@@ -1,13 +1,13 @@
-<!--<form name="deleteForm" (ngSubmit)="closeWindow(true)">-->
 <div class="modal-header">
-    <h4 class="modal-title">Close lecture with unsaved changes</h4>
-    <!--        <button type="button" class="btn-close" data-dismiss="modal" aria-hidden="true" (click)="clear()"></button>-->
+    <h4 class="modal-title">Dismiss unsaved lecture changes</h4>
 </div>
 <div class="modal-body"></div>
 <div class="modal-footer">
-    <button id="submitButton" class="btn btn-primary" type="submit" (click)="closeWindow(false)">
-        <span jhiTranslate="entity.action.cancel"></span>
+    <button type="button" (click)="closeWindow(false)" class="btn btn-default">
+        <fa-icon [icon]="faTimes" />
+        &nbsp;<span jhiTranslate="entity.action.cancel"></span>
     </button>
-    <button type="button" (click)="closeWindow(true)" class="btn btn-default"><fa-icon [icon]="faTimes" />&nbsp;<span jhiTranslate="entity.action.cancel"></span></button>
+    <button class="btn btn-primary" type="submit" (click)="closeWindow(true)">
+        <span jhiTranslate="entity.action.confirm"></span>
+    </button>
 </div>
-<!--</form>-->
