@@ -22,13 +22,13 @@
             </div>
         }
 
-        @if (sshFingerprints && sshFingerprints['ED25519']) {
+        @if (sshFingerprints && sshFingerprints['EdDSA']) {
             <div class="row small-text">
                 <div class="column left">
                     {{ 'ED25519' }}
                 </div>
                 <div class="column right">
-                    {{ sshFingerprints['ED25519'] }}
+                    {{ sshFingerprints['EdDSA'] }}
                 </div>
             </div>
         }

@@ -10,4 +10,8 @@ public class HashUtils {
     public static String getSha512Fingerprint(PublicKey key) {
         return KeyUtils.getFingerPrint(BuiltinDigests.sha512.create(), key);
     }
+
+    public static String getSha256Fingerprint(PublicKey key) {
+        return KeyUtils.getFingerPrint(BuiltinDigests.sha256.create(), key);
+    }
 }

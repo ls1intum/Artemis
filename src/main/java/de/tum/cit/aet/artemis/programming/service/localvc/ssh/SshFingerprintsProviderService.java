@@ -37,7 +37,7 @@ public class SshFingerprintsProviderService {
         if (keyPairProvider != null) {
             try {
                 keyPairProvider.loadKeys(null).iterator()
-                        .forEachRemaining(keyPair -> fingerprints.put(keyPair.getPublic().getAlgorithm(), HashUtils.getSha512Fingerprint(keyPair.getPublic())));
+                        .forEachRemaining(keyPair -> fingerprints.put(keyPair.getPublic().getAlgorithm(), HashUtils.getSha256Fingerprint(keyPair.getPublic())));
 
             }
             catch (IOException | GeneralSecurityException e) {
