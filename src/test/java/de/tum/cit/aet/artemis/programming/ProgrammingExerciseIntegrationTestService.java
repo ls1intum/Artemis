@@ -2308,8 +2308,7 @@ public class ProgrammingExerciseIntegrationTestService {
             throws Exception {
         var submission = setupRepositoryMock.apply(programmingExercise, Map.ofEntries(Map.entry("A.java", "abc"), Map.entry("B.java", "cde"), Map.entry("C.java", "efg")));
 
-        request.getWithForwardedUrl("/api/programming-exercise-participations/" + participation1.getId() + "/files-content/" + submission.getCommitHash(), HttpStatus.OK,
-                "/api/repository/" + participation1.getId() + "/files-content/" + submission.getCommitHash());
+        request.getWithForwardedUrl("/api/programming-exercise-participations/" + participation1.getId() + "/files-content/" + submission.getCommitHash(), HttpStatus.OK, null);
     }
 
     void testRedirectGetParticipationRepositoryFilesWithContentAtCommitForbidden(BiFunction<ProgrammingExercise, Map<String, String>, ProgrammingSubmission> setupRepositoryMock)

@@ -1,11 +1,16 @@
 package de.tum.cit.aet.artemis.programming;
 
+import static org.assertj.core.api.Assertions.fail;
+import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
+
 import java.io.IOException;
 
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.security.test.context.support.WithMockUser;
+
+import de.tum.cit.aet.artemis.programming.util.LocalRepository;
 
 class ProgrammingExerciseLocalVCIntegrationTest extends AbstractProgrammingIntegrationLocalCILocalVCTest {
 
@@ -174,30 +179,59 @@ class ProgrammingExerciseLocalVCIntegrationTest extends AbstractProgrammingInteg
     void testReEvaluateAndUpdateProgrammingExercise_isNotSameGivenExerciseIdInRequestBody_conflict() throws Exception {
         programmingExerciseIntegrationTestService.testReEvaluateAndUpdateProgrammingExercise_isNotSameGivenExerciseIdInRequestBody_conflict();
     }
-    //
-    // @Test
-    // @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
-    // void test_redirectGetSolutionRepositoryFilesWithoutContent() throws Exception {
-    // programmingExerciseIntegrationTestService.test_redirectGetSolutionRepositoryFilesWithoutContent();
-    // }
-    //
-    // @Test
-    // @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
-    // void test_redirectGetTemplateRepositoryFilesWithContent() throws Exception {
-    // programmingExerciseIntegrationTestService.test_redirectGetTemplateRepositoryFilesWithContent();
-    // }
-    //
-    // @Test
-    // @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
-    // void testRedirectGetParticipationRepositoryFilesWithContentAtCommit() throws Exception {
-    // programmingExerciseIntegrationTestService.testRedirectGetParticipationRepositoryFilesWithContentAtCommit();
-    // }
-    //
-    // @Test
-    // @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
-    // void testRedirectGetParticipationRepositoryFilesWithContentAtCommitForbidden() throws Exception {
-    // programmingExerciseIntegrationTestService.testRedirectGetParticipationRepositoryFilesWithContentAtCommitForbidden();
-    // }
 
-    // TODO add all other tests
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void test_redirectGetSolutionRepositoryFilesWithoutContent() throws Exception {
+        programmingExerciseIntegrationTestService.test_redirectGetSolutionRepositoryFilesWithoutContent((exercise, files) -> {
+            LocalRepository localRepository = new LocalRepository("main");
+            assertDoesNotThrow(() -> hestiaUtilTestService.setupSolution(files, exercise, localRepository));
+            return localRepository;
+        });
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void test_redirectGetTemplateRepositoryFilesWithContent() throws Exception {
+        programmingExerciseIntegrationTestService.test_redirectGetTemplateRepositoryFilesWithContent((exercise, files) -> {
+            LocalRepository localRepository = new LocalRepository("main");
+            assertDoesNotThrow(() -> hestiaUtilTestService.setupTemplate(files, exercise, localRepository));
+            return localRepository;
+        });
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testGetParticipationFilesWithContentAtCommitShouldRedirect() throws Exception {
+        programmingExerciseIntegrationTestService.testRedirectGetParticipationRepositoryFilesWithContentAtCommit((exercise, files) -> {
+            LocalRepository localRepository = new LocalRepository("main");
+            var studentLogin = TEST_PREFIX + "student1";
+            try {
+                localRepository.configureRepos("testLocalRepo", "testOriginRepo");
+                return hestiaUtilTestService.setupSubmission(files, exercise, localRepository, studentLogin);
+            }
+            catch (Exception e) {
+                fail("Test setup failed");
+            }
+            return null;
+        });
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "editor1", roles = "EDITOR")
+    void testGetParticipationFilesWithContentAtCommitEditorForbidden() throws Exception {
+        programmingExerciseIntegrationTestService.testRedirectGetParticipationRepositoryFilesWithContentAtCommitForbidden((exercise, files) -> {
+            LocalRepository localRepository = new LocalRepository("main");
+
+            var studentLogin = TEST_PREFIX + "student1";
+            try {
+                localRepository.configureRepos("testLocalRepo", "testOriginRepo");
+                return hestiaUtilTestService.setupSubmission(files, exercise, localRepository, studentLogin);
+            }
+            catch (Exception e) {
+                fail("Test setup failed");
+            }
+            return null;
+        });
+    }
 }
