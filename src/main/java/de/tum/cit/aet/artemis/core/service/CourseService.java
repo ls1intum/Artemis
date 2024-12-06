@@ -55,9 +55,9 @@ import de.tum.cit.aet.artemis.assessment.service.PresentationPointsCalculationSe
 import de.tum.cit.aet.artemis.assessment.service.TutorLeaderboardService;
 import de.tum.cit.aet.artemis.atlas.api.CompetencyProgressApi;
 import de.tum.cit.aet.artemis.atlas.api.CompetencyRelationApi;
+import de.tum.cit.aet.artemis.atlas.api.LearnerProfileApi;
 import de.tum.cit.aet.artemis.atlas.api.LearningPathApi;
 import de.tum.cit.aet.artemis.atlas.api.PrerequisitesApi;
-import de.tum.cit.aet.artemis.atlas.service.profile.CourseLearnerProfileService;
 import de.tum.cit.aet.artemis.communication.domain.FaqState;
 import de.tum.cit.aet.artemis.communication.domain.NotificationType;
 import de.tum.cit.aet.artemis.communication.domain.Post;
@@ -215,7 +215,7 @@ public class CourseService {
 
     private final FaqRepository faqRepository;
 
-    private final CourseLearnerProfileService courseLearnerProfileService;
+    private final LearnerProfileApi learnerProfileApi;
 
     public CourseService(CourseRepository courseRepository, ExerciseService exerciseService, ExerciseDeletionService exerciseDeletionService,
             AuthorizationCheckService authCheckService, UserRepository userRepository, LectureService lectureService, GroupNotificationRepository groupNotificationRepository,
@@ -230,7 +230,7 @@ public class CourseService {
             LearningPathApi learningPathApi, Optional<IrisSettingsService> irisSettingsService, LectureRepository lectureRepository,
             TutorialGroupNotificationRepository tutorialGroupNotificationRepository, TutorialGroupChannelManagementService tutorialGroupChannelManagementService,
             PrerequisitesApi prerequisitesApi, CompetencyRelationApi competencyRelationApi, PostRepository postRepository, AnswerPostRepository answerPostRepository,
-            BuildJobRepository buildJobRepository, FaqRepository faqRepository, CourseLearnerProfileService courseLearnerProfileService) {
+            BuildJobRepository buildJobRepository, FaqRepository faqRepository, LearnerProfileApi learnerProfileApi) {
         this.courseRepository = courseRepository;
         this.exerciseService = exerciseService;
         this.exerciseDeletionService = exerciseDeletionService;
@@ -274,7 +274,7 @@ public class CourseService {
         this.postRepository = postRepository;
         this.answerPostRepository = answerPostRepository;
         this.faqRepository = faqRepository;
-        this.courseLearnerProfileService = courseLearnerProfileService;
+        this.learnerProfileApi = learnerProfileApi;
     }
 
     /**
@@ -512,7 +512,7 @@ public class CourseService {
         deleteExamsOfCourse(course);
         deleteGradingScaleOfCourse(course);
         deleteFaqsOfCourse(course);
-        courseLearnerProfileService.deleteAllForCourse(course);
+        learnerProfileApi.deleteAllForCourse(course);
         irisSettingsService.ifPresent(iss -> iss.deleteSettingsFor(course));
         courseRepository.deleteById(course.getId());
         log.debug("Successfully deleted course {}.", course.getTitle());
@@ -623,7 +623,7 @@ public class CourseService {
         authCheckService.checkUserAllowedToEnrollInCourseElseThrow(user, course);
         userService.addUserToGroup(user, course.getStudentGroupName());
         if (course.getLearningPathsEnabled()) {
-            courseLearnerProfileService.createCourseLearnerProfile(course, user);
+            learnerProfileApi.createCourseLearnerProfile(course, user);
             learningPathApi.generateLearningPathForUser(course, user);
         }
         final var auditEvent = new AuditEvent(user.getLogin(), Constants.ENROLL_IN_COURSE, "course=" + course.getTitle());
@@ -657,7 +657,7 @@ public class CourseService {
                 notFoundStudentsDTOs.add(studentDto);
             }
             else if (courseGroupRole == Role.STUDENT && course.getLearningPathsEnabled()) {
-                courseLearnerProfileService.createCourseLearnerProfile(course, optionalStudent.get());
+                learnerProfileApi.createCourseLearnerProfile(course, optionalStudent.get());
                 learningPathApi.generateLearningPathForUser(course, optionalStudent.get());
             }
         }
@@ -674,7 +674,7 @@ public class CourseService {
     public void unenrollUserForCourseOrThrow(User user, Course course) {
         authCheckService.checkUserAllowedToUnenrollFromCourseElseThrow(user, course);
         userService.removeUserFromGroup(user, course.getStudentGroupName());
-        courseLearnerProfileService.deleteCourseLearnerProfile(course, user);
+        learnerProfileApi.deleteCourseLearnerProfile(course, user);
         final var auditEvent = new AuditEvent(user.getLogin(), Constants.UNENROLL_FROM_COURSE, "course=" + course.getTitle());
         auditEventRepository.add(auditEvent);
         log.info("User {} has successfully unenrolled from course {}", user.getLogin(), course.getTitle());
@@ -1059,19 +1059,18 @@ public class CourseService {
         userService.addUserToGroup(user, group);
         if (group.equals(course.getStudentGroupName()) && course.getLearningPathsEnabled()) {
             Course courseWithCompetencies = courseRepository.findWithEagerCompetenciesAndPrerequisitesByIdElseThrow(course.getId());
-            courseLearnerProfileService.createCourseLearnerProfile(course, user);
-            learningPathService.generateLearningPathForUser(courseWithCompetencies, user);
+            learnerProfileApi.createCourseLearnerProfile(course, user);
+            learningPathApi.generateLearningPathForUser(courseWithCompetencies, user);
         }
     }
 
     /**
      * removes a given user to a user group
      *
-     * @param user   user to be removed from a group
-     * @param group  user-group where the user should be removed
-     * @param course the course in which the user should be removed
+     * @param user  user to be removed from a group
+     * @param group user-group where the user should be removed
      */
-    public void removeUserFromGroup(User user, String group, Course course) {
+    public void removeUserFromGroup(User user, String group) {
         userService.removeUserFromGroup(user, group);
     }
 
