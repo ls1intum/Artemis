@@ -496,6 +496,18 @@ public class ChannelResource extends ConversationManagementResource {
         return ResponseEntity.created(new URI("/api/channels/" + createdChannel.getId())).body(conversationDTOService.convertChannelToDTO(requestingUser, createdChannel));
     }
 
+    @PutMapping("{courseId}/channels/mark-as-read")
+    @EnforceAtLeastStudent
+    public ResponseEntity<ChannelDTO> markAllChannelsOfCourseAsRead(@PathVariable Long courseId) {
+        log.debug("REST request to mark all channels of course {} as read", courseId);
+        var requestingUser = userRepository.getUserWithGroupsAndAuthorities();
+        var course = courseRepository.findByIdElseThrow(courseId);
+        checkCommunicationEnabledElseThrow(course);
+        authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.STUDENT, course, requestingUser);
+        channelService.markAllChannelsOfCourseAsRead(course, requestingUser);
+        return ResponseEntity.ok().build();
+    }
+
     private void checkEntityIdMatchesPathIds(Channel channel, Optional<Long> courseId, Optional<Long> conversationId) {
         courseId.ifPresent(courseIdValue -> {
             if (!channel.getCourse().getId().equals(courseIdValue)) {

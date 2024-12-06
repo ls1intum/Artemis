@@ -442,6 +442,13 @@ public class ConversationService {
         conversationParticipantRepository.save(conversationParticipant);
     }
 
+    public void markConversationAsRead(Channel channel, User requestingUser) {
+        var conversationParticipant = getOrCreateConversationParticipant(channel.getId(), requestingUser);
+        conversationParticipant.setLastRead(ZonedDateTime.now());
+        conversationParticipant.setUnreadMessagesCount(0L);
+        conversationParticipantRepository.save(conversationParticipant);
+    }
+
     /**
      * The user can select one of these roles to filter the conversation members by role
      */

@@ -82,7 +82,8 @@
                 "createDirectChat": "Create direct chat",
                 "groupChats": "Group Chats",
                 "directMessages": "Direct Messages",
-                "filterConversationPlaceholder": "Filter conversations"
+                "filterConversationPlaceholder": "Filter conversations",
+                "setMessagesAsRead": "Mark all messages as read"
             },
             "menu": {
                 "exercises": "Exercises",

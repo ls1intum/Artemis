@@ -450,4 +450,11 @@ public class ChannelService {
 
         return createdChannel;
     }
+
+    public void markAllChannelsOfCourseAsRead(Course course, User requestingUser) {
+        var channels = channelRepository.findChannelsByCourseId(course.getId());
+        for (Channel channel : channels) {
+            conversationService.markConversationAsRead(channel, requestingUser);
+        }
+    }
 }

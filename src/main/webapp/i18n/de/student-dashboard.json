@@ -82,7 +82,8 @@
                 "createDirectChat": "Direkt-Chat erstellen",
                 "groupChats": "Gruppenchats",
                 "directMessages": "Direktnachrichten",
-                "filterConversationPlaceholder": "Konversationen filtern"
+                "filterConversationPlaceholder": "Konversationen filtern",
+                "setMessagesAsRead": "Alle Nachrichten als gelesen markieren"
             },
             "menu": {
                 "exercises": "Aufgaben",
