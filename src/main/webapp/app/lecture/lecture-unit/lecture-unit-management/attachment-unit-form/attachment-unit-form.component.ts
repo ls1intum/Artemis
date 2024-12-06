@@ -51,7 +51,7 @@ export class AttachmentUnitFormComponent implements OnChanges {
 
     datePickerComponent = viewChild(FormDateTimePickerComponent);
 
-    // have to handle the file input as a special case at is not part of the reactive form
+    // have to handle the file input as a special case, as it is not part of the reactive form
     @ViewChild('fileInput', { static: false })
     fileInput: ElementRef;
     file: File;
