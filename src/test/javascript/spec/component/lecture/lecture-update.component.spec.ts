@@ -301,7 +301,17 @@ describe('LectureUpdateComponent', () => {
         lectureUpdateComponent.onDatesValuesChanged();
 
         expect(setDatesSpy).toHaveBeenCalledTimes(3);
-        expect(lectureUpdateComponent.lecture().visibleDate?.toDate()).toBeBefore(lectureUpdateComponent.lecture().startDate?.toDate());
-        expect(lectureUpdateComponent.lecture().startDate?.toDate()).toBeBefore(lectureUpdateComponent.lecture().endDate?.toDate());
+
+        if (lectureUpdateComponent.lecture().visibleDate && lectureUpdateComponent.lecture().startDate) {
+            expect(lectureUpdateComponent.lecture().visibleDate!.toDate()).toBeBefore(lectureUpdateComponent.lecture().startDate!.toDate());
+        } else {
+            throw new Error('visibleDate and startDate should not be undefined');
+        }
+
+        if (lectureUpdateComponent.lecture().startDate && lectureUpdateComponent.lecture().endDate) {
+            expect(lectureUpdateComponent.lecture().startDate!.toDate()).toBeBefore(lectureUpdateComponent.lecture().endDate!.toDate());
+        } else {
+            throw new Error('startDate and endDate should not be undefined');
+        }
     }));
 });
