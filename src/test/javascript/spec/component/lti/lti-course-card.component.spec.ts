@@ -22,6 +22,7 @@ describe('LtiCourseCardComponent', () => {
         }).compileComponents();
 
         fixture = TestBed.createComponent(LtiCourseCardComponent);
+        fixture.componentRef.setInput('course', { id: 1, shortName: 'lti-course', title: 'LTI COURSE' });
         component = fixture.componentInstance;
     });
 
