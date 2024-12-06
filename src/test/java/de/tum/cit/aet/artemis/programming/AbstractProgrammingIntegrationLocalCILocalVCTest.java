@@ -13,7 +13,6 @@ import de.tum.cit.aet.artemis.core.util.PageableSearchUtilService;
 import de.tum.cit.aet.artemis.exam.util.ExamUtilService;
 import de.tum.cit.aet.artemis.exercise.participation.util.ParticipationUtilService;
 import de.tum.cit.aet.artemis.exercise.util.ExerciseIntegrationTestService;
-import de.tum.cit.aet.artemis.programming.hestia.util.HestiaUtilTestService;
 import de.tum.cit.aet.artemis.programming.repository.StaticCodeAnalysisCategoryRepository;
 import de.tum.cit.aet.artemis.programming.repository.VcsAccessLogRepository;
 import de.tum.cit.aet.artemis.programming.service.BuildScriptProviderService;
@@ -104,7 +103,4 @@ public abstract class AbstractProgrammingIntegrationLocalCILocalVCTest extends A
 
     @Autowired
     protected ParticipationUtilService participationUtilService;
-
-    @Autowired
-    protected HestiaUtilTestService hestiaUtilTestService;
 }
