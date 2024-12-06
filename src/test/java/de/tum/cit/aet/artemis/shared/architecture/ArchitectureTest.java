@@ -39,7 +39,6 @@ import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -198,25 +197,6 @@ class ArchitectureTest extends AbstractArchitectureTest {
         noClasses().should().dependOnClassesThat(
                 have(simpleName("JsonParser").or(simpleName("JSONParser"))).and(not(resideInAPackage("com.google.gson"))).and(not(resideInAPackage("com.fasterxml.jackson.core"))))
                 .check(allClasses);
-    }
-
-    @Disabled // TODO: Enable this test once the restructuring is done
-    @Test
-    void testDTOImplementations() {
-        var dtoRecordRule = classes().that().haveSimpleNameEndingWith("DTO").and().areNotInterfaces().should().beRecords().andShould().beAnnotatedWith(JsonInclude.class)
-                .because("All DTOs should be records and annotated with @JsonInclude(JsonInclude.Include.NON_EMPTY)");
-        var result = dtoRecordRule.evaluate(allClasses);
-        log.info("Current number of DTO classes: {}", result.getFailureReport().getDetails().size());
-        log.info("Current DTO classes: {}", result.getFailureReport().getDetails());
-        // TODO: reduce the following number to 0, if the current number is less and the test fails, decrease it
-        assertThat(result.getFailureReport().getDetails()).hasSize(26);
-
-        var dtoPackageRule = classes().that().resideInAPackage("..dto").should().haveSimpleNameEndingWith("DTO");
-        result = dtoPackageRule.evaluate(allClasses);
-        log.info("Current number of DTOs that do not end with \"DTO\": {}", result.getFailureReport().getDetails().size());
-        log.info("Current DTOs that do not end with \"DTO\": {}", result.getFailureReport().getDetails());
-        // TODO: reduce the following number to 0, if the current number is less and the test fails, decrease it
-        assertThat(result.getFailureReport().getDetails()).hasSize(32);
     }
 
     @Test
