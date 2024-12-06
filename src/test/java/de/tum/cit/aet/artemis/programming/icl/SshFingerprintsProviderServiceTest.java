@@ -1,7 +1,9 @@
 package de.tum.cit.aet.artemis.programming.icl;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.Assert.fail;
 import static org.mockito.Mockito.doReturn;
+import static org.mockito.Mockito.doThrow;
 
 import java.io.IOException;
 import java.security.GeneralSecurityException;
@@ -10,6 +12,8 @@ import java.security.KeyPairGenerator;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
+
+import jakarta.ws.rs.BadRequestException;
 
 import org.apache.sshd.common.keyprovider.KeyPairProvider;
 import org.apache.sshd.server.SshServer;
@@ -74,6 +78,22 @@ class SshFingerprintsProviderServiceTest extends AbstractSpringIntegrationLocalC
             var actualFingerprints = fingerprintsProviderService.getSshFingerPrints();
 
             assertThat(actualFingerprints).isEqualTo(expectedFingerprints);
+        }
+
+        @Test
+        void shouldThrowBadRequestExceptionWhenLoadKeysThrowsIOException() throws GeneralSecurityException, IOException {
+            doReturn(Collections.singleton(testKeyPair)).when(keyPairProvider).loadKeys(null);
+            doThrow(new IOException()).when(keyPairProvider).loadKeys(null);
+            doReturn(keyPairProvider).when(sshServer).getKeyPairProvider();
+            fingerprintsProviderService = new SshFingerprintsProviderService(sshServer);
+            try {
+                fingerprintsProviderService.getSshFingerPrints();
+            }
+            catch (BadRequestException e) {
+                return;
+            }
+            fail("Should have thrown an exception");
+
         }
     }
 }
