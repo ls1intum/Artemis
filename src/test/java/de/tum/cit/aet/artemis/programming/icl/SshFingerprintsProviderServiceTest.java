@@ -28,8 +28,6 @@ import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationLocalCILocalV
 
 class SshFingerprintsProviderServiceTest extends AbstractSpringIntegrationLocalCILocalVCTest {
 
-    private static final String TEST_PREFIX = "sshFingerprintsTest";
-
     @Mock
     private SshServer sshServer;
 
