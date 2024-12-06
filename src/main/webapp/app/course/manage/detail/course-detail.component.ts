@@ -16,7 +16,6 @@ import { OrganizationManagementService } from 'app/admin/organization-management
 import { IrisSettingsService } from 'app/iris/settings/shared/iris-settings.service';
 import { AccountService } from 'app/core/auth/account.service';
 import { DetailOverviewSection, DetailType } from 'app/detail-overview-list/detail-overview-list.component';
-import { TranslateService } from '@ngx-translate/core';
 import { ArtemisMarkdownService } from 'app/shared/markdown.service';
 import { IrisSubSettingsType } from 'app/entities/iris/settings/iris-sub-settings.model';
 import { Detail } from 'app/detail-overview-list/detail.model';
@@ -78,7 +77,6 @@ export class CourseDetailComponent implements OnInit, OnDestroy {
         private profileService: ProfileService,
         private accountService: AccountService,
         private irisSettingsService: IrisSettingsService,
-        private translateService: TranslateService,
         private markdownService: ArtemisMarkdownService,
         private featureToggleService: FeatureToggleService,
     ) {}
