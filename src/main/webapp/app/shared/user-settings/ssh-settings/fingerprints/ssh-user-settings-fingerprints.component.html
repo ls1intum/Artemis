@@ -44,6 +44,17 @@
             </div>
         }
 
+        @if (sshFingerprints && sshFingerprints['EC']) {
+            <div class="row">
+                <div class="column left">
+                    {{ 'ECDSA' }}
+                </div>
+                <div class="column right">
+                    {{ sshFingerprints['EC'] }}
+                </div>
+            </div>
+        }
+
         <div class="d-flex justify-content-between align-items-center mt-4">
             <div></div>
             <div>
