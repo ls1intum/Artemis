@@ -1334,7 +1334,7 @@ public class CourseResource {
         if (userToRemoveFromGroup.isEmpty()) {
             throw new EntityNotFoundException("User", userLogin);
         }
-        courseService.removeUserFromGroup(userToRemoveFromGroup.get(), group, course);
+        courseService.removeUserFromGroup(userToRemoveFromGroup.get(), group);
         return ResponseEntity.ok().body(null);
     }
 

@@ -1060,18 +1060,17 @@ public class CourseService {
         if (group.equals(course.getStudentGroupName()) && course.getLearningPathsEnabled()) {
             Course courseWithCompetencies = courseRepository.findWithEagerCompetenciesAndPrerequisitesByIdElseThrow(course.getId());
             courseLearnerProfileService.createCourseLearnerProfile(course, user);
-            learningPathService.generateLearningPathForUser(courseWithCompetencies, user);
+            learningPathApi.generateLearningPathForUser(courseWithCompetencies, user);
         }
     }
 
     /**
      * removes a given user to a user group
      *
-     * @param user   user to be removed from a group
-     * @param group  user-group where the user should be removed
-     * @param course the course in which the user should be removed
+     * @param user  user to be removed from a group
+     * @param group user-group where the user should be removed
      */
-    public void removeUserFromGroup(User user, String group, Course course) {
+    public void removeUserFromGroup(User user, String group) {
         userService.removeUserFromGroup(user, group);
     }
 
