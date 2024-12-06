@@ -23,12 +23,12 @@ import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.boot.test.mock.mockito.SpyBean;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.ldap.SpringSecurityLdapTemplate;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.TestPropertySource;
+import org.springframework.test.context.bean.override.mockito.MockitoSpyBean;
 
 import com.github.dockerjava.api.DockerClient;
 
@@ -82,16 +82,16 @@ public abstract class AbstractSpringIntegrationLocalCILocalVCTest extends Abstra
     @Autowired
     protected LocalVCLocalCITestService localVCLocalCITestService;
 
-    @SpyBean
+    @MockitoSpyBean
     protected LdapUserService ldapUserService;
 
-    @SpyBean
+    @MockitoSpyBean
     protected SpringSecurityLdapTemplate ldapTemplate;
 
-    @SpyBean
+    @MockitoSpyBean
     protected LocalVCService versionControlService;
 
-    @SpyBean
+    @MockitoSpyBean
     protected LocalCIService continuousIntegrationService;
 
     @Autowired
@@ -122,16 +122,16 @@ public abstract class AbstractSpringIntegrationLocalCILocalVCTest extends Abstra
     @Autowired
     protected DockerClient dockerClient;
 
-    @SpyBean
+    @MockitoSpyBean
     protected ResourceLoaderService resourceLoaderService;
 
-    @SpyBean
+    @MockitoSpyBean
     protected ProgrammingMessagingService programmingMessagingService;
 
-    @SpyBean
+    @MockitoSpyBean
     protected ExamLiveEventsService examLiveEventsService;
 
-    @SpyBean
+    @MockitoSpyBean
     protected GroupNotificationScheduleService groupNotificationScheduleService;
 
     @Value("${artemis.version-control.url}")

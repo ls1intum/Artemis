@@ -152,8 +152,10 @@ Learning Paths
 
 Instructors can enable learning paths for their courses either by editing the course or on the dedicated learning path management page. This will generate individualized learning paths for all course participants.
 
-Once the feature is enabled, instructors get access to each student's learning path. Instructors can search for students by login or name and view their respective learning path graph.
-
+Once the feature is enabled, instructors gain access to the Learning Paths Management page, where they can view an overview of the status of the learning paths feature.
+For example, if competencies have not yet been created or relationships between them are missing, the State panel will notify instructors of these issues.
+Instructors can also review the individual learning paths of students. The table on this page displays each student's login, name, and progress within their learning path. By clicking on a student's progress, the instructor can open the learning path graph, which illustrates the relationships between competencies and prerequisites and shows the student's mastery level for each.
+At the bottom of the page, instructors can find generalized information about the learning paths of all students. This includes a graph that presents the average mastery level for each competency or prerequisite across the entire class.
 |instructors-learning-path-management|
 
 .. |instructor-competency-management| image:: instructor/manage-competencies.png
