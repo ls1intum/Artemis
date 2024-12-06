@@ -2,21 +2,15 @@ package de.tum.cit.aet.artemis.programming.icl;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.doReturn;
-import static org.mockito.Mockito.doThrow;
 
-import java.io.IOException;
 import java.security.KeyPair;
 import java.security.KeyPairGenerator;
-import java.util.Collections;
+import java.util.HashMap;
 import java.util.Map;
 
-import org.apache.sshd.common.keyprovider.KeyPairProvider;
-import org.apache.sshd.server.SshServer;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
-import org.mockito.Mock;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.context.bean.override.mockito.MockitoSpyBean;
@@ -30,15 +24,9 @@ class SshFingerprintsProviderIntegrationTest extends AbstractSpringIntegrationLo
     private static final String TEST_PREFIX = "sshFingerprintsTest";
 
     @MockitoSpyBean
-    private SshServer sshServer;
-
-    @Mock
-    private KeyPairProvider keyPairProvider;
+    private SshFingerprintsProviderService fingerprintsProviderService;
 
     private String expectedFingerprint;
-
-    @Autowired
-    private SshFingerprintsProviderService sshFingerprintsProviderService;
 
     @BeforeEach
     void setup() throws Exception {
@@ -47,38 +35,22 @@ class SshFingerprintsProviderIntegrationTest extends AbstractSpringIntegrationLo
         KeyPair testKeyPair = keyPairGenerator.generateKeyPair();
 
         expectedFingerprint = HashUtils.getSha256Fingerprint(testKeyPair.getPublic());
-        doReturn(keyPairProvider).when(sshServer).getKeyPairProvider();
-        doReturn(Collections.singleton(testKeyPair)).when(keyPairProvider).loadKeys(null);
-
-        sshFingerprintsProviderService = new SshFingerprintsProviderService(sshServer);
     }
 
     @Nested
-    class SshFingerprintsProvider {
+    class SshFingerprintsProviderShould {
 
         @Test
         @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
-        void shouldReturnFingerprints() throws Exception {
+        void returnFingerprints() throws Exception {
+            Map<String, String> expectedFingerprints = new HashMap<>();
+            expectedFingerprints.put("RSA", expectedFingerprint);
+            doReturn(expectedFingerprints).when(fingerprintsProviderService).getSshFingerPrints();
+
             var response = request.get("/api/ssh-fingerprints", HttpStatus.OK, Map.class);
+
             assertThat(response.get("RSA")).isNotNull();
             assertThat(response.get("RSA")).isEqualTo(expectedFingerprint);
-        }
-
-        @Test
-        @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
-        void shouldReturnNoFingerprintsWithoutKeyProviderSetup() throws Exception {
-            doReturn(null).when(sshServer).getKeyPairProvider();
-
-            var response = request.get("/api/ssh-fingerprints", HttpStatus.OK, Map.class);
-            assertThat(response.isEmpty()).isTrue();
-        }
-
-        @Test
-        @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
-        void shouldReturnBadRequestWhenLoadKeysThrowsException() throws Exception {
-            doThrow(new IOException("Test exception")).when(keyPairProvider).loadKeys(null);
-
-            request.get("/api/ssh-fingerprints", HttpStatus.BAD_REQUEST, Map.class);
         }
     }
 }
