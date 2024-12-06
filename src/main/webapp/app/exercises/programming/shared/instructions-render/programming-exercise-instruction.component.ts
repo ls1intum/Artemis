@@ -330,7 +330,7 @@ export class ProgrammingExerciseInstructionComponent implements OnChanges, OnDes
     }
 
     addStylesForTables(markdownWithoutTasks: string): string | undefined {
-        if (!markdownWithoutTasks && markdownWithoutTasks.includes('<table')) {
+        if (!markdownWithoutTasks?.includes('<table')) {
             return;
         } else {
             const parser = new DOMParser();
