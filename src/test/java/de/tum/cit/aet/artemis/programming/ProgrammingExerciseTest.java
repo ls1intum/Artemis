@@ -249,6 +249,32 @@ class ProgrammingExerciseTest extends AbstractProgrammingIntegrationJenkinsGitla
     }
 
     @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void testGetProgrammingExerciseByProjectKey() throws Exception {
+        Course course = programmingExerciseUtilService.addCourseWithOneProgrammingExercise();
+        ProgrammingExercise programmingExercise = (ProgrammingExercise) course.getExercises().stream().findFirst().orElseThrow();
+
+        ProgrammingExercise programmingExerciseByProjectKey = request.get("/api/programming-exercises/project-key/" + programmingExercise.getProjectKey(), HttpStatus.OK,
+                ProgrammingExercise.class);
+        assertThat(programmingExerciseByProjectKey).isEqualTo(programmingExercise);
+        assertThat(programmingExerciseByProjectKey.getStudentParticipations()).isEmpty();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void testGetProgrammingExerciseByProjectKeyWithParticipation() throws Exception {
+        Course course = programmingExerciseUtilService.addCourseWithOneProgrammingExercise();
+        ProgrammingExercise programmingExercise = (ProgrammingExercise) course.getExercises().stream().findFirst().orElseThrow();
+        ProgrammingExerciseStudentParticipation participation = participationUtilService.addStudentParticipationForProgrammingExercise(programmingExercise,
+                TEST_PREFIX + "student1");
+
+        ProgrammingExercise programmingExerciseByProjectKey = request.get("/api/programming-exercises/project-key/" + programmingExercise.getProjectKey(), HttpStatus.OK,
+                ProgrammingExercise.class);
+        assertThat(programmingExerciseByProjectKey).isEqualTo(programmingExercise);
+        assertThat(programmingExerciseByProjectKey.getStudentParticipations().contains(participation)).isTrue();
+    }
+
+    @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testDeleteProgrammingExerciseChannel() throws Exception {
         Course course = programmingExerciseUtilService.addCourseWithOneProgrammingExercise();

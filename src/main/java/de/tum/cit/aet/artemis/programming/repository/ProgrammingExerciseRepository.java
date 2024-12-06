@@ -150,6 +150,25 @@ public interface ProgrammingExerciseRepository extends DynamicSpecificationRepos
     }
 
     /**
+     * Get a programmingExercise for a student, with the latest result and feedbacks.
+     *
+     * @param projectKey of the exercise that should be fetched.
+     * @return the exercise with the given ID, if found.
+     */
+    @Query("""
+            SELECT DISTINCT pe
+            FROM ProgrammingExercise pe
+                LEFT JOIN FETCH pe.studentParticipations sp
+                LEFT JOIN FETCH sp.results spr
+                LEFT JOIN FETCH spr.feedbacks sf
+                LEFT JOIN FETCH sf.testCase
+            WHERE pe.projectKey = :projectKey
+                AND (spr.id = (SELECT MAX(re2.id) FROM sp.results re2) OR spr.id IS NULL)
+                AND (sp.student.id IS NULL OR sp.student.id = :studentId)
+            """)
+    Optional<ProgrammingExercise> findWithStudentParticipationLatestResultFeedbackTestCasesByProjectKey(@Param("studentId") long studentId, @Param("projectKey") String projectKey);
+
+    /**
      * Get a programmingExercise with template participation, each with the latest result and feedbacks.
      * NOTICE: this query is quite expensive because it loads all feedback and test cases, and it includes sub queries to retrieve the latest result
      * IMPORTANT: you should generally avoid using this query except you really need all information!!
