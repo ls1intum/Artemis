@@ -9,7 +9,9 @@ import org.slf4j.LoggerFactory;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 
-public abstract class AbstractModuleCodeStyleTest extends AbstractModuleAccessArchitectureTest {
+import de.tum.cit.aet.artemis.shared.architecture.AbstractArchitectureTest;
+
+public abstract class AbstractModuleCodeStyleTest extends AbstractArchitectureTest implements ModuleArchitectureTest {
 
     private static final Logger log = LoggerFactory.getLogger(AbstractModuleCodeStyleTest.class);
 
@@ -25,18 +27,21 @@ public abstract class AbstractModuleCodeStyleTest extends AbstractModuleAccessAr
     void testDTOImplementations() {
         var dtoRecordRule = classes().that().resideInAPackage(getModuleDtoSubpackage()).and().haveSimpleNameEndingWith("DTO").and().areNotInterfaces().should().beRecords()
                 .andShould().beAnnotatedWith(JsonInclude.class).because("All DTOs should be records and annotated with @JsonInclude(JsonInclude.Include.NON_EMPTY)");
-        var result = dtoRecordRule.evaluate(allClasses);
+        var result = dtoRecordRule.allowEmptyShould(true).evaluate(allClasses);
         log.info("Current number of DTO classes: {}", result.getFailureReport().getDetails().size());
         log.info("Current DTO classes: {}", result.getFailureReport().getDetails());
         // TODO: reduce the following number to 0, if the current number is less and the test fails, decrease it
         assertThat(result.getFailureReport().getDetails()).hasSize(dtoAsAnnotatedRecordThreshold());
 
         var dtoPackageRule = classes().that().resideInAPackage(getModuleDtoSubpackage()).should().haveSimpleNameEndingWith("DTO");
-        result = dtoPackageRule.evaluate(allClasses);
+        result = dtoPackageRule.allowEmptyShould(true).evaluate(allClasses);
         log.info("Current number of DTOs that do not end with \"DTO\": {}", result.getFailureReport().getDetails().size());
         log.info("Current DTOs that do not end with \"DTO\": {}", result.getFailureReport().getDetails());
         // TODO: reduce the following number to 0, if the current number is less and the test fails, decrease it
         assertThat(result.getFailureReport().getDetails()).hasSize(dtoNameEndingThreshold());
     }
 
+    private String getModuleDtoSubpackage() {
+        return getModulePackage() + ".dto..";
+    }
 }
