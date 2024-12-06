@@ -23,7 +23,7 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.dao.InvalidDataAccessApiUsageException;
 import org.springframework.stereotype.Service;
 
-import de.tum.cit.aet.artemis.atlas.service.profile.LearnerProfileService;
+import de.tum.cit.aet.artemis.atlas.api.LearnerProfileApi;
 import de.tum.cit.aet.artemis.core.config.Constants;
 import de.tum.cit.aet.artemis.core.domain.Authority;
 import de.tum.cit.aet.artemis.core.domain.Organization;
@@ -75,11 +75,11 @@ public class UserCreationService {
 
     private final CacheManager cacheManager;
 
-    private final LearnerProfileService learnerProfileService;
+    private final LearnerProfileApi learnerProfileApi;
 
     public UserCreationService(UserRepository userRepository, PasswordService passwordService, AuthorityRepository authorityRepository, CourseRepository courseRepository,
             Optional<VcsUserManagementService> optionalVcsUserManagementService, Optional<CIUserManagementService> optionalCIUserManagementService, CacheManager cacheManager,
-            OrganizationRepository organizationRepository, LearnerProfileService learnerProfileService) {
+            OrganizationRepository organizationRepository, LearnerProfileApi learnerProfileApi) {
         this.userRepository = userRepository;
         this.passwordService = passwordService;
         this.authorityRepository = authorityRepository;
@@ -88,7 +88,7 @@ public class UserCreationService {
         this.optionalCIUserManagementService = optionalCIUserManagementService;
         this.cacheManager = cacheManager;
         this.organizationRepository = organizationRepository;
-        this.learnerProfileService = learnerProfileService;
+        this.learnerProfileApi = learnerProfileApi;
     }
 
     /**
@@ -147,7 +147,7 @@ public class UserCreationService {
             log.warn("Could not retrieve matching organizations from pattern: {}", pse.getMessage());
         }
         newUser = saveUser(newUser);
-        learnerProfileService.createProfile(newUser);
+        learnerProfileApi.createProfile(newUser);
         log.debug("Created user: {}", newUser);
         return newUser;
     }
@@ -201,7 +201,7 @@ public class UserCreationService {
 
         addUserToGroupsInternal(user, userDTO.getGroups());
 
-        learnerProfileService.createProfile(user);
+        learnerProfileApi.createProfile(user);
 
         log.debug("Created Information for User: {}", user);
         return user;

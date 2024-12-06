@@ -38,8 +38,8 @@ import org.springframework.context.event.EventListener;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 
+import de.tum.cit.aet.artemis.atlas.api.LearnerProfileApi;
 import de.tum.cit.aet.artemis.atlas.api.ScienceEventApi;
-import de.tum.cit.aet.artemis.atlas.service.profile.LearnerProfileService;
 import de.tum.cit.aet.artemis.communication.domain.SavedPost;
 import de.tum.cit.aet.artemis.communication.repository.SavedPostRepository;
 import de.tum.cit.aet.artemis.core.domain.Authority;
@@ -116,7 +116,7 @@ public class UserService {
 
     private final ParticipationVcsAccessTokenService participationVCSAccessTokenService;
 
-    private final LearnerProfileService learnerProfileService;
+    private final LearnerProfileApi learnerProfileApi;
 
     private final SavedPostRepository savedPostRepository;
 
@@ -124,7 +124,7 @@ public class UserService {
             CacheManager cacheManager, Optional<LdapUserService> ldapUserService, GuidedTourSettingsRepository guidedTourSettingsRepository, PasswordService passwordService,
             Optional<VcsUserManagementService> optionalVcsUserManagementService, Optional<CIUserManagementService> optionalCIUserManagementService,
             InstanceMessageSendService instanceMessageSendService, FileService fileService, ScienceEventApi scienceEventApi,
-            ParticipationVcsAccessTokenService participationVCSAccessTokenService, LearnerProfileService learnerProfileService, SavedPostRepository savedPostRepository) {
+            ParticipationVcsAccessTokenService participationVCSAccessTokenService, LearnerProfileApi learnerProfileApi, SavedPostRepository savedPostRepository) {
         this.userCreationService = userCreationService;
         this.userRepository = userRepository;
         this.authorityService = authorityService;
@@ -139,7 +139,7 @@ public class UserService {
         this.fileService = fileService;
         this.scienceEventApi = scienceEventApi;
         this.participationVCSAccessTokenService = participationVCSAccessTokenService;
-        this.learnerProfileService = learnerProfileService;
+        this.learnerProfileApi = learnerProfileApi;
         this.savedPostRepository = savedPostRepository;
     }
 
@@ -473,7 +473,7 @@ public class UserService {
     public void softDeleteUser(String login) {
         userRepository.findOneWithGroupsByLogin(login).ifPresent(user -> {
             participationVCSAccessTokenService.deleteAllByUserId(user.getId());
-            learnerProfileService.deleteProfile(user);
+            learnerProfileApi.deleteProfile(user);
             user.setDeleted(true);
             user.setLearnerProfile(null);
             anonymizeUser(user);

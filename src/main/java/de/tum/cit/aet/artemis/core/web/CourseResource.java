@@ -66,8 +66,8 @@ import de.tum.cit.aet.artemis.assessment.service.ComplaintService;
 import de.tum.cit.aet.artemis.assessment.service.CourseScoreCalculationService;
 import de.tum.cit.aet.artemis.assessment.service.GradingScaleService;
 import de.tum.cit.aet.artemis.athena.service.AthenaModuleService;
+import de.tum.cit.aet.artemis.atlas.api.LearnerProfileApi;
 import de.tum.cit.aet.artemis.atlas.api.LearningPathApi;
-import de.tum.cit.aet.artemis.atlas.service.profile.CourseLearnerProfileService;
 import de.tum.cit.aet.artemis.communication.service.ConductAgreementService;
 import de.tum.cit.aet.artemis.core.config.Constants;
 import de.tum.cit.aet.artemis.core.domain.Course;
@@ -178,7 +178,7 @@ public class CourseResource {
 
     private final Optional<AthenaModuleService> athenaModuleService;
 
-    private final CourseLearnerProfileService courseLearnerProfileService;
+    private final LearnerProfileApi learnerProfileApi;
 
     @Value("${artemis.course-archives-path}")
     private String courseArchivesDirPath;
@@ -198,7 +198,7 @@ public class CourseResource {
             FileService fileService, TutorialGroupsConfigurationService tutorialGroupsConfigurationService, GradingScaleService gradingScaleService,
             CourseScoreCalculationService courseScoreCalculationService, GradingScaleRepository gradingScaleRepository, LearningPathApi learningPathApi,
             ConductAgreementService conductAgreementService, Optional<AthenaModuleService> athenaModuleService, ExamRepository examRepository, ComplaintService complaintService,
-            TeamRepository teamRepository, CourseLearnerProfileService courseLearnerProfileService) {
+            TeamRepository teamRepository, LearnerProfileApi learnerProfileApi) {
         this.courseService = courseService;
         this.courseRepository = courseRepository;
         this.exerciseService = exerciseService;
@@ -222,7 +222,7 @@ public class CourseResource {
         this.examRepository = examRepository;
         this.complaintService = complaintService;
         this.teamRepository = teamRepository;
-        this.courseLearnerProfileService = courseLearnerProfileService;
+        this.learnerProfileApi = learnerProfileApi;
     }
 
     /**
@@ -340,7 +340,7 @@ public class CourseResource {
         if (existingCourse.getLearningPathsEnabled() != courseUpdate.getLearningPathsEnabled() && courseUpdate.getLearningPathsEnabled()) {
             Course courseWithCompetencies = courseRepository.findWithEagerCompetenciesAndPrerequisitesByIdElseThrow(result.getId());
             Set<User> students = userRepository.getStudentsWithLearnerProfile(courseWithCompetencies);
-            courseLearnerProfileService.createCourseLearnerProfiles(courseWithCompetencies, students);
+            learnerProfileApi.createCourseLearnerProfiles(courseWithCompetencies, students);
             learningPathApi.generateLearningPaths(courseWithCompetencies);
         }
 
@@ -1334,7 +1334,7 @@ public class CourseResource {
         if (userToRemoveFromGroup.isEmpty()) {
             throw new EntityNotFoundException("User", userLogin);
         }
-        courseService.removeUserFromGroup(userToRemoveFromGroup.get(), group, course);
+        courseService.removeUserFromGroup(userToRemoveFromGroup.get(), group);
         return ResponseEntity.ok().body(null);
     }
 
