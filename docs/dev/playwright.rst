@@ -8,9 +8,15 @@ To run the tests locally, developers need to set up Playwright on their machines
 End-to-end tests test entire workflows; therefore, they require the whole Artemis setup - database, client, and server to be running.
 Playwright tests rely on the Playwright Node.js library, browser binaries, and some helper packages.
 To run playwright tests locally, you need to start the Artemis server and client, have the correct users set up and install and run playwright.
+This setup should be used for debugging, and creating new tests for your code, but needs intellij to work, and relies on fully setting up your local Artemis instance
+following :ref:`the server setup guide<dev_setup>`.
 
-For a fast test setup with fewer steps, you can use the scripts provided in `supportingScripts/playwright`. The README explains what you need to do.
-It sets up Artemis inside a dockerized environment, creates users and directly starts playwright.
+
+For a quick test setup with only three steps, you can use the scripts provided in `supportingScripts/playwright`.
+The README explains what you need to do.
+It sets up Artemis inside a dockerized environment, creates users and directly starts playwright. The main drawback with this setup is, that you cannot
+easily change the version of Artemis itself.
+
 
 If you want to manually install playwright, you can follow these steps:
 
