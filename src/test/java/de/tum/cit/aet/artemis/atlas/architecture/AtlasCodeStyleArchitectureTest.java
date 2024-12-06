@@ -2,7 +2,7 @@ package de.tum.cit.aet.artemis.atlas.architecture;
 
 import de.tum.cit.aet.artemis.shared.architecture.module.AbstractModuleCodeStyleTest;
 
-public class AtlasCodeStyleArchitectureTest extends AbstractModuleCodeStyleTest {
+class AtlasCodeStyleArchitectureTest extends AbstractModuleCodeStyleTest {
 
     @Override
     public String getModulePackage() {

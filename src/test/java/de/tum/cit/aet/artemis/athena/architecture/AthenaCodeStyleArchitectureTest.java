@@ -2,7 +2,7 @@ package de.tum.cit.aet.artemis.athena.architecture;
 
 import de.tum.cit.aet.artemis.shared.architecture.module.AbstractModuleCodeStyleTest;
 
-public class AthenaCodeStyleArchitectureTest extends AbstractModuleCodeStyleTest {
+class AthenaCodeStyleArchitectureTest extends AbstractModuleCodeStyleTest {
 
     @Override
     public String getModulePackage() {

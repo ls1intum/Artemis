@@ -2,7 +2,7 @@ package de.tum.cit.aet.artemis.communication.architecture;
 
 import de.tum.cit.aet.artemis.shared.architecture.module.AbstractModuleCodeStyleTest;
 
-public class CommunicationCodeStyleArchitectureTest extends AbstractModuleCodeStyleTest {
+class CommunicationCodeStyleArchitectureTest extends AbstractModuleCodeStyleTest {
 
     @Override
     public String getModulePackage() {

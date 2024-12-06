@@ -2,7 +2,7 @@ package de.tum.cit.aet.artemis.fileupload.architecture;
 
 import de.tum.cit.aet.artemis.shared.architecture.module.AbstractModuleCodeStyleTest;
 
-public class FileUploadCodeStyleArchitectureTest extends AbstractModuleCodeStyleTest {
+class FileUploadCodeStyleArchitectureTest extends AbstractModuleCodeStyleTest {
 
     @Override
     public String getModulePackage() {

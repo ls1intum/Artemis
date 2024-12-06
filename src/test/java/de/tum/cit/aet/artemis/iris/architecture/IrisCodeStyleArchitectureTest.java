@@ -2,7 +2,7 @@ package de.tum.cit.aet.artemis.iris.architecture;
 
 import de.tum.cit.aet.artemis.shared.architecture.module.AbstractModuleCodeStyleTest;
 
-public class IrisCodeStyleArchitectureTest extends AbstractModuleCodeStyleTest {
+class IrisCodeStyleArchitectureTest extends AbstractModuleCodeStyleTest {
 
     @Override
     public String getModulePackage() {

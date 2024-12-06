@@ -2,7 +2,7 @@ package de.tum.cit.aet.artemis.plagiarism.architecture;
 
 import de.tum.cit.aet.artemis.shared.architecture.module.AbstractModuleCodeStyleTest;
 
-public class PlagiarismCodeStyleArchitectureTest extends AbstractModuleCodeStyleTest {
+class PlagiarismCodeStyleArchitectureTest extends AbstractModuleCodeStyleTest {
 
     @Override
     public String getModulePackage() {
