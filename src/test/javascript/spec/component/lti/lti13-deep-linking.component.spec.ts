@@ -13,7 +13,6 @@ import { Exercise, ExerciseType } from 'app/entities/exercise.model';
 import { Course } from 'app/entities/course.model';
 import { User } from 'app/core/user/user.model';
 import { TranslateLoader, TranslateModule, TranslateService } from '@ngx-translate/core';
-import { HttpClientTestingModule } from '@angular/common/http/testing';
 import { TranslateHttpLoader } from '@ngx-translate/http-loader';
 
 function HttpLoaderFactory(http: HttpClient) {
@@ -43,7 +42,6 @@ describe('Lti13DeepLinkingComponent', () => {
         TestBed.configureTestingModule({
             imports: [
                 Lti13DeepLinkingComponent,
-                HttpClientTestingModule,
                 TranslateModule.forRoot({
                     loader: {
                         provide: TranslateLoader,

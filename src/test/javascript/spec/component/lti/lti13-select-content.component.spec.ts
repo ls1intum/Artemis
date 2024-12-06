@@ -4,7 +4,7 @@ import { ActivatedRoute } from '@angular/router';
 import { FormBuilder, FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { of } from 'rxjs';
 import { TranslateLoader, TranslateModule, TranslateService } from '@ngx-translate/core';
-import { HttpClientTestingModule } from '@angular/common/http/testing';
+import { provideHttpClient } from '@angular/common/http';
 import { TranslateHttpLoader } from '@ngx-translate/http-loader';
 import { HttpClient } from '@angular/common/http';
 
@@ -32,7 +32,6 @@ describe('Lti13SelectContentComponent', () => {
                 ReactiveFormsModule,
                 FormsModule,
                 Lti13SelectContentComponent,
-                HttpClientTestingModule,
                 TranslateModule.forRoot({
                     loader: {
                         provide: TranslateLoader,
@@ -41,7 +40,7 @@ describe('Lti13SelectContentComponent', () => {
                     },
                 }),
             ],
-            providers: [FormBuilder, { provide: ActivatedRoute, useValue: routeMock }, TranslateService],
+            providers: [FormBuilder, { provide: ActivatedRoute, useValue: routeMock }, TranslateService, provideHttpClient()],
         }).compileComponents();
     }));
 
