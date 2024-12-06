@@ -13,7 +13,7 @@ import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { HtmlForMarkdownPipe } from 'app/shared/pipes/html-for-markdown.pipe';
 import dayjs from 'dayjs/esm';
-import { MockComponent, MockModule, MockPipe } from 'ng-mocks';
+import { MockComponent, MockDirective, MockModule, MockPipe } from 'ng-mocks';
 import { of } from 'rxjs';
 import { MockRouterLinkDirective } from '../../helpers/mocks/directive/mock-router-link.directive';
 import { MockRouter } from '../../helpers/mocks/mock-router';
@@ -22,6 +22,16 @@ import { ArtemisTestModule } from '../../test.module';
 import { DocumentationButtonComponent } from 'app/shared/components/documentation-button/documentation-button.component';
 import { LectureTitleChannelNameComponent } from 'app/lecture/lecture-title-channel-name.component';
 import { MarkdownEditorMonacoComponent } from 'app/shared/markdown-editor/monaco/markdown-editor-monaco.component';
+import { LectureAttachmentsComponent } from '../../../../../main/webapp/app/lecture/lecture-attachments.component';
+import { LectureUpdateWizardUnitsComponent } from '../../../../../main/webapp/app/lecture/wizard-mode/lecture-wizard-units.component';
+import { FormStatusBarComponent } from '../../../../../main/webapp/app/forms/form-status-bar/form-status-bar.component';
+import { LectureUpdateWizardPeriodComponent } from '../../../../../main/webapp/app/lecture/wizard-mode/lecture-wizard-period.component';
+import { TitleChannelNameComponent } from '../../../../../main/webapp/app/shared/form/title-channel-name/title-channel-name.component';
+import { OwlDateTimeModule } from '@danielmoncada/angular-datetime-picker';
+import { ArtemisSharedModule } from '../../../../../main/webapp/app/shared/shared.module';
+import { LectureUnitManagementComponent } from '../../../../../main/webapp/app/lecture/lecture-unit/lecture-unit-management/lecture-unit-management.component';
+import { UnitCreationCardComponent } from '../../../../../main/webapp/app/lecture/lecture-unit/lecture-unit-management/unit-creation-card/unit-creation-card.component';
+import { CustomNotIncludedInValidatorDirective } from '../../../../../main/webapp/app/shared/validators/custom-not-included-in-validator.directive';
 
 describe('LectureUpdateComponent', () => {
     let lectureService: LectureService;
@@ -41,17 +51,25 @@ describe('LectureUpdateComponent', () => {
         pastLecture.endDate = yesterday;
 
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule, FormsModule, MockModule(NgbTooltipModule)],
+            imports: [ArtemisTestModule, ArtemisSharedModule, FormsModule, MockModule(NgbTooltipModule), MockModule(OwlDateTimeModule)],
             declarations: [
                 LectureUpdateComponent,
-                MockComponent(LectureTitleChannelNameComponent),
-                MockComponent(FormDateTimePickerComponent),
+                LectureUpdateWizardPeriodComponent,
+                LectureTitleChannelNameComponent,
+                TitleChannelNameComponent,
+                FormDateTimePickerComponent,
+                LectureAttachmentsComponent,
+                LectureUpdateWizardUnitsComponent,
+                LectureUnitManagementComponent,
+                MockComponent(FormStatusBarComponent),
                 MockComponent(MarkdownEditorMonacoComponent),
                 MockComponent(DocumentationButtonComponent),
-                MockPipe(ArtemisTranslatePipe),
+                ArtemisTranslatePipe,
                 MockPipe(ArtemisDatePipe),
                 MockPipe(HtmlForMarkdownPipe),
                 MockRouterLinkDirective,
+                UnitCreationCardComponent,
+                MockDirective(CustomNotIncludedInValidatorDirective),
             ],
             providers: [
                 { provide: TranslateService, useClass: MockTranslateService },
@@ -87,6 +105,22 @@ describe('LectureUpdateComponent', () => {
 
     afterEach(() => {
         jest.restoreAllMocks();
+    });
+
+    it('should initialize', () => {
+        // lectureUpdateComponent.ngOnInit();
+        lectureUpdateComponentFixture.detectChanges();
+
+        expect(lectureUpdateComponent.isSaving).toBeFalse();
+        expect(lectureUpdateComponent.processUnitMode).toBeFalse();
+        expect(lectureUpdateComponent.isProcessing).toBeFalse();
+        expect(lectureUpdateComponent.lecture().id).toBeUndefined();
+        expect(lectureUpdateComponent.lecture().title).toBeUndefined();
+        expect(lectureUpdateComponent.lecture().channelName).toBeUndefined();
+        expect(lectureUpdateComponent.lecture().description).toBeUndefined();
+        expect(lectureUpdateComponent.lecture().visibleDate).toBeUndefined();
+        expect(lectureUpdateComponent.lecture().startDate).toBeUndefined();
+        expect(lectureUpdateComponent.lecture().endDate).toBeUndefined();
     });
 
     it('should create lecture', fakeAsync(() => {

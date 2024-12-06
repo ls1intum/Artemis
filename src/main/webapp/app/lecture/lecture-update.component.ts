@@ -21,7 +21,6 @@ import { FormDateTimePickerComponent } from 'app/shared/date-time-picker/date-ti
 import { LectureAttachmentsComponent } from 'app/lecture/lecture-attachments.component';
 import cloneDeep from 'lodash-es/cloneDeep';
 import dayjs from 'dayjs';
-import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 
 @Component({
     selector: 'jhi-lecture-update',
@@ -42,7 +41,6 @@ export class LectureUpdateComponent implements OnInit, OnDestroy {
     private readonly activatedRoute = inject(ActivatedRoute);
     private readonly navigationUtilService = inject(ArtemisNavigationUtilService);
     private readonly router = inject(Router);
-    private readonly modalService = inject(NgbModal);
 
     @ViewChild(ProgrammingExerciseDifficultyComponent) lecturePeriodComponent?: LectureUpdateWizardPeriodComponent;
     titleSection = viewChild.required(LectureTitleChannelNameComponent);
