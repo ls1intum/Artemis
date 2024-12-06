@@ -1,4 +1,4 @@
-import { Component, OnChanges, OnDestroy, OnInit, ViewChild, inject, input, output } from '@angular/core';
+import { Component, OnChanges, OnDestroy, OnInit, ViewChild, computed, inject, input, output } from '@angular/core';
 import { PostCreateEditModalComponent } from 'app/shared/metis/posting-create-edit-modal/post-create-edit-modal/post-create-edit-modal.component';
 import { faCheckSquare, faPencilAlt } from '@fortawesome/free-solid-svg-icons';
 import dayjs from 'dayjs/esm';
@@ -48,6 +48,11 @@ export class PostingHeaderComponent implements OnInit, OnDestroy, OnChanges {
     protected metisService: MetisService = inject(MetisService);
     protected accountService: AccountService = inject(AccountService);
 
+    isPostResolved = computed<boolean>(() => {
+        const p = this.posting();
+        return this.isPost(p) && p.resolved === true;
+    });
+
     /**
      * on initialization: determines if user is author of posting by invoking the metis service,
      * determines if posting is of today and sets the today flag to be shown in the header of the posting
@@ -69,11 +74,6 @@ export class PostingHeaderComponent implements OnInit, OnDestroy, OnChanges {
 
     private isPost(posting: Posting | AnswerPost | undefined): posting is Post {
         return posting !== undefined && 'resolved' in posting;
-    }
-
-    get isPostResolved(): boolean {
-        const p = this.posting();
-        return this.isPost(p) && p.resolved === true;
     }
 
     /**

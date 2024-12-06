@@ -34,7 +34,7 @@
                 {{ postingIsOfToday ? (posting()?.creationDate | artemisDate: 'time') : (posting()?.creationDate | artemisDate: 'short-date') }}
             </span>
         </span>
-        @if (isPostResolved) {
+        @if (isPostResolved()) {
             <fa-icon
                 [icon]="faCheckSquare"
                 iconSize="xs"

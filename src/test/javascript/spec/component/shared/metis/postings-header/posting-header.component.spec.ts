@@ -172,7 +172,7 @@ describe('PostingHeaderComponent', () => {
             component.ngOnInit();
             fixture.detectChanges();
 
-            expect(component.isPostResolved).toBeFalse();
+            expect(component.isPostResolved()).toBeFalse();
             expect(getElement(debugElement, '.resolved')).toBeNull();
         });
     });
