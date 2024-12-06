@@ -104,7 +104,7 @@
             </div>
             <div class="row">
                 <div class="col-12">
-                    <span [ngbTooltip]="tooltipText" container="body" class="d-inline-block">
+                    <span [ngbTooltip]="tooltipText()" container="body" class="d-inline-block">
                         <button id="submitButton" class="btn btn-primary" type="submit" [disabled]="!isFormValid()">
                             <span jhiTranslate="entity.action.submit"></span>
                         </button>

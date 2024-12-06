@@ -6,6 +6,7 @@ import { ACCEPTED_FILE_EXTENSIONS_FILE_BROWSER, ALLOWED_FILE_EXTENSIONS_HUMAN_RE
 import { CompetencyLectureUnitLink } from 'app/entities/competency.model';
 import { MAX_FILE_SIZE } from 'app/shared/constants/input.constants';
 import { toSignal } from '@angular/core/rxjs-interop';
+import { of } from 'rxjs';
 import { FormDateTimePickerComponent } from 'app/shared/date-time-picker/date-time-picker.component';
 import { TranslateService } from '@ngx-translate/core';
 
@@ -71,9 +72,9 @@ export class AttachmentUnitFormComponent implements OnChanges {
         competencyLinks: [undefined as CompetencyLectureUnitLink[] | undefined],
     });
     private readonly statusChanges = toSignal(this.form.statusChanges ?? 'INVALID');
-
+    private readonly name = toSignal(this.nameControl?.valueChanges ?? of(''));
     isFormValid = computed(() => {
-        return this.statusChanges() === 'VALID' && !this.isFileTooBig() && this.nameControl?.value !== '' && this.fileName();
+        return this.statusChanges() === 'VALID' && !this.isFileTooBig() && this.name() && this.fileName();
     });
 
     ngOnChanges(): void {
@@ -90,7 +91,7 @@ export class AttachmentUnitFormComponent implements OnChanges {
         this.file = input.files[0];
         this.fileName.set(this.file.name);
         // automatically set the name in case it is not yet specified
-        if (this.form && (this.nameControl?.value == undefined || this.nameControl?.value == '')) {
+        if (this.form && !this.name()) {
             this.form.patchValue({
                 // without extension
                 name: this.file.name.replace(/\.[^/.]+$/, ''),
@@ -99,21 +100,18 @@ export class AttachmentUnitFormComponent implements OnChanges {
         this.isFileTooBig.set(this.file.size > MAX_FILE_SIZE);
     }
 
-    get tooltipText(): string | null {
-        // Both name and file are invalid
-        if (!this.fileInputTouched && this.nameControl?.invalid) {
+    tooltipText = computed(() => {
+        if (!this.fileName() && !this.name()) {
             return this.translateService.instant('artemisApp.attachmentUnit.createAttachmentUnit.nameAndFileRequiredValidationError');
         }
-        // Only file is invalid
-        if (!this.fileInputTouched) {
+        if (!this.fileName()) {
             return this.translateService.instant('artemisApp.attachmentUnit.createAttachmentUnit.fileRequiredValidationError');
         }
-        // Only name is invalid
-        if (this.nameControl?.invalid) {
+        if (!this.name()) {
             return this.translateService.instant('artemisApp.attachmentUnit.createAttachmentUnit.nameRequiredValidationError');
         }
-        return null;
-    }
+        return undefined;
+    });
 
     get nameControl() {
         return this.form.get('name');
