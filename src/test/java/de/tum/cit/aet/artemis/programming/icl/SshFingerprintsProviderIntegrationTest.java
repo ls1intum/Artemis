@@ -23,7 +23,7 @@ import org.springframework.security.test.context.support.WithMockUser;
 import de.tum.cit.aet.artemis.programming.service.localvc.ssh.HashUtils;
 import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationLocalCILocalVCTest;
 
-public class SshFingerprintsProviderIntegrationTest extends AbstractSpringIntegrationLocalCILocalVCTest {
+class SshFingerprintsProviderIntegrationTest extends AbstractSpringIntegrationLocalCILocalVCTest {
 
     private static final String TEST_PREFIX = "sshFingerprintsTest";
 
