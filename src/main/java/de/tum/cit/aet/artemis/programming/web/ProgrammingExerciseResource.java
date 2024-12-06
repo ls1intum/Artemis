@@ -584,8 +584,10 @@ public class ProgrammingExerciseResource {
     @EnforceAtLeastStudent
     @AllowedTools(ToolTokenType.SCORPIO)
     public ResponseEntity<ProgrammingExercise> getExerciseByProjectKey(@PathVariable String projectKey) {
-        final ProgrammingExercise exercise = programmingExerciseRepository.findOneByProjectKeyOrThrow(projectKey, false);
-        authCheckService.checkIsAtLeastRoleInExerciseElseThrow(Role.STUDENT, exercise.getId());
+        User user = userRepository.getUserWithGroupsAndAuthorities();
+
+        final ProgrammingExercise exercise = programmingExerciseRepository.findWithStudentParticipationLatestResultFeedbackTestCasesByProjectKey(user.getId(), projectKey)
+                .orElseThrow(() -> new EntityNotFoundException("ProgrammingExercise", projectKey));
 
         return ResponseEntity.ok(exercise);
     }
