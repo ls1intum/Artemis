@@ -100,6 +100,7 @@ export class MonacoEditorService {
             },
             renderLineHighlight: 'none',
             fontSize: 12,
+            ignoreTrimWhitespace: false,
         });
     }
 }
