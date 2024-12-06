@@ -69,7 +69,6 @@ class SshFingerprintsProviderServiceTest extends AbstractSpringIntegrationLocalC
 
         @Test
         void notReturnFingerprintsWhenKeysProviderIsNull() throws GeneralSecurityException, IOException {
-            doReturn(Collections.singleton(testKeyPair)).when(keyPairProvider).loadKeys(null);
             doReturn(null).when(sshServer).getKeyPairProvider();
             fingerprintsProviderService = new SshFingerprintsProviderService(sshServer);
 
