@@ -15,7 +15,7 @@ import { ArtemisSharedModule } from 'app/shared/shared.module';
 })
 export class LtiCourseCardComponent {
     readonly ARTEMIS_DEFAULT_COLOR = ARTEMIS_DEFAULT_COLOR;
-    course = input.required<Course>();
+    course = input<Course>();
     CachingStrategy = CachingStrategy;
     courseColor: string;
 
