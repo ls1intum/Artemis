@@ -55,7 +55,7 @@
                 "expiresOn": "Läuft ab am",
                 "hasExpiredOn": "Abgelaufen am",
                 "fingerprint": "Fingerabdruck",
-                "fingerprints": "Fingerabdrücke",
+                "fingerprints": "SSH Fingerabdrücke anzeigen",
                 "sshFingerprints": "SSH Fingerabdrücke",
                 "fingerprintsExplanation": "Mit SSH-Schlüsseln kannst du eine sichere Verbindung zwischen deinem Computer und Artemis herstellen. SSH-Fingerabdrücke stellen sicher, dass der Client eine Verbindung zum richtigen Host herstellt.",
                 "fingerprintsLearnMore": "Lerne mehr über Fingerabdrücke",
