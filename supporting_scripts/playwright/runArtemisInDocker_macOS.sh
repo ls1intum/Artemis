@@ -15,9 +15,6 @@ echo "Copied configuration"
 cd docker
 open -a Docker
 
-echo "Pulling newest artemis docker image"
-docker pull ghcr.io/ls1intum/artemis
-
 echo "Updating docker group ID in the docker compose file"
 PRIMARY_GROUP_ID=$(dscl . -read /Groups/docker PrimaryGroupID | awk '{print $2}')
 if [ -n "$PRIMARY_GROUP_ID" ]; then
