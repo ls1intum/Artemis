@@ -4,14 +4,6 @@ set -e
 
 cd ../..
 
-# configure application and start
-
-if [ ! -f src/main/resources/config/application-local.yml ]; then
-    cp src/main/resources/config/application-local-template.yml src/main/resources/config/application-local.yml
-fi
-
-echo "Copied configuration"
-
 cd docker
 open -a Docker
 
