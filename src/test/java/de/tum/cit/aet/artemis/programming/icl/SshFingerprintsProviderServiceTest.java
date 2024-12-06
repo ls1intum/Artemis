@@ -1,7 +1,7 @@
 package de.tum.cit.aet.artemis.programming.icl;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.junit.Assert.fail;
+import static org.assertj.core.api.Assertions.fail;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.doThrow;
 
@@ -93,7 +93,6 @@ class SshFingerprintsProviderServiceTest extends AbstractSpringIntegrationLocalC
                 return;
             }
             fail("Should have thrown an exception");
-
         }
     }
 }
