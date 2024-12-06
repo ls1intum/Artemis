@@ -46,6 +46,6 @@ public abstract class AbstractModuleCodeStyleTest extends AbstractArchitectureTe
     }
 
     private String getModuleDtoSubpackage() {
-        return getModulePackage() + ".dto..";
+        return getModulePackage() + "..dto..";
     }
 }
