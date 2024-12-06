@@ -86,7 +86,7 @@ class LocalCIResourceIntegrationTest extends AbstractProgrammingIntegrationLocal
         JobTimingInfo jobTimingInfo2 = new JobTimingInfo(ZonedDateTime.now(), ZonedDateTime.now().plusMinutes(1), ZonedDateTime.now().plusMinutes(2));
         JobTimingInfo jobTimingInfo3 = new JobTimingInfo(ZonedDateTime.now().minusMinutes(10), ZonedDateTime.now().minusMinutes(9), ZonedDateTime.now().plusSeconds(150));
 
-        BuildConfig buildConfig = new BuildConfig("echo 'test'", "test", "test", "test", "test", "test", null, null, false, false, false, null, 0, null, null, null);
+        BuildConfig buildConfig = new BuildConfig("echo 'test'", "test", "test", "test", "test", "test", null, null, false, false, false, null, 0, null, null, null, null);
         RepositoryInfo repositoryInfo = new RepositoryInfo("test", null, RepositoryType.USER, "test", "test", "test", null, null);
 
         String memberAddress = hazelcastInstance.getCluster().getLocalMember().getAddress().toString();
@@ -280,7 +280,7 @@ class LocalCIResourceIntegrationTest extends AbstractProgrammingIntegrationLocal
         // Create a failed job to filter for
         JobTimingInfo jobTimingInfo = new JobTimingInfo(ZonedDateTime.now().plusDays(1), ZonedDateTime.now().plusDays(1).plusMinutes(2),
                 ZonedDateTime.now().plusDays(1).plusMinutes(10));
-        BuildConfig buildConfig = new BuildConfig("echo 'test'", "test", "test", "test", "test", "test", null, null, false, false, false, null, 0, null, null, null);
+        BuildConfig buildConfig = new BuildConfig("echo 'test'", "test", "test", "test", "test", "test", null, null, false, false, false, null, 0, null, null, null, null);
         RepositoryInfo repositoryInfo = new RepositoryInfo("test", null, RepositoryType.USER, "test", "test", "test", null, null);
         var failedJob1 = new BuildJobQueueItem("5", "job5", buildAgent, 1, course.getId(), 1, 1, 1, BuildStatus.FAILED, repositoryInfo, jobTimingInfo, buildConfig, null);
         var jobResult = new Result().successful(false).rated(true).score(0D).assessmentType(AssessmentType.AUTOMATIC).completionDate(ZonedDateTime.now());

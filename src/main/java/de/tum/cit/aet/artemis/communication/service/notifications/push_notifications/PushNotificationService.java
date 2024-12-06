@@ -155,11 +155,11 @@ public abstract class PushNotificationService implements InstantNotificationServ
         }
 
         final String date = Instant.now().toString();
-        var notificationData = new PushNotificationData(notification.getTransientPlaceholderValuesAsArray(), notification.getTarget(), type.name(), date,
-                Constants.PUSH_NOTIFICATION_VERSION);
 
         try {
-            final String payload = mapper.writeValueAsString(notificationData);
+            var notificationData = new PushNotificationData(notification.getTransientPlaceholderValuesAsArray(), notification.getTarget(), type.name(), date,
+                    Constants.PUSH_NOTIFICATION_VERSION);
+            var payload = mapper.writeValueAsString(notificationData);
             final byte[] initializationVector = new byte[16];
 
             List<RelayNotificationRequest> notificationRequests = userDeviceConfigurations.stream().flatMap(deviceConfiguration -> {
@@ -170,7 +170,8 @@ public abstract class PushNotificationService implements InstantNotificationServ
                 String ivAsString = Base64.getEncoder().encodeToString(initializationVector);
                 Optional<String> payloadCiphertext = encrypt(payload, key, initializationVector);
 
-                return payloadCiphertext.stream().map(s -> new RelayNotificationRequest(ivAsString, s, deviceConfiguration.getToken()));
+                return payloadCiphertext.stream()
+                        .map(s -> new RelayNotificationRequest(ivAsString, s, deviceConfiguration.getToken(), deviceConfiguration.getApiType().getDatabaseKey()));
             }).toList();
 
             sendNotificationRequestsToEndpoint(notificationRequests, relayServerBaseUrl.get());
