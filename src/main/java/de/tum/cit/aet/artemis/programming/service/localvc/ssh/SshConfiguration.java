@@ -31,7 +31,7 @@ public class SshConfiguration {
     @Value("${artemis.version-control.ssh-port:7921}")
     private int sshPort;
 
-    @Value("${artemis.version-control.ssh-key-path:null}")
+    @Value("${artemis.version-control.ssh-host-key-path:null}")
     private Optional<Path> sshHostKeyPath;
 
     @Value("${server.url}")
