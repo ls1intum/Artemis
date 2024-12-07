@@ -49,6 +49,8 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 60
     steps:
+    - name: Debug - Appending anything to job summary
+      run: echo 'Hello World' >> $GITHUB_STEP_SUMMARY
     - uses: actions/checkout@v4
     - name: Setup Java
       uses: actions/setup-java@v4
