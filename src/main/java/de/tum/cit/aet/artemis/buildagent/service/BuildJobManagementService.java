@@ -178,11 +178,7 @@ public class BuildJobManagementService {
                 else {
                     finishBuildJobExceptionally(buildJobItem.id(), containerName, e);
                     if (e instanceof TimeoutException) {
-                        String msg = "Timed out after " + buildJobTimeoutSeconds + " seconds. "
-                                + "This may be due to an infinite loop or inefficient code. Please review your code for potential issues. "
-                                + "If the problem persists, contact your instructor for assistance. (Build job ID: " + buildJobItem.id() + ")";
-                        buildLogsMap.appendBuildLogEntry(buildJobItem.id(), msg);
-                        log.warn(msg);
+                        logTimedOutBuildJob(buildJobItem, buildJobTimeoutSeconds);
                     }
                     throw new CompletionException(e);
                 }
@@ -194,6 +190,18 @@ public class BuildJobManagementService {
             runningFutures.remove(buildJobItem.id());
             runningFuturesWrapper.remove(buildJobItem.id());
         }));
+    }
+
+    private void logTimedOutBuildJob(BuildJobQueueItem buildJobItem, int buildJobTimeoutSeconds) {
+        String msg = "Timed out after " + buildJobTimeoutSeconds + " seconds. "
+                + "This may be due to an infinite loop or inefficient code. Please review your code for potential issues. "
+                + "If the problem persists, contact your instructor for assistance. (Build job ID: " + buildJobItem.id() + ")";
+        buildLogsMap.appendBuildLogEntry(buildJobItem.id(), msg);
+        log.warn(msg);
+
+        msg = "Executing build job with id " + buildJobItem.id() + " timed out after " + buildJobTimeoutSeconds + " seconds."
+                + "This may be due to strict timeout settings. Consider increasing the exercise timeout and applying stricter timeout constraints within the test cases using @StrictTimeout.";
+        buildLogsMap.appendBuildLogEntry(buildJobItem.id(), msg);
     }
 
     Set<String> getRunningBuildJobIds() {
