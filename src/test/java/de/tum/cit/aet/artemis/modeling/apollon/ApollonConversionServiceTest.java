@@ -1,9 +1,14 @@
-package de.tum.cit.aet.artemis.modeling;
+package de.tum.cit.aet.artemis.modeling.apollon;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+import java.io.BufferedReader;
 import java.io.ByteArrayInputStream;
+import java.io.IOException;
 import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.nio.charset.StandardCharsets;
+import java.util.stream.Collectors;
 
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -13,17 +18,14 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.io.Resource;
-import org.springframework.http.HttpStatus;
-import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.util.ReflectionTestUtils;
 import org.springframework.web.client.RestTemplate;
 
 import de.tum.cit.aet.artemis.core.connector.apollon.ApollonRequestMockProvider;
-import de.tum.cit.aet.artemis.modeling.dto.ApollonModelDTO;
 import de.tum.cit.aet.artemis.modeling.service.apollon.ApollonConversionService;
 import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationIndependentTest;
 
-class ApollonConversionIntegrationTest extends AbstractSpringIntegrationIndependentTest {
+class ApollonConversionServiceTest extends AbstractSpringIntegrationIndependentTest {
 
     @Autowired
     private ApollonRequestMockProvider apollonRequestMockProvider;
@@ -35,12 +37,15 @@ class ApollonConversionIntegrationTest extends AbstractSpringIntegrationIndepend
     @Value("${artemis.apollon.conversion-service-url}")
     private String apollonConversionUrl;
 
-    @Autowired
-    private ApollonConversionService apollonConversionService;
+    ApollonConversionService apollonConversionService;
 
+    /**
+     * Initializes apollonConversionService
+     */
     @BeforeEach
     void init() {
-        apollonConversionService.setRestTemplate(restTemplate);
+        // Create apollonConversionService and inject @Value fields
+        apollonConversionService = new ApollonConversionService(restTemplate);
         ReflectionTestUtils.setField(apollonConversionService, "apollonConversionUrl", apollonConversionUrl);
 
         apollonRequestMockProvider.enableMockingOfRequests();
@@ -52,20 +57,18 @@ class ApollonConversionIntegrationTest extends AbstractSpringIntegrationIndepend
     }
 
     /**
-     * Returns the pdf of the model in the request body
+     * Converts the model to pdf
      */
     @Test
-    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
-    void testConvertingModel() throws Exception {
-
+    void testConvertingModel() throws IOException {
         String mockPdf = "This is my pdf file";
         InputStream inputStream = new ByteArrayInputStream(mockPdf.getBytes());
         Resource mockResource = Mockito.mock(Resource.class);
         Mockito.when(mockResource.getInputStream()).thenReturn(inputStream);
         apollonRequestMockProvider.mockConvertModel(true, mockResource);
-
-        final var apollonModel = new ApollonModelDTO("model");
-        String response = request.postWithResponseBodyString("/api/apollon/convert-to-pdf", apollonModel, HttpStatus.OK);
-        assertThat(response).isEqualTo(mockPdf);
+        final InputStream returnedInputStream = apollonConversionService.convertModel("model");
+        String text = new BufferedReader(new InputStreamReader(returnedInputStream, StandardCharsets.UTF_8)).lines().collect(Collectors.joining("\n"));
+        assertThat(text).isEqualTo(mockPdf);
     }
+
 }
