@@ -75,7 +75,6 @@ import static de.tum.cit.aet.artemis.communication.domain.notification.Notificat
 import static de.tum.cit.aet.artemis.communication.domain.notification.NotificationTargetFactory.createPlagiarismCaseTarget;
 import static de.tum.cit.aet.artemis.communication.domain.notification.NotificationTargetFactory.createTutorialGroupTarget;
 
-import java.time.format.DateTimeFormatter;
 import java.util.Set;
 
 import jakarta.validation.constraints.NotNull;
@@ -174,18 +173,13 @@ public class SingleUserNotificationFactory {
                 return new SingleUserNotification(recipient, SSH_KEY_ADDED_TITLE, SSH_KEY_ADDED_TEXT, true, new String[] {});
             }
             case SSH_KEY_EXPIRES_SOON -> {
-                return new SingleUserNotification(recipient, SSH_KEY_EXPIRES_SOON_TITLE, SSH_KEY_EXPIRES_SOON_TEXT, true, createPlaceholdersSshKeyNotification(key));
+                return new SingleUserNotification(recipient, SSH_KEY_EXPIRES_SOON_TITLE, SSH_KEY_EXPIRES_SOON_TEXT, true, new String[] {});
             }
             case SSH_KEY_HAS_EXPIRED -> {
-                return new SingleUserNotification(recipient, SSH_KEY_HAS_EXPIRED_TITLE, SSH_KEY_HAS_EXPIRED_TEXT, true, createPlaceholdersSshKeyNotification(key));
+                return new SingleUserNotification(recipient, SSH_KEY_HAS_EXPIRED_TITLE, SSH_KEY_HAS_EXPIRED_TEXT, true, new String[] {});
             }
             default -> throw new UnsupportedOperationException("Unsupported NotificationType: " + notificationType);
         }
-    }
-
-    @NotificationPlaceholderCreator(values = { SSH_KEY_EXPIRES_SOON, SSH_KEY_HAS_EXPIRED })
-    public static String[] createPlaceholdersSshKeyNotification(UserSshPublicKey key) {
-        return new String[] { key.getLabel(), key.getExpiryDate().format(DateTimeFormatter.ofPattern("dd.MM.yyyy HH:mm")) };
     }
 
     /**
