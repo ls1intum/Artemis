@@ -26,6 +26,7 @@ import de.tum.cit.aet.artemis.communication.dto.ChannelDTO;
 import de.tum.cit.aet.artemis.communication.dto.ChannelIdAndNameDTO;
 import de.tum.cit.aet.artemis.communication.dto.FeedbackChannelRequestDTO;
 import de.tum.cit.aet.artemis.communication.dto.MetisCrudAction;
+import de.tum.cit.aet.artemis.communication.service.conversation.ConversationService;
 import de.tum.cit.aet.artemis.communication.util.ConversationUtilService;
 import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.domain.CourseInformationSharingConfiguration;
@@ -46,6 +47,9 @@ import de.tum.cit.aet.artemis.tutorialgroup.util.TutorialGroupUtilService;
 class ChannelIntegrationTest extends AbstractConversationTest {
 
     private static final String TEST_PREFIX = "chtest";
+
+    @Autowired
+    private ConversationService conversationService;
 
     @Autowired
     private TutorialGroupTestRepository tutorialGroupRepository;
@@ -92,9 +96,8 @@ class ChannelIntegrationTest extends AbstractConversationTest {
 
     @AfterEach
     void tearDown() {
-        tutorialGroupRepository.deleteAll();
-        conversationMessageRepository.deleteAll();
-        conversationRepository.deleteAllByCourseId(exampleCourseId);
+        var conversations = conversationRepository.findAllByCourseId(exampleCourseId);
+        conversations.forEach(conversation -> conversationService.deleteConversation(conversation));
     }
 
     @Override
@@ -944,8 +947,8 @@ class ChannelIntegrationTest extends AbstractConversationTest {
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void createFeedbackChannel_asInstructor_shouldCreateChannel() {
-        Long courseId = 1L;
-        Long exerciseId = 1L;
+        long courseId = 1L;
+        long exerciseId = 1L;
         ChannelDTO channelDTO = new ChannelDTO();
         channelDTO.setName("feedback-channel");
         channelDTO.setDescription("Discussion channel for feedback");
@@ -958,8 +961,8 @@ class ChannelIntegrationTest extends AbstractConversationTest {
 
         ChannelDTO response = null;
         try {
-            response = request.postWithResponseBody(BASE_ENDPOINT.replace("{courseId}", courseId.toString()).replace("{exerciseId}", exerciseId.toString()), feedbackChannelRequest,
-                    ChannelDTO.class, HttpStatus.CREATED);
+            response = request.postWithResponseBody(BASE_ENDPOINT.replace("{courseId}", Long.toString(courseId)).replace("{exerciseId}", Long.toString(exerciseId)),
+                    feedbackChannelRequest, ChannelDTO.class, HttpStatus.CREATED);
         }
         catch (Exception e) {
             fail("Failed to create feedback channel", e);
