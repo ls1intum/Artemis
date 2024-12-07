@@ -1,4 +1,4 @@
-package de.tum.cit.aet.artemis.connectors;
+package de.tum.cit.aet.artemis.lti;
 
 import static org.mockito.Mockito.reset;
 import static org.mockito.Mockito.verify;
