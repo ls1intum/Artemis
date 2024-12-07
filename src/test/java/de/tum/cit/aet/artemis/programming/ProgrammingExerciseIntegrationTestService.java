@@ -34,10 +34,8 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
-import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
-import java.util.function.BiFunction;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 import java.util.zip.ZipFile;
@@ -95,14 +93,12 @@ import de.tum.cit.aet.artemis.plagiarism.PlagiarismUtilService;
 import de.tum.cit.aet.artemis.plagiarism.domain.PlagiarismComparison;
 import de.tum.cit.aet.artemis.plagiarism.domain.PlagiarismStatus;
 import de.tum.cit.aet.artemis.plagiarism.domain.text.TextPlagiarismResult;
-import de.tum.cit.aet.artemis.plagiarism.domain.text.TextSubmissionElement;
 import de.tum.cit.aet.artemis.plagiarism.dto.PlagiarismResultDTO;
 import de.tum.cit.aet.artemis.programming.domain.AuxiliaryRepository;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseStudentParticipation;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseTestCase;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingLanguage;
-import de.tum.cit.aet.artemis.programming.domain.ProgrammingSubmission;
 import de.tum.cit.aet.artemis.programming.domain.ProjectType;
 import de.tum.cit.aet.artemis.programming.domain.RepositoryType;
 import de.tum.cit.aet.artemis.programming.domain.VcsRepositoryUri;
@@ -578,10 +574,6 @@ public class ProgrammingExerciseIntegrationTestService {
         File downloadedFile = exportSubmissionsByStudentLogins(HttpStatus.OK);
         assertThat(downloadedFile).exists();
         // TODO: unzip the files and add some checks
-    }
-
-    void testExportSubmissionsByStudentLogins_failToCreateZip() throws Exception {
-        exportSubmissionsByStudentLogins(HttpStatus.BAD_REQUEST);
     }
 
     private File exportSubmissionsByStudentLogins(HttpStatus expectedStatus) throws Exception {
@@ -1797,12 +1789,12 @@ public class ProgrammingExerciseIntegrationTestService {
         }
     }
 
-    private void assertPlagiarismResult(ProgrammingExercise programmingExercise, PlagiarismResultDTO<TextPlagiarismResult> result, double expectedSimilarity) {
+    private void assertPlagiarismResult(ProgrammingExercise programmingExercise, PlagiarismResultDTO<?> result, double expectedSimilarity) {
         // verify plagiarism result
         assertThat(result.plagiarismResult().getComparisons()).hasSize(1);
         assertThat(result.plagiarismResult().getExercise().getId()).isEqualTo(programmingExercise.getId());
 
-        PlagiarismComparison<TextSubmissionElement> comparison = result.plagiarismResult().getComparisons().iterator().next();
+        PlagiarismComparison<?> comparison = result.plagiarismResult().getComparisons().iterator().next();
         assertThat(comparison.getSimilarity()).isEqualTo(expectedSimilarity, Offset.offset(0.0001));
         assertThat(comparison.getStatus()).isEqualTo(PlagiarismStatus.NONE);
         assertThat(comparison.getMatches()).hasSize(1);
@@ -2284,40 +2276,6 @@ public class ProgrammingExerciseIntegrationTestService {
         ProgrammingExercise programmingExerciseToBeConflicted = programmingExerciseTestRepository.findAllWithEagerTemplateAndSolutionParticipations().get(1);
 
         request.put("/api/programming-exercises/" + programmingExercise.getId() + "/re-evaluate", programmingExerciseToBeConflicted, HttpStatus.CONFLICT);
-    }
-
-    void test_redirectGetSolutionRepositoryFilesWithoutContent(BiFunction<ProgrammingExercise, Map<String, String>, LocalRepository> setupRepositoryMock) throws Exception {
-        setupRepositoryMock.apply(programmingExercise, Map.ofEntries(Map.entry("A.java", "abc"), Map.entry("B.java", "cde"), Map.entry("C.java", "efg")));
-
-        var savedExercise = programmingExerciseRepository.findByIdWithTemplateAndSolutionParticipationElseThrow(programmingExercise.getId());
-
-        request.getWithForwardedUrl("/api/programming-exercises/" + programmingExercise.getId() + "/file-names", HttpStatus.OK,
-                "/api/repository/" + savedExercise.getSolutionParticipation().getId() + "/file-names");
-    }
-
-    void test_redirectGetTemplateRepositoryFilesWithContent(BiFunction<ProgrammingExercise, Map<String, String>, LocalRepository> setupRepositoryMock) throws Exception {
-        setupRepositoryMock.apply(programmingExercise, Map.ofEntries(Map.entry("A.java", "abc"), Map.entry("B.java", "cde"), Map.entry("C.java", "efg")));
-
-        var savedExercise = programmingExerciseRepository.findByIdWithTemplateAndSolutionParticipationElseThrow(programmingExercise.getId());
-
-        request.getWithForwardedUrl("/api/programming-exercises/" + programmingExercise.getId() + "/template-files-content", HttpStatus.OK,
-                "/api/repository/" + savedExercise.getTemplateParticipation().getId() + "/files-content");
-    }
-
-    void testRedirectGetParticipationRepositoryFilesWithContentAtCommit(BiFunction<ProgrammingExercise, Map<String, String>, ProgrammingSubmission> setupRepositoryMock)
-            throws Exception {
-        var submission = setupRepositoryMock.apply(programmingExercise, Map.ofEntries(Map.entry("A.java", "abc"), Map.entry("B.java", "cde"), Map.entry("C.java", "efg")));
-
-        request.getWithForwardedUrl("/api/programming-exercise-participations/" + participation1.getId() + "/files-content/" + submission.getCommitHash(), HttpStatus.OK,
-                "/api/repository/" + participation1.getId() + "/files-content/" + submission.getCommitHash());
-    }
-
-    void testRedirectGetParticipationRepositoryFilesWithContentAtCommitForbidden(BiFunction<ProgrammingExercise, Map<String, String>, ProgrammingSubmission> setupRepositoryMock)
-            throws Exception {
-        var submission = setupRepositoryMock.apply(programmingExercise, Map.ofEntries(Map.entry("A.java", "abc"), Map.entry("B.java", "cde"), Map.entry("C.java", "efg")));
-        // without forwarding the redirectUrl is null
-        request.getWithForwardedUrl("/api/programming-exercise-participations/" + participation1.getId() + "/files-content/" + submission.getCommitHash(), HttpStatus.FORBIDDEN,
-                null);
     }
 
     private long getMaxProgrammingExerciseId() {
