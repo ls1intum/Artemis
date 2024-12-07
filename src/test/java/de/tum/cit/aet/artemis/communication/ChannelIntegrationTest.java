@@ -10,6 +10,7 @@ import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -47,10 +48,10 @@ class ChannelIntegrationTest extends AbstractConversationTest {
     private static final String TEST_PREFIX = "chtest";
 
     @Autowired
-    TutorialGroupTestRepository tutorialGroupRepository;
+    private TutorialGroupTestRepository tutorialGroupRepository;
 
     @Autowired
-    TutorialGroupChannelManagementService tutorialGroupChannelManagementService;
+    private TutorialGroupChannelManagementService tutorialGroupChannelManagementService;
 
     @Autowired
     private TutorialGroupUtilService tutorialGroupUtilService;
@@ -87,6 +88,13 @@ class ChannelIntegrationTest extends AbstractConversationTest {
         if (userRepository.findOneByLogin(testPrefix + "instructor42").isEmpty()) {
             userRepository.save(UserFactory.generateActivatedUser(testPrefix + "instructor42"));
         }
+    }
+
+    @AfterEach
+    void tearDown() {
+        tutorialGroupRepository.deleteAll();
+        conversationMessageRepository.deleteAll();
+        conversationRepository.deleteAllByCourseId(exampleCourseId);
     }
 
     @Override
