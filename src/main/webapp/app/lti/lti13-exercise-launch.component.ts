@@ -114,9 +114,11 @@ export class Lti13ExerciseLaunchComponent implements OnInit {
         this.storeLtiSessionData(ltiIdToken, clientRegistrationId);
 
         if (targetLinkUri) {
+            /*
             if (targetLinkUri === '/lti/select-course') {
                 this.replaceWindowLocationWrapper(window.location.origin + targetLinkUri);
             }
+            */
             this.replaceWindowLocationWrapper(targetLinkUri);
         } else {
             this.isLaunching = false;
@@ -151,7 +153,9 @@ export class Lti13ExerciseLaunchComponent implements OnInit {
     replaceWindowLocationWrapper(url: string): void {
         this.ltiService.setShownViaLti(true);
         this.themeService.applyThemePreference(Theme.LIGHT);
+        console.log(url);
         const path = new URL(url).pathname;
+        console.log(path);
 
         this.router.navigate([path], { replaceUrl: true });
     }
