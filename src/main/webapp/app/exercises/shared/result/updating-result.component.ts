@@ -35,7 +35,7 @@ export class UpdatingResultComponent implements OnChanges, OnDestroy {
     @Input() showIcon = true;
     @Input() isInSidebarCard = false;
     @Input() showCompletion = true;
-    @Output() showResult = new EventEmitter<void>();
+    @Output() showResult = new EventEmitter<Result>();
     /**
      * @property personalParticipation Whether the participation belongs to the user (by being a student) or not (by being an instructor)
      */
@@ -70,7 +70,7 @@ export class UpdatingResultComponent implements OnChanges, OnDestroy {
             }
 
             if (this.result) {
-                this.showResult.emit();
+                this.showResult.emit(this.result);
             }
         }
     }
@@ -115,7 +115,7 @@ export class UpdatingResultComponent implements OnChanges, OnDestroy {
                     }
                     this.onParticipationChange.emit();
                     if (result) {
-                        this.showResult.emit();
+                        this.showResult.emit(this.result);
                     }
                 }),
             )

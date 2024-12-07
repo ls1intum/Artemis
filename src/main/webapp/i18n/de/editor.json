@@ -77,7 +77,8 @@
                 "deleteFile": "Datei löschen",
                 "compressTree": "Leere Verzeichnisse zusammenfassen",
                 "fileBadgeTooltips": {
-                    "feedbackSuggestions": "Anzahl von Feedback-Vorschlägen in dieser Datei / diesem Ordner"
+                    "feedbackSuggestions": "Anzahl von Feedback-Vorschlägen in dieser Datei / diesem Ordner",
+                    "feedback": "Anzahl von Feedback Elementen in dieser Datei / diesem Ordner"
                 }
             },
             "errors": {
