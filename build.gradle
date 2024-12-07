@@ -175,19 +175,23 @@ jacocoTestReport {
 }
 
 jacocoTestCoverageVerification {
+    def testedModules = System.getProperty("includeTags")
     violationRules {
         rule {
+            enabled = testedModules == null || testedModules.contains("AssessmentTest")
+            element = 'PACKAGE'
+            includes = ['de.tum.cit.aet.artemis.assessment']
             limit {
                 counter = "INSTRUCTION"
                 value = "COVEREDRATIO"
                 // TODO: in the future the following value should become higher than 0.92
-                minimum = 0.892
+                minimum = 0.999
             }
             limit {
                 counter = "CLASS"
                 value = "MISSEDCOUNT"
                 // TODO: in the future the following value should become less than 10
-                maximum = 65
+                maximum = 0
             }
         }
     }
