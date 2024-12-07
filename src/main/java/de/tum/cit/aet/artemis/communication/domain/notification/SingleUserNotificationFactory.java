@@ -167,6 +167,15 @@ public class SingleUserNotificationFactory {
         return new String[] {};
     }
 
+    /**
+     * Creates a user notification based on the given SSH key and notification type.
+     *
+     * @param key              The SSH key related to the notification (currently unused).
+     * @param notificationType The type of notification to create (e.g., key added, expiring, or expired).
+     * @param recipient        The user who will receive the notification.
+     * @return A configured {@link SingleUserNotification}.
+     * @throws UnsupportedOperationException if the notification type is unsupported.
+     */
     public static SingleUserNotification createNotification(UserSshPublicKey key, NotificationType notificationType, User recipient) {
         switch (notificationType) {
             case SSH_KEY_ADDED -> {
