@@ -95,6 +95,10 @@ jobs:
       with:
         name: Coverage Report Server Tests
         path: build/reports/jacoco/test/html/
+    - name: Append Per-Module Coverage to Job Summary
+      if: success() || failure()
+      run: |
+        python3 ./jacoco-parser.py >> $GITHUB_STEP_SUMMARY
 
 
   server-tests-mysql:
