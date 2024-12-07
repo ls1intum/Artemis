@@ -20,6 +20,7 @@
         "playwright:test:sequential": "cross-env PLAYWRIGHT_JUNIT_OUTPUT_NAME=./test-reports/results-sequential.xml playwright test e2e --project=sequential-tests --workers 1",
         "playwright:open": "playwright test e2e --ui",
         "playwright:setup": "npx playwright install --with-deps chromium && playwright test init",
+        "playwright:setup-local": "npx playwright install --with-deps chromium",
         "merge-reports": "junit-merge ./test-reports/results-parallel.xml ./test-reports/results-sequential.xml -o ./test-reports/results.xml",
         "update": "ncu -i --format group"
     }

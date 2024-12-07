@@ -10,7 +10,7 @@ cd src/test/playwright
 
 npm install
 
-npm run playwright:install || true
+npm run playwright:setup-local || true
 
 echo "Starting Playwright in UI mode"
 npm run playwright:open
