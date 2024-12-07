@@ -31,6 +31,13 @@ public class SshFingerprintsProviderService {
         this.sshServer = sshServer;
     }
 
+    /**
+     * Retrieves the SSH key fingerprints from the stored SSH keys
+     *
+     * @return a map containing the SSH key fingerprints, where the key is the algorithm
+     *         of the public key and the value is its SHA-256 fingerprint.
+     * @throws BadRequestException if there is an error loading keys from the SSH server.
+     */
     public Map<String, String> getSshFingerPrints() {
         Map<String, String> fingerprints = new HashMap<>();
         KeyPairProvider keyPairProvider = sshServer.getKeyPairProvider();
