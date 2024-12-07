@@ -1023,9 +1023,9 @@ class LocalVCLocalCIIntegrationTest extends AbstractProgrammingIntegrationLocalC
 
             await().until(() -> {
                 BuildJobQueueItem buildJobQueueItem = queuedJobs.peek();
-                log.info("Poll queue jobs: is null %s".formatted(buildJobQueueItem == null ? "true" : "false"));
+                log.info("Poll queue jobs: is null {}", buildJobQueueItem == null ? "true" : "false");
                 if (buildJobQueueItem == null) {
-                    queuedJobs.forEach(item -> log.info("Item in Queue: %s".formatted(item.toString())));
+                    queuedJobs.forEach(item -> log.info("Item in Queue: {}", item));
                 }
                 return buildJobQueueItem != null && buildJobQueueItem.participationId() == studentParticipation.getId();
             });

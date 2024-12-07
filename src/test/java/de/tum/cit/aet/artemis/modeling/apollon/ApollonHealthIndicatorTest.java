@@ -1,4 +1,4 @@
-package de.tum.cit.aet.artemis.connectors;
+package de.tum.cit.aet.artemis.modeling.apollon;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
