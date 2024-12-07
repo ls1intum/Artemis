@@ -18,7 +18,7 @@
     "editable": true,
     "fiscalYearStartMonth": 0,
     "graphTooltip": 0,
-    "id": 4,
+    "id": 5,
     "links": [],
     "liveNow": false,
     "panels": [
@@ -104,7 +104,7 @@
                     },
                     "disableTextWrap": false,
                     "editorMode": "code",
-                    "expr": "topk(20, 1000 * sum(rate (http_server_requests_seconds_sum[$__rate_interval])\n/\nrate(http_server_requests_seconds_count[$__rate_interval])) by (uri))",
+                    "expr": "topk($topNumberEndpoints, 1000 * sum(rate (http_server_requests_seconds_sum[$__rate_interval])\n/\nrate(http_server_requests_seconds_count[$__rate_interval])) by (uri))",
                     "fullMetaSearch": false,
                     "hide": false,
                     "includeNullMetadata": true,
@@ -201,7 +201,7 @@
                     },
                     "disableTextWrap": false,
                     "editorMode": "code",
-                    "expr": "topk(20, sum(increase(http_server_requests_seconds_count[$__rate_interval])) by (uri))",
+                    "expr": "topk($topNumberEndpoints, sum(increase(http_server_requests_seconds_count[$__rate_interval])) by (uri))",
                     "fullMetaSearch": false,
                     "hide": false,
                     "includeNullMetadata": true,
@@ -262,6 +262,8 @@
                         }
                     },
                     "mappings": [],
+                    "max": 100,
+                    "min": 0,
                     "thresholds": {
                         "mode": "absolute",
                         "steps": [
@@ -270,7 +272,8 @@
                                 "value": null
                             }
                         ]
-                    }
+                    },
+                    "unit": "percent"
                 },
                 "overrides": []
             },
@@ -301,7 +304,7 @@
                     },
                     "disableTextWrap": false,
                     "editorMode": "code",
-                    "expr": "topk(20, 100 * sum(rate(http_server_requests_seconds_count{status=~\"4..\"}[$__rate_interval])) by (uri)\n/\nsum(rate(http_server_requests_seconds_count[$__rate_interval])) by (uri))",
+                    "expr": "topk($topNumberEndpoints, 100 * sum(rate(http_server_requests_seconds_count{status=~\"4..\"}[$__rate_interval])) by (uri)\n/\nsum(rate(http_server_requests_seconds_count[$__rate_interval])) by (uri))",
                     "fullMetaSearch": false,
                     "hide": false,
                     "includeNullMetadata": true,
@@ -359,6 +362,8 @@
                         }
                     },
                     "mappings": [],
+                    "max": 100,
+                    "min": 0,
                     "thresholds": {
                         "mode": "absolute",
                         "steps": [
@@ -367,7 +372,8 @@
                                 "value": null
                             }
                         ]
-                    }
+                    },
+                    "unit": "percent"
                 },
                 "overrides": []
             },
@@ -398,7 +404,7 @@
                     },
                     "disableTextWrap": false,
                     "editorMode": "code",
-                    "expr": "topk(20, 100 * sum(rate(http_server_requests_seconds_count{status=~\"5..\"}[$__rate_interval])) by (uri)\n/\nsum(rate(http_server_requests_seconds_count[$__rate_interval])) by (uri))",
+                    "expr": "topk($topNumberEndpoints, 100 * sum(rate(http_server_requests_seconds_count{status=~\"5..\"}[$__rate_interval])) by (uri)\n/\nsum(rate(http_server_requests_seconds_count[$__rate_interval])) by (uri))",
                     "fullMetaSearch": false,
                     "hide": false,
                     "includeNullMetadata": true,
@@ -419,7 +425,29 @@
     "style": "dark",
     "tags": [],
     "templating": {
-        "list": []
+        "list": [
+            {
+                "current": {
+                    "selected": false,
+                    "text": "20",
+                    "value": "20"
+                },
+                "description": "The number of endpoints that are considered in each graph, sorted by the highest values.",
+                "hide": 0,
+                "label": "Number Endpoints with Highest Value",
+                "name": "topNumberEndpoints",
+                "options": [
+                    {
+                        "selected": true,
+                        "text": "20",
+                        "value": "20"
+                    }
+                ],
+                "query": "20",
+                "skipUrlSync": false,
+                "type": "textbox"
+            }
+        ]
     },
     "time": {
         "from": "now-1h",
@@ -427,8 +455,8 @@
     },
     "timepicker": {},
     "timezone": "",
-    "title": "Endpoint Monitoring",
-    "uid": "ed9f6232-2a61-4a95-a8f4-58e08b53b804",
-    "version": 18,
+    "title": "Endpoint Monitoring Copy",
+    "uid": "fc1fba24-8e72-439a-9759-b35315c1e2ee",
+    "version": 13,
     "weekStart": ""
 }
