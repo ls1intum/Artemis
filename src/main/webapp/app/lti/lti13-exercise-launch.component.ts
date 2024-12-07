@@ -114,16 +114,10 @@ export class Lti13ExerciseLaunchComponent implements OnInit {
         this.storeLtiSessionData(ltiIdToken, clientRegistrationId);
 
         if (targetLinkUri) {
-            try {
-                const url = window.location.origin + targetLinkUri;
-                this.replaceWindowLocationWrapper(url);
-            } catch (e) {
-                console.error('Invalid targetLinkUri received:', targetLinkUri);
-                console.log(window.location.origin);
-                console.log(window.location);
-                console.log(targetLinkUri);
-                this.isLaunching = false;
+            if (targetLinkUri === '/lti/select-course') {
+                this.replaceWindowLocationWrapper(window.location.origin + targetLinkUri);
             }
+            this.replaceWindowLocationWrapper(targetLinkUri);
         } else {
             this.isLaunching = false;
             console.error('No LTI targetLinkUri received for a successful launch');
