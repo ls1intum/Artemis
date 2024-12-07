@@ -32,6 +32,10 @@
     border: 0.01rem solid var(--metis-gray);
 }
 
+.hover-container {
+    position: relative;
+}
+
 .non-consecutive .hover-actions {
     top: -2rem;
 }
@@ -81,10 +85,6 @@
 
 .pinned-message {
     background-color: var(--artemis-alert-warning-background);
-}
-
-.hover-container {
-    position: relative;
 }
 
 .post-time {
