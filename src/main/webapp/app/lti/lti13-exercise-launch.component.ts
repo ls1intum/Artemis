@@ -115,8 +115,8 @@ export class Lti13ExerciseLaunchComponent implements OnInit {
 
         if (targetLinkUri) {
             try {
-                new URL(targetLinkUri);
-                this.replaceWindowLocationWrapper(targetLinkUri);
+                const absoluteUrl = new URL(targetLinkUri, window.location.origin);
+                this.replaceWindowLocationWrapper(absoluteUrl.toString());
             } catch (e) {
                 console.error('Invalid targetLinkUri received:', targetLinkUri);
                 this.isLaunching = false;
