@@ -27,7 +27,7 @@
                 "type": "prometheus",
                 "uid": "prometheus_default"
             },
-            "description": "",
+            "description": "Endpoints that have top 20 highest average duration.",
             "fieldConfig": {
                 "defaults": {
                     "color": {
@@ -104,7 +104,7 @@
                     },
                     "disableTextWrap": false,
                     "editorMode": "code",
-                    "expr": "1000 * sum(rate (http_server_requests_seconds_sum[$__rate_interval])\n/\nrate(http_server_requests_seconds_count[$__rate_interval])) by (uri)",
+                    "expr": "topk(20, 1000 * sum(rate (http_server_requests_seconds_sum[$__rate_interval])\n/\nrate(http_server_requests_seconds_count[$__rate_interval])) by (uri))",
                     "fullMetaSearch": false,
                     "hide": false,
                     "includeNullMetadata": true,
@@ -124,7 +124,7 @@
                 "type": "prometheus",
                 "uid": "prometheus_default"
             },
-            "description": "",
+            "description": "Request count per endpoint for the 20 most used endpoints.",
             "fieldConfig": {
                 "defaults": {
                     "color": {
@@ -201,7 +201,7 @@
                     },
                     "disableTextWrap": false,
                     "editorMode": "code",
-                    "expr": "sum(increase(http_server_requests_seconds_count[$__rate_interval])) by (uri)",
+                    "expr": "topk(20, sum(increase(http_server_requests_seconds_count[$__rate_interval])) by (uri))",
                     "fullMetaSearch": false,
                     "hide": false,
                     "includeNullMetadata": true,
@@ -221,7 +221,7 @@
                 "type": "prometheus",
                 "uid": "prometheus_default"
             },
-            "description": "",
+            "description": "Error rates for the top 20 endpoints with the highest 4xx error rate.",
             "fieldConfig": {
                 "defaults": {
                     "color": {
@@ -301,7 +301,7 @@
                     },
                     "disableTextWrap": false,
                     "editorMode": "code",
-                    "expr": "100 * sum(rate(http_server_requests_seconds_count{status=~\"4..\"}[$__rate_interval])) by (uri)\n/\nsum(rate(http_server_requests_seconds_count[$__rate_interval])) by (uri)",
+                    "expr": "topk(20, 100 * sum(rate(http_server_requests_seconds_count{status=~\"4..\"}[$__rate_interval])) by (uri)\n/\nsum(rate(http_server_requests_seconds_count[$__rate_interval])) by (uri))",
                     "fullMetaSearch": false,
                     "hide": false,
                     "includeNullMetadata": true,
@@ -321,7 +321,7 @@
                 "type": "prometheus",
                 "uid": "prometheus_default"
             },
-            "description": "",
+            "description": "Top 20 endpoints with the highest 5xx error rate.",
             "fieldConfig": {
                 "defaults": {
                     "color": {
@@ -398,7 +398,7 @@
                     },
                     "disableTextWrap": false,
                     "editorMode": "code",
-                    "expr": "sum(rate(http_server_requests_seconds_count{status=~\"5..\"}[$__rate_interval])) by (uri)\n/\nsum(rate(http_server_requests_seconds_count[$__rate_interval])) by (uri)",
+                    "expr": "topk(20, 100 * sum(rate(http_server_requests_seconds_count{status=~\"5..\"}[$__rate_interval])) by (uri)\n/\nsum(rate(http_server_requests_seconds_count[$__rate_interval])) by (uri))",
                     "fullMetaSearch": false,
                     "hide": false,
                     "includeNullMetadata": true,
@@ -429,6 +429,6 @@
     "timezone": "",
     "title": "Endpoint Monitoring",
     "uid": "ed9f6232-2a61-4a95-a8f4-58e08b53b804",
-    "version": 15,
+    "version": 18,
     "weekStart": ""
 }
