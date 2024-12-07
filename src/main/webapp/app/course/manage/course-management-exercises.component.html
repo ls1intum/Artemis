@@ -10,11 +10,6 @@
             <jhi-documentation-button [type]="documentationType" />
         </div>
         <div class="col text-end align-self-center">
-            @if (showBackToWizardModeButton) {
-                <button type="button" id="back-to-wizard" class="btn btn-secondary" (click)="goBackToWizardMode()">
-                    <fa-icon [icon]="faHandshakeAngle" />&nbsp;{{ 'artemisApp.lecture.wizardMode.backToWizard' | artemisTranslate }}
-                </button>
-            }
             <button id="toggleSearchButton" class="btn btn-primary" type="button" (click)="toggleSearch()">
                 {{ 'artemisApp.course.exercise.search.toggleButton.' + showSearch | artemisTranslate }}
             </button>
