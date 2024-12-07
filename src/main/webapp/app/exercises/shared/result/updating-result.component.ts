@@ -50,6 +50,7 @@ export class UpdatingResultComponent implements OnChanges, OnDestroy {
     isQueued: boolean;
     estimatedCompletionDate?: dayjs.Dayjs;
     buildStartDate?: dayjs.Dayjs;
+    showProgressBarInResult = false;
     missingResultInfo = MissingResultInformation.NONE;
     public resultSubscription: Subscription;
     public submissionSubscription: Subscription;
@@ -72,6 +73,10 @@ export class UpdatingResultComponent implements OnChanges, OnDestroy {
             // Currently submissions are only used for programming exercises to visualize the build process.
             if (this.exercise?.type === ExerciseType.PROGRAMMING) {
                 this.subscribeForNewSubmissions();
+            }
+
+            if (this.submissionService.getIsLocalCIProfile()) {
+                this.showProgressBarInResult = this.showProgressBar;
             }
 
             if (this.result) {
