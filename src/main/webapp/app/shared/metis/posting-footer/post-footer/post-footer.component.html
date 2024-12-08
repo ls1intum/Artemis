@@ -2,9 +2,9 @@
     <div class="d-flex align-items-center mt-2">
         <div class="fs-x-small fw-900 me-2">
             {{
-                sortedAnswerPosts.length === 1
+                sortedAnswerPosts().length === 1
                     ? ('artemisApp.metis.singleAnswer' | artemisTranslate)
-                    : ('artemisApp.metis.multipleAnswers' | artemisTranslate: { number: sortedAnswerPosts.length })
+                    : ('artemisApp.metis.multipleAnswers' | artemisTranslate: { number: sortedAnswerPosts().length })
             }}
         </div>
         <div class="flex-grow-1">
