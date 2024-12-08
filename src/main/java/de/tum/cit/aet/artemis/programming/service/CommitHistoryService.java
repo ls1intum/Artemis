@@ -107,7 +107,7 @@ public class CommitHistoryService {
 
             diffs.append(out.toString(StandardCharsets.UTF_8));
         }
-        var programmingExerciseGitDiffEntries = gitDiffReportParserService.extractDiffEntries(diffs.toString(), false);
+        var programmingExerciseGitDiffEntries = gitDiffReportParserService.extractDiffEntries(diffs.toString(), false, false);
         var report = new ProgrammingExerciseGitDiffReport();
         for (ProgrammingExerciseGitDiffEntry gitDiffEntry : programmingExerciseGitDiffEntries) {
             gitDiffEntry.setGitDiffReport(report);

@@ -32,7 +32,7 @@ public class GitDiffReportParserService {
      * @param useAbsoluteLineCount Whether to use absolute line count or previous line count
      * @return The extracted ProgrammingExerciseGitDiffEntries
      */
-    public List<ProgrammingExerciseGitDiffEntry> extractDiffEntries(String diff, boolean useAbsoluteLineCount) {
+    public List<ProgrammingExerciseGitDiffEntry> extractDiffEntries(String diff, boolean useAbsoluteLineCount, boolean ignoreWhitespace) {
         var lines = diff.split("\n");
         var parserState = new ParserState();
         Map<String, String> renamedFilePaths = new HashMap<>();
@@ -44,8 +44,7 @@ public class GitDiffReportParserService {
                 continue;
             }
 
-            // Files may be renamed without changes, in which case the lineMatcher will never match the entry
-            // We store this information separately so it is not lost
+            // Check for renamed files
             if (line.startsWith(PREFIX_RENAME_FROM) && i + 1 < lines.length) {
                 var nextLine = lines[i + 1];
                 if (nextLine.startsWith(PREFIX_RENAME_TO)) {
@@ -57,34 +56,35 @@ public class GitDiffReportParserService {
 
             var lineMatcher = gitDiffLinePattern.matcher(line);
             if (lineMatcher.matches()) {
-                handleNewDiffBlock(lines, i, parserState, lineMatcher);
+                handleNewDiffBlock(lines, i, parserState, lineMatcher, ignoreWhitespace);
             }
-            else if (!parserState.deactivateCodeReading) {
+            else if (!parserState.deactivateCodeReading && !line.isEmpty()) {
                 switch (line.charAt(0)) {
-                    case '+' -> handleAddition(parserState);
-                    case '-' -> handleRemoval(parserState, useAbsoluteLineCount);
-                    case ' ' -> handleUnchanged(parserState);
+                    case '+' -> handleAddition(parserState, line);
+                    case '-' -> handleRemoval(parserState, useAbsoluteLineCount, line);
+                    case ' ' -> handleUnchanged(parserState, ignoreWhitespace);
                     default -> parserState.deactivateCodeReading = true;
                 }
             }
         }
-        if (!parserState.currentEntry.isEmpty()) {
-            parserState.entries.add(parserState.currentEntry);
-        }
-        // Add an empty diff entry for renamed files without changes
+
+        // Check the last entry
+        finalizeEntry(parserState, ignoreWhitespace);
+
+        // Add empty entries for renamed files without changes
         for (var entry : renamedFilePaths.entrySet()) {
             var diffEntry = new ProgrammingExerciseGitDiffEntry();
             diffEntry.setFilePath(entry.getValue());
             diffEntry.setPreviousFilePath(entry.getKey());
             parserState.entries.add(diffEntry);
         }
+
         return parserState.entries;
     }
 
-    private void handleNewDiffBlock(String[] lines, int currentLine, ParserState parserState, Matcher lineMatcher) {
-        if (!parserState.currentEntry.isEmpty()) {
-            parserState.entries.add(parserState.currentEntry);
-        }
+    private void handleNewDiffBlock(String[] lines, int currentLine, ParserState parserState, Matcher lineMatcher, boolean ignoreWhitespace) {
+        finalizeEntry(parserState, ignoreWhitespace);
+
         // Start of a new file
         var newFilePath = getFilePath(lines, currentLine);
         var newPreviousFilePath = getPreviousFilePath(lines, currentLine);
@@ -92,40 +92,45 @@ public class GitDiffReportParserService {
             parserState.currentFilePath = newFilePath;
             parserState.currentPreviousFilePath = newPreviousFilePath;
         }
+
         parserState.currentEntry = new ProgrammingExerciseGitDiffEntry();
         parserState.currentEntry.setFilePath(parserState.currentFilePath);
         parserState.currentEntry.setPreviousFilePath(parserState.currentPreviousFilePath);
         parserState.currentLineCount = Integer.parseInt(lineMatcher.group("newLine"));
         parserState.currentPreviousLineCount = Integer.parseInt(lineMatcher.group("previousLine"));
         parserState.deactivateCodeReading = false;
+        parserState.addedLines.clear();
+        parserState.removedLines.clear();
     }
 
-    private void handleUnchanged(ParserState parserState) {
-        var entry = parserState.currentEntry;
-        if (!entry.isEmpty()) {
-            parserState.entries.add(entry);
-        }
-        entry = new ProgrammingExerciseGitDiffEntry();
-        entry.setFilePath(parserState.currentFilePath);
-        entry.setPreviousFilePath(parserState.currentPreviousFilePath);
+    private void handleUnchanged(ParserState parserState, boolean ignoreWhitespace) {
+        finalizeEntry(parserState, ignoreWhitespace);
+        parserState.currentEntry = new ProgrammingExerciseGitDiffEntry();
+        parserState.currentEntry.setFilePath(parserState.currentFilePath);
+        parserState.currentEntry.setPreviousFilePath(parserState.currentPreviousFilePath);
 
-        parserState.currentEntry = entry;
         parserState.lastLineRemoveOperation = false;
         parserState.currentLineCount++;
         parserState.currentPreviousLineCount++;
+        parserState.addedLines.clear();
+        parserState.removedLines.clear();
     }
 
-    private void handleRemoval(ParserState parserState, boolean useAbsoluteLineCount) {
+    private void handleRemoval(ParserState parserState, boolean useAbsoluteLineCount, String line) {
         var entry = parserState.currentEntry;
         if (!parserState.lastLineRemoveOperation && !entry.isEmpty()) {
-            parserState.entries.add(entry);
-            entry = new ProgrammingExerciseGitDiffEntry();
-            entry.setFilePath(parserState.currentFilePath);
-            entry.setPreviousFilePath(parserState.currentPreviousFilePath);
+            finalizeEntry(parserState, false);
+            parserState.currentEntry = new ProgrammingExerciseGitDiffEntry();
+            parserState.currentEntry.setFilePath(parserState.currentFilePath);
+            parserState.currentEntry.setPreviousFilePath(parserState.currentPreviousFilePath);
         }
-        if (entry.getPreviousLineCount() == null) {
-            entry.setPreviousLineCount(0);
-            entry.setPreviousStartLine(parserState.currentPreviousLineCount);
+
+        // Store removed line
+        parserState.removedLines.add(line.substring(1));
+
+        if (parserState.currentEntry.getPreviousLineCount() == null) {
+            parserState.currentEntry.setPreviousLineCount(0);
+            parserState.currentEntry.setPreviousStartLine(parserState.currentPreviousLineCount);
         }
         if (useAbsoluteLineCount) {
             if (parserState.currentEntry.getLineCount() == null) {
@@ -135,15 +140,17 @@ public class GitDiffReportParserService {
             parserState.currentEntry.setLineCount(parserState.currentEntry.getLineCount() + 1);
         }
         else {
-            entry.setPreviousLineCount(entry.getPreviousLineCount() + 1);
+            parserState.currentEntry.setPreviousLineCount(parserState.currentEntry.getPreviousLineCount() + 1);
         }
 
-        parserState.currentEntry = entry;
         parserState.lastLineRemoveOperation = true;
         parserState.currentPreviousLineCount++;
     }
 
-    private void handleAddition(ParserState parserState) {
+    private void handleAddition(ParserState parserState, String line) {
+        // Store added line
+        parserState.addedLines.add(line.substring(1));
+
         if (parserState.currentEntry.getLineCount() == null) {
             parserState.currentEntry.setLineCount(0);
             parserState.currentEntry.setStartLine(parserState.currentLineCount);
@@ -152,6 +159,29 @@ public class GitDiffReportParserService {
 
         parserState.lastLineRemoveOperation = false;
         parserState.currentLineCount++;
+    }
+
+    private void finalizeEntry(ParserState parserState, boolean ignoreWhitespace) {
+        if (!parserState.currentEntry.isEmpty()) {
+            if (!ignoreWhitespace || !isWhitespaceOnlyChange(parserState.addedLines, parserState.removedLines)) {
+                parserState.entries.add(parserState.currentEntry);
+            }
+        }
+    }
+
+    private boolean isWhitespaceOnlyChange(List<String> addedLines, List<String> removedLines) {
+        if (addedLines.size() != removedLines.size()) {
+            return false; // Different number of lines changed, definitely not whitespace only
+        }
+
+        for (int i = 0; i < addedLines.size(); i++) {
+            String added = addedLines.get(i).replaceAll("\\s+", "");
+            String removed = removedLines.get(i).replaceAll("\\s+", "");
+            if (!added.equals(removed)) {
+                return false;
+            }
+        }
+        return true;
     }
 
     /**
@@ -219,6 +249,10 @@ public class GitDiffReportParserService {
 
         private int currentPreviousLineCount;
 
+        private final List<String> addedLines;
+
+        private final List<String> removedLines;
+
         public ParserState() {
             entries = new ArrayList<>();
             currentEntry = new ProgrammingExerciseGitDiffEntry();
@@ -226,6 +260,8 @@ public class GitDiffReportParserService {
             lastLineRemoveOperation = false;
             currentLineCount = 0;
             currentPreviousLineCount = 0;
+            addedLines = new ArrayList<>();
+            removedLines = new ArrayList<>();
         }
     }
 }

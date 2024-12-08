@@ -109,7 +109,7 @@ public class ProgrammingExerciseGitDiffReportService {
 
         var templateHash = templateSubmission.getCommitHash();
         var solutionHash = solutionSubmission.getCommitHash();
-        var existingReport = this.getReportOfExercise(programmingExercise);
+        var existingReport = getReportOfExercise(programmingExercise);
         if (existingReport != null && canUseExistingReport(existingReport, templateHash, solutionHash)) {
             return existingReport;
         }
@@ -164,7 +164,7 @@ public class ProgrammingExerciseGitDiffReportService {
      * @return The report or null if none can be generated
      */
     public ProgrammingExerciseGitDiffReport getOrCreateReportOfExercise(ProgrammingExercise programmingExercise) {
-        var report = this.getReportOfExercise(programmingExercise);
+        var report = getReportOfExercise(programmingExercise);
         if (report == null) {
             return updateReport(programmingExercise);
         }
@@ -215,7 +215,7 @@ public class ProgrammingExerciseGitDiffReportService {
         try (var diffOutputStream = new ByteArrayOutputStream(); var git = Git.wrap(repoB)) {
             git.diff().setOldTree(treeParserRepoB).setNewTree(treeParserRepoA).setOutputStream(diffOutputStream).call();
             var diff = diffOutputStream.toString();
-            return gitDiffReportParserService.extractDiffEntries(diff, true).stream().mapToInt(ProgrammingExerciseGitDiffEntry::getLineCount).sum();
+            return gitDiffReportParserService.extractDiffEntries(diff, true, false).stream().mapToInt(ProgrammingExerciseGitDiffEntry::getLineCount).sum();
         }
         catch (IOException | GitAPIException e) {
             log.error("Error calculating number of diff lines between repositories: urlRepoA={}, urlRepoB={}.", urlRepoA, urlRepoB, e);
@@ -234,6 +234,7 @@ public class ProgrammingExerciseGitDiffReportService {
      */
     private ProgrammingExerciseGitDiffReport generateReport(TemplateProgrammingExerciseParticipation templateParticipation,
             SolutionProgrammingExerciseParticipation solutionParticipation) throws GitAPIException, IOException {
+        // TODO: in case of LocalVC, we should calculate the diff in the bare origin repository
         Repository templateRepo = prepareTemplateRepository(templateParticipation);
         var solutionRepo = gitService.getOrCheckoutRepository(solutionParticipation.getVcsRepositoryUri(), true);
         gitService.resetToOriginHead(solutionRepo);
@@ -306,19 +307,20 @@ public class ProgrammingExerciseGitDiffReportService {
      * It parses all files of the repositories in their directories on the file system and creates a report containing the changes.
      * Both repositories have to be checked out at the commit that should be compared and be in different directories
      *
-     * @param repo1         The first repository
-     * @param oldTreeParser The tree parser for the first repository
-     * @param newTreeParser The tree parser for the second repository
+     * @param firstRepo            The first repository
+     * @param firstRepoTreeParser  The tree parser for the first repository
+     * @param secondRepoTreeParser The tree parser for the second repository
      * @return The report with the changes between the two repositories at their checked out state
      * @throws IOException     If an error occurs while accessing the file system
      * @throws GitAPIException If an error occurs while accessing the git repository
      */
     @NotNull
-    private ProgrammingExerciseGitDiffReport createReport(Repository repo1, FileTreeIterator oldTreeParser, FileTreeIterator newTreeParser) throws IOException, GitAPIException {
-        try (ByteArrayOutputStream diffOutputStream = new ByteArrayOutputStream(); Git git = Git.wrap(repo1)) {
-            git.diff().setOldTree(oldTreeParser).setNewTree(newTreeParser).setOutputStream(diffOutputStream).call();
+    private ProgrammingExerciseGitDiffReport createReport(Repository firstRepo, FileTreeIterator firstRepoTreeParser, FileTreeIterator secondRepoTreeParser)
+            throws IOException, GitAPIException {
+        try (ByteArrayOutputStream diffOutputStream = new ByteArrayOutputStream(); Git git = Git.wrap(firstRepo)) {
+            git.diff().setOldTree(firstRepoTreeParser).setNewTree(secondRepoTreeParser).setOutputStream(diffOutputStream).call();
             var diff = diffOutputStream.toString();
-            var programmingExerciseGitDiffEntries = gitDiffReportParserService.extractDiffEntries(diff, false);
+            var programmingExerciseGitDiffEntries = gitDiffReportParserService.extractDiffEntries(diff, false, true);
             var report = new ProgrammingExerciseGitDiffReport();
             for (ProgrammingExerciseGitDiffEntry gitDiffEntry : programmingExerciseGitDiffEntries) {
                 gitDiffEntry.setGitDiffReport(report);
