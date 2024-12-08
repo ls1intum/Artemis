@@ -33,6 +33,7 @@ import de.tum.cit.aet.artemis.atlas.domain.competency.CourseCompetency;
 import de.tum.cit.aet.artemis.atlas.dto.CompetencyImportOptionsDTO;
 import de.tum.cit.aet.artemis.atlas.dto.CompetencyJolPairDTO;
 import de.tum.cit.aet.artemis.atlas.dto.CompetencyRelationDTO;
+import de.tum.cit.aet.artemis.atlas.dto.CompetencyStudentProgressDTO;
 import de.tum.cit.aet.artemis.atlas.dto.CompetencyWithTailRelationDTO;
 import de.tum.cit.aet.artemis.atlas.dto.UpdateCourseCompetencyRelationDTO;
 import de.tum.cit.aet.artemis.atlas.repository.CompetencyProgressRepository;
@@ -56,6 +57,7 @@ import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastStudent;
 import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInCourse.EnforceAtLeastEditorInCourse;
 import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInCourse.EnforceAtLeastInstructorInCourse;
 import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInCourse.EnforceAtLeastStudentInCourse;
+import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInCourse.EnforceAtLeastTutorInCourse;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
 import de.tum.cit.aet.artemis.core.service.feature.Feature;
 import de.tum.cit.aet.artemis.core.service.feature.FeatureToggle;
@@ -168,10 +170,24 @@ public class CourseCompetencyResource {
      */
     @GetMapping("courses/{courseId}/course-competencies")
     @EnforceAtLeastStudentInCourse
-    public ResponseEntity<List<CourseCompetency>> getCourseCompetenciesWithProgress(@PathVariable long courseId, @RequestParam(defaultValue = "false") boolean filter) {
+    public ResponseEntity<List<CourseCompetency>> getCourseCompetenciesWithOwnProgress(@PathVariable long courseId, @RequestParam(defaultValue = "false") boolean filter) {
         log.debug("REST request to get competencies for course with id: {}", courseId);
         User user = userRepository.getUserWithGroupsAndAuthorities();
         final var competencies = courseCompetencyService.findCourseCompetenciesWithProgressForUserByCourseId(courseId, user.getId(), filter);
+        return ResponseEntity.ok(competencies);
+    }
+
+    /**
+     * GET courses/:courseId/course-competencies : gets all the course competencies of a course
+     *
+     * @param courseId the id of the course for which the competencies should be fetched
+     * @return the ResponseEntity with status 200 (OK) and with body the found competencies
+     */
+    @GetMapping("courses/{courseId}/course-competencies-student-progress")
+    @EnforceAtLeastTutorInCourse
+    public ResponseEntity<List<CompetencyStudentProgressDTO>> getCourseCompetenciesWithStudentProgress(@PathVariable long courseId) {
+        log.debug("REST request to get competencies for course with id: {}", courseId);
+        final var competencies = courseCompetencyService.findCourseCompetenciesWithStudentProgressByCourseId(courseId);
         return ResponseEntity.ok(competencies);
     }
 
