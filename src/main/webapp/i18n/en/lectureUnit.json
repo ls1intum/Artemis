@@ -173,6 +173,7 @@
                 "file": "File",
                 "version": "Version",
                 "fileRequiredValidationError": "You must select a file to upload.",
+                "nameAndFileRequiredValidationError": "Name is required. You must select a file to upload.",
                 "chooseFile": "Choose File",
                 "fileTooBig": "File is too big! The maximum file size is 20 MB.",
                 "fileLimitation": "(max. size 20 MB)",
