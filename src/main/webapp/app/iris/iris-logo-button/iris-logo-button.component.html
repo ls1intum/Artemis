@@ -1,17 +1,17 @@
 <button
     [ngClass]="['jhi-btn', 'btn', btnType, btnSize]"
-    [type]="shouldSubmit ? 'submit' : 'button'"
-    ngbTooltip="{{ tooltip | artemisTranslate }}"
+    [type]="shouldSubmit() ? 'submit' : 'button'"
+    ngbTooltip="{{ tooltip() | artemisTranslate }}"
     (click)="onClick.emit($event)"
-    [jhiFeatureToggle]="featureToggle"
-    [overwriteDisabled]="disabled || isLoading"
+    [jhiFeatureToggle]="featureToggle()"
+    [overwriteDisabled]="disabled() || isLoading()"
 >
-    @if (isLoading) {
+    @if (isLoading()) {
         <fa-icon class="jhi-btn__loading" [icon]="faCircleNotch" animation="spin" size="sm" />
     } @else {
         <jhi-iris-logo [size]="SMALL" />
     }
-    @if (title) {
-        <span class="jhi-btn__title" [class.ms-1]="true || isLoading" [jhiTranslate]="title"></span>
+    @if (title()) {
+        <span class="jhi-btn__title" [class.ms-1]="true || isLoading()" [jhiTranslate]="title()"></span>
     }
 </button>

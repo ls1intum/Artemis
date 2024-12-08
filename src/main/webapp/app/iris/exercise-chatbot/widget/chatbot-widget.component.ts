@@ -1,15 +1,19 @@
-import { AfterViewInit, Component, HostListener, Inject, OnDestroy } from '@angular/core';
+import { AfterViewInit, ChangeDetectionStrategy, Component, HostListener, OnDestroy, inject } from '@angular/core';
 import interact from 'interactjs';
 import { DOCUMENT } from '@angular/common';
 import { MatDialog } from '@angular/material/dialog';
 import { NavigationStart, Router } from '@angular/router';
 import { Subscription } from 'rxjs';
 import { ButtonType } from 'app/shared/components/button.component';
+import { IrisBaseChatbotComponent } from 'app/iris/base-chatbot/iris-base-chatbot.component';
 
 @Component({
     selector: 'jhi-chatbot-widget',
     templateUrl: './chatbot-widget.component.html',
     styleUrls: ['./chatbot-widget.component.scss'],
+    standalone: true,
+    changeDetection: ChangeDetectionStrategy.OnPush,
+    imports: [IrisBaseChatbotComponent],
 })
 export class IrisChatbotWidgetComponent implements OnDestroy, AfterViewInit {
     // User preferences
@@ -23,8 +27,9 @@ export class IrisChatbotWidgetComponent implements OnDestroy, AfterViewInit {
 
     protected navigationSubscription: Subscription;
 
+    private document = inject(DOCUMENT);
+
     constructor(
-        @Inject(DOCUMENT) private document: Document,
         private router: Router,
         private dialog: MatDialog,
     ) {
@@ -147,6 +152,7 @@ export class IrisChatbotWidgetComponent implements OnDestroy, AfterViewInit {
     }
 
     ngOnDestroy() {
+        this.navigationSubscription?.unsubscribe();
         this.toggleScrollLock(false);
     }
 
