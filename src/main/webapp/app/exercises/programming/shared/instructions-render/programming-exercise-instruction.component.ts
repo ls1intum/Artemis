@@ -304,7 +304,8 @@ export class ProgrammingExerciseInstructionComponent implements OnChanges, OnDes
             const updatedMarkdown = htmlForMarkdown(this.examExerciseUpdateHighlighterComponent.updatedProblemStatement, this.markdownExtensions);
             const diffedMarkdown = diff(outdatedMarkdown, updatedMarkdown);
             const markdownWithoutTasks = this.prepareTasks(diffedMarkdown);
-            this.renderedMarkdown = this.sanitizer.bypassSecurityTrustHtml(markdownWithoutTasks);
+            const markdownWithTableStyles = this.addStylesForTables(markdownWithoutTasks);
+            this.renderedMarkdown = this.sanitizer.bypassSecurityTrustHtml(markdownWithTableStyles ?? markdownWithoutTasks);
             // Differences between UMLs are ignored, and we only inject the current one
             setTimeout(() => {
                 const injectUML = this.injectableContentForMarkdownCallbacks[this.injectableContentForMarkdownCallbacks.length - 1];
@@ -317,13 +318,31 @@ export class ProgrammingExerciseInstructionComponent implements OnChanges, OnDes
             this.injectableContentForMarkdownCallbacks = [];
             const renderedProblemStatement = htmlForMarkdown(this.exercise.problemStatement, this.markdownExtensions);
             const markdownWithoutTasks = this.prepareTasks(renderedProblemStatement);
-            this.renderedMarkdown = this.sanitizer.bypassSecurityTrustHtml(markdownWithoutTasks);
+            const markdownWithTableStyles = this.addStylesForTables(markdownWithoutTasks);
+            this.renderedMarkdown = this.sanitizer.bypassSecurityTrustHtml(markdownWithTableStyles ?? markdownWithoutTasks);
             setTimeout(() => {
                 this.injectableContentForMarkdownCallbacks.forEach((callback) => {
                     callback();
                 });
                 this.injectTasksIntoDocument();
             }, 0);
+        }
+    }
+
+    addStylesForTables(markdownWithoutTasks: string): string | undefined {
+        if (!markdownWithoutTasks?.includes('<table')) {
+            return;
+        } else {
+            const parser = new DOMParser();
+            const doc = parser.parseFromString(markdownWithoutTasks as string, 'text/html');
+            const tables = doc.querySelectorAll('table');
+
+            tables.forEach((table) => {
+                table.style.maxWidth = '100%';
+                table.style.overflowX = 'scroll';
+                table.style.display = 'block';
+            });
+            return doc.body.innerHTML;
         }
     }
 
