@@ -175,8 +175,8 @@ public class GitDiffReportParserService {
         }
 
         for (int i = 0; i < addedLines.size(); i++) {
-            String added = addedLines.get(i).replaceAll("\\s+", "");
-            String removed = removedLines.get(i).replaceAll("\\s+", "");
+            String added = addedLines.get(i).trim();
+            String removed = removedLines.get(i).trim();
             if (!added.equals(removed)) {
                 return false;
             }
