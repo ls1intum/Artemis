@@ -10,9 +10,9 @@ import { VcsAccessTokensSettingsComponent } from 'app/shared/user-settings/vcs-a
 import { IdeSettingsComponent } from 'app/shared/user-settings/ide-preferences/ide-settings.component';
 import { SshUserSettingsKeyDetailsComponent } from 'app/shared/user-settings/ssh-settings/details/ssh-user-settings-key-details.component';
 
-export const userSettingsState: Routes = [
+export const UserSettingsRoutes: Routes = [
     {
-        path: 'user-settings',
+        path: '',
         component: UserSettingsContainerComponent,
         canActivate: [UserRouteAccessService],
         data: {
