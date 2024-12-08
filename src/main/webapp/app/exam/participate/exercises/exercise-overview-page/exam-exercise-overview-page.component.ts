@@ -1,4 +1,4 @@
-import { ChangeDetectorRef, Component, EventEmitter, Input, OnChanges, OnInit, Output } from '@angular/core';
+import { ChangeDetectorRef, Component, OnChanges, OnInit, inject, input, output } from '@angular/core';
 import { Exercise, ExerciseType, getIcon, getIconTooltip } from 'app/entities/exercise.model';
 import { ExamPageComponent } from 'app/exam/participate/exercises/exam-page.component';
 import { StudentExam } from 'app/entities/student-exam.model';
@@ -14,8 +14,15 @@ import { ExerciseButtonStatus } from 'app/exam/participate/exam-navigation-sideb
     styleUrls: ['./exam-exercise-overview-page.scss', '../../exam-navigation-sidebar/exam-navigation-sidebar.component.scss'],
 })
 export class ExamExerciseOverviewPageComponent extends ExamPageComponent implements OnInit, OnChanges {
-    @Input() studentExam: StudentExam;
-    @Output() onPageChanged = new EventEmitter<{ overViewChange: boolean; exercise: Exercise; forceSave: boolean }>();
+    protected changeDetectorReference: ChangeDetectorRef;
+    private examParticipationService = inject(ExamParticipationService);
+
+    studentExam = input.required<StudentExam>();
+    onPageChanged = output<{
+        overViewChange: boolean;
+        exercise: Exercise;
+        forceSave: boolean;
+    }>();
     getIcon = getIcon;
     getIconTooltip = getIconTooltip;
     readonly ExerciseButtonStatus = ExerciseButtonStatus;
@@ -23,15 +30,15 @@ export class ExamExerciseOverviewPageComponent extends ExamPageComponent impleme
 
     examExerciseOverviewItems: ExamExerciseOverviewItem[] = [];
 
-    constructor(
-        protected changeDetectorReference: ChangeDetectorRef,
-        private examParticipationService: ExamParticipationService,
-    ) {
-        super(changeDetectorReference);
+    constructor() {
+        const changeDetectorReference = inject(ChangeDetectorRef);
+
+        super();
+        this.changeDetectorReference = changeDetectorReference;
     }
 
     ngOnInit() {
-        this.studentExam.exercises?.forEach((exercise) => {
+        this.studentExam().exercises?.forEach((exercise) => {
             const item = new ExamExerciseOverviewItem();
             item.exercise = exercise;
             item.icon = faHourglassHalf;

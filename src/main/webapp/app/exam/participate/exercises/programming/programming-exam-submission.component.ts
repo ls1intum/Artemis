@@ -1,4 +1,4 @@
-import { ChangeDetectorRef, Component, Input, OnChanges, OnInit, ViewChild } from '@angular/core';
+import { Component, OnChanges, OnInit, inject, input, viewChild } from '@angular/core';
 import { Submission } from 'app/entities/submission.model';
 import { ExamSubmissionComponent } from 'app/exam/participate/exercises/exam-submission.component';
 import { ProgrammingExerciseStudentParticipation } from 'app/entities/participation/programming-exercise-student-participation.model';
@@ -19,6 +19,14 @@ import {
     CodeEditorRepositoryService,
 } from 'app/exercises/programming/shared/code-editor/service/code-editor-repository.service';
 import { SubmissionVersion } from 'app/entities/submission-version.model';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { ArtemisSharedComponentModule } from 'app/shared/components/shared-component.module';
+import { ArtemisCodeEditorModule } from 'app/exercises/programming/shared/code-editor/code-editor.module';
+import { ArtemisExerciseButtonsModule } from 'app/overview/exercise-details/exercise-buttons.module';
+import { SubmissionResultStatusModule } from 'app/overview/submission-result-status.module';
+import { ArtemisProgrammingSubmissionPolicyStatusModule } from 'app/exercises/programming/participate/programming-submission-policy-status.module';
+import { ArtemisProgrammingExerciseActionsModule } from 'app/exercises/programming/shared/actions/programming-exercise-actions.module';
+import { ArtemisProgrammingExerciseInstructionsRenderModule } from 'app/exercises/programming/shared/instructions-render/programming-exercise-instructions-render.module';
 
 @Component({
     selector: 'jhi-programming-submission-exam',
@@ -32,20 +40,30 @@ import { SubmissionVersion } from 'app/entities/submission-version.model';
         CodeEditorRepositoryService,
     ],
     styleUrls: ['./programming-exam-submission.component.scss'],
+    standalone: true,
+    imports: [
+        TranslateDirective,
+        ArtemisSharedComponentModule,
+        ArtemisCodeEditorModule,
+        ArtemisProgrammingSubmissionPolicyStatusModule,
+        ArtemisExerciseButtonsModule,
+        SubmissionResultStatusModule,
+        ArtemisProgrammingExerciseActionsModule,
+        ArtemisProgrammingExerciseInstructionsRenderModule,
+    ],
 })
 export class ProgrammingExamSubmissionComponent extends ExamSubmissionComponent implements OnChanges, OnInit {
+    private domainService = inject(DomainService);
+
     exerciseType = ExerciseType.PROGRAMMING;
 
-    @ViewChild(CodeEditorContainerComponent, { static: false }) codeEditorContainer: CodeEditorContainerComponent;
-    @ViewChild(ProgrammingExerciseInstructionComponent, { static: false }) instructions: ProgrammingExerciseInstructionComponent;
+    codeEditorContainer = viewChild.required(CodeEditorContainerComponent);
+    instructions = viewChild.required(ProgrammingExerciseInstructionComponent);
 
     // IMPORTANT: this reference must be activeExercise.studentParticipation[0] otherwise the parent component will not be able to react to change
-    @Input()
-    studentParticipation: ProgrammingExerciseStudentParticipation;
-    @Input()
-    exercise: ProgrammingExercise;
-    @Input()
-    courseId: number;
+    studentParticipation = input.required<ProgrammingExerciseStudentParticipation>();
+    exercise = input.required<ProgrammingExercise>();
+    courseId = input.required<number>();
 
     showEditorInstructions = true;
     hasSubmittedOnce = false;
@@ -57,30 +75,25 @@ export class ProgrammingExamSubmissionComponent extends ExamSubmissionComponent 
     readonly getCourseFromExercise = getCourseFromExercise;
 
     getSubmission(): Submission | undefined {
-        if (this.studentParticipation?.submissions?.length) {
-            return this.studentParticipation.submissions[0];
+        const studentParticipation = this.studentParticipation(); // Dereference the signal
+
+        if (studentParticipation?.submissions && studentParticipation.submissions.length > 0) {
+            return studentParticipation.submissions[0];
         }
         return undefined;
     }
 
     getExerciseId(): number | undefined {
-        return this.exercise.id;
+        return this.exercise().id;
     }
 
     getExercise(): Exercise {
-        return this.exercise;
+        return this.exercise();
     }
 
     isSaving: boolean;
     readonly ButtonType = ButtonType;
     readonly ButtonSize = ButtonSize;
-
-    constructor(
-        private domainService: DomainService,
-        changeDetectorReference: ChangeDetectorRef,
-    ) {
-        super(changeDetectorReference);
-    }
 
     /**
      * On init set up the route param subscription.
@@ -97,7 +110,7 @@ export class ProgrammingExamSubmissionComponent extends ExamSubmissionComponent 
 
     onActivate() {
         super.onActivate();
-        this.instructions.updateMarkdown();
+        this.instructions().updateMarkdown();
         this.updateDomain();
     }
 
@@ -105,7 +118,7 @@ export class ProgrammingExamSubmissionComponent extends ExamSubmissionComponent 
      * Updates the domain to set the active student participation
      */
     updateDomain() {
-        const participation = { ...this.studentParticipation, exercise: this.exercise } as StudentParticipation;
+        const participation = { ...this.studentParticipation(), exercise: this.exercise() } as StudentParticipation;
         this.domainService.setDomain([DomainType.PARTICIPATION, participation]);
     }
 
@@ -113,8 +126,8 @@ export class ProgrammingExamSubmissionComponent extends ExamSubmissionComponent 
      * Sets the submission count and lock based on the student participation.
      */
     setSubmissionCountAndLockIfNeeded() {
-        this.submissionCount = this.studentParticipation.submissionCount ?? this.submissionCount;
-        this.repositoryIsLocked = this.studentParticipation.locked ?? this.repositoryIsLocked;
+        this.submissionCount = this.studentParticipation().submissionCount ?? this.submissionCount;
+        this.repositoryIsLocked = this.studentParticipation().locked ?? this.repositoryIsLocked;
     }
 
     /**
@@ -124,10 +137,12 @@ export class ProgrammingExamSubmissionComponent extends ExamSubmissionComponent 
      * @param commitState current CommitState from CodeEditorActionsComponent
      */
     onCommitStateChange(commitState: CommitState): void {
-        if (this.studentParticipation.submissions && this.studentParticipation.submissions.length > 0) {
+        const studentParticipation = this.studentParticipation();
+        if (studentParticipation?.submissions && studentParticipation.submissions.length > 0) {
+            const firstSubmission = studentParticipation.submissions[0];
             if (commitState === CommitState.CLEAN && this.hasSubmittedOnce) {
-                this.studentParticipation.submissions[0].submitted = true;
-                this.studentParticipation.submissions[0].isSynced = true;
+                firstSubmission.submitted = true;
+                firstSubmission.isSynced = true;
             } else if (commitState !== CommitState.UNDEFINED && !this.hasSubmittedOnce) {
                 this.hasSubmittedOnce = true;
             }
@@ -135,21 +150,22 @@ export class ProgrammingExamSubmissionComponent extends ExamSubmissionComponent 
     }
 
     onFileChanged() {
-        if (this.studentParticipation.submissions && this.studentParticipation.submissions.length > 0) {
-            this.studentParticipation.submissions[0].isSynced = false;
+        const studentParticipation = this.studentParticipation();
+        if (studentParticipation?.submissions && studentParticipation.submissions.length > 0) {
+            studentParticipation.submissions[0].isSynced = false;
         }
     }
 
     hasUnsavedChanges(): boolean {
-        if (this.exercise.allowOfflineIde && !this.exercise.allowOnlineEditor) {
+        if (this.exercise().allowOfflineIde && !this.exercise().allowOnlineEditor) {
             return false;
         }
-        return this.codeEditorContainer.editorState === EditorState.UNSAVED_CHANGES;
+        return this.codeEditorContainer().editorState === EditorState.UNSAVED_CHANGES;
     }
 
     updateSubmissionFromView(): void {
         // Note: we just save here and do not commit, because this can lead to problems!
-        this.codeEditorContainer.actions.onSave();
+        this.codeEditorContainer().actions.onSave();
     }
 
     updateViewFromSubmission(): void {

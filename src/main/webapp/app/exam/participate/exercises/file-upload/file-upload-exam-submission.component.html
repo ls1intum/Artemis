@@ -1,24 +1,24 @@
-@if (exercise) {
+@if (exercise()) {
     <h3 class="text-align-left fw-normal">
         <span>
-            {{ exercise.exerciseGroup?.title }}
+            {{ exercise().exerciseGroup?.title }}
         </span>
         <span
-            [jhiTranslate]="exercise.bonusPoints ? 'artemisApp.examParticipation.bonus' : 'artemisApp.examParticipation.points'"
-            [translateValues]="{ points: exercise.maxPoints, bonusPoints: exercise.bonusPoints }"
+            [jhiTranslate]="exercise().bonusPoints ? 'artemisApp.examParticipation.bonus' : 'artemisApp.examParticipation.points'"
+            [translateValues]="{ points: exercise().maxPoints, bonusPoints: exercise().bonusPoints }"
         >
         </span>
-        @if (exercise.includedInOverallScore !== IncludedInOverallScore.INCLUDED_COMPLETELY) {
-            <jhi-included-in-score-badge [includedInOverallScore]="exercise.includedInOverallScore" />
+        @if (exercise().includedInOverallScore !== IncludedInOverallScore.INCLUDED_COMPLETELY) {
+            <jhi-included-in-score-badge [includedInOverallScore]="exercise().includedInOverallScore" />
         }
     </h3>
     <hr />
-    <jhi-resizeable-container [examTimeline]="examTimeline">
+    <jhi-resizeable-container [examTimeline]="examTimeline()">
         <!--region Left Panel-->
-        <span class="exercise-title" left-header>{{ examTimeline ? exercise.title : ('artemisApp.exam.yourSolution' | artemisTranslate) }}</span>
+        <span class="exercise-title" left-header>{{ examTimeline() ? exercise().title : ('artemisApp.exam.yourSolution' | artemisTranslate) }}</span>
         <div left-body class="px-2 pb-2 w-100">
             <div class="row">
-                @if (isActive && !result && exercise && studentSubmission && !readonly) {
+                @if (isActive && !result && exercise() && studentSubmission() && !readonly()) {
                     <div class="col-12 col-md-10">
                         <div class="form-group">
                             <label for="fileUploadInput" class="form-control-label" jhiTranslate="artemisApp.fileUploadSubmission.selectFile"></label>
@@ -36,7 +36,7 @@
                                 </div>
                             </div>
                             <p class="d-inline-block" jhiTranslate="artemisApp.fileUploadExercise.supportedFileExtensions"></p>
-                            @for (extension of exercise.filePattern!.split(','); track extension) {
+                            @for (extension of exercise().filePattern!.split(','); track extension) {
                                 <div class="d-inline-block">
                                     <span class="ms-1 badge bg-info">
                                         {{ extension | uppercase }}
@@ -47,10 +47,10 @@
                     </div>
                 }
             </div>
-            @if (submittedFileName && studentSubmission?.filePath) {
+            @if (submittedFileName && studentSubmission()?.filePath) {
                 <div class="card-text">
                     <h6 jhiTranslate="artemisApp.fileUploadSubmission.submittedFile" [translateValues]="{ filename: submittedFileName }"></h6>
-                    <a class="text-primary" (click)="downloadFile(studentSubmission!.filePath!)" jhiTranslate="artemisApp.fileUploadSubmission.download"></a>
+                    <a class="text-primary" (click)="downloadFile(studentSubmission()!.filePath!)" jhiTranslate="artemisApp.fileUploadSubmission.download"></a>
                     @if (submittedFileExtension) {
                         <span class="ms-2 badge bg-info">
                             {{ submittedFileExtension | uppercase }}
@@ -58,7 +58,7 @@
                     }
                 </div>
             }
-            @if (!submittedFileName && examTimeline) {
+            @if (!submittedFileName && examTimeline()) {
                 <div>
                     <h6 jhiTranslate="artemisApp.timeline.fileUploadNotSubmitted"></h6>
                 </div>
@@ -70,8 +70,8 @@
         <span id="problem-statement" right-header jhiTranslate="artemisApp.exercise.problemStatement"></span>
         <ng-container right-body>
             <!-- problem statement update & difference highlighter -->
-            @if (exercise) {
-                <jhi-exam-exercise-update-highlighter [exercise]="exercise" (problemStatementUpdateEvent)="updateProblemStatement($event)" />
+            @if (exercise()) {
+                <jhi-exam-exercise-update-highlighter [exercise]="exercise()" (problemStatementUpdateEvent)="updateProblemStatement($event)" />
             }
             @if (problemStatementHtml) {
                 <p class="mb-3 markdown-preview">
