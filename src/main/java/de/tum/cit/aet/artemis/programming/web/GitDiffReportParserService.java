@@ -23,7 +23,7 @@ public class GitDiffReportParserService {
 
     private static final String PREFIX_RENAME_TO = "rename to ";
 
-    private final Pattern gitDiffLinePattern = Pattern.compile("@@ -(?<previousLine>\\d+)(,(?<previousLineCount>\\d+))? \\+(?<newLine>\\d+)(,(?<newLineCount>\\d+))? @@");
+    private final Pattern gitDiffLinePattern = Pattern.compile("@@ -(?<previousLine>\\d+)(,(?<previousLineCount>\\d+))? \\+(?<newLine>\\d+)(,(?<newLineCount>\\d+))? @@.*");
 
     /**
      * Extracts the ProgrammingExerciseGitDiffEntry from the raw git-diff output
