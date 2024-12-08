@@ -9,6 +9,7 @@ import java.util.stream.Collectors;
 import jakarta.persistence.Persistence;
 import jakarta.validation.constraints.NotNull;
 
+import org.hibernate.LazyInitializationException;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
@@ -257,8 +258,15 @@ public class ConversationDTOService {
     @NotNull
     private Set<ConversationParticipant> getConversationParticipants(Conversation conversation) {
         Set<ConversationParticipant> conversationParticipants;
-        var participantsInitialized = Persistence.getPersistenceUtil().isLoaded(conversation, "conversationParticipants") && conversation.getConversationParticipants() != null
-                && !conversation.getConversationParticipants().isEmpty();
+        boolean participantsInitialized;
+        try {
+            participantsInitialized = Persistence.getPersistenceUtil().isLoaded(conversation, "conversationParticipants") && conversation.getConversationParticipants() != null
+                    && !conversation.getConversationParticipants().isEmpty();
+        }
+        catch (LazyInitializationException e) {
+            // In case the conversation's persistence context was closed already, we need to re-fetch to avoid errors down the line
+            participantsInitialized = false;
+        }
         if (participantsInitialized) {
             conversationParticipants = conversation.getConversationParticipants();
         }
