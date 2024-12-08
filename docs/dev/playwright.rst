@@ -80,7 +80,9 @@ If you want to manually install playwright, you can follow these steps:
 
     .. code-block:: bash
 
-        npm run playwright:install
+        npm run playwright:setup-local
+        npm run playwright:init
+
 
 
 5. Open Playwright UI
