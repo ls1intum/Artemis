@@ -64,9 +64,6 @@ import { ProfilePictureComponent } from 'app/shared/profile-picture/profile-pict
         MatDialogModule,
         LinkPreviewModule,
         ProfilePictureComponent,
-        HtmlForPostingMarkdownPipe,
-    ],
-    declarations: [
         PostingThreadComponent,
         PostHeaderComponent,
         AnswerPostHeaderComponent,
@@ -87,6 +84,7 @@ import { ProfilePictureComponent } from 'app/shared/profile-picture/profile-pict
         AnswerPostReactionsBarComponent,
         MessageInlineInputComponent,
         MessageReplyInlineInputComponent,
+        HtmlForPostingMarkdownPipe,
         ReactingUsersOnPostingPipe,
         EmojiComponent,
         EmojiPickerComponent,

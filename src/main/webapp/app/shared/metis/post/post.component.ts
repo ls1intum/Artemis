@@ -5,7 +5,6 @@ import {
     Component,
     EventEmitter,
     HostListener,
-    Inject,
     Input,
     OnChanges,
     OnInit,
@@ -13,19 +12,20 @@ import {
     Renderer2,
     ViewChild,
     ViewContainerRef,
+    inject,
     input,
 } from '@angular/core';
 import { Post } from 'app/entities/metis/post.model';
 import { PostingDirective } from 'app/shared/metis/posting.directive';
 import { MetisService } from 'app/shared/metis/metis.service';
-import { NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
+import { NgbModalRef, NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { ContextInformation, DisplayPriority, PageType, RouteComponents } from '../metis.util';
 import { faBookmark, faBullhorn, faCheckSquare, faComments, faPencilAlt, faSmile, faThumbtack, faTrash } from '@fortawesome/free-solid-svg-icons';
 import dayjs from 'dayjs/esm';
 import { PostFooterComponent } from 'app/shared/metis/posting-footer/post-footer/post-footer.component';
 import { OneToOneChatService } from 'app/shared/metis/conversations/one-to-one-chat.service';
 import { isCommunicationEnabled, isMessagingEnabled } from 'app/entities/course.model';
-import { Router } from '@angular/router';
+import { Router, RouterLink, RouterLinkActive } from '@angular/router';
 import { MetisConversationService } from 'app/shared/metis/metis-conversation.service';
 import { getAsChannelDTO } from 'app/entities/metis/conversation/channel.model';
 import { AnswerPost } from 'app/entities/metis/answer-post.model';
@@ -33,8 +33,15 @@ import { AnswerPostCreateEditModalComponent } from 'app/shared/metis/posting-cre
 import { animate, style, transition, trigger } from '@angular/animations';
 import { PostCreateEditModalComponent } from 'app/shared/metis/posting-create-edit-modal/post-create-edit-modal/post-create-edit-modal.component';
 import { PostReactionsBarComponent } from 'app/shared/metis/posting-reactions-bar/post-reactions-bar/post-reactions-bar.component';
-import { CdkOverlayOrigin } from '@angular/cdk/overlay';
-import { DOCUMENT } from '@angular/common';
+import { CdkConnectedOverlay, CdkOverlayOrigin } from '@angular/cdk/overlay';
+import { DOCUMENT, NgClass, NgIf, NgStyle } from '@angular/common';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { PostHeaderComponent } from 'app/shared/metis/posting-header/post-header/post-header.component';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { PostingContentComponent } from 'app/shared/metis/posting-content/posting-content.components';
+import { MessageInlineInputComponent } from 'app/shared/metis/message/message-inline-input/message-inline-input.component';
+import { EmojiPickerComponent } from 'app/shared/metis/emoji/emoji-picker.component';
+import { ArtemisSharedCommonModule } from 'app/shared/shared-common.module';
 
 @Component({
     selector: 'jhi-post',
@@ -47,8 +54,36 @@ import { DOCUMENT } from '@angular/common';
             transition(':leave', [animate('300ms ease-out', style({ opacity: 0 }))]),
         ]),
     ],
+    standalone: true,
+    imports: [
+        NgClass,
+        FaIconComponent,
+        TranslateDirective,
+        PostHeaderComponent,
+        NgbTooltip,
+        RouterLinkActive,
+        RouterLink,
+        PostingContentComponent,
+        PostReactionsBarComponent,
+        MessageInlineInputComponent,
+        PostFooterComponent,
+        NgIf,
+        NgStyle,
+        CdkOverlayOrigin,
+        CdkConnectedOverlay,
+        EmojiPickerComponent,
+        ArtemisSharedCommonModule,
+    ],
 })
 export class PostComponent extends PostingDirective<Post> implements OnInit, OnChanges, AfterContentChecked {
+    metisService = inject(MetisService);
+    changeDetector = inject(ChangeDetectorRef);
+    private oneToOneChatService = inject(OneToOneChatService);
+    private metisConversationService = inject(MetisConversationService);
+    private router = inject(Router);
+    renderer = inject(Renderer2);
+    private document = inject<Document>(DOCUMENT);
+
     @Input() lastReadDate?: dayjs.Dayjs;
     @Input() readOnlyMode: boolean;
     @Input() previewMode: boolean;
@@ -94,18 +129,6 @@ export class PostComponent extends PostingDirective<Post> implements OnInit, OnC
     isConsecutive = input<boolean>(false);
     dropdownPosition = { x: 0, y: 0 };
     @ViewChild(PostReactionsBarComponent) protected reactionsBarComponent!: PostReactionsBarComponent;
-
-    constructor(
-        public metisService: MetisService,
-        public changeDetector: ChangeDetectorRef,
-        private oneToOneChatService: OneToOneChatService,
-        private metisConversationService: MetisConversationService,
-        private router: Router,
-        public renderer: Renderer2,
-        @Inject(DOCUMENT) private document: Document,
-    ) {
-        super();
-    }
 
     get reactionsBar() {
         return this.reactionsBarComponent;

@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, EventEmitter, Input, OnChanges, OnDestroy, OnInit, Output, input, output, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, EventEmitter, Input, OnChanges, OnDestroy, OnInit, Output, inject, input, output, signal } from '@angular/core';
 import { Params } from '@angular/router';
 import { faAngleDown, faAngleUp } from '@fortawesome/free-solid-svg-icons';
 import { Post } from 'app/entities/metis/post.model';
@@ -8,14 +8,23 @@ import { PatternMatch, PostingContentPart, ReferenceType } from '../metis.util';
 import { User } from 'app/core/user/user.model';
 import { Posting } from 'app/entities/metis/posting.model';
 import { isCommunicationEnabled } from 'app/entities/course.model';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { NgStyle } from '@angular/common';
+import { PostingContentPartComponent } from 'app/shared/metis/posting-content/posting-content-part/posting-content-part.components';
+import { LinkPreviewContainerComponent } from 'app/shared/link-preview/components/link-preview-container/link-preview-container.component';
+import { ArtemisSharedModule } from 'app/shared/shared.module';
 
 @Component({
     selector: 'jhi-posting-content',
     templateUrl: './posting-content.component.html',
     styleUrls: ['./posting-content.component.scss'],
     changeDetection: ChangeDetectionStrategy.OnPush,
+    standalone: true,
+    imports: [ArtemisSharedModule, FaIconComponent, NgStyle, PostingContentPartComponent, LinkPreviewContainerComponent],
 })
 export class PostingContentComponent implements OnInit, OnChanges, OnDestroy {
+    private metisService = inject(MetisService);
+
     @Input() content?: string;
     @Input() previewMode?: boolean;
     @Input() author?: User;
@@ -41,8 +50,6 @@ export class PostingContentComponent implements OnInit, OnChanges, OnDestroy {
     // Icons
     faAngleUp = faAngleUp;
     faAngleDown = faAngleDown;
-
-    constructor(private metisService: MetisService) {}
 
     /**
      * on initialization: calculate posting parts to be displayed

@@ -1,10 +1,10 @@
-import { HtmlForPostingMarkdownPipe } from 'app/shared/pipes/html-for-posting-markdown.pipe';
 import { TestBed, fakeAsync, tick } from '@angular/core/testing';
 import { MockTranslateService } from '../helpers/mocks/service/mock-translate.service';
 import { PLACEHOLDER_USER_REACTED, ReactingUsersOnPostingPipe } from 'app/shared/pipes/reacting-users-on-posting.pipe';
 import { TranslateService } from '@ngx-translate/core';
 import { metisTutor, metisUser1, metisUser2 } from '../helpers/sample/metis-sample-data';
 import { MockPipe } from 'ng-mocks';
+import { HtmlForPostingMarkdownPipe } from 'app/shared/pipes/html-for-posting-markdown.pipe';
 
 describe('ReactingUsersOnPostingsPipe', () => {
     let reactingUsersPipe: ReactingUsersOnPostingPipe;
