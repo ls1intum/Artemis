@@ -115,10 +115,9 @@ public class IrisCourseChatSessionService extends AbstractIrisChatSessionService
         requestAndHandleResponse(session, variant, null);
     }
 
-    private void requestAndHandleResponse(IrisCourseChatSession session, String variant, CompetencyJol competencyJol) {
+    private void requestAndHandleResponse(IrisCourseChatSession session, String variant, Object object) {
         var chatSession = (IrisCourseChatSession) irisSessionRepository.findByIdWithMessagesAndContents(session.getId());
-
-        pyrisPipelineService.executeCourseChatPipeline(variant, chatSession, competencyJol);
+        pyrisPipelineService.executeCourseChatPipeline(variant, chatSession, object);
     }
 
     @Override
@@ -134,13 +133,13 @@ public class IrisCourseChatSessionService extends AbstractIrisChatSessionService
      */
     public void onJudgementOfLearningSet(CompetencyJol competencyJol) {
         var course = competencyJol.getCompetency().getCourse();
-        if (!irisSettingsService.isEnabledFor(IrisSubSettingsType.CHAT, course)) {
-            return;
-        }
+
+        // TODO: Add setting to activate/deactivate course chat for JOLs
+
         var user = competencyJol.getUser();
         user.hasAcceptedIrisElseThrow();
         var session = getCurrentSessionOrCreateIfNotExistsInternal(course, user, false);
-        CompletableFuture.runAsync(() -> requestAndHandleResponse(session, "jol", competencyJol));
+        CompletableFuture.runAsync(() -> requestAndHandleResponse(session, "default", competencyJol));
     }
 
     /**
