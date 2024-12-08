@@ -114,11 +114,6 @@ export class Lti13ExerciseLaunchComponent implements OnInit {
         this.storeLtiSessionData(ltiIdToken, clientRegistrationId);
 
         if (targetLinkUri) {
-            /*
-            if (targetLinkUri === '/lti/select-course') {
-                this.replaceWindowLocationWrapper(window.location.origin + targetLinkUri);
-            }
-            */
             this.replaceWindowLocationWrapper(targetLinkUri);
         } else {
             this.isLaunching = false;
