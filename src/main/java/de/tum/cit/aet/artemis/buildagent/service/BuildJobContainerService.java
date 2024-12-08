@@ -206,6 +206,8 @@ public class BuildJobContainerService {
         // Get the container ID.
         String containerId = container.getId();
 
+        log.info("Stopping container with id {}", containerId);
+
         // Create a file "stop_container.txt" in the root directory of the container to indicate that the test results have been extracted or that the container should be stopped
         // for some other reason.
         // The container's main process is waiting for this file to appear and then stops the main process, thus stopping and removing the container.
