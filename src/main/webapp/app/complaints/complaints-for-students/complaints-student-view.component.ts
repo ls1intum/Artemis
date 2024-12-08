@@ -1,4 +1,4 @@
-import { Component, Input, OnInit } from '@angular/core';
+import { ChangeDetectorRef, Component, ElementRef, Input, OnInit, ViewChild } from '@angular/core';
 import { Exercise, getCourseFromExercise } from 'app/entities/exercise.model';
 import { Complaint, ComplaintType } from 'app/entities/complaint.model';
 import { ComplaintService } from 'app/complaints/complaint.service';
@@ -28,6 +28,8 @@ export class ComplaintsStudentViewComponent implements OnInit {
     // flag to indicate exam test run. Default set to false.
     @Input() testRun = false;
 
+    @ViewChild('complaintScrollpoint') complaintScrollpoint: ElementRef;
+
     submission: Submission;
     complaint: Complaint;
     course?: Course;
@@ -51,6 +53,7 @@ export class ComplaintsStudentViewComponent implements OnInit {
         private serverDateService: ArtemisServerDateService,
         private accountService: AccountService,
         private courseService: CourseManagementService,
+        private cdr: ChangeDetectorRef,
     ) {}
 
     /**
@@ -148,5 +151,21 @@ export class ComplaintsStudentViewComponent implements OnInit {
             return this.serverDateService.now().isBetween(dayjs(this.exam.examStudentReviewStart), dayjs(this.exam.examStudentReviewEnd));
         }
         return false;
+    }
+
+    /**
+     * Function to set complaint type (which opens the complaint form) and scrolls to the complaint form
+     */
+    openComplaintForm(complainType: ComplaintType): void {
+        this.formComplaintType = complainType;
+        this.cdr.detectChanges(); // Wait for the view to update
+        this.scrollToComplaint();
+    }
+
+    /**
+     * Function to scroll to the complaint form
+     */
+    private scrollToComplaint(): void {
+        this.complaintScrollpoint?.nativeElement.scrollIntoView({ behavior: 'smooth', block: 'end' });
     }
 }
