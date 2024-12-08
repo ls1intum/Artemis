@@ -34,6 +34,7 @@ export class SubmissionResultStatusComponent implements OnChanges {
     @Input() showCompletion = true;
     @Input() short = true;
     @Input() triggerLastGraded = true;
+    @Input() showProgressBar = false;
 
     quizNotStarted: boolean;
     exerciseMissedDueDate: boolean;
