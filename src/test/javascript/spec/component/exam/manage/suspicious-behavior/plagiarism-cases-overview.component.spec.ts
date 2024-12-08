@@ -8,7 +8,6 @@ import { MockRouter } from '../../../../helpers/mocks/mock-router';
 import { Exercise } from 'app/entities/exercise.model';
 
 describe('PlagiarismCasesOverviewComponent', () => {
-    let component: PlagiarismCasesOverviewComponent;
     let fixture: ComponentFixture<PlagiarismCasesOverviewComponent>;
     let router: Router;
     const exercise1 = {
@@ -49,24 +48,30 @@ describe('PlagiarismCasesOverviewComponent', () => {
             ],
         });
         fixture = TestBed.createComponent(PlagiarismCasesOverviewComponent);
-        component = fixture.componentInstance;
         router = TestBed.inject(Router);
-        component.courseId = 1;
-        component.examId = 2;
-        component.exercises = [exercise1, exercise2];
-        component.plagiarismCasesPerExercise = new Map([
-            [exercise1, 0],
-            [exercise2, 1],
-        ]);
-        component.plagiarismResultsPerExercise = new Map([
-            [exercise1, 2],
-            [exercise2, 4],
-        ]);
+        fixture.componentRef.setInput('courseId', 1);
+        fixture.componentRef.setInput('examId', 2);
+        fixture.componentRef.setInput('exercises', [exercise1, exercise2]);
+        fixture.componentRef.setInput(
+            'plagiarismCasesPerExercise',
+            new Map([
+                [exercise1, 0],
+                [exercise2, 1],
+            ]),
+        );
+        fixture.componentRef.setInput(
+            'plagiarismResultsPerExercise',
+            new Map([
+                [exercise1, 2],
+                [exercise2, 4],
+            ]),
+        );
+
         fixture.detectChanges();
     });
 
     it('should navigate to plagiarism cases on view plagiarism cases click', () => {
-        component.anyPlagiarismCases = true;
+        fixture.componentRef.setInput('anyPlagiarismCases', true);
         fixture.detectChanges();
         const viewCasesButton = fixture.debugElement.nativeElement.querySelector('#view-plagiarism-cases-btn');
         viewCasesButton.click();
@@ -74,7 +79,7 @@ describe('PlagiarismCasesOverviewComponent', () => {
     });
 
     it('should not show view cases button if no cases exist', () => {
-        component.anyPlagiarismCases = false;
+        fixture.componentRef.setInput('anyPlagiarismCases', false);
         fixture.detectChanges();
         const viewCasesButton = fixture.debugElement.nativeElement.querySelector('#view-plagiarism-cases-btn');
         expect(viewCasesButton).toBeNull();
