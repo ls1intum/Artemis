@@ -340,16 +340,11 @@ public class BuildJobContainerService {
     private void addAndPrepareDirectoryAndReplaceContent(String containerId, Path repositoryPath, String newDirectoryName) {
         copyToContainer(repositoryPath.toString(), containerId);
         addDirectory(containerId, newDirectoryName, true);
-        removeDirectoryAndFiles(containerId, newDirectoryName);
-        renameDirectoryOrFile(containerId, LOCALCI_WORKING_DIRECTORY + "/" + repositoryPath.getFileName().toString(), newDirectoryName);
+        insertRepositoryFiles(containerId, LOCALCI_WORKING_DIRECTORY + "/" + repositoryPath.getFileName().toString(), newDirectoryName);
     }
 
-    private void removeDirectoryAndFiles(String containerId, String newName) {
-        executeDockerCommand(containerId, null, false, false, true, "rm", "-rf", newName);
-    }
-
-    private void renameDirectoryOrFile(String containerId, String oldName, String newName) {
-        executeDockerCommand(containerId, null, false, false, true, "mv", oldName, newName);
+    private void insertRepositoryFiles(String containerId, String oldName, String newName) {
+        executeDockerCommand(containerId, null, false, false, true, "cp", "-r", oldName + (oldName.endsWith("/") ? "." : "/."), newName);
     }
 
     private void addDirectory(String containerId, String directoryName, boolean createParentsIfNecessary) {
