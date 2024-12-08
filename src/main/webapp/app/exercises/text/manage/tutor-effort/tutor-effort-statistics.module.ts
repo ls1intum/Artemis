@@ -8,7 +8,6 @@ import { ArtemisSharedComponentModule } from 'app/shared/components/shared-compo
 
 const ENTITY_STATES = [...tutorEffortStatisticsRoute];
 @NgModule({
-    imports: [ArtemisSharedModule, RouterModule.forChild(ENTITY_STATES), BarChartModule, ArtemisSharedComponentModule],
-    declarations: [TutorEffortStatisticsComponent],
+    imports: [ArtemisSharedModule, RouterModule.forChild(ENTITY_STATES), BarChartModule, ArtemisSharedComponentModule, TutorEffortStatisticsComponent],
 })
 export class ArtemisTutorEffortStatisticsModule {}

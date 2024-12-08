@@ -10,7 +10,7 @@ import { TextEditorService } from 'app/exercises/text/participate/text-editor.se
 import { BehaviorSubject } from 'rxjs';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { MockSyncStorage } from '../../helpers/mocks/service/mock-sync-storage.service';
-import { MockComponent, MockDirective, MockPipe } from 'ng-mocks';
+import { MockComponent, MockDirective, MockModule, MockPipe } from 'ng-mocks';
 import { TextResultComponent } from 'app/exercises/text/participate/text-result/text-result.component';
 import { SubmissionResultStatusComponent } from 'app/overview/submission-result-status.component';
 import { TextEditorComponent } from 'app/exercises/text/participate/text-editor.component';
@@ -36,12 +36,26 @@ import { TeamParticipateInfoBoxComponent } from 'app/exercises/shared/team/team-
 import { TeamSubmissionSyncComponent } from 'app/exercises/shared/team-submission-sync/team-submission-sync.component';
 import { AdditionalFeedbackComponent } from 'app/shared/additional-feedback/additional-feedback.component';
 import { RatingComponent } from 'app/exercises/shared/rating/rating.component';
-import { NgModel } from '@angular/forms';
+import { FormsModule, NgModel } from '@angular/forms';
 import { MockTranslateService } from '../../helpers/mocks/service/mock-translate.service';
 import { ComplaintsStudentViewComponent } from 'app/complaints/complaints-for-students/complaints-student-view.component';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { By } from '@angular/platform-browser';
 import { AssessmentType } from 'app/entities/assessment-type.model';
+import { ArtemisSharedComponentModule } from 'app/shared/components/shared-component.module';
+import { ArtemisSharedModule } from 'app/shared/shared.module';
+import { ArtemisSharedCommonModule } from 'app/shared/shared-common.module';
+import { ArtemisHeaderExercisePageWithDetailsModule } from 'app/exercises/shared/exercise-headers/exercise-headers.module';
+import { RequestFeedbackButtonComponent } from 'app/overview/exercise-details/request-feedback-button/request-feedback-button.component';
+import { ArtemisResultModule } from 'app/exercises/shared/result/result.module';
+import { ArtemisTeamParticipeModule } from 'app/exercises/shared/team/team-participate/team-participate.module';
+import { ArtemisTeamSubmissionSyncModule } from 'app/exercises/shared/team-submission-sync/team-submission-sync.module';
+import { RatingModule } from 'app/exercises/shared/rating/rating.module';
+import { ArtemisComplaintsModule } from 'app/complaints/complaints.module';
+import { IrisModule } from 'app/iris/iris.module';
+import { ArtemisMarkdownModule } from 'app/shared/markdown.module';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { UpperCasePipe } from '@angular/common';
 
 describe('TextEditorComponent', () => {
     let comp: TextEditorComponent;
@@ -67,7 +81,6 @@ describe('TextEditorComponent', () => {
         return TestBed.configureTestingModule({
             imports: [ArtemisTestModule, RouterModule.forRoot([textEditorRoute[0]])],
             declarations: [
-                TextEditorComponent,
                 MockComponent(SubmissionResultStatusComponent),
                 MockComponent(ButtonComponent),
                 MockComponent(TextResultComponent),
@@ -94,6 +107,50 @@ describe('TextEditorComponent', () => {
                 { provide: TranslateService, useClass: MockTranslateService },
             ],
         })
+            .overrideComponent(TextEditorComponent, {
+                remove: {
+                    imports: [
+                        ArtemisHeaderExercisePageWithDetailsModule,
+                        ArtemisSharedComponentModule,
+                        RequestFeedbackButtonComponent,
+                        ArtemisResultModule,
+                        ArtemisSharedModule,
+                        ArtemisTeamParticipeModule,
+                        TranslateDirective,
+                        FormsModule,
+                        ArtemisTeamSubmissionSyncModule,
+                        TextResultComponent,
+                        RatingModule,
+                        ArtemisComplaintsModule,
+                        FaIconComponent,
+                        IrisModule,
+                        UpperCasePipe,
+                        ArtemisSharedCommonModule,
+                        ArtemisMarkdownModule,
+                    ],
+                },
+                add: {
+                    imports: [
+                        MockPipe(UpperCasePipe),
+                        MockModule(ArtemisHeaderExercisePageWithDetailsModule),
+                        MockModule(ArtemisSharedComponentModule),
+                        MockModule(ArtemisResultModule),
+                        MockModule(ArtemisSharedModule),
+                        MockModule(ArtemisTeamParticipeModule),
+                        MockModule(FormsModule),
+                        MockModule(ArtemisTeamSubmissionSyncModule),
+                        MockModule(RatingModule),
+                        MockModule(ArtemisComplaintsModule),
+                        MockModule(IrisModule),
+                        MockModule(ArtemisSharedCommonModule),
+                        MockModule(ArtemisMarkdownModule),
+                        MockComponent(RequestFeedbackButtonComponent),
+                        MockComponent(TextResultComponent),
+                        MockComponent(FaIconComponent),
+                        MockDirective(TranslateDirective),
+                    ],
+                },
+            })
             .compileComponents()
             .then(() => {
                 fixture = TestBed.createComponent(TextEditorComponent);

@@ -31,8 +31,9 @@ import { ArtemisExerciseButtonsModule } from 'app/overview/exercise-details/exer
         IrisModule,
         RequestFeedbackButtonComponent,
         ArtemisExerciseButtonsModule,
+        TextEditorComponent,
+        TextResultComponent,
     ],
-    declarations: [TextEditorComponent, TextResultComponent],
     exports: [TextEditorComponent],
 })
 export class ArtemisTextParticipationModule {}
