@@ -4,7 +4,6 @@ import { DebugElement, input, runInInjectionContext } from '@angular/core';
 import { MockComponent, MockModule, MockPipe, ngMocks } from 'ng-mocks';
 import { HtmlForMarkdownPipe } from 'app/shared/pipes/html-for-markdown.pipe';
 import { By } from '@angular/platform-browser';
-import { AnswerPostHeaderComponent } from 'app/shared/metis/posting-header/answer-post-header/answer-post-header.component';
 import { AnswerPostReactionsBarComponent } from 'app/shared/metis/posting-reactions-bar/answer-post-reactions-bar/answer-post-reactions-bar.component';
 import { PostingContentComponent } from 'app/shared/metis/posting-content/posting-content.components';
 import { metisResolvingAnswerPostUser1 } from '../../../../helpers/sample/metis-sample-data';
@@ -17,6 +16,7 @@ import { MetisService } from 'app/shared/metis/metis.service';
 import { MockMetisService } from '../../../../helpers/mocks/service/mock-metis-service.service';
 import { Posting, PostingType } from 'app/entities/metis/posting.model';
 import { AnswerPost } from 'app/entities/metis/answer-post.model';
+import { PostingHeaderComponent } from '../../../../../../../main/webapp/app/shared/metis/posting-header/post-header/posting-header.component';
 
 describe('AnswerPostComponent', () => {
     let component: AnswerPostComponent;
@@ -34,8 +34,8 @@ describe('AnswerPostComponent', () => {
             declarations: [
                 AnswerPostComponent,
                 MockPipe(HtmlForMarkdownPipe),
-                MockComponent(AnswerPostHeaderComponent),
                 MockComponent(PostingContentComponent),
+                MockComponent(PostingHeaderComponent),
                 MockComponent(AnswerPostCreateEditModalComponent),
                 MockComponent(AnswerPostReactionsBarComponent),
             ],
@@ -56,25 +56,25 @@ describe('AnswerPostComponent', () => {
         jest.restoreAllMocks();
     });
 
-    it('should contain an answer post header when isConsecutive is false', () => {
+    it('should contain the posting header when isConsecutive is false', () => {
         runInInjectionContext(fixture.debugElement.injector, () => {
             component.isConsecutive = input<boolean>(false);
             component.posting = metisResolvingAnswerPostUser1;
         });
 
         fixture.detectChanges();
-        const header = debugElement.query(By.css('jhi-answer-post-header'));
+        const header = debugElement.query(By.css('jhi-posting-header'));
         expect(header).not.toBeNull();
     });
 
-    it('should not contain an answer post header when isConsecutive is true', () => {
+    it('should not contain the posting header when isConsecutive is true', () => {
         runInInjectionContext(fixture.debugElement.injector, () => {
             component.isConsecutive = input<boolean>(true);
             component.posting = metisResolvingAnswerPostUser1;
         });
 
         fixture.detectChanges();
-        const header = debugElement.query(By.css('jhi-answer-post-header'));
+        const header = debugElement.query(By.css('jhi-posting-header'));
         expect(header).toBeNull();
     });
 

@@ -8,8 +8,7 @@ import { ArtemisMarkdownModule } from 'app/shared/markdown.module';
 import { ArtemisMarkdownEditorModule } from 'app/shared/markdown-editor/markdown-editor.module';
 import { PostingButtonComponent } from 'app/shared/metis/posting-button/posting-button.component';
 import { PostingMarkdownEditorComponent } from 'app/shared/metis/posting-markdown-editor/posting-markdown-editor.component';
-import { AnswerPostHeaderComponent } from 'app/shared/metis/posting-header/answer-post-header/answer-post-header.component';
-import { PostHeaderComponent } from 'app/shared/metis/posting-header/post-header/post-header.component';
+import { PostingHeaderComponent } from 'app/shared/metis/posting-header/post-header/posting-header.component';
 import { AnswerPostCreateEditModalComponent } from 'app/shared/metis/posting-create-edit-modal/answer-post-create-edit-modal/answer-post-create-edit-modal.component';
 import { PostCreateEditModalComponent } from 'app/shared/metis/posting-create-edit-modal/post-create-edit-modal/post-create-edit-modal.component';
 import { PostFooterComponent } from 'app/shared/metis/posting-footer/post-footer/post-footer.component';
@@ -68,8 +67,7 @@ import { ProfilePictureComponent } from 'app/shared/profile-picture/profile-pict
     ],
     declarations: [
         PostingThreadComponent,
-        PostHeaderComponent,
-        AnswerPostHeaderComponent,
+        PostingHeaderComponent,
         PostCreateEditModalComponent,
         PostTagSelectorComponent,
         PostFooterComponent,
@@ -93,8 +91,7 @@ import { ProfilePictureComponent } from 'app/shared/profile-picture/profile-pict
     ],
     exports: [
         PostingThreadComponent,
-        PostHeaderComponent,
-        AnswerPostHeaderComponent,
+        PostingHeaderComponent,
         PostCreateEditModalComponent,
         PostTagSelectorComponent,
         AnswerPostCreateEditModalComponent,
