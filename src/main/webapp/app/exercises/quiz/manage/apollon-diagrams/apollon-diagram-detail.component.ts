@@ -1,7 +1,7 @@
 import { Component, ElementRef, EventEmitter, Input, OnDestroy, OnInit, Output, ViewChild } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { ApollonEditor, ApollonMode, Locale, UMLModel } from '@ls1intum/apollon';
-import { NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
+import { NgbModal, NgbModalRef, NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { JhiLanguageHelper } from 'app/core/language/language.helper';
 import { convertRenderedSVGToPNG } from './exercise-generation/svg-renderer';
 import { ApollonDiagramService } from 'app/exercises/quiz/manage/apollon-diagrams/apollon-diagram.service';
@@ -16,12 +16,17 @@ import { CourseManagementService } from 'app/course/manage/course-management.ser
 import { DragAndDropQuestion } from 'app/entities/quiz/drag-and-drop-question.model';
 import { ConfirmAutofocusModalComponent } from 'app/shared/components/confirm-autofocus-modal.component';
 import { lastValueFrom } from 'rxjs';
-import { NgModel } from '@angular/forms';
+import { FormsModule, NgModel } from '@angular/forms';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 
 @Component({
     selector: 'jhi-apollon-diagram-detail',
     templateUrl: './apollon-diagram-detail.component.html',
     providers: [ApollonDiagramService],
+    standalone: true,
+    imports: [TranslateDirective, FaIconComponent, FormsModule, NgbTooltip, ArtemisTranslatePipe],
 })
 export class ApollonDiagramDetailComponent implements OnInit, OnDestroy {
     @ViewChild('editorContainer', { static: false }) editorContainer: ElementRef;

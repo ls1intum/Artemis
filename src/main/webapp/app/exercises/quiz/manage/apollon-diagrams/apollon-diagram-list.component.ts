@@ -14,11 +14,17 @@ import { Course } from 'app/entities/course.model';
 import { faPlus, faSort, faTimes, faX } from '@fortawesome/free-solid-svg-icons';
 import { ButtonSize } from 'app/shared/components/button.component';
 import { UMLDiagramType } from '@ls1intum/apollon';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { ArtemisSharedCommonModule } from 'app/shared/shared-common.module';
+import { ArtemisSharedModule } from 'app/shared/shared.module';
 
 @Component({
     selector: 'jhi-apollon-diagram-list',
     templateUrl: './apollon-diagram-list.component.html',
     providers: [ApollonDiagramService],
+    standalone: true,
+    imports: [TranslateDirective, FaIconComponent, ArtemisSharedCommonModule, ArtemisSharedModule],
 })
 export class ApollonDiagramListComponent implements OnInit {
     apollonDiagrams: ApollonDiagram[] = [];

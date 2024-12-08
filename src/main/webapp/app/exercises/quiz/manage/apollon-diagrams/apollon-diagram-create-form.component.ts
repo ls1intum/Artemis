@@ -4,11 +4,16 @@ import { AlertService } from 'app/core/util/alert.service';
 import { ApollonDiagramService } from 'app/exercises/quiz/manage/apollon-diagrams/apollon-diagram.service';
 import { ApollonDiagram } from 'app/entities/apollon-diagram.model';
 import { faSave } from '@fortawesome/free-solid-svg-icons';
+import { FormsModule } from '@angular/forms';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 
 @Component({
     selector: 'jhi-apollon-diagram-create-form',
     templateUrl: './apollon-diagram-create-form.component.html',
     providers: [ApollonDiagramService],
+    standalone: true,
+    imports: [FormsModule, TranslateDirective, FaIconComponent],
 })
 export class ApollonDiagramCreateFormComponent implements AfterViewInit {
     apollonDiagram: ApollonDiagram;
