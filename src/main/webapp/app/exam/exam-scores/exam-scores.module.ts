@@ -12,7 +12,6 @@ import { ArtemisParticipantScoresModule } from 'app/shared/participant-scores/pa
 import { ExportModule } from 'app/shared/export/export.module';
 
 @NgModule({
-    declarations: [ExamScoresComponent, ExamScoresAverageScoresGraphComponent],
     imports: [
         ArtemisSharedModule,
         ArtemisExamScoresRoutingModule,
@@ -23,6 +22,8 @@ import { ExportModule } from 'app/shared/export/export.module';
         BarChartModule,
         ArtemisParticipantScoresModule,
         ExportModule,
+        ExamScoresComponent,
+        ExamScoresAverageScoresGraphComponent,
     ],
 })
 export class ArtemisExamScoresModule {}
