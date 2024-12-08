@@ -1,0 +1,60 @@
+{
+  "tool": "RUFF",
+  "issues": [
+    {
+      "filePath": "/usr/local/src/exercise/policy.py",
+      "startLine": 1,
+      "endLine": 1,
+      "startColumn": 1,
+      "endColumn": 34,
+      "rule": "F403",
+      "category": "Pyflakes",
+      "message": "`from .sorting_algorithms import *` used; unable to detect undefined names",
+      "priority": "error"
+    },
+    {
+      "filePath": "/usr/local/src/exercise/policy.py",
+      "startLine": 11,
+      "endLine": 11,
+      "startColumn": 40,
+      "endColumn": 42,
+      "rule": "PLR2004",
+      "category": "Pylint",
+      "message": "Magic value used in comparison, consider replacing `10` with a constant variable",
+      "priority": "error"
+    },
+    {
+      "filePath": "/usr/local/src/exercise/policy.py",
+      "startLine": 13,
+      "endLine": 13,
+      "startColumn": 46,
+      "endColumn": 55,
+      "rule": "F405",
+      "category": "Pyflakes",
+      "message": "`MergeSort` may be undefined, or defined from star imports",
+      "priority": "error"
+    },
+    {
+      "filePath": "/usr/local/src/exercise/policy.py",
+      "startLine": 16,
+      "endLine": 16,
+      "startColumn": 46,
+      "endColumn": 56,
+      "rule": "F405",
+      "category": "Pyflakes",
+      "message": "`BubbleSort` may be undefined, or defined from star imports",
+      "priority": "error"
+    },
+    {
+      "filePath": "/usr/local/src/exercise/policy.py",
+      "startLine": 1,
+      "endLine": 1,
+      "startColumn": 1,
+      "endColumn": 34,
+      "rule": "X999",
+      "category": "Unknown",
+      "message": "Some unknown issue",
+      "priority": "error"
+    }
+  ]
+}
