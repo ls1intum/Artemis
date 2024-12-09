@@ -34,17 +34,22 @@ import { ProgrammingExerciseService } from 'app/exercises/programming/manage/ser
 import { MockProgrammingExerciseService } from '../../helpers/mocks/service/mock-programming-exercise.service';
 import { ProgrammingExerciseBuildConfig } from 'app/entities/programming/programming-exercise-build.config';
 import { provideRouter } from '@angular/router';
+import { SshUserSettingsService } from 'app/shared/user-settings/ssh-settings/ssh-user-settings.service';
+import { MockSshUserSettingsService } from '../../helpers/mocks/service/mock-ssh-user-settings.service';
+import { UserSshPublicKey } from 'app/entities/programming/user-ssh-public-key.model';
 
 describe('CodeButtonComponent', () => {
     let component: CodeButtonComponent;
     let fixture: ComponentFixture<CodeButtonComponent>;
     let profileService: ProfileService;
     let accountService: AccountService;
+    let sshUserSettingsService: SshUserSettingsService;
     let programmingExerciseService: ProgrammingExerciseService;
 
     let localStorageUseSshStoreStub: jest.SpyInstance;
     let getVcsAccessTokenSpy: jest.SpyInstance;
     let createVcsAccessTokenSpy: jest.SpyInstance;
+    let getCachedSshKeysSpy: jest.SpyInstance;
     let getProfileInfoSub: jest.SpyInstance;
     let getBuildConfigSub: jest.SpyInstance;
     let getToolTokenSpy: jest.SpyInstance;
@@ -121,6 +126,7 @@ describe('CodeButtonComponent', () => {
                 MockProvider(AlertService),
                 { provide: FeatureToggleService, useClass: MockFeatureToggleService },
                 { provide: AccountService, useClass: MockAccountService },
+                { provide: SshUserSettingsService, useClass: MockSshUserSettingsService },
                 { provide: ProfileService, useClass: MockProfileService },
                 { provide: LocalStorageService, useClass: MockSyncStorage },
                 { provide: TranslateService, useClass: MockTranslateService },
@@ -137,11 +143,13 @@ describe('CodeButtonComponent', () => {
         component = fixture.componentInstance;
         profileService = TestBed.inject(ProfileService);
         accountService = TestBed.inject(AccountService);
+        sshUserSettingsService = TestBed.inject(SshUserSettingsService);
         programmingExerciseService = TestBed.inject(ProgrammingExerciseService);
 
         const localStorageMock = fixture.debugElement.injector.get(LocalStorageService);
         localStorageUseSshStoreStub = jest.spyOn(localStorageMock, 'store');
         getVcsAccessTokenSpy = jest.spyOn(accountService, 'getVcsAccessToken');
+        getCachedSshKeysSpy = jest.spyOn(sshUserSettingsService, 'getCachedSshKeys');
         createVcsAccessTokenSpy = jest.spyOn(accountService, 'createVcsAccessToken');
         getToolTokenSpy = jest.spyOn(accountService, 'getToolToken');
 
@@ -152,6 +160,7 @@ describe('CodeButtonComponent', () => {
     // Mock the functions after the TestBed setup
     beforeEach(() => {
         getVcsAccessTokenSpy = jest.spyOn(accountService, 'getVcsAccessToken').mockReturnValue(of(new HttpResponse({ body: vcsToken })));
+        getCachedSshKeysSpy = jest.spyOn(sshUserSettingsService, 'getCachedSshKeys').mockImplementation(() => Promise.resolve([{ id: 99, publicKey: 'key' } as UserSshPublicKey]));
 
         createVcsAccessTokenSpy = jest
             .spyOn(accountService, 'createVcsAccessToken')
@@ -172,6 +181,7 @@ describe('CodeButtonComponent', () => {
         expect(component.sshTemplateUrl).toBe(info.sshCloneURLTemplate);
         expect(component.sshEnabled).toBe(!!info.sshCloneURLTemplate);
         expect(component.versionControlUrl).toBe(info.versionControlUrl);
+        expect(getCachedSshKeysSpy).toHaveBeenCalled();
     });
 
     it('should create new vcsAccessToken when it does not exist', async () => {

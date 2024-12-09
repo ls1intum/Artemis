@@ -1,33 +1,51 @@
-<div class="mb-1" [ngClass]="{ 'mx-0': !isThreadSidebar, 'pinned-message': isPinned() }">
-    @if (!isConsecutive()) {
-        <jhi-post-header
-            [previewMode]="previewMode"
-            [readOnlyMode]="readOnlyMode"
-            [posting]="posting"
-            [isDeleted]="isDeleted"
-            [isCommunicationPage]="isCommunicationPage"
-            (isModalOpen)="displayInlineInput = true"
-            [lastReadDate]="lastReadDate"
-        />
+<div
+    class="post hover-container"
+    [ngClass]="{ 'mx-0': !isThreadSidebar, 'pinned-message': isPinned(), 'is-saved': !isConsecutive() && posting.isSaved, 'non-consecutive': !isConsecutive() }"
+>
+    @if (posting.isSaved) {
+        <div class="post-is-saved-message post-content-padding fs-xx-small py-1" [ngClass]="{ 'is-saved': isConsecutive() && posting.isSaved }">
+            <div class="post-is-saved-message-content">
+                <fa-icon [icon]="faBookmark"></fa-icon>
+                <span class="text-secondary" jhiTranslate="artemisApp.metis.post.saved"></span>
+            </div>
+        </div>
     }
-    <div class="align-items-center post-content-margin">
-        <div class="col">
-            <div class="mb-1">
+    @if (isConsecutive()) {
+        <span class="post-time fs-small" ngbTooltip="{{ posting.creationDate | artemisDate: 'time' }}">
+            {{ posting.creationDate | artemisDate: 'time' }}
+        </span>
+    }
+    @if (!isConsecutive()) {
+        <div class="ps-3">
+            <jhi-post-header
+                [previewMode]="previewMode"
+                [readOnlyMode]="readOnlyMode"
+                [posting]="posting"
+                [isDeleted]="isDeleted"
+                [isCommunicationPage]="isCommunicationPage"
+                (isModalOpen)="displayInlineInput = true"
+                [lastReadDate]="lastReadDate"
+            />
+        </div>
+    }
+    <div class="align-items-center">
+        <div>
+            <div class="post-context-information-wrap post-content-padding" [ngClass]="{ 'is-saved': isConsecutive() && posting.isSaved }">
                 @if (showAnnouncementIcon) {
                     <fa-icon
                         [icon]="faBullhorn"
                         iconSize="xs"
-                        class="col-auto pe-0 announcement-icon"
+                        class="pe-0 ms-1 announcement-icon"
                         [ngbTooltip]="'artemisApp.metis.post.postMarkedAsAnnouncementTooltip' | artemisTranslate"
                     />
                 }
                 <!-- in the course all-messages as well as in the preview mode during similarity check, the context (lecture, exercise, course-wide topic) is shown -->
                 <!-- not shown in course messages page -->
                 @if (showChannelReference && (pageType === PageType.OVERVIEW || previewMode)) {
-                    <span class="col-auto">
+                    <span>
                         @if (contextInformation.routerLinkComponents) {
                             <a
-                                class="linked-context-information"
+                                class="linked-context-information ms-1"
                                 [routerLink]="contextInformation.routerLinkComponents"
                                 [queryParams]="contextInformation.queryParams"
                                 (click)="onNavigateToContext($event)"
@@ -36,21 +54,26 @@
                             >
                         }
                         @if (!contextInformation.routerLinkComponents) {
-                            <span class="context-information">{{ contextInformation.displayName }}:</span>
+                            <span class="context-information ms-1">{{ contextInformation.displayName }}:</span>
                         }
                     </span>
                 }
                 <!-- post title not shown for plagiarism cases -->
                 @if (pageType !== PageType.PLAGIARISM_CASE_INSTRUCTOR && pageType !== PageType.PLAGIARISM_CASE_STUDENT) {
-                    <span class="col-auto">
+                    <span>
                         @if (posting.title?.length) {
-                            <span class="post-title">{{ posting.title }}</span>
+                            <span class="post-title ms-1">{{ posting.title }}</span>
                         }
                     </span>
                 }
             </div>
             @if (!displayInlineInput) {
-                <div class="message-container" [class.force-hover]="showDropdown" (contextmenu)="onRightClick($event)">
+                <div
+                    class="message-container post-content-padding"
+                    [ngClass]="{ 'is-saved': isConsecutive() && posting.isSaved }"
+                    [class.force-hover]="showDropdown"
+                    (contextmenu)="onRightClick($event)"
+                >
                     <div class="message-content" [ngClass]="{ 'mx-0': !isThreadSidebar }">
                         <jhi-posting-content
                             [previewMode]="previewMode"
@@ -65,7 +88,7 @@
                             (userReferenceClicked)="onUserReferenceClicked($event)"
                             (channelReferenceClicked)="onChannelReferenceClicked($event)"
                         ></jhi-posting-content>
-                        <div class="hover-actions post-content-margin" [ngClass]="{ 'mb-2': previewMode }">
+                        <div class="hover-actions" [ngClass]="{ 'mb-2': previewMode }">
                             @if (!previewMode) {
                                 <!-- Post reactions (that appear when post is hovered) -->
                                 <jhi-post-reactions-bar
@@ -84,6 +107,7 @@
                                     (mayDeleteOutput)="onMayDelete($event)"
                                     (canPinOutput)="onCanPin($event)"
                                     (isDeleteEvent)="onDeleteEvent(true)"
+                                    (onBookmarkClicked)="toggleSavePost()"
                                 />
                             }
                         </div>
@@ -93,13 +117,13 @@
         </div>
     </div>
     @if (!isDeleted && displayInlineInput && !readOnlyMode) {
-        <div class="post-content-margin">
+        <div class="post-content-padding">
             <jhi-message-inline-input [posting]="posting" (isModalOpen)="displayInlineInput = false" />
         </div>
     }
     @if (!isDeleted) {
-        <div class="post-content-margin justify-content-between" [ngClass]="{ 'mb-2': previewMode }">
-            <!-- Post reactions (to show replies & reactions under the post) -->
+        <div class="post-content-padding justify-content-between post-reactions-bar" [ngClass]="{ 'mb-2': previewMode, 'is-saved': posting.isSaved && isConsecutive() }">
+            <!-- Post reactions -->
             @if (!previewMode) {
                 <jhi-post-reactions-bar
                     [lastReadDate]="lastReadDate"
@@ -116,6 +140,7 @@
                     (isModalOpen)="displayInlineInput = true"
                     [isEmojiCount]="true"
                     [hoverBar]="false"
+                    (onBookmarkClicked)="toggleSavePost()"
                 />
             }
         </div>
@@ -165,6 +190,10 @@
     <button class="dropdown-item d-flex" (click)="isCommunicationPage ? openThread.emit() : reactionsBarComponent?.openAnswerView()">
         <fa-icon [icon]="faComments" class="item-icon"></fa-icon>
         <span jhiTranslate="artemisApp.metis.post.replyMessage"></span>
+    </button>
+    <button class="dropdown-item d-flex" (click)="toggleSavePost()">
+        <fa-icon [icon]="posting.isSaved ? faBookmark : farBookmark" class="item-icon"></fa-icon>
+        <span [jhiTranslate]="posting.isSaved ? 'artemisApp.metis.post.removeBookmarkPost' : 'artemisApp.metis.post.bookmarkPost'"></span>
     </button>
 </div>
 

@@ -18,6 +18,8 @@ import { IdeSettingsService } from 'app/shared/user-settings/ide-preferences/ide
 import { Ide } from 'app/shared/user-settings/ide-preferences/ide.model';
 import { ProgrammingExerciseService } from 'app/exercises/programming/manage/services/programming-exercise.service';
 import { ProfileInfo } from 'app/shared/layouts/profiles/profile-info.model';
+import { SshUserSettingsService } from 'app/shared/user-settings/ssh-settings/ssh-user-settings.service';
+import { UserSshPublicKey } from 'app/entities/programming/user-ssh-public-key.model';
 
 @Component({
     selector: 'jhi-code-button',
@@ -52,12 +54,16 @@ export class CodeButtonComponent implements OnInit, OnChanges {
     gitlabVCEnabled = false;
     showCloneUrlWithoutToken = true;
     copyEnabled? = true;
+    doesUserHaveSSHkeys = false;
+    areAnySshKeysExpired = false;
 
     sshKeyMissingTip: string;
+    sshKeysExpiredTip: string;
     tokenMissingTip: string;
     tokenExpiredTip: string;
 
     user: User;
+    sshKeys?: UserSshPublicKey[];
     cloneHeadline: string;
     wasCopied = false;
     isTeamParticipation: boolean;
@@ -79,6 +85,7 @@ export class CodeButtonComponent implements OnInit, OnChanges {
     constructor(
         private translateService: TranslateService,
         private externalCloningService: ExternalCloningService,
+        private sshUserSettingsService: SshUserSettingsService,
         private accountService: AccountService,
         private profileService: ProfileService,
         private localStorage: LocalStorageService,
@@ -94,6 +101,7 @@ export class CodeButtonComponent implements OnInit, OnChanges {
         }
         this.user = user;
 
+        await this.checkForSshKeys();
         this.refreshTokenState();
 
         this.copyEnabled = true;
@@ -123,6 +131,7 @@ export class CodeButtonComponent implements OnInit, OnChanges {
                 this.sshSettingsUrl = profileInfo.sshKeysURL;
             }
             this.sshKeyMissingTip = this.formatTip('artemisApp.exerciseActions.sshKeyTip', this.sshSettingsUrl);
+            this.sshKeysExpiredTip = this.formatTip('artemisApp.exerciseActions.sshKeyExpiredTip', this.sshSettingsUrl);
 
             if (this.useSsh) {
                 this.useSshUrl();
@@ -161,7 +170,7 @@ export class CodeButtonComponent implements OnInit, OnChanges {
     public useSshUrl() {
         this.useSsh = true;
         this.useToken = false;
-        this.copyEnabled = this.useSsh && (!!this.user.sshPublicKey || this.gitlabVCEnabled);
+        this.copyEnabled = this.doesUserHaveSSHkeys || this.gitlabVCEnabled;
         this.storeToLocalStorage();
     }
 
@@ -355,6 +364,22 @@ export class CodeButtonComponent implements OnInit, OnChanges {
         this.cloneHeadline = this.isPracticeMode ? 'artemisApp.exerciseActions.clonePracticeRepository' : 'artemisApp.exerciseActions.cloneRatedRepository';
         if (this.activeParticipation.vcsAccessToken) {
             this.user.vcsAccessToken = this.activeParticipation.vcsAccessToken;
+        }
+    }
+
+    /**
+     * Checks whether the user owns any SSH keys, and checks if any of them is expired
+     */
+    private async checkForSshKeys() {
+        this.sshKeys = await this.sshUserSettingsService.getCachedSshKeys();
+        if (this.sshKeys) {
+            const now = dayjs();
+            this.doesUserHaveSSHkeys = this.sshKeys.length > 0;
+            this.areAnySshKeysExpired = this.sshKeys.some((key) => {
+                if (key.expiryDate) {
+                    return dayjs(key.expiryDate).isBefore(now);
+                }
+            });
         }
     }
 
