@@ -45,6 +45,10 @@ export interface NonLatestRatedResultsCleanupCountDTO extends CleanupCount {
     feedback: number;
 }
 
+export interface SubmissionVersionsCleanupCountDTO extends CleanupCount {
+    submissionVersions: number;
+}
+
 @Injectable({ providedIn: 'root' })
 export class DataCleanupService {
     private readonly adminResourceUrl = 'api/admin/cleanup';
@@ -97,6 +101,20 @@ export class DataCleanupService {
         const deleteFromString = convertDateFromClient(deleteFrom)!;
         const deleteToString = convertDateFromClient(deleteTo)!;
         return this.http.delete<CleanupServiceExecutionRecordDTO>(`${this.adminResourceUrl}/old-rated-results`, {
+            params: { deleteFrom: deleteFromString, deleteTo: deleteToString },
+            observe: 'response',
+        });
+    }
+
+    /**
+     * Send DELETE request to delete old submission versions within a specific date range.
+     * @param deleteFrom the start date from which old rated results should be deleted
+     * @param deleteTo the end date until which old rated results should be deleted
+     */
+    deleteOldSubmissionVersions(deleteFrom: dayjs.Dayjs, deleteTo: dayjs.Dayjs): Observable<HttpResponse<CleanupServiceExecutionRecordDTO>> {
+        const deleteFromString = convertDateFromClient(deleteFrom)!;
+        const deleteToString = convertDateFromClient(deleteTo)!;
+        return this.http.delete<CleanupServiceExecutionRecordDTO>(`${this.adminResourceUrl}/old-submission-versions`, {
             params: { deleteFrom: deleteFromString, deleteTo: deleteToString },
             observe: 'response',
         });
@@ -162,6 +180,21 @@ export class DataCleanupService {
         const deleteFromString = convertDateFromClient(deleteFrom)!;
         const deleteToString = convertDateFromClient(deleteTo)!;
         return this.http.get<NonLatestRatedResultsCleanupCountDTO>(`${this.adminResourceUrl}/old-rated-results/count`, {
+            params: { deleteFrom: deleteFromString, deleteTo: deleteToString },
+            observe: 'response',
+        });
+    }
+
+    /**
+     * Send GET request to count old submission versions within a specific date range.
+     * @param deleteFrom the start date for counting
+     * @param deleteTo the end date for counting
+     * @returns An observable of type HttpResponse<SubmissionVersionsCleanupCountDTO>.
+     */
+    countOldSubmissionVersions(deleteFrom: dayjs.Dayjs, deleteTo: dayjs.Dayjs): Observable<HttpResponse<SubmissionVersionsCleanupCountDTO>> {
+        const deleteFromString = convertDateFromClient(deleteFrom)!;
+        const deleteToString = convertDateFromClient(deleteTo)!;
+        return this.http.get<SubmissionVersionsCleanupCountDTO>(`${this.adminResourceUrl}/old-submission-versions/count`, {
             params: { deleteFrom: deleteFromString, deleteTo: deleteToString },
             observe: 'response',
         });
