@@ -51,7 +51,7 @@ export class AttachmentUnitComponent extends LectureUnitDirective<AttachmentUnit
 
         if (this.lectureUnit().attachment?.link) {
             const link = this.lectureUnit().attachment!.link!;
-            this.fileService.downloadFile(this.fileService.replaceAttachmentPrefixAndUnderscores(link));
+            this.fileService.downloadFileByAttachmentName(link, this.lectureUnit().attachment!.name!);
             this.onCompletion.emit({ lectureUnit: this.lectureUnit(), completed: true });
         }
     }

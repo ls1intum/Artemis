@@ -11,9 +11,6 @@ const routes: Routes = [
         data: {
             authorities: [Authority.USER],
             pageTitle: 'artemisApp.editor.home.title',
-            flushRepositoryCacheAfter: 900000, // 15 min
-            participationCache: {},
-            repositoryCache: {},
         },
         canActivate: [UserRouteAccessService],
     },
