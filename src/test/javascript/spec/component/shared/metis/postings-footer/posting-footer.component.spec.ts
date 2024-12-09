@@ -21,11 +21,6 @@ import { Injector, input, runInInjectionContext } from '@angular/core';
 import { Posting } from '../../../../../../../main/webapp/app/entities/metis/posting.model';
 import { PostingFooterComponent } from '../../../../../../../main/webapp/app/shared/metis/posting-footer/posting-footer.component';
 
-interface PostGroup {
-    author: User | undefined;
-    posts: AnswerPost[];
-}
-
 describe('PostingFooterComponent', () => {
     let component: PostingFooterComponent;
     let fixture: ComponentFixture<PostingFooterComponent>;
