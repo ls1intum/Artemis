@@ -118,6 +118,19 @@ export class MonacoEditorComponent implements OnInit, OnDestroy {
         return convertedWords.join(' ');
     }
 
+    public onDidChangeModelContent(listener: (event: monaco.editor.IModelContentChangedEvent) => void): monaco.IDisposable {
+        return this._editor.onDidChangeModelContent(listener);
+    }
+
+    public getModel() {
+        return this._editor.getModel();
+    }
+
+    public getLineContent(lineNumber: number): string {
+        const model = this._editor.getModel();
+        return model ? model.getLineContent(lineNumber) : '';
+    }
+
     ngOnInit(): void {
         const resizeObserver = new ResizeObserver(() => {
             this._editor.layout();
