@@ -12,20 +12,11 @@ import { ArtemisSharedComponentModule } from 'app/shared/components/shared-compo
 import { LtiCoursesComponent } from 'app/lti/lti13-select-course.component';
 import { ArtemisSharedLibsModule } from 'app/shared/shared-libs.module';
 import { LtiCourseCardComponent } from 'app/lti/lti-course-card.component';
-import { NgbDropdownMocksModule } from '../../../../test/javascript/spec/helpers/mocks/directive/ngbDropdownMocks.module';
 
 const LTI_LAUNCH_ROUTES = [...ltiLaunchState];
 
 @NgModule({
-    imports: [
-        RouterModule.forChild(LTI_LAUNCH_ROUTES),
-        ArtemisCoreModule,
-        ArtemisSharedModule,
-        FormsModule,
-        ArtemisSharedComponentModule,
-        ArtemisSharedLibsModule,
-        NgbDropdownMocksModule,
-    ],
+    imports: [RouterModule.forChild(LTI_LAUNCH_ROUTES), ArtemisCoreModule, ArtemisSharedModule, FormsModule, ArtemisSharedComponentModule, ArtemisSharedLibsModule],
     declarations: [
         Lti13ExerciseLaunchComponent,
         Lti13DynamicRegistrationComponent,
