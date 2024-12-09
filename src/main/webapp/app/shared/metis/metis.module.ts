@@ -8,10 +8,10 @@ import { ArtemisMarkdownModule } from 'app/shared/markdown.module';
 import { ArtemisMarkdownEditorModule } from 'app/shared/markdown-editor/markdown-editor.module';
 import { PostingButtonComponent } from 'app/shared/metis/posting-button/posting-button.component';
 import { PostingMarkdownEditorComponent } from 'app/shared/metis/posting-markdown-editor/posting-markdown-editor.component';
-import { PostingHeaderComponent } from 'app/shared/metis/posting-header/post-header/posting-header.component';
+import { PostingHeaderComponent } from 'app/shared/metis/posting-header/posting-header.component';
 import { AnswerPostCreateEditModalComponent } from 'app/shared/metis/posting-create-edit-modal/answer-post-create-edit-modal/answer-post-create-edit-modal.component';
 import { PostCreateEditModalComponent } from 'app/shared/metis/posting-create-edit-modal/post-create-edit-modal/post-create-edit-modal.component';
-import { PostFooterComponent } from 'app/shared/metis/posting-footer/post-footer/post-footer.component';
+import { PostingFooterComponent } from 'app/shared/metis/posting-footer/posting-footer.component';
 import { PostTagSelectorComponent } from 'app/shared/metis/posting-create-edit-modal/post-create-edit-modal/post-tag-selector/post-tag-selector.component';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { ArtemisSharedComponentModule } from 'app/shared/components/shared-component.module';
@@ -70,7 +70,7 @@ import { ProfilePictureComponent } from 'app/shared/profile-picture/profile-pict
         PostingHeaderComponent,
         PostCreateEditModalComponent,
         PostTagSelectorComponent,
-        PostFooterComponent,
+        PostingFooterComponent,
         AnswerPostCreateEditModalComponent,
         PostingButtonComponent,
         PostingMarkdownEditorComponent,
@@ -95,7 +95,7 @@ import { ProfilePictureComponent } from 'app/shared/profile-picture/profile-pict
         PostCreateEditModalComponent,
         PostTagSelectorComponent,
         AnswerPostCreateEditModalComponent,
-        PostFooterComponent,
+        PostingFooterComponent,
         PostingButtonComponent,
         PostingMarkdownEditorComponent,
         PostComponent,

@@ -4,8 +4,8 @@ import { DebugElement } from '@angular/core';
 import { HtmlForMarkdownPipe } from 'app/shared/pipes/html-for-markdown.pipe';
 import { PostComponent } from 'app/shared/metis/post/post.component';
 import { getElement } from '../../../../helpers/utils/general.utils';
-import { PostFooterComponent } from 'app/shared/metis/posting-footer/post-footer/post-footer.component';
-import { PostingHeaderComponent } from '../../../../../../../main/webapp/app/shared/metis/posting-header/post-header/posting-header.component';
+import { PostingFooterComponent } from '../../../../../../../main/webapp/app/shared/metis/posting-footer/posting-footer.component';
+import { PostingHeaderComponent } from '../../../../../../../main/webapp/app/shared/metis/posting-header/posting-header.component';
 import { PostingContentComponent } from 'app/shared/metis/posting-content/posting-content.components';
 import { MockMetisService } from '../../../../helpers/mocks/service/mock-metis-service.service';
 import { MetisService } from 'app/shared/metis/metis.service';
@@ -78,7 +78,7 @@ describe('PostComponent', () => {
                 MockPipe(HtmlForMarkdownPipe),
                 MockComponent(PostingHeaderComponent),
                 MockComponent(PostingContentComponent),
-                MockComponent(PostFooterComponent),
+                MockComponent(PostingFooterComponent),
                 MockComponent(AnswerPostCreateEditModalComponent),
                 MockComponent(PostReactionsBarComponent),
                 MockRouterLinkDirective,
@@ -162,7 +162,7 @@ describe('PostComponent', () => {
     });
 
     it('should contain a post footer', () => {
-        const footer = getElement(debugElement, 'jhi-post-footer');
+        const footer = getElement(debugElement, 'jhi-posting-footer');
         expect(footer).not.toBeNull();
     });
 

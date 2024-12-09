@@ -17,7 +17,7 @@ import { Post } from 'app/entities/metis/post.model';
 @Component({
     selector: 'jhi-posting-header',
     templateUrl: './posting-header.component.html',
-    styleUrls: ['../../metis.component.scss'],
+    styleUrls: ['../metis.component.scss'],
 })
 export class PostingHeaderComponent implements OnInit, OnDestroy, OnChanges {
     readOnlyMode = input<boolean>(false);
@@ -82,6 +82,18 @@ export class PostingHeaderComponent implements OnInit, OnDestroy, OnChanges {
     ngOnChanges() {
         this.setUserProperties();
         this.setUserAuthorityIconAndTooltip();
+    }
+
+    get isAfter(): boolean | undefined {
+        return this.posting()?.creationDate?.isAfter(this.lastReadDate());
+    }
+
+    get authorOfPosting(): User | undefined {
+        return this.posting()?.author;
+    }
+
+    get creationDate(): dayjs.Dayjs | undefined {
+        return this.posting()?.creationDate;
     }
 
     /**

@@ -14,11 +14,10 @@ interface PostGroup {
 }
 
 @Component({
-    selector: 'jhi-post-footer',
-    templateUrl: './post-footer.component.html',
-    styleUrls: ['./post-footer.component.scss'],
+    selector: 'jhi-posting-footer',
+    templateUrl: './posting-footer.component.html',
 })
-export class PostFooterComponent implements OnInit, OnDestroy, AfterContentChecked, OnChanges {
+export class PostingFooterComponent implements OnInit, OnDestroy, AfterContentChecked, OnChanges {
     lastReadDate = input<dayjs.Dayjs | undefined>();
     readOnlyMode = input<boolean>(false);
     previewMode = input<boolean>(false);

@@ -6,7 +6,7 @@ import { ArtemisTranslatePipe } from '../../../../../../../main/webapp/app/share
 import { MockComponent, MockDirective, MockModule, MockPipe } from 'ng-mocks';
 import { getElement } from '../../../../helpers/utils/general.utils';
 import { MockMetisService } from '../../../../helpers/mocks/service/mock-metis-service.service';
-import { PostingHeaderComponent } from '../../../../../../../main/webapp/app/shared/metis/posting-header/post-header/posting-header.component';
+import { PostingHeaderComponent } from '../../../../../../../main/webapp/app/shared/metis/posting-header/posting-header.component';
 import { ArtemisDatePipe } from '../../../../../../../main/webapp/app/shared/pipes/artemis-date.pipe';
 import { PostCreateEditModalComponent } from '../../../../../../../main/webapp/app/shared/metis/posting-create-edit-modal/post-create-edit-modal/post-create-edit-modal.component';
 import { FormBuilder, FormsModule, ReactiveFormsModule } from '@angular/forms';

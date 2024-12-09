@@ -16,7 +16,7 @@ import { MetisService } from 'app/shared/metis/metis.service';
 import { MockMetisService } from '../../../../helpers/mocks/service/mock-metis-service.service';
 import { Posting, PostingType } from 'app/entities/metis/posting.model';
 import { AnswerPost } from 'app/entities/metis/answer-post.model';
-import { PostingHeaderComponent } from '../../../../../../../main/webapp/app/shared/metis/posting-header/post-header/posting-header.component';
+import { PostingHeaderComponent } from '../../../../../../../main/webapp/app/shared/metis/posting-header/posting-header.component';
 import dayjs from 'dayjs/esm';
 import { ArtemisDatePipe } from '../../../../../../../main/webapp/app/shared/pipes/artemis-date.pipe';
 import { ArtemisTranslatePipe } from '../../../../../../../main/webapp/app/shared/pipes/artemis-translate.pipe';
