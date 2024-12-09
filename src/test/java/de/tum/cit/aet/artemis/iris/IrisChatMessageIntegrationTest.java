@@ -177,13 +177,13 @@ class IrisChatMessageIntegrationTest extends AbstractIrisIntegrationTest {
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
-    public void sendOneMessageNormalExercise() throws Exception {
+    void sendOneMessageNormalExercise() throws Exception {
         sendOneMessage(soloExercise, "student1", soloParticipation.getSubmissions().iterator().next().getId());
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "student2", roles = "USER")
-    public void sendOneMessageTeamExercise() throws Exception {
+    void sendOneMessageTeamExercise() throws Exception {
         sendOneMessage(teamExercise, "student2", teamParticipation.getSubmissions().iterator().next().getId());
     }
 
