@@ -1,4 +1,4 @@
-import { Component, EventEmitter, Input, OnDestroy, OnInit, Output } from '@angular/core';
+import { Component, OnDestroy, OnInit, inject, input, output } from '@angular/core';
 import { ChannelDTO, getAsChannelDTO, isChannelDTO } from 'app/entities/metis/conversation/channel.model';
 import { ConversationDTO } from 'app/entities/metis/conversation/conversation.model';
 import { Course } from 'app/entities/course.model';
@@ -24,20 +24,12 @@ import { catchError } from 'rxjs/operators';
 export class ConversationSettingsComponent implements OnInit, OnDestroy {
     private ngUnsubscribe = new Subject<void>();
 
-    @Input()
-    activeConversation: ConversationDTO;
+    activeConversation = input<ConversationDTO>();
+    course = input<Course>();
 
-    @Input()
-    course: Course;
-
-    @Output()
-    channelArchivalChange: EventEmitter<void> = new EventEmitter<void>();
-
-    @Output()
-    channelDeleted: EventEmitter<void> = new EventEmitter<void>();
-
-    @Output()
-    conversationLeave: EventEmitter<void> = new EventEmitter<void>();
+    channelArchivalChange = output<void>();
+    channelDeleted = output<void>();
+    conversationLeave = output<void>();
 
     private dialogErrorSource = new Subject<string>();
     dialogError$ = this.dialogErrorSource.asObservable();
@@ -49,34 +41,32 @@ export class ConversationSettingsComponent implements OnInit, OnDestroy {
     canChangeChannelArchivalState: boolean;
     canDeleteChannel: boolean;
 
-    constructor(
-        private modalService: NgbModal,
-        private channelService: ChannelService,
-        private groupChatService: GroupChatService,
-        private alertService: AlertService,
-    ) {}
+    private modalService = inject(NgbModal);
+    private channelService = inject(ChannelService);
+    private groupChatService = inject(GroupChatService);
+    private alertService = inject(AlertService);
 
     ngOnInit(): void {
-        this.canLeaveConversation = canLeaveConversation(this.activeConversation);
+        this.canLeaveConversation = canLeaveConversation(this.activeConversation()!);
 
-        this.conversationAsChannel = getAsChannelDTO(this.activeConversation);
+        this.conversationAsChannel = getAsChannelDTO(this.activeConversation());
         this.canChangeChannelArchivalState = this.conversationAsChannel ? canChangeChannelArchivalState(this.conversationAsChannel) : false;
-        this.canDeleteChannel = this.conversationAsChannel ? canDeleteChannel(this.course, this.conversationAsChannel) : false;
+        this.canDeleteChannel = this.conversationAsChannel ? canDeleteChannel(this.course()!, this.conversationAsChannel) : false;
     }
 
     leaveConversation($event: MouseEvent) {
         $event.stopPropagation();
-        if (isGroupChatDTO(this.activeConversation)) {
+        if (isGroupChatDTO(this.activeConversation()!)) {
             this.groupChatService
-                .removeUsersFromGroupChat(this.course.id!, this.activeConversation.id!)
+                .removeUsersFromGroupChat(this.course()!.id!, this.activeConversation()?.id!)
                 .pipe(takeUntil(this.ngUnsubscribe))
                 .subscribe(() => {
                     this.conversationLeave.emit();
                 });
             return;
-        } else if (isChannelDTO(this.activeConversation)) {
+        } else if (isChannelDTO(this.activeConversation()!)) {
             this.channelService
-                .deregisterUsersFromChannel(this.course.id!, this.activeConversation.id!)
+                .deregisterUsersFromChannel(this.course()!.id!, this.activeConversation()?.id!)
                 .pipe(takeUntil(this.ngUnsubscribe))
                 .subscribe(() => {
                     this.conversationLeave.emit();
@@ -92,7 +82,7 @@ export class ConversationSettingsComponent implements OnInit, OnDestroy {
     }
 
     openArchivalModal(event: MouseEvent) {
-        const channel = getAsChannelDTO(this.activeConversation);
+        const channel = getAsChannelDTO(this.activeConversation()!);
         if (!channel) {
             return;
         }
@@ -121,7 +111,7 @@ export class ConversationSettingsComponent implements OnInit, OnDestroy {
                 takeUntil(this.ngUnsubscribe),
             )
             .subscribe(() => {
-                this.channelService.archive(this.course.id!, channel.id!).subscribe({
+                this.channelService.archive(this.course()?.id!, channel.id!).subscribe({
                     next: () => {
                         this.channelArchivalChange.emit();
                     },
@@ -131,7 +121,7 @@ export class ConversationSettingsComponent implements OnInit, OnDestroy {
     }
 
     openUnArchivalModal(event: MouseEvent) {
-        const channel = getAsChannelDTO(this.activeConversation);
+        const channel = getAsChannelDTO(this.activeConversation()!);
         if (!channel) {
             return;
         }
@@ -161,7 +151,7 @@ export class ConversationSettingsComponent implements OnInit, OnDestroy {
             )
             .subscribe(() => {
                 this.channelService
-                    .unarchive(this.course.id!, channel.id!)
+                    .unarchive(this.course()?.id!, channel.id!)
                     .pipe(takeUntil(this.ngUnsubscribe))
                     .subscribe({
                         next: () => {
@@ -173,12 +163,12 @@ export class ConversationSettingsComponent implements OnInit, OnDestroy {
     }
 
     deleteChannel() {
-        const channel = getAsChannelDTO(this.activeConversation);
+        const channel = getAsChannelDTO(this.activeConversation()!);
         if (!channel) {
             return;
         }
         this.channelService
-            .delete(this.course.id!, channel.id!)
+            .delete(this.course()?.id!, channel.id!)
             .pipe(takeUntil(this.ngUnsubscribe))
             .subscribe({
                 next: () => {

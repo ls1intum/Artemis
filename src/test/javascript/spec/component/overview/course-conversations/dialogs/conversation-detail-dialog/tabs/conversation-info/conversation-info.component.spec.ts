@@ -18,6 +18,7 @@ import { HttpResponse } from '@angular/common/http';
 import { of } from 'rxjs';
 import { GenericUpdateTextPropertyDialogComponent } from 'app/overview/course-conversations/dialogs/generic-update-text-property-dialog/generic-update-text-property-dialog.component';
 import { defaultSecondLayerDialogOptions } from 'app/overview/course-conversations/other/conversation.util';
+import { input } from '@angular/core';
 
 const examples: ConversationDTO[] = [generateOneToOneChatDTO({}), generateExampleGroupChatDTO({}), generateExampleChannelDTO({})];
 
@@ -48,9 +49,11 @@ examples.forEach((activeConversation) => {
             canChangeChannelProperties.mockReturnValue(true);
             canChangeGroupChatProperties.mockReturnValue(true);
             fixture = TestBed.createComponent(ConversationInfoComponent);
-            component = fixture.componentInstance;
-            component.activeConversation = activeConversation;
-            component.course = course;
+            TestBed.runInInjectionContext(() => {
+                component = fixture.componentInstance;
+                component.activeConversation = input<ConversationDTO>(activeConversation);
+                component.course = input<Course>(course);
+            });
             component.canChangeChannelProperties = canChangeChannelProperties;
             component.canChangeGroupChatProperties = canChangeGroupChatProperties;
             fixture.detectChanges();
