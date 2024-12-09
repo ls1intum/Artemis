@@ -17,7 +17,7 @@
         },
         "tooltip": {
             "deleteOrphans": "Löscht verwaiste Entitäten, die nicht mehr mit gültigen Ergebnissen oder Teilnahmen verbunden sind. Dazu gehören Feedback, Textblöcke und Bewertungen, die sich auf ungültige Ergebnisse, Teilnahmen oder Einreichungen beziehen.",
-            "deletePlagiarismComparisons": "Löscht Plagiatsvergleiche mit dem Status 'Keine', die zu Kursen innerhalb des angegebenen Datumsbereichs gehören.",
+            "deletePlagiarismComparisons": "Löscht Plagiatsvergleiche mit dem Status \"None\", die zu Kursen innerhalb des angegebenen Datumsbereichs gehören.",
             "deleteNonRatedResults": "Löscht nicht bewertete Ergebnisse, mit Ausnahme des neuesten nicht bewerteten Ergebnisses für jede Teilnahme (um Kompetenzergebnisse berechnen zu können), innerhalb des angegebenen Datumsbereichs, zusammen mit zugehörigen langen Feedback-Texten, Textblöcken, Feedback-Elementen und Teilnehmerbewertungen.",
             "deleteOldRatedResults": "Löscht bewertete Ergebnisse, mit Ausnahme des neuesten bewerteten Ergebnisses für jede Teilnahme, für Kurse, die innerhalb des angegebenen Datumsbereichs durchgeführt wurden. Löscht auch zugehörige lange Feedback-Texte, Textblöcke, Feedback-Elemente und Teilnehmerbewertungen.",
             "deleteOldSubmissionVersions": "Löscht alte Teilnahmeversionen.",
