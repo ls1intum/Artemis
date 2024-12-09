@@ -144,17 +144,17 @@ export class ForwardMessageDialogComponent implements OnInit, AfterViewInit {
 
     selectOption(option: CombinedOption): void {
         if (option.type === 'channel') {
-            const existing = this.selectedChannels.find((c) => c.id === option.id);
+            const existing = this.selectedChannels.find((c) => (c as ChannelDTO).id === option.id);
             if (!existing) {
-                const channel = this.channels()?.find((c) => c.id === option.id);
+                const channel = this.channels()?.find((c) => (c as ChannelDTO).id === option.id);
                 if (channel) {
                     this.selectedChannels.push(channel);
                 }
             }
         } else if (option.type === 'chat') {
-            const existing = this.selectedChats.find((c) => c.id === option.id);
+            const existing = this.selectedChats.find((c) => (c as OneToOneChatWithName).id === option.id);
             if (!existing) {
-                const chat = this.filteredChats.find((c) => c.id === option.id);
+                const chat = this.filteredChats.find((c) => (c as OneToOneChatWithName).id === option.id);
                 if (chat) {
                     this.selectedChats.push(chat);
                 }
