@@ -1,11 +1,20 @@
-<div [id]="'item-' + posting.id" class="answer-post" [ngClass]="{ 'module-bg mt-2 rounded-2': isCommunicationPage, 'is-saved': !isConsecutive() && posting.isSaved }">
+<div
+    [id]="'item-' + posting.id"
+    class="answer-post hover-container"
+    [ngClass]="{ 'module-bg rounded-2': isCommunicationPage, 'is-saved': !isConsecutive() && posting.isSaved, 'non-consecutive': !isConsecutive() }"
+>
     @if (posting.isSaved) {
-        <div class="post-is-saved-message answer-post-content-margin fs-xx-small py-1" [ngClass]="{ 'is-saved': isConsecutive() && posting.isSaved }">
+        <div class="post-is-saved-message post-content-padding fs-xx-small py-1" [ngClass]="{ 'is-saved': isConsecutive() && posting.isSaved }">
             <div class="post-is-saved-message-content">
                 <fa-icon [icon]="faBookmark"></fa-icon>
                 <span class="text-secondary" jhiTranslate="artemisApp.metis.post.saved"></span>
             </div>
         </div>
+    }
+    @if (isConsecutive()) {
+        <span class="post-time fs-small" ngbTooltip="{{ posting.creationDate | artemisDate: 'time' }}">
+            {{ posting.creationDate | artemisDate: 'time' }}
+        </span>
     }
     @if (!isConsecutive()) {
         <div class="ps-3">
@@ -19,7 +28,7 @@
         </div>
     }
     @if (!createAnswerPostModal.isInputOpen) {
-        <div class="answer-post-content-margin message-container" [ngClass]="{ 'is-saved': isConsecutive() && posting.isSaved }" (contextmenu)="onRightClick($event)">
+        <div class="message-container post-content-padding" [ngClass]="{ 'is-saved': isConsecutive() && posting.isSaved }" (contextmenu)="onRightClick($event)">
             <div class="message-content" [class.force-hover]="showDropdown">
                 <jhi-posting-content
                     [content]="posting.content"
@@ -33,7 +42,7 @@
                     (userReferenceClicked)="userReferenceClicked.emit($event)"
                     (channelReferenceClicked)="channelReferenceClicked.emit($event)"
                 />
-                <div class="answer-post-content-margin hover-actions">
+                <div class="post-content-padding hover-actions">
                     <jhi-answer-post-reactions-bar
                         [isReadOnlyMode]="isReadOnlyMode"
                         [posting]="posting"
@@ -50,11 +59,11 @@
             </div>
         </div>
     }
-    <div class="answer-post-content-margin">
+    <div class="post-content-padding">
         <ng-container #createEditAnswerPostContainer />
     </div>
     @if (!isDeleted) {
-        <div class="answer-post-content-margin post-reactions-bar" [ngClass]="{ 'is-saved': posting.isSaved && isConsecutive() }" @fade>
+        <div class="post-content-padding post-reactions-bar" [ngClass]="{ 'is-saved': posting.isSaved && isConsecutive() }" @fade>
             <jhi-answer-post-reactions-bar
                 [isReadOnlyMode]="isReadOnlyMode"
                 [posting]="posting"
