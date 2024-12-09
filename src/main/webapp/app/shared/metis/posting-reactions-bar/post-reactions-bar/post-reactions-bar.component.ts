@@ -1,4 +1,4 @@
-import { Component, EventEmitter, Input, OnChanges, OnDestroy, OnInit, Output, ViewChild, output } from '@angular/core';
+import { Component, EventEmitter, Input, OnChanges, OnDestroy, OnInit, Output, ViewChild, inject, output } from '@angular/core';
 import { Reaction } from 'app/entities/metis/reaction.model';
 import { Post } from 'app/entities/metis/post.model';
 import { PostingsReactionsBarDirective } from 'app/shared/metis/posting-reactions-bar/posting-reactions-bar.directive';
@@ -14,13 +14,44 @@ import { AccountService } from 'app/core/auth/account.service';
 import { isOneToOneChatDTO } from 'app/entities/metis/conversation/one-to-one-chat.model';
 import { ConversationDTO } from 'app/entities/metis/conversation/conversation.model';
 import { PostCreateEditModalComponent } from 'app/shared/metis/posting-create-edit-modal/post-create-edit-modal/post-create-edit-modal.component';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+
+import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
+import { CdkConnectedOverlay, CdkOverlayOrigin } from '@angular/cdk/overlay';
+import { PostCreateEditModalComponent as PostCreateEditModalComponent_1 } from '../../posting-create-edit-modal/post-create-edit-modal/post-create-edit-modal.component';
+
+import { ReactingUsersOnPostingPipe } from 'app/shared/pipes/reacting-users-on-posting.pipe';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { EmojiComponent } from 'app/shared/metis/emoji/emoji.component';
+import { EmojiPickerComponent } from 'app/shared/metis/emoji/emoji-picker.component';
+import { ArtemisConfirmIconModule } from 'app/shared/confirm-icon/confirm-icon.module';
+import { AsyncPipe, KeyValuePipe } from '@angular/common';
+import { ArtemisSharedCommonModule } from 'app/shared/shared-common.module';
 
 @Component({
     selector: 'jhi-post-reactions-bar',
     templateUrl: './post-reactions-bar.component.html',
     styleUrls: ['../posting-reactions-bar.component.scss'],
+    standalone: true,
+    imports: [
+        FaIconComponent,
+        TranslateDirective,
+        EmojiComponent,
+        NgbTooltip,
+        CdkOverlayOrigin,
+        CdkConnectedOverlay,
+        EmojiPickerComponent,
+        PostCreateEditModalComponent_1,
+        ArtemisConfirmIconModule,
+        AsyncPipe,
+        KeyValuePipe,
+        ArtemisSharedCommonModule,
+        ReactingUsersOnPostingPipe,
+    ],
 })
 export class PostReactionsBarComponent extends PostingsReactionsBarDirective<Post> implements OnInit, OnChanges, OnDestroy {
+    private accountService = inject(AccountService);
+
     pinTooltip: string;
     displayPriority: DisplayPriority;
     canPin = false;
@@ -55,12 +86,7 @@ export class PostReactionsBarComponent extends PostingsReactionsBarDirective<Pos
     @Input() hoverBar: boolean = true;
     @ViewChild('createEditModal') createEditModal!: PostCreateEditModalComponent;
 
-    constructor(
-        metisService: MetisService,
-        private accountService: AccountService,
-    ) {
-        super(metisService);
-    }
+    protected metisService = inject(MetisService);
 
     isAnyReactionCountAboveZero(): boolean {
         return Object.values(this.reactionMetaDataMap).some((reaction) => reaction.count >= 1);
