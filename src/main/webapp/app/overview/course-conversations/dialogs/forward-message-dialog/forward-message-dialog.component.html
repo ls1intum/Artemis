@@ -48,8 +48,8 @@
                                 fontSizeInRem="0.6"
                                 imageId="user-profile-picture"
                                 defaultPictureId="user-default-profile-picture"
-                                [authorId]="postToForward?.author?.id"
-                                [authorName]="postToForward?.author?.name"
+                                [authorId]="postToForward()?.author?.id"
+                                [authorName]="postToForward()?.author?.name"
                                 [imageUrl]="option.img"
                                 style="margin-right: 0.2rem"
                             />
@@ -78,7 +78,7 @@
         [resizableMaxHeight]="MarkdownEditorHeight.MEDIUM"
     ></jhi-markdown-editor-monaco>
 
-    @if (postToForward) {
+    @if (postToForward()) {
         <div class="forwarded-message-container">
             <div class="left-border-line"></div>
             <div class="forwarded-message-content">
@@ -88,13 +88,13 @@
                         fontSizeInRem="0.6"
                         imageId="user-profile-picture"
                         defaultPictureId="user-default-profile-picture"
-                        [authorId]="postToForward?.author?.id"
-                        [authorName]="postToForward?.author?.name"
-                        [imageUrl]="postToForward?.author?.imageUrl"
+                        [authorId]="postToForward()?.author?.id"
+                        [authorName]="postToForward()?.author?.name"
+                        [imageUrl]="postToForward()?.author?.imageUrl"
                         style="margin-right: 0.2rem"
                     >
                     </jhi-profile-picture>
-                    <span class="forwarded-message-author">{{ postToForward?.author?.name }}</span>
+                    <span class="forwarded-message-author">{{ postToForward()?.author?.name }}</span>
                 </div>
                 <div class="forwarded-message-body" [ngClass]="{ expanded: showFullForwardedMessage }" #messageContent>
                     <div class="preserve-line-breaks">{{ displayedForwardedContent() }}</div>

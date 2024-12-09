@@ -1,4 +1,4 @@
-import { AfterViewInit, ChangeDetectorRef, Component, ElementRef, HostListener, Input, OnInit, Renderer2, ViewChild, inject, input } from '@angular/core';
+import { AfterViewInit, ChangeDetectorRef, Component, ElementRef, HostListener, OnInit, Renderer2, ViewChild, inject, input, signal } from '@angular/core';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import { ChannelDTO } from 'app/entities/metis/conversation/channel.model';
 import { OneToOneChatDTO } from 'app/entities/metis/conversation/one-to-one-chat.model';
@@ -31,9 +31,9 @@ interface CombinedOption {
     styleUrls: ['./forward-message-dialog.component.scss'],
 })
 export class ForwardMessageDialogComponent implements OnInit, AfterViewInit {
-    @Input() channels: ChannelDTO[] = [];
-    @Input() chats: OneToOneChatDTO[] = [];
-    @Input() postToForward: Post;
+    channels = signal<ChannelDTO[] | []>([]);
+    chats = signal<OneToOneChatDTO[] | []>([]);
+    postToForward = signal<Post | null>(null);
     filteredChannels: ChannelDTO[] = [];
     filteredChats: OneToOneChatWithName[] = [];
     selectedChannels: ChannelDTO[] = [];
@@ -60,9 +60,9 @@ export class ForwardMessageDialogComponent implements OnInit, AfterViewInit {
     ) {}
 
     ngOnInit(): void {
-        this.filteredChannels = this.channels;
+        this.filteredChannels = this.channels() || [];
         this.defaultActions = [new BoldAction(), new ItalicAction(), new UnderlineAction(), new QuoteAction(), new CodeAction(), new CodeBlockAction(), new UrlAction()];
-        this.filteredChats = this.chats.map((chat) => {
+        this.filteredChats = this.chats()?.map((chat) => {
             const otherUser = chat.members ? chat.members.find((user) => !user.isRequestingUser) : undefined;
             return {
                 ...chat,
@@ -72,8 +72,8 @@ export class ForwardMessageDialogComponent implements OnInit, AfterViewInit {
         });
 
         this.combinedOptions = [
-            ...this.channels
-                .filter((channel) => channel.id !== undefined && channel.name !== undefined)
+            ...this.channels()
+                .filter((channel: ChannelDTO) => channel.id !== undefined && channel.name !== undefined)
                 .map((channel) => ({
                     id: channel.id!,
                     name: channel.name!,
@@ -109,14 +109,14 @@ export class ForwardMessageDialogComponent implements OnInit, AfterViewInit {
     }
 
     displayedForwardedContent(): string {
-        if (!this.postToForward || !this.postToForward?.content) {
+        if (!this.postToForward || !this.postToForward()?.content) {
             return '';
         }
 
         if (this.showFullForwardedMessage || !this.isContentLong) {
-            return this.postToForward?.content!;
+            return this.postToForward()?.content!;
         } else {
-            const lines = this.postToForward?.content?.split('\n');
+            const lines = this.postToForward()?.content?.split('\n');
             return lines?.slice(0, this.maxLines).join('\n') + '...';
         }
     }
@@ -146,7 +146,7 @@ export class ForwardMessageDialogComponent implements OnInit, AfterViewInit {
         if (option.type === 'channel') {
             const existing = this.selectedChannels.find((c) => c.id === option.id);
             if (!existing) {
-                const channel = this.channels.find((c) => c.id === option.id);
+                const channel = this.channels()?.find((c) => c.id === option.id);
                 if (channel) {
                     this.selectedChannels.push(channel);
                 }

@@ -159,9 +159,9 @@ export abstract class PostingsReactionsBarDirective<T extends Posting> implement
                         backdrop: 'static',
                     });
 
-                    modalRef.componentInstance.chats = this.chats;
-                    modalRef.componentInstance.channels = this.channels;
-                    modalRef.componentInstance.postToForward = post;
+                    modalRef.componentInstance.chats.set(this.chats);
+                    modalRef.componentInstance.channels.set(this.channels);
+                    modalRef.componentInstance.postToForward.set(post);
 
                     modalRef.result.then(
                         (selection: { channels: Conversation[]; chats: Conversation[]; messageContent: string }) => {

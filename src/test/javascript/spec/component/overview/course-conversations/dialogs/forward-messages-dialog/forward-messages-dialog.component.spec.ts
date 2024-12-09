@@ -10,7 +10,7 @@ import { Post } from 'app/entities/metis/post.model';
 import { ForwardMessageDialogComponent } from '../../../../../../../../main/webapp/app/overview/course-conversations/dialogs/forward-message-dialog/forward-message-dialog.component';
 import { MarkdownEditorMonacoComponent } from '../../../../../../../../main/webapp/app/shared/markdown-editor/monaco/markdown-editor-monaco.component';
 import { ProfilePictureComponent } from '../../../../../../../../main/webapp/app/shared/profile-picture/profile-picture.component';
-import { ElementRef } from '@angular/core';
+import { ElementRef, runInInjectionContext, signal } from '@angular/core';
 
 describe('ForwardMessageDialogComponent', () => {
     let component: ForwardMessageDialogComponent;
@@ -28,14 +28,14 @@ describe('ForwardMessageDialogComponent', () => {
         fixture = TestBed.createComponent(ForwardMessageDialogComponent);
         component = fixture.componentInstance;
 
-        component.channels = [{ id: 1, name: 'General' } as ChannelDTO, { id: 2, name: 'Announcements' } as ChannelDTO];
-        component.chats = [
+        component.channels.set([{ id: 1, name: 'General' } as ChannelDTO, { id: 2, name: 'Announcements' } as ChannelDTO]);
+        component.chats.set([
             {
                 id: 3,
                 members: [{ id: 1, name: 'User1', isRequestingUser: false, imageUrl: 'user1.png' }],
             } as OneToOneChatDTO,
-        ];
-        component.postToForward = { id: 10, content: 'Test Message', author: { id: 1, name: 'Author', imageUrl: 'author.png' } } as Post;
+        ]);
+        component.postToForward.set({ id: 10, content: 'Test Message', author: { id: 1, name: 'Author', imageUrl: 'author.png' } } as Post);
 
         fixture.detectChanges();
     });
@@ -175,14 +175,16 @@ describe('ForwardMessageDialogComponent', () => {
     });
 
     it('should truncate forwarded content if it is too long', () => {
-        component.postToForward = {
-            content: 'Line1\nLine2\nLine3\nLine4\nLine5\nLine6\nLine7',
-        } as Post;
-        component.isContentLong = true;
-        component.maxLines = 5;
+        const post = new Post();
+        post.content = 'Line1\nLine2\nLine3\nLine4\nLine5\nLine6\nLine7';
+        runInInjectionContext(fixture.debugElement.injector, () => {
+            component.postToForward = signal<Post | null>(post);
+            component.isContentLong = true;
+            component.maxLines = 5;
 
-        const displayedContent = component.displayedForwardedContent();
-        expect(displayedContent).toContain('Line1\nLine2\nLine3\nLine4\nLine5...');
+            const displayedContent = component.displayedForwardedContent();
+            expect(displayedContent).toContain('Line1\nLine2\nLine3\nLine4\nLine5...');
+        });
     });
 
     it('should disable Send button if no content and no selections are made', () => {
