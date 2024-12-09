@@ -208,4 +208,12 @@ describe('PostingFooterComponent', () => {
             expect(group3.posts).toContainEqual(expect.objectContaining({ id: post5.id }));
         });
     });
+
+    it('should handle empty answer posts array', () => {
+        runInInjectionContext(injector, () => {
+            component.sortedAnswerPosts = input<AnswerPost[]>([]);
+            component.groupAnswerPosts();
+            expect(component.groupedAnswerPosts).toHaveLength(0);
+        });
+    });
 });
