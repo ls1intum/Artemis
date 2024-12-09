@@ -62,6 +62,7 @@ public abstract class AbstractIrisIntegrationTest extends AbstractSpringIntegrat
         activateSubSettings(globalSettings.getIrisLectureIngestionSettings());
         activateSubSettings(globalSettings.getIrisCompetencyGenerationSettings());
         activateSubSettings(globalSettings.getIrisTextExerciseChatSettings());
+
         irisSettingsRepository.save(globalSettings);
     }
 
@@ -94,6 +95,7 @@ public abstract class AbstractIrisIntegrationTest extends AbstractSpringIntegrat
         var exerciseSettings = irisSettingsService.getDefaultSettingsFor(exercise);
         activateSubSettings(exerciseSettings.getIrisChatSettings());
         activateSubSettings(exerciseSettings.getIrisTextExerciseChatSettings());
+
         irisSettingsRepository.save(exerciseSettings);
     }
 
