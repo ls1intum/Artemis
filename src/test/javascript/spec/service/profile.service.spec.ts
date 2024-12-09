@@ -55,7 +55,7 @@ describe('ProfileService', () => {
         },
         'test-server': true,
         sentry: {
-            dsn: 'https://ceeb3e72ec094684aefbb132f87231f2@sentry.ase.in.tum.de/2',
+            dsn: 'https://e52d0b9b6b61769f50b088634b4bc781@sentry.ase.in.tum.de/2',
         },
         'display-ribbon-on-profiles': 'dev',
         'allowed-minimum-orion-version': '1.0.0',
@@ -177,7 +177,7 @@ describe('ProfileService', () => {
         inProduction: true,
         inDevelopment: false,
         openApiEnabled: true,
-        sentry: { dsn: 'https://ceeb3e72ec094684aefbb132f87231f2@sentry.ase.in.tum.de/2' },
+        sentry: { dsn: 'https://e52d0b9b6b61769f50b088634b4bc781@sentry.ase.in.tum.de/2' },
         features: [FeatureToggle.ProgrammingExercises, FeatureToggle.PlagiarismChecks],
         buildPlanURLTemplate: 'https://artemistest2jenkins.ase.in.tum.de/job/{projectKey}/job/{buildPlanId}',
         commitHashURLTemplate: 'https://artemistest2gitlab.ase.in.tum.de/{projectKey}/{repoSlug}/-/commit/{commitHash}',
