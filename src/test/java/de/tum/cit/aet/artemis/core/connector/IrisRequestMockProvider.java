@@ -107,8 +107,7 @@ public class IrisRequestMockProvider {
             .andExpect(method(HttpMethod.POST))
             .andExpect(request -> {
                 var mockRequest = (MockClientHttpRequest) request;
-                var objectMapper = new ObjectMapper();
-                var jsonNode = objectMapper.readTree(mockRequest.getBodyAsString());
+                var jsonNode = mapper.readTree(mockRequest.getBodyAsString());
 
                 if (!jsonNode.has("submission") || !jsonNode.get("submission").isObject()) {
                     throw new AssertionError("Field 'submission' is missing or not an object");
