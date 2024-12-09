@@ -308,9 +308,17 @@ public class BuildJobExecutionService {
 
         ZonedDateTime buildCompletedDate = ZonedDateTime.now();
 
+        msg = "~~~~~~~~~~~~~~~~~~~~ Moving test results to specified directory for build job " + buildJob.id() + " ~~~~~~~~~~~~~~~~~~~~";
+        buildLogsMap.appendBuildLogEntry(buildJob.id(), msg);
+        log.debug(msg);
+
         buildJobContainerService.moveResultsToSpecifiedDirectory(containerId, buildJob.buildConfig().resultPaths(), LOCALCI_WORKING_DIRECTORY + LOCALCI_RESULTS_DIRECTORY);
 
         // Get an input stream of the test result files.
+
+        msg = "~~~~~~~~~~~~~~~~~~~~ Collecting test results from container " + containerId + " for build job " + buildJob.id() + " ~~~~~~~~~~~~~~~~~~~~";
+        buildLogsMap.appendBuildLogEntry(buildJob.id(), msg);
+        log.info(msg);
 
         TarArchiveInputStream testResultsTarInputStream;
 
@@ -349,6 +357,10 @@ public class BuildJobExecutionService {
             }
         }
 
+        msg = "~~~~~~~~~~~~~~~~~~~~ Parsing test results for build job " + buildJob.id() + " ~~~~~~~~~~~~~~~~~~~~";
+        buildLogsMap.appendBuildLogEntry(buildJob.id(), msg);
+        log.info(msg);
+
         BuildResult buildResult;
         try {
             buildResult = parseTestResults(testResultsTarInputStream, buildJob.buildConfig().branch(), assignmentRepoCommitHash, testRepoCommitHash, buildCompletedDate,
@@ -362,7 +374,7 @@ public class BuildJobExecutionService {
         }
 
         msg = "Building and testing submission for repository " + assignmentRepositoryUri.repositorySlug() + " and commit hash " + assignmentRepoCommitHash + " took "
-                + TimeLogUtil.formatDurationFrom(timeNanoStart);
+                + TimeLogUtil.formatDurationFrom(timeNanoStart) + " for build job " + buildJob.id();
         buildLogsMap.appendBuildLogEntry(buildJob.id(), msg);
         log.info(msg);
 
