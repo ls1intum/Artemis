@@ -2,7 +2,7 @@ package de.tum.cit.aet.artemis.assessment.repository.cleanup;
 
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
-import java.time.ZonedDateTime;
+import java.time.Instant;
 
 import org.springframework.context.annotation.Profile;
 import org.springframework.data.jpa.repository.Modifying;
@@ -37,7 +37,7 @@ public interface SubmissionVersionCleanupRepository extends ArtemisJpaRepository
             WHERE sv.createdDate > :deleteFrom
                 AND sv.createdDate < :deleteTo
             """)
-    int deleteSubmissionVersionsByCreatedDateRange(@Param("deleteFrom") ZonedDateTime deleteFrom, @Param("deleteTo") ZonedDateTime deleteTo);
+    int deleteSubmissionVersionsByCreatedDateRange(@Param("deleteFrom") Instant deleteFrom, @Param("deleteTo") Instant deleteTo);
 
     /**
      * Counts {@link SubmissionVersion} entities where the created date is after {@code deleteFrom}
@@ -53,6 +53,6 @@ public interface SubmissionVersionCleanupRepository extends ArtemisJpaRepository
             WHERE sv.createdDate > :deleteFrom
                 AND sv.createdDate < :deleteTo
             """)
-    int countSubmissionVersionsByCreatedDateRange(@Param("deleteFrom") ZonedDateTime deleteFrom, @Param("deleteTo") ZonedDateTime deleteTo);
+    int countSubmissionVersionsByCreatedDateRange(@Param("deleteFrom") Instant deleteFrom, @Param("deleteTo") Instant deleteTo);
 
 }

@@ -191,7 +191,7 @@ public class DataCleanupService {
     }
 
     public CleanupServiceExecutionRecordDTO deleteSubmissionVersions(ZonedDateTime deleteFrom, ZonedDateTime deleteTo) {
-        int deletedSubmissionVersions = submissionVersionCleanupRepository.deleteSubmissionVersionsByCreatedDateRange(deleteFrom, deleteTo);
+        int deletedSubmissionVersions = submissionVersionCleanupRepository.deleteSubmissionVersionsByCreatedDateRange(deleteFrom.toInstant(), deleteTo.toInstant());
         log.info("Deleted {} submission versions entries between {} and {}", deletedSubmissionVersions, deleteFrom, deleteTo);
 
         return CleanupServiceExecutionRecordDTO.of(createCleanupJobExecution(CleanupJobType.SUBMISSION_VERSIONS, deleteFrom, deleteTo));
@@ -272,7 +272,7 @@ public class DataCleanupService {
     }
 
     public SubmissionVersionsCleanupCountDTO countSubmissionVersions(ZonedDateTime deleteFrom, ZonedDateTime deleteTo) {
-        int submissionVersionsCount = this.submissionVersionCleanupRepository.countSubmissionVersionsByCreatedDateRange(deleteFrom, deleteTo);
+        int submissionVersionsCount = this.submissionVersionCleanupRepository.countSubmissionVersionsByCreatedDateRange(deleteFrom.toInstant(), deleteTo.toInstant());
         return new SubmissionVersionsCleanupCountDTO(submissionVersionsCount);
     }
 
