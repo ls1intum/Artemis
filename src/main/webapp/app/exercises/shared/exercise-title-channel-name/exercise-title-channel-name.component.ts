@@ -1,4 +1,4 @@
-import { Component, EventEmitter, Input, OnChanges, Output, SimpleChanges, ViewChild, effect, inject, input, signal } from '@angular/core';
+import { Component, Input, OnChanges, SimpleChanges, ViewChild, effect, inject, input, output, signal } from '@angular/core';
 import { Course, isCommunicationEnabled } from 'app/entities/course.model';
 import { Exercise } from 'app/entities/exercise.model';
 import { TitleChannelNameComponent } from 'app/shared/form/title-channel-name/title-channel-name.component';
@@ -22,8 +22,8 @@ export class ExerciseTitleChannelNameComponent implements OnChanges {
 
     @ViewChild(TitleChannelNameComponent) titleChannelNameComponent: TitleChannelNameComponent;
 
-    @Output() onTitleChange = new EventEmitter<string>();
-    @Output() onChannelNameChange = new EventEmitter<string>();
+    onTitleChange = output<string>();
+    onChannelNameChange = output<string>();
 
     private readonly exerciseService: ExerciseService = inject(ExerciseService);
 
