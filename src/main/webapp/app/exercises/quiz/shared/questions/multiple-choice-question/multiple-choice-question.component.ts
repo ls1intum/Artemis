@@ -6,12 +6,20 @@ import { QuizQuestion, RenderedQuizQuestionMarkDownElement } from 'app/entities/
 import { Result } from 'app/entities/result.model';
 import { faExclamationCircle, faExclamationTriangle, faQuestionCircle } from '@fortawesome/free-solid-svg-icons';
 import { faCheckSquare, faCircle, faDotCircle, faSquare } from '@fortawesome/free-regular-svg-icons';
+import { NgClass } from '@angular/common';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { NgbPopover, NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { QuizScoringInfoStudentModalComponent } from '../quiz-scoring-infostudent-modal/quiz-scoring-info-student-modal.component';
+import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 
 @Component({
     selector: 'jhi-multiple-choice-question',
     templateUrl: './multiple-choice-question.component.html',
     styleUrls: ['./multiple-choice-question.component.scss', '../../../participate/quiz-participation.scss'],
     encapsulation: ViewEncapsulation.None,
+    standalone: true,
+    imports: [NgClass, TranslateDirective, NgbPopover, FaIconComponent, QuizScoringInfoStudentModalComponent, NgbTooltip, ArtemisTranslatePipe],
 })
 export class MultipleChoiceQuestionComponent {
     _question: MultipleChoiceQuestion;

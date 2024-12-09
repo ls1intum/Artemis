@@ -2,8 +2,10 @@ import { AfterViewInit, Directive, ElementRef, HostListener, Input, OnChanges, O
 
 // NOTE: this code was taken from https://github.com/sollenne/angular-fittext because the repository was not maintained any more since June 2018
 
-// eslint-disable-next-line @angular-eslint/directive-selector
-@Directive({ selector: '[fitText]' })
+@Directive({
+    selector: '[fitText]',
+    standalone: true,
+})
 export class FitTextDirective implements AfterViewInit, OnInit, OnChanges {
     @Input() fitText = true;
     @Input() compression = 1;

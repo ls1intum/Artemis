@@ -38,12 +38,40 @@ import { captureException } from '@sentry/angular';
 import { getCourseFromExercise } from 'app/entities/exercise.model';
 import { faCircleNotch, faSync } from '@fortawesome/free-solid-svg-icons';
 import { ArtemisServerDateService } from 'app/shared/server-date.service';
+import { NgClass, NgTemplateOutlet } from '@angular/common';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { ArtemisSharedComponentModule } from 'app/shared/components/shared-component.module';
+import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
+import { MultipleChoiceQuestionComponent as MultipleChoiceQuestionComponent_1 } from 'app/exercises/quiz/shared/questions/multiple-choice-question/multiple-choice-question.component';
+import { DragAndDropQuestionComponent as DragAndDropQuestionComponent_1 } from 'app/exercises/quiz/shared/questions/drag-and-drop-question/drag-and-drop-question.component';
+import { ShortAnswerQuestionComponent as ShortAnswerQuestionComponent_1 } from 'app/exercises/quiz/shared/questions/short-answer-question/short-answer-question.component';
+import { ArtemisSharedModule } from 'app/shared/shared.module';
+import { FormsModule } from '@angular/forms';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { ArtemisSharedCommonModule } from 'app/shared/shared-common.module';
+import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 
 @Component({
     selector: 'jhi-quiz',
     templateUrl: './quiz-participation.component.html',
     providers: [ParticipationService],
     styleUrls: ['./quiz-participation.component.scss'],
+    standalone: true,
+    imports: [
+        NgClass,
+        NgTemplateOutlet,
+        TranslateDirective,
+        ArtemisSharedComponentModule,
+        NgbTooltip,
+        MultipleChoiceQuestionComponent_1,
+        DragAndDropQuestionComponent_1,
+        ShortAnswerQuestionComponent_1,
+        ArtemisSharedModule,
+        FormsModule,
+        FaIconComponent,
+        ArtemisSharedCommonModule,
+        ArtemisTranslatePipe,
+    ],
 })
 export class QuizParticipationComponent implements OnInit, OnDestroy {
     // make constants available to html for comparison
