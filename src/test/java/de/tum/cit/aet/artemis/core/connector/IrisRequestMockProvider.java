@@ -100,6 +100,38 @@ public class IrisRequestMockProvider {
         // @formatter:on
     }
 
+    public void mockProgrammingExerciseChatResponseExpectingSubmissionId(Consumer<PyrisExerciseChatPipelineExecutionDTO> responseConsumer, long submissionId) {
+        // @formatter:off
+        mockServer
+            .expect(ExpectedCount.once(), requestTo(pipelinesApiURL + "/tutor-chat/default/run"))
+            .andExpect(method(HttpMethod.POST))
+            .andExpect(request -> {
+                var mockRequest = (MockClientHttpRequest) request;
+                var objectMapper = new ObjectMapper();
+                var jsonNode = objectMapper.readTree(mockRequest.getBodyAsString());
+
+                if (!jsonNode.has("submission") || !jsonNode.get("submission").isObject()) {
+                    throw new AssertionError("Field 'submission' is missing or not an object");
+                }
+
+                if (!jsonNode.get("submission").has("id")) {
+                    throw new AssertionError("Field 'id' is missing in 'submission'");
+                }
+
+                long id = jsonNode.get("submission").get("id").asLong();
+                if (id != submissionId) {
+                    throw new AssertionError("Field 'id' in 'submission' is not equal to " + submissionId);
+                }
+            })
+            .andRespond(request -> {
+                var mockRequest = (MockClientHttpRequest) request;
+                var dto = mapper.readValue(mockRequest.getBodyAsString(), PyrisExerciseChatPipelineExecutionDTO.class);
+                responseConsumer.accept(dto);
+                return MockRestResponseCreators.withRawStatus(HttpStatus.ACCEPTED.value()).createResponse(request);
+            });
+        // @formatter:on
+    }
+
     public void mockTextExerciseChatResponse(Consumer<PyrisTextExerciseChatPipelineExecutionDTO> responseConsumer) {
         // @formatter:off
         mockServer
