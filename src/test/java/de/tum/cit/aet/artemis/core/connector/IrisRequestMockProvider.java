@@ -1,6 +1,7 @@
 package de.tum.cit.aet.artemis.core.connector;
 
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_IRIS;
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.springframework.test.web.client.match.MockRestRequestMatchers.method;
 import static org.springframework.test.web.client.match.MockRestRequestMatchers.requestTo;
 import static org.springframework.test.web.client.response.MockRestResponseCreators.withRawStatus;
@@ -109,18 +110,19 @@ public class IrisRequestMockProvider {
                 var mockRequest = (MockClientHttpRequest) request;
                 var jsonNode = mapper.readTree(mockRequest.getBodyAsString());
 
-                if (!jsonNode.has("submission") || !jsonNode.get("submission").isObject()) {
-                    throw new AssertionError("Field 'submission' is missing or not an object");
-                }
-
-                if (!jsonNode.get("submission").has("id")) {
-                    throw new AssertionError("Field 'id' is missing in 'submission'");
-                }
-
-                long id = jsonNode.get("submission").get("id").asLong();
-                if (id != submissionId) {
-                    throw new AssertionError("Field 'id' in 'submission' is not equal to " + submissionId);
-                }
+                assertThat(jsonNode.has("submission"))
+                    .withFailMessage("Request body must contain a 'submission' field")
+                    .isTrue();
+                assertThat(jsonNode.get("submission").isObject())
+                    .withFailMessage("The 'submission' field must be an object")
+                    .isTrue();
+                assertThat(jsonNode.get("submission").has("id"))
+                    .withFailMessage("The 'submission' object must contain an 'id' field")
+                    .isTrue();
+                assertThat(jsonNode.get("submission").get("id").asLong())
+                    .withFailMessage("Submission ID in request (%d) does not match expected ID (%d)",
+                        jsonNode.get("submission").get("id").asLong(), submissionId)
+                    .isEqualTo(submissionId);
             })
             .andRespond(request -> {
                 var mockRequest = (MockClientHttpRequest) request;
