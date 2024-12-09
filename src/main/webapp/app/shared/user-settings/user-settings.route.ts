@@ -9,6 +9,7 @@ import { SshUserSettingsComponent } from 'app/shared/user-settings/ssh-settings/
 import { VcsAccessTokensSettingsComponent } from 'app/shared/user-settings/vcs-access-tokens-settings/vcs-access-tokens-settings.component';
 import { IdeSettingsComponent } from 'app/shared/user-settings/ide-preferences/ide-settings.component';
 import { SshUserSettingsKeyDetailsComponent } from 'app/shared/user-settings/ssh-settings/details/ssh-user-settings-key-details.component';
+import { SshUserSettingsFingerprintsComponent } from 'app/shared/user-settings/ssh-settings/fingerprints/ssh-user-settings-fingerprints.component';
 
 export const userSettingsState: Routes = [
     {
@@ -56,6 +57,13 @@ export const userSettingsState: Routes = [
             {
                 path: 'ssh/add',
                 component: SshUserSettingsKeyDetailsComponent,
+                data: {
+                    pageTitle: 'artemisApp.userSettings.categories.SSH_SETTINGS',
+                },
+            },
+            {
+                path: 'ssh/fingerprints',
+                component: SshUserSettingsFingerprintsComponent,
                 data: {
                     pageTitle: 'artemisApp.userSettings.categories.SSH_SETTINGS',
                 },
