@@ -17,7 +17,6 @@ import org.springframework.stereotype.Service;
 import de.tum.cit.aet.artemis.assessment.repository.TutorParticipationRepository;
 import de.tum.cit.aet.artemis.assessment.service.ExampleSubmissionService;
 import de.tum.cit.aet.artemis.atlas.domain.competency.CompetencyExerciseLink;
-import de.tum.cit.aet.artemis.atlas.repository.CompetencyExerciseLinkRepository;
 import de.tum.cit.aet.artemis.atlas.service.competency.CompetencyProgressService;
 import de.tum.cit.aet.artemis.communication.domain.conversation.Channel;
 import de.tum.cit.aet.artemis.communication.repository.conversation.ChannelRepository;
@@ -81,8 +80,6 @@ public class ExerciseDeletionService {
 
     private final CompetencyProgressService competencyProgressService;
 
-    private final CompetencyExerciseLinkRepository competencyExerciseLinkRepository;
-
     private final Optional<IrisSettingsService> irisSettingsService;
 
     public ExerciseDeletionService(ExerciseRepository exerciseRepository, ExerciseUnitRepository exerciseUnitRepository, ParticipationService participationService,
@@ -90,7 +87,7 @@ public class ExerciseDeletionService {
             TutorParticipationRepository tutorParticipationRepository, ExampleSubmissionService exampleSubmissionService, StudentExamRepository studentExamRepository,
             LectureUnitService lectureUnitService, PlagiarismResultRepository plagiarismResultRepository, TextExerciseService textExerciseService,
             ChannelRepository channelRepository, ChannelService channelService, CompetencyProgressService competencyProgressService,
-            CompetencyExerciseLinkRepository competencyExerciseLinkRepository, Optional<IrisSettingsService> irisSettingsService) {
+            Optional<IrisSettingsService> irisSettingsService) {
         this.exerciseRepository = exerciseRepository;
         this.participationService = participationService;
         this.programmingExerciseService = programmingExerciseService;
@@ -106,7 +103,6 @@ public class ExerciseDeletionService {
         this.channelRepository = channelRepository;
         this.channelService = channelService;
         this.competencyProgressService = competencyProgressService;
-        this.competencyExerciseLinkRepository = competencyExerciseLinkRepository;
         this.irisSettingsService = irisSettingsService;
     }
 

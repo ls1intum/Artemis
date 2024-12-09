@@ -526,7 +526,7 @@ describe('CodeButtonComponent', () => {
             },
             false,
         ],
-    ])('%s', (description, profileInfo, programmingExercise, buildConfig, expectedVisibility) => {
+    ])('%s', async (description, profileInfo, programmingExercise, buildConfig, expectedVisibility) => {
         getProfileInfoSub = jest.spyOn(profileService, 'getProfileInfo');
         getProfileInfoSub.mockReturnValue(of(profileInfo as ProfileInfo));
 
@@ -536,7 +536,7 @@ describe('CodeButtonComponent', () => {
         // Expand the programmingExercise by given properties
         component.exercise = { ...exercise, ...programmingExercise } as ProgrammingExercise;
 
-        fixture.detectChanges();
+        await component.ngOnInit();
 
         expect(component.theiaEnabled).toBe(expectedVisibility);
     });

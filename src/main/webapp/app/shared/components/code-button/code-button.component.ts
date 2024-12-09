@@ -130,9 +130,9 @@ export class CodeButtonComponent implements OnInit, OnChanges {
             if (this.useToken) {
                 this.useHttpsUrlWithToken();
             }
-            this.loadParticipationVcsAccessTokens();
 
             this.initTheia(profileInfo);
+            this.loadParticipationVcsAccessTokens();
         });
 
         this.ideSettingsService.loadIdePreferences().then((programmingLanguageToIde) => {
@@ -278,6 +278,7 @@ export class CodeButtonComponent implements OnInit, OnChanges {
      *
      * @param url the url to which the credentials should be added
      * @param insertPlaceholder if true, instead of the actual token, '**********' is used (e.g. to prevent leaking the token during a screen-share)
+     * @param alwaysToken if true, the token is always added, even if it is not required
      */
     private addCredentialsToHttpUrl(url: string, insertPlaceholder = false, alwaysToken = false): string {
         const includeToken = this.accessTokensEnabled && this.user.vcsAccessToken && (this.useToken || alwaysToken);
@@ -357,7 +358,7 @@ export class CodeButtonComponent implements OnInit, OnChanges {
         }
     }
 
-    initTheia(profileInfo: ProfileInfo) {
+    private initTheia(profileInfo: ProfileInfo) {
         if (profileInfo.activeProfiles?.includes(PROFILE_THEIA) && this.exercise) {
             // Theia requires the Build Config of the programming exercise to be set
             this.programmingExerciseService.getBuildConfig(this.exercise.id!).subscribe((buildConfig) => {
@@ -377,11 +378,21 @@ export class CodeButtonComponent implements OnInit, OnChanges {
     async startOnlineIDE() {
         const artemisToken: string = (await this.accountService.getToolToken('SCORPIO').toPromise()) ?? '';
 
+        let artemisUrl: string = '';
+        if (window.location.protocol) {
+            artemisUrl += window.location.protocol + '//';
+        }
+        if (window.location.host) {
+            artemisUrl += window.location.host;
+        }
+
         const data = {
             appDef: this.exercise?.buildConfig?.theiaImage ?? '',
             gitUri: this.addCredentialsToHttpUrl(this.getRepositoryUri(), false, true),
+            gitUser: this.user.name,
+            gitMail: this.user.email,
             artemisToken: artemisToken,
-            artemisUrl: window.location.protocol ? `${window.location.protocol}://` : '' + window.location.host ? window.location.host : '',
+            artemisUrl: artemisUrl,
         };
 
         const newWindow = window.open('', '_blank');

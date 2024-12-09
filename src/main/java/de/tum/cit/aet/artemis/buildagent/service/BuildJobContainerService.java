@@ -43,9 +43,9 @@ import com.github.dockerjava.api.model.Container;
 import com.github.dockerjava.api.model.Frame;
 import com.github.dockerjava.api.model.HostConfig;
 
+import de.tum.cit.aet.artemis.buildagent.dto.BuildLogDTO;
 import de.tum.cit.aet.artemis.core.exception.LocalCIException;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingLanguage;
-import de.tum.cit.aet.artemis.programming.domain.build.BuildLogEntry;
 import de.tum.cit.aet.artemis.programming.service.ci.ContinuousIntegrationService.RepositoryCheckoutPath;
 
 /**
@@ -414,7 +414,7 @@ public class BuildJobContainerService {
                 @Override
                 public void onNext(Frame item) {
                     String text = new String(item.getPayload());
-                    BuildLogEntry buildLogEntry = new BuildLogEntry(ZonedDateTime.now(), text);
+                    BuildLogDTO buildLogEntry = new BuildLogDTO(ZonedDateTime.now(), text);
                     if (buildJobId != null) {
                         buildLogsMap.appendBuildLogEntry(buildJobId, buildLogEntry);
                     }
