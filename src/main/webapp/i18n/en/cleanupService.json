@@ -53,7 +53,8 @@
             "plagiarismMatches": "Plagiarism matches",
             "longFeedbackText": "Long feedback text",
             "textBlock": "Text block",
-            "feedback": "Feedback"
+            "feedback": "Feedback",
+            "submissionVersions": "Submission versions"
         },
         "button": {
             "execute": "Execute",
