@@ -169,11 +169,15 @@ export class ConversationInfoComponent implements OnInit, OnDestroy {
     }
 
     private updateGroupChat<K extends keyof GroupChatDTO>(groupChat: GroupChatDTO, propertyName: K, updateValue: GroupChatDTO[K]) {
+        const courseId = this.course()?.id;
+        if (!courseId) {
+            return;
+        }
         const updateDTO = new GroupChatDTO();
         updateDTO[propertyName] = updateValue;
 
         this.groupChatService
-            .update(this.course()?.id!, groupChat.id!, updateDTO)
+            .update(courseId, groupChat.id!, updateDTO)
             .pipe(
                 map((res: HttpResponse<GroupChatDTO>) => res.body),
                 takeUntil(this.ngUnsubscribe),
@@ -188,10 +192,14 @@ export class ConversationInfoComponent implements OnInit, OnDestroy {
     }
 
     private updateChannel<K extends keyof ChannelDTO>(channel: ChannelDTO, propertyName: K, updateValue: ChannelDTO[K]) {
+        const courseId = this.course()?.id;
+        if (!courseId) {
+            return;
+        }
         const updateDTO = new ChannelDTO();
         updateDTO[propertyName] = updateValue;
         this.channelService
-            .update(this.course()?.id!, channel.id!, updateDTO)
+            .update(courseId, channel.id!, updateDTO)
             .pipe(
                 map((res: HttpResponse<ChannelDTO>) => res.body),
                 takeUntil(this.ngUnsubscribe),

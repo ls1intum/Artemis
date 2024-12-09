@@ -45,12 +45,16 @@ examples.forEach((activeConversation) => {
             fixture = TestBed.createComponent(ConversationSettingsComponent);
             component = fixture.componentInstance;
             TestBed.runInInjectionContext(() => {
-                component = fixture.componentInstance;
                 component.course = input<Course>(course);
                 component.activeConversation = input<ConversationDTO>(activeConversation);
                 component.ngOnInit();
             });
             fixture.detectChanges();
+        });
+
+        afterEach(() => {
+            // Reset injection context
+            TestBed.resetTestingModule();
         });
 
         it('should create', () => {

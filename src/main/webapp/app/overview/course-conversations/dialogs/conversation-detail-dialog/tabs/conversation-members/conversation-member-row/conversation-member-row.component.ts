@@ -123,7 +123,15 @@ export class ConversationMemberRowComponent implements OnInit, OnDestroy {
             channelName: channel.name!,
             userName: this.userLabel,
         };
-        const confirmedCallback = () => this.channelService.grantChannelModeratorRole(this.course()?.id!, channel.id!, [this.conversationMember()?.login!]);
+        const confirmedCallback = () => {
+            const courseId = this.course?.()?.id;
+            const channelId = channel?.id;
+            const memberLogin = this.conversationMember?.()?.login;
+            if (!courseId || !channelId || !memberLogin) {
+                throw new Error('Required parameters are missing');
+            }
+            return this.channelService.grantChannelModeratorRole(courseId, channelId, [memberLogin]);
+        };
         this.openConfirmationDialog(translationKeys, translationParams, confirmedCallback);
     }
 
@@ -143,7 +151,15 @@ export class ConversationMemberRowComponent implements OnInit, OnDestroy {
             channelName: channel.name!,
             userName: this.userLabel,
         };
-        const confirmedCallback = () => this.channelService.revokeChannelModeratorRole(this.course()?.id!, channel.id!, [this.conversationMember()?.login!]);
+        const confirmedCallback = () => {
+            const courseId = this.course?.()?.id;
+            const channelId = channel?.id;
+            const memberLogin = this.conversationMember?.()?.login;
+            if (!courseId || !channelId || !memberLogin) {
+                throw new Error('Required parameters are missing');
+            }
+            return this.channelService.revokeChannelModeratorRole(courseId, channelId, [memberLogin]);
+        };
         this.openConfirmationDialog(translationKeys, translationParams, confirmedCallback);
     }
 
@@ -174,7 +190,15 @@ export class ConversationMemberRowComponent implements OnInit, OnDestroy {
             userName: this.userLabel,
             channelName: channel.name!,
         };
-        const confirmedCallback = () => this.channelService.deregisterUsersFromChannel(this.course()?.id!, this.activeConversation()?.id!, [this.conversationMember()?.login!]);
+        const confirmedCallback = () => {
+            const courseId = this.course?.()?.id;
+            const activeConversationId = this.activeConversation()?.id;
+            const memberLogin = this.conversationMember?.()?.login;
+            if (!courseId || !activeConversationId || !memberLogin) {
+                throw new Error('Required parameters are missing');
+            }
+            return this.channelService.deregisterUsersFromChannel(courseId, activeConversationId, [memberLogin]);
+        };
         this.openConfirmationDialog(translationKeys, translationParams, confirmedCallback);
     }
 
@@ -193,7 +217,15 @@ export class ConversationMemberRowComponent implements OnInit, OnDestroy {
         const translationParams = {
             userName: this.userLabel,
         };
-        const confirmedCallback = () => this.groupChatService.removeUsersFromGroupChat(this.course()?.id!, this.activeConversation()?.id!, [this.conversationMember()?.login!]);
+        const confirmedCallback = () => {
+            const courseId = this.course?.()?.id;
+            const activeConversationId = this.activeConversation()?.id;
+            const memberLogin = this.conversationMember?.()?.login;
+            if (!courseId || !activeConversationId || !memberLogin) {
+                throw new Error('Required parameters are missing');
+            }
+            return this.groupChatService.removeUsersFromGroupChat(courseId, activeConversationId, [memberLogin]);
+        };
         this.openConfirmationDialog(translationKeys, translationParams, confirmedCallback);
     }
 

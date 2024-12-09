@@ -112,16 +112,20 @@ export class ConversationMembersComponent implements OnInit, OnDestroy {
                     this.isSearching = true;
                     this.searchTerm = searchTerm;
                 }),
-                switchMap(() =>
-                    this.conversationService.searchMembersOfConversation(
-                        this.course()?.id!,
-                        this.activeConversation()?.id!,
-                        this.searchTerm,
-                        this.page - 1,
-                        this.itemsPerPage,
-                        Number(this.selectedFilter),
-                    ),
-                ),
+                switchMap(() => {
+                    if (this.course()?.id && this.activeConversation()?.id) {
+                        return this.conversationService.searchMembersOfConversation(
+                            this.course()?.id!,
+                            this.activeConversation()?.id!,
+                            this.searchTerm,
+                            this.page - 1,
+                            this.itemsPerPage,
+                            Number(this.selectedFilter),
+                        );
+                    } else {
+                        return EMPTY;
+                    }
+                }),
                 takeUntil(this.ngUnsubscribe),
             )
             .subscribe({
