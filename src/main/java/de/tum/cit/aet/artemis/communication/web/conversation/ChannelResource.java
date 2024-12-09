@@ -486,12 +486,13 @@ public class ChannelResource extends ConversationManagementResource {
         log.debug("REST request to create feedback channel for course {} and exercise {} with properties: {}", courseId, exerciseId, feedbackChannelRequest);
 
         ChannelDTO channelDTO = feedbackChannelRequest.channel();
-        String feedbackDetailText = feedbackChannelRequest.feedbackDetailText();
+        List<String> feedbackDetailText = feedbackChannelRequest.feedbackDetailText();
+        String testCaseName = feedbackChannelRequest.testCaseName();
 
         User requestingUser = userRepository.getUserWithGroupsAndAuthorities();
         Course course = courseRepository.findByIdElseThrow(courseId);
         checkCommunicationEnabledElseThrow(course);
-        Channel createdChannel = channelService.createFeedbackChannel(course, exerciseId, channelDTO, feedbackDetailText, requestingUser);
+        Channel createdChannel = channelService.createFeedbackChannel(course, exerciseId, channelDTO, feedbackDetailText, testCaseName, requestingUser);
 
         return ResponseEntity.created(new URI("/api/channels/" + createdChannel.getId())).body(conversationDTOService.convertChannelToDTO(requestingUser, createdChannel));
     }

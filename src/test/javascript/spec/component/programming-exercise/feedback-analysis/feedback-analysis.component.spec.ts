@@ -27,8 +27,7 @@ describe('FeedbackAnalysisComponent', () => {
 
     const feedbackMock: FeedbackDetail[] = [
         {
-            concatenatedFeedbackIds: [1, 2],
-            detailText: 'Test feedback 1 detail',
+            detailTexts: ['Test feedback 1 detail'],
             testCaseName: 'test1',
             count: 10,
             relativeCount: 50,
@@ -36,8 +35,7 @@ describe('FeedbackAnalysisComponent', () => {
             errorCategory: 'Student Error',
         },
         {
-            concatenatedFeedbackIds: [3, 4],
-            detailText: 'Test feedback 2 detail',
+            detailTexts: ['Test feedback 2 detail'],
             testCaseName: 'test2',
             count: 5,
             relativeCount: 25,
@@ -52,6 +50,7 @@ describe('FeedbackAnalysisComponent', () => {
         taskNames: ['task1', 'task2'],
         testCaseNames: ['test1', 'test2'],
         errorCategories: ['Student Error', 'AST Error', 'Ares Error'],
+        levenshteinMaxCount: 0,
     };
 
     beforeEach(async () => {
@@ -86,7 +85,6 @@ describe('FeedbackAnalysisComponent', () => {
             result: Promise.resolve(),
         } as any);
 
-        jest.spyOn(feedbackAnalysisService, 'getAffectedStudentCount').mockResolvedValue(10);
         createChannelSpy = jest.spyOn(feedbackAnalysisService, 'createChannel').mockResolvedValue({ id: 123 } as ChannelDTO);
 
         jest.spyOn(fixture.debugElement.injector.get(AlertService), 'success');
