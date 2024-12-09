@@ -392,7 +392,7 @@ public class GitService extends AbstractGitService {
             // Clone repository.
             try {
                 var gitUriAsString = getGitUriAsString(sourceRepoUri);
-                log.info("Cloning from {} to {}", gitUriAsString, localPath);
+                log.debug("Cloning from {} to {}", gitUriAsString, localPath);
                 cloneInProgressOperations.put(localPath, localPath);
                 // make sure the directory to copy into is empty
                 FileUtils.deleteDirectory(localPath.toFile());
