@@ -76,6 +76,9 @@ export class CleanupOperationModalComponent implements OnInit {
             case 'deleteOldRatedResults':
                 this.dataCleanupService.deleteOldRatedResults(this.operation().deleteFrom, this.operation().deleteTo).subscribe(operationHandler);
                 break;
+            case 'deleteOldSubmissionVersions':
+                this.dataCleanupService.deleteOldSubmissionVersions(this.operation().deleteFrom, this.operation().deleteTo).subscribe(operationHandler);
+                break;
         }
     }
 
@@ -92,6 +95,8 @@ export class CleanupOperationModalComponent implements OnInit {
                 return this.dataCleanupService.countNonRatedResults(this.operation().deleteFrom, this.operation().deleteTo);
             case 'deleteOldRatedResults':
                 return this.dataCleanupService.countOldRatedResults(this.operation().deleteFrom, this.operation().deleteTo);
+            case 'deleteOldSubmissionVersions':
+                return this.dataCleanupService.countOldSubmissionVersions(this.operation().deleteFrom, this.operation().deleteTo);
             default:
                 throw new Error(`Unsupported operation: ${this.operation().name}`);
         }
