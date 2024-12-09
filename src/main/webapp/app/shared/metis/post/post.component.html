@@ -1,4 +1,7 @@
-<div class="post" [ngClass]="{ 'mx-0': !isThreadSidebar, 'pinned-message': isPinned(), 'is-saved': !isConsecutive() && posting.isSaved }">
+<div
+    class="post hover-container"
+    [ngClass]="{ 'mx-0': !isThreadSidebar, 'pinned-message': isPinned(), 'is-saved': !isConsecutive() && posting.isSaved, 'non-consecutive': !isConsecutive() }"
+>
     @if (posting.isSaved) {
         <div class="post-is-saved-message post-content-padding fs-xx-small py-1" [ngClass]="{ 'is-saved': isConsecutive() && posting.isSaved }">
             <div class="post-is-saved-message-content">
@@ -6,6 +9,11 @@
                 <span class="text-secondary" jhiTranslate="artemisApp.metis.post.saved"></span>
             </div>
         </div>
+    }
+    @if (isConsecutive()) {
+        <span class="post-time fs-small" ngbTooltip="{{ posting.creationDate | artemisDate: 'time' }}">
+            {{ posting.creationDate | artemisDate: 'time' }}
+        </span>
     }
     @if (!isConsecutive()) {
         <div class="ps-3">

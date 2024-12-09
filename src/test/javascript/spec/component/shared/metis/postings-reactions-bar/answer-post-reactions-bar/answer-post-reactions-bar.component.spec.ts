@@ -135,6 +135,7 @@ describe('AnswerPostReactionsBarComponent', () => {
     it('should display the delete option to instructor if posting is in course-wide channel from a student', () => {
         metisServiceUserIsAtLeastInstructorMock.mockReturnValue(true);
         metisServiceUserPostingAuthorMock.mockReturnValue(false);
+        metisServiceUserIsAtLeastTutorMock.mockReturnValue(true);
         component.posting = { ...metisResolvingAnswerPostUser1, post: { ...metisPostInChannel } };
         component.posting.authorRole = UserRole.USER;
         component.ngOnInit();
@@ -162,7 +163,7 @@ describe('AnswerPostReactionsBarComponent', () => {
         expect(getEditButton()).not.toBeNull();
     });
 
-    it('should not display edit and delete options to tutor if posting is in course-wide channel from a student', () => {
+    it('should display edit and delete options to tutor if posting is in course-wide channel from a student', () => {
         metisServiceUserIsAtLeastInstructorMock.mockReturnValue(false);
         metisServiceUserIsAtLeastTutorMock.mockReturnValue(true);
         metisServiceUserPostingAuthorMock.mockReturnValue(false);
@@ -171,7 +172,7 @@ describe('AnswerPostReactionsBarComponent', () => {
         component.ngOnInit();
         fixture.detectChanges();
         expect(getEditButton()).toBeNull();
-        expect(getDeleteButton()).toBeNull();
+        expect(getDeleteButton()).not.toBeNull();
     });
 
     it('should not display edit and delete options to users that are neither author or tutor', () => {

@@ -11,7 +11,7 @@ import { MockMetisService } from '../../../../helpers/mocks/service/mock-metis-s
 import { MetisService } from 'app/shared/metis/metis.service';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { DisplayPriority, PageType } from 'app/shared/metis/metis.util';
-import { TranslatePipeMock } from '../../../../helpers/mocks/service/mock-translate.service';
+import { MockTranslateService, TranslatePipeMock } from '../../../../helpers/mocks/service/mock-translate.service';
 import { OverlayModule } from '@angular/cdk/overlay';
 import {
     metisChannel,
@@ -38,8 +38,12 @@ import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
 import { DOCUMENT } from '@angular/common';
 import { Posting, PostingType } from 'app/entities/metis/posting.model';
 import { Post } from 'app/entities/metis/post.model';
-import { By } from '@angular/platform-browser';
+import { ArtemisTranslatePipe } from '../../../../../../../main/webapp/app/shared/pipes/artemis-translate.pipe';
+import { ArtemisDatePipe } from '../../../../../../../main/webapp/app/shared/pipes/artemis-date.pipe';
 import { TranslateDirective } from '../../../../../../../main/webapp/app/shared/language/translate.directive';
+import { TranslateService } from '@ngx-translate/core';
+import { By } from '@angular/platform-browser';
+import dayjs from 'dayjs/esm';
 
 describe('PostComponent', () => {
     let component: PostComponent;
@@ -66,6 +70,7 @@ describe('PostComponent', () => {
                 { provide: DOCUMENT, useValue: document },
                 MockProvider(MetisConversationService),
                 MockProvider(OneToOneChatService),
+                { provide: TranslateService, useClass: MockTranslateService },
             ],
             declarations: [
                 PostComponent,
@@ -79,6 +84,8 @@ describe('PostComponent', () => {
                 MockRouterLinkDirective,
                 MockQueryParamsDirective,
                 TranslatePipeMock,
+                ArtemisDatePipe,
+                ArtemisTranslatePipe,
                 MockDirective(TranslateDirective),
             ],
         })
@@ -396,5 +403,32 @@ describe('PostComponent', () => {
 
         expect(component.posting).toBeInstanceOf(Post);
         expect(spy).toHaveBeenCalled();
+    });
+
+    it('should display post-time span when isConsecutive() returns true', () => {
+        const fixedDate = dayjs('2024-12-06T23:39:27.080Z');
+        component.posting = { ...metisPostExerciseUser1, creationDate: fixedDate };
+
+        jest.spyOn(component, 'isConsecutive').mockReturnValue(true);
+        fixture.detectChanges();
+
+        const postTimeDebugElement = debugElement.query(By.css('span.post-time'));
+        const postTimeElement = postTimeDebugElement.nativeElement as HTMLElement;
+
+        expect(postTimeDebugElement).toBeTruthy();
+
+        const expectedTime = dayjs(fixedDate).format('HH:mm');
+        expect(postTimeElement.textContent?.trim()).toBe(expectedTime);
+    });
+
+    it('should not display post-time span when isConsecutive() returns false', () => {
+        const fixedDate = dayjs('2024-12-06T23:39:27.080Z');
+        component.posting = { ...metisPostExerciseUser1, creationDate: fixedDate };
+
+        jest.spyOn(component, 'isConsecutive').mockReturnValue(false);
+        fixture.detectChanges();
+
+        const postTimeElement = debugElement.query(By.css('span.post-time'));
+        expect(postTimeElement).toBeFalsy();
     });
 });
