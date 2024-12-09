@@ -13,10 +13,17 @@ import { ExerciseManagementStatisticsDto } from 'app/exercises/shared/statistics
 import { StatisticsService } from 'app/shared/statistics-graph/statistics.service';
 import { TranslateService } from '@ngx-translate/core';
 import { QuizQuestionType } from 'app/entities/quiz/quiz-question.model';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { ArtemisSharedComponentModule } from 'app/shared/components/shared-component.module';
+import { QuizExerciseManageButtonsComponent } from 'app/exercises/quiz/manage/quiz-exercise-manage-buttons.component';
+import { ArtemisExerciseModule } from 'app/exercises/shared/exercise/exercise.module';
+import { DetailModule } from 'app/detail-overview-list/detail.module';
 
 @Component({
     selector: 'jhi-quiz-exercise-detail',
     templateUrl: './quiz-exercise-detail.component.html',
+    standalone: true,
+    imports: [TranslateDirective, ArtemisSharedComponentModule, QuizExerciseManageButtonsComponent, ArtemisExerciseModule, DetailModule],
 })
 export class QuizExerciseDetailComponent implements OnInit {
     readonly documentationType: DocumentationType = 'Quiz';

@@ -2,8 +2,8 @@ import { Component, Input } from '@angular/core';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import { ApollonDiagramService } from 'app/exercises/quiz/manage/apollon-diagrams/apollon-diagram.service';
 import { DragAndDropQuestion } from 'app/entities/quiz/drag-and-drop-question.model';
-import { ApollonDiagramListComponent } from './apollon-diagram-list.component';
-import { ApollonDiagramDetailComponent } from './apollon-diagram-detail.component';
+import { ApollonDiagramListComponent } from 'app/exercises/quiz/manage/apollon-diagrams/apollon-diagram-list.component';
+import { ApollonDiagramDetailComponent } from 'app/exercises/quiz/manage/apollon-diagrams/apollon-diagram-detail.component';
 
 @Component({
     selector: 'jhi-apollon-diagram-import-dialog',

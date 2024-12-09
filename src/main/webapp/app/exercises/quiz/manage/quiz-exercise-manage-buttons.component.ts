@@ -1,8 +1,8 @@
 import { Component, EventEmitter, Input, OnInit, Output } from '@angular/core';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { QuizExercise } from 'app/entities/quiz/quiz-exercise.model';
-import { QuizExerciseService } from './quiz-exercise.service';
-import { ActivatedRoute, Router } from '@angular/router';
+import { QuizExerciseService } from 'app/exercises/quiz/manage/quiz-exercise.service';
+import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { ActionType } from 'app/shared/delete-dialog/delete-dialog.model';
 import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
 import { AlertService } from 'app/core/util/alert.service';
@@ -10,10 +10,16 @@ import { EventManager } from 'app/core/util/event-manager.service';
 import { faClipboardCheck, faEye, faFileExport, faListAlt, faSignal, faTable, faTrash, faUndo, faWrench } from '@fortawesome/free-solid-svg-icons';
 import { Subject } from 'rxjs';
 import { ButtonSize, ButtonType } from 'app/shared/components/button.component';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { ArtemisSharedComponentModule } from 'app/shared/components/shared-component.module';
+import { ArtemisSharedModule } from 'app/shared/shared.module';
 
 @Component({
     selector: 'jhi-quiz-exercise-manage-buttons',
     templateUrl: './quiz-exercise-manage-buttons.component.html',
+    standalone: true,
+    imports: [RouterLink, FaIconComponent, TranslateDirective, ArtemisSharedComponentModule, ArtemisSharedModule],
 })
 export class QuizExerciseManageButtonsComponent implements OnInit {
     protected readonly ActionType = ActionType;

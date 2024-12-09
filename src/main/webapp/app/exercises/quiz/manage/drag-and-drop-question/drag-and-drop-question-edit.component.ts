@@ -15,7 +15,7 @@ import {
 import { DragAndDropQuestionUtil } from 'app/exercises/quiz/shared/drag-and-drop-question-util.service';
 import { DragAndDropMouseEvent } from 'app/exercises/quiz/manage/drag-and-drop-question/drag-and-drop-mouse-event.class';
 import { DragState } from 'app/entities/quiz/drag-state.enum';
-import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
+import { NgbCollapse, NgbModal, NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { DragAndDropMapping } from 'app/entities/quiz/drag-and-drop-mapping.model';
 import { DragAndDropQuestion } from 'app/entities/quiz/drag-and-drop-question.model';
 import { DragItem } from 'app/entities/quiz/drag-item.model';
@@ -46,12 +46,21 @@ import {
     faUpload,
 } from '@fortawesome/free-solid-svg-icons';
 import { faFileImage } from '@fortawesome/free-regular-svg-icons';
-import { CdkDragDrop } from '@angular/cdk/drag-drop';
+import { CdkDrag, CdkDragDrop, CdkDragPlaceholder, CdkDragPreview, CdkDropList, CdkDropListGroup } from '@angular/cdk/drag-drop';
 import { MAX_QUIZ_QUESTION_POINTS } from 'app/shared/constants/input.constants';
 import { FileService } from 'app/shared/http/file.service';
 import { QuizHintAction } from 'app/shared/monaco-editor/model/actions/quiz/quiz-hint.action';
 import { QuizExplanationAction } from 'app/shared/monaco-editor/model/actions/quiz/quiz-explanation.action';
 import { MarkdownEditorMonacoComponent, TextWithDomainAction } from 'app/shared/markdown-editor/monaco/markdown-editor-monaco.component';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { FormsModule } from '@angular/forms';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { QuizScoringInfoModalComponent } from 'app/exercises/quiz/manage/quiz-scoring-info-modal/quiz-scoring-info-modal.component';
+import { ArtemisMarkdownEditorModule } from 'app/shared/markdown-editor/markdown-editor.module';
+import { ArtemisSharedModule } from 'app/shared/shared.module';
+import { NgClass, NgStyle, NgTemplateOutlet } from '@angular/common';
+import { ArtemisQuizQuestionTypesModule } from 'app/exercises/quiz/shared/questions/artemis-quiz-question-types.module';
+import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 
 @Component({
     selector: 'jhi-drag-and-drop-question-edit',
@@ -59,6 +68,27 @@ import { MarkdownEditorMonacoComponent, TextWithDomainAction } from 'app/shared/
     providers: [DragAndDropQuestionUtil],
     styleUrls: ['./drag-and-drop-question-edit.component.scss', '../quiz-exercise.scss', '../../shared/quiz.scss'],
     encapsulation: ViewEncapsulation.None,
+    standalone: true,
+    imports: [
+        FaIconComponent,
+        FormsModule,
+        TranslateDirective,
+        NgbTooltip,
+        NgbCollapse,
+        QuizScoringInfoModalComponent,
+        ArtemisMarkdownEditorModule,
+        CdkDropListGroup,
+        ArtemisSharedModule,
+        NgClass,
+        CdkDropList,
+        NgStyle,
+        CdkDrag,
+        CdkDragPreview,
+        NgTemplateOutlet,
+        CdkDragPlaceholder,
+        ArtemisQuizQuestionTypesModule,
+        ArtemisTranslatePipe,
+    ],
 })
 export class DragAndDropQuestionEditComponent implements OnInit, OnChanges, AfterViewInit, QuizQuestionEdit {
     @ViewChild('clickLayer', { static: false }) private clickLayer: ElementRef;

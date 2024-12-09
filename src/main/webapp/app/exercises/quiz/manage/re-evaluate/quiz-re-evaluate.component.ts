@@ -1,7 +1,7 @@
 import { ChangeDetectorRef, Component, OnChanges, OnDestroy, OnInit, SimpleChanges, ViewChildren, ViewEncapsulation } from '@angular/core';
 import { Subscription } from 'rxjs';
 import { ActivatedRoute } from '@angular/router';
-import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
+import { NgbModal, NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { QuizReEvaluateWarningComponent } from './quiz-re-evaluate-warning.component';
 import { DragAndDropQuestionUtil } from 'app/exercises/quiz/shared/drag-and-drop-question-util.service';
 import { HttpResponse } from '@angular/common/http';
@@ -18,6 +18,16 @@ import { QuizExerciseValidationDirective } from 'app/exercises/quiz/manage/quiz-
 import { ShortAnswerQuestionUtil } from 'app/exercises/quiz/shared/short-answer-question-util.service';
 import { faExclamationCircle, faExclamationTriangle, faUndo } from '@fortawesome/free-solid-svg-icons';
 import { ReEvaluateDragAndDropQuestionComponent } from 'app/exercises/quiz/manage/re-evaluate/drag-and-drop-question/re-evaluate-drag-and-drop-question.component';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { FormsModule } from '@angular/forms';
+import { FormDateTimePickerModule } from 'app/shared/date-time-picker/date-time-picker.module';
+import { ArtemisIncludedInOverallScorePickerModule } from '../../../shared/included-in-overall-score-picker/included-in-overall-score-picker.module';
+import { ReEvaluateMultipleChoiceQuestionComponent } from './multiple-choice-question/re-evaluate-multiple-choice-question.component';
+import { ReEvaluateDragAndDropQuestionComponent as ReEvaluateDragAndDropQuestionComponent_1 } from './drag-and-drop-question/re-evaluate-drag-and-drop-question.component';
+import { ReEvaluateShortAnswerQuestionComponent } from './short-answer-question/re-evaluate-short-answer-question.component';
+import { JsonPipe } from '@angular/common';
+import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 
 @Component({
     selector: 'jhi-quiz-re-evaluate',
@@ -25,6 +35,20 @@ import { ReEvaluateDragAndDropQuestionComponent } from 'app/exercises/quiz/manag
     styleUrls: ['./quiz-re-evaluate.component.scss', '../../shared/quiz.scss'],
     encapsulation: ViewEncapsulation.None,
     providers: [DragAndDropQuestionUtil, ShortAnswerQuestionUtil],
+    standalone: true,
+    imports: [
+        TranslateDirective,
+        FaIconComponent,
+        FormsModule,
+        NgbTooltip,
+        FormDateTimePickerModule,
+        ArtemisIncludedInOverallScorePickerModule,
+        ReEvaluateMultipleChoiceQuestionComponent,
+        ReEvaluateDragAndDropQuestionComponent_1,
+        ReEvaluateShortAnswerQuestionComponent,
+        JsonPipe,
+        ArtemisTranslatePipe,
+    ],
 })
 export class QuizReEvaluateComponent extends QuizExerciseValidationDirective implements OnInit, OnChanges, OnDestroy {
     private subscription: Subscription;

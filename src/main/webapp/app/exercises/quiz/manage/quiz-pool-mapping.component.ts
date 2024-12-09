@@ -4,11 +4,19 @@ import { QuizGroup } from 'app/entities/quiz/quiz-group.model';
 import { Subject } from 'rxjs';
 import { QuizQuestion } from 'app/entities/quiz/quiz-question.model';
 import { AlertService } from 'app/core/util/alert.service';
+import { CdkDropListGroup } from '@angular/cdk/drag-drop';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { QuizPoolMappingQuestionListComponent } from 'app/exercises/quiz/manage/quiz-pool-mapping-question-list.component';
+import { ArtemisSharedModule } from 'app/shared/shared.module';
+import { NgStyle } from '@angular/common';
 
 @Component({
     selector: 'jhi-quiz-pool-mapping',
     templateUrl: './quiz-pool-mapping.component.html',
     styleUrls: ['./quiz-pool-mapping.component.scss'],
+    standalone: true,
+    imports: [CdkDropListGroup, FaIconComponent, TranslateDirective, QuizPoolMappingQuestionListComponent, ArtemisSharedModule, NgStyle],
 })
 export class QuizPoolMappingComponent implements OnInit, OnChanges, OnDestroy {
     @Input() quizGroups: QuizGroup[] = [];

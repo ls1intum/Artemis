@@ -1,7 +1,7 @@
 import { NgModule } from '@angular/core';
-import { MultipleChoiceQuestionEditComponent } from './multiple-choice-question/multiple-choice-question-edit.component';
-import { DragAndDropQuestionEditComponent } from './drag-and-drop-question/drag-and-drop-question-edit.component';
-import { ShortAnswerQuestionEditComponent } from './short-answer-question/short-answer-question-edit.component';
+import { MultipleChoiceQuestionEditComponent } from 'app/exercises/quiz/manage/multiple-choice-question/multiple-choice-question-edit.component';
+import { DragAndDropQuestionEditComponent } from 'app/exercises/quiz/manage/drag-and-drop-question/drag-and-drop-question-edit.component';
+import { ShortAnswerQuestionEditComponent } from 'app/exercises/quiz/manage/short-answer-question/short-answer-question-edit.component';
 import { ArtemisMarkdownEditorModule } from 'app/shared/markdown-editor/markdown-editor.module';
 import { DragDropModule } from '@angular/cdk/drag-drop';
 import { QuizScoringInfoModalComponent } from './quiz-scoring-info-modal/quiz-scoring-info-modal.component';
@@ -65,8 +65,6 @@ const ENTITY_STATES = [...quizManagementRoute];
         ExerciseTitleChannelNameModule,
         DetailModule,
         ArtemisExerciseModule,
-    ],
-    declarations: [
         QuizExerciseManageButtonsComponent,
         QuizExerciseComponent,
         QuizExerciseCreateButtonsComponent,

@@ -11,6 +11,13 @@ import { MultipleChoiceQuestionEditComponent } from 'app/exercises/quiz/manage/m
 import { DragAndDropQuestionEditComponent } from 'app/exercises/quiz/manage/drag-and-drop-question/drag-and-drop-question-edit.component';
 import { ShortAnswerQuestionEditComponent } from 'app/exercises/quiz/manage/short-answer-question/short-answer-question-edit.component';
 import { ApollonDiagramImportDialogComponent } from 'app/exercises/quiz/manage/apollon-diagrams/apollon-diagram-import-dialog.component';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { MultipleChoiceQuestionEditComponent as MultipleChoiceQuestionEditComponent_1 } from './multiple-choice-question/multiple-choice-question-edit.component';
+import { DragAndDropQuestionEditComponent as DragAndDropQuestionEditComponent_1 } from 'app/exercises/quiz/manage/drag-and-drop-question/drag-and-drop-question-edit.component';
+import { ShortAnswerQuestionEditComponent as ShortAnswerQuestionEditComponent_1 } from 'app/exercises/quiz/manage/short-answer-question/short-answer-question-edit.component';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { NgClass } from '@angular/common';
+import { QuizQuestionListEditExistingComponent } from 'app/exercises/quiz/manage/quiz-question-list-edit-existing.component';
 
 @Component({
     selector: 'jhi-quiz-question-list-edit',
@@ -18,6 +25,16 @@ import { ApollonDiagramImportDialogComponent } from 'app/exercises/quiz/manage/a
     changeDetection: ChangeDetectionStrategy.OnPush,
     styleUrls: ['./quiz-question-list-edit.component.scss', '../shared/quiz.scss'],
     encapsulation: ViewEncapsulation.None,
+    standalone: true,
+    imports: [
+        TranslateDirective,
+        MultipleChoiceQuestionEditComponent_1,
+        DragAndDropQuestionEditComponent_1,
+        ShortAnswerQuestionEditComponent_1,
+        FaIconComponent,
+        NgClass,
+        QuizQuestionListEditExistingComponent,
+    ],
 })
 export class QuizQuestionListEditComponent {
     @Input() courseId: number;

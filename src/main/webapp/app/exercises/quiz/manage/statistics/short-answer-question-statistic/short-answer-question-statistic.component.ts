@@ -13,6 +13,10 @@ import { ShortAnswerSolution } from 'app/entities/quiz/short-answer-solution.mod
 import { QuizExercise } from 'app/entities/quiz/quiz-exercise.model';
 import { QuestionStatisticComponent, blueColor, greenColor } from 'app/exercises/quiz/manage/statistics/question-statistic.component';
 import { faCheckCircle, faSync, faTimesCircle } from '@fortawesome/free-solid-svg-icons';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { BarChartModule } from '@swimlane/ngx-charts';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { QuizStatisticsFooterComponent } from 'app/exercises/quiz/manage/statistics/quiz-statistics-footer/quiz-statistics-footer.component';
 
 @Component({
     selector: 'jhi-short-answer-question-statistic',
@@ -23,6 +27,8 @@ import { faCheckCircle, faSync, faTimesCircle } from '@fortawesome/free-solid-sv
         '../quiz-point-statistic/quiz-point-statistic.component.scss',
         './short-answer-question-statistic.component.scss',
     ],
+    standalone: true,
+    imports: [TranslateDirective, BarChartModule, FaIconComponent, QuizStatisticsFooterComponent],
 })
 export class ShortAnswerQuestionStatisticComponent extends QuestionStatisticComponent {
     declare question: ShortAnswerQuestion;

@@ -1,13 +1,15 @@
 import { Component, EventEmitter, Input, Output, ViewEncapsulation } from '@angular/core';
 import { QuizQuestion } from 'app/entities/quiz/quiz-question.model';
 import { QuizQuestionType } from 'app/entities/quiz/quiz-question.model';
-import { CdkDragDrop, moveItemInArray, transferArrayItem } from '@angular/cdk/drag-drop';
+import { CdkDrag, CdkDragDrop, CdkDropList, moveItemInArray, transferArrayItem } from '@angular/cdk/drag-drop';
 
 @Component({
     selector: 'jhi-quiz-pool-mapping-question-list',
     templateUrl: './quiz-pool-mapping-question-list.component.html',
     styleUrls: ['./quiz-pool-mapping-question-list.component.scss'],
     encapsulation: ViewEncapsulation.None,
+    standalone: true,
+    imports: [CdkDropList, CdkDrag],
 })
 export class QuizPoolMappingQuestionListComponent {
     @Input() quizQuestions: Array<QuizQuestion>;
