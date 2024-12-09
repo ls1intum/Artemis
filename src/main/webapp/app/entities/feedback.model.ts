@@ -297,6 +297,12 @@ export const buildFeedbackTextForReview = (feedback: Feedback, addFeedbackText =
         }
     } else if (feedback.detailText) {
         feedbackText = feedback.detailText;
+        if (feedback.text && feedback.text.includes('lines')) {
+            const linesInfo = feedback.text.match(/lines .*/);
+            if (linesInfo) {
+                feedbackText += ` (${linesInfo[0]})`;
+            }
+        }
     } else if (addFeedbackText && feedback.text) {
         feedbackText = feedback.text;
     }
