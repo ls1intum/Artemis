@@ -1,6 +1,6 @@
-<div class="d-flex justify-content-between">
+<div class="d-flex justify-content-between" style="padding-top: 0.25rem">
     <div id="header-author-date" class="post-header-author-date d-flex align-items-start gap-2 flex-wrap">
-        @if (posting.author) {
+        @if (authorOfPosting) {
             <span class="d-inline-flex align-items-start gap-2 flex-wrap">
                 <jhi-profile-picture
                     imageSizeInRem="2.15"
@@ -8,14 +8,14 @@
                     imageId="post-profile-picture"
                     defaultPictureId="post-default-profile-picture"
                     [isGray]="isDeleted()"
-                    [authorId]="posting.author?.id"
-                    [authorName]="posting.author?.name"
-                    [imageUrl]="posting.author?.imageUrl"
-                    [isEditable]="currentUser !== undefined && posting.author?.id === currentUser.id"
+                    [authorId]="authorOfPosting.id"
+                    [authorName]="authorOfPosting.name"
+                    [imageUrl]="authorOfPosting.imageUrl"
+                    [isEditable]="currentUser !== undefined && authorOfPosting.id === currentUser.id"
                 >
                 </jhi-profile-picture>
                 <span class="fs-small d-inline-flex flex-column align-items-start">
-                    <span class="fw-semibold">{{ posting.author?.name }}</span>
+                    <span class="fw-semibold">{{ authorOfPosting.name }}</span>
                     <span class="fs-x-small mt-1 text-body-secondary">
                         <span class="me-1 fs-x-small" [ngClass]="'post-authority-icon-' + userAuthority" id="role-badge">
                             <fa-icon [icon]="userAuthorityIcon" />
@@ -30,15 +30,11 @@
             @if (postingIsOfToday) {
                 <span [jhiTranslate]="todayFlag ?? ''" id="today-flag" class="fs-small"></span>,
             }
-            <span class="fs-small" [disableTooltip]="postingIsOfToday" ngbTooltip="{{ posting.creationDate | artemisDate: 'time' }}">
-                {{
-                    postingIsOfToday
-                        ? (posting.creationDate | artemisDate: 'time')
-                        : (posting.creationDate | artemisDate: 'short-date') + ' - ' + (posting.creationDate | artemisDate: 'time')
-                }}
+            <span class="post-header-date fs-small" [disableTooltip]="postingIsOfToday" ngbTooltip="{{ creationDate | artemisDate: 'time' }}">
+                {{ postingIsOfToday ? (creationDate | artemisDate: 'time') : (creationDate | artemisDate: 'short-date') + ' - ' + (creationDate | artemisDate: 'time') }}
             </span>
         </span>
-        @if (posting.resolved) {
+        @if (isPostResolved()) {
             <fa-icon
                 [icon]="faCheckSquare"
                 iconSize="xs"
@@ -46,7 +42,7 @@
                 [ngbTooltip]="'artemisApp.metis.post.postMarkedAsResolvedTooltip' | artemisTranslate"
             />
         }
-        @if (!!isCommunicationPage && (!lastReadDate || (lastReadDate && posting.creationDate && posting.creationDate.isAfter(lastReadDate))) && !isAuthorOfPosting) {
+        @if ((!!isCommunicationPage() && !lastReadDate()) || (lastReadDate() && creationDate && isAfter && !isAuthorOfPosting)) {
             <span jhiTranslate="global.generic.new" class="badge bg-secondary hideAfter5Seconds"></span>
         }
     </div>
