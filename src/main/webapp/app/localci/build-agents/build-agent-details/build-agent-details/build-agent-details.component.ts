@@ -1,4 +1,4 @@
-import { Component, OnDestroy, OnInit } from '@angular/core';
+import { Component, OnDestroy, OnInit, inject } from '@angular/core';
 import { BuildAgentInformation } from 'app/entities/programming/build-agent-information.model';
 import { BuildAgentsService } from 'app/localci/build-agents/build-agents.service';
 import { Subscription } from 'rxjs';
@@ -9,13 +9,25 @@ import { ActivatedRoute } from '@angular/router';
 import { JhiWebsocketService } from 'app/core/websocket/websocket.service';
 import { BuildQueueService } from 'app/localci/build-queue/build-queue.service';
 import { AlertService, AlertType } from 'app/core/util/alert.service';
+import { ArtemisSharedModule } from 'app/shared/shared.module';
+import { ArtemisDataTableModule } from 'app/shared/data-table/data-table.module';
+import { NgxDatatableModule } from '@siemens/ngx-datatable';
+import { SubmissionResultStatusModule } from 'app/overview/submission-result-status.module';
 
 @Component({
     selector: 'jhi-build-agent-details',
     templateUrl: './build-agent-details.component.html',
     styleUrl: './build-agent-details.component.scss',
+    standalone: true,
+    imports: [ArtemisSharedModule, NgxDatatableModule, ArtemisDataTableModule, SubmissionResultStatusModule],
 })
 export class BuildAgentDetailsComponent implements OnInit, OnDestroy {
+    private readonly websocketService = inject(JhiWebsocketService);
+    private readonly buildAgentsService = inject(BuildAgentsService);
+    private readonly route = inject(ActivatedRoute);
+    private readonly buildQueueService = inject(BuildQueueService);
+    private readonly alertService = inject(AlertService);
+
     protected readonly TriggeredByPushTo = TriggeredByPushTo;
     buildAgent: BuildAgentInformation;
     agentName: string;
@@ -31,14 +43,6 @@ export class BuildAgentDetailsComponent implements OnInit, OnDestroy {
     faTimes = faTimes;
     readonly faPause = faPause;
     readonly faPlay = faPlay;
-
-    constructor(
-        private websocketService: JhiWebsocketService,
-        private buildAgentsService: BuildAgentsService,
-        private route: ActivatedRoute,
-        private buildQueueService: BuildQueueService,
-        private alertService: AlertService,
-    ) {}
 
     ngOnInit() {
         this.paramSub = this.route.queryParams.subscribe((params) => {
