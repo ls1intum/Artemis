@@ -17,6 +17,7 @@ import de.tum.cit.aet.artemis.assessment.repository.cleanup.PlagiarismComparison
 import de.tum.cit.aet.artemis.assessment.repository.cleanup.RatingCleanupRepository;
 import de.tum.cit.aet.artemis.assessment.repository.cleanup.ResultCleanupRepository;
 import de.tum.cit.aet.artemis.assessment.repository.cleanup.StudentScoreCleanupRepository;
+import de.tum.cit.aet.artemis.assessment.repository.cleanup.SubmissionVersionCleanupRepository;
 import de.tum.cit.aet.artemis.assessment.repository.cleanup.TeamScoreCleanupRepository;
 import de.tum.cit.aet.artemis.assessment.repository.cleanup.TextBlockCleanupRepository;
 import de.tum.cit.aet.artemis.core.domain.CleanupJobExecution;
@@ -26,6 +27,7 @@ import de.tum.cit.aet.artemis.core.dto.NonLatestNonRatedResultsCleanupCountDTO;
 import de.tum.cit.aet.artemis.core.dto.NonLatestRatedResultsCleanupCountDTO;
 import de.tum.cit.aet.artemis.core.dto.OrphanCleanupCountDTO;
 import de.tum.cit.aet.artemis.core.dto.PlagiarismComparisonCleanupCountDTO;
+import de.tum.cit.aet.artemis.core.dto.SubmissionVersionsCleanupCountDTO;
 import de.tum.cit.aet.artemis.core.repository.cleanup.CleanupJobExecutionRepository;
 
 @Profile(PROFILE_CORE)
@@ -52,10 +54,13 @@ public class DataCleanupService {
 
     private final TeamScoreCleanupRepository teamScoreCleanupRepository;
 
+    private final SubmissionVersionCleanupRepository submissionVersionCleanupRepository;
+
     public DataCleanupService(CleanupJobExecutionRepository cleanupJobExecutionRepository, PlagiarismComparisonCleanupRepository plagiarismComparisonCleanupRepository,
             ResultCleanupRepository resultCleanupRepository, RatingCleanupRepository ratingCleanupRepository, FeedbackCleanupRepository feedbackCleanupRepository,
             TextBlockCleanupRepository textBlockCleanupRepository, LongFeedbackTextCleanupRepository longFeedbackTextCleanupRepository,
-            StudentScoreCleanupRepository studentScoreCleanupRepository, TeamScoreCleanupRepository teamScoreCleanupRepository) {
+            StudentScoreCleanupRepository studentScoreCleanupRepository, TeamScoreCleanupRepository teamScoreCleanupRepository,
+            SubmissionVersionCleanupRepository submissionVersionCleanupRepository) {
         this.resultCleanupRepository = resultCleanupRepository;
         this.ratingCleanupRepository = ratingCleanupRepository;
         this.feedbackCleanupRepository = feedbackCleanupRepository;
@@ -65,9 +70,8 @@ public class DataCleanupService {
         this.teamScoreCleanupRepository = teamScoreCleanupRepository;
         this.cleanupJobExecutionRepository = cleanupJobExecutionRepository;
         this.plagiarismComparisonCleanupRepository = plagiarismComparisonCleanupRepository;
+        this.submissionVersionCleanupRepository = submissionVersionCleanupRepository;
     }
-
-    // TODO: offer the possibility to delete old submission versions
 
     /**
      * Deletes orphaned entities that are no longer associated with valid results or participations.
@@ -162,16 +166,6 @@ public class DataCleanupService {
         int deletedFeedback = feedbackCleanupRepository.deleteOldNonRatedFeedbackWhereCourseDateBetween(deleteFrom, deleteTo);
         log.info("Deleted {} feedback entries for non-rated results between {} and {}", deletedFeedback, deleteFrom, deleteTo);
 
-        // TODO: old results and participant scores should not be deleted automatically: if at all this could be offered as an option for the admin
-        // int deletedParticipantScoresForLatest = participantScoreCleanupRepository.deleteParticipantScoresForLatestNonRatedResultsWhereCourseDateBetween(deleteFrom, deleteTo);
-        // log.info("Deleted {} participant scores for latest non-rated results between {} and {}", deletedParticipantScoresForLatest, deleteFrom, deleteTo);
-        //
-        // int deletedParticipantScores = participantScoreCleanupRepository.deleteParticipantScoresForNonRatedResultsWhereCourseDateBetween(deleteFrom, deleteTo);
-        // log.info("Deleted {} participant scores for non-rated results between {} and {}", deletedParticipantScores, deleteFrom, deleteTo);
-
-        // int deletedNonLatestNonRatedResults = resultCleanupRepository.deleteNonLatestNonRatedResultsWhereCourseDateBetween(deleteFrom, deleteTo);
-        // log.info("Deleted {} non-latest non-rated results between {} and {}", deletedNonLatestNonRatedResults, deleteFrom, deleteTo);
-
         return CleanupServiceExecutionRecordDTO.of(createCleanupJobExecution(CleanupJobType.NON_RATED_RESULTS, deleteFrom, deleteTo));
     }
 
@@ -193,18 +187,14 @@ public class DataCleanupService {
         int deletedFeedback = feedbackCleanupRepository.deleteOldFeedbackThatAreNotLatestRatedResultsWhereCourseDateBetween(deleteFrom, deleteTo);
         log.info("Deleted {} feedback entries for rated results between {} and {}", deletedFeedback, deleteFrom, deleteTo);
 
-        // TODO: old results and participant scores should not be deleted automatically: if at all this could be offered as an option for the admin
-        // int deletedParticipantScoresForNonLatest = participantScoreCleanupRepository.deleteParticipantScoresForNonLatestLastResultsWhereCourseDateBetween(deleteFrom, deleteTo);
-        // log.info("Deleted {} participant scores for non-latest rated results between {} and {}", deletedParticipantScoresForNonLatest, deleteFrom, deleteTo);
-        //
-        // int deletedParticipantScoresForNonLatestLast = participantScoreCleanupRepository.deleteParticipantScoresForNonLatestLastRatedResultsWhereCourseDateBetween(deleteFrom,
-        // deleteTo);
-        // log.info("Deleted {} participant scores for non-latest last rated results between {} and {}", deletedParticipantScoresForNonLatestLast, deleteFrom, deleteTo);
-
-        // int deletedNonLatestRatedResults = resultCleanupRepository.deleteNonLatestRatedResultsWhereCourseDateBetween(deleteFrom, deleteTo);
-        // log.info("Deleted {} non-latest rated results between {} and {}", deletedNonLatestRatedResults, deleteFrom, deleteTo);
-
         return CleanupServiceExecutionRecordDTO.of(createCleanupJobExecution(CleanupJobType.RATED_RESULTS, deleteFrom, deleteTo));
+    }
+
+    public CleanupServiceExecutionRecordDTO deleteSubmissionVersions(ZonedDateTime deleteFrom, ZonedDateTime deleteTo) {
+        int deletedSubmissionVersions = submissionVersionCleanupRepository.deleteSubmissionVersionsByCreatedDateRange(deleteFrom, deleteTo);
+        log.info("Deleted {} submission versions entries between {} and {}", deletedSubmissionVersions, deleteFrom, deleteTo);
+
+        return CleanupServiceExecutionRecordDTO.of(createCleanupJobExecution(CleanupJobType.SUBMISSION_VERSIONS, deleteFrom, deleteTo));
     }
 
     /**
@@ -279,6 +269,11 @@ public class DataCleanupService {
         int feedbackCount = feedbackCleanupRepository.countOldFeedbackThatAreNotLatestRatedResultsWhereCourseDateBetween(deleteFrom, deleteTo);
 
         return new NonLatestRatedResultsCleanupCountDTO(longFeedbackTextCount, textBlockCount, feedbackCount);
+    }
+
+    public SubmissionVersionsCleanupCountDTO countSubmissionVersions(ZonedDateTime deleteFrom, ZonedDateTime deleteTo) {
+        int submissionVersionsCount = this.submissionVersionCleanupRepository.countSubmissionVersionsByCreatedDateRange(deleteFrom, deleteTo);
+        return new SubmissionVersionsCleanupCountDTO(submissionVersionsCount);
     }
 
     /**
