@@ -48,13 +48,13 @@ describe('UserSettingsContainerComponent', () => {
     it('should initialize with localVC profile', async () => {
         comp.ngOnInit();
         expect(profileServiceMock.getProfileInfo).toHaveBeenCalled();
-        expect(comp.localVCEnabled).toBeTrue();
+        expect(comp.localVCEnabled()).toBeTrue();
     });
 
     it('should initialize with no localVC profile set', async () => {
         profileServiceMock.getProfileInfo.mockReturnValue(of({ activeProfiles: [] }));
         comp.ngOnInit();
         expect(profileServiceMock.getProfileInfo).toHaveBeenCalled();
-        expect(comp.localVCEnabled).toBeFalse();
+        expect(comp.localVCEnabled()).toBeFalse();
     });
 });

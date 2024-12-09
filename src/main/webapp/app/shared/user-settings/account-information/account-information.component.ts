@@ -10,11 +10,16 @@ import { base64StringToBlob } from 'app/utils/blob-util';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { UserSettingsService } from 'app/shared/user-settings/user-settings.service';
 import { AlertService, AlertType } from 'app/core/util/alert.service';
+import { ArtemisSharedModule } from 'app/shared/shared.module';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
 
 @Component({
     selector: 'jhi-account-information',
+    standalone: true,
     templateUrl: './account-information.component.html',
     styleUrls: ['../user-settings.scss'],
+    imports: [TranslateDirective, FontAwesomeModule, ArtemisSharedModule],
 })
 export class AccountInformationComponent implements OnInit {
     currentUser?: User;

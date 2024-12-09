@@ -103,6 +103,14 @@ const LAYOUT_ROUTES: Routes = [navbarRoute, ...errorRoute];
                         },
                     ],
                 },
+                // ===== USER SETTINGS =====
+                {
+                    path: 'user-settings',
+                    loadChildren: () => import('./shared/user-settings/user-settings.route').then((m) => m.UserSettingsRoutes),
+                    data: {
+                        authorities: [Authority.USER],
+                    },
+                },
                 // ===== COURSE MANAGEMENT =====
                 {
                     path: 'course-management',

@@ -1,17 +1,17 @@
 <h1 jhiTranslate="artemisApp.userSettings.vcsAccessTokenSettings">
     <!--VCS access token Settings-->
 </h1>
-@if (currentUser) {
+@if (currentUser()) {
     <div class="list-group d-block">
         <div class="list-group-item">
             <dt>
                 <span jhiTranslate="artemisApp.userSettings.vcsAccessTokensSettingsPage.infoText"></span>
             </dt>
         </div>
-        @if (!edit) {
+        @if (!edit()) {
             <div class="list-group-item">
                 <dt>
-                    @if (this.currentUser?.vcsAccessToken) {
+                    @if (this.currentUser()?.vcsAccessToken) {
                         <table class="table table-striped flex">
                             <thead class="thead-dark">
                                 <tr>
@@ -33,9 +33,9 @@
                                     <td>***************</td>
                                     <td>
                                         <button
-                                            [cdkCopyToClipboard]="currentUser!.vcsAccessToken || ''"
+                                            [cdkCopyToClipboard]="currentUser()!.vcsAccessToken || ''"
                                             (cdkCopyToClipboardCopied)="onCopyFinished($event)"
-                                            [class.btn-success]="wasCopied"
+                                            [class.btn-success]="wasCopied()"
                                             class="btn btn-secondary btn-sm me-2"
                                             id="copy-token-button"
                                             type="button"
@@ -43,7 +43,7 @@
                                             <fa-icon [icon]="faCopy"></fa-icon>
                                         </button>
                                     </td>
-                                    <td>{{ this.currentUser?.vcsAccessTokenExpiryDate | artemisDate }}</td>
+                                    <td>{{ this.currentUser()?.vcsAccessTokenExpiryDate | artemisDate }}</td>
                                     <td>
                                         <button
                                             class="btn btn-md flex-grow-1 d-flex align-items-center"
@@ -66,7 +66,7 @@
                     }
                 </dt>
             </div>
-            @if (!this.currentUser?.vcsAccessToken) {
+            @if (!this.currentUser()?.vcsAccessToken) {
                 <div class="list-group-item">
                     <dt>
                         <div class="btn-group" role="group" aria-label="Actions">
@@ -84,7 +84,7 @@
                 </div>
             }
         }
-        @if (edit) {
+        @if (edit()) {
             <div class="list-group-item">
                 <dt>
                     <h4 jhiTranslate="artemisApp.userSettings.vcsAccessTokensSettingsPage.addTokenTitle"></h4>
