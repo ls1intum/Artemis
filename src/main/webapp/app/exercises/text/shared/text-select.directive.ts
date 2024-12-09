@@ -30,6 +30,7 @@ enum EventType {
 
 @Directive({
     selector: '[jhiTextSelect]',
+    standalone: true,
 })
 export class TextSelectDirective implements OnInit, OnDestroy {
     private elementRef = inject(ElementRef);

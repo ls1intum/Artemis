@@ -10,15 +10,14 @@ import { TextExercise } from 'app/entities/text/text-exercise.model';
 import { ExerciseGroup } from 'app/entities/exercise-group.model';
 import { MockActivatedRoute } from '../../helpers/mocks/activated-route/mock-activated-route';
 import { TranslateService } from '@ngx-translate/core';
-import { MockComponent, MockPipe, MockProvider } from 'ng-mocks';
-import { NonProgrammingExerciseDetailCommonActionsComponent } from 'app/exercises/shared/exercise-detail-common-actions/non-programming-exercise-detail-common-actions.component';
+import { MockDirective, MockModule, MockProvider } from 'ng-mocks';
 import { StatisticsService } from 'app/shared/statistics-graph/statistics.service';
 import { ExerciseManagementStatisticsDto } from 'app/exercises/shared/statistics/exercise-management-statistics-dto';
 import { MockRouterLinkDirective } from '../../helpers/mocks/directive/mock-router-link.directive';
-import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
-import { ExerciseDetailStatisticsComponent } from 'app/exercises/shared/statistics/exercise-detail-statistics.component';
-import { DocumentationButtonComponent } from 'app/shared/components/documentation-button/documentation-button.component';
-import { DetailOverviewListComponent } from 'app/detail-overview-list/detail-overview-list.component';
+import { NonProgrammingExerciseDetailCommonActionsModule } from 'app/exercises/shared/exercise-detail-common-actions/non-programming-exercise-detail-common-actions.module';
+import { ArtemisExerciseModule } from 'app/exercises/shared/exercise/exercise.module';
+import { DetailModule } from 'app/detail-overview-list/detail.module';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
 
 describe('TextExercise Management Detail Component', () => {
     let comp: TextExerciseDetailComponent;
@@ -43,17 +42,23 @@ describe('TextExercise Management Detail Component', () => {
     beforeEach(() => {
         TestBed.configureTestingModule({
             imports: [ArtemisTestModule],
-            declarations: [
-                TextExerciseDetailComponent,
-                MockComponent(NonProgrammingExerciseDetailCommonActionsComponent),
-                MockComponent(ExerciseDetailStatisticsComponent),
-                MockComponent(DetailOverviewListComponent),
-                MockComponent(DocumentationButtonComponent),
-                MockRouterLinkDirective,
-                MockPipe(ArtemisTranslatePipe),
-            ],
+            declarations: [MockRouterLinkDirective],
             providers: [{ provide: ActivatedRoute, useValue: new MockActivatedRoute() }, MockProvider(TranslateService)],
-        }).compileComponents();
+        })
+            .overrideComponent(TextExerciseDetailComponent, {
+                remove: {
+                    imports: [NonProgrammingExerciseDetailCommonActionsModule, ArtemisExerciseModule, DetailModule, TranslateDirective],
+                },
+                add: {
+                    imports: [
+                        MockModule(NonProgrammingExerciseDetailCommonActionsModule),
+                        MockModule(DetailModule),
+                        MockModule(ArtemisExerciseModule),
+                        MockDirective(TranslateDirective),
+                    ],
+                },
+            })
+            .compileComponents();
         fixture = TestBed.createComponent(TextExerciseDetailComponent);
         comp = fixture.componentInstance;
         exerciseService = fixture.debugElement.injector.get(TextExerciseService);

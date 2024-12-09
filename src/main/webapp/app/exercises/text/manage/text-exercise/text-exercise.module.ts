@@ -60,8 +60,11 @@ const ENTITY_STATES = [...textExerciseRoute];
         ExerciseFeedbackSuggestionOptionsModule,
         DetailModule,
         FormsModule,
+        TextExerciseComponent,
+        TextExerciseDetailComponent,
+        TextExerciseUpdateComponent,
+        TextExerciseRowButtonsComponent,
     ],
-    declarations: [TextExerciseComponent, TextExerciseDetailComponent, TextExerciseUpdateComponent, TextExerciseRowButtonsComponent],
     exports: [TextExerciseComponent],
 })
 export class ArtemisTextExerciseModule {}

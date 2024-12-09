@@ -3,17 +3,42 @@ import { TextBlock } from 'app/entities/text/text-block.model';
 import { Feedback, FeedbackType } from 'app/entities/feedback.model';
 import { ConfirmIconComponent } from 'app/shared/confirm-icon/confirm-icon.component';
 import { StructuredGradingCriterionService } from 'app/exercises/shared/structured-grading-criterion/structured-grading-criterion.service';
-import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
+import { NgbDropdown, NgbDropdownMenu, NgbDropdownToggle, NgbModal, NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { ActivatedRoute } from '@angular/router';
 import { TextAssessmentEventType } from 'app/entities/text/text-assesment-event.model';
 import { TextAssessmentAnalytics } from 'app/exercises/text/assess/analytics/text-assesment-analytics.service';
 import { faAngleRight, faEdit, faExclamationTriangle, faQuestionCircle, faTimes, faTrash } from '@fortawesome/free-solid-svg-icons';
 import { GradingCriterion } from 'app/exercises/shared/structured-grading-criterion/grading-criterion.model';
+import { ArtemisFeedbackModule } from 'app/exercises/shared/feedback/feedback.module';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { ArtemisConfirmIconModule } from 'app/shared/confirm-icon/confirm-icon.module';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { ArtemisGradingInstructionLinkIconModule } from 'app/shared/grading-instruction-link-icon/grading-instruction-link-icon.module';
+import { TextblockFeedbackDropdownComponent } from './dropdown/textblock-feedback-dropdown.component';
+import { FormsModule } from '@angular/forms';
+import { ArtemisAssessmentSharedModule } from 'app/assessment/assessment-shared.module';
+import { ArtemisSharedCommonModule } from 'app/shared/shared-common.module';
 
 @Component({
     selector: 'jhi-textblock-feedback-editor',
     templateUrl: './textblock-feedback-editor.component.html',
     styleUrls: ['./textblock-feedback-editor.component.scss'],
+    standalone: true,
+    imports: [
+        ArtemisFeedbackModule,
+        FaIconComponent,
+        NgbTooltip,
+        ArtemisConfirmIconModule,
+        TranslateDirective,
+        ArtemisGradingInstructionLinkIconModule,
+        NgbDropdown,
+        NgbDropdownToggle,
+        NgbDropdownMenu,
+        TextblockFeedbackDropdownComponent,
+        FormsModule,
+        ArtemisAssessmentSharedModule,
+        ArtemisSharedCommonModule,
+    ],
 })
 export class TextblockFeedbackEditorComponent implements AfterViewInit {
     protected route = inject(ActivatedRoute);
