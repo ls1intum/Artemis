@@ -131,15 +131,15 @@ eureka:
 
 # Theia configuration
 theia:
-    portal-url: https://theia-test.k8s.ase.cit.tum.de
+    portal-url: https://theia.artemis.cit.tum.de
 
     images:
         java:
-            Java-17: "ghcr.io/ls1intum/theia/java-17:latest"
-            Java-Test: "ghcr.io/ls1intum/theia/java-test:latest"
-            Java-Test2: "ghcr.io/ls1intum/theia/java-test:2"
+            Java-17: "java-17-latest"
+            Java-Test: "java-17-latest"
+            Java-Test2: "java-17-latest"
         c:
-            C: "ghcr.io/ls1intum/theia/c:latest"
+            C: "c-latest"
 
 artemis:
     push-notification-relay: https://hermes-sandbox.artemis.cit.tum.de

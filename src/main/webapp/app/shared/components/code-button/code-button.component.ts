@@ -10,12 +10,14 @@ import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
 import { LocalStorageService } from 'ngx-webstorage';
 import { ProgrammingExerciseStudentParticipation } from 'app/entities/participation/programming-exercise-student-participation.model';
 import { ParticipationService } from 'app/exercises/shared/participation/participation.service';
-import { PROFILE_GITLAB, PROFILE_LOCALVC } from 'app/app.constants';
+import { PROFILE_GITLAB, PROFILE_LOCALVC, PROFILE_THEIA } from 'app/app.constants';
 import dayjs from 'dayjs/esm';
 import { isPracticeMode } from 'app/entities/participation/student-participation.model';
-import { faCode, faExternalLink } from '@fortawesome/free-solid-svg-icons';
+import { faCode, faDesktop, faExternalLink } from '@fortawesome/free-solid-svg-icons';
 import { IdeSettingsService } from 'app/shared/user-settings/ide-preferences/ide-settings.service';
 import { Ide } from 'app/shared/user-settings/ide-preferences/ide.model';
+import { ProgrammingExerciseService } from 'app/exercises/programming/manage/services/programming-exercise.service';
+import { ProfileInfo } from 'app/shared/layouts/profiles/profile-info.model';
 import { SshUserSettingsService } from 'app/shared/user-settings/ssh-settings/ssh-user-settings.service';
 import { UserSshPublicKey } from 'app/entities/programming/user-ssh-public-key.model';
 
@@ -71,9 +73,13 @@ export class CodeButtonComponent implements OnInit, OnChanges {
     vscodeFallback: Ide = { name: 'VS Code', deepLink: 'vscode://vscode.git/clone?url={cloneUrl}' };
     programmingLanguageToIde: Map<ProgrammingLanguage, Ide> = new Map([[ProgrammingLanguage.EMPTY, this.vscodeFallback]]);
 
+    theiaEnabled = false;
+    theiaPortalURL: string;
+
     // Icons
     readonly faCode = faCode;
     readonly faExternalLink = faExternalLink;
+    readonly faDesktop = faDesktop;
     ideName: string;
 
     constructor(
@@ -85,6 +91,7 @@ export class CodeButtonComponent implements OnInit, OnChanges {
         private localStorage: LocalStorageService,
         private participationService: ParticipationService,
         private ideSettingsService: IdeSettingsService,
+        private programmingExerciseService: ProgrammingExerciseService,
     ) {}
 
     async ngOnInit() {
@@ -132,6 +139,8 @@ export class CodeButtonComponent implements OnInit, OnChanges {
             if (this.useToken) {
                 this.useHttpsUrlWithToken();
             }
+
+            this.initTheia(profileInfo);
             this.loadParticipationVcsAccessTokens();
         });
 
@@ -278,9 +287,10 @@ export class CodeButtonComponent implements OnInit, OnChanges {
      *
      * @param url the url to which the credentials should be added
      * @param insertPlaceholder if true, instead of the actual token, '**********' is used (e.g. to prevent leaking the token during a screen-share)
+     * @param alwaysToken if true, the token is always added, even if it is not required
      */
-    private addCredentialsToHttpUrl(url: string, insertPlaceholder = false): string {
-        const includeToken = this.accessTokensEnabled && this.user.vcsAccessToken && this.useToken;
+    private addCredentialsToHttpUrl(url: string, insertPlaceholder = false, alwaysToken = false): string {
+        const includeToken = this.accessTokensEnabled && this.user.vcsAccessToken && (this.useToken || alwaysToken);
         const token = insertPlaceholder ? '**********' : this.user.vcsAccessToken;
         const credentials = `://${this.user.login}${includeToken ? `:${token}` : ''}@`;
         if (!url.includes('@')) {
@@ -371,5 +381,70 @@ export class CodeButtonComponent implements OnInit, OnChanges {
                 }
             });
         }
+    }
+
+    private initTheia(profileInfo: ProfileInfo) {
+        if (profileInfo.activeProfiles?.includes(PROFILE_THEIA) && this.exercise) {
+            // Theia requires the Build Config of the programming exercise to be set
+            this.programmingExerciseService.getBuildConfig(this.exercise.id!).subscribe((buildConfig) => {
+                if (this.exercise) {
+                    this.exercise.buildConfig = buildConfig;
+                    // Set variables now, sanitize later on
+                    this.theiaPortalURL = profileInfo.theiaPortalURL ?? '';
+                    // Verify that all conditions are met
+                    if (this.theiaPortalURL !== '' && this.exercise.allowOnlineIde && this.exercise.buildConfig?.theiaImage) {
+                        this.theiaEnabled = true;
+                    }
+                }
+            });
+        }
+    }
+
+    async startOnlineIDE() {
+        const artemisToken: string = (await this.accountService.getToolToken('SCORPIO').toPromise()) ?? '';
+
+        let artemisUrl: string = '';
+        if (window.location.protocol) {
+            artemisUrl += window.location.protocol + '//';
+        }
+        if (window.location.host) {
+            artemisUrl += window.location.host;
+        }
+
+        const data = {
+            appDef: this.exercise?.buildConfig?.theiaImage ?? '',
+            gitUri: this.addCredentialsToHttpUrl(this.getRepositoryUri(), false, true),
+            gitUser: this.user.name,
+            gitMail: this.user.email,
+            artemisToken: artemisToken,
+            artemisUrl: artemisUrl,
+        };
+
+        const newWindow = window.open('', '_blank');
+        if (!newWindow) {
+            return;
+        }
+        newWindow.name = 'Theia-IDE';
+
+        const form = document.createElement('form');
+        form.method = 'GET';
+        form.action = this.theiaPortalURL;
+        form.target = newWindow.name;
+
+        // Loop over data element and create input fields
+        for (const key in data) {
+            if (Object.hasOwn(data, key)) {
+                const hiddenField = document.createElement('input');
+                hiddenField.type = 'hidden';
+                hiddenField.name = key;
+                const descriptor = Object.getOwnPropertyDescriptor(data, key);
+                hiddenField.value = descriptor ? descriptor.value : '';
+                form.appendChild(hiddenField);
+            }
+        }
+
+        document.body.appendChild(form);
+        form.submit();
+        document.body.removeChild(form);
     }
 }
