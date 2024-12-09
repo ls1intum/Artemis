@@ -53,6 +53,13 @@ export class CleanupServiceComponent implements OnInit {
             lastExecuted: undefined,
             datesValid: signal(true),
         },
+        {
+            name: 'deleteOldSubmissionVersions',
+            deleteFrom: dayjs().subtract(12, 'months'),
+            deleteTo: dayjs().subtract(6, 'months'),
+            lastExecuted: undefined,
+            datesValid: signal(true),
+        },
     ];
 
     ngOnInit(): void {
