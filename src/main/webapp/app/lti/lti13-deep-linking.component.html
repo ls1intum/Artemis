@@ -29,6 +29,7 @@
                                     {{ 'artemisApp.exercise.title' | artemisTranslate }}
                                     <fa-icon [icon]="faSort" />
                                 </th>
+                                <!--
                                 <th jhiSortBy="releaseDate">
                                     {{ 'artemisApp.exercise.releaseDate' | artemisTranslate }}
                                     <fa-icon [icon]="faSort" />
@@ -44,7 +45,9 @@
                                 <th jhiSortBy="assessmentDueDate">
                                     {{ 'artemisApp.exercise.assessmentDueDate' | artemisTranslate }}
                                     <fa-icon [icon]="faSort" />
+                                    --
                                 </th>
+                                -->
                                 <th jhiSortBy="includedInOverallScore">
                                     {{ 'artemisApp.exercise.includedInOverallScore' | artemisTranslate }}
                                     <fa-icon [icon]="faSort" />
@@ -60,10 +63,12 @@
                                     <td>{{ exercise.id ? exercise.id : '' }}</td>
                                     <td>{{ exercise.type ? exercise.type : '' }}</td>
                                     <td>{{ exercise.title ? exercise.title : '' }}</td>
+                                    <!--
                                     <td>{{ exercise.releaseDate | artemisDate }}</td>
                                     <td>{{ exercise.startDate | artemisDate }}</td>
                                     <td>{{ exercise.dueDate | artemisDate }}</td>
                                     <td>{{ exercise.assessmentDueDate | artemisDate }}</td>
+                                    -->
                                     <td>
                                         {{
                                             exercise.includedInOverallScore === 'NOT_INCLUDED'
