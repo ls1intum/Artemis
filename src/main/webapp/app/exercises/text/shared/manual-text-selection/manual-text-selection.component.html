@@ -1,6 +1,6 @@
 <div>
     <!-- DO NOT ADD LINEBREAKS INSIDE div.manual-text-selection-area -->
-    @for (word of submissionWords; track word; let i = $index) {
+    @for (word of submissionWords(); track word; let i = $index) {
         <span class="manual-text-selection-area" tabindex="-1" (click)="calculateIndex(i); selectWord(word)">{{ ' ' + word }}</span>
     }
 </div>

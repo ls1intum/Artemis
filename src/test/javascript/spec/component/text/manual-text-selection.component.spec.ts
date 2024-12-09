@@ -44,21 +44,23 @@ describe('ManualTextSelectionComponent', () => {
             .then(() => {
                 fixture = TestBed.createComponent(ManualTextSelectionComponent);
                 component = fixture.componentInstance;
-                component.textBlockRefGroup = new TextBlockRefGroup(textBlockRefs);
+                fixture.componentRef.setInput('textBlockRefGroup', new TextBlockRefGroup(textBlockRefs));
                 fixture.detectChanges();
             });
     });
 
     it('should set words correctly', () => {
-        component.submission = submission;
-        component.words = new TextBlockRefGroup(textBlockRefs);
+        fixture.componentRef.setInput('submission', submission);
+        fixture.componentRef.setInput('words', new TextBlockRefGroup(textBlockRefs));
+        fixture.detectChanges();
 
-        expect(component.submissionWords).toEqual(['First', 'last', 'text.']);
+        expect(component.submissionWords()).toEqual(['First', 'last', 'text.']);
     });
 
     it('should calculate word indices correctly', () => {
-        component.submission = submission;
-        component.words = new TextBlockRefGroup(textBlockRefs);
+        fixture.componentRef.setInput('submission', submission);
+        fixture.componentRef.setInput('words', new TextBlockRefGroup(textBlockRefs));
+        fixture.detectChanges();
         component.calculateIndex(1);
 
         expect(component.currentWordIndex).toBe(6);
@@ -77,7 +79,6 @@ describe('ManualTextSelectionComponent', () => {
         component.ready = true;
         const sendAssessmentEventSpy = jest.spyOn(component.textAssessmentAnalytics, 'sendAssessmentEvent');
         component.selectWord('lastWord');
-        fixture.detectChanges();
         expect(sendAssessmentEventSpy).toHaveBeenCalledOnce();
         expect(sendAssessmentEventSpy).toHaveBeenCalledWith(TextAssessmentEventType.ADD_FEEDBACK_MANUALLY_SELECTED_BLOCK, FeedbackType.MANUAL, TextBlockType.MANUAL);
     });
