@@ -216,4 +216,6 @@ public interface LectureRepository extends ArtemisJpaRepository<Lecture, Long> {
             GROUP BY l.course.id
             """)
     Set<CourseContentCount> countVisibleLectures(@Param("courseIds") Set<Long> courseIds, @Param("now") ZonedDateTime now);
+
+    long countByCourse_Id(Long courseId);
 }
