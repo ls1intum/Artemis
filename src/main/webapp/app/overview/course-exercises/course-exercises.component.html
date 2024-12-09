@@ -1,4 +1,4 @@
-<div class="d-flex justify-content-between horizontal-scroll">
+<div class="d-flex horizontal-scroll">
     @if (course) {
         @if (!isShownViaLti) {
             <div [ngClass]="{ 'sidebar-collapsed': isCollapsed }">
@@ -14,7 +14,11 @@
         }
 
         @if (exerciseSelected) {
-            <div class="vw-100 module-bg rounded-3" [ngStyle]="isShownViaLti ? { height: '90vh', position: 'relative' } : {}">
+            <div
+                [ngClass]="{ 'exercise-content-sidebar-width': !isCollapsed }"
+                class="exercise-content-width module-bg rounded-3"
+                [ngStyle]="isShownViaLti ? { height: '90vh', position: 'relative' } : {}"
+            >
                 <router-outlet (deactivate)="onSubRouteDeactivate()" />
             </div>
         } @else {
