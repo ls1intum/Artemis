@@ -1,64 +1,55 @@
 <div>
-    <div class="d-flex flex-wrap">
-        <div class="mr-auto flex-fill">
-            <h2>
-                <span>{{ exercise?.title }} - </span>{{ filteredParticipationsSize }} <span jhiTranslate="artemisApp.participation.home.title"></span>
-            </h2>
-            <div class="d-flex align-items-center mt-2">
-                <label class="radio-inline mb-0 d-flex align-items-center">
-                    <input type="radio" [ngModel]="participationCriteria.filterProp" (click)="updateParticipationFilter(FilterProp.ALL)" [value]="FilterProp.ALL" />
-                    <span class="ms-1" jhiTranslate="artemisApp.exercise.showAll"></span>
-                </label>
-                <label class="radio-inline ms-2 mb-0 d-flex align-items-center">
-                    <input type="radio" [ngModel]="participationCriteria.filterProp" (click)="updateParticipationFilter(FilterProp.FAILED)" [value]="FilterProp.FAILED" />
-                    <span class="ms-1" jhiTranslate="artemisApp.exercise.showFailed"></span>
-                </label>
-                <label class="radio-inline ms-2 mb-0 d-flex align-items-center">
-                    <input
-                        type="radio"
-                        [ngModel]="participationCriteria.filterProp"
-                        (click)="updateParticipationFilter(FilterProp.NO_SUBMISSIONS)"
-                        [value]="FilterProp.NO_SUBMISSIONS"
-                    />
-                    <span class="ms-1" jhiTranslate="artemisApp.exercise.showNoSubmissions"></span>
-                </label>
-                @if (exercise.type === ExerciseType.PROGRAMMING && afterDueDate) {
-                    <label class="radio-inline ms-2 mb-0 d-flex align-items-center">
-                        <input
-                            type="radio"
-                            [ngModel]="participationCriteria.filterProp"
-                            (click)="updateParticipationFilter(FilterProp.NO_PRACTICE)"
-                            [value]="FilterProp.NO_PRACTICE"
-                        />
-                        <span class="ms-1" jhiTranslate="artemisApp.exercise.showNoPracticeMode"></span>
-                    </label>
+    <div class="d-flex flex-wrap align-items-center justify-content-between">
+        <h2 class="mb-0">
+            <span>{{ exercise?.title }} - </span>{{ filteredParticipationsSize }} <span jhiTranslate="artemisApp.participation.home.title"></span>
+        </h2>
+        <div class="d-flex">
+            @if (exercise?.type !== ExerciseType.QUIZ && exercise?.isAtLeastInstructor) {
+                <div class="p-2">
+                    <button
+                        class="btn btn-success"
+                        [disabled]="isSaving || participationsChangedDueDate.size === 0"
+                        (click)="saveChangedDueDates()"
+                        jhiTranslate="entity.action.save"
+                    ></button>
+                </div>
+            }
+            @if (exercise?.isAtLeastInstructor && exercise?.type === ExerciseType.PROGRAMMING) {
+                <jhi-programming-exercise-instructor-submission-state class="p-2" [exercise]="exercise" />
+            }
+            <div class="p-2">
+                @if (exercise?.isAtLeastTutor) {
+                    <a class="btn btn-info" [routerLink]="getScoresRoute(exercise)">
+                        <div>
+                            <fa-icon [icon]="faTable" />
+                            <span class="d-md-inline" jhiTranslate="entity.action.scores"></span>
+                        </div>
+                    </a>
                 }
             </div>
         </div>
-        @if (exercise?.type !== ExerciseType.QUIZ && exercise?.isAtLeastInstructor) {
-            <div class="p-2">
-                <button
-                    class="btn btn-success"
-                    [disabled]="isSaving || participationsChangedDueDate.size === 0"
-                    (click)="saveChangedDueDates()"
-                    jhiTranslate="entity.action.save"
-                ></button>
-            </div>
-        }
-        @if (exercise?.isAtLeastInstructor && exercise?.type === ExerciseType.PROGRAMMING) {
-            <jhi-programming-exercise-instructor-submission-state class="p-2" [exercise]="exercise" />
-        }
-        <div class="p-2">
-            @if (exercise?.isAtLeastTutor) {
-                <a class="btn btn-info" [routerLink]="getScoresRoute(exercise)">
-                    <div>
-                        <fa-icon [icon]="faTable" />
-                        <span class="d-md-inline" jhiTranslate="entity.action.scores"></span>
-                    </div>
-                </a>
-            }
-        </div>
     </div>
+    <div class="d-flex align-items-center mt-2">
+        <label class="radio-inline mb-0 d-flex align-items-center">
+            <input type="radio" [ngModel]="participationCriteria.filterProp" (click)="updateParticipationFilter(FilterProp.ALL)" [value]="FilterProp.ALL" />
+            <span class="ms-1" jhiTranslate="artemisApp.exercise.showAll"></span>
+        </label>
+        <label class="radio-inline ms-2 mb-0 d-flex align-items-center">
+            <input type="radio" [ngModel]="participationCriteria.filterProp" (click)="updateParticipationFilter(FilterProp.FAILED)" [value]="FilterProp.FAILED" />
+            <span class="ms-1" jhiTranslate="artemisApp.exercise.showFailed"></span>
+        </label>
+        <label class="radio-inline ms-2 mb-0 d-flex align-items-center">
+            <input type="radio" [ngModel]="participationCriteria.filterProp" (click)="updateParticipationFilter(FilterProp.NO_SUBMISSIONS)" [value]="FilterProp.NO_SUBMISSIONS" />
+            <span class="ms-1" jhiTranslate="artemisApp.exercise.showNoSubmissions"></span>
+        </label>
+        @if (exercise.type === ExerciseType.PROGRAMMING && afterDueDate) {
+            <label class="radio-inline ms-2 mb-0 d-flex align-items-center">
+                <input type="radio" [ngModel]="participationCriteria.filterProp" (click)="updateParticipationFilter(FilterProp.NO_PRACTICE)" [value]="FilterProp.NO_PRACTICE" />
+                <span class="ms-1" jhiTranslate="artemisApp.exercise.showNoPracticeMode"></span>
+            </label>
+        }
+    </div>
+
     <jhi-data-table
         [isLoading]="isLoading"
         entityType="participation"
