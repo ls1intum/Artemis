@@ -20,6 +20,7 @@ import de.tum.cit.aet.artemis.core.dto.NonLatestNonRatedResultsCleanupCountDTO;
 import de.tum.cit.aet.artemis.core.dto.NonLatestRatedResultsCleanupCountDTO;
 import de.tum.cit.aet.artemis.core.dto.OrphanCleanupCountDTO;
 import de.tum.cit.aet.artemis.core.dto.PlagiarismComparisonCleanupCountDTO;
+import de.tum.cit.aet.artemis.core.dto.SubmissionVersionsCleanupCountDTO;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAdmin;
 import de.tum.cit.aet.artemis.core.service.cleanup.DataCleanupService;
 
@@ -160,6 +161,38 @@ public class AdminCleanupResource {
             @RequestParam("deleteTo") ZonedDateTime deleteTo) {
         log.info("REST request to count old rated results between {} and {}", deleteFrom, deleteTo);
         NonLatestRatedResultsCleanupCountDTO result = dataCleanupService.countNonLatestRatedResults(deleteFrom, deleteTo);
+        return ResponseEntity.ok().body(result);
+    }
+
+    /**
+     * DELETE admin/cleanup/old-submission-versions
+     * Deletes old submission versions within the specified date range.
+     *
+     * @param deleteFrom the start date of the deletion range
+     * @param deleteTo   the end date of the deletion range
+     * @return a {@link ResponseEntity} containing the result of the cleanup operation
+     */
+    @DeleteMapping("old-submission-versions")
+    public ResponseEntity<CleanupServiceExecutionRecordDTO> deleteOldSubmissionVersions(@RequestParam("deleteFrom") ZonedDateTime deleteFrom,
+            @RequestParam("deleteTo") ZonedDateTime deleteTo) {
+        log.info("REST request to delete old submission versions between {} and {}", deleteFrom, deleteTo);
+        CleanupServiceExecutionRecordDTO result = dataCleanupService.deleteSubmissionVersions(deleteFrom, deleteTo);
+        return ResponseEntity.ok().body(result);
+    }
+
+    /**
+     * GET admin/cleanup/old-submission-versions/count
+     * Counts the number of submission versions entries that would be deleted within the specified date range.
+     *
+     * @param deleteFrom the start date of the counting range
+     * @param deleteTo   the end date of the counting range
+     * @return a {@link ResponseEntity} containing the count of affected entries
+     */
+    @GetMapping("old-submission-versions/count")
+    public ResponseEntity<SubmissionVersionsCleanupCountDTO> countOldSubmissionVersions(@RequestParam("deleteFrom") ZonedDateTime deleteFrom,
+            @RequestParam("deleteTo") ZonedDateTime deleteTo) {
+        log.info("REST request to count old submission versions between {} and {}", deleteFrom, deleteTo);
+        SubmissionVersionsCleanupCountDTO result = dataCleanupService.countSubmissionVersions(deleteFrom, deleteTo);
         return ResponseEntity.ok().body(result);
     }
 
