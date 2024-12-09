@@ -3,16 +3,15 @@
         <div class="col d-flex flex-row pt-3 pb-1">
             <h4 class="modal-title" jhiTranslate="artemisApp.lti13.selectContentFromCourse" [translateValues]="{ title: course?.title }">
                 Select content from course {{ course?.title }}
-                test amogus
             </h4>
             <jhi-help-icon class="ps-1" text="artemisApp.lti13.selectContentTooltip" />
         </div>
     </div>
     <div class="modal-body">
         <div class="table-responsive">
-            <div class="dropdown">
-                <button class="btn btn-secondary dropdown-toggle" type="button" id="exercisesDropdown" data-bs-toggle="dropdown" aria-expanded="false">Exercises</button>
-                <ul class="dropdown-menu" aria-labelledby="exercisesDropdown">
+            <div ngbDropdown container="body" class="d-flex">
+                <button class="btn btn-secondary dropdown-toggle" type="button" id="exercisesDropdown" ngbDropdownToggle>Exercises</button>
+                <div ngbDropdownMenu aria-labelledby="exercisesDropdown">
                     <table class="table table-bordered">
                         <thead class="thead-dark">
                             <tr jhiSort [(predicate)]="predicate" [(ascending)]="reverse" (sortChange)="sortRows()">
@@ -75,13 +74,13 @@
                             }
                         </tbody>
                     </table>
-                </ul>
+                </div>
             </div>
-            <div class="dropdown mt-3">
-                <button class="btn btn-secondary dropdown-toggle" type="button" id="lecturesDropdown" data-bs-toggle="dropdown" aria-expanded="false">Lectures</button>
-                <ul class="dropdown-menu" aria-labelledby="lecturesDropdown">
+            <div ngbDropdown container="body" class="d-flex mt-3">
+                <button class="btn btn-secondary dropdown-toggle" type="button" id="lecturesDropdown" ngbDropdownToggle>Lectures</button>
+                <div ngbDropdownMenu aria-labelledby="lecturesDropdown">
                     <!-- Add content for lectures here -->
-                </ul>
+                </div>
             </div>
         </div>
     </div>
