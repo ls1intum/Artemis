@@ -30,7 +30,6 @@ import de.tum.cit.aet.artemis.atlas.dto.CompetencyImportOptionsDTO;
 import de.tum.cit.aet.artemis.atlas.dto.CompetencyRelationDTO;
 import de.tum.cit.aet.artemis.atlas.dto.CompetencyWithTailRelationDTO;
 import de.tum.cit.aet.artemis.atlas.dto.UpdateCourseCompetencyRelationDTO;
-import de.tum.cit.aet.artemis.atlas.repository.CompetencyLectureUnitLinkRepository;
 import de.tum.cit.aet.artemis.atlas.repository.CompetencyProgressRepository;
 import de.tum.cit.aet.artemis.atlas.repository.CompetencyRelationRepository;
 import de.tum.cit.aet.artemis.atlas.repository.CourseCompetencyRepository;
@@ -83,15 +82,13 @@ public class CourseCompetencyService {
 
     private final LearningObjectImportService learningObjectImportService;
 
-    private final CompetencyLectureUnitLinkRepository competencyLectureUnitLinkRepository;
-
     private final CourseRepository courseRepository;
 
     public CourseCompetencyService(CompetencyProgressRepository competencyProgressRepository, CourseCompetencyRepository courseCompetencyRepository,
             CompetencyRelationRepository competencyRelationRepository, CompetencyProgressService competencyProgressService, ExerciseService exerciseService,
             LectureUnitService lectureUnitService, LearningPathService learningPathService, AuthorizationCheckService authCheckService,
             StandardizedCompetencyRepository standardizedCompetencyRepository, LectureUnitCompletionRepository lectureUnitCompletionRepository,
-            LearningObjectImportService learningObjectImportService, CompetencyLectureUnitLinkRepository competencyLectureUnitLinkRepository, CourseRepository courseRepository) {
+            LearningObjectImportService learningObjectImportService, CourseRepository courseRepository) {
         this.competencyProgressRepository = competencyProgressRepository;
         this.courseCompetencyRepository = courseCompetencyRepository;
         this.competencyRelationRepository = competencyRelationRepository;
@@ -103,7 +100,6 @@ public class CourseCompetencyService {
         this.standardizedCompetencyRepository = standardizedCompetencyRepository;
         this.lectureUnitCompletionRepository = lectureUnitCompletionRepository;
         this.learningObjectImportService = learningObjectImportService;
-        this.competencyLectureUnitLinkRepository = competencyLectureUnitLinkRepository;
         this.courseRepository = courseRepository;
     }
 
@@ -128,10 +124,17 @@ public class CourseCompetencyService {
      *
      * @param courseId The id of the course for which to fetch the competencies
      * @param userId   The id of the user for which to fetch the progress
+     * @param filter   Whether to filter out competencies that are not linked to any learning objects
      * @return The found competency
      */
-    public List<CourseCompetency> findCourseCompetenciesWithProgressForUserByCourseId(Long courseId, Long userId) {
-        List<CourseCompetency> competencies = courseCompetencyRepository.findByCourseIdOrderById(courseId);
+    public List<CourseCompetency> findCourseCompetenciesWithProgressForUserByCourseId(long courseId, long userId, boolean filter) {
+        List<CourseCompetency> competencies;
+        if (filter) {
+            competencies = courseCompetencyRepository.findByCourseIdAndLinkedToLearningObjectOrderById(courseId);
+        }
+        else {
+            competencies = courseCompetencyRepository.findByCourseIdOrderById(courseId);
+        }
         return findProgressForCompetenciesAndUser(competencies, userId);
     }
 
