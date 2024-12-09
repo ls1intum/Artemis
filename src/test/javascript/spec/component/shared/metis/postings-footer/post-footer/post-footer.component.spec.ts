@@ -80,8 +80,8 @@ describe('PostFooterComponent', () => {
         runInInjectionContext(injector, () => {
             component.sortedAnswerPosts = input<AnswerPost[]>(unsortedAnswerArray);
             component.groupAnswerPosts();
-            expect(component.groupedAnswerPosts.length).toBeGreaterThan(0); // Ensure groups are created
-            expect(component.groupedAnswerPosts[0].posts.length).toBeGreaterThan(0); // Ensure posts exist in groups
+            expect(component.groupedAnswerPosts.length).toBeGreaterThan(0);
+            expect(component.groupedAnswerPosts[0].posts.length).toBeGreaterThan(0);
         });
     });
 
@@ -189,27 +189,28 @@ describe('PostFooterComponent', () => {
         const post3: AnswerPost = { id: 3, author: authorA, creationDate: baseTime.add(10, 'minute').toDate() } as unknown as AnswerPost;
         const post4: AnswerPost = { id: 4, author: authorB, creationDate: baseTime.add(12, 'minute').toDate() } as unknown as AnswerPost;
         const post5: AnswerPost = { id: 5, author: authorB, creationDate: baseTime.add(14, 'minute').toDate() } as unknown as AnswerPost;
+        runInInjectionContext(injector, () => {
+            component.sortedAnswerPosts = input<AnswerPost[]>([post3, post1, post5, post2, post4]);
 
-        component.sortedAnswerPosts = [post3, post1, post5, post2, post4];
+            component.groupAnswerPosts();
+            expect(component.groupedAnswerPosts).toHaveLength(3);
 
-        component.groupAnswerPosts();
-        expect(component.groupedAnswerPosts).toHaveLength(3);
+            const group1 = component.groupedAnswerPosts[0];
+            expect(group1.author).toEqual(authorA);
+            expect(group1.posts).toHaveLength(2);
+            expect(group1.posts).toContainEqual(expect.objectContaining({ id: post1.id }));
+            expect(group1.posts).toContainEqual(expect.objectContaining({ id: post2.id }));
 
-        const group1 = component.groupedAnswerPosts[0];
-        expect(group1.author).toEqual(authorA);
-        expect(group1.posts).toHaveLength(2);
-        expect(group1.posts).toContainEqual(expect.objectContaining({ id: post1.id }));
-        expect(group1.posts).toContainEqual(expect.objectContaining({ id: post2.id }));
+            const group2 = component.groupedAnswerPosts[1];
+            expect(group2.author).toEqual(authorA);
+            expect(group2.posts).toHaveLength(1);
+            expect(group2.posts).toContainEqual(expect.objectContaining({ id: post3.id }));
 
-        const group2 = component.groupedAnswerPosts[1];
-        expect(group2.author).toEqual(authorA);
-        expect(group2.posts).toHaveLength(1);
-        expect(group2.posts).toContainEqual(expect.objectContaining({ id: post3.id }));
-
-        const group3 = component.groupedAnswerPosts[2];
-        expect(group3.author).toEqual(authorB);
-        expect(group3.posts).toHaveLength(2);
-        expect(group3.posts).toContainEqual(expect.objectContaining({ id: post4.id }));
-        expect(group3.posts).toContainEqual(expect.objectContaining({ id: post5.id }));
+            const group3 = component.groupedAnswerPosts[2];
+            expect(group3.author).toEqual(authorB);
+            expect(group3.posts).toHaveLength(2);
+            expect(group3.posts).toContainEqual(expect.objectContaining({ id: post4.id }));
+            expect(group3.posts).toContainEqual(expect.objectContaining({ id: post5.id }));
+        });
     });
 });
