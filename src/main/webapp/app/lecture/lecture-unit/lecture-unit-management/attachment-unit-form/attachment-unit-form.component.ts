@@ -6,7 +6,9 @@ import { ACCEPTED_FILE_EXTENSIONS_FILE_BROWSER, ALLOWED_FILE_EXTENSIONS_HUMAN_RE
 import { CompetencyLectureUnitLink } from 'app/entities/competency.model';
 import { MAX_FILE_SIZE } from 'app/shared/constants/input.constants';
 import { toSignal } from '@angular/core/rxjs-interop';
+import { map, of } from 'rxjs';
 import { FormDateTimePickerComponent } from 'app/shared/date-time-picker/date-time-picker.component';
+import { TranslateService } from '@ngx-translate/core';
 
 export interface AttachmentUnitFormData {
     formProperties: FormProperties;
@@ -50,7 +52,7 @@ export class AttachmentUnitFormComponent implements OnChanges {
 
     datePickerComponent = viewChild(FormDateTimePickerComponent);
 
-    // have to handle the file input as a special case at is not part of the reactive form
+    // have to handle the file input as a special case, as it is not part of the reactive form
     @ViewChild('fileInput', { static: false })
     fileInput: ElementRef;
     file: File;
@@ -59,6 +61,7 @@ export class AttachmentUnitFormComponent implements OnChanges {
     fileName = signal<string | undefined>(undefined);
     isFileTooBig = signal<boolean>(false);
 
+    private readonly translateService = inject(TranslateService);
     private readonly formBuilder = inject(FormBuilder);
     form: FormGroup = this.formBuilder.group({
         name: [undefined as string | undefined, [Validators.required, Validators.maxLength(255)]],
@@ -69,9 +72,9 @@ export class AttachmentUnitFormComponent implements OnChanges {
         competencyLinks: [undefined as CompetencyLectureUnitLink[] | undefined],
     });
     private readonly statusChanges = toSignal(this.form.statusChanges ?? 'INVALID');
-
+    private readonly name = toSignal(this.nameControl?.valueChanges ?? of(''));
     isFormValid = computed(() => {
-        return (this.statusChanges() === 'VALID' || this.fileName()) && !this.isFileTooBig() && this.datePickerComponent()?.isValid();
+        return this.statusChanges() === 'VALID' && !this.isFileTooBig() && this.name() && this.fileName();
     });
 
     ngOnChanges(): void {
@@ -79,6 +82,8 @@ export class AttachmentUnitFormComponent implements OnChanges {
             this.setFormValues(this.formData()!);
         }
     }
+
+    private readonly currentLanguage = toSignal(this.translateService.onLangChange.pipe(map((event) => event.lang)));
 
     onFileChange(event: Event): void {
         const input = event.target as HTMLInputElement;
@@ -88,7 +93,7 @@ export class AttachmentUnitFormComponent implements OnChanges {
         this.file = input.files[0];
         this.fileName.set(this.file.name);
         // automatically set the name in case it is not yet specified
-        if (this.form && (this.nameControl?.value == undefined || this.nameControl?.value == '')) {
+        if (this.form && !this.name()) {
             this.form.patchValue({
                 // without extension
                 name: this.file.name.replace(/\.[^/.]+$/, ''),
@@ -96,6 +101,20 @@ export class AttachmentUnitFormComponent implements OnChanges {
         }
         this.isFileTooBig.set(this.file.size > MAX_FILE_SIZE);
     }
+
+    tooltipText = computed(() => {
+        this.currentLanguage();
+        if (!this.fileName() && !this.name()) {
+            return this.translateService.instant('artemisApp.attachmentUnit.createAttachmentUnit.nameAndFileRequiredValidationError');
+        }
+        if (!this.fileName()) {
+            return this.translateService.instant('artemisApp.attachmentUnit.createAttachmentUnit.fileRequiredValidationError');
+        }
+        if (!this.name()) {
+            return this.translateService.instant('artemisApp.attachmentUnit.createAttachmentUnit.nameRequiredValidationError');
+        }
+        return undefined;
+    });
 
     get nameControl() {
         return this.form.get('name');
