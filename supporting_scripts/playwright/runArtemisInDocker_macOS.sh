@@ -2,9 +2,9 @@
 
 set -e
 
-cd ../..
+artemis_path="$(readlink -f "$(dirname $0)/../..")"
 
-cd docker
+cd "$artemis_path/docker"
 open -a Docker
 
 echo "Updating docker group ID in the docker compose file"
@@ -18,7 +18,7 @@ fi
 docker compose -f artemis-dev-local-vc-local-ci-mysql.yml up -d
 echo "Finished docker compose"
 
-cd ..
+cd "$artemis_path"
 
 echo "Installing Artemis npm dependencies and start Artemis client"
 
