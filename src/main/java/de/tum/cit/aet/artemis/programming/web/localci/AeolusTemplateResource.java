@@ -61,21 +61,19 @@ public class AeolusTemplateResource {
      * @param projectType    The project type for which the template file should be returned. If omitted, a default depending on the language will be used.
      * @param staticAnalysis Whether the static analysis template should be used
      * @param sequentialRuns Whether the sequential runs template should be used
-     * @param testCoverage   Whether the test coverage template should be used
      * @return The requested file, or 404 if the file doesn't exist
      */
     @GetMapping({ "templates/{language}/{projectType}", "templates/{language}" })
     @EnforceAtLeastEditor
     public ResponseEntity<String> getAeolusTemplate(@PathVariable ProgrammingLanguage language, @PathVariable Optional<ProjectType> projectType,
             @RequestParam(value = "staticAnalysis", defaultValue = "false") boolean staticAnalysis,
-            @RequestParam(value = "sequentialRuns", defaultValue = "false") boolean sequentialRuns,
-            @RequestParam(value = "testCoverage", defaultValue = "false") boolean testCoverage) {
-        log.debug("REST request to get aeolus template for programming language {} and project type {}, static Analysis: {}, sequential Runs {}, testCoverage: {}", language,
-                projectType, staticAnalysis, sequentialRuns, testCoverage);
+            @RequestParam(value = "sequentialRuns", defaultValue = "false") boolean sequentialRuns) {
+        log.debug("REST request to get aeolus template for programming language {} and project type {}, static Analysis: {}, sequential Runs {}", language, projectType,
+                staticAnalysis, sequentialRuns);
 
         String projectTypePrefix = projectType.map(type -> type.name().toLowerCase()).orElse("");
 
-        return getAeolusTemplateFileContentWithResponse(language, projectTypePrefix, staticAnalysis, sequentialRuns, testCoverage);
+        return getAeolusTemplateFileContentWithResponse(language, projectTypePrefix, staticAnalysis, sequentialRuns);
     }
 
     /**
@@ -95,14 +93,13 @@ public class AeolusTemplateResource {
     @EnforceAtLeastEditor
     public ResponseEntity<String> getAeolusTemplateScript(@PathVariable ProgrammingLanguage language, @PathVariable Optional<ProjectType> projectType,
             @RequestParam(value = "staticAnalysis", defaultValue = "false") boolean staticAnalysis,
-            @RequestParam(value = "sequentialRuns", defaultValue = "false") boolean sequentialRuns,
-            @RequestParam(value = "testCoverage", defaultValue = "false") boolean testCoverage) {
-        log.debug("REST request to get aeolus template for programming language {} and project type {}, static Analysis: {}, sequential Runs {}, testCoverage: {}", language,
-                projectType, staticAnalysis, sequentialRuns, testCoverage);
+            @RequestParam(value = "sequentialRuns", defaultValue = "false") boolean sequentialRuns) {
+        log.debug("REST request to get aeolus template for programming language {} and project type {}, static Analysis: {}, sequential Runs {}", language, projectType,
+                staticAnalysis, sequentialRuns);
 
         String projectTypePrefix = projectType.map(type -> type.name().toLowerCase()).orElse("");
 
-        return getAeolusTemplateScriptWithResponse(language, projectTypePrefix, staticAnalysis, sequentialRuns, testCoverage);
+        return getAeolusTemplateScriptWithResponse(language, projectTypePrefix, staticAnalysis, sequentialRuns);
     }
 
     /**
@@ -115,17 +112,16 @@ public class AeolusTemplateResource {
      * @param projectTypePrefix The project type for which the template file should be returned. If omitted, a default depending on the language will be used.
      * @param staticAnalysis    Whether the static analysis template should be used
      * @param sequentialRuns    Whether the sequential runs template should be used
-     * @param testCoverage      Whether the test coverage template should be used
      * @return The requested file, or 404 if the file doesn't exist
      */
-    private ResponseEntity<String> getAeolusTemplateFileContentWithResponse(ProgrammingLanguage language, String projectTypePrefix, boolean staticAnalysis, boolean sequentialRuns,
-            boolean testCoverage) {
+    private ResponseEntity<String> getAeolusTemplateFileContentWithResponse(ProgrammingLanguage language, String projectTypePrefix, boolean staticAnalysis,
+            boolean sequentialRuns) {
         try {
             Optional<ProjectType> optionalProjectType = Optional.empty();
             if (!projectTypePrefix.isEmpty()) {
                 optionalProjectType = Optional.of(ProjectType.valueOf(projectTypePrefix.toUpperCase()));
             }
-            Windfile windfile = aeolusTemplateService.getWindfileFor(language, optionalProjectType, staticAnalysis, sequentialRuns, testCoverage);
+            Windfile windfile = aeolusTemplateService.getWindfileFor(language, optionalProjectType, staticAnalysis, sequentialRuns);
             if (windfile == null) {
                 return new ResponseEntity<>(null, null, HttpStatus.NOT_FOUND);
             }
@@ -148,17 +144,15 @@ public class AeolusTemplateResource {
      * @param projectTypePrefix The project type for which the template file should be returned. If omitted, a default depending on the language will be used.
      * @param staticAnalysis    Whether the static analysis template should be used
      * @param sequentialRuns    Whether the sequential runs template should be used
-     * @param testCoverage      Whether the test coverage template should be used
      * @return The requested file, or 404 if the file doesn't exist
      */
-    private ResponseEntity<String> getAeolusTemplateScriptWithResponse(ProgrammingLanguage language, String projectTypePrefix, boolean staticAnalysis, boolean sequentialRuns,
-            boolean testCoverage) {
+    private ResponseEntity<String> getAeolusTemplateScriptWithResponse(ProgrammingLanguage language, String projectTypePrefix, boolean staticAnalysis, boolean sequentialRuns) {
         try {
             Optional<ProjectType> optionalProjectType = Optional.empty();
             if (!projectTypePrefix.isEmpty()) {
                 optionalProjectType = Optional.of(ProjectType.valueOf(projectTypePrefix.toUpperCase()));
             }
-            String script = buildScriptProviderService.getScriptFor(language, optionalProjectType, staticAnalysis, sequentialRuns, testCoverage);
+            String script = buildScriptProviderService.getScriptFor(language, optionalProjectType, staticAnalysis, sequentialRuns);
             HttpHeaders responseHeaders = new HttpHeaders();
             responseHeaders.setContentType(MediaType.TEXT_PLAIN);
             return new ResponseEntity<>(script, responseHeaders, HttpStatus.OK);

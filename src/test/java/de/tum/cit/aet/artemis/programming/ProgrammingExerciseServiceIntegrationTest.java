@@ -43,10 +43,7 @@ class ProgrammingExerciseServiceIntegrationTest extends AbstractProgrammingInteg
         programmingExercise = exerciseUtilService.getFirstExerciseWithType(course, ProgrammingExercise.class);
         // Needed, as we need the test cases for the next steps
         programmingExercise = programmingExerciseUtilService.loadProgrammingExerciseWithEagerReferences(programmingExercise);
-        programmingExerciseUtilService.addHintsToExercise(programmingExercise);
         programmingExerciseUtilService.addTasksToProgrammingExercise(programmingExercise);
-        programmingExerciseUtilService.addSolutionEntriesToProgrammingExercise(programmingExercise);
-        programmingExerciseUtilService.addCodeHintsToProgrammingExercise(programmingExercise);
         programmingExerciseUtilService.addStaticCodeAnalysisCategoriesToProgrammingExercise(programmingExercise);
 
         // Load again to fetch changes to statement and hints while keeping eager refs
@@ -82,32 +79,9 @@ class ProgrammingExerciseServiceIntegrationTest extends AbstractProgrammingInteg
         assertThat(programmingExercise.getTestCases()).noneMatch(testCase -> newTestCaseIDs.contains(testCase.getId()));
         assertThat(programmingExercise.getTestCases()).usingRecursiveFieldByFieldElementComparatorIgnoringFields("id", "exercise", "tasks", "solutionEntries", "coverageEntries")
                 .containsExactlyInAnyOrderElementsOf(newlyImported.getTestCases());
-        final var newHintIDs = newlyImported.getExerciseHints().stream().map(ExerciseHint::getId).collect(Collectors.toSet());
-        assertThat(newlyImported.getExerciseHints()).hasSameSizeAs(programmingExercise.getExerciseHints());
-        assertThat(programmingExercise.getExerciseHints()).noneMatch(hint -> newHintIDs.contains(hint.getId()));
         final var newStaticCodeAnalysisCategoriesIDs = newlyImported.getStaticCodeAnalysisCategories().stream().map(StaticCodeAnalysisCategory::getId).collect(Collectors.toSet());
         assertThat(newlyImported.getStaticCodeAnalysisCategories()).hasSameSizeAs(programmingExercise.getStaticCodeAnalysisCategories());
         assertThat(programmingExercise.getStaticCodeAnalysisCategories()).noneMatch(category -> newStaticCodeAnalysisCategoriesIDs.contains(category.getId()));
-    }
-
-    @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
-    void importProgrammingExerciseBasis_testsAndHintsHoldTheSameInformation() {
-        final var imported = importExerciseBase();
-
-        // All copied hints/tests have the same content are referenced to the new exercise
-        assertThat(imported.getExerciseHints()).allMatch(hint -> programmingExercise.getExerciseHints().stream().anyMatch(
-                oldHint -> oldHint.getContent().equals(hint.getContent()) && oldHint.getTitle().equals(hint.getTitle()) && hint.getExercise().getId().equals(imported.getId())));
-        assertThat(imported.getExerciseHints().stream().filter(eh -> eh instanceof CodeHint).map(eh -> (CodeHint) eh).collect(Collectors.toSet()))
-                .allMatch(codeHint -> programmingExercise.getExerciseHints().stream().filter(eh -> eh instanceof CodeHint).map(eh -> (CodeHint) eh)
-                        .anyMatch(oldHint -> oldHint.getTitle().equals(codeHint.getTitle())
-                                && oldHint.getProgrammingExerciseTask().getTaskName().equals(codeHint.getProgrammingExerciseTask().getTaskName())
-                                && codeHint.getSolutionEntries().size() == 1 && oldHint.getSolutionEntries().stream().findFirst().orElseThrow().getCode()
-                                        .equals(codeHint.getSolutionEntries().stream().findFirst().orElseThrow().getCode())));
-
-        assertThat(imported.getTestCases()).allMatch(test -> programmingExercise.getTestCases().stream().anyMatch(oldTest -> test.getExercise().getId().equals(imported.getId())
-                && oldTest.getTestName().equalsIgnoreCase(test.getTestName()) && oldTest.getWeight().equals(test.getWeight()) && test.getSolutionEntries().size() == 1
-                && oldTest.getSolutionEntries().stream().findFirst().orElseThrow().getCode().equals(test.getSolutionEntries().stream().findFirst().orElseThrow().getCode())));
     }
 
     @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")

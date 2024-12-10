@@ -305,10 +305,6 @@ public class ProgrammingExerciseResource {
         if (!Objects.equals(programmingExerciseBeforeUpdate.isStaticCodeAnalysisEnabled(), updatedProgrammingExercise.isStaticCodeAnalysisEnabled())) {
             throw new BadRequestAlertException("Static code analysis enabled flag must not be changed", ENTITY_NAME, "staticCodeAnalysisCannotChange");
         }
-        if (!Objects.equals(programmingExerciseBeforeUpdate.getBuildConfig().isTestwiseCoverageEnabled(),
-                updatedProgrammingExercise.getBuildConfig().isTestwiseCoverageEnabled())) {
-            throw new BadRequestAlertException("Testwise coverage enabled flag must not be changed", ENTITY_NAME, "testwiseCoverageCannotChange");
-        }
         // Check if theia Profile is enabled
         if (Arrays.asList(this.environment.getActiveProfiles()).contains(PROFILE_THEIA)) {
             // Require 1 / 3 participation modes to be enabled

@@ -11,19 +11,15 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.after;
 import static org.mockito.Mockito.argThat;
-import static org.mockito.Mockito.doNothing;
-import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.timeout;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 
 import java.time.ZonedDateTime;
-import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
-import org.eclipse.jgit.api.errors.GitAPIException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpHeaders;
@@ -58,7 +54,6 @@ import de.tum.cit.aet.artemis.programming.domain.SolutionProgrammingExercisePart
 import de.tum.cit.aet.artemis.programming.domain.StaticCodeAnalysisTool;
 import de.tum.cit.aet.artemis.programming.dto.AbstractBuildResultNotificationDTO;
 import de.tum.cit.aet.artemis.programming.dto.ResultDTO;
-import de.tum.cit.aet.artemis.programming.hestia.util.TestwiseCoverageTestUtil;
 import de.tum.cit.aet.artemis.programming.repository.ParticipationVCSAccessTokenRepository;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseBuildConfigRepository;
 import de.tum.cit.aet.artemis.programming.repository.SolutionProgrammingExerciseParticipationRepository;
@@ -372,35 +367,6 @@ public class ProgrammingExerciseResultTestService {
         programmingExerciseTestCaseRepository.save(test4);
         var test2 = programmingExerciseTestCaseRepository.findByExerciseIdAndTestName(programmingExercise.getId(), "test2").orElseThrow().active(true);
         programmingExerciseTestCaseRepository.saveAll(List.of(test2, test4));
-    }
-
-    // Test
-    public void shouldGenerateTestwiseCoverageFileReports(AbstractBuildResultNotificationDTO resultNotification) throws GitAPIException {
-        // set testwise coverage analysis for programming exercise
-        programmingExercise.getBuildConfig().setTestwiseCoverageEnabled(true);
-        programmingExerciseBuildConfigRepository.save(programmingExercise.getBuildConfig());
-        programmingExerciseRepository.save(programmingExercise);
-        solutionParticipation.setProgrammingExercise(programmingExercise);
-        solutionProgrammingExerciseRepository.save(solutionParticipation);
-        programmingExerciseUtilService.createProgrammingSubmission(solutionParticipation, false);
-
-        // setup mocks
-        doReturn(null).when(gitService).getOrCheckoutRepository(any(), eq(true));
-        doNothing().when(gitService).resetToOriginHead(any());
-        doNothing().when(gitService).pullIgnoreConflicts(any());
-        doReturn(Collections.emptyMap()).when(gitService).listFilesAndFolders(any());
-
-        var expectedReportsByTestName = TestwiseCoverageTestUtil.generateCoverageFileReportByTestName();
-
-        final var resultRequestBody = convertBuildResultToJsonObject(resultNotification);
-        final var result = gradingService.processNewProgrammingExerciseResult(solutionParticipation, resultRequestBody);
-        assertThat(result).isNotNull();
-        var actualReportsByTestName = result.getCoverageFileReportsByTestCaseName();
-        assertThat(actualReportsByTestName).usingRecursiveComparison().isEqualTo(expectedReportsByTestName);
-
-        // the coverage result attribute is transient in the result and should not be saved to the database
-        var resultFromDatabase = resultRepository.findByIdElseThrow(result.getId());
-        assertThat(resultFromDatabase.getCoverageFileReportsByTestCaseName()).isNull();
     }
 
     // Test

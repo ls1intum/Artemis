@@ -120,15 +120,6 @@ public class TitleCacheEvictionService implements PostUpdateEventListener, PostD
         else if (entity instanceof Exam exam) {
             evictIdFromCache("examTitle", exam.getId());
         }
-        else if (entity instanceof ExerciseHint hint) {
-            if (hint.getExercise() == null) {
-                log.warn("Unable to clear title of exercise hint {}: Exercise not present", hint.getId());
-                return;
-            }
-
-            var combinedId = hint.getExercise().getId() + "-" + hint.getId();
-            evictIdFromCache("exerciseHintTitle", combinedId);
-        }
         else if (entity instanceof ExerciseGroup exerciseGroup) {
             if (!Hibernate.isInitialized(exerciseGroup.getExercises())) {
                 log.warn("Unable to clear title of exercises from exercise group {}: Exercises not initialized", exerciseGroup.getId());

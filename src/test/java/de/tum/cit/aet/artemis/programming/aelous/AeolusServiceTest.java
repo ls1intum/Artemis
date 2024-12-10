@@ -204,14 +204,13 @@ class AeolusServiceTest extends AbstractSpringIntegrationIndependentTest {
         programmingExercise.setProjectType(ProjectType.PLAIN_GRADLE);
         programmingExercise.setStaticCodeAnalysisEnabled(true);
         programmingExercise.getBuildConfig().setSequentialTestRuns(true);
-        programmingExercise.getBuildConfig().setTestwiseCoverageEnabled(true);
         String script = aeolusBuildScriptGenerationService.getScript(programmingExercise);
         assertThat(script).isNull();
     }
 
     @Test
     void testGetWindfileFor() throws IOException {
-        Windfile windfile = aeolusTemplateService.getWindfileFor(ProgrammingLanguage.JAVA, Optional.empty(), false, false, false);
+        Windfile windfile = aeolusTemplateService.getWindfileFor(ProgrammingLanguage.JAVA, Optional.empty(), false, false);
         assertThat(windfile).isNotNull();
         assertThat(windfile.getActions()).isNotNull();
         assertThat(windfile.getActions()).hasSize(1);
@@ -224,7 +223,6 @@ class AeolusServiceTest extends AbstractSpringIntegrationIndependentTest {
         programmingExercise.setProgrammingLanguage(ProgrammingLanguage.HASKELL);
         programmingExercise.setStaticCodeAnalysisEnabled(true);
         programmingExercise.getBuildConfig().setSequentialTestRuns(true);
-        programmingExercise.getBuildConfig().setTestwiseCoverageEnabled(true);
         Windfile windfile = aeolusTemplateService.getDefaultWindfileFor(programmingExercise);
         assertThat(windfile).isNull();
     }

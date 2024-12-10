@@ -126,7 +126,6 @@ public class ProgrammingExerciseFactory {
             programmingExercise.setBuildConfig(new ProgrammingExerciseBuildConfig());
         }
         programmingExercise.setStaticCodeAnalysisEnabled(false);
-        programmingExercise.getBuildConfig().setTestwiseCoverageEnabled(false);
         programmingExercise.setAssessmentType(AssessmentType.SEMI_AUTOMATIC);
         programmingExercise.setProgrammingLanguage(programmingLanguage);
         programmingExercise.getBuildConfig().setBuildScript("Some script");
@@ -168,7 +167,6 @@ public class ProgrammingExerciseFactory {
         toBeImported.setTotalNumberOfAssessments(template.getTotalNumberOfAssessments());
         toBeImported.setNumberOfComplaints(template.getNumberOfComplaints());
         toBeImported.setNumberOfMoreFeedbackRequests(template.getNumberOfMoreFeedbackRequests());
-        toBeImported.setExerciseHints(null);
         toBeImported.setSolutionParticipation(null);
         toBeImported.setTemplateParticipation(null);
         buildConfig.setSequentialTestRuns(template.getBuildConfig().hasSequentialTestRuns());
@@ -184,7 +182,6 @@ public class ProgrammingExerciseFactory {
         toBeImported.setAllowOnlineEditor(template.isAllowOnlineEditor());
         toBeImported.setAllowOfflineIde(template.isAllowOfflineIde());
         toBeImported.setStaticCodeAnalysisEnabled(template.isStaticCodeAnalysisEnabled());
-        buildConfig.setTestwiseCoverageEnabled(template.getBuildConfig().isTestwiseCoverageEnabled());
         toBeImported.setTutorParticipations(null);
         toBeImported.setPosts(null);
         toBeImported.setStudentParticipations(null);
@@ -438,7 +435,6 @@ public class ProgrammingExerciseFactory {
         if (enableStaticCodeAnalysis) {
             programmingExercise.setMaxStaticCodeAnalysisPenalty(40);
         }
-        programmingExercise.getBuildConfig().setTestwiseCoverageEnabled(enableTestwiseCoverageAnalysis);
         // Note: no separators are allowed for Swift package names
         if (programmingLanguage == ProgrammingLanguage.SWIFT) {
             programmingExercise.setPackageName("swiftTest");

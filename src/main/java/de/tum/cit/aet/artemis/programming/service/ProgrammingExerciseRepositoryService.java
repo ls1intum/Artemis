@@ -386,8 +386,6 @@ public class ProgrammingExerciseRepositoryService {
         final Map<String, Boolean> sectionsMap = new HashMap<>();
         // Keep or delete static code analysis configuration in the build configuration file
         sectionsMap.put("static-code-analysis", Boolean.TRUE.equals(programmingExercise.isStaticCodeAnalysisEnabled()));
-        // Keep or delete testwise coverage configuration in the build file
-        sectionsMap.put("record-testwise-coverage", Boolean.TRUE.equals(programmingExercise.getBuildConfig().isTestwiseCoverageEnabled()));
 
         if (programmingExercise.getBuildConfig().hasSequentialTestRuns()) {
             setupTestTemplateSequentialTestRuns(resources, templatePath, projectTemplatePath, projectType, sectionsMap);

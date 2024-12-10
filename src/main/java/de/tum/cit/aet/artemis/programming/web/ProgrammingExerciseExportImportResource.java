@@ -261,7 +261,6 @@ public class ProgrammingExerciseExportImportResource {
             importedProgrammingExercise.setStaticCodeAnalysisCategories(null);
             importedProgrammingExercise.setTemplateParticipation(null);
             importedProgrammingExercise.setSolutionParticipation(null);
-            importedProgrammingExercise.setExerciseHints(null);
             importedProgrammingExercise.setTasks(null);
 
             competencyProgressApi.updateProgressByLearningObjectAsync(importedProgrammingExercise);

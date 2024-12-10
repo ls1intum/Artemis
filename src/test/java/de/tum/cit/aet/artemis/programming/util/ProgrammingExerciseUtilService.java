@@ -18,7 +18,6 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
-import java.util.Set;
 import java.util.stream.Collectors;
 
 import org.apache.commons.io.FileUtils;
@@ -69,9 +68,6 @@ import de.tum.cit.aet.artemis.programming.repository.SolutionProgrammingExercise
 import de.tum.cit.aet.artemis.programming.repository.StaticCodeAnalysisCategoryRepository;
 import de.tum.cit.aet.artemis.programming.repository.SubmissionPolicyRepository;
 import de.tum.cit.aet.artemis.programming.repository.TemplateProgrammingExerciseParticipationRepository;
-import de.tum.cit.aet.artemis.programming.repository.hestia.CodeHintRepository;
-import de.tum.cit.aet.artemis.programming.repository.hestia.ExerciseHintRepository;
-import de.tum.cit.aet.artemis.programming.repository.hestia.ProgrammingExerciseSolutionEntryRepository;
 import de.tum.cit.aet.artemis.programming.service.GitService;
 import de.tum.cit.aet.artemis.programming.test_repository.ProgrammingExerciseTaskTestRepository;
 import de.tum.cit.aet.artemis.programming.test_repository.ProgrammingExerciseTestCaseTestRepository;
@@ -140,16 +136,7 @@ public class ProgrammingExerciseUtilService {
     private StudentParticipationTestRepository studentParticipationRepo;
 
     @Autowired
-    private ExerciseHintRepository exerciseHintRepository;
-
-    @Autowired
     private ProgrammingExerciseTaskTestRepository programmingExerciseTaskRepository;
-
-    @Autowired
-    private ProgrammingExerciseSolutionEntryRepository solutionEntryRepository;
-
-    @Autowired
-    private CodeHintRepository codeHintRepository;
 
     @Autowired
     private ProgrammingExerciseTestRepository programmingExerciseTestRepository;
@@ -542,27 +529,6 @@ public class ProgrammingExerciseUtilService {
     }
 
     /**
-     * Creates and saves a course with a programming exercise and 3 active, always visible test cases with different weights.
-     *
-     * @return The newly created course with a programming exercise.
-     */
-    public Course addCourseWithOneProgrammingExerciseAndSpecificTestCases() {
-        Course course = addCourseWithOneProgrammingExercise();
-        ProgrammingExercise programmingExercise = exerciseUtilService.findProgrammingExerciseWithTitle(course.getExercises(), "Programming");
-
-        List<ProgrammingExerciseTestCase> testCases = new ArrayList<>();
-        testCases.add(new ProgrammingExerciseTestCase().testName("testClass[BubbleSort]").weight(1.0).active(true).exercise(programmingExercise).bonusMultiplier(1D).bonusPoints(0D)
-                .visibility(Visibility.ALWAYS));
-        testCases.add(new ProgrammingExerciseTestCase().testName("testMethods[Context]").weight(2.0).active(true).exercise(programmingExercise).bonusMultiplier(1D).bonusPoints(0D)
-                .visibility(Visibility.ALWAYS));
-        testCases.add(new ProgrammingExerciseTestCase().testName("testMethods[Policy]").weight(3.0).active(true).exercise(programmingExercise).bonusMultiplier(1D).bonusPoints(0D)
-                .visibility(Visibility.ALWAYS));
-        testCaseRepository.saveAll(testCases);
-
-        return courseRepo.findByIdWithEagerExercisesElseThrow(course.getId());
-    }
-
-    /**
      * Creates and saves a course with a java programming exercise with static code analysis enabled.
      *
      * @return The newly created programming exercise.
@@ -861,27 +827,6 @@ public class ProgrammingExerciseUtilService {
     }
 
     /**
-     * Adds 3 hints to the given programming exercise. Each hint has a unique content and title. All have a display threshold of 3.
-     *
-     * @param exercise The exercise to which hints should be added.
-     */
-    public void addHintsToExercise(ProgrammingExercise exercise) {
-        ExerciseHint exerciseHint1 = new ExerciseHint().content("content 1").exercise(exercise).title("title 1");
-        ExerciseHint exerciseHint2 = new ExerciseHint().content("content 2").exercise(exercise).title("title 2");
-        ExerciseHint exerciseHint3 = new ExerciseHint().content("content 3").exercise(exercise).title("title 3");
-        exerciseHint1.setDisplayThreshold((short) 3);
-        exerciseHint2.setDisplayThreshold((short) 3);
-        exerciseHint3.setDisplayThreshold((short) 3);
-        Set<ExerciseHint> hints = new HashSet<>();
-        hints.add(exerciseHint1);
-        hints.add(exerciseHint2);
-        hints.add(exerciseHint3);
-        exercise.setExerciseHints(hints);
-        exerciseHintRepository.saveAll(hints);
-        programmingExerciseRepository.save(exercise);
-    }
-
-    /**
      * Adds a task for each test case and adds it to the problem statement of the programming exercise.
      *
      * @param programmingExercise The programming exercise to which tasks should be added.
@@ -904,48 +849,6 @@ public class ProgrammingExerciseUtilService {
         programmingExercise.setProblemStatement(problemStatement.toString());
         programmingExerciseTaskRepository.saveAll(tasks);
         programmingExerciseRepository.save(programmingExercise);
-    }
-
-    /**
-     * Adds a solution entry to each test case of the given programming exercise.
-     *
-     * @param programmingExercise The exercise to which solution entries should be added.
-     */
-    public void addSolutionEntriesToProgrammingExercise(ProgrammingExercise programmingExercise) {
-        for (ProgrammingExerciseTestCase testCase : programmingExercise.getTestCases()) {
-            var solutionEntry = new ProgrammingExerciseSolutionEntry();
-            solutionEntry.setFilePath("test.txt");
-            solutionEntry.setLine(1);
-            solutionEntry.setCode("Line for " + testCase.getTestName());
-            solutionEntry.setTestCase(testCase);
-
-            testCase.setSolutionEntries(Collections.singleton(solutionEntry));
-            solutionEntryRepository.save(solutionEntry);
-        }
-    }
-
-    /**
-     * Adds a code hint to each task of the given programming exercise.
-     *
-     * @param programmingExercise The programming exercise to which code hints should be added.
-     */
-    public void addCodeHintsToProgrammingExercise(ProgrammingExercise programmingExercise) {
-        for (ProgrammingExerciseTask task : programmingExercise.getTasks()) {
-            var solutionEntries = task.getTestCases().stream().flatMap(testCase -> testCase.getSolutionEntries().stream()).collect(Collectors.toSet());
-            var codeHint = new CodeHint();
-            codeHint.setTitle("Code Hint for " + task.getTaskName());
-            codeHint.setContent("Content for " + task.getTaskName());
-            codeHint.setExercise(programmingExercise);
-            codeHint.setSolutionEntries(solutionEntries);
-            codeHint.setProgrammingExerciseTask(task);
-
-            programmingExercise.getExerciseHints().add(codeHint);
-            codeHint = codeHintRepository.save(codeHint);
-            for (ProgrammingExerciseSolutionEntry solutionEntry : solutionEntries) {
-                solutionEntry.setCodeHint(codeHint);
-                solutionEntryRepository.save(solutionEntry);
-            }
-        }
     }
 
     /**

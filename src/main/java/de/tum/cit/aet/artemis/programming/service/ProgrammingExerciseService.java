@@ -387,11 +387,6 @@ public class ProgrammingExerciseService {
             throw new BadRequestAlertException("Checkout solution repository is not supported for this programming language", "Exercise", "checkoutSolutionRepositoryNotSupported");
         }
 
-        // Check if testwise coverage analysis is enabled
-        if (Boolean.TRUE.equals(buildConfig.isTestwiseCoverageEnabled()) && !programmingLanguageFeature.testwiseCoverageAnalysisSupported()) {
-            throw new BadRequestAlertException("Testwise coverage analysis is not supported for this language", "Exercise", "testwiseCoverageAnalysisNotSupported");
-        }
-
         programmingExerciseRepository.validateCourseSettings(programmingExercise, course);
         validateStaticCodeAnalysisSettings(programmingExercise);
 

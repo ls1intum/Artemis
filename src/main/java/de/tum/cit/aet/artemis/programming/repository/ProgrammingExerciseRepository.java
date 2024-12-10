@@ -973,7 +973,6 @@ public interface ProgrammingExerciseRepository extends DynamicSpecificationRepos
         Tasks(ProgrammingExercise_.TASKS),
         StaticCodeAnalysisCategories(ProgrammingExercise_.STATIC_CODE_ANALYSIS_CATEGORIES),
         SubmissionPolicy(ProgrammingExercise_.SUBMISSION_POLICY),
-        ExerciseHints(ProgrammingExercise_.EXERCISE_HINTS),
         CompetencyLinks(ProgrammingExercise_.COMPETENCY_LINKS),
         Teams(ProgrammingExercise_.TEAMS),
         TutorParticipations(ProgrammingExercise_.TUTOR_PARTICIPATIONS),

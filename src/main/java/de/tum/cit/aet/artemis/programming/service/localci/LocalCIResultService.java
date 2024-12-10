@@ -27,10 +27,9 @@ import de.tum.cit.aet.artemis.programming.service.ci.AbstractContinuousIntegrati
 @Profile(PROFILE_LOCALCI)
 public class LocalCIResultService extends AbstractContinuousIntegrationResultService {
 
-    public LocalCIResultService(TestwiseCoverageService testwiseCoverageService, BuildLogStatisticsEntryRepository buildLogStatisticsEntryRepository,
-            ProgrammingExerciseFeedbackCreationService feedbackCreationService, ProgrammingExerciseTestCaseRepository testCaseRepository,
-            ProgrammingExerciseBuildConfigRepository programmingExerciseBuildConfigRepository) {
-        super(testCaseRepository, buildLogStatisticsEntryRepository, testwiseCoverageService, feedbackCreationService, programmingExerciseBuildConfigRepository);
+    public LocalCIResultService(BuildLogStatisticsEntryRepository buildLogStatisticsEntryRepository, ProgrammingExerciseFeedbackCreationService feedbackCreationService,
+            ProgrammingExerciseTestCaseRepository testCaseRepository, ProgrammingExerciseBuildConfigRepository programmingExerciseBuildConfigRepository) {
+        super(testCaseRepository, buildLogStatisticsEntryRepository, feedbackCreationService, programmingExerciseBuildConfigRepository);
     }
 
     @Override

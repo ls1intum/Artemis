@@ -131,13 +131,12 @@ public class AeolusTemplateService {
      * @return the requested template as a {@link Windfile} object
      * @throws IOException if the file does not exist
      */
-    public Windfile getWindfileFor(ProgrammingLanguage programmingLanguage, Optional<ProjectType> projectType, Boolean staticAnalysis, Boolean sequentialRuns, Boolean testCoverage)
-            throws IOException {
+    public Windfile getWindfileFor(ProgrammingLanguage programmingLanguage, Optional<ProjectType> projectType, Boolean staticAnalysis, Boolean sequentialRuns) throws IOException {
         if (programmingLanguage.equals(ProgrammingLanguage.JAVA) && projectType.isEmpty()) {
             // to be backwards compatible, we assume that java exercises without project type are plain maven projects
             projectType = Optional.of(ProjectType.PLAIN_MAVEN);
         }
-        String templateFileName = buildScriptProviderService.buildTemplateName(projectType, staticAnalysis, sequentialRuns, testCoverage, "yaml");
+        String templateFileName = buildScriptProviderService.buildTemplateName(projectType, staticAnalysis, sequentialRuns, "yaml");
         String uniqueKey = programmingLanguage.name().toLowerCase() + "_" + templateFileName;
         if (templateCache.containsKey(uniqueKey)) {
             return templateCache.get(uniqueKey);
@@ -184,7 +183,7 @@ public class AeolusTemplateService {
         try {
             ProgrammingExerciseBuildConfig buildConfig = exercise.getBuildConfig();
             return getWindfileFor(exercise.getProgrammingLanguage(), Optional.ofNullable(exercise.getProjectType()), exercise.isStaticCodeAnalysisEnabled(),
-                    buildConfig.hasSequentialTestRuns(), buildConfig.isTestwiseCoverageEnabled());
+                    buildConfig.hasSequentialTestRuns());
         }
         catch (IOException e) {
             log.info("No windfile for the settings of exercise {}", exercise.getId(), e);

@@ -782,7 +782,6 @@ public class ProgrammingExerciseTestService {
         sourceExercise.setTasks(Collections.singletonList(task));
         programmingExerciseTaskRepository.save(task);
         programmingExerciseRepository.save(sourceExercise);
-        programmingExerciseUtilService.addHintsToExercise(sourceExercise);
 
         // Reset because we will add mocks for new requests
         mockDelegate.resetMockProvider();
@@ -829,7 +828,6 @@ public class ProgrammingExerciseTestService {
         sourceExercise = programmingExerciseRepository.save(sourceExercise);
         sourceExercise.setStaticCodeAnalysisEnabled(staticCodeAnalysisEnabled);
         programmingExerciseUtilService.addTestCasesToProgrammingExercise(sourceExercise);
-        programmingExerciseUtilService.addHintsToExercise(sourceExercise);
         sourceExercise = programmingExerciseUtilService.loadProgrammingExerciseWithEagerReferences(sourceExercise);
         ProgrammingExercise exerciseToBeImported = ProgrammingExerciseFactory.generateToBeImportedProgrammingExercise("ImportTitle", "imported", sourceExercise,
                 courseUtilService.addEmptyCourse());
@@ -869,13 +867,6 @@ public class ProgrammingExerciseTestService {
                 .usingRecursiveFieldByFieldElementComparatorIgnoringFields("id", "exercise", "tasks", "solutionEntries", "coverageEntries")
                 .containsExactlyInAnyOrderElementsOf(sourceExercise.getTestCases());
 
-        // Assert correct creation of hints
-        var importedHintIds = importedExercise.getExerciseHints().stream().map(ExerciseHint::getId).collect(Collectors.toSet());
-        var sourceHintIds = sourceExercise.getExerciseHints().stream().map(ExerciseHint::getId).collect(Collectors.toSet());
-        assertThat(importedHintIds).doesNotContainAnyElementsOf(sourceHintIds);
-        assertThat(importedExercise.getExerciseHints()).usingRecursiveFieldByFieldElementComparatorIgnoringFields("id", "exercise", "exerciseHintActivations")
-                .containsExactlyInAnyOrderElementsOf(sourceExercise.getExerciseHints());
-
         // Assert creation of new build plan ids
         assertThat(importedExercise.getSolutionParticipation().getBuildPlanId()).isNotBlank().isNotEqualTo(sourceExercise.getSolutionParticipation().getBuildPlanId());
         assertThat(importedExercise.getTemplateParticipation().getBuildPlanId()).isNotBlank().isNotEqualTo(sourceExercise.getTemplateParticipation().getBuildPlanId());
@@ -893,7 +884,6 @@ public class ProgrammingExerciseTestService {
             sourceExercise.setStaticCodeAnalysisEnabled(staticCodeAnalysisEnabled);
             sourceExercise.getBuildConfig().generateAndSetBuildPlanAccessSecret();
             programmingExerciseUtilService.addTestCasesToProgrammingExercise(sourceExercise);
-            programmingExerciseUtilService.addHintsToExercise(sourceExercise);
             programmingExerciseBuildConfigRepository.save(sourceExercise.getBuildConfig());
             sourceExercise = programmingExerciseUtilService.loadProgrammingExerciseWithEagerReferences(sourceExercise);
             ProgrammingExercise exerciseToBeImported = ProgrammingExerciseFactory.generateToBeImportedProgrammingExercise("ImportTitle", "imported", sourceExercise,
@@ -977,7 +967,6 @@ public class ProgrammingExerciseTestService {
         ProgrammingExercise sourceExercise = programmingExerciseUtilService.addCourseWithOneProgrammingExerciseAndStaticCodeAnalysisCategories();
         sourceExercise.setMode(ExerciseMode.INDIVIDUAL);
         programmingExerciseUtilService.addTestCasesToProgrammingExercise(sourceExercise);
-        programmingExerciseUtilService.addHintsToExercise(sourceExercise);
         sourceExercise = programmingExerciseUtilService.loadProgrammingExerciseWithEagerReferences(sourceExercise);
         sourceExercise.setCourse(sourceExercise.getCourseViaExerciseGroupOrCourseMember());
         programmingExerciseRepository.save(sourceExercise);
@@ -1017,7 +1006,6 @@ public class ProgrammingExerciseTestService {
         ProgrammingExercise sourceExercise = programmingExerciseUtilService.addCourseWithOneProgrammingExerciseAndStaticCodeAnalysisCategories();
         sourceExercise.setMode(TEAM);
         programmingExerciseUtilService.addTestCasesToProgrammingExercise(sourceExercise);
-        programmingExerciseUtilService.addHintsToExercise(sourceExercise);
         sourceExercise = programmingExerciseUtilService.loadProgrammingExerciseWithEagerReferences(sourceExercise);
         var teamAssignmentConfig = new TeamAssignmentConfig();
         teamAssignmentConfig.setExercise(sourceExercise);
@@ -1184,7 +1172,6 @@ public class ProgrammingExerciseTestService {
         ProgrammingExercise sourceExercise = programmingExerciseUtilService.addProgrammingExerciseToExam(sourceExam, 0);
         sourceExercise.setStaticCodeAnalysisEnabled(false);
         programmingExerciseUtilService.addTestCasesToProgrammingExercise(sourceExercise);
-        programmingExerciseUtilService.addHintsToExercise(sourceExercise);
         sourceExercise = programmingExerciseUtilService.loadProgrammingExerciseWithEagerReferences(sourceExercise);
 
         // Setup to be imported exam and exercise
@@ -1231,13 +1218,6 @@ public class ProgrammingExerciseTestService {
         assertThat(importedExercise.getTestCases()).usingRecursiveFieldByFieldElementComparator()
                 .usingRecursiveFieldByFieldElementComparatorIgnoringFields("id", "exercise", "tasks", "solutionEntries", "coverageEntries")
                 .containsExactlyInAnyOrderElementsOf(sourceExercise.getTestCases());
-
-        // Assert correct creation of hints
-        var importedHintIds = importedExercise.getExerciseHints().stream().map(ExerciseHint::getId).toList();
-        var sourceHintIds = sourceExercise.getExerciseHints().stream().map(ExerciseHint::getId).toList();
-        assertThat(importedHintIds).doesNotContainAnyElementsOf(sourceHintIds);
-        assertThat(importedExercise.getExerciseHints()).usingRecursiveFieldByFieldElementComparatorIgnoringFields("id", "exercise", "exerciseHintActivations")
-                .containsExactlyInAnyOrderElementsOf(sourceExercise.getExerciseHints());
     }
 
     // TEST

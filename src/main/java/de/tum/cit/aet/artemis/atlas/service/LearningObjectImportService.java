@@ -261,7 +261,6 @@ public class LearningObjectImportService {
 
     private void clearProgrammingExerciseAttributes(ProgrammingExercise programmingExercise) {
         programmingExercise.setTasks(null);
-        programmingExercise.setExerciseHints(new HashSet<>());
         programmingExercise.setTestCases(new HashSet<>());
         programmingExercise.setStaticCodeAnalysisCategories(new HashSet<>());
         programmingExercise.setTeams(new HashSet<>());
