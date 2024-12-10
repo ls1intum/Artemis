@@ -95,6 +95,7 @@ public abstract class AbstractIrisIntegrationTest extends AbstractSpringIntegrat
         var exerciseSettings = irisSettingsService.getDefaultSettingsFor(exercise);
         activateSubSettings(exerciseSettings.getIrisChatSettings());
         activateSubSettings(exerciseSettings.getIrisTextExerciseChatSettings());
+
         irisSettingsRepository.save(exerciseSettings);
     }
 

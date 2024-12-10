@@ -38,6 +38,19 @@
                     },
                     "hestiaSettings": "Hestia Settings",
                     "competencyGenerationSettings": "Competency Generation Settings",
+                    "proactivityBuildFailedEventEnabled": {
+                        "label": "Monitor submission build failures",
+                        "tooltip": "When enabled, Iris will proactively send help messages if a submission build fails."
+                    },
+                    "proactivityProgressStalledEventEnabled": {
+                        "label": "Monitor exercise performance progress",
+                        "tooltip": "When enabled, Iris will proactively send help messages if the student's exercise performance does not improve."
+                    },
+                    "proactivitySettings": {
+                        "title": "Proactivity Settings",
+                        "tooltip": "Enable options below to allow Iris to proactively reach out to students when specific conditions are met.",
+                        "parentDisabled": "Iris won't send proactive messages for this option because either the option itself or Iris are disabled in the current or parent settings."
+                    },
                     "enabled-disabled": "Enabled/Disabled",
                     "enabledForCategories": "Automatically enable for categories",
                     "variants": {
@@ -87,6 +100,9 @@
             },
             "chat": {
                 "helpOffer": "How can I help you today?"
+            },
+            "chatBubble": {
+                "seeFull": "See full message"
             },
             "ingestionStates": {
                 "loading": "Loading",
