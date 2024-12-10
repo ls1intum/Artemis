@@ -1,12 +1,17 @@
-import { ChangeDetectorRef, Component, OnInit } from '@angular/core';
+import { Component, OnInit, inject } from '@angular/core';
 import { UserSettingsDirective } from 'app/shared/user-settings/user-settings.directive';
 import { UserSettingsCategory } from 'app/shared/constants/user-settings.constants';
 import { NotificationSetting } from 'app/shared/user-settings/notification-settings/notification-settings-structure';
-import { UserSettingsService } from 'app/shared/user-settings/user-settings.service';
 import { UserSettingsStructure } from 'app/shared/user-settings/user-settings.model';
-import { AlertService } from 'app/core/util/alert.service';
 import { faInfoCircle, faSave } from '@fortawesome/free-solid-svg-icons';
 import { NotificationSettingsService, reloadNotificationSideBarMessage } from 'app/shared/user-settings/notification-settings/notification-settings.service';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { RouterModule } from '@angular/router';
+import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
+import { ArtemisSharedModule } from 'app/shared/shared.module';
+import { ArtemisSharedComponentModule } from 'app/shared/components/shared-component.module';
+import { FormDateTimePickerModule } from 'app/shared/date-time-picker/date-time-picker.module';
+import { DocumentationLinkComponent } from 'app/shared/components/documentation-link/documentation-link.component';
 
 export enum NotificationSettingsCommunicationChannel {
     WEBAPP,
@@ -16,21 +21,16 @@ export enum NotificationSettingsCommunicationChannel {
 @Component({
     selector: 'jhi-notification-settings',
     templateUrl: 'notification-settings.component.html',
+    standalone: true,
     styleUrls: ['../user-settings.scss'],
+    imports: [TranslateDirective, RouterModule, FontAwesomeModule, ArtemisSharedModule, ArtemisSharedComponentModule, FormDateTimePickerModule, DocumentationLinkComponent],
 })
 export class NotificationSettingsComponent extends UserSettingsDirective implements OnInit {
-    // Icons
-    faSave = faSave;
-    faInfoCircle = faInfoCircle;
+    private notificationSettingsService = inject(NotificationSettingsService);
 
-    constructor(
-        userSettingsService: UserSettingsService,
-        changeDetector: ChangeDetectorRef,
-        alertService: AlertService,
-        private notificationSettingsService: NotificationSettingsService,
-    ) {
-        super(userSettingsService, alertService, changeDetector);
-    }
+    // Icons
+    protected readonly faSave = faSave;
+    protected readonly faInfoCircle = faInfoCircle;
 
     declare userSettings: UserSettingsStructure<NotificationSetting>;
     declare settings: Array<NotificationSetting>;
