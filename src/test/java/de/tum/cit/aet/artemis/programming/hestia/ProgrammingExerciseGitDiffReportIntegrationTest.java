@@ -133,7 +133,13 @@ class ProgrammingExerciseGitDiffReportIntegrationTest extends AbstractProgrammin
                 + "?participationId=" + submission.getParticipation().getId(), HttpStatus.OK, ProgrammingExerciseGitDiffReport.class);
         assertThat(report).isNotNull();
         assertThat(report.getEntries()).hasSize(1);
-        // TODO: add more assertions
+        var entry = report.getEntries().stream().findAny().orElseThrow();
+        assertThat(entry.getPreviousFilePath()).isEqualTo(FILE_NAME);
+        assertThat(entry.getPreviousStartLine()).isEqualTo(1);
+        assertThat(entry.getPreviousLineCount()).isEqualTo(1);
+        assertThat(entry.getFilePath()).isEqualTo(FILE_NAME);
+        assertThat(entry.getStartLine()).isEqualTo(1);
+        assertThat(entry.getLineCount()).isEqualTo(1);
     }
 
     @Test
@@ -194,7 +200,13 @@ class ProgrammingExerciseGitDiffReportIntegrationTest extends AbstractProgrammin
                 ProgrammingExerciseGitDiffReport.class);
         assertThat(report).isNotNull();
         assertThat(report.getEntries()).hasSize(1);
-        // TODO: add more assertions
+        var entry = report.getEntries().stream().findAny().orElseThrow();
+        assertThat(entry.getPreviousFilePath()).isEqualTo(FILE_NAME);
+        assertThat(entry.getPreviousStartLine()).isEqualTo(1);
+        assertThat(entry.getPreviousLineCount()).isEqualTo(1);
+        assertThat(entry.getFilePath()).isEqualTo(FILE_NAME);
+        assertThat(entry.getStartLine()).isEqualTo(1);
+        assertThat(entry.getLineCount()).isEqualTo(1);
     }
 
     @Test
