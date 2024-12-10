@@ -40,8 +40,6 @@ const ENTITY_STATES = [...textSubmissionAssessmentRoutes];
         SubmissionResultStatusModule,
         ArtemisAssessmentProgressLabelModule,
         ArtemisFeedbackModule,
-    ],
-    declarations: [
         TextSubmissionAssessmentComponent,
         TextAssessmentAreaComponent,
         TextblockAssessmentCardComponent,

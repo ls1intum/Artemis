@@ -9,6 +9,11 @@ import { TranslateService } from '@ngx-translate/core';
 import { median } from 'simple-statistics';
 import { GraphColors } from 'app/entities/statistics.model';
 import { round } from 'app/shared/util/utils';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { ArtemisSharedComponentModule } from 'app/shared/components/shared-component.module';
+import { BarChartModule } from '@swimlane/ngx-charts';
+import { ArtemisSharedCommonModule } from 'app/shared/shared-common.module';
 
 interface TutorEffortRange {
     minimumTimeSpent: number;
@@ -19,6 +24,8 @@ interface TutorEffortRange {
     selector: 'jhi-text-exercise-tutor-effort-statistics',
     templateUrl: './tutor-effort-statistics.component.html',
     styleUrls: ['./tutor-effort-statistics.component.scss'],
+    standalone: true,
+    imports: [TranslateDirective, FaIconComponent, ArtemisSharedComponentModule, BarChartModule, ArtemisSharedCommonModule],
 })
 export class TutorEffortStatisticsComponent extends PlagiarismAndTutorEffortDirective implements OnInit {
     private route = inject(ActivatedRoute);
