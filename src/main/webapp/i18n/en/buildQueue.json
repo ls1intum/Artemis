@@ -74,6 +74,10 @@
                 "daySpan": "1 day",
                 "weekSpan": "7 days",
                 "monthSpan": "30 days"
+            },
+            "logs": {
+                "title": "Build Logs for Job",
+                "download": "Download"
             }
         }
     }

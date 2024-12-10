@@ -15,6 +15,7 @@ import { JobTimingInfo } from 'app/entities/job-timing-info.model';
 import { BuildConfig } from 'app/entities/programming/build-config.model';
 import { FinishedBuildJobFilter } from 'app/localci/build-queue/build-queue.component';
 import { provideHttpClient } from '@angular/common/http';
+import { BuildLogEntry } from '../../../../../../main/webapp/app/entities/programming/build-log.model';
 
 describe('BuildQueueService', () => {
     let service: BuildQueueService;
@@ -31,6 +32,17 @@ describe('BuildQueueService', () => {
     filterOptions.buildStartDateFilterFrom = dayjs('2024-01-01');
     filterOptions.buildStartDateFilterTo = dayjs('2024-01-02');
     filterOptions.status = 'SUCCESSFUL';
+
+    const buildLogEntries: BuildLogEntry[] = [
+        {
+            time: dayjs('2024-01-01'),
+            log: 'log1',
+        },
+        {
+            time: dayjs('2024-01-02'),
+            log: 'log2',
+        },
+    ];
 
     const expectFilterParams = (req: TestRequest, filterOptions: FinishedBuildJobFilter) => {
         expect(req.request.params.get('buildAgentAddress')).toBe(filterOptions.buildAgentAddress);
@@ -581,6 +593,49 @@ describe('BuildQueueService', () => {
         });
 
         const req = httpMock.expectOne(`${service.resourceUrl}/courses/${courseId}/finished-jobs`);
+        expect(req.request.method).toBe('GET');
+
+        req.flush(null, { status: 500, statusText: 'Internal Server Error' });
+
+        tick();
+
+        expect(errorOccurred).toBeTrue();
+    }));
+
+    it('should return build log entries for a specific build job', () => {
+        const buildJobId = '1';
+        const expectedResponse = buildLogEntries;
+
+        service.getBuildJobLogs(buildJobId).subscribe((data) => {
+            expect(data).toEqual(expectedResponse);
+        });
+
+        const req = httpMock.expectOne(`${service.resourceUrl}/build-log/${buildJobId}/entries`);
+        expect(req.request.method).toBe('GET');
+        req.flush(expectedResponse);
+    });
+
+    it('should handle errors when getting build log entries for a specific build job', fakeAsync(() => {
+        const buildJobId = '1';
+
+        let errorOccurred = false;
+
+        service.getBuildJobLogs(buildJobId).subscribe({
+            error: (err) => {
+                expect(err.message).toBe(
+                    'Failed to get build log entries for build job ' +
+                        buildJobId +
+                        '\nHttp failure response for ' +
+                        service.resourceUrl +
+                        '/build-log/' +
+                        buildJobId +
+                        '/entries: 500 Internal Server Error',
+                );
+                errorOccurred = true;
+            },
+        });
+
+        const req = httpMock.expectOne(`${service.resourceUrl}/build-log/${buildJobId}/entries`);
         expect(req.request.method).toBe('GET');
 
         req.flush(null, { status: 500, statusText: 'Internal Server Error' });
