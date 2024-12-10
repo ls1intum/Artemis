@@ -2,6 +2,7 @@ import { BaseEntity } from 'app/shared/model/base-entity';
 import {
     IrisChatSubSettings,
     IrisCompetencyGenerationSubSettings,
+    IrisCourseChatSubSettings,
     IrisLectureIngestionSubSettings,
     IrisTextExerciseChatSubSettings,
 } from 'app/entities/iris/settings/iris-sub-settings.model';
@@ -17,6 +18,7 @@ export abstract class IrisSettings implements BaseEntity {
     type: IrisSettingsType;
     irisChatSettings?: IrisChatSubSettings;
     irisTextExerciseChatSettings?: IrisTextExerciseChatSubSettings;
+    irisCourseChatSettings?: IrisCourseChatSubSettings;
     irisLectureIngestionSettings?: IrisLectureIngestionSubSettings;
     irisCompetencyGenerationSettings?: IrisCompetencyGenerationSubSettings;
 }
@@ -26,6 +28,7 @@ export class IrisGlobalSettings implements IrisSettings {
     type = IrisSettingsType.GLOBAL;
     irisChatSettings?: IrisChatSubSettings;
     irisTextExerciseChatSettings?: IrisTextExerciseChatSubSettings;
+    irisCourseChatSettings?: IrisCourseChatSubSettings;
     irisLectureIngestionSettings?: IrisLectureIngestionSubSettings;
     irisCompetencyGenerationSettings?: IrisCompetencyGenerationSubSettings;
 }
@@ -36,6 +39,7 @@ export class IrisCourseSettings implements IrisSettings {
     courseId?: number;
     irisChatSettings?: IrisChatSubSettings;
     irisTextExerciseChatSettings?: IrisTextExerciseChatSubSettings;
+    irisCourseChatSettings?: IrisCourseChatSubSettings;
     irisLectureIngestionSettings?: IrisLectureIngestionSubSettings;
     irisCompetencyGenerationSettings?: IrisCompetencyGenerationSubSettings;
 }
