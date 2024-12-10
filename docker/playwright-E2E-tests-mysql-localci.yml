@@ -21,6 +21,7 @@ services:
             - ./artemis/config/playwright-local.env
         ports:
           - "8080:8080"
+          - "7921:7921"
         volumes:
             - /var/run/docker.sock:/var/run/docker.sock
 
