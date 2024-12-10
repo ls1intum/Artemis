@@ -138,6 +138,15 @@ class ProgrammingExerciseGitDiffReportServiceTest extends AbstractProgrammingInt
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void gitDiffWhitespace() throws Exception {
+        exercise = hestiaUtilTestService.setupTemplate(FILE_NAME, "   ", exercise, templateRepo);
+        exercise = hestiaUtilTestService.setupSolution(FILE_NAME, "\t", exercise, solutionRepo);
+        var report = reportService.updateReport(exercise);
+        assertThat(report.getEntries()).hasSize(0);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void updateGitDiffReuseExisting() throws Exception {
         exercise = hestiaUtilTestService.setupTemplate(FILE_NAME, "Line 1\nLine 2", exercise, templateRepo);
         exercise = hestiaUtilTestService.setupSolution(FILE_NAME, "Line 1\nLine 2\nLine 3\n", exercise, solutionRepo);
