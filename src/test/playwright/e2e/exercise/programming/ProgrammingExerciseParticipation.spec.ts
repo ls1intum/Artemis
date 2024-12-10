@@ -279,9 +279,9 @@ async function makeGitExerciseSubmission(
         await programmingExerciseOverview.openCloneMenu(cloneMethod);
     }
     let repoUrl = await programmingExerciseOverview.copyCloneUrl();
-    // if (process.env.CI === 'true' && (cloneMethod == GitCloneMethod.https || cloneMethod == GitCloneMethod.httpsWithToken)) {
-    //     repoUrl = repoUrl.replace('localhost', 'artemis-app');
-    // }
+    if (process.env.CI === 'true' && (cloneMethod == GitCloneMethod.https || cloneMethod == GitCloneMethod.httpsWithToken)) {
+        repoUrl = repoUrl.replace('localhost', 'artemis-app');
+    }
     if (process.env.CI === 'true' && cloneMethod == GitCloneMethod.ssh) {
         repoUrl = repoUrl.replace(/ls1Agent.*\.ase\.cit\.tum\.de/, 'artemis-app');
     }
