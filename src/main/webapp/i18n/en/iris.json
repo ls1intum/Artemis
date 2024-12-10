@@ -18,6 +18,10 @@
                         "title": "Iris",
                         "tooltip": "Edit the Iris settings for this programming exercise"
                     },
+                    "lecture": {
+                        "title": "Iris",
+                        "tooltip": "Edit the Iris settings for this lecture"
+                    },
                     "course": {
                         "title": "Iris",
                         "tooltip": "Edit the Iris settings for this course"
@@ -26,6 +30,7 @@
                 "subSettings": {
                     "chatSettings": "Chat Settings",
                     "textExerciseChatSettings": "Text Exercise Chat Settings",
+                    "lectureChatSettings": "Lecture Chat Settings",
                     "courseChatSettings": "Course Chat Settings",
                     "lectureIngestionSettings": {
                         "title": "Lecture Ingestion Settings",

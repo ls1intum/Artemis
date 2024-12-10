@@ -21,11 +21,16 @@
                     "course": {
                         "title": "Iris",
                         "tooltip": "Bearbeite die Iris Einstellungen für diesen Kurs"
+                    },
+                    "lecture": {
+                        "title": "Iris",
+                        "tooltip": "Bearbeite die Iris Einstellungen für diese Vorlesung"
                     }
                 },
                 "subSettings": {
                     "chatSettings": "Chat Einstellungen",
                     "textExerciseChatSettings": "Textaufgaben Chat Einstellungen",
+                    "lectureChatSettings": "Vorlesungschat Einstellungen",
                     "courseChatSettings": "Kurs Chat Einstellungen",
                     "lectureIngestionSettings": {
                         "title": "Vorlesungen Erfassung Einstellungen",
