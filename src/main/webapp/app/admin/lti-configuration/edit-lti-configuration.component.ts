@@ -1,5 +1,5 @@
 import { AlertService } from 'app/core/util/alert.service';
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, inject } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { finalize } from 'rxjs';
 import { FormControl, FormGroup } from '@angular/forms';
@@ -12,6 +12,11 @@ import { LtiConfigurationService } from 'app/admin/lti-configuration/lti-configu
     templateUrl: './edit-lti-configuration.component.html',
 })
 export class EditLtiConfigurationComponent implements OnInit {
+    private route = inject(ActivatedRoute);
+    private ltiConfigurationService = inject(LtiConfigurationService);
+    private router = inject(Router);
+    private alertService = inject(AlertService);
+
     platform: LtiPlatformConfiguration;
     platformConfigurationForm: FormGroup;
 
@@ -21,13 +26,6 @@ export class EditLtiConfigurationComponent implements OnInit {
     faBan = faBan;
     faSave = faSave;
     faPlus = faPlus;
-
-    constructor(
-        private route: ActivatedRoute,
-        private ltiConfigurationService: LtiConfigurationService,
-        private router: Router,
-        private alertService: AlertService,
-    ) {}
 
     /**
      * Gets the configuration for the course encoded in the route and prepares the form

@@ -1,6 +1,9 @@
-import { Component, ElementRef, NgZone, OnInit, SecurityContext, ViewChild } from '@angular/core';
+import { Component, ElementRef, NgZone, OnInit, SecurityContext, ViewChild, inject } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { DomSanitizer } from '@angular/platform-browser';
+import { TranslateDirective } from '../shared/language/translate.directive';
+import { FormsModule } from '@angular/forms';
+import { ArtemisSharedPipesModule } from '../shared/pipes/shared-pipes.module';
 
 /**
  * Component responsible for sending deep linking content.
@@ -8,11 +11,18 @@ import { DomSanitizer } from '@angular/platform-browser';
  * and automatically submits a form with the relevant data.
  * According to LTI documentation auto submit form must be used.
  */
+
 @Component({
     selector: 'jhi-select-exercise',
     templateUrl: './lti13-select-content.component.html',
+    standalone: true,
+    imports: [TranslateDirective, FormsModule, ArtemisSharedPipesModule],
 })
 export class Lti13SelectContentComponent implements OnInit {
+    private route = inject(ActivatedRoute);
+    private sanitizer = inject(DomSanitizer);
+    private zone = inject(NgZone);
+
     jwt: string;
     id: string;
     actionLink: string;
@@ -20,12 +30,6 @@ export class Lti13SelectContentComponent implements OnInit {
 
     @ViewChild('deepLinkingForm', { static: false })
     deepLinkingForm?: ElementRef;
-
-    constructor(
-        private route: ActivatedRoute,
-        private sanitizer: DomSanitizer,
-        private zone: NgZone,
-    ) {}
 
     /**
      * Initializes the component.
