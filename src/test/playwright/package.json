@@ -4,10 +4,10 @@
     "private": true,
     "license": "MIT",
     "devDependencies": {
-        "@playwright/test": "1.48.2",
+        "@playwright/test": "1.49.0",
         "cross-env": "7.0.3",
         "dayjs": "1.11.13",
-        "dotenv": "16.4.5",
+        "dotenv": "16.4.7",
         "junit-merge": "2.0.0",
         "npm-check-updates": "17.1.11",
         "npm-run-all": "4.1.5",
@@ -15,12 +15,12 @@
         "uuid": "11.0.3"
     },
     "scripts": {
-        "playwright:test": "npm-run-all --serial --continue-on-error playwright:test:fast playwright:test:slow merge-reports",
-        "playwright:test:fast": "cross-env PLAYWRIGHT_JUNIT_OUTPUT_NAME=./test-reports/results-fast.xml playwright test e2e --project=fast-tests",
-        "playwright:test:slow": "cross-env PLAYWRIGHT_JUNIT_OUTPUT_NAME=./test-reports/results-slow.xml playwright test e2e --project=slow-tests --workers 1",
+        "playwright:test": "npm-run-all --serial --continue-on-error playwright:test:parallel playwright:test:sequential merge-reports",
+        "playwright:test:parallel": "cross-env PLAYWRIGHT_JUNIT_OUTPUT_NAME=./test-reports/results-parallel.xml playwright test e2e --project=fast-tests --project=slow-tests",
+        "playwright:test:sequential": "cross-env PLAYWRIGHT_JUNIT_OUTPUT_NAME=./test-reports/results-sequential.xml playwright test e2e --project=sequential-tests --workers 1",
         "playwright:open": "playwright test e2e --ui",
         "playwright:setup": "npx playwright install --with-deps chromium && playwright test init",
-        "merge-reports": "junit-merge ./test-reports/results-fast.xml ./test-reports/results-slow.xml -o ./test-reports/results.xml",
+        "merge-reports": "junit-merge ./test-reports/results-parallel.xml ./test-reports/results-sequential.xml -o ./test-reports/results.xml",
         "update": "ncu -i --format group"
     }
 }

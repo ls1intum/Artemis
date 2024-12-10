@@ -404,13 +404,37 @@ Edit Maximum Build Duration
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 **This option is only available when using** :ref:`integrated code lifecycle<integrated code lifecycle>`
-This section is optional. In most cases, the preconfigured build script does not need to be changed.
+
+This section is optional. In most cases, the default maximum build duration does not need to be changed.
 
 The maximum build duration is the time limit for the build plan to execute. If the build plan exceeds this time limit, it will be terminated. The default value is 120 seconds.
 You can change the maximum build duration by using the slider.
 
 .. figure:: programming/timeout-slider.png
           :align: center
+
+Edit Container Configuration
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+**This option is only available when using** :ref:`integrated code lifecycle<integrated code lifecycle>`
+
+This section is optional. In most cases, the default container configuration does not need to be changed.
+
+Currently, instructors can only change whether the container has internet access and add additional environment variables.
+Disabling internet access can be useful if instructors want to prevent students from downloading additional dependencies during the build process.
+If internet access is disabled, the container cannot access the internet during the build process. Thus, it will not be able to download additional dependencies.
+The dependencies must then be included/cached in the docker image.
+
+Additional environment variables can be added to the container configuration. This can be useful if the build process requires additional environment variables to be set.
+
+.. figure:: programming/docker-flags-edit.png
+          :align: center
+
+We plan to add more options to the container configuration in the future.
+
+.. warning::
+  - Disabling internet access is not currently supported for Swift and Haskell exercises.
+
 
 .. _configure_static_code_analysis_tools:
 
