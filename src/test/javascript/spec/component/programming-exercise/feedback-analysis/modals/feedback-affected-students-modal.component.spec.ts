@@ -13,10 +13,9 @@ describe('AffectedStudentsModalComponent', () => {
     let feedbackService: FeedbackAnalysisService;
 
     const feedbackDetailMock: FeedbackDetail = {
-        concatenatedFeedbackIds: [1, 2],
         count: 5,
         relativeCount: 25.0,
-        detailText: 'Some feedback detail',
+        detailTexts: ['Some feedback detail'],
         testCaseName: 'testCase1',
         taskName: '1',
         errorCategory: 'StudentError',
@@ -27,6 +26,8 @@ describe('AffectedStudentsModalComponent', () => {
         { courseId: 1, participationId: 102, firstName: 'Jane', lastName: 'Smith', login: 'janesmith', repositoryURI: 'repo2' },
     ];
 
+    const groupFeedback = false;
+
     beforeEach(async () => {
         await TestBed.configureTestingModule({
             imports: [TranslateModule.forRoot(), AffectedStudentsModalComponent],
@@ -36,7 +37,7 @@ describe('AffectedStudentsModalComponent', () => {
                 {
                     provide: FeedbackAnalysisService,
                     useValue: {
-                        getParticipationForFeedbackIds: jest.fn().mockReturnValue(of({ content: participationMock, totalPages: 1, totalElements: 2 })),
+                        getParticipationForFeedbackDetailText: jest.fn().mockReturnValue(of({ content: participationMock, totalPages: 1, totalElements: 2 })),
                     },
                 },
             ],
@@ -48,6 +49,7 @@ describe('AffectedStudentsModalComponent', () => {
 
         fixture.componentRef.setInput('exerciseId', 1);
         fixture.componentRef.setInput('feedbackDetail', feedbackDetailMock);
+        fixture.componentRef.setInput('groupFeedback', groupFeedback);
         fixture.detectChanges();
     });
 
@@ -60,7 +62,7 @@ describe('AffectedStudentsModalComponent', () => {
     });
 
     it('should handle error when loadAffected fails', async () => {
-        jest.spyOn(feedbackService, 'getParticipationForFeedbackIds').mockReturnValueOnce(Promise.reject(new Error('Error loading data')));
+        jest.spyOn(feedbackService, 'getParticipationForFeedbackDetailText').mockReturnValueOnce(Promise.reject(new Error('Error loading data')));
         const alertServiceSpy = jest.spyOn(component.alertService, 'error');
         const consoleErrorSpy = jest.spyOn(console, 'error').mockImplementation(() => {});
 

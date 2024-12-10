@@ -10,8 +10,7 @@ describe('FeedbackAnalysisService', () => {
 
     const feedbackDetailsMock: FeedbackDetail[] = [
         {
-            concatenatedFeedbackIds: [1, 2],
-            detailText: 'Feedback 1',
+            detailTexts: ['Feedback 1'],
             testCaseName: 'test1',
             count: 5,
             relativeCount: 25.0,
@@ -19,8 +18,7 @@ describe('FeedbackAnalysisService', () => {
             errorCategory: 'StudentError',
         },
         {
-            concatenatedFeedbackIds: [3, 4],
-            detailText: 'Feedback 2',
+            detailTexts: ['Feedback 2'],
             testCaseName: 'test2',
             count: 3,
             relativeCount: 15.0,
@@ -60,18 +58,16 @@ describe('FeedbackAnalysisService', () => {
                 sortedColumn: 'detailText',
             };
             const filters = { tasks: [], testCases: [], occurrence: [], errorCategories: [] };
-            const responsePromise = service.search(pageable, { exerciseId: 1, filters });
+            const responsePromise = service.search(pageable, false, { exerciseId: 1, filters });
 
             const req = httpMock.expectOne(
-                'api/exercises/1/feedback-details?page=1&pageSize=10&searchTerm=&sortingOrder=ASCENDING&sortedColumn=detailText&filterTasks=&filterTestCases=&filterOccurrence=&filterErrorCategories=',
+                'api/exercises/1/feedback-details?page=1&pageSize=10&searchTerm=&sortingOrder=ASCENDING&sortedColumn=detailText&filterTasks=&filterTestCases=&filterOccurrence=&filterErrorCategories=&groupFeedback=false',
             );
             expect(req.request.method).toBe('GET');
             req.flush(feedbackAnalysisResponseMock);
 
             const result = await responsePromise;
             expect(result).toEqual(feedbackAnalysisResponseMock);
-            expect(result.feedbackDetails.resultsOnPage[0].concatenatedFeedbackIds).toStrictEqual([1, 2]);
-            expect(result.feedbackDetails.resultsOnPage[1].concatenatedFeedbackIds).toStrictEqual([3, 4]);
         });
     });
 
@@ -88,9 +84,9 @@ describe('FeedbackAnalysisService', () => {
         });
     });
 
-    describe('getParticipationForFeedbackIds', () => {
-        it('should retrieve paginated participation details for specified feedback IDs', async () => {
-            const feedbackIds = [1, 2];
+    describe('getParticipationForFeedbackDetailText', () => {
+        it('should retrieve paginated participation details for up to 5 feedback details', async () => {
+            const feedbackDetails = ['Feedback 1', 'Feedback 2', 'Feedback 3', 'Feedback 4', 'Feedback 5', 'Feedback 6'];
             const pageable = {
                 page: 1,
                 pageSize: 10,
@@ -120,9 +116,11 @@ describe('FeedbackAnalysisService', () => {
                 totalItems: 2,
             };
 
-            const responsePromise = service.getParticipationForFeedbackIds(1, feedbackIds, pageable);
+            const responsePromise = service.getParticipationForFeedbackDetailText(1, feedbackDetails, 'test1', pageable);
 
-            const req = httpMock.expectOne('api/exercises/1/feedback-details-participation?page=1&pageSize=10&sortedColumn=participationId&sortingOrder=ASCENDING');
+            const req = httpMock.expectOne(
+                'api/exercises/1/feedback-details-participation?page=1&pageSize=10&sortedColumn=participationId&sortingOrder=ASCENDING&testCaseName=test1&detailText1=Feedback%201&detailText2=Feedback%202&detailText3=Feedback%203&detailText4=Feedback%204&detailText5=Feedback%205',
+            );
             expect(req.request.method).toBe('GET');
             req.flush(participationResponseMock);
 
@@ -131,22 +129,41 @@ describe('FeedbackAnalysisService', () => {
             expect(result.content[0].firstName).toBe('John');
             expect(result.content[1].firstName).toBe('Jane');
         });
-    });
 
-    describe('getAffectedStudentCount', () => {
-        it('should retrieve the count of affected students for a feedback detail text', async () => {
-            const exerciseId = 1;
-            const feedbackDetailText = 'Test feedback detail';
-            const affectedStudentCountMock = 42;
+        it('should handle less than 5 feedback details gracefully', async () => {
+            const feedbackDetails = ['Feedback 1', 'Feedback 2'];
+            const pageable = {
+                page: 1,
+                pageSize: 10,
+                sortedColumn: 'participationId',
+                sortingOrder: SortingOrder.ASCENDING,
+            };
+            const participationResponseMock = {
+                content: [
+                    {
+                        courseId: 1,
+                        participationId: 101,
+                        firstName: 'John',
+                        lastName: 'Doe',
+                        login: 'johndoe',
+                        repositoryName: 'repo1',
+                    },
+                ],
+                numberOfPages: 1,
+                totalItems: 1,
+            };
 
-            const responsePromise = service.getAffectedStudentCount(exerciseId, feedbackDetailText);
+            const responsePromise = service.getParticipationForFeedbackDetailText(1, feedbackDetails, 'test1', pageable);
 
-            const req = httpMock.expectOne(`api/exercises/${exerciseId}/feedback-detail/affected-students?detailText=${encodeURIComponent(feedbackDetailText)}`);
+            const req = httpMock.expectOne(
+                'api/exercises/1/feedback-details-participation?page=1&pageSize=10&sortedColumn=participationId&sortingOrder=ASCENDING&testCaseName=test1&detailText1=Feedback%201&detailText2=Feedback%202',
+            );
             expect(req.request.method).toBe('GET');
-            req.flush(affectedStudentCountMock);
+            req.flush(participationResponseMock);
 
             const result = await responsePromise;
-            expect(result).toBe(affectedStudentCountMock);
+            expect(result).toEqual(participationResponseMock);
+            expect(result.content[0].firstName).toBe('John');
         });
     });
 
@@ -164,7 +181,8 @@ describe('FeedbackAnalysisService', () => {
 
             const feedbackChannelRequestMock = {
                 channel: channelDtoMock,
-                feedbackDetailText: 'Sample feedback detail text',
+                feedbackDetailTexts: ['Sample feedback detail text'],
+                testCaseName: 'test1',
             };
 
             const createdChannelMock = {

@@ -5,6 +5,7 @@ import { FeedbackAffectedStudentDTO, FeedbackAnalysisService, FeedbackDetail } f
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import { AlertService } from 'app/core/util/alert.service';
 import { PageableResult, PageableSearch, SortingOrder } from 'app/shared/table/pageable-table';
+import { faSpinner } from '@fortawesome/free-solid-svg-icons';
 
 @Component({
     selector: 'jhi-affected-students-modal',
@@ -16,12 +17,15 @@ import { PageableResult, PageableSearch, SortingOrder } from 'app/shared/table/p
 export class AffectedStudentsModalComponent {
     exerciseId = input.required<number>();
     feedbackDetail = input.required<FeedbackDetail>();
+    groupFeedback = input.required<boolean>();
     readonly participation = signal<PageableResult<FeedbackAffectedStudentDTO>>({ content: [], totalPages: 0, totalElements: 0 });
     readonly TRANSLATION_BASE = 'artemisApp.programmingExercise.configureGrading.feedbackAnalysis.affectedStudentsModal';
 
     page = signal<number>(1);
     pageSize = signal<number>(10);
     readonly collectionsSize = computed(() => this.participation().totalPages * this.pageSize());
+    readonly faSpinner = faSpinner;
+    readonly isLoading = signal<boolean>(false);
 
     activeModal = inject(NgbActiveModal);
     feedbackService = inject(FeedbackAnalysisService);
@@ -44,11 +48,14 @@ export class AffectedStudentsModalComponent {
             sortingOrder: SortingOrder.ASCENDING,
         };
 
+        this.isLoading.set(true);
         try {
-            const response = await this.feedbackService.getParticipationForFeedbackIds(this.exerciseId(), feedbackDetail.concatenatedFeedbackIds, pageable);
+            const response = await this.feedbackService.getParticipationForFeedbackDetailText(this.exerciseId(), feedbackDetail.detailTexts, feedbackDetail.testCaseName, pageable);
             this.participation.set(response);
         } catch (error) {
             this.alertService.error(this.TRANSLATION_BASE + '.error');
+        } finally {
+            this.isLoading.set(false);
         }
     }
 
