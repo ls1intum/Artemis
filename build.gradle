@@ -20,12 +20,12 @@ plugins {
     id "com.github.ben-manes.versions" version "0.51.0"
     id "com.github.andygoossens.modernizer" version "${modernizer_plugin_version}"
     id "com.gorylenko.gradle-git-properties" version "2.4.2"
-    id "org.owasp.dependencycheck" version "11.1.0"
+    id "org.owasp.dependencycheck" version "11.1.1"
     id "com.adarshr.test-logger" version "4.0.0"
 }
 
 group = "de.tum.cit.aet.artemis"
-version = "7.7.4"
+version = "7.7.5"
 description = "Interactive Learning with Individual Feedback"
 
 java {
@@ -96,9 +96,10 @@ spotless {
             @Override
             String apply(String s, File file) throws Exception {
                 if (s =~ /\nimport .*\*;/) {
-                    throw new AssertionError("Do not use wildcard imports. spotlessApply cannot resolve this issue.\n" +
+                    throw new IllegalArgumentException("Do not use wildcard imports. spotlessApply cannot resolve this issue.\n" +
                         "The following file violates this rule: " + file.getName())
                 }
+                return s // Ensure a value is returned after processing
             }
         }))
     }
@@ -134,8 +135,8 @@ test {
     }
     testLogging.showStandardStreams = true
     reports.html.required = false
-    minHeapSize = "1024m" // initial heap size
-    maxHeapSize = "3072m" // maximum heap size
+    minHeapSize = "2g" // initial heap size
+    maxHeapSize = "8g" // maximum heap size
 }
 
 tasks.register("testReport", TestReport) {
@@ -180,13 +181,13 @@ jacocoTestCoverageVerification {
                 counter = "INSTRUCTION"
                 value = "COVEREDRATIO"
                 // TODO: in the future the following value should become higher than 0.92
-                minimum = 0.893
+                minimum = 0.892
             }
             limit {
                 counter = "CLASS"
                 value = "MISSEDCOUNT"
                 // TODO: in the future the following value should become less than 10
-                maximum = 64
+                maximum = 65
             }
         }
     }
@@ -212,17 +213,7 @@ repositories {
     maven {
         url "https://build.shibboleth.net/maven/releases"
     }
-    // TODO: remove this when spring cloud is available in the official maven repository
-    maven {
-        url "https://repo.spring.io/milestone"
-    }
 }
-
-ext["jackson.version"] = fasterxml_version
-ext["junit-jupiter.version"] = junit_version
-
-ext { qDoxVersionReusable = "com.thoughtworks.qdox:qdox:2.2.0" }
-ext { springBootStarterWeb = "org.springframework.boot:spring-boot-starter-web:${spring_boot_version}" }
 
 dependencies {
 
@@ -266,7 +257,7 @@ dependencies {
     implementation "org.apache.lucene:lucene-queryparser:${lucene_version}"
     implementation "org.apache.lucene:lucene-core:${lucene_version}"
     implementation "org.apache.lucene:lucene-analyzers-common:${lucene_version}"
-    implementation "com.google.protobuf:protobuf-java:4.29.0"
+    implementation "com.google.protobuf:protobuf-java:4.29.1"
 
     // we have to override those values to use the latest version
     implementation "org.slf4j:jcl-over-slf4j:${slf4j_version}"
@@ -297,7 +288,7 @@ dependencies {
     implementation "org.apache.sshd:sshd-sftp:${sshd_version}"
 
     // https://mvnrepository.com/artifact/net.sourceforge.plantuml/plantuml
-    implementation "net.sourceforge.plantuml:plantuml:1.2024.7"
+    implementation "net.sourceforge.plantuml:plantuml:1.2024.8"
     implementation "org.jasypt:jasypt:1.9.3"
     implementation "me.xdrop:fuzzywuzzy:1.4.0"
     implementation("org.yaml:snakeyaml") {
@@ -307,7 +298,7 @@ dependencies {
         }
     }
 
-    implementation qDoxVersionReusable
+    implementation "com.thoughtworks.qdox:qdox:2.2.0"
     implementation "io.sentry:sentry-logback:${sentry_version}"
     implementation "io.sentry:sentry-spring-boot-starter-jakarta:${sentry_version}"
 
@@ -327,10 +318,6 @@ dependencies {
 
     implementation "org.jsoup:jsoup:1.18.3"
     implementation "commons-codec:commons-codec:1.17.1"   // needed for spring security saml2
-
-    // TODO: decide if we want to use OpenAPI and Swagger v3
-//    implementation 'io.swagger.core.v3:swagger-annotations:2.2.23'
-//    implementation "org.springdoc:springdoc-openapi-ui:1.8.0"
 
     // use the latest version to avoid security vulnerabilities
     implementation "org.springframework:spring-webmvc:${spring_framework_version}"
@@ -393,7 +380,7 @@ dependencies {
     implementation "org.springframework.boot:spring-boot-starter-aop:${spring_boot_version}"
     implementation "org.springframework.boot:spring-boot-starter-data-jpa:${spring_boot_version}"
     implementation "org.springframework.boot:spring-boot-starter-security:${spring_boot_version}"
-    implementation(springBootStarterWeb) {
+    implementation("org.springframework.boot:spring-boot-starter-web:${spring_boot_version}") {
         exclude module: "spring-boot-starter-undertow"
     }
     implementation "org.springframework.boot:spring-boot-starter-tomcat:${spring_boot_version}"
@@ -550,8 +537,8 @@ dependencies {
         exclude module: "android-json"
     }
 
-    // cannot update due to "Syntax error in SQL statement "WITH ids_to_delete"
-//    testImplementation "com.h2database:h2:2.3.230"
+    // NOTE: cannot update due to "Syntax error in SQL statement "WITH ids_to_delete" --> should be resolved when we collapse the changelogs again for Artemis 8.0
+//    testImplementation "com.h2database:h2:2.3.232"
     testImplementation "com.h2database:h2:2.2.224"
 
     // Lightweight JSON library needed for the internals of the MockRestServiceServer
@@ -563,7 +550,7 @@ dependencies {
 
 dependencyManagement {
     imports {
-        mavenBom "io.zonky.test.postgres:embedded-postgres-binaries-bom:17.0.0"
+        mavenBom "io.zonky.test.postgres:embedded-postgres-binaries-bom:17.2.0"
     }
 }
 

@@ -39,6 +39,8 @@ public final class Constants {
 
     public static final int QUIZ_GRACE_PERIOD_IN_SECONDS = 5;
 
+    public static final int MAX_ENVIRONMENT_VARIABLES_DOCKER_FLAG_LENGTH = 1000;
+
     /**
      * This constant determines how many seconds after the exercise due dates submissions will still be considered rated.
      * Submissions after the grace period exceeded will be flagged as illegal.
@@ -375,6 +377,11 @@ public final class Constants {
      * The value of the version field we send with each push notification to the native clients (Android & iOS).
      */
     public static final int PUSH_NOTIFICATION_VERSION = 1;
+
+    /**
+     * The value of the version field we send with each push notification to the native clients (Android & iOS).
+     */
+    public static final int PUSH_NOTIFICATION_MINOR_VERSION = 2;
 
     /**
      * The directory in the docker container in which the build script is executed
