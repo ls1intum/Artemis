@@ -29,9 +29,9 @@ export class SplitPaneHeaderComponent implements OnChanges, OnInit, OnDestroy {
     public showFiles = false;
     public activeFileIndex = 0;
 
-    private fileSelectSubscription: Subscription | undefined;
-    private showFilesSubscription: Subscription | undefined;
-    private dropdownHoverSubscription: Subscription | undefined;
+    private fileSelectSubscription?: Subscription;
+    private showFilesSubscription?: Subscription;
+    private dropdownHoverSubscription?: Subscription;
 
     // Icons
     faChevronDown = faChevronDown;
