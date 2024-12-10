@@ -164,7 +164,6 @@ describe('ProgrammingExerciseDetailComponent', () => {
         tick();
         expect(loadDiffSpy).toHaveBeenCalledOnce();
         expect(gitDiffReportStub).toHaveBeenCalledOnce();
-        expect(comp.programmingExercise.coveredLinesRatio).toBe(0.5);
     }));
 
     describe('onInit for course exercise', () => {

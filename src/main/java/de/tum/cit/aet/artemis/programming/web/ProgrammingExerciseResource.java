@@ -854,30 +854,6 @@ public class ProgrammingExerciseResource {
     }
 
     /**
-     * GET programming-exercises/:exerciseId/solution-file-names
-     * <p>
-     * Returns the solution repository file names for a given programming exercise.
-     * Note: This endpoint redirects the request to the ProgrammingExerciseParticipationService. This is required if
-     * the solution participation id is not known for the client.
-     *
-     * @param exerciseId the exercise for which the solution repository files should be retrieved
-     * @return a redirect to the endpoint returning the files with content
-     */
-    @GetMapping("programming-exercises/{exerciseId}/file-names")
-    @EnforceAtLeastTutor
-    @FeatureToggle(Feature.ProgrammingExercises)
-    public ModelAndView redirectGetSolutionRepositoryFilesWithoutContent(@PathVariable Long exerciseId) {
-        log.debug("REST request to get latest solution repository file names for ProgrammingExercise with id : {}", exerciseId);
-        ProgrammingExercise exercise = programmingExerciseRepository.findByIdElseThrow(exerciseId);
-        authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.TEACHING_ASSISTANT, exercise, null);
-
-        var participation = solutionProgrammingExerciseParticipationRepository.findByProgrammingExerciseIdElseThrow(exerciseId);
-
-        // TODO: We want to get rid of ModelAndView and use ResponseEntity instead. Define an appropriate service method and then call it here and in the referenced endpoint.
-        return new ModelAndView("forward:/api/repository/" + participation.getId() + "/file-names");
-    }
-
-    /**
      * GET programming-exercises/:exerciseId/build-log-statistics
      * <p>
      * Returns the averaged build log statistics for a given programming exercise.

@@ -71,11 +71,6 @@ export class ProgrammingExercise extends Exercise {
 
     public projectType?: ProjectType;
 
-    // helper attributes
-
-    // this attribute is used to display the covered lines ratio
-    public coveredLinesRatio?: number;
-
     /**
      * This attribute is used to generate a programming exercise with no connection to the VCS and CI.
      * This functionality is only for testing purposes.
