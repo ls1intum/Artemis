@@ -58,7 +58,7 @@
                 <label for="regular" class="btn btn-outline-secondary" [jhiTranslate]="TRANSLATION_BASE + '.announcementChannelNo'"></label>
             </div>
         </div>
-        @if (levenshtein()) {
+        @if (groupFeedback()) {
             <div class="alert alert-info mb-3">
                 <p>
                     <strong [jhiTranslate]="TRANSLATION_BASE + '.levenshteinInfoTitle'"></strong>

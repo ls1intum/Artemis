@@ -572,12 +572,12 @@ public class ResultService {
      * Pagination and sorting:
      * - Sorting is applied based on the specified column and order (ascending or descending).
      * - The result is paginated according to the provided page number and page size.
-     * Additionally one can group by the Levenshtein distance of the feedback detail text.
+     * Additionally one can group the feedback detail text.
      *
      * @param exerciseId    The ID of the exercise for which feedback details should be retrieved.
      * @param data          The {@link FeedbackPageableDTO} containing page number, page size, search term, sorting options, and filtering parameters
      *                          (task names, test cases, occurrence range, error categories).
-     * @param groupFeedback The flag to enable Levenshtein-based grouping and aggregation of feedback details.
+     * @param groupFeedback The flag to enable grouping and aggregation of feedback details.
      * @return A {@link FeedbackAnalysisResponseDTO} object containing:
      *         - A {@link SearchResultPageDTO} of paginated feedback details.
      *         - The total number of distinct results for the exercise.
@@ -620,7 +620,7 @@ public class ResultService {
         // 8. Set up pagination and sorting based on input data
         final var pageable = PageUtil.createDefaultPageRequest(data, PageUtil.ColumnMapping.FEEDBACK_ANALYSIS);
 
-        // 9. Query the database based on levenshtein attribute to retrieve paginated and filtered feedback
+        // 9. Query the database based on groupFeedback attribute to retrieve paginated and filtered feedback
         final Page<FeedbackDetailDTO> feedbackDetailPage;
         List<FeedbackDetailDTO> processedDetails;
         int totalPages = 0;
@@ -645,7 +645,7 @@ public class ResultService {
             // Fetch all feedback details
             List<FeedbackDetailDTO> allFeedbackDetails = feedbackDetailPage.getContent();
 
-            // Apply Levenshtein-based grouping and aggregation with a similarity threshold of 90%
+            // Apply grouping and aggregation with a similarity threshold of 90%
             List<FeedbackDetailDTO> aggregatedFeedbackDetails = aggregateUsingLevenshtein(allFeedbackDetails, 0.5);
 
             groupFeedbackMaxCount = aggregatedFeedbackDetails.stream().mapToLong(FeedbackDetailDTO::count).max().orElse(0);

@@ -16,7 +16,7 @@ import { AlertService } from 'app/core/util/alert.service';
 export class FeedbackDetailChannelModalComponent {
     protected readonly TRANSLATION_BASE = 'artemisApp.programmingExercise.configureGrading.feedbackAnalysis.feedbackDetailChannel';
     feedbackDetail = input.required<FeedbackDetail>();
-    levenshtein = input.required<boolean>();
+    groupFeedback = input.required<boolean>();
     formSubmitted = output<{ channelDto: ChannelDTO; navigate: boolean }>();
 
     isConfirmModalOpen = signal(false);
