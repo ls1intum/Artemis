@@ -1,4 +1,4 @@
-import { Injectable } from '@angular/core';
+import { Injectable, inject } from '@angular/core';
 import { HttpClient, HttpResponse } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { map } from 'rxjs/operators';
@@ -9,11 +9,9 @@ type EntityResponseType = HttpResponse<AnswerPost>;
 
 @Injectable({ providedIn: 'root' })
 export class AnswerPostService extends PostingService<AnswerPost> {
-    public resourceUrl = 'api/courses/';
+    protected http = inject(HttpClient);
 
-    constructor(protected http: HttpClient) {
-        super();
-    }
+    public resourceUrl = 'api/courses/';
 
     /**
      * creates an answerPost
