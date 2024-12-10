@@ -16,9 +16,6 @@ import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseTestCase;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingLanguage;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingSubmission;
-import de.tum.cit.aet.artemis.programming.domain.hestia.CoverageFileReport;
-import de.tum.cit.aet.artemis.programming.domain.hestia.CoverageReport;
-import de.tum.cit.aet.artemis.programming.domain.hestia.TestwiseCoverageReportEntry;
 
 class TestwiseCoverageIntegrationTest extends AbstractProgrammingIntegrationIndependentTest {
 

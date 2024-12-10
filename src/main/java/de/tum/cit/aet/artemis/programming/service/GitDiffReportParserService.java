@@ -1,4 +1,4 @@
-package de.tum.cit.aet.artemis.programming.web;
+package de.tum.cit.aet.artemis.programming.service;
 
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
@@ -13,7 +13,7 @@ import org.eclipse.jgit.diff.DiffEntry;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
-import de.tum.cit.aet.artemis.programming.domain.hestia.ProgrammingExerciseGitDiffEntry;
+import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseGitDiffEntry;
 
 @Profile(PROFILE_CORE)
 @Service

@@ -29,7 +29,6 @@ import de.tum.cit.aet.artemis.exam.domain.ExerciseGroup;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.lecture.domain.Lecture;
 import de.tum.cit.aet.artemis.modeling.domain.ApollonDiagram;
-import de.tum.cit.aet.artemis.programming.domain.hestia.ExerciseHint;
 
 /**
  * Listens to Hibernate events and invalidates the cached titles of an entity if the title changed.

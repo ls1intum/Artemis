@@ -1,9 +1,8 @@
-package de.tum.cit.aet.artemis.programming.domain.hestia;
+package de.tum.cit.aet.artemis.programming.domain;
 
 import java.util.HashSet;
 import java.util.Set;
 
-import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;
@@ -11,7 +10,6 @@ import jakarta.persistence.JoinColumn;
 import jakarta.persistence.JoinTable;
 import jakarta.persistence.ManyToMany;
 import jakarta.persistence.ManyToOne;
-import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
 
 import org.hibernate.annotations.Cache;
@@ -22,8 +20,6 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
 
 import de.tum.cit.aet.artemis.core.domain.DomainObject;
-import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
-import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseTestCase;
 
 /**
  * A ProgrammingExerciseTask
@@ -36,11 +32,6 @@ public class ProgrammingExerciseTask extends DomainObject {
 
     @Column(name = "task_name")
     private String taskName;
-
-    // No orphanRemoval here, as there should only be one parent-child relationship (which is ProgrammingExercise -> ExerciseHint)
-    @OneToMany(mappedBy = "task", cascade = CascadeType.REMOVE, fetch = FetchType.LAZY)
-    @JsonIgnoreProperties("task")
-    private Set<ExerciseHint> exerciseHints = new HashSet<>();
 
     @ManyToMany(fetch = FetchType.LAZY)
     @JoinTable(name = "programming_exercise_task_test_case", joinColumns = @JoinColumn(name = "task_id", referencedColumnName = "id"), inverseJoinColumns = @JoinColumn(name = "test_case_id", referencedColumnName = "id"))
@@ -57,14 +48,6 @@ public class ProgrammingExerciseTask extends DomainObject {
 
     public void setTaskName(String taskName) {
         this.taskName = taskName;
-    }
-
-    public Set<ExerciseHint> getExerciseHints() {
-        return exerciseHints;
-    }
-
-    public void setExerciseHints(Set<ExerciseHint> exerciseHints) {
-        this.exerciseHints = exerciseHints;
     }
 
     public Set<ProgrammingExerciseTestCase> getTestCases() {

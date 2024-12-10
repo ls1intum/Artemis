@@ -30,7 +30,6 @@ import de.tum.cit.aet.artemis.programming.service.ProgrammingExerciseGradingServ
 import de.tum.cit.aet.artemis.programming.service.ProgrammingMessagingService;
 import de.tum.cit.aet.artemis.programming.service.ProgrammingTriggerService;
 import de.tum.cit.aet.artemis.programming.service.ci.ContinuousIntegrationService;
-import de.tum.cit.aet.artemis.programming.service.hestia.TestwiseCoverageService;
 
 /**
  * REST controller for receiving build results.
@@ -51,19 +50,15 @@ public class PublicResultResource {
 
     private final ResultService resultService;
 
-    private final TestwiseCoverageService testwiseCoverageService;
-
     private final ProgrammingTriggerService programmingTriggerService;
 
     private final ProgrammingMessagingService programmingMessagingService;
 
     public PublicResultResource(Optional<ContinuousIntegrationService> continuousIntegrationService, ProgrammingExerciseGradingService programmingExerciseGradingService,
-            ResultService resultService, TestwiseCoverageService testwiseCoverageService, ProgrammingTriggerService programmingTriggerService,
-            ProgrammingMessagingService programmingMessagingService) {
+            ResultService resultService, ProgrammingTriggerService programmingTriggerService, ProgrammingMessagingService programmingMessagingService) {
         this.continuousIntegrationService = continuousIntegrationService;
         this.programmingExerciseGradingService = programmingExerciseGradingService;
         this.resultService = resultService;
-        this.testwiseCoverageService = testwiseCoverageService;
         this.programmingTriggerService = programmingTriggerService;
         this.programmingMessagingService = programmingMessagingService;
     }

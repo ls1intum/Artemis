@@ -21,10 +21,8 @@ import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.programming.AbstractProgrammingIntegrationIndependentTest;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseStudentParticipation;
+import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseTask;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseTestCase;
-import de.tum.cit.aet.artemis.programming.domain.hestia.ExerciseHint;
-import de.tum.cit.aet.artemis.programming.domain.hestia.ExerciseHintActivation;
-import de.tum.cit.aet.artemis.programming.domain.hestia.ProgrammingExerciseTask;
 
 class ExerciseHintServiceTest extends AbstractProgrammingIntegrationIndependentTest {
 

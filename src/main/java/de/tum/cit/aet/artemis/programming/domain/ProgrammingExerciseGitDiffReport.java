@@ -1,4 +1,4 @@
-package de.tum.cit.aet.artemis.programming.domain.hestia;
+package de.tum.cit.aet.artemis.programming.domain;
 
 import java.util.Set;
 
@@ -17,7 +17,6 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
 
 import de.tum.cit.aet.artemis.core.domain.DomainObject;
-import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 
 /**
  * A git-diff report representing a git-diff between the template and solution repositories of a ProgrammingExercise.

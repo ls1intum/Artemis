@@ -1,4 +1,4 @@
-package de.tum.cit.aet.artemis.programming.service.hestia;
+package de.tum.cit.aet.artemis.programming.service;
 
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
@@ -20,11 +20,10 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
+import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseTask;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseTestCase;
-import de.tum.cit.aet.artemis.programming.domain.hestia.ProgrammingExerciseTask;
+import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseTaskRepository;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseTestCaseRepository;
-import de.tum.cit.aet.artemis.programming.repository.hestia.ExerciseHintRepository;
-import de.tum.cit.aet.artemis.programming.repository.hestia.ProgrammingExerciseTaskRepository;
 
 @Profile(PROFILE_CORE)
 @Service
@@ -33,8 +32,6 @@ public class ProgrammingExerciseTaskService {
     private final ProgrammingExerciseTaskRepository programmingExerciseTaskRepository;
 
     private final ProgrammingExerciseTestCaseRepository programmingExerciseTestCaseRepository;
-
-    private final ExerciseHintRepository exerciseHintRepository;
 
     /**
      * Pattern that is used to extract the tasks (capturing group {@code name}) and test case names (capturing groups {@code tests}) from the problem statement.
@@ -85,10 +82,9 @@ public class ProgrammingExerciseTaskService {
     private static final Pattern TESTID_PATTERN = Pattern.compile(TESTID_START + "(\\d+)" + TESTID_END);
 
     public ProgrammingExerciseTaskService(ProgrammingExerciseTaskRepository programmingExerciseTaskRepository,
-            ProgrammingExerciseTestCaseRepository programmingExerciseTestCaseRepository, ExerciseHintRepository exerciseHintRepository) {
+            ProgrammingExerciseTestCaseRepository programmingExerciseTestCaseRepository) {
         this.programmingExerciseTaskRepository = programmingExerciseTaskRepository;
         this.programmingExerciseTestCaseRepository = programmingExerciseTestCaseRepository;
-        this.exerciseHintRepository = exerciseHintRepository;
     }
 
     /**
@@ -98,8 +94,6 @@ public class ProgrammingExerciseTaskService {
      * @param task The task to delete
      */
     public void delete(ProgrammingExerciseTask task) {
-        var exerciseHints = exerciseHintRepository.findByTaskId(task.getId());
-        exerciseHintRepository.deleteAll(exerciseHints);
         programmingExerciseTaskRepository.delete(task);
     }
 

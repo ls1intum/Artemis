@@ -1,4 +1,4 @@
-package de.tum.cit.aet.artemis.programming.domain.hestia;
+package de.tum.cit.aet.artemis.programming.domain;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;

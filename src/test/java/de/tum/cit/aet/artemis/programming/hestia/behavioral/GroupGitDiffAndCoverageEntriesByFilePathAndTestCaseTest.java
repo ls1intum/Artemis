@@ -9,12 +9,9 @@ import java.util.Set;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
+import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseGitDiffEntry;
+import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseGitDiffReport;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseTestCase;
-import de.tum.cit.aet.artemis.programming.domain.hestia.CoverageFileReport;
-import de.tum.cit.aet.artemis.programming.domain.hestia.CoverageReport;
-import de.tum.cit.aet.artemis.programming.domain.hestia.ProgrammingExerciseGitDiffEntry;
-import de.tum.cit.aet.artemis.programming.domain.hestia.ProgrammingExerciseGitDiffReport;
-import de.tum.cit.aet.artemis.programming.domain.hestia.TestwiseCoverageReportEntry;
 import de.tum.cit.aet.artemis.programming.service.hestia.behavioral.BehavioralBlackboard;
 import de.tum.cit.aet.artemis.programming.service.hestia.behavioral.GroupedFile;
 import de.tum.cit.aet.artemis.programming.service.hestia.behavioral.knowledgesource.GroupGitDiffAndCoverageEntriesByFilePathAndTestCase;

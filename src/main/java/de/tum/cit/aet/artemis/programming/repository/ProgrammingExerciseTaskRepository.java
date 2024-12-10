@@ -1,4 +1,4 @@
-package de.tum.cit.aet.artemis.programming.repository.hestia;
+package de.tum.cit.aet.artemis.programming.repository;
 
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
@@ -15,7 +15,7 @@ import org.springframework.stereotype.Repository;
 
 import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
 import de.tum.cit.aet.artemis.core.repository.base.ArtemisJpaRepository;
-import de.tum.cit.aet.artemis.programming.domain.hestia.ProgrammingExerciseTask;
+import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseTask;
 
 /**
  * Spring Data repository for the ProgrammingExerciseTask entity.

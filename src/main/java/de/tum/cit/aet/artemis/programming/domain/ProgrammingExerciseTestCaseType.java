@@ -1,4 +1,4 @@
-package de.tum.cit.aet.artemis.programming.domain.hestia;
+package de.tum.cit.aet.artemis.programming.domain;
 
 /**
  * Used to define the type of a ProgrammingExerciseTestCase.
