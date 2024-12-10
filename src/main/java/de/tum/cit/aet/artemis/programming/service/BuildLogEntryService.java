@@ -494,9 +494,9 @@ public class BuildLogEntryService {
         return Files.exists(logPath);
     }
 
-    public List<BuildLogEntry> parseBuildLogEntries(FileSystemResource buildLog) {
+    public List<BuildLogDTO> parseBuildLogEntries(FileSystemResource buildLog) {
         try {
-            List<BuildLogEntry> buildLogEntries = new ArrayList<>();
+            List<BuildLogDTO> buildLogEntries = new ArrayList<>();
             try (BufferedReader reader = new BufferedReader(new InputStreamReader(buildLog.getInputStream()))) {
                 String line;
                 while ((line = reader.readLine()) != null) {
@@ -504,11 +504,20 @@ public class BuildLogEntryService {
                     if (parts.length == 2) {
                         try {
                             ZonedDateTime time = ZonedDateTime.parse(parts[0]);
-                            buildLogEntries.add(new BuildLogEntry(time, parts[1]));
+                            buildLogEntries.add(new BuildLogDTO(time, parts[1]));
                         }
                         catch (DateTimeParseException e) {
-                            log.warn("Failed to parse build log entry time: {}", parts[0]);
+                            // If the time cannot be parsed, append the line to the last entry
+                            if (!buildLogEntries.isEmpty()) {
+                                BuildLogDTO lastEntry = buildLogEntries.getLast();
+                                buildLogEntries.set(buildLogEntries.size() - 1, new BuildLogDTO(lastEntry.time(), lastEntry.log() + "\n\t" + line));
+                            }
                         }
+                    }
+                    else {
+                        // If the line does not contain a tab, add it to in a new entry
+                        BuildLogDTO lastEntry = buildLogEntries.getLast();
+                        buildLogEntries.add(new BuildLogDTO(lastEntry.time(), line));
                     }
                 }
             }

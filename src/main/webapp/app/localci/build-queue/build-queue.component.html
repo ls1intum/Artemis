@@ -893,8 +893,13 @@
             <tbody>
                 @for (logEntry of rawBuildLogs; track logEntry) {
                     <tr class="build-output__entry">
-                        <td class="build-output__entry-date">{{ logEntry.time | artemisDate: 'short' : true }}</td>
-                        <td class="build-output__entry-text">{{ logEntry.log }}</td>
+                        <td class="build-output__entry-date">{{ logEntry.time | artemisDate: 'long' : true : undefined : false : true }}</td>
+                        <td class="build-output__entry-text">
+                            @for (line of logEntry.log; track line) {
+                                <span>{{ line }}</span>
+                                <br />
+                            }
+                        </td>
                     </tr>
                 }
             </tbody>

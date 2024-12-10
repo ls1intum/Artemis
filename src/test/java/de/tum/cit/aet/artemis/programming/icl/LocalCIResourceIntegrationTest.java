@@ -350,7 +350,7 @@ class LocalCIResourceIntegrationTest extends AbstractProgrammingIntegrationLocal
     void testGetBuildLogsEntriesForResult() throws Exception {
         try {
             buildJobRepository.save(finishedJobForLogs);
-            BuildLogEntry buildLogEntry = new BuildLogEntry(ZonedDateTime.now(), "Dummy log");
+            BuildLogDTO buildLogEntry = new BuildLogDTO(ZonedDateTime.now(), "Dummy log");
             buildLogEntryService.saveBuildLogsToFile(List.of(buildLogEntry), "6", programmingExercise);
             var response = request.get("/api/build-log/6/entries", HttpStatus.OK, List.class);
 
@@ -358,8 +358,8 @@ class LocalCIResourceIntegrationTest extends AbstractProgrammingIntegrationLocal
             String log = responseMap.get("log").toString();
             String time = responseMap.get("time").toString();
             assertThat(response).hasSize(1);
-            assertThat(buildLogEntry.getLog()).isEqualTo(log);
-            assertThat(buildLogEntry.getTime().toString()).contains(time);
+            assertThat(buildLogEntry.log()).isEqualTo(log);
+            assertThat(buildLogEntry.time().toString()).contains(time);
 
         }
         finally {

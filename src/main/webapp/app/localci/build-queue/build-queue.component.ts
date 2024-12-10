@@ -19,7 +19,7 @@ import { NgbModal, NgbTypeahead } from '@ng-bootstrap/ng-bootstrap';
 import { LocalStorageService } from 'ngx-webstorage';
 import { Observable, OperatorFunction, Subject, Subscription, merge } from 'rxjs';
 import { UI_RELOAD_TIME } from 'app/shared/constants/exercise-exam-constants';
-import { BuildLogEntry } from 'app/entities/programming/build-log.model';
+import { BuildLogEntry, BuildLogLines } from 'app/entities/programming/build-log.model';
 
 export class FinishedBuildJobFilter {
     status?: string = undefined;
@@ -160,7 +160,7 @@ export class BuildQueueComponent implements OnInit, OnDestroy {
     searchSubscription: Subscription;
     searchTerm?: string = undefined;
 
-    rawBuildLogs: BuildLogEntry[] = [];
+    rawBuildLogs: BuildLogLines[] = [];
     displayedBuildJobId?: string;
 
     constructor(
@@ -395,11 +395,14 @@ export class BuildQueueComponent implements OnInit, OnDestroy {
      */
     viewBuildLogs(modal: any, buildJobId: string | undefined): void {
         if (buildJobId) {
-            this.openModal(modal, 'xl');
+            this.openModal(modal, true);
             this.displayedBuildJobId = buildJobId;
             this.buildQueueService.getBuildJobLogs(buildJobId).subscribe({
                 next: (buildLogs: BuildLogEntry[]) => {
-                    this.rawBuildLogs = buildLogs;
+                    this.rawBuildLogs = buildLogs.map((entry) => {
+                        const logLines = entry.log ? entry.log.split('\n') : [];
+                        return { time: entry.time, logLines: logLines };
+                    });
                 },
                 error: (res: HttpErrorResponse) => {
                     onError(this.alertService, res);
@@ -466,8 +469,8 @@ export class BuildQueueComponent implements OnInit, OnDestroy {
     /**
      * Opens the modal.
      */
-    openModal(modal: any, size?: 'sm' | 'lg' | 'xl', scrollable = true, keyboard = true) {
-        this.modalService.open(modal, { size, keyboard, scrollable });
+    openModal(modal: any, fullscreen?: boolean, size?: 'sm' | 'lg' | 'xl', scrollable = true, keyboard = true) {
+        this.modalService.open(modal, { size, keyboard, scrollable, fullscreen });
     }
 
     /**

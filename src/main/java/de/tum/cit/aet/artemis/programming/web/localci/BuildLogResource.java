@@ -18,8 +18,8 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import de.tum.cit.aet.artemis.buildagent.dto.BuildLogDTO;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastEditor;
-import de.tum.cit.aet.artemis.programming.domain.build.BuildLogEntry;
 import de.tum.cit.aet.artemis.programming.service.BuildLogEntryService;
 
 @Profile(PROFILE_LOCALCI)
@@ -58,7 +58,7 @@ public class BuildLogResource {
 
     @GetMapping("build-log/{buildJobId}/entries")
     @EnforceAtLeastEditor
-    public ResponseEntity<List<BuildLogEntry>> getBuildLogEntriesForBuildJob(@PathVariable String buildJobId) {
+    public ResponseEntity<List<BuildLogDTO>> getBuildLogEntriesForBuildJob(@PathVariable String buildJobId) {
         FileSystemResource buildLog = buildLogEntryService.retrieveBuildLogsFromFileForBuildJob(buildJobId);
         if (buildLog == null) {
             return ResponseEntity.notFound().build();

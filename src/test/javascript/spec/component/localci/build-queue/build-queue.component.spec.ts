@@ -19,7 +19,7 @@ import { LocalStorageService } from 'ngx-webstorage';
 import { MockLocalStorageService } from '../../../helpers/mocks/service/mock-local-storage.service';
 import { ArtemisSharedComponentModule } from 'app/shared/components/shared-component.module';
 import { PieChartModule } from '@swimlane/ngx-charts';
-import { BuildLogEntry } from '../../../../../../main/webapp/app/entities/programming/build-log.model';
+import { BuildLogEntry, BuildLogLines } from '../../../../../../main/webapp/app/entities/programming/build-log.model';
 
 describe('BuildQueueComponent', () => {
     let component: BuildQueueComponent;
@@ -685,10 +685,14 @@ describe('BuildQueueComponent', () => {
 
         mockBuildQueueService.getBuildJobLogs = jest.fn().mockReturnValue(of(buildLogEntries));
 
+        const buildLogsMultiLines: BuildLogLines[] = buildLogEntries.map((entry) => {
+            return { time: entry.time, logLines: entry.log.split('\n') };
+        });
+
         component.viewBuildLogs(undefined, buildJobId);
 
         expect(mockBuildQueueService.getBuildJobLogs).toHaveBeenCalledWith(buildJobId);
-        expect(component.rawBuildLogs).toEqual(buildLogEntries);
+        expect(component.rawBuildLogs).toEqual(buildLogsMultiLines);
 
         component.downloadBuildLogs();
 
