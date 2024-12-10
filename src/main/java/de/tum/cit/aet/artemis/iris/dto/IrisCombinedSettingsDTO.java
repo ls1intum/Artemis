@@ -7,6 +7,7 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 public record IrisCombinedSettingsDTO(
         IrisCombinedChatSubSettingsDTO irisChatSettings,
         IrisCombinedTextExerciseChatSubSettingsDTO irisTextExerciseChatSettings,
+        IrisCombinedCourseChatSubSettingsDTO irisCourseChatSettings,
         IrisCombinedLectureIngestionSubSettingsDTO irisLectureIngestionSettings,
         IrisCombinedCompetencyGenerationSubSettingsDTO irisCompetencyGenerationSettings,
         IrisCombinedLectureChatSubSettingsDTO irisLectureChatSettings

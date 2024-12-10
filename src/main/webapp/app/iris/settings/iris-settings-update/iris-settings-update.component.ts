@@ -11,6 +11,7 @@ import { cloneDeep, isEqual } from 'lodash-es';
 import {
     IrisChatSubSettings,
     IrisCompetencyGenerationSubSettings,
+    IrisCourseChatSubSettings,
     IrisLectureChatSubSettings,
     IrisLectureIngestionSubSettings,
     IrisTextExerciseChatSubSettings,
@@ -110,6 +111,9 @@ export class IrisSettingsUpdateComponent implements OnInit, DoCheck, ComponentCa
         }
         if (!this.irisSettings.irisLectureChatSettings) {
             this.irisSettings.irisLectureChatSettings = new IrisLectureChatSubSettings();
+        }
+        if (!this.irisSettings.irisCourseChatSettings) {
+            this.irisSettings.irisCourseChatSettings = new IrisCourseChatSubSettings();
         }
         if (!this.irisSettings.irisLectureIngestionSettings) {
             this.irisSettings.irisLectureIngestionSettings = new IrisLectureIngestionSubSettings();

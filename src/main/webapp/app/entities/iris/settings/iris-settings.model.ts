@@ -2,6 +2,7 @@ import { BaseEntity } from 'app/shared/model/base-entity';
 import {
     IrisChatSubSettings,
     IrisCompetencyGenerationSubSettings,
+    IrisCourseChatSubSettings,
     IrisLectureChatSubSettings,
     IrisLectureIngestionSubSettings,
     IrisTextExerciseChatSubSettings,
@@ -19,6 +20,7 @@ export abstract class IrisSettings implements BaseEntity {
     irisChatSettings?: IrisChatSubSettings;
     irisTextExerciseChatSettings?: IrisTextExerciseChatSubSettings;
     irisLectureChatSettings?: IrisLectureChatSubSettings;
+    irisCourseChatSettings?: IrisCourseChatSubSettings;
     irisLectureIngestionSettings?: IrisLectureIngestionSubSettings;
     irisCompetencyGenerationSettings?: IrisCompetencyGenerationSubSettings;
 }
@@ -29,6 +31,7 @@ export class IrisGlobalSettings implements IrisSettings {
     irisChatSettings?: IrisChatSubSettings;
     irisTextExerciseChatSettings?: IrisTextExerciseChatSubSettings;
     irisLectureChatSettings?: IrisLectureChatSubSettings;
+    irisCourseChatSettings?: IrisCourseChatSubSettings;
     irisLectureIngestionSettings?: IrisLectureIngestionSubSettings;
     irisCompetencyGenerationSettings?: IrisCompetencyGenerationSubSettings;
 }
@@ -40,6 +43,7 @@ export class IrisCourseSettings implements IrisSettings {
     irisChatSettings?: IrisChatSubSettings;
     irisTextExerciseChatSettings?: IrisTextExerciseChatSubSettings;
     irisLectureChatSettings?: IrisLectureChatSubSettings;
+    irisCourseChatSettings?: IrisCourseChatSubSettings;
     irisLectureIngestionSettings?: IrisLectureIngestionSubSettings;
     irisCompetencyGenerationSettings?: IrisCompetencyGenerationSubSettings;
 }
