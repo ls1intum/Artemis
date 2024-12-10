@@ -220,42 +220,26 @@ class PostingServiceUnitTest {
 
     @Test
     void shouldSetCorrectFlagsWhenPostsAreSaved() {
-        when(savedPostRepository.findSavedPostIdsByUserIdAndPostType(
-            testUser.getId(),
-            PostingType.POST
-        )).thenReturn(List.of(savedPost.getPostId()));
+        when(savedPostRepository.findSavedPostIdsByUserIdAndPostType(testUser.getId(), PostingType.POST)).thenReturn(List.of(savedPost.getPostId()));
 
-        when(savedPostRepository.findSavedPostIdsByUserIdAndPostType(
-            testUser.getId(),
-            PostingType.ANSWER
-        )).thenReturn(List.of(savedAnswer.getPostId(), savedAnswer2.getPostId()));
+        when(savedPostRepository.findSavedPostIdsByUserIdAndPostType(testUser.getId(), PostingType.ANSWER)).thenReturn(List.of(savedAnswer.getPostId(), savedAnswer2.getPostId()));
 
         postingService.preparePostForBroadcast(testPost);
 
         assertThat(testPost.getIsSaved()).isTrue();
-        testPost.getAnswers().forEach(answer ->
-            assertThat(answer.getIsSaved()).isTrue()
-        );
+        testPost.getAnswers().forEach(answer -> assertThat(answer.getIsSaved()).isTrue());
     }
 
     @Test
     void shouldSetCorrectFlagsWhenPostsAreNotSaved() {
-        when(savedPostRepository.findSavedPostIdsByUserIdAndPostType(
-            testUser.getId(),
-            PostingType.POST
-        )).thenReturn(List.of());
+        when(savedPostRepository.findSavedPostIdsByUserIdAndPostType(testUser.getId(), PostingType.POST)).thenReturn(List.of());
 
-        when(savedPostRepository.findSavedPostIdsByUserIdAndPostType(
-            testUser.getId(),
-            PostingType.ANSWER
-        )).thenReturn(List.of());
+        when(savedPostRepository.findSavedPostIdsByUserIdAndPostType(testUser.getId(), PostingType.ANSWER)).thenReturn(List.of());
 
         postingService.preparePostForBroadcast(testPost);
 
         assertThat(testPost.getIsSaved()).isFalse();
-        testPost.getAnswers().forEach(answer ->
-            assertThat(answer.getIsSaved()).isFalse()
-        );
+        testPost.getAnswers().forEach(answer -> assertThat(answer.getIsSaved()).isFalse());
     }
 
     /**
