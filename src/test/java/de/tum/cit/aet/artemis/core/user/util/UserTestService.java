@@ -27,6 +27,7 @@ import org.springframework.util.LinkedMultiValueMap;
 
 import de.tum.cit.aet.artemis.atlas.domain.science.ScienceEvent;
 import de.tum.cit.aet.artemis.atlas.domain.science.ScienceEventType;
+import de.tum.cit.aet.artemis.atlas.repository.LearnerProfileRepository;
 import de.tum.cit.aet.artemis.atlas.test_repository.ScienceEventTestRepository;
 import de.tum.cit.aet.artemis.core.config.Constants;
 import de.tum.cit.aet.artemis.core.domain.Authority;
@@ -109,6 +110,21 @@ public class UserTestService {
     @Autowired
     private MockMvc mockMvc;
 
+    @Autowired
+    private ParticipationVCSAccessTokenRepository participationVCSAccessTokenRepository;
+
+    @Autowired
+    private ParticipationTestRepository participationRepository;
+
+    @Autowired
+    private SubmissionTestRepository submissionRepository;
+
+    @Autowired
+    private LearnerProfileRepository learnerProfileRepository;
+
+    @Autowired
+    private ExerciseTestRepository exerciseTestRepository;
+
     private String TEST_PREFIX;
 
     private MockDelegate mockDelegate;
@@ -124,18 +140,6 @@ public class UserTestService {
     private static final int NUMBER_OF_EDITORS = 1;
 
     private static final int NUMBER_OF_INSTRUCTORS = 1;
-
-    @Autowired
-    private ParticipationVCSAccessTokenRepository participationVCSAccessTokenRepository;
-
-    @Autowired
-    private ParticipationTestRepository participationRepository;
-
-    @Autowired
-    private SubmissionTestRepository submissionRepository;
-
-    @Autowired
-    private ExerciseTestRepository exerciseTestRepository;
 
     public void setup(String testPrefix, MockDelegate mockDelegate) throws Exception {
         this.TEST_PREFIX = testPrefix;
@@ -406,6 +410,8 @@ public class UserTestService {
 
         assertThat(student).as("New user is equal to request response").isEqualTo(response);
         assertThat(student).as("New user is equal to new user in DB").isEqualTo(userInDB);
+
+        assertThat(learnerProfileRepository.findByUser(student)).isNotEmpty();
 
         return userInDB;
     }
