@@ -767,7 +767,7 @@ public class RequestUtilService {
         restoreSecurityContext();
     }
 
-    public static ResultMatcher matchFileContents(@org.springframework.lang.Nullable String expectedFilesAsString) {
+    public static ResultMatcher matchFileContents(String expectedFilesAsString) {
         return (result) -> AssertionErrors.assertEquals("File contents", expectedFilesAsString, result.getResponse().getContentAsString());
     }
 
