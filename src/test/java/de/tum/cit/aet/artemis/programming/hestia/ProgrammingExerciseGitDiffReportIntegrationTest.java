@@ -38,7 +38,7 @@ class ProgrammingExerciseGitDiffReportIntegrationTest extends AbstractProgrammin
     private ProgrammingExercise exercise;
 
     @BeforeEach
-    void initTestCase() throws Exception {
+    void initTestCase() {
         Course course = courseUtilService.addEmptyCourse();
         userUtilService.addUsers(TEST_PREFIX, 1, 1, 1, 1);
         exercise = ProgrammingExerciseFactory.generateProgrammingExercise(ZonedDateTime.now().minusDays(1), ZonedDateTime.now().plusDays(7), course);
