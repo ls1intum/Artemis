@@ -1011,7 +1011,7 @@ public class ProgrammingExerciseService {
      * @param exerciseId of the exercise
      */
     public void deleteTasks(Long exerciseId) {
-        List<ProgrammingExerciseTask> tasks = programmingExerciseTaskRepository.findByExerciseIdWithTestCaseAndSolutionEntriesElseThrow(exerciseId);
+        List<ProgrammingExerciseTask> tasks = programmingExerciseTaskRepository.findByExerciseIdWithTestCaseElseThrow(exerciseId);
         programmingExerciseTaskRepository.deleteAll(tasks);
     }
 

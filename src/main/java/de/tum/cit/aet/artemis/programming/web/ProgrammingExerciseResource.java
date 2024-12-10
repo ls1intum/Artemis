@@ -796,8 +796,8 @@ public class ProgrammingExerciseResource {
     @DeleteMapping("programming-exercises/{exerciseId}/tasks")
     @EnforceAtLeastEditor
     @FeatureToggle(Feature.ProgrammingExercises)
-    public ResponseEntity<Void> deleteTaskWithSolutionEntries(@PathVariable Long exerciseId) {
-        log.debug("REST request to delete ProgrammingExerciseTasks with ProgrammingExerciseSolutionEntries for ProgrammingExercise with id : {}", exerciseId);
+    public ResponseEntity<Void> deleteTasks(@PathVariable Long exerciseId) {
+        log.debug("REST request to delete tasks for ProgrammingExercise with id : {}", exerciseId);
         ProgrammingExercise exercise = programmingExerciseRepository.findByIdElseThrow(exerciseId);
         authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.EDITOR, exercise, null);
 

@@ -282,24 +282,6 @@ describe('ProgrammingExercise Service', () => {
         }));
     });
 
-    it('should make post request for structural solution entries', fakeAsync(() => {
-        const expected = [new ProgrammingExerciseSolutionEntry()];
-        expected[0].filePath = 'src/test.java';
-        service.createStructuralSolutionEntries(123).subscribe((resp) => expect(resp).toEqual(expected));
-        const req = httpMock.expectOne({ method: 'POST', url: `${resourceUrl}/123/structural-solution-entries` });
-        req.flush(expected);
-        tick();
-    }));
-
-    it('should make post request for behavioral solution entries', fakeAsync(() => {
-        const expected = [new ProgrammingExerciseSolutionEntry()];
-        expected[0].filePath = 'src/test.java';
-        service.createBehavioralSolutionEntries(123).subscribe((resp) => expect(resp).toEqual(expected));
-        const req = httpMock.expectOne({ method: 'POST', url: `${resourceUrl}/123/behavioral-solution-entries` });
-        req.flush(expected);
-        tick();
-    }));
-
     it('should make post request for import from file', fakeAsync(() => {
         const course = new Course();
         course.id = 1;
@@ -443,7 +425,6 @@ describe('ProgrammingExercise Service', () => {
         { uri: 'check-plagiarism', method: 'checkPlagiarism' },
         { uri: 'plagiarism-result', method: 'getLatestPlagiarismResult' },
         { uri: 'test-case-state', method: 'getProgrammingExerciseTestCaseState' },
-        { uri: 'tasks', method: 'getTasksAndTestsExtractedFromProblemStatement' },
         { uri: 'diff-report', method: 'getDiffReport' },
         { uri: 'file-names', method: 'getSolutionFileNames' },
         { uri: 'test-cases', method: 'getAllTestCases' },

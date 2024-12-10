@@ -172,7 +172,7 @@ public class ProgrammingExerciseTaskService {
      * @return Set of all tasks and its test cases
      */
     public Set<ProgrammingExerciseTask> getTasksWithoutInactiveTestCases(long exerciseId) {
-        return programmingExerciseTaskRepository.findByExerciseIdWithTestCaseAndSolutionEntriesElseThrow(exerciseId).stream()
+        return programmingExerciseTaskRepository.findByExerciseIdWithTestCaseElseThrow(exerciseId).stream()
                 .peek(task -> task.getTestCases().removeIf(Predicate.not(ProgrammingExerciseTestCase::isActive))).collect(Collectors.toSet());
     }
 
@@ -184,7 +184,7 @@ public class ProgrammingExerciseTaskService {
      * @return Set of all tasks including one for not manually assigned tests
      */
     public List<ProgrammingExerciseTask> getTasksWithUnassignedTestCases(long exerciseId) {
-        List<ProgrammingExerciseTask> tasks = programmingExerciseTaskRepository.findByExerciseIdWithTestCaseAndSolutionEntriesElseThrow(exerciseId);
+        List<ProgrammingExerciseTask> tasks = programmingExerciseTaskRepository.findByExerciseIdWithTestCaseElseThrow(exerciseId);
 
         Set<ProgrammingExerciseTestCase> testsWithTasks = tasks.stream().flatMap(task -> task.getTestCases().stream()).collect(Collectors.toSet());
 

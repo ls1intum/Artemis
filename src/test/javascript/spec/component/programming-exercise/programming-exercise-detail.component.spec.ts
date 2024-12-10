@@ -256,42 +256,6 @@ describe('ProgrammingExerciseDetailComponent', () => {
         expect(sections).toBeDefined();
     });
 
-    it('should create structural solution entries', () => {
-        const programmingExercise = new ProgrammingExercise(new Course(), undefined);
-        programmingExercise.id = 123;
-        comp.programmingExercise = programmingExercise;
-
-        jest.spyOn(exerciseService, 'createStructuralSolutionEntries').mockReturnValue(of([] as ProgrammingExerciseSolutionEntry[]));
-        jest.spyOn(alertService, 'addAlert');
-
-        comp.createStructuralSolutionEntries();
-
-        expect(exerciseService.createStructuralSolutionEntries).toHaveBeenCalledOnce();
-        expect(alertService.addAlert).toHaveBeenCalledOnce();
-        expect(alertService.addAlert).toHaveBeenCalledWith({
-            type: AlertType.SUCCESS,
-            message: 'artemisApp.programmingExercise.createStructuralSolutionEntriesSuccess',
-        });
-    });
-
-    it('should create behavioral solution entries', () => {
-        const programmingExercise = new ProgrammingExercise(new Course(), undefined);
-        programmingExercise.id = 123;
-        comp.programmingExercise = programmingExercise;
-
-        jest.spyOn(exerciseService, 'createBehavioralSolutionEntries').mockReturnValue(of([] as ProgrammingExerciseSolutionEntry[]));
-        jest.spyOn(alertService, 'addAlert');
-
-        comp.createBehavioralSolutionEntries();
-
-        expect(exerciseService.createBehavioralSolutionEntries).toHaveBeenCalledOnce();
-        expect(alertService.addAlert).toHaveBeenCalledOnce();
-        expect(alertService.addAlert).toHaveBeenCalledWith({
-            type: AlertType.SUCCESS,
-            message: 'artemisApp.programmingExercise.createBehavioralSolutionEntriesSuccess',
-        });
-    });
-
     it.each([
         ['jenkins', true],
         ['gitlabci', true],

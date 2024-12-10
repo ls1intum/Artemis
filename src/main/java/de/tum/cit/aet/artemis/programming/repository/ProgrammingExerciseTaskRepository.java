@@ -32,8 +32,8 @@ public interface ProgrammingExerciseTaskRepository extends ArtemisJpaRepository<
      * @throws EntityNotFoundException If the exercise with exerciseId does not exist
      */
     @NotNull
-    default List<ProgrammingExerciseTask> findByExerciseIdWithTestCaseAndSolutionEntriesElseThrow(long exerciseId) throws EntityNotFoundException {
-        return getArbitraryValueElseThrow(findByExerciseIdWithTestCaseAndSolutionEntries(exerciseId), Long.toString(exerciseId));
+    default List<ProgrammingExerciseTask> findByExerciseIdWithTestCaseElseThrow(long exerciseId) throws EntityNotFoundException {
+        return getArbitraryValueElseThrow(findByExerciseIdWithTestCase(exerciseId), Long.toString(exerciseId));
     }
 
     /**
@@ -49,7 +49,7 @@ public interface ProgrammingExerciseTaskRepository extends ArtemisJpaRepository<
             WHERE t.exercise.id = :exerciseId
                 AND tc.exercise.id = :exerciseId
             """)
-    Optional<List<ProgrammingExerciseTask>> findByExerciseIdWithTestCaseAndSolutionEntries(@Param("exerciseId") long exerciseId);
+    Optional<List<ProgrammingExerciseTask>> findByExerciseIdWithTestCase(@Param("exerciseId") long exerciseId);
 
     /**
      * Gets all tasks with its test cases for a programming exercise
