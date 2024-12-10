@@ -2,9 +2,6 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { Router } from '@angular/router';
 
 import { PlagiarismCasesOverviewComponent } from 'app/exam/manage/suspicious-behavior/plagiarism-cases-overview/plagiarism-cases-overview.component';
-import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
-import { MockPipe } from 'ng-mocks';
-import { MockRouter } from '../../../../helpers/mocks/mock-router';
 import { Exercise } from 'app/entities/exercise.model';
 import { ArtemisTestModule } from '../../../../test.module';
 
@@ -41,13 +38,6 @@ describe('PlagiarismCasesOverviewComponent', () => {
     beforeEach(() => {
         TestBed.configureTestingModule({
             imports: [ArtemisTestModule],
-            declarations: [PlagiarismCasesOverviewComponent, MockPipe(ArtemisTranslatePipe)],
-            providers: [
-                {
-                    provide: Router,
-                    useClass: MockRouter,
-                },
-            ],
         });
         fixture = TestBed.createComponent(PlagiarismCasesOverviewComponent);
         router = TestBed.inject(Router);
