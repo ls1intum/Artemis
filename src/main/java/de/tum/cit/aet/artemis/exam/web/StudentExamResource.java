@@ -73,7 +73,9 @@ import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
 import de.tum.cit.aet.artemis.exercise.repository.StudentParticipationRepository;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
+import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseStudentParticipationRepository;
 import de.tum.cit.aet.artemis.programming.repository.SubmissionPolicyRepository;
+import de.tum.cit.aet.artemis.programming.service.ProgrammingExerciseParticipationService;
 import de.tum.cit.aet.artemis.quiz.repository.SubmittedAnswerRepository;
 
 /**
@@ -126,10 +128,14 @@ public class StudentExamResource {
 
     private static final boolean IS_TEST_RUN = false;
 
+    private final ProgrammingExerciseStudentParticipationRepository programmingExerciseStudentParticipationRepository;
+
     @Value("${info.student-exam-store-session-data:#{true}}")
     private boolean storeSessionDataInStudentExamSession;
 
     private static final String ENTITY_NAME = "studentExam";
+
+    private final ProgrammingExerciseParticipationService programmingExerciseParticipationService;
 
     @Value("${jhipster.clientApp.name}")
     private String applicationName;
@@ -140,7 +146,8 @@ public class StudentExamResource {
             StudentParticipationRepository studentParticipationRepository, ExamRepository examRepository, SubmittedAnswerRepository submittedAnswerRepository,
             AuthorizationCheckService authorizationCheckService, ExamService examService, InstanceMessageSendService instanceMessageSendService,
             WebsocketMessagingService websocketMessagingService, SubmissionPolicyRepository submissionPolicyRepository, ExamLiveEventsService examLiveEventsService,
-            ExamLiveEventRepository examLiveEventRepository) {
+            ExamLiveEventRepository examLiveEventRepository, ProgrammingExerciseStudentParticipationRepository programmingExerciseStudentParticipationRepository,
+            ProgrammingExerciseParticipationService programmingExerciseParticipationService) {
         this.examAccessService = examAccessService;
         this.examDeletionService = examDeletionService;
         this.studentExamService = studentExamService;
@@ -160,6 +167,8 @@ public class StudentExamResource {
         this.submissionPolicyRepository = submissionPolicyRepository;
         this.examLiveEventsService = examLiveEventsService;
         this.examLiveEventRepository = examLiveEventRepository;
+        this.programmingExerciseStudentParticipationRepository = programmingExerciseStudentParticipationRepository;
+        this.programmingExerciseParticipationService = programmingExerciseParticipationService;
     }
 
     /**
@@ -256,6 +265,19 @@ public class StudentExamResource {
             if (now.isBefore(examDateService.getLatestIndividualExamEndDate(exam))) {
                 // potentially re-schedule clustering of modeling submissions (in case Compass is active)
                 examService.scheduleModelingExercises(exam);
+            }
+            boolean wasEndedOriginally = now.isAfter(exam.getEndDate());
+            if (!studentExam.isEnded() && wasEndedOriginally) {
+                studentExam.getExercises().stream().filter(ProgrammingExercise.class::isInstance).forEach(exercise -> {
+                    var programmingExerciseStudentParticipation = programmingExerciseStudentParticipationRepository.findByExerciseIdAndStudentLogin(exercise.getId(),
+                            studentExam.getUser().getLogin());
+                    var programmingExerciseSubmissionPolicy = ((ProgrammingExercise) exercise).getSubmissionPolicy();
+                    // Unlock if there is no submission policy
+                    // or there is a submission policy, but its limit was not reached yet
+                    if (programmingExerciseSubmissionPolicy == null || exercise.getNumberOfSubmissions().inTime() < programmingExerciseSubmissionPolicy.getSubmissionLimit()) {
+                        programmingExerciseStudentParticipation.ifPresent(programmingExerciseParticipationService::unlockStudentRepositoryAndParticipation);
+                    }
+                });
             }
         }
 
