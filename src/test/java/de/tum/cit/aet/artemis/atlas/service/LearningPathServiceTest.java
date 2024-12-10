@@ -15,6 +15,7 @@ import de.tum.cit.aet.artemis.atlas.competency.util.CompetencyUtilService;
 import de.tum.cit.aet.artemis.atlas.domain.competency.RelationType;
 import de.tum.cit.aet.artemis.atlas.dto.LearningPathHealthDTO;
 import de.tum.cit.aet.artemis.atlas.learningpath.util.LearningPathUtilService;
+import de.tum.cit.aet.artemis.atlas.profile.util.LearnerProfileUtilService;
 import de.tum.cit.aet.artemis.atlas.service.learningpath.LearningPathRecommendationService;
 import de.tum.cit.aet.artemis.atlas.service.learningpath.LearningPathService;
 import de.tum.cit.aet.artemis.core.domain.Course;
@@ -43,6 +44,9 @@ class LearningPathServiceTest extends AbstractSpringIntegrationIndependentTest {
     @Autowired
     private CompetencyUtilService competencyUtilService;
 
+    @Autowired
+    private LearnerProfileUtilService learnerProfileUtilService;
+
     private Course course;
 
     @BeforeEach
@@ -61,9 +65,13 @@ class LearningPathServiceTest extends AbstractSpringIntegrationIndependentTest {
         @BeforeEach
         void setup() {
             userUtilService.addUsers(TEST_PREFIX, 5, 1, 1, 1);
+
+            learnerProfileUtilService.createLearnerProfilesForUsers(TEST_PREFIX);
+
             course = CourseFactory.generateCourse(null, ZonedDateTime.now().minusDays(8), ZonedDateTime.now().minusDays(8), new HashSet<>(), TEST_PREFIX + "tumuser",
                     TEST_PREFIX + "tutor", TEST_PREFIX + "editor", TEST_PREFIX + "instructor");
             course = courseRepository.save(course);
+
         }
 
         @Test
