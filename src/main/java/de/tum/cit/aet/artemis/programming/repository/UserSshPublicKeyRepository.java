@@ -2,6 +2,7 @@ package de.tum.cit.aet.artemis.programming.repository;
 
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
+import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.Optional;
 
@@ -20,6 +21,8 @@ public interface UserSshPublicKeyRepository extends ArtemisJpaRepository<UserSsh
     Optional<UserSshPublicKey> findByKeyHash(String keyHash);
 
     Optional<UserSshPublicKey> findByIdAndUserId(Long keyId, Long userId);
+
+    List<UserSshPublicKey> findByExpiryDateBetween(ZonedDateTime from, ZonedDateTime to);
 
     boolean existsByIdAndUserId(Long id, Long userId);
 

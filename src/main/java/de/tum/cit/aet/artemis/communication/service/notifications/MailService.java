@@ -5,6 +5,7 @@ import static de.tum.cit.aet.artemis.communication.domain.notification.Notificat
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
 import java.net.URL;
+import java.time.format.DateTimeFormatter;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
@@ -33,6 +34,7 @@ import de.tum.cit.aet.artemis.core.service.TimeService;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
 import de.tum.cit.aet.artemis.plagiarism.domain.PlagiarismCase;
+import de.tum.cit.aet.artemis.programming.domain.UserSshPublicKey;
 
 /**
  * Service for preparing and sending emails.
@@ -85,6 +87,10 @@ public class MailService implements InstantNotificationService {
     private static final String RELATIVE_SCORE = "relativeScore";
 
     private static final String NOTIFICATION_TYPE = "notificationType";
+
+    private static final String SSH_KEY = "sshKey";
+
+    private static final String SSH_KEY_EXPIRY_DATE = "expiryDate";
 
     // time related variables
     private static final String TIME_SERVICE = "timeService";
@@ -263,6 +269,12 @@ public class MailService implements InstantNotificationService {
         if (notificationSubject instanceof PlagiarismCase plagiarismCase) {
             subject = setPlagiarismContextAndSubject(context, notificationType, notification, plagiarismCase);
         }
+        if (notificationSubject instanceof UserSshPublicKey userSshPublicKey) {
+            context.setVariable(SSH_KEY, userSshPublicKey);
+            if (userSshPublicKey.getExpiryDate() != null) {
+                context.setVariable(SSH_KEY_EXPIRY_DATE, userSshPublicKey.getExpiryDate().format(DateTimeFormatter.ofPattern("dd.MM.yyyy HH:mm")));
+            }
+        }
 
         if (notificationSubject instanceof SingleUserNotificationService.TutorialGroupNotificationSubject tutorialGroupNotificationSubject) {
             setContextForTutorialGroupNotifications(context, notificationType, tutorialGroupNotificationSubject);
@@ -393,6 +405,10 @@ public class MailService implements InstantNotificationService {
             case TUTORIAL_GROUP_UPDATED -> templateEngine.process("mail/notification/tutorialGroupUpdatedEmail", context);
             case DATA_EXPORT_CREATED -> templateEngine.process("mail/notification/dataExportCreatedEmail", context);
             case DATA_EXPORT_FAILED -> templateEngine.process("mail/notification/dataExportFailedEmail", context);
+            case SSH_KEY_ADDED -> templateEngine.process("mail/notification/sshKeyAddedEmail", context);
+            case SSH_KEY_EXPIRES_SOON -> templateEngine.process("mail/notification/sshKeyExpiresSoonEmail", context);
+            case SSH_KEY_HAS_EXPIRED -> templateEngine.process("mail/notification/sshKeyHasExpiredEmail", context);
+
             default -> throw new UnsupportedOperationException("Unsupported NotificationType: " + notificationType);
         };
     }

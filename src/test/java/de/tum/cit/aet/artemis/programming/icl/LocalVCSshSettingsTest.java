@@ -1,8 +1,12 @@
 package de.tum.cit.aet.artemis.programming.icl;
 
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.doNothing;
+
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.test.context.support.WithMockUser;
 
@@ -18,11 +22,13 @@ class LocalVCSshSettingsTest extends AbstractSpringIntegrationLocalCILocalVCTest
 
     @BeforeEach
     void setUp() throws Exception {
+        doNothing().when(singleUserNotificationService).notifyUserAboutNewlyAddedSshKey(any(), any());
         sshSettingsTestService.setup(TEST_PREFIX);
     }
 
     @AfterEach
     void teardown() throws Exception {
+        Mockito.reset(singleUserNotificationService);
         sshSettingsTestService.tearDown(TEST_PREFIX);
     }
 
