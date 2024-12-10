@@ -147,8 +147,6 @@ public class IrisSubSettingsService {
         }
         if (authCheckService.isAdmin()) {
             currentSettings.setEnabled(newSettings.isEnabled());
-        }
-        if (authCheckService.isAdmin()) {
             currentSettings.setRateLimit(newSettings.getRateLimit());
             currentSettings.setRateLimitTimeframeHours(newSettings.getRateLimitTimeframeHours());
         }
