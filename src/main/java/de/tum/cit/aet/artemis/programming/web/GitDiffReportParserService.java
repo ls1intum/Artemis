@@ -30,6 +30,7 @@ public class GitDiffReportParserService {
      *
      * @param diff                 The raw git-diff output
      * @param useAbsoluteLineCount Whether to use absolute line count or previous line count
+     * @param ignoreWhitespace     Whether to ignore entries where only leading and trailing whitespace differ
      * @return The extracted ProgrammingExerciseGitDiffEntries
      */
     public List<ProgrammingExerciseGitDiffEntry> extractDiffEntries(String diff, boolean useAbsoluteLineCount, boolean ignoreWhitespace) {
