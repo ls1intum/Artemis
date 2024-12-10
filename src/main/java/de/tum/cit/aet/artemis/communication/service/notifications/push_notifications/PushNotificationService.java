@@ -141,7 +141,7 @@ public abstract class PushNotificationService implements InstantNotificationServ
     @Override
     @Async
     public void sendNotification(Notification notification, Set<User> users, Object notificationSubject) {
-        final Optional<String> relayServerBaseUrl = getRelayBaseUrl();
+        final String relayServerBaseUrl = getRelayBaseUrl();
 
         if (relayServerBaseUrl.isEmpty()) {
             return;
@@ -155,11 +155,11 @@ public abstract class PushNotificationService implements InstantNotificationServ
         }
 
         final String date = Instant.now().toString();
-        var notificationData = new PushNotificationData(notification.getTransientPlaceholderValuesAsArray(), notification.getTarget(), type.name(), date,
-                Constants.PUSH_NOTIFICATION_VERSION);
 
         try {
-            final String payload = mapper.writeValueAsString(notificationData);
+            var notificationData = new PushNotificationData(notification.getTransientPlaceholderValuesAsArray(), notification.getTarget(), type.name(), date,
+                    Constants.PUSH_NOTIFICATION_VERSION);
+            var payload = mapper.writeValueAsString(notificationData);
             final byte[] initializationVector = new byte[16];
 
             List<RelayNotificationRequest> notificationRequests = userDeviceConfigurations.stream().flatMap(deviceConfiguration -> {
@@ -170,10 +170,11 @@ public abstract class PushNotificationService implements InstantNotificationServ
                 String ivAsString = Base64.getEncoder().encodeToString(initializationVector);
                 Optional<String> payloadCiphertext = encrypt(payload, key, initializationVector);
 
-                return payloadCiphertext.stream().map(s -> new RelayNotificationRequest(ivAsString, s, deviceConfiguration.getToken()));
+                return payloadCiphertext.stream()
+                        .map(s -> new RelayNotificationRequest(ivAsString, s, deviceConfiguration.getToken(), deviceConfiguration.getApiType().getDatabaseKey()));
             }).toList();
 
-            sendNotificationRequestsToEndpoint(notificationRequests, relayServerBaseUrl.get());
+            sendNotificationRequestsToEndpoint(notificationRequests, relayServerBaseUrl);
         }
         catch (JsonProcessingException e) {
             log.error("Error creating push notification payload!", e);
@@ -184,7 +185,7 @@ public abstract class PushNotificationService implements InstantNotificationServ
 
     abstract PushNotificationDeviceType getDeviceType();
 
-    abstract Optional<String> getRelayBaseUrl();
+    abstract String getRelayBaseUrl();
 
     abstract String getRelayPath();
 
