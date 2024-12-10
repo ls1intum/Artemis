@@ -118,12 +118,18 @@ modernizer {
     exclusions = ["java/util/Optional.get:()Ljava/lang/Object;"]
 }
 
+// Allow using in jacoco.gradle
+ext {
+    testTags = System.getProperty("testTags")
+    testedModules = !testTags ? [] : testTags.split(",") as ArrayList
+}
+
 // Execute the test cases: ./gradlew test
-// Execute only architecture tests: ./gradlew test -DincludeTags="ArchitectureTest"
+// Execute only architecture tests: ./gradlew test -DtestTags="ArchitectureTest"
 test {
-    if (System.getProperty("includeTags")) {
+    if (testedModules.size() > 0) {
         useJUnitPlatform {
-            includeTags System.getProperty("includeTags")
+            includeTags testedModules.join(",")
         }
     } else {
         useJUnitPlatform()
@@ -152,54 +158,8 @@ jar {
     enabled = false
 }
 
-private excludedClassFilesForReport(classDirectories) {
-    classDirectories.setFrom(files(classDirectories.files.collect {
-        fileTree(dir: it,
-            exclude: [
-                "**/de/tum/cit/aet/artemis/**/domain/**/*_*",
-                "**/de/tum/cit/aet/artemis/core/config/migration/entries/**",
-                "**/gradle-wrapper.jar/**"
-            ]
-        )
-    }))
-}
-
-jacocoTestReport {
-    reports {
-        xml.required = true
-    }
-    // we want to ignore some generated files in the domain folders
-    afterEvaluate {
-        excludedClassFilesForReport(classDirectories)
-    }
-}
-
-jacocoTestCoverageVerification {
-    def testedModules = System.getProperty("includeTags")
-    violationRules {
-        rule {
-            enabled = testedModules == null || testedModules.contains("AssessmentTest")
-            element = 'PACKAGE'
-            includes = ['de.tum.cit.aet.artemis.assessment']
-            limit {
-                counter = "INSTRUCTION"
-                value = "COVEREDRATIO"
-                // TODO: in the future the following value should become higher than 0.92
-                minimum = 0.999
-            }
-            limit {
-                counter = "CLASS"
-                value = "MISSEDCOUNT"
-                // TODO: in the future the following value should become less than 10
-                maximum = 0
-            }
-        }
-    }
-    // we want to ignore some generated files in the domain folders
-    afterEvaluate {
-        excludedClassFilesForReport(classDirectories)
-    }
-}
+// Dynamic generation of jacoco test report generation-/coverage verification-tasks (per-module)
+apply from: "jacoco.gradle"
 check.dependsOn jacocoTestCoverageVerification
 
 configurations {

@@ -1,0 +1,190 @@
+ext {
+    BasePath = "de/tum/cit/aet/artemis"
+    ModuleCoverageThresholds = [
+        "assessment"   : [
+            "INSTRUCTION": 0.891,
+            "CLASS": 2
+        ],
+        "athena"       : [
+            "INSTRUCTION": 0.872,
+            "CLASS": 2
+        ],
+        "atlas"        : [
+            "INSTRUCTION": 0.832,
+            "CLASS": 4
+        ],
+        "buildagent"   : [
+            "INSTRUCTION": 0.781,
+            "CLASS": 1
+        ],
+        "communication": [
+            "INSTRUCTION": 0.862,
+            "CLASS": 3
+        ],
+        "core"         : [
+            "INSTRUCTION": 0.778,
+            "CLASS": 21
+        ],
+        "exam"         : [
+            "INSTRUCTION": 0.902,
+            "CLASS": 1
+        ],
+        "exercise"     : [
+            "INSTRUCTION": 0.929,
+            "CLASS": 0
+        ],
+        "fileupload"   : [
+            "INSTRUCTION": 0.954,
+            "CLASS": 0
+        ],
+        "iris"        : [
+            "INSTRUCTION": 0.712,
+            "CLASS": 22
+        ],
+        "lecture"      : [
+            "INSTRUCTION": 0.910,
+            "CLASS": 0
+        ],
+        "lti"          : [
+            "INSTRUCTION": 0.881,
+            "CLASS": 2
+        ],
+        "modeling"     : [
+            "INSTRUCTION": 0.914,
+            "CLASS": 2
+        ],
+        "plagiarism"   : [
+            "INSTRUCTION": 0.916,
+            "CLASS": 0
+        ],
+        "programming"  : [
+            "INSTRUCTION": 0.874,
+            "CLASS": 14
+        ],
+        "quiz"         : [
+            "INSTRUCTION": 0.796,
+            "CLASS": 6
+        ],
+        "text"         : [
+            "INSTRUCTION": 0.952,
+            "CLASS": 0
+        ],
+        "tutorialgroup": [
+            "INSTRUCTION": 0.923,
+            "CLASS": 0
+        ],
+    ]
+    // If no explicit modules defined -> generate reports and validate for each module
+    reportedModules = testedModules.size() == 0
+        ? ModuleCoverageThresholds.collect {element -> element.key}
+        : testedModules as ArrayList
+}
+
+jacocoTestReport {
+    // This task is just a wrapper to dynamically create tasks (per module)
+    enabled = false
+
+    dependsOn reportedModules.collect { module -> registerJacocoReportTask(module as String, classDirectories) }
+}
+
+jacocoTestCoverageVerification {
+    // This task is just a wrapper to dynamically create tasks (per module)
+    enabled = false
+
+    dependsOn reportedModules.collect { module -> registerJacocoTestCoverageVerification(module as String, classDirectories) }
+}
+
+/**
+ * Registers a JacocoReport task based on the provided parameters.
+ *
+ * @param moduleName The module name to include in the report.
+ * @param rootClassDir the compiled classes directory
+ * @return The configured JacocoReport task.
+ */
+private JacocoReport registerJacocoReportTask(String moduleName, ConfigurableFileCollection rootClassDir) {
+    def taskName = "jacocoCoverageReport-$moduleName"
+
+    JacocoReport task = project.tasks.register(taskName, JacocoReport).get()
+    task.description = "Generates JaCoCo coverage report for $moduleName"
+
+    prepareJacocoReportTask(task, moduleName, rootClassDir)
+
+    task.reports {
+        xml.required = true
+    }
+
+    return task
+}
+
+/**
+ * Registers a JacocoCoverageVerification task based on the provided parameters.
+ *
+ * @param moduleName The module name to validate rules for.
+ * @param rootClassDir the compiled classes directory
+ * @return The configured JacocoCoverageVerification task.
+ */
+private JacocoCoverageVerification registerJacocoTestCoverageVerification(String moduleName, ConfigurableFileCollection rootClassDir) {
+    def taskName = "jacocoTestCoverageVerification-$moduleName"
+
+    def thresholds = ModuleCoverageThresholds[moduleName]
+    if (thresholds == null) {
+        print "No coverage thresholds defined for module '$moduleName'. Skipping..."
+        return null
+    }
+    def coveredInstructionRatio = thresholds.INSTRUCTION
+    def missedClassCount = thresholds.CLASS
+
+    JacocoCoverageVerification task = project.tasks.register(taskName, JacocoCoverageVerification).get()
+    task.description = "Validates JaCoCo coverage for vioalations for $moduleName"
+
+    prepareJacocoReportTask(task, moduleName, rootClassDir)
+
+    task.violationRules {
+        rule {
+            limit {
+                counter = "INSTRUCTION"
+                value = "COVEREDRATIO"
+                minimum = coveredInstructionRatio
+            }
+            limit {
+                counter = "CLASS"
+                value = "MISSEDCOUNT"
+                maximum = missedClassCount
+            }
+        }
+    }
+
+    return task
+}
+
+/**
+ * Prepares a Jacoco report task (report & verification) to match a specific
+ * @param task that is modified
+ * @param moduleName of the module.
+ * @param rootClassDir the compiled classes directory
+ */
+private void prepareJacocoReportTask(JacocoReportBase task, String moduleName, ConfigurableFileCollection rootClassDir) {
+    task.group = "Reporting"
+    task.executionData = project.fileTree("${project.layout.buildDirectory.get()}/jacoco") {
+        include "test.exec"
+    }
+
+    def modulePath = "$BasePath/$moduleName/**/*.class"
+    task.sourceDirectories.setFrom(project.files("src/main/java/$modulePath"))
+    task.classDirectories.setFrom(
+        files(rootClassDir.files.collect { classDir ->
+            project.fileTree(classDir) {
+                includes=[modulePath]
+                // we want to ignore some generated files in the domain folders
+                excludes=[
+                    "**/$BasePath/**/domain/**/*_*",
+                    "**/$BasePath/core/config/migration/entries/**",
+                    "**/gradle-wrapper.jar/**"
+                ]
+            }
+        }
+    )
+    )
+
+    task.dependsOn compileTestJava
+}
