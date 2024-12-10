@@ -578,7 +578,7 @@
             "auxiliaryRepository": {
                 "error": "Es gibt ein Problem mit den Hilfs-Repositories!",
                 "addAuxiliaryRepository": "Hilfs-Repository anlegen",
-                "usageDescription": "Du kannst Hilfsrepositorien verwenden, um zusätzlichen Code bereitzustellen, den die Studierenden nicht sehen oder ändern können. Der zusätzliche Code wird im angegebenen Checkout-Verzeichnis eingefügt, bevor der Build erstellt wird. Der eingefügte Code überschreibt alles, was sich an der durch das Checkout-Verzeichnis angegebenen Stelle befindet. Wenn du die Dateien der Studierenden nur teilweise überschreiben willst, muss das Build-Skript angepasst werden.",
+                "usageDescription": "Du kannst Hilfsrepositorien verwenden, um zusätzlichen Code bereitzustellen, den die Studierenden nicht sehen oder ändern können. Der zusätzliche Code wird im angegebenen Checkout-Verzeichnis eingefügt, bevor der Build erstellt wird. Die eingefügten Dateien überschreiben alle Dateien im Checkout-Verzeichnis, die den gleichen Namen haben. Dateien, die nicht überschrieben werden, bleiben erhalten.",
                 "repositoryName": "Name des Repositorys",
                 "checkoutDirectory": "Checkout-Verzeichnis",
                 "description": "Beschreibung",
@@ -754,6 +754,19 @@
                 "pushExercise": "Lade den Aufgaben-Code in das entsprechende Repository. Es wird in <code>{{checkoutDirectory}}</code> ausgecheckt.",
                 "pushSolution": "Lade den Lösungs-Code in das entsprechende Repository. Es wird nicht ausgecheckt.",
                 "pushTest": "Lade den Test-Code in das entsprechende Repository. Es wird in <code>{{checkoutDirectory}}</code> ausgecheckt."
+            },
+            "dockerFlags": {
+                "disableNetworkAccess": {
+                    "title": "Deaktiviere den Internetzugang beim beim Ausführen der Studierendeneinreichung",
+                    "description": "Aktiviere diese Option, um den Netzwerkzugang für Container zu deaktivieren. Das Netzwerk wird beim Ausführen der Studierendeneinreichung deaktiviert.",
+                    "warning": "Wenn der Internetzugang deaktiviert ist, müssen alle Abhängigkeiten im Docker-Image enthalten oder darin zwischengespeichert sein. Andernfalls schlägt der Build fehl."
+                },
+                "envVars": {
+                    "title": "Umgebungsvariablen",
+                    "description": "Umgebungsvariablen zum Docker-Container hinzufügen. Jeder Schlüssel und Wert sollte nicht länger als 1000 Zeichen sein.",
+                    "addEnvVar": "Umgebungsvariable hinzufügen",
+                    "removeEnvVar": "Entfernen"
+                }
             }
         },
         "error": {

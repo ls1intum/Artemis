@@ -41,6 +41,7 @@ export interface SidebarData {
     storageId?: string;
     showAccordionLeadingIcon?: boolean;
     messagingEnabled?: boolean;
+    canCreateChannel?: boolean;
 }
 
 export interface SidebarCardElement {
