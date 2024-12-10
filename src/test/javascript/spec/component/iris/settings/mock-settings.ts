@@ -4,7 +4,6 @@ import {
     IrisCompetencyGenerationSubSettings,
     IrisCourseChatSubSettings,
     IrisLectureChatSubSettings,
-    IrisEventType,
     IrisLectureIngestionSubSettings,
     IrisTextExerciseChatSubSettings,
 } from 'app/entities/iris/settings/iris-sub-settings.model';
