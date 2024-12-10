@@ -1,10 +1,11 @@
 import { BaseEntity } from 'app/shared/model/base-entity';
 
 export enum IrisSubSettingsType {
+    CHAT = 'chat', // TODO: Rename to PROGRAMMING_EXERCISE_CHAT
     TEXT_EXERCISE_CHAT = 'text-exercise-chat',
-    CHAT = 'chat', // TODO: Split into PROGRAMMING_EXERCISE_CHAT and COURSE_CHAT
-    COMPETENCY_GENERATION = 'competency-generation',
+    COURSE_CHAT = 'course-chat',
     LECTURE_INGESTION = 'lecture-ingestion',
+    COMPETENCY_GENERATION = 'competency-generation',
 }
 
 export enum IrisEventType {
@@ -30,6 +31,12 @@ export class IrisChatSubSettings extends IrisSubSettings {
 
 export class IrisTextExerciseChatSubSettings extends IrisSubSettings {
     type = IrisSubSettingsType.TEXT_EXERCISE_CHAT;
+    rateLimit?: number;
+    rateLimitTimeframeHours?: number;
+}
+
+export class IrisCourseChatSubSettings extends IrisSubSettings {
+    type = IrisSubSettingsType.COURSE_CHAT;
     rateLimit?: number;
     rateLimitTimeframeHours?: number;
 }

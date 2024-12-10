@@ -86,7 +86,7 @@ export class IrisCommonSubSettingsUpdateComponent implements OnInit, OnChanges {
     }
 
     ngOnChanges(changes: SimpleChanges): void {
-        if (changes.availableVariants) {
+        if (!this.inheritAllowedVariants && changes.availableVariants) {
             this.allowedVariants = this.getAllowedVariants();
         }
         if (changes.subSettings) {
