@@ -20,8 +20,6 @@ import de.tum.cit.aet.artemis.lecture.util.LectureUtilService;
 import de.tum.cit.aet.artemis.modeling.domain.DiagramType;
 import de.tum.cit.aet.artemis.modeling.repository.ApollonDiagramRepository;
 import de.tum.cit.aet.artemis.modeling.util.ModelingExerciseFactory;
-import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
-import de.tum.cit.aet.artemis.programming.repository.hestia.ExerciseHintRepository;
 import de.tum.cit.aet.artemis.programming.util.ProgrammingExerciseUtilService;
 import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationIndependentTest;
 import de.tum.cit.aet.artemis.text.util.TextExerciseUtilService;
@@ -49,9 +47,6 @@ class TitleCacheEvictionServiceTest extends AbstractSpringIntegrationIndependent
 
     @Autowired
     private ExamRepository examRepository;
-
-    @Autowired
-    private ExerciseHintRepository exerciseHintRepository;
 
     @Autowired
     private CourseUtilService courseUtilService;
@@ -207,40 +202,6 @@ class TitleCacheEvictionServiceTest extends AbstractSpringIntegrationIndependent
                 // Should evict after deletion
                 () -> {
                     examRepository.delete(exam);
-                    return true;
-                }));
-    }
-
-    @Test
-    void testEvictsTitleOnUpdateTitleOrDeleteExerciseHint() {
-        var course = programmingExerciseUtilService.addCourseWithOneProgrammingExercise();
-        var exercise = (ProgrammingExercise) course.getExercises().stream().findAny().orElseThrow();
-        programmingExerciseUtilService.addHintsToExercise(exercise);
-        var hint = exercise.getExerciseHints().stream().findFirst().orElseThrow();
-        testCacheEvicted("exerciseHintTitle", () -> new Tuple<>(exercise.getId() + "-" + hint.getId(), hint.getTitle()), List.of(
-                // Should evict as we change the title
-                () -> {
-                    hint.setTitle("testEvictsTitleOnUpdateTitleOrDeleteExerciseHint");
-                    exerciseHintRepository.save(hint);
-                    return true;
-                },
-                // Should not evict as title remains the same
-                () -> {
-                    hint.setDescription("testEvictsTitleOnUpdateTitleOrDeleteExerciseHint"); // Change some other values
-                    exerciseHintRepository.save(hint);
-                    return false;
-                },
-                // Should not do something if the exercise is missing
-                () -> {
-                    hint.setExercise(null);
-                    hint.setTitle("testEvictsTitleOnUpdateTitleOrDeleteExerciseHint");
-                    exerciseHintRepository.save(hint);
-                    return false;
-                },
-                // Should evict after deletion
-                () -> {
-                    hint.setExercise(exercise);
-                    exerciseHintRepository.delete(hint);
                     return true;
                 }));
     }

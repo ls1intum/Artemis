@@ -38,7 +38,6 @@ describe('EntityTitleService', () => {
     });
 
     it.each([
-        { type: EntityType.HINT, ids: [3, 2], url: 'programming-exercises/2/exercise-hints/3' },
         { type: EntityType.EXERCISE, ids: [1], url: 'exercises/1' },
         { type: EntityType.LECTURE, ids: [1], url: 'lectures/1' },
         { type: EntityType.COURSE, ids: [1], url: 'courses/1' },
@@ -82,7 +81,6 @@ describe('EntityTitleService', () => {
     it.each([
         { type: EntityType.COURSE, ids: [] },
         { type: EntityType.COURSE, ids: [undefined] },
-        { type: EntityType.HINT, ids: [1, undefined] },
         { type: undefined, ids: [undefined] },
         { type: undefined, ids: [] },
     ])('captures an exception if invalid parameters are supplied to getTitle', ({ type, ids }) => {
@@ -100,12 +98,10 @@ describe('EntityTitleService', () => {
     it.each([
         { type: EntityType.COURSE, ids: [], title: 'Test' },
         { type: EntityType.COURSE, ids: [undefined], title: 'Test' },
-        { type: EntityType.HINT, ids: [1, undefined], title: 'Test' },
         { type: undefined, ids: [undefined], title: 'Test' },
         { type: undefined, ids: [], title: 'Test' },
         { type: EntityType.COURSE, ids: [], title: undefined },
         { type: EntityType.COURSE, ids: [undefined], title: undefined },
-        { type: EntityType.HINT, ids: [1, undefined], title: undefined },
         { type: undefined, ids: [undefined], title: undefined },
         { type: undefined, ids: [], title: undefined },
     ])('captures an exception if invalid parameters are supplied to setTitle', ({ type, ids, title }) => {

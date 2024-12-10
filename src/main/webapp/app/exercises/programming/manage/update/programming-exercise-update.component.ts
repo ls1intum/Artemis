@@ -141,7 +141,6 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
     public checkoutSolutionRepositoryAllowed = false;
     public customizeBuildPlanWithAeolus = false;
     public sequentialTestRunsAllowed = false;
-    public testwiseCoverageAnalysisSupported = false;
     public auxiliaryRepositoriesSupported = false;
     auxiliaryRepositoriesValid = signal<boolean>(true);
     public customBuildPlansSupported: string = '';
@@ -276,7 +275,6 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
         this.staticCodeAnalysisAllowed = programmingLanguageFeature.staticCodeAnalysis;
         this.checkoutSolutionRepositoryAllowed = programmingLanguageFeature.checkoutSolutionRepositoryAllowed;
         this.sequentialTestRunsAllowed = programmingLanguageFeature.sequentialTestRuns;
-        this.testwiseCoverageAnalysisSupported = programmingLanguageFeature.testwiseCoverageAnalysisSupported;
         this.auxiliaryRepositoriesSupported = programmingLanguageFeature.auxiliaryRepositoriesSupported;
         // filter out MAVEN_MAVEN and GRADLE_GRADLE because they are not directly selectable but only via a checkbox
         this.projectTypes = programmingLanguageFeature.projectTypes?.filter((projectType) => projectType !== ProjectType.MAVEN_MAVEN && projectType !== ProjectType.GRADLE_GRADLE);
@@ -365,11 +363,9 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
                 this.selectedProjectTypeValue = ProjectType.MAVEN_BLACKBOX;
                 this.programmingExercise.projectType = ProjectType.MAVEN_BLACKBOX;
                 this.sequentialTestRunsAllowed = false;
-                this.testwiseCoverageAnalysisSupported = false;
             } else if (type === ProjectType.PLAIN_MAVEN || type === ProjectType.MAVEN_MAVEN) {
                 this.selectedProjectTypeValue = ProjectType.PLAIN_MAVEN;
                 this.sequentialTestRunsAllowed = programmingLanguageFeature.sequentialTestRuns;
-                this.testwiseCoverageAnalysisSupported = programmingLanguageFeature.testwiseCoverageAnalysisSupported;
                 if (this.withDependenciesValue) {
                     this.programmingExercise.projectType = ProjectType.MAVEN_MAVEN;
                 } else {
@@ -378,7 +374,6 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
             } else {
                 this.selectedProjectTypeValue = ProjectType.PLAIN_GRADLE;
                 this.sequentialTestRunsAllowed = programmingLanguageFeature.sequentialTestRuns;
-                this.testwiseCoverageAnalysisSupported = programmingLanguageFeature.testwiseCoverageAnalysisSupported;
                 if (this.withDependenciesValue) {
                     this.programmingExercise.projectType = ProjectType.GRADLE_GRADLE;
                 } else {
@@ -1257,7 +1252,6 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
             selectedProjectType: this.selectedProjectType,
             onProjectTypeChange: this.projectTypeChanged,
             sequentialTestRunsAllowed: this.sequentialTestRunsAllowed,
-            testwiseCoverageAnalysisSupported: this.testwiseCoverageAnalysisSupported,
             staticCodeAnalysisAllowed: this.staticCodeAnalysisAllowed,
             onStaticCodeAnalysisChanged: this.staticCodeAnalysisChanged,
             maxPenaltyPattern: this.maxPenaltyPattern,

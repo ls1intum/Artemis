@@ -1,4 +1,4 @@
-import { ProgrammingExerciseServerSideTask } from 'app/entities/hestia/programming-exercise-task.model';
+import { ProgrammingExerciseServerSideTask } from 'app/entities/programming-exercise-task.model';
 import { TestCaseStats } from 'app/entities/programming/programming-exercise-test-case-statistics.model';
 import { ProgrammingExerciseTestCase, ProgrammingExerciseTestCaseType, Visibility } from 'app/entities/programming/programming-exercise-test-case.model';
 

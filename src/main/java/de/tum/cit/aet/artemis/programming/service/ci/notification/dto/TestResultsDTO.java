@@ -41,8 +41,6 @@ public class TestResultsDTO extends AbstractBuildResultNotificationDTO {
 
     private final List<StaticCodeAnalysisReportDTO> staticCodeAnalysisReports;
 
-    private final List<TestwiseCoverageReportDTO> testwiseCoverageReport;
-
     private final ZonedDateTime runDate;
 
     private final boolean isBuildSuccessful;
@@ -54,7 +52,6 @@ public class TestResultsDTO extends AbstractBuildResultNotificationDTO {
             @JsonProperty("failures") int failures, @JsonProperty("fullName") String fullName, @JsonProperty("commits") @JsonSetter(nulls = Nulls.AS_EMPTY) List<CommitDTO> commits,
             @JsonProperty("results") @JsonSetter(nulls = Nulls.AS_EMPTY) List<TestSuiteDTO> results,
             @JsonProperty("staticCodeAnalysisReports") @JsonSetter(nulls = Nulls.AS_EMPTY) List<StaticCodeAnalysisReportDTO> staticCodeAnalysisReports,
-            @JsonProperty("testwiseCoverageReport") @JsonSetter(nulls = Nulls.AS_EMPTY) List<TestwiseCoverageReportDTO> testwiseCoverageReport,
             @JsonProperty("runDate") ZonedDateTime runDate, @JsonProperty("isBuildSuccessful") boolean isBuildSuccessful,
             @JsonProperty("logs") @JsonSetter(nulls = Nulls.AS_EMPTY) List<String> logs) {
         this.successful = successful;
@@ -65,7 +62,6 @@ public class TestResultsDTO extends AbstractBuildResultNotificationDTO {
         this.commits = commits;
         this.results = results;
         this.staticCodeAnalysisReports = staticCodeAnalysisReports;
-        this.testwiseCoverageReport = testwiseCoverageReport;
         this.runDate = runDate;
         this.isBuildSuccessful = isBuildSuccessful;
         this.logs = logs;
@@ -155,11 +151,6 @@ public class TestResultsDTO extends AbstractBuildResultNotificationDTO {
     @Override
     public List<StaticCodeAnalysisReportDTO> getStaticCodeAnalysisReports() {
         return staticCodeAnalysisReports;
-    }
-
-    @Override
-    public List<TestwiseCoverageReportDTO> getTestwiseCoverageReports() {
-        return testwiseCoverageReport;
     }
 
     @Override

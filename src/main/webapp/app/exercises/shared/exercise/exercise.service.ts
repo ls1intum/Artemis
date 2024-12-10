@@ -20,7 +20,6 @@ import { FileUploadExercise } from 'app/entities/file-upload-exercise.model';
 import { ArtemisMarkdownService } from 'app/shared/markdown.service';
 import { SafeHtml } from '@angular/platform-browser';
 import { PlagiarismCaseInfo } from 'app/exercises/shared/plagiarism/types/PlagiarismCaseInfo';
-import { ExerciseHint } from 'app/entities/hestia/exercise-hint.model';
 import { IrisExerciseSettings } from 'app/entities/iris/settings/iris-settings.model';
 
 export type EntityResponseType = HttpResponse<Exercise>;
@@ -38,8 +37,6 @@ export type ExerciseDetailsType = {
     exercise: Exercise;
     irisSettings?: IrisExerciseSettings;
     plagiarismCaseInfo?: PlagiarismCaseInfo;
-    availableExerciseHints?: ExerciseHint[];
-    activatedExerciseHints?: ExerciseHint[];
 };
 
 export type CourseExistingExerciseDetailsType = {
@@ -175,9 +172,6 @@ export class ExerciseService {
                     // insert an empty list to avoid additional calls in case the list is empty on the server (because then it would be undefined in the client)
                     if (res.body.exercise.posts === undefined) {
                         res.body.exercise.posts = [];
-                    }
-                    for (const hint of res.body.activatedExerciseHints ?? []) {
-                        this.entityTitleService.setTitle(EntityType.HINT, [hint?.id, exerciseId], hint?.title);
                     }
                 }
                 return res;

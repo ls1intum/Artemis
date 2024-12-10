@@ -49,8 +49,6 @@ import de.tum.cit.aet.artemis.exercise.domain.participation.Participation;
 import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
 import de.tum.cit.aet.artemis.exercise.service.ExerciseDateService;
 import de.tum.cit.aet.artemis.programming.domain.build.BuildPlanType;
-import de.tum.cit.aet.artemis.programming.domain.hestia.ExerciseHint;
-import de.tum.cit.aet.artemis.programming.domain.hestia.ProgrammingExerciseTask;
 import de.tum.cit.aet.artemis.programming.domain.submissionpolicy.SubmissionPolicy;
 import de.tum.cit.aet.artemis.programming.service.ProgrammingLanguageFeature;
 
@@ -148,9 +146,6 @@ public class ProgrammingExercise extends Exercise {
     @Enumerated(EnumType.ORDINAL)
     @Column(name = "project_type", table = "programming_exercise_details")
     private ProjectType projectType;
-
-    @OneToMany(mappedBy = "exercise", cascade = CascadeType.REMOVE, orphanRemoval = true, fetch = FetchType.LAZY)
-    private Set<ExerciseHint> exerciseHints = new HashSet<>();
 
     @Column(name = "release_tests_with_example_solution", table = "programming_exercise_details", nullable = false)
     private boolean releaseTestsWithExampleSolution = false;
@@ -815,21 +810,12 @@ public class ProgrammingExercise extends Exercise {
         }
     }
 
-    public Set<ExerciseHint> getExerciseHints() {
-        return exerciseHints;
-    }
-
-    public void setExerciseHints(Set<ExerciseHint> exerciseHints) {
-        this.exerciseHints = exerciseHints;
-    }
-
     /**
      * {@inheritDoc}
      */
     @Override
     public void disconnectRelatedEntities() {
-        Stream.of(exerciseHints, testCases, staticCodeAnalysisCategories).filter(Objects::nonNull).forEach(Collection::clear);
-
+        Stream.of(testCases, staticCodeAnalysisCategories).filter(Objects::nonNull).forEach(Collection::clear);
         super.disconnectRelatedEntities();
     }
 

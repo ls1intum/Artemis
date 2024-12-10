@@ -80,7 +80,6 @@ describe('BuildQueueService', () => {
         buildConfig.projectType = 'type1';
         buildConfig.scaEnabled = false;
         buildConfig.sequentialTestRunsEnabled = false;
-        buildConfig.testwiseCoverageEnabled = false;
         buildConfig.resultPaths = ['path1'];
 
         elem1.id = '1';

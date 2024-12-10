@@ -959,11 +959,7 @@ public class ProgrammingExerciseIntegrationTestService {
      */
     void updateProgrammingExerciseShouldFailWithBadRequestWhenUpdatingCoverageOption() throws Exception {
         mockBuildPlanAndRepositoryCheck(programmingExercise);
-
-        ProgrammingExercise updatedExercise = programmingExercise;
-        updatedExercise.getBuildConfig().setTestwiseCoverageEnabled(true);
-
-        request.put("/api/programming-exercises", updatedExercise, HttpStatus.BAD_REQUEST);
+        request.put("/api/programming-exercises", programmingExercise, HttpStatus.BAD_REQUEST);
     }
 
     void updateExerciseDueDateWithIndividualDueDateUpdate() throws Exception {
@@ -1306,7 +1302,6 @@ public class ProgrammingExerciseIntegrationTestService {
         programmingExercise.setTitle("New title");
         programmingExercise.setShortName("NewShortname");
         programmingExercise.setProgrammingLanguage(programmingLanguage);
-        programmingExercise.getBuildConfig().setTestwiseCoverageEnabled(true);
         request.post("/api/programming-exercises/setup", programmingExercise, HttpStatus.BAD_REQUEST);
     }
 
@@ -1536,7 +1531,7 @@ public class ProgrammingExerciseIntegrationTestService {
         testCasesResponse.forEach(testCase -> testCase.setExercise(programmingExercise));
         final var testCasesInDB = programmingExerciseTestCaseRepository.findByExerciseId(programmingExercise.getId());
 
-        assertThat(new HashSet<>(testCasesResponse)).usingRecursiveFieldByFieldElementComparatorIgnoringFields("exercise", "tasks", "solutionEntries", "coverageEntries")
+        assertThat(new HashSet<>(testCasesResponse)).usingRecursiveFieldByFieldElementComparatorIgnoringFields("exercise", "tasks")
                 .containsExactlyInAnyOrderElementsOf(testCasesInDB);
         assertThat(testCasesResponse).allSatisfy(testCase -> {
             assertThat(testCase.isAfterDueDate()).isTrue();

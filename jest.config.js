@@ -99,16 +99,15 @@ module.exports = {
         'src/main/webapp/app/exercises/file-upload/manage/file-upload-exercise-management.route.ts',
         'src/main/webapp/app/exercises/modeling/manage/modeling-exercise.route.ts',
         'src/main/webapp/app/exam/manage/exam-management.route.ts',
-        'src/main/webapp/app/exercises/shared/exercise-hint/manage/exercise-hint.route.ts',
         'src/main/webapp/app/core/config/prod.config.ts',
     ],
     coverageThreshold: {
         global: {
             // TODO: in the future, the following values should increase to at least 90%
-            statements: 87.69,
-            branches: 73.79,
-            functions: 82.27,
-            lines: 87.74,
+            statements: 87.68,
+            branches: 73.83,
+            functions: 82.42,
+            lines: 87.72,
         },
     },
     coverageReporters: ['clover', 'json', 'lcov', 'text-summary'],

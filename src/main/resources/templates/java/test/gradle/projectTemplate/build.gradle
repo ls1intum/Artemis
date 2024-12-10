@@ -4,9 +4,7 @@ plugins {
     id 'pmd'
     id 'com.github.spotbugs' version '6.0.9'
     // %static-code-analysis-stop%
-    // %record-testwise-coverage-start%
     id 'com.teamscale' version '33.1.2'
-    // %record-testwise-coverage-stop%
 }
 
 apply plugin: 'java'
@@ -97,14 +95,6 @@ def forbiddenPackageFolders = [ //(2)
                                 "$studentOutputDir/org/opentest4j/",
                                 "$studentOutputDir/sun/",
                                 "$studentOutputDir/worker/org/gradle/"
-                                // %record-testwise-coverage-start%
-                                ,"$studentOutputDir/com/teamscale/",
-                                "$studentOutputDir/okhttp3/",
-                                "$studentOutputDir/retrofit2/",
-                                "$studentOutputDir/shadow/",
-                                "$studentOutputDir/com/squareup/",
-                                "$studentOutputDir/okio/"
-                                // %record-testwise-coverage-stop%
 ]
 test {
     doFirst { //(1)
@@ -178,20 +168,3 @@ pmd {
     }
 }
 // %static-code-analysis-stop%
-
-
-// %record-testwise-coverage-start%
-tasks.register('tiaTests', com.teamscale.TestImpacted) {
-    systemProperty "ares.security.trustedpackages", "okhttp3,com.teamscale,retrofit2,shadow,com.squareup,okio"
-    useJUnitPlatform()
-    filter {
-        excludeTestsMatching "AttributeTest"
-        excludeTestsMatching "ConstructorTest"
-        excludeTestsMatching "ClassTest"
-        excludeTestsMatching "MethodTest"
-    }
-    jacoco {
-        includes = ["${packageName}.*"]
-    }
-}
-// %record-testwise-coverage-stop%
