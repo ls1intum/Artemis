@@ -55,8 +55,11 @@ import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
 import de.tum.cit.aet.artemis.core.repository.CourseRepository;
 import de.tum.cit.aet.artemis.core.repository.UserRepository;
 import de.tum.cit.aet.artemis.core.security.Role;
+import de.tum.cit.aet.artemis.core.security.allowedTools.AllowedTools;
+import de.tum.cit.aet.artemis.core.security.allowedTools.ToolTokenType;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastEditor;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastInstructor;
+import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastStudent;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastTutor;
 import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInExercise.EnforceAtLeastTutorInExercise;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
@@ -549,6 +552,26 @@ public class ProgrammingExerciseResource {
         log.debug("REST request to get programming exercise with auxiliary repositories: {}", exerciseId);
         final var programmingExercise = programmingExerciseService.loadProgrammingExerciseWithAuxiliaryRepositories(exerciseId);
         return ResponseEntity.ok(programmingExercise);
+    }
+
+    /**
+     * GET /programming-exercises : Queries a programming exercise by its project key.
+     *
+     *
+     * @param projectKey the project key of the programming exercise
+     *
+     * @return the ProgrammingExercise of this project key in an ResponseEntity or 404 Not Found if no exercise exists
+     */
+    @GetMapping("programming-exercises/project-key/{projectKey}")
+    @EnforceAtLeastStudent
+    @AllowedTools(ToolTokenType.SCORPIO)
+    public ResponseEntity<ProgrammingExercise> getExerciseByProjectKey(@PathVariable String projectKey) {
+        User user = userRepository.getUserWithGroupsAndAuthorities();
+
+        final ProgrammingExercise exercise = programmingExerciseRepository.findWithStudentParticipationLatestResultFeedbackTestCasesByProjectKey(user.getId(), projectKey)
+                .orElseThrow(() -> new EntityNotFoundException("ProgrammingExercise", projectKey));
+
+        return ResponseEntity.ok(exercise);
     }
 
     /**
