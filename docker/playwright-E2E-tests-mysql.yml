@@ -18,6 +18,9 @@ services:
         env_file:
             - ./artemis/config/playwright.env
             - ./artemis/config/playwright-mysql.env
+        ports:
+          - "8080:8080"
+          - "7921:7921"
 
     nginx:
         extends:
@@ -44,6 +47,8 @@ services:
                 condition: service_healthy
         environment:
             PLAYWRIGHT_DB_TYPE: 'MySQL'
+        extra_hosts:
+          - "localhost:host-gateway"
 
 networks:
     artemis:
