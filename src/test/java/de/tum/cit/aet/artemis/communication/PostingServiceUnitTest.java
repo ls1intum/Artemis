@@ -157,7 +157,7 @@ class PostingServiceUnitTest {
     void testParseUserMentionsWithInvalidName() {
         Course course = new Course();
         String content = "[user]Test User 2(test_user_1)[/user]";
-        User user = this.createUser("Test User 1", "test_user_1");  // Different name than mentioned
+        User user = createUser("Test User 1", "test_user_1");  // Different name than mentioned
 
         setupUserRepository(Set.of("test_user_1"), Set.of(user));
         when(authorizationCheckService.isAtLeastStudentInCourse(eq(course), any(User.class))).thenReturn(true);
@@ -169,7 +169,7 @@ class PostingServiceUnitTest {
     void testParseUserMentionsWithUserNotInCourse() {
         Course course = new Course();
         String content = "[user]Test User 1(test_user_1)[/user]";
-        User user = this.createUser("Test User 1", "test_user_1");
+        User user = createUser("Test User 1", "test_user_1");
 
         setupUserRepository(Set.of("test_user_1"), Set.of(user));
         when(authorizationCheckService.isAtLeastStudentInCourse(eq(course), any(User.class))).thenReturn(false);
@@ -220,42 +220,26 @@ class PostingServiceUnitTest {
 
     @Test
     void shouldSetCorrectFlagsWhenPostsAreSaved() {
-        when(savedPostRepository.findSavedPostIdsByUserIdAndPostType(
-            testUser.getId(),
-            PostingType.POST
-        )).thenReturn(List.of(savedPost.getPostId()));
+        when(savedPostRepository.findSavedPostIdsByUserIdAndPostType(testUser.getId(), PostingType.POST)).thenReturn(List.of(savedPost.getPostId()));
 
-        when(savedPostRepository.findSavedPostIdsByUserIdAndPostType(
-            testUser.getId(),
-            PostingType.ANSWER
-        )).thenReturn(List.of(savedAnswer.getPostId(), savedAnswer2.getPostId()));
+        when(savedPostRepository.findSavedPostIdsByUserIdAndPostType(testUser.getId(), PostingType.ANSWER)).thenReturn(List.of(savedAnswer.getPostId(), savedAnswer2.getPostId()));
 
         postingService.preparePostForBroadcast(testPost);
 
         assertThat(testPost.getIsSaved()).isTrue();
-        testPost.getAnswers().forEach(answer ->
-            assertThat(answer.getIsSaved()).isTrue()
-        );
+        testPost.getAnswers().forEach(answer -> assertThat(answer.getIsSaved()).isTrue());
     }
 
     @Test
     void shouldSetCorrectFlagsWhenPostsAreNotSaved() {
-        when(savedPostRepository.findSavedPostIdsByUserIdAndPostType(
-            testUser.getId(),
-            PostingType.POST
-        )).thenReturn(List.of());
+        when(savedPostRepository.findSavedPostIdsByUserIdAndPostType(testUser.getId(), PostingType.POST)).thenReturn(List.of());
 
-        when(savedPostRepository.findSavedPostIdsByUserIdAndPostType(
-            testUser.getId(),
-            PostingType.ANSWER
-        )).thenReturn(List.of());
+        when(savedPostRepository.findSavedPostIdsByUserIdAndPostType(testUser.getId(), PostingType.ANSWER)).thenReturn(List.of());
 
         postingService.preparePostForBroadcast(testPost);
 
         assertThat(testPost.getIsSaved()).isFalse();
-        testPost.getAnswers().forEach(answer ->
-            assertThat(answer.getIsSaved()).isFalse()
-        );
+        testPost.getAnswers().forEach(answer -> assertThat(answer.getIsSaved()).isFalse());
     }
 
     /**

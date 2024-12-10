@@ -6,6 +6,7 @@ import { PlagiarismCase } from 'app/exercises/shared/plagiarism/types/Plagiarism
 import { Exercise, getIcon } from 'app/entities/exercise.model';
 import { downloadFile } from 'app/shared/util/download.util';
 import { DocumentationType } from 'app/shared/components/documentation-button/documentation-button.component';
+import { AlertService } from 'app/core/util/alert.service';
 
 @Component({
     selector: 'jhi-plagiarism-cases-instructor-view',
@@ -24,6 +25,7 @@ export class PlagiarismCasesInstructorViewComponent implements OnInit {
     constructor(
         private plagiarismCasesService: PlagiarismCasesService,
         private route: ActivatedRoute,
+        private alertService: AlertService,
     ) {}
 
     ngOnInit(): void {
@@ -37,23 +39,31 @@ export class PlagiarismCasesInstructorViewComponent implements OnInit {
         plagiarismCasesForInstructor$.subscribe({
             next: (res: HttpResponse<PlagiarismCase[]>) => {
                 this.plagiarismCases = res.body!;
-                this.groupedPlagiarismCases = this.plagiarismCases.reduce((acc: { [exerciseId: number]: PlagiarismCase[] }, plagiarismCase) => {
-                    const caseExerciseId = plagiarismCase.exercise?.id;
-                    if (caseExerciseId === undefined) {
+                this.groupedPlagiarismCases = this.plagiarismCases.reduce(
+                    (
+                        acc: {
+                            [exerciseId: number]: PlagiarismCase[];
+                        },
+                        plagiarismCase,
+                    ) => {
+                        const caseExerciseId = plagiarismCase.exercise?.id;
+                        if (caseExerciseId === undefined) {
+                            return acc;
+                        }
+
+                        // Group initialization
+                        if (!acc[caseExerciseId]) {
+                            acc[caseExerciseId] = [];
+                            this.exercisesWithPlagiarismCases.push(plagiarismCase.exercise!);
+                        }
+
+                        // Grouping
+                        acc[caseExerciseId].push(plagiarismCase);
+
                         return acc;
-                    }
-
-                    // Group initialization
-                    if (!acc[caseExerciseId]) {
-                        acc[caseExerciseId] = [];
-                        this.exercisesWithPlagiarismCases.push(plagiarismCase.exercise!);
-                    }
-
-                    // Grouping
-                    acc[caseExerciseId].push(plagiarismCase);
-
-                    return acc;
-                }, {});
+                    },
+                    {},
+                );
             },
         });
     }
@@ -131,20 +141,48 @@ export class PlagiarismCasesInstructorViewComponent implements OnInit {
     }
 
     /**
-     * export the plagiarism cases in CSV format
+     * set placeholder for undefined values and sanitize the operators away
+     * @param value to be sanitized or replaced with -
+     * @private
+     */
+    private sanitizeCSVField(value: any): string {
+        if (value === null || value === undefined) {
+            // used as placeholder for null or if the passed value does not exist
+            return '-';
+        }
+        // sanitize the operators away in case they appear in the values
+        return String(value).replace(/;/g, '";"');
+    }
+
+    /**
+     * export the cases in CSV format
      */
     exportPlagiarismCases(): void {
-        const blobParts: string[] = ['Student Login,Exercise,Verdict, Verdict Date\n'];
-        this.plagiarismCases.forEach((plagiarismCase) => {
-            const exerciseTitleCSVSanitized = plagiarismCase.exercise?.title?.replace(',', '","');
+        const headers = ['Student Login', 'Matr. Nr.', 'Exercise', 'Verdict', 'Verdict Date', 'Verdict By'];
+        const blobParts: string[] = [headers.join(';') + '\n'];
+        this.plagiarismCases.reduce((acc, plagiarismCase) => {
+            const fields = [
+                this.sanitizeCSVField(plagiarismCase.student?.login),
+                this.sanitizeCSVField(plagiarismCase.student?.visibleRegistrationNumber),
+                this.sanitizeCSVField(plagiarismCase.exercise?.title),
+            ];
             if (plagiarismCase.verdict) {
-                blobParts.push(
-                    `${plagiarismCase.student?.login},${exerciseTitleCSVSanitized},${plagiarismCase.verdict},${plagiarismCase.verdictDate},${plagiarismCase.verdictBy!.name}\n`,
+                fields.push(
+                    this.sanitizeCSVField(plagiarismCase.verdict),
+                    this.sanitizeCSVField(plagiarismCase.verdictDate),
+                    this.sanitizeCSVField(plagiarismCase.verdictBy?.name),
                 );
             } else {
-                blobParts.push(`${plagiarismCase.student?.login},${exerciseTitleCSVSanitized}, No verdict yet, -, -\n`);
+                fields.push('No verdict yet', '-', '-');
             }
-        });
-        downloadFile(new Blob(blobParts, { type: 'text/csv' }), 'plagiarism-cases.csv');
+            acc.push(fields.join(';') + '\n');
+            return acc;
+        }, blobParts);
+
+        try {
+            downloadFile(new Blob(blobParts, { type: 'text/csv' }), 'plagiarism-cases.csv');
+        } catch (error) {
+            this.alertService.error('artemisApp.plagiarism.plagiarismCases.export.error');
+        }
     }
 }

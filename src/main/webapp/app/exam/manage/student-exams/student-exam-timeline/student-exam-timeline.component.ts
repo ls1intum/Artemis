@@ -1,4 +1,4 @@
-import { AfterViewInit, Component, OnDestroy, OnInit, QueryList, ViewChild, ViewChildren } from '@angular/core';
+import { AfterViewInit, ChangeDetectorRef, Component, OnDestroy, OnInit, QueryList, ViewChild, ViewChildren } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { StudentExam } from 'app/entities/student-exam.model';
 import { Exercise, ExerciseType } from 'app/entities/exercise.model';
@@ -8,7 +8,7 @@ import { ExamNavigationBarComponent } from 'app/exam/participate/exam-navigation
 import { SubmissionService } from 'app/exercises/shared/submission/submission.service';
 import dayjs from 'dayjs/esm';
 import { SubmissionVersion } from 'app/entities/submission-version.model';
-import { Observable, Subscription, forkJoin, map, mergeMap, toArray } from 'rxjs';
+import { Observable, Subscription, forkJoin, map, mergeMap, tap, toArray } from 'rxjs';
 import { ProgrammingSubmission } from 'app/entities/programming/programming-submission.model';
 import { Submission } from 'app/entities/submission.model';
 import { FileUploadSubmission } from 'app/entities/file-upload-submission.model';
@@ -57,6 +57,7 @@ export class StudentExamTimelineComponent implements OnInit, AfterViewInit, OnDe
         private submissionService: SubmissionService,
         private submissionVersionService: SubmissionVersionService,
         private programmingExerciseParticipationService: ProgrammingExerciseParticipationService,
+        private cdr: ChangeDetectorRef,
     ) {}
 
     ngOnInit(): void {
@@ -203,7 +204,8 @@ export class StudentExamTimelineComponent implements OnInit, AfterViewInit, OnDe
                 );
             }
         });
-        return forkJoin([...submissionObservables]);
+
+        return forkJoin([...submissionObservables]).pipe(tap(() => this.cdr.detectChanges()));
     }
 
     /**
