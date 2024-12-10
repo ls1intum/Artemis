@@ -6,10 +6,8 @@ import { of, throwError } from 'rxjs';
 import { BuildJob } from 'app/entities/programming/build-job.model';
 import dayjs from 'dayjs/esm';
 import { ArtemisTestModule } from '../../../test.module';
-import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { DataTableComponent } from 'app/shared/data-table/data-table.component';
-import { MockComponent, MockPipe, MockProvider } from 'ng-mocks';
-import { NgxDatatableModule } from '@siemens/ngx-datatable';
+import { MockProvider } from 'ng-mocks';
 import { BuildAgentInformation, BuildAgentStatus } from '../../../../../../main/webapp/app/entities/programming/build-agent-information.model';
 import { RepositoryInfo, TriggeredByPushTo } from 'app/entities/programming/repository-info.model';
 import { JobTimingInfo } from 'app/entities/job-timing-info.model';
@@ -142,8 +140,8 @@ describe('BuildAgentSummaryComponent', () => {
 
     beforeEach(waitForAsync(() => {
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule, NgxDatatableModule],
-            declarations: [BuildAgentSummaryComponent, MockPipe(ArtemisTranslatePipe), MockComponent(DataTableComponent)],
+            imports: [ArtemisTestModule],
+            declarations: [],
             providers: [
                 { provide: JhiWebsocketService, useValue: mockWebsocketService },
                 { provide: BuildAgentsService, useValue: mockBuildAgentsService },

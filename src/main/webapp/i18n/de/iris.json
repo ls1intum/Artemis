@@ -32,6 +32,19 @@
                         "autoIngestOnAttachmentUpload": "Vorlesungen automatisch an Pyris senden"
                     },
                     "competencyGenerationSettings": "Kompetenzgenerierung Einstellungen",
+                    "proactivityBuildFailedEventEnabled": {
+                        "label": "Build-Fehler überwachen",
+                        "tooltip": "Wenn aktiviert, wird Iris proaktiv Hilfe-Nachrichten senden, wenn der Build einer Abbgabe fehlschlägt."
+                    },
+                    "proactivityProgressStalledEventEnabled": {
+                        "label": "Übungsleistung überwachen",
+                        "tooltip": "Wenn aktiviert, wird Iris proaktiv Hilfe-Nachrichten senden, wenn sich die Übungsleistung des Studenten nicht verbessert."
+                    },
+                    "proactivitySettings": {
+                        "title": "Proaktivitätseinstellungen",
+                        "tooltip": "Aktiviere die untenstehenden Optionen, damit Iris proaktiv Studierende kontaktiert, wenn bestimmte Bedingungen erfüllt sind.",
+                        "parentDisabled": "Iris sendet keine proaktiven Nachrichten für diese Option, da entweder die Option selbst, oder Iris in den aktuellen oder übergeordneten Einstellungen deaktiviert ist."
+                    },
                     "enabled-disabled": "Aktiviert/Deaktiviert",
                     "enabledForCategories": "Automatisch aktivieren für Kategorien",
                     "variants": {
@@ -80,6 +93,9 @@
             },
             "chat": {
                 "helpOffer": "Wie kann ich Dir helfen?"
+            },
+            "chatBubble": {
+                "seeFull": "Vollständige Nachricht sehen"
             },
             "ingestionStates": {
                 "loading": "Wird geladen...",

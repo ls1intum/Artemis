@@ -578,7 +578,7 @@
             "auxiliaryRepository": {
                 "error": "There is a problem with the auxiliary repository.",
                 "addAuxiliaryRepository": "Add Auxiliary Repository",
-                "usageDescription": "You can use auxiliary repositories to provide additional code that students cannot see or modify. The additional code is inserted into the specified checkout directory before the submission is built. The inserted code overwrites everything which lies at the location specified by the checkout directory. If you only need to overwrite student files partially, you need to adapt the build script.",
+                "usageDescription": "You can use auxiliary repositories to provide additional code that students cannot see or modify. The additional code is inserted into the specified checkout directory before the submission is built. The additional code is inserted in the specified checkout directory before the build is created. The inserted files overwrite all files in the checkout directory which have the same name. Files that are not overwritten are retained.",
                 "repositoryName": "Repository Name",
                 "checkoutDirectory": "Checkout Directory",
                 "description": "Description",

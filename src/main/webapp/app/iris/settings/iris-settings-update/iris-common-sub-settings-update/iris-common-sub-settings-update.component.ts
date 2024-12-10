@@ -1,9 +1,9 @@
 import { Component, EventEmitter, Input, OnChanges, OnInit, Output, SimpleChanges } from '@angular/core';
-import { IrisSubSettings, IrisSubSettingsType } from 'app/entities/iris/settings/iris-sub-settings.model';
+import { IrisEventType, IrisSubSettings, IrisSubSettingsType } from 'app/entities/iris/settings/iris-sub-settings.model';
 import { IrisVariant } from 'app/entities/iris/settings/iris-variant';
 import { AccountService } from 'app/core/auth/account.service';
 import { ButtonType } from 'app/shared/components/button.component';
-import { faTrash } from '@fortawesome/free-solid-svg-icons';
+import { faCircleExclamation, faQuestionCircle, faTrash } from '@fortawesome/free-solid-svg-icons';
 import { IrisSettingsType } from 'app/entities/iris/settings/iris-settings.model';
 import { IrisSettingsService } from 'app/iris/settings/shared/iris-settings.service';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
@@ -36,6 +36,8 @@ export class IrisCommonSubSettingsUpdateComponent implements OnInit, OnChanges {
 
     inheritAllowedVariants: boolean;
 
+    eventInParentDisabledStatusMap = new Map<IrisEventType, boolean | undefined>();
+
     availableVariants: IrisVariant[] = [];
 
     allowedVariants: IrisVariant[] = [];
@@ -43,6 +45,8 @@ export class IrisCommonSubSettingsUpdateComponent implements OnInit, OnChanges {
     enabled: boolean;
 
     categories: string[] = [];
+
+    exerciseChatEvents: IrisEventType[] = [IrisEventType.BUILD_FAILED, IrisEventType.PROGRESS_STALLED];
 
     // Settings types
     EXERCISE = IrisSettingsType.EXERCISE;
@@ -52,10 +56,17 @@ export class IrisCommonSubSettingsUpdateComponent implements OnInit, OnChanges {
     // Button types
     WARNING = ButtonType.WARNING;
     // Icons
-    faTrash = faTrash;
+    readonly faTrash = faTrash;
+    readonly faQuestionCircle = faQuestionCircle;
+    readonly faCircleExclamation = faCircleExclamation;
 
     protected readonly IrisSubSettings = IrisSubSettings;
     protected readonly IrisSubSettingsType = IrisSubSettingsType;
+
+    protected readonly eventTranslationKeys = {
+        [IrisEventType.BUILD_FAILED]: 'artemisApp.iris.settings.subSettings.proactivityBuildFailedEventEnabled.label',
+        [IrisEventType.PROGRESS_STALLED]: 'artemisApp.iris.settings.subSettings.proactivityProgressStalledEventEnabled.label',
+    };
 
     constructor(
         accountService: AccountService,
@@ -80,6 +91,9 @@ export class IrisCommonSubSettingsUpdateComponent implements OnInit, OnChanges {
         }
         if (changes.subSettings) {
             this.enabled = this.subSettings?.enabled ?? false;
+        }
+        if (changes.parentSubSettings || changes.subSettings) {
+            this.updateEventDisabledStatus();
         }
     }
 
@@ -173,6 +187,20 @@ export class IrisCommonSubSettingsUpdateComponent implements OnInit, OnChanges {
         }
     }
 
+    onEventToggleChange(event: IrisEventType) {
+        if (!this.subSettings) {
+            return;
+        }
+        if (!this.subSettings.disabledProactiveEvents) {
+            this.subSettings.disabledProactiveEvents = [];
+        }
+        if (this.subSettings.disabledProactiveEvents?.includes(event)) {
+            this.subSettings.disabledProactiveEvents = this.subSettings.disabledProactiveEvents!.filter((c) => c !== event);
+        } else {
+            this.subSettings.disabledProactiveEvents = [...(this.subSettings.disabledProactiveEvents ?? []), event] as IrisEventType[];
+        }
+    }
+
     get inheritDisabled() {
         if (this.parentSubSettings) {
             return !this.parentSubSettings.enabled;
@@ -182,5 +210,20 @@ export class IrisCommonSubSettingsUpdateComponent implements OnInit, OnChanges {
 
     get isSettingsSwitchDisabled() {
         return this.inheritDisabled || (!this.isAdmin && this.settingsType !== this.EXERCISE);
+    }
+
+    /**
+     * Updates the event disabled status map based on the parent settings
+     * @private
+     */
+    private updateEventDisabledStatus(): void {
+        this.exerciseChatEvents.forEach((event) => {
+            const isDisabled =
+                !this.subSettings?.enabled ||
+                (this.parentSubSettings &&
+                    !this.subSettings?.disabledProactiveEvents?.includes(event) &&
+                    (this.parentSubSettings.disabledProactiveEvents?.includes(event) || !this.parentSubSettings.enabled));
+            this.eventInParentDisabledStatusMap.set(event, isDisabled);
+        });
     }
 }

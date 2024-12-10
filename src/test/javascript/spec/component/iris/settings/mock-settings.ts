@@ -3,6 +3,7 @@ import {
     IrisChatSubSettings,
     IrisCompetencyGenerationSubSettings,
     IrisCourseChatSubSettings,
+    IrisEventType,
     IrisLectureIngestionSubSettings,
     IrisTextExerciseChatSubSettings,
 } from 'app/entities/iris/settings/iris-sub-settings.model';
@@ -12,6 +13,7 @@ export function mockSettings() {
     const mockChatSettings = new IrisChatSubSettings();
     mockChatSettings.id = 1;
     mockChatSettings.enabled = true;
+    mockChatSettings.disabledProactiveEvents = [];
     const mockTextExerciseChatSettings = new IrisTextExerciseChatSubSettings();
     mockTextExerciseChatSettings.id = 13;
     mockTextExerciseChatSettings.enabled = true;
