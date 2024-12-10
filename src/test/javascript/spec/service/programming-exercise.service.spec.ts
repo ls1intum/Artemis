@@ -14,12 +14,11 @@ import { ProgrammingSubmission } from 'app/entities/programming/programming-subm
 import { Result } from 'app/entities/result.model';
 import { AccountService } from 'app/core/auth/account.service';
 import { MockAccountService } from '../helpers/mocks/service/mock-account.service';
-import { ProgrammingExerciseSolutionEntry } from 'app/entities/hestia/programming-exercise-solution-entry.model';
 import { Course } from 'app/entities/course.model';
 import { SolutionProgrammingExerciseParticipation } from 'app/entities/participation/solution-programming-exercise-participation.model';
 import { Submission } from 'app/entities/submission.model';
-import { ProgrammingExerciseGitDiffReport } from 'app/entities/hestia/programming-exercise-git-diff-report.model';
-import { ProgrammingExerciseGitDiffEntry } from 'app/entities/hestia/programming-exercise-git-diff-entry.model';
+import { ProgrammingExerciseGitDiffReport } from '../../../../main/webapp/app/entities/programming-exercise-git-diff-report.model';
+import { ProgrammingExerciseGitDiffEntry } from '../../../../main/webapp/app/entities/programming-exercise-git-diff-entry.model';
 import { AuxiliaryRepository } from 'app/entities/programming/programming-exercise-auxiliary-repository-model';
 import { provideHttpClient } from '@angular/common/http';
 
@@ -446,9 +445,7 @@ describe('ProgrammingExercise Service', () => {
         { uri: 'test-case-state', method: 'getProgrammingExerciseTestCaseState' },
         { uri: 'tasks', method: 'getTasksAndTestsExtractedFromProblemStatement' },
         { uri: 'diff-report', method: 'getDiffReport' },
-        { uri: 'full-testwise-coverage-report', method: 'getLatestFullTestwiseCoverageReport' },
         { uri: 'file-names', method: 'getSolutionFileNames' },
-        { uri: 'exercise-hints', method: 'getCodeHintsForExercise' },
         { uri: 'test-cases', method: 'getAllTestCases' },
         { uri: 'build-log-statistics', method: 'getBuildLogStatistics' },
     ])('should call correct exercise endpoint', (test) =>

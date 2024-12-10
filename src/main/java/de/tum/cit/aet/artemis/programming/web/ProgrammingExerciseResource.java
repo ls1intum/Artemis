@@ -787,9 +787,7 @@ public class ProgrammingExerciseResource {
     }
 
     /**
-     * DELETE programming-exercises/:exerciseId/tasks : Delete all tasks and solution entries for an existing ProgrammingExercise.
-     * Note: This endpoint exists only for testing purposes and will be removed at a later stage of the development of HESTIA
-     * (automatic generation of code hints for programming exercises in Java).
+     * DELETE programming-exercises/:exerciseId/tasks : Delete all tasks for an existing ProgrammingExercise.
      *
      * @param exerciseId of the exercise
      * @return the {@link ResponseEntity} with status {@code 204},

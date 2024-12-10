@@ -1,5 +1,4 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { ExerciseHintButtonOverlayComponent } from 'app/exercises/shared/exercise-hint/participate/exercise-hint-button-overlay.component';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import dayjs from 'dayjs/esm';
 import { JhiLanguageHelper } from 'app/core/language/language.helper';
@@ -107,7 +106,6 @@ describe('CodeEditorStudentIntegration', () => {
                 MockComponent(CodeEditorFileBrowserFolderComponent),
                 MockComponent(CodeEditorFileBrowserFileComponent),
                 MockComponent(CodeEditorStatusComponent),
-                MockComponent(ExerciseHintButtonOverlayComponent),
                 TreeviewComponent,
             ],
             providers: [

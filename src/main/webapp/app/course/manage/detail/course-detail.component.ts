@@ -221,12 +221,6 @@ export class CourseDetailComponent implements OnInit, OnDestroy {
                 data: { course: this.course, disabled: !this.isAdmin, subSettingsType: IrisSubSettingsType.CHAT },
             });
         }
-        // TODO: Enable in future PR
-        // details.push({
-        //     type: DetailType.ProgrammingIrisEnabled,
-        //     title: 'artemisApp.iris.settings.subSettings.enabled.hesita',
-        //     data: { course: this.course, disabled: !this.isAdmin, subSettingsType: this.HESTIA },
-        // });
         return irisDetails;
     }
 

@@ -22,7 +22,6 @@ export class ProgrammingExerciseCustomBuildPlanComponent implements OnChanges {
     projectType?: ProjectType;
     staticCodeAnalysisEnabled?: boolean;
     sequentialTestRuns?: boolean;
-    testwiseCoverageEnabled?: boolean;
     isImportFromFile: boolean = false;
 
     constructor(private aeolusService: AeolusService) {}
@@ -56,17 +55,7 @@ export class ProgrammingExerciseCustomBuildPlanComponent implements OnChanges {
             (this.programmingExercise.programmingLanguage !== this.programmingLanguage ||
                 this.programmingExercise.projectType !== this.projectType ||
                 this.programmingExercise.staticCodeAnalysisEnabled !== this.staticCodeAnalysisEnabled ||
-                this.programmingExercise.buildConfig!.sequentialTestRuns !== this.sequentialTestRuns ||
-                this.programmingExercise.buildConfig!.testwiseCoverageEnabled !== this.testwiseCoverageEnabled)
-        );
-    }
-
-    shouldReplacePlaceholders(): boolean {
-        return (
-            (!!this.programmingExercise.buildConfig?.assignmentCheckoutPath && this.programmingExercise.buildConfig?.assignmentCheckoutPath.trim() !== '') ||
-            (!!this.programmingExercise.buildConfig?.testCheckoutPath && this.programmingExercise.buildConfig?.testCheckoutPath.trim() !== '') ||
-            !!this.programmingExercise.buildConfig?.buildScript?.includes('${studentParentWorkingDirectoryName}') ||
-            !!this.programmingExercise.buildConfig?.buildScript?.includes('${testWorkingDirectory}')
+                this.programmingExercise.buildConfig!.sequentialTestRuns !== this.sequentialTestRuns)
         );
     }
 
@@ -94,37 +83,32 @@ export class ProgrammingExerciseCustomBuildPlanComponent implements OnChanges {
         this.projectType = this.programmingExercise.projectType;
         this.staticCodeAnalysisEnabled = this.programmingExercise.staticCodeAnalysisEnabled;
         this.sequentialTestRuns = this.programmingExercise.buildConfig?.sequentialTestRuns;
-        this.testwiseCoverageEnabled = this.programmingExercise.buildConfig?.testwiseCoverageEnabled;
         this.isImportFromFile = isImportFromFile;
         if (!isImportFromFile || !this.programmingExercise.buildConfig?.windfile) {
-            this.aeolusService
-                .getAeolusTemplateFile(this.programmingLanguage, this.projectType, this.staticCodeAnalysisEnabled, this.sequentialTestRuns, this.testwiseCoverageEnabled)
-                .subscribe({
-                    next: (file) => {
-                        this.programmingExercise.buildConfig!.windfile = this.aeolusService.parseWindFile(file);
-                    },
-                    error: () => {
-                        this.programmingExercise.buildConfig!.windfile = undefined;
-                    },
-                });
+            this.aeolusService.getAeolusTemplateFile(this.programmingLanguage, this.projectType, this.staticCodeAnalysisEnabled, this.sequentialTestRuns).subscribe({
+                next: (file) => {
+                    this.programmingExercise.buildConfig!.windfile = this.aeolusService.parseWindFile(file);
+                },
+                error: () => {
+                    this.programmingExercise.buildConfig!.windfile = undefined;
+                },
+            });
         }
         this.programmingExerciseCreationConfig.buildPlanLoaded = true;
         if (!this.programmingExercise.buildConfig?.windfile) {
             this.resetCustomBuildPlan();
         }
         if (!isImportFromFile || !this.programmingExercise.buildConfig?.buildScript) {
-            this.aeolusService
-                .getAeolusTemplateScript(this.programmingLanguage, this.projectType, this.staticCodeAnalysisEnabled, this.sequentialTestRuns, this.testwiseCoverageEnabled)
-                .subscribe({
-                    next: (file: string) => {
-                        file = this.replacePlaceholders(file);
-                        this.codeChanged(file);
-                        this.editor?.setText(file);
-                    },
-                    error: () => {
-                        this.programmingExercise.buildConfig!.buildScript = undefined;
-                    },
-                });
+            this.aeolusService.getAeolusTemplateScript(this.programmingLanguage, this.projectType, this.staticCodeAnalysisEnabled, this.sequentialTestRuns).subscribe({
+                next: (file: string) => {
+                    file = this.replacePlaceholders(file);
+                    this.codeChanged(file);
+                    this.editor?.setText(file);
+                },
+                error: () => {
+                    this.programmingExercise.buildConfig!.buildScript = undefined;
+                },
+            });
         }
         if (!this.programmingExercise.buildConfig?.buildScript) {
             this.resetCustomBuildPlan();

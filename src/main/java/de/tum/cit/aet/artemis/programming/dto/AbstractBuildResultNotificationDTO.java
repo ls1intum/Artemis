@@ -11,7 +11,6 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 
 import de.tum.cit.aet.artemis.exercise.domain.SubmissionType;
 import de.tum.cit.aet.artemis.programming.domain.build.BuildLogEntry;
-import de.tum.cit.aet.artemis.programming.service.ci.notification.dto.TestwiseCoverageReportDTO;
 
 @JsonIgnoreProperties(ignoreUnknown = true)
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
@@ -71,11 +70,4 @@ public abstract class AbstractBuildResultNotificationDTO {
      * @return list of static code analysis reports.
      */
     public abstract List<StaticCodeAnalysisReportDTO> getStaticCodeAnalysisReports();
-
-    /**
-     * Gets the test-wise coverage reports that are part of the build result.
-     *
-     * @return list of test-wise coverage reports.
-     */
-    public abstract List<TestwiseCoverageReportDTO> getTestwiseCoverageReports();
 }

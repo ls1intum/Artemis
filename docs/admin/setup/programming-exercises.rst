@@ -98,9 +98,6 @@ server or exercise settings:
   * - ``#isStaticCodeAnalysisEnabled``
     - Defines if static code analysis should be performed.
     - Exercise configuration
-  * - ``#isTestWiseCoverageEnabled``
-    - Defines if testwise coverage should be collected.
-    - Exercise configuration
 
 The ``pipeline.groovy`` file can be customized further by instructors after creating the exercise from within
 Artemis via the ‘Edit Build Plan’ button on the details page of the exercise.

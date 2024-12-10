@@ -1,6 +1,5 @@
 import { ProgrammingExercise } from 'app/entities/programming/programming-exercise.model';
 import { BaseEntity } from 'app/shared/model/base-entity';
-import { ProgrammingExerciseSolutionEntry } from 'app/entities/hestia/programming-exercise-solution-entry.model';
 import { TestCaseStats } from './programming-exercise-test-case-statistics.model';
 
 export enum Visibility {
@@ -25,7 +24,6 @@ export class ProgrammingExerciseTestCase implements BaseEntity {
     visibility?: Visibility;
     exercise?: ProgrammingExercise;
     type?: ProgrammingExerciseTestCaseType;
-    solutionEntries?: ProgrammingExerciseSolutionEntry[];
 
     // Utility information that is not actually part of the object stored on the server
     resultingPoints?: number;

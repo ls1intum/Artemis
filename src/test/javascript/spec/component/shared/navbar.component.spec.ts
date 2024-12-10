@@ -1,11 +1,10 @@
-import { HttpResponse, provideHttpClient } from '@angular/common/http';
+import { provideHttpClient } from '@angular/common/http';
 import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
 import { ActivatedRoute, Router, UrlSerializer } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
 import { MockTranslateService } from '../../helpers/mocks/service/mock-translate.service';
 import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
 import { ProfileInfo } from 'app/shared/layouts/profiles/profile-info.model';
-import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
 import { GuidedTourComponent } from 'app/guided-tour/guided-tour.component';
 import { HasAnyAuthorityDirective } from 'app/shared/auth/has-any-authority.directive';
 import { FindLanguageFromKeyPipe } from 'app/shared/language/find-language-from-key.pipe';
@@ -21,7 +20,6 @@ import { of } from 'rxjs';
 import { MockRouter } from '../../helpers/mocks/mock-router';
 import { MockSyncStorage } from '../../helpers/mocks/service/mock-sync-storage.service';
 import { MockRouterLinkActiveOptionsDirective, MockRouterLinkDirective } from '../../helpers/mocks/directive/mock-router-link.directive';
-import { Exercise, ExerciseType } from 'app/entities/exercise.model';
 import { JhiConnectionWarningComponent } from 'app/shared/connection-warning/connection-warning.component';
 import { AccountService } from 'app/core/auth/account.service';
 import { MockAccountService } from '../../helpers/mocks/service/mock-account.service';
@@ -52,7 +50,6 @@ describe('NavbarComponent', () => {
     let fixture: ComponentFixture<NavbarComponent>;
     let component: NavbarComponent;
     let entityTitleServiceStub: jest.SpyInstance;
-    let exerciseService: ExerciseService;
     let entityTitleService: EntityTitleService;
     let examParticipationService: ExamParticipationService;
 
@@ -154,8 +151,6 @@ describe('NavbarComponent', () => {
                 entityTitleServiceStub = jest
                     .spyOn(entityTitleService, 'getTitle')
                     .mockImplementation((type) => of('Test ' + type.substring(0, 1) + type.substring(1).toLowerCase()));
-
-                exerciseService = fixture.debugElement.injector.get(ExerciseService);
             });
     });
 
@@ -441,57 +436,6 @@ describe('NavbarComponent', () => {
                 uri: '/course-management/1/programming-exercises/2/',
             } as MockBreadcrumb);
             expect(component.breadcrumbs[4]).toEqual(assessmentCrumb);
-        });
-
-        it('programming exercise hints', () => {
-            const testUrl = '/course-management/1/exercises/2/exercise-hints/3';
-            router.setUrl(testUrl);
-
-            const findStub = jest.spyOn(exerciseService, 'find').mockReturnValue(
-                of({
-                    body: {
-                        title: 'Test Exercise',
-                        type: ExerciseType.PROGRAMMING,
-                    },
-                } as HttpResponse<Exercise>),
-            );
-
-            fixture.detectChanges();
-
-            expect(entityTitleServiceStub).toHaveBeenCalledTimes(2);
-            expect(entityTitleServiceStub).toHaveBeenCalledWith(EntityType.COURSE, [1]);
-            expect(entityTitleServiceStub).toHaveBeenCalledWith(EntityType.HINT, [3, 2]);
-            expect(findStub).toHaveBeenCalledOnce();
-            expect(findStub).toHaveBeenCalledWith(2);
-
-            const hintsCrumb = {
-                label: 'artemisApp.exerciseHint.home.title',
-                translate: true,
-                uri: '/course-management/1/exercises/2/exercise-hints/',
-            } as MockBreadcrumb;
-
-            const hintCrumb = {
-                label: 'Test Hint',
-                translate: false,
-                uri: '/course-management/1/exercises/2/exercise-hints/3/',
-            } as MockBreadcrumb;
-
-            expect(component.breadcrumbs).toHaveLength(6);
-
-            expect(component.breadcrumbs[0]).toEqual(courseManagementCrumb);
-            expect(component.breadcrumbs[1]).toEqual(testCourseCrumb);
-            expect(component.breadcrumbs[2]).toEqual({
-                label: 'artemisApp.course.exercises',
-                translate: true,
-                uri: '/course-management/1/exercises/',
-            } as MockBreadcrumb);
-            expect(component.breadcrumbs[3]).toEqual({
-                label: 'Test Exercise',
-                translate: false,
-                uri: '/course-management/1/programming-exercises/2/',
-            } as MockBreadcrumb);
-            expect(component.breadcrumbs[4]).toEqual(hintsCrumb);
-            expect(component.breadcrumbs[5]).toEqual(hintCrumb);
         });
 
         it('exercise assessment dashboard', () => {

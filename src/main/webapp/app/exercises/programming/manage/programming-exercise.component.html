@@ -208,15 +208,6 @@
                                             </div>
                                         </a>
                                     }
-                                    @if (programmingExercise.isAtLeastEditor) {
-                                        <a
-                                            [routerLink]="['/course-management', programmingExercise.course!.id, 'programming-exercises', programmingExercise.id, 'exercise-hints']"
-                                            class="btn btn-warning btn-sm me-1 mb-1"
-                                        >
-                                            <fa-icon [icon]="faLightbulb" />
-                                            <span jhiTranslate="entity.action.hints"></span>
-                                        </a>
-                                    }
                                 </div>
                                 <div class="btn-group-vertical me-1">
                                     @if (programmingExercise.isAtLeastEditor && programmingExercise.templateParticipation) {

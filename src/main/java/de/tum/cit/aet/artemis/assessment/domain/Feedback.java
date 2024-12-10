@@ -79,7 +79,7 @@ public class Feedback extends DomainObject {
      * null if the feedback was not created by an automatic test case.
      */
     @ManyToOne(fetch = FetchType.LAZY)
-    @JsonIgnoreProperties({ "tasks", "solutionEntries", "exercise", "coverageEntries" })
+    @JsonIgnoreProperties({ "tasks", "exercise" })
     private ProgrammingExerciseTestCase testCase;
 
     /**

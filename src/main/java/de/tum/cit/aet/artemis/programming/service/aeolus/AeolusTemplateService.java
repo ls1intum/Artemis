@@ -127,7 +127,6 @@ public class AeolusTemplateService {
      * @param projectType         the project type for which the template file should be returned. If omitted, a default depending on the language will be used.
      * @param staticAnalysis      whether the static analysis template should be used
      * @param sequentialRuns      whether the sequential runs template should be used
-     * @param testCoverage        whether the test coverage template should be used
      * @return the requested template as a {@link Windfile} object
      * @throws IOException if the file does not exist
      */

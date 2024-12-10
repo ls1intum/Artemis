@@ -234,7 +234,7 @@ public class ProgrammingExerciseFactory {
         final var staticCodeAnalysisReports = enableStaticAnalysisReports ? generateStaticCodeAnalysisReports(programmingLanguage) : new ArrayList<StaticCodeAnalysisReportDTO>();
 
         return new TestResultsDTO(successfulTestNames.size(), 0, 0, failedTestNames.size(), fullName, commits != null && !commits.isEmpty() ? commits : List.of(commitDTO),
-                List.of(testSuiteDto != null ? testSuiteDto : testSuite), staticCodeAnalysisReports, List.of(), buildRunDate != null ? buildRunDate : now(), false, logs);
+                List.of(testSuiteDto != null ? testSuiteDto : testSuite), staticCodeAnalysisReports, buildRunDate != null ? buildRunDate : now(), false, logs);
     }
 
     /**

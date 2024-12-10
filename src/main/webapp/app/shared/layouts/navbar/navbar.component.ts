@@ -492,13 +492,6 @@ export class NavbarComponent implements OnInit, OnDestroy {
             case 'assessment-dashboard':
                 this.addResolvedTitleAsCrumb(EntityType.EXERCISE, [Number(segment)], currentPath, segment);
                 break;
-            case 'exercise-hints':
-                // obtain the exerciseId of the current path
-                // current path of form '/course-management/:courseId/exercises/:exerciseId/...
-
-                const exerciseId = currentPath.split('/')[4];
-                this.addResolvedTitleAsCrumb(EntityType.HINT, [Number(segment), Number(exerciseId)], currentPath, segment);
-                break;
             case 'apollon-diagrams':
                 this.addResolvedTitleAsCrumb(EntityType.DIAGRAM, [Number(segment)], currentPath, segment);
                 break;

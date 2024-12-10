@@ -280,8 +280,7 @@ public class ProgrammingExerciseResultTestService {
 
         // test1 - test3 already exist, test4 should be newly created now.
         // All tests must have active = true since they are now used in the new solution result
-        assertThat(testCases).usingRecursiveFieldByFieldElementComparatorIgnoringFields("exercise", "id", "tasks", "solutionEntries", "coverageEntries")
-                .containsExactlyInAnyOrderElementsOf(expectedTestCases);
+        assertThat(testCases).usingRecursiveFieldByFieldElementComparatorIgnoringFields("exercise", "id", "tasks").containsExactlyInAnyOrderElementsOf(expectedTestCases);
 
         assertThat(result).isNotNull();
         if (withFailedTest) {

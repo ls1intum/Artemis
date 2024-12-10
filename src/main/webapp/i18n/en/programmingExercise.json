@@ -703,20 +703,9 @@
             },
             "withDependencies": "With exemplary dependency",
             "withDependenciesTooltip": "Adds an external Apache commons-lang dependency to the generated project as an example how Maven dependencies should be used with Artemis exercises.",
-            "recordTestwiseCoverage": "Record Testwise Coverage",
-            "recordTestwiseCoverageTooltip": "Activate this option to record the testwise coverage for the solution repository. This option is only available for Java/Kotlin-exercises with non-sequential test runs.",
             "customizeBuildPlansWithAeolusTooltip": "Activate this option to customize the docker image and build plan which is executed on Artemis for each submission in a Docker container.",
             "customizeBuildPlansTooltip": "Activate this option to customize the docker image and build plan which is executed on Artemis for each submission in a Docker container.",
             "coveredLineRatio": "Ratio Test-Covered Lines",
-            "testwiseCoverageReport": {
-                "button": "Show testwise coverage",
-                "tooltip": "Shows the testwise coverage for the solution repository.",
-                "title": "Testwise Coverage",
-                "404": "Testwise Coverage has not been generated yet. Please do a push to the solution or test repository to generate the report.",
-                "selectTests": "Select the tests for which the covered lines are marked:",
-                "filePath": "File Path",
-                "coveredLines": "Covered Lines"
-            },
             "buildLogStatistics": {
                 "title": "Average build log statistics",
                 "numberOfBuilds": "# Builds",

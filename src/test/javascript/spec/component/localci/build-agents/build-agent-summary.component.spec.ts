@@ -58,7 +58,6 @@ describe('BuildAgentSummaryComponent', () => {
         projectType: 'Maven',
         scaEnabled: false,
         sequentialTestRunsEnabled: false,
-        testwiseCoverageEnabled: false,
         resultPaths: [],
     };
 

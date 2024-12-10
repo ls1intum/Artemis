@@ -99,7 +99,6 @@ module.exports = {
         'src/main/webapp/app/exercises/file-upload/manage/file-upload-exercise-management.route.ts',
         'src/main/webapp/app/exercises/modeling/manage/modeling-exercise.route.ts',
         'src/main/webapp/app/exam/manage/exam-management.route.ts',
-        'src/main/webapp/app/exercises/shared/exercise-hint/manage/exercise-hint.route.ts',
         'src/main/webapp/app/core/config/prod.config.ts',
     ],
     coverageThreshold: {

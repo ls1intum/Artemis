@@ -19,7 +19,7 @@ import { ArtemisProgrammingExerciseModule } from 'app/exercises/programming/shar
 import { CommitHistoryComponent } from 'app/localvc/commit-history/commit-history.component';
 import { CommitDetailsViewComponent } from 'app/localvc/commit-details-view/commit-details-view.component';
 import { ArtemisProgrammingExerciseActionsModule } from 'app/exercises/programming/shared/actions/programming-exercise-actions.module';
-import { GitDiffReportComponent } from 'app/exercises/programming/hestia/git-diff-report/git-diff-report.component';
+import { GitDiffReportComponent } from 'app/exercises/programming/git-diff-report/git-diff-report.component';
 
 @NgModule({
     imports: [

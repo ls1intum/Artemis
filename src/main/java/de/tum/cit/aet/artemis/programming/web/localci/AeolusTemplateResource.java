@@ -86,7 +86,6 @@ public class AeolusTemplateResource {
      * @param projectType    The project type for which the template file should be returned. If omitted, a default depending on the language will be used.
      * @param staticAnalysis Whether the static analysis template should be used
      * @param sequentialRuns Whether the sequential runs template should be used
-     * @param testCoverage   Whether the test coverage template should be used
      * @return The requested file, or 404 if the file doesn't exist
      */
     @GetMapping({ "template-scripts/{language}/{projectType}", "template-scripts/{language}" })

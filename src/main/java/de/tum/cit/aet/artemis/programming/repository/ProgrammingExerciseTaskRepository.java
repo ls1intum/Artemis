@@ -46,7 +46,6 @@ public interface ProgrammingExerciseTaskRepository extends ArtemisJpaRepository<
             SELECT t
             FROM ProgrammingExerciseTask t
                 LEFT JOIN FETCH t.testCases tc
-                LEFT JOIN FETCH tc.solutionEntries
             WHERE t.exercise.id = :exerciseId
                 AND tc.exercise.id = :exerciseId
             """)
@@ -62,17 +61,7 @@ public interface ProgrammingExerciseTaskRepository extends ArtemisJpaRepository<
             SELECT t
             FROM ProgrammingExerciseTask t
                 LEFT JOIN FETCH t.testCases tc
-                LEFT JOIN FETCH tc.solutionEntries
             WHERE t.exercise.id = :exerciseId
             """)
     Set<ProgrammingExerciseTask> findByExerciseIdWithTestCases(@Param("exerciseId") Long exerciseId);
-
-    @Query("""
-            SELECT pt
-            FROM ProgrammingExerciseTask  pt
-                LEFT JOIN FETCH pt.exerciseHints h
-                LEFT JOIN FETCH pt.testCases tc
-            WHERE h.id = :codeHintId
-            """)
-    Optional<ProgrammingExerciseTask> findByCodeHintIdWithTestCases(@Param("codeHintId") Long codeHintId);
 }

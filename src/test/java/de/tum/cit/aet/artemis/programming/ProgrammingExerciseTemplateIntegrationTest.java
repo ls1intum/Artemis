@@ -237,18 +237,6 @@ class ProgrammingExerciseTemplateIntegrationTest extends AbstractProgrammingInte
                 }
                 argumentBuilder.add(Arguments.of(language, projectType, false));
             }
-
-            if (languageFeatures.testwiseCoverageAnalysisSupported()) {
-                if (projectTypes.isEmpty()) {
-                    argumentBuilder.add(Arguments.of(language, null, true));
-                }
-                for (ProjectType projectType : projectTypes) {
-                    if (projectType == ProjectType.MAVEN_BLACKBOX) {
-                        continue;
-                    }
-                    argumentBuilder.add(Arguments.of(language, projectType, true));
-                }
-            }
         }
         return argumentBuilder.build();
     }

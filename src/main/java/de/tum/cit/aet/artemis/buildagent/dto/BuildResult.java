@@ -3,7 +3,6 @@ package de.tum.cit.aet.artemis.buildagent.dto;
 import java.io.Serializable;
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 
 import org.springframework.util.ObjectUtils;
@@ -16,7 +15,6 @@ import de.tum.cit.aet.artemis.programming.dto.AbstractBuildResultNotificationDTO
 import de.tum.cit.aet.artemis.programming.dto.BuildJobDTOInterface;
 import de.tum.cit.aet.artemis.programming.dto.StaticCodeAnalysisReportDTO;
 import de.tum.cit.aet.artemis.programming.dto.TestCaseBaseDTO;
-import de.tum.cit.aet.artemis.programming.service.ci.notification.dto.TestwiseCoverageReportDTO;
 
 /**
  * Represents all the information returned by the local CI system about a build.
@@ -146,12 +144,6 @@ public class BuildResult extends AbstractBuildResultNotificationDTO implements S
     @Override
     public List<StaticCodeAnalysisReportDTO> getStaticCodeAnalysisReports() {
         return staticCodeAnalysisReports;
-    }
-
-    @Override
-    public List<TestwiseCoverageReportDTO> getTestwiseCoverageReports() {
-        // TODO LOCALVC_CI: Implement testwise coverage and return the reports here.
-        return Collections.emptyList();
     }
 
     /**

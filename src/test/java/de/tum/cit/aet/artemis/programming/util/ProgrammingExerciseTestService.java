@@ -864,8 +864,7 @@ public class ProgrammingExerciseTestService {
         var sourceTestCaseIds = sourceExercise.getTestCases().stream().map(ProgrammingExerciseTestCase::getId).collect(Collectors.toSet());
         assertThat(importedTestCaseIds).doesNotContainAnyElementsOf(sourceTestCaseIds);
         assertThat(importedExercise.getTestCases()).usingRecursiveFieldByFieldElementComparator()
-                .usingRecursiveFieldByFieldElementComparatorIgnoringFields("id", "exercise", "tasks", "solutionEntries", "coverageEntries")
-                .containsExactlyInAnyOrderElementsOf(sourceExercise.getTestCases());
+                .usingRecursiveFieldByFieldElementComparatorIgnoringFields("id", "exercise", "tasks").containsExactlyInAnyOrderElementsOf(sourceExercise.getTestCases());
 
         // Assert creation of new build plan ids
         assertThat(importedExercise.getSolutionParticipation().getBuildPlanId()).isNotBlank().isNotEqualTo(sourceExercise.getSolutionParticipation().getBuildPlanId());
@@ -1216,8 +1215,7 @@ public class ProgrammingExerciseTestService {
         var sourceTestCaseIds = sourceExercise.getTestCases().stream().map(ProgrammingExerciseTestCase::getId).toList();
         assertThat(importedTestCaseIds).doesNotContainAnyElementsOf(sourceTestCaseIds);
         assertThat(importedExercise.getTestCases()).usingRecursiveFieldByFieldElementComparator()
-                .usingRecursiveFieldByFieldElementComparatorIgnoringFields("id", "exercise", "tasks", "solutionEntries", "coverageEntries")
-                .containsExactlyInAnyOrderElementsOf(sourceExercise.getTestCases());
+                .usingRecursiveFieldByFieldElementComparatorIgnoringFields("id", "exercise", "tasks").containsExactlyInAnyOrderElementsOf(sourceExercise.getTestCases());
     }
 
     // TEST

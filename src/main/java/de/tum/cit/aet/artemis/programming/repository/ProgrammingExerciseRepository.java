@@ -311,11 +311,9 @@ public interface ProgrammingExerciseRepository extends DynamicSpecificationRepos
             FROM ProgrammingExercise p
                 LEFT JOIN FETCH p.testCases tc
                 LEFT JOIN FETCH p.staticCodeAnalysisCategories
-                LEFT JOIN FETCH p.exerciseHints
                 LEFT JOIN FETCH p.templateParticipation
                 LEFT JOIN FETCH p.solutionParticipation
                 LEFT JOIN FETCH p.auxiliaryRepositories
-                LEFT JOIN FETCH tc.solutionEntries
                 LEFT JOIN FETCH p.buildConfig
             WHERE p.id = :exerciseId
             """)
@@ -327,11 +325,9 @@ public interface ProgrammingExerciseRepository extends DynamicSpecificationRepos
             FROM ProgrammingExercise p
                 LEFT JOIN FETCH p.testCases tc
                 LEFT JOIN FETCH p.staticCodeAnalysisCategories
-                LEFT JOIN FETCH p.exerciseHints
                 LEFT JOIN FETCH p.templateParticipation
                 LEFT JOIN FETCH p.solutionParticipation
                 LEFT JOIN FETCH p.auxiliaryRepositories
-                LEFT JOIN FETCH tc.solutionEntries
                 LEFT JOIN FETCH p.buildConfig
             WHERE p.id = :exerciseId
             """)
@@ -343,11 +339,9 @@ public interface ProgrammingExerciseRepository extends DynamicSpecificationRepos
             FROM ProgrammingExercise p
                 LEFT JOIN FETCH p.testCases tc
                 LEFT JOIN FETCH p.staticCodeAnalysisCategories
-                LEFT JOIN FETCH p.exerciseHints
                 LEFT JOIN FETCH p.templateParticipation
                 LEFT JOIN FETCH p.solutionParticipation
                 LEFT JOIN FETCH p.auxiliaryRepositories
-                LEFT JOIN FETCH tc.solutionEntries
                 LEFT JOIN FETCH p.buildConfig
                 LEFT JOIN FETCH p.plagiarismDetectionConfig
             WHERE p.id = :exerciseId
