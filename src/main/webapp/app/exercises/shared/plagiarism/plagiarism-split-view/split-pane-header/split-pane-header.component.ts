@@ -29,9 +29,9 @@ export class SplitPaneHeaderComponent implements OnChanges, OnInit, OnDestroy {
     public showFiles = false;
     public activeFileIndex = 0;
 
-    private fileSelectSubscription: Subscription;
-    private showFilesSubscription: Subscription;
-    private dropdownHoverSubscription: Subscription;
+    private fileSelectSubscription: Subscription | undefined;
+    private showFilesSubscription: Subscription | undefined;
+    private dropdownHoverSubscription: Subscription | undefined;
 
     // Icons
     faChevronDown = faChevronDown;
@@ -70,7 +70,7 @@ export class SplitPaneHeaderComponent implements OnChanges, OnInit, OnDestroy {
      * @private helper method
      */
     private subscribeToShowFiles(): void {
-        this.showFilesSubscription = this.showFilesSubject()!.subscribe((showFiles) => {
+        this.showFilesSubscription = this.showFilesSubject()?.subscribe((showFiles) => {
             if (this.isLockFilesEnabled()! || (!this.isLockFilesEnabled()! && !showFiles)) {
                 this.toggleShowFiles(false, showFiles);
             }
@@ -82,7 +82,7 @@ export class SplitPaneHeaderComponent implements OnChanges, OnInit, OnDestroy {
      * @private helper method
      */
     private subscribeToDropdownHover(): void {
-        this.dropdownHoverSubscription = this.dropdownHoverSubject()!.subscribe((textPlagiarismElement) => {
+        this.dropdownHoverSubscription = this.dropdownHoverSubject()?.subscribe((textPlagiarismElement) => {
             if (this.isLockFilesEnabled()) {
                 this.handleDropdownHover(textPlagiarismElement.file, textPlagiarismElement.idx);
             }

@@ -51,6 +51,6 @@
     }
 }
 
-.split-pane-header-file.hover {
-    background-color: lightskyblue;
+.dropdown-item.hover {
+    background-color: var(--data-table-dropdown-item-selected-background-color);
 }
