@@ -1,44 +1,58 @@
+import os
 import xml.etree.ElementTree as ET
+import argparse
 
-def parse_jacoco_report(xml_file, package_path):
-    """
-    Parse a JaCoCo XML report to extract coverage metrics for a specific package.
+def process_reports(input_directory, output_file):
+    results = []
 
-    :param xml_file: Path to the JaCoCo XML report.
-    :param package_path: The package path to search for.
-    :return: A dictionary containing coverage metrics for the package.
-    """
-    tree = ET.parse(xml_file)
-    root = tree.getroot()
+    for module_folder in os.listdir(input_directory):
+        if module_folder.startswith("jacocoCoverageReport-"):
+            module_name = module_folder[len("jacocoCoverageReport-"):]
+            module_path = os.path.join(input_directory, module_folder)
 
-    # Search for the specific package
-    for package in root.findall(".//package"):
-        if package.get('name') == package_path:
-            coverage_metrics = {}
-            # Extract coverage metrics from <counter> elements
-            for counter in package.findall("counter"):
-                metric = counter.get("type")
-                covered = int(counter.get("covered"))
-                missed = int(counter.get("missed"))
-                total = covered + missed
-                coverage_percentage = (covered / total) * 100 if total > 0 else 0
-                coverage_metrics[metric] = {
-                    "covered": covered,
-                    "missed": missed,
-                    "total": total,
-                    "coverage_percentage": coverage_percentage
-                }
-            return coverage_metrics
+            if os.path.isdir(module_path):
+                report_file = os.path.join(module_path, f"jacocoCoverageReport-{module_name}.xml")
 
-    return None
+                if os.path.exists(report_file):
+                    try:
+                        tree = ET.parse(report_file)
+                        root = tree.getroot()
 
-xml_file_path = "build/reports/jacoco/test/jacocoTestReport.xml"
-package = "de/tum/cit/aet/artemis/buildagent"
-metrics = parse_jacoco_report(xml_file_path, package)
+                        instruction_counter = root.find("./counter[@type='INSTRUCTION']")
+                        class_counter = root.find("./counter[@type='CLASS']")
 
-if metrics:
-    print(f"Coverage metrics for package '{package}':")
-    for metric, data in metrics.items():
-        print(f"{metric}: {data['coverage_percentage']:.2f}% (Covered: {data['covered']}, Missed: {data['missed']}, Total: {data['total']})")
-else:
-    print(f"Package '{package}' not found in the report.")
+                        instruction_covered = int(instruction_counter.get('covered', 0))
+                        instruction_missed = int(instruction_counter.get('missed', 0))
+                        total_instructions = instruction_covered + instruction_missed
+                        instruction_coverage = (instruction_covered / total_instructions * 100) if total_instructions > 0 else 0.0
+
+                        missed_classes = int(class_counter.get('missed', 0))
+
+                        results.append({
+                            "module": module_name,
+                            "instruction_coverage": instruction_coverage,
+                            "missed_classes": missed_classes
+                        })
+                    except Exception as e:
+                        print(f"Error processing {module_name}: {e}")
+
+    results = sorted(results, key=lambda x: x['module'])
+
+    with open(output_file, "w") as f:
+        f.write("## Coverage Results\n\n")
+        f.write("| Module Name | Instruction Coverage (%) | Missed Classes |\n")
+        f.write("|-------------|---------------------------|----------------|\n")
+        for result in results:
+            f.write(f"| {result['module']} | {result['instruction_coverage']:.2f} | {result['missed_classes']} |\n")
+
+    print(f"Coverage results written to {output_file}")
+
+
+if __name__ == "__main__":
+    parser = argparse.ArgumentParser(description="Process JaCoCo coverage reports.")
+    parser.add_argument("input_directory", type=str, help="Root directory containing JaCoCo coverage reports")
+    parser.add_argument("output_file", type=str, help="Output file to save the coverage results")
+
+    args = parser.parse_args()
+
+    process_reports(args.input_directory, args.output_file)

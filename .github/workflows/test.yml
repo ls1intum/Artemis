@@ -114,8 +114,9 @@ jobs:
     - name: Append Per-Module Coverage to Job Summary
       if: success() || failure()
       run: |
-        python3 ./jacoco-parser.py >> $GITHUB_STEP_SUMMARY
-
+        AGGREGATED_REPORT_FILE=./coverage_report.md
+        python3 ./jacoco-parser.py build/reports/jacoco $AGGREGATED_REPORT_FILE
+        cat $AGGREGATED_REPORT_FILE > $GITHUB_STEP_SUMMARY
 
   server-tests-mysql:
       needs: [ server-tests ]
