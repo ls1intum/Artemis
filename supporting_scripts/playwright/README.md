@@ -5,8 +5,6 @@ Running playwright locally involves three steps:
 2. If no users have been set up, set up users.
 3. Install and run playwright.
 
-Note: run all setup scripts from within this directory. (cd supporting_scripts/playwright)
-
 ## 1. Start Artemis
 
 To start Artemis, depending on your OS, either run `runArtemisInDocker_macOS.sh` or `runArtemisInDocker_linux.sh`.
