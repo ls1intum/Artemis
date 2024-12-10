@@ -13,11 +13,11 @@
                     </span>
                 </ng-container>
             }
-            @for (chat of selectedChats; track chat) {
+            @for (user of selectedUsers; track user) {
                 <ng-container>
                     <span class="badge bg-secondary me-1">
-                        {{ chat.otherUserName }}
-                        <button type="button" class="btn-close btn-close-white btn-sm ms-1" aria-label="Remove" (click)="removeSelectedChat(chat)"></button>
+                        {{ user.name }}
+                        <button type="button" class="btn-close btn-close-white btn-sm ms-1" aria-label="Remove" (click)="removeSelectedUser(user)"></button>
                     </span>
                 </ng-container>
             }

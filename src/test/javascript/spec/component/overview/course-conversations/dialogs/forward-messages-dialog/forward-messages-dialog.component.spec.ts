@@ -5,12 +5,12 @@ import { By } from '@angular/platform-browser';
 import { MockComponent, MockPipe, MockProvider } from 'ng-mocks';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { ChannelDTO } from 'app/entities/metis/conversation/channel.model';
-import { OneToOneChatDTO } from 'app/entities/metis/conversation/one-to-one-chat.model';
 import { Post } from 'app/entities/metis/post.model';
 import { ForwardMessageDialogComponent } from '../../../../../../../../main/webapp/app/overview/course-conversations/dialogs/forward-message-dialog/forward-message-dialog.component';
 import { MarkdownEditorMonacoComponent } from '../../../../../../../../main/webapp/app/shared/markdown-editor/monaco/markdown-editor-monaco.component';
 import { ProfilePictureComponent } from '../../../../../../../../main/webapp/app/shared/profile-picture/profile-picture.component';
 import { ElementRef, runInInjectionContext, signal } from '@angular/core';
+import { UserPublicInfoDTO } from '../../../../../../../../main/webapp/app/core/user/user.model';
 
 describe('ForwardMessageDialogComponent', () => {
     let component: ForwardMessageDialogComponent;
@@ -29,11 +29,12 @@ describe('ForwardMessageDialogComponent', () => {
         component = fixture.componentInstance;
 
         component.channels.set([{ id: 1, name: 'General' } as ChannelDTO, { id: 2, name: 'Announcements' } as ChannelDTO]);
-        component.chats.set([
+        component.users.set([
             {
                 id: 3,
-                members: [{ id: 1, name: 'User1', isRequestingUser: false, imageUrl: 'user1.png' }],
-            } as OneToOneChatDTO,
+                name: 'User1',
+                imageUrl: 'user1.png',
+            } as UserPublicInfoDTO,
         ]);
         component.postToForward.set({ id: 10, content: 'Test Message', author: { id: 1, name: 'Author', imageUrl: 'author.png' } } as Post);
 
@@ -48,11 +49,11 @@ describe('ForwardMessageDialogComponent', () => {
         expect(component).toBeTruthy();
     });
 
-    it('should initialize combined options with channels and chats', () => {
+    it('should initialize combined options with channels and users', () => {
         expect(component.combinedOptions).toEqual([
             { id: 1, name: 'General', type: 'channel', img: '' },
             { id: 2, name: 'Announcements', type: 'channel', img: '' },
-            { id: 3, name: 'User1', type: 'chat', img: 'user1.png' },
+            { id: 3, name: 'User1', type: 'user', img: 'user1.png' },
         ]);
     });
 
@@ -75,13 +76,13 @@ describe('ForwardMessageDialogComponent', () => {
         expect(component.selectedChannels[0].name).toBe('General');
     });
 
-    it('should select a chat and add it to selectedChats', () => {
-        const option = component.combinedOptions.find((opt) => opt.type === 'chat' && opt.name === 'User1');
+    it('should select a user and add it to selectedUsers', () => {
+        const option = component.combinedOptions.find((opt) => opt.type === 'user' && opt.name === 'User1');
         component.selectOption(option!);
         fixture.detectChanges();
 
-        expect(component.selectedChats).toHaveLength(1);
-        expect(component.selectedChats[0].otherUserName).toBe('User1');
+        expect(component.selectedUsers).toHaveLength(1);
+        expect(component.selectedUsers[0].name).toBe('User1');
     });
 
     it('should remove a selected channel', () => {
@@ -93,11 +94,11 @@ describe('ForwardMessageDialogComponent', () => {
     });
 
     it('should remove a selected chat', () => {
-        component.selectedChats = [{ id: 3, otherUserName: 'User1', otherUserImg: 'user1.png' } as any];
-        component.removeSelectedChat(component.selectedChats[0]);
+        component.selectedUsers = [{ id: 3, otherUserName: 'User1', otherUserImg: 'user1.png' } as any];
+        component.removeSelectedUser(component.selectedUsers[0]);
         fixture.detectChanges();
 
-        expect(component.selectedChats).toHaveLength(0);
+        expect(component.selectedUsers).toHaveLength(0);
     });
 
     it('should send selected items when Send button is clicked', () => {
@@ -112,7 +113,7 @@ describe('ForwardMessageDialogComponent', () => {
 
         expect(closeSpy).toHaveBeenCalledWith({
             channels: component.selectedChannels,
-            chats: [],
+            users: [],
             messageContent: 'Test content',
         });
     });
@@ -189,7 +190,7 @@ describe('ForwardMessageDialogComponent', () => {
 
     it('should disable Send button if no content and no selections are made', () => {
         component.selectedChannels = [];
-        component.selectedChats = [];
+        component.selectedUsers = [];
         component.newPost.content = '';
         fixture.detectChanges();
 
@@ -202,7 +203,7 @@ describe('ForwardMessageDialogComponent', () => {
         const closeSpy = jest.spyOn(activeModal, 'close');
 
         component.selectedChannels = [{ id: 1, name: 'General' } as ChannelDTO];
-        component.selectedChats = [{ id: 3, otherUserName: 'User1', otherUserImg: 'user1.png' } as any];
+        component.selectedUsers = [{ id: 3 } as UserPublicInfoDTO];
         component.newPost.content = 'Test content';
         fixture.detectChanges();
 
@@ -211,7 +212,7 @@ describe('ForwardMessageDialogComponent', () => {
 
         expect(closeSpy).toHaveBeenCalledWith({
             channels: component.selectedChannels,
-            chats: component.selectedChats,
+            users: component.selectedUsers,
             messageContent: 'Test content',
         });
     });
