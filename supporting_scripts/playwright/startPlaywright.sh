@@ -2,11 +2,11 @@
 
 set -e
 
-cd ../..
+artemis_path="$(readlink -f "$(dirname $0)/../..")"
 
 echo "Installing Playwright and dependencies"
 
-cd src/test/playwright
+cd "$artemis_path/src/test/playwright"
 
 npm install
 
