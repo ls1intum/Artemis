@@ -23,6 +23,7 @@ import { isGroupChatDTO } from 'app/entities/metis/conversation/group-chat.model
 import { By } from '@angular/platform-browser';
 import { NgbDropdownMocksModule } from '../../../../../../../../helpers/mocks/directive/ngbDropdownMocks.module';
 import { ProfilePictureComponent } from 'app/shared/profile-picture/profile-picture.component';
+import { input, runInInjectionContext } from '@angular/core';
 
 const memberTemplate = {
     id: 1,
@@ -85,10 +86,12 @@ examples.forEach((activeConversation) => {
             canRevokeChannelModeratorRole.mockReturnValue(true);
 
             fixture = TestBed.createComponent(ConversationMemberRowComponent);
-            component = fixture.componentInstance;
-            component.activeConversation = activeConversation;
-            component.course = course;
-            component.conversationMember = conversationMember;
+            TestBed.runInInjectionContext(() => {
+                component = fixture.componentInstance;
+                component.activeConversation = input<ConversationDTO>(activeConversation);
+                component.course = input<Course>(course);
+                component.conversationMember = input<ConversationUserDTO>(conversationMember);
+            });
             component.canRevokeChannelModeratorRole = canRevokeChannelModeratorRole;
             component.canGrantChannelModeratorRole = canGrantChannelModeratorRole;
             component.canRemoveUsersFromConversation = canRemoveUsersFromConversation;
@@ -156,7 +159,11 @@ examples.forEach((activeConversation) => {
 
         it('should show grant moderator button if user is not yet moderator', fakeAsync(() => {
             if (isChannelDTO(activeConversation)) {
-                component.conversationMember.isChannelModerator = false;
+                runInInjectionContext(fixture.debugElement.injector, () => {
+                    const conversationMember = component.conversationMember();
+                    (conversationMember as ChannelDTO).isChannelModerator = false;
+                    component.conversationMember = input<ConversationUserDTO>(conversationMember as ConversationUserDTO);
+                });
                 fixture.detectChanges();
                 tick();
                 fixture.detectChanges();
