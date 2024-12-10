@@ -30,7 +30,7 @@ describe('FeedbackDetailChannelModalComponent', () => {
             errorCategory: 'StudentError',
         } as any);
         fixture.componentInstance.isConfirmModalOpen.set(false);
-        fixture.componentRef.setInput('levenshtein', false);
+        fixture.componentRef.setInput('groupFeedback', false);
         fixture.detectChanges();
     });
 

@@ -61,7 +61,7 @@ describe('FeedbackAnalysisService', () => {
             const responsePromise = service.search(pageable, false, { exerciseId: 1, filters });
 
             const req = httpMock.expectOne(
-                'api/exercises/1/feedback-details?page=1&pageSize=10&searchTerm=&sortingOrder=ASCENDING&sortedColumn=detailText&filterTasks=&filterTestCases=&filterOccurrence=&filterErrorCategories=&levenshtein=false',
+                'api/exercises/1/feedback-details?page=1&pageSize=10&searchTerm=&sortingOrder=ASCENDING&sortedColumn=detailText&filterTasks=&filterTestCases=&filterOccurrence=&filterErrorCategories=&groupFeedback=false',
             );
             expect(req.request.method).toBe('GET');
             req.flush(feedbackAnalysisResponseMock);

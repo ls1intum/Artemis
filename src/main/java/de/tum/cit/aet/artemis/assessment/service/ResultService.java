@@ -574,10 +574,10 @@ public class ResultService {
      * - The result is paginated according to the provided page number and page size.
      * Additionally one can group by the Levenshtein distance of the feedback detail text.
      *
-     * @param exerciseId  The ID of the exercise for which feedback details should be retrieved.
-     * @param data        The {@link FeedbackPageableDTO} containing page number, page size, search term, sorting options, and filtering parameters
-     *                        (task names, test cases, occurrence range, error categories).
-     * @param levenshtein The flag to enable Levenshtein-based grouping and aggregation of feedback details.
+     * @param exerciseId    The ID of the exercise for which feedback details should be retrieved.
+     * @param data          The {@link FeedbackPageableDTO} containing page number, page size, search term, sorting options, and filtering parameters
+     *                          (task names, test cases, occurrence range, error categories).
+     * @param groupFeedback The flag to enable Levenshtein-based grouping and aggregation of feedback details.
      * @return A {@link FeedbackAnalysisResponseDTO} object containing:
      *         - A {@link SearchResultPageDTO} of paginated feedback details.
      *         - The total number of distinct results for the exercise.
@@ -585,7 +585,7 @@ public class ResultService {
      *         - A list of active test case names used in the feedback.
      *         - A list of predefined error categories ("Student Error," "Ares Error," "AST Error") available for filtering.
      */
-    public FeedbackAnalysisResponseDTO getFeedbackDetailsOnPage(long exerciseId, FeedbackPageableDTO data, String levenshtein) {
+    public FeedbackAnalysisResponseDTO getFeedbackDetailsOnPage(long exerciseId, FeedbackPageableDTO data, boolean groupFeedback) {
 
         // 1. Fetch programming exercise with associated test cases
         ProgrammingExercise programmingExercise = programmingExerciseRepository.findWithTestCasesByIdElseThrow(exerciseId);
@@ -625,8 +625,8 @@ public class ResultService {
         List<FeedbackDetailDTO> processedDetails;
         int totalPages = 0;
         long totalCount = 0;
-        long levenshteinMaxCount = 0;
-        if (!Boolean.parseBoolean(levenshtein)) {
+        long groupFeedbackMaxCount = 0;
+        if (!groupFeedback) {
             feedbackDetailPage = studentParticipationRepository.findFilteredFeedbackByExerciseId(exerciseId,
                     StringUtils.isBlank(data.getSearchTerm()) ? "" : data.getSearchTerm().toLowerCase(), data.getFilterTestCases(), includeUnassignedTasks, minOccurrence,
                     maxOccurrence, filterErrorCategories, pageable);
@@ -646,9 +646,9 @@ public class ResultService {
             List<FeedbackDetailDTO> allFeedbackDetails = feedbackDetailPage.getContent();
 
             // Apply Levenshtein-based grouping and aggregation with a similarity threshold of 90%
-            List<FeedbackDetailDTO> aggregatedFeedbackDetails = aggregateUsingLevenshtein(allFeedbackDetails, 0.9);
+            List<FeedbackDetailDTO> aggregatedFeedbackDetails = aggregateUsingLevenshtein(allFeedbackDetails, 0.5);
 
-            levenshteinMaxCount = aggregatedFeedbackDetails.stream().mapToLong(FeedbackDetailDTO::count).max().orElse(0);
+            groupFeedbackMaxCount = aggregatedFeedbackDetails.stream().mapToLong(FeedbackDetailDTO::count).max().orElse(0);
             // Apply manual pagination
             int page = data.getPage();
             int pageSize = data.getPageSize();
@@ -669,7 +669,7 @@ public class ResultService {
 
         // 11. Return response containing processed feedback details, task names, active test case names, and error categories
         return new FeedbackAnalysisResponseDTO(new SearchResultPageDTO<>(processedDetails, totalPages), totalCount, taskNames, activeTestCaseNames, ERROR_CATEGORIES,
-                levenshteinMaxCount);
+                groupFeedbackMaxCount);
     }
 
     private Comparator<FeedbackDetailDTO> getComparatorForFeedbackDetails(FeedbackPageableDTO search) {

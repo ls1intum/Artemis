@@ -50,7 +50,7 @@ describe('FeedbackAnalysisComponent', () => {
         taskNames: ['task1', 'task2'],
         testCaseNames: ['test1', 'test2'],
         errorCategories: ['Student Error', 'AST Error', 'Ares Error'],
-        levenshteinMaxCount: 0,
+        groupFeedbackMaxCount: 0,
     };
 
     beforeEach(async () => {

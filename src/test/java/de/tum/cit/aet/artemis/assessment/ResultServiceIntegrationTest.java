@@ -753,7 +753,7 @@ class ResultServiceIntegrationTest extends AbstractSpringIntegrationLocalCILocal
         participationUtilService.addFeedbackToResult(feedback, result);
 
         String url = "/api/exercises/" + programmingExercise.getId() + "/feedback-details" + "?page=1&pageSize=10&sortedColumn=count&sortingOrder=ASCENDING"
-                + "&searchTerm=&filterTasks=&filterTestCases=&filterOccurrence=&filterErrorCategories=&levenshtein=false";
+                + "&searchTerm=&filterTasks=&filterTestCases=&filterOccurrence=&filterErrorCategories=&groupFeedback=false";
 
         FeedbackAnalysisResponseDTO response = request.get(url, HttpStatus.OK, FeedbackAnalysisResponseDTO.class);
 
@@ -795,7 +795,7 @@ class ResultServiceIntegrationTest extends AbstractSpringIntegrationLocalCILocal
         participationUtilService.addFeedbackToResult(feedback3, result1);
 
         String url = "/api/exercises/" + programmingExercise.getId() + "/feedback-details" + "?page=1&pageSize=10&sortedColumn=count&sortingOrder=ASCENDING"
-                + "&searchTerm=&filterTasks=&filterTestCases=&filterOccurrence=&filterErrorCategories=&levenshtein=false";
+                + "&searchTerm=&filterTasks=&filterTestCases=&filterOccurrence=&filterErrorCategories=&groupFeedback=false";
 
         FeedbackAnalysisResponseDTO response = request.get(url, HttpStatus.OK, FeedbackAnalysisResponseDTO.class);
 
@@ -824,7 +824,7 @@ class ResultServiceIntegrationTest extends AbstractSpringIntegrationLocalCILocal
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
-    void testGetAllFeedbackDetailsForExerciseWithLevenshteinAndMultipleSimilarFeedback() throws Exception {
+    void testGetAllFeedbackDetailsForExerciseWithGroupFeedbackAndMultipleSimilarFeedback() throws Exception {
         Result result1 = participationUtilService.addResultToParticipation(AssessmentType.AUTOMATIC, null, this.programmingExerciseStudentParticipation);
         Result result2 = participationUtilService.addResultToParticipation(AssessmentType.AUTOMATIC, null, this.programmingExerciseStudentParticipation2);
         ProgrammingExerciseTestCase testCase = programmingExerciseUtilService.addTestCaseToProgrammingExercise(programmingExercise, "test1");
@@ -843,7 +843,7 @@ class ResultServiceIntegrationTest extends AbstractSpringIntegrationLocalCILocal
         participationUtilService.addFeedbackToResult(feedback2, result2);
 
         String url = "/api/exercises/" + programmingExercise.getId() + "/feedback-details" + "?page=1&pageSize=10&sortedColumn=count&sortingOrder=ASCENDING"
-                + "&searchTerm=&filterTasks=&filterTestCases=&filterOccurrence=&filterErrorCategories=&levenshtein=true";
+                + "&searchTerm=&filterTasks=&filterTestCases=&filterOccurrence=&filterErrorCategories=&groupFeedback=true";
 
         FeedbackAnalysisResponseDTO response = request.get(url, HttpStatus.OK, FeedbackAnalysisResponseDTO.class);
 

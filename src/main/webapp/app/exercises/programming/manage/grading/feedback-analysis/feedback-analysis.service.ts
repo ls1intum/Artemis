@@ -11,7 +11,7 @@ export interface FeedbackAnalysisResponse {
     taskNames: string[];
     testCaseNames: string[];
     errorCategories: string[];
-    levenshteinMaxCount: number;
+    groupFeedbackMaxCount: number;
 }
 export interface FeedbackDetail {
     count: number;
@@ -36,7 +36,7 @@ export interface FeedbackChannelRequestDTO {
 }
 @Injectable()
 export class FeedbackAnalysisService extends BaseApiHttpService {
-    search(pageable: SearchTermPageableSearch, levenshtein: boolean, options: { exerciseId: number; filters: FilterData }): Promise<FeedbackAnalysisResponse> {
+    search(pageable: SearchTermPageableSearch, groupFeedback: boolean, options: { exerciseId: number; filters: FilterData }): Promise<FeedbackAnalysisResponse> {
         const params = new HttpParams()
             .set('page', pageable.page.toString())
             .set('pageSize', pageable.pageSize.toString())
@@ -47,7 +47,7 @@ export class FeedbackAnalysisService extends BaseApiHttpService {
             .set('filterTestCases', options.filters.testCases.join(','))
             .set('filterOccurrence', options.filters.occurrence.join(','))
             .set('filterErrorCategories', options.filters.errorCategories.join(','))
-            .set('levenshtein', levenshtein.toString());
+            .set('groupFeedback', groupFeedback.toString());
 
         return this.get<FeedbackAnalysisResponse>(`exercises/${options.exerciseId}/feedback-details`, { params });
     }

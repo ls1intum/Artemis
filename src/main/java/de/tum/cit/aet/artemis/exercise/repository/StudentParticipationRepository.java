@@ -1304,7 +1304,7 @@ public interface StudentParticipationRepository extends ArtemisJpaRepository<Stu
             """)
     Page<FeedbackDetailDTO> findFilteredFeedbackByExerciseId(@Param("exerciseId") long exerciseId, @Param("searchTerm") String searchTerm,
             @Param("filterTestCases") List<String> filterTestCases, @Param("filterTaskNames") List<String> filterTaskNames, @Param("minOccurrence") long minOccurrence,
-            @Param("maxOccurrence") long maxOccurrence, @Param("filterErrorCategories") List<String> filterErrorCategories, Pageable pageable);
+            @Param("maxOccurrence") long maxOccurrence, @Param("filterErrorCategories") List<String> filterErrorCategories, @Param("pageable") Pageable pageable);
 
     /**
      * Counts the distinct number of latest results for a given exercise, excluding those in practice mode.

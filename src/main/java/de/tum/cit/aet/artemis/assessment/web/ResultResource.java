@@ -311,19 +311,19 @@ public class ResultResource {
      * </li>
      * </ul>
      *
-     * @param exerciseId  The unique identifier of the exercise for which feedback details are requested.
-     * @param levenshtein Should the feedback be grouped via Levenshtein distance.
-     * @param data        A {@link FeedbackPageableDTO} object containing pagination, sorting, and filtering parameters, including:
-     *                        <ul>
-     *                        <li>Page number and page size</li>
-     *                        <li>Search term (optional)</li>
-     *                        <li>Sorting order (ASCENDING or DESCENDING)</li>
-     *                        <li>Sorted column</li>
-     *                        <li>Filter task names (optional)</li>
-     *                        <li>Filter test case names (optional)</li>
-     *                        <li>Occurrence range (optional)</li>
-     *                        <li>Error categories (optional)</li>
-     *                        </ul>
+     * @param exerciseId    The unique identifier of the exercise for which feedback details are requested.
+     * @param groupFeedback Should the feedback be grouped via Levenshtein distance.
+     * @param data          A {@link FeedbackPageableDTO} object containing pagination, sorting, and filtering parameters, including:
+     *                          <ul>
+     *                          <li>Page number and page size</li>
+     *                          <li>Search term (optional)</li>
+     *                          <li>Sorting order (ASCENDING or DESCENDING)</li>
+     *                          <li>Sorted column</li>
+     *                          <li>Filter task names (optional)</li>
+     *                          <li>Filter test case names (optional)</li>
+     *                          <li>Occurrence range (optional)</li>
+     *                          <li>Error categories (optional)</li>
+     *                          </ul>
      * @return A {@link ResponseEntity} containing a {@link FeedbackAnalysisResponseDTO}, which includes:
      *         <ul>
      *         <li>{@link SearchResultPageDTO < FeedbackDetailDTO >} feedbackDetails: Paginated and filtered feedback details for the exercise.</li>
@@ -335,9 +335,9 @@ public class ResultResource {
      */
     @GetMapping("exercises/{exerciseId}/feedback-details")
     @EnforceAtLeastEditorInExercise
-    public ResponseEntity<FeedbackAnalysisResponseDTO> getFeedbackDetailsPaged(@PathVariable long exerciseId, @RequestParam("levenshtein") String levenshtein,
+    public ResponseEntity<FeedbackAnalysisResponseDTO> getFeedbackDetailsPaged(@PathVariable long exerciseId, @RequestParam("groupFeedback") boolean groupFeedback,
             @ModelAttribute FeedbackPageableDTO data) {
-        FeedbackAnalysisResponseDTO response = resultService.getFeedbackDetailsOnPage(exerciseId, data, levenshtein);
+        FeedbackAnalysisResponseDTO response = resultService.getFeedbackDetailsOnPage(exerciseId, data, groupFeedback);
         return ResponseEntity.ok(response);
     }
 

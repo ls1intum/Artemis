@@ -74,7 +74,7 @@ export class FeedbackAnalysisComponent {
     private isFeedbackDetailChannelModalOpen = false;
 
     private readonly debounceLoadData = BaseApiHttpService.debounce(this.loadData.bind(this), 300);
-    readonly levenshtein = signal<boolean>(false);
+    readonly groupFeedback = signal<boolean>(false);
 
     constructor() {
         effect(() => {
@@ -101,7 +101,7 @@ export class FeedbackAnalysisComponent {
 
         this.isLoading.set(true);
         try {
-            const response = await this.feedbackAnalysisService.search(state, this.levenshtein(), {
+            const response = await this.feedbackAnalysisService.search(state, this.groupFeedback(), {
                 exerciseId: this.exerciseId(),
                 filters: {
                     tasks: this.selectedFiltersCount() !== 0 ? savedTasks : [],
@@ -115,7 +115,7 @@ export class FeedbackAnalysisComponent {
             this.taskNames.set(response.taskNames);
             this.testCaseNames.set(response.testCaseNames);
             this.errorCategories.set(response.errorCategories);
-            this.maxCount.set(response.levenshteinMaxCount);
+            this.maxCount.set(response.groupFeedbackMaxCount);
         } catch (error) {
             this.alertService.error(this.TRANSLATION_BASE + '.error');
         } finally {
@@ -162,7 +162,7 @@ export class FeedbackAnalysisComponent {
         const savedOccurrence = this.localStorage.retrieve(this.FILTER_OCCURRENCE_KEY);
         const savedErrorCategories = this.localStorage.retrieve(this.FILTER_ERROR_CATEGORIES_KEY);
         this.minCount.set(0);
-        if (this.levenshtein()) {
+        if (this.groupFeedback()) {
             this.maxCount.set(this.maxCount());
         } else {
             this.maxCount.set(await this.feedbackAnalysisService.getMaxCount(this.exerciseId()));
@@ -212,7 +212,7 @@ export class FeedbackAnalysisComponent {
         const modalRef = this.modalService.open(AffectedStudentsModalComponent, { centered: true, size: 'lg' });
         modalRef.componentInstance.exerciseId = this.exerciseId;
         modalRef.componentInstance.feedbackDetail = signal(feedbackDetail);
-        modalRef.componentInstance.levenshtein = signal(this.levenshtein());
+        modalRef.componentInstance.groupFeedback = signal(this.groupFeedback());
     }
 
     async openFeedbackDetailChannelModal(feedbackDetail: FeedbackDetail): Promise<void> {
@@ -222,7 +222,7 @@ export class FeedbackAnalysisComponent {
         this.isFeedbackDetailChannelModalOpen = true;
         const modalRef = this.modalService.open(FeedbackDetailChannelModalComponent, { centered: true, size: 'lg' });
         modalRef.componentInstance.feedbackDetail = signal(feedbackDetail);
-        modalRef.componentInstance.levenshtein = signal(this.levenshtein());
+        modalRef.componentInstance.groupFeedback = signal(this.groupFeedback());
         modalRef.componentInstance.formSubmitted.subscribe(async ({ channelDto, navigate }: { channelDto: ChannelDTO; navigate: boolean }) => {
             try {
                 const feedbackChannelRequest: FeedbackChannelRequestDTO = {
@@ -252,8 +252,8 @@ export class FeedbackAnalysisComponent {
         }
     }
 
-    toggleLevenshtein(): void {
-        this.levenshtein.update((current) => !current);
+    toggleGroupFeedback(): void {
+        this.groupFeedback.update((current) => !current);
         this.loadData();
     }
 }
