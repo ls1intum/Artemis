@@ -70,7 +70,9 @@ class ProgrammingExerciseGitDiffReportIntegrationTest extends AbstractProgrammin
         exercise = hestiaUtilTestService.setupTemplate(FILE_NAME, "TEST", exercise, templateRepo);
         exercise = hestiaUtilTestService.setupSolution(FILE_NAME, "TEST", exercise, solutionRepo);
         reportService.updateReport(exercise);
-        request.get("/api/programming-exercises/" + exercise.getId() + "/diff-report", HttpStatus.OK, ProgrammingExerciseGitDiffReport.class);
+        var report = request.get("/api/programming-exercises/" + exercise.getId() + "/diff-report", HttpStatus.OK, ProgrammingExerciseGitDiffReport.class);
+        assertThat(report).isNotNull();
+        assertThat(report.getEntries()).isNull();
     }
 
     @Test
@@ -79,7 +81,9 @@ class ProgrammingExerciseGitDiffReportIntegrationTest extends AbstractProgrammin
         exercise = hestiaUtilTestService.setupTemplate(FILE_NAME, "TEST", exercise, templateRepo);
         exercise = hestiaUtilTestService.setupSolution(FILE_NAME, "TEST", exercise, solutionRepo);
         reportService.updateReport(exercise);
-        request.get("/api/programming-exercises/" + exercise.getId() + "/diff-report", HttpStatus.OK, ProgrammingExerciseGitDiffReport.class);
+        var report = request.get("/api/programming-exercises/" + exercise.getId() + "/diff-report", HttpStatus.OK, ProgrammingExerciseGitDiffReport.class);
+        assertThat(report).isNotNull();
+        assertThat(report.getEntries()).isNull();
     }
 
     @Test
@@ -88,7 +92,9 @@ class ProgrammingExerciseGitDiffReportIntegrationTest extends AbstractProgrammin
         exercise = hestiaUtilTestService.setupTemplate(FILE_NAME, "TEST", exercise, templateRepo);
         exercise = hestiaUtilTestService.setupSolution(FILE_NAME, "TEST", exercise, solutionRepo);
         reportService.updateReport(exercise);
-        request.get("/api/programming-exercises/" + exercise.getId() + "/diff-report", HttpStatus.OK, ProgrammingExerciseGitDiffReport.class);
+        var report = request.get("/api/programming-exercises/" + exercise.getId() + "/diff-report", HttpStatus.OK, ProgrammingExerciseGitDiffReport.class);
+        assertThat(report).isNotNull();
+        assertThat(report.getEntries()).isNull();
     }
 
     @Test
@@ -98,8 +104,10 @@ class ProgrammingExerciseGitDiffReportIntegrationTest extends AbstractProgrammin
         participationRepo.configureRepos("participationLocalRepo", "participationOriginRepo");
         var studentLogin = TEST_PREFIX + "student1";
         var submission = hestiaUtilTestService.setupSubmission(FILE_NAME, "TEST", exercise, participationRepo, studentLogin);
-        request.get("/api/programming-exercises/" + exercise.getId() + "/submissions/" + submission.getId() + "/diff-report-with-template", HttpStatus.OK,
+        var report = request.get("/api/programming-exercises/" + exercise.getId() + "/submissions/" + submission.getId() + "/diff-report-with-template", HttpStatus.OK,
                 ProgrammingExerciseGitDiffReport.class);
+        assertThat(report).isNotNull();
+        assertThat(report.getEntries()).isNull();
     }
 
     @Test
@@ -121,8 +129,11 @@ class ProgrammingExerciseGitDiffReportIntegrationTest extends AbstractProgrammin
         var studentLogin = TEST_PREFIX + "student1";
         var submission = hestiaUtilTestService.setupSubmission(FILE_NAME, "TEST", exercise, participationRepo, studentLogin);
         var submission2 = hestiaUtilTestService.setupSubmission(FILE_NAME, "TEST2", exercise, participationRepo, studentLogin);
-        request.get("/api/programming-exercises/" + exercise.getId() + "/commits/" + submission.getCommitHash() + "/diff-report/" + submission2.getCommitHash()
+        var report = request.get("/api/programming-exercises/" + exercise.getId() + "/commits/" + submission.getCommitHash() + "/diff-report/" + submission2.getCommitHash()
                 + "?participationId=" + submission.getParticipation().getId(), HttpStatus.OK, ProgrammingExerciseGitDiffReport.class);
+        assertThat(report).isNotNull();
+        assertThat(report.getEntries()).hasSize(1);
+        // TODO: add more assertions
     }
 
     @Test
@@ -179,8 +190,11 @@ class ProgrammingExerciseGitDiffReportIntegrationTest extends AbstractProgrammin
         var studentLogin = TEST_PREFIX + "student1";
         var submission = hestiaUtilTestService.setupSubmission(FILE_NAME, "TEST", exercise, participationRepo, studentLogin);
         var submission2 = hestiaUtilTestService.setupSubmission(FILE_NAME, "TEST2", exercise, participationRepo, studentLogin);
-        request.get("/api/programming-exercises/" + exercise.getId() + "/submissions/" + submission.getId() + "/diff-report/" + submission2.getId(), HttpStatus.OK,
+        var report = request.get("/api/programming-exercises/" + exercise.getId() + "/submissions/" + submission.getId() + "/diff-report/" + submission2.getId(), HttpStatus.OK,
                 ProgrammingExerciseGitDiffReport.class);
+        assertThat(report).isNotNull();
+        assertThat(report.getEntries()).hasSize(1);
+        // TODO: add more assertions
     }
 
     @Test
