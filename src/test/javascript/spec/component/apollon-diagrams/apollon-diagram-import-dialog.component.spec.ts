@@ -11,8 +11,7 @@ describe('ApollonDiagramImportDialog Component', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [],
-            declarations: [ApollonDiagramImportDialogComponent],
+            imports: [ApollonDiagramImportDialogComponent],
             providers: [{ provide: NgbActiveModal, useClass: MockNgbActiveModalService }],
             schemas: [],
         })

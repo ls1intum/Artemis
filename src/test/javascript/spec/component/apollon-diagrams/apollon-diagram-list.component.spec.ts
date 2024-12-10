@@ -31,8 +31,8 @@ describe('ApollonDiagramList Component', () => {
         const route = { params: of({ courseId: 123 }), snapshot: { paramMap: convertToParamMap({ courseId: course.id }) } } as any as ActivatedRoute;
 
         TestBed.configureTestingModule({
-            imports: [],
-            declarations: [ApollonDiagramListComponent],
+            imports: [ApollonDiagramListComponent],
+            declarations: [],
             providers: [
                 provideHttpClient(),
                 provideHttpClientTesting(),
