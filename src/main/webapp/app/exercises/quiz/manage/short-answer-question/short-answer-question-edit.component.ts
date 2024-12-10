@@ -13,7 +13,7 @@ import {
     ViewEncapsulation,
 } from '@angular/core';
 import { ShortAnswerQuestionUtil } from 'app/exercises/quiz/shared/short-answer-question-util.service';
-import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
+import { NgbCollapse, NgbModal, NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { ShortAnswerQuestion } from 'app/entities/quiz/short-answer-question.model';
 import { ShortAnswerMapping } from 'app/entities/quiz/short-answer-mapping.model';
 import { QuizQuestionEdit } from 'app/exercises/quiz/manage/quiz-question-edit.interface';
@@ -38,12 +38,39 @@ import { InsertShortAnswerSpotAction } from 'app/shared/monaco-editor/model/acti
 import { TextEditorAction } from 'app/shared/monaco-editor/model/actions/text-editor-action.model';
 import { InsertShortAnswerOptionAction } from 'app/shared/monaco-editor/model/actions/quiz/insert-short-answer-option.action';
 import { SHORT_ANSWER_QUIZ_QUESTION_EDITOR_OPTIONS } from 'app/shared/monaco-editor/monaco-editor-option.helper';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { FormsModule } from '@angular/forms';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { QuizScoringInfoModalComponent } from 'app/exercises/quiz/manage/quiz-scoring-info-modal/quiz-scoring-info-modal.component';
+import { MatchPercentageInfoModalComponent } from 'app/exercises/quiz/manage/match-percentage-info-modal/match-percentage-info-modal.component';
+import { ArtemisMarkdownEditorModule } from 'app/shared/markdown-editor/markdown-editor.module';
+import { CdkDrag, CdkDragPlaceholder, CdkDragPreview, CdkDropList, CdkDropListGroup } from '@angular/cdk/drag-drop';
+import { NgClass } from '@angular/common';
+import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 
 @Component({
     selector: 'jhi-short-answer-question-edit',
     templateUrl: './short-answer-question-edit.component.html',
     styleUrls: ['./short-answer-question-edit.component.scss', '../quiz-exercise.scss', '../../shared/quiz.scss'],
     encapsulation: ViewEncapsulation.None,
+    standalone: true,
+    imports: [
+        FaIconComponent,
+        FormsModule,
+        TranslateDirective,
+        NgbTooltip,
+        NgbCollapse,
+        QuizScoringInfoModalComponent,
+        MatchPercentageInfoModalComponent,
+        ArtemisMarkdownEditorModule,
+        CdkDropListGroup,
+        CdkDropList,
+        NgClass,
+        CdkDrag,
+        CdkDragPlaceholder,
+        CdkDragPreview,
+        ArtemisTranslatePipe,
+    ],
 })
 export class ShortAnswerQuestionEditComponent implements OnInit, OnChanges, AfterViewInit, QuizQuestionEdit {
     @ViewChild('questionEditor', { static: false })

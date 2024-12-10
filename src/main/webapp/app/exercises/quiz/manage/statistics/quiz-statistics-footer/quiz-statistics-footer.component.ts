@@ -1,5 +1,5 @@
 import { Component, Input, OnDestroy, OnInit } from '@angular/core';
-import { ActivatedRoute, Router } from '@angular/router';
+import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { QuizStatisticUtil } from 'app/exercises/quiz/shared/quiz-statistic-util.service';
 import { ShortAnswerQuestionUtil } from 'app/exercises/quiz/shared/short-answer-question-util.service';
 import { TranslateService } from '@ngx-translate/core';
@@ -16,12 +16,20 @@ import { Authority } from 'app/shared/constants/authority.constants';
 import { UI_RELOAD_TIME } from 'app/shared/constants/exercise-exam-constants';
 import { faListAlt } from '@fortawesome/free-regular-svg-icons';
 import { ArtemisServerDateService } from 'app/shared/server-date.service';
+import { NgbDropdown, NgbDropdownMenu, NgbDropdownToggle } from '@ng-bootstrap/ng-bootstrap';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { NgClass } from '@angular/common';
+import { ArtemisSharedModule } from 'app/shared/shared.module';
+import { ArtemisSharedPipesModule } from 'app/shared/pipes/shared-pipes.module';
 
 @Component({
     selector: 'jhi-quiz-statistics-footer',
     templateUrl: './quiz-statistics-footer.component.html',
     providers: [QuizStatisticUtil, ShortAnswerQuestionUtil],
     styleUrls: ['./quiz-statistics-footer.component.scss', '../../../shared/quiz.scss'],
+    standalone: true,
+    imports: [NgbDropdown, NgbDropdownToggle, FaIconComponent, TranslateDirective, NgbDropdownMenu, RouterLink, NgClass, ArtemisSharedModule, ArtemisSharedPipesModule],
 })
 export class QuizStatisticsFooterComponent implements OnInit, OnDestroy {
     @Input() isQuizPointStatistic: boolean;

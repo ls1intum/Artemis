@@ -17,6 +17,13 @@ import { computeQuizQuestionInvalidReason, isQuizQuestionValid } from 'app/exerc
 import { ExamManagementService } from 'app/exam/manage/exam-management.service';
 import { Exam } from 'app/entities/exam/exam.model';
 import dayjs from 'dayjs/esm';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { QuizPoolMappingComponent as QuizPoolMappingComponent_1 } from 'app/exercises/quiz/manage/quiz-pool-mapping.component';
+import { FormsModule } from '@angular/forms';
+import { QuizQuestionListEditComponent as QuizQuestionListEditComponent_1 } from 'app/exercises/quiz/manage/quiz-question-list-edit.component';
+import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { JsonPipe } from '@angular/common';
 
 @Component({
     selector: 'jhi-quiz-pool',
@@ -25,6 +32,8 @@ import dayjs from 'dayjs/esm';
     changeDetection: ChangeDetectionStrategy.OnPush,
     styleUrls: ['./quiz-pool.component.scss', '../shared/quiz.scss'],
     encapsulation: ViewEncapsulation.None,
+    standalone: true,
+    imports: [TranslateDirective, QuizPoolMappingComponent_1, FormsModule, QuizQuestionListEditComponent_1, NgbTooltip, FaIconComponent, JsonPipe],
 })
 export class QuizPoolComponent implements OnInit {
     @ViewChild('quizPoolQuestionMapping')

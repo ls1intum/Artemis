@@ -1,6 +1,7 @@
 import { Component, EventEmitter, Input, Output, ViewChild } from '@angular/core';
 import { DragAndDropQuestion } from 'app/entities/quiz/drag-and-drop-question.model';
 import { DragAndDropQuestionEditComponent } from 'app/exercises/quiz/manage/drag-and-drop-question/drag-and-drop-question-edit.component';
+import { DragAndDropQuestionEditComponent as DragAndDropQuestionEditComponent_1 } from 'app/exercises/quiz/manage/drag-and-drop-question/drag-and-drop-question-edit.component';
 
 @Component({
     selector: 'jhi-re-evaluate-drag-and-drop-question',
@@ -19,6 +20,8 @@ import { DragAndDropQuestionEditComponent } from 'app/exercises/quiz/manage/drag
         />
     `,
     providers: [],
+    standalone: true,
+    imports: [DragAndDropQuestionEditComponent_1],
 })
 export class ReEvaluateDragAndDropQuestionComponent {
     /**

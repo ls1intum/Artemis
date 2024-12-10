@@ -9,8 +9,15 @@ import { DragAndDropMapping } from 'app/entities/quiz/drag-and-drop-mapping.mode
 import { RenderedQuizQuestionMarkDownElement } from 'app/entities/quiz/quiz-question.model';
 import { DropLocation } from 'app/entities/quiz/drop-location.model';
 import { faExclamationCircle, faExclamationTriangle, faQuestionCircle, faSpinner } from '@fortawesome/free-solid-svg-icons';
-import { CdkDragDrop } from '@angular/cdk/drag-drop';
+import { CdkDragDrop, CdkDropList, CdkDropListGroup } from '@angular/cdk/drag-drop';
 import { DragItem } from 'app/entities/quiz/drag-item.model';
+import { NgClass, NgStyle } from '@angular/common';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { NgbPopover, NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
+import { QuizScoringInfoStudentModalComponent } from 'app/exercises/quiz/shared/questions/quiz-scoring-infostudent-modal/quiz-scoring-info-student-modal.component';
+import { ArtemisSharedModule } from 'app/shared/shared.module';
+import { DragItemComponent } from 'app/exercises/quiz/shared/questions/drag-and-drop-question/drag-item.component';
 
 // options are optional ;)
 polyfill({
@@ -36,6 +43,20 @@ enum MappingResult {
     providers: [DragAndDropQuestionUtil],
     styleUrls: ['./drag-and-drop-question.component.scss', '../../../participate/quiz-participation.scss'],
     encapsulation: ViewEncapsulation.None,
+    standalone: true,
+    imports: [
+        NgClass,
+        FaIconComponent,
+        TranslateDirective,
+        NgbPopover,
+        QuizScoringInfoStudentModalComponent,
+        CdkDropListGroup,
+        ArtemisSharedModule,
+        CdkDropList,
+        NgStyle,
+        DragItemComponent,
+        NgbTooltip,
+    ],
 })
 export class DragAndDropQuestionComponent implements OnChanges, OnInit {
     /** needed to trigger a manual reload of the drag and drop background picture */

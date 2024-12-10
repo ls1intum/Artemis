@@ -10,10 +10,31 @@ import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service'
 import { AlertService } from 'app/core/util/alert.service';
 import { faSort, faTrash } from '@fortawesome/free-solid-svg-icons';
 import { isQuizEditable } from 'app/exercises/quiz/shared/quiz-manage-util.service';
+import { ArtemisSharedCommonModule } from 'app/shared/shared-common.module';
+import { FormsModule } from '@angular/forms';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { RouterLink } from '@angular/router';
+import { ArtemisExerciseModule } from 'app/exercises/shared/exercise/exercise.module';
+import { ExerciseCategoriesModule } from 'app/shared/exercise-categories/exercise-categories.module';
+import { QuizExerciseManageButtonsComponent } from 'app/exercises/quiz/manage/quiz-exercise-manage-buttons.component';
+import { ArtemisSharedModule } from 'app/shared/shared.module';
 
 @Component({
     selector: 'jhi-quiz-exercise',
     templateUrl: './quiz-exercise.component.html',
+    standalone: true,
+    imports: [
+        ArtemisSharedCommonModule,
+        FormsModule,
+        TranslateDirective,
+        FaIconComponent,
+        RouterLink,
+        ArtemisExerciseModule,
+        ExerciseCategoriesModule,
+        QuizExerciseManageButtonsComponent,
+        ArtemisSharedModule,
+    ],
 })
 export class QuizExerciseComponent extends ExerciseComponent {
     protected exerciseService = inject(ExerciseService);

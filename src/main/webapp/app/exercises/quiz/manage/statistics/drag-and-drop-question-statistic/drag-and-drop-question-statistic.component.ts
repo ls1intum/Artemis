@@ -13,6 +13,13 @@ import { DropLocation } from 'app/entities/quiz/drop-location.model';
 import { QuizExercise } from 'app/entities/quiz/quiz-exercise.model';
 import { QuestionStatisticComponent, blueColor, greenColor } from 'app/exercises/quiz/manage/statistics/question-statistic.component';
 import { faCheckCircle, faSync, faTimesCircle } from '@fortawesome/free-solid-svg-icons';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { BarChartModule } from '@swimlane/ngx-charts';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { ArtemisSharedModule } from 'app/shared/shared.module';
+import { NgStyle } from '@angular/common';
+import { ArtemisQuizQuestionTypesModule } from 'app/exercises/quiz/shared/questions/artemis-quiz-question-types.module';
+import { QuizStatisticsFooterComponent } from 'app/exercises/quiz/manage/statistics/quiz-statistics-footer/quiz-statistics-footer.component';
 
 @Component({
     selector: 'jhi-drag-and-drop-question-statistic',
@@ -24,6 +31,8 @@ import { faCheckCircle, faSync, faTimesCircle } from '@fortawesome/free-solid-sv
         './drag-and-drop-question-statistic.component.scss',
     ],
     encapsulation: ViewEncapsulation.None,
+    standalone: true,
+    imports: [TranslateDirective, BarChartModule, FaIconComponent, ArtemisSharedModule, NgStyle, ArtemisQuizQuestionTypesModule, QuizStatisticsFooterComponent],
 })
 export class DragAndDropQuestionStatisticComponent extends QuestionStatisticComponent {
     declare question: DragAndDropQuestion;

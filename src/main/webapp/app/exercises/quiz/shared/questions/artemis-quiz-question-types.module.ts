@@ -11,8 +11,11 @@ import { FitTextModule } from 'app/exercises/quiz/shared/fit-text/fit-text.modul
 import { MultipleChoiceVisualQuestionComponent } from 'app/exercises/quiz/shared/questions/multiple-choice-question/multiple-choice-visual-question.component';
 
 @NgModule({
-    imports: [ArtemisSharedModule, DragDropModule, ArtemisMarkdownModule, FitTextModule],
-    declarations: [
+    imports: [
+        ArtemisSharedModule,
+        DragDropModule,
+        ArtemisMarkdownModule,
+        FitTextModule,
         DragItemComponent,
         DragAndDropQuestionComponent,
         MultipleChoiceQuestionComponent,

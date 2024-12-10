@@ -3,18 +3,22 @@ import { ActivatedRoute, Router } from '@angular/router';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { TranslateService } from '@ngx-translate/core';
 
-import { QuizExerciseService } from './quiz-exercise.service';
+import { QuizExerciseService } from 'app/exercises/quiz/manage/quiz-exercise.service';
 import { QuizExercise } from 'app/entities/quiz/quiz-exercise.model';
 import { AlertService } from 'app/core/util/alert.service';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
 import { QuizQuestion } from 'app/entities/quiz/quiz-question.model';
 import { Course } from 'app/entities/course.model';
 import { onError } from 'app/shared/util/global.utils';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { FormsModule } from '@angular/forms';
 
 @Component({
     selector: 'jhi-quiz-exercise-export',
     templateUrl: './quiz-exercise-export.component.html',
     styleUrls: ['./quiz-exercise-export.component.scss', '../shared/quiz.scss'],
+    standalone: true,
+    imports: [TranslateDirective, FormsModule],
 })
 export class QuizExerciseExportComponent implements OnInit {
     questions: QuizQuestion[] = new Array(0);

@@ -8,7 +8,7 @@ import { DragAndDropQuestionUtil } from 'app/exercises/quiz/shared/drag-and-drop
 import { ShortAnswerQuestionUtil } from 'app/exercises/quiz/shared/short-answer-question-util.service';
 import { TranslateService } from '@ngx-translate/core';
 import { Duration } from './quiz-exercise-interfaces';
-import { NgbDate, NgbModal, NgbModalOptions, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
+import { NgbDate, NgbModal, NgbModalOptions, NgbModalRef, NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import dayjs from 'dayjs/esm';
 import { AlertService } from 'app/core/util/alert.service';
 import { ComponentCanDeactivate } from 'app/shared/guard/can-deactivate.model';
@@ -33,6 +33,19 @@ import { QuizQuestionListEditComponent } from 'app/exercises/quiz/manage/quiz-qu
 import { DragAndDropQuestion } from 'app/entities/quiz/drag-and-drop-question.model';
 import { GenericConfirmationDialogComponent } from 'app/overview/course-conversations/dialogs/generic-confirmation-dialog/generic-confirmation-dialog.component';
 import { ShortAnswerQuestion } from 'app/entities/quiz/short-answer-question.model';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { ArtemisSharedComponentModule } from 'app/shared/components/shared-component.module';
+import { FormsModule } from '@angular/forms';
+import { ExerciseTitleChannelNameModule } from 'app/exercises/shared/exercise-title-channel-name/exercise-title-channel-name.module';
+import { ArtemisCategorySelectorModule } from 'app/shared/category-selector/category-selector.module';
+import { ArtemisDifficultyPickerModule } from 'app/exercises/shared/difficulty-picker/difficulty-picker.module';
+import { FormDateTimePickerModule } from 'app/shared/date-time-picker/date-time-picker.module';
+import { ArtemisIncludedInOverallScorePickerModule } from 'app/exercises/shared/included-in-overall-score-picker/included-in-overall-score-picker.module';
+import { ArtemisSharedModule } from 'app/shared/shared.module';
+import { QuizQuestionListEditComponent as QuizQuestionListEditComponent_1 } from './quiz-question-list-edit.component';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { JsonPipe, NgClass } from '@angular/common';
+import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 
 @Component({
     selector: 'jhi-quiz-exercise-detail',
@@ -41,6 +54,24 @@ import { ShortAnswerQuestion } from 'app/entities/quiz/short-answer-question.mod
     providers: [DragAndDropQuestionUtil, ShortAnswerQuestionUtil],
     styleUrls: ['./quiz-exercise-update.component.scss', '../shared/quiz.scss'],
     encapsulation: ViewEncapsulation.None,
+    standalone: true,
+    imports: [
+        TranslateDirective,
+        ArtemisSharedComponentModule,
+        FormsModule,
+        ExerciseTitleChannelNameModule,
+        ArtemisCategorySelectorModule,
+        ArtemisDifficultyPickerModule,
+        FormDateTimePickerModule,
+        ArtemisIncludedInOverallScorePickerModule,
+        ArtemisSharedModule,
+        QuizQuestionListEditComponent_1,
+        NgbTooltip,
+        FaIconComponent,
+        NgClass,
+        JsonPipe,
+        ArtemisTranslatePipe,
+    ],
 })
 export class QuizExerciseUpdateComponent extends QuizExerciseValidationDirective implements OnInit, OnChanges, ComponentCanDeactivate {
     @ViewChild('quizQuestionsEdit')
