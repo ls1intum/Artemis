@@ -625,7 +625,7 @@ public class ResultService {
         List<FeedbackDetailDTO> processedDetails;
         int totalPages = 0;
         long totalCount = 0;
-        long groupFeedbackMaxCount = 0;
+        long highestOccurrenceOfGroupedFeedback = 0;
         if (!groupFeedback) {
             feedbackDetailPage = studentParticipationRepository.findFilteredFeedbackByExerciseId(exerciseId,
                     StringUtils.isBlank(data.getSearchTerm()) ? "" : data.getSearchTerm().toLowerCase(), data.getFilterTestCases(), includeUnassignedTasks, minOccurrence,
@@ -646,9 +646,9 @@ public class ResultService {
             List<FeedbackDetailDTO> allFeedbackDetails = feedbackDetailPage.getContent();
 
             // Apply grouping and aggregation with a similarity threshold of 90%
-            List<FeedbackDetailDTO> aggregatedFeedbackDetails = aggregateUsingGroupFeedback(allFeedbackDetails, 0.9);
+            List<FeedbackDetailDTO> aggregatedFeedbackDetails = aggregateUsingGroupFeedback(allFeedbackDetails, 0.5);
 
-            groupFeedbackMaxCount = aggregatedFeedbackDetails.stream().mapToLong(FeedbackDetailDTO::count).max().orElse(0);
+            highestOccurrenceOfGroupedFeedback = aggregatedFeedbackDetails.stream().mapToLong(FeedbackDetailDTO::count).max().orElse(0);
             // Apply manual pagination
             int page = data.getPage();
             int pageSize = data.getPageSize();
@@ -669,7 +669,7 @@ public class ResultService {
 
         // 11. Return response containing processed feedback details, task names, active test case names, and error categories
         return new FeedbackAnalysisResponseDTO(new SearchResultPageDTO<>(processedDetails, totalPages), totalCount, taskNames, activeTestCaseNames, ERROR_CATEGORIES,
-                groupFeedbackMaxCount);
+                highestOccurrenceOfGroupedFeedback);
     }
 
     private Comparator<FeedbackDetailDTO> getComparatorForFeedbackDetails(FeedbackPageableDTO search) {

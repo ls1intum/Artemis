@@ -115,7 +115,7 @@ export class FeedbackAnalysisComponent {
             this.taskNames.set(response.taskNames);
             this.testCaseNames.set(response.testCaseNames);
             this.errorCategories.set(response.errorCategories);
-            this.maxCount.set(response.groupFeedbackMaxCount);
+            this.maxCount.set(response.highestOccurrenceOfGroupedFeedback);
         } catch (error) {
             this.alertService.error(this.TRANSLATION_BASE + '.error');
         } finally {

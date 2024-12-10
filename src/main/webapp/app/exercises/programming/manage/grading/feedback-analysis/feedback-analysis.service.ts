@@ -11,7 +11,7 @@ export interface FeedbackAnalysisResponse {
     taskNames: string[];
     testCaseNames: string[];
     errorCategories: string[];
-    groupFeedbackMaxCount: number;
+    highestOccurrenceOfGroupedFeedback: number;
 }
 export interface FeedbackDetail {
     count: number;
