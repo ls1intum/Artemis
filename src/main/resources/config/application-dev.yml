@@ -141,8 +141,9 @@ theia:
         c:
             C: "ghcr.io/ls1intum/theia/c:latest"
 
-# Telemetry service: disabled for development
 artemis:
+    push-notification-relay: https://hermes-sandbox.artemis.cit.tum.de
+    # Telemetry service: disabled for development
     telemetry:
         enabled: false # Disable sending any telemetry information to the telemetry service by setting this to false
         sendAdminDetails: false # Include the admins email and name in the telemetry data. Set to false to disable

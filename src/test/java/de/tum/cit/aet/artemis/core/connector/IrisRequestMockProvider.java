@@ -1,6 +1,7 @@
 package de.tum.cit.aet.artemis.core.connector;
 
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_IRIS;
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.springframework.test.web.client.match.MockRestRequestMatchers.method;
 import static org.springframework.test.web.client.match.MockRestRequestMatchers.requestTo;
 import static org.springframework.test.web.client.response.MockRestResponseCreators.withRawStatus;
@@ -91,6 +92,38 @@ public class IrisRequestMockProvider {
         mockServer
             .expect(ExpectedCount.once(), requestTo(pipelinesApiURL + "/tutor-chat/default/run"))
             .andExpect(method(HttpMethod.POST))
+            .andRespond(request -> {
+                var mockRequest = (MockClientHttpRequest) request;
+                var dto = mapper.readValue(mockRequest.getBodyAsString(), PyrisExerciseChatPipelineExecutionDTO.class);
+                responseConsumer.accept(dto);
+                return MockRestResponseCreators.withRawStatus(HttpStatus.ACCEPTED.value()).createResponse(request);
+            });
+        // @formatter:on
+    }
+
+    public void mockProgrammingExerciseChatResponseExpectingSubmissionId(Consumer<PyrisExerciseChatPipelineExecutionDTO> responseConsumer, long submissionId) {
+        // @formatter:off
+        mockServer
+            .expect(ExpectedCount.once(), requestTo(pipelinesApiURL + "/tutor-chat/default/run"))
+            .andExpect(method(HttpMethod.POST))
+            .andExpect(request -> {
+                var mockRequest = (MockClientHttpRequest) request;
+                var jsonNode = mapper.readTree(mockRequest.getBodyAsString());
+
+                assertThat(jsonNode.has("submission"))
+                    .withFailMessage("Request body must contain a 'submission' field")
+                    .isTrue();
+                assertThat(jsonNode.get("submission").isObject())
+                    .withFailMessage("The 'submission' field must be an object")
+                    .isTrue();
+                assertThat(jsonNode.get("submission").has("id"))
+                    .withFailMessage("The 'submission' object must contain an 'id' field")
+                    .isTrue();
+                assertThat(jsonNode.get("submission").get("id").asLong())
+                    .withFailMessage("Submission ID in request (%d) does not match expected ID (%d)",
+                        jsonNode.get("submission").get("id").asLong(), submissionId)
+                    .isEqualTo(submissionId);
+            })
             .andRespond(request -> {
                 var mockRequest = (MockClientHttpRequest) request;
                 var dto = mapper.readValue(mockRequest.getBodyAsString(), PyrisExerciseChatPipelineExecutionDTO.class);
