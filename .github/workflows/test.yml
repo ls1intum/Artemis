@@ -104,7 +104,7 @@ jobs:
       uses: actions/upload-artifact@v4
       with:
         name: Coverage Report Server Tests
-        path: build/reports/jacoco/test/html/
+        path: build/reports/jacoco/
     - name: Append Per-Module Coverage to Job Summary
       if: success() || failure()
       run: |
