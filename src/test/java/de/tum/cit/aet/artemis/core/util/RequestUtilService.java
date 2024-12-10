@@ -773,7 +773,7 @@ public class RequestUtilService {
     }
 
     public static ResultMatcher matchFileContents(@org.springframework.lang.Nullable String expectedFilesAsString) {
-        return (result) -> AssertionErrors.assertEquals("Forwarded URL", expectedFilesAsString, result.getResponse().getContentAsString());
+        return (result) -> AssertionErrors.assertEquals("File contents", expectedFilesAsString, result.getResponse().getContentAsString());
     }
 
     public String getRedirectTarget(String path, HttpStatus expectedStatus) throws Exception {
