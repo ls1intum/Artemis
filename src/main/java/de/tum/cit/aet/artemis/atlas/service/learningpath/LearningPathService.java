@@ -37,6 +37,7 @@ import de.tum.cit.aet.artemis.atlas.repository.CompetencyRepository;
 import de.tum.cit.aet.artemis.atlas.repository.CourseCompetencyRepository;
 import de.tum.cit.aet.artemis.atlas.repository.LearningPathRepository;
 import de.tum.cit.aet.artemis.atlas.service.competency.CompetencyProgressService;
+import de.tum.cit.aet.artemis.atlas.service.profile.CourseLearnerProfileService;
 import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.dto.SearchResultPageDTO;
@@ -90,10 +91,13 @@ public class LearningPathService {
 
     private final CourseCompetencyRepository courseCompetencyRepository;
 
+    private final CourseLearnerProfileService courseLearnerProfileService;
+
     public LearningPathService(UserRepository userRepository, LearningPathRepository learningPathRepository, CompetencyProgressRepository competencyProgressRepository,
             LearningPathNavigationService learningPathNavigationService, CourseRepository courseRepository, CompetencyRepository competencyRepository,
             CompetencyRelationRepository competencyRelationRepository, LectureUnitCompletionRepository lectureUnitCompletionRepository,
-            StudentParticipationRepository studentParticipationRepository, CourseCompetencyRepository courseCompetencyRepository) {
+            StudentParticipationRepository studentParticipationRepository, CourseCompetencyRepository courseCompetencyRepository,
+            CourseLearnerProfileService courseLearnerProfileService) {
         this.userRepository = userRepository;
         this.learningPathRepository = learningPathRepository;
         this.competencyProgressRepository = competencyProgressRepository;
@@ -104,6 +108,7 @@ public class LearningPathService {
         this.lectureUnitCompletionRepository = lectureUnitCompletionRepository;
         this.studentParticipationRepository = studentParticipationRepository;
         this.courseCompetencyRepository = courseCompetencyRepository;
+        this.courseLearnerProfileService = courseLearnerProfileService;
     }
 
     /**
@@ -113,7 +118,9 @@ public class LearningPathService {
      */
     public void enableLearningPathsForCourse(@NotNull Course course) {
         course.setLearningPathsEnabled(true);
-        generateLearningPaths(course);
+        Set<User> students = userRepository.getStudentsWithLearnerProfile(course);
+        courseLearnerProfileService.createCourseLearnerProfiles(course, students);
+        generateLearningPaths(course, students);
         courseRepository.save(course);
         log.debug("Enabled learning paths for course (id={})", course.getId());
     }
@@ -124,7 +131,17 @@ public class LearningPathService {
      * @param course course the learning paths are created for
      */
     public void generateLearningPaths(@NotNull Course course) {
-        var students = userRepository.getStudents(course);
+        Set<User> students = userRepository.getStudentsWithLearnerProfile(course);
+        generateLearningPaths(course, students);
+    }
+
+    /**
+     * Generate learning paths for all students enrolled in the course
+     *
+     * @param course   course the learning paths are created for
+     * @param students students for which the learning paths are generated with eager loaded learner profiles
+     */
+    public void generateLearningPaths(@NotNull Course course, Set<User> students) {
         students.forEach(student -> generateLearningPathForUser(course, student));
         log.debug("Successfully created learning paths for all {} students in course (id={})", students.size(), course.getId());
     }

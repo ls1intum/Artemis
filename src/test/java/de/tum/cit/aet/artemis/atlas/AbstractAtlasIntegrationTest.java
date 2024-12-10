@@ -9,6 +9,7 @@ import de.tum.cit.aet.artemis.atlas.competency.util.CompetencyUtilService;
 import de.tum.cit.aet.artemis.atlas.competency.util.PrerequisiteUtilService;
 import de.tum.cit.aet.artemis.atlas.competency.util.StandardizedCompetencyUtilService;
 import de.tum.cit.aet.artemis.atlas.learningpath.util.LearningPathUtilService;
+import de.tum.cit.aet.artemis.atlas.profile.util.LearnerProfileUtilService;
 import de.tum.cit.aet.artemis.atlas.repository.CompetencyJolRepository;
 import de.tum.cit.aet.artemis.atlas.repository.CompetencyRelationRepository;
 import de.tum.cit.aet.artemis.atlas.repository.CompetencyRepository;
@@ -144,6 +145,9 @@ public abstract class AbstractAtlasIntegrationTest extends AbstractSpringIntegra
 
     @Autowired
     protected LearningPathUtilService learningPathUtilService;
+
+    @Autowired
+    protected LearnerProfileUtilService learnerProfileUtilService;
 
     // External Util Services
     @Autowired
