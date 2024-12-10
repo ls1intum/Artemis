@@ -14,17 +14,18 @@ import {
     ViewChild,
     ViewContainerRef,
     input,
+    output,
 } from '@angular/core';
 import { Post } from 'app/entities/metis/post.model';
 import { PostingDirective } from 'app/shared/metis/posting.directive';
 import { MetisService } from 'app/shared/metis/metis.service';
 import { NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
 import { ContextInformation, DisplayPriority, PageType, RouteComponents } from '../metis.util';
-import { faBookmark, faBullhorn, faCheckSquare, faComments, faPencilAlt, faSmile, faThumbtack, faTrash } from '@fortawesome/free-solid-svg-icons';
+import { faBookmark, faBullhorn, faCheckSquare, faComments, faPencilAlt, faShare, faSmile, faThumbtack, faTrash } from '@fortawesome/free-solid-svg-icons';
 import dayjs from 'dayjs/esm';
 import { PostFooterComponent } from 'app/shared/metis/posting-footer/post-footer/post-footer.component';
 import { OneToOneChatService } from 'app/shared/metis/conversations/one-to-one-chat.service';
-import { isCommunicationEnabled, isMessagingEnabled } from 'app/entities/course.model';
+import { Course, isCommunicationEnabled, isMessagingEnabled } from 'app/entities/course.model';
 import { Router } from '@angular/router';
 import { MetisConversationService } from 'app/shared/metis/metis-conversation.service';
 import { getAsChannelDTO } from 'app/entities/metis/conversation/channel.model';
@@ -35,6 +36,8 @@ import { PostCreateEditModalComponent } from 'app/shared/metis/posting-create-ed
 import { PostReactionsBarComponent } from 'app/shared/metis/posting-reactions-bar/post-reactions-bar/post-reactions-bar.component';
 import { CdkOverlayOrigin } from '@angular/cdk/overlay';
 import { DOCUMENT } from '@angular/common';
+import { Posting } from 'app/entities/metis/posting.model';
+import { throwError } from 'rxjs';
 
 @Component({
     selector: 'jhi-post',
@@ -80,6 +83,8 @@ export class PostComponent extends PostingDirective<Post> implements OnInit, OnC
     mayEdit: boolean = false;
     mayDelete: boolean = false;
     canPin: boolean = false;
+    originalPostDetails: Post | AnswerPost | undefined = undefined;
+    readonly onNavigateToPost = output<Posting>();
 
     // Icons
     readonly faBullhorn = faBullhorn;
@@ -90,9 +95,13 @@ export class PostComponent extends PostingDirective<Post> implements OnInit, OnC
     readonly faThumbtack = faThumbtack;
     readonly faCheckSquare = faCheckSquare;
     readonly faBookmark = faBookmark;
+    readonly faShare = faShare;
 
     isConsecutive = input<boolean>(false);
+    forwardedPosts = input<Post[]>([]);
+    forwardedAnswerPosts = input<AnswerPost[]>([]);
     dropdownPosition = { x: 0, y: 0 };
+    course: Course;
     @ViewChild(PostReactionsBarComponent) protected reactionsBarComponent!: PostReactionsBarComponent;
 
     constructor(
@@ -105,6 +114,7 @@ export class PostComponent extends PostingDirective<Post> implements OnInit, OnC
         @Inject(DOCUMENT) private document: Document,
     ) {
         super();
+        this.course = this.metisService.getCourse() ?? throwError('Course not found');
     }
 
     get reactionsBar() {
@@ -192,6 +202,26 @@ export class PostComponent extends PostingDirective<Post> implements OnInit, OnC
         this.isAtLeastTutorInCourse = this.metisService.metisUserIsAtLeastTutorInCourse();
         this.sortAnswerPosts();
         this.assignPostingToPost();
+        this.fetchForwardedMessages();
+    }
+
+    fetchForwardedMessages(): void {
+        if (this.forwardedPosts().length > 0) {
+            const forwardedMessage = this.forwardedPosts()[0];
+
+            if (forwardedMessage) {
+                this.originalPostDetails = forwardedMessage;
+                this.changeDetector.markForCheck();
+            }
+        }
+        if (this.forwardedAnswerPosts().length > 0) {
+            const forwardedMessage = this.forwardedAnswerPosts()[0];
+
+            if (forwardedMessage) {
+                this.originalPostDetails = forwardedMessage;
+                this.changeDetector.markForCheck();
+            }
+        }
     }
 
     /**
@@ -261,13 +291,12 @@ export class PostComponent extends PostingDirective<Post> implements OnInit, OnC
      * @param referencedUserLogin login of the referenced user
      */
     onUserReferenceClicked(referencedUserLogin: string) {
-        const course = this.metisService.getCourse();
-        if (isMessagingEnabled(course)) {
+        if (isMessagingEnabled(this.course)) {
             if (this.isCommunicationPage) {
                 this.metisConversationService.createOneToOneChat(referencedUserLogin).subscribe();
             } else {
-                this.oneToOneChatService.create(course.id!, referencedUserLogin).subscribe((res) => {
-                    this.router.navigate(['courses', course.id, 'communication'], {
+                this.oneToOneChatService.create(this.course.id!, referencedUserLogin).subscribe((res) => {
+                    this.router.navigate(['courses', this.course.id, 'communication'], {
                         queryParams: {
                             conversationId: res.body!.id,
                         },
@@ -303,4 +332,10 @@ export class PostComponent extends PostingDirective<Post> implements OnInit, OnC
             this.posting = Object.assign(new Post(), this.posting);
         }
     }
+
+    protected onTriggerNavigateToPost(post: Posting) {
+        this.onNavigateToPost.emit(post);
+    }
+
+    protected readonly origin = origin;
 }

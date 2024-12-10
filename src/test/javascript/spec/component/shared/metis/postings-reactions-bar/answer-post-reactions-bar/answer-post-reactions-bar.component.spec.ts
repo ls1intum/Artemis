@@ -31,6 +31,8 @@ import { ConfirmIconComponent } from 'app/shared/confirm-icon/confirm-icon.compo
 import { getElement } from '../../../../../helpers/utils/general.utils';
 import { DebugElement } from '@angular/core';
 import { UserRole } from 'app/shared/metis/metis.util';
+import { MetisConversationService } from '../../../../../../../../main/webapp/app/shared/metis/metis-conversation.service';
+import { MockMetisConversationService } from '../../../../../helpers/mocks/service/mock-metis-conversation.service';
 
 describe('AnswerPostReactionsBarComponent', () => {
     let component: AnswerPostReactionsBarComponent;
@@ -67,6 +69,7 @@ describe('AnswerPostReactionsBarComponent', () => {
                 { provide: TranslateService, useClass: MockTranslateService },
                 { provide: Router, useClass: MockRouter },
                 { provide: LocalStorageService, useClass: MockLocalStorageService },
+                { provide: MetisConversationService, useClass: MockMetisConversationService },
             ],
         })
             .compileComponents()
@@ -99,6 +102,10 @@ describe('AnswerPostReactionsBarComponent', () => {
 
     function getEditButton(): DebugElement | null {
         return debugElement.query(By.css('button.reaction-button.clickable.px-2.fs-small.edit'));
+    }
+
+    function getForwardButton(): DebugElement | null {
+        return debugElement.query(By.css('button.reaction-button.clickable.px-2.fs-small.forward'));
     }
 
     function getDeleteButton(): DebugElement | null {
@@ -221,5 +228,18 @@ describe('AnswerPostReactionsBarComponent', () => {
         component.toggleResolvesPost();
         expect(component.posting.resolvesPost).toEqual(!previousState);
         expect(metisServiceUpdateAnswerPostMock).toHaveBeenCalledOnce();
+    });
+
+    it('should display forward button and invoke forwardMessage function when clicked', () => {
+        const forwardMessageSpy = jest.spyOn(component, 'forwardMessage');
+        component.isEmojiCount = false;
+        fixture.detectChanges();
+        const forwardButton = getForwardButton();
+
+        expect(forwardButton).not.toBeNull();
+
+        forwardButton?.nativeElement.click();
+        fixture.detectChanges();
+        expect(forwardMessageSpy).toHaveBeenCalled();
     });
 });

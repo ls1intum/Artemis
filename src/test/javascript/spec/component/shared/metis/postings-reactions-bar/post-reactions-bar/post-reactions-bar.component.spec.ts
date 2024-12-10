@@ -35,6 +35,8 @@ import { User } from 'app/core/user/user.model';
 import { provideHttpClient } from '@angular/common/http';
 import { PostCreateEditModalComponent } from 'app/shared/metis/posting-create-edit-modal/post-create-edit-modal/post-create-edit-modal.component';
 import { ConfirmIconComponent } from 'app/shared/confirm-icon/confirm-icon.component';
+import { MetisConversationService } from '../../../../../../../../main/webapp/app/shared/metis/metis-conversation.service';
+import { MockMetisConversationService } from '../../../../../helpers/mocks/service/mock-metis-conversation.service';
 
 describe('PostReactionsBarComponent', () => {
     let component: PostReactionsBarComponent;
@@ -78,6 +80,7 @@ describe('PostReactionsBarComponent', () => {
                 { provide: TranslateService, useClass: MockTranslateService },
                 { provide: Router, useClass: MockRouter },
                 { provide: LocalStorageService, useClass: MockLocalStorageService },
+                { provide: MetisConversationService, useClass: MockMetisConversationService },
             ],
         })
             .compileComponents()
@@ -113,6 +116,10 @@ describe('PostReactionsBarComponent', () => {
 
     function getEditButton(): DebugElement | null {
         return debugElement.query(By.css('button.reaction-button.clickable.px-2.fs-small.edit'));
+    }
+
+    function getForwardButton(): DebugElement | null {
+        return debugElement.query(By.css('button.reaction-button.clickable.px-2.fs-small.forward'));
     }
 
     function getDeleteButton(): DebugElement | null {
@@ -396,5 +403,19 @@ describe('PostReactionsBarComponent', () => {
 
         expect(showAnswersChangeSpy).toHaveBeenCalledWith(false);
         expect(closePostingCreateEditModalSpy).toHaveBeenCalled();
+    });
+
+    it('should display forward button and invoke forwardMessage function when clicked', () => {
+        const forwardMessageSpy = jest.spyOn(component, 'forwardMessage');
+        component.readOnlyMode = false;
+        component.isEmojiCount = false;
+        fixture.detectChanges();
+        const forwardButton = getForwardButton();
+
+        expect(forwardButton).not.toBeNull();
+
+        forwardButton?.nativeElement.click();
+        fixture.detectChanges();
+        expect(forwardMessageSpy).toHaveBeenCalled();
     });
 });
