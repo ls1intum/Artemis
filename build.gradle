@@ -80,7 +80,7 @@ spotless {
             }
         }
         importOrderFile "artemis-spotless.importorder"
-        eclipse("4.28").configFile "artemis-spotless-style.xml"
+        eclipse("4.33").configFile "artemis-spotless-style.xml"
 
         removeUnusedImports()
         trimTrailingWhitespace()

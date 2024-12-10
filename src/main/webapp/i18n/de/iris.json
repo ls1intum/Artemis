@@ -26,6 +26,7 @@
                 "subSettings": {
                     "chatSettings": "Chat Einstellungen",
                     "textExerciseChatSettings": "Textaufgaben Chat Einstellungen",
+                    "courseChatSettings": "Kurs Chat Einstellungen",
                     "lectureIngestionSettings": {
                         "title": "Vorlesungen Erfassung Einstellungen",
                         "autoIngestOnAttachmentUpload": "Vorlesungen automatisch an Pyris senden"
