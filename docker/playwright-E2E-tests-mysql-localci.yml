@@ -49,8 +49,7 @@ services:
                 condition: service_healthy
         environment:
             PLAYWRIGHT_DB_TYPE: 'MySQL'
-        extra_hosts:
-          - "localhost:host-gateway"
+        network_mode: host
 
 networks:
     artemis:
