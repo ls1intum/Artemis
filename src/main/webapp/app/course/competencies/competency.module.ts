@@ -22,6 +22,7 @@ import { CompetencyManagementTableComponent } from 'app/course/competencies/comp
 import { CompetencySearchComponent } from 'app/course/competencies/import/competency-search.component';
 import { ImportCompetenciesTableComponent } from 'app/course/competencies/import/import-competencies-table.component';
 import { ArtemisMarkdownEditorModule } from 'app/shared/markdown-editor/markdown-editor.module';
+import { IrisLogoButtonComponent } from 'app/iris/iris-logo-button/iris-logo-button.component';
 
 @NgModule({
     imports: [
@@ -41,6 +42,7 @@ import { ArtemisMarkdownEditorModule } from 'app/shared/markdown-editor/markdown
         JudgementOfLearningRatingComponent,
         CompetencyManagementTableComponent,
         ArtemisMarkdownEditorModule,
+        IrisLogoButtonComponent,
     ],
     declarations: [
         CompetencyRingsComponent,

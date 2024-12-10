@@ -32,7 +32,6 @@ import {
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
 import { By } from '@angular/platform-browser';
 import { IrisErrorMessageKey } from 'app/entities/iris/iris-errors.model';
-import { HtmlForMarkdownPipe } from 'app/shared/pipes/html-for-markdown.pipe';
 import { IrisMessage, IrisUserMessage } from 'app/entities/iris/iris-message.model';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 
@@ -61,19 +60,21 @@ describe('IrisBaseChatbotComponent', () => {
             userIdentity: { irisAccepted: dayjs() },
         } as any;
 
+        mockModalService = {
+            open: jest.fn(),
+        } as any;
+
         await TestBed.configureTestingModule({
             imports: [FormsModule, FontAwesomeModule, RouterModule, NoopAnimationsModule],
             declarations: [
                 IrisBaseChatbotComponent,
                 MockPipe(ArtemisTranslatePipe),
-                MockPipe(HtmlForMarkdownPipe),
                 MockDirective(TranslateDirective),
                 MockComponent(ChatStatusBarComponent),
                 MockComponent(IrisLogoComponent),
                 MockComponent(ButtonComponent),
             ],
             providers: [
-                MockProvider(NgbModal),
                 { provide: ActivatedRoute, useValue: {} },
                 { provide: LocalStorageService, useValue: {} },
                 { provide: TranslateService, useValue: {} },
@@ -86,6 +87,11 @@ describe('IrisBaseChatbotComponent', () => {
                 MockProvider(IrisWebsocketService),
             ],
         })
+            .overrideComponent(IrisBaseChatbotComponent, {
+                set: {
+                    providers: [{ provide: NgbModal, useValue: mockModalService }],
+                },
+            })
             .compileComponents()
             .then(() => {
                 jest.spyOn(console, 'error').mockImplementation(() => {});
@@ -97,7 +103,6 @@ describe('IrisBaseChatbotComponent', () => {
                 chatService = TestBed.inject(IrisChatService);
                 httpService = TestBed.inject(IrisChatHttpService) as jest.Mocked<IrisChatHttpService>;
                 wsMock = TestBed.inject(IrisWebsocketService) as jest.Mocked<IrisWebsocketService>;
-                mockModalService = TestBed.inject(NgbModal) as jest.Mocked<NgbModal>;
                 component = fixture.componentInstance;
 
                 fixture.nativeElement.querySelector('.chat-body').scrollTo = jest.fn();

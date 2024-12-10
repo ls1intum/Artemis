@@ -2,14 +2,14 @@
     <div
         class="btn"
         [ngClass]="{ 'btn-success selected': irisSubSettings?.enabled, 'btn-default': !irisSubSettings?.enabled }"
-        [class.disabled]="disabled"
+        [class.disabled]="disabled()"
         (click)="setEnabled(true)"
         jhiTranslate="artemisApp.iris.settings.subSettings.enabled.on"
     ></div>
     <div
         class="btn btn-default"
         [ngClass]="{ 'btn-danger selected': !irisSubSettings?.enabled, 'btn-default': irisSubSettings?.enabled }"
-        [class.disabled]="disabled"
+        [class.disabled]="disabled()"
         (click)="setEnabled(false)"
         jhiTranslate="artemisApp.iris.settings.subSettings.enabled.off"
     ></div>
