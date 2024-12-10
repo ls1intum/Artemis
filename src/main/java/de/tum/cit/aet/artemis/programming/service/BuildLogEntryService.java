@@ -494,6 +494,18 @@ public class BuildLogEntryService {
         return Files.exists(logPath);
     }
 
+    /**
+     * Parses the build log entries from a given file and returns them as a list of {@link BuildLogDTO} objects.
+     *
+     * <p>
+     * The method reads the file line by line and splits each line into a timestamp and a log message.
+     * The timestamp is expected to be separated from the log message by a tab character.
+     * If the timestamp cannot be parsed, the log message is appended to the previous entry.
+     * </p>
+     *
+     * @param buildLog The {@link FileSystemResource} representing the build log file.
+     * @return A list of {@link BuildLogDTO} objects containing the parsed build log entries.
+     */
     public List<BuildLogDTO> parseBuildLogEntries(FileSystemResource buildLog) {
         try {
             List<BuildLogDTO> buildLogEntries = new ArrayList<>();

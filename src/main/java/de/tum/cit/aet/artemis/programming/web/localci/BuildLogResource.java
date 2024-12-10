@@ -56,6 +56,12 @@ public class BuildLogResource {
         return new ResponseEntity<>(buildLog, responseHeaders, HttpStatus.OK);
     }
 
+    /**
+     * GET /build-log/{buildJobId}/entries : get the build log entries for a given result
+     *
+     * @param buildJobId the id of the build job for which to retrieve the build log entries
+     * @return the ResponseEntity with status 200 (OK) and the build log entries in the body, or with status 404 (Not Found) if the build log entries could not be found
+     */
     @GetMapping("build-log/{buildJobId}/entries")
     @EnforceAtLeastEditor
     public ResponseEntity<List<BuildLogDTO>> getBuildLogEntriesForBuildJob(@PathVariable String buildJobId) {
