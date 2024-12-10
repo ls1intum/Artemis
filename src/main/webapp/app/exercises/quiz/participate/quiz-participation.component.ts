@@ -3,7 +3,7 @@ import dayjs from 'dayjs/esm';
 import isMobile from 'ismobilejs-es5';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { Subscription, combineLatest, of, take } from 'rxjs';
-import { ActivatedRoute } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 import { AlertService, AlertType } from 'app/core/util/alert.service';
 import { ParticipationService } from 'app/exercises/shared/participation/participation.service';
 import { Result } from 'app/entities/result.model';
@@ -106,6 +106,7 @@ export class QuizParticipationComponent implements OnInit, OnDestroy {
     password = '';
     previousRunning = false;
     isMobile = false;
+    isManagementView = false;
 
     /**
      * Websocket channels
@@ -132,6 +133,7 @@ export class QuizParticipationComponent implements OnInit, OnDestroy {
         private quizExerciseService: QuizExerciseService,
         private participationService: ParticipationService,
         private route: ActivatedRoute,
+        private router: Router,
         private alertService: AlertService,
         private quizParticipationService: QuizParticipationService,
         private translateService: TranslateService,
@@ -171,6 +173,7 @@ export class QuizParticipationComponent implements OnInit, OnDestroy {
             this.updateDisplayedTimes();
             this.checkForQuizEnd();
         }, UI_RELOAD_TIME);
+        this.isManagementView = this.router.url.startsWith('/course-management');
     }
 
     ngOnDestroy() {

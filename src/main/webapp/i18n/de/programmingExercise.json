@@ -754,6 +754,19 @@
                 "pushExercise": "Lade den Aufgaben-Code in das entsprechende Repository. Es wird in <code>{{checkoutDirectory}}</code> ausgecheckt.",
                 "pushSolution": "Lade den Lösungs-Code in das entsprechende Repository. Es wird nicht ausgecheckt.",
                 "pushTest": "Lade den Test-Code in das entsprechende Repository. Es wird in <code>{{checkoutDirectory}}</code> ausgecheckt."
+            },
+            "dockerFlags": {
+                "disableNetworkAccess": {
+                    "title": "Deaktiviere den Internetzugang beim beim Ausführen der Studierendeneinreichung",
+                    "description": "Aktiviere diese Option, um den Netzwerkzugang für Container zu deaktivieren. Das Netzwerk wird beim Ausführen der Studierendeneinreichung deaktiviert.",
+                    "warning": "Wenn der Internetzugang deaktiviert ist, müssen alle Abhängigkeiten im Docker-Image enthalten oder darin zwischengespeichert sein. Andernfalls schlägt der Build fehl."
+                },
+                "envVars": {
+                    "title": "Umgebungsvariablen",
+                    "description": "Umgebungsvariablen zum Docker-Container hinzufügen. Jeder Schlüssel und Wert sollte nicht länger als 1000 Zeichen sein.",
+                    "addEnvVar": "Umgebungsvariable hinzufügen",
+                    "removeEnvVar": "Entfernen"
+                }
             }
         },
         "error": {

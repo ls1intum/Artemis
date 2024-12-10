@@ -18,10 +18,10 @@ import org.junit.jupiter.api.parallel.ResourceLock;
 import org.mockito.Mockito;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.boot.test.mock.mockito.SpyBean;
 import org.springframework.http.HttpStatus;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.TestPropertySource;
+import org.springframework.test.context.bean.override.mockito.MockitoSpyBean;
 
 import de.tum.cit.aet.artemis.communication.service.notifications.GroupNotificationScheduleService;
 import de.tum.cit.aet.artemis.core.domain.Course;
@@ -48,16 +48,16 @@ public abstract class AbstractSpringIntegrationIndependentTest extends AbstractA
 
     private static final Logger log = LoggerFactory.getLogger(AbstractSpringIntegrationIndependentTest.class);
 
-    @SpyBean
+    @MockitoSpyBean
     protected OAuth2JWKSService oAuth2JWKSService;
 
-    @SpyBean
+    @MockitoSpyBean
     protected LtiPlatformConfigurationTestRepository ltiPlatformConfigurationRepository;
 
-    @SpyBean
+    @MockitoSpyBean
     protected ExamLiveEventsService examLiveEventsService;
 
-    @SpyBean
+    @MockitoSpyBean
     protected GroupNotificationScheduleService groupNotificationScheduleService;
 
     @AfterEach

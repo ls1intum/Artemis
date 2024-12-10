@@ -86,6 +86,8 @@ class GitServiceTest extends AbstractProgrammingIntegrationIndependentTest {
         gitUtilService.deleteRepo(GitUtilService.REPOS.LOCAL);
         gitUtilService.reinitializeLocalRepository();
         try (var repo = gitService.getOrCheckoutRepository(repoUri, true)) {
+            assertThat(repo).isNotNull();
+            assertThat(repo.getRemoteRepositoryUri()).isEqualTo(repoUri);
             assertThat(gitUtilService.isLocalEqualToRemote()).isTrue();
         }
     }
@@ -125,6 +127,7 @@ class GitServiceTest extends AbstractProgrammingIntegrationIndependentTest {
         if (withUri) {
             var uri = gitUtilService.getRepoUriByType(GitUtilService.REPOS.LOCAL);
             try (var repo = gitService.checkoutRepositoryAtCommit(uri, commitHash, true)) {
+                assertThat(repo).isNotNull();
             }
         }
         else {

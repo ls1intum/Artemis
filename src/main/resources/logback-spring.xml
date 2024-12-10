@@ -12,6 +12,9 @@
     <include resource="org/springframework/boot/logging/logback/defaults.xml"/>
     <include resource="org/springframework/boot/logging/logback/console-appender.xml" />
 
+    <!-- Add the custom filter -->
+    <turboFilter class="de.tum.cit.aet.artemis.core.config.StompErrorLogFilter" />
+
     <!-- The FILE and ASYNC appenders are here as examples for a production configuration -->
     <!--
     <include resource="org/springframework/boot/logging/logback/file-appender.xml" />

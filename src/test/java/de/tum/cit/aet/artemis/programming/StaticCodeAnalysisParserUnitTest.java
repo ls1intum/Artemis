@@ -75,12 +75,12 @@ class StaticCodeAnalysisParserUnitTest {
     }
 
     @Test
-    void testParseInvalidXML() throws IOException {
+    void testParseInvalidXML() {
         assertThatCode(() -> testParserWithFileNamed("invalid_xml.xml", "pmd.xml", "invalid_xml.txt")).isInstanceOf(RuntimeException.class);
     }
 
     @Test
-    void testInvalidName() throws IOException {
+    void testInvalidName() {
         assertThatCode(() -> testParserWithFile("invalid_name.xml", "invalid_name.txt")).isInstanceOf(UnsupportedToolException.class);
     }
 }

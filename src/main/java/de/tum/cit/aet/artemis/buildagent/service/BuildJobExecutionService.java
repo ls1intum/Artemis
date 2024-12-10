@@ -232,10 +232,18 @@ public class BuildJobExecutionService {
             index++;
         }
 
-        CreateContainerResponse container = buildJobContainerService.configureContainer(containerName, buildJob.buildConfig().dockerImage(), buildJob.buildConfig().buildScript());
+        List<String> envVars = null;
+        boolean isNetworkDisabled = false;
+        if (buildJob.buildConfig().dockerRunConfig() != null) {
+            envVars = buildJob.buildConfig().dockerRunConfig().env();
+            isNetworkDisabled = buildJob.buildConfig().dockerRunConfig().isNetworkDisabled();
+        }
+
+        CreateContainerResponse container = buildJobContainerService.configureContainer(containerName, buildJob.buildConfig().dockerImage(), buildJob.buildConfig().buildScript(),
+                envVars);
 
         return runScriptAndParseResults(buildJob, containerName, container.getId(), assignmentRepoUri, testsRepoUri, solutionRepoUri, auxiliaryRepositoriesUris,
-                assignmentRepositoryPath, testsRepositoryPath, solutionRepositoryPath, auxiliaryRepositoriesPaths, assignmentCommitHash, testCommitHash);
+                assignmentRepositoryPath, testsRepositoryPath, solutionRepositoryPath, auxiliaryRepositoriesPaths, assignmentCommitHash, testCommitHash, isNetworkDisabled);
     }
 
     /**
@@ -270,7 +278,7 @@ public class BuildJobExecutionService {
     private BuildResult runScriptAndParseResults(BuildJobQueueItem buildJob, String containerName, String containerId, VcsRepositoryUri assignmentRepositoryUri,
             VcsRepositoryUri testRepositoryUri, VcsRepositoryUri solutionRepositoryUri, VcsRepositoryUri[] auxiliaryRepositoriesUris, Path assignmentRepositoryPath,
             Path testsRepositoryPath, Path solutionRepositoryPath, Path[] auxiliaryRepositoriesPaths, @Nullable String assignmentRepoCommitHash,
-            @Nullable String testRepoCommitHash) {
+            @Nullable String testRepoCommitHash, boolean isNetworkDisabled) {
 
         long timeNanoStart = System.nanoTime();
 
@@ -292,7 +300,7 @@ public class BuildJobExecutionService {
         buildLogsMap.appendBuildLogEntry(buildJob.id(), msg);
         log.debug(msg);
 
-        buildJobContainerService.runScriptInContainer(containerId, buildJob.id());
+        buildJobContainerService.runScriptInContainer(containerId, buildJob.id(), isNetworkDisabled);
 
         msg = "~~~~~~~~~~~~~~~~~~~~ Finished Executing Build Script for Build job " + buildJob.id() + " ~~~~~~~~~~~~~~~~~~~~";
         buildLogsMap.appendBuildLogEntry(buildJob.id(), msg);
@@ -300,9 +308,17 @@ public class BuildJobExecutionService {
 
         ZonedDateTime buildCompletedDate = ZonedDateTime.now();
 
+        msg = "~~~~~~~~~~~~~~~~~~~~ Moving test results to specified directory for build job " + buildJob.id() + " ~~~~~~~~~~~~~~~~~~~~";
+        buildLogsMap.appendBuildLogEntry(buildJob.id(), msg);
+        log.debug(msg);
+
         buildJobContainerService.moveResultsToSpecifiedDirectory(containerId, buildJob.buildConfig().resultPaths(), LOCALCI_WORKING_DIRECTORY + LOCALCI_RESULTS_DIRECTORY);
 
         // Get an input stream of the test result files.
+
+        msg = "~~~~~~~~~~~~~~~~~~~~ Collecting test results from container " + containerId + " for build job " + buildJob.id() + " ~~~~~~~~~~~~~~~~~~~~";
+        buildLogsMap.appendBuildLogEntry(buildJob.id(), msg);
+        log.info(msg);
 
         TarArchiveInputStream testResultsTarInputStream;
 
@@ -341,6 +357,10 @@ public class BuildJobExecutionService {
             }
         }
 
+        msg = "~~~~~~~~~~~~~~~~~~~~ Parsing test results for build job " + buildJob.id() + " ~~~~~~~~~~~~~~~~~~~~";
+        buildLogsMap.appendBuildLogEntry(buildJob.id(), msg);
+        log.info(msg);
+
         BuildResult buildResult;
         try {
             buildResult = parseTestResults(testResultsTarInputStream, buildJob.buildConfig().branch(), assignmentRepoCommitHash, testRepoCommitHash, buildCompletedDate,
@@ -354,7 +374,7 @@ public class BuildJobExecutionService {
         }
 
         msg = "Building and testing submission for repository " + assignmentRepositoryUri.repositorySlug() + " and commit hash " + assignmentRepoCommitHash + " took "
-                + TimeLogUtil.formatDurationFrom(timeNanoStart);
+                + TimeLogUtil.formatDurationFrom(timeNanoStart) + " for build job " + buildJob.id();
         buildLogsMap.appendBuildLogEntry(buildJob.id(), msg);
         log.info(msg);
 

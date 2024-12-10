@@ -16,6 +16,16 @@ export const routes: Routes = [
         canActivate: [UserRouteAccessService],
         canDeactivate: [PendingChangesGuard],
     },
+    {
+        path: 'participate/:participationId/submission/:submissionId',
+        component: ModelingSubmissionComponent,
+        data: {
+            authorities: [Authority.USER],
+            pageTitle: 'artemisApp.modelingExercise.home.title',
+        },
+        canActivate: [UserRouteAccessService],
+        canDeactivate: [PendingChangesGuard],
+    },
 ];
 
 @NgModule({

@@ -1,7 +1,5 @@
 package de.tum.cit.aet.artemis.athena.dto;
 
-import java.util.List;
-
 import jakarta.validation.constraints.NotNull;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
@@ -13,7 +11,7 @@ import de.tum.cit.aet.artemis.assessment.domain.Feedback;
  */
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public record ModelingFeedbackDTO(long id, long exerciseId, long submissionId, String title, String description, double credits, Long structuredGradingInstructionId,
-        List<String> elementIds) implements FeedbackBaseDTO {
+        String reference) implements FeedbackBaseDTO {
 
     /**
      * Creates a ModelingFeedbackDTO from a Feedback object
@@ -30,6 +28,6 @@ public record ModelingFeedbackDTO(long id, long exerciseId, long submissionId, S
         }
 
         return new ModelingFeedbackDTO(feedback.getId(), exerciseId, submissionId, feedback.getText(), feedback.getDetailText(), feedback.getCredits(), gradingInstructionId,
-                List.of(feedback.getReference()));
+                feedback.getReference());
     }
 }

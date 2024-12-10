@@ -43,7 +43,7 @@ class JenkinsJobServiceTest extends AbstractProgrammingIntegrationJenkinsGitlabT
     @BeforeEach
     void initTestCase() throws Exception {
         userUtilService.addUsers(TEST_PREFIX, 1, 0, 0, 0);
-        jenkinsRequestMockProvider.enableMockingOfRequests(jenkinsServer);
+        jenkinsRequestMockProvider.enableMockingOfRequests(jenkinsServer, jenkinsJobPermissionsService);
         gitlabRequestMockProvider.enableMockingOfRequests();
         // create the document before the mock so that it still works correctly
         invalidDocument = createEmptyDOMDocument();

@@ -22,12 +22,10 @@ import java.util.Set;
 
 import org.apache.http.client.HttpResponseException;
 import org.hamcrest.Matchers;
-import org.mockito.InjectMocks;
 import org.mockito.MockitoAnnotations;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.boot.test.mock.mockito.SpyBean;
 import org.springframework.context.annotation.Profile;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
@@ -70,12 +68,10 @@ public class JenkinsRequestMockProvider {
 
     private MockRestServiceServer shortTimeoutMockServer;
 
-    @SpyBean
-    @InjectMocks
+    // will be assigned in enableMockingOfRequests(), can be used like a MockitoSpyBean
     private JenkinsServer jenkinsServer;
 
-    @SpyBean
-    @InjectMocks
+    // will be assigned in enableMockingOfRequests(), can be used like a MockitoSpyBean
     private JenkinsJobPermissionsService jenkinsJobPermissionsService;
 
     @Autowired
@@ -98,10 +94,11 @@ public class JenkinsRequestMockProvider {
         this.shortTimeoutRestTemplate.setInterceptors(List.of());
     }
 
-    public void enableMockingOfRequests(JenkinsServer jenkinsServer) {
+    public void enableMockingOfRequests(JenkinsServer jenkinsServer, JenkinsJobPermissionsService jenkinsJobPermissionsService) {
         mockServer = MockRestServiceServer.bindTo(restTemplate).ignoreExpectOrder(true).bufferContent().build();
         shortTimeoutMockServer = MockRestServiceServer.bindTo(shortTimeoutRestTemplate).ignoreExpectOrder(true).bufferContent().build();
         this.jenkinsServer = jenkinsServer;
+        this.jenkinsJobPermissionsService = jenkinsJobPermissionsService;
         closeable = MockitoAnnotations.openMocks(this);
     }
 

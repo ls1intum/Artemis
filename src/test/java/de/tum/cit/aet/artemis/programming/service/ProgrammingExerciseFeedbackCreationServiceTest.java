@@ -200,7 +200,7 @@ class ProgrammingExerciseFeedbackCreationServiceTest extends AbstractProgramming
                 \tat de.tum.in.test.api.internal.TimeoutUtils.generateTimeoutFailure(TimeoutUtils.java:79)
                 \tat de.tum.in.test.api.internal.TimeoutUtils.executeWithTimeout(TimeoutUtils.java:72)
                 \tat de.tum.in.test.api.internal.TimeoutUtils.performTimeoutExecution(TimeoutUtils.java:42)
-                    """;
+                """;
         String actualFeedback = createFeedbackFromTestCase("test1", List.of(msgWithStackTrace), false);
         assertThat(actualFeedback)
                 .isEqualTo("The test case execution timed out. This indicates issues in your code such as endless loops, issues with recursion or really slow performance. "

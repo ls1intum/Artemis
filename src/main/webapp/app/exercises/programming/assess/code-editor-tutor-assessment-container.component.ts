@@ -29,11 +29,11 @@ import { DiffMatchPatch } from 'diff-match-patch-typescript';
 import { ProgrammingExerciseService } from 'app/exercises/programming/manage/services/programming-exercise.service';
 import { TemplateProgrammingExerciseParticipation } from 'app/entities/participation/template-programming-exercise-participation.model';
 import { getPositiveAndCappedTotalScore, getTotalMaxPoints } from 'app/exercises/shared/exercise/exercise.utils';
-import { getExerciseDashboardLink, getLinkToSubmissionAssessment } from 'app/utils/navigation.utils';
+import { getExerciseDashboardLink, getLinkToSubmissionAssessment, getLocalRepositoryLink } from 'app/utils/navigation.utils';
 import { SubmissionType, getLatestSubmissionResult } from 'app/entities/submission.model';
 import { isAllowedToModifyFeedback } from 'app/assessment/assessment.service';
 import { breakCircularResultBackReferences } from 'app/exercises/shared/result/result.utils';
-import { faTimesCircle } from '@fortawesome/free-solid-svg-icons';
+import { faExternalLink, faTimesCircle } from '@fortawesome/free-solid-svg-icons';
 import { cloneDeep } from 'lodash-es';
 import { AssessmentAfterComplaint } from 'app/complaints/complaints-for-tutor/complaints-for-tutor.component';
 import { PROFILE_LOCALVC } from 'app/app.constants';
@@ -84,10 +84,12 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
     exerciseId: number;
     exerciseGroupId: number;
     exerciseDashboardLink: string[];
+    localRepositoryLink: string[];
     loadingInitialSubmission = true;
     highlightDifferences = false;
 
     localVCEnabled = false;
+    isAtLeastEditor = false;
 
     unreferencedFeedback: Feedback[] = [];
     referencedFeedback: Feedback[] = [];
@@ -111,6 +113,7 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
 
     // Icons
     faTimesCircle = faTimesCircle;
+    faExternalLink = faExternalLink;
 
     /**
      * Get all feedback suggestions without a reference. They will be shown in cards below the build output.
@@ -187,6 +190,7 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
                         const programmingExercise = response.body!;
                         this.templateParticipation = programmingExercise.templateParticipation!;
                         this.exercise.gradingCriteria = programmingExercise.gradingCriteria;
+                        this.isAtLeastEditor = !!this.exercise.isAtLeastEditor;
                     }),
                     switchMap(() => {
                         // Get all files with content from template repository
@@ -194,6 +198,7 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
                         const observable = this.repositoryFileService.getFilesWithContent();
                         // Set back to student participation
                         this.domainService.setDomain([DomainType.PARTICIPATION, this.participation]);
+                        this.localRepositoryLink = getLocalRepositoryLink(this.courseId, this.exerciseId, this.participation.id!, this.exerciseGroupId, this.examId);
                         return observable;
                     }),
                     tap((templateFilesObj) => {

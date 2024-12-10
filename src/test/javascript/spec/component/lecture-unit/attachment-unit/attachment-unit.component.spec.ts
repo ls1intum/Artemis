@@ -82,7 +82,7 @@ describe('AttachmentUnitComponent', () => {
     });
 
     it('should handle download', () => {
-        const downloadFileSpy = jest.spyOn(fileService, 'downloadFile');
+        const downloadFileSpy = jest.spyOn(fileService, 'downloadFileByAttachmentName');
         const onCompletionEmitSpy = jest.spyOn(component.onCompletion, 'emit');
 
         fixture.detectChanges();
@@ -113,7 +113,7 @@ describe('AttachmentUnitComponent', () => {
     });
 
     it('should download attachment when clicked', () => {
-        const downloadFileSpy = jest.spyOn(fileService, 'downloadFile');
+        const downloadFileSpy = jest.spyOn(fileService, 'downloadFileByAttachmentName');
 
         fixture.detectChanges();
 

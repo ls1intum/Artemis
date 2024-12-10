@@ -97,6 +97,9 @@
         "courseTitleTooLong": "The course title is too long (max. 255 characters). Please choose a shorter title.",
         "notAllowedInExam": "This operation is not allowed in an exam.",
         "profilePictureFilesizeTooBig": "The file size of your image is too big, please upload a smaller one.",
-        "profilePictureFileFormatNotSupported": "The file format is not supported, please make sure to upload a .png or .jpg file."
+        "profilePictureFileFormatNotSupported": "The file format is not supported, please make sure to upload a .png or .jpg file.",
+        "envVariablesTooLong": "The environment variables are too long. Please make sure that each key or value does not exceed 1000 characters.",
+        "networkAccessNotSupported": "Disabling network access is not supported for the selected programming language.",
+        "dockerFlagsParsingError": "Error while parsing the docker flags."
     }
 }

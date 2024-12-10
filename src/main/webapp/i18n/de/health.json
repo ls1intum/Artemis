@@ -28,7 +28,9 @@
             "websocketBroker": "Websocket Broker (Server -> Broker)",
             "athena": "Athena",
             "apollon": "Apollon Conversion Server",
-            "pyris": "Pyris"
+            "pyris": "Pyris",
+            "ssl": "SSL",
+            "hermes": "Hermes Push Notifications"
         },
         "table": {
             "service": "Dienst Name",

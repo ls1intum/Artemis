@@ -1,7 +1,7 @@
 import { faListUl } from '@fortawesome/free-solid-svg-icons';
 import { ListAction } from './list.action';
 
-const BULLET_PREFIX = '•  ';
+const BULLET_PREFIX = '- ';
 
 /**
  * Action used to add or modify a bullet-point list in the text editor.

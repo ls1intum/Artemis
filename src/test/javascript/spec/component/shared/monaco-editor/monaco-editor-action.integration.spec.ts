@@ -138,7 +138,7 @@ describe('MonacoEditorActionIntegration', () => {
         const action = new OrderedListAction();
         comp.registerAction(action);
         action.executeInCurrentEditor();
-        expect(comp.getText()).toBe('1.  ');
+        expect(comp.getText()).toBe('1. ');
     });
 
     it.each([1, 2, 3])('Should toggle heading %i on selected line', (headingLevel) => {
