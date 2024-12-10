@@ -49,6 +49,7 @@ export class LectureAttachmentsComponent implements OnDestroy {
 
     lectureId = input<number>();
     showHeader = input<boolean>(true);
+    redirectToLecturePage = input<boolean>(true);
 
     lecture = signal<Lecture>(new Lecture());
     attachments: Attachment[] = [];
@@ -78,7 +79,9 @@ export class LectureAttachmentsComponent implements OnDestroy {
     });
 
     private readonly statusChanges = toSignal(this.form.statusChanges ?? 'INVALID');
-    isFormValid = computed(() => this.statusChanges() === 'VALID' && this.isFileSelectionValid() && this.datePickerComponent()?.isValid());
+    isFormValid = computed(
+        () => !this.attachmentToBeUpdatedOrCreated() || (this.statusChanges() === 'VALID' && this.isFileSelectionValid() && this.datePickerComponent()?.isValid()),
+    );
 
     constructor() {
         effect(

@@ -89,13 +89,15 @@ export class LectureUnitManagementComponent implements OnInit, OnDestroy {
         });
 
         this.updateOrderSubject = new Subject();
-        this.activatedRoute.parent!.params.subscribe((params) => {
-            this.lectureId ??= +params['lectureId'];
-            if (this.lectureId) {
-                // TODO: the lecture (without units) is already available through the lecture.route.ts resolver, it's not really good that we load it twice
-                this.loadData();
-            }
-        });
+        if (this.activatedRoute?.parent?.params) {
+            this.activatedRoute.parent.params.subscribe((params) => {
+                this.lectureId ??= +params['lectureId'];
+                if (this.lectureId) {
+                    // TODO: the lecture (without units) is already available through the lecture.route.ts resolver, it's not really good that we load it twice
+                    this.loadData();
+                }
+            });
+        }
 
         // debounceTime limits the amount of put requests sent for updating the lecture unit order
         this.updateOrderSubjectSubscription = this.updateOrderSubject.pipe(debounceTime(1000)).subscribe(() => {
