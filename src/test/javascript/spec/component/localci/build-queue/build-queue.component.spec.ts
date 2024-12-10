@@ -19,6 +19,7 @@ import { LocalStorageService } from 'ngx-webstorage';
 import { MockLocalStorageService } from '../../../helpers/mocks/service/mock-local-storage.service';
 import { ArtemisSharedComponentModule } from 'app/shared/components/shared-component.module';
 import { PieChartModule } from '@swimlane/ngx-charts';
+import { BuildLogEntry } from '../../../../../../main/webapp/app/entities/programming/build-log.model';
 
 describe('BuildQueueComponent', () => {
     let component: BuildQueueComponent;
@@ -40,6 +41,7 @@ describe('BuildQueueComponent', () => {
         getFinishedBuildJobs: jest.fn(),
         getBuildJobStatistics: jest.fn(),
         getBuildJobStatisticsForCourse: jest.fn(),
+        getBuildJobLogs: jest.fn(),
     };
 
     const mockLocalStorageService = new MockLocalStorageService();
@@ -270,6 +272,17 @@ describe('BuildQueueComponent', () => {
         areDurationFiltersValid: true,
         numberOfAppliedFilters: 0,
     };
+
+    const buildLogEntries: BuildLogEntry[] = [
+        {
+            time: dayjs('2024-01-01'),
+            log: 'log1',
+        },
+        {
+            time: dayjs('2024-01-02'),
+            log: 'log2',
+        },
+    ];
 
     beforeEach(waitForAsync(() => {
         mockActivatedRoute = { params: of({ courseId: testCourseId }) };
@@ -664,5 +677,21 @@ describe('BuildQueueComponent', () => {
 
         expect(component.finishedBuildJobFilter.areDatesValid).toBeFalsy();
         expect(component.finishedBuildJobFilter.areDurationFiltersValid).toBeFalsy();
+    });
+
+    it('should download build logs', () => {
+        const buildJobId = '1';
+        jest.spyOn(window, 'open').mockImplementation();
+
+        mockBuildQueueService.getBuildJobLogs = jest.fn().mockReturnValue(of(buildLogEntries));
+
+        component.viewBuildLogs(undefined, buildJobId);
+
+        expect(mockBuildQueueService.getBuildJobLogs).toHaveBeenCalledWith(buildJobId);
+        expect(component.rawBuildLogs).toEqual(buildLogEntries);
+
+        component.downloadBuildLogs();
+
+        expect(window.open).toHaveBeenCalledWith(`/api/build-log/${component.displayedBuildJobId}`, '_blank');
     });
 });

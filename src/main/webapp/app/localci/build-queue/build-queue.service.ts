@@ -197,7 +197,7 @@ export class BuildQueueService {
     getBuildJobLogs(buildJobId: string): Observable<BuildLogEntry[]> {
         return this.http.get<BuildLogEntry[]>(`${this.resourceUrl}/build-log/${buildJobId}/entries`).pipe(
             catchError((err) => {
-                return throwError(() => new Error(`Failed to get build logs for build job ${buildJobId}\n${err.message}`));
+                return throwError(() => new Error(`Failed to get build log entries for build job ${buildJobId}\n${err.message}`));
             }),
         );
     }

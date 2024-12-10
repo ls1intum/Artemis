@@ -509,9 +509,6 @@ public class BuildLogEntryService {
                             log.warn("Failed to parse build log entry time: {}", parts[0]);
                         }
                     }
-                    else if (parts.length == 1 && !parts[0].isBlank()) {
-                        buildLogEntries.add(new BuildLogEntry(null, parts[0]));
-                    }
                 }
             }
             return buildLogEntries;

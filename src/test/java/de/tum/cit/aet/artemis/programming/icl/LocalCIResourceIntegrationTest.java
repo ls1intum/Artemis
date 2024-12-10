@@ -9,6 +9,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.List;
 
 import org.junit.jupiter.api.AfterEach;
@@ -336,6 +337,30 @@ class LocalCIResourceIntegrationTest extends AbstractProgrammingIntegrationLocal
             buildLogEntryService.saveBuildLogsToFile(List.of(buildLogEntry), "6", programmingExercise);
             var response = request.get("/api/build-log/6", HttpStatus.OK, String.class);
             assertThat(response).contains("Dummy log");
+        }
+        finally {
+            Path buildLogFile = Path.of("build-logs").resolve(programmingExercise.getCourseViaExerciseGroupOrCourseMember().getShortName())
+                    .resolve(programmingExercise.getShortName()).resolve("6.log");
+            Files.deleteIfExists(buildLogFile);
+        }
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testGetBuildLogsEntriesForResult() throws Exception {
+        try {
+            buildJobRepository.save(finishedJobForLogs);
+            BuildLogEntry buildLogEntry = new BuildLogEntry(ZonedDateTime.now(), "Dummy log");
+            buildLogEntryService.saveBuildLogsToFile(List.of(buildLogEntry), "6", programmingExercise);
+            var response = request.get("/api/build-log/6/entries", HttpStatus.OK, List.class);
+
+            LinkedHashMap<?, ?> responseMap = ((LinkedHashMap<?, ?>) response.getFirst());
+            String log = responseMap.get("log").toString();
+            String time = responseMap.get("time").toString();
+            assertThat(response).hasSize(1);
+            assertThat(buildLogEntry.getLog()).isEqualTo(log);
+            assertThat(buildLogEntry.getTime().toString()).contains(time);
+
         }
         finally {
             Path buildLogFile = Path.of("build-logs").resolve(programmingExercise.getCourseViaExerciseGroupOrCourseMember().getShortName())
