@@ -2304,6 +2304,7 @@ public class ProgrammingExerciseIntegrationTestService {
 
         var savedExercise = programmingExerciseRepository.findByIdWithTemplateAndSolutionParticipationElseThrow(programmingExercise.getId());
 
+        // We expect an URL which is the endpoint, with which the file contents can be retrieved
         request.getWithForwardedUrl("/api/programming-exercises/" + programmingExercise.getId() + "/file-names", HttpStatus.OK,
                 "/api/repository/" + savedExercise.getSolutionParticipation().getId() + "/file-names");
     }
@@ -2348,8 +2349,10 @@ public class ProgrammingExerciseIntegrationTestService {
     private void testRedirectGetParticipationRepositoryFilesWithContentAtCommit(BiFunction<ProgrammingExercise, Map<String, String>, ProgrammingSubmission> setupRepositoryMock)
             throws Exception {
         var submission = setupRepositoryMock.apply(programmingExercise, Map.ofEntries(Map.entry("A.java", "abc"), Map.entry("B.java", "cde"), Map.entry("C.java", "efg")));
+        String filesWithContentsAsJson = "{\n" + "  \"C.java\" : \"efg\",\n" + "  \"B.java\" : \"cde\",\n" + "  \"A.java\" : \"abc\"\n" + "}";
 
-        request.getWithForwardedUrl("/api/programming-exercise-participations/" + participation1.getId() + "/files-content/" + submission.getCommitHash(), HttpStatus.OK, null);
+        request.getWithFileContents("/api/programming-exercise-participations/" + participation1.getId() + "/files-content/" + submission.getCommitHash(), HttpStatus.OK,
+                filesWithContentsAsJson);
     }
 
     void testRedirectGetParticipationRepositoryFilesWithContentAtCommitForbidden(String testPrefix) throws Exception {
@@ -2371,9 +2374,8 @@ public class ProgrammingExerciseIntegrationTestService {
     private void testRedirectGetParticipationRepositoryFilesWithContentAtCommitForbidden(
             BiFunction<ProgrammingExercise, Map<String, String>, ProgrammingSubmission> setupRepositoryMock) throws Exception {
         var submission = setupRepositoryMock.apply(programmingExercise, Map.ofEntries(Map.entry("A.java", "abc"), Map.entry("B.java", "cde"), Map.entry("C.java", "efg")));
-        // without forwarding the redirectUrl is null
-        request.getWithForwardedUrl("/api/programming-exercise-participations/" + participation1.getId() + "/files-content/" + submission.getCommitHash(), HttpStatus.FORBIDDEN,
-                null);
+
+        request.getWithFileContents("/api/programming-exercise-participations/" + participation1.getId() + "/files-content/" + submission.getCommitHash(), HttpStatus.FORBIDDEN);
     }
 
     private long getMaxProgrammingExerciseId() {
