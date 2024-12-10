@@ -824,6 +824,47 @@ class ResultServiceIntegrationTest extends AbstractSpringIntegrationLocalCILocal
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testGetAllFeedbackDetailsForExerciseWithLevenshteinAndMultipleSimilarFeedback() throws Exception {
+        Result result1 = participationUtilService.addResultToParticipation(AssessmentType.AUTOMATIC, null, this.programmingExerciseStudentParticipation);
+        Result result2 = participationUtilService.addResultToParticipation(AssessmentType.AUTOMATIC, null, this.programmingExerciseStudentParticipation2);
+        ProgrammingExerciseTestCase testCase = programmingExerciseUtilService.addTestCaseToProgrammingExercise(programmingExercise, "test1");
+        testCase.setId(1L);
+
+        Feedback feedback1 = new Feedback();
+        feedback1.setPositive(false);
+        feedback1.setDetailText("Some feedback");
+        feedback1.setTestCase(testCase);
+        participationUtilService.addFeedbackToResult(feedback1, result1);
+
+        Feedback feedback2 = new Feedback();
+        feedback2.setPositive(false);
+        feedback2.setDetailText("Some feedbacks");
+        feedback2.setTestCase(testCase);
+        participationUtilService.addFeedbackToResult(feedback2, result2);
+
+        String url = "/api/exercises/" + programmingExercise.getId() + "/feedback-details" + "?page=1&pageSize=10&sortedColumn=count&sortingOrder=ASCENDING"
+                + "&searchTerm=&filterTasks=&filterTestCases=&filterOccurrence=&filterErrorCategories=&levenshtein=true";
+
+        FeedbackAnalysisResponseDTO response = request.get(url, HttpStatus.OK, FeedbackAnalysisResponseDTO.class);
+
+        List<FeedbackDetailDTO> feedbackDetails = response.feedbackDetails().getResultsOnPage();
+        assertThat(feedbackDetails).hasSize(1);
+
+        FeedbackDetailDTO firstFeedbackDetail = feedbackDetails.stream().filter(feedbackDetail -> List.of("Some feedback", "Some feedbacks").equals(feedbackDetail.detailTexts()))
+                .findFirst().orElseThrow();
+
+        assertThat(firstFeedbackDetail.count()).isEqualTo(2);
+        assertThat(firstFeedbackDetail.relativeCount()).isEqualTo(100.0);
+        assertThat(firstFeedbackDetail.detailTexts()).isEqualTo(List.of("Some feedback", "Some feedbacks"));
+        assertThat(firstFeedbackDetail.testCaseName()).isEqualTo("test1");
+
+        assertThat(response.errorCategories()).containsExactlyInAnyOrder("Student Error", "Ares Error", "AST Error");
+
+        assertThat(response.totalItems()).isEqualTo(1);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testGetMaxCountForExercise() throws Exception {
         Result result = participationUtilService.addResultToParticipation(AssessmentType.AUTOMATIC, null, this.programmingExerciseStudentParticipation);
         ProgrammingExerciseTestCase testCase = programmingExerciseUtilService.addTestCaseToProgrammingExercise(programmingExercise, "test1");

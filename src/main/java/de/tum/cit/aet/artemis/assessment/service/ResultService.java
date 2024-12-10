@@ -624,6 +624,7 @@ public class ResultService {
         final Page<FeedbackDetailDTO> feedbackDetailPage;
         List<FeedbackDetailDTO> processedDetails;
         int totalPages = 0;
+        long totalCount = 0;
         long levenshteinMaxCount = 0;
         if (!Boolean.parseBoolean(levenshtein)) {
             feedbackDetailPage = studentParticipationRepository.findFilteredFeedbackByExerciseId(exerciseId,
@@ -634,6 +635,7 @@ public class ResultService {
             processedDetails = feedbackDetailPage.getContent().stream().map(detail -> new FeedbackDetailDTO(detail.count(), (detail.count() * 100.00) / distinctResultCount,
                     detail.detailTexts(), detail.testCaseName(), detail.taskName(), detail.errorCategory())).toList();
             totalPages = feedbackDetailPage.getTotalPages();
+            totalCount = feedbackDetailPage.getTotalElements();
         }
         else {
             feedbackDetailPage = studentParticipationRepository.findFilteredFeedbackByExerciseId(exerciseId,
@@ -659,14 +661,15 @@ public class ResultService {
             processedDetails = processedDetails.stream().map(detail -> new FeedbackDetailDTO(detail.count(), (detail.count() * 100.00) / distinctResultCount, detail.detailTexts(),
                     detail.testCaseName(), detail.taskName(), detail.errorCategory())).toList();
             totalPages = (int) Math.ceil((double) processedDetailsPreSort.size() / pageSize);
+            totalCount = aggregatedFeedbackDetails.size();
         }
 
         // 10. Predefined error categories available for filtering on the client side
         final List<String> ERROR_CATEGORIES = List.of("Student Error", "Ares Error", "AST Error");
 
         // 11. Return response containing processed feedback details, task names, active test case names, and error categories
-        return new FeedbackAnalysisResponseDTO(new SearchResultPageDTO<>(processedDetails, totalPages), feedbackDetailPage.getTotalElements(), taskNames, activeTestCaseNames,
-                ERROR_CATEGORIES, levenshteinMaxCount);
+        return new FeedbackAnalysisResponseDTO(new SearchResultPageDTO<>(processedDetails, totalPages), totalCount, taskNames, activeTestCaseNames, ERROR_CATEGORIES,
+                levenshteinMaxCount);
     }
 
     private Comparator<FeedbackDetailDTO> getComparatorForFeedbackDetails(FeedbackPageableDTO search) {
