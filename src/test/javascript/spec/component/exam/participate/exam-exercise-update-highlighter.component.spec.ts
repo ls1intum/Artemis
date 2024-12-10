@@ -29,8 +29,8 @@ describe('ExamExerciseUpdateHighlighterComponent', () => {
                 fixture = TestBed.createComponent(ExamExerciseUpdateHighlighterComponent);
                 component = fixture.componentInstance;
 
-                component.exercise = textExerciseDummy;
-                const exerciseId = component.exercise.id!;
+                fixture.componentRef.setInput('exercise', textExerciseDummy);
+                const exerciseId = component.exercise().id!;
                 const update = { exerciseId, problemStatement: updatedProblemStatement };
 
                 fixture.detectChanges();
@@ -53,12 +53,13 @@ describe('ExamExerciseUpdateHighlighterComponent', () => {
     it('should display different problem statement after toggle method is called', () => {
         const mouseEvent = new MouseEvent('click');
         const stopPropagationSpy = jest.spyOn(mouseEvent, 'stopPropagation');
-        const problemStatementBeforeClick = htmlForMarkdown(component.exercise.problemStatement);
+        const problemStatementBeforeClick = htmlForMarkdown(component.exercise().problemStatement);
         expect(problemStatementBeforeClick).toEqual(component.updatedProblemStatementHTML);
+        fixture.detectChanges();
 
         component.toggleHighlightedProblemStatement(mouseEvent);
 
-        const problemStatementAfterClick = component.exercise.problemStatement;
+        const problemStatementAfterClick = component.exercise().problemStatement;
         expect(problemStatementAfterClick).toEqual(updatedProblemStatement);
         expect(problemStatementAfterClick).not.toEqual(component.updatedProblemStatementWithHighlightedDifferencesHTML);
         expect(problemStatementAfterClick).not.toEqual(problemStatementBeforeClick);
@@ -77,8 +78,8 @@ describe('ExamExerciseUpdateHighlighterComponent', () => {
                     fixture = TestBed.createComponent(ExamExerciseUpdateHighlighterComponent);
                     component = fixture.componentInstance;
 
-                    component.exercise = programmingExerciseDummy;
-                    const exerciseId = component.exercise.id!;
+                    fixture.componentRef.setInput('exercise', programmingExerciseDummy);
+                    const exerciseId = component.exercise().id!;
                     const update = { exerciseId, problemStatement: updatedProblemStatement };
 
                     fixture.detectChanges();
