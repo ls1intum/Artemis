@@ -17,7 +17,7 @@ import { faSpinner } from '@fortawesome/free-solid-svg-icons';
 export class AffectedStudentsModalComponent {
     exerciseId = input.required<number>();
     feedbackDetail = input.required<FeedbackDetail>();
-    levenshtein = input.required<boolean>();
+    groupFeedback = input.required<boolean>();
     readonly participation = signal<PageableResult<FeedbackAffectedStudentDTO>>({ content: [], totalPages: 0, totalElements: 0 });
     readonly TRANSLATION_BASE = 'artemisApp.programmingExercise.configureGrading.feedbackAnalysis.affectedStudentsModal';
 

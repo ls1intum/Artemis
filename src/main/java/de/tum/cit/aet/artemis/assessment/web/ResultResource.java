@@ -312,7 +312,7 @@ public class ResultResource {
      * </ul>
      *
      * @param exerciseId    The unique identifier of the exercise for which feedback details are requested.
-     * @param groupFeedback Should the feedback be grouped via Levenshtein distance.
+     * @param groupFeedback Should the feedback be grouped
      * @param data          A {@link FeedbackPageableDTO} object containing pagination, sorting, and filtering parameters, including:
      *                          <ul>
      *                          <li>Page number and page size</li>

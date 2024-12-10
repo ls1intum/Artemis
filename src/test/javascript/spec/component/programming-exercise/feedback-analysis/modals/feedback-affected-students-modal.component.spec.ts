@@ -26,7 +26,7 @@ describe('AffectedStudentsModalComponent', () => {
         { courseId: 1, participationId: 102, firstName: 'Jane', lastName: 'Smith', login: 'janesmith', repositoryURI: 'repo2' },
     ];
 
-    const levenshtein = false;
+    const groupFeedback = false;
 
     beforeEach(async () => {
         await TestBed.configureTestingModule({
@@ -49,7 +49,7 @@ describe('AffectedStudentsModalComponent', () => {
 
         fixture.componentRef.setInput('exerciseId', 1);
         fixture.componentRef.setInput('feedbackDetail', feedbackDetailMock);
-        fixture.componentRef.setInput('levenshtein', levenshtein);
+        fixture.componentRef.setInput('groupFeedback', groupFeedback);
         fixture.detectChanges();
     });
 

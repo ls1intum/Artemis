@@ -646,7 +646,7 @@ public class ResultService {
             List<FeedbackDetailDTO> allFeedbackDetails = feedbackDetailPage.getContent();
 
             // Apply grouping and aggregation with a similarity threshold of 90%
-            List<FeedbackDetailDTO> aggregatedFeedbackDetails = aggregateUsingLevenshtein(allFeedbackDetails, 0.9);
+            List<FeedbackDetailDTO> aggregatedFeedbackDetails = aggregateUsingGroupFeedback(allFeedbackDetails, 0.9);
 
             groupFeedbackMaxCount = aggregatedFeedbackDetails.stream().mapToLong(FeedbackDetailDTO::count).max().orElse(0);
             // Apply manual pagination
@@ -683,7 +683,7 @@ public class ResultService {
         return search.getSortingOrder() == SortingOrder.ASCENDING ? comparator : comparator.reversed();
     }
 
-    private List<FeedbackDetailDTO> aggregateUsingLevenshtein(List<FeedbackDetailDTO> feedbackDetails, double similarityThreshold) {
+    private List<FeedbackDetailDTO> aggregateUsingGroupFeedback(List<FeedbackDetailDTO> feedbackDetails, double similarityThreshold) {
         List<FeedbackDetailDTO> processedDetails = new ArrayList<>();
 
         for (FeedbackDetailDTO base : feedbackDetails) {
