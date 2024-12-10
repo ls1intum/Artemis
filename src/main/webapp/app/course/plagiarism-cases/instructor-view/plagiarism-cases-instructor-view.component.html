@@ -20,13 +20,14 @@
                                     <fa-icon [icon]="getIcon(exercise.type)" />
                                 }
                                 {{ exercise.title }}
-                                <small
-                                    ><a
+                                <small>
+                                    <a
                                         id="plagiarism-detection-link-{{ exercise.id }}"
                                         [routerLink]="['/course-management', courseId, getExerciseUrlSegment(exercise.type), exercise.id, 'plagiarism']"
                                         jhiTranslate="artemisApp.plagiarism.plagiarismCases.viewComparisons"
-                                    ></a
-                                ></small>
+                                    >
+                                    </a>
+                                </small>
                             </h5>
                         </div>
                         <div class="col-3">
@@ -58,11 +59,13 @@
                 <div class="card-body">
                     @for (plagiarismCase of groupedPlagiarismCases[exercise!.id!]; track plagiarismCase; let j = $index) {
                         <div class="row mb-3">
-                            <div class="col-1 text-center">
-                                <a [routerLink]="['/course-management', courseId, 'plagiarism-cases', plagiarismCase.id]">
-                                    {{ plagiarismCase.student?.name }} ({{ plagiarismCase.student?.login }})
-                                </a>
-                            </div>
+                            @if (plagiarismCase.student) {
+                                <div class="col-1 text-center">
+                                    <a [routerLink]="['/course-management', courseId, 'plagiarism-cases', plagiarismCase.id]">
+                                        {{ plagiarismCase.student?.name }} ({{ plagiarismCase.student?.login }})
+                                    </a>
+                                </div>
+                            }
                             @if (plagiarismCase.plagiarismSubmissions) {
                                 <div class="col-2 text-center">
                                     <span>
