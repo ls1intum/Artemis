@@ -7,6 +7,7 @@ import java.time.ZonedDateTime;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -20,11 +21,13 @@ import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.util.LinkedMultiValueMap;
 
+import de.tum.cit.aet.artemis.communication.domain.ConversationParticipant;
 import de.tum.cit.aet.artemis.communication.domain.conversation.Channel;
 import de.tum.cit.aet.artemis.communication.dto.ChannelDTO;
 import de.tum.cit.aet.artemis.communication.dto.ChannelIdAndNameDTO;
 import de.tum.cit.aet.artemis.communication.dto.FeedbackChannelRequestDTO;
 import de.tum.cit.aet.artemis.communication.dto.MetisCrudAction;
+import de.tum.cit.aet.artemis.communication.service.conversation.ChannelService;
 import de.tum.cit.aet.artemis.communication.util.ConversationUtilService;
 import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.domain.CourseInformationSharingConfiguration;
@@ -69,6 +72,9 @@ class ChannelIntegrationTest extends AbstractConversationTest {
 
     @Autowired
     private ProgrammingExerciseUtilService programmingExerciseUtilService;
+
+    @Autowired
+    private ChannelService channelService;
 
     @BeforeEach
     @Override
@@ -960,6 +966,32 @@ class ChannelIntegrationTest extends AbstractConversationTest {
         assertThat(response).isNotNull();
         assertThat(response.getName()).isEqualTo("feedback-channel");
         assertThat(response.getDescription()).isEqualTo("Discussion channel for feedback");
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void markAllChannelsAsRead() throws Exception {
+        // ensure there exist atleast two channel with unread messages in the course
+        ChannelDTO newChannel1 = createChannel(true, "channel1");
+        ChannelDTO newChannel2 = createChannel(true, "channel2");
+        List<Channel> channels = channelRepository.findChannelsByCourseId(exampleCourseId);
+        channels.forEach(channel -> {
+            addUsersToConversation(channel.getId(), "instructor1");
+            conversationParticipantRepository.findConversationParticipantsByConversationId(channel.getId()).forEach(conversationParticipant -> {
+                conversationParticipant.setUnreadMessagesCount(1L);
+                conversationParticipantRepository.save(conversationParticipant);
+            });
+        });
+
+        User requestingUser = userTestRepository.getUser();
+        request.put("/api/courses/" + exampleCourseId + "/channels/mark-as-read", null, HttpStatus.OK);
+        List<Channel> updatedChannels = channelRepository.findChannelsByCourseId(exampleCourseId);
+        updatedChannels.forEach(channel -> {
+            Optional<ConversationParticipant> conversationParticipant = conversationParticipantRepository.findConversationParticipantByConversationIdAndUserId(channel.getId(),
+                    requestingUser.getId());
+            assertThat(conversationParticipant.get().getUnreadMessagesCount()).isEqualTo(0L);
+        });
+
     }
 
     private void testArchivalChangeWorks(ChannelDTO channel, boolean isPublicChannel, boolean shouldArchive) throws Exception {

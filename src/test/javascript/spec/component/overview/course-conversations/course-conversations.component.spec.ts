@@ -580,6 +580,14 @@ examples.forEach((activeConversation) => {
             });
         });
 
+        it('should mark all channels as read', () => {
+            const markAllChannelsAsRead = jest.spyOn(metisConversationService, 'markAllChannelsAsRead').mockReturnValue();
+            const forceRefresh = jest.spyOn(metisConversationService, 'forceRefresh');
+            component.markAllChannelAsRead();
+            expect(markAllChannelsAsRead).toHaveBeenCalledOnce();
+            expect(forceRefresh).toHaveBeenCalledTimes(2);
+        });
+
         describe('conversation selection', () => {
             it('should handle numeric conversationId', () => {
                 component.onConversationSelected(123);
