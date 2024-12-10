@@ -31,6 +31,8 @@ import { ConfirmIconComponent } from 'app/shared/confirm-icon/confirm-icon.compo
 import { getElement } from '../../../../../helpers/utils/general.utils';
 import { DebugElement } from '@angular/core';
 import { UserRole } from 'app/shared/metis/metis.util';
+import { MetisConversationService } from '../../../../../../../../main/webapp/app/shared/metis/metis-conversation.service';
+import { MockMetisConversationService } from '../../../../../helpers/mocks/service/mock-metis-conversation.service';
 
 describe('AnswerPostReactionsBarComponent', () => {
     let component: AnswerPostReactionsBarComponent;
@@ -67,6 +69,7 @@ describe('AnswerPostReactionsBarComponent', () => {
                 { provide: TranslateService, useClass: MockTranslateService },
                 { provide: Router, useClass: MockRouter },
                 { provide: LocalStorageService, useClass: MockLocalStorageService },
+                { provide: MetisConversationService, useClass: MockMetisConversationService },
             ],
         })
             .compileComponents()
