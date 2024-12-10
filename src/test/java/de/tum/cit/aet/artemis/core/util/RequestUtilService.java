@@ -767,11 +767,6 @@ public class RequestUtilService {
         restoreSecurityContext();
     }
 
-    public void getWithFileContents(String path, HttpStatus expectedStatus) throws Exception {
-        performMvcRequest(MockMvcRequestBuilders.get(new URI(path))).andExpect(status().is(expectedStatus.value())).andReturn();
-        restoreSecurityContext();
-    }
-
     public static ResultMatcher matchFileContents(@org.springframework.lang.Nullable String expectedFilesAsString) {
         return (result) -> AssertionErrors.assertEquals("File contents", expectedFilesAsString, result.getResponse().getContentAsString());
     }

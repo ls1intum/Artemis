@@ -2375,7 +2375,7 @@ public class ProgrammingExerciseIntegrationTestService {
             BiFunction<ProgrammingExercise, Map<String, String>, ProgrammingSubmission> setupRepositoryMock) throws Exception {
         var submission = setupRepositoryMock.apply(programmingExercise, Map.ofEntries(Map.entry("A.java", "abc"), Map.entry("B.java", "cde"), Map.entry("C.java", "efg")));
 
-        request.getWithFileContents("/api/programming-exercise-participations/" + participation1.getId() + "/files-content/" + submission.getCommitHash(), HttpStatus.FORBIDDEN);
+        request.get("/api/programming-exercise-participations/" + participation1.getId() + "/files-content/" + submission.getCommitHash(), HttpStatus.FORBIDDEN, Map.class);
     }
 
     private long getMaxProgrammingExerciseId() {
