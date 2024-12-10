@@ -14,10 +14,12 @@
     <span th:text="#{email.notification.sshKeyAdded.title}">The following SSH key was added to your account:</span>
     </p>
     <p>
-        <span th:utext="${sshKey.getLabel()}"></span>
+        <span th:utext="#{email.notification.sshKeyExpiry.sshKeyLabel}">SSH key label</span>
+        <span th:utext="${sshKey.getLabel()}">SSH key label</span>
     </p>
     <p>
-        <span th:utext="${sshKey.getKeyHash()}"></span>
+        <span th:utext="#{email.notification.sshKeyExpiry.sshKeyHash}">SSH key hash</span>
+        <span th:utext="${sshKey.getKeyHash()}">SSH key hash</span>
     </p>
     <p></p>
     <p>
