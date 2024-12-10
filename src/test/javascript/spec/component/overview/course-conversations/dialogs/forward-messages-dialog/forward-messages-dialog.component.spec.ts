@@ -11,6 +11,8 @@ import { MarkdownEditorMonacoComponent } from '../../../../../../../../main/weba
 import { ProfilePictureComponent } from '../../../../../../../../main/webapp/app/shared/profile-picture/profile-picture.component';
 import { ElementRef, runInInjectionContext, signal } from '@angular/core';
 import { UserPublicInfoDTO } from '../../../../../../../../main/webapp/app/core/user/user.model';
+import { CourseManagementService } from '../../../../../../../../main/webapp/app/course/manage/course-management.service';
+import { MockCourseManagementService } from '../../../../../helpers/mocks/service/mock-course-management.service';
 
 describe('ForwardMessageDialogComponent', () => {
     let component: ForwardMessageDialogComponent;
@@ -19,7 +21,7 @@ describe('ForwardMessageDialogComponent', () => {
     beforeEach(waitForAsync(() => {
         TestBed.configureTestingModule({
             declarations: [ForwardMessageDialogComponent, MockPipe(ArtemisTranslatePipe), MockComponent(MarkdownEditorMonacoComponent), MockComponent(ProfilePictureComponent)],
-            providers: [MockProvider(NgbActiveModal)],
+            providers: [MockProvider(NgbActiveModal), { provide: CourseManagementService, useClass: MockCourseManagementService }],
             imports: [FormsModule],
         }).compileComponents();
     }));
@@ -57,10 +59,11 @@ describe('ForwardMessageDialogComponent', () => {
         ]);
     });
 
-    it('should filter options based on search term', () => {
+    it('should filter options based on search term', async () => {
         const searchInput = fixture.debugElement.query(By.css('input.tag-input')).nativeElement;
         searchInput.value = 'General';
         searchInput.dispatchEvent(new Event('input'));
+        await fixture.whenStable();
         fixture.detectChanges();
 
         expect(component.filteredOptions).toHaveLength(1);
@@ -154,10 +157,12 @@ describe('ForwardMessageDialogComponent', () => {
         expect(component.showDropdown).toBeFalse();
     });
 
-    it('should clear filteredOptions when no matching results are found', () => {
+    it('should clear filteredOptions when no matching results are found', async () => {
         const searchInput = fixture.debugElement.query(By.css('input.tag-input')).nativeElement;
         searchInput.value = 'NonExistentOption';
         searchInput.dispatchEvent(new Event('input'));
+
+        await component.filterOptions();
         fixture.detectChanges();
 
         expect(component.filteredOptions).toHaveLength(0);

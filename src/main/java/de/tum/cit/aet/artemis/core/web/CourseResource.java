@@ -1022,13 +1022,13 @@ public class CourseResource {
     @GetMapping("courses/{courseId}/users/search")
     @EnforceAtLeastStudent
     public ResponseEntity<List<UserPublicInfoDTO>> searchUsersInCourse(@PathVariable Long courseId, @RequestParam("loginOrName") String loginOrName,
-            @RequestParam("roles") List<String> roles, @RequestParam(value = "skipLengthCheck", required = false, defaultValue = "false") boolean skipLengthCheck) {
+            @RequestParam("roles") List<String> roles) {
         log.debug("REST request to search users in course : {} with login or name : {}", courseId, loginOrName);
         Course course = courseRepository.findByIdElseThrow(courseId);
         authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.STUDENT, course, null);
         var requestedRoles = roles.stream().map(Role::fromString).collect(Collectors.toSet());
         // restrict result size by only allowing reasonable searches if student role is selected
-        if (!skipLengthCheck && loginOrName.length() < 3 && requestedRoles.contains(Role.STUDENT)) {
+        if (loginOrName.length() < 3 && requestedRoles.contains(Role.STUDENT)) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Query param 'loginOrName' must be three characters or longer if you search for students.");
         }
         final var relevantCourseGroupNames = getRelevantCourseGroupNames(requestedRoles, course);

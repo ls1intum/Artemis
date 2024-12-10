@@ -12,6 +12,8 @@ import { UrlAction } from 'app/shared/monaco-editor/model/actions/url.action';
 import { TextEditorAction } from 'app/shared/monaco-editor/model/actions/text-editor-action.model';
 import { MarkdownEditorHeight } from 'app/shared/markdown-editor/monaco/markdown-editor-monaco.component';
 import { UserPublicInfoDTO } from 'app/core/user/user.model';
+import { CourseManagementService } from 'app/course/manage/course-management.service';
+import { catchError, map, of } from 'rxjs';
 
 interface CombinedOption {
     id: number;
@@ -29,6 +31,7 @@ export class ForwardMessageDialogComponent implements OnInit, AfterViewInit {
     channels = signal<ChannelDTO[] | []>([]);
     users = signal<UserPublicInfoDTO[] | []>([]);
     postToForward = signal<Post | null>(null);
+    courseId = signal<number | null>(null);
     filteredChannels: ChannelDTO[] = [];
     filteredUsers: UserPublicInfoDTO[] = [];
     selectedChannels: ChannelDTO[] = [];
@@ -40,6 +43,7 @@ export class ForwardMessageDialogComponent implements OnInit, AfterViewInit {
     editorHeight = input<MarkdownEditorHeight>(MarkdownEditorHeight.INLINE);
     @ViewChild('searchInput') searchInput!: ElementRef;
     @ViewChild('messageContent') messageContent!: ElementRef;
+    public courseManagementService: CourseManagementService = inject(CourseManagementService);
 
     showDropdown: boolean = false;
     combinedOptions: CombinedOption[] = [];
@@ -119,10 +123,53 @@ export class ForwardMessageDialogComponent implements OnInit, AfterViewInit {
 
     filterOptions(): void {
         if (this.searchTerm) {
-            this.filteredOptions = this.combinedOptions.filter((option) => option.name.toLowerCase().includes(this.searchTerm));
+            const lowerCaseSearchTerm = this.searchTerm.toLowerCase();
+
+            if (lowerCaseSearchTerm.length >= 3) {
+                this.courseManagementService
+                    .searchUsers(this.courseId()!, lowerCaseSearchTerm, ['students', 'tutors', 'instructors'])
+                    .pipe(
+                        map((response) => response.body || []),
+                        map(
+                            (users) => users.filter((user) => !this.selectedUsers.find((selectedUser) => selectedUser.id === user.id)), // Seçili kullanıcıları çıkar
+                        ),
+                        catchError(() => {
+                            return of([]);
+                        }),
+                    )
+                    .subscribe((users) => {
+                        this.filteredUsers = users;
+                        this.updateCombinedOptions();
+                        this.cdr.detectChanges();
+                    });
+            } else {
+                this.filteredUsers = [];
+            }
+
+            this.filteredChannels = this.channels().filter((channel: ChannelDTO) => channel.name?.toLowerCase().includes(lowerCaseSearchTerm));
+            this.updateCombinedOptions();
         } else {
-            this.filteredOptions = [...this.combinedOptions];
+            this.filteredUsers = [...this.users()];
+            this.filteredChannels = [...this.channels()];
+            this.updateCombinedOptions();
         }
+    }
+
+    private updateCombinedOptions(): void {
+        this.filteredOptions = [
+            ...this.filteredChannels.map((channel) => ({
+                id: channel.id!,
+                name: channel.name!,
+                type: 'channel',
+                img: '',
+            })),
+            ...this.filteredUsers.map((user) => ({
+                id: user.id!,
+                name: user.name!,
+                type: 'user',
+                img: user.imageUrl!,
+            })),
+        ];
     }
 
     selectOption(option: CombinedOption): void {

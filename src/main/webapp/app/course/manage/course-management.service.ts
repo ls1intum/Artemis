@@ -414,14 +414,6 @@ export class CourseManagementService {
         return this.http.get<User[]>(`${this.resourceUrl}/${courseId}/members/search`, { observe: 'response', params: httpParams });
     }
 
-    searchUsersWithoutLengthCheck(courseId: number, roles: RoleGroup[]): Observable<HttpResponse<UserPublicInfoDTO[]>> {
-        let httpParams = new HttpParams();
-        httpParams = httpParams.append('loginOrName', '');
-        httpParams = httpParams.append('roles', roles.join(','));
-        httpParams = httpParams.append('skipLengthCheck', 'true');
-        return this.http.get<User[]>(`${this.resourceUrl}/${courseId}/users/search`, { observe: 'response', params: httpParams });
-    }
-
     /**
      * Search for a student on the server by login or name in the specified course.
      * @param loginOrName The login or name to search for.
