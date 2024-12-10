@@ -1,5 +1,4 @@
-import { Injectable } from '@angular/core';
-import { Router } from '@angular/router';
+import { Injectable, inject } from '@angular/core';
 import { HttpClient, HttpParams, HttpResponse } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { ExerciseGroup } from 'app/entities/exercise-group.model';
@@ -9,12 +8,9 @@ type EntityArrayResponseType = HttpResponse<ExerciseGroup[]>;
 
 @Injectable({ providedIn: 'root' })
 export class ExerciseGroupService {
-    public resourceUrl = 'api/courses';
+    private http = inject(HttpClient);
 
-    constructor(
-        private router: Router,
-        private http: HttpClient,
-    ) {}
+    public resourceUrl = 'api/courses';
 
     /**
      * Create an exercise group on the server using a POST request.

@@ -6,19 +6,17 @@ import { FileUploadExerciseGroupCellComponent } from 'app/exam/manage/exercise-g
 import { FileUploadExercise } from 'app/entities/file-upload-exercise.model';
 
 describe('File Upload Exercise Group Cell Component', () => {
-    let comp: FileUploadExerciseGroupCellComponent;
     let fixture: ComponentFixture<FileUploadExerciseGroupCellComponent>;
 
     beforeEach(() => {
         TestBed.configureTestingModule({
             imports: [ArtemisTestModule],
-            declarations: [FileUploadExerciseGroupCellComponent, TranslatePipeMock],
+            declarations: [TranslatePipeMock],
             providers: [],
         })
             .compileComponents()
             .then(() => {
                 fixture = TestBed.createComponent(FileUploadExerciseGroupCellComponent);
-                comp = fixture.componentInstance;
             });
     });
 
@@ -28,18 +26,19 @@ describe('File Upload Exercise Group Cell Component', () => {
             type: ExerciseType.FILE_UPLOAD,
             filePattern: '*.pdf',
         } as any as FileUploadExercise;
-        comp.exercise = exercise;
+        fixture.componentRef.setInput('exercise', exercise);
 
         fixture.detectChanges();
         expect(fixture.nativeElement.textContent).toContain(exercise.filePattern);
     });
 
     it('should not display anything for other exercise types', () => {
-        comp.exercise = {
+        const exercise: FileUploadExercise = {
             id: 1,
             type: ExerciseType.TEXT,
             filePattern: '*.pdf',
         } as any as FileUploadExercise;
+        fixture.componentRef.setInput('exercise', exercise);
         fixture.detectChanges();
         expect(fixture.nativeElement.textContent).toBe('');
     });
