@@ -40,6 +40,7 @@ import { CourseSidebarService } from 'app/overview/course-sidebar.service';
 import { LayoutService } from 'app/shared/breakpoints/layout.service';
 import { CustomBreakpointNames } from 'app/shared/breakpoints/breakpoints.service';
 import { Posting, PostingType, SavedPostStatus, SavedPostStatusMap } from 'app/entities/metis/posting.model';
+import { canCreateChannel } from 'app/shared/metis/conversations/conversation-permissions.utils';
 
 const DEFAULT_CHANNEL_GROUPS: AccordionGroups = {
     favoriteChannels: { entityData: [] },
@@ -424,6 +425,7 @@ export class CourseConversationsComponent implements OnInit, OnDestroy {
             ungroupedData: this.sidebarConversations,
             showAccordionLeadingIcon: true,
             messagingEnabled: isMessagingEnabled(this.course),
+            canCreateChannel: canCreateChannel(this.course!),
         };
     }
 
