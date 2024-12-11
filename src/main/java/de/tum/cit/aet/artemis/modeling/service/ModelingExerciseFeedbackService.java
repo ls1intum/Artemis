@@ -59,15 +59,6 @@ public class ModelingExerciseFeedbackService {
         this.participationService = participationService;
     }
 
-    private void checkRateLimitOrThrow(StudentParticipation participation) {
-
-        List<Result> athenaResults = participation.getResults().stream().filter(result -> result.getAssessmentType() == AssessmentType.AUTOMATIC_ATHENA).toList();
-
-        if (athenaResults.size() >= 10) {
-            throw new BadRequestAlertException("Maximum number of AI feedback requests reached.", "participation", "preconditions not met");
-        }
-    }
-
     /**
      * Handles the request for generating feedback for a modeling exercise.
      * Unlike programming exercises a tutor is not notified if Athena is not available.
@@ -79,6 +70,7 @@ public class ModelingExerciseFeedbackService {
     public StudentParticipation handleNonGradedFeedbackRequest(StudentParticipation participation, ModelingExercise modelingExercise) {
         if (this.athenaFeedbackSuggestionsService.isPresent()) {
             this.checkRateLimitOrThrow(participation);
+            this.checkLatestSubmissionHasAthenaResultOrThrow(participation);
             CompletableFuture.runAsync(() -> this.generateAutomaticNonGradedFeedback(participation, modelingExercise));
         }
         return participation;
@@ -125,6 +117,10 @@ public class ModelingExerciseFeedbackService {
         }
         catch (Exception e) {
             log.error("Could not generate feedback for exercise ID: {} and participation ID: {}", modelingExercise.getId(), participation.getId(), e);
+            automaticResult.setSuccessful(false);
+            automaticResult.setCompletionDate(null);
+            participation.addResult(automaticResult);
+            this.resultWebsocketService.broadcastNewResult(participation, automaticResult);
             throw new InternalServerErrorException("Something went wrong... AI Feedback could not be generated");
         }
     }
@@ -173,6 +169,7 @@ public class ModelingExerciseFeedbackService {
         feedback.setHasLongFeedbackText(false);
         feedback.setType(FeedbackType.AUTOMATIC);
         feedback.setCredits(feedbackItem.credits());
+        feedback.setReference(feedbackItem.reference());
         return feedback;
     }
 
@@ -193,4 +190,45 @@ public class ModelingExerciseFeedbackService {
 
         return (totalCredits / maxPoints) * 100;
     }
+
+    /**
+     * Checks if the number of Athena results for the given participation exceeds
+     * the allowed threshold and throws an exception if the limit is reached.
+     *
+     * @param participation the student participation to check
+     * @throws BadRequestAlertException if the maximum number of Athena feedback requests is exceeded
+     */
+    private void checkRateLimitOrThrow(StudentParticipation participation) {
+        List<Result> athenaResults = participation.getResults().stream().filter(result -> result.getAssessmentType() == AssessmentType.AUTOMATIC_ATHENA).toList();
+
+        if (athenaResults.size() >= 10) {
+            throw new BadRequestAlertException("Maximum number of AI feedback requests reached.", "participation", "maxAthenaResultsReached", true);
+        }
+    }
+
+    /**
+     * Ensures that the latest submission associated with the participation does not already
+     * have an Athena-generated result. Throws an exception if Athena result already exists.
+     *
+     * @param participation the student participation to validate
+     * @throws BadRequestAlertException if no legal submissions exist or if an Athena result is already present
+     */
+    private void checkLatestSubmissionHasAthenaResultOrThrow(StudentParticipation participation) {
+        Optional<Submission> submissionOptional = participationService.findExerciseParticipationWithLatestSubmissionAndResultElseThrow(participation.getId())
+                .findLatestSubmission();
+
+        if (submissionOptional.isEmpty()) {
+            throw new BadRequestAlertException("No legal submissions found", "submission", "noSubmission");
+        }
+
+        Submission submission = submissionOptional.get();
+
+        Result latestResult = submission.getLatestResult();
+
+        if (latestResult != null && latestResult.getAssessmentType() == AssessmentType.AUTOMATIC_ATHENA) {
+            log.debug("Submission ID: {} already has an Athena result. Skipping feedback generation.", submission.getId());
+            throw new BadRequestAlertException("Submission already has an Athena result", "submission", "submissionAlreadyHasAthenaResult", true);
+        }
+    }
+
 }

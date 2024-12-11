@@ -121,7 +121,11 @@ export const addParticipationToResult = (result: Result | undefined, participati
  * @returns an array with the unreferenced feedback of the result
  */
 export const getUnreferencedFeedback = (feedbacks: Feedback[] | undefined): Feedback[] | undefined => {
-    return feedbacks ? feedbacks.filter((feedbackElement) => !feedbackElement.reference && feedbackElement.type === FeedbackType.MANUAL_UNREFERENCED) : undefined;
+    return feedbacks
+        ? feedbacks.filter(
+              (feedbackElement) => !feedbackElement.reference && (feedbackElement.type === FeedbackType.MANUAL_UNREFERENCED || feedbackElement.type === FeedbackType.AUTOMATIC),
+          )
+        : undefined;
 };
 
 export function isAIResultAndFailed(result: Result | undefined): boolean {
