@@ -157,7 +157,10 @@ export class SplitPaneHeaderComponent implements OnChanges, OnInit, OnDestroy {
     }
 
     triggerMouseEnter(file: FileWithHasMatch, idx: number) {
-        this.dropdownHoverSubject()!.next({ idx: idx, file: file });
+        const subject = this.dropdownHoverSubject();
+        if (subject) {
+            subject.next({ idx, file });
+        }
     }
 
     /**
