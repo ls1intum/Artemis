@@ -84,7 +84,7 @@ describe('ProgrammingFeedbackItemService', () => {
     it('should create grading instruction feedback item', () => {
         const gradingInstruction = {
             feedback: 'gradingInstruction.feedback',
-            detailText: 'gradingInstruction.detailTexts',
+            detailText: 'gradingInstruction.detailText',
         } as Partial<GradingInstruction>;
 
         const feedback = {
