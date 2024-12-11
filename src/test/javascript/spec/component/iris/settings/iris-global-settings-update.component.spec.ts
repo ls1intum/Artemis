@@ -47,6 +47,10 @@ describe('IrisGlobalSettingsUpdateComponent Component', () => {
         jest.restoreAllMocks();
     });
 
+    it('should create IrisGlobalSettingsUpdateComponent', () => {
+        expect(comp).toBeDefined();
+    });
+
     it('Setup works correctly', () => {
         fixture.detectChanges();
         expect(comp.settingsUpdateComponent).toBeTruthy();
