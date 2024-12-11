@@ -318,4 +318,16 @@ describe('FeedbackAnalysisComponent', () => {
         expect(component['isFeedbackDetailChannelModalOpen']).toBeTrue();
         expect(modalSpy).not.toHaveBeenCalled();
     });
+
+    describe('toggleGroupFeedback', () => {
+        it('should toggle groupFeedback and call loadData', () => {
+            const loadDataSpy = jest.spyOn(component, 'loadData' as any);
+            const initialGroupFeedback = component.groupFeedback();
+
+            component.toggleGroupFeedback();
+
+            expect(component.groupFeedback()).toBe(!initialGroupFeedback);
+            expect(loadDataSpy).toHaveBeenCalledOnce();
+        });
+    });
 });
