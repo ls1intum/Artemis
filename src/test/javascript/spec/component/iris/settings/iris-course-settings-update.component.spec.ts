@@ -13,6 +13,7 @@ import { IrisCourseSettingsUpdateComponent } from 'app/iris/settings/iris-course
 import { By } from '@angular/platform-browser';
 import { IrisSettings } from 'app/entities/iris/settings/iris-settings.model';
 import { HttpResponse } from '@angular/common/http';
+import { MockJhiTranslateDirective } from '../../../helpers/mocks/directive/mock-jhi-translate-directive.directive';
 
 describe('IrisCourseSettingsUpdateComponent Component', () => {
     let comp: IrisCourseSettingsUpdateComponent;
@@ -26,7 +27,7 @@ describe('IrisCourseSettingsUpdateComponent Component', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule],
+            imports: [ArtemisTestModule, MockJhiTranslateDirective],
             declarations: [
                 IrisCourseSettingsUpdateComponent,
                 IrisSettingsUpdateComponent,
@@ -54,6 +55,10 @@ describe('IrisCourseSettingsUpdateComponent Component', () => {
 
     afterEach(() => {
         jest.restoreAllMocks();
+    });
+
+    it('should create IrisCourseSettingsUpdateComponent', () => {
+        expect(comp).toBeDefined();
     });
 
     it('Setup works correctly', () => {

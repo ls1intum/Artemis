@@ -1,6 +1,7 @@
 package de.tum.cit.aet.artemis.iris.service.session;
 
 import java.util.Comparator;
+import java.util.Optional;
 
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
@@ -103,6 +104,7 @@ public class IrisTextExerciseChatSessionService implements IrisChatBasedFeatureI
         pyrisPipelineService.executePipeline(
                 "text-exercise-chat",
                 "default",
+                Optional.empty(),
                 pyrisJobService.createTokenForJob(token -> new TextExerciseChatJob(token, course.getId(), exercise.getId(), session.getId())),
                 dto -> new PyrisTextExerciseChatPipelineExecutionDTO(dto, PyrisTextExerciseDTO.of(exercise), conversation, latestSubmissionText),
                 stages -> irisChatWebsocketService.sendMessage(session, null, stages)
