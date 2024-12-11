@@ -176,7 +176,7 @@ export class PlagiarismCasesInstructorViewComponent implements OnInit {
     private getGroupedPlagiarismCasesByExercise(cases: PlagiarismCase[]): GroupedPlagiarismCases {
         // Pre-collect exercises to avoid side effects in reduce
         this.exercisesWithPlagiarismCases = cases
-            .map(case => case.exercise)
+            .map(plagiarismCase => plagiarismCase.exercise)
             .filter((exercise): exercise is Exercise => exercise !== null && exercise !== undefined);
 
         return cases.reduce((acc: GroupedPlagiarismCases, plagiarismCase) => {
