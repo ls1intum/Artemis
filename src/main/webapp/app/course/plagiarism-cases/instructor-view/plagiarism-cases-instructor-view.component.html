@@ -62,7 +62,7 @@
                             @if (plagiarismCase.student) {
                                 <div class="col-1 text-center">
                                     <a [routerLink]="['/course-management', courseId, 'plagiarism-cases', plagiarismCase.id]">
-                                        {{ plagiarismCase.student?.name }} ({{ plagiarismCase.student?.login }})
+                                        {{ plagiarismCase.student!.name }} ({{ plagiarismCase.student!.login }})
                                     </a>
                                 </div>
                             }
