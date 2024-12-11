@@ -62,7 +62,7 @@ class JWTFilterTest {
     }
 
     @Test
-    void testJWTFilterBearer() throws Exception {
+    void testJWTFilterCookieAndBearer() throws Exception {
         UsernamePasswordAuthenticationToken authentication = new UsernamePasswordAuthenticationToken("test-user", "test-password",
                 Collections.singletonList(new SimpleGrantedAuthority(Role.STUDENT.getAuthority())));
 
@@ -79,7 +79,7 @@ class JWTFilterTest {
     }
 
     @Test
-    void testJWTFilterCookieAndBearer() throws Exception {
+    void testJWTFilterBearer() throws Exception {
         UsernamePasswordAuthenticationToken authentication = new UsernamePasswordAuthenticationToken("test-user", "test-password",
                 Collections.singletonList(new SimpleGrantedAuthority(Role.STUDENT.getAuthority())));
 

@@ -8,6 +8,11 @@ export enum IrisSubSettingsType {
     COMPETENCY_GENERATION = 'competency-generation',
 }
 
+export enum IrisEventType {
+    BUILD_FAILED = 'build_failed',
+    PROGRESS_STALLED = 'progress_stalled',
+}
+
 export abstract class IrisSubSettings implements BaseEntity {
     id?: number;
     type: IrisSubSettingsType;
@@ -15,6 +20,7 @@ export abstract class IrisSubSettings implements BaseEntity {
     allowedVariants?: string[];
     selectedVariant?: string;
     enabledForCategories?: string[];
+    disabledProactiveEvents?: IrisEventType[];
 }
 
 export class IrisChatSubSettings extends IrisSubSettings {
