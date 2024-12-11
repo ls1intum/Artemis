@@ -111,6 +111,7 @@ public class LocalCITriggerService implements ContinuousIntegrationTriggerServic
 
     private static final int DEFAULT_BUILD_DURATION = 17;
 
+    // Arbitrary value to ensure that the build duration is always a bit higher than the actual build duration
     private static final double BUILD_DURATION_SAFETY_FACTOR = 1.2;
 
     public LocalCITriggerService(@Qualifier("hazelcastInstance") HazelcastInstance hazelcastInstance, AeolusTemplateService aeolusTemplateService,
