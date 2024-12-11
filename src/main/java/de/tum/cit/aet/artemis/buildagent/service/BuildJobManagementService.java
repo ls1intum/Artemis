@@ -168,7 +168,6 @@ public class BuildJobManagementService {
                 // RejectedExecutionException is thrown if the queue size limit (defined in "artemis.continuous-integration.queue-size-limit") is reached.
                 // Wrap the exception in a CompletionException so that the future is completed exceptionally and the thenAccept block is not run.
                 // This CompletionException will not resurface anywhere else as it is thrown in this completable future's separate thread.
-                future.cancel(true);
                 if (cancelledBuildJobs.contains(buildJobItem.id())) {
                     finishCancelledBuildJob(buildJobItem.repositoryInfo().assignmentRepositoryUri(), buildJobItem.id(), containerName);
                     String msg = "Build job with id " + buildJobItem.id() + " was cancelled.";
