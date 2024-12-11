@@ -320,7 +320,7 @@ public class BuildJobExecutionService {
         buildLogsMap.appendBuildLogEntry(buildJob.id(), msg);
         log.info(msg);
 
-        TarArchiveInputStream testResultsTarInputStream;
+        TarArchiveInputStream testResultsTarInputStream = null;
 
         BuildResult buildResult;
 
@@ -344,6 +344,14 @@ public class BuildJobExecutionService {
             throw new LocalCIException(msg, e);
         }
         finally {
+            try {
+                if (testResultsTarInputStream != null) {
+                    testResultsTarInputStream.close();
+                }
+            }
+            catch (IOException e) {
+                log.error("Could not close test results tar input stream", e);
+            }
             buildJobContainerService.stopContainer(containerName);
 
             // Delete the cloned repositories
