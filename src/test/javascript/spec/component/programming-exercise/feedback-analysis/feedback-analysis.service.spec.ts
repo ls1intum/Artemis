@@ -10,6 +10,7 @@ describe('FeedbackAnalysisService', () => {
 
     const feedbackDetailsMock: FeedbackDetail[] = [
         {
+            feedbackIds: [1],
             detailTexts: ['Feedback 1'],
             testCaseName: 'test1',
             count: 5,
@@ -18,6 +19,7 @@ describe('FeedbackAnalysisService', () => {
             errorCategory: 'StudentError',
         },
         {
+            feedbackIds: [2],
             detailTexts: ['Feedback 2'],
             testCaseName: 'test2',
             count: 3,
@@ -86,7 +88,7 @@ describe('FeedbackAnalysisService', () => {
 
     describe('getParticipationForFeedbackDetailText', () => {
         it('should retrieve paginated participation details for up to 5 feedback details', async () => {
-            const feedbackDetails = ['Feedback 1', 'Feedback 2', 'Feedback 3', 'Feedback 4', 'Feedback 5', 'Feedback 6'];
+            const feedbackDetailsId = [1, 2, 3, 4, 5];
             const pageable = {
                 page: 1,
                 pageSize: 10,
@@ -96,7 +98,6 @@ describe('FeedbackAnalysisService', () => {
             const participationResponseMock = {
                 content: [
                     {
-                        courseId: 1,
                         participationId: 101,
                         firstName: 'John',
                         lastName: 'Doe',
@@ -104,7 +105,6 @@ describe('FeedbackAnalysisService', () => {
                         repositoryName: 'repo1',
                     },
                     {
-                        courseId: 1,
                         participationId: 102,
                         firstName: 'Jane',
                         lastName: 'Smith',
@@ -116,10 +116,10 @@ describe('FeedbackAnalysisService', () => {
                 totalItems: 2,
             };
 
-            const responsePromise = service.getParticipationForFeedbackDetailText(1, feedbackDetails, 'test1', pageable);
+            const responsePromise = service.getParticipationForFeedbackDetailText(1, feedbackDetailsId, 'test1', pageable);
 
             const req = httpMock.expectOne(
-                'api/exercises/1/feedback-details-participation?page=1&pageSize=10&sortedColumn=participationId&sortingOrder=ASCENDING&testCaseName=test1&detailText1=Feedback%201&detailText2=Feedback%202&detailText3=Feedback%203&detailText4=Feedback%204&detailText5=Feedback%205',
+                'api/exercises/1/feedback-details-participation?page=1&pageSize=10&sortedColumn=participationId&sortingOrder=ASCENDING&testCaseName=test1&feedbackId1=1&feedbackId2=2&feedbackId3=3&feedbackId4=4&feedbackId5=5',
             );
             expect(req.request.method).toBe('GET');
             req.flush(participationResponseMock);
@@ -131,7 +131,7 @@ describe('FeedbackAnalysisService', () => {
         });
 
         it('should handle less than 5 feedback details gracefully', async () => {
-            const feedbackDetails = ['Feedback 1', 'Feedback 2'];
+            const feedbackDetailsId = [1, 2];
             const pageable = {
                 page: 1,
                 pageSize: 10,
@@ -141,7 +141,6 @@ describe('FeedbackAnalysisService', () => {
             const participationResponseMock = {
                 content: [
                     {
-                        courseId: 1,
                         participationId: 101,
                         firstName: 'John',
                         lastName: 'Doe',
@@ -153,10 +152,10 @@ describe('FeedbackAnalysisService', () => {
                 totalItems: 1,
             };
 
-            const responsePromise = service.getParticipationForFeedbackDetailText(1, feedbackDetails, 'test1', pageable);
+            const responsePromise = service.getParticipationForFeedbackDetailText(1, feedbackDetailsId, 'test1', pageable);
 
             const req = httpMock.expectOne(
-                'api/exercises/1/feedback-details-participation?page=1&pageSize=10&sortedColumn=participationId&sortingOrder=ASCENDING&testCaseName=test1&detailText1=Feedback%201&detailText2=Feedback%202',
+                'api/exercises/1/feedback-details-participation?page=1&pageSize=10&sortedColumn=participationId&sortingOrder=ASCENDING&testCaseName=test1&feedbackId1=1&feedbackId2=2',
             );
             expect(req.request.method).toBe('GET');
             req.flush(participationResponseMock);

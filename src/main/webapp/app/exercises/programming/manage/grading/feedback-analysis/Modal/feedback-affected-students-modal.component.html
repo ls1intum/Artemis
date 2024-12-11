@@ -8,6 +8,9 @@
     <button type="button" class="btn-close" aria-label="Close" (click)="activeModal.dismiss()"></button>
 </div>
 <div class="modal-body">
+    <div>
+        <span [jhiTranslate]="TRANSLATION_BASE + '.description'" [translateValues]="{ count: participation().totalElements }"></span>
+    </div>
     @if (isLoading()) {
         <div class="row justify-content-center p-2">
             <div class="spinner-border text-primary" role="status">
@@ -33,27 +36,12 @@
                                 class="ms-2"
                                 [smallButtons]="true"
                                 [repositoryUri]="item.repositoryURI"
-                                [routerLinkForRepositoryView]="['/courses', item.courseId, 'exercises', exerciseId(), 'repository', item.participationId]"
+                                [routerLinkForRepositoryView]="['/courses', courseId(), 'exercises', exerciseId(), 'repository', item.participationId]"
                             />
                         </td>
                     </tr>
                 }
             </tbody>
         </table>
-        <div class="d-flex flex-column align-items-end mt-2">
-            @if (participation().totalElements >= pageSize()) {
-                <ngb-pagination
-                    [collectionSize]="collectionsSize()"
-                    [pageSize]="pageSize()"
-                    [page]="page()"
-                    (pageChange)="setPage($event)"
-                    size="sm"
-                    [maxSize]="5"
-                ></ngb-pagination>
-            }
-            <div class="text-muted text-end">
-                <span [jhiTranslate]="TRANSLATION_BASE + '.totalItems'" [translateValues]="{ count: participation().totalElements }"></span>
-            </div>
-        </div>
     }
 </div>

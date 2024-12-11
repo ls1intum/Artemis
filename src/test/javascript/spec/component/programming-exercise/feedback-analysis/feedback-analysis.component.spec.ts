@@ -27,6 +27,7 @@ describe('FeedbackAnalysisComponent', () => {
 
     const feedbackMock: FeedbackDetail[] = [
         {
+            feedbackIds: [1],
             detailTexts: ['Test feedback 1 detail'],
             testCaseName: 'test1',
             count: 10,
@@ -35,6 +36,7 @@ describe('FeedbackAnalysisComponent', () => {
             errorCategory: 'Student Error',
         },
         {
+            feedbackIds: [2],
             detailTexts: ['Test feedback 2 detail'],
             testCaseName: 'test2',
             count: 5,
@@ -50,7 +52,7 @@ describe('FeedbackAnalysisComponent', () => {
         taskNames: ['task1', 'task2'],
         testCaseNames: ['test1', 'test2'],
         errorCategories: ['Student Error', 'AST Error', 'Ares Error'],
-        groupFeedbackMaxCount: 0,
+        highestOccurrenceOfGroupedFeedback: 0,
     };
 
     beforeEach(async () => {

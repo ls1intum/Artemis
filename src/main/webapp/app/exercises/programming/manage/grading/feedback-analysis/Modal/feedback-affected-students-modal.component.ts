@@ -15,6 +15,7 @@ import { faSpinner } from '@fortawesome/free-solid-svg-icons';
     standalone: true,
 })
 export class AffectedStudentsModalComponent {
+    courseId = input.required<number>();
     exerciseId = input.required<number>();
     feedbackDetail = input.required<FeedbackDetail>();
     groupFeedback = input.required<boolean>();

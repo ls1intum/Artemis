@@ -10,6 +10,7 @@ describe('FeedbackModalComponent', () => {
     let activeModal: NgbActiveModal;
 
     const mockFeedbackDetail: FeedbackDetail = {
+        feedbackIds: [1, 2, 3, 4, 5],
         count: 5,
         relativeCount: 25.0,
         detailTexts: ['Some feedback detail'],

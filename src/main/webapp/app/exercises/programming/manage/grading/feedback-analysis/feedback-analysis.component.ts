@@ -210,6 +210,7 @@ export class FeedbackAnalysisComponent {
 
     async openAffectedStudentsModal(feedbackDetail: FeedbackDetail): Promise<void> {
         const modalRef = this.modalService.open(AffectedStudentsModalComponent, { centered: true, size: 'lg' });
+        modalRef.componentInstance.courseId = this.courseId;
         modalRef.componentInstance.exerciseId = this.exerciseId;
         modalRef.componentInstance.feedbackDetail = signal(feedbackDetail);
         modalRef.componentInstance.groupFeedback = signal(this.groupFeedback());

@@ -377,10 +377,10 @@
                     },
                     "affectedStudentsModal": {
                         "header": "Stichprobe für Betroffene Studierende",
+                        "description": "Die folgende Liste ist eine Stichprobe der betroffenen Studierenden für den ausgewählten Feedback-Eintrag, da diese ausreichend ist, um das Feedback zu analysieren. Die Liste ist auf 5 Studierende begrenzt. Insgesamt haben {{count}} Studierende dieses Feedback erhalten.",
                         "name": "Name",
                         "login": "Login",
                         "repository": "Repository",
-                        "totalItems": "Insgesamt {{count}} Element(e)",
                         "error": "Beim Laden der betroffenen Studierenden ist ein Fehler aufgetreten."
                     },
                     "feedbackDetailChannel": {

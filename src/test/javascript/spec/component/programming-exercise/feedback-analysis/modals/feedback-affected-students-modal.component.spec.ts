@@ -13,6 +13,7 @@ describe('AffectedStudentsModalComponent', () => {
     let feedbackService: FeedbackAnalysisService;
 
     const feedbackDetailMock: FeedbackDetail = {
+        feedbackIds: [1, 2, 3, 4, 5],
         count: 5,
         relativeCount: 25.0,
         detailTexts: ['Some feedback detail'],
@@ -22,8 +23,8 @@ describe('AffectedStudentsModalComponent', () => {
     };
 
     const participationMock: FeedbackAffectedStudentDTO[] = [
-        { courseId: 1, participationId: 101, firstName: 'John', lastName: 'Doe', login: 'johndoe', repositoryURI: 'repo1' },
-        { courseId: 1, participationId: 102, firstName: 'Jane', lastName: 'Smith', login: 'janesmith', repositoryURI: 'repo2' },
+        { participationId: 101, firstName: 'John', lastName: 'Doe', login: 'johndoe', repositoryURI: 'repo1' },
+        { participationId: 102, firstName: 'Jane', lastName: 'Smith', login: 'janesmith', repositoryURI: 'repo2' },
     ];
 
     const groupFeedback = false;
@@ -47,6 +48,7 @@ describe('AffectedStudentsModalComponent', () => {
         component = fixture.componentInstance;
         feedbackService = TestBed.inject(FeedbackAnalysisService);
 
+        fixture.componentRef.setInput('courseId', 1);
         fixture.componentRef.setInput('exerciseId', 1);
         fixture.componentRef.setInput('feedbackDetail', feedbackDetailMock);
         fixture.componentRef.setInput('groupFeedback', groupFeedback);

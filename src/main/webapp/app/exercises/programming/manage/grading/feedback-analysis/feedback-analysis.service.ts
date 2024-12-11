@@ -23,7 +23,6 @@ export interface FeedbackDetail {
     errorCategory: string;
 }
 export interface FeedbackAffectedStudentDTO {
-    courseId: number;
     participationId: number;
     firstName: string;
     lastName: string;

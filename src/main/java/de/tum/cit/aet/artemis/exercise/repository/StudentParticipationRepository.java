@@ -1371,7 +1371,6 @@ public interface StudentParticipationRepository extends ArtemisJpaRepository<Stu
      */
     @Query("""
                 SELECT DISTINCT new de.tum.cit.aet.artemis.assessment.dto.FeedbackAffectedStudentDTO(
-                                p.exercise.course.id,
                                 p.id,
                                 p.student.firstName,
                                 p.student.lastName,

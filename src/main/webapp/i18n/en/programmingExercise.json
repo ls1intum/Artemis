@@ -377,10 +377,10 @@
                     },
                     "affectedStudentsModal": {
                         "header": "Sample for Affected Students",
+                        "description": "The following is a sample of affected students for the selected feedback entry, as this is sufficient to analyze the feedback. The list is limited to 5 students. In total, {{count}} students received this feedback.",
                         "name": "Name",
                         "login": "Login",
                         "repository": "Repository",
-                        "totalItems": "In total {{count}} item(s)",
                         "error": "There was an error while loading the affected Students for this feedback."
                     },
                     "feedbackDetailChannel": {
