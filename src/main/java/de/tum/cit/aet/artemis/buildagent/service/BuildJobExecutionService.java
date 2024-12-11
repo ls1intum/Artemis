@@ -322,24 +322,15 @@ public class BuildJobExecutionService {
 
         TarArchiveInputStream testResultsTarInputStream;
 
-        BuildResult buildResult;
-
         try {
             testResultsTarInputStream = buildJobContainerService.getArchiveFromContainer(containerId, LOCALCI_WORKING_DIRECTORY + LOCALCI_RESULTS_DIRECTORY);
-
-            buildResult = parseTestResults(testResultsTarInputStream, buildJob.buildConfig().branch(), assignmentRepoCommitHash, testRepoCommitHash, buildCompletedDate,
-                buildJob.id());
-            buildResult.setBuildLogEntries(buildLogsMap.getAndTruncateBuildLogs(buildJob.id()));
-        } catch (NotFoundException e) {
+        }
+        catch (NotFoundException e) {
             msg = "Could not find test results in container " + containerName;
             buildLogsMap.appendBuildLogEntry(buildJob.id(), msg);
             log.error(msg, e);
             // If the test results are not found, this means that something went wrong during the build and testing of the submission.
             return constructFailedBuildResult(buildJob.buildConfig().branch(), assignmentRepoCommitHash, testRepoCommitHash, buildCompletedDate);
-        } catch (IOException | IllegalStateException e) {
-            msg = "Error while parsing test results";
-            buildLogsMap.appendBuildLogEntry(buildJob.id(), msg);
-            throw new LocalCIException(msg, e);
         }
         finally {
             buildJobContainerService.stopContainer(containerName);
@@ -364,6 +355,22 @@ public class BuildJobExecutionService {
                 buildLogsMap.appendBuildLogEntry(buildJob.id(), msg);
                 log.error(msg, e);
             }
+        }
+
+        msg = "~~~~~~~~~~~~~~~~~~~~ Parsing test results for build job " + buildJob.id() + " ~~~~~~~~~~~~~~~~~~~~";
+        buildLogsMap.appendBuildLogEntry(buildJob.id(), msg);
+        log.info(msg);
+
+        BuildResult buildResult;
+        try {
+            buildResult = parseTestResults(testResultsTarInputStream, buildJob.buildConfig().branch(), assignmentRepoCommitHash, testRepoCommitHash, buildCompletedDate,
+                    buildJob.id());
+            buildResult.setBuildLogEntries(buildLogsMap.getAndTruncateBuildLogs(buildJob.id()));
+        }
+        catch (IOException | IllegalStateException e) {
+            msg = "Error while parsing test results";
+            buildLogsMap.appendBuildLogEntry(buildJob.id(), msg);
+            throw new LocalCIException(msg, e);
         }
 
         msg = "Building and testing submission for repository " + assignmentRepositoryUri.repositorySlug() + " and commit hash " + assignmentRepoCommitHash + " took "
