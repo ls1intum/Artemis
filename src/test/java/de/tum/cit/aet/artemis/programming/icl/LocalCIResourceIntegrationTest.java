@@ -356,10 +356,10 @@ class LocalCIResourceIntegrationTest extends AbstractProgrammingIntegrationLocal
 
             LinkedHashMap<?, ?> responseMap = ((LinkedHashMap<?, ?>) response.getFirst());
             String log = responseMap.get("log").toString();
-            String time = responseMap.get("time").toString();
+            ZonedDateTime time = ZonedDateTime.parse(responseMap.get("time").toString());
             assertThat(response).hasSize(1);
             assertThat(buildLogEntry.log()).isEqualTo(log);
-            assertThat(buildLogEntry.time().toString()).contains(time);
+            assertThat(buildLogEntry.time()).isEqualTo(time);
 
         }
         finally {
