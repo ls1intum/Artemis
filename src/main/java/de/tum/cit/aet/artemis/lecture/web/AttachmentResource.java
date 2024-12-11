@@ -101,23 +101,24 @@ public class AttachmentResource {
     }
 
     /**
-     * PUT /attachments/:id : Updates an existing attachment.
+     * PUT /attachments/:id : Updates an existing attachment, optionally handling both public and hidden files.
      *
      * @param attachmentId     the id of the attachment to save
      * @param attachment       the attachment to update
      * @param file             the file to save if the file got changed (optional)
-     * @param notificationText text that will be sent to student group
+     * @param hiddenFile       the file to add as hidden version of the attachment (optional)
+     * @param notificationText text that will be sent to the student group (optional)
      * @return the ResponseEntity with status 200 (OK) and with body the updated attachment, or with status 400 (Bad Request) if the attachment is not valid, or with status 500
      *         (Internal Server Error) if the attachment couldn't be updated
      */
     @PutMapping(value = "attachments/{attachmentId}", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     @EnforceAtLeastEditor
     public ResponseEntity<Attachment> updateAttachment(@PathVariable Long attachmentId, @RequestPart Attachment attachment, @RequestPart(required = false) MultipartFile file,
-            @RequestParam(value = "notificationText", required = false) String notificationText) {
+            @RequestPart(required = false) MultipartFile hiddenFile, @RequestParam(value = "notificationText", required = false) String notificationText) {
         log.debug("REST request to update Attachment : {}", attachment);
         attachment.setId(attachmentId);
 
-        // Make sure that the original references are preserved.
+        // Make sure that the original references are preserved
         Attachment originalAttachment = attachmentRepository.findByIdOrElseThrow(attachment.getId());
         attachment.setAttachmentUnit(originalAttachment.getAttachmentUnit());
 
@@ -129,6 +130,20 @@ public class AttachmentResource {
             URI oldPath = URI.create(originalAttachment.getLink());
             fileService.schedulePathForDeletion(FilePathService.actualPathForPublicPathOrThrow(oldPath), 0);
             this.fileService.evictCacheForPath(FilePathService.actualPathForPublicPathOrThrow(oldPath));
+        }
+
+        if (hiddenFile != null) {
+            // Update hidden file logic
+            Path basePath = FilePathService.getAttachmentUnitFilePath().resolve(originalAttachment.getAttachmentUnit().getId().toString());
+            Path savePath = fileService.saveFile(hiddenFile, basePath, true);
+            attachment.setHiddenLink(FilePathService.publicPathForActualPath(savePath, originalAttachment.getAttachmentUnit().getId()).toString() + "v2");
+
+            // Delete the old hidden file
+            if (originalAttachment.getHiddenLink() != null) {
+                URI oldHiddenPath = URI.create(originalAttachment.getHiddenLink());
+                fileService.schedulePathForDeletion(FilePathService.actualPathForPublicPathOrThrow(oldHiddenPath), 0);
+                fileService.evictCacheForPath(FilePathService.actualPathForPublicPathOrThrow(oldHiddenPath));
+            }
         }
 
         Attachment result = attachmentRepository.save(attachment);

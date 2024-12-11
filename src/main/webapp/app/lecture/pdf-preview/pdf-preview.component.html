@@ -70,7 +70,12 @@
                 </a>
             </div>
             <div>
-                <button type="submit" (click)="updateAttachmentWithFile()" class="btn btn-primary" [disabled]="isPdfLoading() || totalPages() === 0 || !isFileChanged()">
+                <button
+                    type="submit"
+                    (click)="updateAttachmentWithFile()"
+                    class="btn btn-primary"
+                    [disabled]="(isPdfLoading() || totalPages() === 0 || !isFileChanged()) && !hiddenPagesChanged()"
+                >
                     <fa-icon [icon]="faSave" [ngbTooltip]="'entity.action.save' | artemisTranslate"></fa-icon>
                     <span jhiTranslate="entity.action.save"></span>
                 </button>

@@ -45,14 +45,15 @@ export class AttachmentService {
      * @param attachmentId the id of the attachment to update
      * @param attachment the attachment object holding the updated values
      * @param file the file to save as an attachment if it was changed (optional)
+     * @param hiddenFile the file to add as hidden version of the attachment (optional)
      * @param req optional request parameters
      */
-    update(attachmentId: number, attachment: Attachment, file?: File, req?: any): Observable<EntityResponseType> {
+    update(attachmentId: number, attachment: Attachment, file?: File, hiddenFile?: File, req?: any): Observable<EntityResponseType> {
         const options = createRequestOption(req);
         const copy = this.convertAttachmentDatesFromClient(attachment);
 
         return this.http
-            .put<Attachment>(this.resourceUrl + '/' + attachmentId, this.createFormData(copy, file), { params: options, observe: 'response' })
+            .put<Attachment>(this.resourceUrl + '/' + attachmentId, this.createFormData(copy, file, hiddenFile), { params: options, observe: 'response' })
             .pipe(map((res: EntityResponseType) => this.convertAttachmentResponseDatesFromServer(res)));
     }
 
@@ -128,11 +129,14 @@ export class AttachmentService {
         return res;
     }
 
-    private createFormData(attachment: Attachment, file?: File) {
+    private createFormData(attachment: Attachment, file?: File, hiddenFile?: File) {
         const formData = new FormData();
         formData.append('attachment', objectToJsonBlob(attachment));
         if (file) {
             formData.append('file', file);
+        }
+        if (hiddenFile) {
+            formData.append('hiddenFile', hiddenFile);
         }
         return formData;
     }
