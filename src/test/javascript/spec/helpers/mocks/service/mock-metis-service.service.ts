@@ -60,6 +60,8 @@ export class MockMetisService {
 
     deleteReaction(reaction: Reaction): void {}
 
+    resetCachedPosts(): void {}
+
     metisUserIsAtLeastTutorInCourse(): boolean {
         return true;
     }
@@ -92,6 +94,10 @@ export class MockMetisService {
 
     getLinkForExam(examId: string): string {
         return '/courses/' + metisCourse.id + '/exams/' + examId;
+    }
+
+    getLinkForFaq(): string {
+        return `/courses/${this.getCourse().id}/faq`;
     }
 
     getLinkForChannelSubType(channel?: ChannelDTO): string | undefined {

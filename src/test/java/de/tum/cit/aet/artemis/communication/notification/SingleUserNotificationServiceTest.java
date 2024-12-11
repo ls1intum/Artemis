@@ -215,6 +215,7 @@ class SingleUserNotificationServiceTest extends AbstractSpringIntegrationIndepen
         channel.setCreationDate(ZonedDateTime.now());
 
         post = new Post();
+        post.setId(1L);
         post.setAuthor(userTwo);
         post.setConversation(channel);
         post.setTitle(POST_TITLE);
@@ -223,7 +224,9 @@ class SingleUserNotificationServiceTest extends AbstractSpringIntegrationIndepen
         Post answerPostPost = new Post();
         answerPostPost.setConversation(channel);
         answerPostPost.setAuthor(userTwo);
+        answerPostPost.setId(2L);
         answerPost = new AnswerPost();
+        answerPost.setId(1L);
         answerPost.setPost(answerPostPost);
         answerPost.setAuthor(userThree);
         answerPost.setContent(ANSWER_POST_CONTENT);
@@ -464,11 +467,13 @@ class SingleUserNotificationServiceTest extends AbstractSpringIntegrationIndepen
     @Test
     void testConversationNotificationsNewMessageReply() {
         Post post = new Post();
+        post.setId(1L);
         post.setAuthor(user);
         post.setCreationDate(ZonedDateTime.now());
         post.setConversation(groupChat);
 
         AnswerPost answerPost = new AnswerPost();
+        answerPost.setId(1L);
         answerPost.setAuthor(userTwo);
         answerPost.setCreationDate(ZonedDateTime.now().plusSeconds(5));
         answerPost.setPost(post);
