@@ -174,20 +174,24 @@ export class PlagiarismCasesInstructorViewComponent implements OnInit {
      * @private return object containing grouped cases
      */
     private getGroupedPlagiarismCasesByExercise(cases: PlagiarismCase[]): GroupedPlagiarismCases {
+        // Pre-collect exercises to avoid side effects in reduce
+        this.exercisesWithPlagiarismCases = cases
+            .map(case => case.exercise)
+            .filter((exercise): exercise is Exercise => exercise !== null && exercise !== undefined);
+
         return cases.reduce((acc: GroupedPlagiarismCases, plagiarismCase) => {
-            const caseExerciseId = plagiarismCase.exercise?.id;
-            if (caseExerciseId === undefined) {
+            const exercise = plagiarismCase.exercise;
+            if (!exercise?.id) {
                 return acc;
             }
 
             // Group initialization
-            if (!acc[caseExerciseId]) {
-                acc[caseExerciseId] = [];
-                this.exercisesWithPlagiarismCases.push(plagiarismCase.exercise!);
+            if (!acc[exercise.id]) {
+                acc[exercise.id] = [];
             }
 
             // Grouping
-            acc[caseExerciseId].push(plagiarismCase);
+            acc[exercise.id].push(plagiarismCase);
             return acc;
         }, {});
     }
