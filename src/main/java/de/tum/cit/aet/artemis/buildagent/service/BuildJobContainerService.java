@@ -231,12 +231,12 @@ public class BuildJobContainerService {
 
             // Submit Docker stop command to executor service
             Future<Void> future = executor.submit(() -> {
-                dockerClient.stopContainerCmd(containerId).withTimeout(5).exec();
+                dockerClient.stopContainerCmd(containerId).withTimeout(15).exec();
                 return null;  // Return type to match Future<Void>
             });
 
             // Await the future with a timeout
-            future.get(10, TimeUnit.SECONDS);  // Wait for the stop command to complete with a timeout
+            future.get(20, TimeUnit.SECONDS);  // Wait for the stop command to complete with a timeout
         }
         catch (NotFoundException | NotModifiedException e) {
             log.warn("Container with id {} is already stopped.", containerId, e);
@@ -251,7 +251,7 @@ public class BuildJobContainerService {
                     return null;
                 });
 
-                killFuture.get(5, TimeUnit.SECONDS);  // Wait for the kill command to complete with a timeout
+                killFuture.get(20, TimeUnit.SECONDS);  // Wait for the kill command to complete with a timeout
             }
             catch (Exception killException) {
                 log.error("Failed to kill container with id {}.", containerId, killException);
