@@ -200,18 +200,6 @@ public class BuildAgentConfiguration {
         }
     }
 
-    public void reinitialize() {
-        shutdownBuildExecutor();
-        log.info("Executor shutdown");
-        this.buildExecutor = createBuildExecutor();
-        log.info("Executor reinitialized");
-
-        closeDockerClient();
-        log.info("Docker client closed");
-        this.dockerClient = createDockerClient();
-        log.info("Docker client reinitialized");
-    }
-
     private void shutdownBuildExecutor() {
         // Shut down the current executor gracefully
         if (buildExecutor != null && !buildExecutor.isShutdown()) {
@@ -238,12 +226,12 @@ public class BuildAgentConfiguration {
         }
     }
 
-    public void pauseBuildAgentServices() {
+    public void closeBuildAgentServices() {
         shutdownBuildExecutor();
         closeDockerClient();
     }
 
-    public void resumeBuildAgentServices() {
+    public void openBuildAgentServices() {
         this.buildExecutor = createBuildExecutor();
         this.dockerClient = createDockerClient();
     }

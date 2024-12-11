@@ -518,7 +518,7 @@ public class SharedQueueProcessingService {
                 }
             }
             // Close the build executor and docker client
-            buildAgentConfiguration.pauseBuildAgentServices();
+            buildAgentConfiguration.closeBuildAgentServices();
         }
         finally {
             pauseResumeLock.unlock();
@@ -552,7 +552,7 @@ public class SharedQueueProcessingService {
             log.info("Resuming build agent with address {}", hazelcastInstance.getCluster().getLocalMember().getAddress().toString());
             isPaused.set(false);
             processResults.set(true);
-            buildAgentConfiguration.resumeBuildAgentServices();
+            buildAgentConfiguration.openBuildAgentServices();
 
             // Cleanup docker containers
             buildAgentDockerService.cleanUpContainers();
