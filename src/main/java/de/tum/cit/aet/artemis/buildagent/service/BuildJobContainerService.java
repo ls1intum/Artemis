@@ -207,6 +207,8 @@ public class BuildJobContainerService {
         // Get the container ID.
         String containerId = container.getId();
 
+        log.info("Stopping container with id {}", containerId);
+
         // Create a file "stop_container.txt" in the root directory of the container to indicate that the test results have been extracted or that the container should be stopped
         // for some other reason.
         // The container's main process is waiting for this file to appear and then stops the main process, thus stopping and removing the container.
@@ -342,16 +344,11 @@ public class BuildJobContainerService {
     private void addAndPrepareDirectoryAndReplaceContent(String containerId, Path repositoryPath, String newDirectoryName) {
         copyToContainer(repositoryPath.toString(), containerId);
         addDirectory(containerId, newDirectoryName, true);
-        removeDirectoryAndFiles(containerId, newDirectoryName);
-        renameDirectoryOrFile(containerId, LOCALCI_WORKING_DIRECTORY + "/" + repositoryPath.getFileName().toString(), newDirectoryName);
+        insertRepositoryFiles(containerId, LOCALCI_WORKING_DIRECTORY + "/" + repositoryPath.getFileName().toString(), newDirectoryName);
     }
 
-    private void removeDirectoryAndFiles(String containerId, String newName) {
-        executeDockerCommand(containerId, null, false, false, true, "rm", "-rf", newName);
-    }
-
-    private void renameDirectoryOrFile(String containerId, String oldName, String newName) {
-        executeDockerCommand(containerId, null, false, false, true, "mv", oldName, newName);
+    private void insertRepositoryFiles(String containerId, String oldName, String newName) {
+        executeDockerCommand(containerId, null, false, false, true, "cp", "-r", oldName + (oldName.endsWith("/") ? "." : "/."), newName);
     }
 
     private void addDirectory(String containerId, String directoryName, boolean createParentsIfNecessary) {

@@ -13,6 +13,7 @@ import { ArtemisFullscreenModule } from 'app/shared/fullscreen/fullscreen.module
 import { RatingModule } from 'app/exercises/shared/rating/rating.module';
 import { ArtemisMarkdownModule } from 'app/shared/markdown.module';
 import { ArtemisTeamParticipeModule } from 'app/exercises/shared/team/team-participate/team-participate.module';
+import { RequestFeedbackButtonComponent } from 'app/overview/exercise-details/request-feedback-button/request-feedback-button.component';
 
 @NgModule({
     imports: [
@@ -29,6 +30,7 @@ import { ArtemisTeamParticipeModule } from 'app/exercises/shared/team/team-parti
         RatingModule,
         ArtemisMarkdownModule,
         ArtemisTeamParticipeModule,
+        RequestFeedbackButtonComponent,
     ],
     declarations: [ModelingSubmissionComponent],
     exports: [ModelingSubmissionComponent],

@@ -316,7 +316,7 @@ public class BuildJobExecutionService {
 
         // Get an input stream of the test result files.
 
-        msg = "~~~~~~~~~~~~~~~~~~~~ Collecting test results from container " + containerName + " for build job " + buildJob.id() + " ~~~~~~~~~~~~~~~~~~~~";
+        msg = "~~~~~~~~~~~~~~~~~~~~ Collecting test results from container " + containerId + " for build job " + buildJob.id() + " ~~~~~~~~~~~~~~~~~~~~";
         buildLogsMap.appendBuildLogEntry(buildJob.id(), msg);
         log.info(msg);
 
