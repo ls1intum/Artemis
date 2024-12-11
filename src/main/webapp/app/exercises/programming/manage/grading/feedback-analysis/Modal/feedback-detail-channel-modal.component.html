@@ -58,14 +58,7 @@
                 <label for="regular" class="btn btn-outline-secondary" [jhiTranslate]="TRANSLATION_BASE + '.announcementChannelNo'"></label>
             </div>
         </div>
-        @if (groupFeedback()) {
-            <div class="alert alert-info mb-3">
-                <p>
-                    <strong [jhiTranslate]="TRANSLATION_BASE + '.groupFeedbackInfoTitle'"></strong>
-                    <span [jhiTranslate]="TRANSLATION_BASE + '.groupFeedbackInfoDescription'"></span>
-                </p>
-            </div>
-        }
+
         <div class="form-group mt-3">
             <p class="text-info">
                 <strong [jhiTranslate]="TRANSLATION_BASE + '.studentNumber'" [translateValues]="{ count: feedbackDetail().count }"></strong>

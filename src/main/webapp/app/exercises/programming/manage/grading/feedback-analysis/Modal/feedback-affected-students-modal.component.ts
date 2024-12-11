@@ -50,7 +50,7 @@ export class AffectedStudentsModalComponent {
 
         this.isLoading.set(true);
         try {
-            const response = await this.feedbackService.getParticipationForFeedbackDetailText(this.exerciseId(), feedbackDetail.detailTexts, feedbackDetail.testCaseName, pageable);
+            const response = await this.feedbackService.getParticipationForFeedbackDetailText(this.exerciseId(), feedbackDetail.feedbackIds, feedbackDetail.testCaseName, pageable);
             this.participation.set(response);
         } catch (error) {
             this.alertService.error(this.TRANSLATION_BASE + '.error');

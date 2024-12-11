@@ -363,11 +363,11 @@ public class ResultResource {
      * <br>
      *
      * @param exerciseId   for which the participation data is requested.
-     * @param detailText1  Optional first detail text to filter affected students by specific feedback entries.
-     * @param detailText2  Optional second detail text to filter affected students by specific feedback entries.
-     * @param detailText3  Optional third detail text to filter affected students by specific feedback entries.
-     * @param detailText4  Optional fourth detail text to filter affected students by specific feedback entries.
-     * @param detailText5  Optional fifth detail text to filter affected students by specific feedback entries.
+     * @param feedbackId1  Optional first detail text id to filter affected students by specific feedback entries.
+     * @param feedbackId2  Optional second detail text id to filter affected students by specific feedback entries.
+     * @param feedbackId3  Optional third detail text id to filter affected students by specific feedback entries.
+     * @param feedbackId4  Optional fourth detail text id to filter affected students by specific feedback entries.
+     * @param feedbackId5  Optional fifth detail text id to filter affected students by specific feedback entries.
      * @param testCaseName The test case name to filter affected students by specific test cases.
      * @param data         A {@link PageableSearchDTO} object containing pagination and sorting parameters.
      * @return A {@link ResponseEntity} containing a {@link Page} of {@link FeedbackAffectedStudentDTO}, each representing a student affected by the feedback entries.
@@ -375,14 +375,14 @@ public class ResultResource {
     @GetMapping("exercises/{exerciseId}/feedback-details-participation")
     @EnforceAtLeastEditorInExercise
     public ResponseEntity<Page<FeedbackAffectedStudentDTO>> getAffectedStudentsWithFeedback(@PathVariable long exerciseId,
-            @RequestParam(value = "detailText1", required = false) String detailText1, @RequestParam(value = "detailText2", required = false) String detailText2,
-            @RequestParam(value = "detailText3", required = false) String detailText3, @RequestParam(value = "detailText4", required = false) String detailText4,
-            @RequestParam(value = "detailText5", required = false) String detailText5, @RequestParam("testCaseName") String testCaseName,
+            @RequestParam(value = "feedbackId1", required = false) Long feedbackId1, @RequestParam(value = "feedbackId2", required = false) Long feedbackId2,
+            @RequestParam(value = "feedbackId3", required = false) Long feedbackId3, @RequestParam(value = "feedbackId4", required = false) Long feedbackId4,
+            @RequestParam(value = "feedbackId5", required = false) Long feedbackId5, @RequestParam("testCaseName") String testCaseName,
             @ModelAttribute PageableSearchDTO<String> data) {
 
-        List<String> detailTexts = Stream.of(detailText1, detailText2, detailText3, detailText4, detailText5).filter(Objects::nonNull).toList();
+        List<Long> feedbackIds = Stream.of(feedbackId1, feedbackId2, feedbackId3, feedbackId4, feedbackId5).filter(Objects::nonNull).toList();
 
-        Page<FeedbackAffectedStudentDTO> participation = resultService.getAffectedStudentsWithFeedbackText(exerciseId, detailTexts, testCaseName, data);
+        Page<FeedbackAffectedStudentDTO> participation = resultService.getAffectedStudentsWithFeedbackIds(exerciseId, feedbackIds, testCaseName, data);
         return ResponseEntity.ok(participation);
     }
 }

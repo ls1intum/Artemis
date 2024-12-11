@@ -1260,6 +1260,7 @@ public interface StudentParticipationRepository extends ArtemisJpaRepository<Stu
      */
     @Query("""
                 SELECT new de.tum.cit.aet.artemis.assessment.dto.FeedbackDetailDTO(
+                    LISTAGG(CAST(f.id AS string), ',') WITHIN GROUP (ORDER BY f.id),
                     COUNT(f.id),
                     0,
                     f.detailText,
@@ -1363,7 +1364,7 @@ public interface StudentParticipationRepository extends ArtemisJpaRepository<Stu
      * <br>
      *
      * @param exerciseId   for which the affected student participation data is requested.
-     * @param detailTexts  used to filter the participation to only those affected by specific feedback entries.
+     * @param feedbackIds  used to filter the participation to only those affected by specific feedback entries.
      * @param pageable     A {@link Pageable} object to control pagination and sorting of the results, specifying page number, page size, and sort order.
      * @param testCaseName The name of the test case for which the feedback is given.
      * @return A {@link Page} of {@link FeedbackAffectedStudentDTO} objects, each representing a student affected by the feedback.
@@ -1385,12 +1386,12 @@ public interface StudentParticipationRepository extends ArtemisJpaRepository<Stu
                 )
                 INNER JOIN r.feedbacks f
                 WHERE p.exercise.id = :exerciseId
-                      AND f.detailText IN :detailTexts
+                      AND f.id IN :feedbackIds
                       AND f.testCase.testName = :testCaseName
                       AND p.testRun = FALSE
                 ORDER BY p.student.firstName ASC
             """)
-    Page<FeedbackAffectedStudentDTO> findAffectedStudentsByFeedbackText(@Param("exerciseId") long exerciseId, @Param("detailTexts") List<String> detailTexts,
+    Page<FeedbackAffectedStudentDTO> findAffectedStudentsByFeedbackIds(@Param("exerciseId") long exerciseId, @Param("feedbackIds") List<Long> feedbackIds,
             @Param("testCaseName") String testCaseName, Pageable pageable);
 
     /**

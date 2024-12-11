@@ -14,6 +14,7 @@ export interface FeedbackAnalysisResponse {
     highestOccurrenceOfGroupedFeedback: number;
 }
 export interface FeedbackDetail {
+    feedbackIds: number[];
     count: number;
     relativeCount: number;
     detailTexts: string[];
@@ -58,7 +59,7 @@ export class FeedbackAnalysisService extends BaseApiHttpService {
 
     async getParticipationForFeedbackDetailText(
         exerciseId: number,
-        detailText: string[],
+        feedbackIds: number[],
         testCaseName: string,
         pageable: PageableSearch,
     ): Promise<PageableResult<FeedbackAffectedStudentDTO>> {
@@ -69,10 +70,10 @@ export class FeedbackAnalysisService extends BaseApiHttpService {
             .set('sortingOrder', pageable.sortingOrder)
             .set('testCaseName', testCaseName);
 
-        const topDetailTexts = detailText.slice(0, 5);
+        const topFeedbackIds = feedbackIds.slice(0, 5);
 
-        topDetailTexts.forEach((text, index) => {
-            params = params.set(`detailText${index + 1}`, text);
+        topFeedbackIds.forEach((id, index) => {
+            params = params.set(`feedbackId${index + 1}`, id.toString());
         });
 
         return this.get<PageableResult<FeedbackAffectedStudentDTO>>(`exercises/${exerciseId}/feedback-details-participation`, { params });

@@ -8,14 +8,6 @@
     <button type="button" class="btn-close" aria-label="Close" (click)="activeModal.dismiss()"></button>
 </div>
 <div class="modal-body">
-    @if (groupFeedback()) {
-        <div class="alert alert-info mb-3">
-            <p>
-                <strong [jhiTranslate]="TRANSLATION_BASE + '.groupFeedbackInfoTitle'"></strong>
-                <span [jhiTranslate]="TRANSLATION_BASE + '.groupFeedbackInfoDescription'"></span>
-            </p>
-        </div>
-    }
     @if (isLoading()) {
         <div class="row justify-content-center p-2">
             <div class="spinner-border text-primary" role="status">
