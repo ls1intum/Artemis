@@ -61,10 +61,7 @@ public class BuildAgentConfiguration {
 
     public BuildAgentConfiguration(ProgrammingLanguageConfiguration programmingLanguageConfiguration) {
         this.programmingLanguageConfiguration = programmingLanguageConfiguration;
-    }
-
-    @EventListener(ApplicationReadyEvent.class)
-    public void onApplicationReady() {
+        // Initialize the build executor and Docker client immediately in case they are needed right after application startup
         buildExecutor = createBuildExecutor();
         dockerClient = createDockerClient();
     }
