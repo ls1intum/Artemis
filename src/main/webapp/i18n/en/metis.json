@@ -135,6 +135,7 @@
                 "collapseContent": "Collapse content",
                 "addReaction": "Add reaction",
                 "pinMessage": "Pin message",
+                "resolvesPost": "Solution",
                 "unpinMessage": "Unpin message",
                 "editMessage": "Edit message",
                 "deleteMessage": "Delete message",

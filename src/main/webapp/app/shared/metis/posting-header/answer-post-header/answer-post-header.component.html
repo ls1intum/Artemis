@@ -34,6 +34,15 @@
                 {{ postingIsOfToday ? (posting.creationDate | artemisDate: 'time') : (posting.creationDate | artemisDate: 'short-date') }}
             </span>
         </span>
+        @if (isResolvesPostSet()) {
+            <span class="post-header-solution">
+                <span
+                    class="badge bg-info ms-2"
+                    jhiTranslate="artemisApp.metis.post.resolvesPost"
+                    ngbTooltip="{{ 'artemisApp.metis.post.resolvesPost' | artemisTranslate }}"
+                ></span>
+            </span>
+        }
         @if (!!isCommunicationPage && (!lastReadDate || (lastReadDate && posting.creationDate && posting.creationDate.isAfter(lastReadDate))) && !isAuthorOfPosting) {
             <span jhiTranslate="global.generic.new" class="badge bg-secondary hideAfter5Seconds"></span>
         }

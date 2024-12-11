@@ -28,4 +28,9 @@ export class AnswerPostHeaderComponent extends PostingHeaderDirective<AnswerPost
         this.setUserProperties();
         this.setUserAuthorityIconAndTooltip();
     }
+
+    isResolvesPostSet(): boolean {
+        //Check if the post is a resolves post and if the attribute is not set return false
+        return this.posting.resolvesPost !== undefined && this.posting.resolvesPost;
+    }
 }
