@@ -13,8 +13,8 @@ import { faCircleNotch } from '@fortawesome/free-solid-svg-icons';
 export class ResultProgressBarComponent implements OnDestroy {
     estimatedRemaining = input<number>(0);
     estimatedDuration = input<number>(0);
-    isBuilding = input<boolean>();
-    isQueued = input<boolean>();
+    isBuilding = input.required<boolean>();
+    isQueued = input.required<boolean>();
     showBorder = input<boolean>(false);
 
     isQueueProgressBarAnimated: boolean;
