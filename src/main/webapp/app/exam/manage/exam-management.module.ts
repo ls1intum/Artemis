@@ -71,8 +71,9 @@ import { DetailModule } from 'app/detail-overview-list/detail.module';
 import { ArtemisDurationFromSecondsPipe } from 'app/shared/pipes/artemis-duration-from-seconds.pipe';
 import { NoDataComponent } from 'app/shared/no-data-component';
 import { GitDiffLineStatComponent } from 'app/exercises/programming/hestia/git-diff-report/git-diff-line-stat.component';
+import { examScoresState } from 'app/exam/exam-scores/exam-scores.route';
 
-const ENTITY_STATES = [...examManagementState];
+const ENTITY_STATES = [...examManagementState, ...examScoresState];
 
 @NgModule({
     // TODO: For better modularization we could define an exercise module with the corresponding exam routes
