@@ -21,6 +21,8 @@ services:
             - ./artemis/config/playwright-local.env
         volumes:
             - /var/run/docker.sock:/var/run/docker.sock
+        ports:
+          - "8080:8080"
 
     nginx:
         extends:
@@ -47,6 +49,9 @@ services:
                 condition: service_healthy
         environment:
             PLAYWRIGHT_DB_TYPE: 'MySQL'
+        network_mode: host
+        networks:
+          - none
 
 networks:
     artemis:

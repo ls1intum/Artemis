@@ -97,7 +97,21 @@ test.describe('Programming exercise participation', { tag: '@sequential' }, () =
             exercise = await exerciseAPIRequests.createProgrammingExercise({ course, programmingLanguage: ProgrammingLanguage.JAVA });
         });
 
-        test('Makes a git submission using SSH', async ({ page, programmingExerciseOverview }) => {
+        test('Makes a git submission through HTTPS using token', async ({ programmingExerciseOverview, page }) => {
+            await programmingExerciseOverview.startParticipation(course.id!, exercise.id!, studentOne);
+            await makeGitExerciseSubmission(
+                page,
+                programmingExerciseOverview,
+                course,
+                exercise,
+                studentOne,
+                javaAllSuccessfulSubmission,
+                'Solution',
+                GitCloneMethod.httpsWithToken,
+            );
+        });
+
+        test('Makes a submission using SSH git', async ({ page, programmingExerciseOverview }) => {
             await programmingExerciseOverview.startParticipation(course.id!, exercise.id!, studentOne);
             await makeGitExerciseSubmission(page, programmingExerciseOverview, course, exercise, studentOne, javaAllSuccessfulSubmission, 'Solution', GitCloneMethod.ssh);
         });
@@ -265,9 +279,9 @@ async function makeGitExerciseSubmission(
         await programmingExerciseOverview.openCloneMenu(cloneMethod);
     }
     let repoUrl = await programmingExerciseOverview.copyCloneUrl();
-    if (process.env.CI === 'true' && cloneMethod == GitCloneMethod.https) {
-        repoUrl = repoUrl.replace('localhost', 'artemis-app');
-    }
+    // if (process.env.CI === 'true' && (cloneMethod == GitCloneMethod.https || cloneMethod == GitCloneMethod.httpsWithToken)) {
+    //     repoUrl = repoUrl.replace('localhost', 'artemis-app');
+    // }
     if (process.env.CI === 'true' && cloneMethod == GitCloneMethod.ssh) {
         repoUrl = repoUrl.replace(/ls1Agent.*\.ase\.cit\.tum\.de/, 'artemis-app');
     }
