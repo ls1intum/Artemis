@@ -14,6 +14,7 @@ import { of } from 'rxjs';
 import { ExerciseCategory } from 'app/entities/exercise-category.model';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
 import { HttpResponse } from '@angular/common/http';
+import { MockJhiTranslateDirective } from '../../../helpers/mocks/directive/mock-jhi-translate-directive.directive';
 
 function baseSettings() {
     const irisSubSettings = new IrisChatSubSettings();
@@ -43,7 +44,7 @@ describe('IrisCommonSubSettingsUpdateComponent Component', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule, FormsModule, MockDirective(NgbTooltip), MockPipe(ArtemisTranslatePipe)],
+            imports: [ArtemisTestModule, FormsModule, MockDirective(NgbTooltip), MockPipe(ArtemisTranslatePipe), MockJhiTranslateDirective],
             declarations: [IrisCommonSubSettingsUpdateComponent],
         })
             .compileComponents()

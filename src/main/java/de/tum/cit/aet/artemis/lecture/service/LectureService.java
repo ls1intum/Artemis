@@ -13,8 +13,8 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.data.domain.Page;
 import org.springframework.stereotype.Service;
 
-import de.tum.cit.aet.artemis.atlas.repository.CompetencyLectureUnitLinkRepository;
-import de.tum.cit.aet.artemis.atlas.service.competency.CompetencyProgressService;
+import de.tum.cit.aet.artemis.atlas.api.CompetencyProgressApi;
+import de.tum.cit.aet.artemis.atlas.api.CompetencyRelationApi;
 import de.tum.cit.aet.artemis.communication.domain.conversation.Channel;
 import de.tum.cit.aet.artemis.communication.repository.conversation.ChannelRepository;
 import de.tum.cit.aet.artemis.communication.service.conversation.ChannelService;
@@ -46,20 +46,19 @@ public class LectureService {
 
     private final Optional<PyrisWebhookService> pyrisWebhookService;
 
-    private final CompetencyProgressService competencyProgressService;
+    private final CompetencyProgressApi competencyProgressApi;
 
-    private final CompetencyLectureUnitLinkRepository competencyLectureUnitLinkRepository;
+    private final CompetencyRelationApi competencyRelationApi;
 
     public LectureService(LectureRepository lectureRepository, AuthorizationCheckService authCheckService, ChannelRepository channelRepository, ChannelService channelService,
-            Optional<PyrisWebhookService> pyrisWebhookService, CompetencyProgressService competencyProgressService,
-            CompetencyLectureUnitLinkRepository competencyLectureUnitLinkRepository) {
+            Optional<PyrisWebhookService> pyrisWebhookService, CompetencyProgressApi competencyProgressApi, CompetencyRelationApi competencyRelationApi) {
         this.lectureRepository = lectureRepository;
         this.authCheckService = authCheckService;
         this.channelRepository = channelRepository;
         this.channelService = channelService;
         this.pyrisWebhookService = pyrisWebhookService;
-        this.competencyProgressService = competencyProgressService;
-        this.competencyLectureUnitLinkRepository = competencyLectureUnitLinkRepository;
+        this.competencyProgressApi = competencyProgressApi;
+        this.competencyRelationApi = competencyRelationApi;
     }
 
     /**
@@ -162,13 +161,13 @@ public class LectureService {
 
         if (updateCompetencyProgress) {
             lecture.getLectureUnits().stream().filter(lectureUnit -> !(lectureUnit instanceof ExerciseUnit))
-                    .forEach(lectureUnit -> competencyProgressService.updateProgressForUpdatedLearningObjectAsync(lectureUnit, Optional.empty()));
+                    .forEach(lectureUnit -> competencyProgressApi.updateProgressForUpdatedLearningObjectAsync(lectureUnit, Optional.empty()));
         }
 
         Channel lectureChannel = channelRepository.findChannelByLectureId(lecture.getId());
         channelService.deleteChannel(lectureChannel);
 
-        competencyLectureUnitLinkRepository.deleteAllByLectureId(lecture.getId());
+        competencyRelationApi.deleteAllLectureUnitLinksByLectureId(lecture.getId());
 
         lectureRepository.deleteById(lecture.getId());
     }
@@ -177,16 +176,14 @@ public class LectureService {
      * Ingest the lectures when triggered by the ingest lectures button
      *
      * @param lectures set of lectures to be ingested
-     * @return returns the job token if the operation is successful else it returns null
      */
-    public boolean ingestLecturesInPyris(Set<Lecture> lectures) {
+    public void ingestLecturesInPyris(Set<Lecture> lectures) {
         if (pyrisWebhookService.isPresent()) {
             List<AttachmentUnit> attachmentUnitList = lectures.stream().flatMap(lec -> lec.getLectureUnits().stream()).filter(unit -> unit instanceof AttachmentUnit)
                     .map(unit -> (AttachmentUnit) unit).toList();
-            if (!attachmentUnitList.isEmpty()) {
-                return pyrisWebhookService.get().addLectureUnitsToPyrisDB(attachmentUnitList) != null;
+            for (AttachmentUnit attachmentUnit : attachmentUnitList) {
+                pyrisWebhookService.get().addLectureUnitToPyrisDB(attachmentUnit);
             }
         }
-        return false;
     }
 }

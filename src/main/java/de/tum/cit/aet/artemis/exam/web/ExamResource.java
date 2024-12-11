@@ -277,6 +277,10 @@ public class ExamResource {
 
         Exam savedExam = examRepository.save(updatedExam);
 
+        User instructor = userRepository.getUser();
+        final var auditEvent = new AuditEvent(instructor.getLogin(), Constants.UPDATE_EXAM, "exam=" + savedExam.getId());
+        auditEventRepository.add(auditEvent);
+
         // NOTE: We have to get exercises and groups as we need them for re-scheduling
         Exam examWithExercises = examService.findByIdWithExerciseGroupsAndExercisesElseThrow(savedExam.getId(), false);
 
@@ -313,7 +317,7 @@ public class ExamResource {
      */
     @PatchMapping("courses/{courseId}/exams/{examId}/working-time")
     @EnforceAtLeastInstructor
-    public ResponseEntity<Exam> updateExamWorkingTime(@PathVariable Long courseId, @PathVariable Long examId, @RequestBody Integer workingTimeChange) {
+    public ResponseEntity<Exam> updateExamWorkingTime(@PathVariable Long courseId, @PathVariable Long examId, @RequestBody int workingTimeChange) {
         log.debug("REST request to update the working time of exam with id {}", examId);
 
         examAccessService.checkCourseAndExamAccessForInstructorElseThrow(courseId, examId);
