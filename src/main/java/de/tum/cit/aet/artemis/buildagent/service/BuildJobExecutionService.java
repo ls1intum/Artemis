@@ -328,17 +328,15 @@ public class BuildJobExecutionService {
             testResultsTarInputStream = buildJobContainerService.getArchiveFromContainer(containerId, LOCALCI_WORKING_DIRECTORY + LOCALCI_RESULTS_DIRECTORY);
 
             buildResult = parseTestResults(testResultsTarInputStream, buildJob.buildConfig().branch(), assignmentRepoCommitHash, testRepoCommitHash, buildCompletedDate,
-                    buildJob.id());
+                buildJob.id());
             buildResult.setBuildLogEntries(buildLogsMap.getAndTruncateBuildLogs(buildJob.id()));
-        }
-        catch (NotFoundException e) {
+        } catch (NotFoundException e) {
             msg = "Could not find test results in container " + containerName;
             buildLogsMap.appendBuildLogEntry(buildJob.id(), msg);
             log.error(msg, e);
             // If the test results are not found, this means that something went wrong during the build and testing of the submission.
             return constructFailedBuildResult(buildJob.buildConfig().branch(), assignmentRepoCommitHash, testRepoCommitHash, buildCompletedDate);
-        }
-        catch (IOException | IllegalStateException e) {
+        } catch (IOException | IllegalStateException e) {
             msg = "Error while parsing test results";
             buildLogsMap.appendBuildLogEntry(buildJob.id(), msg);
             throw new LocalCIException(msg, e);
