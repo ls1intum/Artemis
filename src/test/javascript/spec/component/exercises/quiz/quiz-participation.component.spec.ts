@@ -1,6 +1,6 @@
 import { HttpResponse, provideHttpClient } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
-import { ComponentFixture, TestBed, discardPeriodicTasks, fakeAsync, tick } from '@angular/core/testing';
+import { ComponentFixture, TestBed, discardPeriodicTasks, fakeAsync, tick, waitForAsync } from '@angular/core/testing';
 import { ActivatedRoute } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
 import { JhiWebsocketService } from 'app/core/websocket/websocket.service';
@@ -137,9 +137,9 @@ describe('QuizParticipationComponent', () => {
     let quizExerciseService: QuizExerciseService;
 
     describe('live mode', () => {
-        beforeEach(() => {
+        beforeEach(waitForAsync(() => {
             TestBed.configureTestingModule({
-                imports: [ArtemisTestModule, MockDirective(NgbTooltip)],
+                imports: [ArtemisTestModule, MockDirective(NgbTooltip), QuizParticipationComponent],
                 declarations: [testBedDeclarations, MockDirective(NgModel)],
                 providers: [
                     provideHttpClient(),
@@ -188,7 +188,7 @@ describe('QuizParticipationComponent', () => {
                     jest.spyOn(quizExerciseService, 'findForStudent').mockReturnValue(of({ body: { ...quizExercise } } as HttpResponse<QuizExercise>));
                     httpMock = fixture.debugElement.injector.get(HttpTestingController);
                 });
-        });
+        }));
 
         afterEach(() => {
             httpMock.verify();
@@ -664,7 +664,7 @@ describe('QuizParticipationComponent', () => {
     describe('solution mode', () => {
         beforeEach(() => {
             TestBed.configureTestingModule({
-                imports: [ArtemisTestModule, MockDirective(NgbTooltip)],
+                imports: [ArtemisTestModule, MockDirective(NgbTooltip), QuizParticipationComponent],
                 declarations: testBedDeclarations,
                 providers: [
                     provideHttpClient(),
