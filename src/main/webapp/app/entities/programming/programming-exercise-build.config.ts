@@ -11,11 +11,9 @@ export class ProgrammingExerciseBuildConfig {
     public timeoutSeconds?: number;
     public dockerFlags?: string;
     public windfile?: WindFile;
-    public testwiseCoverageEnabled?: boolean;
     public theiaImage?: string;
 
     constructor() {
         this.checkoutSolutionRepository = false; // default value
-        this.testwiseCoverageEnabled = false; // default value
     }
 }

@@ -50,7 +50,6 @@ import de.tum.cit.aet.artemis.programming.domain.build.BuildPlanType;
 import de.tum.cit.aet.artemis.programming.repository.BuildLogStatisticsEntryRepository;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseRepository;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseStudentParticipationRepository;
-import de.tum.cit.aet.artemis.programming.repository.hestia.CoverageReportRepository;
 import de.tum.cit.aet.artemis.programming.service.BuildLogEntryService;
 import de.tum.cit.aet.artemis.programming.service.GitService;
 import de.tum.cit.aet.artemis.programming.service.ParticipationVcsAccessTokenService;
@@ -93,8 +92,6 @@ public class ParticipationService {
 
     private final ResultService resultService;
 
-    private final CoverageReportRepository coverageReportRepository;
-
     private final BuildLogStatisticsEntryRepository buildLogStatisticsEntryRepository;
 
     private final ParticipantScoreRepository participantScoreRepository;
@@ -115,10 +112,9 @@ public class ParticipationService {
             BuildLogEntryService buildLogEntryService, ParticipationRepository participationRepository, StudentParticipationRepository studentParticipationRepository,
             ProgrammingExerciseStudentParticipationRepository programmingExerciseStudentParticipationRepository, ProgrammingExerciseRepository programmingExerciseRepository,
             SubmissionRepository submissionRepository, TeamRepository teamRepository, UriService uriService, ResultService resultService,
-            CoverageReportRepository coverageReportRepository, BuildLogStatisticsEntryRepository buildLogStatisticsEntryRepository,
-            ParticipantScoreRepository participantScoreRepository, StudentScoreRepository studentScoreRepository, TeamScoreRepository teamScoreRepository,
-            Optional<SharedQueueManagementService> localCISharedBuildJobQueueService, ProfileService profileService,
-            ParticipationVcsAccessTokenService participationVCSAccessTokenService, CompetencyProgressApi competencyProgressApi) {
+            BuildLogStatisticsEntryRepository buildLogStatisticsEntryRepository, ParticipantScoreRepository participantScoreRepository,
+            StudentScoreRepository studentScoreRepository, TeamScoreRepository teamScoreRepository, Optional<SharedQueueManagementService> localCISharedBuildJobQueueService,
+            ProfileService profileService, ParticipationVcsAccessTokenService participationVCSAccessTokenService, CompetencyProgressApi competencyProgressApi) {
         this.gitService = gitService;
         this.continuousIntegrationService = continuousIntegrationService;
         this.versionControlService = versionControlService;
@@ -131,7 +127,6 @@ public class ParticipationService {
         this.teamRepository = teamRepository;
         this.uriService = uriService;
         this.resultService = resultService;
-        this.coverageReportRepository = coverageReportRepository;
         this.buildLogStatisticsEntryRepository = buildLogStatisticsEntryRepository;
         this.participantScoreRepository = participantScoreRepository;
         this.studentScoreRepository = studentScoreRepository;
@@ -901,7 +896,6 @@ public class ParticipationService {
             // We have to set the results to an empty list because otherwise clearing the build log entries does not work correctly
             submission.setResults(Collections.emptyList());
             if (submission instanceof ProgrammingSubmission programmingSubmission) {
-                coverageReportRepository.deleteBySubmissionId(submission.getId());
                 buildLogEntryService.deleteBuildLogEntriesForProgrammingSubmission(programmingSubmission);
                 buildLogStatisticsEntryRepository.deleteByProgrammingSubmissionId(submission.getId());
             }

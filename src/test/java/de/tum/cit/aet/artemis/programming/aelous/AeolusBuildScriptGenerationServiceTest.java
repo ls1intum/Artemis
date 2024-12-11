@@ -97,7 +97,6 @@ class AeolusBuildScriptGenerationServiceTest extends AbstractSpringIntegrationLo
         programmingExercise.setProjectType(ProjectType.PLAIN_GRADLE);
         programmingExercise.setStaticCodeAnalysisEnabled(true);
         programmingExercise.getBuildConfig().setSequentialTestRuns(true);
-        programmingExercise.getBuildConfig().setTestwiseCoverageEnabled(true);
         String script = aeolusBuildScriptGenerationService.getScript(programmingExercise);
         assertThat(script).isNotNull();
         assertThat(script).isEqualTo("imagine a result here");
@@ -105,7 +104,6 @@ class AeolusBuildScriptGenerationServiceTest extends AbstractSpringIntegrationLo
         programmingExercise.setProjectType(null);
         programmingExercise.setStaticCodeAnalysisEnabled(false);
         programmingExercise.getBuildConfig().setSequentialTestRuns(false);
-        programmingExercise.getBuildConfig().setTestwiseCoverageEnabled(false);
         programmingExercise.getBuildConfig().setBuildPlanConfiguration(null);
         script = aeolusBuildScriptGenerationService.getScript(programmingExercise);
         assertThat(script).isNotNull();

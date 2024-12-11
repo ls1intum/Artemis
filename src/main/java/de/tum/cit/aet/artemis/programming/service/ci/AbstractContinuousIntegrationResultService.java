@@ -17,7 +17,6 @@ import de.tum.cit.aet.artemis.programming.repository.BuildLogStatisticsEntryRepo
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseBuildConfigRepository;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseTestCaseRepository;
 import de.tum.cit.aet.artemis.programming.service.ProgrammingExerciseFeedbackCreationService;
-import de.tum.cit.aet.artemis.programming.service.hestia.TestwiseCoverageService;
 
 public abstract class AbstractContinuousIntegrationResultService implements ContinuousIntegrationResultService {
 
@@ -25,18 +24,15 @@ public abstract class AbstractContinuousIntegrationResultService implements Cont
 
     protected final BuildLogStatisticsEntryRepository buildLogStatisticsEntryRepository;
 
-    protected final TestwiseCoverageService testwiseCoverageService;
-
     protected final ProgrammingExerciseFeedbackCreationService feedbackCreationService;
 
     protected final ProgrammingExerciseBuildConfigRepository programmingExerciseBuildConfigRepository;
 
     protected AbstractContinuousIntegrationResultService(ProgrammingExerciseTestCaseRepository testCaseRepository,
-            BuildLogStatisticsEntryRepository buildLogStatisticsEntryRepository, TestwiseCoverageService testwiseCoverageService,
-            ProgrammingExerciseFeedbackCreationService feedbackCreationService, ProgrammingExerciseBuildConfigRepository programmingExerciseBuildConfigRepository) {
+            BuildLogStatisticsEntryRepository buildLogStatisticsEntryRepository, ProgrammingExerciseFeedbackCreationService feedbackCreationService,
+            ProgrammingExerciseBuildConfigRepository programmingExerciseBuildConfigRepository) {
         this.testCaseRepository = testCaseRepository;
         this.buildLogStatisticsEntryRepository = buildLogStatisticsEntryRepository;
-        this.testwiseCoverageService = testwiseCoverageService;
         this.feedbackCreationService = feedbackCreationService;
         this.programmingExerciseBuildConfigRepository = programmingExerciseBuildConfigRepository;
     }
@@ -72,9 +68,6 @@ public abstract class AbstractContinuousIntegrationResultService implements Cont
 
         // 2) process static code analysis feedback
         addStaticCodeAnalysisFeedbackToResult(result, buildResult, programmingExercise);
-
-        // 3) process testwise coverage analysis report
-        addTestwiseCoverageReportToResult(result, buildResult, programmingExercise);
     }
 
     private void addTestCaseFeedbacksToResult(Result result, List<? extends BuildJobDTOInterface> jobs, ProgrammingExercise programmingExercise) {
@@ -102,18 +95,6 @@ public abstract class AbstractContinuousIntegrationResultService implements Cont
             List<Feedback> scaFeedbackList = feedbackCreationService.createFeedbackFromStaticCodeAnalysisReports(staticCodeAnalysisReports);
             result.addFeedbacks(scaFeedbackList);
             result.setCodeIssueCount(scaFeedbackList.size());
-        }
-    }
-
-    private void addTestwiseCoverageReportToResult(Result result, AbstractBuildResultNotificationDTO buildResult, ProgrammingExercise programmingExercise) {
-        programmingExercise.setBuildConfig(programmingExerciseBuildConfigRepository.getProgrammingExerciseBuildConfigElseThrow(programmingExercise));
-        if (Boolean.TRUE.equals(programmingExercise.getBuildConfig().isTestwiseCoverageEnabled())) {
-            var report = buildResult.getTestwiseCoverageReports();
-            if (report != null) {
-                // since the test cases are not saved to the database yet, the test case is null for the entries
-                var coverageFileReportsWithoutTestsByTestCaseName = testwiseCoverageService.createTestwiseCoverageFileReportsWithoutTestsByTestCaseName(report);
-                result.setCoverageFileReportsByTestCaseName(coverageFileReportsWithoutTestsByTestCaseName);
-            }
         }
     }
 

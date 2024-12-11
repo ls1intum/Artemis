@@ -28,7 +28,6 @@ class JenkinsPipelineScriptCreatorTest extends AbstractProgrammingIntegrationJen
         programmingExercise.setProjectType(ProjectType.MAVEN_MAVEN);
         programmingExercise.setStaticCodeAnalysisEnabled(true);
         programmingExercise.getBuildConfig().setSequentialTestRuns(false);
-        programmingExercise.getBuildConfig().setTestwiseCoverageEnabled(false);
         programmingExercise.setReleaseDate(null);
         course.addExercises(programmingExercise);
 
@@ -48,9 +47,7 @@ class JenkinsPipelineScriptCreatorTest extends AbstractProgrammingIntegrationJen
     void testReplacements() {
         jenkinsPipelineScriptCreator.createBuildPlanForExercise(programmingExercise);
         BuildPlan buildPlan = buildPlanRepository.findByProgrammingExercises_IdWithProgrammingExercises(programmingExercise.getId()).orElseThrow();
-        assertThat(buildPlan.getBuildPlan()).doesNotContain("#isStaticCodeAnalysisEnabled", "#testWiseCoverage", "#dockerImage", "#dockerArgs")
-                // testwise coverage is disabled in the dummy exercise
-                .contains("isTestwiseCoverageEnabled = false && isSolutionBuild");
+        assertThat(buildPlan.getBuildPlan()).doesNotContain("#isStaticCodeAnalysisEnabled", "#dockerImage", "#dockerArgs").contains("isSolutionBuild");
     }
 
     @Test

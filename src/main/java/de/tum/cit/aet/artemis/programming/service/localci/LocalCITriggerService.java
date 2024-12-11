@@ -303,7 +303,6 @@ public class LocalCITriggerService implements ContinuousIntegrationTriggerServic
         ProjectType projectType = programmingExercise.getProjectType();
         boolean staticCodeAnalysisEnabled = programmingExercise.isStaticCodeAnalysisEnabled();
         boolean sequentialTestRunsEnabled = buildConfig.hasSequentialTestRuns();
-        boolean testwiseCoverageEnabled = buildConfig.isTestwiseCoverageEnabled();
 
         Windfile windfile;
         String dockerImage;
@@ -327,8 +326,8 @@ public class LocalCITriggerService implements ContinuousIntegrationTriggerServic
         String buildScript = localCIBuildConfigurationService.createBuildScript(programmingExercise);
 
         return new BuildConfig(buildScript, dockerImage, commitHashToBuild, assignmentCommitHash, testCommitHash, branch, programmingLanguage, projectType,
-                staticCodeAnalysisEnabled, sequentialTestRunsEnabled, testwiseCoverageEnabled, resultPaths, buildConfig.getTimeoutSeconds(),
-                buildConfig.getAssignmentCheckoutPath(), buildConfig.getTestCheckoutPath(), buildConfig.getSolutionCheckoutPath(), dockerRunConfig);
+                staticCodeAnalysisEnabled, sequentialTestRunsEnabled, resultPaths, buildConfig.getTimeoutSeconds(), buildConfig.getAssignmentCheckoutPath(),
+                buildConfig.getTestCheckoutPath(), buildConfig.getSolutionCheckoutPath(), dockerRunConfig);
     }
 
     private ProgrammingExerciseBuildConfig loadBuildConfig(ProgrammingExercise programmingExercise) {

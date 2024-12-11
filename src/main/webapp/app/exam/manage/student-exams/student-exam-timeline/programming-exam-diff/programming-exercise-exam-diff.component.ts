@@ -3,7 +3,7 @@ import { ProgrammingExercise } from 'app/entities/programming/programming-exerci
 import { ProgrammingSubmission } from 'app/entities/programming/programming-submission.model';
 import { FeatureToggle } from 'app/shared/feature-toggle/feature-toggle.service';
 import { ButtonSize } from 'app/shared/components/button.component';
-import { GitDiffReportModalComponent } from 'app/exercises/programming/hestia/git-diff-report/git-diff-report-modal.component';
+import { GitDiffReportModalComponent } from 'app/exercises/programming/git-diff-report/git-diff-report-modal.component';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { ProgrammingExerciseService } from 'app/exercises/programming/manage/services/programming-exercise.service';
 import { Exercise, IncludedInOverallScore } from 'app/entities/exercise.model';
@@ -11,7 +11,7 @@ import { ExamSubmissionComponent } from 'app/exam/participate/exercises/exam-sub
 import { Submission } from 'app/entities/submission.model';
 import { ProgrammingExerciseStudentParticipation } from 'app/entities/participation/programming-exercise-student-participation.model';
 import { faCodeCompare } from '@fortawesome/free-solid-svg-icons';
-import { ProgrammingExerciseGitDiffReport } from 'app/entities/hestia/programming-exercise-git-diff-report.model';
+import { ProgrammingExerciseGitDiffReport } from 'app/entities/programming-exercise-git-diff-report.model';
 import { ExamPageComponent } from 'app/exam/participate/exercises/exam-page.component';
 import { Observable, Subject, Subscription, debounceTime, take } from 'rxjs';
 import { CachedRepositoryFilesService } from 'app/exercises/programming/manage/services/cached-repository-files.service';

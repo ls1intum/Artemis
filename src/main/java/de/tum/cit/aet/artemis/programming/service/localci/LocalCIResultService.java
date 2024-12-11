@@ -19,7 +19,6 @@ import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseBuildCon
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseTestCaseRepository;
 import de.tum.cit.aet.artemis.programming.service.ProgrammingExerciseFeedbackCreationService;
 import de.tum.cit.aet.artemis.programming.service.ci.AbstractContinuousIntegrationResultService;
-import de.tum.cit.aet.artemis.programming.service.hestia.TestwiseCoverageService;
 
 /**
  * Service implementation for integrated CI.
@@ -28,10 +27,9 @@ import de.tum.cit.aet.artemis.programming.service.hestia.TestwiseCoverageService
 @Profile(PROFILE_LOCALCI)
 public class LocalCIResultService extends AbstractContinuousIntegrationResultService {
 
-    public LocalCIResultService(TestwiseCoverageService testwiseCoverageService, BuildLogStatisticsEntryRepository buildLogStatisticsEntryRepository,
-            ProgrammingExerciseFeedbackCreationService feedbackCreationService, ProgrammingExerciseTestCaseRepository testCaseRepository,
-            ProgrammingExerciseBuildConfigRepository programmingExerciseBuildConfigRepository) {
-        super(testCaseRepository, buildLogStatisticsEntryRepository, testwiseCoverageService, feedbackCreationService, programmingExerciseBuildConfigRepository);
+    public LocalCIResultService(BuildLogStatisticsEntryRepository buildLogStatisticsEntryRepository, ProgrammingExerciseFeedbackCreationService feedbackCreationService,
+            ProgrammingExerciseTestCaseRepository testCaseRepository, ProgrammingExerciseBuildConfigRepository programmingExerciseBuildConfigRepository) {
+        super(testCaseRepository, buildLogStatisticsEntryRepository, feedbackCreationService, programmingExerciseBuildConfigRepository);
     }
 
     @Override
