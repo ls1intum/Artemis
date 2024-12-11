@@ -126,7 +126,8 @@ public class AthenaSubmissionSendingService {
         try {
             final RequestDTO request = new RequestDTO(athenaDTOConverterService.ofExercise(exercise),
                     filteredSubmissions.stream().map((submission) -> athenaDTOConverterService.ofSubmission(exercise.getId(), submission)).toList());
-            ResponseDTO response = connector.invokeWithRetry(athenaModuleService.getAthenaModuleUrl(exercise) + "/submissions", request, maxRetries);
+            // applies only to feedback suggestions
+            ResponseDTO response = connector.invokeWithRetry(athenaModuleService.getAthenaModuleUrl(exercise.getExerciseType(), exercise.getFeedbackSuggestionModule()) + "/submissions", request, maxRetries);
             log.info("Athena (calculating automatic feedback) responded: {}", response.data);
         }
         catch (NetworkingException error) {

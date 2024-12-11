@@ -13,6 +13,7 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+import de.tum.cit.aet.artemis.athena.domain.ModuleType;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
@@ -225,7 +226,8 @@ public class TextExerciseResource {
         authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.EDITOR, course, null);
 
         // Check that only allowed athena modules are used
-        athenaModuleService.ifPresentOrElse(ams -> ams.checkHasAccessToAthenaModule(textExercise, course, ENTITY_NAME), () -> textExercise.setFeedbackSuggestionModule(null));
+        athenaModuleService.ifPresentOrElse(ams -> ams.checkHasAccessToAthenaModule(textExercise, course, ModuleType.FEEDBACK_SUGGESTIONS, ENTITY_NAME), () -> textExercise.setFeedbackSuggestionModule(null));
+        athenaModuleService.ifPresentOrElse(ams -> ams.checkHasAccessToAthenaModule(textExercise, course, ModuleType.PRELIMINARY_FEEDBACK, ENTITY_NAME), () -> textExercise.setPreliminaryFeedbackModule(null));
 
         TextExercise result = exerciseService.saveWithCompetencyLinks(textExercise, textExerciseRepository::save);
 
@@ -279,7 +281,8 @@ public class TextExerciseResource {
 
         // Check that only allowed athena modules are used
         Course course = courseService.retrieveCourseOverExerciseGroupOrCourseId(textExerciseBeforeUpdate);
-        athenaModuleService.ifPresentOrElse(ams -> ams.checkHasAccessToAthenaModule(textExercise, course, ENTITY_NAME), () -> textExercise.setFeedbackSuggestionModule(null));
+        athenaModuleService.ifPresentOrElse(ams -> ams.checkHasAccessToAthenaModule(textExercise, course, ModuleType.FEEDBACK_SUGGESTIONS, ENTITY_NAME), () -> textExercise.setFeedbackSuggestionModule(null));
+        athenaModuleService.ifPresentOrElse(ams -> ams.checkHasAccessToAthenaModule(textExercise, course, ModuleType.PRELIMINARY_FEEDBACK, ENTITY_NAME), () -> textExercise.setPreliminaryFeedbackModule(null));
         // Changing Athena module after the due date has passed is not allowed
         athenaModuleService.ifPresent(ams -> ams.checkValidAthenaModuleChange(textExerciseBeforeUpdate, textExercise, ENTITY_NAME));
 
@@ -525,14 +528,21 @@ public class TextExerciseResource {
         // validates general settings: points, dates
         importedExercise.validateGeneralSettings();
 
-        // Athena: Check that only allowed athena modules are used, if not we catch the exception and disable feedback suggestions for the imported exercise
-        // If Athena is disabled and the service is not present, we also disable feedback suggestions
+        // Athena: Check that only allowed athena modules are used, if not we catch the exception and disable feedback suggestions or preliminary feedback for the imported exercise
+        // If Athena is disabled and the service is not present, we also disable the corresponding functionality
         try {
-            athenaModuleService.ifPresentOrElse(ams -> ams.checkHasAccessToAthenaModule(importedExercise, importedExercise.getCourseViaExerciseGroupOrCourseMember(), ENTITY_NAME),
+            athenaModuleService.ifPresentOrElse(ams -> ams.checkHasAccessToAthenaModule(importedExercise, importedExercise.getCourseViaExerciseGroupOrCourseMember(), ModuleType.FEEDBACK_SUGGESTIONS, ENTITY_NAME),
                     () -> importedExercise.setFeedbackSuggestionModule(null));
         }
         catch (BadRequestAlertException e) {
             importedExercise.setFeedbackSuggestionModule(null);
+        }
+        try {
+            athenaModuleService.ifPresentOrElse(ams -> ams.checkHasAccessToAthenaModule(importedExercise, importedExercise.getCourseViaExerciseGroupOrCourseMember(), ModuleType.PRELIMINARY_FEEDBACK, ENTITY_NAME),
+                () -> importedExercise.setPreliminaryFeedbackModule(null));
+        }
+        catch (BadRequestAlertException e) {
+            importedExercise.setPreliminaryFeedbackModule(null);
         }
 
         final var newTextExercise = textExerciseImportService.importTextExercise(originalTextExercise, importedExercise);

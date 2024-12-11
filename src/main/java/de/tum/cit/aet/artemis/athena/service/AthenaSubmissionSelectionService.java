@@ -83,7 +83,8 @@ public class AthenaSubmissionSelectionService {
         try {
             final RequestDTO request = new RequestDTO(athenaDTOConverterService.ofExercise(exercise), submissionIds);
             // allow no retries because this should be fast and it's not too bad if it fails
-            ResponseDTO response = connector.invokeWithRetry(athenaModuleService.getAthenaModuleUrl(exercise) + "/select_submission", request, 0);
+            // applies only to feedback suggestions
+            ResponseDTO response = connector.invokeWithRetry(athenaModuleService.getAthenaModuleUrl(exercise.getExerciseType(), exercise.getFeedbackSuggestionModule()) + "/select_submission", request, 0);
             log.info("Athena to calculate next proposes submissions responded: {}", response.submissionId);
             if (response.submissionId == -1) {
                 return Optional.empty();

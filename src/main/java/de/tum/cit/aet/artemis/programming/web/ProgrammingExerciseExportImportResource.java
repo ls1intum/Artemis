@@ -17,6 +17,7 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+import de.tum.cit.aet.artemis.athena.domain.ModuleType;
 import jakarta.validation.constraints.NotNull;
 
 import org.eclipse.jgit.api.errors.GitAPIException;
@@ -243,13 +244,19 @@ public class ProgrammingExerciseExportImportResource {
         Course originalCourse = courseService.retrieveCourseOverExerciseGroupOrCourseId(originalProgrammingExercise);
         authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.EDITOR, originalCourse, user);
 
-        // Athena: Check that only allowed athena modules are used, if not we catch the exception and disable feedback suggestions for the imported exercise
-        // If Athena is disabled and the service is not present, we also disable feedback suggestions
+        // Athena: Check that only allowed athena modules are used, if not we catch the exception and disable feedback suggestions or preliminary feedback for the imported exercise
+        // If Athena is disabled and the service is not present, we also disable corresponding functionality
         try {
-            athenaModuleService.ifPresentOrElse(ams -> ams.checkHasAccessToAthenaModule(newExercise, course, ENTITY_NAME), () -> newExercise.setFeedbackSuggestionModule(null));
+            athenaModuleService.ifPresentOrElse(ams -> ams.checkHasAccessToAthenaModule(newExercise, course, ModuleType.FEEDBACK_SUGGESTIONS, ENTITY_NAME), () -> newExercise.setFeedbackSuggestionModule(null));
         }
         catch (BadRequestAlertException e) {
             newExercise.setFeedbackSuggestionModule(null);
+        }
+        try {
+            athenaModuleService.ifPresentOrElse(ams -> ams.checkHasAccessToAthenaModule(newExercise, course, ModuleType.PRELIMINARY_FEEDBACK, ENTITY_NAME), () -> newExercise.setPreliminaryFeedbackModule(null));
+        }
+        catch (BadRequestAlertException e) {
+            newExercise.setPreliminaryFeedbackModule(null);
         }
 
         try {

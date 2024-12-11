@@ -293,7 +293,9 @@ public class ProgrammingExerciseImportService {
 
         if (newProgrammingExercise.isExamExercise()) {
             // Disable feedback suggestions on exam exercises (currently not supported)
+            // This applies to preliminary feedback as well
             newProgrammingExercise.setFeedbackSuggestionModule(null);
+            newProgrammingExercise.setPreliminaryFeedbackModule(null);
         }
 
         newProgrammingExercise = programmingExerciseImportBasicService.importProgrammingExerciseBasis(originalProgrammingExercise, newProgrammingExercise);

@@ -7,6 +7,7 @@ import java.util.List;
 import java.util.Objects;
 import java.util.stream.Stream;
 
+import de.tum.cit.aet.artemis.athena.domain.ModuleType;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Qualifier;
@@ -107,21 +108,22 @@ public class AthenaModuleService {
     /**
      * Get the URL for an Athena module, depending on the type of exercise.
      *
-     * @param exercise The exercise for which the URL to Athena should be returned
+     * @param exerciseType The exercise type for which the URL to Athena should be returned
+     * @param  module  The name of the Athena module to be consulted
      * @return The URL prefix to access the Athena module. Example: <a href="http://athena.example.com/modules/text/module_text_cofee"></a>
      */
-    public String getAthenaModuleUrl(Exercise exercise) {
-        switch (exercise.getExerciseType()) {
+    public String getAthenaModuleUrl(ExerciseType exerciseType, String module) {
+        switch (exerciseType) {
             case TEXT -> {
-                return athenaUrl + "/modules/text/" + exercise.getFeedbackSuggestionModule();
+                return athenaUrl + "/modules/text/" + module;
             }
             case PROGRAMMING -> {
-                return athenaUrl + "/modules/programming/" + exercise.getFeedbackSuggestionModule();
+                return athenaUrl + "/modules/programming/" + module;
             }
             case MODELING -> {
-                return athenaUrl + "/modules/modeling/" + exercise.getFeedbackSuggestionModule();
+                return athenaUrl + "/modules/modeling/" + module;
             }
-            default -> throw new IllegalArgumentException("Exercise type not supported: " + exercise.getExerciseType());
+            default -> throw new IllegalArgumentException("Exercise type not supported: " + exerciseType);
         }
     }
 
@@ -130,22 +132,36 @@ public class AthenaModuleService {
      *
      * @param exercise   The exercise for which the access should be checked
      * @param course     The course to which the exercise belongs to.
+     * @param moduleType The module type for which the access should be checked.
      * @param entityName Name of the entity
      * @throws BadRequestAlertException when the exercise has no access to the exercise's provided module.
      */
-    public void checkHasAccessToAthenaModule(Exercise exercise, Course course, String entityName) throws BadRequestAlertException {
-        if (exercise.isExamExercise() && exercise.getFeedbackSuggestionModule() != null) {
+    public void checkHasAccessToAthenaModule(Exercise exercise, Course course, ModuleType moduleType, String entityName) throws BadRequestAlertException {
+        String module = getModule(exercise, moduleType, entityName);
+        if (exercise.isExamExercise() && module != null) {
             throw new BadRequestAlertException("The exam exercise has no access to Athena", entityName, "examExerciseNoAccessToAthena");
         }
-        if (!course.getRestrictedAthenaModulesAccess() && restrictedModules.contains(exercise.getFeedbackSuggestionModule())) {
+        if (!course.getRestrictedAthenaModulesAccess() && restrictedModules.contains(module)) {
             // Course does not have access to the restricted Athena modules
-            throw new BadRequestAlertException("The exercise has no access to the selected Athena module", entityName, "noAccessToAthenaModule");
+            throw new BadRequestAlertException("The exercise has no access to the selected Athena module of type " + moduleType, entityName, "noAccessToAthenaModule");
         }
+    }
+
+    private static String getModule(Exercise exercise, ModuleType moduleType, String entityName) {
+        String module = null;
+        switch(moduleType) {
+            case ModuleType.FEEDBACK_SUGGESTIONS ->
+                module = exercise.getFeedbackSuggestionModule();
+            case ModuleType.PRELIMINARY_FEEDBACK ->
+                module = exercise.getPreliminaryFeedbackModule();
+        }
+        return module;
     }
 
     /**
      * Checks if a module change is valid or not. In case it is not allowed it throws an exception.
      * Modules cannot be changed after the exercise due date has passed.
+     * Holds only for feedback suggestion modules.
      *
      * @param originalExercise The exercise before the update
      * @param updatedExercise  The exercise after the update

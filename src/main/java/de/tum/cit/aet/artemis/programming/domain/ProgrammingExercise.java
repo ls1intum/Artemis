@@ -684,7 +684,7 @@ public class ProgrammingExercise extends Exercise {
         if (getAssessmentType() == AssessmentType.SEMI_AUTOMATIC || getAllowComplaintsForAutomaticAssessments()) {
             // The relevantDueDate check below keeps us from assessing feedback requests,
             // as their relevantDueDate is before the due date
-            if (getAllowFeedbackRequests()) {
+            if (getAllowManualFeedbackRequests()) {
                 return true;
             }
 
@@ -798,7 +798,7 @@ public class ProgrammingExercise extends Exercise {
      * Validates settings for exercises, where allowFeedbackRequests is set
      */
     public void validateSettingsForFeedbackRequest() {
-        if (!this.getAllowFeedbackRequests()) {
+        if (!this.getAllowManualFeedbackRequests()) {
             return;
         }
 

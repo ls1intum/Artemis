@@ -95,9 +95,10 @@ public class AthenaFeedbackSendingService {
 
         try {
             // Only send manual feedback from tutors to Athena
+            // Based on the current design, this applies only to feedback suggestions
             final RequestDTO request = new RequestDTO(athenaDTOConverterService.ofExercise(exercise), athenaDTOConverterService.ofSubmission(exercise.getId(), submission),
                     feedbacks.stream().filter(Feedback::isManualFeedback).map((feedback) -> athenaDTOConverterService.ofFeedback(exercise, submission.getId(), feedback)).toList());
-            ResponseDTO response = connector.invokeWithRetry(athenaModuleService.getAthenaModuleUrl(exercise) + "/feedbacks", request, maxRetries);
+            ResponseDTO response = connector.invokeWithRetry(athenaModuleService.getAthenaModuleUrl(exercise.getExerciseType(), exercise.getFeedbackSuggestionModule()) + "/feedbacks", request, maxRetries);
             log.info("Athena responded to feedback: {}", response.data);
         }
         catch (NetworkingException networkingException) {
