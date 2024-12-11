@@ -3,7 +3,6 @@ import { AffectedStudentsModalComponent } from 'app/exercises/programming/manage
 import { FeedbackAffectedStudentDTO, FeedbackAnalysisService, FeedbackDetail } from 'app/exercises/programming/manage/grading/feedback-analysis/feedback-analysis.service';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import { TranslateModule } from '@ngx-translate/core';
-import { of } from 'rxjs';
 import { provideHttpClient } from '@angular/common/http';
 import '@angular/localize/init';
 
@@ -23,8 +22,8 @@ describe('AffectedStudentsModalComponent', () => {
     };
 
     const participationMock: FeedbackAffectedStudentDTO[] = [
-        { participationId: 101, firstName: 'John', lastName: 'Doe', login: 'johndoe', repositoryURI: 'repo1' },
-        { participationId: 102, firstName: 'Jane', lastName: 'Smith', login: 'janesmith', repositoryURI: 'repo2' },
+        { participationId: 101, firstName: 'A', lastName: 'Z', login: 'AZ', repositoryURI: 'repo1' },
+        { participationId: 102, firstName: 'I', lastName: 'B', login: 'IB', repositoryURI: 'repo2' },
     ];
 
     const groupFeedback = false;
@@ -38,7 +37,7 @@ describe('AffectedStudentsModalComponent', () => {
                 {
                     provide: FeedbackAnalysisService,
                     useValue: {
-                        getParticipationForFeedbackDetailText: jest.fn().mockReturnValue(of({ content: participationMock, totalPages: 1, totalElements: 2 })),
+                        getParticipationForFeedbackDetailText: jest.fn().mockReturnValue(participationMock),
                     },
                 },
             ],
@@ -55,14 +54,6 @@ describe('AffectedStudentsModalComponent', () => {
         fixture.detectChanges();
     });
 
-    it('should update page and reload data when setPage is called', async () => {
-        const loadAffectedSpy = jest.spyOn(component as any, 'loadAffected');
-
-        component.setPage(2);
-        expect(component.page()).toBe(2);
-        expect(loadAffectedSpy).toHaveBeenCalledOnce();
-    });
-
     it('should handle error when loadAffected fails', async () => {
         jest.spyOn(feedbackService, 'getParticipationForFeedbackDetailText').mockReturnValueOnce(Promise.reject(new Error('Error loading data')));
         const alertServiceSpy = jest.spyOn(component.alertService, 'error');
@@ -70,7 +61,7 @@ describe('AffectedStudentsModalComponent', () => {
 
         await component['loadAffected']();
 
-        expect(component.participation().content).toEqual([]);
+        expect(component.participation()).toEqual([]);
         expect(alertServiceSpy).toHaveBeenCalled();
         expect(consoleErrorSpy).toHaveBeenCalled();
 

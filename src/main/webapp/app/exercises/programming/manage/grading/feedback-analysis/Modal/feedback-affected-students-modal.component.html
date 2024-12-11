@@ -9,7 +9,7 @@
 </div>
 <div class="modal-body">
     <div>
-        <span [jhiTranslate]="TRANSLATION_BASE + '.description'" [translateValues]="{ count: participation().totalElements }"></span>
+        <span [jhiTranslate]="TRANSLATION_BASE + '.description'" [translateValues]="{ count: feedbackDetail().count }"></span>
     </div>
     @if (isLoading()) {
         <div class="row justify-content-center p-2">
@@ -27,7 +27,7 @@
                 </tr>
             </thead>
             <tbody class="table-group-divider">
-                @for (item of participation().content; track item) {
+                @for (item of participation(); track item) {
                     <tr>
                         <td>{{ item.firstName }} {{ item.lastName }}</td>
                         <td>{{ item.login }}</td>

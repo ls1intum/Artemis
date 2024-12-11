@@ -1,5 +1,5 @@
 import { Injectable } from '@angular/core';
-import { PageableResult, PageableSearch, SearchResult, SearchTermPageableSearch } from 'app/shared/table/pageable-table';
+import { SearchResult, SearchTermPageableSearch } from 'app/shared/table/pageable-table';
 import { BaseApiHttpService } from 'app/course/learning-paths/services/base-api-http.service';
 import { HttpParams } from '@angular/common/http';
 import { FilterData } from 'app/exercises/programming/manage/grading/feedback-analysis/Modal/feedback-filter-modal.component';
@@ -56,26 +56,15 @@ export class FeedbackAnalysisService extends BaseApiHttpService {
         return this.get<number>(`exercises/${exerciseId}/feedback-details-max-count`);
     }
 
-    async getParticipationForFeedbackDetailText(
-        exerciseId: number,
-        feedbackIds: number[],
-        testCaseName: string,
-        pageable: PageableSearch,
-    ): Promise<PageableResult<FeedbackAffectedStudentDTO>> {
-        let params = new HttpParams()
-            .set('page', pageable.page.toString())
-            .set('pageSize', pageable.pageSize.toString())
-            .set('sortedColumn', pageable.sortedColumn)
-            .set('sortingOrder', pageable.sortingOrder)
-            .set('testCaseName', testCaseName);
-
+    async getParticipationForFeedbackDetailText(exerciseId: number, feedbackIds: number[]): Promise<FeedbackAffectedStudentDTO[]> {
+        let params = new HttpParams();
         const topFeedbackIds = feedbackIds.slice(0, 5);
 
         topFeedbackIds.forEach((id, index) => {
             params = params.set(`feedbackId${index + 1}`, id.toString());
         });
 
-        return this.get<PageableResult<FeedbackAffectedStudentDTO>>(`exercises/${exerciseId}/feedback-details-participation`, { params });
+        return this.get<FeedbackAffectedStudentDTO[]>(`exercises/${exerciseId}/feedback-details-participation`, { params });
     }
 
     createChannel(courseId: number, exerciseId: number, feedbackChannelRequest: FeedbackChannelRequestDTO): Promise<ChannelDTO> {

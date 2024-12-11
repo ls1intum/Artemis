@@ -82,9 +82,6 @@ public class PageUtil {
                     JOIN t.testCases tct
                     WHERE t.exercise.id = :exerciseId AND tct.testName = f.testCase.testName
                 ), '')"""
-        )),
-        AFFECTED_STUDENTS(Map.of(
-            "participationId", "p.id"
         ));
         // @formatter:on
 

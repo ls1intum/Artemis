@@ -1363,10 +1363,8 @@ public interface StudentParticipationRepository extends ArtemisJpaRepository<Stu
      * Retrieves a paginated list of students affected by specific feedback entries for a given programming exercise.
      * <br>
      *
-     * @param exerciseId   for which the affected student participation data is requested.
-     * @param feedbackIds  used to filter the participation to only those affected by specific feedback entries.
-     * @param pageable     A {@link Pageable} object to control pagination and sorting of the results, specifying page number, page size, and sort order.
-     * @param testCaseName The name of the test case for which the feedback is given.
+     * @param exerciseId  for which the affected student participation data is requested.
+     * @param feedbackIds used to filter the participation to only those affected by specific feedback entries.
      * @return A {@link Page} of {@link FeedbackAffectedStudentDTO} objects, each representing a student affected by the feedback.
      */
     @Query("""
@@ -1386,12 +1384,25 @@ public interface StudentParticipationRepository extends ArtemisJpaRepository<Stu
                 INNER JOIN r.feedbacks f
                 WHERE p.exercise.id = :exerciseId
                       AND f.id IN :feedbackIds
-                      AND f.testCase.testName = :testCaseName
                       AND p.testRun = FALSE
                 ORDER BY p.student.firstName ASC
             """)
-    Page<FeedbackAffectedStudentDTO> findAffectedStudentsByFeedbackIds(@Param("exerciseId") long exerciseId, @Param("feedbackIds") List<Long> feedbackIds,
-            @Param("testCaseName") String testCaseName, Pageable pageable);
+    List<FeedbackAffectedStudentDTO> findAffectedStudentsByFeedbackIds(@Param("exerciseId") long exerciseId, @Param("feedbackIds") List<Long> feedbackIds);
+
+    @Query("""
+                SELECT f.id
+                FROM ProgrammingExerciseStudentParticipation p
+                INNER JOIN p.results r ON r.id = (
+                    SELECT MAX(pr.id)
+                    FROM p.results pr
+                    WHERE pr.participation.id = p.id
+                )
+                INNER JOIN r.feedbacks f
+                WHERE p.exercise.id = :exerciseId
+                      AND p.testRun = FALSE
+                ORDER BY p.student.firstName ASC
+            """)
+    List<Long> findAffectedStudentsByFeedbackIds2(@Param("exerciseId") long exerciseId);
 
     /**
      * Retrieves the logins of students affected by a specific feedback detail text in a given exercise.

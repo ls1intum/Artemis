@@ -4,8 +4,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
 import static org.mockito.Mockito.doReturn;
 
-import java.net.URLEncoder;
-import java.nio.charset.StandardCharsets;
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.List;
@@ -26,9 +24,6 @@ import org.mockito.ArgumentMatchers;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
-
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
 
 import de.tum.cit.aet.artemis.assessment.domain.AssessmentType;
 import de.tum.cit.aet.artemis.assessment.domain.Feedback;
@@ -908,8 +903,7 @@ class ResultServiceIntegrationTest extends AbstractSpringIntegrationLocalCILocal
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testGetParticipationForFeedbackDetailText() throws Exception {
-        ProgrammingExercise programmingExercise = programmingExerciseUtilService.addProgrammingExerciseToCourse(course);
-        StudentParticipation participation = participationUtilService.createAndSaveParticipationForExercise(programmingExercise, TEST_PREFIX + "student1");
+        Result result = participationUtilService.addResultToParticipation(AssessmentType.AUTOMATIC, null, this.programmingExerciseStudentParticipation);
         ProgrammingExerciseTestCase testCase = programmingExerciseUtilService.addTestCaseToProgrammingExercise(programmingExercise, "test1");
         testCase.setId(1L);
 
@@ -919,27 +913,12 @@ class ResultServiceIntegrationTest extends AbstractSpringIntegrationLocalCILocal
         feedback.setTestCase(testCase);
         feedback = feedbackRepository.saveAndFlush(feedback);
 
-        Result result = participationUtilService.addResultToParticipation(AssessmentType.AUTOMATIC, null, participation);
         participationUtilService.addFeedbackToResult(feedback, result);
 
-        String detailTextEncoded = URLEncoder.encode(feedback.getDetailText(), StandardCharsets.UTF_8);
-        String testCaseName = testCase.getTestName();
-        String url = "/api/exercises/" + programmingExercise.getId() + "/feedback-details-participation?page=1&pageSize=10&sortedColumn=participationId&sortingOrder=ASCENDING"
-                + "&detailTexts=" + detailTextEncoded + "&testCaseName=" + testCaseName;
+        String url = "/api/exercises/" + programmingExercise.getId() + "/feedback-details-participation?feedbackId1=" + feedback.getId();
 
-        String jsonResponse = request.get(url, HttpStatus.OK, String.class);
+        var response = request.get(url, HttpStatus.OK, List.class);
+        assertThat(response).hasSize(1);
 
-        JsonNode jsonNode = new ObjectMapper().readTree(jsonResponse);
-        assertThat(jsonNode.has("content")).isTrue();
-        assertThat(jsonNode.has("pageable")).isTrue();
-        assertThat(jsonNode.has("last")).isTrue();
-        assertThat(jsonNode.has("totalElements")).isTrue();
-        assertThat(jsonNode.has("totalPages")).isTrue();
-        assertThat(jsonNode.has("first")).isTrue();
-        assertThat(jsonNode.has("size")).isTrue();
-        assertThat(jsonNode.has("number")).isTrue();
-        assertThat(jsonNode.has("sort")).isTrue();
-        assertThat(jsonNode.has("numberOfElements")).isTrue();
-        assertThat(jsonNode.has("empty")).isTrue();
     }
 }

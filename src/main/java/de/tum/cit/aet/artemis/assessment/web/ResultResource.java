@@ -16,7 +16,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Profile;
-import org.springframework.data.domain.Page;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -40,7 +39,6 @@ import de.tum.cit.aet.artemis.assessment.service.ResultService;
 import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.dto.SearchResultPageDTO;
-import de.tum.cit.aet.artemis.core.dto.pageablesearch.PageableSearchDTO;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.core.repository.UserRepository;
 import de.tum.cit.aet.artemis.core.security.Role;
@@ -362,27 +360,24 @@ public class ResultResource {
      * and participation details.
      * <br>
      *
-     * @param exerciseId   for which the participation data is requested.
-     * @param feedbackId1  Optional first detail text id to filter affected students by specific feedback entries.
-     * @param feedbackId2  Optional second detail text id to filter affected students by specific feedback entries.
-     * @param feedbackId3  Optional third detail text id to filter affected students by specific feedback entries.
-     * @param feedbackId4  Optional fourth detail text id to filter affected students by specific feedback entries.
-     * @param feedbackId5  Optional fifth detail text id to filter affected students by specific feedback entries.
-     * @param testCaseName The test case name to filter affected students by specific test cases.
-     * @param data         A {@link PageableSearchDTO} object containing pagination and sorting parameters.
-     * @return A {@link ResponseEntity} containing a {@link Page} of {@link FeedbackAffectedStudentDTO}, each representing a student affected by the feedback entries.
+     * @param exerciseId  for which the participation data is requested.
+     * @param feedbackId1 Optional first detail text id to filter affected students by specific feedback entries.
+     * @param feedbackId2 Optional second detail text id to filter affected students by specific feedback entries.
+     * @param feedbackId3 Optional third detail text id to filter affected students by specific feedback entries.
+     * @param feedbackId4 Optional fourth detail text id to filter affected students by specific feedback entries.
+     * @param feedbackId5 Optional fifth detail text id to filter affected students by specific feedback entries.
+     * @return A {@link ResponseEntity} containing a {@link List} of {@link FeedbackAffectedStudentDTO}, each representing a student affected by the feedback entries.
      */
     @GetMapping("exercises/{exerciseId}/feedback-details-participation")
     @EnforceAtLeastEditorInExercise
-    public ResponseEntity<Page<FeedbackAffectedStudentDTO>> getAffectedStudentsWithFeedback(@PathVariable long exerciseId,
+    public ResponseEntity<List<FeedbackAffectedStudentDTO>> getAffectedStudentsWithFeedback(@PathVariable long exerciseId,
             @RequestParam(value = "feedbackId1", required = false) Long feedbackId1, @RequestParam(value = "feedbackId2", required = false) Long feedbackId2,
             @RequestParam(value = "feedbackId3", required = false) Long feedbackId3, @RequestParam(value = "feedbackId4", required = false) Long feedbackId4,
-            @RequestParam(value = "feedbackId5", required = false) Long feedbackId5, @RequestParam("testCaseName") String testCaseName,
-            @ModelAttribute PageableSearchDTO<String> data) {
+            @RequestParam(value = "feedbackId5", required = false) Long feedbackId5) {
 
         List<Long> feedbackIds = Stream.of(feedbackId1, feedbackId2, feedbackId3, feedbackId4, feedbackId5).filter(Objects::nonNull).toList();
 
-        Page<FeedbackAffectedStudentDTO> participation = resultService.getAffectedStudentsWithFeedbackIds(exerciseId, feedbackIds, testCaseName, data);
+        List<FeedbackAffectedStudentDTO> participation = resultService.getAffectedStudentsWithFeedbackIds(exerciseId, feedbackIds);
         return ResponseEntity.ok(participation);
     }
 }

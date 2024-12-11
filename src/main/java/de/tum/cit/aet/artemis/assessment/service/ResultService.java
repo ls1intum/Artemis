@@ -24,7 +24,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Profile;
 import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
@@ -50,7 +49,6 @@ import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.dto.SearchResultPageDTO;
 import de.tum.cit.aet.artemis.core.dto.SortingOrder;
-import de.tum.cit.aet.artemis.core.dto.pageablesearch.PageableSearchDTO;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.core.repository.UserRepository;
 import de.tum.cit.aet.artemis.core.security.Role;
@@ -747,20 +745,15 @@ public class ResultService {
     /**
      * Retrieves a paginated list of students affected by specific feedback entries for a given exercise.
      * <br>
-     * This method filters students based on feedback IDs and returns participation details for each affected student. It uses
-     * pagination and sorting (order based on the {@link PageUtil.ColumnMapping#AFFECTED_STUDENTS}) to allow efficient retrieval and sorting of the results, thus supporting large
-     * datasets.
+     * This method filters students based on feedback IDs and returns participation details for each affected student.
      * <br>
      *
-     * @param exerciseId   for which the affected student participation data is requested.
-     * @param feedbackIds  used to filter the participation to only those affected by specific feedback entries.
-     * @param data         A {@link PageableSearchDTO} object containing pagination and sorting parameters.
-     * @param testCaseName used to filter the participation to only those feedbacks for a specific testCaseName.
-     * @return A {@link Page} of {@link FeedbackAffectedStudentDTO} objects, each representing a student affected by the feedback.
+     * @param exerciseId  for which the affected student participation data is requested.
+     * @param feedbackIds used to filter the participation to only those affected by specific feedback entries.
+     * @return A {@link List} of {@link FeedbackAffectedStudentDTO} objects, each representing a student affected by the feedback.
      */
-    public Page<FeedbackAffectedStudentDTO> getAffectedStudentsWithFeedbackIds(long exerciseId, List<Long> feedbackIds, String testCaseName, PageableSearchDTO<String> data) {
-        PageRequest pageRequest = PageUtil.createDefaultPageRequest(data, PageUtil.ColumnMapping.AFFECTED_STUDENTS);
-        return studentParticipationRepository.findAffectedStudentsByFeedbackIds(exerciseId, feedbackIds, testCaseName, pageRequest);
+    public List<FeedbackAffectedStudentDTO> getAffectedStudentsWithFeedbackIds(long exerciseId, List<Long> feedbackIds) {
+        return studentParticipationRepository.findAffectedStudentsByFeedbackIds(exerciseId, feedbackIds);
     }
 
     /**
