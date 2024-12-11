@@ -27,6 +27,7 @@ import java.util.Set;
 
 import org.gitlab4j.api.GitLabApiException;
 import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.parallel.ResourceLock;
 import org.mockito.Mockito;
@@ -218,8 +219,10 @@ public abstract class AbstractSpringIntegrationLocalCILocalVCTest extends Abstra
 
     protected static final Path PMD_RESULTS_PATH = SCA_REPORTS_PATH.resolve("pmd.xml");
 
-    @BeforeEach
-    protected void mockBuildAgentServices() throws InterruptedException {
+    private static DockerClient dockerClientMock;
+
+    @BeforeAll
+    protected static void mockDockerClient() throws InterruptedException {
         DockerClient dockerClient = mock(DockerClient.class);
 
         // Mock dockerClient.inspectImageCmd(String dockerImage).exec()
@@ -329,8 +332,13 @@ public abstract class AbstractSpringIntegrationLocalCILocalVCTest extends Abstra
         doReturn(disconnectFromNetworkCmd).when(disconnectFromNetworkCmd).withContainerId(anyString());
         doReturn(disconnectFromNetworkCmd).when(disconnectFromNetworkCmd).withNetworkId(anyString());
 
-        doReturn(dockerClient).when(buildAgentConfiguration).getDockerClient();
-        this.dockerClient = dockerClient;
+        dockerClientMock = dockerClient;
+    }
+
+    @BeforeEach
+    protected void mockBuildAgentServices() {
+        doReturn(dockerClientMock).when(buildAgentConfiguration).getDockerClient();
+        this.dockerClient = dockerClientMock;
     }
 
     @AfterEach
