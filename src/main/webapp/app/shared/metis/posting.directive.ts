@@ -4,6 +4,10 @@ import { MetisService } from 'app/shared/metis/metis.service';
 import { DisplayPriority } from 'app/shared/metis/metis.util';
 import { faBookmark } from '@fortawesome/free-solid-svg-icons';
 import { faBookmark as farBookmark } from '@fortawesome/free-regular-svg-icons';
+import { isMessagingEnabled } from 'app/entities/course.model';
+import { OneToOneChatService } from 'app/shared/metis/conversations/one-to-one-chat.service';
+import { MetisConversationService } from 'app/shared/metis/metis-conversation.service';
+import { Router } from '@angular/router';
 
 @Directive()
 export abstract class PostingDirective<T extends Posting> implements OnInit, OnDestroy {
@@ -28,8 +32,11 @@ export abstract class PostingDirective<T extends Posting> implements OnInit, OnD
 
     content?: string;
 
+    protected oneToOneChatService = inject(OneToOneChatService);
+    protected metisConversationService = inject(MetisConversationService);
     protected metisService = inject(MetisService);
     protected changeDetector = inject(ChangeDetectorRef);
+    protected router = inject(Router);
 
     // Icons
     farBookmark = farBookmark;
@@ -129,6 +136,54 @@ export abstract class PostingDirective<T extends Posting> implements OnInit, OnD
         } else {
             this.metisService.savePost(this.posting);
             this.posting.isSaved = true;
+        }
+    }
+
+    /**
+     * Create a or navigate to one-to-one chat with the referenced user
+     *
+     * @param referencedUserLogin login of the referenced user
+     */
+    onUserReferenceClicked(referencedUserLogin: string) {
+        const course = this.metisService.getCourse();
+        if (isMessagingEnabled(course)) {
+            if (this.isCommunicationPage) {
+                this.metisConversationService.createOneToOneChat(referencedUserLogin).subscribe();
+            } else {
+                this.oneToOneChatService.create(course.id!, referencedUserLogin).subscribe((res) => {
+                    this.router.navigate(['courses', course.id, 'communication'], {
+                        queryParams: {
+                            conversationId: res.body!.id,
+                        },
+                    });
+                });
+            }
+        }
+    }
+
+    /**
+     * Create a or navigate to one-to-one chat with the referenced user
+     */
+    onUserNameClicked() {
+        if (!this.posting.author?.id) {
+            return;
+        }
+
+        const referencedUserId = this.posting.author?.id;
+
+        const course = this.metisService.getCourse();
+        if (isMessagingEnabled(course)) {
+            if (this.isCommunicationPage) {
+                this.metisConversationService.createOneToOneChatWithId(referencedUserId).subscribe();
+            } else {
+                this.oneToOneChatService.createWithId(course.id!, referencedUserId).subscribe((res) => {
+                    this.router.navigate(['courses', course.id, 'communication'], {
+                        queryParams: {
+                            conversationId: res.body!.id,
+                        },
+                    });
+                });
+            }
         }
     }
 }

@@ -4,6 +4,14 @@ import { Posting } from 'app/entities/metis/posting.model';
 import { DisplayPriority } from 'app/shared/metis/metis.util';
 import { PostingDirective } from 'app/shared/metis/posting.directive';
 import { MetisService } from 'app/shared/metis/metis.service';
+import { MockTranslateService } from '../helpers/mocks/service/mock-translate.service';
+import { MockSyncStorage } from '../helpers/mocks/service/mock-sync-storage.service';
+import { provideHttpClientTesting } from '@angular/common/http/testing';
+import { provideHttpClient } from '@angular/common/http';
+import { TranslateService } from '@ngx-translate/core';
+import { SessionStorageService } from 'ngx-webstorage';
+import { MetisConversationService } from 'app/shared/metis/metis-conversation.service';
+import { MockMetisConversationService } from '../helpers/mocks/service/mock-metis-conversation.service';
 
 class MockPosting implements Posting {
     content: string;
@@ -46,7 +54,14 @@ describe('PostingDirective', () => {
     beforeEach(async () => {
         await TestBed.configureTestingModule({
             declarations: [TestPostingComponent],
-            providers: [{ provide: MetisService, useClass: MockMetisService }],
+            providers: [
+                provideHttpClient(),
+                provideHttpClientTesting(),
+                { provide: TranslateService, useClass: MockTranslateService },
+                { provide: SessionStorageService, useClass: MockSyncStorage },
+                { provide: MetisService, useClass: MockMetisService },
+                { provide: MetisConversationService, useClass: MockMetisConversationService },
+            ],
         }).compileComponents();
     });
 

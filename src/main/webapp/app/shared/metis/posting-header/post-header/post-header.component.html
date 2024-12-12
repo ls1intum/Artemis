@@ -15,7 +15,7 @@
                 >
                 </jhi-profile-picture>
                 <span class="fs-small d-inline-flex flex-column align-items-start">
-                    <span class="fw-semibold">{{ posting.author?.name }}</span>
+                    <span class="fw-semibold" [ngClass]="{ clickable: !isAuthorOfPosting && posting.authorRole }" (click)="userNameClicked()">{{ posting.author?.name }}</span>
                     <span class="fs-x-small mt-1 text-body-secondary">
                         <span class="me-1 fs-x-small" [ngClass]="'post-authority-icon-' + userAuthority" id="role-badge">
                             <fa-icon [icon]="userAuthorityIcon" />
