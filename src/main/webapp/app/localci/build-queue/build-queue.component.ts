@@ -92,6 +92,7 @@ enum BuildJobStatusFilter {
     MISSING = 'missing',
     BUILDING = 'building',
     QUEUED = 'queued',
+    TIMEOUT = 'timeout',
 }
 
 export enum FinishedBuildJobFilterStorageKey {

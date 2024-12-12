@@ -37,7 +37,8 @@
                     "successful": "Successful",
                     "building": "Building",
                     "queued": "Queued",
-                    "missing": "Missing"
+                    "missing": "Missing",
+                    "timeout": "Timed out"
                 },
                 "buildAgentAddress": "Build Agent Address",
                 "buildStartDate": {

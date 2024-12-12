@@ -37,7 +37,8 @@
                     "successful": "Erfolgreich",
                     "queued": "In Warteschlange",
                     "missing": "Fehlend",
-                    "building": "In Bearbeitung"
+                    "building": "In Bearbeitung",
+                    "timeout": "Zeitüberschreitung"
                 },
                 "buildAgentAddress": "Build Agent Adresse",
                 "buildStartDate": {
