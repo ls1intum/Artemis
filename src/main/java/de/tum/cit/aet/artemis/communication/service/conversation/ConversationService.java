@@ -446,9 +446,6 @@ public class ConversationService {
 
     public void markConversationAsRead(Channel channel, User requestingUser) {
         var conversationParticipant = getOrCreateConversationParticipant(channel.getId(), requestingUser);
-        if (conversationParticipant.getUnreadMessagesCount() == 0) {
-            return;
-        }
         conversationParticipant.setLastRead(ZonedDateTime.now());
         conversationParticipant.setUnreadMessagesCount(0L);
         conversationParticipantRepository.save(conversationParticipant);
