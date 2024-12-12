@@ -620,7 +620,7 @@ public class ResultService {
         List<String> filterErrorCategories = data.getFilterErrorCategories();
 
         // 8. Set up pagination and sorting based on input data
-        final Pageable pageable = groupFeedback ? PageUtil.createDefaultPageRequest(data, PageUtil.ColumnMapping.FEEDBACK_ANALYSIS) : Pageable.unpaged();
+        final Pageable pageable = groupFeedback ? Pageable.unpaged() : PageUtil.createDefaultPageRequest(data, PageUtil.ColumnMapping.FEEDBACK_ANALYSIS);
 
         // 9. Query the database based on groupFeedback attribute to retrieve paginated and filtered feedback
         final Page<FeedbackDetailDTO> feedbackDetailPage = studentParticipationRepository.findFilteredFeedbackByExerciseId(exerciseId,
