@@ -83,7 +83,7 @@
                 "groupChats": "Gruppenchats",
                 "directMessages": "Direktnachrichten",
                 "filterConversationPlaceholder": "Konversationen filtern",
-                "setMessagesAsRead": "Alle Nachrichten als gelesen markieren"
+                "setChannelAsRead": "Alle Kanäle als gelesen markieren"
             },
             "menu": {
                 "exercises": "Aufgaben",
