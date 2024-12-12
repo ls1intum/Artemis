@@ -16,6 +16,9 @@ async function globalSetup() {
     console.log('Running global setup...');
 
     const sshDir = path.join(os.homedir(), '.ssh');
+    if (!fs.existsSync(sshDir)) {
+        fs.mkdirSync(sshDir, { recursive: true });
+    }
 
     for (const keyName of Object.values(SSH_KEY_NAMES)) {
         const sourceKey = path.join(process.cwd(), 'ssh-keys', keyName);
