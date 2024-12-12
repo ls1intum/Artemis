@@ -126,6 +126,10 @@ public class ResultService {
 
     private final ProgrammingExerciseRepository programmingExerciseRepository;
 
+    private static final int MAX_FEEDBACK_IDS = 5;
+
+    private static final double SIMILARITY_THRESHOLD = 0.9;
+
     public ResultService(UserRepository userRepository, ResultRepository resultRepository, Optional<LtiNewResultService> ltiNewResultService,
             ResultWebsocketService resultWebsocketService, ComplaintResponseRepository complaintResponseRepository, RatingRepository ratingRepository,
             FeedbackRepository feedbackRepository, LongFeedbackTextRepository longFeedbackTextRepository, ComplaintRepository complaintRepository,
@@ -600,12 +604,12 @@ public class ResultService {
         Set<String> taskNames = tasks.stream().map(ProgrammingExerciseTask::getTaskName).collect(Collectors.toSet());
 
         // 5. Include unassigned tasks if specified by the filter; otherwise, only include specified tasks
-        List<String> includeUnassignedTasks = new ArrayList<>(taskNames);
+        List<String> includeNotAssignedToTask = new ArrayList<>(taskNames);
         if (!data.getFilterTasks().isEmpty()) {
-            includeUnassignedTasks.removeAll(data.getFilterTasks());
+            includeNotAssignedToTask.removeAll(data.getFilterTasks());
         }
         else {
-            includeUnassignedTasks.clear();
+            includeNotAssignedToTask.clear();
         }
 
         // 6. Define the occurrence range based on filter parameters
@@ -616,45 +620,41 @@ public class ResultService {
         List<String> filterErrorCategories = data.getFilterErrorCategories();
 
         // 8. Set up pagination and sorting based on input data
-        final var pageable = PageUtil.createDefaultPageRequest(data, PageUtil.ColumnMapping.FEEDBACK_ANALYSIS);
+        final Pageable pageable = groupFeedback ? PageUtil.createDefaultPageRequest(data, PageUtil.ColumnMapping.FEEDBACK_ANALYSIS) : Pageable.unpaged();
 
         // 9. Query the database based on groupFeedback attribute to retrieve paginated and filtered feedback
-        final Page<FeedbackDetailDTO> feedbackDetailPage;
+        final Page<FeedbackDetailDTO> feedbackDetailPage = studentParticipationRepository.findFilteredFeedbackByExerciseId(exerciseId,
+                StringUtils.isBlank(data.getSearchTerm()) ? "" : data.getSearchTerm().toLowerCase(), data.getFilterTestCases(), includeNotAssignedToTask, minOccurrence,
+                maxOccurrence, filterErrorCategories, pageable);
+        ;
         List<FeedbackDetailDTO> processedDetails;
         int totalPages = 0;
         long totalCount = 0;
         long highestOccurrenceOfGroupedFeedback = 0;
         if (!groupFeedback) {
-            feedbackDetailPage = studentParticipationRepository.findFilteredFeedbackByExerciseId(exerciseId,
-                    StringUtils.isBlank(data.getSearchTerm()) ? "" : data.getSearchTerm().toLowerCase(), data.getFilterTestCases(), includeUnassignedTasks, minOccurrence,
-                    maxOccurrence, filterErrorCategories, pageable);
-
             // Process and map feedback details, calculating relative count and assigning task names
             processedDetails = feedbackDetailPage.getContent().stream()
-                    .map(detail -> new FeedbackDetailDTO(detail.feedbackIds().subList(0, Math.min(detail.feedbackIds().size(), 5)), detail.count(),
+                    .map(detail -> new FeedbackDetailDTO(detail.feedbackIds().subList(0, Math.min(detail.feedbackIds().size(), MAX_FEEDBACK_IDS)), detail.count(),
                             (detail.count() * 100.00) / distinctResultCount, detail.detailTexts(), detail.testCaseName(), detail.taskName(), detail.errorCategory()))
                     .toList();
             totalPages = feedbackDetailPage.getTotalPages();
             totalCount = feedbackDetailPage.getTotalElements();
         }
         else {
-            feedbackDetailPage = studentParticipationRepository.findFilteredFeedbackByExerciseId(exerciseId,
-                    StringUtils.isBlank(data.getSearchTerm()) ? "" : data.getSearchTerm().toLowerCase(), data.getFilterTestCases(), includeUnassignedTasks, minOccurrence,
-                    maxOccurrence, filterErrorCategories, Pageable.unpaged());
-
             // Fetch all feedback details
             List<FeedbackDetailDTO> allFeedbackDetails = feedbackDetailPage.getContent();
 
             // Apply grouping and aggregation with a similarity threshold of 90%
-            List<FeedbackDetailDTO> aggregatedFeedbackDetails = aggregateFeedback(allFeedbackDetails, 0.5);
+            List<FeedbackDetailDTO> aggregatedFeedbackDetails = aggregateFeedback(allFeedbackDetails, SIMILARITY_THRESHOLD);
 
             highestOccurrenceOfGroupedFeedback = aggregatedFeedbackDetails.stream().mapToLong(FeedbackDetailDTO::count).max().orElse(0);
-            // Apply manual pagination
-            int page = data.getPage();
-            int pageSize = data.getPageSize();
+            // Apply manual sorting
             Comparator<FeedbackDetailDTO> comparator = getComparatorForFeedbackDetails(data);
             List<FeedbackDetailDTO> processedDetailsPreSort = new ArrayList<>(aggregatedFeedbackDetails);
             processedDetailsPreSort.sort(comparator);
+            // Apply manual pagination
+            int page = data.getPage();
+            int pageSize = data.getPageSize();
             int start = Math.max(0, (page - 1) * pageSize);
             int end = Math.min(start + pageSize, processedDetailsPreSort.size());
             processedDetails = processedDetailsPreSort.subList(start, end);
@@ -678,7 +678,7 @@ public class ResultService {
                 Comparator.comparing(detail -> detail.detailTexts().isEmpty() ? "" : detail.detailTexts().getFirst(), // Sort by the first element of the list
                         String.CASE_INSENSITIVE_ORDER),
                 "testCaseName", Comparator.comparing(FeedbackDetailDTO::testCaseName, String.CASE_INSENSITIVE_ORDER), "taskName",
-                Comparator.comparing(FeedbackDetailDTO::taskName, String.CASE_INSENSITIVE_ORDER), "relativeCount", Comparator.comparingDouble(FeedbackDetailDTO::relativeCount));
+                Comparator.comparing(FeedbackDetailDTO::taskName, String.CASE_INSENSITIVE_ORDER));
 
         Comparator<FeedbackDetailDTO> comparator = comparators.getOrDefault(search.getSortedColumn(), (a, b) -> 0);
         return search.getSortingOrder() == SortingOrder.ASCENDING ? comparator : comparator.reversed();
@@ -698,7 +698,7 @@ public class ResultService {
                     if (similarity > similarityThreshold) {
                         // Merge the current base feedback into the processed feedback
                         List<Long> mergedFeedbackIds = new ArrayList<>(processed.feedbackIds());
-                        if (processed.feedbackIds().size() < 5) {
+                        if (processed.feedbackIds().size() < MAX_FEEDBACK_IDS) {
                             mergedFeedbackIds.addAll(base.feedbackIds());
                         }
 

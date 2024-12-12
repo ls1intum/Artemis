@@ -9,6 +9,8 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 public record FeedbackDetailDTO(List<Long> feedbackIds, long count, double relativeCount, List<String> detailTexts, String testCaseName, String taskName, String errorCategory) {
 
     public FeedbackDetailDTO(String feedbackId, long count, double relativeCount, String detailText, String testCaseName, String taskName, String errorCategory) {
+        // Feedback IDs are gathered in the query using a comma separator, and the detail texts are stored in a list because, in case aggregation is applied, the detail texts are
+        // grouped together
         this(Arrays.stream(feedbackId.split(",")).map(Long::valueOf).toList(), count, relativeCount, List.of(detailText), testCaseName, taskName, errorCategory);
     }
 }
