@@ -8,6 +8,7 @@ import {
     NonLatestRatedResultsCleanupCountDTO,
     OrphanCleanupCountDTO,
     PlagiarismComparisonCleanupCountDTO,
+    SubmissionVersionsCleanupCountDTO,
 } from 'app/admin/cleanup-service/data-cleanup.service';
 import { provideHttpClient } from '@angular/common/http';
 
@@ -51,6 +52,11 @@ describe('DataCleanupService', () => {
         longFeedbackText: 2,
         textBlock: 3,
         feedback: 2,
+    };
+
+    const mockSubmissionVersionsCount: SubmissionVersionsCleanupCountDTO = {
+        totalCount: 8,
+        submissionVersions: 8,
     };
 
     beforeEach(() => {
@@ -211,5 +217,43 @@ describe('DataCleanupService', () => {
         expect(req.request.params.get('deleteFrom')).toBe(deleteFrom);
         expect(req.request.params.get('deleteTo')).toBe(deleteTo);
         req.flush(mockRatedResultsCount);
+    });
+
+    it('should send DELETE request to delete old submission versions with date range', () => {
+        const deleteFrom = '2024-03-07T13:06:36.100Z';
+        const deleteTo = '2024-03-08T13:06:36.100Z';
+
+        service.deleteOldSubmissionVersions(dayjs(deleteFrom), dayjs(deleteTo)).subscribe((res) => {
+            expect(res.body).toEqual(mockExecutionRecord);
+        });
+
+        const req = httpMock.expectOne({
+            method: 'DELETE',
+            url: `api/admin/cleanup/old-submission-versions?deleteFrom=${deleteFrom}&deleteTo=${deleteTo}`,
+        });
+
+        expect(req.request.method).toBe('DELETE');
+        expect(req.request.params.get('deleteFrom')).toBe(deleteFrom);
+        expect(req.request.params.get('deleteTo')).toBe(deleteTo);
+        req.flush(mockExecutionRecord);
+    });
+
+    it('should send GET request to count old submission versions with date range', () => {
+        const deleteFrom = '2024-03-07T13:06:36.100Z';
+        const deleteTo = '2024-03-08T13:06:36.100Z';
+
+        service.countOldSubmissionVersions(dayjs(deleteFrom), dayjs(deleteTo)).subscribe((res) => {
+            expect(res.body).toEqual(mockSubmissionVersionsCount);
+        });
+
+        const req = httpMock.expectOne({
+            method: 'GET',
+            url: `api/admin/cleanup/old-submission-versions/count?deleteFrom=${deleteFrom}&deleteTo=${deleteTo}`,
+        });
+
+        expect(req.request.method).toBe('GET');
+        expect(req.request.params.get('deleteFrom')).toBe(deleteFrom);
+        expect(req.request.params.get('deleteTo')).toBe(deleteTo);
+        req.flush(mockSubmissionVersionsCount);
     });
 });
