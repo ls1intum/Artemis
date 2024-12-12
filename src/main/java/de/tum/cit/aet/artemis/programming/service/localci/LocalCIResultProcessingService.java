@@ -6,6 +6,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 import java.util.concurrent.CancellationException;
+import java.util.concurrent.TimeoutException;
 
 import jakarta.annotation.PreDestroy;
 
@@ -163,6 +164,9 @@ public class LocalCIResultProcessingService {
                 if (ex != null) {
                     if (ex.getCause() instanceof CancellationException && ex.getMessage().equals("Build job with id " + buildJob.id() + " was cancelled.")) {
                         savedBuildJob = saveFinishedBuildJob(buildJob, BuildStatus.CANCELLED, result);
+                    }
+                    else if (ex.getCause() instanceof TimeoutException && ex.getMessage().equals("Build job with id " + buildJob.id() + " was timed out")) {
+                        savedBuildJob = saveFinishedBuildJob(buildJob, BuildStatus.TIMEOUT, result);
                     }
                     else {
                         log.error("Error while processing build job: {}", buildJob, ex);

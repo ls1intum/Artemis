@@ -11,5 +11,5 @@ package de.tum.cit.aet.artemis.programming.domain.build;
  */
 
 public enum BuildStatus {
-    SUCCESSFUL, FAILED, ERROR, CANCELLED, QUEUED, BUILDING, MISSING
+    SUCCESSFUL, FAILED, ERROR, CANCELLED, QUEUED, BUILDING, TIMEOUT, MISSING
 }

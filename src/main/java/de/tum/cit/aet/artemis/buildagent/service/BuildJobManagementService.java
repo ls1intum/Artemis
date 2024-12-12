@@ -177,10 +177,17 @@ public class BuildJobManagementService {
                 }
                 else {
                     finishBuildJobExceptionally(buildJobItem.id(), containerName, e);
+
+                    final String msg;
                     if (e instanceof TimeoutException) {
+                        msg = "Build job with id " + buildJobItem.id() + " was timed out";
                         logTimedOutBuildJob(buildJobItem, buildJobTimeoutSeconds);
                     }
-                    throw new CompletionException(e);
+                    else {
+                        msg = "Build job with id " + buildJobItem.id() + " failed";
+                    }
+
+                    throw new CompletionException(msg, e);
                 }
             }
         });
