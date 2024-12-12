@@ -104,6 +104,8 @@ public interface ResultRepository extends ArtemisJpaRepository<Result, Long> {
 
     Optional<Result> findFirstByParticipationIdOrderByCompletionDateDesc(long participationId);
 
+    Optional<Result> findFirstByParticipationIdAndAssessmentTypeOrderByCompletionDateDesc(long participationId, AssessmentType assessmentType);
+
     @EntityGraph(type = LOAD, attributePaths = { "feedbacks", "feedbacks.testCase" })
     Optional<Result> findResultWithFeedbacksAndTestCasesById(long resultId);
 
@@ -428,6 +430,14 @@ public interface ResultRepository extends ArtemisJpaRepository<Result, Long> {
     boolean existsByParticipationId(long participationId);
 
     /**
+     * Checks if a result exists for the given submission ID.
+     *
+     * @param submissionId the ID of the submission to check.
+     * @return true if a result exists for the given submission ID, false otherwise.
+     */
+    boolean existsBySubmissionId(long submissionId);
+
+    /**
      * Returns true if there is at least one result for the given exercise.
      *
      * @param exerciseId id of an Exercise.
@@ -610,7 +620,6 @@ public interface ResultRepository extends ArtemisJpaRepository<Result, Long> {
             """)
     List<TutorLeaderboardAssessmentsDTO> findTutorLeaderboardAssessmentByExerciseId(@Param("exerciseId") long exerciseId);
 
-    // Valid JPQL syntax, only SCA is not able to parse it due to mixing primitive and object types
     @Query("""
             SELECT new de.tum.cit.aet.artemis.assessment.dto.tutor.TutorLeaderboardAssessmentsDTO(
                 r.assessor.id,

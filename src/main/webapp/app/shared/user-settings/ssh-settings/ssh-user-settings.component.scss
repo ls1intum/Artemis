@@ -1,0 +1,116 @@
+textarea {
+    max-width: 600px;
+    width: 100%;
+    height: 150px;
+    resize: none;
+    font-size: small;
+    font-family:
+        Bitstream Vera Sans Mono,
+        Courier New,
+        monospace;
+    border-color: var(--border-color) !important;
+}
+
+.bold-text {
+    font-weight: bold;
+}
+
+.large-text {
+    font-size: large;
+}
+
+.small-text {
+    font-size: small;
+}
+
+.text-and-date {
+    display: flex;
+    gap: 5px;
+}
+
+.small-text-area {
+    height: 30px;
+}
+
+table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 20px 0;
+    font-size: 16px;
+    text-align: left;
+}
+
+th,
+td {
+    padding: 15px 15px;
+}
+
+/* Button styling */
+
+.btn {
+    border-radius: 0;
+}
+
+.rounded-btn {
+    border-radius: 2px;
+    border-top-width: 0;
+}
+
+.bottom-border {
+    border-bottom-width: 2px;
+}
+
+.container {
+    position: relative;
+}
+
+.narrower-box {
+    max-width: 500px;
+    margin: 0 auto;
+}
+
+.font-medium {
+    font-size: medium;
+}
+
+.icon-column {
+    width: auto;
+    margin-right: 15px;
+}
+
+.vertical-center {
+    margin: 0;
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    -ms-transform: translateY(-50%);
+    transform: translateY(-50%);
+}
+
+.abbreviate-hash {
+    font-size: x-small;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+tbody tr:hover {
+    background-color: var(--ssh-key-settings-table-hover-background);
+}
+
+a:link:hover {
+    text-decoration: none !important;
+}
+
+.dropdown-content {
+    overflow-y: auto;
+    position: absolute;
+    background-color: var(--dropdown-bg);
+    border: 1px solid var(--border-color);
+    z-index: 3000;
+    border-radius: 4px;
+}
+
+.dropdown-toggle::after {
+    display: none;
+}

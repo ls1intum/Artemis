@@ -16,7 +16,6 @@ import { OrganizationManagementService } from 'app/admin/organization-management
 import { IrisSettingsService } from 'app/iris/settings/shared/iris-settings.service';
 import { AccountService } from 'app/core/auth/account.service';
 import { DetailOverviewSection, DetailType } from 'app/detail-overview-list/detail-overview-list.component';
-import { TranslateService } from '@ngx-translate/core';
 import { ArtemisMarkdownService } from 'app/shared/markdown.service';
 import { IrisSubSettingsType } from 'app/entities/iris/settings/iris-sub-settings.model';
 import { Detail } from 'app/detail-overview-list/detail.model';
@@ -50,7 +49,6 @@ export class CourseDetailComponent implements OnInit, OnDestroy {
     communicationEnabled: boolean;
     irisEnabled = false;
     irisChatEnabled = false;
-    irisHestiaEnabled = false;
     ltiEnabled = false;
     isAthenaEnabled = false;
     tutorialEnabled = false;
@@ -79,7 +77,6 @@ export class CourseDetailComponent implements OnInit, OnDestroy {
         private profileService: ProfileService,
         private accountService: AccountService,
         private irisSettingsService: IrisSettingsService,
-        private translateService: TranslateService,
         private markdownService: ArtemisMarkdownService,
         private featureToggleService: FeatureToggleService,
     ) {}
@@ -95,8 +92,8 @@ export class CourseDetailComponent implements OnInit, OnDestroy {
         this.irisEnabled = profileInfo?.activeProfiles.includes(PROFILE_IRIS);
         if (this.irisEnabled) {
             const irisSettings = await firstValueFrom(this.irisSettingsService.getGlobalSettings());
+            // TODO: Outdated, as we now have a bunch more sub settings
             this.irisChatEnabled = irisSettings?.irisChatSettings?.enabled ?? false;
-            this.irisHestiaEnabled = irisSettings?.irisHestiaSettings?.enabled ?? false;
         }
         this.route.data.subscribe(({ course }) => {
             if (course) {
@@ -369,7 +366,7 @@ export class CourseDetailComponent implements OnInit, OnDestroy {
         if (this.paramSub) {
             this.paramSub.unsubscribe();
         }
-        this.eventManager.destroy(this.eventSubscriber);
+        this.eventManager?.destroy(this.eventSubscriber);
     }
 
     /**

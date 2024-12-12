@@ -108,8 +108,12 @@ public class Result extends DomainObject implements Comparable<Result> {
     @JsonView(QuizView.Before.class)
     private List<Feedback> feedbacks = new ArrayList<>();
 
+    /**
+     * @deprecated: Will be removed for 8.0, please use submission.participation instead
+     */
     @ManyToOne
     @JsonView(QuizView.Before.class)
+    @Deprecated(since = "7.7", forRemoval = true)
     private Participation participation;
 
     @ManyToOne(fetch = FetchType.LAZY)
@@ -385,15 +389,31 @@ public class Result extends DomainObject implements Comparable<Result> {
         return !Objects.equals(existingText, newText);
     }
 
+    /**
+     * @deprecated: Will be removed for 8.0, please use submission.participation instead
+     * @return the participation
+     */
+    @Deprecated(since = "7.7", forRemoval = true)
     public Participation getParticipation() {
         return participation;
     }
 
+    /**
+     * @deprecated: Will be removed for 8.0, please use submission.participation instead
+     * @param participation the participation to set
+     * @return the result
+     */
+    @Deprecated(since = "7.7", forRemoval = true)
     public Result participation(Participation participation) {
         this.participation = participation;
         return this;
     }
 
+    /**
+     * @deprecated: Will be removed for 8.0, please use submission.participation instead
+     * @param participation the participation to set
+     */
+    @Deprecated(since = "7.7", forRemoval = true)
     public void setParticipation(Participation participation) {
         this.participation = participation;
     }
@@ -629,7 +649,7 @@ public class Result extends DomainObject implements Comparable<Result> {
      * @return true if the result is an automatic AI Athena result
      */
     @JsonIgnore
-    public boolean isAthenaAutomatic() {
+    public boolean isAthenaBased() {
         return AssessmentType.AUTOMATIC_ATHENA == assessmentType;
     }
 

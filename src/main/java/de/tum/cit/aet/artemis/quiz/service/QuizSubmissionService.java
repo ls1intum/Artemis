@@ -147,7 +147,7 @@ public class QuizSubmissionService extends AbstractQuizSubmissionService<QuizSub
         log.info("Calculating results for quiz {}", quizExercise.getId());
         studentParticipationRepository.findByExerciseId(quizExercise.getId()).forEach(participation -> {
             participation.setExercise(quizExercise);
-            Optional<QuizSubmission> quizSubmissionOptional = quizSubmissionRepository.findWithEagerSubmittedAnswersByParticipationId(participation.getId());
+            Optional<QuizSubmission> quizSubmissionOptional = quizSubmissionRepository.findWithEagerSubmittedAnswersByParticipationId(participation.getId()).stream().findFirst();
 
             if (quizSubmissionOptional.isEmpty()) {
                 return;
@@ -183,7 +183,13 @@ public class QuizSubmissionService extends AbstractQuizSubmissionService<QuizSub
             // avoid LazyInitializationException
             participation.setResults(Set.of(result));
 
+            var course = quizExercise.getCourseViaExerciseGroupOrCourseMember();
             sendQuizResultToUser(quizExerciseId, participation);
+            if (course != null) {
+                // This is required, as sendQuizResultToUser removes the course from the quizExercise
+                // TODO: This should be fixed by using DTOs in the future
+                quizExercise.setCourse(course);
+            }
         });
         quizStatisticService.recalculateStatistics(quizExercise);
         // notify users via websocket about new results for the statistics, filter out solution information
@@ -198,7 +204,7 @@ public class QuizSubmissionService extends AbstractQuizSubmissionService<QuizSub
         websocketMessagingService.sendMessageToUser(user, "/topic/exercise/" + quizExerciseId + "/participation", participation);
     }
 
-    // Use a DTO instead of removing data from the entity
+    // TODO: Use a DTO instead of removing data from the entity
     @Deprecated
     private void removeUnnecessaryObjectsBeforeSendingToClient(StudentParticipation participation) {
         if (participation.getExercise() != null) {

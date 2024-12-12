@@ -2,8 +2,9 @@ import { BaseEntity } from 'app/shared/model/base-entity';
 import {
     IrisChatSubSettings,
     IrisCompetencyGenerationSubSettings,
-    IrisHestiaSubSettings,
+    IrisCourseChatSubSettings,
     IrisLectureIngestionSubSettings,
+    IrisTextExerciseChatSubSettings,
 } from 'app/entities/iris/settings/iris-sub-settings.model';
 
 export enum IrisSettingsType {
@@ -16,22 +17,19 @@ export abstract class IrisSettings implements BaseEntity {
     id?: number;
     type: IrisSettingsType;
     irisChatSettings?: IrisChatSubSettings;
+    irisTextExerciseChatSettings?: IrisTextExerciseChatSubSettings;
+    irisCourseChatSettings?: IrisCourseChatSubSettings;
     irisLectureIngestionSettings?: IrisLectureIngestionSubSettings;
-    irisHestiaSettings?: IrisHestiaSubSettings;
     irisCompetencyGenerationSettings?: IrisCompetencyGenerationSubSettings;
 }
 
 export class IrisGlobalSettings implements IrisSettings {
     id?: number;
     type = IrisSettingsType.GLOBAL;
-    currentVersion?: number;
-    enableAutoUpdateChat?: boolean;
-    enableAutoUpdateLectureIngestion?: boolean;
-    enableAutoUpdateHestia?: boolean;
-    enableAutoUpdateCompetencyGeneration?: boolean;
     irisChatSettings?: IrisChatSubSettings;
+    irisTextExerciseChatSettings?: IrisTextExerciseChatSubSettings;
+    irisCourseChatSettings?: IrisCourseChatSubSettings;
     irisLectureIngestionSettings?: IrisLectureIngestionSubSettings;
-    irisHestiaSettings?: IrisHestiaSubSettings;
     irisCompetencyGenerationSettings?: IrisCompetencyGenerationSubSettings;
 }
 
@@ -40,8 +38,9 @@ export class IrisCourseSettings implements IrisSettings {
     type = IrisSettingsType.COURSE;
     courseId?: number;
     irisChatSettings?: IrisChatSubSettings;
+    irisTextExerciseChatSettings?: IrisTextExerciseChatSubSettings;
+    irisCourseChatSettings?: IrisCourseChatSubSettings;
     irisLectureIngestionSettings?: IrisLectureIngestionSubSettings;
-    irisHestiaSettings?: IrisHestiaSubSettings;
     irisCompetencyGenerationSettings?: IrisCompetencyGenerationSubSettings;
 }
 
@@ -50,4 +49,5 @@ export class IrisExerciseSettings implements IrisSettings {
     type = IrisSettingsType.EXERCISE;
     exerciseId?: number;
     irisChatSettings?: IrisChatSubSettings;
+    irisTextExerciseChatSettings?: IrisTextExerciseChatSubSettings;
 }

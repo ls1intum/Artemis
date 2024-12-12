@@ -7,12 +7,9 @@ export class ProfileInfo {
     public activeProfiles: string[];
     public ribbonEnv: string;
     public inProduction: boolean;
+    public inDevelopment: boolean;
     public openApiEnabled?: boolean;
     public sentry?: { dsn: string };
-    public postHog?: {
-        host?: string;
-        token: string;
-    };
     public features: ActiveFeatureToggles;
     public guidedTourMapping?: GuidedTourMapping;
     public buildPlanURLTemplate: string;
@@ -36,6 +33,9 @@ export class ProfileInfo {
     public useVersionControlAccessToken?: boolean;
     public showCloneUrlWithoutToken?: boolean;
     public continuousIntegrationName?: string;
+    public buildTimeoutMin?: number;
+    public buildTimeoutMax?: number;
+    public buildTimeoutDefault?: number;
     public programmingLanguageFeatures: ProgrammingLanguageFeature[];
     public saml2?: Saml2Config;
     public textAssessmentAnalyticsEnabled?: boolean;

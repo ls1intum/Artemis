@@ -2,6 +2,7 @@ package de.tum.cit.aet.artemis.buildagent.service;
 
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_BUILDAGENT;
 
+import java.time.Duration;
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -10,36 +11,46 @@ import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.CancellationException;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.RejectedExecutionException;
+import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.ThreadPoolExecutor;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.locks.ReentrantLock;
 
-import jakarta.annotation.PostConstruct;
 import jakarta.annotation.PreDestroy;
 
+import org.apache.commons.lang3.StringUtils;
 import org.redisson.api.RMap;
 import org.redisson.api.RPriorityQueue;
 import org.redisson.api.RQueue;
 import org.redisson.api.RedissonClient;
 import org.redisson.api.listener.ListAddListener;
 import org.redisson.api.listener.ListRemoveListener;
+import org.redisson.client.RedisConnectionException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.context.event.ApplicationReadyEvent;
 import org.springframework.context.annotation.Profile;
+import org.springframework.context.event.EventListener;
+import org.springframework.scheduling.TaskScheduler;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 
+import de.tum.cit.aet.artemis.buildagent.dto.BuildAgentDTO;
 import de.tum.cit.aet.artemis.buildagent.dto.BuildAgentInformation;
 import de.tum.cit.aet.artemis.buildagent.dto.BuildJobQueueItem;
+import de.tum.cit.aet.artemis.buildagent.dto.BuildLogDTO;
 import de.tum.cit.aet.artemis.buildagent.dto.BuildResult;
 import de.tum.cit.aet.artemis.buildagent.dto.JobTimingInfo;
 import de.tum.cit.aet.artemis.buildagent.dto.ResultQueueItem;
 import de.tum.cit.aet.artemis.core.security.SecurityUtils;
 import de.tum.cit.aet.artemis.core.service.connectors.redis.RedisClientListResolver;
-import de.tum.cit.aet.artemis.programming.domain.build.BuildLogEntry;
 import de.tum.cit.aet.artemis.programming.domain.build.BuildStatus;
 
 /**
@@ -63,6 +74,8 @@ public class SharedQueueProcessingService {
 
     private final BuildAgentSshKeyService buildAgentSSHKeyService;
 
+    private final TaskScheduler taskScheduler;
+
     private RPriorityQueue<BuildJobQueueItem> buildJobQueue;
 
     private RQueue<ResultQueueItem> resultQueue;
@@ -83,26 +96,70 @@ public class SharedQueueProcessingService {
 
     private int listenerIdRemove;
 
+    /**
+     * Lock for pausing and resuming the build agent.
+     */
+    private final ReentrantLock pauseResumeLock = new ReentrantLock();
+
+    private UUID listenerId;
+
+    /**
+     * Scheduled future for checking availability and processing next build job.
+     */
+    private ScheduledFuture<?> scheduledFuture;
+
+    /**
+     * Flag to indicate whether the build agent is paused.
+     */
+    private final AtomicBoolean isPaused = new AtomicBoolean(false);
+
+    /**
+     * Flag to indicate whether the build agent should process build results. This is necessary to differentiate between when the build agent is paused and grace period is not over
+     * yet.
+     */
+    private final AtomicBoolean processResults = new AtomicBoolean(true);
+
+    @Value("${artemis.continuous-integration.pause-grace-period-seconds:60}")
+    private int pauseGracePeriodSeconds;
+
+    @Value("${artemis.continuous-integration.build-agent.short-name}")
+    private String buildAgentShortName;
+
+    @Value("${artemis.continuous-integration.build-agent.display-name:}")
+    private String buildAgentDisplayName;
+
     @Value("${spring.data.redis.client-name}")
     private String redisClientName;     // this is used as build agent name
 
     private final RedisClientListResolver redisClientListResolver;
 
     public SharedQueueProcessingService(RedissonClient redissonClient, ExecutorService localCIBuildExecutorService, BuildJobManagementService buildJobManagementService,
-            BuildLogsMap buildLogsMap, BuildAgentSshKeyService buildAgentSSHKeyService, RedisClientListResolver redisClientListResolver) {
+            BuildLogsMap buildLogsMap, BuildAgentSshKeyService buildAgentSSHKeyService, TaskScheduler taskScheduler, RedisClientListResolver redisClientListResolver) {
         this.redissonClient = redissonClient;
         this.localCIBuildExecutorService = (ThreadPoolExecutor) localCIBuildExecutorService;
         this.buildJobManagementService = buildJobManagementService;
         this.buildLogsMap = buildLogsMap;
         this.buildAgentSSHKeyService = buildAgentSSHKeyService;
+        this.taskScheduler = taskScheduler;
         this.redisClientListResolver = redisClientListResolver;
     }
 
     /**
      * Initialize relevant data for cluster communication.
      */
-    @PostConstruct
+    @EventListener(ApplicationReadyEvent.class)
     public void init() {
+        if (!buildAgentShortName.matches("^[a-z0-9-]+$")) {
+            String errorMessage = "Build agent short name must not be empty and only contain lowercase letters, numbers and hyphens."
+                    + " Build agent short name should be changed in the application properties under 'artemis.continuous-integration.build-agent.short-name'.";
+            log.error(errorMessage);
+            throw new IllegalArgumentException(errorMessage);
+        }
+
+        if (StringUtils.isBlank(buildAgentDisplayName)) {
+            buildAgentDisplayName = buildAgentShortName;
+        }
+
         this.buildAgentInformation = this.redissonClient.getMap("buildAgentInformation");
         this.processingJobs = this.redissonClient.getMap("processingJobs");
         this.buildJobQueue = this.redissonClient.getPriorityQueue("buildJobQueue");
@@ -112,14 +169,52 @@ public class SharedQueueProcessingService {
             checkAvailabilityAndProcessNextBuild();
         });
         this.listenerIdRemove = this.buildJobQueue.addListener((ListRemoveListener) name -> log.info("CIBuildJobQueueItem removed from queue: {}", name));
+
+        /*
+         * Check every 10 seconds whether the node has at least one thread available for a new build job.
+         * If so, process the next build job.
+         * This is a backup mechanism in case the build queue is not empty, no new build jobs are entering the queue and the
+         * node otherwise stopped checking for build jobs in the queue.
+         */
+        scheduledFuture = taskScheduler.scheduleAtFixedRate(this::checkAvailabilityAndProcessNextBuild, Duration.ofSeconds(10));
+
+        ITopic<String> pauseBuildAgentTopic = hazelcastInstance.getTopic("pauseBuildAgentTopic");
+        pauseBuildAgentTopic.addMessageListener(message -> {
+            if (buildAgentShortName.equals(message.getMessageObject())) {
+                pauseBuildAgent();
+            }
+        });
+
+        ITopic<String> resumeBuildAgentTopic = hazelcastInstance.getTopic("resumeBuildAgentTopic");
+        resumeBuildAgentTopic.addMessageListener(message -> {
+            if (buildAgentShortName.equals(message.getMessageObject())) {
+                resumeBuildAgent();
+            }
+        });
     }
 
     @PreDestroy
-    public void removeListener() {
-        // Remove the build agent from the map to avoid issues
-        this.buildAgentInformation.remove(getBuildAgentName());
-        this.buildJobQueue.removeListener(this.listenerIdAdd);
-        this.buildJobQueue.removeListener(this.listenerIdRemove);
+    public void removeListenerAndCancelScheduledFuture() {
+        removeListener();
+        cancelCheckAvailabilityAndProcessNextBuildScheduledFuture();
+    }
+
+    private void removeListener() {
+        try {
+            // Remove the build agent from the map to avoid issues
+            this.buildAgentInformation.remove(getBuildAgentName());
+            this.buildJobQueue.removeListener(this.listenerIdAdd);
+            this.buildJobQueue.removeListener(this.listenerIdRemove);
+        }
+        catch (RedisConnectionException e) {
+            log.error("Failed to remove listener from SharedQueueProcessingService due to Redis connection exception.");
+        }
+    }
+
+    private void cancelCheckAvailabilityAndProcessNextBuildScheduledFuture() {
+        if (scheduledFuture != null && !scheduledFuture.isCancelled()) {
+            scheduledFuture.cancel(false);
+        }
     }
 
     /**
@@ -168,30 +263,40 @@ public class SharedQueueProcessingService {
             return;
         }
 
-        if (buildJobQueue.isEmpty()) {
+        if (buildJobQueue.isEmpty() || isPaused.get()) {
             return;
         }
         BuildJobQueueItem buildJob = null;
         instanceLock.lock();
         try {
             // Recheck conditions after acquiring the lock to ensure they are still valid
-            if (!nodeIsAvailable() || buildJobQueue.isEmpty()) {
+            if (!nodeIsAvailable() || buildJobQueue.isEmpty() || isPaused.get()) {
                 return;
             }
             buildJob = addToProcessingJobs();
             processBuild(buildJob);
         }
         catch (RejectedExecutionException e) {
-            log.error("Couldn't add build job to threadpool: {}\n Concurrent Build Jobs Count: {} Active tasks in pool: {}, Concurrent Build Jobs Size: {}", buildJob,
+            // TODO: we should log this centrally and not on the local node
+            log.error("Couldn't add build job to thread pool: {}\n Concurrent Build Jobs Count: {} Active tasks in pool: {}, Concurrent Build Jobs Size: {}", buildJob,
                     localProcessingJobs.get(), localCIBuildExecutorService.getActiveCount(), localCIBuildExecutorService.getMaximumPoolSize(), e);
 
             // Add the build job back to the queue
             if (buildJob != null) {
                 processingJobs.remove(buildJob.id());
 
-                buildJob = new BuildJobQueueItem(buildJob, "");
-                log.info("Adding build job back to the queue: {}", buildJob);
-                buildJobQueue.add(buildJob);
+                // At most try out the build job 5 times when they get rejected
+                if (buildJob.retryCount() >= 5) {
+                    // TODO: we should log this centrally and not on the local node
+                    log.error("Build job was rejected 5 times. Not adding build job back to the queue: {}", buildJob);
+                }
+                else {
+                    // NOTE: we increase the retry count here, because the build job was not processed successfully
+                    // TODO: we should try to run this job on a different build agent to avoid getting the same error again
+                    buildJob = new BuildJobQueueItem(buildJob, new BuildAgentDTO("", "", ""), buildJob.retryCount() + 1);
+                    log.info("Adding build job {} back to the queue with retry count {}", buildJob, buildJob.retryCount());
+                    buildJobQueue.add(buildJob);
+                }
                 localProcessingJobs.decrementAndGet();
             }
 
@@ -202,12 +307,16 @@ public class SharedQueueProcessingService {
         }
     }
 
+    private static boolean noDataMemberInClusterAvailable(HazelcastInstance hazelcastInstance) {
+        return hazelcastInstance.getCluster().getMembers().stream().allMatch(Member::isLiteMember);
+    }
+
     private BuildJobQueueItem addToProcessingJobs() {
         BuildJobQueueItem buildJob = buildJobQueue.poll();
         if (buildJob != null) {
             String memberAddress = getBuildAgentName();
 
-            BuildJobQueueItem processingJob = new BuildJobQueueItem(buildJob, memberAddress);
+            BuildJobQueueItem processingJob = new BuildJobQueueItem(buildJob, new BuildAgentDTO(buildAgentShortName, memberAddress, buildAgentDisplayName));
 
             processingJobs.put(processingJob.id(), processingJob);
             localProcessingJobs.incrementAndGet();
@@ -226,10 +335,10 @@ public class SharedQueueProcessingService {
         // Add/update
         BuildAgentInformation info = getUpdatedLocalBuildAgentInformation(recentBuildJob);
         try {
-            buildAgentInformation.put(info.name(), info);
+            buildAgentInformation.put(info.buildAgent().memberAddress(), info);
         }
         catch (Exception e) {
-            log.error("Error while updating build agent information for agent {}", info.name(), e);
+            log.error("Error while updating build agent information for agent {} with address {}", info.buildAgent().name(), info.buildAgent().memberAddress(), e);
         }
     }
 
@@ -238,7 +347,9 @@ public class SharedQueueProcessingService {
         List<BuildJobQueueItem> processingJobsOfMember = getProcessingJobsOfNode(memberAddress);
         int numberOfCurrentBuildJobs = processingJobsOfMember.size();
         int maxNumberOfConcurrentBuilds = localCIBuildExecutorService.getMaximumPoolSize();
-        boolean active = numberOfCurrentBuildJobs > 0;
+        boolean hasJobs = numberOfCurrentBuildJobs > 0;
+        BuildAgentInformation.BuildAgentStatus status = isPaused.get() ? BuildAgentInformation.BuildAgentStatus.PAUSED
+                : hasJobs ? BuildAgentInformation.BuildAgentStatus.ACTIVE : BuildAgentInformation.BuildAgentStatus.IDLE;
         BuildAgentInformation agent = buildAgentInformation.get(memberAddress);
         List<BuildJobQueueItem> recentBuildJobs;
         if (agent != null) {
@@ -257,11 +368,15 @@ public class SharedQueueProcessingService {
 
         String publicSshKey = buildAgentSSHKeyService.getPublicKeyAsString();
 
-        return new BuildAgentInformation(memberAddress, maxNumberOfConcurrentBuilds, numberOfCurrentBuildJobs, processingJobsOfMember, active, recentBuildJobs, publicSshKey);
+        BuildAgentDTO agentInfo = new BuildAgentDTO(buildAgentShortName, memberAddress, buildAgentDisplayName);
+
+        return new BuildAgentInformation(agentInfo, maxNumberOfConcurrentBuilds, numberOfCurrentBuildJobs, processingJobsOfMember, status, recentBuildJobs, publicSshKey);
     }
 
     private List<BuildJobQueueItem> getProcessingJobsOfNode(String memberAddress) {
-        return processingJobs.values().stream().filter(job -> Objects.equals(job.buildAgentAddress(), memberAddress)).toList();
+        // NOTE: we should not use streams with IMap, because it can be unstable, when many items are added at the same time and there is a slow network condition
+        List<BuildJobQueueItem> processingJobsList = new ArrayList<>(processingJobs.values());
+        return processingJobsList.stream().filter(job -> Objects.equals(job.buildAgent().memberAddress(), memberAddress)).toList();
     }
 
     private void removeOfflineNodes() {
@@ -296,18 +411,24 @@ public class SharedQueueProcessingService {
         CompletableFuture<BuildResult> futureResult = buildJobManagementService.executeBuildJob(buildJob);
         futureResult.thenAccept(buildResult -> {
 
+            log.debug("Build job completed: {}", buildJob);
             JobTimingInfo jobTimingInfo = new JobTimingInfo(buildJob.jobTimingInfo().submissionDate(), buildJob.jobTimingInfo().buildStartDate(), ZonedDateTime.now());
 
-            BuildJobQueueItem finishedJob = new BuildJobQueueItem(buildJob.id(), buildJob.name(), buildJob.buildAgentAddress(), buildJob.participationId(), buildJob.courseId(),
+            BuildJobQueueItem finishedJob = new BuildJobQueueItem(buildJob.id(), buildJob.name(), buildJob.buildAgent(), buildJob.participationId(), buildJob.courseId(),
                     buildJob.exerciseId(), buildJob.retryCount(), buildJob.priority(), BuildStatus.SUCCESSFUL, buildJob.repositoryInfo(), jobTimingInfo, buildJob.buildConfig(),
                     null);
 
-            List<BuildLogEntry> buildLogs = buildLogsMap.getBuildLogs(buildJob.id());
+            List<BuildLogDTO> buildLogs = buildLogsMap.getAndTruncateBuildLogs(buildJob.id());
             buildLogsMap.removeBuildLogs(buildJob.id());
 
             ResultQueueItem resultQueueItem = new ResultQueueItem(buildResult, finishedJob, buildLogs, null);
-            log.info("Adding build result to result queue: {}", resultQueueItem);
-            resultQueue.add(resultQueueItem);
+            if (processResults.get()) {
+                log.info("Adding build result to result queue: {}", resultQueueItem);
+                resultQueue.add(resultQueueItem);
+            }
+            else {
+                log.info("Build agent is paused. Not adding build result to result queue for build job: {}", buildJob);
+            }
 
             // after processing a build job, remove it from the processing jobs
             processingJobs.remove(buildJob.id());
@@ -319,6 +440,8 @@ public class SharedQueueProcessingService {
         });
 
         futureResult.exceptionally(ex -> {
+            log.debug("Build job completed with exception: {}", buildJob, ex);
+
             ZonedDateTime completionDate = ZonedDateTime.now();
 
             BuildJobQueueItem job;
@@ -334,7 +457,7 @@ public class SharedQueueProcessingService {
 
             job = new BuildJobQueueItem(buildJob, completionDate, status);
 
-            List<BuildLogEntry> buildLogs = buildLogsMap.getBuildLogs(buildJob.id());
+            List<BuildLogDTO> buildLogs = buildLogsMap.getAndTruncateBuildLogs(buildJob.id());
             buildLogsMap.removeBuildLogs(buildJob.id());
 
             BuildResult failedResult = new BuildResult(buildJob.buildConfig().branch(), buildJob.buildConfig().assignmentCommitHash(), buildJob.buildConfig().testCommitHash(),
@@ -342,8 +465,13 @@ public class SharedQueueProcessingService {
             failedResult.setBuildLogEntries(buildLogs);
 
             ResultQueueItem resultQueueItem = new ResultQueueItem(failedResult, job, buildLogs, ex);
-            log.info("Adding build result to result queue: {}", resultQueueItem);
-            resultQueue.add(resultQueueItem);
+            if (processResults.get()) {
+                log.info("Adding build result to result queue: {}", resultQueueItem);
+                resultQueue.add(resultQueueItem);
+            }
+            else {
+                log.info("Build agent is paused. Not adding build result to result queue for build job: {}", buildJob);
+            }
 
             processingJobs.remove(buildJob.id());
             localProcessingJobs.decrementAndGet();
@@ -354,12 +482,97 @@ public class SharedQueueProcessingService {
         });
     }
 
+    private void pauseBuildAgent() {
+        if (isPaused.get()) {
+            log.info("Build agent is already paused");
+            return;
+        }
+
+        pauseResumeLock.lock();
+        try {
+            log.info("Pausing build agent with address {}", hazelcastInstance.getCluster().getLocalMember().getAddress().toString());
+
+            isPaused.set(true);
+            removeListenerAndCancelScheduledFuture();
+            updateLocalBuildAgentInformation();
+
+            log.info("Gracefully cancelling running build jobs");
+
+            Set<String> runningBuildJobIds = buildJobManagementService.getRunningBuildJobIds();
+            if (runningBuildJobIds.isEmpty()) {
+                log.info("No running build jobs to cancel");
+            }
+            else {
+                List<CompletableFuture<BuildResult>> runningFuturesWrapper = runningBuildJobIds.stream().map(buildJobManagementService::getRunningBuildJobFutureWrapper)
+                        .filter(Objects::nonNull).toList();
+
+                if (!runningFuturesWrapper.isEmpty()) {
+                    CompletableFuture<Void> allFuturesWrapper = CompletableFuture.allOf(runningFuturesWrapper.toArray(new CompletableFuture[0]));
+
+                    try {
+                        allFuturesWrapper.get(pauseGracePeriodSeconds, TimeUnit.SECONDS);
+                        log.info("All running build jobs finished during grace period");
+                    }
+                    catch (TimeoutException e) {
+                        handleTimeoutAndCancelRunningJobs();
+                    }
+                    catch (InterruptedException | ExecutionException e) {
+                        log.error("Error while waiting for running build jobs to finish", e);
+                    }
+                }
+            }
+        }
+        finally {
+            pauseResumeLock.unlock();
+        }
+    }
+
+    private void handleTimeoutAndCancelRunningJobs() {
+        if (!isPaused.get()) {
+            log.info("Build agent was resumed before the build jobs could be cancelled");
+            return;
+        }
+        log.info("Grace period exceeded. Cancelling running build jobs.");
+
+        processResults.set(false);
+        Set<String> runningBuildJobIdsAfterGracePeriod = buildJobManagementService.getRunningBuildJobIds();
+        List<BuildJobQueueItem> runningBuildJobsAfterGracePeriod = processingJobs.getAll(runningBuildJobIdsAfterGracePeriod).values().stream().toList();
+        runningBuildJobIdsAfterGracePeriod.forEach(buildJobManagementService::cancelBuildJob);
+        queue.addAll(runningBuildJobsAfterGracePeriod);
+        log.info("Cancelled running build jobs and added them back to the queue with Ids {}", runningBuildJobIdsAfterGracePeriod);
+        log.debug("Cancelled running build jobs: {}", runningBuildJobsAfterGracePeriod);
+    }
+
+    private void resumeBuildAgent() {
+        if (!isPaused.get()) {
+            log.info("Build agent is already running");
+            return;
+        }
+
+        pauseResumeLock.lock();
+        try {
+            log.info("Resuming build agent with address {}", hazelcastInstance.getCluster().getLocalMember().getAddress().toString());
+            isPaused.set(false);
+            processResults.set(true);
+            // We remove the listener and scheduledTask first to avoid having multiple listeners and scheduled tasks running
+            removeListenerAndCancelScheduledFuture();
+            listenerId = queue.addItemListener(new QueuedBuildJobItemListener(), true);
+            scheduledFuture = taskScheduler.scheduleAtFixedRate(this::checkAvailabilityAndProcessNextBuild, Duration.ofSeconds(10));
+            checkAvailabilityAndProcessNextBuild();
+            updateLocalBuildAgentInformation();
+        }
+        finally {
+            pauseResumeLock.unlock();
+        }
+    }
+
     /**
      * Checks whether the node has at least one thread available for a new build job.
      */
     private boolean nodeIsAvailable() {
         log.debug("Currently processing jobs on this node: {}, active threads in Pool: {}, maximum pool size of thread executor : {}", localProcessingJobs.get(),
                 localCIBuildExecutorService.getActiveCount(), localCIBuildExecutorService.getMaximumPoolSize());
-        return localProcessingJobs.get() < localCIBuildExecutorService.getMaximumPoolSize();
+        return localProcessingJobs.get() < localCIBuildExecutorService.getMaximumPoolSize()
+                && localCIBuildExecutorService.getActiveCount() < localCIBuildExecutorService.getMaximumPoolSize() && localCIBuildExecutorService.getQueue().isEmpty();
     }
 }

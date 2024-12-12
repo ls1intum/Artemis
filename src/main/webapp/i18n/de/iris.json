@@ -10,6 +10,10 @@
                 "button": {
                     "reload": "Einstellungen neu laden",
                     "save": "Einstellungen speichern",
+                    "textExercise": {
+                        "title": "Iris",
+                        "tooltip": "Bearbeite die Iris Einstellungen für diese Textaufgabe"
+                    },
                     "programmingExercise": {
                         "title": "Iris",
                         "tooltip": "Bearbeite die Iris Einstellungen für diese Programmieraufgabe"
@@ -21,21 +25,37 @@
                 },
                 "subSettings": {
                     "chatSettings": "Chat Einstellungen",
+                    "textExerciseChatSettings": "Textaufgaben Chat Einstellungen",
+                    "courseChatSettings": "Kurs Chat Einstellungen",
                     "lectureIngestionSettings": {
                         "title": "Vorlesungen Erfassung Einstellungen",
                         "autoIngestOnAttachmentUpload": "Vorlesungen automatisch an Pyris senden"
                     },
                     "hestiaSettings": "Hestia Einstellungen",
                     "competencyGenerationSettings": "Kompetenzgenerierung Einstellungen",
+                    "proactivityBuildFailedEventEnabled": {
+                        "label": "Build-Fehler überwachen",
+                        "tooltip": "Wenn aktiviert, wird Iris proaktiv Hilfe-Nachrichten senden, wenn der Build einer Abbgabe fehlschlägt."
+                    },
+                    "proactivityProgressStalledEventEnabled": {
+                        "label": "Übungsleistung überwachen",
+                        "tooltip": "Wenn aktiviert, wird Iris proaktiv Hilfe-Nachrichten senden, wenn sich die Übungsleistung des Studenten nicht verbessert."
+                    },
+                    "proactivitySettings": {
+                        "title": "Proaktivitätseinstellungen",
+                        "tooltip": "Aktiviere die untenstehenden Optionen, damit Iris proaktiv Studierende kontaktiert, wenn bestimmte Bedingungen erfüllt sind.",
+                        "parentDisabled": "Iris sendet keine proaktiven Nachrichten für diese Option, da entweder die Option selbst, oder Iris in den aktuellen oder übergeordneten Einstellungen deaktiviert ist."
+                    },
                     "enabled-disabled": "Aktiviert/Deaktiviert",
-                    "models": {
-                        "title": "Modelle",
-                        "allowedModels": {
-                            "title": "Erlaubte Modelle",
-                            "inheritSwitch": "Erbe erlaubte Modelle"
+                    "enabledForCategories": "Automatisch aktivieren für Kategorien",
+                    "variants": {
+                        "title": "Varianten",
+                        "allowedVariants": {
+                            "title": "Erlaubte Varianten",
+                            "inheritSwitch": "Erbe erlaubte Varianten"
                         },
-                        "preferredModel": {
-                            "title": "Präferiertes Modell",
+                        "selectedVariant": {
+                            "title": "Genuzte Variante",
                             "inherit": "Erben"
                         }
                     },
@@ -62,27 +82,41 @@
                     "breadcrumb": "Iris Einstellungen",
                     "global": "Globale Iris Einstellungen",
                     "course": "Kurs Iris Einstellungen",
-                    "programmingExercise": "Programmieraufgabe Iris Einstellungen"
-                },
-                "autoUpdate": {
-                    "title": "Auto Update Einstellungen",
-                    "tooltip": "Wenn aktiviert, werden die spezifischen globalen Iris Einstellungen automatisch aktualisiert, wenn eine neue Version von Artemis neue Iris Einstellungen bereitstellt.",
-                    "chatLabel": "Auto Update der Chat Einstellungen",
-                    "hestiaLabel": "Auto Update der Hestia Einstellungen",
-                    "lectureIngestionLabel": "Auto Update der Vorlesungen Erfassung Einstellungen",
-                    "competencyGenerationLabel": "Auto Update der Kompetenzgenerierung Einstellungen"
+                    "exercise": "Programmieraufgabe Iris Einstellungen"
                 }
             },
             "error": {
                 "forbidden": "Artemis ist nicht konfiguriert, um Iris zu verwenden. (Ungültiges Token)",
                 "internalPyrisError": "Ein interner Fehler beim Kommunizieren mit dem LLM ist aufgetreten. Die Fehlermeldung lautet: {{ pyrisErrorMessage }}.",
                 "invalidTemplate": "Die Vorlage ist ungültig. Die Fehlermeldung lautet: {{ pyrisErrorMessage }}.",
-                "noModelAvailable": "Das Modell {{ model }} steht nicht zur Verfügung. Bitte kontaktiere einen Administrator, wenn das Problem weiterhin besteht.",
+                "noVariantAvailable": "Die Variante {{ variant }} steht nicht zur Verfügung. Bitte kontaktiere einen Administrator, wenn das Problem weiterhin besteht.",
                 "noResponse": "Es wurde keine Antwort von Iris empfangen. Bitte kontaktiere einen Administrator, wenn das Problem weiterhin besteht.",
                 "parseResponse": "Ein Fehler ist beim Parsen der Antwort von Iris aufgetreten. Ursache: {{ cause }}"
             },
             "chat": {
                 "helpOffer": "Wie kann ich Dir helfen?"
+            },
+            "chatBubble": {
+                "seeFull": "Vollständige Nachricht sehen"
+            },
+            "ingestionStates": {
+                "loading": "Wird geladen...",
+                "notStarted": "Nicht gestartet",
+                "inProgress": "In Bearbeitung",
+                "done": "Abgeschlossen",
+                "error": "Fehler",
+                "partiallyIngested": "Teilweise abgeschlossen"
+            },
+            "ingestionAlert": {
+                "lectureUnitSuccess": "Vorlesungseinheit Ingestion in Pyris erfolgreich gestartet",
+                "lectureUnitError": "Fehler beim Senden der Vorlesungseinheit an Pyris",
+                "lectureSuccess": "Vorlesung Ingestion in Pyris erfolgreich gestartet",
+                "lectureError": "Fehler beim Senden der Vorlesung an Pyris",
+                "allLecturesSuccess": "Alle Vorlesungen Ingestion in Pyris erfolgreich gestartet",
+                "allLecturesError": "Fehler beim Senden aller Vorlesungen an Pyris",
+                "lectureNotFound": "Vorlesung kann nicht an Pyris gesendet werden, keine Vorlesung mit der angegebenen ID gefunden.",
+                "pyrisUnavailable": "Pyris ist derzeit nicht verfügbar.",
+                "pyrisError": "Ein Fehler ist bei der Kommunikation mit Pyris aufgetreten."
             }
         }
     }

@@ -1,13 +1,11 @@
-import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
+import { ComponentFixture, TestBed, fakeAsync, flush, tick } from '@angular/core/testing';
 import { MatDialog } from '@angular/material/dialog';
 import { Overlay } from '@angular/cdk/overlay';
-import { FormsModule } from '@angular/forms';
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
-import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { MockComponent, MockPipe, MockProvider } from 'ng-mocks';
 import { AccountService } from 'app/core/auth/account.service';
 import { Subject, of } from 'rxjs';
-import { HttpClientTestingModule } from '@angular/common/http/testing';
+import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { MockAccountService } from '../../../helpers/mocks/service/mock-account.service';
 import { ActivatedRoute } from '@angular/router';
 import { mockServerSessionHttpResponseWithId, mockWebsocketServerMessage } from '../../../helpers/sample/iris-sample-data';
@@ -19,6 +17,10 @@ import { IrisWebsocketService } from 'app/iris/iris-websocket.service';
 import { IrisStatusService } from 'app/iris/iris-status.service';
 import { UserService } from 'app/core/user/user.service';
 import dayjs from 'dayjs/esm';
+import { provideHttpClient } from '@angular/common/http';
+import { NoopAnimationsModule } from '@angular/platform-browser/animations';
+import { HtmlForMarkdownPipe } from '../../../../../../main/webapp/app/shared/pipes/html-for-markdown.pipe';
+import { ArtemisTestModule } from '../../../test.module';
 
 describe('ExerciseChatbotButtonComponent', () => {
     let component: IrisExerciseChatbotButtonComponent;
@@ -68,9 +70,11 @@ describe('ExerciseChatbotButtonComponent', () => {
         } as unknown as Overlay;
 
         await TestBed.configureTestingModule({
-            imports: [FormsModule, FontAwesomeModule, HttpClientTestingModule],
-            declarations: [IrisExerciseChatbotButtonComponent, MockComponent(IrisLogoComponent), MockPipe(ArtemisTranslatePipe)],
+            imports: [ArtemisTestModule, FontAwesomeModule, NoopAnimationsModule, MockPipe(HtmlForMarkdownPipe)],
+            declarations: [IrisExerciseChatbotButtonComponent, MockComponent(IrisLogoComponent)],
             providers: [
+                provideHttpClient(),
+                provideHttpClientTesting(),
                 IrisChatService,
                 MockProvider(IrisChatHttpService),
                 MockProvider(IrisWebsocketService),
@@ -98,11 +102,14 @@ describe('ExerciseChatbotButtonComponent', () => {
         jest.restoreAllMocks();
     });
 
-    it('should subscribe to route.params and call chatService.switchTo', fakeAsync(() => {
+    it('should subscribe to route.params and call chatService.switchTo with exercise mode', fakeAsync(() => {
         jest.spyOn(chatHttpServiceMock, 'getCurrentSessionOrCreateIfNotExists').mockReturnValueOnce(of(mockServerSessionHttpResponseWithId(123)));
         jest.spyOn(wsServiceMock, 'subscribeToSession').mockReturnValueOnce(of());
         const mockExerciseId = 123;
         const spy = jest.spyOn(chatService, 'switchTo');
+
+        component.mode = ChatServiceMode.EXERCISE;
+        fixture.detectChanges();
 
         mockParamsSubject.next({
             exerciseId: mockExerciseId,
@@ -111,6 +118,24 @@ describe('ExerciseChatbotButtonComponent', () => {
         tick();
 
         expect(spy).toHaveBeenCalledExactlyOnceWith(ChatServiceMode.EXERCISE, mockExerciseId);
+    }));
+
+    it('should subscribe to route.params and call chatService.switchTo with text exercise mode', fakeAsync(() => {
+        jest.spyOn(chatHttpServiceMock, 'getCurrentSessionOrCreateIfNotExists').mockReturnValueOnce(of(mockServerSessionHttpResponseWithId(123)));
+        jest.spyOn(wsServiceMock, 'subscribeToSession').mockReturnValueOnce(of());
+        const mockExerciseId = 123;
+        const spy = jest.spyOn(chatService, 'switchTo');
+
+        component.mode = ChatServiceMode.TEXT_EXERCISE;
+        fixture.detectChanges();
+
+        mockParamsSubject.next({
+            exerciseId: mockExerciseId,
+        });
+        fixture.whenStable();
+        tick();
+
+        expect(spy).toHaveBeenCalledExactlyOnceWith(ChatServiceMode.TEXT_EXERCISE, mockExerciseId);
     }));
 
     it('should close the dialog when destroying the object', () => {
@@ -137,6 +162,7 @@ describe('ExerciseChatbotButtonComponent', () => {
         // then
         const unreadIndicatorElement: HTMLInputElement = fixture.debugElement.nativeElement.querySelector('.unread-indicator');
         expect(unreadIndicatorElement).not.toBeNull();
+        flush();
     }));
 
     it('should not show new message indicator when chatbot is open', fakeAsync(() => {
@@ -153,5 +179,6 @@ describe('ExerciseChatbotButtonComponent', () => {
         // then
         const unreadIndicatorElement: HTMLInputElement = fixture.debugElement.nativeElement.querySelector('.unread-indicator');
         expect(unreadIndicatorElement).toBeNull();
+        flush();
     }));
 });

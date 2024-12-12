@@ -4,7 +4,9 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.doReturn;
 
+import java.time.Instant;
 import java.util.List;
+import java.util.Optional;
 
 import jakarta.mail.internet.MimeMessage;
 
@@ -19,13 +21,15 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.boot.test.mock.mockito.SpyBean;
 import org.springframework.context.annotation.Import;
 import org.springframework.mail.javamail.JavaMailSender;
+import org.springframework.test.context.bean.override.mockito.MockitoSpyBean;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
+import org.springframework.test.util.ReflectionTestUtils;
 
 import de.tum.cit.aet.artemis.assessment.service.ParticipantScoreScheduleService;
 import de.tum.cit.aet.artemis.assessment.test_repository.ResultTestRepository;
+import de.tum.cit.aet.artemis.atlas.api.CompetencyProgressApi;
 import de.tum.cit.aet.artemis.atlas.service.competency.CompetencyProgressService;
 import de.tum.cit.aet.artemis.communication.service.WebsocketMessagingService;
 import de.tum.cit.aet.artemis.communication.service.notifications.ConversationNotificationService;
@@ -51,11 +55,12 @@ import de.tum.cit.aet.artemis.core.util.QueryCountAssert;
 import de.tum.cit.aet.artemis.core.util.RequestUtilService;
 import de.tum.cit.aet.artemis.core.util.ThrowingProducer;
 import de.tum.cit.aet.artemis.exam.service.ExamAccessService;
-import de.tum.cit.aet.artemis.exercise.repository.ExerciseRepository;
+import de.tum.cit.aet.artemis.exercise.repository.ExerciseTestRepository;
 import de.tum.cit.aet.artemis.exercise.util.ExerciseUtilService;
 import de.tum.cit.aet.artemis.lti.service.Lti13Service;
 import de.tum.cit.aet.artemis.modeling.service.ModelingSubmissionService;
 import de.tum.cit.aet.artemis.programming.domain.VcsRepositoryUri;
+import de.tum.cit.aet.artemis.programming.repository.UserSshPublicKeyRepository;
 import de.tum.cit.aet.artemis.programming.service.GitService;
 import de.tum.cit.aet.artemis.programming.service.ProgrammingExerciseGradingService;
 import de.tum.cit.aet.artemis.programming.service.ProgrammingExerciseParticipationService;
@@ -85,87 +90,90 @@ public abstract class AbstractArtemisIntegrationTest implements MockDelegate {
     @Value("${artemis.version-control.default-branch:main}")
     protected String defaultBranch;
 
-    // NOTE: we prefer SpyBean over MockBean, because it is more lightweight, we can mock method, but we can also invoke actual methods during testing
-    @SpyBean
+    // NOTE: we prefer MockitoSpyBean over MockitoBean, because it is more lightweight, we can mock method, but we can also invoke actual methods during testing
+    @MockitoSpyBean
     protected Lti13Service lti13Service;
 
-    @SpyBean
+    @MockitoSpyBean
     protected GitService gitService;
 
-    @SpyBean
+    @MockitoSpyBean
     protected FileService fileService;
 
-    @SpyBean
+    @MockitoSpyBean
     protected ZipFileService zipFileService;
 
-    @SpyBean
+    @MockitoSpyBean
     protected GroupNotificationService groupNotificationService;
 
-    @SpyBean
+    @MockitoSpyBean
     protected TutorialGroupNotificationService tutorialGroupNotificationService;
 
-    @SpyBean
+    @MockitoSpyBean
     protected ConversationNotificationService conversationNotificationService;
 
-    @SpyBean
+    @MockitoSpyBean
     protected SingleUserNotificationService singleUserNotificationService;
 
-    @SpyBean
+    @MockitoSpyBean
     protected JavaMailSender javaMailSender;
 
-    @SpyBean
+    @MockitoSpyBean
     protected MailService mailService;
 
-    @SpyBean
+    @MockitoSpyBean
     protected GeneralInstantNotificationService generalInstantNotificationService;
 
-    @SpyBean
+    @MockitoSpyBean
     protected FirebasePushNotificationService firebasePushNotificationService;
 
-    @SpyBean
+    @MockitoSpyBean
     protected ApplePushNotificationService applePushNotificationService;
 
-    @SpyBean
+    @MockitoSpyBean
     protected WebsocketMessagingService websocketMessagingService;
 
-    @SpyBean
+    @MockitoSpyBean
     protected ModelingSubmissionService modelingSubmissionService;
 
-    @SpyBean
+    @MockitoSpyBean
     protected TextSubmissionService textSubmissionService;
 
-    @SpyBean
+    @MockitoSpyBean
     protected ProgrammingTriggerService programmingTriggerService;
 
-    @SpyBean
+    @MockitoSpyBean
     protected ProgrammingExerciseGradingService programmingExerciseGradingService;
 
-    @SpyBean
+    @MockitoSpyBean
     protected ExamAccessService examAccessService;
 
-    @SpyBean
+    @MockitoSpyBean
     protected InstanceMessageSendService instanceMessageSendService;
 
-    @SpyBean
+    @MockitoSpyBean
     protected ProgrammingExerciseScheduleService programmingExerciseScheduleService;
 
-    @SpyBean
+    @MockitoSpyBean
     protected ProgrammingExerciseParticipationService programmingExerciseParticipationService;
 
-    @SpyBean
+    @MockitoSpyBean
     protected UriService uriService;
 
-    @SpyBean
+    @MockitoSpyBean
     protected ScheduleService scheduleService;
 
-    @SpyBean
+    @MockitoSpyBean
     protected ParticipantScoreScheduleService participantScoreScheduleService;
 
-    @SpyBean
+    @MockitoSpyBean
     protected TextBlockService textBlockService;
 
-    @SpyBean
+    @MockitoSpyBean
     protected CompetencyProgressService competencyProgressService;
+
+    @MockitoSpyBean
+    protected CompetencyProgressApi competencyProgressApi;
 
     @Autowired
     protected RequestUtilService request;
@@ -186,7 +194,10 @@ public abstract class AbstractArtemisIntegrationTest implements MockDelegate {
     protected UserTestRepository userTestRepository;
 
     @Autowired
-    protected ExerciseRepository exerciseRepository;
+    protected UserSshPublicKeyRepository userSshPublicKeyRepository;
+
+    @Autowired
+    protected ExerciseTestRepository exerciseRepository;
 
     @Autowired
     protected ResultTestRepository resultRepository;
@@ -197,6 +208,14 @@ public abstract class AbstractArtemisIntegrationTest implements MockDelegate {
     @BeforeEach
     void mockMailService() {
         doNothing().when(javaMailSender).send(any(MimeMessage.class));
+    }
+
+    @BeforeEach
+    void resetParticipantScoreScheduler() {
+        // Prevents the ParticipantScoreScheduleService from scheduling tasks related to prior results
+        ReflectionTestUtils.setField(participantScoreScheduleService, "lastScheduledRun", Optional.of(Instant.now()));
+        ParticipantScoreScheduleService.DEFAULT_WAITING_TIME_FOR_SCHEDULED_TASKS = 100;
+        participantScoreScheduleService.activate();
     }
 
     @AfterEach
@@ -212,7 +231,8 @@ public abstract class AbstractArtemisIntegrationTest implements MockDelegate {
     protected void resetSpyBeans() {
         Mockito.reset(gitService, groupNotificationService, conversationNotificationService, tutorialGroupNotificationService, singleUserNotificationService,
                 websocketMessagingService, examAccessService, mailService, instanceMessageSendService, programmingExerciseScheduleService, programmingExerciseParticipationService,
-                uriService, scheduleService, participantScoreScheduleService, javaMailSender, programmingTriggerService, zipFileService, competencyProgressService);
+                uriService, scheduleService, participantScoreScheduleService, javaMailSender, programmingTriggerService, zipFileService, competencyProgressService,
+                competencyProgressApi);
     }
 
     @Override

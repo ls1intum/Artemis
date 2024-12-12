@@ -1,4 +1,6 @@
-import { Component, ElementRef, Input, Renderer2 } from '@angular/core';
+import { Component, ElementRef, Input, Renderer2, inject } from '@angular/core';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { ArtemisSharedModule } from 'app/shared/shared.module';
 
 @Component({
     selector: 'jhi-password-strength-bar',
@@ -13,14 +15,14 @@ import { Component, ElementRef, Input, Renderer2 } from '@angular/core';
         </ul>
     </div>`,
     styleUrls: ['password-strength-bar.scss'],
+    standalone: true,
+    imports: [TranslateDirective, ArtemisSharedModule],
 })
 export class PasswordStrengthBarComponent {
-    colors = ['#F00', '#F90', '#FF0', '#9F0', '#0F0'];
+    private renderer = inject(Renderer2);
+    private elementRef = inject(ElementRef);
 
-    constructor(
-        private renderer: Renderer2,
-        private elementRef: ElementRef,
-    ) {}
+    colors = ['#F00', '#F90', '#FF0', '#9F0', '#0F0'];
 
     measureStrength(p: string): number {
         let force = 0;

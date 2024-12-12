@@ -2,12 +2,14 @@ import { of } from 'rxjs';
 import { ProgrammingExerciseInstructorRepositoryType } from 'app/exercises/programming/manage/services/programming-exercise.service';
 import { Participation } from 'app/entities/participation/participation.model';
 import { ProgrammingLanguage } from 'app/entities/programming/programming-exercise.model';
+import { ProgrammingExerciseStudentParticipation } from 'app/entities/participation/programming-exercise-student-participation.model';
 
 export class MockProgrammingExerciseService {
     updateProblemStatement = (exerciseId: number, problemStatement: string) => of();
     findWithTemplateAndSolutionParticipation = (exerciseId: number) => of();
     findWithTemplateAndSolutionParticipationAndResults = (exerciseId: number) => of();
     findWithTemplateAndSolutionParticipationAndLatestResults = (exerciseId: number) => of();
+    findWithAuxiliaryRepository = (programmingExerciseId: number) => of();
     find = (exerciseId: number) => of({ body: { id: 4 } });
     getProgrammingExerciseTestCaseState = (exerciseId: number) => of({ body: { released: true, hasStudentResult: true, testCasesChanged: false } });
     exportInstructorExercise = (exerciseId: number) => of({ body: undefined });

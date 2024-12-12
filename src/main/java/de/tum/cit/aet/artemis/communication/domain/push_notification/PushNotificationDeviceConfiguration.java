@@ -6,6 +6,7 @@ import java.util.Objects;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
+import jakarta.persistence.Enumerated;
 import jakarta.persistence.Id;
 import jakarta.persistence.IdClass;
 import jakarta.persistence.JoinColumn;
@@ -34,6 +35,10 @@ public class PushNotificationDeviceConfiguration {
     @Column(name = "device_type")
     private PushNotificationDeviceType deviceType;
 
+    @Enumerated
+    @Column(name = "api_type")
+    private PushNotificationApiType apiType;
+
     @Column(name = "expiration_date")
     private Date expirationDate;
 
@@ -51,6 +56,16 @@ public class PushNotificationDeviceConfiguration {
         this.expirationDate = expirationDate;
         this.secretKey = secretKey;
         this.owner = owner;
+    }
+
+    public PushNotificationDeviceConfiguration(String token, PushNotificationDeviceType deviceType, Date expirationDate, byte[] secretKey, User owner,
+            PushNotificationApiType apiType) {
+        this.token = token;
+        this.deviceType = deviceType;
+        this.expirationDate = expirationDate;
+        this.secretKey = secretKey;
+        this.owner = owner;
+        this.apiType = apiType;
     }
 
     public PushNotificationDeviceConfiguration() {
@@ -97,6 +112,10 @@ public class PushNotificationDeviceConfiguration {
         this.owner = owner;
     }
 
+    public PushNotificationApiType getApiType() {
+        return apiType;
+    }
+
     @Override
     public boolean equals(Object object) {
         if (this == object) {
@@ -106,7 +125,9 @@ public class PushNotificationDeviceConfiguration {
             return false;
         }
         PushNotificationDeviceConfiguration that = (PushNotificationDeviceConfiguration) object;
-        return token.equals(that.token) && deviceType == that.deviceType && expirationDate.equals(that.expirationDate) && Arrays.equals(secretKey, that.secretKey)
+        // Use compareTo rather than equals for dates to ensure timestamps and dates with the same time are considered equal
+        // This is caused by Java internal design having different classes for Date (java.util) and Timestamp (java.sql)
+        return token.equals(that.token) && deviceType == that.deviceType && expirationDate.compareTo(that.expirationDate) == 0 && Arrays.equals(secretKey, that.secretKey)
                 && owner.equals(that.owner);
     }
 

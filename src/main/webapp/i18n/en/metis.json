@@ -27,6 +27,7 @@
             "createModalTitleAnswer": "Create reply",
             "editPosting": "Edit content",
             "edited": "(edited)",
+            "saveForLater": "Save for later",
             "markAsResolvingAnswerTooltip": "Confirm that this reply resolves the original message",
             "unmarkAsResolvingAnswerTooltip": "Revoke that this reply resolves the original message",
             "resolvingAnswerTooltip": "This reply resolves the original message",
@@ -46,7 +47,8 @@
                 "exercise": "Exercise",
                 "lecture": "Lecture",
                 "channel": "Channel",
-                "user": "User"
+                "user": "User",
+                "faq": "FAQ"
             },
             "channel": {
                 "noChannel": "There is no channel available.",
@@ -90,7 +92,17 @@
                 "TECH_SUPPORT": "Tech Support",
                 "ORGANIZATION": "Organization",
                 "RANDOM": "Random",
-                "ANNOUNCEMENT": "Announcement"
+                "ANNOUNCEMENT": "Announcement",
+                "allPublicMessages": "All Public Messages",
+                "searchResults": "Search Results for '{{ search }}'",
+                "mobileDisclaimer": "Please select a conversation first.",
+                "mobileDisclaimerCallToAction": "Select conversation",
+                "savedPosts": "Saved Messages",
+                "progress": "In Progress",
+                "completed": "Completed",
+                "archived": "Archived",
+                "emptySavedPosts": "There is nothing here yet. Bookmark messages and they will appear here.",
+                "deleteNoticeSavedPosts": "Archived and completed bookmarks will be removed after 100 days."
             },
             "post": {
                 "context": "Context",
@@ -110,7 +122,7 @@
                 "similarPosts": "Similar Posts",
                 "similarPostsTooltip": "The automatic post comparison has found the following posts that might be similar to your request - please check if your question has already been asked and/or answered. Click on the title or the exercise/lecture name before the title to navigate to a post or the exercise/lecture, respectively.",
                 "content": "Content",
-                "contentTooltip": "Describe your issue or request as precise as possible. Use markdown formatting where it improves readability.",
+                "contentTooltip": "Describe your issue or request as precise as possible. Use Markdown formatting where it improves readability.",
                 "created": "New post successfully created",
                 "updated": "Post successfully updated",
                 "deleted": "Post successfully deleted",
@@ -121,7 +133,22 @@
                 "exerciseOrLecture": "Exercise / Lecture",
                 "showAllPosts": "Show all messages",
                 "showContent": "Show content",
-                "collapseContent": "Collapse content"
+                "collapseContent": "Collapse content",
+                "addReaction": "Add reaction",
+                "pinMessage": "Pin message",
+                "unpinMessage": "Unpin message",
+                "editMessage": "Edit message",
+                "deleteMessage": "Delete message",
+                "replyMessage": "Reply in thread",
+                "deletedContent": "Post is being deleted in {{ progress }} second(s).",
+                "undoDelete": "Undo delete",
+                "bookmarkPost": "Save post for later",
+                "removeBookmarkPost": "Remove bookmark",
+                "bookmarkPostProgress": "Save post as in progress",
+                "bookmarkPostArchived": "Archive saved post",
+                "bookmarkPostComplete": "Mark saved post as done",
+                "thread": "Thread",
+                "saved": "Saved for later"
             },
             "answerPost": {
                 "created": "New reply successfully created",
@@ -130,12 +157,14 @@
             "userRoles": {
                 "instructor": "Instructor",
                 "tutor": "Tutor",
-                "student": "Student"
+                "student": "Student",
+                "deleted": "Deleted"
             },
             "userAuthorityTooltips": {
                 "instructor": "Instructor: Responsible for course conduction.",
                 "tutor": "Tutor: Responsible for helping users with their questions about the course and exercises.",
-                "student": "Student: Takes courses, participates in exercises, and asks questions."
+                "student": "Student: Takes courses, participates in exercises, and asks questions.",
+                "deleted": "Deleted: This user was deleted."
             }
         }
     }

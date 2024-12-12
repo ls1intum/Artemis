@@ -1,7 +1,7 @@
-import { Component, Input, OnDestroy, OnInit, ViewEncapsulation } from '@angular/core';
+import { Component, OnDestroy, OnInit, ViewEncapsulation, inject, input } from '@angular/core';
 import { isEmpty } from 'lodash-es';
 import { FeatureToggle } from 'app/shared/feature-toggle/feature-toggle.service';
-import { ButtonSize, TooltipPlacement } from 'app/shared/components/button.component';
+import { ButtonSize } from 'app/shared/components/button.component';
 import { IrisSubSettingsType } from 'app/entities/iris/settings/iris-sub-settings.model';
 import { ModelingExerciseService } from 'app/exercises/modeling/manage/modeling-exercise.service';
 import { AlertService } from 'app/core/util/alert.service';
@@ -20,6 +20,8 @@ export interface DetailOverviewSection {
 export enum DetailType {
     Link = 'detail-link',
     Text = 'detail-text',
+    DefaultProfilePicture = 'detail-default-profile-picture',
+    Image = 'detail-image',
     Date = 'detail-date',
     Boolean = 'detail-boolean',
     Markdown = 'detail-markdown',
@@ -48,11 +50,13 @@ export class DetailOverviewListComponent implements OnInit, OnDestroy {
     protected readonly FeatureToggle = FeatureToggle;
     protected readonly ButtonSize = ButtonSize;
     protected readonly ProgrammingExerciseParticipationType = ProgrammingExerciseParticipationType;
+    protected readonly CHAT = IrisSubSettingsType.CHAT;
 
-    readonly CHAT = IrisSubSettingsType.CHAT;
+    private readonly modelingExerciseService = inject(ModelingExerciseService);
+    private readonly alertService = inject(AlertService);
+    private readonly profileService = inject(ProfileService);
 
-    @Input()
-    sections: DetailOverviewSection[];
+    sections = input.required<DetailOverviewSection[]>();
 
     // headline list for navigation bar
     headlines: { id: string; translationKey: string }[];
@@ -62,14 +66,8 @@ export class DetailOverviewListComponent implements OnInit, OnDestroy {
     profileSubscription: Subscription;
     isLocalVC = false;
 
-    constructor(
-        private modelingExerciseService: ModelingExerciseService,
-        private alertService: AlertService,
-        private profileService: ProfileService,
-    ) {}
-
     ngOnInit() {
-        this.headlines = this.sections.map((section) => {
+        this.headlines = this.sections().map((section) => {
             return {
                 id: section.headline.replaceAll('.', '-'),
                 translationKey: section.headline,
@@ -96,6 +94,4 @@ export class DetailOverviewListComponent implements OnInit, OnDestroy {
     ngOnDestroy() {
         this.profileSubscription?.unsubscribe();
     }
-
-    protected readonly TooltipPlacement = TooltipPlacement;
 }

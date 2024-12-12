@@ -11,7 +11,7 @@ import { ExerciseAPIRequests } from '../../../support/requests/ExerciseAPIReques
 import { Commands } from '../../../support/commands';
 import { newBrowserPage } from '../../../support/utils';
 
-test.describe('Modeling Exercise Assessment', () => {
+test.describe('Modeling Exercise Assessment', { tag: '@fast' }, () => {
     let course: Course;
     let modelingExercise: ModelingExercise;
 
@@ -44,6 +44,9 @@ test.describe('Modeling Exercise Assessment', () => {
         // });
 
         test('Tutor can assess a submission', async ({ login, courseManagement, courseAssessment, exerciseAssessment, modelingExerciseAssessment }) => {
+            await login(tutor, '/course-management');
+            await courseManagement.openSubmissionsForExerciseAndCourse(course.id!, modelingExercise.id!);
+            await courseManagement.checkIfStudentSubmissionExists(studentOne.username);
             await login(tutor, '/course-management');
             await courseManagement.openAssessmentDashboardOfCourse(course.id!);
             await courseAssessment.clickExerciseDashboardButton();

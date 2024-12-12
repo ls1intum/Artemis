@@ -31,6 +31,7 @@ import de.tum.cit.aet.artemis.exercise.domain.Team;
 import de.tum.cit.aet.artemis.exercise.domain.participation.Participation;
 import de.tum.cit.aet.artemis.exercise.repository.ParticipationRepository;
 import de.tum.cit.aet.artemis.exercise.repository.TeamRepository;
+import de.tum.cit.aet.artemis.programming.domain.AuxiliaryRepository;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseParticipation;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseStudentParticipation;
@@ -452,7 +453,7 @@ public class ProgrammingExerciseParticipationService {
      * @return the participation.
      * @throws EntityNotFoundException if the participation could not be found.
      */
-    public ProgrammingExerciseParticipation getParticipationForRepository(ProgrammingExercise exercise, String repositoryTypeOrUserName, boolean isPracticeRepository,
+    public ProgrammingExerciseParticipation retrieveParticipationForRepository(ProgrammingExercise exercise, String repositoryTypeOrUserName, boolean isPracticeRepository,
             boolean withSubmissions) {
 
         boolean isAuxiliaryRepository = auxiliaryRepositoryService.isAuxiliaryRepositoryOfExercise(repositoryTypeOrUserName, exercise);
@@ -502,6 +503,27 @@ public class ProgrammingExerciseParticipationService {
     }
 
     /**
+     * Get the participation for a given repository url and a repository type or user name. This method is used by the local VC system to get the
+     * participation for logging operations on the repository.
+     *
+     * @param repositoryTypeOrUserName the name of the user or the type of the repository
+     * @param repositoryURI            the participation's repository URL
+     * @return the participation belonging to the provided repositoryURI and repository type or username
+     */
+    public ProgrammingExerciseParticipation retrieveParticipationForRepository(String repositoryTypeOrUserName, String repositoryURI) {
+        if (repositoryTypeOrUserName.equals(RepositoryType.SOLUTION.toString()) || repositoryTypeOrUserName.equals(RepositoryType.TESTS.toString())) {
+            return solutionParticipationRepository.findByRepositoryUriElseThrow(repositoryURI);
+        }
+        if (repositoryTypeOrUserName.equals(RepositoryType.TEMPLATE.toString())) {
+            return templateParticipationRepository.findByRepositoryUriElseThrow(repositoryURI);
+        }
+        if (repositoryTypeOrUserName.equals(RepositoryType.AUXILIARY.toString())) {
+            throw new EntityNotFoundException("Auxiliary repositories do not have participations.");
+        }
+        return studentParticipationRepository.findByRepositoryUriElseThrow(repositoryURI);
+    }
+
+    /**
      * Get the commits information for the given participation.
      *
      * @param participation the participation for which to get the commits.
@@ -513,6 +535,22 @@ public class ProgrammingExerciseParticipationService {
         }
         catch (GitAPIException e) {
             log.error("Could not get commit infos for participation {} with repository uri {}", participation.getId(), participation.getVcsRepositoryUri());
+            return List.of();
+        }
+    }
+
+    /**
+     * Get the commits information for the given auxiliary repository.
+     *
+     * @param auxiliaryRepository the auxiliary repository for which to get the commits.
+     * @return a list of CommitInfo DTOs containing author, timestamp, commit-hash and commit message.
+     */
+    public List<CommitInfoDTO> getAuxiliaryRepositoryCommitInfos(AuxiliaryRepository auxiliaryRepository) {
+        try {
+            return gitService.getCommitInfos(auxiliaryRepository.getVcsRepositoryUri());
+        }
+        catch (GitAPIException e) {
+            log.error("Could not get commit infos for auxiliaryRepository {} with repository uri {}", auxiliaryRepository.getId(), auxiliaryRepository.getVcsRepositoryUri());
             return List.of();
         }
     }

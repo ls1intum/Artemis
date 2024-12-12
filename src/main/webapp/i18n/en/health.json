@@ -29,6 +29,8 @@
             "athena": "Athena",
             "apollon": "Apollon Conversion Server",
             "pyris": "Pyris",
+            "ssl": "SSL",
+            "hermes": "Hermes Push Notifications",
             "redis": "Redis"
         },
         "table": {

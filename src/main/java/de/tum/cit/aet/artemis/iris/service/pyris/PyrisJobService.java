@@ -3,6 +3,7 @@ package de.tum.cit.aet.artemis.iris.service.pyris;
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_IRIS;
 
 import java.security.SecureRandom;
+import java.util.Collection;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
 
@@ -50,8 +51,7 @@ public class PyrisJobService {
     }
 
     /**
-     * Initializes the PyrisJobService by configuring the Hazelcast map for Pyris jobs.
-     * Sets the time-to-live for the map entries to the specified jobTimeout value.
+     * Initializes the PyrisJobService by configuring the Redis map for Pyris jobs.
      */
     @PostConstruct
     public void init() {
@@ -74,14 +74,14 @@ public class PyrisJobService {
 
     public String addExerciseChatJob(Long courseId, Long exerciseId, Long sessionId) {
         var token = generateJobIdToken();
-        var job = new ExerciseChatJob(token, courseId, exerciseId, sessionId);
+        var job = new ExerciseChatJob(token, courseId, exerciseId, sessionId, null);
         jobMap.put(token, job, jobTimeout, TimeUnit.SECONDS);
         return token;
     }
 
     public String addCourseChatJob(Long courseId, Long sessionId) {
         var token = generateJobIdToken();
-        var job = new CourseChatJob(token, courseId, sessionId);
+        var job = new CourseChatJob(token, courseId, sessionId, null);
         jobMap.put(token, job, jobTimeout, TimeUnit.SECONDS);
         return token;
     }
@@ -89,11 +89,14 @@ public class PyrisJobService {
     /**
      * Adds a new ingestion webhook job to the job map with a timeout.
      *
+     * @param courseId      the ID of the course associated with the webhook job
+     * @param lectureId     the ID of the lecture associated with the webhook job
+     * @param lectureUnitId the ID of the lecture unit associated with the webhook job
      * @return a unique token identifying the created webhook job
      */
-    public String addIngestionWebhookJob() {
+    public String addIngestionWebhookJob(long courseId, long lectureId, long lectureUnitId) {
         var token = generateJobIdToken();
-        var job = new IngestionWebhookJob(token);
+        var job = new IngestionWebhookJob(token, courseId, lectureId, lectureUnitId);
         long timeoutWebhookJob = 60;
         TimeUnit unitWebhookJob = TimeUnit.MINUTES;
         jobMap.put(token, job, timeoutWebhookJob, unitWebhookJob);
@@ -103,10 +106,28 @@ public class PyrisJobService {
     /**
      * Remove a job from the job map.
      *
-     * @param token the token
+     * @param job the job to remove
      */
-    public void removeJob(String token) {
-        jobMap.remove(token);
+    public void removeJob(PyrisJob job) {
+        jobMap.remove(job.jobId());
+    }
+
+    /**
+     * Store a job in the job map.
+     *
+     * @param job the job to store
+     */
+    public void updateJob(PyrisJob job) {
+        jobMap.put(job.jobId(), job);
+    }
+
+    /**
+     * Get all current jobs.
+     *
+     * @return the all current jobs
+     */
+    public Collection<PyrisJob> currentJobs() {
+        return jobMap.values();
     }
 
     /**

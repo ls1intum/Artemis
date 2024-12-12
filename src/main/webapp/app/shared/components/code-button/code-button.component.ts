@@ -16,6 +16,8 @@ import { isPracticeMode } from 'app/entities/participation/student-participation
 import { faCode, faExternalLink } from '@fortawesome/free-solid-svg-icons';
 import { IdeSettingsService } from 'app/shared/user-settings/ide-preferences/ide-settings.service';
 import { Ide } from 'app/shared/user-settings/ide-preferences/ide.model';
+import { SshUserSettingsService } from 'app/shared/user-settings/ssh-settings/ssh-user-settings.service';
+import { UserSshPublicKey } from 'app/entities/programming/user-ssh-public-key.model';
 
 @Component({
     selector: 'jhi-code-button',
@@ -26,20 +28,14 @@ export class CodeButtonComponent implements OnInit, OnChanges {
     readonly FeatureToggle = FeatureToggle;
     readonly ProgrammingLanguage = ProgrammingLanguage;
 
-    @Input()
-    loading = false;
-    @Input()
-    useParticipationVcsAccessToken = false;
-    @Input()
-    smallButtons: boolean;
-    @Input()
-    repositoryUri?: string;
-    @Input()
-    routerLinkForRepositoryView?: string | (string | number)[];
-    @Input()
-    participations?: ProgrammingExerciseStudentParticipation[];
-    @Input()
-    exercise?: ProgrammingExercise;
+    @Input() loading = false;
+    @Input() useParticipationVcsAccessToken = false;
+    @Input() smallButtons: boolean;
+    @Input() repositoryUri?: string;
+    @Input() routerLinkForRepositoryView?: string | (string | number)[];
+    @Input() participations?: ProgrammingExerciseStudentParticipation[];
+    @Input() exercise?: ProgrammingExercise;
+    @Input() hideLabelMobile = false;
 
     useSsh = false;
     useToken = false;
@@ -56,12 +52,16 @@ export class CodeButtonComponent implements OnInit, OnChanges {
     gitlabVCEnabled = false;
     showCloneUrlWithoutToken = true;
     copyEnabled? = true;
+    doesUserHaveSSHkeys = false;
+    areAnySshKeysExpired = false;
 
     sshKeyMissingTip: string;
+    sshKeysExpiredTip: string;
     tokenMissingTip: string;
     tokenExpiredTip: string;
 
     user: User;
+    sshKeys?: UserSshPublicKey[];
     cloneHeadline: string;
     wasCopied = false;
     isTeamParticipation: boolean;
@@ -79,6 +79,7 @@ export class CodeButtonComponent implements OnInit, OnChanges {
     constructor(
         private translateService: TranslateService,
         private externalCloningService: ExternalCloningService,
+        private sshUserSettingsService: SshUserSettingsService,
         private accountService: AccountService,
         private profileService: ProfileService,
         private localStorage: LocalStorageService,
@@ -86,27 +87,19 @@ export class CodeButtonComponent implements OnInit, OnChanges {
         private ideSettingsService: IdeSettingsService,
     ) {}
 
-    ngOnInit() {
-        this.accountService
-            .identity()
-            .then((user) => {
-                this.user = user!;
-                this.refreshTokenState();
+    async ngOnInit() {
+        const user = await this.accountService.identity();
+        if (!user) {
+            return;
+        }
+        this.user = user;
 
-                this.copyEnabled = true;
-                this.useSsh = this.localStorage.retrieve('useSsh') || false;
-                this.useToken = this.localStorage.retrieve('useToken') || false;
-                this.localStorage.observe('useSsh').subscribe((useSsh) => (this.useSsh = useSsh || false));
-                this.localStorage.observe('useToken').subscribe((useToken) => (this.useToken = useToken || false));
+        await this.checkForSshKeys();
+        this.refreshTokenState();
 
-                if (this.useSsh) {
-                    this.useSshUrl();
-                }
-                if (this.useToken) {
-                    this.useHttpsUrlWithToken();
-                }
-            })
-            .then(() => this.loadParticipationVcsAccessTokens());
+        this.copyEnabled = true;
+        this.useSsh = this.localStorage.retrieve('useSsh') || false;
+        this.useToken = this.localStorage.retrieve('useToken') || false;
 
         // Get ssh information from the user
         this.profileService.getProfileInfo().subscribe((profileInfo) => {
@@ -131,9 +124,18 @@ export class CodeButtonComponent implements OnInit, OnChanges {
                 this.sshSettingsUrl = profileInfo.sshKeysURL;
             }
             this.sshKeyMissingTip = this.formatTip('artemisApp.exerciseActions.sshKeyTip', this.sshSettingsUrl);
+            this.sshKeysExpiredTip = this.formatTip('artemisApp.exerciseActions.sshKeyExpiredTip', this.sshSettingsUrl);
+
+            if (this.useSsh) {
+                this.useSshUrl();
+            }
+            if (this.useToken) {
+                this.useHttpsUrlWithToken();
+            }
+            this.loadParticipationVcsAccessTokens();
         });
 
-        this.ideSettingsService.loadIdePreferences().subscribe((programmingLanguageToIde) => {
+        this.ideSettingsService.loadIdePreferences().then((programmingLanguageToIde) => {
             if (programmingLanguageToIde.size) {
                 this.programmingLanguageToIde = programmingLanguageToIde;
             }
@@ -159,14 +161,14 @@ export class CodeButtonComponent implements OnInit, OnChanges {
     public useSshUrl() {
         this.useSsh = true;
         this.useToken = false;
-        this.copyEnabled = this.useSsh && (!!this.user.sshPublicKey || this.gitlabVCEnabled);
+        this.copyEnabled = this.doesUserHaveSSHkeys || this.gitlabVCEnabled;
         this.storeToLocalStorage();
     }
 
     public useHttpsUrlWithToken() {
         this.useSsh = false;
         this.useToken = true;
-        this.copyEnabled = !!(this.accessTokensEnabled && this.useToken && ((!!this.user.vcsAccessToken && !this.isTokenExpired()) || this.useParticipationVcsAccessToken));
+        this.copyEnabled = !!(this.accessTokensEnabled && ((!!this.user.vcsAccessToken && !this.isTokenExpired()) || this.useParticipationVcsAccessToken));
         this.refreshTokenState();
         this.storeToLocalStorage();
     }
@@ -240,6 +242,9 @@ export class CodeButtonComponent implements OnInit, OnChanges {
                 if (error.status == 404) {
                     this.createNewVcsAccessToken(participation);
                 }
+                if (error.status == 403) {
+                    this.useParticipationVcsAccessToken = false;
+                }
             },
         });
     }
@@ -257,7 +262,11 @@ export class CodeButtonComponent implements OnInit, OnChanges {
                     }
                 }
             },
-            error: () => {},
+            error: (error: HttpErrorResponse) => {
+                if (error.status == 403) {
+                    this.useParticipationVcsAccessToken = false;
+                }
+            },
         });
     }
 
@@ -345,6 +354,22 @@ export class CodeButtonComponent implements OnInit, OnChanges {
         this.cloneHeadline = this.isPracticeMode ? 'artemisApp.exerciseActions.clonePracticeRepository' : 'artemisApp.exerciseActions.cloneRatedRepository';
         if (this.activeParticipation.vcsAccessToken) {
             this.user.vcsAccessToken = this.activeParticipation.vcsAccessToken;
+        }
+    }
+
+    /**
+     * Checks whether the user owns any SSH keys, and checks if any of them is expired
+     */
+    private async checkForSshKeys() {
+        this.sshKeys = await this.sshUserSettingsService.getCachedSshKeys();
+        if (this.sshKeys) {
+            const now = dayjs();
+            this.doesUserHaveSSHkeys = this.sshKeys.length > 0;
+            this.areAnySshKeysExpired = this.sshKeys.some((key) => {
+                if (key.expiryDate) {
+                    return dayjs(key.expiryDate).isBefore(now);
+                }
+            });
         }
     }
 }

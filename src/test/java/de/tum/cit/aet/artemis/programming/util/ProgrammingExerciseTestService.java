@@ -136,7 +136,6 @@ import de.tum.cit.aet.artemis.programming.repository.BuildLogStatisticsEntryRepo
 import de.tum.cit.aet.artemis.programming.repository.BuildPlanRepository;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseBuildConfigRepository;
 import de.tum.cit.aet.artemis.programming.repository.StaticCodeAnalysisCategoryRepository;
-import de.tum.cit.aet.artemis.programming.repository.hestia.ProgrammingExerciseTaskRepository;
 import de.tum.cit.aet.artemis.programming.service.AutomaticProgrammingExerciseCleanupService;
 import de.tum.cit.aet.artemis.programming.service.GitService;
 import de.tum.cit.aet.artemis.programming.service.JavaTemplateUpgradeService;
@@ -148,6 +147,7 @@ import de.tum.cit.aet.artemis.programming.service.jenkins.build_plan.JenkinsBuil
 import de.tum.cit.aet.artemis.programming.service.vcs.VersionControlRepositoryPermission;
 import de.tum.cit.aet.artemis.programming.service.vcs.VersionControlService;
 import de.tum.cit.aet.artemis.programming.test_repository.ProgrammingExerciseStudentParticipationTestRepository;
+import de.tum.cit.aet.artemis.programming.test_repository.ProgrammingExerciseTaskTestRepository;
 import de.tum.cit.aet.artemis.programming.test_repository.ProgrammingExerciseTestCaseTestRepository;
 import de.tum.cit.aet.artemis.programming.test_repository.ProgrammingExerciseTestRepository;
 import de.tum.cit.aet.artemis.programming.test_repository.ProgrammingSubmissionTestRepository;
@@ -228,7 +228,7 @@ public class ProgrammingExerciseTestService {
     private JavaTemplateUpgradeService javaTemplateUpgradeService;
 
     @Autowired
-    private ProgrammingExerciseTaskRepository programmingExerciseTaskRepository;
+    private ProgrammingExerciseTaskTestRepository programmingExerciseTaskRepository;
 
     @Autowired
     private ProgrammingExerciseTestCaseTestRepository programmingExerciseTestCaseRepository;
@@ -2111,7 +2111,7 @@ public class ProgrammingExerciseTestService {
         mockDelegate.resetMockProvider();
         mockDelegate.mockRetrieveArtifacts(participation);
 
-        var artifact = request.get(PARTICIPATION_BASE_URL + participation.getId() + "/buildArtifact", HttpStatus.OK, byte[].class);
+        var artifact = request.get(PARTICIPATION_BASE_URL + participation.getId() + "/build-artifact", HttpStatus.OK, byte[].class);
 
         assertThat(participation.getInitializationState()).as("Participation should be initialized").isEqualTo(InitializationState.INITIALIZED);
         assertThat(artifact).as("No build artifact available for this plan").isEmpty();
@@ -2382,8 +2382,8 @@ public class ProgrammingExerciseTestService {
         createProgrammingParticipationWithSubmissionAndResult(examExercise, "student3", 100D, ZonedDateTime.now().minusDays(2L), false);
         createProgrammingParticipationWithSubmissionAndResult(examExercise, "student4", 80D, ZonedDateTime.now().minusDays(6L), false);
 
-        automaticProgrammingExerciseCleanupService.cleanupGitRepositoriesOnArtemisServer();
-        // Note: at the moment, we cannot easily assert something here, it might be possible to verify mocks on gitService, in case we could define it as SpyBean
+        automaticProgrammingExerciseCleanupService.cleanupGitWorkingCopiesOnArtemisServer();
+        // Note: at the moment, we cannot easily assert something here, it might be possible to verify mocks on gitService, in case we could define it as MockitoSpyBean
     }
 
     private void validateProgrammingExercise(ProgrammingExercise generatedExercise) {
@@ -2630,12 +2630,12 @@ public class ProgrammingExerciseTestService {
         exercise.setBuildConfig(programmingExerciseBuildConfigRepository.save(exercise.getBuildConfig()));
         exercise = programmingExerciseRepository.save(exercise);
         var statistics = request.get("/api/programming-exercises/" + exercise.getId() + "/build-log-statistics", HttpStatus.OK, BuildLogStatisticsDTO.class);
-        assertThat(statistics.buildCount()).isZero();
-        assertThat(statistics.agentSetupDuration()).isNull();
-        assertThat(statistics.testDuration()).isNull();
-        assertThat(statistics.scaDuration()).isNull();
-        assertThat(statistics.totalJobDuration()).isNull();
-        assertThat(statistics.dependenciesDownloadedCount()).isNull();
+        assertThat(statistics.buildCount()).isEqualTo(0);
+        assertThat(statistics.agentSetupDuration()).isEqualTo(0);
+        assertThat(statistics.testDuration()).isEqualTo(0);
+        assertThat(statistics.scaDuration()).isEqualTo(0);
+        assertThat(statistics.totalJobDuration()).isEqualTo(0);
+        assertThat(statistics.dependenciesDownloadedCount()).isEqualTo(0);
     }
 
     // TEST

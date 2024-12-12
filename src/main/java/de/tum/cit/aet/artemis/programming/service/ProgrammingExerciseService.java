@@ -1,5 +1,7 @@
 package de.tum.cit.aet.artemis.programming.service;
 
+import static de.tum.cit.aet.artemis.core.config.Constants.ALLOWED_CHECKOUT_DIRECTORY;
+import static de.tum.cit.aet.artemis.core.config.Constants.MAX_ENVIRONMENT_VARIABLES_DOCKER_FLAG_LENGTH;
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 import static de.tum.cit.aet.artemis.programming.domain.build.BuildPlanType.SOLUTION;
 import static de.tum.cit.aet.artemis.programming.domain.build.BuildPlanType.TEMPLATE;
@@ -17,6 +19,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
@@ -43,7 +46,9 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import de.tum.cit.aet.artemis.assessment.repository.ResultRepository;
-import de.tum.cit.aet.artemis.atlas.service.competency.CompetencyProgressService;
+import de.tum.cit.aet.artemis.atlas.api.CompetencyProgressApi;
+import de.tum.cit.aet.artemis.buildagent.dto.DockerFlagsDTO;
+import de.tum.cit.aet.artemis.buildagent.dto.DockerRunConfig;
 import de.tum.cit.aet.artemis.communication.service.conversation.ChannelService;
 import de.tum.cit.aet.artemis.communication.service.notifications.GroupNotificationScheduleService;
 import de.tum.cit.aet.artemis.core.domain.Course;
@@ -181,7 +186,9 @@ public class ProgrammingExerciseService {
 
     private final ExerciseService exerciseService;
 
-    private final CompetencyProgressService competencyProgressService;
+    private final CompetencyProgressApi competencyProgressApi;
+
+    private final ProgrammingExerciseBuildConfigService programmingExerciseBuildConfigService;
 
     public ProgrammingExerciseService(ProgrammingExerciseRepository programmingExerciseRepository, GitService gitService, Optional<VersionControlService> versionControlService,
             Optional<ContinuousIntegrationService> continuousIntegrationService, Optional<ContinuousIntegrationTriggerService> continuousIntegrationTriggerService,
@@ -197,7 +204,8 @@ public class ProgrammingExerciseService {
             ProgrammingSubmissionService programmingSubmissionService, Optional<IrisSettingsService> irisSettingsService, Optional<AeolusTemplateService> aeolusTemplateService,
             Optional<BuildScriptGenerationService> buildScriptGenerationService,
             ProgrammingExerciseStudentParticipationRepository programmingExerciseStudentParticipationRepository, ProfileService profileService, ExerciseService exerciseService,
-            ProgrammingExerciseBuildConfigRepository programmingExerciseBuildConfigRepository, CompetencyProgressService competencyProgressService) {
+            ProgrammingExerciseBuildConfigRepository programmingExerciseBuildConfigRepository, CompetencyProgressApi competencyProgressApi,
+            ProgrammingExerciseBuildConfigService programmingExerciseBuildConfigService) {
         this.programmingExerciseRepository = programmingExerciseRepository;
         this.gitService = gitService;
         this.versionControlService = versionControlService;
@@ -230,7 +238,8 @@ public class ProgrammingExerciseService {
         this.profileService = profileService;
         this.exerciseService = exerciseService;
         this.programmingExerciseBuildConfigRepository = programmingExerciseBuildConfigRepository;
-        this.competencyProgressService = competencyProgressService;
+        this.competencyProgressApi = competencyProgressApi;
+        this.programmingExerciseBuildConfigService = programmingExerciseBuildConfigService;
     }
 
     /**
@@ -271,7 +280,9 @@ public class ProgrammingExerciseService {
         // We save once in order to generate an id for the programming exercise
         var savedBuildConfig = programmingExerciseBuildConfigRepository.saveAndFlush(programmingExercise.getBuildConfig());
         programmingExercise.setBuildConfig(savedBuildConfig);
-        var savedProgrammingExercise = programmingExerciseRepository.saveForCreation(programmingExercise);
+
+        var savedProgrammingExercise = exerciseService.saveWithCompetencyLinks(programmingExercise, programmingExerciseRepository::saveForCreation);
+
         savedProgrammingExercise.getBuildConfig().setProgrammingExercise(savedProgrammingExercise);
         programmingExerciseBuildConfigRepository.save(savedProgrammingExercise.getBuildConfig());
         // Step 1: Setting constant facts for a programming exercise
@@ -335,7 +346,12 @@ public class ProgrammingExerciseService {
         // Step 12c: Check notifications for new exercise
         groupNotificationScheduleService.checkNotificationsForNewExerciseAsync(savedProgrammingExercise);
         // Step 12d: Update student competency progress
-        competencyProgressService.updateProgressByLearningObjectAsync(savedProgrammingExercise);
+        competencyProgressApi.updateProgressByLearningObjectAsync(savedProgrammingExercise);
+
+        // Step 13: Set Iris settings
+        if (irisSettingsService.isPresent()) {
+            irisSettingsService.get().setEnabledForExerciseByCategories(savedProgrammingExercise, new HashSet<>());
+        }
 
         return programmingExerciseRepository.saveForCreation(savedProgrammingExercise);
     }
@@ -362,6 +378,8 @@ public class ProgrammingExerciseService {
         programmingExercise.validateGeneralSettings();
         programmingExercise.validateProgrammingSettings();
         programmingExercise.validateSettingsForFeedbackRequest();
+        validateCustomCheckoutPaths(programmingExercise);
+        validateDockerFlags(programmingExercise);
         auxiliaryRepositoryService.validateAndAddAuxiliaryRepositoriesOfProgrammingExercise(programmingExercise, programmingExercise.getAuxiliaryRepositories());
         submissionPolicyService.validateSubmissionPolicyCreation(programmingExercise);
 
@@ -427,6 +445,27 @@ public class ProgrammingExerciseService {
         }
     }
 
+    private void validateCustomCheckoutPaths(ProgrammingExercise programmingExercise) {
+        var buildConfig = programmingExercise.getBuildConfig();
+
+        boolean assignmentCheckoutPathIsValid = isValidCheckoutPath(buildConfig.getAssignmentCheckoutPath());
+        boolean solutionCheckoutPathIsValid = isValidCheckoutPath(buildConfig.getSolutionCheckoutPath());
+        boolean testCheckoutPathIsValid = isValidCheckoutPath(buildConfig.getTestCheckoutPath());
+
+        if (!assignmentCheckoutPathIsValid || !solutionCheckoutPathIsValid || !testCheckoutPathIsValid) {
+            throw new BadRequestAlertException("The custom checkout paths are invalid", "Exercise", "checkoutDirectoriesInvalid");
+        }
+    }
+
+    private boolean isValidCheckoutPath(String checkoutPath) {
+        // Checkout paths are optional for the assignment, solution, and test repositories. If not set, the default path is used.
+        if (checkoutPath == null) {
+            return true;
+        }
+        Matcher matcher = ALLOWED_CHECKOUT_DIRECTORY.matcher(checkoutPath);
+        return matcher.matches();
+    }
+
     /**
      * Validates static code analysis settings
      *
@@ -436,6 +475,22 @@ public class ProgrammingExerciseService {
         ProgrammingLanguageFeature programmingLanguageFeature = programmingLanguageFeatureService.orElseThrow()
                 .getProgrammingLanguageFeatures(programmingExercise.getProgrammingLanguage());
         programmingExercise.validateStaticCodeAnalysisSettings(programmingLanguageFeature);
+    }
+
+    /**
+     * Validates the settings of an updated programming exercise. Checks if the custom checkout paths have changed.
+     *
+     * @param originalProgrammingExercise The original programming exercise
+     * @param updatedProgrammingExercise  The updated programming exercise
+     */
+    public void validateCheckoutDirectoriesUnchanged(ProgrammingExercise originalProgrammingExercise, ProgrammingExercise updatedProgrammingExercise) {
+        var originalBuildConfig = originalProgrammingExercise.getBuildConfig();
+        var updatedBuildConfig = updatedProgrammingExercise.getBuildConfig();
+        if (!Objects.equals(originalBuildConfig.getAssignmentCheckoutPath(), updatedBuildConfig.getAssignmentCheckoutPath())
+                || !Objects.equals(originalBuildConfig.getSolutionCheckoutPath(), updatedBuildConfig.getSolutionCheckoutPath())
+                || !Objects.equals(originalBuildConfig.getTestCheckoutPath(), updatedBuildConfig.getTestCheckoutPath())) {
+            throw new BadRequestAlertException("The custom checkout paths cannot be changed!", "programmingExercise", "checkoutDirectoriesChanged");
+        }
     }
 
     /**
@@ -565,7 +620,9 @@ public class ProgrammingExerciseService {
         String problemStatementWithTestNames = updatedProgrammingExercise.getProblemStatement();
         programmingExerciseTaskService.replaceTestNamesWithIds(updatedProgrammingExercise);
         programmingExerciseBuildConfigRepository.save(updatedProgrammingExercise.getBuildConfig());
-        ProgrammingExercise savedProgrammingExercise = programmingExerciseRepository.save(updatedProgrammingExercise);
+
+        ProgrammingExercise savedProgrammingExercise = exerciseService.saveWithCompetencyLinks(updatedProgrammingExercise, programmingExerciseRepository::save);
+
         // The returned value should use test case names since it gets send back to the client
         savedProgrammingExercise.setProblemStatement(problemStatementWithTestNames);
 
@@ -578,7 +635,10 @@ public class ProgrammingExerciseService {
 
         exerciseService.notifyAboutExerciseChanges(programmingExerciseBeforeUpdate, updatedProgrammingExercise, notificationText);
 
-        competencyProgressService.updateProgressForUpdatedLearningObjectAsync(programmingExerciseBeforeUpdate, Optional.of(updatedProgrammingExercise));
+        competencyProgressApi.updateProgressForUpdatedLearningObjectAsync(programmingExerciseBeforeUpdate, Optional.of(updatedProgrammingExercise));
+
+        irisSettingsService
+                .ifPresent(settingsService -> settingsService.setEnabledForExerciseByCategories(savedProgrammingExercise, programmingExerciseBeforeUpdate.getCategories()));
 
         return savedProgrammingExercise;
     }
@@ -965,7 +1025,7 @@ public class ProgrammingExerciseService {
      * @param exerciseId of the exercise
      */
     public void deleteTasksWithSolutionEntries(Long exerciseId) {
-        Set<ProgrammingExerciseTask> tasks = programmingExerciseTaskRepository.findByExerciseIdWithTestCaseAndSolutionEntriesElseThrow(exerciseId);
+        List<ProgrammingExerciseTask> tasks = programmingExerciseTaskRepository.findByExerciseIdWithTestCaseAndSolutionEntriesElseThrow(exerciseId);
         Set<ProgrammingExerciseSolutionEntry> solutionEntries = tasks.stream().map(ProgrammingExerciseTask::getTestCases).flatMap(Collection::stream)
                 .map(ProgrammingExerciseTestCase::getSolutionEntries).flatMap(Collection::stream).collect(Collectors.toSet());
         programmingExerciseTaskRepository.deleteAll(tasks);
@@ -1008,5 +1068,52 @@ public class ProgrammingExerciseService {
 
         programmingExerciseTaskService.replaceTestIdsWithNames(programmingExercise);
         return programmingExercise;
+    }
+
+    /**
+     * Load a programming exercise, only with eager auxiliary repositories
+     *
+     * @param exerciseId the ID of the programming exercise to load
+     * @return the loaded programming exercise entity
+     */
+    public ProgrammingExercise loadProgrammingExerciseWithAuxiliaryRepositories(long exerciseId) {
+        final Set<ProgrammingExerciseRepository.ProgrammingExerciseFetchOptions> fetchOptions = Set.of(AuxiliaryRepositories);
+        return programmingExerciseRepository.findByIdWithDynamicFetchElseThrow(exerciseId, fetchOptions);
+    }
+
+    /**
+     * Validates the network access feature for the given programming language.
+     * Currently, SWIFT and HASKELL do not support disabling the network access feature.
+     *
+     * @param programmingExercise the programming exercise to validate
+     */
+    public void validateDockerFlags(ProgrammingExercise programmingExercise) {
+        ProgrammingExerciseBuildConfig buildConfig = programmingExercise.getBuildConfig();
+        DockerFlagsDTO dockerFlagsDTO;
+        try {
+            dockerFlagsDTO = programmingExerciseBuildConfigService.parseDockerFlags(buildConfig);
+        }
+        catch (IllegalArgumentException e) {
+            throw new BadRequestAlertException("Error while parsing the docker flags", "Exercise", "dockerFlagsParsingError");
+        }
+
+        if (dockerFlagsDTO == null) {
+            return;
+        }
+
+        if (dockerFlagsDTO.env() != null) {
+            for (var entry : dockerFlagsDTO.env().entrySet()) {
+                if (entry.getKey().length() > MAX_ENVIRONMENT_VARIABLES_DOCKER_FLAG_LENGTH || entry.getValue().length() > MAX_ENVIRONMENT_VARIABLES_DOCKER_FLAG_LENGTH) {
+                    throw new BadRequestAlertException("The environment variables are too long. Max " + MAX_ENVIRONMENT_VARIABLES_DOCKER_FLAG_LENGTH + " chars", "Exercise",
+                            "envVariablesTooLong");
+                }
+            }
+        }
+
+        DockerRunConfig dockerRunConfig = programmingExerciseBuildConfigService.getDockerRunConfigFromParsedFlags(dockerFlagsDTO);
+
+        if (List.of(ProgrammingLanguage.SWIFT, ProgrammingLanguage.HASKELL).contains(programmingExercise.getProgrammingLanguage()) && dockerRunConfig.isNetworkDisabled()) {
+            throw new BadRequestAlertException("This programming language does not support disabling the network access feature", "Exercise", "networkAccessNotSupported");
+        }
     }
 }

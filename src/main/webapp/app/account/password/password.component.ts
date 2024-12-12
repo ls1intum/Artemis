@@ -1,17 +1,25 @@
-import { Component, OnInit } from '@angular/core';
-
+import { Component, OnInit, inject } from '@angular/core';
 import { User } from 'app/core/user/user.model';
 import { AccountService } from 'app/core/auth/account.service';
+import { ArtemisSharedModule } from 'app/shared/shared.module';
 import { PasswordService } from './password.service';
-import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
-import { FormBuilder, FormGroup, Validators } from '@angular/forms';
+import { FormBuilder, FormGroup, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
 import { PASSWORD_MAX_LENGTH, PASSWORD_MIN_LENGTH } from 'app/app.constants';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { PasswordStrengthBarComponent } from './password-strength-bar.component';
+import { ArtemisSharedCommonModule } from 'app/shared/shared-common.module';
 
 @Component({
     selector: 'jhi-password',
     templateUrl: './password.component.html',
+    standalone: true,
+    imports: [TranslateDirective, FormsModule, ReactiveFormsModule, PasswordStrengthBarComponent, ArtemisSharedCommonModule, ArtemisSharedModule],
 })
 export class PasswordComponent implements OnInit {
+    private passwordService = inject(PasswordService);
+    private accountService = inject(AccountService);
+    private fb = inject(FormBuilder);
+
     readonly PASSWORD_MIN_LENGTH = PASSWORD_MIN_LENGTH;
     readonly PASSWORD_MAX_LENGTH = PASSWORD_MAX_LENGTH;
 
@@ -21,13 +29,6 @@ export class PasswordComponent implements OnInit {
     user?: User;
     passwordForm: FormGroup;
     passwordResetEnabled = false;
-
-    constructor(
-        private passwordService: PasswordService,
-        private accountService: AccountService,
-        private profileService: ProfileService,
-        private fb: FormBuilder,
-    ) {}
 
     ngOnInit() {
         this.accountService.identity().then((user) => {

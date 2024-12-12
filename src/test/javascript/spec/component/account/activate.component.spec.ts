@@ -16,8 +16,7 @@ describe('ActivateComponent', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule],
-            declarations: [ActivateComponent],
+            imports: [ArtemisTestModule, ActivateComponent],
             providers: [
                 { provide: ActivatedRoute, useValue: new MockActivatedRoute({ key: 'ABC123' }) },
                 { provide: LocalStorageService, useClass: MockSyncStorage },

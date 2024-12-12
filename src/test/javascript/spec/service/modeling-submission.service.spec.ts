@@ -1,10 +1,11 @@
-import { HttpClientTestingModule, HttpTestingController } from '@angular/common/http/testing';
+import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { TestBed, fakeAsync, tick } from '@angular/core/testing';
 import { ModelingSubmission } from 'app/entities/modeling-submission.model';
 import { ModelingSubmissionService } from 'app/exercises/modeling/participate/modeling-submission.service';
 import { take } from 'rxjs/operators';
 import { AccountService } from 'app/core/auth/account.service';
 import { MockAccountService } from '../helpers/mocks/service/mock-account.service';
+import { provideHttpClient } from '@angular/common/http';
 
 describe('ModelingSubmission Service', () => {
     let service: ModelingSubmissionService;
@@ -13,8 +14,8 @@ describe('ModelingSubmission Service', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [HttpClientTestingModule],
-            providers: [{ provide: AccountService, useClass: MockAccountService }],
+            imports: [],
+            providers: [provideHttpClient(), provideHttpClientTesting(), { provide: AccountService, useClass: MockAccountService }],
         });
         service = TestBed.inject(ModelingSubmissionService);
         httpMock = TestBed.inject(HttpTestingController);
@@ -113,6 +114,39 @@ describe('ModelingSubmission Service', () => {
             .pipe(take(1))
             .subscribe((resp) => expect(resp).toMatchObject({ ...elemDefault }));
         const req = httpMock.expectOne({ method: 'GET', url: `api/participations/${participationId}/latest-modeling-submission` });
+        req.flush(returnedFromService);
+        tick();
+    }));
+
+    it('should get submissions with results for participation', fakeAsync(() => {
+        const { participationId, returnedFromService } = getDefaultValues();
+        const submissions = [returnedFromService];
+
+        service
+            .getSubmissionsWithResultsForParticipation(participationId)
+            .pipe(take(1))
+            .subscribe((resp) => {
+                expect(resp).toEqual([returnedFromService]);
+            });
+
+        const req = httpMock.expectOne({
+            method: 'GET',
+            url: `api/participations/${participationId}/submissions-with-results`,
+        });
+        req.flush(submissions);
+        tick();
+    }));
+
+    it('should get submission without lock', fakeAsync(() => {
+        const { returnedFromService } = getDefaultValues();
+
+        service
+            .getSubmissionWithoutLock(123)
+            .pipe(take(1))
+            .subscribe((resp) => expect(resp).toEqual({ ...elemDefault }));
+
+        const req = httpMock.expectOne((request) => request.method === 'GET' && request.urlWithParams === 'api/modeling-submissions/123?withoutResults=true');
+        expect(req.request.params.get('withoutResults')).toBe('true');
         req.flush(returnedFromService);
         tick();
     }));

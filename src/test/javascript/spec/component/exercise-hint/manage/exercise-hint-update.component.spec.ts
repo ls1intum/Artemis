@@ -162,7 +162,7 @@ describe('ExerciseHint Management Update Component', () => {
 
             // Mock getCombinedProgrammingExerciseSettings
             const irisSettingsService = TestBed.inject(IrisSettingsService);
-            const getCombinedProgrammingExerciseSettingsSpy = jest.spyOn(irisSettingsService, 'getCombinedProgrammingExerciseSettings').mockReturnValue(of(fakeSettings));
+            const getCombinedProgrammingExerciseSettingsSpy = jest.spyOn(irisSettingsService, 'getCombinedExerciseSettings').mockReturnValue(of(fakeSettings));
 
             // Run ngOnInit
             comp.ngOnInit();

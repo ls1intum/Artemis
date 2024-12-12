@@ -1,19 +1,25 @@
 import { ActivateService } from 'app/account/activate/activate.service';
 import { MockHttpService } from '../helpers/mocks/service/mock-http.service';
-import { HttpParams } from '@angular/common/http';
+import { HttpClient, HttpParams } from '@angular/common/http';
+import { TestBed } from '@angular/core/testing';
 
 describe('ActivateService', () => {
     let activateService: ActivateService;
-    let httpService: MockHttpService;
+    let httpService: HttpClient;
     let getStub: jest.SpyInstance;
 
     const getURL = 'api/public/activate';
 
     beforeEach(() => {
-        httpService = new MockHttpService();
-        // @ts-ignore
-        activateService = new ActivateService(httpService);
-        getStub = jest.spyOn(httpService, 'get');
+        TestBed.configureTestingModule({
+            providers: [{ provide: HttpClient, useClass: MockHttpService }],
+        })
+            .compileComponents()
+            .then(() => {
+                httpService = TestBed.inject(HttpClient);
+                activateService = TestBed.inject(ActivateService);
+                getStub = jest.spyOn(httpService, 'get');
+            });
     });
 
     afterEach(() => {

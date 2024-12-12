@@ -1,5 +1,5 @@
 import { Posting } from 'app/entities/metis/posting.model';
-import { Directive, EventEmitter, Input, OnInit, Output } from '@angular/core';
+import { Directive, EventEmitter, Input, OnInit, Output, inject, input } from '@angular/core';
 import dayjs from 'dayjs/esm';
 import { MetisService } from 'app/shared/metis/metis.service';
 import { UserRole } from 'app/shared/metis/metis.util';
@@ -16,6 +16,9 @@ export abstract class PostingHeaderDirective<T extends Posting> implements OnIni
 
     @Input() hasChannelModerationRights = false;
     @Output() isModalOpen = new EventEmitter<void>();
+
+    isDeleted = input<boolean>(false);
+
     isAtLeastTutorInCourse: boolean;
     isAuthorOfPosting: boolean;
     postingIsOfToday: boolean;
@@ -24,14 +27,10 @@ export abstract class PostingHeaderDirective<T extends Posting> implements OnIni
     userAuthority: string;
     userRoleBadge: string;
     userAuthorityTooltip: string;
-    userProfilePictureBackgroundColor: string;
-    userProfilePictureInitials: string;
     currentUser?: User;
 
-    protected constructor(
-        protected metisService: MetisService,
-        protected accountService: AccountService,
-    ) {}
+    protected metisService: MetisService = inject(MetisService);
+    protected accountService: AccountService = inject(AccountService);
 
     /**
      * on initialization: determines if user is at least tutor in the course and if user is author of posting by invoking the metis service,
@@ -79,8 +78,6 @@ export abstract class PostingHeaderDirective<T extends Posting> implements OnIni
     setUserAuthorityIconAndTooltip(): void {
         const toolTipTranslationPath = 'artemisApp.metis.userAuthorityTooltips.';
         const roleBadgeTranslationPath = 'artemisApp.metis.userRoles.';
-        this.userProfilePictureInitials = this.posting.author?.name === undefined ? 'NA' : this.getInitials(this.posting.author?.name);
-        this.userProfilePictureBackgroundColor = this.getBackgroundColor(this.posting.author?.id?.toString());
         this.userAuthorityIcon = faUser;
         if (this.posting.authorRole === UserRole.USER) {
             this.userAuthority = 'student';
@@ -96,66 +93,10 @@ export abstract class PostingHeaderDirective<T extends Posting> implements OnIni
             this.userAuthority = 'tutor';
             this.userRoleBadge = roleBadgeTranslationPath + this.userAuthority;
             this.userAuthorityTooltip = toolTipTranslationPath + this.userAuthority;
-        }
-    }
-
-    /**
-     * Returns a pseudo-random numeric value for a given string using a simple hash function.
-     * @param {string} str - The string used for the hash function.
-     */
-    private deterministicRandomValueFromString(str: string): number {
-        let seed = 0;
-        for (let i = 0; i < str.length; i++) {
-            seed = str.charCodeAt(i) + ((seed << 5) - seed);
-        }
-        const m = 0x80000000;
-        const a = 1103515245;
-        const c = 42718;
-
-        seed = (a * seed + c) % m;
-
-        return seed / (m - 1);
-    }
-
-    /**
-     * Returns a background color hue for a given string.
-     * @param {string | undefined} seed - The string used to determine the random value.
-     */
-    private getBackgroundColor(seed: string | undefined): string {
-        if (seed === undefined) {
-            seed = Math.random().toString();
-        }
-        const hue = this.deterministicRandomValueFromString(seed) * 360;
-        return `hsl(${hue}, 50%, 50%)`; // Return an HSL color string
-    }
-
-    /**
-     * Returns 2 capitalized initials of a given string.
-     * If it has multiple names, it takes the first and last (Albert Berta Muster -> AM)
-     * If it has one name, it'll return a deterministic random other string (Albert -> AB)
-     * If it consists of a single letter it will return the single letter.
-     * @param {string} username - The string used to generate the initials.
-     */
-    private getInitials(username: string): string {
-        const parts = username.trim().split(/\s+/);
-
-        let initials = '';
-
-        if (parts.length > 1) {
-            // Takes first and last word in string and returns their initials.
-            initials = parts[0][0] + parts[parts.length - 1][0];
         } else {
-            // If only one single word, it will take the first letter and a random second.
-            initials = parts[0][0];
-            const remainder = parts[0].slice(1);
-            const secondInitial = remainder.match(/[a-zA-Z0-9]/);
-            if (secondInitial) {
-                initials += secondInitial[Math.floor(this.deterministicRandomValueFromString(username) * secondInitial.length)];
-            }
+            this.userAuthority = 'student';
+            this.userRoleBadge = 'artemisApp.metis.userRoles.deleted';
+            this.userAuthorityTooltip = 'artemisApp.metis.userAuthorityTooltips.deleted';
         }
-
-        return initials.toUpperCase();
     }
-
-    abstract deletePosting(): void;
 }

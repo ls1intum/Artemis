@@ -4,6 +4,7 @@ import static org.gitlab4j.api.models.AccessLevel.DEVELOPER;
 import static org.gitlab4j.api.models.AccessLevel.GUEST;
 import static org.gitlab4j.api.models.AccessLevel.MAINTAINER;
 import static org.gitlab4j.api.models.AccessLevel.REPORTER;
+import static org.mockito.ArgumentMatchers.anyList;
 import static org.mockito.Mockito.any;
 import static org.mockito.Mockito.anyBoolean;
 import static org.mockito.Mockito.anyLong;
@@ -60,6 +61,7 @@ import org.gitlab4j.api.models.Pipeline;
 import org.gitlab4j.api.models.PipelineFilter;
 import org.gitlab4j.api.models.PipelineStatus;
 import org.gitlab4j.api.models.Project;
+import org.gitlab4j.api.models.ProjectAccessToken;
 import org.gitlab4j.api.models.ProjectHook;
 import org.gitlab4j.api.models.ProtectedBranch;
 import org.gitlab4j.api.models.PushData;
@@ -106,6 +108,8 @@ import de.tum.cit.aet.artemis.programming.util.ProgrammingExerciseUtilService;
 
 @Component
 @Profile("gitlab")
+// Gitlab support will be removed in 8.0.0. Please migrate to LocalVC using e.g. the PR https://github.com/ls1intum/Artemis/pull/8972
+@Deprecated(since = "7.5.0", forRemoval = true)
 public class GitlabRequestMockProvider {
 
     private static final Logger log = LoggerFactory.getLogger(GitlabRequestMockProvider.class);
@@ -127,6 +131,7 @@ public class GitlabRequestMockProvider {
 
     private MockRestServiceServer mockServerShortTimeout;
 
+    // NOTE: we currently cannot convert this into @MockitoSpyBean because then @InjectMocks doesn't work
     @SpyBean
     @InjectMocks
     private GitLabApi gitLabApi;
@@ -152,6 +157,7 @@ public class GitlabRequestMockProvider {
     @Mock
     private PipelineApi pipelineApi;
 
+    // NOTE: we currently cannot convert this into @MockitoSpyBean because then @InjectMocks (see above) doesn't work
     @SpyBean
     private GitLabUserManagementService gitLabUserManagementService;
 
@@ -916,6 +922,15 @@ public class GitlabRequestMockProvider {
         else {
             Project project = new Project();
             doReturn(project).when(projectApi).updateProject(any());
+        }
+    }
+
+    public void mockCreateProjectAccessToken(boolean shouldFail) throws GitLabApiException {
+        if (shouldFail) {
+            doThrow(new GitLabApiException("Internal Error", 500)).when(projectApi).createProjectAccessToken(anyString(), anyString(), anyList(), any(), anyLong());
+        }
+        else {
+            doReturn(new ProjectAccessToken()).when(projectApi).createProjectAccessToken(anyString(), anyString(), anyList(), any(), anyLong());
         }
     }
 

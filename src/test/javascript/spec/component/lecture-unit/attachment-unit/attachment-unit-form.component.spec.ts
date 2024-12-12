@@ -1,15 +1,15 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { TranslateService } from '@ngx-translate/core';
 import { AttachmentUnitFormComponent, AttachmentUnitFormData } from 'app/lecture/lecture-unit/lecture-unit-management/attachment-unit-form/attachment-unit-form.component';
 import { FormDateTimePickerComponent } from 'app/shared/date-time-picker/date-time-picker.component';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import dayjs from 'dayjs/esm';
-import { MockComponent, MockDirective, MockPipe, MockProviders } from 'ng-mocks';
+import { MockComponent, MockDirective, MockModule, MockPipe } from 'ng-mocks';
 import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { CompetencySelectionComponent } from 'app/shared/competency-selection/competency-selection.component';
 import { MAX_FILE_SIZE } from 'app/shared/constants/input.constants';
+import { OwlDateTimeModule, OwlNativeDateTimeModule } from '@danielmoncada/angular-datetime-picker';
 
 describe('AttachmentUnitFormComponent', () => {
     let attachmentUnitFormComponentFixture: ComponentFixture<AttachmentUnitFormComponent>;
@@ -17,15 +17,14 @@ describe('AttachmentUnitFormComponent', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ReactiveFormsModule, FormsModule, MockDirective(NgbTooltip)],
+            imports: [ReactiveFormsModule, FormsModule, MockDirective(NgbTooltip), MockModule(OwlDateTimeModule), MockModule(OwlNativeDateTimeModule)],
             declarations: [
                 AttachmentUnitFormComponent,
+                FormDateTimePickerComponent,
                 MockPipe(ArtemisTranslatePipe),
-                MockComponent(FormDateTimePickerComponent),
                 MockComponent(FaIconComponent),
                 MockComponent(CompetencySelectionComponent),
             ],
-            providers: [MockProviders(TranslateService)],
             schemas: [],
         })
             .compileComponents()
@@ -47,7 +46,7 @@ describe('AttachmentUnitFormComponent', () => {
     it('should correctly set form values in edit mode', () => {
         const fakeFile = new File([''], 'Test-File.pdf', { type: 'application/pdf' });
 
-        attachmentUnitFormComponent.isEditMode = true;
+        attachmentUnitFormComponentFixture.componentRef.setInput('isEditMode', true);
         const formData: AttachmentUnitFormData = {
             formProperties: {
                 name: 'test',
@@ -63,7 +62,7 @@ describe('AttachmentUnitFormComponent', () => {
         };
         attachmentUnitFormComponentFixture.detectChanges();
 
-        attachmentUnitFormComponent.formData = formData;
+        attachmentUnitFormComponentFixture.componentRef.setInput('formData', formData);
         attachmentUnitFormComponent.ngOnChanges();
 
         expect(attachmentUnitFormComponent.nameControl?.value).toEqual(formData.formProperties.name);
@@ -71,7 +70,7 @@ describe('AttachmentUnitFormComponent', () => {
         expect(attachmentUnitFormComponent.descriptionControl?.value).toEqual(formData.formProperties.description);
         expect(attachmentUnitFormComponent.versionControl?.value).toEqual(formData.formProperties.version);
         expect(attachmentUnitFormComponent.updateNotificationTextControl?.value).toEqual(formData.formProperties.updateNotificationText);
-        expect(attachmentUnitFormComponent.fileName).toEqual(formData.fileProperties.fileName);
+        expect(attachmentUnitFormComponent.fileName()).toEqual(formData.fileProperties.fileName);
         expect(attachmentUnitFormComponent.file).toEqual(formData.fileProperties.file);
     });
     it('should submit valid form', () => {
@@ -90,7 +89,7 @@ describe('AttachmentUnitFormComponent', () => {
         const fakeFile = new File([''], 'Test-File.pdf', { type: 'application/pdf' });
         attachmentUnitFormComponent.file = fakeFile;
         const exampleFileName = 'lorem Ipsum';
-        attachmentUnitFormComponent.fileName = exampleFileName;
+        attachmentUnitFormComponent.fileName.set(exampleFileName);
 
         attachmentUnitFormComponentFixture.detectChanges();
         expect(attachmentUnitFormComponent.form.valid).toBeTrue();
@@ -107,7 +106,7 @@ describe('AttachmentUnitFormComponent', () => {
                 name: exampleName,
                 description: exampleDescription,
                 releaseDate: exampleReleaseDate,
-                competencies: null,
+                competencyLinks: null,
                 version: exampleVersion,
                 updateNotificationText: exampleUpdateNotificationText,
             },
@@ -132,7 +131,7 @@ describe('AttachmentUnitFormComponent', () => {
         attachmentUnitFormComponent.updateNotificationTextControl!.setValue(exampleUpdateNotificationText);
         const fakeFile = new File([''], 'Test-File.pdf', { type: 'application/pdf' });
         attachmentUnitFormComponent.file = fakeFile;
-        attachmentUnitFormComponent.fileName = 'lorem Ipsum';
+        attachmentUnitFormComponent.fileName.set('lorem Ipsum');
 
         expect(attachmentUnitFormComponent.form.invalid).toBeTrue();
         const submitFormSpy = jest.spyOn(attachmentUnitFormComponent, 'submitForm');
@@ -166,7 +165,7 @@ describe('AttachmentUnitFormComponent', () => {
         attachmentUnitFormComponentFixture.detectChanges();
 
         const submitButton = attachmentUnitFormComponentFixture.debugElement.nativeElement.querySelector('#submitButton');
-        expect(attachmentUnitFormComponent.isFileTooBig).toBeTrue();
+        expect(attachmentUnitFormComponent.isFileTooBig()).toBeTrue();
         expect(submitButton.disabled).toBeTrue();
     });
 });

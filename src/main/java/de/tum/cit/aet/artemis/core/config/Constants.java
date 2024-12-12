@@ -39,6 +39,8 @@ public final class Constants {
 
     public static final int QUIZ_GRACE_PERIOD_IN_SECONDS = 5;
 
+    public static final int MAX_ENVIRONMENT_VARIABLES_DOCKER_FLAG_LENGTH = 1000;
+
     /**
      * This constant determines how many seconds after the exercise due dates submissions will still be considered rated.
      * Submissions after the grace period exceeded will be flagged as illegal.
@@ -93,6 +95,8 @@ public final class Constants {
     // Used to cut off CI specific path segments when receiving static code analysis reports
     public static final String ASSIGNMENT_DIRECTORY = "/" + ASSIGNMENT_REPO_NAME + "/";
 
+    public static final String TEST_WORKING_DIRECTORY = "test";
+
     // Used as a value for <sourceDirectory> for the Java template pom.xml
     public static final String STUDENT_WORKING_DIRECTORY = ASSIGNMENT_DIRECTORY + "src";
 
@@ -105,6 +109,9 @@ public final class Constants {
     // TODO: the following numbers should be configurable in the yml files
 
     public static final long MAX_NUMBER_OF_LOCKED_SUBMISSIONS_PER_TUTOR = 10;
+
+    // Note: The values in input.constants.ts (client) need to be the same
+    public static final long MAX_FILE_SIZE_COMMUNICATION = 5 * 1024 * 1024; // 5 MB
 
     // Note: The values in input.constants.ts (client) need to be the same
     public static final long MAX_SUBMISSION_FILE_SIZE = 8 * 1024 * 1024; // 8 MB
@@ -184,6 +191,8 @@ public final class Constants {
     public static final String DELETE_COURSE = "DELETE_COURSE";
 
     public static final String DELETE_EXAM = "DELETE_EXAM";
+
+    public static final String UPDATE_EXAM = "UPDATE_EXAM";
 
     public static final String ADD_USER_TO_EXAM = "ADD_USER_TO_EXAM";
 
@@ -269,6 +278,12 @@ public final class Constants {
     public static final String VERSION_CONTROL_NAME = "versionControlName";
 
     public static final String CONTINUOUS_INTEGRATION_NAME = "continuousIntegrationName";
+
+    public static final String INSTRUCTOR_BUILD_TIMEOUT_MIN_OPTION = "buildTimeoutMin";
+
+    public static final String INSTRUCTOR_BUILD_TIMEOUT_MAX_OPTION = "buildTimeoutMax";
+
+    public static final String INSTRUCTOR_BUILD_TIMEOUT_DEFAULT_OPTION = "buildTimeoutDefault";
 
     public static final String USE_EXTERNAL = "useExternal";
 
@@ -366,6 +381,11 @@ public final class Constants {
     public static final int PUSH_NOTIFICATION_VERSION = 1;
 
     /**
+     * The value of the version field we send with each push notification to the native clients (Android & iOS).
+     */
+    public static final int PUSH_NOTIFICATION_MINOR_VERSION = 2;
+
+    /**
      * The directory in the docker container in which the build script is executed
      */
     public static final String LOCALCI_WORKING_DIRECTORY = "/var/tmp";
@@ -389,6 +409,18 @@ public final class Constants {
      * Minimum score for a result to be considered partially successful and shown in orange
      */
     public static final int MIN_SCORE_ORANGE = 40;
+
+    public static final String ASSIGNMENT_REPO_PLACEHOLDER = "${studentWorkingDirectory}";
+
+    public static final String TEST_REPO_PLACEHOLDER = "${testWorkingDirectory}";
+
+    public static final String SOLUTION_REPO_PLACEHOLDER = "${solutionWorkingDirectory}";
+
+    public static final String ASSIGNMENT_REPO_PARENT_PLACEHOLDER = "${studentParentWorkingDirectoryName}";
+
+    public static final String ASSIGNMENT_REPO_PLACEHOLDER_NO_SLASH = "${studentWorkingDirectoryNoSlash}";
+
+    public static final Pattern ALLOWED_CHECKOUT_DIRECTORY = Pattern.compile("[\\w-]+(/[\\w-]+)*$");
 
     private Constants() {
     }

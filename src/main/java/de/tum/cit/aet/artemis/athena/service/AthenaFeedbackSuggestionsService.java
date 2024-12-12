@@ -17,10 +17,18 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import de.tum.cit.aet.artemis.athena.dto.ExerciseBaseDTO;
 import de.tum.cit.aet.artemis.athena.dto.ModelingFeedbackDTO;
 import de.tum.cit.aet.artemis.athena.dto.ProgrammingFeedbackDTO;
+import de.tum.cit.aet.artemis.athena.dto.ResponseMetaDTO;
 import de.tum.cit.aet.artemis.athena.dto.SubmissionBaseDTO;
 import de.tum.cit.aet.artemis.athena.dto.TextFeedbackDTO;
+import de.tum.cit.aet.artemis.core.domain.LLMRequest;
+import de.tum.cit.aet.artemis.core.domain.LLMServiceType;
+import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.exception.ConflictException;
 import de.tum.cit.aet.artemis.core.exception.NetworkingException;
+import de.tum.cit.aet.artemis.core.service.LLMTokenUsageService;
+import de.tum.cit.aet.artemis.exercise.domain.Exercise;
+import de.tum.cit.aet.artemis.exercise.domain.Submission;
+import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
 import de.tum.cit.aet.artemis.modeling.domain.ModelingExercise;
 import de.tum.cit.aet.artemis.modeling.domain.ModelingSubmission;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
@@ -48,20 +56,24 @@ public class AthenaFeedbackSuggestionsService {
 
     private final AthenaDTOConverterService athenaDTOConverterService;
 
+    private final LLMTokenUsageService llmTokenUsageService;
+
     /**
      * Create a new AthenaFeedbackSuggestionsService to receive feedback suggestions from the Athena service.
      *
      * @param athenaRestTemplate        REST template used for the communication with Athena
      * @param athenaModuleService       Athena module serviced used to determine the urls for different modules
-     * @param athenaDTOConverterService Service to convert exr
+     * @param athenaDTOConverterService Service to convert exrcises and submissions to DTOs
+     * @param llmTokenUsageService      Service to store the usage of LLM tokens
      */
     public AthenaFeedbackSuggestionsService(@Qualifier("athenaRestTemplate") RestTemplate athenaRestTemplate, AthenaModuleService athenaModuleService,
-            AthenaDTOConverterService athenaDTOConverterService) {
+            AthenaDTOConverterService athenaDTOConverterService, LLMTokenUsageService llmTokenUsageService) {
         textAthenaConnector = new AthenaConnector<>(athenaRestTemplate, ResponseDTOText.class);
         programmingAthenaConnector = new AthenaConnector<>(athenaRestTemplate, ResponseDTOProgramming.class);
         modelingAthenaConnector = new AthenaConnector<>(athenaRestTemplate, ResponseDTOModeling.class);
         this.athenaDTOConverterService = athenaDTOConverterService;
         this.athenaModuleService = athenaModuleService;
+        this.llmTokenUsageService = llmTokenUsageService;
     }
 
     @JsonInclude(JsonInclude.Include.NON_EMPTY)
@@ -69,15 +81,15 @@ public class AthenaFeedbackSuggestionsService {
     }
 
     @JsonInclude(JsonInclude.Include.NON_EMPTY)
-    private record ResponseDTOText(List<TextFeedbackDTO> data) {
+    private record ResponseDTOText(List<TextFeedbackDTO> data, ResponseMetaDTO meta) {
     }
 
     @JsonInclude(JsonInclude.Include.NON_EMPTY)
-    private record ResponseDTOProgramming(List<ProgrammingFeedbackDTO> data) {
+    private record ResponseDTOProgramming(List<ProgrammingFeedbackDTO> data, ResponseMetaDTO meta) {
     }
 
     @JsonInclude(JsonInclude.Include.NON_EMPTY)
-    private record ResponseDTOModeling(List<ModelingFeedbackDTO> data) {
+    private record ResponseDTOModeling(List<ModelingFeedbackDTO> data, ResponseMetaDTO meta) {
     }
 
     /**
@@ -100,6 +112,7 @@ public class AthenaFeedbackSuggestionsService {
         final RequestDTO request = new RequestDTO(athenaDTOConverterService.ofExercise(exercise), athenaDTOConverterService.ofSubmission(exercise.getId(), submission), isGraded);
         ResponseDTOText response = textAthenaConnector.invokeWithRetry(athenaModuleService.getAthenaModuleUrl(exercise) + "/feedback_suggestions", request, 0);
         log.info("Athena responded to '{}' feedback suggestions request: {}", isGraded ? "Graded" : "Non Graded", response.data);
+        storeTokenUsage(exercise, submission, response.meta, !isGraded);
         return response.data.stream().toList();
     }
 
@@ -117,6 +130,7 @@ public class AthenaFeedbackSuggestionsService {
         final RequestDTO request = new RequestDTO(athenaDTOConverterService.ofExercise(exercise), athenaDTOConverterService.ofSubmission(exercise.getId(), submission), isGraded);
         ResponseDTOProgramming response = programmingAthenaConnector.invokeWithRetry(athenaModuleService.getAthenaModuleUrl(exercise) + "/feedback_suggestions", request, 0);
         log.info("Athena responded to '{}' feedback suggestions request: {}", isGraded ? "Graded" : "Non Graded", response.data);
+        storeTokenUsage(exercise, submission, response.meta, !isGraded);
         return response.data.stream().toList();
     }
 
@@ -139,6 +153,36 @@ public class AthenaFeedbackSuggestionsService {
         final RequestDTO request = new RequestDTO(athenaDTOConverterService.ofExercise(exercise), athenaDTOConverterService.ofSubmission(exercise.getId(), submission), isGraded);
         ResponseDTOModeling response = modelingAthenaConnector.invokeWithRetry(athenaModuleService.getAthenaModuleUrl(exercise) + "/feedback_suggestions", request, 0);
         log.info("Athena responded to '{}' feedback suggestions request: {}", isGraded ? "Graded" : "Non Graded", response.data);
+        storeTokenUsage(exercise, submission, response.meta, !isGraded);
         return response.data;
+    }
+
+    /**
+     * Store the usage of LLM tokens for a given submission
+     *
+     * @param exercise              the exercise the submission belongs to
+     * @param submission            the submission for which the tokens were used
+     * @param meta                  the meta information of the response from Athena
+     * @param isPreliminaryFeedback whether the feedback is preliminary or not
+     */
+    private void storeTokenUsage(Exercise exercise, Submission submission, ResponseMetaDTO meta, Boolean isPreliminaryFeedback) {
+        if (meta == null) {
+            return;
+        }
+        Long courseId = exercise.getCourseViaExerciseGroupOrCourseMember().getId();
+        Long userId;
+        if (submission.getParticipation() instanceof StudentParticipation studentParticipation) {
+            userId = studentParticipation.getStudent().map(User::getId).orElse(null);
+        }
+        else {
+            userId = null;
+        }
+        List<LLMRequest> llmRequests = meta.llmRequests();
+        if (llmRequests == null) {
+            return;
+        }
+
+        llmTokenUsageService.saveLLMTokenUsage(llmRequests, LLMServiceType.ATHENA,
+                (llmTokenUsageBuilder -> llmTokenUsageBuilder.withCourse(courseId).withExercise(exercise.getId()).withUser(userId)));
     }
 }

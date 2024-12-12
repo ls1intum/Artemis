@@ -1,6 +1,7 @@
 package de.tum.cit.aet.artemis.communication;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Fail.fail;
 
 import java.time.ZonedDateTime;
 import java.util.Arrays;
@@ -9,6 +10,7 @@ import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -22,7 +24,9 @@ import org.springframework.util.LinkedMultiValueMap;
 import de.tum.cit.aet.artemis.communication.domain.conversation.Channel;
 import de.tum.cit.aet.artemis.communication.dto.ChannelDTO;
 import de.tum.cit.aet.artemis.communication.dto.ChannelIdAndNameDTO;
+import de.tum.cit.aet.artemis.communication.dto.FeedbackChannelRequestDTO;
 import de.tum.cit.aet.artemis.communication.dto.MetisCrudAction;
+import de.tum.cit.aet.artemis.communication.service.conversation.ConversationService;
 import de.tum.cit.aet.artemis.communication.util.ConversationUtilService;
 import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.domain.CourseInformationSharingConfiguration;
@@ -32,21 +36,26 @@ import de.tum.cit.aet.artemis.core.user.util.UserFactory;
 import de.tum.cit.aet.artemis.lecture.domain.Lecture;
 import de.tum.cit.aet.artemis.lecture.repository.LectureRepository;
 import de.tum.cit.aet.artemis.lecture.util.LectureUtilService;
+import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
+import de.tum.cit.aet.artemis.programming.util.ProgrammingExerciseUtilService;
 import de.tum.cit.aet.artemis.text.domain.TextExercise;
 import de.tum.cit.aet.artemis.text.util.TextExerciseUtilService;
 import de.tum.cit.aet.artemis.tutorialgroup.service.TutorialGroupChannelManagementService;
-import de.tum.cit.aet.artemis.tutorialgroups.test_repository.TutorialGroupTestRepository;
-import de.tum.cit.aet.artemis.tutorialgroups.util.TutorialGroupUtilService;
+import de.tum.cit.aet.artemis.tutorialgroup.test_repository.TutorialGroupTestRepository;
+import de.tum.cit.aet.artemis.tutorialgroup.util.TutorialGroupUtilService;
 
 class ChannelIntegrationTest extends AbstractConversationTest {
 
     private static final String TEST_PREFIX = "chtest";
 
     @Autowired
-    TutorialGroupTestRepository tutorialGroupRepository;
+    private ConversationService conversationService;
 
     @Autowired
-    TutorialGroupChannelManagementService tutorialGroupChannelManagementService;
+    private TutorialGroupTestRepository tutorialGroupRepository;
+
+    @Autowired
+    private TutorialGroupChannelManagementService tutorialGroupChannelManagementService;
 
     @Autowired
     private TutorialGroupUtilService tutorialGroupUtilService;
@@ -62,6 +71,9 @@ class ChannelIntegrationTest extends AbstractConversationTest {
 
     @Autowired
     private ConversationUtilService conversationUtilService;
+
+    @Autowired
+    private ProgrammingExerciseUtilService programmingExerciseUtilService;
 
     @BeforeEach
     @Override
@@ -80,6 +92,12 @@ class ChannelIntegrationTest extends AbstractConversationTest {
         if (userRepository.findOneByLogin(testPrefix + "instructor42").isEmpty()) {
             userRepository.save(UserFactory.generateActivatedUser(testPrefix + "instructor42"));
         }
+    }
+
+    @AfterEach
+    void tearDown() {
+        var conversations = conversationRepository.findAllByCourseId(exampleCourseId);
+        conversations.forEach(conversation -> conversationService.deleteConversation(conversation));
     }
 
     @Override
@@ -899,6 +917,60 @@ class ChannelIntegrationTest extends AbstractConversationTest {
 
         conversationRepository.deleteById(publicChannelWhereMember.getId());
         lectureRepository.deleteById(lecture.getId());
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "STUDENT")
+    void createFeedbackChannel_asStudent_shouldReturnForbidden() {
+        Course course = programmingExerciseUtilService.addCourseWithOneProgrammingExercise();
+        ProgrammingExercise programmingExercise = programmingExerciseUtilService.addProgrammingExerciseToCourse(course);
+
+        ChannelDTO channelDTO = new ChannelDTO();
+        channelDTO.setName("feedback-channel");
+        channelDTO.setDescription("Discussion channel for feedback");
+        channelDTO.setIsPublic(true);
+        channelDTO.setIsAnnouncementChannel(false);
+
+        FeedbackChannelRequestDTO feedbackChannelRequest = new FeedbackChannelRequestDTO(channelDTO, "Sample feedback text");
+
+        String BASE_ENDPOINT = "api/courses/{courseId}/{exerciseId}/feedback-channel";
+
+        try {
+            request.postWithoutResponseBody(BASE_ENDPOINT.replace("{courseId}", course.getId().toString()).replace("{exerciseId}", programmingExercise.getId().toString()),
+                    feedbackChannelRequest, HttpStatus.FORBIDDEN);
+        }
+        catch (Exception e) {
+            fail("There was an error executing the post request.", e);
+        }
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void createFeedbackChannel_asInstructor_shouldCreateChannel() {
+        long courseId = 1L;
+        long exerciseId = 1L;
+        ChannelDTO channelDTO = new ChannelDTO();
+        channelDTO.setName("feedback-channel");
+        channelDTO.setDescription("Discussion channel for feedback");
+        channelDTO.setIsPublic(true);
+        channelDTO.setIsAnnouncementChannel(false);
+
+        FeedbackChannelRequestDTO feedbackChannelRequest = new FeedbackChannelRequestDTO(channelDTO, "Sample feedback text");
+
+        String BASE_ENDPOINT = "/api/courses/{courseId}/{exerciseId}/feedback-channel";
+
+        ChannelDTO response = null;
+        try {
+            response = request.postWithResponseBody(BASE_ENDPOINT.replace("{courseId}", Long.toString(courseId)).replace("{exerciseId}", Long.toString(exerciseId)),
+                    feedbackChannelRequest, ChannelDTO.class, HttpStatus.CREATED);
+        }
+        catch (Exception e) {
+            fail("Failed to create feedback channel", e);
+        }
+
+        assertThat(response).isNotNull();
+        assertThat(response.getName()).isEqualTo("feedback-channel");
+        assertThat(response.getDescription()).isEqualTo("Discussion channel for feedback");
     }
 
     private void testArchivalChangeWorks(ChannelDTO channel, boolean isPublicChannel, boolean shouldArchive) throws Exception {

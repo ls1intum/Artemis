@@ -20,7 +20,7 @@ import de.tum.cit.aet.artemis.core.repository.base.RepositoryImpl;
         "de.tum.cit.aet.artemis.communication.test_repository", "de.tum.cit.aet.artemis.core.test_repository", "de.tum.cit.aet.artemis.exam.test_repository",
         "de.tum.cit.aet.artemis.exercise.test_repository", "de.tum.cit.aet.artemis.lecture.test_repository", "de.tum.cit.aet.artemis.lti.test_repository",
         "de.tum.cit.aet.artemis.modeling.test_repository", "de.tum.cit.aet.artemis.programming.test_repository", "de.tum.cit.aet.artemis.quiz.test_repository",
-        "de.tum.cit.aet.artemis.text.test_repository", "de.tum.cit.aet.artemis.tutorialgroups.test_repository" }, repositoryBaseClass = RepositoryImpl.class)
+        "de.tum.cit.aet.artemis.text.test_repository", "de.tum.cit.aet.artemis.tutorialgroup.test_repository" }, repositoryBaseClass = RepositoryImpl.class)
 @EnableJpaAuditing(auditorAwareRef = "springSecurityAuditorAware")
 @EnableTransactionManagement
 public class TestRepositoryConfiguration {

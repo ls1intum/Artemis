@@ -8,9 +8,12 @@ import { TextUnitFormComponent, TextUnitFormData } from 'app/lecture/lecture-uni
 import { FormDateTimePickerComponent } from 'app/shared/date-time-picker/date-time-picker.component';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import dayjs from 'dayjs/esm';
-import { MockComponent, MockPipe, MockProvider } from 'ng-mocks';
+import { MockComponent, MockModule, MockPipe, MockProvider } from 'ng-mocks';
 import { MockRouter } from '../../../helpers/mocks/mock-router';
 import { CompetencySelectionComponent } from 'app/shared/competency-selection/competency-selection.component';
+import { ArtemisTestModule } from '../../../test.module';
+import { NgbTooltipModule } from '@ng-bootstrap/ng-bootstrap';
+import { OwlDateTimeModule, OwlNativeDateTimeModule } from '@danielmoncada/angular-datetime-picker';
 
 @Component({ selector: 'jhi-markdown-editor-monaco', template: '' })
 class MarkdownEditorStubComponent {
@@ -43,11 +46,11 @@ describe('TextUnitFormComponent', () => {
         });
 
         TestBed.configureTestingModule({
-            imports: [ReactiveFormsModule, FormsModule],
+            imports: [ArtemisTestModule, ReactiveFormsModule, FormsModule, MockModule(NgbTooltipModule), MockModule(OwlDateTimeModule), MockModule(OwlNativeDateTimeModule)],
             declarations: [
                 TextUnitFormComponent,
                 MarkdownEditorStubComponent,
-                MockComponent(FormDateTimePickerComponent),
+                FormDateTimePickerComponent,
                 MockPipe(ArtemisTranslatePipe),
                 MockComponent(CompetencySelectionComponent),
             ],
@@ -123,7 +126,7 @@ describe('TextUnitFormComponent', () => {
             expect(submitFormEventSpy).toHaveBeenCalledWith({
                 name: 'Test',
                 releaseDate: null,
-                competencies: null,
+                competencyLinks: null,
                 content: exampleMarkdown,
             });
         });
@@ -167,12 +170,11 @@ describe('TextUnitFormComponent', () => {
 
         // init
         textUnitFormComponentFixture.detectChanges(); // ngOnInit
-        textUnitFormComponent.isEditMode = true;
+        textUnitFormComponentFixture.componentRef.setInput('isEditMode', true);
         tick();
 
-        // setting the form data
-        textUnitFormComponent.formData = formData;
-        textUnitFormComponent.ngOnChanges(); // ngOnChanges
+        textUnitFormComponentFixture.componentRef.setInput('formData', formData);
+        textUnitFormComponent.ngOnChanges();
         textUnitFormComponentFixture.detectChanges();
 
         expect(textUnitFormComponent.nameControl!.value).toEqual(formData.name);

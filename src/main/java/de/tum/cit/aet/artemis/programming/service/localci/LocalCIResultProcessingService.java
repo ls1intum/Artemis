@@ -6,21 +6,24 @@ import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.CancellationException;
 
-import jakarta.annotation.PostConstruct;
 import jakarta.annotation.PreDestroy;
 
 import org.redisson.api.RMap;
 import org.redisson.api.RQueue;
 import org.redisson.api.RedissonClient;
 import org.redisson.api.listener.ListAddListener;
+import org.redisson.client.RedisConnectionException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.boot.context.event.ApplicationReadyEvent;
 import org.springframework.context.annotation.Profile;
+import org.springframework.context.event.EventListener;
 import org.springframework.stereotype.Service;
 
 import de.tum.cit.aet.artemis.assessment.domain.Result;
 import de.tum.cit.aet.artemis.buildagent.dto.BuildAgentInformation;
 import de.tum.cit.aet.artemis.buildagent.dto.BuildJobQueueItem;
+import de.tum.cit.aet.artemis.buildagent.dto.BuildLogDTO;
 import de.tum.cit.aet.artemis.buildagent.dto.BuildResult;
 import de.tum.cit.aet.artemis.buildagent.dto.ResultQueueItem;
 import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
@@ -31,7 +34,6 @@ import de.tum.cit.aet.artemis.exercise.repository.ParticipationRepository;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseParticipation;
 import de.tum.cit.aet.artemis.programming.domain.RepositoryType;
 import de.tum.cit.aet.artemis.programming.domain.build.BuildJob;
-import de.tum.cit.aet.artemis.programming.domain.build.BuildLogEntry;
 import de.tum.cit.aet.artemis.programming.domain.build.BuildStatus;
 import de.tum.cit.aet.artemis.programming.dto.ResultDTO;
 import de.tum.cit.aet.artemis.programming.exception.BuildTriggerWebsocketError;
@@ -86,7 +88,7 @@ public class LocalCIResultProcessingService {
     /**
      * Initializes the result queue, build agent information map and the locks.
      */
-    @PostConstruct
+    @EventListener(ApplicationReadyEvent.class)
     public void init() {
         this.resultQueue = this.redissonClient.getQueue("buildResultQueue");
         this.buildAgentInformation = this.redissonClient.getMap("buildAgentInformation");
@@ -98,7 +100,12 @@ public class LocalCIResultProcessingService {
 
     @PreDestroy
     public void removeListener() {
-        this.resultQueue.removeListener(this.listenerId);
+        try {
+            this.resultQueue.removeListener(this.listenerId);
+        }
+        catch (RedisConnectionException e) {
+            log.error("Could not remove listener due to Redis connection exception.");
+        }
     }
 
     /**
@@ -112,11 +119,13 @@ public class LocalCIResultProcessingService {
         if (resultQueueItem == null) {
             return;
         }
-        log.info("Processing build job result");
+        log.info("Processing build job result with id {}", resultQueueItem.buildJobQueueItem().id());
+        log.debug("Build jobs waiting in queue: {}", resultQueue.size());
+        log.debug("Queued build jobs: {}", resultQueue.stream().map(i -> i.buildJobQueueItem().id()).toList());
 
         BuildJobQueueItem buildJob = resultQueueItem.buildJobQueueItem();
         BuildResult buildResult = resultQueueItem.buildResult();
-        List<BuildLogEntry> buildLogs = resultQueueItem.buildLogs();
+        List<BuildLogDTO> buildLogs = resultQueueItem.buildLogs();
         Throwable ex = resultQueueItem.exception();
 
         BuildJob savedBuildJob;
@@ -207,7 +216,7 @@ public class LocalCIResultProcessingService {
      * @param result   the result of the build job
      */
     private void addResultToBuildAgentsRecentBuildJobs(BuildJobQueueItem buildJob, Result result) {
-        BuildAgentInformation buildAgent = buildAgentInformation.get(buildJob.buildAgentAddress());
+        BuildAgentInformation buildAgent = buildAgentInformation.get(buildJob.buildAgent().memberAddress());
         if (buildAgent != null) {
             List<BuildJobQueueItem> recentBuildJobs = buildAgent.recentBuildJobs();
             for (int i = 0; i < recentBuildJobs.size(); i++) {
@@ -216,7 +225,7 @@ public class LocalCIResultProcessingService {
                     break;
                 }
             }
-            buildAgentInformation.put(buildJob.buildAgentAddress(), new BuildAgentInformation(buildAgent, recentBuildJobs));
+            buildAgentInformation.put(buildJob.buildAgent().memberAddress(), new BuildAgentInformation(buildAgent, recentBuildJobs));
         }
     }
 

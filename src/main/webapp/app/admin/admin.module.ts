@@ -47,6 +47,7 @@ import { KnowledgeAreaTreeComponent } from 'app/shared/standardized-competencies
 import { StandardizedCompetencyFilterComponent } from 'app/shared/standardized-competencies/standardized-competency-filter.component';
 import { StandardizedCompetencyDetailComponent } from 'app/shared/standardized-competencies/standardized-competency-detail.component';
 import { DeleteUsersButtonComponent } from 'app/admin/user-management/delete-users-button.component';
+import { ProfilePictureComponent } from 'app/shared/profile-picture/profile-picture.component';
 
 const ENTITY_STATES = [...adminState];
 
@@ -73,6 +74,9 @@ const ENTITY_STATES = [...adminState];
         StandardizedCompetencyFilterComponent,
         StandardizedCompetencyDetailComponent,
         DeleteUsersButtonComponent,
+        ProfilePictureComponent,
+        BuildAgentSummaryComponent,
+        BuildAgentDetailsComponent,
     ],
     declarations: [
         AuditsComponent,
@@ -95,8 +99,6 @@ const ENTITY_STATES = [...adminState];
         OrganizationManagementUpdateComponent,
         LtiConfigurationComponent,
         EditLtiConfigurationComponent,
-        BuildAgentSummaryComponent,
-        BuildAgentDetailsComponent,
         StandardizedCompetencyEditComponent,
         KnowledgeAreaEditComponent,
         StandardizedCompetencyManagementComponent,

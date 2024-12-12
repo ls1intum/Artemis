@@ -1,7 +1,6 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
-import { ActivatedRoute } from '@angular/router';
-import { RouterTestingModule } from '@angular/router/testing';
+import { ActivatedRoute, provideRouter } from '@angular/router';
 import { NgbTooltipModule } from '@ng-bootstrap/ng-bootstrap';
 import { BarChartModule, PieChartModule } from '@swimlane/ngx-charts';
 import { CourseScores } from 'app/course/course-scores/course-scores';
@@ -329,7 +328,7 @@ describe('CourseStatisticsComponent', () => {
 
     beforeEach(() => {
         return TestBed.configureTestingModule({
-            imports: [ArtemisTestModule, RouterTestingModule, TreeviewModule.forRoot(), MockModule(PieChartModule), MockModule(BarChartModule), MockModule(NgbTooltipModule)],
+            imports: [ArtemisTestModule, TreeviewModule.forRoot(), MockModule(PieChartModule), MockModule(BarChartModule), MockModule(NgbTooltipModule)],
             declarations: [
                 CourseStatisticsComponent,
                 MockComponent(CourseCompetenciesComponent),
@@ -340,6 +339,7 @@ describe('CourseStatisticsComponent', () => {
                 TranslateDirective,
             ],
             providers: [
+                provideRouter([]),
                 MockProvider(ArtemisNavigationUtilService),
                 MockProvider(ChartCategoryFilter),
                 {

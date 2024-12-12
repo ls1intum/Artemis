@@ -6,7 +6,7 @@ import { admin, studentOne } from '../../support/users';
 import { generateUUID } from '../../support/utils';
 import { Fixtures } from '../../fixtures/fixtures';
 
-test.describe('Exam date verification', () => {
+test.describe('Exam date verification', { tag: '@fast' }, () => {
     let course: Course;
     let examTitle: string;
 
@@ -68,9 +68,9 @@ test.describe('Exam date verification', () => {
                 endDate: dayjs().add(3, 'days'),
             };
             const exam = await examAPIRequests.createExam(examConfig);
-            await examAPIRequests.registerStudentForExam(exam, studentOne);
             const exerciseGroup = await examAPIRequests.addExerciseGroupForExam(exam);
             const exercise = await exerciseAPIRequests.createTextExercise({ exerciseGroup });
+            await examAPIRequests.registerStudentForExam(exam, studentOne);
             await examAPIRequests.generateMissingIndividualExams(exam);
             await examAPIRequests.prepareExerciseStartForExam(exam);
             await login(studentOne);
@@ -92,7 +92,8 @@ test.describe('Exam date verification', () => {
             await examNavigation.openOrSaveExerciseByTitle(exercise.exerciseGroup!.title!);
 
             await page.hover('.fa-save-success');
-            await expect(page.getByText('Exercise saved')).toBeVisible();
+            // nth(0) is the button, nth(1) is the ngtooltip, which is tested
+            await expect(page.getByText('Exercise saved').nth(1)).toBeVisible();
         });
 
         test('Exam ends after end time', async ({ page, login, examAPIRequests, exerciseAPIRequests, examStartEnd, examNavigation, textExerciseEditor, examParticipation }) => {
@@ -105,9 +106,9 @@ test.describe('Exam date verification', () => {
                 endDate: examEnd,
             };
             const exam = await examAPIRequests.createExam(examConfig);
-            await examAPIRequests.registerStudentForExam(exam, studentOne);
             const exerciseGroup = await examAPIRequests.addExerciseGroupForExam(exam);
             const exercise = await exerciseAPIRequests.createTextExercise({ exerciseGroup });
+            await examAPIRequests.registerStudentForExam(exam, studentOne);
             await examAPIRequests.generateMissingIndividualExams(exam);
             await examAPIRequests.prepareExerciseStartForExam(exam);
             await login(studentOne);

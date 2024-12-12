@@ -17,6 +17,7 @@ import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import de.tum.cit.aet.artemis.core.dto.CourseContentCount;
+import de.tum.cit.aet.artemis.core.exception.NoUniqueQueryException;
 import de.tum.cit.aet.artemis.core.repository.base.ArtemisJpaRepository;
 import de.tum.cit.aet.artemis.lecture.domain.Lecture;
 
@@ -26,6 +27,13 @@ import de.tum.cit.aet.artemis.lecture.domain.Lecture;
 @Profile(PROFILE_CORE)
 @Repository
 public interface LectureRepository extends ArtemisJpaRepository<Lecture, Long> {
+
+    @Query("""
+            SELECT lecture
+            FROM Lecture lecture
+            WHERE lecture.course.id = :courseId
+            """)
+    Set<Lecture> findAllByCourseId(@Param("courseId") Long courseId);
 
     @Query("""
             SELECT lecture
@@ -62,9 +70,11 @@ public interface LectureRepository extends ArtemisJpaRepository<Lecture, Long> {
                 LEFT JOIN FETCH lecture.posts
                 LEFT JOIN FETCH lecture.lectureUnits lu
                 LEFT JOIN FETCH lu.completedUsers cu
-                LEFT JOIN FETCH lu.competencies
-                LEFT JOIN FETCH lu.exercise exercise
-                LEFT JOIN FETCH exercise.competencies
+                LEFT JOIN FETCH lu.competencyLinks cl
+                LEFT JOIN FETCH cl.competency
+                LEFT JOIN FETCH lu.exercise e
+                LEFT JOIN FETCH e.competencyLinks ecl
+                LEFT JOIN FETCH ecl.competency
             WHERE lecture.id = :lectureId
             """)
     Optional<Lecture> findByIdWithAttachmentsAndPostsAndLectureUnitsAndCompetenciesAndCompletions(@Param("lectureId") Long lectureId);
@@ -73,12 +83,22 @@ public interface LectureRepository extends ArtemisJpaRepository<Lecture, Long> {
             SELECT lecture
             FROM Lecture lecture
                 LEFT JOIN FETCH lecture.lectureUnits lu
-                LEFT JOIN FETCH lu.competencies
-                LEFT JOIN FETCH lu.exercise exercise
-                LEFT JOIN FETCH exercise.competencies
+                LEFT JOIN FETCH lu.competencyLinks cl
+                LEFT JOIN FETCH cl.competency
+                LEFT JOIN FETCH lu.exercise e
+                LEFT JOIN FETCH e.competencyLinks ecl
+                LEFT JOIN FETCH ecl.competency
             WHERE lecture.id = :lectureId
             """)
     Optional<Lecture> findByIdWithLectureUnitsAndCompetencies(@Param("lectureId") Long lectureId);
+
+    @Query("""
+            SELECT lecture
+            FROM Lecture lecture
+                LEFT JOIN FETCH lecture.lectureUnits
+            WHERE lecture.id = :lectureId
+            """)
+    Optional<Lecture> findByIdWithLectureUnits(@Param("lectureId") Long lectureId);
 
     @Query("""
             SELECT lecture
@@ -99,6 +119,30 @@ public interface LectureRepository extends ArtemisJpaRepository<Lecture, Long> {
             WHERE lecture.id = :lectureId
             """)
     Optional<Lecture> findByIdWithLectureUnitsAndSlidesAndAttachments(@Param("lectureId") long lectureId);
+
+    @Query("""
+            SELECT lecture
+            FROM Lecture lecture
+                LEFT JOIN FETCH lecture.lectureUnits
+            WHERE lecture.title = :title AND lecture.course.id = :courseId
+            """)
+    Set<Lecture> findAllByTitleAndCourseIdWithLectureUnits(@Param("title") String title, @Param("courseId") long courseId);
+
+    /**
+     * Finds a lecture by its title and course id and throws a NoUniqueQueryException if multiple lectures are found.
+     *
+     * @param title    the title of the lecture
+     * @param courseId the id of the course
+     * @return the lecture with the given title and course id
+     * @throws NoUniqueQueryException if multiple lectures are found with the same title
+     */
+    default Optional<Lecture> findUniqueByTitleAndCourseIdWithLectureUnitsElseThrow(String title, long courseId) throws NoUniqueQueryException {
+        Set<Lecture> allLectures = findAllByTitleAndCourseIdWithLectureUnits(title, courseId);
+        if (allLectures.size() > 1) {
+            throw new NoUniqueQueryException("Found multiple lectures with title " + title + " in course with id " + courseId);
+        }
+        return allLectures.stream().findFirst();
+    }
 
     @SuppressWarnings("PMD.MethodNamingConventions")
     Page<Lecture> findByTitleIgnoreCaseContainingOrCourse_TitleIgnoreCaseContaining(String partialTitle, String partialCourseTitle, Pageable pageable);
@@ -135,6 +179,11 @@ public interface LectureRepository extends ArtemisJpaRepository<Lecture, Long> {
             """)
     @Cacheable(cacheNames = "lectureTitle", key = "#lectureId", unless = "#result == null")
     String getLectureTitle(@Param("lectureId") Long lectureId);
+
+    @NotNull
+    default Lecture findByIdWithLectureUnitsElseThrow(Long lectureId) {
+        return getValueElseThrow(findByIdWithLectureUnits(lectureId), lectureId);
+    }
 
     @NotNull
     default Lecture findByIdWithLectureUnitsAndCompetenciesElseThrow(Long lectureId) {

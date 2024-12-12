@@ -19,7 +19,6 @@ import java.util.Optional;
 import java.util.regex.Pattern;
 
 import jakarta.annotation.Nullable;
-import jakarta.servlet.http.Cookie;
 import jakarta.validation.constraints.NotNull;
 
 import org.slf4j.Logger;
@@ -28,6 +27,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Profile;
+import org.springframework.http.HttpStatusCode;
 import org.springframework.http.converter.json.MappingJackson2HttpMessageConverter;
 import org.springframework.http.server.ServerHttpRequest;
 import org.springframework.http.server.ServerHttpResponse;
@@ -52,7 +52,6 @@ import org.springframework.web.socket.config.annotation.StompEndpointRegistry;
 import org.springframework.web.socket.server.HandshakeInterceptor;
 import org.springframework.web.socket.server.support.DefaultHandshakeHandler;
 import org.springframework.web.socket.sockjs.transport.handler.WebSocketTransportHandler;
-import org.springframework.web.util.WebUtils;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.collect.Iterators;
@@ -64,7 +63,6 @@ import de.tum.cit.aet.artemis.core.security.jwt.JWTFilter;
 import de.tum.cit.aet.artemis.core.security.jwt.TokenProvider;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
 import de.tum.cit.aet.artemis.exam.repository.ExamRepository;
-import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
 import de.tum.cit.aet.artemis.exercise.repository.ExerciseRepository;
 import de.tum.cit.aet.artemis.exercise.repository.StudentParticipationRepository;
@@ -202,9 +200,14 @@ public class WebsocketConfiguration extends DelegatingWebSocketMessageBrokerConf
             public boolean beforeHandshake(@NotNull ServerHttpRequest request, @NotNull ServerHttpResponse response, @NotNull WebSocketHandler wsHandler,
                     @NotNull Map<String, Object> attributes) {
                 if (request instanceof ServletServerHttpRequest servletRequest) {
-                    attributes.put(IP_ADDRESS, servletRequest.getRemoteAddress());
-                    Cookie jwtCookie = WebUtils.getCookie(servletRequest.getServletRequest(), JWTFilter.JWT_COOKIE_NAME);
-                    return JWTFilter.isJwtCookieValid(tokenProvider, jwtCookie);
+                    try {
+                        attributes.put(IP_ADDRESS, servletRequest.getRemoteAddress());
+                        return JWTFilter.extractValidJwt(servletRequest.getServletRequest(), tokenProvider) != null;
+                    }
+                    catch (IllegalArgumentException e) {
+                        response.setStatusCode(HttpStatusCode.valueOf(400));
+                        return false;
+                    }
                 }
                 return false;
             }
@@ -309,8 +312,7 @@ public class WebsocketConfiguration extends DelegatingWebSocketMessageBrokerConf
 
                 // TODO: Is it right that TAs are not allowed to subscribe to exam exercises?
                 if (exerciseRepository.isExamExercise(exerciseId)) {
-                    Exercise exercise = exerciseRepository.findByIdElseThrow(exerciseId);
-                    return authorizationCheckService.isAtLeastInstructorInCourse(login, exercise.getCourseViaExerciseGroupOrCourseMember().getId());
+                    return authorizationCheckService.isAtLeastInstructorInExercise(login, exerciseId);
                 }
                 else {
                     return authorizationCheckService.isAtLeastTeachingAssistantInExercise(login, exerciseId);

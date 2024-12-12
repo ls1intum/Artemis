@@ -17,6 +17,7 @@ import org.springframework.security.test.context.support.WithMockUser;
 
 import de.tum.cit.aet.artemis.atlas.competency.util.CompetencyUtilService;
 import de.tum.cit.aet.artemis.atlas.domain.competency.Competency;
+import de.tum.cit.aet.artemis.atlas.domain.competency.CompetencyLectureUnitLink;
 import de.tum.cit.aet.artemis.lecture.domain.Lecture;
 import de.tum.cit.aet.artemis.lecture.domain.LectureUnit;
 import de.tum.cit.aet.artemis.lecture.domain.VideoUnit;
@@ -86,10 +87,10 @@ class VideoUnitIntegrationTest extends AbstractSpringIntegrationIndependentTest 
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void createVideoUnit_asInstructor_shouldCreateVideoUnit() throws Exception {
         videoUnit.setSource("https://www.youtube.com/embed/8iU8LPEa4o0");
-        videoUnit.setCompetencies(Set.of(competency));
+        videoUnit.setCompetencyLinks(Set.of(new CompetencyLectureUnitLink(competency, videoUnit, 1)));
         var persistedVideoUnit = request.postWithResponseBody("/api/lectures/" + this.lecture1.getId() + "/video-units", videoUnit, VideoUnit.class, HttpStatus.CREATED);
         assertThat(persistedVideoUnit.getId()).isNotNull();
-        verify(competencyProgressService).updateProgressByLearningObjectAsync(eq(persistedVideoUnit));
+        verify(competencyProgressApi).updateProgressByLearningObjectAsync(eq(persistedVideoUnit));
     }
 
     @Test
@@ -116,7 +117,7 @@ class VideoUnitIntegrationTest extends AbstractSpringIntegrationIndependentTest 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void updateVideoUnit_asInstructor_shouldUpdateVideoUnit() throws Exception {
-        videoUnit.setCompetencies(Set.of(competency));
+        videoUnit.setCompetencyLinks(Set.of(new CompetencyLectureUnitLink(competency, videoUnit, 1)));
         persistVideoUnitWithLecture();
 
         this.videoUnit = (VideoUnit) lectureRepository.findByIdWithLectureUnitsAndAttachments(lecture1.getId()).orElseThrow().getLectureUnits().stream().findFirst().orElseThrow();
@@ -124,7 +125,7 @@ class VideoUnitIntegrationTest extends AbstractSpringIntegrationIndependentTest 
         this.videoUnit.setDescription("Changed");
         this.videoUnit = request.putWithResponseBody("/api/lectures/" + lecture1.getId() + "/video-units", this.videoUnit, VideoUnit.class, HttpStatus.OK);
         assertThat(this.videoUnit.getDescription()).isEqualTo("Changed");
-        verify(competencyProgressService, timeout(1000).times(1)).updateProgressForUpdatedLearningObjectAsync(eq(videoUnit), eq(Optional.of(videoUnit)));
+        verify(competencyProgressApi, timeout(1000).times(1)).updateProgressForUpdatedLearningObjectAsync(eq(videoUnit), eq(Optional.of(videoUnit)));
     }
 
     @Test
@@ -157,10 +158,14 @@ class VideoUnitIntegrationTest extends AbstractSpringIntegrationIndependentTest 
     }
 
     private void persistVideoUnitWithLecture() {
-        this.videoUnit = videoUnitRepository.save(this.videoUnit);
-        lecture1.addLectureUnit(this.videoUnit);
+        Set<CompetencyLectureUnitLink> link = videoUnit.getCompetencyLinks();
+        videoUnit.setCompetencyLinks(null);
+
+        videoUnit = videoUnitRepository.save(videoUnit);
+        videoUnit.setCompetencyLinks(link);
+        lecture1.addLectureUnit(videoUnit);
         lecture1 = lectureRepository.save(lecture1);
-        this.videoUnit = (VideoUnit) lectureRepository.findByIdWithLectureUnitsAndAttachments(lecture1.getId()).orElseThrow().getLectureUnits().stream().findFirst().orElseThrow();
+        videoUnit = (VideoUnit) lectureRepository.findByIdWithLectureUnitsAndAttachments(lecture1.getId()).orElseThrow().getLectureUnits().stream().findFirst().orElseThrow();
     }
 
     @Test
@@ -197,14 +202,14 @@ class VideoUnitIntegrationTest extends AbstractSpringIntegrationIndependentTest 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void deleteVideoUnit_correctId_shouldDeleteVideoUnit() throws Exception {
-        videoUnit.setCompetencies(Set.of(competency));
+        videoUnit.setCompetencyLinks(Set.of(new CompetencyLectureUnitLink(competency, videoUnit, 1)));
         persistVideoUnitWithLecture();
 
         this.videoUnit = (VideoUnit) lectureRepository.findByIdWithLectureUnitsAndAttachments(lecture1.getId()).orElseThrow().getLectureUnits().stream().findFirst().orElseThrow();
         assertThat(this.videoUnit.getId()).isNotNull();
         request.delete("/api/lectures/" + lecture1.getId() + "/lecture-units/" + this.videoUnit.getId(), HttpStatus.OK);
         request.get("/api/lectures/" + lecture1.getId() + "/video-units/" + this.videoUnit.getId(), HttpStatus.NOT_FOUND, VideoUnit.class);
-        verify(competencyProgressService, timeout(1000).times(1)).updateProgressForUpdatedLearningObjectAsync(eq(videoUnit), eq(Optional.empty()));
+        verify(competencyProgressApi, timeout(1000).times(1)).updateProgressForUpdatedLearningObjectAsync(eq(videoUnit), eq(Optional.empty()));
     }
 
     @Test

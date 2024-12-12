@@ -1,10 +1,9 @@
 package de.tum.cit.aet.artemis.communication.service;
 
-import static org.springframework.test.util.AssertionErrors.assertEquals;
+import static org.assertj.core.api.Assertions.assertThat;
 
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
-import java.util.Collections;
 import java.util.Date;
 import java.util.List;
 import java.util.Set;
@@ -13,6 +12,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 
+import de.tum.cit.aet.artemis.communication.domain.push_notification.PushNotificationApiType;
 import de.tum.cit.aet.artemis.communication.domain.push_notification.PushNotificationDeviceConfiguration;
 import de.tum.cit.aet.artemis.communication.domain.push_notification.PushNotificationDeviceType;
 import de.tum.cit.aet.artemis.communication.repository.PushNotificationDeviceConfigurationRepository;
@@ -42,10 +42,10 @@ class PushNotificationDeviceConfigurationCleanupServiceTest extends AbstractSpri
     @Test
     void cleanupTest() {
         final PushNotificationDeviceConfiguration valid = new PushNotificationDeviceConfiguration("token1", PushNotificationDeviceType.FIREBASE,
-                Date.from(Instant.now().plus(10, ChronoUnit.DAYS)), new byte[10], user);
+                Date.from(Instant.now().plus(10, ChronoUnit.DAYS)), new byte[10], user, PushNotificationApiType.DEFAULT);
 
         final PushNotificationDeviceConfiguration expired = new PushNotificationDeviceConfiguration("token2", PushNotificationDeviceType.FIREBASE,
-                Date.from(Instant.now().minus(10, ChronoUnit.DAYS)), new byte[10], user);
+                Date.from(Instant.now().minus(10, ChronoUnit.DAYS)), new byte[10], user, PushNotificationApiType.DEFAULT);
 
         deviceConfigurationRepository.save(valid);
         deviceConfigurationRepository.save(expired);
@@ -54,6 +54,7 @@ class PushNotificationDeviceConfigurationCleanupServiceTest extends AbstractSpri
 
         List<PushNotificationDeviceConfiguration> result = deviceConfigurationRepository.findByUserIn(Set.of(user), PushNotificationDeviceType.FIREBASE);
 
-        assertEquals("The result is not correct", Collections.singletonList(valid), result);
+        assertThat(result).contains(valid);
+        assertThat(result).doesNotContain(expired);
     }
 }

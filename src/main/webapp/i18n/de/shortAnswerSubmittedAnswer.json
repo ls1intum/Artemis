@@ -2,19 +2,19 @@
     "artemisApp": {
         "shortAnswerSubmittedAnswer": {
             "home": {
-                "title": "Short Answer Submitted Answers",
-                "createLabel": "Short Answer Submitted Answer erstellen"
+                "title": "Kurzantwort eingereichte Antworten",
+                "createLabel": "Kurzantwort eingereichte Antwort erstellen"
             },
-            "created": "Short Answer Submitted Answer erstellt mit ID {{ param }}",
-            "updated": "Short Answer Submitted Answer aktualisiert mit ID {{ param }}",
-            "deleted": "Short Answer Submitted Answer gelöscht mit ID {{ param }}",
+            "created": "Kurzantwort eingereichte Antwort erstellt mit ID {{ param }}",
+            "updated": "Kurzantwort eingereichte Antwort aktualisiert mit ID {{ param }}",
+            "deleted": "Kurzantwort eingereichte Antwort gelöscht mit ID {{ param }}",
             "delete": {
-                "question": "Soll Short Answer Submitted Answer {{ id }} wirklich dauerhaft gelöscht werden?"
+                "question": "Soll Kurzantwort eingereichte Antwort {{ id }} wirklich dauerhaft gelöscht werden?"
             },
             "detail": {
-                "title": "Short Answer Submitted Answer"
+                "title": "Kurzantwort eingereichte Antwort "
             },
-            "submittedTexts": "Submitted Texts"
+            "submittedTexts": "Eingereichte Texte"
         }
     }
 }

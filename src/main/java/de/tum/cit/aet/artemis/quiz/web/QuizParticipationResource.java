@@ -3,7 +3,6 @@ package de.tum.cit.aet.artemis.quiz.web;
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
 import java.time.ZonedDateTime;
-import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -27,10 +26,8 @@ import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInExercise.En
 import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
 import de.tum.cit.aet.artemis.exercise.service.ParticipationService;
 import de.tum.cit.aet.artemis.quiz.domain.QuizExercise;
-import de.tum.cit.aet.artemis.quiz.domain.QuizSubmission;
 import de.tum.cit.aet.artemis.quiz.repository.QuizExerciseRepository;
 import de.tum.cit.aet.artemis.quiz.repository.QuizSubmissionRepository;
-import de.tum.cit.aet.artemis.quiz.repository.SubmittedAnswerRepository;
 import de.tum.cit.aet.artemis.quiz.service.QuizBatchService;
 
 /**
@@ -51,26 +48,24 @@ public class QuizParticipationResource {
 
     private final ResultRepository resultRepository;
 
-    private final SubmittedAnswerRepository submittedAnswerRepository;
-
     private final QuizSubmissionRepository quizSubmissionRepository;
 
     private final QuizBatchService quizBatchService;
 
     public QuizParticipationResource(QuizExerciseRepository quizExerciseRepository, ParticipationService participationService, UserRepository userRepository,
-            ResultRepository resultRepository, SubmittedAnswerRepository submittedAnswerRepository, QuizSubmissionRepository quizSubmissionRepository,
-            QuizBatchService quizBatchService) {
+            ResultRepository resultRepository, QuizSubmissionRepository quizSubmissionRepository, QuizBatchService quizBatchService) {
         this.quizExerciseRepository = quizExerciseRepository;
         this.participationService = participationService;
         this.userRepository = userRepository;
         this.resultRepository = resultRepository;
-        this.submittedAnswerRepository = submittedAnswerRepository;
         this.quizSubmissionRepository = quizSubmissionRepository;
         this.quizBatchService = quizBatchService;
     }
 
     /**
      * POST /quiz-exercises/{exerciseId}/start-participation : start the quiz exercise participation
+     * TODO: This endpoint is also called when viewing the result of a quiz exercise.
+     * TODO: This does not make any sense, as the participation is already started.
      *
      * @param exerciseId the id of the quiz exercise
      * @return The created participation
@@ -92,17 +87,15 @@ public class QuizParticipationResource {
 
         StudentParticipation participation = participationService.startExercise(exercise, user, true);
 
-        Optional<Result> optionalResult = resultRepository.findFirstByParticipationIdAndRatedOrderByCompletionDateDesc(participation.getId(), true);
-        Result result;
-        if (optionalResult.isPresent()) {
-            var quizSubmission = (QuizSubmission) optionalResult.get().getSubmission();
-            var submittedAnswers = submittedAnswerRepository.findBySubmission(quizSubmission);
-            quizSubmission.setSubmittedAnswers(submittedAnswers);
-            result = optionalResult.get();
+        // NOTE: starting exercise prevents that two participation will exist, but ensures that a submission is created
+        var result = resultRepository.findFirstByParticipationIdAndRatedOrderByCompletionDateDesc(participation.getId(), true).orElse(new Result());
+        if (result.getId() == null) {
+            // Load the live submission of the participation
+            result.setSubmission(quizSubmissionRepository.findWithEagerSubmittedAnswersByParticipationId(participation.getId()).stream().findFirst().orElseThrow());
         }
         else {
-            result = new Result();
-            result.setSubmission(quizSubmissionRepository.findWithEagerSubmittedAnswersByParticipationId(participation.getId()).orElseThrow());
+            // Load the actual submission of the result
+            result.setSubmission(quizSubmissionRepository.findWithEagerSubmittedAnswersByResultId(result.getId()).orElseThrow());
         }
 
         participation.setResults(Set.of(result));

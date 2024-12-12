@@ -16,8 +16,6 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
@@ -29,58 +27,26 @@ import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import de.tum.cit.aet.artemis.assessment.domain.Result;
 import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.security.SecurityUtils;
-import de.tum.cit.aet.artemis.exercise.participation.util.ParticipationUtilService;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingLanguage;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingSubmission;
 import de.tum.cit.aet.artemis.programming.domain.ProjectType;
 import de.tum.cit.aet.artemis.programming.domain.build.BuildLogEntry;
-import de.tum.cit.aet.artemis.programming.repository.BuildLogStatisticsEntryRepository;
-import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseBuildConfigRepository;
 import de.tum.cit.aet.artemis.programming.service.ci.notification.dto.CommitDTO;
 import de.tum.cit.aet.artemis.programming.service.ci.notification.dto.TestCaseDTO;
 import de.tum.cit.aet.artemis.programming.service.ci.notification.dto.TestCaseDetailMessageDTO;
 import de.tum.cit.aet.artemis.programming.service.ci.notification.dto.TestResultsDTO;
-import de.tum.cit.aet.artemis.programming.test_repository.ProgrammingExerciseTestRepository;
-import de.tum.cit.aet.artemis.programming.test_repository.ProgrammingSubmissionTestRepository;
 import de.tum.cit.aet.artemis.programming.util.ProgrammingExerciseFactory;
-import de.tum.cit.aet.artemis.programming.util.ProgrammingExerciseUtilService;
-import de.tum.cit.aet.artemis.programming.util.ProgrammingSubmissionAndResultIntegrationTestService;
-import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationJenkinsGitlabTest;
 
-class ProgrammingSubmissionAndResultGitlabJenkinsIntegrationTest extends AbstractSpringIntegrationJenkinsGitlabTest {
+class ProgrammingSubmissionAndResultGitlabJenkinsIntegrationTest extends AbstractProgrammingIntegrationJenkinsGitlabTest {
 
     private static final String TEST_PREFIX = "progsubresgitlabjen";
 
-    @Value("${artemis.continuous-integration.artemis-authentication-token-value}")
-    private String ARTEMIS_AUTHENTICATION_TOKEN_VALUE;
-
-    @Autowired
-    private ProgrammingSubmissionTestRepository submissionRepository;
-
-    @Autowired
-    private ProgrammingExerciseTestRepository programmingExerciseRepository;
-
-    @Autowired
-    private ProgrammingExerciseBuildConfigRepository programmingExerciseBuildConfigRepository;
-
-    @Autowired
-    private BuildLogStatisticsEntryRepository buildLogStatisticsEntryRepository;
-
-    @Autowired
-    private ProgrammingExerciseUtilService programmingExerciseUtilService;
-
-    @Autowired
-    private ParticipationUtilService participationUtilService;
-
     private ProgrammingExercise exercise;
-
-    @Autowired
-    private ProgrammingSubmissionAndResultIntegrationTestService testService;
 
     @BeforeEach
     void setUp() {
-        jenkinsRequestMockProvider.enableMockingOfRequests(jenkinsServer);
+        jenkinsRequestMockProvider.enableMockingOfRequests(jenkinsServer, jenkinsJobPermissionsService);
         gitlabRequestMockProvider.enableMockingOfRequests();
 
         userUtilService.addUsers(TEST_PREFIX, 3, 2, 0, 2);
@@ -151,7 +117,7 @@ class ProgrammingSubmissionAndResultGitlabJenkinsIntegrationTest extends Abstrac
         assertThat(statistics.buildCount()).isEqualTo(1);
         assertThat(statistics.agentSetupDuration()).isEqualTo(90);
         assertThat(statistics.testDuration()).isEqualTo(10);
-        assertThat(statistics.scaDuration()).isNull();
+        assertThat(statistics.scaDuration()).isEqualTo(0.0);
         assertThat(statistics.totalJobDuration()).isEqualTo(110);
         assertThat(statistics.dependenciesDownloadedCount()).isEqualTo(1);
     }
@@ -190,11 +156,11 @@ class ProgrammingSubmissionAndResultGitlabJenkinsIntegrationTest extends Abstrac
 
         var statistics = buildLogStatisticsEntryRepository.findAverageBuildLogStatistics(exercise);
         assertThat(statistics.buildCount()).isEqualTo(1);
-        assertThat(statistics.agentSetupDuration()).isNull();
+        assertThat(statistics.agentSetupDuration()).isEqualTo(0.0);
         assertThat(statistics.testDuration()).isEqualTo(20);
-        assertThat(statistics.scaDuration()).isNull();
+        assertThat(statistics.scaDuration()).isEqualTo(0.0);
         assertThat(statistics.totalJobDuration()).isEqualTo(20);
-        assertThat(statistics.dependenciesDownloadedCount()).isNull();
+        assertThat(statistics.dependenciesDownloadedCount()).isEqualTo(0.0);
     }
 
     @Test
@@ -243,11 +209,11 @@ class ProgrammingSubmissionAndResultGitlabJenkinsIntegrationTest extends Abstrac
         var statistics = buildLogStatisticsEntryRepository.findAverageBuildLogStatistics(exercise);
         // Should not extract any statistics
         assertThat(statistics.buildCount()).isZero();
-        assertThat(statistics.agentSetupDuration()).isNull();
-        assertThat(statistics.testDuration()).isNull();
-        assertThat(statistics.scaDuration()).isNull();
-        assertThat(statistics.totalJobDuration()).isNull();
-        assertThat(statistics.dependenciesDownloadedCount()).isNull();
+        assertThat(statistics.agentSetupDuration()).isEqualTo(0.0);
+        assertThat(statistics.testDuration()).isEqualTo(0.0);
+        assertThat(statistics.scaDuration()).isEqualTo(0.0);
+        assertThat(statistics.totalJobDuration()).isEqualTo(0.0);
+        assertThat(statistics.dependenciesDownloadedCount()).isEqualTo(0.0);
     }
 
     private static Stream<Arguments> shouldSaveBuildLogsOnStudentParticipationArguments() {

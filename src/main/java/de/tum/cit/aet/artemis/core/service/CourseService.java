@@ -53,13 +53,18 @@ import de.tum.cit.aet.artemis.assessment.repository.ResultRepository;
 import de.tum.cit.aet.artemis.assessment.service.ComplaintService;
 import de.tum.cit.aet.artemis.assessment.service.PresentationPointsCalculationService;
 import de.tum.cit.aet.artemis.assessment.service.TutorLeaderboardService;
-import de.tum.cit.aet.artemis.atlas.repository.CompetencyRelationRepository;
-import de.tum.cit.aet.artemis.atlas.repository.CompetencyRepository;
-import de.tum.cit.aet.artemis.atlas.repository.PrerequisiteRepository;
-import de.tum.cit.aet.artemis.atlas.service.learningpath.LearningPathService;
+import de.tum.cit.aet.artemis.atlas.api.CompetencyProgressApi;
+import de.tum.cit.aet.artemis.atlas.api.CompetencyRelationApi;
+import de.tum.cit.aet.artemis.atlas.api.LearningPathApi;
+import de.tum.cit.aet.artemis.atlas.api.PrerequisitesApi;
+import de.tum.cit.aet.artemis.communication.domain.FaqState;
 import de.tum.cit.aet.artemis.communication.domain.NotificationType;
+import de.tum.cit.aet.artemis.communication.domain.Post;
 import de.tum.cit.aet.artemis.communication.domain.notification.GroupNotification;
+import de.tum.cit.aet.artemis.communication.repository.AnswerPostRepository;
+import de.tum.cit.aet.artemis.communication.repository.FaqRepository;
 import de.tum.cit.aet.artemis.communication.repository.GroupNotificationRepository;
+import de.tum.cit.aet.artemis.communication.repository.PostRepository;
 import de.tum.cit.aet.artemis.communication.repository.conversation.ConversationRepository;
 import de.tum.cit.aet.artemis.communication.service.notifications.GroupNotificationService;
 import de.tum.cit.aet.artemis.core.config.Constants;
@@ -67,6 +72,8 @@ import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.domain.DomainObject;
 import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.dto.CourseContentCount;
+import de.tum.cit.aet.artemis.core.dto.CourseDeletionSummaryDTO;
+import de.tum.cit.aet.artemis.core.dto.CourseForArchiveDTO;
 import de.tum.cit.aet.artemis.core.dto.CourseManagementDetailViewDTO;
 import de.tum.cit.aet.artemis.core.dto.DueDateStat;
 import de.tum.cit.aet.artemis.core.dto.SearchResultPageDTO;
@@ -103,6 +110,7 @@ import de.tum.cit.aet.artemis.lecture.service.LectureService;
 import de.tum.cit.aet.artemis.plagiarism.domain.PlagiarismCase;
 import de.tum.cit.aet.artemis.plagiarism.repository.PlagiarismCaseRepository;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
+import de.tum.cit.aet.artemis.programming.repository.BuildJobRepository;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseRepository;
 import de.tum.cit.aet.artemis.tutorialgroup.repository.TutorialGroupNotificationRepository;
 import de.tum.cit.aet.artemis.tutorialgroup.repository.TutorialGroupRepository;
@@ -117,12 +125,14 @@ public class CourseService {
 
     private static final Logger log = LoggerFactory.getLogger(CourseService.class);
 
+    private final FaqRepository faqRepository;
+
     @Value("${artemis.course-archives-path}")
     private Path courseArchivesDirPath;
 
     private final TutorialGroupChannelManagementService tutorialGroupChannelManagementService;
 
-    private final CompetencyRelationRepository competencyRelationRepository;
+    private final CompetencyRelationApi competencyRelationApi;
 
     private final ExerciseService exerciseService;
 
@@ -152,9 +162,9 @@ public class CourseService {
 
     private final AuditEventRepository auditEventRepository;
 
-    private final CompetencyRepository competencyRepository;
+    private final CompetencyProgressApi competencyProgressApi;
 
-    private final PrerequisiteRepository prerequisiteRepository;
+    private final PrerequisitesApi prerequisitesApi;
 
     private final GradingScaleRepository gradingScaleRepository;
 
@@ -190,7 +200,7 @@ public class CourseService {
 
     private final ConversationRepository conversationRepository;
 
-    private final LearningPathService learningPathService;
+    private final LearningPathApi learningPathApi;
 
     private final Optional<IrisSettingsService> irisSettingsService;
 
@@ -198,19 +208,26 @@ public class CourseService {
 
     private final TutorialGroupNotificationRepository tutorialGroupNotificationRepository;
 
+    private final PostRepository postRepository;
+
+    private final AnswerPostRepository answerPostRepository;
+
+    private final BuildJobRepository buildJobRepository;
+
     public CourseService(CourseRepository courseRepository, ExerciseService exerciseService, ExerciseDeletionService exerciseDeletionService,
             AuthorizationCheckService authCheckService, UserRepository userRepository, LectureService lectureService, GroupNotificationRepository groupNotificationRepository,
             ExerciseGroupRepository exerciseGroupRepository, AuditEventRepository auditEventRepository, UserService userService, ExamDeletionService examDeletionService,
-            CompetencyRepository competencyRepository, GroupNotificationService groupNotificationService, ExamRepository examRepository,
+            CompetencyProgressApi competencyProgressApi, GroupNotificationService groupNotificationService, ExamRepository examRepository,
             CourseExamExportService courseExamExportService, GradingScaleRepository gradingScaleRepository, StatisticsRepository statisticsRepository,
             StudentParticipationRepository studentParticipationRepository, TutorLeaderboardService tutorLeaderboardService, RatingRepository ratingRepository,
             ComplaintService complaintService, ComplaintRepository complaintRepository, ResultRepository resultRepository, ComplaintResponseRepository complaintResponseRepository,
             SubmissionRepository submissionRepository, ProgrammingExerciseRepository programmingExerciseRepository, ExerciseRepository exerciseRepository,
             ParticipantScoreRepository participantScoreRepository, PresentationPointsCalculationService presentationPointsCalculationService,
             TutorialGroupRepository tutorialGroupRepository, PlagiarismCaseRepository plagiarismCaseRepository, ConversationRepository conversationRepository,
-            LearningPathService learningPathService, Optional<IrisSettingsService> irisSettingsService, LectureRepository lectureRepository,
+            LearningPathApi learningPathApi, Optional<IrisSettingsService> irisSettingsService, LectureRepository lectureRepository,
             TutorialGroupNotificationRepository tutorialGroupNotificationRepository, TutorialGroupChannelManagementService tutorialGroupChannelManagementService,
-            PrerequisiteRepository prerequisiteRepository, CompetencyRelationRepository competencyRelationRepository) {
+            PrerequisitesApi prerequisitesApi, CompetencyRelationApi competencyRelationApi, PostRepository postRepository, AnswerPostRepository answerPostRepository,
+            BuildJobRepository buildJobRepository, FaqRepository faqRepository) {
         this.courseRepository = courseRepository;
         this.exerciseService = exerciseService;
         this.exerciseDeletionService = exerciseDeletionService;
@@ -222,7 +239,7 @@ public class CourseService {
         this.auditEventRepository = auditEventRepository;
         this.userService = userService;
         this.examDeletionService = examDeletionService;
-        this.competencyRepository = competencyRepository;
+        this.competencyProgressApi = competencyProgressApi;
         this.groupNotificationService = groupNotificationService;
         this.examRepository = examRepository;
         this.courseExamExportService = courseExamExportService;
@@ -243,13 +260,17 @@ public class CourseService {
         this.tutorialGroupRepository = tutorialGroupRepository;
         this.plagiarismCaseRepository = plagiarismCaseRepository;
         this.conversationRepository = conversationRepository;
-        this.learningPathService = learningPathService;
+        this.learningPathApi = learningPathApi;
         this.irisSettingsService = irisSettingsService;
         this.lectureRepository = lectureRepository;
         this.tutorialGroupNotificationRepository = tutorialGroupNotificationRepository;
         this.tutorialGroupChannelManagementService = tutorialGroupChannelManagementService;
-        this.prerequisiteRepository = prerequisiteRepository;
-        this.competencyRelationRepository = competencyRelationRepository;
+        this.prerequisitesApi = prerequisitesApi;
+        this.competencyRelationApi = competencyRelationApi;
+        this.buildJobRepository = buildJobRepository;
+        this.postRepository = postRepository;
+        this.answerPostRepository = answerPostRepository;
+        this.faqRepository = faqRepository;
     }
 
     /**
@@ -323,7 +344,7 @@ public class CourseService {
      * @param user     the user entity
      * @return the course including exercises, lectures, exams, competencies and tutorial groups (filtered for given user)
      */
-    public Course findOneWithExercisesAndLecturesAndExamsAndCompetenciesAndTutorialGroupsForUser(Long courseId, User user) {
+    public Course findOneWithExercisesAndLecturesAndExamsAndCompetenciesAndTutorialGroupsAndFaqForUser(Long courseId, User user) {
         Course course = courseRepository.findByIdWithLecturesElseThrow(courseId);
         // Load exercises with categories separately because this is faster than loading them with lectures and exam above (the query would become too complex)
         course.setExercises(exerciseRepository.findByCourseIdWithCategories(course.getId()));
@@ -333,11 +354,14 @@ public class CourseService {
         // TODO: in the future, we only want to know if lectures exist, the actual lectures will be loaded when the user navigates into the lecture
         course.setLectures(lectureService.filterVisibleLecturesWithActiveAttachments(course, course.getLectures(), user));
         // NOTE: in this call we only want to know if competencies exist in the course, we will load them when the user navigates into them
-        course.setNumberOfCompetencies(competencyRepository.countByCourse(course));
+        course.setNumberOfCompetencies(competencyProgressApi.countByCourse(course));
         // NOTE: in this call we only want to know if prerequisites exist in the course, we will load them when the user navigates into them
-        course.setNumberOfPrerequisites(prerequisiteRepository.countByCourse(course));
+        course.setNumberOfPrerequisites(prerequisitesApi.countByCourse(course));
         // NOTE: in this call we only want to know if tutorial groups exist in the course, we will load them when the user navigates into them
         course.setNumberOfTutorialGroups(tutorialGroupRepository.countByCourse(course));
+        if (course.isFaqEnabled()) {
+            course.setFaqs(faqRepository.findAllByCourseIdAndFaqState(courseId, FaqState.ACCEPTED));
+        }
         if (authCheckService.isOnlyStudentInCourse(course, user)) {
             course.setExams(examRepository.filterVisibleExams(course.getExams()));
         }
@@ -441,6 +465,22 @@ public class CourseService {
     }
 
     /**
+     * Get the course deletion summary for the given course.
+     *
+     * @param course the course for which to get the deletion summary
+     * @return the course deletion summary
+     */
+    public CourseDeletionSummaryDTO getDeletionSummary(Course course) {
+        List<Long> programmingExerciseIds = course.getExercises().stream().map(Exercise::getId).toList();
+        long numberOfBuilds = buildJobRepository.countBuildJobsByExerciseIds(programmingExerciseIds);
+
+        List<Post> posts = postRepository.findAllByCourseId(course.getId());
+        long numberOfCommunicationPosts = posts.size();
+        long numberOfAnswerPosts = answerPostRepository.countAnswerPostsByPostIdIn(posts.stream().map(Post::getId).toList());
+        return new CourseDeletionSummaryDTO(numberOfBuilds, numberOfCommunicationPosts, numberOfAnswerPosts);
+    }
+
+    /**
      * Deletes all elements associated with the course including:
      * <ul>
      * <li>The Course</li>
@@ -467,6 +507,7 @@ public class CourseService {
         deleteDefaultGroups(course);
         deleteExamsOfCourse(course);
         deleteGradingScaleOfCourse(course);
+        deleteFaqsOfCourse(course);
         irisSettingsService.ifPresent(iss -> iss.deleteSettingsFor(course));
         courseRepository.deleteById(course.getId());
         log.debug("Successfully deleted course {}.", course.getTitle());
@@ -537,9 +578,13 @@ public class CourseService {
     }
 
     private void deleteCompetenciesOfCourse(Course course) {
-        competencyRelationRepository.deleteAllByCourseId(course.getId());
-        prerequisiteRepository.deleteAll(course.getPrerequisites());
-        competencyRepository.deleteAll(course.getCompetencies());
+        competencyRelationApi.deleteAllByCourseId(course.getId());
+        prerequisitesApi.deleteAll(course.getPrerequisites());
+        competencyProgressApi.deleteAll(course.getCompetencies());
+    }
+
+    private void deleteFaqsOfCourse(Course course) {
+        faqRepository.deleteAllByCourseId(course.getId());
     }
 
     /**
@@ -573,7 +618,7 @@ public class CourseService {
         authCheckService.checkUserAllowedToEnrollInCourseElseThrow(user, course);
         userService.addUserToGroup(user, course.getStudentGroupName());
         if (course.getLearningPathsEnabled()) {
-            learningPathService.generateLearningPathForUser(course, user);
+            learningPathApi.generateLearningPathForUser(course, user);
         }
         final var auditEvent = new AuditEvent(user.getLogin(), Constants.ENROLL_IN_COURSE, "course=" + course.getTitle());
         auditEventRepository.add(auditEvent);
@@ -606,7 +651,7 @@ public class CourseService {
                 notFoundStudentsDTOs.add(studentDto);
             }
             else if (courseGroupRole == Role.STUDENT && course.getLearningPathsEnabled()) {
-                learningPathService.generateLearningPathForUser(course, optionalStudent.get());
+                learningPathApi.generateLearningPathForUser(course, optionalStudent.get());
             }
         }
 
@@ -637,6 +682,7 @@ public class CourseService {
         var user = userRepository.getUserWithGroupsAndAuthorities();
         boolean isAdmin = authCheckService.isAdmin(user);
         if (isAdmin && !onlyActive) {
+            // TODO: we should avoid using findAll() here, as it might return a huge amount of data
             return courseRepository.findAll();
         }
 
@@ -650,6 +696,18 @@ public class CourseService {
         }
 
         return courseRepository.findAllCoursesByManagementGroupNames(userGroups);
+    }
+
+    /**
+     * Retrieves all inactive courses from non-null semesters that the current user is enrolled in
+     * for the course archive.
+     *
+     * @return A list of courses for the course archive.
+     */
+    public Set<CourseForArchiveDTO> getAllCoursesForCourseArchive() {
+        var user = userRepository.getUserWithGroupsAndAuthorities();
+        boolean isAdmin = authCheckService.isAdmin(user);
+        return courseRepository.findInactiveCoursesForUserRolesWithNonNullSemester(isAdmin, user.getGroups(), ZonedDateTime.now());
     }
 
     /**

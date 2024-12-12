@@ -83,6 +83,23 @@ export class FileService {
     }
 
     /**
+     * Downloads the file from the provided downloadUrl and the attachment name
+     *
+     * @param downloadUrl url that is stored in the attachment model
+     * @param downloadName the name given to the attachment
+     */
+    downloadFileByAttachmentName(downloadUrl: string, downloadName: string) {
+        const downloadUrlComponents = downloadUrl.split('/');
+        // take the last element
+        const extension = downloadUrlComponents.pop()!.split('.').pop();
+        const restOfUrl = downloadUrlComponents.join('/');
+        const normalizedDownloadUrl = restOfUrl + '/' + encodeURIComponent(downloadName + '.' + extension);
+        const newWindow = window.open('about:blank');
+        newWindow!.location.href = normalizedDownloadUrl;
+        return newWindow;
+    }
+
+    /**
      * Downloads the merged PDF file.
      *
      * @param lectureId the id of the lecture
@@ -115,5 +132,13 @@ export class FileService {
             name = uuid() + '.' + extension;
         } while (mapOfFiles && mapOfFiles.has(name));
         return name;
+    }
+
+    /**
+     * Removes the prefix from the file name, and replaces underscore with spaces
+     * @param link
+     */
+    replaceAttachmentPrefixAndUnderscores(link: string): string {
+        return link.replace(/AttachmentUnit_\d{4}-\d{2}-\d{2}T\d{2}-\d{2}-\d{2}-\d{3}_/, '').replace(/_/g, ' ');
     }
 }

@@ -21,7 +21,7 @@ import de.tum.cit.aet.artemis.exercise.domain.Submission;
 import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
 import de.tum.cit.aet.artemis.exercise.participation.util.ParticipationFactory;
 import de.tum.cit.aet.artemis.exercise.participation.util.ParticipationUtilService;
-import de.tum.cit.aet.artemis.exercise.repository.ExerciseRepository;
+import de.tum.cit.aet.artemis.exercise.repository.ExerciseTestRepository;
 import de.tum.cit.aet.artemis.exercise.team.TeamUtilService;
 import de.tum.cit.aet.artemis.exercise.test_repository.StudentParticipationTestRepository;
 import de.tum.cit.aet.artemis.exercise.test_repository.SubmissionTestRepository;
@@ -47,7 +47,7 @@ public class PlagiarismUtilService {
     private CourseTestRepository courseRepo;
 
     @Autowired
-    private ExerciseRepository exerciseRepo;
+    private ExerciseTestRepository exerciseRepository;
 
     @Autowired
     private StudentParticipationTestRepository studentParticipationRepo;
@@ -76,7 +76,7 @@ public class PlagiarismUtilService {
         exercise.setMode(mode);
         course.addExercises(exercise);
         courseRepo.save(course);
-        return exerciseRepo.save(exercise);
+        return exerciseRepository.save(exercise);
     }
 
     private ModelingExercise createModelingExercise(String userPrefix, int studentsAmount, ExerciseMode mode) {
@@ -85,7 +85,7 @@ public class PlagiarismUtilService {
         exercise.setMode(mode);
         course.addExercises(exercise);
         courseRepo.save(course);
-        return exerciseRepo.save(exercise);
+        return exerciseRepository.save(exercise);
     }
 
     private StudentParticipation saveParticipationAndAddSubmission(StudentParticipation participation, Submission submission) {
@@ -115,7 +115,7 @@ public class PlagiarismUtilService {
             saveParticipationAndAddSubmission(participation, submission);
             exercise.addParticipation(participation);
         }
-        exerciseRepo.save(exercise);
+        exerciseRepository.save(exercise);
         return exercise.getId();
     }
 
@@ -137,7 +137,7 @@ public class PlagiarismUtilService {
             saveParticipationAndAddSubmission(participation, submission);
             exercise.addParticipation(participation);
         }
-        exerciseRepo.save(exercise);
+        exerciseRepository.save(exercise);
         return exercise.getId();
     }
 
@@ -159,7 +159,7 @@ public class PlagiarismUtilService {
             saveParticipationAndAddSubmission(participation, submission);
             exercise.addParticipation(participation);
         }
-        exerciseRepo.save(exercise);
+        exerciseRepository.save(exercise);
         return exercise.getId();
     }
 
@@ -181,7 +181,7 @@ public class PlagiarismUtilService {
             saveParticipationAndAddSubmission(participation, submission);
             exercise.addParticipation(participation);
         }
-        exerciseRepo.save(exercise);
+        exerciseRepository.save(exercise);
         return exercise.getId();
     }
 

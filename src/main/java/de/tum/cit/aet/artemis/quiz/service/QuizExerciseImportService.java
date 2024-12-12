@@ -5,6 +5,7 @@ import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 import java.io.IOException;
 import java.net.URI;
 import java.nio.file.Path;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -23,7 +24,7 @@ import org.springframework.web.multipart.MultipartFile;
 import de.tum.cit.aet.artemis.assessment.repository.ExampleSubmissionRepository;
 import de.tum.cit.aet.artemis.assessment.repository.ResultRepository;
 import de.tum.cit.aet.artemis.assessment.service.FeedbackService;
-import de.tum.cit.aet.artemis.atlas.service.competency.CompetencyProgressService;
+import de.tum.cit.aet.artemis.atlas.api.CompetencyProgressApi;
 import de.tum.cit.aet.artemis.communication.service.conversation.ChannelService;
 import de.tum.cit.aet.artemis.core.service.FilePathService;
 import de.tum.cit.aet.artemis.core.service.FileService;
@@ -55,16 +56,16 @@ public class QuizExerciseImportService extends ExerciseImportService {
 
     private final ChannelService channelService;
 
-    private final CompetencyProgressService competencyProgressService;
+    private final CompetencyProgressApi competencyProgressApi;
 
     public QuizExerciseImportService(QuizExerciseService quizExerciseService, FileService fileService, ExampleSubmissionRepository exampleSubmissionRepository,
             SubmissionRepository submissionRepository, ResultRepository resultRepository, ChannelService channelService, FeedbackService feedbackService,
-            CompetencyProgressService competencyProgressService) {
+            CompetencyProgressApi competencyProgressApi) {
         super(exampleSubmissionRepository, submissionRepository, resultRepository, feedbackService);
         this.quizExerciseService = quizExerciseService;
         this.fileService = fileService;
         this.channelService = channelService;
-        this.competencyProgressService = competencyProgressService;
+        this.competencyProgressApi = competencyProgressApi;
     }
 
     /**
@@ -89,7 +90,7 @@ public class QuizExerciseImportService extends ExerciseImportService {
 
         channelService.createExerciseChannel(newQuizExercise, Optional.ofNullable(importedExercise.getChannelName()));
 
-        competencyProgressService.updateProgressByLearningObjectAsync(newQuizExercise);
+        competencyProgressApi.updateProgressByLearningObjectAsync(newQuizExercise);
         if (files != null) {
             newQuizExercise = quizExerciseService.save(quizExerciseService.uploadNewFilesToNewImportedQuiz(newQuizExercise, files));
         }
@@ -113,7 +114,8 @@ public class QuizExerciseImportService extends ExerciseImportService {
         newExercise.setRandomizeQuestionOrder(importedExercise.isRandomizeQuestionOrder());
         newExercise.setAllowedNumberOfAttempts(importedExercise.getAllowedNumberOfAttempts());
         newExercise.setRemainingNumberOfAttempts(importedExercise.getRemainingNumberOfAttempts());
-        newExercise.setIsOpenForPractice(importedExercise.isIsOpenForPractice());
+        // The new exercise should not immediately be open for practice
+        newExercise.setIsOpenForPractice(false);
         newExercise.setQuizMode(importedExercise.getQuizMode());
         newExercise.setDuration(importedExercise.getDuration());
         return newExercise;
@@ -128,6 +130,7 @@ public class QuizExerciseImportService extends ExerciseImportService {
     private void copyQuizQuestions(QuizExercise sourceExercise, QuizExercise newExercise) {
         log.debug("Copying the QuizQuestions to new QuizExercise: {}", newExercise);
 
+        List<QuizQuestion> newQuestions = new ArrayList<>();
         for (QuizQuestion quizQuestion : sourceExercise.getQuizQuestions()) {
             quizQuestion.setId(null);
             quizQuestion.setQuizQuestionStatistic(null);
@@ -141,15 +144,21 @@ public class QuizExerciseImportService extends ExerciseImportService {
                 setUpShortAnswerQuestionForImport(saQuestion);
             }
             quizQuestion.setExercise(newExercise);
+
+            newQuestions.add(quizQuestion);
         }
-        newExercise.setQuizQuestions(sourceExercise.getQuizQuestions());
+        newExercise.setQuizQuestions(newQuestions);
     }
 
     private void setUpMultipleChoiceQuestionForImport(MultipleChoiceQuestion mcQuestion) {
+        List<AnswerOption> newAnswerOptions = new ArrayList<>();
         for (AnswerOption answerOption : mcQuestion.getAnswerOptions()) {
             answerOption.setId(null);
             answerOption.setQuestion(mcQuestion);
+
+            newAnswerOptions.add(answerOption);
         }
+        mcQuestion.setAnswerOptions(newAnswerOptions);
     }
 
     private void setUpDragAndDropQuestionForImport(DragAndDropQuestion dndQuestion) {
@@ -171,19 +180,29 @@ public class QuizExerciseImportService extends ExerciseImportService {
             log.warn("BackgroundFilePath of DragAndDropQuestion {} is null", dndQuestion.getId());
         }
 
+        List<DropLocation> newDropLocations = new ArrayList<>();
         for (DropLocation dropLocation : dndQuestion.getDropLocations()) {
             dropLocation.setId(null);
             dropLocation.setQuestion(dndQuestion);
+            dropLocation.setMappings(new HashSet<>());
+
+            newDropLocations.add(dropLocation);
         }
+        dndQuestion.setDropLocations(newDropLocations);
 
         setUpDragItemsForImport(dndQuestion);
         setUpDragAndDropMappingsForImport(dndQuestion);
     }
 
     private void setUpDragItemsForImport(DragAndDropQuestion dndQuestion) {
+        List<DragItem> newDragItems = new ArrayList<>();
         for (DragItem dragItem : dndQuestion.getDragItems()) {
             dragItem.setId(null);
             dragItem.setQuestion(dndQuestion);
+            dragItem.setMappings(new HashSet<>());
+
+            newDragItems.add(dragItem);
+
             if (dragItem.getPictureFilePath() == null) {
                 continue;
             }
@@ -201,9 +220,11 @@ public class QuizExerciseImportService extends ExerciseImportService {
                 dragItem.setPictureFilePath(FilePathService.publicPathForActualPathOrThrow(newDragItemPath, null).toString());
             }
         }
+        dndQuestion.setDragItems(newDragItems);
     }
 
     private void setUpDragAndDropMappingsForImport(DragAndDropQuestion dndQuestion) {
+        List<DragAndDropMapping> newDragAndDropMappings = new ArrayList<>();
         for (DragAndDropMapping dragAndDropMapping : dndQuestion.getCorrectMappings()) {
             dragAndDropMapping.setId(null);
             dragAndDropMapping.setQuestion(dndQuestion);
@@ -213,18 +234,34 @@ public class QuizExerciseImportService extends ExerciseImportService {
             if (dragAndDropMapping.getDropLocationIndex() != null) {
                 dragAndDropMapping.setDropLocation(dndQuestion.getDropLocations().get(dragAndDropMapping.getDropLocationIndex()));
             }
+
+            newDragAndDropMappings.add(dragAndDropMapping);
         }
+        dndQuestion.setCorrectMappings(newDragAndDropMappings);
     }
 
     private void setUpShortAnswerQuestionForImport(ShortAnswerQuestion saQuestion) {
+        List<ShortAnswerSpot> newShortAnswerSpots = new ArrayList<>();
         for (ShortAnswerSpot shortAnswerSpot : saQuestion.getSpots()) {
             shortAnswerSpot.setId(null);
             shortAnswerSpot.setQuestion(saQuestion);
+            shortAnswerSpot.setMappings(new HashSet<>());
+
+            newShortAnswerSpots.add(shortAnswerSpot);
         }
+        saQuestion.setSpots(newShortAnswerSpots);
+
+        List<ShortAnswerSolution> newShortAnswerSolutions = new ArrayList<>();
         for (ShortAnswerSolution shortAnswerSolution : saQuestion.getSolutions()) {
             shortAnswerSolution.setId(null);
             shortAnswerSolution.setQuestion(saQuestion);
+            shortAnswerSolution.setMappings(new HashSet<>());
+
+            newShortAnswerSolutions.add(shortAnswerSolution);
         }
+        saQuestion.setSolutions(newShortAnswerSolutions);
+
+        List<ShortAnswerMapping> newShortAnswerMappings = new ArrayList<>();
         for (ShortAnswerMapping shortAnswerMapping : saQuestion.getCorrectMappings()) {
             shortAnswerMapping.setId(null);
             shortAnswerMapping.setQuestion(saQuestion);
@@ -234,7 +271,9 @@ public class QuizExerciseImportService extends ExerciseImportService {
             if (shortAnswerMapping.getShortAnswerSpotIndex() != null) {
                 shortAnswerMapping.setSpot(saQuestion.getSpots().get(shortAnswerMapping.getShortAnswerSpotIndex()));
             }
+            newShortAnswerMappings.add(shortAnswerMapping);
         }
+        saQuestion.setCorrectMappings(newShortAnswerMappings);
     }
 
     /**

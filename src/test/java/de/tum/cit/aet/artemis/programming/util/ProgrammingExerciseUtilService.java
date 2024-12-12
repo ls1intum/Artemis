@@ -42,6 +42,7 @@ import de.tum.cit.aet.artemis.exam.repository.ExamRepository;
 import de.tum.cit.aet.artemis.exam.util.ExamUtilService;
 import de.tum.cit.aet.artemis.exercise.domain.InitializationState;
 import de.tum.cit.aet.artemis.exercise.domain.SubmissionType;
+import de.tum.cit.aet.artemis.exercise.domain.Team;
 import de.tum.cit.aet.artemis.exercise.domain.participation.Participation;
 import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
 import de.tum.cit.aet.artemis.exercise.participation.util.ParticipationFactory;
@@ -74,8 +75,8 @@ import de.tum.cit.aet.artemis.programming.repository.TemplateProgrammingExercise
 import de.tum.cit.aet.artemis.programming.repository.hestia.CodeHintRepository;
 import de.tum.cit.aet.artemis.programming.repository.hestia.ExerciseHintRepository;
 import de.tum.cit.aet.artemis.programming.repository.hestia.ProgrammingExerciseSolutionEntryRepository;
-import de.tum.cit.aet.artemis.programming.repository.hestia.ProgrammingExerciseTaskRepository;
 import de.tum.cit.aet.artemis.programming.service.GitService;
+import de.tum.cit.aet.artemis.programming.test_repository.ProgrammingExerciseTaskTestRepository;
 import de.tum.cit.aet.artemis.programming.test_repository.ProgrammingExerciseTestCaseTestRepository;
 import de.tum.cit.aet.artemis.programming.test_repository.ProgrammingExerciseTestRepository;
 import de.tum.cit.aet.artemis.programming.test_repository.ProgrammingSubmissionTestRepository;
@@ -92,6 +93,9 @@ public class ProgrammingExerciseUtilService {
 
     @Value("${artemis.version-control.default-branch:main}")
     protected String defaultBranch;
+
+    @Value("${artemis.version-control.url}")
+    protected String artemisVersionControlUrl;
 
     @Autowired
     private TemplateProgrammingExerciseParticipationRepository templateProgrammingExerciseParticipationRepo;
@@ -142,7 +146,7 @@ public class ProgrammingExerciseUtilService {
     private ExerciseHintRepository exerciseHintRepository;
 
     @Autowired
-    private ProgrammingExerciseTaskRepository programmingExerciseTaskRepository;
+    private ProgrammingExerciseTaskTestRepository programmingExerciseTaskRepository;
 
     @Autowired
     private ProgrammingExerciseSolutionEntryRepository solutionEntryRepository;
@@ -168,15 +172,19 @@ public class ProgrammingExerciseUtilService {
     @Autowired
     private GitService gitService;
 
+    public ProgrammingExercise createSampleProgrammingExercise() {
+        return createSampleProgrammingExercise("Title", "Shortname");
+    }
+
     /**
      * Create an example programming exercise
      *
      * @return the created programming exercise
      */
-    public ProgrammingExercise createSampleProgrammingExercise() {
+    public ProgrammingExercise createSampleProgrammingExercise(String title, String shortName) {
         var programmingExercise = new ProgrammingExercise();
-        programmingExercise.setTitle("Title");
-        programmingExercise.setShortName("Shortname");
+        programmingExercise.setTitle(title);
+        programmingExercise.setShortName(shortName);
         programmingExercise.setProgrammingLanguage(ProgrammingLanguage.JAVA);
         programmingExercise.setMaxPoints(10.0);
         programmingExercise.setBonusPoints(0.0);
@@ -197,7 +205,7 @@ public class ProgrammingExerciseUtilService {
         TemplateProgrammingExerciseParticipation participation = new TemplateProgrammingExerciseParticipation();
         participation.setProgrammingExercise(exercise);
         participation.setBuildPlanId(exercise.generateBuildPlanId(BuildPlanType.TEMPLATE));
-        participation.setRepositoryUri(String.format("http://some.test.url/scm/%s/%s.git", exercise.getProjectKey(), repoName));
+        participation.setRepositoryUri(String.format("%s/git/%s/%s.git", artemisVersionControlUrl, exercise.getProjectKey(), repoName));
         participation.setInitializationState(InitializationState.INITIALIZED);
         templateProgrammingExerciseParticipationRepo.save(participation);
         exercise.setTemplateParticipation(participation);
@@ -215,7 +223,7 @@ public class ProgrammingExerciseUtilService {
         SolutionProgrammingExerciseParticipation participation = new SolutionProgrammingExerciseParticipation();
         participation.setProgrammingExercise(exercise);
         participation.setBuildPlanId(exercise.generateBuildPlanId(BuildPlanType.SOLUTION));
-        participation.setRepositoryUri(String.format("http://some.test.url/scm/%s/%s.git", exercise.getProjectKey(), repoName));
+        participation.setRepositoryUri(String.format("%s/git/%s/%s.git", artemisVersionControlUrl, exercise.getProjectKey(), repoName));
         participation.setInitializationState(InitializationState.INITIALIZED);
         solutionProgrammingExerciseParticipationRepo.save(participation);
         exercise.setSolutionParticipation(participation);
@@ -729,6 +737,21 @@ public class ProgrammingExerciseUtilService {
      */
     public ProgrammingSubmission addProgrammingSubmission(ProgrammingExercise exercise, ProgrammingSubmission submission, String login) {
         StudentParticipation participation = participationUtilService.addStudentParticipationForProgrammingExercise(exercise, login);
+        submission.setParticipation(participation);
+        submission = programmingSubmissionRepo.save(submission);
+        return submission;
+    }
+
+    /**
+     * Adds programming submission to provided programming exercise. The provided login is used to access or create a participation.
+     *
+     * @param exercise   The exercise to which the submission should be added.
+     * @param submission The submission which should be added to the programming exercise.
+     * @param team       The login of the user used to access or create an exercise participation.
+     * @return The created programming submission.
+     */
+    public ProgrammingSubmission addProgrammingSubmissionToTeamExercise(ProgrammingExercise exercise, ProgrammingSubmission submission, Team team) {
+        StudentParticipation participation = participationUtilService.addTeamParticipationForProgrammingExercise(exercise, team);
         submission.setParticipation(participation);
         submission = programmingSubmissionRepo.save(submission);
         return submission;

@@ -38,7 +38,7 @@ import org.springframework.web.bind.annotation.RequestPart;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
 
-import de.tum.cit.aet.artemis.atlas.service.competency.CompetencyProgressService;
+import de.tum.cit.aet.artemis.atlas.api.CompetencyProgressApi;
 import de.tum.cit.aet.artemis.communication.domain.conversation.Channel;
 import de.tum.cit.aet.artemis.communication.repository.conversation.ChannelRepository;
 import de.tum.cit.aet.artemis.communication.service.conversation.ChannelService;
@@ -148,7 +148,7 @@ public class QuizExerciseResource {
 
     private final ChannelRepository channelRepository;
 
-    private final CompetencyProgressService competencyProgressService;
+    private final CompetencyProgressApi competencyProgressApi;
 
     public QuizExerciseResource(QuizExerciseService quizExerciseService, QuizMessagingService quizMessagingService, QuizExerciseRepository quizExerciseRepository,
             UserRepository userRepository, CourseService courseService, ExerciseService exerciseService, ExerciseDeletionService exerciseDeletionService,
@@ -156,7 +156,7 @@ public class QuizExerciseResource {
             QuizExerciseImportService quizExerciseImportService, AuthorizationCheckService authCheckService, GroupNotificationService groupNotificationService,
             GroupNotificationScheduleService groupNotificationScheduleService, StudentParticipationRepository studentParticipationRepository, QuizBatchService quizBatchService,
             QuizBatchRepository quizBatchRepository, FileService fileService, ChannelService channelService, ChannelRepository channelRepository,
-            QuizSubmissionService quizSubmissionService, QuizResultService quizResultService, CompetencyProgressService competencyProgressService) {
+            QuizSubmissionService quizSubmissionService, QuizResultService quizResultService, CompetencyProgressApi competencyProgressApi) {
         this.quizExerciseService = quizExerciseService;
         this.quizMessagingService = quizMessagingService;
         this.quizExerciseRepository = quizExerciseRepository;
@@ -179,7 +179,7 @@ public class QuizExerciseResource {
         this.channelRepository = channelRepository;
         this.quizSubmissionService = quizSubmissionService;
         this.quizResultService = quizResultService;
-        this.competencyProgressService = competencyProgressService;
+        this.competencyProgressApi = competencyProgressApi;
     }
 
     /**
@@ -241,7 +241,7 @@ public class QuizExerciseResource {
 
         channelService.createExerciseChannel(result, Optional.ofNullable(quizExercise.getChannelName()));
 
-        competencyProgressService.updateProgressByLearningObjectAsync(result);
+        competencyProgressApi.updateProgressByLearningObjectAsync(result);
 
         return ResponseEntity.created(new URI("/api/quiz-exercises/" + result.getId()))
                 .headers(HeaderUtil.createEntityCreationAlert(applicationName, true, ENTITY_NAME, result.getId().toString())).body(result);
@@ -300,13 +300,15 @@ public class QuizExerciseResource {
 
         Channel updatedChannel = channelService.updateExerciseChannel(originalQuiz, quizExercise);
 
+        exerciseService.reconnectCompetencyExerciseLinks(quizExercise);
+
         quizExercise = quizExerciseService.save(quizExercise);
         exerciseService.logUpdate(quizExercise, quizExercise.getCourseViaExerciseGroupOrCourseMember(), user);
         groupNotificationScheduleService.checkAndCreateAppropriateNotificationsWhenUpdatingExercise(originalQuiz, quizExercise, notificationText);
         if (updatedChannel != null) {
             quizExercise.setChannelName(updatedChannel.getName());
         }
-        competencyProgressService.updateProgressForUpdatedLearningObjectAsync(originalQuiz, Optional.of(quizExercise));
+        competencyProgressApi.updateProgressForUpdatedLearningObjectAsync(originalQuiz, Optional.of(quizExercise));
 
         return ResponseEntity.ok(quizExercise);
     }
@@ -371,7 +373,7 @@ public class QuizExerciseResource {
         // TODO: Split this route in two: One for normal and one for exam exercises
         log.info("REST request to get quiz exercise : {}", quizExerciseId);
         var user = userRepository.getUserWithGroupsAndAuthorities();
-        var quizExercise = quizExerciseRepository.findByIdWithQuestionsAndStatisticsAndCompetenciesElseThrow(quizExerciseId);
+        var quizExercise = quizExerciseRepository.findByIdWithQuestionsAndStatisticsAndCompetenciesAndBatchesAndGradingCriteriaElseThrow(quizExerciseId);
         if (quizExercise.isExamExercise()) {
             authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.EDITOR, quizExercise, user);
             studentParticipationRepository.checkTestRunsExist(quizExercise);

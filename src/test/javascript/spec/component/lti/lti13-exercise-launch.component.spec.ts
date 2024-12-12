@@ -2,8 +2,8 @@ import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testin
 import { ArtemisTestModule } from '../../test.module';
 import { Lti13ExerciseLaunchComponent } from 'app/lti/lti13-exercise-launch.component';
 import { ActivatedRoute, ActivatedRouteSnapshot, Router, convertToParamMap } from '@angular/router';
-import { HttpClientTestingModule } from '@angular/common/http/testing';
-import { HttpClient } from '@angular/common/http';
+import { provideHttpClientTesting } from '@angular/common/http/testing';
+import { HttpClient, provideHttpClient } from '@angular/common/http';
 import { of, throwError } from 'rxjs';
 import { LoginService } from 'app/core/login/login.service';
 import { AccountService } from 'app/core/auth/account.service';
@@ -32,8 +32,10 @@ describe('Lti13ExerciseLaunchComponent', () => {
         window.sessionStorage.setItem('state', 'state');
 
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule, HttpClientTestingModule],
+            imports: [ArtemisTestModule],
             providers: [
+                provideHttpClient(),
+                provideHttpClientTesting(),
                 { provide: ActivatedRoute, useValue: route },
                 { provide: LoginService, useValue: loginService },
                 { provide: AccountService, useClass: MockAccountService },

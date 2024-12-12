@@ -9,8 +9,11 @@ import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_BUILDAGENT;
 import java.io.IOException;
 import java.net.URISyntaxException;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.DirectoryStream;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.time.Duration;
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.List;
@@ -27,7 +30,10 @@ import org.eclipse.jgit.api.errors.GitAPIException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.context.event.ApplicationReadyEvent;
 import org.springframework.context.annotation.Profile;
+import org.springframework.context.event.EventListener;
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 
 import com.github.dockerjava.api.command.CreateContainerResponse;
@@ -71,12 +77,46 @@ public class BuildJobExecutionService {
     @Value("${artemis.version-control.default-branch:main}")
     private String defaultBranch;
 
+    private static final Duration TEMP_DIR_RETENTION_PERIOD = Duration.ofMinutes(5);
+
     public BuildJobExecutionService(BuildJobContainerService buildJobContainerService, BuildJobGitService buildJobGitService, BuildAgentDockerService buildAgentDockerService,
             BuildLogsMap buildLogsMap) {
         this.buildJobContainerService = buildJobContainerService;
         this.buildJobGitService = buildJobGitService;
         this.buildAgentDockerService = buildAgentDockerService;
         this.buildLogsMap = buildLogsMap;
+    }
+
+    /**
+     * This method is responsible for cleaning up temporary directories that were used for checking out repositories.
+     * It is triggered when the application is ready and runs asynchronously.
+     */
+    @EventListener(ApplicationReadyEvent.class)
+    @Async
+    public void initAsync() {
+        final ZonedDateTime currentTime = ZonedDateTime.now();
+        cleanUpTempDirectoriesAsync(currentTime);
+    }
+
+    private void cleanUpTempDirectoriesAsync(ZonedDateTime currentTime) {
+        log.info("Cleaning up temporary directories in {}", CHECKED_OUT_REPOS_TEMP_DIR);
+        try (DirectoryStream<Path> directoryStream = Files.newDirectoryStream(Path.of(CHECKED_OUT_REPOS_TEMP_DIR))) {
+            for (Path path : directoryStream) {
+                try {
+                    ZonedDateTime lastModifiedTime = ZonedDateTime.ofInstant(Files.getLastModifiedTime(path).toInstant(), currentTime.getZone());
+                    if (Files.isDirectory(path) && lastModifiedTime.isBefore(currentTime.minus(TEMP_DIR_RETENTION_PERIOD))) {
+                        FileUtils.deleteDirectory(path.toFile());
+                    }
+                }
+                catch (IOException e) {
+                    log.error("Could not delete temporary directory {}", path, e);
+                }
+            }
+        }
+        catch (IOException e) {
+            log.error("Could not delete temporary directories", e);
+        }
+        log.info("Clean up of temporary directories in {} completed.", CHECKED_OUT_REPOS_TEMP_DIR);
     }
 
     /**
@@ -192,10 +232,18 @@ public class BuildJobExecutionService {
             index++;
         }
 
-        CreateContainerResponse container = buildJobContainerService.configureContainer(containerName, buildJob.buildConfig().dockerImage(), buildJob.buildConfig().buildScript());
+        List<String> envVars = null;
+        boolean isNetworkDisabled = false;
+        if (buildJob.buildConfig().dockerRunConfig() != null) {
+            envVars = buildJob.buildConfig().dockerRunConfig().env();
+            isNetworkDisabled = buildJob.buildConfig().dockerRunConfig().isNetworkDisabled();
+        }
+
+        CreateContainerResponse container = buildJobContainerService.configureContainer(containerName, buildJob.buildConfig().dockerImage(), buildJob.buildConfig().buildScript(),
+                envVars);
 
         return runScriptAndParseResults(buildJob, containerName, container.getId(), assignmentRepoUri, testsRepoUri, solutionRepoUri, auxiliaryRepositoriesUris,
-                assignmentRepositoryPath, testsRepositoryPath, solutionRepositoryPath, auxiliaryRepositoriesPaths, assignmentCommitHash, testCommitHash);
+                assignmentRepositoryPath, testsRepositoryPath, solutionRepositoryPath, auxiliaryRepositoriesPaths, assignmentCommitHash, testCommitHash, isNetworkDisabled);
     }
 
     /**
@@ -230,7 +278,7 @@ public class BuildJobExecutionService {
     private BuildResult runScriptAndParseResults(BuildJobQueueItem buildJob, String containerName, String containerId, VcsRepositoryUri assignmentRepositoryUri,
             VcsRepositoryUri testRepositoryUri, VcsRepositoryUri solutionRepositoryUri, VcsRepositoryUri[] auxiliaryRepositoriesUris, Path assignmentRepositoryPath,
             Path testsRepositoryPath, Path solutionRepositoryPath, Path[] auxiliaryRepositoriesPaths, @Nullable String assignmentRepoCommitHash,
-            @Nullable String testRepoCommitHash) {
+            @Nullable String testRepoCommitHash, boolean isNetworkDisabled) {
 
         long timeNanoStart = System.nanoTime();
 
@@ -245,13 +293,14 @@ public class BuildJobExecutionService {
         buildLogsMap.appendBuildLogEntry(buildJob.id(), msg);
         log.debug(msg);
         buildJobContainerService.populateBuildJobContainer(containerId, assignmentRepositoryPath, testsRepositoryPath, solutionRepositoryPath, auxiliaryRepositoriesPaths,
-                buildJob.repositoryInfo().auxiliaryRepositoryCheckoutDirectories(), buildJob.buildConfig().programmingLanguage());
+                buildJob.repositoryInfo().auxiliaryRepositoryCheckoutDirectories(), buildJob.buildConfig().programmingLanguage(), buildJob.buildConfig().assignmentCheckoutPath(),
+                buildJob.buildConfig().testCheckoutPath(), buildJob.buildConfig().solutionCheckoutPath());
 
         msg = "~~~~~~~~~~~~~~~~~~~~ Executing Build Script for Build job " + buildJob.id() + " ~~~~~~~~~~~~~~~~~~~~";
         buildLogsMap.appendBuildLogEntry(buildJob.id(), msg);
         log.debug(msg);
 
-        buildJobContainerService.runScriptInContainer(containerId, buildJob.id());
+        buildJobContainerService.runScriptInContainer(containerId, buildJob.id(), isNetworkDisabled);
 
         msg = "~~~~~~~~~~~~~~~~~~~~ Finished Executing Build Script for Build job " + buildJob.id() + " ~~~~~~~~~~~~~~~~~~~~";
         buildLogsMap.appendBuildLogEntry(buildJob.id(), msg);
@@ -259,14 +308,28 @@ public class BuildJobExecutionService {
 
         ZonedDateTime buildCompletedDate = ZonedDateTime.now();
 
+        msg = "~~~~~~~~~~~~~~~~~~~~ Moving test results to specified directory for build job " + buildJob.id() + " ~~~~~~~~~~~~~~~~~~~~";
+        buildLogsMap.appendBuildLogEntry(buildJob.id(), msg);
+        log.debug(msg);
+
         buildJobContainerService.moveResultsToSpecifiedDirectory(containerId, buildJob.buildConfig().resultPaths(), LOCALCI_WORKING_DIRECTORY + LOCALCI_RESULTS_DIRECTORY);
 
         // Get an input stream of the test result files.
 
-        TarArchiveInputStream testResultsTarInputStream;
+        msg = "~~~~~~~~~~~~~~~~~~~~ Collecting test results from container " + containerId + " for build job " + buildJob.id() + " ~~~~~~~~~~~~~~~~~~~~";
+        buildLogsMap.appendBuildLogEntry(buildJob.id(), msg);
+        log.info(msg);
+
+        TarArchiveInputStream testResultsTarInputStream = null;
+
+        BuildResult buildResult;
 
         try {
             testResultsTarInputStream = buildJobContainerService.getArchiveFromContainer(containerId, LOCALCI_WORKING_DIRECTORY + LOCALCI_RESULTS_DIRECTORY);
+
+            buildResult = parseTestResults(testResultsTarInputStream, buildJob.buildConfig().branch(), assignmentRepoCommitHash, testRepoCommitHash, buildCompletedDate,
+                    buildJob.id());
+            buildResult.setBuildLogEntries(buildLogsMap.getAndTruncateBuildLogs(buildJob.id()));
         }
         catch (NotFoundException e) {
             msg = "Could not find test results in container " + containerName;
@@ -275,7 +338,22 @@ public class BuildJobExecutionService {
             // If the test results are not found, this means that something went wrong during the build and testing of the submission.
             return constructFailedBuildResult(buildJob.buildConfig().branch(), assignmentRepoCommitHash, testRepoCommitHash, buildCompletedDate);
         }
+        catch (IOException | IllegalStateException e) {
+            msg = "Error while parsing test results";
+            buildLogsMap.appendBuildLogEntry(buildJob.id(), msg);
+            throw new LocalCIException(msg, e);
+        }
         finally {
+            try {
+                if (testResultsTarInputStream != null) {
+                    testResultsTarInputStream.close();
+                }
+            }
+            catch (IOException e) {
+                msg = "Could not close test results tar input stream";
+                buildLogsMap.appendBuildLogEntry(buildJob.id(), msg);
+                log.error(msg, e);
+            }
             buildJobContainerService.stopContainer(containerName);
 
             // Delete the cloned repositories
@@ -300,20 +378,8 @@ public class BuildJobExecutionService {
             }
         }
 
-        BuildResult buildResult;
-        try {
-            buildResult = parseTestResults(testResultsTarInputStream, buildJob.buildConfig().branch(), assignmentRepoCommitHash, testRepoCommitHash, buildCompletedDate,
-                    buildJob.id());
-            buildResult.setBuildLogEntries(buildLogsMap.getBuildLogs(buildJob.id()));
-        }
-        catch (IOException | IllegalStateException e) {
-            msg = "Error while parsing test results";
-            buildLogsMap.appendBuildLogEntry(buildJob.id(), msg);
-            throw new LocalCIException(msg, e);
-        }
-
         msg = "Building and testing submission for repository " + assignmentRepositoryUri.repositorySlug() + " and commit hash " + assignmentRepoCommitHash + " took "
-                + TimeLogUtil.formatDurationFrom(timeNanoStart);
+                + TimeLogUtil.formatDurationFrom(timeNanoStart) + " for build job " + buildJob.id();
         buildLogsMap.appendBuildLogEntry(buildJob.id(), msg);
         log.info(msg);
 
@@ -337,18 +403,18 @@ public class BuildJobExecutionService {
             }
 
             // Read the contents of the tar entry as a string.
-            String xmlString = readTarEntryContent(testResultsTarInputStream);
+            String fileString = readTarEntryContent(testResultsTarInputStream);
             // Get the file name of the tar entry.
             String fileName = getFileName(tarEntry);
 
             try {
                 // Check if the file is a static code analysis report file
                 if (StaticCodeAnalysisTool.getToolByFilePattern(fileName).isPresent()) {
-                    processStaticCodeAnalysisReportFile(fileName, xmlString, staticCodeAnalysisReports, buildJobId);
+                    processStaticCodeAnalysisReportFile(fileName, fileString, staticCodeAnalysisReports, buildJobId);
                 }
                 else {
                     // ugly workaround because in swift result files \n\t breaks the parsing
-                    var testResultFileString = xmlString.replace("\n\t", "");
+                    var testResultFileString = fileString.replace("\n\t", "");
                     if (!testResultFileString.isBlank()) {
                         processTestResultFile(testResultFileString, failedTests, successfulTests);
                     }
@@ -377,7 +443,7 @@ public class BuildJobExecutionService {
         String result = (lastIndexOfSlash != -1 && lastIndexOfSlash + 1 < name.length()) ? name.substring(lastIndexOfSlash + 1) : name;
 
         // Java test result files are named "TEST-*.xml", Python test result files are named "*results.xml".
-        return !tarArchiveEntry.isDirectory() && result.endsWith(".xml") && !result.equals("pom.xml");
+        return !tarArchiveEntry.isDirectory() && (result.endsWith(".xml") && !result.equals("pom.xml") || result.endsWith(".sarif"));
     }
 
     /**
@@ -403,12 +469,12 @@ public class BuildJobExecutionService {
      * Processes a static code analysis report file and adds the report to the corresponding list.
      *
      * @param fileName                  the file name of the static code analysis report file
-     * @param xmlString                 the content of the static code analysis report file
+     * @param reportContent             the content of the static code analysis report file
      * @param staticCodeAnalysisReports the list of static code analysis reports
      */
-    private void processStaticCodeAnalysisReportFile(String fileName, String xmlString, List<StaticCodeAnalysisReportDTO> staticCodeAnalysisReports, String buildJobId) {
+    private void processStaticCodeAnalysisReportFile(String fileName, String reportContent, List<StaticCodeAnalysisReportDTO> staticCodeAnalysisReports, String buildJobId) {
         try {
-            staticCodeAnalysisReports.add(ReportParser.getReport(xmlString, fileName));
+            staticCodeAnalysisReports.add(ReportParser.getReport(reportContent, fileName));
         }
         catch (UnsupportedToolException e) {
             String msg = "Failed to parse static code analysis report for " + fileName;
@@ -511,15 +577,16 @@ public class BuildJobExecutionService {
             }
             buildJobGitService.deleteLocalRepository(repository);
         }
+        // Do not throw an exception if deletion fails. If an exception occurs, clean up will happen in the next server start.
         catch (EntityNotFoundException e) {
             msg = "Error while checking out repository";
             buildLogsMap.appendBuildLogEntry(buildJobId, msg);
-            throw new LocalCIException(msg, e);
+            log.error("Error while deleting repository with URI {} and Path {}", repositoryUri, repositoryPath, e);
         }
         catch (IOException e) {
             msg = "Error while deleting repository";
             buildLogsMap.appendBuildLogEntry(buildJobId, msg);
-            throw new LocalCIException(msg, e);
+            log.error("Error while deleting repository with URI {} and Path {}", repositoryUri, repositoryPath, e);
         }
     }
 

@@ -1,5 +1,6 @@
 package de.tum.cit.aet.artemis.programming.service.localci;
 
+import java.util.ArrayList;
 import java.util.List;
 
 import jakarta.annotation.PostConstruct;
@@ -17,7 +18,9 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
 import de.tum.cit.aet.artemis.buildagent.dto.BuildAgentInformation;
+import de.tum.cit.aet.artemis.buildagent.dto.BuildConfig;
 import de.tum.cit.aet.artemis.buildagent.dto.BuildJobQueueItem;
+import de.tum.cit.aet.artemis.buildagent.dto.RepositoryInfo;
 
 /**
  * This service is responsible for sending build job queue information over websockets.
@@ -98,28 +101,84 @@ public class LocalCIQueueWebsocketService {
     }
 
     private void sendQueuedJobsOverWebsocket(long courseId) {
-        localCIWebsocketMessagingService.sendQueuedBuildJobs(sharedQueueManagementService.getQueuedJobs());
-        localCIWebsocketMessagingService.sendQueuedBuildJobsForCourse(courseId, sharedQueueManagementService.getQueuedJobsForCourse(courseId));
+        var queuedJobs = removeUnnecessaryInformation(sharedQueueManagementService.getQueuedJobs());
+        var queuedJobsForCourse = queuedJobs.stream().filter(job -> job.courseId() == courseId).toList();
+        localCIWebsocketMessagingService.sendQueuedBuildJobs(queuedJobs);
+        localCIWebsocketMessagingService.sendQueuedBuildJobsForCourse(courseId, queuedJobsForCourse);
     }
 
     private void sendProcessingJobsOverWebsocket(long courseId) {
-        localCIWebsocketMessagingService.sendRunningBuildJobs(sharedQueueManagementService.getProcessingJobs());
-        localCIWebsocketMessagingService.sendRunningBuildJobsForCourse(courseId, sharedQueueManagementService.getProcessingJobsForCourse(courseId));
+        var processingJobs = removeUnnecessaryInformation(sharedQueueManagementService.getProcessingJobs());
+        var processingJobsForCourse = processingJobs.stream().filter(job -> job.courseId() == courseId).toList();
+        localCIWebsocketMessagingService.sendRunningBuildJobs(processingJobs);
+        localCIWebsocketMessagingService.sendRunningBuildJobsForCourse(courseId, processingJobsForCourse);
     }
 
     private void sendBuildAgentSummaryOverWebsocket() {
-        // remove the recentBuildJobs from the build agent information before sending it over the websocket
-        List<BuildAgentInformation> buildAgentSummary = sharedQueueManagementService.getBuildAgentInformationWithoutRecentBuildJobs();
+        var buildAgentSummary = removeUnnecessaryInformationFromBuildAgentInformation(sharedQueueManagementService.getBuildAgentInformationWithoutRecentBuildJobs());
         localCIWebsocketMessagingService.sendBuildAgentSummary(buildAgentSummary);
     }
 
     private void sendBuildAgentDetailsOverWebsocket(String agentName) {
-        sharedQueueManagementService.getBuildAgentInformation().stream().filter(agent -> agent.name().equals(agentName)).findFirst()
+        sharedQueueManagementService.getBuildAgentInformation().stream().filter(agent -> agent.buildAgent().name().equals(agentName)).findFirst()
                 .ifPresent(localCIWebsocketMessagingService::sendBuildAgentDetails);
     }
 
     private void sendBuildAgentInformationOverWebsocket(String agentName) {
         sendBuildAgentSummaryOverWebsocket();
         sendBuildAgentDetailsOverWebsocket(agentName);
+    }
+
+    /**
+     * Removes unnecessary information (e.g. repository info, build config, result) from the queued jobs before sending them over the websocket.
+     *
+     * @param queuedJobs the queued jobs
+     */
+    private static List<BuildJobQueueItem> removeUnnecessaryInformation(List<BuildJobQueueItem> queuedJobs) {
+        var filteredQueuedJobs = new ArrayList<BuildJobQueueItem>(); // make list mutable in case it is not
+        for (BuildJobQueueItem job : queuedJobs) {
+            var buildConfig = removeUnnecessaryInformationFromBuildConfig(job.buildConfig());
+            var repositoryInfo = removeUnnecessaryInformationFromRepositoryInfo(job.repositoryInfo());
+            filteredQueuedJobs.add(new BuildJobQueueItem(job.id(), job.name(), job.buildAgent(), job.participationId(), job.courseId(), job.exerciseId(), job.retryCount(),
+                    job.priority(), job.status(), repositoryInfo, job.jobTimingInfo(), buildConfig, null));
+
+        }
+        return filteredQueuedJobs;
+    }
+
+    /**
+     * Removes unnecessary information (e.g. build script, docker image) from the build config before sending it over the websocket.
+     *
+     * @param buildConfig the build config
+     */
+    private static BuildConfig removeUnnecessaryInformationFromBuildConfig(BuildConfig buildConfig) {
+        // We pass "" instead of null strings to avoid errors when serializing to JSON
+        return new BuildConfig("", "", buildConfig.commitHashToBuild(), "", "", "", null, null, buildConfig.scaEnabled(), buildConfig.sequentialTestRunsEnabled(),
+                buildConfig.testwiseCoverageEnabled(), null, buildConfig.timeoutSeconds(), "", "", "", null);
+    }
+
+    /**
+     * Removes unnecessary information (RepositoryUris) from the repository info before sending it over the websocket.
+     *
+     * @param repositoryInfo the repository info
+     */
+    private static RepositoryInfo removeUnnecessaryInformationFromRepositoryInfo(RepositoryInfo repositoryInfo) {
+        // We pass "" instead of null strings to avoid errors when serializing to JSON
+        return new RepositoryInfo(repositoryInfo.repositoryName(), repositoryInfo.repositoryType(), repositoryInfo.triggeredByPushTo(), "", "", "", null, null);
+    }
+
+    /**
+     * Removes unnecessary information (e.g. recent build jobs, public ssh key, result) from the running jobs before sending them over the websocket.
+     *
+     * @param buildAgentSummary the build agent summary
+     */
+    private static List<BuildAgentInformation> removeUnnecessaryInformationFromBuildAgentInformation(List<BuildAgentInformation> buildAgentSummary) {
+        var filteredBuildAgentSummary = new ArrayList<BuildAgentInformation>(); // make list mutable in case it is not
+        for (BuildAgentInformation agent : buildAgentSummary) {
+            var runningJobs = removeUnnecessaryInformation(agent.runningBuildJobs());
+            filteredBuildAgentSummary.add(new BuildAgentInformation(agent.buildAgent(), agent.maxNumberOfConcurrentBuildJobs(), agent.numberOfCurrentBuildJobs(), runningJobs,
+                    agent.status(), null, null));
+        }
+        return filteredBuildAgentSummary;
     }
 }

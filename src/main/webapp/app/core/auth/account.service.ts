@@ -30,7 +30,6 @@ export interface IAccountService {
     isAuthenticated: () => boolean;
     getAuthenticationState: () => Observable<User | undefined>;
     getImageUrl: () => string | undefined;
-    addSshPublicKey: (sshPublicKey: string) => Observable<void>;
 }
 
 @Injectable({ providedIn: 'root' })
@@ -41,6 +40,7 @@ export class AccountService implements IAccountService {
     private websocketService = inject(JhiWebsocketService);
     private featureToggleService = inject(FeatureToggleService);
 
+    // cached value of the user to avoid unnecessary requests to the server
     private userIdentityValue?: User;
     private authenticated = false;
     private authenticationState = new BehaviorSubject<User | undefined>(undefined);
@@ -224,6 +224,10 @@ export class AccountService implements IAccountService {
         return this.hasAnyAuthorityDirect([Authority.ADMIN]);
     }
 
+    isAtLeastTutor(): boolean {
+        return this.hasAnyAuthorityDirect([Authority.ADMIN, Authority.EDITOR, Authority.INSTRUCTOR, Authority.TA]);
+    }
+
     isAuthenticated(): boolean {
         return this.authenticated;
     }
@@ -318,28 +322,6 @@ export class AccountService implements IAccountService {
      */
     setPrefilledUsername(prefilledUsername: string) {
         this.prefilledUsernameValue = prefilledUsername;
-    }
-
-    /**
-     * Sends the added SSH key to the server
-     *
-     * @param sshPublicKey
-     */
-    addSshPublicKey(sshPublicKey: string): Observable<void> {
-        if (this.userIdentity) {
-            this.userIdentity.sshPublicKey = sshPublicKey;
-        }
-        return this.http.put<void>('api/account/ssh-public-key', sshPublicKey);
-    }
-
-    /**
-     * Sends a request to the server to delete the user's current SSH key
-     */
-    deleteSshPublicKey(): Observable<void> {
-        if (this.userIdentity) {
-            this.userIdentity.sshPublicKey = undefined;
-        }
-        return this.http.delete<void>('api/account/ssh-public-key');
     }
 
     /**

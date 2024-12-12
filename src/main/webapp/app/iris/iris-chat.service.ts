@@ -16,7 +16,8 @@ import { UserService } from 'app/core/user/user.service';
 import { AccountService } from 'app/core/auth/account.service';
 
 export enum ChatServiceMode {
-    EXERCISE = 'exercise-chat',
+    TEXT_EXERCISE = 'text-exercise-chat',
+    EXERCISE = 'exercise-chat', // TODO: Rename to PROGRAMMING_EXERCISE
     COURSE = 'course-chat',
 }
 
@@ -27,6 +28,7 @@ export enum ChatServiceMode {
 export class IrisChatService implements OnDestroy {
     sessionId?: number;
     messages: BehaviorSubject<IrisMessage[]> = new BehaviorSubject([]);
+    newIrisMessage: BehaviorSubject<IrisMessage | undefined> = new BehaviorSubject(undefined);
     numNewMessages: BehaviorSubject<number> = new BehaviorSubject(0);
     stages: BehaviorSubject<IrisStageDTO[]> = new BehaviorSubject([]);
     suggestions: BehaviorSubject<string[]> = new BehaviorSubject([]);
@@ -97,6 +99,9 @@ export class IrisChatService implements OnDestroy {
     private replaceOrAddMessage(message: IrisMessage) {
         const messageWasReplaced = this.replaceMessage(message);
         if (!messageWasReplaced) {
+            if (message.sender === IrisSender.LLM) {
+                this.newIrisMessage.next(message);
+            }
             this.messages.next([...this.messages.getValue(), message]);
         }
     }
@@ -151,6 +156,7 @@ export class IrisChatService implements OnDestroy {
 
     public messagesRead(): void {
         this.numNewMessages.next(0);
+        this.newIrisMessage.next(undefined);
     }
 
     public setUserAccepted(): void {
@@ -238,6 +244,7 @@ export class IrisChatService implements OnDestroy {
             this.stages.next([]);
             this.suggestions.next([]);
             this.numNewMessages.next(0);
+            this.newIrisMessage.next(undefined);
         }
         this.error.next(undefined);
     }

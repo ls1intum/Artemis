@@ -3,18 +3,23 @@ package de.tum.cit.aet.artemis.iris;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+import java.util.List;
+import java.util.Optional;
 import java.util.stream.Stream;
 
-import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
+import org.junit.jupiter.params.provider.EnumSource;
 import org.junit.jupiter.params.provider.MethodSource;
 import org.springframework.beans.factory.annotation.Autowired;
 
+import de.tum.cit.aet.artemis.iris.domain.settings.IrisSubSettingsType;
 import de.tum.cit.aet.artemis.iris.exception.IrisForbiddenException;
 import de.tum.cit.aet.artemis.iris.exception.IrisInternalPyrisErrorException;
 import de.tum.cit.aet.artemis.iris.service.pyris.PyrisConnectorException;
 import de.tum.cit.aet.artemis.iris.service.pyris.PyrisConnectorService;
+import de.tum.cit.aet.artemis.iris.service.pyris.dto.lectureingestionwebhook.PyrisLectureUnitWebhookDTO;
+import de.tum.cit.aet.artemis.iris.service.pyris.dto.lectureingestionwebhook.PyrisWebhookLectureIngestionExecutionDTO;
 
 class PyrisConnectorServiceTest extends AbstractIrisIntegrationTest {
 
@@ -39,30 +44,42 @@ class PyrisConnectorServiceTest extends AbstractIrisIntegrationTest {
     void testExceptionV2(int httpStatus, Class<?> exceptionClass) {
         irisRequestMockProvider.mockRunError(httpStatus);
 
-        assertThatThrownBy(() -> pyrisConnectorService.executePipeline("tutor-chat", "default", null)).isInstanceOf(exceptionClass);
+        assertThatThrownBy(() -> pyrisConnectorService.executePipeline("tutor-chat", "default", null, Optional.empty())).isInstanceOf(exceptionClass);
     }
 
     @ParameterizedTest
     @MethodSource("irisExceptions")
     void testExceptionIngestionV2(int httpStatus, Class<?> exceptionClass) {
         irisRequestMockProvider.mockIngestionWebhookRunError(httpStatus);
-        assertThatThrownBy(() -> pyrisConnectorService.executeLectureWebhook("fullIngestion", null)).isInstanceOf(exceptionClass);
+        PyrisLectureUnitWebhookDTO pyrisLectureUnitWebhookDTO = new PyrisLectureUnitWebhookDTO("example.pdf", 123L, "Lecture Unit Name", 456L, "Lecture Name", 789L, "Course Name",
+                "Course Description", "/example/test.pdf");
+        PyrisWebhookLectureIngestionExecutionDTO executionDTO = new PyrisWebhookLectureIngestionExecutionDTO(pyrisLectureUnitWebhookDTO, null, List.of());
+        assertThatThrownBy(() -> pyrisConnectorService.executeLectureAddtionWebhook("fullIngestion", executionDTO)).isInstanceOf(exceptionClass);
     }
 
-    @Test
-    void testOfferedModels() throws Exception {
-        irisRequestMockProvider.mockModelsResponse();
+    @ParameterizedTest
+    @MethodSource("irisExceptions")
+    void testExceptionLectureDeletionV2(int httpStatus, Class<?> exceptionClass) {
+        irisRequestMockProvider.mockDeletionWebhookRunError(httpStatus);
+        assertThatThrownBy(() -> pyrisConnectorService.executeLectureDeletionWebhook(null)).isInstanceOf(exceptionClass);
+    }
 
-        var offeredModels = pyrisConnectorService.getOfferedModels();
+    @ParameterizedTest
+    @EnumSource(IrisSubSettingsType.class)
+    void testOfferedModels(IrisSubSettingsType feature) throws Exception {
+        irisRequestMockProvider.mockVariantsResponse(feature);
+
+        var offeredModels = pyrisConnectorService.getOfferedVariants(feature);
         assertThat(offeredModels).hasSize(1);
         assertThat(offeredModels.getFirst().id()).isEqualTo("TEST_MODEL");
     }
 
-    @Test
-    void testOfferedModelsError() {
-        irisRequestMockProvider.mockModelsError();
+    @ParameterizedTest
+    @EnumSource(IrisSubSettingsType.class)
+    void testOfferedModelsError(IrisSubSettingsType feature) {
+        irisRequestMockProvider.mockVariantsError(feature);
 
-        assertThatThrownBy(() -> pyrisConnectorService.getOfferedModels()).isInstanceOf(PyrisConnectorException.class);
+        assertThatThrownBy(() -> pyrisConnectorService.getOfferedVariants(feature)).isInstanceOf(PyrisConnectorException.class);
     }
 
 }

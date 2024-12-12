@@ -10,14 +10,19 @@ import {
     Output,
     ViewChild,
     ViewEncapsulation,
+    computed,
     forwardRef,
+    inject,
+    input,
 } from '@angular/core';
+import monaco from 'monaco-editor';
+import { ViewContainerRef } from '@angular/core';
 import { ControlValueAccessor, NG_VALUE_ACCESSOR } from '@angular/forms';
 import { MetisService } from 'app/shared/metis/metis.service';
 import { LectureService } from 'app/lecture/lecture.service';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
 import { ChannelService } from 'app/shared/metis/conversations/channel.service';
-import { isCommunicationEnabled } from 'app/entities/course.model';
+import { isCommunicationEnabled, isFaqEnabled } from 'app/entities/course.model';
 import { TextEditorAction } from 'app/shared/monaco-editor/model/actions/text-editor-action.model';
 import { BoldAction } from 'app/shared/monaco-editor/model/actions/bold.action';
 import { ItalicAction } from 'app/shared/monaco-editor/model/actions/italic.action';
@@ -30,6 +35,15 @@ import { ChannelReferenceAction } from 'app/shared/monaco-editor/model/actions/c
 import { UserMentionAction } from 'app/shared/monaco-editor/model/actions/communication/user-mention.action';
 import { ExerciseReferenceAction } from 'app/shared/monaco-editor/model/actions/communication/exercise-reference.action';
 import { LectureAttachmentReferenceAction } from 'app/shared/monaco-editor/model/actions/communication/lecture-attachment-reference.action';
+import { FaqReferenceAction } from 'app/shared/monaco-editor/model/actions/communication/faq-reference.action';
+import { UrlAction } from 'app/shared/monaco-editor/model/actions/url.action';
+import { AttachmentAction } from 'app/shared/monaco-editor/model/actions/attachment.action';
+import { ConversationDTO } from 'app/entities/metis/conversation/conversation.model';
+import { EmojiAction } from 'app/shared/monaco-editor/model/actions/emoji.action';
+import { Overlay, OverlayPositionBuilder } from '@angular/cdk/overlay';
+import { BulletedListAction } from 'app/shared/monaco-editor/model/actions/bulleted-list.action';
+import { OrderedListAction } from 'app/shared/monaco-editor/model/actions/ordered-list.action';
+import { StrikethroughAction } from 'app/shared/monaco-editor/model/actions/strikethrough.action';
 
 @Component({
     selector: 'jhi-posting-markdown-editor',
@@ -51,13 +65,20 @@ export class PostingMarkdownEditorComponent implements OnInit, ControlValueAcces
     @Input() editorHeight: MarkdownEditorHeight = MarkdownEditorHeight.INLINE;
     @Input() isInputLengthDisplayed = true;
     @Input() suppressNewlineOnEnter = true;
+    /**
+     * For AnswerPosts, the MetisService may not always have an active conversation (e.g. when in the 'all messages' view).
+     * In this case, file uploads have to rely on the parent post to determine the course.
+     */
+    readonly activeConversation = input<ConversationDTO>();
     @Output() valueChange = new EventEmitter();
     lectureAttachmentReferenceAction: LectureAttachmentReferenceAction;
     defaultActions: TextEditorAction[];
     content?: string;
     previewMode = false;
+    fallbackConversationId = computed<number | undefined>(() => this.activeConversation()?.id);
 
     protected readonly MarkdownEditorHeight = MarkdownEditorHeight;
+    private overlay = inject(Overlay);
 
     constructor(
         private cdref: ChangeDetectorRef,
@@ -65,6 +86,8 @@ export class PostingMarkdownEditorComponent implements OnInit, ControlValueAcces
         private courseManagementService: CourseManagementService,
         private lectureService: LectureService,
         private channelService: ChannelService,
+        public viewContainerRef: ViewContainerRef,
+        private positionBuilder: OverlayPositionBuilder,
     ) {}
 
     /**
@@ -75,15 +98,24 @@ export class PostingMarkdownEditorComponent implements OnInit, ControlValueAcces
             ? [new UserMentionAction(this.courseManagementService, this.metisService), new ChannelReferenceAction(this.metisService, this.channelService)]
             : [];
 
+        const faqAction = isFaqEnabled(this.metisService.getCourse()) ? [new FaqReferenceAction(this.metisService)] : [];
+
         this.defaultActions = [
             new BoldAction(),
             new ItalicAction(),
             new UnderlineAction(),
+            new StrikethroughAction(),
+            new EmojiAction(this.viewContainerRef, this.overlay, this.positionBuilder),
+            new BulletedListAction(),
+            new OrderedListAction(),
             new QuoteAction(),
             new CodeAction(),
             new CodeBlockAction(),
+            new UrlAction(),
+            new AttachmentAction(),
             ...messagingOnlyActions,
             new ExerciseReferenceAction(this.metisService),
+            ...faqAction,
         ];
 
         this.lectureAttachmentReferenceAction = new LectureAttachmentReferenceAction(this.metisService, this.lectureService);
@@ -91,6 +123,41 @@ export class PostingMarkdownEditorComponent implements OnInit, ControlValueAcces
 
     ngAfterViewInit(): void {
         this.markdownEditor.enableTextFieldMode();
+
+        const editor = this.markdownEditor.monacoEditor;
+        if (editor) {
+            editor.onDidChangeModelContent((event: monaco.editor.IModelContentChangedEvent) => {
+                const position = editor.getPosition();
+                if (!position) {
+                    return;
+                }
+
+                const model = editor.getModel();
+                if (!model) {
+                    return;
+                }
+
+                const lineContent = model.getLineContent(position.lineNumber).trimStart();
+                const hasPrefix = lineContent.startsWith('- ') || /^\s*1\. /.test(lineContent);
+                if (hasPrefix && event.changes.length === 1 && (event.changes[0].text.startsWith('- ') || event.changes[0].text.startsWith('1. '))) {
+                    return;
+                }
+
+                if (hasPrefix) {
+                    this.handleKeyDown(model, position.lineNumber);
+                }
+            });
+        }
+    }
+
+    private handleKeyDown(model: monaco.editor.ITextModel, lineNumber: number): void {
+        const lineContent = model.getLineContent(lineNumber).trimStart();
+
+        if (lineContent.startsWith('- ')) {
+            this.markdownEditor.handleActionClick(new MouseEvent('click'), this.defaultActions.find((action) => action instanceof BulletedListAction)!);
+        } else if (/^\d+\. /.test(lineContent)) {
+            this.markdownEditor.handleActionClick(new MouseEvent('click'), this.defaultActions.find((action) => action instanceof OrderedListAction)!);
+        }
     }
 
     /**

@@ -17,7 +17,7 @@ import { SidebarCardElement, SidebarData } from 'app/types/sidebar';
 import { NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
 import { ExerciseFilterModalComponent } from 'app/shared/exercise-filter/exercise-filter-modal.component';
 import { ExerciseFilterResults } from 'app/types/exercise-filter';
-import { EventEmitter } from '@angular/core';
+import { EventEmitter, input, runInInjectionContext } from '@angular/core';
 import { ExerciseCategory } from 'app/entities/exercise-category.model';
 import { ExerciseType } from 'app/entities/exercise.model';
 import { IconProp } from '@fortawesome/fontawesome-svg-core';
@@ -49,9 +49,7 @@ describe('SidebarComponent', () => {
             ],
             providers: [MockProvider(NgbModal)],
         }).compileComponents();
-    });
 
-    beforeEach(() => {
         fixture = TestBed.createComponent(SidebarComponent);
         component = fixture.componentInstance;
         modalService = TestBed.inject(NgbModal);
@@ -130,6 +128,14 @@ describe('SidebarComponent', () => {
         expect(size).toBe('M');
     });
 
+    it('should update sidebar event subscription on re emit input event change', () => {
+        fixture.detectChanges();
+        const prevSubscription = component.sidebarEventSubscription;
+        fixture.componentRef.setInput('reEmitNonDistinctSidebarEvents', true);
+        fixture.detectChanges();
+        expect(component.sidebarEventSubscription).not.toBe(prevSubscription);
+    });
+
     describe('openFilterExercisesLink', () => {
         const FILTER_LINK_SELECTOR = '.text-primary a';
 
@@ -170,6 +176,44 @@ describe('SidebarComponent', () => {
             expect(initFilterOptionsSpy).toHaveBeenCalledOnce();
             expect(openFilterExercisesDialogSpy).toHaveBeenCalledOnce();
             expect(openModalSpy).toHaveBeenCalledWith(ExerciseFilterModalComponent, { animation: true, backdrop: 'static', size: 'lg' });
+        });
+    });
+
+    describe('Chat and Channel Creation Methods', () => {
+        beforeEach(() => {
+            fixture.detectChanges();
+        });
+
+        it('should emit onDirectChatPressed and set showChatDropdown to false when createDirectChat is called', () => {
+            jest.spyOn(component.onDirectChatPressed, 'emit');
+
+            component.createDirectChat();
+
+            expect(component.onDirectChatPressed.emit).toHaveBeenCalledOnce();
+        });
+
+        it('should emit onGroupChatPressed and set showChatDropdown to false when createGroupChat is called', () => {
+            jest.spyOn(component.onGroupChatPressed, 'emit');
+
+            component.createGroupChat();
+
+            expect(component.onGroupChatPressed.emit).toHaveBeenCalledOnce();
+        });
+
+        it('should emit onBrowsePressed and set showChannelDropdown to false when browseChannels is called', () => {
+            jest.spyOn(component.onBrowsePressed, 'emit');
+
+            component.browseChannels();
+
+            expect(component.onBrowsePressed.emit).toHaveBeenCalledOnce();
+        });
+
+        it('should emit onCreateChannelPressed and set showChannelDropdown to false when createNewChannel is called', () => {
+            jest.spyOn(component.onCreateChannelPressed, 'emit');
+
+            component.createNewChannel();
+
+            expect(component.onCreateChannelPressed.emit).toHaveBeenCalledOnce();
         });
     });
 
@@ -241,6 +285,28 @@ describe('SidebarComponent', () => {
             expect(component.sidebarData).toEqual(mockFilterResults.filteredSidebarData);
             expect(component.exerciseFilters).toEqual(mockFilterResults.appliedExerciseFilters);
             expect(component.isFilterActive).toBeTrue();
+        });
+
+        it('should show "Create Channel" button when canCreateChannel is true', () => {
+            runInInjectionContext(fixture.debugElement.injector, () => {
+                component.inCommunication = input<boolean>(true);
+                component.ngOnInit();
+                component.sidebarData.canCreateChannel = true;
+                fixture.detectChanges();
+                const createChannelButton = fixture.debugElement.query(By.css('.createChannel'));
+                expect(createChannelButton).toBeTruthy();
+            });
+        });
+
+        it('should not show "Create Channel" button when canCreateChannel is false', () => {
+            runInInjectionContext(fixture.debugElement.injector, () => {
+                component.inCommunication = input<boolean>(true);
+                component.ngOnInit();
+                component.sidebarData.canCreateChannel = false;
+                fixture.detectChanges();
+                const createChannelButton = fixture.debugElement.query(By.css('.createChannel'));
+                expect(createChannelButton).toBeFalsy();
+            });
         });
     });
 });

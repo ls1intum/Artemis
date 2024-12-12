@@ -12,7 +12,7 @@ const DocumentationLinks = {
     Quiz: 'exercises/quiz/',
     Model: 'exercises/modeling/',
     Programming: 'exercises/programming/',
-    SshSetup: 'exercises/programming.html#repository-access',
+    SshSetup: 'icl/ssh-intro',
     Text: 'exercises/textual/',
     FileUpload: 'exercises/file-upload/',
     Notifications: 'notifications/',

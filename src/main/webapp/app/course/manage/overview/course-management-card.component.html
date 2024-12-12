@@ -338,5 +338,17 @@
                 <span class="d-none d-xl-inline" jhiTranslate="entity.action.scores"></span>
             </a>
         }
+
+        @if (course.isAtLeastTutor && course.faqEnabled) {
+            <a
+                [routerLink]="['/course-management', course.id, 'faqs']"
+                class="btn btn-info me-1 mb-1"
+                [ngbTooltip]="'entity.action.faq' | artemisTranslate"
+                id="course-card-open-faq"
+            >
+                <fa-icon [icon]="faQuestion" />
+                <span class="d-none d-xl-inline" jhiTranslate="entity.action.faq"></span>
+            </a>
+        }
     </div>
 </div>

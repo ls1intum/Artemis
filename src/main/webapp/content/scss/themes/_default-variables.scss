@@ -51,8 +51,12 @@ $border-color: #dee2e6;
 $footer-bg: $white;
 $footer-height-dev: 3rem;
 $footer-height-prod: 2rem;
-$sidebar-footer-height-dev: 134px;
-$sidebar-footer-height-prod: 118px;
+
+// Sidebar
+$sidebar-footer-height-dev: 104px;
+$sidebar-footer-height-prod: 88px;
+$sidebar-width: 255px;
+$spacing-modules: 1rem;
 
 //Module and Navigationbar
 $module-bg: $white;
@@ -577,6 +581,7 @@ $competency-rings-blue-bg: transparentize($competency-rings-blue, 0.8);
 // Iris Chatbot
 // TODO: Use standard colors
 $iris-chat-widget-background: $white;
+$iris-chat-bubble-fade: $white;
 $iris-client-chat-background: var(--gray-200);
 $iris-client-chat-input: $white;
 $iris-my-chat-background: #a9dcb5;
@@ -587,3 +592,10 @@ $iris-rate-background: var(--gray-300);
 
 // Image Cropper
 $cropper-overlay-color: transparent;
+
+// Settings
+$ssh-key-settings-table-hover-background: $gray-200;
+$ssh-key-settings-dropdown-buttons: $light;
+$ssh-key-settings-dropdown-buttons-hover: $gray-200;
+$ssh-key-settings-text-color: $black;
+$ssh-key-settings-shadow: rgba(0, 0, 0, 0.2);

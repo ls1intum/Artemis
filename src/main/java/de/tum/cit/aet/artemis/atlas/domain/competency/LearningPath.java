@@ -31,6 +31,12 @@ public class LearningPath extends DomainObject {
     @Column(name = "progress")
     private int progress;
 
+    /**
+     * flag indicating if a student started the learning path
+     */
+    @Column(name = "started_by_student")
+    private boolean startedByStudent = false;
+
     @ManyToOne
     @JoinColumn(name = "user_id")
     private User user;
@@ -89,8 +95,16 @@ public class LearningPath extends DomainObject {
         this.competencies.remove(competency);
     }
 
+    public boolean isStartedByStudent() {
+        return startedByStudent;
+    }
+
+    public void setStartedByStudent(boolean startedByStudent) {
+        this.startedByStudent = startedByStudent;
+    }
+
     @Override
     public String toString() {
-        return "LearningPath{" + "id=" + getId() + ", user=" + user + ", course=" + course + ", competencies=" + competencies + '}';
+        return "LearningPath{" + "id=" + getId() + ", user=" + user + ", course=" + course + ", competencies=" + competencies + ", startedByStudent=" + startedByStudent + "}";
     }
 }

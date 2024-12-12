@@ -79,8 +79,8 @@ public class AeolusTemplateResource {
     }
 
     /**
-     * GET /api/aeolus/templates/:language/:projectType : Get the aeolus template file with the given filename<br/>
-     * GET /api/aeolus/templates/:language : Get the aeolus template file with the given filename
+     * GET /api/aeolus/template-scripts/:language/:projectType : Get the aeolus template file with the given filename<br/>
+     * GET /api/aeolus/template-scripts/:language : Get the aeolus template file with the given filename
      * <p>
      * The windfile contains the default build plan configuration for new programming exercises.
      *
@@ -91,7 +91,7 @@ public class AeolusTemplateResource {
      * @param testCoverage   Whether the test coverage template should be used
      * @return The requested file, or 404 if the file doesn't exist
      */
-    @GetMapping({ "templateScripts/{language}/{projectType}", "templateScripts/{language}" })
+    @GetMapping({ "template-scripts/{language}/{projectType}", "template-scripts/{language}" })
     @EnforceAtLeastEditor
     public ResponseEntity<String> getAeolusTemplateScript(@PathVariable ProgrammingLanguage language, @PathVariable Optional<ProjectType> projectType,
             @RequestParam(value = "staticAnalysis", defaultValue = "false") boolean staticAnalysis,

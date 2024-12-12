@@ -10,6 +10,7 @@ import java.util.stream.Stream;
 
 import jakarta.validation.constraints.NotNull;
 
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Profile;
 import org.springframework.http.CacheControl;
@@ -32,6 +33,9 @@ public class PublicResourcesConfiguration implements WebMvcConfigurer {
         this.jHipsterProperties = jHipsterProperties;
     }
 
+    @Value("${artemis.file-upload-path}")
+    private String fileUploadPath;
+
     @Override
     public void addResourceHandlers(@NotNull ResourceHandlerRegistry registry) {
         // Enable static resource serving in general from "/public" from both classpath and hosts filesystem
@@ -46,6 +50,19 @@ public class PublicResourcesConfiguration implements WebMvcConfigurer {
 
         addResourceHandlerForPath(registry, "images", "about").setCacheControl(defaultCacheControl);
         addResourceHandlerForPath(registry, "emoji").setCacheControl(defaultCacheControl);
+
+        // Add caching for course icons, user profile pictures, and drag and drop quiz pictures
+        // Add resource handlers for dynamic image paths based on fileUploadPath
+        // TODO: those paths have to be the same as in FilePathService, ideally we reuse the constants and define them only once
+        registry.addResourceHandler("/course/icons/**").addResourceLocations("file:" + fileUploadPath + "/images/course/icons/").setCacheControl(defaultCacheControl);
+
+        registry.addResourceHandler("/user/profile-pictures/**").addResourceLocations("file:" + fileUploadPath + "/images/user/profile-pictures/")
+                .setCacheControl(defaultCacheControl);
+
+        registry.addResourceHandler("/drag-and-drop/**").addResourceLocations("file:" + fileUploadPath + "/images/drag-and-drop/").setCacheControl(defaultCacheControl);
+
+        // e.g. public/videos/course-competencies/create-competencies.gif
+        addResourceHandlerForPath(registry, "videos", "course-competencies").setCacheControl(defaultCacheControl);
     }
 
     /**

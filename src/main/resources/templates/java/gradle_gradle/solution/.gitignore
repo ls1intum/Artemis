@@ -25,6 +25,8 @@ target/
 *.rar
 
 ### Eclipse
+.project
+.classpath
 .metadata
 bin/
 tmp/

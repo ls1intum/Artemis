@@ -20,7 +20,6 @@ import java.util.stream.Collectors;
 import jakarta.annotation.Nullable;
 import jakarta.validation.constraints.NotNull;
 
-import org.apache.velocity.exception.ResourceNotFoundException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
@@ -67,7 +66,6 @@ import de.tum.cit.aet.artemis.core.service.feature.FeatureToggleService;
 import de.tum.cit.aet.artemis.core.service.messaging.InstanceMessageSendService;
 import de.tum.cit.aet.artemis.core.util.HeaderUtil;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
-import de.tum.cit.aet.artemis.exercise.domain.ExerciseType;
 import de.tum.cit.aet.artemis.exercise.domain.InitializationState;
 import de.tum.cit.aet.artemis.exercise.domain.Submission;
 import de.tum.cit.aet.artemis.exercise.domain.SubmissionType;
@@ -382,7 +380,7 @@ public class ParticipationResource {
             throw new BadRequestAlertException("Not intended for the use in exams", "participation", "preconditions not met");
         }
         if (exercise.getDueDate() != null && now().isAfter(exercise.getDueDate())) {
-            throw new BadRequestAlertException("The due date is over", "participation", "preconditions not met");
+            throw new BadRequestAlertException("The due date is over", "participation", "feedbackRequestAfterDueDate", true);
         }
         if (exercise instanceof ProgrammingExercise) {
             ((ProgrammingExercise) exercise).validateSettingsForFeedbackRequest();
@@ -393,7 +391,7 @@ public class ParticipationResource {
         StudentParticipation participation = (exercise instanceof ProgrammingExercise)
                 ? programmingExerciseParticipationService.findStudentParticipationByExerciseAndStudentId(exercise, principal.getName())
                 : studentParticipationRepository.findByExerciseIdAndStudentLogin(exercise.getId(), principal.getName())
-                        .orElseThrow(() -> new ResourceNotFoundException("Participation not found"));
+                        .orElseThrow(() -> new BadRequestAlertException("Submission not found", "participation", "noSubmissionExists", true));
 
         checkAccessPermissionOwner(participation, user);
         participation = studentParticipationRepository.findByIdWithResultsElseThrow(participation.getId());
@@ -406,21 +404,20 @@ public class ParticipationResource {
         }
         else if (exercise instanceof ProgrammingExercise) {
             if (participation.findLatestLegalResult() == null) {
-                throw new BadRequestAlertException("User has not reached the conditions to submit a feedback request", "participation", "preconditions not met");
+                throw new BadRequestAlertException("You need to submit at least once and have the build results", "participation", "noSubmissionExists", true);
             }
         }
 
         // Check if feedback has already been requested
-        var currentDate = now();
-        var participationIndividualDueDate = participation.getIndividualDueDate();
-        if (participationIndividualDueDate != null && currentDate.isAfter(participationIndividualDueDate)) {
-            throw new BadRequestAlertException("Request has already been sent", "participation", "already sent");
+        var latestResult = participation.findLatestResult();
+        if (latestResult != null && latestResult.getAssessmentType() == AssessmentType.AUTOMATIC_ATHENA && latestResult.getCompletionDate().isAfter(now())) {
+            throw new BadRequestAlertException("Request has already been sent", "participation", "feedbackRequestAlreadySent", true);
         }
 
         // Process feedback request
         StudentParticipation updatedParticipation;
         if (exercise instanceof TextExercise) {
-            updatedParticipation = textExerciseFeedbackService.handleNonGradedFeedbackRequest(exercise.getId(), participation, (TextExercise) exercise);
+            updatedParticipation = textExerciseFeedbackService.handleNonGradedFeedbackRequest(participation, (TextExercise) exercise);
         }
         else if (exercise instanceof ModelingExercise) {
             updatedParticipation = modelingExerciseFeedbackService.handleNonGradedFeedbackRequest(participation, (ModelingExercise) exercise);
@@ -597,9 +594,7 @@ public class ParticipationResource {
     }
 
     private Set<StudentParticipation> findParticipationWithLatestResults(Exercise exercise) {
-        if (exercise.getExerciseType() == ExerciseType.QUIZ) {
-            return studentParticipationRepository.findByExerciseIdWithLatestAndManualRatedResultsAndAssessmentNote(exercise.getId());
-        }
+        // TODO: we should reduce the amount of data fetched here and sent to the client: double check which data is actually required in the exercise scores page
         if (exercise.isTeamMode()) {
             // For team exercises the students need to be eagerly fetched
             return studentParticipationRepository.findByExerciseIdWithLatestAndManualResultsWithTeamInformation(exercise.getId());
@@ -638,7 +633,12 @@ public class ParticipationResource {
             });
         }
         else {
-            participations = studentParticipationRepository.findByExerciseId(exerciseId);
+            if (exercise.isTeamMode()) {
+                participations = studentParticipationRepository.findWithTeamInformationByExerciseId(exerciseId);
+            }
+            else {
+                participations = studentParticipationRepository.findByExerciseId(exerciseId);
+            }
 
             Map<Long, Integer> submissionCountMap = studentParticipationRepository.countSubmissionsPerParticipationByExerciseIdAsMap(exerciseId);
             participations.forEach(participation -> participation.setSubmissionCount(submissionCountMap.get(participation.getId())));
@@ -718,7 +718,7 @@ public class ParticipationResource {
      * @param participationId the participationId of the participation to retrieve
      * @return the ResponseEntity with status 200 (OK) and with body the participation, or with status 404 (Not Found)
      */
-    @GetMapping("participations/{participationId}/withLatestResult")
+    @GetMapping("participations/{participationId}/with-latest-result")
     @EnforceAtLeastStudent
     public ResponseEntity<StudentParticipation> getParticipationWithLatestResult(@PathVariable Long participationId) {
         log.debug("REST request to get Participation : {}", participationId);
@@ -756,7 +756,7 @@ public class ParticipationResource {
      * @param participationId The participationId of the participation
      * @return The latest build artifact (JAR/WAR) for the participation
      */
-    @GetMapping("participations/{participationId}/buildArtifact")
+    @GetMapping("participations/{participationId}/build-artifact")
     @EnforceAtLeastStudent
     public ResponseEntity<byte[]> getParticipationBuildArtifact(@PathVariable Long participationId) {
         log.debug("REST request to get Participation build artifact: {}", participationId);
@@ -931,14 +931,14 @@ public class ParticipationResource {
     }
 
     /**
-     * DELETE /participations/:participationId : remove the build plan of the ProgrammingExerciseStudentParticipation of the "participationId".
+     * DELETE /participations/:participationId/cleanup-build-plan : remove the build plan of the ProgrammingExerciseStudentParticipation of the "participationId".
      * This only works for programming exercises.
      *
      * @param participationId the participationId of the ProgrammingExerciseStudentParticipation for which the build plan should be removed
      * @param principal       The identity of the user accessing this resource
      * @return the ResponseEntity with status 200 (OK)
      */
-    @PutMapping("participations/{participationId}/cleanupBuildPlan")
+    @PutMapping("participations/{participationId}/cleanup-build-plan")
     @EnforceAtLeastInstructor
     @FeatureToggle(Feature.ProgrammingExercises)
     public ResponseEntity<Participation> cleanupBuildPlan(@PathVariable Long participationId, Principal principal) {

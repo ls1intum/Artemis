@@ -16,6 +16,7 @@ import java.util.concurrent.ConcurrentSkipListSet;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.function.Supplier;
 
@@ -30,9 +31,9 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
 import de.tum.cit.aet.artemis.buildagent.dto.BuildJobQueueItem;
+import de.tum.cit.aet.artemis.buildagent.dto.BuildLogDTO;
 import de.tum.cit.aet.artemis.buildagent.dto.BuildResult;
 import de.tum.cit.aet.artemis.core.exception.LocalCIException;
-import de.tum.cit.aet.artemis.programming.domain.build.BuildLogEntry;
 
 /**
  * This service is responsible for adding build jobs to the Integrated Code Lifecycle executor service.
@@ -56,7 +57,7 @@ public class BuildJobManagementService {
 
     private final ReentrantLock lock = new ReentrantLock();
 
-    @Value("${artemis.continuous-integration.timeout-seconds:240}")
+    @Value("${artemis.continuous-integration.build-timeout-seconds.max:240}")
     private int timeoutSeconds;
 
     @Value("${artemis.continuous-integration.asynchronous:true}")
@@ -71,6 +72,8 @@ public class BuildJobManagementService {
      * This map is unique for each node and contains only the build jobs that are running on this node.
      */
     private final Map<String, Future<BuildResult>> runningFutures = new ConcurrentHashMap<>();
+
+    private final Map<String, CompletableFuture<BuildResult>> runningFuturesWrapper = new ConcurrentHashMap<>();
 
     /**
      * A set that contains all build jobs that were cancelled by the user.
@@ -146,9 +149,17 @@ public class BuildJobManagementService {
             lock.unlock();
         }
 
+        int buildJobTimeoutSeconds;
+        if (buildJobItem.buildConfig().timeoutSeconds() > 0 && buildJobItem.buildConfig().timeoutSeconds() < this.timeoutSeconds) {
+            buildJobTimeoutSeconds = buildJobItem.buildConfig().timeoutSeconds();
+        }
+        else {
+            buildJobTimeoutSeconds = this.timeoutSeconds;
+        }
+
         CompletableFuture<BuildResult> futureResult = createCompletableFuture(() -> {
             try {
-                return future.get(timeoutSeconds, TimeUnit.SECONDS);
+                return future.get(buildJobTimeoutSeconds, TimeUnit.SECONDS);
             }
             catch (Exception e) {
                 // RejectedExecutionException is thrown if the queue size limit (defined in "artemis.continuous-integration.queue-size-limit") is reached.
@@ -158,18 +169,44 @@ public class BuildJobManagementService {
                     finishCancelledBuildJob(buildJobItem.repositoryInfo().assignmentRepositoryUri(), buildJobItem.id(), containerName);
                     String msg = "Build job with id " + buildJobItem.id() + " was cancelled.";
                     String stackTrace = stackTraceToString(e);
-                    buildLogsMap.appendBuildLogEntry(buildJobItem.id(), new BuildLogEntry(ZonedDateTime.now(), msg + "\n" + stackTrace));
+                    buildLogsMap.appendBuildLogEntry(buildJobItem.id(), new BuildLogDTO(ZonedDateTime.now(), msg + "\n" + stackTrace));
                     throw new CompletionException(msg, e);
                 }
                 else {
                     finishBuildJobExceptionally(buildJobItem.id(), containerName, e);
+                    if (e instanceof TimeoutException) {
+                        logTimedOutBuildJob(buildJobItem, buildJobTimeoutSeconds);
+                    }
                     throw new CompletionException(e);
                 }
             }
         });
-        futureResult.whenComplete(((result, throwable) -> runningFutures.remove(buildJobItem.id())));
 
-        return futureResult;
+        runningFuturesWrapper.put(buildJobItem.id(), futureResult);
+        return futureResult.whenComplete(((result, throwable) -> {
+            runningFutures.remove(buildJobItem.id());
+            runningFuturesWrapper.remove(buildJobItem.id());
+        }));
+    }
+
+    private void logTimedOutBuildJob(BuildJobQueueItem buildJobItem, int buildJobTimeoutSeconds) {
+        String msg = "Timed out after " + buildJobTimeoutSeconds + " seconds. "
+                + "This may be due to an infinite loop or inefficient code. Please review your code for potential issues. "
+                + "If the problem persists, contact your instructor for assistance. (Build job ID: " + buildJobItem.id() + ")";
+        buildLogsMap.appendBuildLogEntry(buildJobItem.id(), msg);
+        log.warn(msg);
+
+        msg = "Executing build job with id " + buildJobItem.id() + " timed out after " + buildJobTimeoutSeconds + " seconds."
+                + "This may be due to strict timeout settings. Consider increasing the exercise timeout and applying stricter timeout constraints within the test cases using @StrictTimeout.";
+        buildLogsMap.appendBuildLogEntry(buildJobItem.id(), msg);
+    }
+
+    Set<String> getRunningBuildJobIds() {
+        return Set.copyOf(runningFutures.keySet());
+    }
+
+    CompletableFuture<BuildResult> getRunningBuildJobFutureWrapper(String buildJobId) {
+        return runningFuturesWrapper.get(buildJobId);
     }
 
     /**
@@ -208,7 +245,7 @@ public class BuildJobManagementService {
     private void finishBuildJobExceptionally(String buildJobId, String containerName, Exception exception) {
         String msg = "Error while executing build job " + buildJobId + ": " + exception.getMessage();
         String stackTrace = stackTraceToString(exception);
-        buildLogsMap.appendBuildLogEntry(buildJobId, new BuildLogEntry(ZonedDateTime.now(), msg + "\n" + stackTrace));
+        buildLogsMap.appendBuildLogEntry(buildJobId, new BuildLogDTO(ZonedDateTime.now(), msg + "\n" + stackTrace));
         log.error(msg);
 
         log.info("Getting ID of running container {}", containerName);
@@ -224,7 +261,7 @@ public class BuildJobManagementService {
      *
      * @param buildJobId The id of the build job that should be cancelled.
      */
-    private void cancelBuildJob(String buildJobId) {
+    void cancelBuildJob(String buildJobId) {
         Future<BuildResult> future = runningFutures.get(buildJobId);
         if (future != null) {
             try {

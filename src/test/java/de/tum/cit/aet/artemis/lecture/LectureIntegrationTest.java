@@ -23,6 +23,7 @@ import org.springframework.security.test.context.support.WithMockUser;
 
 import de.tum.cit.aet.artemis.atlas.competency.util.CompetencyUtilService;
 import de.tum.cit.aet.artemis.atlas.domain.competency.Competency;
+import de.tum.cit.aet.artemis.atlas.domain.competency.CompetencyLectureUnitLink;
 import de.tum.cit.aet.artemis.communication.domain.conversation.Channel;
 import de.tum.cit.aet.artemis.communication.repository.conversation.ChannelRepository;
 import de.tum.cit.aet.artemis.communication.util.ConversationUtilService;
@@ -109,6 +110,7 @@ class LectureIntegrationTest extends AbstractSpringIntegrationIndependentTest {
         channel.setLecture(this.lecture1);
         channelRepository.save(channel);
         textExercise = textExerciseRepository.findByCourseIdWithCategories(course1.getId()).stream().findFirst().orElseThrow();
+
         // Add users that are not in the course
         userUtilService.createAndSaveUser(TEST_PREFIX + "student42");
         userUtilService.createAndSaveUser(TEST_PREFIX + "instructor42");
@@ -125,6 +127,7 @@ class LectureIntegrationTest extends AbstractSpringIntegrationIndependentTest {
         lecture1 = lectureUtilService.addLectureUnitsToLecture(this.lecture1, List.of(exerciseUnit, attachmentUnit, videoUnit, textUnit, onlineUnit));
 
         competency = competencyUtilService.createCompetency(course1);
+        competencyUtilService.linkExerciseToCompetency(competency, textExercise);
     }
 
     private void addAttachmentToLecture() {
@@ -295,6 +298,8 @@ class LectureIntegrationTest extends AbstractSpringIntegrationIndependentTest {
         Lecture receivedLectureWithDetails = request.get("/api/lectures/" + lecture1.getId() + "/details", HttpStatus.OK, Lecture.class);
         assertThat(receivedLectureWithDetails.getId()).isEqualTo(lecture1.getId());
         assertThat(receivedLectureWithDetails.getLectureUnits()).hasSize(5);
+        assertThat(receivedLectureWithDetails.getLectureUnits().stream().filter(lectureUnit -> lectureUnit instanceof ExerciseUnit).toList().getFirst().getCompetencyLinks())
+                .hasSize(1);
         assertThat(receivedLectureWithDetails.getAttachments()).hasSize(2);
 
         testGetLecture(lecture1.getId());
@@ -357,7 +362,7 @@ class LectureIntegrationTest extends AbstractSpringIntegrationIndependentTest {
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void deleteLecture_lectureExists_shouldDeleteLecture() throws Exception {
-        attachmentUnit.setCompetencies(Set.of(competency));
+        attachmentUnit.setCompetencyLinks(Set.of(new CompetencyLectureUnitLink(competency, attachmentUnit, 1)));
         lectureUnitRepository.save(attachmentUnit);
 
         request.delete("/api/lectures/" + lecture1.getId(), HttpStatus.OK);
@@ -365,7 +370,7 @@ class LectureIntegrationTest extends AbstractSpringIntegrationIndependentTest {
         assertThat(lectureOptional).isEmpty();
 
         // ExerciseUnits do not have competencies, their exercises do
-        verify(competencyProgressService, timeout(1000).times(lecture1.getLectureUnits().size() - 1)).updateProgressForUpdatedLearningObjectAsync(any(), eq(Optional.empty()));
+        verify(competencyProgressApi, timeout(1000).times(lecture1.getLectureUnits().size() - 1)).updateProgressForUpdatedLearningObjectAsync(any(), eq(Optional.empty()));
     }
 
     @Test

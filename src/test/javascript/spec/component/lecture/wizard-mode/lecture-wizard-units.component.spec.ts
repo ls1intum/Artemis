@@ -27,6 +27,7 @@ import { Attachment, AttachmentType } from 'app/entities/attachment.model';
 import { AttachmentUnit } from 'app/entities/lecture-unit/attachmentUnit.model';
 import { objectToJsonBlob } from 'app/utils/blob-util';
 import { CreateExerciseUnitComponent } from 'app/lecture/lecture-unit/lecture-unit-management/create-exercise-unit/create-exercise-unit.component';
+import { CompetencyLectureUnitLink } from '../../../../../../main/webapp/app/entities/competency.model';
 
 @Component({ selector: 'jhi-video-unit-form', template: '' })
 class VideoUnitFormStubComponent {
@@ -94,7 +95,7 @@ describe('LectureWizardUnitComponent', () => {
         unitCreationCard.onUnitCreationCardClicked.emit(LectureUnitType.VIDEO);
 
         wizardUnitComponentFixture.whenStable().then(() => {
-            expect(wizardUnitComponent.isVideoUnitFormOpen).toBeTrue();
+            expect(wizardUnitComponent.isVideoUnitFormOpen()).toBeTrue();
         });
     }));
 
@@ -105,7 +106,7 @@ describe('LectureWizardUnitComponent', () => {
         unitCreationCard.onUnitCreationCardClicked.emit(LectureUnitType.ONLINE);
 
         wizardUnitComponentFixture.whenStable().then(() => {
-            expect(wizardUnitComponent.isOnlineUnitFormOpen).toBeTrue();
+            expect(wizardUnitComponent.isOnlineUnitFormOpen()).toBeTrue();
         });
     }));
 
@@ -116,7 +117,7 @@ describe('LectureWizardUnitComponent', () => {
         unitCreationCard.onUnitCreationCardClicked.emit(LectureUnitType.ATTACHMENT);
 
         wizardUnitComponentFixture.whenStable().then(() => {
-            expect(wizardUnitComponent.isAttachmentUnitFormOpen).toBeTrue();
+            expect(wizardUnitComponent.isAttachmentUnitFormOpen()).toBeTrue();
         });
     }));
 
@@ -127,7 +128,7 @@ describe('LectureWizardUnitComponent', () => {
         unitCreationCard.onUnitCreationCardClicked.emit(LectureUnitType.TEXT);
 
         wizardUnitComponentFixture.whenStable().then(() => {
-            expect(wizardUnitComponent.isTextUnitFormOpen).toBeTrue();
+            expect(wizardUnitComponent.isTextUnitFormOpen()).toBeTrue();
         });
     }));
 
@@ -138,7 +139,7 @@ describe('LectureWizardUnitComponent', () => {
         unitCreationCard.onUnitCreationCardClicked.emit(LectureUnitType.EXERCISE);
 
         wizardUnitComponentFixture.whenStable().then(() => {
-            expect(wizardUnitComponent.isExerciseUnitFormOpen).toBeTrue();
+            expect(wizardUnitComponent.isExerciseUnitFormOpen()).toBeTrue();
         });
     }));
 
@@ -148,11 +149,11 @@ describe('LectureWizardUnitComponent', () => {
         wizardUnitComponent.onCloseLectureUnitForms();
 
         wizardUnitComponentFixture.whenStable().then(() => {
-            expect(wizardUnitComponent.isOnlineUnitFormOpen).toBeFalse();
-            expect(wizardUnitComponent.isTextUnitFormOpen).toBeFalse();
-            expect(wizardUnitComponent.isExerciseUnitFormOpen).toBeFalse();
-            expect(wizardUnitComponent.isAttachmentUnitFormOpen).toBeFalse();
-            expect(wizardUnitComponent.isVideoUnitFormOpen).toBeFalse();
+            expect(wizardUnitComponent.isOnlineUnitFormOpen()).toBeFalse();
+            expect(wizardUnitComponent.isTextUnitFormOpen()).toBeFalse();
+            expect(wizardUnitComponent.isExerciseUnitFormOpen()).toBeFalse();
+            expect(wizardUnitComponent.isAttachmentUnitFormOpen()).toBeFalse();
+            expect(wizardUnitComponent.isVideoUnitFormOpen()).toBeFalse();
         });
     }));
 
@@ -164,14 +165,18 @@ describe('LectureWizardUnitComponent', () => {
             releaseDate: dayjs().year(2010).month(3).date(5),
             description: 'Lorem Ipsum',
             source: 'https://youtu.be/dQw4w9WgXcQ',
-            competencies: [
-                {
-                    id: 1,
-                    masteryThreshold: 0,
-                    optional: false,
-                    taxonomy: undefined,
-                    title: 'Test',
-                },
+            competencyLinks: [
+                new CompetencyLectureUnitLink(
+                    {
+                        id: 1,
+                        masteryThreshold: 0,
+                        optional: false,
+                        taxonomy: undefined,
+                        title: 'Test',
+                    },
+                    undefined,
+                    1,
+                ),
             ],
         };
 
@@ -189,7 +194,7 @@ describe('LectureWizardUnitComponent', () => {
 
         const updateSpy = jest.spyOn(wizardUnitComponent.unitManagementComponent, 'loadData');
 
-        wizardUnitComponent.isVideoUnitFormOpen = true;
+        wizardUnitComponent.isVideoUnitFormOpen.set(true);
 
         wizardUnitComponent.createEditVideoUnit(formData);
 
@@ -201,7 +206,7 @@ describe('LectureWizardUnitComponent', () => {
             expect(videoUnitCallArgument.description).toEqual(formData.description);
             expect(videoUnitCallArgument.releaseDate).toEqual(formData.releaseDate);
             expect(videoUnitCallArgument.source).toEqual(formData.source);
-            expect(videoUnitCallArgument.competencies).toEqual(formData.competencies);
+            expect(videoUnitCallArgument.competencyLinks).toEqual(formData.competencyLinks);
             expect(lectureIdCallArgument).toBe(1);
 
             expect(createStub).toHaveBeenCalledOnce();
@@ -221,7 +226,7 @@ describe('LectureWizardUnitComponent', () => {
         wizardUnitComponentFixture.detectChanges();
         tick();
 
-        wizardUnitComponent.isVideoUnitFormOpen = true;
+        wizardUnitComponent.isVideoUnitFormOpen.set(true);
 
         wizardUnitComponent.createEditVideoUnit(formData);
 
@@ -237,14 +242,18 @@ describe('LectureWizardUnitComponent', () => {
             name: 'Test',
             releaseDate: dayjs().year(2010).month(3).date(5),
             content: 'Lorem Ipsum',
-            competencies: [
-                {
-                    id: 1,
-                    masteryThreshold: 0,
-                    optional: false,
-                    taxonomy: undefined,
-                    title: 'Test',
-                },
+            competencyLinks: [
+                new CompetencyLectureUnitLink(
+                    {
+                        id: 1,
+                        masteryThreshold: 0,
+                        optional: false,
+                        taxonomy: undefined,
+                        title: 'Test',
+                    },
+                    undefined,
+                    1,
+                ),
             ],
         };
 
@@ -268,7 +277,7 @@ describe('LectureWizardUnitComponent', () => {
 
         const updateSpy = jest.spyOn(wizardUnitComponent.unitManagementComponent, 'loadData');
 
-        wizardUnitComponent.isTextUnitFormOpen = true;
+        wizardUnitComponent.isTextUnitFormOpen.set(true);
 
         wizardUnitComponent.createEditTextUnit(formData);
 
@@ -279,7 +288,7 @@ describe('LectureWizardUnitComponent', () => {
             expect(textUnitCallArgument.name).toEqual(formData.name);
             expect(textUnitCallArgument.content).toEqual(formData.content);
             expect(textUnitCallArgument.releaseDate).toEqual(formData.releaseDate);
-            expect(textUnitCallArgument.competencies).toEqual(formData.competencies);
+            expect(textUnitCallArgument.competencyLinks).toEqual(formData.competencyLinks);
             expect(lectureIdCallArgument).toBe(1);
 
             expect(createStub).toHaveBeenCalledOnce();
@@ -299,7 +308,7 @@ describe('LectureWizardUnitComponent', () => {
         wizardUnitComponentFixture.detectChanges();
         tick();
 
-        wizardUnitComponent.isTextUnitFormOpen = true;
+        wizardUnitComponent.isTextUnitFormOpen.set(true);
 
         wizardUnitComponent.createEditTextUnit(formData);
 
@@ -324,7 +333,7 @@ describe('LectureWizardUnitComponent', () => {
         wizardUnitComponentFixture.detectChanges();
         tick();
 
-        wizardUnitComponent.isTextUnitFormOpen = true;
+        wizardUnitComponent.isTextUnitFormOpen.set(true);
 
         wizardUnitComponent.createEditTextUnit(formData);
 
@@ -351,7 +360,7 @@ describe('LectureWizardUnitComponent', () => {
         wizardUnitComponentFixture.detectChanges();
         tick();
 
-        wizardUnitComponent.isVideoUnitFormOpen = true;
+        wizardUnitComponent.isVideoUnitFormOpen.set(true);
 
         wizardUnitComponent.createEditVideoUnit(formData);
 
@@ -378,7 +387,7 @@ describe('LectureWizardUnitComponent', () => {
         wizardUnitComponentFixture.detectChanges();
         tick();
 
-        wizardUnitComponent.isOnlineUnitFormOpen = true;
+        wizardUnitComponent.isOnlineUnitFormOpen.set(true);
 
         wizardUnitComponent.createEditOnlineUnit(formData);
 
@@ -396,14 +405,18 @@ describe('LectureWizardUnitComponent', () => {
             releaseDate: dayjs().year(2010).month(3).date(5),
             description: 'Lorem Ipsum',
             source: 'https://www.example.com',
-            competencies: [
-                {
-                    id: 1,
-                    masteryThreshold: 0,
-                    optional: false,
-                    taxonomy: undefined,
-                    title: 'Test',
-                },
+            competencyLinks: [
+                new CompetencyLectureUnitLink(
+                    {
+                        id: 1,
+                        masteryThreshold: 0,
+                        optional: false,
+                        taxonomy: undefined,
+                        title: 'Test',
+                    },
+                    undefined,
+                    1,
+                ),
             ],
         };
 
@@ -421,7 +434,7 @@ describe('LectureWizardUnitComponent', () => {
 
         const updateSpy = jest.spyOn(wizardUnitComponent.unitManagementComponent, 'loadData');
 
-        wizardUnitComponent.isOnlineUnitFormOpen = true;
+        wizardUnitComponent.isOnlineUnitFormOpen.set(true);
 
         wizardUnitComponent.createEditOnlineUnit(formDate);
 
@@ -433,7 +446,7 @@ describe('LectureWizardUnitComponent', () => {
             expect(onlineUnitCallArgument.description).toEqual(formDate.description);
             expect(onlineUnitCallArgument.releaseDate).toEqual(formDate.releaseDate);
             expect(onlineUnitCallArgument.source).toEqual(formDate.source);
-            expect(onlineUnitCallArgument.competencies).toEqual(formDate.competencies);
+            expect(onlineUnitCallArgument.competencyLinks).toEqual(formDate.competencyLinks);
             expect(lectureIdCallArgument).toBe(1);
 
             expect(createStub).toHaveBeenCalledOnce();
@@ -453,7 +466,7 @@ describe('LectureWizardUnitComponent', () => {
         wizardUnitComponentFixture.detectChanges();
         tick();
 
-        wizardUnitComponent.isOnlineUnitFormOpen = true;
+        wizardUnitComponent.isOnlineUnitFormOpen.set(true);
 
         wizardUnitComponent.createEditOnlineUnit(formData);
 
@@ -474,14 +487,18 @@ describe('LectureWizardUnitComponent', () => {
                 releaseDate: dayjs().year(2010).month(3).date(5),
                 version: 2,
                 updateNotificationText: 'lorem ipsum',
-                competencies: [
-                    {
-                        id: 1,
-                        masteryThreshold: 0,
-                        optional: false,
-                        taxonomy: undefined,
-                        title: 'Test',
-                    },
+                competencyLinks: [
+                    new CompetencyLectureUnitLink(
+                        {
+                            id: 1,
+                            masteryThreshold: 0,
+                            optional: false,
+                            taxonomy: undefined,
+                            title: 'Test',
+                        },
+                        undefined,
+                        1,
+                    ),
                 ],
             },
             fileProperties: {
@@ -521,7 +538,7 @@ describe('LectureWizardUnitComponent', () => {
 
         const updateSpy = jest.spyOn(wizardUnitComponent.unitManagementComponent, 'loadData');
 
-        wizardUnitComponent.isAttachmentUnitFormOpen = true;
+        wizardUnitComponent.isAttachmentUnitFormOpen.set(true);
 
         wizardUnitComponent.createEditAttachmentUnit(attachmentUnitFormData);
 
@@ -590,7 +607,7 @@ describe('LectureWizardUnitComponent', () => {
         wizardUnitComponent.isEditingLectureUnit = true;
         wizardUnitComponent.currentlyProcessedAttachmentUnit = new AttachmentUnit();
         wizardUnitComponent.currentlyProcessedAttachmentUnit.attachment = new Attachment();
-        wizardUnitComponent.isAttachmentUnitFormOpen = true;
+        wizardUnitComponent.isAttachmentUnitFormOpen.set(true);
 
         wizardUnitComponent.createEditAttachmentUnit(attachmentUnitFormData);
 
@@ -646,7 +663,7 @@ describe('LectureWizardUnitComponent', () => {
         wizardUnitComponentFixture.detectChanges();
         tick();
 
-        wizardUnitComponent.isAttachmentUnitFormOpen = true;
+        wizardUnitComponent.isAttachmentUnitFormOpen.set(true);
 
         wizardUnitComponent.createEditAttachmentUnit(attachmentUnitFormData);
 
@@ -702,7 +719,7 @@ describe('LectureWizardUnitComponent', () => {
         wizardUnitComponentFixture.detectChanges();
         tick();
 
-        wizardUnitComponent.isAttachmentUnitFormOpen = true;
+        wizardUnitComponent.isAttachmentUnitFormOpen.set(true);
 
         wizardUnitComponent.createEditAttachmentUnit(attachmentUnitFormData);
 
@@ -725,7 +742,7 @@ describe('LectureWizardUnitComponent', () => {
         wizardUnitComponentFixture.detectChanges();
         tick();
 
-        wizardUnitComponent.isAttachmentUnitFormOpen = true;
+        wizardUnitComponent.isAttachmentUnitFormOpen.set(true);
 
         wizardUnitComponent.createEditAttachmentUnit(formData);
 
@@ -822,6 +839,6 @@ describe('LectureWizardUnitComponent', () => {
         wizardUnitComponentFixture.detectChanges();
 
         expect(wizardUnitComponent).not.toBeNull();
-        expect(wizardUnitComponent.isExerciseUnitFormOpen).toBeTrue();
+        expect(wizardUnitComponent.isExerciseUnitFormOpen()).toBeTrue();
     }));
 });

@@ -10,11 +10,11 @@ import java.util.Optional;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import jakarta.annotation.PostConstruct;
-
 import org.redisson.api.RedissonClient;
+import org.redisson.client.RedisConnectionException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.boot.context.event.ApplicationReadyEvent;
 import org.springframework.context.annotation.Profile;
 import org.springframework.context.event.EventListener;
 import org.springframework.messaging.handler.annotation.DestinationVariable;
@@ -92,9 +92,9 @@ public class ParticipationTeamWebsocketService {
     }
 
     /**
-     * Initialize relevant data from hazelcast
+     * Initialize relevant data from Redis
      */
-    @PostConstruct
+    @EventListener(ApplicationReadyEvent.class)
     public void init() {
         // participationId-username -> timestamp
         this.lastTypingTracker = redissonClient.getMap("lastTypingTracker");
@@ -305,11 +305,17 @@ public class ParticipationTeamWebsocketService {
      * @param sessionId id of the sessions which is unsubscribing
      */
     public void unsubscribe(String sessionId) {
-        Optional.ofNullable(destinationTracker.get(sessionId)).ifPresent(destination -> {
-            Long participationId = getParticipationIdFromDestination(destination);
-            sendOnlineTeamStudents(participationId, sessionId);
-            destinationTracker.remove(sessionId);
-        });
+        try {
+            Optional.ofNullable(destinationTracker.get(sessionId)).ifPresent(destination -> {
+                Long participationId = getParticipationIdFromDestination(destination);
+                sendOnlineTeamStudents(participationId, sessionId);
+                destinationTracker.remove(sessionId);
+            });
+        }
+        catch (RedisConnectionException e) {
+            log.error("Failed to unsubscribe due to Redis connection exception.");
+        }
+
     }
 
     /**

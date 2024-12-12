@@ -76,8 +76,6 @@ public class UserDTO extends AuditingEntityDTO {
 
     private ZonedDateTime vcsAccessTokenExpiryDate;
 
-    private String sshPublicKey;
-
     private ZonedDateTime irisAccepted;
 
     public UserDTO() {
@@ -258,14 +256,6 @@ public class UserDTO extends AuditingEntityDTO {
 
     public ZonedDateTime getVcsAccessTokenExpiryDate() {
         return vcsAccessTokenExpiryDate;
-    }
-
-    public String getSshPublicKey() {
-        return sshPublicKey;
-    }
-
-    public void setSshPublicKey(String sshPublicKey) {
-        this.sshPublicKey = sshPublicKey;
     }
 
     @Override

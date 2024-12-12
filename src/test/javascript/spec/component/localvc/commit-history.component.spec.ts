@@ -272,4 +272,25 @@ describe('CommitHistoryComponent', () => {
         expect(component.paramSub?.closed).toBeTrue();
         expect(component.participationSub?.closed).toBeTrue();
     });
+
+    it('should load auxiliary repository commits', () => {
+        setupComponent();
+        activatedRoute.setParameters({ repositoryType: 'AUXILIARY', repositoryId: 5 });
+        jest.spyOn(programmingExerciseParticipationService, 'retrieveCommitHistoryForAuxiliaryRepository').mockReturnValue(of(mockTestCommits));
+
+        // Trigger ngOnInit
+        component.ngOnInit();
+
+        // Expectations
+        expect(component.commits).toEqual(mockTestCommits); // Updated to reflect the correct order
+        expect(component.commits[0].result).toBeUndefined();
+        expect(component.commits[1].result).toBeUndefined();
+
+        // Trigger ngOnDestroy
+        component.ngOnDestroy();
+
+        // Expect subscription to be unsubscribed
+        expect(component.paramSub?.closed).toBeTrue();
+        expect(component.participationSub?.closed).toBeTrue();
+    });
 });

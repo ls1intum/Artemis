@@ -44,12 +44,12 @@ export class ProfileService {
                                 profileInfo.ribbonEnv = ribbonProfiles[0];
                             }
                             profileInfo.inProduction = profileInfo.activeProfiles.includes('prod');
+                            profileInfo.inDevelopment = profileInfo.activeProfiles.includes('dev');
                             profileInfo.openApiEnabled = profileInfo.activeProfiles.includes('openapi');
                         }
                         profileInfo.ribbonEnv = profileInfo.ribbonEnv ?? '';
 
                         profileInfo.sentry = data.sentry;
-                        profileInfo.postHog = data.postHog;
                         profileInfo.features = data.features;
                         profileInfo.buildPlanURLTemplate = data.buildPlanURLTemplate;
                         profileInfo.commitHashURLTemplate = data.commitHashURLTemplate;
@@ -86,6 +86,10 @@ export class ProfileService {
                         profileInfo.git = data.git;
 
                         profileInfo.theiaPortalURL = data.theiaPortalURL ?? '';
+
+                        profileInfo.buildTimeoutMin = data.buildTimeoutMin;
+                        profileInfo.buildTimeoutMax = data.buildTimeoutMax;
+                        profileInfo.buildTimeoutDefault = data.buildTimeoutDefault;
 
                         return profileInfo;
                     }),

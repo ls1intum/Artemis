@@ -12,9 +12,8 @@ import { By } from '@angular/platform-browser';
 import { TranslateService } from '@ngx-translate/core';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { ReactiveFormsModule } from '@angular/forms';
-import { RouterTestingModule } from '@angular/router/testing';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
-import { Router } from '@angular/router';
+import { Router, provideRouter } from '@angular/router';
 
 describe('CourseRegistrationButtonComponent', () => {
     let fixture: ComponentFixture<CourseUnenrollmentModalComponent>;
@@ -29,9 +28,9 @@ describe('CourseRegistrationButtonComponent', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule, ReactiveFormsModule, RouterTestingModule.withRoutes([])],
+            imports: [ArtemisTestModule, ReactiveFormsModule],
             declarations: [CourseUnenrollmentModalComponent, MockPipe(ArtemisTranslatePipe), MockPipe(ArtemisDatePipe)],
-            providers: [MockProvider(CourseManagementService), MockProvider(AlertService), MockProvider(TranslateService)],
+            providers: [provideRouter([]), MockProvider(CourseManagementService), MockProvider(AlertService), MockProvider(TranslateService)],
         })
             .compileComponents()
             .then(() => {
