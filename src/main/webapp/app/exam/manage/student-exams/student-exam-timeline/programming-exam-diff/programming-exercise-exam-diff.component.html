@@ -33,12 +33,8 @@
         </dt>
         <dd>
             <div class="fw-bold">
-                <jhi-git-diff-line-stat
-                    [addedLineCount]="addedLineCount"
-                    [removedLineCount]="removedLineCount"
-                    ngbTooltip="{{ 'artemisApp.programmingExercise.diffReport.lineStatTooltipExamTimeline' | artemisTranslate }}"
-                />
-                @if (addedLineCount > 0 || removedLineCount > 0) {
+                <jhi-git-diff-line-stat [lineStat]="lineStat()" ngbTooltip="{{ 'artemisApp.programmingExercise.diffReport.lineStatTooltipExamTimeline' | artemisTranslate }}" />
+                @if (lineStat().addedLineCount > 0 || lineStat().removedLineCount > 0) {
                     <jhi-button
                         [featureToggle]="FeatureToggle.ProgrammingExercises"
                         [isLoading]="isLoadingDiffReport"

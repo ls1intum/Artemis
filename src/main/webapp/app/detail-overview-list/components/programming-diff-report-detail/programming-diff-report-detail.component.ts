@@ -1,4 +1,4 @@
-import { Component, Input, OnDestroy, inject, signal } from '@angular/core';
+import { ChangeDetectorRef, Component, Input, OnDestroy, inject, signal } from '@angular/core';
 import type { ProgrammingDiffReportDetail } from 'app/detail-overview-list/detail.model';
 import { FeatureToggle } from 'app/shared/feature-toggle/feature-toggle.service';
 import { ButtonSize, ButtonType, TooltipPlacement } from 'app/shared/components/button.component';
@@ -8,7 +8,7 @@ import { GitDiffReportModalComponent } from 'app/exercises/programming/hestia/gi
 import { ArtemisSharedComponentModule } from 'app/shared/components/shared-component.module';
 import { ArtemisSharedModule } from 'app/shared/shared.module';
 import { NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
-import { GitDiffLineStatComponent } from 'app/exercises/programming/hestia/git-diff-report/git-diff-line-stat.component';
+import { GitDiffLineStatComponent, LineStat } from 'app/exercises/programming/hestia/git-diff-report/git-diff-line-stat.component';
 
 @Component({
     selector: 'jhi-programming-diff-report-detail',
@@ -25,9 +25,15 @@ export class ProgrammingDiffReportDetailComponent implements OnDestroy {
     protected readonly faCodeCompare = faCodeCompare;
 
     private readonly modalService = inject(NgbModal);
+    private readonly changeDetector = inject(ChangeDetectorRef);
     private modalRef?: NgbModalRef;
 
     @Input({ required: true }) detail: ProgrammingDiffReportDetail;
+
+    protected readonly lineStat = signal<LineStat>({
+        addedLineCount: 0,
+        removedLineCount: 0,
+    });
 
     ngOnDestroy() {
         this.modalRef?.close();
@@ -39,6 +45,9 @@ export class ProgrammingDiffReportDetailComponent implements OnDestroy {
         }
 
         this.modalRef = this.modalService.open(GitDiffReportModalComponent, { windowClass: GitDiffReportModalComponent.WINDOW_CLASS });
-        this.modalRef.componentInstance.report = signal(gitDiff);
+        const component: GitDiffReportModalComponent = this.modalRef.componentInstance;
+        component.report.set(gitDiff);
+        component.lineStatChanged.subscribe((lineStat) => this.lineStat.set(lineStat));
+        this.changeDetector.markForCheck();
     }
 }
