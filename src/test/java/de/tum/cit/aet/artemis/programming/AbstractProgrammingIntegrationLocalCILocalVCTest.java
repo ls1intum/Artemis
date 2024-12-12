@@ -1,10 +1,8 @@
 package de.tum.cit.aet.artemis.programming;
 
+import org.redisson.api.RedissonClient;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
-
-import com.hazelcast.core.HazelcastInstance;
 
 import de.tum.cit.aet.artemis.atlas.competency.util.CompetencyUtilService;
 import de.tum.cit.aet.artemis.buildagent.service.SharedQueueProcessingService;
@@ -30,8 +28,7 @@ public abstract class AbstractProgrammingIntegrationLocalCILocalVCTest extends A
 
     // Config
     @Autowired
-    @Qualifier("hazelcastInstance")
-    protected HazelcastInstance hazelcastInstance;
+    protected RedissonClient redissonClient;
 
     @Value("${artemis.user-management.internal-admin.username}")
     protected String localVCUsername;

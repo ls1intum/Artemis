@@ -40,6 +40,8 @@ import org.junit.jupiter.api.parallel.Execution;
 import org.junit.jupiter.api.parallel.ExecutionMode;
 import org.mockito.ArgumentMatcher;
 import org.mockito.Mockito;
+import org.redisson.api.RMap;
+import org.redisson.api.RQueue;
 import org.springframework.core.io.FileSystemResource;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
@@ -49,8 +51,6 @@ import com.github.dockerjava.api.command.CopyArchiveFromContainerCmd;
 import com.github.dockerjava.api.command.ExecStartCmd;
 import com.github.dockerjava.api.exception.NotFoundException;
 import com.github.dockerjava.api.model.Frame;
-import com.hazelcast.collection.IQueue;
-import com.hazelcast.map.IMap;
 
 import de.tum.cit.aet.artemis.assessment.domain.Result;
 import de.tum.cit.aet.artemis.buildagent.dto.BuildJobQueueItem;
@@ -501,20 +501,20 @@ class LocalCIIntegrationTest extends AbstractProgrammingIntegrationLocalCILocalV
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testPauseAndResumeBuildAgent() {
         String buildAgentName = "artemis-build-agent-test";
-        hazelcastInstance.getTopic("pauseBuildAgentTopic").publish(buildAgentName);
+        redissonClient.getTopic("pauseBuildAgentTopic").publish(buildAgentName);
 
         ProgrammingExerciseStudentParticipation studentParticipation = localVCLocalCITestService.createParticipation(programmingExercise, student1Login);
 
         localVCServletService.processNewPush(commitHash, studentAssignmentRepository.originGit.getRepository());
         await().until(() -> {
-            IQueue<BuildJobQueueItem> buildQueue = hazelcastInstance.getQueue("buildJobQueue");
-            IMap<String, BuildJobQueueItem> buildJobMap = hazelcastInstance.getMap("processingJobs");
+            RQueue<BuildJobQueueItem> buildQueue = redissonClient.getQueue("buildJobQueue");
+            RMap<String, BuildJobQueueItem> buildJobMap = redissonClient.getMap("processingJobs");
             BuildJobQueueItem buildJobQueueItem = buildQueue.peek();
 
             return buildJobQueueItem != null && buildJobQueueItem.buildConfig().commitHashToBuild().equals(commitHash) && !buildJobMap.containsKey(buildJobQueueItem.id());
         });
 
-        hazelcastInstance.getTopic("resumeBuildAgentTopic").publish(buildAgentName);
+        redissonClient.getTopic("resumeBuildAgentTopic").publish(buildAgentName);
         localVCLocalCITestService.testLatestSubmission(studentParticipation.getId(), commitHash, 1, false);
     }
 }

@@ -31,10 +31,10 @@ class BuildAgentSshAuthenticationIntegrationTest extends AbstractSpringIntegrati
     }
 
     @Test
-    void testSSHInHazelcast() {
+    void testSSHInRedis() {
         sharedQueueProcessingService.updateBuildAgentInformation();
         Map<String, BuildAgentInformation> buildAgentInformation = redissonClient.getMap("buildAgentInformation");
-        assertThat(buildAgentInformation.values()).as("SSH public key available in hazelcast.")
+        assertThat(buildAgentInformation.values()).as("SSH public key available in Redis.")
                 .anyMatch(agent -> agent.publicSshKey().equals(buildAgentSSHKeyService.getPublicKeyAsString()));
     }
 }

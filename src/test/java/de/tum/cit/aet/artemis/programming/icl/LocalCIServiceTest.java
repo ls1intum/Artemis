@@ -27,7 +27,10 @@ import de.tum.cit.aet.artemis.buildagent.dto.BuildConfig;
 import de.tum.cit.aet.artemis.buildagent.dto.BuildJobQueueItem;
 import de.tum.cit.aet.artemis.buildagent.dto.JobTimingInfo;
 import de.tum.cit.aet.artemis.buildagent.dto.RepositoryInfo;
+import de.tum.cit.aet.artemis.buildagent.service.SharedQueueProcessingService;
 import de.tum.cit.aet.artemis.core.domain.Course;
+import de.tum.cit.aet.artemis.exercise.participation.util.ParticipationUtilService;
+import de.tum.cit.aet.artemis.exercise.util.ExerciseUtilService;
 import de.tum.cit.aet.artemis.programming.AbstractProgrammingIntegrationLocalCILocalVCTest;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseBuildConfig;
@@ -35,8 +38,11 @@ import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseStudentParti
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingLanguage;
 import de.tum.cit.aet.artemis.programming.domain.RepositoryType;
 import de.tum.cit.aet.artemis.programming.dto.CheckoutDirectoriesDTO;
+import de.tum.cit.aet.artemis.programming.service.BuildScriptProviderService;
+import de.tum.cit.aet.artemis.programming.service.aeolus.AeolusTemplateService;
 import de.tum.cit.aet.artemis.programming.service.aeolus.Windfile;
 import de.tum.cit.aet.artemis.programming.service.ci.ContinuousIntegrationService.BuildStatus;
+import de.tum.cit.aet.artemis.programming.util.ProgrammingExerciseUtilService;
 
 class LocalCIServiceTest extends AbstractProgrammingIntegrationLocalCILocalVCTest {
 

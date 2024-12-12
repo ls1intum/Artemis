@@ -28,6 +28,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.redisson.api.RMap;
 import org.redisson.api.RPriorityQueue;
 import org.redisson.api.RQueue;
+import org.redisson.api.RTopic;
 import org.redisson.api.RedissonClient;
 import org.redisson.api.listener.ListAddListener;
 import org.redisson.api.listener.ListRemoveListener;
@@ -100,8 +101,6 @@ public class SharedQueueProcessingService {
      * Lock for pausing and resuming the build agent.
      */
     private final ReentrantLock pauseResumeLock = new ReentrantLock();
-
-    private UUID listenerId;
 
     /**
      * Scheduled future for checking availability and processing next build job.
@@ -178,16 +177,16 @@ public class SharedQueueProcessingService {
          */
         scheduledFuture = taskScheduler.scheduleAtFixedRate(this::checkAvailabilityAndProcessNextBuild, Duration.ofSeconds(10));
 
-        ITopic<String> pauseBuildAgentTopic = hazelcastInstance.getTopic("pauseBuildAgentTopic");
-        pauseBuildAgentTopic.addMessageListener(message -> {
-            if (buildAgentShortName.equals(message.getMessageObject())) {
+        RTopic pauseBuildAgentTopic = redissonClient.getTopic("pauseBuildAgentTopic");
+        pauseBuildAgentTopic.addListener(String.class, (channel, name) -> {
+            if (buildAgentShortName.equals(name)) {
                 pauseBuildAgent();
             }
         });
 
-        ITopic<String> resumeBuildAgentTopic = hazelcastInstance.getTopic("resumeBuildAgentTopic");
-        resumeBuildAgentTopic.addMessageListener(message -> {
-            if (buildAgentShortName.equals(message.getMessageObject())) {
+        RTopic resumeBuildAgentTopic = redissonClient.getTopic("resumeBuildAgentTopic");
+        resumeBuildAgentTopic.addListener(String.class, (channel, name) -> {
+            if (buildAgentShortName.equals(name)) {
                 resumeBuildAgent();
             }
         });
@@ -305,10 +304,6 @@ public class SharedQueueProcessingService {
         finally {
             instanceLock.unlock();
         }
-    }
-
-    private static boolean noDataMemberInClusterAvailable(HazelcastInstance hazelcastInstance) {
-        return hazelcastInstance.getCluster().getMembers().stream().allMatch(Member::isLiteMember);
     }
 
     private BuildJobQueueItem addToProcessingJobs() {
@@ -490,7 +485,7 @@ public class SharedQueueProcessingService {
 
         pauseResumeLock.lock();
         try {
-            log.info("Pausing build agent with address {}", hazelcastInstance.getCluster().getLocalMember().getAddress().toString());
+            log.info("Pausing build agent {}", getBuildAgentName());
 
             isPaused.set(true);
             removeListenerAndCancelScheduledFuture();
@@ -538,7 +533,7 @@ public class SharedQueueProcessingService {
         Set<String> runningBuildJobIdsAfterGracePeriod = buildJobManagementService.getRunningBuildJobIds();
         List<BuildJobQueueItem> runningBuildJobsAfterGracePeriod = processingJobs.getAll(runningBuildJobIdsAfterGracePeriod).values().stream().toList();
         runningBuildJobIdsAfterGracePeriod.forEach(buildJobManagementService::cancelBuildJob);
-        queue.addAll(runningBuildJobsAfterGracePeriod);
+        buildJobQueue.addAll(runningBuildJobsAfterGracePeriod);
         log.info("Cancelled running build jobs and added them back to the queue with Ids {}", runningBuildJobIdsAfterGracePeriod);
         log.debug("Cancelled running build jobs: {}", runningBuildJobsAfterGracePeriod);
     }
@@ -551,12 +546,16 @@ public class SharedQueueProcessingService {
 
         pauseResumeLock.lock();
         try {
-            log.info("Resuming build agent with address {}", hazelcastInstance.getCluster().getLocalMember().getAddress().toString());
+            log.info("Resuming build agent {}", getBuildAgentName());
             isPaused.set(false);
             processResults.set(true);
             // We remove the listener and scheduledTask first to avoid having multiple listeners and scheduled tasks running
             removeListenerAndCancelScheduledFuture();
-            listenerId = queue.addItemListener(new QueuedBuildJobItemListener(), true);
+            listenerIdAdd = this.buildJobQueue.addListener((ListAddListener) name -> {
+                log.debug("CIBuildJobQueueItem added to queue: {}", name);
+                log.debug("Current queued items: {}", name);
+                checkAvailabilityAndProcessNextBuild();
+            });
             scheduledFuture = taskScheduler.scheduleAtFixedRate(this::checkAvailabilityAndProcessNextBuild, Duration.ofSeconds(10));
             checkAvailabilityAndProcessNextBuild();
             updateLocalBuildAgentInformation();

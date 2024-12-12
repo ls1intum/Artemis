@@ -36,12 +36,11 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
 import org.junit.jupiter.api.parallel.Execution;
 import org.junit.jupiter.api.parallel.ExecutionMode;
+import org.redisson.api.RQueue;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
-
-import com.hazelcast.collection.IQueue;
 
 import de.tum.cit.aet.artemis.buildagent.dto.BuildJobQueueItem;
 import de.tum.cit.aet.artemis.core.service.ldap.LdapUserDto;
@@ -96,7 +95,7 @@ class LocalVCLocalCIIntegrationTest extends AbstractProgrammingIntegrationLocalC
 
     private String teamRepositorySlug;
 
-    protected IQueue<BuildJobQueueItem> queuedJobs;
+    protected RQueue<BuildJobQueueItem> queuedJobs;
 
     @Override
     protected String getTestPrefix() {
@@ -153,7 +152,7 @@ class LocalVCLocalCIIntegrationTest extends AbstractProgrammingIntegrationLocalC
 
         localVCLocalCITestService.mockInspectImage(dockerClient);
 
-        queuedJobs = hazelcastInstance.getQueue("buildJobQueue");
+        queuedJobs = redissonClient.getQueue("buildJobQueue");
     }
 
     @AfterEach

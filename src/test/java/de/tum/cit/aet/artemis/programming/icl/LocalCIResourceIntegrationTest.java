@@ -34,12 +34,14 @@ import de.tum.cit.aet.artemis.buildagent.dto.BuildLogDTO;
 import de.tum.cit.aet.artemis.buildagent.dto.FinishedBuildJobDTO;
 import de.tum.cit.aet.artemis.buildagent.dto.JobTimingInfo;
 import de.tum.cit.aet.artemis.buildagent.dto.RepositoryInfo;
+import de.tum.cit.aet.artemis.buildagent.service.SharedQueueProcessingService;
 import de.tum.cit.aet.artemis.core.dto.SortingOrder;
 import de.tum.cit.aet.artemis.core.dto.pageablesearch.PageableSearchDTO;
 import de.tum.cit.aet.artemis.programming.AbstractProgrammingIntegrationLocalCILocalVCTestBase;
 import de.tum.cit.aet.artemis.programming.domain.RepositoryType;
 import de.tum.cit.aet.artemis.programming.domain.build.BuildJob;
 import de.tum.cit.aet.artemis.programming.domain.build.BuildStatus;
+import de.tum.cit.aet.artemis.programming.service.BuildLogEntryService;
 
 class LocalCIResourceIntegrationTest extends AbstractProgrammingIntegrationLocalCILocalVCTestBase {
 
@@ -99,11 +101,13 @@ class LocalCIResourceIntegrationTest extends AbstractProgrammingIntegrationLocal
         BuildConfig buildConfig = new BuildConfig("echo 'test'", "test", "test", "test", "test", "test", null, null, false, false, false, null, 0, null, null, null, null);
         RepositoryInfo repositoryInfo = new RepositoryInfo("test", null, RepositoryType.USER, "test", "test", "test", null, null);
 
-        job1 = new BuildJobQueueItem("1", "job1", "address1", 1, course.getId(), 1, 1, 1, BuildStatus.SUCCESSFUL, repositoryInfo, jobTimingInfo1, buildConfig, null);
-        job2 = new BuildJobQueueItem("2", "job2", "address1", 2, course.getId(), 1, 1, 1, BuildStatus.SUCCESSFUL, repositoryInfo, jobTimingInfo2, buildConfig, null);
+        buildAgent = new BuildAgentDTO(buildAgentShortName, "address1", buildAgentDisplayName);
+
+        job1 = new BuildJobQueueItem("1", "job1", buildAgent, 1, course.getId(), 1, 1, 1, BuildStatus.SUCCESSFUL, repositoryInfo, jobTimingInfo1, buildConfig, null);
+        job2 = new BuildJobQueueItem("2", "job2", buildAgent, 2, course.getId(), 1, 1, 1, BuildStatus.SUCCESSFUL, repositoryInfo, jobTimingInfo2, buildConfig, null);
         String memberAddress = "build-agent-1";
         agent1 = new BuildAgentInformation(buildAgent, 1, 0, new ArrayList<>(List.of(job1)), BuildAgentInformation.BuildAgentStatus.IDLE, new ArrayList<>(List.of(job2)), null);
-        BuildJobQueueItem finishedJobQueueItem1 = new BuildJobQueueItem("3", "job3", "address1", 3, course.getId(), 1, 1, 1, BuildStatus.SUCCESSFUL, repositoryInfo, jobTimingInfo1,
+        BuildJobQueueItem finishedJobQueueItem1 = new BuildJobQueueItem("3", "job3", buildAgent, 3, course.getId(), 1, 1, 1, BuildStatus.SUCCESSFUL, repositoryInfo, jobTimingInfo1,
                 buildConfig, null);
         BuildJobQueueItem finishedJobQueueItem2 = new BuildJobQueueItem("4", "job4", buildAgent, 4, course.getId() + 1, 1, 1, 1, BuildStatus.FAILED, repositoryInfo, jobTimingInfo2,
                 buildConfig, null);

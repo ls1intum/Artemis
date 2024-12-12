@@ -20,6 +20,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
+import de.tum.cit.aet.artemis.buildagent.dto.BuildAgentDTO;
 import de.tum.cit.aet.artemis.buildagent.dto.BuildConfig;
 import de.tum.cit.aet.artemis.buildagent.dto.BuildJobQueueItem;
 import de.tum.cit.aet.artemis.buildagent.dto.DockerRunConfig;
