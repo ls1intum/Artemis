@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, effect, inject, input, signal, untracked } from '@angular/core';
+import { ChangeDetectionStrategy, Component, effect, inject, output, signal, untracked } from '@angular/core';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import { ProgrammingExerciseGitDiffReport } from 'app/entities/hestia/programming-exercise-git-diff-report.model';
 import { ProgrammingExerciseService } from 'app/exercises/programming/manage/services/programming-exercise.service';
@@ -7,6 +7,7 @@ import { CachedRepositoryFilesService } from 'app/exercises/programming/manage/s
 import { firstValueFrom } from 'rxjs';
 import { GitDiffReportComponent } from 'app/exercises/programming/hestia/git-diff-report/git-diff-report.component';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { LineStat } from 'app/exercises/programming/hestia/git-diff-report/git-diff-line-stat.component';
 
 @Component({
     selector: 'jhi-git-diff-report-modal',
@@ -23,9 +24,11 @@ export class GitDiffReportModalComponent {
     private readonly programmingExerciseParticipationService = inject(ProgrammingExerciseParticipationService);
     private readonly cachedRepositoryFilesService = inject(CachedRepositoryFilesService);
 
-    readonly report = input.required<ProgrammingExerciseGitDiffReport>();
-    readonly diffForTemplateAndSolution = input<boolean>(true);
-    readonly cachedRepositoryFiles = input<Map<string, Map<string, string>>>(new Map<string, Map<string, string>>());
+    readonly report = signal<ProgrammingExerciseGitDiffReport | undefined>(undefined);
+    readonly diffForTemplateAndSolution = signal<boolean>(true);
+    readonly cachedRepositoryFiles = signal<Map<string, Map<string, string>>>(new Map<string, Map<string, string>>());
+
+    readonly lineStatChanged = output<LineStat>();
 
     readonly errorWhileFetchingRepos = signal<boolean>(false);
     readonly leftCommitFileContentByPath = signal<Map<string, string> | undefined>(undefined);
@@ -34,8 +37,9 @@ export class GitDiffReportModalComponent {
     constructor() {
         effect(
             () => {
-                // We call the signal here to ensure the effect always runs when the report changes.
-                this.report();
+                if (!this.report()) {
+                    return;
+                }
                 const diffBetweenTemplateAndSolution = this.diffForTemplateAndSolution();
                 untracked(async () => {
                     if (diffBetweenTemplateAndSolution) {
@@ -56,7 +60,7 @@ export class GitDiffReportModalComponent {
 
     private async fetchSolutionRepoFiles(): Promise<void> {
         try {
-            const solutionRepoFiles = await firstValueFrom(this.programmingExerciseService.getSolutionRepositoryTestFilesWithContent(this.report().programmingExercise.id!));
+            const solutionRepoFiles = await firstValueFrom(this.programmingExerciseService.getSolutionRepositoryTestFilesWithContent(this.report()!.programmingExercise.id!));
             this.rightCommitFileContentByPath.set(solutionRepoFiles);
         } catch (e) {
             this.errorWhileFetchingRepos.set(true);
@@ -64,8 +68,8 @@ export class GitDiffReportModalComponent {
     }
 
     private async loadRepositoryFilesForParticipationsFromCacheIfAvailable(): Promise<void> {
-        if (this.report().participationIdForLeftCommit) {
-            const key = this.report().leftCommitHash!;
+        if (this.report()!.participationIdForLeftCommit) {
+            const key = this.report()!.leftCommitHash!;
             if (this.cachedRepositoryFiles().has(key)) {
                 this.leftCommitFileContentByPath.set(this.cachedRepositoryFiles().get(key)!);
                 await this.loadParticipationRepoFilesAtRightCommitFromCacheIfAvailable();
@@ -83,12 +87,12 @@ export class GitDiffReportModalComponent {
             const filesWithContent =
                 (await firstValueFrom(
                     this.programmingExerciseParticipationService.getParticipationRepositoryFilesWithContentAtCommit(
-                        this.report().participationIdForLeftCommit!,
-                        this.report().leftCommitHash!,
+                        this.report()!.participationIdForLeftCommit!,
+                        this.report()!.leftCommitHash!,
                     ),
                 )) ?? new Map<string, string>();
             this.leftCommitFileContentByPath.set(filesWithContent);
-            this.cachedRepositoryFiles().set(this.report().leftCommitHash!, filesWithContent);
+            this.cachedRepositoryFiles().set(this.report()!.leftCommitHash!, filesWithContent);
             this.cachedRepositoryFilesService.emitCachedRepositoryFiles(this.cachedRepositoryFiles());
             await this.loadParticipationRepoFilesAtRightCommitFromCacheIfAvailable();
         } catch (e) {
@@ -106,7 +110,7 @@ export class GitDiffReportModalComponent {
     }
 
     private async loadParticipationRepoFilesAtRightCommitFromCacheIfAvailable(): Promise<void> {
-        const key = this.report().rightCommitHash!;
+        const key = this.report()!.rightCommitHash!;
         if (this.cachedRepositoryFiles().has(key)) {
             this.rightCommitFileContentByPath.set(this.cachedRepositoryFiles().get(key)!);
         } else {
@@ -118,7 +122,7 @@ export class GitDiffReportModalComponent {
         const key = this.calculateTemplateMapKey();
         try {
             const response =
-                (await firstValueFrom(this.programmingExerciseService.getTemplateRepositoryTestFilesWithContent(this.report().programmingExercise.id!))) ??
+                (await firstValueFrom(this.programmingExerciseService.getTemplateRepositoryTestFilesWithContent(this.report()!.programmingExercise.id!))) ??
                 new Map<string, string>();
             this.leftCommitFileContentByPath.set(response);
             this.cachedRepositoryFiles().set(key, response);
@@ -133,12 +137,12 @@ export class GitDiffReportModalComponent {
             const filesWithContent =
                 (await firstValueFrom(
                     this.programmingExerciseParticipationService.getParticipationRepositoryFilesWithContentAtCommit(
-                        this.report().participationIdForRightCommit!,
-                        this.report().rightCommitHash!,
+                        this.report()!.participationIdForRightCommit!,
+                        this.report()!.rightCommitHash!,
                     ),
                 )) ?? new Map<string, string>();
             this.rightCommitFileContentByPath.set(filesWithContent);
-            this.cachedRepositoryFiles().set(this.report().rightCommitHash!, filesWithContent);
+            this.cachedRepositoryFiles().set(this.report()!.rightCommitHash!, filesWithContent);
             this.cachedRepositoryFilesService.emitCachedRepositoryFiles(this.cachedRepositoryFiles());
         } catch (e) {
             this.errorWhileFetchingRepos.set(true);
@@ -150,6 +154,6 @@ export class GitDiffReportModalComponent {
     }
 
     private calculateTemplateMapKey() {
-        return this.report().programmingExercise.id! + '-template';
+        return this.report()!.programmingExercise.id! + '-template';
     }
 }

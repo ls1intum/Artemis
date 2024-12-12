@@ -4,8 +4,7 @@
             <jhi-git-diff-file-panel-title [modifiedFilePath]="modifiedFilePath()" [originalFilePath]="originalFilePath()" />
             <div>
                 <jhi-git-diff-line-stat
-                    [addedLineCount]="addedLineCount()"
-                    [removedLineCount]="removedLineCount()"
+                    [lineStat]="lineStat"
                     ngbTooltip="{{
                         (diffForTemplateAndSolution()
                             ? 'artemisApp.programmingExercise.diffReport.lineStatTooltipFullReport'
@@ -23,12 +22,12 @@
                 <jhi-git-diff-file
                     [allowSplitView]="allowSplitView()"
                     [diffForTemplateAndSolution]="diffForTemplateAndSolution()"
-                    [diffEntries]="diffEntries()"
                     [originalFileContent]="originalFileContent()"
                     [originalFilePath]="originalFilePath()"
                     [modifiedFileContent]="modifiedFileContent()"
                     [modifiedFilePath]="modifiedFilePath()"
                     (onDiffReady)="onDiffReady.emit($event)"
+                    (lineStatChanged)="onLineStatChanged($event)"
                 />
             </div>
         </div>

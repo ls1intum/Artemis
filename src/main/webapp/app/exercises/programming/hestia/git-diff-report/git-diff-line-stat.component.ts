@@ -1,5 +1,7 @@
 import { ChangeDetectionStrategy, Component, computed, input } from '@angular/core';
 
+export type LineStat = { addedLineCount: number; removedLineCount: number };
+
 @Component({
     selector: 'jhi-git-diff-line-stat',
     templateUrl: './git-diff-line-stat.component.html',
@@ -8,8 +10,9 @@ import { ChangeDetectionStrategy, Component, computed, input } from '@angular/co
     changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class GitDiffLineStatComponent {
-    readonly addedLineCount = input<number>(0);
-    readonly removedLineCount = input<number>(0);
+    readonly lineStat = input<LineStat>();
+    readonly addedLineCount = computed(() => this.lineStat()?.addedLineCount ?? 0);
+    readonly removedLineCount = computed(() => this.lineStat()?.removedLineCount ?? 0);
     readonly squareCounts = computed(() => this.getSquareCounts());
     readonly addedSquareArray = computed(() => Array.from({ length: this.squareCounts().addedSquareCount }));
     readonly removedSquareArray = computed(() => Array.from({ length: this.squareCounts().removedSquareCount }));
