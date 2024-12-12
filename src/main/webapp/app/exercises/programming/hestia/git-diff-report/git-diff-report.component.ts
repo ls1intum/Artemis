@@ -1,19 +1,18 @@
-import { ChangeDetectionStrategy, Component, computed, effect, input, signal, untracked } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, input, output, signal } from '@angular/core';
 import { ProgrammingExerciseGitDiffReport } from 'app/entities/hestia/programming-exercise-git-diff-report.model';
 import { ProgrammingExerciseGitDiffEntry } from 'app/entities/hestia/programming-exercise-git-diff-entry.model';
 import { faSpinner, faTableColumns } from '@fortawesome/free-solid-svg-icons';
 import { ButtonSize, ButtonType, TooltipPlacement } from 'app/shared/components/button.component';
-import { GitDiffLineStatComponent } from 'app/exercises/programming/hestia/git-diff-report/git-diff-line-stat.component';
+import { GitDiffLineStatComponent, LineStat } from 'app/exercises/programming/hestia/git-diff-report/git-diff-line-stat.component';
 import { ArtemisSharedComponentModule } from 'app/shared/components/shared-component.module';
 import { ArtemisSharedModule } from 'app/shared/shared.module';
 import { GitDiffFilePanelComponent } from 'app/exercises/programming/hestia/git-diff-report/git-diff-file-panel.component';
 
 interface DiffInformation {
+    templatePath: string;
     path: string;
-    entries: ProgrammingExerciseGitDiffEntry[];
     templateFileContent?: string;
     solutionFileContent?: string;
-    diffReady: boolean;
 }
 
 @Component({
@@ -53,32 +52,6 @@ export class GitDiffReportComponent {
         );
     });
 
-    readonly addedLineCount = computed(() => {
-        return this.sortedEntries()
-            .flatMap((entry) => {
-                if (entry && entry.filePath && entry.startLine && entry.lineCount) {
-                    return this.solutionFileContentByPath()
-                        .get(entry.filePath)
-                        ?.split('\n')
-                        .slice(entry.startLine - 1, entry.startLine + entry.lineCount - 1);
-                }
-            })
-            .filter((line) => line && line.trim().length !== 0).length;
-    });
-
-    readonly removedLineCount = computed(() => {
-        return this.sortedEntries()
-            .flatMap((entry) => {
-                if (entry && entry.previousFilePath && entry.previousStartLine && entry.previousLineCount) {
-                    return this.templateFileContentByPath()
-                        .get(entry.previousFilePath!)
-                        ?.split('\n')
-                        .slice(entry.previousStartLine - 1, entry.previousStartLine + entry.previousLineCount - 1);
-                }
-            })
-            .filter((line) => line && line.trim().length !== 0).length;
-    });
-
     readonly filePaths = computed(() => {
         return [...new Set([...this.templateFileContentByPath().keys(), ...this.solutionFileContentByPath().keys()])].sort();
     });
@@ -111,30 +84,46 @@ export class GitDiffReportComponent {
         return entriesByPath;
     });
 
+    readonly diffFilePaths = computed(() => {
+        return this.filePaths().filter((path) => this.entriesByPath().get(path)?.length);
+    });
+
+    readonly diffInformationForPaths = computed<DiffInformation[]>(() => {
+        return this.diffFilePaths().map((path) => {
+            // entries is not undefined due to the filter above
+            const templatePath = this.renamedFilePaths()[path] ?? path;
+            const templateFileContent = this.templateFileContentByPath().get(templatePath);
+            const solutionFileContent = this.solutionFileContentByPath().get(path);
+            return { templatePath, path, templateFileContent, solutionFileContent };
+        });
+    });
+
     readonly leftCommit = computed(() => this.report().leftCommitHash?.substring(0, 10));
     readonly rightCommit = computed(() => this.report().rightCommitHash?.substring(0, 10));
-    readonly diffInformationForPaths = signal<DiffInformation[]>([]);
     readonly nothingToDisplay = computed(() => this.diffInformationForPaths().length === 0);
-    readonly allDiffsReady = computed(() => Object.values(this.diffInformationForPaths()).every((info) => info.diffReady));
+    readonly allDiffsReady = computed(() => this.diffFilePaths().every((path) => this.diffReadyPaths().has(path)));
+    readonly diffReadyPaths = signal<Set<string>>(new Set());
     readonly allowSplitView = signal<boolean>(true);
+    readonly lineStatForPath = signal<Map<string, LineStat>>(new Map());
+    readonly lineStatChanged = output<LineStat>();
 
-    constructor() {
-        effect(() => {
-            untracked(() => {
-                this.diffInformationForPaths.set(
-                    this.filePaths()
-                        .filter((path) => this.entriesByPath().get(path)?.length)
-                        .map((path) => {
-                            // entries is not undefined due to the filter above
-                            const entries = this.entriesByPath().get(path)!;
-                            const templateFileContent = this.templateFileContentByPath().get(this.renamedFilePaths()[path] ?? path);
-                            const solutionFileContent = this.solutionFileContentByPath().get(path);
-                            return { path, entries, templateFileContent, solutionFileContent, diffReady: false };
-                        }),
-                );
-            });
-        });
-    }
+    readonly lineStat = computed(() => {
+        if (!this.allDiffsReady()) {
+            return undefined;
+        }
+
+        const totalLineStat = [...this.lineStatForPath().values()].reduce(
+            (left, right) => ({
+                addedLineCount: left.addedLineCount + right.addedLineCount,
+                removedLineCount: left.removedLineCount + right.removedLineCount,
+            }),
+            { addedLineCount: 0, removedLineCount: 0 },
+        );
+
+        this.lineStatChanged.emit(totalLineStat);
+
+        return totalLineStat;
+    });
 
     /**
      * Records that the diff editor for a file has changed its "ready" state.
@@ -143,13 +132,22 @@ export class GitDiffReportComponent {
      * @param ready Whether the diff is ready to be displayed or not.
      */
     onDiffReady(path: string, ready: boolean) {
-        const diffInformation = [...this.diffInformationForPaths()];
-        const index = diffInformation.findIndex((info) => info.path === path);
-        if (index !== -1) {
-            diffInformation[index].diffReady = ready;
-            this.diffInformationForPaths.set(diffInformation);
-        } else {
-            console.error(`Received diff ready event for unknown path: ${path}`);
-        }
+        this.diffReadyPaths.update((diffReadyPaths) => {
+            const paths = new Set(diffReadyPaths);
+            if (ready) {
+                paths.add(path);
+            } else {
+                paths.delete(path);
+            }
+            return paths;
+        });
+    }
+
+    onLineStatChanged(path: string, lineStat: LineStat) {
+        this.lineStatForPath.update((lineStatForPath) => {
+            const stats = new Map(lineStatForPath);
+            stats.set(path, lineStat);
+            return stats;
+        });
     }
 }

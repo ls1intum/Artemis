@@ -15,6 +15,7 @@ import { ProgrammingExerciseGitDiffReport } from 'app/entities/hestia/programmin
 import { ExamPageComponent } from 'app/exam/participate/exercises/exam-page.component';
 import { Observable, Subject, Subscription, debounceTime, take } from 'rxjs';
 import { CachedRepositoryFilesService } from 'app/exercises/programming/manage/services/cached-repository-files.service';
+import { LineStat } from 'app/exercises/programming/hestia/git-diff-report/git-diff-line-stat.component';
 
 @Component({
     selector: 'jhi-programming-exam-diff',
@@ -30,9 +31,11 @@ export class ProgrammingExerciseExamDiffComponent extends ExamPageComponent impl
     @Input() cachedDiffReports: Map<string, ProgrammingExerciseGitDiffReport> = new Map<string, ProgrammingExerciseGitDiffReport>();
     @Output() cachedDiffReportsChange = new EventEmitter<Map<string, ProgrammingExerciseGitDiffReport>>();
     @Input() exerciseIdSubject: Subject<number> = new Subject<number>();
+    protected readonly lineStat = signal<LineStat>({
+        addedLineCount: 0,
+        removedLineCount: 0,
+    });
     isLoadingDiffReport: boolean;
-    addedLineCount: number;
-    removedLineCount: number;
     cachedRepositoryFiles: Map<string, Map<string, string>> = new Map<string, Map<string, string>>();
 
     private exerciseIdSubscription: Subscription;
@@ -58,7 +61,7 @@ export class ProgrammingExerciseExamDiffComponent extends ExamPageComponent impl
             const key = this.calculateMapKey();
             if (this.cachedDiffReports.has(key)) {
                 const diffReport = this.cachedDiffReports.get(key)!;
-                this.assignPropertiesToReportAndCalculateLineCount(diffReport);
+                this.assignPropertiesToReport(diffReport);
             } else {
                 this.loadGitDiffReport();
             }
@@ -81,7 +84,7 @@ export class ProgrammingExerciseExamDiffComponent extends ExamPageComponent impl
         const key = this.calculateMapKey();
         subscription.pipe(take(1)).subscribe((gitDiffReport: ProgrammingExerciseGitDiffReport | undefined) => {
             if (gitDiffReport) {
-                this.assignPropertiesToReportAndCalculateLineCount(gitDiffReport);
+                this.assignPropertiesToReport(gitDiffReport);
                 this.cachedDiffReports.set(key, gitDiffReport);
                 this.cachedDiffReportsChange.emit(this.cachedDiffReports);
             }
@@ -89,34 +92,13 @@ export class ProgrammingExerciseExamDiffComponent extends ExamPageComponent impl
         });
     }
 
-    private assignPropertiesToReportAndCalculateLineCount(gitDiffReport: ProgrammingExerciseGitDiffReport) {
+    private assignPropertiesToReport(gitDiffReport: ProgrammingExerciseGitDiffReport) {
         this.exercise.gitDiffReport = gitDiffReport;
         gitDiffReport.programmingExercise = this.exercise;
         gitDiffReport.participationIdForLeftCommit = this.previousSubmission?.participation?.id;
         gitDiffReport.participationIdForRightCommit = this.currentSubmission.participation?.id;
         gitDiffReport.leftCommitHash = this.previousSubmission?.commitHash;
         gitDiffReport.rightCommitHash = this.currentSubmission.commitHash;
-        this.calculateLineCount(gitDiffReport);
-    }
-
-    /**
-     * Calculates the added and removed line count for the given git-diff report.
-     * In case the report doesn't contain any entries, the line count is set to 0.
-     * @param gitDiffReport the report containing the git diff
-     */
-    private calculateLineCount(gitDiffReport: ProgrammingExerciseGitDiffReport) {
-        this.addedLineCount =
-            gitDiffReport?.entries
-                ?.map((entry) => entry.lineCount)
-                .filter((lineCount) => lineCount)
-                .map((lineCount) => lineCount!)
-                .reduce((lineCount1, lineCount2) => lineCount1 + lineCount2, 0) ?? 0;
-        this.removedLineCount =
-            gitDiffReport?.entries
-                ?.map((entry) => entry.previousLineCount)
-                .filter((lineCount) => lineCount)
-                .map((lineCount) => lineCount!)
-                .reduce((lineCount1, lineCount2) => lineCount1 + lineCount2, 0) ?? 0;
     }
 
     /**
@@ -124,9 +106,10 @@ export class ProgrammingExerciseExamDiffComponent extends ExamPageComponent impl
      */
     showGitDiff(): void {
         const modalRef = this.modalService.open(GitDiffReportModalComponent, { windowClass: GitDiffReportModalComponent.WINDOW_CLASS });
-        modalRef.componentInstance.report = signal(this.exercise.gitDiffReport);
-        modalRef.componentInstance.diffForTemplateAndSolution = signal(false);
-        modalRef.componentInstance.cachedRepositoryFiles = signal(this.cachedRepositoryFiles);
+        const component: GitDiffReportModalComponent = modalRef.componentInstance;
+        component.report.set(this.exercise.gitDiffReport);
+        component.diffForTemplateAndSolution.set(false);
+        component.cachedRepositoryFiles.set(this.cachedRepositoryFiles);
         this.cachedRepositoryFilesService.getCachedRepositoryFilesObservable().subscribe((cachedRepositoryFiles) => {
             this.cachedRepositoryFiles = cachedRepositoryFiles;
         });

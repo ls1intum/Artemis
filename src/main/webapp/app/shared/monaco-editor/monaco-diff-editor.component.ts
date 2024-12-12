@@ -3,8 +3,10 @@ import { ChangeDetectionStrategy, Component, ElementRef, OnDestroy, Renderer2, V
 import * as monaco from 'monaco-editor';
 import { Disposable } from 'app/shared/monaco-editor/model/actions/monaco-editor.util';
 import { MonacoEditorService } from './monaco-editor.service';
+import { LineStat } from 'app/exercises/programming/hestia/git-diff-report/git-diff-line-stat.component';
 
 export type MonacoEditorDiffText = { original: string; modified: string };
+
 @Component({
     selector: 'jhi-monaco-diff-editor',
     template: '',
@@ -19,6 +21,7 @@ export class MonacoDiffEditorComponent implements OnDestroy {
 
     allowSplitView = input<boolean>(true);
     onReadyForDisplayChange = output<boolean>();
+    lineStatChanged = output<LineStat>();
 
     /*
      * Subscriptions and listeners that need to be disposed of when this component is destroyed.
@@ -67,6 +70,9 @@ export class MonacoDiffEditorComponent implements OnDestroy {
         const diffListener = this._editor.onDidUpdateDiff(() => {
             this.adjustContainerHeight(this.getMaximumContentHeight());
             this.onReadyForDisplayChange.emit(true);
+
+            const lineStat = this.getLineStat();
+            this.lineStatChanged.emit(lineStat);
         });
 
         this.listeners.push(diffListener);
@@ -155,5 +161,23 @@ export class MonacoDiffEditorComponent implements OnDestroy {
         const original = this._editor.getOriginalEditor().getValue();
         const modified = this._editor.getModifiedEditor().getValue();
         return { original, modified };
+    }
+
+    private getLineStat(): LineStat {
+        const lineChanges = this._editor.getLineChanges();
+        if (lineChanges === null) {
+            return { addedLineCount: 0, removedLineCount: 0 };
+        }
+
+        const addedLineCount = lineChanges
+            .filter((c) => c.modifiedEndLineNumber !== 0)
+            .map((c) => c.modifiedEndLineNumber - c.modifiedStartLineNumber + 1)
+            .reduce((left, right) => left + right, 0);
+        const removedLineCount = lineChanges
+            .filter((c) => c.originalEndLineNumber !== 0)
+            .map((c) => c.originalEndLineNumber - c.originalStartLineNumber + 1)
+            .reduce((left, right) => left + right, 0);
+
+        return { addedLineCount, removedLineCount };
     }
 }

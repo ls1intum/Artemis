@@ -1,8 +1,8 @@
-import { ChangeDetectionStrategy, Component, ViewEncapsulation, computed, input, output } from '@angular/core';
+import { ChangeDetectionStrategy, Component, ViewEncapsulation, computed, input, output, signal } from '@angular/core';
 import { ProgrammingExerciseGitDiffEntry } from 'app/entities/hestia/programming-exercise-git-diff-entry.model';
 import { faAngleDown, faAngleUp } from '@fortawesome/free-solid-svg-icons';
 import { GitDiffFilePanelTitleComponent } from 'app/exercises/programming/hestia/git-diff-report/git-diff-file-panel-title.component';
-import { GitDiffLineStatComponent } from 'app/exercises/programming/hestia/git-diff-report/git-diff-line-stat.component';
+import { GitDiffLineStatComponent, LineStat } from 'app/exercises/programming/hestia/git-diff-report/git-diff-line-stat.component';
 import { GitDiffFileComponent } from 'app/exercises/programming/hestia/git-diff-report/git-diff-file.component';
 import { ArtemisSharedModule } from 'app/shared/shared.module';
 
@@ -19,26 +19,17 @@ export class GitDiffFilePanelComponent {
     protected readonly faAngleUp = faAngleUp;
     protected readonly faAngleDown = faAngleDown;
 
-    readonly diffEntries = input.required<ProgrammingExerciseGitDiffEntry[]>();
+    readonly diffEntries = signal<ProgrammingExerciseGitDiffEntry[]>([]);
     readonly originalFileContent = input<string>();
     readonly modifiedFileContent = input<string>();
+    readonly originalFilePath = input<string>();
+    readonly modifiedFilePath = input<string>();
     readonly diffForTemplateAndSolution = input<boolean>(true);
     readonly allowSplitView = input<boolean>(true);
     readonly onDiffReady = output<boolean>();
+    readonly lineStatChanged = output<LineStat>();
 
-    readonly originalFilePath = computed(() =>
-        this.diffEntries()
-            .map((entry) => entry.previousFilePath)
-            .filter((filePath) => filePath)
-            .first(),
-    );
-
-    readonly modifiedFilePath = computed(() =>
-        this.diffEntries()
-            .map((entry) => entry.filePath)
-            .filter((filePath) => filePath)
-            .first(),
-    );
+    lineStat: LineStat | undefined = undefined;
 
     readonly addedLineCount = computed(
         () =>
@@ -63,4 +54,9 @@ export class GitDiffFilePanelComponent {
                 })
                 .filter((line) => line && line.trim().length !== 0).length,
     );
+
+    onLineStatChanged(lineStat: LineStat) {
+        this.lineStat = lineStat;
+        this.lineStatChanged.emit(lineStat);
+    }
 }
