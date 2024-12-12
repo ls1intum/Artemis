@@ -20,6 +20,7 @@ import { UserCredentials, admin, instructor, studentFour, studentOne, studentTwo
 import { Team } from 'app/entities/team.model';
 import { GitCloneMethod, ProgrammingExerciseOverviewPage } from '../../../support/pageobjects/exercises/programming/ProgrammingExerciseOverviewPage';
 import { Participation } from 'app/entities/participation/participation.model';
+import { SSH_KEY_NAMES, SshEncryptionAlgorithm } from '../../../init/global-setup';
 
 test.describe('Programming exercise participation', { tag: '@sequential' }, () => {
     let course: Course;
@@ -97,9 +98,19 @@ test.describe('Programming exercise participation', { tag: '@sequential' }, () =
             exercise = await exerciseAPIRequests.createProgrammingExercise({ course, programmingLanguage: ProgrammingLanguage.JAVA });
         });
 
-        test('Makes a git submission using SSH', async ({ page, programmingExerciseOverview }) => {
+        test('Makes a git submission using SSH with RSA key', async ({ page, programmingExerciseOverview }) => {
             await programmingExerciseOverview.startParticipation(course.id!, exercise.id!, studentOne);
-            await makeGitExerciseSubmission(page, programmingExerciseOverview, course, exercise, studentOne, javaAllSuccessfulSubmission, 'Solution', GitCloneMethod.ssh);
+            await makeGitExerciseSubmission(
+                page,
+                programmingExerciseOverview,
+                course,
+                exercise,
+                studentOne,
+                javaAllSuccessfulSubmission,
+                'Solution',
+                GitCloneMethod.ssh,
+                SshEncryptionAlgorithm.rsa,
+            );
         });
 
         test.afterEach('Delete SSH key', async ({ accountManagementAPIRequests }) => {
@@ -254,13 +265,14 @@ async function makeGitExerciseSubmission(
     submission: any,
     commitMessage: string,
     cloneMethod: GitCloneMethod = GitCloneMethod.https,
+    sshAlgorithm?: SshEncryptionAlgorithm,
 ) {
     await programmingExerciseOverview.openCloneMenu(cloneMethod);
-    if (cloneMethod == GitCloneMethod.ssh) {
+    if (cloneMethod == GitCloneMethod.ssh && sshAlgorithm !== undefined) {
         await expect(programmingExerciseOverview.getCloneUrlButton()).toBeDisabled();
         const sshKeyNotFoundAlert = page.locator('.alert', { hasText: 'To use ssh, you need to add an ssh key to your account' });
         await expect(sshKeyNotFoundAlert).toBeVisible();
-        await setupSSHCredentials(page.context());
+        await setupSSHCredentials(page.context(), sshAlgorithm);
         await page.reload();
         await programmingExerciseOverview.openCloneMenu(cloneMethod);
     }
@@ -278,7 +290,8 @@ async function makeGitExerciseSubmission(
     console.log(`Cloning repository from ${repoUrl}`);
     const urlParts = repoUrl.split('/');
     const repoName = urlParts[urlParts.length - 1];
-    const exerciseRepo = await gitClient.cloneRepo(repoUrl, repoName);
+    const sshKeyName = sshAlgorithm !== undefined ? SSH_KEY_NAMES[sshAlgorithm] : undefined;
+    const exerciseRepo = await gitClient.cloneRepo(repoUrl, repoName, sshKeyName);
     console.log(`Cloned repository successfully. Pushing files...`);
     await pushGitSubmissionFiles(exerciseRepo, repoName, student, submission, commitMessage);
     await fs.rmdir(`./test-exercise-repos/${repoName}`, { recursive: true });
@@ -287,10 +300,11 @@ async function makeGitExerciseSubmission(
     await expect(resultScore.getByText(submission.expectedResult)).toBeVisible();
 }
 
-async function setupSSHCredentials(context: BrowserContext) {
+async function setupSSHCredentials(context: BrowserContext, sshAlgorithm: SshEncryptionAlgorithm) {
+    console.log(`Setting up SSH credentials with key ${SSH_KEY_NAMES[sshAlgorithm]}`);
     const page = await context.newPage();
-    const projectRoot = process.cwd();
-    const sshKeyPath = path.join(projectRoot, 'ssh-keys', 'id_rsa.pub');
+    const playwrightRoot = process.cwd();
+    const sshKeyPath = path.join(playwrightRoot, 'ssh-keys', `${SSH_KEY_NAMES[sshAlgorithm]}.pub`);
     const sshKey = await fs.readFile(sshKeyPath, 'utf8');
     await page.goto('user-settings/ssh');
     await page.getByTestId('addNewSshKeyButton').click();

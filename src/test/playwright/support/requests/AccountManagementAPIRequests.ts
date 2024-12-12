@@ -3,7 +3,7 @@ import { Page } from '@playwright/test';
 
 export class AccountManagementAPIRequests {
     private readonly page: Page;
-    private readonly PLAYWRIGHT_SSH_LABEL = 'playwright-ssh';
+    private readonly PLAYWRIGHT_SSH_LABEL = 'artemis_playwright_ssh';
 
     constructor(page: Page) {
         this.page = page;
