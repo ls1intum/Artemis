@@ -275,6 +275,9 @@ class LocalCIIntegrationTest extends AbstractProgrammingIntegrationLocalCILocalV
 
         assertThat(buildJob.getBuildStatus()).isEqualTo(BuildStatus.QUEUED);
 
+        buildJob.setBuildSubmissionDate(ZonedDateTime.now().minusMinutes(6));
+        buildJobRepository.save(buildJob);
+
         hazelcastInstance.getQueue("buildJobQueue").clear();
 
         localCIEventListenerService.checkPendingBuildJobsStatus();
