@@ -527,7 +527,7 @@ describe('BuildQueueService', () => {
     });
 
     it('should return build job statistics', fakeAsync(() => {
-        const expectedResponse: BuildJobStatistics = { totalBuilds: 1, successfulBuilds: 1, failedBuilds: 0, cancelledBuilds: 0 };
+        const expectedResponse: BuildJobStatistics = { totalBuilds: 1, successfulBuilds: 1, failedBuilds: 0, cancelledBuilds: 0, timeOutBuilds: 0, missingBuilds: 0 };
 
         service.getBuildJobStatistics(SpanType.WEEK).subscribe((data) => {
             expect(data).toEqual(expectedResponse);
