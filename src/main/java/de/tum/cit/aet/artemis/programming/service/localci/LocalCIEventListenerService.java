@@ -30,9 +30,9 @@ import de.tum.cit.aet.artemis.programming.repository.BuildJobRepository;
 
 @Service
 @Profile("localci & scheduling")
-public class LocalCIEventListener {
+public class LocalCIEventListenerService {
 
-    private static final Logger log = LoggerFactory.getLogger(LocalCIEventListener.class);
+    private static final Logger log = LoggerFactory.getLogger(LocalCIEventListenerService.class);
 
     private final HazelcastInstance hazelcastInstance;
 
@@ -42,7 +42,7 @@ public class LocalCIEventListener {
 
     private final SharedQueueManagementService sharedQueueManagementService;
 
-    public LocalCIEventListener(@Qualifier("hazelcastInstance") HazelcastInstance hazelcastInstance, LocalCIQueueWebsocketService localCIQueueWebsocketService,
+    public LocalCIEventListenerService(@Qualifier("hazelcastInstance") HazelcastInstance hazelcastInstance, LocalCIQueueWebsocketService localCIQueueWebsocketService,
             BuildJobRepository buildJobRepository, SharedQueueManagementService sharedQueueManagementService) {
         this.hazelcastInstance = hazelcastInstance;
         this.localCIQueueWebsocketService = localCIQueueWebsocketService;
