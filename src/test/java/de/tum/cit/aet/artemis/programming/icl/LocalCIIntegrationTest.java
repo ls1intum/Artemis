@@ -215,8 +215,8 @@ class LocalCIIntegrationTest extends AbstractProgrammingIntegrationLocalCILocalV
             doReturn(inspectImageCmd).when(dockerClient).inspectImageCmd(anyString());
             doReturn(inspectImageResponse).when(inspectImageCmd).exec();
             doAnswer(invocation -> {
-                var future = scheduler.schedule(() -> inspectImageResponse, 1, TimeUnit.SECONDS);
-                return future.get(2, TimeUnit.SECONDS);
+                var future = scheduler.schedule(() -> inspectImageResponse, 3, TimeUnit.SECONDS);
+                return future.get(4, TimeUnit.SECONDS);
             }).when(inspectImageCmd).exec();
 
             ProgrammingExerciseStudentParticipation studentParticipation = localVCLocalCITestService.createParticipation(programmingExercise, student1Login);
