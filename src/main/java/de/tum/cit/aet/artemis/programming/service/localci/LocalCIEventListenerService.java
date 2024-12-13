@@ -50,6 +50,9 @@ public class LocalCIEventListenerService {
         this.sharedQueueManagementService = sharedQueueManagementService;
     }
 
+    /**
+     * Add listeners for build job, build agent changes.
+     */
     @PostConstruct
     public void init() {
         IQueue<BuildJobQueueItem> queue = hazelcastInstance.getQueue("buildJobQueue");
@@ -60,6 +63,9 @@ public class LocalCIEventListenerService {
         buildAgentInformation.addEntryListener(new BuildAgentListener(), true);
     }
 
+    /**
+     * Check the status of pending build jobs. If a build job is missing from the queue, not being built or not finished, update the status to missing.
+     */
     @Scheduled(fixedRateString = "${artemis.continuous-integration.check-job-status-interval-seconds:60}", initialDelayString = "${artemis.continuous-integration.check-job-status-interval-seconds:60}", timeUnit = TimeUnit.SECONDS)
     public void checkPendingBuildJobsStatus() {
         log.info("Checking pending build jobs status");
