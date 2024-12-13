@@ -21,6 +21,7 @@ export class CourseDetailDoughnutChartComponent implements OnChanges, OnInit {
     @Input() currentAbsolute: number | undefined;
     @Input() currentMax: number | undefined;
     @Input() course: Course;
+    @Input() showText: string | undefined;
 
     receivedStats = false;
     doughnutChartTitle: string;
@@ -49,7 +50,7 @@ export class CourseDetailDoughnutChartComponent implements OnChanges, OnInit {
     ngOnChanges(): void {
         // [0, 0, 0] will lead to the chart not being displayed,
         // assigning [0, 0, 1] (PIE_CHART_NA_FALLBACK_VALUE) works around this issue and displays 0 %, 0 / 0 with a grey circle
-        if (this.currentAbsolute == undefined && !this.receivedStats) {
+        if (this.currentAbsolute == undefined && !this.receivedStats && !this.showText) {
             this.updatePieChartData(PIE_CHART_NA_FALLBACK_VALUE);
         } else {
             this.receivedStats = true;
@@ -83,6 +84,10 @@ export class CourseDetailDoughnutChartComponent implements OnChanges, OnInit {
                     this.titleLink = 'scores';
                 }
                 this.ngxData[0].name = 'Average score';
+                break;
+            case DoughnutChartType.CURRENT_LLM_COST:
+                this.doughnutChartTitle = 'currentTotalLLMCost';
+                this.titleLink = undefined;
                 break;
             default:
                 this.doughnutChartTitle = '';

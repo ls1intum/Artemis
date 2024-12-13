@@ -9,11 +9,15 @@
     }
     <div class="doughnut-chart-container" [ngClass]="titleLink ? 'clickable' : ''" (click)="openCorrespondingPage()">
         <div class="doughnut-chart-text">
-            @if (receivedStats) {
+            @if (receivedStats && currentPercentage != undefined) {
                 <div class="h4">{{ currentPercentage }}%</div>
+            } @else if (receivedStats && showText) {
+                <div class="h4">{{ showText }}</div>
             }
-            @if (receivedStats) {
+            @if (receivedStats && !showText) {
                 <div class="h6">{{ currentAbsolute }} / {{ currentMax }}</div>
+            } @else if (receivedStats && currentPercentage != undefined) {
+                <div class="h6">{{ showText }}</div>
             }
             @if (!receivedStats) {
                 <div class="h3">

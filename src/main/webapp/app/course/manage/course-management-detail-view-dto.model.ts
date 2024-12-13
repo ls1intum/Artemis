@@ -26,5 +26,8 @@ export class CourseManagementDetailViewDto {
 
     activeStudents?: number[];
 
+    // LLM Stats
+    currentTotalLlmCostInEur: number;
+
     constructor() {}
 }
