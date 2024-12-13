@@ -279,12 +279,12 @@ async function makeGitExerciseSubmission(
         await programmingExerciseOverview.openCloneMenu(cloneMethod);
     }
     let repoUrl = await programmingExerciseOverview.copyCloneUrl();
-    // let token: string | undefined;
-    // if (process.env.CI === 'true' && cloneMethod == GitCloneMethod.httpsWithToken) {
-    //     // token = repoUrl.match(/vcpat.+(?=@)/)?.[0];
-    //     token = student.password!;
-    //     repoUrl = repoUrl.replace(/:vcpat.+(?=@)/, '');
-    // }
+    let token: string | undefined;
+    if (process.env.CI === 'true' && cloneMethod == GitCloneMethod.httpsWithToken) {
+        token = repoUrl.match(/vcpat.+(?=@)/)?.[0];
+        await programmingExerciseOverview.openCloneMenu(GitCloneMethod.https);
+        repoUrl = await programmingExerciseOverview.copyCloneUrl();
+    }
     if (process.env.CI === 'true' && (cloneMethod == GitCloneMethod.https || cloneMethod == GitCloneMethod.httpsWithToken)) {
         repoUrl = repoUrl.replace('localhost', 'artemis-app');
     }
@@ -293,6 +293,9 @@ async function makeGitExerciseSubmission(
     }
     if (cloneMethod == GitCloneMethod.https) {
         repoUrl = repoUrl.replace(student.username!, `${student.username!}:${student.password!}`);
+    }
+    if (cloneMethod == GitCloneMethod.httpsWithToken) {
+        repoUrl = repoUrl.replace(student.username!, `${student.username!}:${token}`);
     }
     if (cloneMethod == GitCloneMethod.https || cloneMethod == GitCloneMethod.httpsWithToken) {
         repoUrl = repoUrl.replace(`:**********`, ``);
