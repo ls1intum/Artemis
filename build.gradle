@@ -25,7 +25,7 @@ plugins {
 }
 
 group = "de.tum.cit.aet.artemis"
-version = "7.7.5"
+version = "7.8.0"
 description = "Interactive Learning with Individual Feedback"
 
 java {
@@ -80,7 +80,7 @@ spotless {
             }
         }
         importOrderFile "artemis-spotless.importorder"
-        eclipse("4.28").configFile "artemis-spotless-style.xml"
+        eclipse("4.33").configFile "artemis-spotless-style.xml"
 
         removeUnusedImports()
         trimTrailingWhitespace()
@@ -135,8 +135,8 @@ test {
     }
     testLogging.showStandardStreams = true
     reports.html.required = false
-    minHeapSize = "1024m" // initial heap size
-    maxHeapSize = "3072m" // maximum heap size
+    minHeapSize = "2g" // initial heap size
+    maxHeapSize = "8g" // maximum heap size
 }
 
 tasks.register("testReport", TestReport) {
@@ -215,9 +215,6 @@ repositories {
     }
 }
 
-ext["jackson.version"] = fasterxml_version
-ext["junit-jupiter.version"] = junit_version
-
 dependencies {
 
     // Note: jenkins-client is not well maintained and includes dependencies to libraries with critical security issues (e.g. CVE-2020-10683 for dom4j@1.6.1)
@@ -260,7 +257,7 @@ dependencies {
     implementation "org.apache.lucene:lucene-queryparser:${lucene_version}"
     implementation "org.apache.lucene:lucene-core:${lucene_version}"
     implementation "org.apache.lucene:lucene-analyzers-common:${lucene_version}"
-    implementation "com.google.protobuf:protobuf-java:4.29.0"
+    implementation "com.google.protobuf:protobuf-java:4.29.1"
 
     // we have to override those values to use the latest version
     implementation "org.slf4j:jcl-over-slf4j:${slf4j_version}"
@@ -540,8 +537,8 @@ dependencies {
         exclude module: "android-json"
     }
 
-    // cannot update due to "Syntax error in SQL statement "WITH ids_to_delete"
-//    testImplementation "com.h2database:h2:2.3.230"
+    // NOTE: cannot update due to "Syntax error in SQL statement "WITH ids_to_delete" --> should be resolved when we collapse the changelogs again for Artemis 8.0
+//    testImplementation "com.h2database:h2:2.3.232"
     testImplementation "com.h2database:h2:2.2.224"
 
     // Lightweight JSON library needed for the internals of the MockRestServiceServer
@@ -553,7 +550,7 @@ dependencies {
 
 dependencyManagement {
     imports {
-        mavenBom "io.zonky.test.postgres:embedded-postgres-binaries-bom:17.0.0"
+        mavenBom "io.zonky.test.postgres:embedded-postgres-binaries-bom:17.2.0"
     }
 }
 
