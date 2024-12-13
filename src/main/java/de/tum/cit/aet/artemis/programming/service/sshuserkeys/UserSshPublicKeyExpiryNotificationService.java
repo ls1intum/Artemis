@@ -40,7 +40,7 @@ public class UserSshPublicKeyExpiryNotificationService {
     /**
      * Schedules SSH key expiry notifications to users every morning at 7:00:00 am
      */
-    @Scheduled(cron = "0 * * * * *")
+    @Scheduled(cron = "0 0 7 * * *")
     public void sendKeyExpirationNotifications() {
         notifyUserOnExpiredKey();
         notifyUserOnUpcomingKeyExpiry();
