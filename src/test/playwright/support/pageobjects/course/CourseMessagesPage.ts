@@ -175,6 +175,7 @@ export class CourseMessagesPage {
         await nameField.clear();
         await nameField.fill(newName);
         await this.page.locator('#submitButton').click();
+        await expect(this.page.locator('#name-section textarea')).toHaveValue(newName);
     }
 
     /**
@@ -187,6 +188,7 @@ export class CourseMessagesPage {
         await topicField.clear();
         await topicField.fill(newTopic);
         await this.page.locator('#submitButton').click();
+        await expect(this.page.locator('#topic-section textarea')).toHaveValue(newTopic);
     }
 
     /**
@@ -199,6 +201,7 @@ export class CourseMessagesPage {
         await descriptionField.clear();
         await descriptionField.fill(newDescription);
         await this.page.locator('#submitButton').click();
+        await expect(this.page.locator('#description-section textarea')).toHaveValue(newDescription);
     }
 
     /**
