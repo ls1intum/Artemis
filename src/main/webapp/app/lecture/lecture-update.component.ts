@@ -197,6 +197,7 @@ export class LectureUpdateComponent implements OnInit, OnDestroy {
      * This function is called by pressing save after creating or editing a lecture
      */
     save() {
+        this.shouldDisplayDismissWarning = false;
         this.pressedSave = true;
         this.isSaving = true;
         this.isProcessing = true;
@@ -261,6 +262,7 @@ export class LectureUpdateComponent implements OnInit, OnDestroy {
             this.isEditMode.set(true);
             this.lecture.set(lecture);
             window.history.replaceState({}, '', `course-management/${lecture.course!.id}/lectures/${lecture.id}/edit`);
+            this.shouldDisplayDismissWarning = true;
         }
     }
 
