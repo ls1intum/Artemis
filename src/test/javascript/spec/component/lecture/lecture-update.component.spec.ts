@@ -59,7 +59,7 @@ describe('LectureUpdateComponent', () => {
                 FormDateTimePickerComponent,
                 LectureAttachmentsComponent,
                 LectureUpdateUnitsComponent,
-                MockComponent(LectureUpdatePeriodComponent),
+                LectureUpdatePeriodComponent,
                 MockComponent(LectureUnitManagementComponent),
                 MockComponent(FormStatusBarComponent),
                 MockComponent(MarkdownEditorMonacoComponent),
