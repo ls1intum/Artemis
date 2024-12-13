@@ -1,4 +1,4 @@
-import { Component, Input, OnInit } from '@angular/core';
+import { Component, computed, input } from '@angular/core';
 
 export enum IrisLogoSize {
     FLUID = 'fluid',
@@ -16,30 +16,29 @@ export enum IrisLogoLookDirection {
     selector: 'jhi-iris-logo',
     templateUrl: './iris-logo.component.html',
     styleUrls: ['./iris-logo.component.scss'],
+    standalone: true,
 })
-export class IrisLogoComponent implements OnInit {
-    @Input()
-    size: IrisLogoSize | number = IrisLogoSize.BIG;
+export class IrisLogoComponent {
+    size = input<IrisLogoSize | number>(IrisLogoSize.BIG);
+    look = input<IrisLogoLookDirection>(IrisLogoLookDirection.RIGHT);
 
-    @Input()
-    look: IrisLogoLookDirection = IrisLogoLookDirection.RIGHT;
-
-    logoUrl: string;
-    classList: string;
-
-    ngOnInit() {
-        if (this.size === IrisLogoSize.SMALL) {
-            this.logoUrl = 'public/images/iris/iris-logo-small.png';
-            this.classList = 'small';
-        } else if (this.size === IrisLogoSize.MEDIUM) {
-            this.logoUrl = `public/images/iris/iris-logo-big-${this.look}.png`;
-            this.classList = 'medium';
-        } else if (this.size === IrisLogoSize.BIG) {
-            this.logoUrl = `public/images/iris/iris-logo-big-${this.look}.png`;
-            this.classList = 'big img-fluid';
-        } else if (this.size === IrisLogoSize.FLUID) {
-            this.logoUrl = `public/images/iris/iris-logo-big-${this.look}.png`;
-            this.classList = 'fluid';
+    logoUrl = computed(() => {
+        if (this.size() === IrisLogoSize.SMALL) {
+            return 'public/images/iris/iris-logo-small.png';
         }
-    }
+        return `public/images/iris/iris-logo-big-${this.look()}.png`;
+    });
+
+    classList = computed(() => {
+        if (this.size() === IrisLogoSize.SMALL) {
+            return 'small';
+        } else if (this.size() === IrisLogoSize.MEDIUM) {
+            return 'medium';
+        } else if (this.size() === IrisLogoSize.BIG) {
+            return 'big img-fluid';
+        } else if (this.size() === IrisLogoSize.FLUID) {
+            return 'fluid';
+        }
+        return '';
+    });
 }
