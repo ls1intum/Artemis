@@ -123,9 +123,8 @@ describe('LectureUpdateComponent', () => {
         expect(lectureUpdateComponent.lecture().endDate).toBeUndefined();
     });
 
-    it('should create lecture', fakeAsync(() => {
+    it('should create lecture', () => {
         lectureUpdateComponent.lecture.set({ title: 'test1', channelName: 'test1' } as Lecture);
-        const navigateSpy = jest.spyOn(router, 'navigate');
 
         const createSpy = jest.spyOn(lectureService, 'create').mockReturnValue(
             of(
@@ -142,18 +141,15 @@ describe('LectureUpdateComponent', () => {
         );
 
         lectureUpdateComponent.save();
-        tick();
         lectureUpdateComponentFixture.detectChanges();
-
-        const expectedPath = ['course-management', 1, 'lectures', 3];
-        expect(navigateSpy).toHaveBeenCalledWith(expectedPath);
 
         expect(createSpy).toHaveBeenCalledOnce();
         expect(createSpy).toHaveBeenCalledWith({ title: 'test1', channelName: 'test1' });
-    }));
+    });
 
     it('should edit a lecture', fakeAsync(() => {
         activatedRoute.parent!.data = of({ course: { id: 1 }, lecture: { id: 6 } });
+        const navigateSpy = jest.spyOn(router, 'navigate');
 
         lectureUpdateComponentFixture.detectChanges();
         lectureUpdateComponent.lecture.set({ id: 6, title: 'test1Updated', channelName: 'test1Updated' } as Lecture);
@@ -175,6 +171,9 @@ describe('LectureUpdateComponent', () => {
         lectureUpdateComponent.save();
         tick();
         lectureUpdateComponentFixture.detectChanges();
+
+        const expectedPath = ['course-management', 1, 'lectures', 6];
+        expect(navigateSpy).toHaveBeenCalledWith(expectedPath);
 
         expect(updateSpy).toHaveBeenCalledOnce();
         expect(updateSpy).toHaveBeenCalledWith({ id: 6, title: 'test1Updated', channelName: 'test1Updated' });
