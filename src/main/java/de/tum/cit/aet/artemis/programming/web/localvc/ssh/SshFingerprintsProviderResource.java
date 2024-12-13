@@ -12,8 +12,6 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastStudent;
-import de.tum.cit.aet.artemis.core.service.feature.Feature;
-import de.tum.cit.aet.artemis.core.service.feature.FeatureToggle;
 import de.tum.cit.aet.artemis.programming.service.localvc.ssh.SshFingerprintsProviderService;
 
 /**
@@ -37,7 +35,6 @@ public class SshFingerprintsProviderResource {
      */
     @GetMapping(value = "ssh-fingerprints", produces = MediaType.APPLICATION_JSON_VALUE)
     @EnforceAtLeastStudent
-    @FeatureToggle(Feature.Exports)
     public ResponseEntity<Map<String, String>> getSshFingerprints() {
         return ResponseEntity.ok().body(sshFingerprintsProviderService.getSshFingerPrints());
     }
