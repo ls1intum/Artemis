@@ -16,11 +16,11 @@ import { ProgrammingExerciseDifficultyComponent } from 'app/exercises/programmin
 import { FormSectionStatus, FormStatusBarComponent } from 'app/forms/form-status-bar/form-status-bar.component';
 import { LectureUpdateWizardPeriodComponent } from 'app/lecture/wizard-mode/lecture-wizard-period.component';
 import { LectureTitleChannelNameComponent } from 'app/lecture/lecture-title-channel-name.component';
-import { LectureUpdateWizardUnitsComponent } from 'app/lecture/wizard-mode/lecture-wizard-units.component';
 import { FormDateTimePickerComponent } from 'app/shared/date-time-picker/date-time-picker.component';
 import { LectureAttachmentsComponent } from 'app/lecture/lecture-attachments.component';
 import cloneDeep from 'lodash-es/cloneDeep';
 import dayjs from 'dayjs';
+import { LectureUpdateUnitsComponent } from 'app/lecture/wizard-mode/lecture-units.component';
 
 @Component({
     selector: 'jhi-lecture-update',
@@ -46,7 +46,7 @@ export class LectureUpdateComponent implements OnInit, OnDestroy {
     titleSection = viewChild.required(LectureTitleChannelNameComponent);
     periodSectionDatepickers = viewChildren(FormDateTimePickerComponent);
     attachmentsSection = viewChild(LectureAttachmentsComponent);
-    unitSection = viewChild(LectureUpdateWizardUnitsComponent);
+    unitSection = viewChild(LectureUpdateUnitsComponent);
     formStatusBar = viewChild(FormStatusBarComponent);
 
     isPeriodSectionValid: Signal<boolean> = computed(() => {

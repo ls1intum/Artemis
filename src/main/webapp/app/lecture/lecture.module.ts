@@ -14,12 +14,12 @@ import { ArtemisMarkdownModule } from 'app/shared/markdown.module';
 import { LectureImportComponent } from 'app/lecture/lecture-import.component';
 import { ArtemisCompetenciesModule } from 'app/course/competencies/competency.module';
 import { LectureUpdateWizardPeriodComponent } from 'app/lecture/wizard-mode/lecture-wizard-period.component';
-import { LectureUpdateWizardUnitsComponent } from 'app/lecture/wizard-mode/lecture-wizard-units.component';
 import { TitleChannelNameModule } from 'app/shared/form/title-channel-name/title-channel-name.module';
 import { LectureTitleChannelNameComponent } from 'app/lecture/lecture-title-channel-name.component';
 import { DetailModule } from 'app/detail-overview-list/detail.module';
 import { CompetencyFormComponent } from 'app/course/competencies/forms/competency/competency-form.component';
 import { FormsModule } from 'app/forms/forms.module';
+import { LectureUpdateUnitsComponent } from 'app/lecture/wizard-mode/lecture-units.component';
 
 const ENTITY_STATES = [...lectureRoute];
 
@@ -45,8 +45,8 @@ const ENTITY_STATES = [...lectureRoute];
         LectureUpdateComponent,
         LectureAttachmentsComponent,
         LectureUpdateWizardPeriodComponent,
-        LectureUpdateWizardUnitsComponent,
         LectureTitleChannelNameComponent,
+        LectureUpdateUnitsComponent,
     ],
 })
 export class ArtemisLectureModule {}

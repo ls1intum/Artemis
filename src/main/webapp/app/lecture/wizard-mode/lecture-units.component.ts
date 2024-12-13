@@ -23,10 +23,10 @@ import dayjs from 'dayjs/esm';
 import { ActivatedRoute } from '@angular/router';
 
 @Component({
-    selector: 'jhi-lecture-update-wizard-units',
-    templateUrl: './lecture-wizard-units.component.html',
+    selector: 'jhi-lecture-update-units',
+    templateUrl: './lecture-units.component.html',
 })
-export class LectureUpdateWizardUnitsComponent implements OnInit {
+export class LectureUpdateUnitsComponent implements OnInit {
     @Input() lecture: Lecture;
 
     @ViewChild(LectureUnitManagementComponent, { static: false }) unitManagementComponent: LectureUnitManagementComponent;
