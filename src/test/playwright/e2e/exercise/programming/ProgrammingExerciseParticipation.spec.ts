@@ -279,12 +279,12 @@ async function makeGitExerciseSubmission(
         await programmingExerciseOverview.openCloneMenu(cloneMethod);
     }
     let repoUrl = await programmingExerciseOverview.copyCloneUrl();
-    let token: string | undefined;
-    if (process.env.CI === 'true' && cloneMethod == GitCloneMethod.httpsWithToken) {
-        // token = repoUrl.match(/vcpat.+(?=@)/)?.[0];
-        token = student.password!;
-        repoUrl = repoUrl.replace(/:vcpat.+(?=@)/, '');
-    }
+    // let token: string | undefined;
+    // if (process.env.CI === 'true' && cloneMethod == GitCloneMethod.httpsWithToken) {
+    //     // token = repoUrl.match(/vcpat.+(?=@)/)?.[0];
+    //     token = student.password!;
+    //     repoUrl = repoUrl.replace(/:vcpat.+(?=@)/, '');
+    // }
     if (process.env.CI === 'true' && (cloneMethod == GitCloneMethod.https || cloneMethod == GitCloneMethod.httpsWithToken)) {
         repoUrl = repoUrl.replace('localhost', 'artemis-app');
     }
@@ -300,7 +300,7 @@ async function makeGitExerciseSubmission(
     console.log(`Cloning repository from ${repoUrl}`);
     const urlParts = repoUrl.split('/');
     const repoName = urlParts[urlParts.length - 1];
-    const exerciseRepo = await gitClient.cloneRepo(repoUrl, repoName, token);
+    const exerciseRepo = await gitClient.cloneRepo(repoUrl, repoName);
     console.log(`Cloned repository successfully. Pushing files...`);
     await pushGitSubmissionFiles(exerciseRepo, repoName, student, submission, commitMessage);
     await fs.rmdir(`./test-exercise-repos/${repoName}`, { recursive: true });
