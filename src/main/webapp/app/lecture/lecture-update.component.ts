@@ -1,4 +1,4 @@
-import { Component, OnDestroy, OnInit, Signal, ViewChild, computed, effect, inject, signal, viewChild, viewChildren } from '@angular/core';
+import { Component, OnDestroy, OnInit, effect, inject, signal, viewChild } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { Observable, Subscription } from 'rxjs';
@@ -12,15 +12,13 @@ import { DocumentationType } from 'app/shared/components/documentation-button/do
 import { faBan, faPuzzlePiece, faQuestionCircle, faSave } from '@fortawesome/free-solid-svg-icons';
 import { ACCEPTED_FILE_EXTENSIONS_FILE_BROWSER, ALLOWED_FILE_EXTENSIONS_HUMAN_READABLE } from 'app/shared/constants/file-extensions.constants';
 import { FormulaAction } from 'app/shared/monaco-editor/model/actions/formula.action';
-import { ProgrammingExerciseDifficultyComponent } from 'app/exercises/programming/manage/update/update-components/difficulty/programming-exercise-difficulty.component';
 import { FormSectionStatus, FormStatusBarComponent } from 'app/forms/form-status-bar/form-status-bar.component';
-import { LectureUpdateWizardPeriodComponent } from 'app/lecture/wizard-mode/lecture-wizard-period.component';
 import { LectureTitleChannelNameComponent } from 'app/lecture/lecture-title-channel-name.component';
-import { FormDateTimePickerComponent } from 'app/shared/date-time-picker/date-time-picker.component';
 import { LectureAttachmentsComponent } from 'app/lecture/lecture-attachments.component';
 import cloneDeep from 'lodash-es/cloneDeep';
 import dayjs from 'dayjs';
-import { LectureUpdateUnitsComponent } from 'app/lecture/wizard-mode/lecture-units.component';
+import { LectureUpdateUnitsComponent } from 'app/lecture/lecture-units/lecture-units.component';
+import { LectureUpdatePeriodComponent } from 'app/lecture/lecture-period/lecture-period.component';
 
 @Component({
     selector: 'jhi-lecture-update',
@@ -42,21 +40,11 @@ export class LectureUpdateComponent implements OnInit, OnDestroy {
     private readonly navigationUtilService = inject(ArtemisNavigationUtilService);
     private readonly router = inject(Router);
 
-    @ViewChild(ProgrammingExerciseDifficultyComponent) lecturePeriodComponent?: LectureUpdateWizardPeriodComponent;
     titleSection = viewChild.required(LectureTitleChannelNameComponent);
-    periodSectionDatepickers = viewChildren(FormDateTimePickerComponent);
+    lecturePeriodSection = viewChild.required(LectureUpdatePeriodComponent);
     attachmentsSection = viewChild(LectureAttachmentsComponent);
     unitSection = viewChild(LectureUpdateUnitsComponent);
     formStatusBar = viewChild(FormStatusBarComponent);
-
-    isPeriodSectionValid: Signal<boolean> = computed(() => {
-        for (const periodSectionDatepicker of this.periodSectionDatepickers()) {
-            if (!periodSectionDatepicker.isValid()) {
-                return false;
-            }
-        }
-        return true;
-    });
 
     isEditMode = signal<boolean>(false);
     pressedSave: boolean = false;
@@ -99,11 +87,13 @@ export class LectureUpdateComponent implements OnInit, OnDestroy {
                     }),
             );
             this.subscriptions.add(
-                this.periodSectionDatepickers().forEach((datepicker) => {
-                    datepicker.valueChange.subscribe(() => {
-                        this.updateIsChangesMadeToTitleOrPeriodSection();
-                    });
-                }),
+                this.lecturePeriodSection()
+                    .periodSectionDatepickers()
+                    .forEach((datepicker) => {
+                        datepicker.valueChange.subscribe(() => {
+                            this.updateIsChangesMadeToTitleOrPeriodSection();
+                        });
+                    }),
             );
         });
 
@@ -131,7 +121,7 @@ export class LectureUpdateComponent implements OnInit, OnDestroy {
                     },
                     {
                         title: 'artemisApp.lecture.wizardMode.steps.periodStepTitle',
-                        valid: Boolean(this.isPeriodSectionValid()),
+                        valid: Boolean(this.lecturePeriodSection().isPeriodSectionValid()),
                     },
                 );
 

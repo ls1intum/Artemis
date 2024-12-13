@@ -37,39 +37,7 @@
                         </div>
                     }
                 </div>
-                <div>
-                    <h2 id="artemisApp.lecture.wizardMode.steps.periodStepTitle"><span jhiTranslate="artemisApp.lecture.wizardMode.steps.periodStepTitle"></span></h2>
-                    <p><span jhiTranslate="artemisApp.lecture.wizardMode.steps.periodStepMessage"></span></p>
-                    <div class="d-flex">
-                        <div class="form-group flex-grow-1">
-                            <jhi-date-time-picker
-                                labelName="{{ 'artemisApp.lecture.visibleDate' | artemisTranslate }}"
-                                [(ngModel)]="lecture().visibleDate"
-                                (valueChange)="onDatesValuesChanged()"
-                                name="visibleDate"
-                                id="visible-date"
-                            />
-                        </div>
-                        <div class="form-group flex-grow-1 ms-3">
-                            <jhi-date-time-picker
-                                labelName="{{ 'artemisApp.lecture.startDate' | artemisTranslate }}"
-                                [(ngModel)]="lecture().startDate"
-                                (valueChange)="onDatesValuesChanged()"
-                                name="startDate"
-                                id="start-date"
-                            />
-                        </div>
-                        <div class="form-group flex-grow-1 ms-3">
-                            <jhi-date-time-picker
-                                labelName="{{ 'artemisApp.lecture.endDate' | artemisTranslate }}"
-                                [(ngModel)]="lecture().endDate"
-                                (valueChange)="onDatesValuesChanged()"
-                                name="endDate"
-                                id="end-date"
-                            />
-                        </div>
-                    </div>
-                </div>
+                <jhi-lecture-update-period [lecture]="lecture()" [validateDatesFunction]="onDatesValuesChanged" />
                 <div class="flex-grow-1 d-flex justify-content-end">
                     <button type="button" id="cancel-save" class="btn btn-secondary" (click)="previousState()">
                         <fa-icon [icon]="faBan" />&nbsp;<span jhiTranslate="entity.action.cancel"></span>
@@ -77,15 +45,16 @@
                     <button
                         type="submit"
                         id="save-entity"
+                        class="btn btn-primary ms-2"
                         [disabled]="
                             editForm.form.invalid ||
                             isSaving ||
                             processUnitMode ||
                             !isChangeMadeToTitleOrPeriodSection ||
-                            !unitSection()?.isUnitConfigurationValid() ||
-                            !attachmentsSection()?.isFormValid()
+                            !lecturePeriodSection().isPeriodSectionValid() ||
+                            !(unitSection()?.isUnitConfigurationValid() ?? true) ||
+                            !(attachmentsSection()?.isFormValid() ?? true)
                         "
-                        class="btn btn-primary ms-2"
                     >
                         <fa-icon [icon]="faSave" />&nbsp;<span jhiTranslate="entity.action.save"></span>
                     </button>

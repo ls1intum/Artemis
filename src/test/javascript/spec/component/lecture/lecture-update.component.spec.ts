@@ -23,15 +23,15 @@ import { DocumentationButtonComponent } from 'app/shared/components/documentatio
 import { LectureTitleChannelNameComponent } from 'app/lecture/lecture-title-channel-name.component';
 import { MarkdownEditorMonacoComponent } from 'app/shared/markdown-editor/monaco/markdown-editor-monaco.component';
 import { LectureAttachmentsComponent } from '../../../../../main/webapp/app/lecture/lecture-attachments.component';
-import { LectureUpdateWizardUnitsComponent } from '../../../../../main/webapp/app/lecture/wizard-mode/lecture-wizard-units.component';
 import { FormStatusBarComponent } from '../../../../../main/webapp/app/forms/form-status-bar/form-status-bar.component';
-import { LectureUpdateWizardPeriodComponent } from '../../../../../main/webapp/app/lecture/wizard-mode/lecture-wizard-period.component';
 import { TitleChannelNameComponent } from '../../../../../main/webapp/app/shared/form/title-channel-name/title-channel-name.component';
 import { OwlDateTimeModule } from '@danielmoncada/angular-datetime-picker';
 import { ArtemisSharedModule } from '../../../../../main/webapp/app/shared/shared.module';
 import { LectureUnitManagementComponent } from '../../../../../main/webapp/app/lecture/lecture-unit/lecture-unit-management/lecture-unit-management.component';
 import { UnitCreationCardComponent } from '../../../../../main/webapp/app/lecture/lecture-unit/lecture-unit-management/unit-creation-card/unit-creation-card.component';
 import { CustomNotIncludedInValidatorDirective } from '../../../../../main/webapp/app/shared/validators/custom-not-included-in-validator.directive';
+import { LectureUpdatePeriodComponent } from 'app/lecture/lecture-period/lecture-period.component';
+import { LectureUpdateUnitsComponent } from '../../../../../main/webapp/app/lecture/lecture-units/lecture-units.component';
 
 describe('LectureUpdateComponent', () => {
     let lectureService: LectureService;
@@ -58,8 +58,8 @@ describe('LectureUpdateComponent', () => {
                 TitleChannelNameComponent,
                 FormDateTimePickerComponent,
                 LectureAttachmentsComponent,
-                LectureUpdateWizardUnitsComponent,
-                MockComponent(LectureUpdateWizardPeriodComponent),
+                LectureUpdateUnitsComponent,
+                MockComponent(LectureUpdatePeriodComponent),
                 MockComponent(LectureUnitManagementComponent),
                 MockComponent(FormStatusBarComponent),
                 MockComponent(MarkdownEditorMonacoComponent),
