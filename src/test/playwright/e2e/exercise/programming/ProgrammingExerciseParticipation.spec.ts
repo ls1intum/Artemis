@@ -293,6 +293,8 @@ async function makeGitExerciseSubmission(
     }
     if (cloneMethod == GitCloneMethod.https) {
         repoUrl = repoUrl.replace(student.username!, `${student.username!}:${student.password!}`);
+    }
+    if (cloneMethod == GitCloneMethod.https || cloneMethod == GitCloneMethod.httpsWithToken) {
         repoUrl = repoUrl.replace(`:**********`, ``);
     }
     console.log(`Cloning repository from ${repoUrl}`);
