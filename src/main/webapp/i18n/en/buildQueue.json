@@ -41,8 +41,8 @@
                     "timeout": "Timed out"
                 },
                 "buildAgentAddress": "Build Agent Address",
-                "buildStartDate": {
-                    "title": "Build Start Date",
+                "buildSubmissionDate": {
+                    "title": "Build Submission Date",
                     "from": "From",
                     "to": "To",
                     "invalidDate": "From date must be before to date"

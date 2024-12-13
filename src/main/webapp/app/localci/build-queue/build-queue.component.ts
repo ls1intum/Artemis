@@ -27,8 +27,8 @@ import { ArtemisDataTableModule } from 'app/shared/data-table/data-table.module'
 export class FinishedBuildJobFilter {
     status?: string = undefined;
     buildAgentAddress?: string = undefined;
-    buildStartDateFilterFrom?: dayjs.Dayjs = undefined;
-    buildStartDateFilterTo?: dayjs.Dayjs = undefined;
+    buildSubmissionDateFilterFrom?: dayjs.Dayjs = undefined;
+    buildSubmissionDateFilterTo?: dayjs.Dayjs = undefined;
     buildDurationFilterLowerBound?: number = undefined;
     buildDurationFilterUpperBound?: number = undefined;
     numberOfAppliedFilters = 0;
@@ -47,11 +47,11 @@ export class FinishedBuildJobFilter {
         if (this.buildAgentAddress) {
             options = options.append('buildAgentAddress', this.buildAgentAddress);
         }
-        if (this.buildStartDateFilterFrom) {
-            options = options.append('startDate', this.buildStartDateFilterFrom.toISOString());
+        if (this.buildSubmissionDateFilterFrom) {
+            options = options.append('startDate', this.buildSubmissionDateFilterFrom.toISOString());
         }
-        if (this.buildStartDateFilterTo) {
-            options = options.append('endDate', this.buildStartDateFilterTo.toISOString());
+        if (this.buildSubmissionDateFilterTo) {
+            options = options.append('endDate', this.buildSubmissionDateFilterTo.toISOString());
         }
         if (this.buildDurationFilterLowerBound) {
             options = options.append('buildDurationLower', this.buildDurationFilterLowerBound.toString());
@@ -102,8 +102,8 @@ enum BuildJobStatusFilter {
 export enum FinishedBuildJobFilterStorageKey {
     status = 'artemis.buildQueue.finishedBuildJobFilterStatus',
     buildAgentAddress = 'artemis.buildQueue.finishedBuildJobFilterBuildAgentAddress',
-    buildStartDateFilterFrom = 'artemis.buildQueue.finishedBuildJobFilterBuildStartDateFilterFrom',
-    buildStartDateFilterTo = 'artemis.buildQueue.finishedBuildJobFilterBuildStartDateFilterTo',
+    buildSubmissionDateFilterFrom = 'artemis.buildQueue.finishedBuildJobFilterBuildSubmissionDateFilterFrom',
+    buildSubmissionDateFilterTo = 'artemis.buildQueue.finishedBuildJobFilterBuildSubmissionDateFilterTo',
     buildDurationFilterLowerBound = 'artemis.buildQueue.finishedBuildJobFilterBuildDurationFilterLowerBound',
     buildDurationFilterUpperBound = 'artemis.buildQueue.finishedBuildJobFilterBuildDurationFilterUpperBound',
 }
@@ -149,7 +149,7 @@ export class BuildQueueComponent implements OnInit, OnDestroy {
     totalItems = 0;
     itemsPerPage = ITEMS_PER_PAGE;
     page = 1;
-    predicate = 'buildStartDate';
+    predicate = 'buildSubmissionDate';
     ascending = false;
     buildDurationInterval: ReturnType<typeof setInterval>;
 
@@ -529,24 +529,24 @@ export class BuildQueueComponent implements OnInit, OnDestroy {
      * Method to remove the build start date filter and store the selected build start date in the local store if required.
      */
     filterDateChanged() {
-        if (!this.finishedBuildJobFilter.buildStartDateFilterFrom?.isValid()) {
-            this.finishedBuildJobFilter.buildStartDateFilterFrom = undefined;
-            this.localStorage.clear(FinishedBuildJobFilterStorageKey.buildStartDateFilterFrom);
-            this.finishedBuildJobFilter.removeFilterFromFilterMap(FinishedBuildJobFilterStorageKey.buildStartDateFilterFrom);
+        if (!this.finishedBuildJobFilter.buildSubmissionDateFilterFrom?.isValid()) {
+            this.finishedBuildJobFilter.buildSubmissionDateFilterFrom = undefined;
+            this.localStorage.clear(FinishedBuildJobFilterStorageKey.buildSubmissionDateFilterFrom);
+            this.finishedBuildJobFilter.removeFilterFromFilterMap(FinishedBuildJobFilterStorageKey.buildSubmissionDateFilterFrom);
         } else {
-            this.localStorage.store(FinishedBuildJobFilterStorageKey.buildStartDateFilterFrom, this.finishedBuildJobFilter.buildStartDateFilterFrom);
-            this.finishedBuildJobFilter.addFilterToFilterMap(FinishedBuildJobFilterStorageKey.buildStartDateFilterFrom);
+            this.localStorage.store(FinishedBuildJobFilterStorageKey.buildSubmissionDateFilterFrom, this.finishedBuildJobFilter.buildSubmissionDateFilterFrom);
+            this.finishedBuildJobFilter.addFilterToFilterMap(FinishedBuildJobFilterStorageKey.buildSubmissionDateFilterFrom);
         }
-        if (!this.finishedBuildJobFilter.buildStartDateFilterTo?.isValid()) {
-            this.finishedBuildJobFilter.buildStartDateFilterTo = undefined;
-            this.localStorage.clear(FinishedBuildJobFilterStorageKey.buildStartDateFilterTo);
-            this.finishedBuildJobFilter.removeFilterFromFilterMap(FinishedBuildJobFilterStorageKey.buildStartDateFilterTo);
+        if (!this.finishedBuildJobFilter.buildSubmissionDateFilterTo?.isValid()) {
+            this.finishedBuildJobFilter.buildSubmissionDateFilterTo = undefined;
+            this.localStorage.clear(FinishedBuildJobFilterStorageKey.buildSubmissionDateFilterTo);
+            this.finishedBuildJobFilter.removeFilterFromFilterMap(FinishedBuildJobFilterStorageKey.buildSubmissionDateFilterTo);
         } else {
-            this.localStorage.store(FinishedBuildJobFilterStorageKey.buildStartDateFilterTo, this.finishedBuildJobFilter.buildStartDateFilterTo);
-            this.finishedBuildJobFilter.addFilterToFilterMap(FinishedBuildJobFilterStorageKey.buildStartDateFilterTo);
+            this.localStorage.store(FinishedBuildJobFilterStorageKey.buildSubmissionDateFilterTo, this.finishedBuildJobFilter.buildSubmissionDateFilterTo);
+            this.finishedBuildJobFilter.addFilterToFilterMap(FinishedBuildJobFilterStorageKey.buildSubmissionDateFilterTo);
         }
-        if (this.finishedBuildJobFilter.buildStartDateFilterFrom && this.finishedBuildJobFilter.buildStartDateFilterTo) {
-            this.finishedBuildJobFilter.areDatesValid = this.finishedBuildJobFilter.buildStartDateFilterFrom.isBefore(this.finishedBuildJobFilter.buildStartDateFilterTo);
+        if (this.finishedBuildJobFilter.buildSubmissionDateFilterFrom && this.finishedBuildJobFilter.buildSubmissionDateFilterTo) {
+            this.finishedBuildJobFilter.areDatesValid = this.finishedBuildJobFilter.buildSubmissionDateFilterFrom.isBefore(this.finishedBuildJobFilter.buildSubmissionDateFilterTo);
         } else {
             this.finishedBuildJobFilter.areDatesValid = true;
         }

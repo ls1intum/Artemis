@@ -35,6 +35,7 @@ export class FinishedBuildJob implements StringBaseEntity {
     public triggeredByPushTo?: TriggeredByPushTo;
     public repositoryName?: string;
     public repositoryType?: string;
+    public buildSubmissionDate?: dayjs.Dayjs;
     public buildStartDate?: dayjs.Dayjs;
     public buildCompletionDate?: dayjs.Dayjs;
     public buildDuration?: string;

@@ -546,8 +546,8 @@ describe('BuildQueueComponent', () => {
         component.finishedBuildJobFilter.buildDurationFilterLowerBound = 1;
         component.finishedBuildJobFilter.buildDurationFilterUpperBound = 2;
         component.filterDurationChanged();
-        component.finishedBuildJobFilter.buildStartDateFilterFrom = dayjs('2023-01-01');
-        component.finishedBuildJobFilter.buildStartDateFilterTo = dayjs('2023-01-02');
+        component.finishedBuildJobFilter.buildSubmissionDateFilterFrom = dayjs('2023-01-01');
+        component.finishedBuildJobFilter.buildSubmissionDateFilterTo = dayjs('2023-01-02');
         component.filterDateChanged();
         component.toggleBuildStatusFilter('SUCCESSFUL');
 
@@ -566,8 +566,8 @@ describe('BuildQueueComponent', () => {
         component.finishedBuildJobFilter.buildAgentAddress = 'agent1';
         component.finishedBuildJobFilter.buildDurationFilterLowerBound = 1;
         component.finishedBuildJobFilter.buildDurationFilterUpperBound = 2;
-        component.finishedBuildJobFilter.buildStartDateFilterFrom = dayjs('2023-01-01');
-        component.finishedBuildJobFilter.buildStartDateFilterTo = dayjs('2023-01-02');
+        component.finishedBuildJobFilter.buildSubmissionDateFilterFrom = dayjs('2023-01-01');
+        component.finishedBuildJobFilter.buildSubmissionDateFilterTo = dayjs('2023-01-02');
         component.finishedBuildJobFilter.status = 'SUCCESSFUL';
 
         component.filterDurationChanged();
@@ -600,7 +600,7 @@ describe('BuildQueueComponent', () => {
     it('should validate correctly', () => {
         component.finishedBuildJobFilter = new FinishedBuildJobFilter();
         component.finishedBuildJobFilter.buildDurationFilterLowerBound = 1;
-        component.finishedBuildJobFilter.buildStartDateFilterFrom = dayjs('2023-01-01');
+        component.finishedBuildJobFilter.buildSubmissionDateFilterFrom = dayjs('2023-01-01');
         component.filterDurationChanged();
         component.filterDateChanged();
 
@@ -608,7 +608,7 @@ describe('BuildQueueComponent', () => {
         expect(component.finishedBuildJobFilter.areDurationFiltersValid).toBeTruthy();
 
         component.finishedBuildJobFilter.buildDurationFilterUpperBound = 2;
-        component.finishedBuildJobFilter.buildStartDateFilterTo = dayjs('2023-01-02');
+        component.finishedBuildJobFilter.buildSubmissionDateFilterTo = dayjs('2023-01-02');
         component.filterDurationChanged();
         component.filterDateChanged();
 
@@ -616,7 +616,7 @@ describe('BuildQueueComponent', () => {
         expect(component.finishedBuildJobFilter.areDurationFiltersValid).toBeTruthy();
 
         component.finishedBuildJobFilter.buildDurationFilterLowerBound = 3;
-        component.finishedBuildJobFilter.buildStartDateFilterFrom = dayjs('2023-01-03');
+        component.finishedBuildJobFilter.buildSubmissionDateFilterFrom = dayjs('2023-01-03');
         component.filterDurationChanged();
         component.filterDateChanged();
 

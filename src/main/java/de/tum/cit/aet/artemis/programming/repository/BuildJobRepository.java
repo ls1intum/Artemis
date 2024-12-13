@@ -41,8 +41,8 @@ public interface BuildJobRepository extends ArtemisJpaRepository<BuildJob, Long>
                 LEFT JOIN Course c ON b.courseId = c.id
             WHERE (:buildStatus IS NULL OR b.buildStatus = :buildStatus)
                 AND (:buildAgentAddress IS NULL OR b.buildAgentAddress = :buildAgentAddress)
-                AND (CAST(:startDate AS string) IS NULL OR b.buildStartDate >= :startDate)
-                AND (CAST(:endDate AS string) IS NULL OR b.buildStartDate <= :endDate)
+                AND (CAST(:startDate AS string) IS NULL OR b.buildSubmissionDate >= :startDate)
+                AND (CAST(:endDate AS string) IS NULL OR b.buildSubmissionDate <= :endDate)
                 AND (:searchTerm IS NULL OR (b.repositoryName LIKE %:searchTerm% OR c.title LIKE %:searchTerm%))
                 AND (:courseId IS NULL OR b.courseId = :courseId)
                 AND (:durationLower IS NULL OR (b.buildCompletionDate - b.buildStartDate) >= :durationLower)
@@ -79,7 +79,7 @@ public interface BuildJobRepository extends ArtemisJpaRepository<BuildJob, Long>
                 COUNT(b.buildStatus)
             )
             FROM BuildJob b
-            WHERE b.buildStartDate >= :fromDateTime
+            WHERE b.buildSubmissionDate >= :fromDateTime
                 AND (:courseId IS NULL OR b.courseId = :courseId)
             GROUP BY b.buildStatus
             """)
@@ -106,6 +106,11 @@ public interface BuildJobRepository extends ArtemisJpaRepository<BuildJob, Long>
             WHERE e.id IN :exerciseIds
             """)
     long countBuildJobsByExerciseIds(@Param("exerciseIds") List<Long> exerciseIds);
+
+    @Transactional
+    @Modifying
+    @Query("UPDATE BuildJob b SET b.buildStatus = :newStatus WHERE b.buildJobId = :buildJobId")
+    void updateBuildJobStatus(@Param("buildJobId") String buildJobId, @Param("newStatus") BuildStatus newStatus);
 
     /**
      * Update the build job status and set the build start date if it is not set yet. The buildStartDate is required to calculate the statistics and the correctly display in the

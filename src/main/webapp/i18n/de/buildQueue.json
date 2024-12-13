@@ -41,8 +41,8 @@
                     "timeout": "Zeitüberschreitung"
                 },
                 "buildAgentAddress": "Build Agent Adresse",
-                "buildStartDate": {
-                    "title": "Build Startdatum",
+                "buildSubmissionDate": {
+                    "title": "Build Abgabedatum",
                     "from": "Von",
                     "to": "Bis",
                     "invalidDate": "Von-Datum muss vor dem Bis-Datum liegen"

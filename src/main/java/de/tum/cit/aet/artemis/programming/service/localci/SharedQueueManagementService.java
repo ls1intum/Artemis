@@ -216,7 +216,7 @@ public class SharedQueueManagementService {
 
     private void updateCancelledQueuedBuildJobsStatus(List<BuildJobQueueItem> queuedJobs) {
         for (BuildJobQueueItem queuedJob : queuedJobs) {
-            buildJobRepository.updateBuildJobStatusWithBuildStartDate(queuedJob.id(), BuildStatus.CANCELLED, ZonedDateTime.now());
+            buildJobRepository.updateBuildJobStatus(queuedJob.id(), BuildStatus.CANCELLED);
         }
     }
 
