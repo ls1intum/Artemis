@@ -2,19 +2,15 @@ package de.tum.cit.aet.artemis.core.web;
 
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
-import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.nio.file.Path;
-import java.security.GeneralSecurityException;
-import java.security.PublicKey;
 import java.time.ZonedDateTime;
 import java.util.Optional;
 
 import jakarta.validation.Valid;
 import jakarta.ws.rs.BadRequestException;
 
-import org.apache.sshd.common.config.keys.AuthorizedKeyEntry;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Profile;
@@ -47,7 +43,6 @@ import de.tum.cit.aet.artemis.core.service.FileService;
 import de.tum.cit.aet.artemis.core.service.user.UserCreationService;
 import de.tum.cit.aet.artemis.core.service.user.UserService;
 import de.tum.cit.aet.artemis.programming.service.localvc.LocalVCPersonalAccessTokenManagementService;
-import de.tum.cit.aet.artemis.programming.service.localvc.ssh.HashUtils;
 
 /**
  * REST controller for managing the current user's account.
@@ -127,50 +122,6 @@ public class AccountResource {
         }
         userService.changePassword(passwordChangeDto.currentPassword(), passwordChangeDto.newPassword());
 
-        return ResponseEntity.ok().build();
-    }
-
-    /**
-     * PUT account/ssh-public-key : sets the ssh public key
-     *
-     * @param sshPublicKey the ssh public key to set
-     *
-     * @return the ResponseEntity with status 200 (OK), with status 404 (Not Found), or with status 400 (Bad Request)
-     */
-    @PutMapping("account/ssh-public-key")
-    @EnforceAtLeastStudent
-    public ResponseEntity<Void> addSshPublicKey(@RequestBody String sshPublicKey) throws GeneralSecurityException, IOException {
-
-        User user = userRepository.getUser();
-        log.debug("REST request to add SSH key to user {}", user.getLogin());
-        // Parse the public key string
-        AuthorizedKeyEntry keyEntry;
-        try {
-            keyEntry = AuthorizedKeyEntry.parseAuthorizedKeyEntry(sshPublicKey);
-        }
-        catch (IllegalArgumentException e) {
-            throw new BadRequestAlertException("Invalid SSH key format", "SSH key", "invalidKeyFormat", true);
-        }
-        // Extract the PublicKey object
-        PublicKey publicKey = keyEntry.resolvePublicKey(null, null, null);
-        String keyHash = HashUtils.getSha512Fingerprint(publicKey);
-        userRepository.updateUserSshPublicKeyHash(user.getId(), keyHash, sshPublicKey);
-        return ResponseEntity.ok().build();
-    }
-
-    /**
-     * PUT account/ssh-public-key : sets the ssh public key
-     *
-     * @return the ResponseEntity with status 200 (OK), with status 404 (Not Found), or with status 400 (Bad Request)
-     */
-    @DeleteMapping("account/ssh-public-key")
-    @EnforceAtLeastStudent
-    public ResponseEntity<Void> deleteSshPublicKey() {
-        User user = userRepository.getUser();
-        log.debug("REST request to remove SSH key of user {}", user.getLogin());
-        userRepository.updateUserSshPublicKeyHash(user.getId(), null, null);
-
-        log.debug("Successfully deleted SSH key of user {}", user.getLogin());
         return ResponseEntity.ok().build();
     }
 

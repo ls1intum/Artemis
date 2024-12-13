@@ -23,15 +23,16 @@ import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.boot.test.mock.mockito.SpyBean;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.ldap.SpringSecurityLdapTemplate;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.TestPropertySource;
+import org.springframework.test.context.bean.override.mockito.MockitoSpyBean;
 
 import com.github.dockerjava.api.DockerClient;
 
+import de.tum.cit.aet.artemis.atlas.service.competency.CompetencyJolService;
 import de.tum.cit.aet.artemis.communication.service.notifications.GroupNotificationScheduleService;
 import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.domain.User;
@@ -40,6 +41,9 @@ import de.tum.cit.aet.artemis.core.service.ldap.LdapUserService;
 import de.tum.cit.aet.artemis.core.user.util.UserUtilService;
 import de.tum.cit.aet.artemis.exam.service.ExamLiveEventsService;
 import de.tum.cit.aet.artemis.exercise.domain.Team;
+import de.tum.cit.aet.artemis.iris.service.pyris.PyrisPipelineService;
+import de.tum.cit.aet.artemis.iris.service.session.IrisCourseChatSessionService;
+import de.tum.cit.aet.artemis.iris.service.session.IrisExerciseChatSessionService;
 import de.tum.cit.aet.artemis.programming.domain.AbstractBaseProgrammingExerciseParticipation;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseParticipation;
@@ -82,16 +86,16 @@ public abstract class AbstractSpringIntegrationLocalCILocalVCTest extends Abstra
     @Autowired
     protected LocalVCLocalCITestService localVCLocalCITestService;
 
-    @SpyBean
+    @MockitoSpyBean
     protected LdapUserService ldapUserService;
 
-    @SpyBean
+    @MockitoSpyBean
     protected SpringSecurityLdapTemplate ldapTemplate;
 
-    @SpyBean
+    @MockitoSpyBean
     protected LocalVCService versionControlService;
 
-    @SpyBean
+    @MockitoSpyBean
     protected LocalCIService continuousIntegrationService;
 
     @Autowired
@@ -122,17 +126,29 @@ public abstract class AbstractSpringIntegrationLocalCILocalVCTest extends Abstra
     @Autowired
     protected DockerClient dockerClient;
 
-    @SpyBean
+    @MockitoSpyBean
     protected ResourceLoaderService resourceLoaderService;
 
-    @SpyBean
+    @MockitoSpyBean
     protected ProgrammingMessagingService programmingMessagingService;
 
-    @SpyBean
+    @MockitoSpyBean
     protected ExamLiveEventsService examLiveEventsService;
 
-    @SpyBean
+    @MockitoSpyBean
     protected GroupNotificationScheduleService groupNotificationScheduleService;
+
+    @MockitoSpyBean
+    protected IrisCourseChatSessionService irisCourseChatSessionService;
+
+    @MockitoSpyBean
+    protected CompetencyJolService competencyJolService;
+
+    @MockitoSpyBean
+    protected PyrisPipelineService pyrisPipelineService;
+
+    @MockitoSpyBean
+    protected IrisExerciseChatSessionService irisExerciseChatSessionService;
 
     @Value("${artemis.version-control.url}")
     protected URL localVCBaseUrl;

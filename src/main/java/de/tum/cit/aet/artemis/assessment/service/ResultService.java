@@ -692,4 +692,15 @@ public class ResultService {
         List<Feedback> feedbacks = new ArrayList<>(feedbackList);
         result.updateAllFeedbackItems(feedbacks, true);
     }
+
+    /**
+     * Retrieves the number of students affected by a specific feedback detail text for a given exercise.
+     *
+     * @param exerciseId for which the affected student count is requested.
+     * @param detailText used to filter affected students.
+     * @return the total number of distinct students affected by the feedback detail text.
+     */
+    public long getAffectedStudentCountByFeedbackDetailText(long exerciseId, String detailText) {
+        return studentParticipationRepository.countAffectedStudentsByFeedbackDetailText(exerciseId, detailText);
+    }
 }
