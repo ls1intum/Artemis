@@ -239,7 +239,7 @@ describe('LectureUpdateComponent', () => {
         expect(navigateSpy).toHaveBeenCalledWith(expectedPath, { state: { file: lectureUpdateComponent.file, fileName: lectureUpdateComponent.fileName } });
     }));
 
-    it('should call onFileChange on changed file', fakeAsync(() => {
+    it('should call onFileChange on changed file', () => {
         lectureUpdateComponent.processUnitMode = false;
         lectureUpdateComponentFixture.detectChanges();
         expect(lectureUpdateComponentFixture.debugElement.nativeElement.querySelector('#fileInput')).toBeFalsy();
@@ -255,7 +255,7 @@ describe('LectureUpdateComponent', () => {
         expect(lectureUpdateComponentFixture.debugElement.nativeElement.querySelector('#fileInput')).toBeTruthy();
         fileInput.dispatchEvent(new Event('change'));
         expect(onFileChangeStub).toHaveBeenCalledOnce();
-    }));
+    });
 
     it('should set lecture visible date, start date and end date correctly', fakeAsync(() => {
         activatedRoute = TestBed.inject(ActivatedRoute);
