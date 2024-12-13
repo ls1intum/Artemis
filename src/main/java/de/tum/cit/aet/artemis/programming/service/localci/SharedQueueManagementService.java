@@ -37,6 +37,7 @@ import de.tum.cit.aet.artemis.core.dto.SortingOrder;
 import de.tum.cit.aet.artemis.core.dto.pageablesearch.FinishedBuildJobPageableSearchDTO;
 import de.tum.cit.aet.artemis.core.service.ProfileService;
 import de.tum.cit.aet.artemis.programming.domain.build.BuildJob;
+import de.tum.cit.aet.artemis.programming.domain.build.BuildStatus;
 import de.tum.cit.aet.artemis.programming.repository.BuildJobRepository;
 
 /**
@@ -202,6 +203,7 @@ public class SharedQueueManagementService {
                 }
             }
             queue.removeAll(toRemove);
+            updateCancelledQueuedBuildJobsStatus(toRemove);
         }
         else {
             // Cancel build job if it is currently being processed
@@ -209,6 +211,12 @@ public class SharedQueueManagementService {
             if (buildJob != null) {
                 triggerBuildJobCancellation(buildJobId);
             }
+        }
+    }
+
+    private void updateCancelledQueuedBuildJobsStatus(List<BuildJobQueueItem> queuedJobs) {
+        for (BuildJobQueueItem queuedJob : queuedJobs) {
+            buildJobRepository.updateBuildJobStatusWithBuildStartDate(queuedJob.id(), BuildStatus.CANCELLED, ZonedDateTime.now());
         }
     }
 
@@ -228,7 +236,9 @@ public class SharedQueueManagementService {
      */
     public void cancelAllQueuedBuildJobs() {
         log.debug("Cancelling all queued build jobs");
+        List<BuildJobQueueItem> queuedJobs = getQueuedJobs();
         queue.clear();
+        updateCancelledQueuedBuildJobsStatus(queuedJobs);
     }
 
     /**
@@ -264,6 +274,7 @@ public class SharedQueueManagementService {
             }
         }
         queue.removeAll(toRemove);
+        updateCancelledQueuedBuildJobsStatus(toRemove);
     }
 
     /**
@@ -294,6 +305,7 @@ public class SharedQueueManagementService {
             }
         }
         queue.removeAll(toRemove);
+        updateCancelledQueuedBuildJobsStatus(toRemove);
 
         List<BuildJobQueueItem> runningJobs = getProcessingJobs();
         for (BuildJobQueueItem runningJob : runningJobs) {

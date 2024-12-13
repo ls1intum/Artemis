@@ -107,16 +107,10 @@ public interface BuildJobRepository extends ArtemisJpaRepository<BuildJob, Long>
             """)
     long countBuildJobsByExerciseIds(@Param("exerciseIds") List<Long> exerciseIds);
 
-    @Transactional
-    @Modifying
-    @Query("UPDATE BuildJob b SET b.buildStatus = :newStatus WHERE b.buildJobId = :buildJobId")
-    void updateBuildJobStatus(@Param("buildJobId") String buildJobId, @Param("newStatus") BuildStatus newStatus);
-
     /**
      * Update the build job status and set the build start date if it is not set yet. The buildStartDate is required to calculate the statistics and the correctly display in the
      * build overview.
-     * This is used to update missing jobs.
-     * Although, the build start date should never be set when the job is missing. We check for this in the query.
+     * This is used to update missing jobs that do not have a build start date yet.
      *
      * @param buildJobId     the build job id
      * @param newStatus      the new build status

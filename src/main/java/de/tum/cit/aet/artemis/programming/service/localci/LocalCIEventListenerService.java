@@ -65,8 +65,9 @@ public class LocalCIEventListenerService {
 
     /**
      * Check the status of pending build jobs. If a build job is missing from the queue, not being built or not finished, update the status to missing.
+     * Default interval is 5 minutes. Default delay is 1 minute.
      */
-    @Scheduled(fixedRateString = "${artemis.continuous-integration.check-job-status-interval-seconds:60}", initialDelayString = "${artemis.continuous-integration.check-job-status-interval-seconds:60}", timeUnit = TimeUnit.SECONDS)
+    @Scheduled(fixedRateString = "${artemis.continuous-integration.check-job-status-interval-seconds:300}", initialDelayString = "${artemis.continuous-integration.check-job-status-delay-seconds:60}", timeUnit = TimeUnit.SECONDS)
     public void checkPendingBuildJobsStatus() {
         log.info("Checking pending build jobs status");
         List<BuildJob> pendingBuildJobs = buildJobRepository.findAllByBuildStatusIn(List.of(BuildStatus.QUEUED, BuildStatus.BUILDING));
@@ -127,7 +128,7 @@ public class LocalCIEventListenerService {
         public void entryAdded(com.hazelcast.core.EntryEvent<Long, BuildJobQueueItem> event) {
             log.debug("CIBuildJobQueueItem added to processing jobs: {}", event.getValue());
             localCIQueueWebsocketService.sendProcessingJobsOverWebsocket(event.getValue().courseId());
-            buildJobRepository.updateBuildJobStatus(event.getValue().id(), BuildStatus.BUILDING);
+            buildJobRepository.updateBuildJobStatusWithBuildStartDate(event.getValue().id(), BuildStatus.BUILDING, event.getValue().jobTimingInfo().buildStartDate());
         }
 
         @Override

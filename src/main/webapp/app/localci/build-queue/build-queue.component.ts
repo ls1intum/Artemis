@@ -149,7 +149,7 @@ export class BuildQueueComponent implements OnInit, OnDestroy {
     totalItems = 0;
     itemsPerPage = ITEMS_PER_PAGE;
     page = 1;
-    predicate = 'buildCompletionDate';
+    predicate = 'buildStartDate';
     ascending = false;
     buildDurationInterval: ReturnType<typeof setInterval>;
 
