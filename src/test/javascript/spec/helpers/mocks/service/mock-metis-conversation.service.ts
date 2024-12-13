@@ -40,6 +40,14 @@ export class MockMetisConversationService {
         return EMPTY;
     };
 
+    createOneToOneChatWithId = (userId: number): Observable<never> => {
+        return EMPTY;
+    };
+
+    createOneToOneChat = (userId: number): Observable<never> => {
+        return EMPTY;
+    };
+
     forceRefresh(notifyActiveConversationSubscribers = true, notifyConversationsSubscribers = true): Observable<never> {
         return EMPTY;
     }
