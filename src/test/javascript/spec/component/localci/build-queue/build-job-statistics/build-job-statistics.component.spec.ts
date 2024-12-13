@@ -18,10 +18,12 @@ describe('BuildJobStatisticsComponent', () => {
     };
 
     const mockBuildJobStatistics: BuildJobStatistics = {
-        totalBuilds: 10,
+        totalBuilds: 15,
         successfulBuilds: 5,
         failedBuilds: 3,
         cancelledBuilds: 2,
+        timeOutBuilds: 3,
+        missingBuilds: 2,
     };
 
     const testCourseId = 123;

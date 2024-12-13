@@ -75,6 +75,10 @@
                 "failedBuildsPercentage": "Fehlgeschlagene Builds %:",
                 "cancelledBuilds": "Abgebrochene Builds:",
                 "cancelledBuildsPercentage": "Abgebrochene Builds %:",
+                "missingBuilds": "Fehlende Builds:",
+                "missingBuildsPercentage": "Fehlende Builds %:",
+                "timeoutBuilds": "Zeitüberschreitende Builds:",
+                "timeoutBuildsPercentage": "Zeitüberschreitende Builds %:",
                 "daySpan": "1 Tag",
                 "weekSpan": "7 Tage",
                 "monthSpan": "30 Tage"
