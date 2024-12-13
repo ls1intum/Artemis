@@ -47,6 +47,8 @@ export class BuildJobStatistics {
     public successfulBuilds: number = 0;
     public failedBuilds: number = 0;
     public cancelledBuilds: number = 0;
+    public timeOutBuilds: number = 0;
+    public missingBuilds: number = 0;
 }
 
 export enum SpanType {

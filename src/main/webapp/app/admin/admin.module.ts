@@ -48,6 +48,7 @@ import { StandardizedCompetencyFilterComponent } from 'app/shared/standardized-c
 import { StandardizedCompetencyDetailComponent } from 'app/shared/standardized-competencies/standardized-competency-detail.component';
 import { DeleteUsersButtonComponent } from 'app/admin/user-management/delete-users-button.component';
 import { ProfilePictureComponent } from 'app/shared/profile-picture/profile-picture.component';
+import { BuildQueueComponent } from 'app/localci/build-queue/build-queue.component';
 
 const ENTITY_STATES = [...adminState];
 
@@ -77,6 +78,7 @@ const ENTITY_STATES = [...adminState];
         ProfilePictureComponent,
         BuildAgentSummaryComponent,
         BuildAgentDetailsComponent,
+        BuildQueueComponent,
     ],
     declarations: [
         AuditsComponent,

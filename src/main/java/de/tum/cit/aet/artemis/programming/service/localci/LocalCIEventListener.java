@@ -1,5 +1,6 @@
 package de.tum.cit.aet.artemis.programming.service.localci;
 
+import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
@@ -64,6 +65,7 @@ public class LocalCIEventListener {
         log.info("Checking pending build jobs status");
         List<BuildJob> pendingBuildJobs = buildJobRepository.findAllByBuildStatusIn(List.of(BuildStatus.QUEUED, BuildStatus.BUILDING));
         for (BuildJob buildJob : pendingBuildJobs) {
+            // TODO: Add submission date to build job and check if the build job is older than a certain threshold
             if (buildJob.getBuildStatus() == BuildStatus.QUEUED && checkIfBuildJobIsStillQueued(buildJob.getBuildJobId())) {
                 log.debug("Build job with id {} is still queued", buildJob.getBuildJobId());
                 continue;
@@ -77,7 +79,8 @@ public class LocalCIEventListener {
                 continue;
             }
             log.error("Build job with id {} is in an unknown state", buildJob.getBuildJobId());
-            buildJobRepository.updateBuildJobStatus(buildJob.getBuildJobId(), BuildStatus.MISSING);
+            // If the build job is in an unknown state, set it to missing and update the build start date
+            buildJobRepository.updateBuildJobStatusWithBuildStartDate(buildJob.getBuildJobId(), BuildStatus.MISSING, ZonedDateTime.now());
         }
     }
 

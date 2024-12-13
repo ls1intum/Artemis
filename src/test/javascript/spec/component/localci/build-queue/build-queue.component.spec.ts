@@ -3,22 +3,17 @@ import { ActivatedRoute } from '@angular/router';
 import { of } from 'rxjs';
 import { BuildQueueComponent, FinishedBuildJobFilter, FinishedBuildJobFilterStorageKey } from 'app/localci/build-queue/build-queue.component';
 import { BuildQueueService } from 'app/localci/build-queue/build-queue.service';
-import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
-import { MockComponent, MockPipe } from 'ng-mocks';
 import dayjs from 'dayjs/esm';
 import { AccountService } from 'app/core/auth/account.service';
 import { DataTableComponent } from 'app/shared/data-table/data-table.component';
-import { NgxDatatableModule } from '@siemens/ngx-datatable';
 import { ArtemisTestModule } from '../../../test.module';
-import { BuildJobStatistics, FinishedBuildJob, SpanType } from 'app/entities/programming/build-job.model';
+import { FinishedBuildJob } from 'app/entities/programming/build-job.model';
 import { TriggeredByPushTo } from 'app/entities/programming/repository-info.model';
 import { waitForAsync } from '@angular/core/testing';
 import { HttpResponse } from '@angular/common/http';
 import { SortingOrder } from 'app/shared/table/pageable-table';
 import { LocalStorageService } from 'ngx-webstorage';
 import { MockLocalStorageService } from '../../../helpers/mocks/service/mock-local-storage.service';
-import { ArtemisSharedComponentModule } from 'app/shared/components/shared-component.module';
-import { PieChartModule } from '@swimlane/ngx-charts';
 
 describe('BuildQueueComponent', () => {
     let component: BuildQueueComponent;
@@ -241,13 +236,6 @@ describe('BuildQueueComponent', () => {
         },
     ];
 
-    const mockBuildJobStatistics: BuildJobStatistics = {
-        totalBuilds: 10,
-        successfulBuilds: 5,
-        failedBuilds: 3,
-        cancelledBuilds: 2,
-    };
-
     const mockFinishedJobsResponse: HttpResponse<FinishedBuildJob[]> = new HttpResponse({ body: mockFinishedJobs });
 
     const request = {
@@ -275,8 +263,8 @@ describe('BuildQueueComponent', () => {
         mockActivatedRoute = { params: of({ courseId: testCourseId }) };
 
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule, NgxDatatableModule, ArtemisSharedComponentModule, PieChartModule],
-            declarations: [BuildQueueComponent, MockPipe(ArtemisTranslatePipe), MockComponent(DataTableComponent)],
+            imports: [ArtemisTestModule, BuildQueueComponent],
+            declarations: [],
             providers: [
                 { provide: BuildQueueService, useValue: mockBuildQueueService },
                 { provide: ActivatedRoute, useValue: mockActivatedRoute },
@@ -312,7 +300,6 @@ describe('BuildQueueComponent', () => {
         mockBuildQueueService.getQueuedBuildJobs.mockReturnValue(of(mockQueuedJobs));
         mockBuildQueueService.getRunningBuildJobs.mockReturnValue(of(mockRunningJobs));
         mockBuildQueueService.getFinishedBuildJobs.mockReturnValue(of(mockFinishedJobsResponse));
-        mockBuildQueueService.getBuildJobStatistics.mockReturnValue(of(mockBuildJobStatistics));
 
         // Initialize the component
         component.ngOnInit();
@@ -341,7 +328,6 @@ describe('BuildQueueComponent', () => {
         mockBuildQueueService.getQueuedBuildJobsByCourseId.mockReturnValue(of(mockQueuedJobs));
         mockBuildQueueService.getRunningBuildJobsByCourseId.mockReturnValue(of(mockRunningJobs));
         mockBuildQueueService.getFinishedBuildJobsByCourseId.mockReturnValue(of(mockFinishedJobsResponse));
-        mockBuildQueueService.getBuildJobStatisticsForCourse.mockReturnValue(of(mockBuildJobStatistics));
 
         // Initialize the component
         component.ngOnInit();
@@ -350,39 +336,11 @@ describe('BuildQueueComponent', () => {
         expect(mockBuildQueueService.getQueuedBuildJobsByCourseId).toHaveBeenCalledWith(testCourseId);
         expect(mockBuildQueueService.getRunningBuildJobsByCourseId).toHaveBeenCalledWith(testCourseId);
         expect(mockBuildQueueService.getFinishedBuildJobsByCourseId).toHaveBeenCalledWith(testCourseId, request, filterOptionsEmpty);
-        expect(mockBuildQueueService.getBuildJobStatisticsForCourse).toHaveBeenCalledWith(testCourseId, SpanType.WEEK);
 
         // Expectations: The component's properties are set with the mock data
         expect(component.queuedBuildJobs).toEqual(mockQueuedJobs);
         expect(component.runningBuildJobs).toEqual(mockRunningJobs);
         expect(component.finishedBuildJobs).toEqual(mockFinishedJobs);
-        expect(component.buildJobStatistics).toEqual(mockBuildJobStatistics);
-    });
-
-    it('should get build job statistics when changing the span', () => {
-        // Mock ActivatedRoute to return no course ID
-        mockActivatedRoute.paramMap = of(new Map([]));
-
-        mockBuildQueueService.getBuildJobStatistics.mockReturnValue(of(mockBuildJobStatistics));
-
-        component.ngOnInit();
-        component.onTabChange(SpanType.DAY);
-
-        expect(mockBuildQueueService.getBuildJobStatistics).toHaveBeenCalledTimes(2);
-        expect(component.buildJobStatistics).toEqual(mockBuildJobStatistics);
-    });
-
-    it('should not get build job statistics when span is the same', () => {
-        // Mock ActivatedRoute to return no course ID
-        mockActivatedRoute.paramMap = of(new Map([]));
-
-        mockBuildQueueService.getBuildJobStatistics.mockReturnValue(of(mockBuildJobStatistics));
-
-        component.ngOnInit();
-        component.onTabChange(SpanType.WEEK);
-
-        expect(mockBuildQueueService.getBuildJobStatistics).toHaveBeenCalledOnce();
-        expect(component.buildJobStatistics).toEqual(mockBuildJobStatistics);
     });
 
     it('should refresh data', () => {
