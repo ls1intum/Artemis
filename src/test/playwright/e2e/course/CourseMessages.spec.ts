@@ -150,6 +150,9 @@ test.describe('Course messages', { tag: '@fast' }, () => {
                 await page.reload();
                 await page.locator('jhi-conversation-header').waitFor({ state: 'visible', timeout: 10000 });
                 await expect(courseMessages.getName()).toContainText(newName);
+                await courseMessages.getName().click();
+                await courseMessages.checkTopic(topic);
+                await courseMessages.closeEditPanel();
                 await expect(courseMessages.getTopic()).toContainText(topic);
             });
         });

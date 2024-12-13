@@ -192,6 +192,14 @@ export class CourseMessagesPage {
     }
 
     /**
+     * Edits the topic of the conversation to a new topic.
+     * @param newTopic - The new topic for the conversation.
+     */
+    async checkTopic(newTopic: string) {
+        await expect(this.page.locator('#topic-section textarea')).toHaveValue(newTopic);
+    }
+
+    /**
      * Edits the description of the conversation to a new description.
      * @param newDescription - The new description for the conversation.
      */
