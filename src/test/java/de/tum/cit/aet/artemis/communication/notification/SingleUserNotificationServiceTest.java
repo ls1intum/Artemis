@@ -401,7 +401,7 @@ class SingleUserNotificationServiceTest extends AbstractSpringIntegrationIndepen
     // UserSshPublicKey related (expiry warning and newly created key)
 
     @Nested
-    class UserSshPublicKeyExpiryNotificationServiceShould {
+    class UserSshPublicKeyExpiryNotification {
 
         String RSA_KEY = "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIEbgjoSpKnry5yuMiWh/uwhMG2Jq5Sh8Uw9vz+39or2i";
 
@@ -417,7 +417,7 @@ class SingleUserNotificationServiceTest extends AbstractSpringIntegrationIndepen
         }
 
         @Test
-        void notifyUserAboutNewlyCreatedSshKeyWithExpirationDate() throws GeneralSecurityException, IOException {
+        void shouldNotifyUserAboutNewlyCreatedSshKeyWithExpirationDate() throws GeneralSecurityException, IOException {
             UserSshPublicKeyDTO keyDTO = new UserSshPublicKeyDTO(KEY_ID, KEY_LABEL, RSA_KEY, null, null, null, null);
 
             userSshPublicKeyService.createSshKeyForUser(user, AuthorizedKeyEntry.parseAuthorizedKeyEntry(keyDTO.publicKey()), keyDTO);
@@ -427,7 +427,7 @@ class SingleUserNotificationServiceTest extends AbstractSpringIntegrationIndepen
         }
 
         @Test
-        void notifyUserAboutNewlyCreatedSshKeyWithNoDate() throws GeneralSecurityException, IOException {
+        void shouldNotifyUserAboutNewlyCreatedSshKeyWithNoDate() throws GeneralSecurityException, IOException {
             UserSshPublicKeyDTO keyDTO = new UserSshPublicKeyDTO(KEY_ID, KEY_LABEL, RSA_KEY, null, null, null, ZonedDateTime.now().plusDays(15));
 
             userSshPublicKeyService.createSshKeyForUser(user, AuthorizedKeyEntry.parseAuthorizedKeyEntry(keyDTO.publicKey()), keyDTO);
@@ -437,7 +437,7 @@ class SingleUserNotificationServiceTest extends AbstractSpringIntegrationIndepen
         }
 
         @Test
-        void notifyUserAboutUpcomingSshKeyExpiry() throws GeneralSecurityException, IOException {
+        void shouldNotifyUserAboutUpcomingSshKeyExpiry() throws GeneralSecurityException, IOException {
             UserSshPublicKeyDTO keyDTO = new UserSshPublicKeyDTO(KEY_ID, KEY_LABEL, RSA_KEY, null, null, null, ZonedDateTime.now().plusDays(6));
             userSshPublicKeyService.createSshKeyForUser(user, AuthorizedKeyEntry.parseAuthorizedKeyEntry(keyDTO.publicKey()), keyDTO);
 
@@ -451,11 +451,11 @@ class SingleUserNotificationServiceTest extends AbstractSpringIntegrationIndepen
         }
 
         @Test
-        void notifyUserAboutExpiredSshKey() throws GeneralSecurityException, IOException {
+        void shouldNotifyUserAboutExpiredSshKey() throws GeneralSecurityException, IOException {
             UserSshPublicKeyDTO keyDTO = new UserSshPublicKeyDTO(KEY_ID, KEY_LABEL, RSA_KEY, null, null, null, ZonedDateTime.now().minusDays(1));
             userSshPublicKeyService.createSshKeyForUser(user, AuthorizedKeyEntry.parseAuthorizedKeyEntry(keyDTO.publicKey()), keyDTO);
 
-            userSshPublicKeyExpiryNotificationService.notifyUserOnKeyExpiry();
+            userSshPublicKeyExpiryNotificationService.notifyUserOnExpiredKey();
 
             sentNotifications = notificationRepository.findAll();
             assertThat(sentNotifications).hasSize(2);
@@ -465,7 +465,7 @@ class SingleUserNotificationServiceTest extends AbstractSpringIntegrationIndepen
         }
 
         @Test
-        void notNotifyUserAboutUpcomingSshKeyExpiryWhenKeyDoesNotExpireSoon() throws GeneralSecurityException, IOException {
+        void shouldNotNotifyUserAboutUpcomingSshKeyExpiryWhenKeyDoesNotExpireSoon() throws GeneralSecurityException, IOException {
             UserSshPublicKeyDTO keyDTO = new UserSshPublicKeyDTO(KEY_ID, KEY_LABEL, RSA_KEY, null, null, null, ZonedDateTime.now().plusDays(100));
             userSshPublicKeyService.createSshKeyForUser(user, AuthorizedKeyEntry.parseAuthorizedKeyEntry(keyDTO.publicKey()), keyDTO);
 
@@ -477,15 +477,23 @@ class SingleUserNotificationServiceTest extends AbstractSpringIntegrationIndepen
         }
 
         @Test
-        void notNotifyUserAboutExpiredSshKeyWhenKeyIsNotExpired() throws GeneralSecurityException, IOException {
+        void shouldNotNotifyUserAboutExpiredSshKeyWhenKeyIsNotExpired() throws GeneralSecurityException, IOException {
             UserSshPublicKeyDTO keyDTO = new UserSshPublicKeyDTO(KEY_ID, KEY_LABEL, RSA_KEY, null, null, null, ZonedDateTime.now().plusDays(100));
             userSshPublicKeyService.createSshKeyForUser(user, AuthorizedKeyEntry.parseAuthorizedKeyEntry(keyDTO.publicKey()), keyDTO);
 
-            userSshPublicKeyExpiryNotificationService.notifyUserOnKeyExpiry();
+            userSshPublicKeyExpiryNotificationService.notifyUserOnExpiredKey();
 
             sentNotifications = notificationRepository.findAll();
             assertThat(sentNotifications).hasSize(1);
             checkFirstNotification();
+        }
+
+        @Test
+        void scheduleKeyExpiryNotifications() {
+            userSshPublicKeyExpiryNotificationService.sendKeyExpirationNotifications();
+
+            sentNotifications = notificationRepository.findAll();
+            assertThat(sentNotifications).hasSize(0);
         }
 
         void checkFirstNotification() {

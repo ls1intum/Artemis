@@ -146,4 +146,13 @@ public class UserSshPublicKeyService {
     public boolean hasUserSSHkeys(Long userId) {
         return userSshPublicKeyRepository.existsByUserId(userId);
     }
+
+    /**
+     * Deletes all the ssh keys of a user
+     *
+     * @param userId the ID of the user.
+     */
+    public void deleteAllByUserId(Long userId) {
+        userSshPublicKeyRepository.deleteAllByUserId(userId);
+    }
 }

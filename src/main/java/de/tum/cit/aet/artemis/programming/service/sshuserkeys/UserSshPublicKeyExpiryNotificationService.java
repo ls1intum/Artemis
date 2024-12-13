@@ -1,15 +1,23 @@
 package de.tum.cit.aet.artemis.programming.service.sshuserkeys;
 
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_SCHEDULING;
+import static java.time.ZonedDateTime.now;
 
 import java.time.ZonedDateTime;
+import java.util.List;
+import java.util.Map;
+import java.util.function.BiFunction;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 
 import org.springframework.context.annotation.Profile;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 
 import de.tum.cit.aet.artemis.communication.service.notifications.SingleUserNotificationService;
+import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.repository.UserRepository;
+import de.tum.cit.aet.artemis.programming.domain.UserSshPublicKey;
 import de.tum.cit.aet.artemis.programming.repository.UserSshPublicKeyRepository;
 
 @Profile(PROFILE_SCHEDULING)
@@ -30,28 +38,46 @@ public class UserSshPublicKeyExpiryNotificationService {
     }
 
     /**
-     * Notifies the user one week in advance about the upcoming expiry of one of their SSH keys
+     * Schedules SSH key expiry notifications to users every morning at 7:00:00 am
      */
-    @Scheduled(cron = "0 0 7 * * *") // execute this every morning at 7:00:00 am
-    public void notifyUserOnUpcomingKeyExpiry() {
-        ZonedDateTime fromDate = ZonedDateTime.now().plusDays(6);
-        ZonedDateTime toDate = ZonedDateTime.now().plusDays(7);
-        userSshPublicKeyRepository.findByExpiryDateBetween(fromDate, toDate).forEach(userSshPublicKey -> {
-            var user = userRepository.findById(userSshPublicKey.getUserId());
-            user.ifPresent(recipient -> singleUserNotificationService.notifyUserAboutSoonExpiringSshKey(recipient, userSshPublicKey));
+    @Scheduled(cron = "0 * * * * *")
+    public void sendKeyExpirationNotifications() {
+        notifyUserOnExpiredKey();
+        notifyUserOnUpcomingKeyExpiry();
+    }
+
+    /**
+     * Notifies the user at the day of key expiry, that the key has expired
+     */
+    public void notifyUserOnExpiredKey() {
+        notifyUsersForKeyExpiryWindow(now().minusDays(1), now(), (user, key) -> {
+            singleUserNotificationService.notifyUserAboutExpiredSshKey(user, key);
+            return null;
         });
     }
 
     /**
-     * Notifies the user about the expiry of one of their SSH keys
+     * Notifies the user one week in advance about the upcoming expiry
      */
-    @Scheduled(cron = "0 0 7 * * *") // execute this every morning at 7:00:00 am
-    public void notifyUserOnKeyExpiry() {
-        ZonedDateTime fromDate = ZonedDateTime.now().minusDays(1);
-        ZonedDateTime toDate = ZonedDateTime.now();
-        userSshPublicKeyRepository.findByExpiryDateBetween(fromDate, toDate).forEach(userSshPublicKey -> {
-            var user = userRepository.findById(userSshPublicKey.getUserId());
-            user.ifPresent(recipient -> singleUserNotificationService.notifyUserAboutExpiredSshKey(recipient, userSshPublicKey));
+    public void notifyUserOnUpcomingKeyExpiry() {
+        notifyUsersForKeyExpiryWindow(now().plusDays(6), now().plusDays(7), (user, key) -> {
+            singleUserNotificationService.notifyUserAboutSoonExpiringSshKey(user, key);
+            return null;
         });
+    }
+
+    /**
+     * Notifies users whose SSH keys are expiring within the specified date range, with the notification specified by the
+     * notifyFunction
+     *
+     * @param fromDate       the start of the expiry date range
+     * @param toDate         the end of the expiry date range
+     * @param notifyFunction a function to handle user notification
+     */
+    private void notifyUsersForKeyExpiryWindow(ZonedDateTime fromDate, ZonedDateTime toDate, BiFunction<User, UserSshPublicKey, Void> notifyFunction) {
+        var soonExpiringKeys = userSshPublicKeyRepository.findByExpiryDateBetween(fromDate, toDate);
+        List<User> users = userRepository.findAllByIdIn(soonExpiringKeys.stream().map(UserSshPublicKey::getUserId).toList());
+        Map<Long, User> userMap = users.stream().collect(Collectors.toMap(User::getId, Function.identity()));
+        soonExpiringKeys.forEach(key -> notifyFunction.apply(userMap.get(key.getUserId()), key));
     }
 }

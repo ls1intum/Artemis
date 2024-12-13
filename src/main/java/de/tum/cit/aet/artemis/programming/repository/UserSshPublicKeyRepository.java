@@ -7,7 +7,9 @@ import java.util.List;
 import java.util.Optional;
 
 import org.springframework.context.annotation.Profile;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.stereotype.Repository;
+import org.springframework.transaction.annotation.Transactional;
 
 import de.tum.cit.aet.artemis.core.repository.base.ArtemisJpaRepository;
 import de.tum.cit.aet.artemis.programming.domain.UserSshPublicKey;
@@ -27,4 +29,8 @@ public interface UserSshPublicKeyRepository extends ArtemisJpaRepository<UserSsh
     boolean existsByIdAndUserId(Long id, Long userId);
 
     boolean existsByUserId(Long userId);
+
+    @Transactional // ok because of delete
+    @Modifying
+    void deleteAllByUserId(Long id);
 }
