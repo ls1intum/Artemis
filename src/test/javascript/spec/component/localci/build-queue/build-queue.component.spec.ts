@@ -212,6 +212,7 @@ describe('BuildQueueComponent', () => {
             repositoryName: 'repo5',
             repositoryType: 'USER',
             triggeredByPushTo: TriggeredByPushTo.USER,
+            buildSubmissionDate: dayjs('2023-01-05'),
             buildStartDate: dayjs('2023-01-05'),
             buildCompletionDate: dayjs('2023-01-05'),
             buildDuration: undefined,
@@ -241,7 +242,7 @@ describe('BuildQueueComponent', () => {
     const request = {
         page: 1,
         pageSize: 50,
-        sortedColumn: 'buildCompletionDate',
+        sortedColumn: 'buildSubmissionDate',
         sortingOrder: SortingOrder.DESCENDING,
         searchTerm: '',
     };
@@ -578,8 +579,8 @@ describe('BuildQueueComponent', () => {
         expect(mockLocalStorageService.retrieve(FinishedBuildJobFilterStorageKey.buildAgentAddress)).toBe('agent1');
         expect(mockLocalStorageService.retrieve(FinishedBuildJobFilterStorageKey.buildDurationFilterLowerBound)).toBe(1);
         expect(mockLocalStorageService.retrieve(FinishedBuildJobFilterStorageKey.buildDurationFilterUpperBound)).toBe(2);
-        expect(mockLocalStorageService.retrieve(FinishedBuildJobFilterStorageKey.buildStartDateFilterFrom)).toEqual(dayjs('2023-01-01'));
-        expect(mockLocalStorageService.retrieve(FinishedBuildJobFilterStorageKey.buildStartDateFilterTo)).toEqual(dayjs('2023-01-02'));
+        expect(mockLocalStorageService.retrieve(FinishedBuildJobFilterStorageKey.buildSubmissionDateFilterFrom)).toEqual(dayjs('2023-01-01'));
+        expect(mockLocalStorageService.retrieve(FinishedBuildJobFilterStorageKey.buildSubmissionDateFilterTo)).toEqual(dayjs('2023-01-02'));
         expect(mockLocalStorageService.retrieve(FinishedBuildJobFilterStorageKey.status)).toBe('SUCCESSFUL');
 
         component.finishedBuildJobFilter = new FinishedBuildJobFilter();
@@ -592,8 +593,8 @@ describe('BuildQueueComponent', () => {
         expect(mockLocalStorageService.retrieve(FinishedBuildJobFilterStorageKey.buildAgentAddress)).toBeUndefined();
         expect(mockLocalStorageService.retrieve(FinishedBuildJobFilterStorageKey.buildDurationFilterLowerBound)).toBeUndefined();
         expect(mockLocalStorageService.retrieve(FinishedBuildJobFilterStorageKey.buildDurationFilterUpperBound)).toBeUndefined();
-        expect(mockLocalStorageService.retrieve(FinishedBuildJobFilterStorageKey.buildStartDateFilterFrom)).toBeUndefined();
-        expect(mockLocalStorageService.retrieve(FinishedBuildJobFilterStorageKey.buildStartDateFilterTo)).toBeUndefined();
+        expect(mockLocalStorageService.retrieve(FinishedBuildJobFilterStorageKey.buildSubmissionDateFilterFrom)).toBeUndefined();
+        expect(mockLocalStorageService.retrieve(FinishedBuildJobFilterStorageKey.buildSubmissionDateFilterTo)).toBeUndefined();
         expect(mockLocalStorageService.retrieve(FinishedBuildJobFilterStorageKey.status)).toBeUndefined();
     });
 
