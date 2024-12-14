@@ -77,6 +77,7 @@ export class Lti13DeepLinkingComponent implements OnInit {
                         if (findWithExercisesResult?.body?.exercises) {
                             this.course = findWithExercisesResult.body;
                             this.exercises = findWithExercisesResult.body.exercises;
+                            this.lectures = findWithExercisesResult.body.lectures;
                         }
                     });
                 } else {
