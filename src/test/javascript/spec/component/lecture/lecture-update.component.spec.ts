@@ -390,16 +390,31 @@ describe('LectureUpdateComponent', () => {
         });
     });
 
-    it('should detect changes made to the period section', () => {
-        lectureUpdateComponent.lecture.set({ visibleDate: dayjs().add(1, 'day'), startDate: dayjs().add(2, 'day'), endDate: dayjs().add(3, 'day') } as Lecture);
-        lectureUpdateComponent.lectureOnInit = { visibleDate: dayjs(), startDate: dayjs(), endDate: dayjs() } as Lecture;
-        expect(lectureUpdateComponent.isChangeMadeToPeriodSection()).toBeTrue();
+    describe('isChangeMadeToPeriodSection', () => {
+        it('should detect changes made to the period section', () => {
+            lectureUpdateComponent.lecture.set({ visibleDate: dayjs().add(1, 'day'), startDate: dayjs().add(2, 'day'), endDate: dayjs().add(3, 'day') } as Lecture);
+            lectureUpdateComponent.lectureOnInit = { visibleDate: dayjs(), startDate: dayjs(), endDate: dayjs() } as Lecture;
+            expect(lectureUpdateComponent.isChangeMadeToPeriodSection()).toBeTrue();
 
-        lectureUpdateComponent.lecture.set({
-            visibleDate: lectureUpdateComponent.lectureOnInit.visibleDate,
-            startDate: lectureUpdateComponent.lectureOnInit.startDate,
-            endDate: lectureUpdateComponent.lectureOnInit.endDate,
-        } as Lecture);
-        expect(lectureUpdateComponent.isChangeMadeToPeriodSection()).toBeFalse();
+            lectureUpdateComponent.lecture.set({
+                visibleDate: lectureUpdateComponent.lectureOnInit.visibleDate,
+                startDate: lectureUpdateComponent.lectureOnInit.startDate,
+                endDate: lectureUpdateComponent.lectureOnInit.endDate,
+            } as Lecture);
+            expect(lectureUpdateComponent.isChangeMadeToPeriodSection()).toBeFalse();
+        });
+
+        it('should not consider resetting an undefined date as a change', () => {
+            lectureUpdateComponent.lecture.set({ visibleDate: dayjs().add(1, 'day'), startDate: dayjs().add(2, 'day'), endDate: dayjs().add(3, 'day') } as Lecture);
+            lectureUpdateComponent.lectureOnInit = { visibleDate: undefined, startDate: undefined, endDate: undefined } as Lecture;
+            expect(lectureUpdateComponent.isChangeMadeToPeriodSection()).toBeTrue();
+
+            lectureUpdateComponent.lecture.set({
+                visibleDate: dayjs('undefined'),
+                startDate: dayjs('undefined'),
+                endDate: dayjs('undefined'),
+            } as Lecture);
+            expect(lectureUpdateComponent.isChangeMadeToPeriodSection()).toBeFalse();
+        });
     });
 });
