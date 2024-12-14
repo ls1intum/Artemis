@@ -132,6 +132,7 @@ export const lectureRoute: Routes = [
                                     authorities: [Authority.EDITOR, Authority.INSTRUCTOR, Authority.ADMIN],
                                     pageTitle: 'global.generic.edit',
                                 },
+                                canActivate: [UserRouteAccessService],
                                 canDeactivate: [hasLectureUnsavedChangesGuard],
                             },
                             ...lectureUnitRoute,
