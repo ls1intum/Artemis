@@ -48,6 +48,7 @@ services:
         environment:
             PLAYWRIGHT_DB_TYPE: 'MySQL'
         network_mode: service:artemis-app
+        networks: []
 
 networks:
     artemis:
