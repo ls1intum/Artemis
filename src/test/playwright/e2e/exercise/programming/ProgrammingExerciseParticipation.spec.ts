@@ -296,7 +296,7 @@ async function makeGitExerciseSubmission(
         repoUrl = repoUrl.replace(student.username!, `${student.username!}:${student.password!}`);
     }
     if (cloneMethod == GitCloneMethod.httpsWithToken) {
-        repoUrl = repoUrl.replace(student.username!, `${student.username!}:${student.password!}`);
+        repoUrl = repoUrl.replace(/vcpat.+(?=@)/, `${student.password!}`);
     }
     if (cloneMethod == GitCloneMethod.https || cloneMethod == GitCloneMethod.httpsWithToken) {
         repoUrl = repoUrl.replace(`:**********`, ``);
