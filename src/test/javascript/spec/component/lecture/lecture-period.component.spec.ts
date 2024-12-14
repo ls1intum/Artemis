@@ -1,10 +1,10 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { FormDateTimePickerComponent } from 'app/shared/date-time-picker/date-time-picker.component';
+import { FormDateTimePickerComponent } from '../../../../../main/webapp/app/shared/date-time-picker/date-time-picker.component';
 import { MockComponent, MockPipe } from 'ng-mocks';
-import { Lecture } from 'app/entities/lecture.model';
-import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
+import { Lecture } from '../../../../../main/webapp/app/entities/lecture.model';
+import { ArtemisTranslatePipe } from '../../../../../main/webapp/app/shared/pipes/artemis-translate.pipe';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
-import { LectureUpdatePeriodComponent } from '../../../../../../main/webapp/app/lecture/lecture-period/lecture-period.component';
+import { LectureUpdatePeriodComponent } from '../../../../../main/webapp/app/lecture/lecture-period/lecture-period.component';
 
 describe('LectureWizardPeriodComponent', () => {
     let wizardPeriodComponentFixture: ComponentFixture<LectureUpdatePeriodComponent>;
