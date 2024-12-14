@@ -3,9 +3,14 @@ import { ComponentFixture, TestBed, fakeAsync, tick, waitForAsync } from '@angul
 import { ActivatedRoute } from '@angular/router';
 import { FormBuilder, FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { of } from 'rxjs';
-import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
-import { SafeResourceUrlPipe } from 'app/shared/pipes/safe-resource-url.pipe';
-import { MockPipe } from 'ng-mocks';
+import { TranslateLoader, TranslateModule, TranslateService } from '@ngx-translate/core';
+import { provideHttpClient } from '@angular/common/http';
+import { TranslateHttpLoader } from '@ngx-translate/http-loader';
+import { HttpClient } from '@angular/common/http';
+
+function HttpLoaderFactory(http: HttpClient) {
+    return new TranslateHttpLoader(http);
+}
 
 describe('Lti13SelectContentComponent', () => {
     let component: Lti13SelectContentComponent;
@@ -23,9 +28,19 @@ describe('Lti13SelectContentComponent', () => {
         };
 
         TestBed.configureTestingModule({
-            imports: [ReactiveFormsModule, FormsModule],
-            declarations: [Lti13SelectContentComponent, MockPipe(ArtemisTranslatePipe), MockPipe(SafeResourceUrlPipe)],
-            providers: [FormBuilder, { provide: ActivatedRoute, useValue: routeMock }],
+            imports: [
+                ReactiveFormsModule,
+                FormsModule,
+                Lti13SelectContentComponent,
+                TranslateModule.forRoot({
+                    loader: {
+                        provide: TranslateLoader,
+                        useFactory: HttpLoaderFactory,
+                        deps: [HttpClient],
+                    },
+                }),
+            ],
+            providers: [FormBuilder, { provide: ActivatedRoute, useValue: routeMock }, TranslateService, provideHttpClient()],
         }).compileComponents();
     }));
 
