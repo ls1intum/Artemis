@@ -340,5 +340,14 @@ examples.forEach((activeConversation) => {
                 expect(inlineInput).toBeTruthy(); // Check if the inline input component is present
             }));
         }
+
+        it('should scroll to bottom and set canStartSaving to true when lastScrollPosition is falsy', async () => {
+            const scrollToBottomSpy = jest.spyOn(component, 'scrollToBottomOfMessages');
+
+            await component.goToLastSelectedElement(0, false);
+
+            expect(scrollToBottomSpy).toHaveBeenCalledOnce();
+            expect(component.canStartSaving).toBeTrue();
+        });
     });
 });
