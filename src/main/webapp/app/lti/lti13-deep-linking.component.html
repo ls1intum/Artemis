@@ -10,7 +10,9 @@
     <div class="modal-body">
         <div class="dropdown-container" style="display: flex; flex-direction: column; gap: 15px">
             <div ngbDropdown class="dropdown-section">
-                <button class="btn btn-secondary dropdown-toggle" type="button" ngbDropdownToggle>Exercises</button>
+                <button class="btn btn-secondary dropdown-toggle" type="button" ngbDropdownToggle>
+                    <div jhiTranslate="">Exercise</div>
+                </button>
 
                 <div ngbDropdownMenu>
                     <div class="table-responsive">
@@ -84,12 +86,55 @@
                     </div>
                 </div>
             </div>
-            <div ngbDropdown class="dropdown">
-                <button class="btn btn-secondary dropdown-toggle" ngbDropdownToggle>Lectures</button>
+            <div ngbDropdown class="dropdown-section">
+                <button class="btn btn-secondary dropdown-toggle" type="button" ngbDropdownToggle>
+                    <div jhiTranslate="">Lectures</div>
+                </button>
 
-                <div ngbDropdownMenu></div>
+                <div ngbDropdownMenu>
+                    <div class="table-responsive">
+                        <table class="table table-bordered">
+                            <thead class="thead-dark">
+                                <tr jhiSort [(predicate)]="predicate" [(ascending)]="reverse" (sortChange)="sortRows()">
+                                    <th class="d-md-table-cell"></th>
+                                    <th jhiSortBy="id">
+                                        id
+                                        <fa-icon [icon]="faSort" />
+                                    </th>
+                                    <th jhiSortBy="title">
+                                        {{ 'artemisApp.lecture.title' | artemisTranslate }}
+                                        <fa-icon [icon]="faSort" />
+                                    </th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @for (lecture of lectures; track lecture) {
+                                    <tr id="exercise-{{ lecture.id }}">
+                                        <td class="d-md-table-cell">
+                                            <input class="form-check-input" type="checkbox" (change)="selectExercise(lecture.id)" [ngModel]="isExerciseSelected(lecture.id)" />
+                                        </td>
+                                        <td>{{ lecture.id ? lecture.id : '' }}</td>
+                                        <td>{{ lecture.title ? lecture.title : '' }}</td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
             </div>
         </div>
+    </div>
+
+    <div class="lti-competency-selector">
+        <h4 class="" jhiTranslate="" [translateValues]="{}">Enable competency</h4>
+        <jhi-help-icon class="ps-1" text="" />
+        <input class="form-check-input" type="checkbox" (change)="enableCompetency()" [ngModel]="isCompetencySelected" />
+    </div>
+
+    <div class="lti-learning-path-selector">
+        <h4 class="" jhiTranslate="" [translateValues]="{}">Enable learning paths</h4>
+        <jhi-help-icon class="ps-1" text="" />
+        <input class="form-check-input" type="checkbox" (change)="enableLearningPath()" [ngModel]="isLearningPathSelected" />
     </div>
 
     <div class="modal-footer">

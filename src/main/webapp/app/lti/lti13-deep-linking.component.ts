@@ -16,6 +16,7 @@ import { ArtemisSharedComponentModule } from '../shared/components/shared-compon
 import { ArtemisSharedCommonModule } from '../shared/shared-common.module';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { FormsModule } from '@angular/forms';
+import { Lecture } from 'app/entities/lecture.model';
 
 @Component({
     selector: 'jhi-deep-linking',
@@ -35,7 +36,11 @@ export class Lti13DeepLinkingComponent implements OnInit {
 
     courseId: number;
     exercises: Exercise[];
+    lectures: Lecture[];
     selectedExercises?: Set<number> = new Set();
+    selectedLectures?: Set<number> = new Set();
+    isCompetencySelected = false;
+    isLearningPathSelected = false;
     course: Course;
 
     predicate = 'type';
@@ -132,10 +137,39 @@ export class Lti13DeepLinkingComponent implements OnInit {
         return exerciseId !== undefined && this.selectedExercises?.has(exerciseId);
     }
 
+    //TODO implement
+    selectLecture(lectureId: number | undefined) {
+        if (lectureId !== undefined) {
+            if (this.selectedLectures?.has(lectureId)) {
+                this.selectedExercises?.delete(lectureId);
+            } else {
+                this.selectedExercises?.add(lectureId);
+            }
+        }
+    }
+
+    isLectureSelected(lectureId: number | undefined) {
+        return lectureId !== undefined && this.selectedExercises?.has(lectureId);
+    }
+
+    enableCompetency() {
+        if (!this.isCompetencySelected) {
+            this.isCompetencySelected = true;
+        }
+    }
+
+    enableLearningPath() {
+        if (!this.isLearningPathSelected) {
+            this.isLearningPathSelected = true;
+        }
+    }
+
     /**
      * Sends a deep link request for the selected exercise.
      * If an exercise is selected, it sends a POST request to initiate deep linking.
      */
+
+    //TODO implement lectures, competencies, lps
     sendDeepLinkRequest() {
         if (this.selectedExercises?.size) {
             const ltiIdToken = this.sessionStorageService.retrieve('ltiIdToken') ?? '';
