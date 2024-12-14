@@ -4,7 +4,7 @@ import os from 'os';
 
 export enum SshEncryptionAlgorithm {
     rsa = 'RSA',
-    ed25519 = ' ED25519',
+    ed25519 = 'ED25519',
 }
 
 export const SSH_KEY_NAMES = {
