@@ -60,8 +60,8 @@ public class ProgrammingMessagingService {
     private final ParticipationRepository participationRepository;
 
     public ProgrammingMessagingService(GroupNotificationService groupNotificationService, WebsocketMessagingService websocketMessagingService,
-                                       ResultWebsocketService resultWebsocketService, Optional<LtiNewResultService> ltiNewResultService, TeamRepository teamRepository,
-                                       Optional<PyrisEventService> pyrisEventService, ParticipationRepository participationRepository) {
+            ResultWebsocketService resultWebsocketService, Optional<LtiNewResultService> ltiNewResultService, TeamRepository teamRepository,
+            Optional<PyrisEventService> pyrisEventService, ParticipationRepository participationRepository) {
         this.groupNotificationService = groupNotificationService;
         this.websocketMessagingService = websocketMessagingService;
         this.resultWebsocketService = resultWebsocketService;
@@ -229,7 +229,7 @@ public class ProgrammingMessagingService {
         Participation participation = participationRepository.findWithProgrammingExerciseWithBuildConfigById(participationId).orElseThrow();
         if (participation instanceof StudentParticipation studentParticipation) {
             if (studentParticipation.getParticipant() instanceof Team team) {
-                // eager load the team with students so their information can be used for the messages below
+                // Eagerly load the team with students so their information can be used for the messages below
                 studentParticipation.setParticipant(teamRepository.findWithStudentsByIdElseThrow(team.getId()));
             }
             studentParticipation.getStudents().forEach(user -> websocketMessagingService.sendMessageToUser(user.getLogin(), SUBMISSION_PROCESSING_TOPIC, submission));
