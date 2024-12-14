@@ -142,17 +142,15 @@ test.describe('Course messages', { tag: '@fast' }, () => {
                 await login(instructor, `/courses/${course.id}/communication?conversationId=${channel.id}`);
                 const newName = 'new-test-name';
                 const topic = 'test-topic';
-                await courseMessages.getName().click();
+
+                // each edit action triggers an update to the server, on multinode this can lead to a race condition
                 await courseMessages.editName(newName);
                 await courseMessages.editTopic(topic);
                 await courseMessages.editDescription('New Description');
-                await courseMessages.closeEditPanel();
+
                 await page.reload();
                 await page.locator('jhi-conversation-header').waitFor({ state: 'visible', timeout: 10000 });
                 await expect(courseMessages.getName()).toContainText(newName);
-                await courseMessages.getName().click();
-                await courseMessages.checkTopic(topic);
-                await courseMessages.closeEditPanel();
                 await expect(courseMessages.getTopic()).toContainText(topic);
             });
         });
