@@ -1,5 +1,5 @@
-import { ComponentFixture, TestBed, fakeAsync } from '@angular/core/testing';
-import { MockComponent, MockDirective, MockPipe, MockProvider } from 'ng-mocks';
+import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
+import { MockComponent, MockDirective, MockModule, MockPipe, MockProvider } from 'ng-mocks';
 import { ActivatedRoute, Router } from '@angular/router';
 import { MockRouter } from '../../../helpers/mocks/mock-router';
 import { of } from 'rxjs';
@@ -14,11 +14,22 @@ import { CourseManagementService } from 'app/course/manage/course-management.ser
 import { LectureUpdateWizardStepComponent } from 'app/lecture/wizard-mode/lecture-update-wizard-step.component';
 import { LectureUpdateWizardUnitsComponent } from 'app/lecture/wizard-mode/lecture-wizard-units.component';
 import { LectureUpdateWizardAttachmentsComponent } from 'app/lecture/wizard-mode/lecture-wizard-attachments.component';
-import { LectureUpdateWizardPeriodComponent } from 'app/lecture/wizard-mode/lecture-wizard-period.component';
 import { LectureUpdateWizardTitleComponent } from 'app/lecture/wizard-mode/lecture-wizard-title.component';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import dayjs from 'dayjs/esm';
+import { LectureUpdatePeriodComponent } from '../../../../../../main/webapp/app/lecture/lecture-period/lecture-period.component';
+import { ArtemisTestModule } from '../../../test.module';
+import { ArtemisSharedModule } from '../../../../../../main/webapp/app/shared/shared.module';
+import { FormsModule } from '../../../../../../main/webapp/app/forms/forms.module';
+import { NgbTooltipModule } from '@ng-bootstrap/ng-bootstrap';
+import { OwlDateTimeModule } from '@danielmoncada/angular-datetime-picker';
+import { LectureUpdateComponent } from '../../../../../../main/webapp/app/lecture/lecture-update.component';
+import { LectureTitleChannelNameComponent } from '../../../../../../main/webapp/app/lecture/lecture-title-channel-name.component';
+import { TitleChannelNameComponent } from '../../../../../../main/webapp/app/shared/form/title-channel-name/title-channel-name.component';
+import { FormDateTimePickerComponent } from '../../../../../../main/webapp/app/shared/date-time-picker/date-time-picker.component';
+import { MarkdownEditorMonacoComponent } from '../../../../../../main/webapp/app/shared/markdown-editor/monaco/markdown-editor-monaco.component';
+import { CustomNotIncludedInValidatorDirective } from '../../../../../../main/webapp/app/shared/validators/custom-not-included-in-validator.directive';
 
 describe('LectureWizardComponent', () => {
     let wizardComponentFixture: ComponentFixture<LectureUpdateWizardComponent>;
@@ -26,17 +37,23 @@ describe('LectureWizardComponent', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [],
+            imports: [ArtemisTestModule, ArtemisSharedModule, FormsModule, MockModule(NgbTooltipModule), MockModule(OwlDateTimeModule)],
             declarations: [
                 LectureUpdateWizardComponent,
+                LectureUpdateComponent,
+                LectureTitleChannelNameComponent,
+                TitleChannelNameComponent,
+                FormDateTimePickerComponent,
+                LectureUpdatePeriodComponent,
+                LectureUpdateWizardTitleComponent,
+                MockComponent(MarkdownEditorMonacoComponent),
                 MockPipe(ArtemisTranslatePipe),
                 MockComponent(LectureUpdateWizardStepComponent),
                 MockComponent(LectureUpdateWizardUnitsComponent),
                 MockComponent(LectureUpdateWizardAttachmentsComponent),
-                MockComponent(LectureUpdateWizardPeriodComponent),
-                MockComponent(LectureUpdateWizardTitleComponent),
                 MockComponent(FaIconComponent),
                 MockDirective(TranslateDirective),
+                MockDirective(CustomNotIncludedInValidatorDirective),
             ],
             providers: [
                 MockProvider(ArtemisNavigationUtilService),
@@ -83,6 +100,8 @@ describe('LectureWizardComponent', () => {
         wizardComponentFixture.detectChanges();
         expect(wizardComponent).not.toBeNull();
 
+        tick();
+
         wizardComponentFixture.whenStable().then(() => {
             expect(wizardComponent.currentStep).toBe(1);
         });
@@ -94,6 +113,8 @@ describe('LectureWizardComponent', () => {
 
         wizardComponentFixture.detectChanges();
         expect(wizardComponent).not.toBeNull();
+
+        tick();
 
         wizardComponentFixture.whenStable().then(() => {
             expect(wizardComponent.currentStep).toBe(2);
