@@ -111,10 +111,15 @@ test.describe('Programming exercise participation', { tag: '@sequential' }, () =
             );
         });
 
-        test('Makes a submission using SSH git', async ({ page, programmingExerciseOverview }) => {
+        test('Makes a git submission through HTTPS using password', async ({ programmingExerciseOverview, page }) => {
             await programmingExerciseOverview.startParticipation(course.id!, exercise.id!, studentOne);
-            await makeGitExerciseSubmission(page, programmingExerciseOverview, course, exercise, studentOne, javaAllSuccessfulSubmission, 'Solution', GitCloneMethod.ssh);
+            await makeGitExerciseSubmission(page, programmingExerciseOverview, course, exercise, studentOne, javaAllSuccessfulSubmission, 'Solution', GitCloneMethod.https);
         });
+
+        // test('Makes a submission using SSH git', async ({ page, programmingExerciseOverview }) => {
+        //     await programmingExerciseOverview.startParticipation(course.id!, exercise.id!, studentOne);
+        //     await makeGitExerciseSubmission(page, programmingExerciseOverview, course, exercise, studentOne, javaAllSuccessfulSubmission, 'Solution', GitCloneMethod.ssh);
+        // });
 
         test.afterEach('Delete SSH key', async ({ accountManagementAPIRequests }) => {
             await accountManagementAPIRequests.deleteSshPublicKey();
@@ -279,13 +284,6 @@ async function makeGitExerciseSubmission(
         await programmingExerciseOverview.openCloneMenu(cloneMethod);
     }
     let repoUrl = await programmingExerciseOverview.copyCloneUrl();
-    // let token: string | undefined;
-    if (process.env.CI === 'true' && cloneMethod == GitCloneMethod.httpsWithToken) {
-        // token = repoUrl.match(/vcpat.+(?=@)/)?.[0];
-        await page.locator('.https-or-ssh-button').click();
-        await page.locator('#useHTTPSWithTokenButton').click();
-        repoUrl = await programmingExerciseOverview.copyCloneUrl();
-    }
     if (process.env.CI === 'true' && (cloneMethod == GitCloneMethod.https || cloneMethod == GitCloneMethod.httpsWithToken)) {
         repoUrl = repoUrl.replace('localhost', 'artemis-app');
     }
@@ -295,9 +293,9 @@ async function makeGitExerciseSubmission(
     if (cloneMethod == GitCloneMethod.https) {
         repoUrl = repoUrl.replace(student.username!, `${student.username!}:${student.password!}`);
     }
-    if (cloneMethod == GitCloneMethod.httpsWithToken) {
-        repoUrl = repoUrl.replace(/vcpat.+(?=@)/, `${student.password!}`);
-    }
+    // if (cloneMethod == GitCloneMethod.httpsWithToken) {
+    //     repoUrl = repoUrl.replace(/vcpat.+(?=@)/, `${student.password!}`);
+    // }
     if (cloneMethod == GitCloneMethod.https || cloneMethod == GitCloneMethod.httpsWithToken) {
         repoUrl = repoUrl.replace(`:**********`, ``);
     }

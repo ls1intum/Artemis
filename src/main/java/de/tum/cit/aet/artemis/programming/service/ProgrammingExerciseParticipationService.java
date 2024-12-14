@@ -520,6 +520,7 @@ public class ProgrammingExerciseParticipationService {
         if (repositoryTypeOrUserName.equals(RepositoryType.AUXILIARY.toString())) {
             throw new EntityNotFoundException("Auxiliary repositories do not have participations.");
         }
+        log.debug("Looking for student participation with repository URI {}", repositoryURI);
         return studentParticipationRepository.findByRepositoryUriElseThrow(repositoryURI);
     }
 
