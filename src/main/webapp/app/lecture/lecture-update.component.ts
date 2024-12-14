@@ -153,7 +153,6 @@ export class LectureUpdateComponent implements OnInit, OnDestroy {
             }
         });
 
-        // TODO investigate where wizard mode is opened by url
         this.isEditMode.set(!this.router.url.endsWith('/new'));
         this.lectureOnInit = cloneDeep(this.lecture());
     }
@@ -257,7 +256,7 @@ export class LectureUpdateComponent implements OnInit, OnDestroy {
         } else if (this.isEditMode()) {
             this.router.navigate(['course-management', lecture.course!.id, 'lectures', lecture.id]);
         } else {
-            // after create we stay on the edit page, as not attachments and lecture units are available (we need the lecture id to save them)
+            // after create we stay on the edit page, as now attachments and lecture units are available (we need the lecture id to save them)
             this.isNewlyCreatedExercise = true;
             this.isEditMode.set(true);
             this.lecture.set(lecture);
