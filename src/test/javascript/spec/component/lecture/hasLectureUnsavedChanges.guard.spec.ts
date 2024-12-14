@@ -4,7 +4,16 @@ import { LectureUpdateComponent } from '../../../../../main/webapp/app/lecture/l
 import { TestBed } from '@angular/core/testing';
 import { MockRouter } from '../../helpers/mocks/mock-router';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
-import { MockNgbModalService } from '../../helpers/mocks/service/mock-ngb-modal.service';
+import { Observable, firstValueFrom, of } from 'rxjs';
+
+class MockNgbModal {
+    open() {
+        return {
+            componentInstance: {},
+            result: Promise.resolve(true), // or false, depending on your test case
+        };
+    }
+}
 
 describe('hasLectureUnsavedChanges', () => {
     let component: LectureUpdateComponent;
@@ -18,7 +27,7 @@ describe('hasLectureUnsavedChanges', () => {
             declarations: [LectureUpdateComponent],
             providers: [
                 { provide: Router, useClass: MockRouter },
-                { provide: NgbModal, useClass: MockNgbModalService },
+                { provide: NgbModal, useClass: MockNgbModal },
                 {
                     provide: LectureUpdateComponent,
                     useValue: {
@@ -51,6 +60,18 @@ describe('hasLectureUnsavedChanges', () => {
         component.isChangeMadeToTitleOrPeriodSection = true;
 
         const result = await hasLectureUnsavedChangesGuard(component, currentRoute, currentState, nextState).toPromise();
+        expect(result).toBeTrue();
+    });
+
+    it('should return result from modal', async () => {
+        component.shouldDisplayDismissWarning = true;
+
+        const result = await TestBed.runInInjectionContext(() => {
+            const guardResult = hasLectureUnsavedChangesGuard(component, currentRoute, currentState, nextState);
+            const guardObservable = guardResult instanceof Observable ? guardResult : of(guardResult);
+            return firstValueFrom(guardObservable);
+        });
+
         expect(result).toBeTrue();
     });
 });
