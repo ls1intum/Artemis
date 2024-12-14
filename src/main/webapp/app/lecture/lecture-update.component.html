@@ -5,7 +5,7 @@
                 [toggleModeFunction]="toggleModeFunction"
                 [saveLectureFunction]="saveLectureFunction"
                 [validateDatesFunction]="onDatesValuesChanged"
-                [lecture]="lecture"
+                [lecture]="lecture()"
                 [isSaving]="isSaving"
             />
         }
@@ -27,16 +27,16 @@
                     </div>
                 </div>
                 <div>
-                    <jhi-lecture-title-channel-name [lecture]="lecture" />
+                    <jhi-lecture-title-channel-name [lecture]="lecture()" />
                     <div class="form-group" id="field_description">
                         <label class="form-control-label" jhiTranslate="artemisApp.lecture.description" for="field_description"></label>
-                        <jhi-markdown-editor-monaco class="markdown-editor" [domainActions]="domainActionsDescription" [(markdown)]="lecture.description" />
+                        <jhi-markdown-editor-monaco class="markdown-editor" [domainActions]="domainActionsDescription" [(markdown)]="lecture().description" />
                     </div>
                     <div class="d-flex">
                         <div class="form-group flex-grow-1">
                             <jhi-date-time-picker
                                 labelName="{{ 'artemisApp.lecture.visibleDate' | artemisTranslate }}"
-                                [(ngModel)]="lecture.visibleDate"
+                                [(ngModel)]="lecture().visibleDate"
                                 (valueChange)="onDatesValuesChanged()"
                                 name="visibleDate"
                                 id="visible-date"
@@ -45,7 +45,7 @@
                         <div class="form-group flex-grow-1 ms-3">
                             <jhi-date-time-picker
                                 labelName="{{ 'artemisApp.lecture.startDate' | artemisTranslate }}"
-                                [(ngModel)]="lecture.startDate"
+                                [(ngModel)]="lecture().startDate"
                                 (valueChange)="onDatesValuesChanged()"
                                 name="startDate"
                                 id="start-date"
@@ -54,18 +54,18 @@
                         <div class="form-group flex-grow-1 ms-3">
                             <jhi-date-time-picker
                                 labelName="{{ 'artemisApp.lecture.endDate' | artemisTranslate }}"
-                                [(ngModel)]="lecture.endDate"
+                                [(ngModel)]="lecture().endDate"
                                 (valueChange)="onDatesValuesChanged()"
                                 name="endDate"
                                 id="end-date"
                             />
                         </div>
                     </div>
-                    @if (lecture.course) {
+                    @if (lecture().course) {
                         <div class="form-group">
                             <label class="form-control-label" jhiTranslate="artemisApp.lecture.course" for="field_course"></label>
                             <div class="d-flex">
-                                <input id="field_course" disabled type="text" class="form-control" name="course" [(ngModel)]="lecture.course.title" />
+                                <input id="field_course" disabled type="text" class="form-control" name="course" [(ngModel)]="lecture().course.title" />
                             </div>
                         </div>
                     }
@@ -116,7 +116,14 @@
                         <button type="button" id="cancel-save" class="btn btn-secondary" (click)="previousState()">
                             <fa-icon [icon]="faBan" />&nbsp;<span jhiTranslate="entity.action.cancel"></span>
                         </button>
-                        <button type="submit" id="save-entity" [disabled]="editForm.form.invalid || isSaving || processUnitMode" class="btn btn-primary">
+                        <button
+                            type="submit"
+                            id="save-entity"
+                            [disabled]="
+                                editForm.form.invalid || isSaving || processUnitMode || !isChangeMadeToTitleOrPeriodSection || !lecturePeriodSection().isPeriodSectionValid()
+                            "
+                            class="btn btn-primary"
+                        >
                             <fa-icon [icon]="faSave" />&nbsp;<span jhiTranslate="entity.action.save"></span>
                         </button>
                     </div>
