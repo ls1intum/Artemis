@@ -122,6 +122,8 @@ import { ArtemisMarkdownEditorModule } from 'app/shared/markdown-editor/markdown
         DetailModule,
         SubmissionResultStatusModule,
         ArtemisMarkdownEditorModule,
+        CourseLtiConfigurationComponent,
+        EditCourseLtiConfigurationComponent,
         BuildQueueComponent,
     ],
     declarations: [
@@ -139,8 +141,6 @@ import { ArtemisMarkdownEditorModule } from 'app/shared/markdown-editor/markdown
         CourseDetailLineChartComponent,
         CourseManagementExercisesSearchComponent,
         CourseGroupMembershipComponent,
-        CourseLtiConfigurationComponent,
-        EditCourseLtiConfigurationComponent,
         CourseManagementTabBarComponent,
         ImageCropperModalComponent,
         HeaderCourseComponent,
