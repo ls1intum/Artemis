@@ -30,7 +30,7 @@ describe('ForwardedMessageService', () => {
         expect(service).toBeTruthy();
     });
 
-    describe('#createForwardedMessage', () => {
+    describe('createForwardedMessage', () => {
         it('should call POST API to create a new forwarded message', () => {
             service.createForwardedMessage(sampleForwardedMessage).subscribe((res) => {
                 expect(res.body).toEqual(sampleForwardedMessage);
@@ -43,7 +43,7 @@ describe('ForwardedMessageService', () => {
         });
     });
 
-    describe('#getForwardedMessages', () => {
+    describe('getForwardedMessages', () => {
         it('should call GET API to retrieve forwarded messages with type "post"', () => {
             const ids = [2, 3];
             const expectedResponse = [

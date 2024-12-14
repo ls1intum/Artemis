@@ -1,4 +1,4 @@
-import { AfterViewInit, ChangeDetectorRef, Component, ElementRef, HostListener, OnInit, Renderer2, ViewChild, inject, input, signal } from '@angular/core';
+import { AfterViewInit, ChangeDetectorRef, Component, ElementRef, HostListener, OnInit, Renderer2, inject, input, signal, viewChild } from '@angular/core';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import { ChannelDTO } from 'app/entities/metis/conversation/channel.model';
 import { Post } from 'app/entities/metis/post.model';
@@ -14,6 +14,10 @@ import { MarkdownEditorHeight } from 'app/shared/markdown-editor/monaco/markdown
 import { UserPublicInfoDTO } from 'app/core/user/user.model';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
 import { catchError, map, of } from 'rxjs';
+import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
+import { ProfilePictureComponent } from 'app/shared/profile-picture/profile-picture.component';
+import { ArtemisMarkdownEditorModule } from 'app/shared/markdown-editor/markdown-editor.module';
+import { ArtemisSharedCommonModule } from 'app/shared/shared-common.module';
 
 interface CombinedOption {
     id: number;
@@ -26,6 +30,8 @@ interface CombinedOption {
     selector: 'jhi-forward-message-dialog',
     templateUrl: './forward-message-dialog.component.html',
     styleUrls: ['./forward-message-dialog.component.scss'],
+    standalone: true,
+    imports: [ProfilePictureComponent, ArtemisMarkdownEditorModule, ArtemisTranslatePipe, ArtemisSharedCommonModule],
 })
 export class ForwardMessageDialogComponent implements OnInit, AfterViewInit {
     channels = signal<ChannelDTO[] | []>([]);
@@ -41,8 +47,8 @@ export class ForwardMessageDialogComponent implements OnInit, AfterViewInit {
     newPost: Post = new Post();
     defaultActions: TextEditorAction[];
     editorHeight = input<MarkdownEditorHeight>(MarkdownEditorHeight.INLINE);
-    @ViewChild('searchInput') searchInput!: ElementRef;
-    @ViewChild('messageContent') messageContent!: ElementRef;
+    searchInput = viewChild<ElementRef>('searchInput');
+    messageContent = viewChild<ElementRef>('messageContent');
     public courseManagementService: CourseManagementService = inject(CourseManagementService);
 
     showDropdown: boolean = false;
@@ -89,7 +95,7 @@ export class ForwardMessageDialogComponent implements OnInit, AfterViewInit {
 
     checkIfContentOverflows(): void {
         if (this.messageContent) {
-            const nativeElement = this.messageContent.nativeElement;
+            const nativeElement = this.messageContent()!.nativeElement;
             this.isContentLong = nativeElement.scrollHeight > nativeElement.clientHeight;
             this.cdr.detectChanges();
         }
@@ -237,13 +243,13 @@ export class ForwardMessageDialogComponent implements OnInit, AfterViewInit {
 
     focusInput(): void {
         if (this.searchInput) {
-            this.renderer.selectRootElement(this.searchInput.nativeElement, true).focus();
+            this.renderer.selectRootElement(this.searchInput()!.nativeElement, true).focus();
         }
     }
 
     @HostListener('document:click', ['$event'])
     onClickOutside(event: Event): void {
-        if (this.searchInput && !this.searchInput.nativeElement.contains(event.target)) {
+        if (this.searchInput && !this.searchInput()!.nativeElement.contains(event.target)) {
             this.showDropdown = false;
         }
     }

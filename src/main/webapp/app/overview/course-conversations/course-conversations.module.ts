@@ -61,6 +61,7 @@ const routes: Routes = [
         CourseUsersSelectorModule,
         ProfilePictureComponent,
         ArtemisMarkdownEditorModule,
+        ForwardMessageDialogComponent,
     ],
     declarations: [
         CourseConversationsComponent,
@@ -87,7 +88,6 @@ const routes: Routes = [
         CourseWideSearchComponent,
         SavedPostsComponent,
         PostingSummaryComponent,
-        ForwardMessageDialogComponent,
     ],
     providers: [MetisService],
 })

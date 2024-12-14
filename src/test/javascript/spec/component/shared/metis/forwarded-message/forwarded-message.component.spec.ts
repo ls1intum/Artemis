@@ -5,11 +5,11 @@ import dayjs from 'dayjs';
 import { Post } from 'app/entities/metis/post.model';
 import { AnswerPost } from 'app/entities/metis/answer-post.model';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { ForwardedMessageComponent } from '../../../../../../../main/webapp/app/shared/metis/forwarded-message/forwarded-message.component';
-import { Posting } from '../../../../../../../main/webapp/app/entities/metis/posting.model';
-import { ProfilePictureComponent } from '../../../../../../../main/webapp/app/shared/profile-picture/profile-picture.component';
-import { ArtemisTranslatePipe } from '../../../../../../../main/webapp/app/shared/pipes/artemis-translate.pipe';
-import { ArtemisDatePipe } from '../../../../../../../main/webapp/app/shared/pipes/artemis-date.pipe';
+import { ForwardedMessageComponent } from 'app/shared/metis/forwarded-message/forwarded-message.component';
+import { Posting } from 'app/entities/metis/posting.model';
+import { ProfilePictureComponent } from 'app/shared/profile-picture/profile-picture.component';
+import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
+import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 
 describe('ForwardedMessageComponent', () => {
     let component: ForwardedMessageComponent;

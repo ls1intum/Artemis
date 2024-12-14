@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, ElementRef, EventEmitter, Input, Output, inject, output } from '@angular/core';
+import { ChangeDetectionStrategy, Component, ElementRef, EventEmitter, Input, Output, inject, input, output } from '@angular/core';
 import { Post } from 'app/entities/metis/post.model';
 import dayjs from 'dayjs/esm';
 import { AnswerPost } from 'app/entities/metis/answer-post.model';
@@ -20,8 +20,8 @@ export class PostingThreadComponent {
     @Input() hasChannelModerationRights = false;
     @Output() openThread = new EventEmitter<Post>();
     @Input() isConsecutive: boolean | undefined = false;
-    @Input() forwardedPosts: Post[] | undefined = [];
-    @Input() forwardedAnswerPosts: AnswerPost[] | undefined = [];
+    forwardedPosts = input<Post[]>([]);
+    forwardedAnswerPosts = input<AnswerPost[]>([]);
     readonly onNavigateToPost = output<Posting>();
 
     elementRef = inject(ElementRef);

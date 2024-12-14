@@ -1,15 +1,21 @@
-import { AfterViewInit, ChangeDetectorRef, Component, ElementRef, OnChanges, OnInit, SimpleChanges, ViewChild, inject, input, output } from '@angular/core';
+import { AfterViewInit, ChangeDetectorRef, Component, ElementRef, OnChanges, OnInit, SimpleChanges, inject, input, output, viewChild } from '@angular/core';
 import { faShare } from '@fortawesome/free-solid-svg-icons';
 import { Post } from 'app/entities/metis/post.model';
 import { AnswerPost } from 'app/entities/metis/answer-post.model';
 import { Posting } from 'app/entities/metis/posting.model';
 import dayjs from 'dayjs';
 import { Conversation } from 'app/entities/metis/conversation/conversation.model';
+import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { ArtemisSharedModule } from 'app/shared/shared.module';
+import { ProfilePictureComponent } from 'app/shared/profile-picture/profile-picture.component';
 
 @Component({
     selector: 'jhi-forwarded-message',
     templateUrl: './forwarded-message.component.html',
     styleUrls: ['./forwarded-message.component.scss'],
+    standalone: true,
+    imports: [ArtemisTranslatePipe, FaIconComponent, ArtemisSharedModule, ProfilePictureComponent],
 })
 export class ForwardedMessageComponent implements OnChanges, AfterViewInit, OnInit {
     readonly faShare = faShare;
@@ -18,7 +24,7 @@ export class ForwardedMessageComponent implements OnChanges, AfterViewInit, OnIn
     postingIsOfToday: boolean;
     todayFlag?: string;
     readonly onNavigateToPost = output<Posting>();
-    @ViewChild('messageContent') messageContent!: ElementRef;
+    messageContent = viewChild<ElementRef>('messageContent');
     isContentLong: boolean = false;
     showFullForwardedMessage: boolean = false;
     maxLines: number = 5;
@@ -68,7 +74,7 @@ export class ForwardedMessageComponent implements OnChanges, AfterViewInit, OnIn
 
     checkIfContentOverflows(): void {
         if (this.messageContent) {
-            const nativeElement = this.messageContent.nativeElement;
+            const nativeElement = this.messageContent()?.nativeElement;
             this.isContentLong = nativeElement.scrollHeight > nativeElement.clientHeight;
             this.cdr.detectChanges();
         }

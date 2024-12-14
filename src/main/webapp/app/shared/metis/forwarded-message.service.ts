@@ -1,4 +1,4 @@
-import { Injectable } from '@angular/core';
+import { Injectable, inject } from '@angular/core';
 import { HttpClient, HttpParams, HttpResponse } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { map } from 'rxjs/operators';
@@ -10,7 +10,7 @@ type EntityResponseType = HttpResponse<ForwardedMessage>;
 export class ForwardedMessageService {
     public resourceUrl = 'api/forwarded-messages';
 
-    constructor(protected http: HttpClient) {}
+    protected http: HttpClient = inject(HttpClient);
 
     /**
      * Creates a new ForwardedMessage.

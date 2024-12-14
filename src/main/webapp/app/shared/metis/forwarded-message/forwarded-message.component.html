@@ -42,7 +42,7 @@
         </div>
         @if (isContentLong) {
             <button type="button" class="btn btn-link p-0" style="width: fit-content; font-size: 0.7rem" (click)="toggleShowFullForwardedMessage()">
-                {{ showFullForwardedMessage ? 'artemisApp.metis.forward.showLess' : ('artemisApp.metis.forward.showMore' | artemisTranslate) }}
+                {{ showFullForwardedMessage ? ('artemisApp.metis.forward.showLess' | artemisTranslate) : ('artemisApp.metis.forward.showMore' | artemisTranslate) }}
             </button>
         }
     </div>

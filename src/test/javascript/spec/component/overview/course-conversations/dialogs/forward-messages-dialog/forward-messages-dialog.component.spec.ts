@@ -6,13 +6,13 @@ import { MockComponent, MockPipe, MockProvider } from 'ng-mocks';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { ChannelDTO } from 'app/entities/metis/conversation/channel.model';
 import { Post } from 'app/entities/metis/post.model';
-import { ForwardMessageDialogComponent } from '../../../../../../../../main/webapp/app/overview/course-conversations/dialogs/forward-message-dialog/forward-message-dialog.component';
-import { MarkdownEditorMonacoComponent } from '../../../../../../../../main/webapp/app/shared/markdown-editor/monaco/markdown-editor-monaco.component';
-import { ProfilePictureComponent } from '../../../../../../../../main/webapp/app/shared/profile-picture/profile-picture.component';
+import { ForwardMessageDialogComponent } from 'app/overview/course-conversations/dialogs/forward-message-dialog/forward-message-dialog.component';
+import { ProfilePictureComponent } from 'app/shared/profile-picture/profile-picture.component';
 import { ElementRef, runInInjectionContext, signal } from '@angular/core';
-import { UserPublicInfoDTO } from '../../../../../../../../main/webapp/app/core/user/user.model';
-import { CourseManagementService } from '../../../../../../../../main/webapp/app/course/manage/course-management.service';
+import { MarkdownEditorMonacoComponent } from 'app/shared/markdown-editor/monaco/markdown-editor-monaco.component';
+import { CourseManagementService } from 'app/course/manage/course-management.service';
 import { MockCourseManagementService } from '../../../../../helpers/mocks/service/mock-course-management.service';
+import { UserPublicInfoDTO } from 'app/core/user/user.model';
 
 describe('ForwardMessageDialogComponent', () => {
     let component: ForwardMessageDialogComponent;
