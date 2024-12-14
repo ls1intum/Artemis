@@ -43,8 +43,8 @@ export class LectureUpdateComponent implements OnInit, OnDestroy {
     private readonly navigationUtilService = inject(ArtemisNavigationUtilService);
     private readonly router = inject(Router);
 
-    titleSection = viewChild.required(LectureTitleChannelNameComponent);
-    lecturePeriodSection = viewChild.required(LectureUpdatePeriodComponent);
+    titleSection = viewChild(LectureTitleChannelNameComponent);
+    lecturePeriodSection = viewChild(LectureUpdatePeriodComponent);
 
     lecture = signal<Lecture>(new Lecture());
     lectureOnInit: Lecture;
@@ -70,27 +70,29 @@ export class LectureUpdateComponent implements OnInit, OnDestroy {
 
     constructor() {
         effect(() => {
-            this.updateSaveButtonDisabledStateBasedOnChangesToSections();
-        });
-    }
+            this.subscriptions.unsubscribe();
 
-    private updateSaveButtonDisabledStateBasedOnChangesToSections() {
-        this.subscriptions.add(
-            this.titleSection()
-                .titleChannelNameComponent()
-                .titleChange.subscribe(() => {
-                    this.updateIsChangesMadeToTitleOrPeriodSection();
-                }),
-        );
-        this.subscriptions.add(
-            this.lecturePeriodSection()
-                .periodSectionDatepickers()
-                .forEach((datepicker: FormDateTimePickerComponent) => {
-                    datepicker.valueChange.subscribe(() => {
-                        this.updateIsChangesMadeToTitleOrPeriodSection();
-                    });
-                }),
-        );
+            if (this.titleSection()) {
+                this.subscriptions.add(
+                    this.titleSection()!
+                        .titleChannelNameComponent()
+                        .titleChange.subscribe(() => {
+                            this.updateIsChangesMadeToTitleOrPeriodSection();
+                        }),
+                );
+            }
+            if (this.lecturePeriodSection()) {
+                this.subscriptions.add(
+                    this.lecturePeriodSection()!
+                        .periodSectionDatepickers()
+                        .forEach((datepicker: FormDateTimePickerComponent) => {
+                            datepicker.valueChange.subscribe(() => {
+                                this.updateIsChangesMadeToTitleOrPeriodSection();
+                            });
+                        }),
+                );
+            }
+        });
     }
 
     ngOnInit() {

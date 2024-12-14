@@ -32,35 +32,7 @@
                         <label class="form-control-label" jhiTranslate="artemisApp.lecture.description" for="field_description"></label>
                         <jhi-markdown-editor-monaco class="markdown-editor" [domainActions]="domainActionsDescription" [(markdown)]="lecture().description" />
                     </div>
-                    <div class="d-flex">
-                        <div class="form-group flex-grow-1">
-                            <jhi-date-time-picker
-                                labelName="{{ 'artemisApp.lecture.visibleDate' | artemisTranslate }}"
-                                [(ngModel)]="lecture().visibleDate"
-                                (valueChange)="onDatesValuesChanged()"
-                                name="visibleDate"
-                                id="visible-date"
-                            />
-                        </div>
-                        <div class="form-group flex-grow-1 ms-3">
-                            <jhi-date-time-picker
-                                labelName="{{ 'artemisApp.lecture.startDate' | artemisTranslate }}"
-                                [(ngModel)]="lecture().startDate"
-                                (valueChange)="onDatesValuesChanged()"
-                                name="startDate"
-                                id="start-date"
-                            />
-                        </div>
-                        <div class="form-group flex-grow-1 ms-3">
-                            <jhi-date-time-picker
-                                labelName="{{ 'artemisApp.lecture.endDate' | artemisTranslate }}"
-                                [(ngModel)]="lecture().endDate"
-                                (valueChange)="onDatesValuesChanged()"
-                                name="endDate"
-                                id="end-date"
-                            />
-                        </div>
-                    </div>
+                    <jhi-lecture-update-period [lecture]="lecture()" [validateDatesFunction]="onDatesValuesChanged" />
                     @if (lecture().course) {
                         <div class="form-group">
                             <label class="form-control-label" jhiTranslate="artemisApp.lecture.course" for="field_course"></label>
@@ -120,7 +92,7 @@
                             type="submit"
                             id="save-entity"
                             [disabled]="
-                                editForm.form.invalid || isSaving || processUnitMode || !isChangeMadeToTitleOrPeriodSection || !lecturePeriodSection().isPeriodSectionValid()
+                                editForm.form.invalid || isSaving || processUnitMode || !isChangeMadeToTitleOrPeriodSection || !lecturePeriodSection()?.isPeriodSectionValid()
                             "
                             class="btn btn-primary"
                         >
