@@ -135,10 +135,22 @@ export class LectureUpdateComponent implements OnInit, OnDestroy {
     }
 
     isChangeMadeToPeriodSection() {
+        const visibleDate = dayjs(this.lecture().visibleDate);
+        const startDate = dayjs(this.lecture().startDate);
+        const endDate = dayjs(this.lecture().endDate);
+
+        const visibleDateOnInit = dayjs(this.lectureOnInit.visibleDate);
+        const startDateOnInit = dayjs(this.lectureOnInit.startDate);
+        const endDateOnInit = dayjs(this.lectureOnInit.endDate);
+
+        const emptyVisibleDateWasCleared = this.lectureOnInit.visibleDate === undefined && !visibleDate.isValid();
+        const emptyStartDateWasCleared = this.lectureOnInit.startDate === undefined && !startDate.isValid();
+        const emptyEndDateWasCleared = this.lectureOnInit.endDate === undefined && !endDate.isValid();
+
         return (
-            !dayjs(this.lecture().visibleDate).isSame(dayjs(this.lectureOnInit.visibleDate)) ||
-            !dayjs(this.lecture().startDate).isSame(dayjs(this.lectureOnInit.startDate)) ||
-            !dayjs(this.lecture().endDate).isSame(dayjs(this.lectureOnInit.endDate))
+            (!visibleDate.isSame(visibleDateOnInit) && !emptyVisibleDateWasCleared) ||
+            (!startDate.isSame(startDateOnInit) && !emptyStartDateWasCleared) ||
+            (!endDate.isSame(endDateOnInit) && !emptyEndDateWasCleared)
         );
     }
 
