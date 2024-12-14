@@ -21,12 +21,6 @@ import dayjs from 'dayjs/esm';
 import { LectureUpdatePeriodComponent } from '../../../../../../main/webapp/app/lecture/lecture-period/lecture-period.component';
 import { ArtemisTestModule } from '../../../test.module';
 import { ArtemisSharedModule } from '../../../../../../main/webapp/app/shared/shared.module';
-import { FormsModule } from '../../../../../../main/webapp/app/forms/forms.module';
-import { NgbTooltipModule } from '@ng-bootstrap/ng-bootstrap';
-import { OwlDateTimeModule } from '@danielmoncada/angular-datetime-picker';
-import { LectureUpdateComponent } from '../../../../../../main/webapp/app/lecture/lecture-update.component';
-import { LectureTitleChannelNameComponent } from '../../../../../../main/webapp/app/lecture/lecture-title-channel-name.component';
-import { TitleChannelNameComponent } from '../../../../../../main/webapp/app/shared/form/title-channel-name/title-channel-name.component';
 import { FormDateTimePickerComponent } from '../../../../../../main/webapp/app/shared/date-time-picker/date-time-picker.component';
 import { MarkdownEditorMonacoComponent } from '../../../../../../main/webapp/app/shared/markdown-editor/monaco/markdown-editor-monaco.component';
 import { CustomNotIncludedInValidatorDirective } from '../../../../../../main/webapp/app/shared/validators/custom-not-included-in-validator.directive';
@@ -37,15 +31,12 @@ describe('LectureWizardComponent', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule, ArtemisSharedModule, FormsModule, MockModule(NgbTooltipModule), MockModule(OwlDateTimeModule)],
+            imports: [ArtemisTestModule, MockModule(ArtemisSharedModule)],
             declarations: [
                 LectureUpdateWizardComponent,
-                LectureUpdateComponent,
-                LectureTitleChannelNameComponent,
-                TitleChannelNameComponent,
-                FormDateTimePickerComponent,
                 LectureUpdatePeriodComponent,
-                LectureUpdateWizardTitleComponent,
+                MockComponent(FormDateTimePickerComponent),
+                MockComponent(LectureUpdateWizardTitleComponent),
                 MockComponent(MarkdownEditorMonacoComponent),
                 MockPipe(ArtemisTranslatePipe),
                 MockComponent(LectureUpdateWizardStepComponent),
