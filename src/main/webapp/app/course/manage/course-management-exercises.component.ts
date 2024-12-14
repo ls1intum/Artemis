@@ -1,10 +1,8 @@
 import { Component, ContentChild, OnInit, TemplateRef } from '@angular/core';
 import { Course } from 'app/entities/course.model';
-import { CourseManagementService } from './course-management.service';
-import { ActivatedRoute, Router } from '@angular/router';
+import { ActivatedRoute } from '@angular/router';
 import { ExerciseFilter } from 'app/entities/exercise-filter.model';
 import { DocumentationType } from 'app/shared/components/documentation-button/documentation-button.component';
-import { faHandshakeAngle } from '@fortawesome/free-solid-svg-icons';
 import { ExerciseType } from 'app/entities/exercise.model';
 
 @Component({
@@ -28,21 +26,13 @@ export class CourseManagementExercisesComponent implements OnInit {
     filteredModelingExercisesCount = 0;
     filteredFileUploadExercisesCount = 0;
     exerciseFilter: ExerciseFilter;
-    lectureIdForGoingBack: number;
-    lectureWizardStepForGoingBack: number;
-
-    faHandshakeAngle = faHandshakeAngle;
 
     // extension points, see shared/extension-point
     @ContentChild('overrideGenerateAndImportButton') overrideGenerateAndImportButton: TemplateRef<any>;
     @ContentChild('overrideProgrammingExerciseCard') overrideProgrammingExerciseCard: TemplateRef<any>;
     @ContentChild('overrideNonProgrammingExerciseCard') overrideNonProgrammingExerciseCard: TemplateRef<any>;
 
-    constructor(
-        private courseService: CourseManagementService,
-        private router: Router,
-        private route: ActivatedRoute,
-    ) {}
+    constructor(private route: ActivatedRoute) {}
 
     /**
      * initializes course
@@ -53,8 +43,6 @@ export class CourseManagementExercisesComponent implements OnInit {
                 this.course = course;
             }
         });
-
-        // TODO investigate shouldHaveBackButtonToWizard
 
         this.exerciseFilter = new ExerciseFilter('');
     }
@@ -98,12 +86,5 @@ export class CourseManagementExercisesComponent implements OnInit {
 
     shouldHideExerciseCard(type: string): boolean {
         return !['all', type].includes(this.exerciseFilter.exerciseTypeSearch);
-    }
-
-    goBackToWizardMode() {
-        this.router.navigate(['/course-management', this.course.id, 'lectures', this.lectureIdForGoingBack, 'edit'], {
-            queryParams: { shouldBeInWizardMode: 'true', shouldOpenCreateExercise: 'true', step: this.lectureWizardStepForGoingBack },
-            queryParamsHandling: '',
-        });
     }
 }
