@@ -59,6 +59,7 @@ export class ConversationMessagesComponent implements OnInit, AfterViewInit, OnD
     scrollSubject = new Subject<number>();
     canStartSaving = false;
     createdNewMessage = false;
+    unreadCount = 0;
 
     @Output() openThread = new EventEmitter<Post>();
 
@@ -145,8 +146,44 @@ export class ConversationMessagesComponent implements OnInit, AfterViewInit, OnD
                 return;
             }
             this._activeConversation = conversation;
+            this.unreadCount = conversation?.unreadMessagesCount || 0;
             this.onActiveConversationChange();
         });
+    }
+
+    /**
+     * Determines whether a post is the "first unread message" in the conversation.
+     */
+    isFirstUnreadMarker(post: Post, group: PostGroup): boolean {
+        let remainingUnread = this.unreadCount;
+        let firstUnreadFound = false;
+
+        const groupIndex = this.groupedPosts.findIndex((g) => g === group);
+        if (groupIndex === -1) {
+            return false;
+        }
+
+        for (let i = this.groupedPosts.length - 1; i >= 0; i--) {
+            const currentGroup = this.groupedPosts[i];
+            const groupMessageCount = currentGroup.posts.length;
+
+            if (i > groupIndex) {
+                remainingUnread -= groupMessageCount;
+            } else if (i === groupIndex) {
+                const postIndexInGroup = currentGroup.posts.indexOf(post);
+
+                if (!firstUnreadFound && postIndexInGroup === groupMessageCount - remainingUnread) {
+                    firstUnreadFound = true;
+                    return true;
+                }
+
+                remainingUnread--;
+            } else {
+                return false;
+            }
+        }
+
+        return false;
     }
 
     private subscribeToSearch() {

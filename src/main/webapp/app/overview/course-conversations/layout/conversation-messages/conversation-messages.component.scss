@@ -112,3 +112,26 @@
 jhi-posting-thread {
     margin-bottom: 5px;
 }
+
+.unread-marker {
+    position: absolute;
+    left: 0;
+    right: 0;
+    min-height: 0.09rem;
+    background-color: var(--bs-danger);
+    z-index: 1;
+
+    .unread-text {
+        position: absolute;
+        top: -0.6rem;
+        left: 95%;
+        transform: translateX(-50%);
+        background-color: var(--bs-danger);
+        color: var(--bs-white);
+        font-size: 0.6rem;
+        font-weight: bold;
+        padding: 0.1rem 0.3rem;
+        border-radius: 0.2rem;
+        z-index: 2;
+    }
+}

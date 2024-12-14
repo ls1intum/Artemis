@@ -84,7 +84,12 @@
                     @for (group of groupedPosts; track postsGroupTrackByFn($index, group)) {
                         <div class="message-group">
                             @for (post of group.posts; track postsTrackByFn($index, post)) {
-                                <div class="post-item">
+                                <div class="post-item" style="position: relative">
+                                    @if (isFirstUnreadMarker(post, group)) {
+                                        <span class="unread-marker">
+                                            <span class="unread-text" jhiTranslate="global.generic.new"></span>
+                                        </span>
+                                    }
                                     <jhi-posting-thread
                                         #postingThread
                                         [lastReadDate]="_activeConversation?.lastReadDate"

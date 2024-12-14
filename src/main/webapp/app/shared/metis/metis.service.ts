@@ -255,6 +255,7 @@ export class MetisService implements OnDestroy {
                 const indexToUpdate = this.cachedPosts.findIndex((cachedPost) => cachedPost.id === updatedPost.id);
                 if (indexToUpdate > -1) {
                     updatedPost.answers = [...(this.cachedPosts[indexToUpdate].answers ?? [])];
+                    updatedPost.authorRole = this.cachedPosts[indexToUpdate].authorRole;
                     this.cachedPosts[indexToUpdate] = updatedPost;
                     this.posts$.next(this.cachedPosts);
                     this.totalNumberOfPosts$.next(this.cachedTotalNumberOfPosts);
