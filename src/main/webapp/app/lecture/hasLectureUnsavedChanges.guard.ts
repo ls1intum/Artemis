@@ -6,7 +6,7 @@ import { Observable, from, of } from 'rxjs';
 import { CloseEditLectureModalComponent } from 'app/lecture/close-edit-lecture-dialog/close-edit-lecture-modal.component';
 
 export const hasLectureUnsavedChangesGuard: CanDeactivateFn<LectureUpdateComponent> = (component: LectureUpdateComponent): Observable<boolean> => {
-    if (!component.shouldDisplayDismissWarning) {
+    if (!component.shouldDisplayDismissWarning || component.isShowingWizardMode) {
         return of(true);
     }
 
