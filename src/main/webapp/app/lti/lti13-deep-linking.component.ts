@@ -74,10 +74,14 @@ export class Lti13DeepLinkingComponent implements OnInit {
             this.accountService.identity().then((user) => {
                 if (user) {
                     this.courseManagementService.findWithExercises(this.courseId).subscribe((findWithExercisesResult) => {
-                        if (findWithExercisesResult?.body?.exercises) {
+                        if (findWithExercisesResult?.body) {
                             this.course = findWithExercisesResult.body;
-                            this.exercises = findWithExercisesResult.body.exercises;
-                            this.lectures = findWithExercisesResult.body.lectures;
+                            if (findWithExercisesResult?.body?.exercises) {
+                                this.exercises = findWithExercisesResult.body.exercises;
+                            }
+                            if (findWithExercisesResult?.body?.lectures) {
+                                this.lectures = findWithExercisesResult.body.lectures;
+                            }
                         }
                     });
                 } else {
