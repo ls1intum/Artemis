@@ -1445,9 +1445,17 @@ public class ExamService {
                 studentExam.setWorkingTime(adjustedWorkingTime);
             }
 
-            // NOTE: if the exam is already visible, notify the student about the working time change
+            // NOTE: If the exam is already visible, notify the student about changes to the working time or the exam rescheduling
             if (now.isAfter(exam.getVisibleDate())) {
-                examLiveEventsService.createAndSendWorkingTimeUpdateEvent(studentExam, studentExam.getWorkingTime(), originalStudentWorkingTime, true, instructor);
+                // If the old working time equals the new working time, the exam has been rescheduled
+                if (studentExam.getWorkingTime().equals(originalStudentWorkingTime)) {
+                    if (now.isBefore(exam.getStartDate())) {
+                        examLiveEventsService.createAndSendExamRescheduledEvent(studentExam, instructor);
+                    }
+                }
+                else {
+                    examLiveEventsService.createAndSendWorkingTimeUpdateEvent(studentExam, studentExam.getWorkingTime(), originalStudentWorkingTime, true, instructor);
+                }
             }
         }
         studentExamRepository.saveAll(studentExams);
