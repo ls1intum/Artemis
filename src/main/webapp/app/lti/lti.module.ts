@@ -16,8 +16,13 @@ import { LtiCourseCardComponent } from 'app/lti/lti-course-card.component';
 const LTI_LAUNCH_ROUTES = [...ltiLaunchState];
 
 @NgModule({
-    imports: [RouterModule.forChild(LTI_LAUNCH_ROUTES), ArtemisCoreModule, ArtemisSharedModule, FormsModule, ArtemisSharedComponentModule, ArtemisSharedLibsModule],
-    declarations: [
+    imports: [
+        RouterModule.forChild(LTI_LAUNCH_ROUTES),
+        ArtemisCoreModule,
+        ArtemisSharedModule,
+        FormsModule,
+        ArtemisSharedComponentModule,
+        ArtemisSharedLibsModule,
         Lti13ExerciseLaunchComponent,
         Lti13DynamicRegistrationComponent,
         Lti13DeepLinkingComponent,
