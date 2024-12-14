@@ -65,7 +65,7 @@
                         <div class="form-group">
                             <label class="form-control-label" jhiTranslate="artemisApp.lecture.course" for="field_course"></label>
                             <div class="d-flex">
-                                <input id="field_course" disabled type="text" class="form-control" name="course" [(ngModel)]="lecture().course.title" />
+                                <input id="field_course" disabled type="text" class="form-control" name="course" [(ngModel)]="lecture().course!.title" />
                             </div>
                         </div>
                     }
