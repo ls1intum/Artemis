@@ -581,7 +581,7 @@ examples.forEach((activeConversation) => {
         });
 
         it('should mark all channels as read', () => {
-            const markAllChannelsAsRead = jest.spyOn(metisConversationService, 'markAllChannelsAsRead').mockReturnValue();
+            const markAllChannelsAsRead = jest.spyOn(metisConversationService, 'markAllChannelsAsRead').mockReturnValue(of());
             const forceRefresh = jest.spyOn(metisConversationService, 'forceRefresh');
             component.markAllChannelAsRead();
             expect(markAllChannelsAsRead).toHaveBeenCalledOnce();

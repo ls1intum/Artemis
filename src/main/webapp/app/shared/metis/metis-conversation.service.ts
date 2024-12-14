@@ -473,13 +473,13 @@ export class MetisConversationService implements OnDestroy {
 
     markAllChannelsAsRead(course: Course | undefined) {
         if (!course?.id) {
-            return EMPTY;
+            return of();
         }
 
         return this.conversationService.markAllChannelsAsRead(course.id).pipe(
             catchError((errorResponse: HttpErrorResponse) => {
                 onError(this.alertService, errorResponse);
-                return EMPTY;
+                return of();
             }),
         );
     }
