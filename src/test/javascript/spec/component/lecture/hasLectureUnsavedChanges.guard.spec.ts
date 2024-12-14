@@ -89,7 +89,7 @@ describe('hasLectureUnsavedChanges', () => {
         expect(result).toBeFalse();
     });
 
-    function getGuardResultAsObservable(guardResult: MaybeAsync<GuardResult>): Observable<GuardResult> {
+    function getGuardResultAsObservable(guardResult: MaybeAsync<GuardResult>): Observable<GuardResult | Promise<GuardResult>> {
         return guardResult instanceof Observable ? guardResult : of(guardResult);
     }
 });
