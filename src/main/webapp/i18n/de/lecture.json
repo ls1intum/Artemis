@@ -78,9 +78,7 @@
                     "attachmentsStepTitle": "Anhänge",
                     "attachmentsStepMessage": "Lade Anhänge für die Vorlesung hoch.",
                     "unitsStepTitle": "Vorlesungseinheiten",
-                    "unitsStepMessage": "Füge Inhalte zur Vorlesung hinzu durch Erstellung von Vorlesungseinheiten.",
-                    "competenciesStepTitle": "Kompetenzen",
-                    "competenciesStepMessage": "Verknüpfe die Einheiten dieser Vorlesung mit Kompetenzen, um zu zeigen, welche Kompetenzen Studierende erreichen werden, wenn sie die Einheit abschließen."
+                    "unitsStepMessage": "Füge Inhalte zur Vorlesung hinzu durch Erstellung von Vorlesungseinheiten."
                 },
                 "newLectureUnit": "Neue Vorlesungseinheit",
                 "editLectureUnit": "Vorlesungseinheit bearbeiten",
