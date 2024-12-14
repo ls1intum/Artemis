@@ -496,6 +496,12 @@ public class ChannelResource extends ConversationManagementResource {
         return ResponseEntity.created(new URI("/api/channels/" + createdChannel.getId())).body(conversationDTOService.convertChannelToDTO(requestingUser, createdChannel));
     }
 
+    /**
+     * PUT /api/courses/:courseId/channels/mark-as-read: Marks all channels of a course as read for the current user.
+     *
+     * @param courseId the id of the course.
+     * @return ResponseEntity with status 200 (Ok).
+     */
     @PutMapping("{courseId}/channels/mark-as-read")
     @EnforceAtLeastStudent
     public ResponseEntity<ChannelDTO> markAllChannelsOfCourseAsRead(@PathVariable Long courseId) {
