@@ -15,7 +15,7 @@ import { ACCEPTED_FILE_EXTENSIONS_FILE_BROWSER, ALLOWED_FILE_EXTENSIONS_HUMAN_RE
 import { FormulaAction } from 'app/shared/monaco-editor/model/actions/formula.action';
 import { LectureTitleChannelNameComponent } from './lecture-title-channel-name.component';
 import { LectureUpdatePeriodComponent } from 'app/lecture/lecture-period/lecture-period.component';
-import dayjs from 'dayjs';
+import dayjs, { Dayjs } from 'dayjs';
 import { FormDateTimePickerComponent } from 'app/shared/date-time-picker/date-time-picker.component';
 import cloneDeep from 'lodash-es/cloneDeep';
 
@@ -135,22 +135,20 @@ export class LectureUpdateComponent implements OnInit, OnDestroy {
     }
 
     isChangeMadeToPeriodSection() {
-        const visibleDate = dayjs(this.lecture().visibleDate);
-        const startDate = dayjs(this.lecture().startDate);
-        const endDate = dayjs(this.lecture().endDate);
+        const { visibleDate, startDate, endDate } = this.lecture();
+        const { visibleDate: visibleDateOnInit, startDate: startDateOnInit, endDate: endDateOnInit } = this.lectureOnInit;
 
-        const visibleDateOnInit = dayjs(this.lectureOnInit.visibleDate);
-        const startDateOnInit = dayjs(this.lectureOnInit.startDate);
-        const endDateOnInit = dayjs(this.lectureOnInit.endDate);
+        const isInvalid = (date: Dayjs | undefined) => !dayjs(date).isValid();
+        const isSame = (date1: Dayjs | undefined, date2: Dayjs | undefined) => dayjs(date1).isSame(dayjs(date2));
 
-        const emptyVisibleDateWasCleared = this.lectureOnInit.visibleDate === undefined && !visibleDate.isValid();
-        const emptyStartDateWasCleared = this.lectureOnInit.startDate === undefined && !startDate.isValid();
-        const emptyEndDateWasCleared = this.lectureOnInit.endDate === undefined && !endDate.isValid();
+        const emptyVisibleDateWasCleared = !visibleDateOnInit && isInvalid(visibleDate);
+        const emptyStartDateWasCleared = !startDateOnInit && isInvalid(startDate);
+        const emptyEndDateWasCleared = !endDateOnInit && isInvalid(endDate);
 
         return (
-            (!visibleDate.isSame(visibleDateOnInit) && !emptyVisibleDateWasCleared) ||
-            (!startDate.isSame(startDateOnInit) && !emptyStartDateWasCleared) ||
-            (!endDate.isSame(endDateOnInit) && !emptyEndDateWasCleared)
+            (!isSame(visibleDate, visibleDateOnInit) && !emptyVisibleDateWasCleared) ||
+            (!isSame(startDate, startDateOnInit) && !emptyStartDateWasCleared) ||
+            (!isSame(endDate, endDateOnInit) && !emptyEndDateWasCleared)
         );
     }
 
