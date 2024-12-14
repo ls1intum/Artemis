@@ -15,7 +15,7 @@ export class CloseEditLectureDialogComponent {
 
     protected readonly activeModal = inject(NgbActiveModal);
 
-    // not input signals yet as not can not be initialized with current ng-bootstrap version https://stackoverflow.com/a/79094268/16540383
+    // no input signals yet as they can not be initialized with current ng-bootstrap version https://stackoverflow.com/a/79094268/16540383
     @Input() hasUnsavedChangesInTitleSection: boolean;
     @Input() hasUnsavedChangesInPeriodSection: boolean;
 
