@@ -24,8 +24,6 @@ import { LectureTitleChannelNameComponent } from 'app/lecture/lecture-title-chan
 import { DetailModule } from 'app/detail-overview-list/detail.module';
 import { CompetencyFormComponent } from 'app/course/competencies/forms/competency/competency-form.component';
 import { LectureUpdatePeriodComponent } from 'app/lecture/lecture-period/lecture-period.component';
-import { MockJhiTranslateDirective } from '../../../../test/javascript/spec/helpers/mocks/directive/mock-jhi-translate-directive.directive';
-import { TranslateTestingModule } from '../../../../test/javascript/spec/helpers/mocks/service/mock-translate.service';
 
 const ENTITY_STATES = [...lectureRoute];
 
@@ -42,8 +40,6 @@ const ENTITY_STATES = [...lectureRoute];
         TitleChannelNameModule,
         DetailModule,
         CompetencyFormComponent,
-        MockJhiTranslateDirective,
-        TranslateTestingModule,
     ],
     declarations: [
         LectureComponent,
