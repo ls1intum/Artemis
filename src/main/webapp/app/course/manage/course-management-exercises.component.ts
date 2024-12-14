@@ -1,4 +1,4 @@
-import { Component, ContentChild, OnInit, TemplateRef } from '@angular/core';
+import { Component, ContentChild, OnInit, TemplateRef, inject } from '@angular/core';
 import { Course } from 'app/entities/course.model';
 import { ActivatedRoute } from '@angular/router';
 import { ExerciseFilter } from 'app/entities/exercise-filter.model';
@@ -32,7 +32,7 @@ export class CourseManagementExercisesComponent implements OnInit {
     @ContentChild('overrideProgrammingExerciseCard') overrideProgrammingExerciseCard: TemplateRef<any>;
     @ContentChild('overrideNonProgrammingExerciseCard') overrideNonProgrammingExerciseCard: TemplateRef<any>;
 
-    constructor(private route: ActivatedRoute) {}
+    private readonly route = inject(ActivatedRoute);
 
     /**
      * initializes course
