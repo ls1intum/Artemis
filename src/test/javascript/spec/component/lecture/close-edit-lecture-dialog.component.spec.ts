@@ -1,14 +1,14 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { CloseEditLectureDialogComponent } from 'app/lecture/close-edit-lecture-dialog.component.ts/close-edit-lecture-dialog.component';
+import { ArtemisTestModule } from '../../test.module';
 
-import { CloseEditLectureDialogComponent } from './close-edit-lecture-dialog.component';
-
-describe('CloseEditLectureDialogComponentTsComponent', () => {
+describe('CloseEditLectureDialogComponent', () => {
     let component: CloseEditLectureDialogComponent;
     let fixture: ComponentFixture<CloseEditLectureDialogComponent>;
 
     beforeEach(async () => {
         await TestBed.configureTestingModule({
-            imports: [CloseEditLectureDialogComponent],
+            imports: [ArtemisTestModule, CloseEditLectureDialogComponent],
         }).compileComponents();
 
         fixture = TestBed.createComponent(CloseEditLectureDialogComponent);
