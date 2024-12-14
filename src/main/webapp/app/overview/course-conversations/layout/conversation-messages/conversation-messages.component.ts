@@ -141,12 +141,12 @@ export class ConversationMessagesComponent implements OnInit, AfterViewInit, OnD
 
     private subscribeToActiveConversation() {
         this.metisConversationService.activeConversation$.pipe(takeUntil(this.ngUnsubscribe)).subscribe((conversation: ConversationDTO) => {
+            this.unreadCount = conversation?.unreadMessagesCount || 0;
             // This statement avoids a bug that reloads the messages when the conversation is already displayed
             if (conversation && this._activeConversation?.id === conversation.id) {
                 return;
             }
             this._activeConversation = conversation;
-            this.unreadCount = conversation?.unreadMessagesCount || 0;
             this.onActiveConversationChange();
         });
     }
