@@ -26,7 +26,6 @@ export class CreateExerciseUnitComponent implements OnInit {
     hasCancelButton = input<boolean>();
     hasCreateExerciseButton = input<boolean>();
     shouldNavigateOnSubmit = input<boolean>(true);
-    currentWizardStep = input<number>();
 
     onCancel = output<void>();
     onExerciseUnitCreated = output<void>();
