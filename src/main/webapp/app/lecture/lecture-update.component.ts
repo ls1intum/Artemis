@@ -80,6 +80,13 @@ export class LectureUpdateComponent implements OnInit, OnDestroy {
                             this.updateIsChangesMadeToTitleOrPeriodSection();
                         }),
                 );
+                this.subscriptions.add(
+                    this.titleSection()!
+                        .titleChannelNameComponent()
+                        .channelNameChange.subscribe(() => {
+                            this.updateIsChangesMadeToTitleOrPeriodSection();
+                        }),
+                );
             }
             if (this.lecturePeriodSection()) {
                 this.subscriptions.add(
