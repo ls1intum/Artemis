@@ -132,4 +132,17 @@ export class ModelingSubmissionService {
             .get<ModelingSubmission>(`api/participations/${participationId}/latest-modeling-submission`, { responseType: 'json' })
             .pipe(map((res: ModelingSubmission) => this.submissionService.convertSubmissionFromServer(res)));
     }
+
+    /**
+     * Get all submissions with results for a participation
+     * @param {number} participationId - Id of the participation
+     */
+    getSubmissionsWithResultsForParticipation(participationId: number): Observable<ModelingSubmission[]> {
+        const url = `api/participations/${participationId}/submissions-with-results`;
+        return this.http.get<ModelingSubmission[]>(url).pipe(
+            map((submissions: ModelingSubmission[]) => {
+                return submissions.map((submission) => this.submissionService.convertSubmissionFromServer(submission) as ModelingSubmission);
+            }),
+        );
+    }
 }

@@ -162,12 +162,12 @@ examples.forEach((activeConversation) => {
             const fetchNextPageSpy = jest.spyOn(component, 'fetchNextPage').mockImplementation(() => {});
             const existingScrollPosition = 1;
 
-            component.goToLastSelectedElement(existingScrollPosition);
+            component.goToLastSelectedElement(existingScrollPosition, false);
             tick();
             expect(fetchNextPageSpy).not.toHaveBeenCalled();
 
             const nonExistingScrollPosition = 999;
-            component.goToLastSelectedElement(nonExistingScrollPosition);
+            component.goToLastSelectedElement(nonExistingScrollPosition, false);
             tick();
 
             expect(fetchNextPageSpy).toHaveBeenCalled();
@@ -284,5 +284,14 @@ examples.forEach((activeConversation) => {
                 expect(inlineInput).toBeTruthy(); // Check if the inline input component is present
             }));
         }
+
+        it('should scroll to bottom and set canStartSaving to true when lastScrollPosition is falsy', async () => {
+            const scrollToBottomSpy = jest.spyOn(component, 'scrollToBottomOfMessages');
+
+            await component.goToLastSelectedElement(0, false);
+
+            expect(scrollToBottomSpy).toHaveBeenCalledOnce();
+            expect(component.canStartSaving).toBeTrue();
+        });
     });
 });

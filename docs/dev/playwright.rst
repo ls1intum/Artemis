@@ -24,6 +24,18 @@ Set up Playwright locally
 To run the tests locally, developers need to set up Playwright on their machines.
 End-to-end tests test entire workflows; therefore, they require the whole Artemis setup - database, client, and server to be running.
 Playwright tests rely on the Playwright Node.js library, browser binaries, and some helper packages.
+To run playwright tests locally, you need to start the Artemis server and client, have the correct users set up and install and run playwright.
+This setup should be used for debugging, and creating new tests for your code, but needs intellij to work, and relies on fully setting up your local Artemis instance
+following :ref:`the server setup guide<dev_setup>`.
+
+
+For a quick test setup with only three steps, you can use the scripts provided in `supportingScripts/playwright`.
+The README explains what you need to do.
+It sets up Artemis inside a dockerized environment, creates users and directly starts playwright. The main drawback with this setup is, that you cannot
+easily change the version of Artemis itself.
+
+
+If you want to manually install playwright, you can follow these steps:
 
 1. Install dependencies:
 
@@ -46,8 +58,8 @@ Playwright tests rely on the Playwright Node.js library, browser binaries, and s
 
     .. code-block:: text
 
-        PLAYWRIGHT_USERNAME_TEMPLATE=artemis_test_user_USERID
-        PLAYWRIGHT_PASSWORD_TEMPLATE=artemis_test_user_USERID
+        PLAYWRIGHT_USERNAME_TEMPLATE=artemis_test_user_
+        PLAYWRIGHT_PASSWORD_TEMPLATE=artemis_test_user_
         ADMIN_USERNAME=artemis_admin
         ADMIN_PASSWORD=artemis_admin
         ALLOW_GROUP_CUSTOMIZATION=true
@@ -55,31 +67,40 @@ Playwright tests rely on the Playwright Node.js library, browser binaries, and s
         TUTOR_GROUP_NAME=tutors
         EDITOR_GROUP_NAME=editors
         INSTRUCTOR_GROUP_NAME=instructors
-        CREATE_USERS=true
         BASE_URL=http://localhost:9000
         EXERCISE_REPO_DIRECTORY=test-exercise-repos
+        FAST_TEST_TIMEOUT_SECONDS=45
+        SLOW_TEST_TIMEOUT_SECONDS=180
+
 
     Make sure ``BASE_URL`` matches your Artemis client URL and ``ADMIN_USERNAME`` and
     ``ADMIN_PASSWORD`` match your Artemis admin user credentials.
 
 3. Configure test users
 
-     Playwright tests require users with different roles to simulate concurrent user interactions. You can configure
-     user IDs and check their corresponding user roles in the ``src/test/playwright/support/users.ts`` file. Usernames
-     are defined automatically by replacing the ``USERID`` part in ``PLAYWRIGHT_USERNAME_TEMPLATE`` with the
-     corresponding user ID. If users with such usernames do not exist, set ``CREATE_USERS`` to ``true`` on the
-     ``playwright.env`` file for users to be created during the setup stage. If users with the same usernames but
-     different user roles already exist, change the user IDs to different values to ensure that new users are created
-     with roles defined in the configuration.
-
-4. Setup Playwright package and its browser binaries:
-
-    Install Playwright browser binaries, set up the environment to ensure Playwright can locate these binaries, and
-    create test users (if creating users is enabled in the configuration) with the following command:
+     Playwright tests require users with different roles to simulate concurrent user interactions. If you already
+     have generated test users, you can skip this step. Generate users with the help of the user creation scripts under the
+     `supportingScripts/playwright` folder:
 
     .. code-block:: bash
 
-        npm run playwright:setup
+        setupUsers.sh
+
+    You can configure user IDs and check their corresponding user roles in the ``src/test/playwright/support/users.ts`` file.
+    Usernames are defined automatically by appending the userId to the ``PLAYWRIGHT_USERNAME_TEMPLATE``.
+    At the moment it is discouraged to change the template string, as the user creation script does not support other names yet.
+
+4. Setup Playwright package and its browser binaries:
+
+    Install Playwright browser binaries, set up the environment to ensure Playwright can locate these binaries.
+    On some operating systems this might not work, and playwright needs to be manually installed via a package manager.
+
+    .. code-block:: bash
+
+        npm run playwright:setup-local
+        npm run playwright:init
+
+
 
 5. Open Playwright UI
 

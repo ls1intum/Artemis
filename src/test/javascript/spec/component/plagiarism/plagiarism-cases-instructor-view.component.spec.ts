@@ -190,9 +190,9 @@ describe('Plagiarism Cases Instructor View Component', () => {
         const downloadSpy = jest.spyOn(DownloadUtil, 'downloadFile');
         component.plagiarismCases = [plagiarismCase1, plagiarismCase4];
         const expectedBlob = [
-            'Student Login,Exercise,Verdict, Verdict Date\n',
-            `Student 1, Test Exercise 1, PLAGIARISM, ${date}, Test Instructor 1\n`,
-            'Student 2, Test Exercise 2, No verdict yet, -, -\n',
+            'Student Login; Matr. Nr.; Exercise;Verdict; Verdict Date\n',
+            `Student 1; -; Test Exercise 1; PLAGIARISM; ${date}; Test Instructor 1\n`,
+            'Student 2; -; Test Exercise 2; No verdict yet; -; -\n',
         ];
         component.exportPlagiarismCases();
         expect(downloadSpy).toHaveBeenCalledOnce();

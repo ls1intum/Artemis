@@ -653,6 +653,7 @@ $competency-rings-blue-bg: transparentize($competency-rings-blue, 0.8);
 
 // Iris Chatbot
 $iris-chat-widget-background: var(--neutral-dark-l-5);
+$iris-chat-bubble-fade: $black;
 $iris-client-chat-background: var(--neutral-dark-l-10);
 $iris-client-chat-input: var(--neutral-dark-l-5);
 $iris-my-chat-background: #008462;
@@ -665,7 +666,7 @@ $iris-rate-background: var(--neutral-dark-l-15);
 $cropper-overlay-color: transparent;
 
 // Settings
-$ssh-key-table-hover-background: $gray-900;
+$ssh-key-settings-table-hover-background: $gray-900;
 $ssh-key-settings-dropdown-buttons: $gray-800;
 $ssh-key-settings-dropdown-buttons-hover: $gray-700;
 $ssh-key-settings-text-color: $white;
