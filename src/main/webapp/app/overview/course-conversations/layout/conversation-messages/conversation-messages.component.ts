@@ -173,6 +173,10 @@ export class ConversationMessagesComponent implements OnInit, AfterViewInit, OnD
                 const postIndexInGroup = currentGroup.posts.indexOf(post);
 
                 if (!firstUnreadFound && postIndexInGroup === groupMessageCount - remainingUnread) {
+                    if (groupIndex === 0 && postIndexInGroup === 0) {
+                        remainingUnread--;
+                        return false;
+                    }
                     firstUnreadFound = true;
                     return true;
                 }
