@@ -70,9 +70,7 @@ export class LectureUpdateComponent implements OnInit, OnDestroy {
 
     constructor() {
         effect(() => {
-            this.subscriptions.unsubscribe();
-
-            if (this.titleSection()) {
+            if (this.titleSection()?.titleChannelNameComponent() && this.lecturePeriodSection()) {
                 this.subscriptions.add(
                     this.titleSection()!
                         .titleChannelNameComponent()
@@ -87,8 +85,6 @@ export class LectureUpdateComponent implements OnInit, OnDestroy {
                             this.updateIsChangesMadeToTitleOrPeriodSection();
                         }),
                 );
-            }
-            if (this.lecturePeriodSection()) {
                 this.subscriptions.add(
                     this.lecturePeriodSection()!
                         .periodSectionDatepickers()

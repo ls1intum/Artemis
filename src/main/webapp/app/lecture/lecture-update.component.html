@@ -30,7 +30,12 @@
                     <jhi-lecture-title-channel-name [lecture]="lecture()" />
                     <div class="form-group" id="field_description">
                         <label class="form-control-label" jhiTranslate="artemisApp.lecture.description" for="field_description"></label>
-                        <jhi-markdown-editor-monaco class="markdown-editor" [domainActions]="domainActionsDescription" [(markdown)]="lecture().description" />
+                        <jhi-markdown-editor-monaco
+                            class="markdown-editor"
+                            [domainActions]="domainActionsDescription"
+                            [(markdown)]="lecture().description"
+                            (markdownChange)="updateIsChangesMadeToTitleOrPeriodSection()"
+                        />
                     </div>
                     <jhi-lecture-update-period [lecture]="lecture()" [validateDatesFunction]="onDatesValuesChanged" />
                     @if (lecture().course) {
