@@ -78,14 +78,11 @@
                     "attachmentsStepTitle": "Attachments",
                     "attachmentsStepMessage": "Upload attachments to this lecture.",
                     "unitsStepTitle": "Units",
-                    "unitsStepMessage": "Add content to the lecture by creating different kinds of lecture units.",
-                    "competenciesStepTitle": "Competencies",
-                    "competenciesStepMessage": "Make it easily visible what knowledge students will achieve when completing the units of this lecture by connecting them to competencies."
+                    "unitsStepMessage": "Add content to the lecture by creating different kinds of lecture units."
                 },
                 "newLectureUnit": "New Lecture Unit",
                 "editLectureUnit": "Edit Lecture Unit",
                 "newExercise": "Create new exercise",
-                "backToWizard": "Back to lecture",
                 "competencyTitle": "Title",
                 "competencyConnectedUnits": "Connected Units",
                 "competencyNoConnectedUnits": "No connected units"
