@@ -33,6 +33,8 @@ import { FormulaAction } from 'app/shared/monaco-editor/model/actions/formula.ac
     changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class FileUploadExerciseUpdateComponent implements AfterViewInit, OnDestroy, OnInit {
+    protected readonly faQuestionCircle = faQuestionCircle;
+
     readonly IncludedInOverallScore = IncludedInOverallScore;
     readonly documentationType: DocumentationType = 'FileUpload';
 
@@ -50,7 +52,6 @@ export class FileUploadExerciseUpdateComponent implements AfterViewInit, OnDestr
     fileUploadExercise: FileUploadExercise;
     backupExercise: FileUploadExercise;
     isSaving: boolean;
-    goBackAfterSaving = false;
     exerciseCategories: ExerciseCategory[];
     existingCategories: ExerciseCategory[];
     notificationText?: string;
@@ -59,18 +60,13 @@ export class FileUploadExerciseUpdateComponent implements AfterViewInit, OnDestr
     isImport: boolean;
     examCourseId?: number;
 
-    saveCommand: SaveExerciseCommand<FileUploadExercise>;
-
     formStatusSections: FormSectionStatus[];
 
-    // Subcriptions
+    // Subscriptions
     titleChannelNameComponentSubscription?: Subscription;
     pointsSubscription?: Subscription;
     bonusPointsSubscription?: Subscription;
     teamSubscription?: Subscription;
-
-    // Icons
-    faQuestionCircle = faQuestionCircle;
 
     constructor(
         private fileUploadExerciseService: FileUploadExerciseService,
@@ -104,11 +100,6 @@ export class FileUploadExerciseUpdateComponent implements AfterViewInit, OnDestr
             this.examCourseId = getCourseId(fileUploadExercise);
         });
 
-        this.activatedRoute.queryParams.subscribe((params) => {
-            if (params.shouldHaveBackButtonToWizard) {
-                this.goBackAfterSaving = true;
-            }
-        });
         this.activatedRoute.url
             .pipe(
                 tap(
@@ -263,12 +254,6 @@ export class FileUploadExerciseUpdateComponent implements AfterViewInit, OnDestr
 
     private onSaveSuccess(exercise: Exercise) {
         this.isSaving = false;
-
-        if (this.goBackAfterSaving) {
-            this.navigationUtilService.navigateBack();
-
-            return;
-        }
 
         this.navigationUtilService.navigateForwardFromExerciseUpdateOrCreation(exercise);
     }

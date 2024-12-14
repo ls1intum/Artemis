@@ -52,7 +52,6 @@ export class QuizExerciseUpdateComponent extends QuizExerciseValidationDirective
     notificationText?: string;
 
     isImport = false;
-    goBackAfterSaving = false;
 
     /** Constants for 'Add existing questions' and 'Import file' features **/
     showExistingQuestions = false;
@@ -148,12 +147,6 @@ export class QuizExerciseUpdateComponent extends QuizExerciseValidationDirective
         if (this.router.url.includes('/import')) {
             this.isImport = true;
         }
-
-        this.route.queryParams.subscribe((params) => {
-            if (params.shouldHaveBackButtonToWizard) {
-                this.goBackAfterSaving = true;
-            }
-        });
 
         /** Query the courseService for the participationId given by the params */
         if (this.courseId) {
@@ -519,12 +512,6 @@ export class QuizExerciseUpdateComponent extends QuizExerciseValidationDirective
         this.exerciseService.validateDate(this.quizExercise);
         this.savedEntity = cloneDeep(quizExercise);
         this.changeDetector.detectChanges();
-
-        if (this.goBackAfterSaving) {
-            this.navigationUtilService.navigateBack();
-
-            return;
-        }
 
         // Navigate back only if it's an import
         // If we edit the exercise, a user might just want to save the current state of the added quiz questions without going back
