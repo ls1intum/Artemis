@@ -266,10 +266,10 @@ async function makeGitExerciseSubmission(
     submission: any,
     commitMessage: string,
     cloneMethod: GitCloneMethod = GitCloneMethod.https,
-    sshAlgorithm?: SshEncryptionAlgorithm,
+    sshAlgorithm: SshEncryptionAlgorithm = SshEncryptionAlgorithm.ed25519,
 ) {
     await programmingExerciseOverview.openCloneMenu(cloneMethod);
-    if (cloneMethod == GitCloneMethod.ssh && sshAlgorithm !== undefined) {
+    if (cloneMethod == GitCloneMethod.ssh) {
         await expect(programmingExerciseOverview.getCloneUrlButton()).toBeDisabled();
         const sshKeyNotFoundAlert = page.locator('.alert', { hasText: 'To use ssh, you need to add an ssh key to your account' });
         await expect(sshKeyNotFoundAlert).toBeVisible();
@@ -287,8 +287,12 @@ async function makeGitExerciseSubmission(
     console.log(`Cloning repository from ${repoUrl}`);
     const urlParts = repoUrl.split('/');
     const repoName = urlParts[urlParts.length - 1];
-    const sshKeyName = sshAlgorithm !== undefined ? SSH_KEY_NAMES[sshAlgorithm] : undefined;
-    const exerciseRepo = await gitClient.cloneRepo(repoUrl, repoName, sshKeyName);
+    let exerciseRepo;
+    if (cloneMethod == GitCloneMethod.ssh) {
+        exerciseRepo = await gitClient.cloneRepo(repoUrl, repoName, SSH_KEY_NAMES[sshAlgorithm]);
+    } else {
+        exerciseRepo = await gitClient.cloneRepo(repoUrl, repoName);
+    }
     console.log(`Cloned repository successfully. Pushing files...`);
     await pushGitSubmissionFiles(exerciseRepo, repoName, student, submission, commitMessage);
     await fs.rmdir(`./test-exercise-repos/${repoName}`, { recursive: true });
