@@ -91,6 +91,12 @@
                 "competencyTitle": "Title",
                 "competencyConnectedUnits": "Connected Units",
                 "competencyNoConnectedUnits": "No connected units"
+            },
+            "dismissChangesModal": {
+                "title": "Discard unsaved lecture changes",
+                "message": "Are you sure you want to discard your unsaved changes?",
+                "sectionsThatContainUnsavedChanges": "The following sections contain unsaved changes:",
+                "sectionThatContainsUnsavedChanges": "The following section contains unsaved changes:"
             }
         },
         "attachment": {
