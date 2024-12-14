@@ -3,18 +3,16 @@ import { OneToOneChatDTO } from 'app/entities/metis/conversation/one-to-one-chat
 import { GroupChatDTO } from 'app/entities/metis/conversation/group-chat.model';
 import { Observable, map } from 'rxjs';
 import { HttpClient, HttpResponse } from '@angular/common/http';
-import { Injectable } from '@angular/core';
+import { Injectable, inject } from '@angular/core';
 import { AccountService } from 'app/core/auth/account.service';
 
 @Injectable({ providedIn: 'root' })
 export class GroupChatService {
     public resourceUrl = 'api/courses/';
 
-    constructor(
-        private http: HttpClient,
-        private conversationService: ConversationService,
-        private accountService: AccountService,
-    ) {}
+    private http = inject(HttpClient);
+    private conversationService = inject(ConversationService);
+    private accountService = inject(AccountService);
 
     create(courseId: number, loginsOfChatPartners: string[]): Observable<HttpResponse<GroupChatDTO>> {
         return this.http
