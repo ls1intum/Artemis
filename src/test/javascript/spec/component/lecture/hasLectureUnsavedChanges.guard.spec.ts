@@ -3,23 +3,16 @@ import { hasLectureUnsavedChangesGuard } from '../../../../../main/webapp/app/le
 import { LectureUpdateComponent } from '../../../../../main/webapp/app/lecture/lecture-update.component';
 import { TestBed } from '@angular/core/testing';
 import { MockRouter } from '../../helpers/mocks/mock-router';
-import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
+import { NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
 import { Observable, firstValueFrom, of } from 'rxjs';
-
-class MockNgbModal {
-    open() {
-        return {
-            componentInstance: {},
-            result: Promise.resolve(true), // or false, depending on your test case
-        };
-    }
-}
+import { MockNgbModalService } from '../../helpers/mocks/service/mock-ngb-modal.service';
 
 describe('hasLectureUnsavedChanges', () => {
     let component: LectureUpdateComponent;
     let currentRoute: ActivatedRouteSnapshot;
     let currentState: RouterStateSnapshot;
     let nextState: RouterStateSnapshot;
+    let mockNgbModal: NgbModal;
 
     beforeEach(() => {
         TestBed.configureTestingModule({
@@ -27,7 +20,7 @@ describe('hasLectureUnsavedChanges', () => {
             declarations: [LectureUpdateComponent],
             providers: [
                 { provide: Router, useClass: MockRouter },
-                { provide: NgbModal, useClass: MockNgbModal },
+                { provide: NgbModal, useClass: MockNgbModalService },
                 {
                     provide: LectureUpdateComponent,
                     useValue: {
@@ -42,6 +35,13 @@ describe('hasLectureUnsavedChanges', () => {
         }).compileComponents();
 
         component = TestBed.inject(LectureUpdateComponent);
+        mockNgbModal = TestBed.inject(NgbModal);
+        const mockModalRef = {
+            componentInstance: {},
+            result: Promise.resolve(true),
+        };
+        jest.spyOn(mockNgbModal, 'open').mockReturnValue(mockModalRef as NgbModalRef);
+
         currentRoute = {} as ActivatedRouteSnapshot;
         currentState = {} as RouterStateSnapshot;
         nextState = {} as RouterStateSnapshot;
@@ -63,7 +63,7 @@ describe('hasLectureUnsavedChanges', () => {
         expect(result).toBeTrue();
     });
 
-    it('should return result from modal', async () => {
+    it('should return result from modal (true, dismiss changes)', async () => {
         component.shouldDisplayDismissWarning = true;
 
         const result = await TestBed.runInInjectionContext(() => {
@@ -73,5 +73,23 @@ describe('hasLectureUnsavedChanges', () => {
         });
 
         expect(result).toBeTrue();
+    });
+
+    it('should return result from modal (false, keep editing)', async () => {
+        component.shouldDisplayDismissWarning = true;
+
+        const mockModalRef = {
+            componentInstance: {},
+            result: Promise.resolve(false),
+        };
+        jest.spyOn(mockNgbModal, 'open').mockReturnValue(mockModalRef as NgbModalRef);
+
+        const result = await TestBed.runInInjectionContext(() => {
+            const guardResult = hasLectureUnsavedChangesGuard(component, currentRoute, currentState, nextState);
+            const guardObservable = guardResult instanceof Observable ? guardResult : of(guardResult);
+            return firstValueFrom(guardObservable);
+        });
+
+        expect(result).toBeFalse();
     });
 });
