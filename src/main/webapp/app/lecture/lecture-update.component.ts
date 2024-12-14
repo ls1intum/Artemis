@@ -130,7 +130,7 @@ export class LectureUpdateComponent implements OnInit, OnDestroy {
         return (
             this.lecture().title !== this.lectureOnInit.title ||
             this.lecture().channelName !== this.lectureOnInit.channelName ||
-            this.lecture().description !== this.lectureOnInit.description
+            (this.lecture().description ?? '') !== (this.lectureOnInit.description ?? '')
         );
     }
 
