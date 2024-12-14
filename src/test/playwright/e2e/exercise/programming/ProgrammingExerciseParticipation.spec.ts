@@ -98,20 +98,22 @@ test.describe('Programming exercise participation', { tag: '@sequential' }, () =
             exercise = await exerciseAPIRequests.createProgrammingExercise({ course, programmingLanguage: ProgrammingLanguage.JAVA });
         });
 
-        test('Makes a git submission using SSH with RSA key', async ({ page, programmingExerciseOverview }) => {
-            await programmingExerciseOverview.startParticipation(course.id!, exercise.id!, studentOne);
-            await makeGitExerciseSubmission(
-                page,
-                programmingExerciseOverview,
-                course,
-                exercise,
-                studentOne,
-                javaAllSuccessfulSubmission,
-                'Solution',
-                GitCloneMethod.ssh,
-                SshEncryptionAlgorithm.rsa,
-            );
-        });
+        for (const sshAlgorithm of [SshEncryptionAlgorithm.rsa, SshEncryptionAlgorithm.ed25519]) {
+            test(`Makes a git submission using SSH with ${sshAlgorithm} key`, async ({ page, programmingExerciseOverview }) => {
+                await programmingExerciseOverview.startParticipation(course.id!, exercise.id!, studentOne);
+                await makeGitExerciseSubmission(
+                    page,
+                    programmingExerciseOverview,
+                    course,
+                    exercise,
+                    studentOne,
+                    javaAllSuccessfulSubmission,
+                    'Solution',
+                    GitCloneMethod.ssh,
+                    sshAlgorithm,
+                );
+            });
+        }
 
         test.afterEach('Delete SSH key', async ({ accountManagementAPIRequests }) => {
             await accountManagementAPIRequests.deleteSshPublicKey();

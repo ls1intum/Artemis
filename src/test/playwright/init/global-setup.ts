@@ -3,8 +3,8 @@ import path from 'path';
 import os from 'os';
 
 export enum SshEncryptionAlgorithm {
-    rsa,
-    ed25519,
+    rsa = 'RSA',
+    ed25519 = ' ED25519',
 }
 
 export const SSH_KEY_NAMES = {
