@@ -1,5 +1,5 @@
 import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
-import { MockComponent, MockDirective, MockModule, MockPipe, MockProvider } from 'ng-mocks';
+import { MockComponent, MockModule, MockProvider } from 'ng-mocks';
 import { ActivatedRoute, Router } from '@angular/router';
 import { MockRouter } from '../../../helpers/mocks/mock-router';
 import { of } from 'rxjs';
@@ -7,7 +7,6 @@ import { Lecture } from 'app/entities/lecture.model';
 import { MockTranslateService } from '../../../helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
 import { Course } from 'app/entities/course.model';
-import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { LectureUpdateWizardComponent } from 'app/lecture/wizard-mode/lecture-update-wizard.component';
 import { ArtemisNavigationUtilService } from 'app/utils/navigation.utils';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
@@ -15,15 +14,11 @@ import { LectureUpdateWizardStepComponent } from 'app/lecture/wizard-mode/lectur
 import { LectureUpdateWizardUnitsComponent } from 'app/lecture/wizard-mode/lecture-wizard-units.component';
 import { LectureUpdateWizardAttachmentsComponent } from 'app/lecture/wizard-mode/lecture-wizard-attachments.component';
 import { LectureUpdateWizardTitleComponent } from 'app/lecture/wizard-mode/lecture-wizard-title.component';
-import { TranslateDirective } from 'app/shared/language/translate.directive';
-import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import dayjs from 'dayjs/esm';
 import { LectureUpdatePeriodComponent } from '../../../../../../main/webapp/app/lecture/lecture-period/lecture-period.component';
 import { ArtemisTestModule } from '../../../test.module';
 import { ArtemisSharedModule } from '../../../../../../main/webapp/app/shared/shared.module';
 import { FormDateTimePickerComponent } from '../../../../../../main/webapp/app/shared/date-time-picker/date-time-picker.component';
-import { MarkdownEditorMonacoComponent } from '../../../../../../main/webapp/app/shared/markdown-editor/monaco/markdown-editor-monaco.component';
-import { CustomNotIncludedInValidatorDirective } from '../../../../../../main/webapp/app/shared/validators/custom-not-included-in-validator.directive';
 
 describe('LectureWizardComponent', () => {
     let wizardComponentFixture: ComponentFixture<LectureUpdateWizardComponent>;
@@ -37,14 +32,9 @@ describe('LectureWizardComponent', () => {
                 LectureUpdatePeriodComponent,
                 MockComponent(FormDateTimePickerComponent),
                 MockComponent(LectureUpdateWizardTitleComponent),
-                MockComponent(MarkdownEditorMonacoComponent),
-                MockPipe(ArtemisTranslatePipe),
                 MockComponent(LectureUpdateWizardStepComponent),
                 MockComponent(LectureUpdateWizardUnitsComponent),
                 MockComponent(LectureUpdateWizardAttachmentsComponent),
-                MockComponent(FaIconComponent),
-                MockDirective(TranslateDirective),
-                MockDirective(CustomNotIncludedInValidatorDirective),
             ],
             providers: [
                 MockProvider(ArtemisNavigationUtilService),
