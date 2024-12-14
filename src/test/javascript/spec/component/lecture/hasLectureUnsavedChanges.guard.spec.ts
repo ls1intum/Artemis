@@ -1,4 +1,4 @@
-import { ActivatedRouteSnapshot, Router, RouterStateSnapshot } from '@angular/router';
+import { ActivatedRouteSnapshot, GuardResult, MaybeAsync, Router, RouterStateSnapshot } from '@angular/router';
 import { hasLectureUnsavedChangesGuard } from '../../../../../main/webapp/app/lecture/hasLectureUnsavedChanges.guard';
 import { LectureUpdateComponent } from '../../../../../main/webapp/app/lecture/lecture-update.component';
 import { TestBed } from '@angular/core/testing';
@@ -51,7 +51,7 @@ describe('hasLectureUnsavedChanges', () => {
         component.shouldDisplayDismissWarning = true;
         component.isChangeMadeToTitleOrPeriodSection = false;
 
-        const result = await firstValueFrom(hasLectureUnsavedChangesGuard(component, currentRoute, currentState, nextState));
+        const result = await firstValueFrom(getGuardResultAsObservable(hasLectureUnsavedChangesGuard(component, currentRoute, currentState, nextState)));
         expect(result).toBeTrue();
     });
 
@@ -59,7 +59,7 @@ describe('hasLectureUnsavedChanges', () => {
         component.shouldDisplayDismissWarning = false;
         component.isChangeMadeToTitleOrPeriodSection = true;
 
-        const result = await firstValueFrom(hasLectureUnsavedChangesGuard(component, currentRoute, currentState, nextState));
+        const result = await firstValueFrom(getGuardResultAsObservable(hasLectureUnsavedChangesGuard(component, currentRoute, currentState, nextState)));
         expect(result).toBeTrue();
     });
 
@@ -67,9 +67,7 @@ describe('hasLectureUnsavedChanges', () => {
         component.shouldDisplayDismissWarning = true;
 
         const result = await TestBed.runInInjectionContext(() => {
-            const guardResult = hasLectureUnsavedChangesGuard(component, currentRoute, currentState, nextState);
-            const guardObservable = guardResult instanceof Observable ? guardResult : of(guardResult);
-            return firstValueFrom(guardObservable);
+            return firstValueFrom(getGuardResultAsObservable(hasLectureUnsavedChangesGuard(component, currentRoute, currentState, nextState)));
         });
 
         expect(result).toBeTrue();
@@ -85,11 +83,13 @@ describe('hasLectureUnsavedChanges', () => {
         jest.spyOn(mockNgbModal, 'open').mockReturnValue(mockModalRef as NgbModalRef);
 
         const result = await TestBed.runInInjectionContext(() => {
-            const guardResult = hasLectureUnsavedChangesGuard(component, currentRoute, currentState, nextState);
-            const guardObservable = guardResult instanceof Observable ? guardResult : of(guardResult);
-            return firstValueFrom(guardObservable);
+            return firstValueFrom(getGuardResultAsObservable(hasLectureUnsavedChangesGuard(component, currentRoute, currentState, nextState)));
         });
 
         expect(result).toBeFalse();
     });
+
+    function getGuardResultAsObservable(guardResult: MaybeAsync<GuardResult>): Observable<GuardResult> {
+        return guardResult instanceof Observable ? guardResult : of(guardResult);
+    }
 });
