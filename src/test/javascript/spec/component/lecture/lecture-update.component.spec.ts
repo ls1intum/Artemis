@@ -361,4 +361,45 @@ describe('LectureUpdateComponent', () => {
             throw new Error('startDate and endDate should not be undefined');
         }
     }));
+
+    describe('isChangeMadeToTitleSection', () => {
+        it('should detect changes made to the title section', () => {
+            lectureUpdateComponent.lecture.set({ title: 'new title', channelName: 'new channel', description: 'new description' } as Lecture);
+            lectureUpdateComponent.lectureOnInit = { title: 'old title', channelName: 'old channel', description: 'old description' } as Lecture;
+            expect(lectureUpdateComponent.isChangeMadeToTitleSection()).toBeTrue();
+
+            lectureUpdateComponent.lecture.set({
+                title: lectureUpdateComponent.lectureOnInit.title,
+                channelName: lectureUpdateComponent.lectureOnInit.channelName,
+                description: lectureUpdateComponent.lectureOnInit.description,
+            } as Lecture);
+            expect(lectureUpdateComponent.isChangeMadeToTitleSection()).toBeFalse();
+        });
+
+        it('should handle undefined from description properly', () => {
+            lectureUpdateComponent.lecture.set({ title: 'new title', channelName: 'new channel', description: 'new description' } as Lecture);
+            lectureUpdateComponent.lectureOnInit = { title: 'old title', channelName: 'old channel', description: undefined } as Lecture;
+            expect(lectureUpdateComponent.isChangeMadeToTitleSection()).toBeTrue();
+
+            lectureUpdateComponent.lecture.set({
+                title: lectureUpdateComponent.lectureOnInit.title,
+                channelName: lectureUpdateComponent.lectureOnInit.channelName,
+                description: '', // will be an empty string if the user clears the input, but was loaded with undefined in that case
+            } as Lecture);
+            expect(lectureUpdateComponent.isChangeMadeToTitleSection()).toBeFalse();
+        });
+    });
+
+    it('should detect changes made to the period section', () => {
+        lectureUpdateComponent.lecture.set({ visibleDate: dayjs().add(1, 'day'), startDate: dayjs().add(2, 'day'), endDate: dayjs().add(3, 'day') } as Lecture);
+        lectureUpdateComponent.lectureOnInit = { visibleDate: dayjs(), startDate: dayjs(), endDate: dayjs() } as Lecture;
+        expect(lectureUpdateComponent.isChangeMadeToPeriodSection()).toBeTrue();
+
+        lectureUpdateComponent.lecture.set({
+            visibleDate: lectureUpdateComponent.lectureOnInit.visibleDate,
+            startDate: lectureUpdateComponent.lectureOnInit.startDate,
+            endDate: lectureUpdateComponent.lectureOnInit.endDate,
+        } as Lecture);
+        expect(lectureUpdateComponent.isChangeMadeToPeriodSection()).toBeFalse();
+    });
 });
