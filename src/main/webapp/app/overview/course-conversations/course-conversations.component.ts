@@ -522,11 +522,14 @@ export class CourseConversationsComponent implements OnInit, OnDestroy {
     }
 
     markAllChannelAsRead() {
-        this.metisConversationService.markAllChannelsAsRead(this.course);
-        this.metisConversationService.forceRefresh().subscribe({
+        this.metisConversationService.markAllChannelsAsRead(this.course).subscribe({
             complete: () => {
-                this.prepareSidebarData();
-                this.closeSidebarOnMobile();
+                this.metisConversationService.forceRefresh().subscribe({
+                    complete: () => {
+                        this.prepareSidebarData();
+                        this.closeSidebarOnMobile();
+                    },
+                });
             },
         });
     }
