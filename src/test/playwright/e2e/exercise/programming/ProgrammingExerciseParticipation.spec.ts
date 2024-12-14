@@ -8,7 +8,7 @@ import pythonAllSuccessful from '../../../fixtures/exercise/programming/python/a
 import { BASE_API, ExerciseCommit, ExerciseMode, ProgrammingLanguage } from '../../../support/constants';
 import { test } from '../../../support/fixtures';
 import { BrowserContext, Page, expect } from '@playwright/test';
-import { gitClient } from '../../../support/pageobjects/exercises/programming/GitClient';
+import { SSH_KEYS_PATH, SSH_KEY_NAMES, SshEncryptionAlgorithm, gitClient } from '../../../support/pageobjects/exercises/programming/GitClient';
 import * as fs from 'fs/promises';
 import path from 'path';
 import { SimpleGit } from 'simple-git';
@@ -20,7 +20,6 @@ import { UserCredentials, admin, instructor, studentFour, studentOne, studentTwo
 import { Team } from 'app/entities/team.model';
 import { GitCloneMethod, ProgrammingExerciseOverviewPage } from '../../../support/pageobjects/exercises/programming/ProgrammingExerciseOverviewPage';
 import { Participation } from 'app/entities/participation/participation.model';
-import { SSH_KEY_NAMES, SshEncryptionAlgorithm } from '../../../init/global-setup';
 
 test.describe('Programming exercise participation', { tag: '@sequential' }, () => {
     let course: Course;
@@ -301,8 +300,7 @@ async function makeGitExerciseSubmission(
 async function setupSSHCredentials(context: BrowserContext, sshAlgorithm: SshEncryptionAlgorithm) {
     console.log(`Setting up SSH credentials with key ${SSH_KEY_NAMES[sshAlgorithm]}`);
     const page = await context.newPage();
-    const playwrightRoot = process.cwd();
-    const sshKeyPath = path.join(playwrightRoot, 'ssh-keys', `${SSH_KEY_NAMES[sshAlgorithm]}.pub`);
+    const sshKeyPath = path.join(SSH_KEYS_PATH, `${SSH_KEY_NAMES[sshAlgorithm]}.pub`);
     const sshKey = await fs.readFile(sshKeyPath, 'utf8');
     await page.goto('user-settings/ssh');
     await page.getByTestId('addNewSshKeyButton').click();
