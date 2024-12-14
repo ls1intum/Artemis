@@ -51,7 +51,7 @@ describe('hasLectureUnsavedChanges', () => {
         component.shouldDisplayDismissWarning = true;
         component.isChangeMadeToTitleOrPeriodSection = false;
 
-        const result = await hasLectureUnsavedChangesGuard(component, currentRoute, currentState, nextState).toPromise();
+        const result = await firstValueFrom(hasLectureUnsavedChangesGuard(component, currentRoute, currentState, nextState));
         expect(result).toBeTrue();
     });
 
@@ -59,7 +59,7 @@ describe('hasLectureUnsavedChanges', () => {
         component.shouldDisplayDismissWarning = false;
         component.isChangeMadeToTitleOrPeriodSection = true;
 
-        const result = await hasLectureUnsavedChangesGuard(component, currentRoute, currentState, nextState).toPromise();
+        const result = await firstValueFrom(hasLectureUnsavedChangesGuard(component, currentRoute, currentState, nextState));
         expect(result).toBeTrue();
     });
 
