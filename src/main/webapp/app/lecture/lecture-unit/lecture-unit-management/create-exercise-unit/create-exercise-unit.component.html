@@ -21,15 +21,6 @@
                         <fa-icon [icon]="faTimes" />&nbsp;<span jhiTranslate="entity.action.cancel"></span>
                     </button>
                 }
-                @if (hasCreateExerciseButton()) {
-                    <button
-                        id="createExerciseButton"
-                        type="button"
-                        class="btn btn-primary"
-                        (click)="createNewExercise()"
-                        jhiTranslate="artemisApp.lecture.wizardMode.newExercise"
-                    ></button>
-                }
                 <button
                     id="createButton"
                     type="button"
