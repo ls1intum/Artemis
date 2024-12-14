@@ -279,9 +279,9 @@ async function makeGitExerciseSubmission(
         await programmingExerciseOverview.openCloneMenu(cloneMethod);
     }
     let repoUrl = await programmingExerciseOverview.copyCloneUrl();
-    let token: string | undefined;
+    // let token: string | undefined;
     if (process.env.CI === 'true' && cloneMethod == GitCloneMethod.httpsWithToken) {
-        token = repoUrl.match(/vcpat.+(?=@)/)?.[0];
+        // token = repoUrl.match(/vcpat.+(?=@)/)?.[0];
         await page.locator('.https-or-ssh-button').click();
         await page.locator('#useHTTPSWithTokenButton').click();
         repoUrl = await programmingExerciseOverview.copyCloneUrl();
@@ -296,7 +296,7 @@ async function makeGitExerciseSubmission(
         repoUrl = repoUrl.replace(student.username!, `${student.username!}:${student.password!}`);
     }
     if (cloneMethod == GitCloneMethod.httpsWithToken) {
-        repoUrl = repoUrl.replace(student.username!, `${student.username!}:${token}`);
+        repoUrl = repoUrl.replace(student.username!, `${student.username!}:${student.password!}`);
     }
     if (cloneMethod == GitCloneMethod.https || cloneMethod == GitCloneMethod.httpsWithToken) {
         repoUrl = repoUrl.replace(`:**********`, ``);
