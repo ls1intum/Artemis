@@ -49,7 +49,6 @@ export class LectureAttachmentsComponent implements OnDestroy {
 
     lectureId = input<number>();
     showHeader = input<boolean>(true);
-    redirectToLecturePage = input<boolean>(true);
 
     lecture = signal<Lecture>(new Lecture());
     attachments: Attachment[] = [];
