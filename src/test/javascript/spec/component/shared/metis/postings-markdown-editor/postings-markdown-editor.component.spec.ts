@@ -8,7 +8,7 @@ import { MetisService } from 'app/shared/metis/metis.service';
 import { MockMetisService } from '../../../../helpers/mocks/service/mock-metis-service.service';
 import { metisAnswerPostUser2, metisPostExerciseUser1 } from '../../../../helpers/sample/metis-sample-data';
 import { LectureService } from 'app/lecture/lecture.service';
-import { Subject } from 'rxjs';
+import { Subject, of } from 'rxjs';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
 import { ChannelService } from 'app/shared/metis/conversations/channel.service';
 import * as CourseModel from 'app/entities/course.model';
@@ -23,12 +23,21 @@ import { CodeAction } from 'app/shared/monaco-editor/model/actions/code.action';
 import { CodeBlockAction } from 'app/shared/monaco-editor/model/actions/code-block.action';
 import { ExerciseReferenceAction } from 'app/shared/monaco-editor/model/actions/communication/exercise-reference.action';
 import { LectureAttachmentReferenceAction } from 'app/shared/monaco-editor/model/actions/communication/lecture-attachment-reference.action';
-import { UrlAction } from '../../../../../../../main/webapp/app/shared/monaco-editor/model/actions/url.action';
-import { AttachmentAction } from '../../../../../../../main/webapp/app/shared/monaco-editor/model/actions/attachment.action';
+import { FaqReferenceAction } from 'app/shared/monaco-editor/model/actions/communication/faq-reference.action';
+import { UrlAction } from 'app/shared/monaco-editor/model/actions/url.action';
+import { AttachmentAction } from 'app/shared/monaco-editor/model/actions/attachment.action';
 import { EmojiAction } from 'app/shared/monaco-editor/model/actions/emoji.action';
 import { Overlay, OverlayPositionBuilder } from '@angular/cdk/overlay';
 import { TextEditor } from 'app/shared/monaco-editor/model/actions/adapter/text-editor.interface';
 import { ComponentPortal } from '@angular/cdk/portal';
+import { HttpResponse } from '@angular/common/http';
+import { TextEditorAction } from 'app/shared/monaco-editor/model/actions/text-editor-action.model';
+import { TextEditorRange } from 'app/shared/monaco-editor/model/actions/adapter/text-editor-range.model';
+import { TextEditorPosition } from 'app/shared/monaco-editor/model/actions/adapter/text-editor-position.model';
+import { BulletedListAction } from 'app/shared/monaco-editor/model/actions/bulleted-list.action';
+import { OrderedListAction } from 'app/shared/monaco-editor/model/actions/ordered-list.action';
+import { ListAction } from '../../../../../../../main/webapp/app/shared/monaco-editor/model/actions/list.action';
+import monaco from 'monaco-editor';
 
 describe('PostingsMarkdownEditor', () => {
     let component: PostingMarkdownEditorComponent;
@@ -37,6 +46,7 @@ describe('PostingsMarkdownEditor', () => {
     let mockMarkdownEditorComponent: MarkdownEditorMonacoComponent;
     let metisService: MetisService;
     let lectureService: LectureService;
+    let findLectureWithDetailsSpy: jest.SpyInstance;
 
     const backdropClickSubject = new Subject<void>();
     const mockOverlayRef = {
@@ -52,7 +62,7 @@ describe('PostingsMarkdownEditor', () => {
         scrollStrategies: { reposition: jest.fn().mockReturnValue({}) },
     };
 
-    const mockEditor: TextEditor = {
+    const mockEditor: jest.Mocked<TextEditor> = {
         getPosition: jest.fn(),
         setPosition: jest.fn(),
         focus: jest.fn(),
@@ -98,6 +108,13 @@ describe('PostingsMarkdownEditor', () => {
             location: { nativeElement: document.createElement('div') },
         };
 
+        mockEditor.getDomNode.mockReturnValue({
+            addEventListener: jest.fn(),
+        } as any);
+
+        jest.clearAllMocks();
+        (ListAction as any).editorsWithListener = new WeakMap<TextEditor, boolean>();
+
         mockOverlayRef.attach.mockReturnValue(mockComponentRef);
 
         return TestBed.configureTestingModule({
@@ -108,6 +125,7 @@ describe('PostingsMarkdownEditor', () => {
                 MockProvider(ChannelService),
                 { provide: Overlay, useValue: mockOverlay },
                 { provide: OverlayPositionBuilder, useValue: overlayPositionBuilderMock },
+                { provide: MarkdownEditorMonacoComponent, useValue: mockMarkdownEditorComponent },
             ],
             declarations: [PostingMarkdownEditorComponent, MockComponent(MarkdownEditorMonacoComponent)],
         })
@@ -118,6 +136,10 @@ describe('PostingsMarkdownEditor', () => {
                 debugElement = fixture.debugElement;
                 metisService = TestBed.inject(MetisService);
                 lectureService = TestBed.inject(LectureService);
+
+                findLectureWithDetailsSpy = jest.spyOn(lectureService, 'findAllByCourseIdWithSlides');
+                const returnValue = of(new HttpResponse({ body: [], status: 200 }));
+                findLectureWithDetailsSpy.mockReturnValue(returnValue);
                 fixture.autoDetectChanges();
                 mockMarkdownEditorComponent = fixture.debugElement.query(By.directive(MarkdownEditorMonacoComponent)).componentInstance;
                 component.ngOnInit();
@@ -129,23 +151,8 @@ describe('PostingsMarkdownEditor', () => {
 
     it('should have set the correct default commands on init if messaging or communication is enabled', () => {
         component.ngOnInit();
-
-        expect(component.defaultActions).toEqual(
-            expect.arrayContaining([
-                expect.any(BoldAction),
-                expect.any(ItalicAction),
-                expect.any(UnderlineAction),
-                expect.any(QuoteAction),
-                expect.any(CodeAction),
-                expect.any(CodeBlockAction),
-                expect.any(EmojiAction),
-                expect.any(UrlAction),
-                expect.any(AttachmentAction),
-                expect.any(UserMentionAction),
-                expect.any(ChannelReferenceAction),
-                expect.any(ExerciseReferenceAction),
-            ]),
-        );
+        containDefaultActions(component.defaultActions);
+        expect(component.defaultActions).toEqual(expect.arrayContaining([expect.any(UserMentionAction), expect.any(ChannelReferenceAction)]));
 
         expect(component.lectureAttachmentReferenceAction).toEqual(new LectureAttachmentReferenceAction(metisService, lectureService));
     });
@@ -153,8 +160,12 @@ describe('PostingsMarkdownEditor', () => {
     it('should have set the correct default commands on init if communication is disabled', () => {
         jest.spyOn(CourseModel, 'isCommunicationEnabled').mockReturnValueOnce(false);
         component.ngOnInit();
+        containDefaultActions(component.defaultActions);
+        expect(component.lectureAttachmentReferenceAction).toEqual(new LectureAttachmentReferenceAction(metisService, lectureService));
+    });
 
-        expect(component.defaultActions).toEqual(
+    function containDefaultActions(defaultActions: TextEditorAction[]) {
+        expect(defaultActions).toEqual(
             expect.arrayContaining([
                 expect.any(BoldAction),
                 expect.any(ItalicAction),
@@ -168,7 +179,21 @@ describe('PostingsMarkdownEditor', () => {
                 expect.any(ExerciseReferenceAction),
             ]),
         );
+    }
 
+    it('should have set the correct default commands on init if faq is enabled', () => {
+        jest.spyOn(CourseModel, 'isFaqEnabled').mockReturnValueOnce(true);
+        component.ngOnInit();
+        containDefaultActions(component.defaultActions);
+        expect(component.defaultActions).toEqual(expect.arrayContaining([expect.any(FaqReferenceAction)]));
+        expect(component.lectureAttachmentReferenceAction).toEqual(new LectureAttachmentReferenceAction(metisService, lectureService));
+    });
+
+    it('should have set the correct default commands on init if faq is disabled', () => {
+        jest.spyOn(CourseModel, 'isFaqEnabled').mockReturnValueOnce(false);
+        component.ngOnInit();
+        containDefaultActions(component.defaultActions);
+        expect(component.defaultActions).toEqual(expect.not.arrayContaining([expect.any(FaqReferenceAction)]));
         expect(component.lectureAttachmentReferenceAction).toEqual(new LectureAttachmentReferenceAction(metisService, lectureService));
     });
 
@@ -317,5 +342,239 @@ describe('PostingsMarkdownEditor', () => {
 
         expect(mockOverlayRef.dispose).toHaveBeenCalled();
         expect(emojiAction['overlayRef']).toBeNull();
+    });
+
+    const simulateKeydownEvent = (editor: TextEditor, key: string, modifiers: { shiftKey?: boolean; metaKey?: boolean } = {}) => {
+        const event = new KeyboardEvent('keydown', { key, ...modifiers });
+        const preventDefaultSpy = jest.spyOn(event, 'preventDefault');
+        const stopPropagationSpy = jest.spyOn(event, 'stopPropagation');
+
+        const addEventListenerMock = (mockEditor.getDomNode()?.addEventListener as jest.Mock).mock;
+        const keydownListener = addEventListenerMock.calls.find((call: any) => call[0] === 'keydown')[1];
+        keydownListener(event);
+
+        return { event, preventDefaultSpy, stopPropagationSpy };
+    };
+
+    it('should handle Shift+Enter correctly by inserting a single line break with prefix', () => {
+        const bulletedListAction = component.defaultActions.find((action) => action instanceof BulletedListAction) as BulletedListAction;
+
+        mockEditor.getPosition.mockReturnValue({
+            getLineNumber: () => 1,
+            getColumn: () => 6,
+        } as TextEditorPosition);
+        mockEditor.getLineText.mockReturnValue('- First line');
+
+        bulletedListAction.run(mockEditor);
+
+        const { preventDefaultSpy } = simulateKeydownEvent(mockEditor, 'Enter', { shiftKey: true });
+
+        expect(preventDefaultSpy).toHaveBeenCalled();
+        expect(mockEditor.replaceTextAtRange).toHaveBeenCalledWith(expect.any(TextEditorRange), '\n- ');
+        expect(mockEditor.setPosition).toHaveBeenCalledWith(new TextEditorPosition(2, 3));
+    });
+
+    it('should handle Cmd+Enter correctly without inserting double line breaks', () => {
+        const bulletedListAction = component.defaultActions.find((action) => action instanceof BulletedListAction) as BulletedListAction;
+
+        mockEditor.getPosition.mockReturnValue({
+            getLineNumber: () => 1,
+            getColumn: () => 6,
+        } as TextEditorPosition);
+        mockEditor.getLineText.mockReturnValue('- First line');
+
+        bulletedListAction.run(mockEditor);
+
+        const { preventDefaultSpy, stopPropagationSpy } = simulateKeydownEvent(mockEditor, 'Enter', { metaKey: true });
+
+        expect(preventDefaultSpy).toHaveBeenCalled();
+        expect(stopPropagationSpy).toHaveBeenCalled();
+        expect(mockEditor.replaceTextAtRange).toHaveBeenCalledWith(expect.any(TextEditorRange), '\n- ');
+        expect(mockEditor.setPosition).toHaveBeenCalledWith(new TextEditorPosition(2, 3));
+    });
+
+    const simulateListAction = (action: TextEditorAction, selectedText: string, expectedText: string, startLineNumber: number = 1) => {
+        const lines = selectedText.split('\n');
+
+        mockEditor.getTextAtRange.mockReturnValue(selectedText);
+
+        mockEditor.getLineText.mockImplementation((lineNumber: number) => {
+            const index = lineNumber - startLineNumber;
+            return lines[index] || '';
+        });
+
+        mockEditor.getPosition.mockReturnValue({
+            getLineNumber: () => startLineNumber,
+            getColumn: () => 1,
+        } as TextEditorPosition);
+
+        const endLineNumber = startLineNumber + lines.length - 1;
+        mockEditor.getSelection.mockReturnValue(
+            new TextEditorRange(new TextEditorPosition(startLineNumber, 1), new TextEditorPosition(endLineNumber, lines[lines.length - 1].length + 1)),
+        );
+
+        action.run(mockEditor);
+
+        const replaceCalls = mockEditor.replaceTextAtRange.mock.calls;
+        expect(replaceCalls).toHaveLength(1);
+
+        const [range, text] = replaceCalls[0];
+
+        expect(range).toEqual(
+            expect.objectContaining({
+                startPosition: expect.objectContaining({
+                    lineNumber: expect.any(Number),
+                    column: expect.any(Number),
+                }),
+                endPosition: expect.objectContaining({
+                    lineNumber: expect.any(Number),
+                    column: expect.any(Number),
+                }),
+            }),
+        );
+
+        expect(text).toBe(expectedText);
+    };
+
+    it('should add bulleted list prefixes correctly', () => {
+        const bulletedListAction = component.defaultActions.find((action: any) => action instanceof BulletedListAction) as BulletedListAction;
+        const selectedText = `First line\nSecond line\nThird line`;
+        const expectedText = `- First line\n- Second line\n- Third line`;
+
+        simulateListAction(bulletedListAction, selectedText, expectedText);
+    });
+
+    it('should remove bulleted list prefixes correctly when toggled', () => {
+        const bulletedListAction = component.defaultActions.find((action: any) => action instanceof BulletedListAction) as BulletedListAction;
+        const selectedText = `- First line\n- Second line\n- Third line`;
+        const expectedText = `First line\nSecond line\nThird line`;
+
+        simulateListAction(bulletedListAction, selectedText, expectedText);
+    });
+
+    it('should add ordered list prefixes correctly starting from 1', () => {
+        const orderedListAction = component.defaultActions.find((action: any) => action instanceof OrderedListAction) as OrderedListAction;
+        const selectedText = `First line\nSecond line\nThird line`;
+        const expectedText = `1. First line\n2. Second line\n3. Third line`;
+
+        simulateListAction(orderedListAction, selectedText, expectedText);
+    });
+
+    it('should remove ordered list prefixes correctly when toggled', () => {
+        const orderedListAction = component.defaultActions.find((action: any) => action instanceof OrderedListAction) as OrderedListAction;
+        const selectedText = `1.  First line\n2.  Second line\n3.  Third line`;
+        const expectedText = `First line\nSecond line\nThird line`;
+
+        simulateListAction(orderedListAction, selectedText, expectedText);
+    });
+
+    it('should switch from bulleted list to ordered list correctly', () => {
+        const bulletedListAction = component.defaultActions.find((action: any) => action instanceof BulletedListAction) as BulletedListAction;
+        const orderedListAction = component.defaultActions.find((action: any) => action instanceof OrderedListAction) as OrderedListAction;
+        const bulletedText = `- First line\n- Second line\n- Third line`;
+        const expectedOrderedText = `1. First line\n2. Second line\n3. Third line`;
+
+        simulateListAction(bulletedListAction, bulletedText, `First line\nSecond line\nThird line`);
+
+        mockEditor.replaceTextAtRange.mockClear();
+        simulateListAction(orderedListAction, `First line\nSecond line\nThird line`, expectedOrderedText);
+    });
+
+    it('should switch from ordered list to bulleted list correctly', () => {
+        const orderedListAction = component.defaultActions.find((action: any) => action instanceof OrderedListAction) as OrderedListAction;
+        const bulletedListAction = component.defaultActions.find((action: any) => action instanceof BulletedListAction) as BulletedListAction;
+        const orderedText = `1.  First line\n2.  Second line\n3.  Third line`;
+        const expectedBulletedText = `- First line\n- Second line\n- Third line`;
+
+        simulateListAction(orderedListAction, orderedText, `First line\nSecond line\nThird line`);
+
+        mockEditor.replaceTextAtRange.mockClear();
+        simulateListAction(bulletedListAction, `First line\nSecond line\nThird line`, expectedBulletedText);
+    });
+
+    it('should start ordered list numbering from 1 regardless of an inline list', () => {
+        const orderedListAction = component.defaultActions.find((action: any) => action instanceof OrderedListAction) as OrderedListAction;
+        const selectedText = `Some previous text\n1.  First line\n2.  Second line\n3.  Third line`;
+        const expectedText = `1. Some previous text\n2. First line\n3. Second line\n4. Third line`;
+
+        simulateListAction(orderedListAction, selectedText, expectedText);
+    });
+
+    it('should update prefixes correctly when switching list types', () => {
+        const bulletedListAction = component.defaultActions.find((action: any) => action instanceof BulletedListAction) as BulletedListAction;
+        const orderedListAction = component.defaultActions.find((action: any) => action instanceof OrderedListAction) as OrderedListAction;
+
+        const bulletedText = `- First line\n- Second line\n- Third line`;
+        const expectedOrderedText = `1. First line\n2. Second line\n3. Third line`;
+
+        simulateListAction(bulletedListAction, `First line\nSecond line\nThird line`, bulletedText);
+
+        mockEditor.replaceTextAtRange.mockClear();
+        simulateListAction(orderedListAction, bulletedText, expectedOrderedText);
+    });
+
+    it('should toggle list prefixes correctly when pressing the same list button twice', () => {
+        const bulletedListAction = component.defaultActions.find((action: any) => action instanceof BulletedListAction) as BulletedListAction;
+        const orderedListAction = component.defaultActions.find((action: any) => action instanceof OrderedListAction) as OrderedListAction;
+
+        const initialText = `First line\nSecond line\nThird line`;
+
+        const bulletedText = `- First line\n- Second line\n- Third line`;
+        simulateListAction(bulletedListAction, initialText, bulletedText);
+
+        mockEditor.replaceTextAtRange.mockClear();
+        simulateListAction(bulletedListAction, bulletedText, initialText);
+
+        const orderedText = `1. First line\n2. Second line\n3. Third line`;
+        mockEditor.replaceTextAtRange.mockClear();
+        simulateListAction(orderedListAction, initialText, orderedText);
+
+        mockEditor.replaceTextAtRange.mockClear();
+        simulateListAction(orderedListAction, orderedText, initialText);
+    });
+
+    it('should handle pressing different list buttons correctly', () => {
+        const bulletedListAction = component.defaultActions.find((action: any) => action instanceof BulletedListAction) as BulletedListAction;
+        const orderedListAction = component.defaultActions.find((action: any) => action instanceof OrderedListAction) as OrderedListAction;
+
+        const initialText = `First line\nSecond line\nThird line`;
+
+        const bulletedText = `- First line\n- Second line\n- Third line`;
+        simulateListAction(bulletedListAction, initialText, bulletedText);
+
+        const orderedText = `1. First line\n2. Second line\n3. Third line`;
+        mockEditor.replaceTextAtRange.mockClear();
+        simulateListAction(orderedListAction, bulletedText, orderedText);
+
+        mockEditor.replaceTextAtRange.mockClear();
+        simulateListAction(bulletedListAction, orderedText, bulletedText);
+    });
+
+    it('should handle key down event and invoke the correct action', () => {
+        const bulletedListAction = new BulletedListAction();
+
+        component.defaultActions = [bulletedListAction];
+
+        const handleActionClickSpy = jest.spyOn(component.markdownEditor, 'handleActionClick');
+
+        const mockModel = {
+            getLineContent: jest.fn().mockReturnValue('- List item'),
+        } as unknown as monaco.editor.ITextModel;
+        const mockPosition = { lineNumber: 1 } as monaco.Position;
+
+        (component as any).handleKeyDown(mockModel, mockPosition.lineNumber);
+
+        expect(handleActionClickSpy).toHaveBeenCalledWith(expect.any(MouseEvent), bulletedListAction);
+    });
+
+    it('should handle invalid line content gracefully', () => {
+        const mockModel = {
+            getLineContent: jest.fn().mockReturnValue(''),
+        } as unknown as monaco.editor.ITextModel;
+        const mockPosition = { lineNumber: 1 } as monaco.Position;
+        const handleActionClickSpy = jest.spyOn(component.markdownEditor, 'handleActionClick');
+
+        (component as any).handleKeyDown(mockModel, mockPosition.lineNumber);
+        expect(handleActionClickSpy).not.toHaveBeenCalled();
     });
 });

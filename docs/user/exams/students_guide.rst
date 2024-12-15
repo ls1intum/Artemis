@@ -105,6 +105,14 @@ Welcome Screen
 
    Welcome Screen, waiting for exam start
 
+This video offers a detailed guide on accessing your exams:
+
+.. raw:: html
+
+    <iframe src="https://live.rbg.tum.de/w/artemisintro/52546?video_only=1&t=0" allowfullscreen="1" frameborder="0" width="600" height="350">
+        Watch this video on TUM-Live.
+    </iframe>
+
 Exam Conduction
 ^^^^^^^^^^^^^^^
 - Once the exam working time starts and you have confirmed your participation, the *Exercise Overview* screen will appear. This screen lists all exercises that are part of your exam with their respective amount of points, title and exercise type. The status column indicates the status of each exercise and whether you have a submission in them or not.
@@ -132,6 +140,14 @@ Exam Conduction
 
    Exam Navigation Sidebar
 
+- You have two options to save your changes for an exercise:
+
+    1. Click the |save_exercise| button to manually save and submit your changes.
+    2. Select an exercise in the navigation sidebar (either the current one or a different exercise), which will automatically save and submit your changes.
+   
+        .. warning::
+            The |save_exercise| button is only available for text, modeling, and quiz exercises. For file upload exercises, you need to manually click the |upload| button, and for programming exercises, you need to manually click the |submit| button to save and submit your changes. 
+   
 - On the header, you will find the exam bar that includes the remaining time and the |exam_hand_in_early| button. If you click this button, you will be sent to the exam `End Screen`_.
 - The *time left* until the end of the exam is also shown next to the button.
 
@@ -373,6 +389,14 @@ Summary
 
    Complaining about the Assessment of a Text Exercise
 
+This video offers a detailed guide on participating in your exams:
+
+.. raw:: html
+
+    <iframe src="https://live.rbg.tum.de/w/artemisintro/53405?video_only=1&t=0" allowfullscreen="1" frameborder="0" width="600" height="350">
+        Watch this video on TUM-Live.
+    </iframe>
+
 Example Solutions
 ^^^^^^^^^^^^^^^^^
 - If the instructor sets the example solution publication date of the exam, the solutions will be available after that date.
@@ -470,3 +494,5 @@ Grades
 .. |exam_no_results_found| image:: student/buttons/exam_no_results_found.png
 .. |exam_hand_in_early| image:: student/buttons/exam_hand_in_early.png
 .. |saved_exercises| image:: student/buttons/saved_exercises.png
+.. |upload| image:: student/buttons/upload.png
+.. |save_exercise| image:: student/buttons/save_exercise.png

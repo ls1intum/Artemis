@@ -1,6 +1,9 @@
 import { Posting } from 'app/entities/metis/posting.model';
 import { ChangeDetectorRef, Directive, Input, OnDestroy, OnInit, inject } from '@angular/core';
 import { MetisService } from 'app/shared/metis/metis.service';
+import { DisplayPriority } from 'app/shared/metis/metis.util';
+import { faBookmark } from '@fortawesome/free-solid-svg-icons';
+import { faBookmark as farBookmark } from '@fortawesome/free-regular-svg-icons';
 
 @Directive()
 export abstract class PostingDirective<T extends Posting> implements OnInit, OnDestroy {
@@ -10,6 +13,11 @@ export abstract class PostingDirective<T extends Posting> implements OnInit, OnD
 
     @Input() hasChannelModerationRights = false;
     @Input() isThreadSidebar: boolean;
+    abstract get reactionsBar(): any;
+    showDropdown = false;
+    dropdownPosition = { x: 0, y: 0 };
+    showReactionSelector = false;
+    clickPosition = { x: 0, y: 0 };
 
     isAnswerPost = false;
     isDeleted = false;
@@ -22,6 +30,10 @@ export abstract class PostingDirective<T extends Posting> implements OnInit, OnD
 
     protected metisService = inject(MetisService);
     protected changeDetector = inject(ChangeDetectorRef);
+
+    // Icons
+    farBookmark = farBookmark;
+    faBookmark = faBookmark;
 
     ngOnInit(): void {
         this.content = this.posting.content;
@@ -67,6 +79,56 @@ export abstract class PostingDirective<T extends Posting> implements OnInit, OnD
                 this.deleteTimerInSeconds = Math.max(0, this.deleteTimerInSeconds - 1);
                 this.changeDetector.detectChanges();
             }, 1000);
+        }
+    }
+
+    editPosting() {
+        this.reactionsBar.editPosting();
+        this.showDropdown = false;
+    }
+
+    togglePin() {
+        this.reactionsBar.togglePin();
+        this.showDropdown = false;
+    }
+
+    deletePost() {
+        this.reactionsBar.deletePosting();
+        this.showDropdown = false;
+    }
+
+    checkIfPinned(): DisplayPriority {
+        return this.reactionsBar.checkIfPinned();
+    }
+
+    selectReaction(event: any) {
+        this.reactionsBar.selectReaction(event);
+        this.showReactionSelector = false;
+    }
+
+    addReaction(event: MouseEvent) {
+        event.preventDefault();
+        this.showDropdown = false;
+
+        this.clickPosition = {
+            x: event.clientX,
+            y: event.clientY,
+        };
+
+        this.showReactionSelector = true;
+    }
+
+    toggleEmojiSelect() {
+        this.showReactionSelector = !this.showReactionSelector;
+    }
+
+    protected toggleSavePost() {
+        if (this.posting.isSaved) {
+            this.metisService.removeSavedPost(this.posting);
+            this.posting.isSaved = false;
+        } else {
+            this.metisService.savePost(this.posting);
+            this.posting.isSaved = true;
         }
     }
 }

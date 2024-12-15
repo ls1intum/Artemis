@@ -8,8 +8,14 @@ export class MockFileService {
     downloadFile = () => {
         return { subscribe: (fn: (value: any) => void) => fn({ body: new Window() }) };
     };
+    downloadFileByAttachmentName = () => {
+        return { subscribe: (fn: (value: any) => void) => fn({ body: new Window() }) };
+    };
 
     getTemplateFile = () => {
         return of();
     };
+
+    replaceLectureAttachmentPrefixAndUnderscores = (link: string) => link;
+    replaceAttachmentPrefixAndUnderscores = (link: string) => link;
 }

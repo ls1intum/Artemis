@@ -1114,7 +1114,7 @@ $transition-in-between-delay: 0.05s;
 .sidebar-wrap {
     overflow: hidden;
     max-width: $sidebar-width;
-    margin-right: $spacer;
+    margin-right: 0.5rem;
 
     transition:
         max-width $transition-sidebar-width-length 0s ease-in-out,
@@ -1144,4 +1144,8 @@ $transition-in-between-delay: 0.05s;
 
 .fs-small {
     font-size: 0.875rem;
+}
+
+.min-h-100 {
+    min-height: 100%;
 }

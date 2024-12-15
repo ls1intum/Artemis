@@ -1,4 +1,4 @@
-import { Component, EventEmitter, Input, OnInit, Output } from '@angular/core';
+import { Component, Input, OnInit, input, output } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { ExerciseUnit } from 'app/entities/lecture-unit/exerciseUnit.model';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
@@ -18,25 +18,18 @@ import { faSort, faTimes } from '@fortawesome/free-solid-svg-icons';
     styleUrls: ['./create-exercise-unit.component.scss'],
 })
 export class CreateExerciseUnitComponent implements OnInit {
-    @Input()
-    hasCancelButton: boolean;
-    @Input()
-    hasCreateExerciseButton: boolean;
-    @Input()
-    shouldNavigateOnSubmit = true;
-    @Input()
-    lectureId: number | undefined;
-    @Input()
-    courseId: number | undefined;
-    @Input()
-    currentWizardStep: number;
+    protected readonly faTimes = faTimes;
+    protected readonly faSort = faSort;
 
-    @Output()
-    onCancel: EventEmitter<any> = new EventEmitter<any>();
-    @Output()
-    onExerciseUnitCreated: EventEmitter<any> = new EventEmitter<any>();
+    @Input() lectureId: number | undefined;
+    @Input() courseId: number | undefined;
+    hasCancelButton = input<boolean>();
+    hasCreateExerciseButton = input<boolean>();
+    shouldNavigateOnSubmit = input<boolean>(true);
+    currentWizardStep = input<number>();
 
-    faTimes = faTimes;
+    onCancel = output<void>();
+    onExerciseUnitCreated = output<void>();
 
     predicate = 'type';
     reverse = false;
@@ -44,9 +37,6 @@ export class CreateExerciseUnitComponent implements OnInit {
 
     exercisesAvailableForUnitCreation: Exercise[] = [];
     exercisesToCreateUnitFor: Exercise[] = [];
-
-    // Icons
-    faSort = faSort;
 
     constructor(
         private activatedRoute: ActivatedRoute,
@@ -98,7 +88,7 @@ export class CreateExerciseUnitComponent implements OnInit {
             .pipe(
                 concatMap((unit) => this.exerciseUnitService.create(unit, this.lectureId!)),
                 finalize(() => {
-                    if (this.shouldNavigateOnSubmit) {
+                    if (this.shouldNavigateOnSubmit()) {
                         this.router.navigate(['../../'], { relativeTo: this.activatedRoute });
                     } else {
                         this.onExerciseUnitCreated.emit();
@@ -136,7 +126,7 @@ export class CreateExerciseUnitComponent implements OnInit {
 
     createNewExercise() {
         this.router.navigate(['/course-management', this.courseId, 'exercises'], {
-            queryParams: { shouldHaveBackButtonToWizard: 'true', lectureId: this.lectureId, step: this.currentWizardStep },
+            queryParams: { shouldHaveBackButtonToWizard: 'true', lectureId: this.lectureId, step: this.currentWizardStep() },
             queryParamsHandling: '',
         });
     }

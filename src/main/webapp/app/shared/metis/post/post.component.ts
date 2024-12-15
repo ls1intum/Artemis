@@ -1,9 +1,26 @@
-import { AfterContentChecked, ChangeDetectionStrategy, Component, EventEmitter, Input, OnChanges, OnInit, Output, ViewChild, ViewContainerRef } from '@angular/core';
+import {
+    AfterContentChecked,
+    ChangeDetectionStrategy,
+    ChangeDetectorRef,
+    Component,
+    EventEmitter,
+    HostListener,
+    Inject,
+    Input,
+    OnChanges,
+    OnInit,
+    Output,
+    Renderer2,
+    ViewChild,
+    ViewContainerRef,
+    input,
+} from '@angular/core';
 import { Post } from 'app/entities/metis/post.model';
 import { PostingDirective } from 'app/shared/metis/posting.directive';
+import { MetisService } from 'app/shared/metis/metis.service';
 import { NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
 import { ContextInformation, DisplayPriority, PageType, RouteComponents } from '../metis.util';
-import { faBullhorn, faCheckSquare } from '@fortawesome/free-solid-svg-icons';
+import { faBookmark, faBullhorn, faCheckSquare, faComments, faPencilAlt, faSmile, faThumbtack, faTrash } from '@fortawesome/free-solid-svg-icons';
 import dayjs from 'dayjs/esm';
 import { PostFooterComponent } from 'app/shared/metis/posting-footer/post-footer/post-footer.component';
 import { OneToOneChatService } from 'app/shared/metis/conversations/one-to-one-chat.service';
@@ -14,6 +31,10 @@ import { getAsChannelDTO } from 'app/entities/metis/conversation/channel.model';
 import { AnswerPost } from 'app/entities/metis/answer-post.model';
 import { AnswerPostCreateEditModalComponent } from 'app/shared/metis/posting-create-edit-modal/answer-post-create-edit-modal/answer-post-create-edit-modal.component';
 import { animate, style, transition, trigger } from '@angular/animations';
+import { PostCreateEditModalComponent } from 'app/shared/metis/posting-create-edit-modal/post-create-edit-modal/post-create-edit-modal.component';
+import { PostReactionsBarComponent } from 'app/shared/metis/posting-reactions-bar/post-reactions-bar/post-reactions-bar.component';
+import { CdkOverlayOrigin } from '@angular/cdk/overlay';
+import { DOCUMENT } from '@angular/common';
 
 @Component({
     selector: 'jhi-post',
@@ -37,8 +58,12 @@ export class PostComponent extends PostingDirective<Post> implements OnInit, OnC
     @Input() showAnswers: boolean;
     @Output() openThread = new EventEmitter<void>();
     @ViewChild('createAnswerPostModal') createAnswerPostModalComponent: AnswerPostCreateEditModalComponent;
+    @ViewChild('createEditModal') createEditModal!: PostCreateEditModalComponent;
     @ViewChild('createEditAnswerPostContainer', { read: ViewContainerRef }) containerRef: ViewContainerRef;
     @ViewChild('postFooter') postFooterComponent: PostFooterComponent;
+    showReactionSelector = false;
+    @ViewChild('emojiPickerTrigger') emojiPickerTrigger!: CdkOverlayOrigin;
+    static activeDropdownPost: PostComponent | null = null;
 
     displayInlineInput = false;
     routerLink: RouteComponents;
@@ -52,17 +77,109 @@ export class PostComponent extends PostingDirective<Post> implements OnInit, OnC
     contextInformation: ContextInformation;
     readonly PageType = PageType;
     readonly DisplayPriority = DisplayPriority;
+    mayEdit: boolean = false;
+    mayDelete: boolean = false;
+    canPin: boolean = false;
 
     // Icons
-    faBullhorn = faBullhorn;
-    faCheckSquare = faCheckSquare;
+    readonly faBullhorn = faBullhorn;
+    readonly faComments = faComments;
+    readonly faPencilAlt = faPencilAlt;
+    readonly faSmile = faSmile;
+    readonly faTrash = faTrash;
+    readonly faThumbtack = faThumbtack;
+    readonly faCheckSquare = faCheckSquare;
+    readonly faBookmark = faBookmark;
+
+    isConsecutive = input<boolean>(false);
+    dropdownPosition = { x: 0, y: 0 };
+    @ViewChild(PostReactionsBarComponent) protected reactionsBarComponent!: PostReactionsBarComponent;
 
     constructor(
+        public metisService: MetisService,
+        public changeDetector: ChangeDetectorRef,
         private oneToOneChatService: OneToOneChatService,
         private metisConversationService: MetisConversationService,
         private router: Router,
+        public renderer: Renderer2,
+        @Inject(DOCUMENT) private document: Document,
     ) {
         super();
+    }
+
+    get reactionsBar() {
+        return this.reactionsBarComponent;
+    }
+
+    isPinned(): boolean {
+        return this.posting.displayPriority === DisplayPriority.PINNED;
+    }
+
+    onMayEdit(value: boolean) {
+        this.mayEdit = value;
+    }
+
+    onMayDelete(value: boolean) {
+        this.mayDelete = value;
+    }
+
+    onCanPin(value: boolean) {
+        this.canPin = value;
+    }
+
+    onRightClick(event: MouseEvent) {
+        const targetElement = event.target as HTMLElement;
+        const isPointerCursor = window.getComputedStyle(targetElement).cursor === 'pointer';
+
+        if (!isPointerCursor) {
+            event.preventDefault();
+
+            if (PostComponent.activeDropdownPost && PostComponent.activeDropdownPost !== this) {
+                PostComponent.activeDropdownPost.showDropdown = false;
+                PostComponent.activeDropdownPost.enableBodyScroll();
+                PostComponent.activeDropdownPost.changeDetector.detectChanges();
+            }
+
+            PostComponent.activeDropdownPost = this;
+
+            this.dropdownPosition = {
+                x: event.clientX,
+                y: event.clientY,
+            };
+
+            this.showDropdown = true;
+            this.adjustDropdownPosition();
+            this.disableBodyScroll();
+        }
+    }
+
+    adjustDropdownPosition() {
+        const dropdownWidth = 200;
+        const screenWidth = window.innerWidth;
+
+        if (this.dropdownPosition.x + dropdownWidth > screenWidth) {
+            this.dropdownPosition.x = screenWidth - dropdownWidth - 10;
+        }
+    }
+
+    disableBodyScroll() {
+        const mainContainer = this.document.querySelector('.posting-infinite-scroll-container');
+        if (mainContainer) {
+            this.renderer.setStyle(mainContainer, 'overflow', 'hidden');
+        }
+    }
+
+    enableBodyScroll() {
+        const mainContainer = this.document.querySelector('.posting-infinite-scroll-container');
+        if (mainContainer) {
+            this.renderer.setStyle(mainContainer, 'overflow-y', 'auto');
+        }
+    }
+
+    @HostListener('document:click', ['$event'])
+    onClickOutside() {
+        this.showDropdown = false;
+        this.enableBodyScroll();
     }
 
     /**
@@ -74,6 +191,7 @@ export class PostComponent extends PostingDirective<Post> implements OnInit, OnC
         this.contextInformation = this.metisService.getContextInformation(this.posting);
         this.isAtLeastTutorInCourse = this.metisService.metisUserIsAtLeastTutorInCourse();
         this.sortAnswerPosts();
+        this.assignPostingToPost();
     }
 
     /**
@@ -85,6 +203,7 @@ export class PostComponent extends PostingDirective<Post> implements OnInit, OnC
         this.queryParams = this.metisService.getQueryParamsForPost(this.posting);
         this.showAnnouncementIcon = (getAsChannelDTO(this.posting.conversation)?.isAnnouncementChannel && this.showChannelReference) ?? false;
         this.sortAnswerPosts();
+        this.assignPostingToPost();
     }
 
     /**
@@ -111,6 +230,13 @@ export class PostComponent extends PostingDirective<Post> implements OnInit, OnC
      */
     openCreateAnswerPostModal() {
         this.postFooterComponent.openCreateAnswerPostModal();
+    }
+
+    /**
+     * Close create answer modal
+     */
+    closeCreateAnswerPostModal() {
+        this.postFooterComponent.closeCreateAnswerPostModal();
     }
 
     /**
@@ -168,6 +294,13 @@ export class PostComponent extends PostingDirective<Post> implements OnInit, OnC
                     },
                 });
             }
+        }
+    }
+
+    private assignPostingToPost() {
+        // This is needed because otherwise instanceof returns 'object'.
+        if (this.posting && !(this.posting instanceof Post)) {
+            this.posting = Object.assign(new Post(), this.posting);
         }
     }
 }

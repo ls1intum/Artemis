@@ -49,4 +49,6 @@ public interface PostRepository extends ArtemisJpaRepository<Post, Long>, JpaSpe
     List<Post> findAllByConversationId(Long conversationId);
 
     List<Post> findAllByCourseId(Long courseId);
+
+    List<Post> findByIdIn(List<Long> idList);
 }

@@ -2383,7 +2383,7 @@ public class ProgrammingExerciseTestService {
         createProgrammingParticipationWithSubmissionAndResult(examExercise, "student4", 80D, ZonedDateTime.now().minusDays(6L), false);
 
         automaticProgrammingExerciseCleanupService.cleanupGitWorkingCopiesOnArtemisServer();
-        // Note: at the moment, we cannot easily assert something here, it might be possible to verify mocks on gitService, in case we could define it as SpyBean
+        // Note: at the moment, we cannot easily assert something here, it might be possible to verify mocks on gitService, in case we could define it as MockitoSpyBean
     }
 
     private void validateProgrammingExercise(ProgrammingExercise generatedExercise) {
@@ -2630,12 +2630,12 @@ public class ProgrammingExerciseTestService {
         exercise.setBuildConfig(programmingExerciseBuildConfigRepository.save(exercise.getBuildConfig()));
         exercise = programmingExerciseRepository.save(exercise);
         var statistics = request.get("/api/programming-exercises/" + exercise.getId() + "/build-log-statistics", HttpStatus.OK, BuildLogStatisticsDTO.class);
-        assertThat(statistics.buildCount()).isZero();
-        assertThat(statistics.agentSetupDuration()).isNull();
-        assertThat(statistics.testDuration()).isNull();
-        assertThat(statistics.scaDuration()).isNull();
-        assertThat(statistics.totalJobDuration()).isNull();
-        assertThat(statistics.dependenciesDownloadedCount()).isNull();
+        assertThat(statistics.buildCount()).isEqualTo(0);
+        assertThat(statistics.agentSetupDuration()).isEqualTo(0);
+        assertThat(statistics.testDuration()).isEqualTo(0);
+        assertThat(statistics.scaDuration()).isEqualTo(0);
+        assertThat(statistics.totalJobDuration()).isEqualTo(0);
+        assertThat(statistics.dependenciesDownloadedCount()).isEqualTo(0);
     }
 
     // TEST

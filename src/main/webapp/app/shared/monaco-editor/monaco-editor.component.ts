@@ -110,7 +110,25 @@ export class MonacoEditorComponent implements OnInit, OnDestroy {
     }
 
     convertTextToEmoji(text: string): string {
-        return this.emojiConvertor.replace_emoticons(text);
+        const words = text.split(' ');
+        const convertedWords = words.map((word) => {
+            return word.startsWith(':') ? this.emojiConvertor.replace_emoticons(word) : word;
+        });
+
+        return convertedWords.join(' ');
+    }
+
+    public onDidChangeModelContent(listener: (event: monaco.editor.IModelContentChangedEvent) => void): monaco.IDisposable {
+        return this._editor.onDidChangeModelContent(listener);
+    }
+
+    public getModel() {
+        return this._editor.getModel();
+    }
+
+    public getLineContent(lineNumber: number): string {
+        const model = this._editor.getModel();
+        return model ? model.getLineContent(lineNumber) : '';
     }
 
     ngOnInit(): void {

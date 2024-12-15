@@ -314,8 +314,8 @@
             "preparingParticipation": "Aufgabe wird vorbereitet. Dies kann ein paar Sekunden dauern.",
             "generateParticipationFailed": "Das Vorbereiten der Aufgabe ist fehlgeschlagen.",
             "generateParticipationRetry": "Erneut versuchen",
-            "points": "Punkte",
-            "bonus": "Bonuspunkte",
+            "points": "({{ points }} Punkte)",
+            "bonus": "({{ points }} Punkte, {{ bonusPoints }} Bonuspunkte)",
             "synced": "Aufgabe gespeichert",
             "notSynced": "Aufgabe nicht gespeichert",
             "notStarted": "Aufgabe nicht gestartet",
@@ -338,7 +338,9 @@
                 "noActionRequired": "Artemis erfordert keine weitere Aktion, das Fenster kann geschlossen werden.",
                 "followExamProtocol": "Halte dich an die Klausuranweisungen deiner Lehrenden.",
                 "button": "Zusammenfassung der Klausur anzeigen{{ countdown }}"
-            }
+            },
+            "saveExercise": "Aufgabe speichern",
+            "exerciseSaved": "Aufgabe gespeichert"
         },
         "exerciseGroup": {
             "created": "Neue Aufgabengruppe erstellt",
@@ -774,7 +776,8 @@
             }
         },
         "studentExamDetail": {
-            "studentExam": "Klausur ({{ examTitle }})",
+            "studentExam": "Studierenden Klausur ({{ examTitle }})",
+            "studentTestExam": "Studierenden Test Klausur ({{ examTitle }})",
             "testRun": "Testlauf ({{ examTitle }})",
             "exercises": "Aufgaben",
             "overview": "Übersicht",
@@ -798,7 +801,7 @@
             "endOfIndividualWorkingTime": "Ende der individuellen Bearbeitungszeit:",
             "disabledChangeSubmissionStateButtonExplanation": "Der Abgabestatus kann erst nach Ende der Bearbeitungszeit und Ablauf der Karenzzeit geändert werden.",
             "toggleSuccessful": "Der Abgabestatus wurde erfolgreich geändert.",
-            "togglefailed": "Der Abgabestatus konnte nicht geändert werden!",
+            "toggleFailed": "Der Abgabestatus konnte nicht geändert werden!",
             "hasComplaint": "Beschwerde existiert",
             "noSessions": "Keine Sitzungen"
         },
