@@ -12,8 +12,14 @@ export const USER_DISPLAY_RELEVANT_EVENTS = [
     ExamLiveEventType.WORKING_TIME_UPDATE,
     ExamLiveEventType.EXAM_ATTENDANCE_CHECK,
     ExamLiveEventType.PROBLEM_STATEMENT_UPDATE,
+    ExamLiveEventType.EXAM_RESCHEDULED,
 ];
-export const USER_DISPLAY_RELEVANT_EVENTS_REOPEN = [ExamLiveEventType.EXAM_WIDE_ANNOUNCEMENT, ExamLiveEventType.WORKING_TIME_UPDATE, ExamLiveEventType.PROBLEM_STATEMENT_UPDATE];
+export const USER_DISPLAY_RELEVANT_EVENTS_REOPEN = [
+    ExamLiveEventType.EXAM_WIDE_ANNOUNCEMENT,
+    ExamLiveEventType.WORKING_TIME_UPDATE,
+    ExamLiveEventType.PROBLEM_STATEMENT_UPDATE,
+    ExamLiveEventType.EXAM_RESCHEDULED,
+];
 
 @Component({
     selector: 'jhi-exam-live-events-button',
