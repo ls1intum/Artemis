@@ -30,7 +30,6 @@ import de.tum.cit.aet.artemis.atlas.domain.competency.Competency;
 import de.tum.cit.aet.artemis.atlas.domain.competency.CompetencyJol;
 import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.domain.User;
-import de.tum.cit.aet.artemis.core.exception.AccessForbiddenAlertException;
 import de.tum.cit.aet.artemis.core.user.util.UserUtilService;
 import de.tum.cit.aet.artemis.exercise.domain.SubmissionType;
 import de.tum.cit.aet.artemis.exercise.participation.util.ParticipationFactory;
@@ -264,7 +263,10 @@ class PyrisEventSystemIntegrationTest extends AbstractIrisIntegrationTest {
         createSubmissionWithScore(studentParticipation, 40);
         createSubmissionWithScore(studentParticipation, 40);
         var result = createSubmissionWithScore(studentParticipation, 40);
-        assertThatExceptionOfType(AccessForbiddenAlertException.class).isThrownBy(() -> pyrisEventService.trigger(new NewResultEvent(result)));
+        pyrisEventService.trigger(new NewResultEvent(result));
+
+        verify(irisExerciseChatSessionService, times(1)).onNewResult(any(Result.class));
+        verify(pyrisPipelineService, times(0)).executeExerciseChatPipeline(any(), any(), any(), any(), any());
     }
 
     @Test
@@ -278,7 +280,10 @@ class PyrisEventSystemIntegrationTest extends AbstractIrisIntegrationTest {
         irisExerciseChatSessionService.createChatSessionForProgrammingExercise(exercise, userUtilService.getUserByLogin(TEST_PREFIX + "student1"));
         // Create a failing submission for the student.
         var result = createFailingSubmission(studentParticipation);
-        assertThatExceptionOfType(AccessForbiddenAlertException.class).isThrownBy(() -> pyrisEventService.trigger(new NewResultEvent(result)));
+        pyrisEventService.trigger(new NewResultEvent(result));
+
+        verify(irisExerciseChatSessionService, times(1)).onBuildFailure(any(Result.class));
+        verify(pyrisPipelineService, times(0)).executeExerciseChatPipeline(any(), any(), any(), any(), any());
     }
 
     @Test

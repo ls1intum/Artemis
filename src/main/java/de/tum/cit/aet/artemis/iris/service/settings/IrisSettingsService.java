@@ -15,6 +15,8 @@ import java.util.SortedSet;
 import java.util.TreeSet;
 import java.util.function.Supplier;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.boot.context.event.ApplicationReadyEvent;
 import org.springframework.context.annotation.Profile;
 import org.springframework.context.event.EventListener;
@@ -59,6 +61,8 @@ import de.tum.cit.aet.artemis.text.repository.TextExerciseRepository;
 @Service
 @Profile(PROFILE_IRIS)
 public class IrisSettingsService {
+
+    private static final Logger log = LoggerFactory.getLogger(IrisSettingsService.class);
 
     private final IrisSettingsRepository irisSettingsRepository;
 
@@ -477,38 +481,6 @@ public class IrisSettingsService {
     }
 
     /**
-     * Checks whether an Iris event is enabled for a course.
-     * Throws an exception if the chat feature is disabled.
-     * Throws an exception if the event is disabled.
-     *
-     * @param type   The Iris event to check
-     * @param course The course to check
-     */
-    public void isActivatedForElseThrow(IrisEventType type, Course course) {
-        isEnabledForElseThrow(IrisSubSettingsType.CHAT, course);
-
-        if (!isActivatedFor(type, course)) {
-            throw new AccessForbiddenAlertException("The Iris " + type.name() + " event is disabled for this course.", "Iris", "iris." + type.name().toLowerCase() + "Disabled");
-        }
-    }
-
-    /**
-     * Checks whether an Iris event is enabled for an exercise.
-     * Throws an exception if the chat feature is disabled.
-     * Throws an exception if the event is disabled.
-     *
-     * @param type     The Iris event to check
-     * @param exercise The exercise to check
-     */
-    public void isActivatedForElseThrow(IrisEventType type, Exercise exercise) {
-        isEnabledForElseThrow(IrisSubSettingsType.CHAT, exercise);
-
-        if (!isActivatedFor(type, exercise)) {
-            throw new AccessForbiddenAlertException("The Iris " + type.name() + " event is disabled for this exercise.", "Iris", "iris." + type.name().toLowerCase() + "Disabled");
-        }
-    }
-
-    /**
      * Checks whether an Iris feature is enabled for a course.
      *
      * @param type   The Iris feature to check
@@ -540,6 +512,10 @@ public class IrisSettingsService {
      * @return Whether the Iris event is active for the course
      */
     public boolean isActivatedFor(IrisEventType type, Course course) {
+        if (!isEnabledFor(IrisSubSettingsType.CHAT, course)) {
+            log.debug("Chat is disabled for course {}", course.getId());
+            return false;
+        }
         var settings = getCombinedIrisSettingsFor(course, false);
         return isEventEnabledInSettings(settings, type);
     }
@@ -552,6 +528,10 @@ public class IrisSettingsService {
      * @return Whether the Iris event is active for the exercise
      */
     public boolean isActivatedFor(IrisEventType type, Exercise exercise) {
+        if (!isEnabledFor(IrisSubSettingsType.CHAT, exercise)) {
+            log.debug("Chat is disabled for exercise {}", exercise.getId());
+            return false;
+        }
         var settings = getCombinedIrisSettingsFor(exercise, false);
         return isEventEnabledInSettings(settings, type);
     }
@@ -760,7 +740,9 @@ public class IrisSettingsService {
         return switch (type) {
             case PROGRESS_STALLED -> {
                 if (settings.irisChatSettings().disabledProactiveEvents() != null) {
-                    yield !settings.irisChatSettings().disabledProactiveEvents().contains(IrisEventType.PROGRESS_STALLED.name().toLowerCase());
+                    var isEventEnabled = !settings.irisChatSettings().disabledProactiveEvents().contains(IrisEventType.PROGRESS_STALLED.name().toLowerCase());
+                    log.debug("Event PROGRESS_STALLED enabled: {}", isEventEnabled);
+                    yield isEventEnabled;
                 }
                 else {
                     yield true;
@@ -768,7 +750,9 @@ public class IrisSettingsService {
             }
             case BUILD_FAILED -> {
                 if (settings.irisChatSettings().disabledProactiveEvents() != null) {
-                    yield !settings.irisChatSettings().disabledProactiveEvents().contains(IrisEventType.BUILD_FAILED.name().toLowerCase());
+                    var isEventEnabled = !settings.irisChatSettings().disabledProactiveEvents().contains(IrisEventType.BUILD_FAILED.name().toLowerCase());
+                    log.debug("Event BUILD_FAILED enabled: {}", isEventEnabled);
+                    yield isEventEnabled;
                 }
                 else {
                     yield true;

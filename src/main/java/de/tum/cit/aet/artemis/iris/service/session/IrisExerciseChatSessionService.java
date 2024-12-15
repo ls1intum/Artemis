@@ -188,7 +188,10 @@ public class IrisExerciseChatSessionService extends AbstractIrisChatSessionServi
             }
             var exercise = validateExercise(participation.getExercise());
 
-            irisSettingsService.isActivatedForElseThrow(IrisEventType.BUILD_FAILED, exercise);
+            if (!irisSettingsService.isActivatedFor(IrisEventType.BUILD_FAILED, exercise)) {
+                log.info("Build failure event is not activated for exercise {}", exercise.getId());
+                return;
+            }
 
             var participant = studentParticipation.getParticipant();
             if (participant instanceof User user) {
@@ -215,7 +218,10 @@ public class IrisExerciseChatSessionService extends AbstractIrisChatSessionServi
 
         var exercise = validateExercise(participation.getExercise());
 
-        irisSettingsService.isActivatedForElseThrow(IrisEventType.PROGRESS_STALLED, exercise);
+        if (!irisSettingsService.isActivatedFor(IrisEventType.PROGRESS_STALLED, exercise)) {
+            log.info("Progress stalled event is not activated for exercise {}", exercise.getId());
+            return;
+        }
 
         var recentSubmissions = submissionRepository.findAllWithResultsByParticipationIdOrderBySubmissionDateAsc(studentParticipation.getId());
 
