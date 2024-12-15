@@ -1445,7 +1445,7 @@ public class ExamService {
                 studentExam.setWorkingTime(adjustedWorkingTime);
             }
 
-            // NOTE: If the exam is already visible, notify the student about changes to the working time or the exam rescheduling
+            // "NOTE: If the exam is already visible, notify the student about any changes to the working time or exam schedule."
             if (now.isAfter(exam.getVisibleDate())) {
                 // If the old working time equals the new working time, the exam has been rescheduled
                 if (studentExam.getWorkingTime().equals(originalStudentWorkingTime)) {

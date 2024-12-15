@@ -9,7 +9,7 @@ import jakarta.persistence.Entity;
 import de.tum.cit.aet.artemis.exam.dto.examevent.ExamRescheduledEventDTO;
 
 /**
- * An event indicating that exam start and end dates were rescheduled for a specific student exam. In case of this event working time doesn't change.
+ * An event indicating that the exam's start and end dates have been rescheduled. The working time remains unchanged in such cases.
  */
 @Entity
 @DiscriminatorValue(value = "R")
