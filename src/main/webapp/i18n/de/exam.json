@@ -187,7 +187,8 @@
                     "examWideAnnouncement": "Klausurweite Ankündigung",
                     "workingTimeUpdate": "Bearbeitungszeit Aktualisiert",
                     "examAttendanceCheck": "Anwesenheitskontrolle",
-                    "problemStatementUpdate": "Aufgabenstellung Aktualisiert"
+                    "problemStatementUpdate": "Aufgabenstellung Aktualisiert",
+                    "examRescheduled": "Prüfung verschoben"
                 },
                 "from": "von",
                 "acknowledge": "Bestätigen",
@@ -206,6 +207,9 @@
                     "problemStatementUpdate": {
                         "description": "Die Aufgabenstellung der Aufgabe '{{ exerciseName }}' wurde aktualisiert. Bitte öffne die Aufgabe, um die Änderungen zu sehen.",
                         "instructorMessage": "Lehrkraft Nachricht:"
+                    },
+                    "examRescheduled": {
+                        "description": "Die Prüfung wurde verschoben. Die Prüfung findet vom {{ startDate }} bis zum {{ endDate }} statt."
                     }
                 }
             }

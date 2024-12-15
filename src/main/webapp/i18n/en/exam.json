@@ -187,7 +187,8 @@
                     "examWideAnnouncement": "Exam-Wide Announcement",
                     "workingTimeUpdate": "Working Time Update",
                     "examAttendanceCheck": "Attendance Check",
-                    "problemStatementUpdate": "Problem Statement Update"
+                    "problemStatementUpdate": "Problem Statement Update",
+                    "examRescheduled": "Exam rescheduled"
                 },
                 "from": "from",
                 "acknowledge": "Acknowledge",
@@ -206,6 +207,9 @@
                     "problemStatementUpdate": {
                         "description": "The problem statement of the exercise '{{ exerciseName }}' was updated. Please open the exercise to see the changes.",
                         "instructorMessage": "Instructor's message:"
+                    },
+                    "examRescheduled": {
+                        "description": "The exam has been rescheduled. The exam will take place from {{ startDate }} to {{ endDate }}."
                     }
                 }
             }
