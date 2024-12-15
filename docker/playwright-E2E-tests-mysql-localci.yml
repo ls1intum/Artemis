@@ -47,7 +47,6 @@ services:
                 condition: service_healthy
         environment:
             PLAYWRIGHT_DB_TYPE: 'MySQL'
-        network_mode: service:artemis-app
 
 networks:
     artemis:
