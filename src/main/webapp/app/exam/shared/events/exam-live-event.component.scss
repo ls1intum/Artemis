@@ -44,6 +44,11 @@
         border-color: var(--artemis-alert-info-border);
     }
 
+    &.examRescheduled {
+        background-color: var(--artemis-alert-warning-background);
+        border-color: var(--artemis-alert-warning-border);
+    }
+
     .headline {
         display: flex;
         justify-content: space-between;
