@@ -213,7 +213,7 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
                             this.localVCEnabled = profileInfo.activeProfiles.includes(PROFILE_LOCALVC);
                             this.localCIEnabled = profileInfo.activeProfiles.includes(PROFILE_LOCALCI);
                             this.irisEnabled = profileInfo.activeProfiles.includes(PROFILE_IRIS);
-                            if (this.irisEnabled) {
+                            if (this.irisEnabled && !this.isExamExercise) {
                                 this.irisSettingsSubscription = this.irisSettingsService.getCombinedCourseSettings(this.courseId).subscribe((settings) => {
                                     this.irisChatEnabled = settings?.irisChatSettings?.enabled ?? false;
                                 });
