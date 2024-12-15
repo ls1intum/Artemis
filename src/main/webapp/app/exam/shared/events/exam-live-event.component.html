@@ -73,7 +73,11 @@
             }
             @case (ExamLiveEventType.EXAM_RESCHEDULED) {
                 <div>
-                    <div jhiTranslate="artemisApp.exam.events.messages.examRescheduled.description" class="wt-title"></div>
+                    <div
+                        [jhiTranslate]="'artemisApp.exam.events.messages.examRescheduled.description'"
+                        [translateValues]="{ startDate: examRescheduledEvent.newStartDate | artemisDate, endDate: examRescheduledEvent.newEndDate | artemisDate }"
+                        class="wt-title"
+                    ></div>
                 </div>
             }
         }
