@@ -758,7 +758,16 @@ public class IrisSettingsService {
                     yield true;
                 }
             }
-            default -> throw new IllegalStateException("Unexpected value: " + type); // TODO: Add JOL event, once Course Chat Settings are implemented
+            case JOL -> {
+                if (settings.irisChatSettings().disabledProactiveEvents() != null) {
+                    var isEventEnabled = !settings.irisChatSettings().disabledProactiveEvents().contains(IrisEventType.JOL.name().toLowerCase());
+                    log.debug("Event JOL enabled: {}", isEventEnabled);
+                    yield isEventEnabled;
+                }
+                else {
+                    yield true;
+                }
+            }
         };
     }
 }

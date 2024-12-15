@@ -39,13 +39,11 @@ import de.tum.cit.aet.artemis.exercise.test_repository.SubmissionTestRepository;
 import de.tum.cit.aet.artemis.iris.domain.settings.event.IrisEventType;
 import de.tum.cit.aet.artemis.iris.repository.IrisSettingsRepository;
 import de.tum.cit.aet.artemis.iris.service.pyris.PyrisEventProcessingException;
+import de.tum.cit.aet.artemis.iris.service.pyris.PyrisEventPublisher;
 import de.tum.cit.aet.artemis.iris.service.pyris.PyrisEventService;
 import de.tum.cit.aet.artemis.iris.service.pyris.PyrisJobService;
 import de.tum.cit.aet.artemis.iris.service.pyris.PyrisStatusUpdateService;
-import de.tum.cit.aet.artemis.iris.service.pyris.UnsupportedPyrisEventException;
 import de.tum.cit.aet.artemis.iris.service.pyris.event.NewResultEvent;
-import de.tum.cit.aet.artemis.iris.service.pyris.event.PyrisEvent;
-import de.tum.cit.aet.artemis.iris.service.session.IrisExerciseChatSessionService;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseStudentParticipation;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingSubmission;
@@ -65,6 +63,9 @@ class PyrisEventSystemIntegrationTest extends AbstractIrisIntegrationTest {
     protected PyrisJobService pyrisJobService;
 
     @Autowired
+    private PyrisEventService pyrisEventService;
+
+    @Autowired
     protected IrisSettingsRepository irisSettingsRepository;
 
     @Autowired
@@ -74,7 +75,7 @@ class PyrisEventSystemIntegrationTest extends AbstractIrisIntegrationTest {
     private SubmissionTestRepository submissionRepository;
 
     @Autowired
-    private PyrisEventService pyrisEventService;
+    private PyrisEventPublisher pyrisEventPublisher;
 
     @Autowired
     private ParticipationUtilService participationUtilService;
@@ -192,7 +193,7 @@ class PyrisEventSystemIntegrationTest extends AbstractIrisIntegrationTest {
             pipelineDone.set(true);
         });
 
-        pyrisEventService.trigger(new NewResultEvent(result));
+        pyrisEventPublisher.publishEvent(new NewResultEvent(this, result));
         verify(irisExerciseChatSessionService, times(1)).onNewResult(eq(result));
 
         await().atMost(2, TimeUnit.SECONDS).until(() -> pipelineDone.get());
@@ -212,7 +213,7 @@ class PyrisEventSystemIntegrationTest extends AbstractIrisIntegrationTest {
             pipelineDone.set(true);
         });
 
-        pyrisEventService.trigger(new NewResultEvent(result));
+        pyrisEventPublisher.publishEvent(new NewResultEvent(this, result));
         verify(irisExerciseChatSessionService, times(1)).onBuildFailure(eq(result));
 
         await().atMost(2, TimeUnit.SECONDS).until(() -> pipelineDone.get());
@@ -239,19 +240,6 @@ class PyrisEventSystemIntegrationTest extends AbstractIrisIntegrationTest {
 
     }
 
-    @Test
-    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
-    void testShouldThrowUnsupportedEventException() {
-        assertThatExceptionOfType(UnsupportedPyrisEventException.class).isThrownBy(() -> pyrisEventService.trigger(new PyrisEvent<IrisExerciseChatSessionService, Object>() {
-
-            @Override
-            public void handleEvent(IrisExerciseChatSessionService service) {
-                // Do nothing
-            }
-        })).withMessageStartingWith("Unsupported event");
-
-    }
-
     @Test()
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testShouldNotFireProgressStalledEventWithEventDisabled() {
@@ -263,9 +251,9 @@ class PyrisEventSystemIntegrationTest extends AbstractIrisIntegrationTest {
         createSubmissionWithScore(studentParticipation, 40);
         createSubmissionWithScore(studentParticipation, 40);
         var result = createSubmissionWithScore(studentParticipation, 40);
-        pyrisEventService.trigger(new NewResultEvent(result));
+        pyrisEventPublisher.publishEvent(new NewResultEvent(this, result));
 
-        verify(irisExerciseChatSessionService, times(1)).onNewResult(any(Result.class));
+        verify(irisExerciseChatSessionService, times(0)).onNewResult(any(Result.class));
         verify(pyrisPipelineService, times(0)).executeExerciseChatPipeline(any(), any(), any(), any(), any());
     }
 
@@ -280,9 +268,9 @@ class PyrisEventSystemIntegrationTest extends AbstractIrisIntegrationTest {
         irisExerciseChatSessionService.createChatSessionForProgrammingExercise(exercise, userUtilService.getUserByLogin(TEST_PREFIX + "student1"));
         // Create a failing submission for the student.
         var result = createFailingSubmission(studentParticipation);
-        pyrisEventService.trigger(new NewResultEvent(result));
+        pyrisEventPublisher.publishEvent(new NewResultEvent(this, result));
 
-        verify(irisExerciseChatSessionService, times(1)).onBuildFailure(any(Result.class));
+        verify(irisExerciseChatSessionService, times(0)).onBuildFailure(any(Result.class));
         verify(pyrisPipelineService, times(0)).executeExerciseChatPipeline(any(), any(), any(), any(), any());
     }
 
@@ -297,13 +285,13 @@ class PyrisEventSystemIntegrationTest extends AbstractIrisIntegrationTest {
         createSubmissionWithScore(studentParticipation, 100);
         var result = createSubmissionWithScore(studentParticipation, 50);
 
-        pyrisEventService.trigger(new NewResultEvent(result));
+        pyrisEventPublisher.publishEvent(new NewResultEvent(this, result));
 
         await().atMost(2, TimeUnit.SECONDS);
 
         result = createSubmissionWithScore(studentParticipation, 50);
 
-        pyrisEventService.trigger(new NewResultEvent(result));
+        pyrisEventPublisher.publishEvent(new NewResultEvent(this, result));
         await().atMost(2, TimeUnit.SECONDS);
 
         verify(irisExerciseChatSessionService, times(2)).onNewResult(any(Result.class));
@@ -318,7 +306,7 @@ class PyrisEventSystemIntegrationTest extends AbstractIrisIntegrationTest {
         createSubmissionWithScore(studentParticipation, 20);
         var result = createSubmissionWithScore(studentParticipation, 20);
 
-        pyrisEventService.trigger(new NewResultEvent(result));
+        pyrisEventPublisher.publishEvent(new NewResultEvent(this, result));
 
         verify(irisExerciseChatSessionService, times(1)).onNewResult(any(Result.class));
         verify(pyrisPipelineService, times(0)).executeExerciseChatPipeline(any(), any(), any(), any(), any());
@@ -333,7 +321,7 @@ class PyrisEventSystemIntegrationTest extends AbstractIrisIntegrationTest {
         createSubmissionWithScore(studentParticipation, 30);
         var result = createSubmissionWithScore(studentParticipation, 40);
 
-        pyrisEventService.trigger(new NewResultEvent(result));
+        pyrisEventPublisher.publishEvent(new NewResultEvent(this, result));
 
         verify(irisExerciseChatSessionService, times(1)).onNewResult(any(Result.class));
         verify(pyrisPipelineService, times(0)).executeExerciseChatPipeline(any(), any(), any(), any(), any());

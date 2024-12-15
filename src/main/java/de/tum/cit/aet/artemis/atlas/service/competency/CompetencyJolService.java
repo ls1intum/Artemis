@@ -23,7 +23,7 @@ import de.tum.cit.aet.artemis.atlas.repository.CompetencyProgressRepository;
 import de.tum.cit.aet.artemis.atlas.repository.CompetencyRepository;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.core.repository.UserRepository;
-import de.tum.cit.aet.artemis.iris.service.pyris.PyrisEventService;
+import de.tum.cit.aet.artemis.iris.service.pyris.PyrisEventPublisher;
 import de.tum.cit.aet.artemis.iris.service.pyris.event.CompetencyJolSetEvent;
 
 /**
@@ -45,15 +45,15 @@ public class CompetencyJolService {
 
     private final UserRepository userRepository;
 
-    private final Optional<PyrisEventService> pyrisEventService;
+    private final Optional<PyrisEventPublisher> pyrisEventPublisher;
 
     public CompetencyJolService(CompetencyJolRepository competencyJolRepository, CompetencyRepository competencyRepository,
-            CompetencyProgressRepository competencyProgressRepository, UserRepository userRepository, Optional<PyrisEventService> pyrisEventService) {
+            CompetencyProgressRepository competencyProgressRepository, UserRepository userRepository, Optional<PyrisEventPublisher> pyrisEventPublisher) {
         this.competencyJolRepository = competencyJolRepository;
         this.competencyRepository = competencyRepository;
         this.competencyProgressRepository = competencyProgressRepository;
         this.userRepository = userRepository;
-        this.pyrisEventService = pyrisEventService;
+        this.pyrisEventPublisher = pyrisEventPublisher;
     }
 
     /**
@@ -84,10 +84,10 @@ public class CompetencyJolService {
         final var jol = createCompetencyJol(competencyId, userId, jolValue, ZonedDateTime.now(), competencyProgress);
         competencyJolRepository.save(jol);
 
-        pyrisEventService.ifPresent(service -> {
-            // Inform Iris so it can send a message to the user
+        // Inform Iris so it can send a message to the user
+        pyrisEventPublisher.ifPresent(service -> {
             try {
-                service.trigger(new CompetencyJolSetEvent(jol));
+                service.publishEvent(new CompetencyJolSetEvent(this, jol));
             }
             catch (Exception e) {
                 log.warn("Something went wrong while sending the judgement of learning to Iris", e);

@@ -1,34 +1,32 @@
 package de.tum.cit.aet.artemis.iris.service.pyris.event;
 
+import java.util.Optional;
+
 import de.tum.cit.aet.artemis.assessment.domain.Result;
-import de.tum.cit.aet.artemis.iris.service.session.IrisExerciseChatSessionService;
-import de.tum.cit.aet.artemis.programming.domain.ProgrammingSubmission;
+import de.tum.cit.aet.artemis.core.domain.User;
+import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseStudentParticipation;
 
-public class NewResultEvent extends PyrisEvent<IrisExerciseChatSessionService, Result> {
+public class NewResultEvent extends PyrisEvent {
 
-    private final Result eventObject;
+    private final Result result;
 
-    public NewResultEvent(Result eventObject) {
-        if (eventObject == null) {
-            throw new IllegalArgumentException("Event object cannot be null");
+    public NewResultEvent(Object source, Result result) {
+        super(source);
+        if (result == null) {
+            throw new IllegalArgumentException("Result cannot be null");
         }
-        this.eventObject = eventObject;
+        this.result = result;
+    }
+
+    public Result getResult() {
+        return result;
     }
 
     @Override
-    public void handleEvent(IrisExerciseChatSessionService service) {
-        if (service == null) {
-            throw new IllegalArgumentException("Service cannot be null");
+    public Optional<User> getUser() {
+        if (result.getSubmission().getParticipation() instanceof ProgrammingExerciseStudentParticipation studentParticipation) {
+            return studentParticipation.getStudent();
         }
-        var submission = eventObject.getSubmission();
-        // We only care about programming submissions
-        if (submission instanceof ProgrammingSubmission programmingSubmission) {
-            if (programmingSubmission.isBuildFailed()) {
-                service.onBuildFailure(eventObject);
-            }
-            else {
-                service.onNewResult(eventObject);
-            }
-        }
+        return Optional.empty();
     }
 }
