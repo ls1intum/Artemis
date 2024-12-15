@@ -325,7 +325,7 @@ connect it to the prelive system in the university data center.
 
   Artemis Deployment on Bamboo Build Agent for Playwright
 
-In total there are four Docker containers started in the Bamboo build agent:
+In total there are three Docker containers started in the Bamboo build agent:
 
 1. MySQL
 
@@ -348,9 +348,8 @@ In total there are four Docker containers started in the Bamboo build agent:
   The main configuration of the Artemis server are contained in the
   `Playwright environment configuration files <https://github.com/ls1intum/Artemis/tree/develop/docker/artemis/config>`__.
   However, those files do not contain any security relevant information.
-  Security relevant settings like the credentials to the Jira admin account in the prelive system are instead passed to
-  the Docker container via environment variables.
-  This information is accessible to the Bamboo build agent via
+  Security relevant settings are instead passed to the Docker container via environment variables. This information is
+  accessible to the Bamboo build agent via
   `Bamboo plan variables <https://confluence.atlassian.com/bamboo/bamboo-variables-289277087.html>`__.
 
   The Artemis container is also configured to
@@ -359,16 +358,7 @@ In total there are four Docker containers started in the Bamboo build agent:
   `health checks <https://docs.docker.com/compose/compose-file/compose-file-v2/#healthcheck>`__
   to wait until the MySQL container is up and running.
 
-3. Artemis Client
-
-  The Artemis Client is deployed within an nginx Docker container, providing the web interface for Artemis. The
-  container is based on the official nginx image and serves the Artemis Client application files. Configuration files
-  for nginx, including settings for load balancing and timeouts, are mounted into the container via volumes.
-  SSL certificates are also included to enable HTTPS support. The client container depends on the Artemis application
-  container to ensure it only starts after the application is running. It exposes ports 80 and 443 for HTTP and HTTPS
-  traffic, respectively, and includes a health check to monitor the nginx service's status.
-
-4. Playwright
+3. Playwright
 
   Playwright offers a test environment `docker image <https://hub.docker.com/r/microsoft/playwright>`__
   to execute Playwright tests.
