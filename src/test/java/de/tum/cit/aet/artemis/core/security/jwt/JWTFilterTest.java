@@ -47,13 +47,47 @@ class JWTFilterTest {
     }
 
     @Test
-    void testJWTFilter() throws Exception {
+    void testJWTFilterCookie() throws Exception {
         UsernamePasswordAuthenticationToken authentication = new UsernamePasswordAuthenticationToken("test-user", "test-password",
                 Collections.singletonList(new SimpleGrantedAuthority(Role.STUDENT.getAuthority())));
         String jwt = tokenProvider.createToken(authentication, false);
         MockHttpServletRequest request = new MockHttpServletRequest();
         request.setCookies(new Cookie(JWTFilter.JWT_COOKIE_NAME, jwt));
         request.setRequestURI("/api/test");
+        MockHttpServletResponse response = new MockHttpServletResponse();
+        MockFilterChain filterChain = new MockFilterChain();
+        jwtFilter.doFilter(request, response, filterChain);
+        assertThat(response.getStatus()).isEqualTo(HttpStatus.OK.value());
+        assertThat(SecurityContextHolder.getContext().getAuthentication().getName()).isEqualTo("test-user");
+    }
+
+    @Test
+    void testJWTFilterCookieAndBearer() throws Exception {
+        UsernamePasswordAuthenticationToken authentication = new UsernamePasswordAuthenticationToken("test-user", "test-password",
+                Collections.singletonList(new SimpleGrantedAuthority(Role.STUDENT.getAuthority())));
+
+        String jwt = tokenProvider.createToken(authentication, false);
+        MockHttpServletRequest request = new MockHttpServletRequest();
+        request.setCookies(new Cookie(JWTFilter.JWT_COOKIE_NAME, jwt));
+        request.addHeader("Authorization", "Bearer " + jwt);
+        request.setRequestURI("/api/test");
+
+        MockHttpServletResponse response = new MockHttpServletResponse();
+        MockFilterChain filterChain = new MockFilterChain();
+        jwtFilter.doFilter(request, response, filterChain);
+        assertThat(response.getStatus()).isEqualTo(HttpStatus.BAD_REQUEST.value());
+    }
+
+    @Test
+    void testJWTFilterBearer() throws Exception {
+        UsernamePasswordAuthenticationToken authentication = new UsernamePasswordAuthenticationToken("test-user", "test-password",
+                Collections.singletonList(new SimpleGrantedAuthority(Role.STUDENT.getAuthority())));
+
+        String jwt = tokenProvider.createToken(authentication, false);
+        MockHttpServletRequest request = new MockHttpServletRequest();
+        request.addHeader("Authorization", "Bearer " + jwt);
+        request.setRequestURI("/api/test");
+
         MockHttpServletResponse response = new MockHttpServletResponse();
         MockFilterChain filterChain = new MockFilterChain();
         jwtFilter.doFilter(request, response, filterChain);

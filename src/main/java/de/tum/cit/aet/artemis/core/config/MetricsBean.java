@@ -108,8 +108,8 @@ public class MetricsBean {
     private final Optional<SharedQueueManagementService> localCIBuildJobQueueService;
 
     /**
-     * List that stores active usernames (users with a submission within the last 14 days) which is refreshed
-     * every 60 minutes.
+     * List that stores active usernames (users with a submission within the last 14 days) which is refreshed every 60 minutes.
+     * NOTE: only active on scheduling node
      */
     private List<String> cachedActiveUserNames;
 
@@ -122,38 +122,54 @@ public class MetricsBean {
 
     private final AtomicInteger examsGauge = new AtomicInteger(0);
 
+    // NOTE: only active on scheduling node
     private MultiGauge activeUserMultiGauge;
 
+    // NOTE: only active on scheduling node
     private MultiGauge studentsCourseGauge;
 
+    // NOTE: only active on scheduling node
     private MultiGauge studentsExamGauge;
 
     // Internal metrics: Exercises
+    // NOTE: only active on scheduling node
     private MultiGauge exerciseGauge;
 
+    // NOTE: only active on scheduling node
     private MultiGauge activeExerciseGauge;
 
+    // NOTE: only active on scheduling node
     private MultiGauge dueExerciseGauge;
 
+    // NOTE: only active on scheduling node
     private MultiGauge dueExerciseStudentMultiplierGauge;
 
+    // NOTE: only active on scheduling node
     private MultiGauge dueExerciseStudentMultiplierActive14DaysGauge;
 
+    // NOTE: only active on scheduling node
     private MultiGauge releaseExerciseGauge;
 
+    // NOTE: only active on scheduling node
     private MultiGauge releaseExerciseStudentMultiplierGauge;
 
+    // NOTE: only active on scheduling node
     private MultiGauge releaseExerciseStudentMultiplierActive14DaysGauge;
 
     // Internal metrics: Exams
+    // NOTE: only active on scheduling node
     private MultiGauge dueExamGauge;
 
+    // NOTE: only active on scheduling node
     private MultiGauge dueExamStudentMultiplierGauge;
 
+    // NOTE: only active on scheduling node
     private MultiGauge releaseExamGauge;
 
+    // NOTE: only active on scheduling node
     private MultiGauge releaseExamStudentMultiplierGauge;
 
+    // NOTE: only active on scheduling node
     private MultiGauge activeAdminsGauge;
 
     private boolean scheduledMetricsEnabled = false;
@@ -213,10 +229,12 @@ public class MetricsBean {
 
         if (profileService.isSchedulingActive()) {
             // Should only be activated if the scheduling profile is present, because these metrics are the same for all instances
-            this.scheduledMetricsEnabled = true;
+            scheduledMetricsEnabled = true;
 
             registerActiveAdminMetrics();
             registerExerciseAndExamMetrics();
+            registerStudentExerciseMetrics();
+            registerStudentExamMetrics();
             registerPublicArtemisMetrics();
 
             // Initial calculation is done in constructor to ensure the values are present before the first metrics are calculated
@@ -245,6 +263,7 @@ public class MetricsBean {
         }
     }
 
+    // This is ALWAYS active on all nodes
     private void registerHealthContributors(List<HealthContributor> healthContributors) {
         // Publish the health status for each HealthContributor one Gauge with name ARTEMIS_HEALTH_NAME that has several values (one for each HealthIndicator),
         // using different values for the ARTEMIS_HEALTH_TAG tag
@@ -307,6 +326,7 @@ public class MetricsBean {
                 .reduce(0, Integer::sum)).orElse(0);
     }
 
+    // This is ALWAYS active on all nodes
     private void registerWebsocketMetrics() {
         // Publish the number of currently (via WebSockets) connected sessions
         Gauge.builder("artemis.instance.websocket.sessions", webSocketHandler, MetricsBean::extractWebsocketSessionCount).strongReference(true)
@@ -338,6 +358,7 @@ public class MetricsBean {
 
     /**
      * Register metrics for exercises and exams
+     * NOTE: only active on scheduling node
      */
     private void registerExerciseAndExamMetrics() {
         dueExerciseGauge = MultiGauge.builder("artemis.scheduled.exercises.due.count").description("Number of exercises ending within the next minutes").register(meterRegistry);
@@ -346,13 +367,11 @@ public class MetricsBean {
 
         dueExamGauge = MultiGauge.builder("artemis.scheduled.exams.due.count").description("Number of exams ending within the next minutes").register(meterRegistry);
         releaseExamGauge = MultiGauge.builder("artemis.scheduled.exams.release.count").description("Number of exams starting within the next minutes").register(meterRegistry);
-
-        registerStudentExerciseMetrics();
-        registerStudentExamMetrics();
     }
 
     /**
      * Register metrics for exercises, multiplied with the student that are enrolled for the exercise
+     * NOTE: only active on scheduling node
      */
     private void registerStudentExerciseMetrics() {
         dueExerciseStudentMultiplierGauge = MultiGauge.builder("artemis.scheduled.exercises.due.student_multiplier")
@@ -369,6 +388,7 @@ public class MetricsBean {
 
     /**
      * Register metrics for exams, multiplied with the student that are enrolled for the exam
+     * NOTE: only active on scheduling node
      */
     private void registerStudentExamMetrics() {
         dueExamStudentMultiplierGauge = MultiGauge.builder("artemis.scheduled.exams.due.student_multiplier")
@@ -377,18 +397,22 @@ public class MetricsBean {
                 .description("Number of exams starting within the next minutes multiplied with students in the course").register(meterRegistry);
     }
 
+    // NOTE: only active on scheduling node
     private void registerActiveAdminMetrics() {
         activeAdminsGauge = MultiGauge.builder("artemis.users.admins.active").description("User logins of active admin accounts").register(meterRegistry);
     }
 
     /**
      * Calculate active users (active within the last 14 days) and store them in a List.
-     * The calculation is performed every 60 minutes.
-     * The initial calculation is done in the constructor to ensure it is done BEFORE {@link #recalculateMetrics()}
-     * is called.
+     * The calculation is performed every 60 minutes and should only be done on the scheduling node
+     * The initial calculation is done in the constructor to ensure it is done BEFORE {@link #recalculateMetrics()} is called.
+     * Only executed if the "scheduling"-profile is present.
      */
     @Scheduled(fixedRate = 60 * 60 * 1000, initialDelay = 60 * 60 * 1000) // Every 60 minutes
     public void calculateActiveUserMetrics() {
+        if (!scheduledMetricsEnabled) {
+            return;
+        }
         var startDate = System.currentTimeMillis();
 
         // The authorization object has to be set because this method is not called by a user but by the scheduler
@@ -537,6 +561,7 @@ public class MetricsBean {
 
     /**
      * Register publicly exposed metrics.
+     * NOTE: only active on scheduling node
      */
     private void registerPublicArtemisMetrics() {
         SecurityUtils.setAuthorizationObject();
