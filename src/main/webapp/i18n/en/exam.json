@@ -209,7 +209,7 @@
                         "instructorMessage": "Instructor's message:"
                     },
                     "examRescheduled": {
-                        "description": "The exam has been rescheduled. The exam will take place from {{ startDate }} to {{ endDate }}."
+                        "description": "The exam has been rescheduled.<br />The exam will take place from {{ startDate }} to {{ endDate }}.<br />The working time has not been affected."
                     }
                 }
             }

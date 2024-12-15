@@ -209,7 +209,7 @@
                         "instructorMessage": "Lehrkraft Nachricht:"
                     },
                     "examRescheduled": {
-                        "description": "Die Prüfung wurde verschoben. Die Prüfung findet vom {{ startDate }} bis zum {{ endDate }} statt."
+                        "description": "Die Prüfung wurde verschoben.<br />Die Prüfung findet vom {{ startDate }} bis zum {{ endDate }} statt.<br />Die Bearbeitungszeit wurde nicht geändert."
                     }
                 }
             }
