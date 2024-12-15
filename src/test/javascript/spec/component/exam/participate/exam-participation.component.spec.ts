@@ -152,7 +152,10 @@ describe('ExamParticipationComponent', () => {
                 courseStorageService = TestBed.inject(CourseStorageService);
                 examManagementService = TestBed.inject(ExamManagementService);
                 fixture.detectChanges();
-                comp.exam = new Exam();
+                const exam = new Exam();
+                exam.startDate = dayjs();
+                comp.exam = exam;
+                jest.spyOn(artemisServerDateService, 'now').mockReturnValue(dayjs());
             });
     });
 
