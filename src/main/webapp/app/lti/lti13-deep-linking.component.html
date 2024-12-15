@@ -11,7 +11,7 @@
         <div class="dropdown-container" style="display: flex; flex-direction: column; gap: 15px">
             <div ngbDropdown class="dropdown-section">
                 <button class="btn btn-secondary dropdown-toggle" type="button" ngbDropdownToggle>
-                    <div jhiTranslate="">Exercise</div>
+                    <span class="d-sm-inline" jhiTranslate="artemisApp.lti13.contentSelectionTable.exercises"></span>
                 </button>
 
                 <div ngbDropdownMenu>
@@ -88,7 +88,7 @@
             </div>
             <div ngbDropdown class="dropdown-section">
                 <button class="btn btn-secondary dropdown-toggle" type="button" ngbDropdownToggle>
-                    <div jhiTranslate="">Lectures</div>
+                    <span class="d-sm-inline" jhiTranslate="artemisApp.lti13.contentSelectionTable.lectures"></span>
                 </button>
 
                 <div ngbDropdownMenu>
@@ -126,13 +126,13 @@
     </div>
 
     <div class="lti-competency-selector">
-        <h4 class="" jhiTranslate="" [translateValues]="{}">Enable competency</h4>
+        <h4 class="" jhiTranslate="artemisApp.lti13.contentSelectionTable.competencies">Enable competency</h4>
         <jhi-help-icon class="ps-1" text="" />
         <input class="form-check-input" type="checkbox" (change)="enableCompetency()" [ngModel]="isCompetencySelected" />
     </div>
 
     <div class="lti-learning-path-selector">
-        <h4 class="" jhiTranslate="" [translateValues]="{}">Enable learning paths</h4>
+        <h4 class="" jhiTranslate="artemisApp.lti13.contentSelectionTable.learningPaths"></h4>
         <jhi-help-icon class="ps-1" text="" />
         <input class="form-check-input" type="checkbox" (change)="enableLearningPath()" [ngModel]="isLearningPathSelected" />
     </div>

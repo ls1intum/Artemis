@@ -4,6 +4,12 @@
             "home": {
                 "title": "LTI-Konfiguration"
             },
+            "contentSelectionTable": {
+                "exercises": "Übungen",
+                "lectures": "Vorlesungen",
+                "competencies": "Kompetenzen hinzufügen",
+                "learningPaths": "Lernpfade hinzufügen"
+            },
             "initializationError": "Die Initialisierung deines Benutzers wurde gestartet aber dein LTI-Konto wurde möglicherweise nicht korrekt erstellt. Bitte benachrichtige deine Übungsleitung, falls du dein Artemis-Passwort bisher nicht erhalten hast.",
             "initialization": {
                 "header": "LTI Benutzer Initialisierung",
