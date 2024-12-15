@@ -25,7 +25,7 @@ class ConversationMembersStubComponent {
     @Input()
     course: Course;
     @Input()
-    public activeConversation: ConversationDTO;
+    public activeConversationInput: ConversationDTO;
     @Output() changesPerformed = new EventEmitter<void>();
 }
 
