@@ -96,10 +96,10 @@ export class AnswerPostReactionsBarComponent extends PostingsReactionsBarDirecti
         this.isAuthorOfOriginalPost = this.metisService.metisUserIsAuthorOfPosting(this.posting.post!);
         this.isAnswerOfAnnouncement = getAsChannelDTO(this.posting.post?.conversation)?.isAnnouncementChannel ?? false;
         const isCourseWideChannel = getAsChannelDTO(this.posting.post?.conversation)?.isCourseWide ?? false;
-        const isAtLeastInstructorInCourse = this.metisService.metisUserIsAtLeastInstructorInCourse();
-        const mayEditOrDeleteOtherUsersAnswer =
-            (isCourseWideChannel && isAtLeastInstructorInCourse) || (getAsChannelDTO(this.metisService.getCurrentConversation())?.hasChannelModerationRights ?? false);
-        this.mayDelete = !this.isReadOnlyMode && (this.isAuthorOfPosting || mayEditOrDeleteOtherUsersAnswer);
+        const canDeletePost = this.isAnswerOfAnnouncement ? this.metisService.metisUserIsAtLeastInstructorInCourse() : this.metisService.metisUserIsAtLeastTutorInCourse();
+        const mayDeleteOtherUsersAnswer =
+            (isCourseWideChannel && canDeletePost) || (getAsChannelDTO(this.metisService.getCurrentConversation())?.hasChannelModerationRights ?? false);
+        this.mayDelete = !this.isReadOnlyMode && (this.isAuthorOfPosting || (mayDeleteOtherUsersAnswer && canDeletePost));
         this.mayDeleteOutput.emit(this.mayDelete);
     }
 

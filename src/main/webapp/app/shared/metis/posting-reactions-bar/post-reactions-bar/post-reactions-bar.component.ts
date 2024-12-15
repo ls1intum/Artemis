@@ -126,7 +126,7 @@ export class PostReactionsBarComponent extends PostingsReactionsBarDirective<Pos
      */
     private setCanPin(currentConversation: ConversationDTO | undefined) {
         if (!currentConversation) {
-            this.canPin = this.metisService.metisUserIsAtLeastInstructorInCourse();
+            this.canPin = this.metisService.metisUserIsAtLeastTutorInCourse();
             return;
         }
 
@@ -229,9 +229,12 @@ export class PostReactionsBarComponent extends PostingsReactionsBarDirective<Pos
     setMayDelete(): void {
         this.isAtLeastInstructorInCourse = this.metisService.metisUserIsAtLeastInstructorInCourse();
         const isCourseWideChannel = getAsChannelDTO(this.posting.conversation)?.isCourseWide ?? false;
+        const isAnswerOfAnnouncement = getAsChannelDTO(this.posting.conversation)?.isAnnouncementChannel ?? false;
+        const isAtLeastTutorInCourse = this.metisService.metisUserIsAtLeastTutorInCourse();
+        const canDeleteAnnouncement = isAnswerOfAnnouncement ? this.metisService.metisUserIsAtLeastInstructorInCourse() : true;
         const mayDeleteOtherUsersAnswer =
-            (isCourseWideChannel && this.isAtLeastInstructorInCourse) || (getAsChannelDTO(this.metisService.getCurrentConversation())?.hasChannelModerationRights ?? false);
-        this.mayDelete = !this.readOnlyMode && !this.previewMode && (this.isAuthorOfPosting || mayDeleteOtherUsersAnswer);
+            (isCourseWideChannel && isAtLeastTutorInCourse) || (getAsChannelDTO(this.metisService.getCurrentConversation())?.hasChannelModerationRights ?? false);
+        this.mayDelete = !this.readOnlyMode && !this.previewMode && (this.isAuthorOfPosting || mayDeleteOtherUsersAnswer) && canDeleteAnnouncement;
         this.mayDeleteOutput.emit(this.mayDelete);
     }
 

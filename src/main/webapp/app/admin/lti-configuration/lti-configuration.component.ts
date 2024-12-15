@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, inject } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { Course } from 'app/entities/course.model';
 import { faExclamationTriangle, faPencilAlt, faPlus, faSort, faTrash, faWrench } from '@fortawesome/free-solid-svg-icons';
@@ -17,6 +17,12 @@ import { combineLatest } from 'rxjs';
     templateUrl: './lti-configuration.component.html',
 })
 export class LtiConfigurationComponent implements OnInit {
+    private router = inject(Router);
+    private ltiConfigurationService = inject(LtiConfigurationService);
+    private sortService = inject(SortService);
+    private alertService = inject(AlertService);
+    private activatedRoute = inject(ActivatedRoute);
+
     course: Course;
     platforms: LtiPlatformConfiguration[];
     ascending!: boolean;
@@ -39,14 +45,6 @@ export class LtiConfigurationComponent implements OnInit {
 
     private dialogErrorSource = new Subject<string>();
     dialogError$ = this.dialogErrorSource.asObservable();
-
-    constructor(
-        private router: Router,
-        private ltiConfigurationService: LtiConfigurationService,
-        private sortService: SortService,
-        private alertService: AlertService,
-        private activatedRoute: ActivatedRoute,
-    ) {}
 
     /**
      * Gets the configuration for the course encoded in the route and fetches the exercises
