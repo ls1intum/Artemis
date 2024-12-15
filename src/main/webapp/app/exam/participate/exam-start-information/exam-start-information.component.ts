@@ -1,4 +1,4 @@
-import { Component, Input, OnInit } from '@angular/core';
+import { Component, Input, OnChanges, OnInit } from '@angular/core';
 import { ArtemisSharedModule } from 'app/shared/shared.module';
 import { ArtemisSharedComponentModule } from 'app/shared/components/shared-component.module';
 import { InformationBox, InformationBoxComponent, InformationBoxContent } from 'app/shared/information-box/information-box.component';
@@ -14,7 +14,7 @@ import { SafeHtml } from '@angular/platform-browser';
     imports: [ArtemisSharedModule, ArtemisSharedComponentModule, InformationBoxComponent, ArtemisExamSharedModule],
     templateUrl: './exam-start-information.component.html',
 })
-export class ExamStartInformationComponent implements OnInit {
+export class ExamStartInformationComponent implements OnInit, OnChanges {
     examInformationBoxData: InformationBox[] = [];
 
     @Input() exam: Exam;
@@ -32,6 +32,23 @@ export class ExamStartInformationComponent implements OnInit {
     gracePeriodInMinutes?: number;
 
     ngOnInit(): void {
+        this.updateInformationBoxes();
+    }
+
+    ngOnChanges(): void {
+        this.updateInformationBoxes();
+    }
+
+    buildInformationBox(boxTitle: string, boxContent: InformationBoxContent, isContentComponent = false): InformationBox {
+        const examInformationBoxData: InformationBox = {
+            title: boxTitle ?? '',
+            content: boxContent,
+            isContentComponent: isContentComponent,
+        };
+        return examInformationBoxData;
+    }
+
+    private updateInformationBoxes(): void {
         this.totalPoints = this.exam.examMaxPoints;
         this.totalWorkingTimeInMinutes = Math.floor(this.exam.workingTime! / 60);
         this.moduleNumber = this.exam.moduleNumber;
@@ -42,16 +59,8 @@ export class ExamStartInformationComponent implements OnInit {
         this.startDate = this.exam.startDate;
         this.gracePeriodInMinutes = Math.floor(this.exam.gracePeriod! / 60);
 
+        this.examInformationBoxData = [];
         this.prepareInformationBoxData();
-    }
-
-    buildInformationBox(boxTitle: string, boxContent: InformationBoxContent, isContentComponent = false): InformationBox {
-        const examInformationBoxData: InformationBox = {
-            title: boxTitle ?? '',
-            content: boxContent,
-            isContentComponent: isContentComponent,
-        };
-        return examInformationBoxData;
     }
 
     prepareInformationBoxData(): void {
