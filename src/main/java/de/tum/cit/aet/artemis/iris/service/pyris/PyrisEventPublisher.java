@@ -4,7 +4,6 @@ import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_IRIS;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.context.ApplicationEvent;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
@@ -40,7 +39,6 @@ public class PyrisEventPublisher {
      * @param event the event to publish
      */
     public void publishEvent(PyrisEvent event) {
-        isEventSupportedElseThrow(event);
         if (!isEventEnabled(event)) {
             log.debug("Skipping event publication as conditions are not met: {}", event.getClass().getSimpleName());
             return;
@@ -52,26 +50,6 @@ public class PyrisEventPublisher {
             log.error("Failed to publish event: {}", event, e);
             throw e;
         }
-    }
-
-    /**
-     * Checks if the given event is supported and throws an exception if it is not.
-     *
-     * @param event - the event to check
-     */
-    private void isEventSupportedElseThrow(ApplicationEvent event) {
-        if (!isEventSupported(event)) {
-            throw new UnsupportedPyrisEventException("Event not supported: " + event);
-        }
-    }
-
-    /**
-     * Checks if the given event is supported.
-     *
-     * @param event the event to publish
-     */
-    private boolean isEventSupported(ApplicationEvent event) {
-        return event instanceof PyrisEvent;
     }
 
     private boolean isEventEnabled(PyrisEvent event) {
