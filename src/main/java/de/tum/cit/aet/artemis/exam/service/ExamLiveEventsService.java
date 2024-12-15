@@ -130,6 +130,12 @@ public class ExamLiveEventsService {
         this.storeAndDistributeLiveExamEvent(event);
     }
 
+    /**
+     * Send an exam rescheduled update to the specified student.
+     *
+     * @param studentExam The student exam the dates rescheduled for
+     * @param sentBy      The user who performed the update
+     */
     public void createAndSendExamRescheduledEvent(StudentExam studentExam, User sentBy) {
         var event = new ExamRescheduledEvent();
 
