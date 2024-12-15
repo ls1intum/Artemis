@@ -281,8 +281,7 @@ async function makeGitExerciseSubmission(
     let repoUrl = await programmingExerciseOverview.copyCloneUrl();
     let token: string | undefined;
     if (process.env.CI === 'true' && cloneMethod == GitCloneMethod.httpsWithToken) {
-        // token = repoUrl.match(/vcpat.+(?=@)/)?.[0];
-        token = student.password!;
+        token = repoUrl.match(/vcpat.+(?=@)/)?.[0];
         repoUrl = repoUrl.replace(/:vcpat.+(?=@)/, '');
     }
     if (process.env.CI === 'true' && (cloneMethod == GitCloneMethod.https || cloneMethod == GitCloneMethod.httpsWithToken)) {
