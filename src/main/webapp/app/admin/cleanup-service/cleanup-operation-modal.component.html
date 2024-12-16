@@ -23,7 +23,7 @@
     <div>
         <p jhiTranslate="cleanupService.modal.affectedEntities"></p>
         <ul>
-            @for (key of cleanupKeys(counts); track key) {
+            @for (key of cleanupKeys; track key) {
                 <li>
                     <span [jhiTranslate]="'cleanupService.entities.' + key"></span>
                     : {{ counts[key] }}

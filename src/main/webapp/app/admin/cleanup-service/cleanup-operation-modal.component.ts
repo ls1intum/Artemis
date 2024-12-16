@@ -31,8 +31,8 @@ export class CleanupOperationModalComponent implements OnInit {
     /**
      * Fetch keys from the CleanupCount object for iteration.
      */
-    cleanupKeys(counts: CleanupCount): (keyof CleanupCount)[] {
-        return Object.keys(counts) as (keyof CleanupCount)[];
+    get cleanupKeys(): (keyof CleanupCount)[] {
+        return this.counts ? (Object.keys(this.counts) as (keyof CleanupCount)[]) : [];
     }
 
     /**
@@ -118,6 +118,6 @@ export class CleanupOperationModalComponent implements OnInit {
      * Getter to check if there are any entries to delete.
      */
     get hasEntriesToDelete(): boolean {
-        return Object.values(this.counts).some((count) => count > 0);
+        return this.counts ? Object.values(this.counts).some((count) => count > 0) : false;
     }
 }
