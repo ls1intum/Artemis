@@ -168,7 +168,7 @@ jar {
 }
 
 // Dynamic generation of jacoco test report generation-/coverage verification-tasks (per-module)
-apply from: "jacoco.gradle"
+apply from: "gradle/jacoco.gradle"
 
 configurations {
     providedRuntime
