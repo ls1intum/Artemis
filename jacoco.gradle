@@ -86,7 +86,7 @@ jacoco {
 }
 
 jacocoTestReport {
-    reportedModules
+    finalizedBy reportedModules
         .collect { module -> registerJacocoReportTask(module as String, jacocoTestReport) }
         .findAll { task -> task != null}
 }
@@ -95,7 +95,7 @@ jacocoTestCoverageVerification {
     // This task is just a wrapper to dynamically create tasks (per module)
     enabled = false
 
-    reportedModules
+    finalizedBy reportedModules
         .collect { module -> registerJacocoTestCoverageVerification(module as String, jacocoTestCoverageVerification) }
         .findAll { task -> task != null}
 }
@@ -192,6 +192,4 @@ private void prepareJacocoReportTask(JacocoReportBase task, String moduleName, J
         }
     )
     )
-
-    task.mustRunAfter(rootTask)
 }
