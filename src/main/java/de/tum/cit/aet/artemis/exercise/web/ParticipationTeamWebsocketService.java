@@ -10,9 +10,10 @@ import java.util.Optional;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import org.redisson.api.RedissonClient;
+import org.redisson.client.RedisConnectionException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.boot.context.event.ApplicationReadyEvent;
 import org.springframework.context.annotation.Profile;
 import org.springframework.context.event.EventListener;
@@ -28,9 +29,6 @@ import org.springframework.messaging.simp.user.SimpUserRegistry;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.socket.messaging.SessionDisconnectEvent;
 import org.springframework.web.socket.messaging.SessionUnsubscribeEvent;
-
-import com.hazelcast.core.HazelcastInstance;
-import com.hazelcast.core.HazelcastInstanceNotActiveException;
 
 import de.tum.cit.aet.artemis.communication.service.WebsocketMessagingService;
 import de.tum.cit.aet.artemis.core.domain.User;
@@ -72,7 +70,7 @@ public class ParticipationTeamWebsocketService {
 
     private final ModelingSubmissionService modelingSubmissionService;
 
-    private final HazelcastInstance hazelcastInstance;
+    private final RedissonClient redissonClient;
 
     private Map<String, String> destinationTracker;
 
@@ -82,7 +80,7 @@ public class ParticipationTeamWebsocketService {
 
     public ParticipationTeamWebsocketService(WebsocketMessagingService websocketMessagingService, SimpUserRegistry simpUserRegistry, UserRepository userRepository,
             StudentParticipationRepository studentParticipationRepository, ExerciseRepository exerciseRepository, TextSubmissionService textSubmissionService,
-            ModelingSubmissionService modelingSubmissionService, @Qualifier("hazelcastInstance") HazelcastInstance hazelcastInstance) {
+            ModelingSubmissionService modelingSubmissionService, RedissonClient redissonClient) {
         this.websocketMessagingService = websocketMessagingService;
         this.simpUserRegistry = simpUserRegistry;
         this.userRepository = userRepository;
@@ -90,20 +88,20 @@ public class ParticipationTeamWebsocketService {
         this.exerciseRepository = exerciseRepository;
         this.textSubmissionService = textSubmissionService;
         this.modelingSubmissionService = modelingSubmissionService;
-        this.hazelcastInstance = hazelcastInstance;
+        this.redissonClient = redissonClient;
     }
 
     /**
-     * Initialize relevant data from hazelcast
+     * Initialize relevant data from Redis
      */
     @EventListener(ApplicationReadyEvent.class)
     public void init() {
         // participationId-username -> timestamp
-        this.lastTypingTracker = hazelcastInstance.getMap("lastTypingTracker");
+        this.lastTypingTracker = redissonClient.getMap("lastTypingTracker");
         // participationId-username -> timestamp
-        this.lastActionTracker = hazelcastInstance.getMap("lastActionTracker");
+        this.lastActionTracker = redissonClient.getMap("lastActionTracker");
         // sessionId -> destination
-        this.destinationTracker = hazelcastInstance.getMap("destinationTracker");
+        this.destinationTracker = redissonClient.getMap("destinationTracker");
     }
 
     /**
@@ -307,19 +305,17 @@ public class ParticipationTeamWebsocketService {
      * @param sessionId id of the sessions which is unsubscribing
      */
     public void unsubscribe(String sessionId) {
-        // check if Hazelcast is still active, before invoking this
         try {
-            if (hazelcastInstance != null && hazelcastInstance.getLifecycleService().isRunning()) {
-                Optional.ofNullable(destinationTracker.get(sessionId)).ifPresent(destination -> {
-                    destinationTracker.remove(sessionId);
-                    Long participationId = getParticipationIdFromDestination(destination);
-                    sendOnlineTeamStudents(participationId, sessionId);
-                });
-            }
+            Optional.ofNullable(destinationTracker.get(sessionId)).ifPresent(destination -> {
+                Long participationId = getParticipationIdFromDestination(destination);
+                sendOnlineTeamStudents(participationId, sessionId);
+                destinationTracker.remove(sessionId);
+            });
         }
-        catch (HazelcastInstanceNotActiveException e) {
-            log.error("Failed to unsubscribe as Hazelcast is no longer active");
+        catch (RedisConnectionException e) {
+            log.error("Failed to unsubscribe due to Redis connection exception.");
         }
+
     }
 
     /**

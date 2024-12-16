@@ -23,6 +23,7 @@ import org.springframework.context.event.EventListener;
 import org.springframework.core.env.Environment;
 import org.springframework.core.env.Profiles;
 
+import de.tum.cit.aet.artemis.ArtemisApp;
 import de.tum.cit.aet.artemis.core.config.migration.DatabaseMigration;
 import liquibase.Scope;
 import liquibase.SingletonScopeManager;
@@ -47,6 +48,8 @@ public class LiquibaseConfiguration {
     private String currentVersionString;
 
     public LiquibaseConfiguration(Environment env, BuildProperties buildProperties) {
+        // provide a static reference (workaround) for ArtemisRedissonRegionFactory to access the Environment
+        ArtemisApp.env = env;
         this.env = env;
         this.buildProperties = buildProperties;
     }

@@ -14,9 +14,12 @@ import java.util.stream.Collectors;
 
 import jakarta.annotation.PostConstruct;
 
+import org.redisson.api.RMap;
+import org.redisson.api.RPriorityQueue;
+import org.redisson.api.RTopic;
+import org.redisson.api.RedissonClient;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.Profile;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
@@ -24,11 +27,6 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
-
-import com.hazelcast.collection.IQueue;
-import com.hazelcast.core.HazelcastInstance;
-import com.hazelcast.map.IMap;
-import com.hazelcast.topic.ITopic;
 
 import de.tum.cit.aet.artemis.buildagent.dto.BuildAgentInformation;
 import de.tum.cit.aet.artemis.buildagent.dto.BuildJobQueueItem;
@@ -50,30 +48,30 @@ public class SharedQueueManagementService {
 
     private final BuildJobRepository buildJobRepository;
 
-    private final HazelcastInstance hazelcastInstance;
+    private final RedissonClient redissonClient;
 
     private final ProfileService profileService;
 
-    private IQueue<BuildJobQueueItem> queue;
+    private RPriorityQueue<BuildJobQueueItem> buildJobQueue;
 
     /**
      * Map of build jobs currently being processed across all nodes
      */
-    private IMap<String, BuildJobQueueItem> processingJobs;
+    private RMap<String, BuildJobQueueItem> processingJobs;
 
-    private IMap<String, BuildAgentInformation> buildAgentInformation;
+    private RMap<String, BuildAgentInformation> buildAgentInformation;
 
-    private IMap<String, ZonedDateTime> dockerImageCleanupInfo;
+    private RMap<String, ZonedDateTime> dockerImageCleanupInfo;
 
-    private ITopic<String> canceledBuildJobsTopic;
+    private RTopic canceledBuildJobsTopic;
 
-    private ITopic<String> pauseBuildAgentTopic;
+    private RTopic pauseBuildAgentTopic;
 
-    private ITopic<String> resumeBuildAgentTopic;
+    private RTopic resumeBuildAgentTopic;
 
-    public SharedQueueManagementService(BuildJobRepository buildJobRepository, @Qualifier("hazelcastInstance") HazelcastInstance hazelcastInstance, ProfileService profileService) {
+    public SharedQueueManagementService(BuildJobRepository buildJobRepository, RedissonClient redissonClient, ProfileService profileService) {
         this.buildJobRepository = buildJobRepository;
-        this.hazelcastInstance = hazelcastInstance;
+        this.redissonClient = redissonClient;
         this.profileService = profileService;
     }
 
@@ -82,13 +80,14 @@ public class SharedQueueManagementService {
      */
     @PostConstruct
     public void init() {
-        this.buildAgentInformation = this.hazelcastInstance.getMap("buildAgentInformation");
-        this.processingJobs = this.hazelcastInstance.getMap("processingJobs");
-        this.queue = this.hazelcastInstance.getQueue("buildJobQueue");
-        this.canceledBuildJobsTopic = hazelcastInstance.getTopic("canceledBuildJobsTopic");
-        this.dockerImageCleanupInfo = this.hazelcastInstance.getMap("dockerImageCleanupInfo");
-        this.pauseBuildAgentTopic = hazelcastInstance.getTopic("pauseBuildAgentTopic");
-        this.resumeBuildAgentTopic = hazelcastInstance.getTopic("resumeBuildAgentTopic");
+        this.buildAgentInformation = this.redissonClient.getMap("buildAgentInformation");
+        this.processingJobs = this.redissonClient.getMap("processingJobs");
+        this.buildJobQueue = this.redissonClient.getPriorityQueue("buildJobQueue");
+        this.buildJobQueue.trySetComparator(new LocalCIPriorityQueueComparator());
+        this.canceledBuildJobsTopic = this.redissonClient.getTopic("canceledBuildJobsTopic");
+        this.pauseBuildAgentTopic = this.redissonClient.getTopic("pauseBuildAgentTopic");
+        this.resumeBuildAgentTopic = this.redissonClient.getTopic("resumeBuildAgentTopic");
+        this.dockerImageCleanupInfo = this.redissonClient.getMap("dockerImageCleanupInfo");
     }
 
     /**
@@ -108,24 +107,16 @@ public class SharedQueueManagementService {
         }
     }
 
-    /**
-     * @return a copy of the queued build jobs as ArrayList
-     */
     public List<BuildJobQueueItem> getQueuedJobs() {
-        // NOTE: we should not use streams with IQueue directly, because it can be unstable, when many items are added at the same time and there is a slow network condition
-        return new ArrayList<>(queue);
+        return new ArrayList<>(buildJobQueue);
     }
 
     public int getQueuedJobsSize() {
-        return queue.size();
+        return buildJobQueue.size();
     }
 
-    /**
-     * @return a copy of the processing jobs as ArrayList
-     */
     public List<BuildJobQueueItem> getProcessingJobs() {
-        // NOTE: we should not use streams with IMap, because it can be unstable, when many items are added at the same time and there is a slow network condition
-        return new ArrayList<>(processingJobs.values());
+        return processingJobs.values().stream().toList();
     }
 
     public int getProcessingJobsSize() {
@@ -133,7 +124,7 @@ public class SharedQueueManagementService {
     }
 
     public List<BuildJobQueueItem> getQueuedJobsForCourse(long courseId) {
-        return getQueuedJobs().stream().filter(job -> job.courseId() == courseId).toList();
+        return buildJobQueue.stream().filter(job -> job.courseId() == courseId).toList();
     }
 
     public List<BuildJobQueueItem> getProcessingJobsForCourse(long courseId) {
@@ -193,7 +184,7 @@ public class SharedQueueManagementService {
                     toRemove.add(job);
                 }
             }
-            queue.removeAll(toRemove);
+            buildJobQueue.removeAll(toRemove);
         }
         else {
             // Cancel build job if it is currently being processed
@@ -220,7 +211,7 @@ public class SharedQueueManagementService {
      */
     public void cancelAllQueuedBuildJobs() {
         log.debug("Cancelling all queued build jobs");
-        queue.clear();
+        buildJobQueue.clear();
     }
 
     /**
@@ -239,6 +230,7 @@ public class SharedQueueManagementService {
      * @param agentName name of the agent
      */
     public void cancelAllRunningBuildJobsForAgent(String agentName) {
+        // TODO: implement better filtering based on predicates to avoid retrieving all values
         getProcessingJobs().stream().filter(job -> Objects.equals(job.buildAgent().name(), agentName)).forEach(job -> cancelBuildJob(job.id()));
     }
 
@@ -248,6 +240,7 @@ public class SharedQueueManagementService {
      * @param courseId id of the course
      */
     public void cancelAllQueuedBuildJobsForCourse(long courseId) {
+        // TODO: implement better searching based on predicates to avoid retrieving all values
         List<BuildJobQueueItem> queuedJobs = getQueuedJobs();
         List<BuildJobQueueItem> toRemove = new ArrayList<>();
         for (BuildJobQueueItem job : queuedJobs) {
@@ -255,7 +248,7 @@ public class SharedQueueManagementService {
                 toRemove.add(job);
             }
         }
-        queue.removeAll(toRemove);
+        buildJobQueue.removeAll(toRemove);
     }
 
     /**
@@ -278,6 +271,7 @@ public class SharedQueueManagementService {
      * @param participationId id of the participation
      */
     public void cancelAllJobsForParticipation(long participationId) {
+        // TODO: implement better searching based on predicates to avoid retrieving all values
         List<BuildJobQueueItem> toRemove = new ArrayList<>();
         List<BuildJobQueueItem> queuedJobs = getQueuedJobs();
         for (BuildJobQueueItem queuedJob : queuedJobs) {
@@ -285,7 +279,7 @@ public class SharedQueueManagementService {
                 toRemove.add(queuedJob);
             }
         }
-        queue.removeAll(toRemove);
+        buildJobQueue.removeAll(toRemove);
 
         List<BuildJobQueueItem> runningJobs = getProcessingJobs();
         for (BuildJobQueueItem runningJob : runningJobs) {

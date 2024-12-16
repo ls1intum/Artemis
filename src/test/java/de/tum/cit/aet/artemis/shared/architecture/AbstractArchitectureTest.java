@@ -39,7 +39,7 @@ public abstract class AbstractArchitectureTest {
 
     protected static JavaClasses allClasses;
 
-    protected static JavaClasses allClassesWithHazelcast;
+    protected static JavaClasses allClassesWithRedisson;
 
     protected static JavaClasses productionClasses;
 
@@ -49,8 +49,8 @@ public abstract class AbstractArchitectureTest {
             testClasses = new ClassFileImporter().withImportOption(new ImportOption.OnlyIncludeTests()).importPackages(ARTEMIS_PACKAGE);
             productionClasses = new ClassFileImporter().withImportOption(new ImportOption.DoNotIncludeTests()).importPackages(ARTEMIS_PACKAGE);
             allClasses = new ClassFileImporter().importPackages(ARTEMIS_PACKAGE);
-            // Also include hazelcast to find usages of hazelcast methods. (see testNoHazelcastUsageInConstructors)
-            allClassesWithHazelcast = new ClassFileImporter().importPackages(ARTEMIS_PACKAGE, "com.hazelcast.core");
+            // Also include Redisson to find usages of redisson methods. (see testNoRedissonUsageInConstructors)
+            allClassesWithRedisson = new ClassFileImporter().importPackages(ARTEMIS_PACKAGE, "org.redisson.api");
         }
         ensureClassSetsNonEmpty();
         ensureAllClassesFound();

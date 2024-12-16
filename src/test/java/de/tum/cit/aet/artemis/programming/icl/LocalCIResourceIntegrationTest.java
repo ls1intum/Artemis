@@ -10,17 +10,18 @@ import java.nio.file.Path;
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
+import java.util.Queue;
 
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.redisson.api.RedissonClient;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.util.LinkedMultiValueMap;
-
-import com.hazelcast.collection.IQueue;
-import com.hazelcast.map.IMap;
 
 import de.tum.cit.aet.artemis.assessment.domain.AssessmentType;
 import de.tum.cit.aet.artemis.assessment.domain.Result;
@@ -33,12 +34,14 @@ import de.tum.cit.aet.artemis.buildagent.dto.BuildLogDTO;
 import de.tum.cit.aet.artemis.buildagent.dto.FinishedBuildJobDTO;
 import de.tum.cit.aet.artemis.buildagent.dto.JobTimingInfo;
 import de.tum.cit.aet.artemis.buildagent.dto.RepositoryInfo;
+import de.tum.cit.aet.artemis.buildagent.service.SharedQueueProcessingService;
 import de.tum.cit.aet.artemis.core.dto.SortingOrder;
 import de.tum.cit.aet.artemis.core.dto.pageablesearch.PageableSearchDTO;
 import de.tum.cit.aet.artemis.programming.AbstractProgrammingIntegrationLocalCILocalVCTestBase;
 import de.tum.cit.aet.artemis.programming.domain.RepositoryType;
 import de.tum.cit.aet.artemis.programming.domain.build.BuildJob;
 import de.tum.cit.aet.artemis.programming.domain.build.BuildStatus;
+import de.tum.cit.aet.artemis.programming.service.BuildLogEntryService;
 
 class LocalCIResourceIntegrationTest extends AbstractProgrammingIntegrationLocalCILocalVCTestBase {
 
@@ -58,11 +61,20 @@ class LocalCIResourceIntegrationTest extends AbstractProgrammingIntegrationLocal
 
     protected BuildJob finishedJobForLogs;
 
-    protected IQueue<BuildJobQueueItem> queuedJobs;
+    @Autowired
+    private RedissonClient redissonClient;
 
-    protected IMap<String, BuildJobQueueItem> processingJobs;
+    @Autowired
+    private SharedQueueProcessingService sharedQueueProcessingService;
 
-    protected IMap<String, BuildAgentInformation> buildAgentInformation;
+    @Autowired
+    private BuildLogEntryService buildLogEntryService;
+
+    protected Queue<BuildJobQueueItem> queuedJobs;
+
+    protected Map<String, BuildJobQueueItem> processingJobs;
+
+    protected Map<String, BuildAgentInformation> buildAgentInformation;
 
     @Override
     protected String getTestPrefix() {
@@ -89,11 +101,11 @@ class LocalCIResourceIntegrationTest extends AbstractProgrammingIntegrationLocal
         BuildConfig buildConfig = new BuildConfig("echo 'test'", "test", "test", "test", "test", "test", null, null, false, false, false, null, 0, null, null, null, null);
         RepositoryInfo repositoryInfo = new RepositoryInfo("test", null, RepositoryType.USER, "test", "test", "test", null, null);
 
-        String memberAddress = hazelcastInstance.getCluster().getLocalMember().getAddress().toString();
-        buildAgent = new BuildAgentDTO(buildAgentShortName, memberAddress, buildAgentDisplayName);
+        buildAgent = new BuildAgentDTO(buildAgentShortName, "address1", buildAgentDisplayName);
 
         job1 = new BuildJobQueueItem("1", "job1", buildAgent, 1, course.getId(), 1, 1, 1, BuildStatus.SUCCESSFUL, repositoryInfo, jobTimingInfo1, buildConfig, null);
         job2 = new BuildJobQueueItem("2", "job2", buildAgent, 2, course.getId(), 1, 1, 1, BuildStatus.SUCCESSFUL, repositoryInfo, jobTimingInfo2, buildConfig, null);
+        String memberAddress = "build-agent-1";
         agent1 = new BuildAgentInformation(buildAgent, 1, 0, new ArrayList<>(List.of(job1)), BuildAgentInformation.BuildAgentStatus.IDLE, new ArrayList<>(List.of(job2)), null);
         BuildJobQueueItem finishedJobQueueItem1 = new BuildJobQueueItem("3", "job3", buildAgent, 3, course.getId(), 1, 1, 1, BuildStatus.SUCCESSFUL, repositoryInfo, jobTimingInfo1,
                 buildConfig, null);
@@ -118,9 +130,9 @@ class LocalCIResourceIntegrationTest extends AbstractProgrammingIntegrationLocal
         finishedJob3 = new BuildJob(finishedJobQueueItem3, BuildStatus.FAILED, result3);
         finishedJobForLogs = new BuildJob(finishedJobQueueItemForLogs, BuildStatus.FAILED, resultForLogs);
 
-        queuedJobs = hazelcastInstance.getQueue("buildJobQueue");
-        processingJobs = hazelcastInstance.getMap("processingJobs");
-        buildAgentInformation = hazelcastInstance.getMap("buildAgentInformation");
+        queuedJobs = redissonClient.getPriorityQueue("buildJobQueue");
+        processingJobs = redissonClient.getMap("processingJobs");
+        buildAgentInformation = redissonClient.getMap("buildAgentInformation");
 
         processingJobs.put(job1.id(), job1);
         processingJobs.put(job2.id(), job2);
@@ -213,7 +225,7 @@ class LocalCIResourceIntegrationTest extends AbstractProgrammingIntegrationLocal
     @Test
     @WithMockUser(username = TEST_PREFIX + "admin", roles = "ADMIN")
     void testCancelQueuedBuildJob() throws Exception {
-        queuedJobs.put(job1);
+        queuedJobs.add(job1);
         request.delete("/api/admin/cancel-job/" + job1.id(), HttpStatus.NO_CONTENT);
     }
 
@@ -239,8 +251,8 @@ class LocalCIResourceIntegrationTest extends AbstractProgrammingIntegrationLocal
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testCancelAllQueuedBuildJobsForCourse() throws Exception {
-        queuedJobs.put(job1);
-        queuedJobs.put(job2);
+        queuedJobs.add(job1);
+        queuedJobs.add(job2);
         request.delete("/api/courses/" + course.getId() + "/cancel-all-queued-jobs", HttpStatus.NO_CONTENT);
     }
 

@@ -22,15 +22,13 @@ import java.util.function.Supplier;
 
 import jakarta.annotation.PostConstruct;
 
+import org.redisson.api.RTopic;
+import org.redisson.api.RedissonClient;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
-
-import com.hazelcast.core.HazelcastInstance;
-import com.hazelcast.topic.ITopic;
 
 import de.tum.cit.aet.artemis.buildagent.dto.BuildJobQueueItem;
 import de.tum.cit.aet.artemis.buildagent.dto.BuildLogDTO;
@@ -53,7 +51,7 @@ public class BuildJobManagementService {
 
     private final BuildJobContainerService buildJobContainerService;
 
-    private final HazelcastInstance hazelcastInstance;
+    private final RedissonClient redissonClient;
 
     private final BuildLogsMap buildLogsMap;
 
@@ -83,12 +81,12 @@ public class BuildJobManagementService {
      */
     private final Set<String> cancelledBuildJobs = new ConcurrentSkipListSet<>();
 
-    public BuildJobManagementService(@Qualifier("hazelcastInstance") HazelcastInstance hazelcastInstance, BuildJobExecutionService buildJobExecutionService,
-            ExecutorService localCIBuildExecutorService, BuildJobContainerService buildJobContainerService, BuildLogsMap buildLogsMap) {
+    public BuildJobManagementService(RedissonClient redissonClient, BuildJobExecutionService buildJobExecutionService, ExecutorService localCIBuildExecutorService,
+            BuildJobContainerService buildJobContainerService, BuildLogsMap buildLogsMap) {
         this.buildJobExecutionService = buildJobExecutionService;
         this.localCIBuildExecutorService = localCIBuildExecutorService;
         this.buildJobContainerService = buildJobContainerService;
-        this.hazelcastInstance = hazelcastInstance;
+        this.redissonClient = redissonClient;
         this.buildLogsMap = buildLogsMap;
     }
 
@@ -98,9 +96,8 @@ public class BuildJobManagementService {
      */
     @PostConstruct
     public void init() {
-        ITopic<String> canceledBuildJobsTopic = hazelcastInstance.getTopic("canceledBuildJobsTopic");
-        canceledBuildJobsTopic.addMessageListener(message -> {
-            String buildJobId = message.getMessageObject();
+        RTopic canceledBuildJobsTopic = redissonClient.getTopic("canceledBuildJobsTopic");
+        canceledBuildJobsTopic.addListener(String.class, (channel, buildJobId) -> {
             lock.lock();
             try {
                 if (runningFutures.containsKey(buildJobId)) {

@@ -10,13 +10,14 @@ import static org.mockito.Mockito.verify;
 import java.time.Instant;
 import java.time.ZonedDateTime;
 import java.util.List;
+import java.util.Map;
 
 import org.junit.jupiter.api.MethodOrderer;
 import org.junit.jupiter.api.Order;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestMethodOrder;
+import org.redisson.api.RedissonClient;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Qualifier;
 
 import com.github.dockerjava.api.command.InfoCmd;
 import com.github.dockerjava.api.command.InspectImageCmd;
@@ -25,8 +26,6 @@ import com.github.dockerjava.api.command.StopContainerCmd;
 import com.github.dockerjava.api.exception.NotFoundException;
 import com.github.dockerjava.api.model.Container;
 import com.github.dockerjava.api.model.Info;
-import com.hazelcast.core.HazelcastInstance;
-import com.hazelcast.map.IMap;
 
 import de.tum.cit.aet.artemis.buildagent.dto.BuildAgentDTO;
 import de.tum.cit.aet.artemis.buildagent.dto.BuildConfig;
@@ -43,8 +42,7 @@ class BuildAgentDockerServiceTest extends AbstractSpringIntegrationLocalCILocalV
     private BuildAgentDockerService buildAgentDockerService;
 
     @Autowired
-    @Qualifier("hazelcastInstance")
-    private HazelcastInstance hazelcastInstance;
+    private RedissonClient redissonClient;
 
     @Test
     @Order(2)
@@ -56,7 +54,7 @@ class BuildAgentDockerServiceTest extends AbstractSpringIntegrationLocalCILocalV
         buildJob.setDockerImage("test-image-name");
         buildJob.setBuildStartDate(buildStartDate);
 
-        IMap<String, ZonedDateTime> dockerImageCleanupInfo = hazelcastInstance.getMap("dockerImageCleanupInfo");
+        Map<String, ZonedDateTime> dockerImageCleanupInfo = redissonClient.getMap("dockerImageCleanupInfo");
 
         dockerImageCleanupInfo.put("test-image-name", buildStartDate);
 
@@ -123,7 +121,7 @@ class BuildAgentDockerServiceTest extends AbstractSpringIntegrationLocalCILocalV
 
         ZonedDateTime buildStartDate = ZonedDateTime.now();
 
-        IMap<String, ZonedDateTime> dockerImageCleanupInfo = hazelcastInstance.getMap("dockerImageCleanupInfo");
+        Map<String, ZonedDateTime> dockerImageCleanupInfo = redissonClient.getMap("dockerImageCleanupInfo");
 
         dockerImageCleanupInfo.put("test-image-name", buildStartDate);
 

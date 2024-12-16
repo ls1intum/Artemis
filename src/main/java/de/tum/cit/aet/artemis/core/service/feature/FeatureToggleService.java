@@ -6,17 +6,15 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
+import org.redisson.api.RedissonClient;
+import org.redisson.client.RedisConnectionException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.context.event.ApplicationReadyEvent;
 import org.springframework.context.annotation.Profile;
 import org.springframework.context.event.EventListener;
 import org.springframework.stereotype.Service;
-
-import com.hazelcast.core.HazelcastInstance;
-import com.hazelcast.core.HazelcastInstanceNotActiveException;
 
 import de.tum.cit.aet.artemis.communication.service.WebsocketMessagingService;
 
@@ -33,34 +31,31 @@ public class FeatureToggleService {
 
     private final WebsocketMessagingService websocketMessagingService;
 
-    private final HazelcastInstance hazelcastInstance;
+    private final RedissonClient redissonClient;
 
     private Map<Feature, Boolean> features;
 
-    public FeatureToggleService(WebsocketMessagingService websocketMessagingService, @Qualifier("hazelcastInstance") HazelcastInstance hazelcastInstance) {
+    public FeatureToggleService(WebsocketMessagingService websocketMessagingService, RedissonClient redissonClient) {
         this.websocketMessagingService = websocketMessagingService;
-        this.hazelcastInstance = hazelcastInstance;
+        this.redissonClient = redissonClient;
     }
 
     private Optional<Map<Feature, Boolean>> getFeatures() {
         try {
-            if (isHazelcastRunning()) {
-                return Optional.ofNullable(features);
-            }
+            return Optional.ofNullable(features);
         }
-        catch (HazelcastInstanceNotActiveException e) {
-            log.error("Failed to get features in {} as Hazelcast instance is not active anymore.", FeatureToggleService.class.getSimpleName());
+        catch (RedisConnectionException e) {
+            log.error("Failed to get features in {} due to Redis connection exception", FeatureToggleService.class.getSimpleName());
         }
         return Optional.empty();
     }
 
     /**
-     * Initialize relevant data from hazelcast
+     * Initialize relevant data from Redis
      */
     @EventListener(ApplicationReadyEvent.class)
     public void init() {
-        // The map will automatically be distributed between all instances by Hazelcast.
-        features = hazelcastInstance.getMap("features");
+        features = redissonClient.getMap("features");
 
         // Features that are neither enabled nor disabled should be enabled by default
         // This ensures that all features (except the Science API) are enabled once the system starts up
@@ -114,12 +109,10 @@ public class FeatureToggleService {
 
     private void sendUpdate() {
         try {
-            if (isHazelcastRunning()) {
-                websocketMessagingService.sendMessage(TOPIC_FEATURE_TOGGLES, enabledFeatures());
-            }
+            websocketMessagingService.sendMessage(TOPIC_FEATURE_TOGGLES, enabledFeatures());
         }
-        catch (HazelcastInstanceNotActiveException e) {
-            log.error("Failed to send features update in {} as Hazelcast instance is not active anymore.", FeatureToggleService.class.getSimpleName());
+        catch (RedisConnectionException e) {
+            log.error("Failed to send features update in {} due to Redis connection exception.", FeatureToggleService.class.getSimpleName());
         }
     }
 
@@ -131,13 +124,11 @@ public class FeatureToggleService {
      */
     public boolean isFeatureEnabled(Feature feature) {
         try {
-            if (isHazelcastRunning()) {
-                Boolean isEnabled = features.get(feature);
-                return Boolean.TRUE.equals(isEnabled);
-            }
+            Boolean isEnabled = features.get(feature);
+            return Boolean.TRUE.equals(isEnabled);
         }
-        catch (HazelcastInstanceNotActiveException e) {
-            log.error("Failed to check if feature is enabled in FeatureToggleService as Hazelcast instance is not active any more.");
+        catch (RedisConnectionException e) {
+            log.error("Failed to check if feature is enabled in FeatureToggleService due to Redis connection exception.");
         }
         return false;
     }
@@ -149,12 +140,10 @@ public class FeatureToggleService {
      */
     public List<Feature> enabledFeatures() {
         try {
-            if (isHazelcastRunning()) {
-                return features.entrySet().stream().filter(feature -> Boolean.TRUE.equals(feature.getValue())).map(Map.Entry::getKey).toList();
-            }
+            return features.entrySet().stream().filter(feature -> Boolean.TRUE.equals(feature.getValue())).map(Map.Entry::getKey).toList();
         }
-        catch (HazelcastInstanceNotActiveException e) {
-            log.error("Failed to retrieve enabled features update in FeatureToggleService as Hazelcast instance is not active any more.");
+        catch (RedisConnectionException e) {
+            log.error("Failed to retrieve enabled features update in FeatureToggleService due to Redis connection exception.");
         }
         return List.of();
     }
@@ -166,17 +155,11 @@ public class FeatureToggleService {
      */
     public List<Feature> disabledFeatures() {
         try {
-            if (isHazelcastRunning()) {
-                return features.entrySet().stream().filter(feature -> Boolean.FALSE.equals(feature.getValue())).map(Map.Entry::getKey).toList();
-            }
+            return features.entrySet().stream().filter(feature -> Boolean.FALSE.equals(feature.getValue())).map(Map.Entry::getKey).toList();
         }
-        catch (HazelcastInstanceNotActiveException e) {
-            log.error("Failed to retrieve disabled features update in FeatureToggleService as Hazelcast instance is not active any more.");
+        catch (RedisConnectionException e) {
+            log.error("Failed to retrieve disabled features update in FeatureToggleService due to Redis connection exception.");
         }
         return List.of();
-    }
-
-    private boolean isHazelcastRunning() {
-        return hazelcastInstance != null && hazelcastInstance.getLifecycleService().isRunning();
     }
 }
