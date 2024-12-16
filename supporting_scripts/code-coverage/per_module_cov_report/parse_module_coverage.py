@@ -4,34 +4,29 @@ import argparse
 
 def get_report_by_module(input_directory):
     results = []
-    if os.exists(input_directory) == False:
-        print(f"'{input_directory}' does not exist.")
-        return results
-
-
     for module_folder in os.listdir(input_directory):
         module_path = os.path.join(input_directory, module_folder)
 
         if os.path.isdir(module_path):
             report_file = os.path.join(module_path, f"jacocoCoverageReport.xml")
 
-            if os.exists(report_file):
+            if os.path.exists(report_file):
                 results.append({
                     "module": module_folder,
                     "report_file": report_file
                 })
             else:
-                print(f"No XML report file found for module: {module_folder}")
+                print(f"No XML report file found for module: {module_folder}. Skipping...")
 
     return results
 
 
-def extract_coverage(input_directory, output_file):
+def extract_coverage(reports):
     results = []
 
-    for report in get_report_files(input_directory):
+    for report in reports:
         try:
-            tree = ET.parse(report_file)
+            tree = ET.parse(report['report_file'])
             root = tree.getroot()
 
             instruction_counter = root.find("./counter[@type='INSTRUCTION']")
@@ -48,7 +43,7 @@ def extract_coverage(input_directory, output_file):
             missed_classes = int(class_counter.get('missed', 0))
 
             results.append({
-                "module": module_folder,
+                "module": report['module'],
                 "instruction_coverage": instruction_coverage,
                 "missed_classes": missed_classes
             })
@@ -56,14 +51,15 @@ def extract_coverage(input_directory, output_file):
             print(f"Error processing {module_folder}: {e}")
 
     results = sorted(results, key=lambda x: x['module'])
+    return results
 
 
-def write_summary_to_file(report):
+def write_summary_to_file(coverage_by_module, output_file):
     with open(output_file, "w") as f:
         f.write("## Coverage Results\n\n")
         f.write("| Module Name | Instruction Coverage (%) | Missed Classes |\n")
         f.write("|-------------|---------------------------|----------------|\n")
-        for result in results:
+        for result in coverage_by_module:
             f.write(f"| {result['module']} | {result['instruction_coverage']:.2f} | {result['missed_classes']} |\n")
 
 
@@ -75,5 +71,5 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     reports = get_report_by_module(args.input_directory)
-    extract_coverage = extract_coverage(reports)
-    write_summary_to_file(args.output_file)
+    coverage_by_module = extract_coverage(reports)
+    write_summary_to_file(coverage_by_module, args.output_file)
