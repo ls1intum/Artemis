@@ -2,11 +2,19 @@ import { AfterViewInit, Component, OnDestroy, OnInit, ViewChild, model } from '@
 import { DEFAULT_PLAGIARISM_DETECTION_CONFIG, Exercise, ExerciseType } from 'app/entities/exercise.model';
 import { faQuestionCircle } from '@fortawesome/free-solid-svg-icons';
 import { NgModel } from '@angular/forms';
+import { FormsModule } from 'app/forms/forms.module';
+
 import { Subject, Subscription } from 'rxjs';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
+import { ArtemisSharedCommonModule } from 'app/shared/shared-common.module';
 
 @Component({
     selector: 'jhi-exercise-update-plagiarism',
     templateUrl: './exercise-update-plagiarism.component.html',
+    standalone: true,
+    imports: [TranslateDirective, FaIconComponent, NgbTooltip, FormsModule, ArtemisSharedCommonModule],
 })
 export class ExerciseUpdatePlagiarismComponent implements OnInit, OnDestroy, AfterViewInit {
     exercise = model.required<Exercise>();

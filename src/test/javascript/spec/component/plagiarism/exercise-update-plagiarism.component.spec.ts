@@ -4,8 +4,13 @@ import { ProgrammingExercise } from 'app/entities/programming/programming-exerci
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { Subject } from 'rxjs';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
-import { MockComponent, MockPipe } from 'ng-mocks';
+import { ArtemisSharedCommonModule } from '../../../../../main/webapp/app/shared/shared-common.module';
+import { FormsModule } from '../../../../../main/webapp/app/forms/forms.module';
+import { TranslateDirective } from '../../../../../main/webapp/app/shared/language/translate.directive';
+import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
+import { MockComponent, MockDirective, MockModule } from 'ng-mocks';
+import { MockTranslateService } from '../../helpers/mocks/service/mock-translate.service';
+import { TranslateService } from '@ngx-translate/core';
 
 describe('Exercise Update Plagiarism Component', () => {
     let comp: ExerciseUpdatePlagiarismComponent;
@@ -13,7 +18,8 @@ describe('Exercise Update Plagiarism Component', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            declarations: [ExerciseUpdatePlagiarismComponent, MockPipe(ArtemisTranslatePipe), MockComponent(FaIconComponent)],
+            imports: [MockDirective(TranslateDirective), MockComponent(FaIconComponent), MockDirective(NgbTooltip), MockModule(FormsModule), MockModule(ArtemisSharedCommonModule)],
+            providers: [{ provide: TranslateService, useClass: MockTranslateService }],
         }).compileComponents();
 
         fixture = TestBed.createComponent(ExerciseUpdatePlagiarismComponent);
