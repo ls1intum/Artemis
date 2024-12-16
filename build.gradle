@@ -145,8 +145,11 @@ test {
         useJUnitPlatform()
         // Always execute "shared"-folder when executing module-specifc tests
         includedModules += "shared"
-        def moduleBasePaths = includedModules.collect { val -> "$BasePath/$val/**"}
-        include(moduleBasePaths)
+        filter { testFilter ->
+            includedModules.each { val ->
+                testFilter.includeTestsMatching("de.tum.cit.aet.artemis.$val.*")
+            }
+        }
     }
 
     testLogging {
