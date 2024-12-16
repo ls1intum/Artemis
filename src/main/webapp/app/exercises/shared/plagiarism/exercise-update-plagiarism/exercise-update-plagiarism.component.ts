@@ -1,4 +1,4 @@
-import { AfterViewInit, Component, Input, OnDestroy, OnInit, ViewChild } from '@angular/core';
+import { AfterViewInit, Component, OnDestroy, OnInit, ViewChild, model } from '@angular/core';
 import { DEFAULT_PLAGIARISM_DETECTION_CONFIG, Exercise, ExerciseType } from 'app/entities/exercise.model';
 import { faQuestionCircle } from '@fortawesome/free-solid-svg-icons';
 import { NgModel } from '@angular/forms';
@@ -9,7 +9,7 @@ import { Subject, Subscription } from 'rxjs';
     templateUrl: './exercise-update-plagiarism.component.html',
 })
 export class ExerciseUpdatePlagiarismComponent implements OnInit, OnDestroy, AfterViewInit {
-    @Input() exercise: Exercise;
+    exercise = model.required<Exercise>();
     @ViewChild('continuous_plagiarism_control_enabled') fieldCPCEnabled?: NgModel;
     @ViewChild('exercise.plagiarismDetectionConfig!.similarityThreshol') fieldThreshhold?: NgModel;
     @ViewChild('exercise.plagiarismDetectionConfig.minimumScore') fieldMinScore?: NgModel;
@@ -31,9 +31,10 @@ export class ExerciseUpdatePlagiarismComponent implements OnInit, OnDestroy, Aft
 
     ngOnInit(): void {
         this.minimumSizeTooltip = this.getMinimumSizeTooltip();
-        if (!this.exercise.plagiarismDetectionConfig) {
+        const exercise = this.exercise();
+        if (exercise && !exercise?.plagiarismDetectionConfig) {
             // Create the default plagiarism configuration if there is none (e.g. importing an old exercise from a file)
-            this.exercise.plagiarismDetectionConfig = DEFAULT_PLAGIARISM_DETECTION_CONFIG;
+            exercise.plagiarismDetectionConfig = DEFAULT_PLAGIARISM_DETECTION_CONFIG;
         }
     }
 
@@ -55,14 +56,14 @@ export class ExerciseUpdatePlagiarismComponent implements OnInit, OnDestroy, Aft
 
     calculateFormValid(): void {
         this.formValid = Boolean(
-            !this.exercise.plagiarismDetectionConfig?.continuousPlagiarismControlEnabled ||
+            !this.exercise()?.plagiarismDetectionConfig?.continuousPlagiarismControlEnabled ||
                 (this.fieldThreshhold?.valid && this.fieldMinScore?.valid && this.fieldMinSize?.valid && this.fieldResponsePeriod?.valid),
         );
         this.formValidChanges.next(this.formValid);
     }
 
     toggleCPCEnabled() {
-        const config = this.exercise.plagiarismDetectionConfig!;
+        const config = this.exercise()?.plagiarismDetectionConfig!;
         const newValue = !config.continuousPlagiarismControlEnabled;
         config.continuousPlagiarismControlEnabled = newValue;
         config.continuousPlagiarismControlPostDueDateChecksEnabled = newValue;
@@ -72,7 +73,7 @@ export class ExerciseUpdatePlagiarismComponent implements OnInit, OnDestroy, Aft
      * Return the translation identifier of the minimum size tooltip for the current exercise type.
      */
     getMinimumSizeTooltip(): string | undefined {
-        switch (this.exercise.type) {
+        switch (this.exercise()?.type) {
             case ExerciseType.PROGRAMMING: {
                 return 'artemisApp.plagiarism.minimumSizeTooltipProgrammingExercise';
             }
@@ -83,5 +84,83 @@ export class ExerciseUpdatePlagiarismComponent implements OnInit, OnDestroy, Aft
                 return 'artemisApp.plagiarism.minimumSizeTooltipModelingExercise';
             }
         }
+    }
+
+    /**
+     * updates the similaritythreshhold value of this exercise
+     * @param threshHold the new threshold
+     */
+    updateSimilarityThreshold(threshHold: number) {
+        this.exercise.update((exercise) => {
+            if (exercise.plagiarismDetectionConfig) {
+                exercise.plagiarismDetectionConfig.similarityThreshold = threshHold;
+            }
+            return exercise;
+        });
+    }
+
+    /**
+     * Updates the minimumScore value of this exercise
+     * @param minimumScore The new minimum score
+     */
+    updateMinimumScore(minimumScore: number) {
+        this.exercise.update((exercise) => {
+            if (exercise.plagiarismDetectionConfig) {
+                exercise.plagiarismDetectionConfig.minimumScore = minimumScore;
+            }
+            return exercise;
+        });
+    }
+
+    /**
+     * Updates the minimumSize value of this exercise
+     * @param minimumSize The new minimum size
+     */
+    updateMinimumSize(minimumSize: number) {
+        this.exercise.update((exercise) => {
+            if (exercise.plagiarismDetectionConfig) {
+                exercise.plagiarismDetectionConfig.minimumSize = minimumSize;
+            }
+            return exercise;
+        });
+    }
+
+    /**
+     * Updates the plagiarismCaseResponsePeriod value of this exercise
+     * @param responsePeriod The new plagiarism case response period
+     */
+    updatePlagiarismCaseResponsePeriod(responsePeriod: number) {
+        this.exercise.update((exercise) => {
+            if (exercise.plagiarismDetectionConfig) {
+                exercise.plagiarismDetectionConfig.continuousPlagiarismControlPlagiarismCaseStudentResponsePeriod = responsePeriod;
+            }
+            return exercise;
+        });
+    }
+
+    /**
+     * Updates the continuousPlagiarismControlEnabled value of this exercise
+     * @param enabled Whether continuous plagiarism control is enabled
+     */
+    updateContinuousPlagiarismControlEnabled(enabled: boolean) {
+        this.exercise.update((exercise) => {
+            if (exercise.plagiarismDetectionConfig) {
+                exercise.plagiarismDetectionConfig.continuousPlagiarismControlEnabled = enabled;
+            }
+            return exercise;
+        });
+    }
+
+    /**
+     * Updates the continuousPlagiarismControlPostDueDateChecksEnabled value of this exercise
+     * @param enabled Whether post-due-date checks for continuous plagiarism control are enabled
+     */
+    updateContinuousPlagiarismControlPostDueDateChecksEnabled(enabled: boolean) {
+        this.exercise.update((exercise) => {
+            if (exercise.plagiarismDetectionConfig) {
+                exercise.plagiarismDetectionConfig.continuousPlagiarismControlPostDueDateChecksEnabled = enabled;
+            }
+            return exercise;
+        });
     }
 }
