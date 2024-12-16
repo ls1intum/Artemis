@@ -444,11 +444,20 @@ public class ConversationService {
         conversationParticipantRepository.save(conversationParticipant);
     }
 
-    public void markConversationAsRead(Channel channel, User requestingUser) {
-        var conversationParticipant = getOrCreateConversationParticipant(channel.getId(), requestingUser);
-        conversationParticipant.setLastRead(ZonedDateTime.now());
-        conversationParticipant.setUnreadMessagesCount(0L);
-        conversationParticipantRepository.save(conversationParticipant);
+    public void markConversationAsRead(Long courseId, User requestingUser) {
+        List<Conversation> conversations = conversationRepository.findAllByCourseId(courseId);
+        for (Conversation conversation : conversations) {
+            boolean userCanBePartOfConversation = conversationParticipantRepository
+                    .findConversationParticipantByConversationIdAndUserId(conversation.getId(), requestingUser.getId()).isPresent()
+                    || (conversation instanceof Channel channel && channel.getIsCourseWide());
+            if (userCanBePartOfConversation) {
+                ConversationParticipant conversationParticipant = getOrCreateConversationParticipant(conversation.getId(), requestingUser);
+                conversationParticipant.setLastRead(ZonedDateTime.now());
+                conversationParticipant.setUnreadMessagesCount(0L);
+                conversationParticipantRepository.save(conversationParticipant);
+            }
+
+        }
     }
 
     /**
