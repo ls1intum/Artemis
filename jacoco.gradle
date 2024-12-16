@@ -84,14 +84,18 @@ jacocoTestReport {
     // This task is just a wrapper to dynamically create tasks (per module)
     enabled = false
 
-    dependsOn reportedModules.collect { module -> registerJacocoReportTask(module as String, classDirectories) }
+    dependsOn reportedModules
+        .collect { module -> registerJacocoReportTask(module as String, classDirectories) }
+        .findAll { task -> task != null}
 }
 
 jacocoTestCoverageVerification {
     // This task is just a wrapper to dynamically create tasks (per module)
     enabled = false
 
-    dependsOn reportedModules.collect { module -> registerJacocoTestCoverageVerification(module as String, classDirectories) }
+    dependsOn reportedModules
+        .collect { module -> registerJacocoTestCoverageVerification(module as String, classDirectories) }
+        .findAll { task -> task != null}
 }
 
 /**
