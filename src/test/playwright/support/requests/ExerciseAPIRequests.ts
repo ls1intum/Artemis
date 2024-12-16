@@ -217,10 +217,16 @@ export class ExerciseAPIRequests {
      *
      * @param body - An object containing either the course or exercise group the exercise will be added to.
      * @param title - The title for the text exercise (optional, default: auto-generated).
+     * @param exerciseTemplate - The template for the text exercise
+     * (optional, default: textExerciseTemplate - default template).
      */
-    async createTextExercise(body: { course: Course } | { exerciseGroup: ExerciseGroup }, title = 'Text ' + generateUUID()): Promise<TextExercise> {
+    async createTextExercise(
+        body: { course: Course } | { exerciseGroup: ExerciseGroup },
+        title = 'Text ' + generateUUID(),
+        exerciseTemplate: any = textExerciseTemplate,
+    ): Promise<TextExercise> {
         const template = {
-            ...textExerciseTemplate,
+            ...exerciseTemplate,
             title,
             channelName: 'exercise-' + titleLowercase(title),
         };
@@ -272,6 +278,7 @@ export class ExerciseAPIRequests {
      *
      * @param exerciseId - The ID of the text exercise for which the submission is made.
      * @param text - The text content of the submission.
+     * @param createNewSubmission - Whether to create a new submission or update an existing one (optional, default: true).
      */
     async makeTextExerciseSubmission(exerciseId: number, text: string, createNewSubmission = true) {
         const url = `${EXERCISE_BASE}/${exerciseId}/text-submissions`;

@@ -67,7 +67,6 @@ import { QuizExerciseOverviewPage } from './pageobjects/exercises/quiz/QuizExerc
 import { QuizExerciseParticipationPage } from './pageobjects/exercises/quiz/QuizExerciseParticipationPage';
 import { ModalDialogBox } from './pageobjects/exam/ModalDialogBox';
 import { ExamParticipationActions } from './pageobjects/exam/ExamParticipationActions';
-import { EditExamPage } from './pageobjects/exam/EditExamPage';
 
 /*
  * Define custom types for fixtures
@@ -97,7 +96,6 @@ export type ArtemisPageObjects = {
     courseCommunication: CourseCommunicationPage;
     lectureManagement: LectureManagementPage;
     lectureCreation: LectureCreationPage;
-    editExam: EditExamPage;
     examCreation: ExamCreationPage;
     examDetails: ExamDetailsPage;
     examExerciseGroupCreation: ExamExerciseGroupCreationPage;
@@ -220,9 +218,6 @@ export const test = base.extend<ArtemisPageObjects & ArtemisCommands & ArtemisRe
     },
     lectureCreation: async ({ page }, use) => {
         await use(new LectureCreationPage(page));
-    },
-    editExam: async ({ page }, use) => {
-        await use(new EditExamPage(page));
     },
     examCreation: async ({ page }, use) => {
         await use(new ExamCreationPage(page));

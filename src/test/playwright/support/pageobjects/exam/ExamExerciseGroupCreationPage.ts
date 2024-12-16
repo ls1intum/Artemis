@@ -44,8 +44,8 @@ export class ExamExerciseGroupCreationPage {
         await responsePromise;
     }
 
-    async addGroupWithExercise(exam: Exam, exerciseType: ExerciseType, additionalData: AdditionalData = {}): Promise<PlaywrightExercise> {
-        const response = await this.handleAddGroupWithExercise(exam, 'Exercise ' + generateUUID(), exerciseType, additionalData);
+    async addGroupWithExercise(exam: Exam, exerciseType: ExerciseType, additionalData: AdditionalData = {}, exerciseTemplate?: any): Promise<PlaywrightExercise> {
+        const response = await this.handleAddGroupWithExercise(exam, 'Exercise ' + generateUUID(), exerciseType, additionalData, exerciseTemplate);
         let exercise = { ...response!, additionalData };
         if (exerciseType == ExerciseType.QUIZ) {
             const quiz = response as QuizExercise;
@@ -61,11 +61,11 @@ export class ExamExerciseGroupCreationPage {
         return exercise;
     }
 
-    async handleAddGroupWithExercise(exam: Exam, title: string, exerciseType: ExerciseType, additionalData: AdditionalData): Promise<Exercise | undefined> {
+    async handleAddGroupWithExercise(exam: Exam, title: string, exerciseType: ExerciseType, additionalData: AdditionalData, exerciseTemplate?: any): Promise<Exercise | undefined> {
         const exerciseGroup = await this.examAPIRequests.addExerciseGroupForExam(exam);
         switch (exerciseType) {
             case ExerciseType.TEXT:
-                return await this.exerciseAPIRequests.createTextExercise({ exerciseGroup }, title);
+                return await this.exerciseAPIRequests.createTextExercise({ exerciseGroup }, title, exerciseTemplate);
             case ExerciseType.MODELING:
                 return await this.exerciseAPIRequests.createModelingExercise({ exerciseGroup }, title);
             case ExerciseType.QUIZ:
