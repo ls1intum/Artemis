@@ -1,5 +1,5 @@
 import { Component, EventEmitter, Input, OnChanges, OnDestroy, OnInit, Output, effect, input, output } from '@angular/core';
-import { faCheck, faFilter, faFilterCircleXmark, faHashtag, faPeopleGroup, faPlusCircle, faSearch, faUser } from '@fortawesome/free-solid-svg-icons';
+import { faCheckDouble, faFilter, faFilterCircleXmark, faHashtag, faPeopleGroup, faPlusCircle, faSearch, faUser } from '@fortawesome/free-solid-svg-icons';
 import { ActivatedRoute, Params } from '@angular/router';
 import { Subscription, distinctUntilChanged } from 'rxjs';
 import { ProfileService } from '../layouts/profiles/profile.service';
@@ -62,7 +62,7 @@ export class SidebarComponent implements OnDestroy, OnChanges, OnInit {
     readonly faPlusCircle = faPlusCircle;
     readonly faSearch = faSearch;
     readonly faHashtag = faHashtag;
-    readonly faCheck = faCheck;
+    readonly faCheckDouble = faCheckDouble;
 
     sidebarDataBeforeFiltering: SidebarData;
 
