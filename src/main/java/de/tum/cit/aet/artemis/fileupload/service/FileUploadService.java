@@ -32,16 +32,37 @@ public class FileUploadService {
         this.fileService = fileService;
     }
 
+    /**
+     * Creates a new file upload entity.
+     *
+     * @param path           Url with which the upload is accessed
+     * @param serverFilePath file path on the server, used for deletion
+     * @param fileName       filename that is returned when downloading it
+     * @param entityId       the id of the attached entity
+     * @param entityType     type of the entity, to identify
+     */
     public void createFileUpload(String path, String serverFilePath, String fileName, Long entityId, FileUploadEntityType entityType) {
         var fileUpload = new FileUpload(path, serverFilePath, fileName, entityId, entityType);
 
         fileUploadRepository.save(fileUpload);
     }
 
+    /**
+     * Creates a new file upload entity.
+     *
+     * @param path public path that the file upload is accessed with
+     *
+     * @return the file upload if found
+     */
     public Optional<FileUpload> findByPath(String path) {
         return Optional.ofNullable(fileUploadRepository.findFileUploadByPath(path));
     }
 
+    /**
+     * Creates a new file upload entity.
+     *
+     * @param fileUploads deletes all these file uploads from the database and from the storage
+     */
     public void deleteFileUploads(List<FileUpload> fileUploads) {
         for (var fileUpload : fileUploads) {
             try {
