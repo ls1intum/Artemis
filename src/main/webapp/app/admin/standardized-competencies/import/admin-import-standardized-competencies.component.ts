@@ -89,8 +89,6 @@ export class AdminImportStandardizedCompetenciesComponent {
     private activatedRoute = inject(ActivatedRoute);
     private router = inject(Router);
 
-    public constructor() {}
-
     /**
      * Verifies the file (only .json, smaller than 20 MB) and then tries to read the importData from it
      *
