@@ -1,8 +1,8 @@
-@if (activeConversation && course) {
+@if (activeConversation() && course()) {
     <div class="container-fluid conversation-info">
         <div class="row info-container">
             <!-- Name (Only for Channels and Group Chats)-->
-            @if (getAsChannelOrGroupChat(activeConversation); as channelOrGroupChat) {
+            @if (getAsChannelOrGroupChat(activeConversation()); as channelOrGroupChat) {
                 <div id="name-section" class="col-12 info-section" [class.interactive]="!readOnlyMode">
                     <div class="form-floating">
                         <textarea
@@ -29,7 +29,7 @@
                 </div>
             }
             <!-- Topic (Only for Channels)-->
-            @if (getAsChannel(activeConversation); as channel) {
+            @if (getAsChannel(activeConversation()); as channel) {
                 <div id="topic-section" class="col-12 info-section" [class.interactive]="!readOnlyMode">
                     <div class="form-floating">
                         <textarea
@@ -53,7 +53,7 @@
                 </div>
             }
             <!-- Description (Only for Channels)-->
-            @if (getAsChannel(activeConversation); as channel) {
+            @if (getAsChannel(activeConversation()); as channel) {
                 <div id="description-section" class="col-12 info-section" [class.interactive]="!readOnlyMode">
                     <div class="form-floating">
                         <textarea
@@ -82,15 +82,15 @@
                     <h6 jhiTranslate="artemisApp.dialogs.conversationDetail.infoTab.moreInfo"></h6>
                 </div>
                 <ul>
-                    @if (activeConversation.creator) {
+                    @if (activeConversation()?.creator) {
                         <li>
                             {{ 'artemisApp.dialogs.conversationDetail.infoTab.createdBy' | artemisTranslate }}:
-                            {{ activeConversation.creator ? getUserLabel(activeConversation.creator) : '' }}
+                            {{ getCreator() ? getUserLabel(getCreator()!) : '' }}
                         </li>
                     }
                     <li>
                         {{ 'artemisApp.dialogs.conversationDetail.infoTab.createdOn' | artemisTranslate }}:
-                        {{ activeConversation.creationDate ? (activeConversation.creationDate | artemisDate) : '' }}
+                        {{ activeConversation()!.creationDate ? (activeConversation()!.creationDate | artemisDate) : '' }}
                     </li>
                 </ul>
             </div>

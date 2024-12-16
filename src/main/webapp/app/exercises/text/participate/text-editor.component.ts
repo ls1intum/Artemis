@@ -152,7 +152,8 @@ export class TextEditorComponent implements OnInit, OnDestroy, ComponentCanDeact
                 this.updateParticipation(this.participation);
             });
         this.profileService.getProfileInfo().subscribe((profileInfo) => {
-            if (profileInfo?.activeProfiles?.includes(PROFILE_IRIS)) {
+            // only load the settings if Iris is available and this is not an exam exercise
+            if (profileInfo?.activeProfiles?.includes(PROFILE_IRIS) && !this.examMode) {
                 this.route.params.subscribe((params) => {
                     this.irisSettingsService.getCombinedExerciseSettings(params['exerciseId']).subscribe((irisSettings) => {
                         this.irisSettings = irisSettings;
