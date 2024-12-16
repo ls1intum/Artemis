@@ -1,6 +1,6 @@
 import { ArtemisTestModule } from '../../test.module';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { MockComponent, MockPipe, MockProvider } from 'ng-mocks';
+import { MockComponent, MockModule, MockPipe, MockProvider } from 'ng-mocks';
 import { AdminImportStandardizedCompetenciesComponent } from 'app/admin/standardized-competencies/import/admin-import-standardized-competencies.component';
 import { HtmlForMarkdownPipe } from 'app/shared/pipes/html-for-markdown.pipe';
 import { KnowledgeAreaTreeStubComponent } from './knowledge-area-tree-stub.component';
@@ -27,22 +27,19 @@ describe('AdminImportStandardizedCompetenciesComponent', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [
-                ArtemisTestModule,
-                NgbCollapseMocksModule,
-                FontAwesomeModule,
-                ArtemisSharedModule,
-                ArtemisSharedComponentModule,
-                StandardizedCompetencyDetailComponent,
-                KnowledgeAreaTreeComponent,
-                ArtemisMarkdownModule,
-            ],
+            imports: [ArtemisTestModule, NgbCollapseMocksModule],
             declarations: [
                 AdminImportStandardizedCompetenciesComponent,
                 MockPipe(HtmlForMarkdownPipe),
                 KnowledgeAreaTreeStubComponent,
                 MockComponent(ButtonComponent),
                 MockComponent(StandardizedCompetencyDetailComponent),
+                MockModule(ArtemisSharedModule),
+                MockModule(ArtemisSharedComponentModule),
+                MockModule(ArtemisMarkdownModule),
+                MockModule(FontAwesomeModule),
+                MockComponent(StandardizedCompetencyDetailComponent),
+                MockComponent(KnowledgeAreaTreeComponent),
             ],
             providers: [{ provide: Router, useClass: MockRouter }, MockProvider(AlertService)],
         })
