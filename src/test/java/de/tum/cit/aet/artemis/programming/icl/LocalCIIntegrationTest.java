@@ -213,7 +213,6 @@ class LocalCIIntegrationTest extends AbstractProgrammingIntegrationLocalCILocalV
             InspectImageCmd inspectImageCmd = mock(InspectImageCmd.class);
             InspectImageResponse inspectImageResponse = new InspectImageResponse();
             doReturn(inspectImageCmd).when(dockerClient).inspectImageCmd(anyString());
-            doReturn(inspectImageResponse).when(inspectImageCmd).exec();
             doAnswer(invocation -> {
                 var future = scheduler.schedule(() -> inspectImageResponse, 3, TimeUnit.SECONDS);
                 return future.get(4, TimeUnit.SECONDS);
