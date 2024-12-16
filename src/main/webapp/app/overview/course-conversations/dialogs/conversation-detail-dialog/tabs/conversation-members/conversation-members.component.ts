@@ -28,9 +28,9 @@ export class ConversationMembersComponent implements OnInit, OnDestroy {
 
     private readonly search$ = new Subject<SearchQuery>();
 
-    course = input<Course>();
-    activeConversationInput = input<ConversationDTO>();
-    activeConversation = signal<ConversationDTO | null>(null);
+    course = input.required<Course>();
+    activeConversationInput = input.required<ConversationDTO>();
+    activeConversation = signal<ConversationDTO | undefined>(undefined);
     changesPerformed = output<void>();
 
     canAddUsersToConversation = canAddUsersToConversation;
@@ -115,8 +115,8 @@ export class ConversationMembersComponent implements OnInit, OnDestroy {
                 switchMap(() => {
                     if (this.course()?.id && this.activeConversation()?.id) {
                         return this.conversationService.searchMembersOfConversation(
-                            this.course()?.id!,
-                            this.activeConversation()?.id!,
+                            this.course().id!,
+                            this.activeConversation()!.id!,
                             this.searchTerm,
                             this.page - 1,
                             this.itemsPerPage,

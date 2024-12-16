@@ -255,7 +255,7 @@ class PyrisEventSystemIntegrationTest extends AbstractIrisIntegrationTest {
 
     }
 
-    @Test()
+    @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testShouldNotFireProgressStalledEventWithEventDisabled() {
         // Find settings for the current exercise
