@@ -23,7 +23,7 @@ import de.tum.cit.aet.artemis.atlas.repository.CompetencyProgressRepository;
 import de.tum.cit.aet.artemis.atlas.repository.CompetencyRepository;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.core.repository.UserRepository;
-import de.tum.cit.aet.artemis.iris.service.pyris.PyrisEventPublisher;
+import de.tum.cit.aet.artemis.iris.service.pyris.PyrisEventPublisherService;
 import de.tum.cit.aet.artemis.iris.service.pyris.event.CompetencyJolSetEvent;
 
 /**
@@ -45,10 +45,10 @@ public class CompetencyJolService {
 
     private final UserRepository userRepository;
 
-    private final Optional<PyrisEventPublisher> pyrisEventPublisher;
+    private final Optional<PyrisEventPublisherService> pyrisEventPublisher;
 
     public CompetencyJolService(CompetencyJolRepository competencyJolRepository, CompetencyRepository competencyRepository,
-            CompetencyProgressRepository competencyProgressRepository, UserRepository userRepository, Optional<PyrisEventPublisher> pyrisEventPublisher) {
+            CompetencyProgressRepository competencyProgressRepository, UserRepository userRepository, Optional<PyrisEventPublisherService> pyrisEventPublisher) {
         this.competencyJolRepository = competencyJolRepository;
         this.competencyRepository = competencyRepository;
         this.competencyProgressRepository = competencyProgressRepository;

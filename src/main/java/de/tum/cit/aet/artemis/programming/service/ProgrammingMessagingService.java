@@ -25,7 +25,7 @@ import de.tum.cit.aet.artemis.exercise.domain.participation.Participation;
 import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
 import de.tum.cit.aet.artemis.exercise.dto.SubmissionDTO;
 import de.tum.cit.aet.artemis.exercise.repository.TeamRepository;
-import de.tum.cit.aet.artemis.iris.service.pyris.PyrisEventPublisher;
+import de.tum.cit.aet.artemis.iris.service.pyris.PyrisEventPublisherService;
 import de.tum.cit.aet.artemis.iris.service.pyris.event.NewResultEvent;
 import de.tum.cit.aet.artemis.lti.service.LtiNewResultService;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
@@ -51,11 +51,11 @@ public class ProgrammingMessagingService {
 
     private final TeamRepository teamRepository;
 
-    private final Optional<PyrisEventPublisher> pyrisEventPublisher;
+    private final Optional<PyrisEventPublisherService> pyrisEventPublisher;
 
     public ProgrammingMessagingService(GroupNotificationService groupNotificationService, WebsocketMessagingService websocketMessagingService,
             ResultWebsocketService resultWebsocketService, Optional<LtiNewResultService> ltiNewResultService, TeamRepository teamRepository,
-            Optional<PyrisEventPublisher> pyrisEventPublisher) {
+            Optional<PyrisEventPublisherService> pyrisEventPublisher) {
         this.groupNotificationService = groupNotificationService;
         this.websocketMessagingService = websocketMessagingService;
         this.resultWebsocketService = resultWebsocketService;

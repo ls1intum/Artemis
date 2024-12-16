@@ -20,15 +20,15 @@ import de.tum.cit.aet.artemis.programming.domain.ProgrammingSubmission;
  */
 @Service
 @Profile(PROFILE_IRIS)
-public class PyrisEventPublisher {
+public class PyrisEventPublisherService {
 
-    private static final Logger log = LoggerFactory.getLogger(PyrisEventPublisher.class);
+    private static final Logger log = LoggerFactory.getLogger(PyrisEventPublisherService.class);
 
     private final ApplicationEventPublisher eventPublisher;
 
     private final IrisSettingsService irisSettingsService;
 
-    public PyrisEventPublisher(ApplicationEventPublisher eventPublisher, IrisSettingsService irisSettingsService) {
+    public PyrisEventPublisherService(ApplicationEventPublisher eventPublisher, IrisSettingsService irisSettingsService) {
         this.eventPublisher = eventPublisher;
         this.irisSettingsService = irisSettingsService;
     }
