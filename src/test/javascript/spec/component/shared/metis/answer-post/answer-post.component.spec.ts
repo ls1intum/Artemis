@@ -1,13 +1,13 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { AnswerPostComponent } from 'app/shared/metis/answer-post/answer-post.component';
 import { DebugElement, input, runInInjectionContext } from '@angular/core';
-import { MockComponent, MockModule, MockPipe, ngMocks } from 'ng-mocks';
+import { MockComponent, MockDirective, MockModule, MockPipe, ngMocks } from 'ng-mocks';
 import { HtmlForMarkdownPipe } from 'app/shared/pipes/html-for-markdown.pipe';
 import { By } from '@angular/platform-browser';
 import { AnswerPostHeaderComponent } from 'app/shared/metis/posting-header/answer-post-header/answer-post-header.component';
 import { AnswerPostReactionsBarComponent } from 'app/shared/metis/posting-reactions-bar/answer-post-reactions-bar/answer-post-reactions-bar.component';
 import { PostingContentComponent } from 'app/shared/metis/posting-content/posting-content.components';
-import { metisResolvingAnswerPostUser1 } from '../../../../helpers/sample/metis-sample-data';
+import { metisPostExerciseUser1, metisResolvingAnswerPostUser1 } from '../../../../helpers/sample/metis-sample-data';
 import { OverlayModule } from '@angular/cdk/overlay';
 import { AnswerPostCreateEditModalComponent } from 'app/shared/metis/posting-create-edit-modal/answer-post-create-edit-modal/answer-post-create-edit-modal.component';
 import { DOCUMENT } from '@angular/common';
@@ -17,6 +17,13 @@ import { MetisService } from 'app/shared/metis/metis.service';
 import { MockMetisService } from '../../../../helpers/mocks/service/mock-metis-service.service';
 import { Posting, PostingType } from 'app/entities/metis/posting.model';
 import { AnswerPost } from 'app/entities/metis/answer-post.model';
+import dayjs from 'dayjs/esm';
+import { ArtemisDatePipe } from '../../../../../../../main/webapp/app/shared/pipes/artemis-date.pipe';
+import { ArtemisTranslatePipe } from '../../../../../../../main/webapp/app/shared/pipes/artemis-translate.pipe';
+import { TranslateDirective } from '../../../../../../../main/webapp/app/shared/language/translate.directive';
+import { MockTranslateService } from '../../../../helpers/mocks/service/mock-translate.service';
+import { TranslateService } from '@ngx-translate/core';
+import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 
 describe('AnswerPostComponent', () => {
     let component: AnswerPostComponent;
@@ -30,7 +37,7 @@ describe('AnswerPostComponent', () => {
         document.body.appendChild(mainContainer);
 
         return TestBed.configureTestingModule({
-            imports: [OverlayModule, MockModule(BrowserAnimationsModule)],
+            imports: [OverlayModule, MockModule(BrowserAnimationsModule), MockDirective(NgbTooltip)],
             declarations: [
                 AnswerPostComponent,
                 MockPipe(HtmlForMarkdownPipe),
@@ -38,10 +45,14 @@ describe('AnswerPostComponent', () => {
                 MockComponent(PostingContentComponent),
                 MockComponent(AnswerPostCreateEditModalComponent),
                 MockComponent(AnswerPostReactionsBarComponent),
+                ArtemisDatePipe,
+                ArtemisTranslatePipe,
+                MockDirective(TranslateDirective),
             ],
             providers: [
                 { provide: DOCUMENT, useValue: document },
                 { provide: MetisService, useClass: MockMetisService },
+                { provide: TranslateService, useClass: MockTranslateService },
             ],
         })
             .compileComponents()
@@ -50,6 +61,10 @@ describe('AnswerPostComponent', () => {
                 component = fixture.componentInstance;
                 debugElement = fixture.debugElement;
             });
+    });
+
+    afterEach(() => {
+        jest.restoreAllMocks();
     });
 
     it('should contain an answer post header when isConsecutive is false', () => {
@@ -178,6 +193,42 @@ describe('AnswerPostComponent', () => {
         expect(component.posting.reactions).toEqual(updatedReactions);
     });
 
+    it('should handle onRightClick correctly based on cursor style', () => {
+        const testCases = [
+            {
+                cursor: 'pointer',
+                preventDefaultCalled: false,
+                showDropdown: false,
+                dropdownPosition: { x: 0, y: 0 },
+            },
+            {
+                cursor: 'default',
+                preventDefaultCalled: true,
+                showDropdown: true,
+                dropdownPosition: { x: 100, y: 200 },
+            },
+        ];
+
+        testCases.forEach(({ cursor, preventDefaultCalled, showDropdown, dropdownPosition }) => {
+            const event = new MouseEvent('contextmenu', { clientX: 100, clientY: 200 });
+
+            const targetElement = document.createElement('div');
+            Object.defineProperty(event, 'target', { value: targetElement });
+
+            jest.spyOn(window, 'getComputedStyle').mockReturnValue({
+                cursor,
+            } as CSSStyleDeclaration);
+
+            const preventDefaultSpy = jest.spyOn(event, 'preventDefault');
+
+            component.onRightClick(event);
+
+            expect(preventDefaultSpy).toHaveBeenCalledTimes(preventDefaultCalled ? 1 : 0);
+            expect(component.showDropdown).toBe(showDropdown);
+            expect(component.dropdownPosition).toEqual(dropdownPosition);
+        });
+    });
+
     it('should cast the post to answer post on change', () => {
         const mockPost: Posting = {
             id: 1,
@@ -196,5 +247,32 @@ describe('AnswerPostComponent', () => {
 
         expect(component.posting).toBeInstanceOf(AnswerPost);
         expect(spy).toHaveBeenCalled();
+    });
+
+    it('should display post-time span when isConsecutive() returns true', () => {
+        const fixedDate = dayjs('2024-12-06T23:39:27.080Z');
+        component.posting = { ...metisPostExerciseUser1, creationDate: fixedDate };
+
+        jest.spyOn(component, 'isConsecutive').mockReturnValue(true);
+        fixture.detectChanges();
+
+        const postTimeDebugElement = debugElement.query(By.css('span.post-time'));
+        const postTimeElement = postTimeDebugElement.nativeElement as HTMLElement;
+
+        expect(postTimeDebugElement).toBeTruthy();
+
+        const expectedTime = dayjs(fixedDate).format('HH:mm');
+        expect(postTimeElement.textContent?.trim()).toBe(expectedTime);
+    });
+
+    it('should not display post-time span when isConsecutive() returns false', () => {
+        const fixedDate = dayjs('2024-12-06T23:39:27.080Z');
+        component.posting = { ...metisPostExerciseUser1, creationDate: fixedDate };
+
+        jest.spyOn(component, 'isConsecutive').mockReturnValue(false);
+        fixture.detectChanges();
+
+        const postTimeElement = debugElement.query(By.css('span.post-time'));
+        expect(postTimeElement).toBeFalsy();
     });
 });
