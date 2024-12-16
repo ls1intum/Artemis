@@ -120,20 +120,31 @@ modernizer {
 
 // Allow using in jacoco.gradle
 ext {
-    testTags = System.getProperty("testTags")
-    testedModules = !testTags ? new String[]{} : testTags.split(",") as String[]
+    includedTestTags = System.getProperty("includeTags")
+    includedTags = !includedTestTags ? new String[]{} : includedTestTags.split(",") as String[]
+    includedModulesTag = System.getProperty("includeModules")
+    includedModules = !includedModulesTag ? new String[]{} : includedModulesTag.split(",") as String[]
+
+    runAllTests = includedTags.size() == 0 && includedModules.size() == 0
 }
 
 // Execute the test cases: ./gradlew test
-// Execute only architecture tests: ./gradlew test -DtestTags="ArchitectureTest"
+// Execute only architecture tests: ./gradlew test -DincludeTags="ArchitectureTest"
+// Execute tests only for specific modules: ./gradlew test -DincludeModules="atlas". Using this flag, "includeTags" will be ignored.
 test {
-    if (testedModules.size() > 0) {
-        useJUnitPlatform {
-            includeTags testedModules
+    if (runAllTests) {
+        useJUnitPlatform()
+        exclude "**/*IT*", "**/*IntTest*"
+    } else if (includedModules.size() == 0) {
+        useJUnitPlatform() {
+            includeTags includedTags
         }
     } else {
         useJUnitPlatform()
-        exclude "**/*IT*", "**/*IntTest*"
+        // Always execute "shared"-folder when executing module-specifc tests
+        includedModules += "shared"
+        def moduleBasePaths = includedModules.collect { val -> "de/tum/cit/aet/artemis/$val/**"}
+        include(moduleBasePaths)
     }
 
     testLogging {
@@ -150,17 +161,12 @@ tasks.register("testReport", TestReport) {
     testResults.from(test)
 }
 
-jacoco {
-    toolVersion = "0.8.12"
-}
-
 jar {
     enabled = false
 }
 
 // Dynamic generation of jacoco test report generation-/coverage verification-tasks (per-module)
 apply from: "jacoco.gradle"
-check.dependsOn jacocoTestCoverageVerification
 
 configurations {
     providedRuntime

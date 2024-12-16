@@ -11,7 +11,7 @@ ext {
         ],
         "atlas"        : [
             "INSTRUCTION": 0.832,
-            "CLASS": 4
+            "CLASS": 13
         ],
         "buildagent"   : [
             "INSTRUCTION": 0.781,
@@ -75,9 +75,13 @@ ext {
         ],
     ]
     // If no explicit modules defined -> generate reports and validate for each module
-    reportedModules = testedModules.size() == 0
+    reportedModules = includedModules.size() == 0
         ? ModuleCoverageThresholds.collect {element -> element.key}
-        : testedModules as ArrayList
+        : includedModules as ArrayList
+}
+
+jacoco {
+    toolVersion = "0.8.12"
 }
 
 jacocoTestReport {
@@ -97,6 +101,7 @@ jacocoTestCoverageVerification {
         .collect { module -> registerJacocoTestCoverageVerification(module as String, classDirectories) }
         .findAll { task -> task != null}
 }
+check.dependsOn jacocoTestCoverageVerification
 
 /**
  * Registers a JacocoReport task based on the provided parameters.
@@ -190,5 +195,5 @@ private void prepareJacocoReportTask(JacocoReportBase task, String moduleName, C
     )
     )
 
-    task.dependsOn compileTestJava
+    task.dependsOn test
 }

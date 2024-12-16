@@ -78,17 +78,14 @@ jobs:
 
           # Restrict executed tests to changed modules if there is diff between this and the base branch
           if [ -n "${CHANGED_MODULES}" ]; then
-            # Always execute ArchitectureTests if at least one module changed
-            CHANGED_MODULES+=("ArchitectureTest")
-
             IFS=,
-            TEST_MODULE_TAGS=$(echo "-DtestTags=${CHANGED_MODULES[*]}")
+            TEST_MODULE_TAGS=$(echo "-DincludeModules=${CHANGED_MODULES[*]}")
 
-            echo "Executing tests with JUnit tags: $CHANGED_MODULES"
+            echo "Executing tests for modules: $CHANGED_MODULES"
           fi
         fi
 
-        TEST_MODULE_TAGS="-DtestTags=atlas,buildagent,fileupload,lti,ArchitectureTest"
+        TEST_MODULE_TAGS="-DincludeModules=atlas,buildagent,fileupload,lti"
 
         ./gradlew --console=plain test jacocoTestReport -x webapp jacocoTestCoverageVerification "$TEST_MODULE_TAGS" | tee tests.log
     - name: Print failed tests
@@ -255,7 +252,7 @@ jobs:
       run: ./gradlew checkstyleMain -x webapp
       if: success() || failure()
     - name: Java Architecture Tests
-      run: ./gradlew test -DtestModules='ArchitectureTest' -x webapp
+      run: ./gradlew test -DincludeTags='ArchitectureTest' -x webapp
       if: success() || failure()
     - name: Test Report
       uses: dorny/test-reporter@v1
