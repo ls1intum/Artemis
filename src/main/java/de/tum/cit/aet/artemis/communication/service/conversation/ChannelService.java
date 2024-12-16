@@ -451,7 +451,13 @@ public class ChannelService {
         return createdChannel;
     }
 
+    /**
+     * Marks all channels of a course as read for the requesting user.
+     *
+     * @param course         the course for which all channels should be marked as read.
+     * @param requestingUser the user requesting the marking of all channels as read.
+     */
     public void markAllChannelsOfCourseAsRead(Course course, User requestingUser) {
-        conversationService.markConversationAsRead(course.getId(), requestingUser);
+        conversationService.markAllConversationOfAUserAsRead(course.getId(), requestingUser);
     }
 }

@@ -12,6 +12,7 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import jakarta.transaction.Transactional;
 import jakarta.validation.constraints.NotNull;
 
 import org.springframework.context.annotation.Profile;
@@ -444,19 +445,28 @@ public class ConversationService {
         conversationParticipantRepository.save(conversationParticipant);
     }
 
-    public void markConversationAsRead(Long courseId, User requestingUser) {
+    /**
+     * Mark all conversation of a user as read
+     *
+     * @param courseId       the id of the course
+     * @param requestingUser the user that wants to mark the conversation as read
+     */
+    @Transactional
+    public void markAllConversationOfAUserAsRead(Long courseId, User requestingUser) {
         List<Conversation> conversations = conversationRepository.findAllByCourseId(courseId);
+        ZonedDateTime now = ZonedDateTime.now();
+        List<ConversationParticipant> participants = new ArrayList<>();
         for (Conversation conversation : conversations) {
             boolean userCanBePartOfConversation = conversationParticipantRepository
                     .findConversationParticipantByConversationIdAndUserId(conversation.getId(), requestingUser.getId()).isPresent()
                     || (conversation instanceof Channel channel && channel.getIsCourseWide());
             if (userCanBePartOfConversation) {
                 ConversationParticipant conversationParticipant = getOrCreateConversationParticipant(conversation.getId(), requestingUser);
-                conversationParticipant.setLastRead(ZonedDateTime.now());
+                conversationParticipant.setLastRead(now);
                 conversationParticipant.setUnreadMessagesCount(0L);
-                conversationParticipantRepository.save(conversationParticipant);
+                participants.add(conversationParticipant);
             }
-
+            conversationParticipantRepository.saveAll(participants);
         }
     }
 
