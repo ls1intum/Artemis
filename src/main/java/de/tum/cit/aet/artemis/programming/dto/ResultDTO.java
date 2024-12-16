@@ -63,7 +63,7 @@ public record ResultDTO(Long id, ZonedDateTime completionDate, Boolean successfu
     public static ResultDTO of(Result result, List<Feedback> filteredFeedback) {
         SubmissionDTO submissionDTO = null;
         if (Hibernate.isInitialized(result.getSubmission()) && result.getSubmission() != null) {
-            submissionDTO = SubmissionDTO.of(result.getSubmission());
+            submissionDTO = SubmissionDTO.of(result.getSubmission(), false, null, null);
         }
         var feedbackDTOs = filteredFeedback.stream().map(FeedbackDTO::of).toList();
         return new ResultDTO(result.getId(), result.getCompletionDate(), result.isSuccessful(), result.getScore(), result.isRated(), submissionDTO,
