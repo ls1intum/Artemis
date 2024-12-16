@@ -467,17 +467,18 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
                         type: ProgrammingExerciseParticipationType.SOLUTION,
                     },
                 },
-                {
-                    type: DetailType.ProgrammingDiffReport,
-                    title: 'artemisApp.programmingExercise.diffReport.title',
-                    titleHelpText: 'artemisApp.programmingExercise.diffReport.detailedTooltip',
-                    data: {
-                        addedLineCount: this.addedLineCount,
-                        removedLineCount: this.removedLineCount,
-                        isLoadingDiffReport: this.isLoadingDiffReport,
-                        gitDiffReport: exercise.gitDiffReport,
+                this.addedLineCount !== undefined &&
+                    this.removedLineCount !== undefined && {
+                        type: DetailType.ProgrammingDiffReport,
+                        title: 'artemisApp.programmingExercise.diffReport.title',
+                        titleHelpText: 'artemisApp.programmingExercise.diffReport.detailedTooltip',
+                        data: {
+                            addedLineCount: this.addedLineCount,
+                            removedLineCount: this.removedLineCount,
+                            isLoadingDiffReport: this.isLoadingDiffReport,
+                            gitDiffReport: exercise.gitDiffReport,
+                        },
                     },
-                },
                 !!exercise.buildConfig?.buildScript &&
                     !!exercise.buildConfig?.windfile?.metadata?.docker?.image && {
                         type: DetailType.Text,
