@@ -6,35 +6,36 @@ def process_reports(input_directory, output_file):
     results = []
 
     for module_folder in os.listdir(input_directory):
-        if module_folder.startswith("jacocoCoverageReport-"):
-            module_name = module_folder[len("jacocoCoverageReport-"):]
-            module_path = os.path.join(input_directory, module_folder)
+        module_path = os.path.join(input_directory, module_folder)
 
-            if os.path.isdir(module_path):
-                report_file = os.path.join(module_path, f"jacocoCoverageReport-{module_name}.xml")
+        if os.path.isdir(module_path):
+            report_file = os.path.join(module_path, f"jacocoCoverageReport.xml")
 
-                if os.path.exists(report_file):
-                    try:
-                        tree = ET.parse(report_file)
-                        root = tree.getroot()
+            if os.path.exists(report_file):
+                try:
+                    tree = ET.parse(report_file)
+                    root = tree.getroot()
 
-                        instruction_counter = root.find("./counter[@type='INSTRUCTION']")
-                        class_counter = root.find("./counter[@type='CLASS']")
+                    instruction_counter = root.find("./counter[@type='INSTRUCTION']")
+                    class_counter = root.find("./counter[@type='CLASS']")
 
-                        instruction_covered = int(instruction_counter.get('covered', 0))
-                        instruction_missed = int(instruction_counter.get('missed', 0))
-                        total_instructions = instruction_covered + instruction_missed
-                        instruction_coverage = (instruction_covered / total_instructions * 100) if total_instructions > 0 else 0.0
+                    if instruction_counter == None or class_counter == None:
+                        continue
 
-                        missed_classes = int(class_counter.get('missed', 0))
+                    instruction_covered = int(instruction_counter.get('covered', 0))
+                    instruction_missed = int(instruction_counter.get('missed', 0))
+                    total_instructions = instruction_covered + instruction_missed
+                    instruction_coverage = (instruction_covered / total_instructions * 100) if total_instructions > 0 else 0.0
 
-                        results.append({
-                            "module": module_name,
-                            "instruction_coverage": instruction_coverage,
-                            "missed_classes": missed_classes
-                        })
-                    except Exception as e:
-                        print(f"Error processing {module_name}: {e}")
+                    missed_classes = int(class_counter.get('missed', 0))
+
+                    results.append({
+                        "module": module_folder,
+                        "instruction_coverage": instruction_coverage,
+                        "missed_classes": missed_classes
+                    })
+                except Exception as e:
+                    print(f"Error processing {module_folder}: {e}")
 
     results = sorted(results, key=lambda x: x['module'])
 

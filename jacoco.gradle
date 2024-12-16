@@ -118,6 +118,9 @@ private JacocoReport registerJacocoReportTask(String moduleName, JacocoReport ro
 
     task.reports {
         xml.required = true
+        xml.outputLocation = file("build/reports/jacoco/$moduleName/jacocoCoverageReport.xml")
+        html.required = true
+        html.outputLocation = file("build/reports/jacoco/$moduleName/html")
     }
 
     return task
