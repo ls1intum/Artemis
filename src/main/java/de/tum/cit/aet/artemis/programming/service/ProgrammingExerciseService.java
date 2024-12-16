@@ -1,6 +1,7 @@
 package de.tum.cit.aet.artemis.programming.service;
 
 import static de.tum.cit.aet.artemis.core.config.Constants.ALLOWED_CHECKOUT_DIRECTORY;
+import static de.tum.cit.aet.artemis.core.config.Constants.MAX_ENVIRONMENT_VARIABLES_DOCKER_FLAG_LENGTH;
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 import static de.tum.cit.aet.artemis.programming.domain.build.BuildPlanType.SOLUTION;
 import static de.tum.cit.aet.artemis.programming.domain.build.BuildPlanType.TEMPLATE;
@@ -46,6 +47,8 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 
 import de.tum.cit.aet.artemis.assessment.repository.ResultRepository;
 import de.tum.cit.aet.artemis.atlas.api.CompetencyProgressApi;
+import de.tum.cit.aet.artemis.buildagent.dto.DockerFlagsDTO;
+import de.tum.cit.aet.artemis.buildagent.dto.DockerRunConfig;
 import de.tum.cit.aet.artemis.communication.service.conversation.ChannelService;
 import de.tum.cit.aet.artemis.communication.service.notifications.GroupNotificationScheduleService;
 import de.tum.cit.aet.artemis.core.domain.Course;
@@ -185,6 +188,8 @@ public class ProgrammingExerciseService {
 
     private final Optional<CompetencyProgressApi> competencyProgressApi;
 
+    private final ProgrammingExerciseBuildConfigService programmingExerciseBuildConfigService;
+
     public ProgrammingExerciseService(ProgrammingExerciseRepository programmingExerciseRepository, GitService gitService, Optional<VersionControlService> versionControlService,
             Optional<ContinuousIntegrationService> continuousIntegrationService, Optional<ContinuousIntegrationTriggerService> continuousIntegrationTriggerService,
             TemplateProgrammingExerciseParticipationRepository templateProgrammingExerciseParticipationRepository,
@@ -199,7 +204,8 @@ public class ProgrammingExerciseService {
             ProgrammingSubmissionService programmingSubmissionService, Optional<IrisSettingsService> irisSettingsService, Optional<AeolusTemplateService> aeolusTemplateService,
             Optional<BuildScriptGenerationService> buildScriptGenerationService,
             ProgrammingExerciseStudentParticipationRepository programmingExerciseStudentParticipationRepository, ProfileService profileService, ExerciseService exerciseService,
-            ProgrammingExerciseBuildConfigRepository programmingExerciseBuildConfigRepository, Optional<CompetencyProgressApi> competencyProgressApi) {
+            ProgrammingExerciseBuildConfigRepository programmingExerciseBuildConfigRepository, Optional<CompetencyProgressApi> competencyProgressApi,
+            ProgrammingExerciseBuildConfigService programmingExerciseBuildConfigService) {
         this.programmingExerciseRepository = programmingExerciseRepository;
         this.gitService = gitService;
         this.versionControlService = versionControlService;
@@ -233,6 +239,7 @@ public class ProgrammingExerciseService {
         this.exerciseService = exerciseService;
         this.programmingExerciseBuildConfigRepository = programmingExerciseBuildConfigRepository;
         this.competencyProgressApi = competencyProgressApi;
+        this.programmingExerciseBuildConfigService = programmingExerciseBuildConfigService;
     }
 
     /**
@@ -373,6 +380,7 @@ public class ProgrammingExerciseService {
         programmingExercise.validateProgrammingSettings();
         programmingExercise.validateSettingsForFeedbackRequest();
         validateCustomCheckoutPaths(programmingExercise);
+        validateDockerFlags(programmingExercise);
         auxiliaryRepositoryService.validateAndAddAuxiliaryRepositoriesOfProgrammingExercise(programmingExercise, programmingExercise.getAuxiliaryRepositories());
         submissionPolicyService.validateSubmissionPolicyCreation(programmingExercise);
 
@@ -1072,5 +1080,41 @@ public class ProgrammingExerciseService {
     public ProgrammingExercise loadProgrammingExerciseWithAuxiliaryRepositories(long exerciseId) {
         final Set<ProgrammingExerciseRepository.ProgrammingExerciseFetchOptions> fetchOptions = Set.of(AuxiliaryRepositories);
         return programmingExerciseRepository.findByIdWithDynamicFetchElseThrow(exerciseId, fetchOptions);
+    }
+
+    /**
+     * Validates the network access feature for the given programming language.
+     * Currently, SWIFT and HASKELL do not support disabling the network access feature.
+     *
+     * @param programmingExercise the programming exercise to validate
+     */
+    public void validateDockerFlags(ProgrammingExercise programmingExercise) {
+        ProgrammingExerciseBuildConfig buildConfig = programmingExercise.getBuildConfig();
+        DockerFlagsDTO dockerFlagsDTO;
+        try {
+            dockerFlagsDTO = programmingExerciseBuildConfigService.parseDockerFlags(buildConfig);
+        }
+        catch (IllegalArgumentException e) {
+            throw new BadRequestAlertException("Error while parsing the docker flags", "Exercise", "dockerFlagsParsingError");
+        }
+
+        if (dockerFlagsDTO == null) {
+            return;
+        }
+
+        if (dockerFlagsDTO.env() != null) {
+            for (var entry : dockerFlagsDTO.env().entrySet()) {
+                if (entry.getKey().length() > MAX_ENVIRONMENT_VARIABLES_DOCKER_FLAG_LENGTH || entry.getValue().length() > MAX_ENVIRONMENT_VARIABLES_DOCKER_FLAG_LENGTH) {
+                    throw new BadRequestAlertException("The environment variables are too long. Max " + MAX_ENVIRONMENT_VARIABLES_DOCKER_FLAG_LENGTH + " chars", "Exercise",
+                            "envVariablesTooLong");
+                }
+            }
+        }
+
+        DockerRunConfig dockerRunConfig = programmingExerciseBuildConfigService.getDockerRunConfigFromParsedFlags(dockerFlagsDTO);
+
+        if (List.of(ProgrammingLanguage.SWIFT, ProgrammingLanguage.HASKELL).contains(programmingExercise.getProgrammingLanguage()) && dockerRunConfig.isNetworkDisabled()) {
+            throw new BadRequestAlertException("This programming language does not support disabling the network access feature", "Exercise", "networkAccessNotSupported");
+        }
     }
 }
