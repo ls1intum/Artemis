@@ -86,7 +86,7 @@ jobs:
           fi
         fi
 
-        TEST_MODULE_TAGS=$(echo "-DtestTags=atlas,buildagent,fileupload,lti,ArchitectureTest")
+        TEST_MODULE_TAGS="-DtestTags=atlas,buildagent,fileupload,lti,ArchitectureTest"
 
         ./gradlew --console=plain test jacocoTestReport -x webapp jacocoTestCoverageVerification $TEST_MODULE_TAGS | tee tests.log
     - name: Print failed tests
