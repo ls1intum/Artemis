@@ -204,8 +204,9 @@ export class ExamUpdateComponent implements OnInit, OnDestroy {
      */
     handleSubmit() {
         const datesChanged = !(this.exam.startDate?.isSame(this.originalStartDate) && this.exam.endDate?.isSame(this.originalEndDate));
+        const workingTimeChanged = this.oldWorkingTime !== this.newWorkingTime;
 
-        if (datesChanged && this.isOngoingExam) {
+        if (datesChanged && workingTimeChanged && this.isOngoingExam) {
             const modalRef = this.modalService.open(ConfirmAutofocusModalComponent, { keyboard: true, size: 'lg' });
             modalRef.componentInstance.title = 'artemisApp.examManagement.dateChange.title';
             modalRef.componentInstance.text = this.artemisTranslatePipe.transform('artemisApp.examManagement.dateChange.message');
