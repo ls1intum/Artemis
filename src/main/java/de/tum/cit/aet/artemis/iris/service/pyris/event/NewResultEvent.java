@@ -24,7 +24,7 @@ public class NewResultEvent extends PyrisEvent {
 
     @Override
     public Optional<User> getUser() {
-        if (result.getSubmission().getParticipation() instanceof ProgrammingExerciseStudentParticipation studentParticipation) {
+        if (result.getSubmission() != null && result.getSubmission().getParticipation() instanceof ProgrammingExerciseStudentParticipation studentParticipation) {
             return studentParticipation.getStudent();
         }
         return Optional.empty();

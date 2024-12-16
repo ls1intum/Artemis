@@ -52,13 +52,32 @@ public class PyrisEventPublisherService {
         }
     }
 
+    /**
+     * Checks if the given event is enabled.
+     *
+     * @param event the event to check
+     * @return true if the event is enabled and conditions are met, false otherwise
+     */
     private boolean isEventEnabled(PyrisEvent event) {
         return switch (event) {
             case NewResultEvent newResultEvent -> {
                 var result = newResultEvent.getResult();
+                if (result == null) {
+                    yield false;
+                }
                 var submission = result.getSubmission();
+                if (submission == null) {
+                    yield false;
+                }
                 if (submission instanceof ProgrammingSubmission programmingSubmission) {
-                    var programmingExercise = programmingSubmission.getParticipation().getExercise();
+                    var participation = programmingSubmission.getParticipation();
+                    if (participation == null) {
+                        yield false;
+                    }
+                    var programmingExercise = participation.getExercise();
+                    if (programmingExercise == null) {
+                        yield false;
+                    }
                     if (programmingSubmission.isBuildFailed()) {
                         yield irisSettingsService.isActivatedFor(IrisEventType.BUILD_FAILED, programmingExercise);
                     }
@@ -72,12 +91,20 @@ public class PyrisEventPublisherService {
             }
             case CompetencyJolSetEvent competencyJolSetEvent -> {
                 var competencyJol = competencyJolSetEvent.getCompetencyJol();
-                var course = competencyJol.getCompetency().getCourse();
+                if (competencyJol == null) {
+                    yield false;
+                }
+                var competency = competencyJol.getCompetency();
+                if (competency == null) {
+                    yield false;
+                }
+                var course = competency.getCourse();
+                if (course == null) {
+                    yield false;
+                }
                 yield irisSettingsService.isActivatedFor(IrisEventType.JOL, course);
             }
-            default -> {
-                throw new UnsupportedPyrisEventException("Unsupported Pyris event: " + event.getClass().getSimpleName());
-            }
+            default -> throw new UnsupportedPyrisEventException("Unsupported Pyris event: " + event.getClass().getSimpleName());
         };
     }
 }
