@@ -37,12 +37,12 @@ import { fromPairs, pickBy } from 'lodash-es';
 import { CodeEditorTutorAssessmentInlineFeedbackSuggestionComponent } from 'app/exercises/programming/assess/code-editor-tutor-assessment-inline-feedback-suggestion.component';
 import { MonacoEditorLineHighlight } from 'app/shared/monaco-editor/model/monaco-editor-line-highlight.model';
 import { FileTypeService } from 'app/exercises/programming/shared/service/file-type.service';
-import { EditorPosition, EditorViewState } from 'app/shared/monaco-editor/model/actions/monaco-editor.util';
+import { EditorPosition } from 'app/shared/monaco-editor/model/actions/monaco-editor.util';
 import { ArtemisProgrammingManualAssessmentModule } from 'app/exercises/programming/assess/programming-manual-assessment.module';
 import { CodeEditorHeaderComponent } from 'app/exercises/programming/shared/code-editor/header/code-editor-header.component';
 import { ArtemisSharedModule } from 'app/shared/shared.module';
 
-type FileSession = { [fileName: string]: { code: string; cursor: EditorPosition; viewState: EditorViewState | undefined; loadingError: boolean } };
+type FileSession = { [fileName: string]: { code: string; cursor: EditorPosition; scrollTop: number; loadingError: boolean } };
 type FeedbackWithLineAndReference = Feedback & { line: number; reference: string };
 export type Annotation = { fileName: string; row: number; column: number; text: string; type: string; timestamp: number; hash?: string };
 @Component({
@@ -116,8 +116,6 @@ export class CodeEditorMonacoComponent implements OnChanges {
         this.filterFeedbackForSelectedFile(this.feedbackSuggestionsInternal()).map((f) => this.attachLineAndReferenceToFeedback(f)),
     );
 
-    private currentFileName: string;
-
     /**
      * Attaches the line number & reference to a feedback item, or -1 if no line is available. This is used to disambiguate feedback items in the template, avoiding warnings.
      * @param feedback The feedback item to attach the line to.
@@ -159,7 +157,8 @@ export class CodeEditorMonacoComponent implements OnChanges {
             this.editor().reset();
         }
         if ((changes.selectedFile && this.selectedFile()) || editorWasRefreshed) {
-            await this.selectFileInEditor(this.selectedFile());
+            const previousFileName: string | undefined = changes.selectedFile.previousValue;
+            await this.selectFileInEditor(previousFileName, this.selectedFile());
             this.setBuildAnnotations(this.annotationsArray);
             this.newFeedbackLines.set([]);
             this.renderFeedbackWidgets();
@@ -177,17 +176,17 @@ export class CodeEditorMonacoComponent implements OnChanges {
         this.editor().layout();
     }
 
-    async selectFileInEditor(fileName: string | undefined): Promise<void> {
-        if (!fileName) {
+    async selectFileInEditor(previousFileName: string | undefined, selectedFileName: string | undefined): Promise<void> {
+        if (!selectedFileName) {
             // There is nothing to be done, as the editor will be hidden when there is no file.
             return;
         }
         this.loadingCount.set(this.loadingCount() + 1);
-        if (!this.fileSession()[fileName] || this.fileSession()[fileName].loadingError) {
+        if (!this.fileSession()[selectedFileName] || this.fileSession()[selectedFileName].loadingError) {
             let fileContent = '';
             let loadingError = false;
             try {
-                fileContent = await firstValueFrom(this.repositoryFileService.getFile(fileName).pipe(timeout(CodeEditorMonacoComponent.FILE_TIMEOUT))).then(
+                fileContent = await firstValueFrom(this.repositoryFileService.getFile(selectedFileName).pipe(timeout(CodeEditorMonacoComponent.FILE_TIMEOUT))).then(
                     (fileObj) => fileObj.fileContent,
                 );
             } catch (error) {
@@ -200,53 +199,38 @@ export class CodeEditorMonacoComponent implements OnChanges {
             }
             this.fileSession.set({
                 ...this.fileSession(),
-                [fileName]: { code: fileContent, loadingError: loadingError, viewState: undefined, cursor: { column: 0, lineNumber: 0 } },
+                [selectedFileName]: { code: fileContent, loadingError: loadingError, scrollTop: 0, cursor: { column: 0, lineNumber: 0 } },
             });
         }
 
-        const code = this.fileSession()[fileName].code;
+        const code = this.fileSession()[selectedFileName].code;
         this.binaryFileSelected.set(this.fileTypeService.isBinaryContent(code));
 
         // Since fetching the file may take some time, we need to check if the file is still selected.
-        if (!this.binaryFileSelected() && this.selectedFile() === fileName) {
-            this.manageEditorViewState(fileName, code);
+        if (!this.binaryFileSelected() && this.selectedFile() === selectedFileName) {
+            this.switchToSelectedFile(previousFileName, selectedFileName, code);
         }
         this.loadingCount.set(this.loadingCount() - 1);
     }
 
-    /**
-     * Manages the model and view state of the monaco editor. The mechanism is as follows:
-     * When the user is currently viewing a file and switches to a different one (denoted by {@link fileName}), the view
-     * state of the current file is stored in its session. When switching back to that file, the view state is restored.
-     * When the current file is also the first file that the user selects, we can't set the view state before 'switching'
-     * to that file, because there is no previous file. Here we set the view state after the editor is fully initialized.
-     * @param fileName The name of the selected file, i.e. the file that the user wants to switch to
-     * @param code     The code contained in the file
-     */
-    manageEditorViewState(fileName: string, code: string): void {
-        const isFirstSelectedFile: boolean = this.currentFileName === undefined;
-        if (!isFirstSelectedFile) {
-            this.fileSession()[this.currentFileName].viewState = this.editor().saveViewState();
+    switchToSelectedFile(previousFileName: string | undefined, selectedFileName: string, code: string): void {
+        // if a file was previously selected, we save the old scrollTop before switching to another file
+        if (previousFileName && this.fileSession()[previousFileName]) {
+            this.fileSession()[previousFileName].scrollTop = this.editor().getScrollTop();
         }
-        this.currentFileName = fileName;
-
-        // This initializes the view state
-        this.editor().changeModel(fileName, code);
-        this.editor().setPosition(this.fileSession()[fileName].cursor);
-        if (isFirstSelectedFile) {
-            this.fileSession()[this.currentFileName].viewState = this.editor().saveViewState();
-        }
-        this.editor().restoreViewState(this.fileSession()[fileName].viewState);
+        this.editor().changeModel(selectedFileName, code);
+        this.editor().setPosition(this.fileSession()[selectedFileName].cursor);
+        this.editor().setScrollTop(this.fileSession()[this.selectedFile()!].scrollTop ?? 0);
     }
 
     onFileTextChanged(text: string): void {
         if (this.selectedFile() && this.fileSession()[this.selectedFile()!]) {
             const previousText = this.fileSession()[this.selectedFile()!].code;
-            const previousViewState = this.fileSession()[this.selectedFile()!].viewState;
+            const previousScrollTop = this.fileSession()[this.selectedFile()!].scrollTop;
             if (previousText !== text) {
                 this.fileSession.set({
                     ...this.fileSession(),
-                    [this.selectedFile()!]: { code: text, loadingError: false, viewState: previousViewState, cursor: this.editor().getPosition() },
+                    [this.selectedFile()!]: { code: text, loadingError: false, scrollTop: previousScrollTop, cursor: this.editor().getPosition() },
                 });
                 this.onFileContentChange.emit({ file: this.selectedFile()!, fileContent: text });
             }
@@ -428,7 +412,6 @@ export class CodeEditorMonacoComponent implements OnChanges {
     async onFileChange(fileChange: FileChange) {
         if (fileChange instanceof RenameFileChange) {
             this.fileSession.set(this.fileService.updateFileReferences(this.fileSession(), fileChange));
-            this.currentFileName = fileChange.newFileName;
             for (const annotation of this.annotationsArray) {
                 if (annotation.fileName === fileChange.oldFileName) {
                     annotation.fileName = fileChange.newFileName;
@@ -439,7 +422,7 @@ export class CodeEditorMonacoComponent implements OnChanges {
             this.fileSession.set(this.fileService.updateFileReferences(this.fileSession(), fileChange));
             this.storeAnnotations([fileChange.fileName]);
         } else if (fileChange instanceof CreateFileChange && fileChange.fileType === FileType.FILE) {
-            this.fileSession.set({ ...this.fileSession(), [fileChange.fileName]: { code: '', cursor: { lineNumber: 0, column: 0 }, viewState: undefined, loadingError: false } });
+            this.fileSession.set({ ...this.fileSession(), [fileChange.fileName]: { code: '', cursor: { lineNumber: 0, column: 0 }, scrollTop: 0, loadingError: false } });
         }
         this.setBuildAnnotations(this.annotationsArray);
     }
