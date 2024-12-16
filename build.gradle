@@ -137,6 +137,7 @@ test {
         useJUnitPlatform()
         exclude "**/*IT*", "**/*IntTest*"
     } else if (includedModules.size() == 0) {
+        // not running all tests, but not module-specific ones -> use tags
         useJUnitPlatform() {
             includeTags includedTags
         }
