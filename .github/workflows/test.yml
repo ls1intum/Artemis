@@ -114,7 +114,7 @@ jobs:
       if: success() || failure()
       run: |
         AGGREGATED_REPORT_FILE=./coverage_report.md
-        python3 ./jacoco-parser.py build/reports/jacoco $AGGREGATED_REPORT_FILE
+        python3 ./.ci/coverage-parser/execute.py build/reports/jacoco $AGGREGATED_REPORT_FILE
         cat $AGGREGATED_REPORT_FILE > $GITHUB_STEP_SUMMARY
 
   server-tests-mysql:
