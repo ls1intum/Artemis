@@ -83,6 +83,8 @@ jobs:
 
             IFS=,
             TEST_MODULE_TAGS=$(echo "-DtestTags=${CHANGED_MODULES[*]}")
+
+            echo "Executing tests with JUnit tags: $TEST_MODULE_TAGS"
           fi
         fi
 
