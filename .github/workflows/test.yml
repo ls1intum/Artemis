@@ -83,8 +83,6 @@ jobs:
           fi
         fi
 
-        TEST_MODULE_TAGS="-DincludeModules=atlas,buildagent,fileupload,lti"
-
         ./gradlew --console=plain test jacocoTestReport -x webapp jacocoTestCoverageVerification "$TEST_MODULE_TAGS" | tee tests.log
     - name: Print failed tests
       if: failure()
