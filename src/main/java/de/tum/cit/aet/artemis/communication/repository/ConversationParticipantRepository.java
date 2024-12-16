@@ -113,5 +113,4 @@ public interface ConversationParticipantRepository extends ArtemisJpaRepository<
                 AND conversationParticipant.unreadMessagesCount IS NOT NULL
             """)
     void decrementUnreadMessagesCountOfParticipants(@Param("conversationId") Long conversationId, @Param("senderId") Long senderId);
-
 }

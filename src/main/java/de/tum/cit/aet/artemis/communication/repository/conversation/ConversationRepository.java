@@ -90,6 +90,5 @@ public interface ConversationRepository extends ArtemisJpaRepository<Conversatio
             """)
     boolean userHasUnreadMessageInCourse(@Param("courseId") Long courseId, @Param("userId") Long userId);
 
-    @Query
     List<Conversation> findAllByCourseId(@Param("courseId") Long courseId);
 }
