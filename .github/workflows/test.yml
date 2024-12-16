@@ -84,13 +84,13 @@ jobs:
             IFS=,
             TEST_MODULE_TAGS=$(echo "-DtestTags=${CHANGED_MODULES[*]}")
 
-            echo "Executing tests with JUnit tags: $TEST_MODULE_TAGS"
+            echo "Executing tests with JUnit tags: $CHANGED_MODULES"
           fi
         fi
 
         TEST_MODULE_TAGS="-DtestTags=atlas,buildagent,fileupload,lti,ArchitectureTest"
 
-        ./gradlew --console=plain test jacocoTestReport -x webapp jacocoTestCoverageVerification $TEST_MODULE_TAGS | tee tests.log
+        ./gradlew --console=plain test jacocoTestReport -x webapp jacocoTestCoverageVerification "$TEST_MODULE_TAGS" | tee tests.log
     - name: Print failed tests
       if: failure()
       run: grep "Test >.* FAILED\$" tests.log || echo "No failed tests."
