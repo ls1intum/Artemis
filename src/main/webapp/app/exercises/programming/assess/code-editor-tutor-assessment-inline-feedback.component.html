@@ -88,20 +88,28 @@
             }
         </div>
     } @else {
-        <div class="p-1">
+        <div class="p-1 position-relative">
+            <button
+                type="button"
+                class="btn-close position-absolute top-0 end-0 m-1 rounded-circle"
+                aria-label="Close"
+                (click)="deleteFeedback()"
+                [ngbTooltip]="'artemisApp.assessment.subsequentFeedback' | artemisTranslate"
+                style="width: 20px; height: 20px; padding: 2px; display: flex; align-items: center; justify-content: center; border: 1px solid #000; color: #000"
+            >
+                <span aria-hidden="true" style="font-size: 10px; line-height: 1">&times;</span>
+            </button>
             <div class="row flex-nowrap align-items-top m-1">
                 <div class="col flex-grow-0 ps-0">
                     <h5 class="d-inline">
-                        @if (!Feedback.isNonGradedFeedbackSuggestion(feedback)) {
-                            <span
-                                class="badge"
-                                [class.bg-success]="feedback.credits! > 0 && feedback.isSubsequent === undefined"
-                                [class.bg-danger]="feedback.credits! < 0 && feedback.isSubsequent === undefined"
-                                [class.bg-warning]="feedback.credits === 0 && feedback.isSubsequent === undefined"
-                                [class.bg-secondary]="readOnly && feedback.isSubsequent"
-                                >{{ roundScoreSpecifiedByCourseSettings(feedback.credits, course) + 'P' }}</span
-                            >
-                        }
+                        <span
+                            class="badge"
+                            [class.bg-success]="feedback.credits! > 0 && feedback.isSubsequent === undefined"
+                            [class.bg-danger]="feedback.credits! < 0 && feedback.isSubsequent === undefined"
+                            [class.bg-warning]="feedback.credits === 0 && feedback.isSubsequent === undefined"
+                            [class.bg-secondary]="readOnly && feedback.isSubsequent"
+                            >{{ roundScoreSpecifiedByCourseSettings(feedback.credits, course) + 'P' }}</span
+                        >
                     </h5>
                 </div>
                 <div class="col-10 ps-0 flex-grow-1 flex-shrink-1">

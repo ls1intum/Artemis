@@ -27,6 +27,7 @@ import { ExerciseHintService } from 'app/exercises/shared/exercise-hint/shared/e
 import { HttpResponse } from '@angular/common/http';
 import { AlertService } from 'app/core/util/alert.service';
 import { isManualResult as isManualResultFunction } from 'app/exercises/shared/result/result.utils';
+import { StudentParticipation } from 'app/entities/participation/student-participation.model';
 
 @Component({
     selector: 'jhi-code-editor-student',
@@ -177,9 +178,13 @@ export class CodeEditorStudentContainerComponent implements OnInit, OnDestroy {
         return [];
     }
 
-    receivedNewResult() {
+    receivedParticipationChange() {
         this.loadStudentExerciseHints();
         this.getNumberOfSubmissionsForSubmissionPolicy();
+    }
+
+    receivedNewResult(result: Result) {
+        this.latestResult = result;
     }
 
     loadStudentExerciseHints() {
