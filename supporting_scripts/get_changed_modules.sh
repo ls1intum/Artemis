@@ -2,6 +2,7 @@
 
 # Determines the changed modules following the module-directory structure.
 # Based on git-diff between the local state and an input branch name.
+# Returns a comma-separated list of changed modules.
 # Example: "./get_changed_modules.sh develop"
 
 # Check for the branch input argument.
