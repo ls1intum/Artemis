@@ -4,9 +4,9 @@ import { ProgrammingExercise } from 'app/entities/programming/programming-exerci
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { Subject } from 'rxjs';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { ArtemisSharedCommonModule } from '../../../../../main/webapp/app/shared/shared-common.module';
-import { FormsModule } from '../../../../../main/webapp/app/forms/forms.module';
-import { TranslateDirective } from '../../../../../main/webapp/app/shared/language/translate.directive';
+import { ArtemisSharedCommonModule } from 'app/shared/shared-common.module';
+import { FormsModule } from 'app/forms/forms.module';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { MockComponent, MockDirective, MockModule } from 'ng-mocks';
 import { MockTranslateService } from '../../helpers/mocks/service/mock-translate.service';
