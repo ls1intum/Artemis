@@ -14,8 +14,7 @@ import { TextExercise } from 'app/entities/text/text-exercise.model';
 import { Exam } from 'app/entities/exam/exam.model';
 import { ChannelDTO, ChannelSubType, getAsChannelDTO } from 'app/entities/metis/conversation/channel.model';
 import { provideHttpClient } from '@angular/common/http';
-import isBetween from 'dayjs/plugin/isBetween';
-import dayjs from 'dayjs';
+import dayjs from 'dayjs/esm';
 import { ConversationDTO, ConversationType } from 'app/entities/metis/conversation/conversation.model';
 
 describe('CourseOverviewService', () => {
@@ -58,7 +57,6 @@ describe('CourseOverviewService', () => {
 
         course = new Course();
         course.id = 1;
-        dayjs.extend(isBetween);
 
         pastExercise = new ModelingExercise(UMLDiagramType.ClassDiagram, course, undefined) as Exercise;
         pastExercise.dueDate = lastWeek;
