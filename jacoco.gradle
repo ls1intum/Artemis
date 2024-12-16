@@ -1,5 +1,5 @@
 ext {
-    BasePath = "de/tum/cit/aet/artemis"
+
     // Thresholds when executing each module on its own
     ModuleCoverageThresholds = [
         "assessment"   : [

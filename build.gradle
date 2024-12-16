@@ -126,6 +126,7 @@ ext {
     includedModules = !includedModulesTag ? new String[]{} : includedModulesTag.split(",") as String[]
 
     runAllTests = includedTags.size() == 0 && includedModules.size() == 0
+    BasePath = "de/tum/cit/aet/artemis"
 }
 
 // Execute the test cases: ./gradlew test
@@ -143,7 +144,7 @@ test {
         useJUnitPlatform()
         // Always execute "shared"-folder when executing module-specifc tests
         includedModules += "shared"
-        def moduleBasePaths = includedModules.collect { val -> "de/tum/cit/aet/artemis/$val/**"}
+        def moduleBasePaths = includedModules.collect { val -> "$BasePath/$val/**"}
         include(moduleBasePaths)
     }
 
