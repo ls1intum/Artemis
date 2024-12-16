@@ -86,9 +86,6 @@ jacoco {
 }
 
 jacocoTestReport {
-    // This task is just a wrapper to dynamically create tasks (per module)
-    enabled = false
-
     reportedModules
         .collect { module -> registerJacocoReportTask(module as String, jacocoTestReport) }
         .findAll { task -> task != null}
