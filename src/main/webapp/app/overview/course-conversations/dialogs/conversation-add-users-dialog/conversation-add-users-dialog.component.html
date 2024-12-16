@@ -17,6 +17,7 @@
         </div>
         <div class="modal-body">
             <jhi-conversation-add-users-form
+                [isLoading]="isLoading"
                 [maxSelectable]="maxSelectable"
                 [courseId]="course.id!"
                 (formSubmitted)="onFormSubmitted($event)"

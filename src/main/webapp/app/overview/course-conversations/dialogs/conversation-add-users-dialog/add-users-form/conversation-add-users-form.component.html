@@ -63,6 +63,9 @@
                         <div class="col-12 text-end">
                             <button type="submit" id="submitButton" [disabled]="!isSubmitPossible" class="btn btn-primary">
                                 <span jhiTranslate="artemisApp.dialogs.addUsers.addUsersForm.addUsersButton"></span>
+                                @if (isLoading()) {
+                                    <fa-icon [icon]="faSpinner" animation="spin" class="ms-2" />
+                                }
                             </button>
                         </div>
                     </div>
