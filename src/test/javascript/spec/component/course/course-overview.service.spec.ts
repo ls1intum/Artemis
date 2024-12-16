@@ -462,14 +462,14 @@ describe('CourseOverviewService', () => {
         jest.spyOn(service, 'getCorrespondingChannelSubType');
         const groupedConversations = service.groupConversationsByChannelType(course, conversations, true);
 
-        expect(groupedConversations['generalChannels'].entityData).toHaveLength(4);
+        expect(groupedConversations['generalChannels'].entityData).toHaveLength(3);
         expect(groupedConversations['examChannels'].entityData).toHaveLength(1);
         expect(groupedConversations['exerciseChannels'].entityData).toHaveLength(1);
         expect(groupedConversations['favoriteChannels'].entityData).toHaveLength(1);
         expect(groupedConversations['hiddenChannels'].entityData).toHaveLength(1);
         expect(service.mapConversationToSidebarCardElement).toHaveBeenCalledTimes(6);
         expect(service.getConversationGroup).toHaveBeenCalledTimes(6);
-        expect(service.getCorrespondingChannelSubType).toHaveBeenCalledTimes(6);
+        expect(service.getCorrespondingChannelSubType).toHaveBeenCalledTimes(5);
         expect(getAsChannelDTO(groupedConversations['generalChannels'].entityData[0].conversation)?.name).toBe('fav-channel');
         expect(getAsChannelDTO(groupedConversations['generalChannels'].entityData[1].conversation)?.name).toBe('General');
         expect(getAsChannelDTO(groupedConversations['generalChannels'].entityData[2].conversation)?.name).toBe('General 2');

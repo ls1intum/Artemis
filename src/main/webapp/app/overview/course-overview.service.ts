@@ -174,11 +174,13 @@ export class CourseOverviewService {
     getConversationGroup(conversation: ConversationDTO): ChannelGroupCategory[] {
         const groups: ChannelGroupCategory[] = [];
 
-        if (conversation.isFavorite) {
-            groups.push('favoriteChannels');
-        }
         if (conversation.isHidden) {
             groups.push('hiddenChannels');
+            return groups;
+        }
+
+        if (conversation.isFavorite) {
+            groups.push('favoriteChannels');
         }
 
         if (isGroupChatDTO(conversation)) {
