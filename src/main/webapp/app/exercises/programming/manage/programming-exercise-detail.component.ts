@@ -57,7 +57,7 @@ import { IrisSubSettingsType } from 'app/entities/iris/settings/iris-sub-setting
 import { Detail } from 'app/detail-overview-list/detail.model';
 import { Competency } from 'app/entities/competency.model';
 import { AeolusService } from 'app/exercises/programming/shared/service/aeolus.service';
-import { mergeMap, tap } from 'rxjs/operators';
+import { catchError, mergeMap, tap } from 'rxjs/operators';
 import { ProgrammingExerciseGitDiffReport } from 'app/entities/hestia/programming-exercise-git-diff-report.model';
 import { BuildLogStatisticsDTO } from 'app/entities/programming/build-log-statistics-dto';
 
@@ -224,9 +224,18 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
                     tap((submissionPolicy) => {
                         this.programmingExercise.submissionPolicy = submissionPolicy;
                     }),
-                    mergeMap(() => this.programmingExerciseService.getDiffReport(exerciseId)),
+                    mergeMap(() =>
+                        this.programmingExerciseService.getDiffReport(exerciseId).pipe(
+                            catchError(() => {
+                                this.alertService.error('artemisApp.programmingExercise.diffReportError');
+                                return of(undefined);
+                            }),
+                        ),
+                    ),
                     tap((gitDiffReport) => {
-                        this.processGitDiffReport(gitDiffReport, false);
+                        if (gitDiffReport) {
+                            this.processGitDiffReport(gitDiffReport, false);
+                        }
                     }),
                     mergeMap(() =>
                         this.programmingExercise.isAtLeastEditor ? this.programmingExerciseService.getBuildLogStatistics(exerciseId!) : of([] as BuildLogStatisticsDTO),
@@ -809,16 +818,21 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
 
             this.addedLineCount = calculateLineCount(gitDiffReport.entries, 'lineCount');
             this.removedLineCount = calculateLineCount(gitDiffReport.entries, 'previousLineCount');
-
-            if (updateDetailSections) {
-                this.exerciseDetailSections = this.getExerciseDetails();
-            }
+        }
+        // TODO: this should not be here and should be independent of the git diff report
+        if (updateDetailSections) {
+            this.exerciseDetailSections = this.getExerciseDetails();
         }
     }
 
     loadGitDiffReport() {
-        this.programmingExerciseService.getDiffReport(this.programmingExercise.id!).subscribe((gitDiffReport) => {
-            this.processGitDiffReport(gitDiffReport);
+        this.programmingExerciseService.getDiffReport(this.programmingExercise.id!).subscribe({
+            next: (gitDiffReport) => {
+                this.processGitDiffReport(gitDiffReport);
+            },
+            error: () => {
+                this.alertService.error('artemisApp.programmingExercise.diffReportError');
+            },
         });
     }
 
