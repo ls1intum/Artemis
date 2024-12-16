@@ -24,7 +24,6 @@ import { DocumentationButtonComponent } from 'app/shared/components/documentatio
 import { LectureTitleChannelNameComponent } from 'app/lecture/lecture-title-channel-name.component';
 import { MarkdownEditorMonacoComponent } from 'app/shared/markdown-editor/monaco/markdown-editor-monaco.component';
 import { CustomNotIncludedInValidatorDirective } from '../../../../../main/webapp/app/shared/validators/custom-not-included-in-validator.directive';
-import { ArtemisSharedModule } from '../../../../../main/webapp/app/shared/shared.module';
 import { OwlDateTimeModule } from '@danielmoncada/angular-datetime-picker';
 import { TitleChannelNameComponent } from '../../../../../main/webapp/app/shared/form/title-channel-name/title-channel-name.component';
 import { LectureUpdatePeriodComponent } from '../../../../../main/webapp/app/lecture/lecture-period/lecture-period.component';
@@ -51,7 +50,7 @@ describe('LectureUpdateComponent', () => {
         pastLecture.endDate = yesterday;
 
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule, ArtemisSharedModule, FormsModule, MockModule(NgbTooltipModule), MockModule(OwlDateTimeModule)],
+            imports: [ArtemisTestModule, FormsModule, MockModule(NgbTooltipModule), MockModule(OwlDateTimeModule)],
             declarations: [
                 LectureUpdateComponent,
                 LectureTitleChannelNameComponent,
