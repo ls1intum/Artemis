@@ -18,7 +18,6 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.RequestBody;
 
 import de.tum.cit.aet.artemis.communication.domain.ConversationParticipant;
@@ -451,7 +450,6 @@ public class ConversationService {
      * @param courseId       the id of the course
      * @param requestingUser the user that wants to mark the conversation as read
      */
-    @Transactional
     public void markAllConversationOfAUserAsRead(Long courseId, User requestingUser) {
         List<Conversation> conversations = conversationRepository.findAllByCourseId(courseId);
         ZonedDateTime now = ZonedDateTime.now();
