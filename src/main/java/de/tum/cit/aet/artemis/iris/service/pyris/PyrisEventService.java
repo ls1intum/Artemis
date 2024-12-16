@@ -32,6 +32,13 @@ public class PyrisEventService {
         this.irisExerciseChatSessionService = irisExerciseChatSessionService;
     }
 
+    /**
+     * Handles a CompetencyJolSetEvent. The event is passed to the {@link de.tum.cit.aet.artemis.iris.service.session.IrisCourseChatSessionService} to handle the judgement of
+     * learning set.
+     *
+     * @see IrisCourseChatSessionService#onJudgementOfLearningSet
+     * @param event the {@link CompetencyJolSetEvent} to handle
+     */
     @EventListener
     public void handleCompetencyJolSetEvent(CompetencyJolSetEvent event) {
         log.debug("Processing CompetencyJolSetEvent");
@@ -45,6 +52,15 @@ public class PyrisEventService {
         }
     }
 
+    /**
+     * Handles a NewResultEvent. A new result represents a new submission result.
+     * Depending on whether there was a build failure or not, the result is passed to the appropriate handler method inside the
+     * {@link de.tum.cit.aet.artemis.iris.service.session.IrisExerciseChatSessionService}.
+     *
+     * @see IrisExerciseChatSessionService#onBuildFailure
+     * @see IrisExerciseChatSessionService#onNewResult
+     * @param event the {@link NewResultEvent} to handle
+     */
     @EventListener
     public void handleNewResultEvent(NewResultEvent event) {
         log.debug("Processing NewResultEvent");
