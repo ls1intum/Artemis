@@ -1,36 +1,48 @@
-import { ComponentFixture, TestBed, waitForAsync } from '@angular/core/testing';
+import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { FormsModule } from '@angular/forms';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import { By } from '@angular/platform-browser';
-import { MockComponent, MockPipe, MockProvider } from 'ng-mocks';
-import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
+import { MockProvider } from 'ng-mocks';
 import { ChannelDTO } from 'app/entities/metis/conversation/channel.model';
 import { Post } from 'app/entities/metis/post.model';
 import { ForwardMessageDialogComponent } from 'app/overview/course-conversations/dialogs/forward-message-dialog/forward-message-dialog.component';
-import { ProfilePictureComponent } from 'app/shared/profile-picture/profile-picture.component';
-import { ElementRef, runInInjectionContext, signal } from '@angular/core';
-import { MarkdownEditorMonacoComponent } from 'app/shared/markdown-editor/monaco/markdown-editor-monaco.component';
+import { runInInjectionContext, signal } from '@angular/core';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
 import { MockCourseManagementService } from '../../../../../helpers/mocks/service/mock-course-management.service';
 import { UserPublicInfoDTO } from 'app/core/user/user.model';
+import { MockTranslateService } from '../../../../../helpers/mocks/service/mock-translate.service';
+import { ArtemisTestModule } from '../../../../../test.module';
+import { TranslateService } from '@ngx-translate/core';
+import { MockResizeObserver } from '../../../../../helpers/mocks/service/mock-resize-observer';
 
 describe('ForwardMessageDialogComponent', () => {
     let component: ForwardMessageDialogComponent;
     let fixture: ComponentFixture<ForwardMessageDialogComponent>;
+    let searchInput: any;
 
-    beforeEach(waitForAsync(() => {
-        TestBed.configureTestingModule({
-            declarations: [ForwardMessageDialogComponent, MockPipe(ArtemisTranslatePipe), MockComponent(MarkdownEditorMonacoComponent), MockComponent(ProfilePictureComponent)],
-            providers: [MockProvider(NgbActiveModal), { provide: CourseManagementService, useClass: MockCourseManagementService }],
-            imports: [FormsModule],
+    beforeEach(async () => {
+        await TestBed.configureTestingModule({
+            providers: [
+                MockProvider(NgbActiveModal),
+                { provide: CourseManagementService, useClass: MockCourseManagementService },
+                { provide: TranslateService, useClass: MockTranslateService },
+            ],
+            imports: [FormsModule, ArtemisTestModule],
         }).compileComponents();
-    }));
 
-    beforeEach(() => {
+        global.ResizeObserver = jest.fn().mockImplementation((callback: ResizeObserverCallback) => {
+            return new MockResizeObserver(callback);
+        });
+
         fixture = TestBed.createComponent(ForwardMessageDialogComponent);
         component = fixture.componentInstance;
-
-        component.channels.set([{ id: 1, name: 'General' } as ChannelDTO, { id: 2, name: 'Announcements' } as ChannelDTO]);
+        component.channels.set([
+            { id: 1, name: 'General' } as ChannelDTO,
+            {
+                id: 2,
+                name: 'Announcements',
+            } as ChannelDTO,
+        ]);
         component.users.set([
             {
                 id: 3,
@@ -38,8 +50,12 @@ describe('ForwardMessageDialogComponent', () => {
                 imageUrl: 'user1.png',
             } as UserPublicInfoDTO,
         ]);
-        component.postToForward.set({ id: 10, content: 'Test Message', author: { id: 1, name: 'Author', imageUrl: 'author.png' } } as Post);
-
+        component.postToForward.set({
+            id: 10,
+            content: 'Test Message',
+            author: { id: 1, name: 'Author', imageUrl: 'author.png' },
+        } as Post);
+        searchInput = fixture.debugElement.query(By.css('input.tag-input')).nativeElement;
         fixture.detectChanges();
     });
 
@@ -60,10 +76,8 @@ describe('ForwardMessageDialogComponent', () => {
     });
 
     it('should filter options based on search term', async () => {
-        const searchInput = fixture.debugElement.query(By.css('input.tag-input')).nativeElement;
         searchInput.value = 'General';
         searchInput.dispatchEvent(new Event('input'));
-        await fixture.whenStable();
         fixture.detectChanges();
 
         expect(component.filteredOptions).toHaveLength(1);
@@ -97,7 +111,7 @@ describe('ForwardMessageDialogComponent', () => {
     });
 
     it('should remove a selected chat', () => {
-        component.selectedUsers = [{ id: 3, otherUserName: 'User1', otherUserImg: 'user1.png' } as any];
+        component.selectedUsers = [{ id: 3, otherUserName: 'User1', otherUserImg: 'user1.png' } as UserPublicInfoDTO];
         component.removeSelectedUser(component.selectedUsers[0]);
         fixture.detectChanges();
 
@@ -169,14 +183,16 @@ describe('ForwardMessageDialogComponent', () => {
     });
 
     it('should detect if content overflows and set isContentLong correctly', () => {
-        component.messageContent = {
-            nativeElement: {
-                scrollHeight: 200,
-                clientHeight: 100,
-            },
-        } as ElementRef;
+        fixture.detectChanges();
+
+        const messageContentDebugElement = fixture.debugElement.query(By.css('#messageContent'));
+        const nativeElement = messageContentDebugElement.nativeElement as HTMLElement;
+
+        Object.defineProperty(nativeElement, 'scrollHeight', { value: 200, configurable: true });
+        Object.defineProperty(nativeElement, 'clientHeight', { value: 100, configurable: true });
 
         component.checkIfContentOverflows();
+
         expect(component.isContentLong).toBeTrue();
     });
 

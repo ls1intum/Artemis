@@ -1,6 +1,6 @@
 import { Injectable, inject } from '@angular/core';
 import { HttpClient, HttpParams, HttpResponse } from '@angular/common/http';
-import { Observable } from 'rxjs';
+import { Observable, throwError } from 'rxjs';
 import { map } from 'rxjs/operators';
 import { ForwardedMessage } from 'app/entities/metis/forwarded-message.model';
 
@@ -31,7 +31,7 @@ export class ForwardedMessageService {
      */
     getForwardedMessages(ids: number[], type: 'post' | 'answer'): Observable<HttpResponse<{ id: number; messages: ForwardedMessage[] }[]>> {
         if (!ids || ids.length === 0) {
-            throw new Error('IDs cannot be empty');
+            return throwError(() => new Error('IDs cannot be empty'));
         }
 
         const params = new HttpParams().set('ids', ids.join(',')).set('type', type);

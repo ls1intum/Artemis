@@ -37,8 +37,16 @@
                 </span>
             </span>
         </div>
-        <div class="forwarded-message-body" #messageContent [ngClass]="{ expanded: showFullForwardedMessage }">
-            <div class="preserve-line-breaks">{{ displayedForwardedContent() }}</div>
+        <div class="forwarded-message-body" id="messageContent" #messageContent [ngClass]="{ expanded: showFullForwardedMessage }">
+            <jhi-posting-content
+                [previewMode]="false"
+                [content]="originalPostDetails()!.content!"
+                [author]="originalPostDetails()!.author!"
+                [isEdited]="!!originalPostDetails()!.updatedDate"
+                [posting]="originalPostDetails()!"
+                [isReply]="false"
+                [isSubscribeToMetis]="false"
+            />
         </div>
         @if (isContentLong) {
             <button type="button" class="btn btn-link p-0" style="width: fit-content; font-size: 0.7rem" (click)="toggleShowFullForwardedMessage()">

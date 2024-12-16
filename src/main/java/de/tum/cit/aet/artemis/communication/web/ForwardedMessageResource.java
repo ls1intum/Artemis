@@ -82,7 +82,7 @@ public class ForwardedMessageResource {
         long start = System.nanoTime();
 
         if (!"post".equalsIgnoreCase(type) && !"answer".equalsIgnoreCase(type)) {
-            throw new BadRequestAlertException("Invalid type provided. Must be 'post' or 'answer'.", "ForwardedMessage", "invalidType");
+            throw new BadRequestAlertException("Invalid type provided. Must be 'post' or 'answer'.", ENTITY_NAME, "invalidType");
         }
 
         Set<ForwardedMessage> forwardedMessages;

@@ -96,7 +96,7 @@
                     </jhi-profile-picture>
                     <span class="forwarded-message-author">{{ postToForward()?.author?.name }}</span>
                 </div>
-                <div class="forwarded-message-body" [ngClass]="{ expanded: showFullForwardedMessage }" #messageContent>
+                <div class="forwarded-message-body" [ngClass]="{ expanded: showFullForwardedMessage }" id="messageContent" #messageContent>
                     <div class="preserve-line-breaks">{{ displayedForwardedContent() }}</div>
                 </div>
                 @if (isContentLong) {

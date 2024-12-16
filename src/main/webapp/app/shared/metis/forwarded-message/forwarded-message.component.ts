@@ -1,23 +1,17 @@
-import { AfterViewInit, ChangeDetectorRef, Component, ElementRef, OnChanges, OnInit, SimpleChanges, inject, input, output, viewChild } from '@angular/core';
+import { AfterViewInit, ChangeDetectorRef, Component, ElementRef, effect, inject, input, output, viewChild } from '@angular/core';
 import { faShare } from '@fortawesome/free-solid-svg-icons';
 import { Post } from 'app/entities/metis/post.model';
 import { AnswerPost } from 'app/entities/metis/answer-post.model';
 import { Posting } from 'app/entities/metis/posting.model';
 import dayjs from 'dayjs';
 import { Conversation } from 'app/entities/metis/conversation/conversation.model';
-import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
-import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { ArtemisSharedModule } from 'app/shared/shared.module';
-import { ProfilePictureComponent } from 'app/shared/profile-picture/profile-picture.component';
 
 @Component({
     selector: 'jhi-forwarded-message',
     templateUrl: './forwarded-message.component.html',
     styleUrls: ['./forwarded-message.component.scss'],
-    standalone: true,
-    imports: [ArtemisTranslatePipe, FaIconComponent, ArtemisSharedModule, ProfilePictureComponent],
 })
-export class ForwardedMessageComponent implements OnChanges, AfterViewInit, OnInit {
+export class ForwardedMessageComponent implements AfterViewInit {
     readonly faShare = faShare;
     sourceName: string | undefined = '';
     originalPostDetails = input<Posting>();
@@ -27,26 +21,29 @@ export class ForwardedMessageComponent implements OnChanges, AfterViewInit, OnIn
     messageContent = viewChild<ElementRef>('messageContent');
     isContentLong: boolean = false;
     showFullForwardedMessage: boolean = false;
-    maxLines: number = 5;
     private cdr = inject(ChangeDetectorRef);
     private conversation: Conversation | undefined;
     private isAnswerPost: boolean = false;
     protected viewButtonVisible: boolean = false;
 
-    ngOnInit() {
-        this.isAnswerPost = 'post' in this.originalPostDetails()!;
-        this.conversation = this.isAnswerPost ? (this.originalPostDetails() as AnswerPost).post?.conversation : (this.originalPostDetails() as Post).conversation;
-        this.updateSourceName();
-        this.isChannel();
-    }
-
-    ngOnChanges(changes: SimpleChanges): void {
-        if (changes['originalPostDetails'] && this.originalPostDetails) {
-            this.updateSourceName();
-            this.postingIsOfToday = dayjs().isSame(this.originalPostDetails()!.creationDate, 'day');
-            this.todayFlag = this.getTodayFlag();
-            this.isChannel();
-        }
+    constructor() {
+        effect(() => {
+            const post = this.originalPostDetails();
+            if (post) {
+                this.isAnswerPost = 'post' in post;
+                this.conversation = this.isAnswerPost ? (post as AnswerPost).post?.conversation : (post as Post).conversation;
+                this.updateSourceName();
+                this.isChannel();
+                this.postingIsOfToday = dayjs().isSame(post.creationDate, 'day');
+                this.todayFlag = this.getTodayFlag();
+            } else {
+                this.sourceName = '';
+                this.conversation = undefined;
+                this.viewButtonVisible = false;
+                this.postingIsOfToday = false;
+                this.todayFlag = undefined;
+            }
+        });
     }
 
     ngAfterViewInit(): void {
@@ -59,21 +56,8 @@ export class ForwardedMessageComponent implements OnChanges, AfterViewInit, OnIn
         this.showFullForwardedMessage = !this.showFullForwardedMessage;
     }
 
-    displayedForwardedContent(): string {
-        if (!this.originalPostDetails() || !this.originalPostDetails()?.content) {
-            return '';
-        }
-
-        if (this.showFullForwardedMessage || !this.isContentLong) {
-            return this.originalPostDetails()?.content || '';
-        } else {
-            const lines = this.originalPostDetails()?.content?.split('\n');
-            return lines?.slice(0, this.maxLines).join('\n') + '...';
-        }
-    }
-
     checkIfContentOverflows(): void {
-        if (this.messageContent) {
+        if (this.messageContent()) {
             const nativeElement = this.messageContent()?.nativeElement;
             this.isContentLong = nativeElement.scrollHeight > nativeElement.clientHeight;
             this.cdr.detectChanges();
