@@ -429,7 +429,7 @@ describe('CourseOverviewService', () => {
 
         jest.spyOn(service, 'getCorrespondingChannelSubType');
         jest.spyOn(service, 'mapConversationToSidebarCardElement');
-        const groupedConversations = service.groupConversationsByChannelType(conversations, true);
+        const groupedConversations = service.groupConversationsByChannelType(course, conversations, true);
 
         expect(groupedConversations['generalChannels'].entityData).toHaveLength(1);
         expect(groupedConversations['examChannels'].entityData).toHaveLength(1);
@@ -445,7 +445,7 @@ describe('CourseOverviewService', () => {
 
         jest.spyOn(service, 'getCorrespondingChannelSubType');
         jest.spyOn(service, 'mapConversationToSidebarCardElement');
-        const groupedConversations = service.groupConversationsByChannelType(conversations, true);
+        const groupedConversations = service.groupConversationsByChannelType(course, conversations, true);
 
         expect(groupedConversations['generalChannels'].entityData).toHaveLength(2);
         expect(service.mapConversationToSidebarCardElement).toHaveBeenCalledTimes(2);
@@ -460,21 +460,39 @@ describe('CourseOverviewService', () => {
         jest.spyOn(service, 'mapConversationToSidebarCardElement');
         jest.spyOn(service, 'getConversationGroup');
         jest.spyOn(service, 'getCorrespondingChannelSubType');
-        const groupedConversations = service.groupConversationsByChannelType(conversations, true);
+        const groupedConversations = service.groupConversationsByChannelType(course, conversations, true);
 
-        expect(groupedConversations['generalChannels'].entityData).toHaveLength(2);
+        expect(groupedConversations['generalChannels'].entityData).toHaveLength(4);
         expect(groupedConversations['examChannels'].entityData).toHaveLength(1);
         expect(groupedConversations['exerciseChannels'].entityData).toHaveLength(1);
         expect(groupedConversations['favoriteChannels'].entityData).toHaveLength(1);
         expect(groupedConversations['hiddenChannels'].entityData).toHaveLength(1);
         expect(service.mapConversationToSidebarCardElement).toHaveBeenCalledTimes(6);
         expect(service.getConversationGroup).toHaveBeenCalledTimes(6);
-        expect(service.getCorrespondingChannelSubType).toHaveBeenCalledTimes(4);
-        expect(getAsChannelDTO(groupedConversations['generalChannels'].entityData[0].conversation)?.name).toBe('General');
-        expect(getAsChannelDTO(groupedConversations['generalChannels'].entityData[1].conversation)?.name).toBe('General 2');
+        expect(service.getCorrespondingChannelSubType).toHaveBeenCalledTimes(6);
+        expect(getAsChannelDTO(groupedConversations['generalChannels'].entityData[0].conversation)?.name).toBe('fav-channel');
+        expect(getAsChannelDTO(groupedConversations['generalChannels'].entityData[1].conversation)?.name).toBe('General');
+        expect(getAsChannelDTO(groupedConversations['generalChannels'].entityData[2].conversation)?.name).toBe('General 2');
         expect(getAsChannelDTO(groupedConversations['examChannels'].entityData[0].conversation)?.name).toBe('exam-test');
         expect(getAsChannelDTO(groupedConversations['exerciseChannels'].entityData[0].conversation)?.name).toBe('exercise-test');
         expect(getAsChannelDTO(groupedConversations['favoriteChannels'].entityData[0].conversation)?.name).toBe('fav-channel');
         expect(getAsChannelDTO(groupedConversations['hiddenChannels'].entityData[0].conversation)?.name).toBe('hidden-channel');
+    });
+
+    it('should not remove favorite conversations from their original section but keep them at the top of the related section', () => {
+        const conversations = [generalChannel, examChannel, exerciseChannel, favoriteChannel];
+
+        jest.spyOn(service, 'getCorrespondingChannelSubType');
+        jest.spyOn(service, 'mapConversationToSidebarCardElement');
+        jest.spyOn(service, 'getConversationGroup');
+        const groupedConversations = service.groupConversationsByChannelType(course, conversations, true);
+
+        expect(groupedConversations['favoriteChannels'].entityData).toContainEqual(expect.objectContaining({ id: favoriteChannel.id }));
+
+        expect(groupedConversations['generalChannels'].entityData[0].id).toBe(favoriteChannel.id);
+
+        expect(service.mapConversationToSidebarCardElement).toHaveBeenCalledTimes(4);
+        expect(service.getConversationGroup).toHaveBeenCalledTimes(4);
+        expect(service.getCorrespondingChannelSubType).toHaveBeenCalledTimes(4);
     });
 });
