@@ -121,7 +121,7 @@ modernizer {
 // Allow using in jacoco.gradle
 ext {
     testTags = System.getProperty("testTags")
-    testedModules = !testTags ? [] : testTags.split(",") as ArrayList
+    testedModules = !testTags ? new String[]{} : testTags.split(",") as String[]
 }
 
 // Execute the test cases: ./gradlew test
@@ -129,7 +129,7 @@ ext {
 test {
     if (testedModules.size() > 0) {
         useJUnitPlatform {
-            includeTags testedModules.join(",")
+            includeTags testedModules
         }
     } else {
         useJUnitPlatform()
