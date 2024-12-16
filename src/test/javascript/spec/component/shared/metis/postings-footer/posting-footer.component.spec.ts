@@ -1,25 +1,31 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { MockComponent, MockModule } from 'ng-mocks';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { PostReactionsBarComponent } from '../../../../../../../main/webapp/app/shared/metis/posting-reactions-bar/post-reactions-bar/post-reactions-bar.component';
-import { ArtemisCoursesRoutingModule } from '../../../../../../../main/webapp/app/overview/courses-routing.module';
-import { MetisService } from '../../../../../../../main/webapp/app/shared/metis/metis.service';
-import { PostService } from '../../../../../../../main/webapp/app/shared/metis/post.service';
+import { PostReactionsBarComponent } from 'app/shared/metis/posting-reactions-bar/post-reactions-bar/post-reactions-bar.component';
+import { ArtemisCoursesRoutingModule } from 'app/overview/courses-routing.module';
+import { MetisService } from 'app/shared/metis/metis.service';
+import { PostService } from 'app/shared/metis/post.service';
 import { MockPostService } from '../../../../helpers/mocks/service/mock-post.service';
-import { AnswerPostService } from '../../../../../../../main/webapp/app/shared/metis/answer-post.service';
+import { AnswerPostService } from 'app/shared/metis/answer-post.service';
 import { MockAnswerPostService } from '../../../../helpers/mocks/service/mock-answer-post.service';
-import { PostComponent } from '../../../../../../../main/webapp/app/shared/metis/post/post.component';
-import { AnswerPostComponent } from '../../../../../../../main/webapp/app/shared/metis/answer-post/answer-post.component';
-import { AnswerPostCreateEditModalComponent } from '../../../../../../../main/webapp/app/shared/metis/posting-create-edit-modal/answer-post-create-edit-modal/answer-post-create-edit-modal.component';
+import { PostComponent } from 'app/shared/metis/post/post.component';
+import { AnswerPostComponent } from 'app/shared/metis/answer-post/answer-post.component';
+import { AnswerPostCreateEditModalComponent } from 'app/shared/metis/posting-create-edit-modal/answer-post-create-edit-modal/answer-post-create-edit-modal.component';
 import { TranslatePipeMock } from '../../../../helpers/mocks/service/mock-translate.service';
 import { MockMetisService } from '../../../../helpers/mocks/service/mock-metis-service.service';
 import { metisPostExerciseUser1, post, unsortedAnswerArray } from '../../../../helpers/sample/metis-sample-data';
-import { AnswerPost } from '../../../../../../../main/webapp/app/entities/metis/answer-post.model';
-import { User } from '../../../../../../../main/webapp/app/core/user/user.model';
+import { AnswerPost } from 'app/entities/metis/answer-post.model';
+import { User } from 'app/core/user/user.model';
 import dayjs from 'dayjs/esm';
 import { Injector, input, runInInjectionContext } from '@angular/core';
-import { Posting } from '../../../../../../../main/webapp/app/entities/metis/posting.model';
-import { PostingFooterComponent } from '../../../../../../../main/webapp/app/shared/metis/posting-footer/posting-footer.component';
+import { Posting } from 'app/entities/metis/posting.model';
+import { PostingFooterComponent } from 'app/shared/metis/posting-footer/posting-footer.component';
+import { Post } from 'app/entities/metis/post.model';
+
+interface PostGroup {
+    author: User | undefined;
+    posts: Post[];
+}
 
 describe('PostingFooterComponent', () => {
     let component: PostingFooterComponent;
