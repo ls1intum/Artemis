@@ -83,8 +83,17 @@ describe('ForwardedMessageService', () => {
         });
 
         it('should not make a GET request if IDs are empty', () => {
-            const ids: number[] = [];
-            expect(() => service.getForwardedMessages(ids, 'post')).toThrow('IDs cannot be empty');
+            return new Promise<void>((done) => {
+                const ids: number[] = [];
+
+                service.getForwardedMessages(ids, 'post').subscribe({
+                    next: () => {},
+                    error: (err) => {
+                        expect(err.message).toBe('IDs cannot be empty');
+                        done();
+                    },
+                });
+            });
         });
     });
 });
