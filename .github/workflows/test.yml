@@ -66,21 +66,29 @@ jobs:
       run: |
         set -o pipefail
 
-        chmod +x ./changed-modules.sh
-        CHANGED_MODULES=$(./changed-modules.sh "${{ github.event.repository.default_branch }}")
+        DEFAULT_BRANCH="${{ github.event.repository.default_branch }}"
+        CURRENT_BRANCH="${{ github.ref_name }}"
 
-        # Restrict executed tests to changed modules if there is diff between this and the base branch
-        if [ -n "${CHANGED_MODULES}" ]; then
-          # Always execute ArchitectureTests if at least one module changed
-          CHANGED_MODULES+=("ArchitectureTest")
+        if [[ "$DEFAULT_BRANCH" != "$CURRENT_BRANCH" ]]; then
+          # Explicitly fetch as the clone action only clones the current branch
+          git fetch origin "$DEFAULT_BRANCH"
 
-          IFS=,
-          TEST_MODULE_TAGS=$(echo "-DtestTags=${CHANGED_MODULES[*]}")
+          chmod +x ./changed-modules.sh
+          CHANGED_MODULES=$(./changed-modules.sh "$DEFAULT_BRANCH")
+
+          # Restrict executed tests to changed modules if there is diff between this and the base branch
+          if [ -n "${CHANGED_MODULES}" ]; then
+            # Always execute ArchitectureTests if at least one module changed
+            CHANGED_MODULES+=("ArchitectureTest")
+
+            IFS=,
+            TEST_MODULE_TAGS=$(echo "-DtestTags=${CHANGED_MODULES[*]}")
+          fi
         fi
 
         TEST_MODULE_TAGS=$(echo "-DtestTags=atlas,buildagent,fileupload,lti,ArchitectureTest")
 
-         ./gradlew --console=plain test jacocoTestReport -x webapp jacocoTestCoverageVerification $TEST_MODULE_TAGS | tee tests.log
+        ./gradlew --console=plain test jacocoTestReport -x webapp jacocoTestCoverageVerification $TEST_MODULE_TAGS | tee tests.log
     - name: Print failed tests
       if: failure()
       run: grep "Test >.* FAILED\$" tests.log || echo "No failed tests."
