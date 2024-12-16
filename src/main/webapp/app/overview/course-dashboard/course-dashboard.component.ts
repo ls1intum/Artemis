@@ -15,7 +15,7 @@ import { round } from 'app/shared/util/utils';
 import { IrisSettingsService } from 'app/iris/settings/shared/iris-settings.service';
 import dayjs from 'dayjs/esm';
 import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
-import { PROFILE_IRIS } from 'app/app.constants';
+import { PROFILE_ATLAS, PROFILE_IRIS } from 'app/app.constants';
 import { CompetencyAccordionToggleEvent } from 'app/course/competencies/competency-accordion/competency-accordion.component';
 import { AccountService } from 'app/core/auth/account.service';
 
@@ -25,6 +25,8 @@ import { AccountService } from 'app/core/auth/account.service';
     styleUrls: ['./course-dashboard.component.scss'],
 })
 export class CourseDashboardComponent implements OnInit, OnDestroy {
+    atlasEnabled = false;
+
     courseId: number;
     exerciseId: number;
     points: number = 0;
@@ -80,6 +82,8 @@ export class CourseDashboardComponent implements OnInit, OnDestroy {
         this.courseUpdatesSubscription = this.courseStorageService.subscribeToCourseUpdates(this.courseId).subscribe((course: Course) => {
             this.setCourse(course);
         });
+
+        this.profileService.getProfileInfo().subscribe((profileInfo) => (this.atlasEnabled = profileInfo.activeProfiles.includes(PROFILE_ATLAS)));
     }
 
     ngOnDestroy(): void {
