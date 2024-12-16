@@ -10,8 +10,6 @@ export class AdminStandardizedCompetencyService {
 
     private httpClient = inject(HttpClient);
 
-    constructor() {}
-
     createStandardizedCompetency(competency: StandardizedCompetencyDTO) {
         return this.httpClient.post<StandardizedCompetencyDTO>(`${this.resourceURL}`, competency, { observe: 'response' });
     }
