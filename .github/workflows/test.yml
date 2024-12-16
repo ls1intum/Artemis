@@ -74,7 +74,7 @@ jobs:
           git fetch origin "$DEFAULT_BRANCH"
 
           chmod +x ./changed-modules.sh
-          CHANGED_MODULES=$(./changed-modules.sh "$DEFAULT_BRANCH")
+          CHANGED_MODULES=$(./changed-modules.sh "origin/$DEFAULT_BRANCH")
 
           # Restrict executed tests to changed modules if there is diff between this and the base branch
           if [ -n "${CHANGED_MODULES}" ]; then
