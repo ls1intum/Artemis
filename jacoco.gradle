@@ -89,8 +89,8 @@ jacocoTestReport {
     // This task is just a wrapper to dynamically create tasks (per module)
     enabled = false
 
-    dependsOn reportedModules
-        .collect { module -> registerJacocoReportTask(module as String, classDirectories) }
+    reportedModules
+        .collect { module -> registerJacocoReportTask(module as String, jacocoTestReport) }
         .findAll { task -> task != null}
 }
 
@@ -98,8 +98,8 @@ jacocoTestCoverageVerification {
     // This task is just a wrapper to dynamically create tasks (per module)
     enabled = false
 
-    dependsOn reportedModules
-        .collect { module -> registerJacocoTestCoverageVerification(module as String, classDirectories) }
+    reportedModules
+        .collect { module -> registerJacocoTestCoverageVerification(module as String, jacocoTestCoverageVerification) }
         .findAll { task -> task != null}
 }
 check.dependsOn jacocoTestCoverageVerification
@@ -108,16 +108,16 @@ check.dependsOn jacocoTestCoverageVerification
  * Registers a JacocoReport task based on the provided parameters.
  *
  * @param moduleName The module name to include in the report.
- * @param rootClassDir the compiled classes directory
+ * @param rootTask The root JacocoReport root task.
  * @return The configured JacocoReport task.
  */
-private JacocoReport registerJacocoReportTask(String moduleName, ConfigurableFileCollection rootClassDir) {
+private JacocoReport registerJacocoReportTask(String moduleName, JacocoReport rootTask) {
     def taskName = "jacocoCoverageReport-$moduleName"
 
     JacocoReport task = project.tasks.register(taskName, JacocoReport).get()
     task.description = "Generates JaCoCo coverage report for $moduleName"
 
-    prepareJacocoReportTask(task, moduleName, rootClassDir)
+    prepareJacocoReportTask(task, moduleName, rootTask)
 
     task.reports {
         xml.required = true
@@ -130,10 +130,10 @@ private JacocoReport registerJacocoReportTask(String moduleName, ConfigurableFil
  * Registers a JacocoCoverageVerification task based on the provided parameters.
  *
  * @param moduleName The module name to validate rules for.
- * @param rootClassDir the compiled classes directory
+ * @param rootTask The root JacocoCoverageVerification task.
  * @return The configured JacocoCoverageVerification task.
  */
-private JacocoCoverageVerification registerJacocoTestCoverageVerification(String moduleName, ConfigurableFileCollection rootClassDir) {
+private JacocoCoverageVerification registerJacocoTestCoverageVerification(String moduleName, JacocoCoverageVerification rootTask) {
     def taskName = "jacocoTestCoverageVerification-$moduleName"
 
     def thresholds = ModuleCoverageThresholds[moduleName]
@@ -147,7 +147,7 @@ private JacocoCoverageVerification registerJacocoTestCoverageVerification(String
     JacocoCoverageVerification task = project.tasks.register(taskName, JacocoCoverageVerification).get()
     task.description = "Validates JaCoCo coverage for vioalations for $moduleName"
 
-    prepareJacocoReportTask(task, moduleName, rootClassDir)
+    prepareJacocoReportTask(task, moduleName, rootTask)
 
     task.violationRules {
         rule {
@@ -171,9 +171,9 @@ private JacocoCoverageVerification registerJacocoTestCoverageVerification(String
  * Prepares a Jacoco report task (report & verification) to match a specific
  * @param task that is modified
  * @param moduleName of the module.
- * @param rootClassDir the compiled classes directory
+ * @param rootTask the JacocoReportBase root task
  */
-private void prepareJacocoReportTask(JacocoReportBase task, String moduleName, ConfigurableFileCollection rootClassDir) {
+private void prepareJacocoReportTask(JacocoReportBase task, String moduleName, JacocoReportBase rootTask) {
     task.group = "Reporting"
     task.executionData = project.fileTree("${project.layout.buildDirectory.get()}/jacoco") {
         include "test.exec"
@@ -182,7 +182,7 @@ private void prepareJacocoReportTask(JacocoReportBase task, String moduleName, C
     def modulePath = "$BasePath/$moduleName/**/*.class"
     task.sourceDirectories.setFrom(project.files("src/main/java/$modulePath"))
     task.classDirectories.setFrom(
-        files(rootClassDir.files.collect { classDir ->
+        files(rootTask.classDirectories.files.collect { classDir ->
             project.fileTree(classDir) {
                 includes=[modulePath]
                 // we want to ignore some generated files in the domain folders
@@ -196,5 +196,5 @@ private void prepareJacocoReportTask(JacocoReportBase task, String moduleName, C
     )
     )
 
-    task.dependsOn test
+    task.mustRunAfter(rootTask)
 }
