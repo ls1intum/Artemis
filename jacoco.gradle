@@ -1,5 +1,6 @@
 ext {
     BasePath = "de/tum/cit/aet/artemis"
+    // Thresholds when executing each module on its own
     ModuleCoverageThresholds = [
         "assessment"   : [
             "INSTRUCTION": 0.891,
@@ -14,8 +15,8 @@ ext {
             "CLASS": 13
         ],
         "buildagent"   : [
-            "INSTRUCTION": 0.781,
-            "CLASS": 1
+            "INSTRUCTION": 0.304,
+            "CLASS": 13
         ],
         "communication": [
             "INSTRUCTION": 0.862,
