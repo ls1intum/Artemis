@@ -4,7 +4,6 @@ import { ModelingExercise } from 'app/entities/modeling-exercise.model';
 import { Exercise } from 'app/entities/exercise.model';
 import { UMLDiagramType } from '@ls1intum/apollon';
 import { Course } from 'app/entities/course.model';
-import dayjs from 'dayjs/esm';
 import { Lecture } from 'app/entities/lecture.model';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { TranslateService } from '@ngx-translate/core';
@@ -15,6 +14,9 @@ import { TextExercise } from 'app/entities/text/text-exercise.model';
 import { Exam } from 'app/entities/exam/exam.model';
 import { ChannelDTO, ChannelSubType, getAsChannelDTO } from 'app/entities/metis/conversation/channel.model';
 import { provideHttpClient } from '@angular/common/http';
+import isBetween from 'dayjs/plugin/isBetween';
+import dayjs from 'dayjs';
+import { ConversationDTO, ConversationType } from 'app/entities/metis/conversation/conversation.model';
 
 describe('CourseOverviewService', () => {
     let service: CourseOverviewService;
@@ -56,6 +58,7 @@ describe('CourseOverviewService', () => {
 
         course = new Course();
         course.id = 1;
+        dayjs.extend(isBetween);
 
         pastExercise = new ModelingExercise(UMLDiagramType.ClassDiagram, course, undefined) as Exercise;
         pastExercise.dueDate = lastWeek;
@@ -494,5 +497,35 @@ describe('CourseOverviewService', () => {
         expect(service.mapConversationToSidebarCardElement).toHaveBeenCalledTimes(4);
         expect(service.getConversationGroup).toHaveBeenCalledTimes(4);
         expect(service.getCorrespondingChannelSubType).toHaveBeenCalledTimes(4);
+    });
+
+    it('should correctly set isCurrent based on the date range in mapConversationToSidebarCardElement', () => {
+        const now = dayjs();
+        const oneAndHalfWeekBefore = now.subtract(1.5, 'week');
+
+        const conversationWithinRange = {
+            id: 5,
+            subType: ChannelSubType.EXERCISE,
+            subTypeReferenceId: 101,
+            type: ConversationType.CHANNEL,
+        } as ConversationDTO;
+
+        const conversationOutsideRange = {
+            subType: ChannelSubType.LECTURE,
+            subTypeReferenceId: 102,
+            type: ConversationType.CHANNEL,
+        } as ConversationDTO;
+
+        const exerciseWithinRange = { id: 101, dueDate: oneAndHalfWeekBefore.add(3, 'day') } as unknown as Exercise;
+        const lectureOutsideRange = { id: 102, startDate: oneAndHalfWeekBefore.subtract(1, 'day') } as unknown as Lecture;
+
+        course.exercises = [exerciseWithinRange];
+        course.lectures = [lectureOutsideRange];
+
+        const sidebarCardWithinRange = service.mapConversationToSidebarCardElement(course, conversationWithinRange);
+        const sidebarCardOutsideRange = service.mapConversationToSidebarCardElement(course, conversationOutsideRange);
+
+        expect(sidebarCardWithinRange.isCurrent).toBeTrue();
+        expect(sidebarCardOutsideRange.isCurrent).toBeFalse();
     });
 });
