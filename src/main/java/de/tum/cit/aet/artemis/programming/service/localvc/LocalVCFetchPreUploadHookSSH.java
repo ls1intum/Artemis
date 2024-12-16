@@ -1,6 +1,5 @@
 package de.tum.cit.aet.artemis.programming.service.localvc;
 
-import java.nio.file.Path;
 import java.util.Collection;
 
 import org.apache.sshd.server.session.ServerSession;
@@ -14,17 +13,14 @@ public class LocalVCFetchPreUploadHookSSH implements PreUploadHook {
 
     private final ServerSession serverSession;
 
-    private final Path rootDir;
-
-    public LocalVCFetchPreUploadHookSSH(LocalVCServletService localVCServletService, ServerSession serverSession, Path rootDir) {
+    public LocalVCFetchPreUploadHookSSH(LocalVCServletService localVCServletService, ServerSession serverSession) {
         this.localVCServletService = localVCServletService;
         this.serverSession = serverSession;
-        this.rootDir = rootDir;
     }
 
     @Override
     public void onBeginNegotiateRound(UploadPack uploadPack, Collection<? extends ObjectId> collection, int clientOffered) {
-        localVCServletService.updateVCSAccessLogForCloneAndPullSSH(serverSession, rootDir, clientOffered);
+        localVCServletService.updateAndStoreVCSAccessLogForCloneAndPullSSH(serverSession, clientOffered);
     }
 
     @Override
