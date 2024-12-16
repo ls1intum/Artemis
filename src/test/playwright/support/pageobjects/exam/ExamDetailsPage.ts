@@ -32,6 +32,26 @@ export class ExamDetailsPage {
         return this.page.getByTestId(checklistItem);
     }
 
+    async clickStudentsToRegister() {
+        await this.page.getByTestId('students-button-register').click();
+    }
+
+    async clickStudentExamsToGenerate() {
+        await this.page.getByTestId('student-exams-button-generate').click();
+    }
+
+    async clickStudentExamsToPrepareStart() {
+        await this.page.getByTestId('student-exams-button-prepare-start').click();
+    }
+
+    async clickEditExamForPublishDate() {
+        await this.page.locator('#editButton_publish').click();
+    }
+
+    async clickEditExamForReviewDate() {
+        await this.page.locator('#editButton_review').click();
+    }
+
     /**
      * Deletes this exam.
      * @param examTitle the exam title to confirm the deletion

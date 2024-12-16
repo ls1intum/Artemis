@@ -154,7 +154,7 @@
                                 </ul>
                             </td>
                             <td>
-                                <a [routerLink]="getExamRoutesByIdentifier('students')" class="btn btn-info">
+                                <a [routerLink]="getExamRoutesByIdentifier('students')" class="btn btn-info" data-testid="students-button-register">
                                     <fa-icon [icon]="faUser" />
                                     <span jhiTranslate="artemisApp.examManagement.students"></span>
                                 </a>
@@ -178,7 +178,7 @@
                                 </ul>
                             </td>
                             <td>
-                                <a [routerLink]="getExamRoutesByIdentifier('student-exams')" class="btn btn-primary">
+                                <a [routerLink]="getExamRoutesByIdentifier('student-exams')" class="btn btn-primary" data-testid="student-exams-button-generate">
                                     <fa-icon [icon]="faEye" />
                                     <span class="d-none d-md-inline" jhiTranslate="artemisApp.examManagement.studentExams"></span>
                                 </a>
@@ -205,7 +205,7 @@
                                 </ul>
                             </td>
                             <td>
-                                <a [routerLink]="getExamRoutesByIdentifier('student-exams')" class="btn btn-primary">
+                                <a [routerLink]="getExamRoutesByIdentifier('student-exams')" class="btn btn-primary" data-testid="student-exams-button-prepare-start">
                                     <fa-icon [icon]="faEye" />
                                     <span class="d-none d-md-inline" jhiTranslate="artemisApp.examManagement.studentExams"></span>
                                 </a>

@@ -113,10 +113,16 @@ export class ExamAPIRequests {
 
     /**
      * Register the student for the exam
-     * @param exam the exam object
      */
     async registerStudentForExam(exam: Exam, student: UserCredentials) {
         await this.page.request.post(`${COURSE_BASE}/${exam.course!.id}/exams/${exam.id}/students/${student.username}`);
+    }
+
+    /**
+     * Register all course students for the exam
+     */
+    async registerAllCourseStudentsForExam(exam: Exam) {
+        await this.page.request.post(`${COURSE_BASE}/${exam.course!.id}/exams/${exam.id}/register-course-students`);
     }
 
     /**

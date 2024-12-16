@@ -1,0 +1,233 @@
+import { test } from '../../support/fixtures';
+import { admin, instructor, studentOne } from '../../support/users';
+import { Course } from 'app/entities/course.model';
+import { Exam } from 'app/entities/exam/exam.model';
+import { generateUUID } from '../../support/utils';
+import dayjs from 'dayjs';
+import { ExamChecklistItem } from '../../support/pageobjects/exam/ExamDetailsPage';
+import { ExerciseType } from '../../support/constants';
+import textExerciseTemplate from '../../fixtures/exercise/text/template.json';
+import { ExamExerciseGroupCreationPage } from '../../support/pageobjects/exam/ExamExerciseGroupCreationPage';
+import { ExamExerciseGroupsPage } from '../../support/pageobjects/exam/ExamExerciseGroupsPage';
+import { Page } from '@playwright/test';
+
+test.describe('Exam Checklists', async () => {
+    let course: Course;
+    let exam: Exam;
+    let examStartDate: dayjs.Dayjs;
+    let examEndDate: dayjs.Dayjs;
+
+    const NUMBER_OF_EXERCISES = 2;
+    const EXAM_MAX_POINTS = NUMBER_OF_EXERCISES * 10;
+
+    test.beforeEach('Create course', async ({ login, courseManagementAPIRequests }) => {
+        await login(admin);
+        course = await courseManagementAPIRequests.createCourse({ customizeGroups: true });
+    });
+
+    test.beforeEach('Create exam', async ({ login, examAPIRequests, courseManagementAPIRequests }) => {
+        await login(admin);
+        examStartDate = dayjs().add(1, 'hour');
+        examEndDate = dayjs().add(2, 'hour');
+        const examConfig = {
+            course,
+            title: 'exam' + generateUUID(),
+            visibleDate: dayjs().subtract(3, 'minutes'),
+            startDate: examStartDate,
+            endDate: examEndDate,
+            examMaxPoints: EXAM_MAX_POINTS,
+            numberOfExercisesInExam: NUMBER_OF_EXERCISES,
+        };
+        exam = await examAPIRequests.createExam(examConfig);
+        await courseManagementAPIRequests.addStudentToCourse(course, studentOne);
+    });
+
+    test.describe('Exercise group checks', { tag: '@fast' }, () => {
+        test('Instructor adds an exercise group and at least one exercise group check is marked', async ({
+            page,
+            login,
+            examDetails,
+            examExerciseGroups,
+            examExerciseGroupCreation,
+        }) => {
+            await login(instructor);
+            await navigateToExamDetailsPage(page, course, exam);
+            await examDetails.checkItemUnchecked(ExamChecklistItem.LEAST_ONE_EXERCISE_GROUP);
+            await examDetails.openExerciseGroups();
+            await examExerciseGroups.clickAddExerciseGroup();
+            await examExerciseGroupCreation.typeTitle('Group 1');
+            await examExerciseGroupCreation.clickSave();
+            await navigateToExamDetailsPage(page, course, exam);
+            await examDetails.checkItemChecked(ExamChecklistItem.LEAST_ONE_EXERCISE_GROUP);
+        });
+
+        test('Instructor adds exercise groups and the number of exercise groups check is correctly reacting to changes', async ({
+            page,
+            login,
+            examDetails,
+            examExerciseGroups,
+            examExerciseGroupCreation,
+        }) => {
+            await login(instructor);
+            await navigateToExamDetailsPage(page, course, exam);
+            await examDetails.checkItemUnchecked(ExamChecklistItem.NUMBER_OF_EXERCISE_GROUPS);
+            await examDetails.openExerciseGroups();
+            for (let i = 0; i < NUMBER_OF_EXERCISES; i++) {
+                await addExamExerciseGroup(examExerciseGroups, examExerciseGroupCreation);
+            }
+            await navigateToExamDetailsPage(page, course, exam);
+            await examDetails.openExerciseGroups();
+            await addExamExerciseGroup(examExerciseGroups, examExerciseGroupCreation, false);
+            await navigateToExamDetailsPage(page, course, exam);
+            await examDetails.checkItemChecked(ExamChecklistItem.NUMBER_OF_EXERCISE_GROUPS);
+            await examDetails.openExerciseGroups();
+            await addExamExerciseGroup(examExerciseGroups, examExerciseGroupCreation);
+            await navigateToExamDetailsPage(page, course, exam);
+            await examDetails.checkItemUnchecked(ExamChecklistItem.NUMBER_OF_EXERCISE_GROUPS);
+        });
+
+        test('Instructor adds exercise groups and each exercise group has exercises check is correctly reacting to changes', async ({
+            page,
+            login,
+            examDetails,
+            examExerciseGroups,
+            examExerciseGroupCreation,
+        }) => {
+            await login(instructor);
+            await navigateToExamDetailsPage(page, course, exam);
+            await examDetails.checkItemUnchecked(ExamChecklistItem.EACH_EXERCISE_GROUP_HAS_EXERCISES);
+            await examExerciseGroupCreation.addGroupWithExercise(exam, ExerciseType.TEXT);
+            await page.reload();
+            await examDetails.checkItemChecked(ExamChecklistItem.EACH_EXERCISE_GROUP_HAS_EXERCISES);
+            await examDetails.openExerciseGroups();
+            await examExerciseGroups.clickAddExerciseGroup();
+            await examExerciseGroupCreation.typeTitle('Empty group');
+            await examExerciseGroupCreation.clickSave();
+            await navigateToExamDetailsPage(page, course, exam);
+            await examDetails.checkItemUnchecked(ExamChecklistItem.EACH_EXERCISE_GROUP_HAS_EXERCISES);
+        });
+
+        test('Instructor adds exercise groups and points in exercise groups equal check is correctly reacting to changes', async ({
+            page,
+            login,
+            examDetails,
+            examAPIRequests,
+            exerciseAPIRequests,
+        }) => {
+            await login(instructor);
+            await navigateToExamDetailsPage(page, course, exam);
+            await examDetails.checkItemUnchecked(ExamChecklistItem.POINTS_IN_EXERCISE_GROUPS_EQUAL);
+            const exerciseGroup = await examAPIRequests.addExerciseGroupForExam(exam);
+            await exerciseAPIRequests.createTextExercise({ exerciseGroup }, 'Exercise ' + generateUUID(), textExerciseTemplate);
+            await page.reload();
+            await examDetails.checkItemChecked(ExamChecklistItem.POINTS_IN_EXERCISE_GROUPS_EQUAL);
+            const maxPointsOfFirstExercise = textExerciseTemplate.maxPoints;
+            const exerciseTemplate = textExerciseTemplate;
+            exerciseTemplate.maxPoints = maxPointsOfFirstExercise - 1;
+            await exerciseAPIRequests.createTextExercise({ exerciseGroup }, 'Exercise ' + generateUUID(), exerciseTemplate);
+            await page.reload();
+            await examDetails.checkItemUnchecked(ExamChecklistItem.POINTS_IN_EXERCISE_GROUPS_EQUAL);
+        });
+
+        test('Instructor adds exercise groups and total points possible check is correctly reacting to changes', async ({
+            page,
+            login,
+            examDetails,
+            examExerciseGroupCreation,
+        }) => {
+            await login(instructor);
+            await navigateToExamDetailsPage(page, course, exam);
+            await examDetails.checkItemUnchecked(ExamChecklistItem.TOTAL_POINTS_POSSIBLE);
+            await examExerciseGroupCreation.addGroupWithExercise(exam, ExerciseType.TEXT);
+            await page.reload();
+            await examDetails.checkItemUnchecked(ExamChecklistItem.TOTAL_POINTS_POSSIBLE);
+            await examExerciseGroupCreation.addGroupWithExercise(exam, ExerciseType.TEXT, {}, false);
+            await page.reload();
+            await examDetails.checkItemChecked(ExamChecklistItem.TOTAL_POINTS_POSSIBLE);
+            await examExerciseGroupCreation.addGroupWithExercise(exam, ExerciseType.TEXT);
+            await page.reload();
+            await examDetails.checkItemChecked(ExamChecklistItem.TOTAL_POINTS_POSSIBLE);
+            await examExerciseGroupCreation.addGroupWithExercise(exam, ExerciseType.TEXT);
+            await page.reload();
+            await examDetails.checkItemUnchecked(ExamChecklistItem.TOTAL_POINTS_POSSIBLE);
+        });
+    });
+
+    test('Instructor registers a student to exam and at least one student check is marked', async ({ page, login, examDetails, studentExamManagement }) => {
+        await login(instructor);
+        await navigateToExamDetailsPage(page, course, exam);
+        await examDetails.checkItemUnchecked(ExamChecklistItem.LEAST_ONE_STUDENT);
+        await examDetails.clickStudentsToRegister();
+        await studentExamManagement.clickRegisterCourseStudents();
+        await navigateToExamDetailsPage(page, course, exam);
+        await examDetails.checkItemChecked(ExamChecklistItem.LEAST_ONE_STUDENT);
+    });
+
+    test.describe('Individual exam generation and exam preparation checks', { tag: '@fast' }, () => {
+        test.beforeEach('Add exercise groups and register exam students', async ({ login, examExerciseGroupCreation, examAPIRequests }) => {
+            await login(admin);
+            for (let i = 0; i < NUMBER_OF_EXERCISES; i++) {
+                await examExerciseGroupCreation.addGroupWithExercise(exam, ExerciseType.TEXT);
+            }
+            await examAPIRequests.registerAllCourseStudentsForExam(exam);
+        });
+
+        test('Instructor generates individual exams, prepares exercises for start and corresponding checks are marked', async ({
+            page,
+            login,
+            examDetails,
+            studentExamManagement,
+        }) => {
+            await login(instructor);
+            await navigateToExamDetailsPage(page, course, exam);
+            await examDetails.checkItemUnchecked(ExamChecklistItem.ALL_EXAMS_GENERATED);
+            await examDetails.checkItemUnchecked(ExamChecklistItem.ALL_EXERCISES_PREPARED);
+            await examDetails.clickStudentExamsToGenerate();
+            await studentExamManagement.clickGenerateStudentExams();
+            await navigateToExamDetailsPage(page, course, exam);
+            await examDetails.checkItemChecked(ExamChecklistItem.ALL_EXAMS_GENERATED);
+            await examDetails.checkItemUnchecked(ExamChecklistItem.ALL_EXERCISES_PREPARED);
+            await examDetails.clickStudentExamsToPrepareStart();
+            await studentExamManagement.clickPrepareExerciseStart();
+            await navigateToExamDetailsPage(page, course, exam);
+            await examDetails.checkItemChecked(ExamChecklistItem.ALL_EXAMS_GENERATED);
+            await examDetails.checkItemChecked(ExamChecklistItem.ALL_EXERCISES_PREPARED);
+        });
+    });
+
+    test('Instructor sets the publish results and review dates and the corresponding checks are marked', async ({ page, login, examDetails, examCreation }) => {
+        await login(instructor);
+        await navigateToExamDetailsPage(page, course, exam);
+        await examDetails.checkItemUnchecked(ExamChecklistItem.PUBLISHING_DATE_SET);
+        await examDetails.checkItemUnchecked(ExamChecklistItem.START_DATE_REVIEW_SET);
+        await examDetails.checkItemUnchecked(ExamChecklistItem.END_DATE_REVIEW_SET);
+        await examDetails.clickEditExamForPublishDate();
+        await examCreation.setPublishResultsDate(examEndDate.add(1, 'hour'));
+        await examCreation.update();
+        await page.waitForURL(`**/exams/${exam.id}`);
+        await examDetails.checkItemChecked(ExamChecklistItem.PUBLISHING_DATE_SET);
+        await examDetails.checkItemUnchecked(ExamChecklistItem.START_DATE_REVIEW_SET);
+        await examDetails.checkItemUnchecked(ExamChecklistItem.END_DATE_REVIEW_SET);
+        await examDetails.clickEditExamForReviewDate();
+        await examCreation.setStudentReviewStartDate(examEndDate.add(2, 'hour'));
+        await examCreation.setStudentReviewEndDate(examEndDate.add(1, 'day'));
+        await examCreation.update();
+        await page.waitForURL(`**/exams/${exam.id}`);
+        await examDetails.checkItemChecked(ExamChecklistItem.PUBLISHING_DATE_SET);
+        await examDetails.checkItemChecked(ExamChecklistItem.START_DATE_REVIEW_SET);
+        await examDetails.checkItemChecked(ExamChecklistItem.END_DATE_REVIEW_SET);
+    });
+});
+
+async function navigateToExamDetailsPage(page: Page, course: Course, exam: Exam) {
+    await page.goto(`/course-management/${course.id}/exams/${exam.id}`);
+}
+
+async function addExamExerciseGroup(examExerciseGroups: ExamExerciseGroupsPage, examExerciseGroupCreation: ExamExerciseGroupCreationPage, isMandatory?: boolean) {
+    await examExerciseGroups.clickAddExerciseGroup();
+    await examExerciseGroupCreation.typeTitle(`Group ${generateUUID()}`);
+    if (isMandatory !== undefined) {
+        await examExerciseGroupCreation.setMandatoryBox(isMandatory);
+    }
+    await examExerciseGroupCreation.clickSave();
+}
