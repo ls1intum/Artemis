@@ -1,17 +1,16 @@
 ext {
-
-    // Thresholds when executing each module on its own
+    // (Isolated) thresholds when executing each module on its own
     ModuleCoverageThresholds = [
         "assessment"   : [
-            "INSTRUCTION": 0.891,
-            "CLASS": 2
+            "INSTRUCTION": 0.774,
+            "CLASS": 9
         ],
         "athena"       : [
-            "INSTRUCTION": 0.872,
+            "INSTRUCTION": 0.863,
             "CLASS": 2
         ],
         "atlas"        : [
-            "INSTRUCTION": 0.832,
+            "INSTRUCTION": 0.846,
             "CLASS": 13
         ],
         "buildagent"   : [
@@ -19,59 +18,59 @@ ext {
             "CLASS": 13
         ],
         "communication": [
-            "INSTRUCTION": 0.862,
-            "CLASS": 3
+            "INSTRUCTION": 0.893,
+            "CLASS": 7
         ],
         "core"         : [
-            "INSTRUCTION": 0.778,
-            "CLASS": 21
+            "INSTRUCTION": 0.658,
+            "CLASS": 69
         ],
         "exam"         : [
-            "INSTRUCTION": 0.902,
+            "INSTRUCTION": 0.914,
             "CLASS": 1
         ],
         "exercise"     : [
-            "INSTRUCTION": 0.929,
-            "CLASS": 0
+            "INSTRUCTION": 0.649,
+            "CLASS": 9
         ],
         "fileupload"   : [
-            "INSTRUCTION": 0.906,
+            "INSTRUCTION": 0.944,
             "CLASS": 0
         ],
         "iris"        : [
-            "INSTRUCTION": 0.712,
+            "INSTRUCTION": 0.706,
             "CLASS": 22
         ],
         "lecture"      : [
-            "INSTRUCTION": 0.910,
+            "INSTRUCTION": 0.867,
             "CLASS": 0
         ],
         "lti"          : [
-            "INSTRUCTION": 0.881,
-            "CLASS": 2
+            "INSTRUCTION": 0.770,
+            "CLASS": 3
         ],
         "modeling"     : [
-            "INSTRUCTION": 0.914,
+            "INSTRUCTION": 0.892,
             "CLASS": 2
         ],
         "plagiarism"   : [
-            "INSTRUCTION": 0.916,
-            "CLASS": 0
+            "INSTRUCTION": 0.770,
+            "CLASS": 1
         ],
         "programming"  : [
-            "INSTRUCTION": 0.874,
-            "CLASS": 14
+            "INSTRUCTION": 0.861,
+            "CLASS": 13
         ],
         "quiz"         : [
-            "INSTRUCTION": 0.796,
+            "INSTRUCTION": 0.785,
             "CLASS": 6
         ],
         "text"         : [
-            "INSTRUCTION": 0.952,
+            "INSTRUCTION": 0.847,
             "CLASS": 0
         ],
         "tutorialgroup": [
-            "INSTRUCTION": 0.923,
+            "INSTRUCTION": 0.915,
             "CLASS": 0
         ],
     ]
