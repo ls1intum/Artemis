@@ -1,4 +1,8 @@
 ext {
+    AggregatedCoverageThresholds = [
+        "INSTRUCTION": 0.900,
+        "CLASS": 10
+    ];
     // (Isolated) thresholds when executing each module on its own
     ModuleCoverageThresholds = [
         "assessment"   : [
@@ -78,6 +82,13 @@ ext {
     reportedModules = includedModules.size() == 0
         ? ModuleCoverageThresholds.collect {element -> element.key}
         : includedModules as ArrayList
+
+    // we want to ignore some generated files in the domain folders
+    ignoredDirectories = [
+        "**/$BasePath/**/domain/**/*_*",
+        "**/$BasePath/core/config/migration/entries/**",
+        "**/gradle-wrapper.jar/**"
+    ]
 }
 
 jacoco {
@@ -91,8 +102,12 @@ jacocoTestReport {
 }
 
 jacocoTestCoverageVerification {
-    // This task is just a wrapper to dynamically create tasks (per module)
-    enabled = false
+    // Only run full coverage when no specific modules set
+    enabled = reportedModules.size() == 0
+
+    def minInstructionCoveredRatio = AggregatedCoverageThresholds["INSTRUCTION"] as double
+    def maxNumberUncoveredClasses = AggregatedCoverageThresholds["CLASS"] as int
+    applyVerificationRule(jacocoTestCoverageVerification, minInstructionCoveredRatio, maxNumberUncoveredClasses)
 
     finalizedBy reportedModules
         .collect { module -> registerJacocoTestCoverageVerification(module as String, jacocoTestCoverageVerification) }
@@ -140,28 +155,14 @@ private JacocoCoverageVerification registerJacocoTestCoverageVerification(String
         println "No coverage thresholds defined for module '$moduleName'. Skipping..."
         return null
     }
-    def coveredInstructionRatio = thresholds.INSTRUCTION
-    def missedClassCount = thresholds.CLASS
+    def minInstructionCoveredRatio = thresholds["INSTRUCTION"] as double
+    def maxNumberUncoveredClasses = thresholds["CLASS"] as int
 
     JacocoCoverageVerification task = project.tasks.register(taskName, JacocoCoverageVerification).get()
     task.description = "Validates JaCoCo coverage for vioalations for $moduleName"
 
     prepareJacocoReportTask(task, moduleName, rootTask)
-
-    task.violationRules {
-        rule {
-            limit {
-                counter = "INSTRUCTION"
-                value = "COVEREDRATIO"
-                minimum = coveredInstructionRatio
-            }
-            limit {
-                counter = "CLASS"
-                value = "MISSEDCOUNT"
-                maximum = missedClassCount
-            }
-        }
-    }
+    applyVerificationRule(task, minInstructionCoveredRatio, maxNumberUncoveredClasses)
 
     return task
 }
@@ -184,14 +185,25 @@ private void prepareJacocoReportTask(JacocoReportBase task, String moduleName, J
         files(rootTask.classDirectories.files.collect { classDir ->
             project.fileTree(classDir) {
                 includes=[modulePath]
-                // we want to ignore some generated files in the domain folders
-                excludes=[
-                    "**/$BasePath/**/domain/**/*_*",
-                    "**/$BasePath/core/config/migration/entries/**",
-                    "**/gradle-wrapper.jar/**"
-                ]
+                excludes=ignoredDirectories
+            }
+        })
+    )
+}
+
+private static void applyVerificationRule(JacocoCoverageVerification task, double minInstructionCoveredRatio, int maxNumberUncoveredClasses) {
+    task.violationRules {
+        rule {
+            limit {
+                counter = "INSTRUCTION"
+                value = "COVEREDRATIO"
+                minimum = minInstructionCoveredRatio
+            }
+            limit {
+                counter = "CLASS"
+                value = "MISSEDCOUNT"
+                maximum = maxNumberUncoveredClasses
             }
         }
-    )
-    )
+    }
 }
