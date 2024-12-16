@@ -43,7 +43,9 @@ import de.tum.cit.aet.artemis.iris.service.pyris.PyrisEventPublisherService;
 import de.tum.cit.aet.artemis.iris.service.pyris.PyrisEventService;
 import de.tum.cit.aet.artemis.iris.service.pyris.PyrisJobService;
 import de.tum.cit.aet.artemis.iris.service.pyris.PyrisStatusUpdateService;
+import de.tum.cit.aet.artemis.iris.service.pyris.UnsupportedPyrisEventException;
 import de.tum.cit.aet.artemis.iris.service.pyris.event.NewResultEvent;
+import de.tum.cit.aet.artemis.iris.service.pyris.event.PyrisEvent;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseStudentParticipation;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingSubmission;
@@ -237,6 +239,19 @@ class PyrisEventSystemIntegrationTest extends AbstractIrisIntegrationTest {
 
         verify(irisCourseChatSessionService, times(1)).onJudgementOfLearningSet(any(CompetencyJol.class));
         verify(pyrisPipelineService, times(1)).executeCourseChatPipeline(eq("default"), eq(irisSession), any(CompetencyJol.class));
+
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void testShouldThrowUnsupportedEventException() {
+        assertThatExceptionOfType(UnsupportedPyrisEventException.class).isThrownBy(() -> pyrisEventPublisherService.publishEvent(new PyrisEvent(this) {
+
+            @Override
+            public Optional<User> getUser() {
+                return Optional.empty();
+            }
+        })).withMessageStartingWith("Unsupported Pyris event");
 
     }
 

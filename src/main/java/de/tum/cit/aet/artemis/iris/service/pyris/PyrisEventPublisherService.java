@@ -76,8 +76,7 @@ public class PyrisEventPublisherService {
                 yield irisSettingsService.isActivatedFor(IrisEventType.JOL, course);
             }
             default -> {
-                log.warn("Unknown event type: {}", event.getClass().getSimpleName());
-                yield false;
+                throw new UnsupportedPyrisEventException("Unsupported Pyris event: " + event.getClass().getSimpleName());
             }
         };
     }
