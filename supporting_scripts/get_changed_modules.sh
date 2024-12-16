@@ -12,10 +12,6 @@ if [ $# -eq 0 ]; then
 fi
 
 BRANCH_TO_COMPARE="$1"
-if ! git show-ref --verify --quiet "refs/heads/$BRANCH_TO_COMPARE"; then
-    echo "Branch $BRANCH_TO_COMPARE does not exist."
-    exit 1
-fi
 
 MODULE_BASE_PATH="src/main/java/de/tum/cit/aet/artemis"
 MODULES=$(find "$MODULE_BASE_PATH" -maxdepth 1 -mindepth 1 -type d -exec basename {} \;)
