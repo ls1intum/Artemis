@@ -1,4 +1,4 @@
-import { Injectable } from '@angular/core';
+import { Injectable, inject } from '@angular/core';
 import { HttpClient, HttpResponse } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { map } from 'rxjs/operators';
@@ -12,7 +12,7 @@ type EntityArrayResponseType = HttpResponse<Faq[]>;
 export class FaqService {
     public resourceUrl = 'api/courses';
 
-    constructor(protected http: HttpClient) {}
+    private http = inject(HttpClient);
 
     create(courseId: number, faq: Faq): Observable<EntityResponseType> {
         const copy = FaqService.convertFaqFromClient(faq);
