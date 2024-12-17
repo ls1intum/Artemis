@@ -11,6 +11,7 @@ import static de.tum.cit.aet.artemis.programming.domain.ProgrammingLanguage.HASK
 import static de.tum.cit.aet.artemis.programming.domain.ProgrammingLanguage.JAVA;
 import static de.tum.cit.aet.artemis.programming.domain.ProgrammingLanguage.JAVASCRIPT;
 import static de.tum.cit.aet.artemis.programming.domain.ProgrammingLanguage.KOTLIN;
+import static de.tum.cit.aet.artemis.programming.domain.ProgrammingLanguage.MATLAB;
 import static de.tum.cit.aet.artemis.programming.domain.ProgrammingLanguage.OCAML;
 import static de.tum.cit.aet.artemis.programming.domain.ProgrammingLanguage.PYTHON;
 import static de.tum.cit.aet.artemis.programming.domain.ProgrammingLanguage.R;
@@ -54,6 +55,7 @@ public class LocalCIProgrammingLanguageFeatureService extends ProgrammingLanguag
                 new ProgrammingLanguageFeature(JAVA, true, true, true, true, false, List.of(PLAIN_GRADLE, GRADLE_GRADLE, PLAIN_MAVEN, MAVEN_MAVEN), false, true));
         programmingLanguageFeatures.put(JAVASCRIPT, new ProgrammingLanguageFeature(JAVASCRIPT, false, false, true, false, false, List.of(), false, true));
         programmingLanguageFeatures.put(KOTLIN, new ProgrammingLanguageFeature(KOTLIN, false, false, true, true, false, List.of(), false, true));
+        programmingLanguageFeatures.put(MATLAB, new ProgrammingLanguageFeature(MATLAB, false, false, false, false, false, List.of(), false, true));
         programmingLanguageFeatures.put(OCAML, new ProgrammingLanguageFeature(OCAML, false, false, false, false, true, List.of(), false, true));
         programmingLanguageFeatures.put(PYTHON, new ProgrammingLanguageFeature(PYTHON, false, true, true, false, false, List.of(), false, true));
         programmingLanguageFeatures.put(R, new ProgrammingLanguageFeature(R, false, false, true, false, false, List.of(), false, true));

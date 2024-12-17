@@ -3,6 +3,7 @@ package de.tum.cit.aet.artemis.programming.service;
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -10,6 +11,7 @@ import jakarta.annotation.Nullable;
 
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
@@ -18,6 +20,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import de.tum.cit.aet.artemis.buildagent.dto.DockerFlagsDTO;
 import de.tum.cit.aet.artemis.buildagent.dto.DockerRunConfig;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseBuildConfig;
+import de.tum.cit.aet.artemis.programming.domain.ProgrammingLanguage;
 
 @Profile(PROFILE_CORE)
 @Service
@@ -26,6 +29,9 @@ public class ProgrammingExerciseBuildConfigService {
     private static final Logger log = org.slf4j.LoggerFactory.getLogger(ProgrammingExerciseBuildConfigService.class);
 
     private final ObjectMapper objectMapper = new ObjectMapper();
+
+    @Value("${artemis.languages.matlab.license-server}")
+    private String matlabLicense;
 
     /**
      * Converts a JSON string representing Docker flags (in JSON format)
@@ -46,7 +52,31 @@ public class ProgrammingExerciseBuildConfigService {
     public DockerRunConfig getDockerRunConfig(ProgrammingExerciseBuildConfig buildConfig) {
         DockerFlagsDTO dockerFlagsDTO = parseDockerFlags(buildConfig);
 
+        dockerFlagsDTO = addLanguageSpecificEnvironment(dockerFlagsDTO, buildConfig.getProgrammingExercise().getProgrammingLanguage());
+
         return getDockerRunConfigFromParsedFlags(dockerFlagsDTO);
+    }
+
+    @Nullable
+    private DockerFlagsDTO addLanguageSpecificEnvironment(DockerFlagsDTO dockerFlagsDTO, ProgrammingLanguage language) {
+        if (language == ProgrammingLanguage.MATLAB && matlabLicense != null) {
+            Map<String, String> env;
+            String network;
+            if (dockerFlagsDTO != null) {
+                env = new HashMap<>(dockerFlagsDTO.env());
+                network = dockerFlagsDTO.network();
+            }
+            else {
+                env = new HashMap<>();
+                network = null;
+            }
+
+            env.put("MLM_LICENSE_FILE", matlabLicense);
+
+            dockerFlagsDTO = new DockerFlagsDTO(network, env);
+        }
+
+        return dockerFlagsDTO;
     }
 
     DockerRunConfig getDockerRunConfigFromParsedFlags(DockerFlagsDTO dockerFlagsDTO) {

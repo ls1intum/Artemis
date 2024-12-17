@@ -80,6 +80,8 @@ artemis:
                     default: "~~invalid~~"
                 go:
                     default: "~~invalid~~"
+                matlab:
+                    default: "~~invalid~~"
         build-agent:
             short-name: "artemis-build-agent-test"
     telemetry:
