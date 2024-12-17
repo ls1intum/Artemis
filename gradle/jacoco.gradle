@@ -96,6 +96,14 @@ jacoco {
 }
 
 jacocoTestReport {
+    // For the aggregated report
+    reports {
+        xml.required = true
+        xml.outputLocation = file("build/reports/jacoco/test/jacocoCoverageReport.xml")
+        html.required = true
+        html.outputLocation = file("build/reports/jacoco/test/html")
+    }
+
     finalizedBy reportedModules
         .collect { module -> registerJacocoReportTask(module as String, jacocoTestReport) }
         .findAll { task -> task != null}
