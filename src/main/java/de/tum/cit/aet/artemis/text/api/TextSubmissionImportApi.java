@@ -9,6 +9,7 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Controller;
 
 import de.tum.cit.aet.artemis.assessment.domain.GradingInstruction;
+import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.text.domain.TextSubmission;
 import de.tum.cit.aet.artemis.text.repository.TextSubmissionRepository;
 import de.tum.cit.aet.artemis.text.service.TextExerciseImportService;
@@ -37,7 +38,7 @@ public class TextSubmissionImportApi extends AbstractTextApi {
 
     private void checkGivenExerciseIdSameForSubmissionParticipation(long originalExerciseId, long exerciseIdInSubmission) {
         if (!Objects.equals(originalExerciseId, exerciseIdInSubmission)) {
-            throw new IllegalArgumentException("ExerciseId does not match with the exerciseId in submission participation");
+            throw new BadRequestAlertException("ExerciseId does not match with the exerciseId in submission participation", "exampleSubmission", "idNotMatched");
         }
     }
 }
