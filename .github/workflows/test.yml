@@ -83,8 +83,8 @@ jobs:
           fi
         fi
 
-        echo "./gradlew --console=plain test jacocoTestReport -x webapp jacocoTestCoverageVerification $TEST_MODULE_TAGS"
-        ./gradlew --console=plain test jacocoTestReport -x webapp jacocoTestCoverageVerification "$TEST_MODULE_TAGS" | tee tests.log
+        echo "./gradlew --console=plain test $TEST_MODULE_TAGS jacocoTestReport -x webapp jacocoTestCoverageVerification"
+        ./gradlew --console=plain test "$TEST_MODULE_TAGS" jacocoTestReport -x webapp jacocoTestCoverageVerification | tee tests.log
     - name: Print failed tests
       if: failure()
       run: grep "Test >.* FAILED\$" tests.log || echo "No failed tests."
