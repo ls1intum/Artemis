@@ -76,8 +76,10 @@ public class LocalCIEventListenerService {
     public void checkPendingBuildJobsStatus() {
         log.info("Checking pending build jobs status");
         List<BuildJob> pendingBuildJobs = buildJobRepository.findAllByBuildStatusIn(List.of(BuildStatus.QUEUED, BuildStatus.BUILDING));
+        ZonedDateTime now = ZonedDateTime.now();
+        final int buildJobExpirationInMinutes = 5; // If a build job is older than 5 minutes, and it's status can't be determined, set it to missing
         for (BuildJob buildJob : pendingBuildJobs) {
-            if (buildJob.getBuildSubmissionDate().isAfter(ZonedDateTime.now().minusMinutes(5))) {
+            if (buildJob.getBuildSubmissionDate().isAfter(now.minusMinutes(buildJobExpirationInMinutes))) {
                 log.debug("Build job with id {} is too recent to check", buildJob.getBuildJobId());
                 continue;
             }

@@ -7,7 +7,7 @@ package de.tum.cit.aet.artemis.programming.domain.build;
  * CANCELED: the build was canceled
  * QUEUED: the build is queued
  * BUILDING: the build is currently building
- * MISSING: the build is missing (i.e.
+ * MISSING: the build is missing (i.e. it was not found in the queue, not being built or not finished)
  */
 
 public enum BuildStatus {

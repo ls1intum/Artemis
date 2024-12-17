@@ -446,11 +446,11 @@ public class SharedQueueProcessingService {
             Throwable cause = ex.getCause();
             String errorMessage = ex.getMessage();
 
-            if ((cause instanceof TimeoutException) || timeoutMsg.equals(errorMessage)) {
+            if ((cause instanceof TimeoutException) || errorMessage.equals(timeoutMsg)) {
                 status = BuildStatus.TIMEOUT;
                 log.info("Build job with id {} was timed out", buildJob.id());
             }
-            else if ((cause instanceof CancellationException) && cancelledMsg.equals(errorMessage)) {
+            else if ((cause instanceof CancellationException) && errorMessage.equals(cancelledMsg)) {
                 status = BuildStatus.CANCELLED;
                 log.info("Build job with id {} was cancelled", buildJob.id());
             }
