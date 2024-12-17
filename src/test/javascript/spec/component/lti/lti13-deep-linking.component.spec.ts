@@ -6,16 +6,18 @@ import { CourseManagementService } from 'app/course/manage/course-management.ser
 import { AccountService } from 'app/core/auth/account.service';
 import { SortService } from 'app/shared/service/sort.service';
 import { of, throwError } from 'rxjs';
-import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
-import { MockPipe } from 'ng-mocks';
-import { User } from 'app/core/user/user.model';
-import { Course } from 'app/entities/course.model';
-import { Exercise, ExerciseType } from 'app/entities/exercise.model';
-import { HelpIconComponent } from 'app/shared/components/help-icon.component';
-import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 import { AlertService } from 'app/core/util/alert.service';
 import { MockSyncStorage } from '../../helpers/mocks/service/mock-sync-storage.service';
 import { SessionStorageService } from 'ngx-webstorage';
+import { Exercise, ExerciseType } from 'app/entities/exercise.model';
+import { Course } from 'app/entities/course.model';
+import { User } from 'app/core/user/user.model';
+import { TranslateLoader, TranslateModule, TranslateService } from '@ngx-translate/core';
+import { TranslateHttpLoader } from '@ngx-translate/http-loader';
+
+function HttpLoaderFactory(http: HttpClient) {
+    return new TranslateHttpLoader(http);
+}
 
 describe('Lti13DeepLinkingComponent', () => {
     let component: Lti13DeepLinkingComponent;
@@ -38,7 +40,16 @@ describe('Lti13DeepLinkingComponent', () => {
         activatedRouteMock = { params: of({ courseId: '123' }) };
 
         TestBed.configureTestingModule({
-            declarations: [Lti13DeepLinkingComponent, MockPipe(ArtemisTranslatePipe), HelpIconComponent, MockPipe(ArtemisDatePipe)],
+            imports: [
+                Lti13DeepLinkingComponent,
+                TranslateModule.forRoot({
+                    loader: {
+                        provide: TranslateLoader,
+                        useFactory: HttpLoaderFactory,
+                        deps: [HttpClient],
+                    },
+                }),
+            ],
             providers: [
                 { provide: ActivatedRoute, useValue: activatedRouteMock },
                 { provide: Router, useValue: routerMock },
@@ -48,6 +59,7 @@ describe('Lti13DeepLinkingComponent', () => {
                 { provide: SortService, useValue: sortServiceMock },
                 { provide: SessionStorageService, useClass: MockSyncStorage },
                 { provide: AlertService, useValue: alertServiceMock },
+                TranslateService,
             ],
         }).compileComponents();
         jest.spyOn(console, 'error').mockImplementation(() => {});

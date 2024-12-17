@@ -1,4 +1,7 @@
-<div class="post" [ngClass]="{ 'mx-0': !isThreadSidebar, 'pinned-message': isPinned(), 'is-saved': !isConsecutive() && posting.isSaved }">
+<div
+    class="post hover-container"
+    [ngClass]="{ 'mx-0': !isThreadSidebar, 'pinned-message': isPinned(), 'is-saved': !isConsecutive() && posting.isSaved, 'non-consecutive': !isConsecutive() }"
+>
     @if (posting.isSaved) {
         <div class="post-is-saved-message post-content-padding fs-xx-small py-1" [ngClass]="{ 'is-saved': isConsecutive() && posting.isSaved }">
             <div class="post-is-saved-message-content">
@@ -6,6 +9,11 @@
                 <span class="text-secondary" jhiTranslate="artemisApp.metis.post.saved"></span>
             </div>
         </div>
+    }
+    @if (isConsecutive()) {
+        <span class="post-time fs-small" ngbTooltip="{{ posting.creationDate | artemisDate: 'time' }}">
+            {{ posting.creationDate | artemisDate: 'time' }}
+        </span>
     }
     @if (!isConsecutive()) {
         <div class="ps-3">
@@ -21,23 +29,23 @@
         </div>
     }
     <div class="align-items-center">
-        <div class="col">
-            <div>
+        <div>
+            <div class="post-context-information-wrap post-content-padding" [ngClass]="{ 'is-saved': isConsecutive() && posting.isSaved }">
                 @if (showAnnouncementIcon) {
                     <fa-icon
                         [icon]="faBullhorn"
                         iconSize="xs"
-                        class="col-auto pe-0 announcement-icon"
+                        class="pe-0 ms-1 announcement-icon"
                         [ngbTooltip]="'artemisApp.metis.post.postMarkedAsAnnouncementTooltip' | artemisTranslate"
                     />
                 }
                 <!-- in the course all-messages as well as in the preview mode during similarity check, the context (lecture, exercise, course-wide topic) is shown -->
                 <!-- not shown in course messages page -->
                 @if (showChannelReference && (pageType === PageType.OVERVIEW || previewMode)) {
-                    <span class="col-auto">
+                    <span>
                         @if (contextInformation.routerLinkComponents) {
                             <a
-                                class="linked-context-information post-content-padding ms-1"
+                                class="linked-context-information ms-1"
                                 [routerLink]="contextInformation.routerLinkComponents"
                                 [queryParams]="contextInformation.queryParams"
                                 (click)="onNavigateToContext($event)"
@@ -46,15 +54,15 @@
                             >
                         }
                         @if (!contextInformation.routerLinkComponents) {
-                            <span class="context-information post-content-padding ms-1">{{ contextInformation.displayName }}:</span>
+                            <span class="context-information ms-1">{{ contextInformation.displayName }}:</span>
                         }
                     </span>
                 }
                 <!-- post title not shown for plagiarism cases -->
                 @if (pageType !== PageType.PLAGIARISM_CASE_INSTRUCTOR && pageType !== PageType.PLAGIARISM_CASE_STUDENT) {
-                    <span class="col-auto">
+                    <span>
                         @if (posting.title?.length) {
-                            <span class="post-title post-content-padding ms-1">{{ posting.title }}</span>
+                            <span class="post-title ms-1">{{ posting.title }}</span>
                         }
                     </span>
                 }

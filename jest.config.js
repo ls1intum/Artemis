@@ -105,10 +105,10 @@ module.exports = {
     coverageThreshold: {
         global: {
             // TODO: in the future, the following values should increase to at least 90%
-            statements: 87.66,
+            statements: 87.69,
             branches: 73.79,
-            functions: 82.17,
-            lines: 87.72,
+            functions: 82.28,
+            lines: 87.74,
         },
     },
     coverageReporters: ['clover', 'json', 'lcov', 'text-summary'],
@@ -128,7 +128,7 @@ module.exports = {
             },
         ],
     },
-    modulePathIgnorePatterns: ['<rootDir>/src/main/resources/templates/'],
+    modulePathIgnorePatterns: ['<rootDir>/src/main/resources/templates/', '<rootDir>/build/'],
     testTimeout: 3000,
     testMatch: [
         '<rootDir>/src/test/javascript/spec/component/**/*.spec.ts',

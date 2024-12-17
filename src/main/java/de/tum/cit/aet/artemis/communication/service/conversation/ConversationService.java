@@ -143,7 +143,9 @@ public class ConversationService {
 
         if (conversation instanceof Channel channel && channel.getIsCourseWide()) {
             ConversationParticipant conversationParticipant = ConversationParticipant.createWithDefaultValues(user, channel);
-            conversationParticipant.setIsModerator(authorizationCheckService.isAtLeastInstructorInCourse(channel.getCourse(), user));
+            boolean canBecomeModerator = (channel.getIsAnnouncementChannel() ? authorizationCheckService.isAtLeastInstructorInCourse(channel.getCourse(), user)
+                    : authorizationCheckService.isAtLeastTeachingAssistantInCourse(channel.getCourse(), user));
+            conversationParticipant.setIsModerator(canBecomeModerator);
             lastReadDate.ifPresent(conversationParticipant::setLastRead);
             conversationParticipantRepository.saveAndFlush(conversationParticipant);
         }
