@@ -8,7 +8,7 @@ def get_report_by_module(input_directory):
         module_path = os.path.join(input_directory, module_folder)
 
         if os.path.isdir(module_path):
-            report_file = os.path.join(module_path, f"jacocoCoverageReport.xml")
+            report_file = os.path.join(module_path, f"jacocoTestReport.xml")
 
             if os.path.exists(report_file):
                 results.append({

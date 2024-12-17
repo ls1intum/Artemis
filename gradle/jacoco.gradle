@@ -99,7 +99,7 @@ jacocoTestReport {
     // For the aggregated report
     reports {
         xml.required = true
-        xml.outputLocation = file("build/reports/jacoco/test/jacocoCoverageReport.xml")
+        xml.outputLocation = file("build/reports/jacoco/test/jacocoTestReport.xml")
         html.required = true
         html.outputLocation = file("build/reports/jacoco/test/html")
     }
@@ -140,7 +140,7 @@ private JacocoReport registerJacocoReportTask(String moduleName, JacocoReport ro
 
     task.reports {
         xml.required = true
-        xml.outputLocation = file("build/reports/jacoco/$moduleName/jacocoCoverageReport.xml")
+        xml.outputLocation = file("build/reports/jacoco/$moduleName/jacocoTestReport.xml")
         html.required = true
         html.outputLocation = file("build/reports/jacoco/$moduleName/html")
     }
