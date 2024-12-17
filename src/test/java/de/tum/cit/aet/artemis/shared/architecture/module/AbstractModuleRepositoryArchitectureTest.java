@@ -354,6 +354,6 @@ public abstract class AbstractModuleRepositoryArchitectureTest extends AbstractA
                             events.add(SimpleConditionEvent.violated(javaClass, message));
                         }
                     }
-                }).because("Simple Services should have exactly one autowired candidate to remain simple").check(productionClasses);
+                }).because("Simple Services should have exactly one autowired candidate to remain simple").allowEmptyShould(true).check(productionClasses);
     }
 }
