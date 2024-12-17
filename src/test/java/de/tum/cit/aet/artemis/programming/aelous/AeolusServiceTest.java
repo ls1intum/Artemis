@@ -1,4 +1,4 @@
-package de.tum.cit.aet.artemis.connectors;
+package de.tum.cit.aet.artemis.programming.aelous;
 
 import static de.tum.cit.aet.artemis.core.config.Constants.ASSIGNMENT_REPO_NAME;
 import static de.tum.cit.aet.artemis.core.config.Constants.SOLUTION_REPO_NAME;

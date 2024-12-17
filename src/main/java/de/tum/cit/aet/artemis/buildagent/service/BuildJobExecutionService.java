@@ -308,14 +308,28 @@ public class BuildJobExecutionService {
 
         ZonedDateTime buildCompletedDate = ZonedDateTime.now();
 
+        msg = "~~~~~~~~~~~~~~~~~~~~ Moving test results to specified directory for build job " + buildJob.id() + " ~~~~~~~~~~~~~~~~~~~~";
+        buildLogsMap.appendBuildLogEntry(buildJob.id(), msg);
+        log.debug(msg);
+
         buildJobContainerService.moveResultsToSpecifiedDirectory(containerId, buildJob.buildConfig().resultPaths(), LOCALCI_WORKING_DIRECTORY + LOCALCI_RESULTS_DIRECTORY);
 
         // Get an input stream of the test result files.
 
-        TarArchiveInputStream testResultsTarInputStream;
+        msg = "~~~~~~~~~~~~~~~~~~~~ Collecting test results from container " + containerId + " for build job " + buildJob.id() + " ~~~~~~~~~~~~~~~~~~~~";
+        buildLogsMap.appendBuildLogEntry(buildJob.id(), msg);
+        log.info(msg);
+
+        TarArchiveInputStream testResultsTarInputStream = null;
+
+        BuildResult buildResult;
 
         try {
             testResultsTarInputStream = buildJobContainerService.getArchiveFromContainer(containerId, LOCALCI_WORKING_DIRECTORY + LOCALCI_RESULTS_DIRECTORY);
+
+            buildResult = parseTestResults(testResultsTarInputStream, buildJob.buildConfig().branch(), assignmentRepoCommitHash, testRepoCommitHash, buildCompletedDate,
+                    buildJob.id());
+            buildResult.setBuildLogEntries(buildLogsMap.getAndTruncateBuildLogs(buildJob.id()));
         }
         catch (NotFoundException e) {
             msg = "Could not find test results in container " + containerName;
@@ -324,7 +338,22 @@ public class BuildJobExecutionService {
             // If the test results are not found, this means that something went wrong during the build and testing of the submission.
             return constructFailedBuildResult(buildJob.buildConfig().branch(), assignmentRepoCommitHash, testRepoCommitHash, buildCompletedDate);
         }
+        catch (IOException | IllegalStateException e) {
+            msg = "Error while parsing test results";
+            buildLogsMap.appendBuildLogEntry(buildJob.id(), msg);
+            throw new LocalCIException(msg, e);
+        }
         finally {
+            try {
+                if (testResultsTarInputStream != null) {
+                    testResultsTarInputStream.close();
+                }
+            }
+            catch (IOException e) {
+                msg = "Could not close test results tar input stream";
+                buildLogsMap.appendBuildLogEntry(buildJob.id(), msg);
+                log.error(msg, e);
+            }
             buildJobContainerService.stopContainer(containerName);
 
             // Delete the cloned repositories
@@ -349,20 +378,8 @@ public class BuildJobExecutionService {
             }
         }
 
-        BuildResult buildResult;
-        try {
-            buildResult = parseTestResults(testResultsTarInputStream, buildJob.buildConfig().branch(), assignmentRepoCommitHash, testRepoCommitHash, buildCompletedDate,
-                    buildJob.id());
-            buildResult.setBuildLogEntries(buildLogsMap.getAndTruncateBuildLogs(buildJob.id()));
-        }
-        catch (IOException | IllegalStateException e) {
-            msg = "Error while parsing test results";
-            buildLogsMap.appendBuildLogEntry(buildJob.id(), msg);
-            throw new LocalCIException(msg, e);
-        }
-
         msg = "Building and testing submission for repository " + assignmentRepositoryUri.repositorySlug() + " and commit hash " + assignmentRepoCommitHash + " took "
-                + TimeLogUtil.formatDurationFrom(timeNanoStart);
+                + TimeLogUtil.formatDurationFrom(timeNanoStart) + " for build job " + buildJob.id();
         buildLogsMap.appendBuildLogEntry(buildJob.id(), msg);
         log.info(msg);
 

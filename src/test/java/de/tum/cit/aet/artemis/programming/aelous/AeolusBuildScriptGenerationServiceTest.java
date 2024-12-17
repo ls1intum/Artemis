@@ -1,4 +1,4 @@
-package de.tum.cit.aet.artemis.connectors;
+package de.tum.cit.aet.artemis.programming.aelous;
 
 import static org.assertj.core.api.Assertions.assertThat;
 

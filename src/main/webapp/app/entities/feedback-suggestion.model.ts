@@ -48,6 +48,6 @@ export class ModelingFeedbackSuggestion {
         public description: string,
         public credits: number,
         public structuredGradingInstructionId: number | undefined,
-        public elementIds: string[],
+        public reference: string | undefined,
     ) {}
 }
