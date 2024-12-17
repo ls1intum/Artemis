@@ -30,15 +30,17 @@ export class IrisLogoComponent {
     });
 
     classList = computed(() => {
-        if (this.size() === IrisLogoSize.SMALL) {
-            return 'small';
-        } else if (this.size() === IrisLogoSize.MEDIUM) {
-            return 'medium';
-        } else if (this.size() === IrisLogoSize.BIG) {
-            return 'big img-fluid';
-        } else if (this.size() === IrisLogoSize.FLUID) {
-            return 'fluid';
+        switch (this.size()) {
+            case IrisLogoSize.SMALL:
+                return 'small';
+            case IrisLogoSize.MEDIUM:
+                return 'medium';
+            case IrisLogoSize.BIG:
+                return 'big img-fluid';
+            case IrisLogoSize.FLUID:
+                return 'fluid';
+            default:
+                return '';
         }
-        return '';
     });
 }
