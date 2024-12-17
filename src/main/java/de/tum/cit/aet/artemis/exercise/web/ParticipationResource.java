@@ -97,8 +97,8 @@ import de.tum.cit.aet.artemis.quiz.repository.QuizExerciseRepository;
 import de.tum.cit.aet.artemis.quiz.repository.SubmittedAnswerRepository;
 import de.tum.cit.aet.artemis.quiz.service.QuizBatchService;
 import de.tum.cit.aet.artemis.quiz.service.QuizSubmissionService;
+import de.tum.cit.aet.artemis.text.api.TextFeedbackApi;
 import de.tum.cit.aet.artemis.text.domain.TextExercise;
-import de.tum.cit.aet.artemis.text.service.TextExerciseFeedbackService;
 
 /**
  * REST controller for managing Participation.
@@ -165,7 +165,7 @@ public class ParticipationResource {
 
     private final ProgrammingExerciseCodeReviewFeedbackService programmingExerciseCodeReviewFeedbackService;
 
-    private final TextExerciseFeedbackService textExerciseFeedbackService;
+    private final Optional<TextFeedbackApi> textFeedbackApi;
 
     private final ModelingExerciseFeedbackService modelingExerciseFeedbackService;
 
@@ -178,7 +178,7 @@ public class ParticipationResource {
             ProgrammingExerciseStudentParticipationRepository programmingExerciseStudentParticipationRepository, SubmissionRepository submissionRepository,
             ResultRepository resultRepository, ExerciseDateService exerciseDateService, InstanceMessageSendService instanceMessageSendService, QuizBatchService quizBatchService,
             SubmittedAnswerRepository submittedAnswerRepository, QuizSubmissionService quizSubmissionService, GradingScaleService gradingScaleService,
-            ProgrammingExerciseCodeReviewFeedbackService programmingExerciseCodeReviewFeedbackService, TextExerciseFeedbackService textExerciseFeedbackService,
+            ProgrammingExerciseCodeReviewFeedbackService programmingExerciseCodeReviewFeedbackService, Optional<TextFeedbackApi> textFeedbackApi,
             ModelingExerciseFeedbackService modelingExerciseFeedbackService) {
         this.participationService = participationService;
         this.programmingExerciseParticipationService = programmingExerciseParticipationService;
@@ -205,7 +205,7 @@ public class ParticipationResource {
         this.quizSubmissionService = quizSubmissionService;
         this.gradingScaleService = gradingScaleService;
         this.programmingExerciseCodeReviewFeedbackService = programmingExerciseCodeReviewFeedbackService;
-        this.textExerciseFeedbackService = textExerciseFeedbackService;
+        this.textFeedbackApi = textFeedbackApi;
         this.modelingExerciseFeedbackService = modelingExerciseFeedbackService;
     }
 
@@ -417,7 +417,8 @@ public class ParticipationResource {
         // Process feedback request
         StudentParticipation updatedParticipation;
         if (exercise instanceof TextExercise) {
-            updatedParticipation = textExerciseFeedbackService.handleNonGradedFeedbackRequest(participation, (TextExercise) exercise);
+            StudentParticipation finalParticipation = participation;
+            updatedParticipation = textFeedbackApi.map(a -> a.handleNonGradedFeedbackRequest(finalParticipation, (TextExercise) exercise)).orElse(participation);
         }
         else if (exercise instanceof ModelingExercise) {
             updatedParticipation = modelingExerciseFeedbackService.handleNonGradedFeedbackRequest(participation, (ModelingExercise) exercise);

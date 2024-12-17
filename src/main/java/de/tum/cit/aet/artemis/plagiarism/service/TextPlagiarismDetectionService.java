@@ -35,7 +35,6 @@ import de.tum.cit.aet.artemis.plagiarism.service.cache.PlagiarismCacheService;
 import de.tum.cit.aet.artemis.text.api.TextSubmissionExportApi;
 import de.tum.cit.aet.artemis.text.domain.TextExercise;
 import de.tum.cit.aet.artemis.text.domain.TextSubmission;
-import de.tum.cit.aet.artemis.text.service.TextSubmissionExportService;
 
 @Profile(PROFILE_CORE)
 @Service
@@ -45,18 +44,15 @@ public class TextPlagiarismDetectionService {
 
     private final Optional<TextSubmissionExportApi> textSubmissionExportApi;
 
-    private final TextSubmissionExportService textSubmissionExportService;
-
     private final PlagiarismWebsocketService plagiarismWebsocketService;
 
     private final PlagiarismCacheService plagiarismCacheService;
 
     private final PlagiarismService plagiarismService;
 
-    public TextPlagiarismDetectionService(Optional<TextSubmissionExportApi> textSubmissionExportApi, TextSubmissionExportService textSubmissionExportService,
-            PlagiarismWebsocketService plagiarismWebsocketService, PlagiarismCacheService plagiarismCacheService, PlagiarismService plagiarismService) {
+    public TextPlagiarismDetectionService(Optional<TextSubmissionExportApi> textSubmissionExportApi, PlagiarismWebsocketService plagiarismWebsocketService,
+            PlagiarismCacheService plagiarismCacheService, PlagiarismService plagiarismService) {
         this.textSubmissionExportApi = textSubmissionExportApi;
-        this.textSubmissionExportService = textSubmissionExportService;
         this.plagiarismWebsocketService = plagiarismWebsocketService;
         this.plagiarismCacheService = plagiarismCacheService;
         this.plagiarismService = plagiarismService;

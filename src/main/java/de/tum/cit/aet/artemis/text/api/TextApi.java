@@ -9,6 +9,7 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Controller;
 
 import de.tum.cit.aet.artemis.assessment.repository.TextBlockRepository;
+import de.tum.cit.aet.artemis.core.service.messaging.InstanceMessageSendService;
 import de.tum.cit.aet.artemis.text.domain.TextBlock;
 import de.tum.cit.aet.artemis.text.domain.TextExercise;
 import de.tum.cit.aet.artemis.text.repository.TextExerciseRepository;
@@ -21,9 +22,12 @@ public class TextApi extends AbstractTextApi {
 
     private final TextBlockRepository textBlockRepository;
 
-    public TextApi(TextExerciseRepository textExerciseRepository, TextBlockRepository textBlockRepository) {
+    private final InstanceMessageSendService instanceMessageSendService;
+
+    public TextApi(TextExerciseRepository textExerciseRepository, TextBlockRepository textBlockRepository, InstanceMessageSendService instanceMessageSendService) {
         this.textExerciseRepository = textExerciseRepository;
         this.textBlockRepository = textBlockRepository;
+        this.instanceMessageSendService = instanceMessageSendService;
     }
 
     public TextExercise findWithGradingCriteriaByIdElseThrow(long exerciseId) {
@@ -40,5 +44,9 @@ public class TextApi extends AbstractTextApi {
 
     public List<TextExercise> findAllWithCategoriesByCourseId(Long courseId) {
         return textExerciseRepository.findAllWithCategoriesByCourseId(courseId);
+    }
+
+    public void cancelScheduledOperations(long exerciseId) {
+        instanceMessageSendService.sendTextExerciseScheduleCancel(exerciseId);
     }
 }

@@ -24,6 +24,10 @@ public class TextSubmissionApi extends AbstractTextApi {
         this.textSubmissionService = textSubmissionService;
     }
 
+    public TextSubmission findByIdElseThrow(long id) {
+        return textSubmissionRepository.findByIdElseThrow(id);
+    }
+
     public TextSubmission saveTextSubmission(TextSubmission textSubmission) {
         return textSubmissionRepository.save(textSubmission);
     }
