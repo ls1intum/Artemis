@@ -89,4 +89,16 @@ public class IrisExerciseSettings extends IrisSettings {
     public void setIrisCompetencyGenerationSettings(IrisCompetencyGenerationSubSettings irisCompetencyGenerationSubSettings) {
 
     }
+
+    @Override
+    public IrisFaqIngestionSubSettings getIrisFaqIngestionSettings() {
+        // Empty because exercises don't have course faq settings
+        return null;
+    }
+
+    @Override
+    public void setIrisFaqIngestionSettings(IrisFaqIngestionSubSettings irisFaqIngestionSubSettings) {
+        // Empty because exercises don't have course faq settings
+
+    }
 }
