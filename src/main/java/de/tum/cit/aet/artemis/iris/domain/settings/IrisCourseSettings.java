@@ -42,7 +42,7 @@ public class IrisCourseSettings extends IrisSettings {
 
     @OneToOne(cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.EAGER)
     @JoinColumn(name = "iris_faq_ingestion_settings_id")
-    private IrisFaqIngestionSubSettings irisFaqIngestionSubSettings;
+    private IrisFaqIngestionSubSettings irisFaqIngestionSettings;
 
     @OneToOne(cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.EAGER, optional = false)
     @JoinColumn(name = "iris_competency_generation_settings_id")
@@ -64,16 +64,6 @@ public class IrisCourseSettings extends IrisSettings {
     @Override
     public void setIrisLectureIngestionSettings(IrisLectureIngestionSubSettings irisLectureIngestionSettings) {
         this.irisLectureIngestionSettings = irisLectureIngestionSettings;
-    }
-
-    @Override
-    public IrisFaqIngestionSubSettings getIrisFaqIngestionSettings() {
-        return irisFaqIngestionSubSettings;
-    }
-
-    @Override
-    public void setIrisFaqIngestionSettings(IrisFaqIngestionSubSettings irisFaqIngestionSubSettings) {
-        this.irisFaqIngestionSubSettings = irisFaqIngestionSubSettings;
     }
 
     @Override
@@ -114,5 +104,15 @@ public class IrisCourseSettings extends IrisSettings {
     @Override
     public void setIrisCompetencyGenerationSettings(IrisCompetencyGenerationSubSettings irisCompetencyGenerationSubSettings) {
         this.irisCompetencyGenerationSettings = irisCompetencyGenerationSubSettings;
+    }
+
+    @Override
+    public IrisFaqIngestionSubSettings getIrisFaqIngestionSettings() {
+        return irisFaqIngestionSettings;
+    }
+
+    @Override
+    public void setIrisFaqIngestionSettings(IrisFaqIngestionSubSettings irisFaqIngestionSubSettings) {
+        this.irisFaqIngestionSettings = irisFaqIngestionSubSettings;
     }
 }

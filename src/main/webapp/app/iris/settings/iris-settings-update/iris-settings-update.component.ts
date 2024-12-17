@@ -34,6 +34,7 @@ export class IrisSettingsUpdateComponent implements OnInit, DoCheck, ComponentCa
     originalIrisSettings?: IrisSettings;
 
     public autoLectureIngestion = false;
+    public autoFaqIngestion = false;
 
     // Status bools
     isLoading = false;
@@ -88,6 +89,7 @@ export class IrisSettingsUpdateComponent implements OnInit, DoCheck, ComponentCa
             this.fillEmptyIrisSubSettings();
             this.originalIrisSettings = cloneDeep(settings);
             this.autoLectureIngestion = this.irisSettings?.irisLectureIngestionSettings?.autoIngestOnLectureAttachmentUpload ?? false;
+            this.autoFaqIngestion = this.irisSettings?.irisFaqIngestionSettings?.autoIngestOnFaqCreation ?? false;
             this.isDirty = false;
         });
         this.loadParentIrisSettingsObservable().subscribe((settings) => {
@@ -123,6 +125,9 @@ export class IrisSettingsUpdateComponent implements OnInit, DoCheck, ComponentCa
         this.isSaving = true;
         if (this.irisSettings && this.irisSettings.irisLectureIngestionSettings) {
             this.irisSettings.irisLectureIngestionSettings.autoIngestOnLectureAttachmentUpload = this.autoLectureIngestion;
+        }
+        if (this.irisSettings && this.irisSettings.irisFaqIngestionSettings) {
+            this.irisSettings.irisFaqIngestionSettings.autoIngestOnFaqCreation = this.autoFaqIngestion;
         }
         this.saveIrisSettingsObservable().subscribe(
             (response) => {
@@ -169,6 +174,7 @@ export class IrisSettingsUpdateComponent implements OnInit, DoCheck, ComponentCa
     }
 
     saveIrisSettingsObservable(): Observable<HttpResponse<IrisSettings | undefined>> {
+        console.log(this.settingsType);
         switch (this.settingsType) {
             case IrisSettingsType.GLOBAL:
                 return this.irisSettingsService.setGlobalSettings(this.irisSettings!);
@@ -178,4 +184,6 @@ export class IrisSettingsUpdateComponent implements OnInit, DoCheck, ComponentCa
                 return this.irisSettingsService.setExerciseSettings(this.exerciseId!, this.irisSettings!);
         }
     }
+
+    protected readonly console = console;
 }

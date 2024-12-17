@@ -7,7 +7,7 @@ import jakarta.persistence.Entity;
 import com.fasterxml.jackson.annotation.JsonInclude;
 
 /**
- * Represents the specific ingestion sub-settings of faq for Iris.
+ * Represents the specific ingestion sub-settings of faqs for Iris.
  * This class extends {@link IrisSubSettings} to provide settings required for faq data ingestion.
  */
 @Entity

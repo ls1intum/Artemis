@@ -92,13 +92,13 @@ public class IrisExerciseSettings extends IrisSettings {
 
     @Override
     public IrisFaqIngestionSubSettings getIrisFaqIngestionSettings() {
-        // Empty because exercises don't have course faq settings
+        // Empty because exercises don't have exercise faq settings
         return null;
     }
 
     @Override
     public void setIrisFaqIngestionSettings(IrisFaqIngestionSubSettings irisFaqIngestionSubSettings) {
-        // Empty because exercises don't have course faq settings
+        // Empty because exercises don't have exercise faq settings
 
     }
 }

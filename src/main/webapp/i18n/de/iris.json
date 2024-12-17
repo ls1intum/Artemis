@@ -31,6 +31,10 @@
                         "title": "Vorlesungen Erfassung Einstellungen",
                         "autoIngestOnAttachmentUpload": "Vorlesungen automatisch an Pyris senden"
                     },
+                    "faqIngestionSettings": {
+                        "title": "FAQ Ingestion Settings",
+                        "autoIngest": "FAQs automatisch an Pyris senden"
+                    },
                     "hestiaSettings": "Hestia Einstellungen",
                     "competencyGenerationSettings": "Kompetenzgenerierung Einstellungen",
                     "proactivityBuildFailedEventEnabled": {

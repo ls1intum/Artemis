@@ -31,6 +31,10 @@
                         "title": "Lecture Ingestion Settings",
                         "autoIngestOnAttachmentUpload": "Send Lectures To Pyris Automatically"
                     },
+                    "faqIngestionSettings": {
+                        "title": "FAQ Ingestion Settings",
+                        "autoIngest": "Send FAQs To Pyris Automatically"
+                    },
                     "hestiaSettings": "Hestia Settings",
                     "competencyGenerationSettings": "Competency Generation Settings",
                     "proactivityBuildFailedEventEnabled": {

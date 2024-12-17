@@ -139,6 +139,7 @@ public class IrisSettingsResource {
     @PutMapping("courses/{courseId}/raw-iris-settings")
     @EnforceAtLeastInstructorInCourse
     public ResponseEntity<IrisCourseSettings> updateCourseSettings(@PathVariable Long courseId, @RequestBody IrisCourseSettings settings) {
+        System.out.println(settings.getIrisFaqIngestionSettings());
         var course = courseRepository.findByIdElseThrow(courseId);
         settings.setCourse(course);
         var updatedSettings = irisSettingsService.saveIrisSettings(settings);
