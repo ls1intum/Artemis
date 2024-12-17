@@ -2,6 +2,7 @@ package de.tum.cit.aet.artemis.text.api;
 
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
+import java.util.List;
 import java.util.Optional;
 
 import org.springframework.context.annotation.Profile;
@@ -31,5 +32,13 @@ public class TextApi extends AbstractTextApi {
 
     public Optional<TextBlock> findById(String reference) {
         return textBlockRepository.findById(reference);
+    }
+
+    public TextExercise findByIdElseThrow(long exerciseId) {
+        return textExerciseRepository.findByIdElseThrow(exerciseId);
+    }
+
+    public List<TextExercise> findAllWithCategoriesByCourseId(Long courseId) {
+        return textExerciseRepository.findAllWithCategoriesByCourseId(courseId);
     }
 }
