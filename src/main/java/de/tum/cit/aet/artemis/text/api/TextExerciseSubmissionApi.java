@@ -35,6 +35,10 @@ public class TextExerciseSubmissionApi extends AbstractTextApi {
         return textExerciseImportService.copySubmission(textSubmission, gradingInstructionCopyTracker);
     }
 
+    public TextSubmission saveTextSubmission(TextSubmission textSubmission) {
+        return textSubmissionRepository.save(textSubmission);
+    }
+
     private void checkGivenExerciseIdSameForSubmissionParticipation(long originalExerciseId, long exerciseIdInSubmission) {
         if (!Objects.equals(originalExerciseId, exerciseIdInSubmission)) {
             throw new IllegalArgumentException("ExerciseId does not match with the exerciseId in submission participation");
