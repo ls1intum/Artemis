@@ -9,6 +9,7 @@
     </div>
     <div class="modal-body">
         <div class="dropdown-container" style="display: flex; flex-direction: column; gap: 15px">
+            <!-- exercise dropdown -->
             <div ngbDropdown class="dropdown-section">
                 <button class="btn btn-secondary dropdown-toggle" type="button" ngbDropdownToggle>
                     <span class="d-sm-inline" jhiTranslate="artemisApp.lti.contentSelectionTable.exercises"></span>
@@ -86,6 +87,8 @@
                     </div>
                 </div>
             </div>
+
+            <!-- lecture dropdown -->
             <div ngbDropdown class="dropdown-section">
                 <button class="btn btn-secondary dropdown-toggle" type="button" ngbDropdownToggle>
                     <span class="d-sm-inline" jhiTranslate="artemisApp.lti.contentSelectionTable.lectures"></span>
@@ -111,7 +114,7 @@
                                 @for (lecture of lectures; track lecture) {
                                     <tr id="exercise-{{ lecture.id }}">
                                         <td class="d-md-table-cell">
-                                            <input class="form-check-input" type="checkbox" (change)="selectExercise(lecture.id)" [ngModel]="isExerciseSelected(lecture.id)" />
+                                            <input class="form-check-input" type="checkbox" (change)="selectLecture(lecture.id)" [ngModel]="isLectureSelected(lecture.id)" />
                                         </td>
                                         <td>{{ lecture.id ? lecture.id : '' }}</td>
                                         <td>{{ lecture.title ? lecture.title : '' }}</td>
@@ -126,8 +129,8 @@
     </div>
 
     <div class="lti-competency-selector">
-        <h4 class="" jhiTranslate="artemisApp.lti.contentSelectionTable.competencies">Enable competency</h4>
-        <jhi-help-icon class="ps-1" text="" />
+        <h4 class="" jhiTranslate="artemisApp.lti.contentSelectionTable.competencies"></h4>
+        <jhi-help-icon class="ps-1" text="artemisApp.lti.contentSelectionTable.competencies.selector" />
         <input class="form-check-input" type="checkbox" (change)="enableCompetency()" [ngModel]="isCompetencySelected" />
     </div>
 
@@ -135,6 +138,12 @@
         <h4 class="" jhiTranslate="artemisApp.lti.contentSelectionTable.learningPaths"></h4>
         <jhi-help-icon class="ps-1" text="" />
         <input class="form-check-input" type="checkbox" (change)="enableLearningPath()" [ngModel]="isLearningPathSelected" />
+    </div>
+
+    <div class="lti-iris-selector">
+        <h4 class="" jhiTranslate="artemisApp.lti.contentSelectionTable.iris"></h4>
+        <jhi-help-icon class="ps-1" text="" />
+        <input class="form-check-input" type="checkbox" (change)="enableIris()" [ngModel]="isIrisSelected" />
     </div>
 
     <div class="modal-footer">

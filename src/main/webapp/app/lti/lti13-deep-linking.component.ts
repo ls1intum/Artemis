@@ -41,6 +41,7 @@ export class Lti13DeepLinkingComponent implements OnInit {
     selectedLectures?: Set<number> = new Set();
     isCompetencySelected = false;
     isLearningPathSelected = false;
+    isIrisSelected = false;
     course: Course;
 
     predicate = 'type';
@@ -135,8 +136,8 @@ export class Lti13DeepLinkingComponent implements OnInit {
     /**
      * Checks if the given exercise is currently selected.
      *
-     * @param exercise The exercise to check.
      * @returns True if the exercise is selected, false otherwise.
+     * @param exerciseId
      */
     isExerciseSelected(exerciseId: number | undefined) {
         return exerciseId !== undefined && this.selectedExercises?.has(exerciseId);
@@ -166,6 +167,12 @@ export class Lti13DeepLinkingComponent implements OnInit {
     enableLearningPath() {
         if (!this.isLearningPathSelected) {
             this.isLearningPathSelected = true;
+        }
+    }
+
+    enableIris() {
+        if (!this.isIrisSelected) {
+            this.isIrisSelected = true;
         }
     }
 

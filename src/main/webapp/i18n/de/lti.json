@@ -7,8 +7,12 @@
             "contentSelectionTable": {
                 "exercises": "Übungen",
                 "lectures": "Vorlesungen",
-                "competencies": "Kompetenzen hinzufügen",
-                "learningPaths": "Lernpfade hinzufügen"
+                "competencies": {
+                    "header": "Kompetenzen hinzufügen",
+                    "selector": "Bestätigen sie hier, ob sie eine Verknüpfung zu den Kompetenzen ihres Kurses hinzufügen wollen"
+                },
+                "learningPaths": "Lernpfade hinzufügen",
+                "iris": "Iris hinzufügen"
             },
             "initializationError": "Die Initialisierung deines Benutzers wurde gestartet aber dein LTI-Konto wurde möglicherweise nicht korrekt erstellt. Bitte benachrichtige deine Übungsleitung, falls du dein Artemis-Passwort bisher nicht erhalten hast.",
             "initialization": {

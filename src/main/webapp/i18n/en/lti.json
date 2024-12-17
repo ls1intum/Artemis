@@ -7,8 +7,12 @@
             "contentSelectionTable": {
                 "exercises": "Exercises",
                 "lectures": "Lectures",
-                "competencies": "Add competencies",
-                "learningPaths": "Add learning paths"
+                "competencies": {
+                    "header": "Add competencies",
+                    "selector": "Confirm here whether you want to add a link to the competencies of your course"
+                },
+                "learningPaths": "Add learning paths",
+                "iris": "Add Iris"
             },
             "initializationError": "Your user initialization process was started but your LTI account was possible created with issues. Please ask your instructor for help if you didn't receive your Artemis password yet.",
             "initialization": {
