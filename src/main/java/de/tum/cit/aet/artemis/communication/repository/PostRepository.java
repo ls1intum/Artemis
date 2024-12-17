@@ -48,6 +48,12 @@ public interface PostRepository extends ArtemisJpaRepository<Post, Long>, JpaSpe
 
     List<Post> findAllByConversationId(Long conversationId);
 
+    @Query("""
+            SELECT p
+            FROM Post p
+            LEFT JOIN p.conversation conversation
+            WHERE conversation.course.id = :courseId
+            """)
     List<Post> findAllByCourseId(Long courseId);
 
     List<Post> findByIdIn(List<Long> idList);
