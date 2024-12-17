@@ -218,9 +218,20 @@ class TestExamIntegrationTest extends AbstractSpringIntegrationIndependentTest {
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void testGetStudentExamForTestExamForStart_tooEarly() throws Exception {
+        Exam testExam = examUtilService.addTestExam(course2);
+        testExam.setStartDate(now().plusMinutes(10));
+        testExam = examRepository.save(testExam);
+        // the request fails because the exam start is 10 min in the future
+        request.get("/api/courses/" + course1.getId() + "/exams/" + testExam.getId() + "/own-student-exam", HttpStatus.FORBIDDEN, StudentExam.class);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testGetStudentExamForTestExamForStart_ExamDoesNotBelongToCourse() throws Exception {
         Exam testExam = examUtilService.addTestExam(course2);
-
+        testExam.setStartDate(now().plusMinutes(4));
+        testExam = examRepository.save(testExam);
         request.get("/api/courses/" + course1.getId() + "/exams/" + testExam.getId() + "/own-student-exam", HttpStatus.CONFLICT, StudentExam.class);
     }
 
