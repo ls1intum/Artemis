@@ -36,4 +36,9 @@ public class TextExerciseImportApi extends AbstractTextApi {
     public TextExercise importTextExercise(final TextExercise templateExercise, TextExercise importedExercise) {
         return textExerciseImportService.importTextExercise(templateExercise, importedExercise);
     }
+
+    public Optional<TextExercise> importTextExercise(final long templateExerciseId, final TextExercise exerciseToCopy) {
+        final Optional<TextExercise> optionalOriginalTextExercise = textExerciseRepository.findWithExampleSubmissionsAndResultsById(templateExerciseId);
+        return optionalOriginalTextExercise.map(textExercise -> textExerciseImportService.importTextExercise(textExercise, exerciseToCopy));
+    }
 }
