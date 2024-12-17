@@ -118,7 +118,7 @@ public class AthenaDTOConverterService {
             case TEXT -> {
                 TextBlock feedbackTextBlock = null;
                 if (feedback.getReference() != null && textApi.isPresent()) {
-                    feedbackTextBlock = textApi.get().findById(feedback.getReference());
+                    feedbackTextBlock = textApi.get().findById(feedback.getReference()).orElse(null);
                 }
                 return TextFeedbackDTO.of(exercise.getId(), submissionId, feedback, feedbackTextBlock);
             }
