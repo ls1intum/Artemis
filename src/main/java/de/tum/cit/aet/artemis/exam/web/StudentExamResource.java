@@ -275,7 +275,7 @@ public class StudentExamResource {
                     // Unlock if there is no submission policy
                     // or there is a submission policy, but its limit was not reached yet
                     var submissionCount = programmingExerciseStudentParticipationRepository
-                            .findAllWithSubmissionsByExerciseIdAndStudentLogin(exercise.getId(), studentExam.getUser().getLogin()).stream().count();
+                            .findAllWithSubmissionsByExerciseIdAndStudentLogin(exercise.getId(), studentExam.getUser().getLogin()).size();
                     if (programmingExerciseSubmissionPolicy == null || submissionCount < programmingExerciseSubmissionPolicy.getSubmissionLimit()) {
                         programmingExerciseStudentParticipation.ifPresent(programmingExerciseParticipationService::unlockStudentRepositoryAndParticipation);
                     }
