@@ -48,6 +48,11 @@ public class TextSubmissionExportApi extends AbstractTextApi {
         return textExerciseWithSubmissionsExportService.exportTextExerciseWithSubmissions(exercise, optionsDTO, exportDir, exportErrors, reportEntries);
     }
 
+    /**
+     * Prepares a text block for export as an example submission
+     *
+     * @param exampleSubmissionId the submission id to be exported
+     */
     public void prepareTextBlockForExampleSubmission(long exampleSubmissionId) {
         Optional<TextSubmission> textSubmission = textSubmissionRepository.findWithEagerResultsAndFeedbackAndTextBlocksById(exampleSubmissionId);
         if (textSubmission.isPresent() && textSubmission.get().getLatestResult() == null

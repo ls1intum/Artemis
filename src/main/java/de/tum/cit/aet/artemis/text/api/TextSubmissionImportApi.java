@@ -27,6 +27,14 @@ public class TextSubmissionImportApi extends AbstractTextApi {
         this.textExerciseImportService = textExerciseImportService;
     }
 
+    /**
+     * Imports a student submission to an exercise.
+     *
+     * @param submissionId                  of the submission to be imported
+     * @param exerciseId                    of the exercise to import the submission into
+     * @param gradingInstructionCopyTracker mapping of the gradingInstructionID to the gradingInstruction
+     * @return the imported text submission
+     */
     public TextSubmission importStudentSubmission(long submissionId, long exerciseId, Map<Long, GradingInstruction> gradingInstructionCopyTracker) {
         TextSubmission textSubmission = textSubmissionRepository.findByIdWithEagerResultsAndFeedbackAndTextBlocksElseThrow(submissionId);
         checkGivenExerciseIdSameForSubmissionParticipation(exerciseId, textSubmission.getParticipation().getExercise().getId());
