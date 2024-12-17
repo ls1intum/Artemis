@@ -92,15 +92,15 @@ public class CourseCompetencyResource {
 
     private final CourseCompetencyRepository courseCompetencyRepository;
 
-    private final CourseCompetencySimpleService courseCompetencySimpleRepository;
+    private final CourseCompetencySimpleService courseCompetencySimpleService;
 
     private final AuthorizationCheckService authorizationCheckService;
 
     public CourseCompetencyResource(UserRepository userRepository, CourseCompetencyService courseCompetencyService, CourseCompetencyRepository courseCompetencyRepository,
-            CourseRepository courseRepository, CompetencyProgressService competencyProgressService, CompetencyProgressRepository competencyProgressRepository,
-            CompetencyRelationRepository competencyRelationRepository, CompetencyRelationService competencyRelationService,
-            Optional<IrisCompetencyGenerationService> irisCompetencyGenerationService, CompetencyJolService competencyJolService,
-            CourseCompetencySimpleService courseCompetencySimpleRepository, AuthorizationCheckService authorizationCheckService) {
+                                    CourseRepository courseRepository, CompetencyProgressService competencyProgressService, CompetencyProgressRepository competencyProgressRepository,
+                                    CompetencyRelationRepository competencyRelationRepository, CompetencyRelationService competencyRelationService,
+                                    Optional<IrisCompetencyGenerationService> irisCompetencyGenerationService, CompetencyJolService competencyJolService,
+                                    CourseCompetencySimpleService courseCompetencySimpleService, AuthorizationCheckService authorizationCheckService) {
         this.userRepository = userRepository;
         this.courseCompetencyService = courseCompetencyService;
         this.courseCompetencyRepository = courseCompetencyRepository;
@@ -111,7 +111,7 @@ public class CourseCompetencyResource {
         this.competencyRelationService = competencyRelationService;
         this.irisCompetencyGenerationService = irisCompetencyGenerationService;
         this.competencyJolService = competencyJolService;
-        this.courseCompetencySimpleRepository = courseCompetencySimpleRepository;
+        this.courseCompetencySimpleService = courseCompetencySimpleService;
         this.authorizationCheckService = authorizationCheckService;
     }
 
@@ -219,7 +219,7 @@ public class CourseCompetencyResource {
     public ResponseEntity<CourseCompetencyProgressDTO> getCompetencyCourseProgress(@PathVariable long courseId, @PathVariable long competencyId) {
         log.debug("REST request to get course progress for competency: {}", competencyId);
         var course = courseRepository.findByIdElseThrow(courseId);
-        var competency = courseCompetencySimpleRepository.findByIdWithExercisesElseThrow(competencyId);
+        var competency = courseCompetencySimpleService.findByIdWithExercisesElseThrow(competencyId);
 
         var progress = competencyProgressService.getCompetencyCourseProgress(competency, course);
 

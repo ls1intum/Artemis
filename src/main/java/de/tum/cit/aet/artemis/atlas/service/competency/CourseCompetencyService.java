@@ -65,7 +65,7 @@ public class CourseCompetencyService {
 
     protected final CourseCompetencyRepository courseCompetencyRepository;
 
-    private final CourseCompetencySimpleService courseCompetencySimpleRepository;
+    private final CourseCompetencySimpleService courseCompetencySimpleService;
 
     protected final CompetencyRelationRepository competencyRelationRepository;
 
@@ -88,13 +88,13 @@ public class CourseCompetencyService {
     private final CourseRepository courseRepository;
 
     public CourseCompetencyService(CompetencyProgressRepository competencyProgressRepository, CourseCompetencyRepository courseCompetencyRepository,
-            CourseCompetencySimpleService courseCompetencySimpleRepository, CompetencyRelationRepository competencyRelationRepository,
+            CourseCompetencySimpleService courseCompetencySimpleService, CompetencyRelationRepository competencyRelationRepository,
             CompetencyProgressService competencyProgressService, ExerciseService exerciseService, LectureUnitService lectureUnitService, LearningPathService learningPathService,
             AuthorizationCheckService authCheckService, StandardizedCompetencyRepository standardizedCompetencyRepository,
             LectureUnitCompletionRepository lectureUnitCompletionRepository, LearningObjectImportService learningObjectImportService, CourseRepository courseRepository) {
         this.competencyProgressRepository = competencyProgressRepository;
         this.courseCompetencyRepository = courseCompetencyRepository;
-        this.courseCompetencySimpleRepository = courseCompetencySimpleRepository;
+        this.courseCompetencySimpleService = courseCompetencySimpleService;
         this.competencyRelationRepository = competencyRelationRepository;
         this.competencyProgressService = competencyProgressService;
         this.exerciseService = exerciseService;
@@ -117,7 +117,7 @@ public class CourseCompetencyService {
      * @return The found competency
      */
     public CourseCompetency findCompetencyWithExercisesAndLectureUnitsAndProgressForUser(Long competencyId, Long userId) {
-        CourseCompetency competency = courseCompetencySimpleRepository.findByIdWithLectureUnitsAndExercisesElseThrow(competencyId);
+        CourseCompetency competency = courseCompetencySimpleService.findByIdWithLectureUnitsAndExercisesElseThrow(competencyId);
         return findProgressAndLectureUnitCompletionsForUser(competency, userId);
     }
 

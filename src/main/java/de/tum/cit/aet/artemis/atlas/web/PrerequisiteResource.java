@@ -73,20 +73,20 @@ public class PrerequisiteResource {
 
     private final CourseCompetencyRepository courseCompetencyRepository;
 
-    private final CourseCompetencySimpleService courseCompetencySimpleRepository;
+    private final CourseCompetencySimpleService courseCompetencySimpleService;
 
     private final CourseCompetencyService courseCompetencyService;
 
     public PrerequisiteResource(CourseRepository courseRepository, AuthorizationCheckService authorizationCheckService, UserRepository userRepository,
-            PrerequisiteRepository prerequisiteRepository, PrerequisiteService prerequisiteService, CourseCompetencyRepository courseCompetencyRepository,
-            CourseCompetencySimpleService courseCompetencySimpleRepository, CourseCompetencyService courseCompetencyService) {
+                                PrerequisiteRepository prerequisiteRepository, PrerequisiteService prerequisiteService, CourseCompetencyRepository courseCompetencyRepository,
+                                CourseCompetencySimpleService courseCompetencySimpleService, CourseCompetencyService courseCompetencyService) {
         this.courseRepository = courseRepository;
         this.authorizationCheckService = authorizationCheckService;
         this.userRepository = userRepository;
         this.prerequisiteRepository = prerequisiteRepository;
         this.prerequisiteService = prerequisiteService;
         this.courseCompetencyRepository = courseCompetencyRepository;
-        this.courseCompetencySimpleRepository = courseCompetencySimpleRepository;
+        this.courseCompetencySimpleService = courseCompetencySimpleService;
         this.courseCompetencyService = courseCompetencyService;
     }
 
@@ -189,7 +189,7 @@ public class PrerequisiteResource {
         long prerequisiteId = importOptions.competencyIds().iterator().next();
 
         var course = courseRepository.findWithEagerCompetenciesAndPrerequisitesByIdElseThrow(courseId);
-        var prerequisiteToImport = courseCompetencySimpleRepository.findByIdWithExercisesAndLectureUnitsAndLecturesElseThrow(prerequisiteId);
+        var prerequisiteToImport = courseCompetencySimpleService.findByIdWithExercisesAndLectureUnitsAndLecturesElseThrow(prerequisiteId);
 
         authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.EDITOR, prerequisiteToImport.getCourse(), null);
         if (prerequisiteToImport.getCourse().getId().equals(courseId)) {
@@ -322,7 +322,7 @@ public class PrerequisiteResource {
         log.info("REST request to delete a Prerequisite : {}", prerequisiteId);
 
         var course = courseRepository.findByIdElseThrow(courseId);
-        var prerequisite = courseCompetencySimpleRepository.findByIdWithExercisesAndLectureUnitsBidirectionalElseThrow(prerequisiteId);
+        var prerequisite = courseCompetencySimpleService.findByIdWithExercisesAndLectureUnitsBidirectionalElseThrow(prerequisiteId);
         checkCourseForPrerequisite(course, prerequisite);
 
         courseCompetencyService.deleteCourseCompetency(prerequisite, course);

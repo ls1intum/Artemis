@@ -39,11 +39,11 @@ public class PrerequisiteService extends CourseCompetencyService {
     private final PrerequisiteRepository prerequisiteRepository;
 
     public PrerequisiteService(PrerequisiteRepository prerequisiteRepository, AuthorizationCheckService authCheckService, CompetencyRelationRepository competencyRelationRepository,
-            CourseCompetencySimpleService courseCompetencySimpleRepository, LearningPathService learningPathService, CompetencyProgressService competencyProgressService,
+            CourseCompetencySimpleService courseCompetencySimpleService, LearningPathService learningPathService, CompetencyProgressService competencyProgressService,
             LectureUnitService lectureUnitService, CompetencyProgressRepository competencyProgressRepository, LectureUnitCompletionRepository lectureUnitCompletionRepository,
             StandardizedCompetencyRepository standardizedCompetencyRepository, CourseCompetencyRepository courseCompetencyRepository, ExerciseService exerciseService,
             LearningObjectImportService learningObjectImportService, CompetencyLectureUnitLinkRepository competencyLectureUnitLinkRepository, CourseRepository courseRepository) {
-        super(competencyProgressRepository, courseCompetencyRepository, courseCompetencySimpleRepository, competencyRelationRepository, competencyProgressService, exerciseService,
+        super(competencyProgressRepository, courseCompetencyRepository, courseCompetencySimpleService, competencyRelationRepository, competencyProgressService, exerciseService,
                 lectureUnitService, learningPathService, authCheckService, standardizedCompetencyRepository, lectureUnitCompletionRepository, learningObjectImportService,
                 courseRepository);
         this.prerequisiteRepository = prerequisiteRepository;

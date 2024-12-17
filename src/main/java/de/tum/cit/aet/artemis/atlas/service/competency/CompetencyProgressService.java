@@ -63,7 +63,7 @@ public class CompetencyProgressService {
 
     private final CourseCompetencyRepository courseCompetencyRepository;
 
-    private final CourseCompetencySimpleService courseCompetencySimpleRepository;
+    private final CourseCompetencySimpleService courseCompetencySimpleService;
 
     private static final int MIN_EXERCISES_RECENCY_CONFIDENCE = 3;
 
@@ -79,13 +79,13 @@ public class CompetencyProgressService {
 
     public CompetencyProgressService(CompetencyProgressRepository competencyProgressRepository, LearningPathService learningPathService,
             ParticipantScoreService participantScoreService, LectureUnitCompletionRepository lectureUnitCompletionRepository, CourseCompetencyRepository courseCompetencyRepository,
-            CourseCompetencySimpleService courseCompetencySimpleRepository) {
+            CourseCompetencySimpleService courseCompetencySimpleService) {
         this.competencyProgressRepository = competencyProgressRepository;
         this.learningPathService = learningPathService;
         this.participantScoreService = participantScoreService;
         this.lectureUnitCompletionRepository = lectureUnitCompletionRepository;
         this.courseCompetencyRepository = courseCompetencyRepository;
-        this.courseCompetencySimpleRepository = courseCompetencySimpleRepository;
+        this.courseCompetencySimpleService = courseCompetencySimpleService;
     }
 
     /**
@@ -108,7 +108,7 @@ public class CompetencyProgressService {
     @Async
     public void updateProgressByLearningObjectAsync(LearningObject learningObject) {
         SecurityUtils.setAuthorizationObject(); // Required for async
-        Set<Long> competencyIds = courseCompetencySimpleRepository.findAllIdsByLearningObject(learningObject);
+        Set<Long> competencyIds = courseCompetencySimpleService.findAllIdsByLearningObject(learningObject);
 
         for (long competencyId : competencyIds) {
             Set<User> users = competencyProgressRepository.findAllByCompetencyId(competencyId).stream().map(CompetencyProgress::getUser).collect(Collectors.toSet());
@@ -187,7 +187,7 @@ public class CompetencyProgressService {
      * @param users          The users for which to update the progress
      */
     public void updateProgressByLearningObjectSync(LearningObject learningObject, Set<User> users) {
-        Set<Long> competencyIds = courseCompetencySimpleRepository.findAllIdsByLearningObject(learningObject);
+        Set<Long> competencyIds = courseCompetencySimpleService.findAllIdsByLearningObject(learningObject);
 
         for (long competencyId : competencyIds) {
             log.debug("Updating competency progress synchronously for {} users.", users.size());

@@ -44,21 +44,21 @@ public class CompetencyService extends CourseCompetencyService {
 
     private final CompetencyRepository competencyRepository;
 
-    private final CompetencySimpleService competencySimpleRepository;
+    private final CompetencySimpleService competencySimpleService;
 
     private final CompetencyExerciseLinkRepository competencyExerciseLinkRepository;
 
     public CompetencyService(CompetencyRepository competencyRepository, AuthorizationCheckService authCheckService, CompetencyRelationRepository competencyRelationRepository,
-            CourseCompetencySimpleService courseCompetencySimpleRepository, LearningPathService learningPathService, CompetencyProgressService competencyProgressService,
-            LectureUnitService lectureUnitService, CompetencyProgressRepository competencyProgressRepository, LectureUnitCompletionRepository lectureUnitCompletionRepository,
-            StandardizedCompetencyRepository standardizedCompetencyRepository, CourseCompetencyRepository courseCompetencyRepository, ExerciseService exerciseService,
-            LearningObjectImportService learningObjectImportService, CompetencyLectureUnitLinkRepository competencyLectureUnitLinkRepository, CourseRepository courseRepository,
-            CompetencySimpleService competencySimpleRepository, CompetencyExerciseLinkRepository competencyExerciseLinkRepository) {
-        super(competencyProgressRepository, courseCompetencyRepository, courseCompetencySimpleRepository, competencyRelationRepository, competencyProgressService, exerciseService,
+                             CourseCompetencySimpleService courseCompetencySimpleService, LearningPathService learningPathService, CompetencyProgressService competencyProgressService,
+                             LectureUnitService lectureUnitService, CompetencyProgressRepository competencyProgressRepository, LectureUnitCompletionRepository lectureUnitCompletionRepository,
+                             StandardizedCompetencyRepository standardizedCompetencyRepository, CourseCompetencyRepository courseCompetencyRepository, ExerciseService exerciseService,
+                             LearningObjectImportService learningObjectImportService, CompetencyLectureUnitLinkRepository competencyLectureUnitLinkRepository, CourseRepository courseRepository,
+                             CompetencySimpleService competencySimpleService, CompetencyExerciseLinkRepository competencyExerciseLinkRepository) {
+        super(competencyProgressRepository, courseCompetencyRepository, courseCompetencySimpleService, competencyRelationRepository, competencyProgressService, exerciseService,
                 lectureUnitService, learningPathService, authCheckService, standardizedCompetencyRepository, lectureUnitCompletionRepository, learningObjectImportService,
                 courseRepository);
         this.competencyRepository = competencyRepository;
-        this.competencySimpleRepository = competencySimpleRepository;
+        this.competencySimpleService = competencySimpleService;
         this.competencyExerciseLinkRepository = competencyExerciseLinkRepository;
     }
 
@@ -106,7 +106,7 @@ public class CompetencyService extends CourseCompetencyService {
      * @return The found competency
      */
     public Competency findCompetencyWithExercisesAndLectureUnitsAndProgressForUser(Long competencyId, Long userId) {
-        Competency competency = competencySimpleRepository.findByIdWithLectureUnitsAndExercisesElseThrow(competencyId);
+        Competency competency = competencySimpleService.findByIdWithLectureUnitsAndExercisesElseThrow(competencyId);
         return findProgressAndLectureUnitCompletionsForUser(competency, userId);
     }
 

@@ -66,28 +66,28 @@ public class CompetencyResource {
 
     private final CompetencyRepository competencyRepository;
 
-    private final CompetencySimpleService competencySimpleRepository;
+    private final CompetencySimpleService competencySimpleService;
 
     private final CompetencyService competencyService;
 
     private final CourseCompetencyRepository courseCompetencyRepository;
 
-    private final CourseCompetencySimpleService courseCompetencySimpleRepository;
+    private final CourseCompetencySimpleService courseCompetencySimpleService;
 
     private final CourseCompetencyService courseCompetencyService;
 
     public CompetencyResource(CourseRepository courseRepository, AuthorizationCheckService authorizationCheckService, UserRepository userRepository,
-            CompetencyRepository competencyRepository, CompetencySimpleService competencySimpleRepository, CompetencyService competencyService,
-            CourseCompetencyRepository courseCompetencyRepository, CourseCompetencySimpleService courseCompetencySimpleRepository,
-            CourseCompetencyService courseCompetencyService) {
+                              CompetencyRepository competencyRepository, CompetencySimpleService competencySimpleService, CompetencyService competencyService,
+                              CourseCompetencyRepository courseCompetencyRepository, CourseCompetencySimpleService courseCompetencySimpleService,
+                              CourseCompetencyService courseCompetencyService) {
         this.courseRepository = courseRepository;
         this.authorizationCheckService = authorizationCheckService;
         this.userRepository = userRepository;
         this.competencyRepository = competencyRepository;
-        this.competencySimpleRepository = competencySimpleRepository;
+        this.competencySimpleService = competencySimpleService;
         this.competencyService = competencyService;
         this.courseCompetencyRepository = courseCompetencyRepository;
-        this.courseCompetencySimpleRepository = courseCompetencySimpleRepository;
+        this.courseCompetencySimpleService = courseCompetencySimpleService;
         this.courseCompetencyService = courseCompetencyService;
     }
 
@@ -190,7 +190,7 @@ public class CompetencyResource {
         long competencyId = importOptions.competencyIds().iterator().next();
 
         var course = courseRepository.findWithEagerCompetenciesAndPrerequisitesByIdElseThrow(courseId);
-        var competencyToImport = courseCompetencySimpleRepository.findByIdWithExercisesAndLectureUnitsAndLecturesElseThrow(competencyId);
+        var competencyToImport = courseCompetencySimpleService.findByIdWithExercisesAndLectureUnitsAndLecturesElseThrow(competencyId);
 
         authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.EDITOR, competencyToImport.getCourse(), null);
         if (competencyToImport.getCourse().getId().equals(courseId)) {
@@ -302,7 +302,7 @@ public class CompetencyResource {
         checkCompetencyAttributesForUpdate(competency);
 
         var course = courseRepository.findByIdElseThrow(courseId);
-        var existingCompetency = competencySimpleRepository.findByIdWithLectureUnitsElseThrow(competency.getId());
+        var existingCompetency = competencySimpleService.findByIdWithLectureUnitsElseThrow(competency.getId());
         checkCourseForCompetency(course, existingCompetency);
 
         var persistedCompetency = competencyService.updateCourseCompetency(existingCompetency, competency);
@@ -323,7 +323,7 @@ public class CompetencyResource {
         log.info("REST request to delete a Competency : {}", competencyId);
 
         var course = courseRepository.findByIdElseThrow(courseId);
-        var competency = courseCompetencySimpleRepository.findByIdWithExercisesAndLectureUnitsBidirectionalElseThrow(competencyId);
+        var competency = courseCompetencySimpleService.findByIdWithExercisesAndLectureUnitsBidirectionalElseThrow(competencyId);
         checkCourseForCompetency(course, competency);
 
         courseCompetencyService.deleteCourseCompetency(competency, course);

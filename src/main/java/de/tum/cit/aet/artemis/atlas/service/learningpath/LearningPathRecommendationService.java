@@ -57,7 +57,7 @@ public class LearningPathRecommendationService {
 
     private final CompetencyProgressRepository competencyProgressRepository;
 
-    private final CourseCompetencySimpleService courseCompetencySimpleRepository;
+    private final CourseCompetencySimpleService courseCompetencySimpleService;
 
     /**
      * Base utility that is used to calculate a competencies' utility with respect to the earliest due date of the competency.
@@ -100,12 +100,12 @@ public class LearningPathRecommendationService {
 
     protected LearningPathRecommendationService(CompetencyRelationRepository competencyRelationRepository, LearningObjectService learningObjectService,
             ParticipantScoreService participantScoreService, CompetencyProgressRepository competencyProgressRepository,
-            CourseCompetencySimpleService courseCompetencySimpleRepository) {
+            CourseCompetencySimpleService courseCompetencySimpleService) {
         this.competencyRelationRepository = competencyRelationRepository;
         this.learningObjectService = learningObjectService;
         this.participantScoreService = participantScoreService;
         this.competencyProgressRepository = competencyProgressRepository;
-        this.courseCompetencySimpleRepository = courseCompetencySimpleRepository;
+        this.courseCompetencySimpleService = courseCompetencySimpleService;
     }
 
     /**
@@ -696,7 +696,7 @@ public class LearningPathRecommendationService {
      * @return the recommended order of learning objects
      */
     public List<LearningObject> getOrderOfLearningObjectsForCompetency(long competencyId, User user) {
-        CourseCompetency competency = courseCompetencySimpleRepository.findByIdWithExercisesAndLectureUnitsElseThrow(competencyId);
+        CourseCompetency competency = courseCompetencySimpleService.findByIdWithExercisesAndLectureUnitsElseThrow(competencyId);
         return getOrderOfLearningObjectsForCompetency(competency, user);
     }
 
