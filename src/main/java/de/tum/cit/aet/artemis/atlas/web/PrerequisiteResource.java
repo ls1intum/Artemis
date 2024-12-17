@@ -78,8 +78,8 @@ public class PrerequisiteResource {
     private final CourseCompetencyService courseCompetencyService;
 
     public PrerequisiteResource(CourseRepository courseRepository, AuthorizationCheckService authorizationCheckService, UserRepository userRepository,
-                                PrerequisiteRepository prerequisiteRepository, PrerequisiteService prerequisiteService, CourseCompetencyRepository courseCompetencyRepository,
-                                CourseCompetencySimpleService courseCompetencySimpleService, CourseCompetencyService courseCompetencyService) {
+            PrerequisiteRepository prerequisiteRepository, PrerequisiteService prerequisiteService, CourseCompetencyRepository courseCompetencyRepository,
+            CourseCompetencySimpleService courseCompetencySimpleService, CourseCompetencyService courseCompetencyService) {
         this.courseRepository = courseRepository;
         this.authorizationCheckService = authorizationCheckService;
         this.userRepository = userRepository;

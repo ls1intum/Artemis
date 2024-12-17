@@ -49,11 +49,11 @@ public class CompetencyService extends CourseCompetencyService {
     private final CompetencyExerciseLinkRepository competencyExerciseLinkRepository;
 
     public CompetencyService(CompetencyRepository competencyRepository, AuthorizationCheckService authCheckService, CompetencyRelationRepository competencyRelationRepository,
-                             CourseCompetencySimpleService courseCompetencySimpleService, LearningPathService learningPathService, CompetencyProgressService competencyProgressService,
-                             LectureUnitService lectureUnitService, CompetencyProgressRepository competencyProgressRepository, LectureUnitCompletionRepository lectureUnitCompletionRepository,
-                             StandardizedCompetencyRepository standardizedCompetencyRepository, CourseCompetencyRepository courseCompetencyRepository, ExerciseService exerciseService,
-                             LearningObjectImportService learningObjectImportService, CompetencyLectureUnitLinkRepository competencyLectureUnitLinkRepository, CourseRepository courseRepository,
-                             CompetencySimpleService competencySimpleService, CompetencyExerciseLinkRepository competencyExerciseLinkRepository) {
+            CourseCompetencySimpleService courseCompetencySimpleService, LearningPathService learningPathService, CompetencyProgressService competencyProgressService,
+            LectureUnitService lectureUnitService, CompetencyProgressRepository competencyProgressRepository, LectureUnitCompletionRepository lectureUnitCompletionRepository,
+            StandardizedCompetencyRepository standardizedCompetencyRepository, CourseCompetencyRepository courseCompetencyRepository, ExerciseService exerciseService,
+            LearningObjectImportService learningObjectImportService, CompetencyLectureUnitLinkRepository competencyLectureUnitLinkRepository, CourseRepository courseRepository,
+            CompetencySimpleService competencySimpleService, CompetencyExerciseLinkRepository competencyExerciseLinkRepository) {
         super(competencyProgressRepository, courseCompetencyRepository, courseCompetencySimpleService, competencyRelationRepository, competencyProgressService, exerciseService,
                 lectureUnitService, learningPathService, authCheckService, standardizedCompetencyRepository, lectureUnitCompletionRepository, learningObjectImportService,
                 courseRepository);

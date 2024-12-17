@@ -77,9 +77,8 @@ public class CompetencyResource {
     private final CourseCompetencyService courseCompetencyService;
 
     public CompetencyResource(CourseRepository courseRepository, AuthorizationCheckService authorizationCheckService, UserRepository userRepository,
-                              CompetencyRepository competencyRepository, CompetencySimpleService competencySimpleService, CompetencyService competencyService,
-                              CourseCompetencyRepository courseCompetencyRepository, CourseCompetencySimpleService courseCompetencySimpleService,
-                              CourseCompetencyService courseCompetencyService) {
+            CompetencyRepository competencyRepository, CompetencySimpleService competencySimpleService, CompetencyService competencyService,
+            CourseCompetencyRepository courseCompetencyRepository, CourseCompetencySimpleService courseCompetencySimpleService, CourseCompetencyService courseCompetencyService) {
         this.courseRepository = courseRepository;
         this.authorizationCheckService = authorizationCheckService;
         this.userRepository = userRepository;
