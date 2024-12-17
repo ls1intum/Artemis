@@ -5,14 +5,15 @@ import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 import java.util.List;
 import java.util.Optional;
 
+import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Controller;
 
 import de.tum.cit.aet.artemis.assessment.repository.TextBlockRepository;
-import de.tum.cit.aet.artemis.core.service.messaging.InstanceMessageSendService;
 import de.tum.cit.aet.artemis.text.domain.TextBlock;
 import de.tum.cit.aet.artemis.text.domain.TextExercise;
 import de.tum.cit.aet.artemis.text.repository.TextExerciseRepository;
+import de.tum.cit.aet.artemis.text.service.TextExerciseService;
 
 @Controller
 @Profile(PROFILE_CORE)
@@ -22,12 +23,13 @@ public class TextApi extends AbstractTextApi {
 
     private final TextBlockRepository textBlockRepository;
 
-    private final InstanceMessageSendService instanceMessageSendService;
+    private final TextExerciseService textExerciseService;
 
-    public TextApi(TextExerciseRepository textExerciseRepository, TextBlockRepository textBlockRepository, InstanceMessageSendService instanceMessageSendService) {
+    // TextExerciseService needs to be initialized lazy because of the dependency to InstanceMessageSendService
+    public TextApi(TextExerciseRepository textExerciseRepository, TextBlockRepository textBlockRepository, @Lazy TextExerciseService textExerciseService) {
         this.textExerciseRepository = textExerciseRepository;
         this.textBlockRepository = textBlockRepository;
-        this.instanceMessageSendService = instanceMessageSendService;
+        this.textExerciseService = textExerciseService;
     }
 
     public TextExercise findWithGradingCriteriaByIdElseThrow(long exerciseId) {
@@ -47,6 +49,6 @@ public class TextApi extends AbstractTextApi {
     }
 
     public void cancelScheduledOperations(long exerciseId) {
-        instanceMessageSendService.sendTextExerciseScheduleCancel(exerciseId);
+        textExerciseService.cancelScheduledOperations(exerciseId);
     }
 }
