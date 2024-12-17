@@ -3,10 +3,12 @@
 </div>
 <div class="modal-body">
     <span jhiTranslate="artemisApp.lecture.dismissChangesModal.message" class="fw-bold"></span><br />
+    <!--    check if translation should be singular or plural, to be exchanged
+        with computed signals once input signals are supported with ng-bootstrap modals -->
     @if (hasUnsavedChangesInTitleSection && hasUnsavedChangesInPeriodSection) {
-        <span jhiTranslate="artemisApp.lecture.dismissChangesModal.sectionsThatContainUnsavedChanges"></span>
+        <span jhiTranslate="artemisApp.lecture.dismissChangesModal.sectionsThatContainUnsavedChangesPlural"></span>
     } @else {
-        <span jhiTranslate="artemisApp.lecture.dismissChangesModal.sectionThatContainsUnsavedChanges"></span>
+        <span jhiTranslate="artemisApp.lecture.dismissChangesModal.sectionsThatContainUnsavedChangesSingular"></span>
     }
     <ul>
         @if (hasUnsavedChangesInTitleSection) {
@@ -22,11 +24,11 @@
     </ul>
 </div>
 <div class="modal-footer">
-    <button type="button" (click)="closeWindow(false)" class="btn btn-default">
-        <fa-icon [icon]="faTimes" />
-        &nbsp;<span jhiTranslate="entity.action.cancel"></span>
-    </button>
-    <button class="btn btn-primary" type="submit" (click)="closeWindow(true)">
+    <button class="btn btn-default" (click)="closeWindow(true)">
         <span jhiTranslate="entity.action.discardChanges"></span>
+    </button>
+    <button type="button" (click)="closeWindow(false)" class="btn btn-primary" type="submit">
+        <fa-icon [icon]="faTimes" />
+        <span class="ms-1" jhiTranslate="entity.action.cancel"></span>
     </button>
 </div>
