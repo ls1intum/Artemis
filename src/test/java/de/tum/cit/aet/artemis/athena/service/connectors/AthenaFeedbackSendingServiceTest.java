@@ -21,7 +21,6 @@ import de.tum.cit.aet.artemis.assessment.domain.GradingCriterion;
 import de.tum.cit.aet.artemis.assessment.domain.GradingInstruction;
 import de.tum.cit.aet.artemis.assessment.domain.Result;
 import de.tum.cit.aet.artemis.assessment.repository.GradingCriterionRepository;
-import de.tum.cit.aet.artemis.assessment.repository.TextBlockRepository;
 import de.tum.cit.aet.artemis.assessment.util.GradingCriterionUtil;
 import de.tum.cit.aet.artemis.athena.AbstractAthenaTest;
 import de.tum.cit.aet.artemis.athena.service.AthenaDTOConverterService;
@@ -34,6 +33,7 @@ import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingSubmission;
 import de.tum.cit.aet.artemis.programming.test_repository.ProgrammingExerciseTestRepository;
 import de.tum.cit.aet.artemis.programming.util.ProgrammingExerciseUtilService;
+import de.tum.cit.aet.artemis.text.api.TextApi;
 import de.tum.cit.aet.artemis.text.domain.TextBlock;
 import de.tum.cit.aet.artemis.text.domain.TextExercise;
 import de.tum.cit.aet.artemis.text.domain.TextSubmission;
@@ -46,10 +46,10 @@ class AthenaFeedbackSendingServiceTest extends AbstractAthenaTest {
     private AthenaModuleService athenaModuleService;
 
     @Mock
-    private TextBlockRepository textBlockRepository;
+    private TextExerciseRepository textExerciseRepository;
 
     @Mock
-    private TextExerciseRepository textExerciseRepository;
+    private TextApi textApi;
 
     @Mock
     private ProgrammingExerciseTestRepository programmingExerciseRepository;
@@ -82,19 +82,19 @@ class AthenaFeedbackSendingServiceTest extends AbstractAthenaTest {
     @BeforeEach
     void setUp() {
         athenaFeedbackSendingService = new AthenaFeedbackSendingService(athenaRequestMockProvider.getRestTemplate(), athenaModuleService,
-                new AthenaDTOConverterService(textBlockRepository, textExerciseRepository, programmingExerciseRepository, gradingCriterionRepository));
+                new AthenaDTOConverterService(Optional.of(textApi), programmingExerciseRepository, gradingCriterionRepository));
 
         athenaRequestMockProvider.enableMockingOfRequests();
 
         textExercise = textExerciseUtilService.createSampleTextExercise(null);
         textExercise.setFeedbackSuggestionModule(ATHENA_MODULE_TEXT_TEST);
-        when(textExerciseRepository.findWithGradingCriteriaByIdElseThrow(textExercise.getId())).thenReturn(textExercise);
+        when(textApi.findWithGradingCriteriaByIdElseThrow(textExercise.getId())).thenReturn(textExercise);
 
         textSubmission = new TextSubmission(2L).text("Test - This is what the feedback references - Submission");
 
         textBlock = new TextBlock().startIndex(7).endIndex(46).text("This is what the feedback references").submission(textSubmission);
         textBlock.computeId();
-        when(textBlockRepository.findById(textBlock.getId())).thenReturn(Optional.of(textBlock));
+        when(textApi.findById(textBlock.getId())).thenReturn(Optional.of(textBlock));
 
         textFeedback = new Feedback().type(FeedbackType.MANUAL).credits(5.0).reference(textBlock.getId());
         textFeedback.setText("Title");
