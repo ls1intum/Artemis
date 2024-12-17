@@ -17,16 +17,16 @@ const PIE_CHART_NA_FALLBACK_VALUE = [0, 0, 1];
 })
 export class CourseDetailDoughnutChartComponent implements OnChanges, OnInit {
     @Input() contentType: DoughnutChartType;
-    @Input() currentPercentage: number | undefined;
-    @Input() currentAbsolute: number | undefined;
-    @Input() currentMax: number | undefined;
+    @Input() currentPercentage?: number;
+    @Input() currentAbsolute?: number;
+    @Input() currentMax?: number;
     @Input() course: Course;
-    @Input() showText: string | undefined;
+    @Input() showText?: string;
 
     receivedStats = false;
     doughnutChartTitle: string;
     stats: number[];
-    titleLink: string | undefined;
+    titleLink?: string;
 
     // Icons
     faSpinner = faSpinner;
