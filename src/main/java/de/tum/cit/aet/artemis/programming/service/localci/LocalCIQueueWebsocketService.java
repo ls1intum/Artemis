@@ -1,11 +1,8 @@
 package de.tum.cit.aet.artemis.programming.service.localci;
 
-import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
@@ -13,8 +10,6 @@ import de.tum.cit.aet.artemis.buildagent.dto.BuildAgentInformation;
 import de.tum.cit.aet.artemis.buildagent.dto.BuildConfig;
 import de.tum.cit.aet.artemis.buildagent.dto.BuildJobQueueItem;
 import de.tum.cit.aet.artemis.buildagent.dto.RepositoryInfo;
-import de.tum.cit.aet.artemis.programming.dto.SubmissionProcessingDTO;
-import de.tum.cit.aet.artemis.programming.service.ProgrammingMessagingService;
 
 /**
  * This service is responsible for sending build job queue information over websockets.
@@ -26,11 +21,7 @@ import de.tum.cit.aet.artemis.programming.service.ProgrammingMessagingService;
 @Profile("localci & scheduling")
 public class LocalCIQueueWebsocketService {
 
-    private static final Logger log = LoggerFactory.getLogger(LocalCIQueueWebsocketService.class);
-
     private final LocalCIWebsocketMessagingService localCIWebsocketMessagingService;
-
-    private final ProgrammingMessagingService programmingMessagingService;
 
     private final SharedQueueManagementService sharedQueueManagementService;
 
@@ -40,11 +31,9 @@ public class LocalCIQueueWebsocketService {
      * @param localCIWebsocketMessagingService the local ci build queue websocket service
      * @param sharedQueueManagementService     the local ci shared build job queue service
      */
-    public LocalCIQueueWebsocketService(LocalCIWebsocketMessagingService localCIWebsocketMessagingService, SharedQueueManagementService sharedQueueManagementService,
-            ProgrammingMessagingService programmingMessagingService) {
+    public LocalCIQueueWebsocketService(LocalCIWebsocketMessagingService localCIWebsocketMessagingService, SharedQueueManagementService sharedQueueManagementService) {
         this.localCIWebsocketMessagingService = localCIWebsocketMessagingService;
         this.sharedQueueManagementService = sharedQueueManagementService;
-        this.programmingMessagingService = programmingMessagingService;
     }
 
     /**
@@ -90,64 +79,6 @@ public class LocalCIQueueWebsocketService {
         sharedQueueManagementService.getBuildAgentInformation().stream().filter(agent -> agent.buildAgent().name().equals(agentName)).findFirst()
                 .ifPresent(localCIWebsocketMessagingService::sendBuildAgentDetails);
     }
-
-    // private void sendBuildAgentInformationOverWebsocket(String agentName) {
-    // sendBuildAgentSummaryOverWebsocket();
-    // sendBuildAgentDetailsOverWebsocket(agentName);
-    // }
-    //
-    // private class QueuedBuildJobItemListener implements ItemListener<BuildJobQueueItem> {
-    //
-    // @Override
-    // public void itemAdded(ItemEvent<BuildJobQueueItem> event) {
-    // sendQueuedJobsOverWebsocket(event.getItem().courseId());
-    // }
-    //
-    // @Override
-    // public void itemRemoved(ItemEvent<BuildJobQueueItem> event) {
-    // sendQueuedJobsOverWebsocket(event.getItem().courseId());
-    // }
-    // }
-    //
-    // private class ProcessingBuildJobItemListener implements EntryAddedListener<Long, BuildJobQueueItem>, EntryRemovedListener<Long, BuildJobQueueItem> {
-    //
-    // @Override
-    // public void entryAdded(com.hazelcast.core.EntryEvent<Long, BuildJobQueueItem> event) {
-    // log.debug("CIBuildJobQueueItem added to processing jobs: {}", event.getValue());
-    // sendProcessingJobsOverWebsocket(event.getValue().courseId());
-    // notifyUserAboutBuildProcessing(event.getValue().exerciseId(), event.getValue().participationId(), event.getValue().buildConfig().assignmentCommitHash(),
-    // event.getValue().jobTimingInfo().submissionDate(), event.getValue().jobTimingInfo().buildStartDate(),
-    // event.getValue().jobTimingInfo().estimatedCompletionDate());
-    // }
-    //
-    // @Override
-    // public void entryRemoved(com.hazelcast.core.EntryEvent<Long, BuildJobQueueItem> event) {
-    // log.debug("CIBuildJobQueueItem removed from processing jobs: {}", event.getOldValue());
-    // sendProcessingJobsOverWebsocket(event.getOldValue().courseId());
-    // }
-    // }
-    //
-    // private class BuildAgentListener
-    // implements EntryAddedListener<String, BuildAgentInformation>, EntryRemovedListener<String, BuildAgentInformation>, EntryUpdatedListener<String, BuildAgentInformation> {
-    //
-    // @Override
-    // public void entryAdded(com.hazelcast.core.EntryEvent<String, BuildAgentInformation> event) {
-    // log.debug("Build agent added: {}", event.getValue());
-    // sendBuildAgentInformationOverWebsocket(event.getValue().buildAgent().name());
-    // }
-    //
-    // @Override
-    // public void entryRemoved(com.hazelcast.core.EntryEvent<String, BuildAgentInformation> event) {
-    // log.debug("Build agent removed: {}", event.getOldValue());
-    // sendBuildAgentInformationOverWebsocket(event.getOldValue().buildAgent().name());
-    // }
-    //
-    // @Override
-    // public void entryUpdated(com.hazelcast.core.EntryEvent<String, BuildAgentInformation> event) {
-    // log.debug("Build agent updated: {}", event.getValue());
-    // sendBuildAgentInformationOverWebsocket(event.getValue().buildAgent().name());
-    // }
-    // }
 
     /**
      * Removes unnecessary information (e.g. repository info, build config, result) from the queued jobs before sending them over the websocket.
@@ -202,9 +133,4 @@ public class LocalCIQueueWebsocketService {
         return filteredBuildAgentSummary;
     }
 
-    private void notifyUserAboutBuildProcessing(long exerciseId, long participationId, String commitHash, ZonedDateTime submissionDate, ZonedDateTime buildStartDate,
-            ZonedDateTime estimatedCompletionDate) {
-        var submissionProcessingDTO = new SubmissionProcessingDTO(exerciseId, participationId, commitHash, submissionDate, buildStartDate, estimatedCompletionDate);
-        programmingMessagingService.notifyUserAboutSubmissionProcessing(submissionProcessingDTO, exerciseId, participationId);
-    }
 }

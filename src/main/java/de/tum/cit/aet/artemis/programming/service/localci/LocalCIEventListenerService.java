@@ -26,7 +26,9 @@ import de.tum.cit.aet.artemis.buildagent.dto.BuildAgentInformation;
 import de.tum.cit.aet.artemis.buildagent.dto.BuildJobQueueItem;
 import de.tum.cit.aet.artemis.programming.domain.build.BuildJob;
 import de.tum.cit.aet.artemis.programming.domain.build.BuildStatus;
+import de.tum.cit.aet.artemis.programming.dto.SubmissionProcessingDTO;
 import de.tum.cit.aet.artemis.programming.repository.BuildJobRepository;
+import de.tum.cit.aet.artemis.programming.service.ProgrammingMessagingService;
 
 @Service
 @Profile("localci & scheduling")
@@ -42,12 +44,15 @@ public class LocalCIEventListenerService {
 
     private final SharedQueueManagementService sharedQueueManagementService;
 
+    private final ProgrammingMessagingService programmingMessagingService;
+
     public LocalCIEventListenerService(@Qualifier("hazelcastInstance") HazelcastInstance hazelcastInstance, LocalCIQueueWebsocketService localCIQueueWebsocketService,
-            BuildJobRepository buildJobRepository, SharedQueueManagementService sharedQueueManagementService) {
+            BuildJobRepository buildJobRepository, SharedQueueManagementService sharedQueueManagementService, ProgrammingMessagingService programmingMessagingService) {
         this.hazelcastInstance = hazelcastInstance;
         this.localCIQueueWebsocketService = localCIQueueWebsocketService;
         this.buildJobRepository = buildJobRepository;
         this.sharedQueueManagementService = sharedQueueManagementService;
+        this.programmingMessagingService = programmingMessagingService;
     }
 
     /**
@@ -133,6 +138,9 @@ public class LocalCIEventListenerService {
             log.debug("CIBuildJobQueueItem added to processing jobs: {}", event.getValue());
             localCIQueueWebsocketService.sendProcessingJobsOverWebsocket(event.getValue().courseId());
             buildJobRepository.updateBuildJobStatusWithBuildStartDate(event.getValue().id(), BuildStatus.BUILDING, event.getValue().jobTimingInfo().buildStartDate());
+            notifyUserAboutBuildProcessing(event.getValue().exerciseId(), event.getValue().participationId(), event.getValue().buildConfig().assignmentCommitHash(),
+                    event.getValue().jobTimingInfo().submissionDate(), event.getValue().jobTimingInfo().buildStartDate(),
+                    event.getValue().jobTimingInfo().estimatedCompletionDate());
         }
 
         @Override
@@ -162,5 +170,11 @@ public class LocalCIEventListenerService {
             log.debug("Build agent updated: {}", event.getValue());
             localCIQueueWebsocketService.sendBuildAgentInformationOverWebsocket(event.getValue().buildAgent().name());
         }
+    }
+
+    private void notifyUserAboutBuildProcessing(long exerciseId, long participationId, String commitHash, ZonedDateTime submissionDate, ZonedDateTime buildStartDate,
+            ZonedDateTime estimatedCompletionDate) {
+        var submissionProcessingDTO = new SubmissionProcessingDTO(exerciseId, participationId, commitHash, submissionDate, buildStartDate, estimatedCompletionDate);
+        programmingMessagingService.notifyUserAboutSubmissionProcessing(submissionProcessingDTO, exerciseId, participationId);
     }
 }
