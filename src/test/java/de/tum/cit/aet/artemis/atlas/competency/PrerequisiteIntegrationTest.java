@@ -109,6 +109,11 @@ class PrerequisiteIntegrationTest extends AbstractCompetencyPrerequisiteIntegrat
         super.shouldReturnCompetenciesForCourse(new Prerequisite());
     }
 
+    @Override
+    List<? extends CourseCompetency> getAllFilteredCall(long courseId, HttpStatus expectedStatus) throws Exception {
+        throw new UnsupportedOperationException("Not implemented for prerequisites");
+    }
+
     @Test
     @WithMockUser(username = TEST_PREFIX + "student42", roles = "USER")
     void shouldReturnCompetenciesForStudentNotInCourse() throws Exception {

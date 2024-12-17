@@ -3,7 +3,7 @@ import { MetisService } from 'app/shared/metis/metis.service';
 import { DebugElement } from '@angular/core';
 import { Post } from 'app/entities/metis/post.model';
 import { MockComponent, MockDirective, MockModule, MockPipe, MockProvider } from 'ng-mocks';
-import { getElement, getElements } from '../../../../../helpers/utils/general.utils';
+import { getElement } from '../../../../../helpers/utils/general.utils';
 import { PostReactionsBarComponent } from 'app/shared/metis/posting-reactions-bar/post-reactions-bar/post-reactions-bar.component';
 import { OverlayModule } from '@angular/cdk/overlay';
 import { Reaction } from 'app/entities/metis/reaction.model';
@@ -149,7 +149,7 @@ describe('PostReactionsBarComponent', () => {
         expect(getEditButton()).not.toBeNull();
     });
 
-    it('should display edit and delete options to user with channel moderation rights when not the author', () => {
+    it('should display the delete option to user with channel moderation rights when not the author', () => {
         component.readOnlyMode = false;
         component.previewMode = false;
         component.isEmojiCount = false;
@@ -166,8 +166,47 @@ describe('PostReactionsBarComponent', () => {
         component.ngOnInit();
         fixture.detectChanges();
 
-        expect(getEditButton()).not.toBeNull();
         expect(getDeleteButton()).not.toBeNull();
+    });
+
+    it('should not display the edit option to user (even instructor) if s/he is not the author of posting', () => {
+        component.readOnlyMode = false;
+        component.previewMode = false;
+        component.isEmojiCount = false;
+
+        const channelConversation = {
+            type: ConversationType.CHANNEL,
+            hasChannelModerationRights: true,
+        } as ChannelDTO;
+
+        jest.spyOn(metisService, 'metisUserIsAuthorOfPosting').mockReturnValue(false);
+        jest.spyOn(metisService, 'metisUserIsAtLeastInstructorInCourse').mockReturnValue(true);
+        jest.spyOn(metisService, 'getCurrentConversation').mockReturnValue(channelConversation);
+
+        component.ngOnInit();
+        fixture.detectChanges();
+
+        expect(getEditButton()).toBeNull();
+    });
+
+    it('should display the edit option to user if s/he is the author of posting', () => {
+        component.readOnlyMode = false;
+        component.previewMode = false;
+        component.isEmojiCount = false;
+
+        const channelConversation = {
+            type: ConversationType.CHANNEL,
+            hasChannelModerationRights: true,
+        } as ChannelDTO;
+
+        jest.spyOn(metisService, 'metisUserIsAuthorOfPosting').mockReturnValue(true);
+        jest.spyOn(metisService, 'metisUserIsAtLeastInstructorInCourse').mockReturnValue(false);
+        jest.spyOn(metisService, 'getCurrentConversation').mockReturnValue(channelConversation);
+
+        component.ngOnInit();
+        fixture.detectChanges();
+
+        expect(getEditButton()).not.toBeNull();
     });
 
     it('should not display edit and delete options when user is not the author and lacks permissions', () => {
@@ -184,7 +223,7 @@ describe('PostReactionsBarComponent', () => {
         expect(debugElement.query(By.directive(ConfirmIconComponent))).toBeNull();
     });
 
-    it('should not display edit and delete options to tutor if posting is in course-wide channel', () => {
+    it('should not display edit option but should display delete option to tutor if posting is in course-wide channel', () => {
         metisServiceUserIsAtLeastInstructorStub.mockReturnValue(false);
         metisServiceUserIsAtLeastTutorStub.mockReturnValue(true);
         metisServiceUserIsAuthorOfPostingStub.mockReturnValue(false);
@@ -193,11 +232,12 @@ describe('PostReactionsBarComponent', () => {
         component.ngOnInit();
         fixture.detectChanges();
         expect(getEditButton()).toBeNull();
-        expect(getDeleteButton()).toBeNull();
+        expect(getDeleteButton()).not.toBeNull();
     });
 
     it('should not display edit and delete options to tutor if posting is announcement', () => {
         metisServiceUserIsAtLeastInstructorStub.mockReturnValue(false);
+        metisServiceUserIsAuthorOfPostingStub.mockReturnValue(false);
         component.posting = metisAnnouncement;
         component.ngOnInit();
         fixture.detectChanges();
@@ -205,8 +245,9 @@ describe('PostReactionsBarComponent', () => {
         expect(getDeleteButton()).toBeNull();
     });
 
-    it('should display edit and delete options to instructor if posting is announcement', () => {
+    it('should display edit and delete options to instructor if his posting is announcement', () => {
         metisServiceUserIsAtLeastInstructorStub.mockReturnValue(true);
+        metisServiceUserIsAuthorOfPostingStub.mockReturnValue(true);
         component.posting = metisAnnouncement;
         component.ngOnInit();
         fixture.detectChanges();
@@ -214,14 +255,16 @@ describe('PostReactionsBarComponent', () => {
         expect(getDeleteButton()).not.toBeNull();
     });
 
-    it('should display edit and delete options to instructor if posting is in course-wide channel from a student', () => {
+    it('should display the delete option to instructor if posting is in course-wide channel from a student', () => {
         metisServiceUserIsAtLeastInstructorStub.mockReturnValue(true);
+        metisServiceUserIsAtLeastTutorStub.mockReturnValue(true);
         metisServiceUserIsAuthorOfPostingStub.mockReturnValue(false);
         component.posting = { ...metisPostInChannel };
         component.posting.authorRole = UserRole.USER;
+
         component.ngOnInit();
         fixture.detectChanges();
-        expect(getEditButton()).not.toBeNull();
+        component.setMayDelete();
         expect(getDeleteButton()).not.toBeNull();
     });
 
@@ -239,9 +282,8 @@ describe('PostReactionsBarComponent', () => {
         component.posting = post;
 
         component.ngOnInit();
+        component.isEmojiCount = true;
         fixture.detectChanges();
-        const reactions = getElements(debugElement, 'jhi-emoji');
-        expect(reactions).toHaveLength(2);
         expect(component.reactionMetaDataMap).toEqual({
             smile: {
                 count: 1,
@@ -311,14 +353,6 @@ describe('PostReactionsBarComponent', () => {
         expect(component.pinTooltip).toBe('artemisApp.metis.pinnedPostTooltip');
     });
 
-    it('start discussion button should be visible if post does not yet have any answers', () => {
-        component.posting = post;
-        component.sortedAnswerPosts = [];
-        fixture.detectChanges();
-        const startDiscussion = fixture.debugElement.query(By.css('.reply-btn')).nativeElement;
-        expect(startDiscussion.innerHTML).toContain('reply');
-    });
-
     it('should display button to show single answer', () => {
         component.posting = post;
         component.sortedAnswerPosts = [metisPostExerciseUser1];
@@ -342,5 +376,25 @@ describe('PostReactionsBarComponent', () => {
         fixture.detectChanges();
         const answerNowButton = fixture.debugElement.query(By.css('.collapse-answers-btn')).nativeElement;
         expect(answerNowButton.innerHTML).toContain('collapseAnswers');
+    });
+
+    it('should emit showAnswersChange and openPostingCreateEditModal when openAnswerView is called', () => {
+        const showAnswersChangeSpy = jest.spyOn(component.showAnswersChange, 'emit');
+        const openPostingCreateEditModalSpy = jest.spyOn(component.openPostingCreateEditModal, 'emit');
+
+        component.openAnswerView();
+
+        expect(showAnswersChangeSpy).toHaveBeenCalledWith(true);
+        expect(openPostingCreateEditModalSpy).toHaveBeenCalled();
+    });
+
+    it('should emit showAnswersChange and closePostingCreateEditModal when closeAnswerView is called', () => {
+        const showAnswersChangeSpy = jest.spyOn(component.showAnswersChange, 'emit');
+        const closePostingCreateEditModalSpy = jest.spyOn(component.closePostingCreateEditModal, 'emit');
+
+        component.closeAnswerView();
+
+        expect(showAnswersChangeSpy).toHaveBeenCalledWith(false);
+        expect(closePostingCreateEditModalSpy).toHaveBeenCalled();
     });
 });

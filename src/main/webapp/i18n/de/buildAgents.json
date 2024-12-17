@@ -22,10 +22,15 @@
                 "buildAgentResumed": "Anfrage zum Fortsetzen des BuildJobs erfolgreich gesendet. Der Agent wird wieder neue BuildJobs annehmen.",
                 "buildAgentPauseFailed": "Anhalten des Build-Agenten fehlgeschlagen.",
                 "buildAgentResumeFailed": "Fortsetzen des Build-Agenten fehlgeschlagen.",
-                "buildAgentWithoutName": "Der Name des Build-Agenten ist erforderlich."
+                "buildAgentWithoutName": "Der Name des Build-Agenten ist erforderlich.",
+                "buildAgentsPaused": "Anfrage zum Anhalten aller Build-Agenten erfolgreich gesendet. Die Agenten akzeptieren keine neuen Build-Jobs und werden die aktuellen Build-Jobs entweder ordnungsgemäß beenden oder nach einer konfigurierbaren Anzahl von Sekunden abbrechen.",
+                "buildAgentsResumed": "Anfrage zum Fortsetzen aller Build-Agenten erfolgreich gesendet. Die Agenten werden wieder neue Build-Jobs annehmen."
             },
             "pause": "Anhalten",
-            "resume": "Fortsetzen"
+            "resume": "Fortsetzen",
+            "pauseAll": "Alle Agenten Anhalten",
+            "resumeAll": "Alle Agenten fortsetzen",
+            "pauseAllWarning": "Du bist dabei, alle Build-Agenten anzuhalten. Dies wird verhindern, dass sie neue Build-Jobs verarbeiten.\nBist du sicher, dass du fortfahren möchtest?"
         }
     }
 }

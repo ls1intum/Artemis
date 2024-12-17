@@ -32,18 +32,28 @@ export default defineConfig({
 
     /* Configure projects for fast and slow tests */
     projects: [
-        // Tests with @slow tag
+        // Tests with @fast tag or without any tags. These are the lightweight tests with lower timeout.
+        {
+            name: 'fast-tests',
+            grep: /@fast|^[^@]*$/,
+            timeout: (parseNumber(process.env.FAST_TEST_TIMEOUT_SECONDS) ?? 45) * 1000,
+            use: { ...devices['Desktop Chrome'] },
+        },
+        // Tests with @slow tag. These tests are expected to run longer
+        // than faster tests and have higher timeout.
         {
             name: 'slow-tests',
             grep: /@slow/,
             timeout: (parseNumber(process.env.SLOW_TEST_TIMEOUT_SECONDS) ?? 180) * 1000,
             use: { ...devices['Desktop Chrome'] },
         },
-        // Tests with @fast tag or without any tags
+        // Tests with @sequential tag. These tests are triggering programming exercise submissions.
+        // Running only one programming exercise evaluation at a time could make the tests more stable.
+        // Thus, it is recommended to run this project with a single worker.
         {
-            name: 'fast-tests',
-            grep: /@fast|^[^@]*$/,
-            timeout: (parseNumber(process.env.FAST_TEST_TIMEOUT_SECONDS) ?? 45) * 1000,
+            name: 'sequential-tests',
+            grep: /@sequential/,
+            timeout: (parseNumber(process.env.SLOW_TEST_TIMEOUT_SECONDS) ?? 180) * 1000,
             use: { ...devices['Desktop Chrome'] },
         },
     ],

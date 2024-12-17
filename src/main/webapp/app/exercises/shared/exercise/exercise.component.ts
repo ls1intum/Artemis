@@ -1,4 +1,4 @@
-import { Component, EventEmitter, Input, OnDestroy, OnInit, Output } from '@angular/core';
+import { Component, EventEmitter, Input, OnDestroy, OnInit, Output, inject } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { Observable, Subject, Subscription, merge } from 'rxjs';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
@@ -15,6 +15,11 @@ interface DeletionServiceInterface {
 
 @Component({ template: '' })
 export abstract class ExerciseComponent implements OnInit, OnDestroy {
+    protected translateService = inject(TranslateService);
+    protected eventManager = inject(EventManager);
+    private courseService = inject(CourseManagementService);
+    private route = inject(ActivatedRoute);
+
     private eventSubscriber: Subscription;
     @Input() embedded = false;
     @Input() course: Course;
@@ -23,8 +28,8 @@ export abstract class ExerciseComponent implements OnInit, OnDestroy {
     @Output() filteredExerciseCount = new EventEmitter<number>();
     showHeading: boolean;
     courseId: number;
-    predicate: string;
-    reverse: boolean;
+    predicate: string = 'id';
+    reverse: boolean = true;
 
     selectedExercises: Exercise[] = [];
     allChecked = false;
@@ -34,16 +39,6 @@ export abstract class ExerciseComponent implements OnInit, OnDestroy {
     dialogError$ = this.dialogErrorSource.asObservable();
 
     protected abstract get exercises(): Exercise[];
-
-    protected constructor(
-        private courseService: CourseManagementService,
-        protected translateService: TranslateService,
-        private route: ActivatedRoute,
-        protected eventManager: EventManager,
-    ) {
-        this.predicate = 'id';
-        this.reverse = true;
-    }
 
     /**
      * Fetches an exercise from the server (and if needed the course as well)

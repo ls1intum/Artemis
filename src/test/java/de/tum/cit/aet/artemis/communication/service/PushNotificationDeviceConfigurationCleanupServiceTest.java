@@ -12,6 +12,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 
+import de.tum.cit.aet.artemis.communication.domain.push_notification.PushNotificationApiType;
 import de.tum.cit.aet.artemis.communication.domain.push_notification.PushNotificationDeviceConfiguration;
 import de.tum.cit.aet.artemis.communication.domain.push_notification.PushNotificationDeviceType;
 import de.tum.cit.aet.artemis.communication.repository.PushNotificationDeviceConfigurationRepository;
@@ -41,10 +42,10 @@ class PushNotificationDeviceConfigurationCleanupServiceTest extends AbstractSpri
     @Test
     void cleanupTest() {
         final PushNotificationDeviceConfiguration valid = new PushNotificationDeviceConfiguration("token1", PushNotificationDeviceType.FIREBASE,
-                Date.from(Instant.now().plus(10, ChronoUnit.DAYS)), new byte[10], user);
+                Date.from(Instant.now().plus(10, ChronoUnit.DAYS)), new byte[10], user, PushNotificationApiType.DEFAULT);
 
         final PushNotificationDeviceConfiguration expired = new PushNotificationDeviceConfiguration("token2", PushNotificationDeviceType.FIREBASE,
-                Date.from(Instant.now().minus(10, ChronoUnit.DAYS)), new byte[10], user);
+                Date.from(Instant.now().minus(10, ChronoUnit.DAYS)), new byte[10], user, PushNotificationApiType.DEFAULT);
 
         deviceConfigurationRepository.save(valid);
         deviceConfigurationRepository.save(expired);

@@ -12,7 +12,7 @@ export class OrderedListAction extends ListAction {
     }
 
     public getPrefix(lineNumber: number): string {
-        const space = lineNumber >= 10 ? ' ' : '  ';
+        const space = ' ';
         return `${lineNumber}.${space}`;
     }
 

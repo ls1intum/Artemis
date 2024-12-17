@@ -1,4 +1,4 @@
-@if (activeConversation && course) {
+@if (activeConversation() && course()) {
     <div class="container-fluid conversation-settings">
         @if (canLeaveConversation || canChangeChannelArchivalState || canDeleteChannel) {
             <div class="row settings-container">

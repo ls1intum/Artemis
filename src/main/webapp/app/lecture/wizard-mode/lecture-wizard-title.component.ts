@@ -11,6 +11,4 @@ export class LectureUpdateWizardTitleComponent {
     @Input() lecture: Lecture;
 
     domainActionsDescription = [new FormulaAction()];
-
-    constructor() {}
 }

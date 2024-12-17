@@ -10,10 +10,6 @@ export class ProfileInfo {
     public inDevelopment: boolean;
     public openApiEnabled?: boolean;
     public sentry?: { dsn: string };
-    public postHog?: {
-        host?: string;
-        token: string;
-    };
     public features: ActiveFeatureToggles;
     public guidedTourMapping?: GuidedTourMapping;
     public buildPlanURLTemplate: string;

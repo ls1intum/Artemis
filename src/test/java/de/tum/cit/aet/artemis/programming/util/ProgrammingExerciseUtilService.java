@@ -42,6 +42,7 @@ import de.tum.cit.aet.artemis.exam.repository.ExamRepository;
 import de.tum.cit.aet.artemis.exam.util.ExamUtilService;
 import de.tum.cit.aet.artemis.exercise.domain.InitializationState;
 import de.tum.cit.aet.artemis.exercise.domain.SubmissionType;
+import de.tum.cit.aet.artemis.exercise.domain.Team;
 import de.tum.cit.aet.artemis.exercise.domain.participation.Participation;
 import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
 import de.tum.cit.aet.artemis.exercise.participation.util.ParticipationFactory;
@@ -736,6 +737,21 @@ public class ProgrammingExerciseUtilService {
      */
     public ProgrammingSubmission addProgrammingSubmission(ProgrammingExercise exercise, ProgrammingSubmission submission, String login) {
         StudentParticipation participation = participationUtilService.addStudentParticipationForProgrammingExercise(exercise, login);
+        submission.setParticipation(participation);
+        submission = programmingSubmissionRepo.save(submission);
+        return submission;
+    }
+
+    /**
+     * Adds programming submission to provided programming exercise. The provided login is used to access or create a participation.
+     *
+     * @param exercise   The exercise to which the submission should be added.
+     * @param submission The submission which should be added to the programming exercise.
+     * @param team       The login of the user used to access or create an exercise participation.
+     * @return The created programming submission.
+     */
+    public ProgrammingSubmission addProgrammingSubmissionToTeamExercise(ProgrammingExercise exercise, ProgrammingSubmission submission, Team team) {
+        StudentParticipation participation = participationUtilService.addTeamParticipationForProgrammingExercise(exercise, team);
         submission.setParticipation(participation);
         submission = programmingSubmissionRepo.save(submission);
         return submission;

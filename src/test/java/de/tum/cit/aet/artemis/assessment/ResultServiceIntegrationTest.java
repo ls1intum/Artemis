@@ -903,4 +903,43 @@ class ResultServiceIntegrationTest extends AbstractSpringIntegrationLocalCILocal
         assertThat(jsonNode.has("empty")).isTrue();
     }
 
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testCountAffectedStudentsByFeedbackDetailText() throws Exception {
+        StudentParticipation participation1 = participationUtilService.createAndSaveParticipationForExercise(programmingExercise, TEST_PREFIX + "student1");
+        StudentParticipation participation2 = participationUtilService.createAndSaveParticipationForExercise(programmingExercise, TEST_PREFIX + "student2");
+        Result result1 = participationUtilService.addResultToParticipation(AssessmentType.AUTOMATIC, null, participation1);
+        Result result2 = participationUtilService.addResultToParticipation(AssessmentType.AUTOMATIC, null, participation2);
+        participationUtilService.addVariousFeedbackTypeFeedbacksToResult(result1);
+        ProgrammingExerciseTestCase testCase = programmingExerciseUtilService.addTestCaseToProgrammingExercise(programmingExercise, "test1");
+        testCase.setId(1L);
+
+        Feedback feedback1 = new Feedback();
+        feedback1.setPositive(false);
+        feedback1.setDetailText("SampleFeedback");
+        feedback1.setTestCase(testCase);
+        participationUtilService.addFeedbackToResult(feedback1, result1);
+
+        Feedback feedback2 = new Feedback();
+        feedback2.setPositive(false);
+        feedback2.setDetailText("SampleFeedback");
+        feedback2.setTestCase(testCase);
+        participationUtilService.addFeedbackToResult(feedback2, result2);
+
+        String url = "/api/exercises/" + programmingExercise.getId() + "/feedback-detail/affected-students?detailText=SampleFeedback";
+        long affectedStudentsCount = request.get(url, HttpStatus.OK, Long.class);
+
+        assertThat(affectedStudentsCount).isInstanceOf(Long.class);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testCountAffectedStudentsByFeedbackDetailText_NoMatch() throws Exception {
+        ProgrammingExercise programmingExercise = programmingExerciseUtilService.addProgrammingExerciseToCourse(course);
+
+        String url = "/api/exercises/" + programmingExercise.getId() + "/feedback-detail/affected-students?detailText=NonexistentFeedback";
+        long affectedStudentsCount = request.get(url, HttpStatus.OK, Long.class);
+
+        assertThat(affectedStudentsCount).isEqualTo(0);
+    }
 }

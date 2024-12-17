@@ -11,7 +11,8 @@
 
 .notification-overlay {
     display: none;
-    z-index: 998;
+    // Needs to be higher than the z-index of the sticky-top class
+    z-index: 1030;
     position: fixed;
     top: 0;
     left: 0;
@@ -30,7 +31,8 @@
     top: 0;
     right: -305px;
     bottom: 0;
-    z-index: 999;
+    // Needs to be higher than the z-index of the sticky-top class
+    z-index: 1030;
     transition: 0.3s;
     overflow-y: hidden;
     color: var(--bs-body-color);

@@ -80,7 +80,9 @@ artemis:
                     default: "~~invalid~~"
         build-agent:
             short-name: "artemis-build-agent-test"
-
+    telemetry:
+        enabled: false  # setting this to false will disable sending any information to the telemetry service
+        
 spring:
     application:
         name: Artemis

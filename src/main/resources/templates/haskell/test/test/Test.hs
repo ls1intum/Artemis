@@ -5,7 +5,9 @@ import qualified Interface as Sub
 import qualified Solution as Sol
 
 import Test.Tasty
-import Test.Tasty.Runners.AntXML 
+import Test.Tasty.Ingredients (composeReporters)
+import Test.Tasty.Ingredients.Basic (consoleTestReporter)
+import Test.Tasty.Runners.AntXML
 import Test.SmallCheck.Series as SCS
 import Test.Tasty.SmallCheck as SC
 import Test.Tasty.QuickCheck as QC
@@ -69,12 +71,12 @@ main = do
   testRunner $ localOption timeoutOption tests
   where
     resultsPath = "test-reports/results.xml"
-#ifdef PROD 
-    -- on the server (production mode), run tests with xml output
-    testRunner = defaultMainWithIngredients [antXMLRunner]
+#ifdef PROD
+    -- on the server (production mode), run tests with additional xml output
+    testRunner = defaultMainWithIngredients [composeReporters antXMLRunner consoleTestReporter]
 #else
     -- locally, run tests with terminal output
     testRunner = defaultMain
-#endif    
+#endif
     -- by default, run for 1 second
     timeoutOption = mkTimeout (1 * 10^6)

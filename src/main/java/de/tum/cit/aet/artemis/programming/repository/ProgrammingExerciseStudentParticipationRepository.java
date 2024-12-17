@@ -136,8 +136,8 @@ public interface ProgrammingExerciseStudentParticipationRepository extends Artem
     @EntityGraph(type = LOAD, attributePaths = { "submissions", "team.students" })
     List<ProgrammingExerciseStudentParticipation> findWithSubmissionsById(long participationId);
 
-    @EntityGraph(type = LOAD, attributePaths = { "submissions" })
-    List<ProgrammingExerciseStudentParticipation> findWithSubmissionsByExerciseId(long exerciseId);
+    @EntityGraph(type = LOAD, attributePaths = { "submissions.results" })
+    List<ProgrammingExerciseStudentParticipation> findWithSubmissionsAndResultsByExerciseId(long exerciseId);
 
     @EntityGraph(type = LOAD, attributePaths = { "submissions", "team.students" })
     List<ProgrammingExerciseStudentParticipation> findWithSubmissionsAndTeamStudentsByExerciseId(long exerciseId);
@@ -194,6 +194,18 @@ public interface ProgrammingExerciseStudentParticipationRepository extends Artem
             ORDER BY participation.testRun ASC
             """)
     List<ProgrammingExerciseStudentParticipation> findAllWithSubmissionsByExerciseIdAndStudentLogin(@Param("exerciseId") long exerciseId, @Param("username") String username);
+
+    @Query("""
+            SELECT participation
+            FROM ProgrammingExerciseStudentParticipation participation
+                LEFT JOIN FETCH participation.team team
+                LEFT JOIN FETCH team.students student
+                LEFT JOIN FETCH participation.submissions
+            WHERE participation.exercise.id = :exerciseId
+                AND student.login = :username
+            ORDER BY participation.testRun ASC
+            """)
+    List<ProgrammingExerciseStudentParticipation> findAllWithSubmissionByExerciseIdAndStudentLoginInTeam(@Param("exerciseId") long exerciseId, @Param("username") String username);
 
     @EntityGraph(type = LOAD, attributePaths = "team.students")
     Optional<ProgrammingExerciseStudentParticipation> findWithTeamStudentsById(long participationId);

@@ -94,7 +94,7 @@ public class ConversationMessageResource {
         sendToUserPost.setConversation(sendToUserPost.getConversation().copy());
         sendToUserPost.getConversation().setConversationParticipants(Collections.emptySet());
 
-        log.info("createMessage took {}", TimeLogUtil.formatDurationFrom(start));
+        log.debug("createMessage took {}", TimeLogUtil.formatDurationFrom(start));
         return ResponseEntity.created(new URI("/api/courses/" + courseId + "/messages/" + sendToUserPost.getId())).body(sendToUserPost);
     }
 
@@ -132,6 +132,8 @@ public class ConversationMessageResource {
             if (post.getConversation() != null) {
                 post.getConversation().hideDetails();
             }
+
+            conversationMessagingService.preparePostForBroadcast(post);
         });
         final var headers = PaginationUtil.generatePaginationHttpHeaders(ServletUriComponentsBuilder.fromCurrentRequest(), coursePosts);
         logDuration(coursePosts.getContent(), principal, timeNanoStart);
@@ -139,7 +141,7 @@ public class ConversationMessageResource {
     }
 
     private void logDuration(List<Post> posts, Principal principal, long timeNanoStart) {
-        if (log.isInfoEnabled()) {
+        if (log.isDebugEnabled()) {
             long answerPosts = posts.stream().mapToLong(post -> post.getAnswers().size()).sum();
             long reactions = posts.stream().mapToLong(post -> post.getReactions().size()).sum();
             long answerReactions = posts.stream().flatMap(post -> post.getAnswers().stream()).mapToLong(answerPost -> answerPost.getReactions().size()).sum();
@@ -163,7 +165,7 @@ public class ConversationMessageResource {
         log.debug("PUT updateMessage invoked for course {} with post {}", courseId, messagePost.getContent());
         long start = System.nanoTime();
         Post updatedMessagePost = conversationMessagingService.updateMessage(courseId, messageId, messagePost);
-        log.info("updateMessage took {}", TimeLogUtil.formatDurationFrom(start));
+        log.debug("updateMessage took {}", TimeLogUtil.formatDurationFrom(start));
         return new ResponseEntity<>(updatedMessagePost, null, HttpStatus.OK);
     }
 
@@ -182,7 +184,7 @@ public class ConversationMessageResource {
         long start = System.nanoTime();
         conversationMessagingService.deleteMessageById(courseId, messageId);
         // deletion of message posts should not trigger entity deletion alert
-        log.info("deleteMessage took {}", TimeLogUtil.formatDurationFrom(start));
+        log.debug("deleteMessage took {}", TimeLogUtil.formatDurationFrom(start));
         return ResponseEntity.ok().build();
     }
 
@@ -200,35 +202,5 @@ public class ConversationMessageResource {
     public ResponseEntity<Post> updateDisplayPriority(@PathVariable Long courseId, @PathVariable Long postId, @RequestParam DisplayPriority displayPriority) {
         Post postWithUpdatedDisplayPriority = conversationMessagingService.changeDisplayPriority(courseId, postId, displayPriority);
         return ResponseEntity.ok().body(postWithUpdatedDisplayPriority);
-    }
-
-    /**
-     * POST /courses/{courseId}/messages/similarity-check : trigger a similarity check for post to be created
-     *
-     * @param courseId id of the course the post should be published in
-     * @param post     post to create
-     * @return ResponseEntity with status 200 (OK)
-     */
-    @PostMapping("courses/{courseId}/messages/similarity-check")
-    @EnforceAtLeastStudent
-    // TODO: unused, remove
-    public ResponseEntity<List<Post>> computeSimilarityScoresWitCoursePosts(@PathVariable Long courseId, @RequestBody Post post) {
-        List<Post> similarPosts = conversationMessagingService.getSimilarPosts(courseId, post);
-        return ResponseEntity.ok().body(similarPosts);
-    }
-
-    /**
-     * GET /courses/{courseId}/posts/tags : Get all tags for posts in a certain course
-     *
-     * @param courseId id of the course the post belongs to
-     * @return the ResponseEntity with status 200 (OK) and with body all tags for posts in that course,
-     *         or 400 (Bad Request) if the checks on user or course validity fail
-     */
-    @GetMapping("courses/{courseId}/messages/tags")
-    // TODO: unused, delete
-    @EnforceAtLeastStudent
-    public ResponseEntity<List<String>> getAllPostTagsForCourse(@PathVariable Long courseId) {
-        List<String> tags = conversationMessagingService.getAllCourseTags(courseId);
-        return new ResponseEntity<>(tags, null, HttpStatus.OK);
     }
 }

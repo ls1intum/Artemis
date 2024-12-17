@@ -16,6 +16,7 @@ import java.util.concurrent.ConcurrentSkipListSet;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.function.Supplier;
 
@@ -32,9 +33,9 @@ import com.hazelcast.core.HazelcastInstance;
 import com.hazelcast.topic.ITopic;
 
 import de.tum.cit.aet.artemis.buildagent.dto.BuildJobQueueItem;
+import de.tum.cit.aet.artemis.buildagent.dto.BuildLogDTO;
 import de.tum.cit.aet.artemis.buildagent.dto.BuildResult;
 import de.tum.cit.aet.artemis.core.exception.LocalCIException;
-import de.tum.cit.aet.artemis.programming.domain.build.BuildLogEntry;
 
 /**
  * This service is responsible for adding build jobs to the Integrated Code Lifecycle executor service.
@@ -171,11 +172,14 @@ public class BuildJobManagementService {
                     finishCancelledBuildJob(buildJobItem.repositoryInfo().assignmentRepositoryUri(), buildJobItem.id(), containerName);
                     String msg = "Build job with id " + buildJobItem.id() + " was cancelled.";
                     String stackTrace = stackTraceToString(e);
-                    buildLogsMap.appendBuildLogEntry(buildJobItem.id(), new BuildLogEntry(ZonedDateTime.now(), msg + "\n" + stackTrace));
+                    buildLogsMap.appendBuildLogEntry(buildJobItem.id(), new BuildLogDTO(ZonedDateTime.now(), msg + "\n" + stackTrace));
                     throw new CompletionException(msg, e);
                 }
                 else {
                     finishBuildJobExceptionally(buildJobItem.id(), containerName, e);
+                    if (e instanceof TimeoutException) {
+                        logTimedOutBuildJob(buildJobItem, buildJobTimeoutSeconds);
+                    }
                     throw new CompletionException(e);
                 }
             }
@@ -186,6 +190,18 @@ public class BuildJobManagementService {
             runningFutures.remove(buildJobItem.id());
             runningFuturesWrapper.remove(buildJobItem.id());
         }));
+    }
+
+    private void logTimedOutBuildJob(BuildJobQueueItem buildJobItem, int buildJobTimeoutSeconds) {
+        String msg = "Timed out after " + buildJobTimeoutSeconds + " seconds. "
+                + "This may be due to an infinite loop or inefficient code. Please review your code for potential issues. "
+                + "If the problem persists, contact your instructor for assistance. (Build job ID: " + buildJobItem.id() + ")";
+        buildLogsMap.appendBuildLogEntry(buildJobItem.id(), msg);
+        log.warn(msg);
+
+        msg = "Executing build job with id " + buildJobItem.id() + " timed out after " + buildJobTimeoutSeconds + " seconds."
+                + "This may be due to strict timeout settings. Consider increasing the exercise timeout and applying stricter timeout constraints within the test cases using @StrictTimeout.";
+        buildLogsMap.appendBuildLogEntry(buildJobItem.id(), msg);
     }
 
     Set<String> getRunningBuildJobIds() {
@@ -232,7 +248,7 @@ public class BuildJobManagementService {
     private void finishBuildJobExceptionally(String buildJobId, String containerName, Exception exception) {
         String msg = "Error while executing build job " + buildJobId + ": " + exception.getMessage();
         String stackTrace = stackTraceToString(exception);
-        buildLogsMap.appendBuildLogEntry(buildJobId, new BuildLogEntry(ZonedDateTime.now(), msg + "\n" + stackTrace));
+        buildLogsMap.appendBuildLogEntry(buildJobId, new BuildLogDTO(ZonedDateTime.now(), msg + "\n" + stackTrace));
         log.error(msg);
 
         log.info("Getting ID of running container {}", containerName);

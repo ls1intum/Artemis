@@ -62,7 +62,7 @@
         <div class="modal-body">
             @switch (selectedTab) {
                 @case (Tabs.MEMBERS) {
-                    <jhi-conversation-members [course]="course" [activeConversation]="activeConversation" (changesPerformed)="changesWerePerformed = true" />
+                    <jhi-conversation-members [course]="course" [activeConversationInput]="activeConversation" (changesPerformed)="changesWerePerformed = true" />
                 }
                 @case (Tabs.INFO) {
                     <jhi-conversation-info [activeConversation]="activeConversation" [course]="course" (changesPerformed)="changesWerePerformed = true" />

@@ -15,8 +15,6 @@ export class User extends Account {
     public password?: string;
     public vcsAccessToken?: string;
     public vcsAccessTokenExpiryDate?: string;
-    public sshPublicKey?: string;
-    public sshKeyHash?: string;
     public irisAccepted?: dayjs.Dayjs;
 
     constructor(
@@ -38,7 +36,6 @@ export class User extends Account {
         imageUrl?: string,
         vcsAccessToken?: string,
         vcsAccessTokenExpiryDate?: string,
-        sshPublicKey?: string,
         irisAccepted?: dayjs.Dayjs,
     ) {
         super(activated, authorities, email, firstName, langKey, lastName, login, imageUrl);
@@ -52,7 +49,6 @@ export class User extends Account {
         this.password = password;
         this.vcsAccessToken = vcsAccessToken;
         this.vcsAccessTokenExpiryDate = vcsAccessTokenExpiryDate;
-        this.sshPublicKey = sshPublicKey;
         this.irisAccepted = irisAccepted;
     }
 }

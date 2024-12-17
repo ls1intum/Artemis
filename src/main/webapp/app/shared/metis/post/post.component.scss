@@ -20,6 +20,7 @@
     top: -1.8rem;
     right: 1%;
     display: flex;
+    max-height: 2.2rem;
     gap: 10px;
     visibility: hidden;
     transition:
@@ -31,32 +32,45 @@
     border: 0.01rem solid var(--metis-gray);
 }
 
+.hover-container {
+    position: relative;
+}
+
+.non-consecutive .hover-actions {
+    top: -2rem;
+}
+
+.hover-container:hover {
+    background: var(--metis-selection-option-hover-background);
+    transition: background-color 0.2s ease-in-out;
+}
+
+.hover-container:hover .hover-actions {
+    visibility: visible;
+    opacity: 1;
+}
+
 .message-container {
     position: relative;
-    border-radius: 5px;
-    transition: background-color 0.3s ease;
+}
 
-    &.force-hover {
-        background: var(--metis-selection-option-hover-background);
+.post-is-saved-message,
+.message-container,
+.post-reactions-bar,
+.post-context-information-wrap,
+.post {
+    background-color: transparent;
 
-        .hover-actions {
-            opacity: 1;
-            visibility: visible;
-        }
+    transition: background-color 0.2s ease-in-out;
+
+    &.is-saved {
+        background-color: rgba($primary, 0.1);
     }
 }
 
-.message-content {
-    padding-left: 0.3rem;
-}
-
-.message-content:hover {
-    background: var(--metis-selection-option-hover-background);
-}
-
-.message-container:hover .hover-actions {
-    opacity: 1;
-    visibility: visible;
+.message-content,
+.post-is-saved-message-content {
+    padding-left: 0.25rem;
 }
 
 .clickable {
@@ -71,4 +85,23 @@
 
 .pinned-message {
     background-color: var(--artemis-alert-warning-background);
+}
+
+.post-time {
+    position: absolute;
+    top: 5%;
+    left: 0.5rem;
+    margin-left: 0.7rem;
+    visibility: hidden;
+    opacity: 0;
+    transition:
+        visibility 0.2s ease-in-out,
+        opacity 0.2s ease-in-out;
+    font-size: 0.75rem;
+    color: var(--metis-gray-dark);
+}
+
+.hover-container:hover .post-time {
+    visibility: visible;
+    opacity: 1;
 }

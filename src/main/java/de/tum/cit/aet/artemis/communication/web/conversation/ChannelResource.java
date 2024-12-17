@@ -35,6 +35,7 @@ import de.tum.cit.aet.artemis.communication.domain.NotificationType;
 import de.tum.cit.aet.artemis.communication.domain.conversation.Channel;
 import de.tum.cit.aet.artemis.communication.dto.ChannelDTO;
 import de.tum.cit.aet.artemis.communication.dto.ChannelIdAndNameDTO;
+import de.tum.cit.aet.artemis.communication.dto.FeedbackChannelRequestDTO;
 import de.tum.cit.aet.artemis.communication.repository.ConversationParticipantRepository;
 import de.tum.cit.aet.artemis.communication.repository.conversation.ChannelRepository;
 import de.tum.cit.aet.artemis.communication.service.conversation.ChannelService;
@@ -42,6 +43,7 @@ import de.tum.cit.aet.artemis.communication.service.conversation.ConversationDTO
 import de.tum.cit.aet.artemis.communication.service.conversation.ConversationService;
 import de.tum.cit.aet.artemis.communication.service.conversation.auth.ChannelAuthorizationService;
 import de.tum.cit.aet.artemis.communication.service.notifications.SingleUserNotificationService;
+import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.exception.AccessForbiddenAlertException;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
@@ -50,7 +52,9 @@ import de.tum.cit.aet.artemis.core.repository.CourseRepository;
 import de.tum.cit.aet.artemis.core.repository.UserRepository;
 import de.tum.cit.aet.artemis.core.security.Role;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastStudent;
+import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInCourse.EnforceAtLeastEditorInCourse;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
+import de.tum.cit.aet.artemis.exercise.repository.StudentParticipationRepository;
 import de.tum.cit.aet.artemis.tutorialgroup.service.TutorialGroupChannelManagementService;
 
 @Profile(PROFILE_CORE)
@@ -80,10 +84,13 @@ public class ChannelResource extends ConversationManagementResource {
 
     private final ConversationParticipantRepository conversationParticipantRepository;
 
+    private final StudentParticipationRepository studentParticipationRepository;
+
     public ChannelResource(ConversationParticipantRepository conversationParticipantRepository, SingleUserNotificationService singleUserNotificationService,
             ChannelService channelService, ChannelRepository channelRepository, ChannelAuthorizationService channelAuthorizationService,
             AuthorizationCheckService authorizationCheckService, ConversationDTOService conversationDTOService, CourseRepository courseRepository, UserRepository userRepository,
-            ConversationService conversationService, TutorialGroupChannelManagementService tutorialGroupChannelManagementService) {
+            ConversationService conversationService, TutorialGroupChannelManagementService tutorialGroupChannelManagementService,
+            StudentParticipationRepository studentParticipationRepository) {
         super(courseRepository);
         this.channelService = channelService;
         this.channelRepository = channelRepository;
@@ -95,6 +102,7 @@ public class ChannelResource extends ConversationManagementResource {
         this.tutorialGroupChannelManagementService = tutorialGroupChannelManagementService;
         this.singleUserNotificationService = singleUserNotificationService;
         this.conversationParticipantRepository = conversationParticipantRepository;
+        this.studentParticipationRepository = studentParticipationRepository;
     }
 
     /**
@@ -458,6 +466,34 @@ public class ChannelResource extends ConversationManagementResource {
         usersToDeRegister.forEach(user -> singleUserNotificationService.notifyClientAboutConversationCreationOrDeletion(channelFromDatabase, user, requestingUser,
                 NotificationType.CONVERSATION_REMOVE_USER_CHANNEL));
         return ResponseEntity.ok().build();
+    }
+
+    /**
+     * POST /api/courses/:courseId/channels/: Creates a new feedback-specific channel in a course.
+     *
+     * @param courseId               where the channel is being created.
+     * @param exerciseId             for which the feedback channel is being created.
+     * @param feedbackChannelRequest containing a DTO with the properties of the channel (e.g., name, description, visibility)
+     *                                   and the feedback detail text used to determine the affected students to be added to the channel.
+     * @return ResponseEntity with status 201 (Created) and the body containing the details of the created channel.
+     * @throws URISyntaxException       if the URI for the created resource cannot be constructed.
+     * @throws BadRequestAlertException if the channel name starts with an invalid prefix (e.g., "$").
+     */
+    @PostMapping("{courseId}/{exerciseId}/feedback-channel")
+    @EnforceAtLeastEditorInCourse
+    public ResponseEntity<ChannelDTO> createFeedbackChannel(@PathVariable Long courseId, @PathVariable Long exerciseId,
+            @RequestBody FeedbackChannelRequestDTO feedbackChannelRequest) throws URISyntaxException {
+        log.debug("REST request to create feedback channel for course {} and exercise {} with properties: {}", courseId, exerciseId, feedbackChannelRequest);
+
+        ChannelDTO channelDTO = feedbackChannelRequest.channel();
+        String feedbackDetailText = feedbackChannelRequest.feedbackDetailText();
+
+        User requestingUser = userRepository.getUserWithGroupsAndAuthorities();
+        Course course = courseRepository.findByIdElseThrow(courseId);
+        checkCommunicationEnabledElseThrow(course);
+        Channel createdChannel = channelService.createFeedbackChannel(course, exerciseId, channelDTO, feedbackDetailText, requestingUser);
+
+        return ResponseEntity.created(new URI("/api/channels/" + createdChannel.getId())).body(conversationDTOService.convertChannelToDTO(requestingUser, createdChannel));
     }
 
     private void checkEntityIdMatchesPathIds(Channel channel, Optional<Long> courseId, Optional<Long> conversationId) {

@@ -44,7 +44,7 @@ export class IrisChatbotWidgetComponent implements OnDestroy, AfterViewInit {
         interact('.chat-widget')
             .resizable({
                 // resize from all edges and corners
-                edges: { left: true, right: true, bottom: true, top: true },
+                edges: { left: true, right: true, bottom: true, top: '.chat-widget-top-resize-area' },
 
                 listeners: {
                     move: (event) => {
@@ -85,6 +85,7 @@ export class IrisChatbotWidgetComponent implements OnDestroy, AfterViewInit {
                 inertia: true,
             })
             .draggable({
+                allowFrom: '.chat-header',
                 listeners: {
                     move: (event: any) => {
                         const target = event.target,

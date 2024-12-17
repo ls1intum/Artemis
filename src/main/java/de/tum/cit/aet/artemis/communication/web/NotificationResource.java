@@ -75,7 +75,7 @@ public class NotificationResource {
     public ResponseEntity<List<Notification>> getAllNotificationsForCurrentUserFilteredBySettings(Pageable pageable) {
         long start = System.nanoTime();
         User currentUser = userRepository.getUserWithGroupsAndAuthorities();
-        log.info("REST request to get notifications page {} with size {} for current user {} filtered by settings", pageable.getPageNumber(), pageable.getPageSize(),
+        log.debug("REST request to get notifications page {} with size {} for current user {} filtered by settings", pageable.getPageNumber(), pageable.getPageSize(),
                 currentUser.getLogin());
         var tutorialGroupIds = tutorialGroupService.findAllForNotifications(currentUser);
         var notificationSettings = notificationSettingRepository.findAllNotificationSettingsForRecipientWithId(currentUser.getId());
@@ -97,7 +97,7 @@ public class NotificationResource {
                     deactivatedTitles, tutorialGroupIds, TITLES_TO_NOT_LOAD_NOTIFICATION, pageable);
         }
         HttpHeaders headers = PaginationUtil.generatePaginationHttpHeaders(ServletUriComponentsBuilder.fromCurrentRequest(), page);
-        log.info("Load notifications for user {} done in {}", currentUser.getLogin(), TimeLogUtil.formatDurationFrom(start));
+        log.debug("Load notifications for user {} done in {}", currentUser.getLogin(), TimeLogUtil.formatDurationFrom(start));
         return new ResponseEntity<>(page.getContent(), headers, HttpStatus.OK);
     }
 }

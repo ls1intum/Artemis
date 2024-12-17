@@ -7,7 +7,7 @@ import { ArtemisTestModule } from '../../test.module';
 import { Result } from 'app/entities/result.model';
 import { AlertOverlayComponent } from 'app/shared/alert/alert-overlay.component';
 import { AssessmentWarningComponent } from 'app/assessment/assessment-warning/assessment-warning.component';
-import { MockProvider } from 'ng-mocks';
+import { MockPipe, MockProvider } from 'ng-mocks';
 import { Exercise, ExerciseType } from 'app/entities/exercise.model';
 import { MockSyncStorage } from '../../helpers/mocks/service/mock-sync-storage.service';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
@@ -49,8 +49,8 @@ describe('AssessmentHeaderComponent', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule, NgbTooltipMocksModule, NgbAlertsMocksModule, RouterModule.forRoot([])],
-            declarations: [AssessmentHeaderComponent, AssessmentWarningComponent, AlertOverlayComponent, ArtemisTranslatePipe, MockTranslateValuesDirective],
+            imports: [ArtemisTestModule, NgbTooltipMocksModule, NgbAlertsMocksModule, RouterModule.forRoot([]), MockPipe(ArtemisTranslatePipe)],
+            declarations: [AssessmentHeaderComponent, AssessmentWarningComponent, AlertOverlayComponent, MockTranslateValuesDirective],
             providers: [
                 {
                     provide: AlertService,

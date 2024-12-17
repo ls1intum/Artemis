@@ -244,4 +244,8 @@ public class TeamUtilService {
         team.setExercise(exercise);
         return teamRepo.saveAndFlush(team);
     }
+
+    public void deleteTeam(Team team) {
+        teamRepo.delete(team);
+    }
 }

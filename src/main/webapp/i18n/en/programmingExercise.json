@@ -357,6 +357,7 @@
                     "filter": "Filters",
                     "noData": "No Feedback Entries could be found for the Programming Exercise.",
                     "noDataFilter": "No Feedback Entries could be found for the specified filter or search Term.",
+                    "channelSuccess": "Channel {{channelName}} successfully created.",
                     "feedbackModal": {
                         "header": "Error Details",
                         "feedbackTitle": "Test Case Feedback",
@@ -379,6 +380,36 @@
                         "repository": "Repository",
                         "totalItems": "In total {{count}} item(s)",
                         "error": "There was an error while loading the affected Students for this feedback."
+                    },
+                    "feedbackDetailChannel": {
+                        "title": "Create Feedback Discussion Channel",
+                        "studentNumber": "Number of students which will be added to the channel: {{count}}",
+                        "description": "This channel is intended to facilitate discussions around specific feedback for the provided exercise feedback. It will allow all affected students and instructors to collaborate and address the feedback effectively.",
+                        "label": "Channel Name",
+                        "channelVisibility": "Channel Visibility",
+                        "visibilityPublic": "Public",
+                        "visibilityPrivate": "Private",
+                        "announcementChannel": "Announcement Channel",
+                        "announcementChannelYes": "Yes",
+                        "announcementChannelNo": "No",
+                        "createAndNavigateLabel": "Create and Navigate",
+                        "createAndNavigateDescription": "Creates the channel and automatically navigates to the channel.",
+                        "createChannelLabel": "Create Channel:",
+                        "createChannelDescription": "Creates the channel without navigating away from this page.",
+                        "createChannelButton": "Create Channel",
+                        "placeholder": "This field should not be empty",
+                        "descriptionLabel": "Description",
+                        "requiredValidationErrorName": "The channel name is required.",
+                        "maxLengthValidationErrorName": "Channel name can be max {{ max }} characters long!",
+                        "regexValidationErrorName": "Names can only contain lowercase letters, numbers, and dashes. Only Artemis can create channels that start with a $.",
+                        "requiredValidationErrorDescription": "The channel description is required.",
+                        "maxLengthValidationErrorDescription": "Channel description can be max {{ max }} characters long!",
+                        "confirmationModal": {
+                            "header": "Confirm Channel Creation",
+                            "confirmationMessage": "Are you sure you want to create this channel? This will create a channel with <strong>{{count}}</strong> student(s).",
+                            "cancel": "Cancel",
+                            "confirm": "Create"
+                        }
                     }
                 },
                 "help": {
@@ -547,7 +578,7 @@
             "auxiliaryRepository": {
                 "error": "There is a problem with the auxiliary repository.",
                 "addAuxiliaryRepository": "Add Auxiliary Repository",
-                "usageDescription": "You can use auxiliary repositories to provide additional code that students cannot see or modify. The additional code is inserted into the specified checkout directory before the submission is built. The inserted code overwrites everything which lies at the location specified by the checkout directory. If you only need to overwrite student files partially, you need to adapt the build script.",
+                "usageDescription": "You can use auxiliary repositories to provide additional code that students cannot see or modify. The additional code is inserted into the specified checkout directory before the submission is built. The additional code is inserted in the specified checkout directory before the build is created. The inserted files overwrite all files in the checkout directory which have the same name. Files that are not overwritten are retained.",
                 "repositoryName": "Repository Name",
                 "checkoutDirectory": "Checkout Directory",
                 "description": "Description",
@@ -722,6 +753,19 @@
                 "pushExercise": "Push the exercise code to its repository. It will be checked out at <code>{{checkoutDirectory}}</code>.",
                 "pushSolution": "Push the solution code to its repository. It will not be checked out.",
                 "pushTest": "Push the test code to its repository. It will be checked out in <code>{{checkoutDirectory}}</code>."
+            },
+            "dockerFlags": {
+                "disableNetworkAccess": {
+                    "title": "Disable internet access when executing the student submission",
+                    "description": "Activate this option to disable network access for containers. The network will be disabled when executing the student submission.",
+                    "warning": "If internet access is disabled, all dependencies must be included in the Docker image or cached within it. Otherwise, the build will fail."
+                },
+                "envVars": {
+                    "title": "Environment Variables",
+                    "description": "Add environment variables to the Docker container. Each key and value should not be longer than 1000 characters.",
+                    "addEnvVar": "Add Environment Variable",
+                    "removeEnvVar": "Remove"
+                }
             }
         },
         "error": {

@@ -58,17 +58,6 @@ public interface ProgrammingSubmissionTestRepository extends ProgrammingSubmissi
         return findProgrammingSubmissionById(id);
     }
 
-    Optional<ProgrammingSubmission> findFirstByParticipationIdOrderBySubmissionDateDesc(Long participationId);
-
-    default Optional<ProgrammingSubmission> findFirstWithResultsByParticipationIdOrderBySubmissionDateDesc(Long participationId) {
-        var programmingSubmissionOptional = findFirstByParticipationIdOrderBySubmissionDateDesc(participationId);
-        if (programmingSubmissionOptional.isEmpty()) {
-            return Optional.empty();
-        }
-        var id = programmingSubmissionOptional.get().getId();
-        return findProgrammingSubmissionById(id);
-    }
-
     @EntityGraph(type = LOAD, attributePaths = { "buildLogEntries" })
     Optional<ProgrammingSubmission> findWithEagerBuildLogEntriesById(Long submissionId);
 

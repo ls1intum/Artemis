@@ -159,7 +159,7 @@ public class ExerciseUtilService {
     }
 
     /**
-     * Accesses the first found exercise of a course with the passed type. The course stores exercises in a set, therefore any
+     * Accesses the first found non-team exercise of a course with the passed type. The course stores exercises in a set, therefore any
      * exercise with the corresponding type could be accessed.
      *
      * @param course The course which should be searched for the exercise.
@@ -167,7 +167,20 @@ public class ExerciseUtilService {
      * @return The first exercise which was found in the course and is of the expected type.
      */
     public <T extends Exercise> T getFirstExerciseWithType(Course course, Class<T> clazz) {
-        var exercise = course.getExercises().stream().filter(ex -> ex.getClass().equals(clazz)).findFirst().orElseThrow();
+        var exercise = course.getExercises().stream().filter(ex -> !ex.isTeamMode() && ex.getClass().equals(clazz)).findFirst().orElseThrow();
+        return (T) exercise;
+    }
+
+    /**
+     * Accesses the first found team exercise of a course with the passed type. The course stores exercises in a set, therefore any
+     * exercise with the corresponding type could be accessed.
+     *
+     * @param course The course which should be searched for the exercise.
+     * @param clazz  The class (type) of the exercise to look for.
+     * @return The first exercise which was found in the course and is of the expected type.
+     */
+    public <T extends Exercise> T getFirstTeamExerciseWithType(Course course, Class<T> clazz) {
+        var exercise = course.getExercises().stream().filter(ex -> ex.isTeamMode() && ex.getClass().equals(clazz)).findFirst().orElseThrow();
         return (T) exercise;
     }
 

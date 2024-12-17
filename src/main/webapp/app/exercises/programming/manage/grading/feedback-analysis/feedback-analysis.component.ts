@@ -1,8 +1,9 @@
 import { Component, computed, effect, inject, input, signal, untracked } from '@angular/core';
-import { FeedbackAnalysisService, FeedbackDetail } from './feedback-analysis.service';
+import { FeedbackAnalysisService, FeedbackChannelRequestDTO, FeedbackDetail } from './feedback-analysis.service';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { AlertService } from 'app/core/util/alert.service';
-import { faFilter, faSort, faSortDown, faSortUp, faUpRightAndDownLeftFromCenter, faUsers } from '@fortawesome/free-solid-svg-icons';
+import { faFilter, faMessage, faSort, faSortDown, faSortUp, faUsers } from '@fortawesome/free-solid-svg-icons';
+import { facDetails } from '../../../../../../content/icons/icons';
 import { SearchResult, SortingOrder } from 'app/shared/table/pageable-table';
 import { ArtemisSharedCommonModule } from 'app/shared/shared-common.module';
 import { FeedbackModalComponent } from 'app/exercises/programming/manage/grading/feedback-analysis/Modal/feedback-modal.component';
@@ -11,6 +12,9 @@ import { LocalStorageService } from 'ngx-webstorage';
 import { BaseApiHttpService } from 'app/course/learning-paths/services/base-api-http.service';
 import { SortIconComponent } from 'app/shared/sort/sort-icon.component';
 import { AffectedStudentsModalComponent } from 'app/exercises/programming/manage/grading/feedback-analysis/Modal/feedback-affected-students-modal.component';
+import { FeedbackDetailChannelModalComponent } from 'app/exercises/programming/manage/grading/feedback-analysis/Modal/feedback-detail-channel-modal.component';
+import { ChannelDTO } from 'app/entities/metis/conversation/channel.model';
+import { Router } from '@angular/router';
 
 @Component({
     selector: 'jhi-feedback-analysis',
@@ -23,11 +27,14 @@ import { AffectedStudentsModalComponent } from 'app/exercises/programming/manage
 export class FeedbackAnalysisComponent {
     exerciseTitle = input.required<string>();
     exerciseId = input.required<number>();
+    courseId = input.required<number>();
+    isCommunicationEnabled = input.required<boolean>();
 
     private feedbackAnalysisService = inject(FeedbackAnalysisService);
     private alertService = inject(AlertService);
     private modalService = inject(NgbModal);
     private localStorage = inject(LocalStorageService);
+    private router = inject(Router);
 
     readonly page = signal<number>(1);
     readonly pageSize = signal<number>(25);
@@ -44,8 +51,9 @@ export class FeedbackAnalysisComponent {
     readonly faSortUp = faSortUp;
     readonly faSortDown = faSortDown;
     readonly faFilter = faFilter;
-    readonly faUpRightAndDownLeftFromCenter = faUpRightAndDownLeftFromCenter;
+    readonly facDetails = facDetails;
     readonly faUsers = faUsers;
+    readonly faMessage = faMessage;
     readonly SortingOrder = SortingOrder;
     readonly MAX_FEEDBACK_DETAIL_TEXT_LENGTH = 200;
 
@@ -59,6 +67,8 @@ export class FeedbackAnalysisComponent {
     readonly minCount = signal<number>(0);
     readonly maxCount = signal<number>(0);
     readonly errorCategories = signal<string[]>([]);
+
+    private isFeedbackDetailChannelModalOpen = false;
 
     private readonly debounceLoadData = BaseApiHttpService.debounce(this.loadData.bind(this), 300);
 
@@ -117,7 +127,7 @@ export class FeedbackAnalysisComponent {
     }
 
     openFeedbackModal(feedbackDetail: FeedbackDetail): void {
-        const modalRef = this.modalService.open(FeedbackModalComponent, { centered: true });
+        const modalRef = this.modalService.open(FeedbackModalComponent, { centered: true, size: 'lg' });
         modalRef.componentInstance.feedbackDetail = signal(feedbackDetail);
     }
 
@@ -190,5 +200,41 @@ export class FeedbackAnalysisComponent {
         const modalRef = this.modalService.open(AffectedStudentsModalComponent, { centered: true, size: 'lg' });
         modalRef.componentInstance.exerciseId = this.exerciseId;
         modalRef.componentInstance.feedbackDetail = signal(feedbackDetail);
+    }
+
+    async openFeedbackDetailChannelModal(feedbackDetail: FeedbackDetail): Promise<void> {
+        if (this.isFeedbackDetailChannelModalOpen) {
+            return;
+        }
+        this.isFeedbackDetailChannelModalOpen = true;
+        const modalRef = this.modalService.open(FeedbackDetailChannelModalComponent, { centered: true, size: 'lg' });
+        modalRef.componentInstance.affectedStudentsCount = await this.feedbackAnalysisService.getAffectedStudentCount(this.exerciseId(), feedbackDetail.detailText);
+        modalRef.componentInstance.feedbackDetail = signal(feedbackDetail);
+        modalRef.componentInstance.formSubmitted.subscribe(async ({ channelDto, navigate }: { channelDto: ChannelDTO; navigate: boolean }) => {
+            try {
+                const feedbackChannelRequest: FeedbackChannelRequestDTO = {
+                    channel: channelDto,
+                    feedbackDetailText: feedbackDetail.detailText,
+                };
+                const createdChannel = await this.feedbackAnalysisService.createChannel(this.courseId(), this.exerciseId(), feedbackChannelRequest);
+                const channelName = createdChannel.name;
+                this.alertService.success(this.TRANSLATION_BASE + '.channelSuccess', { channelName });
+                if (navigate) {
+                    const urlTree = this.router.createUrlTree(['courses', this.courseId(), 'communication'], {
+                        queryParams: { conversationId: createdChannel.id },
+                    });
+                    await this.router.navigateByUrl(urlTree);
+                }
+            } catch (error) {
+                this.alertService.error(error);
+            }
+        });
+        try {
+            await modalRef.result;
+        } catch {
+            // modal dismissed
+        } finally {
+            this.isFeedbackDetailChannelModalOpen = false;
+        }
     }
 }

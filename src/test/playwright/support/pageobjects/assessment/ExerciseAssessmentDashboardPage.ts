@@ -13,8 +13,8 @@ export class ExerciseAssessmentDashboardPage {
         await this.page.click('#participate-in-assessment');
     }
 
-    async clickStartNewAssessment() {
-        const startAssessingButton = this.page.locator('#start-new-assessment');
+    async clickStartNewAssessment(assessmentRound: number = 1) {
+        const startAssessingButton = this.page.locator('#start-new-assessment').nth(assessmentRound - 1);
         await Commands.reloadUntilFound(this.page, startAssessingButton);
         await startAssessingButton.click();
     }
@@ -37,5 +37,9 @@ export class ExerciseAssessmentDashboardPage {
 
     async checkComplaintText(complaintText: string) {
         await expect(this.getComplaintText()).toHaveValue(complaintText);
+    }
+
+    async toggleSecondCorrectionRound() {
+        await this.page.getByTestId('toggle-second-correction').click();
     }
 }

@@ -250,6 +250,9 @@ public interface ProgrammingExerciseRepository extends DynamicSpecificationRepos
             """)
     Optional<ProgrammingExercise> findWithEagerStudentParticipationsStudentAndLegalSubmissionsById(@Param("exerciseId") long exerciseId);
 
+    @EntityGraph(type = LOAD, attributePaths = { "templateParticipation", "solutionParticipation", "studentParticipations.team.students", "buildConfig" })
+    Optional<ProgrammingExercise> findWithAllParticipationsAndBuildConfigById(long exerciseId);
+
     @Query("""
             SELECT pe
             FROM ProgrammingExercise pe

@@ -4,7 +4,12 @@ import { DebugElement } from '@angular/core';
 import { BehaviorSubject, of } from 'rxjs';
 import { ArtemisTestModule } from '../../test.module';
 import { ParticipationWebsocketService } from 'app/overview/participation-websocket.service';
-import { ProgrammingSubmissionService, ProgrammingSubmissionState } from 'app/exercises/programming/participate/programming-submission.service';
+import {
+    BuildTimingInfo,
+    ProgrammingSubmissionService,
+    ProgrammingSubmissionState,
+    ProgrammingSubmissionStateObj,
+} from 'app/exercises/programming/participate/programming-submission.service';
 import { MockProgrammingSubmissionService } from '../../helpers/mocks/service/mock-programming-submission.service';
 import { triggerChanges } from '../../helpers/utils/general.utils';
 import { Exercise, ExerciseType } from 'app/entities/exercise.model';
@@ -28,6 +33,8 @@ describe('UpdatingResultComponent', () => {
     let subscribeForLatestResultOfParticipationSubject: BehaviorSubject<Result | undefined>;
 
     let getLatestPendingSubmissionStub: jest.SpyInstance;
+    let getIsLocalCIProfileStub: jest.SpyInstance;
+    let fetchQueueReleaseDateEstimationByParticipationIdStub: jest.SpyInstance;
 
     const exercise = { id: 20 } as Exercise;
     const student = { id: 99 };
@@ -41,6 +48,10 @@ describe('UpdatingResultComponent', () => {
     const newUngradedResult = { id: 15, rated: false } as Result;
 
     const submission = { id: 1 } as Submission;
+    const buildTimingInfo: BuildTimingInfo = {
+        buildStartDate: dayjs().subtract(10, 'second'),
+        estimatedCompletionDate: dayjs().add(10, 'second'),
+    };
 
     beforeEach(() => {
         TestBed.configureTestingModule({
@@ -69,6 +80,10 @@ describe('UpdatingResultComponent', () => {
                 getLatestPendingSubmissionStub = jest
                     .spyOn(programmingSubmissionService, 'getLatestPendingSubmissionByParticipationId')
                     .mockReturnValue(of(programmingSubmissionStateObj));
+                getIsLocalCIProfileStub = jest.spyOn(programmingSubmissionService, 'getIsLocalCIProfile').mockReturnValue(false);
+                fetchQueueReleaseDateEstimationByParticipationIdStub = jest
+                    .spyOn(programmingSubmissionService, 'fetchQueueReleaseDateEstimationByParticipationId')
+                    .mockReturnValue(of(undefined));
             });
     });
 
@@ -153,12 +168,17 @@ describe('UpdatingResultComponent', () => {
 
     it('should set the isBuilding attribute to true if exerciseType is PROGRAMMING and there is a latest pending submission', () => {
         comp.exercise = { id: 99, type: ExerciseType.PROGRAMMING } as Exercise;
-        getLatestPendingSubmissionStub.mockReturnValue(of({ submissionState: ProgrammingSubmissionState.IS_BUILDING_PENDING_SUBMISSION, submission, participationId: 3 }));
+        getLatestPendingSubmissionStub.mockReturnValue(
+            of({ submissionState: ProgrammingSubmissionState.IS_BUILDING_PENDING_SUBMISSION, submission, participationId: 3, buildTimingInfo }),
+        );
         cleanInitializeGraded();
         expect(getLatestPendingSubmissionStub).toHaveBeenCalledOnce();
         expect(getLatestPendingSubmissionStub).toHaveBeenCalledWith(comp.participation.id, comp.exercise.id, true);
         expect(comp.isBuilding).toBeTrue();
         expect(comp.missingResultInfo).toBe(MissingResultInformation.NONE);
+        // LocalCI is not enabled, so the buildStartDate and estimatedCompletionDate should not be set
+        expect(comp.buildStartDate).toBeUndefined();
+        expect(comp.estimatedCompletionDate).toBeUndefined();
     });
 
     it('should set the isBuilding attribute to false if exerciseType is PROGRAMMING and there is no pending submission anymore', () => {
@@ -216,5 +236,33 @@ describe('UpdatingResultComponent', () => {
         cleanInitializeGraded();
         expect(comp.isBuilding).toBeUndefined();
         expect(comp.missingResultInfo).toBe(MissingResultInformation.NONE);
+    });
+
+    it('should set the isQueue and isBuilding attribute to true with correct timing', () => {
+        getIsLocalCIProfileStub.mockReturnValue(true);
+        comp.exercise = { id: 99, type: ExerciseType.PROGRAMMING } as Exercise;
+        const pendingSubmissionSubject = new BehaviorSubject({
+            submissionState: ProgrammingSubmissionState.IS_QUEUED,
+            submission,
+            participationId: 3,
+        } as ProgrammingSubmissionStateObj);
+        getLatestPendingSubmissionStub.mockReturnValue(pendingSubmissionSubject);
+        const queueReleaseDate = dayjs().add(3, 'second');
+        fetchQueueReleaseDateEstimationByParticipationIdStub.mockReturnValue(of(queueReleaseDate));
+        cleanInitializeGraded();
+        expect(getLatestPendingSubmissionStub).toHaveBeenCalledOnce();
+        expect(getLatestPendingSubmissionStub).toHaveBeenCalledWith(comp.participation.id, comp.exercise.id, true);
+
+        expect(comp.isBuilding).toBeFalsy();
+        expect(comp.isQueued).toBeTruthy();
+        expect(comp.missingResultInfo).toBe(MissingResultInformation.NONE);
+        expect(comp.estimatedCompletionDate).toBe(queueReleaseDate);
+
+        // Now the submission is building
+        pendingSubmissionSubject.next({ submissionState: ProgrammingSubmissionState.IS_BUILDING_PENDING_SUBMISSION, submission, participationId: 3, buildTimingInfo });
+        expect(comp.isBuilding).toBeTruthy();
+        expect(comp.isQueued).toBeFalsy();
+        expect(comp.buildStartDate).toBe(buildTimingInfo.buildStartDate);
+        expect(comp.estimatedCompletionDate).toBe(buildTimingInfo.estimatedCompletionDate);
     });
 });

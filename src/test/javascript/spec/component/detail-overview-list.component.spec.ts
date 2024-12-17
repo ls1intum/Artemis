@@ -56,7 +56,7 @@ describe('DetailOverviewList', () => {
     });
 
     it('should initialize and destroy', () => {
-        component.sections = sections;
+        fixture.componentRef.setInput('sections', sections);
         fixture.detectChanges();
         expect(component.headlines).toStrictEqual([{ id: 'headline-1', translationKey: 'headline.1' }]);
         expect(component.headlinesRecord).toStrictEqual({ 'headline.1': 'headline-1' });
@@ -67,7 +67,7 @@ describe('DetailOverviewList', () => {
     });
 
     it('should escape all falsy values', () => {
-        component.sections = [
+        fixture.componentRef.setInput('sections', [
             {
                 headline: 'some-section',
                 details: [
@@ -81,7 +81,7 @@ describe('DetailOverviewList', () => {
                     },
                 ],
             },
-        ];
+        ]);
         fixture.detectChanges();
         const detailListTitleDOMElements = fixture.nativeElement.querySelectorAll('dt[id^=detail-title]');
         expect(detailListTitleDOMElements).toHaveLength(1);

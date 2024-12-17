@@ -27,10 +27,10 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.parallel.ResourceLock;
 import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.mock.mockito.SpyBean;
 import org.springframework.http.HttpStatus;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.TestPropertySource;
+import org.springframework.test.context.bean.override.mockito.MockitoSpyBean;
 
 import com.offbytwo.jenkins.JenkinsServer;
 
@@ -53,7 +53,9 @@ import de.tum.cit.aet.artemis.programming.domain.VcsRepositoryUri;
 import de.tum.cit.aet.artemis.programming.service.ProgrammingMessagingService;
 import de.tum.cit.aet.artemis.programming.service.gitlab.GitLabService;
 import de.tum.cit.aet.artemis.programming.service.jenkins.JenkinsService;
+import de.tum.cit.aet.artemis.programming.service.jenkins.jobs.JenkinsJobPermissionsService;
 
+// TODO: rewrite this test to use LocalVC instead of GitLab
 @ResourceLock("AbstractSpringIntegrationJenkinsGitlabTest")
 // NOTE: we use a common set of active profiles to reduce the number of application launches during testing. This significantly saves time and memory!
 @ActiveProfiles({ SPRING_PROFILE_TEST, PROFILE_ARTEMIS, PROFILE_CORE, PROFILE_SCHEDULING, "gitlab", "jenkins", PROFILE_ATHENA, PROFILE_LTI, PROFILE_AEOLUS, PROFILE_APOLLON })
@@ -64,21 +66,24 @@ import de.tum.cit.aet.artemis.programming.service.jenkins.JenkinsService;
 public abstract class AbstractSpringIntegrationJenkinsGitlabTest extends AbstractArtemisIntegrationTest {
 
     // please only use this to verify method calls using Mockito. Do not mock methods, instead mock the communication with Jenkins using the corresponding RestTemplate.
-    @SpyBean
+    @MockitoSpyBean
     protected JenkinsService continuousIntegrationService;
 
     // please only use this to verify method calls using Mockito. Do not mock methods, instead mock the communication with Gitlab using the corresponding RestTemplate and
     // GitlabApi.
-    @SpyBean
+    @MockitoSpyBean
     protected GitLabService versionControlService;
 
-    @SpyBean
+    @MockitoSpyBean
     protected JenkinsServer jenkinsServer;
 
-    @SpyBean
+    @MockitoSpyBean
+    protected JenkinsJobPermissionsService jenkinsJobPermissionsService;
+
+    @MockitoSpyBean
     protected ProgrammingMessagingService programmingMessagingService;
 
-    @SpyBean
+    @MockitoSpyBean
     protected ResultWebsocketService resultWebsocketService;
 
     @Autowired
@@ -90,10 +95,10 @@ public abstract class AbstractSpringIntegrationJenkinsGitlabTest extends Abstrac
     @Autowired
     protected AeolusRequestMockProvider aeolusRequestMockProvider;
 
-    @SpyBean
+    @MockitoSpyBean
     protected ExamLiveEventsService examLiveEventsService;
 
-    @SpyBean
+    @MockitoSpyBean
     protected GroupNotificationScheduleService groupNotificationScheduleService;
 
     @AfterEach

@@ -11,6 +11,8 @@ import static org.mockito.Mockito.when;
 
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
+import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 
 import org.junit.jupiter.api.AfterEach;
@@ -20,8 +22,13 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 
+import de.tum.cit.aet.artemis.communication.domain.AnswerPost;
+import de.tum.cit.aet.artemis.communication.domain.Post;
+import de.tum.cit.aet.artemis.communication.domain.PostingType;
+import de.tum.cit.aet.artemis.communication.domain.SavedPost;
 import de.tum.cit.aet.artemis.communication.service.ConversationMessagingService;
 import de.tum.cit.aet.artemis.communication.service.PostingService;
+import de.tum.cit.aet.artemis.communication.test_repository.SavedPostTestRepository;
 import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
@@ -43,12 +50,51 @@ class PostingServiceUnitTest {
 
     private AutoCloseable closeable;
 
+    @Mock
+    private SavedPostTestRepository savedPostRepository;
+
+    private User testUser;
+
+    private Post testPost;
+
+    private SavedPost savedPost;
+
+    private SavedPost savedAnswer;
+
+    private SavedPost savedAnswer2;
+
     @BeforeEach
     void initTestCase() throws NoSuchMethodException {
         closeable = MockitoAnnotations.openMocks(this);
 
         parseUserMentions = PostingService.class.getDeclaredMethod("parseUserMentions", Course.class, String.class);
         parseUserMentions.setAccessible(true);
+
+        testUser = new User();
+        testUser.setId(1L);
+
+        testPost = new Post();
+        testPost.setId(2L);
+
+        AnswerPost testAnswer1 = new AnswerPost();
+        testAnswer1.setId(3L);
+
+        AnswerPost testAnswer2 = new AnswerPost();
+        testAnswer2.setId(4L);
+
+        Set<AnswerPost> answers = new HashSet<>();
+        answers.add(testAnswer1);
+        answers.add(testAnswer2);
+        testPost.setAnswers(answers);
+
+        savedPost = new SavedPost();
+        savedPost.setPostId(testPost.getId());
+        savedAnswer = new SavedPost();
+        savedAnswer.setPostId(testAnswer1.getId());
+        savedAnswer2 = new SavedPost();
+        savedAnswer2.setPostId(testAnswer2.getId());
+
+        when(userRepository.getUser()).thenReturn(testUser);
     }
 
     @AfterEach
@@ -111,7 +157,7 @@ class PostingServiceUnitTest {
     void testParseUserMentionsWithInvalidName() {
         Course course = new Course();
         String content = "[user]Test User 2(test_user_1)[/user]";
-        User user = this.createUser("Test User 1", "test_user_1");  // Different name than mentioned
+        User user = createUser("Test User 1", "test_user_1");  // Different name than mentioned
 
         setupUserRepository(Set.of("test_user_1"), Set.of(user));
         when(authorizationCheckService.isAtLeastStudentInCourse(eq(course), any(User.class))).thenReturn(true);
@@ -123,7 +169,7 @@ class PostingServiceUnitTest {
     void testParseUserMentionsWithUserNotInCourse() {
         Course course = new Course();
         String content = "[user]Test User 1(test_user_1)[/user]";
-        User user = this.createUser("Test User 1", "test_user_1");
+        User user = createUser("Test User 1", "test_user_1");
 
         setupUserRepository(Set.of("test_user_1"), Set.of(user));
         when(authorizationCheckService.isAtLeastStudentInCourse(eq(course), any(User.class))).thenReturn(false);
@@ -170,6 +216,30 @@ class PostingServiceUnitTest {
 
         // Should not be recognized as user mention and therefore should throw now exception
         parseUserMentions.invoke(postingService, course, content);
+    }
+
+    @Test
+    void shouldSetCorrectFlagsWhenPostsAreSaved() {
+        when(savedPostRepository.findSavedPostIdsByUserIdAndPostType(testUser.getId(), PostingType.POST)).thenReturn(List.of(savedPost.getPostId()));
+
+        when(savedPostRepository.findSavedPostIdsByUserIdAndPostType(testUser.getId(), PostingType.ANSWER)).thenReturn(List.of(savedAnswer.getPostId(), savedAnswer2.getPostId()));
+
+        postingService.preparePostForBroadcast(testPost);
+
+        assertThat(testPost.getIsSaved()).isTrue();
+        testPost.getAnswers().forEach(answer -> assertThat(answer.getIsSaved()).isTrue());
+    }
+
+    @Test
+    void shouldSetCorrectFlagsWhenPostsAreNotSaved() {
+        when(savedPostRepository.findSavedPostIdsByUserIdAndPostType(testUser.getId(), PostingType.POST)).thenReturn(List.of());
+
+        when(savedPostRepository.findSavedPostIdsByUserIdAndPostType(testUser.getId(), PostingType.ANSWER)).thenReturn(List.of());
+
+        postingService.preparePostForBroadcast(testPost);
+
+        assertThat(testPost.getIsSaved()).isFalse();
+        testPost.getAnswers().forEach(answer -> assertThat(answer.getIsSaved()).isFalse());
     }
 
     /**

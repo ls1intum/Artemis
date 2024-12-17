@@ -29,10 +29,9 @@ import { DetailOverviewNavigationBarComponent } from 'app/shared/detail-overview
 import { ScienceDirective } from 'app/shared/science/science.directive';
 
 @NgModule({
-    imports: [ArtemisSharedLibsModule, ArtemisSharedCommonModule, ArtemisSharedPipesModule, RouterModule],
+    imports: [ArtemisSharedLibsModule, ArtemisSharedCommonModule, ArtemisSharedPipesModule, RouterModule, LoadingIndicatorContainerComponent],
     declarations: [
         DetailOverviewNavigationBarComponent,
-        LoadingIndicatorContainerComponent,
         CircularProgressBarComponent,
         CompetencySelectionComponent,
         AdditionalFeedbackComponent,

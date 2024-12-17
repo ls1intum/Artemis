@@ -3,10 +3,13 @@ import { VideoUnitFormComponent, VideoUnitFormData } from 'app/lecture/lecture-u
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
-import { MockComponent, MockPipe } from 'ng-mocks';
+import { MockComponent, MockModule, MockPipe } from 'ng-mocks';
 import { FormDateTimePickerComponent } from 'app/shared/date-time-picker/date-time-picker.component';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { CompetencySelectionComponent } from 'app/shared/competency-selection/competency-selection.component';
+import { OwlDateTimeModule, OwlNativeDateTimeModule } from '@danielmoncada/angular-datetime-picker';
+import { ArtemisTestModule } from '../../../test.module';
+import { NgbTooltipModule } from '@ng-bootstrap/ng-bootstrap';
 
 describe('VideoUnitFormComponent', () => {
     const validYouTubeUrl = 'https://www.youtube.com/watch?v=8iU8LPEa4o0';
@@ -16,11 +19,11 @@ describe('VideoUnitFormComponent', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ReactiveFormsModule, FormsModule],
+            imports: [ArtemisTestModule, ReactiveFormsModule, FormsModule, MockModule(NgbTooltipModule), MockModule(OwlDateTimeModule), MockModule(OwlNativeDateTimeModule)],
             declarations: [
                 VideoUnitFormComponent,
+                FormDateTimePickerComponent,
                 MockPipe(ArtemisTranslatePipe),
-                MockComponent(FormDateTimePickerComponent),
                 MockComponent(FaIconComponent),
                 MockComponent(CompetencySelectionComponent),
             ],

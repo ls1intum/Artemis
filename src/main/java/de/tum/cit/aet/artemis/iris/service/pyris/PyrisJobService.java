@@ -3,6 +3,7 @@ package de.tum.cit.aet.artemis.iris.service.pyris;
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_IRIS;
 
 import java.security.SecureRandom;
+import java.util.Collection;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
 
@@ -93,11 +94,14 @@ public class PyrisJobService {
     /**
      * Adds a new ingestion webhook job to the job map with a timeout.
      *
+     * @param courseId      the ID of the course associated with the webhook job
+     * @param lectureId     the ID of the lecture associated with the webhook job
+     * @param lectureUnitId the ID of the lecture unit associated with the webhook job
      * @return a unique token identifying the created webhook job
      */
-    public String addIngestionWebhookJob() {
+    public String addIngestionWebhookJob(long courseId, long lectureId, long lectureUnitId) {
         var token = generateJobIdToken();
-        var job = new IngestionWebhookJob(token);
+        var job = new IngestionWebhookJob(token, courseId, lectureId, lectureUnitId);
         long timeoutWebhookJob = 60;
         TimeUnit unitWebhookJob = TimeUnit.MINUTES;
         jobMap.put(token, job, timeoutWebhookJob, unitWebhookJob);
@@ -120,6 +124,15 @@ public class PyrisJobService {
      */
     public void updateJob(PyrisJob job) {
         jobMap.put(job.jobId(), job);
+    }
+
+    /**
+     * Get all current jobs.
+     *
+     * @return the all current jobs
+     */
+    public Collection<PyrisJob> currentJobs() {
+        return jobMap.values();
     }
 
     /**

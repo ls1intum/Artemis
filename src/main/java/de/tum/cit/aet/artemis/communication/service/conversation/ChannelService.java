@@ -17,18 +17,21 @@ import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 
 import de.tum.cit.aet.artemis.communication.domain.ConversationParticipant;
+import de.tum.cit.aet.artemis.communication.domain.NotificationType;
 import de.tum.cit.aet.artemis.communication.domain.conversation.Channel;
 import de.tum.cit.aet.artemis.communication.dto.ChannelDTO;
 import de.tum.cit.aet.artemis.communication.dto.MetisCrudAction;
 import de.tum.cit.aet.artemis.communication.repository.ConversationParticipantRepository;
 import de.tum.cit.aet.artemis.communication.repository.conversation.ChannelRepository;
 import de.tum.cit.aet.artemis.communication.service.conversation.errors.ChannelNameDuplicateException;
+import de.tum.cit.aet.artemis.communication.service.notifications.SingleUserNotificationService;
 import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.core.repository.UserRepository;
 import de.tum.cit.aet.artemis.exam.domain.Exam;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
+import de.tum.cit.aet.artemis.exercise.repository.StudentParticipationRepository;
 import de.tum.cit.aet.artemis.lecture.domain.Lecture;
 
 @Profile(PROFILE_CORE)
@@ -47,12 +50,18 @@ public class ChannelService {
 
     private final UserRepository userRepository;
 
+    private final StudentParticipationRepository studentParticipationRepository;
+
+    private final SingleUserNotificationService singleUserNotificationService;
+
     public ChannelService(ConversationParticipantRepository conversationParticipantRepository, ChannelRepository channelRepository, ConversationService conversationService,
-            UserRepository userRepository) {
+            UserRepository userRepository, StudentParticipationRepository studentParticipationRepository, SingleUserNotificationService singleUserNotificationService) {
         this.conversationParticipantRepository = conversationParticipantRepository;
         this.channelRepository = channelRepository;
         this.conversationService = conversationService;
         this.userRepository = userRepository;
+        this.studentParticipationRepository = studentParticipationRepository;
+        this.singleUserNotificationService = singleUserNotificationService;
     }
 
     /**
@@ -404,5 +413,41 @@ public class ChannelService {
             channelName = channelName.substring(0, 30);
         }
         return channelName;
+    }
+
+    /**
+     * Creates a feedback-specific channel for an exercise within a course.
+     *
+     * @param course             in which the channel is being created.
+     * @param exerciseId         of the exercise associated with the feedback channel.
+     * @param channelDTO         containing the properties of the channel to be created, such as name, description, and visibility.
+     * @param feedbackDetailText used to identify the students affected by the feedback.
+     * @param requestingUser     initiating the channel creation request.
+     * @return the created {@link Channel} object with its properties.
+     * @throws BadRequestAlertException if the channel name starts with an invalid prefix (e.g., "$").
+     */
+    public Channel createFeedbackChannel(Course course, Long exerciseId, ChannelDTO channelDTO, String feedbackDetailText, User requestingUser) {
+        Channel channelToCreate = new Channel();
+        channelToCreate.setName(channelDTO.getName());
+        channelToCreate.setIsPublic(channelDTO.getIsPublic());
+        channelToCreate.setIsAnnouncementChannel(channelDTO.getIsAnnouncementChannel());
+        channelToCreate.setIsArchived(false);
+        channelToCreate.setDescription(channelDTO.getDescription());
+
+        if (channelToCreate.getName() != null && channelToCreate.getName().trim().startsWith("$")) {
+            throw new BadRequestAlertException("User generated channels cannot start with $", "channel", "channelNameInvalid");
+        }
+
+        Channel createdChannel = createChannel(course, channelToCreate, Optional.of(requestingUser));
+
+        List<String> userLogins = studentParticipationRepository.findAffectedLoginsByFeedbackDetailText(exerciseId, feedbackDetailText);
+
+        if (userLogins != null && !userLogins.isEmpty()) {
+            var registeredUsers = registerUsersToChannel(false, false, false, userLogins, course, createdChannel);
+            registeredUsers.forEach(user -> singleUserNotificationService.notifyClientAboutConversationCreationOrDeletion(createdChannel, user, requestingUser,
+                    NotificationType.CONVERSATION_ADD_USER_CHANNEL));
+        }
+
+        return createdChannel;
     }
 }

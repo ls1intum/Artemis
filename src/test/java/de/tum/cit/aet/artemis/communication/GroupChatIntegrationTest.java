@@ -111,6 +111,7 @@ class GroupChatIntegrationTest extends AbstractConversationTest {
         GroupChatDTO chat = createGroupChatWithStudent1To3();
         // when
         var post = this.postInConversation(chat.getId(), "student1");
+        post.setIsSaved(false);
         // then
         verify(websocketMessagingService, timeout(2000).times(3)).sendMessage(anyString(),
                 (Object) argThat(argument -> argument instanceof PostDTO postDTO && postDTO.post().equals(post)));

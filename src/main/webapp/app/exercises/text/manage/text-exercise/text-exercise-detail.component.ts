@@ -1,4 +1,4 @@
-import { Component, OnDestroy, OnInit } from '@angular/core';
+import { Component, OnDestroy, OnInit, inject } from '@angular/core';
 import { SafeHtml } from '@angular/platform-browser';
 import { ActivatedRoute } from '@angular/router';
 import { HttpResponse } from '@angular/common/http';
@@ -29,6 +29,12 @@ import {
     templateUrl: './text-exercise-detail.component.html',
 })
 export class TextExerciseDetailComponent implements OnInit, OnDestroy {
+    private route = inject(ActivatedRoute);
+    private eventManager = inject(EventManager);
+    private artemisMarkdownService = inject(ArtemisMarkdownService);
+    private textExerciseService = inject(TextExerciseService);
+    private statisticsService = inject(StatisticsService);
+
     readonly documentationType: DocumentationType = 'Text';
 
     readonly AssessmentType = AssessmentType;
@@ -47,14 +53,6 @@ export class TextExerciseDetailComponent implements OnInit, OnDestroy {
 
     private subscription: Subscription;
     private eventSubscriber: Subscription;
-
-    constructor(
-        private eventManager: EventManager,
-        private textExerciseService: TextExerciseService,
-        private route: ActivatedRoute,
-        private artemisMarkdown: ArtemisMarkdownService,
-        private statisticsService: StatisticsService,
-    ) {}
 
     /**
      * Loads the text exercise and subscribes to changes of it on component initialization.
@@ -78,9 +76,9 @@ export class TextExerciseDetailComponent implements OnInit, OnDestroy {
             this.isExamExercise = !!this.textExercise.exerciseGroup;
             this.course = this.isExamExercise ? this.textExercise.exerciseGroup?.exam?.course : this.textExercise.course;
 
-            this.formattedGradingInstructions = this.artemisMarkdown.safeHtmlForMarkdown(this.textExercise.gradingInstructions);
-            this.formattedProblemStatement = this.artemisMarkdown.safeHtmlForMarkdown(this.textExercise.problemStatement);
-            this.formattedExampleSolution = this.artemisMarkdown.safeHtmlForMarkdown(this.textExercise.exampleSolution);
+            this.formattedGradingInstructions = this.artemisMarkdownService.safeHtmlForMarkdown(this.textExercise.gradingInstructions);
+            this.formattedProblemStatement = this.artemisMarkdownService.safeHtmlForMarkdown(this.textExercise.problemStatement);
+            this.formattedExampleSolution = this.artemisMarkdownService.safeHtmlForMarkdown(this.textExercise.exampleSolution);
             this.detailOverviewSections = this.getExerciseDetailSections();
         });
         this.statisticsService.getExerciseStatistics(exerciseId).subscribe((statistics: ExerciseManagementStatisticsDto) => {

@@ -24,6 +24,31 @@ export class ExamParticipationActions {
         await expect(exercise.locator('.exercise-title')).toContainText(title);
     }
 
+    async checkExerciseProblemStatementDifference(differenceSlices: TextDifferenceSlice[]) {
+        const problemStatementCard = this.page.locator('.card', { hasText: 'Problem Statement' });
+        const problemStatementText = problemStatementCard.locator('.markdown-preview').locator('p');
+
+        if ((await problemStatementText.locator('.diffmod').count()) > 0) {
+            for (const slice of differenceSlices) {
+                switch (slice.differenceType) {
+                    case TextDifferenceType.ADD:
+                        await expect(problemStatementText.locator('ins').getByText(slice.text)).toBeVisible();
+                        break;
+                    case TextDifferenceType.DELETE:
+                        await expect(problemStatementText.locator('del').getByText(slice.text)).toBeVisible();
+                        break;
+                    case TextDifferenceType.NONE:
+                        await expect(problemStatementText).toContainText(slice.text);
+                        break;
+                }
+            }
+        } else {
+            const firstSlice = differenceSlices[0];
+            expect(firstSlice.differenceType).toBe(TextDifferenceType.NONE);
+            await expect(problemStatementText).toHaveText(firstSlice.text);
+        }
+    }
+
     async checkExamTitle(title: string) {
         await expect(this.page.locator('#exam-title')).toContainText(title);
     }
@@ -88,4 +113,17 @@ export class ExamParticipationActions {
         await gradingKeyCard.locator('button.rotate-icon').click();
         await expect(gradingKeyCard.locator('tr.highlighted').locator('td', { hasText: gradeName })).toBeVisible();
     }
+}
+
+export class TextDifferenceSlice {
+    constructor(
+        public text: string,
+        public differenceType: TextDifferenceType,
+    ) {}
+}
+
+export enum TextDifferenceType {
+    NONE,
+    ADD,
+    DELETE,
 }

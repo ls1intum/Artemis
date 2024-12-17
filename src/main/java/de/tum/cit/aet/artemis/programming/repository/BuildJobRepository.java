@@ -104,4 +104,20 @@ public interface BuildJobRepository extends ArtemisJpaRepository<BuildJob, Long>
             WHERE e.id IN :exerciseIds
             """)
     long countBuildJobsByExerciseIds(@Param("exerciseIds") List<Long> exerciseIds);
+
+    @Query("""
+            SELECT b
+            FROM BuildJob b
+            WHERE b.exerciseId = :exerciseId AND b.buildStatus = 'SUCCESSFUL'
+            ORDER BY b.buildStartDate DESC
+            LIMIT :limit
+            """)
+    List<BuildJob> fetchSuccessfulBuildJobsByExerciseIdWithLimit(@Param("exerciseId") Long exerciseId, @Param("limit") int limit);
+
+    @Query("""
+            SELECT COUNT(b)
+            FROM BuildJob b
+            WHERE b.exerciseId = :exerciseId AND b.buildStatus = 'SUCCESSFUL'
+            """)
+    long fetchSuccessfulBuildJobCountByExerciseId(@Param("exerciseId") Long exerciseId);
 }

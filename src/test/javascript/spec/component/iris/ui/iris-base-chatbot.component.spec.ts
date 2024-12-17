@@ -480,6 +480,96 @@ describe('IrisBaseChatbotComponent', () => {
         expect(suggestionButtons).toHaveLength(0);
     });
 
+    it('should not render suggestions if isLoading is true', () => {
+        // Arrange
+        const expectedSuggestions = ['suggestion1', 'suggestion2'];
+        const mockMessages = [mockClientMessage, mockServerMessage];
+
+        jest.spyOn(chatService, 'currentSuggestions').mockReturnValue(of(expectedSuggestions));
+        jest.spyOn(chatService, 'currentMessages').mockReturnValue(of(mockMessages));
+
+        // Act
+        component.ngOnInit();
+        component.isLoading = true;
+        fixture.detectChanges();
+
+        // Assert
+        const suggestionButtons = fixture.nativeElement.querySelectorAll('.suggestion-button');
+        expect(suggestionButtons).toHaveLength(0);
+    });
+
+    it('should not render suggestions if userAccepted is false', () => {
+        // Arrange
+        const expectedSuggestions = ['suggestion1', 'suggestion2'];
+        const mockMessages = [mockClientMessage, mockServerMessage];
+
+        jest.spyOn(chatService, 'currentSuggestions').mockReturnValue(of(expectedSuggestions));
+        jest.spyOn(chatService, 'currentMessages').mockReturnValue(of(mockMessages));
+
+        // Act
+        component.ngOnInit();
+        component.userAccepted = false;
+        fixture.detectChanges();
+
+        // Assert
+        const suggestionButtons = fixture.nativeElement.querySelectorAll('.suggestion-button');
+        expect(suggestionButtons).toHaveLength(0);
+    });
+
+    it('should not render suggestions if the rate limit is exceeded', () => {
+        // Arrange
+        const expectedSuggestions = ['suggestion1', 'suggestion2'];
+        const mockMessages = [mockClientMessage, mockServerMessage];
+
+        jest.spyOn(chatService, 'currentSuggestions').mockReturnValue(of(expectedSuggestions));
+        jest.spyOn(chatService, 'currentMessages').mockReturnValue(of(mockMessages));
+
+        // Act
+        component.ngOnInit();
+        component.rateLimitInfo = { currentMessageCount: 100, rateLimit: 100, rateLimitTimeframeHours: 1 };
+        fixture.detectChanges();
+
+        // Assert
+        const suggestionButtons = fixture.nativeElement.querySelectorAll('.suggestion-button');
+        expect(suggestionButtons).toHaveLength(0);
+    });
+
+    it('should not render suggestions if the user is not active', () => {
+        // Arrange
+        const expectedSuggestions = ['suggestion1', 'suggestion2'];
+        const mockMessages = [mockClientMessage, mockServerMessage];
+
+        jest.spyOn(chatService, 'currentSuggestions').mockReturnValue(of(expectedSuggestions));
+        jest.spyOn(chatService, 'currentMessages').mockReturnValue(of(mockMessages));
+
+        // Act
+        component.ngOnInit();
+        component.active = false;
+        fixture.detectChanges();
+
+        // Assert
+        const suggestionButtons = fixture.nativeElement.querySelectorAll('.suggestion-button');
+        expect(suggestionButtons).toHaveLength(0);
+    });
+
+    it('should not render suggestions if hasActiveStage is true', () => {
+        // Arrange
+        const expectedSuggestions = ['suggestion1', 'suggestion2'];
+        const mockMessages = [mockClientMessage, mockServerMessage];
+
+        jest.spyOn(chatService, 'currentSuggestions').mockReturnValue(of(expectedSuggestions));
+        jest.spyOn(chatService, 'currentMessages').mockReturnValue(of(mockMessages));
+
+        // Act
+        component.ngOnInit();
+        component.hasActiveStage = true;
+        fixture.detectChanges();
+
+        // Assert
+        const suggestionButtons = fixture.nativeElement.querySelectorAll('.suggestion-button');
+        expect(suggestionButtons).toHaveLength(0);
+    });
+
     describe('clear chat session', () => {
         it('should open confirm modal when click on the clear button', fakeAsync(() => {
             jest.spyOn(httpService, 'getCurrentSessionOrCreateIfNotExists').mockReturnValueOnce(of(mockServerSessionHttpResponse));

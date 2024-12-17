@@ -15,6 +15,7 @@ import de.tum.cit.aet.artemis.communication.dto.PostDTO;
 import de.tum.cit.aet.artemis.communication.repository.AnswerPostRepository;
 import de.tum.cit.aet.artemis.communication.repository.ConversationParticipantRepository;
 import de.tum.cit.aet.artemis.communication.repository.PostRepository;
+import de.tum.cit.aet.artemis.communication.repository.SavedPostRepository;
 import de.tum.cit.aet.artemis.communication.service.PostingService;
 import de.tum.cit.aet.artemis.communication.service.WebsocketMessagingService;
 import de.tum.cit.aet.artemis.core.domain.Course;
@@ -40,8 +41,9 @@ public class PlagiarismAnswerPostService extends PostingService {
 
     protected PlagiarismAnswerPostService(CourseRepository courseRepository, AuthorizationCheckService authorizationCheckService, UserRepository userRepository,
             AnswerPostRepository answerPostRepository, PostRepository postRepository, ExerciseRepository exerciseRepository, LectureRepository lectureRepository,
-            WebsocketMessagingService websocketMessagingService, ConversationParticipantRepository conversationParticipantRepository) {
-        super(courseRepository, userRepository, exerciseRepository, lectureRepository, authorizationCheckService, websocketMessagingService, conversationParticipantRepository);
+            WebsocketMessagingService websocketMessagingService, ConversationParticipantRepository conversationParticipantRepository, SavedPostRepository savedPostRepository) {
+        super(courseRepository, userRepository, exerciseRepository, lectureRepository, authorizationCheckService, websocketMessagingService, conversationParticipantRepository,
+                savedPostRepository);
         this.answerPostRepository = answerPostRepository;
         this.postRepository = postRepository;
     }
@@ -164,7 +166,7 @@ public class PlagiarismAnswerPostService extends PostingService {
 
         // delete
         answerPostRepository.deleteById(answerPostId);
-
+        preparePostForBroadcast(post);
         broadcastForPost(new PostDTO(post, MetisCrudAction.UPDATE), course.getId(), null, null);
     }
 

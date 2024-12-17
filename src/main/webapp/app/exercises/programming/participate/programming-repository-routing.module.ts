@@ -13,9 +13,6 @@ const routes: Routes = [
         data: {
             authorities: [Authority.USER],
             pageTitle: 'artemisApp.repository.title',
-            flushRepositoryCacheAfter: 900000, // 15 min
-            participationCache: {},
-            repositoryCache: {},
         },
         canActivate: [UserRouteAccessService, LocalVCGuard],
     },
@@ -25,9 +22,6 @@ const routes: Routes = [
         data: {
             authorities: [Authority.USER],
             pageTitle: 'artemisApp.repository.commitHistory.title',
-            flushRepositoryCacheAfter: 900000, // 15 min
-            participationCache: {},
-            repositoryCache: {},
         },
         canActivate: [UserRouteAccessService, LocalVCGuard],
     },
@@ -37,9 +31,6 @@ const routes: Routes = [
         data: {
             authorities: [Authority.USER],
             pageTitle: 'artemisApp.repository.commitHistory.commitDetails.title',
-            flushRepositoryCacheAfter: 900000, // 15 min
-            participationCache: {},
-            repositoryCache: {},
         },
         canActivate: [UserRouteAccessService, LocalVCGuard],
     },
@@ -49,9 +40,6 @@ const routes: Routes = [
         data: {
             authorities: [Authority.ADMIN, Authority.INSTRUCTOR, Authority.TA],
             pageTitle: 'artemisApp.repository.title',
-            flushRepositoryCacheAfter: 900000, // 15 min
-            participationCache: {},
-            repositoryCache: {},
         },
         canActivate: [UserRouteAccessService, LocalVCGuard],
     },

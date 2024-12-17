@@ -63,8 +63,9 @@ export class StudentExamDetailComponent implements OnInit, OnDestroy {
             .subscribe(([data, params, url]) => {
                 this.examId = params.examId;
                 this.courseId = params.courseId;
-                this.setStudentExamWithGrade(data.studentExam);
-                this.isTestExam = data.studentExam.exam?.testExam;
+                const studentExamWithGrade = data.studentExam as StudentExamWithGradeDTO;
+                this.setStudentExamWithGrade(studentExamWithGrade);
+                this.isTestExam = studentExamWithGrade.studentExam?.exam?.testExam || false;
                 this.isTestRun = url[1]?.toString() === 'test-runs';
             });
     }
@@ -215,7 +216,7 @@ export class StudentExamDetailComponent implements OnInit, OnDestroy {
                     this.isSaving = false;
                 },
                 error: () => {
-                    this.alertService.error('artemisApp.studentExamDetail.togglefailed');
+                    this.alertService.error('artemisApp.studentExamDetail.toggleFailed');
                     this.isSaving = false;
                 },
             });

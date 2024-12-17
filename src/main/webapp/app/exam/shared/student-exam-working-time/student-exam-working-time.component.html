@@ -1,6 +1,6 @@
 <span>
     {{ studentExam.workingTime! | artemisDurationFromSeconds }}
-    @if (!isTestRun && percentDifference !== 0) {
+    @if (!isTestRun && !isTestExam && percentDifference !== 0) {
         ({{ percentDifference > 0 ? '+' : '' }}{{ percentDifference }}&thinsp;%)
     }
 </span>

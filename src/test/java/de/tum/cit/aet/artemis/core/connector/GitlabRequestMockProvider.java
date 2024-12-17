@@ -108,6 +108,8 @@ import de.tum.cit.aet.artemis.programming.util.ProgrammingExerciseUtilService;
 
 @Component
 @Profile("gitlab")
+// Gitlab support will be removed in 8.0.0. Please migrate to LocalVC using e.g. the PR https://github.com/ls1intum/Artemis/pull/8972
+@Deprecated(since = "7.5.0", forRemoval = true)
 public class GitlabRequestMockProvider {
 
     private static final Logger log = LoggerFactory.getLogger(GitlabRequestMockProvider.class);
@@ -129,6 +131,7 @@ public class GitlabRequestMockProvider {
 
     private MockRestServiceServer mockServerShortTimeout;
 
+    // NOTE: we currently cannot convert this into @MockitoSpyBean because then @InjectMocks doesn't work
     @SpyBean
     @InjectMocks
     private GitLabApi gitLabApi;
@@ -154,6 +157,7 @@ public class GitlabRequestMockProvider {
     @Mock
     private PipelineApi pipelineApi;
 
+    // NOTE: we currently cannot convert this into @MockitoSpyBean because then @InjectMocks (see above) doesn't work
     @SpyBean
     private GitLabUserManagementService gitLabUserManagementService;
 

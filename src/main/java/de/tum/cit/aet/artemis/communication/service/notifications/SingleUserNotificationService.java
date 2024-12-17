@@ -443,21 +443,32 @@ public class SingleUserNotificationService {
             usersInvolved.add(post.getAuthor());
         }
 
-        mentionedUsers.stream().filter(user -> {
-            boolean isChannelAndCourseWide = post.getConversation() instanceof Channel channel && channel.getIsCourseWide();
-            boolean isChannelVisibleToStudents = !(post.getConversation() instanceof Channel channel) || conversationService.isChannelVisibleToStudents(channel);
-            boolean isChannelVisibleToMentionedUser = isChannelVisibleToStudents
-                    || authorizationCheckService.isAtLeastTeachingAssistantInCourse(post.getConversation().getCourse(), user);
-
-            // Only send a notification to the mentioned user if...
-            // (for course-wide channels) ...the course-wide channel is visible
-            // (for all other cases) ...the user is a member of the conversation
-            return (isChannelAndCourseWide && isChannelVisibleToMentionedUser) || conversationService.isMember(post.getConversation().getId(), user.getId());
-        }).forEach(mentionedUser -> notifyUserAboutNewMessageReply(savedAnswerMessage, notification, mentionedUser, author, CONVERSATION_USER_MENTIONED));
+        filterAllowedRecipientsInMentionedUsers(mentionedUsers, post.getConversation())
+                .forEach(mentionedUser -> notifyUserAboutNewMessageReply(savedAnswerMessage, notification, mentionedUser, author, CONVERSATION_USER_MENTIONED));
 
         Conversation conv = conversationService.getConversationById(post.getConversation().getId());
         usersInvolved.stream().filter(userInvolved -> !mentionedUsers.contains(userInvolved))
                 .forEach(userInvolved -> notifyUserAboutNewMessageReply(savedAnswerMessage, notification, userInvolved, author, getAnswerMessageNotificationType(conv)));
+    }
+
+    /**
+     * Filters which of the mentioned users are permitted to receive a notification
+     *
+     * @param mentionedUsers users mentioned in the answer message
+     * @param conversation   the conversation of the created post/notification, used for filtering
+     * @return the stream of mentioned users which are permitted to receive the notification for the given conversation
+     */
+    public Stream<User> filterAllowedRecipientsInMentionedUsers(Set<User> mentionedUsers, Conversation conversation) {
+        return mentionedUsers.stream().filter(user -> {
+            boolean isChannelAndCourseWide = conversation instanceof Channel channel && channel.getIsCourseWide();
+            boolean isChannelVisibleToStudents = !(conversation instanceof Channel channel) || conversationService.isChannelVisibleToStudents(channel);
+            boolean isChannelVisibleToMentionedUser = isChannelVisibleToStudents || authorizationCheckService.isAtLeastTeachingAssistantInCourse(conversation.getCourse(), user);
+
+            // Only send a notification to the mentioned user if...
+            // (for course-wide channels) ...the course-wide channel is visible
+            // (for all other cases) ...the user is a member of the conversation
+            return (isChannelAndCourseWide && isChannelVisibleToMentionedUser) || conversationService.isMember(conversation.getId(), user.getId());
+        });
     }
 
     /**

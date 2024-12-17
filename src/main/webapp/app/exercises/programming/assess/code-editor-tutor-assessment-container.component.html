@@ -98,12 +98,18 @@
         </ng-template>
         <ng-template #editorToolbar>
             <ng-container *jhiExtensionPoint="overrideExportGoToRepository">
+                @if (isAtLeastEditor && localVCEnabled && !isTestRun) {
+                    <a class="btn btn-secondary btn-sm me-2 open-repository-button" [routerLink]="localRepositoryLink" target="_blank" rel="noopener noreferrer">
+                        <fa-icon [icon]="faExternalLink" />
+                        <span jhiTranslate="artemisApp.exerciseAssessmentDashboard.programmingExercise.goToRepo"></span>
+                    </a>
+                }
                 <jhi-programming-assessment-repo-export
                     [programmingExercises]="[exercise]"
                     [singleParticipantMode]="true"
                     [participationIdList]="participation ? [participation!.id!] : []"
                 />
-                @if (!localVCEnabled) {
+                @if (isAtLeastEditor && !localVCEnabled) {
                     <a
                         class="ms-2 me-5"
                         href="{{ participation?.userIndependentRepositoryUri }}"

@@ -17,6 +17,7 @@ import org.springframework.stereotype.Service;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
 import de.tum.cit.aet.artemis.iris.domain.settings.IrisChatSubSettings;
 import de.tum.cit.aet.artemis.iris.domain.settings.IrisCompetencyGenerationSubSettings;
+import de.tum.cit.aet.artemis.iris.domain.settings.IrisCourseChatSubSettings;
 import de.tum.cit.aet.artemis.iris.domain.settings.IrisCourseSettings;
 import de.tum.cit.aet.artemis.iris.domain.settings.IrisExerciseSettings;
 import de.tum.cit.aet.artemis.iris.domain.settings.IrisLectureIngestionSubSettings;
@@ -26,6 +27,7 @@ import de.tum.cit.aet.artemis.iris.domain.settings.IrisSubSettings;
 import de.tum.cit.aet.artemis.iris.domain.settings.IrisTextExerciseChatSubSettings;
 import de.tum.cit.aet.artemis.iris.dto.IrisCombinedChatSubSettingsDTO;
 import de.tum.cit.aet.artemis.iris.dto.IrisCombinedCompetencyGenerationSubSettingsDTO;
+import de.tum.cit.aet.artemis.iris.dto.IrisCombinedCourseChatSubSettingsDTO;
 import de.tum.cit.aet.artemis.iris.dto.IrisCombinedLectureIngestionSubSettingsDTO;
 import de.tum.cit.aet.artemis.iris.dto.IrisCombinedTextExerciseChatSubSettingsDTO;
 
@@ -51,6 +53,7 @@ public class IrisSubSettingsService {
      * - If the user is not an admin the rate limit will not be updated.
      * - If the user is not an admin the allowed models will not be updated.
      * - If the user is not an admin the preferred model will only be updated if it is included in the allowed models.
+     * - If the user is not an admin the disabled proactive events will only be updated if the settings are exercise or course settings.
      *
      * @param currentSettings Current chat sub settings.
      * @param newSettings     Updated chat sub settings.
@@ -79,6 +82,13 @@ public class IrisSubSettingsService {
         if (authCheckService.isAdmin()) {
             currentSettings.setRateLimit(newSettings.getRateLimit());
             currentSettings.setRateLimitTimeframeHours(newSettings.getRateLimitTimeframeHours());
+        }
+        if (authCheckService.isAdmin() && settingsType == IrisSettingsType.GLOBAL) {
+            currentSettings.setDisabledProactiveEvents(newSettings.getDisabledProactiveEvents());
+
+        }
+        else if (settingsType == IrisSettingsType.COURSE || settingsType == IrisSettingsType.EXERCISE) {
+            currentSettings.setDisabledProactiveEvents(newSettings.getDisabledProactiveEvents());
         }
         currentSettings.setAllowedVariants(selectAllowedVariants(currentSettings.getAllowedVariants(), newSettings.getAllowedVariants()));
         currentSettings.setSelectedVariant(validateSelectedVariant(currentSettings.getSelectedVariant(), newSettings.getSelectedVariant(), currentSettings.getAllowedVariants(),
@@ -114,6 +124,37 @@ public class IrisSubSettingsService {
             currentSettings.setEnabledForCategories(enabledForCategories);
         }
         if (authCheckService.isAdmin()) {
+            currentSettings.setRateLimit(newSettings.getRateLimit());
+            currentSettings.setRateLimitTimeframeHours(newSettings.getRateLimitTimeframeHours());
+        }
+        currentSettings.setAllowedVariants(selectAllowedVariants(currentSettings.getAllowedVariants(), newSettings.getAllowedVariants()));
+        currentSettings.setSelectedVariant(validateSelectedVariant(currentSettings.getSelectedVariant(), newSettings.getSelectedVariant(), currentSettings.getAllowedVariants(),
+                parentSettings != null ? parentSettings.allowedVariants() : null));
+        return currentSettings;
+    }
+
+    /**
+     * Updates a course chat sub settings object.
+     *
+     * @param currentSettings Current chat sub settings.
+     * @param newSettings     Updated chat sub settings.
+     * @param parentSettings  Parent chat sub settings.
+     * @param settingsType    Type of the settings the sub settings belong to.
+     * @return Updated chat sub settings.
+     */
+    public IrisCourseChatSubSettings update(IrisCourseChatSubSettings currentSettings, IrisCourseChatSubSettings newSettings, IrisCombinedCourseChatSubSettingsDTO parentSettings,
+            IrisSettingsType settingsType) {
+        if (newSettings == null) {
+            if (parentSettings == null) {
+                throw new IllegalArgumentException("Cannot delete the course chat settings");
+            }
+            return null;
+        }
+        if (currentSettings == null) {
+            currentSettings = new IrisCourseChatSubSettings();
+        }
+        if (authCheckService.isAdmin()) {
+            currentSettings.setEnabled(newSettings.isEnabled());
             currentSettings.setRateLimit(newSettings.getRateLimit());
             currentSettings.setRateLimitTimeframeHours(newSettings.getRateLimitTimeframeHours());
         }
@@ -233,6 +274,26 @@ public class IrisSubSettingsService {
      * @param minimal      Whether to return a minimal version of the combined settings.
      * @return Combined chat settings.
      */
+    public IrisCombinedChatSubSettingsDTO combineChatSettings(ArrayList<IrisSettings> settingsList, boolean minimal) {
+        var enabled = getCombinedEnabled(settingsList, IrisSettings::getIrisChatSettings);
+        var rateLimit = getCombinedRateLimit(settingsList);
+        var allowedVariants = !minimal ? getCombinedAllowedVariants(settingsList, IrisSettings::getIrisChatSettings) : null;
+        var selectedVariant = !minimal ? getCombinedSelectedVariant(settingsList, IrisSettings::getIrisChatSettings) : null;
+        var enabledForCategories = !minimal ? getCombinedEnabledForCategories(settingsList, IrisSettings::getIrisChatSettings) : null;
+        var disabledForEvents = !minimal ? getCombinedDisabledForEvents(settingsList, IrisSettings::getIrisChatSettings) : null;
+
+        return new IrisCombinedChatSubSettingsDTO(enabled, rateLimit, null, allowedVariants, selectedVariant, enabledForCategories, disabledForEvents);
+    }
+
+    /**
+     * Combines the chat settings of multiple {@link IrisSettings} objects.
+     * If minimal is true, the returned object will only contain the enabled and rateLimit fields.
+     * The minimal version can safely be sent to students.
+     *
+     * @param settingsList List of {@link IrisSettings} objects to combine.
+     * @param minimal      Whether to return a minimal version of the combined settings.
+     * @return Combined chat settings.
+     */
     public IrisCombinedTextExerciseChatSubSettingsDTO combineTextExerciseChatSettings(ArrayList<IrisSettings> settingsList, boolean minimal) {
         var enabled = getCombinedEnabled(settingsList, IrisSettings::getIrisTextExerciseChatSettings);
         var rateLimit = getCombinedRateLimit(settingsList);
@@ -251,13 +312,12 @@ public class IrisSubSettingsService {
      * @param minimal      Whether to return a minimal version of the combined settings.
      * @return Combined chat settings.
      */
-    public IrisCombinedChatSubSettingsDTO combineChatSettings(ArrayList<IrisSettings> settingsList, boolean minimal) {
-        var enabled = getCombinedEnabled(settingsList, IrisSettings::getIrisChatSettings);
+    public IrisCombinedCourseChatSubSettingsDTO combineCourseChatSettings(ArrayList<IrisSettings> settingsList, boolean minimal) {
+        var enabled = getCombinedEnabled(settingsList, IrisSettings::getIrisCourseChatSettings);
         var rateLimit = getCombinedRateLimit(settingsList);
         var allowedVariants = !minimal ? getCombinedAllowedVariants(settingsList, IrisSettings::getIrisChatSettings) : null;
         var selectedVariant = !minimal ? getCombinedSelectedVariant(settingsList, IrisSettings::getIrisChatSettings) : null;
-        var enabledForCategories = !minimal ? getCombinedEnabledForCategories(settingsList, IrisSettings::getIrisChatSettings) : null;
-        return new IrisCombinedChatSubSettingsDTO(enabled, rateLimit, null, allowedVariants, selectedVariant, enabledForCategories);
+        return new IrisCombinedCourseChatSubSettingsDTO(enabled, rateLimit, null, allowedVariants, selectedVariant);
     }
 
     /**
@@ -299,7 +359,7 @@ public class IrisSubSettingsService {
      * @param subSettingsFunction Function to get the sub settings from an IrisSettings object.
      * @return Combined enabled field.
      */
-    private boolean getCombinedEnabled(List<IrisSettings> settingsList, Function<IrisSettings, IrisSubSettings> subSettingsFunction) {
+    private <T extends IrisSubSettings> boolean getCombinedEnabled(List<IrisSettings> settingsList, Function<IrisSettings, T> subSettingsFunction) {
         for (var irisSettings : settingsList) {
             if (irisSettings == null) {
                 return false;
@@ -350,9 +410,34 @@ public class IrisSubSettingsService {
                 .filter(model -> model != null && !model.isBlank()).reduce((first, second) -> second).orElse(null);
     }
 
+    /**
+     * Combines the enabledForCategories field of multiple {@link IrisSettings} objects.
+     * Simply &&s all enabledForCategories fields together.
+     *
+     * @param settingsList        List of {@link IrisSettings} objects to combine.
+     * @param subSettingsFunction Function to get the sub settings from an IrisSettings object.
+     * @return Combined enabledForCategories field.
+     */
     private SortedSet<String> getCombinedEnabledForCategories(List<IrisSettings> settingsList, Function<IrisSettings, IrisChatSubSettings> subSettingsFunction) {
         return settingsList.stream().filter(Objects::nonNull).filter(settings -> settings instanceof IrisCourseSettings).map(subSettingsFunction).filter(Objects::nonNull)
                 .map(IrisChatSubSettings::getEnabledForCategories).filter(Objects::nonNull).filter(models -> !models.isEmpty()).reduce((first, second) -> second)
                 .orElse(new TreeSet<>());
+    }
+
+    /**
+     * Combines the disabledProactiveEvents field of multiple {@link IrisSettings} objects.
+     * Simply takes the last disabledProactiveEvents.
+     *
+     * @param settingsList        List of {@link IrisSettings} objects to combine.
+     * @param subSettingsFunction Function to get the sub settings from an IrisSettings object.
+     * @return Combined disabledProactiveEvents field.
+     */
+    private SortedSet<String> getCombinedDisabledForEvents(List<IrisSettings> settingsList, Function<IrisSettings, IrisChatSubSettings> subSettingsFunction) {
+        return settingsList.stream().filter(Objects::nonNull).map(subSettingsFunction).filter(Objects::nonNull).map(IrisChatSubSettings::getDisabledProactiveEvents)
+                .filter(Objects::nonNull).reduce((first, second) -> {
+                    var result = new TreeSet<>(second);
+                    result.addAll(first);
+                    return result;
+                }).orElse(new TreeSet<>());
     }
 }

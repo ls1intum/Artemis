@@ -28,6 +28,10 @@ public class IrisGlobalSettings extends IrisSettings {
     private IrisTextExerciseChatSubSettings irisTextExerciseChatSettings;
 
     @OneToOne(cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.EAGER, optional = false)
+    @JoinColumn(name = "iris_course_chat_settings_id")
+    private IrisCourseChatSubSettings irisCourseChatSettings;
+
+    @OneToOne(cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.EAGER, optional = false)
     @JoinColumn(name = "iris_lecture_ingestion_settings_id")
     private IrisLectureIngestionSubSettings irisLectureIngestionSettings;
 
@@ -63,6 +67,16 @@ public class IrisGlobalSettings extends IrisSettings {
     @Override
     public void setIrisTextExerciseChatSettings(IrisTextExerciseChatSubSettings irisTextExerciseChatSettings) {
         this.irisTextExerciseChatSettings = irisTextExerciseChatSettings;
+    }
+
+    @Override
+    public IrisCourseChatSubSettings getIrisCourseChatSettings() {
+        return irisCourseChatSettings;
+    }
+
+    @Override
+    public void setIrisCourseChatSettings(IrisCourseChatSubSettings irisCourseChatSettings) {
+        this.irisCourseChatSettings = irisCourseChatSettings;
     }
 
     @Override

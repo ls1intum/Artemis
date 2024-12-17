@@ -1,10 +1,18 @@
-<div class="d-flex flex-wrap gap-2 fs-xx-small align-items-center">
+<div class="d-flex flex-wrap gap-2 fs-xx-small align-items-center" style="width: max-content">
+    @if (hoverBar && sortedAnswerPosts.length === 0) {
+        <div>
+            <button class="reaction-button clickable reply-btn" (click)="isCommunicationPage ? openThread.emit() : openAnswerView()">
+                <fa-icon class="fa-xs align-self-center" [icon]="faArrowRight" />
+                <span jhiTranslate="artemisApp.conversationsLayout.threadSideBar.reply" class="emoji-count px-2"></span>
+            </button>
+        </div>
+    }
     @if (!isCommunicationPage) {
         @if (sortedAnswerPosts.length) {
             <!-- collapse answers -->
             @if (showAnswers) {
                 <div>
-                    <button class="reaction-button clickable collapse-answers-btn" [class.reaction-button--reacted]="showAnswers" (click)="showAnswersChange.emit(false)">
+                    <button class="reaction-button clickable collapse-answers-btn" [class.reaction-button--reacted]="showAnswers" (click)="closeAnswerView()">
                         <jhi-emoji [emoji]="closeCrossId" />
                         <span jhiTranslate="artemisApp.metis.collapseAnswers" class="emoji-count"></span>
                     </button>
@@ -12,8 +20,8 @@
             } @else {
                 <!-- expand answers -->
                 <div>
-                    <button class="reaction-button clickable expand-answers-btn" (click)="showAnswersChange.emit(true)">
-                        <jhi-emoji [emoji]="speechBalloonId" />
+                    <button class="reaction-button clickable expand-answers-btn" (click)="openAnswerView()">
+                        <fa-icon class="fa-xs align-self-center" [icon]="faArrowRight" />
                         <span class="emoji-count">{{
                             sortedAnswerPosts.length === 1
                                 ? ('artemisApp.metis.showSingleAnswer' | artemisTranslate)
@@ -22,26 +30,9 @@
                     </button>
                 </div>
             }
-        } @else {
-            <!-- start discussion -->
-            <div>
-                <button class="reaction-button clickable reply-btn" (click)="openPostingCreateEditModal.emit()" [disabled]="readOnlyMode">
-                    <jhi-emoji [emoji]="speechBalloonId" />
-                    <span jhiTranslate="artemisApp.metis.reply" class="emoji-count"></span>
-                </button>
-            </div>
         }
     } @else {
         @if (!isThreadSidebar) {
-            <!-- start discussion -->
-            @if (hoverBar && sortedAnswerPosts.length === 0) {
-                <div>
-                    <button class="reaction-button clickable reply-btn" (click)="openThread.emit()">
-                        <fa-icon class="fa-xs align-self-center" [icon]="faArrowRight" />
-                        <span jhiTranslate="artemisApp.conversationsLayout.threadSideBar.reply" class="emoji-count px-2"></span>
-                    </button>
-                </div>
-            }
             <!-- expand answers -->
             @if (!showAnswers && sortedAnswerPosts.length) {
                 <div>
@@ -108,7 +99,7 @@
             </ng-container>
         }
 
-        @if (!isEmojiCount && mayEditOrDelete) {
+        @if (!isEmojiCount && mayEdit) {
             <button
                 class="reaction-button clickable px-2 fs-small edit"
                 [disabled]="readOnlyMode"
@@ -119,7 +110,7 @@
             </button>
         }
         <jhi-post-create-edit-modal #createEditModal [posting]="posting" [isCommunicationPage]="isCommunicationPage" (isModalOpen)="isModalOpen.emit()" />
-        @if (!isEmojiCount && mayEditOrDelete) {
+        @if (!isEmojiCount && mayDelete) {
             <button class="reaction-button clickable fs-small">
                 <jhi-confirm-icon
                     iconSize="sm"
@@ -140,9 +131,18 @@
                 <jhi-emoji class="fs-x-small" [emoji]="pinEmojiId" [ngbTooltip]="pinTooltip | artemisTranslate" [placement]="'auto'" />
             </button>
         }
+        @if (!isEmojiCount) {
+            <button
+                class="reaction-button clickable px-2 fs-small bookmark"
+                (click)="bookmarkPosting()"
+                [ngbTooltip]="(posting.isSaved ? 'artemisApp.metis.post.removeBookmarkPost' : 'artemisApp.metis.post.bookmarkPost') | artemisTranslate"
+            >
+                <fa-icon [icon]="posting.isSaved ? faBookmark : farBookmark" cdkOverlayOrigin></fa-icon>
+            </button>
+        }
     </div>
     <div>
-        @if (getShowNewMessageIcon()) {
+        @if (isEmojiCount && getShowNewMessageIcon()) {
             <div jhiTranslate="global.generic.new" class="badge bg-secondary hideAfter5Seconds"></div>
         }
     </div>

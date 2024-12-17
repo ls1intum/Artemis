@@ -24,7 +24,7 @@ import org.springframework.web.multipart.MultipartFile;
 import de.tum.cit.aet.artemis.assessment.repository.ExampleSubmissionRepository;
 import de.tum.cit.aet.artemis.assessment.repository.ResultRepository;
 import de.tum.cit.aet.artemis.assessment.service.FeedbackService;
-import de.tum.cit.aet.artemis.atlas.service.competency.CompetencyProgressService;
+import de.tum.cit.aet.artemis.atlas.api.CompetencyProgressApi;
 import de.tum.cit.aet.artemis.communication.service.conversation.ChannelService;
 import de.tum.cit.aet.artemis.core.service.FilePathService;
 import de.tum.cit.aet.artemis.core.service.FileService;
@@ -56,16 +56,16 @@ public class QuizExerciseImportService extends ExerciseImportService {
 
     private final ChannelService channelService;
 
-    private final CompetencyProgressService competencyProgressService;
+    private final CompetencyProgressApi competencyProgressApi;
 
     public QuizExerciseImportService(QuizExerciseService quizExerciseService, FileService fileService, ExampleSubmissionRepository exampleSubmissionRepository,
             SubmissionRepository submissionRepository, ResultRepository resultRepository, ChannelService channelService, FeedbackService feedbackService,
-            CompetencyProgressService competencyProgressService) {
+            CompetencyProgressApi competencyProgressApi) {
         super(exampleSubmissionRepository, submissionRepository, resultRepository, feedbackService);
         this.quizExerciseService = quizExerciseService;
         this.fileService = fileService;
         this.channelService = channelService;
-        this.competencyProgressService = competencyProgressService;
+        this.competencyProgressApi = competencyProgressApi;
     }
 
     /**
@@ -90,7 +90,7 @@ public class QuizExerciseImportService extends ExerciseImportService {
 
         channelService.createExerciseChannel(newQuizExercise, Optional.ofNullable(importedExercise.getChannelName()));
 
-        competencyProgressService.updateProgressByLearningObjectAsync(newQuizExercise);
+        competencyProgressApi.updateProgressByLearningObjectAsync(newQuizExercise);
         if (files != null) {
             newQuizExercise = quizExerciseService.save(quizExerciseService.uploadNewFilesToNewImportedQuiz(newQuizExercise, files));
         }

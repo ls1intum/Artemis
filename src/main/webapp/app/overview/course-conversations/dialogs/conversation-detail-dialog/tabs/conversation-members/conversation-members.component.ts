@@ -1,4 +1,4 @@
-import { ChangeDetectorRef, Component, EventEmitter, Input, OnDestroy, OnInit, Output } from '@angular/core';
+import { ChangeDetectorRef, Component, OnDestroy, OnInit, inject, input, output, signal } from '@angular/core';
 import { ConversationMemberSearchFilter, ConversationService } from 'app/shared/metis/conversations/conversation.service';
 import { ConversationDTO } from 'app/entities/metis/conversation/conversation.model';
 import { Course } from 'app/entities/course.model';
@@ -27,12 +27,12 @@ export class ConversationMembersComponent implements OnInit, OnDestroy {
     private ngUnsubscribe = new Subject<void>();
 
     private readonly search$ = new Subject<SearchQuery>();
-    @Input()
-    course: Course;
-    @Input()
-    public activeConversation: ConversationDTO;
-    @Output()
-    changesPerformed = new EventEmitter<void>();
+
+    course = input.required<Course>();
+    activeConversationInput = input.required<ConversationDTO>();
+    activeConversation = signal<ConversationDTO | undefined>(undefined);
+    changesPerformed = output<void>();
+
     canAddUsersToConversation = canAddUsersToConversation;
     getAsChannel = getAsChannelDTO;
     isChannel = isChannelDTO;
@@ -59,12 +59,10 @@ export class ConversationMembersComponent implements OnInit, OnDestroy {
     STUDENT_FILTER_OPTION = ConversationMemberSearchFilter.STUDENT;
     CHANNEL_MODERATOR_FILTER_OPTION = ConversationMemberSearchFilter.CHANNEL_MODERATOR;
 
-    constructor(
-        public conversationService: ConversationService,
-        private alertService: AlertService,
-        private modalService: NgbModal,
-        private cdr: ChangeDetectorRef,
-    ) {}
+    public conversationService = inject(ConversationService);
+    private alertService = inject(AlertService);
+    private modalService = inject(NgbModal);
+    private cdr = inject(ChangeDetectorRef);
 
     trackIdentity(index: number, item: ConversationUserDTO) {
         return item.id;
@@ -73,8 +71,8 @@ export class ConversationMembersComponent implements OnInit, OnDestroy {
     openAddUsersDialog(event: MouseEvent) {
         event.stopPropagation();
         const modalRef: NgbModalRef = this.modalService.open(ConversationAddUsersDialogComponent, defaultSecondLayerDialogOptions);
-        modalRef.componentInstance.course = this.course;
-        modalRef.componentInstance.activeConversation = this.activeConversation;
+        modalRef.componentInstance.course = this.course();
+        modalRef.componentInstance.activeConversation = this.activeConversation();
         modalRef.componentInstance.initialize();
         from(modalRef.result)
             .pipe(
@@ -114,16 +112,20 @@ export class ConversationMembersComponent implements OnInit, OnDestroy {
                     this.isSearching = true;
                     this.searchTerm = searchTerm;
                 }),
-                switchMap(() =>
-                    this.conversationService.searchMembersOfConversation(
-                        this.course.id!,
-                        this.activeConversation.id!,
-                        this.searchTerm,
-                        this.page - 1,
-                        this.itemsPerPage,
-                        Number(this.selectedFilter),
-                    ),
-                ),
+                switchMap(() => {
+                    if (this.course()?.id && this.activeConversation()?.id) {
+                        return this.conversationService.searchMembersOfConversation(
+                            this.course().id!,
+                            this.activeConversation()!.id!,
+                            this.searchTerm,
+                            this.page - 1,
+                            this.itemsPerPage,
+                            Number(this.selectedFilter),
+                        );
+                    } else {
+                        return EMPTY;
+                    }
+                }),
                 takeUntil(this.ngUnsubscribe),
             )
             .subscribe({
@@ -140,6 +142,11 @@ export class ConversationMembersComponent implements OnInit, OnDestroy {
             searchTerm: '',
             force: true,
         });
+
+        const inputValue = this.activeConversationInput();
+        if (inputValue) {
+            this.activeConversation.set(inputValue);
+        }
     }
 
     ngOnDestroy() {
@@ -176,7 +183,15 @@ export class ConversationMembersComponent implements OnInit, OnDestroy {
         this.totalItems = Number(headers.get('X-Total-Count'));
         if (this.activeConversation) {
             // might have changed because of user deletion or addition
-            this.activeConversation.numberOfMembers = this.totalItems;
+            this.activeConversation.update((current) => {
+                if (current) {
+                    return {
+                        ...current,
+                        numberOfMembers: this.totalItems,
+                    };
+                }
+                return current;
+            });
         }
         this.members = members || [];
         this.cdr.detectChanges();

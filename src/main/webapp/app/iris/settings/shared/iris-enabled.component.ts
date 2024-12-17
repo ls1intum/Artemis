@@ -56,6 +56,12 @@ export class IrisEnabledComponent implements OnInit {
             case IrisSubSettingsType.CHAT:
                 this.irisSubSettings = this.irisSettings?.irisChatSettings;
                 break;
+            case IrisSubSettingsType.TEXT_EXERCISE_CHAT:
+                this.irisSubSettings = this.irisSettings?.irisTextExerciseChatSettings;
+                break;
+            case IrisSubSettingsType.COURSE_CHAT:
+                this.irisSubSettings = this.irisSettings?.irisCourseChatSettings;
+                break;
             case IrisSubSettingsType.COMPETENCY_GENERATION:
                 this.irisSubSettings = this.irisSettings?.irisCompetencyGenerationSettings;
                 break;

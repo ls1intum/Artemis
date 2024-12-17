@@ -29,8 +29,10 @@ import de.tum.cit.aet.artemis.core.dto.pageablesearch.FinishedBuildJobPageableSe
 import de.tum.cit.aet.artemis.core.exception.AccessForbiddenException;
 import de.tum.cit.aet.artemis.core.repository.CourseRepository;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastInstructor;
+import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastStudent;
 import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInCourse.EnforceAtLeastInstructorInCourse;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
+import de.tum.cit.aet.artemis.core.util.TimeLogUtil;
 import de.tum.cit.aet.artemis.programming.domain.build.BuildJob;
 import de.tum.cit.aet.artemis.programming.repository.BuildJobRepository;
 import de.tum.cit.aet.artemis.programming.service.localci.SharedQueueManagementService;
@@ -189,4 +191,23 @@ public class BuildJobQueueResource {
         BuildJobsStatisticsDTO buildJobStatistics = BuildJobsStatisticsDTO.of(buildJobResultCountDtos);
         return ResponseEntity.ok(buildJobStatistics);
     }
+
+    /**
+     * Returns the estimated start date of the build job for the given participation.
+     *
+     * @param participationId the id of the participation
+     * @return the estimated queue duration
+     */
+    @GetMapping("queued-jobs/queue-duration-estimation")
+    @EnforceAtLeastStudent
+    public ResponseEntity<ZonedDateTime> getBuildJobEstimatedStartDate(@RequestParam long participationId) {
+        var start = System.nanoTime();
+        if (participationId <= 0) {
+            ResponseEntity.badRequest().build();
+        }
+        ZonedDateTime estimatedJobQueueReleaseTime = localCIBuildJobQueueService.getBuildJobEstimatedStartDate(participationId);
+        log.debug("Queue duration estimation took {} ms", TimeLogUtil.formatDurationFrom(start));
+        return ResponseEntity.ok(estimatedJobQueueReleaseTime);
+    }
+
 }

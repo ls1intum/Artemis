@@ -14,9 +14,6 @@ pluginManagement {
 
 rootProject.name = 'Artemis'
 
-// needed for rest call and endpoint analysis
-include 'supporting_scripts:analysis-of-endpoint-connections'
-
 // needed for programming exercise templates
 DirectoryScanner.removeDefaultExclude "**/.gitattributes"
 DirectoryScanner.removeDefaultExclude "**/.gitignore"

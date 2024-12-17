@@ -17,6 +17,7 @@ import { MockMetisService } from '../../../../../helpers/mocks/service/mock-meti
 import { metisPostExerciseUser1, post, unsortedAnswerArray } from '../../../../../helpers/sample/metis-sample-data';
 import { AnswerPost } from 'app/entities/metis/answer-post.model';
 import { User } from 'app/core/user/user.model';
+import dayjs from 'dayjs/esm';
 
 interface PostGroup {
     author: User | undefined;
@@ -72,8 +73,8 @@ describe('PostFooterComponent', () => {
     it('should group answer posts correctly', () => {
         component.sortedAnswerPosts = unsortedAnswerArray;
         component.groupAnswerPosts();
-        expect(component.groupedAnswerPosts.length).toBeGreaterThan(0); // Ensure groups are created
-        expect(component.groupedAnswerPosts[0].posts.length).toBeGreaterThan(0); // Ensure posts exist in groups
+        expect(component.groupedAnswerPosts.length).toBeGreaterThan(0);
+        expect(component.groupedAnswerPosts[0].posts.length).toBeGreaterThan(0);
     });
 
     it('should group answer posts and detect changes on changes to sortedAnswerPosts input', () => {
@@ -150,5 +151,49 @@ describe('PostFooterComponent', () => {
         const createAnswerPostModalOpen = jest.spyOn(component.createAnswerPostModalComponent, 'open');
         component.openCreateAnswerPostModal();
         expect(createAnswerPostModalOpen).toHaveBeenCalledOnce();
+    });
+
+    it('should close create answer post modal', () => {
+        component.posting = metisPostExerciseUser1;
+        component.ngOnInit();
+        fixture.detectChanges();
+        const createAnswerPostModalClose = jest.spyOn(component.createAnswerPostModalComponent, 'close');
+        component.closeCreateAnswerPostModal();
+        expect(createAnswerPostModalClose).toHaveBeenCalledOnce();
+    });
+
+    it('should group answer posts correctly based on author and time difference', () => {
+        const authorA: User = { id: 1, login: 'authorA' } as User;
+        const authorB: User = { id: 2, login: 'authorB' } as User;
+
+        const baseTime = dayjs();
+
+        const post1: AnswerPost = { id: 1, author: authorA, creationDate: baseTime.toDate() } as unknown as AnswerPost;
+        const post2: AnswerPost = { id: 2, author: authorA, creationDate: baseTime.add(3, 'minute').toDate() } as unknown as AnswerPost;
+        const post3: AnswerPost = { id: 3, author: authorA, creationDate: baseTime.add(10, 'minute').toDate() } as unknown as AnswerPost;
+        const post4: AnswerPost = { id: 4, author: authorB, creationDate: baseTime.add(12, 'minute').toDate() } as unknown as AnswerPost;
+        const post5: AnswerPost = { id: 5, author: authorB, creationDate: baseTime.add(14, 'minute').toDate() } as unknown as AnswerPost;
+
+        component.sortedAnswerPosts = [post3, post1, post5, post2, post4];
+
+        component.groupAnswerPosts();
+        expect(component.groupedAnswerPosts).toHaveLength(3);
+
+        const group1 = component.groupedAnswerPosts[0];
+        expect(group1.author).toEqual(authorA);
+        expect(group1.posts).toHaveLength(2);
+        expect(group1.posts).toContainEqual(expect.objectContaining({ id: post1.id }));
+        expect(group1.posts).toContainEqual(expect.objectContaining({ id: post2.id }));
+
+        const group2 = component.groupedAnswerPosts[1];
+        expect(group2.author).toEqual(authorA);
+        expect(group2.posts).toHaveLength(1);
+        expect(group2.posts).toContainEqual(expect.objectContaining({ id: post3.id }));
+
+        const group3 = component.groupedAnswerPosts[2];
+        expect(group3.author).toEqual(authorB);
+        expect(group3.posts).toHaveLength(2);
+        expect(group3.posts).toContainEqual(expect.objectContaining({ id: post4.id }));
+        expect(group3.posts).toContainEqual(expect.objectContaining({ id: post5.id }));
     });
 });

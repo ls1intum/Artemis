@@ -373,4 +373,18 @@ public class ResultResource {
 
         return ResponseEntity.ok(participation);
     }
+
+    /**
+     * GET /exercises/{exerciseId}/feedback-detail/affected-students : Retrieves the count of students affected by a specific feedback detail text.
+     *
+     * @param exerciseId The ID of the exercise for which affected students are counted.
+     * @param detailText The feedback detail text to filter by.
+     * @return A {@link ResponseEntity} containing the count of affected students.
+     */
+    @GetMapping("exercises/{exerciseId}/feedback-detail/affected-students")
+    @EnforceAtLeastEditorInExercise
+    public ResponseEntity<Long> countAffectedStudentsByFeedbackDetailText(@PathVariable long exerciseId, @RequestParam("detailText") String detailText) {
+        long affectedStudentCount = resultService.getAffectedStudentCountByFeedbackDetailText(exerciseId, detailText);
+        return ResponseEntity.ok(affectedStudentCount);
+    }
 }

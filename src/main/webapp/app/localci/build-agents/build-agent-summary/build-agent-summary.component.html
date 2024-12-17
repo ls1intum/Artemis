@@ -1,11 +1,24 @@
 <div style="padding-bottom: 60px">
-    <h3 id="build-agents-heading" jhiTranslate="artemisApp.buildAgents.summary"></h3>
     @if (buildAgents) {
-        <p>
-            {{ buildAgents.length }} <span jhiTranslate="artemisApp.buildAgents.onlineAgents"></span>: {{ currentBuilds }} <span jhiTranslate="artemisApp.buildAgents.of"></span>
-            {{ buildCapacity }} <span jhiTranslate="artemisApp.buildAgents.buildJobsRunning"></span>
-        </p>
-        <div class="d-flex justify-content-between align-items-center border-bottom pb-2 mb-3"></div>
+        <div class="d-flex justify-content-between align-items-center border-bottom pb-2 mb-3">
+            <div>
+                <h3 id="build-agents-heading" jhiTranslate="artemisApp.buildAgents.summary"></h3>
+                <p>
+                    {{ buildAgents.length }} <span jhiTranslate="artemisApp.buildAgents.onlineAgents"></span>: {{ currentBuilds }}
+                    <span jhiTranslate="artemisApp.buildAgents.of"></span> {{ buildCapacity }} <span jhiTranslate="artemisApp.buildAgents.buildJobsRunning"></span>
+                </p>
+            </div>
+            <div>
+                <button class="btn btn-success" (click)="resumeAllBuildAgents()">
+                    <fa-icon [icon]="faPlay" />
+                    <span jhiTranslate="artemisApp.buildAgents.resumeAll"></span>
+                </button>
+                <button class="btn btn-danger" (click)="displayPauseBuildAgentModal(content)">
+                    <fa-icon [icon]="faPause" />
+                    <span jhiTranslate="artemisApp.buildAgents.pauseAll"></span>
+                </button>
+            </div>
+        </div>
         <jhi-data-table [showPageSizeDropdown]="false" [showSearchField]="false" entityType="buildAgent" [allEntities]="buildAgents!">
             <ng-template let-settings="settings" let-controls="controls">
                 <ngx-datatable
@@ -115,3 +128,28 @@
         </jhi-data-table>
     }
 </div>
+
+<!-- Modal -->
+<ng-template #content let-modal>
+    <div class="modal-header">
+        <h5 class="modal-title">
+            <span jhiTranslate="artemisApp.buildAgents.pauseAll"></span>
+        </h5>
+        <button type="button" class="btn-close" aria-label="Close" (click)="modal.close()"></button>
+    </div>
+    <div class="modal-body">
+        <div>
+            <span jhiTranslate="artemisApp.buildAgents.pauseAllWarning"></span>
+        </div>
+    </div>
+    <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" (click)="modal.close()">
+            <fa-icon [icon]="faTimes" />
+            <span jhiTranslate="artemisApp.buildQueue.filter.close"></span>
+        </button>
+        <button type="button" class="btn btn-danger" (click)="pauseAllBuildAgents(modal)">
+            <fa-icon [icon]="faPause" />
+            <span jhiTranslate="artemisApp.buildAgents.pauseAll"></span>
+        </button>
+    </div>
+</ng-template>

@@ -29,7 +29,7 @@ class CourseGitlabJenkinsIntegrationTest extends AbstractProgrammingIntegrationJ
     void setup() {
         courseTestService.setup(TEST_PREFIX, this);
         gitlabRequestMockProvider.enableMockingOfRequests();
-        jenkinsRequestMockProvider.enableMockingOfRequests(jenkinsServer);
+        jenkinsRequestMockProvider.enableMockingOfRequests(jenkinsServer, jenkinsJobPermissionsService);
     }
 
     @Test

@@ -3,6 +3,7 @@ import { PageableResult, PageableSearch, SearchResult, SearchTermPageableSearch 
 import { BaseApiHttpService } from 'app/course/learning-paths/services/base-api-http.service';
 import { HttpHeaders, HttpParams } from '@angular/common/http';
 import { FilterData } from 'app/exercises/programming/manage/grading/feedback-analysis/Modal/feedback-filter-modal.component';
+import { ChannelDTO } from 'app/entities/metis/conversation/channel.model';
 
 export interface FeedbackAnalysisResponse {
     feedbackDetails: SearchResult<FeedbackDetail>;
@@ -27,6 +28,10 @@ export interface FeedbackAffectedStudentDTO {
     lastName: string;
     login: string;
     repositoryURI: string;
+}
+export interface FeedbackChannelRequestDTO {
+    channel: ChannelDTO;
+    feedbackDetailText: string;
 }
 @Injectable()
 export class FeedbackAnalysisService extends BaseApiHttpService {
@@ -61,5 +66,14 @@ export class FeedbackAnalysisService extends BaseApiHttpService {
         const headers = new HttpHeaders().set('feedbackIds', feedbackIdsHeader);
 
         return this.get<PageableResult<FeedbackAffectedStudentDTO>>(`exercises/${exerciseId}/feedback-details-participation`, { params, headers });
+    }
+
+    createChannel(courseId: number, exerciseId: number, feedbackChannelRequest: FeedbackChannelRequestDTO): Promise<ChannelDTO> {
+        return this.post<ChannelDTO>(`courses/${courseId}/${exerciseId}/feedback-channel`, feedbackChannelRequest);
+    }
+
+    getAffectedStudentCount(exerciseId: number, feedbackDetailText: string): Promise<number> {
+        const params = new HttpParams().set('detailText', feedbackDetailText);
+        return this.get<number>(`exercises/${exerciseId}/feedback-detail/affected-students`, { params });
     }
 }

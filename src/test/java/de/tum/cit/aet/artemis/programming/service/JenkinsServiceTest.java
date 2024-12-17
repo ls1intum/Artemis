@@ -47,7 +47,7 @@ class JenkinsServiceTest extends AbstractProgrammingIntegrationJenkinsGitlabTest
      */
     @BeforeEach
     void initTestCase() throws Exception {
-        jenkinsRequestMockProvider.enableMockingOfRequests(jenkinsServer);
+        jenkinsRequestMockProvider.enableMockingOfRequests(jenkinsServer, jenkinsJobPermissionsService);
         gitlabRequestMockProvider.enableMockingOfRequests();
         continuousIntegrationTestService.setup(TEST_PREFIX, this, continuousIntegrationService);
     }
@@ -249,27 +249,28 @@ class JenkinsServiceTest extends AbstractProgrammingIntegrationJenkinsGitlabTest
     @Test
     @WithMockUser(roles = "INSTRUCTOR", username = TEST_PREFIX + "instructor1")
     void testUpdateBuildPlanRepoUrisForStudent() throws Exception {
-        MockedStatic<JenkinsBuildPlanUtils> mockedUtils = mockStatic(JenkinsBuildPlanUtils.class);
-        ArgumentCaptor<String> toBeReplacedCaptor = ArgumentCaptor.forClass(String.class);
-        ArgumentCaptor<String> replacementCaptor = ArgumentCaptor.forClass(String.class);
-        mockedUtils.when(() -> JenkinsBuildPlanUtils.replaceScriptParameters(any(), toBeReplacedCaptor.capture(), replacementCaptor.capture())).thenCallRealMethod();
+        try (MockedStatic<JenkinsBuildPlanUtils> mockedUtils = mockStatic(JenkinsBuildPlanUtils.class)) {
+            ArgumentCaptor<String> toBeReplacedCaptor = ArgumentCaptor.forClass(String.class);
+            ArgumentCaptor<String> replacementCaptor = ArgumentCaptor.forClass(String.class);
+            mockedUtils.when(() -> JenkinsBuildPlanUtils.replaceScriptParameters(any(), toBeReplacedCaptor.capture(), replacementCaptor.capture())).thenCallRealMethod();
 
-        var programmingExercise = continuousIntegrationTestService.programmingExercise;
-        programmingExerciseUtilService.addTemplateParticipationForProgrammingExercise(programmingExercise);
-        programmingExerciseUtilService.addSolutionParticipationForProgrammingExercise(programmingExercise);
-        programmingExerciseUtilService.addTestCasesToProgrammingExercise(programmingExercise);
-        var participation = participationUtilService.addStudentParticipationForProgrammingExercise(programmingExercise, TEST_PREFIX + "student1");
+            var programmingExercise = continuousIntegrationTestService.programmingExercise;
+            programmingExerciseUtilService.addTemplateParticipationForProgrammingExercise(programmingExercise);
+            programmingExerciseUtilService.addSolutionParticipationForProgrammingExercise(programmingExercise);
+            programmingExerciseUtilService.addTestCasesToProgrammingExercise(programmingExercise);
+            var participation = participationUtilService.addStudentParticipationForProgrammingExercise(programmingExercise, TEST_PREFIX + "student1");
 
-        String projectKey = programmingExercise.getProjectKey();
-        String planName = programmingExercise.getProjectKey();
+            String projectKey = programmingExercise.getProjectKey();
+            String planName = programmingExercise.getProjectKey();
 
-        String templateRepoUri = programmingExercise.getTemplateRepositoryUri();
-        jenkinsRequestMockProvider.mockUpdatePlanRepository(projectKey, planName, HttpStatus.OK);
+            String templateRepoUri = programmingExercise.getTemplateRepositoryUri();
+            jenkinsRequestMockProvider.mockUpdatePlanRepository(projectKey, planName, HttpStatus.OK);
 
-        continuousIntegrationService.updatePlanRepository(projectKey, planName, ASSIGNMENT_REPO_NAME, null, participation.getRepositoryUri(), templateRepoUri, "main");
+            continuousIntegrationService.updatePlanRepository(projectKey, planName, ASSIGNMENT_REPO_NAME, null, participation.getRepositoryUri(), templateRepoUri, "main");
 
-        assertThat(toBeReplacedCaptor.getValue()).contains("-exercise.git");
-        assertThat(replacementCaptor.getValue()).contains(TEST_PREFIX + "student1.git");
+            assertThat(toBeReplacedCaptor.getValue()).contains("-exercise.git");
+            assertThat(replacementCaptor.getValue()).contains(TEST_PREFIX + "student1.git");
+        }
     }
 
     @Test

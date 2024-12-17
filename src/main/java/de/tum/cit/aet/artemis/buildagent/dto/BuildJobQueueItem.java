@@ -29,8 +29,9 @@ public record BuildJobQueueItem(String id, String name, BuildAgentDTO buildAgent
      */
     public BuildJobQueueItem(BuildJobQueueItem queueItem, ZonedDateTime buildCompletionDate, BuildStatus status) {
         this(queueItem.id(), queueItem.name(), queueItem.buildAgent(), queueItem.participationId(), queueItem.courseId(), queueItem.exerciseId(), queueItem.retryCount(),
-                queueItem.priority(), status, queueItem.repositoryInfo(),
-                new JobTimingInfo(queueItem.jobTimingInfo.submissionDate(), queueItem.jobTimingInfo.buildStartDate(), buildCompletionDate), queueItem.buildConfig(), null);
+                queueItem.priority(), status, queueItem.repositoryInfo(), new JobTimingInfo(queueItem.jobTimingInfo.submissionDate(), queueItem.jobTimingInfo.buildStartDate(),
+                        buildCompletionDate, queueItem.jobTimingInfo.estimatedCompletionDate(), queueItem.jobTimingInfo.estimatedDuration()),
+                queueItem.buildConfig(), null);
     }
 
     /**
@@ -39,13 +40,22 @@ public record BuildJobQueueItem(String id, String name, BuildAgentDTO buildAgent
      * @param queueItem  The queued build job
      * @param buildAgent The build agent that will process the build job
      */
-    public BuildJobQueueItem(BuildJobQueueItem queueItem, BuildAgentDTO buildAgent) {
+    public BuildJobQueueItem(BuildJobQueueItem queueItem, BuildAgentDTO buildAgent, ZonedDateTime estimatedCompletionDate) {
         this(queueItem.id(), queueItem.name(), buildAgent, queueItem.participationId(), queueItem.courseId(), queueItem.exerciseId(), queueItem.retryCount(), queueItem.priority(),
-                null, queueItem.repositoryInfo(), new JobTimingInfo(queueItem.jobTimingInfo.submissionDate(), ZonedDateTime.now(), null), queueItem.buildConfig(), null);
+                null, queueItem.repositoryInfo(),
+                new JobTimingInfo(queueItem.jobTimingInfo.submissionDate(), ZonedDateTime.now(), null, estimatedCompletionDate, queueItem.jobTimingInfo.estimatedDuration()),
+                queueItem.buildConfig(), null);
     }
 
     public BuildJobQueueItem(BuildJobQueueItem queueItem, ResultDTO submissionResult) {
         this(queueItem.id(), queueItem.name(), queueItem.buildAgent(), queueItem.participationId(), queueItem.courseId(), queueItem.exerciseId(), queueItem.retryCount(),
                 queueItem.priority(), queueItem.status(), queueItem.repositoryInfo(), queueItem.jobTimingInfo(), queueItem.buildConfig(), submissionResult);
+    }
+
+    public BuildJobQueueItem(BuildJobQueueItem queueItem, BuildAgentDTO buildAgent, int newRetryCount) {
+        this(queueItem.id(), queueItem.name(), buildAgent, queueItem.participationId(), queueItem.courseId(), queueItem.exerciseId(), newRetryCount, queueItem.priority(), null,
+                queueItem.repositoryInfo(),
+                new JobTimingInfo(queueItem.jobTimingInfo.submissionDate(), ZonedDateTime.now(), null, null, queueItem.jobTimingInfo().estimatedDuration()),
+                queueItem.buildConfig(), null);
     }
 }

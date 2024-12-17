@@ -295,5 +295,14 @@ public interface CourseCompetencyRepository extends ArtemisJpaRepository<CourseC
 
     List<CourseCompetency> findByCourseIdOrderById(long courseId);
 
+    @Query("""
+            SELECT c
+            FROM CourseCompetency c
+            WHERE c.course.id = :courseId
+                AND (SIZE(c.lectureUnitLinks) > 0 OR SIZE(c.exerciseLinks) > 0)
+            ORDER BY c.id
+            """)
+    List<CourseCompetency> findByCourseIdAndLinkedToLearningObjectOrderById(@Param("courseId") long courseId);
+
     boolean existsByIdAndCourseId(long competencyId, long courseId);
 }

@@ -6,6 +6,9 @@ import {
     HostListener,
     Inject,
     Input,
+    OnChanges,
+    OnDestroy,
+    OnInit,
     Output,
     Renderer2,
     ViewChild,
@@ -18,7 +21,7 @@ import dayjs from 'dayjs/esm';
 import { animate, style, transition, trigger } from '@angular/animations';
 import { Posting } from 'app/entities/metis/posting.model';
 import { Reaction } from 'app/entities/metis/reaction.model';
-import { faPencilAlt, faSmile, faThumbtack, faTrash } from '@fortawesome/free-solid-svg-icons';
+import { faBookmark, faPencilAlt, faSmile, faTrash } from '@fortawesome/free-solid-svg-icons';
 import { DOCUMENT } from '@angular/common';
 import { AnswerPostReactionsBarComponent } from 'app/shared/metis/posting-reactions-bar/answer-post-reactions-bar/answer-post-reactions-bar.component';
 
@@ -34,7 +37,7 @@ import { AnswerPostReactionsBarComponent } from 'app/shared/metis/posting-reacti
         ]),
     ],
 })
-export class AnswerPostComponent extends PostingDirective<AnswerPost> {
+export class AnswerPostComponent extends PostingDirective<AnswerPost> implements OnInit, OnChanges, OnDestroy {
     @Input() lastReadDate?: dayjs.Dayjs;
     @Input() isLastAnswer: boolean;
     @Output() openPostingCreateEditModal = new EventEmitter<void>();
@@ -45,14 +48,18 @@ export class AnswerPostComponent extends PostingDirective<AnswerPost> {
     @Input()
     isReadOnlyMode = false;
     // ng-container to render answerPostCreateEditModalComponent
+
+    // Icons
+    faBookmark = faBookmark;
+
     @ViewChild('createEditAnswerPostContainer', { read: ViewContainerRef }) containerRef: ViewContainerRef;
     isConsecutive = input<boolean>(false);
     readonly faPencilAlt = faPencilAlt;
     readonly faSmile = faSmile;
     readonly faTrash = faTrash;
-    readonly faThumbtack = faThumbtack;
     static activeDropdownPost: AnswerPostComponent | null = null;
-    mayEditOrDelete: boolean = false;
+    mayEdit: boolean = false;
+    mayDelete: boolean = false;
     @ViewChild(AnswerPostReactionsBarComponent) private reactionsBarComponent!: AnswerPostReactionsBarComponent;
 
     constructor(
@@ -61,6 +68,15 @@ export class AnswerPostComponent extends PostingDirective<AnswerPost> {
         @Inject(DOCUMENT) private document: Document,
     ) {
         super();
+    }
+
+    ngOnInit() {
+        super.ngOnInit();
+        this.assignPostingToAnswerPost();
+    }
+
+    ngOnChanges(): void {
+        this.assignPostingToAnswerPost();
     }
 
     get reactionsBar() {
@@ -95,29 +111,42 @@ export class AnswerPostComponent extends PostingDirective<AnswerPost> {
         }
     }
 
-    onMayEditOrDelete(value: boolean) {
-        this.mayEditOrDelete = value;
+    onMayDelete(value: boolean) {
+        this.mayDelete = value;
+    }
+
+    onMayEdit(value: boolean) {
+        this.mayEdit = value;
     }
 
     onRightClick(event: MouseEvent) {
-        event.preventDefault();
-
-        if (AnswerPostComponent.activeDropdownPost && AnswerPostComponent.activeDropdownPost !== this) {
-            AnswerPostComponent.activeDropdownPost.showDropdown = false;
-            AnswerPostComponent.activeDropdownPost.enableBodyScroll();
-            AnswerPostComponent.activeDropdownPost.changeDetector.detectChanges();
+        const targetElement = event.target as HTMLElement;
+        let isPointerCursor = false;
+        try {
+            isPointerCursor = window.getComputedStyle(targetElement).cursor === 'pointer';
+        } catch (error) {
+            console.error('Failed to compute style:', error);
+            isPointerCursor = true;
         }
 
-        AnswerPostComponent.activeDropdownPost = this;
+        if (!isPointerCursor) {
+            event.preventDefault();
 
-        this.dropdownPosition = {
-            x: event.clientX,
-            y: event.clientY,
-        };
+            if (AnswerPostComponent.activeDropdownPost !== this) {
+                AnswerPostComponent.cleanupActiveDropdown();
+            }
 
-        this.showDropdown = true;
-        this.adjustDropdownPosition();
-        this.disableBodyScroll();
+            AnswerPostComponent.activeDropdownPost = this;
+
+            this.dropdownPosition = {
+                x: event.clientX,
+                y: event.clientY,
+            };
+
+            this.showDropdown = true;
+            this.adjustDropdownPosition();
+            this.disableBodyScroll();
+        }
     }
 
     adjustDropdownPosition() {
@@ -126,6 +155,28 @@ export class AnswerPostComponent extends PostingDirective<AnswerPost> {
 
         if (this.dropdownPosition.x + dropdownWidth > screenWidth) {
             this.dropdownPosition.x = screenWidth - dropdownWidth - 10;
+        }
+    }
+
+    private static cleanupActiveDropdown(): void {
+        if (AnswerPostComponent.activeDropdownPost) {
+            AnswerPostComponent.activeDropdownPost.showDropdown = false;
+            AnswerPostComponent.activeDropdownPost.enableBodyScroll();
+            AnswerPostComponent.activeDropdownPost.changeDetector.detectChanges();
+            AnswerPostComponent.activeDropdownPost = null;
+        }
+    }
+
+    ngOnDestroy(): void {
+        if (AnswerPostComponent.activeDropdownPost === this) {
+            AnswerPostComponent.cleanupActiveDropdown();
+        }
+    }
+
+    private assignPostingToAnswerPost() {
+        // This is needed because otherwise instanceof returns 'object'.
+        if (this.posting && !(this.posting instanceof AnswerPost)) {
+            this.posting = Object.assign(new AnswerPost(), this.posting);
         }
     }
 }
