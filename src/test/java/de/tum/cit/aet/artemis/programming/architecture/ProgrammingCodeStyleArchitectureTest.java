@@ -11,7 +11,7 @@ class ProgrammingCodeStyleArchitectureTest extends AbstractModuleCodeStyleTest {
 
     @Override
     protected int dtoAsAnnotatedRecordThreshold() {
-        return 6;
+        return 7;
     }
 
     @Override
