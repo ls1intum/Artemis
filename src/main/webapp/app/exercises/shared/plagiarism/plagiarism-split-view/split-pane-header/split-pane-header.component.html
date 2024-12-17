@@ -9,7 +9,7 @@
         <div>{{ studentLogin || ('artemisApp.plagiarism.unknownStudent' | artemisTranslate) }}</div>
     </div>
     @if (showFiles) {
-        <ul class="split-pane-header-files">
+        <ul (mouseleave)="toggleShowFiles(true, false)" class="split-pane-header-files">
             @for (file of files; track file; let idx = $index) {
                 <li
                     class="split-pane-header-file"
