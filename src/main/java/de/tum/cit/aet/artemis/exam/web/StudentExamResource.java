@@ -274,7 +274,9 @@ public class StudentExamResource {
                     var programmingExerciseSubmissionPolicy = ((ProgrammingExercise) exercise).getSubmissionPolicy();
                     // Unlock if there is no submission policy
                     // or there is a submission policy, but its limit was not reached yet
-                    if (programmingExerciseSubmissionPolicy == null || exercise.getNumberOfSubmissions().inTime() < programmingExerciseSubmissionPolicy.getSubmissionLimit()) {
+                    var submissionCount = programmingExerciseStudentParticipationRepository
+                            .findAllWithSubmissionsByExerciseIdAndStudentLogin(exercise.getId(), studentExam.getUser().getLogin()).stream().count();
+                    if (programmingExerciseSubmissionPolicy == null || submissionCount < programmingExerciseSubmissionPolicy.getSubmissionLimit()) {
                         programmingExerciseStudentParticipation.ifPresent(programmingExerciseParticipationService::unlockStudentRepositoryAndParticipation);
                     }
                 });
