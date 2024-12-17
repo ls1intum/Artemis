@@ -15,16 +15,10 @@ import de.tum.cit.aet.artemis.exam.dto.examevent.ExamRescheduledEventDTO;
 @DiscriminatorValue(value = "R")
 public class ExamRescheduledEvent extends ExamLiveEvent {
 
-    /**
-     * The new start date
-     */
-    @Column(name = "newStartDate")
+    @Column(name = "new_start_date")
     private ZonedDateTime newStartDate;
 
-    /**
-     * The new end date
-     */
-    @Column(name = "newEndDate")
+    @Column(name = "new_end_date")
     private ZonedDateTime newEndDate;
 
     public ZonedDateTime getNewStartDate() {
