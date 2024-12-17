@@ -54,7 +54,7 @@ public interface PostRepository extends ArtemisJpaRepository<Post, Long>, JpaSpe
             LEFT JOIN p.conversation conversation
             WHERE conversation.course.id = :courseId
             """)
-    List<Post> findAllByCourseId(Long courseId);
+    List<Post> findAllByCourseId(@Param("courseId") Long courseId);
 
     List<Post> findByIdIn(List<Long> idList);
 }
