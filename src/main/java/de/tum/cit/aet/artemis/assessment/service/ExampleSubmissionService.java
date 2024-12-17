@@ -15,6 +15,7 @@ import de.tum.cit.aet.artemis.assessment.domain.GradingInstruction;
 import de.tum.cit.aet.artemis.assessment.repository.ExampleSubmissionRepository;
 import de.tum.cit.aet.artemis.assessment.repository.GradingCriterionRepository;
 import de.tum.cit.aet.artemis.assessment.repository.TutorParticipationRepository;
+import de.tum.cit.aet.artemis.core.exception.ApiNotPresentException;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.domain.Submission;
@@ -23,6 +24,7 @@ import de.tum.cit.aet.artemis.exercise.repository.SubmissionRepository;
 import de.tum.cit.aet.artemis.modeling.domain.ModelingExercise;
 import de.tum.cit.aet.artemis.modeling.domain.ModelingSubmission;
 import de.tum.cit.aet.artemis.modeling.service.ModelingExerciseImportService;
+import de.tum.cit.aet.artemis.text.api.TextExerciseSubmissionApi;
 import de.tum.cit.aet.artemis.text.domain.TextExercise;
 import de.tum.cit.aet.artemis.text.domain.TextSubmission;
 import de.tum.cit.aet.artemis.text.repository.TextSubmissionRepository;
@@ -44,6 +46,8 @@ public class ExampleSubmissionService {
 
     private final ModelingExerciseImportService modelingExerciseImportService;
 
+    private final Optional<TextExerciseSubmissionApi> textExerciseSubmissionApi;
+
     private final TextSubmissionRepository textSubmissionRepository;
 
     private final GradingCriterionRepository gradingCriterionRepository;
@@ -51,13 +55,15 @@ public class ExampleSubmissionService {
     private final TutorParticipationRepository tutorParticipationRepository;
 
     public ExampleSubmissionService(ExampleSubmissionRepository exampleSubmissionRepository, SubmissionRepository submissionRepository, ExerciseRepository exerciseRepository,
-            TextExerciseImportService textExerciseImportService, ModelingExerciseImportService modelingExerciseImportService, TextSubmissionRepository textSubmissionRepository,
-            GradingCriterionRepository gradingCriterionRepository, TutorParticipationRepository tutorParticipationRepository) {
+            TextExerciseImportService textExerciseImportService, ModelingExerciseImportService modelingExerciseImportService,
+            Optional<TextExerciseSubmissionApi> textExerciseSubmissionApi, TextSubmissionRepository textSubmissionRepository, GradingCriterionRepository gradingCriterionRepository,
+            TutorParticipationRepository tutorParticipationRepository) {
         this.exampleSubmissionRepository = exampleSubmissionRepository;
         this.submissionRepository = submissionRepository;
         this.exerciseRepository = exerciseRepository;
         this.modelingExerciseImportService = modelingExerciseImportService;
         this.textExerciseImportService = textExerciseImportService;
+        this.textExerciseSubmissionApi = textExerciseSubmissionApi;
         this.textSubmissionRepository = textSubmissionRepository;
         this.gradingCriterionRepository = gradingCriterionRepository;
         this.tutorParticipationRepository = tutorParticipationRepository;
@@ -136,11 +142,9 @@ public class ExampleSubmissionService {
             newExampleSubmission.setSubmission(modelingExerciseImportService.copySubmission(modelingSubmission, gradingInstructionCopyTracker));
         }
         if (exercise instanceof TextExercise) {
-            TextSubmission textSubmission = textSubmissionRepository.findByIdWithEagerResultsAndFeedbackAndTextBlocksElseThrow(submissionId);
-            checkGivenExerciseIdSameForSubmissionParticipation(exercise.getId(), textSubmission.getParticipation().getExercise().getId());
-            // example submission does not need participation
-            textSubmission.setParticipation(null);
-            newExampleSubmission.setSubmission(textExerciseImportService.copySubmission(textSubmission, gradingInstructionCopyTracker));
+            var api = textExerciseSubmissionApi.orElseThrow(() -> new ApiNotPresentException(TextExerciseSubmissionApi.class, PROFILE_CORE));
+            TextSubmission textSubmission = api.importStudentSubmission(submissionId, exercise.getId(), gradingInstructionCopyTracker);
+            newExampleSubmission.setSubmission(textSubmission);
         }
         return exampleSubmissionRepository.save(newExampleSubmission);
     }
