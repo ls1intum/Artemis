@@ -18,24 +18,27 @@ import de.tum.cit.aet.artemis.lecture.domain.LectureUnit;
 @Service
 public class CourseCompetencySimpleService extends AbstractSimpleService<CourseCompetency> {
 
-    private static final String ENTITY_NAME = "CourseCompetency";
-
     private final CourseCompetencyRepository courseCompetencyRepository;
+
+    @Override
+    protected String getEntityName() {
+        return "CourseCompetency";
+    }
 
     public CourseCompetencySimpleService(CourseCompetencyRepository courseCompetencyRepository) {
         this.courseCompetencyRepository = courseCompetencyRepository;
     }
 
     public CourseCompetency findByIdWithExercisesAndLectureUnitsAndLecturesElseThrow(long id) {
-        return getValueElseThrow(courseCompetencyRepository.findByIdWithExercisesAndLectureUnitsAndLectures(id), ENTITY_NAME);
+        return getValueElseThrow(courseCompetencyRepository.findByIdWithExercisesAndLectureUnitsAndLectures(id));
     }
 
     public CourseCompetency findByIdWithExercisesAndLectureUnitsElseThrow(long competencyId) {
-        return getValueElseThrow(courseCompetencyRepository.findByIdWithExercisesAndLectureUnits(competencyId), ENTITY_NAME);
+        return getValueElseThrow(courseCompetencyRepository.findByIdWithExercisesAndLectureUnits(competencyId));
     }
 
     public CourseCompetency findByIdWithExercisesAndLectureUnitsBidirectionalElseThrow(long competencyId) {
-        return getValueElseThrow(courseCompetencyRepository.findByIdWithExercisesAndLectureUnitsBidirectional(competencyId), ENTITY_NAME);
+        return getValueElseThrow(courseCompetencyRepository.findByIdWithExercisesAndLectureUnitsBidirectional(competencyId));
     }
 
     /**
@@ -53,10 +56,10 @@ public class CourseCompetencySimpleService extends AbstractSimpleService<CourseC
     }
 
     public CourseCompetency findByIdWithExercisesElseThrow(long competencyId) {
-        return getValueElseThrow(courseCompetencyRepository.findByIdWithExercises(competencyId), ENTITY_NAME);
+        return getValueElseThrow(courseCompetencyRepository.findByIdWithExercises(competencyId));
     }
 
     public CourseCompetency findByIdWithLectureUnitsAndExercisesElseThrow(long competencyId) {
-        return getValueElseThrow(courseCompetencyRepository.findByIdWithLectureUnitsAndExercises(competencyId), ENTITY_NAME);
+        return getValueElseThrow(courseCompetencyRepository.findByIdWithLectureUnitsAndExercises(competencyId));
     }
 }

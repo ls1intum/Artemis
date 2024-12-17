@@ -13,19 +13,22 @@ import de.tum.cit.aet.artemis.core.repository.base.AbstractSimpleService;
 @Service
 public class CompetencySimpleService extends AbstractSimpleService<Competency> {
 
-    private final static String ENTITY_NAME = "Competency";
-
     private final CompetencyRepository competencyRepository;
+
+    @Override
+    protected String getEntityName() {
+        return "Competency";
+    }
 
     public CompetencySimpleService(CompetencyRepository competencyRepository) {
         this.competencyRepository = competencyRepository;
     }
 
     public Competency findByIdWithLectureUnitsAndExercisesElseThrow(long competencyId) {
-        return getValueElseThrow(competencyRepository.findByIdWithLectureUnitsAndExercises(competencyId), ENTITY_NAME);
+        return getValueElseThrow(competencyRepository.findByIdWithLectureUnitsAndExercises(competencyId));
     }
 
     public Competency findByIdWithLectureUnitsElseThrow(long competencyId) {
-        return getValueElseThrow(competencyRepository.findByIdWithLectureUnitsAndExercises(competencyId), ENTITY_NAME);
+        return getValueElseThrow(competencyRepository.findByIdWithLectureUnitsAndExercises(competencyId));
     }
 }

@@ -11,6 +11,12 @@ import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
  */
 public abstract class AbstractSimpleService<T extends DomainObject> {
 
+    protected abstract String getEntityName();
+
+    protected <U extends T> U getValueElseThrow(Optional<U> optional) {
+        return getValueElseThrow(optional, getEntityName());
+    }
+
     protected <U extends T> U getValueElseThrow(Optional<U> optional, String entityName) {
         return optional.orElseThrow(() -> new EntityNotFoundException(entityName));
     }
