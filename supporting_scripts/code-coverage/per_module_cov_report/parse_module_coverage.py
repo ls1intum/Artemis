@@ -48,7 +48,7 @@ def extract_coverage(reports):
                 "missed_classes": missed_classes
             })
         except Exception as e:
-            print(f"Error processing {module_folder}: {e}")
+            print(f"Error processing {report['module']}: {e}")
 
     results = sorted(results, key=lambda x: x['module'])
     return results
