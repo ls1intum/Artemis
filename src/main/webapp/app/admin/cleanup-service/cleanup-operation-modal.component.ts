@@ -16,7 +16,7 @@ import { faCheckCircle, faTimes } from '@fortawesome/free-solid-svg-icons';
 })
 export class CleanupOperationModalComponent implements OnInit {
     operation = input.required<CleanupOperation>();
-    counts: CleanupCount;
+    counts: CleanupCount = { totalCount: 0 };
     operationExecuted = false;
 
     private dialogErrorSource = new Subject<string>();
@@ -32,7 +32,7 @@ export class CleanupOperationModalComponent implements OnInit {
      * Fetch keys from the CleanupCount object for iteration.
      */
     get cleanupKeys(): (keyof CleanupCount)[] {
-        return this.counts ? (Object.keys(this.counts) as (keyof CleanupCount)[]) : [];
+        return Object.keys(this.counts) as (keyof CleanupCount)[];
     }
 
     /**
@@ -118,6 +118,6 @@ export class CleanupOperationModalComponent implements OnInit {
      * Getter to check if there are any entries to delete.
      */
     get hasEntriesToDelete(): boolean {
-        return this.counts ? Object.values(this.counts).some((count) => count > 0) : false;
+        return Object.values(this.counts).some((count) => count > 0);
     }
 }
