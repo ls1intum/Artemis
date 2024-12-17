@@ -10,18 +10,18 @@ import org.springframework.stereotype.Service;
 import de.tum.cit.aet.artemis.atlas.domain.LearningObject;
 import de.tum.cit.aet.artemis.atlas.domain.competency.CourseCompetency;
 import de.tum.cit.aet.artemis.atlas.repository.CourseCompetencyRepository;
-import de.tum.cit.aet.artemis.core.repository.base.AbstractSimpleService;
+import de.tum.cit.aet.artemis.core.repository.base.ISimpleService;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.lecture.domain.LectureUnit;
 
 @Profile(PROFILE_CORE)
 @Service
-public class CourseCompetencySimpleService extends AbstractSimpleService<CourseCompetency> {
+public class CourseCompetencySimpleService implements ISimpleService<CourseCompetency> {
 
     private final CourseCompetencyRepository courseCompetencyRepository;
 
     @Override
-    protected String getEntityName() {
+    public String getEntityName() {
         return "CourseCompetency";
     }
 

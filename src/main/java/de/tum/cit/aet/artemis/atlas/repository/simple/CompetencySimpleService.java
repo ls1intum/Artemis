@@ -7,16 +7,16 @@ import org.springframework.stereotype.Service;
 
 import de.tum.cit.aet.artemis.atlas.domain.competency.Competency;
 import de.tum.cit.aet.artemis.atlas.repository.CompetencyRepository;
-import de.tum.cit.aet.artemis.core.repository.base.AbstractSimpleService;
+import de.tum.cit.aet.artemis.core.repository.base.ISimpleService;
 
 @Profile(PROFILE_CORE)
 @Service
-public class CompetencySimpleService extends AbstractSimpleService<Competency> {
+public class CompetencySimpleService implements ISimpleService<Competency> {
 
     private final CompetencyRepository competencyRepository;
 
     @Override
-    protected String getEntityName() {
+    public String getEntityName() {
         return "Competency";
     }
 

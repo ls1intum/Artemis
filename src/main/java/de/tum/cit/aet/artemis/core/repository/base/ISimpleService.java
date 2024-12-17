@@ -6,18 +6,18 @@ import de.tum.cit.aet.artemis.core.domain.DomainObject;
 import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
 
 /**
- * Abstract base for simple (repository) services. These are services on repository
+ * Interface for simple (repository) services. These are services on repository
  * layer which contain the default methods of the repository layer/data access.
  */
-public abstract class AbstractSimpleService<T extends DomainObject> {
+public interface ISimpleService<T extends DomainObject> {
 
-    protected abstract String getEntityName();
+    String getEntityName();
 
-    protected <U extends T> U getValueElseThrow(Optional<U> optional) {
+    default <U extends T> U getValueElseThrow(Optional<U> optional) {
         return getValueElseThrow(optional, getEntityName());
     }
 
-    protected <U extends T> U getValueElseThrow(Optional<U> optional, String entityName) {
+    default <U extends T> U getValueElseThrow(Optional<U> optional, String entityName) {
         return optional.orElseThrow(() -> new EntityNotFoundException(entityName));
     }
 }
