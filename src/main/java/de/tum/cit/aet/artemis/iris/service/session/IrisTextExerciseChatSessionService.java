@@ -1,6 +1,6 @@
 package de.tum.cit.aet.artemis.iris.service.session;
 
-import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
+import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_TEXT;
 
 import java.util.Comparator;
 import java.util.Optional;
@@ -87,7 +87,7 @@ public class IrisTextExerciseChatSessionService implements IrisChatBasedFeatureI
         if (session.getExercise().isExamExercise()) {
             throw new ConflictException("Iris is not supported for exam exercises", "Iris", "irisExamExercise");
         }
-        var exercise = textApi.orElseThrow(() -> new ApiNotPresentException(TextApi.class, PROFILE_CORE)).findByIdElseThrow(session.getExercise().getId());
+        var exercise = textApi.orElseThrow(() -> new ApiNotPresentException(TextApi.class, PROFILE_TEXT)).findByIdElseThrow(session.getExercise().getId());
         if (!irisSettingsService.isEnabledFor(IrisSubSettingsType.TEXT_EXERCISE_CHAT, exercise)) {
             throw new ConflictException("Iris is not enabled for this exercise", "Iris", "irisDisabled");
         }

@@ -1,6 +1,6 @@
 package de.tum.cit.aet.artemis.text.web;
 
-import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
+import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_TEXT;
 
 import java.net.URI;
 import java.net.URISyntaxException;
@@ -35,7 +35,7 @@ import de.tum.cit.aet.artemis.text.repository.TextSubmissionRepository;
 /**
  * REST controller for managing TextAssessmentEventResource.
  */
-@Profile(PROFILE_CORE)
+@Profile(PROFILE_TEXT)
 @RestController
 @RequestMapping("api/")
 public class TextAssessmentEventResource {

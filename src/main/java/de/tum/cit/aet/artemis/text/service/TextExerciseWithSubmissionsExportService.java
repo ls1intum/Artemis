@@ -1,6 +1,6 @@
 package de.tum.cit.aet.artemis.text.service;
 
-import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
+import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_TEXT;
 
 import java.nio.file.Path;
 import java.util.List;
@@ -19,7 +19,7 @@ import de.tum.cit.aet.artemis.text.domain.TextExercise;
  * Service for exporting Text Exercises with the student submissions.
  */
 
-@Profile(PROFILE_CORE)
+@Profile(PROFILE_TEXT)
 @Service
 public class TextExerciseWithSubmissionsExportService extends ExerciseWithSubmissionsExportService {
 

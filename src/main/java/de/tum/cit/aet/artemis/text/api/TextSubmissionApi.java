@@ -1,6 +1,6 @@
 package de.tum.cit.aet.artemis.text.api;
 
-import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
+import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_TEXT;
 
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Controller;
@@ -12,7 +12,7 @@ import de.tum.cit.aet.artemis.text.repository.TextSubmissionRepository;
 import de.tum.cit.aet.artemis.text.service.TextSubmissionService;
 
 @Controller
-@Profile(PROFILE_CORE)
+@Profile(PROFILE_TEXT)
 public class TextSubmissionApi extends AbstractTextApi {
 
     private final TextSubmissionRepository textSubmissionRepository;

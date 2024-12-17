@@ -1,6 +1,6 @@
 package de.tum.cit.aet.artemis.iris.web;
 
-import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
+import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_TEXT;
 
 import java.net.URI;
 import java.net.URISyntaxException;
@@ -69,7 +69,7 @@ public class IrisTextExerciseChatSessionResource {
     @PostMapping("{exerciseId}/sessions/current")
     @EnforceAtLeastStudentInExercise
     public ResponseEntity<IrisTextExerciseChatSession> getCurrentSessionOrCreateIfNotExists(@PathVariable Long exerciseId) throws URISyntaxException {
-        var exercise = textApi.orElseThrow(() -> new ApiNotPresentException(TextApi.class, PROFILE_CORE)).findByIdElseThrow(exerciseId);
+        var exercise = textApi.orElseThrow(() -> new ApiNotPresentException(TextApi.class, PROFILE_TEXT)).findByIdElseThrow(exerciseId);
         validateExercise(exercise);
 
         irisSettingsService.isEnabledForElseThrow(IrisSubSettingsType.TEXT_EXERCISE_CHAT, exercise);
@@ -97,7 +97,7 @@ public class IrisTextExerciseChatSessionResource {
     @PostMapping("{exerciseId}/sessions")
     @EnforceAtLeastStudentInExercise
     public ResponseEntity<IrisTextExerciseChatSession> createSessionForExercise(@PathVariable Long exerciseId) throws URISyntaxException {
-        var textExercise = textApi.orElseThrow(() -> new ApiNotPresentException(TextApi.class, PROFILE_CORE)).findByIdElseThrow(exerciseId);
+        var textExercise = textApi.orElseThrow(() -> new ApiNotPresentException(TextApi.class, PROFILE_TEXT)).findByIdElseThrow(exerciseId);
         validateExercise(textExercise);
 
         irisSettingsService.isEnabledForElseThrow(IrisSubSettingsType.TEXT_EXERCISE_CHAT, textExercise);
@@ -119,7 +119,7 @@ public class IrisTextExerciseChatSessionResource {
     @GetMapping("{exerciseId}/sessions")
     @EnforceAtLeastStudentInExercise
     public ResponseEntity<List<IrisTextExerciseChatSession>> getAllSessions(@PathVariable Long exerciseId) {
-        var exercise = textApi.orElseThrow(() -> new ApiNotPresentException(TextApi.class, PROFILE_CORE)).findByIdElseThrow(exerciseId);
+        var exercise = textApi.orElseThrow(() -> new ApiNotPresentException(TextApi.class, PROFILE_TEXT)).findByIdElseThrow(exerciseId);
         validateExercise(exercise);
 
         irisSettingsService.isEnabledForElseThrow(IrisSubSettingsType.TEXT_EXERCISE_CHAT, exercise);

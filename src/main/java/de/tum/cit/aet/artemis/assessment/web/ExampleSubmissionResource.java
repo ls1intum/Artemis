@@ -2,6 +2,7 @@
 package de.tum.cit.aet.artemis.assessment.web;
 
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
+import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_TEXT;
 
 import java.util.Optional;
 
@@ -131,7 +132,7 @@ public class ExampleSubmissionResource {
 
         // Prepare text blocks for fresh assessment
         if (exampleSubmission.getExercise().getExerciseType() == ExerciseType.TEXT && exampleSubmission.getSubmission() != null) {
-            textSubmissionExportApi.orElseThrow(() -> new ApiNotPresentException(TextSubmissionExportApi.class, PROFILE_CORE))
+            textSubmissionExportApi.orElseThrow(() -> new ApiNotPresentException(TextSubmissionExportApi.class, PROFILE_TEXT))
                     .prepareTextBlockForExampleSubmission(exampleSubmission.getSubmission().getId());
         }
 
@@ -163,7 +164,7 @@ public class ExampleSubmissionResource {
 
         // For TextExercise, we need to load the text blocks as well
         if (exampleSubmission.getExercise().getExerciseType() == ExerciseType.TEXT && exampleSubmission.getSubmission() != null) {
-            Optional<TextSubmission> textSubmission = textSubmissionExportApi.orElseThrow(() -> new ApiNotPresentException(TextSubmissionExportApi.class, PROFILE_CORE))
+            Optional<TextSubmission> textSubmission = textSubmissionExportApi.orElseThrow(() -> new ApiNotPresentException(TextSubmissionExportApi.class, PROFILE_TEXT))
                     .getSubmissionForExampleSubmission(exampleSubmission.getSubmission().getId());
             textSubmission.ifPresent(exampleSubmission::setSubmission);
         }

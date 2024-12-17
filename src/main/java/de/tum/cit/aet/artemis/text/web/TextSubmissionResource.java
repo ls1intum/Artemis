@@ -1,6 +1,6 @@
 package de.tum.cit.aet.artemis.text.web;
 
-import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
+import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_TEXT;
 
 import java.util.List;
 import java.util.Optional;
@@ -51,7 +51,7 @@ import de.tum.cit.aet.artemis.text.service.TextSubmissionService;
 /**
  * REST controller for managing TextSubmission.
  */
-@Profile(PROFILE_CORE)
+@Profile(PROFILE_TEXT)
 @RestController
 @RequestMapping("api/")
 public class TextSubmissionResource extends AbstractSubmissionResource {

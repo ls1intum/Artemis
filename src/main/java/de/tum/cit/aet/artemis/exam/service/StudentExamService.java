@@ -2,6 +2,7 @@ package de.tum.cit.aet.artemis.exam.service;
 
 import static de.tum.cit.aet.artemis.core.config.Constants.EXAM_EXERCISE_START_STATUS;
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
+import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_TEXT;
 import static de.tum.cit.aet.artemis.core.util.TimeLogUtil.formatDurationFrom;
 
 import java.time.Instant;
@@ -314,7 +315,7 @@ public class StudentExamService {
                         TextSubmission existingSubmissionInDatabase = (TextSubmission) existingParticipationInDatabase.findLatestSubmission().orElse(null);
                         TextSubmission textSubmissionFromClient = (TextSubmission) submissionFromClient;
                         if (!isContentEqualTo(existingSubmissionInDatabase, textSubmissionFromClient)) {
-                            textSubmissionApi.orElseThrow(() -> new ApiNotPresentException(TextSubmissionApi.class, PROFILE_CORE)).saveTextSubmission(textSubmissionFromClient);
+                            textSubmissionApi.orElseThrow(() -> new ApiNotPresentException(TextSubmissionApi.class, PROFILE_TEXT)).saveTextSubmission(textSubmissionFromClient);
                             saveSubmissionVersion(currentUser, submissionFromClient);
                         }
                     }

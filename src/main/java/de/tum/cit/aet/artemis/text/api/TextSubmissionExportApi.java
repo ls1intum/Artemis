@@ -1,6 +1,6 @@
 package de.tum.cit.aet.artemis.text.api;
 
-import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
+import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_TEXT;
 
 import java.io.IOException;
 import java.nio.file.Path;
@@ -20,7 +20,7 @@ import de.tum.cit.aet.artemis.text.service.TextExerciseWithSubmissionsExportServ
 import de.tum.cit.aet.artemis.text.service.TextSubmissionExportService;
 
 @Controller
-@Profile(PROFILE_CORE)
+@Profile(PROFILE_TEXT)
 public class TextSubmissionExportApi extends AbstractTextApi {
 
     private final TextSubmissionExportService textSubmissionExportService;

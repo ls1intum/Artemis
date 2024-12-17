@@ -1,6 +1,6 @@
 package de.tum.cit.aet.artemis.text.service;
 
-import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
+import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_TEXT;
 
 import java.util.HashMap;
 import java.util.HashSet;
@@ -41,7 +41,7 @@ import de.tum.cit.aet.artemis.text.domain.TextSubmission;
 import de.tum.cit.aet.artemis.text.repository.TextExerciseRepository;
 import de.tum.cit.aet.artemis.text.repository.TextSubmissionRepository;
 
-@Profile(PROFILE_CORE)
+@Profile(PROFILE_TEXT)
 @Service
 public class TextExerciseImportService extends ExerciseImportService {
 

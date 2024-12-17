@@ -1,6 +1,6 @@
 package de.tum.cit.aet.artemis.text.repository;
 
-import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
+import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_TEXT;
 import static org.springframework.data.jpa.repository.EntityGraph.EntityGraphType.LOAD;
 
 import java.util.Optional;
@@ -17,7 +17,7 @@ import de.tum.cit.aet.artemis.text.domain.TextSubmission;
 /**
  * Spring Data JPA repository for the TextSubmission entity.
  */
-@Profile(PROFILE_CORE)
+@Profile(PROFILE_TEXT)
 @Repository
 public interface TextSubmissionRepository extends ArtemisJpaRepository<TextSubmission, Long> {
 

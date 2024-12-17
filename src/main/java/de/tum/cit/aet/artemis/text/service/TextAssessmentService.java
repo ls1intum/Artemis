@@ -1,6 +1,6 @@
 package de.tum.cit.aet.artemis.text.service;
 
-import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
+import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_TEXT;
 import static org.hibernate.Hibernate.isInitialized;
 
 import java.util.List;
@@ -32,7 +32,7 @@ import de.tum.cit.aet.artemis.exercise.service.SubmissionService;
 import de.tum.cit.aet.artemis.lti.service.LtiNewResultService;
 import de.tum.cit.aet.artemis.text.domain.TextSubmission;
 
-@Profile(PROFILE_CORE)
+@Profile(PROFILE_TEXT)
 @Service
 public class TextAssessmentService extends AssessmentService {
 

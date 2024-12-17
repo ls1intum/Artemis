@@ -1,6 +1,6 @@
 package de.tum.cit.aet.artemis.text.web;
 
-import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
+import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_TEXT;
 import static java.util.stream.Collectors.toSet;
 
 import java.util.Collections;
@@ -69,7 +69,7 @@ import de.tum.cit.aet.artemis.text.service.TextSubmissionService;
 /**
  * REST controller for managing TextAssessment.
  */
-@Profile(PROFILE_CORE)
+@Profile(PROFILE_TEXT)
 @RestController
 @RequestMapping("api/")
 public class TextAssessmentResource extends AssessmentResource {

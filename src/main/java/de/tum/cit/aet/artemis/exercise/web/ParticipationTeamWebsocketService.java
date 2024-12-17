@@ -1,6 +1,7 @@
 package de.tum.cit.aet.artemis.exercise.web;
 
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
+import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_TEXT;
 
 import java.security.Principal;
 import java.time.Instant;
@@ -216,7 +217,7 @@ public class ParticipationTeamWebsocketService {
             modelingSubmissionService.hideDetails(submission, user);
         }
         else if (submission instanceof TextSubmission textSubmission && exercise instanceof TextExercise textExercise) {
-            submission = textSubmissionApi.orElseThrow(() -> new ApiNotPresentException(TextSubmissionApi.class, PROFILE_CORE)).handleTextSubmission(textSubmission, textExercise,
+            submission = textSubmissionApi.orElseThrow(() -> new ApiNotPresentException(TextSubmissionApi.class, PROFILE_TEXT)).handleTextSubmission(textSubmission, textExercise,
                     user);
         }
         else {

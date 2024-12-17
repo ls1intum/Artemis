@@ -1,6 +1,7 @@
 package de.tum.cit.aet.artemis.plagiarism.service;
 
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
+import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_TEXT;
 import static de.tum.cit.aet.artemis.plagiarism.service.PlagiarismService.hasMinimumScore;
 
 import java.io.File;
@@ -130,7 +131,7 @@ public class TextPlagiarismDetectionService {
                 }
 
                 try {
-                    textSubmissionExportApi.orElseThrow(() -> new ApiNotPresentException(TextSubmissionExportApi.class, PROFILE_CORE)).saveSubmissionToFile(submission,
+                    textSubmissionExportApi.orElseThrow(() -> new ApiNotPresentException(TextSubmissionExportApi.class, PROFILE_TEXT)).saveSubmissionToFile(submission,
                             participantIdentifier, submissionsFolderName);
                 }
                 catch (IOException e) {

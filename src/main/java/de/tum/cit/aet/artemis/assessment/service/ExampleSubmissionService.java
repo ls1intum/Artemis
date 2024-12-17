@@ -1,6 +1,7 @@
 package de.tum.cit.aet.artemis.assessment.service;
 
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
+import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_TEXT;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -134,7 +135,7 @@ public class ExampleSubmissionService {
             newExampleSubmission.setSubmission(modelingExerciseImportService.copySubmission(modelingSubmission, gradingInstructionCopyTracker));
         }
         if (exercise instanceof TextExercise) {
-            var api = textSubmissionImportApi.orElseThrow(() -> new ApiNotPresentException(TextSubmissionApi.class, PROFILE_CORE));
+            var api = textSubmissionImportApi.orElseThrow(() -> new ApiNotPresentException(TextSubmissionApi.class, PROFILE_TEXT));
             TextSubmission textSubmission = api.importStudentSubmission(submissionId, exercise.getId(), gradingInstructionCopyTracker);
             newExampleSubmission.setSubmission(textSubmission);
         }

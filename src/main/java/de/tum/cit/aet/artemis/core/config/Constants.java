@@ -360,6 +360,11 @@ public final class Constants {
     public static final String PROFILE_SCHEDULING = "scheduling";
 
     /**
+     * The name of the Spring profile used for text exercise-functionality.
+     */
+    public static final String PROFILE_TEXT = "text";
+
+    /**
      * The name of the Spring profile used for Theia as an external online IDE.
      */
     public static final String PROFILE_THEIA = "theia";

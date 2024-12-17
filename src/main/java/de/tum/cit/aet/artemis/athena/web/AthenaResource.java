@@ -1,7 +1,7 @@
 package de.tum.cit.aet.artemis.athena.web;
 
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_ATHENA;
-import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
+import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_TEXT;
 
 import java.io.IOException;
 import java.util.List;
@@ -165,8 +165,8 @@ public class AthenaResource {
     @GetMapping("athena/text-exercises/{exerciseId}/submissions/{submissionId}/feedback-suggestions")
     @EnforceAtLeastTutor
     public ResponseEntity<List<TextFeedbackDTO>> getTextFeedbackSuggestions(@PathVariable long exerciseId, @PathVariable long submissionId) {
-        var api = textApi.orElseThrow(() -> new ApiNotPresentException(TextApi.class, PROFILE_CORE));
-        var submissionApi = textSubmissionApi.orElseThrow(() -> new ApiNotPresentException(TextSubmissionApi.class, PROFILE_CORE));
+        var api = textApi.orElseThrow(() -> new ApiNotPresentException(TextApi.class, PROFILE_TEXT));
+        var submissionApi = textSubmissionApi.orElseThrow(() -> new ApiNotPresentException(TextSubmissionApi.class, PROFILE_TEXT));
 
         return getFeedbackSuggestions(exerciseId, submissionId, api::findByIdElseThrow, submissionApi::findByIdElseThrow,
                 athenaFeedbackSuggestionsService::getTextFeedbackSuggestions);

@@ -1,6 +1,6 @@
 package de.tum.cit.aet.artemis.text.web.admin;
 
-import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
+import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_TEXT;
 
 import java.util.List;
 
@@ -18,7 +18,7 @@ import de.tum.cit.aet.artemis.text.domain.TextAssessmentEvent;
 /**
  * REST controller for administrating TextAssessmentEventResource.
  */
-@Profile(PROFILE_CORE)
+@Profile(PROFILE_TEXT)
 @EnforceAdmin
 @RestController
 @RequestMapping("api/admin/")

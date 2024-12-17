@@ -1,6 +1,6 @@
 package de.tum.cit.aet.artemis.text.service;
 
-import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
+import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_TEXT;
 
 import java.util.Collections;
 
@@ -18,7 +18,7 @@ import de.tum.cit.aet.artemis.exercise.service.ExerciseSpecificationService;
 import de.tum.cit.aet.artemis.text.domain.TextExercise;
 import de.tum.cit.aet.artemis.text.repository.TextExerciseRepository;
 
-@Profile(PROFILE_CORE)
+@Profile(PROFILE_TEXT)
 @Service
 public class TextExerciseService {
 

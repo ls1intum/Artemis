@@ -1,6 +1,6 @@
 package de.tum.cit.aet.artemis.text.api;
 
-import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
+import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_TEXT;
 
 import java.util.Map;
 import java.util.Objects;
@@ -15,7 +15,7 @@ import de.tum.cit.aet.artemis.text.repository.TextSubmissionRepository;
 import de.tum.cit.aet.artemis.text.service.TextExerciseImportService;
 
 @Controller
-@Profile(PROFILE_CORE)
+@Profile(PROFILE_TEXT)
 public class TextSubmissionImportApi extends AbstractTextApi {
 
     private final TextSubmissionRepository textSubmissionRepository;

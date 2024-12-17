@@ -1,7 +1,7 @@
 package de.tum.cit.aet.artemis.athena.service;
 
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_ATHENA;
-import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
+import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_TEXT;
 
 import java.util.Optional;
 
@@ -67,7 +67,7 @@ public class AthenaDTOConverterService {
         switch (exercise.getExerciseType()) {
             case TEXT -> {
                 // Fetch text exercise with grade criteria
-                var textExercise = textApi.orElseThrow(() -> new ApiNotPresentException(TextApi.class, PROFILE_CORE)).findWithGradingCriteriaByIdElseThrow(exercise.getId());
+                var textExercise = textApi.orElseThrow(() -> new ApiNotPresentException(TextApi.class, PROFILE_TEXT)).findWithGradingCriteriaByIdElseThrow(exercise.getId());
                 return TextExerciseDTO.of(textExercise);
             }
             case PROGRAMMING -> {

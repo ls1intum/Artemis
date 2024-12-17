@@ -1,6 +1,6 @@
 package de.tum.cit.aet.artemis.text.repository;
 
-import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
+import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_TEXT;
 import static org.springframework.data.jpa.repository.EntityGraph.EntityGraphType.LOAD;
 
 import java.util.List;
@@ -23,7 +23,7 @@ import de.tum.cit.aet.artemis.text.domain.TextExercise;
 /**
  * Spring Data JPA repository for the TextExercise entity.
  */
-@Profile(PROFILE_CORE)
+@Profile(PROFILE_TEXT)
 @Repository
 public interface TextExerciseRepository extends ArtemisJpaRepository<TextExercise, Long>, JpaSpecificationExecutor<TextExercise> {
 

@@ -1,7 +1,7 @@
 package de.tum.cit.aet.artemis.atlas.service;
 
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_ATLAS;
-import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
+import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_TEXT;
 
 import java.io.IOException;
 import java.time.ZonedDateTime;
@@ -206,7 +206,7 @@ public class LearningObjectImportService {
                     modelingExerciseRepository::findByIdWithExampleSubmissionsAndResultsAndPlagiarismDetectionConfigElseThrow,
                     modelingExerciseImportService::importModelingExercise);
             case TextExercise textExercise -> {
-                var api = textExerciseImportApi.orElseThrow(() -> new ApiNotPresentException(TextExerciseImportApi.class, PROFILE_CORE));
+                var api = textExerciseImportApi.orElseThrow(() -> new ApiNotPresentException(TextExerciseImportApi.class, PROFILE_TEXT));
                 yield importOrLoadExercise(textExercise, course, api::findUniqueWithCompetenciesByTitleAndCourseId,
                         api::findByIdWithExampleSubmissionsAndResultsAndGradingCriteriaElseThrow, api::importTextExercise);
             }
