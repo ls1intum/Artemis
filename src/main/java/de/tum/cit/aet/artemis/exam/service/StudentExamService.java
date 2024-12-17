@@ -314,7 +314,7 @@ public class StudentExamService {
                         TextSubmission existingSubmissionInDatabase = (TextSubmission) existingParticipationInDatabase.findLatestSubmission().orElse(null);
                         TextSubmission textSubmissionFromClient = (TextSubmission) submissionFromClient;
                         if (!isContentEqualTo(existingSubmissionInDatabase, textSubmissionFromClient)) {
-                            textSubmissionApi.orElseThrow(() -> new ApiNotPresentException(TextSubmissionApi.class, PROFILE_CORE));
+                            textSubmissionApi.orElseThrow(() -> new ApiNotPresentException(TextSubmissionApi.class, PROFILE_CORE)).saveTextSubmission(textSubmissionFromClient);
                             saveSubmissionVersion(currentUser, submissionFromClient);
                         }
                     }
