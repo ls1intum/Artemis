@@ -15,13 +15,13 @@ import de.tum.cit.aet.artemis.text.service.TextExerciseImportService;
 
 @Controller
 @Profile(PROFILE_CORE)
-public class TextExerciseSubmissionApi extends AbstractTextApi {
+public class TextSubmissionApi extends AbstractTextApi {
 
     private final TextSubmissionRepository textSubmissionRepository;
 
     private final TextExerciseImportService textExerciseImportService;
 
-    public TextExerciseSubmissionApi(TextSubmissionRepository textSubmissionRepository, TextExerciseImportService textExerciseImportService) {
+    public TextSubmissionApi(TextSubmissionRepository textSubmissionRepository, TextExerciseImportService textExerciseImportService) {
         this.textSubmissionRepository = textSubmissionRepository;
         this.textExerciseImportService = textExerciseImportService;
     }

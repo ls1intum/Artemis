@@ -73,7 +73,7 @@ import de.tum.cit.aet.artemis.quiz.domain.compare.SAMapping;
 import de.tum.cit.aet.artemis.quiz.repository.QuizSubmissionRepository;
 import de.tum.cit.aet.artemis.quiz.repository.SubmittedAnswerRepository;
 import de.tum.cit.aet.artemis.quiz.service.QuizPoolService;
-import de.tum.cit.aet.artemis.text.api.TextExerciseSubmissionApi;
+import de.tum.cit.aet.artemis.text.api.TextSubmissionApi;
 import de.tum.cit.aet.artemis.text.domain.TextExercise;
 import de.tum.cit.aet.artemis.text.domain.TextSubmission;
 
@@ -110,7 +110,7 @@ public class StudentExamService {
 
     private final SubmittedAnswerRepository submittedAnswerRepository;
 
-    private final Optional<TextExerciseSubmissionApi> textExerciseSubmissionApi;
+    private final Optional<TextSubmissionApi> textSubmissionApi;
 
     private final ModelingSubmissionRepository modelingSubmissionRepository;
 
@@ -130,8 +130,8 @@ public class StudentExamService {
             QuizSubmissionRepository quizSubmissionRepository, SubmittedAnswerRepository submittedAnswerRepository, ModelingSubmissionRepository modelingSubmissionRepository,
             SubmissionVersionService submissionVersionService, ProgrammingExerciseParticipationService programmingExerciseParticipationService, SubmissionService submissionService,
             StudentParticipationRepository studentParticipationRepository, ExamQuizService examQuizService, ProgrammingExerciseRepository programmingExerciseRepository,
-            ProgrammingTriggerService programmingTriggerService, Optional<TextExerciseSubmissionApi> textExerciseSubmissionApi, ExamRepository examRepository,
-            CacheManager cacheManager, WebsocketMessagingService websocketMessagingService, @Qualifier("taskScheduler") TaskScheduler scheduler, QuizPoolService quizPoolService) {
+            ProgrammingTriggerService programmingTriggerService, Optional<TextSubmissionApi> textSubmissionApi, ExamRepository examRepository, CacheManager cacheManager,
+            WebsocketMessagingService websocketMessagingService, @Qualifier("taskScheduler") TaskScheduler scheduler, QuizPoolService quizPoolService) {
         this.participationService = participationService;
         this.studentExamRepository = studentExamRepository;
         this.userRepository = userRepository;
@@ -145,7 +145,7 @@ public class StudentExamService {
         this.submissionService = submissionService;
         this.programmingExerciseRepository = programmingExerciseRepository;
         this.programmingTriggerService = programmingTriggerService;
-        this.textExerciseSubmissionApi = textExerciseSubmissionApi;
+        this.textSubmissionApi = textSubmissionApi;
         this.examRepository = examRepository;
         this.cacheManager = cacheManager;
         this.websocketMessagingService = websocketMessagingService;
@@ -314,7 +314,7 @@ public class StudentExamService {
                         TextSubmission existingSubmissionInDatabase = (TextSubmission) existingParticipationInDatabase.findLatestSubmission().orElse(null);
                         TextSubmission textSubmissionFromClient = (TextSubmission) submissionFromClient;
                         if (!isContentEqualTo(existingSubmissionInDatabase, textSubmissionFromClient)) {
-                            textExerciseSubmissionApi.orElseThrow(() -> new ApiNotPresentException(TextExerciseSubmissionApi.class, PROFILE_CORE));
+                            textSubmissionApi.orElseThrow(() -> new ApiNotPresentException(TextSubmissionApi.class, PROFILE_CORE));
                             saveSubmissionVersion(currentUser, submissionFromClient);
                         }
                     }
