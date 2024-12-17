@@ -25,6 +25,7 @@ import de.tum.cit.aet.artemis.modeling.domain.ModelingExercise;
 import de.tum.cit.aet.artemis.modeling.domain.ModelingSubmission;
 import de.tum.cit.aet.artemis.modeling.service.ModelingExerciseImportService;
 import de.tum.cit.aet.artemis.text.api.TextSubmissionApi;
+import de.tum.cit.aet.artemis.text.api.TextSubmissionImportApi;
 import de.tum.cit.aet.artemis.text.domain.TextExercise;
 import de.tum.cit.aet.artemis.text.domain.TextSubmission;
 
@@ -42,20 +43,20 @@ public class ExampleSubmissionService {
 
     private final ModelingExerciseImportService modelingExerciseImportService;
 
-    private final Optional<TextSubmissionApi> textSubmissionApi;
+    private final Optional<TextSubmissionImportApi> textSubmissionImportApi;
 
     private final GradingCriterionRepository gradingCriterionRepository;
 
     private final TutorParticipationRepository tutorParticipationRepository;
 
     public ExampleSubmissionService(ExampleSubmissionRepository exampleSubmissionRepository, SubmissionRepository submissionRepository, ExerciseRepository exerciseRepository,
-            ModelingExerciseImportService modelingExerciseImportService, Optional<TextSubmissionApi> textSubmissionApi, GradingCriterionRepository gradingCriterionRepository,
-            TutorParticipationRepository tutorParticipationRepository) {
+            ModelingExerciseImportService modelingExerciseImportService, Optional<TextSubmissionImportApi> textSubmissionImportApi,
+            GradingCriterionRepository gradingCriterionRepository, TutorParticipationRepository tutorParticipationRepository) {
         this.exampleSubmissionRepository = exampleSubmissionRepository;
         this.submissionRepository = submissionRepository;
         this.exerciseRepository = exerciseRepository;
         this.modelingExerciseImportService = modelingExerciseImportService;
-        this.textSubmissionApi = textSubmissionApi;
+        this.textSubmissionImportApi = textSubmissionImportApi;
         this.gradingCriterionRepository = gradingCriterionRepository;
         this.tutorParticipationRepository = tutorParticipationRepository;
     }
@@ -133,7 +134,7 @@ public class ExampleSubmissionService {
             newExampleSubmission.setSubmission(modelingExerciseImportService.copySubmission(modelingSubmission, gradingInstructionCopyTracker));
         }
         if (exercise instanceof TextExercise) {
-            var api = textSubmissionApi.orElseThrow(() -> new ApiNotPresentException(TextSubmissionApi.class, PROFILE_CORE));
+            var api = textSubmissionImportApi.orElseThrow(() -> new ApiNotPresentException(TextSubmissionApi.class, PROFILE_CORE));
             TextSubmission textSubmission = api.importStudentSubmission(submissionId, exercise.getId(), gradingInstructionCopyTracker);
             newExampleSubmission.setSubmission(textSubmission);
         }
