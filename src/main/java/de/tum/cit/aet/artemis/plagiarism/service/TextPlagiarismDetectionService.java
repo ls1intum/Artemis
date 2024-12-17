@@ -24,6 +24,7 @@ import de.jplag.clustering.ClusteringOptions;
 import de.jplag.exceptions.ExitException;
 import de.jplag.options.JPlagOptions;
 import de.jplag.text.NaturalLanguage;
+import de.tum.cit.aet.artemis.core.exception.ApiNotPresentException;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.core.util.TimeLogUtil;
 import de.tum.cit.aet.artemis.exercise.domain.participation.Participation;
@@ -31,6 +32,7 @@ import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation
 import de.tum.cit.aet.artemis.plagiarism.domain.PlagiarismCheckState;
 import de.tum.cit.aet.artemis.plagiarism.domain.text.TextPlagiarismResult;
 import de.tum.cit.aet.artemis.plagiarism.service.cache.PlagiarismCacheService;
+import de.tum.cit.aet.artemis.text.api.TextSubmissionExportApi;
 import de.tum.cit.aet.artemis.text.domain.TextExercise;
 import de.tum.cit.aet.artemis.text.domain.TextSubmission;
 import de.tum.cit.aet.artemis.text.service.TextSubmissionExportService;
@@ -41,6 +43,8 @@ public class TextPlagiarismDetectionService {
 
     private static final Logger log = LoggerFactory.getLogger(TextPlagiarismDetectionService.class);
 
+    private final Optional<TextSubmissionExportApi> textSubmissionExportApi;
+
     private final TextSubmissionExportService textSubmissionExportService;
 
     private final PlagiarismWebsocketService plagiarismWebsocketService;
@@ -49,8 +53,9 @@ public class TextPlagiarismDetectionService {
 
     private final PlagiarismService plagiarismService;
 
-    public TextPlagiarismDetectionService(TextSubmissionExportService textSubmissionExportService, PlagiarismWebsocketService plagiarismWebsocketService,
-            PlagiarismCacheService plagiarismCacheService, PlagiarismService plagiarismService) {
+    public TextPlagiarismDetectionService(Optional<TextSubmissionExportApi> textSubmissionExportApi, TextSubmissionExportService textSubmissionExportService,
+            PlagiarismWebsocketService plagiarismWebsocketService, PlagiarismCacheService plagiarismCacheService, PlagiarismService plagiarismService) {
+        this.textSubmissionExportApi = textSubmissionExportApi;
         this.textSubmissionExportService = textSubmissionExportService;
         this.plagiarismWebsocketService = plagiarismWebsocketService;
         this.plagiarismCacheService = plagiarismCacheService;
@@ -129,7 +134,8 @@ public class TextPlagiarismDetectionService {
                 }
 
                 try {
-                    textSubmissionExportService.saveSubmissionToFile(submission, participantIdentifier, submissionsFolderName);
+                    textSubmissionExportApi.orElseThrow(() -> new ApiNotPresentException(TextSubmissionExportApi.class, PROFILE_CORE)).saveSubmissionToFile(submission,
+                            participantIdentifier, submissionsFolderName);
                 }
                 catch (IOException e) {
                     log.error(e.getMessage());
