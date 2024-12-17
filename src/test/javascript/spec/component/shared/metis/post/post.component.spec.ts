@@ -43,7 +43,6 @@ import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { TranslateService } from '@ngx-translate/core';
 import { By } from '@angular/platform-browser';
 import dayjs from 'dayjs/esm';
-import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 
 describe('PostComponent', () => {
     let component: PostComponent;
@@ -88,7 +87,6 @@ describe('PostComponent', () => {
                 MockDirective(TranslateDirective),
             ],
         })
-            .overrideProvider(ArtemisDatePipe, { useValue: { ArtemisDatePipe } })
             .compileComponents()
             .then(() => {
                 fixture = TestBed.createComponent(PostComponent);
@@ -399,13 +397,8 @@ describe('PostComponent', () => {
         fixture.detectChanges();
 
         const postTimeDebugElement = debugElement.query(By.css('span.post-time'));
-        //const postTimeElement = postTimeDebugElement.nativeElement as HTMLElement;
 
         expect(postTimeDebugElement).toBeTruthy();
-
-        //const expectedTime = dayjs(fixedDate).format('HH:mm');
-        //i dont know how to get the Date Pipe running here
-        //expect(postTimeElement.textContent?.trim()).toBe(expectedTime);
     });
 
     it('should not display post-time span when isConsecutive() returns false', () => {
