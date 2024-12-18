@@ -27,6 +27,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import de.tum.cit.aet.artemis.atlas.api.CompetencyApi;
 import de.tum.cit.aet.artemis.communication.domain.conversation.Channel;
 import de.tum.cit.aet.artemis.communication.repository.conversation.ChannelRepository;
 import de.tum.cit.aet.artemis.communication.service.conversation.ChannelService;
@@ -66,6 +67,8 @@ public class LectureResource {
 
     private static final String ENTITY_NAME = "lecture";
 
+    private final CompetencyApi competencyApi;
+
     @Value("${jhipster.clientApp.name}")
     private String applicationName;
 
@@ -89,7 +92,7 @@ public class LectureResource {
 
     public LectureResource(LectureRepository lectureRepository, LectureService lectureService, LectureImportService lectureImportService, CourseRepository courseRepository,
             UserRepository userRepository, AuthorizationCheckService authCheckService, ExerciseService exerciseService, ChannelService channelService,
-            ChannelRepository channelRepository) {
+            ChannelRepository channelRepository, CompetencyApi competencyApi) {
         this.lectureRepository = lectureRepository;
         this.lectureService = lectureService;
         this.lectureImportService = lectureImportService;
@@ -99,6 +102,7 @@ public class LectureResource {
         this.exerciseService = exerciseService;
         this.channelService = channelService;
         this.channelRepository = channelRepository;
+        this.competencyApi = competencyApi;
     }
 
     /**
@@ -272,21 +276,21 @@ public class LectureResource {
     @Profile(PROFILE_IRIS)
     @PostMapping("courses/{courseId}/ingest")
     @EnforceAtLeastInstructorInCourse
-    public ResponseEntity<Boolean> ingestLectures(@PathVariable Long courseId, @RequestParam(required = false) Optional<Long> lectureId) {
-        log.debug("REST request to ingest lectures of course : {}", courseId);
+    public ResponseEntity<Void> ingestLectures(@PathVariable Long courseId, @RequestParam(required = false) Optional<Long> lectureId) {
         Course course = courseRepository.findByIdWithLecturesAndLectureUnitsElseThrow(courseId);
+        authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.INSTRUCTOR, course, null);
         if (lectureId.isPresent()) {
             Optional<Lecture> lectureToIngest = course.getLectures().stream().filter(lecture -> lecture.getId().equals(lectureId.get())).findFirst();
             if (lectureToIngest.isPresent()) {
                 Set<Lecture> lecturesToIngest = new HashSet<>();
                 lecturesToIngest.add(lectureToIngest.get());
-                return ResponseEntity.ok().body(lectureService.ingestLecturesInPyris(lecturesToIngest));
+                lectureService.ingestLecturesInPyris(lecturesToIngest);
+                return ResponseEntity.ok().build();
             }
-            return ResponseEntity.badRequest()
-                    .headers(HeaderUtil.createAlert(applicationName, "Could not send lecture to Iris, no lecture found with the provided id.", "idExists")).body(null);
-
+            return ResponseEntity.badRequest().headers(HeaderUtil.createAlert(applicationName, "artemisApp.iris.ingestionAlert.allLecturesError", "idExists")).body(null);
         }
-        return ResponseEntity.ok().body(lectureService.ingestLecturesInPyris(course.getLectures()));
+        lectureService.ingestLecturesInPyris(course.getLectures());
+        return ResponseEntity.ok().build();
     }
 
     /**
@@ -300,6 +304,7 @@ public class LectureResource {
     public ResponseEntity<Lecture> getLectureWithDetails(@PathVariable Long lectureId) {
         log.debug("REST request to get lecture {} with details", lectureId);
         Lecture lecture = lectureRepository.findByIdWithAttachmentsAndPostsAndLectureUnitsAndCompetenciesAndCompletionsElseThrow(lectureId);
+        competencyApi.addCompetencyLinksToExerciseUnits(lecture);
         Course course = lecture.getCourse();
         if (course == null) {
             return ResponseEntity.badRequest().build();
@@ -326,9 +331,10 @@ public class LectureResource {
         if (course == null) {
             return ResponseEntity.badRequest().build();
         }
-        authCheckService.checkIsAllowedToSeeLectureElseThrow(lecture, userRepository.getUserWithGroupsAndAuthorities());
-
         User user = userRepository.getUserWithGroupsAndAuthorities();
+        authCheckService.checkIsAllowedToSeeLectureElseThrow(lecture, user);
+
+        competencyApi.addCompetencyLinksToExerciseUnits(lecture);
         lectureService.filterActiveAttachmentUnits(lecture);
         lectureService.filterActiveAttachments(lecture, user);
         return ResponseEntity.ok(lecture);

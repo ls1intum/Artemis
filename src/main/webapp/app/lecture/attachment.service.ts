@@ -35,8 +35,11 @@ export class AttachmentService {
             copy.lecture.posts = undefined;
         }
 
+        /** Ngsw-worker is bypassed temporarily to fix Chromium file upload issue
+         * See: https://issues.chromium.org/issues/374550348
+         **/
         return this.http
-            .post<Attachment>(this.resourceUrl, this.createFormData(copy, file), { observe: 'response' })
+            .post<Attachment>(this.resourceUrl, this.createFormData(copy, file), { headers: { 'ngsw-bypass': 'true' }, observe: 'response' })
             .pipe(map((res: EntityResponseType) => this.convertAttachmentResponseDatesFromServer(res)));
     }
 
@@ -52,8 +55,15 @@ export class AttachmentService {
         const options = createRequestOption(req);
         const copy = this.convertAttachmentDatesFromClient(attachment);
 
+        /** Ngsw-worker is bypassed temporarily to fix Chromium file upload issue
+         * See: https://issues.chromium.org/issues/374550348
+         **/
         return this.http
-            .put<Attachment>(this.resourceUrl + '/' + attachmentId, this.createFormData(copy, file, studentVersion), { params: options, observe: 'response' })
+            .put<Attachment>(this.resourceUrl + '/' + attachmentId, this.createFormData(copy, file, studentVersion), {
+                headers: { 'ngsw-bypass': 'true' },
+                params: options,
+                observe: 'response',
+            })
             .pipe(map((res: EntityResponseType) => this.convertAttachmentResponseDatesFromServer(res)));
     }
 

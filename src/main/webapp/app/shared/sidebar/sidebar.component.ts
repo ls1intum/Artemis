@@ -22,7 +22,7 @@ import { ExerciseFilterModalComponent } from 'app/shared/exercise-filter/exercis
     styleUrls: ['./sidebar.component.scss'],
 })
 export class SidebarComponent implements OnDestroy, OnChanges, OnInit {
-    @Output() onSelectConversation = new EventEmitter<number>();
+    @Output() onSelectConversation = new EventEmitter<number | string>();
     @Output() onUpdateSidebar = new EventEmitter<void>();
     onDirectChatPressed = output<void>();
     onGroupChatPressed = output<void>();
@@ -117,7 +117,7 @@ export class SidebarComponent implements OnDestroy, OnChanges, OnInit {
             if (itemId) {
                 this.storeLastSelectedItem(itemId);
                 if (this.sidebarData.sidebarType == 'conversation') {
-                    this.onSelectConversation.emit(+itemId);
+                    this.onSelectConversation.emit(itemId);
                     this.onUpdateSidebar.emit();
                 }
             }

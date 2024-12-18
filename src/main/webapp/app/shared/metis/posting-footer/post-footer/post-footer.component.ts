@@ -137,7 +137,7 @@ export class PostFooterComponent extends PostingFooterDirective<Post> implements
                 timeDiff = currentDate.diff(lastDate, 'minute');
             }
 
-            if (currentPost.author?.id === currentGroup.author?.id && timeDiff < 1 && timeDiff >= 0) {
+            if (currentPost.author?.id === currentGroup.author?.id && timeDiff < 5 && timeDiff >= 0) {
                 currentGroup.posts.push({ ...currentPost, isConsecutive: true }); // consecutive post
             } else {
                 groups.push(currentGroup);
@@ -171,6 +171,13 @@ export class PostFooterComponent extends PostingFooterDirective<Post> implements
      */
     openCreateAnswerPostModal() {
         this.createAnswerPostModalComponent.open();
+    }
+
+    /**
+     * Close create answer modal
+     */
+    closeCreateAnswerPostModal() {
+        this.createAnswerPostModalComponent.close();
     }
 
     protected postsTrackByFn(index: number, post: Post): number {

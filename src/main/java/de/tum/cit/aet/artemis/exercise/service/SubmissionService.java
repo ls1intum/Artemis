@@ -203,10 +203,13 @@ public class SubmissionService {
     }
 
     protected List<Submission> getAssessableSubmissions(Exercise exercise, boolean examMode, int correctionRound) {
+        // TODO: it really does not make sense to fetch these submissions with all related data from the database just to select one submission afterwards
+        // it would be better to fetch them with minimal related data (so we can select one) and then afterwards fetch the selected one with all related data
+
         final List<StudentParticipation> participations;
         if (examMode) {
             // Get all participations of submissions that are submitted and do not already have a manual result or belong to test run submissions.
-            // No manual result means that no user has started an assessment for the corresponding submission yet.
+            // No manual result means that no tutor has started an assessment for the corresponding submission yet.
             participations = studentParticipationRepository.findByExerciseIdWithLatestSubmissionWithoutManualResultsAndIgnoreTestRunParticipation(exercise.getId(),
                     correctionRound);
         }
@@ -218,17 +221,21 @@ public class SubmissionService {
                     ZonedDateTime.now());
         }
 
-        List<Submission> submissionsWithoutResult = participations.stream().map(Participation::findLatestLegalOrIllegalSubmission).filter(Optional::isPresent).map(Optional::get)
-                .toList();
+        // TODO: we could move the ILLEGAL check into the database
+        var submissionsWithoutResult = participations.stream().map(Participation::findLatestLegalOrIllegalSubmission).filter(Optional::isPresent).map(Optional::get).toList();
 
         if (correctionRound > 0) {
             // remove submission if user already assessed first correction round
             // if disabled, please switch tutorAssessUnique within the tests
-            submissionsWithoutResult = submissionsWithoutResult.stream()
-                    .filter(submission -> !submission.getResultForCorrectionRound(correctionRound - 1).getAssessor().equals(userRepository.getUser())).toList();
+            // TODO: we could move this check into the database call of the if clause above (examMode == true) to avoid fetching all results and assessors
+            final var user = userRepository.getUser();
+            submissionsWithoutResult = submissionsWithoutResult.stream().filter(submission -> {
+                final var resultForCorrectionRound = submission.getResultForCorrectionRound(correctionRound - 1);
+                return resultForCorrectionRound != null && !resultForCorrectionRound.getAssessor().equals(user);
+            }).toList();
         }
 
-        if (exercise.getDueDate() != null) {
+        if (!examMode && exercise.getDueDate() != null) {
             submissionsWithoutResult = selectOnlySubmissionsBeforeDueDate(submissionsWithoutResult);
         }
 

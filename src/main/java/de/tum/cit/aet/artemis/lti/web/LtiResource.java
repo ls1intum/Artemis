@@ -18,9 +18,12 @@ import org.springframework.security.oauth2.core.oidc.OidcIdToken;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.server.ResponseStatusException;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -34,8 +37,10 @@ import de.tum.cit.aet.artemis.core.security.Role;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastInstructor;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
 import de.tum.cit.aet.artemis.lti.domain.LtiPlatformConfiguration;
+import de.tum.cit.aet.artemis.lti.domain.OnlineCourseConfiguration;
 import de.tum.cit.aet.artemis.lti.repository.LtiPlatformConfigurationRepository;
 import de.tum.cit.aet.artemis.lti.service.LtiDeepLinkingService;
+import de.tum.cit.aet.artemis.lti.service.OnlineCourseConfigurationService;
 import tech.jhipster.web.util.PaginationUtil;
 
 /**
@@ -49,6 +54,8 @@ public class LtiResource {
     private static final Logger log = LoggerFactory.getLogger(LtiResource.class);
 
     private final LtiDeepLinkingService ltiDeepLinkingService;
+
+    private final OnlineCourseConfigurationService onlineCourseConfigurationService;
 
     private final CourseRepository courseRepository;
 
@@ -64,11 +71,53 @@ public class LtiResource {
      * @param ltiDeepLinkingService Service for LTI deep linking.
      */
     public LtiResource(CourseRepository courseRepository, AuthorizationCheckService authCheckService, LtiDeepLinkingService ltiDeepLinkingService,
-            LtiPlatformConfigurationRepository ltiPlatformConfigurationRepository) {
+            OnlineCourseConfigurationService onlineCourseConfigurationService, LtiPlatformConfigurationRepository ltiPlatformConfigurationRepository) {
         this.courseRepository = courseRepository;
         this.authCheckService = authCheckService;
         this.ltiDeepLinkingService = ltiDeepLinkingService;
+        this.onlineCourseConfigurationService = onlineCourseConfigurationService;
         this.ltiPlatformConfigurationRepository = ltiPlatformConfigurationRepository;
+    }
+
+    /**
+     * PUT courses/:courseId/online-course-configuration : Updates the onlineCourseConfiguration for the given course.
+     *
+     * @param courseId                  the id of the course to update
+     * @param onlineCourseConfiguration the online course configuration to update
+     * @return the ResponseEntity with status 200 (OK) and with body the updated online course configuration
+     */
+    @PutMapping("courses/{courseId}/online-course-configuration")
+    @EnforceAtLeastInstructor
+    @Profile(PROFILE_LTI)
+    public ResponseEntity<OnlineCourseConfiguration> updateOnlineCourseConfiguration(@PathVariable Long courseId,
+            @RequestBody OnlineCourseConfiguration onlineCourseConfiguration) {
+        log.debug("REST request to update the online course configuration for Course : {}", courseId);
+
+        Course course = courseRepository.findByIdWithEagerOnlineCourseConfigurationElseThrow(courseId);
+        authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.INSTRUCTOR, course, null);
+
+        if (!course.isOnlineCourse()) {
+            throw new BadRequestAlertException("Course must be online course", Course.ENTITY_NAME, "courseMustBeOnline");
+        }
+
+        if (!course.getOnlineCourseConfiguration().getId().equals(onlineCourseConfiguration.getId())) {
+            throw new BadRequestAlertException("The onlineCourseConfigurationId does not match the id of the course's onlineCourseConfiguration",
+                    OnlineCourseConfiguration.ENTITY_NAME, "idMismatch");
+        }
+
+        onlineCourseConfigurationService.validateOnlineCourseConfiguration(onlineCourseConfiguration);
+        course.setOnlineCourseConfiguration(onlineCourseConfiguration);
+        try {
+            onlineCourseConfigurationService.addOnlineCourseConfigurationToLtiConfigurations(onlineCourseConfiguration);
+        }
+        catch (Exception ex) {
+            log.error("Failed to add online course configuration to LTI configurations", ex);
+            throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Error when adding online course configuration to LTI configurations", ex);
+        }
+
+        courseRepository.save(course);
+
+        return ResponseEntity.ok(onlineCourseConfiguration);
     }
 
     /**

@@ -250,6 +250,9 @@ public interface ProgrammingExerciseRepository extends DynamicSpecificationRepos
             """)
     Optional<ProgrammingExercise> findWithEagerStudentParticipationsStudentAndLegalSubmissionsById(@Param("exerciseId") long exerciseId);
 
+    @EntityGraph(type = LOAD, attributePaths = { "templateParticipation", "solutionParticipation", "studentParticipations.team.students", "buildConfig" })
+    Optional<ProgrammingExercise> findWithAllParticipationsAndBuildConfigById(long exerciseId);
+
     @Query("""
             SELECT pe
             FROM ProgrammingExercise pe
@@ -337,11 +340,6 @@ public interface ProgrammingExerciseRepository extends DynamicSpecificationRepos
             """)
     Optional<ProgrammingExercise> findByIdWithEagerBuildConfigTestCasesStaticCodeAnalysisCategoriesHintsAndTemplateAndSolutionParticipationsAndAuxReposAndSolutionEntriesAndBuildConfig(
             @Param("exerciseId") long exerciseId);
-
-    default ProgrammingExercise findByIdWithEagerTestCasesStaticCodeAnalysisCategoriesHintsAndTemplateAndSolutionParticipationsAndAuxReposAndBuildConfigElseThrow(long exerciseId)
-            throws EntityNotFoundException {
-        return getValueElseThrow(findByIdWithEagerTestCasesStaticCodeAnalysisCategoriesHintsAndTemplateAndSolutionParticipationsAndAuxReposAndBuildConfig(exerciseId), exerciseId);
-    }
 
     @Query("""
             SELECT p

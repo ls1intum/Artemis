@@ -45,7 +45,7 @@ public class AdminCleanupResource {
      */
     @DeleteMapping("orphans")
     public ResponseEntity<CleanupServiceExecutionRecordDTO> deleteOrphans() {
-        log.debug("REST request to delete orphaned data in Artemis database");
+        log.info("REST request to delete orphaned data in Artemis database");
         CleanupServiceExecutionRecordDTO result = dataCleanupService.deleteOrphans();
         return ResponseEntity.ok().body(result);
     }
@@ -61,7 +61,7 @@ public class AdminCleanupResource {
     @DeleteMapping("plagiarism-comparisons")
     public ResponseEntity<CleanupServiceExecutionRecordDTO> deletePlagiarismComparisons(@RequestParam("deleteFrom") ZonedDateTime deleteFrom,
             @RequestParam("deleteTo") ZonedDateTime deleteTo) {
-        log.debug("REST request to delete plagiarism comparisons between {} and {}", deleteFrom, deleteTo);
+        log.info("REST request to delete plagiarism comparisons between {} and {}", deleteFrom, deleteTo);
         CleanupServiceExecutionRecordDTO result = dataCleanupService.deletePlagiarismComparisons(deleteFrom, deleteTo);
         return ResponseEntity.ok().body(result);
     }
@@ -77,8 +77,8 @@ public class AdminCleanupResource {
     @DeleteMapping("non-rated-results")
     public ResponseEntity<CleanupServiceExecutionRecordDTO> deleteNonRatedResults(@RequestParam("deleteFrom") ZonedDateTime deleteFrom,
             @RequestParam("deleteTo") ZonedDateTime deleteTo) {
-        log.debug("REST request to delete non-rated results between {} and {}", deleteFrom, deleteTo);
-        CleanupServiceExecutionRecordDTO result = dataCleanupService.deleteNonLatestNonRatedResults(deleteFrom, deleteTo);
+        log.info("REST request to delete non-rated results between {} and {}", deleteFrom, deleteTo);
+        CleanupServiceExecutionRecordDTO result = dataCleanupService.deleteNonLatestNonRatedResultsFeedback(deleteFrom, deleteTo);
         return ResponseEntity.ok().body(result);
     }
 
@@ -93,8 +93,8 @@ public class AdminCleanupResource {
     @DeleteMapping("old-rated-results")
     public ResponseEntity<CleanupServiceExecutionRecordDTO> deleteOldRatedResults(@RequestParam("deleteFrom") ZonedDateTime deleteFrom,
             @RequestParam("deleteTo") ZonedDateTime deleteTo) {
-        log.debug("REST request to delete old rated results between {} and {}", deleteFrom, deleteTo);
-        CleanupServiceExecutionRecordDTO result = dataCleanupService.deleteNonLatestRatedResults(deleteFrom, deleteTo);
+        log.info("REST request to delete old rated results between {} and {}", deleteFrom, deleteTo);
+        CleanupServiceExecutionRecordDTO result = dataCleanupService.deleteNonLatestRatedResultsFeedback(deleteFrom, deleteTo);
         return ResponseEntity.ok().body(result);
     }
 

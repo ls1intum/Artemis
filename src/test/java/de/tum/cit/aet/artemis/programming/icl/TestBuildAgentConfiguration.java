@@ -20,6 +20,7 @@ import com.github.dockerjava.api.async.ResultCallback;
 import com.github.dockerjava.api.command.CopyArchiveToContainerCmd;
 import com.github.dockerjava.api.command.CreateContainerCmd;
 import com.github.dockerjava.api.command.CreateContainerResponse;
+import com.github.dockerjava.api.command.DisconnectFromNetworkCmd;
 import com.github.dockerjava.api.command.ExecCreateCmd;
 import com.github.dockerjava.api.command.ExecCreateCmdResponse;
 import com.github.dockerjava.api.command.ExecStartCmd;
@@ -157,6 +158,12 @@ public class TestBuildAgentConfiguration {
         // Mock killContainerCmd
         KillContainerCmd killContainerCmd = mock(KillContainerCmd.class);
         doReturn(killContainerCmd).when(dockerClient).killContainerCmd(anyString());
+
+        // Mock DisconnectFromNetworkCmd
+        DisconnectFromNetworkCmd disconnectFromNetworkCmd = mock(DisconnectFromNetworkCmd.class);
+        doReturn(disconnectFromNetworkCmd).when(dockerClient).disconnectFromNetworkCmd();
+        doReturn(disconnectFromNetworkCmd).when(disconnectFromNetworkCmd).withContainerId(anyString());
+        doReturn(disconnectFromNetworkCmd).when(disconnectFromNetworkCmd).withNetworkId(anyString());
 
         return dockerClient;
     }

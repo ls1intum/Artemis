@@ -39,7 +39,7 @@ public interface VcsAccessLogRepository extends ArtemisJpaRepository<VcsAccessLo
                 WHERE vcsAccessLog.participation.id = :participationId
                 ORDER BY vcsAccessLog.timestamp DESC
                 LIMIT 1
-                """)
+            """)
     Optional<VcsAccessLog> findNewestByParticipationId(@Param("participationId") long participationId);
 
     /**

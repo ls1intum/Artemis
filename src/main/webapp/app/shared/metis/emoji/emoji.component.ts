@@ -1,6 +1,5 @@
-import { Component, Input, OnDestroy } from '@angular/core';
+import { Component, Input, computed, inject } from '@angular/core';
 import { Theme, ThemeService } from 'app/core/theme/theme.service';
-import { Subscription } from 'rxjs';
 import { EmojiUtils } from 'app/shared/metis/emoji/emoji.utils';
 
 @Component({
@@ -8,21 +7,11 @@ import { EmojiUtils } from 'app/shared/metis/emoji/emoji.utils';
     templateUrl: './emoji.component.html',
     styleUrls: ['./emoji.component.scss'],
 })
-export class EmojiComponent implements OnDestroy {
-    utils = EmojiUtils;
+export class EmojiComponent {
+    private themeService = inject(ThemeService);
 
+    utils = EmojiUtils;
     @Input() emoji: string;
 
-    dark = false;
-    themeSubscription: Subscription;
-
-    constructor(private themeService: ThemeService) {
-        this.themeSubscription = themeService.getCurrentThemeObservable().subscribe((theme) => {
-            this.dark = theme === Theme.DARK;
-        });
-    }
-
-    ngOnDestroy(): void {
-        this.themeSubscription.unsubscribe();
-    }
+    dark = computed(() => this.themeService.currentTheme() === Theme.DARK);
 }

@@ -35,10 +35,12 @@
                                             <span jhiTranslate="artemisApp.courseOverview.sidebar.createGroupChat"></span>
                                         </button>
                                     }
-                                    <button (click)="createNewChannel()" class="p-2" ngbDropdownItem>
-                                        <fa-icon [icon]="faHashtag" class="item-icon"></fa-icon>
-                                        <span jhiTranslate="artemisApp.courseOverview.sidebar.createChannel"></span>
-                                    </button>
+                                    @if (sidebarData?.canCreateChannel) {
+                                        <button (click)="createNewChannel()" class="p-2 createChannel" ngbDropdownItem>
+                                            <fa-icon [icon]="faHashtag" class="item-icon"></fa-icon>
+                                            <span jhiTranslate="artemisApp.courseOverview.sidebar.createChannel"></span>
+                                        </button>
+                                    }
                                     <button (click)="browseChannels()" class="p-2" ngbDropdownItem>
                                         <fa-icon [icon]="faSearch" class="item-icon"></fa-icon>
                                         <span jhiTranslate="artemisApp.courseOverview.sidebar.browseChannels"></span>

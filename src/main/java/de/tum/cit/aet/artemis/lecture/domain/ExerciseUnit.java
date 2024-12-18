@@ -11,12 +11,14 @@ import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.PrePersist;
 import jakarta.persistence.PreUpdate;
+import jakarta.persistence.Transient;
 
 import org.hibernate.annotations.Cache;
 import org.hibernate.annotations.CacheConcurrencyStrategy;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 
 import de.tum.cit.aet.artemis.atlas.domain.competency.CompetencyLectureUnitLink;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
@@ -31,6 +33,13 @@ public class ExerciseUnit extends LectureUnit {
     @JoinColumn(name = "exercise_id")
     @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
     private Exercise exercise;
+
+    // Competency links are not persisted in this entity but only in the exercise itself
+    @Transient
+    @JsonSerialize
+    @JsonInclude(JsonInclude.Include.NON_EMPTY)
+    @JsonIgnoreProperties("lectureUnit")
+    private Set<CompetencyLectureUnitLink> competencyLinks = new HashSet<>();
 
     public Exercise getExercise() {
         return exercise;
@@ -66,15 +75,16 @@ public class ExerciseUnit extends LectureUnit {
     }
 
     @Override
-    @JsonIgnore
+    @JsonSerialize
+    @JsonInclude(JsonInclude.Include.NON_EMPTY)
+    @JsonIgnoreProperties("lectureUnit")
     public Set<CompetencyLectureUnitLink> getCompetencyLinks() {
-        // Set the links in the associated exercise instead
-        return new HashSet<>();
+        return competencyLinks;
     }
 
     @Override
     public void setCompetencyLinks(Set<CompetencyLectureUnitLink> competencyLinks) {
-        // Retrieve the link in the associated exercise instead"
+        this.competencyLinks = competencyLinks;
     }
 
     /**

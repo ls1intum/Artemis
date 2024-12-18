@@ -138,6 +138,7 @@ public class ReactionService {
             updatedPost.removeAnswerPost(updatedAnswerPost);
             updatedPost.addAnswerPost(updatedAnswerPost);
         }
+        plagiarismPostService.preparePostForBroadcast(updatedPost);
         plagiarismPostService.broadcastForPost(new PostDTO(updatedPost, MetisCrudAction.UPDATE), course.getId(), null, null);
         reactionRepository.deleteById(reactionId);
     }
@@ -201,6 +202,7 @@ public class ReactionService {
         Post updatedPost = postRepository.save(post);
         updatedPost.setConversation(post.getConversation());
 
+        plagiarismPostService.preparePostForBroadcast(post);
         plagiarismPostService.broadcastForPost(new PostDTO(post, MetisCrudAction.UPDATE), course.getId(), null, null);
         return savedReaction;
     }

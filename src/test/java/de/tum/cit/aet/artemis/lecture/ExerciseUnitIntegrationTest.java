@@ -214,7 +214,7 @@ class ExerciseUnitIntegrationTest extends AbstractSpringIntegrationIndependentTe
             request.get("/api/exercises/" + exercise.getId(), HttpStatus.OK, Exercise.class);
         }
 
-        verify(competencyProgressService, never()).updateProgressForUpdatedLearningObjectAsync(any(), any());
+        verify(competencyProgressApi, never()).updateProgressForUpdatedLearningObjectAsync(any(), any());
     }
 
 }

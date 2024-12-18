@@ -126,7 +126,7 @@ public interface CourseCompetencyRepository extends ArtemisJpaRepository<CourseC
                 LEFT JOIN TeamScore tS ON tS.exercise = e AND :user MEMBER OF tS.team.students
             WHERE c.id = :competencyId
                 AND e IS NOT NULL
-            GROUP BY e.id, e.maxPoints, e.difficulty, TYPE(e), sS.lastScore, tS.lastScore, sS.lastPoints, tS.lastPoints, sS.lastModifiedDate, tS.lastModifiedDate
+            GROUP BY e.id, e.maxPoints, e.difficulty, TYPE(e), el.weight, sS.lastScore, tS.lastScore, sS.lastPoints, tS.lastPoints, sS.lastModifiedDate, tS.lastModifiedDate
             """)
     Set<CompetencyExerciseMasteryCalculationDTO> findAllExerciseInfoByCompetencyIdAndUser(@Param("competencyId") long competencyId, @Param("user") User user);
 
@@ -294,6 +294,15 @@ public interface CourseCompetencyRepository extends ArtemisJpaRepository<CourseC
     }
 
     List<CourseCompetency> findByCourseIdOrderById(long courseId);
+
+    @Query("""
+            SELECT c
+            FROM CourseCompetency c
+            WHERE c.course.id = :courseId
+                AND (SIZE(c.lectureUnitLinks) > 0 OR SIZE(c.exerciseLinks) > 0)
+            ORDER BY c.id
+            """)
+    List<CourseCompetency> findByCourseIdAndLinkedToLearningObjectOrderById(@Param("courseId") long courseId);
 
     boolean existsByIdAndCourseId(long competencyId, long courseId);
 }

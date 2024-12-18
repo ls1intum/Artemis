@@ -22,6 +22,8 @@ public interface RatingCleanupRepository extends ArtemisJpaRepository<Rating, Lo
 
     /**
      * Deletes {@link Rating} entries where the associated {@link Result} has no submission and no participation.
+     *
+     * @return the number of deleted entities
      */
     @Modifying
     @Transactional // ok because of delete
@@ -35,5 +37,5 @@ public interface RatingCleanupRepository extends ArtemisJpaRepository<Rating, Lo
                     AND r.participation IS NULL
                 )
             """)
-    void deleteOrphanRating();
+    int deleteOrphanRating();
 }

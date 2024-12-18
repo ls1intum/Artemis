@@ -49,10 +49,10 @@ export class AttachmentUnitComponent extends LectureUnitDirective<AttachmentUnit
     handleDownload() {
         this.logEvent();
 
-        const link = this.lectureUnit().attachment?.studentVersion || this.lectureUnit().attachment?.link; // Prefer hiddenLink if available
+        const link = this.lectureUnit().attachment?.studentVersion || this.lectureUnit().attachment?.link; // Prefer studentVersion if available
         if (link) {
-            const sanitizedLink = this.fileService.replaceAttachmentPrefixAndUnderscores(link);
-            this.fileService.downloadFile(sanitizedLink);
+            const link = this.lectureUnit().attachment!.link!;
+            this.fileService.downloadFileByAttachmentName(link, this.lectureUnit().attachment!.name!);
             this.onCompletion.emit({ lectureUnit: this.lectureUnit(), completed: true });
         }
     }

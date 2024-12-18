@@ -38,7 +38,9 @@ import org.springframework.context.event.EventListener;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 
-import de.tum.cit.aet.artemis.atlas.repository.ScienceEventRepository;
+import de.tum.cit.aet.artemis.atlas.api.ScienceEventApi;
+import de.tum.cit.aet.artemis.communication.domain.SavedPost;
+import de.tum.cit.aet.artemis.communication.repository.SavedPostRepository;
 import de.tum.cit.aet.artemis.core.domain.Authority;
 import de.tum.cit.aet.artemis.core.domain.GuidedTourSetting;
 import de.tum.cit.aet.artemis.core.domain.User;
@@ -109,15 +111,17 @@ public class UserService {
 
     private final FileService fileService;
 
-    private final ScienceEventRepository scienceEventRepository;
+    private final ScienceEventApi scienceEventApi;
 
     private final ParticipationVcsAccessTokenService participationVCSAccessTokenService;
+
+    private final SavedPostRepository savedPostRepository;
 
     public UserService(UserCreationService userCreationService, UserRepository userRepository, AuthorityService authorityService, AuthorityRepository authorityRepository,
             CacheManager cacheManager, Optional<LdapUserService> ldapUserService, GuidedTourSettingsRepository guidedTourSettingsRepository, PasswordService passwordService,
             Optional<VcsUserManagementService> optionalVcsUserManagementService, Optional<CIUserManagementService> optionalCIUserManagementService,
-            InstanceMessageSendService instanceMessageSendService, FileService fileService, ScienceEventRepository scienceEventRepository,
-            ParticipationVcsAccessTokenService participationVCSAccessTokenService) {
+            InstanceMessageSendService instanceMessageSendService, FileService fileService, ScienceEventApi scienceEventApi,
+            ParticipationVcsAccessTokenService participationVCSAccessTokenService, SavedPostRepository savedPostRepository) {
         this.userCreationService = userCreationService;
         this.userRepository = userRepository;
         this.authorityService = authorityService;
@@ -130,8 +134,9 @@ public class UserService {
         this.optionalCIUserManagementService = optionalCIUserManagementService;
         this.instanceMessageSendService = instanceMessageSendService;
         this.fileService = fileService;
-        this.scienceEventRepository = scienceEventRepository;
+        this.scienceEventApi = scienceEventApi;
         this.participationVCSAccessTokenService = participationVCSAccessTokenService;
+        this.savedPostRepository = savedPostRepository;
     }
 
     /**
@@ -493,11 +498,17 @@ public class UserService {
         user.setActivated(false);
         user.setGroups(Collections.emptySet());
 
+        List<SavedPost> savedPostsOfUser = savedPostRepository.findSavedPostsByUserId(user.getId());
+
+        if (!savedPostsOfUser.isEmpty()) {
+            savedPostRepository.deleteAll(savedPostsOfUser);
+        }
+
         userRepository.save(user);
         clearUserCaches(user);
         userRepository.flush();
 
-        scienceEventRepository.renameIdentity(originalLogin, anonymizedLogin);
+        scienceEventApi.renameIdentity(originalLogin, anonymizedLogin);
 
         if (userImageString != null) {
             fileService.schedulePathForDeletion(FilePathService.actualPathForPublicPath(URI.create(userImageString)), 0);
@@ -832,7 +843,7 @@ public class UserService {
      * @return the users participation vcs access token, or throws an exception if it does not exist
      */
     public ParticipationVCSAccessToken getParticipationVcsAccessTokenForUserAndParticipationIdOrElseThrow(User user, Long participationId) {
-        return participationVCSAccessTokenService.findByUserIdAndParticipationIdOrElseThrow(user.getId(), participationId);
+        return participationVCSAccessTokenService.findByUserAndParticipationIdOrElseThrow(user, participationId);
     }
 
     /**

@@ -125,7 +125,7 @@ describe('ParticipationComponent', () => {
         expect(exerciseFindStub).toHaveBeenCalledOnce();
         expect(exerciseFindStub).toHaveBeenCalledWith(theExercise.id);
         expect(participationFindStub).toHaveBeenCalledOnce();
-        expect(participationFindStub).toHaveBeenCalledWith(theExercise.id, true);
+        expect(participationFindStub).toHaveBeenCalledWith(theExercise.id, false);
     }));
 
     it('should initialize for programming exercise', fakeAsync(() => {
@@ -154,7 +154,7 @@ describe('ParticipationComponent', () => {
         expect(exerciseFindStub).toHaveBeenCalledOnce();
         expect(exerciseFindStub).toHaveBeenCalledWith(theExercise.id);
         expect(participationFindStub).toHaveBeenCalledOnce();
-        expect(participationFindStub).toHaveBeenCalledWith(theExercise.id, true);
+        expect(participationFindStub).toHaveBeenCalledWith(theExercise.id, false);
         expect(submissionGetStateStub).toHaveBeenCalledOnce();
         expect(submissionGetStateStub).toHaveBeenCalledWith(theExercise.id);
     }));

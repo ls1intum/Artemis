@@ -2,6 +2,8 @@ import { Posting } from 'app/entities/metis/posting.model';
 import { ChangeDetectorRef, Directive, Input, OnDestroy, OnInit, inject } from '@angular/core';
 import { MetisService } from 'app/shared/metis/metis.service';
 import { DisplayPriority } from 'app/shared/metis/metis.util';
+import { faBookmark } from '@fortawesome/free-solid-svg-icons';
+import { faBookmark as farBookmark } from '@fortawesome/free-regular-svg-icons';
 
 @Directive()
 export abstract class PostingDirective<T extends Posting> implements OnInit, OnDestroy {
@@ -28,6 +30,10 @@ export abstract class PostingDirective<T extends Posting> implements OnInit, OnD
 
     protected metisService = inject(MetisService);
     protected changeDetector = inject(ChangeDetectorRef);
+
+    // Icons
+    farBookmark = farBookmark;
+    faBookmark = faBookmark;
 
     ngOnInit(): void {
         this.content = this.posting.content;
@@ -114,5 +120,15 @@ export abstract class PostingDirective<T extends Posting> implements OnInit, OnD
 
     toggleEmojiSelect() {
         this.showReactionSelector = !this.showReactionSelector;
+    }
+
+    protected toggleSavePost() {
+        if (this.posting.isSaved) {
+            this.metisService.removeSavedPost(this.posting);
+            this.posting.isSaved = false;
+        } else {
+            this.metisService.savePost(this.posting);
+            this.posting.isSaved = true;
+        }
     }
 }

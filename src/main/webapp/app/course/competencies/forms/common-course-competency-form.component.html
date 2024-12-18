@@ -55,6 +55,7 @@
             labelName="{{ 'artemisApp.' + courseCompetency?.type + '.create.softDueDate' | artemisTranslate }}"
             labelTooltip="{{ 'artemisApp.' + courseCompetency?.type + '.create.softDueDateHint' | artemisTranslate }}"
             formControlName="softDueDate"
+            [pickerType]="DateTimePickerType.CALENDAR"
         />
     </div>
     @if (!isInConnectMode) {

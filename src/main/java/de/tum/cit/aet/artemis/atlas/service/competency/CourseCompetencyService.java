@@ -8,7 +8,6 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
-import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.function.Function;
@@ -31,7 +30,6 @@ import de.tum.cit.aet.artemis.atlas.dto.CompetencyImportOptionsDTO;
 import de.tum.cit.aet.artemis.atlas.dto.CompetencyRelationDTO;
 import de.tum.cit.aet.artemis.atlas.dto.CompetencyWithTailRelationDTO;
 import de.tum.cit.aet.artemis.atlas.dto.UpdateCourseCompetencyRelationDTO;
-import de.tum.cit.aet.artemis.atlas.repository.CompetencyLectureUnitLinkRepository;
 import de.tum.cit.aet.artemis.atlas.repository.CompetencyProgressRepository;
 import de.tum.cit.aet.artemis.atlas.repository.CompetencyRelationRepository;
 import de.tum.cit.aet.artemis.atlas.repository.CourseCompetencyRepository;
@@ -84,15 +82,13 @@ public class CourseCompetencyService {
 
     private final LearningObjectImportService learningObjectImportService;
 
-    private final CompetencyLectureUnitLinkRepository competencyLectureUnitLinkRepository;
-
     private final CourseRepository courseRepository;
 
     public CourseCompetencyService(CompetencyProgressRepository competencyProgressRepository, CourseCompetencyRepository courseCompetencyRepository,
             CompetencyRelationRepository competencyRelationRepository, CompetencyProgressService competencyProgressService, ExerciseService exerciseService,
             LectureUnitService lectureUnitService, LearningPathService learningPathService, AuthorizationCheckService authCheckService,
             StandardizedCompetencyRepository standardizedCompetencyRepository, LectureUnitCompletionRepository lectureUnitCompletionRepository,
-            LearningObjectImportService learningObjectImportService, CompetencyLectureUnitLinkRepository competencyLectureUnitLinkRepository, CourseRepository courseRepository) {
+            LearningObjectImportService learningObjectImportService, CourseRepository courseRepository) {
         this.competencyProgressRepository = competencyProgressRepository;
         this.courseCompetencyRepository = courseCompetencyRepository;
         this.competencyRelationRepository = competencyRelationRepository;
@@ -104,7 +100,6 @@ public class CourseCompetencyService {
         this.standardizedCompetencyRepository = standardizedCompetencyRepository;
         this.lectureUnitCompletionRepository = lectureUnitCompletionRepository;
         this.learningObjectImportService = learningObjectImportService;
-        this.competencyLectureUnitLinkRepository = competencyLectureUnitLinkRepository;
         this.courseRepository = courseRepository;
     }
 
@@ -129,10 +124,17 @@ public class CourseCompetencyService {
      *
      * @param courseId The id of the course for which to fetch the competencies
      * @param userId   The id of the user for which to fetch the progress
+     * @param filter   Whether to filter out competencies that are not linked to any learning objects
      * @return The found competency
      */
-    public List<CourseCompetency> findCourseCompetenciesWithProgressForUserByCourseId(Long courseId, Long userId) {
-        List<CourseCompetency> competencies = courseCompetencyRepository.findByCourseIdOrderById(courseId);
+    public List<CourseCompetency> findCourseCompetenciesWithProgressForUserByCourseId(long courseId, long userId, boolean filter) {
+        List<CourseCompetency> competencies;
+        if (filter) {
+            competencies = courseCompetencyRepository.findByCourseIdAndLinkedToLearningObjectOrderById(courseId);
+        }
+        else {
+            competencies = courseCompetencyRepository.findByCourseIdOrderById(courseId);
+        }
         return findProgressForCompetenciesAndUser(competencies, userId);
     }
 
@@ -213,34 +215,39 @@ public class CourseCompetencyService {
      * @return The set of imported course competencies, each also containing the relations it is the tail competency for.
      */
     public Set<CompetencyWithTailRelationDTO> importCourseCompetencies(Course course, Collection<CourseCompetency> courseCompetencies, CompetencyImportOptionsDTO importOptions) {
-        var idToImportedCompetency = new HashMap<Long, CompetencyWithTailRelationDTO>();
+        Function<CourseCompetency, CourseCompetency> createNewCourseCompetency = courseCompetency -> switch (courseCompetency) {
+            case Competency competency -> new Competency(competency);
+            case Prerequisite prerequisite -> new Prerequisite(prerequisite);
+            default -> throw new IllegalStateException("Unexpected value: " + courseCompetency);
+        };
 
-        for (var courseCompetency : courseCompetencies) {
-            CourseCompetency importedCompetency = switch (courseCompetency) {
-                case Competency competency -> new Competency(competency);
-                case Prerequisite prerequisite -> new Prerequisite(prerequisite);
-                default -> throw new IllegalStateException("Unexpected value: " + courseCompetency);
-            };
-            importedCompetency.setCourse(course);
-
-            importedCompetency = courseCompetencyRepository.save(importedCompetency);
-            idToImportedCompetency.put(courseCompetency.getId(), new CompetencyWithTailRelationDTO(importedCompetency, new ArrayList<>()));
-        }
-
-        return importCourseCompetencies(course, courseCompetencies, idToImportedCompetency, importOptions);
+        return importCourseCompetencies(course, courseCompetencies, importOptions, createNewCourseCompetency);
     }
 
     /**
      * Imports the given competencies and relations into a course
      *
-     * @param course                 the course to import into
-     * @param competenciesToImport   the source competencies that were imported
-     * @param idToImportedCompetency map of original competency id to imported competency
-     * @param importOptions          the import options
+     * @param course                    the course to import into
+     * @param competenciesToImport      the source competencies that were imported
+     * @param importOptions             the import options
+     * @param createNewCourseCompetency the function that creates new course competencies
      * @return The set of imported competencies, each also containing the relations it is the tail competency for.
      */
     public Set<CompetencyWithTailRelationDTO> importCourseCompetencies(Course course, Collection<? extends CourseCompetency> competenciesToImport,
-            Map<Long, CompetencyWithTailRelationDTO> idToImportedCompetency, CompetencyImportOptionsDTO importOptions) {
+            CompetencyImportOptionsDTO importOptions, Function<CourseCompetency, CourseCompetency> createNewCourseCompetency) {
+        var idToImportedCompetency = new HashMap<Long, CompetencyWithTailRelationDTO>();
+
+        Set<CourseCompetency> competenciesInCourse = courseCompetencyRepository.findAllForCourse(course.getId());
+
+        for (var courseCompetency : competenciesToImport) {
+            Optional<CourseCompetency> existingCompetency = competenciesInCourse.stream().filter(competency -> competency.getTitle().equals(courseCompetency.getTitle()))
+                    .filter(competency -> competency.getType().equals(courseCompetency.getType())).findFirst();
+            CourseCompetency importedCompetency = existingCompetency.orElse(createNewCourseCompetency.apply(courseCompetency));
+            importedCompetency.setCourse(course);
+            idToImportedCompetency.put(courseCompetency.getId(), new CompetencyWithTailRelationDTO(importedCompetency, new ArrayList<>()));
+        }
+        courseCompetencyRepository.saveAll(idToImportedCompetency.values().stream().map(CompetencyWithTailRelationDTO::competency).toList());
+
         if (course.getLearningPathsEnabled()) {
             var importedCompetencies = idToImportedCompetency.values().stream().map(CompetencyWithTailRelationDTO::competency).toList();
             learningPathService.linkCompetenciesToLearningPathsOfCourse(importedCompetencies, course.getId());

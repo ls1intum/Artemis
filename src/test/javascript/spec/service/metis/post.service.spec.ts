@@ -4,7 +4,7 @@ import { take } from 'rxjs/operators';
 import { Post } from 'app/entities/metis/post.model';
 import { PostService } from 'app/shared/metis/post.service';
 import { DisplayPriority } from 'app/shared/metis/metis.util';
-import { metisCourse, metisCoursePosts, metisPostExerciseUser1, metisPostToCreateUser1, metisTags } from '../../helpers/sample/metis-sample-data';
+import { metisCourse, metisCoursePosts, metisPostExerciseUser1, metisPostToCreateUser1 } from '../../helpers/sample/metis-sample-data';
 import { provideHttpClient } from '@angular/common/http';
 
 describe('Post Service', () => {
@@ -27,18 +27,6 @@ describe('Post Service', () => {
             service
                 .create(1, new Post())
                 .pipe(take(1))
-                .subscribe((resp) => expect(resp.body).toEqual(expected));
-            const req = httpMock.expectOne({ method: 'POST' });
-            req.flush(returnedFromService);
-            tick();
-        }));
-
-        it('should return all similar posts in a course', fakeAsync(() => {
-            const returnedFromService = metisCoursePosts.slice(0, 4);
-            const expected = returnedFromService;
-            service
-                .computeSimilarityScoresWithCoursePosts(metisPostExerciseUser1, metisCourse.id!)
-                .pipe(take(2))
                 .subscribe((resp) => expect(resp.body).toEqual(expected));
             const req = httpMock.expectOne({ method: 'POST' });
             req.flush(returnedFromService);
@@ -95,18 +83,6 @@ describe('Post Service', () => {
             const expected = metisCoursePosts;
             service
                 .getPosts(metisCourse.id!, {})
-                .pipe(take(2))
-                .subscribe((resp) => expect(resp.body).toEqual(expected));
-            const req = httpMock.expectOne({ method: 'GET' });
-            req.flush(returnedFromService);
-            tick();
-        }));
-
-        it('should return all post tags for a course', fakeAsync(() => {
-            const returnedFromService = metisTags;
-            const expected = returnedFromService;
-            service
-                .getAllPostTagsByCourseId(metisCourse.id!)
                 .pipe(take(2))
                 .subscribe((resp) => expect(resp.body).toEqual(expected));
             const req = httpMock.expectOne({ method: 'GET' });
