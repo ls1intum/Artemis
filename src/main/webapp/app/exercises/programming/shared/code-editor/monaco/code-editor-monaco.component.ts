@@ -157,7 +157,7 @@ export class CodeEditorMonacoComponent implements OnChanges {
             this.editor().reset();
         }
         if ((changes.selectedFile && this.selectedFile()) || editorWasRefreshed) {
-            const previousFileName: string | undefined = changes.selectedFile.previousValue;
+            const previousFileName: string | undefined = changes.selectedFile?.previousValue;
             await this.selectFileInEditor(previousFileName, this.selectedFile());
             this.setBuildAnnotations(this.annotationsArray);
             this.newFeedbackLines.set([]);

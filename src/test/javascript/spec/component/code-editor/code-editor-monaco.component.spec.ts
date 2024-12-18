@@ -84,7 +84,7 @@ describe('CodeEditorMonacoComponent', () => {
     it('should not try to load a file if none is selected', async () => {
         const editorChangeModelSpy = jest.spyOn(comp.editor(), 'changeModel');
         fixture.detectChanges();
-        await comp.selectFileInEditor(undefined);
+        await comp.selectFileInEditor(undefined, undefined);
         expect(editorChangeModelSpy).not.toHaveBeenCalled();
         expect(loadFileFromRepositoryStub).not.toHaveBeenCalled();
     });
@@ -117,11 +117,11 @@ describe('CodeEditorMonacoComponent', () => {
         [() => fixture.componentRef.setInput('disableActions', true), true],
         [() => fixture.componentRef.setInput('commitState', CommitState.CONFLICT), true],
         [() => fixture.componentRef.setInput('selectedFile', undefined), true],
-        [() => comp.fileSession.set({ ['file']: { code: '', cursor: { lineNumber: 0, column: 0 }, loadingError: true, viewState: undefined } }), true], // TODO: convert to signal
+        [() => comp.fileSession.set({ ['file']: { code: '', cursor: { lineNumber: 0, column: 0 }, loadingError: true, scrollTop: 0 } }), true], // TODO: convert to signal
     ])('should correctly lock the editor on changes', (setup: () => void, shouldLock: boolean) => {
         fixture.componentRef.setInput('selectedFile', 'file');
         comp.fileSession.set({
-            [comp.selectedFile()!]: { code: 'some code', cursor: { lineNumber: 0, column: 0 }, loadingError: false, viewState: undefined },
+            [comp.selectedFile()!]: { code: 'some code', cursor: { lineNumber: 0, column: 0 }, loadingError: false, scrollTop: 0 },
         });
         fixture.detectChanges();
         setup();
@@ -131,7 +131,7 @@ describe('CodeEditorMonacoComponent', () => {
     it('should update the file session and notify when the file content changes', () => {
         const selectedFile = 'file';
         const fileSession = {
-            [selectedFile]: { code: 'some unchanged code', cursor: { lineNumber: 1, column: 1 }, loadingError: false, viewState: undefined },
+            [selectedFile]: { code: 'some unchanged code', cursor: { lineNumber: 1, column: 1 }, loadingError: false, scrollTop: 0 },
         };
         const newCode = 'some new code';
         const valueCallbackStub = jest.fn();
@@ -142,7 +142,7 @@ describe('CodeEditorMonacoComponent', () => {
         comp.onFileTextChanged(newCode);
         expect(valueCallbackStub).toHaveBeenCalledExactlyOnceWith({ file: selectedFile, fileContent: newCode });
         expect(comp.fileSession()).toEqual({
-            [selectedFile]: { ...fileSession[selectedFile], code: newCode, viewState: undefined },
+            [selectedFile]: { ...fileSession[selectedFile], code: newCode, scrollTop: 0 },
         });
     });
 
@@ -154,18 +154,18 @@ describe('CodeEditorMonacoComponent', () => {
         const changeModelStub = jest.spyOn(comp.editor(), 'changeModel').mockImplementation();
         const presentFileName = 'present-file';
         const presentFileSession = {
-            [presentFileName]: { code: 'code\ncode', cursor: { lineNumber: 1, column: 2 }, viewState: undefined, loadingError: false },
+            [presentFileName]: { code: 'code\ncode', cursor: { lineNumber: 1, column: 2 }, scrollTop: 0, loadingError: false },
         };
         fixture.detectChanges();
         comp.fileSession.set(presentFileSession);
         fixture.componentRef.setInput('selectedFile', fileToLoad.fileName);
-        await comp.selectFileInEditor(fileToLoad.fileName);
+        await comp.selectFileInEditor(presentFileName, fileToLoad.fileName);
         fixture.componentRef.setInput('selectedFile', presentFileName);
-        await comp.selectFileInEditor(presentFileName);
+        await comp.selectFileInEditor(fileToLoad.fileName, presentFileName);
         expect(loadFileFromRepositoryStub).toHaveBeenCalledExactlyOnceWith(fileToLoad.fileName);
         expect(comp.fileSession()).toEqual({
             ...presentFileSession,
-            [fileToLoad.fileName]: { code: fileToLoad.fileContent, cursor: { column: 0, lineNumber: 0 }, viewState: comp.editor().saveViewState(), loadingError: false },
+            [fileToLoad.fileName]: { code: fileToLoad.fileContent, cursor: { column: 0, lineNumber: 0 }, scrollTop: 0, loadingError: false },
         });
         expect(setPositionStub).toHaveBeenCalledTimes(2);
         expect(changeModelStub).toHaveBeenCalledTimes(2);
@@ -174,7 +174,7 @@ describe('CodeEditorMonacoComponent', () => {
     it('should load a selected file after a loading error', async () => {
         const fileToLoad = { fileName: 'file-to-load', fileContent: 'some code' };
         // File session after loading fails
-        const fileSession = { [fileToLoad.fileName]: { code: '', loadingError: true, cursor: { lineNumber: 0, column: 0 }, viewState: undefined } };
+        const fileSession = { [fileToLoad.fileName]: { code: '', loadingError: true, cursor: { lineNumber: 0, column: 0 }, scrollTop: 0 } };
         const loadedFileSubject = new BehaviorSubject(fileToLoad);
         loadFileFromRepositoryStub.mockReturnValue(loadedFileSubject);
         comp.fileSession.set(fileSession);
@@ -183,7 +183,7 @@ describe('CodeEditorMonacoComponent', () => {
         await new Promise(process.nextTick);
         expect(loadFileFromRepositoryStub).toHaveBeenCalledOnce();
         expect(comp.fileSession()).toEqual({
-            [fileToLoad.fileName]: { code: fileToLoad.fileContent, loadingError: false, cursor: { lineNumber: 0, column: 0 }, viewState: comp.editor().saveViewState() },
+            [fileToLoad.fileName]: { code: fileToLoad.fileContent, loadingError: false, cursor: { lineNumber: 0, column: 0 }, scrollTop: 0 },
         });
     });
 
@@ -191,11 +191,11 @@ describe('CodeEditorMonacoComponent', () => {
         const changeModelSpy = jest.spyOn(comp.editor(), 'changeModel');
         const fileName = 'file-to-load';
         comp.fileSession.set({
-            [fileName]: { code: '\0\0\0\0 (binary content)', loadingError: false, cursor: { lineNumber: 0, column: 0 }, viewState: undefined },
+            [fileName]: { code: '\0\0\0\0 (binary content)', loadingError: false, cursor: { lineNumber: 0, column: 0 }, scrollTop: 0 },
         });
         fixture.detectChanges();
         fixture.componentRef.setInput('selectedFile', fileName);
-        await comp.selectFileInEditor(fileName);
+        await comp.selectFileInEditor(undefined, fileName);
         expect(changeModelSpy).not.toHaveBeenCalled();
         expect(comp.binaryFileSelected()).toBeTrue();
     });
@@ -217,7 +217,7 @@ describe('CodeEditorMonacoComponent', () => {
         expect(loadFileFromRepositoryStub).toHaveBeenCalledOnce();
         expect(errorCallbackStub).toHaveBeenCalledExactlyOnceWith(errorCode);
         expect(comp.fileSession()).toEqual({
-            [fileToLoad.fileName]: { code: '', loadingError: true, cursor: { lineNumber: 0, column: 0 }, viewState: comp.editor().saveViewState() },
+            [fileToLoad.fileName]: { code: '', loadingError: true, cursor: { lineNumber: 0, column: 0 }, scrollTop: 0 },
         });
     });
 
@@ -228,13 +228,13 @@ describe('CodeEditorMonacoComponent', () => {
         loadFileFromRepositoryStub.mockReturnValue(reloadedFileSubject);
         fixture.componentRef.setInput('selectedFile', fileToReload.fileName);
         comp.fileSession.set({
-            [fileToReload.fileName]: { code: 'some local undiscarded changes', cursor: { lineNumber: 0, column: 0 }, viewState: undefined, loadingError: false },
+            [fileToReload.fileName]: { code: 'some local undiscarded changes', cursor: { lineNumber: 0, column: 0 }, scrollTop: 0, loadingError: false },
         });
         fixture.componentRef.setInput('editorState', EditorState.CLEAN);
         // Simulate a refresh of the editor.
         await comp.ngOnChanges({ editorState: new SimpleChange(EditorState.REFRESHING, EditorState.CLEAN, false) });
         expect(comp.fileSession()).toEqual({
-            [fileToReload.fileName]: { code: fileToReload.fileContent, cursor: { lineNumber: 0, column: 0 }, loadingError: false, viewState: comp.editor().saveViewState() },
+            [fileToReload.fileName]: { code: fileToReload.fileContent, cursor: { lineNumber: 0, column: 0 }, loadingError: false, scrollTop: 0 },
         });
         expect(editorResetStub).toHaveBeenCalledOnce();
     });
@@ -242,15 +242,15 @@ describe('CodeEditorMonacoComponent', () => {
     it('should only load the currently selected file', async () => {
         const changeModelSpy = jest.spyOn(comp.editor(), 'changeModel');
         // Occurs when the first file load takes a while, but the user has already selected another file.
-        comp.fileSession.set({ ['file2']: { code: 'code2', cursor: { lineNumber: 0, column: 0 }, loadingError: false, viewState: undefined } });
+        comp.fileSession.set({ ['file2']: { code: 'code2', cursor: { lineNumber: 0, column: 0 }, loadingError: false, scrollTop: 0 } });
         fixture.detectChanges();
         fixture.componentRef.setInput('selectedFile', 'file1');
         const longLoadingFileSubject = new Subject();
         loadFileFromRepositoryStub.mockReturnValue(longLoadingFileSubject);
         // We do not await the promise here, as we want to simulate the user selecting another file while the first one is still loading.
-        const firstFileChange = comp.selectFileInEditor('file1');
+        const firstFileChange = comp.selectFileInEditor(undefined, 'file1');
         fixture.componentRef.setInput('selectedFile', 'file2');
-        await comp.selectFileInEditor('file2');
+        await comp.selectFileInEditor('file2', 'file2');
         longLoadingFileSubject.next({ fileName: 'file1', fileContent: 'some code that took a while to retrieve' });
         await firstFileChange;
         expect(changeModelSpy).toHaveBeenCalledExactlyOnceWith('file2', 'code2');
@@ -262,11 +262,11 @@ describe('CodeEditorMonacoComponent', () => {
         fixture.detectChanges();
         const selectedFile = 'file1';
         const fileSession = {
-            [selectedFile]: { code: 'code\ncode', cursor: { lineNumber: 1, column: 2 }, loadingError: false, viewState: undefined },
+            [selectedFile]: { code: 'code\ncode', cursor: { lineNumber: 1, column: 2 }, loadingError: false, scrollTop: 0 },
         };
         comp.fileSession.set(fileSession);
         fixture.componentRef.setInput('selectedFile', selectedFile);
-        await comp.selectFileInEditor(selectedFile);
+        await comp.selectFileInEditor(undefined, selectedFile);
         expect(setPositionStub).toHaveBeenCalledExactlyOnceWith(fileSession[selectedFile].cursor);
         expect(changeModelStub).toHaveBeenCalledExactlyOnceWith(selectedFile, fileSession[selectedFile].code);
     });
@@ -430,8 +430,8 @@ describe('CodeEditorMonacoComponent', () => {
         const newFileName = 'new-file-name';
         const otherFileName = 'other-file';
         const fileSession = {
-            [oldFileName]: { code: 'renamed', cursor: { lineNumber: 0, column: 0 }, loadingError: false, viewState: undefined },
-            [otherFileName]: { code: 'unrelated', cursor: { lineNumber: 0, column: 0 }, loadingError: false, viewState: undefined },
+            [oldFileName]: { code: 'renamed', cursor: { lineNumber: 0, column: 0 }, loadingError: false, scrollTop: 0 },
+            [otherFileName]: { code: 'unrelated', cursor: { lineNumber: 0, column: 0 }, loadingError: false, scrollTop: 0 },
         };
         fixture.detectChanges();
         comp.fileSession.set({ ...fileSession });
@@ -447,8 +447,8 @@ describe('CodeEditorMonacoComponent', () => {
         const fileToDeleteName = 'file-to-delete';
         const otherFileName = 'other-file';
         const fileSession = {
-            [fileToDeleteName]: { code: 'will be deleted', cursor: { lineNumber: 0, column: 0 }, loadingError: false, viewState: undefined },
-            [otherFileName]: { code: 'unrelated', cursor: { lineNumber: 0, column: 0 }, loadingError: false, viewState: undefined },
+            [fileToDeleteName]: { code: 'will be deleted', cursor: { lineNumber: 0, column: 0 }, loadingError: false, scrollTop: 0 },
+            [otherFileName]: { code: 'unrelated', cursor: { lineNumber: 0, column: 0 }, loadingError: false, scrollTop: 0 },
         };
         fixture.detectChanges();
         comp.fileSession.set({ ...fileSession });
@@ -463,7 +463,7 @@ describe('CodeEditorMonacoComponent', () => {
         const fileToCreateName = 'file-to-create';
         const otherFileName = 'other-file';
         const fileSession = {
-            [otherFileName]: { code: 'unrelated', cursor: { lineNumber: 0, column: 0 }, loadingError: false, viewState: undefined },
+            [otherFileName]: { code: 'unrelated', cursor: { lineNumber: 0, column: 0 }, loadingError: false, scrollTop: 0 },
         };
         fixture.detectChanges();
         comp.fileSession.set({ ...fileSession });
@@ -471,7 +471,7 @@ describe('CodeEditorMonacoComponent', () => {
         await comp.onFileChange(createFileChange);
         expect(comp.fileSession()).toEqual({
             [otherFileName]: fileSession[otherFileName],
-            [fileToCreateName]: { code: '', cursor: { lineNumber: 0, column: 0 }, loadingError: false, viewState: undefined },
+            [fileToCreateName]: { code: '', cursor: { lineNumber: 0, column: 0 }, loadingError: false, scrollTop: 0 },
         });
     });
 
@@ -480,5 +480,19 @@ describe('CodeEditorMonacoComponent', () => {
         fixture.detectChanges();
         comp.highlightLines(1, 2);
         expect(highlightStub).toHaveBeenCalledExactlyOnceWith(1, 2, CodeEditorMonacoComponent.CLASS_DIFF_LINE_HIGHLIGHT);
+    });
+
+    it('should remember scroll position', async () => {
+        const setScrollTopStub = jest.spyOn(comp.editor(), 'setScrollTop');
+        const scrolledFile = 'file';
+        const scrollTop = 42;
+        const fileSession = {
+            [scrolledFile]: { code: 'unrelated', cursor: { lineNumber: 0, column: 0 }, loadingError: false, scrollTop: scrollTop },
+        };
+        fixture.detectChanges();
+        comp.fileSession.set(fileSession);
+        fixture.componentRef.setInput('selectedFile', scrolledFile);
+        await comp.selectFileInEditor(undefined, scrolledFile);
+        expect(setScrollTopStub).toHaveBeenCalledExactlyOnceWith(scrollTop);
     });
 });
