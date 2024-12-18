@@ -3,9 +3,6 @@ package de.tum.cit.aet.artemis.communication.domain;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.Enumerated;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
@@ -21,11 +18,6 @@ import de.tum.cit.aet.artemis.core.domain.DomainObject;
 @Table(name = "forwarded_message")
 @Check(constraints = "((destination_post_id IS NOT NULL AND destination_answer_id IS NULL) OR (destination_post_id IS NULL AND destination_answer_id IS NOT NULL))")
 public class ForwardedMessage extends DomainObject {
-
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "id")
-    private Long id;
 
     @Column(name = "source_id", nullable = false)
     private long sourceId;
@@ -62,10 +54,6 @@ public class ForwardedMessage extends DomainObject {
         this.sourceType = sourceType;
         this.destinationPost = destinationPost;
         this.destinationAnswerPost = destinationAnswerPost;
-    }
-
-    public Long getId() {
-        return id;
     }
 
     public long getSourceId() {
@@ -110,26 +98,6 @@ public class ForwardedMessage extends DomainObject {
             throw new IllegalStateException("Cannot set both destination post and answer post");
         }
         this.destinationAnswerPost = answerPost;
-    }
-
-    @Override
-    public String toString() {
-        return "ForwardedMessage{" + "id=" + id + ", sourceId=" + sourceId + ", sourceType=" + sourceType + '}';
-    }
-
-    @Override
-    public boolean equals(Object o) {
-        if (this == o)
-            return true;
-        if (!(o instanceof ForwardedMessage))
-            return false;
-        ForwardedMessage that = (ForwardedMessage) o;
-        return id != null && id.equals(that.id);
-    }
-
-    @Override
-    public int hashCode() {
-        return id == null ? 0 : id.hashCode();
     }
 
 }
