@@ -106,7 +106,8 @@
                 "selectToLink": "Übungen zum Verlinken auswählen",
                 "unknownError": "Aufgrund eines unbekannten Fehlers nicht erfolgreich. Bitte kontaktiere einen Admin!",
                 "noCoursesError": "Keiner deiner Artemis-Kurse hat LTI aktiviert. Bitte fahre mit der Konfiguration mindestens eines Kurses fort.",
-                "learnMore": "Erfahre mehr über die Einrichtung von LTI in einem Kurs.."
+                "learnMore": "Erfahre mehr über die Einrichtung von LTI in einem Kurs..",
+                "parameterError": "Es gab einen fehler beim verarbeiten der Parameter"
             },
             "missingConfigurationWarning": "Fehlende Werte in der LTI1.3-Konfiguration. Starts werden nicht funktionieren. Bitte wende dich für die Konfiguration an den Administrator.",
             "selectContentFromCourse": "Wähle Inhalte aus dem Kurs {{ title }} aus",

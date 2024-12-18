@@ -184,38 +184,60 @@ export class Lti13DeepLinkingComponent implements OnInit {
 
     /**
      * Sends a deep link request for the selected exercise.
-     * If an exercise is selected, it sends a POST request to initiate deep linking.
+     * If an exercise, lecture, competency, learning path or Iris is selected, it sends a POST request to initiate deep linking.
      */
-
-    //TODO implement lectures, competencies, lps
     sendDeepLinkRequest() {
-        if (this.selectedExercises?.size) {
+        if (this.selectedExercises?.size || this.selectedLectures?.size || this.isCompetencySelected || this.isLearningPathSelected || this.isCompetencySelected) {
             const ltiIdToken = this.sessionStorageService.retrieve('ltiIdToken') ?? '';
             const clientRegistrationId = this.sessionStorageService.retrieve('clientRegistrationId') ?? '';
-            const exerciseIds = Array.from(this.selectedExercises).join(',');
-
-            const httpParams = new HttpParams().set('exerciseIds', exerciseIds).set('ltiIdToken', ltiIdToken!).set('clientRegistrationId', clientRegistrationId!);
 
             type DeepLinkingResponse = {
                 targetLinkUri: string;
             };
-            this.http.post<DeepLinkingResponse>(`api/lti13/deep-linking/${this.courseId}`, null, { observe: 'response', params: httpParams }).subscribe({
-                next: (response) => {
-                    if (response.status === 200) {
-                        if (response.body) {
-                            const targetLink = response.body.targetLinkUri;
-                            window.location.replace(targetLink);
-                        }
-                    } else {
-                        this.isLinking = false;
-                        this.alertService.error('artemisApp.lti13.deepLinking.unknownError');
-                    }
-                },
-                error: (error) => {
-                    this.isLinking = false;
-                    onError(this.alertService, error);
-                },
-            });
+
+            let httpParams;
+
+            if (this.selectedExercises?.size) {
+                const exerciseIds = Array.from(this.selectedExercises).join(',');
+
+                httpParams = new HttpParams().set('exerciseIds', exerciseIds).set('ltiIdToken', ltiIdToken!).set('clientRegistrationId', clientRegistrationId!);
+            } else if (this.selectedLectures?.size) {
+                const lectureIds = Array.from(this.selectedLectures).join(',');
+
+                httpParams = new HttpParams().set('lectureIds', lectureIds).set('ltiIdToken', ltiIdToken!).set('clientRegistrationId', clientRegistrationId!);
+            } else if (this.isCompetencySelected) {
+                httpParams = new HttpParams().set('competency', true).set('ltiIdToken', ltiIdToken!).set('clientRegistrationId', clientRegistrationId!);
+            } else if (this.isLearningPathSelected) {
+                httpParams = new HttpParams().set('learningPath', true).set('ltiIdToken', ltiIdToken!).set('clientRegistrationId', clientRegistrationId!);
+            } else if (this.isIrisSelected) {
+                httpParams = new HttpParams().set('iris', true).set('ltiIdToken', ltiIdToken!).set('clientRegistrationId', clientRegistrationId!);
+            }
+            if (httpParams) {
+                this.http
+                    .post<DeepLinkingResponse>(`api/lti13/deep-linking/${this.courseId}`, null, {
+                        observe: 'response',
+                        params: httpParams,
+                    })
+                    .subscribe({
+                        next: (response) => {
+                            if (response.status === 200) {
+                                if (response.body) {
+                                    const targetLink = response.body.targetLinkUri;
+                                    window.location.replace(targetLink);
+                                }
+                            } else {
+                                this.isLinking = false;
+                                this.alertService.error('artemisApp.lti13.deepLinking.unknownError');
+                            }
+                        },
+                        error: (error) => {
+                            this.isLinking = false;
+                            onError(this.alertService, error);
+                        },
+                    });
+            } else {
+                this.alertService.error('artemisApp.lti13.deepLinking.parameterError');
+            }
         } else {
             this.alertService.error('artemisApp.lti13.deepLinking.selectToLink');
         }

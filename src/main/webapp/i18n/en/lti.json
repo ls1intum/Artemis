@@ -106,7 +106,8 @@
                 "selectToLink": "Select exercises to link",
                 "unknownError": "Unsuccessful due to an unknown error. Please contact an admin!",
                 "noCoursesError": "You do not have any LTI-enabled courses in Artemis yet. Please configure at least one course to use this feature.",
-                "learnMore": "Learn more about enabling LTI in your course.."
+                "learnMore": "Learn more about enabling LTI in your course..",
+                "parameterError": "There was an error when processing the parameters"
             },
             "missingConfigurationWarning": "Missing values in the LTI1.3 configuration. Launches will not work. Please contact the administrator for configuration.",
             "selectContentFromCourse": "Select content from course {{ title }}",
