@@ -1,6 +1,6 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { MetisService } from 'app/shared/metis/metis.service';
-import { DebugElement } from '@angular/core';
+import { DebugElement, input, runInInjectionContext } from '@angular/core';
 import { Post } from 'app/entities/metis/post.model';
 import { MockComponent, MockDirective, MockModule, MockPipe, MockProvider } from 'ng-mocks';
 import { getElement } from '../../../../../helpers/utils/general.utils';
@@ -35,8 +35,9 @@ import { User } from 'app/core/user/user.model';
 import { provideHttpClient } from '@angular/common/http';
 import { PostCreateEditModalComponent } from 'app/shared/metis/posting-create-edit-modal/post-create-edit-modal/post-create-edit-modal.component';
 import { ConfirmIconComponent } from 'app/shared/confirm-icon/confirm-icon.component';
-import { MetisConversationService } from '../../../../../../../../main/webapp/app/shared/metis/metis-conversation.service';
+import { MetisConversationService } from 'app/shared/metis/metis-conversation.service';
 import { MockMetisConversationService } from '../../../../../helpers/mocks/service/mock-metis-conversation.service';
+import { Posting } from 'app/entities/metis/posting.model';
 
 describe('PostReactionsBarComponent', () => {
     let component: PostReactionsBarComponent;
@@ -417,5 +418,30 @@ describe('PostReactionsBarComponent', () => {
         forwardButton?.nativeElement.click();
         fixture.detectChanges();
         expect(forwardMessageSpy).toHaveBeenCalled();
+    });
+
+    it('should call openForwardMessageView with originalPostDetails when posting content is empty', () => {
+        const openForwardMessageViewSpy = jest.spyOn(component, 'openForwardMessageView');
+        const originalPost = { id: 42, content: 'Original content' } as Posting;
+
+        runInInjectionContext(fixture.debugElement.injector, () => {
+            component.originalPostDetails = input<Posting>(originalPost);
+            component.posting = { id: 1, content: '' } as Post;
+            component.forwardMessage();
+
+            expect(openForwardMessageViewSpy).toHaveBeenCalledOnce();
+            expect(openForwardMessageViewSpy).toHaveBeenCalledWith(originalPost, false);
+        });
+    });
+
+    it('should call openForwardMessageView with posting when posting content is not empty', () => {
+        const openForwardMessageViewSpy = jest.spyOn(component, 'openForwardMessageView');
+        const postingWithContent = { id: 1, content: 'Non-empty content' } as Post;
+
+        component.posting = postingWithContent;
+        component.forwardMessage();
+
+        expect(openForwardMessageViewSpy).toHaveBeenCalledOnce();
+        expect(openForwardMessageViewSpy).toHaveBeenCalledWith(postingWithContent, false);
     });
 });

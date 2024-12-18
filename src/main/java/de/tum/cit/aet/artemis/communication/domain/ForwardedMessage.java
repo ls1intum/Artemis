@@ -68,7 +68,7 @@ public class ForwardedMessage extends DomainObject {
         return id;
     }
 
-    public Long getSourceId() {
+    public long getSourceId() {
         return sourceId;
     }
 
