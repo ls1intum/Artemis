@@ -60,10 +60,7 @@ public class ForwardedMessage extends DomainObject {
         return sourceId;
     }
 
-    public void setSourceId(Long sourceId) {
-        if (sourceId == null) {
-            throw new IllegalArgumentException("sourceId cannot be null");
-        }
+    public void setSourceId(long sourceId) {
         this.sourceId = sourceId;
     }
 
