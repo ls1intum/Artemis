@@ -32,7 +32,7 @@ import de.tum.cit.aet.artemis.core.util.TimeLogUtil;
  */
 @Profile(PROFILE_CORE)
 @RestController
-@RequestMapping(value = "api")
+@RequestMapping(value = "api/")
 public class ForwardedMessageResource {
 
     private static final Logger log = LoggerFactory.getLogger(ForwardedMessageResource.class);
@@ -56,7 +56,7 @@ public class ForwardedMessageResource {
      *         or with status 400 (Bad Request) if the forwarded message already has an ID.
      * @throws BadRequestAlertException if the forwarded message already has an ID.
      */
-    @PostMapping("/forwarded-messages")
+    @PostMapping("forwarded-messages")
     public ResponseEntity<ForwardedMessageDTO> createForwardedMessage(@RequestBody ForwardedMessage forwardedMessage) throws URISyntaxException {
         if (forwardedMessage.getId() != null) {
             throw new BadRequestAlertException("A new forwarded message cannot already have an ID", ENTITY_NAME, "idExists");
@@ -75,7 +75,7 @@ public class ForwardedMessageResource {
      *         where each object contains a destination ID and the associated forwarded messages.
      * @throws BadRequestAlertException if the type parameter is invalid or unsupported.
      */
-    @GetMapping("/forwarded-messages")
+    @GetMapping("forwarded-messages")
     public ResponseEntity<List<ForwardedMessagesGroupDTO>> getForwardedMessages(@RequestParam Set<Long> ids, @RequestParam String type) {
 
         log.debug("GET getForwardedMessages invoked with ids {} and type {}", ids, type);

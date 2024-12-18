@@ -97,7 +97,15 @@
                     <span class="forwarded-message-author">{{ postToForward()?.author?.name }}</span>
                 </div>
                 <div class="forwarded-message-body" [ngClass]="{ expanded: showFullForwardedMessage }" id="messageContent" #messageContent>
-                    <div class="preserve-line-breaks">{{ displayedForwardedContent() }}</div>
+                    <jhi-posting-content
+                        [previewMode]="false"
+                        [content]="postToForward()?.content!"
+                        [author]="postToForward()?.author!"
+                        [isEdited]="!!postToForward()?.updatedDate"
+                        [posting]="postToForward()!"
+                        [isReply]="false"
+                        [isSubscribeToMetis]="false"
+                    />
                 </div>
                 @if (isContentLong) {
                     <button type="button" class="btn btn-link p-0" style="width: fit-content" (click)="toggleShowFullForwardedMessage()">

@@ -2,18 +2,18 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { FormsModule } from '@angular/forms';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import { By } from '@angular/platform-browser';
-import { MockProvider } from 'ng-mocks';
+import { MockComponent, MockPipe, MockProvider } from 'ng-mocks';
 import { ChannelDTO } from 'app/entities/metis/conversation/channel.model';
 import { Post } from 'app/entities/metis/post.model';
 import { ForwardMessageDialogComponent } from 'app/overview/course-conversations/dialogs/forward-message-dialog/forward-message-dialog.component';
-import { runInInjectionContext, signal } from '@angular/core';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
 import { MockCourseManagementService } from '../../../../../helpers/mocks/service/mock-course-management.service';
 import { UserPublicInfoDTO } from 'app/core/user/user.model';
-import { MockTranslateService } from '../../../../../helpers/mocks/service/mock-translate.service';
-import { ArtemisTestModule } from '../../../../../test.module';
-import { TranslateService } from '@ngx-translate/core';
 import { MockResizeObserver } from '../../../../../helpers/mocks/service/mock-resize-observer';
+import { MarkdownEditorMonacoComponent } from 'app/shared/markdown-editor/monaco/markdown-editor-monaco.component';
+import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
+import { ProfilePictureComponent } from 'app/shared/profile-picture/profile-picture.component';
+import { PostingContentComponent } from 'app/shared/metis/posting-content/posting-content.components';
 
 describe('ForwardMessageDialogComponent', () => {
     let component: ForwardMessageDialogComponent;
@@ -22,12 +22,15 @@ describe('ForwardMessageDialogComponent', () => {
 
     beforeEach(async () => {
         await TestBed.configureTestingModule({
-            providers: [
-                MockProvider(NgbActiveModal),
-                { provide: CourseManagementService, useClass: MockCourseManagementService },
-                { provide: TranslateService, useClass: MockTranslateService },
+            declarations: [
+                ForwardMessageDialogComponent,
+                MockPipe(ArtemisTranslatePipe),
+                MockComponent(MarkdownEditorMonacoComponent),
+                MockComponent(ProfilePictureComponent),
+                MockComponent(PostingContentComponent),
             ],
-            imports: [FormsModule, ArtemisTestModule],
+            providers: [MockProvider(NgbActiveModal), { provide: CourseManagementService, useClass: MockCourseManagementService }],
+            imports: [FormsModule],
         }).compileComponents();
 
         global.ResizeObserver = jest.fn().mockImplementation((callback: ResizeObserverCallback) => {
@@ -194,19 +197,6 @@ describe('ForwardMessageDialogComponent', () => {
         component.checkIfContentOverflows();
 
         expect(component.isContentLong).toBeTrue();
-    });
-
-    it('should truncate forwarded content if it is too long', () => {
-        const post = new Post();
-        post.content = 'Line1\nLine2\nLine3\nLine4\nLine5\nLine6\nLine7';
-        runInInjectionContext(fixture.debugElement.injector, () => {
-            component.postToForward = signal<Post | null>(post);
-            component.isContentLong = true;
-            component.maxLines = 5;
-
-            const displayedContent = component.displayedForwardedContent();
-            expect(displayedContent).toContain('Line1\nLine2\nLine3\nLine4\nLine5...');
-        });
     });
 
     it('should disable Send button if no content and no selections are made', () => {

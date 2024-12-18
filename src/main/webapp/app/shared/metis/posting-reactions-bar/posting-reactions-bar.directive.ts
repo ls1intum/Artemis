@@ -147,7 +147,7 @@ export abstract class PostingsReactionsBarDirective<T extends Posting> implement
             .subscribe({
                 next: (conversations) => {
                     conversations.forEach((conversation) => {
-                        if (conversation.type === ConversationType.CHANNEL) {
+                        if (conversation.type === ConversationType.CHANNEL && !(conversation as ChannelDTO).isAnnouncementChannel) {
                             this.channels.push(conversation as ChannelDTO);
                         }
                     });

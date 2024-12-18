@@ -14,10 +14,6 @@ import { MarkdownEditorHeight } from 'app/shared/markdown-editor/monaco/markdown
 import { UserPublicInfoDTO } from 'app/core/user/user.model';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
 import { catchError, map, of } from 'rxjs';
-import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
-import { ProfilePictureComponent } from 'app/shared/profile-picture/profile-picture.component';
-import { ArtemisMarkdownEditorModule } from 'app/shared/markdown-editor/markdown-editor.module';
-import { ArtemisSharedCommonModule } from 'app/shared/shared-common.module';
 
 interface CombinedOption {
     id: number;
@@ -30,8 +26,6 @@ interface CombinedOption {
     selector: 'jhi-forward-message-dialog',
     templateUrl: './forward-message-dialog.component.html',
     styleUrls: ['./forward-message-dialog.component.scss'],
-    standalone: true,
-    imports: [ProfilePictureComponent, ArtemisMarkdownEditorModule, ArtemisTranslatePipe, ArtemisSharedCommonModule],
 })
 export class ForwardMessageDialogComponent implements OnInit, AfterViewInit {
     channels = signal<ChannelDTO[] | []>([]);
@@ -98,19 +92,6 @@ export class ForwardMessageDialogComponent implements OnInit, AfterViewInit {
             const nativeElement = this.messageContent()!.nativeElement;
             this.isContentLong = nativeElement.scrollHeight > nativeElement.clientHeight;
             this.cdr.detectChanges();
-        }
-    }
-
-    displayedForwardedContent(): string {
-        if (!this.postToForward || !this.postToForward()?.content) {
-            return '';
-        }
-
-        if (this.showFullForwardedMessage || !this.isContentLong) {
-            return this.postToForward()?.content!;
-        } else {
-            const lines = this.postToForward()?.content?.split('\n');
-            return lines?.slice(0, this.maxLines).join('\n') + '...';
         }
     }
 
