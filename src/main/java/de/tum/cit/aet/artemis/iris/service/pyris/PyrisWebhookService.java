@@ -163,7 +163,7 @@ public class PyrisWebhookService {
      * @return jobToken if the job was created
      */
     private String executeLectureDeletionWebhook(List<PyrisLectureUnitWebhookDTO> toUpdateAttachmentUnits) {
-        String jobToken = pyrisJobService.addIngestionWebhookJob(0, 0, 0);
+        String jobToken = pyrisJobService.addLectureIngestionWebhookJob(0, 0, 0);
         PyrisPipelineExecutionSettingsDTO settingsDTO = new PyrisPipelineExecutionSettingsDTO(jobToken, List.of(), artemisBaseUrl);
         PyrisWebhookLectureDeletionExecutionDTO executionDTO = new PyrisWebhookLectureDeletionExecutionDTO(toUpdateAttachmentUnits, settingsDTO, List.of());
         pyrisConnectorService.executeLectureDeletionWebhook(executionDTO);
@@ -177,7 +177,8 @@ public class PyrisWebhookService {
      * @return jobToken if the job was created
      */
     private String executeLectureAdditionWebhook(PyrisLectureUnitWebhookDTO toUpdateAttachmentUnit) {
-        String jobToken = pyrisJobService.addIngestionWebhookJob(toUpdateAttachmentUnit.courseId(), toUpdateAttachmentUnit.lectureId(), toUpdateAttachmentUnit.lectureUnitId());
+        String jobToken = pyrisJobService.addLectureIngestionWebhookJob(toUpdateAttachmentUnit.courseId(), toUpdateAttachmentUnit.lectureId(),
+                toUpdateAttachmentUnit.lectureUnitId());
         PyrisPipelineExecutionSettingsDTO settingsDTO = new PyrisPipelineExecutionSettingsDTO(jobToken, List.of(), artemisBaseUrl);
         PyrisWebhookLectureIngestionExecutionDTO executionDTO = new PyrisWebhookLectureIngestionExecutionDTO(toUpdateAttachmentUnit, settingsDTO, List.of());
         pyrisConnectorService.executeLectureAddtionWebhook("fullIngestion", executionDTO);

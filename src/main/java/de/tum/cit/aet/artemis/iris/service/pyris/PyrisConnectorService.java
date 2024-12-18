@@ -31,7 +31,7 @@ import de.tum.cit.aet.artemis.iris.exception.IrisInternalPyrisErrorException;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.PyrisVariantDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.lectureingestionwebhook.PyrisWebhookLectureDeletionExecutionDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.lectureingestionwebhook.PyrisWebhookLectureIngestionExecutionDTO;
-import de.tum.cit.aet.artemis.iris.service.pyris.job.IngestionWebhookJob;
+import de.tum.cit.aet.artemis.iris.service.pyris.job.LectureIngestionWebhookJob;
 import de.tum.cit.aet.artemis.iris.web.open.PublicPyrisStatusUpdateResource;
 
 /**
@@ -145,7 +145,7 @@ public class PyrisConnectorService {
             IngestionStateResponseDTO response = restTemplate.getForObject(url, IngestionStateResponseDTO.class);
             IngestionState state = response.state();
             if (state != IngestionState.DONE) {
-                if (pyrisJobService.currentJobs().stream().filter(job -> job instanceof IngestionWebhookJob).map(job -> (IngestionWebhookJob) job)
+                if (pyrisJobService.currentJobs().stream().filter(job -> job instanceof LectureIngestionWebhookJob).map(job -> (LectureIngestionWebhookJob) job)
                         .anyMatch(ingestionJob -> ingestionJob.courseId() == courseId && ingestionJob.lectureId() == lectureId && ingestionJob.lectureUnitId() == lectureUnitId)) {
                     return IngestionState.IN_PROGRESS;
                 }

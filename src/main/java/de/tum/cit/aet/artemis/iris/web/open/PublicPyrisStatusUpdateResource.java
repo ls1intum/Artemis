@@ -26,7 +26,7 @@ import de.tum.cit.aet.artemis.iris.service.pyris.dto.lectureingestionwebhook.Pyr
 import de.tum.cit.aet.artemis.iris.service.pyris.job.CompetencyExtractionJob;
 import de.tum.cit.aet.artemis.iris.service.pyris.job.CourseChatJob;
 import de.tum.cit.aet.artemis.iris.service.pyris.job.ExerciseChatJob;
-import de.tum.cit.aet.artemis.iris.service.pyris.job.IngestionWebhookJob;
+import de.tum.cit.aet.artemis.iris.service.pyris.job.LectureIngestionWebhookJob;
 import de.tum.cit.aet.artemis.iris.service.pyris.job.PyrisJob;
 import de.tum.cit.aet.artemis.iris.service.pyris.job.TextExerciseChatJob;
 
@@ -166,11 +166,11 @@ public class PublicPyrisStatusUpdateResource {
         if (!job.jobId().equals(runId)) {
             throw new ConflictException("Run ID in URL does not match run ID in request body", "Job", "runIdMismatch");
         }
-        if (!(job instanceof IngestionWebhookJob ingestionWebhookJob)) {
+        if (!(job instanceof LectureIngestionWebhookJob lectureIngestionWebhookJob)) {
             throw new ConflictException("Run ID is not an ingestion job", "Job", "invalidRunId");
         }
 
-        pyrisStatusUpdateService.handleStatusUpdate(ingestionWebhookJob, statusUpdateDTO);
+        pyrisStatusUpdateService.handleStatusUpdate(lectureIngestionWebhookJob, statusUpdateDTO);
         return ResponseEntity.ok().build();
     }
 }
