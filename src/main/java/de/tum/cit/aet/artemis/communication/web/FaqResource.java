@@ -1,10 +1,12 @@
 package de.tum.cit.aet.artemis.communication.web;
 
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
+import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_IRIS;
 
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -20,12 +22,14 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import de.tum.cit.aet.artemis.communication.domain.Faq;
 import de.tum.cit.aet.artemis.communication.domain.FaqState;
 import de.tum.cit.aet.artemis.communication.dto.FaqDTO;
 import de.tum.cit.aet.artemis.communication.repository.FaqRepository;
+import de.tum.cit.aet.artemis.communication.service.FaqService;
 import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.exception.AccessForbiddenException;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
@@ -58,10 +62,13 @@ public class FaqResource {
 
     private final FaqRepository faqRepository;
 
-    public FaqResource(CourseRepository courseRepository, AuthorizationCheckService authCheckService, FaqRepository faqRepository) {
+    private final FaqService faqService;
+
+    public FaqResource(CourseRepository courseRepository, AuthorizationCheckService authCheckService, FaqRepository faqRepository, FaqService faqService) {
         this.faqRepository = faqRepository;
         this.courseRepository = courseRepository;
         this.authCheckService = authCheckService;
+        this.faqService = faqService;
     }
 
     /**
@@ -210,6 +217,24 @@ public class FaqResource {
         checkShouldAccessNotAccepted(faqState, courseId);
         Set<String> faqs = faqRepository.findAllCategoriesByCourseIdAndState(courseId, faqState);
         return ResponseEntity.ok().body(faqs);
+    }
+
+    /**
+     * POST /courses/{courseId}/ingest
+     * This endpoint is for starting the ingestion of all faqs or only one faq when triggered in Artemis.
+     *
+     * @param courseId the ID of the course for which all faqs should be ingested in pyris
+     * @param faqId    If this id is present then only ingest this one faq of the respective course
+     * @return the ResponseEntity with status 200 (OK) and a message success or null if the operation failed
+     */
+    @Profile(PROFILE_IRIS)
+    @PostMapping("courses/{courseId}/faqs/ingest")
+    @EnforceAtLeastInstructorInCourse
+    public ResponseEntity<Void> ingestFaqInIris(@PathVariable Long courseId, @RequestParam(required = false) Optional<Long> faqId) {
+        Course course = courseRepository.findByIdElseThrow(courseId);
+        authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.INSTRUCTOR, course, null);
+        faqService.ingestFaqsIntoPyris(courseId, faqId);
+        return ResponseEntity.ok().build();
     }
 
     /**

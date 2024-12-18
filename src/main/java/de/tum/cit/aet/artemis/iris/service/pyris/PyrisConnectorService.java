@@ -28,7 +28,10 @@ import de.tum.cit.aet.artemis.iris.dto.IngestionStateResponseDTO;
 import de.tum.cit.aet.artemis.iris.exception.IrisException;
 import de.tum.cit.aet.artemis.iris.exception.IrisForbiddenException;
 import de.tum.cit.aet.artemis.iris.exception.IrisInternalPyrisErrorException;
+import de.tum.cit.aet.artemis.iris.service.pyris.dto.PyrisPipelineExecutionSettingsDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.PyrisVariantDTO;
+import de.tum.cit.aet.artemis.iris.service.pyris.dto.faqingestionwebhook.PyrisFaqWebhookDTO;
+import de.tum.cit.aet.artemis.iris.service.pyris.dto.faqingestionwebhook.PyrisWebhookFaqDeletionExecutionDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.lectureingestionwebhook.PyrisWebhookLectureDeletionExecutionDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.lectureingestionwebhook.PyrisWebhookLectureIngestionExecutionDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.job.LectureIngestionWebhookJob;
@@ -194,5 +197,56 @@ public class PyrisConnectorService {
             log.error("Failed to parse error message from Pyris", e);
             return "";
         }
+    }
+
+    public void executeFaqAdditionWebhook(PyrisFaqWebhookDTO toUpdateFaq, PyrisPipelineExecutionSettingsDTO settingsDTO) {
+        var endpoint = "/api/v1/webhooks/faqs";
+        try {
+            restTemplate.postForEntity(pyrisUrl + endpoint, objectMapper.valueToTree(settingsDTO), Void.class);
+        }
+        catch (HttpStatusCodeException e) {
+            log.error("Failed to send faq {} to Pyris: {}", toUpdateFaq.faqId(), e.getMessage());
+            throw toIrisException(e);
+        }
+        catch (RestClientException | IllegalArgumentException e) {
+            log.error("Failed to send faq {} to Pyris: {}", toUpdateFaq.faqId(), e.getMessage());
+            throw new PyrisConnectorException("Could not fetch response from Pyris");
+        }
+    }
+
+    public void executeFaqDeletionWebhook(PyrisWebhookFaqDeletionExecutionDTO executionDTO) {
+        var endpoint = "/api/v1/webhooks/faqs/delete";
+        try {
+            restTemplate.postForEntity(pyrisUrl + endpoint, objectMapper.valueToTree(executionDTO), Void.class);
+        }
+        catch (HttpStatusCodeException e) {
+            log.error("Failed to send faqs to Pyris", e);
+            throw toIrisException(e);
+        }
+        catch (RestClientException | IllegalArgumentException e) {
+            log.error("Failed to send faqs to Pyris", e);
+            throw new PyrisConnectorException("Could not fetch response from Pyris");
+        }
+    }
+
+    /**
+     * Retrieves the ingestion state of the lecture unit specified by retrieving the ingestion state from the vector database in Pyris.
+     *
+     * @param courseId id of the course
+     * @return The ingestion state of the faq
+     *
+     */
+    IngestionState getFaqIngestionState(long courseId, long faqId) {
+        try {
+            String encodedBaseUrl = URLEncoder.encode(artemisBaseUrl, StandardCharsets.UTF_8);
+            String url = pyrisUrl + "/api/v1/courses/" + courseId + "/faqs/" + faqId + "/ingestion-state?base_url=" + encodedBaseUrl;
+            IngestionStateResponseDTO response = restTemplate.getForObject(url, IngestionStateResponseDTO.class);
+            return response.state();
+        }
+        catch (RestClientException | IllegalArgumentException e) {
+            log.error("Error fetching ingestion state for faq {}", faqId, e);
+            throw new PyrisConnectorException("Error fetching ingestion state for faq" + faqId);
+        }
+
     }
 }

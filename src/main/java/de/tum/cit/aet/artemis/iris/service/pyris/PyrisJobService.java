@@ -22,6 +22,7 @@ import de.tum.cit.aet.artemis.core.exception.AccessForbiddenException;
 import de.tum.cit.aet.artemis.core.exception.ConflictException;
 import de.tum.cit.aet.artemis.iris.service.pyris.job.CourseChatJob;
 import de.tum.cit.aet.artemis.iris.service.pyris.job.ExerciseChatJob;
+import de.tum.cit.aet.artemis.iris.service.pyris.job.FaqIngestionWebhookJob;
 import de.tum.cit.aet.artemis.iris.service.pyris.job.LectureIngestionWebhookJob;
 import de.tum.cit.aet.artemis.iris.service.pyris.job.PyrisJob;
 
@@ -105,6 +106,20 @@ public class PyrisJobService {
         long timeoutWebhookJob = 60;
         TimeUnit unitWebhookJob = TimeUnit.MINUTES;
         jobMap.put(token, job, timeoutWebhookJob, unitWebhookJob);
+        return token;
+    }
+
+    /**
+     * Adds a new faq ingestion webhook job to the job map with a timeout.
+     *
+     * @param courseId the ID of the course associated with the webhook job
+     * @param faqId    the ID of the faq associated with the webhook job
+     * @return a unique token identifying the created webhook job
+     */
+    public String addFaqIngestionWebhookJob(long courseId, long faqId) {
+        var token = generateJobIdToken();
+        var job = new FaqIngestionWebhookJob(token, courseId, faqId);
+        jobMap.put(token, job);
         return token;
     }
 
