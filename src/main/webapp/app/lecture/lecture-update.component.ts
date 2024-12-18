@@ -100,37 +100,9 @@ export class LectureUpdateComponent implements OnInit, OnDestroy {
             }
         });
 
-        effect(
-            function updateFormStatusBarAfterLectureCreation() {
-                const updatedFormStatusSections: FormSectionStatus[] = [];
-
-                if (this.isEditMode()) {
-                    updatedFormStatusSections.push(
-                        {
-                            title: 'artemisApp.lecture.wizardMode.steps.attachmentsStepTitle',
-                            valid: Boolean(this.attachmentsSection()?.isFormValid()),
-                        },
-                        {
-                            title: 'artemisApp.lecture.wizardMode.steps.unitsStepTitle',
-                            valid: Boolean(this.unitSection()?.isUnitConfigurationValid()),
-                        },
-                    );
-                }
-
-                updatedFormStatusSections.unshift(
-                    {
-                        title: 'artemisApp.lecture.wizardMode.steps.titleStepTitle',
-                        valid: Boolean(this.titleSection().titleChannelNameComponent().isFormValidSignal()),
-                    },
-                    {
-                        title: 'artemisApp.lecture.wizardMode.steps.periodStepTitle',
-                        valid: Boolean(this.lecturePeriodSection().isPeriodSectionValid()),
-                    },
-                );
-
-                this.formStatusSections = updatedFormStatusSections;
-            }.bind(this),
-        );
+        effect(() => {
+            this.updateFormStatusBar();
+        });
 
         effect(
             function scrollToLastSectionAfterLectureCreation() {
@@ -162,6 +134,36 @@ export class LectureUpdateComponent implements OnInit, OnDestroy {
 
     ngOnDestroy() {
         this.subscriptions.unsubscribe();
+    }
+
+    updateFormStatusBar() {
+        const updatedFormStatusSections: FormSectionStatus[] = [];
+
+        if (this.isEditMode()) {
+            updatedFormStatusSections.push(
+                {
+                    title: 'artemisApp.lecture.wizardMode.steps.attachmentsStepTitle',
+                    valid: Boolean(this.attachmentsSection()?.isFormValid()),
+                },
+                {
+                    title: 'artemisApp.lecture.wizardMode.steps.unitsStepTitle',
+                    valid: Boolean(this.unitSection()?.isUnitConfigurationValid()),
+                },
+            );
+        }
+
+        updatedFormStatusSections.unshift(
+            {
+                title: 'artemisApp.lecture.wizardMode.steps.titleStepTitle',
+                valid: Boolean(this.titleSection().titleChannelNameComponent().isFormValidSignal()),
+            },
+            {
+                title: 'artemisApp.lecture.wizardMode.steps.periodStepTitle',
+                valid: Boolean(this.lecturePeriodSection().isPeriodSectionValid()),
+            },
+        );
+
+        this.formStatusSections = updatedFormStatusSections;
     }
 
     isChangeMadeToTitleSection() {
