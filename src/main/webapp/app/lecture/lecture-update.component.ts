@@ -142,9 +142,6 @@ export class LectureUpdateComponent implements OnInit, OnDestroy {
         );
     }
 
-    /**
-     * Life cycle hook called by Angular to indicate that Angular is done creating the component
-     */
     ngOnInit() {
         this.isSaving = false;
         this.processUnitMode = false;

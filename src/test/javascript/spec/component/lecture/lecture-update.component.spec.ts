@@ -27,6 +27,11 @@ import { TitleChannelNameComponent } from '../../../../../main/webapp/app/shared
 import { LectureUpdatePeriodComponent } from '../../../../../main/webapp/app/lecture/lecture-period/lecture-period.component';
 import { LectureUnitManagementComponent } from '../../../../../main/webapp/app/lecture/lecture-unit/lecture-unit-management/lecture-unit-management.component';
 import { OwlDateTimeModule } from '@danielmoncada/angular-datetime-picker';
+import { FormStatusBarComponent } from '../../../../../main/webapp/app/forms/form-status-bar/form-status-bar.component';
+import { ArtemisSharedModule } from '../../../../../main/webapp/app/shared/shared.module';
+import { LectureAttachmentsComponent } from '../../../../../main/webapp/app/lecture/lecture-attachments.component';
+import { LectureUpdateUnitsComponent } from '../../../../../main/webapp/app/lecture/lecture-units/lecture-units.component';
+import { UnitCreationCardComponent } from '../../../../../main/webapp/app/lecture/lecture-unit/lecture-unit-management/unit-creation-card/unit-creation-card.component';
 
 describe('LectureUpdateComponent', () => {
     let lectureService: LectureService;
@@ -46,21 +51,24 @@ describe('LectureUpdateComponent', () => {
         pastLecture.endDate = yesterday;
 
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule, FormsModule, MockModule(NgbTooltipModule), MockModule(OwlDateTimeModule)],
+            imports: [ArtemisTestModule, MockModule(ArtemisSharedModule), FormsModule, MockModule(NgbTooltipModule), MockModule(OwlDateTimeModule)],
             declarations: [
                 LectureUpdateComponent,
                 LectureTitleChannelNameComponent,
                 TitleChannelNameComponent,
                 FormDateTimePickerComponent,
+                LectureAttachmentsComponent,
+                LectureUpdateUnitsComponent,
                 LectureUpdatePeriodComponent,
-                MockComponent(LectureUpdateWizardComponent),
                 MockComponent(LectureUnitManagementComponent),
+                MockComponent(FormStatusBarComponent),
                 MockComponent(MarkdownEditorMonacoComponent),
                 MockComponent(DocumentationButtonComponent),
                 MockPipe(ArtemisTranslatePipe),
                 MockPipe(ArtemisDatePipe),
                 MockPipe(HtmlForMarkdownPipe),
                 MockRouterLinkDirective,
+                MockComponent(UnitCreationCardComponent),
                 MockDirective(CustomNotIncludedInValidatorDirective),
             ],
             providers: [
@@ -100,7 +108,6 @@ describe('LectureUpdateComponent', () => {
     });
 
     it('should initialize', () => {
-        // lectureUpdateComponent.ngOnInit();
         lectureUpdateComponentFixture.detectChanges();
 
         expect(lectureUpdateComponent.isSaving).toBeFalse();
