@@ -161,18 +161,24 @@ export class Lti13DeepLinkingComponent implements OnInit {
     enableCompetency() {
         if (!this.isCompetencySelected) {
             this.isCompetencySelected = true;
+            this.isIrisSelected = false;
+            this.isLearningPathSelected = false;
         }
     }
 
     enableLearningPath() {
         if (!this.isLearningPathSelected) {
             this.isLearningPathSelected = true;
+            this.isIrisSelected = false;
+            this.isCompetencySelected = false;
         }
     }
 
     enableIris() {
         if (!this.isIrisSelected) {
             this.isIrisSelected = true;
+            this.isLearningPathSelected = false;
+            this.isCompetencySelected = false;
         }
     }
 
