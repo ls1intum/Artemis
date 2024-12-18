@@ -148,7 +148,7 @@ export class PdfPreviewComponent implements OnInit, OnDestroy {
     }
 
     /**
-     * Updates the existing attachment file or creates a new hidden version of the attachment.
+     * Updates the existing attachment file or creates a student version of the attachment with hidden files.
      */
     async updateAttachmentWithFile(): Promise<void> {
         const pdfFile = new File([this.currentPdfBlob()!], '.pdf', { type: 'application/pdf' });
@@ -183,7 +183,7 @@ export class PdfPreviewComponent implements OnInit, OnDestroy {
             formData.append('attachmentUnit', objectToJsonBlob(this.attachmentUnit()!));
 
             if (this.hiddenPagesChanged()) {
-                const pdfFileWithHiddenPages = await this.createHiddenVersionOfAttachment(finalHiddenPages);
+                const pdfFileWithHiddenPages = await this.createStudentVersionOfAttachment(finalHiddenPages);
                 const attachmentWithHiddenPages = cloneDeep(this.attachmentToBeEdited()!);
 
                 this.attachmentService.update(attachmentWithHiddenPages.id!, attachmentWithHiddenPages, undefined, pdfFileWithHiddenPages).subscribe({
@@ -302,12 +302,12 @@ export class PdfPreviewComponent implements OnInit, OnDestroy {
     }
 
     /**
-     * Creates a hidden version of the current PDF attachment by removing specified pages.
+     * Creates a student version of the current PDF attachment by removing specified pages.
      *
      * @param hiddenPages - An array of page numbers to be removed from the original PDF.
      * @returns A promise that resolves to a new `File` object representing the modified PDF, or undefined if an error occurs.
      */
-    async createHiddenVersionOfAttachment(hiddenPages: number[]) {
+    async createStudentVersionOfAttachment(hiddenPages: number[]) {
         try {
             const fileName = this.attachmentUnit()!.attachment!.name;
             const existingPdfBytes = await this.currentPdfBlob()!.arrayBuffer();

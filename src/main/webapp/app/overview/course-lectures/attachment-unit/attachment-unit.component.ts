@@ -49,7 +49,7 @@ export class AttachmentUnitComponent extends LectureUnitDirective<AttachmentUnit
     handleDownload() {
         this.logEvent();
 
-        const link = this.lectureUnit().attachment?.hiddenLink || this.lectureUnit().attachment?.link; // Prefer hiddenLink if available
+        const link = this.lectureUnit().attachment?.studentVersion || this.lectureUnit().attachment?.link; // Prefer hiddenLink if available
         if (link) {
             const sanitizedLink = this.fileService.replaceAttachmentPrefixAndUnderscores(link);
             this.fileService.downloadFile(sanitizedLink);

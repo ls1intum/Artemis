@@ -572,18 +572,18 @@ public class FileResource {
      */
     @GetMapping("files/attachments/attachment-unit/{attachmentUnitId}/student/*")
     @EnforceAtLeastStudent
-    public ResponseEntity<byte[]> getAttachmentUnitHiddenAttachment(@PathVariable Long attachmentUnitId) {
-        log.debug("REST request to get the hidden version of attachment Unit : {}", attachmentUnitId);
+    public ResponseEntity<byte[]> getAttachmentUnitStudentVersion(@PathVariable Long attachmentUnitId) {
+        log.debug("REST request to get the student version of attachment Unit : {}", attachmentUnitId);
         AttachmentUnit attachmentUnit = attachmentUnitRepository.findByIdElseThrow(attachmentUnitId);
         Attachment attachment = attachmentUnit.getAttachment();
 
         // check if hidden link is available in the attachment
-        String hiddenLink = attachment.getHiddenLink();
-        if (hiddenLink == null) {
+        String studentVersion = attachment.getStudentVersion();
+        if (studentVersion == null) {
             return buildFileResponse(getActualPathFromPublicPathString(attachment.getLink()), false);
         }
 
-        String fileName = hiddenLink.substring(hiddenLink.lastIndexOf("/") + 1);
+        String fileName = studentVersion.substring(studentVersion.lastIndexOf("/") + 1);
 
         return buildFileResponse(FilePathService.getAttachmentUnitFilePath().resolve(Path.of(attachmentUnit.getId().toString(), "student")), fileName, false);
     }

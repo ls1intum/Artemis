@@ -61,8 +61,8 @@ public class Attachment extends DomainObject implements Serializable {
     @JoinColumn(name = "attachment_unit_id")
     private AttachmentUnit attachmentUnit;
 
-    @Column(name = "hidden_link")
-    private String hiddenLink;
+    @Column(name = "student_version")
+    private String studentVersion;
 
     // jhipster-needle-entity-add-field - JHipster will add fields here, do not remove
 
@@ -138,12 +138,12 @@ public class Attachment extends DomainObject implements Serializable {
         this.attachmentUnit = attachmentUnit;
     }
 
-    public String getHiddenLink() {
-        return hiddenLink;
+    public String getStudentVersion() {
+        return studentVersion;
     }
 
-    public void setHiddenLink(String hiddenLink) {
-        this.hiddenLink = hiddenLink;
+    public void setStudentVersion(String studentVersion) {
+        this.studentVersion = studentVersion;
     }
 
     public Boolean isVisibleToStudents() {
