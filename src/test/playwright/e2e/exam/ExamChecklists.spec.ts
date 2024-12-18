@@ -10,35 +10,15 @@ import textExerciseTemplate from '../../fixtures/exercise/text/template.json';
 import { ExamExerciseGroupCreationPage } from '../../support/pageobjects/exam/ExamExerciseGroupCreationPage';
 import { ExamExerciseGroupsPage } from '../../support/pageobjects/exam/ExamExerciseGroupsPage';
 import { Page } from '@playwright/test';
+import { Commands } from '../../support/commands';
+import { ExamAPIRequests } from '../../support/requests/ExamAPIRequests';
 
 test.describe('Exam Checklists', async () => {
     let course: Course;
-    let exam: Exam;
-    let examStartDate: dayjs.Dayjs;
-    let examEndDate: dayjs.Dayjs;
-
-    const NUMBER_OF_EXERCISES = 2;
-    const EXAM_MAX_POINTS = NUMBER_OF_EXERCISES * 10;
 
     test.beforeEach('Create course', async ({ login, courseManagementAPIRequests }) => {
         await login(admin);
         course = await courseManagementAPIRequests.createCourse({ customizeGroups: true });
-    });
-
-    test.beforeEach('Create exam', async ({ login, examAPIRequests, courseManagementAPIRequests }) => {
-        await login(admin);
-        examStartDate = dayjs().add(1, 'hour');
-        examEndDate = dayjs().add(2, 'hour');
-        const examConfig = {
-            course,
-            title: 'exam' + generateUUID(),
-            visibleDate: dayjs().subtract(3, 'minutes'),
-            startDate: examStartDate,
-            endDate: examEndDate,
-            examMaxPoints: EXAM_MAX_POINTS,
-            numberOfExercisesInExam: NUMBER_OF_EXERCISES,
-        };
-        exam = await examAPIRequests.createExam(examConfig);
         await courseManagementAPIRequests.addStudentToCourse(course, studentOne);
     });
 
@@ -50,6 +30,7 @@ test.describe('Exam Checklists', async () => {
             examExerciseGroups,
             examExerciseGroupCreation,
         }) => {
+            const exam = await createExam(course, page);
             await login(instructor);
             await navigateToExamDetailsPage(page, course, exam);
             await examDetails.checkItemUnchecked(ExamChecklistItem.LEAST_ONE_EXERCISE_GROUP);
@@ -68,11 +49,12 @@ test.describe('Exam Checklists', async () => {
             examExerciseGroups,
             examExerciseGroupCreation,
         }) => {
+            const exam = await createExam(course, page);
             await login(instructor);
             await navigateToExamDetailsPage(page, course, exam);
             await examDetails.checkItemUnchecked(ExamChecklistItem.NUMBER_OF_EXERCISE_GROUPS);
             await examDetails.openExerciseGroups();
-            for (let i = 0; i < NUMBER_OF_EXERCISES; i++) {
+            for (let i = 0; i < exam.numberOfExercisesInExam!; i++) {
                 await addExamExerciseGroup(examExerciseGroups, examExerciseGroupCreation);
             }
             await navigateToExamDetailsPage(page, course, exam);
@@ -93,6 +75,7 @@ test.describe('Exam Checklists', async () => {
             examExerciseGroups,
             examExerciseGroupCreation,
         }) => {
+            const exam = await createExam(course, page);
             await login(instructor);
             await navigateToExamDetailsPage(page, course, exam);
             await examDetails.checkItemUnchecked(ExamChecklistItem.EACH_EXERCISE_GROUP_HAS_EXERCISES);
@@ -114,6 +97,7 @@ test.describe('Exam Checklists', async () => {
             examAPIRequests,
             exerciseAPIRequests,
         }) => {
+            const exam = await createExam(course, page);
             await login(instructor);
             await navigateToExamDetailsPage(page, course, exam);
             await examDetails.checkItemUnchecked(ExamChecklistItem.POINTS_IN_EXERCISE_GROUPS_EQUAL);
@@ -122,7 +106,7 @@ test.describe('Exam Checklists', async () => {
             await page.reload();
             await examDetails.checkItemChecked(ExamChecklistItem.POINTS_IN_EXERCISE_GROUPS_EQUAL);
             const maxPointsOfFirstExercise = textExerciseTemplate.maxPoints;
-            const exerciseTemplate = textExerciseTemplate;
+            const exerciseTemplate = { ...textExerciseTemplate };
             exerciseTemplate.maxPoints = maxPointsOfFirstExercise - 1;
             await exerciseAPIRequests.createTextExercise({ exerciseGroup }, 'Exercise ' + generateUUID(), exerciseTemplate);
             await page.reload();
@@ -135,6 +119,7 @@ test.describe('Exam Checklists', async () => {
             examDetails,
             examExerciseGroupCreation,
         }) => {
+            const exam = await createExam(course, page);
             await login(instructor);
             await navigateToExamDetailsPage(page, course, exam);
             await examDetails.checkItemUnchecked(ExamChecklistItem.TOTAL_POINTS_POSSIBLE);
@@ -154,6 +139,7 @@ test.describe('Exam Checklists', async () => {
     });
 
     test('Instructor registers a student to exam and at least one student check is marked', async ({ page, login, examDetails, studentExamManagement }) => {
+        const exam = await createExam(course, page);
         await login(instructor);
         await navigateToExamDetailsPage(page, course, exam);
         await examDetails.checkItemUnchecked(ExamChecklistItem.LEAST_ONE_STUDENT);
@@ -164,9 +150,15 @@ test.describe('Exam Checklists', async () => {
     });
 
     test.describe('Individual exam generation and exam preparation checks', { tag: '@fast' }, () => {
+        let exam: Exam;
+
+        test.beforeEach('Create exam', async ({ page }) => {
+            exam = await createExam(course, page);
+        });
+
         test.beforeEach('Add exercise groups and register exam students', async ({ login, examExerciseGroupCreation, examAPIRequests }) => {
             await login(admin);
-            for (let i = 0; i < NUMBER_OF_EXERCISES; i++) {
+            for (let i = 0; i < exam.numberOfExercisesInExam!; i++) {
                 await examExerciseGroupCreation.addGroupWithExercise(exam, ExerciseType.TEXT);
             }
             await examAPIRequests.registerAllCourseStudentsForExam(exam);
@@ -196,12 +188,14 @@ test.describe('Exam Checklists', async () => {
     });
 
     test('Instructor sets the publish results and review dates and the corresponding checks are marked', async ({ page, login, examDetails, examCreation }) => {
+        const exam = await createExam(course, page);
         await login(instructor);
         await navigateToExamDetailsPage(page, course, exam);
         await examDetails.checkItemUnchecked(ExamChecklistItem.PUBLISHING_DATE_SET);
         await examDetails.checkItemUnchecked(ExamChecklistItem.START_DATE_REVIEW_SET);
         await examDetails.checkItemUnchecked(ExamChecklistItem.END_DATE_REVIEW_SET);
         await examDetails.clickEditExamForPublishDate();
+        const examEndDate = dayjs(exam.endDate! as dayjs.Dayjs);
         await examCreation.setPublishResultsDate(examEndDate.add(1, 'hour'));
         await examCreation.update();
         await page.waitForURL(`**/exams/${exam.id}`);
@@ -218,6 +212,21 @@ test.describe('Exam Checklists', async () => {
         await examDetails.checkItemChecked(ExamChecklistItem.END_DATE_REVIEW_SET);
     });
 });
+
+async function createExam(course: Course, page: Page) {
+    const NUMBER_OF_EXERCISES = 2;
+    const EXAM_MAX_POINTS = NUMBER_OF_EXERCISES * 10;
+
+    await Commands.login(page, admin);
+    const examConfig = {
+        course,
+        examMaxPoints: EXAM_MAX_POINTS,
+        numberOfExercisesInExam: NUMBER_OF_EXERCISES,
+    };
+
+    const examAPIRequests = new ExamAPIRequests(page);
+    return await examAPIRequests.createExam(examConfig);
+}
 
 async function navigateToExamDetailsPage(page: Page, course: Course, exam: Exam) {
     await page.goto(`/course-management/${course.id}/exams/${exam.id}`);
