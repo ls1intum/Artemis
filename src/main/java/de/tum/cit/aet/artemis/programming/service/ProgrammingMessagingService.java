@@ -6,6 +6,8 @@ import static de.tum.cit.aet.artemis.core.config.Constants.EXERCISE_TOPIC_ROOT;
 import static de.tum.cit.aet.artemis.core.config.Constants.NEW_SUBMISSION_TOPIC;
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 import static de.tum.cit.aet.artemis.core.config.Constants.PROGRAMMING_SUBMISSION_TOPIC;
+import static de.tum.cit.aet.artemis.core.config.Constants.SUBMISSION_PROCESSING;
+import static de.tum.cit.aet.artemis.core.config.Constants.SUBMISSION_PROCESSING_TOPIC;
 import static de.tum.cit.aet.artemis.core.config.Constants.TEST_CASES_CHANGED_RUN_COMPLETED_NOTIFICATION;
 
 import java.util.Optional;
@@ -24,6 +26,7 @@ import de.tum.cit.aet.artemis.exercise.domain.Team;
 import de.tum.cit.aet.artemis.exercise.domain.participation.Participation;
 import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
 import de.tum.cit.aet.artemis.exercise.dto.SubmissionDTO;
+import de.tum.cit.aet.artemis.exercise.repository.ParticipationRepository;
 import de.tum.cit.aet.artemis.exercise.repository.TeamRepository;
 import de.tum.cit.aet.artemis.iris.service.pyris.PyrisEventService;
 import de.tum.cit.aet.artemis.iris.service.pyris.event.NewResultEvent;
@@ -33,6 +36,7 @@ import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseParticipatio
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseStudentParticipation;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingSubmission;
 import de.tum.cit.aet.artemis.programming.domain.build.BuildRunState;
+import de.tum.cit.aet.artemis.programming.dto.SubmissionProcessingDTO;
 import de.tum.cit.aet.artemis.programming.exception.BuildTriggerWebsocketError;
 
 @Profile(PROFILE_CORE)
@@ -53,19 +57,26 @@ public class ProgrammingMessagingService {
 
     private final Optional<PyrisEventService> pyrisEventService;
 
+    private final ParticipationRepository participationRepository;
+
     public ProgrammingMessagingService(GroupNotificationService groupNotificationService, WebsocketMessagingService websocketMessagingService,
             ResultWebsocketService resultWebsocketService, Optional<LtiNewResultService> ltiNewResultService, TeamRepository teamRepository,
-            Optional<PyrisEventService> pyrisEventService) {
+            Optional<PyrisEventService> pyrisEventService, ParticipationRepository participationRepository) {
         this.groupNotificationService = groupNotificationService;
         this.websocketMessagingService = websocketMessagingService;
         this.resultWebsocketService = resultWebsocketService;
         this.ltiNewResultService = ltiNewResultService;
         this.teamRepository = teamRepository;
+        this.participationRepository = participationRepository;
         this.pyrisEventService = pyrisEventService;
     }
 
     private static String getExerciseTopicForTAAndAbove(long exerciseId) {
         return EXERCISE_TOPIC_ROOT + exerciseId + PROGRAMMING_SUBMISSION_TOPIC;
+    }
+
+    private static String getSubmissionProcessingTopicForTAAndAbove(Long exerciseId) {
+        return EXERCISE_TOPIC_ROOT + exerciseId + SUBMISSION_PROCESSING;
     }
 
     public static String getProgrammingExerciseTestCaseChangedTopic(Long programmingExerciseId) {
@@ -95,7 +106,7 @@ public class ProgrammingMessagingService {
      * @param exerciseId used to build the correct topic
      */
     public void notifyUserAboutSubmission(ProgrammingSubmission submission, Long exerciseId) {
-        var submissionDTO = SubmissionDTO.of(submission);
+        var submissionDTO = SubmissionDTO.of(submission, false, null, null);
         if (submission.getParticipation() instanceof StudentParticipation studentParticipation) {
             if (studentParticipation.getParticipant() instanceof Team team) {
                 // eager load the team with students so their information can be used for the messages below
@@ -202,6 +213,32 @@ public class ProgrammingMessagingService {
                     log.error("Could not trigger service for result {}", result.getId(), e);
                 }
             });
+        }
+    }
+
+    /**
+     * Notifies the user about the processing of a submission.
+     * This method sends a notification to the user that their submission is processing
+     * It handles both student participations and template/solution participations.
+     *
+     * @param submission      the submission processing data transfer object containing the submission details
+     * @param exerciseId      the ID of the exercise associated with the submission
+     * @param participationId the ID of the participation associated with the submission
+     */
+    public void notifyUserAboutSubmissionProcessing(SubmissionProcessingDTO submission, long exerciseId, long participationId) {
+        Participation participation = participationRepository.findWithProgrammingExerciseWithBuildConfigById(participationId).orElseThrow();
+        if (participation instanceof StudentParticipation studentParticipation) {
+            if (studentParticipation.getParticipant() instanceof Team team) {
+                // Eagerly load the team with students so their information can be used for the messages below
+                studentParticipation.setParticipant(teamRepository.findWithStudentsByIdElseThrow(team.getId()));
+            }
+            studentParticipation.getStudents().forEach(user -> websocketMessagingService.sendMessageToUser(user.getLogin(), SUBMISSION_PROCESSING_TOPIC, submission));
+        }
+
+        // send an update to tutors, editors and instructors about submissions for template and solution participations
+        if (!(participation instanceof StudentParticipation)) {
+            String topicDestination = getSubmissionProcessingTopicForTAAndAbove(exerciseId);
+            websocketMessagingService.sendMessage(topicDestination, submission);
         }
     }
 }
