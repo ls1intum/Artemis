@@ -12,13 +12,14 @@ import { DocumentationType } from 'app/shared/components/documentation-button/do
 import { faBan, faPuzzlePiece, faQuestionCircle, faSave } from '@fortawesome/free-solid-svg-icons';
 import { ACCEPTED_FILE_EXTENSIONS_FILE_BROWSER, ALLOWED_FILE_EXTENSIONS_HUMAN_READABLE } from 'app/shared/constants/file-extensions.constants';
 import { FormulaAction } from 'app/shared/monaco-editor/model/actions/formula.action';
-import { FormSectionStatus, FormStatusBarComponent } from 'app/forms/form-status-bar/form-status-bar.component';
-import { LectureTitleChannelNameComponent } from 'app/lecture/lecture-title-channel-name.component';
-import { LectureAttachmentsComponent } from 'app/lecture/lecture-attachments.component';
-import cloneDeep from 'lodash-es/cloneDeep';
-import dayjs from 'dayjs';
-import { LectureUpdateUnitsComponent } from 'app/lecture/lecture-units/lecture-units.component';
+import { LectureTitleChannelNameComponent } from './lecture-title-channel-name.component';
 import { LectureUpdatePeriodComponent } from 'app/lecture/lecture-period/lecture-period.component';
+import dayjs, { Dayjs } from 'dayjs';
+import { FormDateTimePickerComponent } from 'app/shared/date-time-picker/date-time-picker.component';
+import cloneDeep from 'lodash-es/cloneDeep';
+import { FormSectionStatus, FormStatusBarComponent } from 'app/forms/form-status-bar/form-status-bar.component';
+import { LectureAttachmentsComponent } from 'app/lecture/lecture-attachments.component';
+import { LectureUpdateUnitsComponent } from 'app/lecture/lecture-units/lecture-units.component';
 
 @Component({
     selector: 'jhi-lecture-update',
@@ -31,6 +32,7 @@ export class LectureUpdateComponent implements OnInit, OnDestroy {
     protected readonly faSave = faSave;
     protected readonly faPuzzleProcess = faPuzzlePiece;
     protected readonly faBan = faBan;
+
     protected readonly allowedFileExtensions = ALLOWED_FILE_EXTENSIONS_HUMAN_READABLE;
     protected readonly acceptedFileExtensionsFileBrowser = ACCEPTED_FILE_EXTENSIONS_FILE_BROWSER;
 
@@ -46,10 +48,9 @@ export class LectureUpdateComponent implements OnInit, OnDestroy {
     unitSection = viewChild(LectureUpdateUnitsComponent);
     formStatusBar = viewChild(FormStatusBarComponent);
 
-    isEditMode = signal<boolean>(false);
-    pressedSave: boolean = false;
     lecture = signal<Lecture>(new Lecture());
     lectureOnInit: Lecture;
+    isEditMode = signal<boolean>(false);
     isSaving: boolean;
     isProcessing: boolean;
     processUnitMode: boolean;
@@ -72,29 +73,31 @@ export class LectureUpdateComponent implements OnInit, OnDestroy {
 
     constructor() {
         effect(() => {
-            this.subscriptions.add(
-                this.titleSection()
-                    .titleChannelNameComponent()
-                    .titleChange.subscribe(() => {
-                        this.updateIsChangesMadeToTitleOrPeriodSection();
-                    }),
-            );
-            this.subscriptions.add(
-                this.titleSection()
-                    .titleChannelNameComponent()
-                    .channelNameChange.subscribe(() => {
-                        this.updateIsChangesMadeToTitleOrPeriodSection();
-                    }),
-            );
-            this.subscriptions.add(
-                this.lecturePeriodSection()
-                    .periodSectionDatepickers()
-                    .forEach((datepicker) => {
-                        datepicker.valueChange.subscribe(() => {
+            if (this.titleSection()?.titleChannelNameComponent() && this.lecturePeriodSection()) {
+                this.subscriptions.add(
+                    this.titleSection()!
+                        .titleChannelNameComponent()
+                        .titleChange.subscribe(() => {
                             this.updateIsChangesMadeToTitleOrPeriodSection();
-                        });
-                    }),
-            );
+                        }),
+                );
+                this.subscriptions.add(
+                    this.titleSection()!
+                        .titleChannelNameComponent()
+                        .channelNameChange.subscribe(() => {
+                            this.updateIsChangesMadeToTitleOrPeriodSection();
+                        }),
+                );
+                this.subscriptions.add(
+                    this.lecturePeriodSection()!
+                        .periodSectionDatepickers()
+                        .forEach((datepicker: FormDateTimePickerComponent) => {
+                            datepicker.valueChange.subscribe(() => {
+                                this.updateIsChangesMadeToTitleOrPeriodSection();
+                            });
+                        }),
+                );
+            }
         });
 
         effect(
@@ -139,6 +142,9 @@ export class LectureUpdateComponent implements OnInit, OnDestroy {
         );
     }
 
+    /**
+     * Life cycle hook called by Angular to indicate that Angular is done creating the component
+     */
     ngOnInit() {
         this.isSaving = false;
         this.processUnitMode = false;
@@ -165,15 +171,25 @@ export class LectureUpdateComponent implements OnInit, OnDestroy {
         return (
             this.lecture().title !== this.lectureOnInit.title ||
             this.lecture().channelName !== this.lectureOnInit.channelName ||
-            this.lecture().description !== this.lectureOnInit.description
+            (this.lecture().description ?? '') !== (this.lectureOnInit.description ?? '')
         );
     }
 
     isChangeMadeToPeriodSection() {
+        const { visibleDate, startDate, endDate } = this.lecture();
+        const { visibleDate: visibleDateOnInit, startDate: startDateOnInit, endDate: endDateOnInit } = this.lectureOnInit;
+
+        const isInvalid = (date: Dayjs | undefined) => !dayjs(date).isValid();
+        const isSame = (date1: Dayjs | undefined, date2: Dayjs | undefined) => dayjs(date1).isSame(dayjs(date2));
+
+        const emptyVisibleDateWasCleared = !visibleDateOnInit && isInvalid(visibleDate);
+        const emptyStartDateWasCleared = !startDateOnInit && isInvalid(startDate);
+        const emptyEndDateWasCleared = !endDateOnInit && isInvalid(endDate);
+
         return (
-            !dayjs(this.lecture().visibleDate).isSame(dayjs(this.lectureOnInit.visibleDate)) ||
-            !dayjs(this.lecture().startDate).isSame(dayjs(this.lectureOnInit.startDate)) ||
-            !dayjs(this.lecture().endDate).isSame(dayjs(this.lectureOnInit.endDate))
+            (!isSame(visibleDate, visibleDateOnInit) && !emptyVisibleDateWasCleared) ||
+            (!isSame(startDate, startDateOnInit) && !emptyStartDateWasCleared) ||
+            (!isSame(endDate, endDateOnInit) && !emptyEndDateWasCleared)
         );
     }
 
@@ -197,7 +213,6 @@ export class LectureUpdateComponent implements OnInit, OnDestroy {
      */
     save() {
         this.shouldDisplayDismissWarning = false;
-        this.pressedSave = true;
         this.isSaving = true;
         this.isProcessing = true;
         if (this.lecture().id !== undefined) {

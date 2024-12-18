@@ -22,16 +22,11 @@ import { ArtemisTestModule } from '../../test.module';
 import { DocumentationButtonComponent } from 'app/shared/components/documentation-button/documentation-button.component';
 import { LectureTitleChannelNameComponent } from 'app/lecture/lecture-title-channel-name.component';
 import { MarkdownEditorMonacoComponent } from 'app/shared/markdown-editor/monaco/markdown-editor-monaco.component';
-import { LectureAttachmentsComponent } from '../../../../../main/webapp/app/lecture/lecture-attachments.component';
-import { FormStatusBarComponent } from '../../../../../main/webapp/app/forms/form-status-bar/form-status-bar.component';
-import { TitleChannelNameComponent } from '../../../../../main/webapp/app/shared/form/title-channel-name/title-channel-name.component';
-import { OwlDateTimeModule } from '@danielmoncada/angular-datetime-picker';
-import { ArtemisSharedModule } from '../../../../../main/webapp/app/shared/shared.module';
-import { LectureUnitManagementComponent } from '../../../../../main/webapp/app/lecture/lecture-unit/lecture-unit-management/lecture-unit-management.component';
-import { UnitCreationCardComponent } from '../../../../../main/webapp/app/lecture/lecture-unit/lecture-unit-management/unit-creation-card/unit-creation-card.component';
 import { CustomNotIncludedInValidatorDirective } from '../../../../../main/webapp/app/shared/validators/custom-not-included-in-validator.directive';
-import { LectureUpdatePeriodComponent } from 'app/lecture/lecture-period/lecture-period.component';
-import { LectureUpdateUnitsComponent } from '../../../../../main/webapp/app/lecture/lecture-units/lecture-units.component';
+import { TitleChannelNameComponent } from '../../../../../main/webapp/app/shared/form/title-channel-name/title-channel-name.component';
+import { LectureUpdatePeriodComponent } from '../../../../../main/webapp/app/lecture/lecture-period/lecture-period.component';
+import { LectureUnitManagementComponent } from '../../../../../main/webapp/app/lecture/lecture-unit/lecture-unit-management/lecture-unit-management.component';
+import { OwlDateTimeModule } from '@danielmoncada/angular-datetime-picker';
 
 describe('LectureUpdateComponent', () => {
     let lectureService: LectureService;
@@ -51,24 +46,21 @@ describe('LectureUpdateComponent', () => {
         pastLecture.endDate = yesterday;
 
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule, ArtemisSharedModule, FormsModule, MockModule(NgbTooltipModule), MockModule(OwlDateTimeModule)],
+            imports: [ArtemisTestModule, FormsModule, MockModule(NgbTooltipModule), MockModule(OwlDateTimeModule)],
             declarations: [
                 LectureUpdateComponent,
                 LectureTitleChannelNameComponent,
                 TitleChannelNameComponent,
                 FormDateTimePickerComponent,
-                LectureAttachmentsComponent,
-                LectureUpdateUnitsComponent,
                 LectureUpdatePeriodComponent,
+                MockComponent(LectureUpdateWizardComponent),
                 MockComponent(LectureUnitManagementComponent),
-                MockComponent(FormStatusBarComponent),
                 MockComponent(MarkdownEditorMonacoComponent),
                 MockComponent(DocumentationButtonComponent),
                 MockPipe(ArtemisTranslatePipe),
                 MockPipe(ArtemisDatePipe),
                 MockPipe(HtmlForMarkdownPipe),
                 MockRouterLinkDirective,
-                MockComponent(UnitCreationCardComponent),
                 MockDirective(CustomNotIncludedInValidatorDirective),
             ],
             providers: [
@@ -300,7 +292,6 @@ describe('LectureUpdateComponent', () => {
         lectureUpdateComponent.onDatesValuesChanged();
 
         expect(setDatesSpy).toHaveBeenCalledTimes(3);
-
         if (lectureUpdateComponent.lecture().visibleDate && lectureUpdateComponent.lecture().startDate) {
             expect(lectureUpdateComponent.lecture().visibleDate!.toDate()).toBeBefore(lectureUpdateComponent.lecture().startDate!.toDate());
         } else {
@@ -313,4 +304,60 @@ describe('LectureUpdateComponent', () => {
             throw new Error('startDate and endDate should not be undefined');
         }
     }));
+
+    describe('isChangeMadeToTitleSection', () => {
+        it('should detect changes made to the title section', () => {
+            lectureUpdateComponent.lecture.set({ title: 'new title', channelName: 'new channel', description: 'new description' } as Lecture);
+            lectureUpdateComponent.lectureOnInit = { title: 'old title', channelName: 'old channel', description: 'old description' } as Lecture;
+            expect(lectureUpdateComponent.isChangeMadeToTitleSection()).toBeTrue();
+
+            lectureUpdateComponent.lecture.set({
+                title: lectureUpdateComponent.lectureOnInit.title,
+                channelName: lectureUpdateComponent.lectureOnInit.channelName,
+                description: lectureUpdateComponent.lectureOnInit.description,
+            } as Lecture);
+            expect(lectureUpdateComponent.isChangeMadeToTitleSection()).toBeFalse();
+        });
+
+        it('should handle undefined from description properly', () => {
+            lectureUpdateComponent.lecture.set({ title: 'new title', channelName: 'new channel', description: 'new description' } as Lecture);
+            lectureUpdateComponent.lectureOnInit = { title: 'old title', channelName: 'old channel', description: undefined } as Lecture;
+            expect(lectureUpdateComponent.isChangeMadeToTitleSection()).toBeTrue();
+
+            lectureUpdateComponent.lecture.set({
+                title: lectureUpdateComponent.lectureOnInit.title,
+                channelName: lectureUpdateComponent.lectureOnInit.channelName,
+                description: '', // will be an empty string if the user clears the input, but was loaded with undefined in that case
+            } as Lecture);
+            expect(lectureUpdateComponent.isChangeMadeToTitleSection()).toBeFalse();
+        });
+    });
+
+    describe('isChangeMadeToPeriodSection', () => {
+        it('should detect changes made to the period section', () => {
+            lectureUpdateComponent.lecture.set({ visibleDate: dayjs().add(1, 'day'), startDate: dayjs().add(2, 'day'), endDate: dayjs().add(3, 'day') } as Lecture);
+            lectureUpdateComponent.lectureOnInit = { visibleDate: dayjs(), startDate: dayjs(), endDate: dayjs() } as Lecture;
+            expect(lectureUpdateComponent.isChangeMadeToPeriodSection()).toBeTrue();
+
+            lectureUpdateComponent.lecture.set({
+                visibleDate: lectureUpdateComponent.lectureOnInit.visibleDate,
+                startDate: lectureUpdateComponent.lectureOnInit.startDate,
+                endDate: lectureUpdateComponent.lectureOnInit.endDate,
+            } as Lecture);
+            expect(lectureUpdateComponent.isChangeMadeToPeriodSection()).toBeFalse();
+        });
+
+        it('should not consider resetting an undefined date as a change', () => {
+            lectureUpdateComponent.lecture.set({ visibleDate: dayjs().add(1, 'day'), startDate: dayjs().add(2, 'day'), endDate: dayjs().add(3, 'day') } as Lecture);
+            lectureUpdateComponent.lectureOnInit = { visibleDate: undefined, startDate: undefined, endDate: undefined } as Lecture;
+            expect(lectureUpdateComponent.isChangeMadeToPeriodSection()).toBeTrue();
+
+            lectureUpdateComponent.lecture.set({
+                visibleDate: dayjs('undefined'),
+                startDate: dayjs('undefined'),
+                endDate: dayjs('undefined'),
+            } as Lecture);
+            expect(lectureUpdateComponent.isChangeMadeToPeriodSection()).toBeFalse();
+        });
+    });
 });

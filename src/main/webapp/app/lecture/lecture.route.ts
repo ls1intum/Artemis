@@ -17,7 +17,7 @@ import { CourseManagementTabBarComponent } from 'app/course/manage/course-manage
 import { PdfPreviewComponent } from 'app/lecture/pdf-preview/pdf-preview.component';
 import { Attachment } from 'app/entities/attachment.model';
 import { AttachmentService } from 'app/lecture/attachment.service';
-import { hasLectureUnsavedChangesGuard } from 'app/lecture/hasLectureUnsavedChanges.guard';
+import { hasLectureUnsavedChangesGuard } from './hasLectureUnsavedChanges.guard';
 
 @Injectable({ providedIn: 'root' })
 export class LectureResolve implements Resolve<Lecture> {

@@ -1,5 +1,5 @@
 import { AfterViewInit, ChangeDetectionStrategy, ChangeDetectorRef, Component, OnDestroy, OnInit, ViewChild } from '@angular/core';
-import { ActivatedRoute, Router } from '@angular/router';
+import { ActivatedRoute } from '@angular/router';
 import { HttpErrorResponse } from '@angular/common/http';
 import { ModelingExercise } from 'app/entities/modeling-exercise.model';
 import { ModelingExerciseService } from './modeling-exercise.service';
@@ -90,7 +90,6 @@ export class ModelingExerciseUpdateComponent implements AfterViewInit, OnDestroy
         private exerciseGroupService: ExerciseGroupService,
         private eventManager: EventManager,
         private activatedRoute: ActivatedRoute,
-        private router: Router,
         private navigationUtilService: ArtemisNavigationUtilService,
         private changeDetectorRef: ChangeDetectorRef,
     ) {}

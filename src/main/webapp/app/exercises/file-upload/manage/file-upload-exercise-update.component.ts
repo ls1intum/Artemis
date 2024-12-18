@@ -33,6 +33,8 @@ import { FormulaAction } from 'app/shared/monaco-editor/model/actions/formula.ac
     changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class FileUploadExerciseUpdateComponent implements AfterViewInit, OnDestroy, OnInit {
+    protected readonly faQuestionCircle = faQuestionCircle;
+
     readonly IncludedInOverallScore = IncludedInOverallScore;
     readonly documentationType: DocumentationType = 'FileUpload';
 
@@ -60,14 +62,11 @@ export class FileUploadExerciseUpdateComponent implements AfterViewInit, OnDestr
 
     formStatusSections: FormSectionStatus[];
 
-    // Subcriptions
+    // Subscriptions
     titleChannelNameComponentSubscription?: Subscription;
     pointsSubscription?: Subscription;
     bonusPointsSubscription?: Subscription;
     teamSubscription?: Subscription;
-
-    // Icons
-    faQuestionCircle = faQuestionCircle;
 
     constructor(
         private fileUploadExerciseService: FileUploadExerciseService,

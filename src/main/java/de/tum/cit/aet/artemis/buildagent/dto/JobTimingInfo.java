@@ -10,5 +10,6 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 // in the future are migrated or cleared. Changes should be communicated in release notes as potentially breaking changes.
 @JsonIgnoreProperties(ignoreUnknown = true)
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
-public record JobTimingInfo(ZonedDateTime submissionDate, ZonedDateTime buildStartDate, ZonedDateTime buildCompletionDate) implements Serializable {
+public record JobTimingInfo(ZonedDateTime submissionDate, ZonedDateTime buildStartDate, ZonedDateTime buildCompletionDate, ZonedDateTime estimatedCompletionDate,
+        long estimatedDuration) implements Serializable {
 }
