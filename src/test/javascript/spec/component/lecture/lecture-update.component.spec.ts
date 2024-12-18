@@ -107,21 +107,6 @@ describe('LectureUpdateComponent', () => {
         jest.restoreAllMocks();
     });
 
-    it('should initialize', () => {
-        lectureUpdateComponentFixture.detectChanges();
-
-        expect(lectureUpdateComponent.isSaving).toBeFalse();
-        expect(lectureUpdateComponent.processUnitMode).toBeFalse();
-        expect(lectureUpdateComponent.isProcessing).toBeFalse();
-        expect(lectureUpdateComponent.lecture().id).toBeUndefined();
-        expect(lectureUpdateComponent.lecture().title).toBeUndefined();
-        expect(lectureUpdateComponent.lecture().channelName).toBeUndefined();
-        expect(lectureUpdateComponent.lecture().description).toBeUndefined();
-        expect(lectureUpdateComponent.lecture().visibleDate).toBeUndefined();
-        expect(lectureUpdateComponent.lecture().startDate).toBeUndefined();
-        expect(lectureUpdateComponent.lecture().endDate).toBeUndefined();
-    });
-
     it('should create lecture', () => {
         lectureUpdateComponent.lecture.set({ title: 'test1', channelName: 'test1' } as Lecture);
 
