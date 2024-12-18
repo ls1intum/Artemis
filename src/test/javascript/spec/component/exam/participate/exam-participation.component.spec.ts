@@ -563,6 +563,51 @@ describe('ExamParticipationComponent', () => {
         });
     });
 
+    describe('websocket exam rescheduled subscription', () => {
+        const startDate = dayjs().add(5, 'minutes');
+        const endDate = dayjs().add(10, 'minutes');
+        const exam = new Exam();
+        exam.startDate = dayjs().add(5, 'minutes');
+        exam.endDate = dayjs().add(10, 'minutes');
+        const studentExam = { id: 3, workingTime: 420, numberOfExamSessions: 0, exam: exam };
+
+        it('should correctly postpone exam', () => {
+            const newStartDate = startDate.add(10, 'minutes');
+            const newEndDate = endDate.add(10, 'minutes');
+
+            const event = {
+                newStartDate: newStartDate,
+                newEndDate: newEndDate,
+            } as any as ExamLiveEvent;
+
+            jest.spyOn(examParticipationLiveEventsService, 'observeNewEventsAsSystem').mockReturnValue(of(event));
+            const ackSpy = jest.spyOn(examParticipationLiveEventsService, 'acknowledgeEvent');
+            comp.handleStudentExam(studentExam);
+
+            expect(comp.exam.startDate).toStrictEqual(newStartDate);
+            expect(comp.exam.endDate).toStrictEqual(newEndDate);
+            expect(ackSpy).toHaveBeenCalledExactlyOnceWith(event, false);
+        });
+
+        it('should correctly bring forward exam', () => {
+            const newStartDate = startDate.subtract(10, 'minutes');
+            const newEndDate = endDate.subtract(10, 'minutes');
+
+            const event = {
+                newStartDate: newStartDate,
+                newEndDate: newEndDate,
+            } as any as ExamLiveEvent;
+
+            jest.spyOn(examParticipationLiveEventsService, 'observeNewEventsAsSystem').mockReturnValue(of(event));
+            const ackSpy = jest.spyOn(examParticipationLiveEventsService, 'acknowledgeEvent');
+            comp.handleStudentExam(studentExam);
+
+            expect(comp.exam.startDate).toStrictEqual(newStartDate);
+            expect(comp.exam.endDate).toStrictEqual(newEndDate);
+            expect(ackSpy).toHaveBeenCalledExactlyOnceWith(event, false);
+        });
+    });
+
     describe('websocket problem statement update subscription', () => {
         beforeEach(() => {
             comp.studentExam = new StudentExam();
