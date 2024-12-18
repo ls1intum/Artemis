@@ -11,23 +11,23 @@ import { VideoUnit } from '../../../../../main/webapp/app/entities/lecture-unit/
 import dayjs from 'dayjs/esm';
 import { HttpResponse } from '@angular/common/http';
 import { By } from '@angular/platform-browser';
-import { Lecture } from '../../../../../main/webapp/app/entities/lecture.model';
-import { TextUnitService } from '../../../../../main/webapp/app/lecture/lecture-unit/lecture-unit-management/textUnit.service';
-import { OnlineUnitService } from '../../../../../main/webapp/app/lecture/lecture-unit/lecture-unit-management/onlineUnit.service';
-import { AttachmentUnitService } from '../../../../../main/webapp/app/lecture/lecture-unit/lecture-unit-management/attachmentUnit.service';
-import { LectureUnitType } from '../../../../../main/webapp/app/entities/lecture-unit/lectureUnit.model';
-import { LectureUnitManagementComponent } from '../../../../../main/webapp/app/lecture/lecture-unit/lecture-unit-management/lecture-unit-management.component';
-import { TextUnitFormData } from '../../../../../main/webapp/app/lecture/lecture-unit/lecture-unit-management/text-unit-form/text-unit-form.component';
-import { TextUnit } from '../../../../../main/webapp/app/entities/lecture-unit/textUnit.model';
-import { OnlineUnitFormData } from '../../../../../main/webapp/app/lecture/lecture-unit/lecture-unit-management/online-unit-form/online-unit-form.component';
-import { OnlineUnit } from '../../../../../main/webapp/app/entities/lecture-unit/onlineUnit.model';
-import { AttachmentUnitFormData } from '../../../../../main/webapp/app/lecture/lecture-unit/lecture-unit-management/attachment-unit-form/attachment-unit-form.component';
-import { Attachment, AttachmentType } from '../../../../../main/webapp/app/entities/attachment.model';
-import { AttachmentUnit } from '../../../../../main/webapp/app/entities/lecture-unit/attachmentUnit.model';
-import { objectToJsonBlob } from '../../../../../main/webapp/app/utils/blob-util';
-import { CreateExerciseUnitComponent } from '../../../../../main/webapp/app/lecture/lecture-unit/lecture-unit-management/create-exercise-unit/create-exercise-unit.component';
-import { CompetencyLectureUnitLink } from '../../../../../main/webapp/app/entities/competency.model';
+import { Lecture } from 'app/entities/lecture.model';
+import { TextUnitService } from 'app/lecture/lecture-unit/lecture-unit-management/textUnit.service';
+import { OnlineUnitService } from 'app/lecture/lecture-unit/lecture-unit-management/onlineUnit.service';
+import { AttachmentUnitService } from 'app/lecture/lecture-unit/lecture-unit-management/attachmentUnit.service';
+import { LectureUnitType } from 'app/entities/lecture-unit/lectureUnit.model';
+import { LectureUnitManagementComponent } from 'app/lecture/lecture-unit/lecture-unit-management/lecture-unit-management.component';
+import { TextUnitFormData } from 'app/lecture/lecture-unit/lecture-unit-management/text-unit-form/text-unit-form.component';
+import { TextUnit } from 'app/entities/lecture-unit/textUnit.model';
+import { OnlineUnitFormData } from 'app/lecture/lecture-unit/lecture-unit-management/online-unit-form/online-unit-form.component';
+import { OnlineUnit } from 'app/entities/lecture-unit/onlineUnit.model';
+import { AttachmentUnitFormData } from 'app/lecture/lecture-unit/lecture-unit-management/attachment-unit-form/attachment-unit-form.component';
+import { Attachment, AttachmentType } from 'app/entities/attachment.model';
+import { AttachmentUnit } from 'app/entities/lecture-unit/attachmentUnit.model';
+import { objectToJsonBlob } from 'app/utils/blob-util';
+import { CreateExerciseUnitComponent } from 'app/lecture/lecture-unit/lecture-unit-management/create-exercise-unit/create-exercise-unit.component';
 import { LectureUpdateUnitsComponent } from '../../../../../main/webapp/app/lecture/lecture-units/lecture-units.component';
+import { CompetencyLectureUnitLink } from '../../../../../main/webapp/app/entities/competency.model';
 
 @Component({ selector: 'jhi-video-unit-form', template: '' })
 class VideoUnitFormStubComponent {
