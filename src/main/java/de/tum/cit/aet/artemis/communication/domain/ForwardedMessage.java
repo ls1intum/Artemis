@@ -117,4 +117,19 @@ public class ForwardedMessage extends DomainObject {
         return "ForwardedMessage{" + "id=" + id + ", sourceId=" + sourceId + ", sourceType=" + sourceType + '}';
     }
 
+    @Override
+    public boolean equals(Object o) {
+        if (this == o)
+            return true;
+        if (!(o instanceof ForwardedMessage))
+            return false;
+        ForwardedMessage that = (ForwardedMessage) o;
+        return id != null && id.equals(that.id);
+    }
+
+    @Override
+    public int hashCode() {
+        return id == null ? 0 : id.hashCode();
+    }
+
 }
