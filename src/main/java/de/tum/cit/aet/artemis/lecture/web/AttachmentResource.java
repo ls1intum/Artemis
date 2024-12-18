@@ -136,13 +136,13 @@ public class AttachmentResource {
             // Update hidden file logic
             Path basePath = FilePathService.getAttachmentUnitFilePath().resolve(originalAttachment.getAttachmentUnit().getId().toString());
             Path savePath = fileService.saveFile(hiddenFile, basePath, true);
-            attachment.setHiddenLink(FilePathService.publicPathForActualPath(savePath, originalAttachment.getAttachmentUnit().getId()).toString() + "v2");
+            attachment.setHiddenLink(FilePathService.publicPathForActualPath(savePath, originalAttachment.getAttachmentUnit().getId()).toString());
 
             // Delete the old hidden file
             if (originalAttachment.getHiddenLink() != null) {
                 URI oldHiddenPath = URI.create(originalAttachment.getHiddenLink());
                 fileService.schedulePathForDeletion(FilePathService.actualPathForPublicPathOrThrow(oldHiddenPath), 0);
-                fileService.evictCacheForPath(FilePathService.actualPathForPublicPathOrThrow(oldHiddenPath));
+                this.fileService.evictCacheForPath(FilePathService.actualPathForPublicPathOrThrow(oldHiddenPath));
             }
         }
 

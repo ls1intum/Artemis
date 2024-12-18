@@ -150,6 +150,10 @@ public class FilePathService {
             String attachmentUnitId = path.getName(4).toString();
             return getAttachmentUnitFilePath().resolve(Path.of(attachmentUnitId, filename));
         }
+        else if (publicPath.toString().contains("/student")) {
+            String attachmentUnitId = path.getName(4).toString();
+            return getAttachmentUnitFilePath().resolve(Path.of(attachmentUnitId, "student", filename));
+        }
         try {
             String attachmentUnitId = path.getName(4).toString();
             String slideId = path.getName(6).toString();

@@ -151,7 +151,7 @@ export class PdfPreviewComponent implements OnInit, OnDestroy {
      * Updates the existing attachment file or creates a new hidden version of the attachment.
      */
     async updateAttachmentWithFile(): Promise<void> {
-        const pdfFile = new File([this.currentPdfBlob()!], 'updatedAttachment.pdf', { type: 'application/pdf' });
+        const pdfFile = new File([this.currentPdfBlob()!], '.pdf', { type: 'application/pdf' });
 
         if (pdfFile.size > MAX_FILE_SIZE) {
             this.alertService.error('artemisApp.attachment.pdfPreview.fileSizeError');
@@ -175,7 +175,6 @@ export class PdfPreviewComponent implements OnInit, OnDestroy {
         } else if (this.attachmentUnit()) {
             const finalHiddenPages = this.getHiddenPages();
             this.attachmentToBeEdited.set(this.attachmentUnit()!.attachment!);
-            //this.attachmentToBeEdited()!.version!++;
             this.attachmentToBeEdited()!.uploadDate = dayjs();
 
             const formData = new FormData();
@@ -204,6 +203,17 @@ export class PdfPreviewComponent implements OnInit, OnDestroy {
                     },
                     error: (error) => {
                         this.alertService.error('artemisApp.attachment.pdfPreview.hiddenAttachmentUpdateError', { error: error.message });
+                    },
+                });
+            } else {
+                this.attachmentToBeEdited()!.lecture = this.attachmentUnit()!.lecture;
+                this.attachmentService.update(this.attachmentToBeEdited()!.id!, this.attachmentToBeEdited()!, pdfFile).subscribe({
+                    next: () => {
+                        this.alertService.success('artemisApp.attachment.pdfPreview.attachmentUpdateSuccess');
+                        this.router.navigate(['course-management', this.course()?.id, 'lectures', this.attachmentUnit()!.lecture!.id, 'unit-management']);
+                    },
+                    error: (error) => {
+                        this.alertService.error('artemisApp.attachment.pdfPreview.attachmentUpdateError', { error: error.message });
                     },
                 });
             }

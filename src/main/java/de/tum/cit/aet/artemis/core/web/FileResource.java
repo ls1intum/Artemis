@@ -493,7 +493,7 @@ public class FileResource {
      * @return The requested file, 403 if the logged-in user is not allowed to access it, or 404 if the file doesn't exist
      */
     @GetMapping("files/attachments/attachment-unit/{attachmentUnitId}/*")
-    @EnforceAtLeastStudent
+    @EnforceAtLeastEditorInCourse
     public ResponseEntity<byte[]> getAttachmentUnitAttachment(@PathVariable Long attachmentUnitId) {
         log.debug("REST request to get file for attachment unit : {}", attachmentUnitId);
         AttachmentUnit attachmentUnit = attachmentUnitRepository.findByIdElseThrow(attachmentUnitId);
@@ -562,6 +562,30 @@ public class FileResource {
         else {
             throw new EntityNotFoundException("Slide", slideNumber);
         }
+    }
+
+    /**
+     * GET files/attachments/attachment-unit/{attachmentUnitId}/student/* : Get the student version of attachment unit by attachment unit id
+     *
+     * @param attachmentUnitId ID of the attachment unit, the student version belongs to
+     * @return The requested file, 403 if the logged-in user is not allowed to access it, or 404 if the file doesn't exist
+     */
+    @GetMapping("files/attachments/attachment-unit/{attachmentUnitId}/student/*")
+    @EnforceAtLeastStudent
+    public ResponseEntity<byte[]> getAttachmentUnitHiddenAttachment(@PathVariable Long attachmentUnitId) {
+        log.debug("REST request to get the hidden version of attachment Unit : {}", attachmentUnitId);
+        AttachmentUnit attachmentUnit = attachmentUnitRepository.findByIdElseThrow(attachmentUnitId);
+        Attachment attachment = attachmentUnit.getAttachment();
+
+        // check if hidden link is available in the attachment
+        String hiddenLink = attachment.getHiddenLink();
+        if (hiddenLink == null) {
+            return buildFileResponse(getActualPathFromPublicPathString(attachment.getLink()), false);
+        }
+
+        String fileName = hiddenLink.substring(hiddenLink.lastIndexOf("/") + 1);
+
+        return buildFileResponse(FilePathService.getAttachmentUnitFilePath().resolve(Path.of(attachmentUnit.getId().toString(), "student")), fileName, false);
     }
 
     /**
@@ -714,4 +738,5 @@ public class FileResource {
             throw new EntityNotFoundException("The filename contains invalid characters. Only characters a-z, A-Z, 0-9, '_', '.' and '-' are allowed!");
         }
     }
+
 }
