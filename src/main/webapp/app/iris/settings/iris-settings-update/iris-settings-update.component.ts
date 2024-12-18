@@ -174,7 +174,6 @@ export class IrisSettingsUpdateComponent implements OnInit, DoCheck, ComponentCa
     }
 
     saveIrisSettingsObservable(): Observable<HttpResponse<IrisSettings | undefined>> {
-        console.log(this.settingsType);
         switch (this.settingsType) {
             case IrisSettingsType.GLOBAL:
                 return this.irisSettingsService.setGlobalSettings(this.irisSettings!);
