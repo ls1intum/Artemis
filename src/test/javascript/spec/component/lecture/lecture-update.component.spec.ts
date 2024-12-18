@@ -22,16 +22,16 @@ import { ArtemisTestModule } from '../../test.module';
 import { DocumentationButtonComponent } from 'app/shared/components/documentation-button/documentation-button.component';
 import { LectureTitleChannelNameComponent } from 'app/lecture/lecture-title-channel-name.component';
 import { MarkdownEditorMonacoComponent } from 'app/shared/markdown-editor/monaco/markdown-editor-monaco.component';
-import { CustomNotIncludedInValidatorDirective } from '../../../../../main/webapp/app/shared/validators/custom-not-included-in-validator.directive';
-import { TitleChannelNameComponent } from '../../../../../main/webapp/app/shared/form/title-channel-name/title-channel-name.component';
-import { LectureUpdatePeriodComponent } from '../../../../../main/webapp/app/lecture/lecture-period/lecture-period.component';
-import { LectureUnitManagementComponent } from '../../../../../main/webapp/app/lecture/lecture-unit/lecture-unit-management/lecture-unit-management.component';
+import { CustomNotIncludedInValidatorDirective } from 'app/shared/validators/custom-not-included-in-validator.directive';
 import { OwlDateTimeModule } from '@danielmoncada/angular-datetime-picker';
-import { FormStatusBarComponent } from '../../../../../main/webapp/app/forms/form-status-bar/form-status-bar.component';
-import { ArtemisSharedModule } from '../../../../../main/webapp/app/shared/shared.module';
-import { LectureAttachmentsComponent } from '../../../../../main/webapp/app/lecture/lecture-attachments.component';
-import { LectureUpdateUnitsComponent } from '../../../../../main/webapp/app/lecture/lecture-units/lecture-units.component';
-import { UnitCreationCardComponent } from '../../../../../main/webapp/app/lecture/lecture-unit/lecture-unit-management/unit-creation-card/unit-creation-card.component';
+import { TitleChannelNameComponent } from 'app/shared/form/title-channel-name/title-channel-name.component';
+import { LectureUpdatePeriodComponent } from 'app/lecture/lecture-period/lecture-period.component';
+import { LectureUnitManagementComponent } from 'app/lecture/lecture-unit/lecture-unit-management/lecture-unit-management.component';
+import { FormStatusBarComponent } from 'app/forms/form-status-bar/form-status-bar.component';
+import { ArtemisSharedModule } from 'app/shared/shared.module';
+import { LectureAttachmentsComponent } from 'app/lecture/lecture-attachments.component';
+import { LectureUpdateUnitsComponent } from 'app/lecture/lecture-units/lecture-units.component';
+import { UnitCreationCardComponent } from 'app/lecture/lecture-unit/lecture-unit-management/unit-creation-card/unit-creation-card.component';
 
 describe('LectureUpdateComponent', () => {
     let lectureService: LectureService;
