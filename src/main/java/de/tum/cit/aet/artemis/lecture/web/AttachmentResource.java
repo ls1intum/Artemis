@@ -101,7 +101,7 @@ public class AttachmentResource {
     }
 
     /**
-     * PUT /attachments/:id : Updates an existing attachment, optionally handling both instructor and student version of files.
+     * PUT /attachments/:id : Updates an existing attachment, optionally handling student version of files as well.
      *
      * @param attachmentId     the id of the attachment to save
      * @param attachment       the attachment to update
@@ -118,7 +118,7 @@ public class AttachmentResource {
         log.debug("REST request to update Attachment : {}", attachment);
         attachment.setId(attachmentId);
 
-        // Make sure that the original references are preserved
+        // Make sure that the original references are preserved.
         Attachment originalAttachment = attachmentRepository.findByIdOrElseThrow(attachment.getId());
         attachment.setAttachmentUnit(originalAttachment.getAttachmentUnit());
 

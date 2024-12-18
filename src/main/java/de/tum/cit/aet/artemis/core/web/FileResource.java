@@ -738,5 +738,4 @@ public class FileResource {
             throw new EntityNotFoundException("The filename contains invalid characters. Only characters a-z, A-Z, 0-9, '_', '.' and '-' are allowed!");
         }
     }
-
 }

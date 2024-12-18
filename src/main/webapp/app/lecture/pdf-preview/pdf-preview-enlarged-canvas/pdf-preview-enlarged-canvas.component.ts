@@ -62,13 +62,13 @@ export class PdfPreviewEnlargedCanvasComponent {
     /**
      * Dynamically updates the canvas size within an enlarged view based on the viewport.
      */
-    adjustCanvasSize = () => {
+    adjustCanvasSize() {
         const canvasElements = this.pdfContainer().querySelectorAll('.pdf-canvas-container canvas');
         if (this.currentPage() - 1 < canvasElements.length) {
             const canvas = canvasElements[this.currentPage() - 1] as HTMLCanvasElement;
             this.updateEnlargedCanvas(canvas);
         }
-    };
+    }
 
     displayEnlargedCanvas(originalCanvas: HTMLCanvasElement) {
         this.isEnlargedCanvasLoading.set(true);
