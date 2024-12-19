@@ -170,7 +170,7 @@ describe('Plagiarism Split View Component', () => {
     });
 
     it('should parse text matches', () => {
-        jest.spyOn(comp, 'mapMatchesToElements').mockReturnValue(new Map());
+        jest.spyOn(comp, 'mapMatchesToElements').mockReturnValue(new Map<string, FromToElement[]>());
 
         const matches: PlagiarismMatch[] = [
             { startA: 0, startB: 0, length: 5 },
