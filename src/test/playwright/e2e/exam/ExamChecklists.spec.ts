@@ -138,7 +138,7 @@ test.describe('Exam Checklists', async () => {
         });
     });
 
-    test('Instructor registers a student to exam and at least one student check is marked', async ({ page, login, examDetails, studentExamManagement }) => {
+    test('Instructor registers a student to exam and at least one student check is marked', { tag: '@fast' }, async ({ page, login, examDetails, studentExamManagement }) => {
         const exam = await createExam(course, page);
         await login(instructor);
         await navigateToExamDetailsPage(page, course, exam);
@@ -187,7 +187,7 @@ test.describe('Exam Checklists', async () => {
         });
     });
 
-    test('Instructor sets the publish results and review dates and the corresponding checks are marked', async ({ page, login, examDetails, examCreation }) => {
+    test('Instructor sets the publish results and review dates and the corresponding checks are marked', { tag: '@fast' }, async ({ page, login, examDetails, examCreation }) => {
         const exam = await createExam(course, page);
         await login(instructor);
         await navigateToExamDetailsPage(page, course, exam);
