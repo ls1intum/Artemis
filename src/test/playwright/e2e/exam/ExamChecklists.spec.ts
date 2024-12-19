@@ -2,7 +2,7 @@ import { test } from '../../support/fixtures';
 import { admin, instructor, studentOne } from '../../support/users';
 import { Course } from 'app/entities/course.model';
 import { Exam } from 'app/entities/exam/exam.model';
-import { generateUUID } from '../../support/utils';
+import { generateUUID, prepareExam, startAssessing } from '../../support/utils';
 import dayjs from 'dayjs';
 import { ExamChecklistItem } from '../../support/pageobjects/exam/ExamDetailsPage';
 import { ExerciseType } from '../../support/constants';
@@ -12,7 +12,6 @@ import { ExamExerciseGroupsPage } from '../../support/pageobjects/exam/ExamExerc
 import { Page } from '@playwright/test';
 import { Commands } from '../../support/commands';
 import { ExamAPIRequests } from '../../support/requests/ExamAPIRequests';
-import { prepareExam, startAssessing } from './ExamAssessment.spec';
 
 test.describe('Exam Checklists', async () => {
     let course: Course;

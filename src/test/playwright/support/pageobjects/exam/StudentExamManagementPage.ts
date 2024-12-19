@@ -12,8 +12,7 @@ export class StudentExamManagementPage {
     async clickGenerateStudentExams() {
         const responsePromise = this.page.waitForResponse(`${COURSE_BASE}/*/exams/*/generate-student-exams`);
         await this.page.click('#generateStudentExamsButton');
-        const response = await responsePromise;
-        console.log('Generate student exams response:', await response.json());
+        await responsePromise;
     }
 
     async clickRegisterCourseStudents() {
