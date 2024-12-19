@@ -2,7 +2,6 @@ package de.tum.cit.aet.artemis.communication.service;
 
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
-import java.util.List;
 import java.util.Optional;
 
 import org.springframework.context.annotation.Profile;
@@ -44,7 +43,7 @@ public class FaqService {
         }, () -> faqRepository.findAllByCourseIdAndFaqState(courseId, FaqState.ACCEPTED).forEach(faq -> pyrisWebhookService.get().addFaqToPyris(faq)));
     }
 
-    public void deleteFaqInPyris(List<Faq> existingFaq) {
+    public void deleteFaqInPyris(Faq existingFaq) {
         if (!pyrisWebhookService.isPresent()) {
             return;
         }

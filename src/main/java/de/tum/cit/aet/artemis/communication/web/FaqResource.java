@@ -5,7 +5,6 @@ import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_IRIS;
 
 import java.net.URI;
 import java.net.URISyntaxException;
-import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
@@ -94,6 +93,9 @@ public class FaqResource {
         }
         Faq savedFaq = faqRepository.save(faq);
         FaqDTO dto = new FaqDTO(savedFaq);
+        if (checkIfFaqIsAccepted(savedFaq)) {
+            faqService.ingestFaqsIntoPyris(courseId, Optional.of(savedFaq.getId()));
+        }
         return ResponseEntity.created(new URI("/api/courses/" + courseId + "/faqs/" + savedFaq.getId())).body(dto);
     }
 
@@ -120,6 +122,9 @@ public class FaqResource {
             throw new BadRequestAlertException("Course ID of the FAQ provided courseID must match", ENTITY_NAME, "idNull");
         }
         Faq updatedFaq = faqRepository.save(faq);
+        if (checkIfFaqIsAccepted(updatedFaq)) {
+            faqService.ingestFaqsIntoPyris(courseId, Optional.of(updatedFaq.getId()));
+        }
         FaqDTO dto = new FaqDTO(updatedFaq);
         return ResponseEntity.ok().body(dto);
     }
@@ -160,8 +165,7 @@ public class FaqResource {
         if (!Objects.equals(existingFaq.getCourse().getId(), courseId)) {
             throw new BadRequestAlertException("Course ID of the FAQ provided courseID must match", ENTITY_NAME, "idNull");
         }
-        List<Faq> faq = List.of(existingFaq);
-        faqService.deleteFaqInPyris(faq);
+        faqService.deleteFaqInPyris(existingFaq);
         faqRepository.deleteById(faqId);
         return ResponseEntity.ok().headers(HeaderUtil.createEntityDeletionAlert(applicationName, true, ENTITY_NAME, faqId.toString())).build();
     }
@@ -261,6 +265,10 @@ public class FaqResource {
         if (faqState == FaqState.ACCEPTED) {
             checkRoleForCourse(courseId, Role.INSTRUCTOR);
         }
+    }
+
+    private boolean checkIfFaqIsAccepted(Faq faq) {
+        return faq.getFaqState() == FaqState.ACCEPTED;
     }
 
 }

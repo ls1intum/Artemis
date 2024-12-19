@@ -295,19 +295,13 @@ public class PyrisWebhookService {
      * @param faqs The faqs that got Updated / erased
      * @return jobToken if the job was created
      */
-    public String deleteFaqFromPyrisDB(List<Faq> faqs) {
-        List<PyrisFaqWebhookDTO> toUpdateFaqs = new ArrayList<>();
-        faqs.stream().forEach(faq -> {
-            toUpdateFaqs.add(new PyrisFaqWebhookDTO(faq.getId(), faq.getQuestionTitle(), faq.getQuestionAnswer(), faq.getCourse().getId(), faq.getCourse().getTitle(),
-                    faq.getCourse().getDescription()));
-        });
-        if (!toUpdateFaqs.isEmpty()) {
-            return executeFaqDeletionWebhook(toUpdateFaqs);
-        }
-        return null;
+    public String deleteFaqFromPyrisDB(Faq faq) {
+        return executeFaqDeletionWebhook(new PyrisFaqWebhookDTO(faq.getId(), faq.getQuestionTitle(), faq.getQuestionAnswer(), faq.getCourse().getId(), faq.getCourse().getTitle(),
+                faq.getCourse().getDescription()));
+
     }
 
-    private String executeFaqDeletionWebhook(List<PyrisFaqWebhookDTO> toUpdateFaqs) {
+    private String executeFaqDeletionWebhook(PyrisFaqWebhookDTO toUpdateFaqs) {
         String jobToken = pyrisJobService.addFaqIngestionWebhookJob(0, 0);
         PyrisPipelineExecutionSettingsDTO settingsDTO = new PyrisPipelineExecutionSettingsDTO(jobToken, List.of(), artemisBaseUrl);
         PyrisWebhookFaqDeletionExecutionDTO executionDTO = new PyrisWebhookFaqDeletionExecutionDTO(toUpdateFaqs, settingsDTO, List.of());

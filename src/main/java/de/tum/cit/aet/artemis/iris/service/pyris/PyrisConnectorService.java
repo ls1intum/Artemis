@@ -199,6 +199,11 @@ public class PyrisConnectorService {
         }
     }
 
+    /**
+     * Executes a webhook and send faqs to the webhook with the given variant
+     *
+     * @param executionDTO The DTO sent as a body for the execution
+     */
     public void executeFaqAdditionWebhook(PyrisFaqWebhookDTO toUpdateFaq, PyrisWebhookFaqIngestionExecutionDTO executionDTO) {
         var endpoint = "/api/v1/webhooks/faqs";
         try {
@@ -214,6 +219,11 @@ public class PyrisConnectorService {
         }
     }
 
+    /**
+     * Executes a webhook and send faqs to the webhook with the given variant
+     *
+     * @param executionDTO The DTO sent as a body for the execution
+     */
     public void executeFaqDeletionWebhook(PyrisWebhookFaqDeletionExecutionDTO executionDTO) {
         var endpoint = "/api/v1/webhooks/faqs/delete";
         try {
