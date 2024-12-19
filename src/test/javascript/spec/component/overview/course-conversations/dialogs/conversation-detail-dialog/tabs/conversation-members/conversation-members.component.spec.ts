@@ -77,8 +77,9 @@ examples.forEach((activeConversation) => {
             fixture = TestBed.createComponent(ConversationMembersComponent);
             TestBed.runInInjectionContext(() => {
                 component = fixture.componentInstance;
-                component.activeConversation = signal<ConversationDTO>(activeConversation);
+                component.activeConversationInput = input<ConversationDTO>(activeConversation);
                 component.course = input<Course>(course);
+                component.activeConversation = signal<ConversationDTO>(activeConversation);
             });
             component.canAddUsersToConversation = canAddUsersToConversation;
         });
