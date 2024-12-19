@@ -8,10 +8,10 @@ First, we need to implement two sorting algorithms, in this case `MergeSort` and
 
 **You have the following tasks:**
 
-1. [task][Implement Bubble Sort](artemis/testing/test/structural.TestBubbleSort,artemis/testing/test/behavior.TestBubbleSort)
+1. [task][Implement Bubble Sort](artemis/testing/test/structural.TestBubbleSort,artemis/testing/test/behavior.TestBubbleSortSortsCorrectly)
 Implement the method `PerformSort([]time.Time)` in the class `BubbleSort`. Make sure to follow the Bubble Sort algorithm exactly.
 
-2. [task][Implement Merge Sort](artemis/testing/test/structural.TestMergeSort,artemis/testing/test/behavior.TestMergeSort)
+2. [task][Implement Merge Sort](artemis/testing/test/structural.TestMergeSort,artemis/testing/test/behavior.TestMergeSortSortsCorrectly)
 Implement the method `PerformSort([]time.Time)` in the class `MergeSort`. Make sure to follow the Merge Sort algorithm exactly.
 
 ### Part 2: Strategy Pattern

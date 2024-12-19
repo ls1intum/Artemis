@@ -23,7 +23,7 @@ type Policy interface {
 	Configure()
 }
 
-func TestBubbleSort(t *testing.T) {
+func TestBubbleSortSortsCorrectly(t *testing.T) {
 	defer handlePanic(t)
 
 	dates, datesWithCorrectOrder := createTestDates()
@@ -37,7 +37,7 @@ func TestBubbleSort(t *testing.T) {
 	}
 }
 
-func TestMergeSort(t *testing.T) {
+func TestMergeSortSortsCorrectly(t *testing.T) {
 	defer handlePanic(t)
 
 	dates, datesWithCorrectOrder := createTestDates()
