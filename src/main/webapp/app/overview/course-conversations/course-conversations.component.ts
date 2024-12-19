@@ -521,6 +521,19 @@ export class CourseConversationsComponent implements OnInit, OnDestroy {
             });
     }
 
+    markAllChannelAsRead() {
+        this.metisConversationService.markAllChannelsAsRead(this.course).subscribe({
+            complete: () => {
+                this.metisConversationService.forceRefresh().subscribe({
+                    complete: () => {
+                        this.prepareSidebarData();
+                        this.closeSidebarOnMobile();
+                    },
+                });
+            },
+        });
+    }
+
     openChannelOverviewDialog() {
         const subType = null;
         const modalRef: NgbModalRef = this.modalService.open(ChannelsOverviewDialogComponent, defaultFirstLayerDialogOptions);

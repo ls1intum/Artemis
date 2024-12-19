@@ -406,4 +406,10 @@ describe('MetisConversationService', () => {
         metisConversationService.markAsRead(2);
         expect(metisConversationService['conversationsOfUser'][1].unreadMessagesCount).toBe(0);
     });
+
+    it('should call refresh after marking all channels as read', () => {
+        const markAllChannelAsReadSpy = jest.spyOn(conversationService, 'markAllChannelsAsRead').mockReturnValue(of());
+        metisConversationService.markAllChannelsAsRead(course);
+        expect(markAllChannelAsReadSpy).toHaveBeenCalledOnce();
+    });
 });

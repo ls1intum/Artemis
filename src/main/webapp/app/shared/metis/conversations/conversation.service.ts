@@ -184,4 +184,8 @@ export class ConversationService {
         params = params.set('page', String(page));
         return params.set('size', String(size));
     };
+
+    markAllChannelsAsRead(courseId: number) {
+        return this.http.put<void>(`${this.resourceUrl}${courseId}/channels/mark-as-read`, { observe: 'response' });
+    }
 }
