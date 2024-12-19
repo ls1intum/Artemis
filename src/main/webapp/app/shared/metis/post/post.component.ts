@@ -23,10 +23,7 @@ import { ContextInformation, DisplayPriority, PageType, RouteComponents } from '
 import { faBookmark, faBullhorn, faCheckSquare, faComments, faPencilAlt, faSmile, faThumbtack, faTrash } from '@fortawesome/free-solid-svg-icons';
 import dayjs from 'dayjs/esm';
 import { PostFooterComponent } from 'app/shared/metis/posting-footer/post-footer/post-footer.component';
-import { OneToOneChatService } from 'app/shared/metis/conversations/one-to-one-chat.service';
-import { isCommunicationEnabled, isMessagingEnabled } from 'app/entities/course.model';
-import { Router } from '@angular/router';
-import { MetisConversationService } from 'app/shared/metis/metis-conversation.service';
+import { isCommunicationEnabled } from 'app/entities/course.model';
 import { getAsChannelDTO } from 'app/entities/metis/conversation/channel.model';
 import { AnswerPost } from 'app/entities/metis/answer-post.model';
 import { AnswerPostCreateEditModalComponent } from 'app/shared/metis/posting-create-edit-modal/answer-post-create-edit-modal/answer-post-create-edit-modal.component';
@@ -98,9 +95,6 @@ export class PostComponent extends PostingDirective<Post> implements OnInit, OnC
     constructor(
         public metisService: MetisService,
         public changeDetector: ChangeDetectorRef,
-        private oneToOneChatService: OneToOneChatService,
-        private metisConversationService: MetisConversationService,
-        private router: Router,
         public renderer: Renderer2,
         @Inject(DOCUMENT) private document: Document,
     ) {
@@ -253,28 +247,6 @@ export class PostComponent extends PostingDirective<Post> implements OnInit, OnC
             (answerPostA, answerPostB) =>
                 Number(answerPostB.resolvesPost) - Number(answerPostA.resolvesPost) || answerPostA.creationDate!.valueOf() - answerPostB.creationDate!.valueOf(),
         );
-    }
-
-    /**
-     * Create a or navigate to one-to-one chat with the referenced user
-     *
-     * @param referencedUserLogin login of the referenced user
-     */
-    onUserReferenceClicked(referencedUserLogin: string) {
-        const course = this.metisService.getCourse();
-        if (isMessagingEnabled(course)) {
-            if (this.isCommunicationPage) {
-                this.metisConversationService.createOneToOneChat(referencedUserLogin).subscribe();
-            } else {
-                this.oneToOneChatService.create(course.id!, referencedUserLogin).subscribe((res) => {
-                    this.router.navigate(['courses', course.id, 'communication'], {
-                        queryParams: {
-                            conversationId: res.body!.id,
-                        },
-                    });
-                });
-            }
-        }
     }
 
     /**
