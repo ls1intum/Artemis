@@ -1,8 +1,8 @@
-import { ChangeDetectionStrategy, ChangeDetectorRef, Component, OnDestroy, OnInit } from '@angular/core';
+import { ChangeDetectionStrategy, ChangeDetectorRef, Component, OnDestroy, OnInit, inject } from '@angular/core';
 import { Subscription, forkJoin, of } from 'rxjs';
 import { catchError } from 'rxjs/operators';
 import { ExamManagementService } from 'app/exam/manage/exam-management.service';
-import { ActivatedRoute } from '@angular/router';
+import { ActivatedRoute, RouterLink } from '@angular/router';
 import { SortService } from 'app/shared/service/sort.service';
 import { download, generateCsv, mkConfig } from 'export-to-csv';
 import {
@@ -58,6 +58,14 @@ import {
     USERNAME_KEY,
 } from 'app/shared/export/export-constants';
 import { BonusStrategy } from 'app/entities/bonus.model';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { TranslateDirective } from '../../shared/language/translate.directive';
+import { ExportModule } from '../../shared/export/export.module';
+import { NgStyle } from '@angular/common';
+import { ArtemisParticipantScoresModule } from '../../shared/participant-scores/participant-scores.module';
+import { ExamScoresAverageScoresGraphComponent } from './exam-scores-average-scores-graph.component';
+import { ArtemisSharedComponentModule } from '../../shared/components/shared-component.module';
+import { ArtemisSharedCommonModule } from '../../shared/shared-common.module';
 
 export enum MedianType {
     PASSED,
@@ -70,8 +78,31 @@ export enum MedianType {
     templateUrl: './exam-scores.component.html',
     changeDetection: ChangeDetectionStrategy.OnPush,
     styleUrls: ['./exam-scores.component.scss', '../../shared/chart/vertical-bar-chart.scss'],
+    standalone: true,
+    imports: [
+        FaIconComponent,
+        TranslateDirective,
+        ExportModule,
+        RouterLink,
+        NgStyle,
+        ArtemisParticipantScoresModule,
+        ExamScoresAverageScoresGraphComponent,
+        ArtemisSharedComponentModule,
+        ArtemisSharedCommonModule,
+    ],
 })
 export class ExamScoresComponent implements OnInit, OnDestroy {
+    private route = inject(ActivatedRoute);
+    private examService = inject(ExamManagementService);
+    private sortService = inject(SortService);
+    private alertService = inject(AlertService);
+    private changeDetector = inject(ChangeDetectorRef);
+    private languageHelper = inject(JhiLanguageHelper);
+    private localeConversionService = inject(LocaleConversionService);
+    private participantScoresService = inject(ParticipantScoresService);
+    private gradingSystemService = inject(GradingSystemService);
+    private courseManagementService = inject(CourseManagementService);
+
     public examScoreDTO: ExamScoreDTO;
     public exerciseGroups: ExerciseGroup[];
     public studentResults: StudentResult[];
@@ -130,18 +161,6 @@ export class ExamScoresComponent implements OnInit, OnDestroy {
     faExclamationTriangle = faExclamationTriangle;
 
     private languageChangeSubscription?: Subscription;
-    constructor(
-        private route: ActivatedRoute,
-        private examService: ExamManagementService,
-        private sortService: SortService,
-        private alertService: AlertService,
-        private changeDetector: ChangeDetectorRef,
-        private languageHelper: JhiLanguageHelper,
-        private localeConversionService: LocaleConversionService,
-        private participantScoresService: ParticipantScoresService,
-        private gradingSystemService: GradingSystemService,
-        private courseManagementService: CourseManagementService,
-    ) {}
 
     ngOnInit() {
         this.route.params.subscribe((params) => {
