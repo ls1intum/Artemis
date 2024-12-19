@@ -1,5 +1,7 @@
 package de.tum.cit.aet.artemis.lecture.domain;
 
+import java.util.Date;
+
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.JoinColumn;
@@ -27,6 +29,9 @@ public class Slide extends DomainObject {
     @Column(name = "slide_number")
     private int slideNumber;
 
+    @Column(name = "hidden")
+    private Date hidden;
+
     public AttachmentUnit getAttachmentUnit() {
         return attachmentUnit;
     }
@@ -49,5 +54,13 @@ public class Slide extends DomainObject {
 
     public void setSlideNumber(int slideNumber) {
         this.slideNumber = slideNumber;
+    }
+
+    public Date getHidden() {
+        return hidden;
+    }
+
+    public void setHidden(Date hidden) {
+        this.hidden = hidden;
     }
 }

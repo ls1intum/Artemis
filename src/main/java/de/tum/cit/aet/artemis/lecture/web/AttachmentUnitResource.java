@@ -44,6 +44,7 @@ import de.tum.cit.aet.artemis.lecture.domain.Lecture;
 import de.tum.cit.aet.artemis.lecture.dto.LectureUnitSplitInformationDTO;
 import de.tum.cit.aet.artemis.lecture.repository.AttachmentUnitRepository;
 import de.tum.cit.aet.artemis.lecture.repository.LectureRepository;
+import de.tum.cit.aet.artemis.lecture.repository.SlideRepository;
 import de.tum.cit.aet.artemis.lecture.service.AttachmentUnitService;
 import de.tum.cit.aet.artemis.lecture.service.LectureUnitProcessingService;
 import de.tum.cit.aet.artemis.lecture.service.SlideSplitterService;
@@ -75,9 +76,11 @@ public class AttachmentUnitResource {
 
     private final FileService fileService;
 
+    private final SlideRepository slideRepository;
+
     public AttachmentUnitResource(AttachmentUnitRepository attachmentUnitRepository, LectureRepository lectureRepository, LectureUnitProcessingService lectureUnitProcessingService,
             AuthorizationCheckService authorizationCheckService, GroupNotificationService groupNotificationService, AttachmentUnitService attachmentUnitService,
-            CompetencyProgressApi competencyProgressApi, SlideSplitterService slideSplitterService, FileService fileService) {
+            CompetencyProgressApi competencyProgressApi, SlideSplitterService slideSplitterService, FileService fileService, SlideRepository slideRepository) {
         this.attachmentUnitRepository = attachmentUnitRepository;
         this.lectureUnitProcessingService = lectureUnitProcessingService;
         this.lectureRepository = lectureRepository;
@@ -87,6 +90,7 @@ public class AttachmentUnitResource {
         this.competencyProgressApi = competencyProgressApi;
         this.slideSplitterService = slideSplitterService;
         this.fileService = fileService;
+        this.slideRepository = slideRepository;
     }
 
     /**
@@ -117,19 +121,20 @@ public class AttachmentUnitResource {
      * @param file             the optional file to upload
      * @param keepFilename     specifies if the original filename should be kept or not
      * @param notificationText the text to be used for the notification. No notification will be sent if the parameter is not set
+     * @param hiddenPages      the pages to be hidden in the attachment unit. No hidden pages will be sent if the parameter is not set
      * @return the ResponseEntity with status 200 (OK) and with body the updated attachmentUnit
      */
     @PutMapping(value = "lectures/{lectureId}/attachment-units/{attachmentUnitId}", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     @EnforceAtLeastEditor
     public ResponseEntity<AttachmentUnit> updateAttachmentUnit(@PathVariable Long lectureId, @PathVariable Long attachmentUnitId, @RequestPart AttachmentUnit attachmentUnit,
             @RequestPart Attachment attachment, @RequestPart(required = false) MultipartFile file, @RequestParam(defaultValue = "false") boolean keepFilename,
-            @RequestParam(value = "notificationText", required = false) String notificationText) {
+            @RequestParam(value = "notificationText", required = false) String notificationText, @RequestParam(value = "hiddenPages", required = false) String hiddenPages) {
         log.debug("REST request to update an attachment unit : {}", attachmentUnit);
         AttachmentUnit existingAttachmentUnit = attachmentUnitRepository.findWithSlidesAndCompetenciesByIdElseThrow(attachmentUnitId);
         checkAttachmentUnitCourseAndLecture(existingAttachmentUnit, lectureId);
         authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.EDITOR, existingAttachmentUnit.getLecture().getCourse(), null);
 
-        AttachmentUnit savedAttachmentUnit = attachmentUnitService.updateAttachmentUnit(existingAttachmentUnit, attachmentUnit, attachment, file, keepFilename);
+        AttachmentUnit savedAttachmentUnit = attachmentUnitService.updateAttachmentUnit(existingAttachmentUnit, attachmentUnit, attachment, file, keepFilename, hiddenPages);
 
         if (notificationText != null) {
             groupNotificationService.notifyStudentGroupAboutAttachmentChange(savedAttachmentUnit.getAttachment(), notificationText);
@@ -170,7 +175,7 @@ public class AttachmentUnitResource {
         AttachmentUnit savedAttachmentUnit = attachmentUnitService.createAttachmentUnit(attachmentUnit, attachment, lecture, file, keepFilename);
         lectureRepository.save(lecture);
         if (Objects.equals(FilenameUtils.getExtension(file.getOriginalFilename()), "pdf")) {
-            slideSplitterService.splitAttachmentUnitIntoSingleSlides(savedAttachmentUnit);
+            slideSplitterService.splitAttachmentUnitIntoSingleSlides(savedAttachmentUnit, null);
         }
         attachmentUnitService.prepareAttachmentUnitForClient(savedAttachmentUnit);
         competencyProgressApi.updateProgressByLearningObjectAsync(savedAttachmentUnit);
@@ -331,5 +336,17 @@ public class AttachmentUnitResource {
         if (!filePath.toString().endsWith(".pdf")) {
             throw new BadRequestAlertException("The file must be a pdf", ENTITY_NAME, "wrongFileType");
         }
+    }
+
+    @GetMapping("lectures/{lectureId}/attachment-units/{attachmentUnitId}/hidden-slides")
+    @EnforceAtLeastEditor
+    public ResponseEntity<List<Integer>> getAttachmentUnitHiddenSlides(@PathVariable Long attachmentUnitId, @PathVariable Long lectureId) {
+        log.debug("REST request to get hidden slides of AttachmentUnit : {}", attachmentUnitId);
+        List<Integer> hiddenSlides = slideRepository.findHiddenSlideNumbersByAttachmentUnitId(attachmentUnitId);
+        AttachmentUnit attachmentUnit = attachmentUnitRepository.findByIdElseThrow(attachmentUnitId);
+        checkAttachmentUnitCourseAndLecture(attachmentUnit, lectureId);
+        authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.EDITOR, attachmentUnit.getLecture().getCourse(), null);
+
+        return ResponseEntity.ok().body(hiddenSlides);
     }
 }

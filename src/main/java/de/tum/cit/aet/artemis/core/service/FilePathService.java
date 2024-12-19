@@ -150,6 +150,10 @@ public class FilePathService {
             String attachmentUnitId = path.getName(4).toString();
             return getAttachmentUnitFilePath().resolve(Path.of(attachmentUnitId, filename));
         }
+        else if (publicPath.toString().contains("/student")) {
+            String attachmentUnitId = path.getName(4).toString();
+            return getAttachmentUnitFilePath().resolve(Path.of(attachmentUnitId, "student", filename));
+        }
         try {
             String attachmentUnitId = path.getName(4).toString();
             String slideId = path.getName(6).toString();
@@ -244,6 +248,9 @@ public class FilePathService {
     }
 
     private static URI publicPathForActualAttachmentUnitFilePath(Path path, String filename, String id) {
+        if (path.toString().contains("/student")) {
+            return URI.create(String.format("/api/files/attachments/attachment-unit/%s/student/%s", id, filename));
+        }
         if (!path.toString().contains("/slide")) {
             return URI.create("/api/files/attachments/attachment-unit/" + id + "/" + filename);
         }
