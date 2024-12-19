@@ -3,7 +3,7 @@ import { faFilter, faFilterCircleXmark, faHashtag, faPeopleGroup, faPlusCircle, 
 import { ActivatedRoute, Params } from '@angular/router';
 import { Subscription, distinctUntilChanged } from 'rxjs';
 import { ProfileService } from '../layouts/profiles/profile.service';
-import { ChannelAccordionShowAdd, ChannelTypeIcons, CollapseState, SidebarCardSize, SidebarData, SidebarItemShowAlways, SidebarTypes } from 'app/types/sidebar';
+import { ChannelTypeIcons, CollapseState, SidebarCardSize, SidebarData, SidebarItemShowAlways, SidebarTypes } from 'app/types/sidebar';
 import { SidebarEventService } from './sidebar-event.service';
 import { NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
 import { cloneDeep } from 'lodash-es';
@@ -32,7 +32,6 @@ export class SidebarComponent implements OnDestroy, OnChanges, OnInit {
     @Input() sidebarData: SidebarData;
     @Input() courseId?: number;
     @Input() itemSelected?: boolean;
-    @Input() showAddOption?: ChannelAccordionShowAdd;
     @Input() channelTypeIcon?: ChannelTypeIcons;
     @Input() collapseState: CollapseState;
     sidebarItemAlwaysShow = input.required<SidebarItemShowAlways>();
