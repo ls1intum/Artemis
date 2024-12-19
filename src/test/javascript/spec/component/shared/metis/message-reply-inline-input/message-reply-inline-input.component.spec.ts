@@ -9,8 +9,11 @@ import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { MessageReplyInlineInputComponent } from 'app/shared/metis/message/message-reply-inline-input/message-reply-inline-input.component';
 import { throwError } from 'rxjs';
 import { MockSyncStorage } from '../../../../helpers/mocks/service/mock-sync-storage.service';
-import { LocalStorageService } from 'ngx-webstorage';
+import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { provideHttpClient } from '@angular/common/http';
+import { ArtemisSharedCommonModule } from 'app/shared/shared-common.module';
+import { MockTranslateService } from '../../../../helpers/mocks/service/mock-translate.service';
+import { TranslateService } from '@ngx-translate/core';
 
 describe('MessageReplyInlineInputComponent', () => {
     let component: MessageReplyInlineInputComponent;
@@ -21,7 +24,7 @@ describe('MessageReplyInlineInputComponent', () => {
 
     beforeEach(() => {
         return TestBed.configureTestingModule({
-            imports: [MockModule(FormsModule), MockModule(ReactiveFormsModule)],
+            imports: [MockModule(FormsModule), MockModule(ReactiveFormsModule), MockModule(ArtemisSharedCommonModule)],
             declarations: [MessageReplyInlineInputComponent, MockPipe(ArtemisTranslatePipe)],
             providers: [
                 provideHttpClient(),
@@ -29,6 +32,8 @@ describe('MessageReplyInlineInputComponent', () => {
                 FormBuilder,
                 { provide: MetisService, useClass: MockMetisService },
                 { provide: LocalStorageService, useClass: MockSyncStorage },
+                { provide: TranslateService, useClass: MockTranslateService },
+                { provide: SessionStorageService, useClass: MockSyncStorage },
             ],
         })
             .compileComponents()

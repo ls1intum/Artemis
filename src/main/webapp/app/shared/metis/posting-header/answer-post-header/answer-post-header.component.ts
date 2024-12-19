@@ -3,11 +3,19 @@ import { AnswerPost } from 'app/entities/metis/answer-post.model';
 import { PostingHeaderDirective } from 'app/shared/metis/posting-header/posting-header.directive';
 import { faCheck, faPencilAlt } from '@fortawesome/free-solid-svg-icons';
 import dayjs from 'dayjs/esm';
+import { NgClass } from '@angular/common';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
+import { ArtemisSharedCommonModule } from 'app/shared/shared-common.module';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { ProfilePictureComponent } from 'app/shared/profile-picture/profile-picture.component';
 
 @Component({
     selector: 'jhi-answer-post-header',
     templateUrl: './answer-post-header.component.html',
     styleUrls: ['../../metis.component.scss'],
+    standalone: true,
+    imports: [ProfilePictureComponent, NgClass, FaIconComponent, NgbTooltip, TranslateDirective, ArtemisSharedCommonModule],
 })
 export class AnswerPostHeaderComponent extends PostingHeaderDirective<AnswerPost> implements OnInit, OnChanges {
     @Input()

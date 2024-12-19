@@ -10,6 +10,7 @@ export const PLACEHOLDER_USER_REACTED = 'REPLACE_WITH_TRANSLATED_YOU';
  */
 @Pipe({
     name: 'reactingUsersOnPosting',
+    standalone: true,
 })
 export class ReactingUsersOnPostingPipe implements PipeTransform {
     constructor(private translateService: TranslateService) {}

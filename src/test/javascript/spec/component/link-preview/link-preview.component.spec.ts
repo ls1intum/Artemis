@@ -3,7 +3,7 @@ import { LinkPreviewComponent } from 'app/shared/link-preview/components/link-pr
 import { MetisService } from 'app/shared/metis/metis.service';
 import { MockTranslateService } from '../../helpers/mocks/service/mock-translate.service';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
-import { MockComponent, MockPipe } from 'ng-mocks';
+import { MockComponent, MockModule, MockPipe } from 'ng-mocks';
 import { TranslateService } from '@ngx-translate/core';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { MockSyncStorage } from '../../helpers/mocks/service/mock-sync-storage.service';
@@ -11,6 +11,8 @@ import { MockMetisService } from '../../helpers/mocks/service/mock-metis-service
 import { ConfirmIconComponent } from 'app/shared/confirm-icon/confirm-icon.component';
 import { Post } from 'app/entities/metis/post.model';
 import { AnswerPost } from 'app/entities/metis/answer-post.model';
+import { ArtemisSharedCommonModule } from 'app/shared/shared-common.module';
+import { ArtemisConfirmIconModule } from 'app/shared/confirm-icon/confirm-icon.module';
 
 describe('LinkPreviewComponent', () => {
     let component: LinkPreviewComponent;
@@ -19,7 +21,13 @@ describe('LinkPreviewComponent', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            declarations: [LinkPreviewComponent, MockPipe(ArtemisTranslatePipe), MockComponent(ConfirmIconComponent)],
+            declarations: [
+                LinkPreviewComponent,
+                MockPipe(ArtemisTranslatePipe),
+                MockComponent(ConfirmIconComponent),
+                MockModule(ArtemisConfirmIconModule),
+                MockModule(ArtemisSharedCommonModule),
+            ],
             providers: [
                 { provide: MetisService, useClass: MockMetisService },
                 { provide: TranslateService, useClass: MockTranslateService },

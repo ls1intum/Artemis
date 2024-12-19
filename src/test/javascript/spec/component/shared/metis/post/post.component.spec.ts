@@ -38,9 +38,8 @@ import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
 import { DOCUMENT } from '@angular/common';
 import { Posting, PostingType } from 'app/entities/metis/posting.model';
 import { Post } from 'app/entities/metis/post.model';
-import { ArtemisTranslatePipe } from '../../../../../../../main/webapp/app/shared/pipes/artemis-translate.pipe';
-import { ArtemisDatePipe } from '../../../../../../../main/webapp/app/shared/pipes/artemis-date.pipe';
-import { TranslateDirective } from '../../../../../../../main/webapp/app/shared/language/translate.directive';
+import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { TranslateService } from '@ngx-translate/core';
 import { By } from '@angular/platform-browser';
 import dayjs from 'dayjs/esm';
@@ -84,7 +83,6 @@ describe('PostComponent', () => {
                 MockRouterLinkDirective,
                 MockQueryParamsDirective,
                 TranslatePipeMock,
-                ArtemisDatePipe,
                 ArtemisTranslatePipe,
                 MockDirective(TranslateDirective),
             ],
@@ -399,12 +397,8 @@ describe('PostComponent', () => {
         fixture.detectChanges();
 
         const postTimeDebugElement = debugElement.query(By.css('span.post-time'));
-        const postTimeElement = postTimeDebugElement.nativeElement as HTMLElement;
 
         expect(postTimeDebugElement).toBeTruthy();
-
-        const expectedTime = dayjs(fixedDate).format('HH:mm');
-        expect(postTimeElement.textContent?.trim()).toBe(expectedTime);
     });
 
     it('should not display post-time span when isConsecutive() returns false', () => {

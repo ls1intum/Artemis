@@ -1,6 +1,6 @@
 import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
 import { PostingContentPartComponent } from 'app/shared/metis/posting-content/posting-content-part/posting-content-part.components';
-import { MockComponent, MockDirective, MockPipe } from 'ng-mocks';
+import { MockComponent, MockDirective, MockModule, MockPipe } from 'ng-mocks';
 import { PostingContentComponent } from 'app/shared/metis/posting-content/posting-content.components';
 import { MetisService } from 'app/shared/metis/metis.service';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
@@ -14,6 +14,8 @@ import { metisCourse, metisCoursePosts, metisExercisePosts, metisGeneralCourseWi
 import { Params } from '@angular/router';
 import { provideHttpClient } from '@angular/common/http';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { ArtemisSharedCommonModule } from 'app/shared/shared-common.module';
+import { ArtemisSharedModule } from 'app/shared/shared.module';
 
 describe('PostingContentComponent', () => {
     let component: PostingContentComponent;
@@ -22,7 +24,7 @@ describe('PostingContentComponent', () => {
 
     beforeEach(() => {
         return TestBed.configureTestingModule({
-            imports: [],
+            imports: [MockModule(ArtemisSharedCommonModule), MockModule(ArtemisSharedModule)],
             providers: [provideHttpClient(), provideHttpClientTesting(), { provide: MetisService, useClass: MockMetisService }],
             declarations: [
                 PostingContentComponent,

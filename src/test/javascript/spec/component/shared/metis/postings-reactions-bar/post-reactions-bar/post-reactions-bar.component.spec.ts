@@ -35,6 +35,7 @@ import { User } from 'app/core/user/user.model';
 import { provideHttpClient } from '@angular/common/http';
 import { PostCreateEditModalComponent } from 'app/shared/metis/posting-create-edit-modal/post-create-edit-modal/post-create-edit-modal.component';
 import { ConfirmIconComponent } from 'app/shared/confirm-icon/confirm-icon.component';
+import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 
 describe('PostReactionsBarComponent', () => {
     let component: PostReactionsBarComponent;
@@ -66,6 +67,7 @@ describe('PostReactionsBarComponent', () => {
                 MockComponent(PostCreateEditModalComponent),
                 EmojiComponent,
                 MockComponent(ConfirmIconComponent),
+                ArtemisTranslatePipe,
             ],
             providers: [
                 provideHttpClient(),

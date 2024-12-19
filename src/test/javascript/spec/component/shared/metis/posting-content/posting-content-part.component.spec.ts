@@ -3,7 +3,6 @@ import { DebugElement } from '@angular/core';
 import { Router } from '@angular/router';
 import { PostingContentPartComponent } from 'app/shared/metis/posting-content/posting-content-part/posting-content-part.components';
 import { PostingContentPart, ReferenceType } from 'app/shared/metis/metis.util';
-import { HtmlForPostingMarkdownPipe } from 'app/shared/pipes/html-for-posting-markdown.pipe';
 import { getElement, getElements } from '../../../../helpers/utils/general.utils';
 import { MockQueryParamsDirective, MockRouterLinkDirective } from '../../../../helpers/mocks/directive/mock-router-link.directive';
 import { FileService } from 'app/shared/http/file.service';
@@ -13,7 +12,7 @@ import { MatDialogModule } from '@angular/material/dialog';
 import { MatMenuModule } from '@angular/material/menu';
 import { AccountService } from 'app/core/auth/account.service';
 import { User } from 'app/core/user/user.model';
-import { MockProvider } from 'ng-mocks';
+import { MockModule, MockProvider } from 'ng-mocks';
 import { ArtemisTestModule } from '../../../../test.module';
 
 describe('PostingContentPartComponent', () => {
@@ -29,39 +28,27 @@ describe('PostingContentPartComponent', () => {
     let contentBeforeReference: string;
     let contentAfterReference: string;
 
-    beforeEach(async () => {
-        await TestBed.configureTestingModule({
-            imports: [
-                ArtemisTestModule,
-                MatDialogModule,
-                MatMenuModule,
-                HtmlForPostingMarkdownPipe, // we want to test against the rendered string, therefore we cannot mock the pipe
-            ],
-            declarations: [
-                PostingContentPartComponent,
-                // FaIconComponent, // we want to test the type of rendered icons, therefore we cannot mock the component
-                MockRouterLinkDirective,
-                MockQueryParamsDirective,
-            ],
-            providers: [
-                { provide: FileService, useClass: MockFileService },
-                {
-                    provide: Router,
-                    useClass: MockRouter,
-                },
-                MockProvider(AccountService),
-            ],
-        }).compileComponents();
-        fixture = TestBed.createComponent(PostingContentPartComponent);
-        component = fixture.componentInstance;
-        debugElement = fixture.debugElement;
-        router = TestBed.inject(Router);
-        fileService = TestBed.inject(FileService);
-        navigateByUrlSpy = jest.spyOn(router, 'navigateByUrl');
-        openAttachmentSpy = jest.spyOn(fileService, 'downloadFile');
-        enlargeImageSpy = jest.spyOn(component, 'enlargeImage');
-        contentBeforeReference = '**Be aware**\n\n I want to reference the following Post ';
-        contentAfterReference = 'in my content,\n\n does it *actually* work?';
+    beforeEach(() => {
+        return TestBed.configureTestingModule({
+            imports: [ArtemisTestModule, MockModule(MatDialogModule), MockModule(MatMenuModule)],
+            declarations: [MockRouterLinkDirective, MockQueryParamsDirective],
+            providers: [{ provide: FileService, useClass: MockFileService }, { provide: Router, useClass: MockRouter }, MockProvider(AccountService)],
+        })
+            .compileComponents()
+            .then(() => {
+                fixture = TestBed.createComponent(PostingContentPartComponent);
+                component = fixture.componentInstance;
+                debugElement = fixture.debugElement;
+                router = TestBed.inject(Router);
+                fileService = TestBed.inject(FileService);
+
+                navigateByUrlSpy = jest.spyOn(router, 'navigateByUrl');
+                openAttachmentSpy = jest.spyOn(fileService, 'downloadFile');
+                enlargeImageSpy = jest.spyOn(component, 'enlargeImage');
+
+                contentBeforeReference = '**Be aware**\n\n I want to reference the following Post ';
+                contentAfterReference = 'in my content,\n\n does it *actually* work?';
+            });
     });
 
     describe('For posting without reference', () => {

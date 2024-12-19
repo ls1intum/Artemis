@@ -1,7 +1,7 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { DebugElement } from '@angular/core';
 import { PostingMarkdownEditorComponent } from 'app/shared/metis/posting-markdown-editor/posting-markdown-editor.component';
-import { MockComponent, MockProvider } from 'ng-mocks';
+import { MockComponent, MockModule, MockProvider } from 'ng-mocks';
 import { getElement } from '../../../../helpers/utils/general.utils';
 import { By } from '@angular/platform-browser';
 import { MetisService } from 'app/shared/metis/metis.service';
@@ -27,7 +27,7 @@ import { FaqReferenceAction } from 'app/shared/monaco-editor/model/actions/commu
 import { UrlAction } from 'app/shared/monaco-editor/model/actions/url.action';
 import { AttachmentAction } from 'app/shared/monaco-editor/model/actions/attachment.action';
 import { EmojiAction } from 'app/shared/monaco-editor/model/actions/emoji.action';
-import { Overlay, OverlayPositionBuilder } from '@angular/cdk/overlay';
+import { Overlay, OverlayPositionBuilder, OverlayRef } from '@angular/cdk/overlay';
 import { TextEditor } from 'app/shared/monaco-editor/model/actions/adapter/text-editor.interface';
 import { ComponentPortal } from '@angular/cdk/portal';
 import { HttpResponse } from '@angular/common/http';
@@ -36,7 +36,13 @@ import { TextEditorRange } from 'app/shared/monaco-editor/model/actions/adapter/
 import { TextEditorPosition } from 'app/shared/monaco-editor/model/actions/adapter/text-editor-position.model';
 import { BulletedListAction } from 'app/shared/monaco-editor/model/actions/bulleted-list.action';
 import { OrderedListAction } from 'app/shared/monaco-editor/model/actions/ordered-list.action';
-import { ListAction } from '../../../../../../../main/webapp/app/shared/monaco-editor/model/actions/list.action';
+
+import { ListAction } from 'app/shared/monaco-editor/model/actions/list.action';
+import { ArtemisMarkdownEditorModule } from 'app/shared/markdown-editor/markdown-editor.module';
+import { MockLocalStorageService } from '../../../../helpers/mocks/service/mock-local-storage.service';
+import { LocalStorageService } from 'ngx-webstorage';
+import { MockTranslateService } from '../../../../helpers/mocks/service/mock-translate.service';
+import { TranslateService } from '@ngx-translate/core';
 import monaco from 'monaco-editor';
 
 describe('PostingsMarkdownEditor', () => {
@@ -118,28 +124,35 @@ describe('PostingsMarkdownEditor', () => {
         mockOverlayRef.attach.mockReturnValue(mockComponentRef);
 
         return TestBed.configureTestingModule({
+            imports: [MockModule(ArtemisMarkdownEditorModule)],
             providers: [
                 { provide: MetisService, useClass: MockMetisService },
                 MockProvider(LectureService),
                 MockProvider(CourseManagementService),
                 MockProvider(ChannelService),
-                { provide: Overlay, useValue: mockOverlay },
                 { provide: OverlayPositionBuilder, useValue: overlayPositionBuilderMock },
+                { provide: LocalStorageService, useClass: MockLocalStorageService },
+                { provide: TranslateService, useClass: MockTranslateService },
+
                 { provide: MarkdownEditorMonacoComponent, useValue: mockMarkdownEditorComponent },
             ],
             declarations: [PostingMarkdownEditorComponent, MockComponent(MarkdownEditorMonacoComponent)],
         })
+            .overrideProvider(Overlay, { useValue: mockOverlay })
+            .overrideProvider(OverlayRef, { useValue: mockOverlayRef })
             .compileComponents()
             .then(() => {
                 fixture = TestBed.createComponent(PostingMarkdownEditorComponent);
                 component = fixture.componentInstance;
                 debugElement = fixture.debugElement;
+
                 metisService = TestBed.inject(MetisService);
                 lectureService = TestBed.inject(LectureService);
 
                 findLectureWithDetailsSpy = jest.spyOn(lectureService, 'findAllByCourseIdWithSlides');
                 const returnValue = of(new HttpResponse({ body: [], status: 200 }));
                 findLectureWithDetailsSpy.mockReturnValue(returnValue);
+
                 fixture.autoDetectChanges();
                 mockMarkdownEditorComponent = fixture.debugElement.query(By.directive(MarkdownEditorMonacoComponent)).componentInstance;
                 component.ngOnInit();
@@ -279,7 +292,6 @@ describe('PostingsMarkdownEditor', () => {
     it('should attach EmojiPickerComponent to overlay when EmojiAction.run is called', () => {
         const emojiAction = component.defaultActions.find((action) => action instanceof EmojiAction) as EmojiAction;
         emojiAction.setPoint({ x: 100, y: 200 });
-
         emojiAction.run(mockEditor);
 
         expect(mockOverlayRef.attach).toHaveBeenCalledWith(expect.any(ComponentPortal));
@@ -315,6 +327,7 @@ describe('PostingsMarkdownEditor', () => {
     it('should detach overlay and close EmojiPickerComponent on backdrop click', () => {
         const emojiAction = component.defaultActions.find((action) => action instanceof EmojiAction) as EmojiAction;
         emojiAction.setPoint({ x: 100, y: 200 });
+        fixture.detectChanges();
 
         emojiAction.run(mockEditor);
         backdropClickSubject.next();

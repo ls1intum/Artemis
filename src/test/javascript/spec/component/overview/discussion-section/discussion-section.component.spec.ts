@@ -46,6 +46,11 @@ import { MockNotificationService } from '../../../helpers/mocks/service/mock-not
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { ProfilePictureComponent } from 'app/shared/profile-picture/profile-picture.component';
 import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
+import { ArtemisSharedModule } from 'app/shared/shared.module';
+import { ArtemisConfirmIconModule } from 'app/shared/confirm-icon/confirm-icon.module';
+import { ArtemisSharedComponentModule } from 'app/shared/components/shared-component.module';
+import { ArtemisColorSelectorModule } from 'app/shared/color-selector/color-selector.module';
+import { ArtemisMarkdownEditorModule } from 'app/shared/markdown-editor/markdown-editor.module';
 
 @Directive({
     // eslint-disable-next-line @angular-eslint/directive-selector
@@ -67,7 +72,18 @@ describe('DiscussionSectionComponent', () => {
 
     beforeEach(async () => {
         await TestBed.configureTestingModule({
-            imports: [MockModule(FormsModule), MockModule(ReactiveFormsModule), MockModule(NgbTooltipModule), DiscussionSectionComponent, MockModule(BrowserAnimationsModule)],
+            imports: [
+                MockModule(ArtemisSharedComponentModule),
+                MockModule(ArtemisConfirmIconModule),
+                MockModule(ArtemisSharedModule),
+                MockModule(FormsModule),
+                MockModule(ReactiveFormsModule),
+                MockModule(NgbTooltipModule),
+                DiscussionSectionComponent,
+                MockModule(BrowserAnimationsModule),
+                MockModule(ArtemisColorSelectorModule),
+                MockModule(ArtemisMarkdownEditorModule),
+            ],
             providers: [
                 provideHttpClient(),
                 provideHttpClientTesting(),

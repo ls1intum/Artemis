@@ -18,12 +18,12 @@ import { metisCourse, metisExercise, metisPostLectureUser1, metisPostTechSupport
 import { MockNgbModalService } from '../../../../../helpers/mocks/service/mock-ngb-modal.service';
 import { Channel } from 'app/entities/metis/conversation/channel.model';
 import { provideHttpClient } from '@angular/common/http';
+import { ArtemisSharedComponentModule } from 'app/shared/components/shared-component.module';
 
 describe('PostCreateEditModalComponent', () => {
     let component: PostCreateEditModalComponent;
     let fixture: ComponentFixture<PostCreateEditModalComponent>;
     let metisService: MetisService;
-    let modal: NgbModal;
     let metisServiceGetPageTypeMock: jest.SpyInstance;
     let metisServiceIsAtLeastInstructorStub: jest.SpyInstance;
     let metisServiceCreateStub: jest.SpyInstance;
@@ -31,7 +31,7 @@ describe('PostCreateEditModalComponent', () => {
 
     beforeEach(() => {
         return TestBed.configureTestingModule({
-            imports: [ArtemisTestModule, MockModule(FormsModule), MockModule(ReactiveFormsModule)],
+            imports: [ArtemisTestModule, MockModule(FormsModule), MockModule(ReactiveFormsModule), MockModule(ArtemisSharedComponentModule)],
             declarations: [
                 PostCreateEditModalComponent,
                 MockPipe(ArtemisTranslatePipe),
@@ -54,7 +54,6 @@ describe('PostCreateEditModalComponent', () => {
                 fixture = TestBed.createComponent(PostCreateEditModalComponent);
                 component = fixture.componentInstance;
                 metisService = TestBed.inject(MetisService);
-                modal = TestBed.inject(NgbModal);
                 metisServiceGetPageTypeMock = jest.spyOn(metisService, 'getPageType');
                 metisServiceIsAtLeastInstructorStub = jest.spyOn(metisService, 'metisUserIsAtLeastInstructorInCourse');
                 metisServiceIsAtLeastInstructorStub.mockReturnValue(false);
@@ -181,7 +180,7 @@ describe('PostCreateEditModalComponent', () => {
     it('should invoke the modalService', () => {
         const componentInstance = { title: String, content: String };
         const result = new Promise((resolve) => resolve(true));
-        const modalServiceOpenMock = jest.spyOn(modal, 'open').mockReturnValue(<NgbModalRef>{
+        const modalServiceOpenMock = jest.spyOn(component.modalService, 'open').mockReturnValue(<NgbModalRef>{
             componentInstance,
             result,
         });

@@ -9,6 +9,7 @@ import { metisTags } from '../../../../../helpers/sample/metis-sample-data';
 import { MatChipsModule } from '@angular/material/chips';
 import { MatAutocompleteModule } from '@angular/material/autocomplete';
 import { MatSelectModule } from '@angular/material/select';
+import { ArtemisSharedCommonModule } from 'app/shared/shared-common.module';
 
 describe('PostTagSelectorComponent', () => {
     let component: PostTagSelectorComponent;
@@ -18,7 +19,7 @@ describe('PostTagSelectorComponent', () => {
 
     beforeEach(() => {
         return TestBed.configureTestingModule({
-            imports: [MockModule(MatChipsModule), MockModule(MatAutocompleteModule), MockModule(MatSelectModule), MockModule(FormsModule)],
+            imports: [MockModule(MatChipsModule), MockModule(MatAutocompleteModule), MockModule(MatSelectModule), MockModule(FormsModule), MockModule(ArtemisSharedCommonModule)],
             providers: [{ provide: MetisService, useClass: MockMetisService }],
             declarations: [PostTagSelectorComponent, MockPipe(ArtemisTranslatePipe)],
         })
