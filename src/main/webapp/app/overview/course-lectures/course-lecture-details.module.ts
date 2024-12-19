@@ -14,6 +14,7 @@ import { TextUnitComponent } from 'app/overview/course-lectures/text-unit/text-u
 import { OnlineUnitComponent } from 'app/overview/course-lectures/online-unit/online-unit.component';
 import { AttachmentUnitComponent } from 'app/overview/course-lectures/attachment-unit/attachment-unit.component';
 import { DiscussionSectionComponent } from 'app/overview/discussion-section/discussion-section.component';
+import { IrisModule } from 'app/iris/iris.module';
 
 const routes: Routes = [
     {
@@ -40,6 +41,7 @@ const routes: Routes = [
         OnlineUnitComponent,
         AttachmentUnitComponent,
         DiscussionSectionComponent,
+        IrisModule,
     ],
     declarations: [CourseLectureDetailsComponent],
     exports: [CourseLectureDetailsComponent],

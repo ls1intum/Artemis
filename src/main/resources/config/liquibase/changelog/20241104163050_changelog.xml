@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+                   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                   xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog https://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-latest.xsd">
+    <!-- Add iris lecture chat session support -->
+    <changeSet id="20241104163050" author="sebastianloose">
+        <addColumn tableName="iris_session">
+            <column name="lecture_id" type="bigint"/>
+        </addColumn>
+        <addForeignKeyConstraint baseColumnNames="lecture_id" baseTableName="iris_session"
+                                 constraintName="FK_IRIS_SESSION_ON_LECTURE" referencedColumnNames="id"
+                                 referencedTableName="lecture"/>
+
+        <addColumn tableName="iris_settings">
+            <column name="iris_lecture_chat_settings_id" type="bigint"/>
+        </addColumn>
+        <addForeignKeyConstraint baseColumnNames="iris_lecture_chat_settings_id" baseTableName="iris_settings"
+                                 constraintName="FK_IRIS_SETTINGS_ON_LECTURE_CHAT_SETTINGS" referencedColumnNames="id"
+                                 referencedTableName="iris_sub_settings"/>
+    </changeSet>
+</databaseChangeLog>
