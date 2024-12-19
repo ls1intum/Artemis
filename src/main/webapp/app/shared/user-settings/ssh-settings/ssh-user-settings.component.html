@@ -27,7 +27,7 @@
         <!-- Initial state: There are keys -->
         @if (keyCount > 0) {
             <div class="list-group-item">
-                <div class="d-flex flex-wrap mt-4">
+                <div class="d-flex flex-wrap">
                     <p>
                         <span class="mt-4 font-medium" jhiTranslate="artemisApp.userSettings.sshSettingsPage.whatToUseSSHForInfo"> </span>
                         <jhi-documentation-link [documentationType]="documentationType" [displayString]="'artemisApp.userSettings.sshSettingsPage.learnMore'">
@@ -103,6 +103,11 @@
                 </table>
                 <div class="d-flex justify-content-between align-items-center">
                     <div></div>
+                    <div>
+                        <a [routerLink]="['fingerprints']">
+                            <span style="font-size: small" jhiTranslate="artemisApp.userSettings.sshSettingsPage.fingerprints"></span>
+                        </a>
+                    </div>
                     <div>
                         <a class="btn rounded-btn btn-primary btn-sm" [routerLink]="['add']">
                             <span class="jhi-btn__title" style="font-size: small" jhiTranslate="artemisApp.userSettings.sshSettingsPage.addNewSshKey"></span>
