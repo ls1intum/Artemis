@@ -135,6 +135,7 @@ class ChannelIntegrationTest extends AbstractConversationTest {
         channelDTO.setIsPublic(isPublicChannel);
         channelDTO.setIsAnnouncementChannel(false);
         channelDTO.setDescription("general channel");
+        channelDTO.setIsCourseWide(false);
 
         // when
         var chat = request.postWithResponseBody("/api/courses/" + exampleCourseId + "/channels", channelDTO, ChannelDTO.class, HttpStatus.CREATED);
@@ -169,6 +170,7 @@ class ChannelIntegrationTest extends AbstractConversationTest {
         channelDTO.setIsAnnouncementChannel(false);
         channelDTO.setName(TEST_PREFIX);
         channelDTO.setDescription("general channel");
+        channelDTO.setIsCourseWide(false);
 
         expectCreateForbidden(channelDTO);
 
@@ -187,6 +189,7 @@ class ChannelIntegrationTest extends AbstractConversationTest {
         channelDTO.setIsAnnouncementChannel(false);
         channelDTO.setName(TEST_PREFIX);
         channelDTO.setDescription("general channel");
+        channelDTO.setIsCourseWide(false);
 
         expectUpdateForbidden(1L, channelDTO);
 
@@ -232,6 +235,7 @@ class ChannelIntegrationTest extends AbstractConversationTest {
         channelDTO.setIsPublic(isPublicChannel);
         channelDTO.setIsAnnouncementChannel(false);
         channelDTO.setDescription("general channel");
+        channelDTO.setIsCourseWide(false);
 
         // then
         expectCreateForbidden(channelDTO);
@@ -930,6 +934,7 @@ class ChannelIntegrationTest extends AbstractConversationTest {
         channelDTO.setDescription("Discussion channel for feedback");
         channelDTO.setIsPublic(true);
         channelDTO.setIsAnnouncementChannel(false);
+        channelDTO.setIsCourseWide(false);
 
         FeedbackChannelRequestDTO feedbackChannelRequest = new FeedbackChannelRequestDTO(channelDTO, "Sample feedback text");
 
@@ -954,6 +959,7 @@ class ChannelIntegrationTest extends AbstractConversationTest {
         channelDTO.setDescription("Discussion channel for feedback");
         channelDTO.setIsPublic(true);
         channelDTO.setIsAnnouncementChannel(false);
+        channelDTO.setIsCourseWide(false);
 
         FeedbackChannelRequestDTO feedbackChannelRequest = new FeedbackChannelRequestDTO(channelDTO, "Sample feedback text");
 
