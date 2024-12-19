@@ -258,7 +258,7 @@ describe('CodeEditorContainerIntegration', () => {
     const loadFile = async (fileName: string, fileContent: string) => {
         getFileStub.mockReturnValue(of({ fileContent }));
         container.fileBrowser.selectedFile = fileName;
-        await container.monacoEditor.selectFileInEditor(fileName);
+        await container.monacoEditor.selectFileInEditor(undefined, fileName);
     };
 
     it('should initialize all components correctly if all server calls are successful', fakeAsync(() => {
