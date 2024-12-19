@@ -180,7 +180,7 @@ public class CourseResource {
     @Value("${artemis.course-archives-path}")
     private String courseArchivesDirPath;
 
-    private final LearningPathApi learningPathApi;
+    private final Optional<LearningPathApi> learningPathApi;
 
     private final ExamRepository examRepository;
 
@@ -193,7 +193,7 @@ public class CourseResource {
             TutorParticipationRepository tutorParticipationRepository, SubmissionService submissionService, Optional<VcsUserManagementService> optionalVcsUserManagementService,
             AssessmentDashboardService assessmentDashboardService, ExerciseRepository exerciseRepository, Optional<CIUserManagementService> optionalCiUserManagementService,
             FileService fileService, TutorialGroupsConfigurationService tutorialGroupsConfigurationService, GradingScaleService gradingScaleService,
-            CourseScoreCalculationService courseScoreCalculationService, GradingScaleRepository gradingScaleRepository, LearningPathApi learningPathApi,
+            CourseScoreCalculationService courseScoreCalculationService, GradingScaleRepository gradingScaleRepository, Optional<LearningPathApi> learningPathApi,
             ConductAgreementService conductAgreementService, Optional<AthenaModuleService> athenaModuleService, ExamRepository examRepository, ComplaintService complaintService,
             TeamRepository teamRepository) {
         this.courseService = courseService;
@@ -333,9 +333,9 @@ public class CourseResource {
         Course result = courseRepository.save(courseUpdate);
 
         // if learning paths got enabled, generate learning paths for students
-        if (existingCourse.getLearningPathsEnabled() != courseUpdate.getLearningPathsEnabled() && courseUpdate.getLearningPathsEnabled()) {
+        if (existingCourse.getLearningPathsEnabled() != courseUpdate.getLearningPathsEnabled() && courseUpdate.getLearningPathsEnabled() && learningPathApi.isPresent()) {
             Course courseWithCompetencies = courseRepository.findWithEagerCompetenciesAndPrerequisitesByIdElseThrow(result.getId());
-            learningPathApi.generateLearningPaths(courseWithCompetencies);
+            learningPathApi.ifPresent(api -> api.generateLearningPaths(courseWithCompetencies));
         }
 
         // if access to restricted athena modules got disabled for the course, we need to set all exercises that use restricted modules to null
@@ -1242,9 +1242,9 @@ public class CourseResource {
                 throw new EntityNotFoundException("User", userLogin);
             }
             courseService.addUserToGroup(userToAddToGroup.get(), group);
-            if (role == Role.STUDENT && course.getLearningPathsEnabled()) {
+            if (role == Role.STUDENT && course.getLearningPathsEnabled() && learningPathApi.isPresent()) {
                 Course courseWithCompetencies = courseRepository.findWithEagerCompetenciesAndPrerequisitesByIdElseThrow(course.getId());
-                learningPathApi.generateLearningPathForUser(courseWithCompetencies, userToAddToGroup.get());
+                learningPathApi.get().generateLearningPathForUser(courseWithCompetencies, userToAddToGroup.get());
             }
             return ResponseEntity.ok().body(null);
         }

@@ -45,13 +45,13 @@
                     <span class="tab-link-text" jhiTranslate="artemisApp.entities.tutorialGroup.plural"></span>
                 </a>
             }
-            @if (course.isAtLeastInstructor) {
+            @if (atlasEnabled && course.isAtLeastInstructor) {
                 <a class="tab-link" [routerLink]="['/course-management', course.id, 'competency-management']" routerLinkActive="active">
                     <fa-icon [icon]="faFlag" />
                     <span class="tab-link-text" jhiTranslate="artemisApp.competency.competencyButton"></span>
                 </a>
             }
-            @if (course.isAtLeastInstructor) {
+            @if (atlasEnabled && course.isAtLeastInstructor) {
                 <a
                     class="tab-link"
                     [jhiFeatureToggleHide]="FeatureToggle.LearningPaths"

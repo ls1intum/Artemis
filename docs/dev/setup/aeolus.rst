@@ -24,7 +24,7 @@ Start Aeolus with the following docker compose command:
    docker compose -f docker/aeolus.yml up -d
 
 
-Check if Aeolus is running by visiting the following URL in your browser: http://localhost:8090/docs 
+Check if Aeolus is running by visiting the following URL in your browser: http://localhost:8090/docs
 It should display the Aeolus API documentation.
 
 .. _configure artemis for aeolus:
@@ -77,7 +77,7 @@ e.g.:
 
 ::
 
-   --spring.profiles.active=dev,localci,localvc,aeolus,artemis,scheduling,local
+   --spring.profiles.active=dev,localci,localvc,aeolus,artemis,scheduling,atlas,local
 
 
 More information on how Aeolus works can be found on `GitHub <https://github.com/ls1intum/Aeolus>`_ or in the `Aeolus documentation <https://ls1intum.github.io/Aeolus/>`_.

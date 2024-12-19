@@ -1,6 +1,6 @@
 package de.tum.cit.aet.artemis.atlas.repository;
 
-import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
+import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_ATLAS;
 
 import java.util.Optional;
 import java.util.Set;
@@ -17,7 +17,7 @@ import de.tum.cit.aet.artemis.core.repository.base.ArtemisJpaRepository;
 /**
  * Spring Data JPA repository for the {@link CompetencyJol} entity.
  */
-@Profile(PROFILE_CORE)
+@Profile(PROFILE_ATLAS)
 @Repository
 public interface CompetencyJolRepository extends ArtemisJpaRepository<CompetencyJol, Long> {
 

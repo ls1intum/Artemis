@@ -46,12 +46,12 @@ public class LectureService {
 
     private final Optional<PyrisWebhookService> pyrisWebhookService;
 
-    private final CompetencyProgressApi competencyProgressApi;
+    private final Optional<CompetencyProgressApi> competencyProgressApi;
 
-    private final CompetencyRelationApi competencyRelationApi;
+    private final Optional<CompetencyRelationApi> competencyRelationApi;
 
     public LectureService(LectureRepository lectureRepository, AuthorizationCheckService authCheckService, ChannelRepository channelRepository, ChannelService channelService,
-            Optional<PyrisWebhookService> pyrisWebhookService, CompetencyProgressApi competencyProgressApi, CompetencyRelationApi competencyRelationApi) {
+            Optional<PyrisWebhookService> pyrisWebhookService, Optional<CompetencyProgressApi> competencyProgressApi, Optional<CompetencyRelationApi> competencyRelationApi) {
         this.lectureRepository = lectureRepository;
         this.authCheckService = authCheckService;
         this.channelRepository = channelRepository;
@@ -159,15 +159,16 @@ public class LectureService {
             }
         }
 
-        if (updateCompetencyProgress) {
+        if (updateCompetencyProgress && competencyProgressApi.isPresent()) {
+            var api = competencyProgressApi.get();
             lecture.getLectureUnits().stream().filter(lectureUnit -> !(lectureUnit instanceof ExerciseUnit))
-                    .forEach(lectureUnit -> competencyProgressApi.updateProgressForUpdatedLearningObjectAsync(lectureUnit, Optional.empty()));
+                    .forEach(lectureUnit -> api.updateProgressForUpdatedLearningObjectAsync(lectureUnit, Optional.empty()));
         }
 
         Channel lectureChannel = channelRepository.findChannelByLectureId(lecture.getId());
         channelService.deleteChannel(lectureChannel);
 
-        competencyRelationApi.deleteAllLectureUnitLinksByLectureId(lecture.getId());
+        competencyRelationApi.ifPresent(api -> api.deleteAllLectureUnitLinksByLectureId(lecture.getId()));
 
         lectureRepository.deleteById(lecture.getId());
     }

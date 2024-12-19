@@ -33,13 +33,13 @@ public class FileUploadExerciseImportService extends ExerciseImportService {
 
     private final ChannelService channelService;
 
-    private final CompetencyProgressApi competencyProgressApi;
+    private final Optional<CompetencyProgressApi> competencyProgressApi;
 
     private final ExerciseService exerciseService;
 
     public FileUploadExerciseImportService(ExampleSubmissionRepository exampleSubmissionRepository, SubmissionRepository submissionRepository, ResultRepository resultRepository,
-            FileUploadExerciseRepository fileUploadExerciseRepository, ChannelService channelService, FeedbackService feedbackService, CompetencyProgressApi competencyProgressApi,
-            ExerciseService exerciseService) {
+            FileUploadExerciseRepository fileUploadExerciseRepository, ChannelService channelService, FeedbackService feedbackService,
+            Optional<CompetencyProgressApi> competencyProgressApi, ExerciseService exerciseService) {
         super(exampleSubmissionRepository, submissionRepository, resultRepository, feedbackService);
         this.fileUploadExerciseRepository = fileUploadExerciseRepository;
         this.channelService = channelService;
@@ -65,7 +65,7 @@ public class FileUploadExerciseImportService extends ExerciseImportService {
 
         channelService.createExerciseChannel(newFileUploadExercise, Optional.ofNullable(importedExercise.getChannelName()));
 
-        competencyProgressApi.updateProgressByLearningObjectAsync(newFileUploadExercise);
+        competencyProgressApi.ifPresent(api -> api.updateProgressByLearningObjectAsync(newFileUploadExercise));
 
         return newFileUploadExercise;
     }

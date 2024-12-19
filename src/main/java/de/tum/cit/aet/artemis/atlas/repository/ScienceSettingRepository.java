@@ -1,6 +1,6 @@
 package de.tum.cit.aet.artemis.atlas.repository;
 
-import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
+import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_ATLAS;
 
 import java.util.Set;
 
@@ -13,7 +13,7 @@ import de.tum.cit.aet.artemis.core.repository.base.ArtemisJpaRepository;
 /**
  * Spring Data repository for the ScienceSetting entity.
  */
-@Profile(PROFILE_CORE)
+@Profile(PROFILE_ATLAS)
 @Repository
 public interface ScienceSettingRepository extends ArtemisJpaRepository<ScienceSetting, Long> {
 
