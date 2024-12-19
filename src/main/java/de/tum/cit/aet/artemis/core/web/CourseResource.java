@@ -791,6 +791,25 @@ public class CourseResource {
     }
 
     /**
+     * GET /courses/:courseId : get the "id" course.
+     *
+     * @param courseId the id of the course to retrieve
+     * @return the ResponseEntity with status 200 (OK) and with body the course, or with status 404 (Not Found)
+     */
+    @GetMapping("courses/{courseId}/with-exercises-lectures-competencies")
+    @EnforceAtLeastTutor
+    public ResponseEntity<Course> getCourseWithExercisesAndLecturesAndCompetencies(@PathVariable Long courseId) {
+        log.debug("REST request to get course {} for tutors", courseId);
+        Optional<Course> courseOptional = courseRepository.findWithEagerExercisesAndLecturesAndLectureUnitsAndCompetenciesById(courseId);
+        if (courseOptional.isEmpty()) {
+            return ResponseEntity.notFound().build();
+        }
+        Course course = courseOptional.get();
+        authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.TEACHING_ASSISTANT, course, null);
+        return ResponseEntity.ok(course);
+    }
+
+    /**
      * GET /courses/:courseId/with-organizations Get a course by id with eagerly loaded organizations
      *
      * @param courseId the id of the course
