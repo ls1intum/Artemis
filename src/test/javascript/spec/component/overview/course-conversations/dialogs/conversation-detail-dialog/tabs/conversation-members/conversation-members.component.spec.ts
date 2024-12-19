@@ -3,7 +3,7 @@ import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { ConversationMembersComponent } from 'app/overview/course-conversations/dialogs/conversation-detail-dialog/tabs/conversation-members/conversation-members.component';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { MockComponent, MockPipe, MockProvider } from 'ng-mocks';
-import { Component, EventEmitter, Input, Output } from '@angular/core';
+import { Component, EventEmitter, Input, Output, input, signal } from '@angular/core';
 import { ConversationDTO } from 'app/entities/metis/conversation/conversation.model';
 import { Course } from 'app/entities/course.model';
 import { ConversationUserDTO } from 'app/entities/metis/conversation/conversation-user-dto.model';
@@ -75,9 +75,12 @@ examples.forEach((activeConversation) => {
             canAddUsersToConversation.mockReturnValue(true);
 
             fixture = TestBed.createComponent(ConversationMembersComponent);
-            component = fixture.componentInstance;
-            component.activeConversation = activeConversation;
-            component.course = course;
+            TestBed.runInInjectionContext(() => {
+                component = fixture.componentInstance;
+                component.activeConversationInput = input<ConversationDTO>(activeConversation);
+                component.course = input<Course>(course);
+                component.activeConversation = signal<ConversationDTO>(activeConversation);
+            });
             component.canAddUsersToConversation = canAddUsersToConversation;
         });
 
@@ -147,7 +150,7 @@ examples.forEach((activeConversation) => {
 
             const modalService = TestBed.inject(NgbModal);
             const mockModalRef = {
-                componentInstance: { course: undefined, activeConversation: undefined, initialize: () => {} },
+                componentInstance: { course: component.course(), activeConversation: component.activeConversation(), initialize: () => {} },
                 result: Promise.resolve(),
             };
             const openDialogSpy = jest.spyOn(modalService, 'open').mockReturnValue(mockModalRef as unknown as NgbModalRef);
@@ -159,7 +162,7 @@ examples.forEach((activeConversation) => {
                 expect(openDialogSpy).toHaveBeenCalledOnce();
                 expect(openDialogSpy).toHaveBeenCalledWith(ConversationAddUsersDialogComponent, defaultSecondLayerDialogOptions);
                 expect(mockModalRef.componentInstance.course).toEqual(course);
-                expect(mockModalRef.componentInstance.activeConversation).toEqual(activeConversation);
+                expect(mockModalRef.componentInstance.activeConversation?.id).toEqual(activeConversation.id);
             });
         }));
 
