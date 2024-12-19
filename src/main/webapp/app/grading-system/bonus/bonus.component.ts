@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, inject } from '@angular/core';
 import { BonusService } from 'app/grading-system/bonus/bonus.service';
 import { GradingSystemService } from 'app/grading-system/grading-system.service';
 import { GradingScale } from 'app/entities/grading-scale.model';
@@ -9,7 +9,6 @@ import { faExclamationTriangle, faPlus, faQuestionCircle, faSave, faTimes } from
 import { GradeStep, GradeStepsDTO } from 'app/entities/grade-step.model';
 import { ButtonSize } from 'app/shared/components/button.component';
 import { Subject, forkJoin, of } from 'rxjs';
-import { TranslateService } from '@ngx-translate/core';
 import { SearchTermPageableSearch, SortingOrder } from 'app/shared/table/pageable-table';
 import { GradeEditMode } from 'app/grading-system/base-grading-system/base-grading-system.component';
 import { AlertService } from 'app/core/util/alert.service';
@@ -37,6 +36,12 @@ export enum BonusStrategyDiscreteness {
     imports: [ArtemisSharedModule, ArtemisSharedComponentModule, ArtemisModePickerModule, SafeHtmlPipe, GradeStepBoundsPipe],
 })
 export class BonusComponent implements OnInit {
+    private bonusService = inject(BonusService);
+    private gradingSystemService = inject(GradingSystemService);
+    private route = inject(ActivatedRoute);
+    private router = inject(Router);
+    private alertService = inject(AlertService);
+
     readonly CALCULATION_PLUS = 1;
     readonly CALCULATION_MINUS = -1;
 
@@ -104,15 +109,6 @@ export class BonusComponent implements OnInit {
         sortingOrder: SortingOrder.DESCENDING,
         sortedColumn: 'ID',
     };
-
-    constructor(
-        private bonusService: BonusService,
-        private gradingSystemService: GradingSystemService,
-        private route: ActivatedRoute,
-        private router: Router,
-        private translateService: TranslateService,
-        private alertService: AlertService,
-    ) {}
 
     ngOnInit(): void {
         this.isLoading = true;

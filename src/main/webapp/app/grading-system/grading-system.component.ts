@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, inject } from '@angular/core';
 import { ActivatedRoute, RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
 import { DocumentationType } from 'app/shared/components/documentation-button/documentation-button.component';
 import { GradeType } from 'app/entities/grading-scale.model';
@@ -33,6 +33,8 @@ import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
     ],
 })
 export class GradingSystemComponent implements OnInit {
+    private route = inject(ActivatedRoute);
+
     readonly GradeType = GradeType;
 
     courseId?: number;
@@ -44,8 +46,6 @@ export class GradingSystemComponent implements OnInit {
 
     // Icons
     readonly faExclamationTriangle = faExclamationTriangle;
-
-    constructor(private route: ActivatedRoute) {}
 
     ngOnInit(): void {
         this.route.params.subscribe((params) => {
