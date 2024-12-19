@@ -15,12 +15,12 @@
                         </button>
                         <div ngbDropdownMenu aria-labelledby="instructor-actions-dropdown">
                             @for (instructorActionItem of instructorActionItems; track instructorActionItem) {
-                                <button class="btn" [routerLink]="instructorActionItem.routerLink" ngbDropdownItem>
+                                <a class="btn" [routerLink]="instructorActionItem.routerLink" ngbDropdownItem>
                                     @if (instructorActionItem.icon) {
                                         <fa-icon [fixedWidth]="true" [icon]="instructorActionItem.icon" class="ms-2 me-3" />
                                     }
                                     <span [jhiTranslate]="instructorActionItem.translation"></span>
-                                </button>
+                                </a>
                             }
                         </div>
                     </div>
