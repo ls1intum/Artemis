@@ -38,4 +38,21 @@ public interface RatingCleanupRepository extends ArtemisJpaRepository<Rating, Lo
                 )
             """)
     int deleteOrphanRating();
+
+    /**
+     * Counts {@link Rating} entries where the associated {@link Result} has no submission and no participation.
+     *
+     * @return the number of entities that would be deleted
+     */
+    @Query("""
+            SELECT COUNT(rt)
+            FROM Rating rt
+            WHERE rt.result IN (
+                SELECT r
+                FROM Result r
+                WHERE r.submission IS NULL
+                    AND r.participation IS NULL
+                )
+            """)
+    int countOrphanRating();
 }
