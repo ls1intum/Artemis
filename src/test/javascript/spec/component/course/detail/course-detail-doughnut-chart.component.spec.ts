@@ -80,6 +80,13 @@ describe('CourseDetailDoughnutChartComponent', () => {
         expect(component.doughnutChartTitle).toBe('averageStudentScore');
         expect(component.titleLink).toBe('scores');
 
+        component.contentType = DoughnutChartType.CURRENT_LLM_COST;
+
+        component.ngOnInit();
+
+        expect(component.doughnutChartTitle).toBe('currentTotalLLMCost');
+        expect(component.titleLink).toBeUndefined();
+
         component.contentType = DoughnutChartType.AVERAGE_EXERCISE_SCORE;
 
         component.ngOnInit();

@@ -83,6 +83,7 @@ import de.tum.cit.aet.artemis.core.dto.StudentDTO;
 import de.tum.cit.aet.artemis.core.dto.TutorLeaderboardDTO;
 import de.tum.cit.aet.artemis.core.dto.pageablesearch.SearchTermPageableSearchDTO;
 import de.tum.cit.aet.artemis.core.repository.CourseRepository;
+import de.tum.cit.aet.artemis.core.repository.LLMTokenUsageTraceRepository;
 import de.tum.cit.aet.artemis.core.repository.StatisticsRepository;
 import de.tum.cit.aet.artemis.core.repository.UserRepository;
 import de.tum.cit.aet.artemis.core.security.Role;
@@ -214,6 +215,8 @@ public class CourseService {
 
     private final BuildJobRepository buildJobRepository;
 
+    private final LLMTokenUsageTraceRepository llmTokenUsageTraceRepository;
+
     public CourseService(CourseRepository courseRepository, ExerciseService exerciseService, ExerciseDeletionService exerciseDeletionService,
             AuthorizationCheckService authCheckService, UserRepository userRepository, LectureService lectureService, GroupNotificationRepository groupNotificationRepository,
             ExerciseGroupRepository exerciseGroupRepository, AuditEventRepository auditEventRepository, UserService userService, ExamDeletionService examDeletionService,
@@ -227,7 +230,7 @@ public class CourseService {
             LearningPathApi learningPathApi, Optional<IrisSettingsService> irisSettingsService, LectureRepository lectureRepository,
             TutorialGroupNotificationRepository tutorialGroupNotificationRepository, TutorialGroupChannelManagementService tutorialGroupChannelManagementService,
             PrerequisitesApi prerequisitesApi, CompetencyRelationApi competencyRelationApi, PostRepository postRepository, AnswerPostRepository answerPostRepository,
-            BuildJobRepository buildJobRepository, FaqRepository faqRepository) {
+            BuildJobRepository buildJobRepository, FaqRepository faqRepository, LLMTokenUsageTraceRepository llmTokenUsageTraceRepository) {
         this.courseRepository = courseRepository;
         this.exerciseService = exerciseService;
         this.exerciseDeletionService = exerciseDeletionService;
@@ -271,6 +274,7 @@ public class CourseService {
         this.postRepository = postRepository;
         this.answerPostRepository = answerPostRepository;
         this.faqRepository = faqRepository;
+        this.llmTokenUsageTraceRepository = llmTokenUsageTraceRepository;
     }
 
     /**
@@ -805,7 +809,7 @@ public class CourseService {
         Set<Exercise> exercises = exerciseRepository.findAllExercisesByCourseId(course.getId());
         if (exercises == null || exercises.isEmpty()) {
             return new CourseManagementDetailViewDTO(numberOfStudentsInCourse, numberOfTeachingAssistantsInCourse, numberOfEditorsInCourse, numberOfInstructorsInCourse, 0.0, 0L,
-                    0L, 0.0, 0L, 0L, 0.0, 0L, 0L, 0.0, 0.0, 0.0, List.of());
+                    0L, 0.0, 0L, 0L, 0.0, 0L, 0L, 0.0, 0.0, 0.0, List.of(), 0.0);
         }
         // For the average score we need to only consider scores which are included completely or as bonus
         Set<Exercise> includedExercises = exercises.stream().filter(Exercise::isCourseExercise)
@@ -854,10 +858,12 @@ public class CourseService {
         var currentAbsoluteAverageScore = roundScoreSpecifiedByCourseSettings((averageScoreForCourse / 100.0) * currentMaxAverageScore, course);
         var currentPercentageAverageScore = currentMaxAverageScore > 0.0 ? roundScoreSpecifiedByCourseSettings(averageScoreForCourse, course) : 0.0;
 
+        double currentTotalLlmCostInEur = llmTokenUsageTraceRepository.calculateTotalLlmCostInEurForCourse(course.getId());
+
         return new CourseManagementDetailViewDTO(numberOfStudentsInCourse, numberOfTeachingAssistantsInCourse, numberOfEditorsInCourse, numberOfInstructorsInCourse,
                 currentPercentageAssessments, numberOfAssessments, numberOfSubmissions, currentPercentageComplaints, currentAbsoluteComplaints, currentMaxComplaints,
                 currentPercentageMoreFeedbacks, currentAbsoluteMoreFeedbacks, currentMaxMoreFeedbacks, currentPercentageAverageScore, currentAbsoluteAverageScore,
-                currentMaxAverageScore, activeStudents);
+                currentMaxAverageScore, activeStudents, currentTotalLlmCostInEur);
     }
 
     private double calculatePercentage(double positive, double total) {
