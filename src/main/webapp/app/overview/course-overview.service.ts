@@ -59,7 +59,7 @@ const GROUP_DECISION_MATRIX: Record<StartDateGroup, Record<EndDateGroup, TimeGro
 
 const DEFAULT_CHANNEL_GROUPS: AccordionGroups = {
     favoriteChannels: { entityData: [] },
-    recently: { entityData: [] },
+    recents: { entityData: [] },
     generalChannels: { entityData: [] },
     exerciseChannels: { entityData: [] },
     lectureChannels: { entityData: [] },
@@ -376,18 +376,20 @@ export class CourseOverviewService {
         const now = dayjs();
         const oneAndHalfWeekBefore = now.subtract(1.5, 'week');
         const oneAndHalfWeekLater = now.add(1.5, 'week');
-        let dueDate = null;
+        let relevantDate = null;
         if (subTypeRefId && course.exercises && channelDTO?.subType === 'exercise') {
             const exercise = course.exercises.find((exercise) => exercise.id === subTypeRefId);
-            dueDate = exercise?.dueDate || null;
+            const relevantDates = [exercise?.releaseDate, exercise?.dueDate].filter(Boolean);
+            isCurrent = relevantDates.some((date) => dayjs(date).isBetween(oneAndHalfWeekBefore, oneAndHalfWeekLater, 'day', '[]'));
         } else if (subTypeRefId && course.lectures && channelDTO?.subType === 'lecture') {
             const lecture = course.lectures.find((lecture) => lecture.id === subTypeRefId);
-            dueDate = lecture?.startDate || null;
+            relevantDate = lecture?.startDate || null;
+            isCurrent = relevantDate ? dayjs(relevantDate).isBetween(oneAndHalfWeekBefore, oneAndHalfWeekLater, 'day', '[]') : false;
         } else if (subTypeRefId && course.exams && channelDTO?.subType === 'exam') {
             const exam = course.exams.find((exam) => exam.id === subTypeRefId);
-            dueDate = exam?.startDate || null;
+            relevantDate = exam?.startDate || null;
+            isCurrent = relevantDate ? dayjs(relevantDate).isBetween(oneAndHalfWeekBefore, oneAndHalfWeekLater, 'day', '[]') : false;
         }
-        isCurrent = dueDate ? dayjs(dueDate).isBetween(oneAndHalfWeekBefore, oneAndHalfWeekLater, 'day', '[]') : false;
 
         const conversationCardItem: SidebarCardElement = {
             title: this.conversationService.getConversationName(conversation) ?? '',

@@ -45,7 +45,7 @@ import { canCreateChannel } from 'app/shared/metis/conversations/conversation-pe
 
 const DEFAULT_CHANNEL_GROUPS: AccordionGroups = {
     favoriteChannels: { entityData: [] },
-    recently: { entityData: [] },
+    recents: { entityData: [] },
     generalChannels: { entityData: [] },
     exerciseChannels: { entityData: [] },
     lectureChannels: { entityData: [] },
@@ -64,7 +64,7 @@ const CHANNEL_TYPE_ICON: ChannelTypeIcons = {
     lectureChannels: faFile,
     hiddenChannels: faBan,
     savedPosts: faBookmark,
-    recently: faClock,
+    recents: faClock,
 };
 
 const DEFAULT_COLLAPSE_STATE: CollapseState = {
@@ -77,7 +77,7 @@ const DEFAULT_COLLAPSE_STATE: CollapseState = {
     lectureChannels: true,
     hiddenChannels: true,
     savedPosts: true,
-    recently: true,
+    recents: true,
 };
 
 const DEFAULT_SHOW_ALWAYS: SidebarItemShowAlways = {
@@ -90,7 +90,7 @@ const DEFAULT_SHOW_ALWAYS: SidebarItemShowAlways = {
     lectureChannels: false,
     hiddenChannels: false,
     savedPosts: true,
-    recently: true,
+    recents: true,
 };
 
 @Component({
@@ -404,7 +404,7 @@ export class CourseConversationsComponent implements OnInit, OnDestroy {
                 this.sidebarConversations = this.courseOverviewService.mapConversationsToSidebarCardElements(this.course!, this.conversationsOfUser);
                 this.accordionConversationGroups = this.courseOverviewService.groupConversationsByChannelType(this.course!, this.conversationsOfUser, this.messagingEnabled);
                 const currentConversations = this.sidebarConversations?.filter((item) => item.isCurrent) || [];
-                this.accordionConversationGroups.recently.entityData = currentConversations;
+                this.accordionConversationGroups.recents.entityData = currentConversations;
                 this.updateSidebarData();
             },
         });

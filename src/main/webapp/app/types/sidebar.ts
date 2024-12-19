@@ -16,7 +16,7 @@ export type AccordionGroups = Record<
 >;
 export type ChannelGroupCategory =
     | 'favoriteChannels'
-    | 'recently'
+    | 'recents'
     | 'generalChannels'
     | 'exerciseChannels'
     | 'lectureChannels'

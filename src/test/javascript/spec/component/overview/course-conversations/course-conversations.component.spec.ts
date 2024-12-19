@@ -180,7 +180,7 @@ examples.forEach((activeConversation) => {
             ]);
 
             jest.spyOn(courseOverviewService, 'groupConversationsByChannelType').mockReturnValue({
-                recently: {
+                recents: {
                     entityData: [
                         {
                             id: 1,
@@ -469,15 +469,15 @@ examples.forEach((activeConversation) => {
                 expect(prepareSidebarDataSpy).not.toHaveBeenCalled();
             });
 
-            it('should correctly populate the recently group in accordionConversationGroups using existing mocks', fakeAsync(() => {
+            it('should correctly populate the recents group in accordionConversationGroups using existing mocks', fakeAsync(() => {
                 (metisConversationService.forceRefresh as jest.Mock).mockReturnValue(of({}));
 
                 component.prepareSidebarData();
                 tick();
-                const recentlyGroup = component.accordionConversationGroups.recently;
-                expect(recentlyGroup).toBeDefined();
-                expect(recentlyGroup.entityData).toHaveLength(1);
-                expect(recentlyGroup.entityData[0].isCurrent).toBeTrue();
+                const recentsGroup = component.accordionConversationGroups.recents;
+                expect(recentsGroup).toBeDefined();
+                expect(recentsGroup.entityData).toHaveLength(1);
+                expect(recentsGroup.entityData[0].isCurrent).toBeTrue();
             }));
         });
 
