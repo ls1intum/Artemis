@@ -9,7 +9,7 @@ import { GroupChatService } from 'app/shared/metis/conversations/group-chat.serv
 import { ConversationDTO } from 'app/entities/metis/conversation/conversation.model';
 import { Course } from 'app/entities/course.model';
 import { generateExampleChannelDTO, generateExampleGroupChatDTO } from '../../helpers/conversationExampleModels';
-import { Component, EventEmitter, Input, Output } from '@angular/core';
+import { Component, EventEmitter, Input, Output, input } from '@angular/core';
 import { AddUsersFormData } from 'app/overview/course-conversations/dialogs/conversation-add-users-dialog/add-users-form/conversation-add-users-form.component';
 import { initializeDialog } from '../dialog-test-helpers';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
@@ -28,6 +28,8 @@ class ConversationAddUsersFormStubComponent {
     @Output() formSubmitted: EventEmitter<AddUsersFormData> = new EventEmitter<AddUsersFormData>();
     @Input() courseId: number;
     @Input() maxSelectable?: number = undefined;
+
+    protected readonly isLoading = input<boolean>(false);
 
     @Input()
     activeConversation: ConversationDTO;
