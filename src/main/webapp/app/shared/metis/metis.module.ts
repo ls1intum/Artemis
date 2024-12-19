@@ -3,6 +3,7 @@ import { ArtemisSharedModule } from 'app/shared/shared.module';
 import { ArtemisConfirmIconModule } from 'app/shared/confirm-icon/confirm-icon.module';
 import { PostingThreadComponent } from 'app/shared/metis/posting-thread/posting-thread.component';
 import { PostComponent } from 'app/shared/metis/post/post.component';
+import { ForwardedMessageComponent } from 'app/shared/metis/forwarded-message/forwarded-message.component';
 import { AnswerPostComponent } from 'app/shared/metis/answer-post/answer-post.component';
 import { ArtemisMarkdownModule } from 'app/shared/markdown.module';
 import { ArtemisMarkdownEditorModule } from 'app/shared/markdown-editor/markdown-editor.module';
@@ -90,6 +91,7 @@ import { ProfilePictureComponent } from 'app/shared/profile-picture/profile-pict
         ReactingUsersOnPostingPipe,
         EmojiComponent,
         EmojiPickerComponent,
+        ForwardedMessageComponent,
     ],
     exports: [
         PostingThreadComponent,
@@ -115,6 +117,7 @@ import { ProfilePictureComponent } from 'app/shared/profile-picture/profile-pict
         HtmlForPostingMarkdownPipe,
         EmojiComponent,
         EmojiPickerComponent,
+        ForwardedMessageComponent,
     ],
     providers: [MetisConversationService],
 })

@@ -11,7 +11,7 @@ import { MetisConversationService } from 'app/shared/metis/metis-conversation.se
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { MetisService } from 'app/shared/metis/metis.service';
 import { Post } from 'app/entities/metis/post.model';
-import { BehaviorSubject } from 'rxjs';
+import { BehaviorSubject, of } from 'rxjs';
 import { ConversationDTO } from 'app/entities/metis/conversation/conversation.model';
 import { generateExampleChannelDTO, generateExampleGroupChatDTO, generateOneToOneChatDTO } from '../../helpers/conversationExampleModels';
 import { Directive, EventEmitter, Input, Output, QueryList } from '@angular/core';
@@ -20,6 +20,8 @@ import { Course } from 'app/entities/course.model';
 import { getAsChannelDTO } from 'app/entities/metis/conversation/channel.model';
 import { PostCreateEditModalComponent } from 'app/shared/metis/posting-create-edit-modal/post-create-edit-modal/post-create-edit-modal.component';
 import dayjs from 'dayjs';
+import { HttpResponse } from '@angular/common/http';
+import { ForwardedMessage } from '../../../../../../../../main/webapp/app/entities/metis/forwarded-message.model';
 
 const examples: ConversationDTO[] = [
     generateOneToOneChatDTO({}),
@@ -266,6 +268,23 @@ examples.forEach((activeConversation) => {
             expect(component.groupedPosts[0].posts).toHaveLength(1);
             expect(component.groupedPosts[1].posts).toHaveLength(1);
             expect(component.groupedPosts[2].posts).toHaveLength(1);
+        });
+
+        it('should fetch forwarded messages correctly', () => {
+            const mockForwardedMessages: ForwardedMessage[] = [
+                { id: 101, sourceId: 10, sourceType: 'POST' } as unknown as ForwardedMessage,
+                { id: 102, sourceId: 11, sourceType: 'ANSWER' } as unknown as ForwardedMessage,
+            ];
+
+            const mockResponse = new HttpResponse({
+                body: [{ id: 1, messages: mockForwardedMessages }],
+            });
+
+            jest.spyOn(metisService, 'getForwardedMessagesByIds').mockReturnValue(of(mockResponse));
+
+            metisService.getForwardedMessagesByIds([1], 'post')?.subscribe((response) => {
+                expect(response.body).toEqual(mockResponse.body);
+            });
         });
 
         if (getAsChannelDTO(activeConversation)?.isAnnouncementChannel) {

@@ -1,4 +1,4 @@
-import { Directive, EventEmitter, Input, OnChanges, OnInit, Output, output } from '@angular/core';
+import { Directive, EventEmitter, Input, OnChanges, OnInit, Output, inject, input, output } from '@angular/core';
 import { Posting } from 'app/entities/metis/posting.model';
 import { MetisService } from 'app/shared/metis/metis.service';
 import { EmojiData } from '@ctrl/ngx-emoji-mart/ngx-emoji';
@@ -6,10 +6,18 @@ import { Reaction } from 'app/entities/metis/reaction.model';
 import { PLACEHOLDER_USER_REACTED } from 'app/shared/pipes/reacting-users-on-posting.pipe';
 import { faBookmark } from '@fortawesome/free-solid-svg-icons';
 import { faBookmark as farBookmark } from '@fortawesome/free-regular-svg-icons';
+import { ChannelDTO } from 'app/entities/metis/conversation/channel.model';
+import { Course } from 'app/entities/course.model';
+import { map } from 'rxjs/operators';
+import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
+import { ForwardMessageDialogComponent } from 'app/overview/course-conversations/dialogs/forward-message-dialog/forward-message-dialog.component';
+import { Conversation, ConversationType } from 'app/entities/metis/conversation/conversation.model';
+import { ConversationService } from 'app/shared/metis/conversations/conversation.service';
+import { UserPublicInfoDTO } from 'app/core/user/user.model';
+import { MetisConversationService } from 'app/shared/metis/metis-conversation.service';
 
 const PIN_EMOJI_ID = 'pushpin';
 const ARCHIVE_EMOJI_ID = 'open_file_folder';
-const SPEECH_BALLOON_ID = 'speech_balloon';
 const HEAVY_MULTIPLICATION_ID = 'heavy_multiplication_x';
 
 const SPEECH_BALLOON_UNICODE = '1F4AC';
@@ -46,13 +54,18 @@ interface ReactionMetaDataMap {
 export abstract class PostingsReactionsBarDirective<T extends Posting> implements OnInit, OnChanges {
     pinEmojiId: string = PIN_EMOJI_ID;
     archiveEmojiId: string = ARCHIVE_EMOJI_ID;
-    speechBalloonId: string = SPEECH_BALLOON_ID;
     closeCrossId: string = HEAVY_MULTIPLICATION_ID;
 
     @Input() posting: T;
     @Input() isThreadSidebar: boolean;
     @Output() openPostingCreateEditModal = new EventEmitter<void>();
     @Output() reactionsUpdated = new EventEmitter<Reaction[]>();
+    channels: ChannelDTO[] = [];
+    users: UserPublicInfoDTO[] = [];
+    course = input<Course>();
+    public conversationService: ConversationService = inject(ConversationService);
+    public modalService: NgbModal = inject(NgbModal);
+    public metisConversationService: MetisConversationService = inject(MetisConversationService);
 
     showReactionSelector = false;
     currentUserIsAtLeastTutor: boolean;
@@ -119,6 +132,96 @@ export abstract class PostingsReactionsBarDirective<T extends Posting> implement
 
     deletePosting(): void {
         this.metisService.deletePost(this.posting);
+    }
+
+    openForwardMessageView(post: Posting, isAnswer: boolean): void {
+        if (!this.course()?.id) {
+            return;
+        }
+        this.channels = [];
+        this.users = [];
+
+        this.conversationService
+            .getConversationsOfUser(this.course()!.id!)
+            .pipe(map((response) => response.body || []))
+            .subscribe({
+                next: (conversations) => {
+                    conversations.forEach((conversation) => {
+                        if (conversation.type === ConversationType.CHANNEL && !(conversation as ChannelDTO).isAnnouncementChannel) {
+                            this.channels.push(conversation as ChannelDTO);
+                        }
+                    });
+
+                    const modalRef = this.modalService.open(ForwardMessageDialogComponent, {
+                        size: 'lg',
+                        backdrop: 'static',
+                    });
+
+                    modalRef.componentInstance.users.set([]);
+                    modalRef.componentInstance.channels.set(this.channels);
+                    modalRef.componentInstance.postToForward.set(post);
+                    modalRef.componentInstance.courseId.set(this.course()?.id);
+
+                    modalRef.result.then(
+                        async (selection: { channels: Conversation[]; users: UserPublicInfoDTO[]; messageContent: string }) => {
+                            if (selection) {
+                                const allSelections: Conversation[] = [...selection.channels];
+                                const userLogins = selection.users.map((user) => user.login!);
+
+                                if (userLogins.length > 0) {
+                                    let newConversation: Conversation | null = null;
+
+                                    if (userLogins.length === 1) {
+                                        try {
+                                            const response = await this.metisConversationService.createDirectConversation(userLogins[0]).toPromise();
+                                            newConversation = (response?.body ?? null) as Conversation;
+                                            if (newConversation) {
+                                                allSelections.push(newConversation);
+                                            }
+                                        } catch (error) {
+                                            console.error('Error creating one-to-one chat:', error);
+                                            return;
+                                        }
+                                    } else {
+                                        try {
+                                            const response = await this.metisConversationService.createGroupConversation(userLogins).toPromise();
+                                            if (response && response.body) {
+                                                newConversation = response.body as Conversation;
+                                                allSelections.push(newConversation);
+                                            } else {
+                                                console.error('Response body is undefined');
+                                            }
+                                        } catch (error) {
+                                            console.error('Error creating group chat:', error);
+                                            return;
+                                        }
+                                    }
+                                }
+
+                                allSelections.forEach((conversation) => {
+                                    if (conversation && conversation.id) {
+                                        this.forwardPost(post, conversation, selection.messageContent, isAnswer);
+                                    }
+                                });
+                            }
+                        },
+                        (reason) => {
+                            console.log('Modal dismissed:', reason);
+                        },
+                    );
+                },
+                error: (error) => {
+                    console.error('Error fetching conversations:', error);
+                },
+            });
+    }
+
+    forwardPost(post: Posting, conversation: Conversation, content: string, isAnswer: boolean): void {
+        this.metisService.createForwardedMessages([post], conversation, isAnswer, content).subscribe({
+            error: (error) => {
+                console.error('Error forwarding post:', error);
+            },
+        });
     }
 
     /**
