@@ -12,6 +12,7 @@ import { ExamExerciseGroupsPage } from '../../support/pageobjects/exam/ExamExerc
 import { Page } from '@playwright/test';
 import { Commands } from '../../support/commands';
 import { ExamAPIRequests } from '../../support/requests/ExamAPIRequests';
+import { prepareExam, startAssessing } from './ExamAssessment.spec';
 
 test.describe('Exam Checklists', async () => {
     let course: Course;
@@ -211,14 +212,76 @@ test.describe('Exam Checklists', async () => {
         await examDetails.checkItemChecked(ExamChecklistItem.START_DATE_REVIEW_SET);
         await examDetails.checkItemChecked(ExamChecklistItem.END_DATE_REVIEW_SET);
     });
+
+    test(
+        'Student makes a submission and missing assessment check is marked for instructor after assessment',
+        { tag: '@slow' },
+        async ({ page, login, examDetails, examManagement, courseAssessment, exerciseAssessment, textExerciseAssessment, examAPIRequests }) => {
+            const exam = await prepareExam(course, dayjs().add(1, 'day'), ExerciseType.TEXT, page);
+            await login(instructor);
+            await examAPIRequests.finishExam(exam);
+            await navigateToExamDetailsPage(page, course, exam);
+            await examDetails.checkItemUnchecked(ExamChecklistItem.UNFINISHED_ASSESSMENTS);
+            await startAssessing(course.id!, exam.id!, 60000, examManagement, courseAssessment, exerciseAssessment);
+            await textExerciseAssessment.addNewFeedback(5, 'OK');
+            await textExerciseAssessment.submit();
+            await navigateToExamDetailsPage(page, course, exam);
+            await examDetails.checkItemChecked(ExamChecklistItem.UNFINISHED_ASSESSMENTS);
+        },
+    );
+
+    test.skip(
+        'Student makes a quiz submission and unassessed quizzes check is marked for instructor after assessment',
+        { tag: '@slow' },
+        async ({ page, login, examDetails, examAPIRequests }) => {
+            const exam = await prepareExam(course, dayjs().add(1, 'day'), ExerciseType.QUIZ, page);
+            await login(instructor);
+            await examAPIRequests.finishExam(exam);
+            await navigateToExamDetailsPage(page, course, exam);
+            await examDetails.checkItemUnchecked(ExamChecklistItem.UNASSESSED_QUIZZES);
+            await examDetails.clickEvaluateQuizExercises();
+            await examDetails.checkItemChecked(ExamChecklistItem.UNASSESSED_QUIZZES);
+        },
+    );
+
+    test.skip(
+        'Student does not submit the exam on time and corresponding check is marked',
+        { tag: '@slow' },
+        async ({ page, login, examDetails, examAPIRequests, examExerciseGroupCreation, examParticipation }) => {
+            const examConfig = {
+                startDate: dayjs(),
+                endDate: dayjs().add(1, 'day'),
+                publishResultsDate: dayjs().add(2, 'day'),
+            };
+            const exam = await createExam(course, page, examConfig);
+            for (let i = 0; i < exam.numberOfExercisesInExam!; i++) {
+                await examExerciseGroupCreation.addGroupWithExercise(exam, ExerciseType.TEXT, { textFixture: 'loremIpsum-short.txt' });
+            }
+            await examAPIRequests.registerStudentForExam(exam, studentOne);
+            await examAPIRequests.generateMissingIndividualExams(exam);
+            await examAPIRequests.prepareExerciseStartForExam(exam);
+            await examParticipation.startParticipation(studentOne, course, exam);
+            await login(instructor);
+            await examAPIRequests.finishExam(exam);
+            await navigateToExamDetailsPage(page, course, exam);
+            await examDetails.checkItemUnchecked(ExamChecklistItem.UNSUBMITTED_EXERCISES);
+            await examDetails.clickAssessUnsubmittedParticipations();
+            await examDetails.checkItemChecked(ExamChecklistItem.UNSUBMITTED_EXERCISES);
+        },
+    );
+
+    test.afterEach('Delete course', async ({ courseManagementAPIRequests }) => {
+        await courseManagementAPIRequests.deleteCourse(course, admin);
+    });
 });
 
-async function createExam(course: Course, page: Page) {
+async function createExam(course: Course, page: Page, customConfig?: any) {
     const NUMBER_OF_EXERCISES = 2;
     const EXAM_MAX_POINTS = NUMBER_OF_EXERCISES * 10;
 
     await Commands.login(page, admin);
     const examConfig = {
+        ...customConfig,
         course,
         examMaxPoints: EXAM_MAX_POINTS,
         numberOfExercisesInExam: NUMBER_OF_EXERCISES,

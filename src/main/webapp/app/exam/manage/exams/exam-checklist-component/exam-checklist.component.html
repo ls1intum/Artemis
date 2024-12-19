@@ -494,7 +494,10 @@
                                                                     <span jhiTranslate="artemisApp.examManagement.checklist.textitems.checkUnfinishedAssessments"></span>
                                                                 </th>
                                                                 <th>
-                                                                    <jhi-checklist-check [checkAttribute]="!isExamOver || (isExamOver && !existsUnfinishedAssessments)" />
+                                                                    <jhi-checklist-check
+                                                                        [checkAttribute]="!isExamOver || (isExamOver && !existsUnfinishedAssessments)"
+                                                                        data-testid="check-unfinished-assessments"
+                                                                    />
                                                                 </th>
                                                                 <th>
                                                                     <button
@@ -516,7 +519,10 @@
                                                                     @if (isEvaluatingQuizExercises) {
                                                                         <span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
                                                                     } @else {
-                                                                        <jhi-checklist-check [checkAttribute]="!isExamOver || (isExamOver && !existsUnassessedQuizzes)" />
+                                                                        <jhi-checklist-check
+                                                                            [checkAttribute]="!isExamOver || (isExamOver && !existsUnassessedQuizzes)"
+                                                                            data-testid="check-unassessed-quizzes"
+                                                                        />
                                                                     }
                                                                 </th>
                                                                 <th>
@@ -543,7 +549,10 @@
                                                                     @if (isAssessingUnsubmittedExams) {
                                                                         <span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
                                                                     } @else {
-                                                                        <jhi-checklist-check [checkAttribute]="!isExamOver || (isExamOver && !existsUnsubmittedExercises)" />
+                                                                        <jhi-checklist-check
+                                                                            [checkAttribute]="!isExamOver || (isExamOver && !existsUnsubmittedExercises)"
+                                                                            data-testid="check-unsubmitted-exercises"
+                                                                        />
                                                                     }
                                                                 </th>
                                                                 <th>

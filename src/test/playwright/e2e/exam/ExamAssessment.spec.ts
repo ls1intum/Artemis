@@ -370,7 +370,7 @@ async function makeExamSubmission(
     await examStartEnd.finishExam();
 }
 
-async function startAssessing(
+export async function startAssessing(
     courseID: number,
     examID: number,
     timeout: number,

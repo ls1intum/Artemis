@@ -52,6 +52,14 @@ export class ExamDetailsPage {
         await this.page.locator('#editButton_review').click();
     }
 
+    async clickEvaluateQuizExercises() {
+        await this.page.locator('#evaluateQuizExercisesButton').click();
+    }
+
+    async clickAssessUnsubmittedParticipations() {
+        await this.page.locator('#assessUnsubmittedExamModelingAndTextParticipationsButton').click();
+    }
+
     /**
      * Deletes this exam.
      * @param examTitle the exam title to confirm the deletion
@@ -78,4 +86,7 @@ export enum ExamChecklistItem {
     PUBLISHING_DATE_SET = 'check-publishing-date-set',
     START_DATE_REVIEW_SET = 'check-start-date-review-set',
     END_DATE_REVIEW_SET = 'check-end-date-review-set',
+    UNFINISHED_ASSESSMENTS = 'check-unfinished-assessments',
+    UNASSESSED_QUIZZES = 'check-unassessed-quizzes',
+    UNSUBMITTED_EXERCISES = 'check-unsubmitted-exercises',
 }
