@@ -22,6 +22,7 @@ import { metisAnswerPostUser2, metisResolvingAnswerPostUser1, metisUser1 } from 
 import { AccountService } from 'app/core/auth/account.service';
 import { MockAccountService } from '../../../../../helpers/mocks/service/mock-account.service';
 import { ProfilePictureComponent } from 'app/shared/profile-picture/profile-picture.component';
+import { By } from '@angular/platform-browser';
 
 describe('AnswerPostHeaderComponent', () => {
     let component: AnswerPostHeaderComponent;
@@ -90,6 +91,15 @@ describe('AnswerPostHeaderComponent', () => {
         component.ngOnInit();
         fixture.detectChanges();
         expect(getElement(debugElement, '#today-flag')).toBeNull();
+    });
+
+    it('should display solution when answerPost resolves post', () => {
+        const isResolvesPostSetSpy = jest.spyOn(component, 'isResolvesPostSet');
+        component.posting = metisResolvingAnswerPostUser1;
+        fixture.detectChanges();
+        const solution = debugElement.query(By.css('.post-header-solution'));
+        expect(isResolvesPostSetSpy).toHaveReturnedWith(true);
+        expect(solution).not.toBeNull();
     });
 
     it('should initialize answer post not marked as resolved and not show the check to mark it as such', () => {
