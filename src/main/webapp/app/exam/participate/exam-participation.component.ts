@@ -39,12 +39,14 @@ import { ExamManagementService } from 'app/exam/manage/exam-management.service';
 import {
     ExamLiveEventType,
     ExamParticipationLiveEventsService,
+    ExamRescheduledEvent,
     ProblemStatementUpdateEvent,
     WorkingTimeUpdateEvent,
 } from 'app/exam/participate/exam-participation-live-events.service';
 import { ExamExerciseUpdateService } from 'app/exam/manage/exam-exercise-update.service';
 import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
 import { SidebarCardElement, SidebarData } from 'app/types/sidebar';
+import { convertDateFromServer } from 'app/utils/date.utils';
 
 type GenerateParticipationStatus = 'generating' | 'failed' | 'success';
 
@@ -102,6 +104,7 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
     errorSubscription: Subscription;
     websocketSubscription?: Subscription;
     workingTimeUpdateEventsSubscription?: Subscription;
+    examRescheduledEventsSubscription?: Subscription;
     problemStatementUpdateEventsSubscription?: Subscription;
     profileSubscription?: Subscription;
 
@@ -316,6 +319,7 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
                     });
                 }
             });
+            this.examRescheduledEventsSubscription?.unsubscribe();
             this.subscribeToProblemStatementUpdates();
             this.initializeOverviewPage();
         }
@@ -576,6 +580,7 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
         this.errorSubscription.unsubscribe();
         this.websocketSubscription?.unsubscribe();
         this.workingTimeUpdateEventsSubscription?.unsubscribe();
+        this.examRescheduledEventsSubscription?.unsubscribe();
         this.problemStatementUpdateEventsSubscription?.unsubscribe();
         this.examParticipationService.resetExamLayout();
         this.profileSubscription?.unsubscribe();
@@ -588,6 +593,9 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
         this.testExam = this.exam.testExam!;
         if (!this.exam.testExam) {
             this.initIndividualEndDates(this.exam.startDate!);
+        }
+        if (this.serverDateService.now().isBefore(this.exam.startDate)) {
+            this.subscribeToExamRescheduledEvents();
         }
 
         // only show the summary if the student was able to submit on time.
@@ -653,6 +661,21 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
                 this.individualStudentEndDateWithGracePeriod = this.individualStudentEndDate.clone().add(this.exam.gracePeriod!, 'seconds');
                 this.liveEventsService.acknowledgeEvent(event, false);
             });
+    }
+
+    private subscribeToExamRescheduledEvents() {
+        if (this.examRescheduledEventsSubscription) {
+            this.examRescheduledEventsSubscription.unsubscribe();
+        }
+        this.examRescheduledEventsSubscription = this.liveEventsService.observeNewEventsAsSystem([ExamLiveEventType.EXAM_RESCHEDULED]).subscribe((event: ExamRescheduledEvent) => {
+            // Create new object to make change detection work, otherwise the dates will not update
+            const startDate = convertDateFromServer(event.newStartDate);
+            const endDate = convertDateFromServer(event.newEndDate);
+            this.exam = { ...this.exam, startDate: startDate, endDate: endDate };
+            this.individualStudentEndDate = dayjs(this.exam.startDate).add(this.studentExam.workingTime!, 'seconds');
+            this.individualStudentEndDateWithGracePeriod = this.individualStudentEndDate.clone().add(this.exam.gracePeriod!, 'seconds');
+            this.liveEventsService.acknowledgeEvent(event, false);
+        });
     }
 
     private subscribeToProblemStatementUpdates() {

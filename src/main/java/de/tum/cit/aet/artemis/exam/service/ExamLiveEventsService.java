@@ -12,6 +12,7 @@ import de.tum.cit.aet.artemis.exam.domain.Exam;
 import de.tum.cit.aet.artemis.exam.domain.StudentExam;
 import de.tum.cit.aet.artemis.exam.domain.event.ExamAttendanceCheckEvent;
 import de.tum.cit.aet.artemis.exam.domain.event.ExamLiveEvent;
+import de.tum.cit.aet.artemis.exam.domain.event.ExamRescheduledEvent;
 import de.tum.cit.aet.artemis.exam.domain.event.ExamWideAnnouncementEvent;
 import de.tum.cit.aet.artemis.exam.domain.event.ProblemStatementUpdateEvent;
 import de.tum.cit.aet.artemis.exam.domain.event.WorkingTimeUpdateEvent;
@@ -127,6 +128,28 @@ public class ExamLiveEventsService {
         event.setCourseWide(courseWide);
 
         this.storeAndDistributeLiveExamEvent(event);
+    }
+
+    /**
+     * Send an exam rescheduled update to the specified student.
+     *
+     * @param studentExam The student exam the dates rescheduled for
+     * @param sentBy      The user who performed the update
+     */
+    public void createAndSendExamRescheduledEvent(StudentExam studentExam, User sentBy) {
+        var event = new ExamRescheduledEvent();
+
+        // Common fields
+        event.setExamId(studentExam.getExam().getId());
+        event.setStudentExamId(studentExam.getId());
+        event.setCreatedBy(sentBy.getName());
+
+        // Specific fields
+        event.setNewStartDate(studentExam.getExam().getStartDate());
+        event.setNewEndDate(studentExam.getExam().getEndDate());
+
+        this.storeAndDistributeLiveExamEvent(event);
+
     }
 
     /**
