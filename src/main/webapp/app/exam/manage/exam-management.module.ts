@@ -72,12 +72,14 @@ import { DetailModule } from 'app/detail-overview-list/detail.module';
 import { ArtemisDurationFromSecondsPipe } from 'app/shared/pipes/artemis-duration-from-seconds.pipe';
 import { NoDataComponent } from 'app/shared/no-data-component';
 import { GitDiffLineStatComponent } from 'app/exercises/programming/hestia/git-diff-report/git-diff-line-stat.component';
+import { SafeHtmlPipe } from 'app/shared/pipes/safe-html.pipe';
+import { GradeStepBoundsPipe } from 'app/shared/pipes/grade-step-bounds.pipe';
 
 const ENTITY_STATES = [...examManagementState];
 
 @NgModule({
     // TODO: For better modularization we could define an exercise module with the corresponding exam routes
-    providers: [ArtemisDurationFromSecondsPipe],
+    providers: [ArtemisDurationFromSecondsPipe, SafeHtmlPipe, GradeStepBoundsPipe],
     imports: [
         RouterModule.forChild(ENTITY_STATES),
         ArtemisTextExerciseModule,
@@ -113,6 +115,8 @@ const ENTITY_STATES = [...examManagementState];
         DetailModule,
         NoDataComponent,
         GitDiffLineStatComponent,
+        SafeHtmlPipe,
+        GradeStepBoundsPipe,
     ],
     declarations: [
         ExamManagementComponent,

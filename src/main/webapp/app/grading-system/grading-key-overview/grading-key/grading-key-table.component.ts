@@ -11,11 +11,18 @@ import { ScoresStorageService } from 'app/course/course-scores/scores-storage.se
 import { ScoreType } from 'app/shared/constants/score-type.constants';
 import { ActivatedRoute } from '@angular/router';
 import { loadGradingKeyUrlParams } from 'app/grading-system/grading-key-overview/grading-key-helper';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
+import { GradeStepBoundsPipe } from 'app/shared/pipes/grade-step-bounds.pipe';
+import { SafeHtmlPipe } from 'app/shared/pipes/safe-html.pipe';
+import { ArtemisSharedComponentModule } from 'app/shared/components/shared-component.module';
 
 @Component({
     selector: 'jhi-grade-key-table',
     templateUrl: './grading-key-table.component.html',
     styleUrls: ['../grading-key-overview.scss'],
+    standalone: true,
+    imports: [TranslateDirective, ArtemisTranslatePipe, GradeStepBoundsPipe, SafeHtmlPipe, ArtemisSharedComponentModule],
 })
 export class GradingKeyTableComponent implements OnInit {
     readonly faChevronLeft = faChevronLeft;

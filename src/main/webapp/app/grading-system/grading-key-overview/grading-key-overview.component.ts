@@ -6,11 +6,17 @@ import { ArtemisNavigationUtilService } from 'app/utils/navigation.utils';
 import { faChevronLeft, faPrint } from '@fortawesome/free-solid-svg-icons';
 import { ThemeService } from 'app/core/theme/theme.service';
 import { loadGradingKeyUrlParams } from 'app/grading-system/grading-key-overview/grading-key-helper';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { GradingKeyTableComponent } from 'app/grading-system/grading-key-overview/grading-key/grading-key-table.component';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 
 @Component({
     selector: 'jhi-grade-key-overview',
     templateUrl: './grading-key-overview.component.html',
     styleUrls: ['./grading-key-overview.scss'],
+    standalone: true,
+    imports: [TranslateDirective, GradingKeyTableComponent, FaIconComponent, ArtemisTranslatePipe],
 })
 export class GradingKeyOverviewComponent implements OnInit {
     readonly faChevronLeft = faChevronLeft;
