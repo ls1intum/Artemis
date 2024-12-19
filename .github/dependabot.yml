@@ -57,7 +57,7 @@ updates:
 
   # Check for version updates for Python dependencies (coverage)
   - package-ecosystem: "pip"
-    directory: "/supporting_scripts/generate_code_cov_table"
+    directory: "/supporting_scripts/code-coverage/generate_code_cov_table"
     schedule:
       interval: "weekly"
     reviewers:
