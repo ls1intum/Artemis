@@ -5,13 +5,12 @@ import { VideoUnitService } from 'app/lecture/lecture-unit/lecture-unit-manageme
 import { MockComponent, MockProvider } from 'ng-mocks';
 import { AlertService } from 'app/core/util/alert.service';
 import { ActivatedRoute, Router } from '@angular/router';
-import { MockRouter } from '../../../helpers/mocks/mock-router';
+import { MockRouter } from '../../helpers/mocks/mock-router';
 import { of, throwError } from 'rxjs';
 import { VideoUnit } from 'app/entities/lecture-unit/videoUnit.model';
 import dayjs from 'dayjs/esm';
 import { HttpResponse } from '@angular/common/http';
 import { By } from '@angular/platform-browser';
-import { LectureUpdateWizardUnitsComponent } from 'app/lecture/wizard-mode/lecture-wizard-units.component';
 import { Lecture } from 'app/entities/lecture.model';
 import { TextUnitService } from 'app/lecture/lecture-unit/lecture-unit-management/textUnit.service';
 import { OnlineUnitService } from 'app/lecture/lecture-unit/lecture-unit-management/onlineUnit.service';
@@ -27,7 +26,8 @@ import { Attachment, AttachmentType } from 'app/entities/attachment.model';
 import { AttachmentUnit } from 'app/entities/lecture-unit/attachmentUnit.model';
 import { objectToJsonBlob } from 'app/utils/blob-util';
 import { CreateExerciseUnitComponent } from 'app/lecture/lecture-unit/lecture-unit-management/create-exercise-unit/create-exercise-unit.component';
-import { CompetencyLectureUnitLink } from '../../../../../../main/webapp/app/entities/competency.model';
+import { LectureUpdateUnitsComponent } from 'app/lecture/lecture-units/lecture-units.component';
+import { CompetencyLectureUnitLink } from 'app/entities/competency.model';
 
 @Component({ selector: 'jhi-video-unit-form', template: '' })
 class VideoUnitFormStubComponent {
@@ -41,9 +41,9 @@ class UnitCreationCardStubComponent {
     @Output() onUnitCreationCardClicked: EventEmitter<LectureUnitType> = new EventEmitter<LectureUnitType>();
 }
 
-describe('LectureWizardUnitComponent', () => {
-    let wizardUnitComponentFixture: ComponentFixture<LectureUpdateWizardUnitsComponent>;
-    let wizardUnitComponent: LectureUpdateWizardUnitsComponent;
+describe('LectureUpdateUnitsComponent', () => {
+    let wizardUnitComponentFixture: ComponentFixture<LectureUpdateUnitsComponent>;
+    let wizardUnitComponent: LectureUpdateUnitsComponent;
 
     beforeEach(() => {
         TestBed.configureTestingModule({
@@ -51,7 +51,7 @@ describe('LectureWizardUnitComponent', () => {
             declarations: [
                 VideoUnitFormStubComponent,
                 UnitCreationCardStubComponent,
-                LectureUpdateWizardUnitsComponent,
+                LectureUpdateUnitsComponent,
                 MockComponent(CreateExerciseUnitComponent),
                 MockComponent(LectureUnitManagementComponent),
             ],
@@ -72,7 +72,7 @@ describe('LectureWizardUnitComponent', () => {
         })
             .compileComponents()
             .then(() => {
-                wizardUnitComponentFixture = TestBed.createComponent(LectureUpdateWizardUnitsComponent);
+                wizardUnitComponentFixture = TestBed.createComponent(LectureUpdateUnitsComponent);
                 wizardUnitComponent = wizardUnitComponentFixture.componentInstance;
                 wizardUnitComponent.lecture = new Lecture();
                 wizardUnitComponent.lecture.id = 1;

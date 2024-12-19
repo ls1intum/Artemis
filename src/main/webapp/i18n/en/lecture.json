@@ -4,6 +4,7 @@
             "home": {
                 "title": "Lectures",
                 "createLabel": "Create Lecture",
+                "editLabel": "Edit Lecture",
                 "filterLabel": "Filter",
                 "filterOptions": {
                     "filterPast": "Past",
@@ -12,9 +13,6 @@
                     "filterUnspecifiedDates": "Unspecified Date(s)"
                 },
                 "createOrEditLabel": "Create or Edit Lecture",
-                "switchToGuidedModeLabel": "Switch to guided mode",
-                "switchToTraditionalModeLabel": "Switch to normal mode",
-                "nextStepLabel": "Next",
                 "ingestLecturesInPyrisLabel": "Send Lectures to Iris"
             },
             "created": "Created new lecture with identifier {{ param }}",
@@ -74,7 +72,7 @@
             "wizardMode": {
                 "steps": {
                     "titleStepTitle": "Title",
-                    "titleStepMessage": "Add a title and meaningful description to the new lecture.",
+                    "titleStepMessage": "Add a title and meaningful description to the lecture.",
                     "periodStepTitle": "Period",
                     "periodStepMessage": "Specify the begin and end dates of the lecture.",
                     "attachmentsStepTitle": "Attachments",

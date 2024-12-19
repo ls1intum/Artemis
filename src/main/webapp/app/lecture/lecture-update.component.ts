@@ -1,4 +1,4 @@
-import { Component, OnDestroy, OnInit, ViewChild, effect, inject, signal, viewChild } from '@angular/core';
+import { Component, OnDestroy, OnInit, effect, inject, signal, viewChild } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { Observable, Subscription } from 'rxjs';
@@ -9,8 +9,7 @@ import { Course } from 'app/entities/course.model';
 import { onError } from 'app/shared/util/global.utils';
 import { ArtemisNavigationUtilService } from 'app/utils/navigation.utils';
 import { DocumentationType } from 'app/shared/components/documentation-button/documentation-button.component';
-import { faBan, faHandshakeAngle, faPuzzlePiece, faQuestionCircle, faSave } from '@fortawesome/free-solid-svg-icons';
-import { LectureUpdateWizardComponent } from 'app/lecture/wizard-mode/lecture-update-wizard.component';
+import { faBan, faPuzzlePiece, faQuestionCircle, faSave } from '@fortawesome/free-solid-svg-icons';
 import { ACCEPTED_FILE_EXTENSIONS_FILE_BROWSER, ALLOWED_FILE_EXTENSIONS_HUMAN_READABLE } from 'app/shared/constants/file-extensions.constants';
 import { FormulaAction } from 'app/shared/monaco-editor/model/actions/formula.action';
 import { LectureTitleChannelNameComponent } from './lecture-title-channel-name.component';
@@ -18,6 +17,9 @@ import { LectureUpdatePeriodComponent } from 'app/lecture/lecture-period/lecture
 import dayjs, { Dayjs } from 'dayjs';
 import { FormDateTimePickerComponent } from 'app/shared/date-time-picker/date-time-picker.component';
 import cloneDeep from 'lodash-es/cloneDeep';
+import { FormSectionStatus, FormStatusBarComponent } from 'app/forms/form-status-bar/form-status-bar.component';
+import { LectureAttachmentsComponent } from 'app/lecture/lecture-attachments.component';
+import { LectureUpdateUnitsComponent } from 'app/lecture/lecture-units/lecture-units.component';
 
 @Component({
     selector: 'jhi-lecture-update',
@@ -30,12 +32,9 @@ export class LectureUpdateComponent implements OnInit, OnDestroy {
     protected readonly faSave = faSave;
     protected readonly faPuzzleProcess = faPuzzlePiece;
     protected readonly faBan = faBan;
-    protected readonly faHandShakeAngle = faHandshakeAngle;
 
     protected readonly allowedFileExtensions = ALLOWED_FILE_EXTENSIONS_HUMAN_READABLE;
     protected readonly acceptedFileExtensionsFileBrowser = ACCEPTED_FILE_EXTENSIONS_FILE_BROWSER;
-
-    @ViewChild(LectureUpdateWizardComponent, { static: false }) wizardComponent: LectureUpdateWizardComponent;
 
     private readonly alertService = inject(AlertService);
     private readonly lectureService = inject(LectureService);
@@ -43,15 +42,20 @@ export class LectureUpdateComponent implements OnInit, OnDestroy {
     private readonly navigationUtilService = inject(ArtemisNavigationUtilService);
     private readonly router = inject(Router);
 
-    titleSection = viewChild(LectureTitleChannelNameComponent);
-    lecturePeriodSection = viewChild(LectureUpdatePeriodComponent);
+    titleSection = viewChild.required(LectureTitleChannelNameComponent);
+    lecturePeriodSection = viewChild.required(LectureUpdatePeriodComponent);
+    attachmentsSection = viewChild(LectureAttachmentsComponent);
+    unitSection = viewChild(LectureUpdateUnitsComponent);
+    formStatusBar = viewChild(FormStatusBarComponent);
 
     lecture = signal<Lecture>(new Lecture());
     lectureOnInit: Lecture;
+    isEditMode = signal<boolean>(false);
     isSaving: boolean;
     isProcessing: boolean;
     processUnitMode: boolean;
-    isShowingWizardMode: boolean;
+
+    formStatusSections: FormSectionStatus[];
 
     courses: Course[];
 
@@ -60,8 +64,7 @@ export class LectureUpdateComponent implements OnInit, OnDestroy {
     fileName: string;
     fileInputTouched = false;
 
-    toggleModeFunction = () => this.toggleWizardMode();
-    saveLectureFunction = () => this.save();
+    isNewlyCreatedExercise = false;
 
     isChangeMadeToTitleOrPeriodSection = false;
     shouldDisplayDismissWarning = true;
@@ -96,13 +99,53 @@ export class LectureUpdateComponent implements OnInit, OnDestroy {
                 );
             }
         });
+
+        effect(
+            function updateFormStatusBarAfterLectureCreation() {
+                const updatedFormStatusSections: FormSectionStatus[] = [];
+
+                if (this.isEditMode()) {
+                    updatedFormStatusSections.push(
+                        {
+                            title: 'artemisApp.lecture.wizardMode.steps.attachmentsStepTitle',
+                            valid: Boolean(this.attachmentsSection()?.isFormValid()),
+                        },
+                        {
+                            title: 'artemisApp.lecture.wizardMode.steps.unitsStepTitle',
+                            valid: Boolean(this.unitSection()?.isUnitConfigurationValid()),
+                        },
+                    );
+                }
+
+                updatedFormStatusSections.unshift(
+                    {
+                        title: 'artemisApp.lecture.wizardMode.steps.titleStepTitle',
+                        valid: Boolean(this.titleSection().titleChannelNameComponent().isFormValidSignal()),
+                    },
+                    {
+                        title: 'artemisApp.lecture.wizardMode.steps.periodStepTitle',
+                        valid: Boolean(this.lecturePeriodSection().isPeriodSectionValid()),
+                    },
+                );
+
+                this.formStatusSections = updatedFormStatusSections;
+            }.bind(this),
+        );
+
+        effect(
+            function scrollToLastSectionAfterLectureCreation() {
+                if (this.unitSection() && this.isNewlyCreatedExercise) {
+                    this.isNewlyCreatedExercise = false;
+                    this.formStatusBar()?.scrollToHeadline('artemisApp.lecture.wizardMode.steps.periodStepTitle');
+                }
+            }.bind(this),
+        );
     }
 
     ngOnInit() {
         this.isSaving = false;
         this.processUnitMode = false;
         this.isProcessing = false;
-        this.isShowingWizardMode = false;
         this.activatedRoute.parent!.data.subscribe((data) => {
             // Create a new lecture to use unless we fetch an existing lecture
             const lecture = data['lecture'];
@@ -113,12 +156,7 @@ export class LectureUpdateComponent implements OnInit, OnDestroy {
             }
         });
 
-        this.activatedRoute.queryParams.subscribe((params) => {
-            if (params.shouldBeInWizardMode) {
-                this.isShowingWizardMode = params.shouldBeInWizardMode;
-            }
-        });
-
+        this.isEditMode.set(!this.router.url.endsWith('/new'));
         this.lectureOnInit = cloneDeep(this.lecture());
     }
 
@@ -182,14 +220,6 @@ export class LectureUpdateComponent implements OnInit, OnDestroy {
         }
     }
 
-    /**
-     * Activate or deactivate the wizard mode for easier lecture creation.
-     * This function is called by pressing "Switch to guided mode" when creating a new lecture
-     */
-    toggleWizardMode() {
-        this.isShowingWizardMode = !this.isShowingWizardMode;
-    }
-
     proceedToUnitSplit() {
         this.save();
     }
@@ -227,25 +257,25 @@ export class LectureUpdateComponent implements OnInit, OnDestroy {
      * Action on successful lecture creation or edit
      */
     protected onSaveSuccess(lecture: Lecture) {
-        if (this.isShowingWizardMode && !this.lecture().id) {
-            this.lectureService.findWithDetails(lecture.id!).subscribe({
-                next: (response: HttpResponse<Lecture>) => {
-                    this.isSaving = false;
-                    this.lecture.set(response.body!);
-                    this.alertService.success(`Lecture with title ${lecture.title} was successfully created.`);
-                    this.wizardComponent.onLectureCreationSucceeded();
-                },
-            });
-        } else if (this.processUnitMode) {
-            this.isSaving = false;
+        this.isSaving = false;
+
+        if (this.processUnitMode) {
             this.isProcessing = false;
             this.alertService.success(`Lecture with title ${lecture.title} was successfully ${this.lecture().id !== undefined ? 'updated' : 'created'}.`);
             this.router.navigate(['course-management', lecture.course!.id, 'lectures', lecture.id, 'unit-management', 'attachment-units', 'process'], {
                 state: { file: this.file, fileName: this.fileName },
             });
-        } else {
-            this.isSaving = false;
+        } else if (this.isEditMode()) {
             this.router.navigate(['course-management', lecture.course!.id, 'lectures', lecture.id]);
+        } else {
+            // after create we stay on the edit page, as now attachments and lecture units are available (we need the lecture id to save them)
+            this.isNewlyCreatedExercise = true;
+            this.isEditMode.set(true);
+            this.lectureOnInit = cloneDeep(lecture);
+            this.lecture.set(lecture);
+            this.updateIsChangesMadeToTitleOrPeriodSection();
+            window.history.replaceState({}, '', `course-management/${lecture.course!.id}/lectures/${lecture.id}/edit`);
+            this.shouldDisplayDismissWarning = true;
         }
     }
 

@@ -3,10 +3,10 @@ import { CanDeactivateFn } from '@angular/router';
 import { NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
 import { LectureUpdateComponent } from 'app/lecture/lecture-update.component';
 import { Observable, from, of } from 'rxjs';
-import { CloseEditLectureModalComponent } from 'app/lecture/close-edit-lecture-dialog/close-edit-lecture-modal.component';
+import { CloseEditLectureModalComponent } from 'app/lecture/close-edit-lecture-modal/close-edit-lecture-modal.component';
 
 export const hasLectureUnsavedChangesGuard: CanDeactivateFn<LectureUpdateComponent> = (component: LectureUpdateComponent): Observable<boolean> => {
-    if (!component.shouldDisplayDismissWarning || component.isShowingWizardMode) {
+    if (!component.shouldDisplayDismissWarning) {
         return of(true);
     }
 

@@ -4,6 +4,7 @@
             "home": {
                 "title": "Vorlesungen",
                 "createLabel": "Vorlesung erstellen",
+                "editLabel": "Vorlesung bearbeiten",
                 "filterLabel": "Filter",
                 "filterOptions": {
                     "filterPast": "Vergangene",
@@ -12,9 +13,6 @@
                     "filterUnspecifiedDates": "Ohne Zeitangaben"
                 },
                 "createOrEditLabel": "Vorlesung erstellen oder bearbeiten",
-                "switchToGuidedModeLabel": "Zum geführten Modus wechseln",
-                "switchToTraditionalModeLabel": "Zum normalen Modus wechseln",
-                "nextStepLabel": "Weiter",
                 "ingestLecturesInPyrisLabel": "Vorlesungen an Iris senden"
             },
             "created": "Vorlesung erstellt mit ID {{ param }}",
@@ -74,7 +72,7 @@
             "wizardMode": {
                 "steps": {
                     "titleStepTitle": "Titel",
-                    "titleStepMessage": "Gib einen Titel und eine aussagekräftige Beschreibung für die neue Vorlesung ein.",
+                    "titleStepMessage": "Gib einen Titel und eine aussagekräftige Beschreibung für die Vorlesung ein.",
                     "periodStepTitle": "Zeitraum",
                     "periodStepMessage": "Lege das Start- und Enddatum der Vorlesung fest.",
                     "attachmentsStepTitle": "Anhänge",
