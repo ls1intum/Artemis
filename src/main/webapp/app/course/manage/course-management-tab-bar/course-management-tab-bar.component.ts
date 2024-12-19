@@ -204,12 +204,6 @@ export class CourseManagementTabBarComponent implements OnInit, OnDestroy, After
     }
 
     private getExistingSummaryEntries(): EntitySummary {
-        const numberRepositories =
-            this.course?.exercises
-                ?.filter((exercise) => exercise.type === 'programming')
-                .map((exercise) => exercise?.numberOfParticipations ?? 0)
-                .reduce((repositorySum, numberOfParticipationsForRepository) => repositorySum + numberOfParticipationsForRepository, 0) ?? 0;
-
         const numberOfExercisesPerType = new Map<ExerciseType, number>();
         this.course?.exercises?.forEach((exercise) => {
             if (exercise.type === undefined) {
@@ -219,8 +213,6 @@ export class CourseManagementTabBarComponent implements OnInit, OnDestroy, After
             numberOfExercisesPerType.set(exercise.type, oldValue + 1);
         });
 
-        const numberExams = this.course?.numberOfExams ?? 0;
-        const numberLectures = this.course?.lectures?.length ?? 0;
         const numberStudents = this.course?.numberOfStudents ?? 0;
         const numberTutors = this.course?.numberOfTeachingAssistants ?? 0;
         const numberEditors = this.course?.numberOfEditors ?? 0;
@@ -228,14 +220,6 @@ export class CourseManagementTabBarComponent implements OnInit, OnDestroy, After
         const isTestCourse = this.course?.testCourse;
 
         return {
-            'artemisApp.course.delete.summary.numberRepositories': numberRepositories,
-            'artemisApp.course.delete.summary.numberProgrammingExercises': numberOfExercisesPerType.get(ExerciseType.PROGRAMMING) ?? 0,
-            'artemisApp.course.delete.summary.numberModelingExercises': numberOfExercisesPerType.get(ExerciseType.MODELING) ?? 0,
-            'artemisApp.course.delete.summary.numberTextExercises': numberOfExercisesPerType.get(ExerciseType.TEXT) ?? 0,
-            'artemisApp.course.delete.summary.numberFileUploadExercises': numberOfExercisesPerType.get(ExerciseType.FILE_UPLOAD) ?? 0,
-            'artemisApp.course.delete.summary.numberQuizExercises': numberOfExercisesPerType.get(ExerciseType.QUIZ) ?? 0,
-            'artemisApp.course.delete.summary.numberExams': numberExams,
-            'artemisApp.course.delete.summary.numberLectures': numberLectures,
             'artemisApp.course.delete.summary.numberStudents': numberStudents,
             'artemisApp.course.delete.summary.numberTutors': numberTutors,
             'artemisApp.course.delete.summary.numberEditors': numberEditors,
@@ -259,6 +243,13 @@ export class CourseManagementTabBarComponent implements OnInit, OnDestroy, After
 
                 return {
                     ...this.getExistingSummaryEntries(),
+                    'artemisApp.course.delete.summary.numberExams': summary.numberExams,
+                    'artemisApp.course.delete.summary.numberLectures': summary.numberLectures,
+                    'artemisApp.course.delete.summary.numberProgrammingExercises': summary.numberProgrammingExercises,
+                    'artemisApp.course.delete.summary.numberTextExercises': summary.numberTextExercises,
+                    'artemisApp.course.delete.summary.numberFileUploadExercises': summary.numberFileUploadExercises,
+                    'artemisApp.course.delete.summary.numberQuizExercises': summary.numberQuizExercises,
+                    'artemisApp.course.delete.summary.numberModelingExercises': summary.numberModelingExercises,
                     'artemisApp.course.delete.summary.numberBuilds': summary.numberOfBuilds,
                     'artemisApp.course.delete.summary.numberCommunicationPosts': summary.numberOfCommunicationPosts,
                     'artemisApp.course.delete.summary.numberAnswerPosts': summary.numberOfAnswerPosts,
