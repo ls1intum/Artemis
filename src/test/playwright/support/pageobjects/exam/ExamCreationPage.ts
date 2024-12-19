@@ -52,6 +52,27 @@ export class ExamCreationPage {
     }
 
     /**
+     * @param date the date when the exam results will be published
+     */
+    async setPublishResultsDate(date: dayjs.Dayjs) {
+        await enterDate(this.page, '#publishResultsDate', date);
+    }
+
+    /**
+     * @param date the date when the exam student review starts
+     */
+    async setStudentReviewStartDate(date: dayjs.Dayjs) {
+        await enterDate(this.page, '#examStudentReviewStart', date);
+    }
+
+    /**
+     * @param date the date when the exam student review ends
+     */
+    async setStudentReviewEndDate(date: dayjs.Dayjs) {
+        await enterDate(this.page, '#examStudentReviewEnd', date);
+    }
+
+    /**
      * @param time the exam working time
      */
     async setWorkingTime(time: number) {
