@@ -13,6 +13,11 @@ import { TranslateService } from '@ngx-translate/core';
 import { SearchTermPageableSearch, SortingOrder } from 'app/shared/table/pageable-table';
 import { GradeEditMode } from 'app/grading-system/base-grading-system/base-grading-system.component';
 import { AlertService } from 'app/core/util/alert.service';
+import { ArtemisSharedModule } from 'app/shared/shared.module';
+import { ArtemisSharedComponentModule } from 'app/shared/components/shared-component.module';
+import { SafeHtmlPipe } from 'app/shared/pipes/safe-html.pipe';
+import { GradeStepBoundsPipe } from 'app/shared/pipes/grade-step-bounds.pipe';
+import { ArtemisModePickerModule } from 'app/exercises/shared/mode-picker/mode-picker.module';
 
 export enum BonusStrategyOption {
     GRADES,
@@ -28,6 +33,8 @@ export enum BonusStrategyDiscreteness {
     selector: 'jhi-bonus',
     templateUrl: './bonus.component.html',
     styleUrls: ['./bonus.component.scss'],
+    standalone: true,
+    imports: [ArtemisSharedModule, ArtemisSharedComponentModule, ArtemisModePickerModule, SafeHtmlPipe, GradeStepBoundsPipe],
 })
 export class BonusComponent implements OnInit {
     readonly CALCULATION_PLUS = 1;

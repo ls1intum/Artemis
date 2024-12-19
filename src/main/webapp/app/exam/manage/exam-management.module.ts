@@ -117,6 +117,7 @@ const ENTITY_STATES = [...examManagementState];
         GitDiffLineStatComponent,
         SafeHtmlPipe,
         GradeStepBoundsPipe,
+        BonusComponent,
     ],
     declarations: [
         ExamManagementComponent,
@@ -144,7 +145,6 @@ const ENTITY_STATES = [...examManagementState];
         StudentExamDetailTableRowComponent,
         ExamImportComponent,
         ExamExerciseImportComponent,
-        BonusComponent,
         ExamEditWorkingTimeComponent,
         ExamEditWorkingTimeDialogComponent,
         ExamLiveAnnouncementCreateModalComponent,
