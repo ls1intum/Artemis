@@ -5,18 +5,17 @@ import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_IRIS;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Profile;
+import org.springframework.context.event.EventListener;
 import org.springframework.stereotype.Service;
 
-import de.tum.cit.aet.artemis.iris.domain.session.IrisChatSession;
 import de.tum.cit.aet.artemis.iris.service.pyris.event.CompetencyJolSetEvent;
 import de.tum.cit.aet.artemis.iris.service.pyris.event.NewResultEvent;
-import de.tum.cit.aet.artemis.iris.service.pyris.event.PyrisEvent;
-import de.tum.cit.aet.artemis.iris.service.session.AbstractIrisChatSessionService;
 import de.tum.cit.aet.artemis.iris.service.session.IrisCourseChatSessionService;
 import de.tum.cit.aet.artemis.iris.service.session.IrisExerciseChatSessionService;
+import de.tum.cit.aet.artemis.programming.domain.ProgrammingSubmission;
 
 /**
- * Service to handle Pyris events.
+ * Service for handling Pyris events.
  */
 @Service
 @Profile(PROFILE_IRIS)
@@ -34,32 +33,53 @@ public class PyrisEventService {
     }
 
     /**
-     * Triggers a Pyris pipeline based on the received {@link PyrisEvent}.
+     * Handles a CompetencyJolSetEvent. The event is passed to the {@link de.tum.cit.aet.artemis.iris.service.session.IrisCourseChatSessionService} to handle the judgement of
+     * learning set.
      *
-     * @param event The event object received to trigger the matching pipeline
-     * @throws UnsupportedPyrisEventException if the event is not supported
-     *
-     * @see PyrisEvent
+     * @see IrisCourseChatSessionService#onJudgementOfLearningSet
+     * @param event the {@link CompetencyJolSetEvent} to handle
      */
-    public void trigger(PyrisEvent<? extends AbstractIrisChatSessionService<? extends IrisChatSession>, ?> event) {
-        log.debug("Starting to process event of type: {}", event.getClass().getSimpleName());
+    @EventListener
+    public void handleCompetencyJolSetEvent(CompetencyJolSetEvent event) {
+        log.debug("Processing CompetencyJolSetEvent");
         try {
-            switch (event) {
-                case CompetencyJolSetEvent competencyJolSetEvent -> {
-                    log.info("Processing CompetencyJolSetEvent: {}", competencyJolSetEvent);
-                    competencyJolSetEvent.handleEvent(irisCourseChatSessionService);
-                    log.debug("Successfully processed CompetencyJolSetEvent");
-                }
-                case NewResultEvent newResultEvent -> {
-                    log.info("Processing NewResultEvent: {}", newResultEvent);
-                    newResultEvent.handleEvent(irisExerciseChatSessionService);
-                    log.debug("Successfully processed NewResultEvent");
-                }
-                default -> throw new UnsupportedPyrisEventException("Unsupported event type: " + event.getClass().getSimpleName());
-            }
+            irisCourseChatSessionService.onJudgementOfLearningSet(event.getCompetencyJol());
+            log.debug("Successfully processed CompetencyJolSetEvent");
         }
         catch (Exception e) {
-            log.error("Failed to process event: {}", event, e);
+            log.error("Failed to process CompetencyJolSetEvent: {}", event, e);
+            throw e;
+        }
+    }
+
+    /**
+     * Handles a NewResultEvent. A new result represents a new submission result.
+     * Depending on whether there was a build failure or not, the result is passed to the appropriate handler method inside the
+     * {@link de.tum.cit.aet.artemis.iris.service.session.IrisExerciseChatSessionService}.
+     *
+     * @see IrisExerciseChatSessionService#onBuildFailure
+     * @see IrisExerciseChatSessionService#onNewResult
+     * @param event the {@link NewResultEvent} to handle
+     */
+    @EventListener
+    public void handleNewResultEvent(NewResultEvent event) {
+        log.debug("Processing NewResultEvent");
+        try {
+            var result = event.getResult();
+            var submission = result.getSubmission();
+
+            if (submission instanceof ProgrammingSubmission programmingSubmission) {
+                if (programmingSubmission.isBuildFailed()) {
+                    irisExerciseChatSessionService.onBuildFailure(result);
+                }
+                else {
+                    irisExerciseChatSessionService.onNewResult(result);
+                }
+            }
+            log.debug("Successfully processed NewResultEvent");
+        }
+        catch (Exception e) {
+            log.error("Failed to process NewResultEvent: {}", event, e);
             throw e;
         }
     }

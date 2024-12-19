@@ -1,14 +1,24 @@
 package de.tum.cit.aet.artemis.iris.service.pyris.event;
 
-import de.tum.cit.aet.artemis.iris.domain.session.IrisChatSession;
-import de.tum.cit.aet.artemis.iris.service.session.AbstractIrisChatSessionService;
+import java.util.Optional;
 
-public abstract class PyrisEvent<S extends AbstractIrisChatSessionService<? extends IrisChatSession>, T> {
+import org.springframework.context.ApplicationEvent;
+
+import de.tum.cit.aet.artemis.core.domain.User;
+
+/**
+ * Base class for Pyris events.
+ */
+public abstract class PyrisEvent extends ApplicationEvent {
+
+    public PyrisEvent(Object source) {
+        super(source);
+    }
 
     /**
-     * Handles the event using the given service.
+     * Returns the user associated with this event.
      *
-     * @param service The service to handle the event for
+     * @return the user
      */
-    public abstract void handleEvent(S service);
+    public abstract Optional<User> getUser();
 }
