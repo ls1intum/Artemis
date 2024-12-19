@@ -29,8 +29,8 @@ class UserSettingsMockComponent extends UserSettingsDirective {
     changeDetector: ChangeDetectorRef;
     alertService: AlertService;
 
-    constructor(userSettingsService: UserSettingsService, changeDetector: ChangeDetectorRef, alertService: AlertService) {
-        super(userSettingsService, alertService, changeDetector);
+    constructor(changeDetector: ChangeDetectorRef, alertService: AlertService) {
+        super();
         this.changeDetector = changeDetector;
         this.alertService = alertService;
     }
