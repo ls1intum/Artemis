@@ -1,23 +1,23 @@
 <div class="d-flex justify-content-between align-items-center">
     <h3 class="text-align-left fw-normal mb-0">
         <span>
-            {{ quizConfiguration.exerciseGroup?.title }}
+            {{ quizConfiguration().exerciseGroup?.title }}
         </span>
-        <span jhiTranslate="artemisApp.examParticipation.points" [translateValues]="{ points: quizConfiguration.maxPoints }"></span>
-        @if (quizConfiguration.includedInOverallScore !== IncludedInOverallScore.INCLUDED_COMPLETELY) {
-            <jhi-included-in-score-badge [includedInOverallScore]="quizConfiguration.includedInOverallScore" />
+        <span jhiTranslate="artemisApp.examParticipation.points" [translateValues]="{ points: quizConfiguration().maxPoints }"></span>
+        @if (quizConfiguration().includedInOverallScore !== IncludedInOverallScore.INCLUDED_COMPLETELY) {
+            <jhi-included-in-score-badge [includedInOverallScore]="quizConfiguration().includedInOverallScore" />
         }
     </h3>
-    <jhi-exercise-save-button [submission]="studentSubmission" (save)="notifyTriggerSave()" />
+    <jhi-exercise-save-button [submission]="studentSubmission()" (save)="notifyTriggerSave()" />
 </div>
 <hr />
 
 <div class="w-auto m-0 pb-5">
-    @if (quizConfiguration.quizQuestions && !examTimeline) {
+    @if (quizConfiguration().quizQuestions && !examTimeline()) {
         <div class="position-fixed d-flex align-items-center justify-content-center">
             <div class="p-0 col-md-auto quiz-navigation sticky-top">
                 <div class="stepwizardquiz col-6">
-                    @for (question of quizConfiguration.quizQuestions; track question; let i = $index) {
+                    @for (question of quizConfiguration().quizQuestions; track question; let i = $index) {
                         <div class="stepwizardquiz__step mb-3">
                             @if (question.type === DRAG_AND_DROP) {
                                 <span
@@ -57,9 +57,9 @@
             </div>
         </div>
     }
-    @if (quizConfiguration.quizQuestions) {
+    @if (quizConfiguration().quizQuestions) {
         <div class="ms-5">
-            @for (question of quizConfiguration.quizQuestions; track question; let i = $index) {
+            @for (question of quizConfiguration().quizQuestions; track question; let i = $index) {
                 <div>
                     <!-- TODO: Map vs Array consistency -->
                     @if (question.type === MULTIPLE_CHOICE) {
@@ -69,9 +69,9 @@
                             [selectedAnswerOptions]="selectedAnswerOptions.get(question.id!)!"
                             (selectedAnswerOptionsChange)="selectedAnswerOptions.set(question.id!, $event)"
                             [fnOnSelection]="onSelectionChanged.bind(this)"
-                            [quizQuestions]="quizConfiguration.quizQuestions"
+                            [quizQuestions]="quizConfiguration().quizQuestions"
                             [questionIndex]="i + 1"
-                            [clickDisabled]="readonly"
+                            [clickDisabled]="readonly()"
                         />
                     }
                     <!-- TODO: Map vs Array consistency -->
@@ -83,7 +83,7 @@
                             (mappingsChange)="dragAndDropMappings.set(question.id!, $event)"
                             [onMappingUpdate]="onSelectionChanged.bind(this)"
                             [questionIndex]="i + 1"
-                            [clickDisabled]="readonly"
+                            [clickDisabled]="readonly()"
                         />
                     }
                     <!-- TODO: Map vs Array consistency -->
@@ -95,7 +95,7 @@
                             (submittedTextsChange)="shortAnswerSubmittedTexts.set(question.id!, $event)"
                             [fnOnSubmittedTextUpdate]="onSelectionChanged.bind(this)"
                             [questionIndex]="i + 1"
-                            [clickDisabled]="readonly"
+                            [clickDisabled]="readonly()"
                         />
                     }
                 </div>
