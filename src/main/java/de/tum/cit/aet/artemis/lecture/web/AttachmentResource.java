@@ -135,7 +135,7 @@ public class AttachmentResource {
         if (studentVersion != null) {
             // Update student version of attachment
             Path basePath = FilePathService.getAttachmentUnitFilePath().resolve(originalAttachment.getAttachmentUnit().getId().toString());
-            Path savePath = fileService.saveFile(studentVersion, basePath, true);
+            Path savePath = fileService.saveFile(studentVersion, basePath.resolve("student"), true);
             attachment.setStudentVersion(FilePathService.publicPathForActualPath(savePath, originalAttachment.getAttachmentUnit().getId()).toString());
 
             // Delete the old student version
