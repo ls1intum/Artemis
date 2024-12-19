@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, inject } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { Subject, forkJoin, of } from 'rxjs';
 import { catchError } from 'rxjs/operators';
@@ -13,7 +13,6 @@ import { Course } from 'app/entities/course.model';
 import { Exam } from 'app/entities/exam/exam.model';
 import dayjs from 'dayjs/esm';
 import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
-import { ProgrammingExerciseParticipationType } from 'app/entities/programming/programming-exercise-participation.model';
 import { IconProp } from '@fortawesome/fontawesome-svg-core';
 import { AlertService } from 'app/core/util/alert.service';
 import { EventManager } from 'app/core/util/event-manager.service';
@@ -34,14 +33,42 @@ import { ExamImportComponent } from 'app/exam/manage/exams/exam-import/exam-impo
 import { ExerciseImportWrapperComponent } from 'app/exercises/shared/import/exercise-import-wrapper/exercise-import-wrapper.component';
 import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
 import { PROFILE_LOCALCI, PROFILE_LOCALVC } from 'app/app.constants';
+import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
+import { ArtemisSharedModule } from 'app/shared/shared.module';
+import { ArtemisSharedComponentModule } from 'app/shared/components/shared-component.module';
+import { ProgrammingExerciseGroupCellComponent } from 'app/exam/manage/exercise-groups/programming-exercise-cell/programming-exercise-group-cell.component';
+import { QuizExerciseGroupCellComponent } from 'app/exam/manage/exercise-groups/quiz-exercise-cell/quiz-exercise-group-cell.component';
+import { ModelingExerciseGroupCellComponent } from 'app/exam/manage/exercise-groups/modeling-exercise-cell/modeling-exercise-group-cell.component';
+import { FileUploadExerciseGroupCellComponent } from 'app/exam/manage/exercise-groups/file-upload-exercise-cell/file-upload-exercise-group-cell.component';
+import { ArtemisExamManagementModule } from 'app/exam/manage/exam-management.module';
 
 @Component({
     selector: 'jhi-exercise-groups',
     templateUrl: './exercise-groups.component.html',
     styleUrls: ['./exercise-groups.component.scss'],
+    standalone: true,
+    imports: [
+        ArtemisTranslatePipe,
+        ArtemisSharedModule,
+        ArtemisSharedComponentModule,
+        ProgrammingExerciseGroupCellComponent,
+        QuizExerciseGroupCellComponent,
+        ModelingExerciseGroupCellComponent,
+        FileUploadExerciseGroupCellComponent,
+        ArtemisExamManagementModule,
+    ],
 })
 export class ExerciseGroupsComponent implements OnInit {
-    participationType = ProgrammingExerciseParticipationType;
+    private route = inject(ActivatedRoute);
+    private exerciseGroupService = inject(ExerciseGroupService);
+    exerciseService = inject(ExerciseService);
+    private examManagementService = inject(ExamManagementService);
+    private eventManager = inject(EventManager);
+    private alertService = inject(AlertService);
+    private modalService = inject(NgbModal);
+    private router = inject(Router);
+    private profileService = inject(ProfileService);
+
     courseId: number;
     course: Course;
     examId: number;
@@ -68,18 +95,6 @@ export class ExerciseGroupsComponent implements OnInit {
     faAngleUp = faAngleUp;
     faAngleDown = faAngleDown;
     faFileImport = faFileImport;
-
-    constructor(
-        private route: ActivatedRoute,
-        private exerciseGroupService: ExerciseGroupService,
-        public exerciseService: ExerciseService,
-        private examManagementService: ExamManagementService,
-        private eventManager: EventManager,
-        private alertService: AlertService,
-        private modalService: NgbModal,
-        private router: Router,
-        private profileService: ProfileService,
-    ) {}
 
     /**
      * Initialize the courseId and examId. Get all exercise groups for the exam. Setup dictionary for exercise groups which contain programming exercises.

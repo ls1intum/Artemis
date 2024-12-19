@@ -5,8 +5,6 @@ import { ExamManagementComponent } from 'app/exam/manage/exam-management.compone
 import { examManagementState } from 'app/exam/manage/exam-management.route';
 import { ExamUpdateComponent } from 'app/exam/manage/exams/exam-update.component';
 import { ExamDetailComponent } from 'app/exam/manage/exams/exam-detail.component';
-import { ExerciseGroupsComponent } from 'app/exam/manage/exercise-groups/exercise-groups.component';
-import { ExerciseGroupUpdateComponent } from 'app/exam/manage/exercise-groups/exercise-group-update.component';
 import { ExamStudentsComponent } from 'app/exam/manage/students/exam-students.component';
 import { StudentExamsComponent } from 'app/exam/manage/student-exams/student-exams.component';
 import { StudentExamDetailComponent } from 'app/exam/manage/student-exams/student-exam-detail.component';
@@ -34,10 +32,6 @@ import { ArtemisMarkdownModule } from 'app/shared/markdown.module';
 import { ExamChecklistComponent } from 'app/exam/manage/exams/exam-checklist-component/exam-checklist.component';
 import { ExamChecklistExerciseGroupTableComponent } from 'app/exam/manage/exams/exam-checklist-component/exam-checklist-exercisegroup-table/exam-checklist-exercisegroup-table.component';
 import { ArtemisTutorParticipationGraphModule } from 'app/shared/dashboards/tutor-participation-graph/tutor-participation-graph.module';
-import { ProgrammingExerciseGroupCellComponent } from './exercise-groups/programming-exercise-cell/programming-exercise-group-cell.component';
-import { FileUploadExerciseGroupCellComponent } from './exercise-groups/file-upload-exercise-cell/file-upload-exercise-group-cell.component';
-import { ModelingExerciseGroupCellComponent } from './exercise-groups/modeling-exercise-cell/modeling-exercise-group-cell.component';
-import { QuizExerciseGroupCellComponent } from './exercise-groups/quiz-exercise-cell/quiz-exercise-group-cell.component';
 import { ArtemisTextSubmissionAssessmentModule } from 'app/exercises/text/assess/text-submission-assessment.module';
 import { StudentExamDetailTableRowComponent } from 'app/exam/manage/student-exams/student-exam-detail-table-row/student-exam-detail-table-row.component';
 import { ExampleSubmissionsModule } from 'app/exercises/shared/example-submission/example-submissions.module';
@@ -118,8 +112,6 @@ const ENTITY_STATES = [...examManagementState];
         ExamManagementComponent,
         ExamUpdateComponent,
         ExamDetailComponent,
-        ExerciseGroupsComponent,
-        ExerciseGroupUpdateComponent,
         ExamExerciseRowButtonsComponent,
         ExamStudentsComponent,
         ExamStudentsAttendanceCheckComponent,
@@ -133,10 +125,6 @@ const ENTITY_STATES = [...examManagementState];
         ExamChecklistComponent,
         ExamChecklistExerciseGroupTableComponent,
         ExamStatusComponent,
-        ProgrammingExerciseGroupCellComponent,
-        FileUploadExerciseGroupCellComponent,
-        ModelingExerciseGroupCellComponent,
-        QuizExerciseGroupCellComponent,
         StudentExamDetailTableRowComponent,
         ExamImportComponent,
         ExamExerciseImportComponent,
@@ -152,5 +140,6 @@ const ENTITY_STATES = [...examManagementState];
         StudentExamTimelineComponent,
         ProgrammingExerciseExamDiffComponent,
     ],
+    exports: [ExamExerciseRowButtonsComponent],
 })
 export class ArtemisExamManagementModule {}

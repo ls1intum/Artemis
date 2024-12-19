@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, inject } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { AlertService } from 'app/core/util/alert.service';
@@ -8,12 +8,23 @@ import { ExerciseGroupService } from 'app/exam/manage/exercise-groups/exercise-g
 import { Exam } from 'app/entities/exam/exam.model';
 import { onError } from 'app/shared/util/global.utils';
 import { faBan, faSave } from '@fortawesome/free-solid-svg-icons';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { NgbAlertModule } from '@ng-bootstrap/ng-bootstrap'; // Import NgbAlertModule
+import { FormsModule } from '@angular/forms';
 
 @Component({
     selector: 'jhi-exercise-group-update',
     templateUrl: './exercise-group-update.component.html',
+    standalone: true,
+    imports: [TranslateDirective, FaIconComponent, NgbAlertModule, FormsModule],
 })
 export class ExerciseGroupUpdateComponent implements OnInit {
+    private route = inject(ActivatedRoute);
+    private router = inject(Router);
+    private exerciseGroupService = inject(ExerciseGroupService);
+    private alertService = inject(AlertService);
+
     readonly alertType = 'info';
     courseId: number;
     exam: Exam;
@@ -22,13 +33,6 @@ export class ExerciseGroupUpdateComponent implements OnInit {
     // Icons
     faBan = faBan;
     faSave = faSave;
-
-    constructor(
-        private route: ActivatedRoute,
-        private router: Router,
-        private exerciseGroupService: ExerciseGroupService,
-        private alertService: AlertService,
-    ) {}
 
     /**
      * Initialize the courseId and exerciseGroup
