@@ -19,4 +19,10 @@ export class OneToOneChatService {
             .post<OneToOneChatDTO>(`${this.resourceUrl}${courseId}/one-to-one-chats`, [loginOfChatPartner], { observe: 'response' })
             .pipe(map(this.conversationService.convertDateFromServer));
     }
+
+    createWithId(courseId: number, userIdOfChatPartner: number) {
+        return this.http
+            .post<OneToOneChatDTO>(`${this.resourceUrl}${courseId}/one-to-one-chats/${userIdOfChatPartner}`, null, { observe: 'response' })
+            .pipe(map(this.conversationService.convertDateFromServer));
+    }
 }
