@@ -796,28 +796,42 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
         return link;
     }
 
-    private processGitDiffReport(gitDiffReport: ProgrammingExerciseGitDiffReport | undefined): void {
+    /**
+     * Calculates the added and removed lines of the diff
+     * @param gitDiffReport
+     * @returns whether the report has changed compared to the last run
+     */
+    private processGitDiffReport(gitDiffReport: ProgrammingExerciseGitDiffReport | undefined): boolean {
         const isGitDiffReportUpdated =
             gitDiffReport &&
             (this.programmingExercise.gitDiffReport?.templateRepositoryCommitHash !== gitDiffReport.templateRepositoryCommitHash ||
                 this.programmingExercise.gitDiffReport?.solutionRepositoryCommitHash !== gitDiffReport.solutionRepositoryCommitHash);
-        if (isGitDiffReportUpdated) {
-            this.programmingExercise.gitDiffReport = gitDiffReport;
-            gitDiffReport.programmingExercise = this.programmingExercise;
-
-            const calculateLineCount = (entries: { lineCount?: number; previousLineCount?: number }[] = [], key: 'lineCount' | 'previousLineCount') =>
-                entries.map((entry) => entry[key] ?? 0).reduce((sum, count) => sum + count, 0);
-
-            this.addedLineCount = calculateLineCount(gitDiffReport.entries, 'lineCount');
-            this.removedLineCount = calculateLineCount(gitDiffReport.entries, 'previousLineCount');
+        if (!isGitDiffReportUpdated) {
+            return false;
         }
+
+        this.programmingExercise.gitDiffReport = gitDiffReport;
+        gitDiffReport.programmingExercise = this.programmingExercise;
+        const calculateLineCount = (
+            entries: {
+                lineCount?: number;
+                previousLineCount?: number;
+            }[] = [],
+            key: 'lineCount' | 'previousLineCount',
+        ) => entries.map((entry) => entry[key] ?? 0).reduce((sum, count) => sum + count, 0);
+        this.addedLineCount = calculateLineCount(gitDiffReport.entries, 'lineCount');
+        this.removedLineCount = calculateLineCount(gitDiffReport.entries, 'previousLineCount');
+
+        return true;
     }
 
     loadGitDiffReport() {
         this.programmingExerciseService.getDiffReport(this.programmingExercise.id!).subscribe({
             next: (gitDiffReport) => {
-                this.processGitDiffReport(gitDiffReport);
-                this.updateDetailSections();
+                const diffReportChanged = this.processGitDiffReport(gitDiffReport);
+                if (diffReportChanged) {
+                    this.updateDetailSections();
+                }
             },
             error: () => {
                 this.alertService.error('artemisApp.programmingExercise.diffReportError');
