@@ -221,15 +221,18 @@ describe('ProgrammingExerciseDetailComponent', () => {
             },
         );
 
-        it('should create detail sections after getDiffReport error', () => {
+        it('should create detail sections after getDiffReport error', fakeAsync(() => {
             const errorSpy = jest.spyOn(alertService, 'error');
             gitDiffReportStub.mockReturnValue(throwError(() => new HttpErrorResponse({ status: 500 })));
 
             comp.ngOnInit();
+            tick();
 
             expect(errorSpy).toHaveBeenCalledOnce();
             expect(comp.exerciseDetailSections).toBeDefined();
-        });
+            expect(comp.addedLineCount).toBeUndefined();
+            expect(comp.removedLineCount).toBeUndefined();
+        }));
     });
 
     describe('onInit for exam exercise', () => {
