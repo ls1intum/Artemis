@@ -62,7 +62,7 @@
                 }
             </div>
             @if (isEditMode()) {
-                <div>
+                <div class="mt-3">
                     <jhi-lecture-update-units [lecture]="lecture()" />
                     <div class="py-2">
                         <input class="form-check-input" type="checkbox" name="processUnit" (change)="onSelectProcessUnit()" [disabled]="editForm.form.invalid || isSaving" />
