@@ -73,7 +73,7 @@ public class PageUtil {
         )),
         FEEDBACK_ANALYSIS(Map.of(
             "count", "COUNT(f.id)",
-            "detailText", "f.detailText",
+            "detailTexts", "f.detailText",
             "testCaseName", "f.testCase.testName",
             "taskName", """
                     COALESCE((
@@ -82,9 +82,6 @@ public class PageUtil {
                     JOIN t.testCases tct
                     WHERE t.exercise.id = :exerciseId AND tct.testName = f.testCase.testName
                 ), '')"""
-        )),
-        AFFECTED_STUDENTS(Map.of(
-            "participationId", "p.id"
         ));
         // @formatter:on
 
