@@ -622,15 +622,7 @@ describe('BuildQueueService', () => {
 
         service.getBuildJobLogs(buildJobId).subscribe({
             error: (err) => {
-                expect(err.message).toBe(
-                    'Failed to get build log entries for build job ' +
-                        buildJobId +
-                        '\nHttp failure response for ' +
-                        service.resourceUrl +
-                        '/build-log/' +
-                        buildJobId +
-                        '/entries: 500 Internal Server Error',
-                );
+                expect(err.message).toBe('artemisApp.buildQueue.logs.errorFetchingLogs');
                 errorOccurred = true;
             },
         });
