@@ -8,14 +8,4 @@ class FileUploadCodeStyleArchitectureTest extends AbstractModuleCodeStyleTest {
     public String getModulePackage() {
         return ARTEMIS_PACKAGE + ".fileupload";
     }
-
-    @Override
-    protected int dtoAsAnnotatedRecordThreshold() {
-        return 0;
-    }
-
-    @Override
-    protected int dtoNameEndingThreshold() {
-        return 0;
-    }
 }

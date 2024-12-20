@@ -8,14 +8,4 @@ class TutorialGroupCodeStyleArchitectureTest extends AbstractModuleCodeStyleTest
     public String getModulePackage() {
         return ARTEMIS_PACKAGE + ".tutorialgroup";
     }
-
-    @Override
-    protected int dtoAsAnnotatedRecordThreshold() {
-        return 0;
-    }
-
-    @Override
-    protected int dtoNameEndingThreshold() {
-        return 0;
-    }
 }

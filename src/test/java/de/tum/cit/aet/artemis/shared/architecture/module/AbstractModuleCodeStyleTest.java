@@ -19,13 +19,17 @@ public abstract class AbstractModuleCodeStyleTest extends AbstractArchitectureTe
      * Threshold for number of classes with name ending DTO, that are no records or not annotated with JsonInclude.
      * We should aim to reduce this threshold to 0.
      */
-    protected abstract int dtoAsAnnotatedRecordThreshold();
+    protected int dtoAsAnnotatedRecordThreshold() {
+        return 0;
+    }
 
     /**
      * Threshold or number of classes in a 'dto'-package which file name does not end with DTO.
      * We should aim to reduce this threshold to 0.
      */
-    protected abstract int dtoNameEndingThreshold();
+    protected int dtoNameEndingThreshold() {
+        return 0;
+    }
 
     @Test
     void testDTOImplementations() {
