@@ -38,14 +38,12 @@ public abstract class AbstractModuleCodeStyleTest extends AbstractArchitectureTe
         var result = dtoRecordRule.allowEmptyShould(true).evaluate(allClasses);
         log.info("Current number of DTO classes: {}", result.getFailureReport().getDetails().size());
         log.info("Current DTO classes: {}", result.getFailureReport().getDetails());
-        // TODO: reduce the following number to 0, if the current number is less and the test fails, decrease it
         assertThat(result.getFailureReport().getDetails()).hasSize(dtoAsAnnotatedRecordThreshold());
 
         var dtoPackageRule = classes().that().resideInAPackage(getModuleDtoSubpackage()).should().haveSimpleNameEndingWith("DTO");
         result = dtoPackageRule.allowEmptyShould(true).evaluate(allClasses);
         log.info("Current number of DTOs that do not end with \"DTO\": {}", result.getFailureReport().getDetails().size());
         log.info("Current DTOs that do not end with \"DTO\": {}", result.getFailureReport().getDetails());
-        // TODO: reduce the following number to 0, if the current number is less and the test fails, decrease it
         assertThat(result.getFailureReport().getDetails()).hasSize(dtoNameEndingThreshold());
     }
 
