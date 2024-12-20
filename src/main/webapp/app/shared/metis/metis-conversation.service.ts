@@ -472,4 +472,17 @@ export class MetisConversationService implements OnDestroy {
     static getLinkForConversation(courseId: number): RouteComponents {
         return ['/courses', courseId, 'communication'];
     }
+
+    markAllChannelsAsRead(course: Course | undefined) {
+        if (!course?.id) {
+            return of();
+        }
+
+        return this.conversationService.markAllChannelsAsRead(course.id).pipe(
+            catchError((errorResponse: HttpErrorResponse) => {
+                onError(this.alertService, errorResponse);
+                return of();
+            }),
+        );
+    }
 }
