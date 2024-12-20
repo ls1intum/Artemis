@@ -117,7 +117,7 @@ export class LectureUpdateComponent implements OnInit, OnDestroy {
             function scrollToLastSectionAfterLectureCreation() {
                 if (this.unitSection() && this.isNewlyCreatedExercise) {
                     this.isNewlyCreatedExercise = false;
-                    this.formStatusBar()?.scrollToHeadline('artemisApp.lecture.wizardMode.steps.periodStepTitle');
+                    this.formStatusBar()?.scrollToHeadline('artemisApp.lecture.sections.period');
                 }
             }.bind(this),
         );
@@ -150,11 +150,11 @@ export class LectureUpdateComponent implements OnInit, OnDestroy {
 
         updatedFormStatusSections.push(
             {
-                title: 'artemisApp.lecture.wizardMode.steps.titleStepTitle',
+                title: 'artemisApp.lecture.sections.title',
                 valid: Boolean(this.titleSection().titleChannelNameComponent().isFormValidSignal()),
             },
             {
-                title: 'artemisApp.lecture.wizardMode.steps.periodStepTitle',
+                title: 'artemisApp.lecture.sections.period',
                 valid: Boolean(this.lecturePeriodSection().isPeriodSectionValid()),
             },
         );
@@ -162,11 +162,11 @@ export class LectureUpdateComponent implements OnInit, OnDestroy {
         if (this.isEditMode()) {
             updatedFormStatusSections.push(
                 {
-                    title: 'artemisApp.lecture.wizardMode.steps.attachmentsStepTitle',
+                    title: 'artemisApp.lecture.sections.attachments',
                     valid: Boolean(this.attachmentsSection()?.isFormValid()),
                 },
                 {
-                    title: 'artemisApp.lecture.wizardMode.steps.unitsStepTitle',
+                    title: 'artemisApp.lecture.sections.units',
                     valid: Boolean(this.unitSection()?.isUnitConfigurationValid()),
                 },
             );

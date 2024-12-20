@@ -1,6 +1,6 @@
 <div>
-    <h2><span jhiTranslate="artemisApp.lecture.wizardMode.steps.unitsStepTitle"></span></h2>
-    <p><span jhiTranslate="artemisApp.lecture.wizardMode.steps.unitsStepMessage"></span></p>
+    <h2><span jhiTranslate="artemisApp.lecture.sections.units"></span></h2>
+    <p><span jhiTranslate="artemisApp.lecture.sections.unitsDescription"></span></p>
     <jhi-lecture-unit-management
         [lectureId]="this.lecture.id"
         [emitEditEvents]="true"
@@ -15,9 +15,9 @@
     } @else {
         <div class="form-group">
             @if (!isEditingLectureUnit) {
-                <h4><span jhiTranslate="artemisApp.lecture.wizardMode.newLectureUnit"></span></h4>
+                <h4><span jhiTranslate="artemisApp.lecture.newLectureUnit"></span></h4>
             } @else {
-                <h4><span jhiTranslate="artemisApp.lecture.wizardMode.editLectureUnit"></span></h4>
+                <h4><span jhiTranslate="artemisApp.lecture.editLectureUnit"></span></h4>
             }
             @if (isTextUnitFormOpen()) {
                 <jhi-text-unit-form

@@ -12,8 +12,8 @@
             <jhi-form-status-bar [formStatusSections]="formStatusSections" />
             <div>
                 <div>
-                    <h2 id="artemisApp.lecture.wizardMode.steps.titleStepTitle"><span jhiTranslate="artemisApp.lecture.wizardMode.steps.titleStepTitle"></span></h2>
-                    <p><span jhiTranslate="artemisApp.lecture.wizardMode.steps.titleStepMessage"></span></p>
+                    <h2 id="artemisApp.lecture.sections.title"><span jhiTranslate="artemisApp.lecture.sections.title"></span></h2>
+                    <p><span jhiTranslate="artemisApp.lecture.sections.titleDescription"></span></p>
                     @if (lecture().course) {
                         <div class="form-group">
                             <label class="form-control-label" jhiTranslate="artemisApp.lecture.course" for="field_course"></label>
@@ -53,9 +53,9 @@
                 </div>
                 @if (isEditMode()) {
                     <div>
-                        <h2 id="artemisApp.lecture.wizardMode.steps.attachmentsStepTitle"><span jhiTranslate="artemisApp.lecture.wizardMode.steps.attachmentsStepTitle"></span></h2>
-                        <p id="artemisApp.lecture.wizardMode.steps.attachmentsStepMessage">
-                            <span jhiTranslate="artemisApp.lecture.wizardMode.steps.attachmentsStepMessage"></span>
+                        <h2 id="artemisApp.lecture.sections.attachments"><span jhiTranslate="artemisApp.lecture.sections.attachments"></span></h2>
+                        <p id="artemisApp.lecture.sections.attachmentsDescription">
+                            <span jhiTranslate="artemisApp.lecture.sections.attachmentsDescription"></span>
                         </p>
                         <jhi-lecture-attachments [lectureId]="lecture().id" [showHeader]="false" />
                     </div>

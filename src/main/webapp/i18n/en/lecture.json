@@ -69,24 +69,18 @@
                 "loading": "Loading...",
                 "label": "Import Lecture"
             },
-            "wizardMode": {
-                "steps": {
-                    "titleStepTitle": "Title",
-                    "titleStepMessage": "Add a title and meaningful description to the lecture.",
-                    "periodStepTitle": "Period",
-                    "periodStepMessage": "Specify the begin and end dates of the lecture.",
-                    "attachmentsStepTitle": "Attachments",
-                    "attachmentsStepMessage": "Upload attachments to this lecture.",
-                    "unitsStepTitle": "Units",
-                    "unitsStepMessage": "Add content to the lecture by creating different kinds of lecture units."
-                },
-                "newLectureUnit": "New Lecture Unit",
-                "editLectureUnit": "Edit Lecture Unit",
-                "newExercise": "Create new exercise",
-                "competencyTitle": "Title",
-                "competencyConnectedUnits": "Connected Units",
-                "competencyNoConnectedUnits": "No connected units"
+            "sections": {
+                "title": "Title",
+                "titleDescription": "Add a title and meaningful description to the lecture.",
+                "period": "Period",
+                "periodDescription": "Specify the begin and end dates of the lecture.",
+                "attachments": "Attachments",
+                "attachmentsDescription": "Upload attachments to this lecture.",
+                "units": "Units",
+                "unitsDescription": "Add content to the lecture by creating different kinds of lecture units."
             },
+            "newLectureUnit": "New Lecture Unit",
+            "editLectureUnit": "Edit Lecture Unit",
             "dismissChangesModal": {
                 "title": "Discard unsaved lecture changes",
                 "message": "Are you sure you want to discard your unsaved changes?",
