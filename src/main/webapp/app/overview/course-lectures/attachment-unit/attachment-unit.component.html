@@ -8,8 +8,8 @@
     [isPresentationMode]="isPresentationMode()"
     (onCompletion)="toggleCompletion($event)"
     (onCollapse)="toggleCollapse($event)"
-    (onShowIsolated)="handleDownload(false)"
-    (onShowOriginalVersion)="handleDownload(true)"
+    (onShowIsolated)="handleDownload()"
+    (onShowOriginalVersion)="handleOriginalVersion()"
 >
     @if (lectureUnit().attachment?.uploadDate) {
         <div>
