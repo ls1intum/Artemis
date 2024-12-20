@@ -84,7 +84,7 @@ describe('CodeEditorMonacoComponent', () => {
     it('should not try to load a file if none is selected', async () => {
         const editorChangeModelSpy = jest.spyOn(comp.editor(), 'changeModel');
         fixture.detectChanges();
-        await comp.selectFileInEditor(undefined, undefined);
+        await comp.selectFileInEditor(undefined);
         expect(editorChangeModelSpy).not.toHaveBeenCalled();
         expect(loadFileFromRepositoryStub).not.toHaveBeenCalled();
     });
@@ -159,9 +159,9 @@ describe('CodeEditorMonacoComponent', () => {
         fixture.detectChanges();
         comp.fileSession.set(presentFileSession);
         fixture.componentRef.setInput('selectedFile', fileToLoad.fileName);
-        await comp.selectFileInEditor(presentFileName, fileToLoad.fileName);
+        await comp.selectFileInEditor(fileToLoad.fileName);
         fixture.componentRef.setInput('selectedFile', presentFileName);
-        await comp.selectFileInEditor(fileToLoad.fileName, presentFileName);
+        await comp.selectFileInEditor(presentFileName);
         expect(loadFileFromRepositoryStub).toHaveBeenCalledExactlyOnceWith(fileToLoad.fileName);
         expect(comp.fileSession()).toEqual({
             ...presentFileSession,
@@ -195,7 +195,7 @@ describe('CodeEditorMonacoComponent', () => {
         });
         fixture.detectChanges();
         fixture.componentRef.setInput('selectedFile', fileName);
-        await comp.selectFileInEditor(undefined, fileName);
+        await comp.selectFileInEditor(fileName);
         expect(changeModelSpy).not.toHaveBeenCalled();
         expect(comp.binaryFileSelected()).toBeTrue();
     });
@@ -248,9 +248,9 @@ describe('CodeEditorMonacoComponent', () => {
         const longLoadingFileSubject = new Subject();
         loadFileFromRepositoryStub.mockReturnValue(longLoadingFileSubject);
         // We do not await the promise here, as we want to simulate the user selecting another file while the first one is still loading.
-        const firstFileChange = comp.selectFileInEditor(undefined, 'file1');
+        const firstFileChange = comp.selectFileInEditor('file1');
         fixture.componentRef.setInput('selectedFile', 'file2');
-        await comp.selectFileInEditor('file2', 'file2');
+        await comp.selectFileInEditor('file2');
         longLoadingFileSubject.next({ fileName: 'file1', fileContent: 'some code that took a while to retrieve' });
         await firstFileChange;
         expect(changeModelSpy).toHaveBeenCalledExactlyOnceWith('file2', 'code2');
@@ -266,7 +266,7 @@ describe('CodeEditorMonacoComponent', () => {
         };
         comp.fileSession.set(fileSession);
         fixture.componentRef.setInput('selectedFile', selectedFile);
-        await comp.selectFileInEditor(undefined, selectedFile);
+        await comp.selectFileInEditor(selectedFile);
         expect(setPositionStub).toHaveBeenCalledExactlyOnceWith(fileSession[selectedFile].cursor);
         expect(changeModelStub).toHaveBeenCalledExactlyOnceWith(selectedFile, fileSession[selectedFile].code);
     });
@@ -492,7 +492,7 @@ describe('CodeEditorMonacoComponent', () => {
         fixture.detectChanges();
         comp.fileSession.set(fileSession);
         fixture.componentRef.setInput('selectedFile', scrolledFile);
-        await comp.selectFileInEditor(undefined, scrolledFile);
+        await comp.selectFileInEditor(scrolledFile);
         expect(setScrollTopStub).toHaveBeenCalledExactlyOnceWith(scrollTop);
     });
 });

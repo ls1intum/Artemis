@@ -158,7 +158,11 @@ export class CodeEditorMonacoComponent implements OnChanges {
         }
         if ((changes.selectedFile && this.selectedFile()) || editorWasRefreshed) {
             const previousFileName: string | undefined = changes.selectedFile?.previousValue;
-            await this.selectFileInEditor(previousFileName, this.selectedFile());
+            // we save the old scrollTop before switching to another file
+            if (previousFileName && this.fileSession()[previousFileName]) {
+                this.fileSession()[previousFileName].scrollTop = this.editor().getScrollTop();
+            }
+            await this.selectFileInEditor(this.selectedFile());
             this.setBuildAnnotations(this.annotationsArray);
             this.newFeedbackLines.set([]);
             this.renderFeedbackWidgets();
@@ -176,17 +180,17 @@ export class CodeEditorMonacoComponent implements OnChanges {
         this.editor().layout();
     }
 
-    async selectFileInEditor(previousFileName: string | undefined, selectedFileName: string | undefined): Promise<void> {
-        if (!selectedFileName) {
+    async selectFileInEditor(fileName: string | undefined): Promise<void> {
+        if (!fileName) {
             // There is nothing to be done, as the editor will be hidden when there is no file.
             return;
         }
         this.loadingCount.set(this.loadingCount() + 1);
-        if (!this.fileSession()[selectedFileName] || this.fileSession()[selectedFileName].loadingError) {
+        if (!this.fileSession()[fileName] || this.fileSession()[fileName].loadingError) {
             let fileContent = '';
             let loadingError = false;
             try {
-                fileContent = await firstValueFrom(this.repositoryFileService.getFile(selectedFileName).pipe(timeout(CodeEditorMonacoComponent.FILE_TIMEOUT))).then(
+                fileContent = await firstValueFrom(this.repositoryFileService.getFile(fileName).pipe(timeout(CodeEditorMonacoComponent.FILE_TIMEOUT))).then(
                     (fileObj) => fileObj.fileContent,
                 );
             } catch (error) {
@@ -199,25 +203,21 @@ export class CodeEditorMonacoComponent implements OnChanges {
             }
             this.fileSession.set({
                 ...this.fileSession(),
-                [selectedFileName]: { code: fileContent, loadingError: loadingError, scrollTop: 0, cursor: { column: 0, lineNumber: 0 } },
+                [fileName]: { code: fileContent, loadingError: loadingError, scrollTop: 0, cursor: { column: 0, lineNumber: 0 } },
             });
         }
 
-        const code = this.fileSession()[selectedFileName].code;
+        const code = this.fileSession()[fileName].code;
         this.binaryFileSelected.set(this.fileTypeService.isBinaryContent(code));
 
         // Since fetching the file may take some time, we need to check if the file is still selected.
-        if (!this.binaryFileSelected() && this.selectedFile() === selectedFileName) {
-            this.switchToSelectedFile(previousFileName, selectedFileName, code);
+        if (!this.binaryFileSelected() && this.selectedFile() === fileName) {
+            this.switchToSelectedFile(fileName, code);
         }
         this.loadingCount.set(this.loadingCount() - 1);
     }
 
-    switchToSelectedFile(previousFileName: string | undefined, selectedFileName: string, code: string): void {
-        // if a file was previously selected, we save the old scrollTop before switching to another file
-        if (previousFileName && this.fileSession()[previousFileName]) {
-            this.fileSession()[previousFileName].scrollTop = this.editor().getScrollTop();
-        }
+    switchToSelectedFile(selectedFileName: string, code: string): void {
         this.editor().changeModel(selectedFileName, code);
         this.editor().setPosition(this.fileSession()[selectedFileName].cursor);
         this.editor().setScrollTop(this.fileSession()[this.selectedFile()!].scrollTop ?? 0);
