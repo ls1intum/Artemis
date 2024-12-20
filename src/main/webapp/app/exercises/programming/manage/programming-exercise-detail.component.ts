@@ -224,14 +224,11 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
                     tap((submissionPolicy) => {
                         this.programmingExercise.submissionPolicy = submissionPolicy;
                     }),
-                    mergeMap(() =>
-                        this.programmingExerciseService.getDiffReport(exerciseId).pipe(
-                            catchError(() => {
-                                this.alertService.error('artemisApp.programmingExercise.diffReportError');
-                                return of(undefined);
-                            }),
-                        ),
-                    ),
+                    mergeMap(() => this.programmingExerciseService.getDiffReport(exerciseId)),
+                    catchError(() => {
+                        this.alertService.error('artemisApp.programmingExercise.diffReportError');
+                        return of(undefined);
+                    }),
                     tap((gitDiffReport) => {
                         if (gitDiffReport) {
                             this.processGitDiffReport(gitDiffReport, false);
