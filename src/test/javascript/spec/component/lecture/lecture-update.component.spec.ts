@@ -32,6 +32,7 @@ import { ArtemisSharedModule } from 'app/shared/shared.module';
 import { LectureAttachmentsComponent } from 'app/lecture/lecture-attachments.component';
 import { LectureUpdateUnitsComponent } from 'app/lecture/lecture-units/lecture-units.component';
 import { UnitCreationCardComponent } from 'app/lecture/lecture-unit/lecture-unit-management/unit-creation-card/unit-creation-card.component';
+import { signal } from '@angular/core';
 
 describe('LectureUpdateComponent', () => {
     let lectureService: LectureService;
@@ -350,6 +351,81 @@ describe('LectureUpdateComponent', () => {
                 endDate: dayjs('undefined'),
             } as Lecture);
             expect(lectureUpdateComponent.isChangeMadeToPeriodSection()).toBeFalse();
+        });
+    });
+
+    describe('updateFormStatusBar', () => {
+        it('should update form status bar correctly in edit mode', () => {
+            lectureUpdateComponent.isEditMode.set(true);
+            lectureUpdateComponent.titleSection = signal({
+                titleChannelNameComponent: () => ({
+                    isFormValidSignal: () => true,
+                }),
+            } as any);
+            lectureUpdateComponent.lecturePeriodSection = signal({
+                isPeriodSectionValid: () => true,
+            } as any);
+            lectureUpdateComponent.attachmentsSection = signal({
+                isFormValid: () => true,
+            } as any);
+            lectureUpdateComponent.unitSection = signal({
+                isUnitConfigurationValid: () => true,
+            } as any);
+
+            lectureUpdateComponent.updateFormStatusBar();
+
+            expect(lectureUpdateComponent.formStatusSections).toEqual([
+                { title: 'artemisApp.lecture.sections.title', valid: true },
+                { title: 'artemisApp.lecture.sections.period', valid: true },
+                { title: 'artemisApp.lecture.sections.attachments', valid: true },
+                { title: 'artemisApp.lecture.sections.units', valid: true },
+            ]);
+        });
+
+        it('should update form status bar correctly in create mode', () => {
+            lectureUpdateComponent.isEditMode.set(false);
+            lectureUpdateComponent.titleSection = signal({
+                titleChannelNameComponent: () => ({
+                    isFormValidSignal: () => false,
+                }),
+            } as any);
+            lectureUpdateComponent.lecturePeriodSection = signal({
+                isPeriodSectionValid: () => true,
+            } as any);
+
+            lectureUpdateComponent.updateFormStatusBar();
+
+            expect(lectureUpdateComponent.formStatusSections).toEqual([
+                { title: 'artemisApp.lecture.sections.title', valid: false },
+                { title: 'artemisApp.lecture.sections.period', valid: true },
+            ]);
+        });
+
+        it('should handle invalid sections correctly', () => {
+            lectureUpdateComponent.isEditMode.set(true);
+            lectureUpdateComponent.titleSection = signal({
+                titleChannelNameComponent: () => ({
+                    isFormValidSignal: () => false,
+                }),
+            } as any);
+            lectureUpdateComponent.lecturePeriodSection = signal({
+                isPeriodSectionValid: () => false,
+            } as any);
+            lectureUpdateComponent.attachmentsSection = signal({
+                isFormValid: () => false,
+            } as any);
+            lectureUpdateComponent.unitSection = signal({
+                isUnitConfigurationValid: () => false,
+            } as any);
+
+            lectureUpdateComponent.updateFormStatusBar();
+
+            expect(lectureUpdateComponent.formStatusSections).toEqual([
+                { title: 'artemisApp.lecture.sections.title', valid: false },
+                { title: 'artemisApp.lecture.sections.period', valid: false },
+                { title: 'artemisApp.lecture.sections.attachments', valid: false },
+                { title: 'artemisApp.lecture.sections.units', valid: false },
+            ]);
         });
     });
 });
