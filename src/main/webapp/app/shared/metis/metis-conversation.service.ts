@@ -210,6 +210,8 @@ export class MetisConversationService implements OnDestroy {
 
     public createOneToOneChat = (loginOfChatPartner: string): Observable<HttpResponse<OneToOneChatDTO>> =>
         this.onConversationCreation(this.oneToOneChatService.create(this._courseId, loginOfChatPartner));
+    public createOneToOneChatWithId = (userId: number): Observable<HttpResponse<OneToOneChatDTO>> =>
+        this.onConversationCreation(this.oneToOneChatService.createWithId(this._courseId, userId));
     public createChannel = (channel: ChannelDTO) => this.onConversationCreation(this.channelService.create(this._courseId, channel));
     public createGroupChat = (loginsOfChatPartners: string[]) => this.onConversationCreation(this.groupChatService.create(this._courseId, loginsOfChatPartners));
     private onConversationCreation = (creation$: Observable<HttpResponse<ConversationDTO>>): Observable<never> => {
