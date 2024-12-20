@@ -234,6 +234,9 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
                             this.processGitDiffReport(gitDiffReport);
                         }
                     }),
+                )
+                // split pipe to keep type checks
+                .pipe(
                     mergeMap(() =>
                         this.programmingExercise.isAtLeastEditor ? this.programmingExerciseService.getBuildLogStatistics(exerciseId!) : of([] as BuildLogStatisticsDTO),
                     ),
