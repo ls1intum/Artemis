@@ -1,4 +1,4 @@
-import { Component, OnDestroy, OnInit, effect, inject, signal, viewChild } from '@angular/core';
+import { Component, OnDestroy, OnInit, computed, effect, inject, signal, viewChild } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { Observable, Subscription } from 'rxjs';
@@ -68,6 +68,15 @@ export class LectureUpdateComponent implements OnInit, OnDestroy {
 
     isChangeMadeToTitleOrPeriodSection = false;
     shouldDisplayDismissWarning = true;
+
+    areSectionsValid = computed(() => {
+        return (
+            this.titleSection().titleChannelNameComponent().isFormValidSignal() &&
+            this.lecturePeriodSection().isPeriodSectionValid() &&
+            (this.unitSection()?.isUnitConfigurationValid() ?? true) &&
+            (this.attachmentsSection()?.isFormValid() ?? true)
+        );
+    });
 
     private subscriptions = new Subscription();
 
@@ -139,6 +148,17 @@ export class LectureUpdateComponent implements OnInit, OnDestroy {
     updateFormStatusBar() {
         const updatedFormStatusSections: FormSectionStatus[] = [];
 
+        updatedFormStatusSections.push(
+            {
+                title: 'artemisApp.lecture.wizardMode.steps.titleStepTitle',
+                valid: Boolean(this.titleSection().titleChannelNameComponent().isFormValidSignal()),
+            },
+            {
+                title: 'artemisApp.lecture.wizardMode.steps.periodStepTitle',
+                valid: Boolean(this.lecturePeriodSection().isPeriodSectionValid()),
+            },
+        );
+
         if (this.isEditMode()) {
             updatedFormStatusSections.push(
                 {
@@ -151,17 +171,6 @@ export class LectureUpdateComponent implements OnInit, OnDestroy {
                 },
             );
         }
-
-        updatedFormStatusSections.unshift(
-            {
-                title: 'artemisApp.lecture.wizardMode.steps.titleStepTitle',
-                valid: Boolean(this.titleSection().titleChannelNameComponent().isFormValidSignal()),
-            },
-            {
-                title: 'artemisApp.lecture.wizardMode.steps.periodStepTitle',
-                valid: Boolean(this.lecturePeriodSection().isPeriodSectionValid()),
-            },
-        );
 
         this.formStatusSections = updatedFormStatusSections;
     }
@@ -261,14 +270,19 @@ export class LectureUpdateComponent implements OnInit, OnDestroy {
     protected onSaveSuccess(lecture: Lecture) {
         this.isSaving = false;
 
+        if (!lecture.course?.id) {
+            console.error('Lecture has no course id', lecture);
+            return;
+        }
+
         if (this.processUnitMode) {
             this.isProcessing = false;
             this.alertService.success(`Lecture with title ${lecture.title} was successfully ${this.lecture().id !== undefined ? 'updated' : 'created'}.`);
-            this.router.navigate(['course-management', lecture.course!.id, 'lectures', lecture.id, 'unit-management', 'attachment-units', 'process'], {
+            this.router.navigate(['course-management', lecture.course.id, 'lectures', lecture.id, 'unit-management', 'attachment-units', 'process'], {
                 state: { file: this.file, fileName: this.fileName },
             });
         } else if (this.isEditMode()) {
-            this.router.navigate(['course-management', lecture.course!.id, 'lectures', lecture.id]);
+            this.router.navigate(['course-management', lecture.course.id, 'lectures', lecture.id]);
         } else {
             // after create we stay on the edit page, as now attachments and lecture units are available (we need the lecture id to save them)
             this.isNewlyCreatedExercise = true;
@@ -276,7 +290,7 @@ export class LectureUpdateComponent implements OnInit, OnDestroy {
             this.lectureOnInit = cloneDeep(lecture);
             this.lecture.set(lecture);
             this.updateIsChangesMadeToTitleOrPeriodSection();
-            window.history.replaceState({}, '', `course-management/${lecture.course!.id}/lectures/${lecture.id}/edit`);
+            window.history.replaceState({}, '', `course-management/${lecture.course.id}/lectures/${lecture.id}/edit`);
             this.shouldDisplayDismissWarning = true;
         }
     }

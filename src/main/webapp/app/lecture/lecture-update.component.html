@@ -46,15 +46,7 @@
                         type="submit"
                         id="save-entity"
                         class="btn btn-primary ms-2"
-                        [disabled]="
-                            editForm.form.invalid ||
-                            isSaving ||
-                            processUnitMode ||
-                            !isChangeMadeToTitleOrPeriodSection ||
-                            !lecturePeriodSection().isPeriodSectionValid() ||
-                            !(unitSection()?.isUnitConfigurationValid() ?? true) ||
-                            !(attachmentsSection()?.isFormValid() ?? true)
-                        "
+                        [disabled]="editForm.form.invalid || isSaving || processUnitMode || !isChangeMadeToTitleOrPeriodSection || !areSectionsValid()"
                     >
                         <fa-icon [icon]="faSave" />&nbsp;<span jhiTranslate="entity.action.save"></span>
                     </button>
@@ -126,7 +118,7 @@
                                 class="btn btn-success"
                                 (click)="proceedToUnitSplit()"
                             >
-                                <fa-icon [icon]="faPuzzleProcess" />&nbsp;<span jhiTranslate="artemisApp.attachmentUnit.createAttachmentUnits.processUnits"></span>
+                                <fa-icon [icon]="faPuzzleProcess" class="me-1" /><span jhiTranslate="artemisApp.attachmentUnit.createAttachmentUnits.processUnits"></span>
                                 @if (isProcessing) {
                                     <span class="spinner-border spinner-border-sm"></span>
                                 }
