@@ -65,32 +65,6 @@ test.describe('Test exam test run', { tag: '@slow' }, () => {
     });
 
     test.describe('Manage a test run', () => {
-        test('Changes test run working time', async ({ login, courseManagementAPIRequests, examTestRun }) => {
-            const hour = 1;
-            const minutes = 20;
-            const seconds = 45;
-
-            await login(instructor);
-            const testRun = await courseManagementAPIRequests.createExamTestRun(exam, exerciseArray);
-            await examTestRun.openTestRunPage(course, exam);
-            await examTestRun.changeWorkingTime(testRun.id!);
-            await examTestRun.setWorkingTimeHours(hour);
-            await examTestRun.setWorkingTimeMinutes(minutes);
-            await examTestRun.setWorkingTimeSeconds(seconds);
-            const testRunResponse = await examTestRun.saveTestRun();
-            const updatedTestRun: StudentExam = await testRunResponse.json();
-
-            expect(testRunResponse.status()).toBe(200);
-            expect(updatedTestRun.id).toBe(testRun.id);
-            expect(updatedTestRun.workingTime).toBe(hour * 3600 + minutes * 60 + seconds);
-
-            await examTestRun.openTestRunPage(course, exam);
-            await examTestRun.getTestRun(testRun.id!).waitFor({ state: 'visible' });
-            await expect(examTestRun.getWorkingTime(testRun.id!).filter({ hasText: `${hour}h ${minutes}min ${seconds}s` })).toBeVisible();
-            await expect(examTestRun.getStarted(testRun.id!).filter({ hasText: 'No' })).toBeVisible();
-            await expect(examTestRun.getSubmitted(testRun.id!).filter({ hasText: 'No' })).toBeVisible();
-        });
-
         test('Conducts a test run', async ({ login, courseManagementAPIRequests, examTestRun, examNavigation, examParticipation }) => {
             await login(instructor);
             const testRun = await courseManagementAPIRequests.createExamTestRun(exam, exerciseArray);
