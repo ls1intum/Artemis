@@ -231,7 +231,7 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
                     }),
                     tap((gitDiffReport) => {
                         if (gitDiffReport) {
-                            this.processGitDiffReport(gitDiffReport, false);
+                            this.processGitDiffReport(gitDiffReport);
                         }
                     }),
                     mergeMap(() =>
@@ -252,7 +252,7 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
                         ).plagiarismCheckSupported;
 
                         /** we make sure to await the results of the subscriptions (switchMap) to only call {@link getExerciseDetails} once */
-                        this.exerciseDetailSections = this.getExerciseDetails();
+                        this.updateDetailSections();
                     },
                     error: (error) => {
                         this.alertService.error(error.message);
@@ -795,14 +795,7 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
         return link;
     }
 
-    /**
-     *
-     * @param gitDiffReport
-     * @param updateDetailSections set to false when called from OnInit, as another method will take care to update the
-     *                             {@link exerciseDetailSections} to prevent unnecessary renderings and duplicated requests,
-     *                             see description of {@link getExerciseDetails}
-     */
-    private processGitDiffReport(gitDiffReport: ProgrammingExerciseGitDiffReport | undefined, updateDetailSections: boolean = true): void {
+    private processGitDiffReport(gitDiffReport: ProgrammingExerciseGitDiffReport | undefined): void {
         const isGitDiffReportUpdated =
             gitDiffReport &&
             (this.programmingExercise.gitDiffReport?.templateRepositoryCommitHash !== gitDiffReport.templateRepositoryCommitHash ||
@@ -817,21 +810,26 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
             this.addedLineCount = calculateLineCount(gitDiffReport.entries, 'lineCount');
             this.removedLineCount = calculateLineCount(gitDiffReport.entries, 'previousLineCount');
         }
-        // TODO: this should not be here and should be independent of the git diff report
-        if (updateDetailSections) {
-            this.exerciseDetailSections = this.getExerciseDetails();
-        }
     }
 
     loadGitDiffReport() {
         this.programmingExerciseService.getDiffReport(this.programmingExercise.id!).subscribe({
             next: (gitDiffReport) => {
                 this.processGitDiffReport(gitDiffReport);
+                this.updateDetailSections();
             },
             error: () => {
                 this.alertService.error('artemisApp.programmingExercise.diffReportError');
             },
         });
+    }
+
+    /**
+     * <strong>BE CAREFUL WHEN CALLING THIS METHOD!</strong><br>
+     * Warnings of {@link getExerciseDetails} apply.
+     */
+    private updateDetailSections(): void {
+        this.exerciseDetailSections = this.getExerciseDetails();
     }
 
     createStructuralSolutionEntries() {
