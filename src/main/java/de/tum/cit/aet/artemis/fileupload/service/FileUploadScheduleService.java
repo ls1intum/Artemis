@@ -44,7 +44,7 @@ public class FileUploadScheduleService {
     /**
      * Cleans up all file uploads where entity id is null
      */
-    @Scheduled(cron = "0 0 0 * * *")
+    @Scheduled(cron = "0 5 0 * * *")
     public void cleanupNullEntityFileUploads() {
         var cutoffDate = ZonedDateTime.now().minusDays(DAYS_UNTIL_NULL_ENTITY_FILES_ARE_DELETED);
         var fileUploadsToDelete = fileUploadRepository.findNullEntityReferences(cutoffDate);

@@ -52,7 +52,7 @@ public interface FileUploadRepository extends ArtemisJpaRepository<FileUpload, L
                 SELECT f
                 FROM FileUpload f
                 WHERE (f.entityType IS NULL OR f.entityId IS NULL)
-                    AND f.createdAt < :cutoffDate
+                    AND f.creationDate < :cutoffDate
             """)
     List<FileUpload> findNullEntityReferences(@Param("cutoffDate") ZonedDateTime cutoffDate);
 }

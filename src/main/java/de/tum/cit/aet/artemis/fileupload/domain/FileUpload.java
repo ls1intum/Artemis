@@ -41,8 +41,8 @@ public class FileUpload extends DomainObject {
     @Column(name = "entity_type")
     private FileUploadEntityType entityType;
 
-    @Column(name = "created_at", nullable = false)
-    private ZonedDateTime createdAt;
+    @Column(name = "creation_date", nullable = false)
+    private ZonedDateTime creationDate;
 
     // Constructors
     public FileUpload() {
@@ -54,7 +54,7 @@ public class FileUpload extends DomainObject {
         this.serverFilePath = serverFilePath;
         this.entityId = entityId;
         this.entityType = entityType;
-        this.createdAt = ZonedDateTime.now();
+        this.creationDate = ZonedDateTime.now();
     }
 
     public String getPath() {
@@ -97,17 +97,17 @@ public class FileUpload extends DomainObject {
         this.entityType = entityType;
     }
 
-    public ZonedDateTime getCreatedAt() {
-        return createdAt;
+    public ZonedDateTime getCreationDate() {
+        return creationDate;
     }
 
-    public void setCreatedAt(ZonedDateTime createdAt) {
-        this.createdAt = createdAt;
+    public void setCreationDate(ZonedDateTime createdAt) {
+        this.creationDate = createdAt;
     }
 
     @Override
     public String toString() {
         return "FileUpload{" + "id=" + getId() + ", path='" + path + '\'' + ", filename='" + filename + '\'' + ", entityId=" + entityId + ", entityType=" + entityType
-                + ", createdAt=" + createdAt + '}';
+                + ", createdAt=" + creationDate + '}';
     }
 }

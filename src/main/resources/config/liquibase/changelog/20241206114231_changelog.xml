@@ -48,4 +48,11 @@
             <column name="entity_type"/>
         </createIndex>
     </changeSet>
+
+    <changeSet id="20241206114231_1" author="rangger">
+        <renameColumn tableName="file_upload"
+                      columnDataType="datetime"
+                      oldColumnName="created_at"
+                      newColumnName="creation_date"/>
+    </changeSet>
 </databaseChangeLog>
