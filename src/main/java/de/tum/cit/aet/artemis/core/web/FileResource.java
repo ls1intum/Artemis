@@ -476,7 +476,7 @@ public class FileResource {
      * @return The requested file, 403 if the logged-in user is not allowed to access it, or 404 if the file doesn't exist
      */
     @GetMapping("files/attachments/attachment-unit/{attachmentUnitId}/*")
-    @EnforceAtLeastEditor
+    @EnforceAtLeastTutor
     public ResponseEntity<byte[]> getAttachmentUnitAttachment(@PathVariable Long attachmentUnitId) {
         log.debug("REST request to get the file for attachment unit {} for students", attachmentUnitId);
         AttachmentUnit attachmentUnit = attachmentUnitRepository.findByIdElseThrow(attachmentUnitId);
@@ -580,24 +580,13 @@ public class FileResource {
 
         // check if hidden link is available in the attachment
         String studentVersion = attachment.getStudentVersion();
-        if (attachment.getStudentVersion() == null) {
+        if (studentVersion == null) {
             return buildFileResponse(getActualPathFromPublicPathString(attachment.getLink()), false);
         }
 
         String fileName = studentVersion.substring(studentVersion.lastIndexOf("/") + 1);
 
         return buildFileResponse(FilePathService.getAttachmentUnitFilePath().resolve(Path.of(attachmentUnit.getId().toString(), "student")), fileName, false);
-    }
-
-    /**
-     * Builds the response with headers, body and content type for specified path and file name
-     *
-     * @param path     to the file
-     * @param filename the name of the file
-     * @return response entity
-     */
-    private ResponseEntity<byte[]> buildFileResponse(Path path, String filename) {
-        return buildFileResponse(path, filename, false);
     }
 
     /**
