@@ -82,6 +82,7 @@
                 "createDirectChat": "Direkt-Chat erstellen",
                 "groupChats": "Gruppenchats",
                 "directMessages": "Direktnachrichten",
+                "recents": "Kürzliches",
                 "filterConversationPlaceholder": "Konversationen filtern"
             },
             "menu": {
