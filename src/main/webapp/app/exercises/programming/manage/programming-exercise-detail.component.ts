@@ -230,9 +230,7 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
                         return of(undefined);
                     }),
                     tap((gitDiffReport) => {
-                        if (gitDiffReport) {
-                            this.processGitDiffReport(gitDiffReport);
-                        }
+                        this.processGitDiffReport(gitDiffReport);
                     }),
                 )
                 // split pipe to keep type checks
