@@ -4,7 +4,6 @@ import { Course } from 'app/entities/course.model';
 import { dayjsToString, generateUUID, trimDate } from '../../support/utils';
 import dayjs from 'dayjs';
 import { expect } from '@playwright/test';
-import { Exam } from 'app/entities/exam/exam.model';
 
 /*
  * Common primitives
@@ -39,7 +38,6 @@ const dateFormat = 'MMM D, YYYY HH:mm';
 
 test.describe('Exam creation/deletion', { tag: '@fast' }, () => {
     let course: Course;
-    let examId: number;
 
     test.beforeEach(async ({ login, courseManagementAPIRequests }) => {
         await login(admin);
@@ -64,8 +62,6 @@ test.describe('Exam creation/deletion', { tag: '@fast' }, () => {
         await examCreation.setConfirmationEndText(examData.confirmationEndText);
 
         const response = await examCreation.submit();
-        const exam: Exam = await response.json();
-        examId = exam.id!;
         expect(response.status()).toBe(201);
 
         await expect(examManagement.getExamTitle()).toContainText(examData.title);
@@ -82,6 +78,8 @@ test.describe('Exam creation/deletion', { tag: '@fast' }, () => {
     });
 
     test.describe('Exam deletion', () => {
+        let examId: number;
+
         test.beforeEach(async ({ examAPIRequests }) => {
             examData.title = 'exam' + generateUUID();
             const examConfig = {
@@ -102,6 +100,8 @@ test.describe('Exam creation/deletion', { tag: '@fast' }, () => {
     });
 
     test.describe('Edits an exam', () => {
+        let examId: number;
+
         test.beforeEach(async ({ examAPIRequests }) => {
             examData.title = 'exam' + generateUUID();
             const examConfig = {
