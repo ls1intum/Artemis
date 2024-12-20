@@ -5,7 +5,6 @@ import { ArtemisSharedModule } from 'app/shared/shared.module';
 import { onError } from 'app/shared/util/global.utils';
 import { AlertService } from 'app/core/util/alert.service';
 import { PdfPreviewEnlargedCanvasComponent } from 'app/lecture/pdf-preview/pdf-preview-enlarged-canvas/pdf-preview-enlarged-canvas.component';
-import { clone } from 'lodash-es';
 import { faEye, faEyeSlash } from '@fortawesome/free-solid-svg-icons';
 
 @Component({
@@ -46,7 +45,7 @@ export class PdfPreviewThumbnailGridComponent implements OnChanges {
 
     ngOnChanges(changes: SimpleChanges): void {
         if (changes['hiddenPages']) {
-            this.newHiddenPages.set(clone(this.hiddenPages()!));
+            this.newHiddenPages.set(new Set(this.hiddenPages()!));
         }
         if (changes['currentPdfUrl']) {
             this.loadPdf(this.currentPdfUrl()!, this.appendFile()!);
