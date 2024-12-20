@@ -77,7 +77,9 @@
             },
             "logs": {
                 "title": "Build Logs for Job",
-                "download": "Download"
+                "download": "Download",
+                "noLogs": "No logs available",
+                "errorFetchingLogs": "Failed to get build log entries for build job"
             }
         }
     }

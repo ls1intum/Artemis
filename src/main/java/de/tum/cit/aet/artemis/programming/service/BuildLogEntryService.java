@@ -512,8 +512,10 @@ public class BuildLogEntryService {
             try (BufferedReader reader = new BufferedReader(new InputStreamReader(buildLog.getInputStream()))) {
                 String line;
                 while ((line = reader.readLine()) != null) {
-                    String[] parts = line.split("\t", 2);
-                    if (parts.length == 2) {
+                    // split into timestamp and log message
+                    int logMessageParts = 2;
+                    String[] parts = line.split("\t", logMessageParts);
+                    if (parts.length == logMessageParts) {
                         try {
                             ZonedDateTime time = ZonedDateTime.parse(parts[0]);
                             buildLogEntries.add(new BuildLogDTO(time, parts[1]));
