@@ -32,6 +32,9 @@ export class PostingHeaderComponent implements OnInit, OnDestroy, OnChanges {
 
     isDeleted = input<boolean>(false);
 
+    readonly onUserNameClicked = output<void>();
+
+    isAtLeastTutorInCourse: boolean;
     isAuthorOfPosting: boolean;
     postingIsOfToday: boolean;
     todayFlag?: string;
@@ -152,6 +155,14 @@ export class PostingHeaderComponent implements OnInit, OnDestroy, OnChanges {
             this.userRoleBadge = 'artemisApp.metis.userRoles.deleted';
             this.userAuthorityTooltip = 'artemisApp.metis.userAuthorityTooltips.deleted';
         }
+    }
+
+    protected userNameClicked() {
+        if (this.isAuthorOfPosting || !this.posting()?.authorRole) {
+            return;
+        }
+
+        this.onUserNameClicked.emit();
     }
 
     protected readonly CachingStrategy = CachingStrategy;

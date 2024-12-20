@@ -64,6 +64,8 @@ import { ProfilePictureComponent } from 'app/shared/profile-picture/profile-pict
         LinkPreviewModule,
         ProfilePictureComponent,
         HtmlForPostingMarkdownPipe,
+        EmojiComponent,
+        EmojiPickerComponent,
     ],
     declarations: [
         PostingThreadComponent,
@@ -86,8 +88,6 @@ import { ProfilePictureComponent } from 'app/shared/profile-picture/profile-pict
         MessageInlineInputComponent,
         MessageReplyInlineInputComponent,
         ReactingUsersOnPostingPipe,
-        EmojiComponent,
-        EmojiPickerComponent,
     ],
     exports: [
         PostingThreadComponent,

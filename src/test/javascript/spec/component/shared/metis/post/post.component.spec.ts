@@ -93,6 +93,7 @@ describe('PostComponent', () => {
             .then(() => {
                 fixture = TestBed.createComponent(PostComponent);
                 metisService = TestBed.inject(MetisService);
+                metisService.course = metisCourse;
 
                 component = fixture.componentInstance;
                 debugElement = fixture.debugElement;

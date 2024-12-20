@@ -24,6 +24,7 @@
                 [isCommunicationPage]="isCommunicationPage"
                 [lastReadDate]="lastReadDate"
                 [isDeleted]="isDeleted"
+                (onUserNameClicked)="onUserNameClicked()"
             />
         </div>
     }
@@ -39,7 +40,7 @@
                     [isDeleted]="isDeleted"
                     [deleteTimerInSeconds]="deleteTimerInSeconds"
                     (onUndoDeleteEvent)="onDeleteEvent(false)"
-                    (userReferenceClicked)="userReferenceClicked.emit($event)"
+                    (userReferenceClicked)="onUserReferenceClicked($event)"
                     (channelReferenceClicked)="channelReferenceClicked.emit($event)"
                 />
                 <div class="post-content-padding hover-actions">
