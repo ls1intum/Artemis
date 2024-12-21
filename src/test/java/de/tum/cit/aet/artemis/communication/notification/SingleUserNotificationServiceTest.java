@@ -34,6 +34,8 @@ import static de.tum.cit.aet.artemis.communication.domain.notification.Notificat
 import static de.tum.cit.aet.artemis.communication.domain.notification.NotificationConstants.TUTORIAL_GROUP_REGISTRATION_TUTOR_TITLE;
 import static de.tum.cit.aet.artemis.communication.domain.notification.NotificationConstants.TUTORIAL_GROUP_UNASSIGNED_TEXT;
 import static de.tum.cit.aet.artemis.communication.domain.notification.NotificationConstants.TUTORIAL_GROUP_UNASSIGNED_TITLE;
+import static de.tum.cit.aet.artemis.communication.domain.notification.NotificationConstants.VCS_ACCESS_TOKEN_ADDED_TEXT;
+import static de.tum.cit.aet.artemis.communication.domain.notification.NotificationConstants.VCS_ACCESS_TOKEN_EXPIRED_TEXT;
 import static de.tum.cit.aet.artemis.communication.service.notifications.NotificationSettingsService.NOTIFICATION_USER_NOTIFICATION_DATA_EXPORT_CREATED;
 import static de.tum.cit.aet.artemis.communication.service.notifications.NotificationSettingsService.NOTIFICATION_USER_NOTIFICATION_DATA_EXPORT_FAILED;
 import static de.tum.cit.aet.artemis.communication.service.notifications.NotificationSettingsService.NOTIFICATION__EXERCISE_NOTIFICATION__EXERCISE_SUBMISSION_ASSESSED;
@@ -111,6 +113,7 @@ import de.tum.cit.aet.artemis.plagiarism.domain.text.TextSubmissionElement;
 import de.tum.cit.aet.artemis.programming.dto.UserSshPublicKeyDTO;
 import de.tum.cit.aet.artemis.programming.service.sshuserkeys.UserSshPublicKeyExpiryNotificationService;
 import de.tum.cit.aet.artemis.programming.service.sshuserkeys.UserSshPublicKeyService;
+import de.tum.cit.aet.artemis.programming.service.tokens.UserTokenExpiryNotificationService;
 import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationIndependentTest;
 import de.tum.cit.aet.artemis.text.domain.TextExercise;
 import de.tum.cit.aet.artemis.text.util.TextExerciseFactory;
@@ -146,6 +149,9 @@ class SingleUserNotificationServiceTest extends AbstractSpringIntegrationIndepen
 
     @Autowired
     private UserSshPublicKeyExpiryNotificationService userSshPublicKeyExpiryNotificationService;
+
+    @Autowired
+    private UserTokenExpiryNotificationService userTokenExpiryNotificationService;
 
     @Autowired
     private UserSshPublicKeyService userSshPublicKeyService;
@@ -500,6 +506,58 @@ class SingleUserNotificationServiceTest extends AbstractSpringIntegrationIndepen
             assertThat(sentNotifications.getFirst()).isInstanceOf(SingleUserNotification.class);
             assertThat(((SingleUserNotification) sentNotifications.getFirst()).getRecipient()).isEqualTo(user);
             assertThat((sentNotifications.getFirst()).getText()).isEqualTo(SSH_KEY_ADDED_TEXT);
+        }
+    }
+
+    // User VCS access token related (expiry warning and newly added token)
+
+    @Nested
+    class UserTokenExpiryNotification {
+
+        List<Notification> sentNotifications;
+
+        @AfterEach
+        void tearDown() throws Exception {
+            user.setVcsAccessTokenExpiryDate(null);
+            user.setVcsAccessToken(null);
+            userTestRepository.save(user);
+        }
+
+        @Test
+        void shouldNotifyUserAboutNewlyAddedVcsAccessToken() {
+            singleUserNotificationService.notifyUserAboutNewlyAddedVcsAccessToken(user);
+
+            sentNotifications = notificationRepository.findAll();
+            assertThat(sentNotifications.getFirst()).isInstanceOf(SingleUserNotification.class);
+            assertThat(((SingleUserNotification) sentNotifications.getFirst()).getRecipient()).isEqualTo(user);
+            assertThat((sentNotifications.getFirst()).getText()).isEqualTo(VCS_ACCESS_TOKEN_ADDED_TEXT);
+        }
+
+        @Test
+        void shouldNotifyUserAboutExpiredVcsAccessToken() {
+            user.setVcsAccessToken("token");
+            user.setVcsAccessTokenExpiryDate(ZonedDateTime.now().minusHours(5));
+            userTestRepository.save(user);
+
+            userTokenExpiryNotificationService.sendTokenExpirationNotifications();
+
+            sentNotifications = notificationRepository.findAll();
+            assertThat(sentNotifications).hasSize(1);
+            assertThat(sentNotifications.getFirst()).isInstanceOf(SingleUserNotification.class);
+            assertThat(((SingleUserNotification) sentNotifications.getFirst()).getRecipient()).isEqualTo(user);
+            assertThat((sentNotifications.getFirst()).getText()).isEqualTo(VCS_ACCESS_TOKEN_EXPIRED_TEXT);
+        }
+
+        @Test
+        void shouldNotNotifyUserAboutVcsAccessTokenExpiryWhenTokenIsNotExpired() {
+            user.setVcsAccessToken("token");
+            user.setVcsAccessTokenExpiryDate(ZonedDateTime.now().plusDays(5));
+            userTestRepository.save(user);
+
+            userTokenExpiryNotificationService.sendTokenExpirationNotifications();
+
+            sentNotifications = notificationRepository.findAll();
+            assertThat(sentNotifications).hasSize(0);
         }
     }
 
