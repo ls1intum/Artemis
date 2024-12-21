@@ -85,6 +85,8 @@ public interface UserRepository extends ArtemisJpaRepository<User, Long>, JpaSpe
 
     Optional<User> findOneByEmailIgnoreCase(String email);
 
+    List<User> findByvcsAccessTokenExpiryDateBetween(ZonedDateTime from, ZonedDateTime to);
+
     @EntityGraph(type = LOAD, attributePaths = { "groups" })
     Optional<User> findOneWithGroupsByEmailIgnoreCase(String email);
 

@@ -64,6 +64,10 @@ import static de.tum.cit.aet.artemis.communication.domain.notification.Notificat
 import static de.tum.cit.aet.artemis.communication.domain.notification.NotificationConstants.TUTORIAL_GROUP_REGISTRATION_STUDENT_TEXT;
 import static de.tum.cit.aet.artemis.communication.domain.notification.NotificationConstants.TUTORIAL_GROUP_REGISTRATION_TUTOR_TEXT;
 import static de.tum.cit.aet.artemis.communication.domain.notification.NotificationConstants.TUTORIAL_GROUP_UNASSIGNED_TEXT;
+import static de.tum.cit.aet.artemis.communication.domain.notification.NotificationConstants.VCS_ACCESS_TOKEN_ADDED_TEXT;
+import static de.tum.cit.aet.artemis.communication.domain.notification.NotificationConstants.VCS_ACCESS_TOKEN_ADDED_TITLE;
+import static de.tum.cit.aet.artemis.communication.domain.notification.NotificationConstants.VCS_ACCESS_TOKEN_EXPIRED_TEXT;
+import static de.tum.cit.aet.artemis.communication.domain.notification.NotificationConstants.VCS_ACCESS_TOKEN_EXPIRED_TITLE;
 import static de.tum.cit.aet.artemis.communication.domain.notification.NotificationConstants.findCorrespondingNotificationTitleOrThrow;
 import static de.tum.cit.aet.artemis.communication.domain.notification.NotificationTargetFactory.createConversationCreationTarget;
 import static de.tum.cit.aet.artemis.communication.domain.notification.NotificationTargetFactory.createConversationDeletionTarget;
@@ -186,6 +190,27 @@ public class SingleUserNotificationFactory {
             }
             case SSH_KEY_HAS_EXPIRED -> {
                 return new SingleUserNotification(recipient, SSH_KEY_HAS_EXPIRED_TITLE, SSH_KEY_HAS_EXPIRED_TEXT, true, new String[] {});
+            }
+            default -> throw new UnsupportedOperationException("Unsupported NotificationType: " + notificationType);
+        }
+    }
+
+    /**
+     * Creates a user notification based on the given SSH key and notification type.
+     *
+     * @param vcsAccessToken   The access token of the user
+     * @param notificationType The type of notification to create (e.g., key added, expiring, or expired).
+     * @param recipient        The user who will receive the notification.
+     * @return A configured {@link SingleUserNotification}.
+     * @throws UnsupportedOperationException if the notification type is unsupported.
+     */
+    public static SingleUserNotification createNotification(String vcsAccessToken, NotificationType notificationType, User recipient) {
+        switch (notificationType) {
+            case VCS_ACCESS_TOKEN_ADDED -> {
+                return new SingleUserNotification(recipient, VCS_ACCESS_TOKEN_ADDED_TITLE, VCS_ACCESS_TOKEN_ADDED_TEXT, true, new String[] {});
+            }
+            case VCS_ACCESS_TOKEN_EXPIRED -> {
+                return new SingleUserNotification(recipient, VCS_ACCESS_TOKEN_EXPIRED_TITLE, VCS_ACCESS_TOKEN_EXPIRED_TEXT, true, new String[] {});
             }
             default -> throw new UnsupportedOperationException("Unsupported NotificationType: " + notificationType);
         }
