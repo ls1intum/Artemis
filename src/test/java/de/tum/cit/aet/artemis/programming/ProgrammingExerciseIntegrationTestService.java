@@ -8,6 +8,7 @@ import static de.tum.cit.aet.artemis.programming.web.ProgrammingExerciseResource
 import static de.tum.cit.aet.artemis.programming.web.ProgrammingExerciseResourceErrorKeys.INVALID_TEMPLATE_BUILD_PLAN_ID;
 import static de.tum.cit.aet.artemis.programming.web.ProgrammingExerciseResourceErrorKeys.INVALID_TEMPLATE_REPOSITORY_URL;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.fail;
 import static org.awaitility.Awaitility.await;
 import static org.mockito.Mockito.any;
 import static org.mockito.Mockito.anyBoolean;
@@ -34,8 +35,10 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
+import java.util.function.BiFunction;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 import java.util.zip.ZipFile;
@@ -99,12 +102,14 @@ import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseStudentParticipation;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseTestCase;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingLanguage;
+import de.tum.cit.aet.artemis.programming.domain.ProgrammingSubmission;
 import de.tum.cit.aet.artemis.programming.domain.ProjectType;
 import de.tum.cit.aet.artemis.programming.domain.RepositoryType;
 import de.tum.cit.aet.artemis.programming.domain.VcsRepositoryUri;
 import de.tum.cit.aet.artemis.programming.dto.ProgrammingExerciseResetOptionsDTO;
 import de.tum.cit.aet.artemis.programming.dto.ProgrammingExerciseTestCaseDTO;
 import de.tum.cit.aet.artemis.programming.dto.ProgrammingExerciseTestCaseStateDTO;
+import de.tum.cit.aet.artemis.programming.hestia.util.HestiaUtilTestService;
 import de.tum.cit.aet.artemis.programming.repository.AuxiliaryRepositoryRepository;
 import de.tum.cit.aet.artemis.programming.service.GitService;
 import de.tum.cit.aet.artemis.programming.service.UriService;
@@ -191,6 +196,9 @@ public class ProgrammingExerciseIntegrationTestService {
 
     @Autowired
     private TextExerciseUtilService textExerciseUtilService;
+
+    @Autowired
+    protected HestiaUtilTestService hestiaUtilTestService;
 
     @Autowired
     private ProgrammingExerciseTestRepository programmingExerciseTestRepository;
@@ -2276,6 +2284,98 @@ public class ProgrammingExerciseIntegrationTestService {
         ProgrammingExercise programmingExerciseToBeConflicted = programmingExerciseTestRepository.findAllWithEagerTemplateAndSolutionParticipations().get(1);
 
         request.put("/api/programming-exercises/" + programmingExercise.getId() + "/re-evaluate", programmingExerciseToBeConflicted, HttpStatus.CONFLICT);
+    }
+
+    void test_redirectGetSolutionRepositoryFilesWithoutContent() throws Exception {
+        test_redirectGetSolutionRepositoryFilesWithoutContent((exercise, files) -> {
+            LocalRepository localRepository = new LocalRepository("main");
+            try {
+                hestiaUtilTestService.setupSolution(files, exercise, localRepository);
+            }
+            catch (Exception e) {
+                fail("Setup solution threw unexpected exception: " + e.getMessage());
+            }
+            return localRepository;
+        });
+    }
+
+    private void test_redirectGetSolutionRepositoryFilesWithoutContent(BiFunction<ProgrammingExercise, Map<String, String>, LocalRepository> setupRepositoryMock) throws Exception {
+        setupRepositoryMock.apply(programmingExercise, Map.ofEntries(Map.entry("A.java", "abc"), Map.entry("B.java", "cde"), Map.entry("C.java", "efg")));
+
+        var savedExercise = programmingExerciseRepository.findByIdWithTemplateAndSolutionParticipationElseThrow(programmingExercise.getId());
+
+        // We expect an URL which is the endpoint, with which the file contents can be retrieved
+        request.getWithForwardedUrl("/api/programming-exercises/" + programmingExercise.getId() + "/file-names", HttpStatus.OK,
+                "/api/repository/" + savedExercise.getSolutionParticipation().getId() + "/file-names");
+    }
+
+    void test_redirectGetTemplateRepositoryFilesWithContent() throws Exception {
+        test_redirectGetTemplateRepositoryFilesWithContent((exercise, files) -> {
+            LocalRepository localRepository = new LocalRepository("main");
+            try {
+                hestiaUtilTestService.setupTemplate(files, exercise, localRepository);
+            }
+            catch (Exception e) {
+                fail("Setup template threw unexpected exception: " + e.getMessage());
+            }
+            return localRepository;
+        });
+    }
+
+    private void test_redirectGetTemplateRepositoryFilesWithContent(BiFunction<ProgrammingExercise, Map<String, String>, LocalRepository> setupRepositoryMock) throws Exception {
+        setupRepositoryMock.apply(programmingExercise, Map.ofEntries(Map.entry("A.java", "abc"), Map.entry("B.java", "cde"), Map.entry("C.java", "efg")));
+
+        var savedExercise = programmingExerciseRepository.findByIdWithTemplateAndSolutionParticipationElseThrow(programmingExercise.getId());
+
+        request.getWithForwardedUrl("/api/programming-exercises/" + programmingExercise.getId() + "/template-files-content", HttpStatus.OK,
+                "/api/repository/" + savedExercise.getTemplateParticipation().getId() + "/files-content");
+    }
+
+    void testRedirectGetParticipationRepositoryFilesWithContentAtCommit(String testPrefix) throws Exception {
+        testRedirectGetParticipationRepositoryFilesWithContentAtCommit((exercise, files) -> {
+            LocalRepository localRepository = new LocalRepository("main");
+            var studentLogin = testPrefix + "student1";
+            try {
+                localRepository.configureRepos("testLocalRepo", "testOriginRepo");
+                return hestiaUtilTestService.setupSubmission(files, exercise, localRepository, studentLogin);
+            }
+            catch (Exception e) {
+                fail("Test setup failed");
+            }
+            return null;
+        });
+    }
+
+    private void testRedirectGetParticipationRepositoryFilesWithContentAtCommit(BiFunction<ProgrammingExercise, Map<String, String>, ProgrammingSubmission> setupRepositoryMock)
+            throws Exception {
+        var submission = setupRepositoryMock.apply(programmingExercise, Map.ofEntries(Map.entry("A.java", "abc"), Map.entry("B.java", "cde"), Map.entry("C.java", "efg")));
+        String filesWithContentsAsJson = "{\n" + "  \"C.java\" : \"efg\",\n" + "  \"B.java\" : \"cde\",\n" + "  \"A.java\" : \"abc\"\n" + "}";
+
+        request.getWithFileContents("/api/programming-exercise-participations/" + participation1.getId() + "/files-content/" + submission.getCommitHash(), HttpStatus.OK,
+                filesWithContentsAsJson);
+    }
+
+    void testRedirectGetParticipationRepositoryFilesWithContentAtCommitForbidden(String testPrefix) throws Exception {
+        testRedirectGetParticipationRepositoryFilesWithContentAtCommitForbidden((exercise, files) -> {
+            LocalRepository localRepository = new LocalRepository("main");
+
+            var studentLogin = testPrefix + "student1";
+            try {
+                localRepository.configureRepos("testLocalRepo", "testOriginRepo");
+                return hestiaUtilTestService.setupSubmission(files, exercise, localRepository, studentLogin);
+            }
+            catch (Exception e) {
+                fail("Test setup failed");
+            }
+            return null;
+        });
+    }
+
+    private void testRedirectGetParticipationRepositoryFilesWithContentAtCommitForbidden(
+            BiFunction<ProgrammingExercise, Map<String, String>, ProgrammingSubmission> setupRepositoryMock) throws Exception {
+        var submission = setupRepositoryMock.apply(programmingExercise, Map.ofEntries(Map.entry("A.java", "abc"), Map.entry("B.java", "cde"), Map.entry("C.java", "efg")));
+
+        request.get("/api/programming-exercise-participations/" + participation1.getId() + "/files-content/" + submission.getCommitHash(), HttpStatus.FORBIDDEN, Map.class);
     }
 
     private long getMaxProgrammingExerciseId() {

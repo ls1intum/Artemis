@@ -67,7 +67,6 @@ export class TextExerciseUpdateComponent implements OnInit, OnDestroy, AfterView
     examCourseId?: number;
     isExamMode: boolean;
     isImport = false;
-    goBackAfterSaving = false;
     AssessmentType = AssessmentType;
     isAthenaEnabled$: Observable<boolean> | undefined;
 
@@ -170,12 +169,6 @@ export class TextExerciseUpdateComponent implements OnInit, OnDestroy, AfterView
             )
             .subscribe();
 
-        this.activatedRoute.queryParams.subscribe((params) => {
-            if (params.shouldHaveBackButtonToWizard) {
-                this.goBackAfterSaving = true;
-            }
-        });
-
         this.isAthenaEnabled$ = this.athenaService.isEnabled();
 
         this.isSaving = false;
@@ -277,12 +270,6 @@ export class TextExerciseUpdateComponent implements OnInit, OnDestroy, AfterView
     private onSaveSuccess(exercise: TextExercise) {
         this.eventManager.broadcast({ name: 'textExerciseListModification', content: 'OK' });
         this.isSaving = false;
-
-        if (this.goBackAfterSaving) {
-            this.navigationUtilService.navigateBack();
-
-            return;
-        }
 
         this.navigationUtilService.navigateForwardFromExerciseUpdateOrCreation(exercise);
     }
