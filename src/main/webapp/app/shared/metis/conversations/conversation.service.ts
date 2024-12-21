@@ -1,4 +1,4 @@
-import { Injectable } from '@angular/core';
+import { Injectable, inject } from '@angular/core';
 import { HttpClient, HttpParams, HttpResponse } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { map } from 'rxjs/operators';
@@ -34,11 +34,9 @@ export enum ConversationMemberSearchFilter {
 export class ConversationService {
     public resourceUrl = '/api/courses/';
 
-    constructor(
-        protected http: HttpClient,
-        protected translationService: TranslateService,
-        protected accountService: AccountService,
-    ) {}
+    protected http = inject(HttpClient);
+    protected translationService = inject(TranslateService);
+    protected accountService = inject(AccountService);
 
     getConversationName(conversation: ConversationDTO | undefined, showLogin = false): string {
         if (!conversation) {
@@ -184,4 +182,8 @@ export class ConversationService {
         params = params.set('page', String(page));
         return params.set('size', String(size));
     };
+
+    markAllChannelsAsRead(courseId: number) {
+        return this.http.put<void>(`${this.resourceUrl}${courseId}/channels/mark-as-read`, { observe: 'response' });
+    }
 }

@@ -12,7 +12,7 @@ plugins {
     id "idea"
     id "jacoco"
     id "org.springframework.boot" version "${spring_boot_version}"
-    id "io.spring.dependency-management" version "1.1.6"
+    id "io.spring.dependency-management" version "1.1.7"
     id "com.google.cloud.tools.jib" version "3.4.4"
     id "com.github.node-gradle.node" version "${gradle_node_plugin_version}"
     id "com.diffplug.spotless" version "6.25.0"
@@ -257,7 +257,7 @@ dependencies {
     implementation "org.apache.lucene:lucene-queryparser:${lucene_version}"
     implementation "org.apache.lucene:lucene-core:${lucene_version}"
     implementation "org.apache.lucene:lucene-analyzers-common:${lucene_version}"
-    implementation "com.google.protobuf:protobuf-java:4.29.1"
+    implementation "com.google.protobuf:protobuf-java:4.29.2"
 
     // we have to override those values to use the latest version
     implementation "org.slf4j:jcl-over-slf4j:${slf4j_version}"
@@ -268,7 +268,7 @@ dependencies {
         }
     }
 
-    implementation "org.apache.logging.log4j:log4j-to-slf4j:2.24.2"
+    implementation "org.apache.logging.log4j:log4j-to-slf4j:2.24.3"
 
     // Note: spring-security-lti13 does not work with jakarta yet, so we built our own custom version and declare its transitive dependencies below
     // implementation "uk.ac.ox.ctl:spring-security-lti13:0.1.11"
@@ -337,7 +337,7 @@ dependencies {
 
     implementation "tech.jhipster:jhipster-framework:${jhipster_dependencies_version}"
     implementation "org.springframework.boot:spring-boot-starter-cache:${spring_boot_version}"
-    implementation "io.micrometer:micrometer-registry-prometheus:1.14.1"
+    implementation "io.micrometer:micrometer-registry-prometheus:1.14.2"
     implementation "net.logstash.logback:logstash-logback-encoder:8.0"
 
     // Defines low-level streaming API, and includes JSON-specific implementations
@@ -365,7 +365,7 @@ dependencies {
 
     implementation "com.zaxxer:HikariCP:6.2.1"
 
-    implementation "org.apache.commons:commons-text:1.12.0"
+    implementation "org.apache.commons:commons-text:1.13.0"
     implementation "org.apache.commons:commons-math3:3.6.1"
 
     implementation "javax.transaction:javax.transaction-api:1.3"
@@ -384,13 +384,20 @@ dependencies {
         exclude module: "spring-boot-starter-undertow"
     }
     implementation "org.springframework.boot:spring-boot-starter-tomcat:${spring_boot_version}"
+
+    // Avoid security issues in Tomcat 10.1.33
+    implementation "org.apache.tomcat.embed:tomcat-embed-core:${tomcat_version}"
+    implementation "org.apache.tomcat.embed:tomcat-embed-el:${tomcat_version}"
+    implementation "org.apache.tomcat.embed:tomcat-embed-websocket:${tomcat_version}"
+    implementation "org.apache.tomcat:tomcat-annotations-api:${tomcat_version}"
+
     implementation "org.springframework.boot:spring-boot-starter-websocket:${spring_boot_version}"
     implementation "org.springframework.boot:spring-boot-starter-thymeleaf:${spring_boot_version}"
     implementation "org.springframework.boot:spring-boot-starter-oauth2-resource-server:${spring_boot_version}"
     implementation "org.springframework.boot:spring-boot-starter-oauth2-client:${spring_boot_version}"
 
-    implementation "org.springframework.ldap:spring-ldap-core:3.2.8"
-    implementation "org.springframework.data:spring-data-ldap:3.4.0"
+    implementation "org.springframework.ldap:spring-ldap-core:3.2.10"
+    implementation "org.springframework.data:spring-data-ldap:3.4.1"
 
     implementation("org.springframework.cloud:spring-cloud-starter-netflix-eureka-client:${spring_cloud_version}") {
         // NOTE: these modules contain security vulnerabilities and are not needed
@@ -400,10 +407,10 @@ dependencies {
     implementation "org.springframework.cloud:spring-cloud-starter-config:${spring_cloud_version}"
     implementation "org.springframework.cloud:spring-cloud-commons:${spring_cloud_version}"
 
-    implementation "io.netty:netty-all:4.1.115.Final"
-    implementation "io.projectreactor.netty:reactor-netty:1.2.0"
+    implementation "io.netty:netty-all:4.1.116.Final"
+    implementation "io.projectreactor.netty:reactor-netty:1.2.1"
     implementation "org.springframework:spring-messaging:${spring_framework_version}"
-    implementation "org.springframework.retry:spring-retry:2.0.10"
+    implementation "org.springframework.retry:spring-retry:2.0.11"
 
     implementation "org.springframework.security:spring-security-config:${spring_security_version}"
     implementation "org.springframework.security:spring-security-data:${spring_security_version}"
@@ -451,7 +458,7 @@ dependencies {
     implementation "org.apfloat:apfloat:1.14.0"
 
     // use newest version of guava to avoid security issues through outdated dependencies
-    implementation "com.google.guava:guava:33.3.1-jre"
+    implementation "com.google.guava:guava:33.4.0-jre"
     implementation "com.sun.activation:jakarta.activation:2.0.1"
 
     // use newest version of gson to avoid security issues through outdated dependencies
@@ -518,7 +525,7 @@ dependencies {
     }
     testImplementation "org.springframework.security:spring-security-test:${spring_security_version}"
     testImplementation "org.springframework.boot:spring-boot-test:${spring_boot_version}"
-    testImplementation "org.assertj:assertj-core:3.26.3"
+    testImplementation "org.assertj:assertj-core:3.27.0"
     testImplementation "org.mockito:mockito-core:${mockito_version}"
     testImplementation "org.mockito:mockito-junit-jupiter:${mockito_version}"
 
@@ -607,7 +614,7 @@ tasks.withType(Test).configureEach {
 }
 
 wrapper {
-    gradleVersion = "8.11.1"
+    gradleVersion = "8.12"
 }
 
 tasks.register("stage") {
