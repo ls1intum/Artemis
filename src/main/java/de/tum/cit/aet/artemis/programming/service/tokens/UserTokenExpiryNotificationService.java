@@ -34,7 +34,7 @@ public class UserTokenExpiryNotificationService {
     /**
      * Schedules VCS access token expiry notifications to users every morning at 6:00:00 am
      */
-    @Scheduled(cron = "0 * * * * *")
+    @Scheduled(cron = "0 0 6 * * *")
     public void sendTokenExpirationNotifications() {
         log.info("Sending Token expiration notifications to single user");
         notifyOnExpiredToken();
