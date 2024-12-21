@@ -162,15 +162,16 @@ public class CourseCompetencyResource {
     /**
      * GET courses/:courseId/course-competencies : gets all the course competencies of a course
      *
-     * @param courseId the id of the course for which the competencies should be fetched
+     * @param courseId The id of the course for which the competencies should be fetched
+     * @param filter   Whether to filter out competencies that are not linked to any learning objects
      * @return the ResponseEntity with status 200 (OK) and with body the found competencies
      */
     @GetMapping("courses/{courseId}/course-competencies")
     @EnforceAtLeastStudentInCourse
-    public ResponseEntity<List<CourseCompetency>> getCourseCompetenciesWithProgress(@PathVariable long courseId) {
+    public ResponseEntity<List<CourseCompetency>> getCourseCompetenciesWithProgress(@PathVariable long courseId, @RequestParam(defaultValue = "false") boolean filter) {
         log.debug("REST request to get competencies for course with id: {}", courseId);
         User user = userRepository.getUserWithGroupsAndAuthorities();
-        final var competencies = courseCompetencyService.findCourseCompetenciesWithProgressForUserByCourseId(courseId, user.getId());
+        final var competencies = courseCompetencyService.findCourseCompetenciesWithProgressForUserByCourseId(courseId, user.getId(), filter);
         return ResponseEntity.ok(competencies);
     }
 

@@ -37,6 +37,7 @@ import { TextEditorPosition } from 'app/shared/monaco-editor/model/actions/adapt
 import { BulletedListAction } from 'app/shared/monaco-editor/model/actions/bulleted-list.action';
 import { OrderedListAction } from 'app/shared/monaco-editor/model/actions/ordered-list.action';
 import { ListAction } from '../../../../../../../main/webapp/app/shared/monaco-editor/model/actions/list.action';
+import monaco from 'monaco-editor';
 
 describe('PostingsMarkdownEditor', () => {
     let component: PostingMarkdownEditorComponent;
@@ -124,6 +125,7 @@ describe('PostingsMarkdownEditor', () => {
                 MockProvider(ChannelService),
                 { provide: Overlay, useValue: mockOverlay },
                 { provide: OverlayPositionBuilder, useValue: overlayPositionBuilderMock },
+                { provide: MarkdownEditorMonacoComponent, useValue: mockMarkdownEditorComponent },
             ],
             declarations: [PostingMarkdownEditorComponent, MockComponent(MarkdownEditorMonacoComponent)],
         })
@@ -361,15 +363,15 @@ describe('PostingsMarkdownEditor', () => {
             getLineNumber: () => 1,
             getColumn: () => 6,
         } as TextEditorPosition);
-        mockEditor.getLineText.mockReturnValue('•  First line');
+        mockEditor.getLineText.mockReturnValue('- First line');
 
         bulletedListAction.run(mockEditor);
 
         const { preventDefaultSpy } = simulateKeydownEvent(mockEditor, 'Enter', { shiftKey: true });
 
         expect(preventDefaultSpy).toHaveBeenCalled();
-        expect(mockEditor.replaceTextAtRange).toHaveBeenCalledWith(expect.any(TextEditorRange), '\n•  ');
-        expect(mockEditor.setPosition).toHaveBeenCalledWith(new TextEditorPosition(2, 4));
+        expect(mockEditor.replaceTextAtRange).toHaveBeenCalledWith(expect.any(TextEditorRange), '\n- ');
+        expect(mockEditor.setPosition).toHaveBeenCalledWith(new TextEditorPosition(2, 3));
     });
 
     it('should handle Cmd+Enter correctly without inserting double line breaks', () => {
@@ -379,7 +381,7 @@ describe('PostingsMarkdownEditor', () => {
             getLineNumber: () => 1,
             getColumn: () => 6,
         } as TextEditorPosition);
-        mockEditor.getLineText.mockReturnValue('•  First line');
+        mockEditor.getLineText.mockReturnValue('- First line');
 
         bulletedListAction.run(mockEditor);
 
@@ -387,8 +389,8 @@ describe('PostingsMarkdownEditor', () => {
 
         expect(preventDefaultSpy).toHaveBeenCalled();
         expect(stopPropagationSpy).toHaveBeenCalled();
-        expect(mockEditor.replaceTextAtRange).toHaveBeenCalledWith(expect.any(TextEditorRange), '\n•  ');
-        expect(mockEditor.setPosition).toHaveBeenCalledWith(new TextEditorPosition(2, 4));
+        expect(mockEditor.replaceTextAtRange).toHaveBeenCalledWith(expect.any(TextEditorRange), '\n- ');
+        expect(mockEditor.setPosition).toHaveBeenCalledWith(new TextEditorPosition(2, 3));
     });
 
     const simulateListAction = (action: TextEditorAction, selectedText: string, expectedText: string, startLineNumber: number = 1) => {
@@ -437,14 +439,14 @@ describe('PostingsMarkdownEditor', () => {
     it('should add bulleted list prefixes correctly', () => {
         const bulletedListAction = component.defaultActions.find((action: any) => action instanceof BulletedListAction) as BulletedListAction;
         const selectedText = `First line\nSecond line\nThird line`;
-        const expectedText = `•  First line\n•  Second line\n•  Third line`;
+        const expectedText = `- First line\n- Second line\n- Third line`;
 
         simulateListAction(bulletedListAction, selectedText, expectedText);
     });
 
     it('should remove bulleted list prefixes correctly when toggled', () => {
         const bulletedListAction = component.defaultActions.find((action: any) => action instanceof BulletedListAction) as BulletedListAction;
-        const selectedText = `•  First line\n•  Second line\n•  Third line`;
+        const selectedText = `- First line\n- Second line\n- Third line`;
         const expectedText = `First line\nSecond line\nThird line`;
 
         simulateListAction(bulletedListAction, selectedText, expectedText);
@@ -453,7 +455,7 @@ describe('PostingsMarkdownEditor', () => {
     it('should add ordered list prefixes correctly starting from 1', () => {
         const orderedListAction = component.defaultActions.find((action: any) => action instanceof OrderedListAction) as OrderedListAction;
         const selectedText = `First line\nSecond line\nThird line`;
-        const expectedText = `1.  First line\n2.  Second line\n3.  Third line`;
+        const expectedText = `1. First line\n2. Second line\n3. Third line`;
 
         simulateListAction(orderedListAction, selectedText, expectedText);
     });
@@ -469,8 +471,8 @@ describe('PostingsMarkdownEditor', () => {
     it('should switch from bulleted list to ordered list correctly', () => {
         const bulletedListAction = component.defaultActions.find((action: any) => action instanceof BulletedListAction) as BulletedListAction;
         const orderedListAction = component.defaultActions.find((action: any) => action instanceof OrderedListAction) as OrderedListAction;
-        const bulletedText = `•  First line\n•  Second line\n•  Third line`;
-        const expectedOrderedText = `1.  First line\n2.  Second line\n3.  Third line`;
+        const bulletedText = `- First line\n- Second line\n- Third line`;
+        const expectedOrderedText = `1. First line\n2. Second line\n3. Third line`;
 
         simulateListAction(bulletedListAction, bulletedText, `First line\nSecond line\nThird line`);
 
@@ -482,7 +484,7 @@ describe('PostingsMarkdownEditor', () => {
         const orderedListAction = component.defaultActions.find((action: any) => action instanceof OrderedListAction) as OrderedListAction;
         const bulletedListAction = component.defaultActions.find((action: any) => action instanceof BulletedListAction) as BulletedListAction;
         const orderedText = `1.  First line\n2.  Second line\n3.  Third line`;
-        const expectedBulletedText = `•  First line\n•  Second line\n•  Third line`;
+        const expectedBulletedText = `- First line\n- Second line\n- Third line`;
 
         simulateListAction(orderedListAction, orderedText, `First line\nSecond line\nThird line`);
 
@@ -493,7 +495,7 @@ describe('PostingsMarkdownEditor', () => {
     it('should start ordered list numbering from 1 regardless of an inline list', () => {
         const orderedListAction = component.defaultActions.find((action: any) => action instanceof OrderedListAction) as OrderedListAction;
         const selectedText = `Some previous text\n1.  First line\n2.  Second line\n3.  Third line`;
-        const expectedText = `1.  Some previous text\n2.  First line\n3.  Second line\n4.  Third line`;
+        const expectedText = `1. Some previous text\n2. First line\n3. Second line\n4. Third line`;
 
         simulateListAction(orderedListAction, selectedText, expectedText);
     });
@@ -502,8 +504,8 @@ describe('PostingsMarkdownEditor', () => {
         const bulletedListAction = component.defaultActions.find((action: any) => action instanceof BulletedListAction) as BulletedListAction;
         const orderedListAction = component.defaultActions.find((action: any) => action instanceof OrderedListAction) as OrderedListAction;
 
-        const bulletedText = `•  First line\n•  Second line\n•  Third line`;
-        const expectedOrderedText = `1.  First line\n2.  Second line\n3.  Third line`;
+        const bulletedText = `- First line\n- Second line\n- Third line`;
+        const expectedOrderedText = `1. First line\n2. Second line\n3. Third line`;
 
         simulateListAction(bulletedListAction, `First line\nSecond line\nThird line`, bulletedText);
 
@@ -517,13 +519,13 @@ describe('PostingsMarkdownEditor', () => {
 
         const initialText = `First line\nSecond line\nThird line`;
 
-        const bulletedText = `•  First line\n•  Second line\n•  Third line`;
+        const bulletedText = `- First line\n- Second line\n- Third line`;
         simulateListAction(bulletedListAction, initialText, bulletedText);
 
         mockEditor.replaceTextAtRange.mockClear();
         simulateListAction(bulletedListAction, bulletedText, initialText);
 
-        const orderedText = `1.  First line\n2.  Second line\n3.  Third line`;
+        const orderedText = `1. First line\n2. Second line\n3. Third line`;
         mockEditor.replaceTextAtRange.mockClear();
         simulateListAction(orderedListAction, initialText, orderedText);
 
@@ -537,14 +539,42 @@ describe('PostingsMarkdownEditor', () => {
 
         const initialText = `First line\nSecond line\nThird line`;
 
-        const bulletedText = `•  First line\n•  Second line\n•  Third line`;
+        const bulletedText = `- First line\n- Second line\n- Third line`;
         simulateListAction(bulletedListAction, initialText, bulletedText);
 
-        const orderedText = `1.  First line\n2.  Second line\n3.  Third line`;
+        const orderedText = `1. First line\n2. Second line\n3. Third line`;
         mockEditor.replaceTextAtRange.mockClear();
         simulateListAction(orderedListAction, bulletedText, orderedText);
 
         mockEditor.replaceTextAtRange.mockClear();
         simulateListAction(bulletedListAction, orderedText, bulletedText);
+    });
+
+    it('should handle key down event and invoke the correct action', () => {
+        const bulletedListAction = new BulletedListAction();
+
+        component.defaultActions = [bulletedListAction];
+
+        const handleActionClickSpy = jest.spyOn(component.markdownEditor, 'handleActionClick');
+
+        const mockModel = {
+            getLineContent: jest.fn().mockReturnValue('- List item'),
+        } as unknown as monaco.editor.ITextModel;
+        const mockPosition = { lineNumber: 1 } as monaco.Position;
+
+        (component as any).handleKeyDown(mockModel, mockPosition.lineNumber);
+
+        expect(handleActionClickSpy).toHaveBeenCalledWith(expect.any(MouseEvent), bulletedListAction);
+    });
+
+    it('should handle invalid line content gracefully', () => {
+        const mockModel = {
+            getLineContent: jest.fn().mockReturnValue(''),
+        } as unknown as monaco.editor.ITextModel;
+        const mockPosition = { lineNumber: 1 } as monaco.Position;
+        const handleActionClickSpy = jest.spyOn(component.markdownEditor, 'handleActionClick');
+
+        (component as any).handleKeyDown(mockModel, mockPosition.lineNumber);
+        expect(handleActionClickSpy).not.toHaveBeenCalled();
     });
 });
