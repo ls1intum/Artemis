@@ -71,7 +71,9 @@
                 "courseArchiveFailed": "Kursarchivierung fehlgeschlagen",
                 "examArchiveStarted": "Klausurarchivierung gestartet",
                 "examArchiveFinished": "Klausurarchivierung beendet",
-                "examArchiveFailed": "Klausurarchivierung fehlgeschlagen"
+                "examArchiveFailed": "Klausurarchivierung fehlgeschlagen",
+                "vcsAccessTokenAdded": "Neues VCS Zugriffstoken hinzugefügt",
+                "vcsAccessTokenExpired": "VCS Zugriffstoken abgelaufen"
             },
             "text": {
                 "attachmentChange": "Der Anhang \"{{ placeholderValues.1 }}\" von \"{{ placeholderValues.2 }}\" im Kurs \"{{ placeholderValues.0}}\" wurde aktualisiert.",
@@ -97,7 +99,9 @@
                 "examArchiveStarted": "Die Klausur \"{{ placeholderValues.1 }}\" wird archiviert.",
                 "examArchiveFinishedWithoutErrors": "Die Klausur \"{{ placeholderValues.1 }}\" wurde archiviert.",
                 "examArchiveFinishedWithErrors": "Die Klausur \"{{ placeholderValues.1 }}\" wurde archiviert. Einige Aufgaben konnten nicht in das Archiv aufgenommen werden:<br/><br/> {{ placeholderValues.2 }}",
-                "examArchiveFailed": "Es gab ein Problem beim Archivieren der Klausur \"{{ placeholderValues.1 }}\": <br/><br/>  {{ placeholderValues.2 }}"
+                "examArchiveFailed": "Es gab ein Problem beim Archivieren der Klausur \"{{ placeholderValues.1 }}\": <br/><br/>  {{ placeholderValues.2 }}",
+                "vcsAccessTokenAdded": "Du hast erfolgreich ein persönliches Zugriffstoken hinzugefügt.",
+                "vcsAccessTokenExpired": "Dein persönliches Zugriffstoken ist abgelaufen."
             }
         },
         "singleUserNotification": {
