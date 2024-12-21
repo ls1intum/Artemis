@@ -14,7 +14,7 @@ import { ACCEPTED_FILE_EXTENSIONS_FILE_BROWSER, ALLOWED_FILE_EXTENSIONS_HUMAN_RE
 import { FormulaAction } from 'app/shared/monaco-editor/model/actions/formula.action';
 import { LectureTitleChannelNameComponent } from './lecture-title-channel-name.component';
 import { LectureUpdatePeriodComponent } from 'app/lecture/lecture-period/lecture-period.component';
-import dayjs, { Dayjs } from 'dayjs';
+import dayjs, { Dayjs } from 'dayjs/esm';
 import { FormDateTimePickerComponent } from 'app/shared/date-time-picker/date-time-picker.component';
 import cloneDeep from 'lodash-es/cloneDeep';
 import { FormSectionStatus, FormStatusBarComponent } from 'app/forms/form-status-bar/form-status-bar.component';
