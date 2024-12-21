@@ -1,5 +1,5 @@
 import { Posting } from 'app/entities/metis/posting.model';
-import { Directive, EventEmitter, Input, OnInit, Output, inject, input } from '@angular/core';
+import { Directive, EventEmitter, Input, OnInit, Output, inject, input, output } from '@angular/core';
 import dayjs from 'dayjs/esm';
 import { MetisService } from 'app/shared/metis/metis.service';
 import { UserRole } from 'app/shared/metis/metis.util';
@@ -18,6 +18,8 @@ export abstract class PostingHeaderDirective<T extends Posting> implements OnIni
     @Output() isModalOpen = new EventEmitter<void>();
 
     isDeleted = input<boolean>(false);
+
+    readonly onUserNameClicked = output<void>();
 
     isAtLeastTutorInCourse: boolean;
     isAuthorOfPosting: boolean;
@@ -98,5 +100,13 @@ export abstract class PostingHeaderDirective<T extends Posting> implements OnIni
             this.userRoleBadge = 'artemisApp.metis.userRoles.deleted';
             this.userAuthorityTooltip = 'artemisApp.metis.userAuthorityTooltips.deleted';
         }
+    }
+
+    protected userNameClicked() {
+        if (this.isAuthorOfPosting || !this.posting.authorRole) {
+            return;
+        }
+
+        this.onUserNameClicked.emit();
     }
 }
