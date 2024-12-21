@@ -119,6 +119,7 @@ public class AttachmentUnitResource {
      * @param attachmentUnit   the attachment unit with updated content
      * @param attachment       the attachment with updated content
      * @param file             the optional file to upload
+     * @param studentVersion   the student version of the file to upload
      * @param keepFilename     specifies if the original filename should be kept or not
      * @param notificationText the text to be used for the notification. No notification will be sent if the parameter is not set
      * @param hiddenPages      the pages to be hidden in the attachment unit. No hidden pages will be sent if the parameter is not set
@@ -127,14 +128,16 @@ public class AttachmentUnitResource {
     @PutMapping(value = "lectures/{lectureId}/attachment-units/{attachmentUnitId}", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     @EnforceAtLeastEditor
     public ResponseEntity<AttachmentUnit> updateAttachmentUnit(@PathVariable Long lectureId, @PathVariable Long attachmentUnitId, @RequestPart AttachmentUnit attachmentUnit,
-            @RequestPart Attachment attachment, @RequestPart(required = false) MultipartFile file, @RequestParam(defaultValue = "false") boolean keepFilename,
-            @RequestParam(value = "notificationText", required = false) String notificationText, @RequestParam(value = "hiddenPages", required = false) String hiddenPages) {
+            @RequestPart Attachment attachment, @RequestPart(required = false) MultipartFile file, @RequestPart(required = false) MultipartFile studentVersion,
+            @RequestParam(defaultValue = "false") boolean keepFilename, @RequestParam(value = "notificationText", required = false) String notificationText,
+            @RequestParam(value = "hiddenPages", required = false) String hiddenPages) {
         log.debug("REST request to update an attachment unit : {}", attachmentUnit);
         AttachmentUnit existingAttachmentUnit = attachmentUnitRepository.findWithSlidesAndCompetenciesByIdElseThrow(attachmentUnitId);
         checkAttachmentUnitCourseAndLecture(existingAttachmentUnit, lectureId);
         authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.EDITOR, existingAttachmentUnit.getLecture().getCourse(), null);
 
-        AttachmentUnit savedAttachmentUnit = attachmentUnitService.updateAttachmentUnit(existingAttachmentUnit, attachmentUnit, attachment, file, keepFilename, hiddenPages);
+        AttachmentUnit savedAttachmentUnit = attachmentUnitService.updateAttachmentUnit(existingAttachmentUnit, attachmentUnit, attachment, file, studentVersion, keepFilename,
+                hiddenPages);
 
         if (notificationText != null) {
             groupNotificationService.notifyStudentGroupAboutAttachmentChange(savedAttachmentUnit.getAttachment(), notificationText);

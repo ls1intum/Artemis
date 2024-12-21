@@ -48,10 +48,9 @@ export class AttachmentService {
      * @param attachmentId the id of the attachment to update
      * @param attachment the attachment object holding the updated values
      * @param file the file to save as an attachment if it was changed (optional)
-     * @param studentVersion the file to add as student version of the attachment (optional)
      * @param req optional request parameters
      */
-    update(attachmentId: number, attachment: Attachment, file?: File, studentVersion?: File, req?: any): Observable<EntityResponseType> {
+    update(attachmentId: number, attachment: Attachment, file?: File, req?: any): Observable<EntityResponseType> {
         const options = createRequestOption(req);
         const copy = this.convertAttachmentDatesFromClient(attachment);
 
@@ -59,7 +58,7 @@ export class AttachmentService {
          * See: https://issues.chromium.org/issues/374550348
          **/
         return this.http
-            .put<Attachment>(this.resourceUrl + '/' + attachmentId, this.createFormData(copy, file, studentVersion), {
+            .put<Attachment>(this.resourceUrl + '/' + attachmentId, this.createFormData(copy, file), {
                 headers: { 'ngsw-bypass': 'true' },
                 params: options,
                 observe: 'response',
@@ -139,14 +138,11 @@ export class AttachmentService {
         return res;
     }
 
-    private createFormData(attachment: Attachment, file?: File, studentVersion?: File) {
+    private createFormData(attachment: Attachment, file?: File) {
         const formData = new FormData();
         formData.append('attachment', objectToJsonBlob(attachment));
         if (file) {
             formData.append('file', file);
-        }
-        if (studentVersion) {
-            formData.append('studentVersion', studentVersion);
         }
         return formData;
     }

@@ -106,7 +106,6 @@ public class AttachmentResource {
      * @param attachmentId     the id of the attachment to save
      * @param attachment       the attachment to update
      * @param file             the file to save if the file got changed (optional)
-     * @param studentVersion   the file to add as student version of the attachment (optional)
      * @param notificationText text that will be sent to the student group (optional)
      * @return the ResponseEntity with status 200 (OK) and with body the updated attachment, or with status 400 (Bad Request) if the attachment is not valid, or with status 500
      *         (Internal Server Error) if the attachment couldn't be updated
@@ -114,7 +113,7 @@ public class AttachmentResource {
     @PutMapping(value = "attachments/{attachmentId}", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     @EnforceAtLeastEditor
     public ResponseEntity<Attachment> updateAttachment(@PathVariable Long attachmentId, @RequestPart Attachment attachment, @RequestPart(required = false) MultipartFile file,
-            @RequestPart(required = false) MultipartFile studentVersion, @RequestParam(value = "notificationText", required = false) String notificationText) {
+            @RequestParam(value = "notificationText", required = false) String notificationText) {
         log.debug("REST request to update Attachment : {}", attachment);
         attachment.setId(attachmentId);
 
@@ -130,20 +129,6 @@ public class AttachmentResource {
             URI oldPath = URI.create(originalAttachment.getLink());
             fileService.schedulePathForDeletion(FilePathService.actualPathForPublicPathOrThrow(oldPath), 0);
             this.fileService.evictCacheForPath(FilePathService.actualPathForPublicPathOrThrow(oldPath));
-        }
-
-        if (studentVersion != null) {
-            // Update student version of attachment
-            Path basePath = FilePathService.getAttachmentUnitFilePath().resolve(originalAttachment.getAttachmentUnit().getId().toString());
-            Path savePath = fileService.saveFile(studentVersion, basePath.resolve("student"), true);
-            attachment.setStudentVersion(FilePathService.publicPathForActualPath(savePath, originalAttachment.getAttachmentUnit().getId()).toString());
-
-            // Delete the old student version
-            if (originalAttachment.getStudentVersion() != null) {
-                URI oldHiddenPath = URI.create(originalAttachment.getStudentVersion());
-                fileService.schedulePathForDeletion(FilePathService.actualPathForPublicPathOrThrow(oldHiddenPath), 0);
-                this.fileService.evictCacheForPath(FilePathService.actualPathForPublicPathOrThrow(oldHiddenPath));
-            }
         }
 
         Attachment result = attachmentRepository.save(attachment);
