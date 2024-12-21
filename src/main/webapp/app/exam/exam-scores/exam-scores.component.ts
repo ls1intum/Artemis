@@ -682,7 +682,7 @@ export class ExamScoresComponent implements OnInit, OnDestroy {
      * Localizes a number, e.g. switching the decimal separator
      */
     localize(numberToLocalize: number): string {
-        return this.localeConversionService.toLocaleString(numberToLocalize, this.course!.accuracyOfScores!);
+        return this.localeConversionService.toLocaleString(numberToLocalize, this.course?.accuracyOfScores);
     }
 
     /**
