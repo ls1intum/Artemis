@@ -58,14 +58,11 @@ import {
     USERNAME_KEY,
 } from 'app/shared/export/export-constants';
 import { BonusStrategy } from 'app/entities/bonus.model';
-import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { TranslateDirective } from '../../shared/language/translate.directive';
-import { ExportModule } from '../../shared/export/export.module';
-import { NgStyle } from '@angular/common';
-import { ArtemisParticipantScoresModule } from '../../shared/participant-scores/participant-scores.module';
-import { ExamScoresAverageScoresGraphComponent } from './exam-scores-average-scores-graph.component';
-import { ArtemisSharedComponentModule } from '../../shared/components/shared-component.module';
-import { ArtemisSharedCommonModule } from '../../shared/shared-common.module';
+import { ExamScoresAverageScoresGraphComponent } from 'app/exam/exam-scores/exam-scores-average-scores-graph.component';
+import { ArtemisParticipantScoresModule } from 'app/shared/participant-scores/participant-scores.module';
+import { ExportModule } from 'app/shared/export/export.module';
+import { ArtemisSharedCommonModule } from 'app/shared/shared-common.module';
+import { ArtemisSharedComponentModule } from 'app/shared/components/shared-component.module';
 
 export enum MedianType {
     PASSED,
@@ -79,17 +76,7 @@ export enum MedianType {
     changeDetection: ChangeDetectionStrategy.OnPush,
     styleUrls: ['./exam-scores.component.scss', '../../shared/chart/vertical-bar-chart.scss'],
     standalone: true,
-    imports: [
-        FaIconComponent,
-        TranslateDirective,
-        ExportModule,
-        RouterLink,
-        NgStyle,
-        ArtemisParticipantScoresModule,
-        ExamScoresAverageScoresGraphComponent,
-        ArtemisSharedComponentModule,
-        ArtemisSharedCommonModule,
-    ],
+    imports: [RouterLink, ArtemisSharedComponentModule, ArtemisSharedCommonModule, ExamScoresAverageScoresGraphComponent, ArtemisParticipantScoresModule, ExportModule],
 })
 export class ExamScoresComponent implements OnInit, OnDestroy {
     private route = inject(ActivatedRoute);
