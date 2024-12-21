@@ -146,13 +146,13 @@ public class FilePathService {
 
     private static Path actualPathForPublicAttachmentUnitFilePath(URI publicPath, String filename) {
         Path path = Path.of(publicPath.getPath());
-        if (!publicPath.toString().contains("/slide")) {
-            String attachmentUnitId = path.getName(4).toString();
-            return getAttachmentUnitFilePath().resolve(Path.of(attachmentUnitId, filename));
-        }
-        else if (publicPath.toString().contains("/student")) {
+        if (publicPath.toString().contains("/student")) {
             String attachmentUnitId = path.getName(4).toString();
             return getAttachmentUnitFilePath().resolve(Path.of(attachmentUnitId, "student", filename));
+        }
+        else if (!publicPath.toString().contains("/slide")) {
+            String attachmentUnitId = path.getName(4).toString();
+            return getAttachmentUnitFilePath().resolve(Path.of(attachmentUnitId, filename));
         }
         try {
             String attachmentUnitId = path.getName(4).toString();
