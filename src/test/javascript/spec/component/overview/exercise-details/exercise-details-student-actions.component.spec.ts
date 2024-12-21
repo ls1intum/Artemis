@@ -32,7 +32,6 @@ import { MockRouter } from '../../../helpers/mocks/mock-router';
 import { MockCourseExerciseService } from '../../../helpers/mocks/service/mock-course-exercise.service';
 import { MockSyncStorage } from '../../../helpers/mocks/service/mock-sync-storage.service';
 import { ArtemisTestModule } from '../../../test.module';
-import { PROFILE_THEIA } from 'app/app.constants';
 
 describe('ExerciseDetailsStudentActionsComponent', () => {
     let comp: ExerciseDetailsStudentActionsComponent;
@@ -500,85 +499,4 @@ describe('ExerciseDetailsStudentActionsComponent', () => {
             }
         }),
     );
-
-    it.each([
-        [
-            'start theia button should be visible when profile is active and theia is configured',
-            {
-                activeProfiles: [PROFILE_THEIA],
-                theiaPortalURL: 'https://theia.test',
-            },
-            {
-                allowOnlineIde: true,
-            },
-            {
-                theiaImage: 'this-is-a-theia-image',
-            },
-            true,
-        ],
-        [
-            'start theia button should not be visible when profile is active but theia is ill-configured',
-            {
-                activeProfiles: [PROFILE_THEIA],
-                theiaPortalURL: 'https://theia.test',
-            },
-            {
-                allowOnlineIde: true,
-            },
-            {
-                theiaImage: undefined,
-            },
-            false,
-        ],
-        [
-            'start theia button should not be visible when profile is active but onlineIde is not activated',
-            {
-                activeProfiles: [PROFILE_THEIA],
-                theiaPortalURL: 'https://theia.test',
-            },
-            {
-                allowOnlineIde: false,
-            },
-            {
-                theiaImage: 'this-is-an-old-image',
-            },
-            false,
-        ],
-        [
-            'start theia button should not be visible when profile is active but url is not set',
-            {
-                activeProfiles: [PROFILE_THEIA],
-            },
-            {
-                allowOnlineIde: true,
-            },
-            {
-                theiaImage: 'this-is-a-theia-image',
-            },
-            false,
-        ],
-        [
-            'start theia button should not be visible when profile is not active but url is set',
-            {
-                theiaPortalURL: 'https://theia.test',
-            },
-            {
-                allowOnlineIde: true,
-            },
-            {
-                theiaImage: 'this-is-a-theia-image',
-            },
-            false,
-        ],
-    ])('%s', (description, profileInfo, programmingExercise, buildConfig, expectedVisibility) => {
-        getProfileInfoSub = jest.spyOn(profileService, 'getProfileInfo');
-        getProfileInfoSub.mockReturnValue(of(profileInfo as ProfileInfo));
-
-        // Expand the programmingExercise by given properties
-        comp.exercise = { ...exercise, ...programmingExercise, buildConfig: buildConfig } as ProgrammingExercise;
-
-        fixture.detectChanges();
-
-        expect(comp.theiaEnabled).toBe(expectedVisibility);
-    });
 });

@@ -11,14 +11,14 @@ import { ProgrammingExercise } from 'app/entities/programming/programming-exerci
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
 import { ArtemisQuizService } from 'app/shared/quiz/quiz.service';
 import { finalize } from 'rxjs/operators';
-import { faCodeBranch, faDesktop, faEye, faFolderOpen, faPenSquare, faPlayCircle, faRedo, faUsers } from '@fortawesome/free-solid-svg-icons';
+import { faCodeBranch, faEye, faFolderOpen, faPenSquare, faPlayCircle, faRedo, faUsers } from '@fortawesome/free-solid-svg-icons';
 import { CourseExerciseService } from 'app/exercises/shared/course-exercises/course-exercise.service';
 import { TranslateService } from '@ngx-translate/core';
 import { ParticipationService } from 'app/exercises/shared/participation/participation.service';
 import dayjs from 'dayjs/esm';
 import { QuizExercise } from 'app/entities/quiz/quiz-exercise.model';
 import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
-import { PROFILE_ATHENA, PROFILE_LOCALVC, PROFILE_THEIA } from 'app/app.constants';
+import { PROFILE_ATHENA, PROFILE_LOCALVC } from 'app/app.constants';
 import { AssessmentType } from 'app/entities/assessment-type.model';
 import { ButtonType } from 'app/shared/components/button.component';
 
@@ -62,9 +62,6 @@ export class ExerciseDetailsStudentActionsComponent implements OnInit, OnChanges
     routerLink: string;
     repositoryLink: string;
 
-    theiaEnabled: boolean = false;
-    theiaPortalURL: string;
-
     // Icons
     readonly faFolderOpen = faFolderOpen;
     readonly faUsers = faUsers;
@@ -72,7 +69,6 @@ export class ExerciseDetailsStudentActionsComponent implements OnInit, OnChanges
     readonly faPlayCircle = faPlayCircle;
     readonly faRedo = faRedo;
     readonly faCodeBranch = faCodeBranch;
-    readonly faDesktop = faDesktop;
     readonly faPenSquare = faPenSquare;
 
     private feedbackSent = false;
@@ -112,29 +108,6 @@ export class ExerciseDetailsStudentActionsComponent implements OnInit, OnChanges
             this.profileService.getProfileInfo().subscribe((profileInfo) => {
                 this.localVCEnabled = profileInfo.activeProfiles?.includes(PROFILE_LOCALVC);
                 this.athenaEnabled = profileInfo.activeProfiles?.includes(PROFILE_ATHENA);
-
-                // The online IDE is only available with correct SpringProfile and if it's enabled for this exercise
-                if (profileInfo.activeProfiles?.includes(PROFILE_THEIA) && this.programmingExercise) {
-                    this.theiaEnabled = true;
-
-                    // Set variables now, sanitize later on
-                    this.theiaPortalURL = profileInfo.theiaPortalURL ?? '';
-
-                    // Verify that Theia's portal URL is set
-                    if (this.theiaPortalURL === '') {
-                        this.theiaEnabled = false;
-                    }
-
-                    // Verify that the exercise allows the online IDE
-                    if (!this.programmingExercise.allowOnlineIde) {
-                        this.theiaEnabled = false;
-                    }
-
-                    // Verify that the exercise has a theia blueprint configured
-                    if (!this.programmingExercise.buildConfig?.theiaImage) {
-                        this.theiaEnabled = false;
-                    }
-                }
             });
         } else if (this.exercise.type === ExerciseType.MODELING) {
             this.editorLabel = 'openModelingEditor';
@@ -159,10 +132,6 @@ export class ExerciseDetailsStudentActionsComponent implements OnInit, OnChanges
     ngOnChanges() {
         this.updateParticipations();
         this.isTeamAvailable = !!(this.exercise.teamMode && this.exercise.studentAssignedTeamIdComputed && this.exercise.studentAssignedTeamId);
-    }
-
-    startOnlineIDE() {
-        window.open(this.theiaPortalURL, '_blank');
     }
 
     receiveNewParticipation(newParticipation: StudentParticipation) {
