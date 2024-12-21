@@ -193,6 +193,7 @@ public abstract class PushNotificationService implements InstantNotificationServ
      */
     private static Optional<String> encrypt(@NotNull String payload, SecretKey key, byte[] initializationVector) {
         try {
+            // We need to get a fresh instance here for every notification to avoid a race condition between tasks
             var cipher = Cipher.getInstance(Constants.PUSH_NOTIFICATION_ENCRYPTION_ALGORITHM);
 
             cipher.init(Cipher.ENCRYPT_MODE, key, new IvParameterSpec(initializationVector));
