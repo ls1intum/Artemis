@@ -5,11 +5,15 @@ import { ModelingSubmissionElement } from 'app/exercises/shared/plagiarism/types
 import { ModelingExercise } from 'app/entities/modeling-exercise.model';
 import { ModelingSubmission } from 'app/entities/modeling-submission.model';
 import { UMLModel } from '@ls1intum/apollon';
+import { SplitPaneHeaderComponent } from '../split-pane-header/split-pane-header.component';
+import { ArtemisModelingEditorModule } from '../../../../modeling/shared/modeling-editor.module';
 
 @Component({
     selector: 'jhi-modeling-submission-viewer',
     styleUrls: ['./modeling-submission-viewer.component.scss'],
     templateUrl: './modeling-submission-viewer.component.html',
+    standalone: true,
+    imports: [SplitPaneHeaderComponent, ArtemisModelingEditorModule],
 })
 export class ModelingSubmissionViewerComponent implements OnChanges {
     @Input() exercise: ModelingExercise;

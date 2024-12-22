@@ -4,9 +4,7 @@ import { RouterModule } from '@angular/router';
 import { TranslateModule } from '@ngx-translate/core';
 import { ArtemisModelingEditorModule } from 'app/exercises/modeling/shared/modeling-editor.module';
 import { ArtemisSharedModule } from 'app/shared/shared.module';
-import { PlagiarismDetailsComponent } from 'app/exercises/shared/plagiarism/plagiarism-details/plagiarism-details.component';
 import { PlagiarismHeaderComponent } from 'app/exercises/shared/plagiarism/plagiarism-header/plagiarism-header.component';
-import { PlagiarismInspectorComponent } from 'app/exercises/shared/plagiarism/plagiarism-inspector/plagiarism-inspector.component';
 import { PlagiarismSidebarComponent } from 'app/exercises/shared/plagiarism/plagiarism-sidebar/plagiarism-sidebar.component';
 import { PlagiarismSplitViewComponent, SplitPaneDirective } from 'app/exercises/shared/plagiarism/plagiarism-split-view/plagiarism-split-view.component';
 import { ModelingSubmissionViewerComponent } from './plagiarism-split-view/modeling-submission-viewer/modeling-submission-viewer.component';
@@ -18,11 +16,17 @@ import { FeatureToggleModule } from 'app/shared/feature-toggle/feature-toggle.mo
 import { ArtemisSharedComponentModule } from 'app/shared/components/shared-component.module';
 
 @NgModule({
-    imports: [ArtemisSharedModule, ArtemisSharedComponentModule, ArtemisModelingEditorModule, FormsModule, RouterModule, TranslateModule, BarChartModule, FeatureToggleModule],
-    declarations: [
+    imports: [
+        ArtemisSharedModule,
+        ArtemisSharedComponentModule,
+        ArtemisModelingEditorModule,
+        FormsModule,
+        RouterModule,
+        TranslateModule,
+        BarChartModule,
+        FeatureToggleModule,
         PlagiarismDetailsComponent,
         PlagiarismHeaderComponent,
-        PlagiarismInspectorComponent,
         PlagiarismSidebarComponent,
         PlagiarismSplitViewComponent,
         SplitPaneDirective,
@@ -31,6 +35,6 @@ import { ArtemisSharedComponentModule } from 'app/shared/components/shared-compo
         SplitPaneHeaderComponent,
         PlagiarismRunDetailsComponent,
     ],
-    exports: [PlagiarismInspectorComponent, PlagiarismSplitViewComponent],
+    exports: [PlagiarismSplitViewComponent],
 })
 export class ArtemisPlagiarismModule {}

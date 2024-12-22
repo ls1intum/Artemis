@@ -8,11 +8,15 @@ import { PlagiarismCasesService } from 'app/course/plagiarism-cases/shared/plagi
 import { ConfirmAutofocusModalComponent } from 'app/shared/components/confirm-autofocus-modal.component';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { Exercise, getCourseId } from 'app/entities/exercise.model';
+import { TranslateDirective } from '../../../../shared/language/translate.directive';
+import { ArtemisTranslatePipe } from '../../../../shared/pipes/artemis-translate.pipe';
 
 @Component({
     selector: 'jhi-plagiarism-header',
     styleUrls: ['./plagiarism-header.component.scss'],
     templateUrl: './plagiarism-header.component.html',
+    standalone: true,
+    imports: [TranslateDirective, ArtemisTranslatePipe],
 })
 export class PlagiarismHeaderComponent {
     @Input() comparison?: PlagiarismComparison<TextSubmissionElement | ModelingSubmissionElement>;

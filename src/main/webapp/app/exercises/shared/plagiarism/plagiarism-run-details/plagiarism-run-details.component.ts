@@ -8,6 +8,11 @@ import { PlagiarismComparison } from 'app/exercises/shared/plagiarism/types/Plag
 import { PlagiarismInspectorService } from 'app/exercises/shared/plagiarism/plagiarism-inspector/plagiarism-inspector.service';
 import { PlagiarismStatus } from 'app/exercises/shared/plagiarism/types/PlagiarismStatus';
 import { PlagiarismResultStats } from 'app/exercises/shared/plagiarism/types/PlagiarismResultDTO';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { ArtemisSharedComponentModule } from 'app/shared/components/shared-component.module';
+import { BarChartModule } from '@swimlane/ngx-charts';
+import { DatePipe } from '@angular/common';
+import { ArtemisTranslatePipe } from '../../../../shared/pipes/artemis-translate.pipe';
 
 interface SimilarityRangeComparisonStateDTO {
     confirmed: number;
@@ -19,6 +24,8 @@ interface SimilarityRangeComparisonStateDTO {
     selector: 'jhi-plagiarism-run-details',
     styleUrls: ['./plagiarism-run-details.component.scss', '../../../../shared/chart/vertical-bar-chart.scss'],
     templateUrl: './plagiarism-run-details.component.html',
+    standalone: true,
+    imports: [TranslateDirective, ArtemisSharedComponentModule, BarChartModule, DatePipe, ArtemisTranslatePipe],
 })
 export class PlagiarismRunDetailsComponent extends PlagiarismAndTutorEffortDirective implements OnChanges {
     /**
