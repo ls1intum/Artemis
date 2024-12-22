@@ -269,6 +269,32 @@ describe('MetisConversationService', () => {
         });
     });
 
+    it('should set active conversation to newly created one to one chat when calling with id', () => {
+        return new Promise((done) => {
+            metisConversationService.setUpConversationService(course).subscribe({
+                complete: () => {
+                    const newOneToOneChat = generateOneToOneChatDTO({ id: 99 });
+                    const createOneToOneChatSpy = jest.spyOn(oneToOneChatService, 'createWithId').mockReturnValue(of(new HttpResponse({ body: newOneToOneChat })));
+                    const getConversationSpy = jest
+                        .spyOn(conversationService, 'getConversationsOfUser')
+                        .mockReturnValue(of(new HttpResponse({ body: [groupChat, oneToOneChat, channel, newOneToOneChat] })));
+                    createOneToOneChatSpy.mockClear();
+                    metisConversationService.createOneToOneChatWithId(1).subscribe({
+                        complete: () => {
+                            expect(createOneToOneChatSpy).toHaveBeenCalledOnce();
+                            expect(createOneToOneChatSpy).toHaveBeenCalledWith(course.id, 1);
+                            metisConversationService.activeConversation$.subscribe((activeConversation) => {
+                                expect(activeConversation).toBe(newOneToOneChat);
+                                expect(getConversationSpy).toHaveBeenCalledTimes(2);
+                                done({});
+                            });
+                        },
+                    });
+                },
+            });
+        });
+    });
+
     it('should add new conversation to conversations of user on conversation create received', () => {
         return new Promise((done) => {
             metisConversationService.setUpConversationService(course).subscribe({
@@ -405,5 +431,11 @@ describe('MetisConversationService', () => {
         metisConversationService['conversationsOfUser'] = [{ id: 1, unreadMessageCount: 1 } as ChannelDTO, { id: 2, unreadMessageCount: 1 } as ChannelDTO];
         metisConversationService.markAsRead(2);
         expect(metisConversationService['conversationsOfUser'][1].unreadMessagesCount).toBe(0);
+    });
+
+    it('should call refresh after marking all channels as read', () => {
+        const markAllChannelAsReadSpy = jest.spyOn(conversationService, 'markAllChannelsAsRead').mockReturnValue(of());
+        metisConversationService.markAllChannelsAsRead(course);
+        expect(markAllChannelAsReadSpy).toHaveBeenCalledOnce();
     });
 });

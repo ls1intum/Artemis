@@ -12,7 +12,7 @@ plugins {
     id "idea"
     id "jacoco"
     id "org.springframework.boot" version "${spring_boot_version}"
-    id "io.spring.dependency-management" version "1.1.6"
+    id "io.spring.dependency-management" version "1.1.7"
     id "com.google.cloud.tools.jib" version "3.4.4"
     id "com.github.node-gradle.node" version "${gradle_node_plugin_version}"
     id "com.diffplug.spotless" version "6.25.0"
@@ -257,7 +257,7 @@ dependencies {
     implementation "org.apache.lucene:lucene-queryparser:${lucene_version}"
     implementation "org.apache.lucene:lucene-core:${lucene_version}"
     implementation "org.apache.lucene:lucene-analyzers-common:${lucene_version}"
-    implementation "com.google.protobuf:protobuf-java:4.29.1"
+    implementation "com.google.protobuf:protobuf-java:4.29.2"
 
     // we have to override those values to use the latest version
     implementation "org.slf4j:jcl-over-slf4j:${slf4j_version}"
@@ -384,6 +384,13 @@ dependencies {
         exclude module: "spring-boot-starter-undertow"
     }
     implementation "org.springframework.boot:spring-boot-starter-tomcat:${spring_boot_version}"
+
+    // Avoid security issues in Tomcat 10.1.33
+    implementation "org.apache.tomcat.embed:tomcat-embed-core:${tomcat_version}"
+    implementation "org.apache.tomcat.embed:tomcat-embed-el:${tomcat_version}"
+    implementation "org.apache.tomcat.embed:tomcat-embed-websocket:${tomcat_version}"
+    implementation "org.apache.tomcat:tomcat-annotations-api:${tomcat_version}"
+
     implementation "org.springframework.boot:spring-boot-starter-websocket:${spring_boot_version}"
     implementation "org.springframework.boot:spring-boot-starter-thymeleaf:${spring_boot_version}"
     implementation "org.springframework.boot:spring-boot-starter-oauth2-resource-server:${spring_boot_version}"
@@ -400,7 +407,7 @@ dependencies {
     implementation "org.springframework.cloud:spring-cloud-starter-config:${spring_cloud_version}"
     implementation "org.springframework.cloud:spring-cloud-commons:${spring_cloud_version}"
 
-    implementation "io.netty:netty-all:4.1.115.Final"
+    implementation "io.netty:netty-all:4.1.116.Final"
     implementation "io.projectreactor.netty:reactor-netty:1.2.1"
     implementation "org.springframework:spring-messaging:${spring_framework_version}"
     implementation "org.springframework.retry:spring-retry:2.0.11"
@@ -451,7 +458,7 @@ dependencies {
     implementation "org.apfloat:apfloat:1.14.0"
 
     // use newest version of guava to avoid security issues through outdated dependencies
-    implementation "com.google.guava:guava:33.3.1-jre"
+    implementation "com.google.guava:guava:33.4.0-jre"
     implementation "com.sun.activation:jakarta.activation:2.0.1"
 
     // use newest version of gson to avoid security issues through outdated dependencies
@@ -518,7 +525,7 @@ dependencies {
     }
     testImplementation "org.springframework.security:spring-security-test:${spring_security_version}"
     testImplementation "org.springframework.boot:spring-boot-test:${spring_boot_version}"
-    testImplementation "org.assertj:assertj-core:3.26.3"
+    testImplementation "org.assertj:assertj-core:3.27.0"
     testImplementation "org.mockito:mockito-core:${mockito_version}"
     testImplementation "org.mockito:mockito-junit-jupiter:${mockito_version}"
 
@@ -607,7 +614,7 @@ tasks.withType(Test).configureEach {
 }
 
 wrapper {
-    gradleVersion = "8.12-rc-1"
+    gradleVersion = "8.12"
 }
 
 tasks.register("stage") {
