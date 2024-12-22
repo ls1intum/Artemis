@@ -14,6 +14,8 @@ import { PlagiarismRunDetailsComponent } from './plagiarism-run-details/plagiari
 import { BarChartModule } from '@swimlane/ngx-charts';
 import { FeatureToggleModule } from 'app/shared/feature-toggle/feature-toggle.module';
 import { ArtemisSharedComponentModule } from 'app/shared/components/shared-component.module';
+import { PlagiarismDetailsComponent } from 'app/exercises/shared/plagiarism/plagiarism-details/plagiarism-details.component';
+import { PlagiarismInspectorComponent } from 'app/exercises/shared/plagiarism/plagiarism-inspector/plagiarism-inspector.component';
 
 @NgModule({
     imports: [
@@ -35,6 +37,7 @@ import { ArtemisSharedComponentModule } from 'app/shared/components/shared-compo
         SplitPaneHeaderComponent,
         PlagiarismRunDetailsComponent,
     ],
+    declarations: [PlagiarismInspectorComponent],
     exports: [PlagiarismSplitViewComponent],
 })
 export class ArtemisPlagiarismModule {}
