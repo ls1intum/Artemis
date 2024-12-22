@@ -49,16 +49,16 @@ describe('Test Run Management Component', () => {
                 { provide: TranslateService, useClass: MockTranslateService },
                 { provide: ActivatedRoute, useValue: route },
                 MockDirective(TranslateDirective),
+                { provide: NgbModal, useClass: MockNgbModalService },
             ],
         })
-            .overrideProvider(NgbModal, { useValue: new MockNgbModalService() })
             .compileComponents()
             .then(() => {
                 fixture = TestBed.createComponent(TestRunManagementComponent);
                 component = fixture.componentInstance;
                 examManagementService = TestBed.inject(ExamManagementService);
                 accountService = TestBed.inject(AccountService);
-                modalService = TestBed.inject(NgbModal);
+                modalService = fixture.debugElement.injector.get(NgbModal);
                 jest.spyOn(examManagementService, 'find').mockReturnValue(of(new HttpResponse({ body: exam })));
                 jest.spyOn(examManagementService, 'findAllTestRunsForExam').mockReturnValue(of(new HttpResponse({ body: studentExams })));
                 userSpy = jest.spyOn(accountService, 'identity').mockReturnValue(Promise.resolve(user));
@@ -121,7 +121,6 @@ describe('Test Run Management Component', () => {
             createTestRunButton.nativeElement.click();
 
             tick();
-            fixture.detectChanges();
 
             expect(component.testRuns).toHaveLength(3);
         }));
