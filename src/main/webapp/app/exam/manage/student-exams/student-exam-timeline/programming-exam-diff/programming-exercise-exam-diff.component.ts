@@ -104,7 +104,6 @@ export class ProgrammingExerciseExamDiffComponent extends ExamPageComponent impl
     showGitDiff(): void {
         const modalRef = this.modalService.open(GitDiffReportModalComponent, { windowClass: GitDiffReportModalComponent.WINDOW_CLASS });
         const component: GitDiffReportModalComponent = modalRef.componentInstance;
-        component.report.set(this.exercise.gitDiffReport);
         component.diffForTemplateAndSolution.set(false);
     }
 

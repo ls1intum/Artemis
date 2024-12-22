@@ -2,18 +2,21 @@
 <div class="fw-bold">
     <jhi-git-diff-line-stat [lineStat]="lineStat()" ngbTooltip="{{ 'artemisApp.programmingExercise.diffReport.lineStatTooltipDetailPage' | artemisTranslate }}" placement="right" />
 </div>
-@if (detail.data.addedLineCount > 0 || detail.data.removedLineCount > 0) {
+@if (detail().data.addedLineCount > 0 || detail().data.removedLineCount > 0) {
     <div class="mt-1">
         <jhi-button
             [featureToggle]="FeatureToggle.ProgrammingExercises"
-            [isLoading]="detail.data.isLoadingDiffReport ?? false"
+            [isLoading]="detail().data.isLoadingDiffReport"
             [btnSize]="ButtonSize.SMALL"
             [icon]="faCodeCompare"
             [title]="'artemisApp.programmingExercise.diffReport.button'"
             [tooltip]="'artemisApp.programmingExercise.diffReport.tooltip'"
-            (onClick)="showGitDiff(detail.data.gitDiffReport)"
+            (onClick)="showGitDiff()"
             [btnType]="WARNING"
             [tooltipPlacement]="TooltipPlacement.RIGHT"
         />
     </div>
 }
+<div hidden="hidden">
+    <ng-container #container />
+</div>

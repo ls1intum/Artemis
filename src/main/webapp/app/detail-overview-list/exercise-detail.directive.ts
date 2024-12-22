@@ -69,7 +69,7 @@ export class ExerciseDetailDirective implements OnInit, OnDestroy {
 
     private assignAttributes() {
         if (this.componentRef) {
-            this.componentRef.instance.detail = this.detail;
+            this.componentRef.setInput('detail', this.detail);
         }
     }
 }
