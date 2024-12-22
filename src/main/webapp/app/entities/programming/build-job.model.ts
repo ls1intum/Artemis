@@ -35,6 +35,7 @@ export class FinishedBuildJob implements StringBaseEntity {
     public triggeredByPushTo?: TriggeredByPushTo;
     public repositoryName?: string;
     public repositoryType?: string;
+    public buildSubmissionDate?: dayjs.Dayjs;
     public buildStartDate?: dayjs.Dayjs;
     public buildCompletionDate?: dayjs.Dayjs;
     public buildDuration?: string;
@@ -47,6 +48,8 @@ export class BuildJobStatistics {
     public successfulBuilds: number = 0;
     public failedBuilds: number = 0;
     public cancelledBuilds: number = 0;
+    public timeOutBuilds: number = 0;
+    public missingBuilds: number = 0;
 }
 
 export enum SpanType {

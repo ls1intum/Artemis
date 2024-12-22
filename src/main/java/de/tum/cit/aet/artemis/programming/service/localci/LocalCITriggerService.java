@@ -42,7 +42,10 @@ import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseParticipatio
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingLanguage;
 import de.tum.cit.aet.artemis.programming.domain.ProjectType;
 import de.tum.cit.aet.artemis.programming.domain.RepositoryType;
+import de.tum.cit.aet.artemis.programming.domain.build.BuildJob;
+import de.tum.cit.aet.artemis.programming.domain.build.BuildStatus;
 import de.tum.cit.aet.artemis.programming.repository.AuxiliaryRepositoryRepository;
+import de.tum.cit.aet.artemis.programming.repository.BuildJobRepository;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseBuildConfigRepository;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseBuildStatisticsRepository;
 import de.tum.cit.aet.artemis.programming.repository.SolutionProgrammingExerciseParticipationRepository;
@@ -109,6 +112,8 @@ public class LocalCITriggerService implements ContinuousIntegrationTriggerServic
 
     private final ProgrammingExerciseBuildConfigService programmingExerciseBuildConfigService;
 
+    private final BuildJobRepository buildJobRepository;
+
     private static final int DEFAULT_BUILD_DURATION = 17;
 
     // Arbitrary value to ensure that the build duration is always a bit higher than the actual build duration
@@ -120,7 +125,7 @@ public class LocalCITriggerService implements ContinuousIntegrationTriggerServic
             SolutionProgrammingExerciseParticipationRepository solutionProgrammingExerciseParticipationRepository,
             LocalCIBuildConfigurationService localCIBuildConfigurationService, GitService gitService, ExerciseDateService exerciseDateService,
             ProgrammingExerciseBuildConfigRepository programmingExerciseBuildConfigRepository, BuildScriptProviderService buildScriptProviderService,
-            ProgrammingExerciseBuildConfigService programmingExerciseBuildConfigService,
+            ProgrammingExerciseBuildConfigService programmingExerciseBuildConfigService, BuildJobRepository buildJobRepository,
             ProgrammingExerciseBuildStatisticsRepository programmingExerciseBuildStatisticsRepository) {
         this.hazelcastInstance = hazelcastInstance;
         this.aeolusTemplateService = aeolusTemplateService;
@@ -136,6 +141,7 @@ public class LocalCITriggerService implements ContinuousIntegrationTriggerServic
         this.buildScriptProviderService = buildScriptProviderService;
         this.programmingExerciseBuildConfigService = programmingExerciseBuildConfigService;
         this.programmingExerciseBuildStatisticsRepository = programmingExerciseBuildStatisticsRepository;
+        this.buildJobRepository = buildJobRepository;
     }
 
     @PostConstruct
@@ -224,6 +230,8 @@ public class LocalCITriggerService implements ContinuousIntegrationTriggerServic
         BuildJobQueueItem buildJobQueueItem = new BuildJobQueueItem(buildJobId, participation.getBuildPlanId(), buildAgent, participation.getId(), courseId,
                 programmingExercise.getId(), 0, priority, null, repositoryInfo, jobTimingInfo, buildConfig, null);
 
+        // Save the build job before adding it to the queue in case it got quickly processed. Update statement would then fail.
+        buildJobRepository.save(new BuildJob(buildJobQueueItem, BuildStatus.QUEUED, null));
         queue.add(buildJobQueueItem);
         log.info("Added build job {} for exercise {} and participation {} with priority {} to the queue", buildJobId, programmingExercise.getShortName(), participation.getId(),
                 priority);

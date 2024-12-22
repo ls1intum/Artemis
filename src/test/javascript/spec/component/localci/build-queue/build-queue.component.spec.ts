@@ -3,22 +3,17 @@ import { ActivatedRoute } from '@angular/router';
 import { of } from 'rxjs';
 import { BuildQueueComponent, FinishedBuildJobFilter, FinishedBuildJobFilterStorageKey } from 'app/localci/build-queue/build-queue.component';
 import { BuildQueueService } from 'app/localci/build-queue/build-queue.service';
-import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
-import { MockComponent, MockPipe } from 'ng-mocks';
 import dayjs from 'dayjs/esm';
 import { AccountService } from 'app/core/auth/account.service';
 import { DataTableComponent } from 'app/shared/data-table/data-table.component';
-import { NgxDatatableModule } from '@siemens/ngx-datatable';
 import { ArtemisTestModule } from '../../../test.module';
-import { BuildJobStatistics, FinishedBuildJob, SpanType } from 'app/entities/programming/build-job.model';
+import { FinishedBuildJob } from 'app/entities/programming/build-job.model';
 import { TriggeredByPushTo } from 'app/entities/programming/repository-info.model';
 import { waitForAsync } from '@angular/core/testing';
 import { HttpResponse } from '@angular/common/http';
 import { SortingOrder } from 'app/shared/table/pageable-table';
 import { LocalStorageService } from 'ngx-webstorage';
 import { MockLocalStorageService } from '../../../helpers/mocks/service/mock-local-storage.service';
-import { ArtemisSharedComponentModule } from 'app/shared/components/shared-component.module';
-import { PieChartModule } from '@swimlane/ngx-charts';
 
 describe('BuildQueueComponent', () => {
     let component: BuildQueueComponent;
@@ -217,6 +212,7 @@ describe('BuildQueueComponent', () => {
             repositoryName: 'repo5',
             repositoryType: 'USER',
             triggeredByPushTo: TriggeredByPushTo.USER,
+            buildSubmissionDate: dayjs('2023-01-05'),
             buildStartDate: dayjs('2023-01-05'),
             buildCompletionDate: dayjs('2023-01-05'),
             buildDuration: undefined,
@@ -241,19 +237,12 @@ describe('BuildQueueComponent', () => {
         },
     ];
 
-    const mockBuildJobStatistics: BuildJobStatistics = {
-        totalBuilds: 10,
-        successfulBuilds: 5,
-        failedBuilds: 3,
-        cancelledBuilds: 2,
-    };
-
     const mockFinishedJobsResponse: HttpResponse<FinishedBuildJob[]> = new HttpResponse({ body: mockFinishedJobs });
 
     const request = {
         page: 1,
         pageSize: 50,
-        sortedColumn: 'buildCompletionDate',
+        sortedColumn: 'buildSubmissionDate',
         sortingOrder: SortingOrder.DESCENDING,
         searchTerm: '',
     };
@@ -275,8 +264,8 @@ describe('BuildQueueComponent', () => {
         mockActivatedRoute = { params: of({ courseId: testCourseId }) };
 
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule, NgxDatatableModule, ArtemisSharedComponentModule, PieChartModule],
-            declarations: [BuildQueueComponent, MockPipe(ArtemisTranslatePipe), MockComponent(DataTableComponent)],
+            imports: [ArtemisTestModule, BuildQueueComponent],
+            declarations: [],
             providers: [
                 { provide: BuildQueueService, useValue: mockBuildQueueService },
                 { provide: ActivatedRoute, useValue: mockActivatedRoute },
@@ -312,7 +301,6 @@ describe('BuildQueueComponent', () => {
         mockBuildQueueService.getQueuedBuildJobs.mockReturnValue(of(mockQueuedJobs));
         mockBuildQueueService.getRunningBuildJobs.mockReturnValue(of(mockRunningJobs));
         mockBuildQueueService.getFinishedBuildJobs.mockReturnValue(of(mockFinishedJobsResponse));
-        mockBuildQueueService.getBuildJobStatistics.mockReturnValue(of(mockBuildJobStatistics));
 
         // Initialize the component
         component.ngOnInit();
@@ -341,7 +329,6 @@ describe('BuildQueueComponent', () => {
         mockBuildQueueService.getQueuedBuildJobsByCourseId.mockReturnValue(of(mockQueuedJobs));
         mockBuildQueueService.getRunningBuildJobsByCourseId.mockReturnValue(of(mockRunningJobs));
         mockBuildQueueService.getFinishedBuildJobsByCourseId.mockReturnValue(of(mockFinishedJobsResponse));
-        mockBuildQueueService.getBuildJobStatisticsForCourse.mockReturnValue(of(mockBuildJobStatistics));
 
         // Initialize the component
         component.ngOnInit();
@@ -350,39 +337,11 @@ describe('BuildQueueComponent', () => {
         expect(mockBuildQueueService.getQueuedBuildJobsByCourseId).toHaveBeenCalledWith(testCourseId);
         expect(mockBuildQueueService.getRunningBuildJobsByCourseId).toHaveBeenCalledWith(testCourseId);
         expect(mockBuildQueueService.getFinishedBuildJobsByCourseId).toHaveBeenCalledWith(testCourseId, request, filterOptionsEmpty);
-        expect(mockBuildQueueService.getBuildJobStatisticsForCourse).toHaveBeenCalledWith(testCourseId, SpanType.WEEK);
 
         // Expectations: The component's properties are set with the mock data
         expect(component.queuedBuildJobs).toEqual(mockQueuedJobs);
         expect(component.runningBuildJobs).toEqual(mockRunningJobs);
         expect(component.finishedBuildJobs).toEqual(mockFinishedJobs);
-        expect(component.buildJobStatistics).toEqual(mockBuildJobStatistics);
-    });
-
-    it('should get build job statistics when changing the span', () => {
-        // Mock ActivatedRoute to return no course ID
-        mockActivatedRoute.paramMap = of(new Map([]));
-
-        mockBuildQueueService.getBuildJobStatistics.mockReturnValue(of(mockBuildJobStatistics));
-
-        component.ngOnInit();
-        component.onTabChange(SpanType.DAY);
-
-        expect(mockBuildQueueService.getBuildJobStatistics).toHaveBeenCalledTimes(2);
-        expect(component.buildJobStatistics).toEqual(mockBuildJobStatistics);
-    });
-
-    it('should not get build job statistics when span is the same', () => {
-        // Mock ActivatedRoute to return no course ID
-        mockActivatedRoute.paramMap = of(new Map([]));
-
-        mockBuildQueueService.getBuildJobStatistics.mockReturnValue(of(mockBuildJobStatistics));
-
-        component.ngOnInit();
-        component.onTabChange(SpanType.WEEK);
-
-        expect(mockBuildQueueService.getBuildJobStatistics).toHaveBeenCalledOnce();
-        expect(component.buildJobStatistics).toEqual(mockBuildJobStatistics);
     });
 
     it('should refresh data', () => {
@@ -588,8 +547,8 @@ describe('BuildQueueComponent', () => {
         component.finishedBuildJobFilter.buildDurationFilterLowerBound = 1;
         component.finishedBuildJobFilter.buildDurationFilterUpperBound = 2;
         component.filterDurationChanged();
-        component.finishedBuildJobFilter.buildStartDateFilterFrom = dayjs('2023-01-01');
-        component.finishedBuildJobFilter.buildStartDateFilterTo = dayjs('2023-01-02');
+        component.finishedBuildJobFilter.buildSubmissionDateFilterFrom = dayjs('2023-01-01');
+        component.finishedBuildJobFilter.buildSubmissionDateFilterTo = dayjs('2023-01-02');
         component.filterDateChanged();
         component.toggleBuildStatusFilter('SUCCESSFUL');
 
@@ -608,8 +567,8 @@ describe('BuildQueueComponent', () => {
         component.finishedBuildJobFilter.buildAgentAddress = 'agent1';
         component.finishedBuildJobFilter.buildDurationFilterLowerBound = 1;
         component.finishedBuildJobFilter.buildDurationFilterUpperBound = 2;
-        component.finishedBuildJobFilter.buildStartDateFilterFrom = dayjs('2023-01-01');
-        component.finishedBuildJobFilter.buildStartDateFilterTo = dayjs('2023-01-02');
+        component.finishedBuildJobFilter.buildSubmissionDateFilterFrom = dayjs('2023-01-01');
+        component.finishedBuildJobFilter.buildSubmissionDateFilterTo = dayjs('2023-01-02');
         component.finishedBuildJobFilter.status = 'SUCCESSFUL';
 
         component.filterDurationChanged();
@@ -620,8 +579,8 @@ describe('BuildQueueComponent', () => {
         expect(mockLocalStorageService.retrieve(FinishedBuildJobFilterStorageKey.buildAgentAddress)).toBe('agent1');
         expect(mockLocalStorageService.retrieve(FinishedBuildJobFilterStorageKey.buildDurationFilterLowerBound)).toBe(1);
         expect(mockLocalStorageService.retrieve(FinishedBuildJobFilterStorageKey.buildDurationFilterUpperBound)).toBe(2);
-        expect(mockLocalStorageService.retrieve(FinishedBuildJobFilterStorageKey.buildStartDateFilterFrom)).toEqual(dayjs('2023-01-01'));
-        expect(mockLocalStorageService.retrieve(FinishedBuildJobFilterStorageKey.buildStartDateFilterTo)).toEqual(dayjs('2023-01-02'));
+        expect(mockLocalStorageService.retrieve(FinishedBuildJobFilterStorageKey.buildSubmissionDateFilterFrom)).toEqual(dayjs('2023-01-01'));
+        expect(mockLocalStorageService.retrieve(FinishedBuildJobFilterStorageKey.buildSubmissionDateFilterTo)).toEqual(dayjs('2023-01-02'));
         expect(mockLocalStorageService.retrieve(FinishedBuildJobFilterStorageKey.status)).toBe('SUCCESSFUL');
 
         component.finishedBuildJobFilter = new FinishedBuildJobFilter();
@@ -634,15 +593,15 @@ describe('BuildQueueComponent', () => {
         expect(mockLocalStorageService.retrieve(FinishedBuildJobFilterStorageKey.buildAgentAddress)).toBeUndefined();
         expect(mockLocalStorageService.retrieve(FinishedBuildJobFilterStorageKey.buildDurationFilterLowerBound)).toBeUndefined();
         expect(mockLocalStorageService.retrieve(FinishedBuildJobFilterStorageKey.buildDurationFilterUpperBound)).toBeUndefined();
-        expect(mockLocalStorageService.retrieve(FinishedBuildJobFilterStorageKey.buildStartDateFilterFrom)).toBeUndefined();
-        expect(mockLocalStorageService.retrieve(FinishedBuildJobFilterStorageKey.buildStartDateFilterTo)).toBeUndefined();
+        expect(mockLocalStorageService.retrieve(FinishedBuildJobFilterStorageKey.buildSubmissionDateFilterFrom)).toBeUndefined();
+        expect(mockLocalStorageService.retrieve(FinishedBuildJobFilterStorageKey.buildSubmissionDateFilterTo)).toBeUndefined();
         expect(mockLocalStorageService.retrieve(FinishedBuildJobFilterStorageKey.status)).toBeUndefined();
     });
 
     it('should validate correctly', () => {
         component.finishedBuildJobFilter = new FinishedBuildJobFilter();
         component.finishedBuildJobFilter.buildDurationFilterLowerBound = 1;
-        component.finishedBuildJobFilter.buildStartDateFilterFrom = dayjs('2023-01-01');
+        component.finishedBuildJobFilter.buildSubmissionDateFilterFrom = dayjs('2023-01-01');
         component.filterDurationChanged();
         component.filterDateChanged();
 
@@ -650,7 +609,7 @@ describe('BuildQueueComponent', () => {
         expect(component.finishedBuildJobFilter.areDurationFiltersValid).toBeTruthy();
 
         component.finishedBuildJobFilter.buildDurationFilterUpperBound = 2;
-        component.finishedBuildJobFilter.buildStartDateFilterTo = dayjs('2023-01-02');
+        component.finishedBuildJobFilter.buildSubmissionDateFilterTo = dayjs('2023-01-02');
         component.filterDurationChanged();
         component.filterDateChanged();
 
@@ -658,7 +617,7 @@ describe('BuildQueueComponent', () => {
         expect(component.finishedBuildJobFilter.areDurationFiltersValid).toBeTruthy();
 
         component.finishedBuildJobFilter.buildDurationFilterLowerBound = 3;
-        component.finishedBuildJobFilter.buildStartDateFilterFrom = dayjs('2023-01-03');
+        component.finishedBuildJobFilter.buildSubmissionDateFilterFrom = dayjs('2023-01-03');
         component.filterDurationChanged();
         component.filterDateChanged();
 

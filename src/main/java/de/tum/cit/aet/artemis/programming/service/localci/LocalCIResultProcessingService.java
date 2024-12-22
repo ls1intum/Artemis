@@ -9,6 +9,7 @@ import java.util.OptionalDouble;
 import java.util.UUID;
 import java.util.concurrent.CancellationException;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.TimeoutException;
 
 import jakarta.annotation.PreDestroy;
 
@@ -185,6 +186,9 @@ public class LocalCIResultProcessingService {
                     if (ex.getCause() instanceof CancellationException && ex.getMessage().equals("Build job with id " + buildJob.id() + " was cancelled.")) {
                         savedBuildJob = saveFinishedBuildJob(buildJob, BuildStatus.CANCELLED, result);
                     }
+                    else if (ex.getCause() instanceof TimeoutException && ex.getMessage().equals("Build job with id " + buildJob.id() + " was timed out")) {
+                        savedBuildJob = saveFinishedBuildJob(buildJob, BuildStatus.TIMEOUT, result);
+                    }
                     else {
                         log.error("Error while processing build job: {}", buildJob, ex);
                         savedBuildJob = saveFinishedBuildJob(buildJob, BuildStatus.FAILED, result);
@@ -275,6 +279,9 @@ public class LocalCIResultProcessingService {
     private BuildJob saveFinishedBuildJob(BuildJobQueueItem queueItem, BuildStatus buildStatus, Result result) {
         try {
             BuildJob buildJob = new BuildJob(queueItem, buildStatus, result);
+            buildJobRepository.findByBuildJobId(queueItem.id()).ifPresent(existingBuildJob -> {
+                buildJob.setId(existingBuildJob.getId());
+            });
             return buildJobRepository.save(buildJob);
         }
         catch (Exception e) {
