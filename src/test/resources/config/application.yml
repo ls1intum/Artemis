@@ -78,6 +78,8 @@ artemis:
                     default: "~~invalid~~"
                 typescript:
                     default: "~~invalid~~"
+                go:
+                    default: "~~invalid~~"
         build-agent:
             short-name: "artemis-build-agent-test"
     telemetry:
