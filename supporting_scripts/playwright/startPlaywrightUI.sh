@@ -12,5 +12,5 @@ npm install
 
 npm run playwright:setup-local || true
 
-echo "Run all playwright tests"
-npm run playwright:test
+echo "Start Playwright in UI mode"
+npm run playwright:open
