@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, ChangeDetectorRef, Component, OnDestroy, ViewContainerRef, computed, effect, inject, input, signal, viewChild } from '@angular/core';
+import { ChangeDetectionStrategy, Component, OnDestroy, ViewContainerRef, computed, effect, inject, input, signal, viewChild } from '@angular/core';
 import type { ProgrammingDiffReportDetail } from 'app/detail-overview-list/detail.model';
 import { FeatureToggle } from 'app/shared/feature-toggle/feature-toggle.service';
 import { ButtonSize, ButtonType, TooltipPlacement } from 'app/shared/components/button.component';
@@ -27,7 +27,6 @@ export class ProgrammingDiffReportDetailComponent implements OnDestroy {
     protected readonly faCodeCompare = faCodeCompare;
 
     private readonly modalService = inject(NgbModal);
-    private readonly changeDetector = inject(ChangeDetectorRef);
     private readonly repositoryFilesService = inject(RepositoryFilesService);
     private readonly modalRef = signal<NgbModalRef | undefined>(undefined);
 
@@ -70,47 +69,41 @@ export class ProgrammingDiffReportDetailComponent implements OnDestroy {
             if (!solutionFiles) {
                 return;
             }
+
             const container = this.container();
             const component = container.createComponent(GitDiffReportComponent);
             component.setInput('report', this.diffReport());
             component.setInput('templateFileContentByPath', templateFiles);
             component.setInput('solutionFileContentByPath', solutionFiles);
+            const subscription = component.instance.lineStatChanged.subscribe((lineStat) => this.lineStat.set(lineStat));
 
             onCleanup(() => {
-                container.remove();
+                subscription.unsubscribe();
+                container.remove(container.indexOf(component.hostView));
             });
         });
 
-        effect(() => {
+        effect((onCleanup) => {
             const modalRef = this.modalRef();
             if (!modalRef) {
                 return;
             }
 
-            const view = this.container().detach();
+            const hiddenContainer = this.container();
+            const view = hiddenContainer.detach();
             if (!view) {
                 throw new Error('could not detach view');
             }
 
             const modalComponent: GitDiffReportModalComponent = modalRef.componentInstance;
-            modalComponent.container().insert(view);
+            const modalContainer = modalComponent.container();
+            modalContainer.insert(view);
+
+            onCleanup(() => {
+                modalContainer.detach(modalContainer.indexOf(view));
+                hiddenContainer.insert(view);
+            });
         });
-    }
-
-    returnView() {
-        const modalRef = this.modalRef();
-        if (!modalRef) {
-            return false;
-        }
-        const modalComponent: GitDiffReportModalComponent = modalRef.componentInstance;
-
-        const view = modalComponent.container().detach();
-        if (!view) {
-            throw new Error('could not detach view');
-        }
-
-        this.container().insert(view);
-        return true;
     }
 
     ngOnDestroy() {
@@ -120,13 +113,11 @@ export class ProgrammingDiffReportDetailComponent implements OnDestroy {
     showGitDiff() {
         const modalRef = this.modalService.open(GitDiffReportModalComponent, {
             windowClass: GitDiffReportModalComponent.WINDOW_CLASS,
-            beforeDismiss: () => this.returnView(),
+            beforeDismiss: () => {
+                this.modalRef.set(undefined);
+                return true;
+            },
         });
-        const component: GitDiffReportModalComponent = modalRef.componentInstance;
-        component.lineStatChanged.subscribe((lineStat) => this.lineStat.set(lineStat));
-
         this.modalRef.set(modalRef);
-
-        this.changeDetector.markForCheck();
     }
 }

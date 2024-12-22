@@ -1,7 +1,6 @@
-import { ChangeDetectionStrategy, Component, ViewContainerRef, inject, output, signal, viewChild } from '@angular/core';
+import { ChangeDetectionStrategy, Component, ViewContainerRef, inject, signal, viewChild } from '@angular/core';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
-import { LineStat } from 'app/exercises/programming/hestia/git-diff-report/git-diff-line-stat.component';
 
 @Component({
     selector: 'jhi-git-diff-report-modal',
@@ -16,9 +15,8 @@ export class GitDiffReportModalComponent {
     private readonly activeModal = inject(NgbActiveModal);
 
     public readonly diffForTemplateAndSolution = signal<boolean>(true);
-    public readonly container = viewChild.required('container', { read: ViewContainerRef });
 
-    public readonly lineStatChanged = output<LineStat>();
+    public readonly container = viewChild.required('container', { read: ViewContainerRef });
 
     public close(): void {
         this.activeModal.dismiss();

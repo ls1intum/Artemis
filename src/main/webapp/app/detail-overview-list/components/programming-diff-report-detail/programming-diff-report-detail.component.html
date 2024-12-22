@@ -2,7 +2,7 @@
 <div class="fw-bold">
     <jhi-git-diff-line-stat [lineStat]="lineStat()" ngbTooltip="{{ 'artemisApp.programmingExercise.diffReport.lineStatTooltipDetailPage' | artemisTranslate }}" placement="right" />
 </div>
-@if (detail().data.addedLineCount > 0 || detail().data.removedLineCount > 0) {
+@if (lineStat().addedLineCount > 0 || lineStat().removedLineCount > 0) {
     <div class="mt-1">
         <jhi-button
             [featureToggle]="FeatureToggle.ProgrammingExercises"
