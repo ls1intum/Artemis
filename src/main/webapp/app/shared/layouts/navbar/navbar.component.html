@@ -292,7 +292,7 @@
                             <span jhiTranslate="global.menu.admin.lti"></span>
                         </a>
                     }
-                    @if (standardizedCompetenciesEnabled) {
+                    @if (atlasEnabled && standardizedCompetenciesEnabled) {
                         <li>
                             <a class="dropdown-item" routerLink="/admin/standardized-competencies" routerLinkActive="active" (click)="collapseNavbar()">
                                 <fa-icon [icon]="faFlag" [fixedWidth]="true" />

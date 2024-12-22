@@ -1,6 +1,6 @@
 package de.tum.cit.aet.artemis.atlas.web;
 
-import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
+import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_ATLAS;
 
 import java.net.URI;
 import java.net.URISyntaxException;
@@ -62,7 +62,7 @@ import de.tum.cit.aet.artemis.core.service.feature.FeatureToggle;
 import de.tum.cit.aet.artemis.iris.service.IrisCompetencyGenerationService;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.competency.PyrisCompetencyExtractionInputDTO;
 
-@Profile(PROFILE_CORE)
+@Profile(PROFILE_ATLAS)
 @RestController
 @RequestMapping("api/")
 public class CourseCompetencyResource {

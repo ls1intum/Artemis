@@ -1,6 +1,6 @@
 package de.tum.cit.aet.artemis.atlas.service.competency;
 
-import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
+import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_ATLAS;
 import static java.util.stream.Collectors.toMap;
 import static java.util.stream.Collectors.toSet;
 
@@ -29,7 +29,7 @@ import de.tum.cit.aet.artemis.iris.service.pyris.event.CompetencyJolSetEvent;
 /**
  * Service Implementation for managing CompetencyJol.
  */
-@Profile(PROFILE_CORE)
+@Profile(PROFILE_ATLAS)
 @Service
 public class CompetencyJolService {
 
