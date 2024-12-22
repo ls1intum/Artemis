@@ -408,6 +408,8 @@ public class MailService implements InstantNotificationService {
             case SSH_KEY_ADDED -> templateEngine.process("mail/notification/sshKeyAddedEmail", context);
             case SSH_KEY_EXPIRES_SOON -> templateEngine.process("mail/notification/sshKeyExpiresSoonEmail", context);
             case SSH_KEY_HAS_EXPIRED -> templateEngine.process("mail/notification/sshKeyHasExpiredEmail", context);
+            case VCS_ACCESS_TOKEN_ADDED -> templateEngine.process("mail/notification/vcsAccessTokenAddedEmail", context);
+            case VCS_ACCESS_TOKEN_EXPIRED -> templateEngine.process("mail/notification/vcsAccessTokenExpiredEmail", context);
 
             default -> throw new UnsupportedOperationException("Unsupported NotificationType: " + notificationType);
         };
