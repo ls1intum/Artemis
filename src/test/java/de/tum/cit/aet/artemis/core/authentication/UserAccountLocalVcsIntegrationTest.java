@@ -28,12 +28,6 @@ class UserAccountLocalVcsIntegrationTest extends AbstractSpringIntegrationLocalC
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
-    void addAndDeleteSshPublicKeyByUser() throws Exception {
-        userTestService.addAndDeleteSshPublicKey();
-    }
-
-    @Test
-    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void getAndCreateParticipationVcsAccessTokenByUser() throws Exception {
         userTestService.getAndCreateParticipationVcsAccessToken();
     }

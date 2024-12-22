@@ -24,7 +24,7 @@ import de.tum.cit.aet.artemis.assessment.repository.ParticipantScoreRepository;
 import de.tum.cit.aet.artemis.assessment.repository.StudentScoreRepository;
 import de.tum.cit.aet.artemis.assessment.repository.TeamScoreRepository;
 import de.tum.cit.aet.artemis.assessment.service.ResultService;
-import de.tum.cit.aet.artemis.atlas.service.competency.CompetencyProgressService;
+import de.tum.cit.aet.artemis.atlas.api.CompetencyProgressApi;
 import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.exception.ContinuousIntegrationException;
 import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
@@ -109,7 +109,7 @@ public class ParticipationService {
 
     private final ParticipationVcsAccessTokenService participationVCSAccessTokenService;
 
-    private final CompetencyProgressService competencyProgressService;
+    private final CompetencyProgressApi competencyProgressApi;
 
     public ParticipationService(GitService gitService, Optional<ContinuousIntegrationService> continuousIntegrationService, Optional<VersionControlService> versionControlService,
             BuildLogEntryService buildLogEntryService, ParticipationRepository participationRepository, StudentParticipationRepository studentParticipationRepository,
@@ -118,7 +118,7 @@ public class ParticipationService {
             CoverageReportRepository coverageReportRepository, BuildLogStatisticsEntryRepository buildLogStatisticsEntryRepository,
             ParticipantScoreRepository participantScoreRepository, StudentScoreRepository studentScoreRepository, TeamScoreRepository teamScoreRepository,
             Optional<SharedQueueManagementService> localCISharedBuildJobQueueService, ProfileService profileService,
-            ParticipationVcsAccessTokenService participationVCSAccessTokenService, CompetencyProgressService competencyProgressService) {
+            ParticipationVcsAccessTokenService participationVCSAccessTokenService, CompetencyProgressApi competencyProgressApi) {
         this.gitService = gitService;
         this.continuousIntegrationService = continuousIntegrationService;
         this.versionControlService = versionControlService;
@@ -139,7 +139,7 @@ public class ParticipationService {
         this.localCISharedBuildJobQueueService = localCISharedBuildJobQueueService;
         this.profileService = profileService;
         this.participationVCSAccessTokenService = participationVCSAccessTokenService;
-        this.competencyProgressService = competencyProgressService;
+        this.competencyProgressApi = competencyProgressApi;
     }
 
     /**
@@ -929,7 +929,7 @@ public class ParticipationService {
         }
 
         if (recalculateCompetencyProgress) {
-            competencyProgressService.updateProgressByLearningObjectAsync(exercise);
+            competencyProgressApi.updateProgressByLearningObjectAsync(exercise);
         }
     }
 

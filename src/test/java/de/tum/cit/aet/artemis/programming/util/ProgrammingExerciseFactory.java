@@ -341,6 +341,8 @@ public class ProgrammingExerciseFactory {
             case PMD_CPD -> "Copy/Paste Detection";
             case SWIFTLINT -> "swiftLint"; // TODO: rene: set better value after categories are better defined
             case GCC -> "Memory";
+            case RUFF -> "Pylint";
+            case OTHER -> "Other";
         };
 
         return new StaticCodeAnalysisIssue(Constants.STUDENT_WORKING_DIRECTORY + "/www/packagename/Class1.java", // filePath
