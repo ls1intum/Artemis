@@ -271,6 +271,55 @@ describe('PdfPreviewComponent', () => {
         });
     });
 
+    describe('Attachment Unit Update', () => {
+        it('should update attachment unit successfully when there are no hidden pages', fakeAsync(() => {
+            jest.spyOn(component, 'getHiddenPages').mockReturnValue([]);
+            jest.spyOn(FormData.prototype, 'append');
+            attachmentUnitServiceMock.update.mockReturnValue(of({}));
+
+            component.attachment.set(undefined);
+            component.attachmentUnit.set({
+                id: 1,
+                lecture: { id: 2 },
+                attachment: { id: 3 },
+            });
+
+            routerNavigateSpy = jest.spyOn(TestBed.inject(Router), 'navigate').mockImplementation(() => Promise.resolve(true));
+
+            component.updateAttachmentWithFile();
+            tick();
+
+            expect(FormData.prototype.append).toHaveBeenCalledWith('file', expect.any(File));
+            expect(FormData.prototype.append).toHaveBeenCalledWith('attachment', expect.any(Blob));
+            expect(FormData.prototype.append).toHaveBeenCalledWith('attachmentUnit', expect.any(Blob));
+            expect(attachmentUnitServiceMock.update).toHaveBeenCalledWith(2, 1, expect.any(FormData));
+            expect(alertServiceMock.success).toHaveBeenCalledWith('artemisApp.attachment.pdfPreview.attachmentUpdateSuccess');
+            expect(routerNavigateSpy).toHaveBeenCalledWith(['course-management', 1, 'lectures', 2, 'unit-management']);
+        }));
+
+        it('should show error when updating attachment unit fails', fakeAsync(() => {
+            const error = { message: 'Update failed' };
+            attachmentUnitServiceMock.update.mockReturnValue(throwError(() => error));
+
+            // Mock `currentPdfBlob` to prevent arrayBuffer error
+            const mockPdfBlob = new Blob(['pdf content'], { type: 'application/pdf' });
+            jest.spyOn(component.currentPdfBlob, 'set').mockImplementation(() => {});
+            component.currentPdfBlob.set(mockPdfBlob);
+
+            component.attachment.set(undefined);
+            component.attachmentUnit.set({
+                id: 1,
+                lecture: { id: 2 },
+                attachment: { id: 3 },
+            });
+
+            component.updateAttachmentWithFile();
+            tick();
+
+            expect(alertServiceMock.error).toHaveBeenCalled();
+        }));
+    });
+
     describe('PDF Merging', () => {
         it('should merge PDF files correctly and update the component state', async () => {
             const mockFile = new File(['new pdf'], 'test.pdf', { type: 'application/pdf' });
