@@ -20,6 +20,7 @@ import { Course } from 'app/entities/course.model';
 import { getAsChannelDTO } from 'app/entities/metis/conversation/channel.model';
 import { PostCreateEditModalComponent } from 'app/shared/metis/posting-create-edit-modal/post-create-edit-modal/post-create-edit-modal.component';
 import dayjs from 'dayjs';
+import { User } from '../../../../../../../../main/webapp/app/core/user/user.model';
 
 const examples: ConversationDTO[] = [
     generateOneToOneChatDTO({}),
@@ -27,6 +28,11 @@ const examples: ConversationDTO[] = [
     generateExampleChannelDTO({}),
     generateExampleChannelDTO({ isAnnouncementChannel: true }),
 ];
+
+interface PostGroup {
+    author: User | undefined;
+    posts: Post[];
+}
 
 @Directive({
     // eslint-disable-next-line @angular-eslint/directive-selector
@@ -266,6 +272,56 @@ examples.forEach((activeConversation) => {
             expect(component.groupedPosts[0].posts).toHaveLength(1);
             expect(component.groupedPosts[1].posts).toHaveLength(1);
             expect(component.groupedPosts[2].posts).toHaveLength(1);
+        });
+
+        it('should correctly identify the first unread marker', () => {
+            const mockPosts: Post[] = [{ id: 1, content: 'Post 1' } as Post, { id: 2, content: 'Post 2' } as Post, { id: 3, content: 'Post 3' } as Post];
+
+            const mockGroups: PostGroup[] = [
+                { author: undefined, posts: [mockPosts[0], mockPosts[1]] },
+                { author: undefined, posts: [mockPosts[2]] },
+            ];
+
+            component.groupedPosts = mockGroups;
+            component.unreadCount = 2;
+
+            const isFirstUnreadForPost1 = component.isFirstUnreadMarker(mockPosts[0], mockGroups[0]);
+            const isFirstUnreadForPost2 = component.isFirstUnreadMarker(mockPosts[1], mockGroups[0]);
+            const isFirstUnreadForPost3 = component.isFirstUnreadMarker(mockPosts[2], mockGroups[1]);
+
+            expect(isFirstUnreadForPost1).toBeFalse();
+            expect(isFirstUnreadForPost2).toBeTrue();
+            expect(isFirstUnreadForPost3).toBeFalse();
+        });
+
+        it('should render the unread marker if isFirstUnreadMarker returns true', () => {
+            const mockPost: Post = { id: 1, content: 'Post 1' } as Post;
+            const mockGroup: PostGroup = { author: undefined, posts: [mockPost] };
+
+            jest.spyOn(component, 'isFirstUnreadMarker').mockReturnValue(true);
+
+            component.groupedPosts = [mockGroup];
+            component.unreadCount = 1;
+
+            fixture.detectChanges();
+
+            const unreadMarker = fixture.debugElement.query(By.css('.unread-marker'));
+            expect(unreadMarker).toBeTruthy();
+        });
+
+        it('should not render the unread marker if isFirstUnreadMarker returns false', () => {
+            const mockPost: Post = { id: 1, content: 'Post 1' } as Post;
+            const mockGroup: PostGroup = { author: undefined, posts: [mockPost] };
+
+            jest.spyOn(component, 'isFirstUnreadMarker').mockReturnValue(false);
+
+            component.groupedPosts = [mockGroup];
+            component.unreadCount = 1;
+
+            fixture.detectChanges();
+
+            const unreadMarker = fixture.debugElement.query(By.css('.unread-marker'));
+            expect(unreadMarker).toBeFalsy();
         });
 
         if (getAsChannelDTO(activeConversation)?.isAnnouncementChannel) {

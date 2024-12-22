@@ -59,6 +59,7 @@ export class ConversationMessagesComponent implements OnInit, AfterViewInit, OnD
     scrollSubject = new Subject<number>();
     canStartSaving = false;
     createdNewMessage = false;
+    unreadCount = 0;
 
     @Output() openThread = new EventEmitter<Post>();
 
@@ -140,6 +141,7 @@ export class ConversationMessagesComponent implements OnInit, AfterViewInit, OnD
 
     private subscribeToActiveConversation() {
         this.metisConversationService.activeConversation$.pipe(takeUntil(this.ngUnsubscribe)).subscribe((conversation: ConversationDTO) => {
+            this.unreadCount = conversation?.unreadMessagesCount || 0;
             // This statement avoids a bug that reloads the messages when the conversation is already displayed
             if (conversation && this._activeConversation?.id === conversation.id) {
                 return;
@@ -147,6 +149,45 @@ export class ConversationMessagesComponent implements OnInit, AfterViewInit, OnD
             this._activeConversation = conversation;
             this.onActiveConversationChange();
         });
+    }
+
+    /**
+     * Determines whether a post is the "first unread message" in the conversation.
+     */
+    isFirstUnreadMarker(post: Post, group: PostGroup): boolean {
+        let remainingUnread = this.unreadCount;
+        let firstUnreadFound = false;
+
+        const groupIndex = this.groupedPosts.findIndex((g) => g === group);
+        if (groupIndex === -1) {
+            return false;
+        }
+
+        for (let i = this.groupedPosts.length - 1; i >= 0; i--) {
+            const currentGroup = this.groupedPosts[i];
+            const groupMessageCount = currentGroup.posts.length;
+
+            if (i > groupIndex) {
+                remainingUnread -= groupMessageCount;
+            } else if (i === groupIndex) {
+                const postIndexInGroup = currentGroup.posts.indexOf(post);
+
+                if (!firstUnreadFound && postIndexInGroup === groupMessageCount - remainingUnread) {
+                    if (groupIndex === 0 && postIndexInGroup === 0) {
+                        remainingUnread--;
+                        return false;
+                    }
+                    firstUnreadFound = true;
+                    return true;
+                }
+
+                remainingUnread--;
+            } else {
+                return false;
+            }
+        }
+
+        return false;
     }
 
     private subscribeToSearch() {
