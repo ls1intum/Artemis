@@ -12,7 +12,7 @@
                 }
             } @else {
                 {{
-                    (diffForTemplateAndSolution() || !report().participationIdForLeftCommit
+                    (diffForTemplateAndSolution() || !leftCommit()
                         ? 'artemisApp.programmingExercise.diffReport.template'
                         : 'artemisApp.programmingExercise.diffReport.previousSubmission'
                     ) | artemisTranslate

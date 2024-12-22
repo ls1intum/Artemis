@@ -474,7 +474,7 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
                             addedLineCount: this.addedLineCount,
                             removedLineCount: this.removedLineCount,
                             isLoadingDiffReport: this.isLoadingDiffReport,
-                            gitDiffReport: exercise.gitDiffReport!,
+                            exerciseId: exercise.id!,
                         },
                     },
                 !!exercise.buildConfig?.buildScript &&

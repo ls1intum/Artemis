@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, OnDestroy, ViewContainerRef, computed, effect, inject, input, signal, viewChild } from '@angular/core';
+import { ChangeDetectionStrategy, Component, OnDestroy, ViewContainerRef, effect, inject, input, signal, viewChild } from '@angular/core';
 import type { ProgrammingDiffReportDetail } from 'app/detail-overview-list/detail.model';
 import { FeatureToggle } from 'app/shared/feature-toggle/feature-toggle.service';
 import { ButtonSize, ButtonType, TooltipPlacement } from 'app/shared/components/button.component';
@@ -31,7 +31,6 @@ export class ProgrammingDiffReportDetailComponent implements OnDestroy {
     private readonly modalRef = signal<NgbModalRef | undefined>(undefined);
 
     protected readonly detail = input.required<ProgrammingDiffReportDetail>();
-    protected readonly diffReport = computed(() => this.detail().data.gitDiffReport);
 
     protected readonly leftCommitFileContentByPath = signal<Map<string, string> | undefined>(undefined);
     protected readonly rightCommitFileContentByPath = signal<Map<string, string> | undefined>(undefined);
@@ -48,9 +47,9 @@ export class ProgrammingDiffReportDetailComponent implements OnDestroy {
                 this.leftCommitFileContentByPath.set(undefined);
                 this.rightCommitFileContentByPath.set(undefined);
 
-                const report = this.diffReport();
+                const exerciseId = this.detail().data.exerciseId;
 
-                const subscription = this.repositoryFilesService.loadFilesForTemplateAndSolution(report).subscribe(([leftFileContentByPath, rightFileContentByPath]) => {
+                const subscription = this.repositoryFilesService.loadFilesForTemplateAndSolution(exerciseId).subscribe(([leftFileContentByPath, rightFileContentByPath]) => {
                     this.leftCommitFileContentByPath.set(leftFileContentByPath);
                     this.rightCommitFileContentByPath.set(rightFileContentByPath);
                 });
@@ -72,7 +71,6 @@ export class ProgrammingDiffReportDetailComponent implements OnDestroy {
 
             const container = this.container();
             const component = container.createComponent(GitDiffReportComponent);
-            component.setInput('report', this.diffReport());
             component.setInput('templateFileContentByPath', templateFiles);
             component.setInput('solutionFileContentByPath', solutionFiles);
             const subscription = component.instance.lineStatChanged.subscribe((lineStat) => this.lineStat.set(lineStat));

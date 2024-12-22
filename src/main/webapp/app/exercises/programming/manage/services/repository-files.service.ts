@@ -1,5 +1,4 @@
 import { Injectable, inject } from '@angular/core';
-import { ProgrammingExerciseGitDiffReport } from 'app/entities/hestia/programming-exercise-git-diff-report.model';
 import { Observable, forkJoin, of } from 'rxjs';
 import { ProgrammingExerciseService } from 'app/exercises/programming/manage/services/programming-exercise.service';
 import { ProgrammingExerciseParticipationService } from 'app/exercises/programming/manage/services/programming-exercise-participation.service';
@@ -13,39 +12,40 @@ export class RepositoryFilesService {
 
     private readonly cachedRepositoryFiles = new Map<string, Map<string, string>>();
 
-    public loadFilesForTemplateAndSolution(report: ProgrammingExerciseGitDiffReport): Observable<[Map<string, string>, Map<string, string>]> {
-        return forkJoin([this.fetchTemplateRepoFiles(report), this.fetchSolutionRepoFiles(report)]);
+    public loadFilesForTemplateAndSolution(exerciseId: number): Observable<[Map<string, string>, Map<string, string>]> {
+        return forkJoin([this.fetchTemplateRepoFiles(exerciseId), this.fetchSolutionRepoFiles(exerciseId)]);
     }
 
-    public loadRepositoryFilesForParticipations(report: ProgrammingExerciseGitDiffReport): Observable<[Map<string, string>, Map<string, string>]> {
-        if (report.participationIdForLeftCommit) {
-            return forkJoin([this.fetchParticipationRepoFilesAtLeftCommit(report), this.fetchParticipationRepoFilesAtRightCommit(report)]);
+    public loadRepositoryFilesForParticipations(
+        exerciseId: number,
+        participationIdForLeftCommit: number,
+        leftCommitHash: string,
+        participationIdForRightCommit: number,
+        rightCommitHash: string,
+    ): Observable<[Map<string, string>, Map<string, string>]> {
+        if (participationIdForLeftCommit) {
+            return forkJoin([
+                this.fetchParticipationRepoFiles(participationIdForLeftCommit, leftCommitHash),
+                this.fetchParticipationRepoFiles(participationIdForRightCommit, rightCommitHash),
+            ]);
         } else {
-            return forkJoin([this.fetchTemplateRepoFiles(report), this.fetchParticipationRepoFilesAtRightCommit(report)]);
+            return forkJoin([this.fetchTemplateRepoFiles(exerciseId), this.fetchParticipationRepoFiles(participationIdForRightCommit, rightCommitHash)]);
         }
     }
 
-    private fetchTemplateRepoFiles(report: ProgrammingExerciseGitDiffReport): Observable<Map<string, string>> {
-        return this.fetchCached(this.calculateTemplateCacheKey(report), () =>
-            this.programmingExerciseService.getTemplateRepositoryTestFilesWithContent(report.programmingExercise.id!),
-        );
+    private fetchTemplateRepoFiles(exerciseId: number): Observable<Map<string, string>> {
+        return this.fetchCached(this.calculateTemplateCacheKey(exerciseId), () => this.programmingExerciseService.getTemplateRepositoryTestFilesWithContent(exerciseId));
     }
 
-    private fetchSolutionRepoFiles(report: ProgrammingExerciseGitDiffReport): Observable<Map<string, string>> {
-        return this.fetchCached(this.calculateSolutionCacheKey(report), () => {
-            return this.programmingExerciseService.getSolutionRepositoryTestFilesWithContent(report.programmingExercise.id!);
+    private fetchSolutionRepoFiles(exerciseId: number): Observable<Map<string, string>> {
+        return this.fetchCached(this.calculateSolutionCacheKey(exerciseId), () => {
+            return this.programmingExerciseService.getSolutionRepositoryTestFilesWithContent(exerciseId);
         });
     }
 
-    private fetchParticipationRepoFilesAtLeftCommit(report: ProgrammingExerciseGitDiffReport): Observable<Map<string, string>> {
-        return this.fetchCached(report.leftCommitHash!, () => {
-            return this.programmingExerciseParticipationService.getParticipationRepositoryFilesWithContentAtCommit(report.participationIdForLeftCommit!, report.leftCommitHash!);
-        });
-    }
-
-    private fetchParticipationRepoFilesAtRightCommit(report: ProgrammingExerciseGitDiffReport): Observable<Map<string, string>> {
-        return this.fetchCached(report.rightCommitHash!, () => {
-            return this.programmingExerciseParticipationService.getParticipationRepositoryFilesWithContentAtCommit(report.participationIdForRightCommit!, report.rightCommitHash!);
+    private fetchParticipationRepoFiles(participationId: number, commitHash: string): Observable<Map<string, string>> {
+        return this.fetchCached(commitHash, () => {
+            return this.programmingExerciseParticipationService.getParticipationRepositoryFilesWithContentAtCommit(participationId, commitHash);
         });
     }
 
@@ -57,11 +57,11 @@ export class RepositoryFilesService {
         return fetchFiles();
     }
 
-    private calculateTemplateCacheKey(report: ProgrammingExerciseGitDiffReport): string {
-        return `exercise-${report.programmingExercise.id!}-template`;
+    private calculateTemplateCacheKey(exerciseId: number): string {
+        return `exercise-${exerciseId}-template`;
     }
 
-    private calculateSolutionCacheKey(report: ProgrammingExerciseGitDiffReport): string {
-        return `exercise-${report.programmingExercise.id!}-solution`;
+    private calculateSolutionCacheKey(exerciseId: number): string {
+        return `exercise-${exerciseId}-solution`;
     }
 }

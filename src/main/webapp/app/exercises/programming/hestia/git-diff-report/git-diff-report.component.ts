@@ -1,12 +1,11 @@
-import { ChangeDetectionStrategy, Component, computed, input, output, signal } from '@angular/core';
-import { ProgrammingExerciseGitDiffReport } from 'app/entities/hestia/programming-exercise-git-diff-report.model';
-import { ProgrammingExerciseGitDiffEntry } from 'app/entities/hestia/programming-exercise-git-diff-entry.model';
+import { ChangeDetectionStrategy, Component, computed, effect, input, output, signal } from '@angular/core';
 import { faSpinner, faTableColumns } from '@fortawesome/free-solid-svg-icons';
 import { ButtonSize, ButtonType, TooltipPlacement } from 'app/shared/components/button.component';
 import { GitDiffLineStatComponent, LineStat } from 'app/exercises/programming/hestia/git-diff-report/git-diff-line-stat.component';
 import { ArtemisSharedComponentModule } from 'app/shared/components/shared-component.module';
 import { ArtemisSharedModule } from 'app/shared/shared.module';
 import { GitDiffFilePanelComponent } from 'app/exercises/programming/hestia/git-diff-report/git-diff-file-panel.component';
+import * as Diff from 'diff';
 
 interface DiffInformation {
     templatePath: string;
@@ -14,6 +13,11 @@ interface DiffInformation {
     templateFileContent?: string;
     solutionFileContent?: string;
 }
+
+/**
+ * Analogous to the argument of the git diff -M option
+ */
+const RENAME_SIMILARITY_THRESHOLD = 0.5;
 
 @Component({
     selector: 'jhi-git-diff-report',
@@ -29,63 +33,50 @@ export class GitDiffReportComponent {
     protected readonly ButtonType = ButtonType;
     protected readonly TooltipPlacement = TooltipPlacement;
 
-    readonly report = input.required<ProgrammingExerciseGitDiffReport>();
     readonly templateFileContentByPath = input.required<Map<string, string>>();
     readonly solutionFileContentByPath = input.required<Map<string, string>>();
+    readonly leftCommitHash = input<string>();
+    readonly rightCommitHash = input<string>();
     readonly diffForTemplateAndSolution = input<boolean>(true);
     readonly diffForTemplateAndEmptyRepository = input<boolean>(false);
     readonly isRepositoryView = input<boolean>(false);
+    readonly lineStatChanged = output<LineStat>();
 
-    readonly sortedEntries = computed(() => {
-        return (
-            this.report().entries?.sort((a, b) => {
-                const filePathA = a.filePath ?? a.previousFilePath ?? '';
-                const filePathB = b.filePath ?? b.previousFilePath ?? '';
-                if (filePathA < filePathB) {
-                    return -1;
-                }
-                if (filePathA > filePathB) {
-                    return 1;
-                }
-                return (a.startLine ?? a.previousStartLine ?? 0) - (b.startLine ?? b.previousStartLine ?? 0);
-            }) ?? []
-        );
-    });
+    readonly leftCommit = computed(() => this.leftCommitHash()?.substring(0, 10));
+    readonly rightCommit = computed(() => this.rightCommitHash()?.substring(0, 10));
 
-    readonly filePaths = computed(() => {
-        return [...new Set([...this.templateFileContentByPath().keys(), ...this.solutionFileContentByPath().keys()])].sort();
-    });
+    private readonly filePathsLeft = computed(() => [...this.templateFileContentByPath().keys()]);
+    private readonly filePathsRight = computed(() => [...this.solutionFileContentByPath().keys()]);
+    private readonly filePathsLeftSet = computed(() => new Set(this.filePathsLeft()));
+    private readonly filePathsRightSet = computed(() => new Set(this.filePathsRight()));
+    private readonly filePathsCommon = computed(() => this.filePathsLeft().filter((left) => this.filePathsRightSet().has(left)));
+    private readonly filePathsUniqueLeft = computed(() => this.filePathsLeft().filter((left) => !this.filePathsRightSet().has(left)));
+    private readonly filePathsUniqueRight = computed(() => this.filePathsRight().filter((left) => !this.filePathsLeftSet().has(left)));
+    private readonly filePathsCommonContentDiffers = computed(() =>
+        this.filePathsCommon().filter((path) => !path.endsWith('.jar') && this.templateFileContentByPath().get(path) !== this.solutionFileContentByPath().get(path)),
+    );
 
     readonly renamedFilePaths = computed(() => {
-        const renamedFilePaths: { [before: string]: string | undefined } = {};
-        this.sortedEntries().forEach((entry) => {
-            // Accounts only for files that have existed in the original and the modified version, but under different names
-            if (entry.filePath && entry.previousFilePath && entry.filePath !== entry.previousFilePath) {
-                renamedFilePaths[entry.filePath] = entry.previousFilePath;
-            }
+        const renamedFilePaths: { [before: string]: string } = {};
+
+        this.filePathsUniqueLeft().forEach((leftPath) => {
+            this.filePathsUniqueRight().forEach((rightPath) => {
+                const leftFileContent = this.templateFileContentByPath().get(leftPath)!;
+                const rightFileContent = this.solutionFileContentByPath().get(rightPath)!;
+                const changes = Diff.diffLines(leftFileContent, rightFileContent);
+                const originalLinesCount = leftFileContent.split('\n').length;
+                const unchangedLinesCount = changes.filter((change) => !change.added && !change.removed).length;
+                if (unchangedLinesCount / originalLinesCount >= RENAME_SIMILARITY_THRESHOLD) {
+                    renamedFilePaths[leftPath] = rightPath;
+                }
+            });
         });
+
         return renamedFilePaths;
     });
 
-    readonly entriesByPath = computed(() => {
-        const entriesByPath = new Map<string, ProgrammingExerciseGitDiffEntry[]>();
-        [...this.templateFileContentByPath().keys()].forEach((filePath) => {
-            entriesByPath.set(
-                filePath,
-                this.sortedEntries().filter((entry) => entry.previousFilePath === filePath && !entry.filePath),
-            );
-        });
-        [...this.solutionFileContentByPath().keys()].forEach((filePath) => {
-            entriesByPath.set(
-                filePath,
-                this.sortedEntries().filter((entry) => entry.filePath === filePath),
-            );
-        });
-        return entriesByPath;
-    });
-
     readonly diffFilePaths = computed(() => {
-        return this.filePaths().filter((path) => this.entriesByPath().get(path)?.length);
+        return [...this.filePathsUniqueLeft(), ...this.filePathsCommonContentDiffers(), ...this.filePathsUniqueRight()].sort();
     });
 
     readonly diffInformationForPaths = computed<DiffInformation[]>(() => {
@@ -97,33 +88,34 @@ export class GitDiffReportComponent {
             return { templatePath, path, templateFileContent, solutionFileContent };
         });
     });
-
-    readonly leftCommit = computed(() => this.report().leftCommitHash?.substring(0, 10));
-    readonly rightCommit = computed(() => this.report().rightCommitHash?.substring(0, 10));
     readonly nothingToDisplay = computed(() => this.diffInformationForPaths().length === 0);
     readonly allDiffsReady = computed(() => this.diffFilePaths().every((path) => this.diffReadyPaths().has(path)));
     readonly diffReadyPaths = signal<Set<string>>(new Set());
     readonly allowSplitView = signal<boolean>(true);
     readonly lineStatForPath = signal<Map<string, LineStat>>(new Map());
-    readonly lineStatChanged = output<LineStat>();
 
     readonly lineStat = computed(() => {
         if (!this.allDiffsReady()) {
             return undefined;
         }
 
-        const totalLineStat = [...this.lineStatForPath().values()].reduce(
+        return [...this.lineStatForPath().values()].reduce(
             (left, right) => ({
                 addedLineCount: left.addedLineCount + right.addedLineCount,
                 removedLineCount: left.removedLineCount + right.removedLineCount,
             }),
             { addedLineCount: 0, removedLineCount: 0 },
         );
-
-        this.lineStatChanged.emit(totalLineStat);
-
-        return totalLineStat;
     });
+
+    constructor() {
+        effect(() => {
+            const lineStat = this.lineStat();
+            if (lineStat) {
+                this.lineStatChanged.emit(lineStat);
+            }
+        });
+    }
 
     /**
      * Records that the diff editor for a file has changed its "ready" state.

@@ -23,7 +23,6 @@
 
     @if (report && leftCommitFileContentByPath && rightCommitFileContentByPath) {
         <jhi-git-diff-report
-            [report]="report"
             [diffForTemplateAndSolution]="false"
             [templateFileContentByPath]="leftCommitFileContentByPath"
             [solutionFileContentByPath]="rightCommitFileContentByPath"
