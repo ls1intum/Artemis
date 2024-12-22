@@ -14,7 +14,6 @@ import { faCodeCompare } from '@fortawesome/free-solid-svg-icons';
 import { ProgrammingExerciseGitDiffReport } from 'app/entities/hestia/programming-exercise-git-diff-report.model';
 import { ExamPageComponent } from 'app/exam/participate/exercises/exam-page.component';
 import { Observable, Subject, Subscription, debounceTime, take } from 'rxjs';
-import { CachedRepositoryFilesService } from 'app/exercises/programming/manage/services/cached-repository-files.service';
 import { LineStat } from 'app/exercises/programming/hestia/git-diff-report/git-diff-line-stat.component';
 
 @Component({
@@ -36,7 +35,6 @@ export class ProgrammingExerciseExamDiffComponent extends ExamPageComponent impl
         removedLineCount: 0,
     });
     isLoadingDiffReport: boolean;
-    cachedRepositoryFiles: Map<string, Map<string, string>> = new Map<string, Map<string, string>>();
 
     private exerciseIdSubscription: Subscription;
 
@@ -49,7 +47,6 @@ export class ProgrammingExerciseExamDiffComponent extends ExamPageComponent impl
         protected changeDetectorReference: ChangeDetectorRef,
         private programmingExerciseService: ProgrammingExerciseService,
         private modalService: NgbModal,
-        private cachedRepositoryFilesService: CachedRepositoryFilesService,
     ) {
         super(changeDetectorReference);
     }
@@ -109,10 +106,6 @@ export class ProgrammingExerciseExamDiffComponent extends ExamPageComponent impl
         const component: GitDiffReportModalComponent = modalRef.componentInstance;
         component.report.set(this.exercise.gitDiffReport);
         component.diffForTemplateAndSolution.set(false);
-        component.cachedRepositoryFiles.set(this.cachedRepositoryFiles);
-        this.cachedRepositoryFilesService.getCachedRepositoryFilesObservable().subscribe((cachedRepositoryFiles) => {
-            this.cachedRepositoryFiles = cachedRepositoryFiles;
-        });
     }
 
     getSubmission(): Submission | undefined {
