@@ -18,6 +18,7 @@ import { OrionModule } from 'app/shared/orion/orion.module';
 import { ArtemisPlagiarismModule } from 'app/exercises/shared/plagiarism/plagiarism.module';
 import { ArtemisProgrammingExerciseLifecycleModule } from 'app/exercises/programming/shared/lifecycle/programming-exercise-lifecycle.module';
 import { ProgrammingExerciseInstructorExerciseDownloadComponent } from '../shared/actions/programming-exercise-instructor-exercise-download.component';
+import { ProgrammingExerciseInstructorExerciseSharingComponent } from '../shared/actions/programming-exercise-instructor-exercise-sharing.component';
 import { SubmissionResultStatusModule } from 'app/overview/submission-result-status.module';
 import { ProgrammingExerciseExampleSolutionRepoDownloadComponent } from 'app/exercises/programming/shared/actions/programming-exercise-example-solution-repo-download.component';
 import { TestwiseCoverageReportModule } from 'app/exercises/programming/hestia/testwise-coverage-report/testwise-coverage-report.module';
@@ -62,6 +63,7 @@ import { CodeEditorHeaderComponent } from 'app/exercises/programming/shared/code
         ProgrammingExerciseDetailComponent,
         ProgrammingExerciseEditSelectedComponent,
         ProgrammingExerciseInstructorExerciseDownloadComponent,
+        ProgrammingExerciseInstructorExerciseSharingComponent,
         ProgrammingExerciseExampleSolutionRepoDownloadComponent,
         BuildPlanEditorComponent,
     ],

@@ -1,0 +1,18 @@
+<component name="ProjectRunConfigurationManager">
+  <configuration default="false" name="Artemis Dev" type="Java Scratch">
+    <option name="ALTERNATIVE_JRE_PATH" value="22" />
+    <option name="ALTERNATIVE_JRE_PATH_ENABLED" value="true" />
+    <envs>
+      <env name="SPRING_PROFILES_ACTIVE" value="artemis,scheduling,localci,localvc,buildagent,core,dev,docker,sharing" />
+      <env name="ARTEMIS_USERMANAGEMENT_USEEXTERNAL" value="false" />
+    </envs>
+    <option name="INCLUDE_PROVIDED_SCOPE" value="true" />
+    <option name="MAIN_CLASS_NAME" value="de.tum.in.www1.artemis.ArtemisApp" />
+    <module name="Artemis" />
+    <option name="SCRATCH_FILE_URL" value="file://$APPLICATION_CONFIG_DIR$/scratches/scratch.java" />
+    <shortenClasspath name="ARGS_FILE" />
+    <method v="2">
+      <option name="Make" enabled="true" />
+    </method>
+  </configuration>
+</component>

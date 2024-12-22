@@ -186,6 +186,10 @@ const LAYOUT_ROUTES: Routes = [navbarRoute, ...errorRoute];
                         pageTitle: 'artemisApp.exerciseChatbot.title',
                     },
                 },
+                {
+                    path: 'sharing/import/:basketToken',
+                    loadChildren: () => import('./sharing/sharing.module').then((m) => m.SharingModule),
+                },
             ],
             { enableTracing: false, onSameUrlNavigation: 'reload' },
         ),
