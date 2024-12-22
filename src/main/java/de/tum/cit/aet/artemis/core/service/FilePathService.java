@@ -150,7 +150,7 @@ public class FilePathService {
             String attachmentUnitId = path.getName(4).toString();
             return getAttachmentUnitFilePath().resolve(Path.of(attachmentUnitId, "student", filename));
         }
-        else if (!publicPath.toString().contains("/slide")) {
+        if (!publicPath.toString().contains("/slide")) {
             String attachmentUnitId = path.getName(4).toString();
             return getAttachmentUnitFilePath().resolve(Path.of(attachmentUnitId, filename));
         }

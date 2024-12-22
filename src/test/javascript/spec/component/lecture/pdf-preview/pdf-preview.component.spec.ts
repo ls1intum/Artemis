@@ -275,48 +275,47 @@ describe('PdfPreviewComponent', () => {
         it('should update attachment unit successfully when there are no hidden pages', fakeAsync(() => {
             jest.spyOn(component, 'getHiddenPages').mockReturnValue([]);
             jest.spyOn(FormData.prototype, 'append');
-            attachmentUnitServiceMock.update.mockReturnValue(of({}));
 
             component.attachment.set(undefined);
             component.attachmentUnit.set({
                 id: 1,
-                lecture: { id: 2 },
-                attachment: { id: 3 },
+                lecture: { id: 1 },
+                attachment: { id: 1, version: 1 },
             });
+            attachmentUnitServiceMock.update.mockReturnValue(of({}));
 
             routerNavigateSpy = jest.spyOn(TestBed.inject(Router), 'navigate').mockImplementation(() => Promise.resolve(true));
 
             component.updateAttachmentWithFile();
             tick();
 
+            expect(attachmentUnitServiceMock.update).toHaveBeenCalledWith(1, 1, expect.any(FormData));
             expect(FormData.prototype.append).toHaveBeenCalledWith('file', expect.any(File));
             expect(FormData.prototype.append).toHaveBeenCalledWith('attachment', expect.any(Blob));
             expect(FormData.prototype.append).toHaveBeenCalledWith('attachmentUnit', expect.any(Blob));
-            expect(attachmentUnitServiceMock.update).toHaveBeenCalledWith(2, 1, expect.any(FormData));
             expect(alertServiceMock.success).toHaveBeenCalledWith('artemisApp.attachment.pdfPreview.attachmentUpdateSuccess');
-            expect(routerNavigateSpy).toHaveBeenCalledWith(['course-management', 1, 'lectures', 2, 'unit-management']);
+            expect(routerNavigateSpy).toHaveBeenCalledWith(['course-management', 1, 'lectures', 1, 'unit-management']);
         }));
 
-        it('should show error when updating attachment unit fails', fakeAsync(() => {
-            const error = { message: 'Update failed' };
-            attachmentUnitServiceMock.update.mockReturnValue(throwError(() => error));
-
-            // Mock `currentPdfBlob` to prevent arrayBuffer error
-            const mockPdfBlob = new Blob(['pdf content'], { type: 'application/pdf' });
-            jest.spyOn(component.currentPdfBlob, 'set').mockImplementation(() => {});
-            component.currentPdfBlob.set(mockPdfBlob);
+        it('should handle errors when updating an attachment unit fails', fakeAsync(() => {
+            jest.spyOn(component, 'getHiddenPages').mockReturnValue([]);
+            jest.spyOn(FormData.prototype, 'append');
 
             component.attachment.set(undefined);
             component.attachmentUnit.set({
                 id: 1,
-                lecture: { id: 2 },
-                attachment: { id: 3 },
+                lecture: { id: 1 },
+                attachment: { id: 1, version: 1 },
             });
+            component.currentPdfBlob.set(new Blob(['PDF content'], { type: 'application/pdf' }));
+            routerNavigateSpy = jest.spyOn(TestBed.inject(Router), 'navigate').mockImplementation(() => Promise.resolve(true));
+            attachmentUnitServiceMock.update = jest.fn().mockReturnValue(throwError(() => new Error('Update failed')));
 
             component.updateAttachmentWithFile();
             tick();
 
-            expect(alertServiceMock.error).toHaveBeenCalled();
+            expect(attachmentUnitServiceMock.update).toHaveBeenCalledWith(1, 1, expect.any(FormData));
+            expect(alertServiceMock.error).toHaveBeenCalledWith('artemisApp.attachment.pdfPreview.attachmentUpdateError', { error: 'Update failed' });
         }));
     });
 
