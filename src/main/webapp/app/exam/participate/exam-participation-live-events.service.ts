@@ -20,6 +20,7 @@ export enum ExamLiveEventType {
     WORKING_TIME_UPDATE = 'workingTimeUpdate',
     EXAM_ATTENDANCE_CHECK = 'examAttendanceCheck',
     PROBLEM_STATEMENT_UPDATE = 'problemStatementUpdate',
+    EXAM_RESCHEDULED = 'examRescheduled',
 }
 
 export type ExamLiveEvent = {
@@ -50,6 +51,11 @@ export type ProblemStatementUpdateEvent = ExamLiveEvent & {
     problemStatement: string;
     exerciseId: number;
     exerciseName: string;
+};
+
+export type ExamRescheduledEvent = ExamLiveEvent & {
+    newStartDate: dayjs.Dayjs;
+    newEndDate: dayjs.Dayjs;
 };
 
 @Injectable({ providedIn: 'root' })
@@ -186,6 +192,10 @@ export class ExamParticipationLiveEventsService {
             this.events = events;
             this.events.forEach((event) => {
                 event.createdDate = convertDateFromServer(event.createdDate)!;
+                // The "Exam Rescheduled" event should not trigger the event overlay if the student navigates to the exam page after it has been sent
+                if (event.eventType === ExamLiveEventType.EXAM_RESCHEDULED) {
+                    this.acknowledgeEvent(event, true);
+                }
             });
 
             // Replay events so unacknowledged events can be processed
