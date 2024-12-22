@@ -15,7 +15,7 @@ import { Exercise, getCourseId } from 'app/entities/exercise.model';
     templateUrl: './plagiarism-header.component.html',
 })
 export class PlagiarismHeaderComponent {
-    @Input() comparison: PlagiarismComparison<TextSubmissionElement | ModelingSubmissionElement>;
+    @Input() comparison?: PlagiarismComparison<TextSubmissionElement | ModelingSubmissionElement>;
     @Input() exercise: Exercise;
     @Input() splitControlSubject: Subject<string>;
 
@@ -38,7 +38,7 @@ export class PlagiarismHeaderComponent {
      * Set the status of the currently selected comparison to DENIED.
      */
     denyPlagiarism() {
-        if (this.comparison.status === PlagiarismStatus.CONFIRMED) {
+        if (this.comparison?.status === PlagiarismStatus.CONFIRMED) {
             this.askForConfirmationOfDenying(() => this.updatePlagiarismStatus(PlagiarismStatus.DENIED));
         } else {
             this.updatePlagiarismStatus(PlagiarismStatus.DENIED);
@@ -60,13 +60,15 @@ export class PlagiarismHeaderComponent {
      * @param status the new status of the comparison
      */
     updatePlagiarismStatus(status: PlagiarismStatus) {
-        this.isLoading = true;
         // store comparison in variable in case comparison changes while request is made
         const comparison = this.comparison;
-        this.plagiarismCasesService.updatePlagiarismComparisonStatus(getCourseId(this.exercise)!, comparison.id, status).subscribe(() => {
-            comparison.status = status;
-            this.isLoading = false;
-        });
+        if (comparison) {
+            this.isLoading = true;
+            this.plagiarismCasesService.updatePlagiarismComparisonStatus(getCourseId(this.exercise)!, comparison.id, status).subscribe(() => {
+                comparison.status = status;
+                this.isLoading = false;
+            });
+        }
     }
 
     expandSplitPane(pane: 'left' | 'right') {

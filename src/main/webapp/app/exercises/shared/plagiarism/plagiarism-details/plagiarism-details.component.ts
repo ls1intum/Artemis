@@ -12,7 +12,7 @@ import { ModelingSubmissionElement } from 'app/exercises/shared/plagiarism/types
 })
 export class PlagiarismDetailsComponent {
     comparison = input<PlagiarismComparison<TextSubmissionElement | ModelingSubmissionElement>>();
-    exercise = input<Exercise>();
+    exercise = input.required<Exercise>();
 
     /**
      * Subject to be passed into PlagiarismSplitViewComponent to control the split view.

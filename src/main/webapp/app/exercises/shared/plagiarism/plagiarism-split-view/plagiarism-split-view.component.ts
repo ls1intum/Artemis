@@ -24,7 +24,7 @@ export class SplitPaneDirective {
     templateUrl: './plagiarism-split-view.component.html',
 })
 export class PlagiarismSplitViewComponent implements AfterViewInit, OnChanges, OnInit, OnDestroy {
-    @Input() comparison: PlagiarismComparison<TextSubmissionElement | ModelingSubmissionElement>;
+    @Input() comparison?: PlagiarismComparison<TextSubmissionElement | ModelingSubmissionElement>;
     @Input() exercise: Exercise;
     @Input() splitControlSubject: Subject<string>;
     @Input() sortByStudentLogin: string;
