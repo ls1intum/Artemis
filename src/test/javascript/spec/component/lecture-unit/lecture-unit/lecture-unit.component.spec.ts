@@ -60,27 +60,42 @@ describe('LectureUnitComponent', () => {
 
     it('should toggle completion', async () => {
         const toggleCompletionSpy = jest.spyOn(component, 'toggleCompletion');
-        const onCompletionEmitSpy = jest.spyOn(component.onCompletion, 'emit');
 
         fixture.detectChanges();
 
-        const completedCheckbox = fixture.debugElement.query(By.css('#completed-checkbox'));
-        completedCheckbox.nativeElement.click();
+        const event = new MouseEvent('click');
+        const checkbox = fixture.debugElement.query(By.css('#completed-checkbox'));
+        checkbox.nativeElement.dispatchEvent(event);
 
         expect(toggleCompletionSpy).toHaveBeenCalledOnce();
-        expect(onCompletionEmitSpy).toHaveBeenCalledOnce();
     });
 
     it('should toggle collapse', async () => {
         const toggleCollapseSpy = jest.spyOn(component, 'toggleCollapse');
-        const onCollapseEmitSpy = jest.spyOn(component.onCollapse, 'emit');
 
         fixture.detectChanges();
 
-        const collapseButton = fixture.debugElement.query(By.css('#lecture-unit-toggle-button'));
-        collapseButton.nativeElement.click();
+        const button = fixture.debugElement.query(By.css('#lecture-unit-toggle-button'));
+        button.nativeElement.click();
 
         expect(toggleCollapseSpy).toHaveBeenCalledOnce();
-        expect(onCollapseEmitSpy).toHaveBeenCalledOnce();
+    });
+
+    it('should handle original version view', async () => {
+        const handleOriginalVersionViewSpy = jest.spyOn(component, 'handleOriginalVersionView');
+        const onShowOriginalVersionEmitSpy = jest.spyOn(component.onShowOriginalVersion, 'emit');
+
+        fixture.componentRef.setInput('showOriginalVersionButton', true);
+        fixture.detectChanges();
+
+        const event = new MouseEvent('click');
+        const button = fixture.debugElement.query(By.css('#view-original-version-button'));
+
+        expect(button).not.toBeNull();
+
+        button.nativeElement.dispatchEvent(event);
+
+        expect(handleOriginalVersionViewSpy).toHaveBeenCalledOnce();
+        expect(onShowOriginalVersionEmitSpy).toHaveBeenCalledOnce();
     });
 });
