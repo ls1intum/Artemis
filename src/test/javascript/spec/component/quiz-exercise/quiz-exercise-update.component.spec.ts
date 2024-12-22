@@ -147,7 +147,6 @@ describe('QuizExerciseUpdateComponent', () => {
     const configureTestBed = (testRoute?: ActivatedRoute) => {
         TestBed.configureTestingModule({
             imports: [ArtemisTestModule],
-            declarations: [QuizExerciseUpdateComponent],
             providers: [
                 MockProvider(NgbModal),
                 MockProvider(ChangeDetectorRef),
