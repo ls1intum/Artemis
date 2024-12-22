@@ -220,4 +220,24 @@ describe('AttachmentUnitService', () => {
             req.flush(expectedBlob);
         });
     });
+
+    it('should retrieve hidden slide numbers for a given attachment unit ID', fakeAsync(() => {
+        const lectureId = 1;
+        const attachmentUnitId = 42;
+        const expectedHiddenSlides = [2, 4, 6];
+        let actualResponse: number[] | undefined;
+
+        service
+            .getHiddenSlides(lectureId, attachmentUnitId)
+            .pipe(take(1))
+            .subscribe((response) => (actualResponse = response));
+
+        const req = httpMock.expectOne({
+            url: `api/lectures/${lectureId}/attachment-units/${attachmentUnitId}/hidden-slides`,
+            method: 'GET',
+        });
+        req.flush(expectedHiddenSlides);
+
+        expect(actualResponse).toEqual(expectedHiddenSlides);
+    }));
 });
