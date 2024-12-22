@@ -1,4 +1,4 @@
-import { Component, Input } from '@angular/core';
+import { Component, input } from '@angular/core';
 import { Subject } from 'rxjs';
 import { PlagiarismComparison } from 'app/exercises/shared/plagiarism/types/PlagiarismComparison';
 import { Exercise } from 'app/entities/exercise.model';
@@ -11,8 +11,8 @@ import { ModelingSubmissionElement } from 'app/exercises/shared/plagiarism/types
     templateUrl: './plagiarism-details.component.html',
 })
 export class PlagiarismDetailsComponent {
-    @Input() comparison?: PlagiarismComparison<TextSubmissionElement | ModelingSubmissionElement>;
-    @Input() exercise: Exercise;
+    comparison = input<PlagiarismComparison<TextSubmissionElement | ModelingSubmissionElement>>();
+    exercise = input<Exercise>();
 
     /**
      * Subject to be passed into PlagiarismSplitViewComponent to control the split view.
