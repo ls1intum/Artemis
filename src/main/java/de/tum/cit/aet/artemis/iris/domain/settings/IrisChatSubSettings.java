@@ -32,6 +32,10 @@ public class IrisChatSubSettings extends IrisSubSettings {
     @Convert(converter = IrisListConverter.class)
     private SortedSet<String> enabledForCategories = new TreeSet<>();
 
+    @Column(name = "disabled_proactive_events", nullable = false)
+    @Convert(converter = IrisListConverter.class)
+    private SortedSet<String> disabledProactiveEvents = new TreeSet<>();
+
     @Nullable
     public Integer getRateLimit() {
         return rateLimit;
@@ -56,5 +60,13 @@ public class IrisChatSubSettings extends IrisSubSettings {
 
     public void setEnabledForCategories(SortedSet<String> enabledForCategories) {
         this.enabledForCategories = enabledForCategories;
+    }
+
+    public SortedSet<String> getDisabledProactiveEvents() {
+        return disabledProactiveEvents;
+    }
+
+    public void setDisabledProactiveEvents(SortedSet<String> disabledProactiveEvents) {
+        this.disabledProactiveEvents = disabledProactiveEvents;
     }
 }

@@ -27,8 +27,8 @@ describe('FeedbackAnalysisComponent', () => {
 
     const feedbackMock: FeedbackDetail[] = [
         {
-            concatenatedFeedbackIds: [1, 2],
-            detailText: 'Test feedback 1 detail',
+            feedbackIds: [1],
+            detailTexts: ['Test feedback 1 detail'],
             testCaseName: 'test1',
             count: 10,
             relativeCount: 50,
@@ -36,8 +36,8 @@ describe('FeedbackAnalysisComponent', () => {
             errorCategory: 'Student Error',
         },
         {
-            concatenatedFeedbackIds: [3, 4],
-            detailText: 'Test feedback 2 detail',
+            feedbackIds: [2],
+            detailTexts: ['Test feedback 2 detail'],
             testCaseName: 'test2',
             count: 5,
             relativeCount: 25,
@@ -52,6 +52,7 @@ describe('FeedbackAnalysisComponent', () => {
         taskNames: ['task1', 'task2'],
         testCaseNames: ['test1', 'test2'],
         errorCategories: ['Student Error', 'AST Error', 'Ares Error'],
+        highestOccurrenceOfGroupedFeedback: 0,
     };
 
     beforeEach(async () => {
@@ -86,7 +87,6 @@ describe('FeedbackAnalysisComponent', () => {
             result: Promise.resolve(),
         } as any);
 
-        jest.spyOn(feedbackAnalysisService, 'getAffectedStudentCount').mockResolvedValue(10);
         createChannelSpy = jest.spyOn(feedbackAnalysisService, 'createChannel').mockResolvedValue({ id: 123 } as ChannelDTO);
 
         jest.spyOn(fixture.debugElement.injector.get(AlertService), 'success');
@@ -317,5 +317,17 @@ describe('FeedbackAnalysisComponent', () => {
         await component.openFeedbackDetailChannelModal(feedbackDetail);
         expect(component['isFeedbackDetailChannelModalOpen']).toBeTrue();
         expect(modalSpy).not.toHaveBeenCalled();
+    });
+
+    describe('toggleGroupFeedback', () => {
+        it('should toggle groupFeedback and call loadData', () => {
+            const loadDataSpy = jest.spyOn(component, 'loadData' as any);
+            const initialGroupFeedback = component.groupFeedback();
+
+            component.toggleGroupFeedback();
+
+            expect(component.groupFeedback()).toBe(!initialGroupFeedback);
+            expect(loadDataSpy).toHaveBeenCalledOnce();
+        });
     });
 });
