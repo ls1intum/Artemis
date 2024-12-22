@@ -122,7 +122,7 @@ export interface ProgrammingTestStatusDetail extends DetailBase {
 }
 export interface ProgrammingDiffReportDetail extends DetailBase {
     type: DetailType.ProgrammingDiffReport;
-    data: { addedLineCount: number; removedLineCount: number; isLoadingDiffReport?: boolean; gitDiffReport?: ProgrammingExerciseGitDiffReport };
+    data: { addedLineCount: number; removedLineCount: number; isLoadingDiffReport: boolean; gitDiffReport: ProgrammingExerciseGitDiffReport };
 }
 
 interface ProgrammingProblemStatementDetail extends DetailBase {
