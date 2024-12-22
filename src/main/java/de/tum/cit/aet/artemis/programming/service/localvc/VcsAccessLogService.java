@@ -48,7 +48,7 @@ public class VcsAccessLogService {
      * @param ipAddress               The ip address of the user accessing the repository
      */
     @Async
-    public void storeAccessLog(User user, ProgrammingExerciseParticipation participation, RepositoryActionType actionType, AuthenticationMechanism authenticationMechanism,
+    public void saveAccessLog(User user, ProgrammingExerciseParticipation participation, RepositoryActionType actionType, AuthenticationMechanism authenticationMechanism,
             String commitHash, String ipAddress) {
         log.debug("Storing access operation for user {}", user);
 

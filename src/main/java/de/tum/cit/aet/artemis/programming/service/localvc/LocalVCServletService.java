@@ -257,12 +257,22 @@ public class LocalVCServletService {
         }
 
         var optionalParticipation = authorizeUser(repositoryTypeOrUserName, user, exercise, repositoryAction, localVCRepositoryUri, false);
-        storePreliminaryVcsAccessLogForHTTPs(request, localVCRepositoryUri, user, repositoryAction, optionalParticipation);
+        savePreliminaryVcsAccessLogForHTTPs(request, localVCRepositoryUri, user, repositoryAction, optionalParticipation);
 
         log.debug("Authorizing user {} for repository {} took {}", user.getLogin(), localVCRepositoryUri, TimeLogUtil.formatDurationFrom(timeNanoStart));
     }
 
-    private void storePreliminaryVcsAccessLogForHTTPs(HttpServletRequest request, LocalVCRepositoryUri localVCRepositoryUri, User user, RepositoryActionType repositoryAction,
+    /**
+     * Determines whether a given request to access a local VC repository (either via fetch of push) is authenticated and authorized.
+     *
+     * @param request               The object containing all information about the incoming request.
+     * @param localVCRepositoryUri  The uri of the requested repository
+     * @param user                  The user
+     * @param repositoryAction      Indicates whether the method should authenticate a fetch or a push request. For a push request, additional checks are conducted.
+     * @param optionalParticipation The participation for which the access log should be stored. If an empty Optional is provided, the method does nothing
+     * @throws LocalVCAuthException If the user authentication fails or the user is not authorized to access a certain repository.
+     */
+    private void savePreliminaryVcsAccessLogForHTTPs(HttpServletRequest request, LocalVCRepositoryUri localVCRepositoryUri, User user, RepositoryActionType repositoryAction,
             Optional<ProgrammingExerciseParticipation> optionalParticipation) throws LocalVCAuthException {
         if (optionalParticipation.isPresent()) {
             ProgrammingExerciseParticipation participation = optionalParticipation.get();
@@ -279,7 +289,7 @@ public class LocalVCServletService {
 
             String finalCommitHash = commitHash;
             RepositoryActionType finalRepositoryAction = repositoryAction == RepositoryActionType.WRITE ? RepositoryActionType.PUSH : RepositoryActionType.PULL;
-            vcsAccessLogService.ifPresent(service -> service.storeAccessLog(user, participation, finalRepositoryAction, authenticationMechanism, finalCommitHash, ipAddress));
+            vcsAccessLogService.ifPresent(service -> service.saveAccessLog(user, participation, finalRepositoryAction, authenticationMechanism, finalCommitHash, ipAddress));
         }
     }
 
@@ -371,7 +381,6 @@ public class LocalVCServletService {
             try {
 
                 // check participation vcs access token
-                // var part = programmingExerciseParticipationService.findTeamParticipationByExerciseAndTeamShortNameOrThrow()
                 List<ProgrammingExerciseStudentParticipation> participations;
                 Optional<ProgrammingExerciseStudentParticipation> studentParticipation;
                 if (exercise.isTeamMode()) {
@@ -525,24 +534,30 @@ public class LocalVCServletService {
 
     /**
      * Checks if the provided repository is an auxiliary or test repository.
-     * Only load auxiliary repositories if a user is at least teaching assistant; students are not allowed to access them
+     * But: for students it only checks for test repository, and assumes the requested repository is not an auxiliary repository.
+     * This avoids an unnecessary database call, and postpones the actual check to
+     * {@link LocalVCServletService#tryToLoadParticipation(boolean, String, LocalVCRepositoryUri, ProgrammingExercise)}
+     * and only checks it if it is really needed.
      *
      * @param exercise                 the exercise, where the repository belongs to
      * @param repositoryTypeOrUserName the type or username of the repository
      * @param repositoryActionType     the action that should be performed on of the repository
      * @param user                     the user who tries to access the repository
-     * @return true if user is TA and
-     * @throws LocalVCForbiddenException
+     * @return true if the repository is an Auxiliary or Test repository, and the user has access to it.
+     *         false for students if the repository is possibly an auxiliary repository, or
+     *         false for TAs if the repository is neither auxiliary nor test
+     * @throws LocalVCForbiddenException if the user has no access rights for the requested repository
      */
     private boolean checkIfRepositoryIsAuxiliaryOrTestRepository(ProgrammingExercise exercise, String repositoryTypeOrUserName, RepositoryActionType repositoryActionType,
             User user) throws LocalVCForbiddenException {
 
-        // Students should not be able to access Test or Aux repositories.
-        // To save on db queries we do not check that, until after we tried to fetch the user repository as a user repository
+        // Students are not able to access Test or Aux repositories.
+        // To save on db queries we do not check whether it is an Aux repo here, as we would need to fetch them first.
         if (!authorizationCheckService.isAtLeastTeachingAssistantForExercise(exercise, user)) {
             if (repositoryTypeOrUserName.equals(RepositoryType.TESTS.toString())) {
                 throw new LocalVCForbiddenException();
             }
+            // The user is a student, and the repository is not a test repository
             return false;
         }
 
@@ -555,8 +570,10 @@ public class LocalVCServletService {
             catch (AccessForbiddenException e) {
                 throw new LocalVCForbiddenException(e);
             }
+            // The user is at least TA, it is either an Auxiliary repository or a Test repository, and the user has access to it
             return true;
         }
+        // The repository is neither an Auxiliary repository nor a Test repository
         return false;
     }
 
@@ -653,7 +670,6 @@ public class LocalVCServletService {
         ProgrammingExercise exercise = cachedExercise.orElseGet(() -> getProgrammingExercise(projectKey));
         ProgrammingExerciseParticipation participation;
         RepositoryType repositoryType = getRepositoryTypeWithoutAuxiliary(repositoryTypeOrUserName, exercise);
-        ;
 
         try {
             participation = cachedParticipation.orElseGet(() -> programmingExerciseParticipationService
@@ -948,7 +964,7 @@ public class LocalVCServletService {
             var participation = programmingExerciseParticipationService.fetchParticipationWithSubmissionsByRepository(localVCRepositoryUri.getRepositoryTypeOrUserName(),
                     localVCRepositoryUri.toString(), null);
             var ipAddress = servletRequest.getRemoteAddr();
-            vcsAccessLogService.ifPresent(service -> service.storeAccessLog(user, participation, RepositoryActionType.CLONE_FAIL, mechanism, "", ipAddress));
+            vcsAccessLogService.ifPresent(service -> service.saveAccessLog(user, participation, RepositoryActionType.CLONE_FAIL, mechanism, "", ipAddress));
         }
         catch (LocalVCAuthException | EntityNotFoundException ignored) {
             // Caught when: 1) no user, or 2) no participation was found. In both cases it does not make sense to write a log
