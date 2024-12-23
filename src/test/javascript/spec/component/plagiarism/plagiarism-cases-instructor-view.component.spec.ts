@@ -16,6 +16,7 @@ import { DocumentationButtonComponent } from 'app/shared/components/documentatio
 import { MockComponent } from 'ng-mocks';
 import { NotificationService } from 'app/shared/notification/notification.service';
 import { MockNotificationService } from '../../helpers/mocks/service/mock-notification.service';
+import { ElementRef, signal } from '@angular/core';
 
 jest.mock('app/shared/util/download.util', () => ({
     downloadFile: jest.fn(),
@@ -197,5 +198,26 @@ describe('Plagiarism Cases Instructor View Component', () => {
         component.exportPlagiarismCases();
         expect(downloadSpy).toHaveBeenCalledOnce();
         expect(downloadSpy).toHaveBeenCalledWith(new Blob(expectedBlob, { type: 'text/csv' }), 'plagiarism-cases.csv');
+    });
+
+    it('should scroll to the correct exercise element when scrollToExercise is called', () => {
+        component.exerciseId = 1;
+
+        const nativeElement1 = { id: 'exercise-with-plagiarism-case-1', scrollIntoView: jest.fn() };
+        const nativeElement2 = { id: 'exercise-with-plagiarism-case-2', scrollIntoView: jest.fn() };
+
+        const elementRef1 = new ElementRef(nativeElement1);
+        const elementRef2 = new ElementRef(nativeElement2);
+
+        component.exerciseWithPlagCasesElements = signal([elementRef1, elementRef2]);
+
+        component.scrollToExercise();
+
+        expect(nativeElement1.scrollIntoView).toHaveBeenCalledWith({
+            behavior: 'smooth',
+            block: 'start',
+            inline: 'nearest',
+        });
+        expect(nativeElement2.scrollIntoView).not.toHaveBeenCalled();
     });
 });
