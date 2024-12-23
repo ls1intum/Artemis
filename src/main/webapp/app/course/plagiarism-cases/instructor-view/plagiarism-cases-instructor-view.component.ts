@@ -80,7 +80,6 @@ export class PlagiarismCasesInstructorViewComponent implements OnInit {
 
     scrollToExercise() {
         const element = this.exerciseWithPlagCasesElements().find((elem) => elem.nativeElement.id === 'exercise-with-plagiarism-case-' + this.exerciseId);
-        console.log(element);
         if (element) {
             element.nativeElement.scrollIntoView({
                 behavior: 'smooth',
