@@ -50,4 +50,12 @@ public class FaqService {
 
         pyrisWebhookService.get().deleteFaqFromPyrisDB(existingFaq);
     }
+
+    public void autoIngestFaqsIntoPyris(Long courseId, Faq faq) {
+        if (!pyrisWebhookService.isPresent()) {
+            return;
+        }
+
+        pyrisWebhookService.get().autoUpdateFaqInPyris(courseId, faq);
+    }
 }

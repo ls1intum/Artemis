@@ -246,6 +246,9 @@ public class PyrisWebhookService {
     }
 
     private boolean faqIngestionEnabled(Course course) {
+        System.out.println(irisSettingsService.getRawIrisSettingsFor(course).getIrisFaqIngestionSettings().isEnabled());
+        System.out.println(irisSettingsService.getRawIrisSettingsFor(course).getIrisFaqIngestionSettings() != null
+                && irisSettingsService.getRawIrisSettingsFor(course).getIrisFaqIngestionSettings().isEnabled());
         return irisSettingsService.getRawIrisSettingsFor(course).getIrisFaqIngestionSettings() != null
                 && irisSettingsService.getRawIrisSettingsFor(course).getIrisFaqIngestionSettings().isEnabled();
     }
@@ -254,15 +257,13 @@ public class PyrisWebhookService {
      * send the updated / created attachment to Pyris for ingestion if autoLecturesUpdate is enabled
      *
      * @param courseId Id of the course where the attachment is added
-     * @param newFaqs  the new faqs to be sent to pyris for ingestion
+     * @param newFaq   the new faqs to be sent to pyris for ingestion
      */
-    public void autoUpdateFaqInPyris(Long courseId, List<Faq> newFaqs) {
+    public void autoUpdateFaqInPyris(Long courseId, Faq newFaq) {
         IrisCourseSettings courseSettings = irisSettingsRepository.findCourseSettings(courseId).isPresent() ? irisSettingsRepository.findCourseSettings(courseId).get() : null;
         if (courseSettings != null && courseSettings.getIrisFaqIngestionSettings() != null && courseSettings.getIrisFaqIngestionSettings().isEnabled()
                 && courseSettings.getIrisFaqIngestionSettings().getAutoIngestOnFaqCreation()) {
-            for (Faq faq : newFaqs) {
-                addFaqToPyris(faq);
-            }
+            addFaqToPyris(newFaq);
         }
     }
 
@@ -292,7 +293,7 @@ public class PyrisWebhookService {
     /**
      * delete the faqs from the vector database on pyris
      *
-     * @param faqs The faqs that got Updated / erased
+     * @param faq The faqs that got Updated / erased
      * @return jobToken if the job was created
      */
     public String deleteFaqFromPyrisDB(Faq faq) {

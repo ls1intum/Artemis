@@ -22,10 +22,12 @@ import de.tum.cit.aet.artemis.iris.service.pyris.PyrisStatusUpdateService;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.chat.PyrisChatStatusUpdateDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.chat.textexercise.PyrisTextExerciseChatStatusUpdateDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.competency.PyrisCompetencyStatusUpdateDTO;
+import de.tum.cit.aet.artemis.iris.service.pyris.dto.faqingestionwebhook.PyrisFaqIngestionStatusUpdateDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.lectureingestionwebhook.PyrisLectureIngestionStatusUpdateDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.job.CompetencyExtractionJob;
 import de.tum.cit.aet.artemis.iris.service.pyris.job.CourseChatJob;
 import de.tum.cit.aet.artemis.iris.service.pyris.job.ExerciseChatJob;
+import de.tum.cit.aet.artemis.iris.service.pyris.job.FaqIngestionWebhookJob;
 import de.tum.cit.aet.artemis.iris.service.pyris.job.LectureIngestionWebhookJob;
 import de.tum.cit.aet.artemis.iris.service.pyris.job.PyrisJob;
 import de.tum.cit.aet.artemis.iris.service.pyris.job.TextExerciseChatJob;
@@ -171,6 +173,32 @@ public class PublicPyrisStatusUpdateResource {
         }
 
         pyrisStatusUpdateService.handleStatusUpdate(lectureIngestionWebhookJob, statusUpdateDTO);
+        return ResponseEntity.ok().build();
+    }
+
+    /**
+     * {@code POST /api/public/pyris/webhooks/ingestion/runs/{runId}/status} : Set the status of an Ingestion job.
+     *
+     * @param runId           the ID of the job
+     * @param statusUpdateDTO the status update
+     * @param request         the HTTP request
+     * @return a {@link ResponseEntity} with status {@code 200 (OK)}
+     * @throws ConflictException        if the run ID in the URL does not match the run ID in the request body
+     * @throws AccessForbiddenException if the token is invalid
+     */
+    @PostMapping("webhooks/ingestion/faqs/runs/{runId}/status")
+    @EnforceNothing
+    public ResponseEntity<Void> setStatusOfFaqIngestionJob(@PathVariable String runId, @RequestBody PyrisFaqIngestionStatusUpdateDTO statusUpdateDTO, HttpServletRequest request) {
+        PyrisJob job = pyrisJobService.getAndAuthenticateJobFromHeaderElseThrow(request, PyrisJob.class);
+        if (!job.jobId().equals(runId)) {
+            throw new ConflictException("Run ID in URL does not match run ID in request body", "Job", "runIdMismatch");
+        }
+        if (!(job instanceof FaqIngestionWebhookJob faqIngestionWebhookJob)) {
+            throw new ConflictException("Run ID is not an ingestion job", "Job", "invalidRunId");
+        }
+        System.out.println("Received status update for FAQ ingestion job: " + statusUpdateDTO);
+
+        pyrisStatusUpdateService.handleStatusUpdate(faqIngestionWebhookJob, statusUpdateDTO);
         return ResponseEntity.ok().build();
     }
 }

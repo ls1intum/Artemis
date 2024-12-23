@@ -40,6 +40,7 @@ import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInCourse.Enfo
 import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInCourse.EnforceAtLeastTutorInCourse;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
 import de.tum.cit.aet.artemis.core.util.HeaderUtil;
+import de.tum.cit.aet.artemis.iris.service.settings.IrisSettingsService;
 
 /**
  * REST controller for managing Faqs.
@@ -64,7 +65,8 @@ public class FaqResource {
 
     private final FaqService faqService;
 
-    public FaqResource(CourseRepository courseRepository, AuthorizationCheckService authCheckService, FaqRepository faqRepository, FaqService faqService) {
+    public FaqResource(CourseRepository courseRepository, AuthorizationCheckService authCheckService, FaqRepository faqRepository, FaqService faqService,
+            Optional<IrisSettingsService> irisSettingsService) {
         this.faqRepository = faqRepository;
         this.courseRepository = courseRepository;
         this.authCheckService = authCheckService;
@@ -94,7 +96,7 @@ public class FaqResource {
         Faq savedFaq = faqRepository.save(faq);
         FaqDTO dto = new FaqDTO(savedFaq);
         if (checkIfFaqIsAccepted(savedFaq)) {
-            faqService.ingestFaqsIntoPyris(courseId, Optional.of(savedFaq.getId()));
+            faqService.autoIngestFaqsIntoPyris(courseId, savedFaq);
         }
         return ResponseEntity.created(new URI("/api/courses/" + courseId + "/faqs/" + savedFaq.getId())).body(dto);
     }
@@ -123,7 +125,7 @@ public class FaqResource {
         }
         Faq updatedFaq = faqRepository.save(faq);
         if (checkIfFaqIsAccepted(updatedFaq)) {
-            faqService.ingestFaqsIntoPyris(courseId, Optional.of(updatedFaq.getId()));
+            faqService.autoIngestFaqsIntoPyris(courseId, updatedFaq);
         }
         FaqDTO dto = new FaqDTO(updatedFaq);
         return ResponseEntity.ok().body(dto);
