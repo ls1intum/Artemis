@@ -38,3 +38,8 @@ services:
         stdin_open: true
         tty: true
         ipc: host
+
+networks:
+    artemis:
+        driver: 'bridge'
+        name: artemis
