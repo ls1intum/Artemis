@@ -38,6 +38,7 @@ import com.github.dockerjava.api.model.PullResponseItem;
 import com.hazelcast.core.HazelcastInstance;
 import com.hazelcast.map.IMap;
 
+import de.tum.cit.aet.artemis.buildagent.BuildAgentConfiguration;
 import de.tum.cit.aet.artemis.buildagent.dto.BuildJobQueueItem;
 import de.tum.cit.aet.artemis.core.exception.LocalCIException;
 import de.tum.cit.aet.artemis.core.util.TimeLogUtil;
@@ -53,7 +54,7 @@ public class BuildAgentDockerService {
 
     private static final Logger log = LoggerFactory.getLogger(BuildAgentDockerService.class);
 
-    private final DockerClient dockerClient;
+    private final BuildAgentConfiguration buildAgentConfiguration;
 
     private final HazelcastInstance hazelcastInstance;
 
@@ -88,9 +89,9 @@ public class BuildAgentDockerService {
     @Value("${artemis.continuous-integration.image-architecture:amd64}")
     private String imageArchitecture;
 
-    public BuildAgentDockerService(DockerClient dockerClient, @Qualifier("hazelcastInstance") HazelcastInstance hazelcastInstance,
+    public BuildAgentDockerService(BuildAgentConfiguration buildAgentConfiguration, @Qualifier("hazelcastInstance") HazelcastInstance hazelcastInstance,
             BuildJobContainerService buildJobContainerService, @Qualifier("taskScheduler") TaskScheduler taskScheduler) {
-        this.dockerClient = dockerClient;
+        this.buildAgentConfiguration = buildAgentConfiguration;
         this.hazelcastInstance = hazelcastInstance;
         this.buildJobContainerService = buildJobContainerService;
         this.taskScheduler = taskScheduler;
@@ -123,6 +124,7 @@ public class BuildAgentDockerService {
     public void cleanUpContainers() {
         List<Container> danglingBuildContainers;
         log.info("Start cleanup dangling build containers");
+        DockerClient dockerClient = buildAgentConfiguration.getDockerClient();
         if (isFirstCleanup) {
             // Cleanup all dangling build containers after the application has started
             try {
@@ -213,6 +215,7 @@ public class BuildAgentDockerService {
      * @throws LocalCIException if the image pull is interrupted or fails due to other exceptions.
      */
     public void pullDockerImage(BuildJobQueueItem buildJob, BuildLogsMap buildLogsMap) {
+        DockerClient dockerClient = buildAgentConfiguration.getDockerClient();
         final String imageName = buildJob.buildConfig().dockerImage();
         try {
             // First check if the image is already available
@@ -319,7 +322,7 @@ public class BuildAgentDockerService {
                 if (dockerImageCleanupInfo.get(dockerImage).isBefore(ZonedDateTime.now().minusDays(imageExpiryDays))) {
                     log.info("Deleting docker image {}", dockerImage);
                     try {
-                        dockerClient.removeImageCmd(dockerImage).exec();
+                        buildAgentConfiguration.getDockerClient().removeImageCmd(dockerImage).exec();
                     }
                     catch (NotFoundException e) {
                         log.warn("Docker image {} not found during cleanup", dockerImage);
@@ -342,6 +345,9 @@ public class BuildAgentDockerService {
         if (!imageCleanupEnabled) {
             return;
         }
+
+        DockerClient dockerClient = buildAgentConfiguration.getDockerClient();
+
         try {
             // Get the Docker root directory to check disk space.
             File dockerRootDirectory = new File(Objects.requireNonNullElse(dockerClient.infoCmd().exec().getDockerRootDir(), "/"));
@@ -399,6 +405,8 @@ public class BuildAgentDockerService {
      * @return a set of image names that are not associated with any running containers.
      */
     private Set<String> getUnusedDockerImages() {
+        DockerClient dockerClient = buildAgentConfiguration.getDockerClient();
+
         // Get list of all running containers
         List<Container> containers = dockerClient.listContainersCmd().exec();
 
