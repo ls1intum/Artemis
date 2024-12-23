@@ -130,6 +130,9 @@
                 "exportCsv": "CSV exportieren",
                 "confirm": "Fall bestätigen",
                 "discard": "Fall verwerfen"
+            },
+            "export": {
+                "error": "Fehler beim Exportieren der CSV-Datei."
             }
         }
     }

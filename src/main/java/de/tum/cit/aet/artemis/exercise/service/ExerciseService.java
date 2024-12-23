@@ -45,9 +45,9 @@ import de.tum.cit.aet.artemis.assessment.repository.ParticipantScoreRepository;
 import de.tum.cit.aet.artemis.assessment.repository.ResultRepository;
 import de.tum.cit.aet.artemis.assessment.service.RatingService;
 import de.tum.cit.aet.artemis.assessment.service.TutorLeaderboardService;
+import de.tum.cit.aet.artemis.atlas.api.CompetencyRelationApi;
 import de.tum.cit.aet.artemis.atlas.domain.competency.CompetencyExerciseLink;
 import de.tum.cit.aet.artemis.atlas.domain.competency.CourseCompetency;
-import de.tum.cit.aet.artemis.atlas.repository.CompetencyExerciseLinkRepository;
 import de.tum.cit.aet.artemis.communication.service.notifications.GroupNotificationScheduleService;
 import de.tum.cit.aet.artemis.core.config.Constants;
 import de.tum.cit.aet.artemis.core.domain.Course;
@@ -130,7 +130,7 @@ public class ExerciseService {
 
     private final GroupNotificationScheduleService groupNotificationScheduleService;
 
-    private final CompetencyExerciseLinkRepository competencyExerciseLinkRepository;
+    private final CompetencyRelationApi competencyRelationApi;
 
     public ExerciseService(ExerciseRepository exerciseRepository, AuthorizationCheckService authCheckService, AuditEventRepository auditEventRepository,
             TeamRepository teamRepository, ProgrammingExerciseRepository programmingExerciseRepository, Optional<Lti13ResourceLaunchRepository> lti13ResourceLaunchRepository,
@@ -139,7 +139,7 @@ public class ExerciseService {
             TutorLeaderboardService tutorLeaderboardService, ComplaintResponseRepository complaintResponseRepository, GradingCriterionRepository gradingCriterionRepository,
             FeedbackRepository feedbackRepository, RatingService ratingService, ExerciseDateService exerciseDateService, ExampleSubmissionRepository exampleSubmissionRepository,
             QuizBatchService quizBatchService, ExamLiveEventsService examLiveEventsService, GroupNotificationScheduleService groupNotificationScheduleService,
-            CompetencyExerciseLinkRepository competencyExerciseLinkRepository) {
+            CompetencyRelationApi competencyRelationApi) {
         this.exerciseRepository = exerciseRepository;
         this.resultRepository = resultRepository;
         this.authCheckService = authCheckService;
@@ -162,7 +162,7 @@ public class ExerciseService {
         this.quizBatchService = quizBatchService;
         this.examLiveEventsService = examLiveEventsService;
         this.groupNotificationScheduleService = groupNotificationScheduleService;
-        this.competencyExerciseLinkRepository = competencyExerciseLinkRepository;
+        this.competencyRelationApi = competencyRelationApi;
     }
 
     /**
@@ -773,7 +773,7 @@ public class ExerciseService {
      * @param competency    competency to remove
      */
     public void removeCompetency(@NotNull Set<CompetencyExerciseLink> exerciseLinks, @NotNull CourseCompetency competency) {
-        competencyExerciseLinkRepository.deleteAll(exerciseLinks);
+        competencyRelationApi.deleteAllExerciseLinks(exerciseLinks);
         competency.getExerciseLinks().removeAll(exerciseLinks);
     }
 
@@ -815,7 +815,7 @@ public class ExerciseService {
         if (Hibernate.isInitialized(links) && !links.isEmpty()) {
             savedExercise.setCompetencyLinks(links);
             reconnectCompetencyExerciseLinks(savedExercise);
-            savedExercise.setCompetencyLinks(new HashSet<>(competencyExerciseLinkRepository.saveAll(links)));
+            savedExercise.setCompetencyLinks(new HashSet<>(competencyRelationApi.saveAllExerciseLinks(links)));
         }
 
         return savedExercise;

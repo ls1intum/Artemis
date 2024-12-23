@@ -55,10 +55,6 @@ import { ArtemisModePickerModule } from 'app/exercises/shared/mode-picker/mode-p
 import { StudentExamTimelineComponent } from './student-exams/student-exam-timeline/student-exam-timeline.component';
 import { TitleChannelNameModule } from 'app/shared/form/title-channel-name/title-channel-name.module';
 import { ExamEditWorkingTimeDialogComponent } from 'app/exam/manage/exams/exam-checklist-component/exam-edit-workingtime-dialog/exam-edit-working-time-dialog.component';
-import { SuspiciousBehaviorComponent } from './suspicious-behavior/suspicious-behavior.component';
-import { SuspiciousSessionsOverviewComponent } from './suspicious-behavior/suspicious-sessions-overview/suspicious-sessions-overview.component';
-import { PlagiarismCasesOverviewComponent } from './suspicious-behavior/plagiarism-cases-overview/plagiarism-cases-overview.component';
-import { SuspiciousSessionsComponent } from './suspicious-behavior/suspicious-sessions/suspicious-sessions.component';
 import { ExamEditWorkingTimeComponent } from 'app/exam/manage/exams/exam-checklist-component/exam-edit-workingtime-dialog/exam-edit-working-time.component';
 import { ExamLiveAnnouncementCreateModalComponent } from 'app/exam/manage/exams/exam-checklist-component/exam-announcement-dialog/exam-live-announcement-create-modal.component';
 import { ExamLiveAnnouncementCreateButtonComponent } from 'app/exam/manage/exams/exam-checklist-component/exam-announcement-dialog/exam-live-announcement-create-button.component';
@@ -145,10 +141,6 @@ const ENTITY_STATES = [...examManagementState];
         ExamEditWorkingTimeDialogComponent,
         ExamLiveAnnouncementCreateModalComponent,
         ExamLiveAnnouncementCreateButtonComponent,
-        SuspiciousBehaviorComponent,
-        SuspiciousSessionsOverviewComponent,
-        PlagiarismCasesOverviewComponent,
-        SuspiciousSessionsComponent,
         StudentExamTimelineComponent,
         ProgrammingExerciseExamDiffComponent,
     ],

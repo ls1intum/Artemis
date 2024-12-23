@@ -44,7 +44,6 @@ export class MetisService implements OnDestroy {
     private currentConversation?: ConversationDTO = undefined;
     private user: User;
     private pageType: PageType;
-    private course: Course;
     private courseId: number;
     private cachedPosts: Post[] = [];
     private cachedTotalNumberOfPosts: number;
@@ -52,6 +51,8 @@ export class MetisService implements OnDestroy {
 
     private courseWideTopicSubscription: Subscription;
     private savedPostService: SavedPostService = inject(SavedPostService);
+
+    course: Course;
 
     constructor(
         protected postService: PostService,
@@ -495,6 +496,14 @@ export class MetisService implements OnDestroy {
             default:
                 return undefined;
         }
+    }
+
+    /**
+     * returns the router link required for navigating to the exercise referenced within a faq
+     * @return {string} router link of the faq
+     */
+    getLinkForFaq(): string {
+        return `/courses/${this.getCourse().id}/faq`;
     }
 
     /**

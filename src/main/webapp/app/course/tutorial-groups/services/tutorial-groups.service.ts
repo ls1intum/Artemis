@@ -1,5 +1,5 @@
 import { HttpClient, HttpResponse } from '@angular/common/http';
-import { Injectable } from '@angular/core';
+import { Injectable, inject } from '@angular/core';
 import { TutorialGroup } from 'app/entities/tutorial-group/tutorial-group.model';
 import { Observable } from 'rxjs';
 import { StudentDTO } from 'app/entities/student-dto.model';
@@ -15,13 +15,11 @@ type EntityArrayResponseType = HttpResponse<TutorialGroup[]>;
 
 @Injectable({ providedIn: 'root' })
 export class TutorialGroupsService {
-    private resourceURL = 'api';
+    private httpClient = inject(HttpClient);
+    private tutorialGroupSessionService = inject(TutorialGroupSessionService);
+    private tutorialGroupsConfigurationService = inject(TutorialGroupsConfigurationService);
 
-    constructor(
-        private httpClient: HttpClient,
-        private tutorialGroupSessionService: TutorialGroupSessionService,
-        private tutorialGroupsConfigurationService: TutorialGroupsConfigurationService,
-    ) {}
+    private resourceURL = 'api';
 
     getUniqueCampusValues(courseId: number): Observable<HttpResponse<string[]>> {
         return this.httpClient.get<string[]>(`${this.resourceURL}/courses/${courseId}/tutorial-groups/campus-values`, { observe: 'response' });
