@@ -17,7 +17,7 @@ import { SidebarCardElement, SidebarData } from 'app/types/sidebar';
 import { NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
 import { ExerciseFilterModalComponent } from 'app/shared/exercise-filter/exercise-filter-modal.component';
 import { ExerciseFilterResults } from 'app/types/exercise-filter';
-import { EventEmitter } from '@angular/core';
+import { EventEmitter, input, runInInjectionContext } from '@angular/core';
 import { ExerciseCategory } from 'app/entities/exercise-category.model';
 import { ExerciseType } from 'app/entities/exercise.model';
 import { IconProp } from '@fortawesome/fontawesome-svg-core';
@@ -49,9 +49,7 @@ describe('SidebarComponent', () => {
             ],
             providers: [MockProvider(NgbModal)],
         }).compileComponents();
-    });
 
-    beforeEach(() => {
         fixture = TestBed.createComponent(SidebarComponent);
         component = fixture.componentInstance;
         modalService = TestBed.inject(NgbModal);
@@ -287,6 +285,28 @@ describe('SidebarComponent', () => {
             expect(component.sidebarData).toEqual(mockFilterResults.filteredSidebarData);
             expect(component.exerciseFilters).toEqual(mockFilterResults.appliedExerciseFilters);
             expect(component.isFilterActive).toBeTrue();
+        });
+
+        it('should show "Create Channel" button when canCreateChannel is true', () => {
+            runInInjectionContext(fixture.debugElement.injector, () => {
+                component.inCommunication = input<boolean>(true);
+                component.ngOnInit();
+                component.sidebarData.canCreateChannel = true;
+                fixture.detectChanges();
+                const createChannelButton = fixture.debugElement.query(By.css('.createChannel'));
+                expect(createChannelButton).toBeTruthy();
+            });
+        });
+
+        it('should not show "Create Channel" button when canCreateChannel is false', () => {
+            runInInjectionContext(fixture.debugElement.injector, () => {
+                component.inCommunication = input<boolean>(true);
+                component.ngOnInit();
+                component.sidebarData.canCreateChannel = false;
+                fixture.detectChanges();
+                const createChannelButton = fixture.debugElement.query(By.css('.createChannel'));
+                expect(createChannelButton).toBeFalsy();
+            });
         });
     });
 });
