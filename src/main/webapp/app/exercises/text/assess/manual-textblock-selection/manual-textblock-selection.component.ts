@@ -4,10 +4,14 @@ import { TextSubmission } from 'app/entities/text/text-submission.model';
 import { TextBlock } from 'app/entities/text/text-block.model';
 import { GradingCriterion } from 'app/exercises/shared/structured-grading-criterion/grading-criterion.model';
 import { wordSelection } from 'app/exercises/text/shared/manual-text-selection/manual-text-selection.component';
+import { TextblockAssessmentCardComponent } from 'app/exercises/text/assess/textblock-assessment-card/textblock-assessment-card.component';
+import { ManualTextSelectionComponent } from 'app/exercises/text/shared/manual-text-selection/manual-text-selection.component';
 
 @Component({
     selector: 'jhi-manual-textblock-selection',
     templateUrl: './manual-textblock-selection.component.html',
+    standalone: true,
+    imports: [TextblockAssessmentCardComponent, ManualTextSelectionComponent],
 })
 export class ManualTextblockSelectionComponent {
     @Input() set textBlockRefs(textBlockRefs: TextBlockRef[]) {

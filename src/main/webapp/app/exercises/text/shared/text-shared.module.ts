@@ -5,8 +5,7 @@ import { TextSelectDirective } from './text-select.directive';
 import { ManualTextSelectionComponent } from './manual-text-selection/manual-text-selection.component';
 
 @NgModule({
-    imports: [CommonModule, ArtemisSharedLibsModule],
-    declarations: [TextSelectDirective, ManualTextSelectionComponent],
+    imports: [CommonModule, ArtemisSharedLibsModule, TextSelectDirective, ManualTextSelectionComponent],
     exports: [TextSelectDirective, ManualTextSelectionComponent],
 })
 export class TextSharedModule {}

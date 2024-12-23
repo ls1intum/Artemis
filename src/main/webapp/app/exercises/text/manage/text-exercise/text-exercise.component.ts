@@ -4,7 +4,7 @@ import { ExerciseType } from 'app/entities/exercise.model';
 import { TextExercise } from 'app/entities/text/text-exercise.model';
 import { TextExerciseService } from './text-exercise.service';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
-import { Router } from '@angular/router';
+import { Router, RouterLink } from '@angular/router';
 import { ExerciseComponent } from 'app/exercises/shared/exercise/exercise.component';
 import { onError } from 'app/shared/util/global.utils';
 import { AccountService } from 'app/core/auth/account.service';
@@ -14,10 +14,28 @@ import { AlertService } from 'app/core/util/alert.service';
 import { faPlus, faSort, faTrash } from '@fortawesome/free-solid-svg-icons';
 import { CourseExerciseService } from 'app/exercises/shared/course-exercises/course-exercise.service';
 import { ExerciseImportWrapperComponent } from 'app/exercises/shared/import/exercise-import-wrapper/exercise-import-wrapper.component';
+import { ArtemisSharedCommonModule } from 'app/shared/shared-common.module';
+import { FormsModule } from '@angular/forms';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { ExerciseCategoriesModule } from 'app/shared/exercise-categories/exercise-categories.module';
+import { TextExerciseRowButtonsComponent } from 'app/exercises/text/manage/text-exercise/text-exercise-row-buttons.component';
+import { ArtemisSharedModule } from 'app/shared/shared.module';
 
 @Component({
     selector: 'jhi-text-exercise',
     templateUrl: './text-exercise.component.html',
+    standalone: true,
+    imports: [
+        ArtemisSharedCommonModule,
+        FormsModule,
+        TranslateDirective,
+        FaIconComponent,
+        RouterLink,
+        ExerciseCategoriesModule,
+        TextExerciseRowButtonsComponent,
+        ArtemisSharedModule,
+    ],
 })
 export class TextExerciseComponent extends ExerciseComponent {
     protected exerciseService = inject(ExerciseService);

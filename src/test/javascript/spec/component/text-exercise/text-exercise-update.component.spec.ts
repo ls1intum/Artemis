@@ -40,7 +40,7 @@ describe('TextExercise Management Update Component', () => {
                 { provide: NgbModal, useClass: MockNgbModalService },
                 MockProvider(TranslateService),
             ],
-            declarations: [TextExerciseUpdateComponent],
+            declarations: [],
         })
             .overrideTemplate(TextExerciseUpdateComponent, '')
             .compileComponents();

@@ -37,7 +37,7 @@ describe('ManualTextSelectionComponent', () => {
     beforeEach(() => {
         TestBed.configureTestingModule({
             imports: [ArtemisTestModule],
-            declarations: [ManualTextSelectionComponent],
+            declarations: [],
             providers: [MockProvider(TextAssessmentAnalytics), MockProvider(ActivatedRoute)],
         })
             .compileComponents()

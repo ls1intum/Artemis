@@ -23,10 +23,17 @@ import {
     getExerciseModeDetailSection,
     getExerciseProblemDetailSection,
 } from 'app/exercises/shared/utils';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { ArtemisSharedComponentModule } from 'app/shared/components/shared-component.module';
+import { NonProgrammingExerciseDetailCommonActionsModule } from 'app/exercises/shared/exercise-detail-common-actions/non-programming-exercise-detail-common-actions.module';
+import { ArtemisExerciseModule } from 'app/exercises/shared/exercise/exercise.module';
+import { DetailModule } from 'app/detail-overview-list/detail.module';
 
 @Component({
     selector: 'jhi-text-exercise-detail',
     templateUrl: './text-exercise-detail.component.html',
+    standalone: true,
+    imports: [TranslateDirective, ArtemisSharedComponentModule, NonProgrammingExerciseDetailCommonActionsModule, ArtemisExerciseModule, DetailModule],
 })
 export class TextExerciseDetailComponent implements OnInit, OnDestroy {
     private route = inject(ActivatedRoute);
