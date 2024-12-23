@@ -1,14 +1,17 @@
 package de.tum.cit.aet.artemis.communication;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Fail.fail;
 
 import java.time.ZonedDateTime;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -19,10 +22,14 @@ import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.util.LinkedMultiValueMap;
 
+import de.tum.cit.aet.artemis.communication.domain.ConversationParticipant;
 import de.tum.cit.aet.artemis.communication.domain.conversation.Channel;
 import de.tum.cit.aet.artemis.communication.dto.ChannelDTO;
 import de.tum.cit.aet.artemis.communication.dto.ChannelIdAndNameDTO;
+import de.tum.cit.aet.artemis.communication.dto.FeedbackChannelRequestDTO;
 import de.tum.cit.aet.artemis.communication.dto.MetisCrudAction;
+import de.tum.cit.aet.artemis.communication.service.conversation.ChannelService;
+import de.tum.cit.aet.artemis.communication.service.conversation.ConversationService;
 import de.tum.cit.aet.artemis.communication.util.ConversationUtilService;
 import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.domain.CourseInformationSharingConfiguration;
@@ -32,6 +39,8 @@ import de.tum.cit.aet.artemis.core.user.util.UserFactory;
 import de.tum.cit.aet.artemis.lecture.domain.Lecture;
 import de.tum.cit.aet.artemis.lecture.repository.LectureRepository;
 import de.tum.cit.aet.artemis.lecture.util.LectureUtilService;
+import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
+import de.tum.cit.aet.artemis.programming.util.ProgrammingExerciseUtilService;
 import de.tum.cit.aet.artemis.text.domain.TextExercise;
 import de.tum.cit.aet.artemis.text.util.TextExerciseUtilService;
 import de.tum.cit.aet.artemis.tutorialgroup.service.TutorialGroupChannelManagementService;
@@ -43,10 +52,13 @@ class ChannelIntegrationTest extends AbstractConversationTest {
     private static final String TEST_PREFIX = "chtest";
 
     @Autowired
-    TutorialGroupTestRepository tutorialGroupRepository;
+    private ConversationService conversationService;
 
     @Autowired
-    TutorialGroupChannelManagementService tutorialGroupChannelManagementService;
+    private TutorialGroupTestRepository tutorialGroupRepository;
+
+    @Autowired
+    private TutorialGroupChannelManagementService tutorialGroupChannelManagementService;
 
     @Autowired
     private TutorialGroupUtilService tutorialGroupUtilService;
@@ -62,6 +74,12 @@ class ChannelIntegrationTest extends AbstractConversationTest {
 
     @Autowired
     private ConversationUtilService conversationUtilService;
+
+    @Autowired
+    private ProgrammingExerciseUtilService programmingExerciseUtilService;
+
+    @Autowired
+    private ChannelService channelService;
 
     @BeforeEach
     @Override
@@ -80,6 +98,12 @@ class ChannelIntegrationTest extends AbstractConversationTest {
         if (userRepository.findOneByLogin(testPrefix + "instructor42").isEmpty()) {
             userRepository.save(UserFactory.generateActivatedUser(testPrefix + "instructor42"));
         }
+    }
+
+    @AfterEach
+    void tearDown() {
+        var conversations = conversationRepository.findAllByCourseId(exampleCourseId);
+        conversations.forEach(conversation -> conversationService.deleteConversation(conversation));
     }
 
     @Override
@@ -899,6 +923,86 @@ class ChannelIntegrationTest extends AbstractConversationTest {
 
         conversationRepository.deleteById(publicChannelWhereMember.getId());
         lectureRepository.deleteById(lecture.getId());
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "STUDENT")
+    void createFeedbackChannel_asStudent_shouldReturnForbidden() {
+        Course course = programmingExerciseUtilService.addCourseWithOneProgrammingExercise();
+        ProgrammingExercise programmingExercise = programmingExerciseUtilService.addProgrammingExerciseToCourse(course);
+
+        ChannelDTO channelDTO = new ChannelDTO();
+        channelDTO.setName("feedback-channel");
+        channelDTO.setDescription("Discussion channel for feedback");
+        channelDTO.setIsPublic(true);
+        channelDTO.setIsAnnouncementChannel(false);
+
+        FeedbackChannelRequestDTO feedbackChannelRequest = new FeedbackChannelRequestDTO(channelDTO, List.of("Sample feedback text"), "Sample testName");
+
+        String BASE_ENDPOINT = "api/courses/{courseId}/{exerciseId}/feedback-channel";
+
+        try {
+            request.postWithoutResponseBody(BASE_ENDPOINT.replace("{courseId}", course.getId().toString()).replace("{exerciseId}", programmingExercise.getId().toString()),
+                    feedbackChannelRequest, HttpStatus.FORBIDDEN);
+        }
+        catch (Exception e) {
+            fail("There was an error executing the post request.", e);
+        }
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void createFeedbackChannel_asInstructor_shouldCreateChannel() {
+        long courseId = 1L;
+        long exerciseId = 1L;
+        ChannelDTO channelDTO = new ChannelDTO();
+        channelDTO.setName("feedback-channel");
+        channelDTO.setDescription("Discussion channel for feedback");
+        channelDTO.setIsPublic(true);
+        channelDTO.setIsAnnouncementChannel(false);
+
+        FeedbackChannelRequestDTO feedbackChannelRequest = new FeedbackChannelRequestDTO(channelDTO, List.of("Sample feedback text"), "Sample testName");
+
+        String BASE_ENDPOINT = "/api/courses/{courseId}/{exerciseId}/feedback-channel";
+
+        ChannelDTO response = null;
+        try {
+            response = request.postWithResponseBody(BASE_ENDPOINT.replace("{courseId}", Long.toString(courseId)).replace("{exerciseId}", Long.toString(exerciseId)),
+                    feedbackChannelRequest, ChannelDTO.class, HttpStatus.CREATED);
+        }
+        catch (Exception e) {
+            fail("Failed to create feedback channel", e);
+        }
+
+        assertThat(response).isNotNull();
+        assertThat(response.getName()).isEqualTo("feedback-channel");
+        assertThat(response.getDescription()).isEqualTo("Discussion channel for feedback");
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void markAllChannelsAsRead() throws Exception {
+        // ensure there exist atleast two channel with unread messages in the course
+        ChannelDTO newChannel1 = createChannel(true, "channel1");
+        ChannelDTO newChannel2 = createChannel(true, "channel2");
+        List<Channel> channels = channelRepository.findChannelsByCourseId(exampleCourseId);
+        channels.forEach(channel -> {
+            addUsersToConversation(channel.getId(), "instructor1");
+            conversationParticipantRepository.findConversationParticipantsByConversationId(channel.getId()).forEach(conversationParticipant -> {
+                conversationParticipant.setUnreadMessagesCount(1L);
+                conversationParticipantRepository.save(conversationParticipant);
+            });
+        });
+
+        User requestingUser = userTestRepository.getUser();
+        request.put("/api/courses/" + exampleCourseId + "/channels/mark-as-read", null, HttpStatus.OK);
+        List<Channel> updatedChannels = channelRepository.findChannelsByCourseId(exampleCourseId);
+        updatedChannels.forEach(channel -> {
+            Optional<ConversationParticipant> conversationParticipant = conversationParticipantRepository.findConversationParticipantByConversationIdAndUserId(channel.getId(),
+                    requestingUser.getId());
+            assertThat(conversationParticipant.get().getUnreadMessagesCount()).isEqualTo(0L);
+        });
+
     }
 
     private void testArchivalChangeWorks(ChannelDTO channel, boolean isPublicChannel, boolean shouldArchive) throws Exception {

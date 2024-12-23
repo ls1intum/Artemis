@@ -15,6 +15,7 @@ import {
     faMessage,
     faPaperclip,
     faProjectDiagram,
+    faQuestion,
 } from '@fortawesome/free-solid-svg-icons';
 import { IconProp } from '@fortawesome/fontawesome-svg-core';
 import { EnlargeSlideImageComponent } from 'app/shared/metis/posting-content/enlarge-slide-image/enlarge-slide-image.component';
@@ -43,6 +44,7 @@ export class PostingContentPartComponent implements OnChanges, OnInit {
     protected readonly faBan = faBan;
     protected readonly faAt = faAt;
     protected readonly faHashtag = faHashtag;
+    protected readonly faQuestion = faQuestion;
 
     protected readonly ReferenceType = ReferenceType;
     processedContentBeforeReference: string;
@@ -80,15 +82,21 @@ export class PostingContentPartComponent implements OnChanges, OnInit {
     processContent() {
         if (this.postingContentPart.contentBeforeReference) {
             this.processedContentBeforeReference = this.escapeNumberedList(this.postingContentPart.contentBeforeReference);
+            this.processedContentBeforeReference = this.escapeUnorderedList(this.processedContentBeforeReference);
         }
 
         if (this.postingContentPart.contentAfterReference) {
             this.processedContentAfterReference = this.escapeNumberedList(this.postingContentPart.contentAfterReference);
+            this.processedContentAfterReference = this.escapeUnorderedList(this.processedContentAfterReference);
         }
     }
 
     escapeNumberedList(content: string): string {
-        return content.replace(/^(\s*\d+)\. /gm, '$1\\. ');
+        return content.replace(/^(\s*\d+)\. /gm, '$1\\.  ');
+    }
+
+    escapeUnorderedList(content: string): string {
+        return content.replace(/^(- )/gm, '\\$1');
     }
 
     /**
@@ -125,6 +133,8 @@ export class PostingContentPartComponent implements OnChanges, OnInit {
                 return faFileUpload;
             case ReferenceType.SLIDE:
                 return faFile;
+            case ReferenceType.FAQ:
+                return faQuestion;
             default:
                 return faPaperclip;
         }

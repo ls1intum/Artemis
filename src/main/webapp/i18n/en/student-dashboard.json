@@ -67,6 +67,10 @@
                 "notFound": "No conversation found",
                 "favoriteChannels": "Favorites",
                 "hiddenChannels": "Hidden",
+                "savedPosts": "Saved Messages",
+                "progress": "In Progress",
+                "completed": "Completed",
+                "archived": "Archived",
                 "channels": "Channels",
                 "generalChannels": "General",
                 "exerciseChannels": "Exercises",
@@ -78,7 +82,8 @@
                 "createDirectChat": "Create direct chat",
                 "groupChats": "Group Chats",
                 "directMessages": "Direct Messages",
-                "filterConversationPlaceholder": "Filter conversations"
+                "filterConversationPlaceholder": "Filter conversations",
+                "setChannelAsRead": "Mark all channels as read"
             },
             "menu": {
                 "exercises": "Exercises",

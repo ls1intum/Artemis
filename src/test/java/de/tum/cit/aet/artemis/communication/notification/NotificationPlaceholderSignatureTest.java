@@ -30,12 +30,12 @@ class NotificationPlaceholderSignatureTest extends AbstractSpringIntegrationInde
      * 2. The database becomes inconsistent. The placeholders are stored as JSON in the database.
      * You must now do the following:
      * 1. Check if you really need to change these placeholders. If not, revert your changes.
-     * 2. Write a database migration for the old placeholder JSON strings, such that they match your new signature.
-     * 3. Increment the {{@link Constants#PUSH_NOTIFICATION_VERSION}}. This ensures that old versions of the native apps discard your new
+     * 2a. In case of breaking changes, increment the {{@link Constants#PUSH_NOTIFICATION_VERSION}}. This ensures that old versions of the native apps discard your new
      * notifications.
-     * 4. Update both the Android and iOS app. Only merge this server PR after they have been updated and released to the stores. Otherwise, notifications no longer work for
+     * 2b. In case of non-breaking changes, increment the {{@link Constants#PUSH_NOTIFICATION_MINOR_VERSION}} for better traceability
+     * 3. Update both the Android and iOS app. Only merge this server PR after they have been updated and released to the stores. Otherwise, notifications no longer work for
      * end users.
-     * 5. Execute the Gradle task generatePlaceholderRevisionSignatures to make this test pass again.
+     * 4. Execute the Gradle task generatePlaceholderRevisionSignatures to make this test pass again.
      */
     @Test
     void testSignatureHasNotChanged() throws URISyntaxException, IOException {

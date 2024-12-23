@@ -9,6 +9,10 @@ import { LocalStorageService } from 'ngx-webstorage';
 import '@angular/localize/init';
 import { FeedbackFilterModalComponent } from 'app/exercises/programming/manage/grading/feedback-analysis/Modal/feedback-filter-modal.component';
 import { AffectedStudentsModalComponent } from 'app/exercises/programming/manage/grading/feedback-analysis/Modal/feedback-affected-students-modal.component';
+import { FeedbackDetailChannelModalComponent } from 'app/exercises/programming/manage/grading/feedback-analysis/Modal/feedback-detail-channel-modal.component';
+import { Subject } from 'rxjs';
+import { ChannelDTO } from 'app/entities/metis/conversation/channel.model';
+import { AlertService } from 'app/core/util/alert.service';
 
 describe('FeedbackAnalysisComponent', () => {
     let fixture: ComponentFixture<FeedbackAnalysisComponent>;
@@ -16,11 +20,15 @@ describe('FeedbackAnalysisComponent', () => {
     let feedbackAnalysisService: FeedbackAnalysisService;
     let searchSpy: jest.SpyInstance;
     let localStorageService: LocalStorageService;
+    let modalService: NgbModal;
+    let alertService: AlertService;
+    let modalSpy: jest.SpyInstance;
+    let createChannelSpy: jest.SpyInstance;
 
     const feedbackMock: FeedbackDetail[] = [
         {
-            concatenatedFeedbackIds: [1, 2],
-            detailText: 'Test feedback 1 detail',
+            feedbackIds: [1],
+            detailTexts: ['Test feedback 1 detail'],
             testCaseName: 'test1',
             count: 10,
             relativeCount: 50,
@@ -28,8 +36,8 @@ describe('FeedbackAnalysisComponent', () => {
             errorCategory: 'Student Error',
         },
         {
-            concatenatedFeedbackIds: [3, 4],
-            detailText: 'Test feedback 2 detail',
+            feedbackIds: [2],
+            detailTexts: ['Test feedback 2 detail'],
             testCaseName: 'test2',
             count: 5,
             relativeCount: 25,
@@ -44,6 +52,7 @@ describe('FeedbackAnalysisComponent', () => {
         taskNames: ['task1', 'task2'],
         testCaseNames: ['test1', 'test2'],
         errorCategories: ['Student Error', 'AST Error', 'Ares Error'],
+        highestOccurrenceOfGroupedFeedback: 0,
     };
 
     beforeEach(async () => {
@@ -63,11 +72,26 @@ describe('FeedbackAnalysisComponent', () => {
         component = fixture.componentInstance;
         feedbackAnalysisService = fixture.debugElement.injector.get(FeedbackAnalysisService);
         localStorageService = fixture.debugElement.injector.get(LocalStorageService);
+        modalService = fixture.debugElement.injector.get(NgbModal);
+        alertService = fixture.debugElement.injector.get(AlertService);
 
         jest.spyOn(localStorageService, 'retrieve').mockReturnValue([]);
         searchSpy = jest.spyOn(feedbackAnalysisService, 'search').mockResolvedValue(feedbackResponseMock);
+        const mockFormSubmitted = new Subject<{ channelDto: ChannelDTO; navigate: boolean }>();
+        modalSpy = jest.spyOn(TestBed.inject(NgbModal), 'open').mockReturnValue({
+            componentInstance: {
+                formSubmitted: mockFormSubmitted,
+                affectedStudentsCount: null,
+                feedbackDetail: null,
+            },
+            result: Promise.resolve(),
+        } as any);
 
-        // Initial input setup
+        createChannelSpy = jest.spyOn(feedbackAnalysisService, 'createChannel').mockResolvedValue({ id: 123 } as ChannelDTO);
+
+        jest.spyOn(fixture.debugElement.injector.get(AlertService), 'success');
+        jest.spyOn(fixture.debugElement.injector.get(AlertService), 'error');
+
         fixture.componentRef.setInput('exerciseId', 1);
         fixture.componentRef.setInput('exerciseTitle', 'Sample Exercise Title');
 
@@ -252,6 +276,58 @@ describe('FeedbackAnalysisComponent', () => {
 
             expect(modalSpy).toHaveBeenCalledWith(AffectedStudentsModalComponent, { centered: true, size: 'lg' });
             expect(modalSpy).toHaveBeenCalledOnce();
+        });
+    });
+
+    it('should open the feedback detail channel modal', async () => {
+        const formSubmitted = new Subject<{ channelDto: ChannelDTO; navigate: boolean }>();
+        const modalRef = {
+            result: Promise.resolve('mocked result'),
+            componentInstance: {
+                formSubmitted,
+                affectedStudentsCount: null,
+                feedbackDetail: null,
+            },
+        } as any;
+        jest.spyOn(modalService, 'open').mockReturnValue(modalRef);
+        await component.openFeedbackDetailChannelModal(feedbackMock[0]);
+        expect(modalService.open).toHaveBeenCalledWith(FeedbackDetailChannelModalComponent, { centered: true, size: 'lg' });
+    });
+
+    it('should handle errors during channel creation gracefully', async () => {
+        const formSubmitted = new Subject<{ channelDto: ChannelDTO; navigate: boolean }>();
+        const modalRef = {
+            result: Promise.resolve('mocked result'),
+            componentInstance: {
+                formSubmitted,
+                affectedStudentsCount: null,
+                feedbackDetail: null,
+            },
+        } as any;
+        jest.spyOn(modalService, 'open').mockReturnValue(modalRef);
+        createChannelSpy.mockRejectedValue(new Error('Error creating channel'));
+        await component.openFeedbackDetailChannelModal(feedbackMock[0]);
+        formSubmitted.next({ channelDto: { name: 'Test Channel' } as ChannelDTO, navigate: true });
+        expect(alertService.error).toHaveBeenCalledOnce();
+    });
+
+    it('should not proceed if modal is already open', async () => {
+        component['isFeedbackDetailChannelModalOpen'] = true;
+        const feedbackDetail = feedbackMock[0];
+        await component.openFeedbackDetailChannelModal(feedbackDetail);
+        expect(component['isFeedbackDetailChannelModalOpen']).toBeTrue();
+        expect(modalSpy).not.toHaveBeenCalled();
+    });
+
+    describe('toggleGroupFeedback', () => {
+        it('should toggle groupFeedback and call loadData', () => {
+            const loadDataSpy = jest.spyOn(component, 'loadData' as any);
+            const initialGroupFeedback = component.groupFeedback();
+
+            component.toggleGroupFeedback();
+
+            expect(component.groupFeedback()).toBe(!initialGroupFeedback);
+            expect(loadDataSpy).toHaveBeenCalledOnce();
         });
     });
 });

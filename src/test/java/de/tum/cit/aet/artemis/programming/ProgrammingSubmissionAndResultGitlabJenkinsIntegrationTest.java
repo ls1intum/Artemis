@@ -46,7 +46,7 @@ class ProgrammingSubmissionAndResultGitlabJenkinsIntegrationTest extends Abstrac
 
     @BeforeEach
     void setUp() {
-        jenkinsRequestMockProvider.enableMockingOfRequests(jenkinsServer);
+        jenkinsRequestMockProvider.enableMockingOfRequests(jenkinsServer, jenkinsJobPermissionsService);
         gitlabRequestMockProvider.enableMockingOfRequests();
 
         userUtilService.addUsers(TEST_PREFIX, 3, 2, 0, 2);

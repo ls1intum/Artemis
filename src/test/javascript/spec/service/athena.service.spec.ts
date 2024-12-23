@@ -64,6 +64,7 @@ describe('AthenaService', () => {
     });
 
     const elementID = 'd3184916-e518-45ac-87ca-259ad61e2562';
+    const elementType = 'BPMNTask';
 
     const model = {
         version: '3.0.0',
@@ -80,7 +81,7 @@ describe('AthenaService', () => {
             [elementID]: {
                 id: elementID,
                 name: 'Task',
-                type: 'BPMNTask',
+                type: elementType,
                 owner: null,
                 bounds: {
                     x: 290,
@@ -132,8 +133,8 @@ describe('AthenaService', () => {
             new ProgrammingFeedbackSuggestion(0, 2, 2, 'Test Programming', 'Test Programming Description', -1.0, 4321, 'src/Test.java', 4, undefined),
         ];
         const modelingFeedbackSuggestions: ModelingFeedbackSuggestion[] = [
-            new ModelingFeedbackSuggestion(0, 2, 2, 'Test Modeling 1', 'Test Modeling Description 1', 0.0, 4321, [elementID]),
-            new ModelingFeedbackSuggestion(0, 2, 2, 'Test Modeling 2', 'Test Modeling Description 2', 1.0, 4321, []),
+            new ModelingFeedbackSuggestion(0, 2, 2, 'Test Modeling 1', 'Test Modeling Description 1', 0.0, 4321, `${elementType}:${elementID}`),
+            new ModelingFeedbackSuggestion(0, 2, 2, 'Test Modeling 2', 'Test Modeling Description 2', 1.0, 4321, undefined),
         ];
         let textResponse: TextBlockRef[] | null = null;
         let programmingResponse: Feedback[] | null = null;
@@ -184,7 +185,7 @@ describe('AthenaService', () => {
         expect(modelingResponse![0].type).toEqual(FeedbackType.AUTOMATIC);
         expect(modelingResponse![0].text).toBe('Test Modeling Description 1');
         expect(modelingResponse![0].credits).toBe(0.0);
-        expect(modelingResponse![0].reference).toBe(`BPMNTask:${elementID}`);
+        expect(modelingResponse![0].reference).toBe(`${elementType}:${elementID}`);
 
         // Unreferenced feedback
         expect(modelingResponse![1].type).toEqual(FeedbackType.MANUAL_UNREFERENCED);

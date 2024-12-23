@@ -67,6 +67,8 @@ import { QuizExerciseOverviewPage } from './pageobjects/exercises/quiz/QuizExerc
 import { QuizExerciseParticipationPage } from './pageobjects/exercises/quiz/QuizExerciseParticipationPage';
 import { ModalDialogBox } from './pageobjects/exam/ModalDialogBox';
 import { ExamParticipationActions } from './pageobjects/exam/ExamParticipationActions';
+import { AccountManagementAPIRequests } from './requests/AccountManagementAPIRequests';
+import { EditExamPage } from './pageobjects/exam/EditExamPage';
 
 /*
  * Define custom types for fixtures
@@ -96,6 +98,7 @@ export type ArtemisPageObjects = {
     courseCommunication: CourseCommunicationPage;
     lectureManagement: LectureManagementPage;
     lectureCreation: LectureCreationPage;
+    editExam: EditExamPage;
     examCreation: ExamCreationPage;
     examDetails: ExamDetailsPage;
     examExerciseGroupCreation: ExamExerciseGroupCreationPage;
@@ -141,6 +144,7 @@ export type ArtemisPageObjects = {
 };
 
 export type ArtemisRequests = {
+    accountManagementAPIRequests: AccountManagementAPIRequests;
     courseManagementAPIRequests: CourseManagementAPIRequests;
     userManagementAPIRequests: UserManagementAPIRequests;
     exerciseAPIRequests: ExerciseAPIRequests;
@@ -218,6 +222,9 @@ export const test = base.extend<ArtemisPageObjects & ArtemisCommands & ArtemisRe
     },
     lectureCreation: async ({ page }, use) => {
         await use(new LectureCreationPage(page));
+    },
+    editExam: async ({ page }, use) => {
+        await use(new EditExamPage(page));
     },
     examCreation: async ({ page }, use) => {
         await use(new ExamCreationPage(page));
@@ -360,6 +367,9 @@ export const test = base.extend<ArtemisPageObjects & ArtemisCommands & ArtemisRe
     },
     exerciseTeams: async ({ page }, use) => {
         await use(new ExerciseTeamsPage(page));
+    },
+    accountManagementAPIRequests: async ({ page }, use) => {
+        await use(new AccountManagementAPIRequests(page));
     },
     courseManagementAPIRequests: async ({ page }, use) => {
         await use(new CourseManagementAPIRequests(page));

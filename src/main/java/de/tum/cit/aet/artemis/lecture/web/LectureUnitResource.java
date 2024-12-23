@@ -4,6 +4,7 @@ import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
 import java.util.Comparator;
 import java.util.List;
+import java.util.Optional;
 
 import jakarta.validation.Valid;
 
@@ -11,6 +12,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Profile;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -22,7 +24,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
-import de.tum.cit.aet.artemis.atlas.service.competency.CompetencyProgressService;
+import de.tum.cit.aet.artemis.atlas.api.CompetencyProgressApi;
 import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
@@ -63,16 +65,16 @@ public class LectureUnitResource {
 
     private final LectureUnitService lectureUnitService;
 
-    private final CompetencyProgressService competencyProgressService;
+    private final CompetencyProgressApi competencyProgressApi;
 
     public LectureUnitResource(AuthorizationCheckService authorizationCheckService, UserRepository userRepository, LectureRepository lectureRepository,
-            LectureUnitRepository lectureUnitRepository, LectureUnitService lectureUnitService, CompetencyProgressService competencyProgressService, UserService userService) {
+            LectureUnitRepository lectureUnitRepository, LectureUnitService lectureUnitService, CompetencyProgressApi competencyProgressApi, UserService userService) {
         this.authorizationCheckService = authorizationCheckService;
         this.userRepository = userRepository;
         this.lectureUnitRepository = lectureUnitRepository;
         this.lectureRepository = lectureRepository;
         this.lectureUnitService = lectureUnitService;
-        this.competencyProgressService = competencyProgressService;
+        this.competencyProgressApi = competencyProgressApi;
     }
 
     /**
@@ -142,7 +144,7 @@ public class LectureUnitResource {
         authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.STUDENT, lectureUnit.getLecture().getCourse(), user);
 
         lectureUnitService.setLectureUnitCompletion(lectureUnit, user, completed);
-        competencyProgressService.updateProgressByLearningObjectForParticipantAsync(lectureUnit, user);
+        competencyProgressApi.updateProgressByLearningObjectForParticipantAsync(lectureUnit, user);
 
         return ResponseEntity.ok().build();
     }
@@ -156,7 +158,7 @@ public class LectureUnitResource {
      */
     @DeleteMapping("lectures/{lectureId}/lecture-units/{lectureUnitId}")
     @EnforceAtLeastInstructor
-    public ResponseEntity<Void> deleteLectureUnit(@PathVariable Long lectureUnitId, @PathVariable Long lectureId) {
+    public ResponseEntity<Void> deleteLectureUnit(@PathVariable long lectureUnitId, @PathVariable Long lectureId) {
         log.info("REST request to delete lecture unit: {}", lectureUnitId);
         LectureUnit lectureUnit = lectureUnitRepository.findByIdWithCompetenciesBidirectionalElseThrow(lectureUnitId);
         if (lectureUnit.getLecture() == null || lectureUnit.getLecture().getCourse() == null) {
@@ -200,11 +202,35 @@ public class LectureUnitResource {
      */
     @GetMapping("lecture-units/{lectureUnitId}")
     @EnforceAtLeastStudent
-    public ResponseEntity<LectureUnit> getLectureUnitById(@PathVariable @Valid Long lectureUnitId) {
+    public ResponseEntity<LectureUnit> getLectureUnitById(@PathVariable @Valid long lectureUnitId) {
         log.debug("REST request to get lecture unit with id: {}", lectureUnitId);
         var lectureUnit = lectureUnitRepository.findByIdWithCompletedUsersElseThrow(lectureUnitId);
         authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.STUDENT, lectureUnit.getLecture().getCourse(), null);
         lectureUnit.setCompleted(lectureUnit.isCompletedFor(userRepository.getUser()));
         return ResponseEntity.ok(lectureUnit);
+    }
+
+    /**
+     * This endpoint triggers the ingestion process for a specified lecture unit into Pyris.
+     *
+     * @param lectureId     the ID of the lecture to which the lecture unit belongs
+     * @param lectureUnitId the ID of the lecture unit to be ingested
+     * @return ResponseEntity<Void> with the status of the ingestion operation.
+     *         Returns 200 OK if the ingestion is successfully started.
+     *         Returns 400 BAD_REQUEST if the lecture unit cannot be ingested.
+     *         Returns SERVICE_UNAVAILABLE if the Pyris service is unavailable or
+     *         ingestion fails for another reason.
+     */
+    @PostMapping("lectures/{lectureId}/lecture-units/{lectureUnitId}/ingest")
+    @EnforceAtLeastInstructor
+    public ResponseEntity<Void> ingestLectureUnit(@PathVariable long lectureId, @PathVariable long lectureUnitId) {
+        Lecture lecture = this.lectureRepository.findByIdWithLectureUnitsElseThrow(lectureId);
+        Optional<LectureUnit> lectureUnitOptional = lecture.getLectureUnits().stream().filter(lu -> lu.getId() == lectureUnitId).findFirst();
+        if (lectureUnitOptional.isEmpty()) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).build();
+        }
+        LectureUnit lectureUnit = lectureUnitOptional.get();
+        authorizationCheckService.checkHasAtLeastRoleForLectureElseThrow(Role.INSTRUCTOR, lectureUnit.getLecture(), null);
+        return lectureUnitService.ingestLectureUnitInPyris(lectureUnit);
     }
 }

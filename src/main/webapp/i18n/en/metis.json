@@ -27,6 +27,7 @@
             "createModalTitleAnswer": "Create reply",
             "editPosting": "Edit content",
             "edited": "(edited)",
+            "saveForLater": "Save for later",
             "markAsResolvingAnswerTooltip": "Confirm that this reply resolves the original message",
             "unmarkAsResolvingAnswerTooltip": "Revoke that this reply resolves the original message",
             "resolvingAnswerTooltip": "This reply resolves the original message",
@@ -46,7 +47,8 @@
                 "exercise": "Exercise",
                 "lecture": "Lecture",
                 "channel": "Channel",
-                "user": "User"
+                "user": "User",
+                "faq": "FAQ"
             },
             "channel": {
                 "noChannel": "There is no channel available.",
@@ -94,7 +96,13 @@
                 "allPublicMessages": "All Public Messages",
                 "searchResults": "Search Results for '{{ search }}'",
                 "mobileDisclaimer": "Please select a conversation first.",
-                "mobileDisclaimerCallToAction": "Select conversation"
+                "mobileDisclaimerCallToAction": "Select conversation",
+                "savedPosts": "Saved Messages",
+                "progress": "In Progress",
+                "completed": "Completed",
+                "archived": "Archived",
+                "emptySavedPosts": "There is nothing here yet. Bookmark messages and they will appear here.",
+                "deleteNoticeSavedPosts": "Archived and completed bookmarks will be removed after 100 days."
             },
             "post": {
                 "context": "Context",
@@ -133,7 +141,14 @@
                 "deleteMessage": "Delete message",
                 "replyMessage": "Reply in thread",
                 "deletedContent": "Post is being deleted in {{ progress }} second(s).",
-                "undoDelete": "Undo delete"
+                "undoDelete": "Undo delete",
+                "bookmarkPost": "Save post for later",
+                "removeBookmarkPost": "Remove bookmark",
+                "bookmarkPostProgress": "Save post as in progress",
+                "bookmarkPostArchived": "Archive saved post",
+                "bookmarkPostComplete": "Mark saved post as done",
+                "thread": "Thread",
+                "saved": "Saved for later"
             },
             "answerPost": {
                 "created": "New reply successfully created",

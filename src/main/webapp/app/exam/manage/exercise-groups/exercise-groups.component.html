@@ -242,7 +242,7 @@
                         </thead>
                         <tbody id="exercises">
                             @for (exercise of exerciseGroup.exercises; track exercise) {
-                                <tr>
+                                <tr id="{{ 'exercise-' + exercise.id }}">
                                     <td class="align-middle">
                                         @if (course.isAtLeastEditor) {
                                             <a

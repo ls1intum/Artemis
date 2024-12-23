@@ -13,6 +13,10 @@ export abstract class AbstractExerciseAssessmentPage {
 
     async addNewFeedback(points: number, feedback?: string) {
         await this.page.locator('.add-unreferenced-feedback').click();
+        await this.fillFeedback(points, feedback);
+    }
+
+    async fillFeedback(points: number, feedback?: string) {
         const unreferencedFeedback = this.page.locator('.unreferenced-feedback-detail');
         await unreferencedFeedback.locator('#feedback-points').clear();
         await unreferencedFeedback.locator('#feedback-points').fill(points.toString());
@@ -61,7 +65,11 @@ export abstract class AbstractExerciseAssessmentPage {
                 responsePromise = this.page.waitForResponse(`${BASE_API}/programming-submissions/*/assessment-after-complaint`);
                 break;
             case ExerciseType.TEXT:
-                responsePromise = this.page.waitForResponse(`${BASE_API}/participations/*/submissions/*/text-assessment-after-complaint`);
+                if (accept) {
+                    responsePromise = this.page.waitForResponse(`${BASE_API}/participations/*/submissions/*/text-assessment-after-complaint`);
+                } else {
+                    responsePromise = this.page.waitForResponse(`${BASE_API}/complaints/*/response`);
+                }
                 break;
             case ExerciseType.MODELING:
                 responsePromise = this.page.waitForResponse(`${BASE_API}/complaints/*/response`);
