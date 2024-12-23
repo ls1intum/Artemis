@@ -33,7 +33,7 @@ import { ScrollingModule } from '@angular/cdk/scrolling';
         BrowserModule,
         BrowserAnimationsModule,
         // This enables service worker (PWA)
-        ServiceWorkerModule.register('ngsw-worker.js', { enabled: true }),
+        ServiceWorkerModule.register('sw.js', { enabled: true }),
         ArtemisSharedModule,
         ArtemisCoreModule,
         ArtemisAppRoutingModule,
