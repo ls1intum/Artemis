@@ -36,10 +36,7 @@ export class ProgrammingDiffReportDetailComponent implements OnDestroy {
     protected readonly rightCommitFileContentByPath = signal<Map<string, string> | undefined>(undefined);
     protected readonly container = viewChild.required('container', { read: ViewContainerRef });
 
-    protected readonly lineStat = signal<LineStat>({
-        addedLineCount: 0,
-        removedLineCount: 0,
-    });
+    protected readonly lineStat = signal<LineStat | undefined>(undefined);
 
     constructor() {
         effect(

@@ -57,8 +57,7 @@ import { IrisSubSettingsType } from 'app/entities/iris/settings/iris-sub-setting
 import { Detail } from 'app/detail-overview-list/detail.model';
 import { Competency } from 'app/entities/competency.model';
 import { AeolusService } from 'app/exercises/programming/shared/service/aeolus.service';
-import { catchError, mergeMap, tap } from 'rxjs/operators';
-import { ProgrammingExerciseGitDiffReport } from 'app/entities/hestia/programming-exercise-git-diff-report.model';
+import { mergeMap, tap } from 'rxjs/operators';
 import { BuildLogStatisticsDTO } from 'app/entities/programming/build-log-statistics-dto';
 
 @Component({
@@ -117,9 +116,6 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
     irisChatEnabled = false;
 
     isAdmin = false;
-    addedLineCount: number;
-    removedLineCount: number;
-    isLoadingDiffReport: boolean;
     isBuildPlanEditable = false;
 
     plagiarismCheckSupported = false; // default value
@@ -224,17 +220,6 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
                     tap((submissionPolicy) => {
                         this.programmingExercise.submissionPolicy = submissionPolicy;
                     }),
-                    mergeMap(() => this.programmingExerciseService.getDiffReport(exerciseId)),
-                    catchError(() => {
-                        this.alertService.error('artemisApp.programmingExercise.diffReportError');
-                        return of(undefined);
-                    }),
-                    tap((gitDiffReport) => {
-                        this.processGitDiffReport(gitDiffReport);
-                    }),
-                )
-                // split pipe to keep type checks
-                .pipe(
                     mergeMap(() =>
                         this.programmingExercise.isAtLeastEditor ? this.programmingExerciseService.getBuildLogStatistics(exerciseId!) : of([] as BuildLogStatisticsDTO),
                     ),
@@ -290,7 +275,7 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
             this.getExerciseDetailsLanguageSection(exercise),
             this.getExerciseDetailsProblemSection(exercise),
             this.getExerciseDetailsGradingSection(exercise),
-        ] as DetailOverviewSection[];
+        ];
     }
 
     getExerciseDetailsGeneralSection(exercise: ProgrammingExercise): DetailOverviewSection {
@@ -465,18 +450,12 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
                         type: ProgrammingExerciseParticipationType.SOLUTION,
                     },
                 },
-                this.addedLineCount !== undefined &&
-                    this.removedLineCount !== undefined && {
-                        type: DetailType.ProgrammingDiffReport,
-                        title: 'artemisApp.programmingExercise.diffReport.title',
-                        titleHelpText: 'artemisApp.programmingExercise.diffReport.detailedTooltip',
-                        data: {
-                            addedLineCount: this.addedLineCount,
-                            removedLineCount: this.removedLineCount,
-                            isLoadingDiffReport: this.isLoadingDiffReport,
-                            exerciseId: exercise.id!,
-                        },
-                    },
+                {
+                    type: DetailType.ProgrammingDiffReport,
+                    title: 'artemisApp.programmingExercise.diffReport.title',
+                    titleHelpText: 'artemisApp.programmingExercise.diffReport.detailedTooltip',
+                    data: { exerciseId: exercise.id! },
+                },
                 !!exercise.buildConfig?.buildScript &&
                     !!exercise.buildConfig?.windfile?.metadata?.docker?.image && {
                         type: DetailType.Text,
@@ -625,7 +604,7 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
     }
 
     onParticipationChange(): void {
-        this.loadGitDiffReport();
+        this.updateDetailSections(); // if either repo hash changed
         this.setLatestCoveredLineRatio();
     }
 
@@ -794,49 +773,6 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
             link.push('submissions');
         }
         return link;
-    }
-
-    /**
-     * Calculates the added and removed lines of the diff
-     * @param gitDiffReport
-     * @returns whether the report has changed compared to the last run
-     */
-    private processGitDiffReport(gitDiffReport: ProgrammingExerciseGitDiffReport | undefined): boolean {
-        const isGitDiffReportUpdated =
-            gitDiffReport &&
-            (this.programmingExercise.gitDiffReport?.templateRepositoryCommitHash !== gitDiffReport.templateRepositoryCommitHash ||
-                this.programmingExercise.gitDiffReport?.solutionRepositoryCommitHash !== gitDiffReport.solutionRepositoryCommitHash);
-        if (!isGitDiffReportUpdated) {
-            return false;
-        }
-
-        this.programmingExercise.gitDiffReport = gitDiffReport;
-        gitDiffReport.programmingExercise = this.programmingExercise;
-        const calculateLineCount = (
-            entries: {
-                lineCount?: number;
-                previousLineCount?: number;
-            }[] = [],
-            key: 'lineCount' | 'previousLineCount',
-        ) => entries.map((entry) => entry[key] ?? 0).reduce((sum, count) => sum + count, 0);
-        this.addedLineCount = calculateLineCount(gitDiffReport.entries, 'lineCount');
-        this.removedLineCount = calculateLineCount(gitDiffReport.entries, 'previousLineCount');
-
-        return true;
-    }
-
-    loadGitDiffReport() {
-        this.programmingExerciseService.getDiffReport(this.programmingExercise.id!).subscribe({
-            next: (gitDiffReport) => {
-                const diffReportChanged = this.processGitDiffReport(gitDiffReport);
-                if (diffReportChanged) {
-                    this.updateDetailSections();
-                }
-            },
-            error: () => {
-                this.alertService.error('artemisApp.programmingExercise.diffReportError');
-            },
-        });
     }
 
     /**
