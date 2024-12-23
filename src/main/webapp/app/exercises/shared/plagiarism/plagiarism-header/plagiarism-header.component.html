@@ -7,13 +7,11 @@
     </div>
 
     <div class="plagiarism-header-right">
-        <button
-            [disabled]="comparison.status === plagiarismStatus.CONFIRMED || isLoading || exercise.teamMode"
-            class="btn btn-success btn-sm"
-            (click)="confirmPlagiarism()"
-            data-qa="confirm-plagiarism-button"
-            jhiTranslate="artemisApp.plagiarism.confirm"
-        ></button>
+        @if (comparison.status !== plagiarismStatus.CONFIRMED && !isLoading && !exercise.teamMode) {
+            <button class="btn btn-success btn-sm" (click)="confirmPlagiarism()" data-qa="confirm-plagiarism-button" jhiTranslate="artemisApp.plagiarism.confirm"></button>
+        } @else {
+            <button class="btn btn-primary btn-sm" data-qa="view-plagiarism-cases-button" jhiTranslate="artemisApp.plagiarism.viewCases">View Case(s)</button>
+        }
 
         <button
             [disabled]="comparison.status === plagiarismStatus.DENIED || isLoading || exercise.teamMode"
