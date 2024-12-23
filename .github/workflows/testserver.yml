@@ -138,12 +138,13 @@ jobs:
             folder: /opt/artemis
             host_keys: |
 
-          #- environment: artemis-test7.artemis.cit.tum.de
-          #  label-identifier: artemis-test7
-          #  url: https://artemis-test7.artemis.cit.tum.de
-          #  user: deployment
-          #  hosts: artemis-test7.artemis.cit.tum.de
-          #  folder: /opt/artemis
+          - environment: artemis-test7.artemis.cit.tum.de
+            label-identifier: artemis-test7
+            url: https://artemis-test7.artemis.cit.tum.de
+            user: deployment
+            hosts: artemis-test7.artemis.cit.tum.de
+            folder: /opt/artemis
+            host_keys: |
 
           #- environment: artemis-test8.artemis.cit.tum.de
           #  label-identifier: artemis-test8

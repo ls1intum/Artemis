@@ -50,3 +50,7 @@
         overflow: scroll;
     }
 }
+
+.dropdown-item.hover {
+    background-color: var(--data-table-dropdown-item-selected-background-color);
+}

@@ -21,10 +21,8 @@ describe('FeedbackDetailChannelModalComponent', () => {
         activeModal = TestBed.inject(NgbActiveModal);
         modalService = TestBed.inject(NgbModal);
 
-        fixture.componentRef.setInput('affectedStudentsCount', 42);
         fixture.componentRef.setInput('feedbackDetail', {
-            detailText: 'Sample feedback',
-            concatenatedFeedbackIds: [1],
+            detailTexts: ['Sample feedback'],
             count: 10,
             relativeCount: 50,
             testCaseName: 'testCase1',
@@ -32,12 +30,12 @@ describe('FeedbackDetailChannelModalComponent', () => {
             errorCategory: 'StudentError',
         } as any);
         fixture.componentInstance.isConfirmModalOpen.set(false);
+        fixture.componentRef.setInput('groupFeedback', false);
         fixture.detectChanges();
     });
 
     it('should initialize form and inputs', () => {
-        expect(component.affectedStudentsCount()).toBe(42);
-        expect(component.feedbackDetail().detailText).toBe('Sample feedback');
+        expect(component.feedbackDetail().detailTexts).toStrictEqual(['Sample feedback']);
         expect(component.form).toBeDefined();
         expect(component.form.valid).toBeFalse();
     });

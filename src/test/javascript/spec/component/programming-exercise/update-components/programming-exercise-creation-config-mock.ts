@@ -6,7 +6,6 @@ import { AuxiliaryRepository } from 'app/entities/programming/programming-exerci
 
 /* eslint-disable @typescript-eslint/no-unused-vars */
 export const programmingExerciseCreationConfigMock: ProgrammingExerciseCreationConfig = {
-    appNamePatternForSwift: '',
     auxiliaryRepositoriesSupported: false,
     auxiliaryRepositoryDuplicateDirectories: false,
     auxiliaryRepositoryDuplicateNames: false,

@@ -9,5 +9,5 @@ import de.tum.cit.aet.artemis.core.dto.SearchResultPageDTO;
 
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public record FeedbackAnalysisResponseDTO(SearchResultPageDTO<FeedbackDetailDTO> feedbackDetails, long totalItems, Set<String> taskNames, List<String> testCaseNames,
-        List<String> errorCategories) {
+        List<String> errorCategories, long highestOccurrenceOfGroupedFeedback) {
 }

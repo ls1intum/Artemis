@@ -304,7 +304,7 @@
                     "paragraph1": "Course competencies can build upon or depend on one another, which is why you can establish different types of relationships between them. Competencies can either MATCH, EXTEND, or ASSUME each other. Detailed descriptions of these relationships are provided below.",
                     "paragraph2": "In summary:",
                     "paragraph3": "MATCH is about equivalency between two skills.<br />EXTEND is about building on an existing skill.<br />ASSUME means one skill is a prerequisite for another.",
-                    "paragraph4": "To create these relationships, open the 'Edit Relations' modal. In this modal, you can either select the related competencies or click on each one consecutively. After that, choose the desired relation type and create the relationship. To update or delete a relation, simply click on the specific relation and either update the relation type in the form or delete it.",
+                    "paragraph4": "To create these relationships, open the 'Edit Relations' window. In this window, you can either select the related competencies or click on each one consecutively. After that, choose the desired relation type and create the relationship. To update or delete a relation, simply click on the specific relation and either update the relation type in the form or delete it.",
                     "relationTitle1": "1. MATCH",
                     "relationParagraph1": "This relationship implies that two competencies are at the same level, covering the same skills and requirements. If you have one, you already have the other, and they can be considered interchangeable.",
                     "exampleLabel": "Example:",

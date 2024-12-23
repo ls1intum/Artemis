@@ -445,6 +445,30 @@ public class ConversationService {
     }
 
     /**
+     * Mark all conversation of a user as read
+     *
+     * @param courseId       the id of the course
+     * @param requestingUser the user that wants to mark the conversation as read
+     */
+    public void markAllConversationOfAUserAsRead(Long courseId, User requestingUser) {
+        List<Conversation> conversations = conversationRepository.findAllByCourseId(courseId);
+        ZonedDateTime now = ZonedDateTime.now();
+        List<ConversationParticipant> participants = new ArrayList<>();
+        for (Conversation conversation : conversations) {
+            boolean userCanBePartOfConversation = conversationParticipantRepository
+                    .findConversationParticipantByConversationIdAndUserId(conversation.getId(), requestingUser.getId()).isPresent()
+                    || (conversation instanceof Channel channel && channel.getIsCourseWide());
+            if (userCanBePartOfConversation) {
+                ConversationParticipant conversationParticipant = getOrCreateConversationParticipant(conversation.getId(), requestingUser);
+                conversationParticipant.setLastRead(now);
+                conversationParticipant.setUnreadMessagesCount(0L);
+                participants.add(conversationParticipant);
+            }
+            conversationParticipantRepository.saveAll(participants);
+        }
+    }
+
+    /**
      * The user can select one of these roles to filter the conversation members by role
      */
     public enum ConversationMemberSearchFilters {

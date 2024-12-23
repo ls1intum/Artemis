@@ -17,7 +17,7 @@ Setup with multiple instances
 There are certain scenarios, where a setup with multiple instances of the application server is required.
 This can e.g. be due to special requirements regarding fault tolerance or performance.
 
-Artemis also supports this setup (which is also used at the Chair for Applied Software Engineering at TUM).
+Artemis also supports this setup (which is also used at TUM).
 
 Multiple instances of the application server are used to distribute the load:
 

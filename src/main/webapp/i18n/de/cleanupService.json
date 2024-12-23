@@ -15,13 +15,50 @@
             "deleteOldSubmissionVersions": "Alte Teilnahmeversionen löschen",
             "deleteOldFeedback": "Altes Feedback löschen"
         },
+        "tooltip": {
+            "deleteOrphans": "Löscht verwaiste Entitäten, die nicht mehr mit gültigen Ergebnissen oder Teilnahmen verbunden sind. Dazu gehören Feedback, Textblöcke und Bewertungen, die sich auf ungültige Ergebnisse, Teilnahmen oder Einreichungen beziehen.",
+            "deletePlagiarismComparisons": "Löscht Plagiatsvergleiche mit dem Status \"None\", die zu Kursen innerhalb des angegebenen Datumsbereichs gehören. Ein Status von \"None\" bedeutet, dass der Plagiatsfall noch nicht überprüft wurde.",
+            "deleteNonRatedResults": "Löscht nicht bewertete Ergebnisse, mit Ausnahme des neuesten nicht bewerteten Ergebnisses für jede Teilnahme (um Kompetenzergebnisse berechnen zu können), innerhalb des angegebenen Datumsbereichs, zusammen mit zugehörigen langen Feedback-Texten, Textblöcken, Feedback-Elementen und Teilnehmerbewertungen.",
+            "deleteOldRatedResults": "Löscht bewertete Ergebnisse, mit Ausnahme des neuesten bewerteten Ergebnisses für jede Teilnahme, für Kurse, die innerhalb des angegebenen Datumsbereichs durchgeführt wurden. Löscht auch zugehörige lange Feedback-Texte, Textblöcke, Feedback-Elemente und Teilnehmerbewertungen.",
+            "deleteOldSubmissionVersions": "Löscht alte Teilnahmeversionen. Die letzte Teilnahmeversion wird nicht gelöscht, da sie immer in der entsprechenden Unterklasse von Submission gespeichert wird",
+            "deleteOldFeedback": "Löscht alte Feedback-Versionen."
+        },
         "execute": {
-            "question": "Bist du sicher, dass du die Operation <strong>{{ title }}</strong> ausführen möchtest? Diese Aktion kann NICHT rückgängig gemacht werden!",
+            "question": "Bist du sicher, dass du die Operation <strong>{{ operationName }}</strong> für den Zeitraum von {{deleteFrom}} bis {{deleteTo}} ausführen möchtest? Diese Aktion kann NICHT rückgängig gemacht werden!",
+            "questionWithoutDates": "Bist du sicher, dass du die Operation <strong>{{ operationName }}</strong> ausführen möchtest? Diese Aktion kann NICHT rückgängig gemacht werden!",
             "typeOperationNameToConfirm": "Bitte gib den Namen der Operation ein, um zu bestätigen."
+        },
+        "modal": {
+            "affectedEntities": "Diese Operation wird die folgenden Entitäten löschen:",
+            "noEntriesToDelete": "Keine Einträge zum Löschen vorhanden"
         },
         "notRunYet": "Diese Operation wurde noch nicht ausgeführt",
         "error": {
             "datesInvalid": "'Löschen bis' muss nach 'Löschen von' liegen"
+        },
+        "entities": {
+            "orphanFeedback": "Verwaistes Feedback",
+            "orphanLongFeedbackText": "Verwaister langer Feedback-Text",
+            "orphanTextBlock": "Verwaister Textblock",
+            "orphanStudentScore": "Verwaiste Studentenbewertung",
+            "orphanTeamScore": "Verwaiste Teambewertung",
+            "orphanFeedbackForOrphanResults": "Verwaistes Feedback für verwaiste Ergebnisse",
+            "orphanLongFeedbackTextForOrphanResults": "Verwaister langer Feedback-Text für verwaiste Ergebnisse",
+            "orphanTextBlockForOrphanResults": "Verwaister Textblock für verwaiste Ergebnisse",
+            "orphanRating": "Verwaiste Bewertung",
+            "orphanResultsWithoutParticipation": "Verwaiste Ergebnisse ohne Teilnahme",
+            "plagiarismComparison": "Plagiatsvergleiche",
+            "plagiarismElements": "Plagiatselemente",
+            "plagiarismSubmissions": "Plagiatseingaben",
+            "plagiarismMatches": "Plagiatsübereinstimmungen",
+            "longFeedbackText": "Langer Feedback-Text",
+            "textBlock": "Textblock",
+            "feedback": "Feedback",
+            "submissionVersions": "Teilnahmeversionen"
+        },
+        "button": {
+            "execute": "Ausführen",
+            "close": "Schließen"
         }
     }
 }

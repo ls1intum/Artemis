@@ -57,17 +57,6 @@ public abstract class PushNotificationService implements InstantNotificationServ
 
     protected final ObjectMapper mapper = new ObjectMapper();
 
-    private static final Cipher cipher;
-
-    static {
-        try {
-            cipher = Cipher.getInstance(Constants.PUSH_NOTIFICATION_ENCRYPTION_ALGORITHM);
-        }
-        catch (NoSuchAlgorithmException | NoSuchPaddingException e) {
-            throw new RuntimeException(e);
-        }
-    }
-
     private static final Logger log = LoggerFactory.getLogger(PushNotificationService.class);
 
     private final RestTemplate restTemplate;
@@ -204,11 +193,14 @@ public abstract class PushNotificationService implements InstantNotificationServ
      */
     private static Optional<String> encrypt(@NotNull String payload, SecretKey key, byte[] initializationVector) {
         try {
+            // We need to get a fresh instance here for every notification to avoid a race condition between tasks
+            var cipher = Cipher.getInstance(Constants.PUSH_NOTIFICATION_ENCRYPTION_ALGORITHM);
+
             cipher.init(Cipher.ENCRYPT_MODE, key, new IvParameterSpec(initializationVector));
 
             return Optional.of(Base64.getEncoder().encodeToString(cipher.doFinal(payload.getBytes(StandardCharsets.UTF_8))));
         }
-        catch (InvalidKeyException | InvalidAlgorithmParameterException | IllegalBlockSizeException | BadPaddingException e) {
+        catch (InvalidKeyException | InvalidAlgorithmParameterException | IllegalBlockSizeException | BadPaddingException | NoSuchPaddingException | NoSuchAlgorithmException e) {
             log.error("Error encrypting push notification payload!", e);
             return Optional.empty();
         }

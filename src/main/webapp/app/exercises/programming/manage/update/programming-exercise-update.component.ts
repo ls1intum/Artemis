@@ -23,6 +23,7 @@ import {
     INVALID_DIRECTORY_NAME_PATTERN,
     INVALID_REPOSITORY_NAME_PATTERN,
     MAX_PENALTY_PATTERN,
+    PACKAGE_NAME_PATTERN_FOR_GO,
     PACKAGE_NAME_PATTERN_FOR_JAVA_BLACKBOX,
     PACKAGE_NAME_PATTERN_FOR_JAVA_KOTLIN,
     PROGRAMMING_EXERCISE_SHORT_NAME_PATTERN,
@@ -58,12 +59,13 @@ export const LOCAL_STORAGE_KEY_IS_SIMPLE_MODE = 'isSimpleMode';
 export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDestroy, OnInit {
     protected readonly documentationType: DocumentationType = 'Programming';
     protected readonly maxPenaltyPattern = MAX_PENALTY_PATTERN;
-    protected readonly packageNamePatternForJavaBlackbox = PACKAGE_NAME_PATTERN_FOR_JAVA_BLACKBOX;
     protected readonly invalidRepositoryNamePattern = INVALID_REPOSITORY_NAME_PATTERN;
     protected readonly invalidDirectoryNamePattern = INVALID_DIRECTORY_NAME_PATTERN;
     protected readonly shortNamePattern = PROGRAMMING_EXERCISE_SHORT_NAME_PATTERN;
-    readonly packageNamePatternForJavaKotlin = PACKAGE_NAME_PATTERN_FOR_JAVA_KOTLIN;
-    readonly appNamePatternForSwift = APP_NAME_PATTERN_FOR_SWIFT;
+    private readonly packageNameRegexForJavaKotlin = RegExp(PACKAGE_NAME_PATTERN_FOR_JAVA_KOTLIN);
+    private readonly packageNameRegexForJavaBlackbox = RegExp(PACKAGE_NAME_PATTERN_FOR_JAVA_BLACKBOX);
+    private readonly appNameRegexForSwift = RegExp(APP_NAME_PATTERN_FOR_SWIFT);
+    private readonly packageNameRegexForGo = RegExp(PACKAGE_NAME_PATTERN_FOR_GO);
 
     @ViewChild(ProgrammingExerciseInformationComponent) exerciseInfoComponent?: ProgrammingExerciseInformationComponent;
     @ViewChild(ProgrammingExerciseModeComponent) exerciseDifficultyComponent?: ProgrammingExerciseModeComponent;
@@ -825,10 +827,17 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
      * @param useBlackboxPattern whether to allow points in the regex
      */
     setPackageNamePattern(language: ProgrammingLanguage, useBlackboxPattern = false) {
-        if (language === ProgrammingLanguage.SWIFT) {
-            this.packageNamePattern = this.appNamePatternForSwift;
-        } else {
-            this.packageNamePattern = useBlackboxPattern ? this.packageNamePatternForJavaBlackbox : this.packageNamePatternForJavaKotlin;
+        switch (language) {
+            case ProgrammingLanguage.SWIFT:
+                this.packageNamePattern = APP_NAME_PATTERN_FOR_SWIFT;
+                break;
+            case ProgrammingLanguage.JAVA:
+            case ProgrammingLanguage.KOTLIN:
+                this.packageNamePattern = useBlackboxPattern ? PACKAGE_NAME_PATTERN_FOR_JAVA_BLACKBOX : PACKAGE_NAME_PATTERN_FOR_JAVA_KOTLIN;
+                break;
+            case ProgrammingLanguage.GO:
+                this.packageNamePattern = PACKAGE_NAME_PATTERN_FOR_GO;
+                break;
         }
     }
 
@@ -1062,13 +1071,26 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
     }
 
     private validateExercisePackageName(validationErrorReasons: ValidationReason[]): void {
-        // validation on package name has only to be performed for Java, Kotlin and Swift
-        if (
-            this.programmingExercise.programmingLanguage !== ProgrammingLanguage.JAVA &&
-            this.programmingExercise.programmingLanguage !== ProgrammingLanguage.KOTLIN &&
-            this.programmingExercise.programmingLanguage !== ProgrammingLanguage.SWIFT
-        ) {
-            return;
+        let regex;
+        switch (this.programmingExercise.programmingLanguage) {
+            case ProgrammingLanguage.JAVA:
+                if (this.programmingExercise.projectType === ProjectType.MAVEN_BLACKBOX) {
+                    regex = this.packageNameRegexForJavaBlackbox;
+                } else {
+                    regex = this.packageNameRegexForJavaKotlin;
+                }
+                break;
+            case ProgrammingLanguage.KOTLIN:
+                regex = this.packageNameRegexForJavaKotlin;
+                break;
+            case ProgrammingLanguage.SWIFT:
+                regex = this.appNameRegexForSwift;
+                break;
+            case ProgrammingLanguage.GO:
+                regex = this.packageNameRegexForGo;
+                break;
+            default:
+                return;
         }
 
         if (this.programmingExercise.packageName === undefined || this.programmingExercise.packageName === '') {
@@ -1076,39 +1098,19 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
                 translateKey: 'artemisApp.exercise.form.packageName.undefined',
                 translateValues: {},
             });
-        } else {
-            const patternMatchJavaKotlin: RegExpMatchArray | null = this.programmingExercise.packageName.match(this.packageNamePatternForJavaKotlin);
-            const patternMatchJavaBlackbox: RegExpMatchArray | null = this.programmingExercise.packageName.match(this.packageNamePatternForJavaBlackbox);
-            const patternMatchSwift: RegExpMatchArray | null = this.programmingExercise.packageName.match(this.appNamePatternForSwift);
-            const projectTypeDependentPatternMatch: RegExpMatchArray | null =
-                this.programmingExercise.projectType === ProjectType.MAVEN_BLACKBOX ? patternMatchJavaBlackbox : patternMatchJavaKotlin;
+            return;
+        }
 
-            if (
-                this.programmingExercise.programmingLanguage === ProgrammingLanguage.JAVA &&
-                (projectTypeDependentPatternMatch === null || projectTypeDependentPatternMatch.length === 0)
-            ) {
-                if (this.programmingExercise.projectType === ProjectType.MAVEN_BLACKBOX) {
-                    validationErrorReasons.push({
-                        translateKey: 'artemisApp.exercise.form.packageName.pattern.JAVA_BLACKBOX',
-                        translateValues: {},
-                    });
-                } else {
-                    validationErrorReasons.push({
-                        translateKey: 'artemisApp.exercise.form.packageName.pattern.JAVA',
-                        translateValues: {},
-                    });
-                }
-            } else if (this.programmingExercise.programmingLanguage === ProgrammingLanguage.KOTLIN && (patternMatchJavaKotlin === null || patternMatchJavaKotlin.length === 0)) {
-                validationErrorReasons.push({
-                    translateKey: 'artemisApp.exercise.form.packageName.pattern.KOTLIN',
-                    translateValues: {},
-                });
-            } else if (this.programmingExercise.programmingLanguage === ProgrammingLanguage.SWIFT && (patternMatchSwift === null || patternMatchSwift.length === 0)) {
-                validationErrorReasons.push({
-                    translateKey: 'artemisApp.exercise.form.packageName.pattern.SWIFT',
-                    translateValues: {},
-                });
-            }
+        const packageNameDoesMatch = regex.test(this.programmingExercise.packageName);
+        if (!packageNameDoesMatch) {
+            const translateKey =
+                this.programmingExercise.projectType === ProjectType.MAVEN_BLACKBOX
+                    ? `artemisApp.exercise.form.packageName.pattern.${this.programmingExercise.programmingLanguage}_BLACKBOX`
+                    : `artemisApp.exercise.form.packageName.pattern.${this.programmingExercise.programmingLanguage}`;
+            validationErrorReasons.push({
+                translateKey,
+                translateValues: {},
+            });
         }
     }
 
@@ -1244,7 +1246,6 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
             exerciseCategories: this.exerciseCategories,
             existingCategories: this.existingCategories,
             updateCategories: this.categoriesChanged,
-            appNamePatternForSwift: this.appNamePatternForSwift,
             modePickerOptions: this.modePickerOptions,
             withDependencies: this.withDependencies,
             onWithDependenciesChanged: this.withDependenciesChanged,

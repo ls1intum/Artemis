@@ -243,7 +243,6 @@ describe('TextExercise Management Update Component', () => {
             route.params = of({ courseId });
             route.url = of([{ path: 'import' } as UrlSegment]);
             route.data = of({ textExercise });
-            route.queryParams = of({ shouldHaveBackButtonToWizard: true });
         });
 
         it('should set isImport and remove all dates', fakeAsync(() => {
