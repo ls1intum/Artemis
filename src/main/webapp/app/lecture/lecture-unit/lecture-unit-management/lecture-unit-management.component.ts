@@ -1,4 +1,4 @@
-import { Component, EventEmitter, Input, OnDestroy, OnInit, Output } from '@angular/core';
+import { Component, EventEmitter, Input, OnDestroy, OnInit, Output, inject } from '@angular/core';
 import { ActivatedRoute, NavigationEnd, Router } from '@angular/router';
 import { Lecture } from 'app/entities/lecture.model';
 import { LectureService } from 'app/lecture/lecture.service';
@@ -24,6 +24,25 @@ import { IrisSettingsService } from 'app/iris/settings/shared/iris-settings.serv
     styleUrls: ['./lecture-unit-management.component.scss'],
 })
 export class LectureUnitManagementComponent implements OnInit, OnDestroy {
+    protected readonly faTrash = faTrash;
+    protected readonly faPencilAlt = faPencilAlt;
+    protected readonly faEye = faEye;
+    protected readonly faFileExport = faFileExport;
+    protected readonly faRepeat = faRepeat;
+    protected readonly faCheckCircle = faCheckCircle;
+    protected readonly faSpinner = faSpinner;
+
+    protected readonly LectureUnitType = LectureUnitType;
+    protected readonly ActionType = ActionType;
+
+    private readonly activatedRoute = inject(ActivatedRoute);
+    private readonly router = inject(Router);
+    private readonly lectureService = inject(LectureService);
+    private readonly alertService = inject(AlertService);
+    private readonly profileService = inject(ProfileService);
+    private readonly irisSettingsService = inject(IrisSettingsService);
+    protected readonly lectureUnitService = inject(LectureUnitService);
+
     @Input() showCreationCard = true;
     @Input() showCompetencies = true;
     @Input() emitEditEvents = false;
@@ -39,14 +58,13 @@ export class LectureUnitManagementComponent implements OnInit, OnDestroy {
     updateOrderSubject: Subject<any>;
     viewButtonAvailable: Record<number, boolean> = {};
 
-    updateOrderSubjectSubscription: Subscription;
-    navigationEndSubscription: Subscription;
+    private updateOrderSubjectSubscription: Subscription;
+    private navigationEndSubscription: Subscription;
+    private activatedRouteSubscription?: Subscription;
+    private profileInfoSubscription: Subscription;
 
-    readonly LectureUnitType = LectureUnitType;
-    readonly ActionType = ActionType;
     private dialogErrorSource = new Subject<string>();
     dialogError$ = this.dialogErrorSource.asObservable();
-    private profileInfoSubscription: Subscription;
     irisEnabled = false;
     lectureIngestionEnabled = false;
     routerEditLinksBase: { [key: string]: string } = {
@@ -56,24 +74,25 @@ export class LectureUnitManagementComponent implements OnInit, OnDestroy {
         [LectureUnitType.ONLINE]: 'online-units',
     };
 
-    // Icons
-    readonly faTrash = faTrash;
-    readonly faPencilAlt = faPencilAlt;
-    readonly faEye = faEye;
-    readonly faFileExport = faFileExport;
-    readonly faRepeat = faRepeat;
-    readonly faCheckCircle = faCheckCircle;
-    readonly faSpinner = faSpinner;
+    ngOnInit(): void {
+        this.navigationEndSubscription = this.router.events.pipe(filter((value) => value instanceof NavigationEnd)).subscribe(() => {
+            this.loadData();
+        });
 
-    constructor(
-        private activatedRoute: ActivatedRoute,
-        private router: Router,
-        private lectureService: LectureService,
-        private alertService: AlertService,
-        public lectureUnitService: LectureUnitService,
-        private profileService: ProfileService,
-        private irisSettingsService: IrisSettingsService,
-    ) {}
+        this.updateOrderSubject = new Subject();
+        this.activatedRouteSubscription = this.activatedRoute?.parent?.params.subscribe((params) => {
+            this.lectureId ??= +params['lectureId'];
+            if (this.lectureId) {
+                // TODO: the lecture (without units) is already available through the lecture.route.ts resolver, it's not really good that we load it twice
+                this.loadData();
+            }
+        });
+
+        // debounceTime limits the amount of put requests sent for updating the lecture unit order
+        this.updateOrderSubjectSubscription = this.updateOrderSubject.pipe(debounceTime(1000)).subscribe(() => {
+            this.updateOrder();
+        });
+    }
 
     ngOnDestroy(): void {
         this.updateOrder();
@@ -81,28 +100,7 @@ export class LectureUnitManagementComponent implements OnInit, OnDestroy {
         this.dialogErrorSource.unsubscribe();
         this.navigationEndSubscription.unsubscribe();
         this.profileInfoSubscription?.unsubscribe();
-    }
-
-    ngOnInit(): void {
-        this.navigationEndSubscription = this.router.events.pipe(filter((value) => value instanceof NavigationEnd)).subscribe(() => {
-            this.loadData();
-        });
-
-        this.updateOrderSubject = new Subject();
-        if (this.activatedRoute?.parent?.params) {
-            this.activatedRoute.parent.params.subscribe((params) => {
-                this.lectureId ??= +params['lectureId'];
-                if (this.lectureId) {
-                    // TODO: the lecture (without units) is already available through the lecture.route.ts resolver, it's not really good that we load it twice
-                    this.loadData();
-                }
-            });
-        }
-
-        // debounceTime limits the amount of put requests sent for updating the lecture unit order
-        this.updateOrderSubjectSubscription = this.updateOrderSubject.pipe(debounceTime(1000)).subscribe(() => {
-            this.updateOrder();
-        });
+        this.activatedRouteSubscription?.unsubscribe();
     }
 
     loadData() {
