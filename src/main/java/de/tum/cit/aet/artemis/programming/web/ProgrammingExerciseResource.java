@@ -14,7 +14,6 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 
-import de.tum.cit.aet.artemis.athena.domain.ModuleType;
 import org.eclipse.jgit.api.errors.GitAPIException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -42,6 +41,7 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import de.tum.cit.aet.artemis.assessment.domain.AssessmentType;
 import de.tum.cit.aet.artemis.assessment.domain.GradingCriterion;
 import de.tum.cit.aet.artemis.assessment.repository.GradingCriterionRepository;
+import de.tum.cit.aet.artemis.athena.domain.ModuleType;
 import de.tum.cit.aet.artemis.athena.service.AthenaModuleService;
 import de.tum.cit.aet.artemis.communication.domain.conversation.Channel;
 import de.tum.cit.aet.artemis.communication.repository.conversation.ChannelRepository;
@@ -250,7 +250,7 @@ public class ProgrammingExerciseResource {
         athenaModuleService.ifPresentOrElse(ams -> ams.checkHasAccessToAthenaModule(programmingExercise, course, ModuleType.FEEDBACK_SUGGESTIONS, ENTITY_NAME),
                 () -> programmingExercise.setFeedbackSuggestionModule(null));
         athenaModuleService.ifPresentOrElse(ams -> ams.checkHasAccessToAthenaModule(programmingExercise, course, ModuleType.PRELIMINARY_FEEDBACK, ENTITY_NAME),
-            () -> programmingExercise.setPreliminaryFeedbackModule(null));
+                () -> programmingExercise.setPreliminaryFeedbackModule(null));
 
         try {
             // Setup all repositories etc
@@ -351,7 +351,7 @@ public class ProgrammingExerciseResource {
         athenaModuleService.ifPresentOrElse(ams -> ams.checkHasAccessToAthenaModule(updatedProgrammingExercise, course, ModuleType.FEEDBACK_SUGGESTIONS, ENTITY_NAME),
                 () -> updatedProgrammingExercise.setFeedbackSuggestionModule(null));
         athenaModuleService.ifPresentOrElse(ams -> ams.checkHasAccessToAthenaModule(updatedProgrammingExercise, course, ModuleType.PRELIMINARY_FEEDBACK, ENTITY_NAME),
-            () -> updatedProgrammingExercise.setPreliminaryFeedbackModule(null));
+                () -> updatedProgrammingExercise.setPreliminaryFeedbackModule(null));
         // Changing Athena module after the due date has passed is not allowed
         athenaModuleService.ifPresent(ams -> ams.checkValidAthenaModuleChange(programmingExerciseBeforeUpdate, updatedProgrammingExercise, ENTITY_NAME));
 

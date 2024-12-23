@@ -261,7 +261,6 @@
             </div>
         }
         @if (!isExamMode) {
-            <jhi-exercise-preliminary-feedback-options [exercise]="modelingExercise" [dueDate]="modelingExercise.dueDate" />
             <jhi-exercise-update-plagiarism [exercise]="modelingExercise" />
         }
         <jhi-presentation-score-checkbox [exercise]="modelingExercise" />
@@ -269,6 +268,10 @@
             <label class="form-control-label" jhiTranslate="artemisApp.exercise.assessmentInstructions" for="gradingInstructions"></label>
             <jhi-grading-instructions-details id="gradingInstructions" [exercise]="modelingExercise" />
         </div>
+        <h3 jhiTranslate="artemisApp.assessment.feedback" id="artemisApp.exercise.sections.feedback"></h3>
+        @if (!isExamMode) {
+            <jhi-exercise-preliminary-feedback-options [exercise]="modelingExercise" [dueDate]="modelingExercise.dueDate" />
+        }
     </div>
     <jhi-form-footer
         [isImport]="isImport"

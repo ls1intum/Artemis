@@ -30,6 +30,7 @@ import { DetailModule } from 'app/detail-overview-list/detail.module';
 import { ArtemisExerciseModule } from 'app/exercises/shared/exercise/exercise.module';
 import { FormsModule } from 'app/forms/forms.module';
 import { ExercisePreliminaryFeedbackOptionsModule } from 'app/exercises/shared/preliminary-feedback/exercise-preliminary-feedback-options.module';
+import { ExerciseFeedbackSuggestionOptionsModule } from 'app/exercises/shared/feedback-suggestion/exercise-feedback-suggestion-options.module';
 
 const ENTITY_STATES = [...textExerciseRoute];
 
@@ -58,6 +59,7 @@ const ENTITY_STATES = [...textExerciseRoute];
         ExerciseUpdateNotificationModule,
         ExerciseUpdatePlagiarismModule,
         ExercisePreliminaryFeedbackOptionsModule,
+        ExerciseFeedbackSuggestionOptionsModule,
         DetailModule,
         FormsModule,
     ],

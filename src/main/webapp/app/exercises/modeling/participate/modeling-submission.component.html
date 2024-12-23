@@ -24,7 +24,9 @@
                             />
                         }
                     } @else {
-                        @if (modelingExercise.preliminaryFeedbackModule && (!this.modelingExercise.dueDate || !hasExerciseDueDatePassed(this.modelingExercise, this.participation))) {
+                        @if (
+                            modelingExercise.preliminaryFeedbackModule && (!this.modelingExercise.dueDate || !hasExerciseDueDatePassed(this.modelingExercise, this.participation))
+                        ) {
                             <jhi-request-feedback-button
                                 [exercise]="modelingExercise"
                                 [pendingChanges]="isChanged"

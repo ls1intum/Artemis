@@ -7,7 +7,6 @@ import java.util.List;
 import java.util.Objects;
 import java.util.stream.Stream;
 
-import de.tum.cit.aet.artemis.athena.domain.ModuleType;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Qualifier;
@@ -23,6 +22,7 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
+import de.tum.cit.aet.artemis.athena.domain.ModuleType;
 import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.core.exception.NetworkingException;
@@ -109,7 +109,7 @@ public class AthenaModuleService {
      * Get the URL for an Athena module, depending on the type of exercise.
      *
      * @param exerciseType The exercise type for which the URL to Athena should be returned
-     * @param  module  The name of the Athena module to be consulted
+     * @param module       The name of the Athena module to be consulted
      * @return The URL prefix to access the Athena module. Example: <a href="http://athena.example.com/modules/text/module_text_cofee"></a>
      */
     public String getAthenaModuleUrl(ExerciseType exerciseType, String module) {
@@ -149,11 +149,9 @@ public class AthenaModuleService {
 
     private static String getModule(Exercise exercise, ModuleType moduleType, String entityName) {
         String module = null;
-        switch(moduleType) {
-            case ModuleType.FEEDBACK_SUGGESTIONS ->
-                module = exercise.getFeedbackSuggestionModule();
-            case ModuleType.PRELIMINARY_FEEDBACK ->
-                module = exercise.getPreliminaryFeedbackModule();
+        switch (moduleType) {
+            case ModuleType.FEEDBACK_SUGGESTIONS -> module = exercise.getFeedbackSuggestionModule();
+            case ModuleType.PRELIMINARY_FEEDBACK -> module = exercise.getPreliminaryFeedbackModule();
         }
         return module;
     }
