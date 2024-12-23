@@ -4,7 +4,7 @@
             <div class="d-flex">
                 <div class="flex-grow-1">
                     <div class="d-flex align-items-center">
-                        <h1 id="jhi-lecture-heading" [jhiTranslate]="isEditMode() ? 'artemisApp.lecture.home.editLabel' : 'artemisApp.lecture.home.createLabel'"></h1>
+                        <h2 id="jhi-lecture-heading" [jhiTranslate]="isEditMode() ? 'artemisApp.lecture.home.editLabel' : 'artemisApp.lecture.home.createLabel'"></h2>
                         <jhi-documentation-button [type]="documentationType" />
                     </div>
                 </div>
@@ -12,7 +12,7 @@
             <jhi-form-status-bar [formStatusSections]="formStatusSections" />
             <div>
                 <div>
-                    <h2 id="artemisApp.lecture.sections.title"><span jhiTranslate="artemisApp.lecture.sections.title"></span></h2>
+                    <h3 id="artemisApp.lecture.sections.title"><span jhiTranslate="artemisApp.lecture.sections.title"></span></h3>
                     <p><span jhiTranslate="artemisApp.lecture.sections.titleDescription"></span></p>
                     @if (lecture().course) {
                         <div class="form-group">
@@ -53,7 +53,7 @@
                 </div>
                 @if (isEditMode()) {
                     <div>
-                        <h2 id="artemisApp.lecture.sections.attachments"><span jhiTranslate="artemisApp.lecture.sections.attachments"></span></h2>
+                        <h3 id="artemisApp.lecture.sections.attachments"><span jhiTranslate="artemisApp.lecture.sections.attachments"></span></h3>
                         <p id="artemisApp.lecture.sections.attachmentsDescription">
                             <span jhiTranslate="artemisApp.lecture.sections.attachmentsDescription"></span>
                         </p>
