@@ -1,12 +1,10 @@
 import { ComponentFixture, TestBed, fakeAsync } from '@angular/core/testing';
-import { NgModel } from '@angular/forms';
 import { By } from '@angular/platform-browser';
 import { Course } from 'app/entities/course.model';
 import { ExerciseGroup } from 'app/entities/exercise-group.model';
 import { TextExercise } from 'app/entities/text/text-exercise.model';
 import { TextSubmission } from 'app/entities/text/text-submission.model';
 import { TextExamSubmissionComponent } from 'app/exam/participate/exercises/text/text-exam-submission.component';
-import { IncludedInScoreBadgeComponent } from 'app/exercises/shared/exercise-headers/included-in-score-badge.component';
 import { TextEditorService } from 'app/exercises/text/participate/text-editor.service';
 import { ArtemisMarkdownService } from 'app/shared/markdown.service';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
@@ -14,7 +12,6 @@ import { HtmlForMarkdownPipe } from 'app/shared/pipes/html-for-markdown.pipe';
 import { MockComponent, MockDirective, MockPipe, MockProvider } from 'ng-mocks';
 import { ExamExerciseUpdateHighlighterComponent } from 'app/exam/participate/exercises/exam-exercise-update-highlighter/exam-exercise-update-highlighter.component';
 import { ArtemisTestModule } from '../../../../test.module';
-import { ResizeableContainerComponent } from 'app/shared/resizeable-container/resizeable-container.component';
 import dayjs from 'dayjs/esm';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { ExerciseSaveButtonComponent } from 'app/exam/participate/exercises/exercise-save-button/exercise-save-button.component';
@@ -36,20 +33,15 @@ describe('TextExamSubmissionComponent', () => {
                 TextExamSubmissionComponent,
                 MockPipe(ArtemisTranslatePipe),
                 MockPipe(HtmlForMarkdownPipe),
-                MockDirective(NgModel),
-                MockComponent(IncludedInScoreBadgeComponent),
                 MockComponent(ExamExerciseUpdateHighlighterComponent),
-                MockComponent(ResizeableContainerComponent),
                 MockComponent(ExerciseSaveButtonComponent),
                 MockDirective(TranslateDirective),
             ],
             providers: [MockProvider(TextEditorService), MockProvider(ArtemisMarkdownService)],
-        })
-            .compileComponents()
-            .then(() => {
-                fixture = TestBed.createComponent(TextExamSubmissionComponent);
-                component = fixture.componentInstance;
-            });
+        }).compileComponents();
+
+        fixture = TestBed.createComponent(TextExamSubmissionComponent);
+        component = fixture.componentInstance;
     });
 
     afterEach(() => {
@@ -57,9 +49,9 @@ describe('TextExamSubmissionComponent', () => {
     });
 
     it('should initialize', () => {
-        component.exercise = exercise;
+        fixture.componentRef.setInput('exercise', exercise);
         textSubmission.text = 'Hello World';
-        component.studentSubmission = textSubmission;
+        fixture.componentRef.setInput('studentSubmission', textSubmission);
 
         component.onActivate();
         fixture.detectChanges();
@@ -73,8 +65,8 @@ describe('TextExamSubmissionComponent', () => {
     });
 
     it('should initialize with empty answer', () => {
-        component.exercise = exercise;
-        component.studentSubmission = textSubmission;
+        fixture.componentRef.setInput('exercise', exercise);
+        fixture.componentRef.setInput('studentSubmission', textSubmission);
 
         fixture.detectChanges();
 
@@ -84,9 +76,9 @@ describe('TextExamSubmissionComponent', () => {
     });
 
     it('should return the negation of student submission isSynced value', () => {
-        component.exercise = exercise;
-        component.studentSubmission = textSubmission;
-        component.studentSubmission.isSynced = false;
+        fixture.componentRef.setInput('exercise', exercise);
+        fixture.componentRef.setInput('studentSubmission', textSubmission);
+        component.studentSubmission().isSynced = false;
 
         fixture.detectChanges();
 
@@ -94,19 +86,20 @@ describe('TextExamSubmissionComponent', () => {
     });
 
     it('should update text of the submission', () => {
-        component.exercise = exercise;
+        fixture.componentRef.setInput('exercise', exercise);
         textSubmission.text = 'Text';
-        component.studentSubmission = textSubmission;
+        fixture.componentRef.setInput('studentSubmission', textSubmission);
 
         fixture.detectChanges();
         component.updateSubmissionFromView();
 
-        expect(component.studentSubmission.text).toBe('Text');
+        expect(component.studentSubmission().text).toBe('Text');
     });
 
     it('should update problem statement of the exercise', () => {
-        component.exercise = exercise;
-        component.exercise.problemStatement = 'old problem statement';
+        fixture.componentRef.setInput('exercise', exercise);
+        fixture.componentRef.setInput('studentSubmission', textSubmission);
+        component.exercise().problemStatement = 'old problem statement';
         const newProblemStatement = 'new problem statement';
 
         component.updateProblemStatement(newProblemStatement);
@@ -115,9 +108,9 @@ describe('TextExamSubmissionComponent', () => {
     });
 
     it('should trigger text editor events', fakeAsync(() => {
-        component.exercise = exercise;
+        fixture.componentRef.setInput('exercise', exercise);
         textSubmission.text = 'Hello World';
-        component.studentSubmission = textSubmission;
+        fixture.componentRef.setInput('studentSubmission', textSubmission);
 
         fixture.detectChanges();
         fixture.whenStable().then(() => {
@@ -132,7 +125,7 @@ describe('TextExamSubmissionComponent', () => {
             textarea.dispatchEvent(new Event('input'));
             fixture.detectChanges();
             expect(textarea.value).toBe('Test\t');
-            expect(component.studentSubmission.isSynced).toBeFalse();
+            expect(component.studentSubmission().isSynced).toBeFalse();
         });
     }));
 
@@ -144,9 +137,9 @@ describe('TextExamSubmissionComponent', () => {
     });
 
     it('should call triggerSave if save exercise button is clicked', () => {
-        component.exercise = exercise;
+        fixture.componentRef.setInput('exercise', exercise);
         textSubmission.text = 'Hello World';
-        component.studentSubmission = textSubmission;
+        fixture.componentRef.setInput('studentSubmission', textSubmission);
         fixture.detectChanges();
         const saveExerciseSpy = jest.spyOn(component, 'notifyTriggerSave');
         const saveButton = fixture.debugElement.query(By.directive(ExerciseSaveButtonComponent));

@@ -1,25 +1,25 @@
-@if (exercise) {
+@if (exercise()) {
     <div class="d-flex justify-content-between align-items-center">
         <h3 class="text-align-left fw-normal mb-0">
             <span>
-                {{ exercise.exerciseGroup?.title }}
+                {{ exercise().exerciseGroup?.title }}
             </span>
             <span
-                [jhiTranslate]="exercise.bonusPoints ? 'artemisApp.examParticipation.bonus' : 'artemisApp.examParticipation.points'"
-                [translateValues]="{ points: exercise.maxPoints, bonusPoints: exercise.bonusPoints }"
+                [jhiTranslate]="exercise().bonusPoints ? 'artemisApp.examParticipation.bonus' : 'artemisApp.examParticipation.points'"
+                [translateValues]="{ points: exercise().maxPoints, bonusPoints: exercise().bonusPoints }"
             >
             </span>
-            @if (exercise.includedInOverallScore !== IncludedInOverallScore.INCLUDED_COMPLETELY) {
-                <jhi-included-in-score-badge [includedInOverallScore]="exercise.includedInOverallScore" />
+            @if (exercise().includedInOverallScore !== IncludedInOverallScore.INCLUDED_COMPLETELY) {
+                <jhi-included-in-score-badge [includedInOverallScore]="exercise().includedInOverallScore" />
             }
         </h3>
-        <jhi-exercise-save-button [submission]="studentSubmission" (save)="notifyTriggerSave()" />
+        <jhi-exercise-save-button [submission]="studentSubmission()" (save)="notifyTriggerSave()" />
     </div>
     <hr />
     <!--resizable container-->
-    <jhi-resizeable-container class="col-12" [examTimeline]="examTimeline">
+    <jhi-resizeable-container class="col-12" [examTimeline]="examTimeline()">
         <!--region Left Panel-->
-        <span class="exercise-title" left-header>{{ examTimeline ? exercise.title : ('artemisApp.exam.yourSolution' | artemisTranslate) }}</span>
+        <span class="exercise-title" left-header>{{ examTimeline() ? exercise().title : ('artemisApp.exam.yourSolution' | artemisTranslate) }}</span>
         <div left-body class="text-editor-grid mt-4 ps-2 pb-2 w-100">
             <div class="grid-area-main">
                 <div>
@@ -33,8 +33,8 @@
                         class="text-editor-textarea"
                         [maxLength]="maxCharacterCount"
                         [(ngModel)]="answer"
-                        [readOnly]="readonly || !studentSubmission"
-                        [disabled]="readonly || !studentSubmission"
+                        [readOnly]="readonly() || !studentSubmission()"
+                        [disabled]="readonly() || !studentSubmission()"
                         (keydown.tab)="onTextEditorTab(textEditor, $event)"
                         (input)="onTextEditorInput($event)"
                     ></textarea>
@@ -47,8 +47,8 @@
         <span right-header jhiTranslate="artemisApp.exercise.problemStatement"></span>
         <!-- problem statement update & difference highlighter -->
         <ng-container right-body>
-            @if (exercise) {
-                <jhi-exam-exercise-update-highlighter [exercise]="exercise" (problemStatementUpdateEvent)="updateProblemStatement($event)" />
+            @if (exercise()) {
+                <jhi-exam-exercise-update-highlighter [exercise]="exercise()" (problemStatementUpdateEvent)="updateProblemStatement($event)" />
             }
             @if (problemStatementHtml) {
                 <p class="markdown-preview mb-3">

@@ -48,7 +48,7 @@ export class ProgrammingExerciseExamDiffComponent extends ExamPageComponent impl
         private modalService: NgbModal,
         private cachedRepositoryFilesService: CachedRepositoryFilesService,
     ) {
-        super(changeDetectorReference);
+        super();
     }
 
     ngOnInit() {
