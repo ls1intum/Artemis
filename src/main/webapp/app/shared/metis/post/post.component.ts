@@ -22,7 +22,7 @@ import { NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
 import { ContextInformation, DisplayPriority, PageType, RouteComponents } from '../metis.util';
 import { faBookmark, faBullhorn, faCheckSquare, faComments, faPencilAlt, faSmile, faThumbtack, faTrash } from '@fortawesome/free-solid-svg-icons';
 import dayjs from 'dayjs/esm';
-import { PostFooterComponent } from 'app/shared/metis/posting-footer/post-footer/post-footer.component';
+import { PostingFooterComponent } from 'app/shared/metis/posting-footer/posting-footer.component';
 import { isCommunicationEnabled } from 'app/entities/course.model';
 import { getAsChannelDTO } from 'app/entities/metis/conversation/channel.model';
 import { AnswerPost } from 'app/entities/metis/answer-post.model';
@@ -57,7 +57,7 @@ export class PostComponent extends PostingDirective<Post> implements OnInit, OnC
     @ViewChild('createAnswerPostModal') createAnswerPostModalComponent: AnswerPostCreateEditModalComponent;
     @ViewChild('createEditModal') createEditModal!: PostCreateEditModalComponent;
     @ViewChild('createEditAnswerPostContainer', { read: ViewContainerRef }) containerRef: ViewContainerRef;
-    @ViewChild('postFooter') postFooterComponent: PostFooterComponent;
+    @ViewChild('postFooter') postFooterComponent: PostingFooterComponent;
     showReactionSelector = false;
     @ViewChild('emojiPickerTrigger') emojiPickerTrigger!: CdkOverlayOrigin;
     static activeDropdownPost: PostComponent | null = null;
