@@ -27,8 +27,7 @@ describe('Modeling Submission Viewer Component', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule, ArtemisModelingEditorModule, TranslateTestingModule],
-            declarations: [ModelingSubmissionViewerComponent, SplitPaneHeaderComponent],
+            imports: [ArtemisTestModule, ArtemisModelingEditorModule, TranslateTestingModule, ModelingSubmissionViewerComponent, SplitPaneHeaderComponent],
             providers: [
                 { provide: TranslateService, useClass: MockTranslateService },
                 { provide: LocalStorageService, useClass: MockLocalStorageService },

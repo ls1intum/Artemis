@@ -35,13 +35,14 @@ describe('Plagiarism Header Component', () => {
         comp = fixture.componentInstance;
 
         plagiarismCasesService = TestBed.inject(PlagiarismCasesService);
-        comp.comparison = {
+        fixture.componentRef.setInput('comparison', {
             submissionA: { studentLogin: 'studentA' },
             submissionB: { studentLogin: 'studentB' },
             status: PlagiarismStatus.NONE,
-        } as PlagiarismComparison<ModelingSubmissionElement>;
-        comp.exercise = { course: { id: 1 } } as Exercise;
-        comp.splitControlSubject = new Subject<string>();
+        } as PlagiarismComparison<ModelingSubmissionElement>);
+        fixture.componentRef.setInput('splitControlSubject', new Subject<string>());
+        fixture.componentRef.setInput('exercise', { course: { id: 1 } } as Exercise);
+        fixture.detectChanges();
     });
 
     afterEach(() => {
@@ -57,7 +58,9 @@ describe('Plagiarism Header Component', () => {
     });
 
     it('should disable confirm button if plagiarism status is dirty', () => {
-        comp.comparison.status = PlagiarismStatus.NONE;
+        const comparison = comp.comparison();
+        comparison!.status = PlagiarismStatus.NONE;
+        fixture.componentRef.setInput('comparison', comparison);
         comp.isLoading = true;
 
         const nativeElement = fixture.nativeElement;
@@ -76,7 +79,9 @@ describe('Plagiarism Header Component', () => {
     });
 
     it('should disable deny button if plagiarism status is dirty', () => {
-        comp.comparison.status = PlagiarismStatus.NONE;
+        const comparison = comp.comparison();
+        comparison!.status = PlagiarismStatus.NONE;
+        fixture.componentRef.setInput('comparison', comparison);
         comp.isLoading = true;
 
         const nativeElement = fixture.nativeElement;
@@ -89,8 +94,9 @@ describe('Plagiarism Header Component', () => {
     it('should open a confirmation popup to deny a plagiarism if it is changing from confirmed to denied', () => {
         jest.spyOn(comp, 'updatePlagiarismStatus');
         const modalSpy = jest.spyOn(fixture.debugElement.injector.get(NgbModal), 'open');
-
-        comp.comparison.status = PlagiarismStatus.CONFIRMED;
+        const comparison = comp.comparison();
+        comparison!.status = PlagiarismStatus.CONFIRMED;
+        fixture.componentRef.setInput('comparison', comparison);
 
         comp.denyPlagiarism();
 
@@ -108,13 +114,13 @@ describe('Plagiarism Header Component', () => {
         tick();
 
         expect(updatePlagiarismComparisonStatusStub).toHaveBeenCalledOnce();
-        expect(comp.comparison.status).toEqual(PlagiarismStatus.CONFIRMED);
+        expect(comp.comparison()?.status).toEqual(PlagiarismStatus.CONFIRMED);
         expect(comp.isLoading).toBeFalse();
     }));
 
     it('should emit when expanding left split view pane', () => {
-        comp.splitControlSubject = new Subject<string>();
-        jest.spyOn(comp.splitControlSubject, 'next');
+        fixture.componentRef.setInput('splitControlSubject', new Subject());
+        jest.spyOn(comp.splitControlSubject(), 'next');
 
         const nativeElement = fixture.nativeElement;
         const splitLeftButton = nativeElement.querySelector("[data-qa='split-view-left']");
@@ -122,12 +128,12 @@ describe('Plagiarism Header Component', () => {
 
         fixture.detectChanges();
 
-        expect(comp.splitControlSubject.next).toHaveBeenCalledWith('left');
+        expect(comp.splitControlSubject().next).toHaveBeenCalledWith('left');
     });
 
     it('should emit when expanding right split view pane', () => {
-        comp.splitControlSubject = new Subject<string>();
-        jest.spyOn(comp.splitControlSubject, 'next');
+        fixture.componentRef.setInput('splitControlSubject', new Subject<string>());
+        jest.spyOn(comp.splitControlSubject(), 'next');
 
         const nativeElement = fixture.nativeElement;
         const splitRightButton = nativeElement.querySelector("[data-qa='split-view-right']");
@@ -135,12 +141,12 @@ describe('Plagiarism Header Component', () => {
 
         fixture.detectChanges();
 
-        expect(comp.splitControlSubject.next).toHaveBeenCalledWith('right');
+        expect(comp.splitControlSubject().next).toHaveBeenCalledWith('right');
     });
 
     it('should emit when resetting the split panes', () => {
-        comp.splitControlSubject = new Subject<string>();
-        jest.spyOn(comp.splitControlSubject, 'next');
+        fixture.componentRef.setInput('splitControlSubject', new Subject<string>());
+        jest.spyOn(comp.splitControlSubject(), 'next');
 
         const nativeElement = fixture.nativeElement;
         const splitHalfButton = nativeElement.querySelector("[data-qa='split-view-even']");
@@ -148,11 +154,13 @@ describe('Plagiarism Header Component', () => {
 
         fixture.detectChanges();
 
-        expect(comp.splitControlSubject.next).toHaveBeenCalledWith('even');
+        expect(comp.splitControlSubject().next).toHaveBeenCalledWith('even');
     });
 
     it.each(['confirm-plagiarism-button', 'deny-plagiarism-button'])('should disable status update button for team exercises', (selector) => {
-        comp.exercise.teamMode = true;
+        const exercise = comp.exercise();
+        exercise.teamMode = true;
+        fixture.componentRef.setInput('exercise', exercise);
 
         const nativeElement = fixture.nativeElement;
         const button = nativeElement.querySelector(`[data-qa=${selector}]`) as ButtonComponent;

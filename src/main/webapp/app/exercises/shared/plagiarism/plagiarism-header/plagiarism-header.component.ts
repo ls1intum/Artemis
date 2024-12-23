@@ -1,4 +1,4 @@
-import { Component, Input } from '@angular/core';
+import { Component, inject, input } from '@angular/core';
 import { Subject } from 'rxjs';
 import { PlagiarismStatus } from 'app/exercises/shared/plagiarism/types/PlagiarismStatus';
 import { PlagiarismComparison } from 'app/exercises/shared/plagiarism/types/PlagiarismComparison';
@@ -8,24 +8,26 @@ import { PlagiarismCasesService } from 'app/course/plagiarism-cases/shared/plagi
 import { ConfirmAutofocusModalComponent } from 'app/shared/components/confirm-autofocus-modal.component';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { Exercise, getCourseId } from 'app/entities/exercise.model';
+import { TranslateDirective } from '../../../../shared/language/translate.directive';
+import { ArtemisTranslatePipe } from '../../../../shared/pipes/artemis-translate.pipe';
 
 @Component({
     selector: 'jhi-plagiarism-header',
     styleUrls: ['./plagiarism-header.component.scss'],
     templateUrl: './plagiarism-header.component.html',
+    standalone: true,
+    imports: [TranslateDirective, ArtemisTranslatePipe],
 })
 export class PlagiarismHeaderComponent {
-    @Input() comparison: PlagiarismComparison<TextSubmissionElement | ModelingSubmissionElement>;
-    @Input() exercise: Exercise;
-    @Input() splitControlSubject: Subject<string>;
+    private plagiarismCasesService = inject(PlagiarismCasesService);
+    private modalService = inject(NgbModal);
+
+    comparison = input<PlagiarismComparison<TextSubmissionElement | ModelingSubmissionElement>>();
+    exercise = input.required<Exercise>();
+    splitControlSubject = input.required<Subject<string>>();
 
     readonly plagiarismStatus = PlagiarismStatus;
     isLoading = false;
-
-    constructor(
-        private plagiarismCasesService: PlagiarismCasesService,
-        private modalService: NgbModal,
-    ) {}
 
     /**
      * Set the status of the currently selected comparison to CONFIRMED.
@@ -38,7 +40,7 @@ export class PlagiarismHeaderComponent {
      * Set the status of the currently selected comparison to DENIED.
      */
     denyPlagiarism() {
-        if (this.comparison.status === PlagiarismStatus.CONFIRMED) {
+        if (this.comparison()?.status === PlagiarismStatus.CONFIRMED) {
             this.askForConfirmationOfDenying(() => this.updatePlagiarismStatus(PlagiarismStatus.DENIED));
         } else {
             this.updatePlagiarismStatus(PlagiarismStatus.DENIED);
@@ -60,20 +62,22 @@ export class PlagiarismHeaderComponent {
      * @param status the new status of the comparison
      */
     updatePlagiarismStatus(status: PlagiarismStatus) {
-        this.isLoading = true;
         // store comparison in variable in case comparison changes while request is made
-        const comparison = this.comparison;
-        this.plagiarismCasesService.updatePlagiarismComparisonStatus(getCourseId(this.exercise)!, comparison.id, status).subscribe(() => {
-            comparison.status = status;
-            this.isLoading = false;
-        });
+        const comparison = this.comparison();
+        if (comparison) {
+            this.isLoading = true;
+            this.plagiarismCasesService.updatePlagiarismComparisonStatus(getCourseId(this.exercise())!, comparison.id, status).subscribe(() => {
+                comparison.status = status;
+                this.isLoading = false;
+            });
+        }
     }
 
     expandSplitPane(pane: 'left' | 'right') {
-        this.splitControlSubject.next(pane);
+        this.splitControlSubject().next(pane);
     }
 
     resetSplitPanes() {
-        this.splitControlSubject.next('even');
+        this.splitControlSubject().next('even');
     }
 }
