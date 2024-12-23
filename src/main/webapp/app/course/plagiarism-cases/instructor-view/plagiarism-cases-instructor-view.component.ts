@@ -1,5 +1,5 @@
 import { HttpResponse } from '@angular/common/http';
-import { Component, OnInit } from '@angular/core';
+import { Component, ElementRef, OnInit, effect, viewChildren } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { PlagiarismCasesService } from 'app/course/plagiarism-cases/shared/plagiarism-cases.service';
 import { PlagiarismCase } from 'app/exercises/shared/plagiarism/types/PlagiarismCase';
@@ -15,9 +15,12 @@ import { AlertService } from 'app/core/util/alert.service';
 export class PlagiarismCasesInstructorViewComponent implements OnInit {
     courseId: number;
     examId?: number;
+    exerciseId?: number;
     plagiarismCases: PlagiarismCase[] = [];
     groupedPlagiarismCases: any; // maybe? { [key: number]: PlagiarismCase[] }
     exercisesWithPlagiarismCases: Exercise[] = [];
+
+    exerciseWithPlagCasesElements = viewChildren<ElementRef>('plagExerciseElement');
 
     readonly getIcon = getIcon;
     readonly documentationType: DocumentationType = 'PlagiarismChecks';
@@ -26,11 +29,18 @@ export class PlagiarismCasesInstructorViewComponent implements OnInit {
         private plagiarismCasesService: PlagiarismCasesService,
         private route: ActivatedRoute,
         private alertService: AlertService,
-    ) {}
+    ) {
+        effect(() => {
+            if (this.exerciseId) {
+                this.scrollToExercise();
+            }
+        });
+    }
 
     ngOnInit(): void {
         this.courseId = Number(this.route.snapshot.paramMap.get('courseId'));
         this.examId = Number(this.route.snapshot.paramMap.get('examId'));
+        this.exerciseId = Number(this.route.snapshot.queryParamMap.get('exerciseId'));
 
         const plagiarismCasesForInstructor$ = this.examId
             ? this.plagiarismCasesService.getExamPlagiarismCasesForInstructor(this.courseId, this.examId)
@@ -66,6 +76,18 @@ export class PlagiarismCasesInstructorViewComponent implements OnInit {
                 );
             },
         });
+    }
+
+    scrollToExercise() {
+        const element = this.exerciseWithPlagCasesElements().find((elem) => elem.nativeElement.id === 'exercise-with-plagiarism-case-' + this.exerciseId);
+        console.log(element);
+        if (element) {
+            element.nativeElement.scrollIntoView({
+                behavior: 'smooth',
+                block: 'start',
+                inline: 'nearest',
+            });
+        }
     }
 
     /**
