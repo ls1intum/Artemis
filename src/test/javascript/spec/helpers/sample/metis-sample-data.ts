@@ -39,6 +39,10 @@ export const metisUpVoteReactionUser1 = { id: 1, user: metisUser1, emojiId: VOTE
 export const metisReactionUser2 = { id: 2, user: metisUser2, emojiId: 'smile', creationDate: undefined } as Reaction;
 export const metisReactionToCreate = { emojiId: 'cheerio', creationDate: undefined } as Reaction;
 
+export const metisFaq1 = { id: 1, questionTitle: 'title', questionAnswer: 'answer' };
+export const metisFaq2 = { id: 2, questionTitle: 'title', questionAnswer: 'answer' };
+export const metisFaq3 = { id: 3, questionTitle: 'title', questionAnswer: 'answer' };
+
 export const metisCourse = {
     id: 1,
     title: 'Metis Course',
@@ -46,6 +50,7 @@ export const metisCourse = {
     lectures: [metisLecture, metisLecture2, metisLecture3],
     courseInformationSharingConfiguration: CourseInformationSharingConfiguration.COMMUNICATION_AND_MESSAGING,
     groups: ['metisTutors', 'metisStudents', 'metisInstructors'],
+    faqs: [metisFaq1, metisFaq2, metisFaq3],
 } as Course;
 
 export const metisResolvingAnswerPostUser1 = {

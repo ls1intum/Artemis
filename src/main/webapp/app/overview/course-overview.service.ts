@@ -262,7 +262,7 @@ export class CourseOverviewService {
     mapLecturesToSidebarCardElements(lectures: Lecture[]) {
         return lectures.map((lecture) => this.mapLectureToSidebarCardElement(lecture));
     }
-    mapTutorialGroupsToSidebarCardElements(tutorialGroups: Lecture[]) {
+    mapTutorialGroupsToSidebarCardElements(tutorialGroups: TutorialGroup[]) {
         return tutorialGroups.map((tutorialGroup) => this.mapTutorialGroupToSidebarCardElement(tutorialGroup));
     }
 

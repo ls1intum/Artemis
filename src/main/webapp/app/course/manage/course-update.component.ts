@@ -1,5 +1,5 @@
 import { ActivatedRoute, Router } from '@angular/router';
-import { Component, ElementRef, OnInit, ViewChild } from '@angular/core';
+import { Component, ElementRef, OnInit, ViewChild, inject } from '@angular/core';
 import { FormControl, FormGroup, ValidatorFn, Validators } from '@angular/forms';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { AlertService, AlertType } from 'app/core/util/alert.service';
@@ -31,6 +31,7 @@ import { onError } from 'app/shared/util/global.utils';
 import { getSemesters } from 'app/utils/semester-utils';
 import { ImageCropperModalComponent } from 'app/course/manage/image-cropper-modal.component';
 import { scrollToTopOfPage } from 'app/shared/util/utils';
+import { CourseStorageService } from 'app/course/manage/course-storage.service';
 
 const DEFAULT_CUSTOM_GROUP_NAME = 'artemis-dev';
 
@@ -77,6 +78,8 @@ export class CourseUpdateComponent implements OnInit {
     ltiEnabled = false;
     isAthenaEnabled = false;
     tutorialGroupsFeatureActivated = false;
+
+    private courseStorageServivce = inject(CourseStorageService);
 
     readonly semesters = getSemesters();
 
@@ -344,6 +347,7 @@ export class CourseUpdateComponent implements OnInit {
                 name: 'courseModification',
                 content: 'Changed a course',
             });
+            this.courseStorageServivce.updateCourse(updatedCourse!);
         }
 
         this.router.navigate(['course-management', updatedCourse?.id?.toString()]);

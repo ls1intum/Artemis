@@ -29,33 +29,39 @@ describe('PostingContentPartComponent', () => {
     let contentBeforeReference: string;
     let contentAfterReference: string;
 
-    beforeEach(() => {
-        return TestBed.configureTestingModule({
-            imports: [ArtemisTestModule, MatDialogModule, MatMenuModule],
+    beforeEach(async () => {
+        await TestBed.configureTestingModule({
+            imports: [
+                ArtemisTestModule,
+                MatDialogModule,
+                MatMenuModule,
+                HtmlForPostingMarkdownPipe, // we want to test against the rendered string, therefore we cannot mock the pipe
+            ],
             declarations: [
                 PostingContentPartComponent,
-                HtmlForPostingMarkdownPipe, // we want to test against the rendered string, therefore we cannot mock the pipe
                 // FaIconComponent, // we want to test the type of rendered icons, therefore we cannot mock the component
                 MockRouterLinkDirective,
                 MockQueryParamsDirective,
             ],
-            providers: [{ provide: FileService, useClass: MockFileService }, { provide: Router, useClass: MockRouter }, MockProvider(AccountService)],
-        })
-            .compileComponents()
-            .then(() => {
-                fixture = TestBed.createComponent(PostingContentPartComponent);
-                component = fixture.componentInstance;
-                debugElement = fixture.debugElement;
-                router = TestBed.inject(Router);
-                fileService = TestBed.inject(FileService);
-
-                navigateByUrlSpy = jest.spyOn(router, 'navigateByUrl');
-                openAttachmentSpy = jest.spyOn(fileService, 'downloadFile');
-                enlargeImageSpy = jest.spyOn(component, 'enlargeImage');
-
-                contentBeforeReference = '**Be aware**\n\n I want to reference the following Post ';
-                contentAfterReference = 'in my content,\n\n does it *actually* work?';
-            });
+            providers: [
+                { provide: FileService, useClass: MockFileService },
+                {
+                    provide: Router,
+                    useClass: MockRouter,
+                },
+                MockProvider(AccountService),
+            ],
+        }).compileComponents();
+        fixture = TestBed.createComponent(PostingContentPartComponent);
+        component = fixture.componentInstance;
+        debugElement = fixture.debugElement;
+        router = TestBed.inject(Router);
+        fileService = TestBed.inject(FileService);
+        navigateByUrlSpy = jest.spyOn(router, 'navigateByUrl');
+        openAttachmentSpy = jest.spyOn(fileService, 'downloadFile');
+        enlargeImageSpy = jest.spyOn(component, 'enlargeImage');
+        contentBeforeReference = '**Be aware**\n\n I want to reference the following Post ';
+        contentAfterReference = 'in my content,\n\n does it *actually* work?';
     });
 
     describe('For posting without reference', () => {
@@ -262,6 +268,52 @@ describe('PostingContentPartComponent', () => {
             component.onClickChannelReference(undefined);
 
             expect(outputEmitter).not.toHaveBeenCalled();
+        });
+    });
+
+    describe('Content processing', () => {
+        it('should process content before and after reference with escaped numbered and unordered lists', () => {
+            const contentBefore = '1. This is a numbered list\n2. Another item\n- This is an unordered list';
+            const contentAfter = '1. Numbered again\n- Unordered again';
+            component.postingContentPart = {
+                contentBeforeReference: contentBefore,
+                contentAfterReference: contentAfter,
+                linkToReference: undefined,
+                queryParams: undefined,
+                referenceStr: undefined,
+            } as PostingContentPart;
+            fixture.detectChanges();
+
+            component.processContent();
+
+            expect(component.processedContentBeforeReference).toBe('1\\.  This is a numbered list\n2\\.  Another item\n\\- This is an unordered list');
+            expect(component.processedContentAfterReference).toBe('1\\.  Numbered again\n\\- Unordered again');
+        });
+
+        it('should escape numbered lists correctly', () => {
+            const content = '1. First item\n2. Second item\n3. Third item';
+            const escapedContent = component.escapeNumberedList(content);
+            expect(escapedContent).toBe('1\\.  First item\n2\\.  Second item\n3\\.  Third item');
+        });
+
+        it('should escape unordered lists correctly', () => {
+            const content = '- First item\n- Second item\n- Third item';
+            const escapedContent = component.escapeUnorderedList(content);
+            expect(escapedContent).toBe('\\- First item\n\\- Second item\n\\- Third item');
+        });
+
+        it('should not escape text without numbered or unordered lists', () => {
+            const content = 'This is just a paragraph.\nAnother paragraph.';
+            const escapedNumbered = component.escapeNumberedList(content);
+            const escapedUnordered = component.escapeUnorderedList(content);
+            expect(escapedNumbered).toBe(content);
+            expect(escapedUnordered).toBe(content);
+        });
+
+        it('should handle mixed numbered and unordered lists in content', () => {
+            const content = '1. Numbered item\n- Unordered item\n2. Another numbered item\n- Another unordered item';
+            const escapedContent = component.escapeNumberedList(component.escapeUnorderedList(content));
+            expect(escapedContent).toBe('1\\.  Numbered item\n\\- Unordered item\n2\\.  Another numbered item\n\\- Another unordered item');
         });
     });
 });

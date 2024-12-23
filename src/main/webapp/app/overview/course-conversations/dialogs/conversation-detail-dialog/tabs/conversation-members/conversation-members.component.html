@@ -1,8 +1,8 @@
-@if (course && activeConversation) {
+@if (course() && activeConversation()) {
     <div class="container-fluid">
         <div class="row">
             <div class="col-auto">
-                @if (canAddUsersToConversation(activeConversation)) {
+                @if (canAddUsersToConversation(activeConversation()!)) {
                     <button type="button" class="btn btn-outline-secondary addUsers" (click)="openAddUsersDialog($event)">
                         <fa-icon [icon]="faUserPlus" />
                         {{ 'artemisApp.dialogs.conversationDetail.memberTab.addUsers' | artemisTranslate }}
@@ -33,7 +33,7 @@
                         <option id="instructorFilter" [value]="INSTRUCTOR_FILTER_OPTION" jhiTranslate="artemisApp.dialogs.conversationDetail.memberTab.instructorFilter"></option>
                         <option id="tutorFilter" [value]="TUTOR_FILTER_OPTION" jhiTranslate="artemisApp.dialogs.conversationDetail.memberTab.tutorFilter"></option>
                         <option id="studentFilter" [value]="STUDENT_FILTER_OPTION" jhiTranslate="artemisApp.dialogs.conversationDetail.memberTab.studentFilter"></option>
-                        @if (isChannel(activeConversation)) {
+                        @if (isChannel(activeConversation()!)) {
                             <option [value]="CHANNEL_MODERATOR_FILTER_OPTION" jhiTranslate="artemisApp.dialogs.conversationDetail.memberTab.channelModeratorFilter"></option>
                         }
                     </select>
@@ -55,8 +55,8 @@
                                 [id]="'user-' + user.id"
                                 jhi-conversation-member-row
                                 [conversationMember]="user"
-                                [activeConversation]="activeConversation"
-                                [course]="course"
+                                [activeConversation]="activeConversation()!"
+                                [course]="course()"
                                 (changePerformed)="onChangePerformed()"
                             ></li>
                         }
