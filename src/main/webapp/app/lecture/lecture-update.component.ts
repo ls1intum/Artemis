@@ -1,4 +1,4 @@
-import { Component, OnDestroy, OnInit, computed, effect, inject, signal, viewChild } from '@angular/core';
+import { Component, OnDestroy, OnInit, computed, effect, inject, model, signal, viewChild } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { Observable, Subscription } from 'rxjs';
@@ -48,6 +48,7 @@ export class LectureUpdateComponent implements OnInit, OnDestroy {
     unitSection = viewChild(LectureUpdateUnitsComponent);
     formStatusBar = viewChild(FormStatusBarComponent);
 
+    courseTitle = model<string>('');
     lecture = signal<Lecture>(new Lecture());
     lectureOnInit: Lecture;
     isEditMode = signal<boolean>(false);
@@ -139,6 +140,7 @@ export class LectureUpdateComponent implements OnInit, OnDestroy {
 
         this.isEditMode.set(!this.router.url.endsWith('/new'));
         this.lectureOnInit = cloneDeep(this.lecture());
+        this.courseTitle.set(this.lecture().course?.title ?? '');
     }
 
     ngOnDestroy() {

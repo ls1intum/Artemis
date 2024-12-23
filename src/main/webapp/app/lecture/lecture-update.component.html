@@ -14,14 +14,12 @@
                 <div>
                     <h3 id="artemisApp.lecture.sections.title"><span jhiTranslate="artemisApp.lecture.sections.title"></span></h3>
                     <p><span jhiTranslate="artemisApp.lecture.sections.titleDescription"></span></p>
-                    @if (lecture().course) {
+                    @if (courseTitle()) {
                         <div class="form-group">
                             <label class="form-control-label" jhiTranslate="artemisApp.lecture.course" for="field_course"></label>
-                            @if (lecture().course?.title) {
-                                <div class="d-flex">
-                                    <input id="field_course" disabled type="text" class="form-control" name="course" [(ngModel)]="lecture().course!.title!" />
-                                </div>
-                            }
+                            <div class="d-flex">
+                                <input id="field_course" disabled type="text" class="form-control" name="course" [(ngModel)]="courseTitle" />
+                            </div>
                         </div>
                     }
                     <jhi-lecture-title-channel-name [lecture]="lecture()" />
