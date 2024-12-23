@@ -5,8 +5,7 @@ import { ArtemisSharedComponentModule } from 'app/shared/components/shared-compo
 import { GradingKeyTableComponent } from 'app/grading-system/grading-key-overview/grading-key/grading-key-table.component';
 
 @NgModule({
-    declarations: [GradingKeyOverviewComponent, GradingKeyTableComponent],
-    imports: [ArtemisSharedModule, ArtemisSharedComponentModule],
+    imports: [ArtemisSharedModule, ArtemisSharedComponentModule, GradingKeyOverviewComponent, GradingKeyTableComponent],
     exports: [GradingKeyOverviewComponent, GradingKeyTableComponent],
 })
 export class GradingKeyOverviewModule {}

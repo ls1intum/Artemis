@@ -11,8 +11,17 @@ import { ArtemisSharedComponentModule } from 'app/shared/components/shared-compo
 import { GradingSystemPresentationsComponent } from 'app/grading-system/grading-system-presentations/grading-system-presentations.component';
 
 @NgModule({
-    declarations: [GradingSystemComponent, DetailedGradingSystemComponent, IntervalGradingSystemComponent, GradingSystemInfoModalComponent, GradingSystemPresentationsComponent],
-    imports: [ArtemisSharedModule, RouterModule.forChild(gradingSystemState), ArtemisModePickerModule, ArtemisSharedComponentModule],
+    imports: [
+        ArtemisSharedModule,
+        RouterModule.forChild(gradingSystemState),
+        ArtemisModePickerModule,
+        ArtemisSharedComponentModule,
+        GradingSystemComponent,
+        DetailedGradingSystemComponent,
+        IntervalGradingSystemComponent,
+        GradingSystemInfoModalComponent,
+        GradingSystemPresentationsComponent,
+    ],
     exports: [GradingSystemComponent, GradingSystemInfoModalComponent],
 })
 export class GradingSystemModule {}

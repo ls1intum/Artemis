@@ -80,7 +80,6 @@ describe('Interval Grading System Component', () => {
             declarations: [
                 MockDirective(NgModel),
                 MockDirective(NgSelectOption),
-                IntervalGradingSystemComponent,
                 MockComponent(GradingSystemInfoModalComponent),
                 MockComponent(HelpIconComponent),
                 MockComponent(ModePickerComponent),

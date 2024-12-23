@@ -6,9 +6,10 @@ import { ProgrammingExerciseInstructionStepWizardComponent } from 'app/exercises
 import { ProgrammingExerciseInstructionTaskStatusComponent } from 'app/exercises/programming/shared/instructions-render/task/programming-exercise-instruction-task-status.component';
 import { ArtemisMarkdownModule } from 'app/shared/markdown.module';
 import { ExamExerciseUpdateHighlighterModule } from 'app/exam/participate/exercises/exam-exercise-update-highlighter/exam-exercise-update-highlighter.module';
+import { SafeHtmlPipe } from 'app/shared/pipes/safe-html.pipe';
 
 @NgModule({
-    imports: [ArtemisSharedModule, ArtemisResultModule, ArtemisMarkdownModule, ExamExerciseUpdateHighlighterModule],
+    imports: [ArtemisSharedModule, ArtemisResultModule, ArtemisMarkdownModule, ExamExerciseUpdateHighlighterModule, SafeHtmlPipe],
     declarations: [ProgrammingExerciseInstructionComponent, ProgrammingExerciseInstructionStepWizardComponent, ProgrammingExerciseInstructionTaskStatusComponent],
     exports: [ProgrammingExerciseInstructionComponent],
 })

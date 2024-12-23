@@ -82,7 +82,6 @@ describe('Detailed Grading System Component', () => {
             declarations: [
                 MockDirective(NgModel),
                 MockDirective(NgSelectOption),
-                DetailedGradingSystemComponent,
                 MockComponent(GradingSystemInfoModalComponent),
                 MockComponent(HelpIconComponent),
                 MockDirective(DeleteButtonDirective),
