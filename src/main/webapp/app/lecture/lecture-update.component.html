@@ -40,7 +40,7 @@
                 <jhi-lecture-update-period [lecture]="lecture()" [validateDatesFunction]="onDatesValuesChanged" />
                 <div class="flex-grow-1 d-flex justify-content-end">
                     <button type="button" id="cancel-save" class="btn btn-secondary" (click)="previousState()">
-                        <fa-icon [icon]="faBan" />&nbsp;<span jhiTranslate="entity.action.cancel"></span>
+                        <fa-icon [icon]="faBan" class="me-1" /><span jhiTranslate="entity.action.cancel"></span>
                     </button>
                     <button
                         type="submit"
@@ -48,7 +48,7 @@
                         class="btn btn-primary ms-2"
                         [disabled]="editForm.form.invalid || isSaving || processUnitMode || !isChangeMadeToTitleOrPeriodSection || !areSectionsValid()"
                     >
-                        <fa-icon [icon]="faSave" />&nbsp;<span jhiTranslate="entity.action.save"></span>
+                        <fa-icon [icon]="faSave" class="me-1" /><span jhiTranslate="entity.action.save"></span>
                     </button>
                 </div>
                 @if (isEditMode()) {
