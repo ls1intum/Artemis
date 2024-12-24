@@ -16,6 +16,7 @@
                 }
             </p>
         }
+
         @if (isCorrectUserToFileAction && !complaint) {
             <div class="mt-4">
                 @if (isExamMode || (course?.maxComplaints && course!.maxComplaints! > 0)) {
@@ -23,7 +24,7 @@
                         id="complain"
                         class="btn btn-primary"
                         [class.not-allowed]="(!isExamMode && remainingNumberOfComplaints === 0) || !timeOfComplaintValid"
-                        (click)="formComplaintType = ComplaintType.COMPLAINT"
+                        (click)="openComplaintForm(ComplaintType.COMPLAINT)"
                         [disabled]="(!isExamMode && remainingNumberOfComplaints === 0) || !timeOfComplaintValid"
                         title="{{
                             (!isExamMode && remainingNumberOfComplaints === 0) || !timeOfComplaintValid
@@ -35,9 +36,10 @@
                 }
                 @if (!isExamMode && course?.requestMoreFeedbackEnabled) {
                     <button
+                        id="more-feedback"
                         class="btn btn-primary ms-1"
                         [class.not-allowed]="!timeOfFeedbackRequestValid"
-                        (click)="formComplaintType = ComplaintType.MORE_FEEDBACK"
+                        (click)="openComplaintForm(ComplaintType.MORE_FEEDBACK)"
                         [disabled]="!timeOfFeedbackRequestValid"
                         title="{{ !timeOfFeedbackRequestValid ? ('artemisApp.moreFeedback.notAllowedTooltip' | artemisTranslate) : '' }}"
                         jhiTranslate="artemisApp.moreFeedback.button"
@@ -58,6 +60,7 @@
                 />
             </div>
         }
+        <div #complaintScrollpoint></div>
         @if (complaint) {
             <div class="row">
                 <jhi-complaint-request class="col-12 col-md-6" [complaint]="complaint" [maxComplaintTextLimit]="course?.maxComplaintTextLimit!" />
