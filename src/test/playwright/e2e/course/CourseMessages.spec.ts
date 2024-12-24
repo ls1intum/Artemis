@@ -75,6 +75,19 @@ test.describe('Course messages', { tag: '@fast' }, () => {
                 await expect(courseMessages.getName()).toContainText(name);
             });
 
+            test('Instructor should be able to create a public course-wide unrestricted channel', async ({ login, courseMessages }) => {
+                await login(instructor, `/courses/${course.id}/communication`);
+                const name = 'public-cw-unrstct-ch';
+                await courseMessages.createChannelButton();
+                await courseMessages.setName(name);
+                await courseMessages.setDescription('A public unrestricted channel');
+                await courseMessages.setPublic();
+                await courseMessages.setUnrestrictedChannel();
+                await courseMessages.setCourseWideChannel();
+                await courseMessages.createChannel(false, true);
+                await expect(courseMessages.getName()).toContainText(name);
+            });
+
             test('Instructor should be able to create a private unrestricted channel', async ({ login, courseMessages }) => {
                 await login(instructor, `/courses/${course.id}/communication`);
                 const name = 'private-unrstct-ch';

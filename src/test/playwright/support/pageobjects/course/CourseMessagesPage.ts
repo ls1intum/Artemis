@@ -113,6 +113,13 @@ export class CourseMessagesPage {
     }
 
     /**
+     * Marks a channel as course-wide in the modal dialog.
+     */
+    async setCourseWideChannel() {
+        await this.page.locator('.modal-content label[for="isCourseWideChannel"]').click();
+    }
+
+    /**
      * Marks a channel as an announcement channel in the modal dialog.
      */
     async setAnnouncementChannel() {

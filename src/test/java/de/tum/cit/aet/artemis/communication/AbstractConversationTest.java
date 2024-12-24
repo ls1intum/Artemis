@@ -180,6 +180,7 @@ abstract class AbstractConversationTest extends AbstractSpringIntegrationIndepen
         channelDTO.setIsPublic(isPublicChannel);
         channelDTO.setIsAnnouncementChannel(false);
         channelDTO.setDescription("general channel");
+        channelDTO.setIsCourseWide(false);
 
         var chat = request.postWithResponseBody("/api/courses/" + exampleCourseId + "/channels", channelDTO, ChannelDTO.class, HttpStatus.CREATED);
         resetWebsocketMock();
