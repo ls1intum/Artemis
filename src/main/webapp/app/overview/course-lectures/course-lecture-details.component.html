@@ -147,5 +147,8 @@
                 </div>
             </div>
         </div>
+        @if (irisSettings?.irisLectureChatSettings?.enabled) {
+            <jhi-exercise-chatbot-button [mode]="ChatServiceMode.LECTURE" />
+        }
     </div>
 }
