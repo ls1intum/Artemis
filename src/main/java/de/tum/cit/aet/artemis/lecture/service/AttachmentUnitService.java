@@ -108,16 +108,21 @@ public class AttachmentUnitService {
      * @param updateAttachment       The new attachment data.
      * @param updateFile             The optional file.
      * @param keepFilename           Whether to keep the original filename or not.
+     * @param hiddenPages            The hidden pages of attachment unit.
      * @return The updated attachment unit.
      */
     public AttachmentUnit updateAttachmentUnit(AttachmentUnit existingAttachmentUnit, AttachmentUnit updateUnit, Attachment updateAttachment, MultipartFile updateFile,
-            boolean keepFilename) {
+            MultipartFile studentVersionFile, boolean keepFilename, String hiddenPages) {
         Set<CompetencyLectureUnitLink> existingCompetencyLinks = new HashSet<>(existingAttachmentUnit.getCompetencyLinks());
 
         existingAttachmentUnit.setDescription(updateUnit.getDescription());
         existingAttachmentUnit.setName(updateUnit.getName());
         existingAttachmentUnit.setReleaseDate(updateUnit.getReleaseDate());
         existingAttachmentUnit.setCompetencyLinks(updateUnit.getCompetencyLinks());
+
+        if (studentVersionFile != null) {
+            saveStudentVersion(studentVersionFile, existingAttachmentUnit.getAttachment());
+        }
 
         AttachmentUnit savedAttachmentUnit = lectureUnitService.saveWithCompetencyLinks(existingAttachmentUnit, attachmentUnitRepository::saveAndFlush);
 
@@ -145,7 +150,7 @@ public class AttachmentUnitService {
             }
             // Split the updated file into single slides only if it is a pdf
             if (Objects.equals(FilenameUtils.getExtension(updateFile.getOriginalFilename()), "pdf")) {
-                slideSplitterService.splitAttachmentUnitIntoSingleSlides(savedAttachmentUnit);
+                slideSplitterService.splitAttachmentUnitIntoSingleSlides(savedAttachmentUnit, hiddenPages);
             }
             if (pyrisWebhookService.isPresent() && irisSettingsRepository.isPresent()) {
                 pyrisWebhookService.get().autoUpdateAttachmentUnitsInPyris(savedAttachmentUnit.getLecture().getCourse().getId(), List.of(savedAttachmentUnit));
@@ -212,5 +217,19 @@ public class AttachmentUnitService {
         attachmentUnit.getLecture().setLectureUnits(null);
         attachmentUnit.getLecture().setAttachments(null);
         attachmentUnit.getLecture().setPosts(null);
+    }
+
+    public void saveStudentVersion(MultipartFile studentVersion, Attachment attachment) {
+        // Update student version of attachment
+        Path basePath = FilePathService.getAttachmentUnitFilePath().resolve(attachment.getAttachmentUnit().getId().toString());
+        Path savePath = fileService.saveFile(studentVersion, basePath.resolve("student"), true);
+        attachment.setStudentVersion(FilePathService.publicPathForActualPath(savePath, attachment.getAttachmentUnit().getId()).toString());
+
+        // Delete the old student version
+        if (attachment.getStudentVersion() != null) {
+            URI oldHiddenPath = URI.create(attachment.getStudentVersion());
+            fileService.schedulePathForDeletion(FilePathService.actualPathForPublicPathOrThrow(oldHiddenPath), 0);
+            this.fileService.evictCacheForPath(FilePathService.actualPathForPublicPathOrThrow(oldHiddenPath));
+        }
     }
 }
