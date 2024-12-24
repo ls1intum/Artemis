@@ -1,23 +1,18 @@
-import { NgModule } from '@angular/core';
-import { RouterModule, Routes } from '@angular/router';
-import { UserRouteAccessService } from 'app/core/auth/user-route-access-service';
+import { Route, Routes } from '@angular/router';
 import { ExamScoresComponent } from 'app/exam/exam-scores/exam-scores.component';
-import { Authority } from 'app/shared/constants/authority.constants';
 
-const routes: Routes = [
+export const examScoresRoute: Route[] = [
     {
         path: ':examId/scores',
         component: ExamScoresComponent,
-        data: {
-            authorities: [Authority.ADMIN, Authority.INSTRUCTOR],
-            pageTitle: 'artemisApp.examScores.title',
-        },
-        canActivate: [UserRouteAccessService],
     },
 ];
 
-@NgModule({
-    imports: [RouterModule.forChild(routes)],
-    exports: [RouterModule],
-})
-export class ArtemisExamScoresRoutingModule {}
+const EXAM_SCORES_ROUTES = [...examScoresRoute];
+
+export const examScoresState: Routes = [
+    {
+        path: '',
+        children: EXAM_SCORES_ROUTES,
+    },
+];
