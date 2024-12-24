@@ -1,28 +1,38 @@
-import { HttpClient } from '@angular/common/http';
-import { Router } from '@angular/router';
+import { TestBed } from '@angular/core/testing';
 import { ExerciseGroupService } from 'app/exam/manage/exercise-groups/exercise-group.service';
-import { MockRouter } from '../../../../helpers/mocks/mock-router';
+import { provideHttpClient } from '@angular/common/http';
+import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 
-describe('Exercise Group Service', () => {
-    let httpClient: any;
-    let httpClientDeleteSpy: any;
+describe('ExerciseGroupService', () => {
     let service: ExerciseGroupService;
+    let httpMock: HttpTestingController;
 
     beforeEach(() => {
-        httpClient = {
-            delete: jest.fn(),
-        };
-        httpClientDeleteSpy = jest.spyOn(httpClient, 'delete');
-        service = new ExerciseGroupService(new MockRouter() as any as Router, httpClient as HttpClient);
+        TestBed.configureTestingModule({
+            providers: [ExerciseGroupService, provideHttpClient(), provideHttpClientTesting()],
+        });
+
+        service = TestBed.inject(ExerciseGroupService);
+        httpMock = TestBed.inject(HttpTestingController);
     });
 
     it('should set additional parameters correctly in delete', () => {
-        service.delete(1, 2, 3, true, false);
-        expect(httpClientDeleteSpy).toHaveBeenCalledOnce();
-        expect(httpClientDeleteSpy.mock.calls[0]).toHaveLength(2);
-        expect(httpClientDeleteSpy.mock.calls[0][1].params.updates).toContainAllValues([
-            { op: 's', param: 'deleteStudentReposBuildPlans', value: 'true' },
-            { op: 's', param: 'deleteBaseReposBuildPlans', value: 'false' },
-        ]);
+        const courseId = 1;
+        const examId = 2;
+        const exerciseGroupId = 3;
+        const deleteStudentReposBuildPlans = true;
+        const deleteBaseReposBuildPlans = false;
+
+        service.delete(courseId, examId, exerciseGroupId, deleteStudentReposBuildPlans, deleteBaseReposBuildPlans).subscribe();
+
+        const req = httpMock.expectOne(
+            `api/courses/${courseId}/exams/${examId}/exercise-groups/${exerciseGroupId}?deleteStudentReposBuildPlans=true&deleteBaseReposBuildPlans=false`,
+        );
+
+        expect(req.request.method).toBe('DELETE');
+        expect(req.request.params.get('deleteStudentReposBuildPlans')).toBe('true');
+        expect(req.request.params.get('deleteBaseReposBuildPlans')).toBe('false');
+
+        req.flush(null); // Respond with no content for DELETE request
     });
 });
