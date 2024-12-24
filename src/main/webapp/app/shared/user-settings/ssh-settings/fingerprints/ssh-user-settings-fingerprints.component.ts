@@ -2,11 +2,16 @@ import { Component, OnInit, inject } from '@angular/core';
 import { ButtonSize, ButtonType } from 'app/shared/components/button.component';
 import { DocumentationType } from 'app/shared/components/documentation-button/documentation-button.component';
 import { SshUserSettingsFingerprintsService } from 'app/shared/user-settings/ssh-settings/fingerprints/ssh-user-settings-fingerprints.service';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { DocumentationLinkComponent } from 'app/shared/components/documentation-link/documentation-link.component';
+import { RouterModule } from '@angular/router';
 
 @Component({
     selector: 'jhi-account-information',
     templateUrl: './ssh-user-settings-fingerprints.component.html',
+    standalone: true,
     styleUrls: ['./ssh-user-settings-fingerprints.component.scss', '../ssh-user-settings.component.scss'],
+    imports: [TranslateDirective, RouterModule, DocumentationLinkComponent],
 })
 export class SshUserSettingsFingerprintsComponent implements OnInit {
     readonly sshUserSettingsService = inject(SshUserSettingsFingerprintsService);
