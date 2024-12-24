@@ -28,7 +28,7 @@ import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation
 import de.tum.cit.aet.artemis.exercise.dto.SubmissionDTO;
 import de.tum.cit.aet.artemis.exercise.repository.ParticipationRepository;
 import de.tum.cit.aet.artemis.exercise.repository.TeamRepository;
-import de.tum.cit.aet.artemis.iris.service.pyris.PyrisEventService;
+import de.tum.cit.aet.artemis.iris.service.pyris.PyrisEventPublisherService;
 import de.tum.cit.aet.artemis.iris.service.pyris.event.NewResultEvent;
 import de.tum.cit.aet.artemis.lti.service.LtiNewResultService;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
@@ -55,20 +55,20 @@ public class ProgrammingMessagingService {
 
     private final TeamRepository teamRepository;
 
-    private final Optional<PyrisEventService> pyrisEventService;
+    private final Optional<PyrisEventPublisherService> pyrisEventPublisher;
 
     private final ParticipationRepository participationRepository;
 
     public ProgrammingMessagingService(GroupNotificationService groupNotificationService, WebsocketMessagingService websocketMessagingService,
             ResultWebsocketService resultWebsocketService, Optional<LtiNewResultService> ltiNewResultService, TeamRepository teamRepository,
-            Optional<PyrisEventService> pyrisEventService, ParticipationRepository participationRepository) {
+            Optional<PyrisEventPublisherService> pyrisEventPublisher, ParticipationRepository participationRepository) {
         this.groupNotificationService = groupNotificationService;
         this.websocketMessagingService = websocketMessagingService;
         this.resultWebsocketService = resultWebsocketService;
         this.ltiNewResultService = ltiNewResultService;
         this.teamRepository = teamRepository;
+        this.pyrisEventPublisher = pyrisEventPublisher;
         this.participationRepository = participationRepository;
-        this.pyrisEventService = pyrisEventService;
     }
 
     private static String getExerciseTopicForTAAndAbove(long exerciseId) {
@@ -181,7 +181,8 @@ public class ProgrammingMessagingService {
      * @param participation the participation for which the result was created.
      */
     public void notifyUserAboutNewResult(Result result, ProgrammingExerciseParticipation participation) {
-        log.debug("Send result to client over websocket. Result: {}, Submission: {}, Participation: {}", result, result.getSubmission(), result.getParticipation());
+        var submission = result.getSubmission();
+        log.debug("Send result to client over websocket. Result: {}, Submission: {}, Participation: {}", result, submission, submission.getParticipation());
         // notify user via websocket
         resultWebsocketService.broadcastNewResult((Participation) participation, result);
 
@@ -204,13 +205,12 @@ public class ProgrammingMessagingService {
      */
     private void notifyIrisAboutSubmissionStatus(Result result, ProgrammingExerciseStudentParticipation studentParticipation) {
         if (studentParticipation.getParticipant() instanceof User) {
-            pyrisEventService.ifPresent(eventService -> {
-                // Inform event service about the new result
+            pyrisEventPublisher.ifPresent(service -> {
                 try {
-                    eventService.trigger(new NewResultEvent(result));
+                    service.publishEvent(new NewResultEvent(this, result));
                 }
                 catch (Exception e) {
-                    log.error("Could not trigger service for result {}", result.getId(), e);
+                    log.error("Could not publish event for result {}", result.getId(), e);
                 }
             });
         }
