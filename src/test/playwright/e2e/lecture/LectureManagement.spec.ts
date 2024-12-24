@@ -41,10 +41,17 @@ test.describe('Lecture management', { tag: '@fast' }, () => {
         const lectureResponse = await lectureCreation.save();
         const lecture: Lecture = await lectureResponse.json();
         expect(lectureResponse.status()).toBe(201);
+        await expect(page).toHaveURL(`/course-management/${course.id}/lectures/${lecture.id}/edit`);
 
-        await page.waitForURL(`**/${course.id}/lectures/${lecture.id}`);
+        const adjustedDescription = description! + 'change to enable save button again';
+        await lectureCreation.typeDescription(adjustedDescription);
+        const lectureResponseFromEdit = await lectureCreation.save();
+        const lectureFromEdit: Lecture = await lectureResponseFromEdit.json();
+        expect(lectureResponseFromEdit.status()).toBe(200);
+        await page.waitForURL(`**/${course.id}/lectures/${lectureFromEdit.id}`);
+
         await expect(lectureManagement.getLectureTitle()).toContainText(lectureData.title);
-        await expect(lectureManagement.getLectureDescription()).toContainText(description!);
+        await expect(lectureManagement.getLectureDescription()).toContainText(adjustedDescription!);
         await expect(lectureManagement.getLectureVisibleDate()).toContainText(lectureData.visibleDate!.format(dateFormat));
         await expect(lectureManagement.getLectureStartDate()).toContainText(lectureData.startDate!.format(dateFormat));
         await expect(lectureManagement.getLectureEndDate()).toContainText(lectureData.endDate!.format(dateFormat));
