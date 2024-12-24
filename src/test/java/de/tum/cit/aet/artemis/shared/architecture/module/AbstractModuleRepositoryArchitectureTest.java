@@ -8,12 +8,14 @@ import static com.tngtech.archunit.core.domain.properties.HasType.Predicates.raw
 import static com.tngtech.archunit.lang.SimpleConditionEvent.violated;
 import static com.tngtech.archunit.lang.syntax.ArchRuleDefinition.classes;
 
+import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
 import org.apache.commons.lang3.StringUtils;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.springframework.context.annotation.Primary;
 import org.springframework.data.domain.Pageable;
@@ -27,8 +29,11 @@ import org.springframework.stereotype.Service;
 
 import com.tngtech.archunit.base.DescribedPredicate;
 import com.tngtech.archunit.core.domain.JavaClass;
+import com.tngtech.archunit.core.domain.JavaConstructor;
 import com.tngtech.archunit.core.domain.JavaField;
 import com.tngtech.archunit.core.domain.JavaMethod;
+import com.tngtech.archunit.core.domain.JavaModifier;
+import com.tngtech.archunit.core.domain.JavaParameter;
 import com.tngtech.archunit.core.domain.JavaType;
 import com.tngtech.archunit.lang.ArchCondition;
 import com.tngtech.archunit.lang.ArchRule;
@@ -301,5 +306,54 @@ public abstract class AbstractModuleRepositoryArchitectureTest extends AbstractA
         StringBuilder sb = new StringBuilder(string);
         sb.replace(lastIndex, lastIndex + substring.length(), replacement);
         return sb.toString();
+    }
+
+    /**
+     * Disabled for now.
+     * Enforce that no default methods are declared in the JPARepository interfaces.
+     * Instead, one should use/create a SimpleService in the 'simple'-subpackage.
+     */
+    @Disabled
+    @Test
+    void enforceNoDefaultMethodsInRepository() {
+        methodsOfThisModuleThat().areDeclaredInClassesThat().areAnnotatedWith(Repository.class).should(new ArchCondition<>("not have default methods") {
+
+            @Override
+            public void check(JavaMethod javaMethod, ConditionEvents events) {
+                if (!javaMethod.getModifiers().contains(JavaModifier.ABSTRACT)) {
+                    String message = String.format("Method %s has a default modifier", javaMethod.getFullName());
+                    events.add(SimpleConditionEvent.violated(javaMethod, message));
+                }
+            }
+        }).because("Default methods should be declared in SimpleServices, not in JPA Repository").allowEmptyShould(true).check(productionClasses);
+    }
+
+    @Test
+    void enforceSimpleServiceSingleAutowire() {
+        classesOfThisModuleThat().resideInAPackage("..repository.simple..").and().areAnnotatedWith(Service.class)
+                .should(new ArchCondition<>("have a constructor with exactly one parameter of a @Repository type") {
+
+                    @Override
+                    public void check(JavaClass javaClass, ConditionEvents events) {
+                        List<JavaConstructor> constructors = javaClass.getConstructors().stream().filter(constructor -> constructor.getParameters().size() == 1).toList();
+
+                        boolean hasValidConstructor = false;
+
+                        for (JavaConstructor constructor : constructors) {
+                            JavaParameter parameter = constructor.getParameters().getFirst();
+                            JavaClass parameterType = parameter.getType().toErasure();
+
+                            if (parameterType.isAnnotatedWith(Repository.class)) {
+                                hasValidConstructor = true;
+                                break;
+                            }
+                        }
+
+                        if (!hasValidConstructor) {
+                            String message = String.format("Class %s does not have a constructor with exactly one parameter of a @Repository type.", javaClass.getName());
+                            events.add(SimpleConditionEvent.violated(javaClass, message));
+                        }
+                    }
+                }).because("Simple Services should have exactly one autowired candidate to remain simple").allowEmptyShould(true).check(productionClasses);
     }
 }

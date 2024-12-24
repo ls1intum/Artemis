@@ -37,7 +37,8 @@ public abstract class AbstractModuleServiceArchitectureTest extends AbstractArch
 
     @Test
     void shouldBeInServicePackage() {
-        ArchRule rule = classesOfThisModuleThat().areAnnotatedWith(Service.class).should().resideInAPackage("..service..").because("services should be in the package 'service'.");
+        ArchRule rule = classesOfThisModuleThat().areAnnotatedWith(Service.class).should().resideInAPackage("..service..").orShould().resideInAPackage("..repository.simple..")
+                .because("services should be in the package 'service'.");
         final var exceptions = new Class[] { MigrationService.class, SecurityMetersService.class, DomainUserDetailsService.class, OAuth2JWKSService.class, JWTCookieService.class,
                 GitDiffReportParserService.class, ResultWebsocketService.class, LocalCIWebsocketMessagingService.class };
         final var classes = classesExcept(productionClasses, exceptions);
