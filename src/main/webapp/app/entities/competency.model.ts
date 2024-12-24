@@ -63,6 +63,18 @@ export interface UpdateCourseCompetencyRelationDTO {
     newRelationType: CompetencyRelationType;
 }
 
+export interface CourseCompetencyStudentProgressDTO {
+    id: number;
+    title: string;
+    description?: string;
+    taxonomy?: CompetencyTaxonomy;
+    softDueDate?: dayjs.Dayjs;
+    optional: boolean;
+    numberOfStudents: number;
+    numberOfMasteredStudents: number;
+    type: CourseCompetencyType;
+}
+
 export abstract class CourseCompetency extends BaseCompetency {
     softDueDate?: dayjs.Dayjs;
     masteryThreshold?: number;
