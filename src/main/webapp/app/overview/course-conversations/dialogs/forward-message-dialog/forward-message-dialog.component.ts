@@ -49,7 +49,6 @@ export class ForwardMessageDialogComponent implements OnInit, AfterViewInit {
     combinedOptions: CombinedOption[] = [];
     filteredOptions: CombinedOption[] = [];
     showFullForwardedMessage: boolean = false;
-    maxLines: number = 5;
     isContentLong: boolean = false;
     private cdr = inject(ChangeDetectorRef);
     public renderer = inject(Renderer2);
@@ -104,7 +103,7 @@ export class ForwardMessageDialogComponent implements OnInit, AfterViewInit {
     }
 
     filterItems(event: Event): void {
-        this.searchTerm = (event.target as HTMLInputElement).value.toLowerCase();
+        this.searchTerm = (event.target as HTMLInputElement).value;
         this.filterOptions();
     }
 

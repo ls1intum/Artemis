@@ -10,7 +10,7 @@
                 <button class="btn btn-primary" (click)="exportPlagiarismCases()" jhiTranslate="artemisApp.plagiarism.cases.exportCsv"></button>
             </div>
         </div>
-        @for (exercise of exercisesWithPlagiarismCases; track exercise; let i = $index) {
+        @for (exercise of exercisesWithPlagiarismCases; track exercise.id; let exerciseIndex = $index) {
             <div class="card mb-2">
                 <div class="card-header">
                     <div class="row">
@@ -20,6 +20,14 @@
                                     <fa-icon [icon]="getIcon(exercise.type)" />
                                 }
                                 {{ exercise.title }}
+                                <small>
+                                    <a
+                                        id="plagiarism-detection-link-{{ exercise.id }}"
+                                        [routerLink]="['/course-management', courseId, getExerciseUrlSegment(exercise.type), exercise.id, 'plagiarism']"
+                                        jhiTranslate="artemisApp.plagiarism.plagiarismCases.viewComparisons"
+                                    >
+                                    </a>
+                                </small>
                             </h5>
                         </div>
                         <div class="col-3">
@@ -49,20 +57,25 @@
                     </div>
                 </div>
                 <div class="card-body">
-                    @for (plagiarismCase of groupedPlagiarismCases[exercise!.id!]; track plagiarismCase) {
+                    @for (plagiarismCase of groupedPlagiarismCases[exercise!.id!]; track plagiarismCase; let plagiarismCaseIndex = $index) {
                         <div class="row mb-3">
-                            <div class="col-1 text-center">
-                                <a [routerLink]="['/course-management', courseId, 'plagiarism-cases', plagiarismCase.id]">
-                                    {{ plagiarismCase.student.name }} ({{ plagiarismCase.student.login }})
-                                </a>
-                            </div>
-                            @if (plagiarismCase.plagiarismSubmissions) {
-                                <div
-                                    class="col-2 text-center"
-                                    jhiTranslate="artemisApp.plagiarism.plagiarismCases.appearsInComparisons"
-                                    [translateValues]="{ count: plagiarismCase.plagiarismSubmissions.length }"
-                                ></div>
+                            @if (plagiarismCase.student) {
+                                <div class="col-1 text-center">
+                                    <a [routerLink]="['/course-management', courseId, 'plagiarism-cases', plagiarismCase.id]">
+                                        {{ plagiarismCase.student.name }} ({{ plagiarismCase.student.login }})
+                                    </a>
+                                </div>
                             }
+                            @if (plagiarismCase.plagiarismSubmissions) {
+                                <div class="col-2 text-center">
+                                    <span>
+                                        {{
+                                            'artemisApp.plagiarism.plagiarismCases.appearsInComparisons' | artemisTranslate: { count: plagiarismCase.plagiarismSubmissions?.length }
+                                        }}
+                                    </span>
+                                </div>
+                            }
+
                             @if (plagiarismCase.post) {
                                 <div class="col-3 text-center">
                                     {{ 'artemisApp.plagiarism.plagiarismCases.notifiedAt' | artemisTranslate }} {{ plagiarismCase.post.creationDate | artemisDate }}

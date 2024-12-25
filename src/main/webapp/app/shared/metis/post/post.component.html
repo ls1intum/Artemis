@@ -17,13 +17,14 @@
     }
     @if (!isConsecutive()) {
         <div class="ps-3">
-            <jhi-post-header
+            <jhi-posting-header
                 [previewMode]="previewMode"
                 [readOnlyMode]="readOnlyMode"
                 [posting]="posting"
                 [isDeleted]="isDeleted"
                 [isCommunicationPage]="isCommunicationPage"
                 (isModalOpen)="displayInlineInput = true"
+                (onUserNameClicked)="onUserNameClicked()"
                 [lastReadDate]="lastReadDate"
             />
         </div>
@@ -154,7 +155,7 @@
         </div>
     }
 </div>
-<jhi-post-footer
+<jhi-posting-footer
     #postFooter
     [readOnlyMode]="readOnlyMode"
     [modalRef]="modalRef"
