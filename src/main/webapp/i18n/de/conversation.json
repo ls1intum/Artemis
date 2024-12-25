@@ -239,9 +239,9 @@
                     },
                     "isCourseWideChannelInput": {
                         "label": "Kanalbereich",
-                        "explanation": "In einem kursweiten Kanal werden alle Benutzer des Kurses automatisch hinzugefügt. In einem zielgerichteten Kanal können Sie die hinzuzufügenden Benutzer manuell auswählen.",
+                        "explanation": "In einem kursweiten Kanal werden alle Benutzer des Kurses automatisch hinzugefügt. In einem ausgewählten Kanal kannst du die hinzuzufügenden Benutzer manuell auswählen.",
                         "true": "Kursweiter Kanal",
-                        "false": "Zielgerichteter Kanal"
+                        "false": "Ausgewählter Kanal"
                     },
                     "createButton": "Kanal erstellen"
                 }

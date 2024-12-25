@@ -239,9 +239,9 @@
                     },
                     "isCourseWideChannelInput": {
                         "label": "Channel Scope",
-                        "explanation": "In a course-wide channel, all users in the course are automatically added. In a targeted channel, you can manually select the users to be added after creation.",
+                        "explanation": "In a course-wide channel, all users in the course are automatically added. In a selective channel, you can manually select the users to be added after creation.",
                         "true": "Course-wide Channel",
-                        "false": "Targeted Channel"
+                        "false": "Selective Channel"
                     },
                     "createButton": "Create Channel"
                 }
