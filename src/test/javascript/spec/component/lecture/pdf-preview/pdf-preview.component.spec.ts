@@ -172,6 +172,53 @@ describe('PdfPreviewComponent', () => {
 
             expect(alertServiceSpy).toHaveBeenCalled();
         }));
+
+        it('should update attachment unit with student version when there are hidden pages', fakeAsync(() => {
+            const mockStudentVersion = new File(['pdf content'], 'student.pdf', { type: 'application/pdf' });
+            jest.spyOn(component, 'getHiddenPages').mockReturnValue([1, 2, 3]);
+            jest.spyOn(component, 'createStudentVersionOfAttachment').mockResolvedValue(mockStudentVersion);
+
+            component.currentPdfBlob.set(new Blob(['pdf content'], { type: 'application/pdf' }));
+            component.attachment.set(undefined);
+            component.attachmentUnit.set({
+                id: 1,
+                lecture: { id: 1 },
+                attachment: { id: 1, name: 'test.pdf' },
+            });
+
+            attachmentUnitServiceMock.update.mockReturnValue(of({}));
+
+            component.updateAttachmentWithFile();
+            tick();
+
+            fixture.whenStable().then(() => {
+                expect(attachmentUnitServiceMock.update).toHaveBeenCalledWith(1, 1, expect.any(FormData), undefined, '1,2,3');
+            });
+        }));
+
+        it('should handle errors when updating attachment unit with hidden pages fails', fakeAsync(() => {
+            const mockStudentVersion = new File(['pdf content'], 'student.pdf', { type: 'application/pdf' });
+            jest.spyOn(component, 'getHiddenPages').mockReturnValue([1, 2]);
+            jest.spyOn(component, 'createStudentVersionOfAttachment').mockResolvedValue(mockStudentVersion);
+
+            component.currentPdfBlob.set(new Blob(['pdf content'], { type: 'application/pdf' }));
+            component.attachment.set(undefined);
+            component.attachmentUnit.set({
+                id: 1,
+                lecture: { id: 1 },
+                attachment: { id: 1, name: 'test.pdf' },
+            });
+
+            attachmentUnitServiceMock.update.mockReturnValue(throwError(() => new Error('Update failed')));
+
+            component.updateAttachmentWithFile();
+            fixture.whenStable();
+            tick();
+
+            fixture.whenStable().then(() => {
+                expect(alertServiceMock.error).toHaveBeenCalledWith('artemisApp.attachment.pdfPreview.attachmentUpdateError', { error: 'Update failed' });
+            });
+        }));
     });
 
     describe('Unsubscribing from Observables', () => {
