@@ -1,7 +1,7 @@
 import { Component, OnDestroy, OnInit, inject } from '@angular/core';
 import { Location } from '@angular/common';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
-import { ActivatedRoute, Router } from '@angular/router';
+import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import dayjs from 'dayjs/esm';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
 import { TextSubmission } from 'app/entities/text/text-submission.model';
@@ -35,11 +35,19 @@ import { TextBlockRef } from 'app/entities/text/text-block-ref.model';
 import { AthenaService } from 'app/assessment/athena.service';
 import { TextBlock } from 'app/entities/text/text-block.model';
 import { Subscription } from 'rxjs';
+import { ArtemisAssessmentSharedModule } from '../../../assessment/assessment-shared.module';
+import { ArtemisSharedModule } from 'app/shared/shared.module';
+import { TextAssessmentAreaComponent } from './text-assessment-area/text-assessment-area.component';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { TranslateDirective } from '../../../shared/language/translate.directive';
+import { AssessmentInstructionsModule } from '../../../assessment/assessment-instructions/assessment-instructions.module';
 
 @Component({
     selector: 'jhi-text-submission-assessment',
     templateUrl: './text-submission-assessment.component.html',
     styleUrls: ['./text-submission-assessment.component.scss'],
+    standalone: true,
+    imports: [ArtemisAssessmentSharedModule, ArtemisSharedModule, TextAssessmentAreaComponent, FaIconComponent, TranslateDirective, AssessmentInstructionsModule, RouterLink],
 })
 export class TextSubmissionAssessmentComponent extends TextAssessmentBaseComponent implements OnInit, OnDestroy {
     private activatedRoute = inject(ActivatedRoute);

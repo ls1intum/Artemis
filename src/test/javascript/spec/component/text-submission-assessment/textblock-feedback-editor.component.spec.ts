@@ -6,7 +6,7 @@ import { TextBlock, TextBlockType } from 'app/entities/text/text-block.model';
 import { ConfirmIconComponent } from 'app/shared/confirm-icon/confirm-icon.component';
 import { TranslateModule, TranslateService } from '@ngx-translate/core';
 import { NgbModal, NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
-import { MockComponent, MockDirective, MockProvider } from 'ng-mocks';
+import { MockComponent, MockDirective, MockModule, MockProvider } from 'ng-mocks';
 import { FaLayersComponent } from '@fortawesome/angular-fontawesome';
 import { GradingInstruction } from 'app/exercises/shared/structured-grading-criterion/grading-instruction.model';
 import { AssessmentCorrectionRoundBadgeComponent } from 'app/assessment/unreferenced-feedback-detail/assessment-correction-round-badge/assessment-correction-round-badge.component';
@@ -20,6 +20,11 @@ import { TextAssessmentEventType } from 'app/entities/text/text-assesment-event.
 import { NgModel } from '@angular/forms';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { TextblockFeedbackDropdownComponent } from 'app/exercises/text/assess/textblock-feedback-editor/dropdown/textblock-feedback-dropdown.component';
+import { ArtemisFeedbackModule } from 'app/exercises/shared/feedback/feedback.module';
+import { ArtemisConfirmIconModule } from 'app/shared/confirm-icon/confirm-icon.module';
+import { ArtemisGradingInstructionLinkIconModule } from 'app/shared/grading-instruction-link-icon/grading-instruction-link-icon.module';
+import { ArtemisAssessmentSharedModule } from 'app/assessment/assessment-shared.module';
+import { ArtemisSharedCommonModule } from 'app/shared/shared-common.module';
 
 describe('TextblockFeedbackEditorComponent', () => {
     let component: TextblockFeedbackEditorComponent;
@@ -32,7 +37,6 @@ describe('TextblockFeedbackEditorComponent', () => {
         TestBed.configureTestingModule({
             imports: [ArtemisTestModule, TranslateModule.forRoot(), TranslateTestingModule, MockDirective(NgbTooltip)],
             declarations: [
-                TextblockFeedbackEditorComponent,
                 AssessmentCorrectionRoundBadgeComponent,
                 MockComponent(TextblockFeedbackDropdownComponent),
                 MockComponent(ConfirmIconComponent),
@@ -48,7 +52,32 @@ describe('TextblockFeedbackEditorComponent', () => {
                 { provide: TranslateService, useClass: MockTranslateService },
                 { provide: LocalStorageService, useClass: MockSyncStorage },
             ],
-        }).compileComponents();
+        })
+            .overrideComponent(TextblockFeedbackEditorComponent, {
+                remove: {
+                    imports: [
+                        ArtemisFeedbackModule,
+                        ArtemisConfirmIconModule,
+                        TranslateDirective,
+                        ArtemisGradingInstructionLinkIconModule,
+                        TextblockFeedbackDropdownComponent,
+                        ArtemisAssessmentSharedModule,
+                        ArtemisSharedCommonModule,
+                    ],
+                },
+                add: {
+                    imports: [
+                        MockModule(ArtemisFeedbackModule),
+                        MockModule(ArtemisConfirmIconModule),
+                        MockModule(ArtemisGradingInstructionLinkIconModule),
+                        MockModule(ArtemisAssessmentSharedModule),
+                        MockModule(ArtemisSharedCommonModule),
+                        MockComponent(TextblockFeedbackDropdownComponent),
+                        MockDirective(TranslateDirective),
+                    ],
+                },
+            })
+            .compileComponents();
     });
 
     beforeEach(() => {

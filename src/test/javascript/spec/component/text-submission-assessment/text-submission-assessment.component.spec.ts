@@ -5,7 +5,7 @@ import { By } from '@angular/platform-browser';
 import { of, throwError } from 'rxjs';
 import { AssessmentLayoutComponent } from 'app/assessment/assessment-layout/assessment-layout.component';
 import { TextAssessmentAreaComponent } from 'app/exercises/text/assess/text-assessment-area/text-assessment-area.component';
-import { MockComponent, MockDirective, MockPipe, MockProvider } from 'ng-mocks';
+import { MockComponent, MockDirective, MockModule, MockPipe, MockProvider } from 'ng-mocks';
 import { TextblockAssessmentCardComponent } from 'app/exercises/text/assess/textblock-assessment-card/textblock-assessment-card.component';
 import { TextblockFeedbackEditorComponent } from 'app/exercises/text/assess/textblock-feedback-editor/textblock-feedback-editor.component';
 import { ExerciseType } from 'app/entities/exercise.model';
@@ -27,6 +27,8 @@ import { Feedback, FeedbackType } from 'app/entities/feedback.model';
 import { ComplaintResponse } from 'app/entities/complaint-response.model';
 import { AlertService } from 'app/core/util/alert.service';
 import { SubmissionService } from 'app/exercises/shared/submission/submission.service';
+import { ComplaintService } from 'app/complaints/complaint.service';
+import { MockComplaintService } from '../../helpers/mocks/service/mock-complaint.service';
 import { GradingInstructionLinkIconComponent } from 'app/shared/grading-instruction-link-icon/grading-instruction-link-icon.component';
 import { MockSyncStorage } from '../../helpers/mocks/service/mock-sync-storage.service';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
@@ -46,6 +48,10 @@ import { AthenaService } from 'app/assessment/athena.service';
 import { MockAthenaService } from '../../helpers/mocks/service/mock-athena-service';
 import { TextBlockRef } from 'app/entities/text/text-block-ref.model';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { AssessmentInstructionsModule } from 'app/assessment/assessment-instructions/assessment-instructions.module';
+import { ArtemisAssessmentSharedModule } from 'app/assessment/assessment-shared.module';
+import { ArtemisSharedModule } from 'app/shared/shared.module';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 
 describe('TextSubmissionAssessmentComponent', () => {
     let component: TextSubmissionAssessmentComponent;
@@ -143,11 +149,9 @@ describe('TextSubmissionAssessmentComponent', () => {
                 studentParticipation: participation,
             }),
         } as unknown as ActivatedRoute;
-
         TestBed.configureTestingModule({
             imports: [ArtemisTestModule],
             declarations: [
-                TextSubmissionAssessmentComponent,
                 TextAssessmentAreaComponent,
                 MockComponent(TextblockAssessmentCardComponent),
                 MockComponent(TextblockFeedbackEditorComponent),
@@ -169,9 +173,26 @@ describe('TextSubmissionAssessmentComponent', () => {
                 { provide: SessionStorageService, useClass: MockSyncStorage },
                 { provide: TranslateService, useClass: MockTranslateService },
                 { provide: AthenaService, useClass: MockAthenaService },
+                { provide: ComplaintService, useClass: MockComplaintService },
                 MockProvider(Router),
             ],
-        }).compileComponents();
+        })
+            .overrideComponent(TextSubmissionAssessmentComponent, {
+                remove: {
+                    imports: [ArtemisAssessmentSharedModule, ArtemisSharedModule, TextAssessmentAreaComponent, FaIconComponent, TranslateDirective, AssessmentInstructionsModule],
+                },
+                add: {
+                    imports: [
+                        MockModule(AssessmentInstructionsModule),
+                        MockModule(ArtemisAssessmentSharedModule),
+                        MockModule(ArtemisSharedModule),
+                        MockComponent(TextAssessmentAreaComponent),
+                        MockComponent(FaIconComponent),
+                        MockDirective(TranslateDirective),
+                    ],
+                },
+            })
+            .compileComponents();
     });
 
     beforeEach(() => {
