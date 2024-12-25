@@ -25,7 +25,7 @@ plugins {
 }
 
 group = "de.tum.cit.aet.artemis"
-version = "7.8.0"
+version = "7.8.1"
 description = "Interactive Learning with Individual Feedback"
 
 java {
@@ -242,6 +242,7 @@ dependencies {
     implementation "de.jplag:c:${jplag_version}"
     implementation "de.jplag:cpp:${jplag_version}"
     implementation "de.jplag:csharp:${jplag_version}"
+    implementation "de.jplag:golang:${jplag_version}"
     implementation "de.jplag:java:${jplag_version}"
     implementation "de.jplag:javascript:${jplag_version}"
     implementation "de.jplag:kotlin:${jplag_version}"
@@ -257,7 +258,7 @@ dependencies {
     implementation "org.apache.lucene:lucene-queryparser:${lucene_version}"
     implementation "org.apache.lucene:lucene-core:${lucene_version}"
     implementation "org.apache.lucene:lucene-analyzers-common:${lucene_version}"
-    implementation "com.google.protobuf:protobuf-java:4.29.1"
+    implementation "com.google.protobuf:protobuf-java:4.29.2"
 
     // we have to override those values to use the latest version
     implementation "org.slf4j:jcl-over-slf4j:${slf4j_version}"
@@ -418,7 +419,7 @@ dependencies {
     implementation "org.springframework.security:spring-security-oauth2-core:${spring_security_version}"
     implementation "org.springframework.security:spring-security-oauth2-client:${spring_security_version}"
     // use newest version of nimbus-jose-jwt to avoid security issues through outdated dependencies
-    implementation "com.nimbusds:nimbus-jose-jwt:9.47"
+    implementation "com.nimbusds:nimbus-jose-jwt:9.48"
 
     implementation "org.springframework.security:spring-security-oauth2-jose:${spring_security_version}"
     implementation "org.springframework.security:spring-security-crypto:${spring_security_version}"
@@ -525,14 +526,14 @@ dependencies {
     }
     testImplementation "org.springframework.security:spring-security-test:${spring_security_version}"
     testImplementation "org.springframework.boot:spring-boot-test:${spring_boot_version}"
-    testImplementation "org.assertj:assertj-core:3.26.3"
+    testImplementation "org.assertj:assertj-core:3.27.0"
     testImplementation "org.mockito:mockito-core:${mockito_version}"
     testImplementation "org.mockito:mockito-junit-jupiter:${mockito_version}"
 
     testImplementation "io.github.classgraph:classgraph:4.8.179"
     testImplementation "org.awaitility:awaitility:4.2.2"
     testImplementation "org.apache.maven.shared:maven-invoker:3.3.0"
-    testImplementation "org.gradle:gradle-tooling-api:8.11.1"
+    testImplementation "org.gradle:gradle-tooling-api:8.12"
     testImplementation "org.apache.maven.surefire:surefire-report-parser:3.5.2"
     testImplementation "com.opencsv:opencsv:5.9"
     testImplementation("io.zonky.test:embedded-database-spring-test:2.6.0") {
@@ -614,7 +615,7 @@ tasks.withType(Test).configureEach {
 }
 
 wrapper {
-    gradleVersion = "8.12-rc-2"
+    gradleVersion = "8.12"
 }
 
 tasks.register("stage") {
