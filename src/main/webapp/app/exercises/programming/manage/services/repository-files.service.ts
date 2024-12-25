@@ -34,13 +34,11 @@ export class RepositoryFilesService {
     }
 
     private fetchTemplateRepoFiles(exerciseId: number): Observable<Map<string, string>> {
-        return this.fetchCached(this.calculateTemplateCacheKey(exerciseId), () => this.programmingExerciseService.getTemplateRepositoryTestFilesWithContent(exerciseId));
+        return this.programmingExerciseService.getTemplateRepositoryTestFilesWithContent(exerciseId);
     }
 
     private fetchSolutionRepoFiles(exerciseId: number): Observable<Map<string, string>> {
-        return this.fetchCached(this.calculateSolutionCacheKey(exerciseId), () => {
-            return this.programmingExerciseService.getSolutionRepositoryTestFilesWithContent(exerciseId);
-        });
+        return this.programmingExerciseService.getSolutionRepositoryTestFilesWithContent(exerciseId);
     }
 
     private fetchParticipationRepoFiles(participationId: number, commitHash: string): Observable<Map<string, string>> {
@@ -55,13 +53,5 @@ export class RepositoryFilesService {
             return of(cachedFiles);
         }
         return fetchFiles();
-    }
-
-    private calculateTemplateCacheKey(exerciseId: number): string {
-        return `exercise-${exerciseId}-template`;
-    }
-
-    private calculateSolutionCacheKey(exerciseId: number): string {
-        return `exercise-${exerciseId}-solution`;
     }
 }
