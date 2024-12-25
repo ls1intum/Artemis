@@ -5,6 +5,7 @@ import static de.tum.cit.aet.artemis.exercise.domain.ExerciseMode.INDIVIDUAL;
 import static de.tum.cit.aet.artemis.exercise.domain.ExerciseMode.TEAM;
 import static de.tum.cit.aet.artemis.programming.domain.ProgrammingLanguage.C;
 import static de.tum.cit.aet.artemis.programming.domain.ProgrammingLanguage.JAVA;
+import static de.tum.cit.aet.artemis.programming.domain.ProgrammingLanguage.KOTLIN;
 import static de.tum.cit.aet.artemis.programming.domain.ProgrammingLanguage.SWIFT;
 import static de.tum.cit.aet.artemis.programming.service.ProgrammingExerciseExportService.BUILD_PLAN_FILE_NAME;
 import static de.tum.cit.aet.artemis.programming.service.ProgrammingExerciseExportService.EXPORTED_EXERCISE_DETAILS_FILE_PREFIX;
@@ -526,8 +527,8 @@ public class ProgrammingExerciseTestService {
     public void createProgrammingExercise_programmingLanguage_validExercise_created(ProgrammingLanguage language, ProgrammingLanguageFeature programmingLanguageFeature)
             throws Exception {
         exercise.setProgrammingLanguage(language);
-        if (language == SWIFT) {
-            exercise.setPackageName("swiftTest");
+        if (programmingLanguageFeature.packageNameRequired() && language != JAVA && language != KOTLIN) {
+            exercise.setPackageName("testPackage");
         }
         exercise.setProjectType(programmingLanguageFeature.projectTypes().isEmpty() ? null : programmingLanguageFeature.projectTypes().getFirst());
         mockDelegate.mockConnectorRequestsForSetup(exercise, false, false, false);
@@ -687,8 +688,8 @@ public class ProgrammingExerciseTestService {
             throws Exception {
         exercise.setStaticCodeAnalysisEnabled(true);
         exercise.setProgrammingLanguage(language);
-        if (language == SWIFT) {
-            exercise.setPackageName("swiftTest");
+        if (programmingLanguageFeature.packageNameRequired() && language != JAVA && language != KOTLIN) {
+            exercise.setPackageName("testPackage");
         }
         // Exclude ProjectType FACT as SCA is not supported
         if (language == C) {
@@ -2383,7 +2384,7 @@ public class ProgrammingExerciseTestService {
         createProgrammingParticipationWithSubmissionAndResult(examExercise, "student4", 80D, ZonedDateTime.now().minusDays(6L), false);
 
         automaticProgrammingExerciseCleanupService.cleanupGitWorkingCopiesOnArtemisServer();
-        // Note: at the moment, we cannot easily assert something here, it might be possible to verify mocks on gitService, in case we could define it as SpyBean
+        // Note: at the moment, we cannot easily assert something here, it might be possible to verify mocks on gitService, in case we could define it as MockitoSpyBean
     }
 
     private void validateProgrammingExercise(ProgrammingExercise generatedExercise) {
@@ -2630,12 +2631,12 @@ public class ProgrammingExerciseTestService {
         exercise.setBuildConfig(programmingExerciseBuildConfigRepository.save(exercise.getBuildConfig()));
         exercise = programmingExerciseRepository.save(exercise);
         var statistics = request.get("/api/programming-exercises/" + exercise.getId() + "/build-log-statistics", HttpStatus.OK, BuildLogStatisticsDTO.class);
-        assertThat(statistics.buildCount()).isZero();
-        assertThat(statistics.agentSetupDuration()).isNull();
-        assertThat(statistics.testDuration()).isNull();
-        assertThat(statistics.scaDuration()).isNull();
-        assertThat(statistics.totalJobDuration()).isNull();
-        assertThat(statistics.dependenciesDownloadedCount()).isNull();
+        assertThat(statistics.buildCount()).isEqualTo(0);
+        assertThat(statistics.agentSetupDuration()).isEqualTo(0);
+        assertThat(statistics.testDuration()).isEqualTo(0);
+        assertThat(statistics.scaDuration()).isEqualTo(0);
+        assertThat(statistics.totalJobDuration()).isEqualTo(0);
+        assertThat(statistics.dependenciesDownloadedCount()).isEqualTo(0);
     }
 
     // TEST

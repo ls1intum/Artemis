@@ -1,8 +1,9 @@
-import { Component, EventEmitter, Input, OnChanges, OnInit, Output } from '@angular/core';
+import { Component, EventEmitter, Input, OnChanges, OnInit, Output, input } from '@angular/core';
 import { UserPublicInfoDTO } from 'app/core/user/user.model';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { ConversationDTO } from 'app/entities/metis/conversation/conversation.model';
 import { getAsChannelDTO } from 'app/entities/metis/conversation/channel.model';
+import { faSpinner } from '@fortawesome/free-solid-svg-icons';
 
 export interface AddUsersFormData {
     selectedUsers?: UserPublicInfoDTO[];
@@ -24,7 +25,12 @@ export class ConversationAddUsersFormComponent implements OnInit, OnChanges {
     @Input()
     activeConversation: ConversationDTO;
 
+    protected readonly isLoading = input<boolean>(false);
+
     form: FormGroup;
+
+    // Icons
+    protected readonly faSpinner = faSpinner;
 
     getAsChannel = getAsChannelDTO;
 
@@ -37,8 +43,9 @@ export class ConversationAddUsersFormComponent implements OnInit, OnChanges {
 
     get isSubmitPossible() {
         return (
-            (this.mode === 'individual' && !this.form.invalid) ||
-            (this.mode === 'group' && (this.form.value?.addAllStudents || this.form.value?.addAllTutors || this.form.value?.addAllInstructors))
+            !this.isLoading() &&
+            ((this.mode === 'individual' && !this.form.invalid) ||
+                (this.mode === 'group' && (this.form.value?.addAllStudents || this.form.value?.addAllTutors || this.form.value?.addAllInstructors)))
         );
     }
 

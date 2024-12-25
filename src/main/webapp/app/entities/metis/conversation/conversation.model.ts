@@ -23,6 +23,7 @@ export abstract class Conversation implements BaseEntity {
     public creator?: User;
     public creationDate?: dayjs.Dayjs;
     public lastMessageDate?: dayjs.Dayjs;
+    public title?: string;
 
     protected constructor(type: ConversationType) {
         this.type = type;

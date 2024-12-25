@@ -1,4 +1,4 @@
-import { AfterViewInit, ChangeDetectionStrategy, Component, OnDestroy, OnInit, ViewChild } from '@angular/core';
+import { AfterViewInit, ChangeDetectionStrategy, Component, OnDestroy, OnInit, ViewChild, inject } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { HttpErrorResponse } from '@angular/common/http';
 import { TextExercise } from 'app/entities/text/text-exercise.model';
@@ -37,6 +37,18 @@ import { FormulaAction } from 'app/shared/monaco-editor/model/actions/formula.ac
     changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class TextExerciseUpdateComponent implements OnInit, OnDestroy, AfterViewInit {
+    private activatedRoute = inject(ActivatedRoute);
+    private alertService = inject(AlertService);
+    private textExerciseService = inject(TextExerciseService);
+    private modalService = inject(NgbModal);
+    private popupService = inject(ExerciseUpdateWarningService);
+    private exerciseService = inject(ExerciseService);
+    private exerciseGroupService = inject(ExerciseGroupService);
+    private courseService = inject(CourseManagementService);
+    private eventManager = inject(EventManager);
+    private navigationUtilService = inject(ArtemisNavigationUtilService);
+    private athenaService = inject(AthenaService);
+
     readonly IncludedInOverallScore = IncludedInOverallScore;
     readonly documentationType: DocumentationType = 'Text';
 
@@ -55,7 +67,6 @@ export class TextExerciseUpdateComponent implements OnInit, OnDestroy, AfterView
     examCourseId?: number;
     isExamMode: boolean;
     isImport = false;
-    goBackAfterSaving = false;
     AssessmentType = AssessmentType;
     isAthenaEnabled$: Observable<boolean> | undefined;
 
@@ -77,20 +88,6 @@ export class TextExerciseUpdateComponent implements OnInit, OnDestroy, AfterView
     bonusPointsSubscription?: Subscription;
     plagiarismSubscription?: Subscription;
     teamSubscription?: Subscription;
-
-    constructor(
-        private alertService: AlertService,
-        private textExerciseService: TextExerciseService,
-        private modalService: NgbModal,
-        private popupService: ExerciseUpdateWarningService,
-        private exerciseService: ExerciseService,
-        private exerciseGroupService: ExerciseGroupService,
-        private courseService: CourseManagementService,
-        private eventManager: EventManager,
-        private activatedRoute: ActivatedRoute,
-        private navigationUtilService: ArtemisNavigationUtilService,
-        private athenaService: AthenaService,
-    ) {}
 
     get editType(): EditType {
         if (this.isImport) {
@@ -171,12 +168,6 @@ export class TextExerciseUpdateComponent implements OnInit, OnDestroy, AfterView
                 }),
             )
             .subscribe();
-
-        this.activatedRoute.queryParams.subscribe((params) => {
-            if (params.shouldHaveBackButtonToWizard) {
-                this.goBackAfterSaving = true;
-            }
-        });
 
         this.isAthenaEnabled$ = this.athenaService.isEnabled();
 
@@ -279,12 +270,6 @@ export class TextExerciseUpdateComponent implements OnInit, OnDestroy, AfterView
     private onSaveSuccess(exercise: TextExercise) {
         this.eventManager.broadcast({ name: 'textExerciseListModification', content: 'OK' });
         this.isSaving = false;
-
-        if (this.goBackAfterSaving) {
-            this.navigationUtilService.navigateBack();
-
-            return;
-        }
 
         this.navigationUtilService.navigateForwardFromExerciseUpdateOrCreation(exercise);
     }

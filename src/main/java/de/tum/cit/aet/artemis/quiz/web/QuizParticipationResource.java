@@ -28,7 +28,6 @@ import de.tum.cit.aet.artemis.exercise.service.ParticipationService;
 import de.tum.cit.aet.artemis.quiz.domain.QuizExercise;
 import de.tum.cit.aet.artemis.quiz.repository.QuizExerciseRepository;
 import de.tum.cit.aet.artemis.quiz.repository.QuizSubmissionRepository;
-import de.tum.cit.aet.artemis.quiz.repository.SubmittedAnswerRepository;
 import de.tum.cit.aet.artemis.quiz.service.QuizBatchService;
 
 /**
@@ -49,20 +48,16 @@ public class QuizParticipationResource {
 
     private final ResultRepository resultRepository;
 
-    private final SubmittedAnswerRepository submittedAnswerRepository;
-
     private final QuizSubmissionRepository quizSubmissionRepository;
 
     private final QuizBatchService quizBatchService;
 
     public QuizParticipationResource(QuizExerciseRepository quizExerciseRepository, ParticipationService participationService, UserRepository userRepository,
-            ResultRepository resultRepository, SubmittedAnswerRepository submittedAnswerRepository, QuizSubmissionRepository quizSubmissionRepository,
-            QuizBatchService quizBatchService) {
+            ResultRepository resultRepository, QuizSubmissionRepository quizSubmissionRepository, QuizBatchService quizBatchService) {
         this.quizExerciseRepository = quizExerciseRepository;
         this.participationService = participationService;
         this.userRepository = userRepository;
         this.resultRepository = resultRepository;
-        this.submittedAnswerRepository = submittedAnswerRepository;
         this.quizSubmissionRepository = quizSubmissionRepository;
         this.quizBatchService = quizBatchService;
     }

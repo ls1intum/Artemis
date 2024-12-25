@@ -56,22 +56,40 @@
                                         <div [hidden]="i !== activePageIndex" [id]="'exercise-' + exercise.id">
                                             @switch (exercise.type) {
                                                 @case (QUIZ) {
-                                                    <jhi-quiz-submission-exam
-                                                        [quizConfiguration]="exercise"
-                                                        [studentSubmission]="exercise.studentParticipations[0].submissions![0]"
-                                                    />
+                                                    @if (exercise.studentParticipations[0].submissions) {
+                                                        <jhi-quiz-submission-exam
+                                                            [quizConfiguration]="exercise"
+                                                            [studentSubmission]="exercise.studentParticipations[0].submissions[0]"
+                                                            (saveCurrentExercise)="triggerSave(false)"
+                                                        />
+                                                    }
                                                 }
                                                 @case (FILEUPLOAD) {
-                                                    <jhi-file-upload-submission-exam
-                                                        [exercise]="exercise"
-                                                        [studentSubmission]="exercise.studentParticipations[0].submissions![0]"
-                                                    />
+                                                    @if (exercise.studentParticipations[0].submissions) {
+                                                        <jhi-file-upload-submission-exam
+                                                            [exercise]="exercise"
+                                                            [studentSubmission]="exercise.studentParticipations[0].submissions[0]"
+                                                        />
+                                                    }
                                                 }
                                                 @case (TEXT) {
-                                                    <jhi-text-editor-exam [exercise]="exercise" [studentSubmission]="exercise.studentParticipations[0].submissions![0]" />
+                                                    @if (exercise.studentParticipations[0].submissions) {
+                                                        <jhi-text-editor-exam
+                                                            [exercise]="exercise"
+                                                            [studentSubmission]="exercise.studentParticipations[0].submissions[0]"
+                                                            (saveCurrentExercise)="triggerSave(false)"
+                                                        />
+                                                    }
                                                 }
                                                 @case (MODELING) {
-                                                    <jhi-modeling-submission-exam [exercise]="exercise" [studentSubmission]="exercise.studentParticipations[0].submissions![0]" />
+                                                    @if (exercise.studentParticipations[0].submissions) {
+                                                        <jhi-modeling-submission-exam
+                                                            [exercise]="exercise"
+                                                            [studentSubmission]="exercise.studentParticipations[0].submissions[0]"
+                                                            [isSubmissionSynced]="exercise.studentParticipations[0].submissions[0].isSynced"
+                                                            (saveCurrentExercise)="triggerSave(false)"
+                                                        />
+                                                    }
                                                 }
                                                 @case (PROGRAMMING) {
                                                     <jhi-programming-submission-exam

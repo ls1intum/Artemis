@@ -1078,7 +1078,25 @@ public class ProgrammingExerciseGradingService {
     private static void updateTestCaseMapBasedOnResultFeedback(Result result, HashMap<String, ProgrammingExerciseGradingStatisticsDTO.TestCaseStats> testCaseStatsMap) {
         result.getFeedbacks().stream()
                 // Filter the feedbacks to include only those that are automatic and have an assigned test case
-                .filter(feedback -> FeedbackType.AUTOMATIC.equals(feedback.getType()) && feedback.getTestCase() != null)
+                .filter(feedback -> {
+                    if (!FeedbackType.AUTOMATIC.equals(feedback.getType())) {
+                        return false;
+                    }
+                    if (feedback.getTestCase() == null) {
+                        return false;
+                    }
+                    if (feedback.getTestCase().getTestName() == null) {
+                        // Log the feedback id with null test name to analyse NullPointer issue if it occurs again in the future
+                        log.warn("Feedback with ID {} has a test case with a null test name.", feedback.getId());
+                        return false;
+                    }
+                    if (feedback.isPositive() == null) {
+                        // Log the feedback with null isPositive value to analyse NullPointer issue if it occurs again in the future
+                        log.warn("Feedback with ID {} has a test case with a null isPositive value.", feedback.getId());
+                        return false;
+                    }
+                    return true;
+                })
                 // Collect the filtered feedbacks into a map grouped by test case name, and partitioned by whether the feedback is positive
                 .collect(Collectors.groupingBy(
                         // Group by the name of the test case associated with the feedback

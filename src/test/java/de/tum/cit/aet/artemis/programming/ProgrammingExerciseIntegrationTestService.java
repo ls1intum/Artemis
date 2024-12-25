@@ -8,6 +8,7 @@ import static de.tum.cit.aet.artemis.programming.web.ProgrammingExerciseResource
 import static de.tum.cit.aet.artemis.programming.web.ProgrammingExerciseResourceErrorKeys.INVALID_TEMPLATE_BUILD_PLAN_ID;
 import static de.tum.cit.aet.artemis.programming.web.ProgrammingExerciseResourceErrorKeys.INVALID_TEMPLATE_REPOSITORY_URL;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.fail;
 import static org.awaitility.Awaitility.await;
 import static org.mockito.Mockito.any;
 import static org.mockito.Mockito.anyBoolean;
@@ -16,6 +17,7 @@ import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.eq;
+import static org.mockito.Mockito.reset;
 import static org.mockito.Mockito.timeout;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -94,7 +96,6 @@ import de.tum.cit.aet.artemis.plagiarism.PlagiarismUtilService;
 import de.tum.cit.aet.artemis.plagiarism.domain.PlagiarismComparison;
 import de.tum.cit.aet.artemis.plagiarism.domain.PlagiarismStatus;
 import de.tum.cit.aet.artemis.plagiarism.domain.text.TextPlagiarismResult;
-import de.tum.cit.aet.artemis.plagiarism.domain.text.TextSubmissionElement;
 import de.tum.cit.aet.artemis.plagiarism.dto.PlagiarismResultDTO;
 import de.tum.cit.aet.artemis.programming.domain.AuxiliaryRepository;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
@@ -108,6 +109,7 @@ import de.tum.cit.aet.artemis.programming.domain.VcsRepositoryUri;
 import de.tum.cit.aet.artemis.programming.dto.ProgrammingExerciseResetOptionsDTO;
 import de.tum.cit.aet.artemis.programming.dto.ProgrammingExerciseTestCaseDTO;
 import de.tum.cit.aet.artemis.programming.dto.ProgrammingExerciseTestCaseStateDTO;
+import de.tum.cit.aet.artemis.programming.hestia.util.HestiaUtilTestService;
 import de.tum.cit.aet.artemis.programming.repository.AuxiliaryRepositoryRepository;
 import de.tum.cit.aet.artemis.programming.service.GitService;
 import de.tum.cit.aet.artemis.programming.service.UriService;
@@ -139,11 +141,11 @@ public class ProgrammingExerciseIntegrationTestService {
     private String defaultBranch;
 
     @Autowired
-    // this will be a SpyBean because it was configured as SpyBean in the super class of the actual test class (see AbstractArtemisIntegrationTest)
+    // this will be a MockitoSpyBean because it was configured as MockitoSpyBean in the super class of the actual test class (see AbstractArtemisIntegrationTest)
     private FileService fileService;
 
     @Autowired
-    // this will be a SpyBean because it was configured as SpyBean in the super class of the actual test class (see AbstractArtemisIntegrationTest)
+    // this will be a MockitoSpyBean because it was configured as MockitoSpyBean in the super class of the actual test class (see AbstractArtemisIntegrationTest)
     private UriService uriService;
 
     @Autowired
@@ -168,7 +170,7 @@ public class ProgrammingExerciseIntegrationTestService {
     private RequestUtilService request;
 
     @Autowired
-    // this will be a SpyBean because it was configured as SpyBean in the super class of the actual test class (see AbstractArtemisIntegrationTest)
+    // this will be a MockitoSpyBean because it was configured as MockitoSpyBean in the super class of the actual test class (see AbstractArtemisIntegrationTest)
     private GitService gitService;
 
     @Autowired
@@ -194,6 +196,9 @@ public class ProgrammingExerciseIntegrationTestService {
 
     @Autowired
     private TextExerciseUtilService textExerciseUtilService;
+
+    @Autowired
+    protected HestiaUtilTestService hestiaUtilTestService;
 
     @Autowired
     private ProgrammingExerciseTestRepository programmingExerciseTestRepository;
@@ -237,10 +242,10 @@ public class ProgrammingExerciseIntegrationTestService {
 
     private MockDelegate mockDelegate;
 
-    // this will be a SpyBean because it was configured as SpyBean in the super class of the actual test class (see AbstractArtemisIntegrationTest)
+    // this will be a MockitoSpyBean because it was configured as MockitoSpyBean in the super class of the actual test class (see AbstractArtemisIntegrationTest)
     private VersionControlService versionControlService;
 
-    // this will be a SpyBean because it was configured as SpyBean in the super class of the actual test class (see AbstractArtemisIntegrationTest)
+    // this will be a MockitoSpyBean because it was configured as MockitoSpyBean in the super class of the actual test class (see AbstractArtemisIntegrationTest)
     private ContinuousIntegrationService continuousIntegrationService;
 
     private File plagiarismChecksTestReposDir;
@@ -249,8 +254,8 @@ public class ProgrammingExerciseIntegrationTestService {
             throws Exception {
         this.userPrefix = userPrefix;
         this.mockDelegate = mockDelegate;
-        this.versionControlService = versionControlService; // this can be used like a SpyBean
-        this.continuousIntegrationService = continuousIntegrationService; // this can be used like a SpyBean
+        this.versionControlService = versionControlService; // this can be used like a MockitoSpyBean
+        this.continuousIntegrationService = continuousIntegrationService; // this can be used like a MockitoSpyBean
 
         userUtilService.addUsers(userPrefix, 3, 2, 2, 2);
         course = programmingExerciseUtilService.addCourseWithOneProgrammingExerciseAndTestCases();
@@ -291,10 +296,6 @@ public class ProgrammingExerciseIntegrationTestService {
         // create two empty commits
         GitService.commit(localGit).setMessage("empty").setAllowEmpty(true).setSign(false).setAuthor("test", "test@test.com").call();
         localGit.push().call();
-
-        // we use the temp repository as remote origin for all repositories that are created during the
-        // TODO: distinguish between template, test and solution
-        doReturn(new GitUtilService.MockFileRepositoryUri(remoteRepoFile)).when(versionControlService).getCloneRepositoryUri(anyString(), anyString());
 
         this.plagiarismChecksTestReposDir = Files.createTempDirectory("jplag-repos").toFile();
     }
@@ -581,10 +582,6 @@ public class ProgrammingExerciseIntegrationTestService {
         File downloadedFile = exportSubmissionsByStudentLogins(HttpStatus.OK);
         assertThat(downloadedFile).exists();
         // TODO: unzip the files and add some checks
-    }
-
-    void testExportSubmissionsByStudentLogins_failToCreateZip() throws Exception {
-        exportSubmissionsByStudentLogins(HttpStatus.BAD_REQUEST);
     }
 
     private File exportSubmissionsByStudentLogins(HttpStatus expectedStatus) throws Exception {
@@ -1433,6 +1430,8 @@ public class ProgrammingExerciseIntegrationTestService {
     }
 
     void importProgrammingExercise_updatesTestCaseIds() throws Exception {
+        doReturn(new GitUtilService.MockFileRepositoryUri(remoteRepoFile)).when(versionControlService).getCloneRepositoryUri(anyString(), anyString());
+
         programmingExercise = programmingExerciseRepository.findByIdWithTemplateAndSolutionParticipationAndAuxiliaryRepositoriesElseThrow(programmingExercise.getId());
         var tests = programmingExerciseUtilService.addTestCasesToProgrammingExercise(programmingExercise);
         var test1 = tests.getFirst();
@@ -1464,6 +1463,8 @@ public class ProgrammingExerciseIntegrationTestService {
         var savedProgrammingExercise = programmingExerciseRepository.findByIdElseThrow(response.getId());
 
         assertThat(savedProgrammingExercise.getProblemStatement()).isEqualTo(newProblemStatement);
+
+        reset(versionControlService);
     }
 
     void exportSubmissionsByStudentLogins_notInstructorForExercise_forbidden() throws Exception {
@@ -1796,12 +1797,12 @@ public class ProgrammingExerciseIntegrationTestService {
         }
     }
 
-    private void assertPlagiarismResult(ProgrammingExercise programmingExercise, PlagiarismResultDTO<TextPlagiarismResult> result, double expectedSimilarity) {
+    private void assertPlagiarismResult(ProgrammingExercise programmingExercise, PlagiarismResultDTO<?> result, double expectedSimilarity) {
         // verify plagiarism result
         assertThat(result.plagiarismResult().getComparisons()).hasSize(1);
         assertThat(result.plagiarismResult().getExercise().getId()).isEqualTo(programmingExercise.getId());
 
-        PlagiarismComparison<TextSubmissionElement> comparison = result.plagiarismResult().getComparisons().iterator().next();
+        PlagiarismComparison<?> comparison = result.plagiarismResult().getComparisons().iterator().next();
         assertThat(comparison.getSimilarity()).isEqualTo(expectedSimilarity, Offset.offset(0.0001));
         assertThat(comparison.getStatus()).isEqualTo(PlagiarismStatus.NONE);
         assertThat(comparison.getMatches()).hasSize(1);
@@ -1920,11 +1921,11 @@ public class ProgrammingExerciseIntegrationTestService {
 
     void testValidateValidAuxiliaryRepository() throws Exception {
         AuxiliaryRepositoryBuilder auxRepoBuilder = AuxiliaryRepositoryBuilder.defaults();
-        testAuxRepo(auxRepoBuilder, HttpStatus.CREATED);
+        testAuxRepo(auxRepoBuilder, HttpStatus.OK);
     }
 
     void testValidateAuxiliaryRepositoryIdSetOnRequest() throws Exception {
-        testAuxRepo(AuxiliaryRepositoryBuilder.defaults().withId(0L), HttpStatus.BAD_REQUEST);
+        testAuxRepo(AuxiliaryRepositoryBuilder.defaults().withId(0L), HttpStatus.INTERNAL_SERVER_ERROR);
 
     }
 
@@ -1953,12 +1954,12 @@ public class ProgrammingExerciseIntegrationTestService {
 
     void testValidateAuxiliaryRepositoryWithoutCheckoutDirectory() throws Exception {
         AuxiliaryRepositoryBuilder auxRepoBuilder = AuxiliaryRepositoryBuilder.defaults().withoutCheckoutDirectory();
-        testAuxRepo(auxRepoBuilder, HttpStatus.CREATED);
+        testAuxRepo(auxRepoBuilder, HttpStatus.OK);
     }
 
     void testValidateAuxiliaryRepositoryWithBlankCheckoutDirectory() throws Exception {
         AuxiliaryRepositoryBuilder auxRepoBuilder = AuxiliaryRepositoryBuilder.defaults().withCheckoutDirectory("   ");
-        testAuxRepo(auxRepoBuilder, HttpStatus.CREATED);
+        testAuxRepo(auxRepoBuilder, HttpStatus.OK);
     }
 
     void testValidateAuxiliaryRepositoryWithTooLongCheckoutDirectory() throws Exception {
@@ -1981,7 +1982,7 @@ public class ProgrammingExerciseIntegrationTestService {
 
     void testValidateAuxiliaryRepositoryWithoutDescription() throws Exception {
         AuxiliaryRepositoryBuilder auxRepoBuilder = AuxiliaryRepositoryBuilder.defaults().withoutDescription();
-        testAuxRepo(auxRepoBuilder, HttpStatus.CREATED);
+        testAuxRepo(auxRepoBuilder, HttpStatus.OK);
     }
 
     void testGetAuxiliaryRepositoriesMissingExercise() throws Exception {
@@ -2158,7 +2159,7 @@ public class ProgrammingExerciseIntegrationTestService {
     }
 
     private String defaultAuxiliaryRepositoryEndpoint() {
-        return "/api/programming-exercises/setup";
+        return "/api/programming-exercises";
     }
 
     private String defaultResetEndpoint() {
@@ -2191,17 +2192,7 @@ public class ProgrammingExerciseIntegrationTestService {
 
     private void testAuxRepo(List<AuxiliaryRepository> body, HttpStatus expectedStatus) throws Exception {
         programmingExercise.setAuxiliaryRepositories(body);
-        programmingExercise.setId(null);
-        programmingExercise.setSolutionParticipation(null);
-        programmingExercise.setTemplateParticipation(null);
-        programmingExercise.setChannelName("pe-test");
-        programmingExercise.setShortName("ExerciseTitle");
-        programmingExercise.setTitle("Title");
-        if (expectedStatus == HttpStatus.CREATED) {
-            mockDelegate.mockConnectorRequestsForSetup(programmingExercise, false, false, false);
-            mockDelegate.mockGetProjectKeyFromAnyUrl(programmingExercise.getProjectKey());
-        }
-        request.postWithResponseBody(defaultAuxiliaryRepositoryEndpoint(), programmingExercise, ProgrammingExercise.class, expectedStatus);
+        request.putWithResponseBody(defaultAuxiliaryRepositoryEndpoint(), programmingExercise, ProgrammingExercise.class, expectedStatus);
     }
 
     private static class AuxiliaryRepositoryBuilder {
@@ -2275,8 +2266,8 @@ public class ProgrammingExerciseIntegrationTestService {
         }
     }
 
-    void testReEvaluateAndUpdateProgrammingExercise_instructorNotInCourse_forbidden() throws Exception {
-        userUtilService.addInstructor("other-instructors", userPrefix + "instructoralt");
+    void testReEvaluateAndUpdateProgrammingExercise_instructorNotInCourse_forbidden(String testPrefix) throws Exception {
+        userUtilService.addInstructor("other-instructors", testPrefix + "instructoralt");
         programmingExerciseUtilService.addCourseWithOneProgrammingExercise();
         ProgrammingExercise programmingExercise = programmingExerciseTestRepository.findAllWithEagerTemplateAndSolutionParticipations().getFirst();
         request.put("/api/programming-exercises/" + programmingExercise.getId() + "/re-evaluate", programmingExercise, HttpStatus.FORBIDDEN);
@@ -2295,16 +2286,43 @@ public class ProgrammingExerciseIntegrationTestService {
         request.put("/api/programming-exercises/" + programmingExercise.getId() + "/re-evaluate", programmingExerciseToBeConflicted, HttpStatus.CONFLICT);
     }
 
-    void test_redirectGetSolutionRepositoryFilesWithoutContent(BiFunction<ProgrammingExercise, Map<String, String>, LocalRepository> setupRepositoryMock) throws Exception {
+    void test_redirectGetSolutionRepositoryFilesWithoutContent() throws Exception {
+        test_redirectGetSolutionRepositoryFilesWithoutContent((exercise, files) -> {
+            LocalRepository localRepository = new LocalRepository("main");
+            try {
+                hestiaUtilTestService.setupSolution(files, exercise, localRepository);
+            }
+            catch (Exception e) {
+                fail("Setup solution threw unexpected exception: " + e.getMessage());
+            }
+            return localRepository;
+        });
+    }
+
+    private void test_redirectGetSolutionRepositoryFilesWithoutContent(BiFunction<ProgrammingExercise, Map<String, String>, LocalRepository> setupRepositoryMock) throws Exception {
         setupRepositoryMock.apply(programmingExercise, Map.ofEntries(Map.entry("A.java", "abc"), Map.entry("B.java", "cde"), Map.entry("C.java", "efg")));
 
         var savedExercise = programmingExerciseRepository.findByIdWithTemplateAndSolutionParticipationElseThrow(programmingExercise.getId());
 
+        // We expect an URL which is the endpoint, with which the file contents can be retrieved
         request.getWithForwardedUrl("/api/programming-exercises/" + programmingExercise.getId() + "/file-names", HttpStatus.OK,
                 "/api/repository/" + savedExercise.getSolutionParticipation().getId() + "/file-names");
     }
 
-    void test_redirectGetTemplateRepositoryFilesWithContent(BiFunction<ProgrammingExercise, Map<String, String>, LocalRepository> setupRepositoryMock) throws Exception {
+    void test_redirectGetTemplateRepositoryFilesWithContent() throws Exception {
+        test_redirectGetTemplateRepositoryFilesWithContent((exercise, files) -> {
+            LocalRepository localRepository = new LocalRepository("main");
+            try {
+                hestiaUtilTestService.setupTemplate(files, exercise, localRepository);
+            }
+            catch (Exception e) {
+                fail("Setup template threw unexpected exception: " + e.getMessage());
+            }
+            return localRepository;
+        });
+    }
+
+    private void test_redirectGetTemplateRepositoryFilesWithContent(BiFunction<ProgrammingExercise, Map<String, String>, LocalRepository> setupRepositoryMock) throws Exception {
         setupRepositoryMock.apply(programmingExercise, Map.ofEntries(Map.entry("A.java", "abc"), Map.entry("B.java", "cde"), Map.entry("C.java", "efg")));
 
         var savedExercise = programmingExerciseRepository.findByIdWithTemplateAndSolutionParticipationElseThrow(programmingExercise.getId());
@@ -2313,20 +2331,51 @@ public class ProgrammingExerciseIntegrationTestService {
                 "/api/repository/" + savedExercise.getTemplateParticipation().getId() + "/files-content");
     }
 
-    void testRedirectGetParticipationRepositoryFilesWithContentAtCommit(BiFunction<ProgrammingExercise, Map<String, String>, ProgrammingSubmission> setupRepositoryMock)
-            throws Exception {
-        var submission = setupRepositoryMock.apply(programmingExercise, Map.ofEntries(Map.entry("A.java", "abc"), Map.entry("B.java", "cde"), Map.entry("C.java", "efg")));
-
-        request.getWithForwardedUrl("/api/programming-exercise-participations/" + participation1.getId() + "/files-content/" + submission.getCommitHash(), HttpStatus.OK,
-                "/api/repository/" + participation1.getId() + "/files-content/" + submission.getCommitHash());
+    void testRedirectGetParticipationRepositoryFilesWithContentAtCommit(String testPrefix) throws Exception {
+        testRedirectGetParticipationRepositoryFilesWithContentAtCommit((exercise, files) -> {
+            LocalRepository localRepository = new LocalRepository("main");
+            var studentLogin = testPrefix + "student1";
+            try {
+                localRepository.configureRepos("testLocalRepo", "testOriginRepo");
+                return hestiaUtilTestService.setupSubmission(files, exercise, localRepository, studentLogin);
+            }
+            catch (Exception e) {
+                fail("Test setup failed");
+            }
+            return null;
+        });
     }
 
-    void testRedirectGetParticipationRepositoryFilesWithContentAtCommitForbidden(BiFunction<ProgrammingExercise, Map<String, String>, ProgrammingSubmission> setupRepositoryMock)
+    private void testRedirectGetParticipationRepositoryFilesWithContentAtCommit(BiFunction<ProgrammingExercise, Map<String, String>, ProgrammingSubmission> setupRepositoryMock)
             throws Exception {
         var submission = setupRepositoryMock.apply(programmingExercise, Map.ofEntries(Map.entry("A.java", "abc"), Map.entry("B.java", "cde"), Map.entry("C.java", "efg")));
-        // without forwarding the redirectUrl is null
-        request.getWithForwardedUrl("/api/programming-exercise-participations/" + participation1.getId() + "/files-content/" + submission.getCommitHash(), HttpStatus.FORBIDDEN,
-                null);
+        String filesWithContentsAsJson = "{\n" + "  \"C.java\" : \"efg\",\n" + "  \"B.java\" : \"cde\",\n" + "  \"A.java\" : \"abc\"\n" + "}";
+
+        request.getWithFileContents("/api/programming-exercise-participations/" + participation1.getId() + "/files-content/" + submission.getCommitHash(), HttpStatus.OK,
+                filesWithContentsAsJson);
+    }
+
+    void testRedirectGetParticipationRepositoryFilesWithContentAtCommitForbidden(String testPrefix) throws Exception {
+        testRedirectGetParticipationRepositoryFilesWithContentAtCommitForbidden((exercise, files) -> {
+            LocalRepository localRepository = new LocalRepository("main");
+
+            var studentLogin = testPrefix + "student1";
+            try {
+                localRepository.configureRepos("testLocalRepo", "testOriginRepo");
+                return hestiaUtilTestService.setupSubmission(files, exercise, localRepository, studentLogin);
+            }
+            catch (Exception e) {
+                fail("Test setup failed");
+            }
+            return null;
+        });
+    }
+
+    private void testRedirectGetParticipationRepositoryFilesWithContentAtCommitForbidden(
+            BiFunction<ProgrammingExercise, Map<String, String>, ProgrammingSubmission> setupRepositoryMock) throws Exception {
+        var submission = setupRepositoryMock.apply(programmingExercise, Map.ofEntries(Map.entry("A.java", "abc"), Map.entry("B.java", "cde"), Map.entry("C.java", "efg")));
+
+        request.get("/api/programming-exercise-participations/" + participation1.getId() + "/files-content/" + submission.getCommitHash(), HttpStatus.FORBIDDEN, Map.class);
     }
 
     private long getMaxProgrammingExerciseId() {

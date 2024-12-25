@@ -19,7 +19,7 @@ const lectureData = {
     endDate: dayjs().add(1, 'hour'),
 };
 
-test.describe('Lecture management', () => {
+test.describe('Lecture management', { tag: '@fast' }, () => {
     let course: Course;
 
     test.beforeEach(async ({ login, courseManagementAPIRequests }) => {

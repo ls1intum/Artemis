@@ -15,6 +15,7 @@ import { ArtemisCompetenciesModule } from 'app/course/competencies/competency.mo
 import { ArtemisSharedComponentModule } from 'app/shared/components/shared-component.module';
 import { merge } from 'rxjs';
 import { ArtemisMarkdownEditorModule } from 'app/shared/markdown-editor/markdown-editor.module';
+import { DateTimePickerType } from 'app/shared/date-time-picker/date-time-picker.component';
 
 @Component({
     selector: 'jhi-common-course-competency-form',
@@ -54,6 +55,7 @@ export class CommonCourseCompetencyFormComponent implements OnInit, OnChanges {
     onTitleOrDescriptionChange = new EventEmitter<void>();
 
     protected readonly competencyValidators = CourseCompetencyValidators;
+    protected readonly DateTimePickerType = DateTimePickerType;
 
     suggestedTaxonomies: string[] = [];
 

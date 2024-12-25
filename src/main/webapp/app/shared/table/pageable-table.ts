@@ -1,3 +1,9 @@
+export interface PageableResult<T> {
+    content: T[];
+    totalElements: number;
+    totalPages: number;
+}
+
 export interface SearchResult<T> {
     resultsOnPage: T[];
     numberOfPages: number;

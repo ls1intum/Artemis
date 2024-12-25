@@ -3,7 +3,7 @@ import { UserRouteAccessService } from 'app/core/auth/user-route-access-service'
 import { TextExerciseDetailComponent } from './text-exercise-detail.component';
 import { TextExerciseUpdateComponent } from './text-exercise-update.component';
 import { TextExercise } from 'app/entities/text/text-exercise.model';
-import { Injectable } from '@angular/core';
+import { Injectable, inject } from '@angular/core';
 import { TextExerciseService } from 'app/exercises/text/manage/text-exercise/text-exercise.service';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
 import { of } from 'rxjs';
@@ -19,11 +19,9 @@ import { ExampleSubmissionsComponent } from 'app/exercises/shared/example-submis
 
 @Injectable({ providedIn: 'root' })
 export class TextExerciseResolver implements Resolve<TextExercise> {
-    constructor(
-        private textExerciseService: TextExerciseService,
-        private courseService: CourseManagementService,
-        private exerciseGroupService: ExerciseGroupService,
-    ) {}
+    private textExerciseService = inject(TextExerciseService);
+    private courseService = inject(CourseManagementService);
+    private exerciseGroupService = inject(ExerciseGroupService);
 
     /**
      * Resolves the route and initializes text exercise

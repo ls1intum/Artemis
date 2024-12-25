@@ -1,11 +1,13 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, inject } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
+import { CommonModule } from '@angular/common';
 import { HttpClient, HttpHeaders, HttpParams } from '@angular/common/http';
 import { AccountService } from 'app/core/auth/account.service';
 import { captureException } from '@sentry/angular';
 import { SessionStorageService } from 'ngx-webstorage';
 import { LtiService } from 'app/shared/service/lti.service';
 import { Theme, ThemeService } from 'app/core/theme/theme.service';
+import { TranslateDirective } from '../shared/language/translate.directive';
 
 type LtiLaunchResponse = {
     targetLinkUri: string;
@@ -16,19 +18,21 @@ type LtiLaunchResponse = {
 @Component({
     selector: 'jhi-lti-exercise-launch',
     templateUrl: './lti13-exercise-launch.component.html',
+    standalone: true,
+    imports: [TranslateDirective, CommonModule],
 })
 export class Lti13ExerciseLaunchComponent implements OnInit {
+    private route = inject(ActivatedRoute);
+    private http = inject(HttpClient);
+    private accountService = inject(AccountService);
+    private router = inject(Router);
+    private sessionStorageService = inject(SessionStorageService);
+    private ltiService = inject(LtiService);
+    private themeService = inject(ThemeService);
+
     isLaunching: boolean;
 
-    constructor(
-        private route: ActivatedRoute,
-        private http: HttpClient,
-        private accountService: AccountService,
-        private router: Router,
-        private sessionStorageService: SessionStorageService,
-        private ltiService: LtiService,
-        private themeService: ThemeService,
-    ) {
+    constructor() {
         this.isLaunching = true;
     }
 
@@ -147,8 +151,13 @@ export class Lti13ExerciseLaunchComponent implements OnInit {
 
     replaceWindowLocationWrapper(url: string): void {
         this.ltiService.setShownViaLti(true);
-        this.themeService.applyThemeExplicitly(Theme.LIGHT);
-        const path = new URL(url).pathname;
+        this.themeService.applyThemePreference(Theme.LIGHT);
+        let path;
+        if (url === '/lti/select-course') {
+            path = url;
+        } else {
+            path = new URL(url).pathname;
+        }
 
         this.router.navigate([path], { replaceUrl: true });
     }

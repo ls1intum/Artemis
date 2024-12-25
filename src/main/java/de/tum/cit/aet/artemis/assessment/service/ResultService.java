@@ -24,6 +24,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Profile;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
 import de.tum.cit.aet.artemis.assessment.domain.AssessmentType;
@@ -31,6 +32,7 @@ import de.tum.cit.aet.artemis.assessment.domain.Feedback;
 import de.tum.cit.aet.artemis.assessment.domain.FeedbackType;
 import de.tum.cit.aet.artemis.assessment.domain.LongFeedbackText;
 import de.tum.cit.aet.artemis.assessment.domain.Result;
+import de.tum.cit.aet.artemis.assessment.dto.FeedbackAffectedStudentDTO;
 import de.tum.cit.aet.artemis.assessment.dto.FeedbackAnalysisResponseDTO;
 import de.tum.cit.aet.artemis.assessment.dto.FeedbackDetailDTO;
 import de.tum.cit.aet.artemis.assessment.dto.FeedbackPageableDTO;
@@ -46,6 +48,7 @@ import de.tum.cit.aet.artemis.buildagent.dto.ResultBuildJob;
 import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.dto.SearchResultPageDTO;
+import de.tum.cit.aet.artemis.core.dto.SortingOrder;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.core.repository.UserRepository;
 import de.tum.cit.aet.artemis.core.security.Role;
@@ -60,6 +63,7 @@ import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation
 import de.tum.cit.aet.artemis.exercise.repository.StudentParticipationRepository;
 import de.tum.cit.aet.artemis.exercise.service.ExerciseDateService;
 import de.tum.cit.aet.artemis.lti.service.LtiNewResultService;
+import de.tum.cit.aet.artemis.modeling.service.compass.strategy.NameSimilarity;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseParticipation;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseStudentParticipation;
@@ -121,6 +125,10 @@ public class ResultService {
     private final ProgrammingExerciseTaskService programmingExerciseTaskService;
 
     private final ProgrammingExerciseRepository programmingExerciseRepository;
+
+    private static final int MAX_FEEDBACK_IDS = 5;
+
+    private static final double SIMILARITY_THRESHOLD = 0.9;
 
     public ResultService(UserRepository userRepository, ResultRepository resultRepository, Optional<LtiNewResultService> ltiNewResultService,
             ResultWebsocketService resultWebsocketService, ComplaintResponseRepository complaintResponseRepository, RatingRepository ratingRepository,
@@ -566,10 +574,12 @@ public class ResultService {
      * Pagination and sorting:
      * - Sorting is applied based on the specified column and order (ascending or descending).
      * - The result is paginated according to the provided page number and page size.
+     * Additionally one can group the feedback detail text.
      *
-     * @param exerciseId The ID of the exercise for which feedback details should be retrieved.
-     * @param data       The {@link FeedbackPageableDTO} containing page number, page size, search term, sorting options, and filtering parameters
-     *                       (task names, test cases, occurrence range, error categories).
+     * @param exerciseId    The ID of the exercise for which feedback details should be retrieved.
+     * @param data          The {@link FeedbackPageableDTO} containing page number, page size, search term, sorting options, and filtering parameters
+     *                          (task names, test cases, occurrence range, error categories).
+     * @param groupFeedback The flag to enable grouping and aggregation of feedback details.
      * @return A {@link FeedbackAnalysisResponseDTO} object containing:
      *         - A {@link SearchResultPageDTO} of paginated feedback details.
      *         - The total number of distinct results for the exercise.
@@ -577,7 +587,7 @@ public class ResultService {
      *         - A list of active test case names used in the feedback.
      *         - A list of predefined error categories ("Student Error," "Ares Error," "AST Error") available for filtering.
      */
-    public FeedbackAnalysisResponseDTO getFeedbackDetailsOnPage(long exerciseId, FeedbackPageableDTO data) {
+    public FeedbackAnalysisResponseDTO getFeedbackDetailsOnPage(long exerciseId, FeedbackPageableDTO data, boolean groupFeedback) {
 
         // 1. Fetch programming exercise with associated test cases
         ProgrammingExercise programmingExercise = programmingExerciseRepository.findWithTestCasesByIdElseThrow(exerciseId);
@@ -594,12 +604,12 @@ public class ResultService {
         Set<String> taskNames = tasks.stream().map(ProgrammingExerciseTask::getTaskName).collect(Collectors.toSet());
 
         // 5. Include unassigned tasks if specified by the filter; otherwise, only include specified tasks
-        List<String> includeUnassignedTasks = new ArrayList<>(taskNames);
+        List<String> includeNotAssignedToTask = new ArrayList<>(taskNames);
         if (!data.getFilterTasks().isEmpty()) {
-            includeUnassignedTasks.removeAll(data.getFilterTasks());
+            includeNotAssignedToTask.removeAll(data.getFilterTasks());
         }
         else {
-            includeUnassignedTasks.clear();
+            includeNotAssignedToTask.clear();
         }
 
         // 6. Define the occurrence range based on filter parameters
@@ -610,23 +620,113 @@ public class ResultService {
         List<String> filterErrorCategories = data.getFilterErrorCategories();
 
         // 8. Set up pagination and sorting based on input data
-        final var pageable = PageUtil.createDefaultPageRequest(data, PageUtil.ColumnMapping.FEEDBACK_ANALYSIS);
+        final Pageable pageable = groupFeedback ? Pageable.unpaged() : PageUtil.createDefaultPageRequest(data, PageUtil.ColumnMapping.FEEDBACK_ANALYSIS);
 
-        // 9. Query the database to retrieve paginated and filtered feedback
+        // 9. Query the database based on groupFeedback attribute to retrieve paginated and filtered feedback
         final Page<FeedbackDetailDTO> feedbackDetailPage = studentParticipationRepository.findFilteredFeedbackByExerciseId(exerciseId,
-                StringUtils.isBlank(data.getSearchTerm()) ? "" : data.getSearchTerm().toLowerCase(), data.getFilterTestCases(), includeUnassignedTasks, minOccurrence,
+                StringUtils.isBlank(data.getSearchTerm()) ? "" : data.getSearchTerm().toLowerCase(), data.getFilterTestCases(), includeNotAssignedToTask, minOccurrence,
                 maxOccurrence, filterErrorCategories, pageable);
+        ;
+        List<FeedbackDetailDTO> processedDetails;
+        int totalPages = 0;
+        long totalCount = 0;
+        long highestOccurrenceOfGroupedFeedback = 0;
+        if (!groupFeedback) {
+            // Process and map feedback details, calculating relative count and assigning task names
+            processedDetails = feedbackDetailPage.getContent().stream()
+                    .map(detail -> new FeedbackDetailDTO(detail.feedbackIds().subList(0, Math.min(detail.feedbackIds().size(), MAX_FEEDBACK_IDS)), detail.count(),
+                            (detail.count() * 100.00) / distinctResultCount, detail.detailTexts(), detail.testCaseName(), detail.taskName(), detail.errorCategory()))
+                    .toList();
+            totalPages = feedbackDetailPage.getTotalPages();
+            totalCount = feedbackDetailPage.getTotalElements();
+        }
+        else {
+            // Fetch all feedback details
+            List<FeedbackDetailDTO> allFeedbackDetails = feedbackDetailPage.getContent();
 
-        // 10. Process and map feedback details, calculating relative count and assigning task names
-        List<FeedbackDetailDTO> processedDetails = feedbackDetailPage.getContent().stream().map(detail -> new FeedbackDetailDTO(detail.count(),
-                (detail.count() * 100.00) / distinctResultCount, detail.detailText(), detail.testCaseName(), detail.taskName(), detail.errorCategory())).toList();
+            // Apply grouping and aggregation with a similarity threshold of 90%
+            List<FeedbackDetailDTO> aggregatedFeedbackDetails = aggregateFeedback(allFeedbackDetails, SIMILARITY_THRESHOLD);
 
-        // 11. Predefined error categories available for filtering on the client side
+            highestOccurrenceOfGroupedFeedback = aggregatedFeedbackDetails.stream().mapToLong(FeedbackDetailDTO::count).max().orElse(0);
+            // Apply manual sorting
+            Comparator<FeedbackDetailDTO> comparator = getComparatorForFeedbackDetails(data);
+            List<FeedbackDetailDTO> processedDetailsPreSort = new ArrayList<>(aggregatedFeedbackDetails);
+            processedDetailsPreSort.sort(comparator);
+            // Apply manual pagination
+            int page = data.getPage();
+            int pageSize = data.getPageSize();
+            int start = Math.max(0, (page - 1) * pageSize);
+            int end = Math.min(start + pageSize, processedDetailsPreSort.size());
+            processedDetails = processedDetailsPreSort.subList(start, end);
+            processedDetails = processedDetails.stream().map(detail -> new FeedbackDetailDTO(detail.feedbackIds().subList(0, Math.min(detail.feedbackIds().size(), 5)),
+                    detail.count(), (detail.count() * 100.00) / distinctResultCount, detail.detailTexts(), detail.testCaseName(), detail.taskName(), detail.errorCategory()))
+                    .toList();
+            totalPages = (int) Math.ceil((double) processedDetailsPreSort.size() / pageSize);
+            totalCount = aggregatedFeedbackDetails.size();
+        }
+
+        // 10. Predefined error categories available for filtering on the client side
         final List<String> ERROR_CATEGORIES = List.of("Student Error", "Ares Error", "AST Error");
 
-        // 12. Return response containing processed feedback details, task names, active test case names, and error categories
-        return new FeedbackAnalysisResponseDTO(new SearchResultPageDTO<>(processedDetails, feedbackDetailPage.getTotalPages()), feedbackDetailPage.getTotalElements(), taskNames,
-                activeTestCaseNames, ERROR_CATEGORIES);
+        // 11. Return response containing processed feedback details, task names, active test case names, and error categories
+        return new FeedbackAnalysisResponseDTO(new SearchResultPageDTO<>(processedDetails, totalPages), totalCount, taskNames, activeTestCaseNames, ERROR_CATEGORIES,
+                highestOccurrenceOfGroupedFeedback);
+    }
+
+    private Comparator<FeedbackDetailDTO> getComparatorForFeedbackDetails(FeedbackPageableDTO search) {
+        Map<String, Comparator<FeedbackDetailDTO>> comparators = Map.of("count", Comparator.comparingLong(FeedbackDetailDTO::count), "detailTexts",
+                Comparator.comparing(detail -> detail.detailTexts().isEmpty() ? "" : detail.detailTexts().getFirst(), // Sort by the first element of the list
+                        String.CASE_INSENSITIVE_ORDER),
+                "testCaseName", Comparator.comparing(FeedbackDetailDTO::testCaseName, String.CASE_INSENSITIVE_ORDER), "taskName",
+                Comparator.comparing(FeedbackDetailDTO::taskName, String.CASE_INSENSITIVE_ORDER));
+
+        Comparator<FeedbackDetailDTO> comparator = comparators.getOrDefault(search.getSortedColumn(), (a, b) -> 0);
+        return search.getSortingOrder() == SortingOrder.ASCENDING ? comparator : comparator.reversed();
+    }
+
+    private List<FeedbackDetailDTO> aggregateFeedback(List<FeedbackDetailDTO> feedbackDetails, double similarityThreshold) {
+        List<FeedbackDetailDTO> processedDetails = new ArrayList<>();
+
+        for (FeedbackDetailDTO base : feedbackDetails) {
+            boolean isMerged = false;
+
+            for (FeedbackDetailDTO processed : processedDetails) {
+                // Ensure feedbacks have the same testCaseName and taskName
+                if (base.testCaseName().equals(processed.testCaseName()) && base.taskName().equals(processed.taskName())) {
+                    double similarity = NameSimilarity.levenshteinSimilarity(base.detailTexts().getFirst(), processed.detailTexts().getFirst());
+
+                    if (similarity > similarityThreshold) {
+                        // Merge the current base feedback into the processed feedback
+                        List<Long> mergedFeedbackIds = new ArrayList<>(processed.feedbackIds());
+                        if (processed.feedbackIds().size() < MAX_FEEDBACK_IDS) {
+                            mergedFeedbackIds.addAll(base.feedbackIds());
+                        }
+
+                        List<String> mergedTexts = new ArrayList<>(processed.detailTexts());
+                        mergedTexts.add(base.detailTexts().getFirst());
+
+                        long mergedCount = processed.count() + base.count();
+
+                        // Replace the processed entry with the updated one
+                        processedDetails.remove(processed);
+                        FeedbackDetailDTO updatedProcessed = new FeedbackDetailDTO(mergedFeedbackIds, mergedCount, 0, mergedTexts, processed.testCaseName(), processed.taskName(),
+                                processed.errorCategory());
+                        processedDetails.add(updatedProcessed); // Add the updated entry
+                        isMerged = true;
+                        break; // No need to check further
+                    }
+                }
+            }
+
+            if (!isMerged) {
+                // If not merged, add it as a new entry in processedDetails
+                FeedbackDetailDTO newEntry = new FeedbackDetailDTO(base.feedbackIds(), base.count(), 0, List.of(base.detailTexts().getFirst()), base.testCaseName(),
+                        base.taskName(), base.errorCategory());
+                processedDetails.add(newEntry);
+            }
+        }
+
+        return processedDetails;
     }
 
     /**
@@ -640,6 +740,20 @@ public class ResultService {
      */
     public long getMaxCountForExercise(long exerciseId) {
         return studentParticipationRepository.findMaxCountForExercise(exerciseId);
+    }
+
+    /**
+     * Retrieves a paginated list of students affected by specific feedback entries for a given exercise.
+     * <br>
+     * This method filters students based on feedback IDs and returns participation details for each affected student.
+     * <br>
+     *
+     * @param exerciseId  for which the affected student participation data is requested.
+     * @param feedbackIds used to filter the participation to only those affected by specific feedback entries.
+     * @return A {@link List} of {@link FeedbackAffectedStudentDTO} objects, each representing a student affected by the feedback.
+     */
+    public List<FeedbackAffectedStudentDTO> getAffectedStudentsWithFeedbackIds(long exerciseId, List<Long> feedbackIds) {
+        return studentParticipationRepository.findAffectedStudentsByFeedbackIds(exerciseId, feedbackIds);
     }
 
     /**

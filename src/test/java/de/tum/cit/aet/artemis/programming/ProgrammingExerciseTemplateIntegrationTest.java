@@ -2,7 +2,7 @@ package de.tum.cit.aet.artemis.programming;
 
 import static de.tum.cit.aet.artemis.core.util.TestConstants.COMMIT_HASH_OBJECT_ID;
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Fail.fail;
+import static org.junit.jupiter.api.Assumptions.assumeTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.doReturn;
 
@@ -83,13 +83,11 @@ class ProgrammingExerciseTemplateIntegrationTest extends AbstractProgrammingInte
     @BeforeAll
     static void detectMavenHome() {
         /*
-         * Maven invoker only looks for those two values and ignores maven, even if it is available over PATH. Because Maven reports the path when "-version" is used, we use that
-         * to auto-detect the maven home and store it in the system properties.
+         * Maven invoker only looks for system properties and ignores maven, even if it is available over PATH.
+         * Because Maven reports the path when "-version" is used, we use that to auto-detect the maven home and store it in the system properties.
          */
-        String m2Home = System.getenv("M2_HOME");
-        String mavenHome = System.getProperty("maven.home");
 
-        if (m2Home != null || mavenHome != null) {
+        if (isMavenHomeSet()) {
             return;
         }
 
@@ -98,57 +96,68 @@ class ProgrammingExerciseTemplateIntegrationTest extends AbstractProgrammingInte
             var lines = runProcess(new ProcessBuilder(mvnExecutable, "-version"));
             String prefix = "maven home:";
             Optional<String> home = lines.stream().filter(line -> line.toLowerCase().startsWith(prefix)).findFirst();
-            if (home.isPresent()) {
-                System.setProperty("maven.home", home.get().substring(prefix.length()).strip());
-            }
-            else {
-                fail("maven home not found, unexpected '-version' format");
-            }
+            home.ifPresent(homeLocation -> System.setProperty("maven.home", homeLocation.substring(prefix.length()).strip()));
         }
         catch (Exception e) {
-            fail("maven home not found", e);
+            log.debug("maven home not found", e);
         }
+    }
+
+    private static boolean isMavenHomeSet() {
+        String m2Home = System.getenv("M2_HOME");
+        String mavenHome = System.getProperty("maven.home");
+
+        return m2Home != null || mavenHome != null;
     }
 
     @BeforeAll
     static void findAndSetJava17Home() throws Exception {
         if (Os.isFamily(Os.FAMILY_UNIX) || Os.isFamily(Os.FAMILY_MAC)) {
-            // Use which to find all java installations on Linux
-            var javaInstallations = runProcess(new ProcessBuilder("which", "-a", "java"));
-            for (String path : javaInstallations) {
-                File binFolder = new File(path).getParentFile();
-                if (checkJavaVersion(binFolder, "./java", "-version")) {
-                    return;
-                }
-            }
-
-            var alternativeInstallations = runProcess(new ProcessBuilder("/usr/libexec/java_home", "-v", "17"));
-            for (String path : alternativeInstallations) {
-                File binFolder = new File(path).getParentFile();
-                binFolder = new File(binFolder, "Home/bin");
-                if (checkJavaVersion(binFolder, "./java", "-version")) {
-                    return;
-                }
-            }
+            findAndSetJava17UnixSystems();
         }
         else if (Os.isFamily(Os.FAMILY_WINDOWS)) {
-            // Use PATH to find all java installations on windows
-            String[] path = System.getenv("PATH").split(";");
-            var java17 = Arrays.stream(path).map(Path::of).filter(p -> p.endsWith("bin")).filter(Files::isDirectory).filter(binDir -> Files.exists(binDir.resolve("java.exe")))
-                    .filter(binDir -> {
-                        try {
-                            return checkJavaVersion(binDir.toFile(), "cmd", "/c", "java.exe", "-version");
-                        }
-                        catch (Exception e) {
-                            return false;
-                        }
-                    }).findFirst();
+            findAndSetJava17Windows();
+        }
+    }
 
-            if (java17.isPresent()) {
+    private static void findAndSetJava17UnixSystems() throws Exception {
+        // Use which to find all java installations on Linux
+        var javaInstallations = runProcess(new ProcessBuilder("which", "-a", "java"));
+        for (String path : javaInstallations) {
+            File binFolder = new File(path).getParentFile();
+            if (checkJavaVersion(binFolder, "./java", "-version")) {
                 return;
             }
         }
-        fail("Java 17 not found");
+
+        // Mac systems have additional locations where Java could potentially be
+        if (Os.isFamily(Os.FAMILY_MAC)) {
+            findAndSetJava17Mac();
+        }
+    }
+
+    private static void findAndSetJava17Mac() throws Exception {
+        var alternativeInstallations = runProcess(new ProcessBuilder("/usr/libexec/java_home", "-v", "17"));
+        for (String path : alternativeInstallations) {
+            File binFolder = new File(path).getParentFile();
+            binFolder = new File(binFolder, "Home/bin");
+            if (checkJavaVersion(binFolder, "./java", "-version")) {
+                return;
+            }
+        }
+    }
+
+    private static void findAndSetJava17Windows() {
+        // Use PATH to find all java installations on windows
+        String[] path = System.getenv("PATH").split(";");
+        Arrays.stream(path).map(Path::of).filter(p -> p.endsWith("bin")).filter(Files::isDirectory).filter(binDir -> Files.exists(binDir.resolve("java.exe"))).forEach(binDir -> {
+            try {
+                checkJavaVersion(binDir.toFile(), "cmd", "/c", "java.exe", "-version");
+            }
+            catch (Exception e) {
+                // ignore: we still continue to find another Java installation
+            }
+        });
     }
 
     private static boolean checkJavaVersion(File binFolder, String... command) throws Exception {
@@ -181,7 +190,7 @@ class ProgrammingExerciseTemplateIntegrationTest extends AbstractProgrammingInte
         doReturn(COMMIT_HASH_OBJECT_ID).when(gitService).getLastCommitHash(any());
         Course course = courseUtilService.addEmptyCourse();
         exercise = ProgrammingExerciseFactory.generateProgrammingExercise(ZonedDateTime.now().minusDays(1), ZonedDateTime.now().plusDays(7), course);
-        jenkinsRequestMockProvider.enableMockingOfRequests(jenkinsServer);
+        jenkinsRequestMockProvider.enableMockingOfRequests(jenkinsServer, jenkinsJobPermissionsService);
         gitlabRequestMockProvider.enableMockingOfRequests();
 
         exerciseRepo.configureRepos("exerciseLocalRepo", "exerciseOriginRepo");
@@ -195,7 +204,7 @@ class ProgrammingExerciseTemplateIntegrationTest extends AbstractProgrammingInte
 
     @AfterEach
     void tearDown() throws Exception {
-        jenkinsRequestMockProvider.enableMockingOfRequests(jenkinsServer);
+        jenkinsRequestMockProvider.enableMockingOfRequests(jenkinsServer, jenkinsJobPermissionsService);
         gitlabRequestMockProvider.enableMockingOfRequests();
         programmingExerciseTestService.tearDown();
         exerciseRepo.resetLocalRepo();
@@ -248,6 +257,7 @@ class ProgrammingExerciseTemplateIntegrationTest extends AbstractProgrammingInte
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     @MethodSource("languageTypeBuilder")
     void testTemplateExercise(ProgrammingLanguage language, ProjectType projectType, boolean testwiseCoverageAnalysis) throws Exception {
+        checkPreconditionsForJavaTemplateExecution(projectType);
         runTests(language, projectType, exerciseRepo, TestResult.FAILED, testwiseCoverageAnalysis);
     }
 
@@ -255,7 +265,15 @@ class ProgrammingExerciseTemplateIntegrationTest extends AbstractProgrammingInte
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     @MethodSource("languageTypeBuilder")
     void testTemplateSolution(ProgrammingLanguage language, ProjectType projectType, boolean testwiseCoverageAnalysis) throws Exception {
+        checkPreconditionsForJavaTemplateExecution(projectType);
         runTests(language, projectType, solutionRepo, TestResult.SUCCESSFUL, testwiseCoverageAnalysis);
+    }
+
+    private void checkPreconditionsForJavaTemplateExecution(final ProjectType projectType) {
+        if (projectType == null || projectType.isMaven()) {
+            assumeTrue(isMavenHomeSet(), "Could not find Maven. Skipping execution of template tests.");
+        }
+        assumeTrue(java17Home != null, "Could not find Java 17. Skipping execution of template tests.");
     }
 
     private void runTests(ProgrammingLanguage language, ProjectType projectType, LocalRepository repository, TestResult testResult, boolean testwiseCoverageAnalysis)
