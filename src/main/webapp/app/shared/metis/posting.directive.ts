@@ -141,6 +141,9 @@ export abstract class PostingDirective<T extends Posting> implements OnInit, OnD
             this.metisService.deleteAnswerPost(this.posting);
         } else {
             this.metisService.deletePost(this.posting);
+        }
+    }
+
     /**
      * Create a or navigate to one-to-one chat with the referenced user
      *
