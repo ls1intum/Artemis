@@ -13,7 +13,7 @@ services:
                 nginx['listen_port'] = 80
     gitlab-runner:
         image: docker.io/gitlab/gitlab-runner:latest
-        pull_policy: if_not_present
+        pull_policy: missing
         container_name: artemis-gitlab-runner
         volumes:
             - /var/run/docker.sock:/var/run/docker.sock
