@@ -33,6 +33,7 @@
             [pdfContainer]="pdfContainer"
             [totalPages]="totalPagesArray().size"
             [originalCanvas]="originalCanvas()"
+            [initialPage]="initialPageNumber()"
             (isEnlargedViewOutput)="isEnlargedView.set($event)"
         />
     }

@@ -30,6 +30,7 @@ export class PdfPreviewThumbnailGridComponent implements OnChanges {
     selectedPages = signal<Set<number>>(new Set());
     originalCanvas = signal<HTMLCanvasElement | undefined>(undefined);
     newHiddenPages = signal(new Set<number>(this.hiddenPages()!));
+    initialPageNumber = signal<number>(0);
 
     // Outputs
     isPdfLoading = output<boolean>();
@@ -159,5 +160,6 @@ export class PdfPreviewThumbnailGridComponent implements OnChanges {
         const canvas = this.pdfContainer().nativeElement.querySelector(`#pdf-page-${pageIndex} canvas`) as HTMLCanvasElement;
         this.originalCanvas.set(canvas!);
         this.isEnlargedView.set(true);
+        this.initialPageNumber.set(pageIndex);
     }
 }
