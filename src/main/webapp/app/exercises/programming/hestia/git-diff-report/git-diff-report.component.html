@@ -64,17 +64,17 @@
     </div>
 </div>
 <div [hidden]="!allDiffsReady()">
-    @for (diffInformation of diffInformationForPaths(); track diffInformation) {
+    @for (diffInformation of diffInformation(); track diffInformation.key) {
         <div class="mt-2">
             <jhi-git-diff-file-panel
                 [allowSplitView]="allowSplitView()"
                 [diffForTemplateAndSolution]="diffForTemplateAndSolution()"
                 [originalFilePath]="diffInformation.templatePath"
                 [originalFileContent]="diffInformation.templateFileContent"
-                [modifiedFilePath]="diffInformation.path"
+                [modifiedFilePath]="diffInformation.solutionPath"
                 [modifiedFileContent]="diffInformation.solutionFileContent"
-                (onDiffReady)="onDiffReady(diffInformation.path, $event)"
-                (lineStatChanged)="onLineStatChanged(diffInformation.path, $event)"
+                (onDiffReady)="onDiffReady(diffInformation.key, $event)"
+                (lineStatChanged)="onLineStatChanged(diffInformation.key, $event)"
             />
         </div>
     }

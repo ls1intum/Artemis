@@ -8,8 +8,9 @@ import { GitDiffFilePanelComponent } from 'app/exercises/programming/hestia/git-
 import * as Diff from 'diff';
 
 interface DiffInformation {
-    templatePath: string;
-    path: string;
+    key: string;
+    templatePath?: string;
+    solutionPath?: string;
     templateFileContent?: string;
     solutionFileContent?: string;
 }
@@ -56,8 +57,8 @@ export class GitDiffReportComponent {
         this.filePathsCommon().filter((path) => !path.endsWith('.jar') && this.templateFileContentByPath().get(path) !== this.solutionFileContentByPath().get(path)),
     );
 
-    readonly renamedFilePaths = computed(() => {
-        const renamedFilePaths: { [before: string]: string } = {};
+    private readonly renames = computed(() => {
+        const renames: [string, string][] = [];
 
         this.filePathsUniqueLeft().forEach((leftPath) => {
             this.filePathsUniqueRight().forEach((rightPath) => {
@@ -65,32 +66,56 @@ export class GitDiffReportComponent {
                 const rightFileContent = this.solutionFileContentByPath().get(rightPath)!;
                 const changes = Diff.diffLines(leftFileContent, rightFileContent);
                 const originalLinesCount = leftFileContent.split('\n').length;
-                const unchangedLinesCount = changes.filter((change) => !change.added && !change.removed).length;
+                const unchangedLinesCount = changes
+                    .filter((change) => {
+                        return !change.added && !change.removed;
+                    })
+                    .reduce((lineCount, change) => {
+                        return lineCount + (change.count ?? 0);
+                    }, 0);
                 if (unchangedLinesCount / originalLinesCount >= RENAME_SIMILARITY_THRESHOLD) {
-                    renamedFilePaths[leftPath] = rightPath;
+                    renames.push([leftPath, rightPath]);
                 }
             });
         });
 
-        return renamedFilePaths;
+        return renames;
     });
 
-    readonly diffFilePaths = computed(() => {
-        return [...this.filePathsUniqueLeft(), ...this.filePathsCommonContentDiffers(), ...this.filePathsUniqueRight()].sort();
+    private readonly diffFilePathPairsByKey = computed(() => {
+        const filePathsRenamedLeft = new Set(this.renames().map((r) => r[0]));
+        const filePathsRenamedRight = new Set(this.renames().map((r) => r[1]));
+
+        const filesRemoved = this.filePathsUniqueLeft().filter((path) => !filePathsRenamedLeft.has(path));
+        const filesAdded = this.filePathsUniqueRight().filter((path) => !filePathsRenamedRight.has(path));
+
+        const pairs = [
+            ...filesRemoved.map((path): [string, undefined] => [path, undefined]),
+            ...this.renames(),
+            ...this.filePathsCommonContentDiffers().map((path): [string, string] => [path, path]),
+            ...filesAdded.map((path): [undefined, string] => [undefined, path]),
+        ];
+
+        return new Map(
+            pairs.map((pair) => {
+                return [this.keyOfPathPair(pair), pair];
+            }),
+        );
     });
 
-    readonly diffInformationForPaths = computed<DiffInformation[]>(() => {
-        return this.diffFilePaths().map((path) => {
-            // entries is not undefined due to the filter above
-            const templatePath = this.renamedFilePaths()[path] ?? path;
-            const templateFileContent = this.templateFileContentByPath().get(templatePath);
-            const solutionFileContent = this.solutionFileContentByPath().get(path);
-            return { templatePath, path, templateFileContent, solutionFileContent };
+    private readonly diffKeys = computed(() => [...this.diffFilePathPairsByKey().keys()].sort());
+
+    readonly diffInformation = computed<DiffInformation[]>(() => {
+        return this.diffKeys().map((key) => {
+            const [templatePath, solutionPath] = this.diffFilePathPairsByKey().get(key)!;
+            const templateFileContent = templatePath && this.templateFileContentByPath().get(templatePath);
+            const solutionFileContent = solutionPath && this.solutionFileContentByPath().get(solutionPath);
+            return { key, templatePath, solutionPath, templateFileContent, solutionFileContent };
         });
     });
-    readonly nothingToDisplay = computed(() => this.diffInformationForPaths().length === 0);
-    readonly allDiffsReady = computed(() => this.diffFilePaths().every((path) => this.diffReadyPaths().has(path)));
-    readonly diffReadyPaths = signal<Set<string>>(new Set());
+    readonly nothingToDisplay = computed(() => this.diffInformation().length === 0);
+    readonly allDiffsReady = computed(() => this.diffKeys().every((key) => this.diffReadyKeys().has(key)));
+    readonly diffReadyKeys = signal<Set<string>>(new Set());
     readonly allowSplitView = signal<boolean>(true);
     readonly lineStatForPath = signal<Map<string, LineStat>>(new Map());
 
@@ -118,28 +143,35 @@ export class GitDiffReportComponent {
     }
 
     /**
-     * Records that the diff editor for a file has changed its "ready" state.
-     * If all paths have reported that they are ready, {@link allDiffsReady} will be set to true.
-     * @param path The path of the file whose diff this event refers to.
+     * Records that the diff editor for a file pair has changed its "ready" state.
+     * If all files have reported that they are ready, {@link allDiffsReady} will be set to true.
+     * @param key The key of the file pair whose diff this event refers to.
      * @param ready Whether the diff is ready to be displayed or not.
      */
-    onDiffReady(path: string, ready: boolean) {
-        this.diffReadyPaths.update((diffReadyPaths) => {
+    onDiffReady(key: string, ready: boolean) {
+        this.diffReadyKeys.update((diffReadyPaths) => {
             const paths = new Set(diffReadyPaths);
             if (ready) {
-                paths.add(path);
+                paths.add(key);
             } else {
-                paths.delete(path);
+                paths.delete(key);
             }
             return paths;
         });
     }
 
-    onLineStatChanged(path: string, lineStat: LineStat) {
+    onLineStatChanged(key: string, lineStat: LineStat) {
         this.lineStatForPath.update((lineStatForPath) => {
             const stats = new Map(lineStatForPath);
-            stats.set(path, lineStat);
+            stats.set(key, lineStat);
             return stats;
         });
+    }
+
+    /**
+     * Uniquely identifies one pair of files for which a diff editor is shown
+     */
+    private keyOfPathPair([left, right]: [string, undefined] | [string, string] | [undefined, string]): string {
+        return left ?? right;
     }
 }
