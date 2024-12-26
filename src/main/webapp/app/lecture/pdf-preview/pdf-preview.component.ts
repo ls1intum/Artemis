@@ -17,6 +17,7 @@ import { MAX_FILE_SIZE } from 'app/shared/constants/input.constants';
 import { PdfPreviewThumbnailGridComponent } from 'app/lecture/pdf-preview/pdf-preview-thumbnail-grid/pdf-preview-thumbnail-grid.component';
 import { LectureUnitService } from 'app/lecture/lecture-unit/lecture-unit-management/lectureUnit.service';
 import { PDFDocument } from 'pdf-lib';
+import { Slide } from 'app/entities/lecture-unit/slide.model';
 
 @Component({
     selector: 'jhi-pdf-preview-component',
@@ -79,13 +80,9 @@ export class PdfPreviewComponent implements OnInit, OnDestroy {
                 });
             } else if ('attachmentUnit' in data) {
                 this.attachmentUnit.set(data.attachmentUnit);
-                this.attachmentUnitService.getHiddenSlides(this.attachmentUnit()!.lecture!.id!, this.attachmentUnit()!.id!).subscribe({
-                    next: (hiddenPages: number[]) => {
-                        this.initialHiddenPages.set(new Set(hiddenPages));
-                        this.hiddenPages.set(new Set(hiddenPages));
-                    },
-                    error: (error: HttpErrorResponse) => onError(this.alertService, error),
-                });
+                const hiddenPages: Set<number> = new Set(data.attachmentUnit.slides.filter((page: Slide) => page.hidden).map((page: Slide) => page.slideNumber));
+                this.initialHiddenPages.set(new Set(hiddenPages));
+                this.hiddenPages.set(new Set(hiddenPages));
                 this.attachmentUnitSub = this.attachmentUnitService.getAttachmentFile(this.course()!.id!, this.attachmentUnit()!.id!).subscribe({
                     next: (blob: Blob) => {
                         this.currentPdfBlob.set(blob);

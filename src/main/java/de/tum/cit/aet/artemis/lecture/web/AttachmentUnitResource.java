@@ -44,7 +44,6 @@ import de.tum.cit.aet.artemis.lecture.domain.Lecture;
 import de.tum.cit.aet.artemis.lecture.dto.LectureUnitSplitInformationDTO;
 import de.tum.cit.aet.artemis.lecture.repository.AttachmentUnitRepository;
 import de.tum.cit.aet.artemis.lecture.repository.LectureRepository;
-import de.tum.cit.aet.artemis.lecture.repository.SlideRepository;
 import de.tum.cit.aet.artemis.lecture.service.AttachmentUnitService;
 import de.tum.cit.aet.artemis.lecture.service.LectureUnitProcessingService;
 import de.tum.cit.aet.artemis.lecture.service.SlideSplitterService;
@@ -76,11 +75,9 @@ public class AttachmentUnitResource {
 
     private final FileService fileService;
 
-    private final SlideRepository slideRepository;
-
     public AttachmentUnitResource(AttachmentUnitRepository attachmentUnitRepository, LectureRepository lectureRepository, LectureUnitProcessingService lectureUnitProcessingService,
             AuthorizationCheckService authorizationCheckService, GroupNotificationService groupNotificationService, AttachmentUnitService attachmentUnitService,
-            CompetencyProgressApi competencyProgressApi, SlideSplitterService slideSplitterService, FileService fileService, SlideRepository slideRepository) {
+            CompetencyProgressApi competencyProgressApi, SlideSplitterService slideSplitterService, FileService fileService) {
         this.attachmentUnitRepository = attachmentUnitRepository;
         this.lectureUnitProcessingService = lectureUnitProcessingService;
         this.lectureRepository = lectureRepository;
@@ -90,7 +87,6 @@ public class AttachmentUnitResource {
         this.competencyProgressApi = competencyProgressApi;
         this.slideSplitterService = slideSplitterService;
         this.fileService = fileService;
-        this.slideRepository = slideRepository;
     }
 
     /**
@@ -339,24 +335,5 @@ public class AttachmentUnitResource {
         if (!filePath.toString().endsWith(".pdf")) {
             throw new BadRequestAlertException("The file must be a pdf", ENTITY_NAME, "wrongFileType");
         }
-    }
-
-    /**
-     * Retrieves the list of hidden slide numbers for a specific attachment unit within a lecture.
-     *
-     * @param attachmentUnitId the ID of the attachment unit
-     * @param lectureId        the ID of the lecture
-     * @return the ResponseEntity with status 200 (OK) and with body the list of slides that are hidden
-     */
-    @GetMapping("lectures/{lectureId}/attachment-units/{attachmentUnitId}/hidden-slides")
-    @EnforceAtLeastEditor
-    public ResponseEntity<List<Integer>> getAttachmentUnitHiddenSlides(@PathVariable Long attachmentUnitId, @PathVariable Long lectureId) {
-        log.debug("REST request to get hidden slides of AttachmentUnit : {}", attachmentUnitId);
-        List<Integer> hiddenSlides = slideRepository.findHiddenSlideNumbersByAttachmentUnitId(attachmentUnitId);
-        AttachmentUnit attachmentUnit = attachmentUnitRepository.findByIdElseThrow(attachmentUnitId);
-        checkAttachmentUnitCourseAndLecture(attachmentUnit, lectureId);
-        authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.EDITOR, attachmentUnit.getLecture().getCourse(), null);
-
-        return ResponseEntity.ok().body(hiddenSlides);
     }
 }

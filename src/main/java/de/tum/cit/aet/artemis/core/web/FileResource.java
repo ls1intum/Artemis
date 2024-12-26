@@ -1,6 +1,7 @@
 package de.tum.cit.aet.artemis.core.web;
 
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
+import static java.lang.Integer.parseInt;
 import static org.apache.velocity.shaded.commons.io.FilenameUtils.getBaseName;
 import static org.apache.velocity.shaded.commons.io.FilenameUtils.getExtension;
 
@@ -75,7 +76,6 @@ import de.tum.cit.aet.artemis.lecture.domain.Slide;
 import de.tum.cit.aet.artemis.lecture.repository.AttachmentRepository;
 import de.tum.cit.aet.artemis.lecture.repository.AttachmentUnitRepository;
 import de.tum.cit.aet.artemis.lecture.repository.LectureRepository;
-import de.tum.cit.aet.artemis.lecture.repository.SlideRepository;
 import de.tum.cit.aet.artemis.lecture.service.LectureUnitService;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingLanguage;
 import de.tum.cit.aet.artemis.programming.domain.ProjectType;
@@ -104,8 +104,6 @@ public class FileResource {
 
     private final AttachmentUnitRepository attachmentUnitRepository;
 
-    private final SlideRepository slideRepository;
-
     private final FileUploadSubmissionRepository fileUploadSubmissionRepository;
 
     private final AttachmentRepository attachmentRepository;
@@ -126,7 +124,7 @@ public class FileResource {
 
     private final LectureUnitService lectureUnitService;
 
-    public FileResource(SlideRepository slideRepository, AuthorizationCheckService authorizationCheckService, FileService fileService, ResourceLoaderService resourceLoaderService,
+    public FileResource(AuthorizationCheckService authorizationCheckService, FileService fileService, ResourceLoaderService resourceLoaderService,
             LectureRepository lectureRepository, FileUploadSubmissionRepository fileUploadSubmissionRepository, AttachmentRepository attachmentRepository,
             AttachmentUnitRepository attachmentUnitRepository, AuthorizationCheckService authCheckService, UserRepository userRepository, ExamUserRepository examUserRepository,
             QuizQuestionRepository quizQuestionRepository, DragItemRepository dragItemRepository, CourseRepository courseRepository, LectureUnitService lectureUnitService) {
@@ -140,7 +138,6 @@ public class FileResource {
         this.userRepository = userRepository;
         this.authorizationCheckService = authorizationCheckService;
         this.examUserRepository = examUserRepository;
-        this.slideRepository = slideRepository;
         this.quizQuestionRepository = quizQuestionRepository;
         this.dragItemRepository = dragItemRepository;
         this.courseRepository = courseRepository;
@@ -547,8 +544,11 @@ public class FileResource {
 
         checkAttachmentAuthorizationOrThrow(course, attachment);
 
-        Slide slide = slideRepository.findSlideByAttachmentUnitIdAndSlideNumber(attachmentUnitId, Integer.parseInt(slideNumber));
-        String directoryPath = slide.getSlideImagePath();
+        // Get the slide and check if it is hidden, if not, get the next first slide that is visible
+        List<Slide> slides = attachmentUnit.getSlides();
+        Slide visibleSlide = slides.stream().filter(slide -> slide.getHidden() == null && parseInt(slideNumber) <= slide.getSlideNumber()).findFirst()
+                .orElseThrow(() -> new EntityNotFoundException("Slide", slideNumber));
+        String directoryPath = visibleSlide.getSlideImagePath();
 
         // Use regular expression to match and extract the file name with ".png" format
         Pattern pattern = Pattern.compile(".*/([^/]+\\.png)$");
@@ -557,8 +557,8 @@ public class FileResource {
         if (matcher.matches()) {
             String fileName = matcher.group(1);
             return buildFileResponse(
-                    FilePathService.getAttachmentUnitFilePath().resolve(Path.of(attachmentUnit.getId().toString(), "slide", String.valueOf(slide.getSlideNumber()))), fileName,
-                    true);
+                    FilePathService.getAttachmentUnitFilePath().resolve(Path.of(attachmentUnit.getId().toString(), "slide", String.valueOf(visibleSlide.getSlideNumber()))),
+                    fileName, true);
         }
         else {
             throw new EntityNotFoundException("Slide", slideNumber);

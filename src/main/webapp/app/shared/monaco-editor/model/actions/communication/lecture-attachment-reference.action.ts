@@ -23,6 +23,7 @@ interface LectureAttachmentReferenceActionArgs {
     attachmentUnit?: AttachmentUnit;
     slide?: Slide;
     attachment?: Attachment;
+    slideIndex?: number;
 }
 
 /**
@@ -92,8 +93,8 @@ export class LectureAttachmentReferenceAction extends TextEditorAction {
                 }
                 break;
             case ReferenceType.SLIDE:
-                if (args.attachmentUnit && args.slide) {
-                    this.insertSlideReference(editor, args.attachmentUnit, args.slide);
+                if (args.attachmentUnit && args.slide && args.slideIndex) {
+                    this.insertSlideReference(editor, args.attachmentUnit, args.slide, args.slideIndex);
                 } else {
                     throw new Error(`[${this.id}] No attachment unit or slide provided to reference.`);
                 }
@@ -121,13 +122,13 @@ export class LectureAttachmentReferenceAction extends TextEditorAction {
         this.replaceTextAtCurrentSelection(editor, `[attachment]${sanitizeStringForMarkdownEditor(attachment.name)}(${shortLink})[/attachment]`);
     }
 
-    insertSlideReference(editor: TextEditor, attachmentUnit: AttachmentUnit, slide: Slide): void {
+    insertSlideReference(editor: TextEditor, attachmentUnit: AttachmentUnit, slide: Slide, slideIndex: number): void {
         const shortLink = slide.slideImagePath?.split('attachments/')[1];
-        // Remove the trailing slash and the file name.
-        const shortLinkWithoutFileName = shortLink?.replace(new RegExp(`[^/]*${'.png'}`), '').replace(/\/$/, '');
+        // Extract just the first part of the path up to /slide/
+        const shortLinkWithoutFileName = shortLink?.match(/attachment-unit\/\d+\/slide\//)?.[0];
         this.replaceTextAtCurrentSelection(
             editor,
-            `[slide]${sanitizeStringForMarkdownEditor(attachmentUnit.name)} Slide ${slide.slideNumber}(${shortLinkWithoutFileName})[/slide]`,
+            `[slide]${sanitizeStringForMarkdownEditor(attachmentUnit.name)} Slide ${slideIndex}(${shortLinkWithoutFileName}${slideIndex})[/slide]`,
         );
     }
 
