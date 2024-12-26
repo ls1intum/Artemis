@@ -1,5 +1,7 @@
 package de.tum.cit.aet.artemis.programming.service.jenkins.build_plan;
 
+import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_JENKINS;
+
 import java.net.URL;
 
 import org.springframework.beans.factory.annotation.Value;
@@ -11,7 +13,7 @@ import org.springframework.stereotype.Component;
 import de.tum.cit.aet.artemis.core.config.Constants;
 
 @Component
-@Profile("jenkins")
+@Profile(PROFILE_JENKINS)
 public class JenkinsBuildPlanLinkInfoContributor implements InfoContributor {
 
     @Value("${artemis.continuous-integration.url}")

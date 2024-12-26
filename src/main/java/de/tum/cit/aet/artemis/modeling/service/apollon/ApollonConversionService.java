@@ -12,7 +12,7 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.core.io.Resource;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.HttpClientErrorException;
-import org.springframework.web.client.RestTemplate;
+import org.springframework.web.client.RestClient;
 
 import de.tum.cit.aet.artemis.modeling.dto.ApollonModelDTO;
 
@@ -25,14 +25,14 @@ public class ApollonConversionService {
     @Value("${artemis.apollon.conversion-service-url}")
     private String apollonConversionUrl;
 
-    private RestTemplate restTemplate;
+    private RestClient restClient;
 
-    public ApollonConversionService(RestTemplate apollonRestTemplate) {
-        setRestTemplate(apollonRestTemplate);
+    public ApollonConversionService(RestClient apollonRestClient) {
+        setRestClient(apollonRestClient);
     }
 
-    public void setRestTemplate(RestTemplate restTemplate) {
-        this.restTemplate = restTemplate;
+    public void setRestClient(RestClient restClient) {
+        this.restClient = restClient;
     }
 
     /**
@@ -46,7 +46,7 @@ public class ApollonConversionService {
         log.info("Calling Remote Service to convert for model.");
         try {
             var apollonModel = new ApollonModelDTO(model);
-            var response = restTemplate.postForEntity(apollonConversionUrl + "/pdf", apollonModel, Resource.class);
+            var response = restClient.post().uri(apollonConversionUrl + "/pdf").body(apollonModel).retrieve().toEntity(Resource.class);
             if (response.getBody() != null) {
                 return response.getBody().getInputStream();
             }

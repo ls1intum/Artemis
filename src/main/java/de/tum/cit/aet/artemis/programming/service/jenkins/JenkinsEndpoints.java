@@ -9,11 +9,20 @@ import de.tum.cit.aet.artemis.core.util.UrlUtils;
 
 public enum JenkinsEndpoints {
 
-    NEW_PLAN("job", "<projectKey>", "createItem"), NEW_FOLDER("createItem"), DELETE_FOLDER("job", "<projectKey>", "doDelete"),
-    DELETE_JOB("job", "<projectKey>", "job", "<planName>", "doDelete"), PLAN_CONFIG("job", "<projectKey>", "job", "<planKey>", "config.xml"),
-    TRIGGER_BUILD("job", "<projectKey>", "job", "<planKey>", "build"), ENABLE("job", "<projectKey>", "job", "<planKey>", "enable"),
+    // @formatter:off
+    NEW_PLAN("job", "<projectKey>", "createItem"),
+    NEW_FOLDER("createItem"),
+    DELETE_FOLDER("job", "<projectKey>", "doDelete"),
+    DELETE_JOB("job", "<projectKey>", "job", "<planName>", "doDelete"),
+    PLAN_CONFIG("job", "<projectKey>", "job", "<planKey>", "config.xml"),
+    FOLDER_CONFIG("job", "<projectKey>", "config.xml"),
+    TRIGGER_BUILD("job", "<projectKey>", "job", "<planKey>", "build"),
+    ENABLE("job", "<projectKey>", "job", "<planKey>", "enable"),
     TEST_RESULTS("job", "<projectKey>", "job", "<planKey>", "lastBuild", "testResults", "api", "json"),
-    LAST_BUILD("job", "<projectKey>", "job", "<planKey>", "lastBuild", "api", "json");
+    LAST_BUILD("job", "<projectKey>", "job", "<planKey>", "lastBuild", "api", "json"),
+    GET_FOLDER_JOB("job", "<projectKey>"),
+    GET_JOB("job", "<projectKey>", "job", "<planKey>");
+    // @formatter:on
 
     private final List<String> pathSegments;
 

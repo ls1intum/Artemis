@@ -1,37 +1,47 @@
 package de.tum.cit.aet.artemis.programming.service.jenkins.jobs;
 
+import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_JENKINS;
+
 import java.io.IOException;
+import java.net.URI;
+import java.net.URL;
 
 import javax.xml.transform.TransformerException;
 
-import org.apache.http.client.HttpResponseException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Profile;
+import org.springframework.http.HttpEntity;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.MediaType;
 import org.springframework.stereotype.Service;
+import org.springframework.web.client.HttpClientErrorException;
+import org.springframework.web.client.RestClientException;
+import org.springframework.web.client.RestTemplate;
 import org.w3c.dom.Document;
 
-import com.offbytwo.jenkins.JenkinsServer;
-import com.offbytwo.jenkins.model.FolderJob;
-import com.offbytwo.jenkins.model.JobWithDetails;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.fasterxml.jackson.annotation.JsonInclude;
 
 import de.tum.cit.aet.artemis.core.exception.JenkinsException;
+import de.tum.cit.aet.artemis.programming.service.jenkins.JenkinsEndpoints;
 import de.tum.cit.aet.artemis.programming.service.jenkins.JenkinsXmlFileUtils;
 
 @Service
-@Profile("jenkins")
+@Profile(PROFILE_JENKINS)
 public class JenkinsJobService {
 
     private static final Logger log = LoggerFactory.getLogger(JenkinsJobService.class);
 
-    @Value("${jenkins.use-crumb:#{true}}")
-    private boolean useCrumb;
+    private final RestTemplate restTemplate;
 
-    private final JenkinsServer jenkinsServer;
+    @Value("${artemis.continuous-integration.url}")
+    protected URL serverUrl;
 
-    public JenkinsJobService(JenkinsServer jenkinsServer) {
-        this.jenkinsServer = jenkinsServer;
+    public JenkinsJobService(@Qualifier("jenkinsRestTemplate") RestTemplate restTemplate) {
+        this.restTemplate = restTemplate;
     }
 
     /**
@@ -41,25 +51,31 @@ public class JenkinsJobService {
      * @param jobName       the name of the job
      * @return the job with details
      */
-    public JobWithDetails getJobInFolder(String folderJobName, String jobName) {
+    public JobWithDetails getJob(String folderJobName, String jobName) {
         if (folderJobName == null || jobName == null) {
             log.warn("Cannot get the job, because projectKey {} or jobName {} is null", folderJobName, jobName);
             return null;
         }
 
+        // TODO: this API call is unnecessary and only improves logging, we could remove it
         final var folder = getFolderJob(folderJobName);
         if (folder == null) {
             log.warn("Cannot get the job {} in folder {} because it doesn't exist.", jobName, folderJobName);
             return null;
         }
 
-        try {
-            return jenkinsServer.getJob(folder, jobName);
-        }
-        catch (IOException e) {
-            log.error(e.getMessage(), e);
-            throw new JenkinsException(e.getMessage(), e);
-        }
+        URI uri = JenkinsEndpoints.GET_JOB.buildEndpoint(serverUrl.toString(), folder.name(), jobName).build(true).toUri();
+        return restTemplate.getForObject(uri, JobWithDetails.class);
+    }
+
+    @JsonIgnoreProperties(ignoreUnknown = true)
+    @JsonInclude(JsonInclude.Include.NON_EMPTY)
+    public record JobWithDetails(String name, String description, boolean inQueue) {
+    }
+
+    @JsonIgnoreProperties(ignoreUnknown = true)
+    @JsonInclude(JsonInclude.Include.NON_EMPTY)
+    public record FolderJob(String name, String description, String url) {
     }
 
     /**
@@ -69,17 +85,8 @@ public class JenkinsJobService {
      * @return the folder job
      */
     public FolderJob getFolderJob(String folderName) {
-        try {
-            final var job = jenkinsServer.getJob(folderName);
-            if (job == null) {
-                return null;
-            }
-            return jenkinsServer.getFolderJob(job).orElse(null);
-        }
-        catch (IOException e) {
-            log.error(e.getMessage(), e);
-            throw new JenkinsException(e.getMessage(), e);
-        }
+        URI uri = JenkinsEndpoints.GET_FOLDER_JOB.buildEndpoint(serverUrl.toString(), folderName).build(true).toUri();
+        return restTemplate.getForObject(uri, FolderJob.class);
     }
 
     /**
@@ -89,21 +96,23 @@ public class JenkinsJobService {
      * @param jobName    the name of the job
      * @return the xml document
      */
-    public Document getJobConfigForJobInFolder(String folderName, String jobName) {
+    public Document getJobConfig(String folderName, String jobName) {
         try {
             var folder = getFolderJob(folderName);
             if (folder == null) {
                 throw new JenkinsException("The folder " + folderName + "does not exist.");
             }
 
-            String xmlString = jenkinsServer.getJobXml(folder, jobName);
+            URI uri = JenkinsEndpoints.PLAN_CONFIG.buildEndpoint(serverUrl.toString(), folderName, jobName).build(true).toUri();
+            String xmlString = restTemplate.getForObject(uri, String.class);
+
             // Replace the old reference to the master and main branch by a reference to the default branch
             xmlString = xmlString.replace("*/master", "**");
             xmlString = xmlString.replace("*/main", "**");
 
             return JenkinsXmlFileUtils.readFromString(xmlString);
         }
-        catch (IOException e) {
+        catch (RestClientException e) {
             log.error(e.getMessage(), e);
             throw new JenkinsException(e.getMessage(), e);
         }
@@ -117,12 +126,18 @@ public class JenkinsJobService {
      * @throws IOException in case of errors
      */
     public Document getFolderConfig(String folderName) throws IOException {
-        if (jenkinsServer.getJob(folderName) == null) {
+        if (getFolderJob(folderName) == null) {
             return null;
         }
 
-        String folderXml = jenkinsServer.getJobXml(folderName);
+        URI uri = JenkinsEndpoints.FOLDER_CONFIG.buildEndpoint(serverUrl.toString(), folderName).build(true).toUri();
+        String folderXml = restTemplate.getForObject(uri, String.class);
         return JenkinsXmlFileUtils.readFromString(folderXml);
+    }
+
+    public void createFolder(String projectKey) {
+        URI uri = JenkinsEndpoints.NEW_FOLDER.buildEndpoint(serverUrl.toString(), projectKey).build(true).toUri();
+        restTemplate.postForEntity(uri, new HttpEntity<>(null, new HttpHeaders()), Void.class);
     }
 
     /**
@@ -139,64 +154,49 @@ public class JenkinsJobService {
                 throw new JenkinsException("Cannot create job " + jobName + " because the folder " + folderName + " does not exist.");
             }
 
-            var existingJob = jenkinsServer.getJob(folder, jobName);
+            var existingJob = getJob(folderName, jobName);
             if (existingJob != null) {
                 log.info("Build Plan {} already exists. Skipping creation of job.", jobName);
                 return;
             }
 
-            String configString = JenkinsXmlFileUtils.writeToString(jobConfig);
-            jenkinsServer.createJob(folder, jobName, configString, useCrumb);
+            URI uri = JenkinsEndpoints.NEW_PLAN.buildEndpoint(serverUrl.toString(), folderName, jobName).build(true).toUri();
+
+            final var headers = new HttpHeaders();
+            headers.setContentType(MediaType.APPLICATION_XML);
+            String jobXmlString = JenkinsXmlFileUtils.writeToString(jobConfig);
+            final var entity = new HttpEntity<>(jobXmlString, headers);
+
+            restTemplate.postForEntity(uri, entity, Void.class);
         }
-        catch (IOException | TransformerException e) {
+        catch (RestClientException | TransformerException e) {
             log.error(e.getMessage(), e);
             throw new JenkinsException(e.getMessage(), e);
         }
     }
 
     /**
-     * Gets the job config of a job that is inside a folder
-     *
-     * @param folderName the name of the folder
-     * @param jobName    the name of the job
-     * @return the job config as xml document or null if the job doesn't exist
-     * @throws IOException in case of errors
-     */
-    public Document getJobConfig(String folderName, String jobName) throws IOException {
-        var job = jenkinsServer.getJob(folderName);
-        if (job == null) {
-            return null;
-        }
-
-        var folder = jenkinsServer.getFolderJob(job);
-
-        String jobXml = jenkinsServer.getJobXml(folder.orElse(null), jobName);
-        return JenkinsXmlFileUtils.readFromString(jobXml);
-    }
-
-    /**
      * Updates a job.
      *
-     * @param folderName optional folder name where the job resides
-     * @param jobName    the name of the job
+     * @param folderName optional folder name where the job resides (project key)
+     * @param jobName    the name of the job (build plan key)
      * @param jobConfig  the updated job config
-     * @throws IOException in case of errors
      */
-    public void updateJob(String folderName, String jobName, Document jobConfig) throws IOException {
+    public void updateJob(String folderName, String jobName, Document jobConfig) {
+        final var errorMessage = "Error trying to configure build plan in Jenkins " + jobName;
         try {
-            String configString = JenkinsXmlFileUtils.writeToString(jobConfig);
+            URI uri = JenkinsEndpoints.PLAN_CONFIG.buildEndpoint(serverUrl.toString(), folderName, jobName).build(true).toUri();
 
-            if (folderName != null && !folderName.isEmpty()) {
-                var job = jenkinsServer.getJob(folderName);
-                var folder = jenkinsServer.getFolderJob(job);
-                jenkinsServer.updateJob(folder.orElse(null), jobName, configString, useCrumb);
-            }
-            else {
-                jenkinsServer.updateJob(jobName, configString, useCrumb);
-            }
+            final var headers = new HttpHeaders();
+            headers.setContentType(MediaType.APPLICATION_XML);
+            String jobXmlString = JenkinsXmlFileUtils.writeToString(jobConfig);
+            final var entity = new HttpEntity<>(jobXmlString, headers);
+
+            restTemplate.postForEntity(uri, entity, String.class);
         }
-        catch (TransformerException e) {
-            throw new IOException(e.getMessage(), e);
+        catch (RestClientException | TransformerException e) {
+            log.error(errorMessage, e);
+            throw new JenkinsException(errorMessage, e);
         }
     }
 
@@ -209,34 +209,52 @@ public class JenkinsJobService {
      */
     public void updateFolderJob(String folderName, Document folderConfig) throws IOException {
         try {
-            String configString = JenkinsXmlFileUtils.writeToString(folderConfig);
-            jenkinsServer.updateJob(folderName, configString, useCrumb);
+            URI uri = JenkinsEndpoints.FOLDER_CONFIG.buildEndpoint(serverUrl.toString(), folderName).build(true).toUri();
+
+            final var headers = new HttpHeaders();
+            headers.setContentType(MediaType.APPLICATION_XML);
+            String jobXmlString = JenkinsXmlFileUtils.writeToString(folderConfig);
+            final var entity = new HttpEntity<>(jobXmlString, headers);
+
+            restTemplate.postForEntity(uri, entity, String.class);
         }
         catch (TransformerException e) {
             throw new IOException(e.getMessage(), e);
         }
     }
 
-    /**
-     * Deletes the job from Jenkins. Doesn't do anything if the job
-     * doesn't exist.
-     *
-     * @param jobName the name of the job to delete.
-     */
-    public void deleteJob(String jobName) {
+    public void deleteJob(String folderName, String jobName) {
         try {
-            jenkinsServer.deleteJob(jobName, useCrumb);
+            URI uri = JenkinsEndpoints.DELETE_JOB.buildEndpoint(serverUrl.toString(), folderName, jobName).build(true).toUri();
+            restTemplate.postForEntity(uri, new HttpEntity<>(null, new HttpHeaders()), Void.class);
         }
-        catch (HttpResponseException e) {
+        catch (HttpClientErrorException.NotFound e) {
             // We don't throw an exception if the project doesn't exist in Jenkins (404 status)
-            if (e.getStatusCode() != org.apache.http.HttpStatus.SC_NOT_FOUND) {
-                log.error(e.getMessage(), e);
-                throw new JenkinsException("Error while trying to delete job in Jenkins for " + jobName, e);
-            }
+            log.warn("Job {} in folder {} does not exist in Jenkins. Skipping deletion: {}", jobName, folderName, e.getMessage());
         }
-        catch (IOException e) {
+        catch (RestClientException e) {
             log.error(e.getMessage(), e);
-            throw new JenkinsException("Error while trying to delete job in Jenkins for " + jobName, e);
+            throw new JenkinsException("Error while trying to delete folder job in Jenkins for " + folderName, e);
+        }
+    }
+
+    /**
+     * Deletes the job from Jenkins. Doesn't do anything if the job doesn't exist.
+     *
+     * @param folderName the name of the folder (project) to delete.
+     */
+    public void deleteFolderJob(String folderName) {
+        try {
+            URI uri = JenkinsEndpoints.DELETE_FOLDER.buildEndpoint(serverUrl.toString(), folderName).build(true).toUri();
+            restTemplate.postForEntity(uri, new HttpEntity<>(null, new HttpHeaders()), Void.class);
+        }
+        catch (HttpClientErrorException.NotFound e) {
+            // We don't throw an exception if the project doesn't exist in Jenkins (404 status)
+            log.warn("Folder job {} does not exist in Jenkins. Skipping deletion: {}", folderName, e.getMessage());
+        }
+        catch (RestClientException e) {
+            log.error(e.getMessage(), e);
+            throw new JenkinsException("Error while trying to delete folder job in Jenkins for " + folderName, e);
         }
     }
 }

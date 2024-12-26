@@ -127,8 +127,8 @@ class DataExportCreationServiceTest extends AbstractSpringIntegrationJenkinsGitl
     private ApollonRequestMockProvider apollonRequestMockProvider;
 
     @Autowired
-    @Qualifier("apollonRestTemplate")
-    private RestTemplate restTemplate;
+    @Qualifier("apollonRestClient")
+    private RestTemplate restClient;
 
     @Autowired
     private ApollonConversionService apollonConversionService;
@@ -159,7 +159,7 @@ class DataExportCreationServiceTest extends AbstractSpringIntegrationJenkinsGitl
         userUtilService.addUsers(TEST_PREFIX, 2, 5, 0, 1);
         userUtilService.adjustUserGroupsToCustomGroups(TEST_PREFIX, "", 2, 5, 0, 1);
 
-        apollonConversionService.setRestTemplate(restTemplate);
+        apollonConversionService.setRestClient(restClient);
 
         apollonRequestMockProvider.enableMockingOfRequests();
 

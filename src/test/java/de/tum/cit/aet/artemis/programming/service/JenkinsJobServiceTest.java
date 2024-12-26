@@ -24,8 +24,6 @@ import org.mockito.MockedStatic;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.w3c.dom.Document;
 
-import com.offbytwo.jenkins.model.FolderJob;
-
 import de.tum.cit.aet.artemis.core.exception.JenkinsException;
 import de.tum.cit.aet.artemis.programming.AbstractProgrammingIntegrationJenkinsGitlabTest;
 import de.tum.cit.aet.artemis.programming.service.jenkins.JenkinsXmlFileUtils;
@@ -43,7 +41,7 @@ class JenkinsJobServiceTest extends AbstractProgrammingIntegrationJenkinsGitlabT
     @BeforeEach
     void initTestCase() throws Exception {
         userUtilService.addUsers(TEST_PREFIX, 1, 0, 0, 0);
-        jenkinsRequestMockProvider.enableMockingOfRequests(jenkinsServer, jenkinsJobPermissionsService);
+        jenkinsRequestMockProvider.enableMockingOfRequests(jenkinsJobPermissionsService);
         gitlabRequestMockProvider.enableMockingOfRequests();
         // create the document before the mock so that it still works correctly
         invalidDocument = createEmptyDOMDocument();

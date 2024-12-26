@@ -1,5 +1,6 @@
 package de.tum.cit.aet.artemis.core.connector;
 
+import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_JENKINS;
 import static de.tum.cit.aet.artemis.core.util.TestResourceUtils.loadFileFromResources;
 import static org.mockito.Mockito.any;
 import static org.mockito.Mockito.anyString;
@@ -38,20 +39,17 @@ import org.springframework.web.util.UriComponentsBuilder;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.offbytwo.jenkins.JenkinsServer;
-import com.offbytwo.jenkins.model.FolderJob;
-import com.offbytwo.jenkins.model.JobWithDetails;
-import com.offbytwo.jenkins.model.QueueReference;
 
 import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.service.jenkins.dto.JenkinsUserDTO;
 import de.tum.cit.aet.artemis.programming.service.jenkins.jobs.JenkinsJobPermissionsService;
+import de.tum.cit.aet.artemis.programming.service.jenkins.jobs.JenkinsJobService;
 import de.tum.cit.aet.artemis.programming.test_repository.ProgrammingExerciseTestRepository;
 
 @Component
-@Profile("jenkins")
+@Profile(PROFILE_JENKINS)
 public class JenkinsRequestMockProvider {
 
     @Value("${artemis.continuous-integration.url}")
@@ -67,9 +65,6 @@ public class JenkinsRequestMockProvider {
     private final RestTemplate shortTimeoutRestTemplate;
 
     private MockRestServiceServer shortTimeoutMockServer;
-
-    // will be assigned in enableMockingOfRequests(), can be used like a MockitoSpyBean
-    private JenkinsServer jenkinsServer;
 
     // will be assigned in enableMockingOfRequests(), can be used like a MockitoSpyBean
     private JenkinsJobPermissionsService jenkinsJobPermissionsService;
@@ -94,10 +89,9 @@ public class JenkinsRequestMockProvider {
         this.shortTimeoutRestTemplate.setInterceptors(List.of());
     }
 
-    public void enableMockingOfRequests(JenkinsServer jenkinsServer, JenkinsJobPermissionsService jenkinsJobPermissionsService) {
+    public void enableMockingOfRequests(JenkinsJobPermissionsService jenkinsJobPermissionsService) {
         mockServer = MockRestServiceServer.bindTo(restTemplate).ignoreExpectOrder(true).bufferContent().build();
         shortTimeoutMockServer = MockRestServiceServer.bindTo(shortTimeoutRestTemplate).ignoreExpectOrder(true).bufferContent().build();
-        this.jenkinsServer = jenkinsServer;
         this.jenkinsJobPermissionsService = jenkinsJobPermissionsService;
         closeable = MockitoAnnotations.openMocks(this);
     }
@@ -147,6 +141,7 @@ public class JenkinsRequestMockProvider {
         mockCreateBuildPlan(projectKey, job);
     }
 
+    // TODO: use REST API for mocking
     public void mockCreateJobInFolder(String jobFolder, String job, boolean jobAlreadyExists) throws IOException {
         var folderJob = new FolderJob();
         mockGetFolderJob(jobFolder, folderJob);
@@ -160,6 +155,7 @@ public class JenkinsRequestMockProvider {
         }
     }
 
+    // TODO: use REST API for mocking
     public void mockGivePlanPermissions(String jobFolder, String job) throws IOException {
         mockGetJobConfig(jobFolder, job);
         mockUpdateJob(jobFolder, job);
@@ -167,6 +163,7 @@ public class JenkinsRequestMockProvider {
         doReturn(null).when(jenkinsServer).updateJob(eq(jobFolder), anyString(), eq(useCrumb));
     }
 
+    // TODO: use REST API for mocking
     private void mockGetJobConfig(String folderName, String jobName) throws IOException {
         doReturn(new JobWithDetails()).when(jenkinsServer).getJob(folderName);
         doReturn(Optional.of(new FolderJob())).when(jenkinsServer).getFolderJob(any(JobWithDetails.class));
@@ -175,12 +172,14 @@ public class JenkinsRequestMockProvider {
         doReturn(mockXml).when(jenkinsServer).getJobXml(any(FolderJob.class), eq(jobName));
     }
 
+    // TODO: use REST API for mocking
     public void mockGetFolderConfig(String folderName) throws IOException {
         doReturn(new JobWithDetails()).when(jenkinsServer).getJob(folderName);
         var mockXml = loadFileFromResources("test-data/jenkins-response/job-config.xml");
         doReturn(mockXml).when(jenkinsServer).getJobXml(eq(folderName));
     }
 
+    // TODO: use REST API for mocking
     private void mockUpdateJob(String folderName, String jobName) throws IOException {
         if (folderName != null && !folderName.isEmpty()) {
             doReturn(new JobWithDetails()).when(jenkinsServer).getJob(folderName);
@@ -192,8 +191,9 @@ public class JenkinsRequestMockProvider {
         }
     }
 
+    // TODO: use REST API for mocking
     public void mockCheckIfProjectExists(ProgrammingExercise exercise, boolean exists, boolean shouldFail) throws IOException {
-        var jobOrNull = exists ? mock(JobWithDetails.class) : null;
+        var jobOrNull = exists ? mock(JenkinsJobService.JobWithDetails.class) : null;
         if (jobOrNull != null) {
             doReturn("https://some-job-url.com").when(jobOrNull).getUrl();
         }
@@ -206,10 +206,12 @@ public class JenkinsRequestMockProvider {
         }
     }
 
+    // TODO: use REST API for mocking
     public void mockCheckIfProjectExistsJobIsNull(ProgrammingExercise exercise) throws IOException {
         doReturn(null).when(jenkinsServer).getJob(exercise.getProjectKey());
     }
 
+    // TODO: use REST API for mocking
     public void mockCheckIfProjectExistsJobUrlEmptyOrNull(ProgrammingExercise exercise, boolean urlEmpty) throws IOException {
         var job = mock(JobWithDetails.class);
         doReturn(job).when(jenkinsServer).getJob(exercise.getProjectKey());
@@ -221,6 +223,7 @@ public class JenkinsRequestMockProvider {
         mockSaveJobXml(targetProjectKey);
     }
 
+    // TODO: use REST API for mocking
     private void mockSaveJobXml(String targetProjectKey) throws IOException {
         mockGetFolderJob(targetProjectKey, new FolderJob());
         // copyBuildPlan uses #createJobInFolder()
@@ -239,6 +242,7 @@ public class JenkinsRequestMockProvider {
         return planName.toUpperCase().replaceAll("[^A-Z0-9]", "");
     }
 
+    // TODO: use REST API for mocking
     public void mockUpdatePlanRepository(String projectKey, String planName, boolean useLegacyXml) throws IOException, URISyntaxException {
         var jobConfigXmlFilename = useLegacyXml ? "legacy-job-config.xml" : "job-config.xml";
         var mockXml = loadFileFromResources("test-data/jenkins-response/" + jobConfigXmlFilename);
@@ -255,6 +259,7 @@ public class JenkinsRequestMockProvider {
         mockTriggerBuild(projectKey, planName, false);
     }
 
+    // TODO: use REST API for mocking
     public void mockUpdatePlanRepository(String projectKey, String planName, HttpStatus expectedHttpStatus) throws IOException, URISyntaxException {
         var mockXml = loadFileFromResources("test-data/jenkins-response/job-config.xml");
 
@@ -265,6 +270,7 @@ public class JenkinsRequestMockProvider {
         mockServer.expect(requestTo(uri)).andExpect(method(HttpMethod.POST)).andRespond(withStatus(expectedHttpStatus));
     }
 
+    // TODO: use REST API for mocking
     private void mockGetJobXmlForBuildPlanWith(String projectKey, String xmlToReturn) throws IOException {
         mockGetFolderJob(projectKey, new FolderJob());
         doReturn(xmlToReturn).when(jenkinsServer).getJobXml(any(), any());
@@ -286,7 +292,8 @@ public class JenkinsRequestMockProvider {
         mockCopyBuildPlan(projectKey, projectKey);
     }
 
-    public void mockGetJob(String projectKey, String jobName, JobWithDetails jobToReturn, boolean shouldFail) throws IOException {
+    // TODO: use REST API for mocking
+    public void mockGetJob(String projectKey, String jobName, JenkinsJobService.JobWithDetails jobToReturn, boolean shouldFail) throws IOException {
         final var folder = new FolderJob();
         mockGetFolderJob(projectKey, folder);
         if (!shouldFail) {
@@ -297,6 +304,7 @@ public class JenkinsRequestMockProvider {
         }
     }
 
+    // TODO: use REST API for mocking
     public void mockGetFolderJob(String folderName, FolderJob folderJobToReturn) throws IOException {
         final var jobWithDetails = new JobWithDetails();
         doReturn(jobWithDetails).when(jenkinsServer).getJob(folderName);
@@ -395,6 +403,7 @@ public class JenkinsRequestMockProvider {
         mockAddUsersToGroups(user.getLogin(), user.getGroups(), false);
     }
 
+    // TODO: use REST API for mocking
     public void mockAddUsersToGroups(String login, Set<String> groups, boolean shouldfail) throws IOException {
         var exercises = programmingExerciseRepository.findAllByInstructorOrEditorOrTAGroupNameIn(groups);
         for (ProgrammingExercise exercise : exercises) {
@@ -458,6 +467,7 @@ public class JenkinsRequestMockProvider {
         }
     }
 
+    // TODO: use REST API for mocking
     public void mockDeleteBuildPlan(String projectKey, String planName, boolean shouldFail) throws IOException {
         mockGetFolderJob(projectKey, new FolderJob());
         if (shouldFail) {
@@ -468,16 +478,19 @@ public class JenkinsRequestMockProvider {
         }
     }
 
+    // TODO: use REST API for mocking
     public void mockDeleteBuildPlanNotFound(String projectKey, String planName) throws IOException {
         mockGetFolderJob(projectKey, new FolderJob());
         doThrow(new HttpResponseException(404, "Not found")).when(jenkinsServer).deleteJob(any(FolderJob.class), eq(planName), eq(useCrumb));
     }
 
+    // TODO: use REST API for mocking
     public void mockDeleteBuildPlanFailWithException(String projectKey, String planName) throws IOException {
         mockGetFolderJob(projectKey, new FolderJob());
         doThrow(new IOException("IOException")).when(jenkinsServer).deleteJob(any(FolderJob.class), eq(planName), eq(useCrumb));
     }
 
+    // TODO: use REST API for mocking
     public void mockDeleteBuildPlanProject(String projectKey, boolean shouldFail) throws IOException {
         if (shouldFail) {
             doThrow(new HttpResponseException(400, "Bad Request")).when(jenkinsServer).deleteJob(projectKey, useCrumb);
@@ -487,6 +500,7 @@ public class JenkinsRequestMockProvider {
         }
     }
 
+    // TODO: use REST API for mocking
     public void mockGetBuildStatus(String projectKey, String planName, boolean planExistsInCi, boolean planIsActive, boolean planIsBuilding, boolean failToGetLastBuild)
             throws IOException, URISyntaxException {
         if (!planExistsInCi) {
@@ -494,11 +508,11 @@ public class JenkinsRequestMockProvider {
             return;
         }
 
-        var jobWithDetails = mock(JobWithDetails.class);
+        var jobWithDetails = mock(JenkinsJobService.JobWithDetails.class);
         mockGetJob(projectKey, planName, jobWithDetails, false);
 
         if (planIsActive && !planIsBuilding) {
-            doReturn(true).when(jobWithDetails).isInQueue();
+            doReturn(true).when(jobWithDetails).inQueue();
             return;
         }
 
@@ -519,12 +533,12 @@ public class JenkinsRequestMockProvider {
     }
 
     public void mockCheckIfBuildPlanExists(String projectKey, String buildPlanId, boolean buildPlanExists, boolean shouldFail) throws IOException {
-        var toReturn = buildPlanExists ? new JobWithDetails() : null;
+        var toReturn = buildPlanExists ? new JenkinsJobService.JobWithDetails(buildPlanId, "description", false) : null;
         mockGetJob(projectKey, buildPlanId, toReturn, shouldFail);
     }
 
     public void mockTriggerBuild(String projectKey, String buildPlanId, boolean triggerBuildFails) throws IOException {
-        var jobWithDetails = mock(JobWithDetails.class);
+        var jobWithDetails = mock(JenkinsJobService.JobWithDetails.class);
         mockGetJob(projectKey, buildPlanId, jobWithDetails, triggerBuildFails);
         if (!triggerBuildFails) {
             doReturn(new QueueReference("")).when(jobWithDetails).build();

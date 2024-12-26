@@ -30,7 +30,7 @@ public class JenkinsXmlFileUtils {
 
     private static final Logger log = LoggerFactory.getLogger(JenkinsXmlFileUtils.class);
 
-    public static Document readFromString(String xmlString) {
+    public static Document readFromString(@NotNull String xmlString) {
         return parseDocument(xmlString);
     }
 
@@ -60,7 +60,8 @@ public class JenkinsXmlFileUtils {
         }
     }
 
-    private static Document parseDocument(String configXmlText) {
+    // TODO: should we really parse this into a document?
+    private static Document parseDocument(@NotNull String configXmlText) {
         try {
             final DocumentBuilderFactory domFactory = getDocumentBuilderFactory();
             final var builder = domFactory.newDocumentBuilder();

@@ -16,9 +16,6 @@ import org.junit.jupiter.api.Test;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
 
-import com.offbytwo.jenkins.model.Build;
-import com.offbytwo.jenkins.model.JobWithDetails;
-
 import de.tum.cit.aet.artemis.core.util.TestConstants;
 import de.tum.cit.aet.artemis.exercise.domain.SubmissionType;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;

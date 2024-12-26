@@ -28,8 +28,6 @@ import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.util.StreamUtils;
 
-import com.offbytwo.jenkins.model.JobWithDetails;
-
 import de.tum.cit.aet.artemis.core.exception.JenkinsException;
 import de.tum.cit.aet.artemis.programming.AbstractProgrammingIntegrationJenkinsGitlabTest;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
@@ -47,7 +45,7 @@ class JenkinsServiceTest extends AbstractProgrammingIntegrationJenkinsGitlabTest
      */
     @BeforeEach
     void initTestCase() throws Exception {
-        jenkinsRequestMockProvider.enableMockingOfRequests(jenkinsServer, jenkinsJobPermissionsService);
+        jenkinsRequestMockProvider.enableMockingOfRequests(jenkinsJobPermissionsService);
         gitlabRequestMockProvider.enableMockingOfRequests();
         continuousIntegrationTestService.setup(TEST_PREFIX, this, continuousIntegrationService);
     }

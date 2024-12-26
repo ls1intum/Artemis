@@ -32,8 +32,6 @@ import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.context.bean.override.mockito.MockitoSpyBean;
 
-import com.offbytwo.jenkins.JenkinsServer;
-
 import de.tum.cit.aet.artemis.assessment.web.ResultWebsocketService;
 import de.tum.cit.aet.artemis.communication.service.notifications.GroupNotificationScheduleService;
 import de.tum.cit.aet.artemis.core.connector.AeolusRequestMockProvider;
@@ -75,9 +73,6 @@ public abstract class AbstractSpringIntegrationJenkinsGitlabTest extends Abstrac
     protected GitLabService versionControlService;
 
     @MockitoSpyBean
-    protected JenkinsServer jenkinsServer;
-
-    @MockitoSpyBean
     protected JenkinsJobPermissionsService jenkinsJobPermissionsService;
 
     @MockitoSpyBean
@@ -104,7 +99,7 @@ public abstract class AbstractSpringIntegrationJenkinsGitlabTest extends Abstrac
     @AfterEach
     @Override
     protected void resetSpyBeans() {
-        Mockito.reset(continuousIntegrationService, versionControlService, jenkinsServer);
+        Mockito.reset(continuousIntegrationService, versionControlService);
         super.resetSpyBeans();
     }
 

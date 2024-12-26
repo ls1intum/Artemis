@@ -17,7 +17,6 @@ import org.springframework.security.test.context.support.WithMockUser;
 import com.fasterxml.jackson.core.JsonProcessingException;
 
 import de.tum.cit.aet.artemis.core.user.util.UserUtilService;
-import de.tum.cit.aet.artemis.core.util.RequestUtilService;
 import de.tum.cit.aet.artemis.programming.service.aeolus.ScriptAction;
 import de.tum.cit.aet.artemis.programming.service.aeolus.Windfile;
 import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationLocalCILocalVCTest;
@@ -25,9 +24,6 @@ import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationLocalCILocalV
 class AeolusTemplateResourceTest extends AbstractSpringIntegrationLocalCILocalVCTest {
 
     private static final String TEST_PREFIX = "aeolusintegration";
-
-    @Autowired
-    protected RequestUtilService request;
 
     @Autowired
     private UserUtilService userUtilService;

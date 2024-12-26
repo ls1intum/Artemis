@@ -24,7 +24,6 @@ import de.tum.cit.aet.artemis.programming.domain.ProgrammingLanguage;
 import de.tum.cit.aet.artemis.programming.domain.ProjectType;
 import de.tum.cit.aet.artemis.programming.service.aeolus.AeolusBuildPlanService;
 import de.tum.cit.aet.artemis.programming.service.aeolus.AeolusBuildScriptGenerationService;
-import de.tum.cit.aet.artemis.programming.service.aeolus.AeolusTemplateService;
 import de.tum.cit.aet.artemis.programming.service.aeolus.Windfile;
 import de.tum.cit.aet.artemis.programming.service.aeolus.WindfileMetadata;
 import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationLocalCILocalVCTest;
@@ -33,16 +32,13 @@ class AeolusBuildScriptGenerationServiceTest extends AbstractSpringIntegrationLo
 
     @Autowired
     @Qualifier("aeolusRestTemplate")
-    RestTemplate restTemplate;
+    private RestTemplate restTemplate;
 
     @Autowired
-    AeolusBuildPlanService aeolusBuildPlanService;
+    private AeolusBuildPlanService aeolusBuildPlanService;
 
     @Autowired
-    AeolusTemplateService aeolusTemplateService;
-
-    @Autowired
-    AeolusBuildScriptGenerationService aeolusBuildScriptGenerationService;
+    private AeolusBuildScriptGenerationService aeolusBuildScriptGenerationService;
 
     @Autowired
     private AeolusRequestMockProvider aeolusRequestMockProvider;

@@ -1,6 +1,7 @@
 package de.tum.cit.aet.artemis.programming.service.jenkins;
 
-import java.io.IOException;
+import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_JENKINS;
+
 import java.net.URL;
 import java.util.List;
 import java.util.Map;
@@ -17,7 +18,6 @@ import org.springframework.web.client.RestTemplate;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.offbytwo.jenkins.JenkinsServer;
 
 import de.tum.cit.aet.artemis.core.exception.ContinuousIntegrationException;
 import de.tum.cit.aet.artemis.core.exception.JenkinsException;
@@ -39,7 +39,7 @@ import de.tum.cit.aet.artemis.programming.service.ci.notification.dto.TestResult
 import de.tum.cit.aet.artemis.programming.service.jenkins.build_plan.JenkinsBuildPlanService;
 import de.tum.cit.aet.artemis.programming.service.jenkins.jobs.JenkinsJobService;
 
-@Profile("jenkins")
+@Profile(PROFILE_JENKINS)
 @Service
 public class JenkinsService extends AbstractContinuousIntegrationService {
 
@@ -55,8 +55,6 @@ public class JenkinsService extends AbstractContinuousIntegrationService {
 
     private final JenkinsBuildPlanService jenkinsBuildPlanService;
 
-    private final JenkinsServer jenkinsServer;
-
     private final JenkinsJobService jenkinsJobService;
 
     private final JenkinsInternalUrlService jenkinsInternalUrlService;
@@ -69,11 +67,9 @@ public class JenkinsService extends AbstractContinuousIntegrationService {
 
     private final ProgrammingExerciseBuildConfigRepository programmingExerciseBuildConfigRepository;
 
-    public JenkinsService(JenkinsServer jenkinsServer, @Qualifier("shortTimeoutJenkinsRestTemplate") RestTemplate shortTimeoutRestTemplate,
-            JenkinsBuildPlanService jenkinsBuildPlanService, JenkinsJobService jenkinsJobService, JenkinsInternalUrlService jenkinsInternalUrlService,
-            Optional<AeolusTemplateService> aeolusTemplateService, ProfileService profileService,
-            ProgrammingExerciseBuildConfigRepository programmingExerciseBuildConfigRepository) {
-        this.jenkinsServer = jenkinsServer;
+    public JenkinsService(@Qualifier("shortTimeoutJenkinsRestTemplate") RestTemplate shortTimeoutRestTemplate, JenkinsBuildPlanService jenkinsBuildPlanService,
+            JenkinsJobService jenkinsJobService, JenkinsInternalUrlService jenkinsInternalUrlService, Optional<AeolusTemplateService> aeolusTemplateService,
+            ProfileService profileService, ProgrammingExerciseBuildConfigRepository programmingExerciseBuildConfigRepository) {
         this.jenkinsBuildPlanService = jenkinsBuildPlanService;
         this.jenkinsJobService = jenkinsJobService;
         this.jenkinsInternalUrlService = jenkinsInternalUrlService;
@@ -153,12 +149,12 @@ public class JenkinsService extends AbstractContinuousIntegrationService {
 
     @Override
     public void deleteProject(String projectKey) {
-        jenkinsJobService.deleteJob(projectKey);
+        jenkinsJobService.deleteFolderJob(projectKey);
     }
 
     @Override
     public void deleteBuildPlan(String projectKey, String planKey) {
-        jenkinsBuildPlanService.deleteBuildPlan(projectKey, planKey);
+        jenkinsJobService.deleteJob(projectKey, planKey);
     }
 
     @Override
@@ -204,8 +200,9 @@ public class JenkinsService extends AbstractContinuousIntegrationService {
     @Override
     public String checkIfProjectExists(String projectKey, String projectName) {
         try {
-            final var job = jenkinsServer.getJob(projectKey);
-            if (job == null || job.getUrl() == null || job.getUrl().isEmpty()) {
+            // TODO: use REST API
+            final var job = jenkinsJobService.getFolderJob(projectKey);
+            if (job == null || job.url() == null || job.url().isEmpty()) {
                 // means the project does not exist
                 return null;
             }
@@ -251,9 +248,9 @@ public class JenkinsService extends AbstractContinuousIntegrationService {
     @Override
     public void createProjectForExercise(ProgrammingExercise programmingExercise) throws ContinuousIntegrationException {
         try {
-            jenkinsServer.createFolder(programmingExercise.getProjectKey(), useCrumb);
+            jenkinsJobService.createFolder(programmingExercise.getProjectKey());
         }
-        catch (IOException e) {
+        catch (Exception e) {
             log.error(e.getMessage(), e);
             throw new JenkinsException("Error creating folder for exercise " + programmingExercise, e);
         }

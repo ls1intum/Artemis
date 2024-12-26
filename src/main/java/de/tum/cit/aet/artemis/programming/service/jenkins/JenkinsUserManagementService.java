@@ -1,5 +1,7 @@
 package de.tum.cit.aet.artemis.programming.service.jenkins;
 
+import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_JENKINS;
+
 import java.io.IOException;
 import java.net.URL;
 import java.util.List;
@@ -41,7 +43,7 @@ import de.tum.cit.aet.artemis.programming.service.jenkins.jobs.JenkinsJobPermiss
 import de.tum.cit.aet.artemis.programming.service.jenkins.jobs.JenkinsJobPermissionsService;
 
 @Service
-@Profile("jenkins")
+@Profile(PROFILE_JENKINS)
 public class JenkinsUserManagementService implements CIUserManagementService {
 
     private static final Logger log = LoggerFactory.getLogger(JenkinsUserManagementService.class);
@@ -100,7 +102,7 @@ public class JenkinsUserManagementService implements CIUserManagementService {
 
         try {
             // Create the Jenkins user
-            var uri = UriComponentsBuilder.fromHttpUrl(jenkinsServerUrl.toString()).pathSegment("securityRealm", "createAccountByAdmin").build().toUri();
+            var uri = UriComponentsBuilder.fromUriString(jenkinsServerUrl.toString()).pathSegment("securityRealm", "createAccountByAdmin").build().toUri();
             restTemplate.exchange(uri, HttpMethod.POST, getCreateUserFormHttpEntity(user, password), Void.class);
 
             // Adds the user to groups of existing programming exercises
@@ -152,7 +154,7 @@ public class JenkinsUserManagementService implements CIUserManagementService {
         }
 
         try {
-            var uri = UriComponentsBuilder.fromHttpUrl(jenkinsServerUrl.toString()).pathSegment("user", userLogin, "doDelete").build().toUri();
+            var uri = UriComponentsBuilder.fromUriString(jenkinsServerUrl.toString()).pathSegment("user", userLogin, "doDelete").build().toUri();
             restTemplate.exchange(uri, HttpMethod.POST, null, Void.class);
             removeUserFromGroups(userLogin, getUserWithGroups(user).getGroups());
         }
@@ -393,7 +395,7 @@ public class JenkinsUserManagementService implements CIUserManagementService {
      */
     private JenkinsUserDTO getUser(String userLogin) throws ContinuousIntegrationException {
         try {
-            var uri = UriComponentsBuilder.fromHttpUrl(jenkinsServerUrl.toString()).pathSegment("user", userLogin, "api", "json").build().toUri();
+            var uri = UriComponentsBuilder.fromUriString(jenkinsServerUrl.toString()).pathSegment("user", userLogin, "api", "json").build().toUri();
             return restTemplate.exchange(uri, HttpMethod.GET, null, JenkinsUserDTO.class).getBody();
 
         }

@@ -29,7 +29,7 @@ class ProgrammingExerciseIntegrationJenkinsGitlabTest extends AbstractProgrammin
     @BeforeEach
     void initTestCase() throws Exception {
         gitlabRequestMockProvider.enableMockingOfRequests();
-        jenkinsRequestMockProvider.enableMockingOfRequests(jenkinsServer, jenkinsJobPermissionsService);
+        jenkinsRequestMockProvider.enableMockingOfRequests(jenkinsJobPermissionsService);
         programmingExerciseIntegrationTestService.setup(TEST_PREFIX, this, versionControlService, continuousIntegrationService);
     }
 
