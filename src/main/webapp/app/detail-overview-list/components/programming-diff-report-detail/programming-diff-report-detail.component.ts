@@ -10,6 +10,8 @@ import { NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
 import { GitDiffLineStatComponent, LineStat } from 'app/exercises/programming/hestia/git-diff-report/git-diff-line-stat.component';
 import { GitDiffReportComponent } from 'app/exercises/programming/hestia/git-diff-report/git-diff-report.component';
 import { RepositoryFilesService } from 'app/exercises/programming/manage/services/repository-files.service';
+import { combineLatest, switchMap } from 'rxjs';
+import { ParticipationWebsocketService } from 'app/overview/participation-websocket.service';
 
 @Component({
     selector: 'jhi-programming-diff-report-detail',
@@ -28,10 +30,11 @@ export class ProgrammingDiffReportDetailComponent implements OnDestroy {
 
     private readonly modalService = inject(NgbModal);
     private readonly repositoryFilesService = inject(RepositoryFilesService);
-    private readonly modalRef = signal<NgbModalRef | undefined>(undefined);
+    private readonly participationWebsocketService = inject(ParticipationWebsocketService);
 
     protected readonly detail = input.required<ProgrammingDiffReportDetail>();
 
+    private readonly modalRef = signal<NgbModalRef | undefined>(undefined);
     protected readonly leftCommitFileContentByPath = signal<Map<string, string> | undefined>(undefined);
     protected readonly rightCommitFileContentByPath = signal<Map<string, string> | undefined>(undefined);
     protected readonly container = viewChild.required('container', { read: ViewContainerRef });
@@ -45,11 +48,18 @@ export class ProgrammingDiffReportDetailComponent implements OnDestroy {
                 this.rightCommitFileContentByPath.set(undefined);
 
                 const exerciseId = this.detail().data.exerciseId;
+                const templateParticipationId = this.detail().data.templateParticipationId;
+                const solutionParticipationId = this.detail().data.solutionParticipationId;
 
-                const subscription = this.repositoryFilesService.loadFilesForTemplateAndSolution(exerciseId).subscribe(([leftFileContentByPath, rightFileContentByPath]) => {
-                    this.leftCommitFileContentByPath.set(leftFileContentByPath);
-                    this.rightCommitFileContentByPath.set(rightFileContentByPath);
-                });
+                const subscription = combineLatest([
+                    this.participationWebsocketService.subscribeForLatestResultOfParticipation(templateParticipationId, false, exerciseId),
+                    this.participationWebsocketService.subscribeForLatestResultOfParticipation(solutionParticipationId, false, exerciseId),
+                ])
+                    .pipe(switchMap(() => this.repositoryFilesService.loadFilesForTemplateAndSolution(exerciseId)))
+                    .subscribe(([leftFileContentByPath, rightFileContentByPath]) => {
+                        this.leftCommitFileContentByPath.set(leftFileContentByPath);
+                        this.rightCommitFileContentByPath.set(rightFileContentByPath);
+                    });
 
                 onCleanup(() => subscription.unsubscribe());
             },

@@ -454,7 +454,7 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
                     type: DetailType.ProgrammingDiffReport,
                     title: 'artemisApp.programmingExercise.diffReport.title',
                     titleHelpText: 'artemisApp.programmingExercise.diffReport.detailedTooltip',
-                    data: { exerciseId: exercise.id! },
+                    data: { exerciseId: exercise.id!, templateParticipationId: exercise.templateParticipation!.id!, solutionParticipationId: exercise.solutionParticipation!.id! },
                 },
                 !!exercise.buildConfig?.buildScript &&
                     !!exercise.buildConfig?.windfile?.metadata?.docker?.image && {

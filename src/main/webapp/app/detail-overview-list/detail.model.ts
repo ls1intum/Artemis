@@ -119,9 +119,10 @@ export interface ProgrammingTestStatusDetail extends DetailBase {
         submissionRouterLink?: (string | number | undefined)[];
     };
 }
+
 export interface ProgrammingDiffReportDetail extends DetailBase {
     type: DetailType.ProgrammingDiffReport;
-    data: { exerciseId: number };
+    data: { exerciseId: number; templateParticipationId: number; solutionParticipationId: number };
 }
 
 interface ProgrammingProblemStatementDetail extends DetailBase {
