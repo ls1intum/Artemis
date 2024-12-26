@@ -341,6 +341,13 @@ public class AttachmentUnitResource {
         }
     }
 
+    /**
+     * Retrieves the list of hidden slide numbers for a specific attachment unit within a lecture.
+     *
+     * @param attachmentUnitId the ID of the attachment unit
+     * @param lectureId        the ID of the lecture
+     * @return the ResponseEntity with status 200 (OK) and with body the list of slides that are hidden
+     */
     @GetMapping("lectures/{lectureId}/attachment-units/{attachmentUnitId}/hidden-slides")
     @EnforceAtLeastEditor
     public ResponseEntity<List<Integer>> getAttachmentUnitHiddenSlides(@PathVariable Long attachmentUnitId, @PathVariable Long lectureId) {

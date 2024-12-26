@@ -107,6 +107,7 @@ public class AttachmentUnitService {
      * @param updateUnit             The new attachment unit data.
      * @param updateAttachment       The new attachment data.
      * @param updateFile             The optional file.
+     * @param studentVersionFile     The student version of the original file.
      * @param keepFilename           Whether to keep the original filename or not.
      * @param hiddenPages            The hidden pages of attachment unit.
      * @return The updated attachment unit.
@@ -219,6 +220,13 @@ public class AttachmentUnitService {
         attachmentUnit.getLecture().setPosts(null);
     }
 
+    /**
+     * Saves the student version of an attachment, updates its reference in the database,
+     * and deletes the old version if it exists.
+     *
+     * @param studentVersion the new student version file to be saved
+     * @param attachment     the attachment to be updated
+     */
     public void saveStudentVersion(MultipartFile studentVersion, Attachment attachment) {
         // Update student version of attachment
         Path basePath = FilePathService.getAttachmentUnitFilePath().resolve(attachment.getAttachmentUnit().getId().toString());
