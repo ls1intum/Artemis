@@ -271,9 +271,7 @@ dependencies {
 
     implementation "org.apache.logging.log4j:log4j-to-slf4j:2.24.3"
 
-    // Note: spring-security-lti13 does not work with jakarta yet, so we built our own custom version and declare its transitive dependencies below
-    // implementation "uk.ac.ox.ctl:spring-security-lti13:0.1.11"
-    implementation files("libs/spring-security-lti13-0.1.13.jar")
+    implementation "uk.ac.ox.ctl:spring-security-lti13:0.3.0"
 
     // https://search.maven.org/artifact/org.eclipse.jgit/org.eclipse.jgit
     implementation "org.eclipse.jgit:org.eclipse.jgit:${jgit_version}"
