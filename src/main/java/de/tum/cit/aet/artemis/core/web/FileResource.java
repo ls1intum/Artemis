@@ -1,7 +1,6 @@
 package de.tum.cit.aet.artemis.core.web;
 
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
-import static java.lang.Integer.parseInt;
 import static org.apache.velocity.shaded.commons.io.FilenameUtils.getBaseName;
 import static org.apache.velocity.shaded.commons.io.FilenameUtils.getExtension;
 
@@ -544,10 +543,9 @@ public class FileResource {
 
         checkAttachmentAuthorizationOrThrow(course, attachment);
 
-        // Get the slide and check if it is hidden, if not, get the next first slide that is visible
-        List<Slide> slides = attachmentUnit.getSlides();
-        Slide visibleSlide = slides.stream().filter(slide -> slide.getHidden() == null && parseInt(slideNumber) <= slide.getSlideNumber()).findFirst()
-                .orElseThrow(() -> new EntityNotFoundException("Slide", slideNumber));
+        // Get the all the slides without hidden slides and get the visible slide by slide index
+        Slide visibleSlide = attachmentUnit.getSlides().stream().filter(slide -> slide.getHidden() == null).toList().get(Integer.parseInt(slideNumber) - 1);
+
         String directoryPath = visibleSlide.getSlideImagePath();
 
         // Use regular expression to match and extract the file name with ".png" format
@@ -558,7 +556,7 @@ public class FileResource {
             String fileName = matcher.group(1);
             return buildFileResponse(
                     FilePathService.getAttachmentUnitFilePath().resolve(Path.of(attachmentUnit.getId().toString(), "slide", String.valueOf(visibleSlide.getSlideNumber()))),
-                    fileName, true);
+                    fileName, false);
         }
         else {
             throw new EntityNotFoundException("Slide", slideNumber);
