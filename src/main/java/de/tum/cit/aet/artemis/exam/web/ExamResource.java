@@ -1206,7 +1206,7 @@ public class ExamResource {
      *
      * @param courseId the id of the course
      * @param examId   the id of the exam to archive
-     * @return empty
+     * @return the ResponseEntity with status 200 (OK) if the archiving process has been started successfully
      */
     @PutMapping("courses/{courseId}/exams/{examId}/archive")
     @EnforceAtLeastInstructor
