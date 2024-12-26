@@ -1,4 +1,4 @@
-import { ComponentRef, Directive, Input, OnDestroy, OnInit, Type, ViewContainerRef } from '@angular/core';
+import { ComponentRef, Directive, Input, OnChanges, OnDestroy, OnInit, Type, ViewContainerRef } from '@angular/core';
 import type { Detail, ShownDetail } from 'app/detail-overview-list/detail.model';
 import { DetailType } from 'app/detail-overview-list/detail-overview-list.component';
 import { TextDetailComponent } from 'app/detail-overview-list/components/text-detail/text-detail.component';
@@ -14,7 +14,7 @@ import { ProgrammingDiffReportDetailComponent } from 'app/detail-overview-list/c
     selector: '[jhiExerciseDetail]',
     standalone: true,
 })
-export class ExerciseDetailDirective implements OnInit, OnDestroy {
+export class ExerciseDetailDirective implements OnInit, OnChanges, OnDestroy {
     @Input() detail: Detail;
 
     private componentRef: ComponentRef<any>;
@@ -54,6 +54,10 @@ export class ExerciseDetailDirective implements OnInit, OnDestroy {
             this.componentRef = this.viewContainerRef.createComponent(detailComponent);
             this.assignAttributes();
         }
+    }
+
+    ngOnChanges(): void {
+        this.assignAttributes();
     }
 
     ngOnDestroy() {
