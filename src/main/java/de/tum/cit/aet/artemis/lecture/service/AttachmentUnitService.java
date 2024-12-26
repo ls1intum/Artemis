@@ -121,10 +121,6 @@ public class AttachmentUnitService {
         existingAttachmentUnit.setReleaseDate(updateUnit.getReleaseDate());
         existingAttachmentUnit.setCompetencyLinks(updateUnit.getCompetencyLinks());
 
-        if (studentVersionFile != null) {
-            saveStudentVersion(studentVersionFile, existingAttachmentUnit.getAttachment());
-        }
-
         AttachmentUnit savedAttachmentUnit = lectureUnitService.saveWithCompetencyLinks(existingAttachmentUnit, attachmentUnitRepository::saveAndFlush);
 
         Attachment existingAttachment = existingAttachmentUnit.getAttachment();
@@ -134,6 +130,7 @@ public class AttachmentUnitService {
 
         updateAttachment(existingAttachment, updateAttachment, savedAttachmentUnit);
         handleFile(updateFile, existingAttachment, keepFilename, savedAttachmentUnit.getId());
+        handleStudentVersionFile(studentVersionFile, existingAttachment, savedAttachmentUnit.getId());
         final int revision = existingAttachment.getVersion() == null ? 1 : existingAttachment.getVersion() + 1;
         existingAttachment.setVersion(revision);
         Attachment savedAttachment = attachmentRepository.saveAndFlush(existingAttachment);
@@ -198,6 +195,30 @@ public class AttachmentUnitService {
     }
 
     /**
+     * Handles the student version file of an attachment, updates its reference in the database,
+     * and deletes the old version if it exists.
+     *
+     * @param studentVersionFile the new student version file to be saved
+     * @param attachment         the existing attachment
+     * @param attachmentUnitId   the id of the attachment unit
+     */
+    public void handleStudentVersionFile(MultipartFile studentVersionFile, Attachment attachment, Long attachmentUnitId) {
+        if (studentVersionFile != null) {
+            // Delete the old student version
+            if (attachment.getStudentVersion() != null) {
+                URI oldHiddenPath = URI.create(attachment.getStudentVersion());
+                fileService.schedulePathForDeletion(FilePathService.actualPathForPublicPathOrThrow(oldHiddenPath), 0);
+                this.fileService.evictCacheForPath(FilePathService.actualPathForPublicPathOrThrow(oldHiddenPath));
+            }
+
+            // Update student version of attachment
+            Path basePath = FilePathService.getAttachmentUnitFilePath().resolve(attachmentUnitId.toString());
+            Path savePath = fileService.saveFile(studentVersionFile, basePath.resolve("student"), true);
+            attachment.setStudentVersion(FilePathService.publicPathForActualPath(savePath, attachmentUnitId).toString());
+        }
+    }
+
+    /**
      * If a file was provided the cache for that file gets evicted.
      *
      * @param file           Potential file to evict the cache for.
@@ -218,26 +239,5 @@ public class AttachmentUnitService {
         attachmentUnit.getLecture().setLectureUnits(null);
         attachmentUnit.getLecture().setAttachments(null);
         attachmentUnit.getLecture().setPosts(null);
-    }
-
-    /**
-     * Saves the student version of an attachment, updates its reference in the database,
-     * and deletes the old version if it exists.
-     *
-     * @param studentVersion the new student version file to be saved
-     * @param attachment     the attachment to be updated
-     */
-    public void saveStudentVersion(MultipartFile studentVersion, Attachment attachment) {
-        // Update student version of attachment
-        Path basePath = FilePathService.getAttachmentUnitFilePath().resolve(attachment.getAttachmentUnit().getId().toString());
-        Path savePath = fileService.saveFile(studentVersion, basePath.resolve("student"), true);
-        attachment.setStudentVersion(FilePathService.publicPathForActualPath(savePath, attachment.getAttachmentUnit().getId()).toString());
-
-        // Delete the old student version
-        if (attachment.getStudentVersion() != null) {
-            URI oldHiddenPath = URI.create(attachment.getStudentVersion());
-            fileService.schedulePathForDeletion(FilePathService.actualPathForPublicPathOrThrow(oldHiddenPath), 0);
-            this.fileService.evictCacheForPath(FilePathService.actualPathForPublicPathOrThrow(oldHiddenPath));
-        }
     }
 }
