@@ -418,15 +418,16 @@ public class ChannelService {
     /**
      * Creates a feedback-specific channel for an exercise within a course.
      *
-     * @param course             in which the channel is being created.
-     * @param exerciseId         of the exercise associated with the feedback channel.
-     * @param channelDTO         containing the properties of the channel to be created, such as name, description, and visibility.
-     * @param feedbackDetailText used to identify the students affected by the feedback.
-     * @param requestingUser     initiating the channel creation request.
+     * @param course              in which the channel is being created.
+     * @param exerciseId          of the exercise associated with the feedback channel.
+     * @param channelDTO          containing the properties of the channel to be created, such as name, description, and visibility.
+     * @param feedbackDetailTexts used to identify the students affected by the feedback.
+     * @param requestingUser      initiating the channel creation request.
+     * @param testCaseName        to filter student submissions according to a specific feedback
      * @return the created {@link Channel} object with its properties.
      * @throws BadRequestAlertException if the channel name starts with an invalid prefix (e.g., "$").
      */
-    public Channel createFeedbackChannel(Course course, Long exerciseId, ChannelDTO channelDTO, String feedbackDetailText, User requestingUser) {
+    public Channel createFeedbackChannel(Course course, Long exerciseId, ChannelDTO channelDTO, List<String> feedbackDetailTexts, String testCaseName, User requestingUser) {
         Channel channelToCreate = new Channel();
         channelToCreate.setName(channelDTO.getName());
         channelToCreate.setIsPublic(channelDTO.getIsPublic());
@@ -440,7 +441,7 @@ public class ChannelService {
 
         Channel createdChannel = createChannel(course, channelToCreate, Optional.of(requestingUser));
 
-        List<String> userLogins = studentParticipationRepository.findAffectedLoginsByFeedbackDetailText(exerciseId, feedbackDetailText);
+        List<String> userLogins = studentParticipationRepository.findAffectedLoginsByFeedbackDetailText(exerciseId, feedbackDetailTexts, testCaseName);
 
         if (userLogins != null && !userLogins.isEmpty()) {
             var registeredUsers = registerUsersToChannel(false, false, false, userLogins, course, createdChannel);
@@ -449,5 +450,15 @@ public class ChannelService {
         }
 
         return createdChannel;
+    }
+
+    /**
+     * Marks all channels of a course as read for the requesting user.
+     *
+     * @param course         the course for which all channels should be marked as read.
+     * @param requestingUser the user requesting the marking of all channels as read.
+     */
+    public void markAllChannelsOfCourseAsRead(Course course, User requestingUser) {
+        conversationService.markAllConversationOfAUserAsRead(course.getId(), requestingUser);
     }
 }

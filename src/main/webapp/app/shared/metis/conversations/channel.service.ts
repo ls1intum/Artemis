@@ -1,4 +1,4 @@
-import { Injectable } from '@angular/core';
+import { Injectable, inject } from '@angular/core';
 import { HttpClient, HttpParams, HttpResponse } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { ChannelDTO, ChannelIdAndNameDTO } from 'app/entities/metis/conversation/channel.model';
@@ -10,11 +10,9 @@ import { AccountService } from 'app/core/auth/account.service';
 export class ChannelService {
     public resourceUrl = '/api/courses/';
 
-    constructor(
-        private http: HttpClient,
-        private conversationService: ConversationService,
-        private accountService: AccountService,
-    ) {}
+    private http = inject(HttpClient);
+    private conversationService = inject(ConversationService);
+    private accountService = inject(AccountService);
 
     getChannelsOfCourse(courseId: number): Observable<HttpResponse<ChannelDTO[]>> {
         return this.http.get<ChannelDTO[]>(`${this.resourceUrl}${courseId}/channels/overview`, {
