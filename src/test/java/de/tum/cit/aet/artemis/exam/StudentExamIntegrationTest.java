@@ -73,8 +73,8 @@ import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.domain.Language;
 import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
-import de.tum.cit.aet.artemis.core.repository.CourseRepository;
 import de.tum.cit.aet.artemis.core.security.SecurityUtils;
+import de.tum.cit.aet.artemis.core.test_repository.CourseTestRepository;
 import de.tum.cit.aet.artemis.core.user.util.UserUtilService;
 import de.tum.cit.aet.artemis.core.util.RoundingUtil;
 import de.tum.cit.aet.artemis.exam.domain.Exam;
@@ -118,8 +118,8 @@ import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseStudentParti
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingSubmission;
 import de.tum.cit.aet.artemis.programming.domain.submissionpolicy.LockRepositoryPolicy;
 import de.tum.cit.aet.artemis.programming.domain.submissionpolicy.SubmissionPolicy;
-import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseRepository;
-import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseStudentParticipationRepository;
+import de.tum.cit.aet.artemis.programming.test_repository.ProgrammingExerciseStudentParticipationTestRepository;
+import de.tum.cit.aet.artemis.programming.test_repository.ProgrammingExerciseTestRepository;
 import de.tum.cit.aet.artemis.programming.test_repository.ProgrammingSubmissionTestRepository;
 import de.tum.cit.aet.artemis.programming.util.LocalRepository;
 import de.tum.cit.aet.artemis.programming.util.ProgrammingExerciseTestService;
@@ -158,10 +158,10 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationJenkinsGitlabT
     private ExamUserRepository examUserRepository;
 
     @Autowired
-    private ProgrammingExerciseStudentParticipationRepository participationRepository;
+    private ProgrammingExerciseStudentParticipationTestRepository programmingExerciseStudentParticipationTestRepository;
 
     @Autowired
-    private ProgrammingExerciseRepository programmingExerciseRepository;
+    private ProgrammingExerciseTestRepository ProgrammingExerciseTestRepository;
 
     @Autowired
     private SubmissionTestRepository submissionRepository;
@@ -218,7 +218,7 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationJenkinsGitlabT
     private GradingScaleUtilService gradingScaleUtilService;
 
     @Autowired
-    private CourseRepository courseRepository;
+    private CourseTestRepository CourseTestRepository;
 
     @Autowired
     private UserUtilService userUtilService;
@@ -865,16 +865,16 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationJenkinsGitlabT
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testUpdateWorkingTime_ShouldTriggerUnlock() throws Exception {
         ProgrammingExercise programmingExercise = programmingExerciseUtilService.addCourseExamExerciseGroupWithOneProgrammingExercise();
-        programmingExerciseRepository.save(programmingExercise);
+        ProgrammingExerciseTestRepository.save(programmingExercise);
 
         Course course = programmingExercise.getCourseViaExerciseGroupOrCourseMember();
-        courseRepository.save(course);
+        CourseTestRepository.save(course);
 
         userUtilService.addUsers(TEST_PREFIX, NUMBER_OF_STUDENTS, 0, 0, NUMBER_OF_INSTRUCTORS);
         User student = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
 
         ProgrammingExerciseStudentParticipation participation = participationUtilService.addStudentParticipationForProgrammingExercise(programmingExercise, student.getLogin());
-        participationRepository.save(participation);
+        programmingExerciseStudentParticipationTestRepository.save(participation);
 
         Exam exam = programmingExercise.getExam();
         exam.setStartDate(ZonedDateTime.now().minusHours(2));
