@@ -1,0 +1,125 @@
+import org.gradle.api.tasks.testing.logging.TestExceptionFormat
+import org.gradle.api.tasks.testing.logging.TestLogEvent
+
+// Taken from here: https://stackoverflow.com/questions/3963708/gradle-how-to-display-test-results-in-the-console-in-real-time
+tasks.withType(Test).configureEach {
+    // a collection to track failedTests
+    ext.failedTests = []
+
+    testLogging {
+        // set options for log level LIFECYCLE
+        events TestLogEvent.FAILED,
+            TestLogEvent.PASSED,
+            TestLogEvent.SKIPPED
+        exceptionFormat = TestExceptionFormat.FULL
+        showExceptions = true
+        showCauses = true
+        showStackTraces = true
+
+        info.events = debug.events
+        info.exceptionFormat = debug.exceptionFormat
+    }
+
+    afterTest { descriptor, result ->
+        if (result.resultType == TestResult.ResultType.FAILURE) {
+            var failedTest = "${descriptor.className}::${descriptor.name}"
+            logger.debug("Adding " + failedTest + " to failedTests...")
+            failedTests << [failedTest]
+        }
+    }
+
+    afterSuite { suite, result ->
+        if (!suite.parent) { // will match the outermost suite
+            def output = "Results: ${result.resultType} (${result.testCount} tests, ${result.successfulTestCount} successes, ${result.failedTestCount} failures, ${result.skippedTestCount} skipped)"
+            def startItem = "|  ", endItem = "  |"
+            def repeatLength = startItem.length() + output.length() + endItem.length()
+            println("\n" + ("-" * repeatLength) + "\n" + startItem + output + endItem + "\n" + ("-" * repeatLength))
+            // logs each failed test
+            if (!failedTests.empty) {
+                logger.lifecycle("Failed tests:")
+                failedTests.each { failedTest ->
+                    println("${failedTest}")
+                }
+            }
+        }
+    }
+}
+
+
+// Execute the test cases: ./gradlew test
+// Execute only architecture tests: ./gradlew test -DincludeTags="ArchitectureTest"
+test {
+    if (System.getProperty("includeTags")) {
+        useJUnitPlatform {
+            includeTags System.getProperty("includeTags")
+        }
+    } else {
+        useJUnitPlatform()
+        exclude "**/*IT*", "**/*IntTest*"
+    }
+
+    testLogging {
+        events "FAILED", "SKIPPED"
+    }
+    testLogging.showStandardStreams = true
+    reports.html.required = false
+    minHeapSize = "2g" // initial heap size
+    maxHeapSize = "6g" // maximum heap size
+}
+
+tasks.register("testReport", TestReport) {
+    destinationDirectory = layout.buildDirectory.file("reports/tests").get().asFile
+    testResults.from(test)
+}
+
+apply plugin: "jacoco"
+
+jacoco {
+    toolVersion = "0.8.12"
+}
+
+private excludedClassFilesForReport(classDirectories) {
+    classDirectories.setFrom(files(classDirectories.files.collect {
+        fileTree(dir: it,
+            exclude: [
+                "**/de/tum/cit/aet/artemis/**/domain/**/*_*",
+                "**/de/tum/cit/aet/artemis/core/config/migration/entries/**",
+                "**/gradle-wrapper.jar/**"
+            ]
+        )
+    }))
+}
+
+jacocoTestReport {
+    reports {
+        xml.required = true
+    }
+    // we want to ignore some generated files in the domain folders
+    afterEvaluate {
+        excludedClassFilesForReport(classDirectories)
+    }
+}
+
+jacocoTestCoverageVerification {
+    violationRules {
+        rule {
+            limit {
+                counter = "INSTRUCTION"
+                value = "COVEREDRATIO"
+                // TODO: in the future the following value should become higher than 0.92
+                minimum = 0.895
+            }
+            limit {
+                counter = "CLASS"
+                value = "MISSEDCOUNT"
+                // TODO: in the future the following value should become less than 10
+                maximum = 56
+            }
+        }
+    }
+    // we want to ignore some generated files in the domain folders
+    afterEvaluate {
+        excludedClassFilesForReport(classDirectories)
+    }
+}
+check.dependsOn jacocoTestCoverageVerification
