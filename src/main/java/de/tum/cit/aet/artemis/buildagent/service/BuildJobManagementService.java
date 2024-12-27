@@ -13,7 +13,6 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionException;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentSkipListSet;
-import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
@@ -32,6 +31,7 @@ import org.springframework.stereotype.Service;
 import com.hazelcast.core.HazelcastInstance;
 import com.hazelcast.topic.ITopic;
 
+import de.tum.cit.aet.artemis.buildagent.BuildAgentConfiguration;
 import de.tum.cit.aet.artemis.buildagent.dto.BuildJobQueueItem;
 import de.tum.cit.aet.artemis.buildagent.dto.BuildLogDTO;
 import de.tum.cit.aet.artemis.buildagent.dto.BuildResult;
@@ -49,7 +49,7 @@ public class BuildJobManagementService {
 
     private final BuildJobExecutionService buildJobExecutionService;
 
-    private final ExecutorService localCIBuildExecutorService;
+    private final BuildAgentConfiguration buildAgentConfiguration;
 
     private final BuildJobContainerService buildJobContainerService;
 
@@ -84,9 +84,9 @@ public class BuildJobManagementService {
     private final Set<String> cancelledBuildJobs = new ConcurrentSkipListSet<>();
 
     public BuildJobManagementService(@Qualifier("hazelcastInstance") HazelcastInstance hazelcastInstance, BuildJobExecutionService buildJobExecutionService,
-            ExecutorService localCIBuildExecutorService, BuildJobContainerService buildJobContainerService, BuildLogsMap buildLogsMap) {
+            BuildAgentConfiguration buildAgentConfiguration, BuildJobContainerService buildJobContainerService, BuildLogsMap buildLogsMap) {
         this.buildJobExecutionService = buildJobExecutionService;
-        this.localCIBuildExecutorService = localCIBuildExecutorService;
+        this.buildAgentConfiguration = buildAgentConfiguration;
         this.buildJobContainerService = buildJobContainerService;
         this.hazelcastInstance = hazelcastInstance;
         this.buildLogsMap = buildLogsMap;
@@ -145,7 +145,7 @@ public class BuildJobManagementService {
                 buildLogsMap.appendBuildLogEntry(buildJobItem.id(), msg);
                 throw new CompletionException(msg, null);
             }
-            future = localCIBuildExecutorService.submit(buildJob);
+            future = buildAgentConfiguration.getBuildExecutor().submit(buildJob);
             runningFutures.put(buildJobItem.id(), future);
         }
         finally {
@@ -256,7 +256,7 @@ public class BuildJobManagementService {
         String msg = "Error while executing build job " + buildJobId + ": " + exception.getMessage();
         String stackTrace = stackTraceToString(exception);
         buildLogsMap.appendBuildLogEntry(buildJobId, new BuildLogDTO(ZonedDateTime.now(), msg + "\n" + stackTrace));
-        log.error(msg);
+        log.error(msg, exception);
 
         log.info("Getting ID of running container {}", containerName);
         String containerId = buildJobContainerService.getIDOfRunningContainer(containerName);
