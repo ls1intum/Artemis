@@ -112,7 +112,14 @@ public class JenkinsRequestMockProvider {
     }
 
     public void mockCreateProjectForExercise(ProgrammingExercise exercise, boolean shouldFail) {
-        URI uri = JenkinsEndpoints.NEW_FOLDER.buildEndpoint(serverUri).queryParam("name", exercise.getProjectKey()).build(true).toUri();
+        //@formatter:off
+        URI uri = JenkinsEndpoints.NEW_FOLDER.buildEndpoint(serverUri)
+            .queryParam("name", exercise.getProjectKey())
+            .queryParam("mode", "com.cloudbees.hudson.plugins.folder.Folder")
+            .queryParam("from", "")
+            .queryParam("Submit", "OK")
+            .build(true).toUri();
+        //@formatter:on
         if (shouldFail) {
             mockServer.expect(requestTo(uri)).andExpect(method(HttpMethod.POST)).andRespond(withBadRequest());
         }
@@ -137,13 +144,12 @@ public class JenkinsRequestMockProvider {
         mockCreateBuildPlan(projectKey, job);
     }
 
-    // TODO: use REST API for mocking
     public void mockCreateJobInFolder(String jobFolder, String job, boolean jobAlreadyExists) throws IOException {
-        var folderJob = new JenkinsJobService.FolderJob(jobFolder, "description", "url");
+        var folderJob = jobAlreadyExists ? new JenkinsJobService.FolderJob(jobFolder, "description", "url") : null;
         mockGetFolderJob(jobFolder, folderJob);
         if (jobAlreadyExists) {
             var jobWithDetails = new JenkinsJobService.JobWithDetails(job, "description", false);
-            // TODO: this method also invokes mockGetFolderJob(...)
+            // NOTE: this method also invokes mockGetFolderJob(...)
             mockGetJob(jobFolder, job, jobWithDetails, false);
         }
         else {
@@ -199,11 +205,11 @@ public class JenkinsRequestMockProvider {
         mockGetFolderJob(exercise.getProjectKey());
     }
 
-    public void mockCheckIfProjectExistsJobUrlEmptyOrNull(ProgrammingExercise exercise, boolean urlEmpty) throws IOException {
+    public void mockCheckIfProjectExistsJobUrlEmptyOrNull(ProgrammingExercise exercise) throws IOException {
         var job = new JenkinsJobService.JobWithDetails("name", "description", false);
         URI uri = JenkinsEndpoints.GET_FOLDER_JOB.buildEndpoint(serverUri, exercise.getProjectKey()).build(true).toUri();
         var response = mapper.writeValueAsString(job);
-        mockServer.expect(requestTo(uri)).andExpect(method(HttpMethod.POST)).andRespond(withSuccess().body(response));
+        mockServer.expect(requestTo(uri)).andExpect(method(HttpMethod.POST)).andRespond(withSuccess().body(response).contentType(MediaType.APPLICATION_JSON));
     }
 
     public void mockCopyBuildPlan(String sourceProjectKey, String targetProjectKey, String planKey) throws IOException {
@@ -284,7 +290,7 @@ public class JenkinsRequestMockProvider {
         URI uri = JenkinsEndpoints.GET_JOB.buildEndpoint(serverUri, projectKey, jobName).build(true).toUri();
         if (!shouldFail) {
             var response = mapper.writeValueAsString(jobToReturn);
-            mockServer.expect(requestTo(uri)).andExpect(method(HttpMethod.GET)).andRespond(withSuccess().body(response));
+            mockServer.expect(requestTo(uri)).andExpect(method(HttpMethod.GET)).andRespond(withSuccess().body(response).contentType(MediaType.APPLICATION_JSON));
         }
         else {
             mockServer.expect(requestTo(uri)).andExpect(method(HttpMethod.GET)).andRespond(withBadRequest());

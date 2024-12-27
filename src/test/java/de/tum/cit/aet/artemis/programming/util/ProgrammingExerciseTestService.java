@@ -700,7 +700,7 @@ public class ProgrammingExerciseTestService {
         }
         mockDelegate.mockConnectorRequestsForSetup(exercise, false, false, false);
         exercise.setChannelName("testchannel-pe");
-        var generatedExercise = request.postWithResponseBody("/api/programming-exercises/setup", exercise, ProgrammingExercise.class);
+        var generatedExercise = request.postWithResponseBody("/api/programming-exercises/setup", exercise, ProgrammingExercise.class, HttpStatus.CREATED);
 
         exercise.setId(generatedExercise.getId());
         assertThat(exercise).isEqualTo(generatedExercise);

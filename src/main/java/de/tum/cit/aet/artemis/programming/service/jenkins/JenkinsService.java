@@ -198,14 +198,13 @@ public class JenkinsService extends AbstractContinuousIntegrationService {
     @Override
     public String checkIfProjectExists(String projectKey, String projectName) {
         try {
-            // TODO: use REST API
             final var job = jenkinsJobService.getFolderJob(projectKey);
             if (job == null || job.url() == null || job.url().isEmpty()) {
                 // means the project does not exist
                 return null;
             }
             else {
-                return "The project " + projectKey + " already exists in the CI Server. Please choose a different short name!";
+                return "The project " + projectKey + " already exists in Jenkins. Please choose a different short name!";
             }
         }
         catch (Exception emAll) {

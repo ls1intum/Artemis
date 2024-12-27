@@ -157,8 +157,14 @@ public class JenkinsJobService {
     }
 
     public void createFolder(String projectKey) {
-        URI uri = JenkinsEndpoints.NEW_FOLDER.buildEndpoint(serverUri).queryParam("name", projectKey).queryParam("mode", "com.cloudbees.hudson.plugins.folder.Folder")
-                .queryParam("from", "").queryParam("Submit", "OK").build(true).toUri();
+        //@formatter:off
+        URI uri = JenkinsEndpoints.NEW_FOLDER.buildEndpoint(serverUri)
+            .queryParam("name", projectKey)
+            .queryParam("mode", "com.cloudbees.hudson.plugins.folder.Folder")
+            .queryParam("from", "")
+            .queryParam("Submit", "OK")
+            .build(true).toUri();
+        //@formatter:on
         restTemplate.postForEntity(uri, new HttpEntity<>(null, new HttpHeaders()), Void.class);
     }
 

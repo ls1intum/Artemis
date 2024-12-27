@@ -411,10 +411,10 @@ class ProgrammingExerciseIntegrationJenkinsGitlabTest extends AbstractProgrammin
 
         assertThatNoException().isThrownBy(() -> programmingExerciseService.checkIfProjectExists(programmingExercise));
 
-        jenkinsRequestMockProvider.mockCheckIfProjectExistsJobUrlEmptyOrNull(programmingExercise, true);
+        jenkinsRequestMockProvider.mockCheckIfProjectExistsJobUrlEmptyOrNull(programmingExercise);
         assertThatNoException().isThrownBy(() -> programmingExerciseService.checkIfProjectExists(programmingExercise));
 
-        jenkinsRequestMockProvider.mockCheckIfProjectExistsJobUrlEmptyOrNull(programmingExercise, false);
+        jenkinsRequestMockProvider.mockCheckIfProjectExistsJobUrlEmptyOrNull(programmingExercise);
         assertThatNoException().isThrownBy(() -> programmingExerciseService.checkIfProjectExists(programmingExercise));
     }
 
