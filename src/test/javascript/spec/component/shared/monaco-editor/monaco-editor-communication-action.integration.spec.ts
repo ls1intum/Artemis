@@ -435,14 +435,22 @@ describe('MonacoEditorCommunicationActionIntegration', () => {
             const lecture = lectureAttachmentReferenceAction.lecturesWithDetails[2];
             const attachmentUnit = lecture.attachmentUnits![0];
             const slide = attachmentUnit.slides![0];
-            const slideLink = 'slides';
+
+            // Ensure slide has a valid slideImagePath
+            slide.slideImagePath = 'attachments/attachment-unit/123/slide/slide1.png';
+
+            const slideLink = 'attachment-unit/123/slide/';
+            const slideIndex = 1;
+
             lectureAttachmentReferenceAction.executeInCurrentEditor({
                 reference: ReferenceType.SLIDE,
                 lecture,
                 attachmentUnit,
                 slide,
+                slideIndex,
             });
-            expect(comp.getText()).toBe(`[slide]${attachmentUnit.name} Slide ${slide.slideNumber}(${slideLink})[/slide]`);
+
+            expect(comp.getText()).toBe(`[slide]${attachmentUnit.name} Slide ${slideIndex}(${slideLink}${slideIndex})[/slide]`);
         });
 
         it('should error when incorrectly referencing a slide', () => {

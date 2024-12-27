@@ -128,7 +128,15 @@ describe('PdfPreviewComponent', () => {
         it('should load attachment unit file and verify service calls when attachment unit data is available', fakeAsync(() => {
             routeMock.data = of({
                 course: { id: 1, name: 'Example Course' },
-                attachmentUnit: { id: 1, name: 'Chapter 1', lecture: { id: 1 } },
+                attachmentUnit: {
+                    id: 1,
+                    name: 'Chapter 1',
+                    lecture: { id: 1 },
+                    slides: [
+                        { slideNumber: 1, hidden: false },
+                        { slideNumber: 2, hidden: true },
+                    ],
+                },
             });
             component.ngOnInit();
             tick();
@@ -155,8 +163,14 @@ describe('PdfPreviewComponent', () => {
         it('should handle errors and trigger alert when loading an attachment unit file fails', fakeAsync(() => {
             routeMock.data = of({
                 course: { id: 1, name: 'Example Course' },
-                attachmentUnit: { id: 1, name: 'Chapter 1', lecture: { id: 1 } },
+                attachmentUnit: {
+                    id: 1,
+                    name: 'Chapter 1',
+                    lecture: { id: 1 },
+                    slides: [],
+                },
             });
+
             const errorResponse = new HttpErrorResponse({
                 status: 404,
                 statusText: 'Not Found',
@@ -170,7 +184,7 @@ describe('PdfPreviewComponent', () => {
             component.ngOnInit();
             tick();
 
-            expect(alertServiceSpy).toHaveBeenCalled();
+            expect(alertServiceSpy).toHaveBeenCalledWith('error.http.404');
         }));
 
         it('should update attachment unit with student version when there are hidden pages', fakeAsync(() => {
@@ -231,12 +245,23 @@ describe('PdfPreviewComponent', () => {
         it('should unsubscribe attachmentUnit subscription during component destruction', fakeAsync(() => {
             routeMock.data = of({
                 course: { id: 1, name: 'Example Course' },
-                attachmentUnit: { id: 1, name: 'Chapter 1', lecture: { id: 1 } },
+                attachmentUnit: {
+                    id: 1,
+                    name: 'Chapter 1',
+                    lecture: { id: 1 },
+                    slides: [
+                        { slideNumber: 1, hidden: false },
+                        { slideNumber: 2, hidden: true }, // Example hidden slide
+                    ],
+                },
             });
+
             component.ngOnInit();
             tick();
+
             expect(component.attachmentUnitSub).toBeDefined();
-            const spySub = jest.spyOn(component.attachmentUnitSub, 'unsubscribe');
+
+            const spySub = jest.spyOn(component.attachmentUnitSub!, 'unsubscribe');
             component.ngOnDestroy();
             expect(spySub).toHaveBeenCalled();
         }));
