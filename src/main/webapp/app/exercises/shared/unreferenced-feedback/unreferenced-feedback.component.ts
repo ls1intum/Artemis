@@ -12,7 +12,6 @@ export class UnreferencedFeedbackComponent {
 
     unreferencedFeedback: Feedback[] = [];
     assessmentsAreValid: boolean;
-    feedbackDetailChanges: boolean = false;
 
     @Input() readOnly: boolean;
     @Input() highlightDifferences: boolean;
@@ -42,6 +41,7 @@ export class UnreferencedFeedbackComponent {
         this.feedbacksChange.emit(this.unreferencedFeedback);
         this.validateFeedback();
     }
+
     /**
      * Validates the feedback:
      *   - There must be any form of feedback, either general feedback or feedback referencing a model element or both
@@ -66,7 +66,6 @@ export class UnreferencedFeedbackComponent {
      * @param feedback The feedback to update
      */
     updateFeedback(feedback: Feedback) {
-        this.feedbackDetailChanges = true;
         const indexToUpdate = this.unreferencedFeedback.indexOf(feedback);
         if (indexToUpdate < 0) {
             this.unreferencedFeedback.push(feedback);
@@ -132,16 +131,11 @@ export class UnreferencedFeedbackComponent {
     }
 
     createAssessmentOnDrop(event: Event) {
-        if (this.feedbackDetailChanges) {
-            this.feedbackDetailChanges = false;
-            return;
-        }
         this.addUnreferencedFeedback();
         const newFeedback: Feedback | undefined = this.unreferencedFeedback.last();
         if (newFeedback) {
             this.structuredGradingCriterionService.updateFeedbackWithStructuredGradingInstructionEvent(newFeedback, event);
             this.updateFeedback(newFeedback);
-            this.feedbackDetailChanges = false;
         }
     }
 }

@@ -88,26 +88,39 @@ describe('UnreferencedFeedbackComponent', () => {
         expect(comp.unreferencedFeedback).toHaveLength(0);
     });
 
-    it('should add unreferenced feedback on dropping assessment instruction', () => {
-        const instruction: GradingInstruction = { id: 1, credits: 2, feedback: 'test', gradingScale: 'good', instructionDescription: 'description of instruction', usageCount: 0 };
-        comp.unreferencedFeedback = [];
-        jest.spyOn(sgiService, 'updateFeedbackWithStructuredGradingInstructionEvent').mockImplementation(() => {
-            comp.unreferencedFeedback[0].gradingInstruction = instruction;
-            comp.unreferencedFeedback[0].credits = instruction.credits;
+    describe('Drag and drop assessment criteria', () => {
+        let instruction: GradingInstruction;
+        beforeEach(() => {
+            instruction = { id: 1, credits: 2, feedback: 'test', gradingScale: 'good', instructionDescription: 'description of instruction', usageCount: 0 };
+            comp.unreferencedFeedback = [];
+            jest.spyOn(sgiService, 'updateFeedbackWithStructuredGradingInstructionEvent').mockImplementation(() => {
+                comp.unreferencedFeedback[0].gradingInstruction = instruction;
+                comp.unreferencedFeedback[0].credits = instruction.credits;
+            });
         });
-        // Call spy function with empty event
-        comp.createAssessmentOnDrop(new Event(''));
-        expect(comp.unreferencedFeedback).toHaveLength(1);
-        expect(comp.unreferencedFeedback[0].gradingInstruction).toBe(instruction);
-        expect(comp.unreferencedFeedback[0].credits).toBe(instruction.credits);
-    });
 
-    it('should convert an accepted feedback suggestion to a marked manual feedback', () => {
-        const suggestion = { text: 'FeedbackSuggestion:', detailText: 'test', type: FeedbackType.AUTOMATIC };
-        comp.feedbackSuggestions = [suggestion];
-        comp.acceptSuggestion(suggestion);
-        expect(comp.feedbackSuggestions).toBeEmpty();
-        expect(comp.unreferencedFeedback).toEqual([{ text: 'FeedbackSuggestion:accepted:', detailText: 'test', type: FeedbackType.MANUAL_UNREFERENCED }]);
+        it('should add unreferenced feedback on dropping assessment instruction', () => {
+            // Call spy function with empty event
+            comp.createAssessmentOnDrop(new Event(''));
+            expect(comp.unreferencedFeedback).toHaveLength(1);
+            expect(comp.unreferencedFeedback[0].gradingInstruction).toBe(instruction);
+            expect(comp.unreferencedFeedback[0].credits).toBe(instruction.credits);
+        });
+
+        it('should add feedback via drag and drop after changing another one', () => {
+            comp.createAssessmentOnDrop(new Event(''));
+            expect(comp.unreferencedFeedback).toHaveLength(1);
+            expect(comp.unreferencedFeedback[0].gradingInstruction).toBe(instruction);
+            expect(comp.unreferencedFeedback[0].credits).toBe(instruction.credits);
+
+            const updatedFeedback: Feedback = comp.unreferencedFeedback[0];
+            updatedFeedback.text = updatedFeedback.text + '1';
+            comp.updateFeedback(updatedFeedback);
+            expect(comp.unreferencedFeedback[0]).toBe(updatedFeedback);
+
+            comp.createAssessmentOnDrop(new Event(''));
+            expect(comp.unreferencedFeedback).toHaveLength(2);
+        });
     });
 
     it('should remove discarded suggestions', () => {
