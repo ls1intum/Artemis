@@ -6,7 +6,7 @@ services:
     mysql:
         container_name: artemis-mysql
         image: docker.io/library/mysql:9.1.0
-        pull_policy: if_not_present
+        pull_policy: missing
         volumes:
             - artemis-mysql-data:/var/lib/mysql
         # DO NOT use this default file for production systems!

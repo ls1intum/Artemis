@@ -19,3 +19,7 @@ war {
     enabled = true
     archiveExtension = "war.original"
 }
+
+jar {
+    enabled = false
+}

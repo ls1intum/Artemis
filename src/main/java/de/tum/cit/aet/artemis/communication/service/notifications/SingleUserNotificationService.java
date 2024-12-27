@@ -417,7 +417,7 @@ public class SingleUserNotificationService {
      * @param answerMessage the answerMessage of the user involved
      * @param author        the author of the message reply
      * @param conversation  conversation the message of the reply belongs to
-     * @return notification
+     * @return the created single user notification about the new message reply
      */
     public SingleUserNotification createNotificationAboutNewMessageReply(AnswerPost answerMessage, User author, Conversation conversation) {
         User authorWithHiddenData = new User(author.getId(), null, author.getFirstName(), author.getLastName(), null, null);

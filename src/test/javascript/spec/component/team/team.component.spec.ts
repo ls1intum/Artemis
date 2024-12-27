@@ -1,6 +1,5 @@
-import { HTTP_INTERCEPTORS } from '@angular/common/http';
 import { ComponentFixture, TestBed, waitForAsync } from '@angular/core/testing';
-import { ActivatedRoute, Router, RouterModule } from '@angular/router';
+import { Router, RouterModule } from '@angular/router';
 import { NgbModule } from '@ng-bootstrap/ng-bootstrap';
 import { TranslateService } from '@ngx-translate/core';
 import { NgxDatatableModule } from '@siemens/ngx-datatable';
@@ -19,10 +18,13 @@ import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { MockComponent, MockModule, MockPipe, MockProvider } from 'ng-mocks';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { of, throwError } from 'rxjs';
-import { TeamRequestInterceptorMock, mockExercise, mockTeam, mockTeams } from '../../helpers/mocks/service/mock-team.service';
+import { Exercise } from '../../../../../main/webapp/app/entities/exercise.model';
+import { Team } from '../../../../../main/webapp/app/entities/team.model';
+import { mockExercise, mockTeam, mockTeams } from '../../helpers/mocks/service/mock-team.service';
 import { ArtemisTestModule } from '../../test.module';
 import { AssessmentWarningComponent } from 'app/assessment/assessment-warning/assessment-warning.component';
 import { AlertService } from 'app/core/util/alert.service';
+import { HttpResponse } from '@angular/common/http';
 
 describe('TeamComponent', () => {
     let comp: TeamComponent;
@@ -55,18 +57,6 @@ describe('TeamComponent', () => {
                 TeamService,
                 MockProvider(TranslateService),
                 ExerciseService,
-                {
-                    provide: HTTP_INTERCEPTORS,
-                    useClass: TeamRequestInterceptorMock,
-                    multi: true,
-                },
-                MockProvider(Router),
-                {
-                    provide: ActivatedRoute,
-                    useValue: {
-                        params: of({ teamId: mockTeam.id, exerciseId: mockExercise.id }),
-                    },
-                },
             ],
         })
             .compileComponents()
@@ -94,7 +84,8 @@ describe('TeamComponent', () => {
         });
 
         it('should set team and exercise from services and call find on exerciseService to retreive exercise', () => {
-            jest.spyOn(exerciseService, 'find');
+            jest.spyOn(exerciseService, 'find').mockReturnValue(of(new HttpResponse<Exercise>({ body: mockExercise })));
+            jest.spyOn(teamService, 'find').mockReturnValue(of(new HttpResponse<Team>({ body: mockTeam })));
             comp.ngOnInit();
             expect(comp.exercise).toEqual(mockExercise);
             expect(comp.team).toEqual(mockTeam);
@@ -146,6 +137,8 @@ describe('TeamComponent', () => {
 
     describe('onTeamDelete', () => {
         it('should go to teams overview on delete', () => {
+            jest.spyOn(exerciseService, 'find').mockReturnValue(of(new HttpResponse<Exercise>({ body: mockExercise })));
+            jest.spyOn(teamService, 'find').mockReturnValue(of(new HttpResponse<Team>({ body: mockTeam })));
             comp.ngOnInit();
             jest.spyOn(router, 'navigate');
             comp.onTeamDelete();
