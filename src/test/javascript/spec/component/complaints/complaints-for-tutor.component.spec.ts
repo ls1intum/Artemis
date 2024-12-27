@@ -18,6 +18,8 @@ import { Course } from 'app/entities/course.model';
 import { Exercise } from 'app/entities/exercise.model';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { provideRouter } from '@angular/router';
+import { TranslateService } from '@ngx-translate/core';
+import { MockTranslateService } from '../../helpers/mocks/service/mock-translate.service';
 
 describe('ComplaintsForTutorComponent', () => {
     let complaintsForTutorComponent: ComplaintsForTutorComponent;
@@ -30,14 +32,17 @@ describe('ComplaintsForTutorComponent', () => {
     beforeEach(() => {
         TestBed.configureTestingModule({
             imports: [FormsModule],
-            declarations: [
-                ComplaintsForTutorComponent,
-                MockPipe(ArtemisTranslatePipe),
-                MockPipe(ArtemisDatePipe),
-                MockComponent(TextareaCounterComponent),
-                MockDirective(TranslateDirective),
+            declarations: [MockPipe(ArtemisTranslatePipe), MockPipe(ArtemisDatePipe), MockComponent(TextareaCounterComponent), MockDirective(TranslateDirective)],
+            providers: [
+                provideRouter([]),
+                MockProvider(ComplaintResponseService),
+                MockProvider(ComplaintService),
+                MockProvider(AlertService),
+                {
+                    provide: TranslateService,
+                    useClass: MockTranslateService,
+                },
             ],
-            providers: [provideRouter([]), MockProvider(ComplaintResponseService), MockProvider(ComplaintService), MockProvider(AlertService)],
         })
             .compileComponents()
             .then(() => {

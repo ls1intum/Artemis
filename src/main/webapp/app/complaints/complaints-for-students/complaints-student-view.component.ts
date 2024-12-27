@@ -14,11 +14,19 @@ import dayjs from 'dayjs/esm';
 import { HttpResponse } from '@angular/common/http';
 import { faInfoCircle } from '@fortawesome/free-solid-svg-icons';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { ComplaintsFormComponent } from 'app/complaints/form/complaints-form.component';
+import { ComplaintRequestComponent } from 'app/complaints/request/complaint-request.component';
+import { ComplaintResponseComponent } from 'app/complaints/response/complaint-response.component';
+import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 
 @Component({
     selector: 'jhi-complaint-student-view',
     templateUrl: './complaints-student-view.component.html',
     styleUrls: ['../complaints.scss'],
+    standalone: true,
+    imports: [TranslateDirective, FaIconComponent, ComplaintsFormComponent, ComplaintRequestComponent, ComplaintResponseComponent, ArtemisTranslatePipe],
 })
 export class ComplaintsStudentViewComponent implements OnInit {
     @Input() exercise: Exercise;

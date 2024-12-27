@@ -13,13 +13,19 @@ import { Submission } from 'app/entities/submission.model';
 import { isAllowedToRespondToComplaintAction } from 'app/assessment/assessment.service';
 import { Course } from 'app/entities/course.model';
 import { ComplaintAction, ComplaintResponseUpdateDTO } from 'app/entities/complaint-response-dto.model';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { FormsModule } from '@angular/forms';
+import { TextareaModule } from 'app/shared/textarea/textarea.module';
+import { ArtemisSharedCommonModule } from 'app/shared/shared-common.module';
+import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 
 export type AssessmentAfterComplaint = { complaintResponse: ComplaintResponse; onSuccess: () => void; onError: () => void };
 
 @Component({
     selector: 'jhi-complaints-for-tutor-form',
     templateUrl: './complaints-for-tutor.component.html',
-    providers: [],
+    standalone: true,
+    imports: [TranslateDirective, FormsModule, TextareaModule, ArtemisSharedCommonModule, ArtemisTranslatePipe],
 })
 export class ComplaintsForTutorComponent implements OnInit {
     @Input() complaint: Complaint;

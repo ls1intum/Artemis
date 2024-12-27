@@ -1,7 +1,6 @@
 import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
 import { ActivatedRoute, Router } from '@angular/router';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { TranslateService } from '@ngx-translate/core';
 import { ComplaintService, EntityResponseTypeArray, IComplaintService } from 'app/complaints/complaint.service';
 import { ListOfComplaintsComponent } from 'app/complaints/list-of-complaints/list-of-complaints.component';
@@ -24,7 +23,6 @@ import { MockActivatedRoute } from '../../helpers/mocks/activated-route/mock-act
 import { MockRouter } from '../../helpers/mocks/mock-router';
 import { MockComplaintService } from '../../helpers/mocks/service/mock-complaint.service';
 import { MockCourseManagementService } from '../../helpers/mocks/service/mock-course-management.service';
-import { MockNgbModalService } from '../../helpers/mocks/service/mock-ngb-modal.service';
 import { MockTranslateService, TranslatePipeMock } from '../../helpers/mocks/service/mock-translate.service';
 
 describe('ListOfComplaintsComponent', () => {
@@ -65,13 +63,12 @@ describe('ListOfComplaintsComponent', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            declarations: [ListOfComplaintsComponent, TranslatePipeMock, MockComponent(FaIconComponent)],
+            declarations: [TranslatePipeMock, MockComponent(FaIconComponent)],
             providers: [
                 MockProvider(AlertService),
                 MockProvider(SortService),
                 { provide: ComplaintService, useClass: MockComplaintService },
                 { provide: Router, useClass: MockRouter },
-                { provide: NgbModal, useClass: MockNgbModalService },
                 { provide: ActivatedRoute, useValue: new MockActivatedRoute() },
                 { provide: TranslateService, useClass: MockTranslateService },
                 { provide: ArtemisDatePipe, useClass: TranslatePipeMock },

@@ -8,18 +8,25 @@ import { ActivatedRoute, Router } from '@angular/router';
 import { Course } from 'app/entities/course.model';
 import { Observable, combineLatestWith } from 'rxjs';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
-import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
+import { NgbModal, NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { SortService } from 'app/shared/service/sort.service';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 import { TranslateService } from '@ngx-translate/core';
 import { onError } from 'app/shared/util/global.utils';
 import { getLinkToSubmissionAssessment } from 'app/utils/navigation.utils';
 import { faExclamationTriangle, faFolderOpen, faSort } from '@fortawesome/free-solid-svg-icons';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { FormsModule } from '@angular/forms';
+import { ArtemisSharedCommonModule } from 'app/shared/shared-common.module';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 
 @Component({
     selector: 'jhi-complaint-list',
     templateUrl: './list-of-complaints.component.html',
     providers: [],
+    standalone: true,
+    imports: [TranslateDirective, FormsModule, ArtemisSharedCommonModule, FaIconComponent, NgbTooltip, ArtemisTranslatePipe],
 })
 export class ListOfComplaintsComponent implements OnInit {
     readonly ComplaintType = ComplaintType;

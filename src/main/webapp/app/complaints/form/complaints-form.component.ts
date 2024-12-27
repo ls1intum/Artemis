@@ -7,11 +7,17 @@ import { Course } from 'app/entities/course.model';
 import { Exercise, getCourseFromExercise } from 'app/entities/exercise.model';
 import { onError } from 'app/shared/util/global.utils';
 import { ComplaintRequestDTO } from 'app/entities/complaint-request-dto.model';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { FormsModule } from '@angular/forms';
+import { TextareaModule } from 'app/shared/textarea/textarea.module';
+import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 
 @Component({
     selector: 'jhi-complaint-form',
     templateUrl: './complaints-form.component.html',
     styleUrls: ['../complaints.scss'],
+    standalone: true,
+    imports: [TranslateDirective, FormsModule, TextareaModule, ArtemisTranslatePipe],
 })
 export class ComplaintsFormComponent implements OnInit {
     @Input() exercise: Exercise;
