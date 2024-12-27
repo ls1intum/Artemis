@@ -157,7 +157,7 @@ public class JenkinsJobService {
     }
 
     public void createFolder(String projectKey) {
-        URI uri = JenkinsEndpoints.NEW_FOLDER.buildEndpoint(serverUri, projectKey).build(true).toUri();
+        URI uri = JenkinsEndpoints.NEW_FOLDER.buildEndpoint(serverUri).queryParam("name", projectKey).build(true).toUri();
         restTemplate.postForEntity(uri, new HttpEntity<>(null, new HttpHeaders()), Void.class);
     }
 
@@ -181,7 +181,7 @@ public class JenkinsJobService {
                 return;
             }
 
-            URI uri = JenkinsEndpoints.NEW_PLAN.buildEndpoint(serverUri, folderName, jobName).build(true).toUri();
+            URI uri = JenkinsEndpoints.NEW_PLAN.buildEndpoint(serverUri, folderName).queryParam("name", jobName).build(true).toUri();
 
             final var headers = new HttpHeaders();
             headers.setContentType(MediaType.APPLICATION_XML);

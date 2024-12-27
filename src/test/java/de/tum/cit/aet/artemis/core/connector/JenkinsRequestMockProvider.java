@@ -112,7 +112,7 @@ public class JenkinsRequestMockProvider {
     }
 
     public void mockCreateProjectForExercise(ProgrammingExercise exercise, boolean shouldFail) {
-        URI uri = JenkinsEndpoints.NEW_FOLDER.buildEndpoint(serverUri, exercise.getProjectKey()).build(true).toUri();
+        URI uri = JenkinsEndpoints.NEW_FOLDER.buildEndpoint(serverUri).queryParam("name", exercise.getProjectKey()).build(true).toUri();
         if (shouldFail) {
             mockServer.expect(requestTo(uri)).andExpect(method(HttpMethod.POST)).andRespond(withBadRequest());
         }
@@ -153,7 +153,7 @@ public class JenkinsRequestMockProvider {
     }
 
     private void mockCreateJob(String jobFolder, String job) {
-        URI uri = JenkinsEndpoints.NEW_PLAN.buildEndpoint(serverUri, jobFolder, job).build(true).toUri();
+        URI uri = JenkinsEndpoints.NEW_PLAN.buildEndpoint(serverUri, jobFolder).queryParam("name", job).build(true).toUri();
         mockServer.expect(requestTo(uri)).andExpect(method(HttpMethod.POST)).andRespond(withSuccess());
     }
 

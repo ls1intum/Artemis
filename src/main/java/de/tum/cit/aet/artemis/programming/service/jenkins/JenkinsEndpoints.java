@@ -12,8 +12,8 @@ public enum JenkinsEndpoints {
 
     // @formatter:off
     // Build plan endpoints
-    NEW_PLAN("job", "<projectKey>", "job", "<planName>", "createItem"),
-    NEW_FOLDER("job", "<projectKey>", "createItem"),
+    NEW_PLAN("job", "<projectKey>", "createItem"),
+    NEW_FOLDER("createItem"),
     DELETE_FOLDER("job", "<projectKey>", "doDelete"),
     DELETE_JOB("job", "<projectKey>", "job", "<planName>", "doDelete"),
     PLAN_CONFIG("job", "<projectKey>", "job", "<planKey>", "config.xml"),
@@ -37,10 +37,6 @@ public enum JenkinsEndpoints {
 
     JenkinsEndpoints(String... pathSegments) {
         this.pathSegments = Arrays.asList(pathSegments);
-    }
-
-    public UriComponentsBuilder buildEndpoint(String baseUriString, Object... args) {
-        return UrlUtils.buildEndpoint(baseUriString, pathSegments, args);
     }
 
     public UriComponentsBuilder buildEndpoint(URI baseUri, Object... args) {
