@@ -1,4 +1,4 @@
-import { Component, Input, OnChanges, OnDestroy, OnInit } from '@angular/core';
+import { Component, Input, OnChanges, OnDestroy, OnInit, inject } from '@angular/core';
 import { DueDateStat } from 'app/course/dashboards/due-date-stat.model';
 import { LegendPosition, PieChartModule } from '@swimlane/ngx-charts';
 import { TranslateService } from '@ngx-translate/core';
@@ -41,6 +41,8 @@ export class AssessmentDashboardInformationEntry {
     imports: [TranslateDirective, PieChartModule, ArtemisSidePanelModule, RouterLink, ArtemisTranslatePipe],
 })
 export class AssessmentDashboardInformationComponent implements OnInit, OnChanges, OnDestroy {
+    private translateService = inject(TranslateService);
+
     @Input() isExamMode: boolean;
     @Input() course: Course;
     @Input() examId?: number;
@@ -76,8 +78,6 @@ export class AssessmentDashboardInformationComponent implements OnInit, OnChange
     ratingsLink: any[];
 
     themeSubscription: Subscription;
-
-    constructor(private translateService: TranslateService) {}
 
     ngOnInit(): void {
         this.setup();
