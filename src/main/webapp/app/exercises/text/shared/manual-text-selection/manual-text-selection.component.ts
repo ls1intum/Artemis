@@ -1,4 +1,4 @@
-import { Component, EventEmitter, Input, Output, inject } from '@angular/core';
+import { Component, computed, inject, input, output } from '@angular/core';
 import { TextAssessmentEventType } from 'app/entities/text/text-assesment-event.model';
 import { FeedbackType } from 'app/entities/feedback.model';
 import { TextBlockType } from 'app/entities/text/text-block.model';
@@ -24,14 +24,18 @@ export class ManualTextSelectionComponent {
     protected route = inject(ActivatedRoute);
     textAssessmentAnalytics = inject(TextAssessmentAnalytics);
 
-    @Input() public textBlockRefGroup: TextBlockRefGroup;
-    @Input() submission: TextSubmission;
-    @Output() public didSelectWord = new EventEmitter<wordSelection[]>();
-    @Input() set words(textBlockRefGroup: TextBlockRefGroup) {
-        // Since some words are only separated through linebreaks, the linebreaks are replaced by a linebreak with an additional space, in order to split the words by spaces.
-        this.submissionWords = textBlockRefGroup.getText(this.submission).replace(LINEBREAK, '\n ').split(SPACE);
-    }
-    public submissionWords: string[] | undefined;
+    textBlockRefGroup = input.required<TextBlockRefGroup>();
+    submission = input.required<TextSubmission>();
+    didSelectWord = output<wordSelection[]>();
+    words = input.required<TextBlockRefGroup>();
+
+    public submissionWords = computed(() => {
+        const textBlockRefGroup = this.words();
+        const submissionValue = this.submission();
+        if (!textBlockRefGroup || !submissionValue) return [];
+        const text = textBlockRefGroup.getText(submissionValue);
+        return text.replace(LINEBREAK, '\n ').split(SPACE);
+    });
     public currentWordIndex: number;
     public selectedWords = new Array<wordSelection>();
     public ready = false;
@@ -41,12 +45,12 @@ export class ManualTextSelectionComponent {
     }
 
     calculateIndex(index: number): void {
-        let result = this.textBlockRefGroup.startIndex!;
+        let result = this.textBlockRefGroup().startIndex!;
         for (let i = 0; i < index; i++) {
             const space = 1;
-            result += this.submissionWords![i].length + space;
+            result += this.submissionWords()![i].length + space;
 
-            const wordContainsLinebreak = this.submissionWords![i].search(/\n+/g) !== -1;
+            const wordContainsLinebreak = this.submissionWords()![i].search(/\n+/g) !== -1;
             if (wordContainsLinebreak) {
                 result--;
             }
