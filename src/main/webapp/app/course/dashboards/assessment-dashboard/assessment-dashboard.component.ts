@@ -1,5 +1,5 @@
 import { Component, OnInit } from '@angular/core';
-import { ActivatedRoute } from '@angular/router';
+import { ActivatedRoute, RouterLink } from '@angular/router';
 import { CourseManagementService } from '../../manage/course-management.service';
 import { AlertService } from 'app/core/util/alert.service';
 import { User } from 'app/core/user/user.model';
@@ -17,17 +17,44 @@ import { Exam } from 'app/entities/exam/exam.model';
 import { ExamManagementService } from 'app/exam/manage/exam-management.service';
 import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
 import { QuizExercise } from 'app/entities/quiz/quiz-exercise.model';
-import { AssessmentDashboardInformationEntry } from './assessment-dashboard-information.component';
+import { AssessmentDashboardInformationComponent, AssessmentDashboardInformationEntry } from './assessment-dashboard-information.component';
 import { TutorIssue, TutorIssueComplaintsChecker, TutorIssueRatingChecker, TutorIssueScoreChecker } from 'app/course/dashboards/assessment-dashboard/tutor-issue';
 import { TutorLeaderboardElement } from 'app/shared/dashboards/tutor-leaderboard/tutor-leaderboard.model';
 import { faClipboard, faHeartBroken, faSort, faTable } from '@fortawesome/free-solid-svg-icons';
 import { DocumentationType } from 'app/shared/components/documentation-button/documentation-button.component';
+import { ArtemisSharedComponentModule } from 'app/shared/components/shared-component.module';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { ExamAssessmentButtonsComponent } from 'app/course/dashboards/assessment-dashboard/exam-assessment-buttons/exam-assessment-buttons.component';
+import { FormsModule } from '@angular/forms';
+import { ArtemisSharedCommonModule } from 'app/shared/shared-common.module';
+import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
+import { ArtemisTutorParticipationGraphModule } from 'app/shared/dashboards/tutor-participation-graph/tutor-participation-graph.module';
+import { ArtemisExerciseAssessmentDashboardModule } from 'app/exercises/shared/dashboards/tutor/exercise-assessment-dashboard.module';
+import { ArtemisTutorLeaderboardModule } from 'app/shared/dashboards/tutor-leaderboard/tutor-leaderboard.module';
+import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 
 @Component({
     selector: 'jhi-assessment-dashboard',
     templateUrl: './assessment-dashboard.component.html',
     styleUrls: ['./exam-assessment-buttons/exam-assessment-buttons.component.scss'],
     providers: [CourseManagementService],
+    standalone: true,
+    imports: [
+        ArtemisSharedComponentModule,
+        RouterLink,
+        FaIconComponent,
+        TranslateDirective,
+        ExamAssessmentButtonsComponent,
+        AssessmentDashboardInformationComponent,
+        FormsModule,
+        ArtemisSharedCommonModule,
+        NgbTooltip,
+        ArtemisTutorParticipationGraphModule,
+        ArtemisExerciseAssessmentDashboardModule,
+        ArtemisTutorLeaderboardModule,
+        ArtemisTranslatePipe,
+    ],
 })
 export class AssessmentDashboardComponent implements OnInit {
     readonly TeamFilterProp = TeamFilterProp;

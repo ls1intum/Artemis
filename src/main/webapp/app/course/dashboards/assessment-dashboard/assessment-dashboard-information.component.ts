@@ -1,10 +1,14 @@
 import { Component, Input, OnChanges, OnDestroy, OnInit } from '@angular/core';
 import { DueDateStat } from 'app/course/dashboards/due-date-stat.model';
-import { LegendPosition } from '@swimlane/ngx-charts';
+import { LegendPosition, PieChartModule } from '@swimlane/ngx-charts';
 import { TranslateService } from '@ngx-translate/core';
 import { GraphColors } from 'app/entities/statistics.model';
 import { Subscription } from 'rxjs';
 import { Course } from 'app/entities/course.model';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { ArtemisSidePanelModule } from 'app/shared/side-panel/side-panel.module';
+import { RouterLink } from '@angular/router';
+import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 
 export class AssessmentDashboardInformationEntry {
     constructor(
@@ -33,6 +37,8 @@ export class AssessmentDashboardInformationEntry {
     selector: 'jhi-assessment-dashboard-information',
     templateUrl: './assessment-dashboard-information.component.html',
     styleUrls: ['./assessment-dashboard-information.component.scss'],
+    standalone: true,
+    imports: [TranslateDirective, PieChartModule, ArtemisSidePanelModule, RouterLink, ArtemisTranslatePipe],
 })
 export class AssessmentDashboardInformationComponent implements OnInit, OnChanges, OnDestroy {
     @Input() isExamMode: boolean;

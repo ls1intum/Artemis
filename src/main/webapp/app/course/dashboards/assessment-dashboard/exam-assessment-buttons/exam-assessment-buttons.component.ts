@@ -1,5 +1,5 @@
 import { Component, OnInit } from '@angular/core';
-import { ActivatedRoute } from '@angular/router';
+import { ActivatedRoute, RouterLink } from '@angular/router';
 import { StudentExamService } from 'app/exam/manage/student-exams/student-exam.service';
 import { Subscription, forkJoin } from 'rxjs';
 import { tap } from 'rxjs/operators';
@@ -15,10 +15,14 @@ import { AccountService } from 'app/core/auth/account.service';
 import { onError } from 'app/shared/util/global.utils';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { faClipboard } from '@fortawesome/free-solid-svg-icons';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
 
 @Component({
     selector: 'jhi-exam-assessment-buttons',
     templateUrl: './exam-assessment-buttons.component.html',
+    standalone: true,
+    imports: [RouterLink, FaIconComponent, TranslateDirective],
 })
 export class ExamAssessmentButtonsComponent implements OnInit {
     courseId: number;
