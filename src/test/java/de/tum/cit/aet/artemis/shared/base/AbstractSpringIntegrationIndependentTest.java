@@ -211,11 +211,6 @@ public abstract class AbstractSpringIntegrationIndependentTest extends AbstractA
     }
 
     @Override
-    public void mockDeleteUserInUserManagement(User user, boolean userExistsInUserManagement, boolean failInVcs, boolean failInCi) {
-        log.debug("Called mockDeleteUserInUserManagement with args {}, {}, {}, {}", user, userExistsInUserManagement, failInVcs, failInCi);
-    }
-
-    @Override
     public void mockCreateGroupInUserManagement(String groupName) {
         log.debug("Called mockCreateGroupInUserManagement with args {}", groupName);
     }

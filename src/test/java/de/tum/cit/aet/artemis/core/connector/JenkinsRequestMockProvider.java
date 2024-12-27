@@ -178,7 +178,7 @@ public class JenkinsRequestMockProvider {
         mockGetFolderJob(folderName);
         URI uri = JenkinsEndpoints.FOLDER_CONFIG.buildEndpoint(serverUri, folderName).build(true).toUri();
         var mockXml = loadFileFromResources("test-data/jenkins-response/job-config.xml");
-        mockServer.expect(requestTo(uri)).andExpect(method(HttpMethod.POST)).andRespond(withSuccess().body(mockXml));
+        mockServer.expect(requestTo(uri)).andExpect(method(HttpMethod.GET)).andRespond(withSuccess().body(mockXml).contentType(MediaType.APPLICATION_XML));
     }
 
     public void mockCheckIfProjectExists(ProgrammingExercise exercise, boolean exists, boolean shouldFail) throws IOException {
@@ -298,7 +298,7 @@ public class JenkinsRequestMockProvider {
     public void mockGetFolderJob(String folderName, JenkinsJobService.FolderJob folderJobToReturn) throws IOException {
         URI uri = JenkinsEndpoints.GET_FOLDER_JOB.buildEndpoint(serverUri, folderName).build(true).toUri();
         var response = mapper.writeValueAsString(folderJobToReturn);
-        mockServer.expect(requestTo(uri)).andExpect(method(HttpMethod.GET)).andRespond(withSuccess().body(response));
+        mockServer.expect(requestTo(uri)).andExpect(method(HttpMethod.GET)).andRespond(withSuccess().body(response).contentType(MediaType.APPLICATION_JSON));
     }
 
     public void mockUpdateUserAndGroups(String oldLogin, User user, Set<String> groupsToAdd, Set<String> groupsToRemove, boolean userExistsInJenkins) throws IOException {
@@ -403,10 +403,12 @@ public class JenkinsRequestMockProvider {
                 URI uri = JenkinsEndpoints.FOLDER_CONFIG.buildEndpoint(serverUri, folderName).build(true).toUri();
 
                 if (shouldFail) {
-                    mockServer.expect(requestTo(uri)).andExpect(method(HttpMethod.POST)).andRespond(withBadRequest());
+                    // updateJob
+                    mockServer.expect(requestTo(uri)).andExpect(method(HttpMethod.POST)).andRespond(withBadRequest().contentType(MediaType.APPLICATION_XML));
                 }
                 else {
-                    mockServer.expect(requestTo(uri)).andExpect(method(HttpMethod.POST)).andRespond(withSuccess());
+                    // updateJob
+                    mockServer.expect(requestTo(uri)).andExpect(method(HttpMethod.POST)).andRespond(withSuccess().contentType(MediaType.APPLICATION_XML));
                 }
             }
         }

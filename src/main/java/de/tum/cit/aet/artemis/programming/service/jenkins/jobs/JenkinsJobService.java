@@ -243,7 +243,7 @@ public class JenkinsJobService {
             String jobXmlString = JenkinsXmlFileUtils.writeToString(folderConfig);
             final var entity = new HttpEntity<>(jobXmlString, headers);
 
-            restTemplate.postForEntity(uri, entity, String.class);
+            restTemplate.postForEntity(uri, entity, Void.class);
         }
         catch (HttpClientErrorException.NotFound e) {
             // We don't throw an exception if the project doesn't exist in Jenkins (404 status)
