@@ -56,16 +56,24 @@ public class JenkinsJobService {
             return null;
         }
 
-        // TODO: this API call is unnecessary and only improves logging, we could remove it
+        // NOTE: this API call is unnecessary and only improves logging, we could remove it
         final var folder = getFolderJob(folderJobName);
         if (folder == null) {
             log.warn("Cannot get the job {} in folder {} because it doesn't exist.", jobName, folderJobName);
             return null;
         }
 
-        // TODO: do we need to handle NOT FOUND here?
-        URI uri = JenkinsEndpoints.GET_JOB.buildEndpoint(serverUri, folder.name(), jobName).build(true).toUri();
-        return restTemplate.getForObject(uri, JobWithDetails.class);
+        try {
+            URI uri = JenkinsEndpoints.GET_JOB.buildEndpoint(serverUri, folder.name(), jobName).build(true).toUri();
+            return restTemplate.getForObject(uri, JobWithDetails.class);
+        }
+        catch (HttpClientErrorException.NotFound notFound) {
+            return null;
+        }
+        catch (RestClientException e) {
+            log.error(e.getMessage(), e);
+            throw new JenkinsException(e.getMessage(), e);
+        }
     }
 
     @JsonIgnoreProperties(ignoreUnknown = true)
@@ -85,8 +93,17 @@ public class JenkinsJobService {
      * @return the folder job
      */
     public FolderJob getFolderJob(String folderName) {
-        URI uri = JenkinsEndpoints.GET_FOLDER_JOB.buildEndpoint(serverUri, folderName).build(true).toUri();
-        return restTemplate.getForObject(uri, FolderJob.class);
+        try {
+            URI uri = JenkinsEndpoints.GET_FOLDER_JOB.buildEndpoint(serverUri, folderName).build(true).toUri();
+            return restTemplate.getForObject(uri, FolderJob.class);
+        }
+        catch (HttpClientErrorException.NotFound notFound) {
+            return null;
+        }
+        catch (RestClientException e) {
+            log.error(e.getMessage(), e);
+            throw new JenkinsException(e.getMessage(), e);
+        }
     }
 
     /**
@@ -111,6 +128,10 @@ public class JenkinsJobService {
             xmlString = xmlString.replace("*/main", "**");
 
             return JenkinsXmlFileUtils.readFromString(xmlString);
+        }
+        catch (HttpClientErrorException.NotFound notFound) {
+            log.error("Job with jobName {} in folder {} does not exist in Jenkins", jobName, folderName);
+            throw new JenkinsException(notFound.getMessage(), notFound);
         }
         catch (RestClientException e) {
             log.error(e.getMessage(), e);
@@ -194,6 +215,11 @@ public class JenkinsJobService {
 
             restTemplate.postForEntity(uri, entity, String.class);
         }
+        catch (HttpClientErrorException.NotFound e) {
+            // We don't throw an exception if the project doesn't exist in Jenkins (404 status)
+            log.warn("updateJob {} does not exist in Jenkins: {}", jobName, e.getMessage());
+            throw new JenkinsException(errorMessage, e);
+        }
         catch (RestClientException | TransformerException e) {
             log.error(errorMessage, e);
             throw new JenkinsException(errorMessage, e);
@@ -217,6 +243,11 @@ public class JenkinsJobService {
             final var entity = new HttpEntity<>(jobXmlString, headers);
 
             restTemplate.postForEntity(uri, entity, String.class);
+        }
+        catch (HttpClientErrorException.NotFound e) {
+            // We don't throw an exception if the project doesn't exist in Jenkins (404 status)
+            log.warn("updateFolderJob {} does not exist in Jenkins. Skipping deletion: {}", folderName, e.getMessage());
+            throw new JenkinsException("Error while trying to update folder job in Jenkins for " + folderName, e);
         }
         catch (TransformerException e) {
             throw new IOException(e.getMessage(), e);

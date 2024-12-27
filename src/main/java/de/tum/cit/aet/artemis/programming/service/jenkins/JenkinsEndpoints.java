@@ -20,7 +20,6 @@ public enum JenkinsEndpoints {
     FOLDER_CONFIG("job", "<projectKey>", "config.xml"),
     TRIGGER_BUILD("job", "<projectKey>", "job", "<planKey>", "build"),
     ENABLE("job", "<projectKey>", "job", "<planKey>", "enable"),
-    TEST_RESULTS("job", "<projectKey>", "job", "<planKey>", "lastBuild", "testResults", "api", "json"),
     LAST_BUILD("job", "<projectKey>", "job", "<planKey>", "lastBuild", "api", "json"),
     GET_FOLDER_JOB("job", "<projectKey>"),
     GET_JOB("job", "<projectKey>", "job", "<planKey>"),
