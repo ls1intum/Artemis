@@ -12,8 +12,8 @@ public enum JenkinsEndpoints {
 
     // @formatter:off
     // Build plan endpoints
-    NEW_PLAN("job", "<projectKey>", "createItem"),
-    NEW_FOLDER("createItem"),
+    NEW_PLAN("job", "<projectKey>", "job", "<planName>", "createItem"),
+    NEW_FOLDER("job", "<projectKey>", "createItem"),
     DELETE_FOLDER("job", "<projectKey>", "doDelete"),
     DELETE_JOB("job", "<projectKey>", "job", "<planName>", "doDelete"),
     PLAN_CONFIG("job", "<projectKey>", "job", "<planKey>", "config.xml"),

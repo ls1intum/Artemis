@@ -153,7 +153,7 @@ public class JenkinsUserManagementService implements CIUserManagementService {
         }
 
         try {
-            URI uri = JenkinsEndpoints.LAST_BUILD.buildEndpoint(jenkinsServerUri, userLogin).build(true).toUri();
+            URI uri = JenkinsEndpoints.DELETE_USER.buildEndpoint(jenkinsServerUri, userLogin).build(true).toUri();
             restTemplate.exchange(uri, HttpMethod.POST, null, Void.class);
             removeUserFromGroups(userLogin, getUserWithGroups(user).getGroups());
         }
