@@ -21,8 +21,8 @@ public enum JenkinsEndpoints {
     TRIGGER_BUILD("job", "<projectKey>", "job", "<planKey>", "build"),
     ENABLE("job", "<projectKey>", "job", "<planKey>", "enable"),
     LAST_BUILD("job", "<projectKey>", "job", "<planKey>", "lastBuild", "api", "json"),
-    GET_FOLDER_JOB("job", "<projectKey>"),
-    GET_JOB("job", "<projectKey>", "job", "<planKey>"),
+    GET_FOLDER_JOB("job", "<projectKey>", "api", "json"),
+    GET_JOB("job", "<projectKey>", "job", "<planKey>", "api", "json"),
 
     // Health
     HEALTH("login"),
