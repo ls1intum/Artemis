@@ -38,7 +38,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.io.ClassPathResource;
 import org.springframework.core.io.Resource;
 import org.springframework.security.test.context.support.WithMockUser;
-import org.springframework.web.client.RestTemplate;
+import org.springframework.web.client.RestClient;
 
 import de.tum.cit.aet.artemis.assessment.domain.AssessmentType;
 import de.tum.cit.aet.artemis.assessment.domain.Feedback;
@@ -128,7 +128,7 @@ class DataExportCreationServiceTest extends AbstractSpringIntegrationJenkinsGitl
 
     @Autowired
     @Qualifier("apollonRestClient")
-    private RestTemplate restClient;
+    private RestClient restClient;
 
     @Autowired
     private ApollonConversionService apollonConversionService;

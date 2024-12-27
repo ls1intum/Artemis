@@ -2,7 +2,7 @@ package de.tum.cit.aet.artemis.programming.service.jenkins;
 
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_JENKINS;
 
-import java.net.URL;
+import java.net.URI;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -48,10 +48,7 @@ public class JenkinsService extends AbstractContinuousIntegrationService {
     private final ObjectMapper mapper = new ObjectMapper();
 
     @Value("${artemis.continuous-integration.url}")
-    protected URL serverUrl;
-
-    @Value("${jenkins.use-crumb:#{true}}")
-    private boolean useCrumb;
+    protected URI serverUri;
 
     private final JenkinsBuildPlanService jenkinsBuildPlanService;
 
@@ -170,7 +167,8 @@ public class JenkinsService extends AbstractContinuousIntegrationService {
 
     @Override
     public Optional<String> getWebHookUrl(String projectKey, String buildPlanId) {
-        var urlString = serverUrl + "/project/" + projectKey + "/" + buildPlanId;
+        // TODO: use UriComponentsBuilder
+        var urlString = serverUri + "/project/" + projectKey + "/" + buildPlanId;
         return Optional.of(jenkinsInternalUrlService.toInternalCiUrl(urlString));
     }
 
@@ -234,10 +232,11 @@ public class JenkinsService extends AbstractContinuousIntegrationService {
 
     @Override
     public ConnectorHealth health() {
-        Map<String, Object> additionalInfo = Map.of("url", serverUrl);
+        Map<String, Object> additionalInfo = Map.of("url", serverUri);
         try {
+            URI uri = JenkinsEndpoints.HEALTH.buildEndpoint(serverUri).build(true).toUri();
             // Note: we simply check if the login page is reachable
-            shortTimeoutRestTemplate.getForObject(serverUrl + "/login", String.class);
+            shortTimeoutRestTemplate.getForObject(uri, String.class);
             return new ConnectorHealth(true, additionalInfo);
         }
         catch (Exception emAll) {

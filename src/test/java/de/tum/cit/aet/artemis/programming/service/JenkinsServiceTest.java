@@ -7,10 +7,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
 import static org.assertj.core.api.Assertions.assertThatIllegalStateException;
 import static org.mockito.Mockito.any;
-import static org.mockito.Mockito.eq;
 import static org.mockito.Mockito.mockStatic;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -165,8 +162,8 @@ class JenkinsServiceTest extends AbstractProgrammingIntegrationJenkinsGitlabTest
         programmingExerciseUtilService.addTestCasesToProgrammingExercise(programmingExercise);
 
         jenkinsRequestMockProvider.mockCreateProjectForExercise(programmingExercise, false);
-        jenkinsRequestMockProvider.mockCopyBuildPlan(programmingExercise.getProjectKey(), programmingExercise.getProjectKey());
-        jenkinsRequestMockProvider.mockCopyBuildPlan(programmingExercise.getProjectKey(), programmingExercise.getProjectKey());
+        jenkinsRequestMockProvider.mockCopyBuildPlan(programmingExercise.getProjectKey(), programmingExercise.getProjectKey(), programmingExercise.getTemplateBuildPlanId());
+        jenkinsRequestMockProvider.mockCopyBuildPlan(programmingExercise.getProjectKey(), programmingExercise.getProjectKey(), programmingExercise.getSolutionBuildPlanId());
         jenkinsRequestMockProvider.mockGivePlanPermissionsThrowException(programmingExercise.getProjectKey(), programmingExercise.getProjectKey());
 
         assertThatExceptionOfType(JenkinsException.class).isThrownBy(() -> programmingExerciseImportService.importBuildPlans(programmingExercise, programmingExercise))
@@ -182,8 +179,8 @@ class JenkinsServiceTest extends AbstractProgrammingIntegrationJenkinsGitlabTest
         programmingExerciseUtilService.addTestCasesToProgrammingExercise(programmingExercise);
 
         jenkinsRequestMockProvider.mockCreateProjectForExercise(programmingExercise, false);
-        jenkinsRequestMockProvider.mockCopyBuildPlan(programmingExercise.getProjectKey(), programmingExercise.getProjectKey());
-        jenkinsRequestMockProvider.mockCopyBuildPlan(programmingExercise.getProjectKey(), programmingExercise.getProjectKey());
+        jenkinsRequestMockProvider.mockCopyBuildPlan(programmingExercise.getProjectKey(), programmingExercise.getProjectKey(), programmingExercise.getTemplateBuildPlanId());
+        jenkinsRequestMockProvider.mockCopyBuildPlan(programmingExercise.getProjectKey(), programmingExercise.getProjectKey(), programmingExercise.getSolutionBuildPlanId());
         jenkinsRequestMockProvider.mockGivePlanPermissionsThrowException(programmingExercise.getProjectKey(), programmingExercise.getProjectKey());
 
         assertThatExceptionOfType(JenkinsException.class).isThrownBy(() -> programmingExerciseImportService.importBuildPlans(programmingExercise, programmingExercise))
@@ -207,11 +204,12 @@ class JenkinsServiceTest extends AbstractProgrammingIntegrationJenkinsGitlabTest
         jenkinsRequestMockProvider.mockDeleteBuildPlan(programmingExercise.getProjectKey(), solutionJobName, false);
         jenkinsRequestMockProvider.mockCreateBuildPlan(programmingExercise.getProjectKey(), TEMPLATE.getName(), false);
         jenkinsRequestMockProvider.mockCreateBuildPlan(programmingExercise.getProjectKey(), SOLUTION.getName(), false);
-        when(jenkinsServer.getJob(programmingExercise.getProjectKey())).thenReturn(null).thenReturn(new JobWithDetails());
+        jenkinsRequestMockProvider.mockGetJob(programmingExercise.getProjectKey(), templateJobName, null, false);
+        jenkinsRequestMockProvider.mockGetJob(programmingExercise.getProjectKey(), solutionJobName, null, false);
 
         continuousIntegrationService.recreateBuildPlansForExercise(programmingExercise);
 
-        verify(jenkinsServer).createFolder(eq(null), eq(programmingExercise.getProjectKey()), any());
+        jenkinsRequestMockProvider.verifyMocks();
     }
 
     @Test
@@ -292,7 +290,7 @@ class JenkinsServiceTest extends AbstractProgrammingIntegrationJenkinsGitlabTest
         targetExercise.setBuildConfig(programmingExerciseBuildConfigRepository.save(buildConfigTarget));
         targetExercise = programmingExerciseRepository.save(targetExercise);
 
-        jenkinsRequestMockProvider.mockCopyBuildPlan(sourceExercise.getProjectKey(), targetExercise.getProjectKey());
+        jenkinsRequestMockProvider.mockCopyBuildPlan(sourceExercise.getProjectKey(), targetExercise.getProjectKey(), "");
 
         continuousIntegrationService.copyBuildPlan(sourceExercise, "", targetExercise, "", "", true);
         BuildPlan sourceBuildPlan = buildPlanRepository.findByProgrammingExercises_IdWithProgrammingExercisesElseThrow(sourceExercise.getId());
@@ -323,7 +321,7 @@ class JenkinsServiceTest extends AbstractProgrammingIntegrationJenkinsGitlabTest
         var buildConfigTarget = new ProgrammingExerciseBuildConfig();
         targetExercise.setBuildConfig(programmingExerciseBuildConfigRepository.save(buildConfigTarget));
         targetExercise = programmingExerciseRepository.save(targetExercise);
-        jenkinsRequestMockProvider.mockCopyBuildPlan(sourceExercise.getProjectKey(), targetExercise.getProjectKey());
+        jenkinsRequestMockProvider.mockCopyBuildPlan(sourceExercise.getProjectKey(), targetExercise.getProjectKey(), "");
 
         continuousIntegrationService.copyBuildPlan(sourceExercise, "", targetExercise, "", "", true);
 

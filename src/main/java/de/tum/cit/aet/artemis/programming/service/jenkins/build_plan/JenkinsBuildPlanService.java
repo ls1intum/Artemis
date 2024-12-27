@@ -22,7 +22,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.RestClientException;
 import org.springframework.web.client.RestTemplate;
-import org.springframework.web.util.UriComponentsBuilder;
 import org.w3c.dom.Document;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
@@ -64,7 +63,7 @@ public class JenkinsBuildPlanService {
     private static final Logger log = LoggerFactory.getLogger(JenkinsBuildPlanService.class);
 
     @Value("${artemis.continuous-integration.url}")
-    protected URL serverUrl;
+    protected URI serverUri;
 
     private final RestTemplate restTemplate;
 
@@ -309,7 +308,7 @@ public class JenkinsBuildPlanService {
      */
     public void triggerBuild(String projectKey, String planKey) {
         try {
-            URI uri = JenkinsEndpoints.TRIGGER_BUILD.buildEndpoint(serverUrl.toString(), projectKey, planKey).build(true).toUri();
+            URI uri = JenkinsEndpoints.TRIGGER_BUILD.buildEndpoint(serverUri, projectKey, planKey).build(true).toUri();
             restTemplate.postForEntity(uri, new HttpEntity<>(null, new HttpHeaders()), Void.class);
         }
         catch (RestClientException e) {
@@ -338,7 +337,7 @@ public class JenkinsBuildPlanService {
         }
 
         try {
-            var uri = UriComponentsBuilder.fromUriString(serverUrl.toString()).pathSegment("job", projectKey, "job", planKey, "lastBuild", "api", "json").build().toUri();
+            URI uri = JenkinsEndpoints.LAST_BUILD.buildEndpoint(serverUri, projectKey, planKey).build(true).toUri();
             var buildStatus = restTemplate.getForObject(uri, JenkinsBuildStatusDTO.class);
             return buildStatus != null && buildStatus.building ? ContinuousIntegrationService.BuildStatus.BUILDING : ContinuousIntegrationService.BuildStatus.INACTIVE;
         }
@@ -423,8 +422,8 @@ public class JenkinsBuildPlanService {
      */
     public void enablePlan(String projectKey, String planKey) {
         try {
-            var uri = UriComponentsBuilder.fromUriString(serverUrl.toString()).pathSegment("job", projectKey, "job", planKey, "enable").build(true).toUri();
-            restTemplate.postForEntity(uri, new HttpEntity<>(null, new HttpHeaders()), String.class);
+            URI uri = JenkinsEndpoints.ENABLE.buildEndpoint(serverUri, projectKey, planKey).build(true).toUri();
+            restTemplate.postForEntity(uri, new HttpEntity<>(null, new HttpHeaders()), Void.class);
         }
         catch (HttpClientErrorException e) {
             throw new JenkinsException("Unable to enable plan " + planKey + "; statusCode=" + e.getStatusCode() + "; body=" + e.getResponseBodyAsString());

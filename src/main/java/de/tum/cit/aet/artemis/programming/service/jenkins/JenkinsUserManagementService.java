@@ -3,7 +3,7 @@ package de.tum.cit.aet.artemis.programming.service.jenkins;
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_JENKINS;
 
 import java.io.IOException;
-import java.net.URL;
+import java.net.URI;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
@@ -27,7 +27,6 @@ import org.springframework.util.MultiValueMap;
 import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.RestClientException;
 import org.springframework.web.client.RestTemplate;
-import org.springframework.web.util.UriComponentsBuilder;
 
 import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.domain.User;
@@ -49,7 +48,7 @@ public class JenkinsUserManagementService implements CIUserManagementService {
     private static final Logger log = LoggerFactory.getLogger(JenkinsUserManagementService.class);
 
     @Value("${artemis.continuous-integration.url}")
-    private URL jenkinsServerUrl;
+    private URI jenkinsServerUri;
 
     @Value("${artemis.continuous-integration.user}")
     private String jenkinsAdminUsername;
@@ -102,7 +101,7 @@ public class JenkinsUserManagementService implements CIUserManagementService {
 
         try {
             // Create the Jenkins user
-            var uri = UriComponentsBuilder.fromUriString(jenkinsServerUrl.toString()).pathSegment("securityRealm", "createAccountByAdmin").build().toUri();
+            URI uri = JenkinsEndpoints.CREATE_ADMIN.buildEndpoint(jenkinsServerUri).build(true).toUri();
             restTemplate.exchange(uri, HttpMethod.POST, getCreateUserFormHttpEntity(user, password), Void.class);
 
             // Adds the user to groups of existing programming exercises
@@ -154,7 +153,7 @@ public class JenkinsUserManagementService implements CIUserManagementService {
         }
 
         try {
-            var uri = UriComponentsBuilder.fromUriString(jenkinsServerUrl.toString()).pathSegment("user", userLogin, "doDelete").build().toUri();
+            URI uri = JenkinsEndpoints.LAST_BUILD.buildEndpoint(jenkinsServerUri, userLogin).build(true).toUri();
             restTemplate.exchange(uri, HttpMethod.POST, null, Void.class);
             removeUserFromGroups(userLogin, getUserWithGroups(user).getGroups());
         }
@@ -242,8 +241,7 @@ public class JenkinsUserManagementService implements CIUserManagementService {
     @Override
     public void addUserToGroups(String userLogin, Set<String> groups) throws ContinuousIntegrationException {
         var exercises = programmingExerciseRepository.findAllByInstructorOrEditorOrTAGroupNameIn(groups);
-        log.info("Update Jenkins permissions for programming exercises: {}", exercises.stream().map(ProgrammingExercise::getProjectKey).toList());
-        // TODO: in case we update a tutor group / role here, the tutor should NOT get access to exam exercises before the exam has finished
+        log.info("Update Jenkins permissions (add users to groups) for programming exercises: {}", exercises.stream().map(ProgrammingExercise::getProjectKey).toList());
         exercises.forEach(exercise -> {
 
             // The exercise's project key is also the name of the Jenkins job that groups all build plans
@@ -278,7 +276,6 @@ public class JenkinsUserManagementService implements CIUserManagementService {
                     throw new JenkinsException("Cannot assign teaching assistant permissions to user: " + userLogin, e);
                 }
             }
-
         });
     }
 
@@ -293,7 +290,7 @@ public class JenkinsUserManagementService implements CIUserManagementService {
     public void removeUserFromGroups(String userLogin, Set<String> groups) throws ContinuousIntegrationException {
         // Remove all permissions assigned to the user for each exercise that belongs to the specified groups.
         var exercises = programmingExerciseRepository.findAllByInstructorOrEditorOrTAGroupNameIn(groups);
-        log.info("Update Jenkins permissions for programming exercises: {}", exercises.stream().map(ProgrammingExercise::getProjectKey).toList());
+        log.info("Update Jenkins permissions (remove users from groups) for programming exercises: {}", exercises.stream().map(ProgrammingExercise::getProjectKey).toList());
         exercises.forEach(exercise -> {
             try {
                 // The exercise's projectkey is also the name of the Jenkins folder job which groups the student's, solution,
@@ -321,7 +318,8 @@ public class JenkinsUserManagementService implements CIUserManagementService {
 
         // Remove all permissions assigned to the instructors and teaching assistants that do not belong to the course anymore.
         var programmingExercises = programmingExerciseRepository.findAllProgrammingExercisesInCourseOrInExamsOfCourse(updatedCourse);
-        log.info("Update Jenkins permissions for programming exercises: {}", programmingExercises.stream().map(ProgrammingExercise::getProjectKey).toList());
+        log.info("Update Jenkins permissions (update course permissions) for programming exercises: {}",
+                programmingExercises.stream().map(ProgrammingExercise::getProjectKey).toList());
         removePermissionsFromInstructorsAndEditorsAndTAsForCourse(oldInstructorGroup, oldEditorGroup, oldTeachingAssistantGroup, programmingExercises);
 
         // Assign teaching assistant and instructor permissions
@@ -395,7 +393,7 @@ public class JenkinsUserManagementService implements CIUserManagementService {
      */
     private JenkinsUserDTO getUser(String userLogin) throws ContinuousIntegrationException {
         try {
-            var uri = UriComponentsBuilder.fromUriString(jenkinsServerUrl.toString()).pathSegment("user", userLogin, "api", "json").build().toUri();
+            URI uri = JenkinsEndpoints.GET_USER.buildEndpoint(jenkinsServerUri, userLogin).build(true).toUri();
             return restTemplate.exchange(uri, HttpMethod.GET, null, JenkinsUserDTO.class).getBody();
 
         }

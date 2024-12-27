@@ -11,17 +11,17 @@ import static org.mockito.Mockito.eq;
 import static org.mockito.Mockito.mock;
 import static org.springframework.test.web.client.match.MockRestRequestMatchers.method;
 import static org.springframework.test.web.client.match.MockRestRequestMatchers.requestTo;
+import static org.springframework.test.web.client.response.MockRestResponseCreators.withBadRequest;
+import static org.springframework.test.web.client.response.MockRestResponseCreators.withResourceNotFound;
 import static org.springframework.test.web.client.response.MockRestResponseCreators.withStatus;
+import static org.springframework.test.web.client.response.MockRestResponseCreators.withSuccess;
 
 import java.io.IOException;
-import java.net.URISyntaxException;
-import java.net.URL;
+import java.net.URI;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 import java.util.Set;
 
-import org.apache.http.client.HttpResponseException;
 import org.hamcrest.Matchers;
 import org.mockito.MockitoAnnotations;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -35,7 +35,6 @@ import org.springframework.stereotype.Component;
 import org.springframework.test.web.client.ExpectedCount;
 import org.springframework.test.web.client.MockRestServiceServer;
 import org.springframework.web.client.RestTemplate;
-import org.springframework.web.util.UriComponentsBuilder;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -43,6 +42,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
+import de.tum.cit.aet.artemis.programming.service.jenkins.JenkinsEndpoints;
 import de.tum.cit.aet.artemis.programming.service.jenkins.dto.JenkinsUserDTO;
 import de.tum.cit.aet.artemis.programming.service.jenkins.jobs.JenkinsJobPermissionsService;
 import de.tum.cit.aet.artemis.programming.service.jenkins.jobs.JenkinsJobService;
@@ -53,10 +53,7 @@ import de.tum.cit.aet.artemis.programming.test_repository.ProgrammingExerciseTes
 public class JenkinsRequestMockProvider {
 
     @Value("${artemis.continuous-integration.url}")
-    private URL jenkinsServerUrl;
-
-    @Value("${jenkins.use-crumb:#{true}}")
-    private boolean useCrumb;
+    private URI serverUri;
 
     private final RestTemplate restTemplate;
 
@@ -84,7 +81,6 @@ public class JenkinsRequestMockProvider {
         // We remove JenkinsAuthorizationInterceptor because the tests hit the intercept() method
         // which has its' own instance of RestTemplate (in order to get a crumb(. Since that template
         // isn't mocked, it will throw an exception.
-        // TODO: Find a way to either mock the interceptor or mock its RestTemplate
         this.restTemplate.setInterceptors(List.of());
         this.shortTimeoutRestTemplate.setInterceptors(List.of());
     }
@@ -115,13 +111,13 @@ public class JenkinsRequestMockProvider {
         mockServer.verify();
     }
 
-    public void mockCreateProjectForExercise(ProgrammingExercise exercise, boolean shouldFail) throws IOException {
-        // TODO: we need to mockRetrieveArtifacts folder(...)
+    public void mockCreateProjectForExercise(ProgrammingExercise exercise, boolean shouldFail) {
+        URI uri = JenkinsEndpoints.NEW_FOLDER.buildEndpoint(serverUri, exercise.getProjectKey()).build(true).toUri();
         if (shouldFail) {
-            doThrow(IOException.class).when(jenkinsServer).createFolder(null, exercise.getProjectKey(), useCrumb);
+            mockServer.expect(requestTo(uri)).andExpect(method(HttpMethod.POST)).andRespond(withBadRequest());
         }
         else {
-            doReturn(null).when(jenkinsServer).createFolder(null, exercise.getProjectKey(), useCrumb);
+            mockServer.expect(requestTo(uri)).andExpect(method(HttpMethod.POST)).andRespond(withSuccess());
         }
     }
 
@@ -143,95 +139,86 @@ public class JenkinsRequestMockProvider {
 
     // TODO: use REST API for mocking
     public void mockCreateJobInFolder(String jobFolder, String job, boolean jobAlreadyExists) throws IOException {
-        var folderJob = new FolderJob();
+        var folderJob = new JenkinsJobService.FolderJob(jobFolder, "description", "url");
         mockGetFolderJob(jobFolder, folderJob);
         if (jobAlreadyExists) {
-            var jobWithDetails = new JobWithDetails();
-            doReturn(jobWithDetails).when(jenkinsServer).getJob(any(FolderJob.class), eq(job));
+            var jobWithDetails = new JenkinsJobService.JobWithDetails(job, "description", false);
+            // TODO: this method also invokes mockGetFolderJob(...)
+            mockGetJob(jobFolder, job, jobWithDetails, false);
         }
         else {
-            doReturn(null).when(jenkinsServer).getJob(any(FolderJob.class), eq(job));
-            doReturn(null).when(jenkinsServer).createJob(any(FolderJob.class), eq(job), anyString(), eq(useCrumb));
+            mockGetJob(jobFolder, job, null, false);
+            mockCreateJob(jobFolder, job);
         }
     }
 
-    // TODO: use REST API for mocking
+    private void mockCreateJob(String jobFolder, String job) {
+        URI uri = JenkinsEndpoints.NEW_PLAN.buildEndpoint(serverUri, jobFolder, job).build(true).toUri();
+        mockServer.expect(requestTo(uri)).andExpect(method(HttpMethod.POST)).andRespond(withSuccess());
+    }
+
     public void mockGivePlanPermissions(String jobFolder, String job) throws IOException {
+        // see addInstructorAndEditorAndTAPermissionsToUsersForJob
         mockGetJobConfig(jobFolder, job);
-        mockUpdateJob(jobFolder, job);
-        mockGetFolderConfig(jobFolder);
-        doReturn(null).when(jenkinsServer).updateJob(eq(jobFolder), anyString(), eq(useCrumb));
+        mockUpdatePlanRepository(jobFolder, job, false);
+        // TODO: double check, that those are not necessary
+        // mockGetFolderConfig(jobFolder);
+        // mockUpdatePlanRepository(jobFolder, job, false);
     }
 
-    // TODO: use REST API for mocking
     private void mockGetJobConfig(String folderName, String jobName) throws IOException {
-        doReturn(new JobWithDetails()).when(jenkinsServer).getJob(folderName);
-        doReturn(Optional.of(new FolderJob())).when(jenkinsServer).getFolderJob(any(JobWithDetails.class));
+        mockGetFolderJob(folderName);
 
+        URI uri = JenkinsEndpoints.PLAN_CONFIG.buildEndpoint(serverUri, folderName, jobName).build(true).toUri();
         var mockXml = loadFileFromResources("test-data/jenkins-response/job-config.xml");
-        doReturn(mockXml).when(jenkinsServer).getJobXml(any(FolderJob.class), eq(jobName));
+        mockServer.expect(requestTo(uri)).andExpect(method(HttpMethod.POST)).andRespond(withSuccess().body(mockXml));
     }
 
-    // TODO: use REST API for mocking
     public void mockGetFolderConfig(String folderName) throws IOException {
-        doReturn(new JobWithDetails()).when(jenkinsServer).getJob(folderName);
+        mockGetFolderJob(folderName);
+        URI uri = JenkinsEndpoints.FOLDER_CONFIG.buildEndpoint(serverUri, folderName).build(true).toUri();
         var mockXml = loadFileFromResources("test-data/jenkins-response/job-config.xml");
-        doReturn(mockXml).when(jenkinsServer).getJobXml(eq(folderName));
+        mockServer.expect(requestTo(uri)).andExpect(method(HttpMethod.POST)).andRespond(withSuccess().body(mockXml));
     }
 
-    // TODO: use REST API for mocking
-    private void mockUpdateJob(String folderName, String jobName) throws IOException {
-        if (folderName != null && !folderName.isEmpty()) {
-            doReturn(new JobWithDetails()).when(jenkinsServer).getJob(folderName);
-            mockGetFolderJob(folderName, new FolderJob());
-            doReturn(null).when(jenkinsServer).updateJob(any(FolderJob.class), eq(jobName), anyString(), eq(useCrumb));
-        }
-        else {
-            doReturn(null).when(jenkinsServer).updateJob(eq(jobName), anyString(), eq(useCrumb));
-        }
-    }
-
-    // TODO: use REST API for mocking
     public void mockCheckIfProjectExists(ProgrammingExercise exercise, boolean exists, boolean shouldFail) throws IOException {
-        var jobOrNull = exists ? mock(JenkinsJobService.JobWithDetails.class) : null;
-        if (jobOrNull != null) {
-            doReturn("https://some-job-url.com").when(jobOrNull).getUrl();
-        }
+        var projectKey = exercise.getProjectKey();
+        URI uri = JenkinsEndpoints.GET_FOLDER_JOB.buildEndpoint(serverUri, projectKey).build(true).toUri();
+        var jobOrNull = exists ? new JenkinsJobService.FolderJob(projectKey, "description", "url") : null;
+        var response = mapper.writeValueAsString(jobOrNull);
 
         if (shouldFail) {
-            doThrow(IOException.class).when(jenkinsServer).getJob(exercise.getProjectKey());
+            mockServer.expect(requestTo(uri)).andExpect(method(HttpMethod.GET)).andRespond(withBadRequest());
         }
         else {
-            doReturn(jobOrNull).when(jenkinsServer).getJob(exercise.getProjectKey());
+            mockServer.expect(requestTo(uri)).andExpect(method(HttpMethod.GET)).andRespond(withSuccess().body(response));
         }
     }
 
-    // TODO: use REST API for mocking
     public void mockCheckIfProjectExistsJobIsNull(ProgrammingExercise exercise) throws IOException {
-        doReturn(null).when(jenkinsServer).getJob(exercise.getProjectKey());
+        mockGetFolderJob(exercise.getProjectKey());
     }
 
-    // TODO: use REST API for mocking
     public void mockCheckIfProjectExistsJobUrlEmptyOrNull(ProgrammingExercise exercise, boolean urlEmpty) throws IOException {
-        var job = mock(JobWithDetails.class);
-        doReturn(job).when(jenkinsServer).getJob(exercise.getProjectKey());
-        doReturn(urlEmpty ? "" : null).when(job).getUrl();
+        var job = new JenkinsJobService.JobWithDetails("name", "description", false);
+        URI uri = JenkinsEndpoints.GET_FOLDER_JOB.buildEndpoint(serverUri, exercise.getProjectKey()).build(true).toUri();
+        var response = mapper.writeValueAsString(job);
+        mockServer.expect(requestTo(uri)).andExpect(method(HttpMethod.POST)).andRespond(withSuccess().body(response));
     }
 
-    public void mockCopyBuildPlan(String sourceProjectKey, String targetProjectKey) throws IOException {
+    public void mockCopyBuildPlan(String sourceProjectKey, String targetProjectKey, String planKey) throws IOException {
+
         mockGetJobXmlForBuildPlanWith(sourceProjectKey, "<xml></xml>");
-        mockSaveJobXml(targetProjectKey);
+        mockSaveJobXml(targetProjectKey, planKey);
     }
 
-    // TODO: use REST API for mocking
-    private void mockSaveJobXml(String targetProjectKey) throws IOException {
-        mockGetFolderJob(targetProjectKey, new FolderJob());
-        // copyBuildPlan uses #createJobInFolder()
-        doReturn(null).when(jenkinsServer).getJob(any(), anyString());
-        doReturn(null).when(jenkinsServer).createJob(any(), anyString(), anyString(), eq(useCrumb));
+    private void mockSaveJobXml(String targetProjectKey, String planKey) throws IOException {
+        mockGetFolderJob(targetProjectKey);
+        mockGetJob(targetProjectKey, planKey, null, false);
+        mockCreateBuildPlan(targetProjectKey, planKey);
     }
 
-    public void mockConfigureBuildPlan(ProgrammingExercise exercise, String username) throws URISyntaxException, IOException {
+    public void mockConfigureBuildPlan(ProgrammingExercise exercise, String username) throws IOException {
         final var projectKey = exercise.getProjectKey();
         final var planKey = projectKey + "-" + getCleanPlanName(username.toUpperCase());
         mockUpdatePlanRepository(projectKey, planKey, true);
@@ -242,42 +229,40 @@ public class JenkinsRequestMockProvider {
         return planName.toUpperCase().replaceAll("[^A-Z0-9]", "");
     }
 
-    // TODO: use REST API for mocking
-    public void mockUpdatePlanRepository(String projectKey, String planName, boolean useLegacyXml) throws IOException, URISyntaxException {
+    public void mockUpdatePlanRepository(String projectKey, String planName, boolean useLegacyXml) throws IOException {
         var jobConfigXmlFilename = useLegacyXml ? "legacy-job-config.xml" : "job-config.xml";
         var mockXml = loadFileFromResources("test-data/jenkins-response/" + jobConfigXmlFilename);
 
-        mockGetFolderJob(projectKey, new FolderJob());
+        mockGetFolderJob(projectKey);
         mockGetJobXmlForBuildPlanWith(projectKey, mockXml);
 
-        final var uri = UriComponentsBuilder.fromUri(jenkinsServerUrl.toURI()).pathSegment("job", projectKey, "job", planName, "config.xml").build().toUri();
-
+        URI uri = JenkinsEndpoints.PLAN_CONFIG.buildEndpoint(serverUri, projectKey, planName).build(true).toUri();
         // build plan URL is updated after the repository URIs, so in this case, the URI is used twice
-        mockServer.expect(requestTo(uri)).andExpect(method(HttpMethod.POST)).andRespond(withStatus(HttpStatus.OK));
+        mockServer.expect(requestTo(uri)).andExpect(method(HttpMethod.POST)).andRespond(withSuccess());
 
         mockTriggerBuild(projectKey, planName, false);
         mockTriggerBuild(projectKey, planName, false);
     }
 
-    // TODO: use REST API for mocking
-    public void mockUpdatePlanRepository(String projectKey, String planName, HttpStatus expectedHttpStatus) throws IOException, URISyntaxException {
+    public void mockUpdatePlanRepository(String projectKey, String planName, HttpStatus expectedHttpStatus) throws IOException {
         var mockXml = loadFileFromResources("test-data/jenkins-response/job-config.xml");
 
-        mockGetFolderJob(projectKey, new FolderJob());
+        mockGetFolderJob(projectKey);
         mockGetJobXmlForBuildPlanWith(projectKey, mockXml);
 
-        final var uri = UriComponentsBuilder.fromUri(jenkinsServerUrl.toURI()).pathSegment("job", projectKey, "job", planName, "config.xml").build().toUri();
+        URI uri = JenkinsEndpoints.PLAN_CONFIG.buildEndpoint(serverUri, projectKey, planName).build(true).toUri();
         mockServer.expect(requestTo(uri)).andExpect(method(HttpMethod.POST)).andRespond(withStatus(expectedHttpStatus));
     }
 
-    // TODO: use REST API for mocking
+    // TODO: this should actually use the JOB_CONFIG endpoint
     private void mockGetJobXmlForBuildPlanWith(String projectKey, String xmlToReturn) throws IOException {
-        mockGetFolderJob(projectKey, new FolderJob());
-        doReturn(xmlToReturn).when(jenkinsServer).getJobXml(any(), any());
+        mockGetFolderJob(projectKey);
+        URI uri = JenkinsEndpoints.FOLDER_CONFIG.buildEndpoint(serverUri, projectKey).build(true).toUri();
+        mockServer.expect(requestTo(uri)).andExpect(method(HttpMethod.GET)).andRespond(withSuccess().body(xmlToReturn));
     }
 
-    public void mockEnablePlan(String projectKey, String planKey, boolean planExistsInCi, boolean shouldFail) throws URISyntaxException {
-        final var uri = UriComponentsBuilder.fromUri(jenkinsServerUrl.toURI()).pathSegment("job", projectKey, "job", planKey, "enable").build().toUri();
+    public void mockEnablePlan(String projectKey, String planKey, boolean planExistsInCi, boolean shouldFail) {
+        URI uri = JenkinsEndpoints.ENABLE.buildEndpoint(serverUri, projectKey, planKey).build(true).toUri();
         if (shouldFail) {
             mockServer.expect(requestTo(uri)).andExpect(method(HttpMethod.POST)).andRespond(withStatus(HttpStatus.BAD_REQUEST));
         }
@@ -289,30 +274,34 @@ public class JenkinsRequestMockProvider {
 
     public void mockCopyBuildPlanForParticipation(ProgrammingExercise exercise, String username) throws IOException {
         final var projectKey = exercise.getProjectKey();
-        mockCopyBuildPlan(projectKey, projectKey);
+        final var planKey = projectKey + "-" + getCleanPlanName(username.toUpperCase());
+        mockCopyBuildPlan(projectKey, projectKey, planKey);
     }
 
-    // TODO: use REST API for mocking
     public void mockGetJob(String projectKey, String jobName, JenkinsJobService.JobWithDetails jobToReturn, boolean shouldFail) throws IOException {
-        final var folder = new FolderJob();
+        final var folder = new JenkinsJobService.FolderJob(projectKey, "description", "url");
         mockGetFolderJob(projectKey, folder);
+        URI uri = JenkinsEndpoints.GET_JOB.buildEndpoint(serverUri, projectKey, jobName).build(true).toUri();
         if (!shouldFail) {
-            doReturn(jobToReturn).when(jenkinsServer).getJob(folder, jobName);
+            var response = mapper.writeValueAsString(jobToReturn);
+            mockServer.expect(requestTo(uri)).andExpect(method(HttpMethod.GET)).andRespond(withSuccess().body(response));
         }
         else {
-            doThrow(IOException.class).when(jenkinsServer).getJob(folder, jobName);
+            mockServer.expect(requestTo(uri)).andExpect(method(HttpMethod.GET)).andRespond(withBadRequest());
         }
     }
 
-    // TODO: use REST API for mocking
-    public void mockGetFolderJob(String folderName, FolderJob folderJobToReturn) throws IOException {
-        final var jobWithDetails = new JobWithDetails();
-        doReturn(jobWithDetails).when(jenkinsServer).getJob(folderName);
-        doReturn(Optional.of(folderJobToReturn)).when(jenkinsServer).getFolderJob(jobWithDetails);
+    public void mockGetFolderJob(String folderName) throws IOException {
+        mockGetFolderJob(folderName, new JenkinsJobService.FolderJob(folderName, "description", "url"));
     }
 
-    public void mockUpdateUserAndGroups(String oldLogin, User user, Set<String> groupsToAdd, Set<String> groupsToRemove, boolean userExistsInJenkins)
-            throws IOException, URISyntaxException {
+    public void mockGetFolderJob(String folderName, JenkinsJobService.FolderJob folderJobToReturn) throws IOException {
+        URI uri = JenkinsEndpoints.GET_FOLDER_JOB.buildEndpoint(serverUri, folderName).build(true).toUri();
+        var response = mapper.writeValueAsString(folderJobToReturn);
+        mockServer.expect(requestTo(uri)).andExpect(method(HttpMethod.GET)).andRespond(withSuccess().body(response));
+    }
+
+    public void mockUpdateUserAndGroups(String oldLogin, User user, Set<String> groupsToAdd, Set<String> groupsToRemove, boolean userExistsInJenkins) throws IOException {
         if (!oldLogin.equals(user.getLogin())) {
             mockUpdateUserLogin(oldLogin, user);
         }
@@ -320,16 +309,16 @@ public class JenkinsRequestMockProvider {
             mockUpdateUser(user, userExistsInJenkins);
         }
         mockRemoveUserFromGroups(groupsToRemove, false);
-        mockAddUsersToGroups(user.getLogin(), groupsToAdd, false);
+        mockAddUsersToGroups(groupsToAdd, false);
     }
 
-    private void mockUpdateUser(User user, boolean userExists) throws URISyntaxException, IOException {
+    private void mockUpdateUser(User user, boolean userExists) throws IOException {
         mockGetUser(user.getLogin(), userExists, false);
         mockDeleteUser(user, userExists, false);
         mockCreateUser(user, false, false, false);
     }
 
-    private void mockUpdateUserLogin(String oldLogin, User user) throws IOException, URISyntaxException {
+    private void mockUpdateUserLogin(String oldLogin, User user) throws IOException {
         if (oldLogin.equals(user.getLogin())) {
             return;
         }
@@ -341,20 +330,20 @@ public class JenkinsRequestMockProvider {
         mockCreateUser(user, false, false, false);
     }
 
-    public void mockDeleteUser(User user, boolean userExistsInUserManagement, boolean shouldFailToDelete) throws IOException, URISyntaxException {
+    public void mockDeleteUser(User user, boolean userExistsInUserManagement, boolean shouldFailToDelete) throws IOException {
         mockGetUser(user.getLogin(), userExistsInUserManagement, false);
 
-        final var uri = UriComponentsBuilder.fromUri(jenkinsServerUrl.toURI()).pathSegment("user", user.getLogin(), "doDelete").build().toUri();
+        URI uri = JenkinsEndpoints.DELETE_USER.buildEndpoint(serverUri, user.getLogin()).build(true).toUri();
         var status = shouldFailToDelete ? HttpStatus.NOT_FOUND : HttpStatus.FOUND;
         mockServer.expect(requestTo(uri)).andExpect(method(HttpMethod.POST)).andRespond(withStatus(status));
 
         mockRemoveUserFromGroups(user.getGroups(), false);
     }
 
-    private void mockGetUser(String userLogin, boolean userExists, boolean shouldFailToGetUser) throws URISyntaxException, JsonProcessingException {
+    private void mockGetUser(String userLogin, boolean userExists, boolean shouldFailToGetUser) throws JsonProcessingException {
         var jenkinsUser = new JenkinsUserDTO(userLogin, null, null);
 
-        final var uri = UriComponentsBuilder.fromUri(jenkinsServerUrl.toURI()).pathSegment("user", userLogin, "api", "json").build().toUri();
+        URI uri = JenkinsEndpoints.GET_USER.buildEndpoint(serverUri, userLogin).build(true).toUri();
         if (userExists) {
             mockServer.expect(requestTo(uri)).andExpect(method(HttpMethod.GET))
                     .andRespond(withStatus(HttpStatus.FOUND).body(mapper.writeValueAsString(jenkinsUser)).contentType(MediaType.APPLICATION_JSON));
@@ -367,7 +356,7 @@ public class JenkinsRequestMockProvider {
         }
     }
 
-    public void mockGetAnyUser(boolean shouldFail, int requestCount) throws URISyntaxException, JsonProcessingException {
+    public void mockGetAnyUser(boolean shouldFail, int requestCount) {
         final var httpStatus = shouldFail ? HttpStatus.NOT_FOUND : HttpStatus.FOUND;
         mockServer.expect(ExpectedCount.times(requestCount), requestTo(Matchers.endsWith("api/json"))).andRespond(withStatus(httpStatus));
     }
@@ -393,30 +382,31 @@ public class JenkinsRequestMockProvider {
         }
     }
 
-    public void mockCreateUser(User user, boolean userExistsInCi, boolean shouldFail, boolean shouldFailToGetUser) throws URISyntaxException, IOException {
+    public void mockCreateUser(User user, boolean userExistsInCi, boolean shouldFail, boolean shouldFailToGetUser) throws IOException {
         mockGetUser(user.getLogin(), userExistsInCi, shouldFailToGetUser);
 
-        final var uri = UriComponentsBuilder.fromUri(jenkinsServerUrl.toURI()).pathSegment("securityRealm", "createAccountByAdmin").build().toUri();
+        URI uri = JenkinsEndpoints.CREATE_ADMIN.buildEndpoint(serverUri).build(true).toUri();
         var status = shouldFail ? HttpStatus.INTERNAL_SERVER_ERROR : HttpStatus.FOUND;
         mockServer.expect(requestTo(uri)).andExpect(method(HttpMethod.POST)).andRespond(withStatus(status));
 
-        mockAddUsersToGroups(user.getLogin(), user.getGroups(), false);
+        mockAddUsersToGroups(user.getGroups(), false);
     }
 
-    // TODO: use REST API for mocking
-    public void mockAddUsersToGroups(String login, Set<String> groups, boolean shouldfail) throws IOException {
+    public void mockAddUsersToGroups(Set<String> groups, boolean shouldFail) throws IOException {
         var exercises = programmingExerciseRepository.findAllByInstructorOrEditorOrTAGroupNameIn(groups);
         for (ProgrammingExercise exercise : exercises) {
-            var jobName = exercise.getProjectKey();
+            var folderName = exercise.getProjectKey();
             var course = exercise.getCourseViaExerciseGroupOrCourseMember();
 
             if (groups.contains(course.getInstructorGroupName()) || groups.contains(course.getEditorGroupName()) || groups.contains(course.getTeachingAssistantGroupName())) {
-                mockGetFolderConfig(jobName);
-                if (shouldfail) {
-                    doThrow(IOException.class).when(jenkinsServer).updateJob(eq(jobName), anyString(), eq(useCrumb));
+                mockGetFolderConfig(folderName);
+                URI uri = JenkinsEndpoints.FOLDER_CONFIG.buildEndpoint(serverUri, folderName).build(true).toUri();
+
+                if (shouldFail) {
+                    mockServer.expect(requestTo(uri)).andExpect(method(HttpMethod.POST)).andRespond(withBadRequest());
                 }
                 else {
-                    doReturn(null).when(jenkinsServer).updateJob(eq(jobName), anyString(), eq(useCrumb));
+                    mockServer.expect(requestTo(uri)).andExpect(method(HttpMethod.POST)).andRespond(withSuccess());
                 }
             }
         }
@@ -459,50 +449,50 @@ public class JenkinsRequestMockProvider {
 
     private void mockAddInstructorAndEditorAndTAPermissionsToUsersForFolder(String folderName, boolean shouldFailToAdd) throws IOException {
         mockGetFolderConfig(folderName);
+        URI uri = JenkinsEndpoints.FOLDER_CONFIG.buildEndpoint(serverUri, folderName).build(true).toUri();
         if (shouldFailToAdd) {
-            doThrow(IOException.class).when(jenkinsServer).updateJob(eq(folderName), anyString(), eq(useCrumb));
+            mockServer.expect(requestTo(uri)).andExpect(method(HttpMethod.POST)).andRespond(withBadRequest());
         }
         else {
-            doReturn(null).when(jenkinsServer).updateJob(eq(folderName), anyString(), eq(useCrumb));
+            mockServer.expect(requestTo(uri)).andExpect(method(HttpMethod.POST)).andRespond(withSuccess());
         }
     }
 
-    // TODO: use REST API for mocking
     public void mockDeleteBuildPlan(String projectKey, String planName, boolean shouldFail) throws IOException {
-        mockGetFolderJob(projectKey, new FolderJob());
+        mockGetFolderJob(projectKey);
+        URI uri = JenkinsEndpoints.DELETE_JOB.buildEndpoint(serverUri, projectKey, planName).build(true).toUri();
         if (shouldFail) {
-            doThrow(new HttpResponseException(400, "Bad Request")).when(jenkinsServer).deleteJob(any(FolderJob.class), eq(planName), eq(useCrumb));
+            mockServer.expect(requestTo(uri)).andExpect(method(HttpMethod.POST)).andRespond(withBadRequest());
         }
         else {
-            doReturn(null).when(jenkinsServer).deleteJob(any(FolderJob.class), eq(planName), eq(useCrumb));
+            mockServer.expect(requestTo(uri)).andExpect(method(HttpMethod.POST)).andRespond(withSuccess());
         }
     }
 
-    // TODO: use REST API for mocking
     public void mockDeleteBuildPlanNotFound(String projectKey, String planName) throws IOException {
-        mockGetFolderJob(projectKey, new FolderJob());
-        doThrow(new HttpResponseException(404, "Not found")).when(jenkinsServer).deleteJob(any(FolderJob.class), eq(planName), eq(useCrumb));
+        mockGetFolderJob(projectKey);
+        URI uri = JenkinsEndpoints.DELETE_JOB.buildEndpoint(serverUri, projectKey, planName).build(true).toUri();
+        mockServer.expect(requestTo(uri)).andExpect(method(HttpMethod.POST)).andRespond(withResourceNotFound());
     }
 
-    // TODO: use REST API for mocking
     public void mockDeleteBuildPlanFailWithException(String projectKey, String planName) throws IOException {
-        mockGetFolderJob(projectKey, new FolderJob());
-        doThrow(new IOException("IOException")).when(jenkinsServer).deleteJob(any(FolderJob.class), eq(planName), eq(useCrumb));
+        mockGetFolderJob(projectKey);
+        URI uri = JenkinsEndpoints.DELETE_JOB.buildEndpoint(serverUri, projectKey, planName).build(true).toUri();
+        mockServer.expect(requestTo(uri)).andExpect(method(HttpMethod.POST)).andRespond(withBadRequest());
     }
 
-    // TODO: use REST API for mocking
     public void mockDeleteBuildPlanProject(String projectKey, boolean shouldFail) throws IOException {
+        URI uri = JenkinsEndpoints.DELETE_FOLDER.buildEndpoint(serverUri, projectKey).build(true).toUri();
         if (shouldFail) {
-            doThrow(new HttpResponseException(400, "Bad Request")).when(jenkinsServer).deleteJob(projectKey, useCrumb);
+            mockServer.expect(requestTo(uri)).andExpect(method(HttpMethod.POST)).andRespond(withBadRequest());
         }
         else {
-            doReturn(null).when(jenkinsServer).deleteJob(projectKey, useCrumb);
+            mockServer.expect(requestTo(uri)).andExpect(method(HttpMethod.POST)).andRespond(withSuccess());
         }
     }
 
-    // TODO: use REST API for mocking
     public void mockGetBuildStatus(String projectKey, String planName, boolean planExistsInCi, boolean planIsActive, boolean planIsBuilding, boolean failToGetLastBuild)
-            throws IOException, URISyntaxException {
+            throws IOException {
         if (!planExistsInCi) {
             mockGetJob(projectKey, planName, null, false);
             return;
@@ -516,14 +506,15 @@ public class JenkinsRequestMockProvider {
             return;
         }
 
-        final var uri = UriComponentsBuilder.fromUri(jenkinsServerUrl.toURI()).pathSegment("job", projectKey, "job", planName, "lastBuild", "api", "json").build().toUri();
+        URI uri = JenkinsEndpoints.LAST_BUILD.buildEndpoint(serverUri, projectKey, planName).build(true).toUri();
         final var body = new ObjectMapper().writeValueAsString(Map.of("building", planIsBuilding && planIsActive));
         final var status = failToGetLastBuild ? HttpStatus.NOT_FOUND : HttpStatus.OK;
         mockServer.expect(requestTo(uri)).andExpect(method(HttpMethod.GET)).andRespond(withStatus(status).body(body).contentType(MediaType.APPLICATION_JSON));
     }
 
-    public void mockHealth(boolean isRunning, HttpStatus httpStatus) throws URISyntaxException {
-        final var uri = UriComponentsBuilder.fromUri(jenkinsServerUrl.toURI()).pathSegment("login").build().toUri();
+    public void mockHealth(boolean isRunning, HttpStatus httpStatus) {
+
+        URI uri = JenkinsEndpoints.HEALTH.buildEndpoint(serverUri).build(true).toUri();
         if (isRunning) {
             shortTimeoutMockServer.expect(requestTo(uri)).andExpect(method(HttpMethod.GET)).andRespond(withStatus(httpStatus).body("lol"));
         }
@@ -538,10 +529,15 @@ public class JenkinsRequestMockProvider {
     }
 
     public void mockTriggerBuild(String projectKey, String buildPlanId, boolean triggerBuildFails) throws IOException {
-        var jobWithDetails = mock(JenkinsJobService.JobWithDetails.class);
-        mockGetJob(projectKey, buildPlanId, jobWithDetails, triggerBuildFails);
+        mockGetJob(projectKey, buildPlanId, new JenkinsJobService.JobWithDetails(buildPlanId, "description", false), triggerBuildFails);
+        URI uri = JenkinsEndpoints.TRIGGER_BUILD.buildEndpoint(serverUri, projectKey, buildPlanId).build(true).toUri();
+
         if (!triggerBuildFails) {
-            doReturn(new QueueReference("")).when(jobWithDetails).build();
+            mockServer.expect(requestTo(uri)).andExpect(method(HttpMethod.POST)).andRespond(withSuccess());
+        }
+        else {
+            // simulate a client exception, because this is caught in the actual production code
+            mockServer.expect(requestTo(uri)).andExpect(method(HttpMethod.POST)).andRespond(withStatus(HttpStatus.BAD_REQUEST));
         }
     }
 

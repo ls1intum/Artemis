@@ -1,5 +1,6 @@
 package de.tum.cit.aet.artemis.programming.service.jenkins;
 
+import java.net.URI;
 import java.util.Arrays;
 import java.util.List;
 
@@ -10,6 +11,7 @@ import de.tum.cit.aet.artemis.core.util.UrlUtils;
 public enum JenkinsEndpoints {
 
     // @formatter:off
+    // Build plan endpoints
     NEW_PLAN("job", "<projectKey>", "createItem"),
     NEW_FOLDER("createItem"),
     DELETE_FOLDER("job", "<projectKey>", "doDelete"),
@@ -21,7 +23,15 @@ public enum JenkinsEndpoints {
     TEST_RESULTS("job", "<projectKey>", "job", "<planKey>", "lastBuild", "testResults", "api", "json"),
     LAST_BUILD("job", "<projectKey>", "job", "<planKey>", "lastBuild", "api", "json"),
     GET_FOLDER_JOB("job", "<projectKey>"),
-    GET_JOB("job", "<projectKey>", "job", "<planKey>");
+    GET_JOB("job", "<projectKey>", "job", "<planKey>"),
+
+    // Health
+    HEALTH("login"),
+
+    // User management endpoints
+    GET_USER("user", "<username>", "api", "json"),
+    DELETE_USER("user", "<username>", "doDelete"),
+    CREATE_ADMIN("securityRealm", "createAccountByAdmin");
     // @formatter:on
 
     private final List<String> pathSegments;
@@ -30,7 +40,11 @@ public enum JenkinsEndpoints {
         this.pathSegments = Arrays.asList(pathSegments);
     }
 
-    public UriComponentsBuilder buildEndpoint(String baseUrl, Object... args) {
-        return UrlUtils.buildEndpoint(baseUrl, pathSegments, args);
+    public UriComponentsBuilder buildEndpoint(String baseUriString, Object... args) {
+        return UrlUtils.buildEndpoint(baseUriString, pathSegments, args);
+    }
+
+    public UriComponentsBuilder buildEndpoint(URI baseUri, Object... args) {
+        return UrlUtils.buildEndpoint(baseUri, pathSegments, args);
     }
 }

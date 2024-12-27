@@ -197,8 +197,8 @@ public abstract class AbstractSpringIntegrationJenkinsGitlabTest extends Abstrac
         String solutionBuildPlanId = targetProjectKey + "-" + SOLUTION.getName();
 
         jenkinsRequestMockProvider.mockCreateProjectForExercise(exerciseToBeImported, false);
-        jenkinsRequestMockProvider.mockCopyBuildPlan(sourceExercise.getProjectKey(), targetProjectKey);
-        jenkinsRequestMockProvider.mockCopyBuildPlan(sourceExercise.getProjectKey(), targetProjectKey);
+        jenkinsRequestMockProvider.mockCopyBuildPlan(sourceExercise.getProjectKey(), targetProjectKey, templateBuildPlanId);
+        jenkinsRequestMockProvider.mockCopyBuildPlan(sourceExercise.getProjectKey(), targetProjectKey, solutionBuildPlanId);
         jenkinsRequestMockProvider.mockGivePlanPermissions(targetProjectKey, templateBuildPlanId);
         jenkinsRequestMockProvider.mockGivePlanPermissions(targetProjectKey, solutionBuildPlanId);
         jenkinsRequestMockProvider.mockEnablePlan(targetProjectKey, templateBuildPlanId, planExistsInCi, shouldPlanEnableFail);
@@ -318,7 +318,7 @@ public abstract class AbstractSpringIntegrationJenkinsGitlabTest extends Abstrac
     @Override
     public void mockCopyBuildPlan(ProgrammingExerciseStudentParticipation participation) throws Exception {
         final var projectKey = participation.getProgrammingExercise().getProjectKey();
-        jenkinsRequestMockProvider.mockCopyBuildPlan(projectKey, projectKey);
+        jenkinsRequestMockProvider.mockCopyBuildPlan(projectKey, projectKey, participation.getBuildPlanId());
     }
 
     @Override
@@ -439,14 +439,14 @@ public abstract class AbstractSpringIntegrationJenkinsGitlabTest extends Abstrac
     @Override
     public void mockAddUserToGroupInUserManagement(User user, String group, boolean failInCi) throws Exception {
         gitlabRequestMockProvider.mockUpdateVcsUser(user.getLogin(), user, Set.of(), Set.of(group), false);
-        jenkinsRequestMockProvider.mockAddUsersToGroups(user.getLogin(), Set.of(group), failInCi);
+        jenkinsRequestMockProvider.mockAddUsersToGroups(Set.of(group), failInCi);
     }
 
     @Override
     public void mockRemoveUserFromGroup(User user, String group, boolean failInCi) throws Exception {
         gitlabRequestMockProvider.mockUpdateVcsUser(user.getLogin(), user, Set.of(group), Set.of(), false);
         jenkinsRequestMockProvider.mockRemoveUserFromGroups(Set.of(group), failInCi);
-        jenkinsRequestMockProvider.mockAddUsersToGroups(user.getLogin(), Set.of(group), false);
+        jenkinsRequestMockProvider.mockAddUsersToGroups(Set.of(group), false);
     }
 
     @Override
