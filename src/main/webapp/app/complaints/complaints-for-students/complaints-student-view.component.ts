@@ -1,4 +1,4 @@
-import { Component, Input, OnInit } from '@angular/core';
+import { Component, Input, OnInit, inject } from '@angular/core';
 import { Exercise, getCourseFromExercise } from 'app/entities/exercise.model';
 import { Complaint, ComplaintType } from 'app/entities/complaint.model';
 import { ComplaintService } from 'app/complaints/complaint.service';
@@ -29,6 +29,11 @@ import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
     imports: [TranslateDirective, FaIconComponent, ComplaintsFormComponent, ComplaintRequestComponent, ComplaintResponseComponent, ArtemisTranslatePipe],
 })
 export class ComplaintsStudentViewComponent implements OnInit {
+    private complaintService = inject(ComplaintService);
+    private serverDateService = inject(ArtemisServerDateService);
+    private accountService = inject(AccountService);
+    private courseService = inject(CourseManagementService);
+
     @Input() exercise: Exercise;
     @Input() participation: StudentParticipation;
     @Input() result?: Result;
@@ -53,13 +58,6 @@ export class ComplaintsStudentViewComponent implements OnInit {
 
     // Icons
     faInfoCircle = faInfoCircle;
-
-    constructor(
-        private complaintService: ComplaintService,
-        private serverDateService: ArtemisServerDateService,
-        private accountService: AccountService,
-        private courseService: CourseManagementService,
-    ) {}
 
     /**
      * Loads the number of allowed complaints and feedback requests

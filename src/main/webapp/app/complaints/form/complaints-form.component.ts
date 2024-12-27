@@ -1,5 +1,5 @@
 import { HttpErrorResponse } from '@angular/common/http';
-import { Component, EventEmitter, Input, OnInit, Output } from '@angular/core';
+import { Component, EventEmitter, Input, OnInit, Output, inject } from '@angular/core';
 import { ComplaintService } from 'app/complaints/complaint.service';
 import { AlertService } from 'app/core/util/alert.service';
 import { ComplaintType } from 'app/entities/complaint.model';
@@ -20,6 +20,9 @@ import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
     imports: [TranslateDirective, FormsModule, TextareaModule, ArtemisTranslatePipe],
 })
 export class ComplaintsFormComponent implements OnInit {
+    private complaintService = inject(ComplaintService);
+    private alertService = inject(AlertService);
+
     @Input() exercise: Exercise;
     @Input() resultId: number;
     @Input() examId?: number;
@@ -32,11 +35,6 @@ export class ComplaintsFormComponent implements OnInit {
     course?: Course;
 
     readonly ComplaintType = ComplaintType;
-
-    constructor(
-        private complaintService: ComplaintService,
-        private alertService: AlertService,
-    ) {}
 
     ngOnInit(): void {
         this.course = getCourseFromExercise(this.exercise);
