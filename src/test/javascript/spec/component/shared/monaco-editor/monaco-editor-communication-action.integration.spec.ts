@@ -363,14 +363,24 @@ describe('MonacoEditorCommunicationActionIntegration', () => {
             comp.registerAction(lectureAttachmentReferenceAction);
             const lecture = lectureAttachmentReferenceAction.lecturesWithDetails[2];
             const attachmentUnit = lecture.attachmentUnits![0];
+
+            attachmentUnit.attachment = {
+                link: '/api/files/attachments/lecture/1/Metis-Attachment.pdf',
+                studentVersion: 'attachments/lecture/1/Metis-Attachment.pdf',
+                name: 'Metis-Attachment.pdf',
+            } as Attachment;
+
             const previousName = attachmentUnit.name;
             attachmentUnit.name = attachmentUnitNameWithBrackets;
-            const attachmentUnitFileName = 'Metis-Attachment.pdf';
+
+            const attachmentUnitFileName = 'lecture/1/Metis-Attachment.pdf';
+
             lectureAttachmentReferenceAction.executeInCurrentEditor({
                 reference: ReferenceType.ATTACHMENT_UNITS,
                 lecture,
                 attachmentUnit,
             });
+
             attachmentUnit.name = previousName;
             expect(comp.getText()).toBe(`[lecture-unit]${attachmentUnitNameWithoutBrackets}(${attachmentUnitFileName})[/lecture-unit]`);
         });
@@ -407,7 +417,15 @@ describe('MonacoEditorCommunicationActionIntegration', () => {
             comp.registerAction(lectureAttachmentReferenceAction);
             const lecture = lectureAttachmentReferenceAction.lecturesWithDetails[2];
             const attachmentUnit = lecture.attachmentUnits![0];
+
+            attachmentUnit.attachment = {
+                link: '/api/files/attachments/Metis-Attachment.pdf',
+                studentVersion: 'attachments/Metis-Attachment.pdf',
+                name: 'Metis-Attachment.pdf',
+            } as Attachment;
+
             const attachmentUnitFileName = 'Metis-Attachment.pdf';
+
             lectureAttachmentReferenceAction.executeInCurrentEditor({
                 reference: ReferenceType.ATTACHMENT_UNITS,
                 lecture,
