@@ -9,6 +9,7 @@ import { Slide } from 'app/entities/lecture-unit/slide.model';
 import { LectureUnitType } from 'app/entities/lecture-unit/lectureUnit.model';
 import { TextEditor } from 'app/shared/monaco-editor/model/actions/adapter/text-editor.interface';
 import { sanitizeStringForMarkdownEditor } from 'app/shared/util/markdown.util';
+import { FileService } from 'app/shared/http/file.service';
 
 interface LectureWithDetails {
     id: number;
@@ -34,6 +35,8 @@ export class LectureAttachmentReferenceAction extends TextEditorAction {
     static readonly ID = 'lecture-attachment-reference.action';
 
     lecturesWithDetails: LectureWithDetails[] = [];
+
+    private readonly fileService: FileService;
 
     constructor(
         private readonly metisService: MetisService,
@@ -133,7 +136,8 @@ export class LectureAttachmentReferenceAction extends TextEditorAction {
     }
 
     insertAttachmentUnitReference(editor: TextEditor, attachmentUnit: AttachmentUnit): void {
-        const shortLink = attachmentUnit.attachment?.link!.split('attachments/')[1];
+        const link = attachmentUnit.attachment!.studentVersion || this.fileService.createStudentLink(attachmentUnit.attachment!.link!);
+        const shortLink = link.split('attachments/')[1];
         this.replaceTextAtCurrentSelection(editor, `[lecture-unit]${sanitizeStringForMarkdownEditor(attachmentUnit.name)}(${shortLink})[/lecture-unit]`);
     }
 }
