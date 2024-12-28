@@ -147,7 +147,8 @@ export class PdfPreviewComponent implements OnInit, OnDestroy {
      * Updates the existing attachment file or creates a student version of the attachment with hidden files.
      */
     async updateAttachmentWithFile(): Promise<void> {
-        const pdfFile = new File([this.currentPdfBlob()!], '.pdf', { type: 'application/pdf' });
+        const pdfFileName = this.attachment()?.name ?? this.attachmentUnit()?.name ?? '';
+        const pdfFile = new File([this.currentPdfBlob()!], `${pdfFileName}.pdf`, { type: 'application/pdf' });
 
         if (pdfFile.size > MAX_FILE_SIZE) {
             this.alertService.error('artemisApp.attachment.pdfPreview.fileSizeError');

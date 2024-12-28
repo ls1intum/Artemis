@@ -206,9 +206,9 @@ public class AttachmentUnitService {
         if (studentVersionFile != null) {
             // Delete the old student version
             if (attachment.getStudentVersion() != null) {
-                URI oldHiddenPath = URI.create(attachment.getStudentVersion());
-                fileService.schedulePathForDeletion(FilePathService.actualPathForPublicPathOrThrow(oldHiddenPath), 0);
-                this.fileService.evictCacheForPath(FilePathService.actualPathForPublicPathOrThrow(oldHiddenPath));
+                URI oldStudentVersionPath = URI.create(attachment.getStudentVersion());
+                fileService.schedulePathForDeletion(FilePathService.actualPathForPublicPathOrThrow(oldStudentVersionPath), 0);
+                this.fileService.evictCacheForPath(FilePathService.actualPathForPublicPathOrThrow(oldStudentVersionPath));
             }
 
             // Update student version of attachment
