@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, OnDestroy, ViewContainerRef, effect, inject, input, signal, viewChild } from '@angular/core';
+import { ApplicationRef, ChangeDetectionStrategy, Component, ComponentRef, OnDestroy, computed, createComponent, effect, inject, input, signal, untracked } from '@angular/core';
 import type { ProgrammingDiffReportDetail } from 'app/detail-overview-list/detail.model';
 import { FeatureToggle } from 'app/shared/feature-toggle/feature-toggle.service';
 import { ButtonSize, ButtonType, TooltipPlacement } from 'app/shared/components/button.component';
@@ -31,62 +31,66 @@ export class ProgrammingDiffReportDetailComponent implements OnDestroy {
     private readonly modalService = inject(NgbModal);
     private readonly repositoryFilesService = inject(RepositoryFilesService);
     private readonly participationWebsocketService = inject(ParticipationWebsocketService);
+    private readonly applicationRef = inject(ApplicationRef);
 
     protected readonly detail = input.required<ProgrammingDiffReportDetail>();
 
-    private readonly modalRef = signal<NgbModalRef | undefined>(undefined);
+    private readonly exerciseId = computed(() => this.detail().data.exerciseId);
+    private readonly templateParticipationId = computed(() => this.detail().data.templateParticipationId);
+    private readonly solutionParticipationId = computed(() => this.detail().data.solutionParticipationId);
+
     protected readonly leftCommitFileContentByPath = signal<Map<string, string> | undefined>(undefined);
     protected readonly rightCommitFileContentByPath = signal<Map<string, string> | undefined>(undefined);
-    protected readonly container = viewChild.required('container', { read: ViewContainerRef });
+    private readonly modalRef = signal<NgbModalRef | undefined>(undefined);
+    private readonly diffComponent = signal<ComponentRef<GitDiffReportComponent> | undefined>(undefined);
 
     protected readonly lineStat = signal<LineStat | undefined>(undefined);
 
+    private readonly fileContentsLoaded = computed(() => this.leftCommitFileContentByPath() !== undefined && this.rightCommitFileContentByPath() !== undefined);
+
     constructor() {
+        effect((onCleanup) => {
+            const exerciseId = this.exerciseId();
+            const templateParticipationId = this.templateParticipationId();
+            const solutionParticipationId = this.solutionParticipationId();
+
+            const subscription = combineLatest([
+                this.participationWebsocketService.subscribeForLatestResultOfParticipation(templateParticipationId, false, exerciseId),
+                this.participationWebsocketService.subscribeForLatestResultOfParticipation(solutionParticipationId, false, exerciseId),
+            ])
+                .pipe(switchMap(() => this.repositoryFilesService.loadFilesForTemplateAndSolution(exerciseId)))
+                .subscribe(([leftFileContentByPath, rightFileContentByPath]) => {
+                    this.leftCommitFileContentByPath.set(leftFileContentByPath);
+                    this.rightCommitFileContentByPath.set(rightFileContentByPath);
+                });
+
+            onCleanup(() => subscription.unsubscribe());
+        });
+
         effect(
             (onCleanup) => {
-                this.leftCommitFileContentByPath.set(undefined);
-                this.rightCommitFileContentByPath.set(undefined);
+                if (!this.fileContentsLoaded()) {
+                    return;
+                }
 
-                const exerciseId = this.detail().data.exerciseId;
-                const templateParticipationId = this.detail().data.templateParticipationId;
-                const solutionParticipationId = this.detail().data.solutionParticipationId;
+                const diffComponent = createComponent(GitDiffReportComponent, { environmentInjector: this.applicationRef.injector });
+                untracked(() => {
+                    diffComponent.setInput('templateFileContentByPath', this.leftCommitFileContentByPath()!);
+                    diffComponent.setInput('solutionFileContentByPath', this.rightCommitFileContentByPath()!);
+                    diffComponent.changeDetectorRef.detectChanges();
+                });
 
-                const subscription = combineLatest([
-                    this.participationWebsocketService.subscribeForLatestResultOfParticipation(templateParticipationId, false, exerciseId),
-                    this.participationWebsocketService.subscribeForLatestResultOfParticipation(solutionParticipationId, false, exerciseId),
-                ])
-                    .pipe(switchMap(() => this.repositoryFilesService.loadFilesForTemplateAndSolution(exerciseId)))
-                    .subscribe(([leftFileContentByPath, rightFileContentByPath]) => {
-                        this.leftCommitFileContentByPath.set(leftFileContentByPath);
-                        this.rightCommitFileContentByPath.set(rightFileContentByPath);
-                    });
+                const subscription = diffComponent.instance.lineStatChanged.subscribe((lineStat) => this.lineStat.set(lineStat));
+                this.diffComponent.set(diffComponent);
 
-                onCleanup(() => subscription.unsubscribe());
+                onCleanup(() => {
+                    this.diffComponent.set(undefined);
+                    subscription.unsubscribe();
+                    diffComponent.destroy();
+                });
             },
             { allowSignalWrites: true },
         );
-
-        effect((onCleanup) => {
-            const templateFiles = this.leftCommitFileContentByPath();
-            if (!templateFiles) {
-                return;
-            }
-            const solutionFiles = this.rightCommitFileContentByPath();
-            if (!solutionFiles) {
-                return;
-            }
-
-            const container = this.container();
-            const component = container.createComponent(GitDiffReportComponent);
-            component.setInput('templateFileContentByPath', templateFiles);
-            component.setInput('solutionFileContentByPath', solutionFiles);
-            const subscription = component.instance.lineStatChanged.subscribe((lineStat) => this.lineStat.set(lineStat));
-
-            onCleanup(() => {
-                subscription.unsubscribe();
-                container.remove(container.indexOf(component.hostView));
-            });
-        });
 
         effect((onCleanup) => {
             const modalRef = this.modalRef();
@@ -94,20 +98,36 @@ export class ProgrammingDiffReportDetailComponent implements OnDestroy {
                 return;
             }
 
-            const hiddenContainer = this.container();
-            const view = hiddenContainer.detach();
-            if (!view) {
-                throw new Error('could not detach view');
+            const diffComponent = this.diffComponent();
+            if (!diffComponent) {
+                return;
             }
 
             const modalComponent: GitDiffReportModalComponent = modalRef.componentInstance;
-            const modalContainer = modalComponent.container();
-            modalContainer.insert(view);
+            const diffView = diffComponent.hostView;
+
+            modalComponent.insertView(diffView);
 
             onCleanup(() => {
-                modalContainer.detach(modalContainer.indexOf(view));
-                hiddenContainer.insert(view);
+                modalComponent.detachView(diffView);
             });
+        });
+
+        effect(() => {
+            const diffComponent = this.diffComponent();
+            if (!diffComponent) {
+                return;
+            }
+
+            const templateFiles = this.leftCommitFileContentByPath();
+            const solutionFiles = this.rightCommitFileContentByPath();
+            if (!templateFiles || !solutionFiles) {
+                return;
+            }
+
+            diffComponent.setInput('templateFileContentByPath', templateFiles);
+            diffComponent.setInput('solutionFileContentByPath', solutionFiles);
+            diffComponent.changeDetectorRef.detectChanges();
         });
     }
 

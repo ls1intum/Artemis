@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, ViewContainerRef, inject, signal, viewChild } from '@angular/core';
+import { ChangeDetectionStrategy, Component, ViewContainerRef, ViewRef, inject, signal, viewChild } from '@angular/core';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 
@@ -16,7 +16,18 @@ export class GitDiffReportModalComponent {
 
     public readonly diffForTemplateAndSolution = signal<boolean>(true);
 
-    public readonly container = viewChild.required('container', { read: ViewContainerRef });
+    private readonly container = viewChild.required('container', { read: ViewContainerRef });
+
+    public insertView(view: ViewRef) {
+        this.container().insert(view);
+    }
+
+    public detachView(view: ViewRef) {
+        const index = this.container().indexOf(view);
+        if (index !== -1) {
+            this.container().detach(index);
+        }
+    }
 
     public close(): void {
         this.activeModal.dismiss();

@@ -13,9 +13,6 @@
         (onClick)="showGitDiff()"
         [btnType]="WARNING"
         [tooltipPlacement]="TooltipPlacement.RIGHT"
-        [disabled]="lineStat()?.addedLineCount === 0 && lineStat()?.removedLineCount === 0"
+        [disabled]="(lineStat()?.addedLineCount ?? 0) === 0 && (lineStat()?.removedLineCount ?? 0) === 0"
     />
-</div>
-<div hidden="hidden">
-    <ng-container #container />
 </div>
