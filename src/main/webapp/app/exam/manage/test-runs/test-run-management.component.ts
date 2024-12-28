@@ -1,4 +1,4 @@
-import { Component, OnInit, inject } from '@angular/core';
+import { Component, OnInit, computed, inject, signal } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { Course } from 'app/entities/course.model';
 import { StudentExam } from 'app/entities/student-exam.model';
@@ -10,13 +10,13 @@ import { NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
 import { CreateTestRunModalComponent } from 'app/exam/manage/test-runs/create-test-run-modal.component';
 import { ExamManagementService } from 'app/exam/manage/exam-management.service';
 import { AccountService } from 'app/core/auth/account.service';
-import { Subject } from 'rxjs';
 import { User } from 'app/core/user/user.model';
 import { onError } from 'app/shared/util/global.utils';
 import { faSort, faTimes } from '@fortawesome/free-solid-svg-icons';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { ArtemisSharedModule } from 'app/shared/shared.module';
+import { Subject } from 'rxjs';
 
 @Component({
     selector: 'jhi-test-run-management',
@@ -32,36 +32,43 @@ export class TestRunManagementComponent implements OnInit {
     private sortService = inject(SortService);
     private modalService = inject(NgbModal);
 
-    course: Course;
-    exam: Exam;
-    isLoading: boolean;
-    isExamStarted: boolean;
-    testRuns: StudentExam[] = [];
-    instructor?: User;
+    course = signal<Course | null>(null);
+    exam = signal<Exam | null>(null);
+    isLoading = signal(false);
+    isExamStarted = computed(() => this.exam()?.started || false);
+    testRuns = signal<StudentExam[]>([]);
+    instructor = signal<User | undefined>(undefined);
+    predicate = signal<string>('id');
+    ascending = signal<boolean>(true);
+    // Determines if a test run has been submitted. Used to enable the assess test run button.
+    testRunCanBeAssessed = computed(() => {
+        const runs = this.testRuns();
+        const instructor = this.instructor();
+        return runs.some((testRun) => testRun.user?.id === instructor?.id && testRun.submitted);
+    });
+    // Determines if at least one exercise has been configured for the exam
+    examContainsExercises = computed(() => {
+        const exam = this.exam();
+        return !!exam?.exerciseGroups && exam.exerciseGroups.some((exerciseGroup) => exerciseGroup.exercises && exerciseGroup.exercises.length > 0);
+    });
+
     private dialogErrorSource = new Subject<string>();
     dialogError$ = this.dialogErrorSource.asObservable();
-    predicate: string;
-    ascending: boolean;
 
     // Icons
     faSort = faSort;
     faTimes = faTimes;
 
-    constructor() {
-        this.predicate = 'id';
-        this.ascending = true;
-    }
-
     ngOnInit(): void {
         this.examManagementService.find(Number(this.route.snapshot.paramMap.get('courseId')), Number(this.route.snapshot.paramMap.get('examId')), false, true).subscribe({
             next: (response: HttpResponse<Exam>) => {
-                this.exam = response.body!;
-                this.isExamStarted = this.exam.started!;
-                this.course = this.exam.course!;
-                this.course.isAtLeastInstructor = this.accountService.isAtLeastInstructorInCourse(this.course);
-                this.examManagementService.findAllTestRunsForExam(this.course.id!, this.exam.id!).subscribe({
+                this.exam.set(response.body!);
+                this.course.set(this.exam()!.course!);
+                const course = this.course()!;
+                course.isAtLeastInstructor = this.accountService.isAtLeastInstructorInCourse(course);
+                this.examManagementService.findAllTestRunsForExam(course.id!, this.exam()!.id!).subscribe({
                     next: (res: HttpResponse<StudentExam[]>) => {
-                        this.testRuns = res.body!;
+                        this.testRuns.set(res.body!);
                     },
                     error: (error: HttpErrorResponse) => onError(this.alertService, error),
                 });
@@ -70,7 +77,7 @@ export class TestRunManagementComponent implements OnInit {
         });
         this.accountService.identity().then((user) => {
             if (user) {
-                this.instructor = user;
+                this.instructor.set(user);
             }
         });
     }
@@ -80,13 +87,13 @@ export class TestRunManagementComponent implements OnInit {
      */
     openCreateTestRunModal() {
         const modalRef: NgbModalRef = this.modalService.open(CreateTestRunModalComponent as Component, { size: 'lg', backdrop: 'static' });
-        modalRef.componentInstance.exam = this.exam;
+        modalRef.componentInstance.exam = this.exam();
         modalRef.result
             .then((testRunConfiguration: StudentExam) => {
-                this.examManagementService.createTestRun(this.course.id!, this.exam.id!, testRunConfiguration).subscribe({
+                this.examManagementService.createTestRun(this.course()?.id!, this.exam()?.id!, testRunConfiguration).subscribe({
                     next: (response: HttpResponse<StudentExam>) => {
                         if (response.body != undefined) {
-                            this.testRuns.push(response.body!);
+                            this.testRuns.update((current) => [...current, response.body!]);
                         }
                     },
                     error: (error: HttpErrorResponse) => {
@@ -102,9 +109,9 @@ export class TestRunManagementComponent implements OnInit {
      * @param testRunId {number}
      */
     deleteTestRun(testRunId: number) {
-        this.examManagementService.deleteTestRun(this.course.id!, this.exam.id!, testRunId).subscribe({
+        this.examManagementService.deleteTestRun(this.course()!.id!, this.exam()!.id!, testRunId).subscribe({
             next: () => {
-                this.testRuns = this.testRuns!.filter((testRun) => testRun.id !== testRunId);
+                this.testRuns.update((currentTestRuns) => currentTestRuns.filter((testRun) => testRun.id !== testRunId));
                 this.dialogErrorSource.next('');
             },
             error: (error) => this.dialogErrorSource.next(error.message),
@@ -121,28 +128,6 @@ export class TestRunManagementComponent implements OnInit {
     }
 
     sortRows() {
-        this.sortService.sortByProperty(this.testRuns, this.predicate, this.ascending);
-    }
-
-    /**
-     * Get function to determine if a test run has been submitted.
-     * Used to enable the assess test run button.
-     */
-    get testRunCanBeAssessed(): boolean {
-        if (!!this.testRuns && this.testRuns.length > 0) {
-            for (const testRun of this.testRuns) {
-                if (testRun.user?.id === this.instructor?.id && testRun.submitted) {
-                    return true;
-                }
-            }
-        }
-        return false;
-    }
-
-    /**
-     * Get function to determine if at least one exercise has been configured for the exam
-     */
-    get examContainsExercises(): boolean {
-        return !!this.exam?.exerciseGroups && this.exam.exerciseGroups.some((exerciseGroup) => exerciseGroup.exercises && exerciseGroup.exercises.length > 0);
+        this.sortService.sortByProperty(this.testRuns(), this.predicate(), this.ascending());
     }
 }
