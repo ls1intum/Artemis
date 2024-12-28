@@ -81,11 +81,11 @@ describe('Test Run Management Component', () => {
             expect(examManagementService.findAllTestRunsForExam).toHaveBeenCalledWith(course.id!, exam.id!);
             expect(userSpy).toHaveBeenCalledOnce();
 
-            expect(component.exam).toEqual(exam);
-            expect(component.isExamStarted).toEqual(exam.started!);
-            expect(component.course).toEqual(course);
-            expect(component.testRuns).toEqual(studentExams);
-            expect(component.instructor).toEqual(user);
+            expect(component.exam()).toEqual(exam);
+            expect(component.isExamStarted()).toEqual(exam.started!);
+            expect(component.course()).toEqual(course);
+            expect(component.testRuns()).toEqual(studentExams);
+            expect(component.instructor()).toEqual(user);
         }));
     });
     describe('Delete', () => {
@@ -100,7 +100,7 @@ describe('Test Run Management Component', () => {
     describe('Create test runs', () => {
         it('should not create test run if the exam contains no exercises', () => {
             fixture.detectChanges();
-            expect(component.examContainsExercises).toBeFalsy();
+            expect(component.examContainsExercises()).toBeFalsy();
         });
 
         it('should create test run', fakeAsync(() => {
@@ -114,7 +114,7 @@ describe('Test Run Management Component', () => {
             jest.spyOn(examManagementService, 'createTestRun').mockReturnValue(of(new HttpResponse({ body: { id: 3, user: { id: 90 }, exercises: [exercise] } as StudentExam })));
             fixture.detectChanges();
 
-            expect(component.examContainsExercises).toBeTruthy();
+            expect(component.examContainsExercises()).toBeTruthy();
             const createTestRunButton = fixture.debugElement.query(By.css('#createTestRunButton'));
             expect(createTestRunButton).toBeTruthy();
             expect(createTestRunButton.nativeElement.disabled).toBeFalsy();
@@ -122,7 +122,7 @@ describe('Test Run Management Component', () => {
 
             tick();
 
-            expect(component.testRuns).toHaveLength(3);
+            expect(component.testRuns()).toHaveLength(3);
         }));
 
         it('should correctly catch error after creating test run', () => {
@@ -139,7 +139,7 @@ describe('Test Run Management Component', () => {
             jest.spyOn(alertService, 'error');
             fixture.detectChanges();
 
-            expect(component.examContainsExercises).toBeTruthy();
+            expect(component.examContainsExercises()).toBeTruthy();
             const createTestRunButton = fixture.debugElement.query(By.css('#createTestRunButton'));
             expect(createTestRunButton).toBeTruthy();
             expect(createTestRunButton.nativeElement.disabled).toBeFalsy();
@@ -152,7 +152,7 @@ describe('Test Run Management Component', () => {
         it('should not be able to assess test run because the logged-in user does not have a test run which is submitted', () => {
             studentExams[0].submitted = false;
             fixture.detectChanges();
-            expect(component.testRunCanBeAssessed).toBeFalsy();
+            expect(component.testRunCanBeAssessed()).toBeFalsy();
         });
 
         it('should be able to assess test run', fakeAsync(() => {
