@@ -198,8 +198,8 @@ public class ResultService {
         return savedResult;
     }
 
-    public Result createNewRatedManualResult(Result result) {
-        return createNewManualResult(result, true);
+    public void createNewRatedManualResult(Result result) {
+        createNewManualResult(result, true);
     }
 
     /**
