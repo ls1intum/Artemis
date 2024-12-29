@@ -11,7 +11,6 @@ import jakarta.annotation.Nullable;
 
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
@@ -21,6 +20,7 @@ import de.tum.cit.aet.artemis.buildagent.dto.DockerFlagsDTO;
 import de.tum.cit.aet.artemis.buildagent.dto.DockerRunConfig;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseBuildConfig;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingLanguage;
+import de.tum.cit.aet.artemis.programming.domain.ProjectType;
 
 @Profile(PROFILE_CORE)
 @Service
@@ -30,8 +30,11 @@ public class ProgrammingExerciseBuildConfigService {
 
     private final ObjectMapper objectMapper = new ObjectMapper();
 
-    @Value("${artemis.languages.matlab.license-server}")
-    private String matlabLicense;
+    private final LicenseService licenseService;
+
+    public ProgrammingExerciseBuildConfigService(LicenseService licenseService) {
+        this.licenseService = licenseService;
+    }
 
     /**
      * Converts a JSON string representing Docker flags (in JSON format)
@@ -52,49 +55,55 @@ public class ProgrammingExerciseBuildConfigService {
     public DockerRunConfig getDockerRunConfig(ProgrammingExerciseBuildConfig buildConfig) {
         DockerFlagsDTO dockerFlagsDTO = parseDockerFlags(buildConfig);
 
-        dockerFlagsDTO = addLanguageSpecificEnvironment(dockerFlagsDTO, buildConfig.getProgrammingExercise().getProgrammingLanguage());
+        String network;
+        Map<String, String> exerciseEnvironment;
+        if (dockerFlagsDTO != null) {
+            network = dockerFlagsDTO.network();
+            exerciseEnvironment = dockerFlagsDTO.env();
+        }
+        else {
+            network = null;
+            exerciseEnvironment = null;
+        }
 
-        return getDockerRunConfigFromParsedFlags(dockerFlagsDTO);
+        ProgrammingLanguage programmingLanguage = buildConfig.getProgrammingExercise().getProgrammingLanguage();
+        ProjectType projectType = buildConfig.getProgrammingExercise().getProjectType();
+        Map<String, String> environment = addLanguageSpecificEnvironment(exerciseEnvironment, programmingLanguage, projectType);
+
+        return createDockerRunConfig(network, environment);
     }
 
     @Nullable
-    private DockerFlagsDTO addLanguageSpecificEnvironment(DockerFlagsDTO dockerFlagsDTO, ProgrammingLanguage language) {
-        if (language == ProgrammingLanguage.MATLAB && matlabLicense != null) {
-            Map<String, String> env;
-            String network;
-            if (dockerFlagsDTO != null) {
-                env = new HashMap<>(dockerFlagsDTO.env());
-                network = dockerFlagsDTO.network();
-            }
-            else {
-                env = new HashMap<>();
-                network = null;
-            }
-
-            env.put("MLM_LICENSE_FILE", matlabLicense);
-
-            dockerFlagsDTO = new DockerFlagsDTO(network, env);
+    private Map<String, String> addLanguageSpecificEnvironment(@Nullable Map<String, String> exerciseEnvironment, ProgrammingLanguage language, ProjectType projectType) {
+        Map<String, String> licenseEnvironment = licenseService.getEnvironment(language, projectType);
+        if (licenseEnvironment.isEmpty()) {
+            return exerciseEnvironment;
         }
 
-        return dockerFlagsDTO;
+        Map<String, String> env = new HashMap<>(licenseEnvironment);
+        if (exerciseEnvironment != null) {
+            env.putAll(exerciseEnvironment);
+        }
+
+        return env;
     }
 
-    DockerRunConfig getDockerRunConfigFromParsedFlags(DockerFlagsDTO dockerFlagsDTO) {
-        if (dockerFlagsDTO == null) {
+    DockerRunConfig createDockerRunConfig(String network, Map<String, String> environmentMap) {
+        if (network == null && environmentMap == null) {
             return null;
         }
-        List<String> env = new ArrayList<>();
-        boolean isNetworkDisabled = dockerFlagsDTO.network() != null && dockerFlagsDTO.network().equals("none");
+        List<String> environmentStrings = new ArrayList<>();
+        boolean isNetworkDisabled = network != null && network.equals("none");
 
-        if (dockerFlagsDTO.env() != null) {
-            for (Map.Entry<String, String> entry : dockerFlagsDTO.env().entrySet()) {
+        if (environmentMap != null) {
+            for (Map.Entry<String, String> entry : environmentMap.entrySet()) {
                 String key = entry.getKey();
                 String value = entry.getValue();
-                env.add(key + "=" + value);
+                environmentStrings.add(key + "=" + value);
             }
         }
 
-        return new DockerRunConfig(isNetworkDisabled, env);
+        return new DockerRunConfig(isNetworkDisabled, environmentStrings);
     }
 
     /**
