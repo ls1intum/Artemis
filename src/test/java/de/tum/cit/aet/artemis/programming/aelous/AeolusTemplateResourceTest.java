@@ -55,7 +55,7 @@ class AeolusTemplateResourceTest extends AbstractSpringIntegrationLocalCILocalVC
         assertWindfileIsCorrect(windfile, expectedScriptActions);
     }
 
-    @Test()
+    @Test
     void testInvalidWindfileDeserialization() {
         try {
             String invalidWindfile = """
@@ -81,7 +81,7 @@ class AeolusTemplateResourceTest extends AbstractSpringIntegrationLocalCILocalVC
         }
     }
 
-    @Test()
+    @Test
     void testValidWindfileDeserializationWithClass() throws JsonProcessingException {
         String validWindfile = """
                 {
@@ -116,7 +116,7 @@ class AeolusTemplateResourceTest extends AbstractSpringIntegrationLocalCILocalVC
         assertThat(windfile.getActions().getFirst()).isInstanceOf(ScriptAction.class);
     }
 
-    @Test()
+    @Test
     void testValidWindfileWithInvalidAction() {
         // NOTE: the misspellings are intended
         String invalidWindfile = """

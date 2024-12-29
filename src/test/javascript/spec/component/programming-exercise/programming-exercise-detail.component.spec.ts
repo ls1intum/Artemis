@@ -24,7 +24,7 @@ import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { MockProgrammingExerciseGradingService } from '../../helpers/mocks/service/mock-programming-exercise-grading.service';
 import { TemplateProgrammingExerciseParticipation } from 'app/entities/participation/template-programming-exercise-participation.model';
 import { SolutionProgrammingExerciseParticipation } from 'app/entities/participation/solution-programming-exercise-participation.model';
-import { HttpResponse } from '@angular/common/http';
+import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { ProfileInfo } from 'app/shared/layouts/profiles/profile-info.model';
 import {
     ProgrammingLanguageFeature,
@@ -213,6 +213,19 @@ describe('ProgrammingExerciseDetailComponent', () => {
                 }
             },
         );
+
+        it('should create detail sections after getDiffReport error', fakeAsync(() => {
+            const errorSpy = jest.spyOn(alertService, 'error');
+            gitDiffReportStub.mockReturnValue(throwError(() => new HttpErrorResponse({ status: 500 })));
+
+            comp.ngOnInit();
+            tick();
+
+            expect(errorSpy).toHaveBeenCalledOnce();
+            expect(comp.exerciseDetailSections).toBeDefined();
+            expect(comp.addedLineCount).toBeUndefined();
+            expect(comp.removedLineCount).toBeUndefined();
+        }));
     });
 
     describe('onInit for exam exercise', () => {

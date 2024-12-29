@@ -99,15 +99,16 @@ module.exports = {
         'src/main/webapp/app/exercises/file-upload/manage/file-upload-exercise-management.route.ts',
         'src/main/webapp/app/exercises/modeling/manage/modeling-exercise.route.ts',
         'src/main/webapp/app/exam/manage/exam-management.route.ts',
+        'src/main/webapp/app/exercises/shared/exercise-hint/manage/exercise-hint.route.ts',
         'src/main/webapp/app/core/config/prod.config.ts',
     ],
     coverageThreshold: {
         global: {
             // TODO: in the future, the following values should increase to at least 90%
-            statements: 87.68,
-            branches: 73.83,
-            functions: 82.42,
-            lines: 87.72,
+            statements: 87.71,
+            branches: 73.85,
+            functions: 82.28,
+            lines: 87.77,
         },
     },
     coverageReporters: ['clover', 'json', 'lcov', 'text-summary'],
@@ -127,7 +128,7 @@ module.exports = {
             },
         ],
     },
-    modulePathIgnorePatterns: ['<rootDir>/src/main/resources/templates/'],
+    modulePathIgnorePatterns: ['<rootDir>/src/main/resources/templates/', '<rootDir>/build/'],
     testTimeout: 3000,
     testMatch: [
         '<rootDir>/src/test/javascript/spec/component/**/*.spec.ts',

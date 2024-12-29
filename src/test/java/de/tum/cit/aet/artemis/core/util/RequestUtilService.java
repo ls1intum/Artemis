@@ -32,9 +32,11 @@ import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.test.context.TestSecurityContextHolder;
 import org.springframework.stereotype.Service;
+import org.springframework.test.util.AssertionErrors;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
 import org.springframework.test.web.servlet.ResultActions;
+import org.springframework.test.web.servlet.ResultMatcher;
 import org.springframework.test.web.servlet.request.MockHttpServletRequestBuilder;
 import org.springframework.test.web.servlet.request.MockMultipartHttpServletRequestBuilder;
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
@@ -758,6 +760,15 @@ public class RequestUtilService {
     public void getWithForwardedUrl(String path, HttpStatus expectedStatus, String expectedRedirectedUrl) throws Exception {
         performMvcRequest(MockMvcRequestBuilders.get(new URI(path))).andExpect(status().is(expectedStatus.value())).andExpect(forwardedUrl(expectedRedirectedUrl)).andReturn();
         restoreSecurityContext();
+    }
+
+    public void getWithFileContents(String path, HttpStatus expectedStatus, String expectedFileContents) throws Exception {
+        performMvcRequest(MockMvcRequestBuilders.get(new URI(path))).andExpect(status().is(expectedStatus.value())).andExpect(matchFileContents(expectedFileContents)).andReturn();
+        restoreSecurityContext();
+    }
+
+    public static ResultMatcher matchFileContents(String expectedFilesAsString) {
+        return (result) -> AssertionErrors.assertEquals("File contents", expectedFilesAsString, result.getResponse().getContentAsString());
     }
 
     public String getRedirectTarget(String path, HttpStatus expectedStatus) throws Exception {

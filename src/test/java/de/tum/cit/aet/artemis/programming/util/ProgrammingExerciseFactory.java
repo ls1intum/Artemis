@@ -139,7 +139,12 @@ public class ProgrammingExerciseFactory {
         else {
             programmingExercise.setProjectType(null);
         }
-        programmingExercise.setPackageName(programmingLanguage == ProgrammingLanguage.SWIFT ? "swiftTest" : "de.test");
+        if (programmingLanguage == ProgrammingLanguage.JAVA || programmingLanguage == ProgrammingLanguage.KOTLIN) {
+            programmingExercise.setPackageName("de.test");
+        }
+        else {
+            programmingExercise.setPackageName("testPackage");
+        }
         final var repoName = programmingExercise.generateRepositoryName(RepositoryType.TESTS);
         String testRepoUri = String.format("%s/git/%s/%s.git", artemisVersionControlUrl, programmingExercise.getProjectKey(), repoName);
         programmingExercise.setTestRepositoryUri(testRepoUri);
@@ -338,6 +343,7 @@ public class ProgrammingExerciseFactory {
             case PMD_CPD -> "Copy/Paste Detection";
             case SWIFTLINT -> "swiftLint"; // TODO: rene: set better value after categories are better defined
             case GCC -> "Memory";
+            case RUFF -> "Pylint";
             case OTHER -> "Other";
         };
 

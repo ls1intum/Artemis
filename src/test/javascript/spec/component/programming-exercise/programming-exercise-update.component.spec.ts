@@ -76,6 +76,7 @@ import { TitleChannelNameComponent } from 'app/shared/form/title-channel-name/ti
 import { ExerciseTitleChannelNameModule } from 'app/exercises/shared/exercise-title-channel-name/exercise-title-channel-name.module';
 import { CustomNotIncludedInValidatorDirective } from '../../../../../main/webapp/app/shared/validators/custom-not-included-in-validator.directive';
 import { ProgrammingExerciseDifficultyComponent } from '../../../../../main/webapp/app/exercises/programming/manage/update/update-components/difficulty/programming-exercise-difficulty.component';
+import { APP_NAME_PATTERN_FOR_SWIFT, PACKAGE_NAME_PATTERN_FOR_JAVA_KOTLIN } from '../../../../../main/webapp/app/shared/constants/input.constants';
 
 describe('ProgrammingExerciseUpdateComponent', () => {
     const courseId = 1;
@@ -533,7 +534,7 @@ describe('ProgrammingExerciseUpdateComponent', () => {
             expect(courseService.find).toHaveBeenCalledWith(courseId);
             expect(comp.selectedProgrammingLanguage).toBe(ProgrammingLanguage.SWIFT);
             expect(comp.staticCodeAnalysisAllowed).toBeTrue();
-            expect(comp.packageNamePattern).toBe(comp.appNamePatternForSwift);
+            expect(comp.packageNamePattern).toBe(APP_NAME_PATTERN_FOR_SWIFT);
         }));
 
         it('should activate SCA for C', fakeAsync(() => {
@@ -559,7 +560,7 @@ describe('ProgrammingExerciseUpdateComponent', () => {
             // THEN
             expect(comp.selectedProgrammingLanguage).toBe(ProgrammingLanguage.JAVA);
             expect(comp.staticCodeAnalysisAllowed).toBeTrue();
-            expect(comp.packageNamePattern).toBe(comp.packageNamePatternForJavaKotlin);
+            expect(comp.packageNamePattern).toBe(PACKAGE_NAME_PATTERN_FOR_JAVA_KOTLIN);
         }));
 
         it('should deactivate SCA for C (FACT)', fakeAsync(() => {

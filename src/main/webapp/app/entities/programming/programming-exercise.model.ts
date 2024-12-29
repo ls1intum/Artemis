@@ -17,6 +17,7 @@ export enum ProgrammingLanguage {
     C = 'C',
     C_PLUS_PLUS = 'C_PLUS_PLUS',
     C_SHARP = 'C_SHARP',
+    GO = 'GO',
     HASKELL = 'HASKELL',
     JAVA = 'JAVA',
     JAVASCRIPT = 'JAVASCRIPT',

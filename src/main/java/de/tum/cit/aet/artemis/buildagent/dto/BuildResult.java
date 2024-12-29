@@ -108,7 +108,7 @@ public class BuildResult extends AbstractBuildResultNotificationDTO implements S
      * Local CI does not support checking for artifacts as of now.
      * TODO LOCALVC_CI: Figure out in the build process whether an artifact was created, and return true here if yes.
      *
-     * @return false
+     * @return will always return false because LocalCI does not support checking for artifacts.
      */
     @Override
     public boolean hasArtifact() {

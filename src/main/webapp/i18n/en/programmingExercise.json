@@ -216,6 +216,7 @@
             "checkPlagiarismSuccess": "Plagiarism check finished. Results are included in the zip file.",
             "combineTemplateCommitsWarning": "This action combines all commits in the template repository into one commit. ATTENTION: All uncommitted changes from the online editor will be lost!",
             "combineTemplateCommitsError": "Template repository commits could not be combined.",
+            "diffReportError": "Diff report could not be generated.",
             "combineTemplateCommitsSuccess": "Template repository commits have been successfully combined.",
             "editable": {
                 "unsaved": "Unsaved.",
@@ -343,6 +344,8 @@
                     "noData": "No Feedback Entries could be found for the Programming Exercise.",
                     "noDataFilter": "No Feedback Entries could be found for the specified filter or search Term.",
                     "channelSuccess": "Channel {{channelName}} successfully created.",
+                    "groupFeedback": "Group Feedback",
+                    "groupFeedbackTooltip": "Group feedback enables the grouping of similar feedback entries that share the same test case and task name into a single entry. This is useful for reducing the number of entries in the table, especially when random values or similar inputs are used and compared in the test cases.",
                     "feedbackModal": {
                         "header": "Error Details",
                         "feedbackTitle": "Test Case Feedback",
@@ -359,11 +362,11 @@
                         "apply": "Apply Filter"
                     },
                     "affectedStudentsModal": {
-                        "header": "Affected Students",
+                        "header": "Sample for Affected Students",
+                        "description": "The following is a sample of affected students for the selected feedback entry, as this is sufficient to analyze the feedback. The list is limited to 5 students. In total, {{count}} students received this feedback.",
                         "name": "Name",
                         "login": "Login",
                         "repository": "Repository",
-                        "totalItems": "In total {{count}} item(s)",
                         "error": "There was an error while loading the affected Students for this feedback."
                     },
                     "feedbackDetailChannel": {
@@ -379,9 +382,8 @@
                         "announcementChannelNo": "No",
                         "createAndNavigateLabel": "Create and Navigate",
                         "createAndNavigateDescription": "Creates the channel and automatically navigates to the channel.",
-                        "createChannelLabel": "Create Channel:",
+                        "createChannelLabel": "Create Channel",
                         "createChannelDescription": "Creates the channel without navigating away from this page.",
-                        "createChannelButton": "Create Channel",
                         "placeholder": "This field should not be empty",
                         "descriptionLabel": "Description",
                         "requiredValidationErrorName": "The channel name is required.",
