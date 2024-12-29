@@ -3,6 +3,7 @@ import { ChannelItemComponent } from 'app/overview/course-conversations/dialogs/
 import { MockComponent, MockPipe } from 'ng-mocks';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { ChannelIconComponent } from 'app/overview/course-conversations/other/channel-icon/channel-icon.component';
+import { ChannelDTO } from '../../../../../../../../../main/webapp/app/entities/metis/conversation/channel.model';
 import { generateExampleChannelDTO } from '../../../helpers/conversationExampleModels';
 
 describe('ChannelItemComponent', () => {
@@ -10,7 +11,7 @@ describe('ChannelItemComponent', () => {
     let fixture: ComponentFixture<ChannelItemComponent>;
     const canJoinChannel = jest.fn();
     const canLeaveConversation = jest.fn();
-    const channel = generateExampleChannelDTO({ id: 1 });
+    const channel = generateExampleChannelDTO({ id: 1 } as ChannelDTO);
 
     beforeEach(waitForAsync(() => {
         TestBed.configureTestingModule({ declarations: [ChannelItemComponent, MockPipe(ArtemisTranslatePipe), MockComponent(ChannelIconComponent)] }).compileComponents();
@@ -53,7 +54,7 @@ describe('ChannelItemComponent', () => {
         expect(fixture.nativeElement.querySelector('#deregister' + channel.id)).toBeFalsy();
 
         // change dto to one where not is member
-        component.channel = generateExampleChannelDTO({ id: 2, isMember: false });
+        component.channel = generateExampleChannelDTO({ id: 2, isMember: false } as ChannelDTO);
         fixture.detectChanges();
         expect(fixture.nativeElement.querySelector('#view' + channel.id)).toBeFalsy();
         expect(fixture.nativeElement.querySelector('#register' + channel.id)).toBeFalsy();
