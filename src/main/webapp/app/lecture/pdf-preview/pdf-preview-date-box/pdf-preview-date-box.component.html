@@ -1,11 +1,11 @@
 <div class="date-box">
     <div class="checkbox-container">
-        <input type="checkbox" id="date-box-checkbox" />
+        <input type="checkbox" id="date-box-checkbox" [ngModel]="hideForever()" (ngModelChange)="onHideForeverChange($event)" />
         <label for="date-box-checkbox">Hide forever</label>
     </div>
     <div class="button-container">
-        <button class="btn btn-primary" (click)="selectCalendar()">Select Date</button>
-        <button class="btn btn-primary" (click)="selectExercise()">Select Exercise</button>
+        <button class="btn btn-primary" (click)="selectCalendar()" [disabled]="hideForever()">Select Date</button>
+        <button class="btn btn-primary" (click)="selectExercise()" [disabled]="hideForever()">Select Exercise</button>
     </div>
     @if (calendarSelected()) {
         <div class="calendar-container">
@@ -19,7 +19,7 @@
             } @else {
                 @for (typeGroup of categorizedExercises(); track typeGroup.type) {
                     <div class="type-section">
-                        <h6 class="type-header">{{ typeGroup.type }} Exercises</h6>
+                        <h6 class="type-header">{{ typeGroup.type | titlecase }} Exercises</h6>
                         <div class="list-group">
                             @for (exercise of typeGroup.exercises; track exercise.id) {
                                 <label class="list-group-item list-group-item-action" [class.active]="selectedExerciseId() === exercise.id">

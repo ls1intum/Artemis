@@ -27,12 +27,25 @@ export class PdfPreviewDateBoxComponent implements OnInit {
     defaultDate = signal<string>(this.formatDate(new Date()));
     exercises = signal<Exercise[]>([]);
     categorizedExercises = signal<CategorizedExercise[]>([]);
+    hideForever = signal<boolean>(false);
     selectedExerciseId = signal<number | null>(null);
 
     constructor(private courseExerciseService: CourseExerciseService) {}
 
     ngOnInit(): void {
         this.loadExercises();
+    }
+
+    /**
+     * Toggles the hide forever checkbox
+     */
+    onHideForeverChange(isChecked: boolean): void {
+        this.hideForever.set(isChecked);
+        if (isChecked) {
+            this.calendarSelected.set(false);
+            this.exerciseSelected.set(false);
+            this.selectedExerciseId.set(null);
+        }
     }
 
     /**
@@ -103,13 +116,13 @@ export class PdfPreviewDateBoxComponent implements OnInit {
     }
 
     /**
-     * Group and sort exercises by type
+     * Group and sort exercises by type, excluding those without a due date
      */
     private processExercises(exercises: Exercise[]): CategorizedExercise[] {
         const groupedExercises = new Map<ExerciseType, Exercise[]>();
 
         exercises.forEach((exercise) => {
-            if (exercise.type) {
+            if (exercise.type && exercise.dueDate) {
                 if (!groupedExercises.has(exercise.type)) {
                     groupedExercises.set(exercise.type, []);
                 }
@@ -119,11 +132,7 @@ export class PdfPreviewDateBoxComponent implements OnInit {
 
         return Array.from(groupedExercises.entries()).map(([type, typeExercises]) => ({
             type,
-            exercises: typeExercises.sort((a, b) => {
-                if (!a.dueDate) return 1;
-                if (!b.dueDate) return -1;
-                return a.dueDate.valueOf() - b.dueDate.valueOf();
-            }),
+            exercises: typeExercises.sort((a, b) => a.dueDate!.valueOf() - b.dueDate!.valueOf()),
         }));
     }
 }
