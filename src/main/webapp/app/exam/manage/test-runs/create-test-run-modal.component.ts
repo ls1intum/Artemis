@@ -6,13 +6,14 @@ import { Exercise } from 'app/entities/exercise.model';
 import { ExerciseGroup } from 'app/entities/exercise-group.model';
 import { ArtemisDurationFromSecondsPipe } from 'app/shared/pipes/artemis-duration-from-seconds.pipe';
 import { FormControl, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
 
 @Component({
     selector: 'jhi-create-test-run-modal',
     templateUrl: './create-test-run-modal.component.html',
     providers: [ArtemisDurationFromSecondsPipe],
     styles: ['.table tr.active td { background-color:#3e8acc; color: white; }'],
-    imports: [ReactiveFormsModule],
+    imports: [ReactiveFormsModule, TranslateDirective],
     standalone: true,
 })
 export class CreateTestRunModalComponent implements OnInit {
