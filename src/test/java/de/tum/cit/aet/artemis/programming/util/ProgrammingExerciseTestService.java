@@ -826,8 +826,8 @@ public class ProgrammingExerciseTestService {
         // Setup exercises for import
         ProgrammingExercise sourceExercise = programmingExerciseUtilService.addCourseWithOneProgrammingExerciseAndStaticCodeAnalysisCategories(programmingLanguage);
         sourceExercise.setPlagiarismDetectionConfig(PlagiarismDetectionConfig.createDefault());
-        sourceExercise = programmingExerciseRepository.save(sourceExercise);
         sourceExercise.setStaticCodeAnalysisEnabled(staticCodeAnalysisEnabled);
+        sourceExercise = programmingExerciseRepository.save(sourceExercise);
         programmingExerciseUtilService.addTestCasesToProgrammingExercise(sourceExercise);
         sourceExercise = programmingExerciseUtilService.loadProgrammingExerciseWithEagerReferences(sourceExercise);
         ProgrammingExercise exerciseToBeImported = ProgrammingExerciseFactory.generateToBeImportedProgrammingExercise("ImportTitle", "imported", sourceExercise,

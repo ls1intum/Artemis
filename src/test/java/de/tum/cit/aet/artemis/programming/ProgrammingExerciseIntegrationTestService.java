@@ -109,7 +109,6 @@ import de.tum.cit.aet.artemis.programming.domain.VcsRepositoryUri;
 import de.tum.cit.aet.artemis.programming.dto.ProgrammingExerciseResetOptionsDTO;
 import de.tum.cit.aet.artemis.programming.dto.ProgrammingExerciseTestCaseDTO;
 import de.tum.cit.aet.artemis.programming.dto.ProgrammingExerciseTestCaseStateDTO;
-import de.tum.cit.aet.artemis.programming.hestia.util.HestiaUtilTestService;
 import de.tum.cit.aet.artemis.programming.repository.AuxiliaryRepositoryRepository;
 import de.tum.cit.aet.artemis.programming.service.GitService;
 import de.tum.cit.aet.artemis.programming.service.UriService;
@@ -196,9 +195,6 @@ public class ProgrammingExerciseIntegrationTestService {
 
     @Autowired
     private TextExerciseUtilService textExerciseUtilService;
-
-    @Autowired
-    protected HestiaUtilTestService hestiaUtilTestService;
 
     @Autowired
     private ProgrammingExerciseTestRepository programmingExerciseTestRepository;
@@ -2282,16 +2278,7 @@ public class ProgrammingExerciseIntegrationTestService {
     }
 
     void test_redirectGetSolutionRepositoryFilesWithoutContent() throws Exception {
-        test_redirectGetSolutionRepositoryFilesWithoutContent((exercise, files) -> {
-            LocalRepository localRepository = new LocalRepository("main");
-            try {
-                hestiaUtilTestService.setupSolution(files, exercise, localRepository);
-            }
-            catch (Exception e) {
-                fail("Setup solution threw unexpected exception: " + e.getMessage());
-            }
-            return localRepository;
-        });
+        test_redirectGetSolutionRepositoryFilesWithoutContent((exercise, files) -> new LocalRepository("main"));
     }
 
     private void test_redirectGetSolutionRepositoryFilesWithoutContent(BiFunction<ProgrammingExercise, Map<String, String>, LocalRepository> setupRepositoryMock) throws Exception {
@@ -2305,16 +2292,7 @@ public class ProgrammingExerciseIntegrationTestService {
     }
 
     void test_redirectGetTemplateRepositoryFilesWithContent() throws Exception {
-        test_redirectGetTemplateRepositoryFilesWithContent((exercise, files) -> {
-            LocalRepository localRepository = new LocalRepository("main");
-            try {
-                hestiaUtilTestService.setupTemplate(files, exercise, localRepository);
-            }
-            catch (Exception e) {
-                fail("Setup template threw unexpected exception: " + e.getMessage());
-            }
-            return localRepository;
-        });
+        test_redirectGetTemplateRepositoryFilesWithContent((exercise, files) -> new LocalRepository("main"));
     }
 
     private void test_redirectGetTemplateRepositoryFilesWithContent(BiFunction<ProgrammingExercise, Map<String, String>, LocalRepository> setupRepositoryMock) throws Exception {
@@ -2326,13 +2304,11 @@ public class ProgrammingExerciseIntegrationTestService {
                 "/api/repository/" + savedExercise.getTemplateParticipation().getId() + "/files-content");
     }
 
-    void testRedirectGetParticipationRepositoryFilesWithContentAtCommit(String testPrefix) throws Exception {
+    void testRedirectGetParticipationRepositoryFilesWithContentAtCommit() throws Exception {
         testRedirectGetParticipationRepositoryFilesWithContentAtCommit((exercise, files) -> {
             LocalRepository localRepository = new LocalRepository("main");
-            var studentLogin = testPrefix + "student1";
             try {
                 localRepository.configureRepos("testLocalRepo", "testOriginRepo");
-                return hestiaUtilTestService.setupSubmission(files, exercise, localRepository, studentLogin);
             }
             catch (Exception e) {
                 fail("Test setup failed");
@@ -2344,20 +2320,24 @@ public class ProgrammingExerciseIntegrationTestService {
     private void testRedirectGetParticipationRepositoryFilesWithContentAtCommit(BiFunction<ProgrammingExercise, Map<String, String>, ProgrammingSubmission> setupRepositoryMock)
             throws Exception {
         var submission = setupRepositoryMock.apply(programmingExercise, Map.ofEntries(Map.entry("A.java", "abc"), Map.entry("B.java", "cde"), Map.entry("C.java", "efg")));
-        String filesWithContentsAsJson = "{\n" + "  \"C.java\" : \"efg\",\n" + "  \"B.java\" : \"cde\",\n" + "  \"A.java\" : \"abc\"\n" + "}";
+        String filesWithContentsAsJson = """
+                {
+                  "C.java" : "efg",
+                  "B.java" : "cde",
+                  "A.java" : "abc"
+                }
+                """;
 
         request.getWithFileContents("/api/programming-exercise-participations/" + participation1.getId() + "/files-content/" + submission.getCommitHash(), HttpStatus.OK,
                 filesWithContentsAsJson);
     }
 
-    void testRedirectGetParticipationRepositoryFilesWithContentAtCommitForbidden(String testPrefix) throws Exception {
+    void testRedirectGetParticipationRepositoryFilesWithContentAtCommitForbidden() throws Exception {
         testRedirectGetParticipationRepositoryFilesWithContentAtCommitForbidden((exercise, files) -> {
             LocalRepository localRepository = new LocalRepository("main");
 
-            var studentLogin = testPrefix + "student1";
             try {
                 localRepository.configureRepos("testLocalRepo", "testOriginRepo");
-                return hestiaUtilTestService.setupSubmission(files, exercise, localRepository, studentLogin);
             }
             catch (Exception e) {
                 fail("Test setup failed");
