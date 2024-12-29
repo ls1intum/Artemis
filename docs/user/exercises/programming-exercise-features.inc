@@ -45,6 +45,8 @@ Instructors can still use those templates to generate programming exercises and 
   +----------------------+----------+---------+
   | C#                   | yes      | yes     |
   +----------------------+----------+---------+
+  | Go                   | yes      | yes     |
+  +----------------------+----------+---------+
 
 - Not all ``templates`` support the same feature set and supported features can also change depending on the continuous integration system setup.
   Depending on the feature set, some options might not be available during the creation of the programming exercise.
@@ -86,6 +88,8 @@ Instructors can still use those templates to generate programming exercises and 
   | TypeScript           | no                   | no                   | yes                 | no           | n/a                                      | no                           | no                         | L: yes, J: no          |
   +----------------------+----------------------+----------------------+---------------------+--------------+------------------------------------------+------------------------------+----------------------------+------------------------+
   | C#                   | no                   | no                   | yes                 | no           | n/a                                      | no                           | no                         | L: yes, J: no          |
+  +----------------------+----------------------+----------------------+---------------------+--------------+------------------------------------------+------------------------------+----------------------------+------------------------+
+  | Go                   | no                   | no                   | yes                 | yes          | n/a                                      | no                           | no                         | L: yes, J: no          |
   +----------------------+----------------------+----------------------+---------------------+--------------+------------------------------------------+------------------------------+----------------------------+------------------------+
 
   - *Sequential Test Runs*: ``Artemis`` can generate a build plan which first executes structural and then behavioral tests. This feature can help students to better concentrate on the immediate challenge at hand.

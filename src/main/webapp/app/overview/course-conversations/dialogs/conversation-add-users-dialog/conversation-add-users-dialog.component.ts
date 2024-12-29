@@ -29,6 +29,7 @@ export class ConversationAddUsersDialogComponent extends AbstractDialogComponent
 
     isInitialized = false;
     maxSelectable: number | undefined;
+    protected isLoading: boolean = false;
 
     initialize() {
         super.initialize(['course', 'activeConversation']);
@@ -65,6 +66,8 @@ export class ConversationAddUsersDialogComponent extends AbstractDialogComponent
     private addUsers(usersToAdd: UserPublicInfoDTO[], addAllStudents: boolean, addAllTutors: boolean, addAllInstructors: boolean) {
         const userLogins = usersToAdd.map((user) => user.login!);
 
+        this.isLoading = true;
+
         if (isChannelDTO(this.activeConversation)) {
             this.channelService
                 .registerUsersToChannel(this.course.id!, this.activeConversation.id!, addAllStudents, addAllTutors, addAllInstructors, userLogins)
@@ -76,6 +79,9 @@ export class ConversationAddUsersDialogComponent extends AbstractDialogComponent
                     next: () => {},
                     error: (errorResponse: HttpErrorResponse) => {
                         onError(this.alertService, errorResponse);
+                    },
+                    complete: () => {
+                        this.isLoading = false;
                     },
                 });
         } else if (isGroupChatDTO(this.activeConversation)) {
@@ -89,6 +95,9 @@ export class ConversationAddUsersDialogComponent extends AbstractDialogComponent
                     next: () => {},
                     error: (errorResponse: HttpErrorResponse) => {
                         onError(this.alertService, errorResponse);
+                    },
+                    complete: () => {
+                        this.isLoading = false;
                     },
                 });
         } else {
