@@ -2311,7 +2311,7 @@ public class ProgrammingExerciseIntegrationTestService {
 
     private void testRedirectGetParticipationRepositoryFilesWithContentAtCommit(BiFunction<ProgrammingExercise, Map<String, String>, ProgrammingSubmission> setupRepositoryMock)
             throws Exception {
-        var submission = setupRepositoryMock.apply(programmingExercise, Map.ofEntries(Map.entry("A.java", "abc"), Map.entry("B.java", "cde"), Map.entry("C.java", "efg")));
+        var submission = setupRepositoryMock.apply(programmingExercise, Map.of("A.java", "abc", "B.java", "cde", "C.java", "efg"));
         String filesWithContentsAsJson = """
                 {
                   "C.java" : "efg",

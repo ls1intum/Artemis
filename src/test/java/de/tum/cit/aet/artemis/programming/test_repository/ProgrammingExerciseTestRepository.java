@@ -32,7 +32,7 @@ public interface ProgrammingExerciseTestRepository extends ProgrammingExerciseRe
                 LEFT JOIN FETCH p.exampleSubmissions
                 LEFT JOIN FETCH p.tutorParticipations
                 LEFT JOIN FETCH p.posts
-                LEFT JOIN FETCH p.testCases tc
+                LEFT JOIN FETCH p.testCases
                 LEFT JOIN FETCH p.staticCodeAnalysisCategories
                 LEFT JOIN FETCH p.auxiliaryRepositories
                 LEFT JOIN FETCH p.tasks t

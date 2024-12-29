@@ -9,6 +9,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 import org.springframework.context.annotation.Profile;
@@ -132,6 +133,7 @@ public class ProgrammingExerciseImportBasicService {
         final ProgrammingExercise importedExercise = exerciseService.saveWithCompetencyLinks(newProgrammingExercise, programmingExerciseRepository::save);
 
         final Map<Long, Long> newTestCaseIdByOldId = importTestCases(originalProgrammingExercise, importedExercise);
+        importTasks(originalProgrammingExercise, importedExercise, newTestCaseIdByOldId);
 
         // Set up new exercise submission policy before the solution entries are imported
         importSubmissionPolicy(importedExercise);
@@ -263,33 +265,62 @@ public class ProgrammingExerciseImportBasicService {
     }
 
     /**
-     * Copies tasks from one exercise to another. Because the tasks from the template exercise references its test cases, the
-     * references between tasks and test cases also need to be changed.
+     * Imports tasks from a template exercise to a new exercise. The tasks will get new IDs, thus being saved as a new entity.
+     * The remaining contents stay the same, especially the test cases.
      *
-     * @param templateExercise     The template exercise which tasks should be copied
-     * @param targetExercise       The new exercise to which all tasks should get copied to
-     * @param newTestCaseIdByOldId A map with the old test case id as a key and the new test case id as a value
-     * @return A map with the old task id as a key and the new task id as value
+     * @param sourceExercise    The template exercise which tasks should get copied
+     * @param targetExercise    The new exercise to which all tasks should get copied to
+     * @param testCaseIdMapping A map with the old test case id as a key and the new test case id as a value
      */
-    private Map<Long, Long> importTasks(final ProgrammingExercise templateExercise, final ProgrammingExercise targetExercise, Map<Long, Long> newTestCaseIdByOldId) {
-        Map<Long, Long> newIdByOldId = new HashMap<>();
-        targetExercise.setTasks(templateExercise.getTasks().stream().map(task -> {
-            final var copy = new ProgrammingExerciseTask();
+    private void importTasks(final ProgrammingExercise sourceExercise, final ProgrammingExercise targetExercise, Map<Long, Long> testCaseIdMapping) {
+        // Map the tasks from the template exercise to new tasks in the target exercise
+        List<ProgrammingExerciseTask> newTasks = sourceExercise.getTasks().stream().map(templateTask -> createTaskCopy(templateTask, targetExercise, testCaseIdMapping)).toList();
 
-            // copy everything except for the referenced exercise
-            copy.setTaskName(task.getTaskName());
-            // change reference to newly imported test cases from the target exercise
-            copy.setTestCases(task.getTestCases().stream().map(testCase -> {
-                Long oldTestCaseId = testCase.getId();
-                Long newTestCaseId = newTestCaseIdByOldId.get(oldTestCaseId);
-                return targetExercise.getTestCases().stream().filter(newTestCase -> Objects.equals(newTestCaseId, newTestCase.getId())).findFirst().orElseThrow();
-            }).collect(Collectors.toSet()));
-            copy.setExercise(targetExercise);
-            programmingExerciseTaskRepository.save(copy);
-            newIdByOldId.put(task.getId(), copy.getId());
-            return copy;
-        }).collect(Collectors.toCollection(ArrayList::new)));
-        return newIdByOldId;
+        // Set the new tasks to the target exercise
+        targetExercise.setTasks(new ArrayList<>(newTasks));
+    }
+
+    /**
+     * Creates a copy of a task from a template exercise and links it to the target exercise. The test cases of the task
+     * are also copied and linked to the new task.
+     *
+     * @param sourceTask        The template task which should be copied
+     * @param targetExercise    The new exercise to which the task should be linked
+     * @param testCaseIdMapping A map with the old test case id as a key and the new test case id as a value
+     * @return The new task
+     */
+    private ProgrammingExerciseTask createTaskCopy(ProgrammingExerciseTask sourceTask, ProgrammingExercise targetExercise, Map<Long, Long> testCaseIdMapping) {
+        ProgrammingExerciseTask copiedTask = new ProgrammingExerciseTask();
+
+        // Copy task properties
+        copiedTask.setTaskName(sourceTask.getTaskName());
+
+        // Map and set new test cases
+        Set<ProgrammingExerciseTestCase> mappedTestCases = sourceTask.getTestCases().stream().map(testCase -> findMappedTestCase(testCase, targetExercise, testCaseIdMapping))
+                .collect(Collectors.toSet());
+        copiedTask.setTestCases(mappedTestCases);
+
+        // Link the task to the target exercise
+        copiedTask.setExercise(targetExercise);
+
+        // Persist the new task
+        programmingExerciseTaskRepository.save(copiedTask);
+        return copiedTask;
+    }
+
+    /**
+     * Finds a test case in the target exercise that corresponds to a test case in the template exercise.
+     *
+     * @param existingTestCase  The test case from the template exercise
+     * @param targetExercise    The new exercise to which the test case should be linked
+     * @param testCaseIdMapping A map with the old test case id as a key and the new test case id as a value
+     * @return The test case in the target exercise
+     */
+    private ProgrammingExerciseTestCase findMappedTestCase(ProgrammingExerciseTestCase existingTestCase, ProgrammingExercise targetExercise, Map<Long, Long> testCaseIdMapping) {
+        Long newTestCaseId = testCaseIdMapping.get(existingTestCase.getId());
+
+        return targetExercise.getTestCases().stream().filter(newTestCase -> Objects.equals(newTestCaseId, newTestCase.getId())).findFirst()
+                .orElseThrow(() -> new IllegalArgumentException("Test case not found for ID: " + newTestCaseId));
     }
 
     /**

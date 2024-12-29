@@ -817,7 +817,8 @@ public class ProgrammingExerciseTestService {
         importedExercise = programmingExerciseUtilService.loadProgrammingExerciseWithEagerReferences(importedExercise);
 
         // Check that the tasks were imported correctly (see #5474)
-        assertThat(programmingExerciseTaskRepository.findByExerciseId(importedExercise.getId())).hasSameSizeAs(sourceExercise.getTasks());
+        var importedExerciseTasks = programmingExerciseTaskRepository.findByExerciseId(importedExercise.getId());
+        assertThat(importedExerciseTasks).hasSameSizeAs(sourceExercise.getTasks());
     }
 
     // TEST
@@ -1006,6 +1007,7 @@ public class ProgrammingExerciseTestService {
         ProgrammingExercise sourceExercise = programmingExerciseUtilService.addCourseWithOneProgrammingExerciseAndStaticCodeAnalysisCategories();
         sourceExercise.setMode(TEAM);
         programmingExerciseUtilService.addTestCasesToProgrammingExercise(sourceExercise);
+        programmingExerciseRepository.save(sourceExercise);
         sourceExercise = programmingExerciseUtilService.loadProgrammingExerciseWithEagerReferences(sourceExercise);
         var teamAssignmentConfig = new TeamAssignmentConfig();
         teamAssignmentConfig.setExercise(sourceExercise);
