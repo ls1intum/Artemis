@@ -34,7 +34,7 @@ tasks.register('initPaths', {
 })
 
 def liquibaseCommand(command) {
-    javaexec {
+    tasks.register("runLiquibaseCommand", JavaExec) {
         if (isWindows) {
             classpath tasks.named('pathingLiquibaseJar').get().outputs.files
         } else {
@@ -53,8 +53,8 @@ def liquibaseCommand(command) {
             "--url=jdbc:mysql://localhost:3306/Artemis700?useUnicode=true&characterEncoding=utf8&useSSL=false&useLegacyDatetimeCode=false&serverTimezone=UTC",
             "--driver=com.mysql.cj.jdbc.Driver",
             command
-            ]
-    }
+        ]
+    }.get().exec()
 }
 
 tasks.register('liquibaseDiffChangeLog', {
