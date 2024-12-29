@@ -1,4 +1,7 @@
 <div class="date-box">
+    <div class="popover-title mb-2">
+        <h5>Hide Page</h5>
+    </div>
     <div class="checkbox-container">
         <input type="checkbox" id="date-box-checkbox" [ngModel]="hideForever()" (ngModelChange)="onHideForeverChange($event)" />
         <label for="date-box-checkbox">Hide forever</label>
@@ -19,10 +22,10 @@
             } @else {
                 @for (typeGroup of categorizedExercises(); track typeGroup.type) {
                     <div class="type-section">
-                        <h6 class="type-header">{{ typeGroup.type | titlecase }} Exercises</h6>
+                        <h6 class="type-header text-capitalize">{{ typeGroup.type }} Exercises</h6>
                         <div class="list-group">
                             @for (exercise of typeGroup.exercises; track exercise.id) {
-                                <label class="list-group-item list-group-item-action" [class.active]="selectedExerciseId() === exercise.id">
+                                <label class="list-group-item list-group-item-action" [class.active]="selectedExercise()?.id === exercise.id">
                                     <div class="d-flex w-100 justify-content-between align-items-center">
                                         <div class="form-check mb-0">
                                             <input
@@ -31,8 +34,8 @@
                                                 name="exercise-selection"
                                                 [id]="'exercise-' + exercise.id"
                                                 [value]="exercise.id"
-                                                [checked]="selectedExerciseId() === exercise.id"
-                                                (change)="onExerciseClick(exercise.id!)"
+                                                [checked]="selectedExercise()?.id === exercise.id"
+                                                (change)="onExerciseClick(exercise)"
                                             />
                                             <span class="ms-2">{{ exercise.title }}</span>
                                         </div>
@@ -46,4 +49,7 @@
             }
         </div>
     }
+    <div class="submit-container mt-3">
+        <button class="btn btn-success" (click)="onSubmit()" [disabled]="!hideForever() && !calendarSelected() && !selectedExercise()">Submit</button>
+    </div>
 </div>

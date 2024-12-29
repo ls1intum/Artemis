@@ -1,4 +1,4 @@
-import { Component, OnInit, input, signal } from '@angular/core';
+import { Component, OnDestroy, OnInit, input, output, signal } from '@angular/core';
 import { ArtemisSharedModule } from 'app/shared/shared.module';
 import { Course } from 'app/entities/course.model';
 import { Exercise, ExerciseType } from 'app/entities/exercise.model';
@@ -10,6 +10,13 @@ interface CategorizedExercise {
     exercises: Exercise[];
 }
 
+interface HiddenPage {
+    pageIndex: number;
+    date: dayjs.Dayjs;
+}
+
+const FOREVER = dayjs('9999-12-31');
+
 @Component({
     selector: 'jhi-pdf-preview-date-box-component',
     templateUrl: './pdf-preview-date-box.component.html',
@@ -17,9 +24,10 @@ interface CategorizedExercise {
     standalone: true,
     imports: [ArtemisSharedModule],
 })
-export class PdfPreviewDateBoxComponent implements OnInit {
+export class PdfPreviewDateBoxComponent implements OnInit, OnDestroy {
     // Inputs
     course = input<Course>();
+    pageIndex = input<number>();
 
     // Signals
     calendarSelected = signal<boolean>(false);
@@ -28,12 +36,21 @@ export class PdfPreviewDateBoxComponent implements OnInit {
     exercises = signal<Exercise[]>([]);
     categorizedExercises = signal<CategorizedExercise[]>([]);
     hideForever = signal<boolean>(false);
-    selectedExerciseId = signal<number | null>(null);
+    selectedExercise = signal<Exercise | null>(null);
+    hiddenPages = signal<HiddenPage[]>([]);
+
+    // Outputs
+    dateBoxOpened = output<boolean>();
 
     constructor(private courseExerciseService: CourseExerciseService) {}
 
     ngOnInit(): void {
         this.loadExercises();
+        this.dateBoxOpened.emit(true);
+    }
+
+    ngOnDestroy(): void {
+        this.dateBoxOpened.emit(false);
     }
 
     /**
@@ -44,8 +61,9 @@ export class PdfPreviewDateBoxComponent implements OnInit {
         if (isChecked) {
             this.calendarSelected.set(false);
             this.exerciseSelected.set(false);
-            this.selectedExerciseId.set(null);
+            this.selectedExercise.set(null);
         }
+        console.log(this.pageIndex());
     }
 
     /**
@@ -108,11 +126,10 @@ export class PdfPreviewDateBoxComponent implements OnInit {
 
     /**
      * Handles selection of an exercise
-     * @param exerciseId the id of the selected exercise
+     * @param exercise the selected exercise
      */
-    onExerciseClick(exerciseId: number): void {
-        this.selectedExerciseId.set(exerciseId);
-        console.log(this.selectedExerciseId());
+    onExerciseClick(exercise: Exercise): void {
+        this.selectedExercise.set(exercise);
     }
 
     /**
@@ -134,5 +151,36 @@ export class PdfPreviewDateBoxComponent implements OnInit {
             type,
             exercises: typeExercises.sort((a, b) => a.dueDate!.valueOf() - b.dueDate!.valueOf()),
         }));
+    }
+
+    /**
+     * Submit the selected date option
+     */
+    onSubmit(): void {
+        if (!this.pageIndex()) {
+            return;
+        }
+
+        let selectedDate: dayjs.Dayjs;
+        if (this.hideForever()) {
+            selectedDate = FOREVER;
+        } else if (this.calendarSelected()) {
+            selectedDate = dayjs(this.defaultDate());
+        } else if (this.exerciseSelected() && this.selectedExercise()) {
+            selectedDate = this.selectedExercise()!.dueDate!;
+        } else {
+            return;
+        }
+
+        const newEntry: HiddenPage = {
+            pageIndex: this.pageIndex()!,
+            date: selectedDate,
+        };
+
+        const currentHiddenPages = this.hiddenPages();
+        const updatedHiddenPages = [...currentHiddenPages.filter((entry) => entry.pageIndex !== this.pageIndex()), newEntry];
+        this.hiddenPages.set(updatedHiddenPages);
+        //this.hiddenPagesChange.emit(updatedHiddenPages);
+        console.log(this.hiddenPages());
     }
 }

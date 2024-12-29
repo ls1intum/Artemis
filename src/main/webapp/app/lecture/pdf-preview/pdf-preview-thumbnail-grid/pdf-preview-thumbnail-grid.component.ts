@@ -35,6 +35,7 @@ export class PdfPreviewThumbnailGridComponent implements OnChanges {
     originalCanvas = signal<HTMLCanvasElement | undefined>(undefined);
     newHiddenPages = signal(new Set<number>(this.hiddenPages()!));
     initialPageNumber = signal<number>(0);
+    isDateBoxOpen = signal<boolean>(false);
 
     // Outputs
     isPdfLoading = output<boolean>();
@@ -172,5 +173,20 @@ export class PdfPreviewThumbnailGridComponent implements OnChanges {
         this.originalCanvas.set(canvas!);
         this.isEnlargedView.set(true);
         this.initialPageNumber.set(pageIndex);
+    }
+
+    /**
+     * Handles the date box open/close state
+     */
+    handleDateBoxOpen(isOpen: boolean): void {
+        this.isDateBoxOpen.set(isOpen);
+        if (!isOpen) {
+            const button = document.getElementById('hide-show-button-' + this.activeButtonIndex());
+            if (button) {
+                button.style.opacity = '0';
+            }
+
+            this.activeButtonIndex.set(null);
+        }
     }
 }

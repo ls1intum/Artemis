@@ -11,6 +11,10 @@
     box-shadow: 0 2px 5px var(--pdf-preview-pdf-container-shadow);
     z-index: 0;
 
+    &.scroll-disabled {
+        overflow: hidden !important;
+    }
+
     @media (max-width: 800px) {
         grid-template-columns: repeat(auto-fit, minmax(270px, 1fr));
     }
@@ -68,6 +72,10 @@
 
     .hidden-overlay {
         opacity: 0 !important;
+    }
+
+    .hide-show-btn {
+        opacity: 1 !important;
     }
 }
 

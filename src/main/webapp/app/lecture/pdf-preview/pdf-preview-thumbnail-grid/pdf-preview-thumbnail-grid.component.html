@@ -1,4 +1,4 @@
-<div #pdfContainer class="pdf-container">
+<div #pdfContainer class="pdf-container" [class.scroll-disabled]="isDateBoxOpen()">
     @for (page of totalPagesArray(); track page) {
         <div [id]="'pdf-page-' + page" class="pdf-canvas-container" (click)="displayEnlargedCanvas(page); $event.stopPropagation()">
             @if (hiddenPages()!.has(page)) {
@@ -31,7 +31,7 @@
                 </button>
 
                 <ng-template #popContent>
-                    <jhi-pdf-preview-date-box-component [course]="course()" />
+                    <jhi-pdf-preview-date-box-component [course]="course()" [pageIndex]="activeButtonIndex()!" (dateBoxOpened)="handleDateBoxOpen($event)" />
                 </ng-template>
             }
         </div>
