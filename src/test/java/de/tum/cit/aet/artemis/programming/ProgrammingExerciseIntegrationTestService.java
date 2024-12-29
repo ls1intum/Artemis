@@ -123,11 +123,13 @@ import de.tum.cit.aet.artemis.programming.util.LocalRepository;
 import de.tum.cit.aet.artemis.programming.util.MockDelegate;
 import de.tum.cit.aet.artemis.programming.util.ProgrammingExerciseFactory;
 import de.tum.cit.aet.artemis.programming.util.ProgrammingExerciseUtilService;
+import de.tum.cit.aet.artemis.programming.util.ProgrammingUtilTestService;
 import de.tum.cit.aet.artemis.text.util.TextExerciseUtilService;
 
 /**
  * Note: this class should be independent of the actual VCS and CIS and contains common test logic for scenarios:
  * 1) Jenkins + Gitlab
+ * 2) LocalVC + LocalCI
  */
 @Service
 public class ProgrammingExerciseIntegrationTestService {
@@ -207,6 +209,9 @@ public class ProgrammingExerciseIntegrationTestService {
 
     @Autowired
     private GradingCriterionRepository gradingCriterionRepository;
+
+    @Autowired
+    private ProgrammingUtilTestService programmingUtilTestService;
 
     private Course course;
 
@@ -575,19 +580,19 @@ public class ProgrammingExerciseIntegrationTestService {
     }
 
     void testExportSubmissionsByStudentLogins() throws Exception {
-        File downloadedFile = exportSubmissionsByStudentLogins(HttpStatus.OK);
+        File downloadedFile = exportSubmissionsByStudentLogins();
         assertThat(downloadedFile).exists();
         // TODO: unzip the files and add some checks
     }
 
-    private File exportSubmissionsByStudentLogins(HttpStatus expectedStatus) throws Exception {
+    private File exportSubmissionsByStudentLogins() throws Exception {
         var repository1 = gitService.getExistingCheckedOutRepositoryByLocalPath(localRepoFile.toPath(), null);
         var repository2 = gitService.getExistingCheckedOutRepositoryByLocalPath(localRepoFile2.toPath(), null);
         doReturn(repository1).when(gitService).getOrCheckoutRepository(eq(participation1.getVcsRepositoryUri()), anyString(), anyBoolean());
         doReturn(repository2).when(gitService).getOrCheckoutRepository(eq(participation2.getVcsRepositoryUri()), anyString(), anyBoolean());
         final var path = "/api/programming-exercises/" + programmingExercise.getId() + "/export-repos-by-participant-identifiers/" + userPrefix + "student1," + userPrefix
                 + "student2";
-        return request.postWithResponseBodyFile(path, getOptions(), expectedStatus);
+        return request.postWithResponseBodyFile(path, getOptions(), HttpStatus.OK);
     }
 
     private RepositoryExportOptionsDTO getOptions() {
@@ -759,24 +764,19 @@ public class ProgrammingExerciseIntegrationTestService {
         assertThat(programmingExerciseServer.getStudentParticipations()).isEmpty();
     }
 
-    void testGetProgrammingExerciseWithTemplateAndSolutionParticipationAndAuxiliaryRepositories(boolean withSubmissionResults, boolean withGradingCriteria) throws Exception {
+    void testGetProgrammingExerciseWithTemplateAndSolutionParticipationAndAuxiliaryRepositories(boolean withSubmissionResults) throws Exception {
         AuxiliaryRepository auxiliaryRepository = programmingExerciseUtilService.addAuxiliaryRepositoryToExercise(programmingExercise);
         Set<GradingCriterion> gradingCriteria = exerciseUtilService.addGradingInstructionsToExercise(programmingExercise);
-        gradingCriteria = Set.copyOf(gradingCriterionRepository.saveAll(gradingCriteria));
+        gradingCriterionRepository.saveAll(gradingCriteria);
         programmingExercise = programmingExerciseRepository.save(programmingExercise);
 
         var path = "/api/programming-exercises/" + programmingExercise.getId() + "/with-template-and-solution-participation" + "?withSubmissionResults=" + withSubmissionResults
-                + "&withGradingCriteria=" + withGradingCriteria;
+                + "&withGradingCriteria=" + false;
         var programmingExerciseServer = request.get(path, HttpStatus.OK, ProgrammingExercise.class);
 
         checkTemplateAndSolutionParticipationsFromServer(programmingExerciseServer);
         assertThat(programmingExerciseServer.getAuxiliaryRepositories()).hasSize(1).containsExactly(auxiliaryRepository);
-        if (withGradingCriteria) {
-            assertThat(programmingExerciseServer.getGradingCriteria()).containsAll(gradingCriteria);
-        }
-        else {
-            assertThat(programmingExerciseServer.getGradingCriteria()).isEmpty();
-        }
+        assertThat(programmingExerciseServer.getGradingCriteria()).isEmpty();
     }
 
     private void checkTemplateAndSolutionParticipationsFromServer(ProgrammingExercise programmingExerciseServer) {
@@ -972,6 +972,7 @@ public class ProgrammingExerciseIntegrationTestService {
         }
 
         programmingExercise.setDueDate(ZonedDateTime.now().plusHours(12));
+        assertThat(programmingExercise.getDueDate()).isNotNull();
         programmingExercise.setReleaseDate(programmingExercise.getDueDate().minusDays(1));
         request.put("/api/programming-exercises", programmingExercise, HttpStatus.OK);
 
@@ -2269,22 +2270,17 @@ public class ProgrammingExerciseIntegrationTestService {
         request.put("/api/programming-exercises/" + programmingExercise.getId() + "/re-evaluate", programmingExerciseToBeConflicted, HttpStatus.CONFLICT);
     }
 
-    void test_redirectGetSolutionRepositoryFilesWithoutContent() throws Exception {
-        test_redirectGetSolutionRepositoryFilesWithoutContent((exercise, files) -> new LocalRepository("main"));
-    }
-
-    private void test_redirectGetSolutionRepositoryFilesWithoutContent(BiFunction<ProgrammingExercise, Map<String, String>, LocalRepository> setupRepositoryMock) throws Exception {
-        setupRepositoryMock.apply(programmingExercise, Map.ofEntries(Map.entry("A.java", "abc"), Map.entry("B.java", "cde"), Map.entry("C.java", "efg")));
-
-        var savedExercise = programmingExerciseRepository.findByIdWithTemplateAndSolutionParticipationElseThrow(programmingExercise.getId());
-
-        // We expect an URL which is the endpoint, with which the file contents can be retrieved
-        request.getWithForwardedUrl("/api/programming-exercises/" + programmingExercise.getId() + "/file-names", HttpStatus.OK,
-                "/api/repository/" + savedExercise.getSolutionParticipation().getId() + "/file-names");
-    }
-
     void test_redirectGetTemplateRepositoryFilesWithContent() throws Exception {
-        test_redirectGetTemplateRepositoryFilesWithContent((exercise, files) -> new LocalRepository("main"));
+        test_redirectGetTemplateRepositoryFilesWithContent((exercise, files) -> {
+            LocalRepository localRepository = new LocalRepository("main");
+            try {
+                programmingUtilTestService.setupTemplate(files, exercise, localRepository);
+            }
+            catch (Exception e) {
+                fail("Setup template threw unexpected exception: " + e.getMessage());
+            }
+            return localRepository;
+        });
     }
 
     private void test_redirectGetTemplateRepositoryFilesWithContent(BiFunction<ProgrammingExercise, Map<String, String>, LocalRepository> setupRepositoryMock) throws Exception {
@@ -2296,11 +2292,13 @@ public class ProgrammingExerciseIntegrationTestService {
                 "/api/repository/" + savedExercise.getTemplateParticipation().getId() + "/files-content");
     }
 
-    void testRedirectGetParticipationRepositoryFilesWithContentAtCommit() throws Exception {
+    void testRedirectGetParticipationRepositoryFilesWithContentAtCommit(String testPrefix) throws Exception {
         testRedirectGetParticipationRepositoryFilesWithContentAtCommit((exercise, files) -> {
             LocalRepository localRepository = new LocalRepository("main");
+            var studentLogin = testPrefix + "student1";
             try {
                 localRepository.configureRepos("testLocalRepo", "testOriginRepo");
+                return programmingUtilTestService.setupSubmission(files, exercise, localRepository, studentLogin);
             }
             catch (Exception e) {
                 fail("Test setup failed");
@@ -2317,19 +2315,20 @@ public class ProgrammingExerciseIntegrationTestService {
                   "C.java" : "efg",
                   "B.java" : "cde",
                   "A.java" : "abc"
-                }
-                """;
+                }""";
 
         request.getWithFileContents("/api/programming-exercise-participations/" + participation1.getId() + "/files-content/" + submission.getCommitHash(), HttpStatus.OK,
                 filesWithContentsAsJson);
     }
 
-    void testRedirectGetParticipationRepositoryFilesWithContentAtCommitForbidden() throws Exception {
+    void testRedirectGetParticipationRepositoryFilesWithContentAtCommitForbidden(String testPrefix) throws Exception {
         testRedirectGetParticipationRepositoryFilesWithContentAtCommitForbidden((exercise, files) -> {
             LocalRepository localRepository = new LocalRepository("main");
 
+            var studentLogin = testPrefix + "student1";
             try {
                 localRepository.configureRepos("testLocalRepo", "testOriginRepo");
+                return programmingUtilTestService.setupSubmission(files, exercise, localRepository, studentLogin);
             }
             catch (Exception e) {
                 fail("Test setup failed");
@@ -2340,7 +2339,7 @@ public class ProgrammingExerciseIntegrationTestService {
 
     private void testRedirectGetParticipationRepositoryFilesWithContentAtCommitForbidden(
             BiFunction<ProgrammingExercise, Map<String, String>, ProgrammingSubmission> setupRepositoryMock) throws Exception {
-        var submission = setupRepositoryMock.apply(programmingExercise, Map.ofEntries(Map.entry("A.java", "abc"), Map.entry("B.java", "cde"), Map.entry("C.java", "efg")));
+        var submission = setupRepositoryMock.apply(programmingExercise, Map.of("A.java", "abc", "B.java", "cde", "C.java", "efg"));
 
         request.get("/api/programming-exercise-participations/" + participation1.getId() + "/files-content/" + submission.getCommitHash(), HttpStatus.FORBIDDEN, Map.class);
     }

@@ -234,7 +234,7 @@ class ProgrammingExerciseIntegrationJenkinsGitlabTest extends AbstractProgrammin
     @ValueSource(booleans = { true, false })
     @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
     void testGetProgrammingExerciseWithTemplateAndSolutionParticipationAndAuxiliaryRepositories(boolean withSubmissionResults) throws Exception {
-        programmingExerciseIntegrationTestService.testGetProgrammingExerciseWithTemplateAndSolutionParticipationAndAuxiliaryRepositories(withSubmissionResults, false);
+        programmingExerciseIntegrationTestService.testGetProgrammingExerciseWithTemplateAndSolutionParticipationAndAuxiliaryRepositories(withSubmissionResults);
     }
 
     @Test

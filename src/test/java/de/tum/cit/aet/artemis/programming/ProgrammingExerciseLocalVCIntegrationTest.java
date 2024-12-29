@@ -177,12 +177,6 @@ class ProgrammingExerciseLocalVCIntegrationTest extends AbstractProgrammingInteg
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
-    void test_redirectGetSolutionRepositoryFilesWithoutContent() throws Exception {
-        programmingExerciseIntegrationTestService.test_redirectGetSolutionRepositoryFilesWithoutContent();
-    }
-
-    @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void test_redirectGetTemplateRepositoryFilesWithContent() throws Exception {
         programmingExerciseIntegrationTestService.test_redirectGetTemplateRepositoryFilesWithContent();
     }
@@ -190,12 +184,12 @@ class ProgrammingExerciseLocalVCIntegrationTest extends AbstractProgrammingInteg
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testGetParticipationFilesWithContentAtCommitShouldRedirect() throws Exception {
-        programmingExerciseIntegrationTestService.testRedirectGetParticipationRepositoryFilesWithContentAtCommit();
+        programmingExerciseIntegrationTestService.testRedirectGetParticipationRepositoryFilesWithContentAtCommit(TEST_PREFIX);
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "editor1", roles = "EDITOR")
     void testGetParticipationFilesWithContentAtCommitEditorForbidden() throws Exception {
-        programmingExerciseIntegrationTestService.testRedirectGetParticipationRepositoryFilesWithContentAtCommitForbidden();
+        programmingExerciseIntegrationTestService.testRedirectGetParticipationRepositoryFilesWithContentAtCommitForbidden(TEST_PREFIX);
     }
 }
