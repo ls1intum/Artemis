@@ -110,7 +110,7 @@ public class Lti13LaunchFilter extends OncePerRequestFilter {
                 throw new IllegalStateException("No authentication was returned");
             }
         }
-        catch (OAuth2AuthenticationException | IllegalStateException ex) {
+        catch (OAuth2AuthenticationException | IllegalStateException | IOException | ServletException ex) {
             throw new IllegalStateException("Failed to attempt LTI 1.3 login authentication: " + ex.getMessage(), ex);
         }
 
