@@ -259,7 +259,7 @@
         [id]="sidebarItem.testId ?? ''"
         [ngClass]="{
             'guided-tour': sidebarItem.guidedTour,
-            newMessage: !communicationRouteLoaded && hasUnreadMessages && sidebarItem.title === 'Communication',
+            newMessage: hasUnreadMessages && sidebarItem.title === 'Communication',
             collapsed: isNavbarCollapsed,
         }"
         jhiOrionFilter

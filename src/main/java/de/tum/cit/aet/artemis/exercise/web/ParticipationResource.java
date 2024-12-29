@@ -66,7 +66,6 @@ import de.tum.cit.aet.artemis.core.service.feature.FeatureToggleService;
 import de.tum.cit.aet.artemis.core.service.messaging.InstanceMessageSendService;
 import de.tum.cit.aet.artemis.core.util.HeaderUtil;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
-import de.tum.cit.aet.artemis.exercise.domain.ExerciseType;
 import de.tum.cit.aet.artemis.exercise.domain.InitializationState;
 import de.tum.cit.aet.artemis.exercise.domain.Submission;
 import de.tum.cit.aet.artemis.exercise.domain.SubmissionType;
@@ -595,9 +594,7 @@ public class ParticipationResource {
     }
 
     private Set<StudentParticipation> findParticipationWithLatestResults(Exercise exercise) {
-        if (exercise.getExerciseType() == ExerciseType.QUIZ) {
-            return studentParticipationRepository.findByExerciseIdWithLatestAndManualRatedResultsAndAssessmentNote(exercise.getId());
-        }
+        // TODO: we should reduce the amount of data fetched here and sent to the client: double check which data is actually required in the exercise scores page
         if (exercise.isTeamMode()) {
             // For team exercises the students need to be eagerly fetched
             return studentParticipationRepository.findByExerciseIdWithLatestAndManualResultsWithTeamInformation(exercise.getId());
@@ -636,7 +633,12 @@ public class ParticipationResource {
             });
         }
         else {
-            participations = studentParticipationRepository.findByExerciseId(exerciseId);
+            if (exercise.isTeamMode()) {
+                participations = studentParticipationRepository.findWithTeamInformationByExerciseId(exerciseId);
+            }
+            else {
+                participations = studentParticipationRepository.findByExerciseId(exerciseId);
+            }
 
             Map<Long, Integer> submissionCountMap = studentParticipationRepository.countSubmissionsPerParticipationByExerciseIdAsMap(exerciseId);
             participations.forEach(participation -> participation.setSubmissionCount(submissionCountMap.get(participation.getId())));

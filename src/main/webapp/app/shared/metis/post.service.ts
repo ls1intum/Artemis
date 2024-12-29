@@ -83,16 +83,6 @@ export class PostService extends PostingService<Post> {
     }
 
     /**
-     * gets all tags for course
-     * @param {number} courseId
-     * @return {Observable<string[]>}
-     */
-    // TODO: unused, delete
-    getAllPostTagsByCourseId(courseId: number): Observable<HttpResponse<string[]>> {
-        return this.http.get<string[]>(`${this.resourceUrl}${courseId}/messages/tags`, { observe: 'response' });
-    }
-
-    /**
      * updates a post
      * @param {number} courseId
      * @param {Post} post
@@ -126,20 +116,6 @@ export class PostService extends PostingService<Post> {
      */
     delete(courseId: number, post: Post): Observable<HttpResponse<void>> {
         return this.http.delete<void>(`${this.resourceUrl}${courseId}${PostService.getResourceEndpoint(undefined, post)}/${post.id}`, { observe: 'response' });
-    }
-
-    /**
-     * determines similar posts in a course
-     * @param {Post} tempPost
-     * @param {number} courseId
-     * @return {Observable<HttpResponse<void>>}
-     */
-    // TODO: unused, remove
-    computeSimilarityScoresWithCoursePosts(tempPost: Post, courseId: number): Observable<EntityArrayResponseType> {
-        const copy = this.convertPostingDateFromClient(tempPost);
-        return this.http
-            .post<Post[]>(`${this.resourceUrl}${courseId}/posts/similarity-check`, copy, { observe: 'response' })
-            .pipe(map(this.convertPostResponseArrayDatesFromServer));
     }
 
     /**

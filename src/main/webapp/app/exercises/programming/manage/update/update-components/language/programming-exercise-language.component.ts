@@ -9,6 +9,7 @@ import { ProgrammingExerciseCustomAeolusBuildPlanComponent } from 'app/exercises
 import { ProgrammingExerciseCustomBuildPlanComponent } from 'app/exercises/programming/manage/update/update-components/custom-build-plans/programming-exercise-custom-build-plan.component';
 import { ProgrammingExerciseTheiaComponent } from 'app/exercises/programming/manage/update/update-components/theia/programming-exercise-theia.component';
 import { ProgrammingExerciseInputField } from 'app/exercises/programming/manage/update/programming-exercise-update.helper';
+import { APP_NAME_PATTERN_FOR_SWIFT } from 'app/shared/constants/input.constants';
 
 @Component({
     selector: 'jhi-programming-exercise-language',
@@ -43,6 +44,8 @@ export class ProgrammingExerciseLanguageComponent implements AfterViewChecked, A
         dockerhubLink: 'https://hub.docker.com/',
     };
     readonly DOCUMENTATION_LINK = 'https://docs.artemis.cit.tum.de/user/exercises/programming.html';
+
+    protected readonly APP_NAME_PATTERN_FOR_SWIFT = APP_NAME_PATTERN_FOR_SWIFT;
 
     ngAfterViewInit() {
         this.fieldSubscriptions.push(this.selectLanguageField.valueChanges?.subscribe(() => setTimeout(() => this.calculateFormValid())));

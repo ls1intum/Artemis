@@ -1,4 +1,4 @@
-import { Component, OnChanges, OnDestroy, OnInit, computed, inject, input, output } from '@angular/core';
+import { Component, OnChanges, OnDestroy, OnInit, computed, inject, input, output, viewChild } from '@angular/core';
 import dayjs from 'dayjs/esm';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { Router } from '@angular/router';
@@ -8,6 +8,7 @@ import { TranslateService } from '@ngx-translate/core';
 import { faTimes } from '@fortawesome/free-solid-svg-icons';
 import { CompetencyLectureUnitLink } from 'app/entities/competency.model';
 import { toSignal } from '@angular/core/rxjs-interop';
+import { FormDateTimePickerComponent } from 'app/shared/date-time-picker/date-time-picker.component';
 
 export interface TextUnitFormData {
     name?: string;
@@ -32,6 +33,8 @@ export class TextUnitFormComponent implements OnInit, OnChanges, OnDestroy {
     hasCancelButton = input<boolean>(false);
     onCancel = output<void>();
 
+    datePickerComponent = viewChild(FormDateTimePickerComponent);
+
     // not included in reactive form
     content: string | undefined;
     contentLoadedFromCache = false;
@@ -46,7 +49,7 @@ export class TextUnitFormComponent implements OnInit, OnChanges, OnDestroy {
     });
 
     private readonly statusChanges = toSignal(this.form.statusChanges ?? 'INVALID');
-    isFormValid = computed(() => this.statusChanges() === 'VALID');
+    isFormValid = computed(() => this.statusChanges() === 'VALID' && this.datePickerComponent()?.isValid());
 
     private markdownChanges = new Subject<string>();
     private markdownChangesSubscription: Subscription;

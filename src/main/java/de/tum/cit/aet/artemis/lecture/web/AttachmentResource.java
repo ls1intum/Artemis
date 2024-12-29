@@ -108,12 +108,12 @@ public class AttachmentResource {
     }
 
     /**
-     * PUT /attachments/:id : Updates an existing attachment.
+     * PUT /attachments/:id : Updates an existing attachment, optionally handling student version of files as well.
      *
      * @param attachmentId     the id of the attachment to save
      * @param attachment       the attachment to update
      * @param file             the file to save if the file got changed (optional)
-     * @param notificationText text that will be sent to student group
+     * @param notificationText text that will be sent to the student group (optional)
      * @return the ResponseEntity with status 200 (OK) and with body the updated attachment, or with status 400 (Bad Request) if the attachment is not valid, or with status 500
      *         (Internal Server Error) if the attachment couldn't be updated
      */

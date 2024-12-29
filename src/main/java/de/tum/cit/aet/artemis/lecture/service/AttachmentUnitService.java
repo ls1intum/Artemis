@@ -16,8 +16,8 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
+import de.tum.cit.aet.artemis.atlas.api.CompetencyProgressApi;
 import de.tum.cit.aet.artemis.atlas.domain.competency.CompetencyLectureUnitLink;
-import de.tum.cit.aet.artemis.atlas.service.competency.CompetencyProgressService;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.core.service.FilePathService;
 import de.tum.cit.aet.artemis.core.service.FileService;
@@ -49,13 +49,13 @@ public class AttachmentUnitService {
 
     private final Optional<IrisSettingsRepository> irisSettingsRepository;
 
-    private final CompetencyProgressService competencyProgressService;
+    private final CompetencyProgressApi competencyProgressService;
 
     private final LectureUnitService lectureUnitService;
 
     public AttachmentUnitService(SlideRepository slideRepository, SlideSplitterService slideSplitterService, AttachmentUnitRepository attachmentUnitRepository,
             AttachmentRepository attachmentRepository, FileService fileService, Optional<PyrisWebhookService> pyrisWebhookService,
-            Optional<IrisSettingsRepository> irisSettingsRepository, CompetencyProgressService competencyProgressService, LectureUnitService lectureUnitService) {
+            Optional<IrisSettingsRepository> irisSettingsRepository, CompetencyProgressApi competencyProgressService, LectureUnitService lectureUnitService) {
         this.attachmentUnitRepository = attachmentUnitRepository;
         this.attachmentRepository = attachmentRepository;
         this.fileService = fileService;
@@ -107,17 +107,19 @@ public class AttachmentUnitService {
      * @param updateUnit             The new attachment unit data.
      * @param updateAttachment       The new attachment data.
      * @param updateFile             The optional file.
+     * @param studentVersionFile     The student version of the original file.
      * @param keepFilename           Whether to keep the original filename or not.
      * @param hiddenPages            The hidden pages of attachment unit.
      * @return The updated attachment unit.
      */
     public AttachmentUnit updateAttachmentUnit(AttachmentUnit existingAttachmentUnit, AttachmentUnit updateUnit, Attachment updateAttachment, MultipartFile updateFile,
-            boolean keepFilename, String hiddenPages) {
+            MultipartFile studentVersionFile, boolean keepFilename, String hiddenPages) {
         Set<CompetencyLectureUnitLink> existingCompetencyLinks = new HashSet<>(existingAttachmentUnit.getCompetencyLinks());
 
         existingAttachmentUnit.setDescription(updateUnit.getDescription());
         existingAttachmentUnit.setName(updateUnit.getName());
         existingAttachmentUnit.setReleaseDate(updateUnit.getReleaseDate());
+        existingAttachmentUnit.setCompetencyLinks(updateUnit.getCompetencyLinks());
 
         AttachmentUnit savedAttachmentUnit = lectureUnitService.saveWithCompetencyLinks(existingAttachmentUnit, attachmentUnitRepository::saveAndFlush);
 
@@ -128,6 +130,7 @@ public class AttachmentUnitService {
 
         updateAttachment(existingAttachment, updateAttachment, savedAttachmentUnit);
         handleFile(updateFile, existingAttachment, keepFilename, savedAttachmentUnit.getId());
+        handleStudentVersionFile(studentVersionFile, existingAttachment, savedAttachmentUnit.getId());
         final int revision = existingAttachment.getVersion() == null ? 1 : existingAttachment.getVersion() + 1;
         existingAttachment.setVersion(revision);
         Attachment savedAttachment = attachmentRepository.saveAndFlush(existingAttachment);
@@ -188,6 +191,30 @@ public class AttachmentUnitService {
             Path savePath = fileService.saveFile(file, basePath, keepFilename);
             attachment.setLink(FilePathService.publicPathForActualPathOrThrow(savePath, attachmentUnitId).toString());
             attachment.setUploadDate(ZonedDateTime.now());
+        }
+    }
+
+    /**
+     * Handles the student version file of an attachment, updates its reference in the database,
+     * and deletes the old version if it exists.
+     *
+     * @param studentVersionFile the new student version file to be saved
+     * @param attachment         the existing attachment
+     * @param attachmentUnitId   the id of the attachment unit
+     */
+    public void handleStudentVersionFile(MultipartFile studentVersionFile, Attachment attachment, Long attachmentUnitId) {
+        if (studentVersionFile != null) {
+            // Delete the old student version
+            if (attachment.getStudentVersion() != null) {
+                URI oldStudentVersionPath = URI.create(attachment.getStudentVersion());
+                fileService.schedulePathForDeletion(FilePathService.actualPathForPublicPathOrThrow(oldStudentVersionPath), 0);
+                this.fileService.evictCacheForPath(FilePathService.actualPathForPublicPathOrThrow(oldStudentVersionPath));
+            }
+
+            // Update student version of attachment
+            Path basePath = FilePathService.getAttachmentUnitFilePath().resolve(attachmentUnitId.toString());
+            Path savePath = fileService.saveFile(studentVersionFile, basePath.resolve("student"), true);
+            attachment.setStudentVersion(FilePathService.publicPathForActualPath(savePath, attachmentUnitId).toString());
         }
     }
 

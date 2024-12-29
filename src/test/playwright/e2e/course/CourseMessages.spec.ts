@@ -6,7 +6,7 @@ import { generateUUID, titleLowercase } from '../../support/utils';
 import { Channel } from 'app/entities/metis/conversation/channel.model';
 import { GroupChat } from 'app/entities/metis/conversation/group-chat.model';
 
-test.describe('Course messages', () => {
+test.describe('Course messages', { tag: '@fast' }, () => {
     let course: Course;
 
     test.beforeEach('Create course', async ({ login, courseManagementAPIRequests, courseMessages }) => {
@@ -142,12 +142,14 @@ test.describe('Course messages', () => {
                 await login(instructor, `/courses/${course.id}/communication?conversationId=${channel.id}`);
                 const newName = 'new-test-name';
                 const topic = 'test-topic';
-                await courseMessages.getName().click();
+
+                // each edit action triggers an update to the server, on multinode this can lead to a race condition
                 await courseMessages.editName(newName);
                 await courseMessages.editTopic(topic);
                 await courseMessages.editDescription('New Description');
-                await courseMessages.closeEditPanel();
+
                 await page.reload();
+                await page.locator('jhi-conversation-header').waitFor({ state: 'visible', timeout: 10000 });
                 await expect(courseMessages.getName()).toContainText(newName);
                 await expect(courseMessages.getTopic()).toContainText(topic);
             });

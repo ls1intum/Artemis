@@ -1,9 +1,10 @@
 import { Component, computed, input, output, signal } from '@angular/core';
-import { IconDefinition, faExternalLinkAlt, faSquare, faSquareCheck } from '@fortawesome/free-solid-svg-icons';
+import { IconDefinition, faDownload, faExternalLinkAlt, faSquare, faSquareCheck } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
 import { ArtemisSharedCommonModule } from 'app/shared/shared-common.module';
 import { NgbCollapseModule } from '@ng-bootstrap/ng-bootstrap';
 import { LectureUnit } from 'app/entities/lecture-unit/lectureUnit.model';
+import { Router } from '@angular/router';
 
 @Component({
     selector: 'jhi-lecture-unit-card',
@@ -13,11 +14,17 @@ import { LectureUnit } from 'app/entities/lecture-unit/lectureUnit.model';
     styleUrl: './lecture-unit.component.scss',
 })
 export class LectureUnitComponent {
+    constructor(private router: Router) {}
+
+    protected faDownload = faDownload;
     protected faSquareCheck = faSquareCheck;
     protected faSquare = faSquare;
 
     readonly lectureUnit = input.required<LectureUnit>();
     protected readonly icon = input.required<IconDefinition>();
+
+    readonly showOriginalVersionButton = input<boolean>(false);
+    readonly onShowOriginalVersion = output<void>();
 
     readonly showViewIsolatedButton = input<boolean>(false);
     readonly viewIsolatedButtonLabel = input<string>('artemisApp.textUnit.isolated');
@@ -32,6 +39,7 @@ export class LectureUnitComponent {
     readonly onCompletion = output<boolean>();
 
     readonly isVisibleToStudents = computed(() => this.lectureUnit().visibleToStudents);
+    readonly isStudentPath = computed(() => this.router.url.startsWith('/courses'));
 
     toggleCompletion(event: Event) {
         event.stopPropagation();
@@ -46,5 +54,10 @@ export class LectureUnitComponent {
     handleIsolatedView(event: Event) {
         event.stopPropagation();
         this.onShowIsolated.emit();
+    }
+
+    handleOriginalVersionView(event: Event) {
+        event.stopPropagation();
+        this.onShowOriginalVersion.emit();
     }
 }

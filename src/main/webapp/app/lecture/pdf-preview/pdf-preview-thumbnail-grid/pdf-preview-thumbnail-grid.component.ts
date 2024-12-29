@@ -5,23 +5,19 @@ import { ArtemisSharedModule } from 'app/shared/shared.module';
 import { onError } from 'app/shared/util/global.utils';
 import { AlertService } from 'app/core/util/alert.service';
 import { PdfPreviewEnlargedCanvasComponent } from 'app/lecture/pdf-preview/pdf-preview-enlarged-canvas/pdf-preview-enlarged-canvas.component';
-import { clone } from 'lodash-es';
 import { faEye, faEyeSlash } from '@fortawesome/free-solid-svg-icons';
-import { PdfPreviewDateBoxComponent } from 'app/lecture/pdf-preview/pdf-preview-date-box/pdf-preview-date-box.component';
-import { Lecture } from 'app/entities/lecture.model';
 
 @Component({
     selector: 'jhi-pdf-preview-thumbnail-grid-component',
     templateUrl: './pdf-preview-thumbnail-grid.component.html',
     styleUrls: ['./pdf-preview-thumbnail-grid.component.scss'],
     standalone: true,
-    imports: [ArtemisSharedModule, PdfPreviewEnlargedCanvasComponent, PdfPreviewDateBoxComponent],
+    imports: [ArtemisSharedModule, PdfPreviewEnlargedCanvasComponent],
 })
 export class PdfPreviewThumbnailGridComponent implements OnChanges {
     pdfContainer = viewChild.required<ElementRef<HTMLDivElement>>('pdfContainer');
 
     // Inputs
-    lecture = input<Lecture>();
     currentPdfUrl = input<string>();
     appendFile = input<boolean>();
     hiddenPages = input<Set<number>>();
@@ -34,7 +30,7 @@ export class PdfPreviewThumbnailGridComponent implements OnChanges {
     selectedPages = signal<Set<number>>(new Set());
     originalCanvas = signal<HTMLCanvasElement | undefined>(undefined);
     newHiddenPages = signal(new Set<number>(this.hiddenPages()!));
-    activeButtonIndex = signal<number | null>(null);
+    initialPageNumber = signal<number>(0);
 
     // Outputs
     isPdfLoading = output<boolean>();
@@ -50,7 +46,7 @@ export class PdfPreviewThumbnailGridComponent implements OnChanges {
 
     ngOnChanges(changes: SimpleChanges): void {
         if (changes['hiddenPages']) {
-            this.newHiddenPages.set(clone(this.hiddenPages()!));
+            this.newHiddenPages.set(new Set(this.hiddenPages()!));
         }
         if (changes['currentPdfUrl']) {
             this.loadPdf(this.currentPdfUrl()!, this.appendFile()!);
@@ -132,14 +128,12 @@ export class PdfPreviewThumbnailGridComponent implements OnChanges {
      * @param event The event object triggered by the click action.
      */
     toggleVisibility(pageIndex: number, event: Event): void {
-        /**if (this.hiddenPages()!.has(pageIndex)) {
+        if (this.hiddenPages()!.has(pageIndex)) {
             this.hiddenPages()!.delete(pageIndex);
         } else {
             this.hiddenPages()!.add(pageIndex);
         }
         this.newHiddenPagesOutput.emit(this.hiddenPages()!);
-        **/
-        this.activeButtonIndex.set(pageIndex);
         event.stopPropagation();
     }
 
@@ -166,5 +160,6 @@ export class PdfPreviewThumbnailGridComponent implements OnChanges {
         const canvas = this.pdfContainer().nativeElement.querySelector(`#pdf-page-${pageIndex} canvas`) as HTMLCanvasElement;
         this.originalCanvas.set(canvas!);
         this.isEnlargedView.set(true);
+        this.initialPageNumber.set(pageIndex);
     }
 }

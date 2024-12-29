@@ -104,6 +104,8 @@ public interface ResultRepository extends ArtemisJpaRepository<Result, Long> {
 
     Optional<Result> findFirstByParticipationIdOrderByCompletionDateDesc(long participationId);
 
+    Optional<Result> findFirstByParticipationIdAndAssessmentTypeOrderByCompletionDateDesc(long participationId, AssessmentType assessmentType);
+
     @EntityGraph(type = LOAD, attributePaths = { "feedbacks", "feedbacks.testCase" })
     Optional<Result> findResultWithFeedbacksAndTestCasesById(long resultId);
 

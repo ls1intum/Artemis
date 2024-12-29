@@ -232,7 +232,7 @@ class AttachmentUnitIntegrationTest extends AbstractSpringIntegrationIndependent
         assertThat(updatedAttachmentUnit.getAttachment()).isEqualTo(persistedAttachment);
         assertThat(updatedAttachmentUnit.getAttachment().getName()).isEqualTo("LoremIpsum");
         assertThat(updatedAttachmentUnit.getCompetencyLinks()).anyMatch(link -> link.getCompetency().getId().equals(competency.getId()));
-        verify(competencyProgressService).updateProgressByLearningObjectAsync(eq(updatedAttachmentUnit));
+        verify(competencyProgressApi).updateProgressByLearningObjectAsync(eq(updatedAttachmentUnit));
     }
 
     @Test
@@ -278,7 +278,8 @@ class AttachmentUnitIntegrationTest extends AbstractSpringIntegrationIndependent
         attachment = attachmentRepository.findById(attachment.getId()).orElseThrow();
         assertThat(attachmentUnit2.getAttachment()).isEqualTo(attachment);
         assertThat(attachment.getAttachmentUnit()).isEqualTo(attachmentUnit2);
-        verify(competencyProgressService, timeout(1000).times(1)).updateProgressForUpdatedLearningObjectAsync(eq(attachmentUnit), eq(Optional.of(attachmentUnit)));
+        assertThat(attachmentUnit1.getCompetencyLinks()).anyMatch(link -> link.getCompetency().getId().equals(competency.getId()));
+        verify(competencyProgressApi, timeout(1000).times(1)).updateProgressForUpdatedLearningObjectAsync(eq(attachmentUnit), eq(Optional.of(attachmentUnit)));
     }
 
     @Test
@@ -334,6 +335,7 @@ class AttachmentUnitIntegrationTest extends AbstractSpringIntegrationIndependent
         this.attachment.setAttachmentUnit(this.attachmentUnit);
         this.attachment = attachmentRepository.save(attachment);
         this.attachmentUnit = this.attachmentUnitRepository.save(this.attachmentUnit);
+        competencyUtilService.linkLectureUnitToCompetency(competency, attachmentUnit);
 
         // 1. check the database call directly
         this.attachmentUnit = this.attachmentUnitRepository.findByIdElseThrow(this.attachmentUnit.getId());
@@ -342,6 +344,7 @@ class AttachmentUnitIntegrationTest extends AbstractSpringIntegrationIndependent
         // 2. check the REST call
         this.attachmentUnit = request.get("/api/lectures/" + lecture1.getId() + "/attachment-units/" + this.attachmentUnit.getId(), HttpStatus.OK, AttachmentUnit.class);
         assertThat(this.attachmentUnit.getAttachment()).isEqualTo(this.attachment);
+        assertThat(this.attachmentUnit.getCompetencyLinks()).anyMatch(link -> link.getCompetency().getId().equals(competency.getId()));
     }
 
     @Test
@@ -354,6 +357,6 @@ class AttachmentUnitIntegrationTest extends AbstractSpringIntegrationIndependent
         assertThat(slideRepository.findAllByAttachmentUnitId(persistedAttachmentUnit.getId())).hasSize(0);
         request.delete("/api/lectures/" + lecture1.getId() + "/lecture-units/" + persistedAttachmentUnit.getId(), HttpStatus.OK);
         request.get("/api/lectures/" + lecture1.getId() + "/attachment-units/" + persistedAttachmentUnit.getId(), HttpStatus.NOT_FOUND, AttachmentUnit.class);
-        verify(competencyProgressService, timeout(1000).times(1)).updateProgressForUpdatedLearningObjectAsync(eq(persistedAttachmentUnit), eq(Optional.empty()));
+        verify(competencyProgressApi, timeout(1000).times(1)).updateProgressForUpdatedLearningObjectAsync(eq(persistedAttachmentUnit), eq(Optional.empty()));
     }
 }

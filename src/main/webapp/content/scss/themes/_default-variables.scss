@@ -54,7 +54,7 @@ $footer-height-prod: 2rem;
 
 // Sidebar
 $sidebar-footer-height-dev: 104px;
-$sidebar-footer-height-prod: 96px;
+$sidebar-footer-height-prod: 88px;
 $sidebar-width: 255px;
 $spacing-modules: 1rem;
 
@@ -581,6 +581,7 @@ $competency-rings-blue-bg: transparentize($competency-rings-blue, 0.8);
 // Iris Chatbot
 // TODO: Use standard colors
 $iris-chat-widget-background: $white;
+$iris-chat-bubble-fade: $white;
 $iris-client-chat-background: var(--gray-200);
 $iris-client-chat-input: $white;
 $iris-my-chat-background: #a9dcb5;

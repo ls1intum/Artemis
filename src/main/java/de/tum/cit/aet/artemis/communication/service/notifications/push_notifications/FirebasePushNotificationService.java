@@ -3,7 +3,6 @@ package de.tum.cit.aet.artemis.communication.service.notifications.push_notifica
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
 import java.util.List;
-import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 
 import org.slf4j.Logger;
@@ -32,8 +31,8 @@ public class FirebasePushNotificationService extends PushNotificationService {
 
     private final PushNotificationDeviceConfigurationRepository repository;
 
-    @Value("${artemis.push-notification-relay:#{null}}")
-    private Optional<String> relayServerBaseUrl;
+    @Value("${artemis.push-notification-relay:https://hermes-sandbox.artemis.cit.tum.de}")
+    private String relayServerBaseUrl;
 
     public FirebasePushNotificationService(PushNotificationDeviceConfigurationRepository pushNotificationDeviceConfigurationRepository, RestTemplate restTemplate) {
         super(restTemplate);
@@ -61,7 +60,7 @@ public class FirebasePushNotificationService extends PushNotificationService {
     }
 
     @Override
-    Optional<String> getRelayBaseUrl() {
+    String getRelayBaseUrl() {
         return relayServerBaseUrl;
     }
 

@@ -25,6 +25,7 @@ import com.hazelcast.map.IMap;
 import de.tum.cit.aet.artemis.buildagent.dto.BuildAgentDTO;
 import de.tum.cit.aet.artemis.buildagent.dto.BuildConfig;
 import de.tum.cit.aet.artemis.buildagent.dto.BuildJobQueueItem;
+import de.tum.cit.aet.artemis.buildagent.dto.DockerRunConfig;
 import de.tum.cit.aet.artemis.buildagent.dto.JobTimingInfo;
 import de.tum.cit.aet.artemis.buildagent.dto.RepositoryInfo;
 import de.tum.cit.aet.artemis.core.config.ProgrammingLanguageConfiguration;
@@ -36,15 +37,18 @@ import de.tum.cit.aet.artemis.exercise.service.ExerciseDateService;
 import de.tum.cit.aet.artemis.programming.domain.AuxiliaryRepository;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseBuildConfig;
+import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseBuildStatistics;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseParticipation;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingLanguage;
 import de.tum.cit.aet.artemis.programming.domain.ProjectType;
 import de.tum.cit.aet.artemis.programming.domain.RepositoryType;
 import de.tum.cit.aet.artemis.programming.repository.AuxiliaryRepositoryRepository;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseBuildConfigRepository;
+import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseBuildStatisticsRepository;
 import de.tum.cit.aet.artemis.programming.repository.SolutionProgrammingExerciseParticipationRepository;
 import de.tum.cit.aet.artemis.programming.service.BuildScriptProviderService;
 import de.tum.cit.aet.artemis.programming.service.GitService;
+import de.tum.cit.aet.artemis.programming.service.ProgrammingExerciseBuildConfigService;
 import de.tum.cit.aet.artemis.programming.service.ProgrammingLanguageFeature;
 import de.tum.cit.aet.artemis.programming.service.aeolus.AeolusResult;
 import de.tum.cit.aet.artemis.programming.service.aeolus.AeolusTemplateService;
@@ -95,18 +99,29 @@ public class LocalCITriggerService implements ContinuousIntegrationTriggerServic
 
     private final ProgrammingExerciseBuildConfigRepository programmingExerciseBuildConfigRepository;
 
+    private final ProgrammingExerciseBuildStatisticsRepository programmingExerciseBuildStatisticsRepository;
+
     private IQueue<BuildJobQueueItem> queue;
 
     private IMap<String, ZonedDateTime> dockerImageCleanupInfo;
 
     private final ExerciseDateService exerciseDateService;
 
+    private final ProgrammingExerciseBuildConfigService programmingExerciseBuildConfigService;
+
+    private static final int DEFAULT_BUILD_DURATION = 17;
+
+    // Arbitrary value to ensure that the build duration is always a bit higher than the actual build duration
+    private static final double BUILD_DURATION_SAFETY_FACTOR = 1.2;
+
     public LocalCITriggerService(@Qualifier("hazelcastInstance") HazelcastInstance hazelcastInstance, AeolusTemplateService aeolusTemplateService,
             ProgrammingLanguageConfiguration programmingLanguageConfiguration, AuxiliaryRepositoryRepository auxiliaryRepositoryRepository,
             LocalCIProgrammingLanguageFeatureService programmingLanguageFeatureService, Optional<VersionControlService> versionControlService,
             SolutionProgrammingExerciseParticipationRepository solutionProgrammingExerciseParticipationRepository,
             LocalCIBuildConfigurationService localCIBuildConfigurationService, GitService gitService, ExerciseDateService exerciseDateService,
-            ProgrammingExerciseBuildConfigRepository programmingExerciseBuildConfigRepository, BuildScriptProviderService buildScriptProviderService) {
+            ProgrammingExerciseBuildConfigRepository programmingExerciseBuildConfigRepository, BuildScriptProviderService buildScriptProviderService,
+            ProgrammingExerciseBuildConfigService programmingExerciseBuildConfigService,
+            ProgrammingExerciseBuildStatisticsRepository programmingExerciseBuildStatisticsRepository) {
         this.hazelcastInstance = hazelcastInstance;
         this.aeolusTemplateService = aeolusTemplateService;
         this.programmingLanguageConfiguration = programmingLanguageConfiguration;
@@ -119,6 +134,8 @@ public class LocalCITriggerService implements ContinuousIntegrationTriggerServic
         this.programmingExerciseBuildConfigRepository = programmingExerciseBuildConfigRepository;
         this.exerciseDateService = exerciseDateService;
         this.buildScriptProviderService = buildScriptProviderService;
+        this.programmingExerciseBuildConfigService = programmingExerciseBuildConfigService;
+        this.programmingExerciseBuildStatisticsRepository = programmingExerciseBuildStatisticsRepository;
     }
 
     @PostConstruct
@@ -189,9 +206,14 @@ public class LocalCITriggerService implements ContinuousIntegrationTriggerServic
 
         String buildJobId = String.valueOf(participation.getId()) + submissionDate.toInstant().toEpochMilli();
 
-        JobTimingInfo jobTimingInfo = new JobTimingInfo(submissionDate, null, null);
-
         var programmingExerciseBuildConfig = loadBuildConfig(programmingExercise);
+
+        var buildStatics = loadBuildStatistics(programmingExercise);
+
+        long estimatedDuration = (buildStatics != null && buildStatics.getBuildDurationSeconds() > 0) ? buildStatics.getBuildDurationSeconds() : DEFAULT_BUILD_DURATION;
+        estimatedDuration = Math.round(estimatedDuration * BUILD_DURATION_SAFETY_FACTOR);
+
+        JobTimingInfo jobTimingInfo = new JobTimingInfo(submissionDate, null, null, null, estimatedDuration);
 
         RepositoryInfo repositoryInfo = getRepositoryInfo(participation, triggeredByPushTo, programmingExerciseBuildConfig);
 
@@ -203,7 +225,8 @@ public class LocalCITriggerService implements ContinuousIntegrationTriggerServic
                 programmingExercise.getId(), 0, priority, null, repositoryInfo, jobTimingInfo, buildConfig, null);
 
         queue.add(buildJobQueueItem);
-        log.info("Added build job {} to the queue", buildJobId);
+        log.info("Added build job {} for exercise {} and participation {} with priority {} to the queue", buildJobId, programmingExercise.getShortName(), participation.getId(),
+                priority);
 
         dockerImageCleanupInfo.put(buildConfig.dockerImage(), jobTimingInfo.submissionDate());
     }
@@ -310,6 +333,8 @@ public class LocalCITriggerService implements ContinuousIntegrationTriggerServic
             dockerImage = programmingLanguageConfiguration.getImage(programmingExercise.getProgrammingLanguage(), Optional.ofNullable(programmingExercise.getProjectType()));
         }
 
+        DockerRunConfig dockerRunConfig = programmingExerciseBuildConfigService.getDockerRunConfig(buildConfig);
+
         List<String> resultPaths = getTestResultPaths(windfile);
         resultPaths = buildScriptProviderService.replaceResultPathsPlaceholders(resultPaths, buildConfig);
 
@@ -319,11 +344,15 @@ public class LocalCITriggerService implements ContinuousIntegrationTriggerServic
 
         return new BuildConfig(buildScript, dockerImage, commitHashToBuild, assignmentCommitHash, testCommitHash, branch, programmingLanguage, projectType,
                 staticCodeAnalysisEnabled, sequentialTestRunsEnabled, testwiseCoverageEnabled, resultPaths, buildConfig.getTimeoutSeconds(),
-                buildConfig.getAssignmentCheckoutPath(), buildConfig.getTestCheckoutPath(), buildConfig.getSolutionCheckoutPath());
+                buildConfig.getAssignmentCheckoutPath(), buildConfig.getTestCheckoutPath(), buildConfig.getSolutionCheckoutPath(), dockerRunConfig);
     }
 
     private ProgrammingExerciseBuildConfig loadBuildConfig(ProgrammingExercise programmingExercise) {
         return programmingExerciseBuildConfigRepository.getProgrammingExerciseBuildConfigElseThrow(programmingExercise);
+    }
+
+    private ProgrammingExerciseBuildStatistics loadBuildStatistics(ProgrammingExercise programmingExercise) {
+        return programmingExerciseBuildStatisticsRepository.findByExerciseId(programmingExercise.getId()).orElse(null);
     }
 
     /**

@@ -29,7 +29,7 @@ class ProgrammingExerciseIntegrationJenkinsGitlabTest extends AbstractProgrammin
     @BeforeEach
     void initTestCase() throws Exception {
         gitlabRequestMockProvider.enableMockingOfRequests();
-        jenkinsRequestMockProvider.enableMockingOfRequests(jenkinsServer);
+        jenkinsRequestMockProvider.enableMockingOfRequests(jenkinsServer, jenkinsJobPermissionsService);
         programmingExerciseIntegrationTestService.setup(TEST_PREFIX, this, versionControlService, continuousIntegrationService);
     }
 
@@ -72,6 +72,18 @@ class ProgrammingExerciseIntegrationJenkinsGitlabTest extends AbstractProgrammin
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testExportSubmissionsByParticipationIds_includePracticeSubmissions() throws Exception {
         programmingExerciseIntegrationTestService.testExportSubmissionsByParticipationIds_includePracticeSubmissions();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testExportSubmissionsByParticipationIds_addParticipantIdentifierToProjectNameError() throws Exception {
+        programmingExerciseIntegrationTestService.testExportSubmissionsByParticipationIds_addParticipantIdentifierToProjectNameError();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testExportSubmissionsByParticipationIds_addParticipantIdentifierToProjectName() throws Exception {
+        programmingExerciseIntegrationTestService.testExportSubmissionsByParticipationIds_addParticipantIdentifierToProjectName();
     }
 
     @Test
@@ -560,6 +572,12 @@ class ProgrammingExerciseIntegrationJenkinsGitlabTest extends AbstractProgrammin
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void createProgrammingExercise_projectTypeNotExpected_badRequest() throws Exception {
         programmingExerciseIntegrationTestService.createProgrammingExercise_projectTypeNotExpected_badRequest();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void createProgrammingExercise_onlineCodeEditorNotExpected_badRequest() throws Exception {
+        programmingExerciseIntegrationTestService.createProgrammingExercise_onlineCodeEditorNotExpected_badRequest();
     }
 
     private static Set<ProgrammingLanguage> generateSupportedLanguagesWithoutHaskell() {

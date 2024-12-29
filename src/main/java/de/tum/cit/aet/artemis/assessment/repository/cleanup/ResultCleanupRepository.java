@@ -26,6 +26,8 @@ public interface ResultCleanupRepository extends ArtemisJpaRepository<Result, Lo
 
     /**
      * Deletes {@link Result} entries that have no participation and no submission.
+     *
+     * @return the number of deleted entities
      */
     @Modifying
     @Transactional // ok because of delete
@@ -35,7 +37,20 @@ public interface ResultCleanupRepository extends ArtemisJpaRepository<Result, Lo
             WHERE r.participation IS NULL
                 AND r.submission IS NULL
             """)
-    void deleteResultWithoutParticipationAndSubmission();
+    int deleteResultWithoutParticipationAndSubmission();
+
+    /**
+     * Counts {@link Result} entries that have no participation and no submission.
+     *
+     * @return the number of entities that would be deleted
+     */
+    @Query("""
+            SELECT COUNT(r)
+            FROM Result r
+            WHERE r.participation IS NULL
+                AND r.submission IS NULL
+            """)
+    int countResultWithoutParticipationAndSubmission();
 
     /**
      * Deletes non-rated {@link Result} entries that are not the latest result where the associated {@link Participation} and {@link Exercise} are not null,
@@ -45,6 +60,7 @@ public interface ResultCleanupRepository extends ArtemisJpaRepository<Result, Lo
      *
      * @param deleteFrom the start date for selecting courses
      * @param deleteTo   the end date for selecting courses
+     * @return the number of deleted entities
      */
     @Modifying
     @Transactional // ok because of delete
@@ -71,7 +87,41 @@ public interface ResultCleanupRepository extends ArtemisJpaRepository<Result, Lo
                         )
                     )
             """)
-    void deleteNonLatestNonRatedResultsWhereCourseDateBetween(@Param("deleteFrom") ZonedDateTime deleteFrom, @Param("deleteTo") ZonedDateTime deleteTo);
+    int deleteNonLatestNonRatedResultsWhereCourseDateBetween(@Param("deleteFrom") ZonedDateTime deleteFrom, @Param("deleteTo") ZonedDateTime deleteTo);
+
+    /**
+     * Counts non-rated {@link Result} entries that are not the latest result where the associated {@link Participation} and {@link Exercise} are not null,
+     * and the course's start and end dates fall between the specified date range.
+     *
+     * @param deleteFrom the start date for selecting courses
+     * @param deleteTo   the end date for selecting courses
+     * @return the number of entities that would be deleted
+     */
+    @Query("""
+            SELECT COUNT(r)
+            FROM Result r
+            WHERE r.rated = FALSE
+                AND r.participation IS NOT NULL
+                AND r.participation.exercise IS NOT NULL
+                AND EXISTS (
+                    SELECT 1
+                    FROM Course c
+                        LEFT JOIN c.exercises e
+                    WHERE e = r.participation.exercise
+                        AND c.endDate < :deleteTo
+                        AND c.startDate > :deleteFrom
+                    )
+                AND r.id NOT IN (
+                    SELECT max_id
+                    FROM (
+                        SELECT MAX(r2.id) AS max_id
+                        FROM Result r2
+                        WHERE r2.rated = FALSE
+                        GROUP BY r2.participation.id
+                        )
+                    )
+            """)
+    int countNonLatestNonRatedResultsWhereCourseDateBetween(@Param("deleteFrom") ZonedDateTime deleteFrom, @Param("deleteTo") ZonedDateTime deleteTo);
 
     /**
      * Deletes rated {@link Result} entries that are not the latest rated result for a {@link Participation}, within courses
@@ -81,6 +131,7 @@ public interface ResultCleanupRepository extends ArtemisJpaRepository<Result, Lo
      *
      * @param deleteFrom the start date for selecting courses
      * @param deleteTo   the end date for selecting courses
+     * @return the number of deleted entities
      */
     @Modifying
     @Transactional // ok because of delete
@@ -107,5 +158,39 @@ public interface ResultCleanupRepository extends ArtemisJpaRepository<Result, Lo
                         )
                     )
             """)
-    void deleteNonLatestRatedResultsWhereCourseDateBetween(@Param("deleteFrom") ZonedDateTime deleteFrom, @Param("deleteTo") ZonedDateTime deleteTo);
+    int deleteNonLatestRatedResultsWhereCourseDateBetween(@Param("deleteFrom") ZonedDateTime deleteFrom, @Param("deleteTo") ZonedDateTime deleteTo);
+
+    /**
+     * Counts rated {@link Result} entries that are not the latest rated result for a {@link Participation}, within courses
+     * conducted between the specified date range.
+     *
+     * @param deleteFrom the start date for selecting courses
+     * @param deleteTo   the end date for selecting courses
+     * @return the number of entities that would be deleted
+     */
+    @Query("""
+            SELECT COUNT(r)
+            FROM Result r
+            WHERE r.rated = TRUE
+                AND r.participation IS NOT NULL
+                AND r.participation.exercise IS NOT NULL
+                AND EXISTS (
+                    SELECT 1
+                    FROM Course c
+                        LEFT JOIN c.exercises e
+                    WHERE e = r.participation.exercise
+                        AND c.endDate < :deleteTo
+                        AND c.startDate > :deleteFrom
+                    )
+                AND r.id NOT IN (
+                    SELECT max_id
+                    FROM (
+                        SELECT MAX(r2.id) AS max_id
+                        FROM Result r2
+                        WHERE r2.rated = TRUE
+                        GROUP BY r2.participation.id
+                        )
+                    )
+            """)
+    int countNonLatestRatedResultsWhereCourseDateBetween(@Param("deleteFrom") ZonedDateTime deleteFrom, @Param("deleteTo") ZonedDateTime deleteTo);
 }

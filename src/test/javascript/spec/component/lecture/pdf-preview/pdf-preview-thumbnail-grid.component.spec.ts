@@ -6,9 +6,7 @@ import { AlertService } from 'app/core/util/alert.service';
 import { HttpClientModule } from '@angular/common/http';
 import { TranslateService } from '@ngx-translate/core';
 import { PdfPreviewThumbnailGridComponent } from 'app/lecture/pdf-preview/pdf-preview-thumbnail-grid/pdf-preview-thumbnail-grid.component';
-import { getDocument } from 'pdfjs-dist';
-import * as GlobalUtils from 'app/shared/util/global.utils';
-import { ElementRef, Signal } from '@angular/core';
+import { ElementRef, InputSignal, Signal, SimpleChanges } from '@angular/core';
 
 jest.mock('pdfjs-dist', () => {
     return {
@@ -40,7 +38,6 @@ describe('PdfPreviewThumbnailGridComponent', () => {
     beforeEach(async () => {
         alertServiceMock = {
             error: jest.fn(),
-            addAlert: jest.fn(),
         };
 
         await TestBed.configureTestingModule({
@@ -62,115 +59,91 @@ describe('PdfPreviewThumbnailGridComponent', () => {
         jest.clearAllMocks();
     });
 
-    it('should handle changes to inputs correctly in ngOnChanges', async () => {
-        const initialHiddenPages = new Set<number>([1, 2]);
-        const updatedHiddenPages = new Set<number>([3, 4]);
-        const initialPdfUrl = 'old-pdf-url';
-        const updatedPdfUrl = 'new-pdf-url';
+    it('should update newHiddenPages when hiddenPages changes', () => {
+        const initialHiddenPages = new Set<number>([1, 2, 3]);
+        const updatedHiddenPages = new Set<number>([4, 5, 6]);
 
-        fixture.componentRef.setInput('hiddenPages', initialHiddenPages);
-        fixture.componentRef.setInput('currentPdfUrl', initialPdfUrl);
-        fixture.detectChanges(); // Trigger initial bindings
+        component.hiddenPages = jest.fn(() => updatedHiddenPages) as unknown as InputSignal<Set<number>>;
 
-        const loadPdfSpy = jest.spyOn(component, 'loadPdf').mockImplementation();
-
-        fixture.componentRef.setInput('hiddenPages', updatedHiddenPages);
-        fixture.componentRef.setInput('currentPdfUrl', updatedPdfUrl);
-
-        component.ngOnChanges({
+        const changes: SimpleChanges = {
             hiddenPages: {
-                previousValue: initialHiddenPages,
                 currentValue: updatedHiddenPages,
+                previousValue: initialHiddenPages,
                 firstChange: false,
                 isFirstChange: () => false,
             },
-            currentPdfUrl: {
-                previousValue: initialPdfUrl,
-                currentValue: updatedPdfUrl,
-                firstChange: false,
-                isFirstChange: () => false,
-            },
-        });
+        };
+        component.ngOnChanges(changes);
 
-        expect(component.newHiddenPages()).toEqual(updatedHiddenPages); // Check newHiddenPages signal is updated
-        expect(loadPdfSpy).toHaveBeenCalledWith(updatedPdfUrl, component.appendFile()); // Verify loadPdf is called with correct args
+        expect(component.newHiddenPages()).toEqual(new Set(updatedHiddenPages));
+    });
+
+    it('should load the PDF when currentPdfUrl changes', async () => {
+        const mockLoadPdf = jest.spyOn(component, 'loadPdf').mockResolvedValue();
+        const initialPdfUrl = 'initial.pdf';
+        const updatedPdfUrl = 'updated.pdf';
+
+        let currentPdfUrlValue = initialPdfUrl;
+        component.currentPdfUrl = jest.fn(() => currentPdfUrlValue) as unknown as InputSignal<string>;
+        component.appendFile = jest.fn(() => false) as unknown as InputSignal<boolean>;
+
+        currentPdfUrlValue = updatedPdfUrl;
+        const changes: SimpleChanges = {
+            currentPdfUrl: {
+                currentValue: updatedPdfUrl,
+                previousValue: initialPdfUrl,
+                firstChange: false,
+                isFirstChange: () => false,
+            },
+        };
+        await component.ngOnChanges(changes);
+
+        expect(mockLoadPdf).toHaveBeenCalledWith(updatedPdfUrl, false);
     });
 
     it('should load PDF and render pages', async () => {
-        fixture.componentRef.setInput('currentPdfUrl', 'fake-url');
-        fixture.componentRef.setInput('appendFile', false);
-
-        const mockCanvas = document.createElement('canvas');
-        jest.spyOn(component as any, 'createCanvas').mockReturnValue(mockCanvas);
+        const spyCreateCanvas = jest.spyOn(component as any, 'createCanvas');
 
         await component.loadPdf('fake-url', false);
 
-        expect(getDocument).toHaveBeenCalledWith('fake-url');
+        expect(spyCreateCanvas).toHaveBeenCalled();
         expect(component.totalPagesArray().size).toBe(1);
     });
 
-    it('should create and configure a canvas element for the given viewport', () => {
-        const mockViewport = {
-            width: 600,
-            height: 800,
-        };
-
-        const canvas = (component as any).createCanvas(mockViewport);
-
-        expect(canvas).toBeInstanceOf(HTMLCanvasElement);
-        expect(canvas.width).toBe(mockViewport.width);
-        expect(canvas.height).toBe(mockViewport.height);
-        expect(canvas.style.display).toBe('block');
-        expect(canvas.style.width).toBe('100%');
-        expect(canvas.style.height).toBe('100%');
-    });
-
-    it('should toggle visibility of a page correctly', () => {
-        const hiddenPagesMock = new Set<number>([1, 2]);
-        fixture.componentRef.setInput('hiddenPages', hiddenPagesMock);
-        component.toggleVisibility(2, new Event('click'));
-
-        expect(hiddenPagesMock.has(2)).toBeFalsy();
-        expect(hiddenPagesMock.has(1)).toBeTruthy();
-    });
-
-    it('should toggle selection of a page correctly', () => {
-        const mockEvent = { target: { checked: true } } as unknown as Event;
-
-        const initialSelectedPages = new Set<number>();
-        component.selectedPages.set(initialSelectedPages);
-        fixture.detectChanges();
-
-        component.togglePageSelection(1, mockEvent);
-
-        expect(component.selectedPages().has(1)).toBeTruthy();
-
-        (mockEvent.target as HTMLInputElement).checked = false;
-        component.togglePageSelection(1, mockEvent);
-
-        expect(component.selectedPages().has(1)).toBeFalsy();
-    });
-
-    it('should handle PDF load errors gracefully', async () => {
-        const errorMessage = 'Error loading PDF';
-
-        (getDocument as jest.Mock).mockReturnValue({
-            promise: Promise.reject(new Error(errorMessage)),
-        });
-
-        const onErrorSpy = jest.spyOn(GlobalUtils, 'onError').mockImplementation();
-        await component.loadPdf('invalid-url', false);
-        expect(onErrorSpy).toHaveBeenCalledWith(alertServiceMock, new Error(errorMessage));
-        onErrorSpy.mockRestore();
-    });
-
-    it('should set the selected canvas as the originalCanvas and enable enlarged view', () => {
+    it('should toggle enlarged view state', () => {
         const mockCanvas = document.createElement('canvas');
-        const mockDiv = document.createElement('div');
-        mockDiv.id = 'pdf-page-1';
-        mockDiv.appendChild(mockCanvas);
+        component.originalCanvas.set(mockCanvas);
+        component.isEnlargedView.set(true);
+        expect(component.isEnlargedView()).toBeTruthy();
 
-        const pdfContainerMock: ElementRef<HTMLDivElement> = {
+        component.isEnlargedView.set(false);
+        expect(component.isEnlargedView()).toBeFalsy();
+    });
+
+    it('should toggle visibility of a page', () => {
+        fixture.componentRef.setInput('hiddenPages', new Set([1]));
+        component.toggleVisibility(1, new MouseEvent('click'));
+        expect(component.hiddenPages()!.has(1)).toBeFalse();
+
+        component.toggleVisibility(2, new MouseEvent('click'));
+        expect(component.hiddenPages()!.has(2)).toBeTrue();
+    });
+
+    it('should select and deselect pages', () => {
+        component.togglePageSelection(1, { target: { checked: true } } as unknown as Event);
+        expect(component.selectedPages().has(1)).toBeTrue();
+
+        component.togglePageSelection(1, { target: { checked: false } } as unknown as Event);
+        expect(component.selectedPages().has(1)).toBeFalse();
+    });
+
+    it('should handle enlarged view correctly for a specific page', () => {
+        const mockCanvas = document.createElement('canvas');
+        const container = document.createElement('div');
+        container.id = 'pdf-page-1';
+        container.appendChild(mockCanvas);
+
+        component.pdfContainer = jest.fn(() => ({
             nativeElement: {
                 querySelector: jest.fn((selector: string) => {
                     if (selector === '#pdf-page-1 canvas') {
@@ -179,13 +152,11 @@ describe('PdfPreviewThumbnailGridComponent', () => {
                     return null;
                 }),
             },
-        } as unknown as ElementRef<HTMLDivElement>;
+        })) as unknown as Signal<ElementRef<HTMLDivElement>>;
 
-        component.pdfContainer = jest.fn(() => pdfContainerMock) as unknown as Signal<ElementRef<HTMLDivElement>>;
         component.displayEnlargedCanvas(1);
 
-        expect(pdfContainerMock.nativeElement.querySelector).toHaveBeenCalledWith('#pdf-page-1 canvas');
         expect(component.originalCanvas()).toBe(mockCanvas);
-        expect(component.isEnlargedView()).toBeTrue();
+        expect(component.isEnlargedView()).toBeTruthy();
     });
 });

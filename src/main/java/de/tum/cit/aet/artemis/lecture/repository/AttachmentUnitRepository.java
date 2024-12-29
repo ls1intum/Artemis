@@ -3,6 +3,7 @@ package de.tum.cit.aet.artemis.lecture.repository;
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
 import java.util.List;
+import java.util.Optional;
 
 import jakarta.validation.constraints.NotNull;
 
@@ -62,5 +63,9 @@ public interface AttachmentUnitRepository extends ArtemisJpaRepository<Attachmen
                 LEFT JOIN FETCH cl.competency
             WHERE attachmentUnit.id = :attachmentUnitId
             """)
-    AttachmentUnit findOneWithSlidesAndCompetencies(@Param("attachmentUnitId") long attachmentUnitId);
+    Optional<AttachmentUnit> findWithSlidesAndCompetenciesById(@Param("attachmentUnitId") long attachmentUnitId);
+
+    default AttachmentUnit findWithSlidesAndCompetenciesByIdElseThrow(long attachmentUnitId) {
+        return getValueElseThrow(findWithSlidesAndCompetenciesById(attachmentUnitId), attachmentUnitId);
+    }
 }

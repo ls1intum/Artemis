@@ -82,11 +82,22 @@ describe('AttachmentUnitComponent', () => {
     });
 
     it('should handle download', () => {
-        const downloadFileSpy = jest.spyOn(fileService, 'downloadFile');
+        const createStudentLinkSpy = jest.spyOn(fileService, 'createStudentLink');
+        const downloadFileSpy = jest.spyOn(fileService, 'downloadFileByAttachmentName');
         const onCompletionEmitSpy = jest.spyOn(component.onCompletion, 'emit');
 
-        fixture.detectChanges();
         component.handleDownload();
+
+        expect(createStudentLinkSpy).toHaveBeenCalledOnce();
+        expect(downloadFileSpy).toHaveBeenCalledOnce();
+        expect(onCompletionEmitSpy).toHaveBeenCalledOnce();
+    });
+
+    it('should handle original version', () => {
+        const downloadFileSpy = jest.spyOn(fileService, 'downloadFileByAttachmentName');
+        const onCompletionEmitSpy = jest.spyOn(component.onCompletion, 'emit');
+
+        component.handleOriginalVersion();
 
         expect(downloadFileSpy).toHaveBeenCalledOnce();
         expect(onCompletionEmitSpy).toHaveBeenCalledOnce();
@@ -113,7 +124,7 @@ describe('AttachmentUnitComponent', () => {
     });
 
     it('should download attachment when clicked', () => {
-        const downloadFileSpy = jest.spyOn(fileService, 'downloadFile');
+        const downloadFileSpy = jest.spyOn(fileService, 'downloadFileByAttachmentName');
 
         fixture.detectChanges();
 

@@ -15,6 +15,13 @@
     flex-direction: column;
 }
 
+.chat-widget-top-resize-area {
+    position: absolute;
+    height: 5px;
+    width: 100%;
+    z-index: 10;
+}
+
 .ng-draggable {
     cursor: grab;
 }

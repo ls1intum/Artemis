@@ -1,6 +1,7 @@
 import { MockInstance } from 'ng-mocks';
 import { CodeEditorMonacoComponent } from 'app/exercises/programming/shared/code-editor/monaco/code-editor-monaco.component';
 import { signal } from '@angular/core';
+import { ThemeSwitchComponent } from 'app/core/theme/theme-switch.component';
 
 /*
  * This file contains mock instances for the tests where they would otherwise fail due to the use of a signal-based viewChild or contentChild with MockComponent(SomeComponent).
@@ -17,5 +18,12 @@ export function mockCodeEditorMonacoViewChildren() {
         editor: signal<any>({}),
         inlineFeedbackComponents: signal<any[]>([]),
         inlineFeedbackSuggestionComponents: signal<any[]>([]),
+    }));
+}
+
+export function mockThemeSwitcherComponentViewChildren() {
+    MockInstance.scope('case');
+    MockInstance(ThemeSwitchComponent, () => ({
+        popover: signal<any>({}),
     }));
 }

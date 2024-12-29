@@ -31,6 +31,7 @@
             "endDate": "End Date",
             "visibleDate": "Visible from",
             "course": "Course",
+            "ingestionState": "Ingestion State",
             "detail": {
                 "title": "Lecture",
                 "sections": {
@@ -79,17 +80,20 @@
                     "attachmentsStepTitle": "Attachments",
                     "attachmentsStepMessage": "Upload attachments to this lecture.",
                     "unitsStepTitle": "Units",
-                    "unitsStepMessage": "Add content to the lecture by creating different kinds of lecture units.",
-                    "competenciesStepTitle": "Competencies",
-                    "competenciesStepMessage": "Make it easily visible what knowledge students will achieve when completing the units of this lecture by connecting them to competencies."
+                    "unitsStepMessage": "Add content to the lecture by creating different kinds of lecture units."
                 },
                 "newLectureUnit": "New Lecture Unit",
                 "editLectureUnit": "Edit Lecture Unit",
                 "newExercise": "Create new exercise",
-                "backToWizard": "Back to lecture",
                 "competencyTitle": "Title",
                 "competencyConnectedUnits": "Connected Units",
                 "competencyNoConnectedUnits": "No connected units"
+            },
+            "dismissChangesModal": {
+                "title": "Discard unsaved lecture changes",
+                "message": "Are you sure you want to discard your unsaved changes?",
+                "sectionsThatContainUnsavedChangesSingular": "The following section contains unsaved changes:",
+                "sectionsThatContainUnsavedChangesPlural": "The following sections contain unsaved changes:"
             }
         },
         "attachment": {
@@ -109,12 +113,7 @@
                 "pageDeleteError": "Failed to delete pages: {{error}}",
                 "fileSizeError": "The file size exceeds the limit of 20MB.",
                 "deletePagesQuestion": "Are you sure you want to delete the selected pages?",
-                "deleteAllPagesQuestion": "Are you sure you want to delete all pages? This will result in the deletion of the attachment.",
-                "hiddenAttachmentCreateSuccess": "Attachment with hidden pages created successfully.",
-                "hiddenAttachmentCreateError": "Failed to create attachment with hidden pages: {{error}}",
-                "hiddenAttachmentUpdateSuccess": "Attachment with hidden pages updated successfully.",
-                "hiddenAttachmentUpdateError": "Failed to update attachment with hidden pages: {{error}}",
-                "hiddenAttachmentRetrievalError": "Failed to retrieve attachment with hidden pages: {{error}}"
+                "deleteAllPagesQuestion": "Are you sure you want to delete all pages? This will result in the deletion of the attachment."
             }
         }
     }

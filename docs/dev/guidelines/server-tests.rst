@@ -151,19 +151,19 @@ Follow these tips to write performant tests:
 * Limit object creation in tests and the test setup.
 
 
-6. Avoid using @MockBean
-=========================
+6. Avoid using @MockitoBean
+===========================
 
-Do not use the ``@SpyBean`` or ``@MockBean`` annotation unless absolutely necessary or possibly in an abstract Superclass. `Here <https://www.baeldung.com/spring-tests>`__ you can see why in more detail.
-Whenever``@MockBean`` appears in a class, the application context cache gets marked as dirty, meaning the runner will clean the cache after finishing the test class. The application context is restarted, which leads to an additional server start with runtime overhead.
+Do not use the ``@MockitoSpyBean`` or ``@MockitoBean`` annotation unless absolutely necessary or possibly in an abstract Superclass. `Here <https://www.baeldung.com/spring-tests>`__ you can see why in more detail.
+Whenever``@MockitoBean`` appears in a class, the application context cache gets marked as dirty, meaning the runner will clean the cache after finishing the test class. The application context is restarted, which leads to an additional server start with runtime overhead.
 We want to keep the number of server starts minimal.
 
-Below is an example of how to replace a ``@SpyBean``. To test an edge case where an ``IOException`` is thrown, we mocked the service method so it threw an Exception.
+Below is an example of how to replace a ``@MockitoSpyBean``. To test an edge case where an ``IOException`` is thrown, we mocked the service method so it threw an Exception.
 
 .. code-block:: java
 
     class TestExport extends AbstractSpringIntegrationIndependentTest {
-        @SpyBean
+        @MockitoSpyBean
         private FileUploadSubmissionExportService fileUploadSubmissionExportService;
 
         @Test
@@ -174,7 +174,7 @@ Below is an example of how to replace a ``@SpyBean``. To test an edge case where
         }
     }
 
-To avoid new SpyBeans, we now use `static mocks <https://asolntsev.github.io/en/2020/07/11/mockito-static-methods/>`__. Upon examining the ``export()`` method, we find a ``File.newOutputStream(..)`` call.
+To avoid new MockitoSpyBeans, we now use `static mocks <https://asolntsev.github.io/en/2020/07/11/mockito-static-methods/>`__. Upon examining the ``export()`` method, we find a ``File.newOutputStream(..)`` call.
 Now, instead of mocking the whole service, we can mock the static method:
 
 .. code-block:: java

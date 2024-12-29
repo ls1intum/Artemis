@@ -6,7 +6,7 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.nio.file.Path;
 import java.util.Arrays;
-import java.util.LinkedHashSet;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
@@ -35,6 +35,7 @@ import de.tum.cit.aet.artemis.core.config.Constants;
 import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.dto.CourseDeletionSummaryDTO;
+import de.tum.cit.aet.artemis.core.dto.CourseGroupsDTO;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.core.repository.CourseRepository;
 import de.tum.cit.aet.artemis.core.repository.UserRepository;
@@ -94,14 +95,14 @@ public class AdminCourseResource {
     @GetMapping("courses/groups")
     public ResponseEntity<Set<String>> getAllGroupsForAllCourses() {
         log.debug("REST request to get all Groups for all Courses");
-        List<Course> courses = courseRepository.findAll();
-        Set<String> groups = new LinkedHashSet<>();
-        for (Course course : courses) {
-            groups.add(course.getInstructorGroupName());
-            groups.add(course.getEditorGroupName());
-            groups.add(course.getTeachingAssistantGroupName());
-            groups.add(course.getStudentGroupName());
-        }
+        Set<CourseGroupsDTO> courseGroups = courseRepository.findAllCourseGroups();
+        Set<String> groups = new HashSet<>();
+        courseGroups.forEach(courseGroup -> {
+            groups.add(courseGroup.instructorGroupName());
+            groups.add(courseGroup.editorGroupName());
+            groups.add(courseGroup.teachingAssistantGroupName());
+            groups.add(courseGroup.studentGroupName());
+        });
         return ResponseEntity.ok().body(groups);
     }
 

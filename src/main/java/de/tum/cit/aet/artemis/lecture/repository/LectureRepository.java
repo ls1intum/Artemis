@@ -31,19 +31,24 @@ public interface LectureRepository extends ArtemisJpaRepository<Lecture, Long> {
     @Query("""
             SELECT lecture
             FROM Lecture lecture
-                LEFT JOIN FETCH lecture.attachments a
             WHERE lecture.course.id = :courseId
-                AND a.parentAttachment IS NULL
+            """)
+    Set<Lecture> findAllByCourseId(@Param("courseId") Long courseId);
+
+    @Query("""
+            SELECT lecture
+            FROM Lecture lecture
+                LEFT JOIN FETCH lecture.attachments
+            WHERE lecture.course.id = :courseId
             """)
     Set<Lecture> findAllByCourseIdWithAttachments(@Param("courseId") Long courseId);
 
     @Query("""
             SELECT lecture
             FROM Lecture lecture
-                LEFT JOIN FETCH lecture.attachments a
+                LEFT JOIN FETCH lecture.attachments
                 LEFT JOIN FETCH lecture.lectureUnits
             WHERE lecture.course.id = :courseId
-                AND a.parentAttachment IS NULL
             """)
     Set<Lecture> findAllByCourseIdWithAttachmentsAndLectureUnits(@Param("courseId") Long courseId);
 
@@ -55,14 +60,13 @@ public interface LectureRepository extends ArtemisJpaRepository<Lecture, Long> {
                 LEFT JOIN FETCH lectureUnit.attachment luAttachment
                 LEFT JOIN FETCH lectureUnit.slides slides
             WHERE lecture.course.id = :courseId
-                AND attachment.parentAttachment IS NULL
             """)
     Set<Lecture> findAllByCourseIdWithAttachmentsAndLectureUnitsAndSlides(@Param("courseId") Long courseId);
 
     @Query("""
             SELECT lecture
             FROM Lecture lecture
-                LEFT JOIN FETCH lecture.attachments a
+                LEFT JOIN FETCH lecture.attachments
                 LEFT JOIN FETCH lecture.posts
                 LEFT JOIN FETCH lecture.lectureUnits lu
                 LEFT JOIN FETCH lu.completedUsers cu
@@ -72,7 +76,6 @@ public interface LectureRepository extends ArtemisJpaRepository<Lecture, Long> {
                 LEFT JOIN FETCH e.competencyLinks ecl
                 LEFT JOIN FETCH ecl.competency
             WHERE lecture.id = :lectureId
-                AND a.parentAttachment IS NULL
             """)
     Optional<Lecture> findByIdWithAttachmentsAndPostsAndLectureUnitsAndCompetenciesAndCompletions(@Param("lectureId") Long lectureId);
 
@@ -93,9 +96,16 @@ public interface LectureRepository extends ArtemisJpaRepository<Lecture, Long> {
             SELECT lecture
             FROM Lecture lecture
                 LEFT JOIN FETCH lecture.lectureUnits
-                LEFT JOIN FETCH lecture.attachments a
             WHERE lecture.id = :lectureId
-                AND a.parentAttachment IS NULL
+            """)
+    Optional<Lecture> findByIdWithLectureUnits(@Param("lectureId") Long lectureId);
+
+    @Query("""
+            SELECT lecture
+            FROM Lecture lecture
+                LEFT JOIN FETCH lecture.lectureUnits
+                LEFT JOIN FETCH lecture.attachments
+            WHERE lecture.id = :lectureId
             """)
     Optional<Lecture> findByIdWithLectureUnitsAndAttachments(@Param("lectureId") Long lectureId);
 
@@ -105,9 +115,8 @@ public interface LectureRepository extends ArtemisJpaRepository<Lecture, Long> {
                 LEFT JOIN FETCH lecture.lectureUnits lectureUnit
                 LEFT JOIN FETCH lectureUnit.attachment luAttachment
                 LEFT JOIN FETCH lectureUnit.slides slides
-                LEFT JOIN FETCH lecture.attachments attachment
+                LEFT JOIN FETCH lecture.attachments
             WHERE lecture.id = :lectureId
-                 AND attachment.parentAttachment IS NULL
             """)
     Optional<Lecture> findByIdWithLectureUnitsAndSlidesAndAttachments(@Param("lectureId") long lectureId);
 
@@ -170,6 +179,11 @@ public interface LectureRepository extends ArtemisJpaRepository<Lecture, Long> {
             """)
     @Cacheable(cacheNames = "lectureTitle", key = "#lectureId", unless = "#result == null")
     String getLectureTitle(@Param("lectureId") Long lectureId);
+
+    @NotNull
+    default Lecture findByIdWithLectureUnitsElseThrow(Long lectureId) {
+        return getValueElseThrow(findByIdWithLectureUnits(lectureId), lectureId);
+    }
 
     @NotNull
     default Lecture findByIdWithLectureUnitsAndCompetenciesElseThrow(Long lectureId) {

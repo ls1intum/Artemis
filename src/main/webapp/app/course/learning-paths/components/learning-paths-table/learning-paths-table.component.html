@@ -55,6 +55,7 @@
             </table>
         </div>
         <ngb-pagination
+            [maxSize]="5"
             [collectionSize]="collectionSize()"
             [page]="page()"
             (pageChange)="setPage($event)"

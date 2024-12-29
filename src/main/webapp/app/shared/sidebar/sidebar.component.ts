@@ -1,5 +1,5 @@
 import { Component, EventEmitter, Input, OnChanges, OnDestroy, OnInit, Output, effect, input, output } from '@angular/core';
-import { faFilter, faFilterCircleXmark, faHashtag, faPeopleGroup, faPlusCircle, faSearch, faUser } from '@fortawesome/free-solid-svg-icons';
+import { faCheckDouble, faFilter, faFilterCircleXmark, faHashtag, faPeopleGroup, faPlusCircle, faSearch, faUser } from '@fortawesome/free-solid-svg-icons';
 import { ActivatedRoute, Params } from '@angular/router';
 import { Subscription, distinctUntilChanged } from 'rxjs';
 import { ProfileService } from '../layouts/profiles/profile.service';
@@ -22,12 +22,13 @@ import { ExerciseFilterModalComponent } from 'app/shared/exercise-filter/exercis
     styleUrls: ['./sidebar.component.scss'],
 })
 export class SidebarComponent implements OnDestroy, OnChanges, OnInit {
-    @Output() onSelectConversation = new EventEmitter<number>();
+    @Output() onSelectConversation = new EventEmitter<number | string>();
     @Output() onUpdateSidebar = new EventEmitter<void>();
     onDirectChatPressed = output<void>();
     onGroupChatPressed = output<void>();
     onBrowsePressed = output<void>();
     onCreateChannelPressed = output<void>();
+    onMarkAllChannelsAsRead = output<void>();
     @Input() searchFieldEnabled: boolean = true;
     @Input() sidebarData: SidebarData;
     @Input() courseId?: number;
@@ -61,6 +62,7 @@ export class SidebarComponent implements OnDestroy, OnChanges, OnInit {
     readonly faPlusCircle = faPlusCircle;
     readonly faSearch = faSearch;
     readonly faHashtag = faHashtag;
+    readonly faCheckDouble = faCheckDouble;
 
     sidebarDataBeforeFiltering: SidebarData;
 
@@ -117,7 +119,7 @@ export class SidebarComponent implements OnDestroy, OnChanges, OnInit {
             if (itemId) {
                 this.storeLastSelectedItem(itemId);
                 if (this.sidebarData.sidebarType == 'conversation') {
-                    this.onSelectConversation.emit(+itemId);
+                    this.onSelectConversation.emit(itemId);
                     this.onUpdateSidebar.emit();
                 }
             }
@@ -194,5 +196,9 @@ export class SidebarComponent implements OnDestroy, OnChanges, OnInit {
             achievedScore: scoreAndPointsFilterOptions?.achievedScore,
             achievablePoints: scoreAndPointsFilterOptions?.achievablePoints,
         };
+    }
+
+    markAllMessagesAsChecked() {
+        this.onMarkAllChannelsAsRead.emit();
     }
 }

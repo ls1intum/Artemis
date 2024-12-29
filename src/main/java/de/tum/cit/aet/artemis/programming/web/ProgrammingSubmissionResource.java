@@ -398,8 +398,8 @@ public class ProgrammingSubmissionResource {
 
         if (submission != null) {
             if (lockSubmission) {
-                Result lockedResult = programmingSubmissionService.lockSubmission(submission, correctionRound);
-                submission = (ProgrammingSubmission) lockedResult.getSubmission();
+                // NOTE: we explicitly load the feedback for the submission eagerly to avoid org.hibernate.LazyInitializationException
+                submission = programmingSubmissionService.lockAndGetProgrammingSubmission(submission.getId(), correctionRound);
             }
             submission.getParticipation().setExercise(programmingExercise);
             programmingSubmissionService.hideDetails(submission, user);

@@ -28,6 +28,8 @@ public interface TextBlockCleanupRepository extends ArtemisJpaRepository<TextBlo
     /**
      * Deletes {@link TextBlock} entries linked to {@link Feedback} where the associated {@link Result}
      * has no submission and no participation.
+     *
+     * @return the number of deleted entities
      */
     @Modifying
     @Transactional // ok because of delete
@@ -41,10 +43,31 @@ public interface TextBlockCleanupRepository extends ArtemisJpaRepository<TextBlo
                     AND r.participation IS NULL
                 )
             """)
-    void deleteTextBlockForOrphanResults();
+    int deleteTextBlockForOrphanResults();
+
+    /**
+     * Counts {@link TextBlock} entries linked to {@link Feedback} where the associated {@link Result}
+     * has no submission and no participation.
+     *
+     * @return the number of entities that would be deleted
+     */
+    @Query("""
+            SELECT COUNT(tb)
+            FROM TextBlock tb
+            WHERE tb.feedback IN (
+                SELECT f
+                FROM Feedback f
+                    LEFT JOIN f.result r
+                WHERE r.submission IS NULL
+                    AND r.participation IS NULL
+                )
+            """)
+    int countTextBlockForOrphanResults();
 
     /**
      * Deletes {@link TextBlock} entries linked to {@link Feedback} with a {@code null} result.
+     *
+     * @return the number of deleted entities
      */
     @Modifying
     @Transactional // ok because of delete
@@ -56,16 +79,31 @@ public interface TextBlockCleanupRepository extends ArtemisJpaRepository<TextBlo
                 WHERE f.result IS NULL
                 )
             """)
-    void deleteTextBlockForEmptyFeedback();
+    int deleteTextBlockForEmptyFeedback();
+
+    /**
+     * Counts {@link TextBlock} entries linked to {@link Feedback} with a {@code null} result.
+     *
+     * @return the number of entities that would be deleted
+     */
+    @Query("""
+            SELECT COUNT(tb)
+            FROM TextBlock tb
+            WHERE tb.feedback IN (
+                SELECT f
+                FROM Feedback f
+                WHERE f.result IS NULL
+                )
+            """)
+    int countTextBlockForEmptyFeedback();
 
     /**
      * Deletes {@link TextBlock} entries associated with rated {@link Result} that are not the latest rated result
      * for a {@link Participation}, within courses conducted between the specified date range.
-     * This query removes old text blocks that are not part of the latest rated results, for courses whose
-     * end date is before {@code deleteTo} and start date is after {@code deleteFrom}.
      *
      * @param deleteFrom the start date for selecting courses
      * @param deleteTo   the end date for selecting courses
+     * @return the number of deleted entities
      */
     @Modifying
     @Transactional // ok because of delete
@@ -89,7 +127,38 @@ public interface TextBlockCleanupRepository extends ArtemisJpaRepository<TextBlo
                     AND c.startDate > :deleteFrom
             )
             """)
-    void deleteTextBlockForRatedResultsWhereCourseDateBetween(@Param("deleteFrom") ZonedDateTime deleteFrom, @Param("deleteTo") ZonedDateTime deleteTo);
+    int deleteTextBlockForRatedResultsWhereCourseDateBetween(@Param("deleteFrom") ZonedDateTime deleteFrom, @Param("deleteTo") ZonedDateTime deleteTo);
+
+    /**
+     * Counts {@link TextBlock} entries associated with rated {@link Result} that are not the latest rated result
+     * for a {@link Participation}, within courses conducted between the specified date range.
+     *
+     * @param deleteFrom the start date for selecting courses
+     * @param deleteTo   the end date for selecting courses
+     * @return the number of entities that would be deleted
+     */
+    @Query("""
+            SELECT COUNT(tb)
+            FROM TextBlock tb
+            WHERE tb.feedback IN (
+                SELECT f
+                FROM Feedback f
+                    LEFT JOIN f.result r
+                    LEFT JOIN r.participation p
+                    LEFT JOIN p.exercise e
+                    LEFT JOIN e.course c
+                WHERE f.result.id NOT IN (
+                    SELECT MAX(r2.id)
+                    FROM Result r2
+                    WHERE r2.participation.id = p.id
+                        AND r2.rated = TRUE
+                )
+                    AND r.rated = TRUE
+                    AND c.endDate < :deleteTo
+                    AND c.startDate > :deleteFrom
+            )
+            """)
+    int countTextBlockForRatedResultsWhereCourseDateBetween(@Param("deleteFrom") ZonedDateTime deleteFrom, @Param("deleteTo") ZonedDateTime deleteTo);
 
     /**
      * Deletes {@link TextBlock} entries linked to non-rated {@link Result} that are not the latest non-rated result
@@ -100,6 +169,7 @@ public interface TextBlockCleanupRepository extends ArtemisJpaRepository<TextBlo
      *
      * @param deleteFrom the start date for selecting courses
      * @param deleteTo   the end date for selecting courses
+     * @return the number of deleted entities
      */
     @Modifying
     @Transactional // ok because of delete
@@ -123,5 +193,37 @@ public interface TextBlockCleanupRepository extends ArtemisJpaRepository<TextBlo
                     AND c.startDate > :deleteFrom
                 )
             """)
-    void deleteTextBlockForNonRatedResultsWhereCourseDateBetween(@Param("deleteFrom") ZonedDateTime deleteFrom, @Param("deleteTo") ZonedDateTime deleteTo);
+    int deleteTextBlockForNonRatedResultsWhereCourseDateBetween(@Param("deleteFrom") ZonedDateTime deleteFrom, @Param("deleteTo") ZonedDateTime deleteTo);
+
+    /**
+     * Counts {@link TextBlock} entries linked to non-rated {@link Result} that are not the latest non-rated result
+     * for a {@link Participation}, where the associated course's start and end dates
+     * are between the specified date range.
+     *
+     * @param deleteFrom the start date for selecting courses
+     * @param deleteTo   the end date for selecting courses
+     * @return the number of entities that would be deleted
+     */
+    @Query("""
+            SELECT COUNT(tb)
+            FROM TextBlock tb
+            WHERE tb.feedback IN (
+                SELECT f
+                FROM Feedback f
+                    LEFT JOIN f.result r
+                    LEFT JOIN r.participation p
+                    LEFT JOIN p.exercise e
+                    LEFT JOIN e.course c
+                WHERE f.result.id NOT IN (
+                    SELECT MAX(r2.id)
+                    FROM Result r2
+                    WHERE r2.participation.id = p.id
+                        AND r2.rated = FALSE
+                    )
+                    AND r.rated = FALSE
+                    AND c.endDate < :deleteTo
+                    AND c.startDate > :deleteFrom
+                )
+            """)
+    int countTextBlockForNonRatedResultsWhereCourseDateBetween(@Param("deleteFrom") ZonedDateTime deleteFrom, @Param("deleteTo") ZonedDateTime deleteTo);
 }

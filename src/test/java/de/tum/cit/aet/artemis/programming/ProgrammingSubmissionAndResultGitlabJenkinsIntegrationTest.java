@@ -46,7 +46,7 @@ class ProgrammingSubmissionAndResultGitlabJenkinsIntegrationTest extends Abstrac
 
     @BeforeEach
     void setUp() {
-        jenkinsRequestMockProvider.enableMockingOfRequests(jenkinsServer);
+        jenkinsRequestMockProvider.enableMockingOfRequests(jenkinsServer, jenkinsJobPermissionsService);
         gitlabRequestMockProvider.enableMockingOfRequests();
 
         userUtilService.addUsers(TEST_PREFIX, 3, 2, 0, 2);
@@ -117,7 +117,7 @@ class ProgrammingSubmissionAndResultGitlabJenkinsIntegrationTest extends Abstrac
         assertThat(statistics.buildCount()).isEqualTo(1);
         assertThat(statistics.agentSetupDuration()).isEqualTo(90);
         assertThat(statistics.testDuration()).isEqualTo(10);
-        assertThat(statistics.scaDuration()).isNull();
+        assertThat(statistics.scaDuration()).isEqualTo(0.0);
         assertThat(statistics.totalJobDuration()).isEqualTo(110);
         assertThat(statistics.dependenciesDownloadedCount()).isEqualTo(1);
     }
@@ -156,11 +156,11 @@ class ProgrammingSubmissionAndResultGitlabJenkinsIntegrationTest extends Abstrac
 
         var statistics = buildLogStatisticsEntryRepository.findAverageBuildLogStatistics(exercise);
         assertThat(statistics.buildCount()).isEqualTo(1);
-        assertThat(statistics.agentSetupDuration()).isNull();
+        assertThat(statistics.agentSetupDuration()).isEqualTo(0.0);
         assertThat(statistics.testDuration()).isEqualTo(20);
-        assertThat(statistics.scaDuration()).isNull();
+        assertThat(statistics.scaDuration()).isEqualTo(0.0);
         assertThat(statistics.totalJobDuration()).isEqualTo(20);
-        assertThat(statistics.dependenciesDownloadedCount()).isNull();
+        assertThat(statistics.dependenciesDownloadedCount()).isEqualTo(0.0);
     }
 
     @Test
@@ -209,11 +209,11 @@ class ProgrammingSubmissionAndResultGitlabJenkinsIntegrationTest extends Abstrac
         var statistics = buildLogStatisticsEntryRepository.findAverageBuildLogStatistics(exercise);
         // Should not extract any statistics
         assertThat(statistics.buildCount()).isZero();
-        assertThat(statistics.agentSetupDuration()).isNull();
-        assertThat(statistics.testDuration()).isNull();
-        assertThat(statistics.scaDuration()).isNull();
-        assertThat(statistics.totalJobDuration()).isNull();
-        assertThat(statistics.dependenciesDownloadedCount()).isNull();
+        assertThat(statistics.agentSetupDuration()).isEqualTo(0.0);
+        assertThat(statistics.testDuration()).isEqualTo(0.0);
+        assertThat(statistics.scaDuration()).isEqualTo(0.0);
+        assertThat(statistics.totalJobDuration()).isEqualTo(0.0);
+        assertThat(statistics.dependenciesDownloadedCount()).isEqualTo(0.0);
     }
 
     private static Stream<Arguments> shouldSaveBuildLogsOnStudentParticipationArguments() {

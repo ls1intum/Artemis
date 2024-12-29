@@ -19,8 +19,6 @@ import {
     faFileWord,
 } from '@fortawesome/free-solid-svg-icons';
 import { FileService } from 'app/shared/http/file.service';
-import { AttachmentService } from 'app/lecture/attachment.service';
-import { AlertService } from 'app/core/util/alert.service';
 
 @Component({
     selector: 'jhi-attachment-unit',
@@ -32,8 +30,6 @@ export class AttachmentUnitComponent extends LectureUnitDirective<AttachmentUnit
     protected readonly faDownload = faDownload;
 
     private readonly fileService = inject(FileService);
-    private readonly attachmentService = inject(AttachmentService);
-    private readonly alertService = inject(AlertService);
 
     /**
      * Returns the name of the attachment file (including its file extension)
@@ -48,29 +44,29 @@ export class AttachmentUnitComponent extends LectureUnitDirective<AttachmentUnit
     }
 
     /**
-     * Downloads the file
+     * Downloads the file as the student version if available, otherwise the instructor version
+     * If it is not the student view, it always downloads the original version
      */
     handleDownload() {
         this.logEvent();
 
-        if (this.lectureUnit().attachment?.id) {
-            let link = '';
-            this.attachmentService.getAttachmentByParentAttachmentId(this.lectureUnit().attachment!.id!).subscribe({
-                next: (res) => {
-                    console.log(res);
-                    if (res.body) {
-                        const hiddenAttachment = res.body;
-                        link = this.fileService.replaceAttachmentPrefixAndUnderscores(hiddenAttachment!.link!);
-                    } else {
-                        link = this.fileService.replaceAttachmentPrefixAndUnderscores(this.lectureUnit().attachment!.link!);
-                    }
-                    this.fileService.downloadFile(link!);
-                    this.onCompletion.emit({ lectureUnit: this.lectureUnit(), completed: true });
-                },
-                error: (error: any) => {
-                    this.alertService.error('artemisApp.attachment.pdfPreview.hiddenAttachmentRetrievalError', { error: error.message });
-                },
-            });
+        // Determine the link based on the availability of a student version
+        const link = this.lectureUnit().attachment!.studentVersion || this.fileService.createStudentLink(this.lectureUnit().attachment!.link!);
+
+        if (link) {
+            this.fileService.downloadFileByAttachmentName(link, this.lectureUnit().attachment!.name!);
+            this.onCompletion.emit({ lectureUnit: this.lectureUnit(), completed: true });
+        }
+    }
+
+    handleOriginalVersion() {
+        this.logEvent();
+
+        const link = this.lectureUnit().attachment!.link!;
+
+        if (link) {
+            this.fileService.downloadFileByAttachmentName(link, this.lectureUnit().attachment!.name!);
+            this.onCompletion.emit({ lectureUnit: this.lectureUnit(), completed: true });
         }
     }
 

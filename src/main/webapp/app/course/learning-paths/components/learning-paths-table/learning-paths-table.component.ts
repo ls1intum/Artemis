@@ -1,14 +1,16 @@
-import { Component, computed, effect, inject, input, signal, untracked } from '@angular/core';
-import { ArtemisSharedCommonModule } from 'app/shared/shared-common.module';
+import { ChangeDetectionStrategy, Component, computed, effect, inject, input, signal, untracked } from '@angular/core';
 import { LearningPathApiService } from 'app/course/learning-paths/services/learning-path-api.service';
 import { AlertService } from 'app/core/util/alert.service';
 import { LearningPathInformationDTO } from 'app/entities/competency/learning-path.model';
 import { SearchResult, SearchTermPageableSearch, SortingOrder } from 'app/shared/table/pageable-table';
 import { onError } from 'app/shared/util/global.utils';
 import { faSpinner } from '@fortawesome/free-solid-svg-icons';
-import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
+import { NgbModal, NgbPaginationModule, NgbTypeaheadModule } from '@ng-bootstrap/ng-bootstrap';
 import { CompetencyGraphModalComponent } from 'app/course/learning-paths/components/competency-graph-modal/competency-graph-modal.component';
 import { BaseApiHttpService } from 'app/course/learning-paths/services/base-api-http.service';
+import { FormsModule } from '@angular/forms';
+import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
+import { ArtemisSharedModule } from 'app/shared/shared.module';
 
 enum TableColumn {
     ID = 'ID',
@@ -20,7 +22,8 @@ enum TableColumn {
 @Component({
     selector: 'jhi-learning-paths-table',
     standalone: true,
-    imports: [ArtemisSharedCommonModule],
+    changeDetection: ChangeDetectionStrategy.OnPush,
+    imports: [NgbPaginationModule, NgbTypeaheadModule, FormsModule, FontAwesomeModule, ArtemisSharedModule],
     templateUrl: './learning-paths-table.component.html',
     styleUrls: ['./learning-paths-table.component.scss', '../../pages/learning-path-instructor-page/learning-path-instructor-page.component.scss'],
 })

@@ -70,7 +70,7 @@ export class CourseDashboardComponent implements OnInit, OnDestroy {
             this.profileService.getProfileInfo().subscribe((profileInfo) => {
                 if (profileInfo?.activeProfiles.includes(PROFILE_IRIS)) {
                     this.irisSettingsService.getCombinedCourseSettings(this.courseId).subscribe((settings) => {
-                        this.irisEnabled = !!settings?.irisChatSettings?.enabled;
+                        this.irisEnabled = !!settings?.irisCourseChatSettings?.enabled;
                     });
                 }
             });
