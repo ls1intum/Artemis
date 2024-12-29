@@ -347,12 +347,6 @@ class ProgrammingExerciseIntegrationJenkinsGitlabTest extends AbstractProgrammin
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
-    void updateProgrammingExercise_updatingCoverageOption_badRequest() throws Exception {
-        programmingExerciseIntegrationTestService.updateProgrammingExerciseShouldFailWithBadRequestWhenUpdatingCoverageOption();
-    }
-
-    @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void updateExerciseDueDateWithIndividualDueDateUpdate() throws Exception {
         programmingExerciseIntegrationTestService.updateExerciseDueDateWithIndividualDueDateUpdate();
     }

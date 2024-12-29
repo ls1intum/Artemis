@@ -11,6 +11,7 @@
 dockerImage = '#dockerImage'
 dockerFlags = '#dockerArgs'
 
+isSolutionBuild = "${env.JOB_NAME}" ==~ /.+-SOLUTION$/
 isStaticCodeAnalysisEnabled = #isStaticCodeAnalysisEnabled
 
 /**

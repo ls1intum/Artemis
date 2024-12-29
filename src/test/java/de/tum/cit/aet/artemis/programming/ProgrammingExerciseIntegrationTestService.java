@@ -958,14 +958,6 @@ public class ProgrammingExerciseIntegrationTestService {
         request.put("/api/programming-exercises", updatedExercise, HttpStatus.BAD_REQUEST);
     }
 
-    /**
-     * This test checks that it is not allowed to change coverage enabled option
-     */
-    void updateProgrammingExerciseShouldFailWithBadRequestWhenUpdatingCoverageOption() throws Exception {
-        mockBuildPlanAndRepositoryCheck(programmingExercise);
-        request.put("/api/programming-exercises", programmingExercise, HttpStatus.BAD_REQUEST);
-    }
-
     void updateExerciseDueDateWithIndividualDueDateUpdate() throws Exception {
         mockBuildPlanAndRepositoryCheck(programmingExercise);
         mockConfigureRepository(programmingExercise);
