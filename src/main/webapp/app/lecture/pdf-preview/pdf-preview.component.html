@@ -41,6 +41,7 @@
         </div>
         @if (currentPdfUrl()) {
             <jhi-pdf-preview-thumbnail-grid-component
+                [course]="course()"
                 [currentPdfUrl]="currentPdfUrl()"
                 [appendFile]="appendFile()"
                 [hiddenPages]="hiddenPages()"

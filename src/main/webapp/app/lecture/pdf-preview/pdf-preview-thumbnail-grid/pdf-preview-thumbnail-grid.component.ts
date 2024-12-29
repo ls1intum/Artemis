@@ -6,8 +6,8 @@ import { onError } from 'app/shared/util/global.utils';
 import { AlertService } from 'app/core/util/alert.service';
 import { PdfPreviewEnlargedCanvasComponent } from 'app/lecture/pdf-preview/pdf-preview-enlarged-canvas/pdf-preview-enlarged-canvas.component';
 import { faEye, faEyeSlash } from '@fortawesome/free-solid-svg-icons';
-import { Lecture } from 'app/entities/lecture.model';
 import { PdfPreviewDateBoxComponent } from 'app/lecture/pdf-preview/pdf-preview-date-box/pdf-preview-date-box.component';
+import { Course } from 'app/entities/course.model';
 
 @Component({
     selector: 'jhi-pdf-preview-thumbnail-grid-component',
@@ -20,7 +20,7 @@ export class PdfPreviewThumbnailGridComponent implements OnChanges {
     pdfContainer = viewChild.required<ElementRef<HTMLDivElement>>('pdfContainer');
 
     // Inputs
-    lecture = input<Lecture>();
+    course = input<Course>();
     currentPdfUrl = input<string>();
     appendFile = input<boolean>();
     hiddenPages = input<Set<number>>();
@@ -131,15 +131,21 @@ export class PdfPreviewThumbnailGridComponent implements OnChanges {
      * @param pageIndex The index of the page whose visibility is being toggled.
      * @param event The event object triggered by the click action.
      */
-    toggleVisibility(pageIndex: number): void {
+    toggleVisibility(pageIndex: number, event: Event): void {
         /**if (this.hiddenPages()!.has(pageIndex)) {
          this.hiddenPages()!.delete(pageIndex);
          } else {
          this.hiddenPages()!.add(pageIndex);
          }
          this.newHiddenPagesOutput.emit(this.hiddenPages()!);
-         **/
+         event.stopPropagation();**/
         this.activeButtonIndex.set(pageIndex);
+        const button = (event.target as HTMLElement).closest('button');
+        if (button) {
+            button.style.opacity = '1';
+        }
+
+        event.stopPropagation();
     }
 
     /**

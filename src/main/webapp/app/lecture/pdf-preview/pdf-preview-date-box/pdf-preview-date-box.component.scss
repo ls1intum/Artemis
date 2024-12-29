@@ -26,5 +26,53 @@
     .exercise-container {
         margin-top: 15px;
         color: #333;
+        max-height: 300px;
+        overflow-y: auto;
+    }
+}
+
+.list-group-item {
+    .badge {
+        font-size: 0.8em;
+    }
+}
+
+.type-section {
+    margin-bottom: 1rem;
+
+    .type-header {
+        margin: 0.5rem 0;
+        padding: 0.5rem;
+        background-color: #f8f9fa;
+        border-radius: 4px;
+        font-weight: 600;
+        display: flex;
+        align-items: center;
+    }
+
+    .list-group {
+        .list-group-item {
+            cursor: pointer;
+            transition: all 0.2s ease;
+            padding: 0.75rem 1rem;
+
+            &:hover:not(.active) {
+                background-color: #f8f9fa;
+            }
+
+            &.active {
+                background-color: #0d6efd;
+                border-color: #0d6efd;
+                color: white;
+
+                .text-muted {
+                    color: rgba(255, 255, 255, 0.75) !important;
+                }
+            }
+
+            .form-check-input {
+                cursor: pointer;
+            }
+        }
     }
 }
