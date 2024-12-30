@@ -172,6 +172,7 @@ export class JhiWebsocketService implements IWebsocketService, OnDestroy {
             debug: false,
             protocols: ['v12.stomp'],
         };
+        // TODO: consider to switch to RxStomp (like in the latest jhipster version)
         this.stompClient = Stomp.over(this.socket, options);
         // Note: at the moment, debugging is deactivated to prevent console log statements
         this.stompClient.debug = () => {};
