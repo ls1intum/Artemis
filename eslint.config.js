@@ -7,6 +7,8 @@ const typescriptParser = require('@typescript-eslint/parser');
 const angularTemplateParser = require('@angular-eslint/template-parser');
 const customRulesPlugin = require('./rules/custom-rules');
 
+// TODO: adapt the rules of the newest jhipster version, e.g. no-inferrable-types, restrict-plus-operands, etc.
+
 module.exports = [
     {
         ignores: [
