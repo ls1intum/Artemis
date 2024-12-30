@@ -232,6 +232,7 @@ public class ChannelResource extends ConversationManagementResource {
         channelToCreate.setIsAnnouncementChannel(channelDTO.getIsAnnouncementChannel());
         channelToCreate.setIsArchived(false);
         channelToCreate.setDescription(channelDTO.getDescription());
+        channelToCreate.setIsCourseWide(channelDTO.getIsCourseWide());
 
         if (channelToCreate.getName() != null && channelToCreate.getName().trim().startsWith("$")) {
             throw new BadRequestAlertException("User generated channels cannot start with $", "channel", "channelNameInvalid");

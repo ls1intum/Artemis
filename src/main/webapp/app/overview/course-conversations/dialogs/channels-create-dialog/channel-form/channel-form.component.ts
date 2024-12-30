@@ -1,4 +1,4 @@
-import { Component, EventEmitter, OnChanges, OnDestroy, OnInit, Output } from '@angular/core';
+import { Component, EventEmitter, OnChanges, OnDestroy, OnInit, Output, output } from '@angular/core';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { Subject, takeUntil } from 'rxjs';
 
@@ -7,6 +7,7 @@ export interface ChannelFormData {
     description?: string;
     isPublic?: boolean;
     isAnnouncementChannel?: boolean;
+    isCourseWideChannel?: boolean;
 }
 
 export type ChannelType = 'PUBLIC' | 'PRIVATE';
@@ -25,10 +26,12 @@ export class ChannelFormComponent implements OnInit, OnChanges, OnDestroy {
         description: undefined,
         isPublic: undefined,
         isAnnouncementChannel: undefined,
+        isCourseWideChannel: undefined,
     };
     @Output() formSubmitted: EventEmitter<ChannelFormData> = new EventEmitter<ChannelFormData>();
     @Output() channelTypeChanged: EventEmitter<ChannelType> = new EventEmitter<ChannelType>();
     @Output() isAnnouncementChannelChanged: EventEmitter<boolean> = new EventEmitter<boolean>();
+    isCourseWideChannelChanged = output<boolean>();
 
     form: FormGroup;
 
@@ -48,6 +51,10 @@ export class ChannelFormComponent implements OnInit, OnChanges, OnDestroy {
 
     get isisAnnouncementChannelControl() {
         return this.form.get('isAnnouncementChannel');
+    }
+
+    get isisCourseWideChannelControl() {
+        return this.form.get('isCourseWideChannel');
     }
 
     get isSubmitPossible() {
@@ -81,6 +88,7 @@ export class ChannelFormComponent implements OnInit, OnChanges, OnDestroy {
             description: [undefined, [Validators.maxLength(250)]],
             isPublic: [true, [Validators.required]],
             isAnnouncementChannel: [false, [Validators.required]],
+            isCourseWideChannel: [false, [Validators.required]],
         });
 
         if (this.isPublicControl) {
@@ -92,6 +100,12 @@ export class ChannelFormComponent implements OnInit, OnChanges, OnDestroy {
         if (this.isisAnnouncementChannelControl) {
             this.isisAnnouncementChannelControl.valueChanges.pipe(takeUntil(this.ngUnsubscribe)).subscribe((value) => {
                 this.isAnnouncementChannelChanged.emit(value);
+            });
+        }
+
+        if (this.isisCourseWideChannelControl) {
+            this.isisCourseWideChannelControl.valueChanges.pipe(takeUntil(this.ngUnsubscribe)).subscribe((value) => {
+                this.isCourseWideChannelChanged.emit(value);
             });
         }
     }
