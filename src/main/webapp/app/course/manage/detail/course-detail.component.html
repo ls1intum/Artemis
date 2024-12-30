@@ -41,13 +41,11 @@
                             [currentMax]="courseDTO?.currentMaxAverageScore"
                         />
                         @if (this.irisChatEnabled || this.isAthenaEnabled) {
-                            <jhi-course-detail-doughnut-chart
-                                class="doughnut-container col-sm-6 my-3"
-                                [course]="course"
-                                [contentType]="DoughnutChartType.CURRENT_LLM_COST"
-                                [showText]="courseDTO?.currentTotalLlmCostInEur + ' €'"
-                                [currentMax]="0"
-                            />
+                            <div class="doughnut-container col-sm-6 my-3">
+                                <h5 class="text-center">
+                                    {{ 'artemisApp.course.detail.currentTotalLLMCostTitle' | artemisTranslate }}{{ ': ' + courseDTO?.currentTotalLlmCostInEur + ' €' }}
+                                </h5>
+                            </div>
                         }
                     </div>
                 </div>
