@@ -522,11 +522,18 @@ public class ResultService {
         // Temporarily detach feedback from the parent result to avoid Hibernate issues
         feedback.setResult(null);
 
-        // Clear the long feedback if it exists in the map
+        // Connect old long feedback text to the feedback before saving, otherwise it would be deleted
         if (feedback.getId() != null && feedback.getHasLongFeedbackText()) {
-            LongFeedbackText longFeedback = longFeedbackTextMap.get(feedback.getId());
-            if (longFeedback != null) {
-                feedback.clearLongFeedback();
+
+            // If the long feedback is not empty, it means that changes have been made on the client, so we do not want
+            // to override the new long feedback with its previous version
+            if (feedback.getLongFeedback().isPresent()) {
+                // Delete the old long feedback so we don't get a duplicate key error
+                longFeedbackTextRepository.deleteByFeedbackIds(List.of(feedback.getId()));
+            }
+            else {
+                LongFeedbackText longFeedback = longFeedbackTextMap.get(feedback.getId());
+                feedback.setLongFeedbackText(Set.of(longFeedback));
             }
         }
 
@@ -535,10 +542,6 @@ public class ResultService {
 
         // Restore associations to the result and long feedback after persistence
         feedback.setResult(result);
-        LongFeedbackText longFeedback = longFeedbackTextMap.get(feedback.getId());
-        if (longFeedback != null) {
-            feedback.setDetailText(longFeedback.getText());
-        }
     }
 
     @NotNull

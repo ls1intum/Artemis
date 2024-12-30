@@ -91,7 +91,7 @@ public class ProgrammingAssessmentService extends AssessmentService {
      */
     public Result saveAndSubmitManualAssessment(StudentParticipation participation, Result newManualResult, Result existingManualResult, User assessor, boolean submit) {
         // long feedback text is deleted as it otherwise causes duplicate entries errors and will be saved again with {@link resultRepository.save}
-        resultService.deleteLongFeedback(newManualResult.getFeedbacks(), newManualResult);
+        // resultService.deleteLongFeedback(newManualResult.getFeedbacks(), newManualResult);
         // make sure that the submission cannot be manipulated on the client side
         var submission = (ProgrammingSubmission) existingManualResult.getSubmission();
         ProgrammingExercise exercise = (ProgrammingExercise) participation.getExercise();
