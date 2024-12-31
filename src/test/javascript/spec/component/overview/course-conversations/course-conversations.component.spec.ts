@@ -1,6 +1,7 @@
 import { CourseConversationsComponent } from 'app/overview/course-conversations/course-conversations.component';
 import { ComponentFixture, TestBed, fakeAsync, tick, waitForAsync } from '@angular/core/testing';
 import { ConversationDTO } from 'app/entities/metis/conversation/conversation.model';
+import { OneToOneChatDTO } from '../../../../../../main/webapp/app/entities/metis/conversation/one-to-one-chat.model';
 import { generateExampleChannelDTO, generateExampleGroupChatDTO, generateOneToOneChatDTO } from './helpers/conversationExampleModels';
 import { MockComponent, MockPipe, MockProvider } from 'ng-mocks';
 import { MetisConversationService } from 'app/shared/metis/metis-conversation.service';
@@ -44,7 +45,12 @@ import { LayoutService } from 'app/shared/breakpoints/layout.service';
 import { CustomBreakpointNames } from 'app/shared/breakpoints/breakpoints.service';
 import { Posting, PostingType, SavedPostStatus, SavedPostStatusMap } from 'app/entities/metis/posting.model';
 
-const examples: (ConversationDTO | undefined)[] = [undefined, generateOneToOneChatDTO({}), generateExampleGroupChatDTO({}), generateExampleChannelDTO({})];
+const examples: (ConversationDTO | undefined)[] = [
+    undefined,
+    generateOneToOneChatDTO({} as OneToOneChatDTO),
+    generateExampleGroupChatDTO({} as GroupChatDTO),
+    generateExampleChannelDTO({} as ChannelDTO),
+];
 
 examples.forEach((activeConversation) => {
     describe('CourseConversationComponent with ' + (activeConversation?.type || 'no active conversation'), () => {
