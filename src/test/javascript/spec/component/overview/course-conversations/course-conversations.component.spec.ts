@@ -63,6 +63,7 @@ examples.forEach((activeConversation) => {
         let acceptCodeOfConductSpy: jest.SpyInstance;
         let setActiveConversationSpy: jest.SpyInstance;
         let metisConversationService: MetisConversationService;
+        let courseOverviewService: CourseOverviewService;
         let modalService: NgbModal;
         let courseSidebarService: CourseSidebarService;
         let layoutService: LayoutService;
@@ -136,6 +137,7 @@ examples.forEach((activeConversation) => {
             });
 
             metisConversationService = TestBed.inject(MetisConversationService);
+            courseOverviewService = TestBed.inject(CourseOverviewService);
             courseSidebarService = TestBed.inject(CourseSidebarService);
             layoutService = TestBed.inject(LayoutService);
             activatedRoute = TestBed.inject(ActivatedRoute);
@@ -164,6 +166,39 @@ examples.forEach((activeConversation) => {
             acceptCodeOfConductSpy = jest.spyOn(metisConversationService, 'acceptCodeOfConduct');
             jest.spyOn(metisService, 'posts', 'get').mockReturnValue(postsSubject.asObservable());
             modalService = TestBed.inject(NgbModal);
+            component.sidebarConversations = [];
+
+            jest.spyOn(courseOverviewService, 'mapConversationsToSidebarCardElements').mockReturnValue([
+                {
+                    id: 1,
+                    title: 'Test Channel 1',
+                    isCurrent: true,
+                    conversation: { id: 1 },
+                    size: 'S',
+                },
+                {
+                    id: 2,
+                    title: 'Test Channel 2',
+                    isCurrent: false,
+                    conversation: { id: 2 },
+                    size: 'S',
+                },
+            ]);
+
+            jest.spyOn(courseOverviewService, 'groupConversationsByChannelType').mockReturnValue({
+                recents: {
+                    entityData: [
+                        {
+                            id: 1,
+                            title: 'Test Channel 1',
+                            isCurrent: true,
+                            conversation: { id: 1 },
+                            size: 'S',
+                        },
+                    ],
+                },
+                generalChannels: { entityData: [] },
+            });
         }));
 
         afterEach(() => {
@@ -439,6 +474,17 @@ examples.forEach((activeConversation) => {
                 // Since createChannelFn is undefined, prepareSidebarData should not be called
                 expect(prepareSidebarDataSpy).not.toHaveBeenCalled();
             });
+
+            it('should correctly populate the recents group in accordionConversationGroups using existing mocks', fakeAsync(() => {
+                (metisConversationService.forceRefresh as jest.Mock).mockReturnValue(of({}));
+
+                component.prepareSidebarData();
+                tick();
+                const recentsGroup = component.accordionConversationGroups.recents;
+                expect(recentsGroup).toBeDefined();
+                expect(recentsGroup.entityData).toHaveLength(1);
+                expect(recentsGroup.entityData[0].isCurrent).toBeTrue();
+            }));
         });
 
         describe('query parameter handling', () => {
