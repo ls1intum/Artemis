@@ -18,6 +18,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 
 import de.tum.cit.aet.artemis.buildagent.dto.DockerFlagsDTO;
 import de.tum.cit.aet.artemis.buildagent.dto.DockerRunConfig;
+import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseBuildConfig;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingLanguage;
 import de.tum.cit.aet.artemis.programming.domain.ProjectType;
@@ -66,8 +67,13 @@ public class ProgrammingExerciseBuildConfigService {
             exerciseEnvironment = null;
         }
 
-        ProgrammingLanguage programmingLanguage = buildConfig.getProgrammingExercise().getProgrammingLanguage();
-        ProjectType projectType = buildConfig.getProgrammingExercise().getProjectType();
+        ProgrammingExercise exercise = buildConfig.getProgrammingExercise();
+        if (exercise == null) {
+            return createDockerRunConfig(network, exerciseEnvironment);
+        }
+
+        ProgrammingLanguage programmingLanguage = exercise.getProgrammingLanguage();
+        ProjectType projectType = exercise.getProjectType();
         Map<String, String> environment = addLanguageSpecificEnvironment(exerciseEnvironment, programmingLanguage, projectType);
 
         return createDockerRunConfig(network, environment);
