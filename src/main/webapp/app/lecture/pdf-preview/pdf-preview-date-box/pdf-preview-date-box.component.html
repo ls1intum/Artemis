@@ -1,6 +1,7 @@
 <div class="date-box">
-    <div class="popover-title mb-2">
+    <div class="popover-title mb-2 d-flex justify-content-between align-items-center">
         <h5>Hide Page</h5>
+        <button type="button" class="btn-close btn-close-sm" aria-label="Close" (click)="onClose()"></button>
     </div>
     <div class="checkbox-container">
         <input type="checkbox" id="date-box-checkbox" [ngModel]="hideForever()" (ngModelChange)="onHideForeverChange($event)" />
@@ -12,7 +13,7 @@
     </div>
     @if (calendarSelected()) {
         <div class="calendar-container">
-            <input type="date" class="form-control" [ngModel]="defaultDate()" (ngModelChange)="defaultDate.set($event)" />
+            <input type="datetime-local" class="form-control" [ngModel]="defaultDate()" (ngModelChange)="defaultDate.set($event)" />
         </div>
     }
     @if (exerciseSelected()) {
@@ -39,7 +40,7 @@
                                             />
                                             <span class="ms-2">{{ exercise.title }}</span>
                                         </div>
-                                        <small class="text-muted">{{ formatDueDate(exercise.dueDate) }}</small>
+                                        <small class="text-muted">{{ formatDueDate(exercise.dueDate!) }}</small>
                                     </div>
                                 </label>
                             }

@@ -8,6 +8,12 @@ import { PdfPreviewEnlargedCanvasComponent } from 'app/lecture/pdf-preview/pdf-p
 import { faEye, faEyeSlash } from '@fortawesome/free-solid-svg-icons';
 import { PdfPreviewDateBoxComponent } from 'app/lecture/pdf-preview/pdf-preview-date-box/pdf-preview-date-box.component';
 import { Course } from 'app/entities/course.model';
+import dayjs from 'dayjs/esm';
+
+interface HiddenPage {
+    pageIndex: number;
+    date: dayjs.Dayjs;
+}
 
 @Component({
     selector: 'jhi-pdf-preview-thumbnail-grid-component',
@@ -151,17 +157,13 @@ export class PdfPreviewThumbnailGridComponent implements OnChanges {
 
     /**
      * Toggles the selection state of a page by adding or removing it from the selected pages set.
-     * @param pageIndex The index of the page whose selection state is being toggled.
-     * @param event The change event triggered by the checkbox interaction.
+     * @param hiddenPage
      */
-    togglePageSelection(pageIndex: number, event: Event): void {
-        const checkbox = event.target as HTMLInputElement;
-        if (checkbox.checked) {
-            this.selectedPages().add(pageIndex);
-        } else {
-            this.selectedPages().delete(pageIndex);
-        }
-        this.selectedPagesOutput.emit(this.selectedPages());
+    onHiddenPageChange(hiddenPage: HiddenPage): void {
+        const updatedHiddenPages = new Set(this.newHiddenPages());
+        updatedHiddenPages.add(hiddenPage.pageIndex);
+        this.newHiddenPages.set(updatedHiddenPages);
+        this.newHiddenPagesOutput.emit(updatedHiddenPages);
     }
 
     /**
@@ -185,8 +187,6 @@ export class PdfPreviewThumbnailGridComponent implements OnChanges {
             if (button) {
                 button.style.opacity = '0';
             }
-
-            this.activeButtonIndex.set(null);
         }
     }
 }

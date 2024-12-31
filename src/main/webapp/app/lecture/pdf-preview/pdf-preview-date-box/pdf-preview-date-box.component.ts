@@ -37,10 +37,11 @@ export class PdfPreviewDateBoxComponent implements OnInit, OnDestroy {
     categorizedExercises = signal<CategorizedExercise[]>([]);
     hideForever = signal<boolean>(false);
     selectedExercise = signal<Exercise | null>(null);
-    hiddenPages = signal<HiddenPage[]>([]);
+    hiddenPage = signal<HiddenPage | null>(null);
 
     // Outputs
     dateBoxOpened = output<boolean>();
+    hiddenPageOutput = output<HiddenPage>();
 
     constructor(private courseExerciseService: CourseExerciseService) {}
 
@@ -120,8 +121,8 @@ export class PdfPreviewDateBoxComponent implements OnInit, OnDestroy {
     /**
      * Format a date object to a string for display
      */
-    formatDueDate(date: dayjs.Dayjs | undefined): string {
-        return date ? date.format('MMM D, YYYY') : 'No due date';
+    formatDueDate(date: dayjs.Dayjs): string {
+        return date!.format('MMM D, YYYY - HH:mm');
     }
 
     /**
@@ -157,10 +158,6 @@ export class PdfPreviewDateBoxComponent implements OnInit, OnDestroy {
      * Submit the selected date option
      */
     onSubmit(): void {
-        if (!this.pageIndex()) {
-            return;
-        }
-
         let selectedDate: dayjs.Dayjs;
         if (this.hideForever()) {
             selectedDate = FOREVER;
@@ -177,10 +174,12 @@ export class PdfPreviewDateBoxComponent implements OnInit, OnDestroy {
             date: selectedDate,
         };
 
-        const currentHiddenPages = this.hiddenPages();
-        const updatedHiddenPages = [...currentHiddenPages.filter((entry) => entry.pageIndex !== this.pageIndex()), newEntry];
-        this.hiddenPages.set(updatedHiddenPages);
-        //this.hiddenPagesChange.emit(updatedHiddenPages);
-        console.log(this.hiddenPages());
+        this.hiddenPage.set(newEntry);
+        this.hiddenPageOutput.emit(newEntry);
+        this.onClose();
+    }
+
+    onClose(): void {
+        this.dateBoxOpened.emit(false);
     }
 }

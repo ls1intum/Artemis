@@ -14,7 +14,7 @@
                 <span>{{ page }}</span>
             </span>
             @if (loadedPages().has(page)) {
-                <input type="checkbox" [id]="'checkbox-' + page" (click)="$event.stopPropagation()" (change)="togglePageSelection(page, $event)" />
+                <input type="checkbox" [id]="'checkbox-' + page" (click)="$event.stopPropagation()" />
             }
             @if (isAttachmentUnit()) {
                 <button
@@ -23,7 +23,8 @@
                     [class]="'hide-show-btn btn ' + (hiddenPages()!.has(page) ? 'btn-success' : 'btn-secondary')"
                     (click)="toggleVisibility(page, $event)"
                     [ngbPopover]="popContent"
-                    [autoClose]="'outside'"
+                    #popover="ngbPopover"
+                    [autoClose]="false"
                     placement="right auto"
                     container="body"
                 >
@@ -31,7 +32,12 @@
                 </button>
 
                 <ng-template #popContent>
-                    <jhi-pdf-preview-date-box-component [course]="course()" [pageIndex]="activeButtonIndex()!" (dateBoxOpened)="handleDateBoxOpen($event)" />
+                    <jhi-pdf-preview-date-box-component
+                        [course]="course()"
+                        [pageIndex]="activeButtonIndex()!"
+                        (dateBoxOpened)="handleDateBoxOpen($event)"
+                        (hiddenPageOutput)="onHiddenPageChange($event); popover.close()"
+                    />
                 </ng-template>
             }
         </div>
