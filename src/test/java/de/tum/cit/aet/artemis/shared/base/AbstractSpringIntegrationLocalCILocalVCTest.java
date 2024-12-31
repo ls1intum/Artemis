@@ -245,7 +245,7 @@ public abstract class AbstractSpringIntegrationLocalCILocalVCTest extends Abstra
 
         String dummyContainerId = "1234567890";
 
-        // Mock dockerClient.createContainerCmd(String dockerImage).withHostConfig(HostConfig hostConfig).withEnv(String... env).withCmd(String... cmd).exec()
+        // Mock dockerClient.createContainerCmd(String dockerImage).withHostConfig(HostConfig hostConfig).withEnv(String... env).withEntrypoint().withCmd(String... cmd).exec()
         CreateContainerCmd createContainerCmd = mock(CreateContainerCmd.class);
         CreateContainerResponse createContainerResponse = new CreateContainerResponse();
         createContainerResponse.setId(dummyContainerId);
@@ -254,6 +254,7 @@ public abstract class AbstractSpringIntegrationLocalCILocalVCTest extends Abstra
         doReturn(createContainerCmd).when(createContainerCmd).withHostConfig(any());
         doReturn(createContainerCmd).when(createContainerCmd).withEnv(anyList());
         doReturn(createContainerCmd).when(createContainerCmd).withUser(anyString());
+        doReturn(createContainerCmd).when(createContainerCmd).withEntrypoint();
         doReturn(createContainerCmd).when(createContainerCmd).withCmd(anyString(), anyString(), anyString());
         doReturn(createContainerResponse).when(createContainerCmd).exec();
 
