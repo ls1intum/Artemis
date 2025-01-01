@@ -14,7 +14,7 @@
                 <span>{{ page }}</span>
             </span>
             @if (loadedPages().has(page)) {
-                <input type="checkbox" [id]="'checkbox-' + page" (click)="$event.stopPropagation()" />
+                <input type="checkbox" [id]="'checkbox-' + page" (click)="$event.stopPropagation()" (change)="togglePageSelection(page, $event)" />
             }
             @if (isAttachmentUnit()) {
                 <button

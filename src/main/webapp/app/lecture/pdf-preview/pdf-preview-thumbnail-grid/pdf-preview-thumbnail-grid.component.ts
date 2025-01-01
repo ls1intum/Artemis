@@ -143,13 +143,6 @@ export class PdfPreviewThumbnailGridComponent implements OnChanges {
      * @param event The event object triggered by the click action.
      */
     toggleVisibility(pageIndex: number, event: Event): void {
-        /**if (this.hiddenPages()!.has(pageIndex)) {
-         this.hiddenPages()!.delete(pageIndex);
-         } else {
-         this.hiddenPages()!.add(pageIndex);
-         }
-         this.newHiddenPagesOutput.emit(this.hiddenPages()!);
-         event.stopPropagation();**/
         this.activeButtonIndex.set(pageIndex);
         const button = (event.target as HTMLElement).closest('button');
         if (button) {
@@ -161,13 +154,28 @@ export class PdfPreviewThumbnailGridComponent implements OnChanges {
 
     /**
      * Toggles the selection state of a page by adding or removing it from the selected pages set.
+     * @param pageIndex The index of the page whose selection state is being toggled.
+     * @param event The change event triggered by the checkbox interaction.
+     */
+    togglePageSelection(pageIndex: number, event: Event): void {
+        const checkbox = event.target as HTMLInputElement;
+        if (checkbox.checked) {
+            this.selectedPages().add(pageIndex);
+        } else {
+            this.selectedPages().delete(pageIndex);
+        }
+        this.selectedPagesOutput.emit(this.selectedPages());
+    }
+
+    /**
+     * Toggles the selection state of a page by adding or removing it from the selected pages set.
      * @param hiddenPage
      */
     onHiddenPageChange(hiddenPage: HiddenPage): void {
         const updatedHiddenPages = this.newHiddenPages();
         updatedHiddenPages[hiddenPage.pageIndex] = dayjs(hiddenPage.date);
         this.newHiddenPages.set(updatedHiddenPages);
-        this.newHiddenPagesOutput.emit(updatedHiddenPages);
+        this.newHiddenPagesOutput.emit(this.newHiddenPages());
     }
 
     /**
