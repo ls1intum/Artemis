@@ -2,7 +2,7 @@
     <div class="popover-title mb-2">
         <h5><span jhiTranslate="artemisApp.attachment.pdfPreview.dateBox.hidePage" [translateValues]="{ param: pageIndex()! }"></span></h5>
     </div>
-    <div class="checkbox-container">
+    <div class="checkbox-container mb-3">
         <input type="checkbox" id="date-box-checkbox" [ngModel]="hideForever()" (ngModelChange)="onHideForeverChange($event)" />
         <label for="date-box-checkbox">
             <span jhiTranslate="artemisApp.attachment.pdfPreview.dateBox.hideForever"></span>
@@ -17,12 +17,12 @@
         </button>
     </div>
     @if (calendarSelected()) {
-        <div class="calendar-container">
+        <div class="calendar-container mt-3">
             <input type="datetime-local" class="form-control" [ngModel]="defaultDate()" (ngModelChange)="defaultDate.set($event)" />
         </div>
     }
     @if (exerciseSelected()) {
-        <div class="exercise-container">
+        <div class="exercise-container mt-2">
             @if (categorizedExercises().length === 0) {
                 <p class="text-muted">
                     <span jhiTranslate="artemisApp.attachment.pdfPreview.dateBox.noExercises"></span>
