@@ -40,8 +40,8 @@ export class FeedbackDetailChannelModalComponent {
                 const channelDTO = new ChannelDTO();
                 channelDTO.name = this.form.get('name')?.value;
                 channelDTO.description = this.form.get('description')?.value;
-                channelDTO.isPublic = this.form.get('isPublic')?.value;
-                channelDTO.isAnnouncementChannel = this.form.get('isAnnouncementChannel')?.value;
+                channelDTO.isPublic = this.form.get('isPublic')?.value || false;
+                channelDTO.isAnnouncementChannel = this.form.get('isAnnouncementChannel')?.value || false;
 
                 this.formSubmitted.emit({ channelDto: channelDTO, navigate });
                 this.closeModal();
