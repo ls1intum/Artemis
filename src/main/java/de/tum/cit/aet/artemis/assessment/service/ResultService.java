@@ -540,7 +540,7 @@ public class ResultService {
         // Persist the feedback entity without the parent association
         feedback = feedbackRepository.saveAndFlush(feedback);
 
-        // Restore associations to the result and long feedback after persistence
+        // Restore associations to the result
         feedback.setResult(result);
     }
 
