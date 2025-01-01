@@ -256,14 +256,12 @@ public class ChannelService {
      *
      * @param lecture     the lecture to create the channel for
      * @param channelName the name of the channel
-     * @return the created channel
      */
-    public Channel createLectureChannel(Lecture lecture, Optional<String> channelName) {
+    public void createLectureChannel(Lecture lecture, Optional<String> channelName) {
         Channel channelToCreate = createDefaultChannel(channelName, "lecture-", lecture.getTitle());
         channelToCreate.setLecture(lecture);
         Channel createdChannel = createChannel(lecture.getCourse(), channelToCreate, Optional.of(userRepository.getUserWithGroupsAndAuthorities()));
         lecture.setChannelName(createdChannel.getName());
-        return createdChannel;
     }
 
     /**
@@ -287,14 +285,12 @@ public class ChannelService {
      *
      * @param exam        the exam to create the channel for
      * @param channelName the name of the channel
-     * @return the created channel
      */
-    public Channel createExamChannel(Exam exam, Optional<String> channelName) {
+    public void createExamChannel(Exam exam, Optional<String> channelName) {
         Channel channelToCreate = createDefaultChannel(channelName, "exam-", exam.getTitle());
         channelToCreate.setExam(exam);
         Channel createdChannel = createChannel(exam.getCourse(), channelToCreate, Optional.of(userRepository.getUserWithGroupsAndAuthorities()));
         exam.setChannelName(createdChannel.getName());
-        return createdChannel;
     }
 
     /**
@@ -302,17 +298,16 @@ public class ChannelService {
      *
      * @param originalLecture the original lecture
      * @param channelName     the new channel name
-     * @return the updated channel
      */
-    public Channel updateLectureChannel(Lecture originalLecture, String channelName) {
+    public void updateLectureChannel(Lecture originalLecture, String channelName) {
         if (channelName == null) {
-            return null;
+            return;
         }
         Channel channel = channelRepository.findChannelByLectureId(originalLecture.getId());
         if (channel == null) {
-            return null;
+            return;
         }
-        return updateChannelName(channel, channelName);
+        updateChannelName(channel, channelName);
     }
 
     /**
@@ -428,18 +423,11 @@ public class ChannelService {
      * @throws BadRequestAlertException if the channel name starts with an invalid prefix (e.g., "$").
      */
     public Channel createFeedbackChannel(Course course, Long exerciseId, ChannelDTO channelDTO, List<String> feedbackDetailTexts, String testCaseName, User requestingUser) {
-        Channel channelToCreate = new Channel();
-        channelToCreate.setName(channelDTO.getName());
-        channelToCreate.setIsPublic(channelDTO.getIsPublic());
-        channelToCreate.setIsAnnouncementChannel(channelDTO.getIsAnnouncementChannel());
-        channelToCreate.setIsArchived(false);
-        channelToCreate.setDescription(channelDTO.getDescription());
-
-        if (channelToCreate.getName() != null && channelToCreate.getName().trim().startsWith("$")) {
+        if (channelDTO.getName() != null && channelDTO.getName().trim().startsWith("$")) {
             throw new BadRequestAlertException("User generated channels cannot start with $", "channel", "channelNameInvalid");
         }
 
-        Channel createdChannel = createChannel(course, channelToCreate, Optional.of(requestingUser));
+        Channel createdChannel = createChannel(course, channelDTO.toChannel(), Optional.of(requestingUser));
 
         List<String> userLogins = studentParticipationRepository.findAffectedLoginsByFeedbackDetailText(exerciseId, feedbackDetailTexts, testCaseName);
 
@@ -450,15 +438,5 @@ public class ChannelService {
         }
 
         return createdChannel;
-    }
-
-    /**
-     * Marks all channels of a course as read for the requesting user.
-     *
-     * @param course         the course for which all channels should be marked as read.
-     * @param requestingUser the user requesting the marking of all channels as read.
-     */
-    public void markAllChannelsOfCourseAsRead(Course course, User requestingUser) {
-        conversationService.markAllConversationOfAUserAsRead(course.getId(), requestingUser);
     }
 }
