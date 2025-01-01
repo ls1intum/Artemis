@@ -29,9 +29,8 @@ export class PdfPreviewThumbnailGridComponent implements OnChanges {
     course = input<Course>();
     currentPdfUrl = input<string>();
     appendFile = input<boolean>();
-    hiddenPages = input<Set<number>>();
+    hiddenPages = signal<Set<HiddenPage>>(new Set());
     isAttachmentUnit = input<boolean>();
-    activeButtonIndex = signal<number | null>(null);
 
     // Signals
     isEnlargedView = signal<boolean>(false);
@@ -39,15 +38,17 @@ export class PdfPreviewThumbnailGridComponent implements OnChanges {
     loadedPages = signal<Set<number>>(new Set());
     selectedPages = signal<Set<number>>(new Set());
     originalCanvas = signal<HTMLCanvasElement | undefined>(undefined);
-    newHiddenPages = signal(new Set<number>(this.hiddenPages()!));
+    newHiddenPages = signal(new Set<HiddenPage>(this.hiddenPages()!));
+    hiddenPageIndexes = signal<Set<number>>(new Set());
     initialPageNumber = signal<number>(0);
+    activeButtonIndex = signal<number | null>(null);
     isDateBoxOpen = signal<boolean>(false);
 
     // Outputs
     isPdfLoading = output<boolean>();
     totalPagesOutput = output<number>();
     selectedPagesOutput = output<Set<number>>();
-    newHiddenPagesOutput = output<Set<number>>();
+    newHiddenPagesOutput = output<Set<HiddenPage>>();
 
     // Injected services
     private readonly alertService = inject(AlertService);
@@ -58,6 +59,7 @@ export class PdfPreviewThumbnailGridComponent implements OnChanges {
     ngOnChanges(changes: SimpleChanges): void {
         if (changes['hiddenPages']) {
             this.newHiddenPages.set(new Set(this.hiddenPages()!));
+            console.log(this.newHiddenPages());
         }
         if (changes['currentPdfUrl']) {
             this.loadPdf(this.currentPdfUrl()!, this.appendFile()!);
@@ -161,8 +163,11 @@ export class PdfPreviewThumbnailGridComponent implements OnChanges {
      */
     onHiddenPageChange(hiddenPage: HiddenPage): void {
         const updatedHiddenPages = new Set(this.newHiddenPages());
-        updatedHiddenPages.add(hiddenPage.pageIndex);
+        const updatedHiddenPageIndexes = this.hiddenPageIndexes();
+        updatedHiddenPages.add(hiddenPage);
+        updatedHiddenPageIndexes.add(hiddenPage.pageIndex);
         this.newHiddenPages.set(updatedHiddenPages);
+        this.hiddenPageIndexes.set(updatedHiddenPageIndexes);
         this.newHiddenPagesOutput.emit(updatedHiddenPages);
     }
 
@@ -183,10 +188,27 @@ export class PdfPreviewThumbnailGridComponent implements OnChanges {
     handleDateBoxOpen(isOpen: boolean): void {
         this.isDateBoxOpen.set(isOpen);
         if (!isOpen) {
-            const button = document.getElementById('hide-show-button-' + this.activeButtonIndex());
-            if (button) {
-                button.style.opacity = '0';
-            }
+            this.hideActionButton(this.activeButtonIndex()!);
+        }
+    }
+
+    showPage(pageIndex: number): void {
+        this.newHiddenPages.update((pages) => {
+            return new Set([...pages].filter((page) => page.pageIndex !== pageIndex));
+        });
+
+        this.hiddenPageIndexes.update((indexes) => {
+            indexes.delete(pageIndex);
+            return indexes;
+        });
+
+        this.hideActionButton(pageIndex);
+    }
+
+    hideActionButton(pageIndex: number): void {
+        const button = document.getElementById('hide-show-button-' + pageIndex);
+        if (button) {
+            button.style.opacity = '0';
         }
     }
 }

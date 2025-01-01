@@ -42,6 +42,7 @@ export class PdfPreviewDateBoxComponent implements OnInit, OnDestroy {
     // Outputs
     dateBoxOpened = output<boolean>();
     hiddenPageOutput = output<HiddenPage>();
+    selectionCancelledOutput = output<boolean>();
 
     constructor(private courseExerciseService: CourseExerciseService) {}
 
@@ -107,15 +108,18 @@ export class PdfPreviewDateBoxComponent implements OnInit, OnDestroy {
     }
 
     /**
-     * Formats a Date object to YYYY-MM-DD string format required by date input
-     * @param date The date to format
-     * @returns The formatted date string
+     * Formats a given `Date` object into a string in the format `YYYY-MM-DDTHH:mm`.
+     *
+     * @param date - The `Date` object to format.
+     * @returns A formatted string representing the date and time.
      */
     formatDate(date: Date): string {
         const year = date.getFullYear();
         const month = String(date.getMonth() + 1).padStart(2, '0');
         const day = String(date.getDate()).padStart(2, '0');
-        return `${year}-${month}-${day}`;
+        const hours = String(date.getHours()).padStart(2, '0');
+        const minutes = String(date.getMinutes()).padStart(2, '0');
+        return `${year}-${month}-${day}T${hours}:${minutes}`;
     }
 
     /**

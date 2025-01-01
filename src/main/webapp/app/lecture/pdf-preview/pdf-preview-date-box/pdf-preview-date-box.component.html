@@ -1,6 +1,6 @@
 <div class="date-box">
     <div class="popover-title mb-2">
-        <h5>Hide Page</h5>
+        <h5>Hide Page {{ pageIndex() }}</h5>
     </div>
     <div class="checkbox-container">
         <input type="checkbox" id="date-box-checkbox" [ngModel]="hideForever()" (ngModelChange)="onHideForeverChange($event)" />
@@ -49,7 +49,8 @@
             }
         </div>
     }
-    <div class="submit-container mt-3">
-        <button class="btn btn-success" (click)="onSubmit()" [disabled]="!hideForever() && !calendarSelected() && !selectedExercise()">Submit</button>
+    <div class="submit-container mt-3 d-flex justify-content-between">
+        <button class="btn btn-secondary" (click)="selectionCancelledOutput.emit(true)">Cancel</button>
+        <button class="btn btn-primary" (click)="onSubmit()" [disabled]="!hideForever() && !calendarSelected() && !selectedExercise()">Submit</button>
     </div>
 </div>

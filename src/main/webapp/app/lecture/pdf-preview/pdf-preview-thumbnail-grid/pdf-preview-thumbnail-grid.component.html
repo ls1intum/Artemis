@@ -1,7 +1,7 @@
 <div #pdfContainer class="pdf-container" [class.scroll-disabled]="isDateBoxOpen()">
     @for (page of totalPagesArray(); track page) {
         <div [id]="'pdf-page-' + page" class="pdf-canvas-container" (click)="displayEnlargedCanvas(page); $event.stopPropagation()">
-            @if (hiddenPages()!.has(page)) {
+            @if (hiddenPageIndexes()!.has(page)) {
                 <ng-container>
                     <div class="hidden-overlay pdf-overlay" style="opacity: 1">
                         <span>
@@ -20,24 +20,37 @@
                 <button
                     [id]="'hide-show-button-' + page"
                     style="'opacity' : activeButtonIndex === page '1' : '0'"
-                    [class]="'hide-show-btn btn ' + (hiddenPages()!.has(page) ? 'btn-success' : 'btn-secondary')"
+                    [class]="'hide-show-btn btn ' + (hiddenPageIndexes()!.has(page) ? 'btn-success' : 'btn-secondary')"
                     (click)="toggleVisibility(page, $event)"
-                    [ngbPopover]="popContent"
+                    [ngbPopover]="hiddenPageIndexes()!.has(page) ? showPageBox : hidePageBox"
                     #popover="ngbPopover"
-                    [autoClose]="'outside'"
+                    [autoClose]="false"
                     placement="right auto"
                     container="body"
                 >
-                    <fa-icon [icon]="hiddenPages()!.has(page) ? faEye : faEyeSlash"></fa-icon>
+                    <fa-icon [icon]="hiddenPageIndexes()!.has(page) ? faEye : faEyeSlash"></fa-icon>
                 </button>
 
-                <ng-template #popContent>
+                <ng-template #hidePageBox>
                     <jhi-pdf-preview-date-box-component
                         [course]="course()"
                         [pageIndex]="activeButtonIndex()!"
                         (dateBoxOpened)="handleDateBoxOpen($event)"
                         (hiddenPageOutput)="onHiddenPageChange($event); popover.close()"
+                        (selectionCancelledOutput)="popover.close()"
                     />
+                </ng-template>
+                <ng-template #showPageBox>
+                    <div class="confirmation-box">
+                        <div class="popover-title mb-2">
+                            <h5>Show Page {{ activeButtonIndex()! }}</h5>
+                            Would you like to show this page?
+                            <div class="submit-container mt-3 d-flex justify-content-between">
+                                <button class="btn btn-secondary" (click)="hideActionButton(activeButtonIndex()!); popover.close()">Cancel</button>
+                                <button class="btn btn-primary" (click)="showPage(activeButtonIndex()!); popover.close()">Show</button>
+                            </div>
+                        </div>
+                    </div>
                 </ng-template>
             }
         </div>
