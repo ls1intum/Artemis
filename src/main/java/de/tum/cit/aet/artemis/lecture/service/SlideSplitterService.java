@@ -8,6 +8,8 @@ import java.io.File;
 import java.io.IOException;
 import java.net.URI;
 import java.nio.file.Path;
+import java.sql.Timestamp;
+import java.time.Instant;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
@@ -25,6 +27,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Profile;
 import org.springframework.scheduling.annotation.Async;
+import org.springframework.scheduling.annotation.EnableScheduling;
+import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -43,6 +47,7 @@ import de.tum.cit.aet.artemis.lecture.repository.SlideRepository;
  */
 @Profile(PROFILE_CORE)
 @Service
+@EnableScheduling
 public class SlideSplitterService {
 
     private static final Logger log = LoggerFactory.getLogger(SlideSplitterService.class);
@@ -113,7 +118,10 @@ public class SlideSplitterService {
             PDFRenderer pdfRenderer = new PDFRenderer(document);
 
             Map<Integer, java.sql.Timestamp> hiddenPagesMap = hiddenPages != null ? new ObjectMapper().readValue(hiddenPages, new TypeReference<List<Map<String, Object>>>() {
-            }).stream().collect(Collectors.toMap(map -> (Integer) map.get("pageIndex"), map -> java.sql.Timestamp.valueOf((String) map.get("date")))) : Collections.emptyMap();
+            }).stream().collect(Collectors.toMap(map -> (Integer) map.get("pageIndex"), map -> {
+                String dateStr = (String) map.get("date");
+                return Timestamp.from(Instant.parse(dateStr));
+            })) : Collections.emptyMap();
 
             for (int page = 0; page < numPages; page++) {
                 BufferedImage bufferedImage = pdfRenderer.renderImageWithDPI(page, 72, ImageType.RGB);
@@ -150,6 +158,17 @@ public class SlideSplitterService {
         try (ByteArrayOutputStream outputStream = new ByteArrayOutputStream()) {
             ImageIO.write(bufferedImage, format, outputStream);
             return outputStream.toByteArray();
+        }
+    }
+
+    @Scheduled(cron = "0 * * * * *")
+    public void checkAndUnhideSlides() {
+        Timestamp currentTime = new Timestamp(System.currentTimeMillis());
+        List<Slide> expiredHiddenSlides = slideRepository.findByHiddenLessThanEqual(currentTime);
+
+        for (Slide slide : expiredHiddenSlides) {
+            slide.setHidden(null);
+            slideRepository.save(slide);
         }
     }
 }
