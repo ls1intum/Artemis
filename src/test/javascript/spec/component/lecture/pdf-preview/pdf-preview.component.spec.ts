@@ -12,6 +12,7 @@ import { AlertService } from 'app/core/util/alert.service';
 import { HttpClientModule, HttpErrorResponse } from '@angular/common/http';
 import { TranslateService } from '@ngx-translate/core';
 import { PDFDocument } from 'pdf-lib';
+import dayjs from 'dayjs/esm';
 
 jest.mock('pdf-lib', () => {
     const originalModule = jest.requireActual('pdf-lib');
@@ -126,21 +127,32 @@ describe('PdfPreviewComponent', () => {
         });
 
         it('should load attachment unit file and verify service calls when attachment unit data is available', fakeAsync(() => {
+            const mockAttachmentUnit = {
+                id: 1,
+                name: 'Chapter 1',
+                lecture: { id: 1 },
+                slides: [
+                    { slideNumber: 1, hidden: false },
+                    { slideNumber: 2, hidden: '2024-01-01' },
+                ],
+            };
+
             routeMock.data = of({
                 course: { id: 1, name: 'Example Course' },
-                attachmentUnit: {
-                    id: 1,
-                    name: 'Chapter 1',
-                    lecture: { id: 1 },
-                    slides: [
-                        { slideNumber: 1, hidden: false },
-                        { slideNumber: 2, hidden: true },
-                    ],
-                },
+                attachmentUnit: mockAttachmentUnit,
             });
+
             component.ngOnInit();
             tick();
+
+            expect(component.course()).toEqual({ id: 1, name: 'Example Course' });
+            expect(component.attachmentUnit()).toEqual(mockAttachmentUnit);
+
+            expect(component.initialHiddenPages()).toEqual({ 2: expect.any(Object) });
+            expect(component.hiddenPages()).toEqual({ 2: expect.any(Object) });
+
             expect(attachmentUnitServiceMock.getAttachmentFile).toHaveBeenCalledWith(1, 1);
+            expect(global.URL.createObjectURL).toHaveBeenCalled();
         }));
 
         it('should handle errors and trigger alert when loading an attachment file fails', () => {
@@ -189,7 +201,13 @@ describe('PdfPreviewComponent', () => {
 
         it('should update attachment unit with student version when there are hidden pages', fakeAsync(() => {
             const mockStudentVersion = new File(['pdf content'], 'student.pdf', { type: 'application/pdf' });
-            jest.spyOn(component, 'getHiddenPages').mockReturnValue([1, 2, 3]);
+            const mockHiddenPages = [
+                { pageIndex: 1, date: dayjs() },
+                { pageIndex: 2, date: dayjs() },
+                { pageIndex: 3, date: dayjs() },
+            ];
+
+            jest.spyOn(component, 'getHiddenPages').mockReturnValue(mockHiddenPages);
             jest.spyOn(component, 'createStudentVersionOfAttachment').mockResolvedValue(mockStudentVersion);
 
             component.currentPdfBlob.set(new Blob(['pdf content'], { type: 'application/pdf' }));
@@ -206,13 +224,23 @@ describe('PdfPreviewComponent', () => {
             tick();
 
             fixture.whenStable().then(() => {
-                expect(attachmentUnitServiceMock.update).toHaveBeenCalledWith(1, 1, expect.any(FormData), undefined, '1,2,3');
+                expect(attachmentUnitServiceMock.update).toHaveBeenCalledWith(1, 1, expect.any(FormData));
+
+                const lastCallArgs = attachmentUnitServiceMock.update.mock.lastCall[2];
+                expect(lastCallArgs instanceof FormData).toBeTrue();
+                expect(lastCallArgs.get('hiddenPages')).toBe(JSON.stringify(mockHiddenPages));
             });
         }));
 
         it('should handle errors when updating attachment unit with hidden pages fails', fakeAsync(() => {
             const mockStudentVersion = new File(['pdf content'], 'student.pdf', { type: 'application/pdf' });
-            jest.spyOn(component, 'getHiddenPages').mockReturnValue([1, 2]);
+            const mockHiddenPages = [
+                { pageIndex: 1, date: dayjs() },
+                { pageIndex: 2, date: dayjs() },
+                { pageIndex: 3, date: dayjs() },
+            ];
+
+            jest.spyOn(component, 'getHiddenPages').mockReturnValue(mockHiddenPages);
             jest.spyOn(component, 'createStudentVersionOfAttachment').mockResolvedValue(mockStudentVersion);
 
             component.currentPdfBlob.set(new Blob(['pdf content'], { type: 'application/pdf' }));
@@ -280,7 +308,17 @@ describe('PdfPreviewComponent', () => {
     });
 
     describe('Get Hidden Pages', () => {
-        it('should return an array of hidden page numbers based on button IDs', () => {
+        it('should return an array of hidden page objects based on button IDs', () => {
+            const mockDate1 = dayjs();
+            const mockDate3 = dayjs();
+            const mockDate5 = dayjs();
+
+            component.hiddenPages.set({
+                1: mockDate1,
+                3: mockDate3,
+                5: mockDate5,
+            });
+
             document.body.innerHTML = `
             <button id="hide-show-button-1" class="hide-show-btn btn-success"></button>
             <button id="hide-show-button-3" class="hide-show-btn btn-success"></button>
@@ -288,7 +326,12 @@ describe('PdfPreviewComponent', () => {
         `;
 
             const hiddenPages = component.getHiddenPages();
-            expect(hiddenPages).toEqual([1, 3, 5]);
+
+            expect(hiddenPages).toEqual([
+                { pageIndex: 1, date: mockDate1 },
+                { pageIndex: 3, date: mockDate3 },
+                { pageIndex: 5, date: mockDate5 },
+            ]);
         });
 
         it('should return an empty array if no matching elements are found', () => {
@@ -302,14 +345,26 @@ describe('PdfPreviewComponent', () => {
         });
 
         it('should ignore elements without valid IDs', () => {
+            const mockDate1 = dayjs();
+            const mockDate2 = dayjs();
+
+            component.hiddenPages.set({
+                1: mockDate1,
+                2: mockDate2,
+            });
+
             document.body.innerHTML = `
-            <button id="hide-show-button-1" class="hide-show-btn btn-success"></button>
-            <button id="hide-show-button-invalid" class="hide-show-btn btn-success"></button>
-            <button id="hide-show-button-2" class="hide-show-btn btn-success"></button>
-        `;
+        <button id="hide-show-button-1" class="hide-show-btn btn-success"></button>
+        <button id="hide-show-button-invalid" class="hide-show-btn btn-success"></button>
+        <button id="hide-show-button-2" class="hide-show-btn btn-success"></button>
+    `;
 
             const hiddenPages = component.getHiddenPages();
-            expect(hiddenPages).toEqual([1, 2]);
+
+            expect(hiddenPages).toEqual([
+                { pageIndex: 1, date: mockDate1 },
+                { pageIndex: 2, date: mockDate2 },
+            ]);
         });
     });
 
@@ -544,43 +599,44 @@ describe('PdfPreviewComponent', () => {
     });
 
     describe('Create Student Version of Attachment', () => {
-        it('should create a new PDF file with specified hidden pages removed', async () => {
-            const hiddenPages = [2, 4];
-            const mockPdfBytes = new Uint8Array([1, 2, 3, 4]).buffer;
-            const mockFileName = 'test-file';
-            const updatedPdfBytes = new Uint8Array([5, 6, 7]).buffer;
+        it('should update attachment unit with student version when there are hidden pages', fakeAsync(() => {
+            const mockStudentVersion = new File(['pdf content'], 'student.pdf', { type: 'application/pdf' });
+            const mockHiddenPages = [
+                { pageIndex: 1, date: dayjs() },
+                { pageIndex: 2, date: dayjs() },
+                { pageIndex: 3, date: dayjs() },
+            ];
 
-            const mockAttachmentUnit = {
-                attachment: {
-                    name: mockFileName,
-                },
-            };
+            jest.spyOn(component, 'getHiddenPages').mockReturnValue(mockHiddenPages);
+            jest.spyOn(component, 'createStudentVersionOfAttachment').mockResolvedValue(mockStudentVersion);
 
-            const hiddenPdfDoc = {
-                removePage: jest.fn(),
-                save: jest.fn().mockResolvedValue(updatedPdfBytes),
-            };
+            component.currentPdfBlob.set(new Blob(['pdf content'], { type: 'application/pdf' }));
+            component.attachment.set(undefined);
+            component.attachmentUnit.set({
+                id: 1,
+                lecture: { id: 1 },
+                attachment: { id: 1, name: 'test.pdf' },
+            });
 
-            PDFDocument.load = jest.fn().mockResolvedValue(hiddenPdfDoc);
+            attachmentUnitServiceMock.update.mockReturnValue(of({}));
 
-            component.attachmentUnit.set(mockAttachmentUnit as any);
-            component.currentPdfBlob.set(new Blob([mockPdfBytes], { type: 'application/pdf' }));
-            component.currentPdfBlob()!.arrayBuffer = jest.fn().mockResolvedValue(mockPdfBytes);
+            component.updateAttachmentWithFile();
+            tick();
 
-            const result = await component.createStudentVersionOfAttachment(hiddenPages);
+            fixture.whenStable().then(() => {
+                expect(attachmentUnitServiceMock.update).toHaveBeenCalledWith(1, 1, expect.any(FormData));
 
-            expect(PDFDocument.load).toHaveBeenCalledWith(mockPdfBytes);
-            expect(hiddenPdfDoc.removePage).toHaveBeenCalledTimes(hiddenPages.length);
-            expect(hiddenPdfDoc.removePage).toHaveBeenCalledWith(1); // 2-1 (zero-indexed)
-            expect(hiddenPdfDoc.removePage).toHaveBeenCalledWith(3); // 4-1 (zero-indexed)
-            expect(hiddenPdfDoc.save).toHaveBeenCalled();
-            expect(result).toBeInstanceOf(File);
-            expect(result!.name).toBe(`${mockFileName}.pdf`);
-            expect(result!.type).toBe('application/pdf');
-        });
+                const lastCallArgs = attachmentUnitServiceMock.update.mock.lastCall[2];
+                expect(lastCallArgs instanceof FormData).toBeTrue();
+                expect(lastCallArgs.get('hiddenPages')).toBe(JSON.stringify(mockHiddenPages));
+            });
+        }));
 
         it('should handle errors and call alertService.error if something goes wrong', async () => {
-            const hiddenPages = [2, 4];
+            const hiddenPages = [
+                { pageIndex: 2, date: dayjs() },
+                { pageIndex: 4, date: dayjs() },
+            ];
             const errorMessage = 'Failed to load PDF';
             PDFDocument.load = jest.fn().mockRejectedValue(new Error(errorMessage));
 

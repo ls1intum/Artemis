@@ -94,7 +94,6 @@ export class PdfPreviewComponent implements OnInit, OnDestroy {
                 );
                 this.initialHiddenPages.set(hiddenPagesMap);
                 this.hiddenPages.set({ ...hiddenPagesMap });
-                console.log(this.hiddenPages());
                 this.attachmentUnitSub = this.attachmentUnitService.getAttachmentFile(this.course()!.id!, this.attachmentUnit()!.id!).subscribe({
                     next: (blob: Blob) => {
                         this.currentPdfBlob.set(blob);

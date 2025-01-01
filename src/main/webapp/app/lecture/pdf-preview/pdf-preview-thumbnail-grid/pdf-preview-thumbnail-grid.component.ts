@@ -9,7 +9,6 @@ import { faEye, faEyeSlash } from '@fortawesome/free-solid-svg-icons';
 import { PdfPreviewDateBoxComponent } from 'app/lecture/pdf-preview/pdf-preview-date-box/pdf-preview-date-box.component';
 import { Course } from 'app/entities/course.model';
 import dayjs from 'dayjs/esm';
-import { NgbPopover } from '@ng-bootstrap/ng-bootstrap';
 
 interface HiddenPage {
     pageIndex: number;
@@ -30,6 +29,8 @@ interface HiddenPageMap {
 export class PdfPreviewThumbnailGridComponent implements OnChanges {
     pdfContainer = viewChild.required<ElementRef<HTMLDivElement>>('pdfContainer');
 
+    forever = dayjs('9999-12-31');
+
     // Inputs
     course = input<Course>();
     currentPdfUrl = input<string>();
@@ -47,8 +48,6 @@ export class PdfPreviewThumbnailGridComponent implements OnChanges {
     initialPageNumber = signal<number>(0);
     activeButtonIndex = signal<number | null>(null);
     isPopoverOpen = signal<boolean>(false);
-    forever = signal<dayjs.Dayjs>(dayjs('9999-12-31'));
-    activePopover = signal<NgbPopover | null>(null);
 
     // Outputs
     isPdfLoading = output<boolean>();
