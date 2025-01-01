@@ -71,10 +71,13 @@ export class ExerciseUpdatePlagiarismComponent implements OnInit, OnDestroy, Aft
     }
 
     toggleCPCEnabled() {
-        const config = this.exercise()?.plagiarismDetectionConfig!;
-        const newValue = !config.continuousPlagiarismControlEnabled;
-        config.continuousPlagiarismControlEnabled = newValue;
-        config.continuousPlagiarismControlPostDueDateChecksEnabled = newValue;
+        const config = this.exercise()?.plagiarismDetectionConfig;
+
+        if (config) {
+            const newValue = !config.continuousPlagiarismControlEnabled;
+            config.continuousPlagiarismControlEnabled = newValue;
+            config.continuousPlagiarismControlPostDueDateChecksEnabled = newValue;
+        }
     }
 
     /**

@@ -255,10 +255,7 @@ describe('Plagiarism Cases Instructor View Component', () => {
     });
 
     it('should navigate to plagiarism detection page on click', fakeAsync(() => {
-        const courseId = route.snapshot.paramMap.get('courseId');
-        // exercise id = exercise1.id for first element of first group (0-0)
         const exerciseId = exercise1.id;
-
         fixture.detectChanges();
         const plagiarismDetectionLink = fixture.debugElement.nativeElement.querySelector('#plagiarism-detection-link-' + exerciseId);
         expect(plagiarismDetectionLink).toBeTruthy();
