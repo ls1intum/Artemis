@@ -57,16 +57,14 @@ public class Channel extends Conversation {
      * A channel is either public or private. Users need an invitation to join a private channel. Every user can join a public channel.
      */
     @Column(name = "is_public")
-    @NotNull
-    private Boolean isPublic;
+    private boolean isPublic = false;
 
     /**
      * An announcement channel is a special type of channel where only channel moderators and instructors can start new posts.
      * Answer posts are still possible so that students can ask questions concerning the announcement.
      */
     @Column(name = "is_announcement")
-    @NotNull
-    private Boolean isAnnouncementChannel;
+    private boolean isAnnouncementChannel = false;
 
     /**
      * A channel that is no longer needed can be archived or deleted.
@@ -74,8 +72,7 @@ public class Channel extends Conversation {
      * The channel can be unarchived at any time.
      */
     @Column(name = "is_archived")
-    @NotNull
-    private Boolean isArchived;
+    private boolean isArchived = false;
 
     /**
      * Channels, that are meant to be seen by all course members by default, even if they haven't joined the channel yet, can be flagged with is_course_wide=true.
@@ -101,7 +98,7 @@ public class Channel extends Conversation {
     private Exam exam;
 
     public Channel(Long id, User creator, Set<ConversationParticipant> conversationParticipants, Set<Post> posts, Course course, ZonedDateTime creationDate,
-            ZonedDateTime lastMessageDate, String name, @Nullable String description, @Nullable String topic, Boolean isPublic, Boolean isAnnouncementChannel, Boolean isArchived,
+            ZonedDateTime lastMessageDate, String name, @Nullable String description, @Nullable String topic, boolean isPublic, boolean isAnnouncementChannel, boolean isArchived,
             boolean isCourseWide, Lecture lecture, Exercise exercise, Exam exam) {
         super(id, creator, conversationParticipants, posts, course, creationDate, lastMessageDate);
         this.name = name;
@@ -138,11 +135,11 @@ public class Channel extends Conversation {
     }
 
     @Nullable
-    public Boolean getIsPublic() {
+    public boolean getIsPublic() {
         return isPublic;
     }
 
-    public void setIsPublic(@Nullable Boolean isPublic) {
+    public void setIsPublic(boolean isPublic) {
         this.isPublic = isPublic;
     }
 
@@ -155,19 +152,19 @@ public class Channel extends Conversation {
         this.topic = topic;
     }
 
-    public Boolean getIsArchived() {
+    public boolean getIsArchived() {
         return isArchived;
     }
 
-    public void setIsArchived(Boolean archived) {
+    public void setIsArchived(boolean archived) {
         isArchived = archived;
     }
 
-    public Boolean getIsAnnouncementChannel() {
+    public boolean getIsAnnouncementChannel() {
         return isAnnouncementChannel;
     }
 
-    public void setIsAnnouncementChannel(Boolean announcementChannel) {
+    public void setIsAnnouncementChannel(boolean announcementChannel) {
         isAnnouncementChannel = announcementChannel;
     }
 

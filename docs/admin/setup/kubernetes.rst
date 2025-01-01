@@ -15,7 +15,7 @@ This section describes how to set up an environment deployed in Kubernetes.
 Follow the links to install the tools which will be needed to proceed with the Kubernetes cluster setup.
 The setup has been tested with the described versions; newer ones might work, too.
 
-* `Docker <https://docs.docker.com/get-docker/>`__ - v20.10.7
+* `Docker <https://docs.docker.com/get-docker/>`__ - v27.4.1
    Docker is a platform for developing, shipping and running applications.
    In our case, we will use it to build the images which we will deploy.
    It is also needed from k3d to create a cluster. The cluster nodes are deployed on Docker containers.
@@ -24,17 +24,17 @@ The setup has been tested with the described versions; newer ones might work, to
    Docker Hub is a service provided by Docker for finding and sharing container images.
    Account in DockerHub is needed to push the Artemis image which will be used by the Kubernetes deployment.
 
-* `k3d <https://k3d.io/#installation>`__ - v4.4.7
+* `k3d <https://k3d.io/#installation>`__ - v5.7.5
    k3d is a lightweight wrapper to run k3s which is a lightweight Kubernetes distribution in Docker.
    k3d makes it very easy to create k3s clusters especially for local deployment on Kubernetes.
 
    Windows users can use ``choco`` to install it. More details can be found in the link under ``Other Installation Methods``
 
-* `kubectl <https://kubernetes.io/docs/tasks/tools/#kubectl>`__ - v1.21
+* `kubectl <https://kubernetes.io/docs/tasks/tools/#kubectl>`__ - v1.32
    kubectl is the Kubernetes command-line tool, which allows you to run commands against Kubernetes clusters.
    It can be used to deploy applications, inspect and manage cluster resources, and view logs.
 
-* `helm <https://helm.sh/docs/intro/install/>`__ - v3.6.3
+* `helm <https://helm.sh/docs/intro/install/>`__ - v3.16.4
    Helm is the package manager for Kubernetes. We will use it to install cert-manager and Rancher
 
 

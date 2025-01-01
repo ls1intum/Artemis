@@ -23,17 +23,15 @@ import { NgbCollapseMocksModule } from '../../../../../helpers/mocks/directive/n
     template: '',
 })
 class ChannelItemStubComponent {
-    @Output()
-    channelAction = new EventEmitter<ChannelAction>();
-    @Input()
-    channel: ChannelDTO;
+    @Output() channelAction = new EventEmitter<ChannelAction>();
+    @Input() channel: ChannelDTO;
 }
 
 const examples: ChannelDTO[] = [
-    generateExampleChannelDTO({}),
-    generateExampleChannelDTO({ subType: ChannelSubType.EXERCISE }),
-    generateExampleChannelDTO({ subType: ChannelSubType.LECTURE }),
-    generateExampleChannelDTO({ subType: ChannelSubType.EXAM }),
+    generateExampleChannelDTO({} as ChannelDTO),
+    generateExampleChannelDTO({ subType: ChannelSubType.EXERCISE } as ChannelDTO),
+    generateExampleChannelDTO({ subType: ChannelSubType.LECTURE } as ChannelDTO),
+    generateExampleChannelDTO({ subType: ChannelSubType.EXAM } as ChannelDTO),
 ];
 
 examples.forEach((exampleChannel) => {
@@ -76,8 +74,8 @@ examples.forEach((exampleChannel) => {
         beforeEach(() => {
             fixture = TestBed.createComponent(ChannelsOverviewDialogComponent);
             component = fixture.componentInstance;
-            channelOne = generateExampleChannelDTO({ id: 1, name: 'one', subType: exampleChannel.subType });
-            channelTwo = generateExampleChannelDTO({ id: 2, name: 'two', subType: exampleChannel.subType });
+            channelOne = generateExampleChannelDTO({ id: 1, name: 'one', subType: exampleChannel.subType } as ChannelDTO);
+            channelTwo = generateExampleChannelDTO({ id: 2, name: 'two', subType: exampleChannel.subType } as ChannelDTO);
             channelService = TestBed.inject(ChannelService);
             getChannelsOfCourseSpy = jest.spyOn(channelService, 'getChannelsOfCourse').mockReturnValue(
                 of(

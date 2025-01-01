@@ -13,7 +13,7 @@ public record GradingInstructionDTO(long id, double credits, String gradingScale
      * Convert GradingInstruction to GradingInstructionDTO
      *
      * @param gradingInstruction GradingInstruction to convert
-     * @return GradingInstructionDTO
+     * @return a GradingInstructionDTO based on the GradingInstruction
      */
     public static GradingInstructionDTO of(@NotNull GradingInstruction gradingInstruction) {
         return new GradingInstructionDTO(gradingInstruction.getId(), gradingInstruction.getCredits(), gradingInstruction.getGradingScale(),

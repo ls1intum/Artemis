@@ -7,7 +7,7 @@ import { Course } from 'app/entities/course.model';
 import { Component, EventEmitter, Output } from '@angular/core';
 import { ChannelFormData, ChannelType } from 'app/overview/course-conversations/dialogs/channels-create-dialog/channel-form/channel-form.component';
 import { By } from '@angular/platform-browser';
-import { Channel } from 'app/entities/metis/conversation/channel.model';
+import { ChannelDTO } from 'app/entities/metis/conversation/channel.model';
 import { initializeDialog } from '../dialog-test-helpers';
 
 @Component({
@@ -81,10 +81,10 @@ describe('ChannelsCreateDialogComponent', () => {
         };
         form.formSubmitted.emit(formData);
 
-        const expectedChannel = new Channel();
+        const expectedChannel = new ChannelDTO();
         expectedChannel.name = formData.name;
         expectedChannel.description = formData.description;
-        expectedChannel.isPublic = formData.isPublic;
+        expectedChannel.isPublic = formData.isPublic!;
 
         expect(closeSpy).toHaveBeenCalledOnce();
         expect(closeSpy).toHaveBeenCalledWith(expectedChannel);

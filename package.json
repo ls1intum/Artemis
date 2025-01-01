@@ -1,6 +1,6 @@
 {
     "name": "artemis",
-    "version": "7.8.0",
+    "version": "7.8.1",
     "description": "Interactive Learning with Individual Feedback",
     "private": true,
     "license": "MIT",
@@ -114,6 +114,7 @@
         "yargs-parser": "21.1.1"
     },
     "devDependencies": {
+        "@analogjs/vite-plugin-angular": "1.10.3",
         "@angular-builders/jest": "18.0.0",
         "@angular-devkit/build-angular": "18.2.12",
         "@angular-eslint/builder": "18.4.1",
@@ -125,6 +126,7 @@
         "@angular/compiler-cli": "18.2.13",
         "@angular/language-service": "18.2.13",
         "@sentry/types": "8.47.0",
+        "@testing-library/angular": "17.3.5",
         "@types/crypto-js": "4.2.2",
         "@types/d3-shape": "3.1.6",
         "@types/dompurify": "3.0.5",
@@ -156,13 +158,15 @@
         "jest-junit": "16.0.0",
         "jest-preset-angular": "14.4.2",
         "lint-staged": "15.2.11",
-        "ngxtension": "4.2.0",
         "ng-mocks": "14.13.1",
+        "ngxtension": "4.2.0",
         "prettier": "3.4.2",
         "rimraf": "6.0.1",
         "sass": "1.83.0",
         "ts-jest": "29.2.5",
         "typescript": "5.5.4",
+        "vite-tsconfig-paths": "5.1.4",
+        "vitest": "2.1.8",
         "weak-napi": "2.0.2"
     },
     "engines": {
@@ -187,6 +191,7 @@
         "test:leaks": "npm run prebuild && ng test --log-heap-usage --detect-leaks",
         "test:open-handles": "npm run prebuild && ng test --detect-open-handles",
         "test": "npm run prebuild && ng test --coverage --log-heap-usage -w=4",
+        "vitest": "npm run prebuild && npx vitest --run",
         "testw8": "npm run prebuild && ng test --coverage --log-heap-usage -w=8",
         "update": "ncu -i --format group",
         "webapp:build": "npm run clean-www && npm run prebuild -- --develop && ng build --configuration development",

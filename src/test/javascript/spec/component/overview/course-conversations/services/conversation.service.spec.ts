@@ -2,6 +2,7 @@ import { HttpTestingController, provideHttpClientTesting } from '@angular/common
 import { TestBed, fakeAsync, tick } from '@angular/core/testing';
 import { map, take } from 'rxjs/operators';
 import { TranslateService } from '@ngx-translate/core';
+import { ChannelDTO } from '../../../../../../../main/webapp/app/entities/metis/conversation/channel.model';
 import { MockAccountService } from '../../../../helpers/mocks/service/mock-account.service';
 import { MockTranslateService } from '../../../../helpers/mocks/service/mock-translate.service';
 import { AccountService } from 'app/core/auth/account.service';
@@ -147,7 +148,7 @@ describe('ConversationService', () => {
         // undefined
         expect(service.getConversationName(undefined)).toBe('');
         // channel
-        const channel = generateExampleChannelDTO({});
+        const channel = generateExampleChannelDTO({} as ChannelDTO);
         expect(service.getConversationName(channel)).toBe(channel.name);
         // one to one chat
         const oneToOneChat = generateOneToOneChatDTO({});

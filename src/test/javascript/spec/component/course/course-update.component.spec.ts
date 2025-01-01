@@ -112,6 +112,8 @@ describe('Course Management Update Component', () => {
                 { provide: NgbModal, useClass: MockNgbModalService },
                 MockProvider(TranslateService),
                 MockProvider(LoadImageService),
+                provideHttpClient(),
+                provideHttpClientTesting(),
             ],
             declarations: [
                 CourseUpdateComponent,

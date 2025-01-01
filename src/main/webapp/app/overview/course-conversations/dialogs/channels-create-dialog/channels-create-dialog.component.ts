@@ -35,8 +35,8 @@ export class ChannelsCreateDialogComponent extends AbstractDialogComponent {
         const { name, description, isPublic, isAnnouncementChannel } = formData;
         this.channelToCreate.name = name ? name.trim() : undefined;
         this.channelToCreate.description = description ? description.trim() : undefined;
-        this.channelToCreate.isPublic = isPublic;
-        this.channelToCreate.isAnnouncementChannel = isAnnouncementChannel;
+        this.channelToCreate.isPublic = isPublic ?? false;
+        this.channelToCreate.isAnnouncementChannel = isAnnouncementChannel ?? false;
         this.close(this.channelToCreate);
     }
 }

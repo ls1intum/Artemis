@@ -1,12 +1,12 @@
 apply plugin: "war"
 
 bootWar {
-    mainClass = 'de.tum.cit.aet.artemis.ArtemisApp'
+    mainClass = "de.tum.cit.aet.artemis.ArtemisApp"
     includes = ["WEB-INF/**", "META-INF/**"]
     webXml = file("${project.rootDir}/src/main/webapp/WEB-INF/web.xml")
     manifest {
-        attributes('Implementation-Title': 'Artemis',
-                   'Implementation-Version': version)
+        attributes("Implementation-Title": "Artemis",
+                   "Implementation-Version": version)
     }
     duplicatesStrategy = DuplicatesStrategy.EXCLUDE
 }
@@ -18,4 +18,8 @@ war {
     webXml = file("${project.rootDir}/src/main/webapp/WEB-INF/web.xml")
     enabled = true
     archiveExtension = "war.original"
+}
+
+jar {
+    enabled = false
 }

@@ -2,7 +2,7 @@ import { Injectable, inject } from '@angular/core';
 import { HttpClient, HttpParams, HttpResponse } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { map } from 'rxjs/operators';
-import { Conversation, ConversationDTO } from 'app/entities/metis/conversation/conversation.model';
+import { ConversationDTO } from 'app/entities/metis/conversation/conversation.model';
 import { TranslateService } from '@ngx-translate/core';
 import { AccountService } from 'app/core/auth/account.service';
 import { User } from 'app/core/user/user.model';
@@ -11,7 +11,7 @@ import { isGroupChatDTO } from 'app/entities/metis/conversation/group-chat.model
 import { ConversationUserDTO } from 'app/entities/metis/conversation/conversation-user-dto.model';
 import { isOneToOneChatDTO } from 'app/entities/metis/conversation/one-to-one-chat.model';
 import { getUserLabel } from 'app/overview/course-conversations/other/conversation.util';
-import { convertDateFromClient, convertDateFromServer } from 'app/utils/date.utils';
+import { convertDateFromServer } from 'app/utils/date.utils';
 
 type EntityArrayResponseType = HttpResponse<ConversationDTO[]>;
 
@@ -141,12 +141,6 @@ export class ConversationService {
         return this.http.get<User[]>(`${this.resourceUrl}${courseId}/code-of-conduct/responsible-users`, { observe: 'response' });
     }
 
-    public convertDateFromClient = (conversation: Conversation) => ({
-        ...conversation,
-        creationDate: convertDateFromClient(conversation.creationDate),
-        lastMessageDate: convertDateFromClient(conversation.lastMessageDate),
-    });
-
     public convertDateFromServer = (res: HttpResponse<ConversationDTO>): HttpResponse<ConversationDTO> => {
         if (res.body) {
             this.convertServerDates(res.body);
@@ -184,6 +178,6 @@ export class ConversationService {
     };
 
     markAllChannelsAsRead(courseId: number) {
-        return this.http.put<void>(`${this.resourceUrl}${courseId}/channels/mark-as-read`, { observe: 'response' });
+        return this.http.post<void>(`${this.resourceUrl}${courseId}/channels/mark-as-read`, { observe: 'response' });
     }
 }

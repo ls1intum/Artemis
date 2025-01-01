@@ -30,7 +30,7 @@ import { catchError } from 'rxjs/operators';
 export class ConversationMemberRowComponent implements OnInit, OnDestroy {
     private ngUnsubscribe = new Subject<void>();
 
-    activeConversation = input<ConversationDTO>();
+    activeConversation = input.required<ConversationDTO>();
     course = input<Course>();
     changePerformed = output<void>();
     conversationMember = input<ConversationUserDTO>();
@@ -90,13 +90,13 @@ export class ConversationMemberRowComponent implements OnInit, OnDestroy {
                 this.setUserAuthorityIconAndTooltip();
                 // the creator of a channel can not be removed from the channel
                 this.canBeRemovedFromConversation = !this.isCurrentUser && this.canRemoveUsersFromConversation(this.activeConversation()!);
-                if (isChannelDTO(this.activeConversation()!)) {
+                if (isChannelDTO(this.activeConversation())) {
                     // the creator of a channel can not be removed from the channel
-                    this.canBeRemovedFromConversation = this.canBeRemovedFromConversation && !this.isCreator && !(this.activeConversation() as ChannelDTO)!.isCourseWide;
-                    this.canBeGrantedChannelModeratorRole = this.canGrantChannelModeratorRole(this.activeConversation()!) && !this.conversationMember()?.isChannelModerator;
+                    const channelDTO = this.activeConversation() as ChannelDTO;
+                    this.canBeRemovedFromConversation = this.canBeRemovedFromConversation && !this.isCreator && !channelDTO.isCourseWide;
+                    this.canBeGrantedChannelModeratorRole = this.canGrantChannelModeratorRole(channelDTO) && !this.conversationMember()?.isChannelModerator;
                     // the creator of a channel cannot be revoked the channel moderator role
-                    this.canBeRevokedChannelModeratorRole =
-                        this.canRevokeChannelModeratorRole(this.activeConversation()!) && !this.isCreator && !!this.conversationMember()?.isChannelModerator;
+                    this.canBeRevokedChannelModeratorRole = this.canRevokeChannelModeratorRole(channelDTO) && !this.isCreator && !!this.conversationMember()?.isChannelModerator;
                 }
             });
         }

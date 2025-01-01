@@ -394,7 +394,7 @@ public class JenkinsBuildPlanService {
         }
 
         try {
-            var uri = UriComponentsBuilder.fromHttpUrl(serverUrl.toString()).pathSegment("job", projectKey, "job", planKey, "lastBuild", "api", "json").build().toUri();
+            var uri = UriComponentsBuilder.fromUriString(serverUrl.toString()).pathSegment("job", projectKey, "job", planKey, "lastBuild", "api", "json").build().toUri();
             var response = restTemplate.getForObject(uri, JsonNode.class);
             var isJobBuilding = response.get("building").asBoolean();
             return isJobBuilding ? ContinuousIntegrationService.BuildStatus.BUILDING : ContinuousIntegrationService.BuildStatus.INACTIVE;
@@ -475,7 +475,7 @@ public class JenkinsBuildPlanService {
      */
     public void enablePlan(String projectKey, String planKey) {
         try {
-            var uri = UriComponentsBuilder.fromHttpUrl(serverUrl.toString()).pathSegment("job", projectKey, "job", planKey, "enable").build(true).toUri();
+            var uri = UriComponentsBuilder.fromUriString(serverUrl.toString()).pathSegment("job", projectKey, "job", planKey, "enable").build(true).toUri();
             restTemplate.postForEntity(uri, null, String.class);
         }
         catch (HttpClientErrorException e) {

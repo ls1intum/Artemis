@@ -1,9 +1,7 @@
 import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
 import { PlagiarismCasesInstructorViewComponent } from 'app/course/plagiarism-cases/instructor-view/plagiarism-cases-instructor-view.component';
-import { ArtemisTestModule } from '../../test.module';
-import { MockTranslateService, TranslateTestingModule } from '../../helpers/mocks/service/mock-translate.service';
 import { PlagiarismCasesService } from 'app/course/plagiarism-cases/shared/plagiarism-cases.service';
-import { ActivatedRoute, ActivatedRouteSnapshot, convertToParamMap } from '@angular/router';
+import { ActivatedRoute, ActivatedRouteSnapshot, Router, RouterModule, convertToParamMap } from '@angular/router';
 import { Observable, of } from 'rxjs';
 import { HttpResponse } from '@angular/common/http';
 import { PlagiarismCase } from 'app/exercises/shared/plagiarism/types/PlagiarismCase';
@@ -12,9 +10,22 @@ import { TextExercise } from 'app/entities/text/text-exercise.model';
 import { PlagiarismVerdict } from 'app/exercises/shared/plagiarism/types/PlagiarismVerdict';
 import * as DownloadUtil from 'app/shared/util/download.util';
 import dayjs from 'dayjs/esm';
-import { DocumentationButtonComponent } from 'app/shared/components/documentation-button/documentation-button.component';
 import { NotificationService } from 'app/shared/notification/notification.service';
+import { ExerciseType } from 'app/entities/exercise.model';
+import { PlagiarismSubmission } from 'app/exercises/shared/plagiarism/types/PlagiarismSubmission';
+import { TextSubmissionElement } from 'app/exercises/shared/plagiarism/types/text/TextSubmissionElement';
+import { ArtemisTestModule } from '../../test.module';
+import { MockTranslateService, TranslateTestingModule } from '../../helpers/mocks/service/mock-translate.service';
 import { MockNotificationService } from '../../helpers/mocks/service/mock-notification.service';
+import { PlagiarismCaseVerdictComponent } from 'app/course/plagiarism-cases/shared/verdict/plagiarism-case-verdict.component';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { ArtemisSharedComponentModule } from 'app/shared/components/shared-component.module';
+import { ArtemisTutorParticipationGraphModule } from 'app/shared/dashboards/tutor-participation-graph/tutor-participation-graph.module';
+import { ArtemisPlagiarismCasesSharedModule } from 'app/course/plagiarism-cases/shared/plagiarism-cases-shared.module';
+import { ArtemisSharedCommonModule } from 'app/shared/shared-common.module';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { MockComponent, MockDirective, MockModule } from 'ng-mocks';
+import { MockRouter } from '../../helpers/mocks/mock-router';
 
 jest.mock('app/shared/util/download.util', () => ({
     downloadFile: jest.fn(),
@@ -24,6 +35,7 @@ describe('Plagiarism Cases Instructor View Component', () => {
     let component: PlagiarismCasesInstructorViewComponent;
     let fixture: ComponentFixture<PlagiarismCasesInstructorViewComponent>;
     let plagiarismCasesService: PlagiarismCasesService;
+    let router: MockRouter;
 
     let route: ActivatedRoute;
 
@@ -32,15 +44,24 @@ describe('Plagiarism Cases Instructor View Component', () => {
     const exercise1 = {
         id: 1,
         title: 'Test Exercise 1',
+        type: ExerciseType.TEXT,
     } as TextExercise;
     const exercise2 = {
         id: 2,
         title: 'Test Exercise 2',
+        type: ExerciseType.TEXT,
     } as TextExercise;
+
+    const studentLoginA = 'studentA';
+    const plagiarismSubmission1 = {
+        id: 1,
+        studentLogin: studentLoginA,
+    } as PlagiarismSubmission<TextSubmissionElement>;
 
     const plagiarismCase1 = {
         id: 1,
         exercise: exercise1,
+
         student: { id: 1, login: 'Student 1' },
         verdict: PlagiarismVerdict.PLAGIARISM,
         verdictBy: {
@@ -55,6 +76,7 @@ describe('Plagiarism Cases Instructor View Component', () => {
                 },
             ],
         },
+        plagiarismSubmissions: [plagiarismSubmission1],
     } as PlagiarismCase;
     const plagiarismCase2 = {
         id: 2,
@@ -84,22 +106,42 @@ describe('Plagiarism Cases Instructor View Component', () => {
 
     beforeEach(() => {
         route = { snapshot: { paramMap: convertToParamMap({ courseId: 1 }) } } as any as ActivatedRoute;
+        router = new MockRouter();
 
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule, TranslateTestingModule, PlagiarismCasesInstructorViewComponent],
+            imports: [ArtemisTestModule, TranslateTestingModule, MockModule(RouterModule)],
             providers: [
                 { provide: ActivatedRoute, useValue: route },
+                { provide: Router, useValue: router },
                 { provide: NotificationService, useClass: MockNotificationService },
                 { provide: TranslateService, useClass: MockTranslateService },
             ],
-        }).compileComponents();
-
-        TestBed.overrideComponent(DocumentationButtonComponent, {
-            set: {
-                selector: 'jhi-documentation-button',
-                template: '',
-            },
-        });
+        })
+            .overrideComponent(PlagiarismCasesInstructorViewComponent, {
+                remove: {
+                    imports: [
+                        TranslateDirective,
+                        ArtemisSharedComponentModule,
+                        FaIconComponent,
+                        ArtemisTutorParticipationGraphModule,
+                        ArtemisPlagiarismCasesSharedModule,
+                        ArtemisSharedCommonModule,
+                        PlagiarismCaseVerdictComponent,
+                    ],
+                },
+                add: {
+                    imports: [
+                        MockModule(ArtemisSharedComponentModule),
+                        MockModule(ArtemisPlagiarismCasesSharedModule),
+                        MockModule(ArtemisSharedCommonModule),
+                        MockModule(ArtemisTutorParticipationGraphModule),
+                        MockDirective(TranslateDirective),
+                        MockComponent(FaIconComponent),
+                        MockComponent(PlagiarismCaseVerdictComponent),
+                    ],
+                },
+            })
+            .compileComponents();
 
         fixture = TestBed.createComponent(PlagiarismCasesInstructorViewComponent);
         component = fixture.componentInstance;
@@ -107,6 +149,11 @@ describe('Plagiarism Cases Instructor View Component', () => {
         jest.spyOn(plagiarismCasesService, 'getCoursePlagiarismCasesForInstructor').mockReturnValue(
             of({ body: [plagiarismCase1, plagiarismCase2, plagiarismCase3, plagiarismCase4] }) as Observable<HttpResponse<PlagiarismCase[]>>,
         );
+
+        jest.spyOn(plagiarismCasesService, 'getExamPlagiarismCasesForInstructor').mockReturnValue(
+            of({ body: [plagiarismCase1, plagiarismCase2, plagiarismCase3, plagiarismCase4] }) as Observable<HttpResponse<PlagiarismCase[]>>,
+        );
+        jest.spyOn(router, 'navigateByUrl');
     });
 
     afterEach(() => {
@@ -120,7 +167,10 @@ describe('Plagiarism Cases Instructor View Component', () => {
         expect(component.examId).toBe(0);
         expect(component.plagiarismCases).toEqual([plagiarismCase1, plagiarismCase2, plagiarismCase3, plagiarismCase4]);
         expect(component.exercisesWithPlagiarismCases).toEqual([exercise1, exercise2]);
-        expect(component.groupedPlagiarismCases).toEqual({ 1: [plagiarismCase1, plagiarismCase2], 2: [plagiarismCase3, plagiarismCase4] });
+        expect(component.groupedPlagiarismCases).toEqual({
+            1: [plagiarismCase1, plagiarismCase2],
+            2: [plagiarismCase3, plagiarismCase4],
+        });
     }));
 
     it('should get plagiarism cases for course when exam id is not set', fakeAsync(() => {
@@ -203,4 +253,17 @@ describe('Plagiarism Cases Instructor View Component', () => {
         expect(downloadSpy).toHaveBeenCalledOnce();
         expect(downloadSpy).toHaveBeenCalledWith(new Blob(expectedBlob, { type: 'text/csv' }), 'plagiarism-cases.csv');
     });
+
+    it('should navigate to plagiarism detection page on click', fakeAsync(() => {
+        const courseId = route.snapshot.paramMap.get('courseId');
+        // exercise id = exercise1.id for first element of first group (0-0)
+        const exerciseId = exercise1.id;
+
+        fixture.detectChanges();
+        const plagiarismDetectionLink = fixture.debugElement.nativeElement.querySelector('#plagiarism-detection-link-' + exerciseId);
+        expect(plagiarismDetectionLink).toBeTruthy();
+        plagiarismDetectionLink.click();
+
+        expect(router.navigateByUrl).toHaveBeenCalled();
+    }));
 });

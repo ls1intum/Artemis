@@ -1,6 +1,6 @@
-def profiles = 'prod'
-if (project.hasProperty('no-liquibase')) {
-    profiles += ',no-liquibase'
+def profiles = "prod"
+if (project.hasProperty("no-liquibase")) {
+    profiles += ",no-liquibase"
 }
 
 springBoot {
@@ -11,26 +11,26 @@ bootRun {
     args = []
 }
 
-tasks.register('webapp_test', NpmTask) {
+tasks.register("webapp_test", NpmTask) {
     dependsOn "npm_install"
     args = ["run", "webapp:test"]
 }
 
-tasks.register('webapp', NpmTask) {
+tasks.register("webapp", NpmTask) {
     dependsOn "npm_install"
     args = ["run", "webapp:prod"]
     environment = [APP_VERSION: project.version]
 }
 
 processResources {
-    inputs.property('version', version)
-    inputs.property('springProfiles', profiles)
-    filesMatching('**/application.yml') {
+    inputs.property("version", version)
+    inputs.property("springProfiles", profiles)
+    filesMatching("**/application.yml") {
         filter {
-            it.replace('#project.version#', version)
+            it.replace("#project.version#", version)
         }
         filter {
-            it.replace('#spring.profiles.active#', profiles)
+            it.replace("#spring.profiles.active#", profiles)
         }
     }
 }

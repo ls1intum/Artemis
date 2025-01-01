@@ -11,6 +11,7 @@ import { ItemCountComponent } from 'app/shared/pagination/item-count.component';
 import { NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
 import { ConversationMemberSearchFilter, ConversationService } from 'app/shared/metis/conversations/conversation.service';
 import { AlertService } from 'app/core/util/alert.service';
+import { ChannelDTO } from '../../../../../../../../../../main/webapp/app/entities/metis/conversation/channel.model';
 import { generateExampleChannelDTO, generateExampleGroupChatDTO, generateOneToOneChatDTO } from '../../../../helpers/conversationExampleModels';
 import { HttpHeaders, HttpResponse } from '@angular/common/http';
 import { of } from 'rxjs';
@@ -34,7 +35,7 @@ class ConversationMemberRowStubComponent {
     @Input()
     conversationMember: ConversationUserDTO;
 }
-const examples: ConversationDTO[] = [generateOneToOneChatDTO({}), generateExampleGroupChatDTO({}), generateExampleChannelDTO({})];
+const examples: ConversationDTO[] = [generateOneToOneChatDTO({}), generateExampleGroupChatDTO({}), generateExampleChannelDTO({} as ChannelDTO)];
 
 examples.forEach((activeConversation) => {
     describe('ConversationMembersComponent with ' + activeConversation.type, () => {

@@ -2,12 +2,12 @@ package de.tum.cit.aet.artemis.communication;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Fail.fail;
+import static org.awaitility.Awaitility.await;
 
 import java.time.ZonedDateTime;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
-import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -22,13 +22,11 @@ import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.util.LinkedMultiValueMap;
 
-import de.tum.cit.aet.artemis.communication.domain.ConversationParticipant;
 import de.tum.cit.aet.artemis.communication.domain.conversation.Channel;
 import de.tum.cit.aet.artemis.communication.dto.ChannelDTO;
 import de.tum.cit.aet.artemis.communication.dto.ChannelIdAndNameDTO;
 import de.tum.cit.aet.artemis.communication.dto.FeedbackChannelRequestDTO;
 import de.tum.cit.aet.artemis.communication.dto.MetisCrudAction;
-import de.tum.cit.aet.artemis.communication.service.conversation.ChannelService;
 import de.tum.cit.aet.artemis.communication.service.conversation.ConversationService;
 import de.tum.cit.aet.artemis.communication.util.ConversationUtilService;
 import de.tum.cit.aet.artemis.core.domain.Course;
@@ -77,9 +75,6 @@ class ChannelIntegrationTest extends AbstractConversationTest {
 
     @Autowired
     private ProgrammingExerciseUtilService programmingExerciseUtilService;
-
-    @Autowired
-    private ChannelService channelService;
 
     @BeforeEach
     @Override
@@ -982,9 +977,9 @@ class ChannelIntegrationTest extends AbstractConversationTest {
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void markAllChannelsAsRead() throws Exception {
-        // ensure there exist atleast two channel with unread messages in the course
-        ChannelDTO newChannel1 = createChannel(true, "channel1");
-        ChannelDTO newChannel2 = createChannel(true, "channel2");
+        // ensure there exist at least two channel with unread messages in the course
+        createChannel(true, "channel1");
+        createChannel(true, "channel2");
         List<Channel> channels = channelRepository.findChannelsByCourseId(exampleCourseId);
         channels.forEach(channel -> {
             addUsersToConversation(channel.getId(), "instructor1");
@@ -994,13 +989,12 @@ class ChannelIntegrationTest extends AbstractConversationTest {
             });
         });
 
-        User requestingUser = userTestRepository.getUser();
-        request.put("/api/courses/" + exampleCourseId + "/channels/mark-as-read", null, HttpStatus.OK);
+        User instructor1 = userTestRepository.getUser();
+        request.postWithoutLocation("/api/courses/" + exampleCourseId + "/channels/mark-as-read", null, HttpStatus.OK, null);
         List<Channel> updatedChannels = channelRepository.findChannelsByCourseId(exampleCourseId);
         updatedChannels.forEach(channel -> {
-            Optional<ConversationParticipant> conversationParticipant = conversationParticipantRepository.findConversationParticipantByConversationIdAndUserId(channel.getId(),
-                    requestingUser.getId());
-            assertThat(conversationParticipant.get().getUnreadMessagesCount()).isEqualTo(0L);
+            var conversationParticipant = conversationParticipantRepository.findConversationParticipantByConversationIdAndUserId(channel.getId(), instructor1.getId());
+            await().untilAsserted(() -> assertThat(conversationParticipant.get().getUnreadMessagesCount()).isZero()); // async db call, so we need to wait
         });
 
     }

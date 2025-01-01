@@ -30,7 +30,7 @@ on:
 # Keep in sync with build.yml and test.yml and analysis-of-endpoint-connections.yml
 env:
   CI: true
-  node: 20
+  node: 22
   java: 21
 
 

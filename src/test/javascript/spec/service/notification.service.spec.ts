@@ -515,9 +515,9 @@ describe('Notification Service', () => {
             const notification = { author: { id: 2 }, target: 'target', notificationDate: dayjs() } as Notification;
             const postDTO: MetisPostDTO = {
                 post: {
-                    author: { id: 2 },
+                    author: { id: 2 } as User,
                     conversation: { type: ConversationType.CHANNEL, isCourseWide: true } as Channel,
-                    answers: [{ author: { id: 1 } }, { author: { id: 2 } }],
+                    answers: [{ author: { id: 1 } as User }, { author: { id: 2 } as User }],
                 } as Post,
                 action: MetisPostAction.UPDATE,
                 notification,

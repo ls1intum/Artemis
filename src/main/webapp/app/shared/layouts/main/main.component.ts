@@ -27,12 +27,12 @@ export class JhiMainComponent implements OnInit, OnDestroy {
     courseOverviewSubscription: Subscription;
     testRunSubscription: Subscription;
     ltiSubscription: Subscription;
-    isProduction: boolean = true;
-    isTestServer: boolean = false;
-    isExamStarted: boolean = false;
-    isTestRunExam: boolean = false;
-    isCourseOverview: boolean = false;
-    isShownViaLti: boolean = false;
+    isProduction = true;
+    isTestServer = false;
+    isExamStarted = false;
+    isTestRunExam = false;
+    isCourseOverview = false;
+    isShownViaLti = false;
 
     constructor(
         private jhiLanguageHelper: JhiLanguageHelper,

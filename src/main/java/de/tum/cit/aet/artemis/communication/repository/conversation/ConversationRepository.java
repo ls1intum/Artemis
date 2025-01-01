@@ -14,6 +14,7 @@ import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
 
+import de.tum.cit.aet.artemis.communication.domain.conversation.Channel;
 import de.tum.cit.aet.artemis.communication.domain.conversation.Conversation;
 import de.tum.cit.aet.artemis.communication.dto.GeneralConversationInfo;
 import de.tum.cit.aet.artemis.communication.dto.UserConversationInfo;
@@ -90,11 +91,17 @@ public interface ConversationRepository extends ArtemisJpaRepository<Conversatio
             """)
     boolean userHasUnreadMessageInCourse(@Param("courseId") Long courseId, @Param("userId") Long userId);
 
-    /**
-     * Retrieves a list of conversations for the given course
-     *
-     * @param courseId the course id
-     * @return a list of conversations for the given course
-     */
-    List<Conversation> findAllByCourseId(Long courseId);
+    @Query("""
+            SELECT DISTINCT c
+            FROM Conversation c
+            WHERE c.course.id = :courseId
+                AND TYPE(c) = Channel
+                AND c.isCourseWide = TRUE
+                AND c.id NOT IN (
+                    SELECT cp.conversation.id
+                    FROM ConversationParticipant cp
+                    WHERE cp.user.id = :userId
+                )
+            """)
+    List<Channel> findAllCourseWideChannelsByUserIdAndCourseIdWithoutConversationParticipant(@Param("courseId") Long courseId, @Param("userId") Long userId);
 }

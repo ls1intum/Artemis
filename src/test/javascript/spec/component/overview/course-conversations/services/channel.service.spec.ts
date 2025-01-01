@@ -31,7 +31,7 @@ describe('ChannelService', () => {
         service = TestBed.inject(ChannelService);
         httpMock = TestBed.inject(HttpTestingController);
 
-        elemDefault = generateExampleChannelDTO({});
+        elemDefault = generateExampleChannelDTO({} as ChannelDTO);
     });
 
     afterEach(() => {
