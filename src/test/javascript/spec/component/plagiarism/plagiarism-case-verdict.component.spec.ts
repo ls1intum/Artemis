@@ -6,8 +6,6 @@ import { TranslateService } from '@ngx-translate/core';
 import { PlagiarismVerdict } from 'app/exercises/shared/plagiarism/types/PlagiarismVerdict';
 import { PlagiarismCase } from 'app/exercises/shared/plagiarism/types/PlagiarismCase';
 import { By } from '@angular/platform-browser';
-import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
-import { MockPipe } from 'ng-mocks';
 import { NgbModule } from '@ng-bootstrap/ng-bootstrap';
 
 describe('Plagiarism Case Verdict Component', () => {
@@ -16,8 +14,7 @@ describe('Plagiarism Case Verdict Component', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule, TranslateTestingModule, NgbModule],
-            declarations: [PlagiarismCaseVerdictComponent, MockPipe(ArtemisDatePipe)],
+            imports: [ArtemisTestModule, TranslateTestingModule, NgbModule, PlagiarismCaseVerdictComponent],
             providers: [{ provide: TranslateService, useClass: MockTranslateService }],
         }).compileComponents();
 
@@ -32,7 +29,8 @@ describe('Plagiarism Case Verdict Component', () => {
         [PlagiarismVerdict.POINT_DEDUCTION, 'artemisApp.plagiarism.plagiarismCases.verdict.pointDeduction'],
         [PlagiarismVerdict.NO_PLAGIARISM, 'artemisApp.plagiarism.plagiarismCases.verdict.noPlagiarism'],
     ])('should return correct translation string', (verdict: PlagiarismVerdict | undefined, message: string) => {
-        comp.plagiarismCase = { verdict } as PlagiarismCase;
+        const mockPlagiarismCase = <PlagiarismCase>{ id: 1, verdict };
+        fixture.componentRef.setInput('plagiarismCase', mockPlagiarismCase);
         fixture.detectChanges();
 
         expect(comp.verdictTranslationString).toBe(message);
@@ -45,7 +43,8 @@ describe('Plagiarism Case Verdict Component', () => {
         [PlagiarismVerdict.POINT_DEDUCTION, 'bg-danger'],
         [PlagiarismVerdict.NO_PLAGIARISM, 'bg-success'],
     ])('should return correct verdict badge class', (verdict: PlagiarismVerdict | undefined, className: string) => {
-        comp.plagiarismCase = { verdict } as PlagiarismCase;
+        const mockPlagiarismCase = <PlagiarismCase>{ id: 1, verdict };
+        fixture.componentRef.setInput('plagiarismCase', mockPlagiarismCase);
         fixture.detectChanges();
 
         const element = fixture.debugElement.query(By.css('.badge'));
