@@ -176,10 +176,6 @@ export class PdfPreviewDateBoxComponent implements OnInit, OnDestroy {
 
         this.hiddenPage.set(newEntry);
         this.hiddenPageOutput.emit(newEntry);
-        this.onClose();
-    }
-
-    onClose(): void {
         this.dateBoxOpened.emit(false);
     }
 }
