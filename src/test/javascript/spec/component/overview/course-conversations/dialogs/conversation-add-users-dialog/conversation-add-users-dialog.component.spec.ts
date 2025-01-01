@@ -9,15 +9,15 @@ import { GroupChatService } from 'app/shared/metis/conversations/group-chat.serv
 import { ConversationDTO } from 'app/entities/metis/conversation/conversation.model';
 import { Course } from 'app/entities/course.model';
 import { generateExampleChannelDTO, generateExampleGroupChatDTO } from '../../helpers/conversationExampleModels';
-import { Component, EventEmitter, Input, Output } from '@angular/core';
+import { Component, EventEmitter, Input, Output, input } from '@angular/core';
 import { AddUsersFormData } from 'app/overview/course-conversations/dialogs/conversation-add-users-dialog/add-users-form/conversation-add-users-form.component';
 import { initializeDialog } from '../dialog-test-helpers';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { ChannelIconComponent } from 'app/overview/course-conversations/other/channel-icon/channel-icon.component';
 import { UserPublicInfoDTO } from 'app/core/user/user.model';
 import { By } from '@angular/platform-browser';
-import { isChannelDTO } from 'app/entities/metis/conversation/channel.model';
-import { isGroupChatDTO } from 'app/entities/metis/conversation/group-chat.model';
+import { ChannelDTO, isChannelDTO } from 'app/entities/metis/conversation/channel.model';
+import { GroupChatDTO, isGroupChatDTO } from 'app/entities/metis/conversation/group-chat.model';
 import { of } from 'rxjs';
 import { HttpResponse } from '@angular/common/http';
 @Component({
@@ -29,10 +29,12 @@ class ConversationAddUsersFormStubComponent {
     @Input() courseId: number;
     @Input() maxSelectable?: number = undefined;
 
+    protected readonly isLoading = input<boolean>(false);
+
     @Input()
     activeConversation: ConversationDTO;
 }
-const examples: ConversationDTO[] = [generateExampleGroupChatDTO({}), generateExampleChannelDTO({})];
+const examples: ConversationDTO[] = [generateExampleGroupChatDTO({} as GroupChatDTO), generateExampleChannelDTO({} as ChannelDTO)];
 examples.forEach((activeConversation) => {
     describe('ConversationAddUsersDialogComponent with ' + activeConversation.type, () => {
         let component: ConversationAddUsersDialogComponent;
