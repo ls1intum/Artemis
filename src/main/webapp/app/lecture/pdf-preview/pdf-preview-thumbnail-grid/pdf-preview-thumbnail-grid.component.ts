@@ -9,6 +9,7 @@ import { faEye, faEyeSlash } from '@fortawesome/free-solid-svg-icons';
 import { PdfPreviewDateBoxComponent } from 'app/lecture/pdf-preview/pdf-preview-date-box/pdf-preview-date-box.component';
 import { Course } from 'app/entities/course.model';
 import dayjs from 'dayjs/esm';
+import { NgbPopover } from '@ng-bootstrap/ng-bootstrap';
 
 interface HiddenPage {
     pageIndex: number;
@@ -45,8 +46,9 @@ export class PdfPreviewThumbnailGridComponent implements OnChanges {
     newHiddenPages = signal<HiddenPageMap>(this.hiddenPages() || {});
     initialPageNumber = signal<number>(0);
     activeButtonIndex = signal<number | null>(null);
-    isDateBoxOpen = signal<boolean>(false);
+    isPopoverOpen = signal<boolean>(false);
     forever = signal<dayjs.Dayjs>(dayjs('9999-12-31'));
+    activePopover = signal<NgbPopover | null>(null);
 
     // Outputs
     isPdfLoading = output<boolean>();
@@ -188,16 +190,6 @@ export class PdfPreviewThumbnailGridComponent implements OnChanges {
         this.originalCanvas.set(canvas!);
         this.isEnlargedView.set(true);
         this.initialPageNumber.set(pageIndex);
-    }
-
-    /**
-     * Handles the date box open/close state
-     */
-    handleDateBoxOpen(isOpen: boolean): void {
-        this.isDateBoxOpen.set(isOpen);
-        if (!isOpen) {
-            this.hideActionButton(this.activeButtonIndex()!);
-        }
     }
 
     /**

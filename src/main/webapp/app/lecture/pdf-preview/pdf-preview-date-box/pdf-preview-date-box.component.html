@@ -45,7 +45,7 @@
                                                 [id]="'exercise-' + exercise.id"
                                                 [value]="exercise.id"
                                                 [checked]="selectedExercise()?.id === exercise.id"
-                                                (change)="onExerciseClick(exercise)"
+                                                (change)="selectedExercise.set(exercise)"
                                             />
                                             <span class="ms-2">{{ exercise.title }}</span>
                                         </div>

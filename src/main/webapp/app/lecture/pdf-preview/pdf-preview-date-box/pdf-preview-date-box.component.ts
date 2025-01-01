@@ -1,4 +1,4 @@
-import { Component, OnDestroy, OnInit, input, output, signal } from '@angular/core';
+import { Component, OnInit, input, output, signal } from '@angular/core';
 import { ArtemisSharedModule } from 'app/shared/shared.module';
 import { Course } from 'app/entities/course.model';
 import { Exercise, ExerciseType } from 'app/entities/exercise.model';
@@ -24,7 +24,7 @@ const FOREVER = dayjs('9999-12-31');
     standalone: true,
     imports: [ArtemisSharedModule],
 })
-export class PdfPreviewDateBoxComponent implements OnInit, OnDestroy {
+export class PdfPreviewDateBoxComponent implements OnInit {
     // Inputs
     course = input<Course>();
     pageIndex = input<number>();
@@ -40,7 +40,6 @@ export class PdfPreviewDateBoxComponent implements OnInit, OnDestroy {
     hiddenPage = signal<HiddenPage | null>(null);
 
     // Outputs
-    dateBoxOpened = output<boolean>();
     hiddenPageOutput = output<HiddenPage>();
     selectionCancelledOutput = output<boolean>();
 
@@ -48,11 +47,6 @@ export class PdfPreviewDateBoxComponent implements OnInit, OnDestroy {
 
     ngOnInit(): void {
         this.loadExercises();
-        this.dateBoxOpened.emit(true);
-    }
-
-    ngOnDestroy(): void {
-        this.dateBoxOpened.emit(false);
     }
 
     /**
@@ -87,9 +81,7 @@ export class PdfPreviewDateBoxComponent implements OnInit, OnDestroy {
      * Loads all exercises for the current course
      */
     private loadExercises(): void {
-        const courseId = this.course()!.id!;
-
-        this.courseExerciseService.findAllExercisesForCourse(courseId).subscribe({
+        this.courseExerciseService.findAllExercisesForCourse(this.course()!.id!).subscribe({
             next: (response) => {
                 if (response.body) {
                     this.exercises.set(response.body);
@@ -125,14 +117,6 @@ export class PdfPreviewDateBoxComponent implements OnInit, OnDestroy {
     }
 
     /**
-     * Handles selection of an exercise
-     * @param exercise the selected exercise
-     */
-    onExerciseClick(exercise: Exercise): void {
-        this.selectedExercise.set(exercise);
-    }
-
-    /**
      * Group and sort exercises by type, excluding those without a due date
      */
     private processExercises(exercises: Exercise[]): CategorizedExercise[] {
@@ -157,24 +141,18 @@ export class PdfPreviewDateBoxComponent implements OnInit, OnDestroy {
      * Submit the selected date option
      */
     onSubmit(): void {
-        let selectedDate: dayjs.Dayjs;
-        if (this.hideForever()) {
-            selectedDate = FOREVER;
-        } else if (this.calendarSelected()) {
-            selectedDate = dayjs(this.defaultDate());
-        } else if (this.exerciseSelected() && this.selectedExercise()) {
-            selectedDate = this.selectedExercise()!.dueDate!;
-        } else {
-            return;
-        }
+        const selectedDate = this.hideForever()
+            ? FOREVER
+            : this.calendarSelected()
+              ? dayjs(this.defaultDate())
+              : this.exerciseSelected() && this.selectedExercise()
+                ? this.selectedExercise()!.dueDate!
+                : null;
 
-        const newEntry: HiddenPage = {
-            pageIndex: this.pageIndex()!,
-            date: selectedDate,
-        };
+        if (!selectedDate) return;
 
+        const newEntry = { pageIndex: this.pageIndex()!, date: selectedDate };
         this.hiddenPage.set(newEntry);
         this.hiddenPageOutput.emit(newEntry);
-        this.dateBoxOpened.emit(false);
     }
 }

@@ -1,4 +1,4 @@
-<div #pdfContainer class="pdf-container" [class.scroll-disabled]="isDateBoxOpen()">
+<div #pdfContainer class="pdf-container" [class.scroll-disabled]="isPopoverOpen()">
     @for (page of totalPagesArray(); track page) {
         <div [id]="'pdf-page-' + page" class="pdf-canvas-container" (click)="displayEnlargedCanvas(page); $event.stopPropagation()">
             @if (newHiddenPages()![page]) {
@@ -24,9 +24,11 @@
                     (click)="toggleVisibility(page, $event)"
                     [ngbPopover]="newHiddenPages()![page] ? showPageBox : hidePageBox"
                     #popover="ngbPopover"
-                    [autoClose]="false"
+                    [autoClose]="'outside'"
                     placement="right auto"
                     container="body"
+                    (shown)="isPopoverOpen.set(true)"
+                    (hidden)="this.hideActionButton(page); isPopoverOpen.set(false)"
                 >
                     <fa-icon [icon]="newHiddenPages()![page] ? faEye : faEyeSlash"></fa-icon>
                 </button>
@@ -35,7 +37,6 @@
                     <jhi-pdf-preview-date-box-component
                         [course]="course()"
                         [pageIndex]="activeButtonIndex()!"
-                        (dateBoxOpened)="handleDateBoxOpen($event)"
                         (hiddenPageOutput)="onHiddenPageChange($event); popover.close()"
                         (selectionCancelledOutput)="popover.close()"
                     />
