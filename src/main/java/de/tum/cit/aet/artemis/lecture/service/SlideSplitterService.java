@@ -161,6 +161,10 @@ public class SlideSplitterService {
         }
     }
 
+    /**
+     * A scheduled task that runs every minute to check for slides
+     * with expired hidden timestamps and unhide them.
+     */
     @Scheduled(cron = "0 * * * * *")
     public void checkAndUnhideSlides() {
         Timestamp currentTime = new Timestamp(System.currentTimeMillis());

@@ -9,10 +9,6 @@
     }
 }
 
-.text-muted {
-    color: var(--secondary);
-}
-
 .type-section {
     margin-bottom: 1rem;
 
@@ -29,6 +25,14 @@
 
             &:hover:not(.active) {
                 background-color: var(--pdf-preview-date-box-title-background);
+            }
+
+            &:not(.active) .text-muted {
+                color: var(--secondary) !important;
+            }
+
+            &.active .text-muted {
+                color: var(--white) !important;
             }
 
             .form-check-input {
