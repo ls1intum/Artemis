@@ -7,7 +7,6 @@ import { PlagiarismVerdict } from 'app/exercises/shared/plagiarism/types/Plagiar
 import { PlagiarismCase } from 'app/exercises/shared/plagiarism/types/PlagiarismCase';
 import { By } from '@angular/platform-browser';
 import { NgbModule } from '@ng-bootstrap/ng-bootstrap';
-import { signal } from '@angular/core';
 
 describe('Plagiarism Case Verdict Component', () => {
     let comp: PlagiarismCaseVerdictComponent;
@@ -30,8 +29,8 @@ describe('Plagiarism Case Verdict Component', () => {
         [PlagiarismVerdict.POINT_DEDUCTION, 'artemisApp.plagiarism.plagiarismCases.verdict.pointDeduction'],
         [PlagiarismVerdict.NO_PLAGIARISM, 'artemisApp.plagiarism.plagiarismCases.verdict.noPlagiarism'],
     ])('should return correct translation string', (verdict: PlagiarismVerdict | undefined, message: string) => {
-        const mockPlagiarismCaseSignal = signal<PlagiarismCase | undefined>({ verdict });
-        comp.plagiarismCase = mockPlagiarismCaseSignal;
+        const mockPlagiarismCase = <PlagiarismCase>{ id: 1, verdict };
+        fixture.componentRef.setInput('plagiarismCase', mockPlagiarismCase);
         fixture.detectChanges();
 
         expect(comp.verdictTranslationString).toBe(message);
@@ -44,8 +43,8 @@ describe('Plagiarism Case Verdict Component', () => {
         [PlagiarismVerdict.POINT_DEDUCTION, 'bg-danger'],
         [PlagiarismVerdict.NO_PLAGIARISM, 'bg-success'],
     ])('should return correct verdict badge class', (verdict: PlagiarismVerdict | undefined, className: string) => {
-        const mockPlagiarismCaseSignal = signal<PlagiarismCase | undefined>({ verdict });
-        comp.plagiarismCase = mockPlagiarismCaseSignal;
+        const mockPlagiarismCase = <PlagiarismCase>{ id: 1, verdict };
+        fixture.componentRef.setInput('plagiarismCase', mockPlagiarismCase);
         fixture.detectChanges();
 
         const element = fixture.debugElement.query(By.css('.badge'));
