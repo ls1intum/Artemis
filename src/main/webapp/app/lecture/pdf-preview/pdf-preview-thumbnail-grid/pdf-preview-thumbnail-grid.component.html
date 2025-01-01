@@ -1,7 +1,7 @@
 <div #pdfContainer class="pdf-container" [class.scroll-disabled]="isDateBoxOpen()">
     @for (page of totalPagesArray(); track page) {
         <div [id]="'pdf-page-' + page" class="pdf-canvas-container" (click)="displayEnlargedCanvas(page); $event.stopPropagation()">
-            @if (hiddenPageIndexes()!.has(page)) {
+            @if (newHiddenPages()![page]) {
                 <ng-container>
                     <div class="hidden-overlay pdf-overlay" style="opacity: 1">
                         <span>
@@ -20,15 +20,15 @@
                 <button
                     [id]="'hide-show-button-' + page"
                     style="'opacity' : activeButtonIndex === page '1' : '0'"
-                    [class]="'hide-show-btn btn ' + (hiddenPageIndexes()!.has(page) ? 'btn-success' : 'btn-secondary')"
+                    [class]="'hide-show-btn btn ' + (newHiddenPages()![page] ? 'btn-success' : 'btn-secondary')"
                     (click)="toggleVisibility(page, $event)"
-                    [ngbPopover]="hiddenPageIndexes()!.has(page) ? showPageBox : hidePageBox"
+                    [ngbPopover]="newHiddenPages()![page] ? showPageBox : hidePageBox"
                     #popover="ngbPopover"
                     [autoClose]="false"
                     placement="right auto"
                     container="body"
                 >
-                    <fa-icon [icon]="hiddenPageIndexes()!.has(page) ? faEye : faEyeSlash"></fa-icon>
+                    <fa-icon [icon]="newHiddenPages()![page] ? faEye : faEyeSlash"></fa-icon>
                 </button>
 
                 <ng-template #hidePageBox>

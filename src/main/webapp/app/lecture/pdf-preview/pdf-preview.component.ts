@@ -24,6 +24,10 @@ interface HiddenPage {
     date: dayjs.Dayjs;
 }
 
+interface HiddenPageMap {
+    [pageIndex: number]: dayjs.Dayjs;
+}
+
 @Component({
     selector: 'jhi-pdf-preview-component',
     templateUrl: './pdf-preview.component.html',
@@ -50,8 +54,8 @@ export class PdfPreviewComponent implements OnInit, OnDestroy {
     isFileChanged = signal<boolean>(false);
     selectedPages = signal<Set<number>>(new Set());
     allPagesSelected = computed(() => this.selectedPages().size === this.totalPages());
-    initialHiddenPages = signal<Set<HiddenPage>>(new Set());
-    hiddenPages = signal<Set<HiddenPage>>(new Set());
+    initialHiddenPages = signal<HiddenPageMap>({});
+    hiddenPages = signal<HiddenPageMap>({});
 
     // Injected services
     private readonly route = inject(ActivatedRoute);
@@ -85,16 +89,11 @@ export class PdfPreviewComponent implements OnInit, OnDestroy {
                 });
             } else if ('attachmentUnit' in data) {
                 this.attachmentUnit.set(data.attachmentUnit);
-                const hiddenPages: Set<HiddenPage> = new Set(
-                    data.attachmentUnit.slides
-                        .filter((page: Slide) => page.hidden)
-                        .map((page: Slide) => ({
-                            pageIndex: page.slideNumber,
-                            date: dayjs(page.hidden),
-                        })),
+                const hiddenPagesMap: HiddenPageMap = Object.fromEntries(
+                    data.attachmentUnit.slides.filter((page: Slide) => page.hidden).map((page: Slide) => [page.slideNumber, dayjs(page.hidden)]),
                 );
-                this.initialHiddenPages.set(new Set(hiddenPages));
-                this.hiddenPages.set(new Set(hiddenPages));
+                this.initialHiddenPages.set(hiddenPagesMap);
+                this.hiddenPages.set(hiddenPagesMap);
                 console.log(this.hiddenPages());
                 this.attachmentUnitSub = this.attachmentUnitService.getAttachmentFile(this.course()!.id!, this.attachmentUnit()!.id!).subscribe({
                     next: (blob: Blob) => {
@@ -129,17 +128,14 @@ export class PdfPreviewComponent implements OnInit, OnDestroy {
     }
 
     /**
-     * Checks if there has been any change between the current set of hidden pages and the new set of hidden pages.
+     * Compares the initial and current hidden pages to determine if there have been any changes.
      *
-     * @returns Returns true if the sets differ in size or if any element in `newHiddenPages` is not found in `hiddenPages`, otherwise false.
+     * @returns `true` if the initial and current hidden pages differ, indicating a change; otherwise, `false`.
      */
     hiddenPagesChanged() {
-        if (this.initialHiddenPages()!.size !== this.hiddenPages()!.size) return true;
-
-        for (const elem of this.initialHiddenPages()!) {
-            if (!this.hiddenPages()!.has(elem)) return true;
-        }
-        return false;
+        const initial = this.initialHiddenPages()!;
+        const current = this.hiddenPages()!;
+        return JSON.stringify(initial) !== JSON.stringify(current);
     }
 
     /**
@@ -152,8 +148,13 @@ export class PdfPreviewComponent implements OnInit, OnDestroy {
             .map((el) => {
                 const match = el.id.match(/hide-show-button-(\d+)/);
                 const pageIndex = match ? parseInt(match[1], 10) : null;
-                const hiddenPage = [...this.hiddenPages()].find((hp) => hp.pageIndex === pageIndex);
-                return hiddenPage || null;
+                if (pageIndex && this.hiddenPages()![pageIndex]) {
+                    return {
+                        pageIndex,
+                        date: this.hiddenPages()![pageIndex],
+                    };
+                }
+                return null;
             })
             .filter((page): page is HiddenPage => page !== null);
     }
@@ -273,23 +274,26 @@ export class PdfPreviewComponent implements OnInit, OnDestroy {
         }
     }
 
+    /**
+     * Updates the mapping of hidden pages after deleting specified pages.
+     *
+     * @param pagesToDelete - An array of page indices to delete. Each index represents a page to be removed.
+     */
     updateHiddenPages(pagesToDelete: number[]) {
-        const updatedHiddenPages = new Set<HiddenPage>();
+        const updated: HiddenPageMap = {};
 
-        this.hiddenPages().forEach((hiddenPage) => {
-            const adjustedPageIndex = pagesToDelete.reduce((acc, pageIndex) => {
-                if (acc === pageIndex + 1) return acc;
-                return pageIndex < acc - 1 ? acc - 1 : acc;
-            }, hiddenPage.pageIndex);
+        Object.entries(this.hiddenPages()!).forEach(([pageIndex, date]) => {
+            const adjustedIndex = pagesToDelete.reduce((acc, pageToDelete) => {
+                if (acc === pageToDelete + 1) return acc;
+                return pageToDelete < acc - 1 ? acc - 1 : acc;
+            }, parseInt(pageIndex));
 
-            if (adjustedPageIndex !== -1) {
-                updatedHiddenPages.add({
-                    pageIndex: adjustedPageIndex,
-                    date: hiddenPage.date,
-                });
+            if (adjustedIndex !== -1) {
+                updated[adjustedIndex] = date;
             }
         });
-        this.hiddenPages.set(updatedHiddenPages);
+
+        this.hiddenPages.set(updated);
     }
 
     /**
