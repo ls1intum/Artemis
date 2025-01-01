@@ -16,8 +16,8 @@ import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { ChannelIconComponent } from 'app/overview/course-conversations/other/channel-icon/channel-icon.component';
 import { UserPublicInfoDTO } from 'app/core/user/user.model';
 import { By } from '@angular/platform-browser';
-import { isChannelDTO } from 'app/entities/metis/conversation/channel.model';
-import { isGroupChatDTO } from 'app/entities/metis/conversation/group-chat.model';
+import { ChannelDTO, isChannelDTO } from 'app/entities/metis/conversation/channel.model';
+import { GroupChatDTO, isGroupChatDTO } from 'app/entities/metis/conversation/group-chat.model';
 import { of } from 'rxjs';
 import { HttpResponse } from '@angular/common/http';
 @Component({
@@ -34,7 +34,7 @@ class ConversationAddUsersFormStubComponent {
     @Input()
     activeConversation: ConversationDTO;
 }
-const examples: ConversationDTO[] = [generateExampleGroupChatDTO({}), generateExampleChannelDTO({})];
+const examples: ConversationDTO[] = [generateExampleGroupChatDTO({} as GroupChatDTO), generateExampleChannelDTO({} as ChannelDTO)];
 examples.forEach((activeConversation) => {
     describe('ConversationAddUsersDialogComponent with ' + activeConversation.type, () => {
         let component: ConversationAddUsersDialogComponent;
