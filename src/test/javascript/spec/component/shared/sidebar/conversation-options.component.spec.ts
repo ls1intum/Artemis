@@ -31,10 +31,10 @@ import { provideRouter } from '@angular/router';
 const examples: (() => ConversationDTO)[] = [
     () => generateOneToOneChatDTO({}),
     () => generateExampleGroupChatDTO({}),
-    () => generateExampleChannelDTO({}),
-    () => generateExampleChannelDTO({ subType: ChannelSubType.EXERCISE, subTypeReferenceId: 1 }),
-    () => generateExampleChannelDTO({ subType: ChannelSubType.LECTURE, subTypeReferenceId: 1 }),
-    () => generateExampleChannelDTO({ subType: ChannelSubType.EXAM, subTypeReferenceId: 1 }),
+    () => generateExampleChannelDTO({} as ChannelDTO),
+    () => generateExampleChannelDTO({ subType: ChannelSubType.EXERCISE, subTypeReferenceId: 1 } as ChannelDTO),
+    () => generateExampleChannelDTO({ subType: ChannelSubType.LECTURE, subTypeReferenceId: 1 } as ChannelDTO),
+    () => generateExampleChannelDTO({ subType: ChannelSubType.EXAM, subTypeReferenceId: 1 } as ChannelDTO),
 ];
 
 examples.forEach((conversation) => {

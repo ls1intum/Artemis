@@ -1,5 +1,5 @@
 import { HttpClient } from '@angular/common/http';
-import { Injectable } from '@angular/core';
+import { Injectable, inject } from '@angular/core';
 import { KnowledgeAreaDTO, KnowledgeAreasForImportDTO, StandardizedCompetencyDTO } from 'app/entities/competency/standardized-competency.model';
 
 @Injectable({
@@ -8,7 +8,7 @@ import { KnowledgeAreaDTO, KnowledgeAreasForImportDTO, StandardizedCompetencyDTO
 export class AdminStandardizedCompetencyService {
     private resourceURL = 'api/admin/standardized-competencies';
 
-    constructor(private httpClient: HttpClient) {}
+    private httpClient = inject(HttpClient);
 
     createStandardizedCompetency(competency: StandardizedCompetencyDTO) {
         return this.httpClient.post<StandardizedCompetencyDTO>(`${this.resourceURL}`, competency, { observe: 'response' });
