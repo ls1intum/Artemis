@@ -180,6 +180,26 @@
                 <jhi-help-icon placement="right auto" [text]="'artemisApp.programmingExercise.showTestNamesToStudentsTooltip'" />
             </div>
         }
+        @if (isEditFieldDisplayedRecord()?.includeTestsIntoExampleSolution || !isEditFieldDisplayedRecord()) {
+            <div class="form-check">
+                <input
+                    type="checkbox"
+                    class="form-check-input"
+                    name="releaseTestsWithExampleSolution"
+                    [checked]="exercise.releaseTestsWithExampleSolution"
+                    [disabled]="!exercise.exampleSolutionPublicationDate && !exercise.exerciseGroup?.exam?.exampleSolutionPublicationDate"
+                    id="releaseTestsWithExampleSolution"
+                    (change)="toggleReleaseTests()"
+                />
+                <label
+                    [ngStyle]="!exercise.exampleSolutionPublicationDate && !exercise.exerciseGroup?.exam?.exampleSolutionPublicationDate ? { color: 'grey' } : {}"
+                    class="form-control-label"
+                    for="releaseTestsWithExampleSolution"
+                    jhiTranslate="artemisApp.programmingExercise.timeline.releaseTestsWithExampleSolution"
+                ></label>
+                <jhi-help-icon placement="right auto" [text]="'artemisApp.programmingExercise.timeline.releaseTestsWithExampleSolutionTooltip'" />
+            </div>
+        }
         @if ((isEditFieldDisplayedRecord()?.feedbackSuggestions || !isEditFieldDisplayedRecord()) && !isExamMode) {
             <jhi-exercise-feedback-suggestion-options [exercise]="exercise" [dueDate]="exercise.dueDate" [readOnly]="readOnly" />
         }

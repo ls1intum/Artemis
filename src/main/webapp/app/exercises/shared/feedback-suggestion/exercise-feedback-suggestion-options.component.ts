@@ -75,8 +75,8 @@ export class ExerciseFeedbackSuggestionOptionsComponent implements OnInit, OnCha
         this.showDropdownList = event.target.checked;
         if (event.target.checked) {
             this.exercise.feedbackSuggestionModule = this.availableAthenaModules.first();
-        } else {
             this.exercise.allowManualFeedbackRequests = false;
+        } else {
             this.exercise.feedbackSuggestionModule = undefined;
         }
     }

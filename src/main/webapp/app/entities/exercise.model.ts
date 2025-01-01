@@ -281,6 +281,8 @@ export function resetForImport(exercise: Exercise) {
     // without dates set, they can only be false
     exercise.allowComplaintsForAutomaticAssessments = false;
     exercise.allowManualFeedbackRequests = false;
+    exercise.feedbackSuggestionModule = undefined;
+    exercise.preliminaryFeedbackModule = undefined;
 
     exercise.competencyLinks = [];
 }

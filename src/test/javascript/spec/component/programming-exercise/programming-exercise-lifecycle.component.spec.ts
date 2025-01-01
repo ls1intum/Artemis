@@ -12,10 +12,11 @@ import { QueryList, SimpleChange } from '@angular/core';
 import { IncludedInOverallScore } from 'app/entities/exercise.model';
 import { expectElementToBeDisabled, expectElementToBeEnabled } from '../../helpers/utils/general.utils';
 import { Course } from 'app/entities/course.model';
-import { ExerciseAthenaFeedbackModuleOptionsComponent } from 'app/exercises/shared/feedback-module-selector/exercise-athena-feedback-module-options.component';
 import { Subject, of } from 'rxjs';
 import { ActivatedRoute, UrlSegment } from '@angular/router';
 import { TranslatePipeMock } from '../../helpers/mocks/service/mock-translate.service';
+import { ExerciseFeedbackSuggestionOptionsComponent } from 'app/exercises/shared/feedback-suggestion/exercise-feedback-suggestion-options.component';
+import { ExercisePreliminaryFeedbackOptionsComponent } from 'app/exercises/shared/preliminary-feedback/exercise-preliminary-feedback-options.component';
 
 describe('ProgrammingExerciseLifecycleComponent', () => {
     let comp: ProgrammingExerciseLifecycleComponent;
@@ -34,7 +35,8 @@ describe('ProgrammingExerciseLifecycleComponent', () => {
                 ProgrammingExerciseLifecycleComponent,
                 MockComponent(ProgrammingExerciseTestScheduleDatePickerComponent),
                 MockComponent(HelpIconComponent),
-                MockComponent(ExerciseAthenaFeedbackModuleOptionsComponent),
+                MockComponent(ExerciseFeedbackSuggestionOptionsComponent),
+                MockComponent(ExercisePreliminaryFeedbackOptionsComponent),
                 MockDirective(NgModel),
                 TranslatePipeMock,
             ],
@@ -150,13 +152,13 @@ describe('ProgrammingExerciseLifecycleComponent', () => {
         expect(comp.exercise.allowComplaintsForAutomaticAssessments).toBeTrue();
     });
 
-    it('should change feedback request allowed after toggling', () => {
-        comp.exercise = { ...exercise, allowFeedbackSuggestions: false };
-        expect(comp.exercise.allowFeedbackSuggestions).toBeFalse();
+    it('should change manual feedback request allowed after toggling', () => {
+        comp.exercise = { ...exercise, allowManualFeedbackRequests: false };
+        expect(comp.exercise.allowManualFeedbackRequests).toBeFalse();
 
-        comp.toggleFeedbackRequests();
+        comp.toggleManualFeedbackRequests();
 
-        expect(comp.exercise.allowFeedbackSuggestions).toBeTrue();
+        expect(comp.exercise.allowManualFeedbackRequests).toBeTrue();
     });
 
     it('should change assessment type from automatic to semi-automatic after toggling', () => {

@@ -27,7 +27,6 @@ import { ExerciseUpdatePlagiarismModule } from 'app/exercises/shared/plagiarism/
 import { DetailModule } from 'app/detail-overview-list/detail.module';
 import { ArtemisExerciseModule } from 'app/exercises/shared/exercise/exercise.module';
 import { FormsModule } from 'app/forms/forms.module';
-import { ExerciseFeedbackSuggestionOptionsModule } from 'app/exercises/shared/feedback-suggestion/exercise-feedback-suggestion-options.module';
 import { ExercisePreliminaryFeedbackOptionsModule } from 'app/exercises/shared/preliminary-feedback/exercise-preliminary-feedback-options.module';
 
 @NgModule({
