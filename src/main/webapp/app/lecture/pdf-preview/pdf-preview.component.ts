@@ -19,6 +19,11 @@ import { LectureUnitService } from 'app/lecture/lecture-unit/lecture-unit-manage
 import { PDFDocument } from 'pdf-lib';
 import { Slide } from 'app/entities/lecture-unit/slide.model';
 
+interface HiddenPage {
+    pageIndex: number;
+    date: dayjs.Dayjs;
+}
+
 @Component({
     selector: 'jhi-pdf-preview-component',
     templateUrl: './pdf-preview.component.html',
@@ -45,8 +50,8 @@ export class PdfPreviewComponent implements OnInit, OnDestroy {
     isFileChanged = signal<boolean>(false);
     selectedPages = signal<Set<number>>(new Set());
     allPagesSelected = computed(() => this.selectedPages().size === this.totalPages());
-    initialHiddenPages = signal<Set<number>>(new Set());
-    hiddenPages = signal<Set<number>>(new Set());
+    initialHiddenPages = signal<Set<HiddenPage>>(new Set());
+    hiddenPages = signal<Set<HiddenPage>>(new Set());
 
     // Injected services
     private readonly route = inject(ActivatedRoute);
@@ -80,9 +85,17 @@ export class PdfPreviewComponent implements OnInit, OnDestroy {
                 });
             } else if ('attachmentUnit' in data) {
                 this.attachmentUnit.set(data.attachmentUnit);
-                const hiddenPages: Set<number> = new Set(data.attachmentUnit.slides.filter((page: Slide) => page.hidden).map((page: Slide) => page.slideNumber));
+                const hiddenPages: Set<HiddenPage> = new Set(
+                    data.attachmentUnit.slides
+                        .filter((page: Slide) => page.hidden)
+                        .map((page: Slide) => ({
+                            pageIndex: page.slideNumber,
+                            date: dayjs(page.hidden),
+                        })),
+                );
                 this.initialHiddenPages.set(new Set(hiddenPages));
                 this.hiddenPages.set(new Set(hiddenPages));
+                console.log(this.hiddenPages());
                 this.attachmentUnitSub = this.attachmentUnitService.getAttachmentFile(this.course()!.id!, this.attachmentUnit()!.id!).subscribe({
                     next: (blob: Blob) => {
                         this.currentPdfBlob.set(blob);
@@ -130,17 +143,19 @@ export class PdfPreviewComponent implements OnInit, OnDestroy {
     }
 
     /**
-     * Retrieves an array of hidden page numbers from elements with IDs starting with "show-button-".
+     * Retrieves an array of hidden page objects based on elements with IDs starting with "hide-show-button-".
      *
-     * @returns An array of strings representing the hidden page numbers.
+     * @returns An array of HiddenPage objects representing the hidden pages.
      */
-    getHiddenPages() {
+    getHiddenPages(): HiddenPage[] {
         return Array.from(document.querySelectorAll('.hide-show-btn.btn-success'))
             .map((el) => {
                 const match = el.id.match(/hide-show-button-(\d+)/);
-                return match ? parseInt(match[1], 10) : null;
+                const pageIndex = match ? parseInt(match[1], 10) : null;
+                const hiddenPage = [...this.hiddenPages()].find((hp) => hp.pageIndex === pageIndex);
+                return hiddenPage || null;
             })
-            .filter((id) => id !== null);
+            .filter((page): page is HiddenPage => page !== null);
     }
 
     /**
@@ -183,7 +198,7 @@ export class PdfPreviewComponent implements OnInit, OnDestroy {
             if (finalHiddenPages.length > 0) {
                 const pdfFileWithHiddenPages = await this.createStudentVersionOfAttachment(finalHiddenPages);
                 formData.append('studentVersion', pdfFileWithHiddenPages!);
-                formData.append('hiddenPages', finalHiddenPages.join(','));
+                formData.append('hiddenPages', JSON.stringify(finalHiddenPages));
             }
 
             this.attachmentUnitService.update(this.attachmentUnit()!.lecture!.id!, this.attachmentUnit()!.id!, formData).subscribe({
@@ -258,22 +273,20 @@ export class PdfPreviewComponent implements OnInit, OnDestroy {
         }
     }
 
-    /**
-     * Updates hidden pages after selected pages are deleted.
-     * @param pagesToDelete - Array of pages to be deleted (0-indexed).
-     */
     updateHiddenPages(pagesToDelete: number[]) {
-        const updatedHiddenPages = new Set<number>();
+        const updatedHiddenPages = new Set<HiddenPage>();
+
         this.hiddenPages().forEach((hiddenPage) => {
-            // Adjust hiddenPage based on the deleted pages
-            const adjustedPage = pagesToDelete.reduce((acc, pageIndex) => {
-                if (acc === pageIndex + 1) {
-                    return;
-                }
+            const adjustedPageIndex = pagesToDelete.reduce((acc, pageIndex) => {
+                if (acc === pageIndex + 1) return acc;
                 return pageIndex < acc - 1 ? acc - 1 : acc;
-            }, hiddenPage);
-            if (adjustedPage !== -1) {
-                updatedHiddenPages.add(adjustedPage!);
+            }, hiddenPage.pageIndex);
+
+            if (adjustedPageIndex !== -1) {
+                updatedHiddenPages.add({
+                    pageIndex: adjustedPageIndex,
+                    date: hiddenPage.date,
+                });
             }
         });
         this.hiddenPages.set(updatedHiddenPages);
@@ -285,13 +298,13 @@ export class PdfPreviewComponent implements OnInit, OnDestroy {
      * @param hiddenPages - An array of page numbers to be removed from the original PDF.
      * @returns A promise that resolves to a new `File` object representing the modified PDF, or undefined if an error occurs.
      */
-    async createStudentVersionOfAttachment(hiddenPages: number[]) {
+    async createStudentVersionOfAttachment(hiddenPages: HiddenPage[]) {
         try {
             const fileName = this.attachmentUnit()!.attachment!.name;
             const existingPdfBytes = await this.currentPdfBlob()!.arrayBuffer();
             const hiddenPdfDoc = await PDFDocument.load(existingPdfBytes);
 
-            const pagesToDelete = hiddenPages.map((page) => page - 1).sort((a, b) => b - a);
+            const pagesToDelete = hiddenPages.map(({ pageIndex }) => pageIndex - 1).sort((a, b) => b - a);
             pagesToDelete.forEach((pageIndex) => {
                 hiddenPdfDoc.removePage(pageIndex);
             });

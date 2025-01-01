@@ -8,11 +8,11 @@ import java.io.File;
 import java.io.IOException;
 import java.net.URI;
 import java.nio.file.Path;
-import java.time.LocalDate;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 import javax.imageio.ImageIO;
 
@@ -27,6 +27,9 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
+
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.ObjectMapper;
 
 import de.tum.cit.aet.artemis.core.exception.InternalServerErrorException;
 import de.tum.cit.aet.artemis.core.service.FilePathService;
@@ -43,8 +46,6 @@ import de.tum.cit.aet.artemis.lecture.repository.SlideRepository;
 public class SlideSplitterService {
 
     private static final Logger log = LoggerFactory.getLogger(SlideSplitterService.class);
-
-    static final LocalDate FOREVER = LocalDate.of(9999, 12, 31);
 
     private final FileService fileService;
 
@@ -111,8 +112,8 @@ public class SlideSplitterService {
             int numPages = document.getNumberOfPages();
             PDFRenderer pdfRenderer = new PDFRenderer(document);
 
-            List<Integer> hiddenPagesList = hiddenPages != null && !hiddenPages.isEmpty() ? Arrays.stream(hiddenPages.split(",")).map(Integer::parseInt).toList()
-                    : Collections.emptyList();
+            Map<Integer, java.sql.Timestamp> hiddenPagesMap = hiddenPages != null ? new ObjectMapper().readValue(hiddenPages, new TypeReference<List<Map<String, Object>>>() {
+            }).stream().collect(Collectors.toMap(map -> (Integer) map.get("pageIndex"), map -> java.sql.Timestamp.valueOf((String) map.get("date")))) : Collections.emptyMap();
 
             for (int page = 0; page < numPages; page++) {
                 BufferedImage bufferedImage = pdfRenderer.renderImageWithDPI(page, 72, ImageType.RGB);
@@ -128,9 +129,9 @@ public class SlideSplitterService {
                 slide.setSlideImagePath(FilePathService.publicPathForActualPath(savePath, (long) slideNumber).toString());
                 slide.setSlideNumber(slideNumber);
                 slide.setAttachmentUnit(attachmentUnit);
-                slide.setHidden(hiddenPagesList.contains(slideNumber) ? java.sql.Date.valueOf(FOREVER) : null);
-                slideRepository.save(slide);
 
+                slide.setHidden(hiddenPagesMap.getOrDefault(slideNumber, null));
+                slideRepository.save(slide);
             }
         }
         catch (IOException e) {

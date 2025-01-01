@@ -44,10 +44,12 @@
                 [course]="course()"
                 [currentPdfUrl]="currentPdfUrl()"
                 [appendFile]="appendFile()"
+                [hiddenPages]="hiddenPages()"
                 [isAttachmentUnit]="!!attachmentUnit()"
                 (isPdfLoading)="isPdfLoading.set($event)"
                 (selectedPagesOutput)="selectedPages.set($event)"
                 (totalPagesOutput)="totalPages.set($event)"
+                (newHiddenPagesOutput)="hiddenPages.set($event)"
             />
         } @else {
             <div class="empty-pdf-container"></div>

@@ -29,7 +29,7 @@ export class PdfPreviewThumbnailGridComponent implements OnChanges {
     course = input<Course>();
     currentPdfUrl = input<string>();
     appendFile = input<boolean>();
-    hiddenPages = signal<Set<HiddenPage>>(new Set());
+    hiddenPages = input<Set<HiddenPage>>();
     isAttachmentUnit = input<boolean>();
 
     // Signals
@@ -59,7 +59,7 @@ export class PdfPreviewThumbnailGridComponent implements OnChanges {
     ngOnChanges(changes: SimpleChanges): void {
         if (changes['hiddenPages']) {
             this.newHiddenPages.set(new Set(this.hiddenPages()!));
-            console.log(this.newHiddenPages());
+            this.hiddenPageIndexes.set(new Set(Array.from(this.newHiddenPages()).map((page) => page.pageIndex)));
         }
         if (changes['currentPdfUrl']) {
             this.loadPdf(this.currentPdfUrl()!, this.appendFile()!);
