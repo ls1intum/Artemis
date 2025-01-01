@@ -210,6 +210,7 @@ public class LectureResource {
         Set<Lecture> lectures = lectureRepository.findAllByCourseIdWithAttachmentsAndLectureUnitsAndSlides(courseId);
         lectures = lectureService.filterVisibleLecturesWithActiveAttachments(course, lectures, user);
         lectures.forEach(lectureService::filterActiveAttachmentUnits);
+        lectures.forEach(lectureService::filterHiddenPagesOfAttachmentUnits);
         return ResponseEntity.ok().body(lectures);
     }
 
@@ -337,6 +338,7 @@ public class LectureResource {
         competencyApi.addCompetencyLinksToExerciseUnits(lecture);
         lectureService.filterActiveAttachmentUnits(lecture);
         lectureService.filterActiveAttachments(lecture, user);
+        lectureService.filterHiddenPagesOfAttachmentUnits(lecture);
         return ResponseEntity.ok(lecture);
     }
 

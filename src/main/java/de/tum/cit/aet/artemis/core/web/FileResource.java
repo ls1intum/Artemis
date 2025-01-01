@@ -75,7 +75,6 @@ import de.tum.cit.aet.artemis.lecture.domain.Slide;
 import de.tum.cit.aet.artemis.lecture.repository.AttachmentRepository;
 import de.tum.cit.aet.artemis.lecture.repository.AttachmentUnitRepository;
 import de.tum.cit.aet.artemis.lecture.repository.LectureRepository;
-import de.tum.cit.aet.artemis.lecture.repository.SlideRepository;
 import de.tum.cit.aet.artemis.lecture.service.LectureUnitService;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingLanguage;
 import de.tum.cit.aet.artemis.programming.domain.ProjectType;
@@ -104,8 +103,6 @@ public class FileResource {
 
     private final AttachmentUnitRepository attachmentUnitRepository;
 
-    private final SlideRepository slideRepository;
-
     private final FileUploadSubmissionRepository fileUploadSubmissionRepository;
 
     private final AttachmentRepository attachmentRepository;
@@ -126,7 +123,7 @@ public class FileResource {
 
     private final LectureUnitService lectureUnitService;
 
-    public FileResource(SlideRepository slideRepository, AuthorizationCheckService authorizationCheckService, FileService fileService, ResourceLoaderService resourceLoaderService,
+    public FileResource(AuthorizationCheckService authorizationCheckService, FileService fileService, ResourceLoaderService resourceLoaderService,
             LectureRepository lectureRepository, FileUploadSubmissionRepository fileUploadSubmissionRepository, AttachmentRepository attachmentRepository,
             AttachmentUnitRepository attachmentUnitRepository, AuthorizationCheckService authCheckService, UserRepository userRepository, ExamUserRepository examUserRepository,
             QuizQuestionRepository quizQuestionRepository, DragItemRepository dragItemRepository, CourseRepository courseRepository, LectureUnitService lectureUnitService) {
@@ -140,7 +137,6 @@ public class FileResource {
         this.userRepository = userRepository;
         this.authorizationCheckService = authorizationCheckService;
         this.examUserRepository = examUserRepository;
-        this.slideRepository = slideRepository;
         this.quizQuestionRepository = quizQuestionRepository;
         this.dragItemRepository = dragItemRepository;
         this.courseRepository = courseRepository;
@@ -476,7 +472,7 @@ public class FileResource {
      * @return The requested file, 403 if the logged-in user is not allowed to access it, or 404 if the file doesn't exist
      */
     @GetMapping("files/attachments/attachment-unit/{attachmentUnitId}/*")
-    @EnforceAtLeastStudent
+    @EnforceAtLeastTutor
     public ResponseEntity<byte[]> getAttachmentUnitAttachment(@PathVariable Long attachmentUnitId) {
         log.debug("REST request to get the file for attachment unit {} for students", attachmentUnitId);
         AttachmentUnit attachmentUnit = attachmentUnitRepository.findByIdElseThrow(attachmentUnitId);
@@ -547,8 +543,10 @@ public class FileResource {
 
         checkAttachmentAuthorizationOrThrow(course, attachment);
 
-        Slide slide = slideRepository.findSlideByAttachmentUnitIdAndSlideNumber(attachmentUnitId, Integer.parseInt(slideNumber));
-        String directoryPath = slide.getSlideImagePath();
+        // Get the all the slides without hidden slides and get the visible slide by slide index
+        Slide visibleSlide = attachmentUnit.getSlides().stream().filter(slide -> slide.getHidden() == null).toList().get(Integer.parseInt(slideNumber) - 1);
+
+        String directoryPath = visibleSlide.getSlideImagePath();
 
         // Use regular expression to match and extract the file name with ".png" format
         Pattern pattern = Pattern.compile(".*/([^/]+\\.png)$");
@@ -557,12 +555,36 @@ public class FileResource {
         if (matcher.matches()) {
             String fileName = matcher.group(1);
             return buildFileResponse(
-                    FilePathService.getAttachmentUnitFilePath().resolve(Path.of(attachmentUnit.getId().toString(), "slide", String.valueOf(slide.getSlideNumber()))), fileName,
-                    true);
+                    FilePathService.getAttachmentUnitFilePath().resolve(Path.of(attachmentUnit.getId().toString(), "slide", String.valueOf(visibleSlide.getSlideNumber()))),
+                    fileName, false);
         }
         else {
             throw new EntityNotFoundException("Slide", slideNumber);
         }
+    }
+
+    /**
+     * GET files/attachments/attachment-unit/{attachmentUnitId}/student/* : Get the student version of attachment unit by attachment unit id
+     *
+     * @param attachmentUnitId ID of the attachment unit, the student version belongs to
+     * @return The requested file, 403 if the logged-in user is not allowed to access it, or 404 if the file doesn't exist
+     */
+    @GetMapping("files/attachments/attachment-unit/{attachmentUnitId}/student/*")
+    @EnforceAtLeastStudent
+    public ResponseEntity<byte[]> getAttachmentUnitStudentVersion(@PathVariable Long attachmentUnitId) {
+        log.debug("REST request to get the student version of attachment Unit : {}", attachmentUnitId);
+        AttachmentUnit attachmentUnit = attachmentUnitRepository.findByIdElseThrow(attachmentUnitId);
+        Attachment attachment = attachmentUnit.getAttachment();
+
+        // check if hidden link is available in the attachment
+        String studentVersion = attachment.getStudentVersion();
+        if (studentVersion == null) {
+            return buildFileResponse(getActualPathFromPublicPathString(attachment.getLink()), false);
+        }
+
+        String fileName = studentVersion.substring(studentVersion.lastIndexOf("/") + 1);
+
+        return buildFileResponse(FilePathService.getAttachmentUnitFilePath().resolve(Path.of(attachmentUnit.getId().toString(), "student")), fileName, false);
     }
 
     /**

@@ -107,11 +107,13 @@ public class AttachmentUnitService {
      * @param updateUnit             The new attachment unit data.
      * @param updateAttachment       The new attachment data.
      * @param updateFile             The optional file.
+     * @param studentVersionFile     The student version of the original file.
      * @param keepFilename           Whether to keep the original filename or not.
+     * @param hiddenPages            The hidden pages of attachment unit.
      * @return The updated attachment unit.
      */
     public AttachmentUnit updateAttachmentUnit(AttachmentUnit existingAttachmentUnit, AttachmentUnit updateUnit, Attachment updateAttachment, MultipartFile updateFile,
-            boolean keepFilename) {
+            MultipartFile studentVersionFile, boolean keepFilename, String hiddenPages) {
         Set<CompetencyLectureUnitLink> existingCompetencyLinks = new HashSet<>(existingAttachmentUnit.getCompetencyLinks());
 
         existingAttachmentUnit.setDescription(updateUnit.getDescription());
@@ -128,6 +130,7 @@ public class AttachmentUnitService {
 
         updateAttachment(existingAttachment, updateAttachment, savedAttachmentUnit);
         handleFile(updateFile, existingAttachment, keepFilename, savedAttachmentUnit.getId());
+        handleStudentVersionFile(studentVersionFile, existingAttachment, savedAttachmentUnit.getId());
         final int revision = existingAttachment.getVersion() == null ? 1 : existingAttachment.getVersion() + 1;
         existingAttachment.setVersion(revision);
         Attachment savedAttachment = attachmentRepository.saveAndFlush(existingAttachment);
@@ -145,7 +148,7 @@ public class AttachmentUnitService {
             }
             // Split the updated file into single slides only if it is a pdf
             if (Objects.equals(FilenameUtils.getExtension(updateFile.getOriginalFilename()), "pdf")) {
-                slideSplitterService.splitAttachmentUnitIntoSingleSlides(savedAttachmentUnit);
+                slideSplitterService.splitAttachmentUnitIntoSingleSlides(savedAttachmentUnit, hiddenPages);
             }
             if (pyrisWebhookService.isPresent() && irisSettingsRepository.isPresent()) {
                 pyrisWebhookService.get().autoUpdateAttachmentUnitsInPyris(savedAttachmentUnit.getLecture().getCourse().getId(), List.of(savedAttachmentUnit));
@@ -188,6 +191,30 @@ public class AttachmentUnitService {
             Path savePath = fileService.saveFile(file, basePath, keepFilename);
             attachment.setLink(FilePathService.publicPathForActualPathOrThrow(savePath, attachmentUnitId).toString());
             attachment.setUploadDate(ZonedDateTime.now());
+        }
+    }
+
+    /**
+     * Handles the student version file of an attachment, updates its reference in the database,
+     * and deletes the old version if it exists.
+     *
+     * @param studentVersionFile the new student version file to be saved
+     * @param attachment         the existing attachment
+     * @param attachmentUnitId   the id of the attachment unit
+     */
+    public void handleStudentVersionFile(MultipartFile studentVersionFile, Attachment attachment, Long attachmentUnitId) {
+        if (studentVersionFile != null) {
+            // Delete the old student version
+            if (attachment.getStudentVersion() != null) {
+                URI oldStudentVersionPath = URI.create(attachment.getStudentVersion());
+                fileService.schedulePathForDeletion(FilePathService.actualPathForPublicPathOrThrow(oldStudentVersionPath), 0);
+                this.fileService.evictCacheForPath(FilePathService.actualPathForPublicPathOrThrow(oldStudentVersionPath));
+            }
+
+            // Update student version of attachment
+            Path basePath = FilePathService.getAttachmentUnitFilePath().resolve(attachmentUnitId.toString());
+            Path savePath = fileService.saveFile(studentVersionFile, basePath.resolve("student"), true);
+            attachment.setStudentVersion(FilePathService.publicPathForActualPath(savePath, attachmentUnitId).toString());
         }
     }
 

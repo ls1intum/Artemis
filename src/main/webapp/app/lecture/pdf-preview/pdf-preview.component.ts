@@ -1,4 +1,4 @@
-import { Component, ElementRef, OnDestroy, OnInit, computed, inject, signal, viewChild } from '@angular/core';
+import { Component, ElementRef, OnDestroy, OnInit, computed, effect, inject, signal, viewChild } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { AttachmentService } from 'app/lecture/attachment.service';
 import { Attachment } from 'app/entities/attachment.model';
@@ -17,6 +17,7 @@ import { MAX_FILE_SIZE } from 'app/shared/constants/input.constants';
 import { PdfPreviewThumbnailGridComponent } from 'app/lecture/pdf-preview/pdf-preview-thumbnail-grid/pdf-preview-thumbnail-grid.component';
 import { LectureUnitService } from 'app/lecture/lecture-unit/lecture-unit-management/lectureUnit.service';
 import { PDFDocument } from 'pdf-lib';
+import { Slide } from 'app/entities/lecture-unit/slide.model';
 
 @Component({
     selector: 'jhi-pdf-preview-component',
@@ -44,6 +45,8 @@ export class PdfPreviewComponent implements OnInit, OnDestroy {
     isFileChanged = signal<boolean>(false);
     selectedPages = signal<Set<number>>(new Set());
     allPagesSelected = computed(() => this.selectedPages().size === this.totalPages());
+    initialHiddenPages = signal<Set<number>>(new Set());
+    hiddenPages = signal<Set<number>>(new Set());
 
     // Injected services
     private readonly route = inject(ActivatedRoute);
@@ -77,6 +80,9 @@ export class PdfPreviewComponent implements OnInit, OnDestroy {
                 });
             } else if ('attachmentUnit' in data) {
                 this.attachmentUnit.set(data.attachmentUnit);
+                const hiddenPages: Set<number> = new Set(data.attachmentUnit.slides.filter((page: Slide) => page.hidden).map((page: Slide) => page.slideNumber));
+                this.initialHiddenPages.set(new Set(hiddenPages));
+                this.hiddenPages.set(new Set(hiddenPages));
                 this.attachmentUnitSub = this.attachmentUnitService.getAttachmentFile(this.course()!.id!, this.attachmentUnit()!.id!).subscribe({
                     next: (blob: Blob) => {
                         this.currentPdfBlob.set(blob);
@@ -93,6 +99,15 @@ export class PdfPreviewComponent implements OnInit, OnDestroy {
         this.attachmentUnitSub?.unsubscribe();
     }
 
+    constructor() {
+        effect(
+            () => {
+                this.hiddenPagesChanged();
+            },
+            { allowSignalWrites: true },
+        );
+    }
+
     /**
      * Triggers the file input to select files.
      */
@@ -100,8 +115,40 @@ export class PdfPreviewComponent implements OnInit, OnDestroy {
         this.fileInput().nativeElement.click();
     }
 
-    updateAttachmentWithFile(): void {
-        const pdfFile = new File([this.currentPdfBlob()!], 'updatedAttachment.pdf', { type: 'application/pdf' });
+    /**
+     * Checks if there has been any change between the current set of hidden pages and the new set of hidden pages.
+     *
+     * @returns Returns true if the sets differ in size or if any element in `newHiddenPages` is not found in `hiddenPages`, otherwise false.
+     */
+    hiddenPagesChanged() {
+        if (this.initialHiddenPages()!.size !== this.hiddenPages()!.size) return true;
+
+        for (const elem of this.initialHiddenPages()!) {
+            if (!this.hiddenPages()!.has(elem)) return true;
+        }
+        return false;
+    }
+
+    /**
+     * Retrieves an array of hidden page numbers from elements with IDs starting with "show-button-".
+     *
+     * @returns An array of strings representing the hidden page numbers.
+     */
+    getHiddenPages() {
+        return Array.from(document.querySelectorAll('.hide-show-btn.btn-success'))
+            .map((el) => {
+                const match = el.id.match(/hide-show-button-(\d+)/);
+                return match ? parseInt(match[1], 10) : null;
+            })
+            .filter((id) => id !== null);
+    }
+
+    /**
+     * Updates the existing attachment file or creates a student version of the attachment with hidden files.
+     */
+    async updateAttachmentWithFile(): Promise<void> {
+        const pdfFileName = this.attachment()?.name ?? this.attachmentUnit()?.name ?? '';
+        const pdfFile = new File([this.currentPdfBlob()!], `${pdfFileName}.pdf`, { type: 'application/pdf' });
 
         if (pdfFile.size > MAX_FILE_SIZE) {
             this.alertService.error('artemisApp.attachment.pdfPreview.fileSizeError');
@@ -124,13 +171,20 @@ export class PdfPreviewComponent implements OnInit, OnDestroy {
             });
         } else if (this.attachmentUnit()) {
             this.attachmentToBeEdited.set(this.attachmentUnit()!.attachment!);
-            this.attachmentToBeEdited()!.version!++;
             this.attachmentToBeEdited()!.uploadDate = dayjs();
 
             const formData = new FormData();
             formData.append('file', pdfFile);
             formData.append('attachment', objectToJsonBlob(this.attachmentToBeEdited()!));
             formData.append('attachmentUnit', objectToJsonBlob(this.attachmentUnit()!));
+
+            const finalHiddenPages = this.getHiddenPages();
+
+            if (finalHiddenPages.length > 0) {
+                const pdfFileWithHiddenPages = await this.createStudentVersionOfAttachment(finalHiddenPages);
+                formData.append('studentVersion', pdfFileWithHiddenPages!);
+                formData.append('hiddenPages', finalHiddenPages.join(','));
+            }
 
             this.attachmentUnitService.update(this.attachmentUnit()!.lecture!.id!, this.attachmentUnit()!.id!, formData).subscribe({
                 next: () => {
@@ -184,9 +238,9 @@ export class PdfPreviewComponent implements OnInit, OnDestroy {
             const pagesToDelete = Array.from(this.selectedPages()!)
                 .map((page) => page - 1)
                 .sort((a, b) => b - a);
-            pagesToDelete.forEach((pageIndex) => {
-                pdfDoc.removePage(pageIndex);
-            });
+
+            this.updateHiddenPages(pagesToDelete);
+            pagesToDelete.forEach((pageIndex) => pdfDoc.removePage(pageIndex));
 
             this.isFileChanged.set(true);
             const pdfBytes = await pdfDoc.save();
@@ -201,6 +255,51 @@ export class PdfPreviewComponent implements OnInit, OnDestroy {
             this.alertService.error('artemisApp.attachment.pdfPreview.pageDeleteError', { error: error.message });
         } finally {
             this.isPdfLoading.set(false);
+        }
+    }
+
+    /**
+     * Updates hidden pages after selected pages are deleted.
+     * @param pagesToDelete - Array of pages to be deleted (0-indexed).
+     */
+    updateHiddenPages(pagesToDelete: number[]) {
+        const updatedHiddenPages = new Set<number>();
+        this.hiddenPages().forEach((hiddenPage) => {
+            // Adjust hiddenPage based on the deleted pages
+            const adjustedPage = pagesToDelete.reduce((acc, pageIndex) => {
+                if (acc === pageIndex + 1) {
+                    return;
+                }
+                return pageIndex < acc - 1 ? acc - 1 : acc;
+            }, hiddenPage);
+            if (adjustedPage !== -1) {
+                updatedHiddenPages.add(adjustedPage!);
+            }
+        });
+        this.hiddenPages.set(updatedHiddenPages);
+    }
+
+    /**
+     * Creates a student version of the current PDF attachment by removing specified pages.
+     *
+     * @param hiddenPages - An array of page numbers to be removed from the original PDF.
+     * @returns A promise that resolves to a new `File` object representing the modified PDF, or undefined if an error occurs.
+     */
+    async createStudentVersionOfAttachment(hiddenPages: number[]) {
+        try {
+            const fileName = this.attachmentUnit()!.attachment!.name;
+            const existingPdfBytes = await this.currentPdfBlob()!.arrayBuffer();
+            const hiddenPdfDoc = await PDFDocument.load(existingPdfBytes);
+
+            const pagesToDelete = hiddenPages.map((page) => page - 1).sort((a, b) => b - a);
+            pagesToDelete.forEach((pageIndex) => {
+                hiddenPdfDoc.removePage(pageIndex);
+            });
+
+            const pdfBytes = await hiddenPdfDoc.save();
+            return new File([pdfBytes], `${fileName}.pdf`, { type: 'application/pdf' });
+        } catch (error) {
+            this.alertService.error('artemisApp.attachment.pdfPreview.pageDeleteError', { error: error.message });
         }
     }
 
