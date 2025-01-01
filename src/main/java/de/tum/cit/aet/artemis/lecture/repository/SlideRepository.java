@@ -7,6 +7,7 @@ import java.util.List;
 
 import org.springframework.context.annotation.Profile;
 import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import de.tum.cit.aet.artemis.core.repository.base.ArtemisJpaRepository;
@@ -26,6 +27,6 @@ public interface SlideRepository extends ArtemisJpaRepository<Slide, Long> {
                 FROM Slide s
                 WHERE s.hidden IS NOT NULL AND s.hidden <= :hidden
             """)
-    List<Slide> findByHiddenLessThanEqual(Date hidden);
+    List<Slide> findByHiddenLessThanEqual(@Param("hidden") Date hidden);
 
 }
