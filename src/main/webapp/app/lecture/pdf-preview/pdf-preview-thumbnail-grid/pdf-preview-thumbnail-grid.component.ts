@@ -46,6 +46,7 @@ export class PdfPreviewThumbnailGridComponent implements OnChanges {
     initialPageNumber = signal<number>(0);
     activeButtonIndex = signal<number | null>(null);
     isDateBoxOpen = signal<boolean>(false);
+    forever = signal<dayjs.Dayjs>(dayjs('9999-12-31'));
 
     // Outputs
     isPdfLoading = output<boolean>();

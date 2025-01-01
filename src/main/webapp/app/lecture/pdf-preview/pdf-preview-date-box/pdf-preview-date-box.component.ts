@@ -65,7 +65,6 @@ export class PdfPreviewDateBoxComponent implements OnInit, OnDestroy {
             this.exerciseSelected.set(false);
             this.selectedExercise.set(null);
         }
-        console.log(this.pageIndex());
     }
 
     /**
@@ -88,10 +87,6 @@ export class PdfPreviewDateBoxComponent implements OnInit, OnDestroy {
      * Loads all exercises for the current course
      */
     private loadExercises(): void {
-        if (!this.course()) {
-            return;
-        }
-
         const courseId = this.course()!.id!;
 
         this.courseExerciseService.findAllExercisesForCourse(courseId).subscribe({

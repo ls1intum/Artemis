@@ -276,7 +276,8 @@
             "search": "Search",
             "select": "Select",
             "sendToIris": "Send To Iris",
-            "faq": "FAQ"
+            "faq": "FAQ",
+            "show": "Show"
         },
         "detail": {
             "field": "Field",

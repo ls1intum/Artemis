@@ -1,14 +1,20 @@
 <div class="date-box">
     <div class="popover-title mb-2">
-        <h5>Hide Page {{ pageIndex() }}</h5>
+        <h5><span jhiTranslate="artemisApp.attachment.pdfPreview.dateBox.hidePage" [translateValues]="{ param: pageIndex()! }"></span></h5>
     </div>
     <div class="checkbox-container">
         <input type="checkbox" id="date-box-checkbox" [ngModel]="hideForever()" (ngModelChange)="onHideForeverChange($event)" />
-        <label for="date-box-checkbox">Hide forever</label>
+        <label for="date-box-checkbox">
+            <span jhiTranslate="artemisApp.attachment.pdfPreview.dateBox.hideForever"></span>
+        </label>
     </div>
     <div class="button-container">
-        <button class="btn btn-primary" (click)="selectCalendar()" [disabled]="hideForever()">Select Date</button>
-        <button class="btn btn-primary" (click)="selectExercise()" [disabled]="hideForever()">Select Exercise</button>
+        <button class="btn btn-primary" (click)="selectCalendar()" [disabled]="hideForever()">
+            <span jhiTranslate="artemisApp.attachment.pdfPreview.dateBox.selectDate"></span>
+        </button>
+        <button class="btn btn-primary" (click)="selectExercise()" [disabled]="hideForever()">
+            <span jhiTranslate="artemisApp.attachment.pdfPreview.dateBox.selectExercise"></span>
+        </button>
     </div>
     @if (calendarSelected()) {
         <div class="calendar-container">
@@ -18,11 +24,15 @@
     @if (exerciseSelected()) {
         <div class="exercise-container">
             @if (categorizedExercises().length === 0) {
-                <p class="text-muted">No exercises available</p>
+                <p class="text-muted">
+                    <span jhiTranslate="artemisApp.attachment.pdfPreview.dateBox.noExercises"></span>
+                </p>
             } @else {
                 @for (typeGroup of categorizedExercises(); track typeGroup.type) {
                     <div class="type-section">
-                        <h6 class="type-header text-capitalize">{{ typeGroup.type }} Exercises</h6>
+                        <h6 class="type-header text-capitalize">
+                            <span jhiTranslate="artemisApp.attachment.pdfPreview.dateBox.exerciseTypeTitle" [translateValues]="{ param: typeGroup.type }"></span>
+                        </h6>
                         <div class="list-group">
                             @for (exercise of typeGroup.exercises; track exercise.id) {
                                 <label class="list-group-item list-group-item-action" [class.active]="selectedExercise()?.id === exercise.id">
@@ -50,7 +60,11 @@
         </div>
     }
     <div class="submit-container mt-3 d-flex justify-content-between">
-        <button class="btn btn-secondary" (click)="selectionCancelledOutput.emit(true)">Cancel</button>
-        <button class="btn btn-primary" (click)="onSubmit()" [disabled]="!hideForever() && !calendarSelected() && !selectedExercise()">Submit</button>
+        <button class="btn btn-secondary" (click)="selectionCancelledOutput.emit(true)">
+            <span jhiTranslate="entity.action.cancel"></span>
+        </button>
+        <button class="btn btn-primary" (click)="onSubmit()" [disabled]="!hideForever() && !calendarSelected() && !selectedExercise()">
+            <span jhiTranslate="entity.action.save"></span>
+        </button>
     </div>
 </div>

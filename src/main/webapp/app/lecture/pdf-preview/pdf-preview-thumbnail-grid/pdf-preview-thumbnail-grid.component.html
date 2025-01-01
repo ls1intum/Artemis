@@ -43,11 +43,27 @@
                 <ng-template #showPageBox>
                     <div class="confirmation-box">
                         <div class="popover-title mb-2">
-                            <h5>Show Page {{ activeButtonIndex()! }}</h5>
-                            Would you like to show this page?
+                            <h5><span jhiTranslate="artemisApp.attachment.pdfPreview.thumbnailGrid.showPage" [translateValues]="{ param: activeButtonIndex()! }"></span></h5>
+                            <p>
+                                <span jhiTranslate="artemisApp.attachment.pdfPreview.thumbnailGrid.hiddenUntil"></span>
+                                @if (newHiddenPages()![activeButtonIndex()!].isSame(forever())) {
+                                    <span class="text-muted" jhiTranslate="artemisApp.attachment.pdfPreview.thumbnailGrid.forever"></span>
+                                } @else {
+                                    <span>
+                                        {{ newHiddenPages()![activeButtonIndex()!].format('MMM D, YYYY - HH:mm') }}
+                                    </span>
+                                }
+                                <br />
+
+                                <span jhiTranslate="artemisApp.attachment.pdfPreview.thumbnailGrid.showPageConfirmation"></span>
+                            </p>
                             <div class="submit-container mt-3 d-flex justify-content-between">
-                                <button class="btn btn-secondary" (click)="hideActionButton(activeButtonIndex()!); popover.close()">Cancel</button>
-                                <button class="btn btn-primary" (click)="showPage(activeButtonIndex()!); popover.close()">Show</button>
+                                <button class="btn btn-secondary" (click)="hideActionButton(activeButtonIndex()!); popover.close()">
+                                    <span jhiTranslate="entity.action.cancel"></span>
+                                </button>
+                                <button class="btn btn-primary" (click)="showPage(activeButtonIndex()!); popover.close()">
+                                    <span jhiTranslate="entity.action.show"></span>
+                                </button>
                             </div>
                         </div>
                     </div>
