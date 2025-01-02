@@ -24,6 +24,7 @@ import { MockRouterLinkDirective } from '../../helpers/mocks/directive/mock-rout
 import { ProgressBarComponent } from 'app/shared/dashboards/tutor-participation-graph/progress-bar/progress-bar.component';
 import { PlagiarismCaseVerdictComponent } from 'app/course/plagiarism-cases/shared/verdict/plagiarism-case-verdict.component';
 import { MockNotificationService } from '../../helpers/mocks/service/mock-notification.service';
+import { ElementRef, signal } from '@angular/core';
 
 jest.mock('app/shared/util/download.util', () => ({
     downloadFile: jest.fn(),
@@ -241,4 +242,25 @@ describe('Plagiarism Cases Instructor View Component', () => {
         const routePath = router.navigateByUrl.mock.calls[0][0];
         expect(routePath).toStrictEqual(['/course-management', courseId, exercise1.type + '-exercises', exerciseId, 'plagiarism']);
     }));
+
+    it('should scroll to the correct exercise element when scrollToExercise is called', () => {
+        component.exerciseId = 1;
+
+        const nativeElement1 = { id: 'exercise-with-plagiarism-case-1', scrollIntoView: jest.fn() };
+        const nativeElement2 = { id: 'exercise-with-plagiarism-case-2', scrollIntoView: jest.fn() };
+
+        const elementRef1 = new ElementRef(nativeElement1);
+        const elementRef2 = new ElementRef(nativeElement2);
+
+        component.exerciseWithPlagCasesElements = signal([elementRef1, elementRef2]);
+
+        component.scrollToExercise();
+
+        expect(nativeElement1.scrollIntoView).toHaveBeenCalledWith({
+            behavior: 'smooth',
+            block: 'start',
+            inline: 'nearest',
+        });
+        expect(nativeElement2.scrollIntoView).not.toHaveBeenCalled();
+    });
 });
