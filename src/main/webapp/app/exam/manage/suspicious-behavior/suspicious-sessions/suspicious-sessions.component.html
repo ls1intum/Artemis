@@ -1,4 +1,4 @@
-@for (session of suspiciousSessions.examSessions; track session; let i = $index) {
+@for (session of suspiciousSessions().examSessions; track session; let i = $index) {
     <tr>
         <th scope="row">{{ session.id }}</th>
         <td [ngClass]="suspiciousFingerprint ? 'suspicious' : ''">{{ session.browserFingerprintHash }}</td>
