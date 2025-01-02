@@ -1022,29 +1022,39 @@ public class GitService extends AbstractGitService {
      * Note: This method does not handle changes to the repository content between invocations. If files change
      * after the initial caching, the cache does not automatically refresh, which may lead to stale data.
      *
-     * @param repo The repository to scan for files and directories.
+     * @param repo         The repository to scan for files and directories.
+     * @param omitBinaries do not include binaries to reduce payload size
      * @return A {@link Map} where each key is a {@link File} object representing a file or directory, and each value is
      *         the corresponding {@link FileType} (FILE or FOLDER). The map excludes symbolic links.
      */
-    public Map<File, FileType> listFilesAndFolders(Repository repo) {
+    public Map<File, FileType> listFilesAndFolders(Repository repo, Boolean omitBinaries) {
         FileAndDirectoryFilter filter = new FileAndDirectoryFilter();
-
         Iterator<java.io.File> itr = FileUtils.iterateFilesAndDirs(repo.getLocalPath().toFile(), filter, filter);
         Map<File, FileType> files = new HashMap<>();
+
+        List<String> binaryExtensions = List.of(".exe", ".jar", ".dll", ".so", ".class", ".bin");
 
         while (itr.hasNext()) {
             File nextFile = new File(itr.next(), repo);
             Path nextPath = nextFile.toPath();
 
-            // filter out symlinks
             if (Files.isSymbolicLink(nextPath)) {
                 log.warn("Found a symlink {} in the git repository {}. Do not allow access!", nextPath, repo);
+                continue;
+            }
+
+            if (Boolean.TRUE.equals(omitBinaries) && nextFile.isFile() && binaryExtensions.stream().anyMatch(nextFile.getName()::endsWith)) {
+                log.info("Omitting binary file: {}", nextFile);
                 continue;
             }
 
             files.put(nextFile, nextFile.isFile() ? FileType.FILE : FileType.FOLDER);
         }
         return files;
+    }
+
+    public Map<File, FileType> listFilesAndFolders(Repository repo) {
+        return listFilesAndFolders(repo, false);
     }
 
     /**

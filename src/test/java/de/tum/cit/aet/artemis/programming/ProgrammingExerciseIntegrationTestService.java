@@ -2309,8 +2309,8 @@ public class ProgrammingExerciseIntegrationTestService {
                 "/api/repository/" + savedExercise.getSolutionParticipation().getId() + "/file-names");
     }
 
-    void test_redirectGetTemplateRepositoryFilesWithContent() throws Exception {
-        test_redirectGetTemplateRepositoryFilesWithContent((exercise, files) -> {
+    void test_redirectGetTemplateRepositoryFilesWithContent(boolean omitBinaries) throws Exception {
+        BiFunction<ProgrammingExercise, Map<String, String>, LocalRepository> redirectFnc = (exercise, files) -> {
             LocalRepository localRepository = new LocalRepository("main");
             try {
                 hestiaUtilTestService.setupTemplate(files, exercise, localRepository);
@@ -2319,7 +2319,14 @@ public class ProgrammingExerciseIntegrationTestService {
                 fail("Setup template threw unexpected exception: " + e.getMessage());
             }
             return localRepository;
-        });
+        };
+
+        if (omitBinaries) {
+            test_redirectGetTemplateRepositoryFilesWithContentOmitBinary(redirectFnc);
+        }
+        else {
+            test_redirectGetTemplateRepositoryFilesWithContent(redirectFnc);
+        }
     }
 
     private void test_redirectGetTemplateRepositoryFilesWithContent(BiFunction<ProgrammingExercise, Map<String, String>, LocalRepository> setupRepositoryMock) throws Exception {
@@ -2329,6 +2336,16 @@ public class ProgrammingExerciseIntegrationTestService {
 
         request.getWithForwardedUrl("/api/programming-exercises/" + programmingExercise.getId() + "/template-files-content", HttpStatus.OK,
                 "/api/repository/" + savedExercise.getTemplateParticipation().getId() + "/files-content");
+    }
+
+    private void test_redirectGetTemplateRepositoryFilesWithContentOmitBinary(BiFunction<ProgrammingExercise, Map<String, String>, LocalRepository> setupRepositoryMock)
+            throws Exception {
+        setupRepositoryMock.apply(programmingExercise, Map.ofEntries(Map.entry("A.java", "abc"), Map.entry("B.jar", "binaryContent")));
+
+        var savedExercise = programmingExerciseRepository.findByIdWithTemplateAndSolutionParticipationElseThrow(programmingExercise.getId());
+        var queryParams = "?omitBinaries=true";
+        request.getWithForwardedUrl("/api/programming-exercises/" + programmingExercise.getId() + "/template-files-content" + queryParams, HttpStatus.OK,
+                "/api/repository/" + savedExercise.getTemplateParticipation().getId() + "/files-content" + queryParams);
     }
 
     void testRedirectGetParticipationRepositoryFilesWithContentAtCommit(String testPrefix) throws Exception {
