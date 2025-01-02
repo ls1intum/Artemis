@@ -18,7 +18,7 @@ ext {
             "CLASS": 12
         ],
         "buildagent"   : [
-            "INSTRUCTION": 0.686,
+            "INSTRUCTION": 0.313,
             "CLASS": 13
         ],
         "communication": [
