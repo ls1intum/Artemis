@@ -25,12 +25,12 @@ export class SettingsComponent implements OnInit {
     account: User;
     languages = LANGUAGES;
     settingsForm: FormGroup;
-    isRegistrationEnabled = true;
+    isRegistrationEnabled = false;
 
     ngOnInit() {
         this.profileService.getProfileInfo().subscribe((profileInfo) => {
             if (profileInfo) {
-                this.isRegistrationEnabled = true; //profileInfo.registrationEnabled || false;
+                this.isRegistrationEnabled = profileInfo.registrationEnabled || false;
             }
         });
         this.accountService.identity().then((user) => {
