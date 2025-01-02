@@ -1,4 +1,4 @@
-import { Component, Input, OnChanges, OnDestroy, OnInit } from '@angular/core';
+import { Component, Input, OnChanges, OnDestroy, OnInit, inject } from '@angular/core';
 import { Exam } from 'app/entities/exam/exam.model';
 import { ExamChecklist } from 'app/entities/exam/exam-checklist.model';
 import { faChartBar, faEye, faListAlt, faThList, faUser, faWrench } from '@fortawesome/free-solid-svg-icons';
@@ -11,6 +11,9 @@ import dayjs from 'dayjs/esm';
 import { StudentExamService } from 'app/exam/manage/student-exams/student-exam.service';
 import { Subject, Subscription } from 'rxjs';
 import { captureException } from '@sentry/angular';
+import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
+import { Exercise, ExerciseType } from 'app/entities/exercise.model';
+import { PROFILE_TEXT } from 'app/app.constants';
 
 @Component({
     selector: 'jhi-exam-checklist',
@@ -43,6 +46,8 @@ export class ExamChecklistComponent implements OnChanges, OnInit, OnDestroy {
 
     examPreparationFinished: boolean;
 
+    disabledExercises: Exercise[] = [];
+
     // Icons
     faEye = faEye;
     faWrench = faWrench;
@@ -54,13 +59,12 @@ export class ExamChecklistComponent implements OnChanges, OnInit, OnDestroy {
     private dialogErrorSource = new Subject<string>();
     dialogError$ = this.dialogErrorSource.asObservable();
 
-    constructor(
-        private examChecklistService: ExamChecklistService,
-        private websocketService: JhiWebsocketService,
-        private examManagementService: ExamManagementService,
-        private alertService: AlertService,
-        private studentExamService: StudentExamService,
-    ) {}
+    private examChecklistService = inject(ExamChecklistService);
+    private websocketService = inject(JhiWebsocketService);
+    private examManagementService = inject(ExamManagementService);
+    private alertService = inject(AlertService);
+    private studentExamService = inject(StudentExamService);
+    private profileService = inject(ProfileService);
 
     ngOnInit() {
         const submittedTopic = this.examChecklistService.getSubmittedTopic(this.exam);
@@ -69,6 +73,13 @@ export class ExamChecklistComponent implements OnChanges, OnInit, OnDestroy {
         const startedTopic = this.examChecklistService.getStartedTopic(this.exam);
         this.websocketService.subscribe(startedTopic);
         this.websocketService.receive(startedTopic).subscribe(() => (this.numberOfStarted += 1));
+        this.profileService.getProfileInfo().subscribe((profileInfo) => {
+            this.disabledExercises =
+                this.exam.exerciseGroups
+                    ?.flatMap((group) => group.exercises)
+                    .filter((exercise) => exercise !== undefined)
+                    .filter((exercise) => !this.isExerciseTypeEnabled(profileInfo.activeProfiles, exercise?.type)) ?? [];
+        });
         if (this.exam?.course?.id && this.exam?.id) {
             this.longestWorkingTimeSub = this.studentExamService.getLongestWorkingTimeForExam(this.exam.course.id, this.exam.id).subscribe((res) => {
                 this.longestWorkingTime = res;
@@ -165,6 +176,16 @@ export class ExamChecklistComponent implements OnChanges, OnInit, OnDestroy {
                 endDate = endDate.add(this.exam.gracePeriod!, 'seconds');
             }
             this.isExamOver = endDate.isBefore(dayjs());
+        }
+    }
+
+    private isExerciseTypeEnabled(activeProfiles: string[], exerciseType?: ExerciseType) {
+        switch (exerciseType) {
+            case ExerciseType.TEXT:
+                return activeProfiles.includes(PROFILE_TEXT);
+            // For now, all exercises are enabled by default
+            default:
+                return true;
         }
     }
 }
