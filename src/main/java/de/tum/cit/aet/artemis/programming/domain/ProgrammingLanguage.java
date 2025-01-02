@@ -47,6 +47,7 @@ public enum ProgrammingLanguage {
         JAVA,
         JAVASCRIPT,
         KOTLIN,
+        MATLAB,
         OCAML,
         PYTHON,
         R,

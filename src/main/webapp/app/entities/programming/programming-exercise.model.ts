@@ -23,6 +23,7 @@ export enum ProgrammingLanguage {
     JAVA = 'JAVA',
     JAVASCRIPT = 'JAVASCRIPT',
     KOTLIN = 'KOTLIN',
+    MATLAB = 'MATLAB',
     OCAML = 'OCAML',
     PYTHON = 'PYTHON',
     R = 'R',

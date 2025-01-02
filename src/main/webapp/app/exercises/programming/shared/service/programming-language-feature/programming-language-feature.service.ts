@@ -30,8 +30,8 @@ export class ProgrammingLanguageFeatureService {
         });
     }
 
-    public getProgrammingLanguageFeature(programmingLanguage: ProgrammingLanguage): ProgrammingLanguageFeature {
-        return this.programmingLanguageFeatures.get(programmingLanguage)!;
+    public getProgrammingLanguageFeature(programmingLanguage: ProgrammingLanguage): ProgrammingLanguageFeature | undefined {
+        return this.programmingLanguageFeatures.get(programmingLanguage);
     }
 
     public supportsProgrammingLanguage(programmingLanguage: ProgrammingLanguage): boolean {
