@@ -391,6 +391,7 @@ public class SingleUserNotificationService {
      * @param responsibleUser  the responsibleUser that has registered/removed the user for the conversation
      * @param notificationType the type of notification to be sent
      */
+    // TODO: this should be Async
     public void notifyClientAboutConversationCreationOrDeletion(Conversation conversation, User user, User responsibleUser, NotificationType notificationType) {
         notifyRecipientWithNotificationType(new ConversationNotificationSubject(conversation, user, responsibleUser), notificationType, null, null);
     }
