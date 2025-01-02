@@ -14,7 +14,6 @@ import { expectElementToBeDisabled, expectElementToBeEnabled } from '../../helpe
 import { Course } from 'app/entities/course.model';
 import { Subject, of } from 'rxjs';
 import { ActivatedRoute, UrlSegment } from '@angular/router';
-import { TranslatePipeMock } from '../../helpers/mocks/service/mock-translate.service';
 import { ExerciseFeedbackSuggestionOptionsComponent } from 'app/exercises/shared/feedback-suggestion/exercise-feedback-suggestion-options.component';
 import { ExercisePreliminaryFeedbackOptionsComponent } from 'app/exercises/shared/preliminary-feedback/exercise-preliminary-feedback-options.component';
 import { AthenaService } from 'app/assessment/athena.service';
