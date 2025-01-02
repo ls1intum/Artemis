@@ -45,6 +45,7 @@
                 />
                 <div class="post-content-padding hover-actions">
                     <jhi-answer-post-reactions-bar
+                        [course]="course"
                         [isReadOnlyMode]="isReadOnlyMode"
                         [posting]="posting"
                         [isLastAnswer]="isLastAnswer"
@@ -101,6 +102,10 @@
     <button class="dropdown-item d-flex" (click)="toggleSavePost()">
         <fa-icon [icon]="posting.isSaved ? faBookmark : farBookmark" class="item-icon"></fa-icon>
         <span [jhiTranslate]="posting.isSaved ? 'artemisApp.metis.post.removeBookmarkPost' : 'artemisApp.metis.post.bookmarkPost'"></span>
+    </button>
+    <button class="dropdown-item d-flex forward" (click)="forwardMessage()">
+        <fa-icon [icon]="faShare" class="item-icon"></fa-icon>
+        <span jhiTranslate="artemisApp.metis.post.forwardMessage"></span>
     </button>
 </div>
 

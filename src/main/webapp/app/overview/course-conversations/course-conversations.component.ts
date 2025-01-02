@@ -40,6 +40,7 @@ import { ChannelsCreateDialogComponent } from 'app/overview/course-conversations
 import { CourseSidebarService } from 'app/overview/course-sidebar.service';
 import { LayoutService } from 'app/shared/breakpoints/layout.service';
 import { CustomBreakpointNames } from 'app/shared/breakpoints/breakpoints.service';
+import { AnswerPost } from 'app/entities/metis/answer-post.model';
 import { Posting, PostingType, SavedPostStatus, SavedPostStatusMap } from 'app/entities/metis/posting.model';
 import { canCreateChannel } from 'app/shared/metis/conversations/conversation-permissions.utils';
 
@@ -571,5 +572,21 @@ export class CourseConversationsComponent implements OnInit, OnDestroy {
             event.preventDefault();
             this.searchElement.nativeElement.focus();
         }
+    }
+
+    onTriggerNavigateToPost(post: Posting) {
+        let id = (post as Post)?.conversation?.id;
+        this.focusPostId = post.id;
+        this.openThreadOnFocus = false;
+        if (post.id === undefined) {
+            return;
+        } else if ((post as Post)?.conversation?.id === undefined) {
+            this.openThreadOnFocus = true;
+            id = (post as AnswerPost)?.post?.conversation?.id;
+            this.focusPostId = (post as AnswerPost)?.post?.id;
+        }
+
+        this.metisConversationService.setActiveConversation(id);
+        this.changeDetector.detectChanges();
     }
 }

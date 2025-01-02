@@ -1,15 +1,16 @@
 import { Post } from 'app/entities/metis/post.model';
 import { PostService } from 'app/shared/metis/post.service';
-import { BehaviorSubject, Observable, ReplaySubject, Subscription, map, tap } from 'rxjs';
+import { BehaviorSubject, Observable, ReplaySubject, Subscription, forkJoin, map, switchMap, tap } from 'rxjs';
 import { HttpResponse } from '@angular/common/http';
 import { User } from 'app/core/user/user.model';
 import { AccountService } from 'app/core/auth/account.service';
 import { Course } from 'app/entities/course.model';
-import { Posting, SavedPostStatus } from 'app/entities/metis/posting.model';
+import { Posting, PostingType, SavedPostStatus } from 'app/entities/metis/posting.model';
 import { Injectable, OnDestroy, inject } from '@angular/core';
 import { AnswerPostService } from 'app/shared/metis/answer-post.service';
 import { AnswerPost } from 'app/entities/metis/answer-post.model';
 import { Reaction } from 'app/entities/metis/reaction.model';
+import { catchError } from 'rxjs/operators';
 import { ReactionService } from 'app/shared/metis/reaction.service';
 import {
     ContextInformation,
@@ -33,6 +34,9 @@ import { ConversationService } from 'app/shared/metis/conversations/conversation
 import { NotificationService } from 'app/shared/notification/notification.service';
 import { SavedPostService } from 'app/shared/metis/saved-post.service';
 import { cloneDeep } from 'lodash-es';
+import { ForwardedMessageService } from 'app/shared/metis/forwarded-message.service';
+import { ForwardedMessage } from 'app/entities/metis/forwarded-message.model';
+import { throwError } from 'rxjs';
 
 @Injectable()
 export class MetisService implements OnDestroy {
@@ -60,6 +64,7 @@ export class MetisService implements OnDestroy {
         protected reactionService: ReactionService,
         protected accountService: AccountService,
         protected exerciseService: ExerciseService,
+        protected forwardedMessageService: ForwardedMessageService,
         private jhiWebsocketService: JhiWebsocketService,
         private conversationService: ConversationService,
         notificationService: NotificationService,
@@ -711,6 +716,113 @@ export class MetisService implements OnDestroy {
             }
             return;
         }
+    }
+
+    /**
+     * Retrieves forwarded messages for a given set of IDs and message type.
+     *
+     * @param ids - An array of numeric IDs for which forwarded messages should be retrieved.
+     * @param type - The type of messages to retrieve ('post' or 'answer').
+     * @returns An observable containing a list of objects where each object includes an ID and its corresponding messages, wrapped in an HttpResponse, or undefined if the IDs are invalid.
+     */
+    getForwardedMessagesByIds(ids: number[], type: 'post' | 'answer'): Observable<HttpResponse<{ id: number; messages: ForwardedMessage[] }[]>> | undefined {
+        if (ids && ids.length > 0) {
+            return this.forwardedMessageService.getForwardedMessages(ids, type);
+        } else {
+            return undefined;
+        }
+    }
+
+    /**
+     * Retrieves the source posts for a given set of post IDs.
+     *
+     * @param postIds - An array of numeric post IDs to retrieve source posts for.
+     * @returns An observable containing the source posts or undefined if the IDs are invalid.
+     */
+    getSourcePostsByIds(postIds: number[]) {
+        if (postIds) return this.postService.getSourcePostsByIds(this.courseId, postIds);
+        else return;
+    }
+
+    /**
+     * Retrieves the source answer posts for a given set of answer post IDs.
+     *
+     * @param answerPostIds - An array of numeric answer post IDs to retrieve source answer posts for.
+     * @returns An observable containing the source answer posts or undefined if the IDs are invalid.
+     */
+    getSourceAnswerPostsByIds(answerPostIds: number[]) {
+        if (answerPostIds) return this.answerPostService.getSourceAnswerPostsByIds(this.courseId, answerPostIds);
+        else return;
+    }
+
+    /**
+     * Creates forwarded messages by associating original posts with a target conversation.
+     *
+     * @param originalPosts - An array of original posts to be forwarded.
+     * @param targetConversation - The target conversation where the posts will be forwarded.
+     * @param isAnswer - A boolean indicating if the forwarded posts are answers.
+     * @param newContent - Optional new content for the forwarded posts.
+     * @returns An observable containing an array of created ForwardedMessage objects.
+     *
+     * @throws Error if the course ID is not set.
+     */
+    createForwardedMessages(originalPosts: Posting[], targetConversation: Conversation, isAnswer: boolean, newContent?: string): Observable<ForwardedMessage[]> {
+        if (!this.courseId) {
+            return throwError(() => new Error('Course ID is not set. Ensure that setCourse() is called before forwarding posts.'));
+        }
+
+        const newPost: Post = {
+            content: newContent || '',
+            conversation: targetConversation,
+            hasForwardedMessages: true,
+        };
+
+        let sourceType = PostingType.POST;
+        if (isAnswer) {
+            sourceType = PostingType.ANSWER;
+        }
+
+        return this.postService.create(this.courseId, newPost).pipe(
+            switchMap((createdPost: HttpResponse<Post>) => {
+                const createdPostBody = createdPost.body!;
+                const forwardedMessages: ForwardedMessage[] = originalPosts.map(
+                    (post) => new ForwardedMessage(undefined, post.id, sourceType, { id: createdPostBody.id } as Post, undefined, newContent || ''),
+                );
+
+                const createForwardedMessageObservables = forwardedMessages.map((fm) =>
+                    this.forwardedMessageService.createForwardedMessage(fm).pipe(map((res: HttpResponse<ForwardedMessage>) => res.body!)),
+                );
+
+                return forkJoin(createForwardedMessageObservables).pipe(
+                    tap((createdForwardedMessages: ForwardedMessage[]) => {
+                        if (targetConversation.id === this.currentConversation?.id) {
+                            const existingPostIndex = this.cachedPosts.findIndex((post) => post.id === createdPostBody.id);
+                            if (existingPostIndex === -1) {
+                                this.cachedPosts = [createdPostBody, ...this.cachedPosts];
+                            }
+
+                            createdForwardedMessages.forEach((fm) => {
+                                const postIndex = this.cachedPosts.findIndex((post) => post.id === fm.destinationPost?.id);
+                                if (postIndex > -1) {
+                                    const post = this.cachedPosts[postIndex];
+                                    const updatedPost = { ...post, hasForwardedMessages: true };
+                                    this.cachedPosts[postIndex] = updatedPost;
+                                }
+                            });
+                            this.posts$.next(this.cachedPosts);
+                            this.cachedTotalNumberOfPosts += 1;
+                            this.totalNumberOfPosts$.next(this.cachedTotalNumberOfPosts);
+                        }
+                    }),
+                    catchError((error) => {
+                        return throwError(() => error);
+                    }),
+                );
+            }),
+            catchError((error) => {
+                return throwError(() => error);
+            }),
+        );
     }
 
     /**

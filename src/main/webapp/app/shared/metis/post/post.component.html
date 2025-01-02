@@ -76,23 +76,30 @@
                     (contextmenu)="onRightClick($event)"
                 >
                     <div class="message-content" [ngClass]="{ 'mx-0': !isThreadSidebar }">
-                        <jhi-posting-content
-                            [previewMode]="previewMode"
-                            [content]="posting.content"
-                            [author]="posting.author"
-                            [isEdited]="!!posting.updatedDate"
-                            [posting]="posting"
-                            [isReply]="false"
-                            [isDeleted]="isDeleted"
-                            [deleteTimerInSeconds]="deleteTimerInSeconds"
-                            (onUndoDeleteEvent)="onDeleteEvent(false)"
-                            (userReferenceClicked)="onUserReferenceClicked($event)"
-                            (channelReferenceClicked)="onChannelReferenceClicked($event)"
-                        ></jhi-posting-content>
-                        <div class="hover-actions" [ngClass]="{ 'mb-2': previewMode }">
+                        @if (posting.content) {
+                            <jhi-posting-content
+                                [previewMode]="previewMode"
+                                [content]="posting.content"
+                                [author]="posting.author"
+                                [isEdited]="!!posting.updatedDate"
+                                [posting]="posting"
+                                [isReply]="false"
+                                [isDeleted]="isDeleted"
+                                [deleteTimerInSeconds]="deleteTimerInSeconds"
+                                (onUndoDeleteEvent)="onDeleteEvent(false)"
+                                (userReferenceClicked)="onUserReferenceClicked($event)"
+                                (channelReferenceClicked)="onChannelReferenceClicked($event)"
+                            ></jhi-posting-content>
+                        }
+                        @if (originalPostDetails) {
+                            <jhi-forwarded-message [originalPostDetails]="originalPostDetails" (onNavigateToPost)="onTriggerNavigateToPost(originalPostDetails)">
+                            </jhi-forwarded-message>
+                        }
+                        <div class="hover-actions post-content-margin" [ngClass]="{ 'mb-2': previewMode }">
                             @if (!previewMode) {
                                 <!-- Post reactions (that appear when post is hovered) -->
                                 <jhi-post-reactions-bar
+                                    [course]="course"
                                     [lastReadDate]="lastReadDate"
                                     [readOnlyMode]="readOnlyMode"
                                     [previewMode]="previewMode"
@@ -107,6 +114,7 @@
                                     (mayEditOutput)="onMayEdit($event)"
                                     (mayDeleteOutput)="onMayDelete($event)"
                                     (canPinOutput)="onCanPin($event)"
+                                    [originalPostDetails]="originalPostDetails"
                                     (isDeleteEvent)="onDeleteEvent(true)"
                                     (onBookmarkClicked)="toggleSavePost()"
                                 />
@@ -195,6 +203,10 @@
     <button class="dropdown-item d-flex" (click)="toggleSavePost()">
         <fa-icon [icon]="posting.isSaved ? faBookmark : farBookmark" class="item-icon"></fa-icon>
         <span [jhiTranslate]="posting.isSaved ? 'artemisApp.metis.post.removeBookmarkPost' : 'artemisApp.metis.post.bookmarkPost'"></span>
+    </button>
+    <button class="dropdown-item d-flex forward" (click)="forwardMessage()">
+        <fa-icon [icon]="faShare" class="item-icon"></fa-icon>
+        <span jhiTranslate="artemisApp.metis.post.forwardMessage"></span>
     </button>
 </div>
 

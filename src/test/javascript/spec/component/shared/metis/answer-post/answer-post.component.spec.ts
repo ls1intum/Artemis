@@ -6,7 +6,7 @@ import { HtmlForMarkdownPipe } from 'app/shared/pipes/html-for-markdown.pipe';
 import { By } from '@angular/platform-browser';
 import { AnswerPostReactionsBarComponent } from 'app/shared/metis/posting-reactions-bar/answer-post-reactions-bar/answer-post-reactions-bar.component';
 import { PostingContentComponent } from 'app/shared/metis/posting-content/posting-content.components';
-import { metisPostExerciseUser1, metisResolvingAnswerPostUser1 } from '../../../../helpers/sample/metis-sample-data';
+import { metisPostExerciseUser1, metisResolvingAnswerPostUser1, post } from '../../../../helpers/sample/metis-sample-data';
 import { OverlayModule } from '@angular/cdk/overlay';
 import { AnswerPostCreateEditModalComponent } from 'app/shared/metis/posting-create-edit-modal/answer-post-create-edit-modal/answer-post-create-edit-modal.component';
 import { DOCUMENT } from '@angular/common';
@@ -14,6 +14,7 @@ import { Reaction } from '../../../../../../../main/webapp/app/entities/metis/re
 import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
 import { MetisService } from 'app/shared/metis/metis.service';
 import { MockMetisService } from '../../../../helpers/mocks/service/mock-metis-service.service';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { Posting, PostingType } from 'app/entities/metis/posting.model';
 import { AnswerPost } from 'app/entities/metis/answer-post.model';
 import { PostingHeaderComponent } from '../../../../../../../main/webapp/app/shared/metis/posting-header/posting-header.component';
@@ -46,6 +47,7 @@ describe('AnswerPostComponent', () => {
             imports: [OverlayModule, MockModule(BrowserAnimationsModule), MockDirective(NgbTooltip)],
             declarations: [
                 AnswerPostComponent,
+                FaIconComponent,
                 MockPipe(HtmlForMarkdownPipe),
                 MockComponent(PostingContentComponent),
                 MockComponent(PostingHeaderComponent),
@@ -284,5 +286,18 @@ describe('AnswerPostComponent', () => {
 
         const postTimeElement = debugElement.query(By.css('span.post-time'));
         expect(postTimeElement).toBeFalsy();
+    });
+
+    it('should display forwardMessage button and invoke forwardMessage function when clicked', () => {
+        const forwardMessageSpy = jest.spyOn(component, 'forwardMessage');
+        component.showDropdown = true;
+        component.posting = post;
+        fixture.detectChanges();
+
+        const forwardButton = debugElement.query(By.css('button.dropdown-item.d-flex.forward'));
+        expect(forwardButton).not.toBeNull();
+
+        forwardButton.nativeElement.click();
+        expect(forwardMessageSpy).toHaveBeenCalled();
     });
 });
