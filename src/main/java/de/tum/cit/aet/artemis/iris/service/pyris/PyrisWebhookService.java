@@ -246,9 +246,6 @@ public class PyrisWebhookService {
     }
 
     private boolean faqIngestionEnabled(Course course) {
-        System.out.println(irisSettingsService.getRawIrisSettingsFor(course).getIrisFaqIngestionSettings().isEnabled());
-        System.out.println(irisSettingsService.getRawIrisSettingsFor(course).getIrisFaqIngestionSettings() != null
-                && irisSettingsService.getRawIrisSettingsFor(course).getIrisFaqIngestionSettings().isEnabled());
         return irisSettingsService.getRawIrisSettingsFor(course).getIrisFaqIngestionSettings() != null
                 && irisSettingsService.getRawIrisSettingsFor(course).getIrisFaqIngestionSettings().isEnabled();
     }
