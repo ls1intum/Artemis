@@ -674,6 +674,7 @@ public class ProgrammingExerciseRepositoryService {
                 replacements.put(PACKAGE_NAME_PLACEHOLDER, programmingExercise.getPackageName());
             }
             case SWIFT -> replaceSwiftPlaceholders(replacements, programmingExercise, repository);
+            case GO -> replacements.put(PACKAGE_NAME_PLACEHOLDER, programmingExercise.getPackageName());
             default -> {
                 // no special package name replacements needed for other programming languages
             }
