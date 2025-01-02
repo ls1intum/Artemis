@@ -105,17 +105,17 @@ public class AthenaResource {
     }
 
     @FunctionalInterface
-    private interface FeedbackProvider<ExerciseType, SubmissionType, OutputType> {
+    private interface FeedbackProvider<ExerciseType, SubmissionType, Boolean, OutputType> {
 
         /**
          * Method to apply the (graded) feedback provider. Examples: AthenaFeedbackSuggestionsService::getTextFeedbackSuggestions,
          * AthenaFeedbackSuggestionsService::getProgrammingFeedbackSuggestions
          */
-        List<OutputType> apply(ExerciseType exercise, SubmissionType submission, Boolean isGraded) throws NetworkingException;
+        List<OutputType> apply(ExerciseType exercise, SubmissionType submission, Boolean isPreliminary) throws NetworkingException;
     }
 
     private <ExerciseT extends Exercise, SubmissionT extends Submission, OutputT> ResponseEntity<List<OutputT>> getFeedbackSuggestions(long exerciseId, long submissionId,
-            Function<Long, ExerciseT> exerciseFetcher, Function<Long, SubmissionT> submissionFetcher, FeedbackProvider<ExerciseT, SubmissionT, OutputT> feedbackProvider) {
+            Function<Long, ExerciseT> exerciseFetcher, Function<Long, SubmissionT> submissionFetcher, FeedbackProvider<ExerciseT, SubmissionT, Boolean, OutputT> feedbackProvider) {
 
         log.debug("REST call to get feedback suggestions for exercise {}, submission {}", exerciseId, submissionId);
 
@@ -130,7 +130,8 @@ public class AthenaResource {
         final var submission = submissionFetcher.apply(submissionId);
 
         try {
-            return ResponseEntity.ok(feedbackProvider.apply(exercise, submission, true));
+            // this resource is only for graded feedback suggestions
+            return ResponseEntity.ok(feedbackProvider.apply(exercise, submission, false));
         }
         catch (NetworkingException e) {
             return ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE).build();

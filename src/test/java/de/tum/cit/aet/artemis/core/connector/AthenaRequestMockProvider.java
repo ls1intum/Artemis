@@ -52,15 +52,28 @@ public class AthenaRequestMockProvider {
 
     private AutoCloseable closeable;
 
+    // _suggestions_ and _preliminary_ modules are only relevant for get suggestions service call
     public static final String ATHENA_MODULE_TEXT_TEST = "module_text_test";
+
+    public static final String ATHENA_MODULE_TEXT_SUGGESTIONS_TEST = "module_text_suggestions_test";
+
+    public static final String ATHENA_MODULE_TEXT_PRELIMINARY_TEST = "module_text_preliminary_test";
 
     public static final String ATHENA_RESTRICTED_MODULE_TEXT_TEST = "module_text_test_restricted";
 
     public static final String ATHENA_MODULE_PROGRAMMING_TEST = "module_programming_test";
 
+    public static final String ATHENA_MODULE_PROGRAMMING_SUGGESTIONS_TEST = "module_programming_suggestions_test";
+
+    public static final String ATHENA_MODULE_PROGRAMMING_PRELIMINARY_TEST = "module_programming_preliminary_test";
+
     public static final String ATHENA_RESTRICTED_MODULE_PROGRAMMING_TEST = "module_programming_test_restricted";
 
     public static final String ATHENA_MODULE_MODELING_TEST = "module_modeling_test";
+
+    public static final String ATHENA_MODULE_MODELING_SUGGESTIONS_TEST = "module_modeling_suggestions_test";
+
+    public static final String ATHENA_MODULE_MODELING_PRELIMINARY_TEST = "module_modeling_preliminary_test";
 
     public static final String ATHENA_RESTRICTED_MODULE_MODELING_TEST = "module_modeling_test_restricted";
 
@@ -94,6 +107,16 @@ public class AthenaRequestMockProvider {
         if (closeable != null) {
             closeable.close();
         }
+    }
+
+    /**
+     * Returns the name of the test module for the given module type
+     *
+     * @param moduleType    The type of the module: "text" or "programming"
+     * @param isPreliminary The type of the module: feedback suggestions or preliminary feedback
+     */
+    private static String getTestModuleName(String moduleType, boolean isPreliminary) {
+        return "module_" + moduleType + (isPreliminary ? "_preliminary" : "_suggestions") + "_test";
     }
 
     /**
@@ -186,9 +209,9 @@ public class AthenaRequestMockProvider {
      * @param moduleType       The type of the module: "text" or "programming"
      * @param expectedContents The expected contents of the request
      */
-    public void mockGetFeedbackSuggestionsAndExpect(String moduleType, RequestMatcher... expectedContents) {
+    public void mockGetFeedbackSuggestionsAndExpect(String moduleType, boolean isPreliminary, RequestMatcher... expectedContents) {
         ResponseActions responseActions = mockServer
-                .expect(ExpectedCount.once(), requestTo(athenaUrl + "/modules/" + moduleType + "/" + getTestModuleName(moduleType) + "/feedback_suggestions"))
+                .expect(ExpectedCount.once(), requestTo(athenaUrl + "/modules/" + moduleType + "/" + getTestModuleName(moduleType, isPreliminary) + "/feedback_suggestions"))
                 .andExpect(method(HttpMethod.POST)).andExpect(content().contentType(MediaType.APPLICATION_JSON));
 
         for (RequestMatcher matcher : expectedContents) {

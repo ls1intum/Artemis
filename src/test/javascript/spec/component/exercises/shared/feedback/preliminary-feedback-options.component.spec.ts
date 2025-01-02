@@ -5,20 +5,20 @@ import { MockProvider } from 'ng-mocks';
 import { Exercise, ExerciseType } from 'app/entities/exercise.model';
 import { AssessmentType } from 'app/entities/assessment-type.model';
 import { AthenaService } from 'app/assessment/athena.service';
-import { ExerciseFeedbackSuggestionOptionsComponent } from 'app/exercises/shared/feedback-suggestion/exercise-feedback-suggestion-options.component';
 import dayjs from 'dayjs/esm';
+import { ExercisePreliminaryFeedbackOptionsComponent } from 'app/exercises/shared/preliminary-feedback/exercise-preliminary-feedback-options.component';
 import { ArtemisTestModule } from '../../../../test.module';
 
-describe('ExerciseFeedbackSuggestionOptionsComponent', () => {
-    let component: ExerciseFeedbackSuggestionOptionsComponent;
-    let fixture: ComponentFixture<ExerciseFeedbackSuggestionOptionsComponent>;
+describe('ExercisePreliminaryFeedbackOptionsComponent', () => {
+    let component: ExercisePreliminaryFeedbackOptionsComponent;
+    let fixture: ComponentFixture<ExercisePreliminaryFeedbackOptionsComponent>;
     let athenaService: AthenaService;
     const pastDueDate = dayjs().subtract(1, 'hour');
     const futureDueDate = dayjs().add(1, 'hour');
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule, ExerciseFeedbackSuggestionOptionsComponent],
+            imports: [ArtemisTestModule, ExercisePreliminaryFeedbackOptionsComponent],
             providers: [
                 MockProvider(AthenaService, {
                     isEnabled: () => of(true),
@@ -27,7 +27,7 @@ describe('ExerciseFeedbackSuggestionOptionsComponent', () => {
             ],
         }).compileComponents();
 
-        fixture = TestBed.createComponent(ExerciseFeedbackSuggestionOptionsComponent);
+        fixture = TestBed.createComponent(ExercisePreliminaryFeedbackOptionsComponent);
         component = fixture.componentInstance;
         athenaService = TestBed.inject(AthenaService);
     });
@@ -39,7 +39,7 @@ describe('ExerciseFeedbackSuggestionOptionsComponent', () => {
     it('should initialize with available modules', async () => {
         const modules = ['Module1', 'Module2'];
         jest.spyOn(athenaService, 'getAvailableModules').mockReturnValue(of(modules));
-        component.exercise = { type: ExerciseType.TEXT, dueDate: futureDueDate, feedbackSuggestionModule: undefined } as Exercise;
+        component.exercise = { type: ExerciseType.TEXT, dueDate: futureDueDate, preliminaryFeedbackModule: undefined } as Exercise;
 
         await component.ngOnInit();
 
@@ -50,7 +50,7 @@ describe('ExerciseFeedbackSuggestionOptionsComponent', () => {
     it('should set isAthenaEnabled$ with the result from athenaService', async () => {
         jest.spyOn(athenaService, 'getAvailableModules').mockReturnValue(of());
         jest.spyOn(athenaService, 'isEnabled').mockReturnValue(of(true));
-        component.exercise = { type: ExerciseType.TEXT, dueDate: futureDueDate, feedbackSuggestionModule: undefined } as Exercise;
+        component.exercise = { type: ExerciseType.TEXT, dueDate: futureDueDate, preliminaryFeedbackModule: undefined } as Exercise;
 
         await component.ngOnInit();
 
@@ -61,14 +61,10 @@ describe('ExerciseFeedbackSuggestionOptionsComponent', () => {
     });
 
     it('should disable input controls for programming exercises with automatic assessment type or read-only', () => {
-        component.exercise = { type: ExerciseType.PROGRAMMING, assessmentType: AssessmentType.AUTOMATIC, dueDate: futureDueDate } as Exercise;
+        component.exercise = { type: ExerciseType.PROGRAMMING, assessmentType: AssessmentType.AUTOMATIC, dueDate: pastDueDate } as Exercise;
 
         let result = component.inputControlsDisabled();
         expect(result).toBeTruthy();
-
-        component.exercise.assessmentType = AssessmentType.MANUAL;
-        result = component.inputControlsDisabled();
-        expect(result).toBeFalsy();
 
         component.readOnly = true;
         result = component.inputControlsDisabled();
@@ -83,7 +79,7 @@ describe('ExerciseFeedbackSuggestionOptionsComponent', () => {
     });
 
     it('should return grey color for checkbox label style for automatic programming exercises', () => {
-        component.exercise = { type: ExerciseType.PROGRAMMING, assessmentType: AssessmentType.AUTOMATIC, dueDate: futureDueDate } as Exercise;
+        component.exercise = { type: ExerciseType.PROGRAMMING, assessmentType: AssessmentType.AUTOMATIC, dueDate: pastDueDate } as Exercise;
 
         const style = component.getCheckboxLabelStyle();
 
@@ -98,7 +94,7 @@ describe('ExerciseFeedbackSuggestionOptionsComponent', () => {
         expect(style).toEqual({});
     });
 
-    it('should toggle feedback suggestions and set the module for any exercise', () => {
+    it('should toggle preliminary feedback module and set the module for any exercise', () => {
         const modules = ['Module1', 'Module2'];
         component.availableAthenaModules = modules;
         component.exercise = { type: ExerciseType.PROGRAMMING } as Exercise;
@@ -106,15 +102,14 @@ describe('ExerciseFeedbackSuggestionOptionsComponent', () => {
         expect(component.showDropdownList).toBeFalse();
 
         const event = { target: { checked: true } };
-        component.toggleFeedbackSuggestions(event);
+        component.togglePreliminaryFeedback(event);
 
-        expect(component.exercise.feedbackSuggestionModule).toBe('Module1');
+        expect(component.exercise.preliminaryFeedbackModule).toBe('Module1');
         expect(component.showDropdownList).toBeTrue();
-        expect(component.exercise.allowManualFeedbackRequests).toBeFalse();
 
         event.target.checked = false;
-        component.toggleFeedbackSuggestions(event);
+        component.togglePreliminaryFeedback(event);
 
-        expect(component.exercise.feedbackSuggestionModule).toBeUndefined();
+        expect(component.exercise.preliminaryFeedbackModule).toBeUndefined();
     });
 });

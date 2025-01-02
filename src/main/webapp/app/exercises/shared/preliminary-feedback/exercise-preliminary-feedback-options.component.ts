@@ -9,12 +9,12 @@ import { ArtemisSharedCommonModule } from 'app/shared/shared-common.module';
 import { ArtemisSharedComponentModule } from 'app/shared/components/shared-component.module';
 
 @Component({
-    selector: 'jhi-exercise-feedback-suggestion-options',
+    selector: 'jhi-exercise-preliminary-feedback-options',
     standalone: true,
     imports: [ArtemisSharedCommonModule, ArtemisSharedComponentModule],
-    templateUrl: './exercise-feedback-suggestion-options.component.html',
+    templateUrl: './exercise-preliminary-feedback-options.component.html',
 })
-export class ExerciseFeedbackSuggestionOptionsComponent implements OnInit, OnChanges {
+export class ExercisePreliminaryFeedbackOptionsComponent implements OnInit, OnChanges {
     @Input() exercise: Exercise;
     @Input() dueDate?: dayjs.Dayjs;
     @Input() readOnly: boolean = false;
@@ -43,30 +43,26 @@ export class ExerciseFeedbackSuggestionOptionsComponent implements OnInit, OnCha
             this.modulesAvailable = modules.length > 0;
         });
         this.isAthenaEnabled$ = this.athenaService.isEnabled();
-        this.initialAthenaModule = this.exercise.feedbackSuggestionModule;
+        this.initialAthenaModule = this.exercise.preliminaryFeedbackModule;
     }
 
     ngOnChanges(changes: SimpleChanges) {
         if (changes.dueDate && !changes.dueDate.isFirstChange()) {
             if (this.inputControlsDisabled()) {
-                this.exercise.feedbackSuggestionModule = this.initialAthenaModule;
+                this.exercise.preliminaryFeedbackModule = this.initialAthenaModule;
             }
         }
     }
 
     /**
-     * Returns true in case the input controls should be disabled. This is the case for all exercises when the due date has passed. For programming exercises,
-     * it returns true in case the assessment type is automatic, the exercise is readonly, the due date is undefined or the due date has passed.
+     * Returns true in case the input controls should be disabled. This is the case for all exercises when the due date has passed.
      */
     inputControlsDisabled() {
-        if (this.exercise.type == ExerciseType.PROGRAMMING) {
-            return this.exercise.assessmentType == AssessmentType.AUTOMATIC || this.readOnly || this.exercise.dueDate == undefined || this.hasDueDatePassed();
-        }
-        return this.hasDueDatePassed();
+        return this.readOnly || this.hasDueDatePassed();
     }
 
     /**
-     * Returns the label style for the checkbox to enable feedback suggestions. In case the input controls are disabled, the label text color is set to grey.
+     * Returns the label style for the checkbox to enable preliminary feedback. In case the input controls are disabled, the label text color is set to grey.
      */
     getCheckboxLabelStyle() {
         if (this.inputControlsDisabled()) {
@@ -75,13 +71,12 @@ export class ExerciseFeedbackSuggestionOptionsComponent implements OnInit, OnCha
         return {};
     }
 
-    toggleFeedbackSuggestions(event: any) {
+    togglePreliminaryFeedback(event: any) {
         this.showDropdownList = event.target.checked;
         if (event.target.checked) {
-            this.exercise.feedbackSuggestionModule = this.availableAthenaModules.first();
-            this.exercise.allowManualFeedbackRequests = false;
+            this.exercise.preliminaryFeedbackModule = this.availableAthenaModules.first();
         } else {
-            this.exercise.feedbackSuggestionModule = undefined;
+            this.exercise.preliminaryFeedbackModule = undefined;
         }
     }
 

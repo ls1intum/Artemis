@@ -332,7 +332,7 @@ export class ExerciseAssessmentDashboardComponent implements OnInit {
 
                 // The assessment for team exercises is not started from the tutor exercise dashboard but from the team pages
                 const isAfterDueDate = !this.exercise.dueDate || this.exercise.dueDate.isBefore(dayjs());
-                if ((this.exercise.allowFeedbackRequests || isAfterDueDate) && !this.exercise.teamMode && !this.isTestRun) {
+                if ((this.exercise.allowManualFeedbackRequests || isAfterDueDate) && !this.exercise.teamMode && !this.isTestRun) {
                     this.getSubmissionWithoutAssessmentForAllCorrectionRounds();
                 }
 

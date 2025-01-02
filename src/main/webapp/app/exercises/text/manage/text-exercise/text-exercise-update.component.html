@@ -214,6 +214,10 @@
             <label class="form-control-label" jhiTranslate="artemisApp.exercise.assessmentInstructions" for="gradingInstructions"></label>
             <jhi-grading-instructions-details id="gradingInstructions" [exercise]="textExercise" />
         </div>
+        <h3 jhiTranslate="artemisApp.assessment.feedback" id="artemisApp.exercise.sections.feedback"></h3>
+        @if (!isExamMode) {
+            <jhi-exercise-preliminary-feedback-options [exercise]="textExercise" [dueDate]="textExercise.dueDate" />
+        }
     </div>
     <jhi-form-footer
         [isCreation]="!textExercise.id"
