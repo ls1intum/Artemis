@@ -5,9 +5,13 @@ import { Observable } from 'rxjs';
 import { AthenaService } from 'app/assessment/athena.service';
 import { ActivatedRoute } from '@angular/router';
 import dayjs from 'dayjs/esm';
+import { ArtemisSharedCommonModule } from 'app/shared/shared-common.module';
+import { ArtemisSharedComponentModule } from 'app/shared/components/shared-component.module';
 
 @Component({
     selector: 'jhi-exercise-feedback-suggestion-options',
+    standalone: true,
+    imports: [ArtemisSharedCommonModule, ArtemisSharedComponentModule],
     templateUrl: './exercise-feedback-suggestion-options.component.html',
 })
 export class ExerciseFeedbackSuggestionOptionsComponent implements OnInit, OnChanges {
