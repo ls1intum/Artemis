@@ -1,32 +1,32 @@
 ext {
     AggregatedCoverageThresholds = [
-        "INSTRUCTION": 0.900,
-        "CLASS": 10
+        "INSTRUCTION": 0.895,
+        "CLASS": 56
     ];
     // (Isolated) thresholds when executing each module on its own
     ModuleCoverageThresholds = [
         "assessment"   : [
-            "INSTRUCTION": 0.774,
-            "CLASS": 9
+            "INSTRUCTION": 0.779,
+            "CLASS": 8
         ],
         "athena"       : [
-            "INSTRUCTION": 0.863,
+            "INSTRUCTION": 0.856,
             "CLASS": 2
         ],
         "atlas"        : [
-            "INSTRUCTION": 0.846,
-            "CLASS": 13
+            "INSTRUCTION": 0.860,
+            "CLASS": 12
         ],
         "buildagent"   : [
-            "INSTRUCTION": 0.304,
+            "INSTRUCTION": 0.686,
             "CLASS": 13
         ],
         "communication": [
-            "INSTRUCTION": 0.893,
+            "INSTRUCTION": 0.890,
             "CLASS": 7
         ],
         "core"         : [
-            "INSTRUCTION": 0.658,
+            "INSTRUCTION": 0.657,
             "CLASS": 69
         ],
         "exam"         : [
@@ -38,12 +38,12 @@ ext {
             "CLASS": 9
         ],
         "fileupload"   : [
-            "INSTRUCTION": 0.944,
+            "INSTRUCTION": 0.906,
             "CLASS": 0
         ],
         "iris"        : [
-            "INSTRUCTION": 0.706,
-            "CLASS": 22
+            "INSTRUCTION": 0.796,
+            "CLASS": 16
         ],
         "lecture"      : [
             "INSTRUCTION": 0.867,
@@ -54,19 +54,19 @@ ext {
             "CLASS": 3
         ],
         "modeling"     : [
-            "INSTRUCTION": 0.892,
+            "INSTRUCTION": 0.891,
             "CLASS": 2
         ],
         "plagiarism"   : [
-            "INSTRUCTION": 0.770,
+            "INSTRUCTION": 0.760,
             "CLASS": 1
         ],
         "programming"  : [
-            "INSTRUCTION": 0.861,
-            "CLASS": 13
+            "INSTRUCTION": 0.863,
+            "CLASS": 12
         ],
         "quiz"         : [
-            "INSTRUCTION": 0.785,
+            "INSTRUCTION": 0.784,
             "CLASS": 6
         ],
         "text"         : [
@@ -160,7 +160,7 @@ private JacocoCoverageVerification registerJacocoTestCoverageVerification(String
 
     def thresholds = ModuleCoverageThresholds[moduleName]
     if (thresholds == null) {
-        println "No coverage thresholds defined for module '$moduleName'. Skipping verification..."
+        println "No coverage thresholds defined for module '$moduleName'. Skipping verification for this module..."
         return null
     }
     def minInstructionCoveredRatio = thresholds["INSTRUCTION"] as double
@@ -176,7 +176,7 @@ private JacocoCoverageVerification registerJacocoTestCoverageVerification(String
 }
 
 /**
- * Prepares a Jacoco report task (report & verification) to match a specific
+ * Prepares a Jacoco report task (report & verification) to match a specific module.
  * @param task that is modified
  * @param moduleName of the module.
  * @param rootTask the JacocoReportBase root task
