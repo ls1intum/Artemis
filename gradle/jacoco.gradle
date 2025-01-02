@@ -160,7 +160,7 @@ private JacocoCoverageVerification registerJacocoTestCoverageVerification(String
 
     def thresholds = ModuleCoverageThresholds[moduleName]
     if (thresholds == null) {
-        println "No coverage thresholds defined for module '$moduleName'. Skipping verification..."
+        println "No coverage thresholds defined for module '$moduleName'. Skipping verification for this module..."
         return null
     }
     def minInstructionCoveredRatio = thresholds["INSTRUCTION"] as double
