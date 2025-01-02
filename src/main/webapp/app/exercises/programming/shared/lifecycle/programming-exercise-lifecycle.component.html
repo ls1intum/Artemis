@@ -212,12 +212,12 @@
                     <input
                         type="checkbox"
                         class="form-check-input"
-                        name="allowFeedbackRequests"
+                        name="allowManualFeedbackRequests"
                         [checked]="exercise.allowManualFeedbackRequests"
-                        id="allowFeedbackRequests"
+                        id="allowManualFeedbackRequests"
                         (change)="toggleManualFeedbackRequests()"
                     />
-                    <label class="form-control-label" for="allowFeedbackRequests" jhiTranslate="artemisApp.programmingExercise.timeline.manualFeedbackRequests"></label>
+                    <label class="form-control-label" for="allowManualFeedbackRequests" jhiTranslate="artemisApp.programmingExercise.timeline.manualFeedbackRequests"></label>
                     <jhi-help-icon placement="right auto" [text]="'artemisApp.programmingExercise.timeline.manualFeedbackRequestsTooltip'" />
                 </div>
             }

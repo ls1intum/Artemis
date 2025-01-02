@@ -17,6 +17,7 @@ import { ActivatedRoute, UrlSegment } from '@angular/router';
 import { TranslatePipeMock } from '../../helpers/mocks/service/mock-translate.service';
 import { ExerciseFeedbackSuggestionOptionsComponent } from 'app/exercises/shared/feedback-suggestion/exercise-feedback-suggestion-options.component';
 import { ExercisePreliminaryFeedbackOptionsComponent } from 'app/exercises/shared/preliminary-feedback/exercise-preliminary-feedback-options.component';
+import { AthenaService } from 'app/assessment/athena.service';
 
 describe('ProgrammingExerciseLifecycleComponent', () => {
     let comp: ProgrammingExerciseLifecycleComponent;
@@ -27,6 +28,7 @@ describe('ProgrammingExerciseLifecycleComponent', () => {
     const afterDueDate = dayjs().add(7, 'days');
     const exampleSolutionPublicationDate = dayjs().add(9, 'days');
     let exercise: ProgrammingExercise;
+    let athenaService: AthenaService;
 
     beforeEach(() => {
         TestBed.configureTestingModule({
@@ -74,6 +76,8 @@ describe('ProgrammingExerciseLifecycleComponent', () => {
                     showTestNamesToStudents: true,
                     includeTestsIntoExampleSolution: true,
                 });
+
+                athenaService = TestBed.inject(AthenaService);
             });
     });
 
@@ -363,5 +367,66 @@ describe('ProgrammingExerciseLifecycleComponent', () => {
         tick();
         expect(comp.formValid).toBeTrue();
         expect(comp.formEmpty).toBeTrue();
+    }));
+
+    it('should render ExerciseFeedbackSuggestionOptionsComponent when feedback suggestions are set', () => {
+        comp.exercise = exercise;
+        fixture.componentRef.setInput('isEditFieldDisplayedRecord', {
+            feedbackSuggestions: true,
+        });
+        comp.isExamMode = false;
+
+        fixture.detectChanges();
+
+        const feedbackSuggestionElement = fixture.debugElement.nativeElement.querySelector('jhi-exercise-feedback-suggestion-options');
+        expect(feedbackSuggestionElement).toBeTruthy();
+    });
+
+    it('should not render ExerciseFeedbackSuggestionOptionsComponent in exam mode', () => {
+        comp.exercise = exercise;
+        fixture.componentRef.setInput('isEditFieldDisplayedRecord', {
+            feedbackSuggestions: true,
+        });
+        comp.isExamMode = true;
+
+        fixture.detectChanges();
+
+        const feedbackSuggestionElement = fixture.debugElement.nativeElement.querySelector('jhi-exercise-feedback-suggestion-options');
+        expect(feedbackSuggestionElement).toBeFalsy();
+    });
+
+    it('should render ExercisePreliminaryFeedbackOptionsComponent when preliminary feedback requests are set', fakeAsync(() => {
+        comp.exercise = exercise;
+        fixture.componentRef.setInput('isEditFieldDisplayedRecord', {
+            preliminaryFeedbackRequests: true,
+        });
+        comp.isExamMode = false;
+        jest.spyOn(athenaService, 'isEnabled').mockReturnValue(of(true));
+
+        tick();
+        fixture.detectChanges();
+
+        expect(comp.isAthenaEnabled$).toBeDefined();
+
+        const preliminaryFeedbackElement = fixture.debugElement.nativeElement.querySelector('jhi-exercise-preliminary-feedback-options');
+        expect(preliminaryFeedbackElement).toBeTruthy();
+    }));
+
+    it('should not render ExercisePreliminaryFeedbackOptionsComponent when Athena is disabled', fakeAsync(() => {
+        comp.exercise = exercise;
+        fixture.componentRef.setInput('isEditFieldDisplayedRecord', {
+            preliminaryFeedbackRequests: true,
+        });
+        comp.isExamMode = false;
+        jest.spyOn(athenaService, 'isEnabled').mockReturnValue(of(false));
+
+        tick();
+        fixture.detectChanges();
+
+        const preliminaryFeedbackElement = fixture.debugElement.nativeElement.querySelector('jhi-exercise-preliminary-feedback-options');
+        expect(preliminaryFeedbackElement).toBeFalsy();
+
+        const checkbox: HTMLInputElement = fixture.debugElement.nativeElement.querySelector('#allowManualFeedbackRequests');
+        expect(checkbox).toBeTruthy();
     }));
 });

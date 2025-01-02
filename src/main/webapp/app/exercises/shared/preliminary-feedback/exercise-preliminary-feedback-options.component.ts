@@ -39,13 +39,13 @@ export class ExercisePreliminaryFeedbackOptionsComponent implements OnInit, OnCh
             this.modulesAvailable = modules.length > 0;
         });
         this.isAthenaEnabled$ = this.athenaService.isEnabled();
-        this.initialAthenaModule = this.exercise.feedbackSuggestionModule;
+        this.initialAthenaModule = this.exercise.preliminaryFeedbackModule;
     }
 
     ngOnChanges(changes: SimpleChanges) {
         if (changes.dueDate && !changes.dueDate.isFirstChange()) {
             if (this.inputControlsDisabled()) {
-                this.exercise.feedbackSuggestionModule = this.initialAthenaModule;
+                this.exercise.preliminaryFeedbackModule = this.initialAthenaModule;
             }
         }
     }
@@ -54,11 +54,11 @@ export class ExercisePreliminaryFeedbackOptionsComponent implements OnInit, OnCh
      * Returns true in case the input controls should be disabled. This is the case for all exercises when the due date has passed.
      */
     inputControlsDisabled() {
-        return this.hasDueDatePassed();
+        return this.readOnly || this.hasDueDatePassed();
     }
 
     /**
-     * Returns the label style for the checkbox to enable feedback suggestions. In case the input controls are disabled, the label text color is set to grey.
+     * Returns the label style for the checkbox to enable preliminary feedback. In case the input controls are disabled, the label text color is set to grey.
      */
     getCheckboxLabelStyle() {
         if (this.inputControlsDisabled()) {
@@ -72,7 +72,7 @@ export class ExercisePreliminaryFeedbackOptionsComponent implements OnInit, OnCh
         if (event.target.checked) {
             this.exercise.preliminaryFeedbackModule = this.availableAthenaModules.first();
         } else {
-            this.exercise.preliminaryFeedbackModule = '';
+            this.exercise.preliminaryFeedbackModule = undefined;
         }
     }
 
