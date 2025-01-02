@@ -16,6 +16,7 @@ public class Lti13ClientRegistrationFactory {
      *
      * @param serverUrl            The server URL for LTI configuration.
      * @param clientRegistrationId The client registration ID for LTI configuration.
+     * @return A new Lti13ClientRegistration object with certain default values for Artemis
      */
     public static Lti13ClientRegistration createRegistration(String serverUrl, String clientRegistrationId) {
         var grantTypes = Arrays.asList(AuthorizationGrantType.CLIENT_CREDENTIALS.getValue(), LTIAuthorizationGrantType.IMPLICIT.getValue());
