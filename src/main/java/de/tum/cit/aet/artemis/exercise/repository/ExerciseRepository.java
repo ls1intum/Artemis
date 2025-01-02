@@ -641,7 +641,7 @@ public interface ExerciseRepository extends ArtemisJpaRepository<Exercise, Long>
             FROM Course c
                 JOIN c.exercises e
             WHERE c.id = :courseId
-            AND TYPE(e) IN (ModelingExercise, TextExercise, ProgrammingExercise, QuizExercise, FileUploadExercise)
+                AND TYPE(e) IN (ModelingExercise, TextExercise, ProgrammingExercise, QuizExercise, FileUploadExercise)
             GROUP BY TYPE(e)
             """)
     List<ExerciseTypeCount> countByCourseIdGroupedByType(@Param("courseId") long courseId);
