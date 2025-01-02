@@ -8,7 +8,6 @@ import { TranslateService } from '@ngx-translate/core';
 import { Lecture } from 'app/entities/lecture.model';
 import { LectureUpdateComponent } from 'app/lecture/lecture-update.component';
 import { LectureService } from 'app/lecture/lecture.service';
-import { LectureUpdateWizardComponent } from 'app/lecture/wizard-mode/lecture-update-wizard.component';
 import { FormDateTimePickerComponent } from 'app/shared/date-time-picker/date-time-picker.component';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
@@ -23,16 +22,19 @@ import { ArtemisTestModule } from '../../test.module';
 import { DocumentationButtonComponent } from 'app/shared/components/documentation-button/documentation-button.component';
 import { LectureTitleChannelNameComponent } from 'app/lecture/lecture-title-channel-name.component';
 import { MarkdownEditorMonacoComponent } from 'app/shared/markdown-editor/monaco/markdown-editor-monaco.component';
-import { CustomNotIncludedInValidatorDirective } from '../../../../../main/webapp/app/shared/validators/custom-not-included-in-validator.directive';
+import { CustomNotIncludedInValidatorDirective } from 'app/shared/validators/custom-not-included-in-validator.directive';
 import { OwlDateTimeModule } from '@danielmoncada/angular-datetime-picker';
-import { TitleChannelNameComponent } from '../../../../../main/webapp/app/shared/form/title-channel-name/title-channel-name.component';
-import { LectureUpdatePeriodComponent } from '../../../../../main/webapp/app/lecture/lecture-period/lecture-period.component';
-import { LectureUnitManagementComponent } from '../../../../../main/webapp/app/lecture/lecture-unit/lecture-unit-management/lecture-unit-management.component';
+import { TitleChannelNameComponent } from 'app/shared/form/title-channel-name/title-channel-name.component';
+import { LectureUpdatePeriodComponent } from 'app/lecture/lecture-period/lecture-period.component';
+import { LectureUnitManagementComponent } from 'app/lecture/lecture-unit/lecture-unit-management/lecture-unit-management.component';
+import { FormStatusBarComponent } from 'app/forms/form-status-bar/form-status-bar.component';
+import { ArtemisSharedModule } from 'app/shared/shared.module';
+import { LectureAttachmentsComponent } from 'app/lecture/lecture-attachments.component';
+import { LectureUpdateUnitsComponent } from 'app/lecture/lecture-units/lecture-units.component';
+import { UnitCreationCardComponent } from 'app/lecture/lecture-unit/lecture-unit-management/unit-creation-card/unit-creation-card.component';
+import { signal } from '@angular/core';
 
 describe('LectureUpdateComponent', () => {
-    let lectureUpdateWizardComponentFixture: ComponentFixture<LectureUpdateWizardComponent>;
-    let lectureUpdateWizardComponent: LectureUpdateWizardComponent;
-
     let lectureService: LectureService;
     let lectureUpdateComponentFixture: ComponentFixture<LectureUpdateComponent>;
     let lectureUpdateComponent: LectureUpdateComponent;
@@ -50,21 +52,24 @@ describe('LectureUpdateComponent', () => {
         pastLecture.endDate = yesterday;
 
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule, FormsModule, MockModule(NgbTooltipModule), MockModule(OwlDateTimeModule)],
+            imports: [ArtemisTestModule, MockModule(ArtemisSharedModule), FormsModule, MockModule(NgbTooltipModule), MockModule(OwlDateTimeModule)],
             declarations: [
                 LectureUpdateComponent,
                 LectureTitleChannelNameComponent,
                 TitleChannelNameComponent,
                 FormDateTimePickerComponent,
+                LectureAttachmentsComponent,
+                LectureUpdateUnitsComponent,
                 LectureUpdatePeriodComponent,
-                MockComponent(LectureUpdateWizardComponent),
                 MockComponent(LectureUnitManagementComponent),
+                MockComponent(FormStatusBarComponent),
                 MockComponent(MarkdownEditorMonacoComponent),
                 MockComponent(DocumentationButtonComponent),
                 MockPipe(ArtemisTranslatePipe),
                 MockPipe(ArtemisDatePipe),
                 MockPipe(HtmlForMarkdownPipe),
                 MockRouterLinkDirective,
+                MockComponent(UnitCreationCardComponent),
                 MockDirective(CustomNotIncludedInValidatorDirective),
             ],
             providers: [
@@ -93,9 +98,6 @@ describe('LectureUpdateComponent', () => {
                 lectureUpdateComponentFixture = TestBed.createComponent(LectureUpdateComponent);
                 lectureUpdateComponent = lectureUpdateComponentFixture.componentInstance;
 
-                lectureUpdateWizardComponentFixture = TestBed.createComponent(LectureUpdateWizardComponent);
-                lectureUpdateWizardComponent = lectureUpdateWizardComponentFixture.componentInstance;
-
                 lectureService = TestBed.inject(LectureService);
                 router = TestBed.get(Router);
                 activatedRoute = TestBed.inject(ActivatedRoute);
@@ -108,7 +110,6 @@ describe('LectureUpdateComponent', () => {
 
     it('should create lecture', () => {
         lectureUpdateComponent.lecture.set({ title: 'test1', channelName: 'test1' } as Lecture);
-        const navigateSpy = jest.spyOn(router, 'navigate');
 
         const createSpy = jest.spyOn(lectureService, 'create').mockReturnValue(
             of(
@@ -127,58 +128,13 @@ describe('LectureUpdateComponent', () => {
         lectureUpdateComponent.save();
         lectureUpdateComponentFixture.detectChanges();
 
-        const expectedPath = ['course-management', 1, 'lectures', 3];
-        expect(navigateSpy).toHaveBeenCalledWith(expectedPath);
-
         expect(createSpy).toHaveBeenCalledOnce();
         expect(createSpy).toHaveBeenCalledWith({ title: 'test1', channelName: 'test1' });
     });
 
-    it('should create lecture in wizard mode', () => {
-        lectureUpdateComponent.lecture.set({ title: '', channelName: '' } as Lecture);
-        lectureUpdateComponent.isShowingWizardMode = true;
-        lectureUpdateComponent.wizardComponent = lectureUpdateWizardComponent;
-
-        const createSpy = jest.spyOn(lectureService, 'create').mockReturnValue(
-            of<HttpResponse<Lecture>>(
-                new HttpResponse({
-                    body: {
-                        title: 'test1',
-                        course: {
-                            id: 1,
-                        },
-                    } as Lecture,
-                }),
-            ),
-        );
-
-        const findSpy = jest.spyOn(lectureService, 'findWithDetails').mockReturnValue(
-            of<HttpResponse<Lecture>>(
-                new HttpResponse({
-                    body: {
-                        id: 3,
-                        title: 'test1',
-                        course: {
-                            id: 1,
-                        },
-                    } as Lecture,
-                }),
-            ),
-        );
-
-        const onLectureCreationSucceededSpy = jest.spyOn(lectureUpdateWizardComponent, 'onLectureCreationSucceeded');
-
-        lectureUpdateComponent.save();
-
-        expect(createSpy).toHaveBeenCalledOnce();
-        expect(createSpy).toHaveBeenCalledWith({ title: '', channelName: '' });
-
-        expect(findSpy).toHaveBeenCalledOnce();
-        expect(onLectureCreationSucceededSpy).toHaveBeenCalledOnce();
-    });
-
     it('should edit a lecture', fakeAsync(() => {
         activatedRoute.parent!.data = of({ course: { id: 1 }, lecture: { id: 6 } });
+        const navigateSpy = jest.spyOn(router, 'navigate');
 
         lectureUpdateComponentFixture.detectChanges();
         lectureUpdateComponent.lecture.set({ id: 6, title: 'test1Updated', channelName: 'test1Updated' } as Lecture);
@@ -201,30 +157,11 @@ describe('LectureUpdateComponent', () => {
         tick();
         lectureUpdateComponentFixture.detectChanges();
 
+        const expectedPath = ['course-management', 1, 'lectures', 6];
+        expect(navigateSpy).toHaveBeenCalledWith(expectedPath);
+
         expect(updateSpy).toHaveBeenCalledOnce();
         expect(updateSpy).toHaveBeenCalledWith({ id: 6, title: 'test1Updated', channelName: 'test1Updated' });
-    }));
-
-    it('should switch to wizard mode', fakeAsync(() => {
-        lectureUpdateComponent.isShowingWizardMode = false;
-        const wizardModeButton = jest.spyOn(lectureUpdateComponent, 'toggleWizardMode');
-        lectureUpdateComponent.toggleWizardMode();
-        tick();
-        expect(wizardModeButton).toHaveBeenCalledOnce();
-        expect(lectureUpdateComponent.isShowingWizardMode).toBeTrue();
-    }));
-
-    it('should be in wizard mode', fakeAsync(() => {
-        activatedRoute = TestBed.inject(ActivatedRoute);
-        activatedRoute.queryParams = of({
-            shouldBeInWizardMode: true,
-        });
-
-        lectureUpdateComponent.ngOnInit();
-        lectureUpdateComponentFixture.detectChanges();
-        tick();
-
-        expect(lectureUpdateComponent.isShowingWizardMode).toBeTrue();
     }));
 
     it('should select process units checkbox', fakeAsync(() => {
@@ -414,6 +351,81 @@ describe('LectureUpdateComponent', () => {
                 endDate: dayjs('undefined'),
             } as Lecture);
             expect(lectureUpdateComponent.isChangeMadeToPeriodSection()).toBeFalse();
+        });
+    });
+
+    describe('updateFormStatusBar', () => {
+        it('should update form status bar correctly in edit mode', () => {
+            lectureUpdateComponent.isEditMode.set(true);
+            lectureUpdateComponent.titleSection = signal({
+                titleChannelNameComponent: () => ({
+                    isFormValidSignal: () => true,
+                }),
+            } as any);
+            lectureUpdateComponent.lecturePeriodSection = signal({
+                isPeriodSectionValid: () => true,
+            } as any);
+            lectureUpdateComponent.attachmentsSection = signal({
+                isFormValid: () => true,
+            } as any);
+            lectureUpdateComponent.unitSection = signal({
+                isUnitConfigurationValid: () => true,
+            } as any);
+
+            lectureUpdateComponent.updateFormStatusBar();
+
+            expect(lectureUpdateComponent.formStatusSections).toEqual([
+                { title: 'artemisApp.lecture.sections.title', valid: true },
+                { title: 'artemisApp.lecture.sections.period', valid: true },
+                { title: 'artemisApp.lecture.sections.attachments', valid: true },
+                { title: 'artemisApp.lecture.sections.units', valid: true },
+            ]);
+        });
+
+        it('should update form status bar correctly in create mode', () => {
+            lectureUpdateComponent.isEditMode.set(false);
+            lectureUpdateComponent.titleSection = signal({
+                titleChannelNameComponent: () => ({
+                    isFormValidSignal: () => false,
+                }),
+            } as any);
+            lectureUpdateComponent.lecturePeriodSection = signal({
+                isPeriodSectionValid: () => true,
+            } as any);
+
+            lectureUpdateComponent.updateFormStatusBar();
+
+            expect(lectureUpdateComponent.formStatusSections).toEqual([
+                { title: 'artemisApp.lecture.sections.title', valid: false },
+                { title: 'artemisApp.lecture.sections.period', valid: true },
+            ]);
+        });
+
+        it('should handle invalid sections correctly', () => {
+            lectureUpdateComponent.isEditMode.set(true);
+            lectureUpdateComponent.titleSection = signal({
+                titleChannelNameComponent: () => ({
+                    isFormValidSignal: () => false,
+                }),
+            } as any);
+            lectureUpdateComponent.lecturePeriodSection = signal({
+                isPeriodSectionValid: () => false,
+            } as any);
+            lectureUpdateComponent.attachmentsSection = signal({
+                isFormValid: () => false,
+            } as any);
+            lectureUpdateComponent.unitSection = signal({
+                isUnitConfigurationValid: () => false,
+            } as any);
+
+            lectureUpdateComponent.updateFormStatusBar();
+
+            expect(lectureUpdateComponent.formStatusSections).toEqual([
+                { title: 'artemisApp.lecture.sections.title', valid: false },
+                { title: 'artemisApp.lecture.sections.period', valid: false },
+                { title: 'artemisApp.lecture.sections.attachments', valid: false },
+                { title: 'artemisApp.lecture.sections.units', valid: false },
+            ]);
         });
     });
 });

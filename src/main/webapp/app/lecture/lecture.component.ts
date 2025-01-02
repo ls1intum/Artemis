@@ -124,6 +124,12 @@ export class LectureComponent implements OnInit, OnDestroy {
         );
     }
 
+    private deleteLectureFromDisplayedLectures(lectureId: number) {
+        this.dialogErrorSource.next('');
+        this.lectures = this.lectures.filter((lecture) => lecture.id !== lectureId);
+        this.applyFilters();
+    }
+
     /**
      * Deletes Lecture
      * @param lectureId the id of the lecture
@@ -131,9 +137,7 @@ export class LectureComponent implements OnInit, OnDestroy {
     deleteLecture(lectureId: number) {
         this.lectureService.delete(lectureId).subscribe({
             next: () => {
-                this.dialogErrorSource.next('');
-                this.lectures = this.lectures.filter((lecture) => lecture.id !== lectureId);
-                this.applyFilters();
+                this.deleteLectureFromDisplayedLectures(lectureId);
             },
             error: (error: HttpErrorResponse) => this.dialogErrorSource.next(error.message),
         });

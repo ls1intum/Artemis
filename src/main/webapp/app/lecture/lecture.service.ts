@@ -112,6 +112,7 @@ export class LectureService {
                 tap((res: EntityArrayResponseType) => res?.body?.forEach(this.sendTitlesToEntityTitleService.bind(this))),
             );
     }
+
     /**
      * triggers the ingestion of All the lectures inside the course specified or one lecture inside of the course
      *
@@ -128,6 +129,7 @@ export class LectureService {
             observe: 'response',
         });
     }
+
     /**
      * Fetch the ingestion state of all the lectures inside the course specified
      * @param courseId
