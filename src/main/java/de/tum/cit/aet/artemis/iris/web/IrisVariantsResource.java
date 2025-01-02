@@ -1,5 +1,7 @@
 package de.tum.cit.aet.artemis.iris.web;
 
+import static de.tum.cit.aet.artemis.iris.domain.settings.IrisSubSettingsType.FAQ_INGESTION;
+
 import java.util.List;
 
 import org.slf4j.Logger;
@@ -44,6 +46,9 @@ public class IrisVariantsResource {
     @EnforceAtLeastEditor
     public ResponseEntity<List<PyrisVariantDTO>> getAllVariants(@PathVariable("feature") String featureRaw) {
         var feature = IrisSubSettingsType.valueOf(featureRaw.toUpperCase().replace("-", "_"));
+        if (feature == FAQ_INGESTION) {
+            System.out.println("FAQ_INGESTION is not supported yet");
+        }
         try {
             var variants = pyrisConnectorService.getOfferedVariants(feature);
             return ResponseEntity.ok(variants);

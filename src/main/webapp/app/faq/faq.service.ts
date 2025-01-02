@@ -1,5 +1,5 @@
 import { Injectable, inject } from '@angular/core';
-import { HttpClient, HttpResponse } from '@angular/common/http';
+import { HttpClient, HttpParams, HttpResponse } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { map } from 'rxjs/operators';
 import { Faq, FaqState } from 'app/entities/faq.model';
@@ -156,6 +156,20 @@ export class FaqService {
 
     findAllCategoriesByCourseIdAndCategory(courseId: number, faqState: FaqState) {
         return this.http.get<string[]>(`${this.resourceUrl}/${courseId}/faq-categories/${faqState}`, {
+            observe: 'response',
+        });
+    }
+
+    /**
+     * Trigger the Ingestion of all Lectures in the course.
+     */
+    ingestFaqsInPyris(courseId: number, lectureId?: number): Observable<HttpResponse<void>> {
+        let params = new HttpParams();
+        if (lectureId !== undefined) {
+            params = params.set('lectureId', lectureId.toString());
+        }
+        return this.http.post<void>(`api/courses/${courseId}/faqs/ingest`, null, {
+            params: params,
             observe: 'response',
         });
     }
