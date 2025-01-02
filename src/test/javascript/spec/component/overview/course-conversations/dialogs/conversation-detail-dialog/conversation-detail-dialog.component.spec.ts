@@ -12,6 +12,7 @@ import { MockComponent, MockPipe, MockProvider } from 'ng-mocks';
 import { ChannelIconComponent } from 'app/overview/course-conversations/other/channel-icon/channel-icon.component';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import { ConversationService } from 'app/shared/metis/conversations/conversation.service';
+import { ChannelDTO } from '../../../../../../../../main/webapp/app/entities/metis/conversation/channel.model';
 import { generateExampleChannelDTO, generateExampleGroupChatDTO, generateOneToOneChatDTO } from '../../helpers/conversationExampleModels';
 import { initializeDialog } from '../dialog-test-helpers';
 import { isOneToOneChatDTO } from 'app/entities/metis/conversation/one-to-one-chat.model';
@@ -25,7 +26,7 @@ class ConversationMembersStubComponent {
     @Input()
     course: Course;
     @Input()
-    public activeConversation: ConversationDTO;
+    public activeConversationInput: ConversationDTO;
     @Output() changesPerformed = new EventEmitter<void>();
 }
 
@@ -65,7 +66,7 @@ class ConversationInfoStubComponent {
     changesPerformed = new EventEmitter<void>();
 }
 
-const examples: ConversationDTO[] = [generateOneToOneChatDTO({}), generateExampleGroupChatDTO({}), generateExampleChannelDTO({})];
+const examples: ConversationDTO[] = [generateOneToOneChatDTO({}), generateExampleGroupChatDTO({}), generateExampleChannelDTO({} as ChannelDTO)];
 
 examples.forEach((activeConversation) => {
     describe('ConversationDetailDialogComponent with ' + activeConversation.type, () => {
