@@ -158,6 +158,7 @@ public class FileUploadExerciseResource {
 
         FileUploadExercise result = exerciseService.saveWithCompetencyLinks(fileUploadExercise, fileUploadExerciseRepository::save);
 
+        log.info("aabc");
         channelService.createExerciseChannel(result, Optional.ofNullable(fileUploadExercise.getChannelName()));
         groupNotificationScheduleService.checkNotificationsForNewExerciseAsync(fileUploadExercise);
         competencyProgressApi.updateProgressByLearningObjectAsync(result);
