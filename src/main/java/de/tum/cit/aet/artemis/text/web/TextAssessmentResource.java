@@ -180,6 +180,8 @@ public class TextAssessmentResource extends AssessmentResource {
             TextExercise textExercise = textExerciseRepository.findByIdElseThrow(exerciseId);
             authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.EDITOR, textExercise, null);
         }
+        final int g = 5;
+        log.info(g + "$");
         final Result result = super.saveExampleAssessment(exampleSubmissionId, textAssessment.getFeedbacks());
         final Submission submission = result.getSubmission();
         final TextSubmission textSubmission = textSubmissionService.findOneWithEagerResultFeedbackAndTextBlocks(submission.getId());

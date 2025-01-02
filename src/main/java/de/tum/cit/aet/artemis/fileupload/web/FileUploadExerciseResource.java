@@ -161,7 +161,8 @@ public class FileUploadExerciseResource {
         channelService.createExerciseChannel(result, Optional.ofNullable(fileUploadExercise.getChannelName()));
         groupNotificationScheduleService.checkNotificationsForNewExerciseAsync(fileUploadExercise);
         competencyProgressApi.updateProgressByLearningObjectAsync(result);
-
+        final int g = 5;
+        log.info(g + "$");
         return ResponseEntity.created(new URI("/api/file-upload-exercises/" + result.getId())).body(result);
     }
 
