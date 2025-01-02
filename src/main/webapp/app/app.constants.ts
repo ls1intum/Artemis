@@ -35,4 +35,6 @@ export const PROFILE_LTI = 'lti';
 
 export const PROFILE_ATHENA = 'athena';
 
+export const PROFILE_TEXT = 'text';
+
 export const PROFILE_THEIA = 'theia';

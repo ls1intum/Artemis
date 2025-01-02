@@ -1,11 +1,12 @@
-import { Component, ContentChild, OnInit, TemplateRef } from '@angular/core';
+import { Component, ContentChild, OnInit, TemplateRef, inject } from '@angular/core';
 import { Course } from 'app/entities/course.model';
-import { CourseManagementService } from './course-management.service';
 import { ActivatedRoute, Router } from '@angular/router';
 import { ExerciseFilter } from 'app/entities/exercise-filter.model';
 import { DocumentationType } from 'app/shared/components/documentation-button/documentation-button.component';
 import { faHandshakeAngle } from '@fortawesome/free-solid-svg-icons';
 import { ExerciseType } from 'app/entities/exercise.model';
+import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
+import { PROFILE_TEXT } from 'app/app.constants';
 
 @Component({
     selector: 'jhi-course-management-exercises',
@@ -14,6 +15,12 @@ import { ExerciseType } from 'app/entities/exercise.model';
 export class CourseManagementExercisesComponent implements OnInit {
     readonly ExerciseType = ExerciseType;
     readonly documentationType: DocumentationType = 'Exercise';
+
+    private router = inject(Router);
+    private route = inject(ActivatedRoute);
+    private profileService = inject(ProfileService);
+
+    textExercisesEnabled = false;
 
     course: Course;
     showSearch = false;
@@ -39,12 +46,6 @@ export class CourseManagementExercisesComponent implements OnInit {
     @ContentChild('overrideProgrammingExerciseCard') overrideProgrammingExerciseCard: TemplateRef<any>;
     @ContentChild('overrideNonProgrammingExerciseCard') overrideNonProgrammingExerciseCard: TemplateRef<any>;
 
-    constructor(
-        private courseService: CourseManagementService,
-        private router: Router,
-        private route: ActivatedRoute,
-    ) {}
-
     /**
      * initializes course
      */
@@ -60,6 +61,8 @@ export class CourseManagementExercisesComponent implements OnInit {
             this.lectureIdForGoingBack = params.lectureId;
             this.lectureWizardStepForGoingBack = params.step;
         });
+
+        this.profileService.getProfileInfo().subscribe((result) => (this.textExercisesEnabled = result.activeProfiles.includes(PROFILE_TEXT)));
 
         this.exerciseFilter = new ExerciseFilter('');
     }
