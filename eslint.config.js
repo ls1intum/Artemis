@@ -5,6 +5,7 @@ const jestPlugin = require('eslint-plugin-jest');
 const jestExtendedPlugin = require('eslint-plugin-jest-extended');
 const typescriptParser = require('@typescript-eslint/parser');
 const angularTemplateParser = require('@angular-eslint/template-parser');
+const customRulesPlugin = require('./rules/custom-rules');
 
 module.exports = [
     {
@@ -43,11 +44,13 @@ module.exports = [
             '@typescript-eslint': tsPlugin,
             '@angular-eslint': angularPlugin,
             prettier: prettierPlugin,
+            'custom-rules': customRulesPlugin,
         },
         rules: {
             ...prettierPlugin.configs.recommended.rules,
             ...tsPlugin.configs.recommended.rules,
             ...angularPlugin.configs.recommended.rules,
+            'custom-rules/enforce-no-http-client-testing-module': 'error',
             '@angular-eslint/directive-selector': [
                 'warn',
                 {

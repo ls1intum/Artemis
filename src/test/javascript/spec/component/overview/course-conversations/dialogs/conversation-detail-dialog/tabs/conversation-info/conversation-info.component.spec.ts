@@ -20,7 +20,7 @@ import { GenericUpdateTextPropertyDialogComponent } from 'app/overview/course-co
 import { defaultSecondLayerDialogOptions } from 'app/overview/course-conversations/other/conversation.util';
 import { input } from '@angular/core';
 
-const examples: ConversationDTO[] = [generateOneToOneChatDTO({}), generateExampleGroupChatDTO({}), generateExampleChannelDTO({})];
+const examples: ConversationDTO[] = [generateOneToOneChatDTO({}), generateExampleGroupChatDTO({}), generateExampleChannelDTO({} as ChannelDTO)];
 
 examples.forEach((activeConversation) => {
     describe('ConversationInfoComponent with ' + activeConversation.type, () => {
@@ -36,7 +36,7 @@ examples.forEach((activeConversation) => {
             name: 'updated',
             description: 'updated',
             topic: 'updated',
-        });
+        } as ChannelDTO);
 
         beforeEach(waitForAsync(() => {
             TestBed.configureTestingModule({
