@@ -110,7 +110,7 @@ public class AthenaFeedbackSuggestionsService {
         }
 
         final RequestDTO request = new RequestDTO(athenaDTOConverterService.ofExercise(exercise), athenaDTOConverterService.ofSubmission(exercise.getId(), submission),
-                isPreliminary);
+                !isPreliminary);
         ResponseDTOText response = textAthenaConnector.invokeWithRetry(
                 athenaModuleService.getAthenaModuleUrl(exercise.getExerciseType(), isPreliminary ? exercise.getPreliminaryFeedbackModule() : exercise.getFeedbackSuggestionModule())
                         + "/feedback_suggestions",
@@ -132,7 +132,7 @@ public class AthenaFeedbackSuggestionsService {
             throws NetworkingException {
         log.debug("Start Athena {} Feedback Suggestions Service for Exercise '{}' (#{}).", isPreliminary ? "Graded" : "Non Graded", exercise.getTitle(), exercise.getId());
         final RequestDTO request = new RequestDTO(athenaDTOConverterService.ofExercise(exercise), athenaDTOConverterService.ofSubmission(exercise.getId(), submission),
-                isPreliminary);
+                !isPreliminary);
         ResponseDTOProgramming response = programmingAthenaConnector.invokeWithRetry(
                 athenaModuleService.getAthenaModuleUrl(exercise.getExerciseType(), isPreliminary ? exercise.getPreliminaryFeedbackModule() : exercise.getFeedbackSuggestionModule())
                         + "/feedback_suggestions",
@@ -159,7 +159,7 @@ public class AthenaFeedbackSuggestionsService {
         }
 
         final RequestDTO request = new RequestDTO(athenaDTOConverterService.ofExercise(exercise), athenaDTOConverterService.ofSubmission(exercise.getId(), submission),
-                isPreliminary);
+                !isPreliminary);
         ResponseDTOModeling response = modelingAthenaConnector.invokeWithRetry(
                 athenaModuleService.getAthenaModuleUrl(exercise.getExerciseType(), isPreliminary ? exercise.getPreliminaryFeedbackModule() : exercise.getFeedbackSuggestionModule())
                         + "/feedback_suggestions",
