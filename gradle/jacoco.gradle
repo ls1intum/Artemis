@@ -176,7 +176,7 @@ private JacocoCoverageVerification registerJacocoTestCoverageVerification(String
 }
 
 /**
- * Prepares a Jacoco report task (report & verification) to match a specific
+ * Prepares a Jacoco report task (report & verification) to match a specific module.
  * @param task that is modified
  * @param moduleName of the module.
  * @param rootTask the JacocoReportBase root task
