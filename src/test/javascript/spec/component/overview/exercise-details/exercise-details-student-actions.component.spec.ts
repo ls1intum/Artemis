@@ -33,6 +33,7 @@ import { MockCourseExerciseService } from '../../../helpers/mocks/service/mock-c
 import { MockSyncStorage } from '../../../helpers/mocks/service/mock-sync-storage.service';
 import { ArtemisTestModule } from '../../../test.module';
 import { PROFILE_THEIA } from 'app/app.constants';
+import { RequestFeedbackButtonComponent } from 'app/overview/exercise-details/request-feedback-button/request-feedback-button.component';
 
 describe('ExerciseDetailsStudentActionsComponent', () => {
     let comp: ExerciseDetailsStudentActionsComponent;
@@ -75,7 +76,7 @@ describe('ExerciseDetailsStudentActionsComponent', () => {
 
     beforeEach(() => {
         return TestBed.configureTestingModule({
-            imports: [ArtemisTestModule, MockModule(NgbTooltipModule)],
+            imports: [ArtemisTestModule, MockModule(NgbTooltipModule), RequestFeedbackButtonComponent],
             declarations: [
                 ExerciseDetailsStudentActionsComponent,
                 MockComponent(ExerciseActionButtonComponent),

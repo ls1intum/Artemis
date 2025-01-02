@@ -50,7 +50,7 @@ export class RequestFeedbackButtonComponent implements OnInit {
         this.profileService.getProfileInfo().subscribe((profileInfo) => {
             this.athenaEnabled = profileInfo.activeProfiles?.includes(PROFILE_ATHENA);
             if (this.athenaEnabled) {
-                this.requestFeedbackEnabled = !!this.exercise().feedbackSuggestionModule;
+                this.requestFeedbackEnabled = !!this.exercise().preliminaryFeedbackModule;
             } else {
                 this.requestFeedbackEnabled = this.exercise().allowManualFeedbackRequests ?? false;
             }
