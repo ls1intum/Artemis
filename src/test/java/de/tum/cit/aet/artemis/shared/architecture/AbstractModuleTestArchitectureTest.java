@@ -8,9 +8,9 @@ import org.springframework.beans.factory.annotation.Autowired;
 
 public abstract class AbstractModuleTestArchitectureTest<T> extends AbstractArchitectureTest {
 
-    abstract protected String getModulePackageName();
+    protected abstract String getModulePackageName();
 
-    abstract protected Class<T> getAbstractModuleIntegrationTestClass();
+    protected abstract Class<T> getAbstractModuleIntegrationTestClass();
 
     @Test
     void integrationTestsShouldExtendAbstractModuleIntegrationTest() {

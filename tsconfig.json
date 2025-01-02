@@ -43,5 +43,5 @@
         }
     },
     "include": ["src/main/webapp/app"],
-    "exclude": ["node_modules"]
+    "exclude": ["node_modules", "src/main/resources"]
 }
