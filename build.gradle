@@ -119,15 +119,6 @@ test {
     maxHeapSize = "8g" // maximum heap size
 }
 
-tasks.register("testReport", TestReport) {
-    destinationDirectory = layout.buildDirectory.file("reports/tests").get().asFile
-    testResults.from(test)
-}
-
-jar {
-    enabled = false
-}
-
 // Dynamic generation of jacoco test report generation-/coverage verification-tasks (per-module)
 apply from: "gradle/jacoco.gradle"
 
