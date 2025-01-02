@@ -172,18 +172,3 @@ export class MockTeamService implements ITeamService {
         return of({ body: entity }) as Observable<HttpResponse<T>>;
     }
 }
-
-@Injectable()
-export class TeamRequestInterceptorMock implements HttpInterceptor {
-    constructor() {}
-
-    intercept(request: HttpRequest<any>, next: HttpHandler): Observable<HttpEvent<any>> {
-        if (request.url && request.url.indexOf(`${TeamService.resourceUrl(mockExercise.id!)}/${mockTeamFromServer.id}`) > -1) {
-            return of(new HttpResponse({ status: 200, body: mockTeamFromServer }));
-        }
-        if (request.url === `api/exercises/${mockExercise.id}`) {
-            return of(new HttpResponse({ status: 200, body: mockExercise }));
-        }
-        return next.handle(request);
-    }
-}

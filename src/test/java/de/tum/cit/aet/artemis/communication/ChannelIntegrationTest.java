@@ -2,6 +2,7 @@ package de.tum.cit.aet.artemis.communication;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Fail.fail;
+import static org.awaitility.Awaitility.await;
 
 import java.time.ZonedDateTime;
 import java.util.Arrays;
@@ -931,7 +932,7 @@ class ChannelIntegrationTest extends AbstractConversationTest {
         channelDTO.setIsPublic(true);
         channelDTO.setIsAnnouncementChannel(false);
 
-        FeedbackChannelRequestDTO feedbackChannelRequest = new FeedbackChannelRequestDTO(channelDTO, "Sample feedback text");
+        FeedbackChannelRequestDTO feedbackChannelRequest = new FeedbackChannelRequestDTO(channelDTO, List.of("Sample feedback text"), "Sample testName");
 
         String BASE_ENDPOINT = "api/courses/{courseId}/{exerciseId}/feedback-channel";
 
@@ -955,7 +956,7 @@ class ChannelIntegrationTest extends AbstractConversationTest {
         channelDTO.setIsPublic(true);
         channelDTO.setIsAnnouncementChannel(false);
 
-        FeedbackChannelRequestDTO feedbackChannelRequest = new FeedbackChannelRequestDTO(channelDTO, "Sample feedback text");
+        FeedbackChannelRequestDTO feedbackChannelRequest = new FeedbackChannelRequestDTO(channelDTO, List.of("Sample feedback text"), "Sample testName");
 
         String BASE_ENDPOINT = "/api/courses/{courseId}/{exerciseId}/feedback-channel";
 
@@ -971,6 +972,31 @@ class ChannelIntegrationTest extends AbstractConversationTest {
         assertThat(response).isNotNull();
         assertThat(response.getName()).isEqualTo("feedback-channel");
         assertThat(response.getDescription()).isEqualTo("Discussion channel for feedback");
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void markAllChannelsAsRead() throws Exception {
+        // ensure there exist at least two channel with unread messages in the course
+        createChannel(true, "channel1");
+        createChannel(true, "channel2");
+        List<Channel> channels = channelRepository.findChannelsByCourseId(exampleCourseId);
+        channels.forEach(channel -> {
+            addUsersToConversation(channel.getId(), "instructor1");
+            conversationParticipantRepository.findConversationParticipantsByConversationId(channel.getId()).forEach(conversationParticipant -> {
+                conversationParticipant.setUnreadMessagesCount(1L);
+                conversationParticipantRepository.save(conversationParticipant);
+            });
+        });
+
+        User instructor1 = userTestRepository.getUser();
+        request.postWithoutLocation("/api/courses/" + exampleCourseId + "/channels/mark-as-read", null, HttpStatus.OK, null);
+        List<Channel> updatedChannels = channelRepository.findChannelsByCourseId(exampleCourseId);
+        updatedChannels.forEach(channel -> {
+            var conversationParticipant = conversationParticipantRepository.findConversationParticipantByConversationIdAndUserId(channel.getId(), instructor1.getId());
+            await().untilAsserted(() -> assertThat(conversationParticipant.get().getUnreadMessagesCount()).isZero()); // async db call, so we need to wait
+        });
+
     }
 
     private void testArchivalChangeWorks(ChannelDTO channel, boolean isPublicChannel, boolean shouldArchive) throws Exception {

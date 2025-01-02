@@ -992,7 +992,6 @@ public class UserTestService {
      *
      * @param userNumbers the user creation matrix
      * @return String of the user authority with the most users
-     * @throws Exception
      */
     private String getMainUserAuthority(Integer[] userNumbers) throws Exception {
         List<Integer> userNumbersList = Arrays.asList(userNumbers);

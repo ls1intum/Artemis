@@ -1,31 +1,31 @@
-import com.diffplug.spotless.FormatterFunc
-import com.diffplug.spotless.FormatterStep
-import org.gradle.api.tasks.testing.logging.TestExceptionFormat
-import org.gradle.api.tasks.testing.logging.TestLogEvent
-
-import static com.diffplug.spotless.Formatter.NO_FILE_SENTINEL
+buildscript {
+    dependencies {
+        classpath "com.diffplug.spotless:spotless-plugin-gradle:${spotless_plugin_version}"
+        // This is required so that the latest version of the liquibase gradle plugin works
+        classpath "org.liquibase:liquibase-core:${liquibase_version}"
+    }
+}
 
 plugins {
     id "checkstyle"
-    id "java"
-    id "maven-publish"
     id "idea"
     id "jacoco"
-    id "org.springframework.boot" version "${spring_boot_version}"
-    id "io.spring.dependency-management" version "1.1.6"
-    id "com.google.cloud.tools.jib" version "3.4.4"
-    id "com.github.node-gradle.node" version "${gradle_node_plugin_version}"
-    id "com.diffplug.spotless" version "6.25.0"
-    // this allows us to find outdated dependencies via ./gradlew dependencyUpdates
-    id "com.github.ben-manes.versions" version "0.51.0"
-    id "com.github.andygoossens.modernizer" version "${modernizer_plugin_version}"
-    id "com.gorylenko.gradle-git-properties" version "2.4.2"
-    id "org.owasp.dependencycheck" version "11.1.1"
+    id "java"
     id "com.adarshr.test-logger" version "4.0.0"
+    id "com.diffplug.spotless" version "${spotless_plugin_version}"
+    id "com.github.andygoossens.modernizer" version "${modernizer_plugin_version}"
+    id "com.github.ben-manes.versions" version "0.51.0"
+    id "com.github.node-gradle.node" version "${gradle_node_plugin_version}"
+    id "com.google.cloud.tools.jib" version "3.4.4"
+    id "com.gorylenko.gradle-git-properties" version "2.4.2"
+    id "io.spring.dependency-management" version "1.1.7"
+    id "org.liquibase.gradle" version "${liquibase_plugin_version}"
+    id "org.owasp.dependencycheck" version "11.1.1"
+    id "org.springframework.boot" version "${spring_boot_version}"
 }
 
 group = "de.tum.cit.aet.artemis"
-version = "7.8.0"
+version = "7.8.1"
 description = "Interactive Learning with Individual Feedback"
 
 java {
@@ -33,8 +33,19 @@ java {
     targetCompatibility = JavaVersion.VERSION_21
 }
 
-//this enables us to invoke ./gradlew liquibaseDiffChangelog
+wrapper {
+    gradleVersion = "8.12"
+}
+
+node {
+    download = true
+    version = "${node_version}"
+    npmVersion = "${npm_version}"
+}
+
 apply from: "gradle/liquibase.gradle"
+apply from: "gradle/test.gradle"
+apply from: "gradle/spotless.gradle"
 
 if (project.hasProperty("prod")) {
     apply from: "gradle/profile_prod.gradle"
@@ -46,62 +57,9 @@ if (project.hasProperty("war")) {
     apply from: "gradle/war.gradle"
 }
 
-apply plugin: "jacoco"
-
 idea {
     module {
         excludeDirs += files("node_modules")
-    }
-}
-
-spotless {
-
-    // allows to execute the code formatting commands ./gradlew spotlessApply and ./gradlew spotlessCheck
-    java {
-        target {
-            fileTree(rootDir) {
-                include (
-                    "src/main/java/**/*.java",
-                    "src/test/java/**/*.java",
-                )
-                exclude(
-                        "**/src/test/resources/test-data/repository-export/EncodingISO_8559_1.java",
-                        "**/node_modules/**",
-                        "**/out/**",
-                        "**/repos/**",
-                        "**/repos-download/**",
-                        "**/build/**",
-                        "**/src/main/generated/**",
-                        "**/src/main/resources/templates/**",
-                        "/docker/**",
-                        "checked-out-repos/**",
-                        "supporting_scripts/**"
-                )
-            }
-        }
-        importOrderFile "artemis-spotless.importorder"
-        eclipse("4.33").configFile "artemis-spotless-style.xml"
-
-        removeUnusedImports()
-        trimTrailingWhitespace()
-
-        // Wildcard imports cannot be resolved by spotless itself.
-        // This will require the developer themselves to adhere to best practices.
-        addStep(FormatterStep.createNeverUpToDate("Refuse wildcard imports", new FormatterFunc() {
-            @Override
-            String apply(String s) throws Exception {
-                apply(s, NO_FILE_SENTINEL)
-            }
-
-            @Override
-            String apply(String s, File file) throws Exception {
-                if (s =~ /\nimport .*\*;/) {
-                    throw new IllegalArgumentException("Do not use wildcard imports. spotlessApply cannot resolve this issue.\n" +
-                        "The following file violates this rule: " + file.getName())
-                }
-                return s // Ensure a value is returned after processing
-            }
-        }))
     }
 }
 
@@ -118,101 +76,53 @@ modernizer {
     exclusions = ["java/util/Optional.get:()Ljava/lang/Object;"]
 }
 
-// Execute the test cases: ./gradlew test
-// Execute only architecture tests: ./gradlew test -DincludeTags="ArchitectureTest"
-test {
-    if (System.getProperty("includeTags")) {
-        useJUnitPlatform {
-            includeTags System.getProperty("includeTags")
-        }
-    } else {
-        useJUnitPlatform()
-        exclude "**/*IT*", "**/*IntTest*"
-    }
-
-    testLogging {
-        events "FAILED", "SKIPPED"
-    }
-    testLogging.showStandardStreams = true
-    reports.html.required = false
-    minHeapSize = "2g" // initial heap size
-    maxHeapSize = "8g" // maximum heap size
-}
-
-tasks.register("testReport", TestReport) {
-    destinationDirectory = layout.buildDirectory.file("reports/tests").get().asFile
-    testResults.from(test)
-}
-
-jacoco {
-    toolVersion = "0.8.12"
-}
-
-jar {
-    enabled = false
-}
-
-private excludedClassFilesForReport(classDirectories) {
-    classDirectories.setFrom(files(classDirectories.files.collect {
-        fileTree(dir: it,
-            exclude: [
-                "**/de/tum/cit/aet/artemis/**/domain/**/*_*",
-                "**/de/tum/cit/aet/artemis/core/config/migration/entries/**",
-                "**/gradle-wrapper.jar/**"
-            ]
-        )
-    }))
-}
-
-jacocoTestReport {
-    reports {
-        xml.required = true
-    }
-    // we want to ignore some generated files in the domain folders
-    afterEvaluate {
-        excludedClassFilesForReport(classDirectories)
-    }
-}
-
-jacocoTestCoverageVerification {
-    violationRules {
-        rule {
-            limit {
-                counter = "INSTRUCTION"
-                value = "COVEREDRATIO"
-                // TODO: in the future the following value should become higher than 0.92
-                minimum = 0.892
-            }
-            limit {
-                counter = "CLASS"
-                value = "MISSEDCOUNT"
-                // TODO: in the future the following value should become less than 10
-                maximum = 65
-            }
-        }
-    }
-    // we want to ignore some generated files in the domain folders
-    afterEvaluate {
-        excludedClassFilesForReport(classDirectories)
-    }
-}
-check.dependsOn jacocoTestCoverageVerification
-
 configurations {
     providedRuntime
 }
 
 repositories {
-    mavenLocal()
     mavenCentral()
+    mavenLocal()
     // required for org.gradle:gradle-tooling-api dependency
     maven {
-        url "https://repo.gradle.org/gradle/libs-releases"
+        url = "https://repo.gradle.org/gradle/libs-releases"
     }
     // required for org.opensaml:* dependencies
     maven {
-        url "https://build.shibboleth.net/maven/releases"
+        url = "https://build.shibboleth.net/maven/releases"
     }
+}
+
+configurations.configureEach {
+//    exclude group: "org.dom4j", module: "dom4j"
+    exclude group: "org.xmlpull", module: "pull-parser"
+    exclude group: "jaxen", module: "jaxen"
+    exclude group: "xmlpull", module: "xpp3"
+    exclude group: "xsdlib", module: "xsdlib"
+    exclude group: "javax.xml.stream", module: "stax-api"
+//    exclude group: "javax.xml.bind", module: "jaxb-api"
+
+    exclude group: "org.junit.vintage", module: "junit-vintage-engine"
+    exclude group: "com.vaadin.external.google", module: "android-json"
+    exclude group: "org.xmlunit", module: "xmlunit-core"
+
+    exclude group: "org.testcontainers", module: "mariadb"
+    exclude group: "org.testcontainers", module: "mssqlserver"
+
+    exclude group: "jakarta.ws.rs", module: "jsr311-api"
+
+    exclude group: "org.springframework.boot", module: "spring-boot-starter-undertow"
+
+    // these modules include security issues and are not needed
+    exclude group: "commons-jxpath", module: "commons-jxpath"
+    exclude group: "com.fasterxml.woodstox", module: "woodstox-core"
+
+    // those are transitive dependencies of JPlag Text --> Stanford NLP
+    // Note: we exclude them because they are not needed and might have security vulnerabilities
+    exclude group: "org.apache.lucene", module: "lucene-queryparser"
+    exclude group: "org.apache.lucene", module: "lucene-core"
+    exclude group: "org.apache.lucene", module: "lucene-analyzers-common"
+    exclude group: "com.google.protobuf", module: "protobuf-java"
 }
 
 dependencies {
@@ -235,13 +145,14 @@ dependencies {
         exclude module: "jaxb-api"
     }
 
-    implementation "org.gitlab4j:gitlab4j-api:6.0.0-rc.7"
+    implementation "org.gitlab4j:gitlab4j-api:6.0.0-rc.8"
 
     implementation "de.jplag:jplag:${jplag_version}"
 
     implementation "de.jplag:c:${jplag_version}"
     implementation "de.jplag:cpp:${jplag_version}"
     implementation "de.jplag:csharp:${jplag_version}"
+    implementation "de.jplag:golang:${jplag_version}"
     implementation "de.jplag:java:${jplag_version}"
     implementation "de.jplag:javascript:${jplag_version}"
     implementation "de.jplag:kotlin:${jplag_version}"
@@ -251,13 +162,6 @@ dependencies {
     implementation "de.jplag:swift:${jplag_version}"
     implementation "de.jplag:text:${jplag_version}"
     implementation "de.jplag:typescript:${jplag_version}"
-
-    // those are transitive dependencies of JPlag Text --> Stanford NLP
-    // Note: ideally we would exclude them, but for some reason this does not work
-    implementation "org.apache.lucene:lucene-queryparser:${lucene_version}"
-    implementation "org.apache.lucene:lucene-core:${lucene_version}"
-    implementation "org.apache.lucene:lucene-analyzers-common:${lucene_version}"
-    implementation "com.google.protobuf:protobuf-java:4.29.1"
 
     // we have to override those values to use the latest version
     implementation "org.slf4j:jcl-over-slf4j:${slf4j_version}"
@@ -270,15 +174,11 @@ dependencies {
 
     implementation "org.apache.logging.log4j:log4j-to-slf4j:2.24.3"
 
-    // Note: spring-security-lti13 does not work with jakarta yet, so we built our own custom version and declare its transitive dependencies below
-    // implementation "uk.ac.ox.ctl:spring-security-lti13:0.1.11"
-    implementation files("libs/spring-security-lti13-0.1.13.jar")
+    implementation "uk.ac.ox.ctl:spring-security-lti13:0.3.0"
 
     // https://search.maven.org/artifact/org.eclipse.jgit/org.eclipse.jgit
     implementation "org.eclipse.jgit:org.eclipse.jgit:${jgit_version}"
     implementation "org.eclipse.jgit:org.eclipse.jgit.ssh.apache:${jgit_version}"
-    // Note: jgit.htt.server is not compatible with jakarta yet and neither is there a timeline. Hence, we had to add the source files to our repository.
-    // Once the compatibility is given, we can switch back to the maven dependency.
     implementation "org.eclipse.jgit:org.eclipse.jgit.http.server:${jgit_version}"
 
     // apache ssh enabled the ssh git operations in LocalVC together with JGit
@@ -307,13 +207,13 @@ dependencies {
     implementation "ch.qos.logback:logback-core:${logback_version}"
     // required by eureka client
     implementation "com.thoughtworks.xstream:xstream:1.4.21"
-    // required by JPlag
+    // required by JPlag, should NOT be used in other places
     implementation "xerces:xercesImpl:2.12.2"
-    // required by JPlag
+    // required by JPlag, should NOT be used in other places
     implementation "xalan:xalan:2.7.3"
-    // required by JPlag
+    // required by JPlag, should NOT be used in other places
     implementation "xalan:serializer:2.7.3"
-    // required by Saml2
+    // required by Saml2, should NOT be used in other places
     implementation "org.apache.santuario:xmlsec:4.0.3"
 
     implementation "org.jsoup:jsoup:1.18.3"
@@ -380,10 +280,9 @@ dependencies {
     implementation "org.springframework.boot:spring-boot-starter-aop:${spring_boot_version}"
     implementation "org.springframework.boot:spring-boot-starter-data-jpa:${spring_boot_version}"
     implementation "org.springframework.boot:spring-boot-starter-security:${spring_boot_version}"
-    implementation("org.springframework.boot:spring-boot-starter-web:${spring_boot_version}") {
-        exclude module: "spring-boot-starter-undertow"
-    }
+    implementation "org.springframework.boot:spring-boot-starter-web:${spring_boot_version}"
     implementation "org.springframework.boot:spring-boot-starter-tomcat:${spring_boot_version}"
+
     implementation "org.springframework.boot:spring-boot-starter-websocket:${spring_boot_version}"
     implementation "org.springframework.boot:spring-boot-starter-thymeleaf:${spring_boot_version}"
     implementation "org.springframework.boot:spring-boot-starter-oauth2-resource-server:${spring_boot_version}"
@@ -392,15 +291,11 @@ dependencies {
     implementation "org.springframework.ldap:spring-ldap-core:3.2.10"
     implementation "org.springframework.data:spring-data-ldap:3.4.1"
 
-    implementation("org.springframework.cloud:spring-cloud-starter-netflix-eureka-client:${spring_cloud_version}") {
-        // NOTE: these modules contain security vulnerabilities and are not needed
-        exclude module: "commons-jxpath"
-        exclude module: "woodstox-core"
-    }
+    implementation "org.springframework.cloud:spring-cloud-starter-netflix-eureka-client:${spring_cloud_version}"
     implementation "org.springframework.cloud:spring-cloud-starter-config:${spring_cloud_version}"
     implementation "org.springframework.cloud:spring-cloud-commons:${spring_cloud_version}"
 
-    implementation "io.netty:netty-all:4.1.115.Final"
+    implementation "io.netty:netty-all:4.1.116.Final"
     implementation "io.projectreactor.netty:reactor-netty:1.2.1"
     implementation "org.springframework:spring-messaging:${spring_framework_version}"
     implementation "org.springframework.retry:spring-retry:2.0.11"
@@ -411,7 +306,7 @@ dependencies {
     implementation "org.springframework.security:spring-security-oauth2-core:${spring_security_version}"
     implementation "org.springframework.security:spring-security-oauth2-client:${spring_security_version}"
     // use newest version of nimbus-jose-jwt to avoid security issues through outdated dependencies
-    implementation "com.nimbusds:nimbus-jose-jwt:9.47"
+    implementation "com.nimbusds:nimbus-jose-jwt:9.48"
 
     implementation "org.springframework.security:spring-security-oauth2-jose:${spring_security_version}"
     implementation "org.springframework.security:spring-security-crypto:${spring_security_version}"
@@ -432,7 +327,7 @@ dependencies {
     implementation "org.bouncycastle:bcpkix-jdk18on:1.79"
     implementation "org.bouncycastle:bcprov-jdk18on:1.79"
 
-    implementation "com.mysql:mysql-connector-j:9.1.0"
+    implementation "com.mysql:mysql-connector-j:${mysql_version}"
     implementation "org.postgresql:postgresql:42.7.4"
 
     implementation "org.zalando:problem-spring-web:0.29.1"
@@ -451,7 +346,7 @@ dependencies {
     implementation "org.apfloat:apfloat:1.14.0"
 
     // use newest version of guava to avoid security issues through outdated dependencies
-    implementation "com.google.guava:guava:33.3.1-jre"
+    implementation "com.google.guava:guava:33.4.0-jre"
     implementation "com.sun.activation:jakarta.activation:2.0.1"
 
     // use newest version of gson to avoid security issues through outdated dependencies
@@ -471,7 +366,7 @@ dependencies {
             strictly byte_buddy_version
         }
     }
-    liquibase("net.bytebuddy:byte-buddy") {
+    liquibaseRuntime("net.bytebuddy:byte-buddy") {
         version {
             strictly byte_buddy_version
         }
@@ -486,19 +381,10 @@ dependencies {
             strictly byte_buddy_version
         }
     }
-    liquibase("net.bytebuddy:byte-buddy-agent") {
-        version {
-            strictly byte_buddy_version
-        }
-    }
 
     annotationProcessor "org.hibernate:hibernate-jpamodelgen:${hibernate_version}"
-    annotationProcessor("org.glassfish.jaxb:jaxb-runtime:${jaxb_runtime_version}") {
-        exclude group: "jakarta.ws.rs", module: "jsr311-api"
-    }
-    annotationProcessor("org.springframework.boot:spring-boot-configuration-processor:${spring_boot_version}") {
-        exclude group: "com.vaadin.external.google", module: "android-json"
-    }
+    annotationProcessor "org.glassfish.jaxb:jaxb-runtime:${jaxb_runtime_version}"
+    annotationProcessor "org.springframework.boot:spring-boot-configuration-processor:${spring_boot_version}"
 
 
     // ---- CHECKSTYLE DEPENDENCIES ----
@@ -511,31 +397,23 @@ dependencies {
 
     // ---- TEST DEPENDENCIES ----
 
-    testImplementation("org.springframework.boot:spring-boot-starter-test:${spring_boot_version}") {
-        exclude group: "org.junit.vintage", module: "junit-vintage-engine"
-        exclude group: "com.vaadin.external.google", module: "android-json"
-        exclude group: "org.xmlunit", module: "xmlunit-core"
-    }
+    testImplementation "org.springframework.boot:spring-boot-starter-test:${spring_boot_version}"
     testImplementation "org.springframework.security:spring-security-test:${spring_security_version}"
     testImplementation "org.springframework.boot:spring-boot-test:${spring_boot_version}"
-    testImplementation "org.assertj:assertj-core:3.26.3"
+    testImplementation "org.assertj:assertj-core:3.27.0"
     testImplementation "org.mockito:mockito-core:${mockito_version}"
     testImplementation "org.mockito:mockito-junit-jupiter:${mockito_version}"
 
     testImplementation "io.github.classgraph:classgraph:4.8.179"
     testImplementation "org.awaitility:awaitility:4.2.2"
     testImplementation "org.apache.maven.shared:maven-invoker:3.3.0"
-    testImplementation "org.gradle:gradle-tooling-api:8.11.1"
+    testImplementation "org.gradle:gradle-tooling-api:8.12"
     testImplementation "org.apache.maven.surefire:surefire-report-parser:3.5.2"
     testImplementation "com.opencsv:opencsv:5.9"
-    testImplementation("io.zonky.test:embedded-database-spring-test:2.6.0") {
-        exclude group: "org.testcontainers", module: "mariadb"
-        exclude group: "org.testcontainers", module: "mssqlserver"
-    }
+    testImplementation "io.zonky.test:embedded-database-spring-test:2.6.0"
+
     testImplementation "com.tngtech.archunit:archunit:1.3.0"
-    testImplementation("org.skyscreamer:jsonassert:1.5.3") {
-        exclude module: "android-json"
-    }
+    testImplementation "org.skyscreamer:jsonassert:1.5.3"
 
     // NOTE: cannot update due to "Syntax error in SQL statement "WITH ids_to_delete" --> should be resolved when we collapse the changelogs again for Artemis 8.0
 //    testImplementation "com.h2database:h2:2.3.232"
@@ -562,62 +440,8 @@ tasks.withType(JavaCompile).configureEach {
     options.compilerArgs << "-Xlint:deprecation"
 }
 
-// Taken from here: https://stackoverflow.com/questions/3963708/gradle-how-to-display-test-results-in-the-console-in-real-time
-tasks.withType(Test).configureEach {
-    // a collection to track failedTests
-    ext.failedTests = []
-
-    testLogging {
-        // set options for log level LIFECYCLE
-        events TestLogEvent.FAILED,
-                TestLogEvent.PASSED,
-                TestLogEvent.SKIPPED
-        exceptionFormat TestExceptionFormat.FULL
-        showExceptions true
-        showCauses true
-        showStackTraces true
-
-        info.events = debug.events
-        info.exceptionFormat = debug.exceptionFormat
-    }
-
-    afterTest { descriptor, result ->
-        if (result.resultType == TestResult.ResultType.FAILURE) {
-            var failedTest = "${descriptor.className}::${descriptor.name}"
-            logger.debug("Adding " + failedTest + " to failedTests...")
-            failedTests << [failedTest]
-        }
-    }
-
-    afterSuite { suite, result ->
-        if (!suite.parent) { // will match the outermost suite
-            def output = "Results: ${result.resultType} (${result.testCount} tests, ${result.successfulTestCount} successes, ${result.failedTestCount} failures, ${result.skippedTestCount} skipped)"
-            def startItem = "|  ", endItem = "  |"
-            def repeatLength = startItem.length() + output.length() + endItem.length()
-            println("\n" + ("-" * repeatLength) + "\n" + startItem + output + endItem + "\n" + ("-" * repeatLength))
-            // logs each failed test
-            if (!failedTests.empty) {
-                logger.lifecycle("Failed tests:")
-                failedTests.each { failedTest ->
-                    println("${failedTest}")
-                }
-            }
-        }
-    }
-}
-
-wrapper {
-    gradleVersion = "8.12-rc-1"
-}
-
 tasks.register("stage") {
     dependsOn "bootWar"
-}
-
-node {
-    download = true
-    version = "${node_version}"
-    npmVersion = "${npm_version}"
 }
 
 // Set the npm cache (used in the Dockerfile)
@@ -627,8 +451,8 @@ tasks.register("npmSetCacheDockerfile", NpmTask) {
 
 // Command to execute the JavaDoc checkstyle verification ./gradlew checkstyleMain
 checkstyle {
-    toolVersion "${checkstyle_version}"
-    configFile file("checkstyle.xml")
+    toolVersion = "${checkstyle_version}"
+    configFile = file("checkstyle.xml")
     checkstyleTest.enabled = false
     maxErrors = 0
 }
