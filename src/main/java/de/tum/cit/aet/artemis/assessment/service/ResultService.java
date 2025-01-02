@@ -529,7 +529,7 @@ public class ResultService {
             // to override the new long feedback with its previous version
             if (feedback.getLongFeedback().isPresent()) {
                 // Delete the old long feedback so we don't get a duplicate key error
-                longFeedbackTextRepository.deleteByFeedbackIds(List.of(feedback.getId()));
+                longFeedbackTextRepository.deleteByFeedbackId(feedback.getId());
             }
             else {
                 LongFeedbackText longFeedback = longFeedbackTextMap.get(feedback.getId());
