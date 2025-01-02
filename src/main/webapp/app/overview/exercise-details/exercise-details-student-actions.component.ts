@@ -18,7 +18,7 @@ import { ParticipationService } from 'app/exercises/shared/participation/partici
 import dayjs from 'dayjs/esm';
 import { QuizExercise } from 'app/entities/quiz/quiz-exercise.model';
 import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
-import { PROFILE_ATHENA, PROFILE_LOCALVC, PROFILE_THEIA } from 'app/app.constants';
+import { PROFILE_ATHENA, PROFILE_LOCALVC, PROFILE_TEXT, PROFILE_THEIA } from 'app/app.constants';
 import { AssessmentType } from 'app/entities/assessment-type.model';
 import { ButtonType } from 'app/shared/components/button.component';
 
@@ -57,6 +57,7 @@ export class ExerciseDetailsStudentActionsComponent implements OnInit, OnChanges
     hasRatedGradedResult: boolean;
     beforeDueDate: boolean;
     editorLabel?: string;
+    editExerciseEnabled = true;
     localVCEnabled = false;
     athenaEnabled = false;
     routerLink: string;
@@ -145,6 +146,7 @@ export class ExerciseDetailsStudentActionsComponent implements OnInit, OnChanges
             this.editorLabel = 'openTextEditor';
             this.profileService.getProfileInfo().subscribe((profileInfo) => {
                 this.athenaEnabled = profileInfo.activeProfiles?.includes(PROFILE_ATHENA);
+                this.editExerciseEnabled = profileInfo.activeProfiles.includes(PROFILE_TEXT);
             });
         } else if (this.exercise.type === ExerciseType.FILE_UPLOAD) {
             this.editorLabel = 'uploadFile';

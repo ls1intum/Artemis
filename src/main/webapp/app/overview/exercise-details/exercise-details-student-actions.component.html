@@ -209,7 +209,7 @@
                     }
                 </span>
                 @if (
-                    (gradedParticipation?.initializationState === InitializationState.INITIALIZED && this.beforeDueDate) ||
+                    (editExerciseEnabled && gradedParticipation?.initializationState === InitializationState.INITIALIZED && this.beforeDueDate) ||
                     gradedParticipation?.initializationState === InitializationState.FINISHED
                 ) {
                     <button
