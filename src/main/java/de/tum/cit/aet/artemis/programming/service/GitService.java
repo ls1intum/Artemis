@@ -1022,7 +1022,8 @@ public class GitService extends AbstractGitService {
      * Note: This method does not handle changes to the repository content between invocations. If files change
      * after the initial caching, the cache does not automatically refresh, which may lead to stale data.
      *
-     * @param repo The repository to scan for files and directories.
+     * @param repo         The repository to scan for files and directories.
+     * @param omitBinaries do not include binaries to reduce payload size
      * @return A {@link Map} where each key is a {@link File} object representing a file or directory, and each value is
      *         the corresponding {@link FileType} (FILE or FOLDER). The map excludes symbolic links.
      */
