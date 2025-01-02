@@ -5,14 +5,15 @@
                 type="checkbox"
                 class="form-check-input"
                 name="allowFeedbackRequests"
-                [checked]="showDropdownList"
+                [checked]="showDropdownList || !!this.exercise.preliminaryFeedbackModule"
+                [disabled]="inputControlsDisabled()"
                 id="allowFeedbackRequests"
                 (change)="togglePreliminaryFeedback($event)"
             />
             <label [ngStyle]="getCheckboxLabelStyle()" for="allowFeedbackRequests" jhiTranslate="artemisApp.exercise.allowFeedbackRequests"></label>
             <jhi-help-icon placement="right auto" [text]="'artemisApp.exercise.allowFeedbackRequestsTooltip'" />
         </div>
-        @if (this.showDropdownList) {
+        @if (this.showDropdownList || !!this.exercise.preliminaryFeedbackModule) {
             <div class="form-group">
                 <label for="athenaModuleSelect">Athena Preliminary Feedback Module</label>
                 <select

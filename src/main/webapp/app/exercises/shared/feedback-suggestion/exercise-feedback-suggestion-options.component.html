@@ -5,7 +5,7 @@
                 type="checkbox"
                 class="form-check-input"
                 name="feedbackSuggestionsEnabledCheck"
-                [checked]="showDropdownList"
+                [checked]="showDropdownList || !!this.exercise.feedbackSuggestionModule"
                 [disabled]="inputControlsDisabled()"
                 id="feedbackSuggestionsEnabledCheck"
                 (change)="toggleFeedbackSuggestions($event)"
@@ -18,7 +18,7 @@
             ></label>
             <jhi-help-icon placement="right auto" [text]="'artemisApp.exercise.allowFeedbackSuggestionsTooltip'" />
         </div>
-        @if (!!this.exercise.feedbackSuggestionModule) {
+        @if (this.showDropdownList || !!this.exercise.feedbackSuggestionModule) {
             <div class="form-group">
                 <label for="athenaModuleSelect">Athena Feedback Suggestions Module</label>
                 <select
