@@ -1,6 +1,6 @@
 package de.tum.cit.aet.artemis.atlas.service;
 
-import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
+import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_ATLAS;
 
 import java.time.ZonedDateTime;
 
@@ -16,7 +16,7 @@ import de.tum.cit.aet.artemis.atlas.repository.ScienceEventRepository;
 /**
  * Service class for {@link ScienceEvent}.
  */
-@Profile(PROFILE_CORE)
+@Profile(PROFILE_ATLAS)
 @Service
 public class ScienceEventService {
 

@@ -27,6 +27,8 @@ export const PROFILE_GITLAB = 'gitlab';
 
 export const PROFILE_AEOLUS = 'aeolus';
 
+export const PROFILE_ATLAS = 'atlas';
+
 export const PROFILE_IRIS = 'iris';
 
 export const PROFILE_LTI = 'lti';

@@ -1,6 +1,6 @@
 package de.tum.cit.aet.artemis.atlas.web;
 
-import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
+import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_ATLAS;
 
 import java.net.URI;
 import java.net.URISyntaxException;
@@ -48,7 +48,7 @@ import de.tum.cit.aet.artemis.core.util.HeaderUtil;
 /**
  * REST controller for managing {@link Prerequisite Prerequisite} entities.
  */
-@Profile(PROFILE_CORE)
+@Profile(PROFILE_ATLAS)
 @RestController
 @RequestMapping("api/")
 public class PrerequisiteResource {
