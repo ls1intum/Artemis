@@ -27,38 +27,38 @@ spotless {
 
         removeUnusedImports()
 
-        custom 'Remove commented-out import statements', {
-            it.replaceAll(/\n\/\/ import .*?;.*/, '')
+        custom "Remove commented-out import statements", {
+            it.replaceAll(/\n\/\/ import .*?;.*/, "")
         }
 
-        custom 'Refuse wildcard imports', { code ->
-            // Wildcard imports can't be resolved by spotless itself.
+        custom "Refuse wildcard imports", { code ->
+            // Wildcard imports cannot be resolved by spotless itself.
             // This will require the developer themselves to adhere to best practices.
             if (code =~ /\nimport .*\*;/) {
-                throw new IllegalArgumentException("Do not use wildcard imports. 'spotlessApply' cannot resolve this issue.")
+                throw new IllegalArgumentException("Do not use wildcard imports. \"spotlessApply\" cannot resolve this issue.")
             }
             return code // make sure to avoid a warning and always
         }
 
-        custom 'Remove unhelpful javadoc stubs', {
+        custom "Remove unhelpful javadoc stubs", {
             // e.g., remove the following lines:
             // "* @param paramName"
             // "* @throws ExceptionType"
-            // "* @return returnType"'
+            // "* @return returnType""
             // Multiline to allow anchors on newlines
-            it.replaceAll(/(?m)^ *\* *@(?:param|throws|return) *\w* *\n/, '')
+            it.replaceAll(/(?m)^ *\* *@(?:param|throws|return) *\w* *\n/, "")
         }
 
-        custom 'Remove any empty Javadocs and block comments', {
+        custom "Remove any empty Javadocs and block comments", {
             // Matches any /** [...] */ or /* [...] */ that contains:
             // (a) only whitespace
             // (b) trivial information, such as "@param paramName" or @throws ExceptionType
             //     without any additional information.  This information is implicit in the signature.
-            it.replaceAll(/\/\*+\s*\n(\s*\*\s*\n)*\s*\*+\/\s*\n/, '')
+            it.replaceAll(/\/\*+\s*\n(\s*\*\s*\n)*\s*\*+\/\s*\n/, "")
         }
 
         // Enforce style modifier order
-        custom 'Modifier ordering', {
+        custom "Modifier ordering", {
             def modifierRanking = [
                 "public"      : 1,
                 "protected"   : 2,
@@ -78,7 +78,7 @@ spotless {
                 // Do not replace the leading non-word character.  Identify the modifiers
                 it.replaceAll(/(?:public |protected |private |abstract |default |static |final |transient |volatile |synchronized |native |strictfp ){2,}/, {
                     // Sort the modifiers according to the ranking above
-                    it.split().sort({ modifierRanking[it] }).join(' ') + ' '
+                    it.split().sort({ modifierRanking[it] }).join(" ") + " "
                 }
                 )
             }
