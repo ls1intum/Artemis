@@ -818,7 +818,8 @@ public class ProgrammingExerciseResource {
      * Note: This endpoint redirects the request to the ProgrammingExerciseParticipationService. This is required if
      * the solution participation id is not known for the client.
      *
-     * @param exerciseId the exercise for which the solution repository files should be retrieved
+     * @param exerciseId   the exercise for which the solution repository files should be retrieved
+     * @param omitBinaries do not send binaries to reduce payload size
      * @return a redirect to the endpoint returning the files with content
      */
     @GetMapping("programming-exercises/{exerciseId}/solution-files-content")
@@ -843,7 +844,8 @@ public class ProgrammingExerciseResource {
      * Note: This endpoint redirects the request to the ProgrammingExerciseParticipationService. This is required if
      * the template participation id is not known for the client.
      *
-     * @param exerciseId the exercise for which the template repository files should be retrieved
+     * @param exerciseId   the exercise for which the template repository files should be retrieved
+     * @param omitBinaries do not send binaries to reduce payload size
      * @return a redirect to the endpoint returning the files with content
      */
     @GetMapping("programming-exercises/{exerciseId}/template-files-content")

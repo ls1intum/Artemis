@@ -282,6 +282,7 @@ public class RepositoryProgrammingExerciseParticipationResource extends Reposito
      * Gets the files of the repository with content
      *
      * @param participationId participation of the student/template/solution
+     * @param omitBinaries    do not send binaries to reduce payload size
      * @return the ResponseEntity with status 200 (OK) and a map of files with their content
      */
     @GetMapping(value = "repository/{participationId}/files-content", produces = MediaType.APPLICATION_JSON_VALUE)
