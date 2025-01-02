@@ -21,13 +21,7 @@ describe('Grading System Component', () => {
     beforeEach(() => {
         TestBed.configureTestingModule({
             imports: [ArtemisTestModule, RouterModule.forRoot([])],
-            declarations: [
-                GradingSystemComponent,
-                MockDirective(NgModel),
-                MockComponent(DocumentationButtonComponent),
-                MockComponent(GradingSystemInfoModalComponent),
-                MockPipe(ArtemisTranslatePipe),
-            ],
+            declarations: [MockDirective(NgModel), MockComponent(DocumentationButtonComponent), MockComponent(GradingSystemInfoModalComponent), MockPipe(ArtemisTranslatePipe)],
             providers: [{ provide: ActivatedRoute, useValue: route }],
         })
             .compileComponents()

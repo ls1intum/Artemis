@@ -36,7 +36,7 @@ describe('ExamNavigationSidebarComponent', () => {
     beforeEach(() => {
         TestBed.configureTestingModule({
             imports: [ArtemisTestModule, TranslateTestingModule, MockModule(NgbTooltipModule), MockModule(ArtemisSharedCommonModule)],
-            declarations: [ExamNavigationSidebarComponent, MockComponent(ExamTimerComponent), MockComponent(ExamLiveEventsButtonComponent), MockComponent(SearchFilterComponent)],
+            declarations: [MockComponent(ExamTimerComponent), MockComponent(ExamLiveEventsButtonComponent), MockComponent(SearchFilterComponent)],
             providers: [
                 ExamParticipationService,
                 { provide: ExamExerciseUpdateService, useValue: mockExamExerciseUpdateService },
