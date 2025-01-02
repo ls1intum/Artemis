@@ -27,10 +27,8 @@ export class ApollonDiagramDetailComponent implements OnInit, OnDestroy {
     @ViewChild('editorContainer', { static: false }) editorContainer: ElementRef;
     @ViewChild('titleField') titleField?: NgModel;
 
-    @Input()
-    private courseId: number;
-    @Input()
-    private apollonDiagramId: number;
+    @Input() courseId: number;
+    @Input() apollonDiagramId: number;
 
     @Output() closeEdit = new EventEmitter<DragAndDropQuestion | undefined>();
     @Output() closeModal = new EventEmitter();

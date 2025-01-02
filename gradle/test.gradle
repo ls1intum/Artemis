@@ -57,7 +57,8 @@ test {
         useJUnitPlatform()
         exclude "**/*IT*", "**/*IntTest*"
     }
-
+    testClassesDirs = testing.suites.test.sources.output.classesDirs
+    classpath = testing.suites.test.sources.runtimeClasspath
     testLogging {
         events "FAILED", "SKIPPED"
     }
