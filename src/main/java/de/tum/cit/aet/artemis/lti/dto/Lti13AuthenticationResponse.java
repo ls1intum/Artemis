@@ -1,5 +1,7 @@
 package de.tum.cit.aet.artemis.lti.dto;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
+
 /**
  * Holds LTI authentication response details.
  *
@@ -7,5 +9,6 @@ package de.tum.cit.aet.artemis.lti.dto;
  * @param ltiIdToken           LTI service provided ID token.
  * @param clientRegistrationId Client's registration ID with LTI service.
  */
-public record LtiAuthenticationResponse(String targetLinkUri, String ltiIdToken, String clientRegistrationId) {
+@JsonInclude(JsonInclude.Include.NON_EMPTY)
+public record Lti13AuthenticationResponse(String targetLinkUri, String ltiIdToken, String clientRegistrationId) {
 }
