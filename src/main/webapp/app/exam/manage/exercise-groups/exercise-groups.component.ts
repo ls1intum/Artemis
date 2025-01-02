@@ -33,7 +33,7 @@ import {
 import { ExamImportComponent } from 'app/exam/manage/exams/exam-import/exam-import.component';
 import { ExerciseImportWrapperComponent } from 'app/exercises/shared/import/exercise-import-wrapper/exercise-import-wrapper.component';
 import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
-import { PROFILE_LOCALCI, PROFILE_LOCALVC } from 'app/app.constants';
+import { PROFILE_LOCALCI, PROFILE_LOCALVC, PROFILE_TEXT } from 'app/app.constants';
 
 @Component({
     selector: 'jhi-exercise-groups',
@@ -55,6 +55,8 @@ export class ExerciseGroupsComponent implements OnInit {
 
     localVCEnabled = false;
     localCIEnabled = false;
+    textExercisesEnabled = false;
+    private disabledExerciseTypes: string[] = [];
 
     // Icons
     faPlus = faPlus;
@@ -102,6 +104,11 @@ export class ExerciseGroupsComponent implements OnInit {
         this.profileService.getProfileInfo().subscribe((profileInfo) => {
             this.localVCEnabled = profileInfo.activeProfiles.includes(PROFILE_LOCALVC);
             this.localCIEnabled = profileInfo.activeProfiles.includes(PROFILE_LOCALCI);
+            for (const type of [PROFILE_TEXT]) {
+                if (!profileInfo.activeProfiles.includes(type)) {
+                    this.disabledExerciseTypes.push(type);
+                }
+            }
         });
     }
 
@@ -280,5 +287,9 @@ export class ExerciseGroupsComponent implements OnInit {
                 this.alertService.success('artemisApp.examManagement.exerciseGroup.importSuccessful');
             }
         });
+    }
+
+    protected isExerciseTypeDisabled(exerciseType: ExerciseType) {
+        return this.disabledExerciseTypes.includes(exerciseType);
     }
 }

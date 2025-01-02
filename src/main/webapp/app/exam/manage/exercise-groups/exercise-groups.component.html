@@ -75,7 +75,7 @@
                                 </a>
                             </div>
                         }
-                        @if (course?.isAtLeastEditor) {
+                        @if (textExercisesEnabled && course?.isAtLeastEditor) {
                             <div class="btn-group-vertical me-1 mb-1">
                                 <a [routerLink]="[exerciseGroup.id, 'text-exercises', 'new']" class="add-text-exercise btn btn-info btn-sm me-1 mb-1">
                                     <fa-icon [icon]="faPlus" />
@@ -346,7 +346,12 @@
                                         </td>
                                     }
                                     <td class="align-middle">
-                                        @if (exercise.id && exerciseGroup.id) {
+                                        @if (isExerciseTypeDisabled(exercise.type!)) {
+                                            <div class="d-flex justify-content-end align-items-center gap-2">
+                                                <span jhiTranslate="artemisApp.exercise.errors.deactivatedExerciseType.label"></span>
+                                                <jhi-help-icon text="artemisApp.exercise.errors.deactivatedExerciseType.tooltip" />
+                                            </div>
+                                        } @else if (exercise.id && exerciseGroup.id) {
                                             <jhi-exam-exercise-row-buttons
                                                 class="d-flex justify-content-end"
                                                 [course]="course"
