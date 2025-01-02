@@ -67,6 +67,7 @@ import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.core.exception.FilePathParsingException;
 import de.tum.cit.aet.artemis.core.exception.InternalServerErrorException;
 import de.tum.cit.aet.artemis.core.util.CommonsMultipartFile;
+import de.tum.cit.aet.artemis.fileupload.domain.FilePathInformation;
 
 @Profile(PROFILE_CORE)
 @Service
@@ -194,22 +195,23 @@ public class FileService implements DisposableBean {
      * @param conversationId The ID of the conversation.
      * @return The URI of the saved file.
      */
-    public URI handleSaveFileInConversation(MultipartFile file, Long courseId, Long conversationId) {
+    public FilePathInformation handleSaveFileInConversation(MultipartFile file, Long courseId, Long conversationId) {
         // TODO: Improve the access check. The course is already checked, but the user might not be a member of the conversation. The course may not belong to the conversation
-        String filename = checkAndSanitizeFilename(file.getOriginalFilename());
+        String sanitizedOriginalFilename = checkAndSanitizeFilename(file.getOriginalFilename());
 
-        validateExtension(filename, true);
+        validateExtension(sanitizedOriginalFilename, true);
 
         final String filenamePrefix = "Markdown_";
         final Path path = FilePathService.getMarkdownFilePathForConversation(courseId, conversationId);
 
-        String fileName = generateFilename(filenamePrefix, filename, false); // TODO: keep?
+        String fileName = generateFilename(filenamePrefix, sanitizedOriginalFilename, false);
         Path filePath = path.resolve(fileName);
 
         copyFile(file, filePath);
 
         String currentFilename = filePath.getFileName().toString();
-        return URI.create("/api/files/courses/" + courseId + "/conversations/" + conversationId + "/").resolve(currentFilename);
+        return new FilePathInformation(filePath, URI.create("/api/files/courses/" + courseId + "/conversations/" + conversationId + "/").resolve(currentFilename),
+                sanitizedOriginalFilename);
     }
 
     /**
