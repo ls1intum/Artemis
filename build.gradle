@@ -76,6 +76,52 @@ modernizer {
     exclusions = ["java/util/Optional.get:()Ljava/lang/Object;"]
 }
 
+// Allow using in jacoco.gradle
+ext {
+    includedTestTags = System.getProperty("includeTags")
+    includedTags = !includedTestTags ? new String[]{} : includedTestTags.split(",") as String[]
+    includedModulesTag = System.getProperty("includeModules")
+    includedModules = !includedModulesTag ? new String[]{} : includedModulesTag.split(",") as String[]
+
+    runAllTests = includedTags.size() == 0 && includedModules.size() == 0
+    BasePath = "de/tum/cit/aet/artemis"
+}
+
+// Execute the test cases: ./gradlew test
+// Execute only architecture tests: ./gradlew test -DincludeTags="ArchitectureTest"
+// Execute tests only for specific modules: ./gradlew test -DincludeModules="atlas". Using this flag, "includeTags" will be ignored.
+test {
+    if (runAllTests) {
+        useJUnitPlatform()
+        exclude "**/*IT*", "**/*IntTest*"
+    } else if (includedModules.size() == 0) {
+        // not running all tests, but not module-specific ones -> use tags
+        useJUnitPlatform() {
+            includeTags includedTags
+        }
+    } else {
+        useJUnitPlatform()
+        // Always execute "shared"-folder when executing module-specifc tests
+        includedModules += "shared"
+        filter { testFilter ->
+            includedModules.each { val ->
+                testFilter.includeTestsMatching("de.tum.cit.aet.artemis.$val.*")
+            }
+        }
+    }
+
+    testLogging {
+        events "FAILED", "SKIPPED"
+    }
+    testLogging.showStandardStreams = true
+    reports.html.required = false
+    minHeapSize = "2g" // initial heap size
+    maxHeapSize = "8g" // maximum heap size
+}
+
+// Dynamic generation of jacoco test report generation-/coverage verification-tasks (per-module)
+apply from: "gradle/jacoco.gradle"
+
 configurations {
     providedRuntime
 }
@@ -479,8 +525,9 @@ tasks.named("dependencyUpdates").configure {
 // 2) Execute tests with coverage report:           ./gradlew test jacocoTestReport -x webapp
 // 2a) Execute tests without coverage report:       ./gradlew test -x webapp
 // 2b) Run a single test:                           ./gradlew test --tests ExamIntegrationTest -x webapp or ./gradlew test --tests ExamIntegrationTest.testGetExamScore -x webapp
-// 2c) Execute tests with Postgres container:       SPRING_PROFILES_INCLUDE=postgres ./gradlew test -x webapp
-// 2d) Execute tests with MySQL container:          SPRING_PROFILES_INCLUDE=mysql ./gradlew test -x webapp
+// 2c) Run tests for modules:                       ./gradlew test -DincludeModules=athena,atlas -x webapp (executes all tests in directories ./src/main/test/.../athena and ./src/main/test/.../atlas) + ArchitectureTests
+// 2d) Execute tests with Postgres container:       SPRING_PROFILES_INCLUDE=postgres ./gradlew test -x webapp
+// 2e) Execute tests with MySQL container:          SPRING_PROFILES_INCLUDE=mysql ./gradlew test -x webapp
 // 3) Verify code coverage (after tests):           ./gradlew jacocoTestCoverageVerification
 // 4) Check Java code format:                       ./gradlew spotlessCheck -x webapp
 // 5) Apply Java code formatter:                    ./gradlew spotlessApply -x webapp
