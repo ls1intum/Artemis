@@ -1,37 +1,37 @@
-import { ChangeDetectorRef, Component, OnDestroy, OnInit } from '@angular/core';
+import { Component, OnDestroy, OnInit, inject } from '@angular/core';
 import { UserSettingsDirective } from 'app/shared/user-settings/user-settings.directive';
 import { UserSettingsCategory } from 'app/shared/constants/user-settings.constants';
-import { UserSettingsService } from 'app/shared/user-settings/user-settings.service';
 import { UserSettingsStructure } from 'app/shared/user-settings/user-settings.model';
-import { AlertService } from 'app/core/util/alert.service';
 import { faInfoCircle, faSave } from '@fortawesome/free-solid-svg-icons';
 import { ScienceSetting } from 'app/shared/user-settings/science-settings/science-settings-structure';
 import { ScienceSettingsService } from 'app/shared/user-settings/science-settings/science-settings.service';
 import { FeatureToggle, FeatureToggleService } from 'app/shared/feature-toggle/feature-toggle.service';
 import { Subscription } from 'rxjs';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { RouterModule } from '@angular/router';
+import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
+import { ArtemisSharedModule } from 'app/shared/shared.module';
+import { ArtemisSharedComponentModule } from 'app/shared/components/shared-component.module';
+import { FormDateTimePickerModule } from 'app/shared/date-time-picker/date-time-picker.module';
+import { DocumentationLinkComponent } from 'app/shared/components/documentation-link/documentation-link.component';
 
 @Component({
     selector: 'jhi-science-settings',
+    standalone: true,
     templateUrl: 'science-settings.component.html',
     styleUrls: ['../user-settings.scss'],
+    imports: [TranslateDirective, RouterModule, FontAwesomeModule, ArtemisSharedModule, ArtemisSharedComponentModule, FormDateTimePickerModule, DocumentationLinkComponent],
 })
 export class ScienceSettingsComponent extends UserSettingsDirective implements OnInit, OnDestroy {
+    private scienceSettingsService = inject(ScienceSettingsService);
+    private featureToggleService = inject(FeatureToggleService);
+
     // Icons
     faSave = faSave;
     faInfoCircle = faInfoCircle;
 
     private featureToggleActiveSubscription: Subscription;
     featureToggleActive = false;
-
-    constructor(
-        userSettingsService: UserSettingsService,
-        changeDetector: ChangeDetectorRef,
-        alertService: AlertService,
-        private scienceSettingsService: ScienceSettingsService,
-        private featureToggleService: FeatureToggleService,
-    ) {
-        super(userSettingsService, alertService, changeDetector);
-    }
 
     declare userSettings: UserSettingsStructure<ScienceSetting>;
     declare settings: Array<ScienceSetting>;

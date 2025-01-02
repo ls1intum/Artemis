@@ -4,7 +4,7 @@ import { of, throwError } from 'rxjs';
 import { ActivatedRoute, Router } from '@angular/router';
 import { ArtemisTestModule } from '../../../test.module';
 import { MockNgbModalService } from '../../../helpers/mocks/service/mock-ngb-modal.service';
-import { MockTranslateService, TranslatePipeMock } from '../../../helpers/mocks/service/mock-translate.service';
+import { MockTranslateService } from '../../../helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { SshUserSettingsKeyDetailsComponent } from 'app/shared/user-settings/ssh-settings/details/ssh-user-settings-key-details.component';
@@ -52,7 +52,6 @@ describe('SshUserSettingsComponent', () => {
         const routerMock = { navigate: jest.fn() };
         await TestBed.configureTestingModule({
             imports: [ArtemisTestModule],
-            declarations: [SshUserSettingsKeyDetailsComponent, TranslatePipeMock],
             providers: [
                 {
                     provide: ActivatedRoute,
@@ -78,12 +77,12 @@ describe('SshUserSettingsComponent', () => {
         sshServiceMock.addNewSshPublicKey.mockReturnValue(of({}));
         comp.ngOnInit();
         expect(sshServiceMock.getSshPublicKey).not.toHaveBeenCalled();
-        expect(comp.isLoading).toBeFalse();
-        comp.displayedSshKey = mockKey;
-        comp.displayedExpiryDate = dayjs();
-        comp.displayedKeyLabel = 'label';
+        expect(comp.isLoading()).toBeFalse();
+        comp.displayedSshKey.set(mockKey);
+        comp.displayedExpiryDate.set(dayjs());
+        comp.displayedKeyLabel.set('label');
         comp.validateExpiryDate();
-        expect(comp.isExpiryDateValid).toBeTrue();
+        expect(comp.isExpiryDateValid()).toBeTrue();
         comp.saveSshKey();
         expect(alertServiceMock.success).toHaveBeenCalled();
         expect(router.navigate).toHaveBeenCalledWith(['/user-settings/ssh']);
@@ -101,12 +100,12 @@ describe('SshUserSettingsComponent', () => {
         sshServiceMock.addNewSshPublicKey.mockReturnValue(throwError(() => httpError1));
         comp.ngOnInit();
         expect(sshServiceMock.getSshPublicKey).not.toHaveBeenCalled();
-        expect(comp.isLoading).toBeFalse();
-        comp.displayedSshKey = mockKey;
-        comp.displayedExpiryDate = dayjs();
-        comp.displayedKeyLabel = 'label';
+        expect(comp.isLoading()).toBeFalse();
+        comp.displayedSshKey.set(mockKey);
+        comp.displayedExpiryDate.set(dayjs());
+        comp.displayedKeyLabel.set('label');
         comp.validateExpiryDate();
-        expect(comp.isExpiryDateValid).toBeTrue();
+        expect(comp.isExpiryDateValid()).toBeTrue();
         comp.saveSshKey();
         sshServiceMock.addNewSshPublicKey.mockReturnValue(throwError(() => httpError2));
         comp.saveSshKey();
@@ -119,8 +118,8 @@ describe('SshUserSettingsComponent', () => {
         activatedRoute.setParameters({ keyId: 1 });
         comp.ngOnInit();
         expect(sshServiceMock.getSshPublicKey).toHaveBeenCalled();
-        expect(comp.isLoading).toBeFalse();
-        expect(comp.displayedSshKey).toEqual(mockKey);
+        expect(comp.isLoading()).toBeFalse();
+        expect(comp.displayedSshKey()).toEqual(mockKey);
         comp.goBack();
         expect(router.navigate).toHaveBeenCalledWith(['/user-settings/ssh']);
     });
@@ -128,36 +127,36 @@ describe('SshUserSettingsComponent', () => {
     it('should detect Windows', () => {
         jest.spyOn(window.navigator, 'userAgent', 'get').mockReturnValue('Mozilla/5.0 (Windows NT 10.0; Win64; x64)');
         comp.ngOnInit();
-        expect(comp.copyInstructions).toBe('cat ~/.ssh/id_ed25519.pub | clip');
+        expect(comp.copyInstructions()).toBe('cat ~/.ssh/id_ed25519.pub | clip');
     });
 
     it('should detect MacOS', () => {
         jest.spyOn(window.navigator, 'userAgent', 'get').mockReturnValue('Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7)');
         comp.ngOnInit();
-        expect(comp.copyInstructions).toBe('pbcopy < ~/.ssh/id_ed25519.pub');
+        expect(comp.copyInstructions()).toBe('pbcopy < ~/.ssh/id_ed25519.pub');
     });
 
     it('should detect Linux', () => {
         jest.spyOn(window.navigator, 'userAgent', 'get').mockReturnValue('Mozilla/5.0 (X11; Linux x86_64)');
         comp.ngOnInit();
-        expect(comp.copyInstructions).toBe('xclip -selection clipboard < ~/.ssh/id_ed25519.pub');
+        expect(comp.copyInstructions()).toBe('xclip -selection clipboard < ~/.ssh/id_ed25519.pub');
     });
 
     it('should detect Android', () => {
         jest.spyOn(window.navigator, 'userAgent', 'get').mockReturnValue('Mozilla/5.0 (Linux; Android 10; Pixel 3)');
         comp.ngOnInit();
-        expect(comp.copyInstructions).toBe('termux-clipboard-set < ~/.ssh/id_ed25519.pub');
+        expect(comp.copyInstructions()).toBe('termux-clipboard-set < ~/.ssh/id_ed25519.pub');
     });
 
     it('should detect iOS', () => {
         jest.spyOn(window.navigator, 'userAgent', 'get').mockReturnValue('Mozilla/5.0 (iPhone; CPU iPhone OS 13_5)');
         comp.ngOnInit();
-        expect(comp.copyInstructions).toBe('Ctrl + C');
+        expect(comp.copyInstructions()).toBe('Ctrl + C');
     });
 
     it('should return Unknown for unrecognized OS', () => {
         jest.spyOn(window.navigator, 'userAgent', 'get').mockReturnValue('Mozilla/5.0 (Unknown OS)');
         comp.ngOnInit();
-        expect(comp.copyInstructions).toBe('Ctrl + C');
+        expect(comp.copyInstructions()).toBe('Ctrl + C');
     });
 });

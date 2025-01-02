@@ -1,6 +1,5 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ArtemisTestModule } from '../../../test.module';
-import { TranslatePipeMock } from '../../../helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
 import { SshUserSettingsFingerprintsComponent } from 'app/shared/user-settings/ssh-settings/fingerprints/ssh-user-settings-fingerprints.component';
 import { SshUserSettingsFingerprintsService } from 'app/shared/user-settings/ssh-settings/fingerprints/ssh-user-settings-fingerprints.service';
@@ -24,7 +23,6 @@ describe('SshUserSettingsFingerprintsComponent', () => {
         jest.spyOn(console, 'error').mockImplementation(() => {});
         await TestBed.configureTestingModule({
             imports: [ArtemisTestModule],
-            declarations: [SshUserSettingsFingerprintsComponent, TranslatePipeMock],
             providers: [{ provide: SshUserSettingsFingerprintsService, useValue: fingerPintsServiceMock }],
         }).compileComponents();
         fixture = TestBed.createComponent(SshUserSettingsFingerprintsComponent);

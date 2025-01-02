@@ -11,9 +11,9 @@ import { IdeSettingsComponent } from 'app/shared/user-settings/ide-preferences/i
 import { SshUserSettingsKeyDetailsComponent } from 'app/shared/user-settings/ssh-settings/details/ssh-user-settings-key-details.component';
 import { SshUserSettingsFingerprintsComponent } from 'app/shared/user-settings/ssh-settings/fingerprints/ssh-user-settings-fingerprints.component';
 
-export const userSettingsState: Routes = [
+export const UserSettingsRoutes: Routes = [
     {
-        path: 'user-settings',
+        path: '',
         component: UserSettingsContainerComponent,
         canActivate: [UserRouteAccessService],
         data: {
