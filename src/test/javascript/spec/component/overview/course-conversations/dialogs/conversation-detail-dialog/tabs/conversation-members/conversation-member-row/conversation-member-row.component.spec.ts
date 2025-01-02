@@ -42,8 +42,8 @@ const currentUserTemplate = { id: 3, login: 'login3', firstName: 'Kaddl3', lastN
 const examples: ConversationDTO[] = [
     generateOneToOneChatDTO({}),
     generateExampleGroupChatDTO({}),
-    generateExampleChannelDTO({}),
-    generateExampleChannelDTO({ isCourseWide: true }),
+    generateExampleChannelDTO({} as ChannelDTO),
+    generateExampleChannelDTO({ isCourseWide: true } as ChannelDTO),
 ];
 
 examples.forEach((activeConversation) => {
