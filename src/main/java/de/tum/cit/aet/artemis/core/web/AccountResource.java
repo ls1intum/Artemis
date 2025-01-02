@@ -34,6 +34,8 @@ import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.core.exception.EmailAlreadyUsedException;
 import de.tum.cit.aet.artemis.core.exception.PasswordViolatesRequirementsException;
 import de.tum.cit.aet.artemis.core.repository.UserRepository;
+import de.tum.cit.aet.artemis.core.security.allowedTools.AllowedTools;
+import de.tum.cit.aet.artemis.core.security.allowedTools.ToolTokenType;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastStudent;
 import de.tum.cit.aet.artemis.core.service.AccountService;
 import de.tum.cit.aet.artemis.core.service.FilePathService;
@@ -172,6 +174,7 @@ public class AccountResource {
      */
     @GetMapping("account/participation-vcs-access-token")
     @EnforceAtLeastStudent
+    @AllowedTools(ToolTokenType.SCORPIO)
     public ResponseEntity<String> getVcsAccessToken(@RequestParam("participationId") Long participationId) {
         User user = userRepository.getUser();
 
@@ -188,6 +191,7 @@ public class AccountResource {
      */
     @PutMapping("account/participation-vcs-access-token")
     @EnforceAtLeastStudent
+    @AllowedTools(ToolTokenType.SCORPIO)
     public ResponseEntity<String> createVcsAccessToken(@RequestParam("participationId") Long participationId) {
         User user = userRepository.getUser();
 
