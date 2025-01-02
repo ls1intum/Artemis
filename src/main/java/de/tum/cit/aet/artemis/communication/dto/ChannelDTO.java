@@ -197,6 +197,11 @@ public class ChannelDTO extends ConversationDTO {
         }
     }
 
+    /**
+     * Converts the DTO to a channel entity
+     *
+     * @return the created channel entity based on the attributes in the DTO
+     */
     public Channel toChannel() {
         Channel channel = new Channel();
         channel.setName(this.name);
