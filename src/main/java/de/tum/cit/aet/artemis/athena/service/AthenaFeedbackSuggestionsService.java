@@ -115,7 +115,7 @@ public class AthenaFeedbackSuggestionsService {
                 athenaModuleService.getAthenaModuleUrl(exercise.getExerciseType(), isPreliminary ? exercise.getPreliminaryFeedbackModule() : exercise.getFeedbackSuggestionModule())
                         + "/feedback_suggestions",
                 request, 0);
-        log.info("Athena responded to '{}' feedback suggestions request: {}", isPreliminary ? "Graded" : "Non Graded", response.data);
+        log.info("Athena responded to '{}' feedback suggestions request: {}", isPreliminary ? "Non Graded" : "Graded", response.data);
         storeTokenUsage(exercise, submission, response.meta, !isPreliminary);
         return response.data.stream().toList();
     }
@@ -137,7 +137,7 @@ public class AthenaFeedbackSuggestionsService {
                 athenaModuleService.getAthenaModuleUrl(exercise.getExerciseType(), isPreliminary ? exercise.getPreliminaryFeedbackModule() : exercise.getFeedbackSuggestionModule())
                         + "/feedback_suggestions",
                 request, 0);
-        log.info("Athena responded to '{}' feedback suggestions request: {}", isPreliminary ? "Graded" : "Non Graded", response.data);
+        log.info("Athena responded to '{}' feedback suggestions request: {}", isPreliminary ? "Non-Graded" : "Graded", response.data);
         storeTokenUsage(exercise, submission, response.meta, !isPreliminary);
         return response.data.stream().toList();
     }
@@ -164,7 +164,7 @@ public class AthenaFeedbackSuggestionsService {
                 athenaModuleService.getAthenaModuleUrl(exercise.getExerciseType(), isPreliminary ? exercise.getPreliminaryFeedbackModule() : exercise.getFeedbackSuggestionModule())
                         + "/feedback_suggestions",
                 request, 0);
-        log.info("Athena responded to '{}' feedback suggestions request: {}", isPreliminary ? "Graded" : "Non Graded", response.data);
+        log.info("Athena responded to '{}' feedback suggestions request: {}", isPreliminary ? "Non Graded" : "Graded", response.data);
         storeTokenUsage(exercise, submission, response.meta, !isPreliminary);
         return response.data;
     }
