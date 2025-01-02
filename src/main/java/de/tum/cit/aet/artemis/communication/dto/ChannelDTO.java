@@ -197,6 +197,9 @@ public class ChannelDTO extends ConversationDTO {
         }
     }
 
+    /**
+     * Converts the current object into a {@link Channel} instance.
+     */
     public Channel toChannel() {
         Channel channel = new Channel();
         channel.setName(this.name);

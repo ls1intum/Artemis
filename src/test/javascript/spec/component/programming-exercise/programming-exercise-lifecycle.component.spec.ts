@@ -40,7 +40,6 @@ describe('ProgrammingExerciseLifecycleComponent', () => {
                 MockComponent(ExerciseFeedbackSuggestionOptionsComponent),
                 MockComponent(ExercisePreliminaryFeedbackOptionsComponent),
                 MockDirective(NgModel),
-                TranslatePipeMock,
             ],
             providers: [
                 {

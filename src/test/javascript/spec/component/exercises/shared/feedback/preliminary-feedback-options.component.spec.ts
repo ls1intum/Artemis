@@ -7,6 +7,7 @@ import { AssessmentType } from 'app/entities/assessment-type.model';
 import { AthenaService } from 'app/assessment/athena.service';
 import dayjs from 'dayjs/esm';
 import { ExercisePreliminaryFeedbackOptionsComponent } from 'app/exercises/shared/preliminary-feedback/exercise-preliminary-feedback-options.component';
+import { ArtemisTestModule } from '../../../../test.module';
 
 describe('ExercisePreliminaryFeedbackOptionsComponent', () => {
     let component: ExercisePreliminaryFeedbackOptionsComponent;
@@ -17,7 +18,7 @@ describe('ExercisePreliminaryFeedbackOptionsComponent', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            declarations: [ExercisePreliminaryFeedbackOptionsComponent],
+            imports: [ArtemisTestModule, ExercisePreliminaryFeedbackOptionsComponent],
             providers: [
                 MockProvider(AthenaService, {
                     isEnabled: () => of(true),
