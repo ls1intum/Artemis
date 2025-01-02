@@ -824,7 +824,8 @@ public class ProgrammingExerciseResource {
     @GetMapping("programming-exercises/{exerciseId}/solution-files-content")
     @EnforceAtLeastTutor
     @FeatureToggle(Feature.ProgrammingExercises)
-    public ModelAndView redirectGetSolutionRepositoryFiles(@PathVariable Long exerciseId) {
+    public ModelAndView redirectGetSolutionRepositoryFiles(@PathVariable Long exerciseId,
+            @RequestParam(value = "omitBinaries", required = false, defaultValue = "false") boolean omitBinaries) {
         log.debug("REST request to get latest Solution Repository Files for ProgrammingExercise with id : {}", exerciseId);
         ProgrammingExercise exercise = programmingExerciseRepository.findByIdElseThrow(exerciseId);
         authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.TEACHING_ASSISTANT, exercise, null);
@@ -832,7 +833,7 @@ public class ProgrammingExerciseResource {
         var participation = solutionProgrammingExerciseParticipationRepository.findByProgrammingExerciseIdElseThrow(exerciseId);
 
         // TODO: We want to get rid of ModelAndView and use ResponseEntity instead. Define an appropriate service method and then call it here and in the referenced endpoint.
-        return new ModelAndView("forward:/api/repository/" + participation.getId() + "/files-content");
+        return new ModelAndView("forward:/api/repository/" + participation.getId() + "/files-content" + "?omitBinaries=" + omitBinaries);
     }
 
     /**
@@ -848,7 +849,8 @@ public class ProgrammingExerciseResource {
     @GetMapping("programming-exercises/{exerciseId}/template-files-content")
     @EnforceAtLeastTutor
     @FeatureToggle(Feature.ProgrammingExercises)
-    public ModelAndView redirectGetTemplateRepositoryFiles(@PathVariable Long exerciseId) {
+    public ModelAndView redirectGetTemplateRepositoryFiles(@PathVariable Long exerciseId,
+            @RequestParam(value = "omitBinaries", required = false, defaultValue = "false") boolean omitBinaries) {
         log.debug("REST request to get latest Template Repository Files for ProgrammingExercise with id : {}", exerciseId);
         ProgrammingExercise exercise = programmingExerciseRepository.findByIdElseThrow(exerciseId);
         authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.TEACHING_ASSISTANT, exercise, null);
@@ -856,7 +858,7 @@ public class ProgrammingExerciseResource {
         var participation = templateProgrammingExerciseParticipationRepository.findByProgrammingExerciseIdElseThrow(exerciseId);
 
         // TODO: We want to get rid of ModelAndView and use ResponseEntity instead. Define an appropriate service method and then call it here and in the referenced endpoint.
-        return new ModelAndView("forward:/api/repository/" + participation.getId() + "/files-content");
+        return new ModelAndView("forward:/api/repository/" + participation.getId() + "/files-content" + "?omitBinaries=" + omitBinaries);
     }
 
     /**

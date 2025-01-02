@@ -286,10 +286,11 @@ public class RepositoryProgrammingExerciseParticipationResource extends Reposito
      */
     @GetMapping(value = "repository/{participationId}/files-content", produces = MediaType.APPLICATION_JSON_VALUE)
     @EnforceAtLeastTutor
-    public ResponseEntity<Map<String, String>> getFilesWithContent(@PathVariable Long participationId) {
+    public ResponseEntity<Map<String, String>> getFilesWithContent(@PathVariable Long participationId,
+            @RequestParam(value = "omitBinaries", required = false, defaultValue = "false") boolean omitBinaries) {
         return super.executeAndCheckForExceptions(() -> {
             Repository repository = getRepository(participationId, RepositoryActionType.READ, true);
-            var filesWithContent = super.repositoryService.getFilesContentFromWorkingCopy(repository);
+            var filesWithContent = super.repositoryService.getFilesContentFromWorkingCopy(repository, omitBinaries);
             return new ResponseEntity<>(filesWithContent, HttpStatus.OK);
         });
     }
