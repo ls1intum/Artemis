@@ -26,7 +26,9 @@ const ENTITY_STATES = [...assessmentDashboardRoute];
         ArtemisExerciseAssessmentDashboardModule,
         ArtemisSharedComponentModule,
         PieChartModule,
+        AssessmentDashboardComponent,
+        AssessmentDashboardInformationComponent,
+        ExamAssessmentButtonsComponent,
     ],
-    declarations: [AssessmentDashboardComponent, AssessmentDashboardInformationComponent, ExamAssessmentButtonsComponent],
 })
 export class ArtemisAssessmentDashboardModule {}

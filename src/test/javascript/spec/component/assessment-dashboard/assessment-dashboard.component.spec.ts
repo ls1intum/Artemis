@@ -142,7 +142,6 @@ describe('AssessmentDashboardInformationComponent', () => {
         return TestBed.configureTestingModule({
             imports: [ArtemisTestModule, MockModule(RouterModule)],
             declarations: [
-                AssessmentDashboardComponent,
                 MockComponent(TutorLeaderboardComponent),
                 MockComponent(TutorParticipationGraphComponent),
                 MockComponent(AssessmentDashboardInformationComponent),

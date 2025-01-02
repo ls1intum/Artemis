@@ -20,7 +20,7 @@ describe('AssessmentDashboardInformationComponent', () => {
     beforeEach(() => {
         TestBed.configureTestingModule({
             imports: [ArtemisTestModule, MockModule(PieChartModule)],
-            declarations: [AssessmentDashboardInformationComponent, MockPipe(ArtemisTranslatePipe), MockComponent(SidePanelComponent)],
+            declarations: [MockPipe(ArtemisTranslatePipe), MockComponent(SidePanelComponent)],
             providers: [{ provide: TranslateService, useClass: MockTranslateService }],
         }).compileComponents();
 
