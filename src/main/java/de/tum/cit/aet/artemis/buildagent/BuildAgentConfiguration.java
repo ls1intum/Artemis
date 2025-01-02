@@ -2,8 +2,8 @@ package de.tum.cit.aet.artemis.buildagent;
 
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_BUILDAGENT;
 
+import java.io.IOException;
 import java.util.List;
-import java.util.concurrent.ExecutorService;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.RejectedExecutionException;
 import java.util.concurrent.RejectedExecutionHandler;
@@ -14,9 +14,11 @@ import java.util.concurrent.TimeUnit;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.context.event.ApplicationReadyEvent;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Profile;
+import org.springframework.context.event.EventListener;
 
 import com.github.dockerjava.api.DockerClient;
 import com.github.dockerjava.api.model.HostConfig;
@@ -40,6 +42,12 @@ public class BuildAgentConfiguration {
 
     private final ProgrammingLanguageConfiguration programmingLanguageConfiguration;
 
+    private ThreadPoolExecutor buildExecutor;
+
+    private int threadPoolSize = 0;
+
+    private DockerClient dockerClient;
+
     private static final Logger log = LoggerFactory.getLogger(BuildAgentConfiguration.class);
 
     @Value("${artemis.continuous-integration.docker-connection-uri}")
@@ -53,6 +61,24 @@ public class BuildAgentConfiguration {
 
     public BuildAgentConfiguration(ProgrammingLanguageConfiguration programmingLanguageConfiguration) {
         this.programmingLanguageConfiguration = programmingLanguageConfiguration;
+    }
+
+    @EventListener(ApplicationReadyEvent.class)
+    public void onApplicationReady() {
+        buildExecutor = createBuildExecutor();
+        dockerClient = createDockerClient();
+    }
+
+    public ThreadPoolExecutor getBuildExecutor() {
+        return buildExecutor;
+    }
+
+    public int getThreadPoolSize() {
+        return threadPoolSize;
+    }
+
+    public DockerClient getDockerClient() {
+        return dockerClient;
     }
 
     /**
@@ -114,12 +140,11 @@ public class BuildAgentConfiguration {
     }
 
     /**
-     * Creates an executor service that manages the queue of build jobs.
+     * Creates an thread pool executor that manages the queue of build jobs.
      *
-     * @return The executor service bean.
+     * @return The executor service.
      */
-    @Bean
-    public ExecutorService localCIBuildExecutorService() {
+    private ThreadPoolExecutor createBuildExecutor() {
         int threadPoolSize;
 
         if (specifyConcurrentBuilds) {
@@ -129,6 +154,7 @@ public class BuildAgentConfiguration {
             int availableProcessors = Runtime.getRuntime().availableProcessors();
             threadPoolSize = Math.max(1, (availableProcessors - 2) / 2);
         }
+        this.threadPoolSize = threadPoolSize;
 
         ThreadFactory customThreadFactory = new ThreadFactoryBuilder().setNameFormat("local-ci-build-%d")
                 .setUncaughtExceptionHandler((thread, exception) -> log.error("Uncaught exception in thread {}", thread.getName(), exception)).build();
@@ -144,11 +170,9 @@ public class BuildAgentConfiguration {
     /**
      * Creates a Docker client that is used to communicate with the Docker daemon.
      *
-     * @return The DockerClient bean.
+     * @return The DockerClient.
      */
-    @Bean
-    // TODO: reconsider if a bean is necessary here, this could also be created after application startup with @EventListener(ApplicationReadyEvent.class) to speed up the startup
-    public DockerClient dockerClient() {
+    public DockerClient createDockerClient() {
         log.debug("Create bean dockerClient");
         DockerClientConfig config = DefaultDockerClientConfig.createDefaultConfigBuilder().withDockerHost(dockerConnectionUri).build();
         DockerHttpClient httpClient = new ZerodepDockerHttpClient.Builder().dockerHost(config.getDockerHost()).sslConfig(config.getSSLConfig()).build();
@@ -174,5 +198,41 @@ public class BuildAgentConfiguration {
         else {
             return Long.parseLong(memoryString);
         }
+    }
+
+    private void shutdownBuildExecutor() {
+        // Shut down the current executor gracefully
+        if (buildExecutor != null && !buildExecutor.isShutdown()) {
+            buildExecutor.shutdown();
+            try {
+                buildExecutor.awaitTermination(5, TimeUnit.SECONDS);
+            }
+            catch (InterruptedException e) {
+                log.warn("Executor termination interrupted", e);
+            }
+        }
+        buildExecutor = null;
+    }
+
+    private void closeDockerClient() {
+        if (dockerClient != null) {
+            try {
+                dockerClient.close();
+            }
+            catch (IOException e) {
+                log.error("Error closing Docker client", e);
+            }
+            dockerClient = null;
+        }
+    }
+
+    public void closeBuildAgentServices() {
+        shutdownBuildExecutor();
+        closeDockerClient();
+    }
+
+    public void openBuildAgentServices() {
+        this.buildExecutor = createBuildExecutor();
+        this.dockerClient = createDockerClient();
     }
 }

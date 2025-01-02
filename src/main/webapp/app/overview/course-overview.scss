@@ -189,3 +189,13 @@ canvas#complete-chart {
         opacity: 1;
     }
 }
+
+.exercise-content-sidebar-width {
+    // magic number is 255px sidebar width + 8px margin
+    width: calc(100% - 263px) !important;
+    transition: width 0.1s 0s ease-in-out;
+}
+.exercise-content-width {
+    width: 100%;
+    transition: width 0.1s 0s ease-in-out;
+}

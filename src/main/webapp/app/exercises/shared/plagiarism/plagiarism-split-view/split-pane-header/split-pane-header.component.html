@@ -1,5 +1,5 @@
 <div class="split-pane-header" ngbDropdown>
-    <div class="split-pane-header-top" data-toggle="dropdown" [ngClass]="{ active: showFiles, clickable: hasFiles() }" (click)="toggleShowFiles()">
+    <div class="split-pane-header-top" data-toggle="dropdown" [ngClass]="{ active: showFiles, clickable: hasFiles() }" (click)="toggleShowFiles(true)">
         @if (hasActiveFile()) {
             <div class="split-pane-header-file-name">
                 <fa-icon class="file-arrow-down" [icon]="faChevronDown" />
@@ -9,9 +9,15 @@
         <div>{{ studentLogin || ('artemisApp.plagiarism.unknownStudent' | artemisTranslate) }}</div>
     </div>
     @if (showFiles) {
-        <ul class="split-pane-header-files">
+        <ul (mouseleave)="toggleShowFiles(true, false)" class="split-pane-header-files">
             @for (file of files; track file; let idx = $index) {
-                <li class="split-pane-header-file" ngbDropdownItem (click)="handleFileSelect(file, idx)">
+                <li
+                    class="split-pane-header-file"
+                    ngbDropdownItem
+                    (mouseenter)="triggerMouseEnter(file, idx)"
+                    (click)="handleFileSelect(file, idx, true)"
+                    [ngClass]="{ hover: idx === hoveredFileIndex }"
+                >
                     <span [class.split-pane-header-file-with-match]="file.hasMatch">{{ file.file }}</span>
                 </li>
             }

@@ -28,6 +28,7 @@ export enum DoughnutChartType {
     AVERAGE_EXERCISE_SCORE = 'AVERAGE_EXERCISE_SCORE',
     PARTICIPATIONS = 'PARTICIPATIONS',
     QUESTIONS = 'QUESTIONS',
+    CURRENT_LLM_COST = 'LLM_COST',
 }
 
 @Component({
@@ -92,6 +93,7 @@ export class CourseDetailComponent implements OnInit, OnDestroy {
         this.irisEnabled = profileInfo?.activeProfiles.includes(PROFILE_IRIS);
         if (this.irisEnabled) {
             const irisSettings = await firstValueFrom(this.irisSettingsService.getGlobalSettings());
+            // TODO: Outdated, as we now have a bunch more sub settings
             this.irisChatEnabled = irisSettings?.irisChatSettings?.enabled ?? false;
         }
         this.route.data.subscribe(({ course }) => {

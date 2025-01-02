@@ -31,4 +31,16 @@ public interface TeamScoreCleanupRepository extends ArtemisJpaRepository<TeamSco
             WHERE ps.team IS NULL
             """)
     int deleteOrphanTeamScore();
+
+    /**
+     * Counts {@link TeamScore} entries where the associated team is {@code null}.
+     *
+     * @return the number of entities that would be deleted
+     */
+    @Query("""
+            SELECT COUNT(ps)
+            FROM TeamScore ps
+            WHERE ps.team IS NULL
+            """)
+    int countOrphanTeamScore();
 }

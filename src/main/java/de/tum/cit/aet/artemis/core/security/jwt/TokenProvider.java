@@ -106,7 +106,7 @@ public class TokenProvider {
      * Convert JWT Authorization Token into UsernamePasswordAuthenticationToken, including a USer object and its authorities
      *
      * @param token JWT Authorization Token
-     * @return UsernamePasswordAuthenticationToken
+     * @return UsernamePasswordAuthenticationToken with principal, token and authorities that were stored in the token or null if no authorities were found
      */
     public Authentication getAuthentication(String token) {
         Claims claims = parseClaims(token);
@@ -118,7 +118,6 @@ public class TokenProvider {
         List<? extends GrantedAuthority> authorities = Arrays.stream(authorityClaim.toString().split(",")).map(SimpleGrantedAuthority::new).toList();
 
         User principal = new User(claims.getSubject(), "", authorities);
-
         return new UsernamePasswordAuthenticationToken(principal, token, authorities);
     }
 
@@ -168,6 +167,11 @@ public class TokenProvider {
 
     private Claims parseClaims(String authToken) {
         return Jwts.parser().verifyWith(key).build().parseSignedClaims(authToken).getPayload();
+    }
+
+    public <T> T getClaim(String token, String claimName, Class<T> claimType) {
+        Claims claims = parseClaims(token);
+        return claims.get(claimName, claimType);
     }
 
     public Date getExpirationDate(String authToken) {

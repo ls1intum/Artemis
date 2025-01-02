@@ -25,11 +25,8 @@ public class LocalVCPostPushHook implements PostReceiveHook {
     /**
      * Called by JGit after a push has been received (i.e. after the pushed files were successfully written to disk).
      *
-     * @param receivePack
-     *                        the process handling the current receive. Hooks may obtain
-     *                        details about the destination repository through this handle.
-     * @param commands
-     *                        unmodifiable set of successfully completed commands.
+     * @param receivePack the process handling the current receive. Hooks may obtain details about the destination repository through this handle.
+     * @param commands    unmodifiable set of successfully completed commands.
      */
     @Override
     public void onPostReceive(ReceivePack receivePack, Collection<ReceiveCommand> commands) {
