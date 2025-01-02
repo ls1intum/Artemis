@@ -1,5 +1,5 @@
 import { Component, OnInit, inject } from '@angular/core';
-import { ActivatedRoute, Router } from '@angular/router';
+import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { Subject, forkJoin, of } from 'rxjs';
 import { catchError } from 'rxjs/operators';
 import { ExerciseGroupService } from 'app/exam/manage/exercise-groups/exercise-group.service';
@@ -37,7 +37,10 @@ import { ProgrammingExerciseGroupCellComponent } from 'app/exam/manage/exercise-
 import { QuizExerciseGroupCellComponent } from 'app/exam/manage/exercise-groups/quiz-exercise-cell/quiz-exercise-group-cell.component';
 import { ModelingExerciseGroupCellComponent } from 'app/exam/manage/exercise-groups/modeling-exercise-cell/modeling-exercise-group-cell.component';
 import { FileUploadExerciseGroupCellComponent } from 'app/exam/manage/exercise-groups/file-upload-exercise-cell/file-upload-exercise-group-cell.component';
-import { ArtemisExamManagementModule } from 'app/exam/manage/exam-management.module';
+import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
+import { ArtemisSharedModule } from 'app/shared/shared.module';
+import { ArtemisSharedComponentModule } from 'app/shared/components/shared-component.module';
+import { ExamExerciseRowButtonsComponent } from 'app/exercises/shared/exam-exercise-row-buttons/exam-exercise-row-buttons.component';
 
 @Component({
     selector: 'jhi-exercise-groups',
@@ -49,7 +52,11 @@ import { ArtemisExamManagementModule } from 'app/exam/manage/exam-management.mod
         QuizExerciseGroupCellComponent,
         ModelingExerciseGroupCellComponent,
         FileUploadExerciseGroupCellComponent,
-        ArtemisExamManagementModule,
+        ArtemisTranslatePipe,
+        RouterLink,
+        ArtemisSharedModule,
+        ArtemisSharedComponentModule,
+        ExamExerciseRowButtonsComponent,
     ],
 })
 export class ExerciseGroupsComponent implements OnInit {

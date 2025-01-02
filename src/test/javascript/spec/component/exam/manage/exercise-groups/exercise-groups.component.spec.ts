@@ -49,7 +49,12 @@ describe('Exercise Groups Component', () => {
     beforeEach(() => {
         TestBed.configureTestingModule({
             imports: [ArtemisTestModule, ExerciseGroupsComponent],
-            providers: [{ provide: ActivatedRoute, useValue: route }, { provide: Router, useClass: MockRouter }, MockProvider(AlertService)],
+            providers: [
+                { provide: ActivatedRoute, useValue: route },
+                { provide: Router, useClass: MockRouter },
+                MockProvider(AlertService),
+                { provide: NgbModal, useClass: MockNgbModalService },
+            ],
         })
             .overrideProvider(NgbModal, { useValue: new MockNgbModalService() })
             .compileComponents()
@@ -60,7 +65,7 @@ describe('Exercise Groups Component', () => {
                 exerciseGroupService = TestBed.inject(ExerciseGroupService);
                 examManagementService = TestBed.inject(ExamManagementService);
                 eventManager = TestBed.inject(EventManager);
-                modalService = TestBed.inject(NgbModal);
+                modalService = fixture.debugElement.injector.get(NgbModal);
                 alertService = TestBed.inject(AlertService);
                 router = TestBed.inject(Router);
 
