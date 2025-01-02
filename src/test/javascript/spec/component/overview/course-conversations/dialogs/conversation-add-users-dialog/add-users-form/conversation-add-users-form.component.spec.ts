@@ -8,14 +8,15 @@ import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { MockComponent, MockDirective, MockPipe } from 'ng-mocks';
 import { CourseUsersSelectorComponent } from 'app/shared/course-users-selector/course-users-selector.component';
 import { ConversationDTO } from 'app/entities/metis/conversation/conversation.model';
+import { GroupChatDTO } from '../../../../../../../../../main/webapp/app/entities/metis/conversation/group-chat.model';
 import { generateExampleChannelDTO, generateExampleGroupChatDTO } from '../../../helpers/conversationExampleModels';
 import { Course } from 'app/entities/course.model';
-import { isChannelDTO } from 'app/entities/metis/conversation/channel.model';
+import { ChannelDTO, isChannelDTO } from 'app/entities/metis/conversation/channel.model';
 import { By } from '@angular/platform-browser';
 import { UserPublicInfoDTO } from 'app/core/user/user.model';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 
-const examples: ConversationDTO[] = [generateExampleGroupChatDTO({}), generateExampleChannelDTO({})];
+const examples: ConversationDTO[] = [generateExampleGroupChatDTO({} as GroupChatDTO), generateExampleChannelDTO({} as ChannelDTO)];
 examples.forEach((activeConversation) => {
     describe('ConversationAddUsersFormComponent with ' + activeConversation.type, () => {
         let component: ConversationAddUsersFormComponent;
@@ -164,23 +165,22 @@ examples.forEach((activeConversation) => {
             expect(component.form.valid).toBeTrue();
             expect(component.isSubmitPossible).toBeTrue();
         }
-        const clickSubmitButton = (expectSubmitEvent: boolean, expectedFormData?: AddUsersFormData) => {
+        const clickSubmitButton = async (expectSubmitEvent: boolean, expectedFormData?: AddUsersFormData) => {
             const submitFormSpy = jest.spyOn(component, 'submitForm');
             const submitFormEventSpy = jest.spyOn(component.formSubmitted, 'emit');
 
             const submitButton = fixture.debugElement.nativeElement.querySelector('#submitButton');
             submitButton.click();
 
-            return fixture.whenStable().then(() => {
-                if (expectSubmitEvent) {
-                    expect(submitFormSpy).toHaveBeenCalledOnce();
-                    expect(submitFormEventSpy).toHaveBeenCalledOnce();
-                    expect(submitFormEventSpy).toHaveBeenCalledWith(expectedFormData);
-                } else {
-                    expect(submitFormSpy).not.toHaveBeenCalled();
-                    expect(submitFormEventSpy).not.toHaveBeenCalled();
-                }
-            });
+            await fixture.whenStable();
+            if (expectSubmitEvent) {
+                expect(submitFormSpy).toHaveBeenCalledOnce();
+                expect(submitFormEventSpy).toHaveBeenCalledOnce();
+                expect(submitFormEventSpy).toHaveBeenCalledWith(expectedFormData);
+            } else {
+                expect(submitFormSpy).not.toHaveBeenCalled();
+                expect(submitFormEventSpy).not.toHaveBeenCalled();
+            }
         };
     });
 });
