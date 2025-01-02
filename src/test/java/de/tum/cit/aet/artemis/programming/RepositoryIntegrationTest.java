@@ -143,6 +143,10 @@ class RepositoryIntegrationTest extends AbstractProgrammingIntegrationJenkinsGit
         // write content to the created file
         FileUtils.write(studentFile, currentLocalFileContent, Charset.defaultCharset());
 
+        // add binary file to the repo folder
+        var studentFileBinary = Path.of(studentRepository.localRepoFile + "/" + currentLocalFileName + ".jar");
+        Files.createFile(studentFileBinary);
+
         // add folder to the repository folder
         Path folderPath = Path.of(studentRepository.localRepoFile + "/" + currentLocalFolderName);
         Files.createDirectory(folderPath);
@@ -263,6 +267,22 @@ class RepositoryIntegrationTest extends AbstractProgrammingIntegrationJenkinsGit
         for (String key : files.keySet()) {
             assertThat(Path.of(studentRepository.localRepoFile + "/" + key)).exists();
         }
+        assertThat(files).containsEntry(currentLocalFileName, currentLocalFileContent);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+    void testGetFilesWithOmitBinaries() throws Exception {
+        var queryParams = "?omitBinaries=true";
+        var files = request.getMap(studentRepoBaseUrl + participation.getId() + "/files-content" + queryParams, HttpStatus.OK, String.class, String.class);
+        assertThat(files).isNotEmpty();
+
+        for (String key : files.keySet()) {
+            assertThat(Path.of(studentRepository.localRepoFile + "/" + key)).exists();
+        }
+
+        assertThat(files.keySet()).noneMatch(file -> file.endsWith(".jar"));
+
         assertThat(files).containsEntry(currentLocalFileName, currentLocalFileContent);
     }
 

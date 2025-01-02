@@ -75,9 +75,9 @@ class GitServiceTest extends AbstractProgrammingIntegrationIndependentTest {
         String newFileContent = "const a = arr.reduce(sum)";
         gitUtilService.updateFile(GitUtilService.REPOS.REMOTE, GitUtilService.FILES.FILE1, newFileContent);
         // Note: the test updates the file, but does not commit the update to the remote repository...
-        assertThat(gitUtilService.getFileContent(GitUtilService.REPOS.REMOTE, GitUtilService.FILES.FILE1)).isEqualTo(newFileContent);
+        assertThat(gitUtilService.getFileContent(GitUtilService.REPOS.REMOTE, GitUtilService.FILES.FILE1.toString())).isEqualTo(newFileContent);
         // ... therefore it is NOT available in the local repository
-        assertThat(gitUtilService.getFileContent(GitUtilService.REPOS.LOCAL, GitUtilService.FILES.FILE1)).isNotEqualTo(newFileContent);
+        assertThat(gitUtilService.getFileContent(GitUtilService.REPOS.LOCAL, GitUtilService.FILES.FILE1.toString())).isNotEqualTo(newFileContent);
     }
 
     @Test
@@ -135,9 +135,9 @@ class GitServiceTest extends AbstractProgrammingIntegrationIndependentTest {
                 gitService.checkoutRepositoryAtCommit(repo, commitHash);
             }
         }
-        assertThat(gitUtilService.getFileContent(GitUtilService.REPOS.LOCAL, GitUtilService.FILES.FILE1)).isEqualTo("lorem ipsum");
+        assertThat(gitUtilService.getFileContent(GitUtilService.REPOS.LOCAL, GitUtilService.FILES.FILE1.toString())).isEqualTo("lorem ipsum");
         assertThat(gitUtilService.getLog(GitUtilService.REPOS.LOCAL)).hasSize(2);
-        assertThat(gitUtilService.getFileContent(GitUtilService.REPOS.LOCAL, GitUtilService.FILES.FILE2)).isEmpty();
+        assertThat(gitUtilService.getFileContent(GitUtilService.REPOS.LOCAL, GitUtilService.FILES.FILE2.toString())).isEmpty();
     }
 
     @Test
@@ -155,18 +155,18 @@ class GitServiceTest extends AbstractProgrammingIntegrationIndependentTest {
         String commitHash = getCommitHash("my first commit");
         // switch to different commit at branch
         try (var repo = gitService.checkoutRepositoryAtCommit(gitUtilService.getRepoByType(GitUtilService.REPOS.LOCAL), commitHash)) {
-            assertThat(gitUtilService.getFileContent(GitUtilService.REPOS.LOCAL, GitUtilService.FILES.FILE1)).isEqualTo("lorem ipsum");
+            assertThat(gitUtilService.getFileContent(GitUtilService.REPOS.LOCAL, GitUtilService.FILES.FILE1.toString())).isEqualTo("lorem ipsum");
             assertThat(gitUtilService.getLog(GitUtilService.REPOS.LOCAL)).hasSize(2);
-            assertThat(gitUtilService.getFileContent(GitUtilService.REPOS.LOCAL, GitUtilService.FILES.FILE2)).isEmpty();
+            assertThat(gitUtilService.getFileContent(GitUtilService.REPOS.LOCAL, GitUtilService.FILES.FILE2.toString())).isEmpty();
             // switch back
             gitService.switchBackToDefaultBranchHead(repo);
-            assertThat(gitUtilService.getFileContent(GitUtilService.REPOS.LOCAL, GitUtilService.FILES.FILE2)).isEqualTo("lorem ipsum solet");
+            assertThat(gitUtilService.getFileContent(GitUtilService.REPOS.LOCAL, GitUtilService.FILES.FILE2.toString())).isEqualTo("lorem ipsum solet");
             // switch to different branch
             gitUtilService.checkoutBranch(GitUtilService.REPOS.LOCAL, "my-other-branch", true);
             // switch back again
             gitService.switchBackToDefaultBranchHead(repo);
-            assertThat(gitUtilService.getFileContent(GitUtilService.REPOS.LOCAL, GitUtilService.FILES.FILE1)).isEqualTo("lorem ipsum");
-            assertThat(gitUtilService.getFileContent(GitUtilService.REPOS.LOCAL, GitUtilService.FILES.FILE2)).isEqualTo("lorem ipsum solet");
+            assertThat(gitUtilService.getFileContent(GitUtilService.REPOS.LOCAL, GitUtilService.FILES.FILE1.toString())).isEqualTo("lorem ipsum");
+            assertThat(gitUtilService.getFileContent(GitUtilService.REPOS.LOCAL, GitUtilService.FILES.FILE2.toString())).isEqualTo("lorem ipsum solet");
         }
     }
 
@@ -293,10 +293,24 @@ class GitServiceTest extends AbstractProgrammingIntegrationIndependentTest {
 
         var map = gitService.listFilesAndFolders(localRepo);
 
-        assertThat(map).hasSize(4).containsEntry(new File(gitUtilService.getFile(GitUtilService.REPOS.LOCAL, GitUtilService.FILES.FILE1), localRepo), FileType.FILE)
-                .containsEntry(new File(gitUtilService.getFile(GitUtilService.REPOS.LOCAL, GitUtilService.FILES.FILE2), localRepo), FileType.FILE)
-                .containsEntry(new File(gitUtilService.getFile(GitUtilService.REPOS.LOCAL, GitUtilService.FILES.FILE3), localRepo), FileType.FILE)
+        assertThat(map).hasSize(5).containsEntry(new File(gitUtilService.getFile(GitUtilService.REPOS.LOCAL, GitUtilService.FILES.FILE1.toString()), localRepo), FileType.FILE)
+                .containsEntry(new File(gitUtilService.getFile(GitUtilService.REPOS.LOCAL, GitUtilService.FILES.FILE2.toString()), localRepo), FileType.FILE)
+                .containsEntry(new File(gitUtilService.getFile(GitUtilService.REPOS.LOCAL, GitUtilService.FILES.FILE3.toString()), localRepo), FileType.FILE)
+                .containsEntry(new File(gitUtilService.getFile(GitUtilService.REPOS.LOCAL, GitUtilService.FILES.FILE4.toString() + ".jar"), localRepo), FileType.FILE)
                 .containsEntry(new File(localRepo.getLocalPath().toFile(), localRepo), FileType.FOLDER);
+    }
+
+    @Test
+    void testListFilesAndFoldersAndOmitBinary() {
+        Repository localRepo = gitUtilService.getRepoByType(GitUtilService.REPOS.LOCAL);
+
+        var map = gitService.listFilesAndFolders(localRepo, true);
+
+        assertThat(map).hasSize(4).containsEntry(new File(gitUtilService.getFile(GitUtilService.REPOS.LOCAL, GitUtilService.FILES.FILE1.toString()), localRepo), FileType.FILE)
+                .containsEntry(new File(gitUtilService.getFile(GitUtilService.REPOS.LOCAL, GitUtilService.FILES.FILE2.toString()), localRepo), FileType.FILE)
+                .containsEntry(new File(gitUtilService.getFile(GitUtilService.REPOS.LOCAL, GitUtilService.FILES.FILE3.toString()), localRepo), FileType.FILE)
+                .containsEntry(new File(localRepo.getLocalPath().toFile(), localRepo), FileType.FOLDER)
+                .doesNotContainKey(new File(gitUtilService.getFile(GitUtilService.REPOS.LOCAL, GitUtilService.FILES.FILE4.toString() + ".jar"), localRepo));
     }
 
     @Test
@@ -305,9 +319,9 @@ class GitServiceTest extends AbstractProgrammingIntegrationIndependentTest {
 
         var fileList = gitService.listFiles(localRepo);
 
-        assertThat(fileList).hasSize(3).contains(new File(gitUtilService.getFile(GitUtilService.REPOS.LOCAL, GitUtilService.FILES.FILE1), localRepo))
-                .contains(new File(gitUtilService.getFile(GitUtilService.REPOS.LOCAL, GitUtilService.FILES.FILE2), localRepo))
-                .contains(new File(gitUtilService.getFile(GitUtilService.REPOS.LOCAL, GitUtilService.FILES.FILE3), localRepo))
+        assertThat(fileList).hasSize(4).contains(new File(gitUtilService.getFile(GitUtilService.REPOS.LOCAL, GitUtilService.FILES.FILE1.toString()), localRepo))
+                .contains(new File(gitUtilService.getFile(GitUtilService.REPOS.LOCAL, GitUtilService.FILES.FILE2.toString()), localRepo))
+                .contains(new File(gitUtilService.getFile(GitUtilService.REPOS.LOCAL, GitUtilService.FILES.FILE3.toString()), localRepo))
                 .doesNotContain(new File(localRepo.getLocalPath().toFile(), localRepo));
     }
 
@@ -315,8 +329,8 @@ class GitServiceTest extends AbstractProgrammingIntegrationIndependentTest {
     void testGetFileByName() {
         Repository localRepo = gitUtilService.getRepoByType(GitUtilService.REPOS.LOCAL);
 
-        var presentFile = gitService.getFileByName(localRepo, gitUtilService.getFile(GitUtilService.REPOS.LOCAL, GitUtilService.FILES.FILE1).getName());
-        assertThat(presentFile).contains(new File(gitUtilService.getFile(GitUtilService.REPOS.LOCAL, GitUtilService.FILES.FILE1), localRepo));
+        var presentFile = gitService.getFileByName(localRepo, gitUtilService.getFile(GitUtilService.REPOS.LOCAL, GitUtilService.FILES.FILE1.toString()).getName());
+        assertThat(presentFile).contains(new File(gitUtilService.getFile(GitUtilService.REPOS.LOCAL, GitUtilService.FILES.FILE1.toString()), localRepo));
 
         var nonPresentFile = gitService.getFileByName(localRepo, "NameThatWillNeverBePResent");
         assertThat(nonPresentFile).isNotPresent();
@@ -326,7 +340,7 @@ class GitServiceTest extends AbstractProgrammingIntegrationIndependentTest {
     void testCombineAllCommitsIntoInitialCommitTest() throws GitAPIException {
         String newFileContent1 = "lorem ipsum";
         String newFileContent2 = "lorem ipsum solet";
-        String fileContent = gitUtilService.getFileContent(GitUtilService.REPOS.REMOTE, GitUtilService.FILES.FILE3);
+        String fileContent = gitUtilService.getFileContent(GitUtilService.REPOS.REMOTE, GitUtilService.FILES.FILE3.toString());
 
         // These commits should be combined into the initial commit
         gitUtilService.updateFile(GitUtilService.REPOS.REMOTE, GitUtilService.FILES.FILE1, newFileContent1);
@@ -344,9 +358,9 @@ class GitServiceTest extends AbstractProgrammingIntegrationIndependentTest {
             Iterable<RevCommit> commits = gitUtilService.getLog(repo);
             Long numberOfCommits = StreamSupport.stream(commits.spliterator(), false).count();
 
-            String fileContent1 = gitUtilService.getFileContent(repo, GitUtilService.FILES.FILE1);
-            String fileContent2 = gitUtilService.getFileContent(repo, GitUtilService.FILES.FILE2);
-            String fileContent3 = gitUtilService.getFileContent(repo, GitUtilService.FILES.FILE3);
+            String fileContent1 = gitUtilService.getFileContent(repo, GitUtilService.FILES.FILE1.toString());
+            String fileContent2 = gitUtilService.getFileContent(repo, GitUtilService.FILES.FILE2.toString());
+            String fileContent3 = gitUtilService.getFileContent(repo, GitUtilService.FILES.FILE3.toString());
 
             assertThat(numberOfCommits).isEqualTo(1L);
             assertThat(fileContent1).isEqualTo(newFileContent1);
@@ -357,9 +371,9 @@ class GitServiceTest extends AbstractProgrammingIntegrationIndependentTest {
 
     @Test
     void testCombineAllCommitsIntoInitialCommitWithoutNewCommitsTest() throws GitAPIException {
-        String oldFileContent1 = gitUtilService.getFileContent(GitUtilService.REPOS.REMOTE, GitUtilService.FILES.FILE1);
-        String oldFileContent2 = gitUtilService.getFileContent(GitUtilService.REPOS.REMOTE, GitUtilService.FILES.FILE2);
-        String oldFileContent3 = gitUtilService.getFileContent(GitUtilService.REPOS.REMOTE, GitUtilService.FILES.FILE3);
+        String oldFileContent1 = gitUtilService.getFileContent(GitUtilService.REPOS.REMOTE, GitUtilService.FILES.FILE1.toString());
+        String oldFileContent2 = gitUtilService.getFileContent(GitUtilService.REPOS.REMOTE, GitUtilService.FILES.FILE2.toString());
+        String oldFileContent3 = gitUtilService.getFileContent(GitUtilService.REPOS.REMOTE, GitUtilService.FILES.FILE3.toString());
 
         gitService.combineAllCommitsIntoInitialCommit(gitUtilService.getRepoByType(GitUtilService.REPOS.LOCAL));
 
@@ -367,9 +381,9 @@ class GitServiceTest extends AbstractProgrammingIntegrationIndependentTest {
             Iterable<RevCommit> commits = gitUtilService.getLog(repo);
             Long numberOfCommits = StreamSupport.stream(commits.spliterator(), false).count();
 
-            String fileContent1 = gitUtilService.getFileContent(repo, GitUtilService.FILES.FILE1);
-            String fileContent2 = gitUtilService.getFileContent(repo, GitUtilService.FILES.FILE2);
-            String fileContent3 = gitUtilService.getFileContent(repo, GitUtilService.FILES.FILE3);
+            String fileContent1 = gitUtilService.getFileContent(repo, GitUtilService.FILES.FILE1.toString());
+            String fileContent2 = gitUtilService.getFileContent(repo, GitUtilService.FILES.FILE2.toString());
+            String fileContent3 = gitUtilService.getFileContent(repo, GitUtilService.FILES.FILE3.toString());
 
             assertThat(numberOfCommits).isEqualTo(1L);
             assertThat(fileContent1).isEqualTo(oldFileContent1);
