@@ -47,6 +47,16 @@ public interface SavedPostRepository extends ArtemisJpaRepository<SavedPost, Lon
     SavedPost findSavedPostByUserIdAndPostIdAndPostType(Long userId, Long postId, PostingType postType);
 
     /***
+     * Get all saved posts by connected post/answer post id and posting type. Not cached.
+     *
+     * @param postId   of the bookmark
+     * @param postType of the bookmark
+     *
+     * @return List of all saved posts connected to the corresponding entity.
+     */
+    List<SavedPost> findSavedPostByPostIdAndPostType(Long postId, PostingType postType);
+
+    /***
      * Query all post ids that a user has saved by a certain posting type. Cached by user id and post type.
      *
      * @param userId   of the bookmarks
