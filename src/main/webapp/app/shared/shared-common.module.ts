@@ -43,6 +43,6 @@ import { ArtemisDateRangePipe } from 'app/shared/pipes/artemis-date-range.pipe';
         DurationPipe,
         CloseCircleComponent,
     ],
-    providers: [ArtemisDateRangePipe],
+    providers: [ArtemisDatePipe, ArtemisDateRangePipe],
 })
 export class ArtemisSharedCommonModule {}

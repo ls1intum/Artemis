@@ -24,7 +24,6 @@ import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 @Component({
     selector: 'jhi-complaint-list',
     templateUrl: './list-of-complaints.component.html',
-    providers: [],
     standalone: true,
     imports: [TranslateDirective, FormsModule, ArtemisSharedCommonModule, FaIconComponent, NgbTooltip, ArtemisTranslatePipe],
 })

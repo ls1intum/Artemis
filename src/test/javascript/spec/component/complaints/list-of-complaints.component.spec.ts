@@ -24,6 +24,7 @@ import { MockRouter } from '../../helpers/mocks/mock-router';
 import { MockComplaintService } from '../../helpers/mocks/service/mock-complaint.service';
 import { MockCourseManagementService } from '../../helpers/mocks/service/mock-course-management.service';
 import { MockTranslateService, TranslatePipeMock } from '../../helpers/mocks/service/mock-translate.service';
+import { ArtemisSharedCommonModule } from 'app/shared/shared-common.module';
 
 describe('ListOfComplaintsComponent', () => {
     let fixture: ComponentFixture<ListOfComplaintsComponent>;
@@ -75,6 +76,9 @@ describe('ListOfComplaintsComponent', () => {
                 { provide: CourseManagementService, useClass: MockCourseManagementService },
             ],
         })
+            .overrideComponent(ListOfComplaintsComponent, {
+                remove: { imports: [ArtemisSharedCommonModule] },
+            })
             .compileComponents()
             .then(() => {
                 fixture = TestBed.createComponent(ListOfComplaintsComponent);
