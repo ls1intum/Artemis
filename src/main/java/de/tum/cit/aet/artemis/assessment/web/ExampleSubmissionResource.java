@@ -24,6 +24,7 @@ import org.springframework.web.bind.annotation.RestController;
 import de.tum.cit.aet.artemis.assessment.domain.ExampleSubmission;
 import de.tum.cit.aet.artemis.assessment.repository.ExampleSubmissionRepository;
 import de.tum.cit.aet.artemis.assessment.service.ExampleSubmissionService;
+import de.tum.cit.aet.artemis.core.exception.ApiNotPresentException;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
 import de.tum.cit.aet.artemis.core.security.Role;
@@ -35,10 +36,9 @@ import de.tum.cit.aet.artemis.core.util.HeaderUtil;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.domain.ExerciseType;
 import de.tum.cit.aet.artemis.exercise.repository.ExerciseRepository;
+import de.tum.cit.aet.artemis.text.api.TextSubmissionExportApi;
 import de.tum.cit.aet.artemis.text.domain.TextExercise;
 import de.tum.cit.aet.artemis.text.domain.TextSubmission;
-import de.tum.cit.aet.artemis.text.repository.TextSubmissionRepository;
-import de.tum.cit.aet.artemis.text.service.TextBlockService;
 
 /**
  * REST controller for managing ExampleSubmission.
@@ -63,19 +63,15 @@ public class ExampleSubmissionResource {
 
     private final ExerciseRepository exerciseRepository;
 
-    private final TextSubmissionRepository textSubmissionRepository;
-
-    private final TextBlockService textBlockService;
+    private final Optional<TextSubmissionExportApi> textSubmissionExportApi;
 
     public ExampleSubmissionResource(ExampleSubmissionService exampleSubmissionService, ExampleSubmissionRepository exampleSubmissionRepository,
-            AuthorizationCheckService authCheckService, ExerciseRepository exerciseRepository, TextSubmissionRepository textSubmissionRepository,
-            TextBlockService textBlockService) {
+            AuthorizationCheckService authCheckService, ExerciseRepository exerciseRepository, Optional<TextSubmissionExportApi> textSubmissionExportApi) {
         this.exampleSubmissionService = exampleSubmissionService;
         this.exampleSubmissionRepository = exampleSubmissionRepository;
         this.authCheckService = authCheckService;
         this.exerciseRepository = exerciseRepository;
-        this.textSubmissionRepository = textSubmissionRepository;
-        this.textBlockService = textBlockService;
+        this.textSubmissionExportApi = textSubmissionExportApi;
     }
 
     /**
@@ -135,13 +131,8 @@ public class ExampleSubmissionResource {
 
         // Prepare text blocks for fresh assessment
         if (exampleSubmission.getExercise().getExerciseType() == ExerciseType.TEXT && exampleSubmission.getSubmission() != null) {
-            Optional<TextSubmission> textSubmission = textSubmissionRepository.findWithEagerResultsAndFeedbackAndTextBlocksById(exampleSubmission.getSubmission().getId());
-            if (textSubmission.isPresent() && textSubmission.get().getLatestResult() == null
-                    && (textSubmission.get().getBlocks() == null || textSubmission.get().getBlocks().isEmpty())) {
-                TextSubmission submission = textSubmission.get();
-                textBlockService.computeTextBlocksForSubmissionBasedOnSyntax(submission);
-                textBlockService.saveAll(submission.getBlocks());
-            }
+            textSubmissionExportApi.orElseThrow(() -> new ApiNotPresentException(TextSubmissionExportApi.class, PROFILE_CORE))
+                    .prepareTextBlockForExampleSubmission(exampleSubmission.getSubmission().getId());
         }
 
         return ResponseEntity.ok(null);
@@ -172,7 +163,8 @@ public class ExampleSubmissionResource {
 
         // For TextExercise, we need to load the text blocks as well
         if (exampleSubmission.getExercise().getExerciseType() == ExerciseType.TEXT && exampleSubmission.getSubmission() != null) {
-            Optional<TextSubmission> textSubmission = textSubmissionRepository.findWithEagerResultsAndFeedbackAndTextBlocksById(exampleSubmission.getSubmission().getId());
+            Optional<TextSubmission> textSubmission = textSubmissionExportApi.orElseThrow(() -> new ApiNotPresentException(TextSubmissionExportApi.class, PROFILE_CORE))
+                    .getSubmissionForExampleSubmission(exampleSubmission.getSubmission().getId());
             textSubmission.ifPresent(exampleSubmission::setSubmission);
         }
 

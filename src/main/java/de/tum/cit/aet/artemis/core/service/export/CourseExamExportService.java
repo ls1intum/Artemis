@@ -48,8 +48,8 @@ import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.service.ProgrammingExerciseExportService;
 import de.tum.cit.aet.artemis.quiz.domain.QuizExercise;
 import de.tum.cit.aet.artemis.quiz.service.QuizExerciseWithSubmissionsExportService;
+import de.tum.cit.aet.artemis.text.api.TextSubmissionExportApi;
 import de.tum.cit.aet.artemis.text.domain.TextExercise;
-import de.tum.cit.aet.artemis.text.service.TextExerciseWithSubmissionsExportService;
 
 /**
  * Service Implementation for exporting courses and exams.
@@ -67,7 +67,7 @@ public class CourseExamExportService {
 
     private final ZipFileService zipFileService;
 
-    private final TextExerciseWithSubmissionsExportService textExerciseWithSubmissionsExportService;
+    private final Optional<TextSubmissionExportApi> textSubmissionExportApi;
 
     private final FileUploadExerciseWithSubmissionsExportService fileUploadExerciseWithSubmissionsExportService;
 
@@ -81,15 +81,16 @@ public class CourseExamExportService {
 
     private final WebsocketMessagingService websocketMessagingService;
 
-    public CourseExamExportService(ProgrammingExerciseExportService programmingExerciseExportService, ZipFileService zipFileService, FileService fileService,
-            TextExerciseWithSubmissionsExportService textExerciseWithSubmissionsExportService,
+    public CourseExamExportService(ProgrammingExerciseExportService programmingExerciseExportService, ZipFileService zipFileService,
+            Optional<TextSubmissionExportApi> textSubmissionExportApi, FileService fileService,
+
             FileUploadExerciseWithSubmissionsExportService fileUploadExerciseWithSubmissionsExportService,
             ModelingExerciseWithSubmissionsExportService modelingExerciseWithSubmissionsExportService,
             QuizExerciseWithSubmissionsExportService quizExerciseWithSubmissionsExportService, WebsocketMessagingService websocketMessagingService, ExamRepository examRepository) {
         this.programmingExerciseExportService = programmingExerciseExportService;
         this.zipFileService = zipFileService;
+        this.textSubmissionExportApi = textSubmissionExportApi;
         this.fileService = fileService;
-        this.textExerciseWithSubmissionsExportService = textExerciseWithSubmissionsExportService;
         this.fileUploadExerciseWithSubmissionsExportService = fileUploadExerciseWithSubmissionsExportService;
         this.modelingExerciseWithSubmissionsExportService = modelingExerciseWithSubmissionsExportService;
         this.quizExerciseWithSubmissionsExportService = quizExerciseWithSubmissionsExportService;
@@ -423,8 +424,8 @@ public class CourseExamExportService {
                                 .ifPresent(exportedExercises::add);
                     case FileUploadExercise fileUploadExercise -> exportedExercises.add(fileUploadExerciseWithSubmissionsExportService
                             .exportFileUploadExerciseWithSubmissions(fileUploadExercise, submissionsExportOptions, exerciseExportDir, exportErrors, reportData));
-                    case TextExercise textExercise -> exportedExercises.add(textExerciseWithSubmissionsExportService.exportTextExerciseWithSubmissions(textExercise,
-                            submissionsExportOptions, exerciseExportDir, exportErrors, reportData));
+                    case TextExercise textExercise -> textSubmissionExportApi.ifPresent(api -> exportedExercises
+                            .add(api.exportTextExerciseWithSubmissions(textExercise, submissionsExportOptions, exerciseExportDir, exportErrors, reportData)));
                     case ModelingExercise modelingExercise -> exportedExercises.add(modelingExerciseWithSubmissionsExportService
                             .exportModelingExerciseWithSubmissions(modelingExercise, submissionsExportOptions, exerciseExportDir, exportErrors, reportData));
                     case QuizExercise quizExercise ->
