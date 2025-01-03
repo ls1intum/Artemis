@@ -3,7 +3,7 @@
 # We use the supporting scripts to create users
 
 set -e
-artemis_path="$(readlink -f "$(dirname $0)/../..")"
+artemis_path="$(readlink -f "$(dirname "$0")/../..")"
 
 cd "$artemis_path/supporting_scripts"
 
