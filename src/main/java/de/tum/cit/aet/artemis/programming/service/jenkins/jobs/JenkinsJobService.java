@@ -150,6 +150,11 @@ public class JenkinsJobService {
         return JenkinsXmlFileUtils.readFromString(folderXml);
     }
 
+    /**
+     * Creates a new folder in Jenkins.
+     *
+     * @param projectKey The name of the folder.
+     */
     public void createFolder(String projectKey) {
         //@formatter:off
         URI uri = JenkinsEndpoints.NEW_FOLDER.buildEndpoint(jenkinsServerUri)
@@ -255,6 +260,12 @@ public class JenkinsJobService {
         }
     }
 
+    /**
+     * Deletes a job in Jenkins.
+     *
+     * @param folderName The name of the folder the job is in.
+     * @param jobName    The name of the job itself.
+     */
     public void deleteJob(String folderName, String jobName) {
         try {
             URI uri = JenkinsEndpoints.DELETE_JOB.buildEndpoint(jenkinsServerUri, folderName, jobName).build(true).toUri();
