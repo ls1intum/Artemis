@@ -72,6 +72,8 @@ artemis:
                     default: "~~invalid~~"
                 r:
                     default: "~~invalid~~"
+                bash:
+                    default: "~~invalid~~"
                 c_plus_plus:
                     default: "~~invalid~~"
                 c_sharp:
