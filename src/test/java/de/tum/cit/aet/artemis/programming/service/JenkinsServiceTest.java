@@ -162,8 +162,10 @@ class JenkinsServiceTest extends AbstractProgrammingIntegrationJenkinsGitlabTest
         programmingExerciseUtilService.addTestCasesToProgrammingExercise(programmingExercise);
 
         jenkinsRequestMockProvider.mockCreateProjectForExercise(programmingExercise, false);
-        jenkinsRequestMockProvider.mockCopyBuildPlan(programmingExercise.getProjectKey(), programmingExercise.getProjectKey(), programmingExercise.getTemplateBuildPlanId());
-        jenkinsRequestMockProvider.mockCopyBuildPlan(programmingExercise.getProjectKey(), programmingExercise.getProjectKey(), programmingExercise.getSolutionBuildPlanId());
+        jenkinsRequestMockProvider.mockCopyBuildPlanFromTemplate(programmingExercise.getProjectKey(), programmingExercise.getProjectKey(),
+                programmingExercise.getTemplateBuildPlanId());
+        jenkinsRequestMockProvider.mockCopyBuildPlanFromTemplate(programmingExercise.getProjectKey(), programmingExercise.getProjectKey(),
+                programmingExercise.getSolutionBuildPlanId());
         jenkinsRequestMockProvider.mockGivePlanPermissionsThrowException(programmingExercise.getProjectKey(), programmingExercise.getProjectKey());
 
         assertThatExceptionOfType(JenkinsException.class).isThrownBy(() -> programmingExerciseImportService.importBuildPlans(programmingExercise, programmingExercise))
@@ -179,8 +181,10 @@ class JenkinsServiceTest extends AbstractProgrammingIntegrationJenkinsGitlabTest
         programmingExerciseUtilService.addTestCasesToProgrammingExercise(programmingExercise);
 
         jenkinsRequestMockProvider.mockCreateProjectForExercise(programmingExercise, false);
-        jenkinsRequestMockProvider.mockCopyBuildPlan(programmingExercise.getProjectKey(), programmingExercise.getProjectKey(), programmingExercise.getTemplateBuildPlanId());
-        jenkinsRequestMockProvider.mockCopyBuildPlan(programmingExercise.getProjectKey(), programmingExercise.getProjectKey(), programmingExercise.getSolutionBuildPlanId());
+        jenkinsRequestMockProvider.mockCopyBuildPlanFromTemplate(programmingExercise.getProjectKey(), programmingExercise.getProjectKey(),
+                programmingExercise.getTemplateBuildPlanId());
+        jenkinsRequestMockProvider.mockCopyBuildPlanFromTemplate(programmingExercise.getProjectKey(), programmingExercise.getProjectKey(),
+                programmingExercise.getSolutionBuildPlanId());
         jenkinsRequestMockProvider.mockGivePlanPermissionsThrowException(programmingExercise.getProjectKey(), programmingExercise.getProjectKey());
 
         assertThatExceptionOfType(JenkinsException.class).isThrownBy(() -> programmingExerciseImportService.importBuildPlans(programmingExercise, programmingExercise))
@@ -290,7 +294,7 @@ class JenkinsServiceTest extends AbstractProgrammingIntegrationJenkinsGitlabTest
         targetExercise.setBuildConfig(programmingExerciseBuildConfigRepository.save(buildConfigTarget));
         targetExercise = programmingExerciseRepository.save(targetExercise);
 
-        jenkinsRequestMockProvider.mockCopyBuildPlan(sourceExercise.getProjectKey(), targetExercise.getProjectKey(), "");
+        jenkinsRequestMockProvider.mockCopyBuildPlanFromTemplate(sourceExercise.getProjectKey(), targetExercise.getProjectKey(), "");
 
         continuousIntegrationService.copyBuildPlan(sourceExercise, "", targetExercise, "", "", true);
         BuildPlan sourceBuildPlan = buildPlanRepository.findByProgrammingExercises_IdWithProgrammingExercisesElseThrow(sourceExercise.getId());
@@ -321,7 +325,7 @@ class JenkinsServiceTest extends AbstractProgrammingIntegrationJenkinsGitlabTest
         var buildConfigTarget = new ProgrammingExerciseBuildConfig();
         targetExercise.setBuildConfig(programmingExerciseBuildConfigRepository.save(buildConfigTarget));
         targetExercise = programmingExerciseRepository.save(targetExercise);
-        jenkinsRequestMockProvider.mockCopyBuildPlan(sourceExercise.getProjectKey(), targetExercise.getProjectKey(), "");
+        jenkinsRequestMockProvider.mockCopyBuildPlanFromTemplate(sourceExercise.getProjectKey(), targetExercise.getProjectKey(), "");
 
         continuousIntegrationService.copyBuildPlan(sourceExercise, "", targetExercise, "", "", true);
 

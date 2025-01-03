@@ -197,8 +197,8 @@ public abstract class AbstractSpringIntegrationJenkinsGitlabTest extends Abstrac
         String solutionBuildPlanId = targetProjectKey + "-" + SOLUTION.getName();
 
         jenkinsRequestMockProvider.mockCreateProjectForExercise(exerciseToBeImported, false);
-        jenkinsRequestMockProvider.mockCopyBuildPlan(sourceExercise.getProjectKey(), targetProjectKey, templateBuildPlanId);
-        jenkinsRequestMockProvider.mockCopyBuildPlan(sourceExercise.getProjectKey(), targetProjectKey, solutionBuildPlanId);
+        jenkinsRequestMockProvider.mockCopyBuildPlanFromTemplate(sourceExercise.getProjectKey(), targetProjectKey, templateBuildPlanId);
+        jenkinsRequestMockProvider.mockCopyBuildPlanFromTemplate(sourceExercise.getProjectKey(), targetProjectKey, solutionBuildPlanId);
         jenkinsRequestMockProvider.mockGivePlanPermissions(targetProjectKey, templateBuildPlanId);
         jenkinsRequestMockProvider.mockGivePlanPermissions(targetProjectKey, solutionBuildPlanId);
         jenkinsRequestMockProvider.mockEnablePlan(targetProjectKey, templateBuildPlanId, planExistsInCi, shouldPlanEnableFail);
@@ -318,7 +318,7 @@ public abstract class AbstractSpringIntegrationJenkinsGitlabTest extends Abstrac
     @Override
     public void mockCopyBuildPlan(ProgrammingExerciseStudentParticipation participation) throws Exception {
         final var projectKey = participation.getProgrammingExercise().getProjectKey();
-        jenkinsRequestMockProvider.mockCopyBuildPlan(projectKey, projectKey, participation.getBuildPlanId());
+        jenkinsRequestMockProvider.mockCopyBuildPlanFromTemplate(projectKey, projectKey, participation.getBuildPlanId());
     }
 
     @Override

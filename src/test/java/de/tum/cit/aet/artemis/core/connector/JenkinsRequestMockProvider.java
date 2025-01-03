@@ -2,6 +2,7 @@ package de.tum.cit.aet.artemis.core.connector;
 
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_JENKINS;
 import static de.tum.cit.aet.artemis.core.util.TestResourceUtils.loadFileFromResources;
+import static de.tum.cit.aet.artemis.programming.domain.build.BuildPlanType.TEMPLATE;
 import static org.mockito.Mockito.any;
 import static org.mockito.Mockito.anyString;
 import static org.mockito.Mockito.doNothing;
@@ -111,6 +112,16 @@ public class JenkinsRequestMockProvider {
         mockServer.verify();
     }
 
+    private String buildJobName(final String projectKey, final String planName) {
+        // the build plan ID can be provided either as the full name already (contains -), or only the participation ID suffix.
+        if (planName.contains("-")) {
+            return planName;
+        }
+        else {
+            return projectKey + "-" + planName;
+        }
+    }
+
     public void mockCreateProjectForExercise(ProgrammingExercise exercise, boolean shouldFail) {
         //@formatter:off
         URI uri = JenkinsEndpoints.NEW_FOLDER.buildEndpoint(serverUri)
@@ -129,19 +140,16 @@ public class JenkinsRequestMockProvider {
     }
 
     public void mockCreateBuildPlan(String projectKey, String planKey, boolean jobAlreadyExists) throws IOException {
-        var job = projectKey + "-" + planKey;
-        mockCreateJobInFolder(projectKey, job, jobAlreadyExists);
-        mockCreateBuildPlan(projectKey, job);
-    }
+        final String job = buildJobName(projectKey, planKey);
 
-    private void mockCreateBuildPlan(String projectKey, String job) throws IOException {
+        mockCreateJobInFolder(projectKey, job, jobAlreadyExists);
         mockGivePlanPermissions(projectKey, job);
         mockTriggerBuild(projectKey, job, false);
     }
 
     public void mockCreateCustomBuildPlan(String projectKey, String planKey) throws IOException {
-        var job = projectKey + "-" + planKey;
-        mockCreateBuildPlan(projectKey, job);
+        final String job = buildJobName(projectKey, planKey);
+        mockCreateBuildPlan(projectKey, job, false);
     }
 
     public void mockCreateJobInFolder(String jobFolder, String job, boolean jobAlreadyExists) throws IOException {
@@ -218,15 +226,17 @@ public class JenkinsRequestMockProvider {
         mockServer.expect(requestTo(uri)).andExpect(method(HttpMethod.POST)).andRespond(withSuccess().body(response).contentType(MediaType.APPLICATION_JSON));
     }
 
-    public void mockCopyBuildPlan(String sourceProjectKey, String targetProjectKey, String planKey) throws IOException {
-        mockGetJobXmlForBuildPlanWith(sourceProjectKey, planKey, "<xml></xml>");
+    public void mockCopyBuildPlanFromTemplate(String sourceProjectKey, String targetProjectKey, String planKey) throws IOException {
+        // the plan key has the form EXERCISE_ID-PARTICIPATION_ID
+        final String sourcePlanKey = planKey.replaceAll("-.*$", "-" + TEMPLATE.getName());
+        mockGetJobXmlForBuildPlanWith(sourceProjectKey, sourcePlanKey, "<xml></xml>");
         mockSaveJobXml(targetProjectKey, planKey);
     }
 
     private void mockSaveJobXml(String targetProjectKey, String planKey) throws IOException {
         mockGetFolderJob(targetProjectKey);
         mockGetJob(targetProjectKey, planKey, null, false);
-        mockCreateBuildPlan(targetProjectKey, planKey);
+        mockCreateBuildPlan(targetProjectKey, planKey, false);
     }
 
     public void mockConfigureBuildPlan(ProgrammingExercise exercise, String username) throws IOException {
@@ -285,7 +295,7 @@ public class JenkinsRequestMockProvider {
     public void mockCopyBuildPlanForParticipation(ProgrammingExercise exercise, String username) throws IOException {
         final var projectKey = exercise.getProjectKey();
         final var planKey = projectKey + "-" + getCleanPlanName(username.toUpperCase());
-        mockCopyBuildPlan(projectKey, projectKey, planKey);
+        mockCopyBuildPlanFromTemplate(projectKey, projectKey, planKey);
     }
 
     public void mockGetJob(String projectKey, String jobName, JenkinsJobService.JobWithDetails jobToReturn, boolean shouldFail) throws IOException {
