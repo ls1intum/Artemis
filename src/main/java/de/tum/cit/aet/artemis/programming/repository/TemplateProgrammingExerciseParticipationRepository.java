@@ -41,11 +41,11 @@ public interface TemplateProgrammingExerciseParticipationRepository
             """)
     Optional<TemplateProgrammingExerciseParticipation> findByBuildPlanIdWithResults(@Param("buildPlanId") String buildPlanId);
 
-    @EntityGraph(type = LOAD, attributePaths = { "results", "submissions" })
-    Optional<TemplateProgrammingExerciseParticipation> findWithEagerResultsAndSubmissionsByProgrammingExerciseId(long exerciseId);
+    @EntityGraph(type = LOAD, attributePaths = { "submissions" })
+    Optional<TemplateProgrammingExerciseParticipation> findWithSubmissionsByRepositoryUri(String repositoryUri);
 
-    default TemplateProgrammingExerciseParticipation findWithEagerResultsAndSubmissionsByProgrammingExerciseIdElseThrow(long exerciseId) {
-        return getValueElseThrow(findWithEagerResultsAndSubmissionsByProgrammingExerciseId(exerciseId));
+    default TemplateProgrammingExerciseParticipation findWithSubmissionsByRepositoryUriElseThrow(String repositoryUri) {
+        return getValueElseThrow(findWithSubmissionsByRepositoryUri(repositoryUri));
     }
 
     Optional<TemplateProgrammingExerciseParticipation> findByRepositoryUri(String repositoryUri);
