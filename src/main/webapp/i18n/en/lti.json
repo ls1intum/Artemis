@@ -4,6 +4,22 @@
             "home": {
                 "title": "LTI Configuration"
             },
+            "contentSelectionTable": {
+                "exercises": "Exercises",
+                "lectures": "Lectures",
+                "competencies": {
+                    "header": "Add competencies",
+                    "selector": "Confirm whether you want to add a link to the competencies of your course"
+                },
+                "learningPaths": {
+                    "header": "Add learning paths",
+                    "selector": "Confirm whether you want to add a link to the learning paths of your course"
+                },
+                "iris": {
+                    "header": "Add Iris",
+                    "selector": "Confirm whether you want to add a link to Iris"
+                }
+            },
             "initializationError": "Your user initialization process was started but your LTI account was possible created with issues. Please ask your instructor for help if you didn't receive your Artemis password yet.",
             "initialization": {
                 "header": "LTI User Initialization",
@@ -90,7 +106,8 @@
                 "selectToLink": "Select exercises to link",
                 "unknownError": "Unsuccessful due to an unknown error. Please contact an admin!",
                 "noCoursesError": "You do not have any LTI-enabled courses in Artemis yet. Please configure at least one course to use this feature.",
-                "learnMore": "Learn more about enabling LTI in your course.."
+                "learnMore": "Learn more about enabling LTI in your course..",
+                "parameterError": "There was an error when processing the parameters"
             },
             "missingConfigurationWarning": "Missing values in the LTI1.3 configuration. Launches will not work. Please contact the administrator for configuration.",
             "selectContentFromCourse": "Select content from course {{ title }}",

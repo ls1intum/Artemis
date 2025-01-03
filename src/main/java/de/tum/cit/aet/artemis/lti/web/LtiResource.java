@@ -131,10 +131,14 @@ public class LtiResource {
      * @param clientRegistrationId The identifier online of the course configuration.
      * @return A ResponseEntity containing a JSON object with the 'targetLinkUri' property set to the deep linking response target link.
      */
+    // TODO Deep Linking 1
     @PostMapping("lti13/deep-linking/{courseId}")
     @EnforceAtLeastInstructor
-    public ResponseEntity<String> lti13DeepLinking(@PathVariable Long courseId, @RequestParam(name = "exerciseIds") Set<Long> exerciseIds,
+    public ResponseEntity<String> lti13DeepLinking(@PathVariable Long courseId, @RequestParam(name = "exerciseIds", required = false) Set<Long> exerciseIds,
+            @RequestParam(name = "lectureIds", required = false) Set<Long> lectureIds, @RequestParam(name = "competency", required = false) boolean competency,
+            @RequestParam(name = "learningPath", required = false) boolean learningPath, @RequestParam(name = "iris", required = false) boolean iris,
             @RequestParam(name = "ltiIdToken") String ltiIdToken, @RequestParam(name = "clientRegistrationId") String clientRegistrationId) throws ParseException {
+        // TODO update message
         log.info("LTI 1.3 Deep Linking request received for course {} with exercises {} for registrationId {}", courseId, exerciseIds, clientRegistrationId);
 
         Course course = courseRepository.findByIdWithEagerOnlineCourseConfigurationElseThrow(courseId);
@@ -146,7 +150,14 @@ public class LtiResource {
 
         OidcIdToken idToken = new OidcIdToken(ltiIdToken, null, null, SignedJWT.parse(ltiIdToken).getJWTClaimsSet().getClaims());
 
-        String targetLink = ltiDeepLinkingService.performDeepLinking(idToken, clientRegistrationId, courseId, exerciseIds);
+        String targetLink = "";
+
+        if (exerciseIds != null) {
+            targetLink = ltiDeepLinkingService.performExerciseDeepLinking(idToken, clientRegistrationId, courseId, exerciseIds);
+        }
+        else if (competency) {
+            targetLink = ltiDeepLinkingService.performCompetencyDeepLinking(idToken, clientRegistrationId, courseId);
+        }
 
         ObjectNode json = new ObjectMapper().createObjectNode();
         json.put("targetLinkUri", targetLink);

@@ -61,6 +61,7 @@ export class Lti13ExerciseLaunchComponent implements OnInit {
             })
             .subscribe({
                 next: (data) => {
+                    console.log(data);
                     this.handleLtiLaunchSuccess(data);
                 },
                 error: (error) => {
