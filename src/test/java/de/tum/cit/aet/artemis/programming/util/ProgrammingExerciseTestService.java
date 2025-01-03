@@ -1995,8 +1995,8 @@ public class ProgrammingExerciseTestService {
         Set<Long> peIds = exam.getExerciseGroups().get(6).getExercises().stream().map(Exercise::getId).collect(Collectors.toSet());
         List<ProgrammingExercise> programmingExercises = programmingExerciseTestRepository.findAllWithTemplateAndSolutionParticipationByIdIn(peIds);
         exam.getExerciseGroups().get(6).setExercises(new HashSet<>(programmingExercises));
-        for (var exercise : programmingExercises) {
 
+        for (var exercise : programmingExercises) {
             setupRepositoryMocks(exercise);
             for (var examUser : exam.getExamUsers()) {
                 var repo = new LocalRepository(defaultBranch);
@@ -2013,7 +2013,8 @@ public class ProgrammingExerciseTestService {
         }
 
         int noGeneratedParticipations = ExamPrepareExercisesTestUtil.prepareExerciseStart(request, exam, course);
-        assertThat(noGeneratedParticipations).isEqualTo(registeredStudents.size() * exam.getExerciseGroups().size());
+        assertThat(noGeneratedParticipations).as("for each of the %d students there should be %d exercises", registeredStudents.size(), exam.getExerciseGroups().size())
+                .isEqualTo(registeredStudents.size() * exam.getExerciseGroups().size());
 
         mockDelegate.resetMockProvider();
 

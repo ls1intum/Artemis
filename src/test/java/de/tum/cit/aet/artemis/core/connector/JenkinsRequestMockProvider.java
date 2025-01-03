@@ -154,6 +154,19 @@ public class JenkinsRequestMockProvider {
         mockCreateBuildPlan(projectKey, job, false);
     }
 
+    private void mockCreateJobInExistingFolder(String jobFolder, String job) throws IOException {
+        mockGetFolderJob(jobFolder);
+        if (false) {
+            var jobWithDetails = new JenkinsJobService.JobWithDetails(job, "description", false);
+            // NOTE: this method also invokes mockGetFolderJob(...)
+            mockGetJob(jobFolder, job, jobWithDetails, false);
+        }
+        else {
+            mockGetJob(jobFolder, job, null, false);
+            mockCreateJob(jobFolder, job);
+        }
+    }
+
     public void mockCreateJobInFolder(String jobFolder, String job, boolean jobAlreadyExists) throws IOException {
         var folderJob = jobAlreadyExists ? new JenkinsJobService.FolderJob(jobFolder, "description", "url") : null;
         mockGetFolderJob(jobFolder, folderJob);
@@ -229,24 +242,33 @@ public class JenkinsRequestMockProvider {
     }
 
     public void mockCopyBuildPlanFromTemplate(String sourceProjectKey, String targetProjectKey, String planKey) throws IOException {
-        mockCopyBuildPlanFromPlanType(sourceProjectKey, targetProjectKey, planKey, TEMPLATE);
+        mockCopyBuildPlanFromPlanType(sourceProjectKey, targetProjectKey, planKey, TEMPLATE, false);
+    }
+
+    public void mockCopyBuildPlanFromTemplateIntoExistingTargetFolder(String sourceProjectKey, String targetProjectKey, String planKey) throws IOException {
+        mockCopyBuildPlanFromPlanType(sourceProjectKey, targetProjectKey, planKey, TEMPLATE, true);
     }
 
     public void mockCopyBuildPlanFromSolution(String sourceProjectKey, String targetProjectKey, String planKey) throws IOException {
-        mockCopyBuildPlanFromPlanType(sourceProjectKey, targetProjectKey, planKey, SOLUTION);
+        mockCopyBuildPlanFromPlanType(sourceProjectKey, targetProjectKey, planKey, SOLUTION, false);
     }
 
-    private void mockCopyBuildPlanFromPlanType(String sourceProjectKey, String targetProjectKey, String planKey, BuildPlanType planType) throws IOException {
+    private void mockCopyBuildPlanFromPlanType(String sourceProjectKey, String targetProjectKey, String planKey, BuildPlanType planType, boolean folderExists) throws IOException {
         // the plan key has the form EXERCISE_ID-PARTICIPATION_ID
         final String sourcePlanKey = sourceProjectKey + "-" + planType.getName();
         mockGetJobXmlForBuildPlanWith(sourceProjectKey, sourcePlanKey, "<xml></xml>");
-        mockSaveJobXml(targetProjectKey, planKey);
+        mockSaveJobXml(targetProjectKey, planKey, folderExists);
     }
 
-    private void mockSaveJobXml(String targetProjectKey, String planKey) throws IOException {
+    private void mockSaveJobXml(String targetProjectKey, String planKey, boolean folderExists) throws IOException {
         mockGetFolderJob(targetProjectKey);
         mockGetJob(targetProjectKey, planKey, null, false);
-        mockCreateBuildPlan(targetProjectKey, planKey, false);
+        if (folderExists) {
+            mockCreateJobInExistingFolder(targetProjectKey, planKey);
+        }
+        else {
+            mockCreateBuildPlan(targetProjectKey, planKey, false);
+        }
     }
 
     public void mockConfigureBuildPlan(ProgrammingExercise exercise, String username) throws IOException {
@@ -305,7 +327,7 @@ public class JenkinsRequestMockProvider {
     public void mockCopyBuildPlanForParticipation(ProgrammingExercise exercise, String username) throws IOException {
         final var projectKey = exercise.getProjectKey();
         final var planKey = projectKey + "-" + getCleanPlanName(username.toUpperCase());
-        mockCopyBuildPlanFromTemplate(projectKey, projectKey, planKey);
+        mockCopyBuildPlanFromTemplateIntoExistingTargetFolder(projectKey, projectKey, planKey);
     }
 
     public void mockGetJob(String projectKey, String jobName, JenkinsJobService.JobWithDetails jobToReturn, boolean shouldFail) throws IOException {

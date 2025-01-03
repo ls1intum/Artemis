@@ -111,7 +111,7 @@ public class JenkinsJobService {
         try {
             var folder = getFolderJob(folderName);
             if (folder == null) {
-                throw new JenkinsException("The folder " + folderName + "does not exist.");
+                throw new JenkinsException("The folder " + folderName + " does not exist.");
             }
 
             URI uri = JenkinsEndpoints.PLAN_CONFIG.buildEndpoint(serverUri, folderName, jobName).build(true).toUri();
