@@ -68,7 +68,7 @@ import de.tum.cit.aet.artemis.exercise.domain.ExerciseType;
 import de.tum.cit.aet.artemis.exercise.domain.Submission;
 import de.tum.cit.aet.artemis.exercise.domain.Team;
 import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
-import de.tum.cit.aet.artemis.exercise.dto.ExerciseTypeCountDAO;
+import de.tum.cit.aet.artemis.exercise.dto.ExerciseTypeCountDTO;
 import de.tum.cit.aet.artemis.exercise.repository.ExerciseRepository;
 import de.tum.cit.aet.artemis.exercise.repository.StudentParticipationRepository;
 import de.tum.cit.aet.artemis.exercise.repository.SubmissionRepository;
@@ -841,7 +841,7 @@ public class ExerciseService {
      */
     public Map<ExerciseType, Long> countByCourseIdGroupByType(Long courseId) {
         Map<ExerciseType, Long> exerciseTypeCountMap = exerciseRepository.countByCourseIdGroupedByType(courseId).stream()
-                .collect(Collectors.toMap(ExerciseTypeCountDAO::exerciseType, ExerciseTypeCountDAO::count));
+                .collect(Collectors.toMap(ExerciseTypeCountDTO::exerciseType, ExerciseTypeCountDTO::count));
 
         return Arrays.stream(ExerciseType.values()).collect(Collectors.toMap(type -> type, type -> exerciseTypeCountMap.getOrDefault(type, 0L)));
     }

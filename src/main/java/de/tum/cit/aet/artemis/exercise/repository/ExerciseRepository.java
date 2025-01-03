@@ -25,7 +25,7 @@ import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
 import de.tum.cit.aet.artemis.core.repository.base.ArtemisJpaRepository;
 import de.tum.cit.aet.artemis.exam.web.ExamResource;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
-import de.tum.cit.aet.artemis.exercise.dto.ExerciseTypeCountDAO;
+import de.tum.cit.aet.artemis.exercise.dto.ExerciseTypeCountDTO;
 import de.tum.cit.aet.artemis.exercise.dto.ExerciseTypeMetricsEntry;
 
 /**
@@ -637,12 +637,12 @@ public interface ExerciseRepository extends ArtemisJpaRepository<Exercise, Long>
      * @return a list of mappings from exercise type to count
      */
     @Query("""
-            SELECT new de.tum.cit.aet.artemis.exercise.dto.ExerciseTypeCountDAO(TYPE(e), COUNT(e))
+            SELECT new de.tum.cit.aet.artemis.exercise.dto.ExerciseTypeCountDTO(TYPE(e), COUNT(e))
             FROM Course c
                 JOIN c.exercises e
             WHERE c.id = :courseId
                 AND TYPE(e) IN (ModelingExercise, TextExercise, ProgrammingExercise, QuizExercise, FileUploadExercise)
             GROUP BY TYPE(e)
             """)
-    List<ExerciseTypeCountDAO> countByCourseIdGroupedByType(@Param("courseId") long courseId);
+    List<ExerciseTypeCountDTO> countByCourseIdGroupedByType(@Param("courseId") long courseId);
 }
