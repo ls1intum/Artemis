@@ -2,7 +2,7 @@
 
 set -e
 
-artemis_path="$(readlink -f "$(dirname $0)/../..")"
+artemis_path="$(readlink -f "$(dirname "$0")/../..")"
 
 echo "Installing Playwright and dependencies"
 
