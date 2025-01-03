@@ -3,7 +3,7 @@
 @import 'node_modules/bootstrap/scss/mixins';
 
 $step-font-size: 0.6rem;
-$step-button-size: 1.5rem;
+$step-button-size: 1.4rem;
 
 .card-second-header {
     padding: 1rem 1rem 0 1rem;
@@ -53,10 +53,10 @@ $step-button-size: 1.5rem;
         text-align: center;
         padding: 0;
         font-size: $step-font-size;
-        line-height: 1.428571429;
+        line-height: 1;
         border-radius: 15px;
         border-width: 2px;
-        border-color: var(--programming-exercise-instruction-step-wizard-btn-border-color);
+        border-color: $gray-600;
         display: inline-flex;
         align-items: center;
         justify-content: center;
@@ -66,20 +66,22 @@ $step-button-size: 1.5rem;
         cursor: default;
     }
 
-    &--failed.btn {
+    & &--failed.btn {
         cursor: pointer;
         color: $danger;
         border-color: $danger;
     }
 
-    &--success.btn {
+    & &--success.btn {
         cursor: pointer;
         color: $success;
         border-color: $success;
     }
 
+    & &--no-result.btn,
     .btn.not-done {
-        color: $gray-500;
+        color: $gray-600;
+        font-size: 0.4rem;
     }
 }
 
