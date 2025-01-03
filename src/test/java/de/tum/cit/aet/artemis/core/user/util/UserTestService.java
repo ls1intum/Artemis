@@ -160,7 +160,9 @@ public class UserTestService {
     }
 
     public void tearDown() throws IOException {
-        notificationTestRepository.deleteAllInBatch(notificationTestRepository.findAllByRecipientId(student.getId()));
+        if (student.getId() != null) {
+            notificationTestRepository.deleteAllInBatch(notificationTestRepository.findAllByRecipientId(student.getId()));
+        }
         userTestRepository.deleteAll(userTestRepository.searchAllByLoginOrName(Pageable.unpaged(), TEST_PREFIX));
     }
 

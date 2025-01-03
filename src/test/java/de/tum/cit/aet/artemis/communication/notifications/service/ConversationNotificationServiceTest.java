@@ -20,7 +20,6 @@ import de.tum.cit.aet.artemis.communication.domain.conversation.OneToOneChat;
 import de.tum.cit.aet.artemis.communication.domain.notification.ConversationNotification;
 import de.tum.cit.aet.artemis.communication.domain.notification.Notification;
 import de.tum.cit.aet.artemis.communication.repository.ConversationMessageRepository;
-import de.tum.cit.aet.artemis.communication.repository.NotificationRepository;
 import de.tum.cit.aet.artemis.communication.repository.conversation.ConversationNotificationRepository;
 import de.tum.cit.aet.artemis.communication.service.notifications.ConversationNotificationService;
 import de.tum.cit.aet.artemis.communication.test_repository.ConversationParticipantTestRepository;
@@ -28,6 +27,7 @@ import de.tum.cit.aet.artemis.communication.test_repository.ConversationTestRepo
 import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.domain.DomainObject;
 import de.tum.cit.aet.artemis.core.domain.User;
+import de.tum.cit.aet.artemis.core.test_repository.NotificationTestRepository;
 import de.tum.cit.aet.artemis.core.test_repository.UserTestRepository;
 import de.tum.cit.aet.artemis.core.user.util.UserUtilService;
 import de.tum.cit.aet.artemis.core.util.CourseUtilService;
@@ -62,7 +62,7 @@ class ConversationNotificationServiceTest extends AbstractSpringIntegrationIndep
     private CourseUtilService courseUtilService;
 
     @Autowired
-    private NotificationRepository notificationRepository;
+    private NotificationTestRepository notificationTestRepository;
 
     private OneToOneChat oneToOneChat;
 
@@ -115,7 +115,7 @@ class ConversationNotificationServiceTest extends AbstractSpringIntegrationIndep
         conversationNotificationService.notifyAboutNewMessage(post, notification, Set.of(user2));
         verifyRepositoryCallWithCorrectNotification(NEW_MESSAGE_TITLE);
 
-        Notification sentNotification = notificationRepository.findAll().stream().max(Comparator.comparing(DomainObject::getId)).orElseThrow();
+        Notification sentNotification = notificationTestRepository.findAll().stream().max(Comparator.comparing(DomainObject::getId)).orElseThrow();
 
         verify(generalInstantNotificationService).sendNotification(sentNotification, Set.of(user2), post);
 
