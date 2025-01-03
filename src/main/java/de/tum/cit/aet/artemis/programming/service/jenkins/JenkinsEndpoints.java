@@ -30,7 +30,7 @@ public enum JenkinsEndpoints {
     // User management endpoints
     GET_USER("user", "<username>", "api", "json"),
     DELETE_USER("user", "<username>", "doDelete"),
-    CREATE_ADMIN("securityRealm", "createAccountByAdmin");
+    CREATE_USER("securityRealm", "createAccountByAdmin");
     // @formatter:on
 
     private final List<String> pathSegments;

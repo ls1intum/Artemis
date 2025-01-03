@@ -405,7 +405,7 @@ public class JenkinsRequestMockProvider {
     public void mockCreateUser(User user, boolean userExistsInCi, boolean shouldFail, boolean shouldFailToGetUser) throws IOException {
         mockGetUser(user.getLogin(), userExistsInCi, shouldFailToGetUser);
 
-        URI uri = JenkinsEndpoints.CREATE_ADMIN.buildEndpoint(serverUri).build(true).toUri();
+        URI uri = JenkinsEndpoints.CREATE_USER.buildEndpoint(serverUri).build(true).toUri();
         var status = shouldFail ? HttpStatus.INTERNAL_SERVER_ERROR : HttpStatus.FOUND;
         mockServer.expect(requestTo(uri)).andExpect(method(HttpMethod.POST)).andRespond(withStatus(status));
 

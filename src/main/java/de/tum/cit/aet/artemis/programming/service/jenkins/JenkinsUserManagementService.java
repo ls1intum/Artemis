@@ -101,7 +101,7 @@ public class JenkinsUserManagementService implements CIUserManagementService {
 
         try {
             // Create the Jenkins user
-            URI uri = JenkinsEndpoints.CREATE_ADMIN.buildEndpoint(jenkinsServerUri).build(true).toUri();
+            URI uri = JenkinsEndpoints.CREATE_USER.buildEndpoint(jenkinsServerUri).build(true).toUri();
             restTemplate.exchange(uri, HttpMethod.POST, getCreateUserFormHttpEntity(user, password), Void.class);
 
             // Adds the user to groups of existing programming exercises
