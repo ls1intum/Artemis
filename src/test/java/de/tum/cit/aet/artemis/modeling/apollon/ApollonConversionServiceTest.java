@@ -37,7 +37,7 @@ class ApollonConversionServiceTest extends AbstractSpringIntegrationIndependentT
     @Value("${artemis.apollon.conversion-service-url}")
     private String apollonConversionUrl;
 
-    ApollonConversionService apollonConversionService;
+    private ApollonConversionService apollonConversionService;
 
     /**
      * Initializes apollonConversionService

@@ -36,8 +36,6 @@ class LectureUnitServiceTest extends AbstractSpringIntegrationIndependentTest {
     @Autowired
     private UserUtilService userUtilService;
 
-    private Lecture lecture;
-
     private LectureUnit unit1;
 
     private LectureUnit unit2;
@@ -46,7 +44,7 @@ class LectureUnitServiceTest extends AbstractSpringIntegrationIndependentTest {
 
     @BeforeEach
     void init() {
-        lecture = lectureUtilService.createCourseWithLecture(true);
+        Lecture lecture = lectureUtilService.createCourseWithLecture(true);
         unit1 = lectureUtilService.createAttachmentUnit(false);
         unit2 = lectureUtilService.createTextUnit();
         lectureUtilService.addLectureUnitsToLecture(lecture, List.of(unit1, unit2));

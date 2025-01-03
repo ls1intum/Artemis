@@ -6,7 +6,7 @@ import static org.mockito.Mockito.reset;
 
 import java.io.File;
 import java.io.IOException;
-import java.net.URL;
+import java.net.URI;
 import java.nio.charset.Charset;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -33,7 +33,7 @@ import de.tum.cit.aet.artemis.programming.util.ProgrammingExerciseUtilService;
 public class ContinuousIntegrationTestService {
 
     @Value("${artemis.continuous-integration.url}")
-    private URL ciServerUrl;
+    private URI ciServerUrl;
 
     @Value("${artemis.version-control.default-branch:main}")
     private String defaultBranch;
@@ -169,6 +169,7 @@ public class ContinuousIntegrationTestService {
     public void testHealthNotRunning() throws Exception {
         mockDelegate.mockHealthInCiService(false, HttpStatus.OK);
         var health = continuousIntegrationService.health();
+        assertThat(health.additionalInfo().get("url")).isEqualTo(ciServerUrl);
         assertThat(health.additionalInfo()).containsEntry("url", ciServerUrl);
         assertThat(health.isUp()).isFalse();
     }

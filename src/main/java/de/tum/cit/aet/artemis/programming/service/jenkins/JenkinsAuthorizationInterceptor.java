@@ -1,7 +1,9 @@
 package de.tum.cit.aet.artemis.programming.service.jenkins;
 
+import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_JENKINS;
+
 import java.io.IOException;
-import java.net.URL;
+import java.net.URI;
 
 import jakarta.validation.constraints.NotNull;
 
@@ -22,7 +24,7 @@ import org.springframework.web.client.RestTemplate;
 
 import com.fasterxml.jackson.databind.JsonNode;
 
-@Profile("jenkins")
+@Profile(PROFILE_JENKINS)
 @Component
 public class JenkinsAuthorizationInterceptor implements ClientHttpRequestInterceptor {
 
@@ -35,7 +37,7 @@ public class JenkinsAuthorizationInterceptor implements ClientHttpRequestInterce
     private String password;
 
     @Value("${artemis.continuous-integration.url}")
-    private URL jenkinsURL;
+    private URI jenkinsServerUri;
 
     @Value("${jenkins.use-crumb:#{true}}")
     private boolean useCrumb;
@@ -62,7 +64,7 @@ public class JenkinsAuthorizationInterceptor implements ClientHttpRequestInterce
         final var entity = new HttpEntity<>(headers);
 
         try {
-            final var response = restTemplate.exchange(jenkinsURL.toString() + "/crumbIssuer/api/json", HttpMethod.GET, entity, JsonNode.class);
+            final var response = restTemplate.exchange(jenkinsServerUri.toString() + "/crumbIssuer/api/json", HttpMethod.GET, entity, JsonNode.class);
             final var sessionId = response.getHeaders().get("Set-Cookie").getFirst();
             headersToAuthenticate.add("Jenkins-Crumb", response.getBody().get("crumb").asText());
             headersToAuthenticate.add("Cookie", sessionId);

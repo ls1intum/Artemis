@@ -107,7 +107,7 @@ class ExamUserIntegrationTest extends AbstractSpringIntegrationJenkinsGitlabTest
 
         programmingExerciseTestService.setup(this, versionControlService, continuousIntegrationService);
         gitlabRequestMockProvider.enableMockingOfRequests();
-        jenkinsRequestMockProvider.enableMockingOfRequests(jenkinsServer, jenkinsJobPermissionsService);
+        jenkinsRequestMockProvider.enableMockingOfRequests(jenkinsJobPermissionsService);
     }
 
     @AfterEach

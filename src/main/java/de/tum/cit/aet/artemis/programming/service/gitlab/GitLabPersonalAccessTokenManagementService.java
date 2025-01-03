@@ -148,7 +148,7 @@ public class GitLabPersonalAccessTokenManagementService extends VcsTokenManageme
     }
 
     private void revokePersonalAccessToken(Long tokenId) {
-        UriComponentsBuilder uriBuilder = UriComponentsBuilder.fromHttpUrl(gitlabApi.getGitLabServerUrl() + "/api/v4/personal_access_tokens");
+        UriComponentsBuilder uriBuilder = UriComponentsBuilder.fromUriString(gitlabApi.getGitLabServerUrl() + "/api/v4/personal_access_tokens");
         uriBuilder.pathSegment(String.valueOf(tokenId));
 
         try {
@@ -161,7 +161,7 @@ public class GitLabPersonalAccessTokenManagementService extends VcsTokenManageme
     }
 
     private GitLabPersonalAccessTokenListResponseDTO fetchPersonalAccessTokenId(Long userId) {
-        UriComponentsBuilder uriBuilder = UriComponentsBuilder.fromHttpUrl(gitlabApi.getGitLabServerUrl() + "/api/v4/personal_access_tokens");
+        UriComponentsBuilder uriBuilder = UriComponentsBuilder.fromUriString(gitlabApi.getGitLabServerUrl() + "/api/v4/personal_access_tokens");
         uriBuilder.queryParam("search", PERSONAL_ACCESS_TOKEN_NAME);
         uriBuilder.queryParam("user_id", userId);
 

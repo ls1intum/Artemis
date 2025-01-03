@@ -1,5 +1,7 @@
 package de.tum.cit.aet.artemis.programming.service.jenkins.build_plan;
 
+import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_JENKINS;
+
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.charset.Charset;
@@ -26,7 +28,7 @@ import de.tum.cit.aet.artemis.programming.service.ci.ContinuousIntegrationServic
 import de.tum.cit.aet.artemis.programming.service.jenkins.JenkinsXmlConfigBuilder;
 import de.tum.cit.aet.artemis.programming.service.jenkins.JenkinsXmlFileUtils;
 
-@Profile("jenkins")
+@Profile(PROFILE_JENKINS)
 @Component
 public class JenkinsBuildPlanCreator implements JenkinsXmlConfigBuilder {
 

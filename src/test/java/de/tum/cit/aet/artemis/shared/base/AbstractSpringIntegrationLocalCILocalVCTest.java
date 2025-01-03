@@ -506,11 +506,6 @@ public abstract class AbstractSpringIntegrationLocalCILocalVCTest extends Abstra
     }
 
     @Override
-    public void mockDeleteUserInUserManagement(User user, boolean userExistsInUserManagement, boolean failInVcs, boolean failInCi) {
-        // Not implemented for local VC and local CI
-    }
-
-    @Override
     public void mockCreateGroupInUserManagement(String groupName) {
         // Not implemented for local VC and local CI
     }

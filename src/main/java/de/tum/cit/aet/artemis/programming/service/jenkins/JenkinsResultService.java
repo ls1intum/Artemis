@@ -1,5 +1,6 @@
 package de.tum.cit.aet.artemis.programming.service.jenkins;
 
+import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_JENKINS;
 import static de.tum.cit.aet.artemis.programming.domain.build.BuildLogStatisticsEntry.BuildJobPartDuration;
 
 import java.time.ZonedDateTime;
@@ -26,7 +27,7 @@ import de.tum.cit.aet.artemis.programming.service.ci.AbstractContinuousIntegrati
 import de.tum.cit.aet.artemis.programming.service.ci.notification.dto.TestResultsDTO;
 import de.tum.cit.aet.artemis.programming.service.hestia.TestwiseCoverageService;
 
-@Profile("jenkins")
+@Profile(PROFILE_JENKINS)
 @Service
 public class JenkinsResultService extends AbstractContinuousIntegrationResultService {
 

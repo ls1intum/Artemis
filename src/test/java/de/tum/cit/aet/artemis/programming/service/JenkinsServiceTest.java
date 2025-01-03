@@ -7,14 +7,10 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
 import static org.assertj.core.api.Assertions.assertThatIllegalStateException;
 import static org.mockito.Mockito.any;
-import static org.mockito.Mockito.eq;
 import static org.mockito.Mockito.mockStatic;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
 
 import java.io.IOException;
 import java.io.InputStream;
-import java.net.URISyntaxException;
 import java.util.Optional;
 
 import org.junit.jupiter.api.AfterEach;
@@ -27,8 +23,6 @@ import org.mockito.MockedStatic;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.util.StreamUtils;
-
-import com.offbytwo.jenkins.model.JobWithDetails;
 
 import de.tum.cit.aet.artemis.core.exception.JenkinsException;
 import de.tum.cit.aet.artemis.programming.AbstractProgrammingIntegrationJenkinsGitlabTest;
@@ -47,7 +41,7 @@ class JenkinsServiceTest extends AbstractProgrammingIntegrationJenkinsGitlabTest
      */
     @BeforeEach
     void initTestCase() throws Exception {
-        jenkinsRequestMockProvider.enableMockingOfRequests(jenkinsServer, jenkinsJobPermissionsService);
+        jenkinsRequestMockProvider.enableMockingOfRequests(jenkinsJobPermissionsService);
         gitlabRequestMockProvider.enableMockingOfRequests();
         continuousIntegrationTestService.setup(TEST_PREFIX, this, continuousIntegrationService);
     }
@@ -167,8 +161,10 @@ class JenkinsServiceTest extends AbstractProgrammingIntegrationJenkinsGitlabTest
         programmingExerciseUtilService.addTestCasesToProgrammingExercise(programmingExercise);
 
         jenkinsRequestMockProvider.mockCreateProjectForExercise(programmingExercise, false);
-        jenkinsRequestMockProvider.mockCopyBuildPlan(programmingExercise.getProjectKey(), programmingExercise.getProjectKey());
-        jenkinsRequestMockProvider.mockCopyBuildPlan(programmingExercise.getProjectKey(), programmingExercise.getProjectKey());
+        jenkinsRequestMockProvider.mockCopyBuildPlanFromTemplate(programmingExercise.getProjectKey(), programmingExercise.getProjectKey(),
+                programmingExercise.getTemplateBuildPlanId());
+        jenkinsRequestMockProvider.mockCopyBuildPlanFromTemplate(programmingExercise.getProjectKey(), programmingExercise.getProjectKey(),
+                programmingExercise.getSolutionBuildPlanId());
         jenkinsRequestMockProvider.mockGivePlanPermissionsThrowException(programmingExercise.getProjectKey(), programmingExercise.getProjectKey());
 
         assertThatExceptionOfType(JenkinsException.class).isThrownBy(() -> programmingExerciseImportService.importBuildPlans(programmingExercise, programmingExercise))
@@ -184,8 +180,10 @@ class JenkinsServiceTest extends AbstractProgrammingIntegrationJenkinsGitlabTest
         programmingExerciseUtilService.addTestCasesToProgrammingExercise(programmingExercise);
 
         jenkinsRequestMockProvider.mockCreateProjectForExercise(programmingExercise, false);
-        jenkinsRequestMockProvider.mockCopyBuildPlan(programmingExercise.getProjectKey(), programmingExercise.getProjectKey());
-        jenkinsRequestMockProvider.mockCopyBuildPlan(programmingExercise.getProjectKey(), programmingExercise.getProjectKey());
+        jenkinsRequestMockProvider.mockCopyBuildPlanFromTemplate(programmingExercise.getProjectKey(), programmingExercise.getProjectKey(),
+                programmingExercise.getTemplateBuildPlanId());
+        jenkinsRequestMockProvider.mockCopyBuildPlanFromTemplate(programmingExercise.getProjectKey(), programmingExercise.getProjectKey(),
+                programmingExercise.getSolutionBuildPlanId());
         jenkinsRequestMockProvider.mockGivePlanPermissionsThrowException(programmingExercise.getProjectKey(), programmingExercise.getProjectKey());
 
         assertThatExceptionOfType(JenkinsException.class).isThrownBy(() -> programmingExerciseImportService.importBuildPlans(programmingExercise, programmingExercise))
@@ -209,11 +207,12 @@ class JenkinsServiceTest extends AbstractProgrammingIntegrationJenkinsGitlabTest
         jenkinsRequestMockProvider.mockDeleteBuildPlan(programmingExercise.getProjectKey(), solutionJobName, false);
         jenkinsRequestMockProvider.mockCreateBuildPlan(programmingExercise.getProjectKey(), TEMPLATE.getName(), false);
         jenkinsRequestMockProvider.mockCreateBuildPlan(programmingExercise.getProjectKey(), SOLUTION.getName(), false);
-        when(jenkinsServer.getJob(programmingExercise.getProjectKey())).thenReturn(null).thenReturn(new JobWithDetails());
+        jenkinsRequestMockProvider.mockGetJob(programmingExercise.getProjectKey(), templateJobName, null, false);
+        jenkinsRequestMockProvider.mockGetJob(programmingExercise.getProjectKey(), solutionJobName, null, false);
 
         continuousIntegrationService.recreateBuildPlansForExercise(programmingExercise);
 
-        verify(jenkinsServer).createFolder(eq(null), eq(programmingExercise.getProjectKey()), any());
+        jenkinsRequestMockProvider.verifyMocks();
     }
 
     @Test
@@ -228,7 +227,7 @@ class JenkinsServiceTest extends AbstractProgrammingIntegrationJenkinsGitlabTest
         testFailToUpdatePlanRepositoryRestClientException(HttpStatus.INTERNAL_SERVER_ERROR);
     }
 
-    private void testFailToUpdatePlanRepositoryRestClientException(HttpStatus expectedStatus) throws IOException, URISyntaxException {
+    private void testFailToUpdatePlanRepositoryRestClientException(HttpStatus expectedStatus) throws IOException {
         var programmingExercise = continuousIntegrationTestService.programmingExercise;
         programmingExerciseUtilService.addTemplateParticipationForProgrammingExercise(programmingExercise);
         programmingExerciseUtilService.addSolutionParticipationForProgrammingExercise(programmingExercise);
@@ -294,7 +293,7 @@ class JenkinsServiceTest extends AbstractProgrammingIntegrationJenkinsGitlabTest
         targetExercise.setBuildConfig(programmingExerciseBuildConfigRepository.save(buildConfigTarget));
         targetExercise = programmingExerciseRepository.save(targetExercise);
 
-        jenkinsRequestMockProvider.mockCopyBuildPlan(sourceExercise.getProjectKey(), targetExercise.getProjectKey());
+        jenkinsRequestMockProvider.mockCopyBuildPlanFromTemplate(sourceExercise.getProjectKey(), targetExercise.getProjectKey(), "");
 
         continuousIntegrationService.copyBuildPlan(sourceExercise, "", targetExercise, "", "", true);
         BuildPlan sourceBuildPlan = buildPlanRepository.findByProgrammingExercises_IdWithProgrammingExercisesElseThrow(sourceExercise.getId());
@@ -312,6 +311,8 @@ class JenkinsServiceTest extends AbstractProgrammingIntegrationJenkinsGitlabTest
 
         ProgrammingExercise sourceExercise = new ProgrammingExercise();
         course.addExercises(sourceExercise);
+        sourceExercise.setShortName("source");
+        sourceExercise.generateAndSetProjectKey();
         var buildConfig = new ProgrammingExerciseBuildConfig();
         sourceExercise.setBuildConfig(programmingExerciseBuildConfigRepository.save(buildConfig));
         sourceExercise = programmingExerciseRepository.save(sourceExercise);
@@ -321,13 +322,15 @@ class JenkinsServiceTest extends AbstractProgrammingIntegrationJenkinsGitlabTest
 
         ProgrammingExercise targetExercise = new ProgrammingExercise();
         course.addExercises(targetExercise);
+        targetExercise.setShortName("target");
         targetExercise.generateAndSetProjectKey();
         var buildConfigTarget = new ProgrammingExerciseBuildConfig();
         targetExercise.setBuildConfig(programmingExerciseBuildConfigRepository.save(buildConfigTarget));
         targetExercise = programmingExerciseRepository.save(targetExercise);
-        jenkinsRequestMockProvider.mockCopyBuildPlan(sourceExercise.getProjectKey(), targetExercise.getProjectKey());
+        String targetPlanName = targetExercise.getProjectKey() + "-" + TEMPLATE.getName();
+        jenkinsRequestMockProvider.mockCopyBuildPlanFromTemplate(sourceExercise.getProjectKey(), targetExercise.getProjectKey(), targetPlanName);
 
-        continuousIntegrationService.copyBuildPlan(sourceExercise, "", targetExercise, "", "", true);
+        continuousIntegrationService.copyBuildPlan(sourceExercise, TEMPLATE.getName(), targetExercise, targetExercise.getProjectName(), TEMPLATE.getName(), true);
 
         Optional<BuildPlan> targetBuildPlan = buildPlanRepository.findByProgrammingExercises_IdWithProgrammingExercises(targetExercise.getId());
         assertThat(targetBuildPlan).isEmpty();
