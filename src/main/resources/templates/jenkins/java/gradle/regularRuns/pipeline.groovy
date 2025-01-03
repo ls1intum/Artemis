@@ -12,7 +12,6 @@ dockerImage = '#dockerImage'
 dockerFlags = '#dockerArgs'
 
 isSolutionBuild = "${env.JOB_NAME}" ==~ /.+-SOLUTION$/
-isTestWiseCoverageEnabled = #testWiseCoverage && isSolutionBuild
 isStaticCodeAnalysisEnabled = #isStaticCodeAnalysisEnabled
 
 /**
@@ -37,11 +36,7 @@ private void runTestSteps() {
  */
 void test() {
     stage('Test') {
-        if (isTestWiseCoverageEnabled) {
-            sh './gradlew clean test tiaTests --run-all-tests'
-        } else {
-            sh './gradlew clean test'
-        }
+        sh './gradlew clean test'
     }
 }
 
@@ -66,25 +61,12 @@ private void staticCodeAnalysis() {
     }
 }
 
-private void collectTestwiseCoverageReport() {
-    catchError {
-        sh '''
-        rm -rf testwiseCoverageReport
-        mkdir testwiseCoverageReport
-        mv build/reports/testwise-coverage/tiaTests/tiaTests.json testwiseCoverageReport/
-        '''
-    }
-}
-
 /**
  * Script of the post build tasks aggregating all JUnit files in $WORKSPACE/results.
  *
  * Called by Jenkins.
  */
 void postBuildTasks() {
-    if (isTestWiseCoverageEnabled) {
-        collectTestwiseCoverageReport()
-    }
     sh '''
     rm -rf results
     mkdir results

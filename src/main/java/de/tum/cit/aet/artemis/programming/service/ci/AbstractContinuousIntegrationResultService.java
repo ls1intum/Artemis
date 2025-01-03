@@ -11,13 +11,12 @@ import de.tum.cit.aet.artemis.exercise.domain.participation.Participation;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseParticipation;
 import de.tum.cit.aet.artemis.programming.domain.build.BuildLogEntry;
-import de.tum.cit.aet.artemis.programming.dto.AbstractBuildResultNotificationDTO;
-import de.tum.cit.aet.artemis.programming.dto.BuildJobDTOInterface;
+import de.tum.cit.aet.artemis.programming.dto.BuildJobInterface;
+import de.tum.cit.aet.artemis.programming.dto.BuildResultNotification;
 import de.tum.cit.aet.artemis.programming.repository.BuildLogStatisticsEntryRepository;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseBuildConfigRepository;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseTestCaseRepository;
 import de.tum.cit.aet.artemis.programming.service.ProgrammingExerciseFeedbackCreationService;
-import de.tum.cit.aet.artemis.programming.service.hestia.TestwiseCoverageService;
 
 public abstract class AbstractContinuousIntegrationResultService implements ContinuousIntegrationResultService {
 
@@ -25,32 +24,29 @@ public abstract class AbstractContinuousIntegrationResultService implements Cont
 
     protected final BuildLogStatisticsEntryRepository buildLogStatisticsEntryRepository;
 
-    protected final TestwiseCoverageService testwiseCoverageService;
-
     protected final ProgrammingExerciseFeedbackCreationService feedbackCreationService;
 
     protected final ProgrammingExerciseBuildConfigRepository programmingExerciseBuildConfigRepository;
 
     protected AbstractContinuousIntegrationResultService(ProgrammingExerciseTestCaseRepository testCaseRepository,
-            BuildLogStatisticsEntryRepository buildLogStatisticsEntryRepository, TestwiseCoverageService testwiseCoverageService,
-            ProgrammingExerciseFeedbackCreationService feedbackCreationService, ProgrammingExerciseBuildConfigRepository programmingExerciseBuildConfigRepository) {
+            BuildLogStatisticsEntryRepository buildLogStatisticsEntryRepository, ProgrammingExerciseFeedbackCreationService feedbackCreationService,
+            ProgrammingExerciseBuildConfigRepository programmingExerciseBuildConfigRepository) {
         this.testCaseRepository = testCaseRepository;
         this.buildLogStatisticsEntryRepository = buildLogStatisticsEntryRepository;
-        this.testwiseCoverageService = testwiseCoverageService;
         this.feedbackCreationService = feedbackCreationService;
         this.programmingExerciseBuildConfigRepository = programmingExerciseBuildConfigRepository;
     }
 
     @Override
-    public Result createResultFromBuildResult(AbstractBuildResultNotificationDTO buildResult, ProgrammingExerciseParticipation participation) {
+    public Result createResultFromBuildResult(BuildResultNotification buildResult, ProgrammingExerciseParticipation participation) {
         ProgrammingExercise exercise = participation.getProgrammingExercise();
 
         final var result = new Result();
         result.setAssessmentType(AssessmentType.AUTOMATIC);
         result.setSuccessful(buildResult.isBuildSuccessful());
-        result.setCompletionDate(buildResult.getBuildRunDate());
+        result.setCompletionDate(buildResult.buildRunDate());
         // this only sets the score to a temporary value, the real score is calculated in the grading service
-        result.setScore(buildResult.getBuildScore(), exercise.getCourseViaExerciseGroupOrCourseMember());
+        result.setScore(buildResult.buildScore(), exercise.getCourseViaExerciseGroupOrCourseMember());
         result.setParticipation((Participation) participation);
 
         addFeedbackToResult(result, buildResult);
@@ -63,8 +59,8 @@ public abstract class AbstractContinuousIntegrationResultService implements Cont
      * @param result      the result for which the feedback should be added
      * @param buildResult The build result
      */
-    private void addFeedbackToResult(Result result, AbstractBuildResultNotificationDTO buildResult) {
-        final var jobs = buildResult.getBuildJobs();
+    private void addFeedbackToResult(Result result, BuildResultNotification buildResult) {
+        final var jobs = buildResult.jobs();
         final var programmingExercise = (ProgrammingExercise) result.getParticipation().getExercise();
 
         // 1) add feedback for failed and passed test cases
@@ -72,48 +68,32 @@ public abstract class AbstractContinuousIntegrationResultService implements Cont
 
         // 2) process static code analysis feedback
         addStaticCodeAnalysisFeedbackToResult(result, buildResult, programmingExercise);
-
-        // 3) process testwise coverage analysis report
-        addTestwiseCoverageReportToResult(result, buildResult, programmingExercise);
     }
 
-    private void addTestCaseFeedbacksToResult(Result result, List<? extends BuildJobDTOInterface> jobs, ProgrammingExercise programmingExercise) {
+    private void addTestCaseFeedbacksToResult(Result result, List<? extends BuildJobInterface> jobs, ProgrammingExercise programmingExercise) {
         var activeTestCases = testCaseRepository.findByExerciseIdAndActive(programmingExercise.getId(), true);
-        for (final var job : jobs) {
-            for (final var failedTest : job.getFailedTests()) {
-                result.addFeedback(
-                        feedbackCreationService.createFeedbackFromTestCase(failedTest.getName(), failedTest.getTestMessages(), false, programmingExercise, activeTestCases));
-            }
-            result.setTestCaseCount(result.getTestCaseCount() + job.getFailedTests().size());
+        jobs.forEach(job -> {
+            job.failedTests().forEach(failedTest -> {
+                result.addFeedback(feedbackCreationService.createFeedbackFromTestCase(failedTest.name(), failedTest.testMessages(), false, programmingExercise, activeTestCases));
+            });
+            result.setTestCaseCount(result.getTestCaseCount() + job.failedTests().size());
 
-            for (final var successfulTest : job.getSuccessfulTests()) {
+            for (final var successfulTest : job.successfulTests()) {
                 result.addFeedback(
-                        feedbackCreationService.createFeedbackFromTestCase(successfulTest.getName(), successfulTest.getTestMessages(), true, programmingExercise, activeTestCases));
+                        feedbackCreationService.createFeedbackFromTestCase(successfulTest.name(), successfulTest.testMessages(), true, programmingExercise, activeTestCases));
             }
 
-            result.setTestCaseCount(result.getTestCaseCount() + job.getSuccessfulTests().size());
-            result.setPassedTestCaseCount(result.getPassedTestCaseCount() + job.getSuccessfulTests().size());
-        }
+            result.setTestCaseCount(result.getTestCaseCount() + job.successfulTests().size());
+            result.setPassedTestCaseCount(result.getPassedTestCaseCount() + job.successfulTests().size());
+        });
     }
 
-    private void addStaticCodeAnalysisFeedbackToResult(Result result, AbstractBuildResultNotificationDTO buildResult, ProgrammingExercise programmingExercise) {
-        final var staticCodeAnalysisReports = buildResult.getStaticCodeAnalysisReports();
+    private void addStaticCodeAnalysisFeedbackToResult(Result result, BuildResultNotification buildResult, ProgrammingExercise programmingExercise) {
+        final var staticCodeAnalysisReports = buildResult.staticCodeAnalysisReports();
         if (Boolean.TRUE.equals(programmingExercise.isStaticCodeAnalysisEnabled()) && staticCodeAnalysisReports != null && !staticCodeAnalysisReports.isEmpty()) {
             List<Feedback> scaFeedbackList = feedbackCreationService.createFeedbackFromStaticCodeAnalysisReports(staticCodeAnalysisReports);
             result.addFeedbacks(scaFeedbackList);
             result.setCodeIssueCount(scaFeedbackList.size());
-        }
-    }
-
-    private void addTestwiseCoverageReportToResult(Result result, AbstractBuildResultNotificationDTO buildResult, ProgrammingExercise programmingExercise) {
-        programmingExercise.setBuildConfig(programmingExerciseBuildConfigRepository.getProgrammingExerciseBuildConfigElseThrow(programmingExercise));
-        if (Boolean.TRUE.equals(programmingExercise.getBuildConfig().isTestwiseCoverageEnabled())) {
-            var report = buildResult.getTestwiseCoverageReports();
-            if (report != null) {
-                // since the test cases are not saved to the database yet, the test case is null for the entries
-                var coverageFileReportsWithoutTestsByTestCaseName = testwiseCoverageService.createTestwiseCoverageFileReportsWithoutTestsByTestCaseName(report);
-                result.setCoverageFileReportsByTestCaseName(coverageFileReportsWithoutTestsByTestCaseName);
-            }
         }
     }
 

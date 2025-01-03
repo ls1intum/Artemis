@@ -278,7 +278,9 @@ export class MarkdownEditorMonacoComponent implements AfterContentInit, AfterVie
             color: this.filterDisplayedAction(this.colorAction),
             domain: {
                 withoutOptions: this.filterDisplayedActions(this.domainActions.filter((action) => !(action instanceof TextEditorDomainActionWithOptions))),
-                withOptions: this.filterDisplayedActions(this.domainActions.filter((action) => action instanceof TextEditorDomainActionWithOptions)),
+                withOptions: this.filterDisplayedActions(
+                    this.domainActions.filter((action) => action instanceof TextEditorDomainActionWithOptions),
+                ) as TextEditorDomainActionWithOptions[],
             },
             lecture: this.filterDisplayedAction(this.lectureReferenceAction),
             meta: this.filterDisplayedActions(this.metaActions),
@@ -521,7 +523,7 @@ export class MarkdownEditorMonacoComponent implements AfterContentInit, AfterVie
     private processFileUploadResponse(response: FileUploadResponse, file: File): void {
         const extension = file.name.split('.').last()?.toLocaleLowerCase();
 
-        const attachmentAction: AttachmentAction | undefined = this.defaultActions.find((action) => action instanceof AttachmentAction);
+        const attachmentAction: AttachmentAction | undefined = this.defaultActions.find((action) => action instanceof AttachmentAction) as AttachmentAction;
         const urlAction: UrlAction | undefined = this.defaultActions.find((action) => action instanceof UrlAction);
         if (!attachmentAction || !urlAction || !response.path) {
             throw new Error('Cannot process file upload.');

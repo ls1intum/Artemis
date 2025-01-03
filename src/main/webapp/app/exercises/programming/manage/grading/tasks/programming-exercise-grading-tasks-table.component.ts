@@ -8,7 +8,7 @@ import { ProgrammingExerciseTask } from './programming-exercise-task';
 import { Observable, Subject } from 'rxjs';
 import { ProgrammingExerciseTestCase } from 'app/entities/programming/programming-exercise-test-case.model';
 import { isExamExercise } from 'app/shared/util/utils';
-import { ProgrammingExerciseServerSideTask } from 'app/entities/hestia/programming-exercise-task.model';
+import { ProgrammingExerciseServerSideTask } from 'app/entities/programming-exercise-task.model';
 
 type Sort = {
     by: 'name' | 'weight' | 'multiplier' | 'bonusPoints' | 'visibility' | 'resulting' | 'type';

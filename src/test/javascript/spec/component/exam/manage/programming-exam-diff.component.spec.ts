@@ -6,12 +6,12 @@ import { MockComponent, MockPipe } from 'ng-mocks';
 import { ProgrammingExerciseService } from 'app/exercises/programming/manage/services/programming-exercise.service';
 import { ProgrammingExercise } from 'app/entities/programming/programming-exercise.model';
 import { of } from 'rxjs';
-import { ProgrammingExerciseGitDiffReport } from 'app/entities/hestia/programming-exercise-git-diff-report.model';
+import { ProgrammingExerciseGitDiffReport } from '../../../../../../main/webapp/app/entities/programming-exercise-git-diff-report.model';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { MockNgbModalService } from '../../../helpers/mocks/service/mock-ngb-modal.service';
-import { GitDiffReportModalComponent } from 'app/exercises/programming/hestia/git-diff-report/git-diff-report-modal.component';
-import { ProgrammingExerciseGitDiffEntry } from 'app/entities/hestia/programming-exercise-git-diff-entry.model';
+import { GitDiffReportModalComponent } from '../../../../../../main/webapp/app/exercises/programming/git-diff-report/git-diff-report-modal.component';
+import { ProgrammingExerciseGitDiffEntry } from '../../../../../../main/webapp/app/entities/programming-exercise-git-diff-entry.model';
 import { IncludedInScoreBadgeComponent } from 'app/exercises/shared/exercise-headers/included-in-score-badge.component';
 import { CachedRepositoryFilesService } from 'app/exercises/programming/manage/services/cached-repository-files.service';
 

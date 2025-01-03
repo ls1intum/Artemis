@@ -9,7 +9,6 @@ export enum EntityType {
     EXERCISE = 'EXERCISE',
     LECTURE = 'LECTURE',
     COMPETENCY = 'COMPETENCY',
-    HINT = 'HINT',
     DIAGRAM = 'DIAGRAM',
     ORGANIZATION = 'ORGANIZATION',
     EXAM = 'EXAM',
@@ -119,9 +118,6 @@ export class EntityTitleService {
                 break;
             case EntityType.COMPETENCY:
                 resourceUrl += 'competencies';
-                break;
-            case EntityType.HINT:
-                resourceUrl += `programming-exercises/${ids[1]}/exercise-hints`;
                 break;
             case EntityType.DIAGRAM:
                 resourceUrl += 'apollon-diagrams';

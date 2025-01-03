@@ -117,7 +117,7 @@ class ProgrammingExerciseResultJenkinsIntegrationTest extends AbstractProgrammin
         CommitDTO dummy = new CommitDTO("", "", "");
         var notification = ProgrammingExerciseFactory.generateTestResultDTO(null, Constants.ASSIGNMENT_REPO_NAME, null, ProgrammingLanguage.JAVA, true,
                 List.of("test1", "test2", "test4"), List.of(), new ArrayList<>(), new ArrayList<>(List.of(dummy)), null);
-        notification.getCommits().clear();
+        notification.commits().clear();
         programmingExerciseResultTestService.shouldRejectNotificationWithoutCommitHash(notification);
     }
 

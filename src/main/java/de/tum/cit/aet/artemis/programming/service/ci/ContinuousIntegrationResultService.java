@@ -8,7 +8,7 @@ import de.tum.cit.aet.artemis.programming.domain.ProgrammingLanguage;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingSubmission;
 import de.tum.cit.aet.artemis.programming.domain.ProjectType;
 import de.tum.cit.aet.artemis.programming.domain.build.BuildLogEntry;
-import de.tum.cit.aet.artemis.programming.dto.AbstractBuildResultNotificationDTO;
+import de.tum.cit.aet.artemis.programming.dto.BuildResultNotification;
 
 /**
  * Abstract service for managing entities related to continuous integration.
@@ -21,7 +21,7 @@ public interface ContinuousIntegrationResultService {
      * @param requestBody the object sent from the CI system to Artemis
      * @return the DTO with all information in Java Object form
      */
-    AbstractBuildResultNotificationDTO convertBuildResult(Object requestBody);
+    BuildResultNotification convertBuildResult(Object requestBody);
 
     /**
      * Generate an Artemis result object from the CI build result. Will use the test case results and issues in static code analysis as result feedback.
@@ -30,7 +30,7 @@ public interface ContinuousIntegrationResultService {
      * @param participation to attach result to.
      * @return the created Artemis result with a score, completion date, etc.
      */
-    Result createResultFromBuildResult(AbstractBuildResultNotificationDTO buildResult, ProgrammingExerciseParticipation participation);
+    Result createResultFromBuildResult(BuildResultNotification buildResult, ProgrammingExerciseParticipation participation);
 
     /**
      * Extract the build log statistics from the BuildLogEntries and persist a BuildLogStatisticsEntry.

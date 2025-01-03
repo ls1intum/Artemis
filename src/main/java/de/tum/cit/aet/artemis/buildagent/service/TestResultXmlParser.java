@@ -12,7 +12,7 @@ import com.fasterxml.jackson.dataformat.xml.annotation.JacksonXmlElementWrapper;
 import com.fasterxml.jackson.dataformat.xml.annotation.JacksonXmlProperty;
 import com.fasterxml.jackson.dataformat.xml.annotation.JacksonXmlText;
 
-import de.tum.cit.aet.artemis.buildagent.dto.BuildResult;
+import de.tum.cit.aet.artemis.buildagent.dto.LocalCITestJobDTO;
 
 public class TestResultXmlParser {
 
@@ -75,8 +75,7 @@ public class TestResultXmlParser {
      * @param successfulTests      A list of successful tests. This list will be populated by the method.
      * @throws IOException If an I/O error occurs while reading the test result file.
      */
-    public static void processTestResultFile(String testResultFileString, List<BuildResult.LocalCITestJobDTO> failedTests, List<BuildResult.LocalCITestJobDTO> successfulTests)
-            throws IOException {
+    public static void processTestResultFile(String testResultFileString, List<LocalCITestJobDTO> failedTests, List<LocalCITestJobDTO> successfulTests) throws IOException {
         testResultFileString = testResultFileString.replaceAll(INVALID_XML_CHARS, "");
 
         // The root element can be <testsuites> or <testsuite>
@@ -105,7 +104,7 @@ public class TestResultXmlParser {
      * @param successfulTests A list of successful tests. This list will be populated by the method.
      * @param suite           The top-level test suite to process.
      */
-    private static void processTopLevelTestSuite(List<BuildResult.LocalCITestJobDTO> failedTests, List<BuildResult.LocalCITestJobDTO> successfulTests, TestSuite suite) {
+    private static void processTopLevelTestSuite(List<LocalCITestJobDTO> failedTests, List<LocalCITestJobDTO> successfulTests, TestSuite suite) {
         processTestSuiteWithNamePrefix(suite, failedTests, successfulTests, "");
     }
 
@@ -117,8 +116,7 @@ public class TestResultXmlParser {
      * @param successfulTests A list of successful tests. This list will be populated by the method.
      * @param outerNamePrefix The name prefix for the test suite, derived from its parent suites.
      */
-    private static void processInnerTestSuite(TestSuite testSuite, List<BuildResult.LocalCITestJobDTO> failedTests, List<BuildResult.LocalCITestJobDTO> successfulTests,
-            String outerNamePrefix) {
+    private static void processInnerTestSuite(TestSuite testSuite, List<LocalCITestJobDTO> failedTests, List<LocalCITestJobDTO> successfulTests, String outerNamePrefix) {
         // namePrefix recursively accumulates all parent testsuite names seperated with dots
         String namePrefix;
         if (testSuite.name() != null) {
@@ -140,18 +138,17 @@ public class TestResultXmlParser {
      * @param successfulTests A list of successful tests. This list will be populated by the method.
      * @param namePrefix      The name prefix for the test cases within the suite.
      */
-    private static void processTestSuiteWithNamePrefix(TestSuite testSuite, List<BuildResult.LocalCITestJobDTO> failedTests, List<BuildResult.LocalCITestJobDTO> successfulTests,
-            String namePrefix) {
+    private static void processTestSuiteWithNamePrefix(TestSuite testSuite, List<LocalCITestJobDTO> failedTests, List<LocalCITestJobDTO> successfulTests, String namePrefix) {
         for (TestCase testCase : testSuite.testCases()) {
             if (testCase.isSkipped()) {
                 continue;
             }
             Failure failure = testCase.extractFailure();
             if (failure != null) {
-                failedTests.add(new BuildResult.LocalCITestJobDTO(namePrefix + testCase.name(), List.of(failure.extractMessage())));
+                failedTests.add(new LocalCITestJobDTO(namePrefix + testCase.name(), List.of(failure.extractMessage())));
             }
             else {
-                successfulTests.add(new BuildResult.LocalCITestJobDTO(namePrefix + testCase.name(), List.of()));
+                successfulTests.add(new LocalCITestJobDTO(namePrefix + testCase.name(), List.of()));
             }
         }
 
@@ -190,11 +187,11 @@ public class TestResultXmlParser {
         private Failure extractFailure() {
             return failure != null ? failure : error;
         }
-    }
 
-    // Intentionally empty record to represent the skipped tag (<skipped/>)
-    @JsonIgnoreProperties(ignoreUnknown = true)
-    record Skip() {
+        // Intentionally empty record to represent the skipped tag (<skipped/>)
+        @JsonIgnoreProperties(ignoreUnknown = true)
+        record Skip() {
+        }
     }
 
     // Due to issues with Jackson this currently cannot be a record.

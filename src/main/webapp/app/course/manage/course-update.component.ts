@@ -128,7 +128,7 @@ export class CourseUpdateComponent implements OnInit {
                     this.course.maxComplaintResponseTextLimit! > 0;
                 this.requestMoreFeedbackEnabled = this.course.maxRequestMoreFeedbackTimeDays! > 0;
             } else {
-                this.fileService.getTemplateCodeOfCondcut().subscribe({
+                this.fileService.getTemplateCodeOfConduct().subscribe({
                     next: (res: HttpResponse<string>) => {
                         if (res.body) {
                             this.course.courseInformationSharingMessagingCodeOfConduct = res.body;

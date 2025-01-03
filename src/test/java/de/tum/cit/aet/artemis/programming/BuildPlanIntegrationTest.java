@@ -31,7 +31,6 @@ class BuildPlanIntegrationTest extends AbstractProgrammingIntegrationJenkinsGitl
         programmingExercise.setProjectType(ProjectType.MAVEN_MAVEN);
         programmingExercise.setStaticCodeAnalysisEnabled(true);
         buildConfig.setSequentialTestRuns(false);
-        buildConfig.setTestwiseCoverageEnabled(false);
         var savedBuildConfig = programmingExerciseBuildConfigRepository.save(buildConfig);
 
         programmingExercise.setBuildConfig(savedBuildConfig);

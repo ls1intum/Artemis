@@ -8,6 +8,10 @@ import com.fasterxml.jackson.databind.JsonDeserializer;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
+import de.tum.cit.aet.artemis.programming.dto.aeolus.Action;
+import de.tum.cit.aet.artemis.programming.dto.aeolus.PlatformAction;
+import de.tum.cit.aet.artemis.programming.dto.aeolus.ScriptAction;
+
 /**
  * Deserializer for {@link Action} that determines the type of the action based on the content of the JSON.
  */

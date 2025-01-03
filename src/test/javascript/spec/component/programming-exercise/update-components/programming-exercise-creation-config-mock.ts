@@ -51,7 +51,6 @@ export const programmingExerciseCreationConfigMock: ProgrammingExerciseCreationC
     staticCodeAnalysisAllowed: false,
     supportedLanguages: [],
     templateParticipationResultLoaded: false,
-    testwiseCoverageAnalysisSupported: false,
     titleNamePattern: '',
     updateCategories(_categories: ExerciseCategory[]): void {},
     updateCheckoutDirectory(_editedAuxiliaryRepository: AuxiliaryRepository): (newValue: any) => string | undefined {

@@ -30,11 +30,8 @@ import { Complaint } from 'app/entities/complaint.model';
 import { SubmissionPolicy } from 'app/entities/submission-policy.model';
 import { ArtemisMarkdownService } from 'app/shared/markdown.service';
 import { IconDefinition, faAngleDown, faAngleUp, faBook, faEye, faFileSignature, faListAlt, faSignal, faTable, faWrench } from '@fortawesome/free-solid-svg-icons';
-import { ExerciseHintService } from 'app/exercises/shared/exercise-hint/shared/exercise-hint.service';
-import { ExerciseHint } from 'app/entities/hestia/exercise-hint.model';
 import { PlagiarismVerdict } from 'app/exercises/shared/plagiarism/types/PlagiarismVerdict';
 import { PlagiarismCaseInfo } from 'app/exercises/shared/plagiarism/types/PlagiarismCaseInfo';
-import { ResultService } from 'app/exercises/shared/result/result.service';
 import { MAX_RESULT_HISTORY_LENGTH } from 'app/overview/result-history/result-history.component';
 import { isCommunicationEnabled, isMessagingEnabled } from 'app/entities/course.model';
 import { ExerciseCacheService } from 'app/exercises/shared/exercise/exercise-cache.service';
@@ -68,7 +65,6 @@ export class CourseExerciseDetailsComponent extends AbstractScienceComponent imp
     readonly MODELING = ExerciseType.MODELING;
     readonly TEXT = ExerciseType.TEXT;
     readonly FILE_UPLOAD = ExerciseType.FILE_UPLOAD;
-    readonly evaluateBadge = ResultService.evaluateBadge;
     readonly dayjs = dayjs;
     readonly ChatServiceMode = ChatServiceMode;
 
@@ -99,8 +95,6 @@ export class CourseExerciseDetailsComponent extends AbstractScienceComponent imp
     submissionPolicy?: SubmissionPolicy;
     exampleSolutionCollapsed: boolean;
     plagiarismCaseInfo?: PlagiarismCaseInfo;
-    availableExerciseHints: ExerciseHint[];
-    activatedExerciseHints: ExerciseHint[];
     irisSettings?: IrisSettings;
     paramsSubscription: Subscription;
     profileSubscription?: Subscription;
@@ -120,8 +114,6 @@ export class CourseExerciseDetailsComponent extends AbstractScienceComponent imp
     faWrench = faWrench;
     faTable = faTable;
     faListAlt = faListAlt;
-    faSignal = faSignal;
-    faFileSignature = faFileSignature;
     faAngleDown = faAngleDown;
     faAngleUp = faAngleUp;
 
@@ -137,7 +129,6 @@ export class CourseExerciseDetailsComponent extends AbstractScienceComponent imp
         private quizExerciseService: QuizExerciseService,
         private complaintService: ComplaintService,
         private artemisMarkdown: ArtemisMarkdownService,
-        private exerciseHintService: ExerciseHintService,
         scienceService: ScienceService,
     ) {
         super(scienceService, ScienceEventType.EXERCISE__OPEN);
@@ -209,8 +200,6 @@ export class CourseExerciseDetailsComponent extends AbstractScienceComponent imp
                     this.irisSettings = newExerciseDetails.irisSettings;
                 }
             });
-            this.availableExerciseHints = newExerciseDetails.availableExerciseHints || [];
-            this.activatedExerciseHints = newExerciseDetails.activatedExerciseHints || [];
         }
 
         this.showIfExampleSolutionPresent(newExerciseDetails.exercise);
@@ -331,25 +320,6 @@ export class CourseExerciseDetailsComponent extends AbstractScienceComponent imp
                     }
                     this.updateStudentParticipations();
                     this.mergeResultsAndSubmissionsForParticipations();
-
-                    if (ExerciseType.PROGRAMMING === this.exercise?.type) {
-                        this.exerciseHintService.getActivatedExerciseHints(this.exerciseId).subscribe((activatedRes?: HttpResponse<ExerciseHint[]>) => {
-                            this.activatedExerciseHints = activatedRes!.body!;
-
-                            this.exerciseHintService.getAvailableExerciseHints(this.exerciseId).subscribe((availableRes?: HttpResponse<ExerciseHint[]>) => {
-                                // filter out the activated hints from the available hints
-                                this.availableExerciseHints = availableRes!.body!.filter(
-                                    (availableHint) => !this.activatedExerciseHints.some((activatedHint) => availableHint.id === activatedHint.id),
-                                );
-                                const filteredAvailableExerciseHints = this.availableExerciseHints.filter((hint) => hint.displayThreshold !== 0);
-                                if (filteredAvailableExerciseHints.length) {
-                                    this.alertService.info('artemisApp.exerciseHint.availableHintsAlertMessage', {
-                                        taskName: filteredAvailableExerciseHints.first()?.programmingExerciseTask?.taskName,
-                                    });
-                                }
-                            });
-                        });
-                    }
                 }
             });
     }
@@ -427,11 +397,6 @@ export class CourseExerciseDetailsComponent extends AbstractScienceComponent imp
 
     private onError(error: string) {
         this.alertService.error(error);
-    }
-
-    onHintActivated(exerciseHint: ExerciseHint) {
-        this.availableExerciseHints = this.availableExerciseHints.filter((hint) => hint.id !== exerciseHint.id);
-        this.activatedExerciseHints.push(exerciseHint);
     }
 
     /**

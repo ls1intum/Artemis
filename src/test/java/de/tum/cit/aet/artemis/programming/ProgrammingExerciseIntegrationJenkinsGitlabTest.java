@@ -234,7 +234,7 @@ class ProgrammingExerciseIntegrationJenkinsGitlabTest extends AbstractProgrammin
     @ValueSource(booleans = { true, false })
     @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
     void testGetProgrammingExerciseWithTemplateAndSolutionParticipationAndAuxiliaryRepositories(boolean withSubmissionResults) throws Exception {
-        programmingExerciseIntegrationTestService.testGetProgrammingExerciseWithTemplateAndSolutionParticipationAndAuxiliaryRepositories(withSubmissionResults, false);
+        programmingExerciseIntegrationTestService.testGetProgrammingExerciseWithTemplateAndSolutionParticipationAndAuxiliaryRepositories(withSubmissionResults);
     }
 
     @Test
@@ -343,12 +343,6 @@ class ProgrammingExerciseIntegrationJenkinsGitlabTest extends AbstractProgrammin
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void updateProgrammingExercise_updatingSCAEnabledOption_badRequest() throws Exception {
         programmingExerciseIntegrationTestService.updateProgrammingExerciseShouldFailWithBadRequestWhenUpdatingSCAOption();
-    }
-
-    @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
-    void updateProgrammingExercise_updatingCoverageOption_badRequest() throws Exception {
-        programmingExerciseIntegrationTestService.updateProgrammingExerciseShouldFailWithBadRequestWhenUpdatingCoverageOption();
     }
 
     @Test
@@ -610,21 +604,6 @@ class ProgrammingExerciseIntegrationJenkinsGitlabTest extends AbstractProgrammin
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void createProgrammingExercise_notIncluded_invalidBonusPoints_badRequest() throws Exception {
         programmingExerciseIntegrationTestService.createProgrammingExercise_notIncluded_invalidBonusPoints_badRequest();
-    }
-
-    private static Set<ProgrammingLanguage> generateSupportedLanguagesWithoutJavaAndKotlin() {
-        Set<ProgrammingLanguage> supportedLanguages = ArgumentSources.generateJenkinsSupportedLanguages();
-        supportedLanguages.remove(ProgrammingLanguage.JAVA);
-        supportedLanguages.remove(ProgrammingLanguage.KOTLIN);
-        return supportedLanguages;
-    }
-
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
-    @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")
-    // It should return a bad request error for all ProgrammingExercises except Java and Kotlin.
-    @MethodSource("generateSupportedLanguagesWithoutJavaAndKotlin")
-    void createProgrammingExercise_testwiseCoverageAnalysisNotSupported_badRequest(ProgrammingLanguage programmingLanguage) throws Exception {
-        programmingExerciseIntegrationTestService.createProgrammingExercise_testwiseCoverageAnalysisNotSupported_badRequest(programmingLanguage);
     }
 
     @Test

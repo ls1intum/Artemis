@@ -14,13 +14,13 @@ import com.fasterxml.jackson.annotation.JsonSetter;
 import com.fasterxml.jackson.annotation.Nulls;
 
 import de.tum.cit.aet.artemis.assessment.domain.Feedback;
-import de.tum.cit.aet.artemis.programming.dto.TestCaseBaseDTO;
+import de.tum.cit.aet.artemis.programming.dto.TestCaseBase;
 
 @JsonIgnoreProperties(ignoreUnknown = true)
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public record TestCaseDTO(String name, String classname, double time, @JsonProperty("failures") @JsonSetter(nulls = Nulls.AS_EMPTY) List<TestCaseDetailMessageDTO> failures,
         @JsonProperty("errors") @JsonSetter(nulls = Nulls.AS_EMPTY) List<TestCaseDetailMessageDTO> errors,
-        @JsonProperty("successInfos") @JsonSetter(nulls = Nulls.AS_EMPTY) List<TestCaseDetailMessageDTO> successInfos) implements TestCaseBaseDTO {
+        @JsonProperty("successInfos") @JsonSetter(nulls = Nulls.AS_EMPTY) List<TestCaseDetailMessageDTO> successInfos) implements TestCaseBase {
 
     @JsonIgnore
     public boolean isSuccessful() {
@@ -28,12 +28,7 @@ public record TestCaseDTO(String name, String classname, double time, @JsonPrope
     }
 
     @Override
-    public String getName() {
-        return name;
-    }
-
-    @Override
-    public List<String> getTestMessages() {
+    public List<String> testMessages() {
         return extractMessage().map(Collections::singletonList).orElse(Collections.emptyList());
     }
 

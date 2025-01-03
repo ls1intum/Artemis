@@ -33,7 +33,6 @@ test.describe('Programming exercise assessment', { tag: '@sequential' }, () => {
         assessmentDueDate = dueDate.add(20, 'seconds');
         exercise = await exerciseAPIRequests.createProgrammingExercise({
             course,
-            recordTestwiseCoverage: false,
             releaseDate: dayjs(),
             dueDate: dueDate,
             assessmentDate: assessmentDueDate,

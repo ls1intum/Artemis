@@ -72,7 +72,7 @@ class ProgrammingSubmissionAndResultGitlabJenkinsIntegrationTest extends Abstrac
     void shouldReceiveBuildLogsOnNewStudentParticipationResult() throws Exception {
         // Precondition: Database has participation and a programming submission.
         String userLogin = TEST_PREFIX + "student1";
-        var course = programmingExerciseUtilService.addCourseWithOneProgrammingExercise(false, false, ProgrammingLanguage.JAVA);
+        var course = programmingExerciseUtilService.addCourseWithOneProgrammingExercise(false, ProgrammingLanguage.JAVA);
         var exercise = exerciseUtilService.getFirstExerciseWithType(course, ProgrammingExercise.class);
         exercise = programmingExerciseRepository.findWithEagerStudentParticipationsById(exercise.getId()).orElseThrow();
 
@@ -102,7 +102,7 @@ class ProgrammingSubmissionAndResultGitlabJenkinsIntegrationTest extends Abstrac
     void shouldExtractBuildLogAnalytics_noSca() throws Exception {
         // Precondition: Database has participation and a programming submission.
         String userLogin = TEST_PREFIX + "student1";
-        Course course = programmingExerciseUtilService.addCourseWithOneProgrammingExercise(false, false, ProgrammingLanguage.JAVA);
+        Course course = programmingExerciseUtilService.addCourseWithOneProgrammingExercise(false, ProgrammingLanguage.JAVA);
         ProgrammingExercise exercise = exerciseUtilService.getFirstExerciseWithType(course, ProgrammingExercise.class);
         exercise = programmingExerciseRepository.findWithEagerStudentParticipationsStudentAndLegalSubmissionsById(exercise.getId()).orElseThrow();
         var participation = participationUtilService.addStudentParticipationForProgrammingExercise(exercise, userLogin);
@@ -138,7 +138,7 @@ class ProgrammingSubmissionAndResultGitlabJenkinsIntegrationTest extends Abstrac
     void shouldExtractBuildLogAnalytics_noSca_gradle() throws Exception {
         // Precondition: Database has participation and a programming submission.
         String userLogin = TEST_PREFIX + "student1";
-        Course course = programmingExerciseUtilService.addCourseWithOneProgrammingExercise(false, false, ProgrammingLanguage.JAVA);
+        Course course = programmingExerciseUtilService.addCourseWithOneProgrammingExercise(false, ProgrammingLanguage.JAVA);
         ProgrammingExercise exercise = exerciseUtilService.getFirstExerciseWithType(course, ProgrammingExercise.class);
         exercise = programmingExerciseRepository.findWithEagerStudentParticipationsStudentAndLegalSubmissionsById(exercise.getId()).orElseThrow();
         exercise.setProjectType(ProjectType.GRADLE_GRADLE);
@@ -168,7 +168,7 @@ class ProgrammingSubmissionAndResultGitlabJenkinsIntegrationTest extends Abstrac
     void shouldExtractBuildLogAnalytics_sca() throws Exception {
         // Precondition: Database has participation and a programming submission.
         String userLogin = TEST_PREFIX + "student1";
-        Course course = programmingExerciseUtilService.addCourseWithOneProgrammingExercise(false, false, ProgrammingLanguage.JAVA);
+        Course course = programmingExerciseUtilService.addCourseWithOneProgrammingExercise(false, ProgrammingLanguage.JAVA);
         ProgrammingExercise exercise = exerciseUtilService.getFirstExerciseWithType(course, ProgrammingExercise.class);
         exercise = programmingExerciseRepository.findWithEagerStudentParticipationsStudentAndLegalSubmissionsById(exercise.getId()).orElseThrow();
         var participation = participationUtilService.addStudentParticipationForProgrammingExercise(exercise, userLogin);
@@ -196,7 +196,7 @@ class ProgrammingSubmissionAndResultGitlabJenkinsIntegrationTest extends Abstrac
     void shouldExtractBuildLogAnalytics_unsupportedProgrammingLanguage() throws Exception {
         // Precondition: Database has participation and a programming submission.
         String userLogin = TEST_PREFIX + "student1";
-        var course = programmingExerciseUtilService.addCourseWithOneProgrammingExercise(false, false, ProgrammingLanguage.PYTHON);
+        var course = programmingExerciseUtilService.addCourseWithOneProgrammingExercise(false, ProgrammingLanguage.PYTHON);
         var exercise = exerciseUtilService.getFirstExerciseWithType(course, ProgrammingExercise.class);
         var participation = participationUtilService.addStudentParticipationForProgrammingExercise(exercise, userLogin);
         programmingExerciseUtilService.createProgrammingSubmission(participation, false);
@@ -227,7 +227,7 @@ class ProgrammingSubmissionAndResultGitlabJenkinsIntegrationTest extends Abstrac
     void shouldReturnBadRequestWhenPlanKeyDoesntExist(ProgrammingLanguage programmingLanguage, boolean enableStaticCodeAnalysis) throws Exception {
         // Precondition: Database has participation and a programming submission.
         String userLogin = TEST_PREFIX + "student1";
-        var course = programmingExerciseUtilService.addCourseWithOneProgrammingExercise(enableStaticCodeAnalysis, false, programmingLanguage);
+        var course = programmingExerciseUtilService.addCourseWithOneProgrammingExercise(enableStaticCodeAnalysis, programmingLanguage);
         exercise = exerciseUtilService.getFirstExerciseWithType(course, ProgrammingExercise.class);
         exercise = programmingExerciseRepository.findWithEagerStudentParticipationsById(exercise.getId()).orElseThrow();
 
@@ -297,7 +297,7 @@ class ProgrammingSubmissionAndResultGitlabJenkinsIntegrationTest extends Abstrac
     void shouldSaveBuildLogsOnStudentParticipationWithoutResult(ProgrammingLanguage programmingLanguage, boolean enableStaticCodeAnalysis, boolean buildFailed) throws Exception {
         // Precondition: Database has participation and a programming submission.
         String userLogin = TEST_PREFIX + "student1";
-        var course = programmingExerciseUtilService.addCourseWithOneProgrammingExercise(enableStaticCodeAnalysis, false, programmingLanguage);
+        var course = programmingExerciseUtilService.addCourseWithOneProgrammingExercise(enableStaticCodeAnalysis, programmingLanguage);
         exercise = exerciseUtilService.getFirstExerciseWithType(course, ProgrammingExercise.class);
         exercise = programmingExerciseRepository.findWithEagerStudentParticipationsById(exercise.getId()).orElseThrow();
 
@@ -324,7 +324,7 @@ class ProgrammingSubmissionAndResultGitlabJenkinsIntegrationTest extends Abstrac
     void shouldSaveBuildLogsOnStudentParticipationWithoutSubmissionNorResult(ProgrammingLanguage programmingLanguage, boolean enableStaticCodeAnalysis) throws Exception {
         // Precondition: Database has participation without result and a programming
         String userLogin = TEST_PREFIX + "student1";
-        var course = programmingExerciseUtilService.addCourseWithOneProgrammingExercise(enableStaticCodeAnalysis, false, programmingLanguage);
+        var course = programmingExerciseUtilService.addCourseWithOneProgrammingExercise(enableStaticCodeAnalysis, programmingLanguage);
         exercise = exerciseUtilService.getFirstExerciseWithType(course, ProgrammingExercise.class);
         exercise = programmingExerciseRepository.findWithEagerStudentParticipationsById(exercise.getId()).orElseThrow();
 
@@ -341,7 +341,7 @@ class ProgrammingSubmissionAndResultGitlabJenkinsIntegrationTest extends Abstrac
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void shouldCreateGradleFeedback() throws Exception {
         String userLogin = TEST_PREFIX + "student1";
-        var course = programmingExerciseUtilService.addCourseWithOneProgrammingExercise(false, false, JAVA);
+        var course = programmingExerciseUtilService.addCourseWithOneProgrammingExercise(false, JAVA);
         exercise = exerciseUtilService.getFirstExerciseWithType(course, ProgrammingExercise.class);
         exercise.setProjectType(ProjectType.GRADLE_GRADLE);
         exercise = programmingExerciseRepository.save(exercise);
@@ -352,7 +352,7 @@ class ProgrammingSubmissionAndResultGitlabJenkinsIntegrationTest extends Abstrac
 
         var longErrorMessage = new TestCaseDetailMessageDTO("abc\nmultiline\nfeedback");
         var testCase = new TestCaseDTO("test1", "Class", 0d, new ArrayList<>(), List.of(longErrorMessage), new ArrayList<>());
-        notification.getResults().getFirst().testCases().set(0, testCase);
+        notification.results().getFirst().testCases().set(0, testCase);
 
         postResult(notification, HttpStatus.OK);
 

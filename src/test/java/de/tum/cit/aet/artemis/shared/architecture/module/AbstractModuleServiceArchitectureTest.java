@@ -3,7 +3,6 @@ package de.tum.cit.aet.artemis.shared.architecture.module;
 import static com.tngtech.archunit.core.domain.JavaModifier.ABSTRACT;
 import static com.tngtech.archunit.core.domain.JavaModifier.FINAL;
 import static com.tngtech.archunit.lang.SimpleConditionEvent.violated;
-import static com.tngtech.archunit.lang.syntax.ArchRuleDefinition.classes;
 
 import org.junit.jupiter.api.Test;
 import org.springframework.scheduling.annotation.Async;
@@ -22,8 +21,8 @@ import de.tum.cit.aet.artemis.core.management.SecurityMetersService;
 import de.tum.cit.aet.artemis.core.security.DomainUserDetailsService;
 import de.tum.cit.aet.artemis.core.security.jwt.JWTCookieService;
 import de.tum.cit.aet.artemis.lti.service.OAuth2JWKSService;
+import de.tum.cit.aet.artemis.programming.service.GitDiffReportParserService;
 import de.tum.cit.aet.artemis.programming.service.localci.LocalCIWebsocketMessagingService;
-import de.tum.cit.aet.artemis.programming.web.GitDiffReportParserService;
 import de.tum.cit.aet.artemis.shared.architecture.AbstractArchitectureTest;
 
 public abstract class AbstractModuleServiceArchitectureTest extends AbstractArchitectureTest implements ModuleArchitectureTest {

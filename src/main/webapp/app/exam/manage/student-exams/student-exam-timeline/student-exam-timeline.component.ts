@@ -17,7 +17,7 @@ import { SubmissionVersionService } from 'app/exercises/shared/submission-versio
 import { ProgrammingExerciseExamDiffComponent } from 'app/exam/manage/student-exams/student-exam-timeline/programming-exam-diff/programming-exercise-exam-diff.component';
 import { ProgrammingExerciseParticipationService } from 'app/exercises/programming/manage/services/programming-exercise-participation.service';
 import { ExamPageComponent } from 'app/exam/participate/exercises/exam-page.component';
-import { ProgrammingExerciseGitDiffReport } from 'app/entities/hestia/programming-exercise-git-diff-report.model';
+import { ProgrammingExerciseGitDiffReport } from 'app/entities/programming-exercise-git-diff-report.model';
 
 @Component({
     selector: 'jhi-student-exam-timeline',

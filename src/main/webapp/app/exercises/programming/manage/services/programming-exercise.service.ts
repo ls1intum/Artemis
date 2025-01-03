@@ -13,13 +13,8 @@ import { SolutionProgrammingExerciseParticipation } from 'app/entities/participa
 import { TextPlagiarismResult } from 'app/exercises/shared/plagiarism/types/text/TextPlagiarismResult';
 import { PlagiarismOptions } from 'app/exercises/shared/plagiarism/types/PlagiarismOptions';
 import { Submission } from 'app/entities/submission.model';
-import { ProgrammingExerciseGitDiffReport } from 'app/entities/hestia/programming-exercise-git-diff-report.model';
-import { CoverageReport } from 'app/entities/hestia/coverage-report.model';
-import { ProgrammingExerciseSolutionEntry } from 'app/entities/hestia/programming-exercise-solution-entry.model';
-import { ProgrammingExerciseServerSideTask } from 'app/entities/hestia/programming-exercise-task.model';
+import { ProgrammingExerciseGitDiffReport } from 'app/entities/programming-exercise-git-diff-report.model';
 import { convertDateFromClient, convertDateFromServer } from 'app/utils/date.utils';
-import { ExerciseHint } from 'app/entities/hestia/exercise-hint.model';
-import { ProgrammingExerciseTestCase } from 'app/entities/programming/programming-exercise-test-case.model';
 import { BuildLogStatisticsDTO } from 'app/entities/programming/build-log-statistics-dto';
 import { SortService } from 'app/shared/service/sort.service';
 import { Result } from 'app/entities/result.model';
@@ -534,17 +529,6 @@ export class ProgrammingExerciseService {
     }
 
     /**
-     * Get tasks and tests cases extracted from the problem statement for a programming exercise.
-     * This method and all helper methods are only for testing reason and will be removed later on.
-     * @param exerciseId the exercise id
-     */
-    getTasksAndTestsExtractedFromProblemStatement(exerciseId: number): Observable<ProgrammingExerciseServerSideTask[]> {
-        return this.http
-            .get(`${this.resourceUrl}/${exerciseId}/tasks`, { observe: 'response' })
-            .pipe(map((res: HttpResponse<ProgrammingExerciseServerSideTask[]>) => res.body ?? []));
-    }
-
-    /**
      * Gets the git-diff report of a programming exercise
      *
      * @param exerciseId The id of a programming exercise
@@ -613,14 +597,6 @@ export class ProgrammingExerciseService {
     }
 
     /**
-     * Gets the testwise coverage report of a programming exercise for the latest solution submission with all descending reports
-     * @param exerciseId The id of a programming exercise
-     */
-    getLatestFullTestwiseCoverageReport(exerciseId: number): Observable<CoverageReport> {
-        return this.http.get<CoverageReport>(`${this.resourceUrl}/${exerciseId}/full-testwise-coverage-report`);
-    }
-
-    /**
      * Gets all files from the last solution participation repository
      */
     getSolutionRepositoryTestFilesWithContent(exerciseId: number): Observable<Map<string, string> | undefined> {
@@ -644,26 +620,6 @@ export class ProgrammingExerciseService {
                 return res && new Map(Object.entries(res));
             }),
         );
-    }
-
-    getSolutionFileNames(exerciseId: number): Observable<string[]> {
-        return this.http.get<string[]>(`${this.resourceUrl}/${exerciseId}/file-names`);
-    }
-
-    getCodeHintsForExercise(exerciseId: number): Observable<ExerciseHint[]> {
-        return this.http.get<ExerciseHint[]>(`${this.resourceUrl}/${exerciseId}/exercise-hints`);
-    }
-
-    createStructuralSolutionEntries(exerciseId: number): Observable<ProgrammingExerciseSolutionEntry[]> {
-        return this.http.post<ProgrammingExerciseSolutionEntry[]>(`${this.resourceUrl}/${exerciseId}/structural-solution-entries`, null);
-    }
-
-    createBehavioralSolutionEntries(exerciseId: number): Observable<ProgrammingExerciseSolutionEntry[]> {
-        return this.http.post<ProgrammingExerciseSolutionEntry[]>(`${this.resourceUrl}/${exerciseId}/behavioral-solution-entries`, null);
-    }
-
-    getAllTestCases(exerciseId: number): Observable<ProgrammingExerciseTestCase[]> {
-        return this.http.get<ProgrammingExerciseTestCase[]>(`api/programming-exercises/${exerciseId}/test-cases`);
     }
 
     getBuildLogStatistics(exerciseId: number): Observable<BuildLogStatisticsDTO> {

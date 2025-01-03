@@ -6,6 +6,5 @@ export class BuildConfig {
     public projectType?: string;
     public scaEnabled?: boolean;
     public sequentialTestRunsEnabled?: boolean;
-    public testwiseCoverageEnabled?: boolean;
     public resultPaths?: string[];
 }

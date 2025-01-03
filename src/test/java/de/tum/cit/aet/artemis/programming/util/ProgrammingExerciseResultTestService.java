@@ -11,19 +11,15 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.after;
 import static org.mockito.Mockito.argThat;
-import static org.mockito.Mockito.doNothing;
-import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.timeout;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 
 import java.time.ZonedDateTime;
-import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
-import org.eclipse.jgit.api.errors.GitAPIException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpHeaders;
@@ -52,13 +48,12 @@ import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseParticipation;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseStudentParticipation;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseTestCase;
+import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseTestCaseType;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingLanguage;
 import de.tum.cit.aet.artemis.programming.domain.SolutionProgrammingExerciseParticipation;
 import de.tum.cit.aet.artemis.programming.domain.StaticCodeAnalysisTool;
-import de.tum.cit.aet.artemis.programming.domain.hestia.ProgrammingExerciseTestCaseType;
-import de.tum.cit.aet.artemis.programming.dto.AbstractBuildResultNotificationDTO;
+import de.tum.cit.aet.artemis.programming.dto.BuildResultNotification;
 import de.tum.cit.aet.artemis.programming.dto.ResultDTO;
-import de.tum.cit.aet.artemis.programming.hestia.util.TestwiseCoverageTestUtil;
 import de.tum.cit.aet.artemis.programming.repository.ParticipationVCSAccessTokenRepository;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseBuildConfigRepository;
 import de.tum.cit.aet.artemis.programming.repository.SolutionProgrammingExerciseParticipationRepository;
@@ -152,10 +147,10 @@ public class ProgrammingExerciseResultTestService {
     }
 
     public void setupForProgrammingLanguage(ProgrammingLanguage programmingLanguage) {
-        course = programmingExerciseUtilService.addCourseWithOneProgrammingExercise(false, false, programmingLanguage);
+        course = programmingExerciseUtilService.addCourseWithOneProgrammingExercise(false, programmingLanguage);
         programmingExercise = exerciseUtilService.getFirstExerciseWithType(course, ProgrammingExercise.class);
         programmingExerciseUtilService.addTestCasesToProgrammingExercise(programmingExercise);
-        programmingExerciseWithStaticCodeAnalysis = programmingExerciseUtilService.addProgrammingExerciseToCourse(course, true, false, programmingLanguage);
+        programmingExerciseWithStaticCodeAnalysis = programmingExerciseUtilService.addProgrammingExerciseToCourse(course, true, programmingLanguage);
         staticCodeAnalysisService.createDefaultCategories(programmingExerciseWithStaticCodeAnalysis);
         // This is done to avoid an unproxy issue in the processNewResult method of the ResultService.
         solutionParticipation = solutionProgrammingExerciseRepository.findWithEagerResultsAndSubmissionsByProgrammingExerciseId(programmingExercise.getId()).orElseThrow();
@@ -180,7 +175,7 @@ public class ProgrammingExerciseResultTestService {
     }
 
     // Test
-    public void shouldUpdateFeedbackInSemiAutomaticResult(AbstractBuildResultNotificationDTO buildResultNotification, String loginName) throws Exception {
+    public void shouldUpdateFeedbackInSemiAutomaticResult(BuildResultNotification buildResultNotification, String loginName) throws Exception {
         // Make sure we only have one participation
         var participations = participationRepository.findByExerciseId(programmingExercise.getId());
         for (ProgrammingExerciseStudentParticipation participation : participations) {
@@ -229,7 +224,7 @@ public class ProgrammingExerciseResultTestService {
         assertThat(semiAutoResult.getFeedbacks().get(1).getType()).isEqualTo(FeedbackType.AUTOMATIC);
     }
 
-    private void postResult(AbstractBuildResultNotificationDTO requestBodyMap) throws Exception {
+    private void postResult(BuildResultNotification requestBodyMap) throws Exception {
         final var alteredObj = convertBuildResultToJsonObject(requestBodyMap);
 
         HttpHeaders httpHeaders = new HttpHeaders();
@@ -237,7 +232,7 @@ public class ProgrammingExerciseResultTestService {
         request.postWithoutLocation("/api/public/programming-exercises/new-result", alteredObj, HttpStatus.OK, httpHeaders);
     }
 
-    public static Object convertBuildResultToJsonObject(AbstractBuildResultNotificationDTO requestBodyMap) {
+    public static Object convertBuildResultToJsonObject(BuildResultNotification requestBodyMap) {
         ObjectMapper mapper = new ObjectMapper();
         mapper.registerModule(new JavaTimeModule());
         return mapper.convertValue(requestBodyMap, Object.class);
@@ -255,7 +250,7 @@ public class ProgrammingExerciseResultTestService {
     }
 
     // Test
-    public void shouldUpdateTestCasesAndResultScoreFromSolutionParticipationResult(AbstractBuildResultNotificationDTO resultNotification, boolean withFailedTest) {
+    public void shouldUpdateTestCasesAndResultScoreFromSolutionParticipationResult(BuildResultNotification resultNotification, boolean withFailedTest) {
         // reset saved test weights to be all 1
         var test2 = programmingExerciseTestCaseRepository.findByExerciseIdAndTestName(programmingExercise.getId(), "test2").orElseThrow();
         var test3 = programmingExerciseTestCaseRepository.findByExerciseIdAndTestName(programmingExercise.getId(), "test3").orElseThrow();
@@ -285,8 +280,7 @@ public class ProgrammingExerciseResultTestService {
 
         // test1 - test3 already exist, test4 should be newly created now.
         // All tests must have active = true since they are now used in the new solution result
-        assertThat(testCases).usingRecursiveFieldByFieldElementComparatorIgnoringFields("exercise", "id", "tasks", "solutionEntries", "coverageEntries")
-                .containsExactlyInAnyOrderElementsOf(expectedTestCases);
+        assertThat(testCases).usingRecursiveFieldByFieldElementComparatorIgnoringFields("exercise", "id", "tasks").containsExactlyInAnyOrderElementsOf(expectedTestCases);
 
         assertThat(result).isNotNull();
         if (withFailedTest) {
@@ -306,7 +300,7 @@ public class ProgrammingExerciseResultTestService {
     }
 
     // Test
-    public void shouldStoreFeedbackForResultWithStaticCodeAnalysisReport(AbstractBuildResultNotificationDTO resultNotification, ProgrammingLanguage programmingLanguage) {
+    public void shouldStoreFeedbackForResultWithStaticCodeAnalysisReport(BuildResultNotification resultNotification, ProgrammingLanguage programmingLanguage) {
         final long participationId = programmingExerciseStudentParticipationStaticCodeAnalysis.getId();
         final var resultRequestBody = convertBuildResultToJsonObject(resultNotification);
         final var result = gradingService.processNewProgrammingExerciseResult(programmingExerciseStudentParticipationStaticCodeAnalysis, resultRequestBody);
@@ -331,7 +325,7 @@ public class ProgrammingExerciseResultTestService {
     }
 
     // Test
-    public void shouldGenerateNewManualResultIfManualAssessmentExists(AbstractBuildResultNotificationDTO resultNotification) {
+    public void shouldGenerateNewManualResultIfManualAssessmentExists(BuildResultNotification resultNotification) {
         activateFourTests();
 
         var programmingSubmission = programmingExerciseUtilService.createProgrammingSubmission(programmingExerciseStudentParticipation, false);
@@ -360,7 +354,7 @@ public class ProgrammingExerciseResultTestService {
     }
 
     // Test
-    public void shouldRejectNotificationWithoutCommitHash(AbstractBuildResultNotificationDTO resultNotification) {
+    public void shouldRejectNotificationWithoutCommitHash(BuildResultNotification resultNotification) {
         final Object resultRequestBody = convertBuildResultToJsonObject(resultNotification);
         assertThatThrownBy(() -> gradingService.processNewProgrammingExerciseResult(programmingExerciseStudentParticipation, resultRequestBody))
                 .isInstanceOf(IllegalArgumentException.class).hasMessageContaining("does not specify the assignment commit hash.");
@@ -375,36 +369,7 @@ public class ProgrammingExerciseResultTestService {
     }
 
     // Test
-    public void shouldGenerateTestwiseCoverageFileReports(AbstractBuildResultNotificationDTO resultNotification) throws GitAPIException {
-        // set testwise coverage analysis for programming exercise
-        programmingExercise.getBuildConfig().setTestwiseCoverageEnabled(true);
-        programmingExerciseBuildConfigRepository.save(programmingExercise.getBuildConfig());
-        programmingExerciseRepository.save(programmingExercise);
-        solutionParticipation.setProgrammingExercise(programmingExercise);
-        solutionProgrammingExerciseRepository.save(solutionParticipation);
-        programmingExerciseUtilService.createProgrammingSubmission(solutionParticipation, false);
-
-        // setup mocks
-        doReturn(null).when(gitService).getOrCheckoutRepository(any(), eq(true));
-        doNothing().when(gitService).resetToOriginHead(any());
-        doNothing().when(gitService).pullIgnoreConflicts(any());
-        doReturn(Collections.emptyMap()).when(gitService).listFilesAndFolders(any());
-
-        var expectedReportsByTestName = TestwiseCoverageTestUtil.generateCoverageFileReportByTestName();
-
-        final var resultRequestBody = convertBuildResultToJsonObject(resultNotification);
-        final var result = gradingService.processNewProgrammingExerciseResult(solutionParticipation, resultRequestBody);
-        assertThat(result).isNotNull();
-        var actualReportsByTestName = result.getCoverageFileReportsByTestCaseName();
-        assertThat(actualReportsByTestName).usingRecursiveComparison().isEqualTo(expectedReportsByTestName);
-
-        // the coverage result attribute is transient in the result and should not be saved to the database
-        var resultFromDatabase = resultRepository.findByIdElseThrow(result.getId());
-        assertThat(resultFromDatabase.getCoverageFileReportsByTestCaseName()).isNull();
-    }
-
-    // Test
-    public void shouldIgnoreResultIfNotOnDefaultBranch(AbstractBuildResultNotificationDTO resultNotification) {
+    public void shouldIgnoreResultIfNotOnDefaultBranch(BuildResultNotification resultNotification) {
         solutionParticipation.setProgrammingExercise(programmingExercise);
 
         final var resultRequestBody = convertBuildResultToJsonObject(resultNotification);
@@ -413,7 +378,7 @@ public class ProgrammingExerciseResultTestService {
     }
 
     // Test
-    public void shouldCreateResultOnParticipationDefaultBranch(AbstractBuildResultNotificationDTO resultNotification) {
+    public void shouldCreateResultOnParticipationDefaultBranch(BuildResultNotification resultNotification) {
         programmingExerciseStudentParticipation.setProgrammingExercise(programmingExercise);
         programmingExerciseStudentParticipation.setBranch("branch");
 
@@ -424,7 +389,7 @@ public class ProgrammingExerciseResultTestService {
     }
 
     // Test
-    public void shouldIgnoreResultIfNotOnParticipationBranch(AbstractBuildResultNotificationDTO resultNotification) {
+    public void shouldIgnoreResultIfNotOnParticipationBranch(BuildResultNotification resultNotification) {
         programmingExerciseStudentParticipation.setBranch("default");
         programmingExerciseStudentParticipation.setProgrammingExercise(programmingExercise);
 
@@ -434,7 +399,7 @@ public class ProgrammingExerciseResultTestService {
     }
 
     // Test
-    public void shouldCreateResultOnCustomDefaultBranch(String defaultBranch, AbstractBuildResultNotificationDTO resultNotification) {
+    public void shouldCreateResultOnCustomDefaultBranch(String defaultBranch, BuildResultNotification resultNotification) {
         programmingExercise.getBuildConfig().setBranch(defaultBranch);
         programmingExerciseBuildConfigRepository.save(programmingExercise.getBuildConfig());
         programmingExercise = programmingExerciseRepository.save(programmingExercise);
@@ -447,8 +412,7 @@ public class ProgrammingExerciseResultTestService {
     }
 
     // Test
-    public void shouldCorrectlyNotifyStudentsAboutNewResults(AbstractBuildResultNotificationDTO resultNotification, WebsocketMessagingService websocketMessagingService)
-            throws Exception {
+    public void shouldCorrectlyNotifyStudentsAboutNewResults(BuildResultNotification resultNotification, WebsocketMessagingService websocketMessagingService) throws Exception {
         programmingExerciseUtilService.addTestCasesToProgrammingExercise(programmingExercise);
 
         var programmingSubmission = programmingExerciseUtilService.createProgrammingSubmission(programmingExerciseStudentParticipation, false);
@@ -471,8 +435,7 @@ public class ProgrammingExerciseResultTestService {
     }
 
     // Test
-    public void shouldNotNotifyStudentsAboutNewResults(AbstractBuildResultNotificationDTO resultNotification, WebsocketMessagingService websocketMessagingService)
-            throws Exception {
+    public void shouldNotNotifyStudentsAboutNewResults(BuildResultNotification resultNotification, WebsocketMessagingService websocketMessagingService) throws Exception {
         programmingExerciseUtilService.addTestCasesToProgrammingExercise(programmingExercise);
 
         var programmingSubmission = programmingExerciseUtilService.createProgrammingSubmission(programmingExerciseStudentParticipation, false);
@@ -486,7 +449,7 @@ public class ProgrammingExerciseResultTestService {
     }
 
     // Test
-    public void shouldRemoveTestCaseNamesFromWebsocketNotification(AbstractBuildResultNotificationDTO resultNotification, WebsocketMessagingService websocketMessagingService)
+    public void shouldRemoveTestCaseNamesFromWebsocketNotification(BuildResultNotification resultNotification, WebsocketMessagingService websocketMessagingService)
             throws Exception {
         var programmingSubmission = programmingExerciseUtilService.createProgrammingSubmission(programmingExerciseStudentParticipation, false);
         programmingExerciseStudentParticipation.addSubmission(programmingSubmission);
@@ -500,7 +463,7 @@ public class ProgrammingExerciseResultTestService {
     }
 
     // Test
-    public void shouldUpdateParticipantScoresOnlyOnce(AbstractBuildResultNotificationDTO resultNotification, InstanceMessageSendService instanceMessageSendService) {
+    public void shouldUpdateParticipantScoresOnlyOnce(BuildResultNotification resultNotification, InstanceMessageSendService instanceMessageSendService) {
         final var resultRequestBody = convertBuildResultToJsonObject(resultNotification);
         gradingService.processNewProgrammingExerciseResult(programmingExerciseStudentParticipation, resultRequestBody);
 

@@ -33,7 +33,6 @@
     "templateParticipation": {
         "type": "template"
     },
-    "testwiseCoverageEnabled": false,
     "title": "<Insert programming exercise title here>",
     "type": "programming",
     "buildConfig": {

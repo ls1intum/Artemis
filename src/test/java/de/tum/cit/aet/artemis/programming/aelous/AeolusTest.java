@@ -8,13 +8,13 @@ import java.util.Map;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
-import de.tum.cit.aet.artemis.programming.service.aeolus.AeolusRepository;
-import de.tum.cit.aet.artemis.programming.service.aeolus.AeolusResult;
-import de.tum.cit.aet.artemis.programming.service.aeolus.DockerConfig;
-import de.tum.cit.aet.artemis.programming.service.aeolus.PlatformAction;
-import de.tum.cit.aet.artemis.programming.service.aeolus.ScriptAction;
-import de.tum.cit.aet.artemis.programming.service.aeolus.Windfile;
-import de.tum.cit.aet.artemis.programming.service.aeolus.WindfileMetadata;
+import de.tum.cit.aet.artemis.programming.dto.aeolus.AeolusRepository;
+import de.tum.cit.aet.artemis.programming.dto.aeolus.AeolusResult;
+import de.tum.cit.aet.artemis.programming.dto.aeolus.DockerConfig;
+import de.tum.cit.aet.artemis.programming.dto.aeolus.PlatformAction;
+import de.tum.cit.aet.artemis.programming.dto.aeolus.ScriptAction;
+import de.tum.cit.aet.artemis.programming.dto.aeolus.Windfile;
+import de.tum.cit.aet.artemis.programming.dto.aeolus.WindfileMetadata;
 
 class AeolusTest {
 
@@ -25,45 +25,29 @@ class AeolusTest {
         DockerConfig dockerConfig = new DockerConfig("image", "tag", List.of("host:container"), List.of("--param1", "--param2"));
         WindfileMetadata metadata = new WindfileMetadata("name", "id", "description", "author", "gitCredentials", dockerConfig, null, null);
 
-        windfile = new Windfile();
-        windfile.setApi("v0.0.1");
-        windfile.setMetadata(metadata);
-
-        ScriptAction scriptAction = new ScriptAction();
-        scriptAction.setName("scriptAction");
-        scriptAction.setRunAlways(true);
-        scriptAction.setScript("script");
-        scriptAction.setEnvironment(Map.of("key", "value"));
-        scriptAction.setParameters(Map.of("key", "value"));
         AeolusResult scriptResult = new AeolusResult("junit", "text.xml", "ignore", "junit", false);
-        scriptAction.setResults(List.of(scriptResult));
-        assertThat(scriptAction.getResults().getFirst().name()).isEqualTo("junit");
-        assertThat(scriptAction.getResults().getFirst().path()).isEqualTo("text.xml");
-        assertThat(scriptAction.getResults().getFirst().ignore()).isEqualTo("ignore");
-        assertThat(scriptAction.getResults().getFirst().type()).isEqualTo("junit");
-        assertThat(scriptAction.getResults().getFirst().before()).isEqualTo(false);
+        ScriptAction scriptAction = new ScriptAction("scriptAction", Map.of("key", "value"), Map.of("key", "value"), List.of(scriptResult), null, true, null, "script");
+        assertThat(scriptAction.results().getFirst().name()).isEqualTo("junit");
+        assertThat(scriptAction.results().getFirst().path()).isEqualTo("text.xml");
+        assertThat(scriptAction.results().getFirst().ignore()).isEqualTo("ignore");
+        assertThat(scriptAction.results().getFirst().type()).isEqualTo("junit");
+        assertThat(scriptAction.results().getFirst().before()).isEqualTo(false);
 
-        PlatformAction platformAction = new PlatformAction();
-        platformAction.setName("platformAction");
-        platformAction.setWorkdir("workdir");
-        platformAction.setRunAlways(true);
-        platformAction.setPlatform("jenkins");
-        platformAction.setPlatform("jenkins");
-        platformAction.setKind("junit");
         AeolusResult result = new AeolusResult("name", "path", "ignore", "type", true);
-        platformAction.setResults(List.of(result));
-        assertThat(platformAction.getResults().getFirst().name()).isEqualTo("name");
-        assertThat(platformAction.getResults().getFirst().path()).isEqualTo("path");
-        assertThat(platformAction.getResults().getFirst().ignore()).isEqualTo("ignore");
-        assertThat(platformAction.getResults().getFirst().type()).isEqualTo("type");
-        assertThat(platformAction.getResults().getFirst().before()).isEqualTo(true);
+        PlatformAction platformAction = new PlatformAction("platformAction", Map.of("key", "value"), Map.of("key", "value"), List.of(result), "workdir", true, "jenkins", "junit",
+                "type");
+        assertThat(platformAction.results().getFirst().name()).isEqualTo("name");
+        assertThat(platformAction.results().getFirst().path()).isEqualTo("path");
+        assertThat(platformAction.results().getFirst().ignore()).isEqualTo("ignore");
+        assertThat(platformAction.results().getFirst().type()).isEqualTo("type");
+        assertThat(platformAction.results().getFirst().before()).isEqualTo(true);
 
-        windfile.setActions(List.of(scriptAction, platformAction));
+        windfile = new Windfile("v0.0.1", metadata, List.of(scriptAction, platformAction), null);
     }
 
     @Test
     void testGetResults() {
-        var results = windfile.getResults();
+        var results = windfile.results();
         assertThat(results.size()).isEqualTo(2);
         assertThat(results.getFirst().name()).isEqualTo("junit");
         assertThat(results.getFirst().path()).isEqualTo("text.xml");
@@ -79,43 +63,25 @@ class AeolusTest {
 
     @Test
     void testWindfileGetterAndSetter() {
-        assertThat(windfile.getApi()).isEqualTo("v0.0.1");
-        assertThat(windfile.getMetadata().author()).isEqualTo("author");
-        assertThat(windfile.getMetadata().id()).isEqualTo("id");
-        assertThat(windfile.getMetadata().description()).isEqualTo("description");
+        assertThat(windfile.api()).isEqualTo("v0.0.1");
+        assertThat(windfile.metadata().author()).isEqualTo("author");
+        assertThat(windfile.metadata().id()).isEqualTo("id");
+        assertThat(windfile.metadata().description()).isEqualTo("description");
         DockerConfig dockerConfig = new DockerConfig("image", "tag", List.of("host:container"), List.of("--param1", "--param2"));
-        assertThat(windfile.getMetadata().docker()).isEqualTo(dockerConfig);
-        assertThat(windfile.getMetadata().name()).isEqualTo("name");
-        assertThat(windfile.getMetadata().gitCredentials()).isEqualTo("gitCredentials");
-        assertThat(windfile.getActions().getFirst().getName()).isEqualTo("scriptAction");
-        assertThat(windfile.getActions().getFirst().isRunAlways()).isEqualTo(true);
-        ScriptAction scriptAction = (ScriptAction) windfile.getActions().getFirst();
-        assertThat(scriptAction.getScript()).isEqualTo("script");
-        assertThat(scriptAction.getEnvironment()).isEqualTo(Map.of("key", "value"));
-        assertThat(scriptAction.getParameters()).isEqualTo(Map.of("key", "value"));
-        PlatformAction platformAction = (PlatformAction) windfile.getActions().get(1);
-        platformAction.setKind("junit");
-        assertThat(platformAction.getKind()).isEqualTo("junit");
-        platformAction.setType("type");
-        assertThat(platformAction.getType()).isEqualTo("type");
-        assertThat(platformAction.getWorkdir()).isEqualTo("workdir");
-        assertThat(platformAction.getName()).isEqualTo("platformAction");
-        assertThat(platformAction.isRunAlways()).isEqualTo(true);
-        assertThat(platformAction.getPlatform()).isEqualTo("jenkins");
-    }
-
-    @Test
-    void testSettersWithoutMetadata() {
-        windfile.setMetadata(null);
-        AeolusRepository aeolusRepository = new AeolusRepository("url", "branch", "path");
-        windfile.setPreProcessingMetadata("id", "name", "gitCredentials", "resultHook", "description", Map.of("key", aeolusRepository), "resultHookCredentials");
-        assertThat(windfile.getMetadata().id()).isEqualTo("id");
-        assertThat(windfile.getMetadata().description()).isEqualTo("description");
-        assertThat(windfile.getMetadata().name()).isEqualTo("name");
-        assertThat(windfile.getRepositories().get("key")).isEqualTo(aeolusRepository);
-        assertThat(windfile.getMetadata().gitCredentials()).isEqualTo("gitCredentials");
-        assertThat(windfile.getMetadata().resultHook()).isEqualTo("resultHook");
-        assertThat(windfile.getMetadata().resultHookCredentials()).isEqualTo("resultHookCredentials");
+        assertThat(windfile.metadata().docker()).isEqualTo(dockerConfig);
+        assertThat(windfile.metadata().name()).isEqualTo("name");
+        assertThat(windfile.metadata().gitCredentials()).isEqualTo("gitCredentials");
+        assertThat(windfile.actions().getFirst().name()).isEqualTo("scriptAction");
+        assertThat(windfile.actions().getFirst().runAlways()).isEqualTo(true);
+        ScriptAction scriptAction = (ScriptAction) windfile.actions().getFirst();
+        assertThat(scriptAction.script()).isEqualTo("script");
+        assertThat(scriptAction.environment()).isEqualTo(Map.of("key", "value"));
+        assertThat(scriptAction.parameters()).isEqualTo(Map.of("key", "value"));
+        PlatformAction platformAction = (PlatformAction) windfile.actions().get(1);
+        assertThat(platformAction.workdir()).isEqualTo("workdir");
+        assertThat(platformAction.name()).isEqualTo("platformAction");
+        assertThat(platformAction.runAlways()).isEqualTo(true);
+        assertThat(platformAction.platform()).isEqualTo("jenkins");
     }
 
     @Test
