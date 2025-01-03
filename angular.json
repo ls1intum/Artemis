@@ -226,7 +226,7 @@
     "packageManager": "npm",
     "cache": {
       "enabled": true,
-      "path": ".cache",
+      "path": "./build/angular/",
       "environment": "all"
     },
     "schematicCollections": [
