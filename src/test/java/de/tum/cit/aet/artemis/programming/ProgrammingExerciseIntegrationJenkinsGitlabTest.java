@@ -606,21 +606,6 @@ class ProgrammingExerciseIntegrationJenkinsGitlabTest extends AbstractProgrammin
         programmingExerciseIntegrationTestService.createProgrammingExercise_notIncluded_invalidBonusPoints_badRequest();
     }
 
-    private static Set<ProgrammingLanguage> generateSupportedLanguagesWithoutJavaAndKotlin() {
-        Set<ProgrammingLanguage> supportedLanguages = ArgumentSources.generateJenkinsSupportedLanguages();
-        supportedLanguages.remove(ProgrammingLanguage.JAVA);
-        supportedLanguages.remove(ProgrammingLanguage.KOTLIN);
-        return supportedLanguages;
-    }
-
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
-    @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")
-    // It should return a bad request error for all ProgrammingExercises except Java and Kotlin.
-    @MethodSource("generateSupportedLanguagesWithoutJavaAndKotlin")
-    void createProgrammingExercise_testwiseCoverageAnalysisNotSupported_badRequest(ProgrammingLanguage programmingLanguage) throws Exception {
-        programmingExerciseIntegrationTestService.createProgrammingExercise_testwiseCoverageAnalysisNotSupported_badRequest(programmingLanguage);
-    }
-
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructoralt1", roles = "INSTRUCTOR")
     void importProgrammingExercise_sourceExerciseIdNegative_badRequest() throws Exception {

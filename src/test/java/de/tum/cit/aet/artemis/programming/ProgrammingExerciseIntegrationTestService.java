@@ -1293,15 +1293,6 @@ public class ProgrammingExerciseIntegrationTestService {
         request.post("/api/programming-exercises/setup", programmingExercise, HttpStatus.BAD_REQUEST);
     }
 
-    void createProgrammingExercise_testwiseCoverageAnalysisNotSupported_badRequest(ProgrammingLanguage programmingLanguage) throws Exception {
-        programmingExercise.setId(null);
-        programmingExercise.setProjectType(null);
-        programmingExercise.setTitle("New title");
-        programmingExercise.setShortName("NewShortname");
-        programmingExercise.setProgrammingLanguage(programmingLanguage);
-        request.post("/api/programming-exercises/setup", programmingExercise, HttpStatus.BAD_REQUEST);
-    }
-
     void importProgrammingExercise_sourceExerciseIdNegative_badRequest() throws Exception {
         programmingExercise.setId(-1L);
         request.post("/api/programming-exercises/import/" + programmingExercise.getId(), programmingExercise, HttpStatus.BAD_REQUEST);

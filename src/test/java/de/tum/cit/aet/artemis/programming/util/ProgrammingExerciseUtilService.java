@@ -360,7 +360,7 @@ public class ProgrammingExerciseUtilService {
      * @return The created course with a programming exercise.
      */
     public Course addCourseWithOneProgrammingExercise(boolean enableStaticCodeAnalysis) {
-        return addCourseWithOneProgrammingExercise(enableStaticCodeAnalysis, false, ProgrammingLanguage.JAVA);
+        return addCourseWithOneProgrammingExercise(enableStaticCodeAnalysis, ProgrammingLanguage.JAVA);
     }
 
     /**
@@ -372,36 +372,33 @@ public class ProgrammingExerciseUtilService {
      * @return The created course with a programming exercise.
      */
     public Course addCourseWithOneProgrammingExercise(boolean enableStaticCodeAnalysis, String title, String shortName) {
-        return addCourseWithOneProgrammingExercise(enableStaticCodeAnalysis, false, ProgrammingLanguage.JAVA, title, shortName);
+        return addCourseWithOneProgrammingExercise(enableStaticCodeAnalysis, ProgrammingLanguage.JAVA, title, shortName);
     }
 
     /**
      * Creates and saves a course with a programming exercise. Uses <code>Programming</code> as the title and <code>TSTEXC</code> as the short name of the exercise.
      *
-     * @param enableStaticCodeAnalysis       True, if the static code analysis should be enabled for the exercise.
-     * @param enableTestwiseCoverageAnalysis True, if test wise coverage analysis should be enabled for the exercise.
-     * @param programmingLanguage            The programming language fo the exercise.
+     * @param enableStaticCodeAnalysis True, if the static code analysis should be enabled for the exercise.
+     * @param programmingLanguage      The programming language fo the exercise.
      * @return The created course with a programming exercise.
      */
-    public Course addCourseWithOneProgrammingExercise(boolean enableStaticCodeAnalysis, boolean enableTestwiseCoverageAnalysis, ProgrammingLanguage programmingLanguage) {
-        return addCourseWithOneProgrammingExercise(enableStaticCodeAnalysis, enableTestwiseCoverageAnalysis, programmingLanguage, "Programming", "TSTEXC");
+    public Course addCourseWithOneProgrammingExercise(boolean enableStaticCodeAnalysis, ProgrammingLanguage programmingLanguage) {
+        return addCourseWithOneProgrammingExercise(enableStaticCodeAnalysis, programmingLanguage, "Programming", "TSTEXC");
     }
 
     /**
      * Creates and saves a course with a programming exercise.
      *
-     * @param enableStaticCodeAnalysis       True, if the static code analysis should be enabled for the exercise.
-     * @param enableTestwiseCoverageAnalysis True, if test wise coverage analysis should be enabled for the exercise.
-     * @param programmingLanguage            The programming language fo the exercise.
-     * @param title                          The title of the exercise.
-     * @param shortName                      The short name of the exercise.
+     * @param enableStaticCodeAnalysis True, if the static code analysis should be enabled for the exercise.
+     * @param programmingLanguage      The programming language fo the exercise.
+     * @param title                    The title of the exercise.
+     * @param shortName                The short name of the exercise.
      * @return The created course with a programming exercise.
      */
-    public Course addCourseWithOneProgrammingExercise(boolean enableStaticCodeAnalysis, boolean enableTestwiseCoverageAnalysis, ProgrammingLanguage programmingLanguage,
-            String title, String shortName) {
+    public Course addCourseWithOneProgrammingExercise(boolean enableStaticCodeAnalysis, ProgrammingLanguage programmingLanguage, String title, String shortName) {
         var course = CourseFactory.generateCourse(null, PAST_TIMESTAMP, FUTURE_FUTURE_TIMESTAMP, new HashSet<>(), "tumuser", "tutor", "editor", "instructor");
         course = courseRepo.save(course);
-        addProgrammingExerciseToCourse(course, enableStaticCodeAnalysis, enableTestwiseCoverageAnalysis, programmingLanguage, title, shortName, null);
+        addProgrammingExerciseToCourse(course, enableStaticCodeAnalysis, programmingLanguage, title, shortName, null);
         course = courseRepo.findByIdWithExercisesAndExerciseDetailsAndLecturesElseThrow(course.getId());
         for (var exercise : course.getExercises()) {
             if (exercise instanceof ProgrammingExercise) {
@@ -430,7 +427,7 @@ public class ProgrammingExerciseUtilService {
      * @return The programming exercise which was added to the course.
      */
     public ProgrammingExercise addProgrammingExerciseToCourse(Course course, boolean enableStaticCodeAnalysis) {
-        return addProgrammingExerciseToCourse(course, enableStaticCodeAnalysis, false, ProgrammingLanguage.JAVA);
+        return addProgrammingExerciseToCourse(course, enableStaticCodeAnalysis, ProgrammingLanguage.JAVA);
     }
 
     /**
@@ -442,56 +439,51 @@ public class ProgrammingExerciseUtilService {
      * @return The programming exercise which was added to the course.
      */
     public ProgrammingExercise addProgrammingExerciseToCourse(Course course, boolean enableStaticCodeAnalysis, ZonedDateTime assessmentDueDate) {
-        return addProgrammingExerciseToCourse(course, enableStaticCodeAnalysis, false, ProgrammingLanguage.JAVA, assessmentDueDate);
+        return addProgrammingExerciseToCourse(course, enableStaticCodeAnalysis, ProgrammingLanguage.JAVA, assessmentDueDate);
     }
 
     /**
      * Adds a programming exercise to the given course. Uses <code>Programming</code> as the title and <code>TSTEXC</code> as the short name of the exercise.
      *
-     * @param course                         The course to which the exercise should be added.
-     * @param enableStaticCodeAnalysis       True, if the static code analysis should be enabled for the exercise.
-     * @param enableTestwiseCoverageAnalysis True, if test wise coverage analysis should be enabled for the exercise.
-     * @param programmingLanguage            The programming language used in the exercise.
-     * @param assessmentDueDate              The assessment due date of the exercise.
+     * @param course                   The course to which the exercise should be added.
+     * @param enableStaticCodeAnalysis True, if the static code analysis should be enabled for the exercise.
+     * @param programmingLanguage      The programming language used in the exercise.
+     * @param assessmentDueDate        The assessment due date of the exercise.
      * @return The programming exercise which was added to the course.
      */
-    public ProgrammingExercise addProgrammingExerciseToCourse(Course course, boolean enableStaticCodeAnalysis, boolean enableTestwiseCoverageAnalysis,
-            ProgrammingLanguage programmingLanguage, ZonedDateTime assessmentDueDate) {
-        return addProgrammingExerciseToCourse(course, enableStaticCodeAnalysis, enableTestwiseCoverageAnalysis, programmingLanguage, "Programming", "TSTEXC", assessmentDueDate);
+    public ProgrammingExercise addProgrammingExerciseToCourse(Course course, boolean enableStaticCodeAnalysis, ProgrammingLanguage programmingLanguage,
+            ZonedDateTime assessmentDueDate) {
+        return addProgrammingExerciseToCourse(course, enableStaticCodeAnalysis, programmingLanguage, "Programming", "TSTEXC", assessmentDueDate);
     }
 
     /**
      * Adds a programming exercise without an assessment due date to the given course. Uses <code>Programming</code> as the title and <code>TSTEXC</code> as the short name of the
      * exercise.
      *
-     * @param course                         The course to which the exercise should be added.
-     * @param enableStaticCodeAnalysis       True, if the static code analysis should be enabled for the exercise.
-     * @param enableTestwiseCoverageAnalysis True, if test wise coverage analysis should be enabled for the exercise.
-     * @param programmingLanguage            The programming language used in the exercise.
+     * @param course                   The course to which the exercise should be added.
+     * @param enableStaticCodeAnalysis True, if the static code analysis should be enabled for the exercise.
+     * @param programmingLanguage      The programming language used in the exercise.
      * @return The programming exercise which was added to the course.
      */
-    public ProgrammingExercise addProgrammingExerciseToCourse(Course course, boolean enableStaticCodeAnalysis, boolean enableTestwiseCoverageAnalysis,
-            ProgrammingLanguage programmingLanguage) {
-        return addProgrammingExerciseToCourse(course, enableStaticCodeAnalysis, enableTestwiseCoverageAnalysis, programmingLanguage, "Programming", "TSTEXC", null);
+    public ProgrammingExercise addProgrammingExerciseToCourse(Course course, boolean enableStaticCodeAnalysis, ProgrammingLanguage programmingLanguage) {
+        return addProgrammingExerciseToCourse(course, enableStaticCodeAnalysis, programmingLanguage, "Programming", "TSTEXC", null);
     }
 
     /**
      * Adds a programming exercise to the given course.
      *
-     * @param course                         The course to which the exercise should be added.
-     * @param enableStaticCodeAnalysis       True, if the static code analysis should be enabled for the exercise.
-     * @param enableTestwiseCoverageAnalysis True, if test wise coverage analysis should be enabled for the exercise.
-     * @param programmingLanguage            The programming language used in the exercise.
-     * @param title                          The title of the exercise.
-     * @param shortName                      The short name of the exercise.
-     * @param assessmentDueDate              The assessment due date of the exercise.
+     * @param course                   The course to which the exercise should be added.
+     * @param enableStaticCodeAnalysis True, if the static code analysis should be enabled for the exercise.
+     * @param programmingLanguage      The programming language used in the exercise.
+     * @param title                    The title of the exercise.
+     * @param shortName                The short name of the exercise.
+     * @param assessmentDueDate        The assessment due date of the exercise.
      * @return The programming exercise which was added to the course.
      */
-    public ProgrammingExercise addProgrammingExerciseToCourse(Course course, boolean enableStaticCodeAnalysis, boolean enableTestwiseCoverageAnalysis,
-            ProgrammingLanguage programmingLanguage, String title, String shortName, ZonedDateTime assessmentDueDate) {
+    public ProgrammingExercise addProgrammingExerciseToCourse(Course course, boolean enableStaticCodeAnalysis, ProgrammingLanguage programmingLanguage, String title,
+            String shortName, ZonedDateTime assessmentDueDate) {
         var programmingExercise = (ProgrammingExercise) new ProgrammingExercise().course(course);
-        ProgrammingExerciseFactory.populateUnreleasedProgrammingExercise(programmingExercise, shortName, title, enableStaticCodeAnalysis, enableTestwiseCoverageAnalysis,
-                programmingLanguage);
+        ProgrammingExerciseFactory.populateUnreleasedProgrammingExercise(programmingExercise, shortName, title, enableStaticCodeAnalysis, programmingLanguage);
         programmingExercise.setAssessmentDueDate(assessmentDueDate);
         programmingExercise.setPresentationScoreEnabled(course.getPresentationScore() != 0);
 
@@ -544,7 +536,7 @@ public class ProgrammingExerciseUtilService {
      * @return The newly created programming exercise.
      */
     public ProgrammingExercise addCourseWithOneProgrammingExerciseAndStaticCodeAnalysisCategories(ProgrammingLanguage programmingLanguage) {
-        Course course = addCourseWithOneProgrammingExercise(true, false, programmingLanguage);
+        Course course = addCourseWithOneProgrammingExercise(true, programmingLanguage);
         ProgrammingExercise programmingExercise = exerciseUtilService.findProgrammingExerciseWithTitle(course.getExercises(), "Programming");
         programmingExercise = programmingExerciseRepository.save(programmingExercise);
         programmingExercise = programmingExerciseRepository.findWithBuildConfigById(programmingExercise.getId()).orElseThrow();

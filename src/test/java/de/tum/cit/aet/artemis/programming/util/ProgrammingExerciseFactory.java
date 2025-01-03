@@ -391,21 +391,20 @@ public class ProgrammingExerciseFactory {
      * @param enableStaticCodeAnalysis True, if the static code analysis should be enabled for the exercise.
      */
     public static void populateUnreleasedProgrammingExercise(ProgrammingExercise programmingExercise, String shortName, String title, boolean enableStaticCodeAnalysis) {
-        populateUnreleasedProgrammingExercise(programmingExercise, shortName, title, enableStaticCodeAnalysis, false, ProgrammingLanguage.JAVA);
+        populateUnreleasedProgrammingExercise(programmingExercise, shortName, title, enableStaticCodeAnalysis, ProgrammingLanguage.JAVA);
     }
 
     /**
      * Populates the provided programming exercise with the given short name, title, and other values. The release date of the exercise is set in the future.
      *
-     * @param programmingExercise            The exercise to be populated.
-     * @param shortName                      The short name of the exercise.
-     * @param title                          The title of the exercise.
-     * @param enableStaticCodeAnalysis       True, if the static code analysis should be enabled for the exercise.
-     * @param enableTestwiseCoverageAnalysis True, if test wise coverage analysis should be enabled for the exercise.
-     * @param programmingLanguage            The programming language used in the exercise.
+     * @param programmingExercise      The exercise to be populated.
+     * @param shortName                The short name of the exercise.
+     * @param title                    The title of the exercise.
+     * @param enableStaticCodeAnalysis True, if the static code analysis should be enabled for the exercise.
+     * @param programmingLanguage      The programming language used in the exercise.
      */
     public static void populateUnreleasedProgrammingExercise(ProgrammingExercise programmingExercise, String shortName, String title, boolean enableStaticCodeAnalysis,
-            boolean enableTestwiseCoverageAnalysis, ProgrammingLanguage programmingLanguage) {
+            ProgrammingLanguage programmingLanguage) {
         programmingExercise.setProgrammingLanguage(programmingLanguage);
         programmingExercise.setShortName(shortName);
         programmingExercise.generateAndSetProjectKey();

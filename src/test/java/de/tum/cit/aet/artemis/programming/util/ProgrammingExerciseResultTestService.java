@@ -147,10 +147,10 @@ public class ProgrammingExerciseResultTestService {
     }
 
     public void setupForProgrammingLanguage(ProgrammingLanguage programmingLanguage) {
-        course = programmingExerciseUtilService.addCourseWithOneProgrammingExercise(false, false, programmingLanguage);
+        course = programmingExerciseUtilService.addCourseWithOneProgrammingExercise(false, programmingLanguage);
         programmingExercise = exerciseUtilService.getFirstExerciseWithType(course, ProgrammingExercise.class);
         programmingExerciseUtilService.addTestCasesToProgrammingExercise(programmingExercise);
-        programmingExerciseWithStaticCodeAnalysis = programmingExerciseUtilService.addProgrammingExerciseToCourse(course, true, false, programmingLanguage);
+        programmingExerciseWithStaticCodeAnalysis = programmingExerciseUtilService.addProgrammingExerciseToCourse(course, true, programmingLanguage);
         staticCodeAnalysisService.createDefaultCategories(programmingExerciseWithStaticCodeAnalysis);
         // This is done to avoid an unproxy issue in the processNewResult method of the ResultService.
         solutionParticipation = solutionProgrammingExerciseRepository.findWithEagerResultsAndSubmissionsByProgrammingExerciseId(programmingExercise.getId()).orElseThrow();
