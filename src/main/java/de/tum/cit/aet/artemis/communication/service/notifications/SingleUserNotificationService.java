@@ -23,6 +23,8 @@ import static de.tum.cit.aet.artemis.communication.domain.NotificationType.TUTOR
 import static de.tum.cit.aet.artemis.communication.domain.NotificationType.TUTORIAL_GROUP_REGISTRATION_STUDENT;
 import static de.tum.cit.aet.artemis.communication.domain.NotificationType.TUTORIAL_GROUP_REGISTRATION_TUTOR;
 import static de.tum.cit.aet.artemis.communication.domain.NotificationType.TUTORIAL_GROUP_UNASSIGNED;
+import static de.tum.cit.aet.artemis.communication.domain.NotificationType.VCS_ACCESS_TOKEN_ADDED;
+import static de.tum.cit.aet.artemis.communication.domain.NotificationType.VCS_ACCESS_TOKEN_EXPIRED;
 import static de.tum.cit.aet.artemis.communication.domain.notification.NotificationConstants.CONVERSATION_ADD_USER_CHANNEL_TITLE;
 import static de.tum.cit.aet.artemis.communication.domain.notification.NotificationConstants.CONVERSATION_ADD_USER_GROUP_CHAT_TITLE;
 import static de.tum.cit.aet.artemis.communication.domain.notification.NotificationConstants.CONVERSATION_CREATE_GROUP_CHAT_TITLE;
@@ -150,6 +152,7 @@ public class SingleUserNotificationService {
                         ((NewReplyNotificationSubject) notificationSubject).responsibleUser);
             case DATA_EXPORT_CREATED, DATA_EXPORT_FAILED -> createNotification((DataExport) notificationSubject, notificationType, typeSpecificInformation);
             case SSH_KEY_ADDED, SSH_KEY_EXPIRES_SOON, SSH_KEY_HAS_EXPIRED -> createNotification((UserSshPublicKey) notificationSubject, notificationType, typeSpecificInformation);
+            case VCS_ACCESS_TOKEN_ADDED, VCS_ACCESS_TOKEN_EXPIRED -> createNotification(typeSpecificInformation.getVcsAccessToken(), notificationType, typeSpecificInformation);
             default -> throw new UnsupportedOperationException("Can not create notification for type : " + notificationType);
         };
     }
@@ -282,13 +285,31 @@ public class SingleUserNotificationService {
     }
 
     /**
-     * Notify user about an upcoming expiry of an SSH key
+     * Notify user about the expiration of an SSH key
      *
      * @param recipient the user to whose account the SSH key was added
      * @param key       the key which was added
      */
     public void notifyUserAboutExpiredSshKey(User recipient, UserSshPublicKey key) {
         notifyRecipientWithNotificationType(key, SSH_KEY_HAS_EXPIRED, recipient, null);
+    }
+
+    /**
+     * Notify user about the addition of a VCS access token
+     *
+     * @param recipient the user to whose account the SSH key was added
+     */
+    public void notifyUserAboutNewlyAddedVcsAccessToken(User recipient) {
+        notifyRecipientWithNotificationType(null, VCS_ACCESS_TOKEN_ADDED, recipient, null);
+    }
+
+    /**
+     * Notify user about the expiration of the VCS access token
+     *
+     * @param recipient the user to whose account the SSH key was added
+     */
+    public void notifyUserAboutExpiredVcsAccessToken(User recipient) {
+        notifyRecipientWithNotificationType(null, VCS_ACCESS_TOKEN_EXPIRED, recipient, null);
     }
 
     /**

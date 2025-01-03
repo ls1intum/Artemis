@@ -34,6 +34,8 @@ import static de.tum.cit.aet.artemis.communication.domain.notification.Notificat
 import static de.tum.cit.aet.artemis.communication.domain.notification.NotificationConstants.TUTORIAL_GROUP_REGISTRATION_TUTOR_TITLE;
 import static de.tum.cit.aet.artemis.communication.domain.notification.NotificationConstants.TUTORIAL_GROUP_UNASSIGNED_TEXT;
 import static de.tum.cit.aet.artemis.communication.domain.notification.NotificationConstants.TUTORIAL_GROUP_UNASSIGNED_TITLE;
+import static de.tum.cit.aet.artemis.communication.domain.notification.NotificationConstants.VCS_ACCESS_TOKEN_ADDED_TEXT;
+import static de.tum.cit.aet.artemis.communication.domain.notification.NotificationConstants.VCS_ACCESS_TOKEN_EXPIRED_TEXT;
 import static de.tum.cit.aet.artemis.communication.service.notifications.NotificationSettingsService.NOTIFICATION_USER_NOTIFICATION_DATA_EXPORT_CREATED;
 import static de.tum.cit.aet.artemis.communication.service.notifications.NotificationSettingsService.NOTIFICATION_USER_NOTIFICATION_DATA_EXPORT_FAILED;
 import static de.tum.cit.aet.artemis.communication.service.notifications.NotificationSettingsService.NOTIFICATION__EXERCISE_NOTIFICATION__EXERCISE_SUBMISSION_ASSESSED;
@@ -87,7 +89,6 @@ import de.tum.cit.aet.artemis.communication.domain.conversation.GroupChat;
 import de.tum.cit.aet.artemis.communication.domain.conversation.OneToOneChat;
 import de.tum.cit.aet.artemis.communication.domain.notification.Notification;
 import de.tum.cit.aet.artemis.communication.domain.notification.SingleUserNotification;
-import de.tum.cit.aet.artemis.communication.repository.NotificationRepository;
 import de.tum.cit.aet.artemis.communication.repository.NotificationSettingRepository;
 import de.tum.cit.aet.artemis.communication.service.notifications.SingleUserNotificationService;
 import de.tum.cit.aet.artemis.core.domain.Course;
@@ -95,6 +96,7 @@ import de.tum.cit.aet.artemis.core.domain.DataExport;
 import de.tum.cit.aet.artemis.core.domain.DomainObject;
 import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.security.SecurityUtils;
+import de.tum.cit.aet.artemis.core.test_repository.NotificationTestRepository;
 import de.tum.cit.aet.artemis.core.user.util.UserUtilService;
 import de.tum.cit.aet.artemis.core.util.CourseUtilService;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
@@ -111,6 +113,7 @@ import de.tum.cit.aet.artemis.plagiarism.domain.text.TextSubmissionElement;
 import de.tum.cit.aet.artemis.programming.dto.UserSshPublicKeyDTO;
 import de.tum.cit.aet.artemis.programming.service.sshuserkeys.UserSshPublicKeyExpiryNotificationService;
 import de.tum.cit.aet.artemis.programming.service.sshuserkeys.UserSshPublicKeyService;
+import de.tum.cit.aet.artemis.programming.service.tokens.UserTokenExpiryNotificationService;
 import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationIndependentTest;
 import de.tum.cit.aet.artemis.text.domain.TextExercise;
 import de.tum.cit.aet.artemis.text.util.TextExerciseFactory;
@@ -124,7 +127,7 @@ class SingleUserNotificationServiceTest extends AbstractSpringIntegrationIndepen
     private SingleUserNotificationService singleUserNotificationService;
 
     @Autowired
-    private NotificationRepository notificationRepository;
+    private NotificationTestRepository notificationTestRepository;
 
     @Autowired
     private NotificationSettingRepository notificationSettingRepository;
@@ -146,6 +149,9 @@ class SingleUserNotificationServiceTest extends AbstractSpringIntegrationIndepen
 
     @Autowired
     private UserSshPublicKeyExpiryNotificationService userSshPublicKeyExpiryNotificationService;
+
+    @Autowired
+    private UserTokenExpiryNotificationService userTokenExpiryNotificationService;
 
     @Autowired
     private UserSshPublicKeyService userSshPublicKeyService;
@@ -211,7 +217,7 @@ class SingleUserNotificationServiceTest extends AbstractSpringIntegrationIndepen
         userTwo = userUtilService.getUserByLogin(TEST_PREFIX + "student2");
         userThree = userUtilService.getUserByLogin(TEST_PREFIX + "student3");
 
-        notificationRepository.deleteAllInBatch();
+        notificationTestRepository.deleteAllInBatch();
 
         exercise = new TextExercise();
         exercise.setCourse(course);
@@ -298,7 +304,7 @@ class SingleUserNotificationServiceTest extends AbstractSpringIntegrationIndepen
      * @param expectedNotificationTitle is the title (NotificationTitleTypeConstants) of the expected notification
      */
     private void verifyRepositoryCallWithCorrectNotification(String expectedNotificationTitle) {
-        List<Notification> capturedNotifications = notificationRepository.findAll();
+        List<Notification> capturedNotifications = notificationTestRepository.findAll();
         assertThat(capturedNotifications).isNotEmpty();
         List<Notification> relevantNotifications = capturedNotifications.stream().filter(e -> e.getTitle().equals(expectedNotificationTitle)).toList();
         assertThat(relevantNotifications).as("Title of the captured notification should be equal to the expected one").hasSize(1);
@@ -313,13 +319,13 @@ class SingleUserNotificationServiceTest extends AbstractSpringIntegrationIndepen
     @Test
     void testSendNoNotificationOrEmailWhenSettingsAreDeactivated() {
         notificationSettingRepository.save(new NotificationSetting(user, false, true, true, NOTIFICATION__EXERCISE_NOTIFICATION__NEW_REPLY_FOR_EXERCISE_POST));
-        assertThat(notificationRepository.findAll()).as("No notifications should be present prior to the method call").isEmpty();
+        assertThat(notificationTestRepository.findAll()).as("No notifications should be present prior to the method call").isEmpty();
 
         SingleUserNotification notification = singleUserNotificationService.createNotificationAboutNewMessageReply(answerPost, answerPost.getAuthor(),
                 answerPost.getPost().getConversation());
         singleUserNotificationService.notifyUserAboutNewMessageReply(answerPost, notification, user, userTwo, NEW_REPLY_FOR_EXERCISE_POST);
 
-        assertThat(notificationRepository.findAll()).as("The notification should have been saved to the DB").hasSize(1);
+        assertThat(notificationTestRepository.findAll()).as("The notification should have been saved to the DB").hasSize(1);
         // no web app notification or email should be sent
         verify(websocketMessagingService, never()).sendMessage(any(), any());
     }
@@ -358,7 +364,7 @@ class SingleUserNotificationServiceTest extends AbstractSpringIntegrationIndepen
     void testCheckNotificationForAssessmentExerciseSubmission_pastAssessmentDueDate() {
         exercise = TextExerciseFactory.generateTextExercise(null, null, ZonedDateTime.now().minusMinutes(1), course);
         singleUserNotificationService.checkNotificationForAssessmentExerciseSubmission(exercise, user, result);
-        assertThat(notificationRepository.findAll()).as("One new notification should have been created").hasSize(1);
+        assertThat(notificationTestRepository.findAll()).as("One new notification should have been created").hasSize(1);
     }
 
     /**
@@ -368,7 +374,7 @@ class SingleUserNotificationServiceTest extends AbstractSpringIntegrationIndepen
     void testCheckNotificationForAssessmentExerciseSubmission_futureAssessmentDueDate() {
         exercise = TextExerciseFactory.generateTextExercise(null, null, ZonedDateTime.now().plusHours(1), course);
         singleUserNotificationService.checkNotificationForAssessmentExerciseSubmission(exercise, user, result);
-        assertThat(notificationRepository.findAll()).as("No new notification should have been created").isEmpty();
+        assertThat(notificationTestRepository.findAll()).as("No new notification should have been created").isEmpty();
     }
 
     @Test
@@ -391,7 +397,7 @@ class SingleUserNotificationServiceTest extends AbstractSpringIntegrationIndepen
 
         singleUserNotificationService.notifyUsersAboutAssessedExerciseSubmission(testExercise);
 
-        List<Notification> sentNotifications = notificationRepository.findAll();
+        List<Notification> sentNotifications = notificationTestRepository.findAll();
 
         assertThat(sentNotifications).as("Only one notification should have been created (for the user with a valid participation, submission, and manual result)").hasSize(1);
         assertThat(sentNotifications.getFirst()).isInstanceOf(SingleUserNotification.class);
@@ -422,7 +428,7 @@ class SingleUserNotificationServiceTest extends AbstractSpringIntegrationIndepen
 
             userSshPublicKeyService.createSshKeyForUser(user, AuthorizedKeyEntry.parseAuthorizedKeyEntry(keyDTO.publicKey()), keyDTO);
 
-            sentNotifications = notificationRepository.findAll();
+            sentNotifications = notificationTestRepository.findAllByRecipientId(user.getId());
             checkFirstNotification();
         }
 
@@ -432,7 +438,7 @@ class SingleUserNotificationServiceTest extends AbstractSpringIntegrationIndepen
 
             userSshPublicKeyService.createSshKeyForUser(user, AuthorizedKeyEntry.parseAuthorizedKeyEntry(keyDTO.publicKey()), keyDTO);
 
-            sentNotifications = notificationRepository.findAll();
+            sentNotifications = notificationTestRepository.findAllByRecipientId(user.getId());
             checkFirstNotification();
         }
 
@@ -443,7 +449,7 @@ class SingleUserNotificationServiceTest extends AbstractSpringIntegrationIndepen
 
             userSshPublicKeyExpiryNotificationService.notifyUserOnUpcomingKeyExpiry();
 
-            sentNotifications = notificationRepository.findAll();
+            sentNotifications = notificationTestRepository.findAllByRecipientId(user.getId());
             assertThat(sentNotifications).hasSize(2);
             assertThat(((SingleUserNotification) sentNotifications.getFirst()).getRecipient()).isEqualTo(user);
             assertThat((sentNotifications.get(1)).getText()).isEqualTo(SSH_KEY_EXPIRES_SOON_TEXT);
@@ -457,7 +463,7 @@ class SingleUserNotificationServiceTest extends AbstractSpringIntegrationIndepen
 
             userSshPublicKeyExpiryNotificationService.notifyUserOnExpiredKey();
 
-            sentNotifications = notificationRepository.findAll();
+            sentNotifications = notificationTestRepository.findAllByRecipientId(user.getId());
             assertThat(sentNotifications).hasSize(2);
             assertThat(((SingleUserNotification) sentNotifications.getFirst()).getRecipient()).isEqualTo(user);
             assertThat((sentNotifications.get(1)).getText()).isEqualTo(SSH_KEY_HAS_EXPIRED_TEXT);
@@ -471,7 +477,7 @@ class SingleUserNotificationServiceTest extends AbstractSpringIntegrationIndepen
 
             userSshPublicKeyExpiryNotificationService.notifyUserOnUpcomingKeyExpiry();
 
-            sentNotifications = notificationRepository.findAll();
+            sentNotifications = notificationTestRepository.findAllByRecipientId(user.getId());
             assertThat(sentNotifications).hasSize(1);
             checkFirstNotification();
         }
@@ -483,7 +489,7 @@ class SingleUserNotificationServiceTest extends AbstractSpringIntegrationIndepen
 
             userSshPublicKeyExpiryNotificationService.notifyUserOnExpiredKey();
 
-            sentNotifications = notificationRepository.findAll();
+            sentNotifications = notificationTestRepository.findAllByRecipientId(user.getId());
             assertThat(sentNotifications).hasSize(1);
             checkFirstNotification();
         }
@@ -492,7 +498,7 @@ class SingleUserNotificationServiceTest extends AbstractSpringIntegrationIndepen
         void scheduleKeyExpiryNotifications() {
             userSshPublicKeyExpiryNotificationService.sendKeyExpirationNotifications();
 
-            sentNotifications = notificationRepository.findAll();
+            sentNotifications = notificationTestRepository.findAllByRecipientId(user.getId());
             assertThat(sentNotifications).hasSize(0);
         }
 
@@ -500,6 +506,58 @@ class SingleUserNotificationServiceTest extends AbstractSpringIntegrationIndepen
             assertThat(sentNotifications.getFirst()).isInstanceOf(SingleUserNotification.class);
             assertThat(((SingleUserNotification) sentNotifications.getFirst()).getRecipient()).isEqualTo(user);
             assertThat((sentNotifications.getFirst()).getText()).isEqualTo(SSH_KEY_ADDED_TEXT);
+        }
+    }
+
+    // User VCS access token related (expiry warning and newly added token)
+
+    @Nested
+    class UserTokenExpiryNotification {
+
+        List<Notification> sentNotifications;
+
+        @AfterEach
+        void tearDown() throws Exception {
+            user.setVcsAccessTokenExpiryDate(null);
+            user.setVcsAccessToken(null);
+            userTestRepository.save(user);
+        }
+
+        @Test
+        void shouldNotifyUserAboutNewlyAddedVcsAccessToken() {
+            singleUserNotificationService.notifyUserAboutNewlyAddedVcsAccessToken(user);
+
+            sentNotifications = notificationTestRepository.findAll();
+            assertThat(sentNotifications.getFirst()).isInstanceOf(SingleUserNotification.class);
+            assertThat(((SingleUserNotification) sentNotifications.getFirst()).getRecipient()).isEqualTo(user);
+            assertThat((sentNotifications.getFirst()).getText()).isEqualTo(VCS_ACCESS_TOKEN_ADDED_TEXT);
+        }
+
+        @Test
+        void shouldNotifyUserAboutExpiredVcsAccessToken() {
+            user.setVcsAccessToken("token");
+            user.setVcsAccessTokenExpiryDate(ZonedDateTime.now().minusHours(5));
+            userTestRepository.save(user);
+
+            userTokenExpiryNotificationService.sendTokenExpirationNotifications();
+
+            sentNotifications = notificationTestRepository.findAll();
+            assertThat(sentNotifications).hasSize(1);
+            assertThat(sentNotifications.getFirst()).isInstanceOf(SingleUserNotification.class);
+            assertThat(((SingleUserNotification) sentNotifications.getFirst()).getRecipient()).isEqualTo(user);
+            assertThat((sentNotifications.getFirst()).getText()).isEqualTo(VCS_ACCESS_TOKEN_EXPIRED_TEXT);
+        }
+
+        @Test
+        void shouldNotNotifyUserAboutVcsAccessTokenExpiryWhenTokenIsNotExpired() {
+            user.setVcsAccessToken("token");
+            user.setVcsAccessTokenExpiryDate(ZonedDateTime.now().plusDays(5));
+            userTestRepository.save(user);
+
+            userTokenExpiryNotificationService.sendTokenExpirationNotifications();
+
+            sentNotifications = notificationTestRepository.findAll();
+            assertThat(sentNotifications).hasSize(0);
         }
     }
 
@@ -542,9 +600,9 @@ class SingleUserNotificationServiceTest extends AbstractSpringIntegrationIndepen
 
     @Test
     void testConversationNotificationsOneToOneChatCreation() {
-        var notificationsBefore = (int) notificationRepository.count();
+        var notificationsBefore = (int) notificationTestRepository.count();
         singleUserNotificationService.notifyClientAboutConversationCreationOrDeletion(oneToOneChat, user, userTwo, CONVERSATION_CREATE_ONE_TO_ONE_CHAT);
-        List<Notification> capturedNotifications = notificationRepository.findAll();
+        List<Notification> capturedNotifications = notificationTestRepository.findAll();
         assertThat(capturedNotifications).as("Notification should not have been saved").hasSize(notificationsBefore);
         // notification should be sent
         verify(websocketMessagingService).sendMessage(eq("/topic/user/" + user.getId() + "/notifications"), (Object) any());
@@ -552,14 +610,14 @@ class SingleUserNotificationServiceTest extends AbstractSpringIntegrationIndepen
 
     @Test
     void testConversationNotificationsGroupChatCreation() {
-        int notificationsBefore = (int) notificationRepository.count();
+        int notificationsBefore = (int) notificationTestRepository.count();
         singleUserNotificationService.notifyClientAboutConversationCreationOrDeletion(groupChat, user, userTwo, CONVERSATION_CREATE_GROUP_CHAT);
         verify(websocketMessagingService).sendMessage(eq("/topic/user/" + user.getId() + "/notifications"), (Object) any());
 
         singleUserNotificationService.notifyClientAboutConversationCreationOrDeletion(groupChat, userThree, userTwo, CONVERSATION_CREATE_GROUP_CHAT);
         verify(websocketMessagingService).sendMessage(eq("/topic/user/" + userThree.getId() + "/notifications"), (Object) any());
 
-        List<Notification> capturedNotifications = notificationRepository.findAll();
+        List<Notification> capturedNotifications = notificationTestRepository.findAll();
         assertThat(capturedNotifications).as("Both notifications should have been saved").hasSize(notificationsBefore + 2);
         capturedNotifications.forEach(capturedNotification -> {
             assertThat(capturedNotification.getTitle()).as("Title of the captured notification should be equal to the expected one")
@@ -603,7 +661,7 @@ class SingleUserNotificationServiceTest extends AbstractSpringIntegrationIndepen
                 answerPost.getPost().getConversation());
         singleUserNotificationService.notifyUserAboutNewMessageReply(answerPost, notification, user, userTwo, CONVERSATION_NEW_REPLY_MESSAGE);
         verify(websocketMessagingService, never()).sendMessage(eq("/topic/user/" + user.getId() + "/notifications"), (Object) any());
-        Notification sentNotification = notificationRepository.findAll().stream().max(Comparator.comparing(DomainObject::getId)).orElseThrow();
+        Notification sentNotification = notificationTestRepository.findAll().stream().max(Comparator.comparing(DomainObject::getId)).orElseThrow();
 
         SingleUserNotificationService.NewReplyNotificationSubject notificationSubject = new SingleUserNotificationService.NewReplyNotificationSubject(answerPost, user, userTwo);
         verify(generalInstantNotificationService, times(1)).sendNotification(sentNotification, user, notificationSubject);
