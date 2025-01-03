@@ -34,7 +34,7 @@ import de.tum.cit.aet.artemis.programming.test_repository.ProgrammingExerciseTes
 import de.tum.cit.aet.artemis.programming.test_repository.ProgrammingSubmissionTestRepository;
 
 /**
- * Utility service specifically used for testing Hestia related functionality.
+ * Utility service specifically used for testing programming exercises.
  * This currently includes:
  * - Setting up a template repository
  * - Setting up a solution repository

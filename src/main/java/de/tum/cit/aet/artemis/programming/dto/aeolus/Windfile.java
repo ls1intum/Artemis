@@ -1,4 +1,4 @@
-package de.tum.cit.aet.artemis.programming.service.aeolus;
+package de.tum.cit.aet.artemis.programming.dto.aeolus;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -10,6 +10,8 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.module.SimpleModule;
+
+import de.tum.cit.aet.artemis.programming.service.aeolus.ActionDeserializer;
 
 /**
  * Represents a windfile, the definition file for an aeolus build plan that

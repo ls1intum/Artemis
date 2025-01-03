@@ -88,7 +88,7 @@ public class ProgrammingExerciseTaskService {
     }
 
     /**
-     * Deletes a ProgrammingExerciseTask together with its CodeHints
+     * Deletes a ProgrammingExerciseTask
      * This has to be manually done, as there is no orphanRemoval between the two entities
      *
      * @param task The task to delete
@@ -103,14 +103,13 @@ public class ProgrammingExerciseTaskService {
      * If there is already a task with the same test cases as a new one, but with a different name the existing one will be renamed.
      *
      * @param exercise The programming exercise to extract the tasks from
-     * @return The current tasks of the exercise
      */
-    public Set<ProgrammingExerciseTask> updateTasksFromProblemStatement(ProgrammingExercise exercise) {
+    public void updateTasksFromProblemStatement(ProgrammingExercise exercise) {
         var previousTasks = programmingExerciseTaskRepository.findByExerciseIdWithTestCases(exercise.getId());
         var extractedTasks = new HashSet<>(extractTasks(exercise));
         // No changes
         if (previousTasks.equals(extractedTasks)) {
-            return previousTasks;
+            return;
         }
         // Add all tasks that did not change
         var tasksToBeSaved = new HashSet<>(previousTasks);
@@ -145,24 +144,7 @@ public class ProgrammingExerciseTaskService {
         for (ProgrammingExerciseTask task : tasksToBeSaved) {
             task.setExercise(exercise);
         }
-        return new HashSet<>(programmingExerciseTaskRepository.saveAll(tasksToBeSaved));
-    }
-
-    /**
-     * Gets the tasks of a programming exercise sorted by their order in the problem statement
-     * TODO: Replace this with an @OrderColumn on tasks in ProgrammingExercise
-     *
-     * @param exercise The programming exercise
-     * @return The sorted tasks
-     */
-    public List<ProgrammingExerciseTask> getSortedTasks(ProgrammingExercise exercise) {
-        var unsortedTasks = programmingExerciseTaskRepository.findByExerciseIdWithTestCases(exercise.getId());
-        var sortedExtractedTasks = extractTasks(exercise);
-        return sortedExtractedTasks.stream()
-                .map(extractedTask -> unsortedTasks.stream()
-                        .filter(task -> task.getTaskName().equals(extractedTask.getTaskName()) && task.getTestCases().equals(extractedTask.getTestCases())).findFirst()
-                        .orElse(null))
-                .distinct().filter(Objects::nonNull).toList();
+        programmingExerciseTaskRepository.saveAll(tasksToBeSaved);
     }
 
     /**
@@ -181,7 +163,7 @@ public class ProgrammingExerciseTaskService {
      * Additionally, adds a new task for all test cases with no manually assigned task and adds all tests to that task
      *
      * @param exerciseId of the programming exercise
-     * @return Set of all tasks including one for not manually assigned tests
+     * @return List of all tasks including one for not manually assigned tests
      */
     public List<ProgrammingExerciseTask> getTasksWithUnassignedTestCases(long exerciseId) {
         List<ProgrammingExerciseTask> tasks = programmingExerciseTaskRepository.findByExerciseIdWithTestCaseElseThrow(exerciseId);

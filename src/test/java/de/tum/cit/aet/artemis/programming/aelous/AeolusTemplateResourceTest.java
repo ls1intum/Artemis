@@ -18,8 +18,8 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 
 import de.tum.cit.aet.artemis.core.user.util.UserUtilService;
 import de.tum.cit.aet.artemis.core.util.RequestUtilService;
-import de.tum.cit.aet.artemis.programming.service.aeolus.ScriptAction;
-import de.tum.cit.aet.artemis.programming.service.aeolus.Windfile;
+import de.tum.cit.aet.artemis.programming.dto.aeolus.ScriptAction;
+import de.tum.cit.aet.artemis.programming.dto.aeolus.Windfile;
 import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationLocalCILocalVCTest;
 
 class AeolusTemplateResourceTest extends AbstractSpringIntegrationLocalCILocalVCTest {
