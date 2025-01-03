@@ -165,6 +165,7 @@
         "sass": "1.83.0",
         "ts-jest": "29.2.5",
         "typescript": "5.5.4",
+        "typescript-eslint": "8.18.2",
         "vite-tsconfig-paths": "5.1.4",
         "vitest": "2.1.8",
         "weak-napi": "2.0.2"
