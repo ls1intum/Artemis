@@ -56,18 +56,12 @@ public class JenkinsJobService {
             return null;
         }
 
-        // NOTE: this API call is unnecessary and only improves logging, we could remove it
-        final var folder = getFolderJob(folderJobName);
-        if (folder == null) {
-            log.warn("Cannot get the job {} in folder {} because it doesn't exist.", jobName, folderJobName);
-            return null;
-        }
-
         try {
-            URI uri = JenkinsEndpoints.GET_JOB.buildEndpoint(serverUri, folder.name(), jobName).build(true).toUri();
+            URI uri = JenkinsEndpoints.GET_JOB.buildEndpoint(serverUri, folderJobName, jobName).build(true).toUri();
             return restTemplate.getForObject(uri, JobWithDetails.class);
         }
         catch (HttpClientErrorException.NotFound notFound) {
+            log.warn("Cannot get the job {} in folder {} because it doesn't exist.", jobName, folderJobName);
             return null;
         }
         catch (RestClientException e) {

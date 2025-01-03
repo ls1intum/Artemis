@@ -163,13 +163,19 @@ public class JenkinsRequestMockProvider {
         mockServer.expect(requestTo(uri)).andExpect(method(HttpMethod.POST)).andRespond(withSuccess());
     }
 
-    public void mockGivePlanPermissions(String jobFolder, String job) throws IOException {
-        // see addInstructorAndEditorAndTAPermissionsToUsersForJob
-        mockGetJobConfig(jobFolder, job);
-        mockUpdatePlanRepository(jobFolder, job, false);
-        // TODO: double check, that those are not necessary
-        // mockGetFolderConfig(jobFolder);
-        // mockUpdatePlanRepository(jobFolder, job, false);
+    /**
+     * Mock equivalent of {@link JenkinsJobPermissionsService#addInstructorAndEditorAndTAPermissionsToUsersForJob(Set, Set, Set, String, String)}.
+     *
+     * @param folderName The folder the job is in.
+     * @param job        The name of the job itself.
+     */
+    public void mockGivePlanPermissions(String folderName, String job) throws IOException {
+        // add permissions to job itself
+        mockGetJobConfig(folderName, job);
+        mockUpdatePlanRepository(folderName, job, false);
+
+        // add read permission to folder the job is in
+        mockAddInstructorAndEditorAndTAPermissionsToUsersForFolder(folderName, false);
     }
 
     private void mockGetJobConfig(String folderName, String jobName) throws IOException {
@@ -213,8 +219,7 @@ public class JenkinsRequestMockProvider {
     }
 
     public void mockCopyBuildPlan(String sourceProjectKey, String targetProjectKey, String planKey) throws IOException {
-
-        mockGetJobXmlForBuildPlanWith(sourceProjectKey, "<xml></xml>");
+        mockGetJobXmlForBuildPlanWith(sourceProjectKey, planKey, "<xml></xml>");
         mockSaveJobXml(targetProjectKey, planKey);
     }
 
@@ -240,7 +245,7 @@ public class JenkinsRequestMockProvider {
         var mockXml = loadFileFromResources("test-data/jenkins-response/" + jobConfigXmlFilename);
 
         mockGetFolderJob(projectKey);
-        mockGetJobXmlForBuildPlanWith(projectKey, mockXml);
+        mockGetJobXmlForBuildPlanWith(projectKey, planName, mockXml);
 
         URI uri = JenkinsEndpoints.PLAN_CONFIG.buildEndpoint(serverUri, projectKey, planName).build(true).toUri();
         // build plan URL is updated after the repository URIs, so in this case, the URI is used twice
@@ -254,16 +259,15 @@ public class JenkinsRequestMockProvider {
         var mockXml = loadFileFromResources("test-data/jenkins-response/job-config.xml");
 
         mockGetFolderJob(projectKey);
-        mockGetJobXmlForBuildPlanWith(projectKey, mockXml);
+        mockGetJobXmlForBuildPlanWith(projectKey, planName, mockXml);
 
         URI uri = JenkinsEndpoints.PLAN_CONFIG.buildEndpoint(serverUri, projectKey, planName).build(true).toUri();
         mockServer.expect(requestTo(uri)).andExpect(method(HttpMethod.POST)).andRespond(withStatus(expectedHttpStatus));
     }
 
-    // TODO: this should actually use the JOB_CONFIG endpoint
-    private void mockGetJobXmlForBuildPlanWith(String projectKey, String xmlToReturn) throws IOException {
+    private void mockGetJobXmlForBuildPlanWith(String projectKey, String planName, String xmlToReturn) throws IOException {
         mockGetFolderJob(projectKey);
-        URI uri = JenkinsEndpoints.FOLDER_CONFIG.buildEndpoint(serverUri, projectKey).build(true).toUri();
+        URI uri = JenkinsEndpoints.PLAN_CONFIG.buildEndpoint(serverUri, projectKey, planName).build(true).toUri();
         mockServer.expect(requestTo(uri)).andExpect(method(HttpMethod.GET)).andRespond(withSuccess().body(xmlToReturn));
     }
 
