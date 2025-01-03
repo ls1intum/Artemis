@@ -1,4 +1,4 @@
-package de.tum.cit.aet.artemis.core.security;
+package de.tum.cit.aet.artemis.core.security.lti;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.any;
@@ -230,7 +230,7 @@ class Lti13LaunchFilterTest {
         verify(httpResponse).setStatus(HttpStatus.UNAUTHORIZED.value());
         assertThat((responseJsonBody.get("targetLinkUri").toString())).as("Response body contains the expected targetLinkUri")
                 .contains("https://any-artemis-domain.org/course/123/exercise/1234");
-        assertThat(responseJsonBody.get("ltiIdToken").isNull()).isTrue();
+        assertThat(responseJsonBody.get("ltiIdToken")).isNull();
         assertThat((responseJsonBody.get("clientRegistrationId").toString())).as("Response body contains the expected clientRegistrationId").contains("some-registration");
     }
 
@@ -247,7 +247,7 @@ class Lti13LaunchFilterTest {
 
         verify(httpResponse).setStatus(HttpStatus.UNAUTHORIZED.value());
         assertThat((responseJsonBody.get("targetLinkUri").toString())).as("Response body contains the expected targetLinkUri").contains("/lti/select-course");
-        assertThat(responseJsonBody.get("ltiIdToken").isNull()).isTrue();
+        assertThat(responseJsonBody.get("ltiIdToken")).isNull();
         assertThat((responseJsonBody.get("clientRegistrationId").toString())).as("Response body contains the expected clientRegistrationId").contains("some-registration");
 
     }
