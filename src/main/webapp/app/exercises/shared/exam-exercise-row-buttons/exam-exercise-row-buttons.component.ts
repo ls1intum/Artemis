@@ -16,10 +16,13 @@ import { faBook, faExclamationTriangle, faEye, faFileExport, faFileSignature, fa
 import { faListAlt } from '@fortawesome/free-regular-svg-icons';
 import { PROFILE_LOCALCI, PROFILE_LOCALVC } from 'app/app.constants';
 import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
+import { ArtemisSharedModule } from 'app/shared/shared.module';
 
 @Component({
     selector: 'jhi-exam-exercise-row-buttons',
     templateUrl: './exam-exercise-row-buttons.component.html',
+    standalone: true,
+    imports: [ArtemisSharedModule],
 })
 export class ExamExerciseRowButtonsComponent implements OnInit {
     @Input() course: Course;
