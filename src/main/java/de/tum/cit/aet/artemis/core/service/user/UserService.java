@@ -66,6 +66,7 @@ import de.tum.cit.aet.artemis.core.service.messaging.InstanceMessageSendService;
 import de.tum.cit.aet.artemis.programming.domain.ParticipationVCSAccessToken;
 import de.tum.cit.aet.artemis.programming.service.ParticipationVcsAccessTokenService;
 import de.tum.cit.aet.artemis.programming.service.ci.CIUserManagementService;
+import de.tum.cit.aet.artemis.programming.service.sshuserkeys.UserSshPublicKeyService;
 import de.tum.cit.aet.artemis.programming.service.vcs.VcsUserManagementService;
 import tech.jhipster.security.RandomUtil;
 
@@ -117,11 +118,13 @@ public class UserService {
 
     private final SavedPostRepository savedPostRepository;
 
+    private final UserSshPublicKeyService userSshPublicKeyService;
+
     public UserService(UserCreationService userCreationService, UserRepository userRepository, AuthorityService authorityService, AuthorityRepository authorityRepository,
             CacheManager cacheManager, Optional<LdapUserService> ldapUserService, GuidedTourSettingsRepository guidedTourSettingsRepository, PasswordService passwordService,
             Optional<VcsUserManagementService> optionalVcsUserManagementService, Optional<CIUserManagementService> optionalCIUserManagementService,
             InstanceMessageSendService instanceMessageSendService, FileService fileService, ScienceEventApi scienceEventApi,
-            ParticipationVcsAccessTokenService participationVCSAccessTokenService, SavedPostRepository savedPostRepository) {
+            ParticipationVcsAccessTokenService participationVCSAccessTokenService, SavedPostRepository savedPostRepository, UserSshPublicKeyService userSshPublicKeyService) {
         this.userCreationService = userCreationService;
         this.userRepository = userRepository;
         this.authorityService = authorityService;
@@ -137,6 +140,7 @@ public class UserService {
         this.scienceEventApi = scienceEventApi;
         this.participationVCSAccessTokenService = participationVCSAccessTokenService;
         this.savedPostRepository = savedPostRepository;
+        this.userSshPublicKeyService = userSshPublicKeyService;
     }
 
     /**
@@ -321,6 +325,7 @@ public class UserService {
             catch (VersionControlException e) {
                 log.error("An error occurred while registering GitLab user {}:", savedNonActivatedUser.getLogin(), e);
                 participationVCSAccessTokenService.deleteAllByUserId(savedNonActivatedUser.getId());
+                userSshPublicKeyService.deleteAllByUserId(savedNonActivatedUser.getId());
                 userRepository.delete(savedNonActivatedUser);
                 clearUserCaches(savedNonActivatedUser);
                 userRepository.flush();
@@ -469,6 +474,7 @@ public class UserService {
     public void softDeleteUser(String login) {
         userRepository.findOneWithGroupsByLogin(login).ifPresent(user -> {
             participationVCSAccessTokenService.deleteAllByUserId(user.getId());
+            userSshPublicKeyService.deleteAllByUserId(user.getId());
             user.setDeleted(true);
             anonymizeUser(user);
             log.warn("Soft Deleted User: {}", user);
