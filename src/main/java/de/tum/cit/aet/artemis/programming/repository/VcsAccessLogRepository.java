@@ -33,11 +33,11 @@ public interface VcsAccessLogRepository extends ArtemisJpaRepository<VcsAccessLo
      * @return an {@link Optional} containing the newest {@link VcsAccessLog}, or empty if none exists.
      */
     @Query("""
-                SELECT vcsAccessLog
-                FROM VcsAccessLog vcsAccessLog
-                WHERE vcsAccessLog.participation.id = :participationId
-                ORDER BY vcsAccessLog.id DESC
-                LIMIT 1
+            SELECT vcsAccessLog
+            FROM VcsAccessLog vcsAccessLog
+            WHERE vcsAccessLog.participation.id = :participationId
+            ORDER BY vcsAccessLog.id DESC
+            LIMIT 1
             """)
     Optional<VcsAccessLog> findNewestByParticipationId(@Param("participationId") long participationId);
 
@@ -48,12 +48,12 @@ public interface VcsAccessLogRepository extends ArtemisJpaRepository<VcsAccessLo
      * @return an Optional containing the newest {@link VcsAccessLog} of the participation, or empty if none exists.
      */
     @Query("""
-                SELECT vcsAccessLog
-                FROM VcsAccessLog vcsAccessLog
+            SELECT vcsAccessLog
+            FROM VcsAccessLog vcsAccessLog
                 LEFT JOIN TREAT (vcsAccessLog.participation AS ProgrammingExerciseStudentParticipation) participation
-                WHERE participation.repositoryUri = :repositoryUri
-                ORDER BY vcsAccessLog.id DESC
-                LIMIT 1
+            WHERE participation.repositoryUri = :repositoryUri
+            ORDER BY vcsAccessLog.id DESC
+            LIMIT 1
             """)
     Optional<VcsAccessLog> findNewestByRepositoryUri(@Param("repositoryUri") String repositoryUri);
 
