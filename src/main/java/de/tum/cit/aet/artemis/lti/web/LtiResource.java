@@ -152,7 +152,7 @@ public class LtiResource {
 
         String targetLink = "";
 
-        if (!exerciseIds.isEmpty()) {
+        if (exerciseIds != null) {
             targetLink = ltiDeepLinkingService.performExerciseDeepLinking(idToken, clientRegistrationId, courseId, exerciseIds);
         }
         else if (competency) {
