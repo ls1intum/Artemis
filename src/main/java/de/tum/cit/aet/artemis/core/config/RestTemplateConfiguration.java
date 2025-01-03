@@ -19,7 +19,6 @@ import org.springframework.http.client.ClientHttpRequestInterceptor;
 import org.springframework.http.client.SimpleClientHttpRequestFactory;
 import org.springframework.http.converter.HttpMessageConverter;
 import org.springframework.http.converter.xml.MappingJackson2XmlHttpMessageConverter;
-import org.springframework.web.client.RestClient;
 import org.springframework.web.client.RestTemplate;
 
 import de.tum.cit.aet.artemis.athena.config.AthenaAuthorizationInterceptor;
@@ -63,8 +62,8 @@ public class RestTemplateConfiguration {
 
     @Bean
     @Profile(PROFILE_APOLLON)
-    public RestClient apollonRestClient() {
-        return createRestClient();
+    public RestTemplate apollonRestTemplate() {
+        return createRestTemplate();
     }
 
     /**
@@ -107,8 +106,8 @@ public class RestTemplateConfiguration {
 
     @Bean
     @Profile(PROFILE_APOLLON)
-    public RestClient shortTimeoutApollonRestClient() {
-        return createShortTimeoutRestClient();
+    public RestTemplate shortTimeoutApollonRestTemplate() {
+        return createShortTimeoutRestTemplate();
     }
 
     @Bean
@@ -171,14 +170,6 @@ public class RestTemplateConfiguration {
 
     private RestTemplate createRestTemplate() {
         return new RestTemplate();
-    }
-
-    private RestClient createRestClient() {
-        return RestClient.create();
-    }
-
-    private RestClient createShortTimeoutRestClient() {
-        return RestClient.builder().requestFactory(getSimpleClientHttpRequestFactory(SHORT_READ_TIMEOUT, SHORT_CONNECTION_TIMEOUT)).build();
     }
 
     private RestTemplate createShortTimeoutRestTemplate() {

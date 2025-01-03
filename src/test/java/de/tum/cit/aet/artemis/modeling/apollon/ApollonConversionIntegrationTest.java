@@ -16,7 +16,7 @@ import org.springframework.core.io.Resource;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.util.ReflectionTestUtils;
-import org.springframework.web.client.RestClient;
+import org.springframework.web.client.RestTemplate;
 
 import de.tum.cit.aet.artemis.core.connector.apollon.ApollonRequestMockProvider;
 import de.tum.cit.aet.artemis.modeling.dto.ApollonModelDTO;
@@ -29,8 +29,8 @@ class ApollonConversionIntegrationTest extends AbstractSpringIntegrationIndepend
     private ApollonRequestMockProvider apollonRequestMockProvider;
 
     @Autowired
-    @Qualifier("apollonRestClient")
-    RestClient restClient;
+    @Qualifier("apollonRestTemplate")
+    RestTemplate restTemplate;
 
     @Value("${artemis.apollon.conversion-service-url}")
     private String apollonConversionUrl;
@@ -40,7 +40,7 @@ class ApollonConversionIntegrationTest extends AbstractSpringIntegrationIndepend
 
     @BeforeEach
     void init() {
-        apollonConversionService.setRestClient(restClient);
+        apollonConversionService.setRestTemplate(restTemplate);
         ReflectionTestUtils.setField(apollonConversionService, "apollonConversionUrl", apollonConversionUrl);
 
         apollonRequestMockProvider.enableMockingOfRequests();

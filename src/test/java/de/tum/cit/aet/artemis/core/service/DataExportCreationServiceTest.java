@@ -38,7 +38,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.io.ClassPathResource;
 import org.springframework.core.io.Resource;
 import org.springframework.security.test.context.support.WithMockUser;
-import org.springframework.web.client.RestClient;
+import org.springframework.web.client.RestTemplate;
 
 import de.tum.cit.aet.artemis.assessment.domain.AssessmentType;
 import de.tum.cit.aet.artemis.assessment.domain.Feedback;
@@ -127,8 +127,8 @@ class DataExportCreationServiceTest extends AbstractSpringIntegrationJenkinsGitl
     private ApollonRequestMockProvider apollonRequestMockProvider;
 
     @Autowired
-    @Qualifier("apollonRestClient")
-    private RestClient restClient;
+    @Qualifier("apollonRestTemplate")
+    private RestTemplate restTemplate;
 
     @Autowired
     private ApollonConversionService apollonConversionService;
@@ -159,7 +159,7 @@ class DataExportCreationServiceTest extends AbstractSpringIntegrationJenkinsGitl
         userUtilService.addUsers(TEST_PREFIX, 2, 5, 0, 1);
         userUtilService.adjustUserGroupsToCustomGroups(TEST_PREFIX, "", 2, 5, 0, 1);
 
-        apollonConversionService.setRestClient(restClient);
+        apollonConversionService.setRestTemplate(restTemplate);
 
         apollonRequestMockProvider.enableMockingOfRequests();
 

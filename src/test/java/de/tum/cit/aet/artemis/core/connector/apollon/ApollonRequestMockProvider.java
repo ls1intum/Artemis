@@ -19,17 +19,17 @@ import org.springframework.stereotype.Component;
 import org.springframework.test.web.client.ExpectedCount;
 import org.springframework.test.web.client.MockRestServiceServer;
 import org.springframework.test.web.client.ResponseActions;
-import org.springframework.web.client.RestClient;
+import org.springframework.web.client.RestTemplate;
 
 @Component
 @Profile(PROFILE_APOLLON)
 public class ApollonRequestMockProvider {
 
-    private final RestClient restClient;
+    private final RestTemplate restTemplate;
 
     private MockRestServiceServer mockServer;
 
-    private final RestClient shortTimeoutRestClient;
+    private final RestTemplate shortTimeoutRestTemplate;
 
     private MockRestServiceServer mockServerShortTimeout;
 
@@ -38,17 +38,18 @@ public class ApollonRequestMockProvider {
 
     private AutoCloseable closeable;
 
-    public ApollonRequestMockProvider(@Qualifier("apollonRestClient") RestClient restClient, @Qualifier("shortTimeoutApollonRestClient") RestClient shortTimeoutRestClient) {
-        this.restClient = restClient;
-        this.shortTimeoutRestClient = shortTimeoutRestClient;
+    public ApollonRequestMockProvider(@Qualifier("apollonRestTemplate") RestTemplate restTemplate,
+            @Qualifier("shortTimeoutApollonRestTemplate") RestTemplate shortTimeoutRestTemplate) {
+        this.restTemplate = restTemplate;
+        this.shortTimeoutRestTemplate = shortTimeoutRestTemplate;
     }
 
     public void enableMockingOfRequests() {
-        MockRestServiceServer.MockRestServiceServerBuilder builder = MockRestServiceServer.bindTo(restClient.mutate());
+        MockRestServiceServer.MockRestServiceServerBuilder builder = MockRestServiceServer.bindTo(restTemplate);
         builder.ignoreExpectOrder(true);
         mockServer = builder.build();
 
-        MockRestServiceServer.MockRestServiceServerBuilder builderShortTimeout = MockRestServiceServer.bindTo(shortTimeoutRestClient.mutate());
+        MockRestServiceServer.MockRestServiceServerBuilder builderShortTimeout = MockRestServiceServer.bindTo(shortTimeoutRestTemplate);
         builderShortTimeout.ignoreExpectOrder(true);
         mockServerShortTimeout = builderShortTimeout.build();
 
