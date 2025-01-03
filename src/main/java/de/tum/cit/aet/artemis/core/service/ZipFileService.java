@@ -2,11 +2,11 @@ package de.tum.cit.aet.artemis.core.service;
 
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
-import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.function.Predicate;
@@ -18,6 +18,7 @@ import java.util.zip.ZipOutputStream;
 import jakarta.annotation.Nullable;
 
 import org.apache.commons.io.FileUtils;
+import org.apache.commons.io.IOUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Profile;
@@ -52,36 +53,44 @@ public class ZipFileService {
      * @throws IOException if an error occurred while zipping
      */
     public void createZipFile(Path zipFilePath, List<Path> paths) throws IOException {
+        Set<String> addedEntries = new HashSet<>(); // Keep track of added entries locally to avoid unnecessary duplicates
+
         try (ZipOutputStream zipOut = new ZipOutputStream(new FileOutputStream(zipFilePath.toFile()))) {
-            for (var path : paths) {
+            for (Path path : paths) {
                 if (Files.isReadable(path)) {
                     if (Files.isDirectory(path)) {
-                        Files.walk(path).filter(p -> !Files.isDirectory(p)).forEach(p -> {
-                            try {
-                                addFileToZip(zipOut, p, path);
-                            }
-                            catch (IOException e) {
-                                throw new RuntimeException("Error adding file to ZIP", e);
-                            }
-                        });
+                        try (var stream = Files.walk(path)) {
+                            stream.filter(p -> !Files.isDirectory(p)) // Skip directories
+                                    .filter(p -> !Files.isSymbolicLink(p)) // Skip symbolic links
+                                    .forEach(p -> {
+                                        try {
+                                            addFileToZip(zipOut, p, path, addedEntries);
+                                        }
+                                        catch (IOException e) {
+                                            throw new RuntimeException("Error adding file to ZIP", e);
+                                        }
+                                    });
+                        }
                     }
-                    else {
-                        addFileToZip(zipOut, path, path.getParent());
+                    else if (!Files.isSymbolicLink(path)) { // Skip symbolic links
+                        addFileToZip(zipOut, path, path.getParent(), addedEntries);
                     }
                 }
             }
         }
     }
 
-    private void addFileToZip(ZipOutputStream zipOut, Path file, Path basePath) throws IOException {
-        String zipEntryName = basePath.relativize(file).toString();
+    private void addFileToZip(ZipOutputStream zipOut, Path filePath, Path basePath, Set<String> addedEntries) throws IOException {
+        String zipEntryName = basePath.relativize(filePath).toString();
+        if (addedEntries.contains(zipEntryName)) {
+            return; // Skip duplicate entries
+        }
+        addedEntries.add(zipEntryName); // Mark this entry as added
+
         zipOut.putNextEntry(new ZipEntry(zipEntryName));
-        try (FileInputStream fis = new FileInputStream(file.toFile())) {
-            byte[] buffer = new byte[1024];
-            int length;
-            while ((length = fis.read(buffer)) >= 0) {
-                zipOut.write(buffer, 0, length);
-            }
+        try (var inputStream = Files.newInputStream(filePath)) {
+            // Copy data from InputStream to ZipOutputStream
+            IOUtils.copy(inputStream, zipOut);
         }
         zipOut.closeEntry();
     }
