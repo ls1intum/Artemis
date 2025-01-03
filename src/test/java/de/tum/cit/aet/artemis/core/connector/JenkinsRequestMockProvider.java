@@ -2,6 +2,7 @@ package de.tum.cit.aet.artemis.core.connector;
 
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_JENKINS;
 import static de.tum.cit.aet.artemis.core.util.TestResourceUtils.loadFileFromResources;
+import static de.tum.cit.aet.artemis.programming.domain.build.BuildPlanType.SOLUTION;
 import static de.tum.cit.aet.artemis.programming.domain.build.BuildPlanType.TEMPLATE;
 import static org.mockito.Mockito.any;
 import static org.mockito.Mockito.anyString;
@@ -43,6 +44,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
+import de.tum.cit.aet.artemis.programming.domain.build.BuildPlanType;
 import de.tum.cit.aet.artemis.programming.service.jenkins.JenkinsEndpoints;
 import de.tum.cit.aet.artemis.programming.service.jenkins.dto.JenkinsUserDTO;
 import de.tum.cit.aet.artemis.programming.service.jenkins.jobs.JenkinsJobPermissionsService;
@@ -227,8 +229,16 @@ public class JenkinsRequestMockProvider {
     }
 
     public void mockCopyBuildPlanFromTemplate(String sourceProjectKey, String targetProjectKey, String planKey) throws IOException {
+        mockCopyBuildPlanFromPlanType(sourceProjectKey, targetProjectKey, planKey, TEMPLATE);
+    }
+
+    public void mockCopyBuildPlanFromSolution(String sourceProjectKey, String targetProjectKey, String planKey) throws IOException {
+        mockCopyBuildPlanFromPlanType(sourceProjectKey, targetProjectKey, planKey, SOLUTION);
+    }
+
+    private void mockCopyBuildPlanFromPlanType(String sourceProjectKey, String targetProjectKey, String planKey, BuildPlanType planType) throws IOException {
         // the plan key has the form EXERCISE_ID-PARTICIPATION_ID
-        final String sourcePlanKey = planKey.replaceAll("-.*$", "-" + TEMPLATE.getName());
+        final String sourcePlanKey = sourceProjectKey + "-" + planType.getName();
         mockGetJobXmlForBuildPlanWith(sourceProjectKey, sourcePlanKey, "<xml></xml>");
         mockSaveJobXml(targetProjectKey, planKey);
     }

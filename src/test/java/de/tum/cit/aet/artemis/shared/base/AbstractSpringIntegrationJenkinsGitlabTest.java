@@ -196,9 +196,11 @@ public abstract class AbstractSpringIntegrationJenkinsGitlabTest extends Abstrac
         String templateBuildPlanId = targetProjectKey + "-" + TEMPLATE.getName();
         String solutionBuildPlanId = targetProjectKey + "-" + SOLUTION.getName();
 
+        jenkinsRequestMockProvider.mockGetFolderJob(targetProjectKey, null);
         jenkinsRequestMockProvider.mockCreateProjectForExercise(exerciseToBeImported, false);
+        jenkinsRequestMockProvider.mockGetFolderJob(targetProjectKey);
         jenkinsRequestMockProvider.mockCopyBuildPlanFromTemplate(sourceExercise.getProjectKey(), targetProjectKey, templateBuildPlanId);
-        jenkinsRequestMockProvider.mockCopyBuildPlanFromTemplate(sourceExercise.getProjectKey(), targetProjectKey, solutionBuildPlanId);
+        jenkinsRequestMockProvider.mockCopyBuildPlanFromSolution(sourceExercise.getProjectKey(), targetProjectKey, solutionBuildPlanId);
         jenkinsRequestMockProvider.mockGivePlanPermissions(targetProjectKey, templateBuildPlanId);
         jenkinsRequestMockProvider.mockGivePlanPermissions(targetProjectKey, solutionBuildPlanId);
         jenkinsRequestMockProvider.mockEnablePlan(targetProjectKey, templateBuildPlanId, planExistsInCi, shouldPlanEnableFail);
