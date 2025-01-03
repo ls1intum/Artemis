@@ -60,7 +60,8 @@ class JenkinsJobServiceTest extends AbstractProgrammingIntegrationJenkinsGitlabT
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1")
     void testCreateIfJobExists() throws IOException {
-        jenkinsRequestMockProvider.mockCreateJobInFolder("JenkinsFolder", "JenkinsJob", true);
+        var job = new JenkinsJobService.JobWithDetails("JenkinsJob", "", false);
+        jenkinsRequestMockProvider.mockGetJob("JenkinsFolder", "JenkinsJob", job, false);
         // This call shall not fail, since the job already exists ..
         jenkinsJobService.createJobInFolder(validDocument, "JenkinsFolder", "JenkinsJob");
         // Create Job shouldn't be invoked because it exists
@@ -70,7 +71,8 @@ class JenkinsJobServiceTest extends AbstractProgrammingIntegrationJenkinsGitlabT
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1")
     void testCreateIfJobDoesNotExist() throws IOException {
-        jenkinsRequestMockProvider.mockCreateJobInFolder("JenkinsFolder", "JenkinsJob", false);
+        jenkinsRequestMockProvider.mockGetJob("JenkinsFolder", "JenkinsJob", null, false);
+        jenkinsRequestMockProvider.mockCreateJob("JenkinsFolder", "JenkinsJob");
         // This call shall not fail, since the job will be created ..
         jenkinsJobService.createJobInFolder(validDocument, "JenkinsFolder", "JenkinsJob");
         // Create Job should be invoked
@@ -80,14 +82,14 @@ class JenkinsJobServiceTest extends AbstractProgrammingIntegrationJenkinsGitlabT
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1")
     void testCreateJobInFolderJenkinsExceptionOnXmlError() throws IOException {
-        jenkinsRequestMockProvider.mockGetFolderJob("JenkinsFolder", new JenkinsJobService.FolderJob("name", "description", "url"));
+        jenkinsRequestMockProvider.mockCreateJobInFolder("JenkinsFolder", "JenkinsJob", false);
         assertThatExceptionOfType(JenkinsException.class).isThrownBy(() -> jenkinsJobService.createJobInFolder(invalidDocument, "JenkinsFolder", "JenkinsJob"));
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1")
     void testUpdateJobThrowIOExceptionOnXmlError() {
-        assertThatIOException().isThrownBy(() -> jenkinsJobService.updateJob("JenkinsFolder", "JenkinsJob", invalidDocument));
+        assertThatExceptionOfType(JenkinsException.class).isThrownBy(() -> jenkinsJobService.updateJob("JenkinsFolder", "JenkinsJob", invalidDocument));
     }
 
     @Test

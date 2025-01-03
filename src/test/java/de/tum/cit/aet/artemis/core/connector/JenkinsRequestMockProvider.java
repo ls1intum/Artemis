@@ -156,15 +156,8 @@ public class JenkinsRequestMockProvider {
 
     private void mockCreateJobInExistingFolder(String jobFolder, String job) throws IOException {
         mockGetFolderJob(jobFolder);
-        if (false) {
-            var jobWithDetails = new JenkinsJobService.JobWithDetails(job, "description", false);
-            // NOTE: this method also invokes mockGetFolderJob(...)
-            mockGetJob(jobFolder, job, jobWithDetails, false);
-        }
-        else {
-            mockGetJob(jobFolder, job, null, false);
-            mockCreateJob(jobFolder, job);
-        }
+        mockGetJob(jobFolder, job, null, false);
+        mockCreateJob(jobFolder, job);
     }
 
     public void mockCreateJobInFolder(String jobFolder, String job, boolean jobAlreadyExists) throws IOException {
@@ -181,7 +174,7 @@ public class JenkinsRequestMockProvider {
         }
     }
 
-    private void mockCreateJob(String jobFolder, String job) {
+    public void mockCreateJob(String jobFolder, String job) {
         URI uri = JenkinsEndpoints.NEW_PLAN.buildEndpoint(jenkinsServerUri, jobFolder).queryParam("name", job).build(true).toUri();
         mockServer.expect(requestTo(uri)).andExpect(method(HttpMethod.POST)).andRespond(withSuccess());
     }
