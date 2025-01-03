@@ -16,20 +16,19 @@ export class LectureUnitComponent {
     protected faSquareCheck = faSquareCheck;
     protected faSquare = faSquare;
 
-    readonly lectureUnit = input.required<LectureUnit>();
-    protected readonly icon = input.required<IconDefinition>();
+    lectureUnit = input.required<LectureUnit>();
+    icon = input.required<IconDefinition>();
 
-    readonly showViewIsolatedButton = input<boolean>(false);
-    readonly viewIsolatedButtonLabel = input<string>('artemisApp.textUnit.isolated');
-    readonly viewIsolatedButtonIcon = input<IconDefinition>(faExternalLinkAlt);
+    showViewIsolatedButton = input<boolean>(false);
+    viewIsolatedButtonLabel = input<string>('artemisApp.textUnit.isolated');
+    viewIsolatedButtonIcon = input<IconDefinition>(faExternalLinkAlt);
+    isPresentationMode = input.required<boolean>();
+
     readonly onShowIsolated = output<void>();
+    readonly onCollapse = output<boolean>();
+    readonly onCompletion = output<boolean>();
 
     readonly isCollapsed = signal<boolean>(true);
-    readonly onCollapse = output<boolean>();
-
-    readonly isPresentationMode = input.required<boolean>();
-
-    readonly onCompletion = output<boolean>();
 
     readonly isVisibleToStudents = computed(() => this.lectureUnit().visibleToStudents);
 
