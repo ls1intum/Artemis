@@ -28,11 +28,6 @@ public record TestCaseDTO(String name, String classname, double time, @JsonPrope
     }
 
     @Override
-    public String getName() {
-        return name;
-    }
-
-    @Override
     public List<String> getTestMessages() {
         return extractMessage().map(Collections::singletonList).orElse(Collections.emptyList());
     }

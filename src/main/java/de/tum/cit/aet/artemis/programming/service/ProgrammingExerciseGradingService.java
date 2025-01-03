@@ -220,7 +220,7 @@ public class ProgrammingExerciseGradingService {
      */
     private void checkCorrectBranchElseThrow(final ProgrammingExerciseParticipation participation, final AbstractBuildResultNotificationDTO buildResult)
             throws IllegalArgumentException {
-        var branchName = buildResult.getBranchNameFromAssignmentRepo();
+        var branchName = buildResult.assignmentRepoBranchName();
         // If the branch is not present, it might be because the assignment repo did not change because only the test repo was changed
         if (!ObjectUtils.isEmpty(branchName)) {
             String participationDefaultBranch = null;
@@ -277,7 +277,7 @@ public class ProgrammingExerciseGradingService {
         log.warn("Could not find pending ProgrammingSubmission for Commit Hash {} (Participation {}, Build Plan {}). Will create a new one subsequently...", commitHash,
                 participation.getId(), participation.getBuildPlanId());
         // We always take the build run date as the fallback solution
-        ZonedDateTime submissionDate = buildResult.getBuildRunDate();
+        ZonedDateTime submissionDate = buildResult.buildRunDate();
         if (!ObjectUtils.isEmpty(commitHash)) {
             try {
                 // Try to get the actual date, the push might be 10s - 3min earlier, depending on how long the build takes.

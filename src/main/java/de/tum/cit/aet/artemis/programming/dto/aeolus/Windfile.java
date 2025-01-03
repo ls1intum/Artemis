@@ -4,7 +4,6 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.stream.Collectors;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
@@ -73,7 +72,7 @@ public record Windfile(String api, WindfileMetadata metadata, List<Action> actio
      * @return the script actions of a windfile.
      */
     public List<ScriptAction> scriptActions() {
-        return actions.stream().filter(ScriptAction.class::isInstance).map(ScriptAction.class::cast).collect(Collectors.toList());
+        return actions.stream().filter(ScriptAction.class::isInstance).map(ScriptAction.class::cast).toList();
     }
 
     /**
@@ -82,6 +81,6 @@ public record Windfile(String api, WindfileMetadata metadata, List<Action> actio
      * @return the results of all actions of this windfile
      */
     public List<AeolusResult> results() {
-        return actions.stream().filter(action -> action.results() != null && !action.results().isEmpty()).flatMap(action -> action.results().stream()).collect(Collectors.toList());
+        return actions.stream().filter(action -> action.results() != null && !action.results().isEmpty()).flatMap(action -> action.results().stream()).toList();
     }
 }

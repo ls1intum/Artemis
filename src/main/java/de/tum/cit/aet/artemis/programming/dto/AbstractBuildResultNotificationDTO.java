@@ -14,23 +14,22 @@ import de.tum.cit.aet.artemis.programming.domain.build.BuildLogEntry;
 
 @JsonIgnoreProperties(ignoreUnknown = true)
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
-// TODO: convert subclasses to records
-public abstract class AbstractBuildResultNotificationDTO {
+public interface AbstractBuildResultNotificationDTO {
 
-    public abstract ZonedDateTime getBuildRunDate();
-
-    @Nullable
-    protected abstract String getCommitHashFromAssignmentRepo();
+    ZonedDateTime buildRunDate();
 
     @Nullable
-    protected abstract String getCommitHashFromTestsRepo();
+    String assignmentRepoCommitHash();
 
     @Nullable
-    public abstract String getBranchNameFromAssignmentRepo();
+    String testsRepoCommitHash();
 
-    public abstract boolean isBuildSuccessful();
+    @Nullable
+    String assignmentRepoBranchName();
 
-    public abstract Double getBuildScore();
+    boolean isBuildSuccessful();
+
+    Double buildScore();
 
     /**
      * Get the commit hash from the build result, the commit hash will be different for submission types or null.
@@ -39,22 +38,22 @@ public abstract class AbstractBuildResultNotificationDTO {
      * @return if the commit hash for the given submission type was found, otherwise empty.
      */
     @Nullable
-    public String getCommitHash(SubmissionType submissionType) {
+    default String getCommitHash(SubmissionType submissionType) {
         final var isAssignmentSubmission = List.of(SubmissionType.MANUAL, SubmissionType.INSTRUCTOR, SubmissionType.ILLEGAL).contains(submissionType);
         if (isAssignmentSubmission) {
-            return getCommitHashFromAssignmentRepo();
+            return assignmentRepoCommitHash();
         }
         else if (submissionType.equals(SubmissionType.TEST)) {
-            return getCommitHashFromTestsRepo();
+            return testsRepoCommitHash();
         }
         return null;
     }
 
-    public abstract boolean hasArtifact();
+    boolean hasArtifact();
 
-    public abstract boolean hasLogs();
+    boolean hasLogs();
 
-    public abstract List<BuildLogEntry> extractBuildLogs();
+    List<BuildLogEntry> extractBuildLogs();
 
     /**
      * Gets the build jobs that are part of the build result.
@@ -62,12 +61,12 @@ public abstract class AbstractBuildResultNotificationDTO {
      * @return list of build jobs.
      */
     @JsonIgnore
-    public abstract List<? extends BuildJobDTOInterface> getBuildJobs();
+    List<? extends BuildJobDTOInterface> getBuildJobs();
 
     /**
      * Gets the static code analysis reports that are part of the build result.
      *
      * @return list of static code analysis reports.
      */
-    public abstract List<StaticCodeAnalysisReportDTO> getStaticCodeAnalysisReports();
+    List<StaticCodeAnalysisReportDTO> staticCodeAnalysisReports();
 }

@@ -15,12 +15,12 @@ public interface BuildJobDTOInterface {
      *
      * @return list of failed tests.
      */
-    List<? extends TestCaseBaseDTO> getFailedTests();
+    List<? extends TestCaseBaseDTO> failedTests();
 
     /**
      * Gets the successful tests of the build job.
      *
      * @return list of successful tests.
      */
-    List<? extends TestCaseBaseDTO> getSuccessfulTests();
+    List<? extends TestCaseBaseDTO> successfulTests();
 }

@@ -11,7 +11,7 @@ class BuildResultTest extends AbstractSpringIntegrationLocalCILocalVCTest {
 
     @Test
     void testUnsupportedMethods() {
-        BuildResult buildResult = new BuildResult(null, null, null, true, null, null, null);
+        BuildResult buildResult = new BuildResult(null, null, null, true, null, null, null, null, false);
         assertThat(buildResult.extractBuildLogs()).isEmpty();
     }
 }

@@ -19,13 +19,13 @@ public record TestSuiteDTO(String name, double time, int errors, int skipped, in
 
     @Override
     @JsonIgnore
-    public List<? extends TestCaseBaseDTO> getFailedTests() {
+    public List<? extends TestCaseBaseDTO> failedTests() {
         return testCases.stream().filter(testCase -> !testCase.isSuccessful()).toList();
     }
 
     @Override
     @JsonIgnore
-    public List<? extends TestCaseBaseDTO> getSuccessfulTests() {
+    public List<? extends TestCaseBaseDTO> successfulTests() {
         return testCases.stream().filter(TestCaseDTO::isSuccessful).toList();
     }
 }

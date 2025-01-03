@@ -5,8 +5,6 @@ import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
-import org.springframework.util.ObjectUtils;
-
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
 
@@ -25,88 +23,38 @@ import de.tum.cit.aet.artemis.programming.dto.TestCaseBaseDTO;
 // in the future are migrated or cleared. Changes should be communicated in release notes as potentially breaking changes.
 @JsonIgnoreProperties(ignoreUnknown = true)
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
-// TODO: this should be a record in the future
-public class BuildResult extends AbstractBuildResultNotificationDTO implements Serializable {
+public record BuildResult(String assignmentRepoBranchName, String assignmentRepoCommitHash, String testsRepoCommitHash, boolean isBuildSuccessful, ZonedDateTime buildRunDate,
+        List<LocalCIJobDTO> jobs, List<BuildLogDTO> buildLogEntries, List<StaticCodeAnalysisReportDTO> staticCodeAnalysisReports, boolean hasLogs)
+        implements AbstractBuildResultNotificationDTO, Serializable {
 
-    private final String assignmentRepoBranchName;
-
-    private final String assignmentRepoCommitHash;
-
-    private final String testsRepoCommitHash;
-
-    private final boolean isBuildSuccessful;
-
-    private final ZonedDateTime buildRunDate;
-
-    private final List<LocalCIJobDTO> jobs;
-
-    private List<BuildLogDTO> buildLogEntries = new ArrayList<>();
-
-    private final List<StaticCodeAnalysisReportDTO> staticCodeAnalysisReports;
-
-    private boolean hasLogs = false;
-
-    public BuildResult(String assignmentRepoBranchName, String assignmentRepoCommitHash, String testsRepoCommitHash, boolean isBuildSuccessful, ZonedDateTime buildRunDate,
-            List<LocalCIJobDTO> jobs, List<StaticCodeAnalysisReportDTO> staticCodeAnalysisReports) {
-        this.assignmentRepoBranchName = assignmentRepoBranchName;
-        this.assignmentRepoCommitHash = assignmentRepoCommitHash;
-        this.testsRepoCommitHash = testsRepoCommitHash;
-        this.isBuildSuccessful = isBuildSuccessful;
-        this.buildRunDate = buildRunDate;
-        this.jobs = jobs;
-        this.staticCodeAnalysisReports = staticCodeAnalysisReports;
-    }
-
-    public BuildResult(String assignmentRepoBranchName, String assignmentRepoCommitHash, String testsRepoCommitHash, boolean isBuildSuccessful) {
-        this.assignmentRepoBranchName = assignmentRepoBranchName;
-        this.assignmentRepoCommitHash = assignmentRepoCommitHash;
-        this.testsRepoCommitHash = testsRepoCommitHash;
-        this.isBuildSuccessful = isBuildSuccessful;
-        this.buildRunDate = ZonedDateTime.now();
-        this.jobs = new ArrayList<>();
-        this.staticCodeAnalysisReports = new ArrayList<>();
-    }
-
-    @Override
-    public ZonedDateTime getBuildRunDate() {
-        return buildRunDate;
-    }
-
-    @Override
-    protected String getCommitHashFromAssignmentRepo() {
-        if (ObjectUtils.isEmpty(assignmentRepoCommitHash)) {
-            return null;
+    public BuildResult {
+        if (buildRunDate == null) {
+            buildRunDate = ZonedDateTime.now();
         }
-        return assignmentRepoCommitHash;
-    }
-
-    @Override
-    protected String getCommitHashFromTestsRepo() {
-        if (ObjectUtils.isEmpty(testsRepoCommitHash)) {
-            return null;
+        if (jobs == null) {
+            jobs = new ArrayList<>();
         }
-        return testsRepoCommitHash;
+        if (buildLogEntries == null) {
+            buildLogEntries = new ArrayList<>();
+            hasLogs = false;
+        }
+        if (staticCodeAnalysisReports == null) {
+            staticCodeAnalysisReports = new ArrayList<>();
+        }
+    }
+
+    public BuildResult(String branch, String assignmentRepoCommitHash, String testsRepoCommitHash, List<BuildLogDTO> buildLogs, boolean isBuildSuccessful) {
+        this(branch, assignmentRepoCommitHash, testsRepoCommitHash, isBuildSuccessful, null, null, buildLogs, null, true);
     }
 
     @Override
-    public String getBranchNameFromAssignmentRepo() {
-        return assignmentRepoBranchName;
-    }
-
-    @Override
-    public boolean isBuildSuccessful() {
-        return isBuildSuccessful;
-    }
-
-    @Override
-    public Double getBuildScore() {
+    public Double buildScore() {
         // the real score is calculated in the grading service
         return 0D;
     }
 
     /**
-     * Local CI does not support checking for artifacts as of now.
-     * TODO LOCALVC_CI: Figure out in the build process whether an artifact was created, and return true here if yes.
+     * NOTE: Local CI does not support checking for artifacts as of now.
      *
      * @return will always return false because LocalCI does not support checking for artifacts.
      */
@@ -116,34 +64,14 @@ public class BuildResult extends AbstractBuildResultNotificationDTO implements S
     }
 
     @Override
-    public boolean hasLogs() {
-        return hasLogs;
-    }
-
-    @Override
     public List<BuildLogEntry> extractBuildLogs() {
         // convert the buildLogEntry DTOs to BuildLogEntry objects
         return buildLogEntries.stream().map(log -> new BuildLogEntry(log.time(), log.log())).toList();
     }
 
-    /**
-     * Setter for the buildLogEntries
-     *
-     * @param buildLogEntries the buildLogEntries to be set
-     */
-    public void setBuildLogEntries(List<BuildLogDTO> buildLogEntries) {
-        this.buildLogEntries = buildLogEntries;
-        hasLogs = true;
-    }
-
     @Override
     public List<? extends BuildJobDTOInterface> getBuildJobs() {
         return jobs;
-    }
-
-    @Override
-    public List<StaticCodeAnalysisReportDTO> getStaticCodeAnalysisReports() {
-        return staticCodeAnalysisReports;
     }
 
     /**
@@ -155,16 +83,6 @@ public class BuildResult extends AbstractBuildResultNotificationDTO implements S
      */
     @JsonInclude(JsonInclude.Include.NON_EMPTY)
     public record LocalCIJobDTO(List<LocalCITestJobDTO> failedTests, List<LocalCITestJobDTO> successfulTests) implements BuildJobDTOInterface, Serializable {
-
-        @Override
-        public List<? extends TestCaseBaseDTO> getFailedTests() {
-            return failedTests;
-        }
-
-        @Override
-        public List<? extends TestCaseBaseDTO> getSuccessfulTests() {
-            return successfulTests;
-        }
     }
 
     /**
@@ -175,11 +93,6 @@ public class BuildResult extends AbstractBuildResultNotificationDTO implements S
      */
     @JsonInclude(JsonInclude.Include.NON_EMPTY)
     public record LocalCITestJobDTO(String name, List<String> errors) implements TestCaseBaseDTO, Serializable {
-
-        @Override
-        public String getName() {
-            return name;
-        }
 
         @Override
         public List<String> getTestMessages() {

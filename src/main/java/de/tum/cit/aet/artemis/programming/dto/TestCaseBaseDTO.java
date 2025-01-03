@@ -16,7 +16,7 @@ public interface TestCaseBaseDTO {
      *
      * @return the name of the test case
      */
-    String getName();
+    String name();
 
     /**
      * Gets the messages of the test case (typically error messages)

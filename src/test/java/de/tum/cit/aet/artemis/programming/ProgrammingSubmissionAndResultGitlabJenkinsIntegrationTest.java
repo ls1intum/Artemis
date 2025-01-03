@@ -352,7 +352,7 @@ class ProgrammingSubmissionAndResultGitlabJenkinsIntegrationTest extends Abstrac
 
         var longErrorMessage = new TestCaseDetailMessageDTO("abc\nmultiline\nfeedback");
         var testCase = new TestCaseDTO("test1", "Class", 0d, new ArrayList<>(), List.of(longErrorMessage), new ArrayList<>());
-        notification.getResults().getFirst().testCases().set(0, testCase);
+        notification.results().getFirst().testCases().set(0, testCase);
 
         postResult(notification, HttpStatus.OK);
 

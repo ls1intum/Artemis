@@ -4,7 +4,6 @@ import static de.tum.cit.aet.artemis.core.config.Constants.LOCALCI_WORKING_DIREC
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_LOCALCI;
 
 import java.time.ZonedDateTime;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
@@ -42,7 +41,6 @@ import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseParticipatio
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingLanguage;
 import de.tum.cit.aet.artemis.programming.domain.ProjectType;
 import de.tum.cit.aet.artemis.programming.domain.RepositoryType;
-import de.tum.cit.aet.artemis.programming.dto.aeolus.AeolusResult;
 import de.tum.cit.aet.artemis.programming.dto.aeolus.Windfile;
 import de.tum.cit.aet.artemis.programming.repository.AuxiliaryRepositoryRepository;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseBuildConfigRepository;
@@ -233,12 +231,8 @@ public class LocalCITriggerService implements ContinuousIntegrationTriggerServic
 
     // -------Helper methods for triggerBuild()-------
 
-    private List<String> getTestResultPaths(Windfile windfile) throws IllegalArgumentException {
-        List<String> testResultPaths = new ArrayList<>();
-        for (AeolusResult testResultPath : windfile.results()) {
-            testResultPaths.add(LOCALCI_WORKING_DIRECTORY + "/testing-dir/" + testResultPath.path());
-        }
-        return testResultPaths;
+    private List<String> getTestResultPaths(Windfile windfile) {
+        return windfile.results().stream().map(result -> LOCALCI_WORKING_DIRECTORY + "/testing-dir/" + result.path()).toList();
     }
 
     /**

@@ -44,9 +44,9 @@ public abstract class AbstractContinuousIntegrationResultService implements Cont
         final var result = new Result();
         result.setAssessmentType(AssessmentType.AUTOMATIC);
         result.setSuccessful(buildResult.isBuildSuccessful());
-        result.setCompletionDate(buildResult.getBuildRunDate());
+        result.setCompletionDate(buildResult.buildRunDate());
         // this only sets the score to a temporary value, the real score is calculated in the grading service
-        result.setScore(buildResult.getBuildScore(), exercise.getCourseViaExerciseGroupOrCourseMember());
+        result.setScore(buildResult.buildScore(), exercise.getCourseViaExerciseGroupOrCourseMember());
         result.setParticipation((Participation) participation);
 
         addFeedbackToResult(result, buildResult);
@@ -73,24 +73,24 @@ public abstract class AbstractContinuousIntegrationResultService implements Cont
     private void addTestCaseFeedbacksToResult(Result result, List<? extends BuildJobDTOInterface> jobs, ProgrammingExercise programmingExercise) {
         var activeTestCases = testCaseRepository.findByExerciseIdAndActive(programmingExercise.getId(), true);
         for (final var job : jobs) {
-            for (final var failedTest : job.getFailedTests()) {
+            for (final var failedTest : job.failedTests()) {
                 result.addFeedback(
-                        feedbackCreationService.createFeedbackFromTestCase(failedTest.getName(), failedTest.getTestMessages(), false, programmingExercise, activeTestCases));
+                        feedbackCreationService.createFeedbackFromTestCase(failedTest.name(), failedTest.getTestMessages(), false, programmingExercise, activeTestCases));
             }
-            result.setTestCaseCount(result.getTestCaseCount() + job.getFailedTests().size());
+            result.setTestCaseCount(result.getTestCaseCount() + job.failedTests().size());
 
-            for (final var successfulTest : job.getSuccessfulTests()) {
+            for (final var successfulTest : job.successfulTests()) {
                 result.addFeedback(
-                        feedbackCreationService.createFeedbackFromTestCase(successfulTest.getName(), successfulTest.getTestMessages(), true, programmingExercise, activeTestCases));
+                        feedbackCreationService.createFeedbackFromTestCase(successfulTest.name(), successfulTest.getTestMessages(), true, programmingExercise, activeTestCases));
             }
 
-            result.setTestCaseCount(result.getTestCaseCount() + job.getSuccessfulTests().size());
-            result.setPassedTestCaseCount(result.getPassedTestCaseCount() + job.getSuccessfulTests().size());
+            result.setTestCaseCount(result.getTestCaseCount() + job.successfulTests().size());
+            result.setPassedTestCaseCount(result.getPassedTestCaseCount() + job.successfulTests().size());
         }
     }
 
     private void addStaticCodeAnalysisFeedbackToResult(Result result, AbstractBuildResultNotificationDTO buildResult, ProgrammingExercise programmingExercise) {
-        final var staticCodeAnalysisReports = buildResult.getStaticCodeAnalysisReports();
+        final var staticCodeAnalysisReports = buildResult.staticCodeAnalysisReports();
         if (Boolean.TRUE.equals(programmingExercise.isStaticCodeAnalysisEnabled()) && staticCodeAnalysisReports != null && !staticCodeAnalysisReports.isEmpty()) {
             List<Feedback> scaFeedbackList = feedbackCreationService.createFeedbackFromStaticCodeAnalysisReports(staticCodeAnalysisReports);
             result.addFeedbacks(scaFeedbackList);
