@@ -342,7 +342,8 @@ dependencies {
     implementation "org.apache.commons:commons-csv:1.12.0"
     implementation "org.commonmark:commonmark:0.24.0"
     implementation "commons-fileupload:commons-fileupload:1.5"
-
+    implementation "net.lingala.zip4j:zip4j:2.11.5"
+    
     // use newest version of guava to avoid security issues through outdated dependencies
     implementation "com.google.guava:guava:33.4.0-jre"
     implementation "com.sun.activation:jakarta.activation:2.0.1"
