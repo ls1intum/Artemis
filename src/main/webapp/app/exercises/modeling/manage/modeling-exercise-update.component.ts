@@ -1,5 +1,5 @@
 import { AfterViewInit, ChangeDetectionStrategy, ChangeDetectorRef, Component, OnDestroy, OnInit, ViewChild } from '@angular/core';
-import { ActivatedRoute, Router } from '@angular/router';
+import { ActivatedRoute } from '@angular/router';
 import { HttpErrorResponse } from '@angular/common/http';
 import { ModelingExercise } from 'app/entities/modeling-exercise.model';
 import { ModelingExerciseService } from './modeling-exercise.service';
@@ -70,7 +70,6 @@ export class ModelingExerciseUpdateComponent implements AfterViewInit, OnDestroy
     isImport: boolean;
     isExamMode: boolean;
     semiAutomaticAssessmentAvailable = true;
-    goBackAfterSaving = false;
 
     formSectionStatus: FormSectionStatus[];
 
@@ -91,7 +90,6 @@ export class ModelingExerciseUpdateComponent implements AfterViewInit, OnDestroy
         private exerciseGroupService: ExerciseGroupService,
         private eventManager: EventManager,
         private activatedRoute: ActivatedRoute,
-        private router: Router,
         private navigationUtilService: ArtemisNavigationUtilService,
         private changeDetectorRef: ChangeDetectorRef,
     ) {}
@@ -185,12 +183,6 @@ export class ModelingExerciseUpdateComponent implements AfterViewInit, OnDestroy
                 }),
             )
             .subscribe();
-
-        this.activatedRoute.queryParams.subscribe((params) => {
-            if (params.shouldHaveBackButtonToWizard) {
-                this.goBackAfterSaving = true;
-            }
-        });
 
         this.isSaving = false;
         this.notificationText = undefined;
@@ -291,12 +283,6 @@ export class ModelingExerciseUpdateComponent implements AfterViewInit, OnDestroy
     private onSaveSuccess(exercise: ModelingExercise): void {
         this.eventManager.broadcast({ name: 'modelingExerciseListModification', content: 'OK' });
         this.isSaving = false;
-
-        if (this.goBackAfterSaving) {
-            this.navigationUtilService.navigateBack();
-
-            return;
-        }
 
         this.navigationUtilService.navigateForwardFromExerciseUpdateOrCreation(exercise);
     }

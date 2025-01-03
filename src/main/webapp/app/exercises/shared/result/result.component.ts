@@ -55,6 +55,7 @@ export class ResultComponent implements OnInit, OnChanges, OnDestroy {
 
     @Input() participation: Participation;
     @Input() isBuilding: boolean;
+    @Input() isQueued = false;
     @Input() short = true;
     @Input() result?: Result;
     @Input() showUngradedResults = false;
@@ -64,6 +65,10 @@ export class ResultComponent implements OnInit, OnChanges, OnDestroy {
     @Input() showCompletion = true;
     @Input() missingResultInfo = MissingResultInformation.NONE;
     @Input() exercise?: Exercise;
+    @Input() estimatedCompletionDate?: dayjs.Dayjs;
+    @Input() buildStartDate?: dayjs.Dayjs;
+    @Input() showProgressBar = false;
+    @Input() showProgressBarBorder = false;
 
     textColorClass: string;
     resultIconClass: IconProp;
@@ -73,6 +78,10 @@ export class ResultComponent implements OnInit, OnChanges, OnDestroy {
     badge: Badge;
     resultTooltip?: string;
     latestDueDate: dayjs.Dayjs | undefined;
+
+    estimatedDurationInterval?: ReturnType<typeof setInterval>;
+    estimatedRemaining: number = 0;
+    estimatedDuration: number = 0;
 
     // Icons
     readonly faCircleNotch = faCircleNotch;
@@ -163,6 +172,9 @@ export class ResultComponent implements OnInit, OnChanges, OnDestroy {
         if (this.resultUpdateSubscription) {
             clearTimeout(this.resultUpdateSubscription);
         }
+        if (this.estimatedDurationInterval) {
+            clearInterval(this.estimatedDurationInterval);
+        }
     }
 
     /**
@@ -175,16 +187,26 @@ export class ResultComponent implements OnInit, OnChanges, OnDestroy {
             this.ngOnInit();
         }
 
-        if (changes.isBuilding?.currentValue) {
+        if (changes.isBuilding?.currentValue && changes.isBuilding?.currentValue === true) {
             // If it's building, we change the templateStatus to building regardless of any other settings.
             this.templateStatus = ResultTemplateStatus.IS_BUILDING;
+        } else if (changes.isQueued?.currentValue && changes.isQueued?.currentValue === true) {
+            // If it's queued, we change the templateStatus to queued regardless of any other settings.
+            this.templateStatus = ResultTemplateStatus.IS_QUEUED;
         } else if (changes.missingResultInfo || changes.isBuilding?.previousValue) {
             // If ...
             // ... the result was building and is not building anymore, or
             // ... the missingResultInfo changed
             // we evaluate the result status.
-
             this.evaluate();
+        }
+
+        clearInterval(this.estimatedDurationInterval);
+        if (this.estimatedCompletionDate && this.buildStartDate) {
+            this.estimatedDurationInterval = setInterval(() => {
+                this.estimatedRemaining = Math.max(0, dayjs(this.estimatedCompletionDate).diff(dayjs(), 'seconds'));
+                this.estimatedDuration = dayjs(this.estimatedCompletionDate).diff(dayjs(this.buildStartDate), 'seconds');
+            });
         }
     }
 
@@ -192,7 +214,7 @@ export class ResultComponent implements OnInit, OnChanges, OnDestroy {
      * Sets the corresponding icon, styling and message to display results.
      */
     evaluate() {
-        this.templateStatus = evaluateTemplateStatus(this.exercise, this.participation, this.result, this.isBuilding, this.missingResultInfo);
+        this.templateStatus = evaluateTemplateStatus(this.exercise, this.participation, this.result, this.isBuilding, this.missingResultInfo, this.isQueued);
         if (this.templateStatus === ResultTemplateStatus.LATE) {
             this.textColorClass = getTextColorClass(this.result, this.templateStatus);
             this.resultIconClass = getResultIconClass(this.result, this.templateStatus);

@@ -184,8 +184,8 @@ public class JenkinsBuildPlanService {
             throw new UnsupportedOperationException("Xcode templates are not available for Jenkins.");
         }
         return switch (programmingLanguage) {
-            case JAVA, KOTLIN, PYTHON, C, HASKELL, SWIFT, EMPTY, RUST, JAVASCRIPT, R, C_PLUS_PLUS, TYPESCRIPT, C_SHARP -> jenkinsBuildPlanCreator;
-            case VHDL, ASSEMBLER, OCAML, SQL, GO, MATLAB, BASH, RUBY, POWERSHELL, ADA, DART, PHP ->
+            case JAVA, KOTLIN, PYTHON, C, HASKELL, SWIFT, EMPTY, RUST, JAVASCRIPT, R, C_PLUS_PLUS, TYPESCRIPT, C_SHARP, GO -> jenkinsBuildPlanCreator;
+            case VHDL, ASSEMBLER, OCAML, SQL, MATLAB, BASH, RUBY, POWERSHELL, ADA, DART, PHP ->
                 throw new UnsupportedOperationException(programmingLanguage + " templates are not available for Jenkins.");
         };
     }
@@ -394,7 +394,7 @@ public class JenkinsBuildPlanService {
         }
 
         try {
-            var uri = UriComponentsBuilder.fromHttpUrl(serverUrl.toString()).pathSegment("job", projectKey, "job", planKey, "lastBuild", "api", "json").build().toUri();
+            var uri = UriComponentsBuilder.fromUriString(serverUrl.toString()).pathSegment("job", projectKey, "job", planKey, "lastBuild", "api", "json").build().toUri();
             var response = restTemplate.getForObject(uri, JsonNode.class);
             var isJobBuilding = response.get("building").asBoolean();
             return isJobBuilding ? ContinuousIntegrationService.BuildStatus.BUILDING : ContinuousIntegrationService.BuildStatus.INACTIVE;
@@ -475,7 +475,7 @@ public class JenkinsBuildPlanService {
      */
     public void enablePlan(String projectKey, String planKey) {
         try {
-            var uri = UriComponentsBuilder.fromHttpUrl(serverUrl.toString()).pathSegment("job", projectKey, "job", planKey, "enable").build(true).toUri();
+            var uri = UriComponentsBuilder.fromUriString(serverUrl.toString()).pathSegment("job", projectKey, "job", planKey, "enable").build(true).toUri();
             restTemplate.postForEntity(uri, null, String.class);
         }
         catch (HttpClientErrorException e) {
