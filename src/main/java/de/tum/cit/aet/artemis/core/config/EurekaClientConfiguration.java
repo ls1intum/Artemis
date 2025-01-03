@@ -53,7 +53,7 @@ public class EurekaClientConfiguration {
     @Bean
     public RestClientDiscoveryClientOptionalArgs restClientDiscoveryClientOptionalArgs(TlsProperties tlsProperties, ObjectProvider<RestClient.Builder> restClientBuilderProvider)
             throws GeneralSecurityException, IOException {
-        log.debug("Using RestTemplate for the Eureka client.");
+        log.debug("Using RestClient for the Eureka client.");
         // The Eureka DiscoveryClientOptionalArgsConfiguration invokes a private method setupTLS.
         // This code is taken from that method.
         var supplier = new DefaultEurekaClientHttpRequestFactorySupplier(new RestClientTimeoutProperties());

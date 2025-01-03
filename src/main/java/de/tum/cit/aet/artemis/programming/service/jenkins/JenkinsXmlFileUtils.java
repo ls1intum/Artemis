@@ -60,7 +60,8 @@ public class JenkinsXmlFileUtils {
         }
     }
 
-    // TODO: should we really parse this into a document?
+    // Since the XML configuration of build jobs can contain the additional config of any Jenkins-plugin that has folder/job-specific settings
+    // we parse the config into a document and not into a predefined DTO structure
     private static Document parseDocument(@NotNull String configXmlText) {
         try {
             final DocumentBuilderFactory domFactory = getDocumentBuilderFactory();

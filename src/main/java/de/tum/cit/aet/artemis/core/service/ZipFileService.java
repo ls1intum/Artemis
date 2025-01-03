@@ -132,7 +132,10 @@ public class ZipFileService {
         try (ZipInputStream zis = new ZipInputStream(Files.newInputStream(zipPath))) {
             ZipEntry entry;
             while ((entry = zis.getNextEntry()) != null) {
-                Path filePath = dirToUnzip.resolve(entry.getName());
+                Path filePath = dirToUnzip.resolve(entry.getName()).normalize();
+                if (!filePath.startsWith(dirToUnzip)) {
+                    throw new IOException("Bad zip entry: " + entry.getName());
+                }
                 if (entry.isDirectory()) {
                     Files.createDirectories(filePath);
                 }
