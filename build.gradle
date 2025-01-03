@@ -1,27 +1,28 @@
 buildscript {
     dependencies {
-        classpath "com.diffplug.spotless:spotless-plugin-gradle:6.25.0"
+        classpath "com.diffplug.spotless:spotless-plugin-gradle:${spotless_plugin_version}"
+        // This is required so that the latest version of the liquibase gradle plugin works
+        classpath "org.liquibase:liquibase-core:${liquibase_version}"
     }
 }
 
 plugins {
     id "checkstyle"
-    id "java"
-    id "maven-publish"
     id "idea"
     id "jacoco"
-    id "org.springframework.boot" version "${spring_boot_version}"
-    id "io.spring.dependency-management" version "1.1.7"
-    id "com.google.cloud.tools.jib" version "3.4.4"
-    id "com.github.node-gradle.node" version "${gradle_node_plugin_version}"
-    id "com.diffplug.spotless" version "6.25.0"
-    // this allows us to find outdated dependencies via ./gradlew dependencyUpdates
-    id "com.github.ben-manes.versions" version "0.51.0"
-    id "com.github.andygoossens.modernizer" version "${modernizer_plugin_version}"
-    id "com.gorylenko.gradle-git-properties" version "2.4.2"
-    id "org.owasp.dependencycheck" version "11.1.1"
+    id "java"
     id "com.adarshr.test-logger" version "4.0.0"
+    id "com.diffplug.spotless" version "${spotless_plugin_version}"
+    id "com.github.andygoossens.modernizer" version "${modernizer_plugin_version}"
+    id "com.github.ben-manes.versions" version "0.51.0"
+    id "com.github.node-gradle.node" version "${gradle_node_plugin_version}"
+    id "com.google.cloud.tools.jib" version "3.4.4"
+    id "com.gorylenko.gradle-git-properties" version "2.4.2"
+    id "io.spring.dependency-management" version "1.1.7"
     id "nebula.lint" version "20.3.1"
+    id "org.liquibase.gradle" version "${liquibase_plugin_version}"
+    id "org.owasp.dependencycheck" version "11.1.1"
+    id "org.springframework.boot" version "${spring_boot_version}"
 }
 
 group = "de.tum.cit.aet.artemis"
@@ -153,7 +154,7 @@ dependencies {
     implementation "org.apache.httpcomponents.core5:httpcore5:5.3.1"
     implementation "org.apache.httpcomponents:httpmime:4.5.14"
 
-    implementation "org.gitlab4j:gitlab4j-api:6.0.0-rc.7"
+    implementation "org.gitlab4j:gitlab4j-api:6.0.0-rc.8"
 
     implementation "de.jplag:jplag:${jplag_version}"
 
@@ -325,7 +326,7 @@ dependencies {
     implementation "org.bouncycastle:bcpkix-jdk18on:1.79"
     implementation "org.bouncycastle:bcprov-jdk18on:1.79"
 
-    implementation "com.mysql:mysql-connector-j:9.1.0"
+    implementation "com.mysql:mysql-connector-j:${mysql_version}"
     implementation "org.postgresql:postgresql:42.7.4"
 
     implementation "org.zalando:problem-spring-web:0.29.1"
@@ -363,7 +364,7 @@ dependencies {
             strictly byte_buddy_version
         }
     }
-    liquibase("net.bytebuddy:byte-buddy") {
+    liquibaseRuntime("net.bytebuddy:byte-buddy") {
         version {
             strictly byte_buddy_version
         }
@@ -374,11 +375,6 @@ dependencies {
         }
     }
     annotationProcessor("net.bytebuddy:byte-buddy-agent") {
-        version {
-            strictly byte_buddy_version
-        }
-    }
-    liquibase("net.bytebuddy:byte-buddy-agent") {
         version {
             strictly byte_buddy_version
         }
