@@ -130,6 +130,5 @@ const ENTITY_STATES = [...examManagementState];
         StudentExamTimelineComponent,
         ProgrammingExerciseExamDiffComponent,
     ],
-    exports: [ArtemisSharedModule, ArtemisSharedComponentModule],
 })
 export class ArtemisExamManagementModule {}
