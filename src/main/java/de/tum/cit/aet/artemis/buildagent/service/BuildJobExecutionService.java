@@ -42,6 +42,8 @@ import com.github.dockerjava.api.exception.NotFoundException;
 import de.tum.cit.aet.artemis.buildagent.dto.BuildJobQueueItem;
 import de.tum.cit.aet.artemis.buildagent.dto.BuildLogDTO;
 import de.tum.cit.aet.artemis.buildagent.dto.BuildResult;
+import de.tum.cit.aet.artemis.buildagent.dto.LocalCIJobDTO;
+import de.tum.cit.aet.artemis.buildagent.dto.LocalCITestJobDTO;
 import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
 import de.tum.cit.aet.artemis.core.exception.GitException;
 import de.tum.cit.aet.artemis.core.exception.LocalCIException;
@@ -392,8 +394,8 @@ public class BuildJobExecutionService {
     private BuildResult parseTestResults(TarArchiveInputStream testResultsTarInputStream, String assignmentRepoBranchName, String assignmentRepoCommitHash,
             String testsRepoCommitHash, ZonedDateTime buildCompletedDate, String buildJobId, List<BuildLogDTO> buildLogs) throws IOException {
 
-        List<BuildResult.LocalCITestJobDTO> failedTests = new ArrayList<>();
-        List<BuildResult.LocalCITestJobDTO> successfulTests = new ArrayList<>();
+        List<LocalCITestJobDTO> failedTests = new ArrayList<>();
+        List<LocalCITestJobDTO> successfulTests = new ArrayList<>();
         List<StaticCodeAnalysisReportDTO> staticCodeAnalysisReports = new ArrayList<>();
 
         TarArchiveEntry tarEntry;
@@ -517,10 +519,10 @@ public class BuildJobExecutionService {
      * @param buildLogs                 the build logs
      * @return a {@link BuildResult}
      */
-    private BuildResult constructBuildResult(List<BuildResult.LocalCITestJobDTO> failedTests, List<BuildResult.LocalCITestJobDTO> successfulTests, String assignmentRepoBranchName,
+    private BuildResult constructBuildResult(List<LocalCITestJobDTO> failedTests, List<LocalCITestJobDTO> successfulTests, String assignmentRepoBranchName,
             String assignmentRepoCommitHash, String testsRepoCommitHash, boolean isBuildSuccessful, ZonedDateTime buildRunDate,
             List<StaticCodeAnalysisReportDTO> staticCodeAnalysisReports, List<BuildLogDTO> buildLogs) {
-        BuildResult.LocalCIJobDTO job = new BuildResult.LocalCIJobDTO(failedTests, successfulTests);
+        LocalCIJobDTO job = new LocalCIJobDTO(failedTests, successfulTests);
         return new BuildResult(assignmentRepoBranchName, assignmentRepoCommitHash, testsRepoCommitHash, isBuildSuccessful, buildRunDate, List.of(job), buildLogs,
                 staticCodeAnalysisReports, true);
     }

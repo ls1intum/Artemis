@@ -14,7 +14,7 @@ import de.tum.cit.aet.artemis.programming.domain.build.BuildLogEntry;
 
 @JsonIgnoreProperties(ignoreUnknown = true)
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
-public interface AbstractBuildResultNotificationDTO {
+public interface BuildResultNotification {
 
     ZonedDateTime buildRunDate();
 
@@ -38,7 +38,7 @@ public interface AbstractBuildResultNotificationDTO {
      * @return if the commit hash for the given submission type was found, otherwise empty.
      */
     @Nullable
-    default String getCommitHash(SubmissionType submissionType) {
+    default String commitHash(SubmissionType submissionType) {
         final var isAssignmentSubmission = List.of(SubmissionType.MANUAL, SubmissionType.INSTRUCTOR, SubmissionType.ILLEGAL).contains(submissionType);
         if (isAssignmentSubmission) {
             return assignmentRepoCommitHash();
@@ -61,7 +61,7 @@ public interface AbstractBuildResultNotificationDTO {
      * @return list of build jobs.
      */
     @JsonIgnore
-    List<? extends BuildJobDTOInterface> getBuildJobs();
+    List<? extends BuildJobInterface> jobs();
 
     /**
      * Gets the static code analysis reports that are part of the build result.

@@ -14,7 +14,7 @@ import de.tum.cit.aet.artemis.programming.domain.ProgrammingLanguage;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingSubmission;
 import de.tum.cit.aet.artemis.programming.domain.ProjectType;
 import de.tum.cit.aet.artemis.programming.domain.build.BuildLogEntry;
-import de.tum.cit.aet.artemis.programming.dto.AbstractBuildResultNotificationDTO;
+import de.tum.cit.aet.artemis.programming.dto.BuildResultNotification;
 import de.tum.cit.aet.artemis.programming.repository.BuildLogStatisticsEntryRepository;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseBuildConfigRepository;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseTestCaseRepository;
@@ -34,7 +34,7 @@ public class JenkinsResultService extends AbstractContinuousIntegrationResultSer
     }
 
     @Override
-    public AbstractBuildResultNotificationDTO convertBuildResult(Object requestBody) {
+    public BuildResultNotification convertBuildResult(Object requestBody) {
         return TestResultsDTO.convert(requestBody);
     }
 

@@ -8,13 +8,13 @@ import java.util.List;
 
 import org.junit.jupiter.api.Test;
 
-import de.tum.cit.aet.artemis.buildagent.dto.BuildResult;
+import de.tum.cit.aet.artemis.buildagent.dto.LocalCITestJobDTO;
 
 class TestResultXmlParserTest {
 
-    private final List<BuildResult.LocalCITestJobDTO> failedTests = new ArrayList<>();
+    private final List<LocalCITestJobDTO> failedTests = new ArrayList<>();
 
-    private final List<BuildResult.LocalCITestJobDTO> successfulTests = new ArrayList<>();
+    private final List<LocalCITestJobDTO> successfulTests = new ArrayList<>();
 
     @Test
     void testParseResultXmlInnerText() throws IOException {
@@ -32,7 +32,7 @@ class TestResultXmlParserTest {
         assertThat(failedTests).hasSize(1);
         var test = failedTests.getFirst();
         assertThat(test.name()).isEqualTo("testBubbleSort()");
-        assertThat(test.getTestMessages()).containsExactly("""
+        assertThat(test.testMessages()).containsExactly("""
                 test `add` failed on ≥ 1 cases:
                 (0, 0)
                 Your submission raised an error Failure("TODO add")""");
@@ -53,7 +53,7 @@ class TestResultXmlParserTest {
         assertThat(failedTests).hasSize(1);
         var test = failedTests.getFirst();
         assertThat(test.name()).isEqualTo("testBubbleSort()");
-        assertThat(test.getTestMessages()).containsExactly("test `add` failed");
+        assertThat(test.testMessages()).containsExactly("test `add` failed");
     }
 
     @Test
@@ -70,7 +70,7 @@ class TestResultXmlParserTest {
         assertThat(failedTests).hasSize(1);
         var test = failedTests.getFirst();
         assertThat(test.name()).isEqualTo("testMergeSort()");
-        assertThat(failedTests.getFirst().getTestMessages()).containsExactly("org.opentest4j.AssertionFailedError: Deine Einreichung enthält keine Ausgabe. (67cac2)");
+        assertThat(failedTests.getFirst().testMessages()).containsExactly("org.opentest4j.AssertionFailedError: Deine Einreichung enthält keine Ausgabe. (67cac2)");
     }
 
     @Test
@@ -88,7 +88,7 @@ class TestResultXmlParserTest {
         TestResultXmlParser.processTestResultFile(exampleXml, failedTests, successfulTests);
         assertThat(failedTests).isEmpty();
         assertThat(successfulTests).hasSize(4);
-        assertThat(successfulTests).map(BuildResult.LocalCITestJobDTO::name).containsExactlyInAnyOrder("testMergeSort()", "testUseBubbleSortForSmallList()", "testBubbleSort()",
+        assertThat(successfulTests).map(LocalCITestJobDTO::name).containsExactlyInAnyOrder("testMergeSort()", "testUseBubbleSortForSmallList()", "testBubbleSort()",
                 "testUseMergeSortForBigList()");
     }
 
@@ -185,7 +185,7 @@ class TestResultXmlParserTest {
         assertThat(failedTests).hasSize(1);
         var test = failedTests.getFirst();
         assertThat(test.name()).isEqualTo("CompileLinkedList");
-        assertThat(test.getTestMessages().getFirst()).isEqualTo("Build for directory ../assignment/build failed. Returncode is 2.");
+        assertThat(test.testMessages().getFirst()).isEqualTo("Build for directory ../assignment/build failed. Returncode is 2.");
     }
 
     @Test
@@ -206,7 +206,7 @@ class TestResultXmlParserTest {
         assertThat(failedTests).hasSize(1);
         var test = failedTests.getFirst();
         assertThat(test.name()).isEqualTo("mwe-name");
-        assertThat(test.getTestMessages()).hasSize(1).contains("");
+        assertThat(test.testMessages()).hasSize(1).contains("");
     }
 
     @Test
@@ -242,7 +242,7 @@ class TestResultXmlParserTest {
         TestResultXmlParser.processTestResultFile(input, failedTests, successfulTests);
 
         // @formatter:off
-        assertThat(successfulTests).extracting(BuildResult.LocalCITestJobDTO::name).containsExactlyInAnyOrder(
+        assertThat(successfulTests).extracting(LocalCITestJobDTO::name).containsExactlyInAnyOrder(
             "Properties.Checked by SmallCheck.Testing filtering in A",
                 "Properties.Checked by SmallCheck.Testing mapping in A",
                 "Properties.Checked by SmallCheck.Testing filtering in B",
@@ -280,7 +280,7 @@ class TestResultXmlParserTest {
         TestResultXmlParser.processTestResultFile(input, failedTests, successfulTests);
 
         // @formatter:off
-        assertThat(successfulTests).extracting(BuildResult.LocalCITestJobDTO::name).containsExactlyInAnyOrder(
+        assertThat(successfulTests).extracting(LocalCITestJobDTO::name).containsExactlyInAnyOrder(
             "SuiteA.Test1",
                 "SuiteA.Test2",
                 "SuiteA.Test3",
@@ -310,7 +310,7 @@ class TestResultXmlParserTest {
 
         TestResultXmlParser.processTestResultFile(input, failedTests, successfulTests);
 
-        assertThat(successfulTests).extracting(BuildResult.LocalCITestJobDTO::name).containsExactlyInAnyOrder("Test1", "Test2", "Test3");
+        assertThat(successfulTests).extracting(LocalCITestJobDTO::name).containsExactlyInAnyOrder("Test1", "Test2", "Test3");
         assertThat(failedTests).isEmpty();
     }
 
@@ -329,7 +329,7 @@ class TestResultXmlParserTest {
 
         TestResultXmlParser.processTestResultFile(input, failedTests, successfulTests);
 
-        assertThat(successfulTests).singleElement().extracting(BuildResult.LocalCITestJobDTO::name).isEqualTo("Test");
+        assertThat(successfulTests).singleElement().extracting(LocalCITestJobDTO::name).isEqualTo("Test");
         assertThat(failedTests).isEmpty();
     }
 
@@ -346,7 +346,7 @@ class TestResultXmlParserTest {
 
         TestResultXmlParser.processTestResultFile(input, failedTests, successfulTests);
 
-        assertThat(successfulTests).singleElement().extracting(BuildResult.LocalCITestJobDTO::name).isEqualTo("Suite.Test");
+        assertThat(successfulTests).singleElement().extracting(LocalCITestJobDTO::name).isEqualTo("Suite.Test");
         assertThat(failedTests).isEmpty();
     }
 
@@ -365,7 +365,7 @@ class TestResultXmlParserTest {
 
         TestResultXmlParser.processTestResultFile(input, failedTests, successfulTests);
 
-        assertThat(successfulTests).singleElement().extracting(BuildResult.LocalCITestJobDTO::name).isEqualTo("Suite.Test");
+        assertThat(successfulTests).singleElement().extracting(LocalCITestJobDTO::name).isEqualTo("Suite.Test");
         assertThat(failedTests).isEmpty();
     }
 
@@ -385,7 +385,7 @@ class TestResultXmlParserTest {
 
         TestResultXmlParser.processTestResultFile(input, failedTests, successfulTests);
 
-        assertThat(successfulTests).extracting(BuildResult.LocalCITestJobDTO::name).containsExactlyInAnyOrder("Test", "Suite.Test");
+        assertThat(successfulTests).extracting(LocalCITestJobDTO::name).containsExactlyInAnyOrder("Test", "Suite.Test");
         assertThat(failedTests).isEmpty();
     }
 }

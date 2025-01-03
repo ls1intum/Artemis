@@ -4,15 +4,14 @@ import java.io.Serializable;
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
 
 import de.tum.cit.aet.artemis.programming.domain.build.BuildLogEntry;
-import de.tum.cit.aet.artemis.programming.dto.AbstractBuildResultNotificationDTO;
-import de.tum.cit.aet.artemis.programming.dto.BuildJobDTOInterface;
+import de.tum.cit.aet.artemis.programming.dto.BuildResultNotification;
 import de.tum.cit.aet.artemis.programming.dto.StaticCodeAnalysisReportDTO;
-import de.tum.cit.aet.artemis.programming.dto.TestCaseBaseDTO;
 
 /**
  * Represents all the information returned by the local CI system about a build.
@@ -25,26 +24,18 @@ import de.tum.cit.aet.artemis.programming.dto.TestCaseBaseDTO;
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public record BuildResult(String assignmentRepoBranchName, String assignmentRepoCommitHash, String testsRepoCommitHash, boolean isBuildSuccessful, ZonedDateTime buildRunDate,
         List<LocalCIJobDTO> jobs, List<BuildLogDTO> buildLogEntries, List<StaticCodeAnalysisReportDTO> staticCodeAnalysisReports, boolean hasLogs)
-        implements AbstractBuildResultNotificationDTO, Serializable {
+        implements BuildResultNotification, Serializable {
 
     public BuildResult {
-        if (buildRunDate == null) {
-            buildRunDate = ZonedDateTime.now();
-        }
-        if (jobs == null) {
-            jobs = new ArrayList<>();
-        }
-        if (buildLogEntries == null) {
-            buildLogEntries = new ArrayList<>();
-            hasLogs = false;
-        }
-        if (staticCodeAnalysisReports == null) {
-            staticCodeAnalysisReports = new ArrayList<>();
-        }
+        buildRunDate = Objects.requireNonNullElse(buildRunDate, ZonedDateTime.now());
+        jobs = Objects.requireNonNullElse(jobs, new ArrayList<>());
+        staticCodeAnalysisReports = Objects.requireNonNullElse(staticCodeAnalysisReports, new ArrayList<>());
+        buildLogEntries = Objects.requireNonNullElse(buildLogEntries, new ArrayList<>());
+        hasLogs = !buildLogEntries.isEmpty();
     }
 
     public BuildResult(String branch, String assignmentRepoCommitHash, String testsRepoCommitHash, List<BuildLogDTO> buildLogs, boolean isBuildSuccessful) {
-        this(branch, assignmentRepoCommitHash, testsRepoCommitHash, isBuildSuccessful, null, null, buildLogs, null, true);
+        this(branch, assignmentRepoCommitHash, testsRepoCommitHash, isBuildSuccessful, null, null, buildLogs, null, buildLogs != null && !buildLogs.isEmpty());
     }
 
     @Override
@@ -67,36 +58,5 @@ public record BuildResult(String assignmentRepoBranchName, String assignmentRepo
     public List<BuildLogEntry> extractBuildLogs() {
         // convert the buildLogEntry DTOs to BuildLogEntry objects
         return buildLogEntries.stream().map(log -> new BuildLogEntry(log.time(), log.log())).toList();
-    }
-
-    @Override
-    public List<? extends BuildJobDTOInterface> getBuildJobs() {
-        return jobs;
-    }
-
-    /**
-     * Represents all the information returned by the local CI system about a job.
-     * In the current implementation of local CI, there is always one job per build.
-     *
-     * @param failedTests     list of failed tests.
-     * @param successfulTests list of successful tests.
-     */
-    @JsonInclude(JsonInclude.Include.NON_EMPTY)
-    public record LocalCIJobDTO(List<LocalCITestJobDTO> failedTests, List<LocalCITestJobDTO> successfulTests) implements BuildJobDTOInterface, Serializable {
-    }
-
-    /**
-     * Represents the information about one test case, including the test case's name and potential error messages that indicate what went wrong.
-     *
-     * @param name   name of the test case.
-     * @param errors list of error messages.
-     */
-    @JsonInclude(JsonInclude.Include.NON_EMPTY)
-    public record LocalCITestJobDTO(String name, List<String> errors) implements TestCaseBaseDTO, Serializable {
-
-        @Override
-        public List<String> getTestMessages() {
-            return errors;
-        }
     }
 }

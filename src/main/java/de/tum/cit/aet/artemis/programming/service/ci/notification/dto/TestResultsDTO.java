@@ -14,8 +14,8 @@ import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 
 import de.tum.cit.aet.artemis.programming.domain.RepositoryType;
 import de.tum.cit.aet.artemis.programming.domain.build.BuildLogEntry;
-import de.tum.cit.aet.artemis.programming.dto.AbstractBuildResultNotificationDTO;
-import de.tum.cit.aet.artemis.programming.dto.BuildJobDTOInterface;
+import de.tum.cit.aet.artemis.programming.dto.BuildJobInterface;
+import de.tum.cit.aet.artemis.programming.dto.BuildResultNotification;
 import de.tum.cit.aet.artemis.programming.dto.StaticCodeAnalysisReportDTO;
 import de.tum.cit.aet.artemis.programming.service.ci.notification.BuildLogParseUtils;
 
@@ -27,7 +27,7 @@ public record TestResultsDTO(@JsonProperty("successful") int successful, @JsonPr
         @JsonProperty("results") @JsonSetter(nulls = Nulls.AS_EMPTY) List<TestSuiteDTO> results,
         @JsonProperty("staticCodeAnalysisReports") @JsonSetter(nulls = Nulls.AS_EMPTY) List<StaticCodeAnalysisReportDTO> staticCodeAnalysisReports,
         @JsonProperty("runDate") ZonedDateTime runDate, @JsonProperty("isBuildSuccessful") boolean isBuildSuccessful,
-        @JsonProperty("logs") @JsonSetter(nulls = Nulls.AS_EMPTY) List<String> logs) implements AbstractBuildResultNotificationDTO {
+        @JsonProperty("logs") @JsonSetter(nulls = Nulls.AS_EMPTY) List<String> logs) implements BuildResultNotification {
 
     public static TestResultsDTO convert(Object someResult) {
         return new ObjectMapper().registerModule(new JavaTimeModule()).convertValue(someResult, TestResultsDTO.class);
@@ -87,7 +87,7 @@ public record TestResultsDTO(@JsonProperty("successful") int successful, @JsonPr
     }
 
     @Override
-    public List<? extends BuildJobDTOInterface> getBuildJobs() {
+    public List<? extends BuildJobInterface> jobs() {
         return results();
     }
 

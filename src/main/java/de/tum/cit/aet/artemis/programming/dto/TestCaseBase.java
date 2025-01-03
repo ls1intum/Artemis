@@ -9,7 +9,7 @@ import com.fasterxml.jackson.annotation.JsonInclude;
  * Interface for DTOs that represent a test case.
  */
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
-public interface TestCaseBaseDTO {
+public interface TestCaseBase {
 
     /**
      * Gets the name of the test case
@@ -24,5 +24,5 @@ public interface TestCaseBaseDTO {
      * @return the messages of the test case
      */
     @JsonIgnore
-    List<String> getTestMessages();
+    List<String> testMessages();
 }

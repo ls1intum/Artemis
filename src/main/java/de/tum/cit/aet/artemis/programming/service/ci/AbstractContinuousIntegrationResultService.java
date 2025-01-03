@@ -11,8 +11,8 @@ import de.tum.cit.aet.artemis.exercise.domain.participation.Participation;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseParticipation;
 import de.tum.cit.aet.artemis.programming.domain.build.BuildLogEntry;
-import de.tum.cit.aet.artemis.programming.dto.AbstractBuildResultNotificationDTO;
-import de.tum.cit.aet.artemis.programming.dto.BuildJobDTOInterface;
+import de.tum.cit.aet.artemis.programming.dto.BuildJobInterface;
+import de.tum.cit.aet.artemis.programming.dto.BuildResultNotification;
 import de.tum.cit.aet.artemis.programming.repository.BuildLogStatisticsEntryRepository;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseBuildConfigRepository;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseTestCaseRepository;
@@ -38,7 +38,7 @@ public abstract class AbstractContinuousIntegrationResultService implements Cont
     }
 
     @Override
-    public Result createResultFromBuildResult(AbstractBuildResultNotificationDTO buildResult, ProgrammingExerciseParticipation participation) {
+    public Result createResultFromBuildResult(BuildResultNotification buildResult, ProgrammingExerciseParticipation participation) {
         ProgrammingExercise exercise = participation.getProgrammingExercise();
 
         final var result = new Result();
@@ -59,8 +59,8 @@ public abstract class AbstractContinuousIntegrationResultService implements Cont
      * @param result      the result for which the feedback should be added
      * @param buildResult The build result
      */
-    private void addFeedbackToResult(Result result, AbstractBuildResultNotificationDTO buildResult) {
-        final var jobs = buildResult.getBuildJobs();
+    private void addFeedbackToResult(Result result, BuildResultNotification buildResult) {
+        final var jobs = buildResult.jobs();
         final var programmingExercise = (ProgrammingExercise) result.getParticipation().getExercise();
 
         // 1) add feedback for failed and passed test cases
@@ -70,26 +70,25 @@ public abstract class AbstractContinuousIntegrationResultService implements Cont
         addStaticCodeAnalysisFeedbackToResult(result, buildResult, programmingExercise);
     }
 
-    private void addTestCaseFeedbacksToResult(Result result, List<? extends BuildJobDTOInterface> jobs, ProgrammingExercise programmingExercise) {
+    private void addTestCaseFeedbacksToResult(Result result, List<? extends BuildJobInterface> jobs, ProgrammingExercise programmingExercise) {
         var activeTestCases = testCaseRepository.findByExerciseIdAndActive(programmingExercise.getId(), true);
-        for (final var job : jobs) {
-            for (final var failedTest : job.failedTests()) {
-                result.addFeedback(
-                        feedbackCreationService.createFeedbackFromTestCase(failedTest.name(), failedTest.getTestMessages(), false, programmingExercise, activeTestCases));
-            }
+        jobs.forEach(job -> {
+            job.failedTests().forEach(failedTest -> {
+                result.addFeedback(feedbackCreationService.createFeedbackFromTestCase(failedTest.name(), failedTest.testMessages(), false, programmingExercise, activeTestCases));
+            });
             result.setTestCaseCount(result.getTestCaseCount() + job.failedTests().size());
 
             for (final var successfulTest : job.successfulTests()) {
                 result.addFeedback(
-                        feedbackCreationService.createFeedbackFromTestCase(successfulTest.name(), successfulTest.getTestMessages(), true, programmingExercise, activeTestCases));
+                        feedbackCreationService.createFeedbackFromTestCase(successfulTest.name(), successfulTest.testMessages(), true, programmingExercise, activeTestCases));
             }
 
             result.setTestCaseCount(result.getTestCaseCount() + job.successfulTests().size());
             result.setPassedTestCaseCount(result.getPassedTestCaseCount() + job.successfulTests().size());
-        }
+        });
     }
 
-    private void addStaticCodeAnalysisFeedbackToResult(Result result, AbstractBuildResultNotificationDTO buildResult, ProgrammingExercise programmingExercise) {
+    private void addStaticCodeAnalysisFeedbackToResult(Result result, BuildResultNotification buildResult, ProgrammingExercise programmingExercise) {
         final var staticCodeAnalysisReports = buildResult.staticCodeAnalysisReports();
         if (Boolean.TRUE.equals(programmingExercise.isStaticCodeAnalysisEnabled()) && staticCodeAnalysisReports != null && !staticCodeAnalysisReports.isEmpty()) {
             List<Feedback> scaFeedbackList = feedbackCreationService.createFeedbackFromStaticCodeAnalysisReports(staticCodeAnalysisReports);
