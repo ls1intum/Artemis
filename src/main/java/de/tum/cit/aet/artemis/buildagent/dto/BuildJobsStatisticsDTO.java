@@ -4,10 +4,8 @@ import java.util.List;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 
-import de.tum.cit.aet.artemis.programming.domain.build.BuildStatus;
-
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
-public record BuildJobsStatisticsDTO(long totalBuilds, long successfulBuilds, long failedBuilds, long cancelledBuilds) {
+public record BuildJobsStatisticsDTO(long totalBuilds, long successfulBuilds, long failedBuilds, long cancelledBuilds, long timeOutBuilds, long missingBuilds) {
 
     /**
      * Create a BuildJobsStatisticsDTO from a list of BuildJobResultCountDTOs.
@@ -20,19 +18,21 @@ public record BuildJobsStatisticsDTO(long totalBuilds, long successfulBuilds, lo
         long successfulBuilds = 0;
         long failedBuilds = 0;
         long cancelledBuilds = 0;
-        // Switch case would cause an error in the testDTOImplementations test
+        long timeOutBuilds = 0;
+        long missingBuilds = 0;
+        long otherBuilds = 0;
+
         for (BuildJobResultCountDTO resultCountDTO : resultCountDTOList) {
-            if (resultCountDTO.status() == BuildStatus.SUCCESSFUL) {
-                successfulBuilds += resultCountDTO.count();
-            }
-            else if (resultCountDTO.status() == BuildStatus.FAILED || resultCountDTO.status() == BuildStatus.ERROR) {
-                failedBuilds += resultCountDTO.count();
-            }
-            else if (resultCountDTO.status() == BuildStatus.CANCELLED) {
-                cancelledBuilds += resultCountDTO.count();
+            switch (resultCountDTO.status()) {
+                case SUCCESSFUL -> successfulBuilds += resultCountDTO.count();
+                case FAILED, ERROR -> failedBuilds += resultCountDTO.count();
+                case CANCELLED -> cancelledBuilds += resultCountDTO.count();
+                case TIMEOUT -> timeOutBuilds += resultCountDTO.count();
+                case MISSING -> missingBuilds += resultCountDTO.count();
+                default -> otherBuilds += resultCountDTO.count();
             }
         }
-        totalBuilds = successfulBuilds + failedBuilds + cancelledBuilds;
-        return new BuildJobsStatisticsDTO(totalBuilds, successfulBuilds, failedBuilds, cancelledBuilds);
+        totalBuilds = successfulBuilds + failedBuilds + cancelledBuilds + timeOutBuilds + missingBuilds + otherBuilds;
+        return new BuildJobsStatisticsDTO(totalBuilds, successfulBuilds, failedBuilds, cancelledBuilds, timeOutBuilds, missingBuilds);
     }
 }

@@ -122,7 +122,7 @@
             "scaIssueCount": "Du hast {{issues}} Code-Issues.",
             "manualFeedbackCount": "Du hast {{feedbacks}} manuelle Feedbacks bekommen.",
             "buildLogs": {
-                "viewLogs": "Build-Logs anzeigen"
+                "viewLogs": "Logs anzeigen"
             }
         }
     }
