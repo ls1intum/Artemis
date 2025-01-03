@@ -7,7 +7,6 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.StandardCopyOption;
 import java.util.List;
 import java.util.Set;
 import java.util.function.Predicate;
@@ -122,11 +121,10 @@ public class ZipFileService {
      * @param zipPath path to the zip file
      * @throws IOException if an error occurred while extracting
      */
-
     public void extractZipFileRecursively(Path zipPath) throws IOException {
         Path parentDir = zipPath.toAbsolutePath().getParent();
         String baseName = zipPath.getFileName().toString().replaceFirst("\\.zip$", "");
-        Path dirToUnzip = Files.createDirectory(parentDir.resolve(baseName));
+        Path dirToUnzip = Files.createDirectories(parentDir.resolve(baseName)); // Ensure target directory exists
 
         // Extract the zip file
         try (ZipInputStream zis = new ZipInputStream(Files.newInputStream(zipPath))) {
@@ -141,17 +139,17 @@ public class ZipFileService {
                 }
                 else {
                     Files.createDirectories(filePath.getParent()); // Ensure parent directories exist
-                    Files.copy(zis, filePath, StandardCopyOption.REPLACE_EXISTING);
+                    FileUtils.copyInputStreamToFile(zis, filePath.toFile());
                 }
                 zis.closeEntry();
             }
         }
 
-        // Check for nested zip files and extract them
+        // Recursively handle nested ZIP files
         try (var filesInDirStream = Files.list(dirToUnzip)) {
-            List<Path> zipFilesInDir = filesInDirStream.filter(path -> path.toString().toLowerCase().endsWith(".zip")).toList();
+            List<Path> nestedZipFiles = filesInDirStream.filter(path -> path.toString().toLowerCase().endsWith(".zip")).toList();
 
-            for (Path nestedZip : zipFilesInDir) {
+            for (Path nestedZip : nestedZipFiles) {
                 extractZipFileRecursively(nestedZip);
             }
         }
