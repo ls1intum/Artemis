@@ -1,21 +1,28 @@
 package de.tum.cit.aet.artemis.iris.service.pyris.event;
 
+import java.util.Optional;
+
 import de.tum.cit.aet.artemis.atlas.domain.competency.CompetencyJol;
-import de.tum.cit.aet.artemis.iris.service.session.IrisCourseChatSessionService;
+import de.tum.cit.aet.artemis.core.domain.User;
 
-public class CompetencyJolSetEvent extends PyrisEvent<IrisCourseChatSessionService, CompetencyJol> {
+public class CompetencyJolSetEvent extends PyrisEvent {
 
-    private final CompetencyJol eventObject;
+    private final CompetencyJol competencyJol;
 
-    public CompetencyJolSetEvent(CompetencyJol eventObject) {
-        if (eventObject == null) {
-            throw new IllegalArgumentException("Event object cannot be null");
+    public CompetencyJolSetEvent(Object source, CompetencyJol competencyJol) {
+        super(source);
+        if (competencyJol == null) {
+            throw new IllegalArgumentException("CompetencyJol cannot be null");
         }
-        this.eventObject = eventObject;
+        this.competencyJol = competencyJol;
+    }
+
+    public CompetencyJol getCompetencyJol() {
+        return competencyJol;
     }
 
     @Override
-    public void handleEvent(IrisCourseChatSessionService service) {
-        service.onJudgementOfLearningSet(eventObject);
+    public Optional<User> getUser() {
+        return Optional.ofNullable(competencyJol.getUser());
     }
 }

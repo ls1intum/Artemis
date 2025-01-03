@@ -133,9 +133,6 @@ public class IrisCourseChatSessionService extends AbstractIrisChatSessionService
      */
     public void onJudgementOfLearningSet(CompetencyJol competencyJol) {
         var course = competencyJol.getCompetency().getCourse();
-        if (!irisSettingsService.isEnabledFor(IrisSubSettingsType.COURSE_CHAT, course)) {
-            return;
-        }
         var user = competencyJol.getUser();
         user.hasAcceptedIrisElseThrow();
         var session = getCurrentSessionOrCreateIfNotExistsInternal(course, user, false);
