@@ -134,10 +134,10 @@ public class LtiResource {
     // TODO Deep Linking 1
     @PostMapping("lti13/deep-linking/{courseId}")
     @EnforceAtLeastInstructor
-    public ResponseEntity<String> lti13DeepLinking(@PathVariable Long courseId, @RequestParam(name = "exerciseIds") Set<Long> exerciseIds,
-            @RequestParam(name = "lectureIds") Set<Long> lectureIds, @RequestParam(name = "competency") boolean competency, @RequestParam(name = "ltiIdToken") String ltiIdToken,
-            @RequestParam(name = "learningPath") boolean learningPath, @RequestParam(name = "iris") boolean iris,
-            @RequestParam(name = "clientRegistrationId") String clientRegistrationId) throws ParseException {
+    public ResponseEntity<String> lti13DeepLinking(@PathVariable Long courseId, @RequestParam(name = "exerciseIds", required = false) Set<Long> exerciseIds,
+            @RequestParam(name = "lectureIds", required = false) Set<Long> lectureIds, @RequestParam(name = "competency", required = false) boolean competency,
+            @RequestParam(name = "learningPath", required = false) boolean learningPath, @RequestParam(name = "iris", required = false) boolean iris,
+            @RequestParam(name = "ltiIdToken") String ltiIdToken, @RequestParam(name = "clientRegistrationId") String clientRegistrationId) throws ParseException {
         // TODO update message
         log.info("LTI 1.3 Deep Linking request received for course {} with exercises {} for registrationId {}", courseId, exerciseIds, clientRegistrationId);
 
