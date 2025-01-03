@@ -88,7 +88,7 @@ public class AeolusTemplateService {
                     script = buildScriptProviderService.replacePlaceholders(script, null, null, null);
                 }
                 Windfile windfile = readWindfile(script);
-                this.addInstanceVariablesToWindfile(windfile, ProgrammingLanguage.valueOf(directory.toUpperCase()), optionalProjectType);
+                windfile = addInstanceVariablesToWindfile(windfile, ProgrammingLanguage.valueOf(directory.toUpperCase()), optionalProjectType);
                 templateCache.put(uniqueKey, windfile);
             }
             catch (IOException | IllegalArgumentException e) {
@@ -153,7 +153,7 @@ public class AeolusTemplateService {
             scriptCache = buildScriptProviderService.replacePlaceholders(scriptCache, null, null, null);
         }
         Windfile windfile = readWindfile(scriptCache);
-        this.addInstanceVariablesToWindfile(windfile, programmingLanguage, projectType);
+        windfile = addInstanceVariablesToWindfile(windfile, programmingLanguage, projectType);
         templateCache.put(uniqueKey, windfile);
         return windfile;
     }
@@ -204,23 +204,24 @@ public class AeolusTemplateService {
      * @param windfile    the Windfile template to be updated with Docker configuration
      * @param language    the programming language used, which determines the Docker image and flags
      * @param projectType an optional specifying the project type; influences the Docker configuration
+     * @return the updated Windfile instance with Docker configuration
      */
-    private void addInstanceVariablesToWindfile(Windfile windfile, ProgrammingLanguage language, Optional<ProjectType> projectType) {
+    private Windfile addInstanceVariablesToWindfile(Windfile windfile, ProgrammingLanguage language, Optional<ProjectType> projectType) {
 
-        WindfileMetadata metadata = windfile.getMetadata();
+        WindfileMetadata metadata = windfile.metadata();
         if (metadata == null) {
             metadata = new WindfileMetadata();
         }
         if (projectType.isPresent() && ProjectType.XCODE.equals(projectType.get())) {
             // xcode does not support docker
             metadata = new WindfileMetadata();
-            windfile.setMetadata(metadata);
-            return;
         }
-        String image = programmingLanguageConfiguration.getImage(language, projectType);
-        DockerConfig dockerConfig = new DockerConfig(image, null, null, programmingLanguageConfiguration.getDefaultDockerFlags());
-        metadata = new WindfileMetadata(metadata.name(), metadata.id(), metadata.description(), metadata.author(), metadata.gitCredentials(), dockerConfig, metadata.resultHook(),
-                metadata.resultHookCredentials());
-        windfile.setMetadata(metadata);
+        else {
+            String image = programmingLanguageConfiguration.getImage(language, projectType);
+            DockerConfig dockerConfig = new DockerConfig(image, null, null, programmingLanguageConfiguration.getDefaultDockerFlags());
+            metadata = new WindfileMetadata(metadata.name(), metadata.id(), metadata.description(), metadata.author(), metadata.gitCredentials(), dockerConfig,
+                    metadata.resultHook(), metadata.resultHookCredentials());
+        }
+        return new Windfile(windfile, metadata);
     }
 }

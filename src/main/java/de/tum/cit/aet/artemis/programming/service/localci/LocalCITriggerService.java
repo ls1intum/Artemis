@@ -235,7 +235,7 @@ public class LocalCITriggerService implements ContinuousIntegrationTriggerServic
 
     private List<String> getTestResultPaths(Windfile windfile) throws IllegalArgumentException {
         List<String> testResultPaths = new ArrayList<>();
-        for (AeolusResult testResultPath : windfile.getResults()) {
+        for (AeolusResult testResultPath : windfile.results()) {
             testResultPaths.add(LOCALCI_WORKING_DIRECTORY + "/testing-dir/" + testResultPath.path());
         }
         return testResultPaths;
@@ -324,7 +324,7 @@ public class LocalCITriggerService implements ContinuousIntegrationTriggerServic
         String dockerImage;
         try {
             windfile = buildConfig.getWindfile();
-            dockerImage = windfile.getMetadata().docker().getFullImageName();
+            dockerImage = windfile.metadata().docker().getFullImageName();
         }
         catch (NullPointerException e) {
             log.warn("Could not retrieve windfile for programming exercise {}. Using default windfile instead.", programmingExercise.getId());

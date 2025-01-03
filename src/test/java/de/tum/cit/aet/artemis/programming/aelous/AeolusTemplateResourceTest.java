@@ -113,7 +113,7 @@ class AeolusTemplateResourceTest extends AbstractSpringIntegrationLocalCILocalVC
 
         Windfile windfile = Windfile.deserialize(validWindfile);
         assertThat(windfile).isNotNull();
-        assertThat(windfile.getActions().getFirst()).isInstanceOf(ScriptAction.class);
+        assertThat(windfile.actions().getFirst()).isInstanceOf(ScriptAction.class);
     }
 
     @Test
@@ -153,9 +153,9 @@ class AeolusTemplateResourceTest extends AbstractSpringIntegrationLocalCILocalVC
     }
 
     void assertWindfileIsCorrect(Windfile windfile, long expectedScriptActions) {
-        assertThat(windfile.getApi()).isEqualTo("v0.0.1");
-        assertThat(windfile.getMetadata().gitCredentials()).isNull();
-        assertThat(windfile.getMetadata().docker()).isNotNull();
-        assertThat(windfile.getScriptActions().size()).isEqualTo(expectedScriptActions);
+        assertThat(windfile.api()).isEqualTo("v0.0.1");
+        assertThat(windfile.metadata().gitCredentials()).isNull();
+        assertThat(windfile.metadata().docker()).isNotNull();
+        assertThat(windfile.scriptActions().size()).isEqualTo(expectedScriptActions);
     }
 }

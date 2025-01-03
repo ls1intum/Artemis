@@ -76,10 +76,7 @@ class AeolusBuildScriptGenerationServiceTest extends AbstractSpringIntegrationLo
     }
 
     private Windfile getWindfile() {
-        Windfile windfile = new Windfile();
-        windfile.setApi("v0.0.1");
-        windfile.setMetadata(new WindfileMetadata("test", "test", "test", null, null, null, null, null));
-        return windfile;
+        return new Windfile("v0.0.1", new WindfileMetadata("test", "test", "test", null, null, null, null, null), null, null);
     }
 
     private String getSerializedWindfile() throws JsonProcessingException {

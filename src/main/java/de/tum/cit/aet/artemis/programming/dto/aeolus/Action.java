@@ -7,80 +7,24 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
 
 /**
- * Base class for the actions that can be defined in a {@link Windfile}
+ * Base for the actions that can be defined in a {@link Windfile}
+ * NOTE: you must create a record that implements this interface to specify actions
  */
-// TODO: remove and convert subclasses into Records
 @JsonIgnoreProperties(ignoreUnknown = true)
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
-public abstract class Action {
+public interface Action {
 
-    private String name;
+    Map<String, Object> parameters();
 
-    private Map<String, Object> parameters;
+    Map<String, Object> environment();
 
-    private Map<String, Object> environment;
+    boolean runAlways();
 
-    private List<AeolusResult> results;
+    String name();
 
-    private String workdir;
+    List<AeolusResult> results();
 
-    private boolean runAlways;
+    String workdir();
 
-    private String platform;
-
-    public Map<String, Object> getParameters() {
-        return parameters;
-    }
-
-    public void setParameters(Map<String, Object> parameters) {
-        this.parameters = parameters;
-    }
-
-    public Map<String, Object> getEnvironment() {
-        return environment;
-    }
-
-    public void setEnvironment(Map<String, Object> environment) {
-        this.environment = environment;
-    }
-
-    public boolean isRunAlways() {
-        return runAlways;
-    }
-
-    public void setRunAlways(boolean runAlways) {
-        this.runAlways = runAlways;
-    }
-
-    public String getName() {
-        return name;
-    }
-
-    public void setName(String name) {
-        this.name = name;
-    }
-
-    public List<AeolusResult> getResults() {
-        return results;
-    }
-
-    public void setResults(List<AeolusResult> results) {
-        this.results = results;
-    }
-
-    public String getWorkdir() {
-        return workdir;
-    }
-
-    public void setWorkdir(String workdir) {
-        this.workdir = workdir;
-    }
-
-    public String getPlatform() {
-        return platform;
-    }
-
-    public void setPlatform(String platform) {
-        this.platform = platform;
-    }
+    String platform();
 }
