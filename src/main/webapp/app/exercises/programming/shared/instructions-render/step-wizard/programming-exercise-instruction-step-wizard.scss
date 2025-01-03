@@ -47,7 +47,7 @@ $step-button-size: 1.4rem;
 
     .btn {
         cursor: default;
-        background-color: $card-bg;
+        background-color: var(--bs-card-bg);
         width: $step-button-size;
         height: $step-button-size;
         text-align: center;
