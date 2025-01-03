@@ -96,7 +96,7 @@ public interface CompetencyProgressRepository extends ArtemisJpaRepository<Compe
     Set<CompetencyProgress> findAllPriorByCompetencyId(@Param("competency") CourseCompetency competency, @Param("user") User userId);
 
     @Query("""
-            SELECT COALESCE(GREATEST(0.0, LEAST(1.0, AVG(cp.progress * cp.confidence / com.masteryThreshold))), 0.0)
+            SELECT COALESCE(GREATEST(0.0, LEAST(100.0, AVG(cp.progress * cp.confidence / com.masteryThreshold * 100))), 0.0)
             FROM CompetencyProgress cp
                 LEFT JOIN cp.competency com
                 LEFT JOIN com.course c
