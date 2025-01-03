@@ -116,7 +116,7 @@ class JenkinsAuthorizationInterceptorTest extends AbstractProgrammingIntegration
     }
 
     private void mockGetCrumb(String expectedBody, HttpStatus expectedStatus) throws URISyntaxException {
-        final var uri = UriComponentsBuilder.fromUri(jenkinsServerUrl.toURI()).pathSegment("crumbIssuer/api/json").build().toUri();
+        final var uri = UriComponentsBuilder.fromUri(jenkinsServerUri).pathSegment("crumbIssuer/api/json").build().toUri();
         var headers = new HttpHeaders();
         headers.add("Set-Cookie", "some-session");
         mockRestServiceServer.expect(requestTo(uri)).andExpect(method(HttpMethod.GET))

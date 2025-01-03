@@ -37,7 +37,7 @@ public class JenkinsJobService {
     private final RestTemplate restTemplate;
 
     @Value("${artemis.continuous-integration.url}")
-    protected URI serverUri;
+    private URI jenkinsServerUri;
 
     public JenkinsJobService(@Qualifier("jenkinsRestTemplate") RestTemplate restTemplate) {
         this.restTemplate = restTemplate;
@@ -57,7 +57,7 @@ public class JenkinsJobService {
         }
 
         try {
-            URI uri = JenkinsEndpoints.GET_JOB.buildEndpoint(serverUri, folderJobName, jobName).build(true).toUri();
+            URI uri = JenkinsEndpoints.GET_JOB.buildEndpoint(jenkinsServerUri, folderJobName, jobName).build(true).toUri();
             return restTemplate.getForObject(uri, JobWithDetails.class);
         }
         catch (HttpClientErrorException.NotFound notFound) {
@@ -88,7 +88,7 @@ public class JenkinsJobService {
      */
     public FolderJob getFolderJob(String folderName) {
         try {
-            URI uri = JenkinsEndpoints.GET_FOLDER_JOB.buildEndpoint(serverUri, folderName).build(true).toUri();
+            URI uri = JenkinsEndpoints.GET_FOLDER_JOB.buildEndpoint(jenkinsServerUri, folderName).build(true).toUri();
             return restTemplate.getForObject(uri, FolderJob.class);
         }
         catch (HttpClientErrorException.NotFound notFound) {
@@ -114,7 +114,7 @@ public class JenkinsJobService {
                 throw new JenkinsException("The folder " + folderName + " does not exist.");
             }
 
-            URI uri = JenkinsEndpoints.PLAN_CONFIG.buildEndpoint(serverUri, folderName, jobName).build(true).toUri();
+            URI uri = JenkinsEndpoints.PLAN_CONFIG.buildEndpoint(jenkinsServerUri, folderName, jobName).build(true).toUri();
             String xmlString = restTemplate.getForObject(uri, String.class);
 
             // Replace the old reference to the master and main branch by a reference to the default branch
@@ -145,14 +145,14 @@ public class JenkinsJobService {
             return null;
         }
 
-        URI uri = JenkinsEndpoints.FOLDER_CONFIG.buildEndpoint(serverUri, folderName).build(true).toUri();
+        URI uri = JenkinsEndpoints.FOLDER_CONFIG.buildEndpoint(jenkinsServerUri, folderName).build(true).toUri();
         String folderXml = restTemplate.getForObject(uri, String.class);
         return JenkinsXmlFileUtils.readFromString(folderXml);
     }
 
     public void createFolder(String projectKey) {
         //@formatter:off
-        URI uri = JenkinsEndpoints.NEW_FOLDER.buildEndpoint(serverUri)
+        URI uri = JenkinsEndpoints.NEW_FOLDER.buildEndpoint(jenkinsServerUri)
             .queryParam("name", projectKey)
             .queryParam("mode", "com.cloudbees.hudson.plugins.folder.Folder")
             .queryParam("from", "")
@@ -182,7 +182,7 @@ public class JenkinsJobService {
                 return;
             }
 
-            URI uri = JenkinsEndpoints.NEW_PLAN.buildEndpoint(serverUri, folderName).queryParam("name", jobName).build(true).toUri();
+            URI uri = JenkinsEndpoints.NEW_PLAN.buildEndpoint(jenkinsServerUri, folderName).queryParam("name", jobName).build(true).toUri();
 
             final var headers = new HttpHeaders();
             headers.setContentType(MediaType.APPLICATION_XML);
@@ -207,7 +207,7 @@ public class JenkinsJobService {
     public void updateJob(String folderName, String jobName, Document jobConfig) {
         final var errorMessage = "Error trying to configure build plan in Jenkins " + jobName;
         try {
-            URI uri = JenkinsEndpoints.PLAN_CONFIG.buildEndpoint(serverUri, folderName, jobName).build(true).toUri();
+            URI uri = JenkinsEndpoints.PLAN_CONFIG.buildEndpoint(jenkinsServerUri, folderName, jobName).build(true).toUri();
 
             final var headers = new HttpHeaders();
             headers.setContentType(MediaType.APPLICATION_XML);
@@ -236,7 +236,7 @@ public class JenkinsJobService {
      */
     public void updateFolderJob(String folderName, Document folderConfig) throws IOException {
         try {
-            URI uri = JenkinsEndpoints.FOLDER_CONFIG.buildEndpoint(serverUri, folderName).build(true).toUri();
+            URI uri = JenkinsEndpoints.FOLDER_CONFIG.buildEndpoint(jenkinsServerUri, folderName).build(true).toUri();
 
             final var headers = new HttpHeaders();
             headers.setContentType(MediaType.APPLICATION_XML);
@@ -257,7 +257,7 @@ public class JenkinsJobService {
 
     public void deleteJob(String folderName, String jobName) {
         try {
-            URI uri = JenkinsEndpoints.DELETE_JOB.buildEndpoint(serverUri, folderName, jobName).build(true).toUri();
+            URI uri = JenkinsEndpoints.DELETE_JOB.buildEndpoint(jenkinsServerUri, folderName, jobName).build(true).toUri();
             restTemplate.postForEntity(uri, new HttpEntity<>(null, new HttpHeaders()), Void.class);
         }
         catch (HttpClientErrorException.NotFound e) {
@@ -277,7 +277,7 @@ public class JenkinsJobService {
      */
     public void deleteFolderJob(String folderName) {
         try {
-            URI uri = JenkinsEndpoints.DELETE_FOLDER.buildEndpoint(serverUri, folderName).build(true).toUri();
+            URI uri = JenkinsEndpoints.DELETE_FOLDER.buildEndpoint(jenkinsServerUri, folderName).build(true).toUri();
             restTemplate.postForEntity(uri, new HttpEntity<>(null, new HttpHeaders()), Void.class);
         }
         catch (HttpClientErrorException.NotFound e) {

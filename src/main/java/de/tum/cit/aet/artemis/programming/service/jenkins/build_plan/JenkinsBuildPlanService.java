@@ -63,7 +63,7 @@ public class JenkinsBuildPlanService {
     private static final Logger log = LoggerFactory.getLogger(JenkinsBuildPlanService.class);
 
     @Value("${artemis.continuous-integration.url}")
-    protected URI serverUri;
+    private URI jenkinsServerUri;
 
     private final RestTemplate restTemplate;
 
@@ -308,7 +308,7 @@ public class JenkinsBuildPlanService {
      */
     public void triggerBuild(String projectKey, String planKey) {
         try {
-            URI uri = JenkinsEndpoints.TRIGGER_BUILD.buildEndpoint(serverUri, projectKey, planKey).build(true).toUri();
+            URI uri = JenkinsEndpoints.TRIGGER_BUILD.buildEndpoint(jenkinsServerUri, projectKey, planKey).build(true).toUri();
             restTemplate.postForEntity(uri, new HttpEntity<>(null, new HttpHeaders()), Void.class);
         }
         catch (RestClientException e) {
@@ -337,7 +337,7 @@ public class JenkinsBuildPlanService {
         }
 
         try {
-            URI uri = JenkinsEndpoints.LAST_BUILD.buildEndpoint(serverUri, projectKey, planKey).build(true).toUri();
+            URI uri = JenkinsEndpoints.LAST_BUILD.buildEndpoint(jenkinsServerUri, projectKey, planKey).build(true).toUri();
             var buildStatus = restTemplate.getForObject(uri, JenkinsBuildStatusDTO.class);
             return buildStatus != null && buildStatus.building ? ContinuousIntegrationService.BuildStatus.BUILDING : ContinuousIntegrationService.BuildStatus.INACTIVE;
         }
@@ -422,7 +422,7 @@ public class JenkinsBuildPlanService {
      */
     public void enablePlan(String projectKey, String planKey) {
         try {
-            URI uri = JenkinsEndpoints.ENABLE.buildEndpoint(serverUri, projectKey, planKey).build(true).toUri();
+            URI uri = JenkinsEndpoints.ENABLE.buildEndpoint(jenkinsServerUri, projectKey, planKey).build(true).toUri();
             restTemplate.postForEntity(uri, new HttpEntity<>(null, new HttpHeaders()), Void.class);
         }
         catch (HttpClientErrorException e) {

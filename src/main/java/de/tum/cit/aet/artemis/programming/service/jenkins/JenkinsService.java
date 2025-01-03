@@ -48,7 +48,7 @@ public class JenkinsService extends AbstractContinuousIntegrationService {
     private final ObjectMapper mapper = new ObjectMapper();
 
     @Value("${artemis.continuous-integration.url}")
-    protected URI serverUri;
+    private URI jenkinsServerUri;
 
     private final JenkinsBuildPlanService jenkinsBuildPlanService;
 
@@ -168,7 +168,7 @@ public class JenkinsService extends AbstractContinuousIntegrationService {
     @Override
     public Optional<String> getWebHookUrl(String projectKey, String buildPlanId) {
         // TODO: use UriComponentsBuilder
-        var urlString = serverUri + "/project/" + projectKey + "/" + buildPlanId;
+        var urlString = jenkinsServerUri + "/project/" + projectKey + "/" + buildPlanId;
         return Optional.of(jenkinsInternalUrlService.toInternalCiUrl(urlString));
     }
 
@@ -231,9 +231,9 @@ public class JenkinsService extends AbstractContinuousIntegrationService {
 
     @Override
     public ConnectorHealth health() {
-        Map<String, Object> additionalInfo = Map.of("url", serverUri);
+        Map<String, Object> additionalInfo = Map.of("url", jenkinsServerUri);
         try {
-            URI uri = JenkinsEndpoints.HEALTH.buildEndpoint(serverUri).build(true).toUri();
+            URI uri = JenkinsEndpoints.HEALTH.buildEndpoint(jenkinsServerUri).build(true).toUri();
             // Note: we simply check if the login page is reachable
             shortTimeoutRestTemplate.getForObject(uri, String.class);
             return new ConnectorHealth(true, additionalInfo);
