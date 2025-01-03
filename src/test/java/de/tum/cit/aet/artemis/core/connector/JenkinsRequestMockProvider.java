@@ -7,10 +7,8 @@ import static de.tum.cit.aet.artemis.programming.domain.build.BuildPlanType.TEMP
 import static org.mockito.Mockito.any;
 import static org.mockito.Mockito.anyString;
 import static org.mockito.Mockito.doNothing;
-import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.eq;
-import static org.mockito.Mockito.mock;
 import static org.springframework.test.web.client.match.MockRestRequestMatchers.method;
 import static org.springframework.test.web.client.match.MockRestRequestMatchers.requestTo;
 import static org.springframework.test.web.client.response.MockRestResponseCreators.withBadRequest;
@@ -545,11 +543,11 @@ public class JenkinsRequestMockProvider {
             return;
         }
 
-        var jobWithDetails = mock(JenkinsJobService.JobWithDetails.class);
+        boolean isQueued = planIsActive && !planIsBuilding;
+        var jobWithDetails = new JenkinsJobService.JobWithDetails(planName, "", isQueued);
         mockGetJob(projectKey, planName, jobWithDetails, false);
 
-        if (planIsActive && !planIsBuilding) {
-            doReturn(true).when(jobWithDetails).inQueue();
+        if (isQueued) {
             return;
         }
 

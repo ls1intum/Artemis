@@ -11,7 +11,6 @@ import static org.mockito.Mockito.mockStatic;
 
 import java.io.IOException;
 import java.io.InputStream;
-import java.net.URISyntaxException;
 import java.util.Optional;
 
 import org.junit.jupiter.api.AfterEach;
@@ -228,7 +227,7 @@ class JenkinsServiceTest extends AbstractProgrammingIntegrationJenkinsGitlabTest
         testFailToUpdatePlanRepositoryRestClientException(HttpStatus.INTERNAL_SERVER_ERROR);
     }
 
-    private void testFailToUpdatePlanRepositoryRestClientException(HttpStatus expectedStatus) throws IOException, URISyntaxException {
+    private void testFailToUpdatePlanRepositoryRestClientException(HttpStatus expectedStatus) throws IOException {
         var programmingExercise = continuousIntegrationTestService.programmingExercise;
         programmingExerciseUtilService.addTemplateParticipationForProgrammingExercise(programmingExercise);
         programmingExerciseUtilService.addSolutionParticipationForProgrammingExercise(programmingExercise);
@@ -312,6 +311,8 @@ class JenkinsServiceTest extends AbstractProgrammingIntegrationJenkinsGitlabTest
 
         ProgrammingExercise sourceExercise = new ProgrammingExercise();
         course.addExercises(sourceExercise);
+        sourceExercise.setShortName("source");
+        sourceExercise.generateAndSetProjectKey();
         var buildConfig = new ProgrammingExerciseBuildConfig();
         sourceExercise.setBuildConfig(programmingExerciseBuildConfigRepository.save(buildConfig));
         sourceExercise = programmingExerciseRepository.save(sourceExercise);
@@ -321,13 +322,15 @@ class JenkinsServiceTest extends AbstractProgrammingIntegrationJenkinsGitlabTest
 
         ProgrammingExercise targetExercise = new ProgrammingExercise();
         course.addExercises(targetExercise);
+        targetExercise.setShortName("target");
         targetExercise.generateAndSetProjectKey();
         var buildConfigTarget = new ProgrammingExerciseBuildConfig();
         targetExercise.setBuildConfig(programmingExerciseBuildConfigRepository.save(buildConfigTarget));
         targetExercise = programmingExerciseRepository.save(targetExercise);
-        jenkinsRequestMockProvider.mockCopyBuildPlanFromTemplate(sourceExercise.getProjectKey(), targetExercise.getProjectKey(), "");
+        String targetPlanName = targetExercise.getProjectKey() + "-" + TEMPLATE.getName();
+        jenkinsRequestMockProvider.mockCopyBuildPlanFromTemplate(sourceExercise.getProjectKey(), targetExercise.getProjectKey(), targetPlanName);
 
-        continuousIntegrationService.copyBuildPlan(sourceExercise, "", targetExercise, "", "", true);
+        continuousIntegrationService.copyBuildPlan(sourceExercise, TEMPLATE.getName(), targetExercise, targetExercise.getProjectName(), TEMPLATE.getName(), true);
 
         Optional<BuildPlan> targetBuildPlan = buildPlanRepository.findByProgrammingExercises_IdWithProgrammingExercises(targetExercise.getId());
         assertThat(targetBuildPlan).isEmpty();
