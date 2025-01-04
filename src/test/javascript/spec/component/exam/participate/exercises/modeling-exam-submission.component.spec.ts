@@ -26,7 +26,7 @@ describe('ModelingExamSubmissionComponent', () => {
 
     const resetComponent = () => {
         if (comp) {
-            mockSubmission = { explanationText: 'Test Explanation', model: JSON.stringify({ model: true }) } as ModelingSubmission;
+            mockSubmission = { explanationText: 'Test Explanation', model: JSON.stringify({ version: '2.0.0', model: true }) } as ModelingSubmission;
             const course = new Course();
             course.isAtLeastInstructor = true;
             mockExercise = new ModelingExercise(UMLDiagramType.ClassDiagram, course, undefined);
@@ -36,7 +36,7 @@ describe('ModelingExamSubmissionComponent', () => {
         }
     };
 
-    beforeEach(() => {
+    beforeEach(async () => {
         TestBed.configureTestingModule({
             imports: [ArtemisTestModule, NgbTooltipMocksModule],
             declarations: [
@@ -52,14 +52,18 @@ describe('ModelingExamSubmissionComponent', () => {
 
         fixture = TestBed.createComponent(ModelingExamSubmissionComponent);
         comp = fixture.componentInstance;
+        resetComponent();
+        // fixture.detectChanges();
+    });
+
+    afterEach(() => {
+        fixture.destroy();
+        jest.restoreAllMocks();
+        TestBed.resetTestingModule();
     });
 
     describe('With exercise', () => {
-        beforeEach(() => {
-            resetComponent();
-        });
         it('should initialize', () => {
-            fixture.detectChanges();
             expect(ModelingExamSubmissionComponent).not.toBeNull();
         });
 
@@ -107,7 +111,7 @@ describe('ModelingExamSubmissionComponent', () => {
             fixture.detectChanges();
             const modelingEditor = fixture.debugElement.query(By.directive(ModelingEditorComponent));
             expect(modelingEditor).not.toBeNull();
-            expect(modelingEditor.componentInstance.umlModel).toEqual({ model: true, assessments: {} });
+            expect(modelingEditor.componentInstance.umlModel).toEqual({ version: '2.0.0', model: true, assessments: {} });
             expect(modelingEditor.componentInstance.withExplanation).toBeTrue();
             expect(modelingEditor.componentInstance.explanation).toEqual(mockSubmission.explanationText);
             expect(modelingEditor.componentInstance.diagramType).toEqual(UMLDiagramType.ClassDiagram);
@@ -164,14 +168,8 @@ describe('ModelingExamSubmissionComponent', () => {
     });
 
     describe('updateSubmissionFromView', () => {
-        beforeEach(() => {
-            resetComponent();
-            fixture.detectChanges();
-        });
-        afterEach(() => {
-            jest.restoreAllMocks();
-        });
         it('should set submission model to new model from modeling editor', () => {
+            fixture.detectChanges();
             const modelingEditor = fixture.debugElement.query(By.directive(ModelingEditorComponent)).componentInstance;
             const newModel = { newModel: true };
             const currentModelStub = jest.spyOn(modelingEditor, 'getCurrentModel').mockReturnValue(newModel);
@@ -185,9 +183,6 @@ describe('ModelingExamSubmissionComponent', () => {
     });
 
     describe('hasUnsavedChanges', () => {
-        beforeEach(() => {
-            resetComponent();
-        });
         it('should return true if isSynced false', () => {
             comp.studentSubmission().isSynced = false;
             expect(comp.hasUnsavedChanges()).toBeTrue();
@@ -242,8 +237,6 @@ describe('ModelingExamSubmissionComponent', () => {
                 'Model: {"version":"3.0.0","type":"ClassDiagram","size":{"width":220,"height":420},"interactive":{"elements":{},"relationships":{}},"elements":{},"relationships":{},"assessments":{}}; Explanation: explanation',
         } as unknown as SubmissionVersion;
         await comp.setSubmissionVersion(submissionVersion);
-        fixture.detectChanges();
-        await fixture.whenStable();
 
         expect(comp.submissionVersion).toEqual(submissionVersion);
         expect(comp.umlModel).toEqual(parsedModel);
