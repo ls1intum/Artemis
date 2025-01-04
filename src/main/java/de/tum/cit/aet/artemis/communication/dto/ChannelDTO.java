@@ -198,9 +198,9 @@ public class ChannelDTO extends ConversationDTO {
     }
 
     /**
-     * Converts the current object into a {@link Channel} instance.
+     * Converts the DTO to a channel entity
      *
-     * @return Channel with the created channel.
+     * @return the created channel entity based on the attributes in the DTO
      */
     public Channel toChannel() {
         Channel channel = new Channel();
