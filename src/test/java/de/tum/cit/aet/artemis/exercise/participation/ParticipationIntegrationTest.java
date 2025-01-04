@@ -2,7 +2,6 @@ package de.tum.cit.aet.artemis.exercise.participation;
 
 import static de.tum.cit.aet.artemis.core.connector.AthenaRequestMockProvider.ATHENA_MODULE_MODELING_PRELIMINARY_TEST;
 import static de.tum.cit.aet.artemis.core.connector.AthenaRequestMockProvider.ATHENA_MODULE_PROGRAMMING_PRELIMINARY_TEST;
-import static de.tum.cit.aet.artemis.core.connector.AthenaRequestMockProvider.ATHENA_MODULE_PROGRAMMING_SUGGESTIONS_TEST;
 import static de.tum.cit.aet.artemis.core.connector.AthenaRequestMockProvider.ATHENA_MODULE_TEXT_PRELIMINARY_TEST;
 import static de.tum.cit.aet.artemis.core.util.TestResourceUtils.HalfSecond;
 import static org.assertj.core.api.Assertions.assertThat;
@@ -546,7 +545,7 @@ class ParticipationIntegrationTest extends AbstractAthenaTest {
         course.setRestrictedAthenaModulesAccess(true);
         this.courseRepository.save(course);
 
-        this.programmingExercise.setPreliminaryFeedbackModule(ATHENA_MODULE_PROGRAMMING_SUGGESTIONS_TEST);
+        this.programmingExercise.setPreliminaryFeedbackModule(ATHENA_MODULE_PROGRAMMING_PRELIMINARY_TEST);
         this.exerciseRepository.save(programmingExercise);
 
         athenaRequestMockProvider.mockGetFeedbackSuggestionsAndExpect("programming", true);
