@@ -103,13 +103,11 @@ public class BuildScriptProviderService {
      * @param projectType         the project type for which the template file should be returned. If omitted, a default depending on the language will be used.
      * @param staticAnalysis      whether the static analysis template should be used
      * @param sequentialRuns      whether the sequential runs template should be used
-     * @param testCoverage        whether the test coverage template should be used
      * @return the requested template as a bash script
      * @throws IOException if the file does not exist
      */
-    public String getScriptFor(ProgrammingLanguage programmingLanguage, Optional<ProjectType> projectType, Boolean staticAnalysis, Boolean sequentialRuns, Boolean testCoverage)
-            throws IOException {
-        String templateFileName = buildTemplateName(projectType, staticAnalysis, sequentialRuns, testCoverage, "sh");
+    public String getScriptFor(ProgrammingLanguage programmingLanguage, Optional<ProjectType> projectType, Boolean staticAnalysis, Boolean sequentialRuns) throws IOException {
+        String templateFileName = buildTemplateName(projectType, staticAnalysis, sequentialRuns, "sh");
         String uniqueKey = programmingLanguage.name().toLowerCase() + "_" + templateFileName;
         if (scriptCache.containsKey(uniqueKey)) {
             log.debug("Returning cached script for {}", uniqueKey);
@@ -139,7 +137,7 @@ public class BuildScriptProviderService {
         try {
             ProgrammingExerciseBuildConfig buildConfig = exercise.getBuildConfig();
             return getScriptFor(exercise.getProgrammingLanguage(), Optional.ofNullable(exercise.getProjectType()), exercise.isStaticCodeAnalysisEnabled(),
-                    buildConfig.hasSequentialTestRuns(), buildConfig.isTestwiseCoverageEnabled());
+                    buildConfig.hasSequentialTestRuns());
         }
         catch (IOException e) {
             log.error("Failed to provide build script for programming exercise " + exercise.getId(), e);
@@ -153,11 +151,10 @@ public class BuildScriptProviderService {
      * @param projectType    The project type for which the template file should be returned. If omitted, a default depending on the language will be used.
      * @param staticAnalysis whether the static analysis template should be used
      * @param sequentialRuns whether the sequential runs template should be used
-     * @param testCoverage   whether the test coverage template should be used
      * @param fileExtension  the file extension of the template file
      * @return The filename of the requested configuration
      */
-    public String buildTemplateName(Optional<ProjectType> projectType, Boolean staticAnalysis, Boolean sequentialRuns, Boolean testCoverage, String fileExtension) {
+    public String buildTemplateName(Optional<ProjectType> projectType, Boolean staticAnalysis, Boolean sequentialRuns, String fileExtension) {
         List<String> fileNameComponents = new ArrayList<>();
 
         if (ProjectType.MAVEN_BLACKBOX.equals(projectType.orElse(null))) {
@@ -172,9 +169,6 @@ public class BuildScriptProviderService {
         }
         if (sequentialRuns) {
             fileNameComponents.add("sequential");
-        }
-        if (testCoverage) {
-            fileNameComponents.add("coverage");
         }
         return String.join("_", fileNameComponents) + "." + fileExtension;
     }

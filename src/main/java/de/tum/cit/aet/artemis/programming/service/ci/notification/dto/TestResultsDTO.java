@@ -4,7 +4,6 @@ import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.stream.Stream;
 
-import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
@@ -15,156 +14,64 @@ import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 
 import de.tum.cit.aet.artemis.programming.domain.RepositoryType;
 import de.tum.cit.aet.artemis.programming.domain.build.BuildLogEntry;
-import de.tum.cit.aet.artemis.programming.dto.AbstractBuildResultNotificationDTO;
-import de.tum.cit.aet.artemis.programming.dto.BuildJobDTOInterface;
+import de.tum.cit.aet.artemis.programming.dto.BuildJobInterface;
+import de.tum.cit.aet.artemis.programming.dto.BuildResultNotification;
 import de.tum.cit.aet.artemis.programming.dto.StaticCodeAnalysisReportDTO;
 import de.tum.cit.aet.artemis.programming.service.ci.notification.BuildLogParseUtils;
 
 @JsonIgnoreProperties(ignoreUnknown = true)
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 // Note: due to limitations with inheritance, we cannot declare this as record, but we can use it in a similar way with final fields
-public class TestResultsDTO extends AbstractBuildResultNotificationDTO {
-
-    private final int successful;
-
-    private final int skipped;
-
-    private final int errors;
-
-    private final int failures;
-
-    private final String fullName;
-
-    private final List<CommitDTO> commits;
-
-    private final List<TestSuiteDTO> results;
-
-    private final List<StaticCodeAnalysisReportDTO> staticCodeAnalysisReports;
-
-    private final List<TestwiseCoverageReportDTO> testwiseCoverageReport;
-
-    private final ZonedDateTime runDate;
-
-    private final boolean isBuildSuccessful;
-
-    private final List<String> logs;
-
-    @JsonCreator
-    public TestResultsDTO(@JsonProperty("successful") int successful, @JsonProperty("skipped") int skipped, @JsonProperty("errors") int errors,
-            @JsonProperty("failures") int failures, @JsonProperty("fullName") String fullName, @JsonProperty("commits") @JsonSetter(nulls = Nulls.AS_EMPTY) List<CommitDTO> commits,
-            @JsonProperty("results") @JsonSetter(nulls = Nulls.AS_EMPTY) List<TestSuiteDTO> results,
-            @JsonProperty("staticCodeAnalysisReports") @JsonSetter(nulls = Nulls.AS_EMPTY) List<StaticCodeAnalysisReportDTO> staticCodeAnalysisReports,
-            @JsonProperty("testwiseCoverageReport") @JsonSetter(nulls = Nulls.AS_EMPTY) List<TestwiseCoverageReportDTO> testwiseCoverageReport,
-            @JsonProperty("runDate") ZonedDateTime runDate, @JsonProperty("isBuildSuccessful") boolean isBuildSuccessful,
-            @JsonProperty("logs") @JsonSetter(nulls = Nulls.AS_EMPTY) List<String> logs) {
-        this.successful = successful;
-        this.skipped = skipped;
-        this.errors = errors;
-        this.failures = failures;
-        this.fullName = fullName;
-        this.commits = commits;
-        this.results = results;
-        this.staticCodeAnalysisReports = staticCodeAnalysisReports;
-        this.testwiseCoverageReport = testwiseCoverageReport;
-        this.runDate = runDate;
-        this.isBuildSuccessful = isBuildSuccessful;
-        this.logs = logs;
-    }
+public record TestResultsDTO(@JsonProperty("successful") int successful, @JsonProperty("skipped") int skipped, @JsonProperty("errors") int errors,
+        @JsonProperty("failures") int failures, @JsonProperty("fullName") String fullName, @JsonProperty("commits") @JsonSetter(nulls = Nulls.AS_EMPTY) List<CommitDTO> commits,
+        @JsonProperty("results") @JsonSetter(nulls = Nulls.AS_EMPTY) List<TestSuiteDTO> results,
+        @JsonProperty("staticCodeAnalysisReports") @JsonSetter(nulls = Nulls.AS_EMPTY) List<StaticCodeAnalysisReportDTO> staticCodeAnalysisReports,
+        @JsonProperty("runDate") ZonedDateTime runDate, @JsonProperty("isBuildSuccessful") boolean isBuildSuccessful,
+        @JsonProperty("logs") @JsonSetter(nulls = Nulls.AS_EMPTY) List<String> logs) implements BuildResultNotification {
 
     public static TestResultsDTO convert(Object someResult) {
         return new ObjectMapper().registerModule(new JavaTimeModule()).convertValue(someResult, TestResultsDTO.class);
     }
 
-    public int getSuccessful() {
-        return successful;
-    }
-
-    public int getSkipped() {
-        return skipped;
-    }
-
-    public int getErrors() {
-        return errors;
-    }
-
-    public int getFailures() {
-        return failures;
-    }
-
-    public String getFullName() {
-        return fullName;
-    }
-
-    public ZonedDateTime getRunDate() {
-        return runDate;
-    }
-
-    public List<String> getLogs() {
-        return this.logs;
+    @Override
+    public ZonedDateTime buildRunDate() {
+        return runDate();
     }
 
     @Override
-    public ZonedDateTime getBuildRunDate() {
-        return getRunDate();
-    }
-
-    @Override
-    protected String getCommitHashFromAssignmentRepo() {
+    public String assignmentRepoCommitHash() {
         final var testRepoNameSuffix = RepositoryType.TESTS.getName();
-        final var firstCommit = getCommits().stream().filter(commit -> !commit.repositorySlug().endsWith(testRepoNameSuffix)).findFirst();
+        final var firstCommit = commits().stream().filter(commit -> !commit.repositorySlug().endsWith(testRepoNameSuffix)).findFirst();
         return firstCommit.map(CommitDTO::hash).orElse(null);
     }
 
     @Override
-    protected String getCommitHashFromTestsRepo() {
+    public String testsRepoCommitHash() {
         final var testRepoNameSuffix = RepositoryType.TESTS.getName();
-        final var firstCommit = getCommits().stream().filter(commit -> commit.repositorySlug().endsWith(testRepoNameSuffix)).findFirst();
+        final var firstCommit = commits().stream().filter(commit -> commit.repositorySlug().endsWith(testRepoNameSuffix)).findFirst();
         return firstCommit.map(CommitDTO::hash).orElse(null);
     }
 
     @Override
-    public String getBranchNameFromAssignmentRepo() {
+    public String assignmentRepoBranchName() {
         final var testRepoNameSuffix = RepositoryType.TESTS.getName();
-        final var firstCommit = getCommits().stream().filter(commit -> !commit.repositorySlug().endsWith(testRepoNameSuffix)).findFirst();
+        final var firstCommit = commits().stream().filter(commit -> !commit.repositorySlug().endsWith(testRepoNameSuffix)).findFirst();
         return firstCommit.map(CommitDTO::branchName).orElse(null);
     }
 
     private int getSum() {
-        return getSkipped() + getFailures() + getErrors() + getSuccessful();
+        return skipped() + failures() + errors() + successful();
     }
 
     @Override
-    public boolean isBuildSuccessful() {
-        return isBuildSuccessful;
-    }
-
-    @Override
-    public Double getBuildScore() {
+    public Double buildScore() {
         final var testSum = getSum();
-        return testSum == 0 ? 0D : ((double) getSuccessful() / testSum) * 100D;
-    }
-
-    public List<CommitDTO> getCommits() {
-        return commits;
-    }
-
-    public List<TestSuiteDTO> getResults() {
-        return results;
-    }
-
-    @Override
-    public List<StaticCodeAnalysisReportDTO> getStaticCodeAnalysisReports() {
-        return staticCodeAnalysisReports;
-    }
-
-    @Override
-    public List<TestwiseCoverageReportDTO> getTestwiseCoverageReports() {
-        return testwiseCoverageReport;
+        return testSum == 0 ? 0D : ((double) successful() / testSum) * 100D;
     }
 
     @Override
     public boolean hasArtifact() {
-        // TODO: this is not available in Jenkins or GitLab CI yet
+        // NOTE: this is not available in Jenkins
         return false;
     }
 
@@ -175,13 +82,13 @@ public class TestResultsDTO extends AbstractBuildResultNotificationDTO {
 
     @Override
     public List<BuildLogEntry> extractBuildLogs() {
-        var buildLogs = BuildLogParseUtils.parseBuildLogsFromLogs(getLogs());
+        var buildLogs = BuildLogParseUtils.parseBuildLogsFromLogs(logs());
         return filterBuildLogs(buildLogs);
     }
 
     @Override
-    public List<? extends BuildJobDTOInterface> getBuildJobs() {
-        return getResults();
+    public List<? extends BuildJobInterface> jobs() {
+        return results();
     }
 
     /**
