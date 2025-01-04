@@ -14,7 +14,7 @@ import { ExerciseButtonStatus } from 'app/exam/participate/exam-navigation-sideb
     styleUrls: ['./exam-exercise-overview-page.scss', '../../exam-navigation-sidebar/exam-navigation-sidebar.component.scss'],
 })
 export class ExamExerciseOverviewPageComponent extends ExamPageComponent implements OnInit, OnChanges {
-    protected changeDetectorReference: ChangeDetectorRef;
+    protected changeDetectorReference: ChangeDetectorRef = inject(ChangeDetectorRef);
     private examParticipationService = inject(ExamParticipationService);
 
     studentExam = input.required<StudentExam>();
@@ -29,13 +29,6 @@ export class ExamExerciseOverviewPageComponent extends ExamPageComponent impleme
     showResultWidth = 10;
 
     examExerciseOverviewItems: ExamExerciseOverviewItem[] = [];
-
-    constructor() {
-        const changeDetectorReference = inject(ChangeDetectorRef);
-
-        super();
-        this.changeDetectorReference = changeDetectorReference;
-    }
 
     ngOnInit() {
         this.studentExam().exercises?.forEach((exercise) => {
