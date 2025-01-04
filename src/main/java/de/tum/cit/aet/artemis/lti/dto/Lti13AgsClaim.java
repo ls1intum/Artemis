@@ -6,12 +6,14 @@ import java.util.Optional;
 
 import org.springframework.security.oauth2.core.oidc.OidcIdToken;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 /**
  * A wrapper record for an LTI 1.3 Assignment and Grading Services Claim. We support the Score Publishing Service in order to transmit scores.
  */
+@JsonInclude(JsonInclude.Include.NON_EMPTY)
 public record Lti13AgsClaim(List<String> scope, String lineItem) {
 
     /**
