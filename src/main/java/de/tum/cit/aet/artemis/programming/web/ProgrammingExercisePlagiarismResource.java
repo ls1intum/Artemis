@@ -105,7 +105,7 @@ public class ProgrammingExercisePlagiarismResource {
         log.info("Started manual plagiarism checks for programming exercise: exerciseId={}.", exerciseId);
         PlagiarismDetectionConfigHelper.updateWithTemporaryParameters(programmingExercise, similarityThreshold, minimumScore, minimumSize);
         try {
-            var plagiarismResult = (TextPlagiarismResult) plagiarismDetectionService.checkProgrammingExercise(programmingExercise);
+            var plagiarismResult = plagiarismDetectionService.checkProgrammingExercise(programmingExercise);
             return buildPlagiarismResultResponse(plagiarismResult);
         }
         catch (ProgrammingLanguageNotSupportedForPlagiarismDetectionException e) {

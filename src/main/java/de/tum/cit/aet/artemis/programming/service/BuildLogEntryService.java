@@ -402,8 +402,6 @@ public class BuildLogEntryService {
      * In case of an error during file deletion, it logs the error and continues processing.
      * </p>
      *
-     * @throws IOException if an I/O error occurs while accessing the build log files directory or
-     *                         deleting files.
      */
     @Scheduled(cron = "${artemis.continuous-integration.build-log.cleanup-schedule:0 0 3 * * ?}")
     public void deleteOldBuildLogsFiles() {
