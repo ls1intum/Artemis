@@ -35,6 +35,8 @@ import de.tum.cit.aet.artemis.programming.domain.AuxiliaryRepository;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingLanguage;
 import de.tum.cit.aet.artemis.programming.domain.VcsRepositoryUri;
 import de.tum.cit.aet.artemis.programming.dto.AeolusGenerationResponseDTO;
+import de.tum.cit.aet.artemis.programming.dto.aeolus.AeolusRepository;
+import de.tum.cit.aet.artemis.programming.dto.aeolus.Windfile;
 import de.tum.cit.aet.artemis.programming.service.InternalUrlService;
 import de.tum.cit.aet.artemis.programming.service.ci.ContinuousIntegrationService;
 

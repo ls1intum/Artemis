@@ -234,7 +234,7 @@ class InternalAuthenticationIntegrationTest extends AbstractSpringIntegrationJen
 
         var responseBody = new ObjectMapper().readValue(response.getContentAsString(), new TypeReference<Map<String, Object>>() {
         });
-        assertThat(tokenProvider.validateTokenForAuthority(responseBody.get("access_token").toString())).isTrue();
+        assertThat(tokenProvider.validateTokenForAuthority(responseBody.get("access_token").toString(), null)).isTrue();
     }
 
     @Test

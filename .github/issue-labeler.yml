@@ -111,7 +111,6 @@ programming:
   - build plan
   - code hint
   - \b(?<!\S)git(?!\S)\b
-  - testwise coverage
   - \b(?<!\S)ide(?!\S)\b
   - submission policy
   - aeolus
