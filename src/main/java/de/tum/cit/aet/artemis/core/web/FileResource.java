@@ -1,6 +1,8 @@
 package de.tum.cit.aet.artemis.core.web;
 
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
+import static org.apache.velocity.shaded.commons.io.FilenameUtils.getBaseName;
+import static org.apache.velocity.shaded.commons.io.FilenameUtils.getExtension;
 
 import java.io.IOException;
 import java.net.FileNameMap;
@@ -409,20 +411,18 @@ public class FileResource {
     /**
      * GET /files/attachments/lecture/:lectureId/:filename : Get the lecture attachment
      *
-     * @param lectureId ID of the lecture, the attachment belongs to
-     * @param filename  the filename of the file
+     * @param lectureId      ID of the lecture, the attachment belongs to
+     * @param attachmentName the filename of the file
      * @return The requested file, 403 if the logged-in user is not allowed to access it, or 404 if the file doesn't exist
      */
-    @GetMapping("files/attachments/lecture/{lectureId}/{filename}")
+    @GetMapping("files/attachments/lecture/{lectureId}/{attachmentName}")
     @EnforceAtLeastStudent
-    public ResponseEntity<byte[]> getLectureAttachment(@PathVariable Long lectureId, @PathVariable String filename) {
-        log.debug("REST request to get lecture attachment : {}", filename);
-        String fileNameWithoutSpaces = filename.replaceAll(" ", "_");
-        sanitizeFilenameElseThrow(fileNameWithoutSpaces);
+    public ResponseEntity<byte[]> getLectureAttachment(@PathVariable Long lectureId, @PathVariable String attachmentName) {
+        log.debug("REST request to get lecture attachment : {}", attachmentName);
 
         List<Attachment> lectureAttachments = attachmentRepository.findAllByLectureId(lectureId);
-        Attachment attachment = lectureAttachments.stream().filter(lectureAttachment -> lectureAttachment.getLink().endsWith(fileNameWithoutSpaces)).findAny()
-                .orElseThrow(() -> new EntityNotFoundException("Attachment", filename));
+        Attachment attachment = lectureAttachments.stream().filter(lectureAttachment -> lectureAttachment.getName().equals(getBaseName(attachmentName))).findAny()
+                .orElseThrow(() -> new EntityNotFoundException("Attachment", attachmentName));
 
         // get the course for a lecture attachment
         Lecture lecture = attachment.getLecture();
@@ -431,7 +431,7 @@ public class FileResource {
         // check if the user is authorized to access the requested attachment unit
         checkAttachmentAuthorizationOrThrow(course, attachment);
 
-        return buildFileResponse(getActualPathFromPublicPathString(attachment.getLink()), Optional.of(attachment.getName()));
+        return buildFileResponse(getActualPathFromPublicPathString(attachment.getLink()), Optional.of(attachmentName));
     }
 
     /**
@@ -487,7 +487,7 @@ public class FileResource {
 
         // check if the user is authorized to access the requested attachment unit
         checkAttachmentAuthorizationOrThrow(course, attachment);
-        return buildFileResponse(getActualPathFromPublicPathString(attachment.getLink()), Optional.of(attachment.getName()));
+        return buildFileResponse(getActualPathFromPublicPathString(attachment.getLink()), Optional.of(attachment.getName() + "." + getExtension(attachment.getLink())));
     }
 
     /**

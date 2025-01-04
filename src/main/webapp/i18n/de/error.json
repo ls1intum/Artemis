@@ -83,7 +83,6 @@
         },
         "idNull": "Ungültige ID",
         "unexpectedError": "Ein unerwarteter Fehler ist aufgetreten: {{error}}",
-        "manualCodeHintOperation": "Dieser Endpunkt erlaubt keine manuelle Bearbeitung von Codehinweisen.",
         "exerciseNotDefined": "Die Aufgabe ist nicht definiert.",
         "exerciseIdMismatch": "Die Aufgaben-IDs stimmen nicht überein.",
         "solutionEntryError": "Fehler beim Laden der extrahierten Aufgaben aus der Aufgabenstellung.",
@@ -97,6 +96,9 @@
         "courseTitleTooLong": "Der Kurstitel ist zu lang (max. 255 Zeichen), bitte nutze einen kürzeren Kurstitel.",
         "notAllowedInExam": "Diese Aktion ist in einer Klausur nicht erlaubt.",
         "profilePictureFilesizeTooBig": "Die Dateigröße des hochgeladenen Bilds ist zu groß, bitte lade ein kleineres Bild hoch.",
-        "profilePictureFileFormatNotSupported": "Das Dateiformat wird nicht unterstützt, bitte lade eine .png oder .jpg Datei hoch."
+        "profilePictureFileFormatNotSupported": "Das Dateiformat wird nicht unterstützt, bitte lade eine .png oder .jpg Datei hoch.",
+        "envVariablesTooLong": "Die Umgebungsvariablen sind zu lang. Bitte stelle sicher, dass jeder Schlüssel oder Wert nicht länger als 1000 Zeichen ist.",
+        "networkAccessNotSupported": "Die gewählte Programmiersprache unterstützt die Deaktivierung der Netzzugangsfunktion nicht.",
+        "dockerFlagsParsingError": "Fehler beim Parsen der Docker-Flags."
     }
 }

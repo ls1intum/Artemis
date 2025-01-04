@@ -441,7 +441,7 @@ export class ConversationMessagesComponent implements OnInit, AfterViewInit, OnD
             }
         }
         this.elementsAtScrollPosition = visibleMessages;
-        if (this.elementsAtScrollPosition && this.canStartSaving) {
+        if (this.elementsAtScrollPosition && this.elementsAtScrollPosition.length > 0 && this.canStartSaving) {
             this.saveScrollPosition(this.elementsAtScrollPosition[0].post.id!);
         }
     }

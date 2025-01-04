@@ -53,6 +53,7 @@ import de.tum.cit.aet.artemis.exercise.domain.Team;
 import de.tum.cit.aet.artemis.programming.AbstractProgrammingIntegrationLocalCILocalVCTestBase;
 import de.tum.cit.aet.artemis.programming.domain.AuxiliaryRepository;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
+import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseBuildConfig;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseStudentParticipation;
 import de.tum.cit.aet.artemis.programming.domain.RepositoryType;
 import de.tum.cit.aet.artemis.programming.domain.build.BuildJob;
@@ -947,7 +948,13 @@ class LocalVCLocalCIIntegrationTest extends AbstractProgrammingIntegrationLocalC
     }
 
     @Nested
-    class BuildJobPriorityTest {
+    class BuildJobConfigurationTest {
+
+        @BeforeEach
+        void setup() {
+            queuedJobs.clear();
+            sharedQueueProcessingService.removeListenerAndCancelScheduledFuture();
+        }
 
         @AfterEach
         void tearDown() {
@@ -1002,9 +1009,6 @@ class LocalVCLocalCIIntegrationTest extends AbstractProgrammingIntegrationLocalC
         }
 
         private void testPriority(String login, int expectedPriority) throws Exception {
-            queuedJobs.clear();
-            sharedQueueProcessingService.removeListenerAndCancelScheduledFuture();
-
             log.info("Creating participation");
             ProgrammingExerciseStudentParticipation studentParticipation = localVCLocalCITestService.createParticipation(programmingExercise, student1Login);
 
@@ -1019,9 +1023,9 @@ class LocalVCLocalCIIntegrationTest extends AbstractProgrammingIntegrationLocalC
 
             await().until(() -> {
                 BuildJobQueueItem buildJobQueueItem = queuedJobs.peek();
-                log.info("Poll queue jobs: is null %s".formatted(buildJobQueueItem == null ? "true" : "false"));
+                log.info("Poll queue jobs: is null {}", buildJobQueueItem == null ? "true" : "false");
                 if (buildJobQueueItem == null) {
-                    queuedJobs.forEach(item -> log.info("Item in Queue: %s".formatted(item.toString())));
+                    queuedJobs.forEach(item -> log.info("Item in Queue: {}", item));
                 }
                 return buildJobQueueItem != null && buildJobQueueItem.participationId() == studentParticipation.getId();
             });
@@ -1031,6 +1035,29 @@ class LocalVCLocalCIIntegrationTest extends AbstractProgrammingIntegrationLocalC
             assertThat(buildJobQueueItem).isNotNull();
             assertThat(buildJobQueueItem.priority()).isEqualTo(expectedPriority);
             log.info("Assertions done");
+        }
+
+        @Test
+        @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+        void testDockerFlagsParsing() {
+            String dockerFlags = "{\"network\": \"none\", \"env\": {\"key\": \"value\", \"key1\": \"value1\"}}";
+            ProgrammingExerciseBuildConfig buildConfig = programmingExercise.getBuildConfig();
+            buildConfig.setDockerFlags(dockerFlags);
+            programmingExerciseBuildConfigRepository.save(buildConfig);
+
+            ProgrammingExerciseStudentParticipation studentParticipation = localVCLocalCITestService.createParticipation(programmingExercise, student1Login);
+
+            localCITriggerService.triggerBuild(studentParticipation, false);
+
+            await().until(() -> {
+                BuildJobQueueItem buildJobQueueItem = queuedJobs.peek();
+                return buildJobQueueItem != null && buildJobQueueItem.participationId() == studentParticipation.getId();
+            });
+            BuildJobQueueItem buildJobQueueItem = queuedJobs.poll();
+
+            assertThat(buildJobQueueItem).isNotNull();
+            assertThat(buildJobQueueItem.buildConfig().dockerRunConfig().isNetworkDisabled()).isTrue();
+            assertThat(buildJobQueueItem.buildConfig().dockerRunConfig().env()).containsExactlyInAnyOrder("key=value", "key1=value1");
         }
     }
 }

@@ -20,7 +20,6 @@ import { ArtemisLectureModule } from 'app/lecture/lecture.module';
 import { ArtemisTextExerciseManagementModule } from 'app/exercises/text/manage/text-exercise-management.module';
 import { ArtemisDashboardsModule } from 'app/shared/dashboards/dashboards.module';
 import { ArtemisParticipationModule } from 'app/exercises/shared/participation/participation.module';
-import { ArtemisExerciseHintManagementModule } from 'app/exercises/shared/exercise-hint/manage/exercise-hint-management.module';
 import { ArtemisModelingExerciseManagementModule } from 'app/exercises/modeling/manage/modeling-exercise-management.module';
 import { ArtemisCourseScoresModule } from 'app/course/course-scores/course-scores.module';
 import { ArtemisExerciseScoresModule } from 'app/exercises/shared/exercise-scores/exercise-scores.module';
@@ -95,7 +94,6 @@ import { ArtemisMarkdownEditorModule } from 'app/shared/markdown-editor/markdown
         ArtemisModelingExerciseModule,
         ArtemisColorSelectorModule,
         ArtemisDashboardsModule,
-        ArtemisExerciseHintManagementModule,
         ArtemisParticipationModule,
         ArtemisComplaintsForTutorModule,
         ArtemisListOfComplaintsModule,
@@ -122,6 +120,8 @@ import { ArtemisMarkdownEditorModule } from 'app/shared/markdown-editor/markdown
         DetailModule,
         SubmissionResultStatusModule,
         ArtemisMarkdownEditorModule,
+        CourseLtiConfigurationComponent,
+        EditCourseLtiConfigurationComponent,
     ],
     declarations: [
         CourseManagementComponent,
@@ -138,8 +138,6 @@ import { ArtemisMarkdownEditorModule } from 'app/shared/markdown-editor/markdown
         CourseDetailLineChartComponent,
         CourseManagementExercisesSearchComponent,
         CourseGroupMembershipComponent,
-        CourseLtiConfigurationComponent,
-        EditCourseLtiConfigurationComponent,
         CourseManagementTabBarComponent,
         BuildQueueComponent,
         ImageCropperModalComponent,

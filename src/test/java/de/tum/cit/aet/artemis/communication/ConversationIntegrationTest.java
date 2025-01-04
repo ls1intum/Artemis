@@ -42,27 +42,22 @@ class ConversationIntegrationTest extends AbstractConversationTest {
 
     private static final String TEST_PREFIX = "cvtest";
 
-    private final TextExerciseUtilService textExerciseUtilService;
-
-    private final ExerciseUtilService exerciseUtilService;
-
-    private final ExamUtilService examUtilService;
-
-    private final LectureUtilService lectureUtilService;
-
-    private final ConversationUtilService conversationUtilService;
-
-    private List<User> users = List.of();
+    @Autowired
+    private TextExerciseUtilService textExerciseUtilService;
 
     @Autowired
-    public ConversationIntegrationTest(TextExerciseUtilService textExerciseUtilService, ExerciseUtilService exerciseUtilService, ExamUtilService examUtilService,
-            LectureUtilService lectureUtilService, ConversationUtilService conversationUtilService) {
-        this.textExerciseUtilService = textExerciseUtilService;
-        this.exerciseUtilService = exerciseUtilService;
-        this.examUtilService = examUtilService;
-        this.lectureUtilService = lectureUtilService;
-        this.conversationUtilService = conversationUtilService;
-    }
+    private ExerciseUtilService exerciseUtilService;
+
+    @Autowired
+    private ExamUtilService examUtilService;
+
+    @Autowired
+    private LectureUtilService lectureUtilService;
+
+    @Autowired
+    private ConversationUtilService conversationUtilService;
+
+    private List<User> users = List.of();
 
     @BeforeEach
     @Override
@@ -212,9 +207,7 @@ class ConversationIntegrationTest extends AbstractConversationTest {
         setCourseInformationSharingConfiguration(CourseInformationSharingConfiguration.COMMUNICATION_ONLY);
         List<ConversationDTO> channels = request.getList("/api/courses/" + exampleCourseId + "/conversations", HttpStatus.OK, ConversationDTO.class);
 
-        assertThat(channels).allSatisfy(ch -> {
-            assertThat(ch).isInstanceOf(ChannelDTO.class);
-        });
+        assertThat(channels).allSatisfy(ch -> assertThat(ch).isInstanceOf(ChannelDTO.class));
 
         // cleanup
         conversationMessageRepository.deleteById(post.getId());

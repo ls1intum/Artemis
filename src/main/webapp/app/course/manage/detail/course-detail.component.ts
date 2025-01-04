@@ -16,7 +16,6 @@ import { OrganizationManagementService } from 'app/admin/organization-management
 import { IrisSettingsService } from 'app/iris/settings/shared/iris-settings.service';
 import { AccountService } from 'app/core/auth/account.service';
 import { DetailOverviewSection, DetailType } from 'app/detail-overview-list/detail-overview-list.component';
-import { TranslateService } from '@ngx-translate/core';
 import { ArtemisMarkdownService } from 'app/shared/markdown.service';
 import { IrisSubSettingsType } from 'app/entities/iris/settings/iris-sub-settings.model';
 import { Detail } from 'app/detail-overview-list/detail.model';
@@ -29,6 +28,7 @@ export enum DoughnutChartType {
     AVERAGE_EXERCISE_SCORE = 'AVERAGE_EXERCISE_SCORE',
     PARTICIPATIONS = 'PARTICIPATIONS',
     QUESTIONS = 'QUESTIONS',
+    CURRENT_LLM_COST = 'LLM_COST',
 }
 
 @Component({
@@ -78,7 +78,6 @@ export class CourseDetailComponent implements OnInit, OnDestroy {
         private profileService: ProfileService,
         private accountService: AccountService,
         private irisSettingsService: IrisSettingsService,
-        private translateService: TranslateService,
         private markdownService: ArtemisMarkdownService,
         private featureToggleService: FeatureToggleService,
     ) {}
@@ -94,6 +93,7 @@ export class CourseDetailComponent implements OnInit, OnDestroy {
         this.irisEnabled = profileInfo?.activeProfiles.includes(PROFILE_IRIS);
         if (this.irisEnabled) {
             const irisSettings = await firstValueFrom(this.irisSettingsService.getGlobalSettings());
+            // TODO: Outdated, as we now have a bunch more sub settings
             this.irisChatEnabled = irisSettings?.irisChatSettings?.enabled ?? false;
         }
         this.route.data.subscribe(({ course }) => {
@@ -222,12 +222,6 @@ export class CourseDetailComponent implements OnInit, OnDestroy {
                 data: { course: this.course, disabled: !this.isAdmin, subSettingsType: IrisSubSettingsType.CHAT },
             });
         }
-        // TODO: Enable in future PR
-        // details.push({
-        //     type: DetailType.ProgrammingIrisEnabled,
-        //     title: 'artemisApp.iris.settings.subSettings.enabled.hesita',
-        //     data: { course: this.course, disabled: !this.isAdmin, subSettingsType: this.HESTIA },
-        // });
         return irisDetails;
     }
 

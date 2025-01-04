@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, inject } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
 import { Exercise } from 'app/entities/exercise.model';
@@ -10,12 +10,29 @@ import { Course } from 'app/entities/course.model';
 import { AlertService } from 'app/core/util/alert.service';
 import { onError } from 'app/shared/util/global.utils';
 import { SessionStorageService } from 'ngx-webstorage';
+import { ArtemisSharedModule } from 'app/shared/shared.module';
+import { TranslateDirective } from '../shared/language/translate.directive';
+import { ArtemisSharedComponentModule } from '../shared/components/shared-component.module';
+import { ArtemisSharedCommonModule } from '../shared/shared-common.module';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { FormsModule } from '@angular/forms';
 
 @Component({
     selector: 'jhi-deep-linking',
     templateUrl: './lti13-deep-linking.component.html',
+    standalone: true,
+    imports: [ArtemisSharedModule, TranslateDirective, ArtemisSharedComponentModule, ArtemisSharedCommonModule, FaIconComponent, FormsModule],
 })
 export class Lti13DeepLinkingComponent implements OnInit {
+    route = inject(ActivatedRoute);
+    private sortService = inject(SortService);
+    private courseManagementService = inject(CourseManagementService);
+    private http = inject(HttpClient);
+    private accountService = inject(AccountService);
+    private router = inject(Router);
+    private alertService = inject(AlertService);
+    private sessionStorageService = inject(SessionStorageService);
+
     courseId: number;
     exercises: Exercise[];
     selectedExercises?: Set<number> = new Set();
@@ -29,16 +46,6 @@ export class Lti13DeepLinkingComponent implements OnInit {
     faSort = faSort;
     faExclamationTriangle = faExclamationTriangle;
     faWrench = faWrench;
-    constructor(
-        public route: ActivatedRoute,
-        private sortService: SortService,
-        private courseManagementService: CourseManagementService,
-        private http: HttpClient,
-        private accountService: AccountService,
-        private router: Router,
-        private alertService: AlertService,
-        private sessionStorageService: SessionStorageService,
-    ) {}
 
     /**
      * Initializes the component.

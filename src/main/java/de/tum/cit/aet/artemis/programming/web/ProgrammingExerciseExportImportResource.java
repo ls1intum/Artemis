@@ -73,11 +73,12 @@ import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseStudentParti
 import de.tum.cit.aet.artemis.programming.domain.RepositoryType;
 import de.tum.cit.aet.artemis.programming.repository.AuxiliaryRepositoryRepository;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseRepository;
-import de.tum.cit.aet.artemis.programming.repository.hestia.ProgrammingExerciseTaskRepository;
+import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseTaskRepository;
 import de.tum.cit.aet.artemis.programming.service.ConsistencyCheckService;
 import de.tum.cit.aet.artemis.programming.service.ProgrammingExerciseExportService;
 import de.tum.cit.aet.artemis.programming.service.ProgrammingExerciseImportFromFileService;
 import de.tum.cit.aet.artemis.programming.service.ProgrammingExerciseImportService;
+import de.tum.cit.aet.artemis.programming.service.ProgrammingExerciseService;
 import de.tum.cit.aet.artemis.programming.service.ProgrammingLanguageFeature;
 import de.tum.cit.aet.artemis.programming.service.ProgrammingLanguageFeatureService;
 import de.tum.cit.aet.artemis.programming.service.SubmissionPolicyService;
@@ -130,13 +131,15 @@ public class ProgrammingExerciseExportImportResource {
 
     private final Optional<AthenaModuleService> athenaModuleService;
 
+    private final ProgrammingExerciseService programmingExerciseService;
+
     public ProgrammingExerciseExportImportResource(ProgrammingExerciseRepository programmingExerciseRepository, UserRepository userRepository,
             AuthorizationCheckService authCheckService, CourseService courseService, ProgrammingExerciseImportService programmingExerciseImportService,
             ProgrammingExerciseExportService programmingExerciseExportService, Optional<ProgrammingLanguageFeatureService> programmingLanguageFeatureService,
             AuxiliaryRepositoryRepository auxiliaryRepositoryRepository, SubmissionPolicyService submissionPolicyService,
             ProgrammingExerciseTaskRepository programmingExerciseTaskRepository, ExamAccessService examAccessService, CourseRepository courseRepository,
             ProgrammingExerciseImportFromFileService programmingExerciseImportFromFileService, ConsistencyCheckService consistencyCheckService,
-            Optional<AthenaModuleService> athenaModuleService, CompetencyProgressApi competencyProgressApi) {
+            Optional<AthenaModuleService> athenaModuleService, CompetencyProgressApi competencyProgressApi, ProgrammingExerciseService programmingExerciseService) {
         this.programmingExerciseRepository = programmingExerciseRepository;
         this.userRepository = userRepository;
         this.courseService = courseService;
@@ -153,6 +156,7 @@ public class ProgrammingExerciseExportImportResource {
         this.consistencyCheckService = consistencyCheckService;
         this.athenaModuleService = athenaModuleService;
         this.competencyProgressApi = competencyProgressApi;
+        this.programmingExerciseService = programmingExerciseService;
     }
 
     /**
@@ -199,6 +203,7 @@ public class ProgrammingExerciseExportImportResource {
         newExercise.validateGeneralSettings();
         newExercise.validateProgrammingSettings();
         newExercise.validateSettingsForFeedbackRequest();
+        programmingExerciseService.validateDockerFlags(newExercise);
         validateStaticCodeAnalysisSettings(newExercise);
 
         final User user = userRepository.getUserWithGroupsAndAuthorities();
@@ -209,8 +214,7 @@ public class ProgrammingExerciseExportImportResource {
         programmingExerciseRepository.validateCourseSettings(newExercise, course);
 
         final var originalProgrammingExercise = programmingExerciseRepository
-                .findByIdWithEagerBuildConfigTestCasesStaticCodeAnalysisCategoriesHintsAndTemplateAndSolutionParticipationsAndAuxReposAndSolutionEntriesAndBuildConfig(
-                        sourceExerciseId)
+                .findByIdWithEagerBuildConfigTestCasesStaticCodeAnalysisCategoriesAndTemplateAndSolutionParticipationsAndAuxReposAndAndBuildConfig(sourceExerciseId)
                 .orElseThrow(() -> new EntityNotFoundException("ProgrammingExercise", sourceExerciseId));
 
         var consistencyErrors = consistencyCheckService.checkConsistencyOfProgrammingExercise(originalProgrammingExercise);
@@ -256,7 +260,6 @@ public class ProgrammingExerciseExportImportResource {
             importedProgrammingExercise.setStaticCodeAnalysisCategories(null);
             importedProgrammingExercise.setTemplateParticipation(null);
             importedProgrammingExercise.setSolutionParticipation(null);
-            importedProgrammingExercise.setExerciseHints(null);
             importedProgrammingExercise.setTasks(null);
 
             competencyProgressApi.updateProgressByLearningObjectAsync(importedProgrammingExercise);
