@@ -152,7 +152,7 @@ public class ModelingExerciseFeedbackService {
      * @throws NetworkingException if there's a problem communicating with Athena
      */
     private List<Feedback> getAthenaFeedback(ModelingExercise modelingExercise, ModelingSubmission submission) throws NetworkingException {
-        return this.athenaFeedbackSuggestionsService.orElseThrow().getModelingFeedbackSuggestions(modelingExercise, submission, false).stream()
+        return this.athenaFeedbackSuggestionsService.orElseThrow().getModelingFeedbackSuggestions(modelingExercise, submission, true).stream()
                 .filter(feedbackItem -> feedbackItem.description() != null).map(this::convertToFeedback).toList();
     }
 

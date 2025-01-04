@@ -207,6 +207,7 @@ public class AthenaRequestMockProvider {
      * Makes the endpoint return one example feedback suggestion.
      *
      * @param moduleType       The type of the module: "text" or "programming"
+     * @param isPreliminary    Is part of graded assessment or not
      * @param expectedContents The expected contents of the request
      */
     public void mockGetFeedbackSuggestionsAndExpect(String moduleType, boolean isPreliminary, RequestMatcher... expectedContents) {
@@ -244,11 +245,12 @@ public class AthenaRequestMockProvider {
      * Makes the endpoint fail
      *
      * @param moduleType       The type of the module: "text" or "programming"
+     * @param isPreliminary    Is part of graded assessment or not
      * @param expectedContents The expected contents of the request
      */
-    public void mockGetFeedbackSuggestionsWithFailure(String moduleType, RequestMatcher... expectedContents) {
+    public void mockGetFeedbackSuggestionsWithFailure(String moduleType, boolean isPreliminary, RequestMatcher... expectedContents) {
         ResponseActions responseActions = mockServer
-                .expect(ExpectedCount.once(), requestTo(athenaUrl + "/modules/" + moduleType + "/" + getTestModuleName(moduleType) + "/feedback_suggestions"))
+                .expect(ExpectedCount.once(), requestTo(athenaUrl + "/modules/" + moduleType + "/" + getTestModuleName(moduleType, isPreliminary) + "/feedback_suggestions"))
                 .andExpect(method(HttpMethod.POST)).andExpect(content().contentType(MediaType.APPLICATION_JSON));
 
         for (RequestMatcher matcher : expectedContents) {
