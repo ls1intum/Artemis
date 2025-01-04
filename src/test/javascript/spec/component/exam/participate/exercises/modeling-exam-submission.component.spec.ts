@@ -195,7 +195,6 @@ describe('ModelingExamSubmissionComponent', () => {
     });
 
     it('should update the model on submission version change', async () => {
-        resetComponent();
         const parsedModel = {
             version: '3.0.0',
             type: 'ClassDiagram',
