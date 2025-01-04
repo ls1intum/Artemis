@@ -21,7 +21,6 @@ import de.jplag.JPlag;
 import de.jplag.JPlagResult;
 import de.jplag.Language;
 import de.jplag.clustering.ClusteringOptions;
-import de.jplag.exceptions.ExitException;
 import de.jplag.options.JPlagOptions;
 import de.jplag.text.NaturalLanguage;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
@@ -84,7 +83,6 @@ public class TextPlagiarismDetectionService {
      * @param minimumScore        consider only submissions whose score is greater or equal to this value
      * @param minimumSize         consider only submissions whose size is greater or equal to this value
      * @return a zip file that can be returned to the client
-     * @throws ExitException is thrown if JPlag exits unexpectedly
      */
     public TextPlagiarismResult checkPlagiarism(TextExercise textExercise, float similarityThreshold, int minimumScore, int minimumSize) {
         // Only one plagiarism check per course allowed
