@@ -7,7 +7,6 @@ import { TextExamSubmissionComponent } from 'app/exam/participate/exercises/text
 import { ModelingExamSubmissionComponent } from 'app/exam/participate/exercises/modeling/modeling-exam-submission.component';
 import { ArtemisSharedModule } from 'app/shared/shared.module';
 import { ArtemisMarkdownModule } from 'app/shared/markdown.module';
-import { ExamExerciseUpdateHighlighterModule } from 'app/exam/participate/exercises/exam-exercise-update-highlighter/exam-exercise-update-highlighter.module';
 import { ArtemisSharedComponentModule } from 'app/shared/components/shared-component.module';
 import { ArtemisQuizQuestionTypesModule } from 'app/exercises/quiz/shared/questions/artemis-quiz-question-types.module';
 import { SubmissionResultStatusModule } from 'app/overview/submission-result-status.module';
@@ -19,6 +18,7 @@ import { ArtemisFullscreenModule } from 'app/shared/fullscreen/fullscreen.module
 import { ArtemisModelingEditorModule } from 'app/exercises/modeling/shared/modeling-editor.module';
 import { ArtemisProgrammingSubmissionPolicyStatusModule } from 'app/exercises/programming/participate/programming-submission-policy-status.module';
 import { ExerciseSaveButtonComponent } from './exercise-save-button/exercise-save-button.component';
+import { ExamExerciseUpdateHighlighterComponent } from 'app/exam/participate/exercises/exam-exercise-update-highlighter/exam-exercise-update-highlighter.component';
 
 @NgModule({
     imports: [
@@ -35,7 +35,7 @@ import { ExerciseSaveButtonComponent } from './exercise-save-button/exercise-sav
         ArtemisFullscreenModule,
         ArtemisModelingEditorModule,
         ArtemisProgrammingSubmissionPolicyStatusModule,
-        ExamExerciseUpdateHighlighterModule,
+        ExamExerciseUpdateHighlighterComponent,
         ExerciseSaveButtonComponent,
         FileUploadExamSubmissionComponent,
         QuizExamSubmissionComponent,
