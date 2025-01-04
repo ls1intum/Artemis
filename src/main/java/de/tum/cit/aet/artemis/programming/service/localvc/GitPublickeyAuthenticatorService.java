@@ -112,12 +112,17 @@ public class GitPublickeyAuthenticatorService implements PublickeyAuthenticator 
      * @return true if the authentication succeeds, and false if it doesn't
      */
     private boolean authenticateBuildAgent(PublicKey providedKey, ServerSession session) {
-        if (localCIBuildJobQueueService.isPresent()
-                && localCIBuildJobQueueService.get().getBuildAgentInformation().stream().anyMatch(agent -> checkPublicKeyMatchesBuildAgentPublicKey(agent, providedKey))) {
+        if (localCIBuildJobQueueService.isPresent()) {
+            // Find the build agent that matches the provided key
+            Optional<BuildAgentInformation> matchingAgent = localCIBuildJobQueueService.get().getBuildAgentInformation().stream()
+                    .filter(agent -> checkPublicKeyMatchesBuildAgentPublicKey(agent, providedKey)).findFirst();
 
-            log.info("Authenticating as build agent");
-            session.setAttribute(SshConstants.IS_BUILD_AGENT_KEY, true);
-            return true;
+            if (matchingAgent.isPresent()) {
+                var agent = matchingAgent.get().buildAgent();
+                log.debug("Authenticating build agent {} on address {}", agent.displayName(), agent.memberAddress());
+                session.setAttribute(SshConstants.IS_BUILD_AGENT_KEY, true);
+                return true;
+            }
         }
         return false;
     }

@@ -10,7 +10,6 @@ import { TextBlockRef } from 'app/entities/text/text-block-ref.model';
 import { TextSubmission } from 'app/entities/text/text-submission.model';
 import { PROFILE_ATHENA } from 'app/app.constants';
 import { ModelingSubmission } from 'app/entities/modeling-submission.model';
-import { UMLModel, findElement } from '@ls1intum/apollon';
 
 @Injectable({ providedIn: 'root' })
 export class AthenaService {
@@ -169,45 +168,33 @@ export class AthenaService {
     public getModelingFeedbackSuggestions(exercise: Exercise, submission: ModelingSubmission): Observable<Feedback[]> {
         return this.getFeedbackSuggestions<ModelingFeedbackSuggestion>(exercise, submission.id!).pipe(
             map((suggestions) => {
-                const referencedElementIDs = new Set();
-
-                const model: UMLModel | undefined = submission.model ? JSON.parse(submission.model) : undefined;
-
                 return suggestions.map((suggestion, index) => {
                     const feedback = new Feedback();
                     feedback.id = index;
                     feedback.credits = suggestion.credits;
                     feedback.positive = suggestion.credits >= 1;
 
-                    // Even though Athena can reference multiple elements for the same feedback item, Apollon can only
-                    // attach feedback to one element, so we select the first element ID mentioned. To ensure that not
-                    // more than one feedback item is attached to the same element, we additionally ensure that the
-                    // same element is only referenced once.
-                    const referenceId: string | undefined = suggestion.elementIds.filter((id) => !referencedElementIDs.has(id))[0];
+                    // Extract reference details if present
+                    const reference = suggestion.reference?.split(':');
+                    const [referenceType, referenceId] = reference || [];
 
                     if (referenceId) {
                         feedback.type = FeedbackType.AUTOMATIC;
                         feedback.text = suggestion.description;
-
+                        feedback.reference = suggestion.reference;
                         feedback.referenceId = referenceId;
-
-                        referencedElementIDs.add(referenceId);
-
-                        if (model && feedback.referenceId) {
-                            const element = findElement(model, feedback.referenceId);
-                            feedback.referenceType = element?.type;
-                            feedback.reference = `${element?.type}:${referenceId}`;
-                        }
+                        feedback.referenceType = referenceType;
                     } else {
                         feedback.type = FeedbackType.MANUAL_UNREFERENCED;
                         feedback.text = `${FEEDBACK_SUGGESTION_IDENTIFIER}${suggestion.title}`;
                         feedback.detailText = suggestion.description;
                     }
 
-                    // Load grading instruction from exercise, if available
+                    // Attach grading instruction if available
                     if (suggestion.structuredGradingInstructionId) {
                         feedback.gradingInstruction = this.findGradingInstruction(exercise, suggestion.structuredGradingInstructionId);
                     }
+
                     return feedback;
                 });
             }),
