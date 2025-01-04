@@ -61,13 +61,14 @@ export class Lti13ExerciseLaunchComponent implements OnInit {
             })
             .subscribe({
                 next: (data) => {
-                    console.log(data);
                     this.handleLtiLaunchSuccess(data);
                 },
                 error: (error) => {
                     if (error.status === 401) {
+                        console.log('401');
                         this.authenticateUserThenRedirect(error);
                     } else {
+                        console.log('else');
                         this.handleLtiLaunchError();
                     }
                 },
