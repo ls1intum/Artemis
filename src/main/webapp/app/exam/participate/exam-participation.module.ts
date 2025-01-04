@@ -24,7 +24,6 @@ import { ExamExerciseOverviewPageComponent } from 'app/exam/participate/exercise
 import { SubmissionResultStatusModule } from 'app/overview/submission-result-status.module';
 import { ArtemisExamNavigationBarModule } from 'app/exam/participate/exam-navigation-bar/exam-navigation-bar.module';
 import { ArtemisExamTimerModule } from 'app/exam/participate/timer/exam-timer.module';
-import { ArtemisExamSubmissionComponentsModule } from 'app/exam/participate/exercises/exam-submission-components.module';
 import { ArtemisExamSharedModule } from 'app/exam/shared/exam-shared.module';
 import { ArtemisExamLiveEventsModule } from 'app/exam/participate/events/exam-live-events.module';
 import { ExamStartInformationComponent } from 'app/exam/participate/exam-start-information/exam-start-information.component';
@@ -32,6 +31,11 @@ import { ArtemisSidebarModule } from 'app/shared/sidebar/sidebar.module';
 import { ExamNavigationSidebarComponent } from 'app/exam/participate/exam-navigation-sidebar/exam-navigation-sidebar.component';
 import { ExamBarComponent } from 'app/exam/participate/exam-bar/exam-bar.component';
 import { ExamExerciseUpdateHighlighterComponent } from 'app/exam/participate/exercises/exam-exercise-update-highlighter/exam-exercise-update-highlighter.component';
+import { QuizExamSubmissionComponent } from 'app/exam/participate/exercises/quiz/quiz-exam-submission.component';
+import { FileUploadExamSubmissionComponent } from 'app/exam/participate/exercises/file-upload/file-upload-exam-submission.component';
+import { TextExamSubmissionComponent } from 'app/exam/participate/exercises/text/text-exam-submission.component';
+import { ModelingExamSubmissionComponent } from 'app/exam/participate/exercises/modeling/modeling-exam-submission.component';
+import { ProgrammingExamSubmissionComponent } from 'app/exam/participate/exercises/programming/programming-exam-submission.component';
 
 const ENTITY_STATES = [...examParticipationState];
 
@@ -57,7 +61,6 @@ const ENTITY_STATES = [...examParticipationState];
         SubmissionResultStatusModule,
         ArtemisExamNavigationBarModule,
         ArtemisExamTimerModule,
-        ArtemisExamSubmissionComponentsModule,
         ExamExerciseUpdateHighlighterComponent,
         ArtemisExamSharedModule,
         ArtemisExamLiveEventsModule,
@@ -65,6 +68,11 @@ const ENTITY_STATES = [...examParticipationState];
         ArtemisSidebarModule,
         ExamNavigationSidebarComponent,
         ExamBarComponent,
+        QuizExamSubmissionComponent,
+        FileUploadExamSubmissionComponent,
+        TextExamSubmissionComponent,
+        ModelingExamSubmissionComponent,
+        ProgrammingExamSubmissionComponent,
     ],
     declarations: [ExamParticipationComponent, ExamParticipationCoverComponent, ExamExerciseOverviewPageComponent],
 })

@@ -60,7 +60,6 @@ import { ExamLiveAnnouncementCreateModalComponent } from 'app/exam/manage/exams/
 import { ExamLiveAnnouncementCreateButtonComponent } from 'app/exam/manage/exams/exam-checklist-component/exam-announcement-dialog/exam-live-announcement-create-button.component';
 
 import { ArtemisExamNavigationBarModule } from 'app/exam/participate/exam-navigation-bar/exam-navigation-bar.module';
-import { ArtemisExamSubmissionComponentsModule } from 'app/exam/participate/exercises/exam-submission-components.module';
 import { MatSliderModule } from '@angular/material/slider';
 import { ProgrammingExerciseExamDiffComponent } from './student-exams/student-exam-timeline/programming-exam-diff/programming-exercise-exam-diff.component';
 import { ArtemisProgrammingExerciseModule } from 'app/exercises/programming/shared/programming-exercise.module';
@@ -68,6 +67,10 @@ import { DetailModule } from 'app/detail-overview-list/detail.module';
 import { ArtemisDurationFromSecondsPipe } from 'app/shared/pipes/artemis-duration-from-seconds.pipe';
 import { NoDataComponent } from 'app/shared/no-data-component';
 import { GitDiffLineStatComponent } from 'app/exercises/programming/git-diff-report/git-diff-line-stat.component';
+import { QuizExamSubmissionComponent } from 'app/exam/participate/exercises/quiz/quiz-exam-submission.component';
+import { FileUploadExamSubmissionComponent } from 'app/exam/participate/exercises/file-upload/file-upload-exam-submission.component';
+import { TextExamSubmissionComponent } from 'app/exam/participate/exercises/text/text-exam-submission.component';
+import { ModelingExamSubmissionComponent } from 'app/exam/participate/exercises/modeling/modeling-exam-submission.component';
 
 const ENTITY_STATES = [...examManagementState];
 
@@ -103,12 +106,15 @@ const ENTITY_STATES = [...examManagementState];
         StudentsUploadImagesModule,
         TitleChannelNameModule,
         ArtemisExamNavigationBarModule,
-        ArtemisExamSubmissionComponentsModule,
         MatSliderModule,
         ArtemisProgrammingExerciseModule,
         DetailModule,
         NoDataComponent,
         GitDiffLineStatComponent,
+        QuizExamSubmissionComponent,
+        FileUploadExamSubmissionComponent,
+        TextExamSubmissionComponent,
+        ModelingExamSubmissionComponent,
     ],
     declarations: [
         ExamManagementComponent,
