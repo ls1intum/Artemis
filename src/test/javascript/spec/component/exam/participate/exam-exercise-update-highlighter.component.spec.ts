@@ -11,16 +11,19 @@ describe('ExamExerciseUpdateHighlighterComponent', () => {
     let fixture: ComponentFixture<ExamExerciseUpdateHighlighterComponent>;
     let component: ExamExerciseUpdateHighlighterComponent;
 
-    const examExerciseIdAndProblemStatementSourceMock = new BehaviorSubject<ExamExerciseUpdate>({ exerciseId: -1, problemStatement: 'initialProblemStatementValue' });
-    const mockExamExerciseUpdateService = {
-        currentExerciseIdAndProblemStatement: examExerciseIdAndProblemStatementSourceMock.asObservable(),
-    };
+    let examExerciseIdAndProblemStatementSourceMock: BehaviorSubject<ExamExerciseUpdate>;
+    let mockExamExerciseUpdateService: any;
 
     const oldProblemStatement = 'problem statement with errors';
     const updatedProblemStatement = 'new updated ProblemStatement';
-    const textExerciseDummy = { id: 42, problemStatement: oldProblemStatement } as Exercise;
-    beforeAll(() => {
-        return TestBed.configureTestingModule({
+    beforeEach(async () => {
+        const textExerciseDummy = { id: 42, problemStatement: oldProblemStatement } as Exercise;
+        examExerciseIdAndProblemStatementSourceMock = new BehaviorSubject<ExamExerciseUpdate>({ exerciseId: -1, problemStatement: 'initialProblemStatementValue' });
+        mockExamExerciseUpdateService = {
+            currentExerciseIdAndProblemStatement: examExerciseIdAndProblemStatementSourceMock.asObservable(),
+        };
+
+        await TestBed.configureTestingModule({
             declarations: [MockPipe(ArtemisTranslatePipe), ExamExerciseUpdateHighlighterComponent],
             providers: [{ provide: ExamExerciseUpdateService, useValue: mockExamExerciseUpdateService }],
         })
@@ -55,7 +58,6 @@ describe('ExamExerciseUpdateHighlighterComponent', () => {
         const stopPropagationSpy = jest.spyOn(mouseEvent, 'stopPropagation');
         const problemStatementBeforeClick = htmlForMarkdown(component.exercise().problemStatement);
         expect(problemStatementBeforeClick).toEqual(component.updatedProblemStatementHTML);
-        fixture.detectChanges();
 
         component.toggleHighlightedProblemStatement(mouseEvent);
 
@@ -68,7 +70,7 @@ describe('ExamExerciseUpdateHighlighterComponent', () => {
 
     describe('ExamExerciseUpdateHighlighterComponent for programming exercises', () => {
         const programmingExerciseDummy = { id: 42, problemStatement: oldProblemStatement, type: ExerciseType.PROGRAMMING } as Exercise;
-        beforeAll(() => {
+        beforeEach(async () => {
             return TestBed.configureTestingModule({
                 declarations: [MockPipe(ArtemisTranslatePipe), ExamExerciseUpdateHighlighterComponent],
                 providers: [{ provide: ExamExerciseUpdateService, useValue: mockExamExerciseUpdateService }],
