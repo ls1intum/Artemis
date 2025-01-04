@@ -53,13 +53,11 @@ describe('ModelingExamSubmissionComponent', () => {
         fixture = TestBed.createComponent(ModelingExamSubmissionComponent);
         comp = fixture.componentInstance;
         resetComponent();
-        // fixture.detectChanges();
     });
 
     afterEach(() => {
         fixture.destroy();
         jest.restoreAllMocks();
-        TestBed.resetTestingModule();
     });
 
     describe('With exercise', () => {
@@ -125,12 +123,6 @@ describe('ModelingExamSubmissionComponent', () => {
     });
 
     describe('ngOnInit', () => {
-        beforeEach(() => {
-            resetComponent();
-        });
-        afterEach(() => {
-            jest.restoreAllMocks();
-        });
         it('should call updateViewFromSubmission', () => {
             const updateViewStub = jest.spyOn(comp, 'updateViewFromSubmission');
             comp.ngOnInit();
@@ -139,27 +131,18 @@ describe('ModelingExamSubmissionComponent', () => {
     });
 
     describe('getSubmission', () => {
-        beforeEach(() => {
-            resetComponent();
-        });
         it('should return student submission', () => {
             expect(comp.getSubmission()).toEqual(mockSubmission);
         });
     });
 
     describe('getExercise', () => {
-        beforeEach(() => {
-            resetComponent();
-        });
         it('should return exercise', () => {
             expect(comp.getExerciseId()).toEqual(mockExercise.id);
         });
     });
 
     describe('updateProblemStatement', () => {
-        beforeEach(() => {
-            resetComponent();
-        });
         it('should update problem statement', () => {
             const newProblemStatement = 'new problem statement';
             comp.updateProblemStatement(newProblemStatement);
@@ -194,9 +177,6 @@ describe('ModelingExamSubmissionComponent', () => {
     });
 
     describe('modelChanged', () => {
-        beforeEach(() => {
-            resetComponent();
-        });
         it('should set isSynced to false', () => {
             comp.studentSubmission().isSynced = true;
             comp.modelChanged({} as UMLModel);
@@ -205,9 +185,6 @@ describe('ModelingExamSubmissionComponent', () => {
     });
 
     describe('explanationChanged', () => {
-        beforeEach(() => {
-            resetComponent();
-        });
         it('should set explanation text to given value and isSynced to false', () => {
             const explanationText = 'New Explanation Text';
             comp.studentSubmission().isSynced = true;
