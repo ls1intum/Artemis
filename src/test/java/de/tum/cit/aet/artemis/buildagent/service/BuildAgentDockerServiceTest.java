@@ -83,7 +83,7 @@ class BuildAgentDockerServiceTest extends AbstractSpringIntegrationLocalCILocalV
         buildAgentDockerService.deleteOldDockerImages();
 
         // Verify that removeImageCmd() was not called.
-        verify(dockerClient, times(0)).removeImageCmd(anyString());
+        verify(dockerClient, never()).removeImageCmd(anyString());
     }
 
     @Test

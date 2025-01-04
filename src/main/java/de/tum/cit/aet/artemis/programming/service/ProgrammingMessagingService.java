@@ -200,7 +200,7 @@ public class ProgrammingMessagingService {
 
     /**
      * Notify Iris about the submission status for the given result and student participation.
-     * Only if the user has accepted Iris, the exercise is not an exam exercise, and the exercise chat is enabled in the exercise settings
+     * Only notifies if the user has accepted Iris, the exercise is not an exam exercise, and the exercise chat is enabled in the exercise settings
      * NOTE: we check those settings early to prevent unnecessary database queries and exceptions later on in most cases. More sophisticated checks are done in the Iris service.
      * <p>
      * If the submission was successful, Iris will be informed about the successful submission.

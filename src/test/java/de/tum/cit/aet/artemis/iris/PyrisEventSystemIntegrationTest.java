@@ -5,6 +5,7 @@ import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
 import static org.awaitility.Awaitility.await;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 
@@ -244,7 +245,7 @@ class PyrisEventSystemIntegrationTest extends AbstractIrisIntegrationTest {
         createSubmissionWithScore(studentParticipation, 40);
         createSubmissionWithScore(studentParticipation, 40);
         var result = createSubmissionWithScore(studentParticipation, 40);
-        verify(pyrisEventService, times(0)).trigger(new NewResultEvent(result));
+        verify(pyrisEventService, never()).trigger(new NewResultEvent(result));
     }
 
     @Test
@@ -259,7 +260,7 @@ class PyrisEventSystemIntegrationTest extends AbstractIrisIntegrationTest {
         // Create a failing submission for the student.
         var result = createFailingSubmission(studentParticipation);
         // very that the event is not fired
-        verify(pyrisEventService, times(0)).trigger(new NewResultEvent(result));
+        verify(pyrisEventService, never()).trigger(new NewResultEvent(result));
     }
 
     @Test
@@ -284,7 +285,7 @@ class PyrisEventSystemIntegrationTest extends AbstractIrisIntegrationTest {
 
         await().atMost(2, TimeUnit.SECONDS).untilAsserted(() -> {
             verify(irisExerciseChatSessionService, times(2)).onNewResult(any(Result.class));
-            verify(pyrisPipelineService, times(0)).executeExerciseChatPipeline(any(), any(), any(), any(), any());
+            verify(pyrisPipelineService, never()).executeExerciseChatPipeline(any(), any(), any(), any(), any());
         });
     }
 
@@ -298,8 +299,8 @@ class PyrisEventSystemIntegrationTest extends AbstractIrisIntegrationTest {
 
         pyrisEventService.trigger(new NewResultEvent(result));
 
-        verify(irisExerciseChatSessionService, times(0)).onNewResult(any(Result.class));
-        verify(pyrisPipelineService, times(0)).executeExerciseChatPipeline(any(), any(), any(), any(), any());
+        verify(irisExerciseChatSessionService, never()).onNewResult(any(Result.class));
+        verify(pyrisPipelineService, never()).executeExerciseChatPipeline(any(), any(), any(), any(), any());
     }
 
     @Test
@@ -313,8 +314,8 @@ class PyrisEventSystemIntegrationTest extends AbstractIrisIntegrationTest {
 
         pyrisEventService.trigger(new NewResultEvent(result));
 
-        verify(irisExerciseChatSessionService, times(0)).onNewResult(any(Result.class));
-        verify(pyrisPipelineService, times(0)).executeExerciseChatPipeline(any(), any(), any(), any(), any());
+        verify(irisExerciseChatSessionService, never()).onNewResult(any(Result.class));
+        verify(pyrisPipelineService, never()).executeExerciseChatPipeline(any(), any(), any(), any(), any());
     }
 
     @Test
