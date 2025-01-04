@@ -1,11 +1,10 @@
 package de.tum.cit.aet.artemis.programming.domain;
 
-import static de.tum.cit.aet.artemis.programming.domain.hestia.ProgrammingExerciseTestCaseType.DEFAULT;
+import static de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseTestCaseType.DEFAULT;
 
 import java.util.HashSet;
 import java.util.Set;
 
-import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
@@ -15,7 +14,6 @@ import jakarta.persistence.JoinColumn;
 import jakarta.persistence.JoinTable;
 import jakarta.persistence.ManyToMany;
 import jakarta.persistence.ManyToOne;
-import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
 import jakarta.validation.constraints.NotNull;
 
@@ -31,10 +29,6 @@ import de.tum.cit.aet.artemis.assessment.domain.Result;
 import de.tum.cit.aet.artemis.assessment.domain.Visibility;
 import de.tum.cit.aet.artemis.core.domain.DomainObject;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
-import de.tum.cit.aet.artemis.programming.domain.hestia.ProgrammingExerciseSolutionEntry;
-import de.tum.cit.aet.artemis.programming.domain.hestia.ProgrammingExerciseTask;
-import de.tum.cit.aet.artemis.programming.domain.hestia.ProgrammingExerciseTestCaseType;
-import de.tum.cit.aet.artemis.programming.domain.hestia.TestwiseCoverageReportEntry;
 
 /**
  * A ProgrammingExerciseTestCase.
@@ -69,10 +63,6 @@ public class ProgrammingExerciseTestCase extends DomainObject {
     @JsonIgnoreProperties({ "testCases", "exercise" })
     private Set<ProgrammingExerciseTask> tasks = new HashSet<>();
 
-    @OneToMany(mappedBy = "testCase", cascade = CascadeType.REMOVE, orphanRemoval = true, fetch = FetchType.LAZY)
-    @JsonIgnoreProperties(value = "testCase", allowSetters = true)
-    private Set<ProgrammingExerciseSolutionEntry> solutionEntries = new HashSet<>();
-
     @ManyToOne(fetch = FetchType.LAZY)
     @JsonIgnoreProperties("testCases")
     private ProgrammingExercise exercise;
@@ -80,10 +70,6 @@ public class ProgrammingExerciseTestCase extends DomainObject {
     @Enumerated(EnumType.STRING)
     @Column(name = "test_case_type", nullable = false)
     private ProgrammingExerciseTestCaseType type = DEFAULT;     // default value
-
-    @OneToMany(mappedBy = "testCase", fetch = FetchType.LAZY)
-    @JsonIgnoreProperties("testCase")
-    private Set<TestwiseCoverageReportEntry> coverageEntries;
 
     public ProgrammingExerciseTestCase id(Long id) {
         setId(id);
@@ -152,14 +138,6 @@ public class ProgrammingExerciseTestCase extends DomainObject {
         this.tasks = tasks;
     }
 
-    public Set<ProgrammingExerciseSolutionEntry> getSolutionEntries() {
-        return solutionEntries;
-    }
-
-    public void setSolutionEntries(Set<ProgrammingExerciseSolutionEntry> solutionEntries) {
-        this.solutionEntries = solutionEntries;
-    }
-
     public Boolean isActive() {
         return active;
     }
@@ -215,14 +193,6 @@ public class ProgrammingExerciseTestCase extends DomainObject {
 
     public void setType(ProgrammingExerciseTestCaseType programmingExerciseTestCaseType) {
         this.type = programmingExerciseTestCaseType;
-    }
-
-    public Set<TestwiseCoverageReportEntry> getCoverageEntries() {
-        return coverageEntries;
-    }
-
-    public void setCoverageEntries(Set<TestwiseCoverageReportEntry> coverageEntries) {
-        this.coverageEntries = coverageEntries;
     }
 
     /**

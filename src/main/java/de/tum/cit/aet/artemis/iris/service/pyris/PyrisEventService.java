@@ -5,6 +5,7 @@ import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_IRIS;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Profile;
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 
 import de.tum.cit.aet.artemis.iris.domain.session.IrisChatSession;
@@ -41,17 +42,18 @@ public class PyrisEventService {
      *
      * @see PyrisEvent
      */
+    @Async
     public void trigger(PyrisEvent<? extends AbstractIrisChatSessionService<? extends IrisChatSession>, ?> event) {
         log.debug("Starting to process event of type: {}", event.getClass().getSimpleName());
         try {
             switch (event) {
                 case CompetencyJolSetEvent competencyJolSetEvent -> {
-                    log.info("Processing CompetencyJolSetEvent: {}", competencyJolSetEvent);
+                    log.debug("Processing CompetencyJolSetEvent: {}", competencyJolSetEvent);
                     competencyJolSetEvent.handleEvent(irisCourseChatSessionService);
                     log.debug("Successfully processed CompetencyJolSetEvent");
                 }
                 case NewResultEvent newResultEvent -> {
-                    log.info("Processing NewResultEvent: {}", newResultEvent);
+                    log.debug("Processing NewResultEvent: {}", newResultEvent);
                     newResultEvent.handleEvent(irisExerciseChatSessionService);
                     log.debug("Successfully processed NewResultEvent");
                 }

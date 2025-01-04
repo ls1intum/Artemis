@@ -70,7 +70,6 @@ export class ExerciseAPIRequests {
      *   - exerciseGroup: The exercise group the exercise will be added to
      *   - scaMaxPenalty: The max percentage (0-100) static code analysis can reduce from the points
      *                    If sca should be disabled, pass null or omit this property
-     *   - recordTestwiseCoverage: Enable testwise coverage analysis for this exercise
      *   - releaseDate: When the programming exercise should be available
      *   - dueDate: When the programming exercise should be due
      *   - title: The title of the programming exercise
@@ -85,7 +84,6 @@ export class ExerciseAPIRequests {
         course?: Course;
         exerciseGroup?: ExerciseGroup;
         scaMaxPenalty?: number | undefined;
-        recordTestwiseCoverage?: boolean;
         releaseDate?: dayjs.Dayjs;
         dueDate?: dayjs.Dayjs;
         title?: string;
@@ -101,7 +99,6 @@ export class ExerciseAPIRequests {
             course,
             exerciseGroup,
             scaMaxPenalty = undefined,
-            recordTestwiseCoverage = false,
             releaseDate = dayjs(),
             dueDate = dayjs().add(1, 'day'),
             title = 'Programming ' + generateUUID(),
@@ -147,7 +144,6 @@ export class ExerciseAPIRequests {
         }
 
         exercise.programmingLanguage = programmingLanguage;
-        exercise.buildConfig!.testwiseCoverageEnabled = recordTestwiseCoverage;
         exercise.mode = mode;
         exercise.teamAssignmentConfig = teamAssignmentConfig;
 

@@ -8,6 +8,7 @@ import java.util.Date;
 import java.util.List;
 import java.util.stream.Collectors;
 
+import jakarta.annotation.Nullable;
 import jakarta.annotation.PostConstruct;
 
 import javax.crypto.SecretKey;
@@ -125,19 +126,21 @@ public class TokenProvider {
      * Validate an JWT Authorization Token
      *
      * @param authToken JWT Authorization Token
+     * @param source    the source of the token
      * @return boolean indicating if token is valid
      */
-    public boolean validateTokenForAuthority(String authToken) {
-        return validateJwsToken(authToken);
+    public boolean validateTokenForAuthority(String authToken, @Nullable String source) {
+        return validateJwsToken(authToken, source);
     }
 
     /**
      * Validate an JWT Authorization Token
      *
      * @param authToken JWT Authorization Token
+     * @param source    the source of the token
      * @return boolean indicating if token is valid
      */
-    private boolean validateJwsToken(String authToken) {
+    private boolean validateJwsToken(String authToken, @Nullable String source) {
         try {
             parseClaims(authToken);
             return true;
@@ -161,7 +164,7 @@ public class TokenProvider {
         catch (IllegalArgumentException e) {
             log.error("Token validation error {}", e.getMessage());
         }
-        log.info("Invalid JWT token: {}", authToken);
+        log.info("Invalid JWT token: {} from source {}", authToken, source);
         return false;
     }
 
@@ -169,13 +172,7 @@ public class TokenProvider {
         return Jwts.parser().verifyWith(key).build().parseSignedClaims(authToken).getPayload();
     }
 
-    public <T> T getClaim(String token, String claimName, Class<T> claimType) {
-        Claims claims = parseClaims(token);
-        return claims.get(claimName, claimType);
-    }
-
     public Date getExpirationDate(String authToken) {
         return parseClaims(authToken).getExpiration();
     }
-
 }
