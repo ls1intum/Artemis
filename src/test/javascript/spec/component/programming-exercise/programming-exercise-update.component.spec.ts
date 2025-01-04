@@ -197,7 +197,6 @@ describe('ProgrammingExerciseUpdateComponent', () => {
                     packageNameRequired: true,
                     checkoutSolutionRepositoryAllowed: true,
                     projectTypes: [ProjectType.PLAIN_MAVEN, ProjectType.MAVEN_MAVEN],
-                    testwiseCoverageAnalysisSupported: true,
                     auxiliaryRepositoriesSupported: true,
                 } as ProgrammingLanguageFeature);
             });
@@ -1195,7 +1194,6 @@ describe('ProgrammingExerciseUpdateComponent', () => {
             tick();
 
             expect(comp.programmingExercise.staticCodeAnalysisEnabled).toBeFalse();
-            expect(comp.programmingExercise.buildConfig?.testwiseCoverageEnabled).toBeFalse();
         }));
 
         it('should disable options for java dejagnu project type and re-enable them after changing back to maven or gradle', fakeAsync(() => {
@@ -1203,19 +1201,15 @@ describe('ProgrammingExerciseUpdateComponent', () => {
             getFeaturesStub.mockImplementation((language: ProgrammingLanguage) => getProgrammingLanguageFeature(language));
             comp.selectedProjectType = ProjectType.MAVEN_BLACKBOX;
             expect(comp.sequentialTestRunsAllowed).toBeFalse();
-            expect(comp.testwiseCoverageAnalysisSupported).toBeFalse();
 
             comp.selectedProjectType = ProjectType.MAVEN_MAVEN;
             expect(comp.sequentialTestRunsAllowed).toBeTrue();
-            expect(comp.testwiseCoverageAnalysisSupported).toBeTrue();
 
             comp.selectedProjectType = ProjectType.MAVEN_BLACKBOX;
             expect(comp.sequentialTestRunsAllowed).toBeFalse();
-            expect(comp.testwiseCoverageAnalysisSupported).toBeFalse();
 
             comp.selectedProjectType = ProjectType.GRADLE_GRADLE;
             expect(comp.sequentialTestRunsAllowed).toBeTrue();
-            expect(comp.testwiseCoverageAnalysisSupported).toBeTrue();
         }));
     });
 
@@ -1392,7 +1386,6 @@ const getProgrammingLanguageFeature = (programmingLanguage: ProgrammingLanguage)
                 packageNameRequired: true,
                 checkoutSolutionRepositoryAllowed: false,
                 projectTypes: [ProjectType.PLAIN, ProjectType.XCODE],
-                testwiseCoverageAnalysisSupported: false,
                 auxiliaryRepositoriesSupported: true,
             } as ProgrammingLanguageFeature;
         case ProgrammingLanguage.JAVA:
@@ -1404,7 +1397,6 @@ const getProgrammingLanguageFeature = (programmingLanguage: ProgrammingLanguage)
                 packageNameRequired: true,
                 checkoutSolutionRepositoryAllowed: true,
                 projectTypes: [ProjectType.PLAIN_MAVEN, ProjectType.MAVEN_MAVEN],
-                testwiseCoverageAnalysisSupported: true,
                 auxiliaryRepositoriesSupported: true,
             } as ProgrammingLanguageFeature;
         case ProgrammingLanguage.HASKELL:
@@ -1415,7 +1407,6 @@ const getProgrammingLanguageFeature = (programmingLanguage: ProgrammingLanguage)
                 plagiarismCheckSupported: false,
                 packageNameRequired: false,
                 checkoutSolutionRepositoryAllowed: true,
-                testwiseCoverageAnalysisSupported: false,
                 auxiliaryRepositoriesSupported: true,
             } as ProgrammingLanguageFeature;
         case ProgrammingLanguage.C:
@@ -1427,7 +1418,6 @@ const getProgrammingLanguageFeature = (programmingLanguage: ProgrammingLanguage)
                 packageNameRequired: false,
                 checkoutSolutionRepositoryAllowed: true,
                 projectTypes: [ProjectType.FACT, ProjectType.GCC],
-                testwiseCoverageAnalysisSupported: false,
                 auxiliaryRepositoriesSupported: true,
             } as ProgrammingLanguageFeature;
         default:

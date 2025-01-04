@@ -18,8 +18,8 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 
 import de.tum.cit.aet.artemis.core.user.util.UserUtilService;
 import de.tum.cit.aet.artemis.core.util.RequestUtilService;
-import de.tum.cit.aet.artemis.programming.service.aeolus.ScriptAction;
-import de.tum.cit.aet.artemis.programming.service.aeolus.Windfile;
+import de.tum.cit.aet.artemis.programming.dto.aeolus.ScriptAction;
+import de.tum.cit.aet.artemis.programming.dto.aeolus.Windfile;
 import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationLocalCILocalVCTest;
 
 class AeolusTemplateResourceTest extends AbstractSpringIntegrationLocalCILocalVCTest {
@@ -39,11 +39,10 @@ class AeolusTemplateResourceTest extends AbstractSpringIntegrationLocalCILocalVC
 
     private static Stream<Arguments> templateProvider() {
         return Stream.of(new Object[][] { { "JAVA/PLAIN_GRADLE", 1 }, { "JAVA/PLAIN_GRADLE?sequentialRuns=true", 2 }, { "JAVA/PLAIN_GRADLE?staticAnalysis=true", 2 },
-                { "JAVA/PLAIN_GRADLE?staticAnalysis=true&testCoverage=true", 2 }, { "JAVA/PLAIN_MAVEN", 1 }, { "JAVA/PLAIN_MAVEN?sequentialRuns=true", 2 },
-                { "JAVA/PLAIN_MAVEN?staticAnalysis=true", 2 }, { "JAVA/PLAIN_MAVEN?staticAnalysis=true&testCoverage=true", 3 }, { "JAVA/MAVEN_BLACKBOX", 5 },
+                { "JAVA/PLAIN_MAVEN", 1 }, { "JAVA/PLAIN_MAVEN?sequentialRuns=true", 2 }, { "JAVA/PLAIN_MAVEN?staticAnalysis=true", 2 }, { "JAVA/MAVEN_BLACKBOX", 5 },
                 { "JAVA/MAVEN_BLACKBOX?staticAnalysis=true", 6 }, { "ASSEMBLER", 4 }, { "C/FACT", 2 }, { "C/GCC", 3 }, { "C/GCC?staticAnalysis=true", 3 }, { "KOTLIN", 1 },
-                { "KOTLIN?testCoverage=true", 2 }, { "KOTLIN?sequentialRuns=true", 3 }, { "VHDL", 4 }, { "HASKELL", 1 }, { "HASKELL?sequentialRuns=true", 2 }, { "OCAML", 2 },
-                { "SWIFT/PLAIN", 1 }, { "SWIFT/PLAIN?staticAnalysis=true", 2 } }).map(params -> Arguments.of(params[0], params[1]));
+                { "KOTLIN?sequentialRuns=true", 3 }, { "VHDL", 4 }, { "HASKELL", 1 }, { "HASKELL?sequentialRuns=true", 2 }, { "OCAML", 2 }, { "SWIFT/PLAIN", 1 },
+                { "SWIFT/PLAIN?staticAnalysis=true", 2 } }).map(params -> Arguments.of(params[0], params[1]));
     }
 
     @ParameterizedTest
@@ -114,7 +113,7 @@ class AeolusTemplateResourceTest extends AbstractSpringIntegrationLocalCILocalVC
 
         Windfile windfile = Windfile.deserialize(validWindfile);
         assertThat(windfile).isNotNull();
-        assertThat(windfile.getActions().getFirst()).isInstanceOf(ScriptAction.class);
+        assertThat(windfile.actions().getFirst()).isInstanceOf(ScriptAction.class);
     }
 
     @Test
@@ -150,13 +149,13 @@ class AeolusTemplateResourceTest extends AbstractSpringIntegrationLocalCILocalVC
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testGetNonExistingAeolusTemplateFile() throws Exception {
-        request.get("/api/aeolus/templates/JAVA/PLAIN_GRADLE?staticAnalysis=true&sequentialRuns=true&testCoverage=true", HttpStatus.NOT_FOUND, String.class);
+        request.get("/api/aeolus/templates/JAVA/PLAIN_GRADLE?staticAnalysis=true&sequentialRuns=true", HttpStatus.NOT_FOUND, String.class);
     }
 
     void assertWindfileIsCorrect(Windfile windfile, long expectedScriptActions) {
-        assertThat(windfile.getApi()).isEqualTo("v0.0.1");
-        assertThat(windfile.getMetadata().gitCredentials()).isNull();
-        assertThat(windfile.getMetadata().docker()).isNotNull();
-        assertThat(windfile.getScriptActions().size()).isEqualTo(expectedScriptActions);
+        assertThat(windfile.api()).isEqualTo("v0.0.1");
+        assertThat(windfile.metadata().gitCredentials()).isNull();
+        assertThat(windfile.metadata().docker()).isNotNull();
+        assertThat(windfile.scriptActions().size()).isEqualTo(expectedScriptActions);
     }
 }

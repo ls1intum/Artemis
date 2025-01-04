@@ -179,7 +179,6 @@ describe('ProgrammingExercise Aeolus Custom Build Plan', () => {
         comp.projectType = programmingExercise.projectType;
         comp.sequentialTestRuns = programmingExercise.buildConfig?.sequentialTestRuns;
         comp.staticCodeAnalysisEnabled = programmingExercise.staticCodeAnalysisEnabled;
-        comp.testwiseCoverageEnabled = programmingExercise.buildConfig?.testwiseCoverageEnabled;
         expect(comp.shouldReloadTemplate()).toBeFalse();
     });
 
@@ -188,7 +187,6 @@ describe('ProgrammingExercise Aeolus Custom Build Plan', () => {
         comp.projectType = ProjectType.PLAIN_GRADLE;
         comp.sequentialTestRuns = programmingExercise.buildConfig?.sequentialTestRuns;
         comp.staticCodeAnalysisEnabled = true;
-        comp.testwiseCoverageEnabled = true;
         expect(comp.shouldReloadTemplate()).toBeTrue();
     });
 
@@ -214,7 +212,6 @@ describe('ProgrammingExercise Aeolus Custom Build Plan', () => {
         comp.projectType = undefined;
         comp.sequentialTestRuns = undefined;
         comp.staticCodeAnalysisEnabled = undefined;
-        comp.testwiseCoverageEnabled = undefined;
         comp.programmingExerciseCreationConfig = programmingExerciseCreationConfigMock;
         comp.programmingExerciseCreationConfig.customBuildPlansSupported = PROFILE_AEOLUS;
         comp.loadAeolusTemplate();
@@ -222,7 +219,6 @@ describe('ProgrammingExercise Aeolus Custom Build Plan', () => {
         expect(comp.projectType).toBe(programmingExercise.projectType);
         expect(comp.sequentialTestRuns).toBe(programmingExercise.buildConfig?.sequentialTestRuns);
         expect(comp.staticCodeAnalysisEnabled).toBe(programmingExercise.staticCodeAnalysisEnabled);
-        expect(comp.testwiseCoverageEnabled).toBe(programmingExercise.buildConfig?.testwiseCoverageEnabled);
     });
 
     it('should not call loadAeolusTemplate', () => {

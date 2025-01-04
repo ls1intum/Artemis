@@ -22,6 +22,8 @@ logging:
         org.springframework.web.socket.config: INFO
         liquibase: INFO
         de.jplag.Submission: ERROR
+        de.jplag.logging: WARN
+        de.jplag.reporting: WARN
     logback:
         rollingpolicy:
             max-history: 90
