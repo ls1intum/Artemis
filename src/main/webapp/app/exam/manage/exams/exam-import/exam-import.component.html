@@ -1,9 +1,9 @@
 <form>
     <div class="modal-header">
-        @if (!subsequentExerciseGroupSelection) {
+        @if (!subsequentExerciseGroupSelection()) {
             <h4 class="modal-title" jhiTranslate="artemisApp.examManagement.importExam"></h4>
         }
-        @if (subsequentExerciseGroupSelection) {
+        @if (subsequentExerciseGroupSelection()) {
             <h4 class="modal-title" jhiTranslate="artemisApp.examManagement.exerciseGroup.import"></h4>
         }
         <button type="button" class="btn-close" data-dismiss="modal" aria-hidden="true" (click)="clear()"></button>
@@ -61,10 +61,10 @@
                                 }
                             </td>
                             <td class="col-1">
-                                @if (!subsequentExerciseGroupSelection) {
+                                @if (!subsequentExerciseGroupSelection()) {
                                     <jhi-button (onClick)="selectImport(exam)" [title]="'artemisApp.exercise.import.table.doImport'" />
                                 }
-                                @if (subsequentExerciseGroupSelection) {
+                                @if (subsequentExerciseGroupSelection()) {
                                     <jhi-button (onClick)="openExerciseSelection(exam)" [title]="'artemisApp.examManagement.exerciseGroup.selectExerciseGroup'" />
                                 }
                             </td>
@@ -78,7 +78,7 @@
         </div>
     }
     <!-- State 2: Selection of exercises to be imported after an exam was selected -->
-    @if (exam && subsequentExerciseGroupSelection) {
+    @if (exam && subsequentExerciseGroupSelection()) {
         <div class="modal-body">
             <div class="form-group form-inline">
                 @if (!isImportingExercises) {
