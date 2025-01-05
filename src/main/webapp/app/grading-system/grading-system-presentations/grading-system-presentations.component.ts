@@ -1,6 +1,10 @@
 import { Component, Input, OnChanges } from '@angular/core';
 import { ModePickerOption } from 'app/exercises/shared/mode-picker/mode-picker.component';
 import { GradingScale } from 'app/entities/grading-scale.model';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { ArtemisSharedComponentModule } from 'app/shared/components/shared-component.module';
+import { ArtemisModePickerModule } from 'app/exercises/shared/mode-picker/mode-picker.module';
+import { FormsModule } from '@angular/forms';
 
 export enum PresentationType {
     NONE = 'none',
@@ -22,6 +26,8 @@ export interface PresentationsConfig {
     selector: 'jhi-grading-system-presentations',
     templateUrl: './grading-system-presentations.component.html',
     styleUrls: ['./grading-system-presentations.component.scss'],
+    standalone: true,
+    imports: [TranslateDirective, ArtemisSharedComponentModule, ArtemisModePickerModule, FormsModule],
 })
 export class GradingSystemPresentationsComponent implements OnChanges {
     readonly NONE = PresentationType.NONE;
