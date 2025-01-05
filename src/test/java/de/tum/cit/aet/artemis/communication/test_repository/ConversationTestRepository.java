@@ -12,5 +12,11 @@ import de.tum.cit.aet.artemis.communication.repository.conversation.Conversation
 @Primary
 public interface ConversationTestRepository extends ConversationRepository {
 
+    /**
+     * Retrieves a list of conversations for the given course
+     *
+     * @param courseId the course id
+     * @return a list of conversations for the given course
+     */
     List<Conversation> findAllByCourseId(long courseId);
 }

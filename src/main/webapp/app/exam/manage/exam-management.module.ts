@@ -1,6 +1,5 @@
 import { NgModule } from '@angular/core';
 import { RouterModule } from '@angular/router';
-import { ArtemisExamScoresModule } from 'app/exam/exam-scores/exam-scores.module';
 import { ExamManagementComponent } from 'app/exam/manage/exam-management.component';
 import { examManagementState } from 'app/exam/manage/exam-management.route';
 import { ExamUpdateComponent } from 'app/exam/manage/exams/exam-update.component';
@@ -67,11 +66,12 @@ import { ArtemisProgrammingExerciseModule } from 'app/exercises/programming/shar
 import { DetailModule } from 'app/detail-overview-list/detail.module';
 import { ArtemisDurationFromSecondsPipe } from 'app/shared/pipes/artemis-duration-from-seconds.pipe';
 import { NoDataComponent } from 'app/shared/no-data-component';
-import { GitDiffLineStatComponent } from 'app/exercises/programming/hestia/git-diff-report/git-diff-line-stat.component';
 import { SafeHtmlPipe } from 'app/shared/pipes/safe-html.pipe';
 import { GradeStepBoundsPipe } from 'app/shared/pipes/grade-step-bounds.pipe';
+import { examScoresState } from 'app/exam/exam-scores/exam-scores.route';
+import { GitDiffLineStatComponent } from 'app/exercises/programming/git-diff-report/git-diff-line-stat.component';
 
-const ENTITY_STATES = [...examManagementState];
+const ENTITY_STATES = [...examManagementState, ...examScoresState];
 
 @NgModule({
     // TODO: For better modularization we could define an exercise module with the corresponding exam routes
@@ -79,7 +79,6 @@ const ENTITY_STATES = [...examManagementState];
     imports: [
         RouterModule.forChild(ENTITY_STATES),
         ArtemisTextExerciseModule,
-        ArtemisExamScoresModule,
         ArtemisSharedModule,
         FormDateTimePickerModule,
         ArtemisSharedComponentModule,

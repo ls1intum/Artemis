@@ -19,13 +19,12 @@ export interface AddUsersFormData {
 })
 export class ConversationAddUsersFormComponent implements OnInit, OnChanges {
     @Output() formSubmitted: EventEmitter<AddUsersFormData> = new EventEmitter<AddUsersFormData>();
+
     @Input() courseId: number;
     @Input() maxSelectable?: number = undefined;
+    @Input() activeConversation: ConversationDTO;
 
-    @Input()
-    activeConversation: ConversationDTO;
-
-    protected readonly isLoading = input<boolean>(false);
+    isLoading = input<boolean>(false);
 
     form: FormGroup;
 
