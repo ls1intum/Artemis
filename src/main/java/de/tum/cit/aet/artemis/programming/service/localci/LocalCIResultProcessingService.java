@@ -2,10 +2,8 @@ package de.tum.cit.aet.artemis.programming.service.localci;
 
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_LOCALCI;
 
-import java.time.Duration;
 import java.util.List;
 import java.util.Optional;
-import java.util.OptionalDouble;
 import java.util.UUID;
 import java.util.concurrent.CancellationException;
 import java.util.concurrent.CompletableFuture;
@@ -148,7 +146,7 @@ public class LocalCIResultProcessingService {
         BuildJobQueueItem buildJob = resultQueueItem.buildJobQueueItem();
         BuildResult buildResult = resultQueueItem.buildResult();
         List<BuildLogDTO> buildLogs = resultQueueItem.buildLogs();
-        Throwable ex = resultQueueItem.exception();
+        Throwable buildException = resultQueueItem.exception();
 
         BuildJob savedBuildJob;
 
@@ -181,12 +179,13 @@ public class LocalCIResultProcessingService {
                 }
 
                 // save build job to database
-                if (ex != null) {
-                    if (ex.getCause() instanceof CancellationException && ex.getMessage().equals("Build job with id " + buildJob.id() + " was cancelled.")) {
+                if (buildException != null) {
+                    if (buildException.getCause() instanceof CancellationException
+                            && buildException.getMessage().equals("Build job with id " + buildJob.id() + " was cancelled.")) {
                         savedBuildJob = saveFinishedBuildJob(buildJob, BuildStatus.CANCELLED, result);
                     }
                     else {
-                        log.error("Error while processing build job: {}", buildJob, ex);
+                        log.error("Error while processing build job: {}", buildJob, buildException);
                         savedBuildJob = saveFinishedBuildJob(buildJob, BuildStatus.FAILED, result);
                     }
                 }
@@ -289,30 +288,21 @@ public class LocalCIResultProcessingService {
 
     private void updateExerciseBuildDuration(ProgrammingExercise exercise) {
         try {
-            ProgrammingExerciseBuildStatistics buildStatistics = programmingExerciseBuildStatisticsRepository.findByExerciseId(exercise.getId()).orElse(null);
-            long successfulBuildJobCountByExerciseId = buildJobRepository.fetchSuccessfulBuildJobCountByExerciseId(exercise.getId());
-
-            boolean hasSuccessfulBuildJobs = successfulBuildJobCountByExerciseId > 0;
-            boolean exceedsUpdateThreshold = buildStatistics == null
-                    || successfulBuildJobCountByExerciseId - buildStatistics.getBuildCountWhenUpdated() >= BUILD_STATISTICS_UPDATE_THRESHOLD;
-
-            boolean shouldUpdate = hasSuccessfulBuildJobs && exceedsUpdateThreshold;
-            if (!shouldUpdate) {
+            var buildStatisticsDto = buildJobRepository.findBuildJobStatisticsByExerciseId(exercise.getId());
+            if (buildStatisticsDto == null || buildStatisticsDto.buildCountWhenUpdated() == 0) {
                 return;
             }
+            var programmingExerciseBuildStatistics = programmingExerciseBuildStatisticsRepository.findByExerciseId(exercise.getId()).orElse(null);
 
-            OptionalDouble averageBuildDuration = buildJobRepository.fetchSuccessfulBuildJobsByExerciseIdWithLimit(exercise.getId(), BUILD_JOB_DURATION_UPDATE_LIMIT).stream()
-                    .mapToLong(buildJob -> Duration.between(buildJob.getBuildStartDate(), buildJob.getBuildCompletionDate()).toSeconds()).average();
-            if (averageBuildDuration.isPresent()) {
-                if (buildStatistics == null) {
-                    buildStatistics = new ProgrammingExerciseBuildStatistics(exercise.getId(), Math.round(averageBuildDuration.getAsDouble()), successfulBuildJobCountByExerciseId);
-                }
-                else {
-                    buildStatistics.setBuildDurationSeconds((long) averageBuildDuration.getAsDouble());
-                    buildStatistics.setBuildCountWhenUpdated(successfulBuildJobCountByExerciseId);
-                }
-                programmingExerciseBuildStatisticsRepository.save(buildStatistics);
+            if (programmingExerciseBuildStatistics == null) {
+                programmingExerciseBuildStatistics = new ProgrammingExerciseBuildStatistics(exercise.getId(), buildStatisticsDto.buildDurationSeconds(),
+                        buildStatisticsDto.buildCountWhenUpdated());
             }
+            else {
+                programmingExerciseBuildStatistics.setBuildDurationSeconds(buildStatisticsDto.buildDurationSeconds());
+                programmingExerciseBuildStatistics.setBuildCountWhenUpdated(buildStatisticsDto.buildCountWhenUpdated());
+            }
+            programmingExerciseBuildStatisticsRepository.save(programmingExerciseBuildStatistics);
         }
         catch (Exception e) {
             log.error("Could not update exercise build duration", e);
