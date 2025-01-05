@@ -66,6 +66,7 @@ import { DetailModule } from 'app/detail-overview-list/detail.module';
 import { ArtemisDurationFromSecondsPipe } from 'app/shared/pipes/artemis-duration-from-seconds.pipe';
 import { NoDataComponent } from 'app/shared/no-data-component';
 import { GitDiffLineStatComponent } from 'app/exercises/programming/git-diff-report/git-diff-line-stat.component';
+import { ExamExerciseImportComponent } from 'app/exam/manage/exams/exam-exercise-import/exam-exercise-import.component';
 
 const ENTITY_STATES = [...examManagementState];
 
@@ -107,6 +108,7 @@ const ENTITY_STATES = [...examManagementState];
         DetailModule,
         NoDataComponent,
         GitDiffLineStatComponent,
+        ExamExerciseImportComponent,
     ],
     declarations: [
         ExamManagementComponent,

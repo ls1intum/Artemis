@@ -12,12 +12,13 @@ import { ImportComponent } from 'app/shared/import/import.component';
 import { SortService } from 'app/shared/service/sort.service';
 import { onError } from 'app/shared/util/global.utils';
 import { ArtemisSharedComponentModule } from 'app/shared/components/shared-component.module';
+import { ArtemisSharedModule } from 'app/shared/shared.module';
 
 @Component({
     selector: 'jhi-exam-import',
     templateUrl: './exam-import.component.html',
     standalone: true,
-    imports: [ExamExerciseImportComponent, ArtemisSharedComponentModule],
+    imports: [ExamExerciseImportComponent, ArtemisSharedComponentModule, ArtemisSharedModule],
 })
 export class ExamImportComponent extends ImportComponent<Exam> {
     private examManagementService = inject(ExamManagementService);
