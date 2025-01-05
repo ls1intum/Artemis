@@ -143,7 +143,6 @@ export class Lti13DeepLinkingComponent implements OnInit {
         return exerciseId !== undefined && this.selectedExercises?.has(exerciseId);
     }
 
-    //TODO implement
     selectLecture(lectureId: number | undefined) {
         if (lectureId !== undefined) {
             if (this.selectedLectures?.has(lectureId)) {

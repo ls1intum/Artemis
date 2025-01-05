@@ -65,10 +65,8 @@ export class Lti13ExerciseLaunchComponent implements OnInit {
                 },
                 error: (error) => {
                     if (error.status === 401) {
-                        console.log('401');
                         this.authenticateUserThenRedirect(error);
                     } else {
-                        console.log('else');
                         this.handleLtiLaunchError();
                     }
                 },
