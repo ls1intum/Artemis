@@ -17,7 +17,7 @@ const tutorCodeFeedback = 'The input parameter should be mentioned in javadoc!';
 const tutorCodeFeedbackPoints = -2;
 const complaint = "That feedback wasn't very useful!";
 
-test.describe('Programming exercise assessment', () => {
+test.describe('Programming exercise assessment', { tag: '@sequential' }, () => {
     let course: Course;
     let exercise: ProgrammingExercise;
     let dueDate: dayjs.Dayjs;
@@ -33,7 +33,6 @@ test.describe('Programming exercise assessment', () => {
         assessmentDueDate = dueDate.add(20, 'seconds');
         exercise = await exerciseAPIRequests.createProgrammingExercise({
             course,
-            recordTestwiseCoverage: false,
             releaseDate: dayjs(),
             dueDate: dueDate,
             assessmentDate: assessmentDueDate,

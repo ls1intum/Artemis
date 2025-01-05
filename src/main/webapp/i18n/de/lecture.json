@@ -31,6 +31,7 @@
             "endDate": "Ende",
             "visibleDate": "Sichtbar ab",
             "course": "Kurs",
+            "ingestionState": "Vorlesungsimport Zustand in Pyris",
             "detail": {
                 "title": "Vorlesung",
                 "sections": {
@@ -79,17 +80,20 @@
                     "attachmentsStepTitle": "Anhänge",
                     "attachmentsStepMessage": "Lade Anhänge für die Vorlesung hoch.",
                     "unitsStepTitle": "Vorlesungseinheiten",
-                    "unitsStepMessage": "Füge Inhalte zur Vorlesung hinzu durch Erstellung von Vorlesungseinheiten.",
-                    "competenciesStepTitle": "Kompetenzen",
-                    "competenciesStepMessage": "Verknüpfe die Einheiten dieser Vorlesung mit Kompetenzen, um zu zeigen, welche Kompetenzen Studierende erreichen werden, wenn sie die Einheit abschließen."
+                    "unitsStepMessage": "Füge Inhalte zur Vorlesung hinzu, indem du Vorlesungseinheiten erstellst."
                 },
                 "newLectureUnit": "Neue Vorlesungseinheit",
                 "editLectureUnit": "Vorlesungseinheit bearbeiten",
                 "newExercise": "Neue Übung erstellen",
-                "backToWizard": "Zurück zur Vorlesung",
                 "competencyTitle": "Titel",
                 "competencyConnectedUnits": "Verknüpfte Einheiten",
                 "competencyNoConnectedUnits": "Keine verknüpften Einheiten"
+            },
+            "dismissChangesModal": {
+                "title": "Ungespeicherte Änderungen der Vorlesung verwerfen?",
+                "message": "Bist du sicher, dass du die ungespeicherten Änderungen verwerfen willst?",
+                "sectionsThatContainUnsavedChangesSingular": "Der folgende Abschnitt enthält ungespeicherte Änderungen:",
+                "sectionsThatContainUnsavedChangesPlural": "Die folgenden Abschnitte enthalten ungespeicherte Änderungen:"
             }
         },
         "attachment": {

@@ -33,8 +33,8 @@ public interface TextSubmissionRepository extends ArtemisJpaRepository<TextSubmi
      * @param submissionId the submissionId
      * @return optional text submission
      */
-    @EntityGraph(type = LOAD, attributePaths = { "results", "results.assessor" })
-    Optional<TextSubmission> findWithEagerResultsById(long submissionId);
+    @EntityGraph(type = LOAD, attributePaths = { "results.assessor" })
+    Optional<TextSubmission> findWithEagerResultsAssessorById(long submissionId);
 
     /**
      * @param submissionId the submission id we are interested in
@@ -43,7 +43,7 @@ public interface TextSubmissionRepository extends ArtemisJpaRepository<TextSubmi
     @EntityGraph(type = LOAD, attributePaths = { "results.assessor", "results.feedbacks", "blocks" })
     Optional<TextSubmission> findWithEagerResultsAndFeedbackAndTextBlocksById(long submissionId);
 
-    @EntityGraph(type = LOAD, attributePaths = { "results", "results.assessor", "blocks", "results.feedbacks" })
+    @EntityGraph(type = LOAD, attributePaths = { "results.assessor", "blocks", "results.feedbacks" })
     Optional<TextSubmission> findWithEagerResultAndTextBlocksAndFeedbackByResults_Id(long resultId);
 
     @NotNull

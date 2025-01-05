@@ -5,3 +5,22 @@
 hr {
     border-top-color: var(--overview-light-border-color);
 }
+
+.unread-count {
+    background-color: var(--bs-primary);
+    color: var(--bs-white);
+    border-radius: 50%;
+    font-size: 0.6rem;
+    width: 1.1rem;
+    height: 1.1rem;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    overflow: hidden;
+    white-space: nowrap;
+}
+
+.icon-container {
+    display: flex;
+    align-items: center;
+}

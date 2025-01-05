@@ -19,7 +19,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.core.JsonProcessingException;
 
 import de.tum.cit.aet.artemis.core.domain.DomainObject;
-import de.tum.cit.aet.artemis.programming.service.aeolus.Windfile;
+import de.tum.cit.aet.artemis.programming.dto.aeolus.Windfile;
 import de.tum.cit.aet.artemis.programming.service.vcs.AbstractVersionControlService;
 
 @Entity
@@ -60,15 +60,12 @@ public class ProgrammingExerciseBuildConfig extends DomainObject {
     @Column(name = "timeout_seconds")
     private int timeoutSeconds;
 
-    @Column(name = "docker_flags")
+    @Column(name = "docker_flags", columnDefinition = "longtext")
     private String dockerFlags;
 
     @OneToOne(mappedBy = "buildConfig")
     @JsonIgnoreProperties("buildConfig")
     private ProgrammingExercise programmingExercise;
-
-    @Column(name = "testwise_coverage_enabled")
-    private boolean testwiseCoverageEnabled;
 
     @Nullable
     @Column(name = "theia_image")
@@ -98,7 +95,6 @@ public class ProgrammingExerciseBuildConfig extends DomainObject {
         this.setDockerFlags(originalBuildConfig.getDockerFlags());
         this.setSequentialTestRuns(originalBuildConfig.hasSequentialTestRuns());
         this.setBuildScript(originalBuildConfig.getBuildScript());
-        this.setTestwiseCoverageEnabled(originalBuildConfig.isTestwiseCoverageEnabled());
         this.setTimeoutSeconds(originalBuildConfig.getTimeoutSeconds());
         this.setTheiaImage(originalBuildConfig.getTheiaImage());
         this.setAllowBranching(originalBuildConfig.isAllowBranching());
@@ -247,14 +243,6 @@ public class ProgrammingExerciseBuildConfig extends DomainObject {
         setBuildScript(null);
     }
 
-    public boolean isTestwiseCoverageEnabled() {
-        return testwiseCoverageEnabled;
-    }
-
-    public void setTestwiseCoverageEnabled(boolean testwiseCoverageEnabled) {
-        this.testwiseCoverageEnabled = testwiseCoverageEnabled;
-    }
-
     public ProgrammingExercise getProgrammingExercise() {
         return programmingExercise;
     }
@@ -296,7 +284,7 @@ public class ProgrammingExerciseBuildConfig extends DomainObject {
     public String toString() {
         return "BuildJobConfig{" + "id=" + getId() + ", sequentialTestRuns=" + sequentialTestRuns + ", branch='" + branch + '\'' + ", buildPlanConfiguration='"
                 + buildPlanConfiguration + '\'' + ", buildScript='" + buildScript + '\'' + ", checkoutSolutionRepository=" + checkoutSolutionRepository + ", checkoutPath='"
-                + testCheckoutPath + '\'' + ", timeoutSeconds=" + timeoutSeconds + ", dockerFlags='" + dockerFlags + '\'' + ", testwiseCoverageEnabled=" + testwiseCoverageEnabled
-                + ", theiaImage='" + theiaImage + '\'' + ", allowBranching=" + allowBranching + ", branchRegex='" + branchRegex + '\'' + '}';
+                + testCheckoutPath + '\'' + ", timeoutSeconds=" + timeoutSeconds + ", dockerFlags='" + dockerFlags + '\'' + ", theiaImage='" + theiaImage + '\''
+                + ", allowBranching=" + allowBranching + ", branchRegex='" + branchRegex + '\'' + '}';
     }
 }

@@ -73,7 +73,7 @@ public class PageUtil {
         )),
         FEEDBACK_ANALYSIS(Map.of(
             "count", "COUNT(f.id)",
-            "detailText", "f.detailText",
+            "detailTexts", "f.detailText",
             "testCaseName", "f.testCase.testName",
             "taskName", """
                     COALESCE((

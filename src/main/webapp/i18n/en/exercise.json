@@ -64,8 +64,6 @@
             "emptyExampleSolution": "(No example solution)",
             "exampleSolutionPublicationDateError": "For graded exercises, Example Solution Publication Date must be after Release, Start and Due Date if set. Please check your selection again",
             "exampleSolutionPublicationDateWarning": "Example Solution Publication Date is before Due Date!",
-            "feedbackSuggestionsEnabled": "Enable feedback suggestions from Athena",
-            "feedbackSuggestionsEnabledTooltip": "If enabled, Athena will suggest feedback to tutors on some submissions.",
             "assessmentCriterion": "Assessment Criterion",
             "assessmentInstructions": "Assessment Instructions",
             "assessmentInstruction": "Assessment Instruction: ",
@@ -175,6 +173,10 @@
             "maxAthenaResultsReached": "You have reached the maximum number of AI feedback requests.",
             "athenaFeedbackSuccessful": "AI feedback successfully generated. Click on the result to view details.",
             "athenaFeedbackFailed": "Something went wrong... AI feedback could not be generated at the moment",
+            "allowFeedbackSuggestions": "Allow automatic Athena-generated feedback suggestions",
+            "allowFeedbackSuggestionsTooltip": "Athena will generate feedback suggestions that tutors can use when grading submissions.",
+            "allowFeedbackRequests": "Allow automatic preliminary feedback requests",
+            "allowFeedbackRequestsTooltip": "Students can request feedback before the due date. The requests will be processed by Athena.",
             "submissionAlreadyHasAthenaResult": "This submission already has an existing AI result. Please submit again before requesting further feedback.",
             "startError": "<strong>Uh oh! Something went wrong... Please try again to start the exercise in a few minutes.</strong>",
             "name": "Name",
@@ -239,7 +241,8 @@
                         "JAVA": "The package name must consist of one or more valid Java identifiers separated by '.', e.g. \"net.java\"!",
                         "KOTLIN": "The package name must consist of one or more valid Kotlin identifiers separated by '.', e.g. \"net.kotlin\"!",
                         "SWIFT": "The package name must consist of one or more valid Swift identifiers without any separator, e.g. \"SwiftEx\"!",
-                        "JAVA_BLACKBOX": "The package name must be a valid Java identifier. In addition, no dots are allowed in the package name of DejaGnu projects"
+                        "JAVA_BLACKBOX": "The package name must be a valid Java identifier. In addition, no dots are allowed in the package name of DejaGnu projects",
+                        "GO": "The package name must be a valid Go identifier, e.g. \"exercise\"."
                     }
                 },
                 "points": {

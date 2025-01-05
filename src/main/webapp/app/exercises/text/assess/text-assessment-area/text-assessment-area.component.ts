@@ -1,4 +1,4 @@
-import { Component, EventEmitter, HostListener, Input, OnChanges, Output, SimpleChanges } from '@angular/core';
+import { Component, EventEmitter, HostListener, Input, OnChanges, Output, SimpleChanges, inject } from '@angular/core';
 import { TextSubmission } from 'app/entities/text/text-submission.model';
 import { TextBlockRef } from 'app/entities/text/text-block-ref.model';
 import { StringCountService } from 'app/exercises/text/participate/string-count.service';
@@ -16,6 +16,8 @@ import { GradingCriterion } from 'app/exercises/shared/structured-grading-criter
     ],
 })
 export class TextAssessmentAreaComponent implements OnChanges {
+    private stringCountService = inject(StringCountService);
+
     // inputs
     @Input() submission: TextSubmission;
     @Input() textBlockRefs: TextBlockRef[];
@@ -31,8 +33,6 @@ export class TextAssessmentAreaComponent implements OnChanges {
     selectedRef?: TextBlockRef;
     wordCount = 0;
     characterCount = 0;
-
-    constructor(private stringCountService: StringCountService) {}
 
     /**
      * Life cycle hook to indicate component change

@@ -139,10 +139,10 @@ public class ProgrammingExerciseCodeReviewFeedbackService {
 
             /*
              * var athenaResponse = this.athenaFeedbackSuggestionsService.orElseThrow().getProgrammingFeedbackSuggestions(programmingExercise, (ProgrammingSubmission) submission,
-             * false);
+             * true);
              */
             var athenaResponse = List.of(new ProgrammingFeedbackDTO(0, 1, 2, "aaa1", "aaas", 3, null, "Xpense/XpenseModel/Model Objects/Transaction.swift", 0, 1),
-                    new ProgrammingFeedbackDTO(1, 1, 2, "bbb2", "bbbs", 3, null, "Xpense/XpenseModel/Model Objects/Transaction.swift", 3, 4));
+                new ProgrammingFeedbackDTO(1, 1, 2, "bbb2", "bbbs", 3, null, "Xpense/XpenseModel/Model Objects/Transaction.swift", 3, 4));
 
             List<Feedback> feedbacks = athenaResponse.stream().filter(individualFeedbackItem -> individualFeedbackItem.filePath() != null)
                     .filter(individualFeedbackItem -> individualFeedbackItem.description() != null).map(individualFeedbackItem -> {

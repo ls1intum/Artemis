@@ -1,6 +1,8 @@
 package de.tum.cit.aet.artemis.communication.repository;
 
+import java.util.ArrayList;
 import java.util.Collections;
+import java.util.LinkedHashSet;
 import java.util.List;
 
 import jakarta.persistence.EntityManager;
@@ -50,6 +52,8 @@ public class CustomPostRepositoryImpl implements CustomPostRepository {
         query.setMaxResults(pageable.getPageSize());
 
         List<Long> postIds = query.getResultList();
+        // removes all duplicates from the answer posts
+        List<Long> uniquePostIds = new ArrayList<>(new LinkedHashSet<>(postIds));
 
         // Count query
         CriteriaQuery<Long> countQuery = builder.createQuery(Long.class);
@@ -66,6 +70,6 @@ public class CustomPostRepositoryImpl implements CustomPostRepository {
         Long countResult = entityManager.createQuery(countQuery).getSingleResult();
         long count = countResult != null ? countResult : 0L;
 
-        return new PageImpl<>(postIds, pageable, count);
+        return new PageImpl<>(uniquePostIds, pageable, count);
     }
 }

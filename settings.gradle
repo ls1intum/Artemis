@@ -1,21 +1,20 @@
 import org.apache.tools.ant.DirectoryScanner
 
 pluginManagement {
+    repositories {
+        mavenLocal()
+        mavenCentral()
+        gradlePluginPortal()
+    }
     plugins {
-        id 'org.springframework.boot' version "${spring_boot_version}"
-        id 'com.github.node-gradle.node' version "${gradle_node_plugin_version}"
-        id 'org.liquibase.gradle' version "${liquibase_plugin_version}"
-        id 'net.ltgt.apt-eclipse' version "${apt_plugin_version}"
-        id 'net.ltgt.apt-idea' version "${apt_plugin_version}"
-        id 'net.ltgt.apt' version "${apt_plugin_version}"
-        id 'com.github.andygoossens.gradle-modernizer-plugin' version "${modernizer_plugin_version}"
+        id "org.liquibase.gradle" version "${liquibase_plugin_version}"
+        id "net.ltgt.apt-eclipse" version "${apt_plugin_version}"
+        id "net.ltgt.apt-idea" version "${apt_plugin_version}"
+        id "net.ltgt.apt" version "${apt_plugin_version}"
     }
 }
 
-rootProject.name = 'Artemis'
-
-// needed for rest call and endpoint analysis
-include 'supporting_scripts:analysis-of-endpoint-connections'
+rootProject.name = "Artemis"
 
 // needed for programming exercise templates
 DirectoryScanner.removeDefaultExclude "**/.gitattributes"

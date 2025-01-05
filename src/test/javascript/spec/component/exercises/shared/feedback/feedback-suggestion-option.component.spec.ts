@@ -7,6 +7,7 @@ import { AssessmentType } from 'app/entities/assessment-type.model';
 import { AthenaService } from 'app/assessment/athena.service';
 import { ExerciseFeedbackSuggestionOptionsComponent } from 'app/exercises/shared/feedback-suggestion/exercise-feedback-suggestion-options.component';
 import dayjs from 'dayjs/esm';
+import { ArtemisTestModule } from '../../../../test.module';
 
 describe('ExerciseFeedbackSuggestionOptionsComponent', () => {
     let component: ExerciseFeedbackSuggestionOptionsComponent;
@@ -17,7 +18,7 @@ describe('ExerciseFeedbackSuggestionOptionsComponent', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            declarations: [ExerciseFeedbackSuggestionOptionsComponent],
+            imports: [ArtemisTestModule, ExerciseFeedbackSuggestionOptionsComponent],
             providers: [
                 MockProvider(AthenaService, {
                     isEnabled: () => of(true),
@@ -97,34 +98,22 @@ describe('ExerciseFeedbackSuggestionOptionsComponent', () => {
         expect(style).toEqual({});
     });
 
-    it('should toggle feedback suggestions and set the module for programming exercises', () => {
+    it('should toggle feedback suggestions and set the module for any exercise', () => {
         const modules = ['Module1', 'Module2'];
         component.availableAthenaModules = modules;
         component.exercise = { type: ExerciseType.PROGRAMMING } as Exercise;
 
+        expect(component.showDropdownList).toBeFalse();
+
         const event = { target: { checked: true } };
         component.toggleFeedbackSuggestions(event);
 
         expect(component.exercise.feedbackSuggestionModule).toBe('Module1');
+        expect(component.showDropdownList).toBeTrue();
+        expect(component.exercise.allowManualFeedbackRequests).toBeFalse();
 
         event.target.checked = false;
         component.toggleFeedbackSuggestions(event);
-
-        expect(component.exercise.feedbackSuggestionModule).toBeUndefined();
-    });
-
-    it('should toggle feedback requests and set the module for text exercises', () => {
-        const modules = ['Module1', 'Module2'];
-        component.availableAthenaModules = modules;
-        component.exercise = { type: ExerciseType.TEXT } as Exercise;
-
-        const event = { target: { checked: true } };
-        component.toggleFeedbackRequests(event); // for students
-
-        expect(component.exercise.feedbackSuggestionModule).toBe('Module1');
-
-        event.target.checked = false;
-        component.toggleFeedbackSuggestions(event); // for tutors, should disable both
 
         expect(component.exercise.feedbackSuggestionModule).toBeUndefined();
     });

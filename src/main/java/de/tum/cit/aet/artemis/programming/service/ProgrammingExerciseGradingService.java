@@ -61,7 +61,7 @@ import de.tum.cit.aet.artemis.programming.domain.TemplateProgrammingExercisePart
 import de.tum.cit.aet.artemis.programming.domain.submissionpolicy.LockRepositoryPolicy;
 import de.tum.cit.aet.artemis.programming.domain.submissionpolicy.SubmissionPenaltyPolicy;
 import de.tum.cit.aet.artemis.programming.domain.submissionpolicy.SubmissionPolicy;
-import de.tum.cit.aet.artemis.programming.dto.AbstractBuildResultNotificationDTO;
+import de.tum.cit.aet.artemis.programming.dto.BuildResultNotification;
 import de.tum.cit.aet.artemis.programming.dto.ProgrammingExerciseGradingStatisticsDTO;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseRepository;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseTestCaseRepository;
@@ -218,9 +218,8 @@ public class ProgrammingExerciseGradingService {
      * @param buildResult   The build result received from the CI system.
      * @throws IllegalArgumentException Thrown if the result does not belong to the default branch of the exercise.
      */
-    private void checkCorrectBranchElseThrow(final ProgrammingExerciseParticipation participation, final AbstractBuildResultNotificationDTO buildResult)
-            throws IllegalArgumentException {
-        var branchName = buildResult.getBranchNameFromAssignmentRepo();
+    private void checkCorrectBranchElseThrow(final ProgrammingExerciseParticipation participation, final BuildResultNotification buildResult) throws IllegalArgumentException {
+        var branchName = buildResult.assignmentRepoBranchName();
         // If the branch is not present, it might be because the assignment repo did not change because only the test repo was changed
         if (!ObjectUtils.isEmpty(branchName)) {
             String participationDefaultBranch = null;
@@ -243,8 +242,8 @@ public class ProgrammingExerciseGradingService {
      *
      * @param buildResult The build result received from the CI system.
      */
-    private void checkHasCommitHashElseThrow(final AbstractBuildResultNotificationDTO buildResult) {
-        if (StringUtils.isEmpty(buildResult.getCommitHash(SubmissionType.MANUAL))) {
+    private void checkHasCommitHashElseThrow(final BuildResultNotification buildResult) {
+        if (StringUtils.isEmpty(buildResult.commitHash(SubmissionType.MANUAL))) {
             throw new IllegalArgumentException("The provided result does not specify the assignment commit hash. The result will not get processed.");
         }
     }
@@ -256,28 +255,28 @@ public class ProgrammingExerciseGradingService {
      * @param buildResult     The build result
      * @return The submission or empty if no submissions exist
      */
-    protected Optional<ProgrammingSubmission> getSubmissionForBuildResult(Long participationId, AbstractBuildResultNotificationDTO buildResult) {
+    protected Optional<ProgrammingSubmission> getSubmissionForBuildResult(Long participationId, BuildResultNotification buildResult) {
         var submissions = programmingSubmissionRepository.findAllByParticipationIdWithResults(participationId);
         if (submissions.isEmpty()) {
             return Optional.empty();
         }
 
         return submissions.stream().filter(theSubmission -> {
-            var commitHash = buildResult.getCommitHash(theSubmission.getType());
+            var commitHash = buildResult.commitHash(theSubmission.getType());
             return !ObjectUtils.isEmpty(commitHash) && commitHash.equals(theSubmission.getCommitHash());
         }).max(Comparator.naturalOrder());
     }
 
     @NotNull
-    protected ProgrammingSubmission createAndSaveFallbackSubmission(ProgrammingExerciseParticipation participation, AbstractBuildResultNotificationDTO buildResult) {
-        final var commitHash = buildResult.getCommitHash(SubmissionType.MANUAL);
+    protected ProgrammingSubmission createAndSaveFallbackSubmission(ProgrammingExerciseParticipation participation, BuildResultNotification buildResult) {
+        final var commitHash = buildResult.commitHash(SubmissionType.MANUAL);
         if (ObjectUtils.isEmpty(commitHash)) {
             log.error("Could not find commit hash for participation {}, build plan {}", participation.getId(), participation.getBuildPlanId());
         }
         log.warn("Could not find pending ProgrammingSubmission for Commit Hash {} (Participation {}, Build Plan {}). Will create a new one subsequently...", commitHash,
                 participation.getId(), participation.getBuildPlanId());
         // We always take the build run date as the fallback solution
-        ZonedDateTime submissionDate = buildResult.getBuildRunDate();
+        ZonedDateTime submissionDate = buildResult.buildRunDate();
         if (!ObjectUtils.isEmpty(commitHash)) {
             try {
                 // Try to get the actual date, the push might be 10s - 3min earlier, depending on how long the build takes.
@@ -1078,7 +1077,25 @@ public class ProgrammingExerciseGradingService {
     private static void updateTestCaseMapBasedOnResultFeedback(Result result, HashMap<String, ProgrammingExerciseGradingStatisticsDTO.TestCaseStats> testCaseStatsMap) {
         result.getFeedbacks().stream()
                 // Filter the feedbacks to include only those that are automatic and have an assigned test case
-                .filter(feedback -> FeedbackType.AUTOMATIC.equals(feedback.getType()) && feedback.getTestCase() != null)
+                .filter(feedback -> {
+                    if (!FeedbackType.AUTOMATIC.equals(feedback.getType())) {
+                        return false;
+                    }
+                    if (feedback.getTestCase() == null) {
+                        return false;
+                    }
+                    if (feedback.getTestCase().getTestName() == null) {
+                        // Log the feedback id with null test name to analyse NullPointer issue if it occurs again in the future
+                        log.warn("Feedback with ID {} has a test case with a null test name.", feedback.getId());
+                        return false;
+                    }
+                    if (feedback.isPositive() == null) {
+                        // Log the feedback with null isPositive value to analyse NullPointer issue if it occurs again in the future
+                        log.warn("Feedback with ID {} has a test case with a null isPositive value.", feedback.getId());
+                        return false;
+                    }
+                    return true;
+                })
                 // Collect the filtered feedbacks into a map grouped by test case name, and partitioned by whether the feedback is positive
                 .collect(Collectors.groupingBy(
                         // Group by the name of the test case associated with the feedback

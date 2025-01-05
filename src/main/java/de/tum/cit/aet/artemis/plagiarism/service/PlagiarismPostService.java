@@ -16,6 +16,7 @@ import de.tum.cit.aet.artemis.communication.dto.PostContextFilterDTO;
 import de.tum.cit.aet.artemis.communication.dto.PostDTO;
 import de.tum.cit.aet.artemis.communication.repository.ConversationParticipantRepository;
 import de.tum.cit.aet.artemis.communication.repository.PostRepository;
+import de.tum.cit.aet.artemis.communication.repository.SavedPostRepository;
 import de.tum.cit.aet.artemis.communication.service.PostingService;
 import de.tum.cit.aet.artemis.communication.service.WebsocketMessagingService;
 import de.tum.cit.aet.artemis.core.domain.Course;
@@ -42,9 +43,11 @@ public class PlagiarismPostService extends PostingService {
     private final PlagiarismCaseService plagiarismCaseService;
 
     protected PlagiarismPostService(CourseRepository courseRepository, AuthorizationCheckService authorizationCheckService, UserRepository userRepository,
-            PostRepository postRepository, ExerciseRepository exerciseRepository, LectureRepository lectureRepository, WebsocketMessagingService websocketMessagingService,
-            PlagiarismCaseService plagiarismCaseService, PlagiarismCaseRepository plagiarismCaseRepository, ConversationParticipantRepository conversationParticipantRepository) {
-        super(courseRepository, userRepository, exerciseRepository, lectureRepository, authorizationCheckService, websocketMessagingService, conversationParticipantRepository);
+            SavedPostRepository savedPostRepository, PostRepository postRepository, ExerciseRepository exerciseRepository, LectureRepository lectureRepository,
+            WebsocketMessagingService websocketMessagingService, PlagiarismCaseService plagiarismCaseService, PlagiarismCaseRepository plagiarismCaseRepository,
+            ConversationParticipantRepository conversationParticipantRepository) {
+        super(courseRepository, userRepository, exerciseRepository, lectureRepository, authorizationCheckService, websocketMessagingService, conversationParticipantRepository,
+                savedPostRepository);
         this.postRepository = postRepository;
         this.plagiarismCaseRepository = plagiarismCaseRepository;
         this.plagiarismCaseService = plagiarismCaseService;
@@ -132,6 +135,7 @@ public class PlagiarismPostService extends PostingService {
 
         Post updatedPost = postRepository.save(existingPost);
 
+        preparePostForBroadcast(updatedPost);
         broadcastForPost(new PostDTO(updatedPost, MetisCrudAction.UPDATE), course.getId(), null, null);
         return updatedPost;
     }
@@ -184,6 +188,7 @@ public class PlagiarismPostService extends PostingService {
 
         // delete
         postRepository.deleteById(postId);
+        preparePostForBroadcast(post);
         broadcastForPost(new PostDTO(post, MetisCrudAction.DELETE), course.getId(), null, null);
     }
 

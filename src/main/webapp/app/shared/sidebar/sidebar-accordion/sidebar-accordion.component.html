@@ -11,9 +11,14 @@
                         <fa-icon [fixedWidth]="true" [icon]="$any(channelTypeIcon)?.[groupKey]" />
                     }
                     {{ 'artemisApp.courseOverview.sidebar.' + groupKey | artemisTranslate | titlecase }}
-                    ({{ (groupedData[groupKey].entityData | searchFilter: ['title', 'type'] : searchValue)?.length }})
+                    @if (!groupedData[groupKey].isHideCount) {
+                        ({{ (groupedData[groupKey].entityData | searchFilter: ['title', 'type'] : searchValue)?.length }})
+                    }
                 </div>
                 <div class="icon-container pe-3">
+                    @if (totalUnreadMessagesPerGroup[groupKey] > 0 && collapseState[groupKey]) {
+                        <span class="unread-count me-2">{{ totalUnreadMessagesPerGroup[groupKey] }}</span>
+                    }
                     <fa-icon [icon]="faChevronRight" class="rotate-icon chevron-position" [class.rotated]="!collapseState[groupKey]" />
                 </div>
             </div>

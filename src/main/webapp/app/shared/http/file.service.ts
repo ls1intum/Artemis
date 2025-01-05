@@ -38,31 +38,10 @@ export class FileService {
     }
 
     /**
-     * Fetches the aeolus template file for the given programming language
-     * @param {ProgrammingLanguage} language
-     * @param {ProjectType} projectType (if available)
-     * @param staticAnalysis (if available) whether static code analysis should be enabled
-     * @param sequentialRuns (if available) whether sequential test runs should be enabled
-     * @param coverage (if available) whether test coverage should be enabled
-     * @returns json test file
-     */
-    getAeolusTemplateFile(language: ProgrammingLanguage, projectType?: ProjectType, staticAnalysis?: boolean, sequentialRuns?: boolean, coverage?: boolean): Observable<string> {
-        const urlParts: string[] = [language];
-        const params: string[] = [];
-        if (projectType) {
-            urlParts.push(projectType);
-        }
-        params.push('staticAnalysis=' + (staticAnalysis == undefined ? false : staticAnalysis));
-        params.push('sequentialRuns=' + (sequentialRuns == undefined ? false : sequentialRuns));
-        params.push('testCoverage=' + (coverage == undefined ? false : coverage));
-        return this.http.get<string>(`${this.resourceUrl}/aeolus/templates/` + urlParts.join('/') + '?' + params.join('&'), { responseType: 'text' as 'json' });
-    }
-
-    /**
      * Fetches the template code of conduct
      * @returns markdown file
      */
-    getTemplateCodeOfCondcut(): Observable<HttpResponse<string>> {
+    getTemplateCodeOfConduct(): Observable<HttpResponse<string>> {
         return this.http.get<string>(`api/files/templates/code-of-conduct`, { observe: 'response', responseType: 'text' as 'json' });
     }
 
@@ -77,6 +56,23 @@ export class FileService {
         const fileName = downloadUrlComponents.pop()!;
         const restOfUrl = downloadUrlComponents.join('/');
         const normalizedDownloadUrl = restOfUrl + '/' + encodeURIComponent(fileName);
+        const newWindow = window.open('about:blank');
+        newWindow!.location.href = normalizedDownloadUrl;
+        return newWindow;
+    }
+
+    /**
+     * Downloads the file from the provided downloadUrl and the attachment name
+     *
+     * @param downloadUrl url that is stored in the attachment model
+     * @param downloadName the name given to the attachment
+     */
+    downloadFileByAttachmentName(downloadUrl: string, downloadName: string) {
+        const downloadUrlComponents = downloadUrl.split('/');
+        // take the last element
+        const extension = downloadUrlComponents.pop()!.split('.').pop();
+        const restOfUrl = downloadUrlComponents.join('/');
+        const normalizedDownloadUrl = restOfUrl + '/' + encodeURIComponent(downloadName + '.' + extension);
         const newWindow = window.open('about:blank');
         newWindow!.location.href = normalizedDownloadUrl;
         return newWindow;
@@ -123,13 +119,5 @@ export class FileService {
      */
     replaceAttachmentPrefixAndUnderscores(link: string): string {
         return link.replace(/AttachmentUnit_\d{4}-\d{2}-\d{2}T\d{2}-\d{2}-\d{2}-\d{3}_/, '').replace(/_/g, ' ');
-    }
-
-    /**
-     * Removes the prefix from the file name, and replaces underscore with spaces
-     * @param link
-     */
-    replaceLectureAttachmentPrefixAndUnderscores(link: string): string {
-        return link.replace(/LectureAttachment_\d{4}-\d{2}-\d{2}T\d{2}-\d{2}-\d{2}-\d{3}_/, '').replace(/_/g, ' ');
     }
 }

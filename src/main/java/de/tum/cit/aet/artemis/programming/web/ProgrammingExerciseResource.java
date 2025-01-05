@@ -41,6 +41,7 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import de.tum.cit.aet.artemis.assessment.domain.AssessmentType;
 import de.tum.cit.aet.artemis.assessment.domain.GradingCriterion;
 import de.tum.cit.aet.artemis.assessment.repository.GradingCriterionRepository;
+import de.tum.cit.aet.artemis.athena.domain.ModuleType;
 import de.tum.cit.aet.artemis.athena.service.AthenaModuleService;
 import de.tum.cit.aet.artemis.communication.domain.conversation.Channel;
 import de.tum.cit.aet.artemis.communication.repository.conversation.ChannelRepository;
@@ -86,10 +87,10 @@ import de.tum.cit.aet.artemis.programming.service.AuxiliaryRepositoryService;
 import de.tum.cit.aet.artemis.programming.service.GitService;
 import de.tum.cit.aet.artemis.programming.service.ProgrammingExerciseRepositoryService;
 import de.tum.cit.aet.artemis.programming.service.ProgrammingExerciseService;
+import de.tum.cit.aet.artemis.programming.service.ProgrammingExerciseTaskService;
 import de.tum.cit.aet.artemis.programming.service.ProgrammingExerciseTestCaseService;
 import de.tum.cit.aet.artemis.programming.service.StaticCodeAnalysisService;
 import de.tum.cit.aet.artemis.programming.service.ci.ContinuousIntegrationService;
-import de.tum.cit.aet.artemis.programming.service.hestia.ProgrammingExerciseTaskService;
 import de.tum.cit.aet.artemis.programming.service.vcs.VersionControlService;
 import io.jsonwebtoken.lang.Arrays;
 
@@ -246,8 +247,10 @@ public class ProgrammingExerciseResource {
         programmingExerciseService.validateNewProgrammingExerciseSettings(programmingExercise, course);
 
         // Check that only allowed athena modules are used
-        athenaModuleService.ifPresentOrElse(ams -> ams.checkHasAccessToAthenaModule(programmingExercise, course, ENTITY_NAME),
+        athenaModuleService.ifPresentOrElse(ams -> ams.checkHasAccessToAthenaModule(programmingExercise, course, ModuleType.FEEDBACK_SUGGESTIONS, ENTITY_NAME),
                 () -> programmingExercise.setFeedbackSuggestionModule(null));
+        athenaModuleService.ifPresentOrElse(ams -> ams.checkHasAccessToAthenaModule(programmingExercise, course, ModuleType.PRELIMINARY_FEEDBACK, ENTITY_NAME),
+                () -> programmingExercise.setPreliminaryFeedbackModule(null));
 
         try {
             // Setup all repositories etc
@@ -305,10 +308,6 @@ public class ProgrammingExerciseResource {
         if (!Objects.equals(programmingExerciseBeforeUpdate.isStaticCodeAnalysisEnabled(), updatedProgrammingExercise.isStaticCodeAnalysisEnabled())) {
             throw new BadRequestAlertException("Static code analysis enabled flag must not be changed", ENTITY_NAME, "staticCodeAnalysisCannotChange");
         }
-        if (!Objects.equals(programmingExerciseBeforeUpdate.getBuildConfig().isTestwiseCoverageEnabled(),
-                updatedProgrammingExercise.getBuildConfig().isTestwiseCoverageEnabled())) {
-            throw new BadRequestAlertException("Testwise coverage enabled flag must not be changed", ENTITY_NAME, "testwiseCoverageCannotChange");
-        }
         // Check if theia Profile is enabled
         if (Arrays.asList(this.environment.getActiveProfiles()).contains(PROFILE_THEIA)) {
             // Require 1 / 3 participation modes to be enabled
@@ -329,6 +328,9 @@ public class ProgrammingExerciseResource {
         // Verify that the checkout directories have not been changed. This is required since the buildScript and result paths are determined during the creation of the exercise.
         programmingExerciseService.validateCheckoutDirectoriesUnchanged(programmingExerciseBeforeUpdate, updatedProgrammingExercise);
 
+        // Verify that the programming language supports the selected network access option
+        programmingExerciseService.validateDockerFlags(updatedProgrammingExercise);
+
         // Verify that a theia image is provided when the online IDE is enabled
         if (updatedProgrammingExercise.isAllowOnlineIde() && updatedProgrammingExercise.getBuildConfig().getTheiaImage() == null) {
             throw new BadRequestAlertException("You need to provide a Theia image when the online IDE is enabled", ENTITY_NAME, "noTheiaImageProvided");
@@ -342,8 +344,10 @@ public class ProgrammingExerciseResource {
         exerciseService.checkForConversionBetweenExamAndCourseExercise(updatedProgrammingExercise, programmingExerciseBeforeUpdate, ENTITY_NAME);
 
         // Check that only allowed Athena modules are used
-        athenaModuleService.ifPresentOrElse(ams -> ams.checkHasAccessToAthenaModule(updatedProgrammingExercise, course, ENTITY_NAME),
+        athenaModuleService.ifPresentOrElse(ams -> ams.checkHasAccessToAthenaModule(updatedProgrammingExercise, course, ModuleType.FEEDBACK_SUGGESTIONS, ENTITY_NAME),
                 () -> updatedProgrammingExercise.setFeedbackSuggestionModule(null));
+        athenaModuleService.ifPresentOrElse(ams -> ams.checkHasAccessToAthenaModule(updatedProgrammingExercise, course, ModuleType.PRELIMINARY_FEEDBACK, ENTITY_NAME),
+                () -> updatedProgrammingExercise.setPreliminaryFeedbackModule(null));
         // Changing Athena module after the due date has passed is not allowed
         athenaModuleService.ifPresent(ams -> ams.checkValidAthenaModuleChange(programmingExerciseBeforeUpdate, updatedProgrammingExercise, ENTITY_NAME));
 
@@ -788,9 +792,7 @@ public class ProgrammingExerciseResource {
     }
 
     /**
-     * DELETE programming-exercises/:exerciseId/tasks : Delete all tasks and solution entries for an existing ProgrammingExercise.
-     * Note: This endpoint exists only for testing purposes and will be removed at a later stage of the development of HESTIA
-     * (automatic generation of code hints for programming exercises in Java).
+     * DELETE programming-exercises/:exerciseId/tasks : Delete all tasks for an existing ProgrammingExercise.
      *
      * @param exerciseId of the exercise
      * @return the {@link ResponseEntity} with status {@code 204},
@@ -799,12 +801,12 @@ public class ProgrammingExerciseResource {
     @DeleteMapping("programming-exercises/{exerciseId}/tasks")
     @EnforceAtLeastEditor
     @FeatureToggle(Feature.ProgrammingExercises)
-    public ResponseEntity<Void> deleteTaskWithSolutionEntries(@PathVariable Long exerciseId) {
-        log.debug("REST request to delete ProgrammingExerciseTasks with ProgrammingExerciseSolutionEntries for ProgrammingExercise with id : {}", exerciseId);
+    public ResponseEntity<Void> deleteTasks(@PathVariable Long exerciseId) {
+        log.debug("REST request to delete tasks for ProgrammingExercise with id : {}", exerciseId);
         ProgrammingExercise exercise = programmingExerciseRepository.findByIdElseThrow(exerciseId);
         authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.EDITOR, exercise, null);
 
-        programmingExerciseService.deleteTasksWithSolutionEntries(exercise.getId());
+        programmingExerciseService.deleteTasks(exercise.getId());
         return ResponseEntity.noContent().build();
     }
 
@@ -854,30 +856,6 @@ public class ProgrammingExerciseResource {
 
         // TODO: We want to get rid of ModelAndView and use ResponseEntity instead. Define an appropriate service method and then call it here and in the referenced endpoint.
         return new ModelAndView("forward:/api/repository/" + participation.getId() + "/files-content");
-    }
-
-    /**
-     * GET programming-exercises/:exerciseId/solution-file-names
-     * <p>
-     * Returns the solution repository file names for a given programming exercise.
-     * Note: This endpoint redirects the request to the ProgrammingExerciseParticipationService. This is required if
-     * the solution participation id is not known for the client.
-     *
-     * @param exerciseId the exercise for which the solution repository files should be retrieved
-     * @return a redirect to the endpoint returning the files with content
-     */
-    @GetMapping("programming-exercises/{exerciseId}/file-names")
-    @EnforceAtLeastTutor
-    @FeatureToggle(Feature.ProgrammingExercises)
-    public ModelAndView redirectGetSolutionRepositoryFilesWithoutContent(@PathVariable Long exerciseId) {
-        log.debug("REST request to get latest solution repository file names for ProgrammingExercise with id : {}", exerciseId);
-        ProgrammingExercise exercise = programmingExerciseRepository.findByIdElseThrow(exerciseId);
-        authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.TEACHING_ASSISTANT, exercise, null);
-
-        var participation = solutionProgrammingExerciseParticipationRepository.findByProgrammingExerciseIdElseThrow(exerciseId);
-
-        // TODO: We want to get rid of ModelAndView and use ResponseEntity instead. Define an appropriate service method and then call it here and in the referenced endpoint.
-        return new ModelAndView("forward:/api/repository/" + participation.getId() + "/file-names");
     }
 
     /**

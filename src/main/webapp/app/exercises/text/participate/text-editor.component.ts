@@ -1,5 +1,4 @@
-import { Component, Input, OnDestroy, OnInit } from '@angular/core';
-import { TranslateService } from '@ngx-translate/core';
+import { Component, OnDestroy, OnInit, inject, input } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { HttpErrorResponse } from '@angular/common/http';
 import { AlertService } from 'app/core/util/alert.service';
@@ -34,7 +33,7 @@ import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
 import { PROFILE_IRIS } from 'app/app.constants';
 import { IrisSettingsService } from 'app/iris/settings/shared/iris-settings.service';
 import { AssessmentType } from 'app/entities/assessment-type.model';
-import { CourseExerciseService } from 'app/exercises/shared/course-exercises/course-exercise.service';
+
 @Component({
     selector: 'jhi-text-editor',
     templateUrl: './text-editor.component.html',
@@ -42,6 +41,16 @@ import { CourseExerciseService } from 'app/exercises/shared/course-exercises/cou
     styleUrls: ['./text-editor.component.scss'],
 })
 export class TextEditorComponent implements OnInit, OnDestroy, ComponentCanDeactivate {
+    private route = inject(ActivatedRoute);
+    private textSubmissionService = inject(TextSubmissionService);
+    private textService = inject(TextEditorService);
+    private alertService = inject(AlertService);
+    private participationWebsocketService = inject(ParticipationWebsocketService);
+    private stringCountService = inject(StringCountService);
+    private accountService = inject(AccountService);
+    private profileService = inject(ProfileService);
+    private irisSettingsService = inject(IrisSettingsService);
+
     readonly ButtonType = ButtonType;
     readonly MAX_CHARACTER_COUNT = MAX_SUBMISSION_TEXT_LENGTH;
     protected readonly Result = Result;
@@ -49,14 +58,13 @@ export class TextEditorComponent implements OnInit, OnDestroy, ComponentCanDeact
     readonly ChatServiceMode = ChatServiceMode;
     protected readonly isAthenaAIResult = isAthenaAIResult;
 
-    @Input() participationId?: number;
-    @Input() displayHeader: boolean = true;
-    @Input() expandProblemStatement?: boolean = true;
-
-    @Input() inputExercise?: TextExercise;
-    @Input() inputSubmission?: TextSubmission;
-    @Input() inputParticipation?: StudentParticipation;
-    @Input() isExamSummary = false;
+    participationId = input<number>();
+    displayHeader = input<boolean>(true);
+    expandProblemStatement = input<boolean | undefined>(true);
+    inputExercise = input<TextExercise>();
+    inputSubmission = input<TextSubmission>();
+    inputParticipation = input<StudentParticipation>();
+    isExamSummary = input<boolean>(false);
 
     textExercise: TextExercise;
     participation: StudentParticipation;
@@ -64,7 +72,7 @@ export class TextEditorComponent implements OnInit, OnDestroy, ComponentCanDeact
     resultWithComplaint?: Result;
     submission: TextSubmission;
     course?: Course;
-    isSaving: boolean;
+    isSaving: boolean = false;
     private textEditorInput = new Subject<string>();
     textEditorInputObservable = this.textEditorInput.asObservable();
     private submissionChange = new Subject<TextSubmission>();
@@ -96,27 +104,11 @@ export class TextEditorComponent implements OnInit, OnDestroy, ComponentCanDeact
     showHistory: boolean = false;
     submissionId: number | undefined;
 
-    constructor(
-        private route: ActivatedRoute,
-        private textSubmissionService: TextSubmissionService,
-        private textService: TextEditorService,
-        private alertService: AlertService,
-        private translateService: TranslateService,
-        private participationWebsocketService: ParticipationWebsocketService,
-        private stringCountService: StringCountService,
-        private accountService: AccountService,
-        private courseExerciseService: CourseExerciseService,
-        private profileService: ProfileService,
-        private irisSettingsService: IrisSettingsService,
-    ) {
-        this.isSaving = false;
-    }
-
     ngOnInit() {
         if (this.inputValuesArePresent()) {
             this.setupComponentWithInputValues();
         } else {
-            const participationId = this.participationId !== undefined ? this.participationId : Number(this.route.snapshot.paramMap.get('participationId'));
+            const participationId = this.participationId() !== undefined ? this.participationId() : Number(this.route.snapshot.paramMap.get('participationId'));
             this.submissionId = Number(this.route.snapshot.paramMap.get('submissionId')) || undefined;
 
             if (Number.isNaN(participationId)) {
@@ -128,7 +120,7 @@ export class TextEditorComponent implements OnInit, OnDestroy, ComponentCanDeact
                 this.updateParticipation(this.participation, this.submissionId);
             });
 
-            this.textService.get(participationId).subscribe({
+            this.textService.get(participationId!).subscribe({
                 next: (data: StudentParticipation) => this.updateParticipation(data, this.submissionId),
                 error: (error: HttpErrorResponse) => onError(this.alertService, error),
             });
@@ -159,7 +151,8 @@ export class TextEditorComponent implements OnInit, OnDestroy, ComponentCanDeact
                 this.updateParticipation(this.participation);
             });
         this.profileService.getProfileInfo().subscribe((profileInfo) => {
-            if (profileInfo?.activeProfiles?.includes(PROFILE_IRIS)) {
+            // only load the settings if Iris is available and this is not an exam exercise
+            if (profileInfo?.activeProfiles?.includes(PROFILE_IRIS) && !this.examMode) {
                 this.route.params.subscribe((params) => {
                     this.irisSettingsService.getCombinedExerciseSettings(params['exerciseId']).subscribe((irisSettings) => {
                         this.irisSettings = irisSettings;
@@ -170,7 +163,7 @@ export class TextEditorComponent implements OnInit, OnDestroy, ComponentCanDeact
     }
 
     private inputValuesArePresent(): boolean {
-        return !!(this.inputExercise || this.inputSubmission || this.inputParticipation);
+        return !!(this.inputExercise() || this.inputSubmission() || this.inputParticipation());
     }
 
     /**
@@ -181,14 +174,14 @@ export class TextEditorComponent implements OnInit, OnDestroy, ComponentCanDeact
      * @private
      */
     private setupComponentWithInputValues() {
-        if (this.inputExercise) {
-            this.textExercise = this.inputExercise;
+        if (this.inputExercise() !== undefined) {
+            this.textExercise = this.inputExercise()!;
         }
-        if (this.inputSubmission) {
-            this.submission = this.inputSubmission;
+        if (this.inputSubmission() !== undefined) {
+            this.submission = this.inputSubmission()!;
         }
-        if (this.inputParticipation) {
-            this.participation = this.inputParticipation;
+        if (this.inputParticipation() !== undefined) {
+            this.participation = this.inputParticipation()!;
         }
 
         if (this.submission?.text) {

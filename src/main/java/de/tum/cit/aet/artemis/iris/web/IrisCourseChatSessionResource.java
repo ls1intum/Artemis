@@ -91,7 +91,7 @@ public class IrisCourseChatSessionResource {
     public ResponseEntity<List<IrisCourseChatSession>> getAllSessions(@PathVariable Long courseId) {
         var course = courseRepository.findByIdElseThrow(courseId);
 
-        irisSettingsService.isEnabledForElseThrow(IrisSubSettingsType.CHAT, course);
+        irisSettingsService.isEnabledForElseThrow(IrisSubSettingsType.COURSE_CHAT, course);
         var user = userRepository.getUserWithGroupsAndAuthorities();
         user.hasAcceptedIrisElseThrow();
 

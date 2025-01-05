@@ -5,9 +5,13 @@ import { Observable } from 'rxjs';
 import { AthenaService } from 'app/assessment/athena.service';
 import { ActivatedRoute } from '@angular/router';
 import dayjs from 'dayjs/esm';
+import { ArtemisSharedCommonModule } from 'app/shared/shared-common.module';
+import { ArtemisSharedComponentModule } from 'app/shared/components/shared-component.module';
 
 @Component({
     selector: 'jhi-exercise-feedback-suggestion-options',
+    standalone: true,
+    imports: [ArtemisSharedCommonModule, ArtemisSharedComponentModule],
     templateUrl: './exercise-feedback-suggestion-options.component.html',
 })
 export class ExerciseFeedbackSuggestionOptionsComponent implements OnInit, OnChanges {
@@ -25,6 +29,7 @@ export class ExerciseFeedbackSuggestionOptionsComponent implements OnInit, OnCha
     modulesAvailable: boolean;
     availableAthenaModules: string[];
     initialAthenaModule?: string;
+    showDropdownList: boolean = false;
 
     constructor(
         private athenaService: AthenaService,
@@ -71,20 +76,12 @@ export class ExerciseFeedbackSuggestionOptionsComponent implements OnInit, OnCha
     }
 
     toggleFeedbackSuggestions(event: any) {
+        this.showDropdownList = event.target.checked;
         if (event.target.checked) {
             this.exercise.feedbackSuggestionModule = this.availableAthenaModules.first();
+            this.exercise.allowManualFeedbackRequests = false;
         } else {
-            this.exercise.allowFeedbackRequests = false;
             this.exercise.feedbackSuggestionModule = undefined;
-        }
-    }
-
-    toggleFeedbackRequests(event: any) {
-        if (event.target.checked) {
-            this.exercise.feedbackSuggestionModule = this.availableAthenaModules.first();
-            this.exercise.allowFeedbackRequests = true;
-        } else {
-            this.exercise.allowFeedbackRequests = false;
         }
     }
 

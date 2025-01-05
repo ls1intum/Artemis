@@ -13,14 +13,13 @@ import org.springframework.web.bind.annotation.RestController;
 
 import de.tum.cit.aet.artemis.core.repository.CourseRepository;
 import de.tum.cit.aet.artemis.core.repository.UserRepository;
-import de.tum.cit.aet.artemis.core.security.Role;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastInstructor;
-import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInCourse.EnforceAtLeastEditorInCourse;
 import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInCourse.EnforceAtLeastInstructorInCourse;
 import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInCourse.EnforceAtLeastStudentInCourse;
-import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInExercise.EnforceAtLeastEditorInExercise;
+import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInCourse.EnforceAtLeastTutorInCourse;
 import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInExercise.EnforceAtLeastInstructorInExercise;
 import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInExercise.EnforceAtLeastStudentInExercise;
+import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInExercise.EnforceAtLeastTutorInExercise;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
 import de.tum.cit.aet.artemis.exercise.repository.ExerciseRepository;
 import de.tum.cit.aet.artemis.iris.domain.settings.IrisCourseSettings;
@@ -75,7 +74,7 @@ public class IrisSettingsResource {
      * @return the {@link ResponseEntity} with status {@code 200 (Ok)} and with body the settings, or with status {@code 404 (Not Found)} if the course could not be found.
      */
     @GetMapping("courses/{courseId}/raw-iris-settings")
-    @EnforceAtLeastEditorInCourse
+    @EnforceAtLeastTutorInCourse
     public ResponseEntity<IrisSettings> getRawCourseSettings(@PathVariable Long courseId) {
         var course = courseRepository.findByIdElseThrow(courseId);
         var irisSettings = irisSettingsService.getRawIrisSettingsFor(course);
@@ -89,12 +88,9 @@ public class IrisSettingsResource {
      * @return the {@link ResponseEntity} with status {@code 200 (Ok)} and with body the settings, or with status {@code 404 (Not Found)} if the exercise could not be found.
      */
     @GetMapping("exercises/{exerciseId}/raw-iris-settings")
-    @EnforceAtLeastEditorInExercise
+    @EnforceAtLeastTutorInExercise
     public ResponseEntity<IrisSettings> getRawExerciseSettings(@PathVariable Long exerciseId) {
         var exercise = exerciseRepository.findByIdElseThrow(exerciseId);
-        var user = userRepository.getUserWithGroupsAndAuthorities();
-        authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.STUDENT, exercise, user);
-
         var combinedIrisSettings = irisSettingsService.getRawIrisSettingsFor(exercise);
         return ResponseEntity.ok(combinedIrisSettings);
     }

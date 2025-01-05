@@ -14,7 +14,7 @@ import { expect } from '@playwright/test';
 // Common primitives
 const textFixture = 'loremIpsum-short.txt';
 
-test.describe('Test exam participation', () => {
+test.describe('Test exam participation', { tag: '@slow' }, () => {
     let course: Course;
     let exerciseArray: Array<Exercise> = [];
 

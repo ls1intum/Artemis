@@ -95,13 +95,13 @@ public class AthenaFeedbackSuggestionsService {
     /**
      * Calls the remote Athena service to get feedback suggestions for a given submission.
      *
-     * @param exercise   the {@link TextExercise} the suggestions are fetched for
-     * @param submission the {@link TextSubmission} the suggestions are fetched for
-     * @param isGraded   the {@link Boolean} should Athena generate grade suggestions or not
+     * @param exercise      the {@link TextExercise} the suggestions are fetched for
+     * @param submission    the {@link TextSubmission} the suggestions are fetched for
+     * @param isPreliminary the {@link Boolean} should Athena generate grade suggestions or not
      * @return a list of feedback suggestions
      */
-    public List<TextFeedbackDTO> getTextFeedbackSuggestions(TextExercise exercise, TextSubmission submission, boolean isGraded) throws NetworkingException {
-        log.debug("Start Athena '{}' Feedback Suggestions Service for Exercise '{}' (#{}).", isGraded ? "Graded" : "Non Graded", exercise.getTitle(), exercise.getId());
+    public List<TextFeedbackDTO> getTextFeedbackSuggestions(TextExercise exercise, TextSubmission submission, boolean isPreliminary) throws NetworkingException {
+        log.debug("Start Athena {} Feedback Suggestions Service for Exercise '{}' (#{}).", isPreliminary ? "Non Graded" : "Graded", exercise.getTitle(), exercise.getId());
 
         if (!Objects.equals(submission.getParticipation().getExercise().getId(), exercise.getId())) {
             log.error("Exercise id {} does not match submission's exercise id {}", exercise.getId(), submission.getParticipation().getExercise().getId());
@@ -109,51 +109,63 @@ public class AthenaFeedbackSuggestionsService {
                     "Exercise", "exerciseIdDoesNotMatch");
         }
 
-        final RequestDTO request = new RequestDTO(athenaDTOConverterService.ofExercise(exercise), athenaDTOConverterService.ofSubmission(exercise.getId(), submission), isGraded);
-        ResponseDTOText response = textAthenaConnector.invokeWithRetry(athenaModuleService.getAthenaModuleUrl(exercise) + "/feedback_suggestions", request, 0);
-        log.info("Athena responded to '{}' feedback suggestions request: {}", isGraded ? "Graded" : "Non Graded", response.data);
-        storeTokenUsage(exercise, submission, response.meta, !isGraded);
+        final RequestDTO request = new RequestDTO(athenaDTOConverterService.ofExercise(exercise), athenaDTOConverterService.ofSubmission(exercise.getId(), submission),
+                !isPreliminary);
+        ResponseDTOText response = textAthenaConnector.invokeWithRetry(
+                athenaModuleService.getAthenaModuleUrl(exercise.getExerciseType(), isPreliminary ? exercise.getPreliminaryFeedbackModule() : exercise.getFeedbackSuggestionModule())
+                        + "/feedback_suggestions",
+                request, 0);
+        log.info("Athena responded to '{}' feedback suggestions request: {}", isPreliminary ? "Non Graded" : "Graded", response.data);
+        storeTokenUsage(exercise, submission, response.meta, !isPreliminary);
         return response.data.stream().toList();
     }
 
     /**
      * Calls the remote Athena service to get feedback suggestions for a given programming submission.
      *
-     * @param exercise   the {@link ProgrammingExercise} the suggestions are fetched for
-     * @param submission the {@link ProgrammingSubmission} the suggestions are fetched for
-     * @param isGraded   the {@link Boolean} should Athena generate grade suggestions or not
+     * @param exercise      the {@link ProgrammingExercise} the suggestions are fetched for
+     * @param submission    the {@link ProgrammingSubmission} the suggestions are fetched for
+     * @param isPreliminary the {@link Boolean} should Athena generate grade suggestions or not
      * @return a list of feedback suggestions
      */
-    public List<ProgrammingFeedbackDTO> getProgrammingFeedbackSuggestions(ProgrammingExercise exercise, ProgrammingSubmission submission, boolean isGraded)
+    public List<ProgrammingFeedbackDTO> getProgrammingFeedbackSuggestions(ProgrammingExercise exercise, ProgrammingSubmission submission, boolean isPreliminary)
             throws NetworkingException {
-        log.debug("Start Athena '{}' Feedback Suggestions Service for Exercise '{}' (#{}).", isGraded ? "Graded" : "Non Graded", exercise.getTitle(), exercise.getId());
-        final RequestDTO request = new RequestDTO(athenaDTOConverterService.ofExercise(exercise), athenaDTOConverterService.ofSubmission(exercise.getId(), submission), isGraded);
-        ResponseDTOProgramming response = programmingAthenaConnector.invokeWithRetry(athenaModuleService.getAthenaModuleUrl(exercise) + "/feedback_suggestions", request, 0);
-        log.info("Athena responded to '{}' feedback suggestions request: {}", isGraded ? "Graded" : "Non Graded", response.data);
-        storeTokenUsage(exercise, submission, response.meta, !isGraded);
+        log.debug("Start Athena {} Feedback Suggestions Service for Exercise '{}' (#{}).", isPreliminary ? "Non Graded" : "Graded", exercise.getTitle(), exercise.getId());
+        final RequestDTO request = new RequestDTO(athenaDTOConverterService.ofExercise(exercise), athenaDTOConverterService.ofSubmission(exercise.getId(), submission),
+                !isPreliminary);
+        ResponseDTOProgramming response = programmingAthenaConnector.invokeWithRetry(
+                athenaModuleService.getAthenaModuleUrl(exercise.getExerciseType(), isPreliminary ? exercise.getPreliminaryFeedbackModule() : exercise.getFeedbackSuggestionModule())
+                        + "/feedback_suggestions",
+                request, 0);
+        log.info("Athena responded to '{}' feedback suggestions request: {}", isPreliminary ? "Non-Graded" : "Graded", response.data);
+        storeTokenUsage(exercise, submission, response.meta, !isPreliminary);
         return response.data.stream().toList();
     }
 
     /**
      * Retrieve feedback suggestions for a given modeling exercise submission from Athena
      *
-     * @param exercise   the {@link ModelingExercise} the suggestions are fetched for
-     * @param submission the {@link ModelingSubmission} the suggestions are fetched for
-     * @param isGraded   the {@link Boolean} should Athena generate grade suggestions or not
+     * @param exercise      the {@link ModelingExercise} the suggestions are fetched for
+     * @param submission    the {@link ModelingSubmission} the suggestions are fetched for
+     * @param isPreliminary the {@link Boolean} should Athena generate grade suggestions or not
      * @return a list of feedback suggestions generated by Athena
      */
-    public List<ModelingFeedbackDTO> getModelingFeedbackSuggestions(ModelingExercise exercise, ModelingSubmission submission, boolean isGraded) throws NetworkingException {
-        log.debug("Start Athena '{}' Feedback Suggestions Service for Modeling Exercise '{}' (#{}).", isGraded ? "Graded" : "Non Graded", exercise.getTitle(), exercise.getId());
+    public List<ModelingFeedbackDTO> getModelingFeedbackSuggestions(ModelingExercise exercise, ModelingSubmission submission, boolean isPreliminary) throws NetworkingException {
+        log.debug("Start Athena {} Feedback Suggestions Service for Modeling Exercise '{}' (#{}).", isPreliminary ? "Non Graded" : "Graded", exercise.getTitle(), exercise.getId());
 
         if (!Objects.equals(submission.getParticipation().getExercise().getId(), exercise.getId())) {
             throw new ConflictException("Exercise id " + exercise.getId() + " does not match submission's exercise id " + submission.getParticipation().getExercise().getId(),
                     "Exercise", "exerciseIdDoesNotMatch");
         }
 
-        final RequestDTO request = new RequestDTO(athenaDTOConverterService.ofExercise(exercise), athenaDTOConverterService.ofSubmission(exercise.getId(), submission), isGraded);
-        ResponseDTOModeling response = modelingAthenaConnector.invokeWithRetry(athenaModuleService.getAthenaModuleUrl(exercise) + "/feedback_suggestions", request, 0);
-        log.info("Athena responded to '{}' feedback suggestions request: {}", isGraded ? "Graded" : "Non Graded", response.data);
-        storeTokenUsage(exercise, submission, response.meta, !isGraded);
+        final RequestDTO request = new RequestDTO(athenaDTOConverterService.ofExercise(exercise), athenaDTOConverterService.ofSubmission(exercise.getId(), submission),
+                !isPreliminary);
+        ResponseDTOModeling response = modelingAthenaConnector.invokeWithRetry(
+                athenaModuleService.getAthenaModuleUrl(exercise.getExerciseType(), isPreliminary ? exercise.getPreliminaryFeedbackModule() : exercise.getFeedbackSuggestionModule())
+                        + "/feedback_suggestions",
+                request, 0);
+        log.info("Athena responded to '{}' feedback suggestions request: {}", isPreliminary ? "Non Graded" : "Graded", response.data);
+        storeTokenUsage(exercise, submission, response.meta, !isPreliminary);
         return response.data;
     }
 

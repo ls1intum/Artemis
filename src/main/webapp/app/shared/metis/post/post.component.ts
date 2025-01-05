@@ -20,13 +20,10 @@ import { PostingDirective } from 'app/shared/metis/posting.directive';
 import { MetisService } from 'app/shared/metis/metis.service';
 import { NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
 import { ContextInformation, DisplayPriority, PageType, RouteComponents } from '../metis.util';
-import { faBullhorn, faComments, faPencilAlt, faSmile, faThumbtack, faTrash } from '@fortawesome/free-solid-svg-icons';
+import { faBookmark, faBullhorn, faCheckSquare, faComments, faPencilAlt, faSmile, faThumbtack, faTrash } from '@fortawesome/free-solid-svg-icons';
 import dayjs from 'dayjs/esm';
-import { PostFooterComponent } from 'app/shared/metis/posting-footer/post-footer/post-footer.component';
-import { OneToOneChatService } from 'app/shared/metis/conversations/one-to-one-chat.service';
-import { isCommunicationEnabled, isMessagingEnabled } from 'app/entities/course.model';
-import { Router } from '@angular/router';
-import { MetisConversationService } from 'app/shared/metis/metis-conversation.service';
+import { PostingFooterComponent } from 'app/shared/metis/posting-footer/posting-footer.component';
+import { isCommunicationEnabled } from 'app/entities/course.model';
 import { getAsChannelDTO } from 'app/entities/metis/conversation/channel.model';
 import { AnswerPost } from 'app/entities/metis/answer-post.model';
 import { AnswerPostCreateEditModalComponent } from 'app/shared/metis/posting-create-edit-modal/answer-post-create-edit-modal/answer-post-create-edit-modal.component';
@@ -60,7 +57,7 @@ export class PostComponent extends PostingDirective<Post> implements OnInit, OnC
     @ViewChild('createAnswerPostModal') createAnswerPostModalComponent: AnswerPostCreateEditModalComponent;
     @ViewChild('createEditModal') createEditModal!: PostCreateEditModalComponent;
     @ViewChild('createEditAnswerPostContainer', { read: ViewContainerRef }) containerRef: ViewContainerRef;
-    @ViewChild('postFooter') postFooterComponent: PostFooterComponent;
+    @ViewChild('postFooter') postFooterComponent: PostingFooterComponent;
     showReactionSelector = false;
     @ViewChild('emojiPickerTrigger') emojiPickerTrigger!: CdkOverlayOrigin;
     static activeDropdownPost: PostComponent | null = null;
@@ -77,7 +74,8 @@ export class PostComponent extends PostingDirective<Post> implements OnInit, OnC
     contextInformation: ContextInformation;
     readonly PageType = PageType;
     readonly DisplayPriority = DisplayPriority;
-    mayEditOrDelete: boolean = false;
+    mayEdit: boolean = false;
+    mayDelete: boolean = false;
     canPin: boolean = false;
 
     // Icons
@@ -87,17 +85,16 @@ export class PostComponent extends PostingDirective<Post> implements OnInit, OnC
     readonly faSmile = faSmile;
     readonly faTrash = faTrash;
     readonly faThumbtack = faThumbtack;
+    readonly faCheckSquare = faCheckSquare;
+    readonly faBookmark = faBookmark;
 
     isConsecutive = input<boolean>(false);
     dropdownPosition = { x: 0, y: 0 };
-    @ViewChild(PostReactionsBarComponent) private reactionsBarComponent!: PostReactionsBarComponent;
+    @ViewChild(PostReactionsBarComponent) protected reactionsBarComponent!: PostReactionsBarComponent;
 
     constructor(
         public metisService: MetisService,
         public changeDetector: ChangeDetectorRef,
-        private oneToOneChatService: OneToOneChatService,
-        private metisConversationService: MetisConversationService,
-        private router: Router,
         public renderer: Renderer2,
         @Inject(DOCUMENT) private document: Document,
     ) {
@@ -112,8 +109,12 @@ export class PostComponent extends PostingDirective<Post> implements OnInit, OnC
         return this.posting.displayPriority === DisplayPriority.PINNED;
     }
 
-    onMayEditOrDelete(value: boolean) {
-        this.mayEditOrDelete = value;
+    onMayEdit(value: boolean) {
+        this.mayEdit = value;
+    }
+
+    onMayDelete(value: boolean) {
+        this.mayDelete = value;
     }
 
     onCanPin(value: boolean) {
@@ -121,24 +122,29 @@ export class PostComponent extends PostingDirective<Post> implements OnInit, OnC
     }
 
     onRightClick(event: MouseEvent) {
-        event.preventDefault();
+        const targetElement = event.target as HTMLElement;
+        const isPointerCursor = window.getComputedStyle(targetElement).cursor === 'pointer';
 
-        if (PostComponent.activeDropdownPost && PostComponent.activeDropdownPost !== this) {
-            PostComponent.activeDropdownPost.showDropdown = false;
-            PostComponent.activeDropdownPost.enableBodyScroll();
-            PostComponent.activeDropdownPost.changeDetector.detectChanges();
+        if (!isPointerCursor) {
+            event.preventDefault();
+
+            if (PostComponent.activeDropdownPost && PostComponent.activeDropdownPost !== this) {
+                PostComponent.activeDropdownPost.showDropdown = false;
+                PostComponent.activeDropdownPost.enableBodyScroll();
+                PostComponent.activeDropdownPost.changeDetector.detectChanges();
+            }
+
+            PostComponent.activeDropdownPost = this;
+
+            this.dropdownPosition = {
+                x: event.clientX,
+                y: event.clientY,
+            };
+
+            this.showDropdown = true;
+            this.adjustDropdownPosition();
+            this.disableBodyScroll();
         }
-
-        PostComponent.activeDropdownPost = this;
-
-        this.dropdownPosition = {
-            x: event.clientX,
-            y: event.clientY,
-        };
-
-        this.showDropdown = true;
-        this.adjustDropdownPosition();
-        this.disableBodyScroll();
     }
 
     adjustDropdownPosition() {
@@ -179,6 +185,7 @@ export class PostComponent extends PostingDirective<Post> implements OnInit, OnC
         this.contextInformation = this.metisService.getContextInformation(this.posting);
         this.isAtLeastTutorInCourse = this.metisService.metisUserIsAtLeastTutorInCourse();
         this.sortAnswerPosts();
+        this.assignPostingToPost();
     }
 
     /**
@@ -190,6 +197,7 @@ export class PostComponent extends PostingDirective<Post> implements OnInit, OnC
         this.queryParams = this.metisService.getQueryParamsForPost(this.posting);
         this.showAnnouncementIcon = (getAsChannelDTO(this.posting.conversation)?.isAnnouncementChannel && this.showChannelReference) ?? false;
         this.sortAnswerPosts();
+        this.assignPostingToPost();
     }
 
     /**
@@ -219,6 +227,13 @@ export class PostComponent extends PostingDirective<Post> implements OnInit, OnC
     }
 
     /**
+     * Close create answer modal
+     */
+    closeCreateAnswerPostModal() {
+        this.postFooterComponent.closeCreateAnswerPostModal();
+    }
+
+    /**
      * sorts answerPosts by two criteria
      * 1. criterion: resolvesPost -> true comes first
      * 2. criterion: creationDate -> most recent comes at the end (chronologically from top to bottom)
@@ -232,28 +247,6 @@ export class PostComponent extends PostingDirective<Post> implements OnInit, OnC
             (answerPostA, answerPostB) =>
                 Number(answerPostB.resolvesPost) - Number(answerPostA.resolvesPost) || answerPostA.creationDate!.valueOf() - answerPostB.creationDate!.valueOf(),
         );
-    }
-
-    /**
-     * Create a or navigate to one-to-one chat with the referenced user
-     *
-     * @param referencedUserLogin login of the referenced user
-     */
-    onUserReferenceClicked(referencedUserLogin: string) {
-        const course = this.metisService.getCourse();
-        if (isMessagingEnabled(course)) {
-            if (this.isCommunicationPage) {
-                this.metisConversationService.createOneToOneChat(referencedUserLogin).subscribe();
-            } else {
-                this.oneToOneChatService.create(course.id!, referencedUserLogin).subscribe((res) => {
-                    this.router.navigate(['courses', course.id, 'communication'], {
-                        queryParams: {
-                            conversationId: res.body!.id,
-                        },
-                    });
-                });
-            }
-        }
     }
 
     /**
@@ -273,6 +266,13 @@ export class PostComponent extends PostingDirective<Post> implements OnInit, OnC
                     },
                 });
             }
+        }
+    }
+
+    private assignPostingToPost() {
+        // This is needed because otherwise instanceof returns 'object'.
+        if (this.posting && !(this.posting instanceof Post)) {
+            this.posting = Object.assign(new Post(), this.posting);
         }
     }
 }

@@ -74,7 +74,6 @@ import de.tum.cit.aet.artemis.programming.domain.VcsRepositoryUri;
 import de.tum.cit.aet.artemis.programming.repository.AuxiliaryRepositoryRepository;
 import de.tum.cit.aet.artemis.programming.repository.BuildPlanRepository;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseRepository;
-import de.tum.cit.aet.artemis.programming.service.hestia.ProgrammingExerciseTaskService;
 
 /**
  * Service for exporting programming exercises.
@@ -186,6 +185,7 @@ public class ProgrammingExerciseExportService extends ExerciseWithSubmissionsExp
         if (exercise instanceof ProgrammingExercise programmingExercise) {
             // Used for a save typecast, this should always be true since this class only works with programming exercises.
             programmingExerciseTaskService.replaceTestIdsWithNames(programmingExercise);
+            programmingExercise.setAuxiliaryRepositories(auxiliaryRepositoryRepository.findByExerciseId(exercise.getId()));
         }
         super.exportProblemStatementAndEmbeddedFilesAndExerciseDetails(exercise, exportErrors, exportDir, pathsToBeZipped);
     }

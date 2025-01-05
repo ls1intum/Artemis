@@ -10,9 +10,10 @@ describe('FeedbackModalComponent', () => {
     let activeModal: NgbActiveModal;
 
     const mockFeedbackDetail: FeedbackDetail = {
+        feedbackIds: [1, 2, 3, 4, 5],
         count: 5,
         relativeCount: 25.0,
-        detailText: 'Some feedback detail',
+        detailTexts: ['Some feedback detail'],
         testCaseName: 'testCase1',
         taskName: '1',
         errorCategory: 'StudentError',
@@ -32,7 +33,7 @@ describe('FeedbackModalComponent', () => {
 
     it('should initialize with the provided feedback detail', () => {
         expect(component.feedbackDetail()).toEqual(mockFeedbackDetail);
-        expect(component.feedbackDetail().detailText).toBe('Some feedback detail');
+        expect(component.feedbackDetail().detailTexts).toStrictEqual(['Some feedback detail']);
         expect(component.feedbackDetail().testCaseName).toBe('testCase1');
     });
 

@@ -1,4 +1,4 @@
-import { Component, ElementRef, EventEmitter, HostListener, OnDestroy, OnInit, ViewChild, ViewEncapsulation, inject } from '@angular/core';
+import { ChangeDetectorRef, Component, ElementRef, EventEmitter, HostListener, OnDestroy, OnInit, ViewChild, ViewEncapsulation, inject } from '@angular/core';
 import { ConversationDTO } from 'app/entities/metis/conversation/conversation.model';
 import { Post } from 'app/entities/metis/post.model';
 import { ActivatedRoute, Router } from '@angular/router';
@@ -10,10 +10,25 @@ import { ChannelDTO, ChannelSubType, getAsChannelDTO } from 'app/entities/metis/
 import { MetisService } from 'app/shared/metis/metis.service';
 import { Course, isMessagingEnabled } from 'app/entities/course.model';
 import { PageType, SortDirection } from 'app/shared/metis/metis.util';
-import { faBan, faComment, faComments, faFile, faFilter, faGraduationCap, faHeart, faList, faMessage, faPlus, faSearch, faTimes } from '@fortawesome/free-solid-svg-icons';
+import {
+    faBan,
+    faBookmark,
+    faClock,
+    faComment,
+    faComments,
+    faFile,
+    faFilter,
+    faGraduationCap,
+    faHeart,
+    faList,
+    faMessage,
+    faPlus,
+    faSearch,
+    faTimes,
+} from '@fortawesome/free-solid-svg-icons';
 import { ButtonType } from 'app/shared/components/button.component';
 import { CourseWideSearchComponent, CourseWideSearchConfig } from 'app/overview/course-conversations/course-wide-search/course-wide-search.component';
-import { AccordionGroups, ChannelAccordionShowAdd, ChannelTypeIcons, CollapseState, SidebarCardElement, SidebarData, SidebarItemShowAlways } from 'app/types/sidebar';
+import { AccordionGroups, ChannelTypeIcons, CollapseState, SidebarCardElement, SidebarData, SidebarItemShowAlways } from 'app/types/sidebar';
 import { CourseOverviewService } from 'app/overview/course-overview.service';
 import { GroupChatCreateDialogComponent } from 'app/overview/course-conversations/dialogs/group-chat-create-dialog/group-chat-create-dialog.component';
 import { defaultFirstLayerDialogOptions, defaultSecondLayerDialogOptions } from 'app/overview/course-conversations/other/conversation.util';
@@ -25,25 +40,18 @@ import { ChannelsCreateDialogComponent } from 'app/overview/course-conversations
 import { CourseSidebarService } from 'app/overview/course-sidebar.service';
 import { LayoutService } from 'app/shared/breakpoints/layout.service';
 import { CustomBreakpointNames } from 'app/shared/breakpoints/breakpoints.service';
+import { Posting, PostingType, SavedPostStatus, SavedPostStatusMap } from 'app/entities/metis/posting.model';
+import { canCreateChannel } from 'app/shared/metis/conversations/conversation-permissions.utils';
 
 const DEFAULT_CHANNEL_GROUPS: AccordionGroups = {
     favoriteChannels: { entityData: [] },
+    recents: { entityData: [] },
     generalChannels: { entityData: [] },
     exerciseChannels: { entityData: [] },
     lectureChannels: { entityData: [] },
     examChannels: { entityData: [] },
     hiddenChannels: { entityData: [] },
-};
-
-const CHANNEL_TYPE_SHOW_ADD_OPTION: ChannelAccordionShowAdd = {
-    generalChannels: true,
-    exerciseChannels: true,
-    examChannels: true,
-    groupChats: true,
-    directMessages: true,
-    favoriteChannels: false,
-    lectureChannels: true,
-    hiddenChannels: false,
+    savedPosts: { entityData: [] },
 };
 
 const CHANNEL_TYPE_ICON: ChannelTypeIcons = {
@@ -55,6 +63,8 @@ const CHANNEL_TYPE_ICON: ChannelTypeIcons = {
     favoriteChannels: faHeart,
     lectureChannels: faFile,
     hiddenChannels: faBan,
+    savedPosts: faBookmark,
+    recents: faClock,
 };
 
 const DEFAULT_COLLAPSE_STATE: CollapseState = {
@@ -66,6 +76,8 @@ const DEFAULT_COLLAPSE_STATE: CollapseState = {
     favoriteChannels: false,
     lectureChannels: true,
     hiddenChannels: true,
+    savedPosts: true,
+    recents: true,
 };
 
 const DEFAULT_SHOW_ALWAYS: SidebarItemShowAlways = {
@@ -77,6 +89,8 @@ const DEFAULT_SHOW_ALWAYS: SidebarItemShowAlways = {
     favoriteChannels: true,
     lectureChannels: false,
     hiddenChannels: false,
+    savedPosts: true,
+    recents: true,
 };
 
 @Component({
@@ -110,8 +124,10 @@ export class CourseConversationsComponent implements OnInit, OnDestroy {
     isProduction = true;
     isTestServer = false;
     isMobile = false;
+    focusPostId: number | undefined = undefined;
+    openThreadOnFocus = false;
+    selectedSavedPostStatus: null | SavedPostStatus = null;
 
-    readonly CHANNEL_TYPE_SHOW_ADD_OPTION = CHANNEL_TYPE_SHOW_ADD_OPTION;
     readonly CHANNEL_TYPE_ICON = CHANNEL_TYPE_ICON;
     readonly DEFAULT_COLLAPSE_STATE = DEFAULT_COLLAPSE_STATE;
     protected readonly DEFAULT_SHOW_ALWAYS = DEFAULT_SHOW_ALWAYS;
@@ -140,6 +156,7 @@ export class CourseConversationsComponent implements OnInit, OnDestroy {
 
     private courseSidebarService: CourseSidebarService = inject(CourseSidebarService);
     private layoutService: LayoutService = inject(LayoutService);
+    private changeDetector: ChangeDetectorRef = inject(ChangeDetectorRef);
 
     constructor(
         private router: Router,
@@ -251,9 +268,23 @@ export class CourseConversationsComponent implements OnInit, OnDestroy {
     subscribeToQueryParameter() {
         this.activatedRoute.queryParams.pipe(take(1), takeUntil(this.ngUnsubscribe)).subscribe((queryParams) => {
             if (queryParams.conversationId) {
-                this.metisConversationService.setActiveConversation(Number(queryParams.conversationId));
-
-                this.closeSidebarOnMobile();
+                if (
+                    isNaN(Number(queryParams.conversationId)) &&
+                    Object.values(SavedPostStatusMap)
+                        .map((s) => s.toString())
+                        .includes(queryParams.conversationId)
+                ) {
+                    this.selectedSavedPostStatus = Posting.mapToStatus(queryParams.conversationId as SavedPostStatusMap);
+                } else {
+                    this.metisConversationService.setActiveConversation(Number(queryParams.conversationId));
+                    this.closeSidebarOnMobile();
+                }
+            }
+            if (queryParams.focusPostId) {
+                this.focusPostId = Number(queryParams.focusPostId);
+            }
+            if (queryParams.openThreadOnFocus) {
+                this.openThreadOnFocus = queryParams.openThreadOnFocus;
             }
             if (queryParams.messageId) {
                 this.postInThread = { id: Number(queryParams.messageId) } as Post;
@@ -265,11 +296,22 @@ export class CourseConversationsComponent implements OnInit, OnDestroy {
         });
     }
 
+    onNavigateToPost(post: Posting) {
+        if (post.referencePostId === undefined || post.conversation?.id === undefined) {
+            return;
+        }
+
+        this.focusPostId = post.referencePostId;
+        this.openThreadOnFocus = (post.postingType as PostingType) === PostingType.ANSWER;
+        this.metisConversationService.setActiveConversation(post.conversation!.id!);
+        this.changeDetector.detectChanges();
+    }
+
     updateQueryParameters() {
         this.router.navigate([], {
             relativeTo: this.activatedRoute,
             queryParams: {
-                conversationId: this.activeConversation?.id,
+                conversationId: this.activeConversation?.id ?? (this.selectedSavedPostStatus !== null ? Posting.statusToMap(this.selectedSavedPostStatus) : undefined),
             },
             replaceUrl: true,
         });
@@ -348,6 +390,7 @@ export class CourseConversationsComponent implements OnInit, OnDestroy {
                 this.courseSidebarService.openSidebar();
             }
         }
+        this.selectedSavedPostStatus = null;
         this.metisConversationService.setActiveConversation(undefined);
         this.activeConversation = undefined;
         this.updateQueryParameters();
@@ -358,8 +401,10 @@ export class CourseConversationsComponent implements OnInit, OnDestroy {
     prepareSidebarData() {
         this.metisConversationService.forceRefresh().subscribe({
             complete: () => {
-                this.sidebarConversations = this.courseOverviewService.mapConversationsToSidebarCardElements(this.conversationsOfUser);
-                this.accordionConversationGroups = this.courseOverviewService.groupConversationsByChannelType(this.conversationsOfUser, this.messagingEnabled);
+                this.sidebarConversations = this.courseOverviewService.mapConversationsToSidebarCardElements(this.course!, this.conversationsOfUser);
+                this.accordionConversationGroups = this.courseOverviewService.groupConversationsByChannelType(this.course!, this.conversationsOfUser, this.messagingEnabled);
+                const currentConversations = this.sidebarConversations?.filter((item) => item.isCurrent) || [];
+                this.accordionConversationGroups.recents.entityData = currentConversations;
                 this.updateSidebarData();
             },
         });
@@ -374,12 +419,33 @@ export class CourseConversationsComponent implements OnInit, OnDestroy {
             ungroupedData: this.sidebarConversations,
             showAccordionLeadingIcon: true,
             messagingEnabled: isMessagingEnabled(this.course),
+            canCreateChannel: canCreateChannel(this.course!),
         };
     }
 
-    onConversationSelected(conversationId: number) {
+    onConversationSelected(conversationId: number | string) {
         this.closeSidebarOnMobile();
-        this.metisConversationService.setActiveConversation(conversationId);
+        this.focusPostId = undefined;
+        this.openThreadOnFocus = false;
+        if (typeof conversationId === 'string') {
+            if (
+                Object.values(SavedPostStatusMap)
+                    .map((s) => s.toString())
+                    .includes(conversationId)
+            ) {
+                this.selectedSavedPostStatus = Posting.mapToStatus(conversationId as SavedPostStatusMap);
+                this.postInThread = undefined;
+                this.metisConversationService.setActiveConversation(undefined);
+                this.activeConversation = undefined;
+                this.updateQueryParameters();
+                this.metisService.resetCachedPosts();
+                this.changeDetector.detectChanges();
+            }
+        } else {
+            conversationId = +conversationId;
+            this.selectedSavedPostStatus = null;
+            this.metisConversationService.setActiveConversation(conversationId);
+        }
     }
 
     toggleSidebar() {
@@ -447,6 +513,19 @@ export class CourseConversationsComponent implements OnInit, OnDestroy {
             .subscribe((channel: ChannelDTO) => {
                 this.channelActions$.emit({ action: 'create', channel });
             });
+    }
+
+    markAllChannelAsRead() {
+        this.metisConversationService.markAllChannelsAsRead(this.course).subscribe({
+            complete: () => {
+                this.metisConversationService.forceRefresh().subscribe({
+                    complete: () => {
+                        this.prepareSidebarData();
+                        this.closeSidebarOnMobile();
+                    },
+                });
+            },
+        });
     }
 
     openChannelOverviewDialog() {

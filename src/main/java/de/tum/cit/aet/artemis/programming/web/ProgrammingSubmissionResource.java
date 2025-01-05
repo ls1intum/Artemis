@@ -384,7 +384,7 @@ public class ProgrammingSubmissionResource {
 
         // TODO Check if submission has newly created manual result for this and endpoint and endpoint above
         ProgrammingSubmission submission;
-        if (programmingExercise.getAllowFeedbackRequests() && programmingExercise.getDueDate() != null && programmingExercise.getDueDate().isAfter(ZonedDateTime.now())) {
+        if (programmingExercise.getAllowManualFeedbackRequests() && programmingExercise.getDueDate() != null && programmingExercise.getDueDate().isAfter(ZonedDateTime.now())) {
             // Assess manual feedback request before the due date
             submission = programmingSubmissionService.getNextAssessableSubmission(programmingExercise, programmingExercise.isExamExercise(), correctionRound).orElse(null);
         }
@@ -398,8 +398,8 @@ public class ProgrammingSubmissionResource {
 
         if (submission != null) {
             if (lockSubmission) {
-                Result lockedResult = programmingSubmissionService.lockSubmission(submission, correctionRound);
-                submission = (ProgrammingSubmission) lockedResult.getSubmission();
+                // NOTE: we explicitly load the feedback for the submission eagerly to avoid org.hibernate.LazyInitializationException
+                submission = programmingSubmissionService.lockAndGetProgrammingSubmission(submission.getId(), correctionRound);
             }
             submission.getParticipation().setExercise(programmingExercise);
             programmingSubmissionService.hideDetails(submission, user);
