@@ -69,6 +69,7 @@ import { GradeStepBoundsPipe } from 'app/shared/pipes/grade-step-bounds.pipe';
 import { examScoresState } from 'app/exam/exam-scores/exam-scores.route';
 import { GitDiffLineStatComponent } from 'app/exercises/programming/git-diff-report/git-diff-line-stat.component';
 import { ExamExerciseImportComponent } from 'app/exam/manage/exams/exam-exercise-import/exam-exercise-import.component';
+import { ExamImportComponent } from 'app/exam/manage/exams/exam-import/exam-import.component';
 
 const ENTITY_STATES = [...examManagementState, ...examScoresState];
 
@@ -113,6 +114,9 @@ const ENTITY_STATES = [...examManagementState, ...examScoresState];
         GradeStepBoundsPipe,
         BonusComponent,
         ExamExerciseImportComponent,
+        ExamImportComponent,
+        ExamExerciseImportComponent,
+        BonusComponent,
     ],
     declarations: [
         ExamManagementComponent,
@@ -138,9 +142,6 @@ const ENTITY_STATES = [...examManagementState, ...examScoresState];
         ModelingExerciseGroupCellComponent,
         QuizExerciseGroupCellComponent,
         StudentExamDetailTableRowComponent,
-        ExamImportComponent,
-        ExamExerciseImportComponent,
-        BonusComponent,
         ExamEditWorkingTimeComponent,
         ExamEditWorkingTimeDialogComponent,
         ExamLiveAnnouncementCreateModalComponent,
