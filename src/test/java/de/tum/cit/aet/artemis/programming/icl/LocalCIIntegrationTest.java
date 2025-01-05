@@ -173,7 +173,7 @@ class LocalCIIntegrationTest extends AbstractProgrammingIntegrationLocalCILocalV
         assertThat(buildJob.getCourseId()).isEqualTo(course.getId());
         assertThat(buildJob.getExerciseId()).isEqualTo(programmingExercise.getId());
         assertThat(buildJob.getParticipationId()).isEqualTo(studentParticipation.getId());
-        assertThat(buildJob.getDockerImage()).isEqualTo(programmingExercise.getBuildConfig().getWindfile().getMetadata().docker().getFullImageName());
+        assertThat(buildJob.getDockerImage()).isEqualTo(programmingExercise.getBuildConfig().getWindfile().metadata().docker().getFullImageName());
         assertThat(buildJob.getRepositoryName()).isEqualTo(assignmentRepositorySlug);
         assertThat(buildJob.getBuildAgentAddress()).isNotEmpty();
         assertThat(buildJob.getPriority()).isEqualTo(2);
@@ -567,7 +567,7 @@ class LocalCIIntegrationTest extends AbstractProgrammingIntegrationLocalCILocalV
         submission = programmingExerciseUtilService.addProgrammingSubmission(programmingExercise, submission, TEST_PREFIX + "student1");
 
         JobTimingInfo jobTimingInfo = new JobTimingInfo(ZonedDateTime.now().minusSeconds(30), ZonedDateTime.now(), null, ZonedDateTime.now().plusSeconds(30), 60);
-        BuildConfig buildConfig = new BuildConfig(null, null, commitHash, commitHash, null, null, null, null, false, false, false, null, 0, null, null, null, null);
+        BuildConfig buildConfig = new BuildConfig(null, null, commitHash, commitHash, null, null, null, null, false, false, null, 0, null, null, null, null);
         BuildJobQueueItem buildJobQueueItem = new BuildJobQueueItem("1", "1", null, submission.getParticipation().getId(), 1L, programmingExercise.getId(), 0, 1, null, null,
                 jobTimingInfo, buildConfig, null);
 

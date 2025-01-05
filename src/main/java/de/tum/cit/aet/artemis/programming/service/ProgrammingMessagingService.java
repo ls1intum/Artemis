@@ -28,6 +28,7 @@ import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation
 import de.tum.cit.aet.artemis.exercise.dto.SubmissionDTO;
 import de.tum.cit.aet.artemis.exercise.repository.ParticipationRepository;
 import de.tum.cit.aet.artemis.exercise.repository.TeamRepository;
+import de.tum.cit.aet.artemis.iris.repository.IrisExerciseSettingsRepository;
 import de.tum.cit.aet.artemis.iris.service.pyris.PyrisEventService;
 import de.tum.cit.aet.artemis.iris.service.pyris.event.NewResultEvent;
 import de.tum.cit.aet.artemis.lti.service.LtiNewResultService;
@@ -57,16 +58,20 @@ public class ProgrammingMessagingService {
 
     private final Optional<PyrisEventService> pyrisEventService;
 
+    private final Optional<IrisExerciseSettingsRepository> irisExerciseSettingsRepository;
+
     private final ParticipationRepository participationRepository;
 
     public ProgrammingMessagingService(GroupNotificationService groupNotificationService, WebsocketMessagingService websocketMessagingService,
             ResultWebsocketService resultWebsocketService, Optional<LtiNewResultService> ltiNewResultService, TeamRepository teamRepository,
-            Optional<PyrisEventService> pyrisEventService, ParticipationRepository participationRepository) {
+            Optional<PyrisEventService> pyrisEventService, Optional<IrisExerciseSettingsRepository> irisExerciseSettingsRepository,
+            ParticipationRepository participationRepository) {
         this.groupNotificationService = groupNotificationService;
         this.websocketMessagingService = websocketMessagingService;
         this.resultWebsocketService = resultWebsocketService;
         this.ltiNewResultService = ltiNewResultService;
         this.teamRepository = teamRepository;
+        this.irisExerciseSettingsRepository = irisExerciseSettingsRepository;
         this.participationRepository = participationRepository;
         this.pyrisEventService = pyrisEventService;
     }
@@ -188,13 +193,16 @@ public class ProgrammingMessagingService {
         if (participation instanceof ProgrammingExerciseStudentParticipation studentParticipation) {
             // do not try to report results for template or solution participations
             ltiNewResultService.ifPresent(newResultService -> newResultService.onNewResult(studentParticipation));
-            // Inform Iris about the submission status
+            // Inform Iris about the submission status (when certain conditions are met)
             notifyIrisAboutSubmissionStatus(result, studentParticipation);
         }
     }
 
     /**
      * Notify Iris about the submission status for the given result and student participation.
+     * Only notifies if the user has accepted Iris, the exercise is not an exam exercise, and the exercise chat is enabled in the exercise settings
+     * NOTE: we check those settings early to prevent unnecessary database queries and exceptions later on in most cases. More sophisticated checks are done in the Iris service.
+     * <p>
      * If the submission was successful, Iris will be informed about the successful submission.
      * If the submission failed, Iris will be informed about the submission failure.
      * Iris will only be informed about the submission status if the participant is a user.
@@ -203,14 +211,18 @@ public class ProgrammingMessagingService {
      * @param studentParticipation the student participation for which Iris should be informed about the submission status
      */
     private void notifyIrisAboutSubmissionStatus(Result result, ProgrammingExerciseStudentParticipation studentParticipation) {
-        if (studentParticipation.getParticipant() instanceof User) {
+        if (studentParticipation.getParticipant() instanceof User user) {
             pyrisEventService.ifPresent(eventService -> {
-                // Inform event service about the new result
-                try {
-                    eventService.trigger(new NewResultEvent(result));
-                }
-                catch (Exception e) {
-                    log.error("Could not trigger service for result {}", result.getId(), e);
+                final var exercise = studentParticipation.getExercise();
+                if (user.hasAcceptedIris() && !exercise.isExamExercise() && irisExerciseSettingsRepository.get().isExerciseChatEnabled(exercise.getId())) {
+                    // Inform event service about the new result
+                    try {
+                        // This is done asynchronously to prevent blocking the current thread
+                        eventService.trigger(new NewResultEvent(result));
+                    }
+                    catch (Exception e) {
+                        log.error("Could not trigger service for result {}", result.getId(), e);
+                    }
                 }
             });
         }
