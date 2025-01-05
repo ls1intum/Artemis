@@ -1,6 +1,5 @@
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { FormsModule } from '@angular/forms';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import { AlertService } from 'app/core/util/alert.service';
 import { Exam } from 'app/entities/exam/exam.model';
@@ -8,18 +7,10 @@ import { ExerciseGroup } from 'app/entities/exercise-group.model';
 import { ModelingExercise } from 'app/entities/modeling-exercise.model';
 import { ExamManagementService } from 'app/exam/manage/exam-management.service';
 import { ExamExerciseImportComponent } from 'app/exam/manage/exams/exam-exercise-import/exam-exercise-import.component';
-import { ExamImportPagingService } from 'app/exam/manage/exams/exam-import/exam-import-paging.service';
 import { ExamImportComponent } from 'app/exam/manage/exams/exam-import/exam-import.component';
-import { DifficultyBadgeComponent } from 'app/exercises/shared/exercise-headers/difficulty-badge.component';
-import { ButtonComponent } from 'app/shared/components/button.component';
-import { HelpIconComponent } from 'app/shared/components/help-icon.component';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
-import { SortService } from 'app/shared/service/sort.service';
-import { SortByDirective } from 'app/shared/sort/sort-by.directive';
-import { SortDirective } from 'app/shared/sort/sort.directive';
-import { MockComponent, MockDirective, MockPipe, MockProvider } from 'ng-mocks';
+import { MockPipe } from 'ng-mocks';
 import { of, throwError } from 'rxjs';
-import { NgbPaginationMocksModule } from '../../../helpers/mocks/directive/ngbPaginationMocks.module';
 import { ArtemisTestModule } from '../../../test.module';
 import { UMLDiagramType } from '@ls1intum/apollon';
 
@@ -42,32 +33,16 @@ describe('Exam Import Component', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule, FormsModule, NgbPaginationMocksModule],
-            declarations: [
-                ExamImportComponent,
-                ExamExerciseImportComponent,
-                MockPipe(ArtemisTranslatePipe),
-                MockDirective(SortByDirective),
-                MockDirective(SortDirective),
-                MockComponent(ButtonComponent),
-                MockComponent(HelpIconComponent),
-                MockComponent(DifficultyBadgeComponent),
-            ],
-            providers: [
-                MockProvider(SortService),
-                MockProvider(ExamImportPagingService),
-                MockProvider(NgbActiveModal),
-                MockProvider(ExamManagementService),
-                MockProvider(AlertService),
-            ],
+            imports: [ArtemisTestModule],
+            declarations: [ExamImportComponent, ExamExerciseImportComponent, MockPipe(ArtemisTranslatePipe)],
         })
             .compileComponents()
             .then(() => {
                 fixture = TestBed.createComponent(ExamImportComponent);
                 component = fixture.componentInstance;
                 activeModal = TestBed.inject(NgbActiveModal);
-                examManagementService = fixture.debugElement.injector.get(ExamManagementService);
-                alertService = fixture.debugElement.injector.get(AlertService);
+                examManagementService = TestBed.inject(ExamManagementService);
+                alertService = TestBed.inject(AlertService);
             });
     });
 
@@ -97,19 +72,19 @@ describe('Exam Import Component', () => {
         const alertSpy = jest.spyOn(alertService, 'error');
         const modalSpy = jest.spyOn(activeModal, 'close');
 
-        component.subsequentExerciseGroupSelection = false;
+        fixture.componentRef.setInput('subsequentExerciseGroupSelection', false);
         component.performImportOfExerciseGroups();
 
-        component.subsequentExerciseGroupSelection = true;
+        fixture.componentRef.setInput('subsequentExerciseGroupSelection', true);
         component.exam = undefined;
         component.performImportOfExerciseGroups();
 
         component.exam = exam1WithExercises;
-        component.targetExamId = undefined;
+        fixture.componentRef.setInput('targetExamId', undefined);
         component.performImportOfExerciseGroups();
 
-        component.targetExamId = 1;
-        component.targetCourseId = undefined;
+        fixture.componentRef.setInput('targetExamId', 1);
+        fixture.componentRef.setInput('targetCourseId', undefined);
         component.performImportOfExerciseGroups();
 
         expect(importSpy).not.toHaveBeenCalled();
@@ -147,14 +122,14 @@ describe('Exam Import Component', () => {
         const alertSpy = jest.spyOn(alertService, 'error');
         const modalSpy = jest.spyOn(activeModal, 'close');
 
-        component.subsequentExerciseGroupSelection = true;
+        fixture.componentRef.setInput('subsequentExerciseGroupSelection', true);
         const exerciseGroup2 = { title: 'exerciseGroup2' } as ExerciseGroup;
         const modelingExercise2 = new ModelingExercise(UMLDiagramType.ClassDiagram, undefined, exerciseGroup2);
         modelingExercise2.id = 2;
         exerciseGroup2.exercises = [modelingExercise2];
         component.exam = { id: 1, exerciseGroups: [exerciseGroup2] } as Exam;
-        component.targetCourseId = 1;
-        component.targetExamId = 3;
+        fixture.componentRef.setInput('targetCourseId', 1);
+        fixture.componentRef.setInput('targetExamId', 3);
         fixture.detectChanges();
         component.performImportOfExerciseGroups();
         expect(importSpy).not.toHaveBeenCalled();
@@ -197,10 +172,10 @@ describe('Exam Import Component', () => {
     });
 
     function performImport(importSpy: jest.SpyInstance): void {
-        component.subsequentExerciseGroupSelection = true;
+        fixture.componentRef.setInput('subsequentExerciseGroupSelection', true);
         component.exam = exam1WithExercises;
-        component.targetCourseId = 1;
-        component.targetExamId = 2;
+        fixture.componentRef.setInput('targetCourseId', 1);
+        fixture.componentRef.setInput('targetExamId', 2);
         fixture.detectChanges();
         component.performImportOfExerciseGroups();
         expect(importSpy).toHaveBeenCalledOnce();
