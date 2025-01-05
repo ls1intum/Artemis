@@ -1,6 +1,5 @@
 import { Component, Input } from '@angular/core';
-import { faCheckCircle, faTimesCircle } from '@fortawesome/free-regular-svg-icons';
-import { faQuestionCircle } from '@fortawesome/free-solid-svg-icons';
+import { faCheckCircle, faCircleDot, faTimesCircle } from '@fortawesome/free-regular-svg-icons';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { Exercise, ExerciseType } from 'app/entities/exercise.model';
 import { Result } from 'app/entities/result.model';
@@ -41,7 +40,7 @@ export class ProgrammingExerciseInstructionTaskStatusComponent {
     hasMessage: boolean;
 
     // Icons
-    faQuestionCircle = faQuestionCircle;
+    faCircleDot = faCircleDot;
     farCheckCircle = faCheckCircle;
     farTimesCircle = faTimesCircle;
 

@@ -9,6 +9,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 import org.springframework.context.annotation.Profile;
@@ -22,33 +23,23 @@ import de.tum.cit.aet.artemis.plagiarism.domain.PlagiarismDetectionConfig;
 import de.tum.cit.aet.artemis.programming.domain.AuxiliaryRepository;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseBuildConfig;
+import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseTask;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseTestCase;
 import de.tum.cit.aet.artemis.programming.domain.RepositoryType;
 import de.tum.cit.aet.artemis.programming.domain.StaticCodeAnalysisCategory;
-import de.tum.cit.aet.artemis.programming.domain.hestia.CodeHint;
-import de.tum.cit.aet.artemis.programming.domain.hestia.ProgrammingExerciseSolutionEntry;
-import de.tum.cit.aet.artemis.programming.domain.hestia.ProgrammingExerciseTask;
 import de.tum.cit.aet.artemis.programming.domain.submissionpolicy.SubmissionPolicy;
 import de.tum.cit.aet.artemis.programming.repository.AuxiliaryRepositoryRepository;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseBuildConfigRepository;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseRepository;
+import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseTaskRepository;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseTestCaseRepository;
 import de.tum.cit.aet.artemis.programming.repository.StaticCodeAnalysisCategoryRepository;
 import de.tum.cit.aet.artemis.programming.repository.SubmissionPolicyRepository;
-import de.tum.cit.aet.artemis.programming.repository.hestia.ExerciseHintRepository;
-import de.tum.cit.aet.artemis.programming.repository.hestia.ProgrammingExerciseSolutionEntryRepository;
-import de.tum.cit.aet.artemis.programming.repository.hestia.ProgrammingExerciseTaskRepository;
-import de.tum.cit.aet.artemis.programming.service.hestia.ExerciseHintService;
-import de.tum.cit.aet.artemis.programming.service.hestia.ProgrammingExerciseTaskService;
 import de.tum.cit.aet.artemis.programming.service.vcs.VersionControlService;
 
 @Profile(PROFILE_CORE)
 @Service
 public class ProgrammingExerciseImportBasicService {
-
-    private final ExerciseHintService exerciseHintService;
-
-    private final ExerciseHintRepository exerciseHintRepository;
 
     private final Optional<VersionControlService> versionControlService;
 
@@ -74,22 +65,17 @@ public class ProgrammingExerciseImportBasicService {
 
     private final ProgrammingExerciseTaskService programmingExerciseTaskService;
 
-    private final ProgrammingExerciseSolutionEntryRepository solutionEntryRepository;
-
     private final ChannelService channelService;
 
     private final ExerciseService exerciseService;
 
-    public ProgrammingExerciseImportBasicService(ExerciseHintService exerciseHintService, ExerciseHintRepository exerciseHintRepository,
-            Optional<VersionControlService> versionControlService, ProgrammingExerciseParticipationService programmingExerciseParticipationService,
-            ProgrammingExerciseTestCaseRepository programmingExerciseTestCaseRepository, StaticCodeAnalysisCategoryRepository staticCodeAnalysisCategoryRepository,
-            ProgrammingExerciseRepository programmingExerciseRepository, ProgrammingExerciseService programmingExerciseService, StaticCodeAnalysisService staticCodeAnalysisService,
-            AuxiliaryRepositoryRepository auxiliaryRepositoryRepository, SubmissionPolicyRepository submissionPolicyRepository,
-            ProgrammingExerciseTaskRepository programmingExerciseTaskRepository, ProgrammingExerciseTaskService programmingExerciseTaskService,
-            ProgrammingExerciseSolutionEntryRepository solutionEntryRepository, ChannelService channelService,
+    public ProgrammingExerciseImportBasicService(Optional<VersionControlService> versionControlService,
+            ProgrammingExerciseParticipationService programmingExerciseParticipationService, ProgrammingExerciseTestCaseRepository programmingExerciseTestCaseRepository,
+            StaticCodeAnalysisCategoryRepository staticCodeAnalysisCategoryRepository, ProgrammingExerciseRepository programmingExerciseRepository,
+            ProgrammingExerciseService programmingExerciseService, StaticCodeAnalysisService staticCodeAnalysisService, AuxiliaryRepositoryRepository auxiliaryRepositoryRepository,
+            SubmissionPolicyRepository submissionPolicyRepository, ProgrammingExerciseTaskRepository programmingExerciseTaskRepository,
+            ProgrammingExerciseTaskService programmingExerciseTaskService, ChannelService channelService,
             ProgrammingExerciseBuildConfigRepository programmingExerciseBuildConfigRepository, ExerciseService exerciseService) {
-        this.exerciseHintService = exerciseHintService;
-        this.exerciseHintRepository = exerciseHintRepository;
         this.versionControlService = versionControlService;
         this.programmingExerciseParticipationService = programmingExerciseParticipationService;
         this.programmingExerciseTestCaseRepository = programmingExerciseTestCaseRepository;
@@ -101,7 +87,6 @@ public class ProgrammingExerciseImportBasicService {
         this.submissionPolicyRepository = submissionPolicyRepository;
         this.programmingExerciseTaskRepository = programmingExerciseTaskRepository;
         this.programmingExerciseTaskService = programmingExerciseTaskService;
-        this.solutionEntryRepository = solutionEntryRepository;
         this.channelService = channelService;
         this.programmingExerciseBuildConfigRepository = programmingExerciseBuildConfigRepository;
         this.exerciseService = exerciseService;
@@ -143,20 +128,16 @@ public class ProgrammingExerciseImportBasicService {
         }
 
         // Hints, tasks, test cases and static code analysis categories
-        final Map<Long, Long> newHintIdByOldId = exerciseHintService.copyExerciseHints(originalProgrammingExercise, newProgrammingExercise);
-
         newProgrammingExercise.setBuildConfig(programmingExerciseBuildConfigRepository.save(newProgrammingExercise.getBuildConfig()));
 
         final ProgrammingExercise importedExercise = exerciseService.saveWithCompetencyLinks(newProgrammingExercise, programmingExerciseRepository::save);
 
         final Map<Long, Long> newTestCaseIdByOldId = importTestCases(originalProgrammingExercise, importedExercise);
-        final Map<Long, Long> newTaskIdByOldId = importTasks(originalProgrammingExercise, importedExercise, newTestCaseIdByOldId);
-        updateTaskExerciseHintReferences(originalProgrammingExercise, importedExercise, newTaskIdByOldId, newHintIdByOldId);
+        importTasks(originalProgrammingExercise, importedExercise, newTestCaseIdByOldId);
 
         // Set up new exercise submission policy before the solution entries are imported
         importSubmissionPolicy(importedExercise);
         // Having the submission policy in place prevents errors
-        importSolutionEntries(originalProgrammingExercise, importedExercise, newTestCaseIdByOldId, newHintIdByOldId);
 
         // Use the template problem statement (with ids) as a new basis (You cannot edit the problem statement while importing)
         // Then replace the old test ids by the newly created ones.
@@ -284,33 +265,62 @@ public class ProgrammingExerciseImportBasicService {
     }
 
     /**
-     * Copies tasks from one exercise to another. Because the tasks from the template exercise references its test cases, the
-     * references between tasks and test cases also need to be changed.
+     * Imports tasks from a template exercise to a new exercise. The tasks will get new IDs, thus being saved as a new entity.
+     * The remaining contents stay the same, especially the test cases.
      *
-     * @param templateExercise     The template exercise which tasks should be copied
-     * @param targetExercise       The new exercise to which all tasks should get copied to
-     * @param newTestCaseIdByOldId A map with the old test case id as a key and the new test case id as a value
-     * @return A map with the old task id as a key and the new task id as value
+     * @param sourceExercise    The template exercise which tasks should get copied
+     * @param targetExercise    The new exercise to which all tasks should get copied to
+     * @param testCaseIdMapping A map with the old test case id as a key and the new test case id as a value
      */
-    private Map<Long, Long> importTasks(final ProgrammingExercise templateExercise, final ProgrammingExercise targetExercise, Map<Long, Long> newTestCaseIdByOldId) {
-        Map<Long, Long> newIdByOldId = new HashMap<>();
-        targetExercise.setTasks(templateExercise.getTasks().stream().map(task -> {
-            final var copy = new ProgrammingExerciseTask();
+    private void importTasks(final ProgrammingExercise sourceExercise, final ProgrammingExercise targetExercise, Map<Long, Long> testCaseIdMapping) {
+        // Map the tasks from the template exercise to new tasks in the target exercise
+        List<ProgrammingExerciseTask> newTasks = sourceExercise.getTasks().stream().map(templateTask -> createTaskCopy(templateTask, targetExercise, testCaseIdMapping)).toList();
 
-            // copy everything except for the referenced exercise
-            copy.setTaskName(task.getTaskName());
-            // change reference to newly imported test cases from the target exercise
-            copy.setTestCases(task.getTestCases().stream().map(testCase -> {
-                Long oldTestCaseId = testCase.getId();
-                Long newTestCaseId = newTestCaseIdByOldId.get(oldTestCaseId);
-                return targetExercise.getTestCases().stream().filter(newTestCase -> Objects.equals(newTestCaseId, newTestCase.getId())).findFirst().orElseThrow();
-            }).collect(Collectors.toSet()));
-            copy.setExercise(targetExercise);
-            programmingExerciseTaskRepository.save(copy);
-            newIdByOldId.put(task.getId(), copy.getId());
-            return copy;
-        }).collect(Collectors.toCollection(ArrayList::new)));
-        return newIdByOldId;
+        // Set the new tasks to the target exercise
+        targetExercise.setTasks(new ArrayList<>(newTasks));
+    }
+
+    /**
+     * Creates a copy of a task from a template exercise and links it to the target exercise. The test cases of the task
+     * are also copied and linked to the new task.
+     *
+     * @param sourceTask        The template task which should be copied
+     * @param targetExercise    The new exercise to which the task should be linked
+     * @param testCaseIdMapping A map with the old test case id as a key and the new test case id as a value
+     * @return The new task
+     */
+    private ProgrammingExerciseTask createTaskCopy(ProgrammingExerciseTask sourceTask, ProgrammingExercise targetExercise, Map<Long, Long> testCaseIdMapping) {
+        ProgrammingExerciseTask copiedTask = new ProgrammingExerciseTask();
+
+        // Copy task properties
+        copiedTask.setTaskName(sourceTask.getTaskName());
+
+        // Map and set new test cases
+        Set<ProgrammingExerciseTestCase> mappedTestCases = sourceTask.getTestCases().stream().map(testCase -> findMappedTestCase(testCase, targetExercise, testCaseIdMapping))
+                .collect(Collectors.toSet());
+        copiedTask.setTestCases(mappedTestCases);
+
+        // Link the task to the target exercise
+        copiedTask.setExercise(targetExercise);
+
+        // Persist the new task
+        programmingExerciseTaskRepository.save(copiedTask);
+        return copiedTask;
+    }
+
+    /**
+     * Finds a test case in the target exercise that corresponds to a test case in the template exercise.
+     *
+     * @param existingTestCase  The test case from the template exercise
+     * @param targetExercise    The new exercise to which the test case should be linked
+     * @param testCaseIdMapping A map with the old test case id as a key and the new test case id as a value
+     * @return The test case in the target exercise
+     */
+    private ProgrammingExerciseTestCase findMappedTestCase(ProgrammingExerciseTestCase existingTestCase, ProgrammingExercise targetExercise, Map<Long, Long> testCaseIdMapping) {
+        Long newTestCaseId = testCaseIdMapping.get(existingTestCase.getId());
+
+        return targetExercise.getTestCases().stream().filter(newTestCase -> Objects.equals(newTestCaseId, newTestCase.getId())).findFirst()
+                .orElseThrow(() -> new IllegalArgumentException("Test case not found for ID: " + newTestCaseId));
     }
 
     /**
@@ -379,69 +389,5 @@ public class ProgrammingExerciseImportBasicService {
         else {
             newExercise.setPlagiarismDetectionConfig(null);
         }
-    }
-
-    /**
-     * Updates the newly imported exercise hints to reference the newly imported tasks they belong to.
-     *
-     * @param templateExercise The template exercise which tasks should be copied
-     * @param targetExercise   The new exercise to which all tasks should get copied to
-     * @param newTaskIdByOldId A map with the old task id as a key and the new task id as a value
-     * @param newHintIdByOldId A map with the old hint id as a key and the new hint id as a value
-     */
-    private void updateTaskExerciseHintReferences(final ProgrammingExercise templateExercise, final ProgrammingExercise targetExercise, Map<Long, Long> newTaskIdByOldId,
-            Map<Long, Long> newHintIdByOldId) {
-        templateExercise.getExerciseHints().forEach(templateExerciseHint -> {
-            var templateTask = templateExerciseHint.getProgrammingExerciseTask();
-            if (templateTask == null) {
-                return;
-            }
-            var targetTask = targetExercise.getTasks().stream().filter(newTask -> Objects.equals(newTask.getId(), newTaskIdByOldId.get(templateTask.getId()))).findAny()
-                    .orElseThrow();
-            var targetExerciseHint = targetExercise.getExerciseHints().stream()
-                    .filter(newHint -> Objects.equals(newHint.getId(), newHintIdByOldId.get(templateExerciseHint.getId()))).findAny().orElseThrow();
-
-            targetExerciseHint.setProgrammingExerciseTask(targetTask);
-            exerciseHintRepository.save(targetExerciseHint);
-            targetTask.getExerciseHints().add(targetExerciseHint);
-        });
-    }
-
-    /**
-     * Copies solution entries from one exercise to another. Because the solution entries from the template exercise
-     * references its test cases and code hint, the references between them also need to be changed.
-     *
-     * @param templateExercise     The template exercise which tasks should be copied
-     * @param targetExercise       The new exercise to which all tasks should get copied to
-     * @param newTestCaseIdByOldId A map with the old test case id as a key and the new test case id as a value
-     * @param newHintIdByOldId     A map with the old hint id as a key and the new hint id as a value
-     */
-    private void importSolutionEntries(final ProgrammingExercise templateExercise, final ProgrammingExercise targetExercise, Map<Long, Long> newTestCaseIdByOldId,
-            Map<Long, Long> newHintIdByOldId) {
-        templateExercise.getTestCases().forEach(testCase -> {
-            var newSolutionEntries = solutionEntryRepository.findByTestCaseIdWithCodeHint(testCase.getId()).stream().map(solutionEntry -> {
-                Long newTestCaseId = newTestCaseIdByOldId.get(testCase.getId());
-                var targetTestCase = targetExercise.getTestCases().stream().filter(newTestCase -> Objects.equals(newTestCaseId, newTestCase.getId())).findFirst().orElseThrow();
-
-                CodeHint codeHint = null;
-                if (solutionEntry.getCodeHint() != null) {
-                    Long newHintId = newHintIdByOldId.get(solutionEntry.getCodeHint().getId());
-                    codeHint = (CodeHint) targetExercise.getExerciseHints().stream().filter(newHint -> Objects.equals(newHintId, newHint.getId())).findFirst().orElseThrow();
-                }
-                var copy = new ProgrammingExerciseSolutionEntry();
-                copy.setCode(solutionEntry.getCode());
-                copy.setPreviousCode(solutionEntry.getPreviousCode());
-                copy.setLine(solutionEntry.getLine());
-                copy.setPreviousLine(solutionEntry.getPreviousLine());
-                copy.setTestCase(targetTestCase);
-                targetTestCase.getSolutionEntries().add(copy);
-                copy.setCodeHint(codeHint);
-                if (codeHint != null) {
-                    codeHint.getSolutionEntries().add(copy);
-                }
-                return copy;
-            }).collect(Collectors.toSet());
-            solutionEntryRepository.saveAll(newSolutionEntries);
-        });
     }
 }

@@ -25,7 +25,7 @@ plugins {
 }
 
 group = "de.tum.cit.aet.artemis"
-version = "7.8.1"
+version = "7.8.2"
 description = "Interactive Learning with Individual Feedback"
 
 java {
@@ -306,7 +306,7 @@ dependencies {
     implementation "org.springframework.security:spring-security-oauth2-core:${spring_security_version}"
     implementation "org.springframework.security:spring-security-oauth2-client:${spring_security_version}"
     // use newest version of nimbus-jose-jwt to avoid security issues through outdated dependencies
-    implementation "com.nimbusds:nimbus-jose-jwt:9.48"
+    implementation "com.nimbusds:nimbus-jose-jwt:10.0.1"
 
     implementation "org.springframework.security:spring-security-oauth2-jose:${spring_security_version}"
     implementation "org.springframework.security:spring-security-crypto:${spring_security_version}"
@@ -400,7 +400,7 @@ dependencies {
     testImplementation "org.springframework.boot:spring-boot-starter-test:${spring_boot_version}"
     testImplementation "org.springframework.security:spring-security-test:${spring_security_version}"
     testImplementation "org.springframework.boot:spring-boot-test:${spring_boot_version}"
-    testImplementation "org.assertj:assertj-core:3.27.0"
+    testImplementation "org.assertj:assertj-core:3.27.2"
     testImplementation "org.mockito:mockito-core:${mockito_version}"
     testImplementation "org.mockito:mockito-junit-jupiter:${mockito_version}"
 
@@ -420,7 +420,7 @@ dependencies {
     testImplementation "com.h2database:h2:2.2.224"
 
     // Lightweight JSON library needed for the internals of the MockRestServiceServer
-    testImplementation "org.json:json:20240303"
+    testImplementation "org.json:json:20241224"
 
     // NOTE: make sure this corresponds to the version used for JUnit in the testImplementation
     testRuntimeOnly "org.junit.platform:junit-platform-launcher:${junit_platform_version}"

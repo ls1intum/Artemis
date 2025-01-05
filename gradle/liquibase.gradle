@@ -19,12 +19,12 @@ ext.isWindows = OperatingSystem.current().isWindows()
 
 if (isWindows) {
     tasks.register("pathingLiquibaseJar", Jar) {
-        dependsOn configurations.liquibase
+        dependsOn configurations.liquibaseRuntime
         archiveAppendix = "pathingLiquibase"
 
         doFirst {
             manifest {
-                attributes "Class-Path": (sourceSets.main.runtimeClasspath + configurations.liquibase).collect {
+                attributes "Class-Path": (sourceSets.main.runtimeClasspath + configurations.liquibaseRuntime).collect {
                     it.toURI().toURL().toString().replaceFirst(/file:\/+/, "/")
                 }.join(" ")
             }
@@ -46,7 +46,7 @@ def liquibaseCommand(command) {
             classpath tasks.named("pathingLiquibaseJar").get().outputs.files
         } else {
             classpath sourceSets.main.runtimeClasspath
-            classpath configurations.liquibase
+            classpath configurations.liquibaseRuntime
         }
         mainClass = "liquibase.integration.commandline.Main"
 

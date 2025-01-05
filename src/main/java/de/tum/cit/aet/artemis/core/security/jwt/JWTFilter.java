@@ -62,7 +62,8 @@ public class JWTFilter extends GenericFilterBean {
      * @param tokenProvider      the Artemis token provider used to generate and validate jwt's
      * @return the valid jwt or null if not found or invalid
      */
-    public static @Nullable String extractValidJwt(HttpServletRequest httpServletRequest, TokenProvider tokenProvider) {
+    @Nullable
+    public static String extractValidJwt(HttpServletRequest httpServletRequest, TokenProvider tokenProvider) {
         var cookie = WebUtils.getCookie(httpServletRequest, JWT_COOKIE_NAME);
         var authHeader = httpServletRequest.getHeader(AUTHORIZATION_HEADER);
 
@@ -76,8 +77,9 @@ public class JWTFilter extends GenericFilterBean {
         }
 
         String jwtToken = cookie != null ? getJwtFromCookie(cookie) : getJwtFromBearer(authHeader);
+        String source = cookie != null ? "cookie" : "bearer";
 
-        if (!isJwtValid(tokenProvider, jwtToken)) {
+        if (!isJwtValid(tokenProvider, jwtToken, source)) {
             return null;
         }
 
@@ -90,7 +92,8 @@ public class JWTFilter extends GenericFilterBean {
      * @param jwtCookie the cookie with Key "jwt"
      * @return the jwt or null if not found
      */
-    private static @Nullable String getJwtFromCookie(@Nullable Cookie jwtCookie) {
+    @Nullable
+    private static String getJwtFromCookie(@Nullable Cookie jwtCookie) {
         if (jwtCookie == null) {
             return null;
         }
@@ -103,7 +106,8 @@ public class JWTFilter extends GenericFilterBean {
      * @param jwtBearer the content of the Authorization header
      * @return the jwt or null if not found
      */
-    private static @Nullable String getJwtFromBearer(@Nullable String jwtBearer) {
+    @Nullable
+    private static String getJwtFromBearer(@Nullable String jwtBearer) {
         if (!StringUtils.hasText(jwtBearer) || !jwtBearer.startsWith(BEARER_PREFIX)) {
             return null;
         }
@@ -116,10 +120,11 @@ public class JWTFilter extends GenericFilterBean {
      * Checks if the jwt is valid
      *
      * @param tokenProvider the Artemis token provider used to generate and validate jwt's
-     * @param jwtToken      the jwt
+     * @param jwtToken      the jwt token which should be validated
+     * @param source        the source of the jwt token
      * @return true if the jwt is valid, false if missing or invalid
      */
-    private static boolean isJwtValid(TokenProvider tokenProvider, @Nullable String jwtToken) {
-        return StringUtils.hasText(jwtToken) && tokenProvider.validateTokenForAuthority(jwtToken);
+    private static boolean isJwtValid(TokenProvider tokenProvider, @Nullable String jwtToken, @Nullable String source) {
+        return StringUtils.hasText(jwtToken) && tokenProvider.validateTokenForAuthority(jwtToken, source);
     }
 }

@@ -55,9 +55,7 @@ import de.tum.cit.aet.artemis.iris.service.settings.IrisSettingsService;
 import de.tum.cit.aet.artemis.plagiarism.dto.PlagiarismCaseInfoDTO;
 import de.tum.cit.aet.artemis.plagiarism.service.PlagiarismCaseService;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
-import de.tum.cit.aet.artemis.programming.domain.hestia.ExerciseHint;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseRepository;
-import de.tum.cit.aet.artemis.programming.service.hestia.ExerciseHintService;
 import de.tum.cit.aet.artemis.quiz.domain.QuizExercise;
 import de.tum.cit.aet.artemis.quiz.service.QuizBatchService;
 import de.tum.cit.aet.artemis.tutorialgroup.domain.TutorParticipationStatus;
@@ -104,14 +102,12 @@ public class ExerciseResource {
 
     private final PlagiarismCaseService plagiarismCaseService;
 
-    private final ExerciseHintService exerciseHintService;
-
     public ExerciseResource(ExerciseService exerciseService, ExerciseDeletionService exerciseDeletionService, ParticipationService participationService,
             UserRepository userRepository, ExamDateService examDateService, AuthorizationCheckService authCheckService, TutorParticipationService tutorParticipationService,
             ExampleSubmissionRepository exampleSubmissionRepository, ProgrammingExerciseRepository programmingExerciseRepository,
             GradingCriterionRepository gradingCriterionRepository, ExerciseRepository exerciseRepository, QuizBatchService quizBatchService,
             ParticipationRepository participationRepository, ExamAccessService examAccessService, Optional<IrisSettingsService> irisSettingsService,
-            PlagiarismCaseService plagiarismCaseService, ExerciseHintService exerciseHintService) {
+            PlagiarismCaseService plagiarismCaseService) {
         this.exerciseService = exerciseService;
         this.exerciseDeletionService = exerciseDeletionService;
         this.participationService = participationService;
@@ -128,7 +124,6 @@ public class ExerciseResource {
         this.examAccessService = examAccessService;
         this.irisSettingsService = irisSettingsService;
         this.plagiarismCaseService = plagiarismCaseService;
-        this.exerciseHintService = exerciseHintService;
     }
 
     /**
@@ -349,13 +344,7 @@ public class ExerciseResource {
                 .orElse(null);
         PlagiarismCaseInfoDTO plagiarismCaseInfo = plagiarismCaseService.getPlagiarismCaseInfoForExerciseAndUser(exercise.getId(), user.getId()).orElse(null);
 
-        if (exercise instanceof ProgrammingExercise programmingExercise) {
-            Set<ExerciseHint> activatedExerciseHints = exerciseHintService.getActivatedExerciseHints(programmingExercise, user);
-            Set<ExerciseHint> availableExerciseHints = exerciseHintService.getAvailableExerciseHints(programmingExercise, user);
-            return ResponseEntity.ok(new ExerciseDetailsDTO(exercise, irisSettings, plagiarismCaseInfo, availableExerciseHints, activatedExerciseHints));
-        }
-
-        return ResponseEntity.ok(new ExerciseDetailsDTO(exercise, irisSettings, plagiarismCaseInfo, null, null));
+        return ResponseEntity.ok(new ExerciseDetailsDTO(exercise, irisSettings, plagiarismCaseInfo));
     }
 
     /**
