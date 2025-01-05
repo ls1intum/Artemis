@@ -13,6 +13,7 @@ import { PageType, SortDirection } from 'app/shared/metis/metis.util';
 import {
     faBan,
     faBookmark,
+    faClock,
     faComment,
     faComments,
     faFile,
@@ -27,7 +28,7 @@ import {
 } from '@fortawesome/free-solid-svg-icons';
 import { ButtonType } from 'app/shared/components/button.component';
 import { CourseWideSearchComponent, CourseWideSearchConfig } from 'app/overview/course-conversations/course-wide-search/course-wide-search.component';
-import { AccordionGroups, ChannelAccordionShowAdd, ChannelTypeIcons, CollapseState, SidebarCardElement, SidebarData, SidebarItemShowAlways } from 'app/types/sidebar';
+import { AccordionGroups, ChannelTypeIcons, CollapseState, SidebarCardElement, SidebarData, SidebarItemShowAlways } from 'app/types/sidebar';
 import { CourseOverviewService } from 'app/overview/course-overview.service';
 import { GroupChatCreateDialogComponent } from 'app/overview/course-conversations/dialogs/group-chat-create-dialog/group-chat-create-dialog.component';
 import { defaultFirstLayerDialogOptions, defaultSecondLayerDialogOptions } from 'app/overview/course-conversations/other/conversation.util';
@@ -44,24 +45,13 @@ import { canCreateChannel } from 'app/shared/metis/conversations/conversation-pe
 
 const DEFAULT_CHANNEL_GROUPS: AccordionGroups = {
     favoriteChannels: { entityData: [] },
+    recents: { entityData: [] },
     generalChannels: { entityData: [] },
     exerciseChannels: { entityData: [] },
     lectureChannels: { entityData: [] },
     examChannels: { entityData: [] },
     hiddenChannels: { entityData: [] },
     savedPosts: { entityData: [] },
-};
-
-const CHANNEL_TYPE_SHOW_ADD_OPTION: ChannelAccordionShowAdd = {
-    generalChannels: true,
-    exerciseChannels: true,
-    examChannels: true,
-    groupChats: true,
-    directMessages: true,
-    favoriteChannels: false,
-    lectureChannels: true,
-    hiddenChannels: false,
-    savedPosts: false,
 };
 
 const CHANNEL_TYPE_ICON: ChannelTypeIcons = {
@@ -74,6 +64,7 @@ const CHANNEL_TYPE_ICON: ChannelTypeIcons = {
     lectureChannels: faFile,
     hiddenChannels: faBan,
     savedPosts: faBookmark,
+    recents: faClock,
 };
 
 const DEFAULT_COLLAPSE_STATE: CollapseState = {
@@ -86,6 +77,7 @@ const DEFAULT_COLLAPSE_STATE: CollapseState = {
     lectureChannels: true,
     hiddenChannels: true,
     savedPosts: true,
+    recents: true,
 };
 
 const DEFAULT_SHOW_ALWAYS: SidebarItemShowAlways = {
@@ -98,6 +90,7 @@ const DEFAULT_SHOW_ALWAYS: SidebarItemShowAlways = {
     lectureChannels: false,
     hiddenChannels: false,
     savedPosts: true,
+    recents: true,
 };
 
 @Component({
@@ -135,7 +128,6 @@ export class CourseConversationsComponent implements OnInit, OnDestroy {
     openThreadOnFocus = false;
     selectedSavedPostStatus: null | SavedPostStatus = null;
 
-    readonly CHANNEL_TYPE_SHOW_ADD_OPTION = CHANNEL_TYPE_SHOW_ADD_OPTION;
     readonly CHANNEL_TYPE_ICON = CHANNEL_TYPE_ICON;
     readonly DEFAULT_COLLAPSE_STATE = DEFAULT_COLLAPSE_STATE;
     protected readonly DEFAULT_SHOW_ALWAYS = DEFAULT_SHOW_ALWAYS;
@@ -409,8 +401,10 @@ export class CourseConversationsComponent implements OnInit, OnDestroy {
     prepareSidebarData() {
         this.metisConversationService.forceRefresh().subscribe({
             complete: () => {
-                this.sidebarConversations = this.courseOverviewService.mapConversationsToSidebarCardElements(this.conversationsOfUser);
-                this.accordionConversationGroups = this.courseOverviewService.groupConversationsByChannelType(this.conversationsOfUser, this.messagingEnabled);
+                this.sidebarConversations = this.courseOverviewService.mapConversationsToSidebarCardElements(this.course!, this.conversationsOfUser);
+                this.accordionConversationGroups = this.courseOverviewService.groupConversationsByChannelType(this.course!, this.conversationsOfUser, this.messagingEnabled);
+                const currentConversations = this.sidebarConversations?.filter((item) => item.isCurrent) || [];
+                this.accordionConversationGroups.recents.entityData = currentConversations;
                 this.updateSidebarData();
             },
         });

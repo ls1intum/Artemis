@@ -29,7 +29,6 @@ def create_programming_exercise(session: Session, course_id: int, server_url: st
             "buildConfig": {
                 "buildScript": "#!/usr/bin/env bash\nset -e\n\ngradle () {\n  echo '⚙️ executing gradle'\n  chmod +x ./gradlew\n  ./gradlew clean test\n}\n\nmain () {\n  gradle\n}\n\nmain \"${@}\"\n",
                 "checkoutSolutionRepository": False,
-                "testwiseCoverageEnabled": False
             },
         }
 

@@ -18,7 +18,6 @@ import de.tum.cit.aet.artemis.assessment.domain.Result;
 import de.tum.cit.aet.artemis.communication.service.WebsocketMessagingService;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
 import de.tum.cit.aet.artemis.exam.service.ExamDateService;
-import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.domain.Team;
 import de.tum.cit.aet.artemis.exercise.domain.participation.Participation;
 import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
@@ -73,7 +72,7 @@ public class ResultWebsocketService {
     }
 
     private void broadcastNewResultToParticipants(StudentParticipation studentParticipation, Result result) {
-        final Exercise exercise = studentParticipation.getExercise();
+        final var exercise = studentParticipation.getExercise();
         boolean isWorkingPeriodOver;
         if (exercise.isExamExercise()) {
             isWorkingPeriodOver = examDateService.isIndividualExerciseWorkingPeriodOver(exercise.getExam(), studentParticipation);
