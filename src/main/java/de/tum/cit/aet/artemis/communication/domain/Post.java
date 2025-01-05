@@ -21,7 +21,6 @@ import jakarta.validation.constraints.Size;
 
 import org.hibernate.annotations.Cache;
 import org.hibernate.annotations.CacheConcurrencyStrategy;
-import org.hibernate.annotations.SQLRestriction;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
@@ -56,13 +55,6 @@ public class Post extends Posting {
 
     @OneToMany(mappedBy = "post", cascade = CascadeType.REMOVE, orphanRemoval = true, fetch = FetchType.EAGER)
     private Set<AnswerPost> answers = new HashSet<>();
-
-    /***
-     * The value 0 represents a post, given by the enum {{@link PostingType}}
-     */
-    @OneToMany(mappedBy = "postId", cascade = CascadeType.REMOVE, orphanRemoval = true, fetch = FetchType.LAZY)
-    @SQLRestriction("post_type = 0")
-    private Set<SavedPost> savedPosts = new HashSet<>();
 
     @ElementCollection(fetch = FetchType.EAGER)
     @CollectionTable(name = "post_tag", joinColumns = @JoinColumn(name = "post_id"))
@@ -233,11 +225,6 @@ public class Post extends Posting {
     public void setVoteCount(Integer voteCount) {
         // the case "null" should NOT happen and is only a safety measurement
         this.voteCount = voteCount != null ? voteCount : 0;
-    }
-
-    @JsonIgnore
-    public Set<SavedPost> getSavedPosts() {
-        return savedPosts;
     }
 
     @JsonProperty("isSaved")

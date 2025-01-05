@@ -14,13 +14,13 @@ import { ManualTextblockSelectionComponent } from 'app/exercises/text/assess/man
 import { ArtemisConfirmIconModule } from 'app/shared/confirm-icon/confirm-icon.module';
 import { TextSharedModule } from 'app/exercises/text/shared/text-shared.module';
 import { ArtemisResultModule } from 'app/exercises/shared/result/result.module';
-import { ArtemisComplaintsForTutorModule } from 'app/complaints/complaints-for-tutor/complaints-for-tutor.module';
 import { ArtemisSharedComponentModule } from 'app/shared/components/shared-component.module';
 import { ArtemisGradingInstructionLinkIconModule } from 'app/shared/grading-instruction-link-icon/grading-instruction-link-icon.module';
 import { SubmissionResultStatusModule } from 'app/overview/submission-result-status.module';
 import { TextblockFeedbackDropdownComponent } from 'app/exercises/text/assess/textblock-feedback-editor/dropdown/textblock-feedback-dropdown.component';
 import { ArtemisAssessmentProgressLabelModule } from 'app/exercises/shared/assessment-progress-label/assessment-progress-label.module';
 import { ArtemisFeedbackModule } from 'app/exercises/shared/feedback/feedback.module';
+import { ComplaintsForTutorComponent } from 'app/complaints/complaints-for-tutor/complaints-for-tutor.component';
 
 const ENTITY_STATES = [...textSubmissionAssessmentRoutes];
 
@@ -30,7 +30,7 @@ const ENTITY_STATES = [...textSubmissionAssessmentRoutes];
         RouterModule.forChild(ENTITY_STATES),
         ArtemisSharedModule,
         ArtemisResultModule,
-        ArtemisComplaintsForTutorModule,
+        ComplaintsForTutorComponent,
         ArtemisSharedComponentModule,
         ArtemisAssessmentSharedModule,
         AssessmentInstructionsModule,

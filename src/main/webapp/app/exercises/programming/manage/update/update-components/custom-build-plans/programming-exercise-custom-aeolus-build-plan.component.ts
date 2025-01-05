@@ -22,7 +22,6 @@ export class ProgrammingExerciseCustomAeolusBuildPlanComponent implements OnChan
     projectType?: ProjectType;
     staticCodeAnalysisEnabled?: boolean;
     sequentialTestRuns?: boolean;
-    testwiseCoverageEnabled?: boolean;
 
     constructor(private aeolusService: AeolusService) {}
 
@@ -54,8 +53,7 @@ export class ProgrammingExerciseCustomAeolusBuildPlanComponent implements OnChan
             this.programmingExercise.programmingLanguage !== this.programmingLanguage ||
             this.programmingExercise.projectType !== this.projectType ||
             this.programmingExercise.staticCodeAnalysisEnabled !== this.staticCodeAnalysisEnabled ||
-            this.programmingExercise.buildConfig?.sequentialTestRuns !== this.sequentialTestRuns ||
-            this.programmingExercise.buildConfig?.testwiseCoverageEnabled !== this.testwiseCoverageEnabled
+            this.programmingExercise.buildConfig?.sequentialTestRuns !== this.sequentialTestRuns
         );
     }
 
@@ -92,18 +90,15 @@ export class ProgrammingExerciseCustomAeolusBuildPlanComponent implements OnChan
         this.projectType = this.programmingExercise.projectType;
         this.staticCodeAnalysisEnabled = this.programmingExercise.staticCodeAnalysisEnabled;
         this.sequentialTestRuns = this.programmingExercise.buildConfig?.sequentialTestRuns;
-        this.testwiseCoverageEnabled = this.programmingExercise.buildConfig?.testwiseCoverageEnabled;
         if (!isImportFromFile || !this.programmingExercise.buildConfig?.windfile) {
-            this.aeolusService
-                .getAeolusTemplateFile(this.programmingLanguage, this.projectType, this.staticCodeAnalysisEnabled, this.sequentialTestRuns, this.testwiseCoverageEnabled)
-                .subscribe({
-                    next: (file) => {
-                        this.programmingExercise.buildConfig!.windfile = this.aeolusService.parseWindFile(file);
-                    },
-                    error: () => {
-                        this.programmingExercise.buildConfig!.windfile = undefined;
-                    },
-                });
+            this.aeolusService.getAeolusTemplateFile(this.programmingLanguage, this.projectType, this.staticCodeAnalysisEnabled, this.sequentialTestRuns).subscribe({
+                next: (file) => {
+                    this.programmingExercise.buildConfig!.windfile = this.aeolusService.parseWindFile(file);
+                },
+                error: () => {
+                    this.programmingExercise.buildConfig!.windfile = undefined;
+                },
+            });
         }
         this.programmingExerciseCreationConfig.buildPlanLoaded = true;
     }
