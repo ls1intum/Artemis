@@ -769,7 +769,8 @@ describe('ExamUpdateComponent', () => {
             examWithError.exerciseGroups = [exerciseGroup2];
 
             component.exam = examWithError;
-            component.examExerciseImportComponent.exam = examWithError;
+            const examExerciseImportComponent = TestBed.createComponent(ExamExerciseImportComponent);
+            examExerciseImportComponent.componentRef.setInput('exam', examWithError);
             component.examExerciseImportComponent.ngOnInit();
 
             fixture.detectChanges();
