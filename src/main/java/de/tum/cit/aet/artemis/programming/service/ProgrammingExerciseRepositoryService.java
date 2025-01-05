@@ -49,6 +49,8 @@ public class ProgrammingExerciseRepositoryService {
 
     private static final String TEST_DIR = "test";
 
+    private static final String STATIC_CODE_ANALYSIS_DIR = "staticCodeAnalysis";
+
     private static final String POM_XML = "pom.xml";
 
     private static final String BUILD_GRADLE = "build.gradle";
@@ -114,7 +116,8 @@ public class ProgrammingExerciseRepositoryService {
         setupRepositories(programmingExercise, exerciseCreator, exerciseResources, solutionResources, testResources);
     }
 
-    private record RepositoryResources(Repository repository, Resource[] resources, Path prefix, Resource[] projectTypeResources, Path projectTypePrefix) {
+    private record RepositoryResources(Repository repository, Resource[] resources, Path prefix, Resource[] projectTypeResources, Path projectTypePrefix,
+            Resource[] staticCodeAnalysisResources, Path staticCodeAnalysisPrefix) {
     }
 
     /**
@@ -128,17 +131,17 @@ public class ProgrammingExerciseRepositoryService {
     private RepositoryResources getRepositoryResources(final ProgrammingExercise programmingExercise, final RepositoryType repositoryType) throws GitAPIException {
         final String programmingLanguage = programmingExercise.getProgrammingLanguage().toString().toLowerCase(Locale.ROOT);
         final ProjectType projectType = programmingExercise.getProjectType();
-        final Path projectTypeTemplateDir = getTemplateDirectoryForRepositoryType(repositoryType);
+        final Path repositoryTypeTemplateDir = getTemplateDirectoryForRepositoryType(repositoryType);
 
         final VcsRepositoryUri repoUri = programmingExercise.getRepositoryURL(repositoryType);
         final Repository repo = gitService.getOrCheckoutRepository(repoUri, true);
 
         // Get path, files and prefix for the programming-language dependent files. They are copied first.
         final Path generalTemplatePath = ProgrammingExerciseService.getProgrammingLanguageTemplatePath(programmingExercise.getProgrammingLanguage())
-                .resolve(projectTypeTemplateDir);
+                .resolve(repositoryTypeTemplateDir);
         Resource[] resources = resourceLoaderService.getFileResources(generalTemplatePath);
 
-        Path prefix = Path.of(programmingLanguage).resolve(projectTypeTemplateDir);
+        Path prefix = Path.of(programmingLanguage).resolve(repositoryTypeTemplateDir);
 
         Resource[] projectTypeResources = null;
         Path projectTypePrefix = null;
@@ -149,8 +152,8 @@ public class ProgrammingExerciseRepositoryService {
                     projectType);
             final String projectTypePath = projectType.name().toLowerCase();
             final Path generalProjectTypePrefix = Path.of(programmingLanguage, projectTypePath);
-            final Path projectTypeSpecificPrefix = generalProjectTypePrefix.resolve(projectTypeTemplateDir);
-            final Path projectTypeTemplatePath = programmingLanguageProjectTypePath.resolve(projectTypeTemplateDir);
+            final Path projectTypeSpecificPrefix = generalProjectTypePrefix.resolve(repositoryTypeTemplateDir);
+            final Path projectTypeTemplatePath = programmingLanguageProjectTypePath.resolve(repositoryTypeTemplateDir);
 
             final Resource[] projectTypeSpecificResources = resourceLoaderService.getFileResources(projectTypeTemplatePath);
 
@@ -165,7 +168,19 @@ public class ProgrammingExerciseRepositoryService {
             }
         }
 
-        return new RepositoryResources(repo, resources, prefix, projectTypeResources, projectTypePrefix);
+        Resource[] staticCodeAnalysisResources = null;
+        Path staticCodeAnalysisPrefix = null;
+
+        if (programmingExercise.isStaticCodeAnalysisEnabled()) {
+            Path programmingLanguageStaticCodeAnalysisPath = ProgrammingExerciseService.getProgrammingLanguageTemplatePath(programmingExercise.getProgrammingLanguage())
+                    .resolve(STATIC_CODE_ANALYSIS_DIR);
+            final Path staticCodeAnalysisTemplatePath = programmingLanguageStaticCodeAnalysisPath.resolve(repositoryTypeTemplateDir);
+
+            staticCodeAnalysisResources = resourceLoaderService.getFileResources(staticCodeAnalysisTemplatePath);
+            staticCodeAnalysisPrefix = Path.of(programmingLanguage, STATIC_CODE_ANALYSIS_DIR).resolve(repositoryTypeTemplateDir);
+        }
+
+        return new RepositoryResources(repo, resources, prefix, projectTypeResources, projectTypePrefix, staticCodeAnalysisResources, staticCodeAnalysisPrefix);
     }
 
     private Path getTemplateDirectoryForRepositoryType(final RepositoryType repositoryType) {
@@ -316,9 +331,12 @@ public class ProgrammingExerciseRepositoryService {
         final Path repoLocalPath = getRepoAbsoluteLocalPath(repositoryResources.repository);
 
         fileService.copyResources(repositoryResources.resources, repositoryResources.prefix, repoLocalPath, true);
-        // Also copy project type specific files AFTERWARDS (so that they might overwrite the default files)
+        // Also copy project type and static code analysis specific files AFTERWARDS (so that they might overwrite the default files)
         if (repositoryResources.projectTypeResources != null) {
             fileService.copyResources(repositoryResources.projectTypeResources, repositoryResources.projectTypePrefix, repoLocalPath, true);
+        }
+        if (repositoryResources.staticCodeAnalysisResources != null) {
+            fileService.copyResources(repositoryResources.staticCodeAnalysisResources, repositoryResources.staticCodeAnalysisPrefix, repoLocalPath, true);
         }
 
         replacePlaceholders(programmingExercise, repositoryResources.repository);
@@ -386,8 +404,6 @@ public class ProgrammingExerciseRepositoryService {
         final Map<String, Boolean> sectionsMap = new HashMap<>();
         // Keep or delete static code analysis configuration in the build configuration file
         sectionsMap.put("static-code-analysis", Boolean.TRUE.equals(programmingExercise.isStaticCodeAnalysisEnabled()));
-        // Keep or delete testwise coverage configuration in the build file
-        sectionsMap.put("record-testwise-coverage", Boolean.TRUE.equals(programmingExercise.getBuildConfig().isTestwiseCoverageEnabled()));
 
         if (programmingExercise.getBuildConfig().hasSequentialTestRuns()) {
             setupTestTemplateSequentialTestRuns(resources, templatePath, projectTemplatePath, projectType, sectionsMap);
@@ -656,6 +672,7 @@ public class ProgrammingExerciseRepositoryService {
                 replacements.put(PACKAGE_NAME_PLACEHOLDER, programmingExercise.getPackageName());
             }
             case SWIFT -> replaceSwiftPlaceholders(replacements, programmingExercise, repository);
+            case GO -> replacements.put(PACKAGE_NAME_PLACEHOLDER, programmingExercise.getPackageName());
             default -> {
                 // no special package name replacements needed for other programming languages
             }

@@ -26,7 +26,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import de.tum.cit.aet.artemis.core.exception.LtiEmailAlreadyInUseException;
 import de.tum.cit.aet.artemis.core.security.SecurityUtils;
 import de.tum.cit.aet.artemis.lti.dto.Claims;
-import de.tum.cit.aet.artemis.lti.dto.LtiAuthenticationResponse;
+import de.tum.cit.aet.artemis.lti.dto.Lti13AuthenticationResponse;
 import de.tum.cit.aet.artemis.lti.service.Lti13Service;
 import uk.ac.ox.ctl.lti13.security.oauth2.client.lti.authentication.OidcAuthenticationToken;
 import uk.ac.ox.ctl.lti13.security.oauth2.client.lti.web.OAuth2LoginAuthenticationFilter;
@@ -110,7 +110,7 @@ public class Lti13LaunchFilter extends OncePerRequestFilter {
                 throw new IllegalStateException("No authentication was returned");
             }
         }
-        catch (OAuth2AuthenticationException | IllegalStateException ex) {
+        catch (OAuth2AuthenticationException | IllegalStateException | IOException | ServletException ex) {
             throw new IllegalStateException("Failed to attempt LTI 1.3 login authentication: " + ex.getMessage(), ex);
         }
 
@@ -125,7 +125,7 @@ public class Lti13LaunchFilter extends OncePerRequestFilter {
             log.info("User is authenticated, building LTI response");
             lti13Service.buildLtiResponse(uriBuilder, response);
         }
-        LtiAuthenticationResponse jsonResponse = new LtiAuthenticationResponse(uriBuilder.build().toUriString(), ltiIdToken.getTokenValue(), clientRegistrationId);
+        Lti13AuthenticationResponse jsonResponse = new Lti13AuthenticationResponse(uriBuilder.build().toUriString(), ltiIdToken.getTokenValue(), clientRegistrationId);
 
         response.setContentType("application/json");
         response.setCharacterEncoding("UTF-8");

@@ -32,7 +32,6 @@ import {
     faExclamationTriangle,
     faEye,
     faFileSignature,
-    faLightbulb,
     faListAlt,
     faPencilAlt,
     faRobot,
@@ -43,7 +42,6 @@ import {
     faUsers,
     faWrench,
 } from '@fortawesome/free-solid-svg-icons';
-import { TestwiseCoverageReportModalComponent } from 'app/exercises/programming/hestia/testwise-coverage-report/testwise-coverage-report-modal.component';
 import { ButtonSize } from 'app/shared/components/button.component';
 import { ProgrammingLanguageFeatureService } from 'app/exercises/programming/shared/service/programming-language-feature/programming-language-feature.service';
 import { DocumentationType } from 'app/shared/components/documentation-button/documentation-button.component';
@@ -57,8 +55,8 @@ import { IrisSubSettingsType } from 'app/entities/iris/settings/iris-sub-setting
 import { Detail } from 'app/detail-overview-list/detail.model';
 import { Competency } from 'app/entities/competency.model';
 import { AeolusService } from 'app/exercises/programming/shared/service/aeolus.service';
-import { mergeMap, tap } from 'rxjs/operators';
-import { ProgrammingExerciseGitDiffReport } from 'app/entities/hestia/programming-exercise-git-diff-report.model';
+import { catchError, mergeMap, tap } from 'rxjs/operators';
+import { ProgrammingExerciseGitDiffReport } from 'app/entities/programming-exercise-git-diff-report.model';
 import { BuildLogStatisticsDTO } from 'app/entities/programming/build-log-statistics-dto';
 
 @Component({
@@ -88,7 +86,6 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
     protected readonly faFileSignature = faFileSignature;
     protected readonly faListAlt = faListAlt;
     protected readonly faChartBar = faChartBar;
-    protected readonly faLightbulb = faLightbulb;
     protected readonly faPencilAlt = faPencilAlt;
     protected readonly faUsers = faUsers;
     protected readonly faEye = faEye;
@@ -186,7 +183,6 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
                 .pipe(
                     tap((updatedProgrammingExercise) => {
                         this.programmingExercise = updatedProgrammingExercise.body!;
-                        this.setLatestCoveredLineRatio();
                         this.loadingTemplateParticipationResults = false;
                         this.loadingSolutionParticipationResults = false;
                     }),
@@ -225,9 +221,16 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
                         this.programmingExercise.submissionPolicy = submissionPolicy;
                     }),
                     mergeMap(() => this.programmingExerciseService.getDiffReport(exerciseId)),
-                    tap((gitDiffReport) => {
-                        this.processGitDiffReport(gitDiffReport, false);
+                    catchError(() => {
+                        this.alertService.error('artemisApp.programmingExercise.diffReportError');
+                        return of(undefined);
                     }),
+                    tap((gitDiffReport) => {
+                        this.processGitDiffReport(gitDiffReport);
+                    }),
+                )
+                // split pipe to keep type checks
+                .pipe(
                     mergeMap(() =>
                         this.programmingExercise.isAtLeastEditor ? this.programmingExerciseService.getBuildLogStatistics(exerciseId!) : of([] as BuildLogStatisticsDTO),
                     ),
@@ -239,7 +242,6 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
                 )
                 .subscribe({
                     next: () => {
-                        this.setLatestCoveredLineRatio();
                         this.checkAndAlertInconsistencies();
                         this.plagiarismCheckSupported = this.programmingLanguageFeatureService.getProgrammingLanguageFeature(
                             programmingExercise.programmingLanguage,
@@ -458,17 +460,18 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
                         type: ProgrammingExerciseParticipationType.SOLUTION,
                     },
                 },
-                {
-                    type: DetailType.ProgrammingDiffReport,
-                    title: 'artemisApp.programmingExercise.diffReport.title',
-                    titleHelpText: 'artemisApp.programmingExercise.diffReport.detailedTooltip',
-                    data: {
-                        addedLineCount: this.addedLineCount,
-                        removedLineCount: this.removedLineCount,
-                        isLoadingDiffReport: this.isLoadingDiffReport,
-                        gitDiffReport: exercise.gitDiffReport,
+                this.addedLineCount !== undefined &&
+                    this.removedLineCount !== undefined && {
+                        type: DetailType.ProgrammingDiffReport,
+                        title: 'artemisApp.programmingExercise.diffReport.title',
+                        titleHelpText: 'artemisApp.programmingExercise.diffReport.detailedTooltip',
+                        data: {
+                            addedLineCount: this.addedLineCount,
+                            removedLineCount: this.removedLineCount,
+                            isLoadingDiffReport: this.isLoadingDiffReport,
+                            gitDiffReport: exercise.gitDiffReport,
+                        },
                     },
-                },
                 !!exercise.buildConfig?.buildScript &&
                     !!exercise.buildConfig?.windfile?.metadata?.docker?.image && {
                         type: DetailType.Text,
@@ -481,17 +484,6 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
                         title: 'artemisApp.programmingExercise.script',
                         titleHelpText: 'artemisApp.programmingExercise.revertToTemplateBuildPlan',
                         data: { innerHtml: this.artemisMarkdown.safeHtmlForMarkdown('```bash\n' + exercise.buildConfig?.buildScript + '\n```') },
-                    },
-                {
-                    type: DetailType.Boolean,
-                    title: 'artemisApp.programmingExercise.recordTestwiseCoverage',
-                    data: { boolean: exercise.buildConfig?.testwiseCoverageEnabled },
-                },
-                exercise.isAtLeastTutor &&
-                    exercise?.buildConfig?.testwiseCoverageEnabled && {
-                        type: DetailType.Text,
-                        title: 'artemisApp.programmingExercise.coveredLineRatio',
-                        data: { text: exercise?.coveredLinesRatio ? (exercise.coveredLinesRatio * 100).toFixed(1) + ' %' : undefined },
                     },
                 {
                     type: DetailType.Text,
@@ -618,7 +610,6 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
 
     onParticipationChange(): void {
         this.loadGitDiffReport();
-        this.setLatestCoveredLineRatio();
     }
 
     combineTemplateCommits() {
@@ -789,106 +780,41 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
     }
 
     /**
-     *
+     * Calculates the added and removed lines of the diff
      * @param gitDiffReport
-     * @param updateDetailSections set to false when called from OnInit, as another method will take care to update the
-     *                             {@link exerciseDetailSections} to prevent unnecessary renderings and duplicated requests,
-     *                             see description of {@link getExerciseDetails}
+     * @returns whether the report has changed compared to the last run
      */
-    private processGitDiffReport(gitDiffReport: ProgrammingExerciseGitDiffReport | undefined, updateDetailSections: boolean = true): void {
+    private processGitDiffReport(gitDiffReport: ProgrammingExerciseGitDiffReport | undefined): boolean {
         const isGitDiffReportUpdated =
             gitDiffReport &&
             (this.programmingExercise.gitDiffReport?.templateRepositoryCommitHash !== gitDiffReport.templateRepositoryCommitHash ||
                 this.programmingExercise.gitDiffReport?.solutionRepositoryCommitHash !== gitDiffReport.solutionRepositoryCommitHash);
-        if (isGitDiffReportUpdated) {
-            this.programmingExercise.gitDiffReport = gitDiffReport;
-            gitDiffReport.programmingExercise = this.programmingExercise;
-
-            const calculateLineCount = (entries: { lineCount?: number; previousLineCount?: number }[] = [], key: 'lineCount' | 'previousLineCount') =>
-                entries.map((entry) => entry[key] ?? 0).reduce((sum, count) => sum + count, 0);
-
-            this.addedLineCount = calculateLineCount(gitDiffReport.entries, 'lineCount');
-            this.removedLineCount = calculateLineCount(gitDiffReport.entries, 'previousLineCount');
-
-            if (updateDetailSections) {
-                this.exerciseDetailSections = this.getExerciseDetails();
-            }
+        if (!isGitDiffReportUpdated) {
+            return false;
         }
+
+        this.programmingExercise.gitDiffReport = gitDiffReport;
+        gitDiffReport.programmingExercise = this.programmingExercise;
+        const calculateLineCount = (
+            entries: {
+                lineCount?: number;
+                previousLineCount?: number;
+            }[] = [],
+            key: 'lineCount' | 'previousLineCount',
+        ) => entries.map((entry) => entry[key] ?? 0).reduce((sum, count) => sum + count, 0);
+        this.addedLineCount = calculateLineCount(gitDiffReport.entries, 'lineCount');
+        this.removedLineCount = calculateLineCount(gitDiffReport.entries, 'previousLineCount');
+
+        return true;
     }
 
     loadGitDiffReport() {
-        this.programmingExerciseService.getDiffReport(this.programmingExercise.id!).subscribe((gitDiffReport) => {
-            this.processGitDiffReport(gitDiffReport);
-        });
-    }
-
-    createStructuralSolutionEntries() {
-        this.programmingExerciseService.createStructuralSolutionEntries(this.programmingExercise.id!).subscribe({
-            next: () => {
-                this.alertService.addAlert({
-                    type: AlertType.SUCCESS,
-                    message: 'artemisApp.programmingExercise.createStructuralSolutionEntriesSuccess',
-                });
+        this.programmingExerciseService.getDiffReport(this.programmingExercise.id!).subscribe({
+            next: (gitDiffReport) => {
+                this.processGitDiffReport(gitDiffReport);
             },
-            error: (err) => {
-                this.onError(err);
-            },
-        });
-    }
-
-    createBehavioralSolutionEntries() {
-        this.programmingExerciseService.createBehavioralSolutionEntries(this.programmingExercise.id!).subscribe({
-            next: () => {
-                this.alertService.addAlert({
-                    type: AlertType.SUCCESS,
-                    message: 'artemisApp.programmingExercise.createBehavioralSolutionEntriesSuccess',
-                });
-            },
-            error: (err) => {
-                this.onError(err);
-            },
-        });
-    }
-
-    /**
-     * Returns undefined if the last solution submission was not successful or no report exists yet
-     */
-    private setLatestCoveredLineRatio() {
-        if (!this.programmingExercise?.solutionParticipation) {
-            return;
-        }
-
-        const latestSolutionSubmissionSuccessful = this.programmingExerciseService.getLatestResult(this.programmingExercise.solutionParticipation)?.successful;
-        if (this.programmingExercise.buildConfig?.testwiseCoverageEnabled && !!latestSolutionSubmissionSuccessful) {
-            this.programmingExerciseService.getLatestFullTestwiseCoverageReport(this.programmingExercise.id!).subscribe((coverageReport) => {
-                this.programmingExercise.coveredLinesRatio = coverageReport.coveredLineRatio;
-            });
-        }
-    }
-
-    /**
-     * Gets the testwise coverage reports from the server and displays it in a modal.
-     */
-    getAndShowTestwiseCoverage() {
-        this.programmingExerciseService.getSolutionRepositoryTestFilesWithContent(this.programmingExercise.id!).subscribe({
-            next: (response: Map<string, string>) => {
-                this.programmingExerciseService.getLatestFullTestwiseCoverageReport(this.programmingExercise.id!).subscribe({
-                    next: (coverageReport) => {
-                        const modalRef = this.modalService.open(TestwiseCoverageReportModalComponent, {
-                            size: 'xl',
-                            backdrop: 'static',
-                        });
-                        modalRef.componentInstance.report = coverageReport;
-                        modalRef.componentInstance.fileContentByPath = response;
-                    },
-                    error: (err: HttpErrorResponse) => {
-                        if (err.status === 404) {
-                            this.alertService.error('artemisApp.programmingExercise.testwiseCoverageReport.404');
-                        } else {
-                            this.onError(err);
-                        }
-                    },
-                });
+            error: () => {
+                this.alertService.error('artemisApp.programmingExercise.diffReportError');
             },
         });
     }
