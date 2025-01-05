@@ -17,7 +17,7 @@ import { generateExampleChannelDTO, generateExampleGroupChatDTO, generateOneToOn
 import { Directive, EventEmitter, Input, Output, QueryList } from '@angular/core';
 import { By } from '@angular/platform-browser';
 import { Course } from 'app/entities/course.model';
-import { getAsChannelDTO } from 'app/entities/metis/conversation/channel.model';
+import { ChannelDTO, getAsChannelDTO } from 'app/entities/metis/conversation/channel.model';
 import { PostCreateEditModalComponent } from 'app/shared/metis/posting-create-edit-modal/post-create-edit-modal/post-create-edit-modal.component';
 import dayjs from 'dayjs';
 import { HttpResponse } from '@angular/common/http';
@@ -26,8 +26,8 @@ import { ForwardedMessage } from '../../../../../../../../main/webapp/app/entiti
 const examples: ConversationDTO[] = [
     generateOneToOneChatDTO({}),
     generateExampleGroupChatDTO({}),
-    generateExampleChannelDTO({}),
-    generateExampleChannelDTO({ isAnnouncementChannel: true }),
+    generateExampleChannelDTO({} as ChannelDTO),
+    generateExampleChannelDTO({ isAnnouncementChannel: true } as ChannelDTO),
 ];
 
 @Directive({

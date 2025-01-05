@@ -4,8 +4,8 @@
 
 services:
     artemis-playwright:
-        image: mcr.microsoft.com/playwright:v1.44.0-jammy
-        pull_policy: if_not_present
+        image: mcr.microsoft.com/playwright:v1.49.1
+        pull_policy: missing
         environment:
             CI: 'true'
             BASE_URL: 'https://artemis-nginx'
