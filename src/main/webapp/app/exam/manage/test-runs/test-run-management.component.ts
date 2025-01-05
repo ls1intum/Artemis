@@ -32,8 +32,8 @@ export class TestRunManagementComponent implements OnInit {
     private sortService = inject(SortService);
     private modalService = inject(NgbModal);
 
-    course = signal<Course | null>(null);
-    exam = signal<Exam | null>(null);
+    course = signal<Course | undefined>(undefined);
+    exam = signal<Exam | undefined>(undefined);
     isLoading = signal(false);
     isExamStarted = computed(() => this.exam()?.started || false);
     testRuns = signal<StudentExam[]>([]);
