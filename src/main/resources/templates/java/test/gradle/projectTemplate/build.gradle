@@ -115,17 +115,15 @@ configurations {
     behaviorTestRuntime.extendsFrom testRuntime
 }
 
-task structuralTests(type: Test) {
+tasks.register('structuralTests', Test) {
     testClassesDirs = sourceSets.structuralTest.output.classesDirs
     classpath += sourceSets.structuralTest.runtimeClasspath
-
     useJUnitPlatform()
 }
 
-task behaviorTests(type: Test) {
+tasks.register('behaviorTests', Test) {
     testClassesDirs = sourceSets.behaviorTest.output.classesDirs
     classpath += sourceSets.behaviorTest.runtimeClasspath
-
     useJUnitPlatform()
 }
 // %sequential-stop%
