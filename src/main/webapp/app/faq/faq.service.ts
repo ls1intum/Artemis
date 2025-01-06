@@ -161,13 +161,10 @@ export class FaqService {
     }
 
     /**
-     * Trigger the Ingestion of all Lectures in the course.
+     * Trigger the Ingestion of all Faqs in the course.
      */
-    ingestFaqsInPyris(courseId: number, lectureId?: number): Observable<HttpResponse<void>> {
-        let params = new HttpParams();
-        if (lectureId !== undefined) {
-            params = params.set('lectureId', lectureId.toString());
-        }
+    ingestFaqsInPyris(courseId: number): Observable<HttpResponse<void>> {
+        const params = new HttpParams();
         return this.http.post<void>(`api/courses/${courseId}/faqs/ingest`, null, {
             params: params,
             observe: 'response',

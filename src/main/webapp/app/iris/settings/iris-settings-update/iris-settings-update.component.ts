@@ -187,6 +187,4 @@ export class IrisSettingsUpdateComponent implements OnInit, DoCheck, ComponentCa
                 return this.irisSettingsService.setExerciseSettings(this.exerciseId!, this.irisSettings!);
         }
     }
-
-    protected readonly console = console;
 }
