@@ -10,6 +10,7 @@ import { PdfPreviewDateBoxComponent } from 'app/lecture/pdf-preview/pdf-preview-
 import { Course } from 'app/entities/course.model';
 import dayjs from 'dayjs/esm';
 import { HiddenPage, HiddenPageMap } from 'app/lecture/pdf-preview/pdf-preview.component';
+import { Exercise } from 'app/entities/exercise.model';
 
 @Component({
     selector: 'jhi-pdf-preview-thumbnail-grid-component',
@@ -40,6 +41,7 @@ export class PdfPreviewThumbnailGridComponent implements OnChanges {
     initialPageNumber = signal<number>(0);
     activeButtonIndex = signal<number | null>(null);
     isPopoverOpen = signal<boolean>(false);
+    connectedExercise = signal<Exercise | null>(null);
 
     // Outputs
     isPdfLoading = output<boolean>();
@@ -167,7 +169,10 @@ export class PdfPreviewThumbnailGridComponent implements OnChanges {
      */
     onHiddenPageChange(hiddenPage: HiddenPage): void {
         const updatedHiddenPages = this.newHiddenPages();
-        updatedHiddenPages[hiddenPage.pageIndex] = dayjs(hiddenPage.date);
+        updatedHiddenPages[hiddenPage.pageIndex] = {
+            date: dayjs(hiddenPage.date),
+            exerciseId: hiddenPage.exerciseId ?? null,
+        };
         this.newHiddenPages.set(updatedHiddenPages);
         this.newHiddenPagesOutput.emit(this.newHiddenPages());
     }

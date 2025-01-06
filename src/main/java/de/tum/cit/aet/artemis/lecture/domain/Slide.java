@@ -12,6 +12,7 @@ import jakarta.validation.constraints.Size;
 import com.fasterxml.jackson.annotation.JsonInclude;
 
 import de.tum.cit.aet.artemis.core.domain.DomainObject;
+import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 
 @Entity
 @Table(name = "slide")
@@ -31,6 +32,10 @@ public class Slide extends DomainObject {
 
     @Column(name = "hidden")
     private Date hidden;
+
+    @ManyToOne
+    @JoinColumn(name = "exercise_id")
+    private Exercise exercise;
 
     public AttachmentUnit getAttachmentUnit() {
         return attachmentUnit;
@@ -62,5 +67,13 @@ public class Slide extends DomainObject {
 
     public void setHidden(Date hidden) {
         this.hidden = hidden;
+    }
+
+    public Exercise getExercise() {
+        return exercise;
+    }
+
+    public void setExercise(Exercise exercise) {
+        this.exercise = exercise;
     }
 }

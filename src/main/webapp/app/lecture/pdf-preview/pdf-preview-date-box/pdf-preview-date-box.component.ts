@@ -157,7 +157,12 @@ export class PdfPreviewDateBoxComponent implements OnInit {
             return;
         }
 
-        const newEntry = { pageIndex: this.pageIndex()!, date: selectedDate };
+        const newEntry: HiddenPage = {
+            pageIndex: this.pageIndex()!,
+            date: selectedDate,
+            exerciseId: this.selectedExercise()?.id ?? null,
+        };
+
         this.hiddenPage.set(newEntry);
         this.hiddenPageOutput.emit(newEntry);
     }

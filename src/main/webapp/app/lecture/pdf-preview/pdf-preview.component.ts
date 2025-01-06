@@ -22,10 +22,14 @@ import { Slide } from 'app/entities/lecture-unit/slide.model';
 export interface HiddenPage {
     pageIndex: number;
     date: dayjs.Dayjs;
+    exerciseId: number | null;
 }
 
 export interface HiddenPageMap {
-    [pageIndex: number]: dayjs.Dayjs;
+    [pageIndex: number]: {
+        date: dayjs.Dayjs;
+        exerciseId: number | null;
+    };
 }
 
 @Component({
@@ -90,7 +94,15 @@ export class PdfPreviewComponent implements OnInit, OnDestroy {
             } else if ('attachmentUnit' in data) {
                 this.attachmentUnit.set(data.attachmentUnit);
                 const hiddenPagesMap: HiddenPageMap = Object.fromEntries(
-                    data.attachmentUnit.slides.filter((page: Slide) => page.hidden).map((page: Slide) => [page.slideNumber, dayjs(page.hidden)]),
+                    data.attachmentUnit.slides
+                        .filter((page: Slide) => page.hidden)
+                        .map((page: Slide) => [
+                            page.slideNumber,
+                            {
+                                date: dayjs(page.hidden),
+                                exerciseId: page.exercise?.id ?? null,
+                            },
+                        ]),
                 );
                 this.initialHiddenPages.set(hiddenPagesMap);
                 this.hiddenPages.set({ ...hiddenPagesMap });
@@ -148,9 +160,11 @@ export class PdfPreviewComponent implements OnInit, OnDestroy {
                 const match = el.id.match(/hide-show-button-(\d+)/);
                 const pageIndex = match ? parseInt(match[1], 10) : null;
                 if (pageIndex && this.hiddenPages()![pageIndex]) {
+                    const pageData = this.hiddenPages()![pageIndex];
                     return {
                         pageIndex,
-                        date: this.hiddenPages()![pageIndex],
+                        date: pageData.date,
+                        exerciseId: pageData.exerciseId ?? null,
                     };
                 }
                 return null;
