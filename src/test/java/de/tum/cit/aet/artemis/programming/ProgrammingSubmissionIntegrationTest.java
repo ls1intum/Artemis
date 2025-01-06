@@ -515,6 +515,8 @@ class ProgrammingSubmissionIntegrationTest extends AbstractProgrammingIntegratio
 
     }
 
+    // todo: only fails when running the whole test class rather than only this test
+    // some race condition on the mocked API due to parallel execution?
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testNotifyPush_studentCommitUpdatesSubmissionCount() throws Exception {

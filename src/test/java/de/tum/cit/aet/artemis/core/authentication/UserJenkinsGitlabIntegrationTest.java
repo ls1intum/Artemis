@@ -256,6 +256,8 @@ class UserJenkinsGitlabIntegrationTest extends AbstractSpringIntegrationJenkinsG
      * Tests if attempting to delete a number of users, including the current user works as expected.
      * The expected behavior is the deletion of all users except the current user.
      */
+    // todo: only fails when running the whole test class rather than only this test
+    // some race condition on the mocked API due to parallel execution?
     @Test
     @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "ADMIN")
     void deleteUsers_isSuccessfulForAllUsersExceptSelf() throws Exception {
