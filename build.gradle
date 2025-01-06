@@ -1,30 +1,31 @@
 buildscript {
     dependencies {
-        classpath "com.diffplug.spotless:spotless-plugin-gradle:6.25.0"
+        classpath "com.diffplug.spotless:spotless-plugin-gradle:${spotless_plugin_version}"
+        // This is required so that the latest version of the liquibase gradle plugin works
+        classpath "org.liquibase:liquibase-core:${liquibase_version}"
     }
 }
 
 plugins {
     id "checkstyle"
-    id "java"
-    id "maven-publish"
     id "idea"
     id "jacoco"
-    id "org.springframework.boot" version "${spring_boot_version}"
-    id "io.spring.dependency-management" version "1.1.7"
-    id "com.google.cloud.tools.jib" version "3.4.4"
-    id "com.github.node-gradle.node" version "${gradle_node_plugin_version}"
-    id "com.diffplug.spotless" version "6.25.0"
-    // this allows us to find outdated dependencies via ./gradlew dependencyUpdates
-    id "com.github.ben-manes.versions" version "0.51.0"
-    id "com.github.andygoossens.modernizer" version "${modernizer_plugin_version}"
-    id "com.gorylenko.gradle-git-properties" version "2.4.2"
-    id "org.owasp.dependencycheck" version "11.1.1"
+    id "java"
     id "com.adarshr.test-logger" version "4.0.0"
+    id "com.diffplug.spotless" version "${spotless_plugin_version}"
+    id "com.github.andygoossens.modernizer" version "${modernizer_plugin_version}"
+    id "com.github.ben-manes.versions" version "0.51.0"
+    id "com.github.node-gradle.node" version "${gradle_node_plugin_version}"
+    id "com.google.cloud.tools.jib" version "3.4.4"
+    id "com.gorylenko.gradle-git-properties" version "2.4.2"
+    id "io.spring.dependency-management" version "1.1.7"
+    id "org.liquibase.gradle" version "${liquibase_plugin_version}"
+    id "org.owasp.dependencycheck" version "11.1.1"
+    id "org.springframework.boot" version "${spring_boot_version}"
 }
 
 group = "de.tum.cit.aet.artemis"
-version = "7.8.1"
+version = "7.8.3"
 description = "Interactive Learning with Individual Feedback"
 
 java {
@@ -144,7 +145,7 @@ dependencies {
         exclude module: "jaxb-api"
     }
 
-    implementation "org.gitlab4j:gitlab4j-api:6.0.0-rc.7"
+    implementation "org.gitlab4j:gitlab4j-api:6.0.0-rc.8"
 
     implementation "de.jplag:jplag:${jplag_version}"
 
@@ -305,7 +306,7 @@ dependencies {
     implementation "org.springframework.security:spring-security-oauth2-core:${spring_security_version}"
     implementation "org.springframework.security:spring-security-oauth2-client:${spring_security_version}"
     // use newest version of nimbus-jose-jwt to avoid security issues through outdated dependencies
-    implementation "com.nimbusds:nimbus-jose-jwt:9.48"
+    implementation "com.nimbusds:nimbus-jose-jwt:10.0.1"
 
     implementation "org.springframework.security:spring-security-oauth2-jose:${spring_security_version}"
     implementation "org.springframework.security:spring-security-crypto:${spring_security_version}"
@@ -326,7 +327,7 @@ dependencies {
     implementation "org.bouncycastle:bcpkix-jdk18on:1.79"
     implementation "org.bouncycastle:bcprov-jdk18on:1.79"
 
-    implementation "com.mysql:mysql-connector-j:9.1.0"
+    implementation "com.mysql:mysql-connector-j:${mysql_version}"
     implementation "org.postgresql:postgresql:42.7.4"
 
     implementation "org.zalando:problem-spring-web:0.29.1"
@@ -365,7 +366,7 @@ dependencies {
             strictly byte_buddy_version
         }
     }
-    liquibase("net.bytebuddy:byte-buddy") {
+    liquibaseRuntime("net.bytebuddy:byte-buddy") {
         version {
             strictly byte_buddy_version
         }
@@ -376,11 +377,6 @@ dependencies {
         }
     }
     annotationProcessor("net.bytebuddy:byte-buddy-agent") {
-        version {
-            strictly byte_buddy_version
-        }
-    }
-    liquibase("net.bytebuddy:byte-buddy-agent") {
         version {
             strictly byte_buddy_version
         }
@@ -404,7 +400,7 @@ dependencies {
     testImplementation "org.springframework.boot:spring-boot-starter-test:${spring_boot_version}"
     testImplementation "org.springframework.security:spring-security-test:${spring_security_version}"
     testImplementation "org.springframework.boot:spring-boot-test:${spring_boot_version}"
-    testImplementation "org.assertj:assertj-core:3.27.0"
+    testImplementation "org.assertj:assertj-core:3.27.2"
     testImplementation "org.mockito:mockito-core:${mockito_version}"
     testImplementation "org.mockito:mockito-junit-jupiter:${mockito_version}"
 
@@ -424,7 +420,7 @@ dependencies {
     testImplementation "com.h2database:h2:2.2.224"
 
     // Lightweight JSON library needed for the internals of the MockRestServiceServer
-    testImplementation "org.json:json:20240303"
+    testImplementation "org.json:json:20241224"
 
     // NOTE: make sure this corresponds to the version used for JUnit in the testImplementation
     testRuntimeOnly "org.junit.platform:junit-platform-launcher:${junit_platform_version}"
