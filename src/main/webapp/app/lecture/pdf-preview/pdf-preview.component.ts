@@ -19,12 +19,12 @@ import { LectureUnitService } from 'app/lecture/lecture-unit/lecture-unit-manage
 import { PDFDocument } from 'pdf-lib';
 import { Slide } from 'app/entities/lecture-unit/slide.model';
 
-interface HiddenPage {
+export interface HiddenPage {
     pageIndex: number;
     date: dayjs.Dayjs;
 }
 
-interface HiddenPageMap {
+export interface HiddenPageMap {
     [pageIndex: number]: dayjs.Dayjs;
 }
 

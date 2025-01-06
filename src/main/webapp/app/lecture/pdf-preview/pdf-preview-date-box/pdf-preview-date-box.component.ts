@@ -4,15 +4,11 @@ import { Course } from 'app/entities/course.model';
 import { Exercise, ExerciseType } from 'app/entities/exercise.model';
 import { CourseExerciseService } from 'app/exercises/shared/course-exercises/course-exercise.service';
 import dayjs from 'dayjs/esm';
+import { HiddenPage } from 'app/lecture/pdf-preview/pdf-preview.component';
 
 interface CategorizedExercise {
     type: ExerciseType;
     exercises: Exercise[];
-}
-
-interface HiddenPage {
-    pageIndex: number;
-    date: dayjs.Dayjs;
 }
 
 const FOREVER = dayjs('9999-12-31');

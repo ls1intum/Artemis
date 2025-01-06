@@ -103,15 +103,15 @@ describe('PdfPreviewDateBoxComponent', () => {
         it('should handle calendar selection', () => {
             component.selectCalendar();
 
-            expect(component.calendarSelected()).toBeTrue();
-            expect(component.exerciseSelected()).toBeFalse();
+            expect(component.calendarSelected()).toBeTruthy();
+            expect(component.exerciseSelected()).toBeFalsy();
         });
 
         it('should handle exercise selection', () => {
             component.selectExercise();
 
-            expect(component.calendarSelected()).toBeFalse();
-            expect(component.exerciseSelected()).toBeTrue();
+            expect(component.calendarSelected()).toBeFalsy();
+            expect(component.exerciseSelected()).toBeTruthy();
         });
 
         it('should handle hide forever changes', () => {
@@ -121,9 +121,9 @@ describe('PdfPreviewDateBoxComponent', () => {
 
             component.onHideForeverChange(true);
 
-            expect(component.hideForever()).toBeTrue();
-            expect(component.calendarSelected()).toBeFalse();
-            expect(component.exerciseSelected()).toBeFalse();
+            expect(component.hideForever()).toBeTruthy();
+            expect(component.calendarSelected()).toBeFalsy();
+            expect(component.exerciseSelected()).toBeFalsy();
             expect(component.selectedExercise()).toBeNull();
         });
     });

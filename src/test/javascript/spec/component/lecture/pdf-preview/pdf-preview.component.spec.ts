@@ -227,7 +227,7 @@ describe('PdfPreviewComponent', () => {
                 expect(attachmentUnitServiceMock.update).toHaveBeenCalledWith(1, 1, expect.any(FormData));
 
                 const lastCallArgs = attachmentUnitServiceMock.update.mock.lastCall[2];
-                expect(lastCallArgs instanceof FormData).toBeTrue();
+                expect(lastCallArgs instanceof FormData).toBeTruthy();
                 expect(lastCallArgs.get('hiddenPages')).toBe(JSON.stringify(mockHiddenPages));
             });
         }));
@@ -627,7 +627,7 @@ describe('PdfPreviewComponent', () => {
                 expect(attachmentUnitServiceMock.update).toHaveBeenCalledWith(1, 1, expect.any(FormData));
 
                 const lastCallArgs = attachmentUnitServiceMock.update.mock.lastCall[2];
-                expect(lastCallArgs instanceof FormData).toBeTrue();
+                expect(lastCallArgs instanceof FormData).toBeTruthy();
                 expect(lastCallArgs.get('hiddenPages')).toBe(JSON.stringify(mockHiddenPages));
             });
         }));

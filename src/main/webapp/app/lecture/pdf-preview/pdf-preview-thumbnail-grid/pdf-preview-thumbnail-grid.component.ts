@@ -9,15 +9,7 @@ import { faEye, faEyeSlash } from '@fortawesome/free-solid-svg-icons';
 import { PdfPreviewDateBoxComponent } from 'app/lecture/pdf-preview/pdf-preview-date-box/pdf-preview-date-box.component';
 import { Course } from 'app/entities/course.model';
 import dayjs from 'dayjs/esm';
-
-interface HiddenPage {
-    pageIndex: number;
-    date: dayjs.Dayjs;
-}
-
-interface HiddenPageMap {
-    [pageIndex: number]: dayjs.Dayjs;
-}
+import { HiddenPage, HiddenPageMap } from 'app/lecture/pdf-preview/pdf-preview.component';
 
 @Component({
     selector: 'jhi-pdf-preview-thumbnail-grid-component',
