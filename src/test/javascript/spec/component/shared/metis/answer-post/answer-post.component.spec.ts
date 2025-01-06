@@ -18,12 +18,18 @@ import { MockMetisService } from '../../../../helpers/mocks/service/mock-metis-s
 import { Posting, PostingType } from 'app/entities/metis/posting.model';
 import { AnswerPost } from 'app/entities/metis/answer-post.model';
 import dayjs from 'dayjs/esm';
-import { ArtemisDatePipe } from '../../../../../../../main/webapp/app/shared/pipes/artemis-date.pipe';
-import { ArtemisTranslatePipe } from '../../../../../../../main/webapp/app/shared/pipes/artemis-translate.pipe';
-import { TranslateDirective } from '../../../../../../../main/webapp/app/shared/language/translate.directive';
+import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
+import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { MockTranslateService } from '../../../../helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
 import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
+import { provideHttpClientTesting } from '@angular/common/http/testing';
+import { provideHttpClient } from '@angular/common/http';
+import { MockSyncStorage } from '../../../../helpers/mocks/service/mock-sync-storage.service';
+import { SessionStorageService } from 'ngx-webstorage';
+import { MetisConversationService } from 'app/shared/metis/metis-conversation.service';
+import { MockMetisConversationService } from '../../../../helpers/mocks/service/mock-metis-conversation.service';
 
 describe('AnswerPostComponent', () => {
     let component: AnswerPostComponent;
@@ -50,9 +56,13 @@ describe('AnswerPostComponent', () => {
                 MockDirective(TranslateDirective),
             ],
             providers: [
+                provideHttpClient(),
+                provideHttpClientTesting(),
                 { provide: DOCUMENT, useValue: document },
                 { provide: MetisService, useClass: MockMetisService },
                 { provide: TranslateService, useClass: MockTranslateService },
+                { provide: SessionStorageService, useClass: MockSyncStorage },
+                { provide: MetisConversationService, useClass: MockMetisConversationService },
             ],
         })
             .compileComponents()
