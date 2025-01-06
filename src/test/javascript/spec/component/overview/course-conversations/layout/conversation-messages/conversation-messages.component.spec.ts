@@ -21,8 +21,8 @@ import { getAsChannelDTO } from 'app/entities/metis/conversation/channel.model';
 import { PostCreateEditModalComponent } from 'app/shared/metis/posting-create-edit-modal/post-create-edit-modal/post-create-edit-modal.component';
 import dayjs from 'dayjs';
 import { HttpResponse } from '@angular/common/http';
-import { ForwardedMessage } from '../../../../../../../../main/webapp/app/entities/metis/forwarded-message.model';
-import { AnswerPost } from '../../../../../../../../main/webapp/app/entities/metis/answer-post.model';
+import { ForwardedMessage } from 'app/entities/metis/forwarded-message.model';
+import { AnswerPost } from 'app/entities/metis/answer-post.model';
 
 const examples: ConversationDTO[] = [
     generateOneToOneChatDTO({}),
