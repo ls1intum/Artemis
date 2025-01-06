@@ -80,7 +80,6 @@ describe('ForwardedMessageComponent', () => {
     it('should set sourceName correctly for a one-to-one chat post when isAnswerPost is false', () => {
         const oneToOnePost: Post = {
             id: 3,
-            creationDate: dayjs(),
             conversation: { type: 'oneToOneChat' } as any,
         } as Post;
 
@@ -94,7 +93,6 @@ describe('ForwardedMessageComponent', () => {
     it('should set sourceName correctly for a one-to-one chat post when isAnswerPost is true', () => {
         const oneToOneAnswerPost: AnswerPost = {
             id: 4,
-            creationDate: dayjs(),
             post: { ...mockPost, conversation: { type: 'oneToOneChat' } as any },
         } as AnswerPost;
 
@@ -126,7 +124,6 @@ describe('ForwardedMessageComponent', () => {
     it('should set sourceName correctly for a group chat post when isAnswerPost is true', () => {
         const groupChatAnswerPost: AnswerPost = {
             id: 5,
-            creationDate: dayjs(),
             post: { ...mockPost, conversation: { type: 'groupChat' } as any },
         } as AnswerPost;
 
@@ -140,7 +137,6 @@ describe('ForwardedMessageComponent', () => {
     it('should set sourceName correctly for a group chat post when isAnswerPost is false', () => {
         const groupChatPost: Post = {
             id: 6,
-            creationDate: dayjs(),
             conversation: { type: 'groupChat', name: 'dev-team' } as any,
         } as Post;
 
@@ -154,7 +150,6 @@ describe('ForwardedMessageComponent', () => {
     it('should set sourceName to "#unknown |" for channel post without name and isAnswerPost false', () => {
         const channelPostWithoutName: Post = {
             id: 7,
-            creationDate: dayjs(),
             conversation: { type: 'channel', name: undefined } as any,
         } as Post;
 
@@ -168,7 +163,6 @@ describe('ForwardedMessageComponent', () => {
     it('should set sourceName correctly for an unknown conversation type when isAnswerPost is true', () => {
         const unknownTypeAnswerPost: AnswerPost = {
             id: 8,
-            creationDate: dayjs(),
             post: { ...mockPost, conversation: { type: 'unknownType' } as any },
         } as AnswerPost;
 
@@ -182,7 +176,6 @@ describe('ForwardedMessageComponent', () => {
     it('should set sourceName correctly for an unknown conversation type when isAnswerPost is false', () => {
         const unknownTypePost: Post = {
             id: 9,
-            creationDate: dayjs(),
             conversation: { type: 'unknownType' } as any,
         } as Post;
 
@@ -196,7 +189,6 @@ describe('ForwardedMessageComponent', () => {
     it('should set sourceName to empty string when conversation is undefined', () => {
         const postWithoutConversation: Post = {
             id: 10,
-            creationDate: dayjs(),
             conversation: undefined,
         } as Post;
 
@@ -220,7 +212,6 @@ describe('ForwardedMessageComponent', () => {
     it('should update sourceName correctly based on isAnswerPost flag (true case)', () => {
         const channelAnswerPost: AnswerPost = {
             id: 12,
-            creationDate: dayjs(),
             postingType: PostingType.ANSWER,
             conversation: { type: 'channel', name: 'general' } as any,
             post: mockPost,
@@ -236,7 +227,6 @@ describe('ForwardedMessageComponent', () => {
     it('should update sourssceName correctly based on isAnswerPost flag (false case)', () => {
         const channelPost: Posting = {
             id: 11,
-            creationDate: dayjs(),
             conversation: { type: 'channel', name: 'general' } as any,
             postingType: PostingType.POST,
         };
@@ -251,9 +241,8 @@ describe('ForwardedMessageComponent', () => {
     it('should update sourceName correctly when updateSourceName is called manually', () => {
         const oneToOnePost: Post = {
             id: 13,
-            creationDate: dayjs(),
             conversation: { type: 'oneToOneChat' } as any,
-        } as Post;
+        };
 
         runInInjectionContext(fixture.debugElement.injector, () => {
             component.originalPostDetails = input<Posting>(oneToOnePost);
@@ -266,7 +255,6 @@ describe('ForwardedMessageComponent', () => {
     it('should handle missing conversation gracefully in updateSourceName', () => {
         const postWithoutConversation: Post = {
             id: 14,
-            creationDate: dayjs(),
             conversation: undefined,
         } as Post;
 
