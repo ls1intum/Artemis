@@ -17,11 +17,9 @@ export class ResultFaviconService {
     private readonly FAVICON_LOADING_UPDATE_INTERVAL = 200;
     private readonly FAVICON_ROTATION_SPEED = 1;
 
-    private static originalFaviconSrcMap = new Map<HTMLLinkElement, string>();
-    private static isFaviconReplaced = false;
-    private static cleanupFunctions = new Set<() => void>(); // Not an array since arrays are immutable by default according to the client guidelines
-
-    constructor() {}
+    private originalFaviconSrcMap = new Map<HTMLLinkElement, string>();
+    private isFaviconReplaced = false;
+    private cleanupFunctions = new Set<() => void>(); // Not an array since arrays are immutable by default according to the client guidelines
 
     private getSVGPathFromIcon(icon: IconDefinition) {
         return icon.icon[4].toString();
@@ -59,9 +57,9 @@ export class ResultFaviconService {
         isQueued: boolean,
         missingResultInfo: MissingResultInformation | undefined,
     ) {
-        if (ResultFaviconService.isFaviconReplaced) this.removeFavicon();
+        if (this.isFaviconReplaced) this.removeFavicon();
 
-        ResultFaviconService.isFaviconReplaced = true;
+        this.isFaviconReplaced = true;
 
         const templateStatus = evaluateTemplateStatus(exercise, participation, result, isBuilding, missingResultInfo, isQueued);
         const shouldBeLoading = [ResultTemplateStatus.IS_BUILDING, ResultTemplateStatus.IS_QUEUED, ResultTemplateStatus.IS_GENERATING_FEEDBACK].includes(templateStatus);
@@ -116,17 +114,17 @@ export class ResultFaviconService {
                 if (shouldBeLoading) {
                     // We're not using requestAnimationFrame here because it won't update when the tab is in the background
                     const interval = setInterval(drawBadge, this.FAVICON_LOADING_UPDATE_INTERVAL);
-                    ResultFaviconService.cleanupFunctions.add(() => clearInterval(interval));
+                    this.cleanupFunctions.add(() => clearInterval(interval));
                 }
             };
             img.addEventListener('load', createBadge);
 
-            ResultFaviconService.cleanupFunctions.add(() => {
+            this.cleanupFunctions.add(() => {
                 img.removeEventListener('load', createBadge);
             });
 
             img.src = originalHref;
-            ResultFaviconService.originalFaviconSrcMap.set(faviconLinkElement, originalHref);
+            this.originalFaviconSrcMap.set(faviconLinkElement, originalHref);
         });
     }
 
@@ -134,17 +132,17 @@ export class ResultFaviconService {
      * Removes the custom favicon from the page and restores the original favicon.
      */
     removeFavicon() {
-        if (!ResultFaviconService.isFaviconReplaced) return;
+        if (!this.isFaviconReplaced) return;
 
-        ResultFaviconService.originalFaviconSrcMap.forEach((originalSrc, linkElement) => {
+        this.originalFaviconSrcMap.forEach((originalSrc, linkElement) => {
             linkElement.href = originalSrc;
         });
 
-        ResultFaviconService.originalFaviconSrcMap.clear();
+        this.originalFaviconSrcMap.clear();
 
-        ResultFaviconService.cleanupFunctions.forEach((fn) => fn());
-        ResultFaviconService.cleanupFunctions.clear();
+        this.cleanupFunctions.forEach((fn) => fn());
+        this.cleanupFunctions.clear();
 
-        ResultFaviconService.isFaviconReplaced = false;
+        this.isFaviconReplaced = false;
     }
 }
