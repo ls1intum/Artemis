@@ -73,4 +73,12 @@ export class BuildAgentsService {
             }),
         );
     }
+
+    clearDistributedData(): Observable<void> {
+        return this.http.delete<void>(`${this.adminResourceUrl}/clear-distributed-data`).pipe(
+            catchError((err) => {
+                return throwError(() => new Error(`Failed to clear distributed data\n${err.message}`));
+            }),
+        );
+    }
 }
