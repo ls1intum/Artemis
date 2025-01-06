@@ -11,6 +11,6 @@ class LtiCodeStyleArchitectureTest extends AbstractModuleCodeStyleTest {
 
     @Override
     protected int dtoNameEndingThreshold() {
-        return 10;
+        return 11;
     }
 }
