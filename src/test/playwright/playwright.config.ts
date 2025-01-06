@@ -21,13 +21,21 @@ export default defineConfig({
     /* Reporter to use. See https://playwright.dev/docs/test-reporters */
     reporter: [
         ['list'],
-        ['junit', { outputFile: process.env.PLAYWRIGHT_JUNIT_OUTPUT_NAME ?? './test-reports/results.xml' }],
+        ['junit', { outputFile: process.env.PLAYWRIGHT_TEST_TYPE ? `./test-reports/results-${process.env.PLAYWRIGHT_TEST_TYPE}.xml` : './test-reports/results.xml' }],
         [
             'monocart-reporter',
             {
-                outputFile: './test-reports/monocart-report',
+                outputFile: process.env.PLAYWRIGHT_TEST_TYPE ? `./test-reports/monocart-report-${process.env.PLAYWRIGHT_TEST_TYPE}` : './test-reports/monocart-report',
                 coverage: {
-                    reports: ['json', 'lcov', 'text-summary'],
+                    reports: [
+                        [
+                            'raw',
+                            {
+                                outputDir: 'raw',
+                            },
+                        ],
+                        'lcov',
+                    ],
                     filter: {
                         '**/src/**': true,
                         '**/node_modules/**': false,
