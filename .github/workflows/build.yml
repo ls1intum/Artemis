@@ -32,9 +32,9 @@ on:
     - created
 
 
-# Keep build.yml in sync with build-reusable.yml
+# Keep build.yml in sync with test-server.yml
 
-# Keep in sync with codeql-analysis.yml and test.yml and analysis-of-endpoint-connections.yml and build-reusable.yml
+# Keep in sync with codeql-analysis.yml and test.yml and analysis-of-endpoint-connections.yml
 env:
   CI: true
   node: 22

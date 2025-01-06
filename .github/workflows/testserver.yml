@@ -40,6 +40,7 @@ on:
 concurrency: test-servers
 
 env:
+  CI: true
   RAW_URL: ${{ github.event.inputs.HELIOS_RAW_URL }}
 
 jobs:
@@ -73,11 +74,35 @@ jobs:
   conditional-build:
     if: ${{ github.event.inputs.HELIOS_BUILD == 'true' }}
     needs: [ validate-inputs ]
-    uses: ./.github/workflows/build-reusable.yml
-    with:
-      sha: ${{ github.event.inputs.HELIOS_BRANCH_HEAD_SHA }}
-      tag: ${{ github.event.inputs.HELIOS_BUILD_TAG }}
-      raw_url: ${{ github.event.inputs.HELIOS_RAW_URL }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Git Checkout
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.inputs.HELIOS_BRANCH_HEAD_SHA }}
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v3
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+      # Build and Push to GitHub Container Registry
+      - name: Login to GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.repository_owner }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - name: Build and Push to GitHub Container Registry
+        uses: docker/build-push-action@v5
+        with:
+          # beware that the linux/arm64 build from the registry is using an amd64 compiled .war file as
+          # the GitHub runners don't support arm64 and QEMU takes too long for emulating the build
+          platforms: linux/amd64,linux/arm64
+          file: ./docker/artemis/Dockerfile
+          context: .
+          tags: ghcr.io/ls1intum/artemis:${{ github.event.inputs.HELIOS_BUILD_TAG }}
+          push: true
+          cache-from: type=gha
+          cache-to: type=gha,mode=min
 
   # Check if the build has run successfully (PR)
   check-existing-build:
@@ -86,7 +111,6 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Get latest successful build for branch
-        if: ${{ github.event.inputs.HELIOS_BUILD == 'false' }}
         id: check_build
         uses: octokit/request-action@v2.x
         with:
@@ -94,12 +118,12 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       - name: Fail if no successful build found
-        if: fromJSON(steps.check_build.outputs.data).total_count == 0 && github.event.inputs.HELIOS_BUILD == 'false'
+        if: fromJSON(steps.check_build.outputs.data).total_count == 0
         run: |
           echo "No successful build found for branch '${{ github.event.inputs.HELIOS_BRANCH_NAME }}' with SHA '${{ github.event.inputs.HELIOS_BRANCH_HEAD_SHA }}'."
           exit 1
       - name: Post comment about build validation failure
-        if: failure() && github.event.inputs.HELIOS_BUILD == 'false'
+        if: failure()
         uses: marocchino/sticky-pull-request-comment@v2
         with:
           number: ${{ github.event.inputs.HELIOS_PR_NUMBER }}
@@ -109,7 +133,7 @@ jobs:
 
             The build needs to run through first. Please wait for the build to finish and then try again.
       - name: Remove sticky comment on build validation failure
-        if: success() && github.event.inputs.HELIOS_BUILD == 'false'
+        if: success()
         uses: marocchino/sticky-pull-request-comment@v2
         with:
           number: ${{ github.event.inputs.HELIOS_PR_NUMBER }}
