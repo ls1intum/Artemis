@@ -73,7 +73,7 @@ jobs:
   conditional-build:
     if: ${{ github.event.inputs.HELIOS_BUILD == 'true' }}
     needs: [ validate-inputs ]
-    uses: ./.github/workflows/build.yml
+    uses: ./.github/workflows/build-reusable.yml
     with:
       sha: ${{ github.event.inputs.HELIOS_BRANCH_HEAD_SHA }}
       tag: ${{ github.event.inputs.HELIOS_BUILD_TAG }}
