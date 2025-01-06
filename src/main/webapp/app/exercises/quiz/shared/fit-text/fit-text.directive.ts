@@ -3,7 +3,7 @@ import { AfterViewInit, Directive, ElementRef, HostListener, Input, OnChanges, O
 // NOTE: this code was taken from https://github.com/sollenne/angular-fittext because the repository was not maintained any more since June 2018
 
 @Directive({
-    selector: '[jhiFitText]',
+    selector: '[fitText]',
     standalone: false,
 })
 export class FitTextDirective implements AfterViewInit, OnInit, OnChanges, OnDestroy {
