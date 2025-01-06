@@ -38,31 +38,10 @@ export class FileService {
     }
 
     /**
-     * Fetches the aeolus template file for the given programming language
-     * @param {ProgrammingLanguage} language
-     * @param {ProjectType} projectType (if available)
-     * @param staticAnalysis (if available) whether static code analysis should be enabled
-     * @param sequentialRuns (if available) whether sequential test runs should be enabled
-     * @param coverage (if available) whether test coverage should be enabled
-     * @returns json test file
-     */
-    getAeolusTemplateFile(language: ProgrammingLanguage, projectType?: ProjectType, staticAnalysis?: boolean, sequentialRuns?: boolean, coverage?: boolean): Observable<string> {
-        const urlParts: string[] = [language];
-        const params: string[] = [];
-        if (projectType) {
-            urlParts.push(projectType);
-        }
-        params.push('staticAnalysis=' + (staticAnalysis == undefined ? false : staticAnalysis));
-        params.push('sequentialRuns=' + (sequentialRuns == undefined ? false : sequentialRuns));
-        params.push('testCoverage=' + (coverage == undefined ? false : coverage));
-        return this.http.get<string>(`${this.resourceUrl}/aeolus/templates/` + urlParts.join('/') + '?' + params.join('&'), { responseType: 'text' as 'json' });
-    }
-
-    /**
      * Fetches the template code of conduct
      * @returns markdown file
      */
-    getTemplateCodeOfCondcut(): Observable<HttpResponse<string>> {
+    getTemplateCodeOfConduct(): Observable<HttpResponse<string>> {
         return this.http.get<string>(`api/files/templates/code-of-conduct`, { observe: 'response', responseType: 'text' as 'json' });
     }
 

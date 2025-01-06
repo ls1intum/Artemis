@@ -164,11 +164,11 @@ public class ConversationService {
     }
 
     /**
-     * Gets the conversation in a course for which the user is a member
+     * Gets the conversations in a course for which the user is a member
      *
      * @param course         the course
      * @param requestingUser the user for which the conversations are requested
-     * @return the conversation in the course for which the user is a member
+     * @return list of conversations in the course for which the user is a member
      */
     public List<ConversationDTO> getConversationsOfUser(Course course, User requestingUser) {
         var conversationsOfUser = new ArrayList<Conversation>();

@@ -10,21 +10,17 @@ import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
-import de.tum.cit.aet.artemis.assessment.repository.FeedbackRepository;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingLanguage;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingSubmission;
 import de.tum.cit.aet.artemis.programming.domain.ProjectType;
 import de.tum.cit.aet.artemis.programming.domain.build.BuildLogEntry;
-import de.tum.cit.aet.artemis.programming.dto.AbstractBuildResultNotificationDTO;
+import de.tum.cit.aet.artemis.programming.dto.BuildResultNotification;
 import de.tum.cit.aet.artemis.programming.repository.BuildLogStatisticsEntryRepository;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseBuildConfigRepository;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseTestCaseRepository;
-import de.tum.cit.aet.artemis.programming.repository.ProgrammingSubmissionRepository;
-import de.tum.cit.aet.artemis.programming.service.BuildLogEntryService;
 import de.tum.cit.aet.artemis.programming.service.ProgrammingExerciseFeedbackCreationService;
 import de.tum.cit.aet.artemis.programming.service.ci.AbstractContinuousIntegrationResultService;
 import de.tum.cit.aet.artemis.programming.service.ci.notification.dto.TestResultsDTO;
-import de.tum.cit.aet.artemis.programming.service.hestia.TestwiseCoverageService;
 
 @Profile("jenkins")
 @Service
@@ -32,15 +28,13 @@ public class JenkinsResultService extends AbstractContinuousIntegrationResultSer
 
     private static final Logger log = LoggerFactory.getLogger(JenkinsResultService.class);
 
-    public JenkinsResultService(ProgrammingSubmissionRepository programmingSubmissionRepository, FeedbackRepository feedbackRepository, BuildLogEntryService buildLogService,
-            BuildLogStatisticsEntryRepository buildLogStatisticsEntryRepository, TestwiseCoverageService testwiseCoverageService,
-            ProgrammingExerciseFeedbackCreationService feedbackCreationService, ProgrammingExerciseTestCaseRepository testCaseRepository,
-            ProgrammingExerciseBuildConfigRepository programmingExerciseBuildConfigRepository) {
-        super(testCaseRepository, buildLogStatisticsEntryRepository, testwiseCoverageService, feedbackCreationService, programmingExerciseBuildConfigRepository);
+    public JenkinsResultService(BuildLogStatisticsEntryRepository buildLogStatisticsEntryRepository, ProgrammingExerciseFeedbackCreationService feedbackCreationService,
+            ProgrammingExerciseTestCaseRepository testCaseRepository, ProgrammingExerciseBuildConfigRepository programmingExerciseBuildConfigRepository) {
+        super(testCaseRepository, buildLogStatisticsEntryRepository, feedbackCreationService, programmingExerciseBuildConfigRepository);
     }
 
     @Override
-    public AbstractBuildResultNotificationDTO convertBuildResult(Object requestBody) {
+    public BuildResultNotification convertBuildResult(Object requestBody) {
         return TestResultsDTO.convert(requestBody);
     }
 

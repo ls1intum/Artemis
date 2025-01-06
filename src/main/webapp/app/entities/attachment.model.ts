@@ -21,6 +21,4 @@ export class Attachment implements BaseEntity {
     exercise?: Exercise;
     attachmentUnit?: AttachmentUnit;
     studentVersion?: string;
-
-    constructor() {}
 }
