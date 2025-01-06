@@ -218,11 +218,11 @@ jobs:
     steps:
       - run: |
           echo "$DEPLOY_LABEL"
-          echo '${{ contains(github.event.inputs.HELIOS_ENVIRONMENT_NAME, matrix.label-identifier) }}'
+          echo '${{ contains(github.event.inputs.HELIOS_ENVIRONMENT_NAME, format('{0}', matrix.hosts)) }}'
       - id: filter
         env:
           MATRIX_JSON: ${{ toJSON(matrix) }}
-        if: ${{ contains(github.event.inputs.HELIOS_ENVIRONMENT_NAME, matrix.label-identifier) }}
+        if: ${{ contains(github.event.inputs.HELIOS_ENVIRONMENT_NAME, format('{0}', matrix.hosts)) }}
         run: |
           MATRIX_JSON=${MATRIX_JSON//$'\n'/}
           echo "${{ matrix.label-identifier }}=$MATRIX_JSON" >> $GITHUB_OUTPUT
