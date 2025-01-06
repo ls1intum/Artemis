@@ -54,8 +54,13 @@ jobs:
           echo "HELIOS_BUILD is false but no HELIOS_PR_NUMBER was provided."
           exit 1
 
+      # If this is a workflow_call and a 'sha' is provided, override RAW_URL
+      - name: Override RAW_URL
+        run: echo "RAW_URL=https://raw.githubusercontent.com/${{ github.repository }}/${{ github.event.inputs.HELIOS_BRANCH_HEAD_SHA }}" >> $GITHUB_ENV
+
       - name: Print Inputs
         run: |
+          echo "RAW_URL: ${{ env.RAW_URL }}"
           echo "Triggered by: ${{ github.event.inputs.HELIOS_TRIGGERED_BY }}"
           echo "Branch: ${{ github.event.inputs.HELIOS_BRANCH_NAME }}"
           echo "SHA: ${{ github.event.inputs.HELIOS_BRANCH_HEAD_SHA }}"
