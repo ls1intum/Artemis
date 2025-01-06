@@ -21,13 +21,15 @@ export class OrionAssessmentService {
     activeSubmissionId: number | undefined = undefined;
 
     constructor() {
-        this.orionConnectorService.state().subscribe((state) => {
-            if (this.orionState?.cloning && !state.cloning && this.activeSubmissionId !== undefined) {
-                // If the client sends a cloning = false the download was cancelled, unlock the pending submission
-                this.manualAssessmentService.cancelAssessment(this.activeSubmissionId).subscribe();
-            }
-            this.orionState = { ...state };
-        });
+        if (this.orionConnectorService && this.orionConnectorService.state()) {
+            this.orionConnectorService.state().subscribe((state) => {
+                if (this.orionState?.cloning && !state.cloning && this.activeSubmissionId !== undefined) {
+                    // If the client sends a cloning = false the download was cancelled, unlock the pending submission
+                    this.manualAssessmentService.cancelAssessment(this.activeSubmissionId).subscribe();
+                }
+                this.orionState = { ...state };
+            });
+        }
     }
 
     /**

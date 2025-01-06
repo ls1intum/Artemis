@@ -1,26 +1,21 @@
 import { Component, Directive, EventEmitter, Input, NgModule, Output } from '@angular/core';
 
-// eslint-disable-next-line @angular-eslint/directive-selector
 @Directive({ selector: 'ng-template[ngbPaginationLast]' })
 export class NgbPaginationLastMockDirective {}
-// eslint-disable-next-line @angular-eslint/directive-selector
+
 @Directive({ selector: 'ng-template[ngbPaginationNext]' })
 export class NgbPaginationNextMockDirective {}
 
-// eslint-disable-next-line @angular-eslint/directive-selector
 @Directive({ selector: 'ng-template[ngbPaginationNumber]' })
 export class NgbPaginationNumberMockDirective {}
 
-// eslint-disable-next-line @angular-eslint/directive-selector
 @Directive({ selector: 'ng-template[ngbPaginationPrevious]' })
 export class NgbPaginationPreviousMockDirective {}
 
-// eslint-disable-next-line @angular-eslint/directive-selector
 @Directive({ selector: 'ng-template[ngbPaginationPages]' })
 export class NgbPaginationPagesMockDirective {}
 
 @Component({
-    // eslint-disable-next-line @angular-eslint/component-selector
     selector: 'ngb-pagination',
     template: '',
 })

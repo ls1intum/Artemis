@@ -5,11 +5,11 @@ import { faCircleNotch } from '@fortawesome/free-solid-svg-icons';
 import { IrisLogoSize } from 'app/iris/iris-logo/iris-logo.component';
 import { NgClass } from '@angular/common';
 import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
-import { FeatureToggleDirective } from '../../shared/feature-toggle/feature-toggle.directive';
+import { FeatureToggleDirective } from 'app/shared/feature-toggle/feature-toggle.directive';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { IrisLogoComponent } from '../iris-logo/iris-logo.component';
-import { TranslateDirective } from '../../shared/language/translate.directive';
-import { ArtemisTranslatePipe } from '../../shared/pipes/artemis-translate.pipe';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 
 @Component({
     selector: 'jhi-iris-logo-button',

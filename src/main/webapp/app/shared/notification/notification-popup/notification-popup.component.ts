@@ -26,7 +26,6 @@ import { translationNotFoundMessage } from 'app/core/config/translation.config';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { TranslateDirective } from '../../language/translate.directive';
-import { ArtemisTranslatePipe as ArtemisTranslatePipe_1 } from '../../pipes/artemis-translate.pipe';
 
 const conversationMessageNotificationTitles = [
     MENTIONED_IN_MESSAGE_TITLE,
@@ -47,7 +46,7 @@ const conversationMessageNotificationTitles = [
     selector: 'jhi-notification-popup',
     templateUrl: './notification-popup.component.html',
     styleUrls: ['./notification-popup.scss'],
-    imports: [FaIconComponent, TranslateDirective, ArtemisTranslatePipe_1],
+    imports: [FaIconComponent, TranslateDirective, ArtemisTranslatePipe],
 })
 export class NotificationPopupComponent implements OnInit {
     private notificationService = inject(NotificationService);

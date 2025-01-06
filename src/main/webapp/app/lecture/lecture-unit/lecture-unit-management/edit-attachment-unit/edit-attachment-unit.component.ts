@@ -11,13 +11,11 @@ import { Attachment, AttachmentType } from 'app/entities/attachment.model';
 import { combineLatest } from 'rxjs';
 import { objectToJsonBlob } from 'app/utils/blob-util';
 import { LectureUnitLayoutComponent } from '../lecture-unit-layout/lecture-unit-layout.component';
-import { AttachmentUnitFormComponent as AttachmentUnitFormComponent_1 } from '../attachment-unit-form/attachment-unit-form.component';
 
 @Component({
     selector: 'jhi-edit-attachment-unit',
     templateUrl: './edit-attachment-unit.component.html',
-    styles: [],
-    imports: [LectureUnitLayoutComponent, AttachmentUnitFormComponent_1],
+    imports: [LectureUnitLayoutComponent, AttachmentUnitFormComponent],
 })
 export class EditAttachmentUnitComponent implements OnInit {
     private activatedRoute = inject(ActivatedRoute);
@@ -25,8 +23,8 @@ export class EditAttachmentUnitComponent implements OnInit {
     private attachmentUnitService = inject(AttachmentUnitService);
     private alertService = inject(AlertService);
 
-    @ViewChild('attachmentUnitForm')
-    attachmentUnitForm: AttachmentUnitFormComponent;
+    @ViewChild('attachmentUnitForm') attachmentUnitForm: AttachmentUnitFormComponent;
+
     isLoading = false;
     attachmentUnit: AttachmentUnit;
     attachment: Attachment;

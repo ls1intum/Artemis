@@ -13,7 +13,6 @@ import { Course } from 'app/entities/course.model';
 import { Exam } from 'app/entities/exam/exam.model';
 import dayjs from 'dayjs/esm';
 import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
-import { ProgrammingExerciseParticipationType } from 'app/entities/programming/programming-exercise-participation.model';
 import { IconProp } from '@fortawesome/fontawesome-svg-core';
 import { AlertService } from 'app/core/util/alert.service';
 import { EventManager } from 'app/core/util/event-manager.service';
@@ -34,17 +33,17 @@ import { ExamImportComponent } from 'app/exam/manage/exams/exam-import/exam-impo
 import { ExerciseImportWrapperComponent } from 'app/exercises/shared/import/exercise-import-wrapper/exercise-import-wrapper.component';
 import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
 import { PROFILE_LOCALCI, PROFILE_LOCALVC } from 'app/app.constants';
-import { TranslateDirective } from '../../../shared/language/translate.directive';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { HelpIconComponent } from '../../../shared/components/help-icon.component';
-import { DeleteButtonDirective } from '../../../shared/delete-dialog/delete-button.directive';
+import { HelpIconComponent } from 'app/shared/components/help-icon.component';
+import { DeleteButtonDirective } from 'app/shared/delete-dialog/delete-button.directive';
 import { ProgrammingExerciseGroupCellComponent } from './programming-exercise-cell/programming-exercise-group-cell.component';
 import { QuizExerciseGroupCellComponent } from './quiz-exercise-cell/quiz-exercise-group-cell.component';
 import { ModelingExerciseGroupCellComponent } from './modeling-exercise-cell/modeling-exercise-group-cell.component';
 import { FileUploadExerciseGroupCellComponent } from './file-upload-exercise-cell/file-upload-exercise-group-cell.component';
-import { ExamExerciseRowButtonsComponent } from '../../../exercises/shared/exam-exercise-row-buttons/exam-exercise-row-buttons.component';
+import { ExamExerciseRowButtonsComponent } from 'app/exercises/shared/exam-exercise-row-buttons/exam-exercise-row-buttons.component';
 import { LowerCasePipe } from '@angular/common';
-import { ArtemisTranslatePipe } from '../../../shared/pipes/artemis-translate.pipe';
+import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 
 @Component({
     selector: 'jhi-exercise-groups',
@@ -76,7 +75,6 @@ export class ExerciseGroupsComponent implements OnInit {
     private router = inject(Router);
     private profileService = inject(ProfileService);
 
-    participationType = ProgrammingExerciseParticipationType;
     courseId: number;
     course: Course;
     examId: number;

@@ -1,11 +1,16 @@
 import { Component, EventEmitter, Input, OnChanges, OnDestroy, OnInit, Output, ViewChild, inject, output } from '@angular/core';
 import { Reaction } from 'app/entities/metis/reaction.model';
 import { Post } from 'app/entities/metis/post.model';
+import { ConfirmIconComponent } from 'app/shared/confirm-icon/confirm-icon.component';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { EmojiPickerComponent } from 'app/shared/metis/emoji/emoji-picker.component';
+import { EmojiComponent } from 'app/shared/metis/emoji/emoji.component';
 import { PostingsReactionsBarDirective } from 'app/shared/metis/posting-reactions-bar/posting-reactions-bar.directive';
 import { DisplayPriority } from 'app/shared/metis/metis.util';
 import { faTrashAlt } from '@fortawesome/free-regular-svg-icons';
 import { faArrowRight, faPencilAlt, faSmile } from '@fortawesome/free-solid-svg-icons';
 import { AnswerPost } from 'app/entities/metis/answer-post.model';
+import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import dayjs from 'dayjs/esm';
 import { getAsChannelDTO, isChannelDTO } from 'app/entities/metis/conversation/channel.model';
 import { isGroupChatDTO } from 'app/entities/metis/conversation/group-chat.model';
@@ -14,15 +19,9 @@ import { isOneToOneChatDTO } from 'app/entities/metis/conversation/one-to-one-ch
 import { ConversationDTO } from 'app/entities/metis/conversation/conversation.model';
 import { PostCreateEditModalComponent } from 'app/shared/metis/posting-create-edit-modal/post-create-edit-modal/post-create-edit-modal.component';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { TranslateDirective } from '../../../language/translate.directive';
-import { EmojiComponent } from '../../emoji/emoji.component';
 import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { CdkConnectedOverlay, CdkOverlayOrigin } from '@angular/cdk/overlay';
-import { EmojiPickerComponent } from '../../emoji/emoji-picker.component';
-import { PostCreateEditModalComponent as PostCreateEditModalComponent_1 } from '../../posting-create-edit-modal/post-create-edit-modal/post-create-edit-modal.component';
-import { ConfirmIconComponent } from '../../../confirm-icon/confirm-icon.component';
 import { AsyncPipe, KeyValuePipe } from '@angular/common';
-import { ArtemisTranslatePipe } from '../../../pipes/artemis-translate.pipe';
 import { ReactingUsersOnPostingPipe } from 'app/shared/pipes/reacting-users-on-posting.pipe';
 
 @Component({
@@ -37,7 +36,7 @@ import { ReactingUsersOnPostingPipe } from 'app/shared/pipes/reacting-users-on-p
         CdkOverlayOrigin,
         CdkConnectedOverlay,
         EmojiPickerComponent,
-        PostCreateEditModalComponent_1,
+        PostCreateEditModalComponent,
         ConfirmIconComponent,
         AsyncPipe,
         KeyValuePipe,

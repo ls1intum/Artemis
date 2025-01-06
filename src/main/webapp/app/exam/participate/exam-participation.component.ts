@@ -56,11 +56,11 @@ import { FileUploadExamSubmissionComponent } from './exercises/file-upload/file-
 import { TextExamSubmissionComponent } from './exercises/text/text-exam-submission.component';
 import { ModelingExamSubmissionComponent } from './exercises/modeling/modeling-exam-submission.component';
 import { ProgrammingExamSubmissionComponent } from './exercises/programming/programming-exam-submission.component';
-import { TranslateDirective } from '../../shared/language/translate.directive';
-import { JhiConnectionStatusComponent } from '../../shared/connection-status/connection-status.component';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { JhiConnectionStatusComponent } from 'app/shared/connection-status/connection-status.component';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { ExamResultSummaryComponent } from './summary/exam-result-summary.component';
-import { ArtemisTranslatePipe } from '../../shared/pipes/artemis-translate.pipe';
+import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 
 type GenerateParticipationStatus = 'generating' | 'failed' | 'success';
 

@@ -18,10 +18,10 @@ import { NgClass } from '@angular/common';
 import { ExamLiveEventsButtonComponent } from '../events/exam-live-events-button.component';
 import { ExamStartInformationComponent } from '../exam-start-information/exam-start-information.component';
 import { FormsModule } from '@angular/forms';
-import { TranslateDirective } from '../../../shared/language/translate.directive';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
-import { ArtemisTranslatePipe } from '../../../shared/pipes/artemis-translate.pipe';
+import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 
 @Component({
     selector: 'jhi-exam-participation-cover',

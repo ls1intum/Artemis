@@ -9,12 +9,12 @@ import dayjs from 'dayjs/esm';
 import { dayOfWeekZeroSundayToZeroMonday } from 'app/utils/date.utils';
 import { NgbTimeStringAdapter } from 'app/course/tutorial-groups/shared/ngbTimeStringAdapter';
 import { validTimeRange } from 'app/course/tutorial-groups/shared/timeRangeValidator';
-import { TranslateDirective } from '../../../../../../../shared/language/translate.directive';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { OwlDateTimeModule } from '@danielmoncada/angular-datetime-picker';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 import { ArtemisDateRangePipe } from 'app/shared/pipes/artemis-date-range.pipe';
-import { ArtemisTranslatePipe } from '../../../../../../../shared/pipes/artemis-translate.pipe';
+import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 
 export interface ScheduleFormData {
     dayOfWeek?: number;

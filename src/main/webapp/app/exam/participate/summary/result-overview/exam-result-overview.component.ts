@@ -11,13 +11,13 @@ import { roundScorePercentSpecifiedByCourseSettings } from 'app/shared/util/util
 import { IconProp } from '@fortawesome/fontawesome-svg-core';
 import { captureException } from '@sentry/angular';
 import { isExamResultPublished } from 'app/exam/participate/exam.utils';
-import { TranslateDirective } from '../../../../shared/language/translate.directive';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { CollapsibleCardComponent } from '../collapsible-card.component';
 import { NgClass } from '@angular/common';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { NoDataComponent } from '../../../../shared/no-data-component';
-import { GradingKeyTableComponent } from '../../../../grading-system/grading-key-overview/grading-key/grading-key-table.component';
-import { ArtemisTranslatePipe } from '../../../../shared/pipes/artemis-translate.pipe';
+import { NoDataComponent } from 'app/shared/no-data-component';
+import { GradingKeyTableComponent } from 'app/grading-system/grading-key-overview/grading-key/grading-key-table.component';
+import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 
 type ExerciseInfo = {
     icon: IconProp;
@@ -224,14 +224,6 @@ export class ExamResultOverviewComponent implements OnInit, OnChanges {
             return exercises!.some((exercise) => exercise.studentParticipations?.[0]?.results?.length! > 0);
         }
         return false;
-    }
-
-    toggleGradingKey(): void {
-        this.isGradingKeyCollapsed = !this.isGradingKeyCollapsed;
-    }
-
-    toggleBonusGradingKey(): void {
-        this.isBonusGradingKeyCollapsed = !this.isBonusGradingKeyCollapsed;
     }
 
     toggleCollapse(resultOverviewSection: ResultOverviewSection) {

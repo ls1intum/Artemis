@@ -11,9 +11,9 @@ import { faClipboardCheck, faEye, faFileExport, faListAlt, faSignal, faTable, fa
 import { Subject } from 'rxjs';
 import { ButtonSize, ButtonType } from 'app/shared/components/button.component';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { TranslateDirective } from '../../../shared/language/translate.directive';
-import { ButtonComponent } from '../../../shared/components/button.component';
-import { DeleteButtonDirective } from '../../../shared/delete-dialog/delete-button.directive';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { ButtonComponent } from 'app/shared/components/button.component';
+import { DeleteButtonDirective } from 'app/shared/delete-dialog/delete-button.directive';
 
 @Component({
     selector: 'jhi-quiz-exercise-manage-buttons',

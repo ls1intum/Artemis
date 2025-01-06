@@ -4,7 +4,7 @@ import { Column, ImportComponent } from 'app/shared/import/import.component';
 import { ArtemisSharedCommonModule } from 'app/shared/shared-common.module';
 import { ArtemisSharedComponentModule } from 'app/shared/components/shared-component.module';
 import { CourseCompetencyType } from 'app/entities/competency.model';
-import { NgbPaginationMockComponent } from '../../../../../../test/javascript/spec/helpers/mocks/directive/ngbPaginationMocks.module';
+import { NgbPagination } from '@ng-bootstrap/ng-bootstrap';
 
 const tableColumns: Column<Course>[] = [
     {
@@ -35,7 +35,7 @@ export type ImportAllFromCourseResult = {
 @Component({
     selector: 'jhi-import-all-competencies',
     templateUrl: './import-all-competencies.component.html',
-    imports: [ArtemisSharedCommonModule, ArtemisSharedComponentModule, NgbPaginationMockComponent],
+    imports: [ArtemisSharedCommonModule, ArtemisSharedComponentModule, NgbPagination],
 })
 export class ImportAllCompetenciesComponent extends ImportComponent<CourseForImportDTO> {
     //import relations by default

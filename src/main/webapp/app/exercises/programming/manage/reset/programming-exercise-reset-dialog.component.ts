@@ -8,7 +8,7 @@ import { ProgrammingExerciseResetOptions, ProgrammingExerciseService } from 'app
 import { faBan, faCircleNotch, faSpinner, faUndo } from '@fortawesome/free-solid-svg-icons';
 import { PROFILE_AEOLUS, PROFILE_LOCALCI } from 'app/app.constants';
 import { FormsModule } from '@angular/forms';
-import { TranslateDirective } from '../../../../shared/language/translate.directive';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 
 @Component({

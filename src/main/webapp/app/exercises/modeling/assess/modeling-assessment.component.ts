@@ -7,7 +7,7 @@ import { Course } from 'app/entities/course.model';
 import { GradingInstruction } from 'app/exercises/shared/structured-grading-criterion/grading-instruction.model';
 import { ModelingComponent } from 'app/exercises/modeling/shared/modeling.component';
 import { filterInvalidFeedback } from 'app/exercises/modeling/assess/modeling-assessment.util';
-import { ScoreDisplayComponent } from '../../../shared/score-display/score-display.component';
+import { ScoreDisplayComponent } from 'app/shared/score-display/score-display.component';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { ModelingExplanationEditorComponent } from '../shared/modeling-explanation-editor.component';
 

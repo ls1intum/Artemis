@@ -13,7 +13,7 @@ import { faExclamationTriangle } from '@fortawesome/free-solid-svg-icons';
 import { hasParticipationChanged } from 'app/exercises/shared/participation/participation.utils';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
-import { ArtemisTranslatePipe } from '../../../../shared/pipes/artemis-translate.pipe';
+import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 
 @Component({
     selector: 'jhi-programming-exercise-instructor-status',

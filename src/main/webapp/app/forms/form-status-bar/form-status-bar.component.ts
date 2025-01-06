@@ -1,7 +1,7 @@
 import { AfterViewInit, Component, ElementRef, HostListener, ViewChild, input } from '@angular/core';
 import { updateHeaderHeight } from 'app/shared/util/navbar.util';
-import { ChecklistCheckComponent } from '../../shared/components/checklist-check/checklist-check.component';
-import { ArtemisTranslatePipe } from '../../shared/pipes/artemis-translate.pipe';
+import { ChecklistCheckComponent } from 'app/shared/components/checklist-check/checklist-check.component';
+import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 
 export type FormSectionStatus = {
     title: string;

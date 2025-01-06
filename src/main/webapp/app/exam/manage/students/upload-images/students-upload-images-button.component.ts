@@ -4,7 +4,7 @@ import { StudentsUploadImagesDialogComponent } from 'app/exam/manage/students/up
 import { ButtonSize, ButtonType } from 'app/shared/components/button.component';
 import { Exam } from 'app/entities/exam/exam.model';
 import { faPlus, faUpload } from '@fortawesome/free-solid-svg-icons';
-import { ButtonComponent } from '../../../../shared/components/button.component';
+import { ButtonComponent } from 'app/shared/components/button.component';
 
 @Component({
     selector: 'jhi-student-upload-images-button',

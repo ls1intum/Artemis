@@ -5,8 +5,8 @@ import { JhiLanguageHelper } from 'app/core/language/language.helper';
 import { AccountService } from 'app/core/auth/account.service';
 import { LegalDocumentService } from 'app/shared/service/legal-document.service';
 import { LegalDocumentLanguage } from 'app/entities/legal-document.model';
-import { TranslateDirective } from '../../shared/language/translate.directive';
-import { HtmlForMarkdownPipe } from '../../shared/pipes/html-for-markdown.pipe';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { HtmlForMarkdownPipe } from 'app/shared/pipes/html-for-markdown.pipe';
 
 @Component({
     selector: 'jhi-privacy',

@@ -42,14 +42,13 @@ import { escapeStringForUseInRegex } from 'app/shared/util/global.utils';
 import { ProgrammingExerciseInstructionTaskStatusComponent } from 'app/exercises/programming/shared/instructions-render/task/programming-exercise-instruction-task-status.component';
 import { toObservable } from '@angular/core/rxjs-interop';
 import { ProgrammingExerciseInstructionStepWizardComponent } from './step-wizard/programming-exercise-instruction-step-wizard.component';
-import { ExamExerciseUpdateHighlighterComponent as ExamExerciseUpdateHighlighterComponent_1 } from '../../../../exam/participate/exercises/exam-exercise-update-highlighter/exam-exercise-update-highlighter.component';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 
 @Component({
     selector: 'jhi-programming-exercise-instructions',
     templateUrl: './programming-exercise-instruction.component.html',
     styleUrls: ['./programming-exercise-instruction.scss'],
-    imports: [ProgrammingExerciseInstructionStepWizardComponent, ExamExerciseUpdateHighlighterComponent_1, FaIconComponent],
+    imports: [ProgrammingExerciseInstructionStepWizardComponent, ExamExerciseUpdateHighlighterComponent, FaIconComponent],
 })
 export class ProgrammingExerciseInstructionComponent implements OnChanges, OnDestroy {
     viewContainerRef = inject(ViewContainerRef);
@@ -102,7 +101,6 @@ export class ProgrammingExerciseInstructionComponent implements OnChanges, OnDes
 
     markdownExtensions: PluginSimple[];
     private injectableContentFoundSubscription: Subscription;
-    private tasksSubscription: Subscription;
     private generateHtmlSubscription: Subscription;
     private testCases?: ProgrammingExerciseTestCase[];
     private themeChangeSubscription = toObservable(this.themeService.currentTheme).subscribe(() => {

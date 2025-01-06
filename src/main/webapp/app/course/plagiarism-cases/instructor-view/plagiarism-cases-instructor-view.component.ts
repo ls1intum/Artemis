@@ -8,13 +8,13 @@ import { downloadFile } from 'app/shared/util/download.util';
 import { DocumentationType } from 'app/shared/components/documentation-button/documentation-button.component';
 import { GroupedPlagiarismCases } from 'app/exercises/shared/plagiarism/types/GroupedPlagiarismCase';
 import { AlertService } from 'app/core/util/alert.service';
-import { TranslateDirective } from '../../../shared/language/translate.directive';
-import { DocumentationButtonComponent } from '../../../shared/components/documentation-button/documentation-button.component';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { DocumentationButtonComponent } from 'app/shared/components/documentation-button/documentation-button.component';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { ProgressBarComponent } from '../../../shared/dashboards/tutor-participation-graph/progress-bar/progress-bar.component';
+import { ProgressBarComponent } from 'app/shared/dashboards/tutor-participation-graph/progress-bar/progress-bar.component';
 import { PlagiarismCaseVerdictComponent } from '../shared/verdict/plagiarism-case-verdict.component';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
-import { ArtemisTranslatePipe } from '../../../shared/pipes/artemis-translate.pipe';
+import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 
 @Component({
     selector: 'jhi-plagiarism-cases-instructor-view',

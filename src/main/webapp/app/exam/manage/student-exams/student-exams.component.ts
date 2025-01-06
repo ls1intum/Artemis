@@ -2,6 +2,8 @@ import { Component, OnDestroy, OnInit, inject } from '@angular/core';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { NgbModal, NgbProgressbar } from '@ng-bootstrap/ng-bootstrap';
 import { StudentExamService } from 'app/exam/manage/student-exams/student-exam.service';
+import { StudentExamWorkingTimeComponent } from 'app/exam/shared/student-exam-working-time/student-exam-working-time.component';
+import { TestExamWorkingTimeComponent } from 'app/exam/shared/testExam-workingTime/test-exam-working-time.component';
 import { Subscription } from 'rxjs';
 import { tap } from 'rxjs/operators';
 import { StudentExam } from 'app/entities/student-exam.model';
@@ -21,15 +23,12 @@ import { JhiWebsocketService } from 'app/core/websocket/websocket.service';
 import { convertDateFromServer } from 'app/utils/date.utils';
 import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
 import { PROFILE_LOCALVC } from 'app/app.constants';
-import { TranslateDirective } from '../../../shared/language/translate.directive';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { StudentExamStatusComponent } from './student-exam-status/student-exam-status.component';
-import { DataTableComponent } from '../../../shared/data-table/data-table.component';
+import { DataTableComponent } from 'app/shared/data-table/data-table.component';
 import { NgxDatatableModule } from '@siemens/ngx-datatable';
-import { TestexamWorkingTimeComponent } from '../../shared/testExam-workingTime/testexam-working-time.component';
-import { StudentExamWorkingTimeComponent } from '../../shared/student-exam-working-time/student-exam-working-time.component';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
-import { ArtemisTranslatePipe as ArtemisTranslatePipe_1 } from '../../../shared/pipes/artemis-translate.pipe';
 
 const getWebsocketChannel = (examId: number) => `/topic/exams/${examId}/exercise-start-status`;
 
@@ -52,10 +51,10 @@ export type ExamExerciseStartPreparationStatus = {
         DataTableComponent,
         NgxDatatableModule,
         RouterLink,
-        TestexamWorkingTimeComponent,
+        TestExamWorkingTimeComponent,
         StudentExamWorkingTimeComponent,
         ArtemisDatePipe,
-        ArtemisTranslatePipe_1,
+        ArtemisTranslatePipe,
     ],
 })
 export class StudentExamsComponent implements OnInit, OnDestroy {

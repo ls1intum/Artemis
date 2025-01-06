@@ -4,6 +4,8 @@ import { TranslateService } from '@ngx-translate/core';
 import { ActivatedRoute } from '@angular/router';
 import { HttpErrorResponse } from '@angular/common/http';
 import { AlertService } from 'app/core/util/alert.service';
+import { HeaderParticipationPageComponent } from 'app/exercises/shared/exercise-headers/header-participation-page.component';
+import { RatingComponent } from 'app/exercises/shared/rating/rating.component';
 import dayjs from 'dayjs/esm';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
 import { FileUploadSubmissionService } from 'app/exercises/file-upload/participate/file-upload-submission.service';
@@ -29,18 +31,16 @@ import { getCourseFromExercise } from 'app/entities/exercise.model';
 import { Course } from 'app/entities/course.model';
 import { faListAlt } from '@fortawesome/free-regular-svg-icons';
 import { faDownload } from '@fortawesome/free-solid-svg-icons';
-import { HeaderParticipationPageComponent } from '../../shared/exercise-headers/header-participation-page.component';
-import { ButtonComponent } from '../../../shared/components/button.component';
-import { ResizeableContainerComponent } from '../../../shared/resizeable-container/resizeable-container.component';
-import { TranslateDirective } from '../../../shared/language/translate.directive';
-import { ExerciseActionButtonComponent } from '../../../shared/components/exercise-action-button.component';
-import { AdditionalFeedbackComponent } from '../../../shared/additional-feedback/additional-feedback.component';
-import { RatingComponent } from '../../shared/rating/rating.component';
-import { ComplaintsStudentViewComponent } from '../../../complaints/complaints-for-students/complaints-student-view.component';
+import { ButtonComponent } from 'app/shared/components/button.component';
+import { ResizeableContainerComponent } from 'app/shared/resizeable-container/resizeable-container.component';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { ExerciseActionButtonComponent } from 'app/shared/components/exercise-action-button.component';
+import { AdditionalFeedbackComponent } from 'app/shared/additional-feedback/additional-feedback.component';
+import { ComplaintsStudentViewComponent } from 'app/complaints/complaints-for-students/complaints-student-view.component';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { ArtemisTranslatePipe } from '../../../shared/pipes/artemis-translate.pipe';
+import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { ArtemisTimeAgoPipe } from 'app/shared/pipes/artemis-time-ago.pipe';
-import { HtmlForMarkdownPipe } from '../../../shared/pipes/html-for-markdown.pipe';
+import { HtmlForMarkdownPipe } from 'app/shared/pipes/html-for-markdown.pipe';
 
 @Component({
     selector: 'jhi-file-upload-submission',

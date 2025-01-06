@@ -7,9 +7,9 @@ import { getColor } from 'app/exercises/programming/manage/grading/charts/progra
 import { ProgrammingGradingChartsDirective } from 'app/exercises/programming/manage/grading/charts/programming-grading-charts.directive';
 import { NgxChartsMultiSeriesDataEntry } from 'app/shared/chart/ngx-charts-datatypes';
 import { ArtemisNavigationUtilService } from 'app/utils/navigation.utils';
-import { TranslateDirective } from '../../../../../shared/language/translate.directive';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { BarChartModule } from '@swimlane/ngx-charts';
-import { ArtemisTranslatePipe } from '../../../../../shared/pipes/artemis-translate.pipe';
+import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 
 enum ScaChartBarTitle {
     PENALTY = 'Penalty',

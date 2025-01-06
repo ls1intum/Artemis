@@ -9,19 +9,19 @@ import { Subscription } from 'rxjs';
 import { ExamParticipationService } from 'app/exam/participate/exam-participation.service';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
 import { LtiService } from 'app/shared/service/lti.service';
-import { AlertOverlayComponent } from '../../alert/alert-overlay.component';
+import { AlertOverlayComponent } from './shared/alert/alert-overlay.component';
 import { CdkScrollable } from '@angular/cdk/scrolling';
-import { PageRibbonComponent } from '../profiles/page-ribbon.component';
-import { NotificationPopupComponent } from '../../notification/notification-popup/notification-popup.component';
-import { FooterComponent } from '../footer/footer.component';
+import { PageRibbonComponent } from './shared/layouts/profiles/page-ribbon.component';
+import { NotificationPopupComponent } from './shared/notification/notification-popup/notification-popup.component';
+import { FooterComponent } from './shared/layouts/footer/footer.component';
 
 @Component({
-    selector: 'jhi-main',
-    templateUrl: './main.component.html',
-    styleUrls: ['./main.component.scss'],
+    selector: 'jhi-app',
+    templateUrl: './app.component.html',
+    styleUrls: ['./app.component.scss'],
     imports: [AlertOverlayComponent, CdkScrollable, NgClass, NgStyle, PageRibbonComponent, RouterOutlet, NotificationPopupComponent, FooterComponent],
 })
-export class JhiMainComponent implements OnInit, OnDestroy {
+export class AppComponent implements OnInit, OnDestroy {
     private jhiLanguageHelper = inject(JhiLanguageHelper);
     private router = inject(Router);
     private profileService = inject(ProfileService);
@@ -33,17 +33,17 @@ export class JhiMainComponent implements OnInit, OnDestroy {
     private courseService = inject(CourseManagementService);
     private ltiService = inject(LtiService);
 
+    private profileSubscription: Subscription;
+    private examStartedSubscription: Subscription;
+    private courseOverviewSubscription: Subscription;
+    private testRunSubscription: Subscription;
+    private ltiSubscription: Subscription;
     /**
      * If the footer and header should be shown.
      * Only set to false on specific pages designed for the native Android and iOS applications where the footer and header are not wanted.
      * The decision on whether to show the skeleton or not for a specific route is defined in shouldShowSkeleton.
      */
-    public showSkeleton = true;
-    profileSubscription: Subscription;
-    examStartedSubscription: Subscription;
-    courseOverviewSubscription: Subscription;
-    testRunSubscription: Subscription;
-    ltiSubscription: Subscription;
+    showSkeleton = true;
     isProduction = true;
     isTestServer = false;
     isExamStarted = false;

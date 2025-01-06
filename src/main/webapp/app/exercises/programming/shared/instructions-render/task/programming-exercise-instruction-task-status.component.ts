@@ -6,8 +6,8 @@ import { Result } from 'app/entities/result.model';
 import { ProgrammingExerciseInstructionService, TestCaseState } from 'app/exercises/programming/shared/instructions-render/service/programming-exercise-instruction.service';
 import { FeedbackComponent } from 'app/exercises/shared/feedback/feedback.component';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { ArtemisTranslatePipe } from '../../../../../shared/pipes/artemis-translate.pipe';
-import { SafeHtmlPipe } from '../../../../../shared/pipes/safe-html.pipe';
+import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
+import { SafeHtmlPipe } from 'app/shared/pipes/safe-html.pipe';
 
 @Component({
     selector: 'jhi-programming-exercise-instructions-task-status',

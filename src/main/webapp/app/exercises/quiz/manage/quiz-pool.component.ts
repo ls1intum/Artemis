@@ -17,10 +17,8 @@ import { computeQuizQuestionInvalidReason, isQuizQuestionValid } from 'app/exerc
 import { ExamManagementService } from 'app/exam/manage/exam-management.service';
 import { Exam } from 'app/entities/exam/exam.model';
 import dayjs from 'dayjs/esm';
-import { TranslateDirective } from '../../../shared/language/translate.directive';
-import { QuizPoolMappingComponent as QuizPoolMappingComponent_1 } from './quiz-pool-mapping.component';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { FormsModule } from '@angular/forms';
-import { QuizQuestionListEditComponent as QuizQuestionListEditComponent_1 } from './quiz-question-list-edit.component';
 import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { JsonPipe } from '@angular/common';
@@ -32,7 +30,7 @@ import { JsonPipe } from '@angular/common';
     changeDetection: ChangeDetectionStrategy.OnPush,
     styleUrls: ['./quiz-pool.component.scss', '../shared/quiz.scss'],
     encapsulation: ViewEncapsulation.None,
-    imports: [TranslateDirective, QuizPoolMappingComponent_1, FormsModule, QuizQuestionListEditComponent_1, NgbTooltip, FaIconComponent, JsonPipe],
+    imports: [TranslateDirective, QuizPoolMappingComponent, FormsModule, QuizQuestionListEditComponent, NgbTooltip, FaIconComponent, JsonPipe],
 })
 export class QuizPoolComponent implements OnInit {
     private route = inject(ActivatedRoute);

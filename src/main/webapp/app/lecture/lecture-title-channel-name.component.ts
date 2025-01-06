@@ -2,12 +2,11 @@ import { Component, Input, OnInit, viewChild } from '@angular/core';
 import { isCommunicationEnabled } from 'app/entities/course.model';
 import { Lecture } from 'app/entities/lecture.model';
 import { TitleChannelNameComponent } from 'app/shared/form/title-channel-name/title-channel-name.component';
-import { TitleChannelNameComponent as TitleChannelNameComponent_1 } from '../shared/form/title-channel-name/title-channel-name.component';
 
 @Component({
     selector: 'jhi-lecture-title-channel-name',
     templateUrl: './lecture-title-channel-name.component.html',
-    imports: [TitleChannelNameComponent_1],
+    imports: [TitleChannelNameComponent],
 })
 export class LectureTitleChannelNameComponent implements OnInit {
     @Input() lecture: Lecture;
@@ -15,6 +14,7 @@ export class LectureTitleChannelNameComponent implements OnInit {
     titleChannelNameComponent = viewChild.required(TitleChannelNameComponent);
 
     hideChannelNameInput = false;
+
     ngOnInit() {
         this.hideChannelNameInput = !this.requiresChannelName(this.lecture);
     }

@@ -1,6 +1,7 @@
 import { ChangeDetectionStrategy, ChangeDetectorRef, Component, Input, OnDestroy, ViewEncapsulation, inject } from '@angular/core';
 import { TutorialGroupsService } from 'app/course/tutorial-groups/services/tutorial-groups.service';
 import { AlertService } from 'app/core/util/alert.service';
+import { TutorialGroupSessionsTableComponent } from 'app/course/tutorial-groups/shared/tutorial-group-sessions-table/tutorial-group-sessions-table.component';
 import { EMPTY, Subject, from } from 'rxjs';
 import { catchError, finalize, map, takeUntil } from 'rxjs/operators';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
@@ -13,12 +14,11 @@ import { TutorialGroupSession } from 'app/entities/tutorial-group/tutorial-group
 import { getDayTranslationKey } from 'app/course/tutorial-groups/shared/weekdays';
 import { NgbActiveModal, NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
 import { CreateTutorialGroupSessionComponent } from 'app/course/tutorial-groups/tutorial-groups-management/tutorial-group-sessions/crud/create-tutorial-group-session/create-tutorial-group-session.component';
-import { LoadingIndicatorContainerComponent } from '../../../../../shared/loading-indicator-container/loading-indicator-container.component';
-import { TranslateDirective } from '../../../../../shared/language/translate.directive';
+import { LoadingIndicatorContainerComponent } from 'app/shared/loading-indicator-container/loading-indicator-container.component';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { TutorialGroupSessionsTableComponent } from '../../../shared/tutorial-group-sessions-table/tutorial-group-sessions-table.component';
 import { TutorialGroupSessionRowButtonsComponent } from './tutorial-group-session-row-buttons/tutorial-group-session-row-buttons.component';
-import { ArtemisTranslatePipe } from '../../../../../shared/pipes/artemis-translate.pipe';
+import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { RemoveSecondsPipe } from 'app/course/tutorial-groups/shared/remove-seconds.pipe';
 
 @Component({

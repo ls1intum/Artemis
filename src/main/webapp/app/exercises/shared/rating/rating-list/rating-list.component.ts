@@ -5,9 +5,9 @@ import { ActivatedRoute, Router } from '@angular/router';
 import { SortService } from 'app/shared/service/sort.service';
 import { ExerciseType } from 'app/entities/exercise.model';
 import { faFolderOpen, faSort } from '@fortawesome/free-solid-svg-icons';
-import { TranslateDirective } from '../../../../shared/language/translate.directive';
-import { SortDirective } from '../../../../shared/sort/sort.directive';
-import { SortByDirective } from '../../../../shared/sort/sort-by.directive';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { SortDirective } from 'app/shared/sort/sort.directive';
+import { SortByDirective } from 'app/shared/sort/sort-by.directive';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { StarRatingComponent } from '../star-rating/star-rating.component';
 

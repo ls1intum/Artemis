@@ -5,10 +5,10 @@ import { Exercise } from 'app/entities/exercise.model';
 import { ExampleSolutionInfo, ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
 import { ArtemisMarkdownService } from 'app/shared/markdown.service';
 import { HeaderExercisePageWithDetailsComponent } from '../exercise-headers/header-exercise-page-with-details.component';
-import { TranslateDirective } from '../../../shared/language/translate.directive';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { ModelingEditorComponent } from '../../modeling/shared/modeling-editor.component';
-import { ArtemisTranslatePipe } from '../../../shared/pipes/artemis-translate.pipe';
-import { HtmlForMarkdownPipe } from '../../../shared/pipes/html-for-markdown.pipe';
+import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
+import { HtmlForMarkdownPipe } from 'app/shared/pipes/html-for-markdown.pipe';
 
 @Component({
     selector: 'jhi-example-solution',

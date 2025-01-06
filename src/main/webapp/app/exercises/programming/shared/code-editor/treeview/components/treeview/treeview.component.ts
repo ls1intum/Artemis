@@ -5,7 +5,6 @@ import { FormsModule } from '@angular/forms';
 import { TreeviewItemComponent } from '../treeview-item/treeview-item.component';
 
 @Component({
-    // eslint-disable-next-line @angular-eslint/component-selector
     selector: 'treeview',
     templateUrl: './treeview.component.html',
     styleUrls: ['./treeview.component.scss'],

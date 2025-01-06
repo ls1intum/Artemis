@@ -16,12 +16,12 @@ import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { SubmissionResultStatusComponent } from '../submission-result-status.component';
 import { ExerciseDetailsStudentActionsComponent } from '../exercise-details/exercise-details-student-actions.component';
-import { OrionFilterDirective } from '../../shared/orion/orion-filter.directive';
+import { OrionFilterDirective } from 'app/shared/orion/orion-filter.directive';
 import { NgClass } from '@angular/common';
-import { ExerciseCategoriesComponent } from '../../shared/exercise-categories/exercise-categories.component';
-import { TranslateDirective } from '../../shared/language/translate.directive';
+import { ExerciseCategoriesComponent } from 'app/shared/exercise-categories/exercise-categories.component';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
-import { ArtemisTranslatePipe } from '../../shared/pipes/artemis-translate.pipe';
+import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { ArtemisTimeAgoPipe } from 'app/shared/pipes/artemis-time-ago.pipe';
 
 @Component({

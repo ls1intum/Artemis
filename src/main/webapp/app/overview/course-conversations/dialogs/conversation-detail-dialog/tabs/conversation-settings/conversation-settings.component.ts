@@ -15,8 +15,8 @@ import { GroupChatService } from 'app/shared/metis/conversations/group-chat.serv
 import { isGroupChatDTO } from 'app/entities/metis/conversation/group-chat.model';
 import { defaultSecondLayerDialogOptions } from 'app/overview/course-conversations/other/conversation.util';
 import { catchError } from 'rxjs/operators';
-import { TranslateDirective } from '../../../../../../shared/language/translate.directive';
-import { DeleteButtonDirective } from '../../../../../../shared/delete-dialog/delete-button.directive';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { DeleteButtonDirective } from 'app/shared/delete-dialog/delete-button.directive';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 
 @Component({

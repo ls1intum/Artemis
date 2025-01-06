@@ -4,13 +4,13 @@ import { faBookmark, faBoxArchive, faCheckSquare, faEllipsis, faHashtag, faLock 
 import { ConversationType } from 'app/entities/metis/conversation/conversation.model';
 import dayjs from 'dayjs/esm';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { TranslateDirective } from '../../../shared/language/translate.directive';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { NgClass } from '@angular/common';
-import { ProfilePictureComponent } from '../../../shared/profile-picture/profile-picture.component';
+import { ProfilePictureComponent } from 'app/shared/profile-picture/profile-picture.component';
 import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
-import { PostingContentComponent } from '../../../shared/metis/posting-content/posting-content.components';
+import { PostingContentComponent } from 'app/shared/metis/posting-content/posting-content.components';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
-import { ArtemisTranslatePipe } from '../../../shared/pipes/artemis-translate.pipe';
+import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 
 @Component({
     selector: 'jhi-posting-summary',

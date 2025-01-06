@@ -8,8 +8,8 @@ import { PlagiarismCasesService } from 'app/course/plagiarism-cases/shared/plagi
 import { ConfirmAutofocusModalComponent } from 'app/shared/components/confirm-autofocus-modal.component';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { Exercise, getCourseId } from 'app/entities/exercise.model';
-import { TranslateDirective } from '../../../../shared/language/translate.directive';
-import { ArtemisTranslatePipe } from '../../../../shared/pipes/artemis-translate.pipe';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 
 @Component({
     selector: 'jhi-plagiarism-header',

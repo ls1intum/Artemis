@@ -20,7 +20,7 @@ import { PostingDirective } from 'app/shared/metis/posting.directive';
 import { MetisService } from 'app/shared/metis/metis.service';
 import { NgbModalRef, NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { ContextInformation, DisplayPriority, PageType, RouteComponents } from '../metis.util';
-import { faBookmark, faBullhorn, faCheckSquare, faComments, faPencilAlt, faSmile, faThumbtack, faTrash } from '@fortawesome/free-solid-svg-icons';
+import { faBookmark, faBullhorn, faComments, faPencilAlt, faSmile, faThumbtack, faTrash } from '@fortawesome/free-solid-svg-icons';
 import dayjs from 'dayjs/esm';
 import { PostingFooterComponent } from 'app/shared/metis/posting-footer/posting-footer.component';
 import { isCommunicationEnabled } from 'app/entities/course.model';
@@ -37,9 +37,7 @@ import { TranslateDirective } from '../../language/translate.directive';
 import { PostingHeaderComponent } from '../posting-header/posting-header.component';
 import { RouterLink, RouterLinkActive } from '@angular/router';
 import { PostingContentComponent } from '../posting-content/posting-content.components';
-import { PostReactionsBarComponent as PostReactionsBarComponent_1 } from '../posting-reactions-bar/post-reactions-bar/post-reactions-bar.component';
 import { MessageInlineInputComponent } from '../message/message-inline-input/message-inline-input.component';
-import { PostingFooterComponent as PostingFooterComponent_1 } from '../posting-footer/posting-footer.component';
 import { EmojiPickerComponent } from '../emoji/emoji-picker.component';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 import { ArtemisTranslatePipe } from '../../pipes/artemis-translate.pipe';
@@ -64,9 +62,9 @@ import { ArtemisTranslatePipe } from '../../pipes/artemis-translate.pipe';
         RouterLinkActive,
         RouterLink,
         PostingContentComponent,
-        PostReactionsBarComponent_1,
+        PostReactionsBarComponent,
         MessageInlineInputComponent,
-        PostingFooterComponent_1,
+        PostingFooterComponent,
         NgIf,
         NgStyle,
         CdkOverlayOrigin,
@@ -89,15 +87,19 @@ export class PostComponent extends PostingDirective<Post> implements OnInit, OnC
     // we need to pass the ref in order to close it when navigating to the previewed post via post title
     @Input() modalRef?: NgbModalRef;
     @Input() showAnswers: boolean;
+
     @Output() openThread = new EventEmitter<void>();
+
     @ViewChild('createAnswerPostModal') createAnswerPostModalComponent: AnswerPostCreateEditModalComponent;
     @ViewChild('createEditModal') createEditModal!: PostCreateEditModalComponent;
     @ViewChild('createEditAnswerPostContainer', { read: ViewContainerRef }) containerRef: ViewContainerRef;
     @ViewChild('postFooter') postFooterComponent: PostingFooterComponent;
-    showReactionSelector = false;
     @ViewChild('emojiPickerTrigger') emojiPickerTrigger!: CdkOverlayOrigin;
+    @ViewChild(PostReactionsBarComponent) protected reactionsBarComponent!: PostReactionsBarComponent;
+
     static activeDropdownPost: PostComponent | null = null;
 
+    showReactionSelector = false;
     displayInlineInput = false;
     routerLink: RouteComponents;
     queryParams = {};
@@ -121,13 +123,10 @@ export class PostComponent extends PostingDirective<Post> implements OnInit, OnC
     readonly faSmile = faSmile;
     readonly faTrash = faTrash;
     readonly faThumbtack = faThumbtack;
-    readonly faCheckSquare = faCheckSquare;
     readonly faBookmark = faBookmark;
 
     isConsecutive = input<boolean>(false);
     dropdownPosition = { x: 0, y: 0 };
-    @ViewChild(PostReactionsBarComponent) protected reactionsBarComponent!: PostReactionsBarComponent;
-
     constructor() {
         super();
     }

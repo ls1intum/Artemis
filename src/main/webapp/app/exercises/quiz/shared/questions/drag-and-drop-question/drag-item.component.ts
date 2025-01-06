@@ -3,9 +3,9 @@ import isMobile from 'ismobilejs-es5';
 import { DragItem } from 'app/entities/quiz/drag-item.model';
 import { NgClass, NgStyle } from '@angular/common';
 import { CdkDrag, CdkDragPlaceholder, CdkDragPreview } from '@angular/cdk/drag-drop';
-import { SecuredImageComponent } from '../../../../../shared/image/secured-image.component';
+import { SecuredImageComponent } from 'app/shared/image/secured-image.component';
 import { FitTextDirective } from '../../fit-text/fit-text.directive';
-import { TranslateDirective } from '../../../../../shared/language/translate.directive';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
 
 @Component({
     selector: 'jhi-drag-item',

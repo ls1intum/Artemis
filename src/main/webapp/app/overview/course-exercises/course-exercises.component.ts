@@ -11,8 +11,8 @@ import { AccordionGroups, CollapseState, SidebarCardElement, SidebarData, Sideba
 import { CourseOverviewService } from '../course-overview.service';
 import { LtiService } from 'app/shared/service/lti.service';
 import { NgClass, NgStyle } from '@angular/common';
-import { SidebarComponent } from '../../shared/sidebar/sidebar.component';
-import { TranslateDirective } from '../../shared/language/translate.directive';
+import { SidebarComponent } from 'app/shared/sidebar/sidebar.component';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
 
 const DEFAULT_UNIT_GROUPS: AccordionGroups = {
     future: { entityData: [] },

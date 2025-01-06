@@ -3,8 +3,8 @@ import { ControlValueAccessor, FormsModule, NG_VALUE_ACCESSOR, NgModel } from '@
 import dayjs from 'dayjs/esm';
 import { isDate } from 'app/shared/util/utils';
 import { faCalendarCheck, faCalendarMinus, faCalendarPlus } from '@fortawesome/free-solid-svg-icons';
-import { TranslateDirective } from '../../../../shared/language/translate.directive';
-import { HelpIconComponent } from '../../../../shared/components/help-icon.component';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { HelpIconComponent } from 'app/shared/components/help-icon.component';
 import { OwlDateTimeModule } from '@danielmoncada/angular-datetime-picker';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';

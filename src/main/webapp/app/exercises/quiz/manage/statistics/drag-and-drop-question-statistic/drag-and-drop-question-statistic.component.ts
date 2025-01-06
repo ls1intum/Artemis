@@ -1,4 +1,5 @@
 import { Component, ViewEncapsulation, inject } from '@angular/core';
+import { DragItemComponent } from 'app/exercises/quiz/shared/questions/drag-and-drop-question/drag-item.component';
 import { QuizStatisticUtil } from 'app/exercises/quiz/shared/quiz-statistic-util.service';
 import { DragAndDropQuestionUtil } from 'app/exercises/quiz/shared/drag-and-drop-question-util.service';
 import { ArtemisMarkdownService } from 'app/shared/markdown.service';
@@ -8,12 +9,11 @@ import { DropLocation } from 'app/entities/quiz/drop-location.model';
 import { QuizExercise } from 'app/entities/quiz/quiz-exercise.model';
 import { QuestionStatisticComponent, blueColor, greenColor } from 'app/exercises/quiz/manage/statistics/question-statistic.component';
 import { faCheckCircle, faSync, faTimesCircle } from '@fortawesome/free-solid-svg-icons';
-import { TranslateDirective } from '../../../../../shared/language/translate.directive';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { BarChartModule } from '@swimlane/ngx-charts';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { SecuredImageComponent } from '../../../../../shared/image/secured-image.component';
+import { SecuredImageComponent } from 'app/shared/image/secured-image.component';
 import { NgStyle } from '@angular/common';
-import { DragItemComponent } from '../../../shared/questions/drag-and-drop-question/drag-item.component';
 import { QuizStatisticsFooterComponent } from '../quiz-statistics-footer/quiz-statistics-footer.component';
 
 @Component({

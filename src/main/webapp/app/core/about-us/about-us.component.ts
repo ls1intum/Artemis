@@ -5,8 +5,8 @@ import { VERSION } from 'app/app.constants';
 import { StaticContentService } from 'app/shared/service/static-content.service';
 import { AboutUsModel } from 'app/core/about-us/models/about-us-model';
 import { ContributorModel } from 'app/core/about-us/models/contributor-model';
-import { TranslateDirective } from '../../shared/language/translate.directive';
-import { ArtemisTranslatePipe } from '../../shared/pipes/artemis-translate.pipe';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 
 @Component({
     selector: 'jhi-about-us',

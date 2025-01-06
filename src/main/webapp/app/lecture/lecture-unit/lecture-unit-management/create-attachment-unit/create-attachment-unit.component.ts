@@ -11,13 +11,11 @@ import { AttachmentUnitFormComponent, AttachmentUnitFormData } from 'app/lecture
 import { combineLatest } from 'rxjs';
 import { objectToJsonBlob } from 'app/utils/blob-util';
 import { LectureUnitLayoutComponent } from '../lecture-unit-layout/lecture-unit-layout.component';
-import { AttachmentUnitFormComponent as AttachmentUnitFormComponent_1 } from '../attachment-unit-form/attachment-unit-form.component';
 
 @Component({
     selector: 'jhi-create-attachment-unit',
     templateUrl: './create-attachment-unit.component.html',
-    styles: [],
-    imports: [LectureUnitLayoutComponent, AttachmentUnitFormComponent_1],
+    imports: [LectureUnitLayoutComponent, AttachmentUnitFormComponent],
 })
 export class CreateAttachmentUnitComponent implements OnInit {
     private activatedRoute = inject(ActivatedRoute);

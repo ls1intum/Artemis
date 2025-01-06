@@ -6,11 +6,11 @@ import { StatisticsService } from 'app/shared/statistics-graph/statistics.servic
 import { CourseManagementStatisticsDTO } from './course-management-statistics-dto';
 import { DocumentationType } from 'app/shared/components/documentation-button/documentation-button.component';
 import { Course, isCommunicationEnabled } from 'app/entities/course.model';
-import { TranslateDirective } from '../../shared/language/translate.directive';
-import { DocumentationButtonComponent } from '../../shared/components/documentation-button/documentation-button.component';
-import { StatisticsAverageScoreGraphComponent } from '../../shared/statistics-graph/statistics-average-score-graph.component';
-import { StatisticsGraphComponent } from '../../shared/statistics-graph/statistics-graph.component';
-import { ArtemisTranslatePipe } from '../../shared/pipes/artemis-translate.pipe';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { DocumentationButtonComponent } from 'app/shared/components/documentation-button/documentation-button.component';
+import { StatisticsAverageScoreGraphComponent } from 'app/shared/statistics-graph/statistics-average-score-graph.component';
+import { StatisticsGraphComponent } from 'app/shared/statistics-graph/statistics-graph.component';
+import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 
 @Component({
     selector: 'jhi-course-management-statistics',

@@ -18,6 +18,7 @@ import {
 import { FormsModule, NgModel } from '@angular/forms';
 import { ProgrammingExercise, ProjectType } from 'app/entities/programming/programming-exercise.model';
 import { ProgrammingExerciseCreationConfig } from 'app/exercises/programming/manage/update/programming-exercise-creation-config';
+import { ProgrammingExerciseRepositoryAndBuildPlanDetailsComponent } from 'app/exercises/programming/shared/build-details/programming-exercise-repository-and-build-plan-details.component';
 import { ExerciseTitleChannelNameComponent } from 'app/exercises/shared/exercise-title-channel-name/exercise-title-channel-name.component';
 import { Subject, Subscription } from 'rxjs';
 import { TableEditableFieldComponent } from 'app/shared/table/table-editable-field.component';
@@ -32,22 +33,18 @@ import { ButtonSize, ButtonType } from 'app/shared/components/button.component';
 import { faPlus } from '@fortawesome/free-solid-svg-icons';
 import { ProgrammingExerciseEditCheckoutDirectoriesComponent } from 'app/exercises/programming/shared/build-details/programming-exercise-edit-checkout-directories/programming-exercise-edit-checkout-directories.component';
 import { BuildPlanCheckoutDirectoriesDTO } from 'app/entities/programming/build-plan-checkout-directories-dto';
-import { TranslateDirective } from '../../../../../../shared/language/translate.directive';
-import { HelpIconComponent } from '../../../../../../shared/components/help-icon.component';
-import { ExerciseTitleChannelNameComponent as ExerciseTitleChannelNameComponent_1 } from '../../../../../shared/exercise-title-channel-name/exercise-title-channel-name.component';
-import { CustomNotIncludedInValidatorDirective } from '../../../../../../shared/validators/custom-not-included-in-validator.directive';
-import { ProgrammingExerciseRepositoryAndBuildPlanDetailsComponent } from '../../../../shared/build-details/programming-exercise-repository-and-build-plan-details.component';
-import { ProgrammingExerciseEditCheckoutDirectoriesComponent as ProgrammingExerciseEditCheckoutDirectoriesComponent_1 } from '../../../../shared/build-details/programming-exercise-edit-checkout-directories/programming-exercise-edit-checkout-directories.component';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { HelpIconComponent } from 'app/shared/components/help-icon.component';
+import { CustomNotIncludedInValidatorDirective } from 'app/shared/validators/custom-not-included-in-validator.directive';
 import { NgxDatatableModule } from '@siemens/ngx-datatable';
-import { TableEditableFieldComponent as TableEditableFieldComponent_1 } from '../../../../../../shared/table/table-editable-field.component';
 import { RemoveAuxiliaryRepositoryButtonComponent } from '../../remove-auxiliary-repository-button.component';
 import { NgbAlert } from '@ng-bootstrap/ng-bootstrap';
-import { ButtonComponent } from '../../../../../../shared/components/button.component';
+import { ButtonComponent } from 'app/shared/components/button.component';
 import { AddAuxiliaryRepositoryButtonComponent } from '../../add-auxiliary-repository-button.component';
-import { CategorySelectorComponent } from '../../../../../../shared/category-selector/category-selector.component';
+import { CategorySelectorComponent } from 'app/shared/category-selector/category-selector.component';
 import { ProgrammingExerciseDifficultyComponent } from '../difficulty/programming-exercise-difficulty.component';
 import { KeyValuePipe } from '@angular/common';
-import { ArtemisTranslatePipe } from '../../../../../../shared/pipes/artemis-translate.pipe';
+import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { RemoveKeysPipe } from 'app/shared/pipes/remove-keys.pipe';
 
 const MAXIMUM_TRIES_TO_GENERATE_UNIQUE_SHORT_NAME = 200;
@@ -59,13 +56,13 @@ const MAXIMUM_TRIES_TO_GENERATE_UNIQUE_SHORT_NAME = 200;
     imports: [
         TranslateDirective,
         HelpIconComponent,
-        ExerciseTitleChannelNameComponent_1,
+        ExerciseTitleChannelNameComponent,
         FormsModule,
         CustomNotIncludedInValidatorDirective,
         ProgrammingExerciseRepositoryAndBuildPlanDetailsComponent,
-        ProgrammingExerciseEditCheckoutDirectoriesComponent_1,
+        ProgrammingExerciseEditCheckoutDirectoriesComponent,
         NgxDatatableModule,
-        TableEditableFieldComponent_1,
+        TableEditableFieldComponent,
         RemoveAuxiliaryRepositoryButtonComponent,
         NgbAlert,
         ButtonComponent,

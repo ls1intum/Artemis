@@ -7,7 +7,6 @@ import { AbstractControl, NG_VALIDATORS, Validator } from '@angular/forms';
  * Adds the 'disallowedValue' error key (= true) to the control if the value is in the disallowedValues array
  */
 @Directive({
-    // eslint-disable-next-line @angular-eslint/directive-selector
     selector: '[notIncludedIn][ngModel],[notIncludedIn][formControl]',
     providers: [{ provide: NG_VALIDATORS, useExisting: CustomNotIncludedInValidatorDirective, multi: true }],
     standalone: true,

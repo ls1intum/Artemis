@@ -6,9 +6,9 @@ import { IFileDeleteDelegate } from 'app/exercises/programming/shared/code-edito
 import { captureException } from '@sentry/angular';
 import { faBan, faTrashAlt } from '@fortawesome/free-solid-svg-icons';
 import { FormsModule } from '@angular/forms';
-import { TranslateDirective } from '../../../../../shared/language/translate.directive';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { ArtemisTranslatePipe } from '../../../../../shared/pipes/artemis-translate.pipe';
+import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 
 // Modal -> Delete repository file
 @Component({

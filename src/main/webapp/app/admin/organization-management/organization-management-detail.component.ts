@@ -12,11 +12,10 @@ import { iconsAsHTML } from 'app/utils/icons.utils';
 import { UserService } from 'app/core/user/user.service';
 import { DataTableComponent } from 'app/shared/data-table/data-table.component';
 import { faUserSlash } from '@fortawesome/free-solid-svg-icons';
-import { TranslateDirective } from '../../shared/language/translate.directive';
-import { DataTableComponent as DataTableComponent_1 } from '../../shared/data-table/data-table.component';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { NgxDatatableModule } from '@siemens/ngx-datatable';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { DeleteButtonDirective } from '../../shared/delete-dialog/delete-button.directive';
+import { DeleteButtonDirective } from 'app/shared/delete-dialog/delete-button.directive';
 
 const cssClasses = {
     alreadyMember: 'already-member',
@@ -26,7 +25,7 @@ const cssClasses = {
 @Component({
     selector: 'jhi-organization-management-detail',
     templateUrl: './organization-management-detail.component.html',
-    imports: [TranslateDirective, RouterLink, DataTableComponent_1, NgxDatatableModule, FaIconComponent, DeleteButtonDirective],
+    imports: [TranslateDirective, RouterLink, DataTableComponent, NgxDatatableModule, FaIconComponent, DeleteButtonDirective],
 })
 export class OrganizationManagementDetailComponent implements OnInit {
     private organizationService = inject(OrganizationManagementService);

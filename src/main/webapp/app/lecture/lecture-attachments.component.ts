@@ -18,7 +18,6 @@ import { NgClass } from '@angular/common';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { DeleteButtonDirective } from '../shared/delete-dialog/delete-button.directive';
-import { FormDateTimePickerComponent as FormDateTimePickerComponent_1 } from '../shared/date-time-picker/date-time-picker.component';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 import { ArtemisTranslatePipe } from '../shared/pipes/artemis-translate.pipe';
 import { HtmlForMarkdownPipe } from '../shared/pipes/html-for-markdown.pipe';
@@ -43,7 +42,7 @@ export interface LectureAttachmentFormData {
         DeleteButtonDirective,
         FormsModule,
         ReactiveFormsModule,
-        FormDateTimePickerComponent_1,
+        FormDateTimePickerComponent,
         ArtemisDatePipe,
         ArtemisTranslatePipe,
         HtmlForMarkdownPipe,
@@ -275,7 +274,7 @@ export class LectureAttachmentsComponent implements OnDestroy {
         }
     }
 
-    trackId(index: number, item: Attachment): number | undefined {
+    trackId(_index: number, item: Attachment): number | undefined {
         return item.id;
     }
 

@@ -11,8 +11,8 @@ import { onError } from 'app/shared/util/global.utils';
 import { OrionAssessmentService } from 'app/orion/assessment/orion-assessment.service';
 import { OrionButtonType } from 'app/shared/orion/orion-button/orion-button.component';
 import { ExerciseAssessmentDashboardComponent } from '../../exercises/shared/dashboards/tutor/exercise-assessment-dashboard.component';
-import { OrionButtonComponent } from '../../shared/orion/orion-button/orion-button.component';
-import { ArtemisTranslatePipe } from '../../shared/pipes/artemis-translate.pipe';
+import { OrionButtonComponent } from 'app/shared/orion/orion-button/orion-button.component';
+import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 
 @Component({
     selector: 'jhi-orion-exercise-assessment-dashboard',
@@ -41,8 +41,9 @@ export class OrionExerciseAssessmentDashboardComponent implements OnInit {
             next: (res) => (this.exercise = res.body!),
             error: (error) => onError(this.alertService, error),
         });
-
-        this.orionConnectorService.state().subscribe((state) => (this.orionState = state));
+        if (this.orionConnectorService && this.orionConnectorService.state()) {
+            this.orionConnectorService.state().subscribe((state) => (this.orionState = state));
+        }
     }
 
     /**

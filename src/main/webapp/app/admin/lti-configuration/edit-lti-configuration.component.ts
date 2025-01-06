@@ -6,8 +6,8 @@ import { FormControl, FormGroup, FormsModule, ReactiveFormsModule } from '@angul
 import { faBan, faPlus, faSave } from '@fortawesome/free-solid-svg-icons';
 import { LtiPlatformConfiguration } from 'app/admin/lti-configuration/lti-configuration.model';
 import { LtiConfigurationService } from 'app/admin/lti-configuration/lti-configuration.service';
-import { TranslateDirective } from '../../shared/language/translate.directive';
-import { HelpIconComponent } from '../../shared/components/help-icon.component';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { HelpIconComponent } from 'app/shared/components/help-icon.component';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 
 @Component({

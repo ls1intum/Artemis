@@ -8,7 +8,7 @@ import { Exam } from 'app/entities/exam/exam.model';
 import { AlertService } from 'app/core/util/alert.service';
 import { ExamEditWorkingTimeDialogComponent } from './exam-edit-working-time-dialog.component';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { TranslateDirective } from '../../../../../shared/language/translate.directive';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
 
 @Component({
     selector: 'jhi-exam-edit-working-time',

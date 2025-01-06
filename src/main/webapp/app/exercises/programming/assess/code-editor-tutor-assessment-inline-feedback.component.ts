@@ -1,5 +1,6 @@
 import { Component, ElementRef, EventEmitter, Input, Output, ViewChild, inject } from '@angular/core';
 import { Feedback, FeedbackType, buildFeedbackTextForReview } from 'app/entities/feedback.model';
+import { FeedbackSuggestionBadgeComponent } from 'app/exercises/shared/feedback/feedback-suggestion-badge/feedback-suggestion-badge.component';
 import { ButtonSize } from 'app/shared/components/button.component';
 import { cloneDeep } from 'lodash-es';
 import { TranslateService } from '@ngx-translate/core';
@@ -8,17 +9,16 @@ import { roundValueSpecifiedByCourseSettings } from 'app/shared/util/utils';
 import { Course } from 'app/entities/course.model';
 import { faBan, faExclamationTriangle, faPencilAlt, faQuestionCircle, faSave, faTrashAlt } from '@fortawesome/free-solid-svg-icons';
 import { Subject } from 'rxjs';
-import { FeedbackSuggestionBadgeComponent } from '../../shared/feedback/feedback-suggestion-badge/feedback-suggestion-badge.component';
-import { TranslateDirective } from '../../../shared/language/translate.directive';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
-import { GradingInstructionLinkIconComponent } from '../../../shared/grading-instruction-link-icon/grading-instruction-link-icon.component';
+import { GradingInstructionLinkIconComponent } from 'app/shared/grading-instruction-link-icon/grading-instruction-link-icon.component';
 import { FormsModule } from '@angular/forms';
-import { DeleteButtonDirective } from '../../../shared/delete-dialog/delete-button.directive';
-import { AssessmentCorrectionRoundBadgeComponent } from '../../../assessment/unreferenced-feedback-detail/assessment-correction-round-badge/assessment-correction-round-badge.component';
-import { ArtemisTranslatePipe } from '../../../shared/pipes/artemis-translate.pipe';
-import { FeedbackContentPipe } from '../../../shared/pipes/feedback-content.pipe';
-import { QuotePipe } from '../../../shared/pipes/quote.pipe';
+import { DeleteButtonDirective } from 'app/shared/delete-dialog/delete-button.directive';
+import { AssessmentCorrectionRoundBadgeComponent } from 'app/assessment/unreferenced-feedback-detail/assessment-correction-round-badge/assessment-correction-round-badge.component';
+import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
+import { FeedbackContentPipe } from 'app/shared/pipes/feedback-content.pipe';
+import { QuotePipe } from 'app/shared/pipes/quote.pipe';
 
 @Component({
     selector: 'jhi-code-editor-tutor-assessment-inline-feedback',

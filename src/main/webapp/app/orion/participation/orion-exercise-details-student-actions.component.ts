@@ -8,9 +8,9 @@ import { OrionConnectorService } from 'app/shared/orion/orion-connector.service'
 import { OrionBuildAndTestService } from 'app/shared/orion/orion-build-and-test.service';
 import { Exercise } from 'app/entities/exercise.model';
 import { OrionButtonType } from 'app/shared/orion/orion-button/orion-button.component';
-import { ExerciseDetailsStudentActionsComponent } from '../../overview/exercise-details/exercise-details-student-actions.component';
-import { OrionButtonComponent } from '../../shared/orion/orion-button/orion-button.component';
-import { ArtemisTranslatePipe } from '../../shared/pipes/artemis-translate.pipe';
+import { ExerciseDetailsStudentActionsComponent } from 'app/overview/exercise-details/exercise-details-student-actions.component';
+import { OrionButtonComponent } from 'app/shared/orion/orion-button/orion-button.component';
+import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 
 @Component({
     selector: 'jhi-orion-exercise-details-student-actions',
@@ -31,18 +31,21 @@ export class OrionExerciseDetailsStudentActionsComponent implements OnInit {
     @Input() courseId: number;
     @Input() smallButtons: boolean;
     @Input() examMode: boolean;
+
     protected readonly OrionButtonType = OrionButtonType;
 
     /**
      * get orionState and submit changes if withIdeSubmit set in route query
      */
     ngOnInit(): void {
-        this.orionConnectorService.state().subscribe((orionState: OrionState) => (this.orionState = orionState));
-        this.route.queryParams.subscribe((params) => {
-            if (params['withIdeSubmit']) {
-                this.submitChanges();
-            }
-        });
+        if (this.orionConnectorService && this.orionConnectorService.state()) {
+            this.orionConnectorService.state().subscribe((orionState: OrionState) => (this.orionState = orionState));
+            this.route.queryParams.subscribe((params) => {
+                if (params['withIdeSubmit']) {
+                    this.submitChanges();
+                }
+            });
+        }
     }
 
     get isOfflineIdeAllowed() {

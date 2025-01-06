@@ -20,7 +20,7 @@ import { hasParticipationChanged } from 'app/exercises/shared/participation/part
 import { AssessmentType } from 'app/entities/assessment-type.model';
 import { Annotation } from '../monaco/code-editor-monaco.component';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { TranslateDirective } from '../../../../../shared/language/translate.directive';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 
 @Component({

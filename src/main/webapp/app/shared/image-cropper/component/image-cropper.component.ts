@@ -32,7 +32,6 @@ import { ImageCroppedEvent } from 'app/shared/image-cropper/interfaces/image-cro
 // Note: Partially adapted to fit Artemis needs
 
 @Component({
-    // eslint-disable-next-line @angular-eslint/component-selector
     selector: 'image-cropper',
     templateUrl: './image-cropper.component.html',
     styleUrls: ['./image-cropper.component.scss'],

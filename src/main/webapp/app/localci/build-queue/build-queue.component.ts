@@ -20,20 +20,20 @@ import { LocalStorageService } from 'ngx-webstorage';
 import { Observable, OperatorFunction, Subject, Subscription, merge } from 'rxjs';
 import { UI_RELOAD_TIME } from 'app/shared/constants/exercise-exam-constants';
 import { BuildLogEntry, BuildLogLines } from 'app/entities/programming/build-log.model';
-import { TranslateDirective } from '../../shared/language/translate.directive';
-import { HelpIconComponent } from '../../shared/components/help-icon.component';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { HelpIconComponent } from 'app/shared/components/help-icon.component';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { DataTableComponent } from '../../shared/data-table/data-table.component';
+import { DataTableComponent } from 'app/shared/data-table/data-table.component';
 import { NgxDatatableModule } from '@siemens/ngx-datatable';
 import { NgClass } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { SortDirective } from '../../shared/sort/sort.directive';
-import { SortByDirective } from '../../shared/sort/sort-by.directive';
+import { SortDirective } from 'app/shared/sort/sort.directive';
+import { SortByDirective } from 'app/shared/sort/sort-by.directive';
 import { ResultComponent } from '../../exercises/shared/result/result.component';
-import { ItemCountComponent } from '../../shared/pagination/item-count.component';
-import { FormDateTimePickerComponent } from '../../shared/date-time-picker/date-time-picker.component';
+import { ItemCountComponent } from 'app/shared/pagination/item-count.component';
+import { FormDateTimePickerComponent } from 'app/shared/date-time-picker/date-time-picker.component';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
-import { ArtemisTranslatePipe } from '../../shared/pipes/artemis-translate.pipe';
+import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { ArtemisDurationFromSecondsPipe } from 'app/shared/pipes/artemis-duration-from-seconds.pipe';
 
 export class FinishedBuildJobFilter {

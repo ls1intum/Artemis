@@ -1,4 +1,6 @@
 import { Component, OnDestroy, OnInit, ViewChild, inject } from '@angular/core';
+import { PlagiarismCaseReviewComponent } from 'app/course/plagiarism-cases/shared/review/plagiarism-case-review.component';
+import { PlagiarismCaseVerdictComponent } from 'app/course/plagiarism-cases/shared/verdict/plagiarism-case-verdict.component';
 import { PlagiarismCase } from 'app/exercises/shared/plagiarism/types/PlagiarismCase';
 import { PlagiarismCasesService } from 'app/course/plagiarism-cases/shared/plagiarism-cases.service';
 import { ActivatedRoute, Params, RouterLink } from '@angular/router';
@@ -13,29 +15,17 @@ import { PlagiarismVerdict } from 'app/exercises/shared/plagiarism/types/Plagiar
 import { PostComponent } from 'app/shared/metis/post/post.component';
 import { ButtonType } from 'app/shared/components/button.component';
 import dayjs from 'dayjs/esm';
-import { TranslateDirective } from '../../../../shared/language/translate.directive';
-import { PlagiarismCaseVerdictComponent } from '../../shared/verdict/plagiarism-case-verdict.component';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { PostComponent as PostComponent_1 } from '../../../../shared/metis/post/post.component';
-import { ButtonComponent } from '../../../../shared/components/button.component';
-import { PlagiarismCaseReviewComponent } from '../../shared/review/plagiarism-case-review.component';
-import { ArtemisTranslatePipe } from '../../../../shared/pipes/artemis-translate.pipe';
+import { ButtonComponent } from 'app/shared/components/button.component';
+import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 
 @Component({
     selector: 'jhi-plagiarism-case-student-detail-view',
     templateUrl: './plagiarism-case-student-detail-view.component.html',
     styleUrls: ['./plagiarism-case-student-detail-view.component.scss'],
     providers: [MetisService],
-    imports: [
-        TranslateDirective,
-        PlagiarismCaseVerdictComponent,
-        FaIconComponent,
-        RouterLink,
-        PostComponent_1,
-        ButtonComponent,
-        PlagiarismCaseReviewComponent,
-        ArtemisTranslatePipe,
-    ],
+    imports: [TranslateDirective, PlagiarismCaseVerdictComponent, FaIconComponent, RouterLink, PostComponent, ButtonComponent, PlagiarismCaseReviewComponent, ArtemisTranslatePipe],
 })
 export class PlagiarismCaseStudentDetailViewComponent implements OnInit, OnDestroy {
     protected metisService = inject(MetisService);

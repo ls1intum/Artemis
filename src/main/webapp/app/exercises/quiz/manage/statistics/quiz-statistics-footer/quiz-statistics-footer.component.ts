@@ -18,9 +18,9 @@ import { faListAlt } from '@fortawesome/free-regular-svg-icons';
 import { ArtemisServerDateService } from 'app/shared/server-date.service';
 import { NgbDropdown, NgbDropdownMenu, NgbDropdownToggle } from '@ng-bootstrap/ng-bootstrap';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { TranslateDirective } from '../../../../../shared/language/translate.directive';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { NgClass } from '@angular/common';
-import { JhiConnectionStatusComponent } from '../../../../../shared/connection-status/connection-status.component';
+import { JhiConnectionStatusComponent } from 'app/shared/connection-status/connection-status.component';
 import { TruncatePipe } from 'app/shared/pipes/truncate.pipe';
 
 @Component({

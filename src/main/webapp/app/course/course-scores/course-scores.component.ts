@@ -48,15 +48,15 @@ import { PlagiarismCasesService } from 'app/course/plagiarism-cases/shared/plagi
 import { GradeStep } from 'app/entities/grade-step.model';
 import { PlagiarismCase } from 'app/exercises/shared/plagiarism/types/PlagiarismCase';
 import { PlagiarismVerdict } from 'app/exercises/shared/plagiarism/types/PlagiarismVerdict';
-import { TranslateDirective } from '../../shared/language/translate.directive';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { ParticipantScoresDistributionComponent } from '../../shared/participant-scores/participant-scores-distribution/participant-scores-distribution.component';
+import { ParticipantScoresDistributionComponent } from 'app/shared/participant-scores/participant-scores-distribution/participant-scores-distribution.component';
 import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { NgClass } from '@angular/common';
-import { ExportButtonComponent } from '../../shared/export/export-button.component';
-import { SortDirective } from '../../shared/sort/sort.directive';
-import { SortByDirective } from '../../shared/sort/sort-by.directive';
-import { ArtemisTranslatePipe } from '../../shared/pipes/artemis-translate.pipe';
+import { ExportButtonComponent } from 'app/shared/export/export-button.component';
+import { SortDirective } from 'app/shared/sort/sort.directive';
+import { SortByDirective } from 'app/shared/sort/sort-by.directive';
+import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 
 export enum HighlightType {
     AVERAGE = 'average',

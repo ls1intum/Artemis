@@ -8,8 +8,8 @@ import { faBook, faTable, faTrash, faUsers, faWrench } from '@fortawesome/free-s
 import { faListAlt } from '@fortawesome/free-regular-svg-icons';
 import { RouterLink } from '@angular/router';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { TranslateDirective } from '../../../../shared/language/translate.directive';
-import { DeleteButtonDirective } from '../../../../shared/delete-dialog/delete-button.directive';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { DeleteButtonDirective } from 'app/shared/delete-dialog/delete-button.directive';
 
 @Component({
     selector: 'jhi-text-exercise-row-buttons',

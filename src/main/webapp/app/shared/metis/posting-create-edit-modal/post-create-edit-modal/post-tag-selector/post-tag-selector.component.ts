@@ -10,7 +10,7 @@ import { MatFormField } from '@angular/material/form-field';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { MatOption } from '@angular/material/core';
 import { AsyncPipe } from '@angular/common';
-import { ArtemisTranslatePipe } from '../../../../pipes/artemis-translate.pipe';
+import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 
 @Component({
     selector: 'jhi-post-tag-selector',

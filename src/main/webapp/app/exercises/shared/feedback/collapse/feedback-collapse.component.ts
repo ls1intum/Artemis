@@ -3,7 +3,7 @@ import { faAngleDown, faAngleRight } from '@fortawesome/free-solid-svg-icons';
 import { FeedbackItem } from 'app/exercises/shared/feedback/item/feedback-item';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { FeedbackTextComponent } from '../text/feedback-text.component';
-import { ArtemisTranslatePipe } from '../../../../shared/pipes/artemis-translate.pipe';
+import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 
 @Component({
     selector: 'jhi-feedback-collapse',

@@ -5,9 +5,9 @@ import { GraphColors } from 'app/entities/statistics.model';
 import { NgxChartsMultiSeriesDataEntry } from 'app/shared/chart/ngx-charts-datatypes';
 import { round } from 'app/shared/util/utils';
 import { Subscription } from 'rxjs';
-import { TranslateDirective } from '../../../shared/language/translate.directive';
-import { HelpIconComponent } from '../../../shared/components/help-icon.component';
-import { ArtemisTranslatePipe } from '../../../shared/pipes/artemis-translate.pipe';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { HelpIconComponent } from 'app/shared/components/help-icon.component';
+import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 
 export interface ExerciseLateness {
     exerciseId: number;

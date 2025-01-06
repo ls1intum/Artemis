@@ -5,12 +5,12 @@ import { Authority } from 'app/shared/constants/authority.constants';
 import { GradingSystemService } from 'app/grading-system/grading-system.service';
 import { Subscription } from 'rxjs';
 import { GradeStepsDTO } from 'app/entities/grade-step.model';
-import { HasAnyAuthorityDirective } from '../../../shared/auth/has-any-authority.directive';
+import { HasAnyAuthorityDirective } from 'app/shared/auth/has-any-authority.directive';
 import { FormsModule } from '@angular/forms';
-import { TranslateDirective } from '../../../shared/language/translate.directive';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
-import { ArtemisTranslatePipe } from '../../../shared/pipes/artemis-translate.pipe';
+import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 
 @Component({
     selector: 'jhi-presentation-score-checkbox',

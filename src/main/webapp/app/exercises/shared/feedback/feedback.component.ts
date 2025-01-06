@@ -31,12 +31,12 @@ import { ChartData } from 'app/exercises/shared/feedback/chart/feedback-chart-da
 import { FeedbackChartService } from 'app/exercises/shared/feedback/chart/feedback-chart.service';
 import { isFeedbackGroup } from 'app/exercises/shared/feedback/group/feedback-group';
 import { cloneDeep } from 'lodash-es';
-import { TranslateDirective } from '../../../shared/language/translate.directive';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { NgClass, NgTemplateOutlet, UpperCasePipe } from '@angular/common';
 import { FeedbackNodeComponent } from './node/feedback-node.component';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
-import { ArtemisTranslatePipe } from '../../../shared/pipes/artemis-translate.pipe';
+import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { ArtemisTimeAgoPipe } from 'app/shared/pipes/artemis-time-ago.pipe';
 
 // Modal -> Result details view

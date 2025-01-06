@@ -15,11 +15,11 @@ import { canAddUsersToConversation } from 'app/shared/metis/conversations/conver
 import { ConversationUserDTO } from 'app/entities/metis/conversation/conversation-user-dto.model';
 import { defaultSecondLayerDialogOptions } from 'app/overview/course-conversations/other/conversation.util';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { TranslateDirective } from '../../../../../../shared/language/translate.directive';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { FormsModule } from '@angular/forms';
 import { ConversationMemberRowComponent } from './conversation-member-row/conversation-member-row.component';
-import { ItemCountComponent } from '../../../../../../shared/pagination/item-count.component';
-import { ArtemisTranslatePipe } from '../../../../../../shared/pipes/artemis-translate.pipe';
+import { ItemCountComponent } from 'app/shared/pagination/item-count.component';
+import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 
 interface SearchQuery {
     searchTerm: string;

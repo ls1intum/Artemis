@@ -1,7 +1,7 @@
 import { Component, Input } from '@angular/core';
 import { ModelingSubmission } from 'app/entities/modeling-submission.model';
 import { ModelingExercise } from 'app/entities/modeling-exercise.model';
-import { ModelingSubmissionComponent } from '../../../../../exercises/modeling/participate/modeling-submission.component';
+import { ModelingSubmissionComponent } from 'app/exercises/modeling/participate/modeling-submission.component';
 
 @Component({
     selector: 'jhi-modeling-exam-summary',
@@ -11,7 +11,7 @@ import { ModelingSubmissionComponent } from '../../../../../exercises/modeling/p
 export class ModelingExamSummaryComponent {
     @Input() exercise: ModelingExercise;
     @Input() submission: ModelingSubmission;
-    @Input() isPrinting?: boolean = false;
-    @Input() expandProblemStatement?: boolean = false;
-    @Input() isAfterResultsArePublished?: boolean = false;
+    @Input() isPrinting = false;
+    @Input() expandProblemStatement = false;
+    @Input() isAfterResultsArePublished = false;
 }

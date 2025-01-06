@@ -11,8 +11,8 @@ import { CourseManagementService } from 'app/course/manage/course-management.ser
 import { Course } from 'app/entities/course.model';
 import { Subject } from 'rxjs';
 import { CourseStorageService } from 'app/course/manage/course-storage.service';
-import { LoadingIndicatorContainerComponent } from '../../../../../../shared/loading-indicator-container/loading-indicator-container.component';
-import { TranslateDirective } from '../../../../../../shared/language/translate.directive';
+import { LoadingIndicatorContainerComponent } from 'app/shared/loading-indicator-container/loading-indicator-container.component';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { TutorialGroupsConfigurationFormComponent } from '../tutorial-groups-configuration-form/tutorial-groups-configuration-form.component';
 
 @Component({

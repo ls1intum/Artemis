@@ -3,7 +3,7 @@ import { ActivatedRoute, Router, RouterLink, RouterOutlet } from '@angular/route
 import { faWrench } from '@fortawesome/free-solid-svg-icons';
 import { SystemNotification } from 'app/entities/system-notification.model';
 import { SystemNotificationService } from 'app/shared/notification/system-notification/system-notification.service';
-import { TranslateDirective } from '../../shared/language/translate.directive';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 

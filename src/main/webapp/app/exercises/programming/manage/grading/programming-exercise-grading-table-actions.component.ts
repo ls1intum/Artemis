@@ -6,7 +6,7 @@ import { ProgrammingExercise } from 'app/entities/programming/programming-exerci
 import { GradingTab } from 'app/exercises/programming/manage/grading/programming-exercise-configure-grading.component';
 import { ExerciseImportWrapperComponent } from 'app/exercises/shared/import/exercise-import-wrapper/exercise-import-wrapper.component';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { TranslateDirective } from '../../../../shared/language/translate.directive';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
 
 /**
  * The actions of the test case table:

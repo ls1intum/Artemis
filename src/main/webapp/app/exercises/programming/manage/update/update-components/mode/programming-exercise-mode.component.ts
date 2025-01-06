@@ -6,14 +6,13 @@ import { TeamConfigFormGroupComponent } from 'app/exercises/shared/team-config-f
 import { PROFILE_THEIA } from 'app/app.constants';
 import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
 import { ProgrammingExerciseInputField } from 'app/exercises/programming/manage/update/programming-exercise-update.helper';
-import { TranslateDirective } from '../../../../../../shared/language/translate.directive';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { ProgrammingExerciseDifficultyComponent } from '../difficulty/programming-exercise-difficulty.component';
-import { TeamConfigFormGroupComponent as TeamConfigFormGroupComponent_1 } from '../../../../../shared/team-config-form-group/team-config-form-group.component';
 import { FormsModule } from '@angular/forms';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
-import { HelpIconComponent } from '../../../../../../shared/components/help-icon.component';
-import { ArtemisTranslatePipe } from '../../../../../../shared/pipes/artemis-translate.pipe';
+import { HelpIconComponent } from 'app/shared/components/help-icon.component';
+import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 
 @Component({
     selector: 'jhi-programming-exercise-mode',
@@ -22,7 +21,7 @@ import { ArtemisTranslatePipe } from '../../../../../../shared/pipes/artemis-tra
     imports: [
         TranslateDirective,
         ProgrammingExerciseDifficultyComponent,
-        TeamConfigFormGroupComponent_1,
+        TeamConfigFormGroupComponent,
         FormsModule,
         FaIconComponent,
         NgbTooltip,

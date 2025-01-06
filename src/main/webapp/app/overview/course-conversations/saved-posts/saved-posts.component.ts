@@ -2,7 +2,7 @@ import { Component, effect, inject, input, output } from '@angular/core';
 import { Posting, SavedPostStatus, SavedPostStatusMap } from 'app/entities/metis/posting.model';
 import { SavedPostService } from 'app/shared/metis/saved-post.service';
 import { faBookmark, faInfoCircle } from '@fortawesome/free-solid-svg-icons';
-import { TranslateDirective } from '../../../shared/language/translate.directive';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { PostingSummaryComponent } from '../posting-summary/posting-summary.component';
 

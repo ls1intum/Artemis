@@ -3,6 +3,7 @@ import { NgbCollapse, NgbModal, NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { AnswerOption } from 'app/entities/quiz/answer-option.model';
 import { MultipleChoiceQuestion } from 'app/entities/quiz/multiple-choice-question.model';
 import { QuizQuestionEdit } from 'app/exercises/quiz/manage/quiz-question-edit.interface';
+import { MultipleChoiceQuestionComponent } from 'app/exercises/quiz/shared/questions/multiple-choice-question/multiple-choice-question.component';
 import { generateExerciseHintExplanation } from 'app/shared/util/markdown.util';
 import { faAngleDown, faAngleRight, faQuestionCircle, faTrash } from '@fortawesome/free-solid-svg-icons';
 import { ScoringType } from 'app/entities/quiz/quiz-question.model';
@@ -15,12 +16,9 @@ import { MarkdownEditorMonacoComponent, TextWithDomainAction } from 'app/shared/
 import { MultipleChoiceVisualQuestionComponent } from 'app/exercises/quiz/shared/questions/multiple-choice-question/multiple-choice-visual-question.component';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { FormsModule } from '@angular/forms';
-import { TranslateDirective } from '../../../../shared/language/translate.directive';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { QuizScoringInfoModalComponent } from '../quiz-scoring-info-modal/quiz-scoring-info-modal.component';
-import { MarkdownEditorMonacoComponent as MarkdownEditorMonacoComponent_1 } from '../../../../shared/markdown-editor/monaco/markdown-editor-monaco.component';
-import { MultipleChoiceQuestionComponent } from '../../shared/questions/multiple-choice-question/multiple-choice-question.component';
-import { MultipleChoiceVisualQuestionComponent as MultipleChoiceVisualQuestionComponent_1 } from '../../shared/questions/multiple-choice-question/multiple-choice-visual-question.component';
-import { ArtemisTranslatePipe } from '../../../../shared/pipes/artemis-translate.pipe';
+import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 
 @Component({
     selector: 'jhi-multiple-choice-question-edit',
@@ -35,9 +33,9 @@ import { ArtemisTranslatePipe } from '../../../../shared/pipes/artemis-translate
         NgbCollapse,
         QuizScoringInfoModalComponent,
         NgbTooltip,
-        MarkdownEditorMonacoComponent_1,
+        MarkdownEditorMonacoComponent,
         MultipleChoiceQuestionComponent,
-        MultipleChoiceVisualQuestionComponent_1,
+        MultipleChoiceVisualQuestionComponent,
         ArtemisTranslatePipe,
     ],
 })

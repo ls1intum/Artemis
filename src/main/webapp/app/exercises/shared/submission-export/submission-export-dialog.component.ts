@@ -10,9 +10,9 @@ import { SubmissionExportOptions, SubmissionExportService } from './submission-e
 import { downloadZipFileFromResponse } from 'app/shared/util/download.util';
 import { faCircleNotch } from '@fortawesome/free-solid-svg-icons';
 import { FormsModule } from '@angular/forms';
-import { TranslateDirective } from '../../../shared/language/translate.directive';
-import { HelpIconComponent } from '../../../shared/components/help-icon.component';
-import { FormDateTimePickerComponent } from '../../../shared/date-time-picker/date-time-picker.component';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { HelpIconComponent } from 'app/shared/components/help-icon.component';
+import { FormDateTimePickerComponent } from 'app/shared/date-time-picker/date-time-picker.component';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 
 @Component({

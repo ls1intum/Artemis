@@ -14,10 +14,10 @@ import { AlertService } from 'app/core/util/alert.service';
 import { EventManager } from 'app/core/util/event-manager.service';
 import { faCheck, faInfoCircle, faPlus, faSort, faTimes, faUpload, faUserSlash, faXmark } from '@fortawesome/free-solid-svg-icons';
 import dayjs from 'dayjs/esm';
-import { TranslateDirective } from '../../../../shared/language/translate.directive';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { SortDirective } from '../../../../shared/sort/sort.directive';
-import { SortByDirective } from '../../../../shared/sort/sort-by.directive';
+import { SortDirective } from 'app/shared/sort/sort.directive';
+import { SortByDirective } from 'app/shared/sort/sort-by.directive';
 
 @Component({
     selector: 'jhi-exam-students-attendance-check',

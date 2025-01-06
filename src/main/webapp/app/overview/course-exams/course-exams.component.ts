@@ -14,8 +14,8 @@ import { CourseOverviewService } from '../course-overview.service';
 import { cloneDeep } from 'lodash-es';
 import { lastValueFrom } from 'rxjs';
 import { NgClass } from '@angular/common';
-import { SidebarComponent } from '../../shared/sidebar/sidebar.component';
-import { TranslateDirective } from '../../shared/language/translate.directive';
+import { SidebarComponent } from 'app/shared/sidebar/sidebar.component';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
 
 const DEFAULT_UNIT_GROUPS: AccordionGroups = {
     real: { entityData: [] },

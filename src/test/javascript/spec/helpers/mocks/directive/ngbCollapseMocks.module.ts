@@ -1,7 +1,6 @@
 import { Directive, EventEmitter, Input, NgModule, Output } from '@angular/core';
 
 @Directive({
-    // eslint-disable-next-line @angular-eslint/directive-selector
     selector: '[ngbCollapse]',
 })
 class NgbCollapseMockDirective {

@@ -1,5 +1,4 @@
 import { Component, Input } from '@angular/core';
-import { NoDataComponent } from 'app/shared/no-data-component';
 import { RouterModule } from '@angular/router';
 import { ArtemisSharedComponentModule } from 'app/shared/components/shared-component.module';
 import { ArtemisProgrammingExerciseActionsModule } from 'app/exercises/programming/shared/actions/programming-exercise-actions.module';
@@ -10,7 +9,7 @@ import { ArtemisSharedModule } from 'app/shared/shared.module';
 @Component({
     selector: 'jhi-programming-auxiliary-repository-buttons-detail',
     templateUrl: 'programming-auxiliary-repository-buttons-detail.component.html',
-    imports: [NoDataComponent, RouterModule, ArtemisSharedComponentModule, ArtemisProgrammingExerciseActionsModule, ArtemisSharedModule],
+    imports: [RouterModule, ArtemisSharedComponentModule, ArtemisProgrammingExerciseActionsModule, ArtemisSharedModule],
 })
 export class ProgrammingAuxiliaryRepositoryButtonsDetailComponent {
     @Input() detail: ProgrammingAuxiliaryRepositoryButtonsDetail;

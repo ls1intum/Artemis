@@ -10,14 +10,13 @@ import { map } from 'rxjs';
 import { NgbPopover } from '@ng-bootstrap/ng-bootstrap';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { FormsModule } from '@angular/forms';
-import { TranslateDirective } from '../../../../../shared/language/translate.directive';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { NgTemplateOutlet } from '@angular/common';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
-import { ArtemisTranslatePipe } from '../../../../../shared/pipes/artemis-translate.pipe';
+import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 
 @Component({
     // this is intended and an attribute selector because otherwise the rendered table breaks
-    // eslint-disable-next-line @angular-eslint/component-selector
     selector: '[jhi-session-row]',
     templateUrl: './tutorial-group-session-row.component.html',
     styleUrls: ['./tutorial-group-session-row.component.scss'],

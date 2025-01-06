@@ -1,4 +1,7 @@
 import { Component, ViewChild } from '@angular/core';
+import { ProgrammingExerciseStudentTriggerBuildButtonComponent } from 'app/exercises/programming/shared/actions/programming-exercise-student-trigger-build-button.component';
+import { CodeEditorContainerComponent } from 'app/exercises/programming/shared/code-editor/container/code-editor-container.component';
+import { IncludedInScoreBadgeComponent } from 'app/exercises/shared/exercise-headers/included-in-score-badge.component';
 import { UpdatingResultComponent } from 'app/exercises/shared/result/updating-result.component';
 import { CodeEditorInstructorBaseContainerComponent } from 'app/exercises/programming/manage/code-editor/code-editor-instructor-base-container.component';
 import { ProgrammingExerciseEditableInstructionComponent } from 'app/exercises/programming/manage/instructions-editor/programming-exercise-editable-instruction.component';
@@ -6,14 +9,9 @@ import { IncludedInOverallScore } from 'app/entities/exercise.model';
 import { faCircleNotch, faPlus, faTimes, faTimesCircle } from '@fortawesome/free-solid-svg-icons';
 import { IrisSettings } from 'app/entities/iris/settings/iris-settings.model';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { TranslateDirective } from '../../../../shared/language/translate.directive';
-import { CodeEditorContainerComponent } from '../../shared/code-editor/container/code-editor-container.component';
-import { IncludedInScoreBadgeComponent } from '../../../shared/exercise-headers/included-in-score-badge.component';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { ProgrammingExerciseInstructorExerciseStatusComponent } from '../status/programming-exercise-instructor-exercise-status.component';
 import { NgbDropdown, NgbDropdownButtonItem, NgbDropdownItem, NgbDropdownMenu, NgbDropdownToggle } from '@ng-bootstrap/ng-bootstrap';
-import { UpdatingResultComponent as UpdatingResultComponent_1 } from '../../../shared/result/updating-result.component';
-import { ProgrammingExerciseStudentTriggerBuildButtonComponent } from '../../shared/actions/programming-exercise-student-trigger-build-button.component';
-import { ProgrammingExerciseEditableInstructionComponent as ProgrammingExerciseEditableInstructionComponent_1 } from '../instructions-editor/programming-exercise-editable-instruction.component';
 
 @Component({
     selector: 'jhi-code-editor-instructor',
@@ -30,9 +28,9 @@ import { ProgrammingExerciseEditableInstructionComponent as ProgrammingExerciseE
         NgbDropdownMenu,
         NgbDropdownButtonItem,
         NgbDropdownItem,
-        UpdatingResultComponent_1,
+        UpdatingResultComponent,
         ProgrammingExerciseStudentTriggerBuildButtonComponent,
-        ProgrammingExerciseEditableInstructionComponent_1,
+        ProgrammingExerciseEditableInstructionComponent,
     ],
 })
 export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorInstructorBaseContainerComponent {

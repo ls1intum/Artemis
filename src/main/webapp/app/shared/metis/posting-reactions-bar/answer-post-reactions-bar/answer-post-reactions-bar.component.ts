@@ -1,17 +1,17 @@
 import { Component, EventEmitter, Input, OnChanges, OnInit, Output, output } from '@angular/core';
 import { Reaction } from 'app/entities/metis/reaction.model';
+import { ConfirmIconComponent } from 'app/shared/confirm-icon/confirm-icon.component';
+import { EmojiPickerComponent } from 'app/shared/metis/emoji/emoji-picker.component';
+import { EmojiComponent } from 'app/shared/metis/emoji/emoji.component';
 import { PostingsReactionsBarDirective } from 'app/shared/metis/posting-reactions-bar/posting-reactions-bar.directive';
 import { AnswerPost } from 'app/entities/metis/answer-post.model';
 import { faCheck, faPencilAlt, faSmile } from '@fortawesome/free-solid-svg-icons';
 import { getAsChannelDTO } from 'app/entities/metis/conversation/channel.model';
 import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
-import { EmojiComponent } from '../../emoji/emoji.component';
 import { CdkConnectedOverlay, CdkOverlayOrigin } from '@angular/cdk/overlay';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { EmojiPickerComponent } from '../../emoji/emoji-picker.component';
 import { AsyncPipe, KeyValuePipe, NgClass } from '@angular/common';
-import { ConfirmIconComponent } from '../../../confirm-icon/confirm-icon.component';
-import { ArtemisTranslatePipe } from '../../../pipes/artemis-translate.pipe';
+import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { ReactingUsersOnPostingPipe } from 'app/shared/pipes/reacting-users-on-posting.pipe';
 
 @Component({

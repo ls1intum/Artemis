@@ -7,9 +7,9 @@ import { Course } from 'app/entities/course.model';
 import { ProgrammingExerciseService } from 'app/exercises/programming/manage/services/programming-exercise.service';
 import { ExerciseFilter } from 'app/entities/exercise-filter.model';
 import { OrionButtonType } from 'app/shared/orion/orion-button/orion-button.component';
-import { ProgrammingExerciseComponent } from '../../exercises/programming/manage/programming-exercise.component';
-import { OrionButtonComponent } from '../../shared/orion/orion-button/orion-button.component';
-import { ArtemisTranslatePipe } from '../../shared/pipes/artemis-translate.pipe';
+import { ProgrammingExerciseComponent } from 'app/exercises/programming/manage/programming-exercise.component';
+import { OrionButtonComponent } from 'app/shared/orion/orion-button/orion-button.component';
+import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 
 @Component({
     selector: 'jhi-orion-programming-exercise',
@@ -32,9 +32,11 @@ export class OrionProgrammingExerciseComponent implements OnInit {
     orionState: OrionState;
 
     ngOnInit() {
-        this.orionConnectorService.state().subscribe((state) => {
-            this.orionState = state;
-        });
+        if (this.orionConnectorService && this.orionConnectorService.state()) {
+            this.orionConnectorService.state().subscribe((state) => {
+                this.orionState = state;
+            });
+        }
     }
 
     /**

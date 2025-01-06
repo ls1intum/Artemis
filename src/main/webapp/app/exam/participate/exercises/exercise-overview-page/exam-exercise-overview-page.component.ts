@@ -5,14 +5,14 @@ import { StudentExam } from 'app/entities/student-exam.model';
 import { ExamExerciseOverviewItem } from 'app/entities/exam/exam-exercise-overview-item.model';
 import { ButtonTooltipType, ExamParticipationService } from 'app/exam/participate/exam-participation.service';
 import { faHourglassHalf } from '@fortawesome/free-solid-svg-icons';
-import { facSaveSuccess, facSaveWarning } from '../../../../../content/icons/icons';
+import { facSaveSuccess, facSaveWarning } from 'src/main/webapp/content/icons/icons';
 import { ExerciseButtonStatus } from 'app/exam/participate/exam-navigation-sidebar/exam-navigation-sidebar.component';
-import { TranslateDirective } from '../../../../shared/language/translate.directive';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { NgClass } from '@angular/common';
-import { UpdatingResultComponent } from '../../../../exercises/shared/result/updating-result.component';
-import { ArtemisTranslatePipe } from '../../../../shared/pipes/artemis-translate.pipe';
+import { UpdatingResultComponent } from 'app/exercises/shared/result/updating-result.component';
+import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 
 @Component({
     selector: 'jhi-exam-exercise-overview-page',

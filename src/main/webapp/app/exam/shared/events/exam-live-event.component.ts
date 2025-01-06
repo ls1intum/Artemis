@@ -9,12 +9,12 @@ import {
     WorkingTimeUpdateEvent,
 } from 'app/exam/participate/exam-participation-live-events.service';
 import { NgClass } from '@angular/common';
-import { TranslateDirective } from '../../../shared/language/translate.directive';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { WorkingTimeChangeComponent } from '../working-time-change/working-time-change.component';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
-import { ArtemisTranslatePipe } from '../../../shared/pipes/artemis-translate.pipe';
-import { HtmlForMarkdownPipe } from '../../../shared/pipes/html-for-markdown.pipe';
+import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
+import { HtmlForMarkdownPipe } from 'app/shared/pipes/html-for-markdown.pipe';
 
 @Component({
     selector: 'jhi-exam-live-event',

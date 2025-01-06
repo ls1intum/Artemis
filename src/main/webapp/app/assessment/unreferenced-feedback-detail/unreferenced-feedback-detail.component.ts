@@ -6,16 +6,16 @@ import { ButtonSize } from 'app/shared/components/button.component';
 import { Subject } from 'rxjs';
 import { FeedbackService } from 'app/exercises/shared/feedback/feedback.service';
 import { FeedbackSuggestionBadgeComponent } from '../../exercises/shared/feedback/feedback-suggestion-badge/feedback-suggestion-badge.component';
-import { GradingInstructionLinkIconComponent } from '../../shared/grading-instruction-link-icon/grading-instruction-link-icon.component';
-import { DeleteButtonDirective } from '../../shared/delete-dialog/delete-button.directive';
+import { GradingInstructionLinkIconComponent } from 'app/shared/grading-instruction-link-icon/grading-instruction-link-icon.component';
+import { DeleteButtonDirective } from 'app/shared/delete-dialog/delete-button.directive';
 import { FaIconComponent, FaLayersComponent } from '@fortawesome/angular-fontawesome';
-import { TranslateDirective } from '../../shared/language/translate.directive';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { FormsModule } from '@angular/forms';
 import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { AssessmentCorrectionRoundBadgeComponent } from './assessment-correction-round-badge/assessment-correction-round-badge.component';
-import { ArtemisTranslatePipe } from '../../shared/pipes/artemis-translate.pipe';
-import { FeedbackContentPipe } from '../../shared/pipes/feedback-content.pipe';
-import { QuotePipe } from '../../shared/pipes/quote.pipe';
+import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
+import { FeedbackContentPipe } from 'app/shared/pipes/feedback-content.pipe';
+import { QuotePipe } from 'app/shared/pipes/quote.pipe';
 
 @Component({
     selector: 'jhi-unreferenced-feedback-detail',

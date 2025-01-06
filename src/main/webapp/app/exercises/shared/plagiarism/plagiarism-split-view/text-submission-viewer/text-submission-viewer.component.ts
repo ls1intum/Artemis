@@ -16,7 +16,7 @@ import { Subject } from 'rxjs';
 import { TextPlagiarismFileElement } from 'app/exercises/shared/plagiarism/types/text/TextPlagiarismFileElement';
 import { SplitPaneHeaderComponent } from '../split-pane-header/split-pane-header.component';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { TranslateDirective } from '../../../../../shared/language/translate.directive';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { NgClass } from '@angular/common';
 
 type FilesWithType = { [p: string]: FileType };

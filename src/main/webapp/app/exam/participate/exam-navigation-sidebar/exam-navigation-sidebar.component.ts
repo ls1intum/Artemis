@@ -1,7 +1,6 @@
 import { Component, EventEmitter, HostListener, Input, OnDestroy, OnInit, Output, inject } from '@angular/core';
 import { ArtemisSidebarModule } from 'app/shared/sidebar/sidebar.module';
 import { ArtemisSharedModule } from 'app/shared/shared.module';
-import { SidebarCardDirective } from 'app/shared/sidebar/sidebar-card.directive';
 import { Subscription } from 'rxjs';
 import { SidebarEventService } from 'app/shared/sidebar/sidebar-event.service';
 import { SidebarData } from 'app/types/sidebar';
@@ -20,8 +19,8 @@ import { CommitState, DomainChange, DomainType } from 'app/exercises/programming
 import { ProgrammingExercise } from 'app/entities/programming/programming-exercise.model';
 import { IconProp } from '@fortawesome/fontawesome-svg-core';
 import { faChevronRight, faFileLines, faHourglassHalf } from '@fortawesome/free-solid-svg-icons';
-import { facSaveSuccess, facSaveWarning } from '../../../../content/icons/icons';
 import { getIconTooltip } from 'app/entities/exercise.model';
+import { facSaveSuccess, facSaveWarning } from 'src/main/webapp/content/icons/icons';
 
 export enum ExerciseButtonStatus {
     Synced = 'synced',
@@ -31,7 +30,7 @@ export enum ExerciseButtonStatus {
 
 @Component({
     selector: 'jhi-exam-navigation-sidebar',
-    imports: [ArtemisSidebarModule, ArtemisSharedModule, SidebarCardDirective],
+    imports: [ArtemisSidebarModule, ArtemisSharedModule],
     templateUrl: './exam-navigation-sidebar.component.html',
     styleUrl: './exam-navigation-sidebar.component.scss',
 })
@@ -67,7 +66,6 @@ export class ExamNavigationSidebarComponent implements OnDestroy, OnInit {
     icon: IconProp;
     readonly faFileLines = faFileLines;
     readonly faChevronRight = faChevronRight;
-    readonly ExerciseButtonStatus = ExerciseButtonStatus;
 
     profileSubscription?: Subscription;
     isProduction = true;
@@ -89,6 +87,7 @@ export class ExamNavigationSidebarComponent implements OnDestroy, OnInit {
             });
         }
 
+        // TODO: avoid duplicated code
         const isInitialSession = this.examSessions && this.examSessions.length > 0 && this.examSessions[0].initialSession;
         if (isInitialSession || isInitialSession == undefined) {
             return;
@@ -131,9 +130,9 @@ export class ExamNavigationSidebarComponent implements OnDestroy, OnInit {
     }
 
     /**
-     * @param overviewPage: user wants to switch to the overview page
-     * @param exerciseIndex: index of the exercise to switch to, if it should not be used, you can pass -1
-     * @param forceSave: true if forceSave shall be used.
+     * @param overviewPage user wants to switch to the overview page
+     * @param exerciseIndex index of the exercise to switch to, if it should not be used, you can pass -1
+     * @param forceSave true if forceSave shall be used.
      * @param submission the submission to be viewed, used in the exam timeline
      */
     changePage(overviewPage: boolean, exerciseIndex: number, forceSave?: boolean, submission?: SubmissionVersion | ProgrammingSubmission | FileUploadSubmission): void {

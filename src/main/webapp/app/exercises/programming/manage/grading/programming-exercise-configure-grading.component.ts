@@ -17,17 +17,17 @@ import { ProgrammingExerciseGradingService, StaticCodeAnalysisCategoryUpdate } f
 import { ProgrammingExerciseWebsocketService } from 'app/exercises/programming/manage/services/programming-exercise-websocket.service';
 import { ProgrammingExerciseService } from 'app/exercises/programming/manage/services/programming-exercise.service';
 import { SubmissionPolicyService } from 'app/exercises/programming/manage/services/submission-policy.service';
+import { SubmissionPolicyUpdateComponent } from 'app/exercises/shared/submission-policy/submission-policy-update.component';
 import { ComponentCanDeactivate } from 'app/shared/guard/can-deactivate.model';
 import { roundValueSpecifiedByCourseSettings } from 'app/shared/util/utils';
 import { differenceBy as _differenceBy, differenceWith as _differenceWith, intersectionWith as _intersectionWith, unionBy as _unionBy } from 'lodash-es';
 import { Observable, Subscription, of, zip } from 'rxjs';
 import { catchError, distinctUntilChanged, map, take, tap } from 'rxjs/operators';
 import { ProgrammingExerciseTaskService } from 'app/exercises/programming/manage/grading/tasks/programming-exercise-task.service';
-import { TranslateDirective } from '../../../../shared/language/translate.directive';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { ProgrammingExerciseConfigureGradingStatusComponent } from './programming-exercise-configure-grading-status.component';
 import { ProgrammingExerciseConfigureGradingActionsComponent } from './programming-exercise-configure-grading-actions.component';
 import { ProgrammingExerciseGradingSubmissionPolicyConfigurationActionsComponent } from './programming-exercise-grading-submission-policy-configuration-actions.component';
-import { SubmissionPolicyUpdateComponent } from '../../../shared/submission-policy/submission-policy-update.component';
 import { NgbAlert, NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { ProgrammingExerciseGradingTasksTableComponent } from './tasks/programming-exercise-grading-tasks-table.component';
 import { TestCaseDistributionChartComponent } from './charts/test-case-distribution-chart.component';
@@ -35,11 +35,11 @@ import { ProgrammingExerciseGradingTableActionsComponent } from './programming-e
 import { NgxDatatableModule } from '@siemens/ngx-datatable';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { FormsModule } from '@angular/forms';
-import { TableEditableFieldComponent } from '../../../../shared/table/table-editable-field.component';
+import { TableEditableFieldComponent } from 'app/shared/table/table-editable-field.component';
 import { CategoryIssuesChartComponent } from './charts/category-issues-chart.component';
 import { ScaCategoryDistributionChartComponent } from './charts/sca-category-distribution-chart.component';
 import { FeedbackAnalysisComponent } from './feedback-analysis/feedback-analysis.component';
-import { ArtemisTranslatePipe } from '../../../../shared/pipes/artemis-translate.pipe';
+import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 
 /**
  * Describes the editableField

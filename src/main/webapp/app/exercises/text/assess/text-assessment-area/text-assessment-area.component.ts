@@ -5,7 +5,7 @@ import { StringCountService } from 'app/exercises/text/participate/string-count.
 import { GradingCriterion } from 'app/exercises/shared/structured-grading-criterion/grading-criterion.model';
 import { TextblockAssessmentCardComponent } from '../textblock-assessment-card/textblock-assessment-card.component';
 import { ManualTextblockSelectionComponent } from '../manual-textblock-selection/manual-textblock-selection.component';
-import { TranslateDirective } from '../../../../shared/language/translate.directive';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
 
 @Component({
     selector: 'jhi-text-assessment-area',

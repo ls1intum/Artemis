@@ -8,11 +8,11 @@ import { ExerciseManagementStatisticsDto } from 'app/exercises/shared/statistics
 import { Exercise, getCourseFromExercise } from 'app/entities/exercise.model';
 import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
 import { HttpResponse } from '@angular/common/http';
-import { TranslateDirective } from '../../../shared/language/translate.directive';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { ExerciseDetailStatisticsComponent } from './exercise-detail-statistics.component';
-import { StatisticsScoreDistributionGraphComponent } from '../../../shared/statistics-graph/statistics-score-distribution-graph.component';
-import { StatisticsGraphComponent } from '../../../shared/statistics-graph/statistics-graph.component';
-import { ArtemisTranslatePipe } from '../../../shared/pipes/artemis-translate.pipe';
+import { StatisticsScoreDistributionGraphComponent } from 'app/shared/statistics-graph/statistics-score-distribution-graph.component';
+import { StatisticsGraphComponent } from 'app/shared/statistics-graph/statistics-graph.component';
+import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 
 @Component({
     selector: 'jhi-exercise-statistics',

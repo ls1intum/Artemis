@@ -7,8 +7,8 @@ import { AlertService } from 'app/core/util/alert.service';
 import { faUpload } from '@fortawesome/free-solid-svg-icons';
 import { ProgrammingExercise, copyBuildConfigFromExerciseJson } from 'app/entities/programming/programming-exercise.model';
 import JSZip from 'jszip';
-import { ButtonComponent } from '../../../../shared/components/button.component';
-import { HelpIconComponent } from '../../../../shared/components/help-icon.component';
+import { ButtonComponent } from 'app/shared/components/button.component';
+import { HelpIconComponent } from 'app/shared/components/help-icon.component';
 
 @Component({
     selector: 'jhi-exercise-import-from-file',

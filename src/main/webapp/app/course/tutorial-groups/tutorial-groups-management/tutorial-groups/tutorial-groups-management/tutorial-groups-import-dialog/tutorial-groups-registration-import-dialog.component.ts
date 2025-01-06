@@ -14,9 +14,9 @@ import { TranslateService } from '@ngx-translate/core';
 import { titleRegex } from 'app/course/tutorial-groups/tutorial-groups-management/tutorial-groups/crud/tutorial-group-form/tutorial-group-form.component';
 import { takeUntil } from 'rxjs/operators';
 import { CsvDownloadService } from 'app/shared/util/CsvDownloadService';
-import { TranslateDirective } from '../../../../../../shared/language/translate.directive';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { ArtemisTranslatePipe } from '../../../../../../shared/pipes/artemis-translate.pipe';
+import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 
 /**
  * Each row is a object with the structure

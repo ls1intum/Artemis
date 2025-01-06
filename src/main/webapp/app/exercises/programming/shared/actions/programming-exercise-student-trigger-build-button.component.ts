@@ -5,7 +5,7 @@ import { catchError } from 'rxjs/operators';
 import { of } from 'rxjs';
 import { SubmissionType } from 'app/entities/submission.model';
 import { faRedo } from '@fortawesome/free-solid-svg-icons';
-import { ButtonComponent } from '../../../../shared/components/button.component';
+import { ButtonComponent } from 'app/shared/components/button.component';
 
 @Component({
     selector: 'jhi-programming-exercise-student-trigger-build-button',

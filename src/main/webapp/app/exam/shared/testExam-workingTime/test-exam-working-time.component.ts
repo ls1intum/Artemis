@@ -5,12 +5,12 @@ import dayjs from 'dayjs/esm';
 import { ArtemisDurationFromSecondsPipe } from 'app/shared/pipes/artemis-duration-from-seconds.pipe';
 
 @Component({
-    selector: 'jhi-testexam-working-time',
-    templateUrl: './testexam-working-time.component.html',
+    selector: 'jhi-test-exam-working-time',
+    templateUrl: './test-exam-working-time.component.html',
     providers: [],
     imports: [ArtemisDurationFromSecondsPipe],
 })
-export class TestexamWorkingTimeComponent implements OnInit {
+export class TestExamWorkingTimeComponent implements OnInit {
     @Input() studentExam: StudentExam;
 
     percentUsedWorkingTime = 0;

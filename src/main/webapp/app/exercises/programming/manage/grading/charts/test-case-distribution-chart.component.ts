@@ -8,9 +8,9 @@ import { ProgrammingGradingChartsDirective } from 'app/exercises/programming/man
 import { getTotalMaxPoints } from 'app/exercises/shared/exercise/exercise.utils';
 import { NgxChartsMultiSeriesDataEntry } from 'app/shared/chart/ngx-charts-datatypes';
 import { ArtemisNavigationUtilService } from 'app/utils/navigation.utils';
-import { TranslateDirective } from '../../../../../shared/language/translate.directive';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { BarChartModule } from '@swimlane/ngx-charts';
-import { ArtemisTranslatePipe } from '../../../../../shared/pipes/artemis-translate.pipe';
+import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 
 enum TestCaseBarTitle {
     WEIGHT_EN = 'Weight',

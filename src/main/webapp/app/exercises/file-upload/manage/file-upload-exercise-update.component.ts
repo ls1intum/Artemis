@@ -2,6 +2,10 @@ import { AfterViewInit, ChangeDetectionStrategy, Component, OnDestroy, OnInit, V
 import { ActivatedRoute, Params } from '@angular/router';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { AlertService, AlertType } from 'app/core/util/alert.service';
+import { DifficultyPickerComponent } from 'app/exercises/shared/difficulty-picker/difficulty-picker.component';
+import { IncludedInOverallScorePickerComponent } from 'app/exercises/shared/included-in-overall-score-picker/included-in-overall-score-picker.component';
+import { PresentationScoreComponent } from 'app/exercises/shared/presentation-score/presentation-score.component';
+import { GradingInstructionsDetailsComponent } from 'app/exercises/shared/structured-grading-criterion/grading-instructions-details/grading-instructions-details.component';
 import { FileUploadExerciseService } from './file-upload-exercise.service';
 import { FileUploadExercise } from 'app/entities/file-upload-exercise.model';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
@@ -26,25 +30,18 @@ import { FormsModule, NgModel } from '@angular/forms';
 import { Subscription } from 'rxjs';
 import { FormSectionStatus } from 'app/forms/form-status-bar/form-status-bar.component';
 import { FormulaAction } from 'app/shared/monaco-editor/model/actions/formula.action';
-import { TranslateDirective } from '../../../shared/language/translate.directive';
-import { DocumentationButtonComponent } from '../../../shared/components/documentation-button/documentation-button.component';
-import { FormStatusBarComponent } from '../../../forms/form-status-bar/form-status-bar.component';
-import { ExerciseTitleChannelNameComponent as ExerciseTitleChannelNameComponent_1 } from '../../shared/exercise-title-channel-name/exercise-title-channel-name.component';
-import { HelpIconComponent } from '../../../shared/components/help-icon.component';
-import { CategorySelectorComponent } from '../../../shared/category-selector/category-selector.component';
-import { DifficultyPickerComponent } from '../../shared/difficulty-picker/difficulty-picker.component';
-import { TeamConfigFormGroupComponent as TeamConfigFormGroupComponent_1 } from '../../shared/team-config-form-group/team-config-form-group.component';
-import { MarkdownEditorMonacoComponent } from '../../../shared/markdown-editor/monaco/markdown-editor-monaco.component';
-import { CompetencySelectionComponent } from '../../../shared/competency-selection/competency-selection.component';
-import { FormDateTimePickerComponent as FormDateTimePickerComponent_1 } from '../../../shared/date-time-picker/date-time-picker.component';
-import { IncludedInOverallScorePickerComponent } from '../../shared/included-in-overall-score-picker/included-in-overall-score-picker.component';
-import { CustomMinDirective } from '../../../shared/validators/custom-min-validator.directive';
-import { CustomMaxDirective } from '../../../shared/validators/custom-max-validator.directive';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { DocumentationButtonComponent } from 'app/shared/components/documentation-button/documentation-button.component';
+import { FormStatusBarComponent } from 'app/forms/form-status-bar/form-status-bar.component';
+import { HelpIconComponent } from 'app/shared/components/help-icon.component';
+import { CategorySelectorComponent } from 'app/shared/category-selector/category-selector.component';
+import { MarkdownEditorMonacoComponent } from 'app/shared/markdown-editor/monaco/markdown-editor-monaco.component';
+import { CompetencySelectionComponent } from 'app/shared/competency-selection/competency-selection.component';
+import { CustomMinDirective } from 'app/shared/validators/custom-min-validator.directive';
+import { CustomMaxDirective } from 'app/shared/validators/custom-max-validator.directive';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { PresentationScoreComponent } from '../../shared/presentation-score/presentation-score.component';
-import { GradingInstructionsDetailsComponent } from '../../shared/structured-grading-criterion/grading-instructions-details/grading-instructions-details.component';
-import { FormFooterComponent } from '../../../forms/form-footer/form-footer.component';
-import { ArtemisTranslatePipe } from '../../../shared/pipes/artemis-translate.pipe';
+import { FormFooterComponent } from 'app/forms/form-footer/form-footer.component';
+import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 
 @Component({
     selector: 'jhi-file-upload-exercise-update',
@@ -55,14 +52,14 @@ import { ArtemisTranslatePipe } from '../../../shared/pipes/artemis-translate.pi
         TranslateDirective,
         DocumentationButtonComponent,
         FormStatusBarComponent,
-        ExerciseTitleChannelNameComponent_1,
+        ExerciseTitleChannelNameComponent,
         HelpIconComponent,
         CategorySelectorComponent,
         DifficultyPickerComponent,
-        TeamConfigFormGroupComponent_1,
+        TeamConfigFormGroupComponent,
         MarkdownEditorMonacoComponent,
         CompetencySelectionComponent,
-        FormDateTimePickerComponent_1,
+        FormDateTimePickerComponent,
         IncludedInOverallScorePickerComponent,
         CustomMinDirective,
         CustomMaxDirective,

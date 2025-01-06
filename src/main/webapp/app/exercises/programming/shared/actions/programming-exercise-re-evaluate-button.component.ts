@@ -6,7 +6,7 @@ import { FeatureToggle } from 'app/shared/feature-toggle/feature-toggle.service'
 import { ProgrammingExercise } from 'app/entities/programming/programming-exercise.model';
 import { ButtonType } from 'app/shared/components/button.component';
 import { faRedo } from '@fortawesome/free-solid-svg-icons';
-import { ButtonComponent } from '../../../../shared/components/button.component';
+import { ButtonComponent } from 'app/shared/components/button.component';
 
 /**
  * A button that re-evaluates all latest automatic results of the given programming exercise.

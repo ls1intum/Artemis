@@ -12,8 +12,8 @@ import { FeatureToggle, FeatureToggleService } from 'app/shared/feature-toggle/f
 import { CourseCompetencyService } from 'app/course/competencies/course-competency.service';
 import { CompetencyCardComponent } from '../../course/competencies/competency-card/competency-card.component';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { TranslateDirective } from '../../shared/language/translate.directive';
-import { ArtemisTranslatePipe } from '../../shared/pipes/artemis-translate.pipe';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 
 @Component({
     selector: 'jhi-course-competencies',

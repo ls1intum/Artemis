@@ -1,5 +1,6 @@
 import { AfterViewInit, Component, EventEmitter, HostListener, Input, OnChanges, OnDestroy, Output, SimpleChanges, ViewChild, ViewEncapsulation, inject } from '@angular/core';
 import { AlertService } from 'app/core/util/alert.service';
+import { ProgrammingExerciseInstructionComponent } from 'app/exercises/programming/shared/instructions-render/programming-exercise-instruction.component';
 import { Observable, Subject, Subscription, of, throwError } from 'rxjs';
 import { catchError, map as rxMap, switchMap, tap } from 'rxjs/operators';
 import { ProgrammingExerciseTestCase } from 'app/entities/programming/programming-exercise-test-case.model';
@@ -18,14 +19,12 @@ import { FormulaAction } from 'app/shared/monaco-editor/model/actions/formula.ac
 import { TaskAction } from 'app/shared/monaco-editor/model/actions/task.action';
 import { TestCaseAction } from 'app/shared/monaco-editor/model/actions/test-case.action';
 import { TextEditorDomainAction } from 'app/shared/monaco-editor/model/actions/text-editor-domain-action.model';
-import { MarkdownEditorMonacoComponent as MarkdownEditorMonacoComponent_1 } from '../../../../shared/markdown-editor/monaco/markdown-editor-monaco.component';
-import { ProgrammingExerciseInstructionComponent } from '../../shared/instructions-render/programming-exercise-instruction.component';
 import { NgClass } from '@angular/common';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { TranslateDirective } from '../../../../shared/language/translate.directive';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { ProgrammingExerciseInstructionAnalysisComponent } from './analysis/programming-exercise-instruction-analysis.component';
-import { ArtemisTranslatePipe } from '../../../../shared/pipes/artemis-translate.pipe';
+import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 
 @Component({
     selector: 'jhi-programming-exercise-editable-instructions',
@@ -33,7 +32,7 @@ import { ArtemisTranslatePipe } from '../../../../shared/pipes/artemis-translate
     styleUrls: ['./programming-exercise-editable-instruction.scss'],
     encapsulation: ViewEncapsulation.None,
     imports: [
-        MarkdownEditorMonacoComponent_1,
+        MarkdownEditorMonacoComponent,
         ProgrammingExerciseInstructionComponent,
         NgClass,
         FaIconComponent,

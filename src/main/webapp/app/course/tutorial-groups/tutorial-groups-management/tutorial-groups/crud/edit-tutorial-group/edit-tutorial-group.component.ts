@@ -11,8 +11,8 @@ import { AlertService } from 'app/core/util/alert.service';
 import { TutorialGroupSchedule } from 'app/entities/tutorial-group/tutorial-group-schedule.model';
 import dayjs from 'dayjs/esm';
 import { Course } from 'app/entities/course.model';
-import { LoadingIndicatorContainerComponent } from '../../../../../../shared/loading-indicator-container/loading-indicator-container.component';
-import { TranslateDirective } from '../../../../../../shared/language/translate.directive';
+import { LoadingIndicatorContainerComponent } from 'app/shared/loading-indicator-container/loading-indicator-container.component';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
 
 @Component({
     selector: 'jhi-edit-tutorial-group',

@@ -9,7 +9,7 @@ import dayjs from 'dayjs/esm';
 import { catchError, map, tap } from 'rxjs/operators';
 import { GitDiffReportComponent } from '../../exercises/programming/git-diff-report/git-diff-report.component';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
-import { ArtemisTranslatePipe } from '../../shared/pipes/artemis-translate.pipe';
+import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 
 @Component({
     selector: 'jhi-commit-details-view',

@@ -26,12 +26,12 @@ import { PostContextFilter, PostSortCriterion, SortDirection } from 'app/shared/
 import { ConversationDTO } from 'app/entities/metis/conversation/conversation.model';
 import { CourseSidebarService } from 'app/overview/course-sidebar.service';
 import { NgClass } from '@angular/common';
-import { TranslateDirective } from '../../../shared/language/translate.directive';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { InfiniteScrollDirective } from 'ngx-infinite-scroll';
-import { PostingThreadComponent } from '../../../shared/metis/posting-thread/posting-thread.component';
-import { ArtemisTranslatePipe } from '../../../shared/pipes/artemis-translate.pipe';
+import { PostingThreadComponent } from 'app/shared/metis/posting-thread/posting-thread.component';
+import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 
 @Component({
     selector: 'jhi-course-wide-search',

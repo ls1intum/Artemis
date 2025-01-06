@@ -1,4 +1,8 @@
 import { Component, ContentChild, EventEmitter, Input, OnDestroy, OnInit, Output, TemplateRef, ViewChild, inject } from '@angular/core';
+import { IncludedInScoreBadgeComponent } from 'app/exercises/shared/exercise-headers/included-in-score-badge.component';
+import { ResultComponent } from 'app/exercises/shared/result/result.component';
+import { UnreferencedFeedbackComponent } from 'app/exercises/shared/unreferenced-feedback/unreferenced-feedback.component';
+import { ExtensionPointDirective } from 'app/shared/extension-point/extension-point.directive';
 import { Observable, Subscription, firstValueFrom } from 'rxjs';
 import dayjs from 'dayjs/esm';
 import { TranslateService } from '@ngx-translate/core';
@@ -42,15 +46,10 @@ import { AthenaService } from 'app/assessment/athena.service';
 import { FeedbackSuggestionsPendingConfirmationDialogComponent } from 'app/exercises/shared/feedback/feedback-suggestions-pending-confirmation-dialog/feedback-suggestions-pending-confirmation-dialog.component';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { TranslateDirective } from '../../../shared/language/translate.directive';
-import { AssessmentLayoutComponent } from '../../../assessment/assessment-layout/assessment-layout.component';
-import { ExtensionPointDirective } from '../../../shared/extension-point/extension-point.directive';
-import { CodeEditorContainerComponent as CodeEditorContainerComponent_1 } from '../shared/code-editor/container/code-editor-container.component';
-import { IncludedInScoreBadgeComponent } from '../../shared/exercise-headers/included-in-score-badge.component';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { AssessmentLayoutComponent } from 'app/assessment/assessment-layout/assessment-layout.component';
 import { ProgrammingAssessmentRepoExportButtonComponent } from './repo-export/programming-assessment-repo-export-button.component';
-import { ResultComponent } from '../../shared/result/result.component';
-import { AssessmentInstructionsComponent } from '../../../assessment/assessment-instructions/assessment-instructions/assessment-instructions.component';
-import { UnreferencedFeedbackComponent } from '../../shared/unreferenced-feedback/unreferenced-feedback.component';
+import { AssessmentInstructionsComponent } from 'app/assessment/assessment-instructions/assessment-instructions/assessment-instructions.component';
 
 @Component({
     selector: 'jhi-code-editor-tutor-assessment',
@@ -60,14 +59,15 @@ import { UnreferencedFeedbackComponent } from '../../shared/unreferenced-feedbac
         TranslateDirective,
         AssessmentLayoutComponent,
         NgTemplateOutlet,
-        ExtensionPointDirective,
-        CodeEditorContainerComponent_1,
+        CodeEditorContainerComponent,
         IncludedInScoreBadgeComponent,
         RouterLink,
         ProgrammingAssessmentRepoExportButtonComponent,
         ResultComponent,
         AssessmentInstructionsComponent,
         UnreferencedFeedbackComponent,
+        // NOTE: this is actually used
+        ExtensionPointDirective,
     ],
 })
 export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDestroy {

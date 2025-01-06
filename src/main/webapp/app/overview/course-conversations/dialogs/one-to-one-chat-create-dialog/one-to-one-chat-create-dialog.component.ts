@@ -2,10 +2,10 @@ import { Component, Input } from '@angular/core';
 import { Course } from 'app/entities/course.model';
 import { UserPublicInfoDTO } from 'app/core/user/user.model';
 import { AbstractDialogComponent } from 'app/overview/course-conversations/dialogs/abstract-dialog.component';
-import { TranslateDirective } from '../../../../shared/language/translate.directive';
-import { CourseUsersSelectorComponent } from '../../../../shared/course-users-selector/course-users-selector.component';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { CourseUsersSelectorComponent } from 'app/shared/course-users-selector/course-users-selector.component';
 import { FormsModule } from '@angular/forms';
-import { ArtemisTranslatePipe } from '../../../../shared/pipes/artemis-translate.pipe';
+import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 
 @Component({
     selector: 'jhi-one-to-one-chat-create-dialog',

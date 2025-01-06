@@ -29,7 +29,6 @@ const examples: ConversationDTO[] = [
 ];
 
 @Directive({
-    // eslint-disable-next-line @angular-eslint/directive-selector
     selector: '[infiniteScroll], [infinite-scroll], [data-infinite-scroll]',
 })
 class InfiniteScrollStubDirective {

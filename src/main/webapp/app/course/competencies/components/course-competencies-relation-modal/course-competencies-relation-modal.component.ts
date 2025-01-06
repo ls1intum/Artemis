@@ -4,14 +4,13 @@ import { CompetencyRelationDTO, CourseCompetency } from 'app/entities/competency
 import { AlertService } from 'app/core/util/alert.service';
 import { onError } from 'app/shared/util/global.utils';
 import { ArtemisSharedCommonModule } from 'app/shared/shared-common.module';
-import { CompetencyGraphComponent } from 'app/course/learning-paths/components/competency-graph/competency-graph.component';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import { CourseCompetencyRelationFormComponent } from 'app/course/competencies/components/course-competency-relation-form/course-competency-relation-form.component';
 import { CourseCompetenciesRelationGraphComponent } from '../course-competencies-relation-graph/course-competencies-relation-graph.component';
 
 @Component({
     selector: 'jhi-course-competencies-relation-modal',
-    imports: [ArtemisSharedCommonModule, CompetencyGraphComponent, CourseCompetenciesRelationGraphComponent, CourseCompetencyRelationFormComponent],
+    imports: [ArtemisSharedCommonModule, CourseCompetenciesRelationGraphComponent, CourseCompetencyRelationFormComponent],
     templateUrl: './course-competencies-relation-modal.component.html',
     styleUrl: './course-competencies-relation-modal.component.scss',
 })

@@ -9,7 +9,7 @@ import { faQuestionCircle } from '@fortawesome/free-regular-svg-icons';
 import { ModelingComponent } from 'app/exercises/modeling/shared/modeling.component';
 import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
 import { Patch } from '@ls1intum/apollon';
-import { TranslateDirective } from '../../../shared/language/translate.directive';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { NgClass, NgStyle } from '@angular/common';
 import { ModelingExplanationEditorComponent } from './modeling-explanation-editor.component';

@@ -32,17 +32,15 @@ import { getSemesters } from 'app/utils/semester-utils';
 import { ImageCropperModalComponent } from 'app/course/manage/image-cropper-modal.component';
 import { scrollToTopOfPage } from 'app/shared/util/utils';
 import { CourseStorageService } from 'app/course/manage/course-storage.service';
-import { SecuredImageComponent } from '../../shared/image/secured-image.component';
+import { SecuredImageComponent } from 'app/shared/image/secured-image.component';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { TranslateDirective } from '../../shared/language/translate.directive';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { KeyValuePipe, NgClass, NgStyle, NgTemplateOutlet } from '@angular/common';
-import { ColorSelectorComponent as ColorSelectorComponent_1 } from '../../shared/color-selector/color-selector.component';
-import { FormDateTimePickerComponent } from '../../shared/date-time-picker/date-time-picker.component';
-import { HasAnyAuthorityDirective } from '../../shared/auth/has-any-authority.directive';
-import { HelpIconComponent } from '../../shared/components/help-icon.component';
-import { MarkdownEditorMonacoComponent } from '../../shared/markdown-editor/monaco/markdown-editor-monaco.component';
-import { FeatureToggleHideDirective } from '../../shared/feature-toggle/feature-toggle-hide.directive';
-import { ArtemisTranslatePipe } from '../../shared/pipes/artemis-translate.pipe';
+import { FormDateTimePickerComponent } from 'app/shared/date-time-picker/date-time-picker.component';
+import { HelpIconComponent } from 'app/shared/components/help-icon.component';
+import { MarkdownEditorMonacoComponent } from 'app/shared/markdown-editor/monaco/markdown-editor-monaco.component';
+import { FeatureToggleHideDirective } from 'app/shared/feature-toggle/feature-toggle-hide.directive';
+import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { RemoveKeysPipe } from 'app/shared/pipes/remove-keys.pipe';
 
 const DEFAULT_CUSTOM_GROUP_NAME = 'artemis-dev';
@@ -58,11 +56,10 @@ const DEFAULT_CUSTOM_GROUP_NAME = 'artemis-dev';
         FaIconComponent,
         TranslateDirective,
         NgStyle,
-        ColorSelectorComponent_1,
+        ColorSelectorComponent,
         NgClass,
         NgbTooltip,
         FormDateTimePickerComponent,
-        HasAnyAuthorityDirective,
         HelpIconComponent,
         MarkdownEditorMonacoComponent,
         FeatureToggleHideDirective,

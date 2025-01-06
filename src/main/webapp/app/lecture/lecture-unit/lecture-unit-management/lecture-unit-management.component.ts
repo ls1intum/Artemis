@@ -17,20 +17,20 @@ import { CdkDrag, CdkDragDrop, CdkDropList, moveItemInArray } from '@angular/cdk
 import { PROFILE_IRIS } from 'app/app.constants';
 import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
 import { IrisSettingsService } from 'app/iris/settings/shared/iris-settings.service';
-import { TranslateDirective } from '../../../shared/language/translate.directive';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { UnitCreationCardComponent } from './unit-creation-card/unit-creation-card.component';
-import { AttachmentUnitComponent } from '../../../overview/course-lectures/attachment-unit/attachment-unit.component';
-import { ExerciseUnitComponent } from '../../../overview/course-lectures/exercise-unit/exercise-unit.component';
-import { VideoUnitComponent } from '../../../overview/course-lectures/video-unit/video-unit.component';
-import { TextUnitComponent } from '../../../overview/course-lectures/text-unit/text-unit.component';
-import { OnlineUnitComponent } from '../../../overview/course-lectures/online-unit/online-unit.component';
-import { CompetenciesPopoverComponent } from '../../../course/competencies/competencies-popover/competencies-popover.component';
+import { AttachmentUnitComponent } from 'app/overview/course-lectures/attachment-unit/attachment-unit.component';
+import { ExerciseUnitComponent } from 'app/overview/course-lectures/exercise-unit/exercise-unit.component';
+import { VideoUnitComponent } from 'app/overview/course-lectures/video-unit/video-unit.component';
+import { TextUnitComponent } from 'app/overview/course-lectures/text-unit/text-unit.component';
+import { OnlineUnitComponent } from 'app/overview/course-lectures/online-unit/online-unit.component';
+import { CompetenciesPopoverComponent } from 'app/course/competencies/competencies-popover/competencies-popover.component';
 import { NgClass } from '@angular/common';
 import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { DeleteButtonDirective } from '../../../shared/delete-dialog/delete-button.directive';
+import { DeleteButtonDirective } from 'app/shared/delete-dialog/delete-button.directive';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
-import { ArtemisTranslatePipe } from '../../../shared/pipes/artemis-translate.pipe';
+import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 
 @Component({
     selector: 'jhi-lecture-unit-management',

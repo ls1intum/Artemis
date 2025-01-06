@@ -14,6 +14,7 @@ import { ModelingAssessmentService } from 'app/exercises/modeling/assess/modelin
 import { ModelingSubmission } from 'app/entities/modeling-submission.model';
 import { ModelingExercise } from 'app/entities/modeling-exercise.model';
 import { ModelingAssessmentComponent } from 'app/exercises/modeling/assess/modeling-assessment.component';
+import { UnreferencedFeedbackComponent } from 'app/exercises/shared/unreferenced-feedback/unreferenced-feedback.component';
 import { catchError, concatMap, map, tap } from 'rxjs/operators';
 import { getLatestSubmissionResult, setLatestSubmissionResult } from 'app/entities/submission.model';
 import { getPositiveAndCappedTotalScore, getTotalMaxPoints } from 'app/exercises/shared/exercise/exercise.utils';
@@ -28,15 +29,12 @@ import { forkJoin } from 'rxjs';
 import { filterInvalidFeedback } from 'app/exercises/modeling/assess/modeling-assessment.util';
 import { Theme, ThemeService } from 'app/core/theme/theme.service';
 import { scrollToTopOfPage } from 'app/shared/util/utils';
-import { TranslateDirective } from '../../../../shared/language/translate.directive';
-import { HelpIconComponent } from '../../../../shared/components/help-icon.component';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { HelpIconComponent } from 'app/shared/components/help-icon.component';
 import { FormsModule } from '@angular/forms';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { ModelingEditorComponent as ModelingEditorComponent_1 } from '../../shared/modeling-editor.component';
-import { ModelingAssessmentComponent as ModelingAssessmentComponent_1 } from '../../assess/modeling-assessment.component';
-import { UnreferencedFeedbackComponent } from '../../../shared/unreferenced-feedback/unreferenced-feedback.component';
-import { CollapsableAssessmentInstructionsComponent } from '../../../../assessment/assessment-instructions/collapsable-assessment-instructions/collapsable-assessment-instructions.component';
-import { ArtemisTranslatePipe } from '../../../../shared/pipes/artemis-translate.pipe';
+import { CollapsableAssessmentInstructionsComponent } from 'app/assessment/assessment-instructions/collapsable-assessment-instructions/collapsable-assessment-instructions.component';
+import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 
 @Component({
     selector: 'jhi-example-modeling-submission',
@@ -47,8 +45,8 @@ import { ArtemisTranslatePipe } from '../../../../shared/pipes/artemis-translate
         HelpIconComponent,
         FormsModule,
         FaIconComponent,
-        ModelingEditorComponent_1,
-        ModelingAssessmentComponent_1,
+        ModelingEditorComponent,
+        ModelingAssessmentComponent,
         UnreferencedFeedbackComponent,
         CollapsableAssessmentInstructionsComponent,
         ArtemisTranslatePipe,

@@ -1,7 +1,7 @@
 import { Component, Input } from '@angular/core';
 import { ProgrammingExercise } from 'app/entities/programming/programming-exercise.model';
 import { SubmissionPolicyType } from 'app/entities/submission-policy.model';
-import { TranslateDirective } from '../../../shared/language/translate.directive';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
 
 @Component({
     selector: 'jhi-programming-submission-policy-status',

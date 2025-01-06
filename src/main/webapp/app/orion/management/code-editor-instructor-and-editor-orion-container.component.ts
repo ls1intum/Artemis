@@ -7,14 +7,14 @@ import { faCircleNotch, faTimesCircle } from '@fortawesome/free-solid-svg-icons'
 
 import { MarkdownEditorHeight } from 'app/shared/markdown-editor/monaco/markdown-editor-monaco.component';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { TranslateDirective } from '../../shared/language/translate.directive';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { UpdatingResultComponent } from '../../exercises/shared/result/updating-result.component';
 import { ProgrammingExerciseInstructorExerciseStatusComponent } from '../../exercises/programming/manage/status/programming-exercise-instructor-exercise-status.component';
 import { NgbDropdown, NgbDropdownButtonItem, NgbDropdownItem, NgbDropdownMenu, NgbDropdownToggle } from '@ng-bootstrap/ng-bootstrap';
 import { ProgrammingExerciseStudentTriggerBuildButtonComponent } from '../../exercises/programming/shared/actions/programming-exercise-student-trigger-build-button.component';
-import { OrionButtonComponent } from '../../shared/orion/orion-button/orion-button.component';
+import { OrionButtonComponent } from 'app/shared/orion/orion-button/orion-button.component';
 import { ProgrammingExerciseEditableInstructionComponent } from '../../exercises/programming/manage/instructions-editor/programming-exercise-editable-instruction.component';
-import { ArtemisTranslatePipe } from '../../shared/pipes/artemis-translate.pipe';
+import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 
 @Component({
     selector: 'jhi-code-editor-instructor-orion',
@@ -54,7 +54,9 @@ export class CodeEditorInstructorAndEditorOrionContainerComponent extends CodeEd
      */
     ngOnInit(): void {
         super.ngOnInit();
-        this.orionConnectorService.state().subscribe((state) => (this.orionState = state));
+        if (this.orionConnectorService && this.orionConnectorService.state()) {
+            this.orionConnectorService.state().subscribe((state) => (this.orionState = state));
+        }
     }
 
     protected applyDomainChange(domainType: any, domainValue: any) {

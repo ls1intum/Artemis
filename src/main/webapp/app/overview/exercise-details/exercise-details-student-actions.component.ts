@@ -11,9 +11,8 @@ import { ProgrammingExercise } from 'app/entities/programming/programming-exerci
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
 import { ArtemisQuizService } from 'app/shared/quiz/quiz.service';
 import { finalize } from 'rxjs/operators';
-import { faCodeBranch, faDesktop, faEye, faFolderOpen, faPenSquare, faPlayCircle, faRedo, faUsers } from '@fortawesome/free-solid-svg-icons';
+import { faDesktop, faEye, faFolderOpen, faPlayCircle, faRedo, faUsers } from '@fortawesome/free-solid-svg-icons';
 import { CourseExerciseService } from 'app/exercises/shared/course-exercises/course-exercise.service';
-import { TranslateService } from '@ngx-translate/core';
 import { ParticipationService } from 'app/exercises/shared/participation/participation.service';
 import dayjs from 'dayjs/esm';
 import { QuizExercise } from 'app/entities/quiz/quiz-exercise.model';
@@ -22,23 +21,19 @@ import { PROFILE_ATHENA, PROFILE_LOCALVC, PROFILE_THEIA } from 'app/app.constant
 import { AssessmentType } from 'app/entities/assessment-type.model';
 import { ButtonType } from 'app/shared/components/button.component';
 import { NgTemplateOutlet } from '@angular/common';
-import { ExerciseActionButtonComponent } from '../../shared/components/exercise-action-button.component';
+import { ExerciseActionButtonComponent } from 'app/shared/components/exercise-action-button.component';
 import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
-import { FeatureToggleDirective } from '../../shared/feature-toggle/feature-toggle.directive';
-import { StartPracticeModeButtonComponent } from '../../shared/components/start-practice-mode-button/start-practice-mode-button.component';
-import { ExtensionPointDirective } from '../../shared/extension-point/extension-point.directive';
-import { OpenCodeEditorButtonComponent } from '../../shared/components/open-code-editor-button/open-code-editor-button.component';
-import { CodeButtonComponent } from '../../shared/components/code-button/code-button.component';
+import { FeatureToggleDirective } from 'app/shared/feature-toggle/feature-toggle.directive';
+import { StartPracticeModeButtonComponent } from 'app/shared/components/start-practice-mode-button/start-practice-mode-button.component';
+import { ExtensionPointDirective } from 'app/shared/extension-point/extension-point.directive';
+import { OpenCodeEditorButtonComponent } from 'app/shared/components/open-code-editor-button/open-code-editor-button.component';
+import { CodeButtonComponent } from 'app/shared/components/code-button/code-button.component';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { TranslateDirective } from '../../shared/language/translate.directive';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { RequestFeedbackButtonComponent } from './request-feedback-button/request-feedback-button.component';
-import { ArtemisTranslatePipe } from '../../shared/pipes/artemis-translate.pipe';
+import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 
 @Component({
-    selector: 'jhi-exercise-details-student-actions',
-    templateUrl: './exercise-details-student-actions.component.html',
-    styleUrls: ['../course-overview.scss'],
-    providers: [ExternalCloningService],
     imports: [
         NgTemplateOutlet,
         ExerciseActionButtonComponent,
@@ -46,6 +41,7 @@ import { ArtemisTranslatePipe } from '../../shared/pipes/artemis-translate.pipe'
         NgbTooltip,
         FeatureToggleDirective,
         StartPracticeModeButtonComponent,
+        // NOTE: this is actually used
         ExtensionPointDirective,
         OpenCodeEditorButtonComponent,
         CodeButtonComponent,
@@ -54,12 +50,15 @@ import { ArtemisTranslatePipe } from '../../shared/pipes/artemis-translate.pipe'
         RequestFeedbackButtonComponent,
         ArtemisTranslatePipe,
     ],
+    providers: [ExternalCloningService],
+    selector: 'jhi-exercise-details-student-actions',
+    styleUrls: ['../course-overview.scss'],
+    templateUrl: './exercise-details-student-actions.component.html',
 })
 export class ExerciseDetailsStudentActionsComponent implements OnInit, OnChanges {
     private alertService = inject(AlertService);
     private courseExerciseService = inject(CourseExerciseService);
     private router = inject(Router);
-    private translateService = inject(TranslateService);
     private participationService = inject(ParticipationService);
     private profileService = inject(ProfileService);
 
@@ -105,11 +104,7 @@ export class ExerciseDetailsStudentActionsComponent implements OnInit, OnChanges
     readonly faEye = faEye;
     readonly faPlayCircle = faPlayCircle;
     readonly faRedo = faRedo;
-    readonly faCodeBranch = faCodeBranch;
     readonly faDesktop = faDesktop;
-    readonly faPenSquare = faPenSquare;
-
-    private feedbackSent = false;
 
     ngOnInit(): void {
         this.repositoryLink = this.router.url;
@@ -332,9 +327,5 @@ export class ExerciseDetailsStudentActionsComponent implements OnInit, OnChanges
     get assignedTeamId(): number | undefined {
         const participations = this.exercise.studentParticipations;
         return participations?.length ? participations[0].team?.id : this.exercise.studentAssignedTeamId;
-    }
-
-    buildPlanUrl(participation: StudentParticipation) {
-        return (participation as ProgrammingExerciseStudentParticipation).buildPlanUrl;
     }
 }

@@ -7,10 +7,10 @@ import { ExerciseType } from 'app/entities/exercise.model';
 import { ProgrammingExercise } from 'app/entities/programming/programming-exercise.model';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { Router, RouterLink } from '@angular/router';
-import { FeatureToggleLinkDirective } from '../../../shared/feature-toggle/feature-toggle-link.directive';
+import { FeatureToggleLinkDirective } from 'app/shared/feature-toggle/feature-toggle-link.directive';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { TranslateDirective } from '../../../shared/language/translate.directive';
-import { FeatureToggleDirective } from '../../../shared/feature-toggle/feature-toggle.directive';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { FeatureToggleDirective } from 'app/shared/feature-toggle/feature-toggle.directive';
 
 @Component({
     selector: 'jhi-programming-exercise-create-buttons',

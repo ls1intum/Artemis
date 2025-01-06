@@ -3,6 +3,8 @@ import { SafeHtml } from '@angular/platform-browser';
 import { ActivatedRoute } from '@angular/router';
 import { HttpResponse } from '@angular/common/http';
 import { UMLModel } from '@ls1intum/apollon';
+import { NonProgrammingExerciseDetailCommonActionsComponent } from 'app/exercises/shared/exercise-detail-common-actions/non-programming-exercise-detail-common-actions.component';
+import { ExerciseDetailStatisticsComponent } from 'app/exercises/shared/statistics/exercise-detail-statistics.component';
 import { Subscription } from 'rxjs';
 import { ModelingExercise } from 'app/entities/modeling-exercise.model';
 import { ModelingExerciseService } from './modeling-exercise.service';
@@ -25,11 +27,9 @@ import {
     getExerciseProblemDetailSection,
 } from 'app/exercises/shared/utils';
 import { DetailOverviewSection, DetailType } from 'app/detail-overview-list/detail-overview-list.component';
-import { TranslateDirective } from '../../../shared/language/translate.directive';
-import { DocumentationButtonComponent } from '../../../shared/components/documentation-button/documentation-button.component';
-import { NonProgrammingExerciseDetailCommonActionsComponent } from '../../shared/exercise-detail-common-actions/non-programming-exercise-detail-common-actions.component';
-import { ExerciseDetailStatisticsComponent } from '../../shared/statistics/exercise-detail-statistics.component';
-import { DetailOverviewListComponent } from '../../../detail-overview-list/detail-overview-list.component';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { DocumentationButtonComponent } from 'app/shared/components/documentation-button/documentation-button.component';
+import { DetailOverviewListComponent } from 'app/detail-overview-list/detail-overview-list.component';
 
 @Component({
     selector: 'jhi-modeling-exercise-detail',

@@ -22,20 +22,20 @@ import { faCircleNotch, faCodeBranch, faEraser, faFilePowerpoint, faTable, faTim
 import { GradingSystemService } from 'app/grading-system/grading-system.service';
 import { GradeStepsDTO } from 'app/entities/grade-step.model';
 import { PROFILE_LOCALVC } from 'app/app.constants';
-import { TranslateDirective } from '../../../shared/language/translate.directive';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { FormsModule } from '@angular/forms';
 import { ProgrammingExerciseInstructorSubmissionStateComponent } from '../../programming/shared/actions/programming-exercise-instructor-submission-state.component';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { DataTableComponent } from '../../../shared/data-table/data-table.component';
+import { DataTableComponent } from 'app/shared/data-table/data-table.component';
 import { NgxDatatableModule } from '@siemens/ngx-datatable';
-import { CodeButtonComponent } from '../../../shared/components/code-button/code-button.component';
+import { CodeButtonComponent } from 'app/shared/components/code-button/code-button.component';
 import { TeamStudentsListComponent } from '../team/team-participate/team-students-list.component';
-import { FormDateTimePickerComponent } from '../../../shared/date-time-picker/date-time-picker.component';
+import { FormDateTimePickerComponent } from 'app/shared/date-time-picker/date-time-picker.component';
 import { ProgrammingExerciseInstructorTriggerBuildButtonComponent } from '../../programming/shared/actions/programming-exercise-instructor-trigger-build-button.component';
-import { DeleteButtonDirective } from '../../../shared/delete-dialog/delete-button.directive';
-import { FeatureToggleDirective } from '../../../shared/feature-toggle/feature-toggle.directive';
+import { DeleteButtonDirective } from 'app/shared/delete-dialog/delete-button.directive';
+import { FeatureToggleDirective } from 'app/shared/feature-toggle/feature-toggle.directive';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
-import { ArtemisTranslatePipe } from '../../../shared/pipes/artemis-translate.pipe';
+import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 
 enum FilterProp {
     ALL = 'all',

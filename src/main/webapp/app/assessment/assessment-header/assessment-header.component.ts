@@ -9,11 +9,11 @@ import { AssessmentType } from 'app/entities/assessment-type.model';
 import { TranslateService } from '@ngx-translate/core';
 import { faSave, faSpinner } from '@fortawesome/free-solid-svg-icons';
 import { faSquareCaretRight } from '@fortawesome/free-regular-svg-icons';
-import { TranslateDirective } from '../../shared/language/translate.directive';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { NgbAlert, NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { AssessmentWarningComponent } from '../assessment-warning/assessment-warning.component';
-import { ArtemisTranslatePipe } from '../../shared/pipes/artemis-translate.pipe';
+import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 
 /**
  * The <jhi-assessment-header> component is used in the shared assessment layout.

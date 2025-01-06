@@ -48,7 +48,6 @@ import { ProfilePictureComponent } from 'app/shared/profile-picture/profile-pict
 import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
 
 @Directive({
-    // eslint-disable-next-line @angular-eslint/directive-selector
     selector: '[infinite-scroll]',
 })
 class InfiniteScrollStubDirective {

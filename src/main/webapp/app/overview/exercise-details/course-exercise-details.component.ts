@@ -45,24 +45,24 @@ import { IconProp } from '@fortawesome/fontawesome-svg-core';
 import { NgClass } from '@angular/common';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { NgbDropdown, NgbDropdownItem, NgbDropdownMenu, NgbDropdownToggle, NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
-import { TranslateDirective } from '../../shared/language/translate.directive';
-import { ExtensionPointDirective } from '../../shared/extension-point/extension-point.directive';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { ExtensionPointDirective } from 'app/shared/extension-point/extension-point.directive';
 import { ExerciseDetailsStudentActionsComponent } from './exercise-details-student-actions.component';
-import { ExerciseHeadersInformationComponent } from '../../exercises/shared/exercise-headers/exercise-headers-information/exercise-headers-information.component';
+import { ExerciseHeadersInformationComponent } from 'app/exercises/shared/exercise-headers/exercise-headers-information/exercise-headers-information.component';
 import { ResultHistoryComponent } from '../result-history/result-history.component';
-import { ResultComponent } from '../../exercises/shared/result/result.component';
+import { ResultComponent } from 'app/exercises/shared/result/result.component';
 import { ProblemStatementComponent } from './problem-statement/problem-statement.component';
-import { ResetRepoButtonComponent } from '../../shared/components/reset-repo-button/reset-repo-button.component';
-import { ModelingEditorComponent } from '../../exercises/modeling/shared/modeling-editor.component';
-import { ProgrammingExerciseExampleSolutionRepoDownloadComponent } from '../../exercises/programming/shared/actions/programming-exercise-example-solution-repo-download.component';
-import { ExerciseInfoComponent } from '../../exercises/shared/exercise-info/exercise-info.component';
-import { ComplaintsStudentViewComponent } from '../../complaints/complaints-for-students/complaints-student-view.component';
-import { RatingComponent } from '../../exercises/shared/rating/rating.component';
-import { IrisExerciseChatbotButtonComponent } from '../../iris/exercise-chatbot/exercise-chatbot-button.component';
+import { ResetRepoButtonComponent } from 'app/shared/components/reset-repo-button/reset-repo-button.component';
+import { ModelingEditorComponent } from 'app/exercises/modeling/shared/modeling-editor.component';
+import { ProgrammingExerciseExampleSolutionRepoDownloadComponent } from 'app/exercises/programming/shared/actions/programming-exercise-example-solution-repo-download.component';
+import { ExerciseInfoComponent } from 'app/exercises/shared/exercise-info/exercise-info.component';
+import { ComplaintsStudentViewComponent } from 'app/complaints/complaints-for-students/complaints-student-view.component';
+import { RatingComponent } from 'app/exercises/shared/rating/rating.component';
+import { IrisExerciseChatbotButtonComponent } from 'app/iris/exercise-chatbot/exercise-chatbot-button.component';
 import { DiscussionSectionComponent } from '../discussion-section/discussion-section.component';
 import { LtiInitializerComponent } from './lti-initializer.component';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
-import { ArtemisTranslatePipe } from '../../shared/pipes/artemis-translate.pipe';
+import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 
 interface InstructorActionItem {
     routerLink: string;
@@ -83,6 +83,7 @@ interface InstructorActionItem {
         NgbDropdownItem,
         RouterLink,
         TranslateDirective,
+        // NOTE: this is actually used
         ExtensionPointDirective,
         ExerciseDetailsStudentActionsComponent,
         ExerciseHeadersInformationComponent,

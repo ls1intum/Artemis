@@ -17,11 +17,11 @@ import { faClipboard, faEye, faFileImport, faListAlt, faPlus, faSort, faThList, 
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { ExamImportComponent } from 'app/exam/manage/exams/exam-import/exam-import.component';
 import { DocumentationType } from 'app/shared/components/documentation-button/documentation-button.component';
-import { TranslateDirective } from '../../shared/language/translate.directive';
-import { DocumentationButtonComponent } from '../../shared/components/documentation-button/documentation-button.component';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { DocumentationButtonComponent } from 'app/shared/components/documentation-button/documentation-button.component';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { SortDirective } from '../../shared/sort/sort.directive';
-import { SortByDirective } from '../../shared/sort/sort-by.directive';
+import { SortDirective } from 'app/shared/sort/sort.directive';
+import { SortByDirective } from 'app/shared/sort/sort-by.directive';
 import { ExamStatusComponent } from './exam-status.component';
 
 @Component({

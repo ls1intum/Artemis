@@ -1,4 +1,5 @@
 import { Component, OnDestroy, OnInit, ViewChild, inject } from '@angular/core';
+import { CodeEditorContainerComponent } from 'app/exercises/programming/shared/code-editor/container/code-editor-container.component';
 import { Observable, Subscription, of, throwError } from 'rxjs';
 import { ActivatedRoute, Router } from '@angular/router';
 import { Location } from '@angular/common';
@@ -15,7 +16,6 @@ import { ProgrammingExercise } from 'app/entities/programming/programming-exerci
 import { ProgrammingExerciseStudentParticipation } from 'app/entities/participation/programming-exercise-student-participation.model';
 import { SolutionProgrammingExerciseParticipation } from 'app/entities/participation/solution-programming-exercise-participation.model';
 import { DomainChange, DomainType } from 'app/exercises/programming/shared/code-editor/model/code-editor.model';
-import { CodeEditorContainerComponent } from '../../shared/code-editor/container/code-editor-container.component';
 import { Course } from 'app/entities/course.model';
 import { CourseExerciseService } from 'app/exercises/shared/course-exercises/course-exercise.service';
 

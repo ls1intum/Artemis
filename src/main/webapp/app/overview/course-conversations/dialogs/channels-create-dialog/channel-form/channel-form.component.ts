@@ -1,9 +1,9 @@
 import { Component, EventEmitter, OnChanges, OnDestroy, OnInit, Output, inject } from '@angular/core';
 import { FormBuilder, FormGroup, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
+import { ChannelIconComponent } from 'app/overview/course-conversations/other/channel-icon/channel-icon.component';
 import { Subject, takeUntil } from 'rxjs';
-import { TranslateDirective } from '../../../../../shared/language/translate.directive';
-import { ChannelIconComponent } from '../../../other/channel-icon/channel-icon.component';
-import { ArtemisTranslatePipe } from '../../../../../shared/pipes/artemis-translate.pipe';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 
 export interface ChannelFormData {
     name?: string;

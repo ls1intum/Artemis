@@ -1,5 +1,6 @@
 import { Component, OnInit, inject } from '@angular/core';
 import { Location } from '@angular/common';
+import { UnreferencedFeedbackComponent } from 'app/exercises/shared/unreferenced-feedback/unreferenced-feedback.component';
 import { firstValueFrom } from 'rxjs';
 import { AlertService } from 'app/core/util/alert.service';
 import { UMLDiagramType, UMLModel } from '@ls1intum/apollon';
@@ -31,14 +32,13 @@ import { isAllowedToModifyFeedback } from 'app/assessment/assessment.service';
 import { AssessmentAfterComplaint } from 'app/complaints/complaints-for-tutor/complaints-for-tutor.component';
 import { AthenaService } from 'app/assessment/athena.service';
 import { faCircleNotch, faQuestionCircle } from '@fortawesome/free-solid-svg-icons';
-import { AssessmentLayoutComponent } from '../../../../assessment/assessment-layout/assessment-layout.component';
-import { TranslateDirective } from '../../../../shared/language/translate.directive';
+import { AssessmentLayoutComponent } from 'app/assessment/assessment-layout/assessment-layout.component';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { ModelingAssessmentComponent } from '../modeling-assessment.component';
-import { CollapsableAssessmentInstructionsComponent } from '../../../../assessment/assessment-instructions/collapsable-assessment-instructions/collapsable-assessment-instructions.component';
-import { UnreferencedFeedbackComponent } from '../../../shared/unreferenced-feedback/unreferenced-feedback.component';
-import { ArtemisTranslatePipe } from '../../../../shared/pipes/artemis-translate.pipe';
+import { CollapsableAssessmentInstructionsComponent } from 'app/assessment/assessment-instructions/collapsable-assessment-instructions/collapsable-assessment-instructions.component';
+import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 
 @Component({
     selector: 'jhi-modeling-assessment-editor',

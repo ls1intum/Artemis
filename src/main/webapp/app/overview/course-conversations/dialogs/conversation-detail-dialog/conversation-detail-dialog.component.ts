@@ -9,7 +9,7 @@ import { AbstractDialogComponent } from 'app/overview/course-conversations/dialo
 import { faPeopleGroup } from '@fortawesome/free-solid-svg-icons';
 import { ChannelIconComponent } from '../../other/channel-icon/channel-icon.component';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { TranslateDirective } from '../../../../shared/language/translate.directive';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { RouterLink } from '@angular/router';
 import { ConversationMembersComponent } from './tabs/conversation-members/conversation-members.component';
 import { ConversationInfoComponent } from './tabs/conversation-info/conversation-info.component';

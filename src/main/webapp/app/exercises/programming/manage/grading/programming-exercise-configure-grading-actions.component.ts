@@ -1,7 +1,7 @@
 import { Component, EventEmitter, Input, Output } from '@angular/core';
 import { ProgrammingExercise } from 'app/entities/programming/programming-exercise.model';
-import { ProgrammingExerciseReEvaluateButtonComponent } from '../../shared/actions/programming-exercise-re-evaluate-button.component';
-import { ProgrammingExerciseTriggerAllButtonComponent } from '../../shared/actions/programming-exercise-trigger-all-button.component';
+import { ProgrammingExerciseReEvaluateButtonComponent } from 'app/exercises/programming/shared/actions/programming-exercise-re-evaluate-button.component';
+import { ProgrammingExerciseTriggerAllButtonComponent } from 'app/exercises/programming/shared/actions/programming-exercise-trigger-all-button.component';
 
 /**
  * The actions of the grading page:

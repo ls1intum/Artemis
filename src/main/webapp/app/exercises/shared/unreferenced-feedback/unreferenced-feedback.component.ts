@@ -1,8 +1,8 @@
 import { Component, EventEmitter, Input, Output, inject } from '@angular/core';
 import { FEEDBACK_SUGGESTION_ACCEPTED_IDENTIFIER, FEEDBACK_SUGGESTION_IDENTIFIER, Feedback, FeedbackType } from 'app/entities/feedback.model';
 import { StructuredGradingCriterionService } from 'app/exercises/shared/structured-grading-criterion/structured-grading-criterion.service';
-import { TranslateDirective } from '../../../shared/language/translate.directive';
-import { UnreferencedFeedbackDetailComponent } from '../../../assessment/unreferenced-feedback-detail/unreferenced-feedback-detail.component';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { UnreferencedFeedbackDetailComponent } from 'app/assessment/unreferenced-feedback-detail/unreferenced-feedback-detail.component';
 
 @Component({
     selector: 'jhi-unreferenced-feedback',

@@ -2,6 +2,7 @@ import { Component, OnDestroy, OnInit, inject } from '@angular/core';
 import { Location } from '@angular/common';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
+import { UnreferencedFeedbackComponent } from 'app/exercises/shared/unreferenced-feedback/unreferenced-feedback.component';
 import dayjs from 'dayjs/esm';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
 import { TextSubmission } from 'app/entities/text/text-submission.model';
@@ -35,14 +36,13 @@ import { TextBlockRef } from 'app/entities/text/text-block-ref.model';
 import { AthenaService } from 'app/assessment/athena.service';
 import { TextBlock } from 'app/entities/text/text-block.model';
 import { Subscription } from 'rxjs';
-import { AssessmentLayoutComponent } from '../../../assessment/assessment-layout/assessment-layout.component';
-import { ResizeableContainerComponent } from '../../../shared/resizeable-container/resizeable-container.component';
-import { ScoreDisplayComponent } from '../../../shared/score-display/score-display.component';
+import { AssessmentLayoutComponent } from 'app/assessment/assessment-layout/assessment-layout.component';
+import { ResizeableContainerComponent } from 'app/shared/resizeable-container/resizeable-container.component';
+import { ScoreDisplayComponent } from 'app/shared/score-display/score-display.component';
 import { TextAssessmentAreaComponent } from './text-assessment-area/text-assessment-area.component';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { TranslateDirective } from '../../../shared/language/translate.directive';
-import { AssessmentInstructionsComponent } from '../../../assessment/assessment-instructions/assessment-instructions/assessment-instructions.component';
-import { UnreferencedFeedbackComponent } from '../../shared/unreferenced-feedback/unreferenced-feedback.component';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { AssessmentInstructionsComponent } from 'app/assessment/assessment-instructions/assessment-instructions/assessment-instructions.component';
 
 @Component({
     selector: 'jhi-text-submission-assessment',

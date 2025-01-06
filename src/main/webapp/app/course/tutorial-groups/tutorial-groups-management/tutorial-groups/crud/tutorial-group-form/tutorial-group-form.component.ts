@@ -16,11 +16,10 @@ import {
 import { isEqual } from 'lodash-es';
 import { TutorialGroupsService } from 'app/course/tutorial-groups/services/tutorial-groups.service';
 import { faSave } from '@fortawesome/free-solid-svg-icons';
-import { TranslateDirective } from '../../../../../../shared/language/translate.directive';
-import { MarkdownEditorMonacoComponent } from '../../../../../../shared/markdown-editor/monaco/markdown-editor-monaco.component';
-import { ScheduleFormComponent as ScheduleFormComponent_1 } from './schedule-form/schedule-form.component';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { MarkdownEditorMonacoComponent } from 'app/shared/markdown-editor/monaco/markdown-editor-monaco.component';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { ArtemisTranslatePipe } from '../../../../../../shared/pipes/artemis-translate.pipe';
+import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 
 export interface TutorialGroupFormData {
     title?: string;
@@ -45,7 +44,7 @@ export const titleRegex = new RegExp('^[a-zA-Z0-9]{1}[a-zA-Z0-9- ]{0,19}$');
     selector: 'jhi-tutorial-group-form',
     templateUrl: './tutorial-group-form.component.html',
     changeDetection: ChangeDetectionStrategy.OnPush,
-    imports: [FormsModule, ReactiveFormsModule, TranslateDirective, NgbTypeahead, MarkdownEditorMonacoComponent, ScheduleFormComponent_1, FaIconComponent, ArtemisTranslatePipe],
+    imports: [FormsModule, ReactiveFormsModule, TranslateDirective, NgbTypeahead, MarkdownEditorMonacoComponent, ScheduleFormComponent, FaIconComponent, ArtemisTranslatePipe],
 })
 export class TutorialGroupFormComponent implements OnInit, OnChanges, OnDestroy {
     private fb = inject(FormBuilder);

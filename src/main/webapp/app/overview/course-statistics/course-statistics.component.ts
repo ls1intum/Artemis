@@ -27,11 +27,11 @@ import { sortBy } from 'lodash-es';
 import { Subject, Subscription } from 'rxjs';
 import { NgbDropdown, NgbDropdownMenu, NgbDropdownToggle, NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { TranslateDirective } from '../../shared/language/translate.directive';
-import { DocumentationButtonComponent } from '../../shared/components/documentation-button/documentation-button.component';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { DocumentationButtonComponent } from 'app/shared/components/documentation-button/documentation-button.component';
 import { ExerciseScoresChartComponent } from '../visualizations/exercise-scores-chart/exercise-scores-chart.component';
 import { KeyValuePipe } from '@angular/common';
-import { ArtemisTranslatePipe } from '../../shared/pipes/artemis-translate.pipe';
+import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 
 const QUIZ_EXERCISE_COLOR = '#17a2b8';
 const PROGRAMMING_EXERCISE_COLOR = '#fd7e14';

@@ -6,18 +6,18 @@ import { faLink, faTrash } from '@fortawesome/free-solid-svg-icons';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { NgClass } from '@angular/common';
-import { ArtemisTranslatePipe as ArtemisTranslatePipe_1 } from '../pipes/artemis-translate.pipe';
 
 @Component({
     selector: 'jhi-grading-instruction-link-icon',
     templateUrl: './grading-instruction-link-icon.component.html',
-    imports: [FaIconComponent, NgbTooltip, NgClass, ArtemisTranslatePipe_1],
+    imports: [FaIconComponent, NgbTooltip, NgClass, ArtemisTranslatePipe],
 })
 export class GradingInstructionLinkIconComponent implements OnInit {
     private artemisTranslatePipe = inject(ArtemisTranslatePipe);
 
     @Input() linkIcon = faLink;
     @Input() feedback: Feedback;
+
     instruction: GradingInstruction | undefined;
     confirmIcon = faTrash;
     showConfirm = false;

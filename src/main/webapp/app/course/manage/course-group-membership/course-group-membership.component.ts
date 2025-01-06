@@ -9,8 +9,8 @@ import { CourseManagementService } from 'app/course/manage/course-management.ser
 import { UserService } from 'app/core/user/user.service';
 import { Subscription } from 'rxjs';
 import { capitalize } from 'lodash-es';
-import { CourseGroupComponent } from '../../../shared/course-group/course-group.component';
-import { TranslateDirective } from '../../../shared/language/translate.directive';
+import { CourseGroupComponent } from 'app/shared/course-group/course-group.component';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
 
 @Component({
     selector: 'jhi-course-group-membership',

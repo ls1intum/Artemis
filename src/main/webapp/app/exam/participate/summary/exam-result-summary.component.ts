@@ -26,22 +26,22 @@ import { ProgrammingExercise } from 'app/entities/programming/programming-exerci
 import { isExamResultPublished } from 'app/exam/participate/exam.utils';
 import { Course } from 'app/entities/course.model';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { TranslateDirective } from '../../../shared/language/translate.directive';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { ExamGeneralInformationComponent } from '../general-information/exam-general-information.component';
 import { ExamResultOverviewComponent } from './result-overview/exam-result-overview.component';
 import { CollapsibleCardComponent } from './collapsible-card.component';
 import { ExamResultSummaryExerciseCardHeaderComponent } from './exercises/header/exam-result-summary-exercise-card-header.component';
 import { NgClass } from '@angular/common';
-import { ProgrammingExerciseExampleSolutionRepoDownloadComponent } from '../../../exercises/programming/shared/actions/programming-exercise-example-solution-repo-download.component';
+import { ProgrammingExerciseExampleSolutionRepoDownloadComponent } from 'app/exercises/programming/shared/actions/programming-exercise-example-solution-repo-download.component';
 import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
-import { ExampleSolutionComponent } from '../../../exercises/shared/example-solution/example-solution.component';
+import { ExampleSolutionComponent } from 'app/exercises/shared/example-solution/example-solution.component';
 import { TextExamSummaryComponent } from './exercises/text-exam-summary/text-exam-summary.component';
 import { ModelingExamSummaryComponent } from './exercises/modeling-exam-summary/modeling-exam-summary.component';
 import { QuizExamSummaryComponent } from './exercises/quiz-exam-summary/quiz-exam-summary.component';
 import { FileUploadExamSummaryComponent } from './exercises/file-upload-exam-summary/file-upload-exam-summary.component';
-import { ComplaintsStudentViewComponent } from '../../../complaints/complaints-for-students/complaints-student-view.component';
+import { ComplaintsStudentViewComponent } from 'app/complaints/complaints-for-students/complaints-student-view.component';
 import { ProgrammingExamSummaryComponent } from './exercises/programming-exam-summary/programming-exam-summary.component';
-import { ArtemisTranslatePipe } from '../../../shared/pipes/artemis-translate.pipe';
+import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 
 export type ResultSummaryExerciseInfo = {
     icon: IconProp;

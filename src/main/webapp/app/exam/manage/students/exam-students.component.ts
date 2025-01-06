@@ -2,7 +2,7 @@ import { Component, OnDestroy, OnInit, ViewChild, ViewEncapsulation, inject } fr
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { ExamUser } from 'app/entities/exam/exam-user.model';
 import { Observable, Subject, Subscription, of } from 'rxjs';
-import { ActivatedRoute, Router, RouterLink } from '@angular/router';
+import { ActivatedRoute, RouterLink } from '@angular/router';
 import { User } from 'app/core/user/user.model';
 import { ActionType } from 'app/shared/delete-dialog/delete-dialog.model';
 import { catchError, map, switchMap, tap } from 'rxjs/operators';
@@ -14,18 +14,16 @@ import { ExamManagementService } from 'app/exam/manage/exam-management.service';
 import { ButtonSize, ButtonType } from 'app/shared/components/button.component';
 import { AccountService } from 'app/core/auth/account.service';
 import { AlertService } from 'app/core/util/alert.service';
-import { EventManager } from 'app/core/util/event-manager.service';
 import { faCheck, faInfoCircle, faPlus, faTimes, faUpload, faUserSlash, faUserTimes } from '@fortawesome/free-solid-svg-icons';
 import dayjs from 'dayjs/esm';
 import { StudentExamService } from 'app/exam/manage/student-exams/student-exam.service';
-import { TranslateDirective } from '../../../shared/language/translate.directive';
-import { UsersImportButtonComponent } from '../../../shared/user-import/users-import-button.component';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { UsersImportButtonComponent } from 'app/shared/user-import/users-import-button.component';
 import { StudentsUploadImagesButtonComponent } from './upload-images/students-upload-images-button.component';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { DeleteButtonDirective } from '../../../shared/delete-dialog/delete-button.directive';
-import { DataTableComponent as DataTableComponent_1 } from '../../../shared/data-table/data-table.component';
+import { DeleteButtonDirective } from 'app/shared/delete-dialog/delete-button.directive';
 import { NgxDatatableModule } from '@siemens/ngx-datatable';
-import { ArtemisTranslatePipe } from '../../../shared/pipes/artemis-translate.pipe';
+import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 
 const cssClasses = {
     alreadyRegistered: 'already-registered',
@@ -44,16 +42,14 @@ const cssClasses = {
         FaIconComponent,
         RouterLink,
         DeleteButtonDirective,
-        DataTableComponent_1,
+        DataTableComponent,
         NgxDatatableModule,
         ArtemisTranslatePipe,
     ],
 })
 export class ExamStudentsComponent implements OnInit, OnDestroy {
-    private router = inject(Router);
     private route = inject(ActivatedRoute);
     private alertService = inject(AlertService);
-    private eventManager = inject(EventManager);
     private examManagementService = inject(ExamManagementService);
     private userService = inject(UserService);
     private accountService = inject(AccountService);

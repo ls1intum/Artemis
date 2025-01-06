@@ -4,10 +4,10 @@ import { OneToOneChatDTO } from 'app/entities/metis/conversation/one-to-one-chat
 import { faPeopleGroup } from '@fortawesome/free-solid-svg-icons';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { TranslateDirective } from '../../language/translate.directive';
-import { StudentExamWorkingTimeComponent } from '../../../exam/shared/student-exam-working-time/student-exam-working-time.component';
+import { StudentExamWorkingTimeComponent } from 'app/exam/shared/student-exam-working-time/student-exam-working-time.component';
 import { NgClass } from '@angular/common';
 import { ProfilePictureComponent } from '../../profile-picture/profile-picture.component';
-import { SubmissionResultStatusComponent } from '../../../overview/submission-result-status.component';
+import { SubmissionResultStatusComponent } from 'app/overview/submission-result-status.component';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 import { ArtemisDurationFromSecondsPipe } from 'app/shared/pipes/artemis-duration-from-seconds.pipe';
 

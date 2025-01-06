@@ -22,8 +22,8 @@ import { getAsOneToOneChatDTO } from 'app/entities/metis/conversation/one-to-one
 import { ConversationUserDTO } from 'app/entities/metis/conversation/conversation-user-dto.model';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { ChannelIconComponent } from '../../other/channel-icon/channel-icon.component';
-import { ProfilePictureComponent } from '../../../../shared/profile-picture/profile-picture.component';
-import { TranslateDirective } from '../../../../shared/language/translate.directive';
+import { ProfilePictureComponent } from 'app/shared/profile-picture/profile-picture.component';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { RouterLink } from '@angular/router';
 
 @Component({

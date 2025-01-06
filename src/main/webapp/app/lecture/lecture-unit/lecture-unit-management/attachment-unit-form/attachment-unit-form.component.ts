@@ -7,12 +7,11 @@ import { CompetencyLectureUnitLink } from 'app/entities/competency.model';
 import { MAX_FILE_SIZE } from 'app/shared/constants/input.constants';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { FormDateTimePickerComponent } from 'app/shared/date-time-picker/date-time-picker.component';
-import { TranslateDirective } from '../../../../shared/language/translate.directive';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
-import { FormDateTimePickerComponent as FormDateTimePickerComponent_1 } from '../../../../shared/date-time-picker/date-time-picker.component';
-import { CompetencySelectionComponent } from '../../../../shared/competency-selection/competency-selection.component';
-import { ArtemisTranslatePipe } from '../../../../shared/pipes/artemis-translate.pipe';
+import { CompetencySelectionComponent } from 'app/shared/competency-selection/competency-selection.component';
+import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 
 export interface AttachmentUnitFormData {
     formProperties: FormProperties;
@@ -38,7 +37,7 @@ export interface FileProperties {
 @Component({
     selector: 'jhi-attachment-unit-form',
     templateUrl: './attachment-unit-form.component.html',
-    imports: [FormsModule, ReactiveFormsModule, TranslateDirective, FaIconComponent, NgbTooltip, FormDateTimePickerComponent_1, CompetencySelectionComponent, ArtemisTranslatePipe],
+    imports: [FormsModule, ReactiveFormsModule, TranslateDirective, FaIconComponent, NgbTooltip, FormDateTimePickerComponent, CompetencySelectionComponent, ArtemisTranslatePipe],
 })
 export class AttachmentUnitFormComponent implements OnChanges {
     protected readonly faQuestionCircle = faQuestionCircle;

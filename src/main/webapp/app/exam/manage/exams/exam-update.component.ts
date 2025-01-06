@@ -1,3 +1,4 @@
+import { WorkingTimeChangeComponent } from 'app/exam/shared/working-time-change/working-time-change.component';
 import dayjs from 'dayjs/esm';
 import { omit } from 'lodash-es';
 import { combineLatest, takeWhile } from 'rxjs';
@@ -19,19 +20,16 @@ import { ConfirmAutofocusModalComponent } from 'app/shared/components/confirm-au
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { examWorkingTime, normalWorkingTime } from 'app/exam/participate/exam.utils';
 import { FormsModule } from '@angular/forms';
-import { TranslateDirective } from '../../../shared/language/translate.directive';
-import { DocumentationButtonComponent } from '../../../shared/components/documentation-button/documentation-button.component';
-import { TitleChannelNameComponent } from '../../../shared/form/title-channel-name/title-channel-name.component';
-import { HelpIconComponent } from '../../../shared/components/help-icon.component';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { DocumentationButtonComponent } from 'app/shared/components/documentation-button/documentation-button.component';
+import { TitleChannelNameComponent } from 'app/shared/form/title-channel-name/title-channel-name.component';
+import { HelpIconComponent } from 'app/shared/components/help-icon.component';
 import { ExamModePickerComponent } from './exam-mode-picker/exam-mode-picker.component';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { WorkingTimeChangeComponent } from '../../shared/working-time-change/working-time-change.component';
-import { FormDateTimePickerComponent } from '../../../shared/date-time-picker/date-time-picker.component';
-import { CustomMinDirective } from '../../../shared/validators/custom-min-validator.directive';
-import { CustomMaxDirective } from '../../../shared/validators/custom-max-validator.directive';
-import { ExamExerciseImportComponent as ExamExerciseImportComponent_1 } from './exam-exercise-import/exam-exercise-import.component';
-import { MarkdownEditorMonacoComponent } from '../../../shared/markdown-editor/monaco/markdown-editor-monaco.component';
-import { ArtemisTranslatePipe as ArtemisTranslatePipe_1 } from '../../../shared/pipes/artemis-translate.pipe';
+import { FormDateTimePickerComponent } from 'app/shared/date-time-picker/date-time-picker.component';
+import { CustomMinDirective } from 'app/shared/validators/custom-min-validator.directive';
+import { CustomMaxDirective } from 'app/shared/validators/custom-max-validator.directive';
+import { MarkdownEditorMonacoComponent } from 'app/shared/markdown-editor/monaco/markdown-editor-monaco.component';
 
 @Component({
     selector: 'jhi-exam-update',
@@ -49,9 +47,9 @@ import { ArtemisTranslatePipe as ArtemisTranslatePipe_1 } from '../../../shared/
         FormDateTimePickerComponent,
         CustomMinDirective,
         CustomMaxDirective,
-        ExamExerciseImportComponent_1,
+        ExamExerciseImportComponent,
         MarkdownEditorMonacoComponent,
-        ArtemisTranslatePipe_1,
+        ArtemisTranslatePipe,
     ],
 })
 export class ExamUpdateComponent implements OnInit, OnDestroy {

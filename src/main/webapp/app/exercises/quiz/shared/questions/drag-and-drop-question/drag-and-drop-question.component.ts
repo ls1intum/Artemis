@@ -13,10 +13,9 @@ import { CdkDragDrop, CdkDropList, CdkDropListGroup } from '@angular/cdk/drag-dr
 import { DragItem } from 'app/entities/quiz/drag-item.model';
 import { NgClass, NgStyle } from '@angular/common';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { TranslateDirective } from '../../../../../shared/language/translate.directive';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { NgbPopover, NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { QuizScoringInfoStudentModalComponent } from '../quiz-scoring-infostudent-modal/quiz-scoring-info-student-modal.component';
-import { SecuredImageComponent as SecuredImageComponent_1 } from '../../../../../shared/image/secured-image.component';
 import { DragItemComponent } from './drag-item.component';
 
 // options are optional ;)
@@ -50,7 +49,7 @@ enum MappingResult {
         NgbPopover,
         QuizScoringInfoStudentModalComponent,
         CdkDropListGroup,
-        SecuredImageComponent_1,
+        SecuredImageComponent,
         CdkDropList,
         NgStyle,
         DragItemComponent,
@@ -233,8 +232,8 @@ export class DragAndDropQuestionComponent implements OnChanges, OnInit {
     /**
      * Get the drag item that was mapped to the given drop location
      *
-     * @param dropLocation {object} the drop location that the drag item should be mapped to
-     * @return {object | undefined} the mapped drag item, or undefined, if no drag item has been mapped to this location
+     * @param dropLocation the drop location that the drag item should be mapped to
+     * @return the mapped drag item, or undefined, if no drag item has been mapped to this location
      */
     dragItemForDropLocation(dropLocation: DropLocation) {
         if (this.mappings) {
@@ -256,7 +255,7 @@ export class DragAndDropQuestionComponent implements OnChanges, OnInit {
     /**
      * Get all drag items that have not been assigned to a drop location yet
      *
-     * @return {Array} an array of all unassigned drag items
+     * @returnan array of all unassigned drag items
      */
     getUnassignedDragItems() {
         return this.question.dragItems?.filter((dragItem) => {
@@ -330,8 +329,8 @@ export class DragAndDropQuestionComponent implements OnChanges, OnInit {
     /**
      * Get the drag item that was mapped to the given drop location in the sample solution
      *
-     * @param dropLocation {object} the drop location that the drag item should be mapped to
-     * @return {DragItem | undefined} the mapped drag item, or undefined, if no drag item has been mapped to this location
+     * @param dropLocation the drop location that the drag item should be mapped to
+     * @return the mapped drag item, or undefined, if no drag item has been mapped to this location
      */
     correctDragItemForDropLocation(dropLocation: DropLocation) {
         const dragAndDropQuestionUtil = this.dragAndDropQuestionUtil;

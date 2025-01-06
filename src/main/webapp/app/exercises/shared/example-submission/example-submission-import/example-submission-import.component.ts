@@ -5,15 +5,15 @@ import { Submission } from 'app/entities/submission.model';
 import { ExampleSubmissionService } from 'app/exercises/shared/example-submission/example-submission.service';
 import { ImportComponent } from 'app/shared/import/import.component';
 import { FormsModule } from '@angular/forms';
-import { TranslateDirective } from '../../../../shared/language/translate.directive';
-import { SortDirective } from '../../../../shared/sort/sort.directive';
-import { SortByDirective } from '../../../../shared/sort/sort-by.directive';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { SortDirective } from 'app/shared/sort/sort.directive';
+import { SortByDirective } from 'app/shared/sort/sort-by.directive';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { NgbPagination, NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { ResultComponent } from '../../result/result.component';
-import { ButtonComponent } from '../../../../shared/components/button.component';
+import { ButtonComponent } from 'app/shared/components/button.component';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
-import { ArtemisTranslatePipe } from '../../../../shared/pipes/artemis-translate.pipe';
+import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 
 @Component({
     selector: 'jhi-example-submission-import',

@@ -2,19 +2,19 @@ import { Component, Input, OnChanges } from '@angular/core';
 import { StudentExam } from 'app/entities/student-exam.model';
 import { Exam } from 'app/entities/exam/exam.model';
 import { endTime, examWorkingTime, getAdditionalWorkingTime, isExamOverMultipleDays } from 'app/exam/participate/exam.utils';
+import { StudentExamWorkingTimeComponent } from 'app/exam/shared/student-exam-working-time/student-exam-working-time.component';
+import { TestExamWorkingTimeComponent } from 'app/exam/shared/testExam-workingTime/test-exam-working-time.component';
 import dayjs from 'dayjs/esm';
-import { TranslateDirective } from '../../../shared/language/translate.directive';
-import { StudentExamWorkingTimeComponent } from '../../shared/student-exam-working-time/student-exam-working-time.component';
-import { TestexamWorkingTimeComponent } from '../../shared/testExam-workingTime/testexam-working-time.component';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
-import { ArtemisTranslatePipe } from '../../../shared/pipes/artemis-translate.pipe';
+import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { ArtemisDurationFromSecondsPipe } from 'app/shared/pipes/artemis-duration-from-seconds.pipe';
 
 @Component({
     selector: 'jhi-exam-general-information',
     styleUrls: ['./exam-general-information.component.scss'],
     templateUrl: './exam-general-information.component.html',
-    imports: [TranslateDirective, StudentExamWorkingTimeComponent, TestexamWorkingTimeComponent, ArtemisDatePipe, ArtemisTranslatePipe, ArtemisDurationFromSecondsPipe],
+    imports: [TranslateDirective, StudentExamWorkingTimeComponent, TestExamWorkingTimeComponent, ArtemisDatePipe, ArtemisTranslatePipe, ArtemisDurationFromSecondsPipe],
 })
 export class ExamGeneralInformationComponent implements OnChanges {
     @Input() exam: Exam;

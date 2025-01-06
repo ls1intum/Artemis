@@ -6,7 +6,7 @@ import { createCommitUrl } from 'app/exercises/programming/shared/utils/programm
 import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
 import { PROFILE_LOCALVC } from 'app/app.constants';
 import { Subscription } from 'rxjs';
-import { TranslateDirective } from '../../../../shared/language/translate.directive';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { CommitsInfoGroupComponent } from './commits-info-group/commits-info-group.component';
 import { NgStyle } from '@angular/common';
 

@@ -1,6 +1,6 @@
 import { Component, Input } from '@angular/core';
 import { Feedback } from 'app/entities/feedback.model';
-import { TranslateDirective } from '../../../shared/language/translate.directive';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { NgStyle } from '@angular/common';
 
 @Component({

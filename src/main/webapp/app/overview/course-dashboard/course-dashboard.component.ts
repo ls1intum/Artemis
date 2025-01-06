@@ -19,12 +19,12 @@ import { PROFILE_IRIS } from 'app/app.constants';
 import { CompetencyAccordionToggleEvent } from 'app/course/competencies/competency-accordion/competency-accordion.component';
 import { AccountService } from 'app/core/auth/account.service';
 import { CourseChatbotComponent } from '../../iris/course-chatbot/course-chatbot.component';
-import { TranslateDirective } from '../../shared/language/translate.directive';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { NgbProgressbar } from '@ng-bootstrap/ng-bootstrap';
 import { CourseExercisePerformanceComponent } from './course-exercise-performance/course-exercise-performance.component';
 import { CourseExerciseLatenessComponent } from './course-exercise-lateness/course-exercise-lateness.component';
 import { CompetencyAccordionComponent } from '../../course/competencies/competency-accordion/competency-accordion.component';
-import { FeatureToggleHideDirective } from '../../shared/feature-toggle/feature-toggle-hide.directive';
+import { FeatureToggleHideDirective } from 'app/shared/feature-toggle/feature-toggle-hide.directive';
 
 @Component({
     selector: 'jhi-course-dashboard',

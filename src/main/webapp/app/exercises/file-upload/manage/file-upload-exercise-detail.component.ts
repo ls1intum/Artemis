@@ -2,6 +2,8 @@ import { Component, OnDestroy, OnInit, inject } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { SafeHtml } from '@angular/platform-browser';
+import { NonProgrammingExerciseDetailCommonActionsComponent } from 'app/exercises/shared/exercise-detail-common-actions/non-programming-exercise-detail-common-actions.component';
+import { ExerciseDetailStatisticsComponent } from 'app/exercises/shared/statistics/exercise-detail-statistics.component';
 import { Subscription } from 'rxjs';
 import { FileUploadExercise } from 'app/entities/file-upload-exercise.model';
 import { FileUploadExerciseService } from './file-upload-exercise.service';
@@ -25,11 +27,9 @@ import {
     getExerciseProblemDetailSection,
 } from 'app/exercises/shared/utils';
 import { ArtemisMarkdownService } from 'app/shared/markdown.service';
-import { TranslateDirective } from '../../../shared/language/translate.directive';
-import { DocumentationButtonComponent } from '../../../shared/components/documentation-button/documentation-button.component';
-import { NonProgrammingExerciseDetailCommonActionsComponent } from '../../shared/exercise-detail-common-actions/non-programming-exercise-detail-common-actions.component';
-import { ExerciseDetailStatisticsComponent } from '../../shared/statistics/exercise-detail-statistics.component';
-import { DetailOverviewListComponent } from '../../../detail-overview-list/detail-overview-list.component';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { DocumentationButtonComponent } from 'app/shared/components/documentation-button/documentation-button.component';
+import { DetailOverviewListComponent } from 'app/detail-overview-list/detail-overview-list.component';
 
 @Component({
     selector: 'jhi-file-upload-exercise-detail',

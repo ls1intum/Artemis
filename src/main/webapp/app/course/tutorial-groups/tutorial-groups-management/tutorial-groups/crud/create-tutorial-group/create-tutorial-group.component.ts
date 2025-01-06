@@ -11,8 +11,8 @@ import { TutorialGroupSchedule } from 'app/entities/tutorial-group/tutorial-grou
 import dayjs from 'dayjs/esm';
 import { Course } from 'app/entities/course.model';
 import { Subject } from 'rxjs';
-import { LoadingIndicatorContainerComponent } from '../../../../../../shared/loading-indicator-container/loading-indicator-container.component';
-import { TranslateDirective } from '../../../../../../shared/language/translate.directive';
+import { LoadingIndicatorContainerComponent } from 'app/shared/loading-indicator-container/loading-indicator-container.component';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { TutorialGroupFormComponent } from '../tutorial-group-form/tutorial-group-form.component';
 
 @Component({

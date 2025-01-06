@@ -5,8 +5,8 @@ import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
 import { Course } from 'app/entities/course.model';
 import { matchesRegexFully } from 'app/utils/regex.util';
 import { AlertService } from 'app/core/util/alert.service';
-import { ConfirmAutofocusButtonComponent } from '../../../shared/components/confirm-autofocus-button.component';
-import { TranslateDirective } from '../../../shared/language/translate.directive';
+import { ConfirmAutofocusButtonComponent } from 'app/shared/components/confirm-autofocus-button.component';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
 
 @Component({
     selector: 'jhi-course-registration-button',

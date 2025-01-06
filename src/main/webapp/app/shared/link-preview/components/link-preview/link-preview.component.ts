@@ -1,12 +1,12 @@
 import { Component, Input, OnInit, inject } from '@angular/core';
+import { ConfirmIconComponent } from 'app/shared/confirm-icon/confirm-icon.component';
 import { LinkPreview } from 'app/shared/link-preview/services/link-preview.service';
 import { faTimes } from '@fortawesome/free-solid-svg-icons';
 import { MetisService } from 'app/shared/metis/metis.service';
 import { Posting } from 'app/entities/metis/posting.model';
 import { urlRegex } from 'app/shared/link-preview/services/linkify.service';
-import { ConfirmIconComponent } from '../../../confirm-icon/confirm-icon.component';
 import { NgClass } from '@angular/common';
-import { ArtemisTranslatePipe } from '../../../pipes/artemis-translate.pipe';
+import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 
 @Component({
     selector: 'jhi-link-preview',

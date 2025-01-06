@@ -9,11 +9,11 @@ import { TranslateService } from '@ngx-translate/core';
 import { median } from 'simple-statistics';
 import { GraphColors } from 'app/entities/statistics.model';
 import { round } from 'app/shared/util/utils';
-import { TranslateDirective } from '../../../../shared/language/translate.directive';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { HelpIconComponent } from '../../../../shared/components/help-icon.component';
+import { HelpIconComponent } from 'app/shared/components/help-icon.component';
 import { BarChartModule } from '@swimlane/ngx-charts';
-import { ArtemisTranslatePipe } from '../../../../shared/pipes/artemis-translate.pipe';
+import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 
 interface TutorEffortRange {
     minimumTimeSpent: number;

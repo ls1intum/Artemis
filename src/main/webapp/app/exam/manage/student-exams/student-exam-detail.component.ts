@@ -5,6 +5,8 @@ import { StudentExamService } from 'app/exam/manage/student-exams/student-exam.s
 import { Course } from 'app/entities/course.model';
 import { User } from 'app/core/user/user.model';
 import { AlertService } from 'app/core/util/alert.service';
+import { TestExamWorkingTimeComponent } from 'app/exam/shared/testExam-workingTime/test-exam-working-time.component';
+import { WorkingTimeControlComponent } from 'app/exam/shared/working-time-control/working-time-control.component';
 import dayjs from 'dayjs/esm';
 import { NgbModal, NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { getLatestSubmissionResult, setLatestSubmissionResult } from 'app/entities/submission.model';
@@ -13,14 +15,12 @@ import { faSave } from '@fortawesome/free-solid-svg-icons';
 import { Exercise } from 'app/entities/exercise.model';
 import { StudentExamWithGradeDTO } from 'app/exam/exam-scores/exam-score-dtos.model';
 import { combineLatest, takeWhile } from 'rxjs';
-import { TranslateDirective } from '../../../shared/language/translate.directive';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { FormsModule } from '@angular/forms';
-import { WorkingTimeControlComponent } from '../../shared/working-time-control/working-time-control.component';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { TestexamWorkingTimeComponent } from '../../shared/testExam-workingTime/testexam-working-time.component';
 import { StudentExamDetailTableRowComponent } from './student-exam-detail-table-row/student-exam-detail-table-row.component';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
-import { ArtemisTranslatePipe } from '../../../shared/pipes/artemis-translate.pipe';
+import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 
 @Component({
     selector: 'jhi-student-exam-detail',
@@ -31,7 +31,7 @@ import { ArtemisTranslatePipe } from '../../../shared/pipes/artemis-translate.pi
         FormsModule,
         WorkingTimeControlComponent,
         FaIconComponent,
-        TestexamWorkingTimeComponent,
+        TestExamWorkingTimeComponent,
         NgbTooltip,
         RouterLink,
         StudentExamDetailTableRowComponent,

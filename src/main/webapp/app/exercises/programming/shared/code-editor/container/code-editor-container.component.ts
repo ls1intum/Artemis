@@ -24,12 +24,6 @@ import { Feedback } from 'app/entities/feedback.model';
 import { Course } from 'app/entities/course.model';
 import { ConnectionError } from 'app/exercises/programming/shared/code-editor/service/code-editor-repository.service';
 import { Annotation, CodeEditorMonacoComponent } from 'app/exercises/programming/shared/code-editor/monaco/code-editor-monaco.component';
-import { CodeEditorGridComponent as CodeEditorGridComponent_1 } from '../layout/code-editor-grid.component';
-import { CodeEditorActionsComponent as CodeEditorActionsComponent_1 } from '../actions/code-editor-actions.component';
-import { CodeEditorFileBrowserComponent as CodeEditorFileBrowserComponent_1 } from '../file-browser/code-editor-file-browser.component';
-import { CodeEditorMonacoComponent as CodeEditorMonacoComponent_1 } from '../monaco/code-editor-monaco.component';
-import { CodeEditorInstructionsComponent as CodeEditorInstructionsComponent_1 } from '../instructions/code-editor-instructions.component';
-import { CodeEditorBuildOutputComponent as CodeEditorBuildOutputComponent_1 } from '../build-output/code-editor-build-output.component';
 import { KeysPipe } from 'app/shared/pipes/keys.pipe';
 
 export enum CollapsableCodeEditorElement {
@@ -43,12 +37,12 @@ export enum CollapsableCodeEditorElement {
     templateUrl: './code-editor-container.component.html',
     styleUrls: ['./code-editor-container.component.scss'],
     imports: [
-        CodeEditorGridComponent_1,
-        CodeEditorActionsComponent_1,
-        CodeEditorFileBrowserComponent_1,
-        CodeEditorMonacoComponent_1,
-        CodeEditorInstructionsComponent_1,
-        CodeEditorBuildOutputComponent_1,
+        CodeEditorGridComponent,
+        CodeEditorActionsComponent,
+        CodeEditorFileBrowserComponent,
+        CodeEditorMonacoComponent,
+        CodeEditorInstructionsComponent,
+        CodeEditorBuildOutputComponent,
         KeysPipe,
     ],
 })

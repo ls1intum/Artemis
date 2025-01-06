@@ -1,14 +1,14 @@
 import { Component, Input, OnDestroy, OnInit, inject } from '@angular/core';
 import { faCheck } from '@fortawesome/free-solid-svg-icons';
+import { ExamLiveEventComponent } from 'app/exam/shared/events/exam-live-event.component';
 import { Subscription } from 'rxjs';
 import { ExamLiveEvent, ExamLiveEventType, ExamParticipationLiveEventsService, ProblemStatementUpdateEvent } from 'app/exam/participate/exam-participation-live-events.service';
 import { USER_DISPLAY_RELEVANT_EVENTS, USER_DISPLAY_RELEVANT_EVENTS_REOPEN } from 'app/exam/participate/events/exam-live-events-button.component';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import { ExamExerciseUpdateService } from 'app/exam/manage/exam-exercise-update.service';
 import dayjs from 'dayjs/esm';
-import { ExamLiveEventComponent } from '../../shared/events/exam-live-event.component';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { TranslateDirective } from '../../../shared/language/translate.directive';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
 
 @Component({
     selector: 'jhi-exam-live-events-overlay',

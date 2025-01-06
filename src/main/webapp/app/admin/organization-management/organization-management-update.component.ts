@@ -4,8 +4,8 @@ import { Organization } from 'app/entities/organization.model';
 import { OrganizationManagementService } from 'app/admin/organization-management/organization-management.service';
 import { faBan, faSave } from '@fortawesome/free-solid-svg-icons';
 import { FormsModule } from '@angular/forms';
-import { TranslateDirective } from '../../shared/language/translate.directive';
-import { CustomPatternValidatorDirective } from '../../shared/validators/custom-pattern-validator.directive';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { CustomPatternValidatorDirective } from 'app/shared/validators/custom-pattern-validator.directive';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 
 @Component({

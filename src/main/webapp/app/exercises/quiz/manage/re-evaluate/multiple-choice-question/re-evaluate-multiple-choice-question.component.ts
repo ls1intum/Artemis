@@ -11,9 +11,9 @@ import { WrongMultipleChoiceAnswerAction } from 'app/shared/monaco-editor/model/
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { FormsModule } from '@angular/forms';
 import { NgbCollapse, NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
-import { TranslateDirective } from '../../../../../shared/language/translate.directive';
-import { MarkdownEditorMonacoComponent } from '../../../../../shared/markdown-editor/monaco/markdown-editor-monaco.component';
-import { ArtemisTranslatePipe } from '../../../../../shared/pipes/artemis-translate.pipe';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { MarkdownEditorMonacoComponent } from 'app/shared/markdown-editor/monaco/markdown-editor-monaco.component';
+import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 
 @Component({
     selector: 'jhi-re-evaluate-multiple-choice-question',

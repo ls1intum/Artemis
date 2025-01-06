@@ -6,7 +6,7 @@ import { downloadZipFileFromResponse } from 'app/shared/util/download.util';
 import { AlertService } from 'app/core/util/alert.service';
 import { faDownload } from '@fortawesome/free-solid-svg-icons';
 import { take } from 'rxjs';
-import { ButtonComponent } from '../../../../shared/components/button.component';
+import { ButtonComponent } from 'app/shared/components/button.component';
 
 @Component({
     selector: 'jhi-programming-exercise-student-repo-download',

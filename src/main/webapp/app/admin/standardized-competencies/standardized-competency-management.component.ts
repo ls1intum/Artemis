@@ -22,16 +22,16 @@ import { StandardizedCompetencyFilterPageComponent } from 'app/shared/standardiz
 import { ComponentCanDeactivate } from 'app/shared/guard/can-deactivate.model';
 import { StandardizedCompetencyService } from 'app/shared/standardized-competencies/standardized-competency.service';
 import { DocumentationType } from 'app/shared/components/documentation-button/documentation-button.component';
-import { TranslateDirective } from '../../shared/language/translate.directive';
-import { DocumentationButtonComponent } from '../../shared/components/documentation-button/documentation-button.component';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { DocumentationButtonComponent } from 'app/shared/components/documentation-button/documentation-button.component';
 import { RouterLink } from '@angular/router';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { StandardizedCompetencyFilterComponent } from '../../shared/standardized-competencies/standardized-competency-filter.component';
-import { ButtonComponent } from '../../shared/components/button.component';
-import { KnowledgeAreaTreeComponent } from '../../shared/standardized-competencies/knowledge-area-tree.component';
+import { StandardizedCompetencyFilterComponent } from 'app/shared/standardized-competencies/standardized-competency-filter.component';
+import { ButtonComponent } from 'app/shared/components/button.component';
+import { KnowledgeAreaTreeComponent } from 'app/shared/standardized-competencies/knowledge-area-tree.component';
 import { StandardizedCompetencyEditComponent } from './standardized-competency-edit.component';
 import { KnowledgeAreaEditComponent } from './knowledge-area-edit.component';
-import { ArtemisTranslatePipe } from '../../shared/pipes/artemis-translate.pipe';
+import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 
 @Component({
     selector: 'jhi-standardized-competency-management',

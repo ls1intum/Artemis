@@ -16,8 +16,8 @@ import { AccordionGroups, CollapseState, SidebarCardElement, SidebarData, Sideba
 import { CourseOverviewService } from '../course-overview.service';
 import { cloneDeep } from 'lodash-es';
 import { NgClass } from '@angular/common';
-import { SidebarComponent } from '../../shared/sidebar/sidebar.component';
-import { TranslateDirective } from '../../shared/language/translate.directive';
+import { SidebarComponent } from 'app/shared/sidebar/sidebar.component';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
 
 const TUTORIAL_UNIT_GROUPS: AccordionGroups = {
     registered: { entityData: [] },

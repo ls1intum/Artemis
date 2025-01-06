@@ -4,7 +4,6 @@ import { TreeviewItemTemplateContext } from '../../models/treeview-item-template
 import { NgTemplateOutlet } from '@angular/common';
 
 @Component({
-    // eslint-disable-next-line @angular-eslint/component-selector
     selector: 'treeview-item',
     templateUrl: './treeview-item.component.html',
     styleUrls: ['./treeview-item.component.scss'],

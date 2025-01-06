@@ -11,8 +11,8 @@ import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { NgClass } from '@angular/common';
 import { ProgrammingExerciseTriggerAllButtonComponent } from './programming-exercise-trigger-all-button.component';
-import { ButtonComponent } from '../../../../shared/components/button.component';
-import { ArtemisTranslatePipe } from '../../../../shared/pipes/artemis-translate.pipe';
+import { ButtonComponent } from 'app/shared/components/button.component';
+import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { DurationPipe } from 'app/shared/pipes/duration.pipe';
 
 /**

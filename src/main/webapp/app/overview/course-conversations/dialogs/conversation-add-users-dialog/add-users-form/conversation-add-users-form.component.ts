@@ -4,10 +4,10 @@ import { FormBuilder, FormGroup, FormsModule, ReactiveFormsModule, Validators } 
 import { ConversationDTO } from 'app/entities/metis/conversation/conversation.model';
 import { getAsChannelDTO } from 'app/entities/metis/conversation/channel.model';
 import { faSpinner } from '@fortawesome/free-solid-svg-icons';
-import { TranslateDirective } from '../../../../../shared/language/translate.directive';
-import { CourseUsersSelectorComponent } from '../../../../../shared/course-users-selector/course-users-selector.component';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { CourseUsersSelectorComponent } from 'app/shared/course-users-selector/course-users-selector.component';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { ArtemisTranslatePipe } from '../../../../../shared/pipes/artemis-translate.pipe';
+import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 
 export interface AddUsersFormData {
     selectedUsers?: UserPublicInfoDTO[];

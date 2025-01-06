@@ -15,11 +15,11 @@ import { AUTOSAVE_CHECK_INTERVAL, AUTOSAVE_EXERCISE_INTERVAL } from 'app/shared/
 import { faCircleNotch, faSync, faTimes } from '@fortawesome/free-solid-svg-icons';
 import { faPlayCircle } from '@fortawesome/free-regular-svg-icons';
 import { Participation } from 'app/entities/participation/participation.model';
-import { RequestFeedbackButtonComponent } from '../../../../../overview/exercise-details/request-feedback-button/request-feedback-button.component';
-import { FeatureToggleDirective } from '../../../../../shared/feature-toggle/feature-toggle.directive';
+import { RequestFeedbackButtonComponent } from 'app/overview/exercise-details/request-feedback-button/request-feedback-button.component';
+import { FeatureToggleDirective } from 'app/shared/feature-toggle/feature-toggle.directive';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { TranslateDirective } from '../../../../../shared/language/translate.directive';
-import { ArtemisTranslatePipe } from '../../../../../shared/pipes/artemis-translate.pipe';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 
 @Component({
     selector: 'jhi-code-editor-actions',
@@ -175,7 +175,7 @@ export class CodeEditorActionsComponent implements OnInit, OnDestroy, OnChanges 
     }
 
     /**
-     * @function saveFiles
+     * @param andCommit whether the saved changed in the files should be committed or not
      * @desc Saves all files that have unsaved changes in the editor.
      */
     saveChangedFiles(andCommit = false): Observable<any> {

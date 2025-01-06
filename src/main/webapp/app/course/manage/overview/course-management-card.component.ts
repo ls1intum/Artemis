@@ -27,16 +27,16 @@ import {
 import { FeatureToggle } from 'app/shared/feature-toggle/feature-toggle.service';
 import { NgStyle } from '@angular/common';
 import { RouterLink } from '@angular/router';
-import { SecuredImageComponent } from '../../../shared/image/secured-image.component';
-import { TranslateDirective } from '../../../shared/language/translate.directive';
+import { SecuredImageComponent } from 'app/shared/image/secured-image.component';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { CourseManagementExerciseRowComponent } from './course-management-exercise-row.component';
 import { CourseManagementOverviewStatisticsComponent } from './course-management-overview-statistics.component';
 import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
-import { FeatureToggleLinkDirective } from '../../../shared/feature-toggle/feature-toggle-link.directive';
-import { FeatureToggleHideDirective } from '../../../shared/feature-toggle/feature-toggle-hide.directive';
+import { FeatureToggleLinkDirective } from 'app/shared/feature-toggle/feature-toggle-link.directive';
+import { FeatureToggleHideDirective } from 'app/shared/feature-toggle/feature-toggle-hide.directive';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
-import { ArtemisTranslatePipe } from '../../../shared/pipes/artemis-translate.pipe';
+import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 
 @Component({
     selector: 'jhi-course-management-card',

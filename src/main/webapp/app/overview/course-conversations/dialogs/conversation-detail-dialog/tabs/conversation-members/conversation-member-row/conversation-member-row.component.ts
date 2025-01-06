@@ -20,13 +20,12 @@ import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { getAsGroupChatDTO, isGroupChatDTO } from 'app/entities/metis/conversation/group-chat.model';
 import { GroupChatService } from 'app/shared/metis/conversations/group-chat.service';
 import { catchError } from 'rxjs/operators';
-import { ProfilePictureComponent } from '../../../../../../../shared/profile-picture/profile-picture.component';
+import { ProfilePictureComponent } from 'app/shared/profile-picture/profile-picture.component';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { TranslateDirective } from '../../../../../../../shared/language/translate.directive';
-import { ArtemisTranslatePipe } from '../../../../../../../shared/pipes/artemis-translate.pipe';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 
 @Component({
-    // eslint-disable-next-line @angular-eslint/component-selector
     selector: '[jhi-conversation-member-row]',
     templateUrl: './conversation-member-row.component.html',
     styleUrls: ['./conversation-member-row.component.scss'],

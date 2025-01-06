@@ -4,7 +4,7 @@ import { Exercise } from 'app/entities/exercise.model';
 import { IrisSettings } from 'app/entities/iris/settings/iris-settings.model';
 import { Course } from 'app/entities/course.model';
 import { IrisSettingsService } from 'app/iris/settings/shared/iris-settings.service';
-import { TranslateDirective } from '../../../shared/language/translate.directive';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { NgClass } from '@angular/common';
 
 @Component({

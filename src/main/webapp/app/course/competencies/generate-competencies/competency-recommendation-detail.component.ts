@@ -5,12 +5,12 @@ import { ButtonSize, ButtonType } from 'app/shared/components/button.component';
 import { FormGroup, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
 import { CompetencyFormControlsWithViewed } from 'app/course/competencies/generate-competencies/generate-competencies.component';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { TranslateDirective } from '../../../shared/language/translate.directive';
-import { ButtonComponent } from '../../../shared/components/button.component';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { ButtonComponent } from 'app/shared/components/button.component';
 import { NgbCollapse } from '@ng-bootstrap/ng-bootstrap';
-import { MarkdownEditorMonacoComponent } from '../../../shared/markdown-editor/monaco/markdown-editor-monaco.component';
+import { MarkdownEditorMonacoComponent } from 'app/shared/markdown-editor/monaco/markdown-editor-monaco.component';
 import { TaxonomySelectComponent } from '../taxonomy-select/taxonomy-select.component';
-import { HtmlForMarkdownPipe } from '../../../shared/pipes/html-for-markdown.pipe';
+import { HtmlForMarkdownPipe } from 'app/shared/pipes/html-for-markdown.pipe';
 
 @Component({
     selector: 'jhi-competency-recommendation',

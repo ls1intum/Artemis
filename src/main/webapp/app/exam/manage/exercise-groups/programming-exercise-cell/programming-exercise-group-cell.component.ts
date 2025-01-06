@@ -12,8 +12,8 @@ import { faDownload } from '@fortawesome/free-solid-svg-icons';
 import { PROFILE_LOCALVC, PROFILE_THEIA } from 'app/app.constants';
 import { RouterLink } from '@angular/router';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { ProgrammingExerciseInstructorStatusComponent } from '../../../../exercises/programming/manage/status/programming-exercise-instructor-status.component';
-import { TranslateDirective } from '../../../../shared/language/translate.directive';
+import { ProgrammingExerciseInstructorStatusComponent } from 'app/exercises/programming/manage/status/programming-exercise-instructor-status.component';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
 
 @Component({
     selector: 'jhi-programming-exercise-group-cell',

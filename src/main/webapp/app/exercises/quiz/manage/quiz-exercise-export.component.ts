@@ -10,7 +10,7 @@ import { CourseManagementService } from 'app/course/manage/course-management.ser
 import { QuizQuestion } from 'app/entities/quiz/quiz-question.model';
 import { Course } from 'app/entities/course.model';
 import { onError } from 'app/shared/util/global.utils';
-import { TranslateDirective } from '../../../shared/language/translate.directive';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { FormsModule } from '@angular/forms';
 
 @Component({

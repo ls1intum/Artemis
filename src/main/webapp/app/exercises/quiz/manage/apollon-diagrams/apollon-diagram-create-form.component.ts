@@ -5,7 +5,7 @@ import { ApollonDiagramService } from 'app/exercises/quiz/manage/apollon-diagram
 import { ApollonDiagram } from 'app/entities/apollon-diagram.model';
 import { faSave } from '@fortawesome/free-solid-svg-icons';
 import { FormsModule } from '@angular/forms';
-import { TranslateDirective } from '../../../../shared/language/translate.directive';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 
 @Component({

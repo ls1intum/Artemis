@@ -5,6 +5,7 @@ import { ExamManagementService } from 'app/exam/manage/exam-management.service';
 import { ExamLiveEventType, ExamWideAnnouncementEvent } from 'app/exam/participate/exam-participation-live-events.service';
 import { faCheckCircle, faSpinner } from '@fortawesome/free-solid-svg-icons';
 import { AccountService } from 'app/core/auth/account.service';
+import { ExamLiveEventComponent } from 'app/exam/shared/events/exam-live-event.component';
 import dayjs from 'dayjs/esm';
 import { BoldAction } from 'app/shared/monaco-editor/model/actions/bold.action';
 import { ItalicAction } from 'app/shared/monaco-editor/model/actions/italic.action';
@@ -13,9 +14,8 @@ import { CodeAction } from 'app/shared/monaco-editor/model/actions/code.action';
 import { CodeBlockAction } from 'app/shared/monaco-editor/model/actions/code-block.action';
 import { OrderedListAction } from 'app/shared/monaco-editor/model/actions/ordered-list.action';
 import { FormsModule } from '@angular/forms';
-import { TranslateDirective } from '../../../../../shared/language/translate.directive';
-import { MarkdownEditorMonacoComponent } from '../../../../../shared/markdown-editor/monaco/markdown-editor-monaco.component';
-import { ExamLiveEventComponent } from '../../../../shared/events/exam-live-event.component';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { MarkdownEditorMonacoComponent } from 'app/shared/markdown-editor/monaco/markdown-editor-monaco.component';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 
 @Component({

@@ -4,8 +4,8 @@ import { ResultSummaryExerciseInfo } from 'app/exam/participate/summary/exam-res
 import { SubmissionType } from 'app/entities/submission.model';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { NgClass } from '@angular/common';
-import { TranslateDirective } from '../../../../../shared/language/translate.directive';
-import { ArtemisTranslatePipe } from '../../../../../shared/pipes/artemis-translate.pipe';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 
 @Component({
     selector: 'jhi-result-summary-exercise-card-header',

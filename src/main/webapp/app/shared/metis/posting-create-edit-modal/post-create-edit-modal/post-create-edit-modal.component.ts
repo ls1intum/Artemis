@@ -1,4 +1,8 @@
 import { Component, Input, OnChanges, OnInit } from '@angular/core';
+import { HelpIconComponent } from 'app/shared/components/help-icon.component';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { PostComponent } from 'app/shared/metis/post/post.component';
+import { PostingButtonComponent } from 'app/shared/metis/posting-button/posting-button.component';
 import { PostingCreateEditModalDirective } from 'app/shared/metis/posting-create-edit-modal/posting-create-edit-modal.directive';
 import { Post } from 'app/entities/metis/post.model';
 import { FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
@@ -9,8 +13,8 @@ import { faAngleDown, faAngleUp } from '@fortawesome/free-solid-svg-icons';
 import { PageType, PostContentValidationPattern, PostTitleValidationPattern, PostingEditType } from 'app/shared/metis/metis.util';
 import { Conversation } from 'app/entities/metis/conversation/conversation.model';
 import { getAsChannelDTO } from 'app/entities/metis/conversation/channel.model';
-import { TranslateDirective } from '../../../language/translate.directive';
-import { HelpIconComponent } from '../../../components/help-icon.component';
+import { PostingMarkdownEditorComponent } from 'app/shared/metis/posting-markdown-editor/posting-markdown-editor.component';
+import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { PostTagSelectorComponent } from './post-tag-selector/post-tag-selector.component';
 import {
     NgbAccordionBody,
@@ -22,10 +26,6 @@ import {
     NgbAccordionToggle,
     NgbCollapse,
 } from '@ng-bootstrap/ng-bootstrap';
-import { PostComponent } from '../../post/post.component';
-import { PostingMarkdownEditorComponent } from '../../posting-markdown-editor/posting-markdown-editor.component';
-import { PostingButtonComponent } from '../../posting-button/posting-button.component';
-import { ArtemisTranslatePipe } from '../../../pipes/artemis-translate.pipe';
 
 const TITLE_MAX_LENGTH = 200;
 

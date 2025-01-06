@@ -41,13 +41,12 @@ import { InsertShortAnswerOptionAction } from 'app/shared/monaco-editor/model/ac
 import { SHORT_ANSWER_QUIZ_QUESTION_EDITOR_OPTIONS } from 'app/shared/monaco-editor/monaco-editor-option.helper';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { FormsModule } from '@angular/forms';
-import { TranslateDirective } from '../../../../shared/language/translate.directive';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { QuizScoringInfoModalComponent } from '../quiz-scoring-info-modal/quiz-scoring-info-modal.component';
 import { MatchPercentageInfoModalComponent } from '../match-percentage-info-modal/match-percentage-info-modal.component';
-import { MarkdownEditorMonacoComponent as MarkdownEditorMonacoComponent_1 } from '../../../../shared/markdown-editor/monaco/markdown-editor-monaco.component';
 import { CdkDrag, CdkDragPlaceholder, CdkDragPreview, CdkDropList, CdkDropListGroup } from '@angular/cdk/drag-drop';
 import { NgClass } from '@angular/common';
-import { ArtemisTranslatePipe } from '../../../../shared/pipes/artemis-translate.pipe';
+import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 
 @Component({
     selector: 'jhi-short-answer-question-edit',
@@ -62,7 +61,7 @@ import { ArtemisTranslatePipe } from '../../../../shared/pipes/artemis-translate
         NgbCollapse,
         QuizScoringInfoModalComponent,
         MatchPercentageInfoModalComponent,
-        MarkdownEditorMonacoComponent_1,
+        MarkdownEditorMonacoComponent,
         CdkDropListGroup,
         CdkDropList,
         NgClass,
@@ -77,12 +76,8 @@ export class ShortAnswerQuestionEditComponent implements OnInit, OnChanges, Afte
     private modalService = inject(NgbModal);
     private changeDetector = inject(ChangeDetectorRef);
 
-    @ViewChild('questionEditor', { static: false })
-    private questionEditor: MarkdownEditorMonacoComponent;
-    @ViewChild('clickLayer', { static: false })
-    private clickLayer: ElementRef;
-    @ViewChild('question', { static: false })
-    questionElement: ElementRef;
+    @ViewChild('questionEditor', { static: false }) private questionEditor: MarkdownEditorMonacoComponent;
+    @ViewChild('question', { static: false }) questionElement: ElementRef;
 
     markdownActions: TextEditorAction[];
     insertShortAnswerOptionAction = new InsertShortAnswerOptionAction();
@@ -162,7 +157,7 @@ export class ShortAnswerQuestionEditComponent implements OnInit, OnChanges, Afte
 
         /** We create now the structure on how to display the text of the question
          * 1. The question text is split at every new line. The first element of the array would be then the first line of the question text.
-         * 2. Now each line of the question text will be divided into each word (we use whitespace and the borders of spots as separator, see {@link #regex}).
+         * 2. Now each line of the question text will be divided into each word (we use whitespace and the borders of spots as separator, see regex).
          */
         this.textParts = this.parseQuestionTextIntoTextBlocks(this.shortAnswerQuestion.text!);
 

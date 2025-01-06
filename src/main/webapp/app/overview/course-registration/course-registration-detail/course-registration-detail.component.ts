@@ -5,7 +5,7 @@ import { AccountService } from 'app/core/auth/account.service';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
 import { Course } from 'app/entities/course.model';
 import { Observable, catchError, map, of, throwError } from 'rxjs';
-import { TranslateDirective } from '../../../shared/language/translate.directive';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { CoursePrerequisitesButtonComponent } from '../course-prerequisites-button/course-prerequisites-button.component';
 import { CourseRegistrationButtonComponent } from '../course-registration-button/course-registration-button.component';
 

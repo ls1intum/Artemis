@@ -14,9 +14,13 @@ import { getFirstResultWithComplaint, getLatestSubmissionResult } from 'app/enti
 import { ModelingAssessmentService } from 'app/exercises/modeling/assess/modeling-assessment.service';
 import { ModelingSubmissionService } from 'app/exercises/modeling/participate/modeling-submission.service';
 import { ModelingEditorComponent } from 'app/exercises/modeling/shared/modeling-editor.component';
+import { HeaderParticipationPageComponent } from 'app/exercises/shared/exercise-headers/header-participation-page.component';
 import { getExerciseDueDate, hasExerciseDueDatePassed } from 'app/exercises/shared/exercise/exercise.utils';
+import { RatingComponent } from 'app/exercises/shared/rating/rating.component';
 import { addParticipationToResult, getUnreferencedFeedback } from 'app/exercises/shared/result/result.utils';
 import { AccountService } from 'app/core/auth/account.service';
+import { TeamSubmissionSyncComponent } from 'app/exercises/shared/team-submission-sync/team-submission-sync.component';
+import { TeamParticipateInfoBoxComponent } from 'app/exercises/shared/team/team-participate/team-participate-info-box.component';
 import { GuidedTourService } from 'app/guided-tour/guided-tour.service';
 import { modelingTour } from 'app/guided-tour/tours/modeling-tour';
 import { ParticipationWebsocketService } from 'app/overview/participation-websocket.service';
@@ -39,25 +43,20 @@ import { AssessmentType } from 'app/entities/assessment-type.model';
 import { catchError, filter, skip, switchMap, tap } from 'rxjs/operators';
 import { onError } from 'app/shared/util/global.utils';
 import { of } from 'rxjs';
-import { HeaderParticipationPageComponent } from '../../shared/exercise-headers/header-participation-page.component';
-import { ButtonComponent } from '../../../shared/components/button.component';
-import { RequestFeedbackButtonComponent } from '../../../overview/exercise-details/request-feedback-button/request-feedback-button.component';
-import { ResultHistoryComponent } from '../../../overview/result-history/result-history.component';
-import { ResizeableContainerComponent } from '../../../shared/resizeable-container/resizeable-container.component';
-import { TeamParticipateInfoBoxComponent } from '../../shared/team/team-participate/team-participate-info-box.component';
-import { FullscreenComponent } from '../../../shared/fullscreen/fullscreen.component';
-import { ModelingEditorComponent as ModelingEditorComponent_1 } from '../shared/modeling-editor.component';
+import { ButtonComponent } from 'app/shared/components/button.component';
+import { RequestFeedbackButtonComponent } from 'app/overview/exercise-details/request-feedback-button/request-feedback-button.component';
+import { ResultHistoryComponent } from 'app/overview/result-history/result-history.component';
+import { ResizeableContainerComponent } from 'app/shared/resizeable-container/resizeable-container.component';
+import { FullscreenComponent } from 'app/shared/fullscreen/fullscreen.component';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { TeamSubmissionSyncComponent } from '../../shared/team-submission-sync/team-submission-sync.component';
 import { ModelingAssessmentComponent } from '../assess/modeling-assessment.component';
-import { TranslateDirective } from '../../../shared/language/translate.directive';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { DecimalPipe, NgClass } from '@angular/common';
 import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
-import { AdditionalFeedbackComponent } from '../../../shared/additional-feedback/additional-feedback.component';
-import { RatingComponent } from '../../shared/rating/rating.component';
-import { ComplaintsStudentViewComponent } from '../../../complaints/complaints-for-students/complaints-student-view.component';
-import { ArtemisTranslatePipe } from '../../../shared/pipes/artemis-translate.pipe';
-import { HtmlForMarkdownPipe } from '../../../shared/pipes/html-for-markdown.pipe';
+import { AdditionalFeedbackComponent } from 'app/shared/additional-feedback/additional-feedback.component';
+import { ComplaintsStudentViewComponent } from 'app/complaints/complaints-for-students/complaints-student-view.component';
+import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
+import { HtmlForMarkdownPipe } from 'app/shared/pipes/html-for-markdown.pipe';
 
 @Component({
     selector: 'jhi-modeling-submission',
@@ -72,7 +71,7 @@ import { HtmlForMarkdownPipe } from '../../../shared/pipes/html-for-markdown.pip
         ResizeableContainerComponent,
         TeamParticipateInfoBoxComponent,
         FullscreenComponent,
-        ModelingEditorComponent_1,
+        ModelingEditorComponent,
         FaIconComponent,
         TeamSubmissionSyncComponent,
         ModelingAssessmentComponent,
@@ -100,10 +99,9 @@ export class ModelingSubmissionComponent implements OnInit, OnDestroy, Component
 
     readonly addParticipationToResult = addParticipationToResult;
     readonly buildFeedbackTextForReview = buildFeedbackTextForReview;
-
-    @ViewChild(ModelingEditorComponent, { static: false })
-    modelingEditor: ModelingEditorComponent;
     ButtonType = ButtonType;
+
+    @ViewChild(ModelingEditorComponent, { static: false }) modelingEditor: ModelingEditorComponent;
 
     @Input() participationId?: number;
     @Input() displayHeader: boolean = true;

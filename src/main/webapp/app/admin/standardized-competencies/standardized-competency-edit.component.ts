@@ -5,13 +5,13 @@ import { ButtonSize, ButtonType } from 'app/shared/components/button.component';
 import { FormBuilder, FormControl, FormGroup, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
 import { CompetencyTaxonomy } from 'app/entities/competency.model';
 import { Observable } from 'rxjs';
-import { TranslateDirective } from '../../shared/language/translate.directive';
-import { ButtonComponent } from '../../shared/components/button.component';
-import { DeleteButtonDirective } from '../../shared/delete-dialog/delete-button.directive';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { ButtonComponent } from 'app/shared/components/button.component';
+import { DeleteButtonDirective } from 'app/shared/delete-dialog/delete-button.directive';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { MarkdownEditorMonacoComponent } from '../../shared/markdown-editor/monaco/markdown-editor-monaco.component';
-import { TaxonomySelectComponent } from '../../course/competencies/taxonomy-select/taxonomy-select.component';
-import { HtmlForMarkdownPipe } from '../../shared/pipes/html-for-markdown.pipe';
+import { MarkdownEditorMonacoComponent } from 'app/shared/markdown-editor/monaco/markdown-editor-monaco.component';
+import { TaxonomySelectComponent } from 'app/course/competencies/taxonomy-select/taxonomy-select.component';
+import { HtmlForMarkdownPipe } from 'app/shared/pipes/html-for-markdown.pipe';
 
 @Component({
     selector: 'jhi-standardized-competency-edit',

@@ -19,15 +19,13 @@ import {
     CodeEditorRepositoryService,
 } from 'app/exercises/programming/shared/code-editor/service/code-editor-repository.service';
 import { SubmissionVersion } from 'app/entities/submission-version.model';
-import { TranslateDirective } from '../../../../shared/language/translate.directive';
-import { IncludedInScoreBadgeComponent } from '../../../../exercises/shared/exercise-headers/included-in-score-badge.component';
-import { CodeEditorContainerComponent as CodeEditorContainerComponent_1 } from '../../../../exercises/programming/shared/code-editor/container/code-editor-container.component';
-import { ProgrammingSubmissionPolicyStatusComponent } from '../../../../exercises/programming/participate/programming-submission-policy-status';
-import { ExerciseDetailsStudentActionsComponent } from '../../../../overview/exercise-details/exercise-details-student-actions.component';
-import { CodeEditorRepositoryIsLockedComponent } from '../../../../exercises/programming/shared/code-editor/layout/code-editor-repository-is-locked.component';
-import { UpdatingResultComponent } from '../../../../exercises/shared/result/updating-result.component';
-import { ProgrammingExerciseStudentTriggerBuildButtonComponent } from '../../../../exercises/programming/shared/actions/programming-exercise-student-trigger-build-button.component';
-import { ProgrammingExerciseInstructionComponent as ProgrammingExerciseInstructionComponent_1 } from '../../../../exercises/programming/shared/instructions-render/programming-exercise-instruction.component';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { IncludedInScoreBadgeComponent } from 'app/exercises/shared/exercise-headers/included-in-score-badge.component';
+import { ProgrammingSubmissionPolicyStatusComponent } from 'app/exercises/programming/participate/programming-submission-policy-status';
+import { ExerciseDetailsStudentActionsComponent } from 'app/overview/exercise-details/exercise-details-student-actions.component';
+import { CodeEditorRepositoryIsLockedComponent } from 'app/exercises/programming/shared/code-editor/layout/code-editor-repository-is-locked.component';
+import { UpdatingResultComponent } from 'app/exercises/shared/result/updating-result.component';
+import { ProgrammingExerciseStudentTriggerBuildButtonComponent } from 'app/exercises/programming/shared/actions/programming-exercise-student-trigger-build-button.component';
 
 @Component({
     selector: 'jhi-programming-submission-exam',
@@ -44,13 +42,13 @@ import { ProgrammingExerciseInstructionComponent as ProgrammingExerciseInstructi
     imports: [
         TranslateDirective,
         IncludedInScoreBadgeComponent,
-        CodeEditorContainerComponent_1,
+        CodeEditorContainerComponent,
         ProgrammingSubmissionPolicyStatusComponent,
         ExerciseDetailsStudentActionsComponent,
         CodeEditorRepositoryIsLockedComponent,
         UpdatingResultComponent,
         ProgrammingExerciseStudentTriggerBuildButtonComponent,
-        ProgrammingExerciseInstructionComponent_1,
+        ProgrammingExerciseInstructionComponent,
     ],
 })
 export class ProgrammingExamSubmissionComponent extends ExamSubmissionComponent implements OnChanges, OnInit {

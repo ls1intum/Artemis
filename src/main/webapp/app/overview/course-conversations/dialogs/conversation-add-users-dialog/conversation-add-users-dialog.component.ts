@@ -16,9 +16,9 @@ import { Subject, takeUntil } from 'rxjs';
 import { AbstractDialogComponent } from 'app/overview/course-conversations/dialogs/abstract-dialog.component';
 import { finalize } from 'rxjs/operators';
 import { ChannelIconComponent } from '../../other/channel-icon/channel-icon.component';
-import { TranslateDirective } from '../../../../shared/language/translate.directive';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { ConversationAddUsersFormComponent } from './add-users-form/conversation-add-users-form.component';
-import { ArtemisTranslatePipe } from '../../../../shared/pipes/artemis-translate.pipe';
+import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 
 @Component({
     selector: 'jhi-conversation-add-users-dialog',

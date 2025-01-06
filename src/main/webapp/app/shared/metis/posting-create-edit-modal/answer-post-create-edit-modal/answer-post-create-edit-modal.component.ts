@@ -1,12 +1,12 @@
 import { Component, EventEmitter, Input, Output, ViewContainerRef, ViewEncapsulation } from '@angular/core';
+import { PostingButtonComponent } from 'app/shared/metis/posting-button/posting-button.component';
 import { PostingCreateEditModalDirective } from 'app/shared/metis/posting-create-edit-modal/posting-create-edit-modal.directive';
 import { AnswerPost } from 'app/entities/metis/answer-post.model';
 import { FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
 import { PostContentValidationPattern } from 'app/shared/metis/metis.util';
 import { Posting } from 'app/entities/metis/posting.model';
-import { PostingMarkdownEditorComponent } from '../../posting-markdown-editor/posting-markdown-editor.component';
-import { PostingButtonComponent } from '../../posting-button/posting-button.component';
-import { ArtemisTranslatePipe } from '../../../pipes/artemis-translate.pipe';
+import { PostingMarkdownEditorComponent } from 'app/shared/metis/posting-markdown-editor/posting-markdown-editor.component';
+import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 
 @Component({
     selector: 'jhi-answer-post-create-edit-modal',

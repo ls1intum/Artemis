@@ -18,13 +18,13 @@ import * as _ from 'lodash-es';
 import { IrisLogoComponent } from '../iris-logo/iris-logo.component';
 import { RouterLink } from '@angular/router';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { TranslateDirective } from '../../shared/language/translate.directive';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { ChatStatusBarComponent } from './chat-status-bar/chat-status-bar.component';
 import { FormsModule } from '@angular/forms';
-import { ButtonComponent } from '../../shared/components/button.component';
-import { ArtemisTranslatePipe } from '../../shared/pipes/artemis-translate.pipe';
+import { ButtonComponent } from 'app/shared/components/button.component';
+import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { AsPipe } from 'app/shared/pipes/as.pipe';
-import { HtmlForMarkdownPipe } from '../../shared/pipes/html-for-markdown.pipe';
+import { HtmlForMarkdownPipe } from 'app/shared/pipes/html-for-markdown.pipe';
 
 @Component({
     selector: 'jhi-iris-base-chatbot',

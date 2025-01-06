@@ -8,17 +8,16 @@ import { ActivatedRoute } from '@angular/router';
 import { Observable, tap } from 'rxjs';
 import { JhiLanguageHelper } from 'app/core/language/language.helper';
 import { MarkdownEditorHeight, MarkdownEditorMonacoComponent } from 'app/shared/markdown-editor/monaco/markdown-editor-monaco.component';
-import { TranslateDirective } from '../../shared/language/translate.directive';
-import { MarkdownEditorMonacoComponent as MarkdownEditorMonacoComponent_1 } from '../../shared/markdown-editor/monaco/markdown-editor-monaco.component';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { ModePickerComponent } from '../../exercises/shared/mode-picker/mode-picker.component';
-import { ArtemisTranslatePipe } from '../../shared/pipes/artemis-translate.pipe';
+import { ModePickerComponent } from 'app/exercises/shared/mode-picker/mode-picker.component';
+import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 
 @Component({
     selector: 'jhi-privacy-statement-update-component',
     styleUrls: ['./legal-document-update.component.scss'],
     templateUrl: './legal-document-update.component.html',
-    imports: [TranslateDirective, MarkdownEditorMonacoComponent_1, FaIconComponent, NgbTooltip, ModePickerComponent, ArtemisTranslatePipe],
+    imports: [TranslateDirective, MarkdownEditorMonacoComponent, FaIconComponent, NgbTooltip, ModePickerComponent, ArtemisTranslatePipe],
 })
 export class LegalDocumentUpdateComponent implements OnInit, AfterContentChecked {
     private legalDocumentService = inject(LegalDocumentService);

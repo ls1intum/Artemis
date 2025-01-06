@@ -9,8 +9,8 @@ import { Course } from 'app/entities/course.model';
 import { TutorialGroup } from 'app/entities/tutorial-group/tutorial-group.model';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import { Subject } from 'rxjs';
-import { LoadingIndicatorContainerComponent } from '../../../../../../shared/loading-indicator-container/loading-indicator-container.component';
-import { TranslateDirective } from '../../../../../../shared/language/translate.directive';
+import { LoadingIndicatorContainerComponent } from 'app/shared/loading-indicator-container/loading-indicator-container.component';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { TutorialGroupSessionFormComponent } from '../tutorial-group-session-form/tutorial-group-session-form.component';
 
 @Component({

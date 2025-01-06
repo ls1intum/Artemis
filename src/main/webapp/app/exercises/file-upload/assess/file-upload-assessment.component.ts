@@ -24,19 +24,19 @@ import { getPositiveAndCappedTotalScore, getTotalMaxPoints } from 'app/exercises
 import { assessmentNavigateBack } from 'app/exercises/shared/navigate-back.util';
 import { StructuredGradingCriterionService } from 'app/exercises/shared/structured-grading-criterion/structured-grading-criterion.service';
 import { SubmissionService } from 'app/exercises/shared/submission/submission.service';
+import { UnreferencedFeedbackComponent } from 'app/exercises/shared/unreferenced-feedback/unreferenced-feedback.component';
 import { FileService } from 'app/shared/http/file.service';
 import { onError } from 'app/shared/util/global.utils';
 import { getExerciseDashboardLink, getLinkToSubmissionAssessment } from 'app/utils/navigation.utils';
 import dayjs from 'dayjs/esm';
 import { filter, finalize } from 'rxjs/operators';
-import { AssessmentLayoutComponent } from '../../../assessment/assessment-layout/assessment-layout.component';
-import { ResizeableContainerComponent } from '../../../shared/resizeable-container/resizeable-container.component';
-import { ScoreDisplayComponent } from '../../../shared/score-display/score-display.component';
-import { TranslateDirective } from '../../../shared/language/translate.directive';
+import { AssessmentLayoutComponent } from 'app/assessment/assessment-layout/assessment-layout.component';
+import { ResizeableContainerComponent } from 'app/shared/resizeable-container/resizeable-container.component';
+import { ScoreDisplayComponent } from 'app/shared/score-display/score-display.component';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { AssessmentInstructionsComponent } from '../../../assessment/assessment-instructions/assessment-instructions/assessment-instructions.component';
-import { UnreferencedFeedbackComponent } from '../../shared/unreferenced-feedback/unreferenced-feedback.component';
-import { ArtemisTranslatePipe } from '../../../shared/pipes/artemis-translate.pipe';
+import { AssessmentInstructionsComponent } from 'app/assessment/assessment-instructions/assessment-instructions/assessment-instructions.component';
+import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 
 @Component({
     providers: [FileUploadAssessmentService],

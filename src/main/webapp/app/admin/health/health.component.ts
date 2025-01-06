@@ -6,11 +6,11 @@ import { HealthService } from './health.service';
 import { HealthModalComponent } from './health-modal.component';
 import { Health, HealthDetails, HealthStatus } from 'app/admin/health/health.model';
 import { faEye, faSync } from '@fortawesome/free-solid-svg-icons';
-import { TranslateDirective } from '../../shared/language/translate.directive';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { KeyValuePipe, NgClass } from '@angular/common';
-import { JhiConnectionStatusComponent } from '../../shared/connection-status/connection-status.component';
-import { ArtemisTranslatePipe } from '../../shared/pipes/artemis-translate.pipe';
+import { JhiConnectionStatusComponent } from 'app/shared/connection-status/connection-status.component';
+import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 
 @Component({
     selector: 'jhi-health',

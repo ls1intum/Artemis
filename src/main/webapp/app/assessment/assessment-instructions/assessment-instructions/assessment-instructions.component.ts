@@ -11,12 +11,12 @@ import { GradingCriterion } from 'app/exercises/shared/structured-grading-criter
 import { ProgrammingExerciseStudentParticipation } from 'app/entities/participation/programming-exercise-student-participation.model';
 import { ExpandableSectionComponent } from '../expandable-section/expandable-section.component';
 import { StructuredGradingInstructionsAssessmentLayoutComponent } from '../../structured-grading-instructions-assessment-layout/structured-grading-instructions-assessment-layout.component';
-import { ExtensionPointDirective } from '../../../shared/extension-point/extension-point.directive';
-import { ProgrammingExerciseInstructionComponent } from '../../../exercises/programming/shared/instructions-render/programming-exercise-instruction.component';
-import { SecureLinkDirective } from '../../../shared/http/secure-link.directive';
-import { ButtonComponent } from '../../../shared/components/button.component';
-import { TranslateDirective } from '../../../shared/language/translate.directive';
-import { ModelingEditorComponent } from '../../../exercises/modeling/shared/modeling-editor.component';
+import { ExtensionPointDirective } from 'app/shared/extension-point/extension-point.directive';
+import { ProgrammingExerciseInstructionComponent } from 'app/exercises/programming/shared/instructions-render/programming-exercise-instruction.component';
+import { SecureLinkDirective } from 'app/shared/http/secure-link.directive';
+import { ButtonComponent } from 'app/shared/components/button.component';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { ModelingEditorComponent } from 'app/exercises/modeling/shared/modeling-editor.component';
 
 @Component({
     selector: 'jhi-assessment-instructions',
@@ -24,6 +24,7 @@ import { ModelingEditorComponent } from '../../../exercises/modeling/shared/mode
     imports: [
         ExpandableSectionComponent,
         StructuredGradingInstructionsAssessmentLayoutComponent,
+        // NOTE: this is actually used
         ExtensionPointDirective,
         ProgrammingExerciseInstructionComponent,
         SecureLinkDirective,

@@ -2,6 +2,7 @@ import { Component, OnDestroy, OnInit, ViewEncapsulation, inject } from '@angula
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { SafeHtml } from '@angular/platform-browser';
 import { ProgrammingExerciseBuildConfig } from 'app/entities/programming/programming-exercise-build.config';
+import { ExerciseDetailStatisticsComponent } from 'app/exercises/shared/statistics/exercise-detail-statistics.component';
 import { Subject, Subscription, of } from 'rxjs';
 import { ProgrammingExercise, ProgrammingLanguage } from 'app/entities/programming/programming-exercise.model';
 import { ProgrammingExerciseService } from 'app/exercises/programming/manage/services/programming-exercise.service';
@@ -58,18 +59,17 @@ import { AeolusService } from 'app/exercises/programming/shared/service/aeolus.s
 import { catchError, mergeMap, tap } from 'rxjs/operators';
 import { ProgrammingExerciseGitDiffReport } from 'app/entities/programming-exercise-git-diff-report.model';
 import { BuildLogStatisticsDTO } from 'app/entities/programming/build-log-statistics-dto';
-import { TranslateDirective } from '../../../shared/language/translate.directive';
-import { DocumentationButtonComponent } from '../../../shared/components/documentation-button/documentation-button.component';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { DocumentationButtonComponent } from 'app/shared/components/documentation-button/documentation-button.component';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { OrionFilterDirective } from '../../../shared/orion/orion-filter.directive';
-import { FeatureToggleLinkDirective } from '../../../shared/feature-toggle/feature-toggle-link.directive';
+import { OrionFilterDirective } from 'app/shared/orion/orion-filter.directive';
+import { FeatureToggleLinkDirective } from 'app/shared/feature-toggle/feature-toggle-link.directive';
 import { ProgrammingExerciseInstructorExerciseDownloadComponent } from '../shared/actions/programming-exercise-instructor-exercise-download.component';
-import { FeatureToggleDirective } from '../../../shared/feature-toggle/feature-toggle.directive';
+import { FeatureToggleDirective } from 'app/shared/feature-toggle/feature-toggle.directive';
 import { ProgrammingExerciseResetButtonDirective } from './reset/programming-exercise-reset-button.directive';
-import { DeleteButtonDirective } from '../../../shared/delete-dialog/delete-button.directive';
-import { ExerciseDetailStatisticsComponent } from '../../shared/statistics/exercise-detail-statistics.component';
-import { DetailOverviewListComponent } from '../../../detail-overview-list/detail-overview-list.component';
-import { ArtemisTranslatePipe } from '../../../shared/pipes/artemis-translate.pipe';
+import { DeleteButtonDirective } from 'app/shared/delete-dialog/delete-button.directive';
+import { DetailOverviewListComponent } from 'app/detail-overview-list/detail-overview-list.component';
+import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 
 @Component({
     selector: 'jhi-programming-exercise-detail',

@@ -1,5 +1,6 @@
 import { Component, HostListener, OnDestroy, OnInit, inject } from '@angular/core';
 import { AccountService } from 'app/core/auth/account.service';
+import { HasAnyAuthorityDirective } from 'app/shared/auth/has-any-authority.directive';
 import { Subscription } from 'rxjs';
 import { filter, map, tap } from 'rxjs/operators';
 import { NgbCollapse, NgbDropdown, NgbDropdownMenu, NgbDropdownToggle, NgbModalRef, NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
@@ -90,6 +91,8 @@ import { ArtemisTranslatePipe } from '../../pipes/artemis-translate.pipe';
         GuidedTourComponent,
         FindLanguageFromKeyPipe,
         ArtemisTranslatePipe,
+        // NOTE: this is not unused
+        HasAnyAuthorityDirective,
     ],
 })
 export class NavbarComponent implements OnInit, OnDestroy {

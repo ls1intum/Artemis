@@ -9,12 +9,11 @@ import { faTimes } from '@fortawesome/free-solid-svg-icons';
 import { CompetencyLectureUnitLink } from 'app/entities/competency.model';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { FormDateTimePickerComponent } from 'app/shared/date-time-picker/date-time-picker.component';
-import { TranslateDirective } from '../../../../shared/language/translate.directive';
-import { FormDateTimePickerComponent as FormDateTimePickerComponent_1 } from '../../../../shared/date-time-picker/date-time-picker.component';
-import { CompetencySelectionComponent } from '../../../../shared/competency-selection/competency-selection.component';
-import { MarkdownEditorMonacoComponent } from '../../../../shared/markdown-editor/monaco/markdown-editor-monaco.component';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { CompetencySelectionComponent } from 'app/shared/competency-selection/competency-selection.component';
+import { MarkdownEditorMonacoComponent } from 'app/shared/markdown-editor/monaco/markdown-editor-monaco.component';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { ArtemisTranslatePipe } from '../../../../shared/pipes/artemis-translate.pipe';
+import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 
 export interface TextUnitFormData {
     name?: string;
@@ -26,12 +25,11 @@ export interface TextUnitFormData {
 @Component({
     selector: 'jhi-text-unit-form',
     templateUrl: './text-unit-form.component.html',
-    styles: [],
     imports: [
         FormsModule,
         ReactiveFormsModule,
         TranslateDirective,
-        FormDateTimePickerComponent_1,
+        FormDateTimePickerComponent,
         CompetencySelectionComponent,
         MarkdownEditorMonacoComponent,
         FaIconComponent,

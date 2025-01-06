@@ -5,7 +5,7 @@ import { SubmissionExportDialogComponent } from './submission-export-dialog.comp
 import { ExerciseType } from 'app/entities/exercise.model';
 import { faDownload } from '@fortawesome/free-solid-svg-icons';
 import { FeatureToggle } from 'app/shared/feature-toggle/feature-toggle.service';
-import { ButtonComponent } from '../../../shared/components/button.component';
+import { ButtonComponent } from 'app/shared/components/button.component';
 
 @Component({
     selector: 'jhi-exercise-submission-export',

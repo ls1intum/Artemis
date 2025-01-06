@@ -8,16 +8,15 @@ import { ShortAnswerSubmittedText } from 'app/entities/quiz/short-answer-submitt
 import { MultipleChoiceSubmittedAnswer } from 'app/entities/quiz/multiple-choice-submitted-answer.model';
 import { DragAndDropSubmittedAnswer } from 'app/entities/quiz/drag-and-drop-submitted-answer.model';
 import { ShortAnswerSubmittedAnswer } from 'app/entities/quiz/short-answer-submitted-answer.model';
-import { QuizExerciseService } from 'app/exercises/quiz/manage/quiz-exercise.service';
 import { Exam } from 'app/entities/exam/exam.model';
 import { ArtemisServerDateService } from 'app/shared/server-date.service';
 import { Result } from 'app/entities/result.model';
 import { roundValueSpecifiedByCourseSettings } from 'app/shared/util/utils';
 import { QuizParticipation } from 'app/entities/quiz/quiz-participation.model';
-import { TranslateDirective } from '../../../../../shared/language/translate.directive';
-import { MultipleChoiceQuestionComponent } from '../../../../../exercises/quiz/shared/questions/multiple-choice-question/multiple-choice-question.component';
-import { DragAndDropQuestionComponent } from '../../../../../exercises/quiz/shared/questions/drag-and-drop-question/drag-and-drop-question.component';
-import { ShortAnswerQuestionComponent } from '../../../../../exercises/quiz/shared/questions/short-answer-question/short-answer-question.component';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { MultipleChoiceQuestionComponent } from 'app/exercises/quiz/shared/questions/multiple-choice-question/multiple-choice-question.component';
+import { DragAndDropQuestionComponent } from 'app/exercises/quiz/shared/questions/drag-and-drop-question/drag-and-drop-question.component';
+import { ShortAnswerQuestionComponent } from 'app/exercises/quiz/shared/questions/short-answer-question/short-answer-question.component';
 
 @Component({
     selector: 'jhi-quiz-exam-summary',
@@ -25,7 +24,6 @@ import { ShortAnswerQuestionComponent } from '../../../../../exercises/quiz/shar
     imports: [TranslateDirective, MultipleChoiceQuestionComponent, DragAndDropQuestionComponent, ShortAnswerQuestionComponent],
 })
 export class QuizExamSummaryComponent implements OnChanges {
-    private exerciseService = inject(QuizExerciseService);
     private serverDateService = inject(ArtemisServerDateService);
 
     readonly DRAG_AND_DROP = QuizQuestionType.DRAG_AND_DROP;
@@ -36,17 +34,10 @@ export class QuizExamSummaryComponent implements OnChanges {
     dragAndDropMappings = new Map<number, DragAndDropMapping[]>();
     shortAnswerSubmittedTexts = new Map<number, ShortAnswerSubmittedText[]>();
 
-    @Input()
-    quizParticipation: QuizParticipation;
-
-    @Input()
-    submission: QuizSubmission;
-
-    @Input()
-    resultsPublished: boolean;
-
-    @Input()
-    exam: Exam;
+    @Input() quizParticipation: QuizParticipation;
+    @Input() submission: QuizSubmission;
+    @Input() resultsPublished: boolean;
+    @Input() exam: Exam;
 
     result?: Result;
 

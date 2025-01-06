@@ -9,7 +9,7 @@ import { faCheckCircle, faExclamationTriangle } from '@fortawesome/free-solid-sv
 import { hasSolutionParticipationChanged, hasTemplateParticipationChanged } from 'app/exercises/shared/participation/participation.utils';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
-import { TranslateDirective } from '../../../../shared/language/translate.directive';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
 
 /**
  * Describes programming exercise issues

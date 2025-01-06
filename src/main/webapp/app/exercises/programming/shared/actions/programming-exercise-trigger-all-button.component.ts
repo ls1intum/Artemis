@@ -10,9 +10,9 @@ import { ProgrammingExercise } from 'app/entities/programming/programming-exerci
 import { ButtonType } from 'app/shared/components/button.component';
 import { faBan, faRedo, faTimes } from '@fortawesome/free-solid-svg-icons';
 import { FormsModule } from '@angular/forms';
-import { TranslateDirective } from '../../../../shared/language/translate.directive';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { ButtonComponent } from '../../../../shared/components/button.component';
+import { ButtonComponent } from 'app/shared/components/button.component';
 
 /**
  * A button that triggers the build for all participations of the given programming exercise.

@@ -15,7 +15,7 @@ import { TextAssessmentService } from 'app/exercises/text/assess/text-assessment
 import { getLinkToSubmissionAssessment } from 'app/utils/navigation.utils';
 import { RouterLink } from '@angular/router';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { ArtemisTranslatePipe } from '../../../shared/pipes/artemis-translate.pipe';
+import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 
 @Component({
     selector: 'jhi-manage-assessment-buttons',

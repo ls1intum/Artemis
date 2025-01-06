@@ -10,10 +10,10 @@ import { DataExport, DataExportState } from 'app/entities/data-export.model';
 import { ActivatedRoute } from '@angular/router';
 import { convertDateFromServer } from 'app/utils/date.utils';
 import { DataExportRequestButtonDirective } from './confirmation/data-export-request-button.directive';
-import { ButtonComponent } from '../../../shared/components/button.component';
-import { TranslateDirective } from '../../../shared/language/translate.directive';
+import { ButtonComponent } from 'app/shared/components/button.component';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
-import { ArtemisTranslatePipe } from '../../../shared/pipes/artemis-translate.pipe';
+import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 
 @Component({
     selector: 'jhi-data-export',

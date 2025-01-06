@@ -12,15 +12,15 @@ import { LTI_URLS } from 'app/admin/lti-configuration/lti-configuration.urls';
 import { ITEMS_PER_PAGE } from 'app/shared/constants/pagination.constants';
 import { combineLatest } from 'rxjs';
 import { FormsModule } from '@angular/forms';
-import { TranslateDirective } from '../../shared/language/translate.directive';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { NgbNav, NgbNavContent, NgbNavItem, NgbNavLink, NgbNavLinkBase, NgbNavOutlet, NgbPagination } from '@ng-bootstrap/ng-bootstrap';
-import { HelpIconComponent } from '../../shared/components/help-icon.component';
-import { CopyIconButtonComponent } from '../../shared/components/copy-icon-button/copy-icon-button.component';
+import { HelpIconComponent } from 'app/shared/components/help-icon.component';
+import { CopyIconButtonComponent } from 'app/shared/components/copy-icon-button/copy-icon-button.component';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { SortDirective } from '../../shared/sort/sort.directive';
-import { SortByDirective } from '../../shared/sort/sort-by.directive';
-import { DeleteButtonDirective } from '../../shared/delete-dialog/delete-button.directive';
-import { ItemCountComponent } from '../../shared/pagination/item-count.component';
+import { SortDirective } from 'app/shared/sort/sort.directive';
+import { SortByDirective } from 'app/shared/sort/sort-by.directive';
+import { DeleteButtonDirective } from 'app/shared/delete-dialog/delete-button.directive';
+import { ItemCountComponent } from 'app/shared/pagination/item-count.component';
 
 @Component({
     selector: 'jhi-lti-configuration',

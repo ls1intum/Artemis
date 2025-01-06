@@ -18,12 +18,12 @@ import { ProgrammingSubmission } from 'app/entities/programming/programming-subm
 import { roundValueSpecifiedByCourseSettings } from 'app/shared/util/utils';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
-import { ExerciseCategoriesComponent } from '../../../shared/exercise-categories/exercise-categories.component';
+import { ExerciseCategoriesComponent } from 'app/shared/exercise-categories/exercise-categories.component';
 import { NgClass } from '@angular/common';
 import { IncludedInScoreBadgeComponent } from './included-in-score-badge.component';
-import { TranslateDirective } from '../../../shared/language/translate.directive';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
-import { ArtemisTranslatePipe } from '../../../shared/pipes/artemis-translate.pipe';
+import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { ArtemisTimeAgoPipe } from 'app/shared/pipes/artemis-time-ago.pipe';
 
 @Component({

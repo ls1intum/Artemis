@@ -4,7 +4,7 @@ import { faChevronLeft, faChevronRight, faGripLinesVertical } from '@fortawesome
 import { Exercise } from 'app/entities/exercise.model';
 import interact from 'interactjs';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { TranslateDirective } from '../../../shared/language/translate.directive';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { AssessmentInstructionsComponent } from '../assessment-instructions/assessment-instructions.component';
 
 @Component({

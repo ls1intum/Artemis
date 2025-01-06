@@ -4,9 +4,9 @@ import { DocumentationType } from 'app/shared/components/documentation-button/do
 import { LectureUnitType } from 'app/entities/lecture-unit/lectureUnit.model';
 import { RouterLink } from '@angular/router';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { TranslateDirective } from '../../../../shared/language/translate.directive';
-import { DocumentationButtonComponent } from '../../../../shared/components/documentation-button/documentation-button.component';
-import { ArtemisTranslatePipe } from '../../../../shared/pipes/artemis-translate.pipe';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { DocumentationButtonComponent } from 'app/shared/components/documentation-button/documentation-button.component';
+import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 
 @Component({
     selector: 'jhi-unit-creation-card',

@@ -1,5 +1,6 @@
 import { AfterViewInit, Component, OnInit, ViewChild, ViewEncapsulation, inject } from '@angular/core';
 import { faCircleNotch, faPlayCircle } from '@fortawesome/free-solid-svg-icons';
+import { UpdatingResultComponent } from 'app/exercises/shared/result/updating-result.component';
 import { onError } from 'app/shared/util/global.utils';
 import { AlertService } from 'app/core/util/alert.service';
 import { BuildPlanService } from 'app/exercises/programming/manage/services/build-plan.service';
@@ -8,20 +9,18 @@ import { ActivatedRoute } from '@angular/router';
 import { ProgrammingExercise } from 'app/entities/programming/programming-exercise.model';
 import { ProgrammingExerciseService } from 'app/exercises/programming/manage/services/programming-exercise.service';
 import { MonacoEditorComponent } from 'app/shared/monaco-editor/monaco-editor.component';
-import { TranslateDirective } from '../../../shared/language/translate.directive';
-import { UpdatingResultComponent } from '../../shared/result/updating-result.component';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { CodeEditorHeaderComponent } from '../shared/code-editor/header/code-editor-header.component';
-import { MonacoEditorComponent as MonacoEditorComponent_1 } from '../../../shared/monaco-editor/monaco-editor.component';
-import { ArtemisTranslatePipe } from '../../../shared/pipes/artemis-translate.pipe';
+import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 
 @Component({
     selector: 'jhi-build-plan-editor',
     templateUrl: './build-plan-editor.component.html',
     styleUrls: ['./build-plan-editor.scss'],
     encapsulation: ViewEncapsulation.None,
-    imports: [TranslateDirective, UpdatingResultComponent, NgbTooltip, FaIconComponent, CodeEditorHeaderComponent, MonacoEditorComponent_1, ArtemisTranslatePipe],
+    imports: [TranslateDirective, UpdatingResultComponent, NgbTooltip, FaIconComponent, CodeEditorHeaderComponent, MonacoEditorComponent, ArtemisTranslatePipe],
 })
 export class BuildPlanEditorComponent implements AfterViewInit, OnInit {
     private buildPlanService = inject(BuildPlanService);

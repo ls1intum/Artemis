@@ -12,7 +12,6 @@ import { MatFormField } from '@angular/material/form-field';
 import { AsyncPipe, NgStyle } from '@angular/common';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { MatOption } from '@angular/material/core';
-import { ColorSelectorComponent as ColorSelectorComponent_1 } from '../color-selector/color-selector.component';
 import { ArtemisTranslatePipe } from '../pipes/artemis-translate.pipe';
 
 const DEFAULT_COLORS = ['#6ae8ac', '#9dca53', '#94a11c', '#691b0b', '#ad5658', '#1b97ca', '#0d3cc2', '#0ab84f'];
@@ -35,7 +34,7 @@ const DEFAULT_COLORS = ['#6ae8ac', '#9dca53', '#94a11c', '#691b0b', '#ad5658', '
         ReactiveFormsModule,
         MatAutocomplete,
         MatOption,
-        ColorSelectorComponent_1,
+        ColorSelectorComponent,
         AsyncPipe,
         ArtemisTranslatePipe,
     ],

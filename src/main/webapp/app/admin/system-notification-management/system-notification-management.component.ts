@@ -14,12 +14,12 @@ import { EventManager } from 'app/core/util/event-manager.service';
 import { ParseLinks } from 'app/core/util/parse-links.service';
 import { faEye, faPlus, faSort, faTimes, faWrench } from '@fortawesome/free-solid-svg-icons';
 import { AdminSystemNotificationService } from 'app/shared/notification/system-notification/admin-system-notification.service';
-import { TranslateDirective } from '../../shared/language/translate.directive';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { SortDirective } from '../../shared/sort/sort.directive';
-import { SortByDirective } from '../../shared/sort/sort-by.directive';
-import { DeleteButtonDirective } from '../../shared/delete-dialog/delete-button.directive';
-import { ItemCountComponent } from '../../shared/pagination/item-count.component';
+import { SortDirective } from 'app/shared/sort/sort.directive';
+import { SortByDirective } from 'app/shared/sort/sort-by.directive';
+import { DeleteButtonDirective } from 'app/shared/delete-dialog/delete-button.directive';
+import { ItemCountComponent } from 'app/shared/pagination/item-count.component';
 import { NgbPagination } from '@ng-bootstrap/ng-bootstrap';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 

@@ -1,10 +1,10 @@
 import { Component, ElementRef, EventEmitter, Input, Output, inject } from '@angular/core';
 import { Feedback, buildFeedbackTextForReview } from 'app/entities/feedback.model';
+import { FeedbackSuggestionBadgeComponent } from 'app/exercises/shared/feedback/feedback-suggestion-badge/feedback-suggestion-badge.component';
 import { roundValueSpecifiedByCourseSettings } from 'app/shared/util/utils';
 import { Course } from 'app/entities/course.model';
 import { faCheck, faTrash } from '@fortawesome/free-solid-svg-icons';
-import { FeedbackSuggestionBadgeComponent } from '../../shared/feedback/feedback-suggestion-badge/feedback-suggestion-badge.component';
-import { TranslateDirective } from '../../../shared/language/translate.directive';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 
 @Component({

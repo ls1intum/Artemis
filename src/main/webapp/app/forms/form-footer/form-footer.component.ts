@@ -4,12 +4,12 @@ import { faBan, faExclamationCircle, faSave } from '@fortawesome/free-solid-svg-
 import { ButtonSize } from 'app/shared/components/button.component';
 import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { SwitchEditModeButtonComponent } from '../../exercises/programming/manage/update/switch-edit-mode-button/switch-edit-mode-button.component';
-import { HelpIconComponent } from '../../shared/components/help-icon.component';
+import { HelpIconComponent } from 'app/shared/components/help-icon.component';
 import { ExerciseUpdateNotificationComponent } from '../../exercises/shared/exercise-update-notification/exercise-update-notification.component';
-import { TranslateDirective } from '../../shared/language/translate.directive';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { ButtonComponent } from '../../shared/components/button.component';
-import { ArtemisTranslatePipe } from '../../shared/pipes/artemis-translate.pipe';
+import { ButtonComponent } from 'app/shared/components/button.component';
+import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 
 @Component({
     selector: 'jhi-form-footer',

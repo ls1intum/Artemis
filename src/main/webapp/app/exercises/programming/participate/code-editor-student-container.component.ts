@@ -1,4 +1,6 @@
 import { Component, OnDestroy, OnInit, ViewChild, inject } from '@angular/core';
+import { IncludedInScoreBadgeComponent } from 'app/exercises/shared/exercise-headers/included-in-score-badge.component';
+import { UpdatingResultComponent } from 'app/exercises/shared/result/updating-result.component';
 import { Observable, Subscription } from 'rxjs';
 import { map, tap } from 'rxjs/operators';
 import { ProgrammingExerciseParticipationService } from 'app/exercises/programming/manage/services/programming-exercise-participation.service';
@@ -23,14 +25,11 @@ import { hasExerciseDueDatePassed } from 'app/exercises/shared/exercise/exercise
 import { faCircleNotch, faTimesCircle } from '@fortawesome/free-solid-svg-icons';
 import { isManualResult as isManualResultFunction } from 'app/exercises/shared/result/result.utils';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { TranslateDirective } from '../../../shared/language/translate.directive';
-import { CodeEditorContainerComponent as CodeEditorContainerComponent_1 } from '../shared/code-editor/container/code-editor-container.component';
-import { IncludedInScoreBadgeComponent } from '../../shared/exercise-headers/included-in-score-badge.component';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { CodeEditorRepositoryIsLockedComponent } from '../shared/code-editor/layout/code-editor-repository-is-locked.component';
-import { UpdatingResultComponent } from '../../shared/result/updating-result.component';
 import { ProgrammingExerciseStudentTriggerBuildButtonComponent } from '../shared/actions/programming-exercise-student-trigger-build-button.component';
 import { ProgrammingExerciseInstructionComponent } from '../shared/instructions-render/programming-exercise-instruction.component';
-import { AdditionalFeedbackComponent } from '../../../shared/additional-feedback/additional-feedback.component';
+import { AdditionalFeedbackComponent } from 'app/shared/additional-feedback/additional-feedback.component';
 
 @Component({
     selector: 'jhi-code-editor-student',
@@ -38,7 +37,7 @@ import { AdditionalFeedbackComponent } from '../../../shared/additional-feedback
     imports: [
         FaIconComponent,
         TranslateDirective,
-        CodeEditorContainerComponent_1,
+        CodeEditorContainerComponent,
         IncludedInScoreBadgeComponent,
         CodeEditorRepositoryIsLockedComponent,
         UpdatingResultComponent,

@@ -1,7 +1,7 @@
 import { Component, Input } from '@angular/core';
 import { Submission } from 'app/entities/submission.model';
 import { TextSubmission } from 'app/entities/text/text-submission.model';
-import { ArtemisTranslatePipe } from '../../../../../shared/pipes/artemis-translate.pipe';
+import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 
 @Component({
     selector: 'jhi-language-table-cell',

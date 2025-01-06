@@ -1,4 +1,5 @@
 import { ChangeDetectorRef, Component, OnChanges, OnDestroy, OnInit, SimpleChanges, ViewChildren, ViewEncapsulation, inject } from '@angular/core';
+import { IncludedInOverallScorePickerComponent } from 'app/exercises/shared/included-in-overall-score-picker/included-in-overall-score-picker.component';
 import { Subscription } from 'rxjs';
 import { ActivatedRoute } from '@angular/router';
 import { NgbModal, NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
@@ -18,16 +19,14 @@ import { QuizExerciseValidationDirective } from 'app/exercises/quiz/manage/quiz-
 import { ShortAnswerQuestionUtil } from 'app/exercises/quiz/shared/short-answer-question-util.service';
 import { faExclamationCircle, faExclamationTriangle, faUndo } from '@fortawesome/free-solid-svg-icons';
 import { ReEvaluateDragAndDropQuestionComponent } from 'app/exercises/quiz/manage/re-evaluate/drag-and-drop-question/re-evaluate-drag-and-drop-question.component';
-import { TranslateDirective } from '../../../../shared/language/translate.directive';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { FormsModule } from '@angular/forms';
-import { FormDateTimePickerComponent } from '../../../../shared/date-time-picker/date-time-picker.component';
-import { IncludedInOverallScorePickerComponent } from '../../../shared/included-in-overall-score-picker/included-in-overall-score-picker.component';
+import { FormDateTimePickerComponent } from 'app/shared/date-time-picker/date-time-picker.component';
 import { ReEvaluateMultipleChoiceQuestionComponent } from './multiple-choice-question/re-evaluate-multiple-choice-question.component';
-import { ReEvaluateDragAndDropQuestionComponent as ReEvaluateDragAndDropQuestionComponent_1 } from './drag-and-drop-question/re-evaluate-drag-and-drop-question.component';
 import { ReEvaluateShortAnswerQuestionComponent } from './short-answer-question/re-evaluate-short-answer-question.component';
 import { JsonPipe } from '@angular/common';
-import { ArtemisTranslatePipe } from '../../../../shared/pipes/artemis-translate.pipe';
+import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 
 @Component({
     selector: 'jhi-quiz-re-evaluate',
@@ -43,7 +42,7 @@ import { ArtemisTranslatePipe } from '../../../../shared/pipes/artemis-translate
         FormDateTimePickerComponent,
         IncludedInOverallScorePickerComponent,
         ReEvaluateMultipleChoiceQuestionComponent,
-        ReEvaluateDragAndDropQuestionComponent_1,
+        ReEvaluateDragAndDropQuestionComponent,
         ReEvaluateShortAnswerQuestionComponent,
         JsonPipe,
         ArtemisTranslatePipe,

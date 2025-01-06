@@ -6,7 +6,7 @@ import { TeamService } from 'app/exercises/shared/team/team.service';
 import { Exercise } from 'app/entities/exercise.model';
 import { AlertService } from 'app/core/util/alert.service';
 import { faTrashAlt } from '@fortawesome/free-solid-svg-icons';
-import { DeleteButtonDirective } from '../../../../shared/delete-dialog/delete-button.directive';
+import { DeleteButtonDirective } from 'app/shared/delete-dialog/delete-button.directive';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 
 @Component({

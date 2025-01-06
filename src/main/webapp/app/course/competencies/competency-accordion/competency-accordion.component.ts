@@ -14,9 +14,9 @@ import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { NgbProgressbar, NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { CompetencyRingsComponent } from '../competency-rings/competency-rings.component';
 import { JudgementOfLearningRatingComponent } from '../judgement-of-learning-rating/judgement-of-learning-rating.component';
-import { TranslateDirective } from '../../../shared/language/translate.directive';
-import { CourseExerciseRowComponent } from '../../../overview/course-exercises/course-exercise-row.component';
-import { ArtemisTranslatePipe } from '../../../shared/pipes/artemis-translate.pipe';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { CourseExerciseRowComponent } from 'app/overview/course-exercises/course-exercise-row.component';
+import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 
 export interface CompetencyAccordionToggleEvent {
     opened: boolean;

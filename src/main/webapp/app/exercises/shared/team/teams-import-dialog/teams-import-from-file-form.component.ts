@@ -5,8 +5,8 @@ import { User } from 'app/core/user/user.model';
 import { StudentWithTeam, Team } from 'app/entities/team.model';
 import { SHORT_NAME_PATTERN } from 'app/shared/constants/input.constants';
 import { parse } from 'papaparse';
-import { TranslateDirective } from '../../../../shared/language/translate.directive';
-import { HelpIconComponent } from '../../../../shared/components/help-icon.component';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { HelpIconComponent } from 'app/shared/components/help-icon.component';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 
 const csvColumns = Object.freeze({

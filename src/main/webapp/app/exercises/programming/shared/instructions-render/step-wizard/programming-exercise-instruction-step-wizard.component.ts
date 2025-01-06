@@ -6,7 +6,7 @@ import { FeedbackComponent } from 'app/exercises/shared/feedback/feedback.compon
 import { Exercise, ExerciseType } from 'app/entities/exercise.model';
 import { Result } from 'app/entities/result.model';
 import { faCheck, faCircle, faTimes } from '@fortawesome/free-solid-svg-icons';
-import { TranslateDirective } from '../../../../../shared/language/translate.directive';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 
 @Component({

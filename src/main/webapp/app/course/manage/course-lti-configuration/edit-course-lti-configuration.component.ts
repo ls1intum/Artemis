@@ -13,14 +13,14 @@ import { LtiConfigurationService } from 'app/admin/lti-configuration/lti-configu
 import { ITEMS_PER_PAGE } from 'app/shared/constants/pagination.constants';
 import { HttpHeaders, HttpResponse } from '@angular/common/http';
 import { combineLatest } from 'rxjs';
-import { TranslateDirective } from '../../../shared/language/translate.directive';
-import { ArtemisSharedComponentModule } from '../../../shared/components/shared-component.module';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { ArtemisSharedComponentModule } from 'app/shared/components/shared-component.module';
 import { ArtemisSharedModule } from 'app/shared/shared.module';
 import { NgbDropdown, NgbDropdownButtonItem, NgbDropdownItem, NgbDropdownMenu, NgbDropdownToggle, NgbPagination, NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { KeyValuePipe } from '@angular/common';
-import { ArtemisTranslatePipe } from '../../../shared/pipes/artemis-translate.pipe';
-import { ArtemisSharedPipesModule } from '../../../shared/pipes/shared-pipes.module';
+import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
+import { ArtemisSharedPipesModule } from 'app/shared/pipes/shared-pipes.module';
 
 @Component({
     selector: 'jhi-edit-course-lti-configuration',

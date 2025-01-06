@@ -11,12 +11,12 @@ import { GraphColors } from 'app/entities/statistics.model';
 import { ActiveStudentsChart } from 'app/shared/chart/active-students-chart';
 import { mean } from 'simple-statistics';
 import { RouterLink } from '@angular/router';
-import { TranslateDirective } from '../../../shared/language/translate.directive';
-import { HelpIconComponent } from '../../../shared/components/help-icon.component';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { HelpIconComponent } from 'app/shared/components/help-icon.component';
 import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
-import { ArtemisTranslatePipe } from '../../../shared/pipes/artemis-translate.pipe';
+import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 
 export enum SwitchTimeSpanDirection {
     LEFT,

@@ -6,7 +6,7 @@ import { FileBadge } from 'app/exercises/programming/shared/code-editor/model/co
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { NgClass } from '@angular/common';
 import { CodeEditorFileBrowserBadgeComponent } from './code-editor-file-browser-badge.component';
-import { ArtemisTranslatePipe } from '../../../../../shared/pipes/artemis-translate.pipe';
+import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 
 @Component({
     selector: 'jhi-code-editor-file-browser-file',

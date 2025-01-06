@@ -4,9 +4,9 @@ import { faCircle } from '@fortawesome/free-regular-svg-icons';
 import { faAngleDown, faAngleLeft } from '@fortawesome/free-solid-svg-icons';
 import { RouterLink } from '@angular/router';
 import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
-import { ResultComponent } from '../../../../../shared/result/result.component';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { TranslateDirective } from '../../../../../../shared/language/translate.directive';
+import { ResultComponent } from 'app/exercises/shared/result/result.component';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 import { TruncatePipe } from 'app/shared/pipes/truncate.pipe';
 

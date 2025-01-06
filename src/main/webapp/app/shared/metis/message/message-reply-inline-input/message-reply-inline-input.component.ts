@@ -1,14 +1,14 @@
 import { Component, EventEmitter, OnChanges, OnInit, Output, SimpleChanges, ViewEncapsulation, inject, input } from '@angular/core';
 import { AnswerPost } from 'app/entities/metis/answer-post.model';
 import { FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { PostContentValidationPattern } from 'app/shared/metis/metis.util';
+import { PostingButtonComponent } from 'app/shared/metis/posting-button/posting-button.component';
 import { PostingCreateEditDirective } from 'app/shared/metis/posting-create-edit.directive';
+import { PostingMarkdownEditorComponent } from 'app/shared/metis/posting-markdown-editor/posting-markdown-editor.component';
+import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { LocalStorageService } from 'ngx-webstorage';
 import { ConversationDTO } from 'app/entities/metis/conversation/conversation.model';
-import { PostingMarkdownEditorComponent } from '../../posting-markdown-editor/posting-markdown-editor.component';
-import { TranslateDirective } from '../../../language/translate.directive';
-import { PostingButtonComponent } from '../../posting-button/posting-button.component';
-import { ArtemisTranslatePipe } from '../../../pipes/artemis-translate.pipe';
 
 @Component({
     selector: 'jhi-message-reply-inline-input',

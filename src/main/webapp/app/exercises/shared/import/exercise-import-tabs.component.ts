@@ -1,7 +1,7 @@
 import { Component, Input } from '@angular/core';
 import { ExerciseType } from 'app/entities/exercise.model';
 import { NgbNav, NgbNavContent, NgbNavItem, NgbNavItemRole, NgbNavLink, NgbNavLinkBase, NgbNavOutlet } from '@ng-bootstrap/ng-bootstrap';
-import { TranslateDirective } from '../../../shared/language/translate.directive';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { ExerciseImportComponent } from './exercise-import.component';
 import { ExerciseImportFromFileComponent } from './from-file/exercise-import-from-file.component';
 

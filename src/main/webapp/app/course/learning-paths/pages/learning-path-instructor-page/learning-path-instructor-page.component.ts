@@ -1,7 +1,6 @@
 import { ChangeDetectionStrategy, Component, computed, effect, inject, signal, untracked } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { ActivatedRoute } from '@angular/router';
-import { LearningPathsConfigurationComponent } from 'app/course/learning-paths/components/learning-paths-configuration/learning-paths-configuration.component';
 import { lastValueFrom, map } from 'rxjs';
 import { LearningPathApiService } from 'app/course/learning-paths/services/learning-path-api.service';
 import { AlertService } from 'app/core/util/alert.service';
@@ -16,7 +15,7 @@ import { TranslateDirective } from 'app/shared/language/translate.directive';
 @Component({
     selector: 'jhi-learning-path-instructor-page',
     changeDetection: ChangeDetectionStrategy.OnPush,
-    imports: [LearningPathsConfigurationComponent, LearningPathsStateComponent, LearningPathsTableComponent, LearningPathsAnalyticsComponent, TranslateDirective],
+    imports: [LearningPathsStateComponent, LearningPathsTableComponent, LearningPathsAnalyticsComponent, TranslateDirective],
     templateUrl: './learning-path-instructor-page.component.html',
     styleUrl: './learning-path-instructor-page.component.scss',
 })

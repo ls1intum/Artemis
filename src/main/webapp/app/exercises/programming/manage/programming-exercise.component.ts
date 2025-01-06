@@ -1,5 +1,7 @@
 import { Component, ContentChild, Input, OnDestroy, OnInit, TemplateRef, inject } from '@angular/core';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
+import { ExerciseScoresExportButtonComponent } from 'app/exercises/shared/exercise-scores/exercise-scores-export-button.component';
+import { ExtensionPointDirective } from 'app/shared/extension-point/extension-point.directive';
 import { merge } from 'rxjs';
 import { ProgrammingExercise } from 'app/entities/programming/programming-exercise.model';
 import { ProgrammingExerciseInstructorRepositoryType, ProgrammingExerciseService } from './services/programming-exercise.service';
@@ -22,7 +24,6 @@ import {
     faCheckDouble,
     faDownload,
     faFileSignature,
-    faLightbulb,
     faListAlt,
     faPencilAlt,
     faPlus,
@@ -36,22 +37,20 @@ import {
 import { CourseExerciseService } from 'app/exercises/shared/course-exercises/course-exercise.service';
 import { downloadZipFileFromResponse } from 'app/shared/util/download.util';
 import { PROFILE_LOCALCI, PROFILE_LOCALVC, PROFILE_THEIA } from 'app/app.constants';
-import { SortDirective } from '../../../shared/sort/sort.directive';
+import { SortDirective } from 'app/shared/sort/sort.directive';
 import { FormsModule } from '@angular/forms';
-import { SortByDirective } from '../../../shared/sort/sort-by.directive';
-import { TranslateDirective } from '../../../shared/language/translate.directive';
+import { SortByDirective } from 'app/shared/sort/sort-by.directive';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { ExtensionPointDirective } from '../../../shared/extension-point/extension-point.directive';
 import { RouterLink } from '@angular/router';
 import { ProgrammingExerciseGradingDirtyWarningComponent } from './grading/programming-exercise-grading-dirty-warning.component';
 import { ProgrammingExerciseInstructorStatusComponent } from './status/programming-exercise-instructor-status.component';
-import { ExerciseCategoriesComponent } from '../../../shared/exercise-categories/exercise-categories.component';
-import { FeatureToggleLinkDirective } from '../../../shared/feature-toggle/feature-toggle-link.directive';
+import { ExerciseCategoriesComponent } from 'app/shared/exercise-categories/exercise-categories.component';
+import { FeatureToggleLinkDirective } from 'app/shared/feature-toggle/feature-toggle-link.directive';
 import { ProgrammingExerciseResetButtonDirective } from './reset/programming-exercise-reset-button.directive';
-import { FeatureToggleDirective } from '../../../shared/feature-toggle/feature-toggle.directive';
-import { DeleteButtonDirective } from '../../../shared/delete-dialog/delete-button.directive';
+import { FeatureToggleDirective } from 'app/shared/feature-toggle/feature-toggle.directive';
+import { DeleteButtonDirective } from 'app/shared/delete-dialog/delete-button.directive';
 import { ProgrammingAssessmentRepoExportButtonComponent } from '../assess/repo-export/programming-assessment-repo-export-button.component';
-import { ExerciseScoresExportButtonComponent } from '../../shared/exercise-scores/exercise-scores-export-button.component';
 import { SlicePipe } from '@angular/common';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 
@@ -64,7 +63,6 @@ import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
         SortByDirective,
         TranslateDirective,
         FaIconComponent,
-        ExtensionPointDirective,
         RouterLink,
         ProgrammingExerciseGradingDirtyWarningComponent,
         ProgrammingExerciseInstructorStatusComponent,
@@ -77,6 +75,8 @@ import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
         ExerciseScoresExportButtonComponent,
         SlicePipe,
         ArtemisDatePipe,
+        // NOTE: this is actually used
+        ExtensionPointDirective,
     ],
 })
 export class ProgrammingExerciseComponent extends ExerciseComponent implements OnInit, OnDestroy {
@@ -117,7 +117,6 @@ export class ProgrammingExerciseComponent extends ExerciseComponent implements O
     faTable = faTable;
     faTrash = faTrash;
     faListAlt = faListAlt;
-    faLightbulb = faLightbulb;
     faPencilAlt = faPencilAlt;
     faFileSignature = faFileSignature;
 
@@ -173,7 +172,7 @@ export class ProgrammingExerciseComponent extends ExerciseComponent implements O
         this.emitFilteredExerciseCount(this.filteredProgrammingExercises.length);
     }
 
-    trackId(index: number, item: ProgrammingExercise) {
+    trackId(_index: number, item: ProgrammingExercise) {
         return item.id;
     }
 

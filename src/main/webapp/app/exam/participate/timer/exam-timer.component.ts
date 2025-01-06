@@ -7,7 +7,7 @@ import { cloneDeep } from 'lodash-es';
 import { ArtemisDurationFromSecondsPipe } from 'app/shared/pipes/artemis-duration-from-seconds.pipe';
 import { round } from 'app/shared/util/utils';
 import { AsyncPipe } from '@angular/common';
-import { ArtemisTranslatePipe } from '../../../shared/pipes/artemis-translate.pipe';
+import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 
 @Component({
     selector: 'jhi-exam-timer',

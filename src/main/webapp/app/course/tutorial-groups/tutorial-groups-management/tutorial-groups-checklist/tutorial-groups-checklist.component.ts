@@ -9,9 +9,9 @@ import { HttpErrorResponse } from '@angular/common/http';
 import { faPlus, faWrench } from '@fortawesome/free-solid-svg-icons';
 import { TutorialGroupsConfigurationService } from 'app/course/tutorial-groups/services/tutorial-groups-configuration.service';
 import { takeUntil } from 'rxjs/operators';
-import { LoadingIndicatorContainerComponent } from '../../../../shared/loading-indicator-container/loading-indicator-container.component';
-import { TranslateDirective } from '../../../../shared/language/translate.directive';
-import { ChecklistCheckComponent } from '../../../../shared/components/checklist-check/checklist-check.component';
+import { LoadingIndicatorContainerComponent } from 'app/shared/loading-indicator-container/loading-indicator-container.component';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { ChecklistCheckComponent } from 'app/shared/components/checklist-check/checklist-check.component';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 
 @Component({

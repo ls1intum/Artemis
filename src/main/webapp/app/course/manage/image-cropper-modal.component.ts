@@ -2,8 +2,8 @@ import { Component, inject } from '@angular/core';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import { ImageCroppedEvent } from 'app/shared/image-cropper/interfaces/image-cropped-event.interface';
 import { OutputFormat } from 'app/shared/image-cropper/interfaces/cropper-options.interface';
-import { TranslateDirective } from '../../shared/language/translate.directive';
-import { ImageCropperComponent } from '../../shared/image-cropper/component/image-cropper.component';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { ImageCropperComponent } from 'app/shared/image-cropper/component/image-cropper.component';
 
 @Component({
     selector: 'jhi-image-cropper-modal',

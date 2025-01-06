@@ -8,12 +8,11 @@ import { Result } from 'app/entities/result.model';
 import { StudentExam } from 'app/entities/student-exam.model';
 import { faFolderOpen } from '@fortawesome/free-solid-svg-icons';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { TranslateDirective } from '../../../../shared/language/translate.directive';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { RouterLink } from '@angular/router';
-import { ArtemisTranslatePipe } from '../../../../shared/pipes/artemis-translate.pipe';
+import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 
 @Component({
-    /* eslint-disable-next-line  @angular-eslint/component-selector */
     selector: '[jhi-student-exam-detail-table-row]',
     templateUrl: './student-exam-detail-table-row.component.html',
     providers: [],

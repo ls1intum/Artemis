@@ -4,12 +4,12 @@ import { faCheckDouble, faFont } from '@fortawesome/free-solid-svg-icons';
 import { Exercise, ExerciseType, getIcon } from 'app/entities/exercise.model';
 import { ExerciseGroup } from 'app/entities/exercise-group.model';
 import { EXERCISE_TITLE_NAME_REGEX, SHORT_NAME_PATTERN } from 'app/shared/constants/input.constants';
-import { TranslateDirective } from '../../../../shared/language/translate.directive';
-import { HelpIconComponent } from '../../../../shared/components/help-icon.component';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { HelpIconComponent } from 'app/shared/components/help-icon.component';
 import { FormsModule } from '@angular/forms';
 import { NgClass } from '@angular/common';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { DifficultyBadgeComponent } from '../../../../exercises/shared/exercise-headers/difficulty-badge.component';
+import { DifficultyBadgeComponent } from 'app/exercises/shared/exercise-headers/difficulty-badge.component';
 
 @Component({
     selector: 'jhi-exam-exercise-import',

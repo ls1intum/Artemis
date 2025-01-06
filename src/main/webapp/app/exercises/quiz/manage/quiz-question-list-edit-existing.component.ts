@@ -18,7 +18,7 @@ import { checkForInvalidFlaggedQuestions } from 'app/exercises/quiz/shared/quiz-
 import { FileService } from 'app/shared/http/file.service';
 import JSZip from 'jszip';
 import { KeyValuePipe, NgClass } from '@angular/common';
-import { TranslateDirective } from '../../../shared/language/translate.directive';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { FormsModule } from '@angular/forms';
 
 export enum State {

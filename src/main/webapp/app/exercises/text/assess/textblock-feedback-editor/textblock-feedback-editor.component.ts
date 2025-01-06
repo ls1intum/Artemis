@@ -1,6 +1,7 @@
 import { AfterViewInit, Component, ElementRef, EventEmitter, HostBinding, Input, Output, ViewChild, inject } from '@angular/core';
 import { TextBlock } from 'app/entities/text/text-block.model';
 import { Feedback, FeedbackType } from 'app/entities/feedback.model';
+import { FeedbackSuggestionBadgeComponent } from 'app/exercises/shared/feedback/feedback-suggestion-badge/feedback-suggestion-badge.component';
 import { ConfirmIconComponent } from 'app/shared/confirm-icon/confirm-icon.component';
 import { StructuredGradingCriterionService } from 'app/exercises/shared/structured-grading-criterion/structured-grading-criterion.service';
 import { NgbDropdown, NgbDropdownMenu, NgbDropdownToggle, NgbModal, NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
@@ -9,15 +10,13 @@ import { TextAssessmentEventType } from 'app/entities/text/text-assesment-event.
 import { TextAssessmentAnalytics } from 'app/exercises/text/assess/analytics/text-assesment-analytics.service';
 import { faAngleRight, faEdit, faExclamationTriangle, faQuestionCircle, faTimes, faTrash } from '@fortawesome/free-solid-svg-icons';
 import { GradingCriterion } from 'app/exercises/shared/structured-grading-criterion/grading-criterion.model';
-import { FeedbackSuggestionBadgeComponent } from '../../../shared/feedback/feedback-suggestion-badge/feedback-suggestion-badge.component';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { ConfirmIconComponent as ConfirmIconComponent_1 } from '../../../../shared/confirm-icon/confirm-icon.component';
-import { TranslateDirective } from '../../../../shared/language/translate.directive';
-import { GradingInstructionLinkIconComponent } from '../../../../shared/grading-instruction-link-icon/grading-instruction-link-icon.component';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { GradingInstructionLinkIconComponent } from 'app/shared/grading-instruction-link-icon/grading-instruction-link-icon.component';
 import { TextblockFeedbackDropdownComponent } from './dropdown/textblock-feedback-dropdown.component';
 import { FormsModule } from '@angular/forms';
-import { AssessmentCorrectionRoundBadgeComponent } from '../../../../assessment/unreferenced-feedback-detail/assessment-correction-round-badge/assessment-correction-round-badge.component';
-import { ArtemisTranslatePipe } from '../../../../shared/pipes/artemis-translate.pipe';
+import { AssessmentCorrectionRoundBadgeComponent } from 'app/assessment/unreferenced-feedback-detail/assessment-correction-round-badge/assessment-correction-round-badge.component';
+import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 
 @Component({
     selector: 'jhi-textblock-feedback-editor',
@@ -27,7 +26,7 @@ import { ArtemisTranslatePipe } from '../../../../shared/pipes/artemis-translate
         FeedbackSuggestionBadgeComponent,
         FaIconComponent,
         NgbTooltip,
-        ConfirmIconComponent_1,
+        ConfirmIconComponent,
         TranslateDirective,
         GradingInstructionLinkIconComponent,
         NgbDropdown,

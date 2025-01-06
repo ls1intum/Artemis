@@ -2,9 +2,9 @@ import { Component, inject } from '@angular/core';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import { AlertService } from 'app/core/util/alert.service';
-import { TranslateDirective } from '../../shared/language/translate.directive';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { FormsModule } from '@angular/forms';
-import { CopyIconButtonComponent } from '../../shared/components/copy-icon-button/copy-icon-button.component';
+import { CopyIconButtonComponent } from 'app/shared/components/copy-icon-button/copy-icon-button.component';
 
 @Component({
     selector: 'jhi-lti-initializer-modal',

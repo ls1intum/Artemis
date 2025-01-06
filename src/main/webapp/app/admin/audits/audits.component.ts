@@ -8,12 +8,12 @@ import { ITEMS_PER_PAGE } from 'app/shared/constants/pagination.constants';
 import { Audit } from './audit.model';
 import { AuditsService } from './audits.service';
 import { faSort } from '@fortawesome/free-solid-svg-icons';
-import { TranslateDirective } from '../../shared/language/translate.directive';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { FormsModule } from '@angular/forms';
-import { SortDirective } from '../../shared/sort/sort.directive';
-import { SortByDirective } from '../../shared/sort/sort-by.directive';
+import { SortDirective } from 'app/shared/sort/sort.directive';
+import { SortByDirective } from 'app/shared/sort/sort-by.directive';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { ItemCountComponent } from '../../shared/pagination/item-count.component';
+import { ItemCountComponent } from 'app/shared/pagination/item-count.component';
 import { NgbPagination } from '@ng-bootstrap/ng-bootstrap';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 

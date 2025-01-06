@@ -1,4 +1,5 @@
 import { AfterViewInit, Component, Input, OnChanges, OnDestroy, OnInit, QueryList, SimpleChanges, ViewChildren, inject, input } from '@angular/core';
+import { ExerciseFeedbackSuggestionOptionsComponent } from 'app/exercises/shared/feedback-suggestion/exercise-feedback-suggestion-options.component';
 import dayjs from 'dayjs/esm';
 import { TranslateService } from '@ngx-translate/core';
 import { AssessmentType } from 'app/entities/assessment-type.model';
@@ -14,21 +15,19 @@ import { ActivatedRoute } from '@angular/router';
 import { tap } from 'rxjs/operators';
 import { ImportOptions } from 'app/types/programming-exercises';
 import { ProgrammingExerciseInputField } from 'app/exercises/programming/manage/update/programming-exercise-update.helper';
-import { ProgrammingExerciseTestScheduleDatePickerComponent as ProgrammingExerciseTestScheduleDatePickerComponent_1 } from './programming-exercise-test-schedule-date-picker.component';
 import { FormsModule } from '@angular/forms';
-import { TranslateDirective } from '../../../../shared/language/translate.directive';
-import { HelpIconComponent } from '../../../../shared/components/help-icon.component';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { HelpIconComponent } from 'app/shared/components/help-icon.component';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { AsyncPipe, NgStyle } from '@angular/common';
-import { ExerciseFeedbackSuggestionOptionsComponent } from '../../../shared/feedback-suggestion/exercise-feedback-suggestion-options.component';
-import { ArtemisTranslatePipe } from '../../../../shared/pipes/artemis-translate.pipe';
+import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 
 @Component({
     selector: 'jhi-programming-exercise-lifecycle',
     templateUrl: './programming-exercise-lifecycle.component.html',
     styleUrls: ['./programming-exercise-test-schedule-picker.scss'],
     imports: [
-        ProgrammingExerciseTestScheduleDatePickerComponent_1,
+        ProgrammingExerciseTestScheduleDatePickerComponent,
         FormsModule,
         TranslateDirective,
         HelpIconComponent,

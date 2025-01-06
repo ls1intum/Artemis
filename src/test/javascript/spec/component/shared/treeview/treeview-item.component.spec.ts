@@ -37,7 +37,6 @@ const fakeData: FakeData = {
 const testTemplate = fakeItemTemplate + '<treeview-item [item]="item" [template]="itemTemplate" (checkedChange)="checkedChange($event)"></treeview-item>';
 
 @Component({
-    // eslint-disable-next-line @angular-eslint/component-selector
     selector: 'test',
     template: '',
 })

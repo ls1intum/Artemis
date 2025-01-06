@@ -12,7 +12,6 @@ import { AnswerOption } from 'app/entities/quiz/answer-option.model';
 import { NgbModule } from '@ng-bootstrap/ng-bootstrap';
 import { MarkdownEditorMonacoComponent } from 'app/shared/markdown-editor/monaco/markdown-editor-monaco.component';
 
-// eslint-disable-next-line @angular-eslint/directive-selector
 @Directive({ selector: '[sortableData]' })
 class MockSortableDataDirective {
     @Input('sortableData') data: any;

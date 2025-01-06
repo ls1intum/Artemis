@@ -7,18 +7,16 @@ import { AeolusService } from 'app/exercises/programming/shared/service/aeolus.s
 import { ProgrammingExerciseBuildConfigurationComponent } from 'app/exercises/programming/manage/update/update-components/custom-build-plans/programming-exercise-build-configuration/programming-exercise-build-configuration.component';
 import { MonacoEditorComponent } from 'app/shared/monaco-editor/monaco-editor.component';
 import { FormsModule } from '@angular/forms';
-import { TranslateDirective } from '../../../../../../shared/language/translate.directive';
-import { HelpIconComponent } from '../../../../../../shared/components/help-icon.component';
-import { ProgrammingExerciseBuildConfigurationComponent as ProgrammingExerciseBuildConfigurationComponent_1 } from './programming-exercise-build-configuration/programming-exercise-build-configuration.component';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { HelpIconComponent } from 'app/shared/components/help-icon.component';
 import { NgClass } from '@angular/common';
-import { MonacoEditorComponent as MonacoEditorComponent_1 } from '../../../../../../shared/monaco-editor/monaco-editor.component';
-import { ArtemisTranslatePipe } from '../../../../../../shared/pipes/artemis-translate.pipe';
+import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 
 @Component({
     selector: 'jhi-programming-exercise-custom-aeolus-build-plan',
     templateUrl: './programming-exercise-custom-aeolus-build-plan.component.html',
     styleUrls: ['../../../programming-exercise-form.scss'],
-    imports: [FormsModule, TranslateDirective, HelpIconComponent, ProgrammingExerciseBuildConfigurationComponent_1, NgClass, MonacoEditorComponent_1, ArtemisTranslatePipe],
+    imports: [FormsModule, TranslateDirective, HelpIconComponent, ProgrammingExerciseBuildConfigurationComponent, NgClass, MonacoEditorComponent, ArtemisTranslatePipe],
 })
 export class ProgrammingExerciseCustomAeolusBuildPlanComponent implements OnChanges {
     private aeolusService = inject(AeolusService);

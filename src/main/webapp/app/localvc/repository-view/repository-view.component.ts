@@ -18,21 +18,20 @@ import { ButtonSize, ButtonType } from 'app/shared/components/button.component';
 import { Feedback } from 'app/entities/feedback.model';
 import { PROFILE_LOCALVC } from 'app/app.constants';
 import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
-import { CodeEditorContainerComponent as CodeEditorContainerComponent_1 } from '../../exercises/programming/shared/code-editor/container/code-editor-container.component';
-import { TranslateDirective } from '../../shared/language/translate.directive';
-import { ButtonComponent } from '../../shared/components/button.component';
-import { ResultComponent } from '../../exercises/shared/result/result.component';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { ButtonComponent } from 'app/shared/components/button.component';
+import { ResultComponent } from 'app/exercises/shared/result/result.component';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { CodeButtonComponent } from '../../shared/components/code-button/code-button.component';
-import { ProgrammingExerciseStudentRepoDownloadComponent } from '../../exercises/programming/shared/actions/programming-exercise-student-repo-download.component';
-import { ProgrammingExerciseInstructorRepoDownloadComponent } from '../../exercises/programming/shared/actions/programming-exercise-instructor-repo-download.component';
-import { ProgrammingExerciseInstructionComponent } from '../../exercises/programming/shared/instructions-render/programming-exercise-instruction.component';
+import { CodeButtonComponent } from 'app/shared/components/code-button/code-button.component';
+import { ProgrammingExerciseStudentRepoDownloadComponent } from 'app/exercises/programming/shared/actions/programming-exercise-student-repo-download.component';
+import { ProgrammingExerciseInstructorRepoDownloadComponent } from 'app/exercises/programming/shared/actions/programming-exercise-instructor-repo-download.component';
+import { ProgrammingExerciseInstructionComponent } from 'app/exercises/programming/shared/instructions-render/programming-exercise-instruction.component';
 
 @Component({
     selector: 'jhi-repository-view',
     templateUrl: './repository-view.component.html',
     imports: [
-        CodeEditorContainerComponent_1,
+        CodeEditorContainerComponent,
         TranslateDirective,
         ButtonComponent,
         ResultComponent,

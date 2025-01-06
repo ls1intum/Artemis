@@ -20,20 +20,12 @@ import { ConversationAddUsersDialogComponent } from 'app/overview/course-convers
 import { defaultSecondLayerDialogOptions } from 'app/overview/course-conversations/other/conversation.util';
 import { NgbPaginationMocksModule } from '../../../../../../../helpers/mocks/directive/ngbPaginationMocks.module';
 
-// eslint-disable-next-line @angular-eslint/component-selector
 @Component({ selector: '[jhi-conversation-member-row]', template: '' })
 class ConversationMemberRowStubComponent {
-    @Input()
-    activeConversation: ConversationDTO;
-
-    @Input()
-    course: Course;
-
-    @Output()
-    changePerformed = new EventEmitter<void>();
-
-    @Input()
-    conversationMember: ConversationUserDTO;
+    @Input() activeConversation: ConversationDTO;
+    @Input() course: Course;
+    @Input() conversationMember: ConversationUserDTO;
+    @Output() changePerformed = new EventEmitter<void>();
 }
 const examples: ConversationDTO[] = [generateOneToOneChatDTO({}), generateExampleGroupChatDTO({}), generateExampleChannelDTO({} as ChannelDTO)];
 

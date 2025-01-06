@@ -6,13 +6,13 @@ import { ButtonType } from 'app/shared/components/button.component';
 import { ExerciseCategory } from 'app/entities/exercise-category.model';
 import { getExerciseDueDate, hasExerciseDueDatePassed } from 'app/exercises/shared/exercise/exercise.utils';
 import { roundValueSpecifiedByCourseSettings } from 'app/shared/util/utils';
-import { TranslateDirective } from '../../../shared/language/translate.directive';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { NgClass, NgStyle } from '@angular/common';
 import { DifficultyBadgeComponent } from './difficulty-badge.component';
 import { IncludedInScoreBadgeComponent } from './included-in-score-badge.component';
-import { SubmissionResultStatusComponent } from '../../../overview/submission-result-status.component';
+import { SubmissionResultStatusComponent } from 'app/overview/submission-result-status.component';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
-import { ArtemisTranslatePipe } from '../../../shared/pipes/artemis-translate.pipe';
+import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { ArtemisTimeAgoPipe } from 'app/shared/pipes/artemis-time-ago.pipe';
 
 @Component({

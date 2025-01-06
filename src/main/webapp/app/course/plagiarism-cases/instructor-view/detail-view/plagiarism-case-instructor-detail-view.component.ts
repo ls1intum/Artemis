@@ -1,4 +1,6 @@
 import { Component, OnDestroy, OnInit, inject } from '@angular/core';
+import { PlagiarismCaseReviewComponent } from 'app/course/plagiarism-cases/shared/review/plagiarism-case-review.component';
+import { PlagiarismCaseVerdictComponent } from 'app/course/plagiarism-cases/shared/verdict/plagiarism-case-verdict.component';
 import { PlagiarismCase } from 'app/exercises/shared/plagiarism/types/PlagiarismCase';
 import { PlagiarismCasesService } from 'app/course/plagiarism-cases/shared/plagiarism-cases.service';
 import { ActivatedRoute, RouterLink } from '@angular/router';
@@ -17,8 +19,7 @@ import { abbreviateString } from 'app/utils/text.utils';
 import { AccountService } from 'app/core/auth/account.service';
 import { User } from 'app/core/user/user.model';
 import dayjs from 'dayjs/esm';
-import { TranslateDirective } from '../../../../shared/language/translate.directive';
-import { PlagiarismCaseVerdictComponent } from '../../shared/verdict/plagiarism-case-verdict.component';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import {
     NgbDropdown,
@@ -33,11 +34,10 @@ import {
     NgbNavLinkBase,
     NgbNavOutlet,
 } from '@ng-bootstrap/ng-bootstrap';
-import { PostingThreadComponent } from '../../../../shared/metis/posting-thread/posting-thread.component';
-import { PostCreateEditModalComponent } from '../../../../shared/metis/posting-create-edit-modal/post-create-edit-modal/post-create-edit-modal.component';
-import { ConfirmAutofocusButtonComponent } from '../../../../shared/components/confirm-autofocus-button.component';
+import { PostingThreadComponent } from 'app/shared/metis/posting-thread/posting-thread.component';
+import { PostCreateEditModalComponent } from 'app/shared/metis/posting-create-edit-modal/post-create-edit-modal/post-create-edit-modal.component';
+import { ConfirmAutofocusButtonComponent } from 'app/shared/components/confirm-autofocus-button.component';
 import { FormsModule } from '@angular/forms';
-import { PlagiarismCaseReviewComponent } from '../../shared/review/plagiarism-case-review.component';
 
 @Component({
     selector: 'jhi-plagiarism-case-instructor-detail-view',

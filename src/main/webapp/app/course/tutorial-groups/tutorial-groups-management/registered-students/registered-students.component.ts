@@ -11,9 +11,9 @@ import { AccountService } from 'app/core/auth/account.service';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import { Subject } from 'rxjs';
-import { LoadingIndicatorContainerComponent } from '../../../../shared/loading-indicator-container/loading-indicator-container.component';
-import { TranslateDirective } from '../../../../shared/language/translate.directive';
-import { CourseGroupComponent } from '../../../../shared/course-group/course-group.component';
+import { LoadingIndicatorContainerComponent } from 'app/shared/loading-indicator-container/loading-indicator-container.component';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { CourseGroupComponent } from 'app/shared/course-group/course-group.component';
 
 @Component({
     selector: 'jhi-registered-students',

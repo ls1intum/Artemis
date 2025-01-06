@@ -5,9 +5,9 @@ import { Exercise, ExerciseType } from 'app/entities/exercise.model';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
 import { ExerciseDetailsType, ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
 import { ParticipationService } from 'app/exercises/shared/participation/participation.service';
-import { ProgrammingExerciseInstructionComponent } from '../../../exercises/programming/shared/instructions-render/programming-exercise-instruction.component';
-import { TranslateDirective } from '../../../shared/language/translate.directive';
-import { HtmlForMarkdownPipe } from '../../../shared/pipes/html-for-markdown.pipe';
+import { ProgrammingExerciseInstructionComponent } from 'app/exercises/programming/shared/instructions-render/programming-exercise-instruction.component';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { HtmlForMarkdownPipe } from 'app/shared/pipes/html-for-markdown.pipe';
 
 @Component({
     selector: 'jhi-problem-statement',

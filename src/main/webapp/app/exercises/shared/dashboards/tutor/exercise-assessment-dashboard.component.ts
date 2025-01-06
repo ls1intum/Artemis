@@ -5,9 +5,12 @@ import { CourseManagementService } from 'app/course/manage/course-management.ser
 import { AlertService } from 'app/core/util/alert.service';
 import { User } from 'app/core/user/user.model';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
+import { ModelingEditorComponent } from 'app/exercises/modeling/shared/modeling-editor.component';
+import { ProgrammingExerciseInstructionComponent } from 'app/exercises/programming/shared/instructions-render/programming-exercise-instruction.component';
 import { TutorParticipationService } from 'app/exercises/shared/dashboards/tutor/tutor-participation.service';
 import { TextSubmissionService } from 'app/exercises/text/participate/text-submission.service';
 import { ExampleSubmission } from 'app/entities/example-submission.model';
+import { ExtensionPointDirective } from 'app/shared/extension-point/extension-point.directive';
 import { ArtemisMarkdownService } from 'app/shared/markdown.service';
 import { TextExercise } from 'app/entities/text/text-exercise.model';
 import { ModelingExercise } from 'app/entities/modeling-exercise.model';
@@ -38,7 +41,7 @@ import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 import { SortService } from 'app/shared/service/sort.service';
 import { onError } from 'app/shared/util/global.utils';
 import { roundValueSpecifiedByCourseSettings } from 'app/shared/util/utils';
-import { ArtemisNavigationUtilService, getLinkToSubmissionAssessment } from 'app/utils/navigation.utils';
+import { getLinkToSubmissionAssessment } from 'app/utils/navigation.utils';
 import { AssessmentType } from 'app/entities/assessment-type.model';
 import { LegendPosition, PieChartModule } from '@swimlane/ngx-charts';
 import { AssessmentDashboardInformationEntry } from 'app/course/dashboards/assessment-dashboard/assessment-dashboard-information.component';
@@ -49,29 +52,26 @@ import { PROFILE_LOCALVC } from 'app/app.constants';
 import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
 import { isManualResult } from 'app/exercises/shared/result/result.utils';
 import { HeaderExercisePageWithDetailsComponent } from '../../exercise-headers/header-exercise-page-with-details.component';
-import { TutorParticipationGraphComponent } from '../../../../shared/dashboards/tutor-participation-graph/tutor-participation-graph.component';
+import { TutorParticipationGraphComponent } from 'app/shared/dashboards/tutor-participation-graph/tutor-participation-graph.component';
 import { SecondCorrectionEnableButtonComponent } from './second-correction-button/second-correction-enable-button.component';
-import { SidePanelComponent } from '../../../../shared/side-panel/side-panel.component';
-import { TranslateDirective } from '../../../../shared/language/translate.directive';
+import { SidePanelComponent } from 'app/shared/side-panel/side-panel.component';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { InfoPanelComponent } from '../../../../shared/info-panel/info-panel.component';
-import { ProgrammingExerciseInstructionComponent } from '../../../programming/shared/instructions-render/programming-exercise-instruction.component';
-import { ModelingEditorComponent } from '../../../modeling/shared/modeling-editor.component';
-import { SecureLinkDirective } from '../../../../shared/http/secure-link.directive';
-import { ButtonComponent } from '../../../../shared/components/button.component';
-import { CodeButtonComponent } from '../../../../shared/components/code-button/code-button.component';
-import { StructuredGradingInstructionsAssessmentLayoutComponent } from '../../../../assessment/structured-grading-instructions-assessment-layout/structured-grading-instructions-assessment-layout.component';
-import { ExtensionPointDirective } from '../../../../shared/extension-point/extension-point.directive';
+import { InfoPanelComponent } from 'app/shared/info-panel/info-panel.component';
+import { SecureLinkDirective } from 'app/shared/http/secure-link.directive';
+import { ButtonComponent } from 'app/shared/components/button.component';
+import { CodeButtonComponent } from 'app/shared/components/code-button/code-button.component';
+import { StructuredGradingInstructionsAssessmentLayoutComponent } from 'app/assessment/structured-grading-instructions-assessment-layout/structured-grading-instructions-assessment-layout.component';
 import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
-import { SortDirective } from '../../../../shared/sort/sort.directive';
-import { SortByDirective } from '../../../../shared/sort/sort-by.directive';
+import { SortDirective } from 'app/shared/sort/sort.directive';
+import { SortByDirective } from 'app/shared/sort/sort-by.directive';
 import { LanguageTableCellComponent } from './language-table-cell/language-table-cell.component';
 import { NgStyle } from '@angular/common';
 import { ResultComponent } from '../../result/result.component';
-import { AssessmentWarningComponent } from '../../../../assessment/assessment-warning/assessment-warning.component';
-import { CollapsableAssessmentInstructionsComponent } from '../../../../assessment/assessment-instructions/collapsable-assessment-instructions/collapsable-assessment-instructions.component';
-import { TutorLeaderboardComponent } from '../../../../shared/dashboards/tutor-leaderboard/tutor-leaderboard.component';
-import { ArtemisTranslatePipe } from '../../../../shared/pipes/artemis-translate.pipe';
+import { AssessmentWarningComponent } from 'app/assessment/assessment-warning/assessment-warning.component';
+import { CollapsableAssessmentInstructionsComponent } from 'app/assessment/assessment-instructions/collapsable-assessment-instructions/collapsable-assessment-instructions.component';
+import { TutorLeaderboardComponent } from 'app/shared/dashboards/tutor-leaderboard/tutor-leaderboard.component';
+import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { ArtemisDurationFromSecondsPipe } from 'app/shared/pipes/artemis-duration-from-seconds.pipe';
 
 export interface ExampleSubmissionQueryParams {
@@ -100,7 +100,6 @@ export interface ExampleSubmissionQueryParams {
         ButtonComponent,
         CodeButtonComponent,
         StructuredGradingInstructionsAssessmentLayoutComponent,
-        ExtensionPointDirective,
         NgbTooltip,
         SortDirective,
         SortByDirective,
@@ -113,6 +112,8 @@ export interface ExampleSubmissionQueryParams {
         ArtemisDatePipe,
         ArtemisTranslatePipe,
         ArtemisDurationFromSecondsPipe,
+        // NOTE: this is actually used
+        ExtensionPointDirective,
     ],
 })
 export class ExerciseAssessmentDashboardComponent implements OnInit {
@@ -131,13 +132,12 @@ export class ExerciseAssessmentDashboardComponent implements OnInit {
     private router = inject(Router);
     private programmingSubmissionService = inject(ProgrammingSubmissionService);
     private guidedTourService = inject(GuidedTourService);
-    private artemisDatePipe = inject(ArtemisDatePipe);
     private sortService = inject(SortService);
-    private navigationUtilService = inject(ArtemisNavigationUtilService);
     private profileService = inject(ProfileService);
 
     readonly roundScoreSpecifiedByCourseSettings = roundValueSpecifiedByCourseSettings;
     readonly getCourseFromExercise = getCourseFromExercise;
+
     exercise: Exercise;
     modelingExercise: ModelingExercise;
     programmingExercise: ProgrammingExercise;
@@ -186,7 +186,6 @@ export class ExerciseAssessmentDashboardComponent implements OnInit {
     getSubmissionResultByCorrectionRound = getSubmissionResultByCorrectionRound;
 
     // helper variables to display information message about why no new assessments are possible anymore
-    remainingAssessments: number[] = [];
     lockedSubmissionsByOtherTutor: number[] = [];
     notYetAssessed: number[] = [];
     firstRoundAssessments: number;

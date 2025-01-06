@@ -9,13 +9,13 @@ import { Observable, Subject } from 'rxjs';
 import { ProgrammingExerciseTestCase } from 'app/entities/programming/programming-exercise-test-case.model';
 import { isExamExercise } from 'app/shared/util/utils';
 import { ProgrammingExerciseServerSideTask } from 'app/entities/programming-exercise-task.model';
-import { ButtonComponent } from '../../../../../shared/components/button.component';
-import { TranslateDirective } from '../../../../../shared/language/translate.directive';
+import { ButtonComponent } from 'app/shared/components/button.component';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { FormsModule } from '@angular/forms';
 import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { ProgrammingExerciseTaskComponent } from './programming-exercise-task/programming-exercise-task.component';
-import { ArtemisTranslatePipe } from '../../../../../shared/pipes/artemis-translate.pipe';
+import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 
 type Sort = {
     by: 'name' | 'weight' | 'multiplier' | 'bonusPoints' | 'visibility' | 'resulting' | 'type';

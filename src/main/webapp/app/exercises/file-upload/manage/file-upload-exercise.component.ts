@@ -12,14 +12,14 @@ import { AlertService } from 'app/core/util/alert.service';
 import { faBook, faPlus, faSort, faTable, faTrash, faUsers, faWrench } from '@fortawesome/free-solid-svg-icons';
 import { faListAlt } from '@fortawesome/free-regular-svg-icons';
 import { CourseExerciseService } from 'app/exercises/shared/course-exercises/course-exercise.service';
-import { SortDirective } from '../../../shared/sort/sort.directive';
+import { SortDirective } from 'app/shared/sort/sort.directive';
 import { FormsModule } from '@angular/forms';
-import { SortByDirective } from '../../../shared/sort/sort-by.directive';
-import { TranslateDirective } from '../../../shared/language/translate.directive';
+import { SortByDirective } from 'app/shared/sort/sort-by.directive';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { RouterLink } from '@angular/router';
-import { ExerciseCategoriesComponent } from '../../../shared/exercise-categories/exercise-categories.component';
-import { DeleteButtonDirective } from '../../../shared/delete-dialog/delete-button.directive';
+import { ExerciseCategoriesComponent } from 'app/shared/exercise-categories/exercise-categories.component';
+import { DeleteButtonDirective } from 'app/shared/delete-dialog/delete-button.directive';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 
 @Component({

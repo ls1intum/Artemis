@@ -8,11 +8,11 @@ import { PlagiarismComparison } from 'app/exercises/shared/plagiarism/types/Plag
 import { PlagiarismInspectorService } from 'app/exercises/shared/plagiarism/plagiarism-inspector/plagiarism-inspector.service';
 import { PlagiarismStatus } from 'app/exercises/shared/plagiarism/types/PlagiarismStatus';
 import { PlagiarismResultStats } from 'app/exercises/shared/plagiarism/types/PlagiarismResultDTO';
-import { TranslateDirective } from '../../../../shared/language/translate.directive';
-import { HelpIconComponent } from '../../../../shared/components/help-icon.component';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { HelpIconComponent } from 'app/shared/components/help-icon.component';
 import { BarChartModule } from '@swimlane/ngx-charts';
 import { DatePipe } from '@angular/common';
-import { ArtemisTranslatePipe } from '../../../../shared/pipes/artemis-translate.pipe';
+import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 
 interface SimilarityRangeComparisonStateDTO {
     confirmed: number;

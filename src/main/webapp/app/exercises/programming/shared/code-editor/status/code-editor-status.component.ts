@@ -3,8 +3,8 @@ import { faCheckCircle, faCircleNotch, faExclamationTriangle, faTimesCircle } fr
 import { CommitState, EditorState } from 'app/exercises/programming/shared/code-editor/model/code-editor.model';
 import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { TranslateDirective } from '../../../../../shared/language/translate.directive';
-import { ArtemisTranslatePipe } from '../../../../../shared/pipes/artemis-translate.pipe';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 
 @Component({
     selector: 'jhi-code-editor-status',

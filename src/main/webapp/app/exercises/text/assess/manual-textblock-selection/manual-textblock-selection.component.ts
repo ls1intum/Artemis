@@ -3,9 +3,8 @@ import { TextBlockRef } from 'app/entities/text/text-block-ref.model';
 import { TextSubmission } from 'app/entities/text/text-submission.model';
 import { TextBlock } from 'app/entities/text/text-block.model';
 import { GradingCriterion } from 'app/exercises/shared/structured-grading-criterion/grading-criterion.model';
-import { wordSelection } from 'app/exercises/text/shared/manual-text-selection/manual-text-selection.component';
+import { ManualTextSelectionComponent, wordSelection } from 'app/exercises/text/shared/manual-text-selection/manual-text-selection.component';
 import { TextblockAssessmentCardComponent } from '../textblock-assessment-card/textblock-assessment-card.component';
-import { ManualTextSelectionComponent } from '../../shared/manual-text-selection/manual-text-selection.component';
 
 @Component({
     selector: 'jhi-manual-textblock-selection',
@@ -19,13 +18,15 @@ export class ManualTextblockSelectionComponent {
     get textBlockRefs(): TextBlockRef[] {
         return this.textBlockRefGroups.reduce((previous: TextBlockRef[], group: TextBlockRefGroup) => [...previous, ...group.refs], []);
     }
-    @Output() textBlockRefsChange = new EventEmitter<TextBlockRef[]>();
-    @Output() textBlockRefAdded = new EventEmitter<TextBlockRef>();
     @Input() selectedRef?: TextBlockRef;
     @Input() readOnly: boolean;
-    @Output() selectedRefChange = new EventEmitter<TextBlockRef | undefined>();
     @Input() submission: TextSubmission;
     @Input() criteria?: GradingCriterion[];
+
+    @Output() textBlockRefsChange = new EventEmitter<TextBlockRef[]>();
+    @Output() textBlockRefAdded = new EventEmitter<TextBlockRef>();
+    @Output() selectedRefChange = new EventEmitter<TextBlockRef | undefined>();
+
     textBlockRefGroups: TextBlockRefGroup[];
 
     textBlockRefsChangeEmit(): void {

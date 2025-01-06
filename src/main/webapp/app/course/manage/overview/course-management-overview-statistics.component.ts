@@ -7,8 +7,8 @@ import { Course } from 'app/entities/course.model';
 import * as shape from 'd3-shape';
 import { ActiveStudentsChart } from 'app/shared/chart/active-students-chart';
 import { RouterLink } from '@angular/router';
-import { TranslateDirective } from '../../../shared/language/translate.directive';
-import { HelpIconComponent } from '../../../shared/components/help-icon.component';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { HelpIconComponent } from 'app/shared/components/help-icon.component';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 
 @Component({

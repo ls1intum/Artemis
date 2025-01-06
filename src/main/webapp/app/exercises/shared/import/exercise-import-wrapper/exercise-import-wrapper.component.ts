@@ -3,7 +3,7 @@ import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import { ExerciseType } from 'app/entities/exercise.model';
 import { ProgrammingLanguage } from 'app/entities/programming/programming-exercise.model';
 import { FormsModule } from '@angular/forms';
-import { TranslateDirective } from '../../../../shared/language/translate.directive';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { ExerciseImportTabsComponent } from '../exercise-import-tabs.component';
 import { ExerciseImportComponent } from '../exercise-import.component';
 

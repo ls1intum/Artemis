@@ -48,17 +48,12 @@ import { ProgrammingExerciseGradingComponent } from 'app/exercises/programming/m
 import { ExerciseUpdatePlagiarismComponent } from 'app/exercises/shared/plagiarism/exercise-update-plagiarism/exercise-update-plagiarism.component';
 import { ImportOptions } from 'app/types/programming-exercises';
 import { IS_DISPLAYED_IN_SIMPLE_MODE, ProgrammingExerciseInputField } from 'app/exercises/programming/manage/update/programming-exercise-update.helper';
-import { TranslateDirective } from '../../../../shared/language/translate.directive';
-import { DocumentationButtonComponent } from '../../../../shared/components/documentation-button/documentation-button.component';
-import { FormStatusBarComponent } from '../../../../forms/form-status-bar/form-status-bar.component';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { DocumentationButtonComponent } from 'app/shared/components/documentation-button/documentation-button.component';
+import { FormStatusBarComponent } from 'app/forms/form-status-bar/form-status-bar.component';
 import { FormsModule } from '@angular/forms';
-import { ProgrammingExerciseInformationComponent as ProgrammingExerciseInformationComponent_1 } from './update-components/information/programming-exercise-information.component';
-import { ProgrammingExerciseModeComponent as ProgrammingExerciseModeComponent_1 } from './update-components/mode/programming-exercise-mode.component';
-import { ProgrammingExerciseLanguageComponent as ProgrammingExerciseLanguageComponent_1 } from './update-components/language/programming-exercise-language.component';
 import { ProgrammingExerciseProblemComponent } from './update-components/problem/programming-exercise-problem.component';
-import { ProgrammingExerciseGradingComponent as ProgrammingExerciseGradingComponent_1 } from './update-components/grading/programming-exercise-grading.component';
-import { ExerciseUpdatePlagiarismComponent as ExerciseUpdatePlagiarismComponent_1 } from '../../../shared/plagiarism/exercise-update-plagiarism/exercise-update-plagiarism.component';
-import { FormFooterComponent } from '../../../../forms/form-footer/form-footer.component';
+import { FormFooterComponent } from 'app/forms/form-footer/form-footer.component';
 
 export const LOCAL_STORAGE_KEY_IS_SIMPLE_MODE = 'isSimpleMode';
 
@@ -71,12 +66,12 @@ export const LOCAL_STORAGE_KEY_IS_SIMPLE_MODE = 'isSimpleMode';
         DocumentationButtonComponent,
         FormStatusBarComponent,
         FormsModule,
-        ProgrammingExerciseInformationComponent_1,
-        ProgrammingExerciseModeComponent_1,
-        ProgrammingExerciseLanguageComponent_1,
+        ProgrammingExerciseInformationComponent,
+        ProgrammingExerciseModeComponent,
+        ProgrammingExerciseLanguageComponent,
         ProgrammingExerciseProblemComponent,
-        ProgrammingExerciseGradingComponent_1,
-        ExerciseUpdatePlagiarismComponent_1,
+        ProgrammingExerciseGradingComponent,
+        ExerciseUpdatePlagiarismComponent,
         FormFooterComponent,
     ],
 })

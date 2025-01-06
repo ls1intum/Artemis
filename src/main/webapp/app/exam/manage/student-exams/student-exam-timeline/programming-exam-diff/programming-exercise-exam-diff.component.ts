@@ -14,12 +14,12 @@ import { ProgrammingExerciseGitDiffReport } from 'app/entities/programming-exerc
 import { ExamPageComponent } from 'app/exam/participate/exercises/exam-page.component';
 import { Observable, Subject, Subscription, debounceTime, take } from 'rxjs';
 import { CachedRepositoryFilesService } from 'app/exercises/programming/manage/services/cached-repository-files.service';
-import { IncludedInScoreBadgeComponent } from '../../../../../exercises/shared/exercise-headers/included-in-score-badge.component';
-import { CommitsInfoComponent } from '../../../../../exercises/programming/shared/commits-info/commits-info.component';
-import { TranslateDirective } from '../../../../../shared/language/translate.directive';
-import { GitDiffLineStatComponent } from '../../../../../exercises/programming/git-diff-report/git-diff-line-stat.component';
-import { ButtonComponent } from '../../../../../shared/components/button.component';
-import { ArtemisTranslatePipe } from '../../../../../shared/pipes/artemis-translate.pipe';
+import { IncludedInScoreBadgeComponent } from 'app/exercises/shared/exercise-headers/included-in-score-badge.component';
+import { CommitsInfoComponent } from 'app/exercises/programming/shared/commits-info/commits-info.component';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { GitDiffLineStatComponent } from 'app/exercises/programming/git-diff-report/git-diff-line-stat.component';
+import { ButtonComponent } from 'app/shared/components/button.component';
+import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 
 @Component({
     selector: 'jhi-programming-exam-diff',

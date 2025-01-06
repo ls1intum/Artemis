@@ -9,7 +9,7 @@ import { CourseManagementService } from 'app/course/manage/course-management.ser
 import { cloneDeep } from 'lodash-es';
 import { NgbTypeahead } from '@ng-bootstrap/ng-bootstrap';
 import { FormsModule } from '@angular/forms';
-import { ArtemisTranslatePipe } from '../../../../shared/pipes/artemis-translate.pipe';
+import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 
 @Component({
     selector: 'jhi-team-owner-search',
