@@ -25,5 +25,8 @@
         "playwright:init": "playwright test init",
         "merge-reports": "junit-merge ./test-reports/results-parallel.xml ./test-reports/results-sequential.xml -o ./test-reports/results.xml",
         "update": "ncu -i --format group"
+    },
+    "dependencies": {
+        "archiver": "^7.0.1"
     }
 }
