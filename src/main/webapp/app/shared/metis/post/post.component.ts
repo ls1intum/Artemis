@@ -22,11 +22,11 @@ import { NgbModalRef, NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { ContextInformation, DisplayPriority, PageType, RouteComponents } from '../metis.util';
 import { faBookmark, faBullhorn, faCheckSquare, faComments, faPencilAlt, faSmile, faThumbtack, faTrash } from '@fortawesome/free-solid-svg-icons';
 import dayjs from 'dayjs/esm';
-import { PostFooterComponent } from 'app/shared/metis/posting-footer/post-footer/post-footer.component';
 import { OneToOneChatService } from 'app/shared/metis/conversations/one-to-one-chat.service';
-import { isCommunicationEnabled, isMessagingEnabled } from 'app/entities/course.model';
+import { isCommunicationEnabled } from 'app/entities/course.model';
 import { Router, RouterLink, RouterLinkActive } from '@angular/router';
 import { MetisConversationService } from 'app/shared/metis/metis-conversation.service';
+import { PostingFooterComponent } from 'app/shared/metis/posting-footer/posting-footer.component';
 import { getAsChannelDTO } from 'app/entities/metis/conversation/channel.model';
 import { AnswerPost } from 'app/entities/metis/answer-post.model';
 import { AnswerPostCreateEditModalComponent } from 'app/shared/metis/posting-create-edit-modal/answer-post-create-edit-modal/answer-post-create-edit-modal.component';
@@ -36,7 +36,6 @@ import { PostReactionsBarComponent } from 'app/shared/metis/posting-reactions-ba
 import { CdkConnectedOverlay, CdkOverlayOrigin } from '@angular/cdk/overlay';
 import { DOCUMENT, NgClass, NgIf, NgStyle } from '@angular/common';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { PostHeaderComponent } from 'app/shared/metis/posting-header/post-header/post-header.component';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { PostingContentComponent } from 'app/shared/metis/posting-content/posting-content.components';
 import { MessageInlineInputComponent } from 'app/shared/metis/message/message-inline-input/message-inline-input.component';
@@ -59,14 +58,12 @@ import { ArtemisSharedCommonModule } from 'app/shared/shared-common.module';
         NgClass,
         FaIconComponent,
         TranslateDirective,
-        PostHeaderComponent,
         NgbTooltip,
         RouterLinkActive,
         RouterLink,
         PostingContentComponent,
         PostReactionsBarComponent,
         MessageInlineInputComponent,
-        PostFooterComponent,
         NgIf,
         NgStyle,
         CdkOverlayOrigin,
@@ -76,11 +73,11 @@ import { ArtemisSharedCommonModule } from 'app/shared/shared-common.module';
     ],
 })
 export class PostComponent extends PostingDirective<Post> implements OnInit, OnChanges, AfterContentChecked {
-    metisService = inject(MetisService);
-    changeDetector = inject(ChangeDetectorRef);
-    private oneToOneChatService = inject(OneToOneChatService);
-    private metisConversationService = inject(MetisConversationService);
-    private router = inject(Router);
+    protected metisService = inject(MetisService);
+    protected changeDetector = inject(ChangeDetectorRef);
+    protected oneToOneChatService = inject(OneToOneChatService);
+    protected metisConversationService = inject(MetisConversationService);
+    protected router = inject(Router);
     renderer = inject(Renderer2);
     private document = inject<Document>(DOCUMENT);
 
@@ -95,7 +92,7 @@ export class PostComponent extends PostingDirective<Post> implements OnInit, OnC
     @ViewChild('createAnswerPostModal') createAnswerPostModalComponent: AnswerPostCreateEditModalComponent;
     @ViewChild('createEditModal') createEditModal!: PostCreateEditModalComponent;
     @ViewChild('createEditAnswerPostContainer', { read: ViewContainerRef }) containerRef: ViewContainerRef;
-    @ViewChild('postFooter') postFooterComponent: PostFooterComponent;
+    @ViewChild('postFooter') postFooterComponent: PostingFooterComponent;
     showReactionSelector = false;
     @ViewChild('emojiPickerTrigger') emojiPickerTrigger!: CdkOverlayOrigin;
     static activeDropdownPost: PostComponent | null = null;
@@ -129,6 +126,10 @@ export class PostComponent extends PostingDirective<Post> implements OnInit, OnC
     isConsecutive = input<boolean>(false);
     dropdownPosition = { x: 0, y: 0 };
     @ViewChild(PostReactionsBarComponent) protected reactionsBarComponent!: PostReactionsBarComponent;
+
+    constructor() {
+        super();
+    }
 
     get reactionsBar() {
         return this.reactionsBarComponent;
@@ -276,28 +277,6 @@ export class PostComponent extends PostingDirective<Post> implements OnInit, OnC
             (answerPostA, answerPostB) =>
                 Number(answerPostB.resolvesPost) - Number(answerPostA.resolvesPost) || answerPostA.creationDate!.valueOf() - answerPostB.creationDate!.valueOf(),
         );
-    }
-
-    /**
-     * Create a or navigate to one-to-one chat with the referenced user
-     *
-     * @param referencedUserLogin login of the referenced user
-     */
-    onUserReferenceClicked(referencedUserLogin: string) {
-        const course = this.metisService.getCourse();
-        if (isMessagingEnabled(course)) {
-            if (this.isCommunicationPage) {
-                this.metisConversationService.createOneToOneChat(referencedUserLogin).subscribe();
-            } else {
-                this.oneToOneChatService.create(course.id!, referencedUserLogin).subscribe((res) => {
-                    this.router.navigate(['courses', course.id, 'communication'], {
-                        queryParams: {
-                            conversationId: res.body!.id,
-                        },
-                    });
-                });
-            }
-        }
     }
 
     /**

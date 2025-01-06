@@ -385,6 +385,8 @@ public interface ExamRepository extends ArtemisJpaRepository<Exam, Long> {
             """)
     long countGeneratedStudentExamsByExamWithoutTestRuns(@Param("examId") long examId);
 
+    long countByCourse_Id(Long courseId);
+
     /**
      * Returns the title of the exam with the given id.
      *

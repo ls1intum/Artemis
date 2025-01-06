@@ -1,0 +1,26 @@
+diff --git a/node_modules/@swimlane/ngx-graph/esm2022/lib/graph/graph.component.mjs b/node_modules/@swimlane/ngx-graph/esm2022/lib/graph/graph.component.mjs
+index fadcfa7..6a6ab52 100644
+--- a/node_modules/@swimlane/ngx-graph/esm2022/lib/graph/graph.component.mjs
++++ b/node_modules/@swimlane/ngx-graph/esm2022/lib/graph/graph.component.mjs
+@@ -197,7 +197,7 @@ export class GraphComponent {
+         if (layoutSettings) {
+             this.setLayoutSettings(this.layoutSettings);
+         }
+-        if (this.layout && this.nodes.length && this.links.length) {
++        if (this.layout && this.nodes && this.links) {
+             this.update();
+         }
+     }
+diff --git a/node_modules/@swimlane/ngx-graph/fesm2022/swimlane-ngx-graph.mjs b/node_modules/@swimlane/ngx-graph/fesm2022/swimlane-ngx-graph.mjs
+index 0e851a7..c8dce60 100644
+--- a/node_modules/@swimlane/ngx-graph/fesm2022/swimlane-ngx-graph.mjs
++++ b/node_modules/@swimlane/ngx-graph/fesm2022/swimlane-ngx-graph.mjs
+@@ -1478,7 +1478,7 @@ class GraphComponent {
+         if (layoutSettings) {
+             this.setLayoutSettings(this.layoutSettings);
+         }
+-        if (this.layout && this.nodes.length && this.links.length) {
++        if (this.layout && this.nodes && this.links) {
+             this.update();
+         }
+     }

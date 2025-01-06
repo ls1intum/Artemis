@@ -7,14 +7,20 @@ import { OneToOneChatDTO } from 'app/entities/metis/conversation/one-to-one-chat
 
 @Injectable({ providedIn: 'root' })
 export class OneToOneChatService {
+    public resourceUrl = '/api/courses/';
+
     private http = inject(HttpClient);
     private conversationService = inject(ConversationService);
-
-    public resourceUrl = '/api/courses/';
 
     create(courseId: number, loginOfChatPartner: string): Observable<HttpResponse<OneToOneChatDTO>> {
         return this.http
             .post<OneToOneChatDTO>(`${this.resourceUrl}${courseId}/one-to-one-chats`, [loginOfChatPartner], { observe: 'response' })
+            .pipe(map(this.conversationService.convertDateFromServer));
+    }
+
+    createWithId(courseId: number, userIdOfChatPartner: number) {
+        return this.http
+            .post<OneToOneChatDTO>(`${this.resourceUrl}${courseId}/one-to-one-chats/${userIdOfChatPartner}`, null, { observe: 'response' })
             .pipe(map(this.conversationService.convertDateFromServer));
     }
 }

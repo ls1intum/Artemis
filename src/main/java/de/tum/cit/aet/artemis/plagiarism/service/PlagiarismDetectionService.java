@@ -12,7 +12,6 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
-import de.jplag.exceptions.ExitException;
 import de.tum.cit.aet.artemis.modeling.domain.ModelingExercise;
 import de.tum.cit.aet.artemis.plagiarism.domain.PlagiarismResult;
 import de.tum.cit.aet.artemis.plagiarism.domain.modeling.ModelingPlagiarismResult;
@@ -60,7 +59,7 @@ public class PlagiarismDetectionService {
      * @param exercise exercise to check plagiarism
      * @return result of plagiarism checks
      */
-    public TextPlagiarismResult checkTextExercise(TextExercise exercise) throws ExitException {
+    public TextPlagiarismResult checkTextExercise(TextExercise exercise) {
         var plagiarismResult = textPlagiarismDetectionService.checkPlagiarism(exercise, exercise.getPlagiarismDetectionConfig().getSimilarityThreshold(),
                 exercise.getPlagiarismDetectionConfig().getMinimumScore(), exercise.getPlagiarismDetectionConfig().getMinimumSize());
         log.info("Finished textPlagiarismDetectionService.checkPlagiarism for exercise {} with {} comparisons,", exercise.getId(), plagiarismResult.getComparisons().size());
@@ -75,8 +74,7 @@ public class PlagiarismDetectionService {
      * @param exercise exercise to check plagiarism
      * @return result of plagiarism checks
      */
-    public TextPlagiarismResult checkProgrammingExercise(ProgrammingExercise exercise)
-            throws ExitException, IOException, ProgrammingLanguageNotSupportedForPlagiarismDetectionException {
+    public TextPlagiarismResult checkProgrammingExercise(ProgrammingExercise exercise) throws IOException, ProgrammingLanguageNotSupportedForPlagiarismDetectionException {
         checkProgrammingLanguageSupport(exercise);
 
         var plagiarismResult = programmingPlagiarismDetectionService.checkPlagiarism(exercise.getId(), exercise.getPlagiarismDetectionConfig().getSimilarityThreshold(),

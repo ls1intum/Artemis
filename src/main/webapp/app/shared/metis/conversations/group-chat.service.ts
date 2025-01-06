@@ -8,11 +8,11 @@ import { AccountService } from 'app/core/auth/account.service';
 
 @Injectable({ providedIn: 'root' })
 export class GroupChatService {
+    public resourceUrl = 'api/courses/';
+
     private http = inject(HttpClient);
     private conversationService = inject(ConversationService);
     private accountService = inject(AccountService);
-
-    public resourceUrl = 'api/courses/';
 
     create(courseId: number, loginsOfChatPartners: string[]): Observable<HttpResponse<GroupChatDTO>> {
         return this.http

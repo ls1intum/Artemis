@@ -52,7 +52,6 @@ export class MetisService implements OnDestroy {
     private currentConversation?: ConversationDTO = undefined;
     private user: User;
     private pageType: PageType;
-    private course: Course;
     private courseId: number;
     private cachedPosts: Post[] = [];
     private cachedTotalNumberOfPosts: number;
@@ -60,6 +59,8 @@ export class MetisService implements OnDestroy {
 
     private courseWideTopicSubscription: Subscription;
     private savedPostService: SavedPostService = inject(SavedPostService);
+
+    course: Course;
 
     constructor() {
         const notificationService = inject(NotificationService);

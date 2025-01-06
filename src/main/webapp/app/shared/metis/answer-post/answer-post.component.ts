@@ -28,7 +28,6 @@ import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { CdkConnectedOverlay, CdkOverlayOrigin } from '@angular/cdk/overlay';
 import { AnswerPostCreateEditModalComponent } from '../posting-create-edit-modal/answer-post-create-edit-modal/answer-post-create-edit-modal.component';
 import { PostingContentComponent } from 'app/shared/metis/posting-content/posting-content.components';
-import { AnswerPostHeaderComponent } from 'app/shared/metis/posting-header/answer-post-header/answer-post-header.component';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { EmojiPickerComponent } from 'app/shared/metis/emoji/emoji-picker.component';
 import { ArtemisSharedCommonModule } from 'app/shared/shared-common.module';
@@ -49,7 +48,6 @@ import { ArtemisSharedCommonModule } from 'app/shared/shared-common.module';
         NgClass,
         FaIconComponent,
         TranslateDirective,
-        AnswerPostHeaderComponent,
         PostingContentComponent,
         AnswerPostReactionsBarComponent,
         AnswerPostCreateEditModalComponent,
