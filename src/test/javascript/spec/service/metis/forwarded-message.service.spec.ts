@@ -5,7 +5,7 @@ import { ForwardedMessageService } from 'app/shared/metis/forwarded-message.serv
 import { ForwardedMessage } from 'app/entities/metis/forwarded-message.model';
 import { PostingType } from 'app/entities/metis/posting.model';
 
-describe('ForwardedMessageService (Jest)', () => {
+describe('ForwardedMessageService', () => {
     let service: ForwardedMessageService;
     let httpClientMock: Partial<HttpClient>;
 
@@ -92,7 +92,7 @@ describe('ForwardedMessageService (Jest)', () => {
             expect(calledOptions.params.get('type')).toBe('answer');
         });
 
-        it('should throw an error if IDs are empty (using async/await)', async () => {
+        it('should throw an error if IDs are empty', async () => {
             const ids: number[] = [];
 
             await expect(lastValueFrom(service.getForwardedMessages(ids, 'post'))).rejects.toThrow('IDs cannot be empty');

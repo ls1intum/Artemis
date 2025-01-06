@@ -48,10 +48,10 @@ import { NotificationService } from 'app/shared/notification/notification.servic
 import { MockNotificationService } from '../../helpers/mocks/service/mock-notification.service';
 import { SavedPostService } from 'app/shared/metis/saved-post.service';
 import { SavedPostStatus } from 'app/entities/metis/posting.model';
-import { ForwardedMessageService } from '../../../../../main/webapp/app/shared/metis/forwarded-message.service';
+import { ForwardedMessageService } from 'app/shared/metis/forwarded-message.service';
 import { MockForwardedMessageService } from '../../helpers/mocks/service/mock-forwarded-message.service';
-import { ForwardedMessage } from '../../../../../main/webapp/app/entities/metis/forwarded-message.model';
-import { Posting } from '../../../../../main/webapp/app/entities/metis/posting.model';
+import { ForwardedMessage } from 'app/entities/metis/forwarded-message.model';
+import { Posting } from 'app/entities/metis/posting.model';
 
 describe('Metis Service', () => {
     let metisService: MetisService;
@@ -664,6 +664,9 @@ describe('Metis Service', () => {
         metisService.getForwardedMessagesByIds([], 'post');
         expect(forwardedMessageServiceSpy).not.toHaveBeenCalled();
 
+        metisService.getForwardedMessagesByIds([], 'answer');
+        expect(forwardedMessageServiceSpy).not.toHaveBeenCalled();
+
         metisService.getForwardedMessagesByIds(undefined as any, 'post');
         expect(forwardedMessageServiceSpy).not.toHaveBeenCalled();
         tick();
@@ -689,6 +692,22 @@ describe('Metis Service', () => {
         tick();
     }));
 
+    it('should not call getSourcePostsByIds if postId list is undefined', fakeAsync(() => {
+        const postIds: number[] | undefined = undefined;
+        metisService.getSourcePostsByIds(postIds as any);
+        const postServiceSpy = jest.spyOn(postService, 'getSourcePostsByIds');
+
+        expect(postServiceSpy).not.toHaveBeenCalled();
+        tick();
+    }));
+
+    it('should not call getSourceAnswerPostsByIds if answerPostIds is undefined', () => {
+        const answerPostIds: number[] | undefined = undefined;
+        metisService.getSourceAnswerPostsByIds(answerPostIds as any);
+        const answerPostServiceSpy = jest.spyOn(answerPostService, 'getSourceAnswerPostsByIds');
+        expect(answerPostServiceSpy).not.toHaveBeenCalled();
+    });
+
     it('should create forwarded messages and update cached posts', fakeAsync(() => {
         const originalPosts: Posting[] = [{ id: 1 }, { id: 2 }] as Posting[];
         metisService.setCourse(course);
@@ -708,6 +727,30 @@ describe('Metis Service', () => {
         expect(forwardedMessageService.createForwardedMessage).toHaveBeenCalledTimes(originalPosts.length);
         expect(result?.length).toBe(originalPosts.length);
         expect(result?.every((fm) => fm.destinationPost?.id === createdPost.id)).toBeTrue();
+    }));
+
+    it('should create forwarded messages with sourceType=ANSWER if isAnswer=true', fakeAsync(() => {
+        metisService.setCourse(course);
+        const targetConversation: Conversation = { id: 2 } as Conversation;
+        const originalAnswerPosts: Posting[] = [{ id: 10, content: 'originalAnswer1' } as Posting, { id: 11, content: 'originalAnswer2' } as Posting];
+
+        const createdPost: Post = { id: 200, content: 'Forwarded answer container', hasForwardedMessages: true } as Post;
+        jest.spyOn(postService, 'create').mockReturnValue(of(new HttpResponse({ body: createdPost })));
+
+        const createFwSpy = jest.spyOn(forwardedMessageService, 'createForwardedMessage').mockReturnValue(of(new HttpResponse({ body: { id: 1234 } as ForwardedMessage })));
+
+        let result: ForwardedMessage[] = [];
+        metisService.createForwardedMessages(originalAnswerPosts, targetConversation, true, 'some content').subscribe((res) => (result = res));
+        tick();
+
+        expect(postService.create).toHaveBeenCalled();
+        expect(createFwSpy).toHaveBeenCalledTimes(originalAnswerPosts.length);
+
+        createFwSpy.mock.calls.forEach(([argForwardedMessage]) => {
+            expect(argForwardedMessage.sourceType).toBe(1); // ANSWER==1
+        });
+
+        expect(result).toHaveLength(originalAnswerPosts.length);
     }));
 
     describe('Save post methods', () => {

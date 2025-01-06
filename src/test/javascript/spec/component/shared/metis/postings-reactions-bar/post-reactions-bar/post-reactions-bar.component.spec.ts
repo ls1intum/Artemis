@@ -1,4 +1,4 @@
-import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
 import { MetisService } from 'app/shared/metis/metis.service';
 import { DebugElement, input, runInInjectionContext } from '@angular/core';
 import { Post } from 'app/entities/metis/post.model';
@@ -29,7 +29,7 @@ import { EmojiComponent } from 'app/shared/metis/emoji/emoji.component';
 import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { NotificationService } from 'app/shared/notification/notification.service';
 import { MockNotificationService } from '../../../../../helpers/mocks/service/mock-notification.service';
-import { ConversationDTO, ConversationType } from 'app/entities/metis/conversation/conversation.model';
+import { Conversation, ConversationDTO, ConversationType } from 'app/entities/metis/conversation/conversation.model';
 import { ChannelDTO } from 'app/entities/metis/conversation/channel.model';
 import { User } from 'app/core/user/user.model';
 import { provideHttpClient } from '@angular/common/http';
@@ -38,6 +38,7 @@ import { ConfirmIconComponent } from 'app/shared/confirm-icon/confirm-icon.compo
 import { MetisConversationService } from 'app/shared/metis/metis-conversation.service';
 import { MockMetisConversationService } from '../../../../../helpers/mocks/service/mock-metis-conversation.service';
 import { Posting } from 'app/entities/metis/posting.model';
+import { of } from 'rxjs';
 
 describe('PostReactionsBarComponent', () => {
     let component: PostReactionsBarComponent;
@@ -444,4 +445,29 @@ describe('PostReactionsBarComponent', () => {
         expect(openForwardMessageViewSpy).toHaveBeenCalledOnce();
         expect(openForwardMessageViewSpy).toHaveBeenCalledWith(postingWithContent, false);
     });
+
+    it('should not call openForwardMessageView when course id is not set', fakeAsync(() => {
+        metisService.setCourse(undefined);
+
+        const metisServiceSpy = jest.spyOn(metisService, 'createForwardedMessages').mockReturnValue(of([]));
+        const modalServiceSpy = jest.spyOn(component['modalService'], 'open').mockReturnValue({
+            componentInstance: {
+                users: { set: jest.fn() },
+                channels: { set: jest.fn() },
+                postToForward: { set: jest.fn() },
+                courseId: { set: jest.fn() },
+            },
+            result: Promise.resolve({
+                channels: [{ id: 1, type: ConversationType.CHANNEL } as Conversation],
+                users: [],
+                messageContent: 'Forwarded content to convo 1',
+            }),
+        } as any);
+
+        component.forwardMessage();
+        tick();
+
+        expect(modalServiceSpy).not.toHaveBeenCalled();
+        expect(metisServiceSpy).not.toHaveBeenCalled();
+    }));
 });
