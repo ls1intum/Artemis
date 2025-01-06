@@ -12,6 +12,7 @@ import org.springframework.stereotype.Service;
 
 import de.tum.cit.aet.artemis.communication.domain.AnswerPost;
 import de.tum.cit.aet.artemis.communication.domain.Post;
+import de.tum.cit.aet.artemis.communication.domain.PostingType;
 import de.tum.cit.aet.artemis.communication.domain.conversation.Channel;
 import de.tum.cit.aet.artemis.communication.domain.conversation.Conversation;
 import de.tum.cit.aet.artemis.communication.domain.notification.SingleUserNotification;
@@ -208,6 +209,10 @@ public class AnswerMessageService extends PostingService {
         // delete
         answerPostRepository.deleteById(answerMessageId);
         preparePostForBroadcast(updatedMessage);
+
+        // Delete all connected saved posts
+        var savedPosts = savedPostRepository.findSavedPostByPostIdAndPostType(answerMessageId, PostingType.ANSWER);
+        savedPostRepository.deleteAll(savedPosts);
 
         broadcastForPost(new PostDTO(updatedMessage, MetisCrudAction.UPDATE), course.getId(), null, null);
     }
