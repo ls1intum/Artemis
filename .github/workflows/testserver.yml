@@ -77,7 +77,7 @@ jobs:
     with:
       sha: ${{ github.event.inputs.HELIOS_BRANCH_HEAD_SHA }}
       tag: ${{ github.event.inputs.HELIOS_BUILD_TAG }}
-      raw_url: ${{ env.RAW_URL }}
+      raw_url: ${{ github.event.inputs.HELIOS_RAW_URL }}
 
   # Check if the build has run successfully (PR)
   check-existing-build:
