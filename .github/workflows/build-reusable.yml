@@ -1,4 +1,4 @@
-name: Build
+name: Build (reusable)
 
 on:
   # workflow_call makes it possible to trigger this build workflow from another workflow
