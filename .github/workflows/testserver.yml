@@ -74,6 +74,10 @@ jobs:
     needs: [ validate-inputs ]
     runs-on: ubuntu-latest
     steps:
+      - name: Git Checkout
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.inputs.HELIOS_BRANCH_NAME }}
       # Build the Docker image (branch without PR)
       - name: Run build workflow
         if: ${{ github.event.inputs.HELIOS_BUILD == 'true' }}
