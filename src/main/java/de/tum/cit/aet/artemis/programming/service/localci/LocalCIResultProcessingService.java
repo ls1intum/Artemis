@@ -56,10 +56,6 @@ import de.tum.cit.aet.artemis.programming.service.ProgrammingTriggerService;
 @Service
 public class LocalCIResultProcessingService {
 
-    private static final int BUILD_STATISTICS_UPDATE_THRESHOLD = 10;
-
-    private static final int BUILD_JOB_DURATION_UPDATE_LIMIT = 100;
-
     private static final Logger log = LoggerFactory.getLogger(LocalCIResultProcessingService.class);
 
     private final HazelcastInstance hazelcastInstance;
@@ -192,7 +188,7 @@ public class LocalCIResultProcessingService {
                 else {
                     savedBuildJob = saveFinishedBuildJob(buildJob, BuildStatus.SUCCESSFUL, result);
                     if (programmingExerciseParticipation != null) {
-                        updateExerciseBuildDurationAsync(programmingExerciseParticipation.getProgrammingExercise());
+                        updateExerciseBuildDurationAsync(programmingExerciseParticipation.getProgrammingExercise().getId());
                     }
                 }
 
@@ -282,34 +278,33 @@ public class LocalCIResultProcessingService {
         }
     }
 
-    private void updateExerciseBuildDurationAsync(ProgrammingExercise exercise) {
-        CompletableFuture.runAsync(() -> updateExerciseBuildDuration(exercise));
+    private void updateExerciseBuildDurationAsync(long exerciseId) {
+        CompletableFuture.runAsync(() -> updateExerciseBuildDuration(exerciseId));
     }
 
-    private void updateExerciseBuildDuration(ProgrammingExercise exercise) {
+    private void updateExerciseBuildDuration(long exerciseId) {
         try {
-            var buildStatisticsDto = buildJobRepository.findBuildJobStatisticsByExerciseId(exercise.getId());
+            var buildStatisticsDto = buildJobRepository.findBuildJobStatisticsByExerciseId(exerciseId);
             if (buildStatisticsDto == null || buildStatisticsDto.buildCountWhenUpdated() == 0) {
                 return;
             }
-            var programmingExerciseBuildStatistics = programmingExerciseBuildStatisticsRepository.findByExerciseId(exercise.getId()).orElse(null);
+            var programmingExerciseBuildStatistics = programmingExerciseBuildStatisticsRepository.findByExerciseId(exerciseId).orElse(null);
+
+            long averageDuration = Math.round(buildStatisticsDto.buildDurationSeconds());
 
             if (programmingExerciseBuildStatistics == null) {
-                programmingExerciseBuildStatistics = new ProgrammingExerciseBuildStatistics(exercise.getId(), buildStatisticsDto.buildDurationSeconds(),
-                        buildStatisticsDto.buildCountWhenUpdated());
+                // create the database row if it does not exist
+                programmingExerciseBuildStatistics = new ProgrammingExerciseBuildStatistics(exerciseId, averageDuration, buildStatisticsDto.buildCountWhenUpdated());
+                programmingExerciseBuildStatisticsRepository.save(programmingExerciseBuildStatistics);
             }
             else {
-                // Only update the build duration if the number of builds has increased by a certain threshold
-                boolean shouldUpdateBuildDuration = buildStatisticsDto.buildCountWhenUpdated()
-                        - programmingExerciseBuildStatistics.getBuildCountWhenUpdated() >= BUILD_STATISTICS_UPDATE_THRESHOLD;
-                if (!shouldUpdateBuildDuration) {
+                // only update the database row if the build duration has changed using a modifying query
+                if (averageDuration == programmingExerciseBuildStatistics.getBuildDurationSeconds()) {
                     return;
                 }
-
-                programmingExerciseBuildStatistics.setBuildDurationSeconds(buildStatisticsDto.buildDurationSeconds());
-                programmingExerciseBuildStatistics.setBuildCountWhenUpdated(buildStatisticsDto.buildCountWhenUpdated());
+                programmingExerciseBuildStatisticsRepository.updateStatistics(averageDuration, buildStatisticsDto.buildCountWhenUpdated(), exerciseId);
             }
-            programmingExerciseBuildStatisticsRepository.save(programmingExerciseBuildStatistics);
+
         }
         catch (Exception e) {
             log.error("Could not update exercise build duration", e);

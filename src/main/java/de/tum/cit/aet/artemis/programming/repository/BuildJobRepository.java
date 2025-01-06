@@ -107,24 +107,8 @@ public interface BuildJobRepository extends ArtemisJpaRepository<BuildJob, Long>
     long countBuildJobsByExerciseIds(@Param("exerciseIds") List<Long> exerciseIds);
 
     @Query("""
-            SELECT b
-            FROM BuildJob b
-            WHERE b.exerciseId = :exerciseId AND b.buildStatus = de.tum.cit.aet.artemis.programming.domain.build.BuildStatus.SUCCESSFUL
-            ORDER BY b.buildStartDate DESC
-            LIMIT :limit
-            """)
-    List<BuildJob> fetchSuccessfulBuildJobsByExerciseIdWithLimit(@Param("exerciseId") Long exerciseId, @Param("limit") int limit);
-
-    @Query("""
-            SELECT COUNT(b)
-            FROM BuildJob b
-            WHERE b.exerciseId = :exerciseId AND b.buildStatus = de.tum.cit.aet.artemis.programming.domain.build.BuildStatus.SUCCESSFUL
-            """)
-    long fetchSuccessfulBuildJobCountByExerciseId(@Param("exerciseId") Long exerciseId);
-
-    @Query("""
             SELECT new de.tum.cit.aet.artemis.programming.dto.BuildJobStatisticsDTO(
-                ROUND(AVG(TIMESTAMPDIFF(SECOND, b.buildStartDate, b.buildCompletionDate))),
+                ROUND(AVG((b.buildCompletionDate - b.buildStartDate) BY SECOND)),
                 COUNT(b),
                 b.exerciseId
             )
