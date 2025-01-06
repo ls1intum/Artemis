@@ -69,35 +69,23 @@ jobs:
           echo "Need Build? ${{ github.event.inputs.HELIOS_BUILD }}"
           echo "Build Tag? ${{ github.event.inputs.HELIOS_BUILD_TAG }}"
 
-  # Build the Docker image (branch without PR) or check if the build has run successfully (PR)
-  build-or-check-existing-build:
+  # Build the Docker image (branch without PR)
+  conditional-build:
+    if: ${{ github.event.inputs.HELIOS_BUILD == 'true' }}
+    needs: [ validate-inputs ]
+    runs-on: ubuntu-latest
+    uses: ./.github/workflows/build.yml
+    with:
+      sha: ${{ github.event.inputs.HELIOS_BRANCH_HEAD_SHA }}
+      tag: ${{ github.event.inputs.HELIOS_BUILD_TAG }}
+      raw_url: ${{ env.RAW_URL }}
+
+  # Check if the build has run successfully (PR)
+  check-existing-build:
+    if: ${{ github.event.inputs.HELIOS_BUILD == 'false' }}
     needs: [ validate-inputs ]
     runs-on: ubuntu-latest
     steps:
-      - name: Git Checkout
-        uses: actions/checkout@v4
-        with:
-          ref: ${{ github.event.inputs.HELIOS_BRANCH_NAME }}
-      - name: Debug List files
-        run: |
-          ls -R .github/workflows/
-          cat .github/workflows/build.yml
-      # Build the Docker image (branch without PR)
-      - name: Run build workflow
-        if: ${{ github.event.inputs.HELIOS_BUILD == 'true' }}
-        uses: ./.github/workflows/build.yml
-        with:
-          sha: ${{ github.event.inputs.HELIOS_BRANCH_HEAD_SHA }}
-          tag: ${{ github.event.inputs.HELIOS_BUILD_TAG }}
-          raw_url: ${{ env.RAW_URL }}
-      - name: Echo build failure
-        if: failure() && github.event.inputs.HELIOS_BUILD == 'true'
-        run: echo "Build failed."
-      - name: Echo build success
-        if: success() && github.event.inputs.HELIOS_BUILD == 'true'
-        run: echo "Build succeeded."
-
-      # Check if the build has run successfully (PR)
       - name: Get latest successful build for branch
         if: ${{ github.event.inputs.HELIOS_BUILD == 'false' }}
         id: check_build
@@ -132,7 +120,9 @@ jobs:
 
   # Check which test server to deploy to based on the label
   filter-matrix:
-    needs: [ build-or-check-existing-build ]
+    needs: [ conditional-build, check-existing-build ]
+    # Run if either job is successful
+    if: ${{ needs.conditional-build.result == 'success' || needs.check-existing-build.result == 'success'}}
     runs-on: ubuntu-latest
     strategy:
       matrix:
