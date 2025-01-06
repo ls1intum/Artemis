@@ -222,12 +222,14 @@ jobs:
       #TS10: ${{ steps.filter.outputs.artemis-test10 || '' }}
     steps:
       - run: |
+          echo "matrix.hosts = ${{ matrix.hosts }}"
+          echo "HELIOS_ENVIRONMENT_NAME = ${{ github.event.inputs.HELIOS_ENVIRONMENT_NAME }}"
           echo "$DEPLOY_LABEL"
-          echo '${{ contains(github.event.inputs.HELIOS_ENVIRONMENT_NAME, format('{0}', matrix.hosts)) }}'
+          echo '${{ github.event.inputs.HELIOS_ENVIRONMENT_NAME == matrix.hosts }}'
       - id: filter
         env:
           MATRIX_JSON: ${{ toJSON(matrix) }}
-        if: ${{ contains(github.event.inputs.HELIOS_ENVIRONMENT_NAME, format('{0}', matrix.hosts)) }}
+        if: ${{ github.event.inputs.HELIOS_ENVIRONMENT_NAME == matrix.hosts }}
         run: |
           MATRIX_JSON=${MATRIX_JSON//$'\n'/}
           echo "${{ matrix.label-identifier }}=$MATRIX_JSON" >> $GITHUB_OUTPUT
