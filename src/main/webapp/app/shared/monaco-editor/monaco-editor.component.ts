@@ -189,6 +189,14 @@ export class MonacoEditorComponent implements OnInit, OnDestroy {
         this._editor.setPosition(position);
     }
 
+    getScrollTop(): number {
+        return this._editor.getScrollTop();
+    }
+
+    setScrollTop(scrollTop: number) {
+        this._editor.setScrollTop(scrollTop);
+    }
+
     setSelection(range: EditorRange): void {
         this._editor.setSelection(range);
     }

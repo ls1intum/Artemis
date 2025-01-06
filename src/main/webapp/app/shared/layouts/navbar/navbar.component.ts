@@ -344,7 +344,6 @@ export class NavbarComponent implements OnInit, OnDestroy {
         detailed: 'artemisApp.gradingSystem.detailedTab.title',
         interval: 'artemisApp.gradingSystem.intervalTab.title',
         plagiarism_cases: 'artemisApp.plagiarism.cases.pageTitle',
-        code_hint_management: 'artemisApp.codeHint.management.title',
         tutorial_groups_management: 'artemisApp.pages.tutorialGroupsManagement.title',
         tutorial_groups: 'artemisApp.breadcrumb.title',
         registered_students: 'artemisApp.pages.registeredStudents.title',
@@ -493,13 +492,6 @@ export class NavbarComponent implements OnInit, OnDestroy {
             case 'quiz-exercises':
             case 'assessment-dashboard':
                 this.addResolvedTitleAsCrumb(EntityType.EXERCISE, [Number(segment)], currentPath, segment);
-                break;
-            case 'exercise-hints':
-                // obtain the exerciseId of the current path
-                // current path of form '/course-management/:courseId/exercises/:exerciseId/...
-
-                const exerciseId = currentPath.split('/')[4];
-                this.addResolvedTitleAsCrumb(EntityType.HINT, [Number(segment), Number(exerciseId)], currentPath, segment);
                 break;
             case 'apollon-diagrams':
                 this.addResolvedTitleAsCrumb(EntityType.DIAGRAM, [Number(segment)], currentPath, segment);

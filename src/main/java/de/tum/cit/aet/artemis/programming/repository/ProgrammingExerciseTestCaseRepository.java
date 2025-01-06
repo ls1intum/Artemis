@@ -2,7 +2,6 @@ package de.tum.cit.aet.artemis.programming.repository;
 
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
-import java.util.Optional;
 import java.util.Set;
 
 import org.springframework.context.annotation.Profile;
@@ -22,40 +21,6 @@ import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseTestCase;
 public interface ProgrammingExerciseTestCaseRepository extends ArtemisJpaRepository<ProgrammingExerciseTestCase, Long> {
 
     Set<ProgrammingExerciseTestCase> findByExerciseId(long exerciseId);
-
-    default ProgrammingExerciseTestCase findByIdWithExerciseElseThrow(long testCaseId) {
-        return getValueElseThrow(findByIdWithExercise(testCaseId), testCaseId);
-    }
-
-    /**
-     * Returns the test case with the programming exercise
-     *
-     * @param testCaseId of the test case
-     * @return the test case with the programming exercise
-     */
-    @Query("""
-            SELECT tc
-            FROM ProgrammingExerciseTestCase tc
-                LEFT JOIN FETCH tc.exercise ex
-            WHERE tc.id = :testCaseId
-            """)
-    Optional<ProgrammingExerciseTestCase> findByIdWithExercise(@Param("testCaseId") long testCaseId);
-
-    /**
-     * Returns all test cases with the associated solution entries for a programming exercise
-     *
-     * @param exerciseId of the exercise
-     * @param active     status of the test case
-     * @return all test cases with the associated solution entries
-     */
-    @Query("""
-            SELECT DISTINCT tc
-            FROM ProgrammingExerciseTestCase tc
-                LEFT JOIN FETCH tc.solutionEntries se
-            WHERE tc.exercise.id = :exerciseId
-                AND tc.active = :active
-            """)
-    Set<ProgrammingExerciseTestCase> findByExerciseIdWithSolutionEntriesAndActive(@Param("exerciseId") long exerciseId, @Param("active") Boolean active);
 
     Set<ProgrammingExerciseTestCase> findByExerciseIdAndActive(long exerciseId, Boolean active);
 
