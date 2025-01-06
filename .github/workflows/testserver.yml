@@ -18,7 +18,7 @@ on:
       HELIOS_PR_NUMBER:
         description: "PR number that triggered deployment"
         required: false
-        type: number
+        type: string
       HELIOS_ENVIRONMENT_NAME:
         description: "Which environment to deploy (e.g. artemis-test7.artemis.cit.tum.de, etc.)."
         required: true
