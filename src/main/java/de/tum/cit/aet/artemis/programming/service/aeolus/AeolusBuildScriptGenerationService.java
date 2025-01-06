@@ -10,6 +10,8 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import de.tum.cit.aet.artemis.core.service.ProfileService;
 import de.tum.cit.aet.artemis.programming.domain.AeolusTarget;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
+import de.tum.cit.aet.artemis.programming.dto.aeolus.Windfile;
+import de.tum.cit.aet.artemis.programming.dto.aeolus.WindfileMetadata;
 import de.tum.cit.aet.artemis.programming.service.BuildScriptGenerationService;
 import de.tum.cit.aet.artemis.programming.service.BuildScriptProviderService;
 
@@ -52,12 +54,12 @@ public class AeolusBuildScriptGenerationService extends BuildScriptGenerationSer
             windfile = aeolusTemplateService.getDefaultWindfileFor(programmingExercise);
         }
         if (windfile != null) {
-            WindfileMetadata oldMetadata = windfile.getMetadata();
+            WindfileMetadata oldMetadata = windfile.metadata();
             // Creating a new instance of WindfileMetadata with placeholder values for id, name, and description,
             // and copying the rest of the fields from oldMetadata
             WindfileMetadata updatedMetadata = new WindfileMetadata("not-used", "not-used", "not-used", oldMetadata.author(), oldMetadata.gitCredentials(), oldMetadata.docker(),
                     oldMetadata.resultHook(), oldMetadata.resultHookCredentials());
-            windfile.setMetadata(updatedMetadata);
+            windfile = new Windfile(windfile, updatedMetadata);
             return aeolusBuildPlanService.generateBuildScript(windfile, AeolusTarget.CLI);
         }
         return null;
