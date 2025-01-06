@@ -23,7 +23,6 @@ import { ArtemisParticipationModule } from 'app/exercises/shared/participation/p
 import { ArtemisModelingExerciseManagementModule } from 'app/exercises/modeling/manage/modeling-exercise-management.module';
 import { ArtemisCourseScoresModule } from 'app/course/course-scores/course-scores.module';
 import { ArtemisExerciseScoresModule } from 'app/exercises/shared/exercise-scores/exercise-scores.module';
-import { ArtemisComplaintsForTutorModule } from 'app/complaints/complaints-for-tutor/complaints-for-tutor.module';
 import { ArtemisFileUploadAssessmentModule } from 'app/exercises/file-upload/assess/file-upload-assessment.module';
 import { ArtemisModelingAssessmentEditorModule } from 'app/exercises/modeling/assess/modeling-assessment-editor/modeling-assessment-editor.module';
 import { NgxDatatableModule } from '@siemens/ngx-datatable';
@@ -68,6 +67,7 @@ import { SubmissionResultStatusModule } from 'app/overview/submission-result-sta
 import { ImageCropperModalComponent } from 'app/course/manage/image-cropper-modal.component';
 import { HeaderCourseComponent } from 'app/overview/header-course.component';
 import { ArtemisMarkdownEditorModule } from 'app/shared/markdown-editor/markdown-editor.module';
+import { ComplaintsForTutorComponent } from 'app/complaints/complaints-for-tutor/complaints-for-tutor.component';
 
 @NgModule({
     imports: [
@@ -95,7 +95,7 @@ import { ArtemisMarkdownEditorModule } from 'app/shared/markdown-editor/markdown
         ArtemisColorSelectorModule,
         ArtemisDashboardsModule,
         ArtemisParticipationModule,
-        ArtemisComplaintsForTutorModule,
+        ComplaintsForTutorComponent,
         ArtemisListOfComplaintsModule,
         ArtemisFileUploadAssessmentModule,
         ArtemisModelingAssessmentEditorModule,
