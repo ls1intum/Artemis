@@ -177,7 +177,7 @@ public class PublicPyrisStatusUpdateResource {
     }
 
     /**
-     * {@code POST /api/public/pyris/webhooks/ingestion/runs/{runId}/status} : Set the status of an Ingestion job.
+     * {@code POST /api/public/pyris/webhooks/ingestion/faqs/runs/{runId}/status} : Set the status of an Ingestion job.
      *
      * @param runId           the ID of the job
      * @param statusUpdateDTO the status update
