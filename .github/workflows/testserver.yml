@@ -70,6 +70,7 @@ jobs:
           echo "Need Build? ${{ github.event.inputs.HELIOS_BUILD }}"
           echo "Build Tag? ${{ github.event.inputs.HELIOS_BUILD_TAG }}"
 
+
   # Build the Docker image (branch without PR) or check if the build has run successfully (PR)
   build-or-check-existing-build:
     needs: [ validate-inputs ]
