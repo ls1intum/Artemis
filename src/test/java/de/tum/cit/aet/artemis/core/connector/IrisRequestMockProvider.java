@@ -173,7 +173,7 @@ public class IrisRequestMockProvider {
     }
 
     public void mockFaqIngestionWebhookRunResponse(Consumer<PyrisWebhookFaqIngestionExecutionDTO> responseConsumer) {
-        mockServer.expect(ExpectedCount.once(), requestTo(webhooksApiURL + "/faqs")).andExpect(method(HttpMethod.POST)).andRespond(request -> {
+        mockServer.expect(ExpectedCount.once(), requestTo(webhooksApiURL + "/faqs/ingest")).andExpect(method(HttpMethod.POST)).andRespond(request -> {
             var mockRequest = (MockClientHttpRequest) request;
             var dto = mapper.readValue(mockRequest.getBodyAsString(), PyrisWebhookFaqIngestionExecutionDTO.class);
             responseConsumer.accept(dto);
