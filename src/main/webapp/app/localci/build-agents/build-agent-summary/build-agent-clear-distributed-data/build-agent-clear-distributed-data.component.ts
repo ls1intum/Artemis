@@ -2,7 +2,7 @@ import { Component, computed, inject, model } from '@angular/core';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
-import { faPause, faTimes } from '@fortawesome/free-solid-svg-icons';
+import { faTimes, faTrash } from '@fortawesome/free-solid-svg-icons';
 import { FormsModule } from '@angular/forms';
 
 @Component({
@@ -17,7 +17,7 @@ export class BuildAgentClearDistributedDataComponent {
     confirmationText = model<string>('');
 
     protected readonly faTimes = faTimes;
-    protected readonly faPause = faPause;
+    protected readonly faTrash = faTrash;
 
     private readonly expectedConfirmationText = 'CLEAR DATA';
 
