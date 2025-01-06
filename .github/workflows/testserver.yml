@@ -73,7 +73,6 @@ jobs:
   conditional-build:
     if: ${{ github.event.inputs.HELIOS_BUILD == 'true' }}
     needs: [ validate-inputs ]
-    runs-on: ubuntu-latest
     uses: ./.github/workflows/build.yml
     with:
       sha: ${{ github.event.inputs.HELIOS_BRANCH_HEAD_SHA }}
