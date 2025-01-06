@@ -75,8 +75,6 @@ jobs:
         with:
           sha: ${{ github.event.inputs.HELIOS_BRANCH_HEAD_SHA }}
           tag: ${{ github.event.inputs.HELIOS_BUILD_TAG }}
-        secrets:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       - name: Echo build failure
         if: failure()
         run: echo "Build failed."

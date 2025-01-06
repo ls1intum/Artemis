@@ -42,9 +42,6 @@ on:
         description: "Tag to use when building Docker image"
         required: true
         type: string
-    secrets:
-      GITHUB_TOKEN:
-        required: true
 
 # Keep in sync with codeql-analysis.yml and test.yml and analysis-of-endpoint-connections.yml
 env:
