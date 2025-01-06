@@ -41,6 +41,7 @@ import { PostingContentComponent } from 'app/shared/metis/posting-content/postin
 import { MessageInlineInputComponent } from 'app/shared/metis/message/message-inline-input/message-inline-input.component';
 import { EmojiPickerComponent } from 'app/shared/metis/emoji/emoji-picker.component';
 import { ArtemisSharedCommonModule } from 'app/shared/shared-common.module';
+import { PostingHeaderComponent } from 'app/shared/metis/posting-header/posting-header.component';
 
 @Component({
     selector: 'jhi-post',
@@ -70,6 +71,8 @@ import { ArtemisSharedCommonModule } from 'app/shared/shared-common.module';
         CdkConnectedOverlay,
         EmojiPickerComponent,
         ArtemisSharedCommonModule,
+        PostingFooterComponent,
+        PostingHeaderComponent,
     ],
 })
 export class PostComponent extends PostingDirective<Post> implements OnInit, OnChanges, AfterContentChecked {

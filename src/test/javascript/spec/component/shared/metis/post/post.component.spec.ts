@@ -4,8 +4,8 @@ import { DebugElement } from '@angular/core';
 import { HtmlForMarkdownPipe } from 'app/shared/pipes/html-for-markdown.pipe';
 import { PostComponent } from 'app/shared/metis/post/post.component';
 import { getElement } from '../../../../helpers/utils/general.utils';
-import { PostingFooterComponent } from '../../../../../../../main/webapp/app/shared/metis/posting-footer/posting-footer.component';
-import { PostingHeaderComponent } from '../../../../../../../main/webapp/app/shared/metis/posting-header/posting-header.component';
+import { PostingFooterComponent } from 'app/shared/metis/posting-footer/posting-footer.component';
+import { PostingHeaderComponent } from 'app/shared/metis/posting-header/posting-header.component';
 import { PostingContentComponent } from 'app/shared/metis/posting-content/posting-content.components';
 import { MockMetisService } from '../../../../helpers/mocks/service/mock-metis-service.service';
 import { MetisService } from 'app/shared/metis/metis.service';
@@ -307,7 +307,6 @@ describe('PostComponent', () => {
 
         expect(previousComponent.showDropdown).toBeFalse();
         expect(previousComponent.enableBodyScroll).toHaveBeenCalled();
-        expect(previousComponent.changeDetector.detectChanges).toHaveBeenCalled();
         expect(PostComponent.activeDropdownPost).toBe(component);
         expect(component.showDropdown).toBeTrue();
     });

@@ -31,6 +31,7 @@ import { PostingContentComponent } from 'app/shared/metis/posting-content/postin
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { EmojiPickerComponent } from 'app/shared/metis/emoji/emoji-picker.component';
 import { ArtemisSharedCommonModule } from 'app/shared/shared-common.module';
+import { PostingHeaderComponent } from 'app/shared/metis/posting-header/posting-header.component';
 
 @Component({
     selector: 'jhi-answer-post',
@@ -57,6 +58,7 @@ import { ArtemisSharedCommonModule } from 'app/shared/shared-common.module';
         CdkConnectedOverlay,
         EmojiPickerComponent,
         ArtemisSharedCommonModule,
+        PostingHeaderComponent,
     ],
 })
 export class AnswerPostComponent extends PostingDirective<AnswerPost> implements OnInit, OnChanges, OnDestroy {
