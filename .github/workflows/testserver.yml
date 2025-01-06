@@ -98,9 +98,9 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       - name: Fail if no successful build found
-        if: ${{ fromJSON(steps.check_build.outputs.data).total_count == 0 }} && github.event.inputs.HELIOS_BUILD == 'false'
+        if: fromJSON(steps.check_build.outputs.data).total_count == 0 && github.event.inputs.HELIOS_BUILD == 'false'
         run: |
-          echo "No successful build found for branch '${{ github.event.inputs.HELIOS_BRANCH_NAME }}'."
+          echo "No successful build found for branch '${{ github.event.inputs.HELIOS_BRANCH_NAME }}' with SHA '${{ github.event.inputs.HELIOS_BRANCH_HEAD_SHA }}'."
           exit 1
       - name: Post comment about build validation failure
         if: failure() && github.event.inputs.HELIOS_BUILD == 'false'
