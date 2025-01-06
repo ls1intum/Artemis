@@ -12,7 +12,7 @@ import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { MetisService } from 'app/shared/metis/metis.service';
 import { Post } from 'app/entities/metis/post.model';
 import { BehaviorSubject, of } from 'rxjs';
-import { ConversationDTO } from 'app/entities/metis/conversation/conversation.model';
+import { Conversation, ConversationDTO } from 'app/entities/metis/conversation/conversation.model';
 import { generateExampleChannelDTO, generateExampleGroupChatDTO, generateOneToOneChatDTO } from '../../helpers/conversationExampleModels';
 import { Directive, EventEmitter, Input, Output, QueryList } from '@angular/core';
 import { By } from '@angular/platform-browser';
@@ -22,6 +22,7 @@ import { PostCreateEditModalComponent } from 'app/shared/metis/posting-create-ed
 import dayjs from 'dayjs';
 import { HttpResponse } from '@angular/common/http';
 import { ForwardedMessage } from '../../../../../../../../main/webapp/app/entities/metis/forwarded-message.model';
+import { AnswerPost } from '../../../../../../../../main/webapp/app/entities/metis/answer-post.model';
 
 const examples: ConversationDTO[] = [
     generateOneToOneChatDTO({}),
@@ -312,5 +313,96 @@ examples.forEach((activeConversation) => {
             expect(scrollToBottomSpy).toHaveBeenCalledOnce();
             expect(component.canStartSaving).toBeTrue();
         });
+
+        it('should handle posts without forwarded messages gracefully', fakeAsync(() => {
+            jest.spyOn(metisService, 'getForwardedMessagesByIds').mockReturnValue(of(new HttpResponse({ body: [] })));
+
+            component.setPosts([{ id: 1, hasForwardedMessages: false } as Post]);
+
+            tick();
+
+            expect(component.posts[0].forwardedPosts).toBeUndefined();
+            expect(component.posts[0].forwardedAnswerPosts).toBeUndefined();
+        }));
+
+        it('should handle forwarded messages with missing source gracefully', fakeAsync(() => {
+            const mockForwardedMessages: ForwardedMessage[] = [
+                { id: 101, sourceId: 99, sourceType: 'POST' } as unknown as ForwardedMessage,
+                { id: 102, sourceId: 100, sourceType: 'ANSWER' } as unknown as ForwardedMessage,
+            ];
+
+            jest.spyOn(metisService, 'getSourcePostsByIds').mockReturnValue(of([]));
+            jest.spyOn(metisService, 'getSourceAnswerPostsByIds').mockReturnValue(of([]));
+
+            jest.spyOn(metisService, 'getForwardedMessagesByIds').mockReturnValue(of(new HttpResponse({ body: [{ id: 1, messages: mockForwardedMessages }] })));
+
+            component.setPosts([{ id: 1, hasForwardedMessages: true } as Post]);
+
+            tick();
+
+            expect(component.posts[0].forwardedPosts).toEqual([]);
+            expect(component.posts[0].forwardedAnswerPosts).toEqual([]);
+        }));
+
+        it('should not fetch source posts or answers for empty forwarded messages', fakeAsync(() => {
+            const mockForwardedMessages: ForwardedMessage[] = [];
+
+            jest.spyOn(metisService, 'getSourcePostsByIds').mockReturnValue(of([]));
+            jest.spyOn(metisService, 'getSourceAnswerPostsByIds').mockReturnValue(of([]));
+
+            jest.spyOn(metisService, 'getForwardedMessagesByIds').mockReturnValue(of(new HttpResponse({ body: [{ id: 1, messages: mockForwardedMessages }] })));
+
+            const getSourcePostsSpy = jest.spyOn(metisService, 'getSourcePostsByIds');
+            const getSourceAnswersSpy = jest.spyOn(metisService, 'getSourceAnswerPostsByIds');
+
+            component.setPosts([{ id: 1, hasForwardedMessages: true } as Post]);
+
+            tick();
+
+            expect(getSourcePostsSpy).not.toHaveBeenCalled();
+            expect(getSourceAnswersSpy).not.toHaveBeenCalled();
+        }));
+
+        it('should correctly assign forwarded posts and answers', fakeAsync(() => {
+            const mockForwardedMessages: ForwardedMessage[] = [
+                { id: 101, sourceId: 10, sourceType: 'POST' } as unknown as ForwardedMessage,
+                { id: 102, sourceId: 11, sourceType: 'ANSWER' } as unknown as ForwardedMessage,
+            ];
+
+            const mockSourcePosts: Post[] = [{ id: 10, content: 'Forwarded Post Content', conversation: component._activeConversation as Conversation } as Post];
+            const mockSourceAnswerPosts: AnswerPost[] = [{ id: 11, content: 'Forwarded Answer Content', resolvesPost: true } as AnswerPost];
+
+            jest.spyOn(metisService, 'getForwardedMessagesByIds').mockReturnValue(of(new HttpResponse({ body: [{ id: 1, messages: mockForwardedMessages }] })));
+            jest.spyOn(metisService, 'getSourcePostsByIds').mockReturnValue(of(mockSourcePosts));
+            jest.spyOn(metisService, 'getSourceAnswerPostsByIds').mockReturnValue(of(mockSourceAnswerPosts));
+
+            const postsWithForwarded: Post[] = [
+                {
+                    id: 1,
+                    content: 'Some content...',
+                    hasForwardedMessages: true,
+                } as Post,
+            ];
+
+            component.setPosts(postsWithForwarded);
+
+            tick();
+            fixture.detectChanges();
+            const getSourcePostsSpy = jest.spyOn(metisService, 'getSourcePostsByIds');
+            const getSourceAnswersSpy = jest.spyOn(metisService, 'getSourceAnswerPostsByIds');
+
+            expect(getSourcePostsSpy).toHaveBeenCalled();
+            expect(getSourceAnswersSpy).toHaveBeenCalled();
+
+            expect(component.posts).toHaveLength(1);
+            expect(component.posts[0].forwardedPosts).toBeDefined();
+            expect(component.posts[0].forwardedAnswerPosts).toBeDefined();
+
+            expect(component.posts[0].forwardedPosts!).toHaveLength(mockSourcePosts.length);
+            expect(component.posts[0].forwardedAnswerPosts!).toHaveLength(mockSourceAnswerPosts.length);
+
+            expect(component.posts[0].forwardedPosts![0].id).toBe(10);
+            expect(component.posts[0].forwardedAnswerPosts![0].id).toBe(11);
+        }));
     });
 });
