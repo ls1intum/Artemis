@@ -41,7 +41,6 @@ import { ScienceService } from 'app/shared/science/science.service';
 import { ScienceEventType } from 'app/shared/science/science.model';
 import { PROFILE_IRIS } from 'app/app.constants';
 import { ChatServiceMode } from 'app/iris/iris-chat.service';
-import { ResultFaviconService } from 'app/exercises/shared/result/result-favicon/result-favicon.service';
 import { IconProp } from '@fortawesome/fontawesome-svg-core';
 
 interface InstructorActionItem {
@@ -130,7 +129,6 @@ export class CourseExerciseDetailsComponent extends AbstractScienceComponent imp
         private quizExerciseService: QuizExerciseService,
         private complaintService: ComplaintService,
         private artemisMarkdown: ArtemisMarkdownService,
-        private resultFaviconService: ResultFaviconService,
         scienceService: ScienceService,
     ) {
         super(scienceService, ScienceEventType.EXERCISE__OPEN);
@@ -384,9 +382,6 @@ export class CourseExerciseDetailsComponent extends AbstractScienceComponent imp
                 latestResult.participation = this.gradedStudentParticipation;
             }
             this.latestRatedResult = latestResult;
-
-            // todo: fix. add actual params instead of mock values
-            this.resultFaviconService.updateFavicon(this.latestRatedResult, this.exercise, this.gradedStudentParticipation, false, undefined, false);
         }
     }
 
@@ -531,7 +526,5 @@ export class CourseExerciseDetailsComponent extends AbstractScienceComponent imp
         this.submissionSubscription?.unsubscribe();
         this.paramsSubscription?.unsubscribe();
         this.profileSubscription?.unsubscribe();
-
-        this.resultFaviconService.removeFavicon();
     }
 }

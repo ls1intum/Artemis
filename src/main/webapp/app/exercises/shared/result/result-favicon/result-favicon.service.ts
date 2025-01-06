@@ -5,18 +5,21 @@ import { Exercise } from 'app/entities/exercise.model';
 import { Participation } from 'app/entities/participation/participation.model';
 import { IconProp } from '@fortawesome/angular-fontawesome/types';
 
+/**
+ * A service that updates the favicon of the page based on the result of an exercise. Adds a small badge to the favicon that indicates the status of the result.
+ */
 @Injectable({
     providedIn: 'root',
 })
 export class ResultFaviconService {
-    // experimented with different values here, these seem to work best
+    // Experimented with different values here, these seem to work best
     private readonly FAVICON_SCALE_FACTOR = 1.75;
     private readonly FAVICON_LOADING_UPDATE_INTERVAL = 200;
     private readonly FAVICON_ROTATION_SPEED = 1;
 
-    private originalFaviconSrcMap = new Map<HTMLLinkElement, string>();
-    private isFaviconReplaced = false;
-    private cleanupFunctions: (() => void)[] = [];
+    private static originalFaviconSrcMap = new Map<HTMLLinkElement, string>();
+    private static isFaviconReplaced = false;
+    private static cleanupFunctions = new Set<() => void>(); // Not an array since arrays are immutable by default according to the client guidelines
 
     constructor() {}
 
@@ -40,15 +43,27 @@ export class ResultFaviconService {
         return computedColor;
     }
 
+    /**
+     * Updates the favicon of the page. If the favicon has already been replaced, it will be removed first.
+     *
+     * @param result The result of the exercise
+     * @param exercise The exercise the result belongs to
+     * @param participation The participation the result belongs to
+     * @param isBuilding Whether the result is currently being built
+     * @param isQueued Whether the result is currently queued
+     * @param missingResultInfo Information about missing results
+     */
     updateFavicon(
         result: Result | undefined,
         exercise: Exercise,
         participation: Participation,
         isBuilding: boolean,
-        missingResultInfo: MissingResultInformation | undefined,
         isQueued: boolean,
+        missingResultInfo: MissingResultInformation | undefined,
     ) {
-        if (this.isFaviconReplaced) this.removeFavicon();
+        if (ResultFaviconService.isFaviconReplaced) this.removeFavicon();
+
+        ResultFaviconService.isFaviconReplaced = true;
 
         const templateStatus = evaluateTemplateStatus(exercise, participation, result, isBuilding, missingResultInfo, isQueued);
         const shouldBeLoading = [ResultTemplateStatus.IS_BUILDING, ResultTemplateStatus.IS_QUEUED, ResultTemplateStatus.IS_GENERATING_FEEDBACK].includes(templateStatus);
@@ -101,37 +116,37 @@ export class ResultFaviconService {
                 drawBadge();
 
                 if (shouldBeLoading) {
+                    // We're not using requestAnimationFrame here because it won't update when the tab is in the background
                     const interval = setInterval(drawBadge, this.FAVICON_LOADING_UPDATE_INTERVAL);
-                    this.cleanupFunctions.push(() => clearInterval(interval));
+                    ResultFaviconService.cleanupFunctions.add(() => clearInterval(interval));
                 }
             };
             img.addEventListener('load', createBadge);
 
-            // this shouldn't actually be needed since the images are probably loaded
-            // already, but better safe than sorry
-            this.cleanupFunctions.push(() => {
+            ResultFaviconService.cleanupFunctions.add(() => {
                 img.removeEventListener('load', createBadge);
             });
 
             img.src = originalHref;
-            this.originalFaviconSrcMap.set(faviconLinkElement, originalHref);
+            ResultFaviconService.originalFaviconSrcMap.set(faviconLinkElement, originalHref);
         });
-
-        this.isFaviconReplaced = true;
     }
 
+    /**
+     * Removes the custom favicon from the page and restores the original favicon.
+     */
     removeFavicon() {
-        if (!this.isFaviconReplaced) return;
+        if (!ResultFaviconService.isFaviconReplaced) return;
 
-        this.originalFaviconSrcMap.forEach((originalSrc, linkElement) => {
+        ResultFaviconService.originalFaviconSrcMap.forEach((originalSrc, linkElement) => {
             linkElement.href = originalSrc;
         });
 
-        this.originalFaviconSrcMap.clear();
+        ResultFaviconService.originalFaviconSrcMap.clear();
 
-        this.cleanupFunctions.forEach((fn) => fn());
-        this.cleanupFunctions.length = 0;
+        ResultFaviconService.cleanupFunctions.forEach((fn) => fn());
+        ResultFaviconService.cleanupFunctions.clear();
 
-        this.isFaviconReplaced = false;
+        ResultFaviconService.isFaviconReplaced = false;
     }
 }
