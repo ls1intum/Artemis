@@ -1,10 +1,11 @@
-import { Component, OnInit, input, output, signal } from '@angular/core';
+import { Component, OnInit, inject, input, output, signal } from '@angular/core';
 import { ArtemisSharedModule } from 'app/shared/shared.module';
 import { Course } from 'app/entities/course.model';
 import { Exercise, ExerciseType } from 'app/entities/exercise.model';
 import { CourseExerciseService } from 'app/exercises/shared/course-exercises/course-exercise.service';
 import dayjs from 'dayjs/esm';
 import { HiddenPage } from 'app/lecture/pdf-preview/pdf-preview.component';
+import { AlertService } from 'app/core/util/alert.service';
 
 interface CategorizedExercise {
     type: ExerciseType;
@@ -39,7 +40,9 @@ export class PdfPreviewDateBoxComponent implements OnInit {
     hiddenPageOutput = output<HiddenPage>();
     selectionCancelledOutput = output<boolean>();
 
-    constructor(private courseExerciseService: CourseExerciseService) {}
+    // Injected services
+    private readonly alertService = inject(AlertService);
+    private readonly courseExerciseService = inject(CourseExerciseService);
 
     ngOnInit(): void {
         this.loadExercises();
@@ -117,9 +120,10 @@ export class PdfPreviewDateBoxComponent implements OnInit {
      */
     private processExercises(exercises: Exercise[]): CategorizedExercise[] {
         const groupedExercises = new Map<ExerciseType, Exercise[]>();
+        const now = dayjs();
 
         exercises.forEach((exercise) => {
-            if (exercise.type && exercise.dueDate) {
+            if (exercise.type && exercise.dueDate && exercise.dueDate.isAfter(now)) {
                 if (!groupedExercises.has(exercise.type)) {
                     groupedExercises.set(exercise.type, []);
                 }
@@ -137,6 +141,7 @@ export class PdfPreviewDateBoxComponent implements OnInit {
      * Submit the selected date option
      */
     onSubmit(): void {
+        const now = dayjs();
         const selectedDate = this.hideForever()
             ? FOREVER
             : this.calendarSelected()
@@ -146,6 +151,11 @@ export class PdfPreviewDateBoxComponent implements OnInit {
                 : null;
 
         if (!selectedDate) return;
+
+        if (selectedDate !== FOREVER && selectedDate.isBefore(now)) {
+            this.alertService.error('artemisApp.attachment.pdfPreview.dateBox.dateError');
+            return;
+        }
 
         const newEntry = { pageIndex: this.pageIndex()!, date: selectedDate };
         this.hiddenPage.set(newEntry);

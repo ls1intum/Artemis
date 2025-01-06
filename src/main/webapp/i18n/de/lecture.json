@@ -126,7 +126,8 @@
                     "selectDate": "Datum auswählen",
                     "selectExercise": "Übung auswählen",
                     "noExercises": "Keine Übungen verfügbar",
-                    "exerciseTypeTitle": "{{ param }} Übungen"
+                    "exerciseTypeTitle": "{{ param }} Übungen",
+                    "dateError": "Die ausgewählten Daten dürfen nicht in der Vergangenheit liegen."
                 }
             }
         }
