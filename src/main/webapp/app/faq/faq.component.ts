@@ -205,9 +205,8 @@ export class FaqComponent implements OnInit, OnDestroy {
         if (this.faqs.first()) {
             this.faqService.ingestFaqsInPyris(this.courseId).subscribe({
                 next: () => this.alertService.success('artemisApp.iris.ingestionAlert.allFaqsSuccess'),
-                error: (error: any) => {
+                error: () => {
                     this.alertService.error('artemisApp.iris.ingestionAlert.allFaqsError');
-                    console.error('Failed to send Lectures Ingestion request', error);
                 },
             });
         }

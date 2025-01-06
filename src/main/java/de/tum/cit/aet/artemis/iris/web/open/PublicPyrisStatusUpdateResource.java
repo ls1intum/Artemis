@@ -196,8 +196,6 @@ public class PublicPyrisStatusUpdateResource {
         if (!(job instanceof FaqIngestionWebhookJob faqIngestionWebhookJob)) {
             throw new ConflictException("Run ID is not an ingestion job", "Job", "invalidRunId");
         }
-        System.out.println("Received status update for FAQ ingestion job: " + statusUpdateDTO);
-
         pyrisStatusUpdateService.handleStatusUpdate(faqIngestionWebhookJob, statusUpdateDTO);
         return ResponseEntity.ok().build();
     }

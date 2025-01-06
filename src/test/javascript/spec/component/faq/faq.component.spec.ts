@@ -25,6 +25,7 @@ import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
 import { PROFILE_IRIS } from 'app/app.constants';
 import { ProfileInfo } from 'app/shared/layouts/profiles/profile-info.model';
 import { IrisCourseSettings } from 'app/entities/iris/settings/iris-settings.model';
+import { MockProfileService } from '../../helpers/mocks/service/mock-profile.service';
 
 function createFaq(id: number, category: string, color: string): Faq {
     const faq = new Faq();
@@ -61,6 +62,10 @@ describe('FaqComponent', () => {
 
         courseId = 1;
 
+        const profileInfo = {
+            activeProfiles: [],
+        } as unknown as ProfileInfo;
+
         TestBed.configureTestingModule({
             imports: [ArtemisTestModule, MockModule(ArtemisMarkdownEditorModule), MockModule(BrowserAnimationsModule)],
             declarations: [FaqComponent, MockRouterLinkDirective, MockComponent(CustomExerciseCategoryBadgeComponent)],
@@ -79,6 +84,7 @@ describe('FaqComponent', () => {
                         },
                     },
                 },
+                { provide: ProfileService, useValue: new MockProfileService() },
                 MockProvider(FaqService, {
                     findAllByCourseId: () => {
                         return of(
@@ -119,6 +125,9 @@ describe('FaqComponent', () => {
 
                 profileService = TestBed.inject(ProfileService);
                 irisSettingsService = TestBed.inject(IrisSettingsService);
+
+                profileService = faqComponentFixture.debugElement.injector.get(ProfileService);
+                jest.spyOn(profileService, 'getProfileInfo').mockReturnValue(of(profileInfo));
             });
     });
 
@@ -251,7 +260,7 @@ describe('FaqComponent', () => {
         expect(alertServiceStub).toHaveBeenCalledOnce();
     });
 
-    it('should set lectureIngestionEnabled based on service response', () => {
+    it('should set faqIngestionEnabled based on service response', () => {
         faqComponent.faqs = [faq1];
         const profileInfoResponse = {
             activeProfiles: [PROFILE_IRIS],

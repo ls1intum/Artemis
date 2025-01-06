@@ -83,7 +83,7 @@ class PyrisFaqIngestionTest extends AbstractIrisIntegrationTest {
         IrisCourseSettings courseSettings = irisSettingsService.getRawIrisSettingsFor(faq1.getCourse());
         courseSettings.getIrisFaqIngestionSettings().setAutoIngestOnFaqCreation(true);
         this.irisSettingsRepository.save(courseSettings);
-        irisRequestMockProvider.mockIngestionWebhookRunResponse(dto -> {
+        irisRequestMockProvider.mockFaqIngestionWebhookRunResponse(dto -> {
             assertThat(dto.settings().authenticationToken()).isNotNull();
         });
     }
@@ -146,7 +146,7 @@ class PyrisFaqIngestionTest extends AbstractIrisIntegrationTest {
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testAllStagesDoneIngestionStateDone() throws Exception {
         activateIrisFor(faq1.getCourse());
-        irisRequestMockProvider.mockIngestionWebhookRunResponse(dto -> {
+        irisRequestMockProvider.mockFaqIngestionWebhookRunResponse(dto -> {
             assertThat(dto.settings().authenticationToken()).isNotNull();
         });
         String jobToken = pyrisWebhookService.addFaqToPyris(faq1);
@@ -161,7 +161,7 @@ class PyrisFaqIngestionTest extends AbstractIrisIntegrationTest {
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testAllStagesDoneRemovesDeletionIngestionJob() throws Exception {
         activateIrisFor(faq1.getCourse());
-        irisRequestMockProvider.mockDeletionWebhookRunResponse(dto -> {
+        irisRequestMockProvider.mockFaqDeletionWebhookRunResponse(dto -> {
             assertThat(dto.settings().authenticationToken()).isNotNull();
         });
         String jobToken = pyrisWebhookService.deleteFaqFromPyrisDB(faq1);
@@ -176,7 +176,7 @@ class PyrisFaqIngestionTest extends AbstractIrisIntegrationTest {
     @Test
     void testStageNotDoneKeepsAdditionIngestionJob() throws Exception {
         activateIrisFor(faq1.getCourse());
-        irisRequestMockProvider.mockIngestionWebhookRunResponse(dto -> {
+        irisRequestMockProvider.mockFaqIngestionWebhookRunResponse(dto -> {
             assertThat(dto.settings().authenticationToken()).isNotNull();
         });
         String jobToken = pyrisWebhookService.addFaqToPyris(faq1);
@@ -192,7 +192,7 @@ class PyrisFaqIngestionTest extends AbstractIrisIntegrationTest {
     @Test
     void testStageNotDoneKeepsDeletionIngestionJob() throws Exception {
         activateIrisFor(faq1.getCourse());
-        irisRequestMockProvider.mockDeletionWebhookRunResponse(dto -> {
+        irisRequestMockProvider.mockFaqDeletionWebhookRunResponse(dto -> {
             assertThat(dto.settings().authenticationToken()).isNotNull();
         });
 
@@ -209,7 +209,7 @@ class PyrisFaqIngestionTest extends AbstractIrisIntegrationTest {
     @Test
     void testErrorStageRemovesDeletionIngestionJob() throws Exception {
         activateIrisFor(faq1.getCourse());
-        irisRequestMockProvider.mockDeletionWebhookRunResponse(dto -> {
+        irisRequestMockProvider.mockFaqIngestionWebhookRunResponse(dto -> {
             assertThat(dto.settings().authenticationToken()).isNotNull();
         });
 
@@ -225,7 +225,7 @@ class PyrisFaqIngestionTest extends AbstractIrisIntegrationTest {
     @Test
     void testErrorStageRemovesAdditionIngestionJob() throws Exception {
         activateIrisFor(faq1.getCourse());
-        irisRequestMockProvider.mockIngestionWebhookRunResponse(dto -> {
+        irisRequestMockProvider.mockFaqIngestionWebhookRunResponse(dto -> {
             assertThat(dto.settings().authenticationToken()).isNotNull();
         });
         String jobToken = pyrisWebhookService.addFaqToPyris(faq1);
@@ -240,7 +240,7 @@ class PyrisFaqIngestionTest extends AbstractIrisIntegrationTest {
     @Test
     void testRunIdIngestionJob() throws Exception {
         activateIrisFor(faq1.getCourse());
-        irisRequestMockProvider.mockIngestionWebhookRunResponse(dto -> {
+        irisRequestMockProvider.mockFaqIngestionWebhookRunResponse(dto -> {
             assertThat(dto.settings().authenticationToken()).isNotNull();
         });
         String newJobToken = pyrisJobService.addFaqIngestionWebhookJob(123L, faq1.getId());
@@ -258,7 +258,7 @@ class PyrisFaqIngestionTest extends AbstractIrisIntegrationTest {
     @Test
     void testIngestionJobDone() throws Exception {
         activateIrisFor(faq1.getCourse());
-        irisRequestMockProvider.mockIngestionWebhookRunResponse(dto -> {
+        irisRequestMockProvider.mockFaqIngestionWebhookRunResponse(dto -> {
             assertThat(dto.settings().authenticationToken()).isNotNull();
         });
         String newJobToken = pyrisJobService.addFaqIngestionWebhookJob(123L, faq1.getId());
