@@ -1,29 +1,32 @@
 import { TestBed } from '@angular/core/testing';
-import { HttpClientTestingModule, HttpTestingController } from '@angular/common/http/testing';
+import { lastValueFrom, of } from 'rxjs';
+import { HttpClient, HttpResponse } from '@angular/common/http';
+import { ForwardedMessageService } from 'app/shared/metis/forwarded-message.service';
 import { ForwardedMessage } from 'app/entities/metis/forwarded-message.model';
-import { ForwardedMessageService } from '../../../../../main/webapp/app/shared/metis/forwarded-message.service';
-import { PostingType } from '../../../../../main/webapp/app/entities/metis/posting.model';
+import { PostingType } from 'app/entities/metis/posting.model';
 
-describe('ForwardedMessageService', () => {
+describe('ForwardedMessageService (Jest)', () => {
     let service: ForwardedMessageService;
-    let httpMock: HttpTestingController;
+    let httpClientMock: Partial<HttpClient>;
 
     const apiUrl = 'api/forwarded-messages';
-
     const sampleForwardedMessage = new ForwardedMessage(1, 2, PostingType.POST, { id: 3 } as any, undefined, '');
 
     beforeEach(() => {
+        httpClientMock = {
+            post: jest.fn(),
+            get: jest.fn(),
+        };
+
         TestBed.configureTestingModule({
-            imports: [HttpClientTestingModule],
-            providers: [ForwardedMessageService],
+            providers: [ForwardedMessageService, { provide: HttpClient, useValue: httpClientMock }],
         });
 
         service = TestBed.inject(ForwardedMessageService);
-        httpMock = TestBed.inject(HttpTestingController);
     });
 
     afterEach(() => {
-        httpMock.verify();
+        jest.clearAllMocks();
     });
 
     it('should be created', () => {
@@ -32,14 +35,15 @@ describe('ForwardedMessageService', () => {
 
     describe('createForwardedMessage', () => {
         it('should call POST API to create a new forwarded message', () => {
+            const response = new HttpResponse<ForwardedMessage>({ body: sampleForwardedMessage });
+            (httpClientMock.post as jest.Mock).mockReturnValue(of(response));
+
             service.createForwardedMessage(sampleForwardedMessage).subscribe((res) => {
                 expect(res.body).toEqual(sampleForwardedMessage);
             });
 
-            const req = httpMock.expectOne(`${apiUrl}`);
-            expect(req.request.method).toBe('POST');
-            expect(req.request.body).toEqual(sampleForwardedMessage);
-            req.flush(sampleForwardedMessage);
+            expect(httpClientMock.post).toHaveBeenCalledOnce();
+            expect(httpClientMock.post).toHaveBeenCalledWith(apiUrl, sampleForwardedMessage, { observe: 'response' });
         });
     });
 
@@ -50,17 +54,21 @@ describe('ForwardedMessageService', () => {
                 { id: 2, messages: [sampleForwardedMessage] },
                 { id: 3, messages: [] },
             ];
+            const response = new HttpResponse({ body: expectedResponse });
+
+            (httpClientMock.get as jest.Mock).mockReturnValue(of(response));
 
             service.getForwardedMessages(ids, 'post').subscribe((res) => {
                 expect(res.body).toEqual(expectedResponse);
             });
 
-            const req = httpMock.expectOne((request) => {
-                return request.url === `${apiUrl}` && request.params.get('ids') === '2,3' && request.params.get('type') === 'post';
-            });
+            expect(httpClientMock.get).toHaveBeenCalledOnce();
 
-            expect(req.request.method).toBe('GET');
-            req.flush(expectedResponse);
+            const [calledUrl, calledOptions] = (httpClientMock.get as jest.Mock).mock.calls[0];
+            expect(calledUrl).toBe(apiUrl);
+            expect(calledOptions.params.get('ids')).toBe('2,3');
+            expect(calledOptions.params.get('type')).toBe('post');
+            expect(calledOptions.observe).toBe('response');
         });
 
         it('should call GET API to retrieve forwarded messages with type "answer"', () => {
@@ -69,31 +77,27 @@ describe('ForwardedMessageService', () => {
                 { id: 4, messages: [] },
                 { id: 5, messages: [sampleForwardedMessage] },
             ];
+            const response = new HttpResponse({ body: expectedResponse });
+
+            (httpClientMock.get as jest.Mock).mockReturnValue(of(response));
 
             service.getForwardedMessages(ids, 'answer').subscribe((res) => {
                 expect(res.body).toEqual(expectedResponse);
             });
 
-            const req = httpMock.expectOne((request) => {
-                return request.url === `${apiUrl}` && request.params.get('ids') === '4,5' && request.params.get('type') === 'answer';
-            });
-
-            expect(req.request.method).toBe('GET');
-            req.flush(expectedResponse);
+            expect(httpClientMock.get).toHaveBeenCalledOnce();
+            const [calledUrl, calledOptions] = (httpClientMock.get as jest.Mock).mock.calls[0];
+            expect(calledUrl).toBe(apiUrl);
+            expect(calledOptions.params.get('ids')).toBe('4,5');
+            expect(calledOptions.params.get('type')).toBe('answer');
         });
 
-        it('should not make a GET request if IDs are empty', () => {
-            return new Promise<void>((done) => {
-                const ids: number[] = [];
+        it('should throw an error if IDs are empty (using async/await)', async () => {
+            const ids: number[] = [];
 
-                service.getForwardedMessages(ids, 'post').subscribe({
-                    next: () => {},
-                    error: (err) => {
-                        expect(err.message).toBe('IDs cannot be empty');
-                        done();
-                    },
-                });
-            });
+            await expect(lastValueFrom(service.getForwardedMessages(ids, 'post'))).rejects.toThrow('IDs cannot be empty');
+
+            expect(httpClientMock.get).not.toHaveBeenCalled();
         });
     });
 });
