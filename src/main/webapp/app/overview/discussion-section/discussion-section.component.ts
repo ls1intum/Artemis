@@ -11,19 +11,19 @@ import { PostCreateEditModalComponent } from 'app/shared/metis/posting-create-ed
 import { HttpResponse } from '@angular/common/http';
 import { faArrowLeft, faChevronLeft, faChevronRight, faGripLinesVertical, faLongArrowRight } from '@fortawesome/free-solid-svg-icons';
 import { CourseDiscussionDirective } from 'app/shared/metis/course-discussion.directive';
-import { FormBuilder } from '@angular/forms';
+import { FormBuilder, FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { Channel, ChannelDTO } from 'app/entities/metis/conversation/channel.model';
 import { ChannelService } from 'app/shared/metis/conversations/channel.service';
 import { ArtemisSharedModule } from 'app/shared/shared.module';
 import { ArtemisPlagiarismCasesSharedModule } from 'app/course/plagiarism-cases/shared/plagiarism-cases-shared.module';
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
-import { InfiniteScrollModule } from 'ngx-infinite-scroll';
+import { InfiniteScrollDirective } from 'ngx-infinite-scroll';
 
 @Component({
     selector: 'jhi-discussion-section',
     templateUrl: './discussion-section.component.html',
     styleUrls: ['./discussion-section.component.scss'],
-    imports: [FontAwesomeModule, ArtemisSharedModule, ArtemisPlagiarismCasesSharedModule, InfiniteScrollModule],
+    imports: [FontAwesomeModule, ArtemisSharedModule, ArtemisPlagiarismCasesSharedModule, InfiniteScrollDirective, FormsModule, ReactiveFormsModule],
     providers: [MetisService],
 })
 export class DiscussionSectionComponent extends CourseDiscussionDirective implements AfterViewInit, OnDestroy {

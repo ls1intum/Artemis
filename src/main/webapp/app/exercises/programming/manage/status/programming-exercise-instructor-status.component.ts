@@ -11,11 +11,14 @@ import { SolutionProgrammingExerciseParticipation } from 'app/entities/participa
 import { TemplateProgrammingExerciseParticipation } from 'app/entities/participation/template-programming-exercise-participation.model';
 import { faExclamationTriangle } from '@fortawesome/free-solid-svg-icons';
 import { hasParticipationChanged } from 'app/exercises/shared/participation/participation.utils';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
+import { ArtemisTranslatePipe } from '../../../../shared/pipes/artemis-translate.pipe';
 
 @Component({
     selector: 'jhi-programming-exercise-instructor-status',
     templateUrl: './programming-exercise-instructor-status.component.html',
-    standalone: false,
+    imports: [FaIconComponent, NgbTooltip, ArtemisTranslatePipe],
 })
 export class ProgrammingExerciseInstructorStatusComponent implements OnChanges, OnDestroy {
     private participationWebsocketService = inject(ParticipationWebsocketService);

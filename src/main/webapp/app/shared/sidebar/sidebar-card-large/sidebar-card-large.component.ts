@@ -1,14 +1,15 @@
 import { Component, Input, inject } from '@angular/core';
 import { SidebarCardElement, SidebarTypes } from 'app/types/sidebar';
 import { SidebarEventService } from '../sidebar-event.service';
-import { ActivatedRoute, Router } from '@angular/router';
+import { ActivatedRoute, Router, RouterLink, RouterLinkActive } from '@angular/router';
 import { Location } from '@angular/common';
+import { SidebarCardItemComponent } from '../sidebar-card-item/sidebar-card-item.component';
 
 @Component({
     selector: 'jhi-large-sidebar-card',
     templateUrl: './sidebar-card-large.component.html',
     styleUrls: ['./sidebar-card-large.component.scss'],
-    standalone: false,
+    imports: [RouterLink, RouterLinkActive, SidebarCardItemComponent],
 })
 export class SidebarCardLargeComponent {
     private sidebarEventService = inject(SidebarEventService);

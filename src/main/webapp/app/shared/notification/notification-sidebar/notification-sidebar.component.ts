@@ -12,6 +12,13 @@ import { SessionStorageService } from 'ngx-webstorage';
 import { DocumentationType } from 'app/shared/components/documentation-button/documentation-button.component';
 import { translationNotFoundMessage } from 'app/core/config/translation.config';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { DatePipe, NgClass } from '@angular/common';
+import { DocumentationButtonComponent } from '../../components/documentation-button/documentation-button.component';
+import { RouterLink } from '@angular/router';
+import { TranslateDirective } from '../../language/translate.directive';
+import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
+import { ArtemisTranslatePipe as ArtemisTranslatePipe_1 } from '../../pipes/artemis-translate.pipe';
 
 export const LAST_READ_STORAGE_KEY = 'lastNotificationRead';
 const IRRELEVANT_NOTIFICATION_TITLES = [NEW_MESSAGE_TITLE, LIVE_EXAM_EXERCISE_UPDATE_NOTIFICATION_TITLE];
@@ -20,7 +27,7 @@ const IRRELEVANT_NOTIFICATION_TITLES = [NEW_MESSAGE_TITLE, LIVE_EXAM_EXERCISE_UP
     selector: 'jhi-notification-sidebar',
     templateUrl: './notification-sidebar.component.html',
     styleUrls: ['./notification-sidebar.scss'],
-    standalone: false,
+    imports: [FaIconComponent, NgClass, DocumentationButtonComponent, RouterLink, TranslateDirective, NgbTooltip, DatePipe, ArtemisTranslatePipe_1],
 })
 export class NotificationSidebarComponent implements OnInit, OnDestroy {
     private notificationService = inject(NotificationService);

@@ -8,12 +8,14 @@ import { onError } from 'app/shared/util/global.utils';
 import { finalize, switchMap, take } from 'rxjs/operators';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { combineLatest } from 'rxjs';
+import { LectureUnitLayoutComponent } from '../lecture-unit-layout/lecture-unit-layout.component';
+import { TextUnitFormComponent } from '../text-unit-form/text-unit-form.component';
 
 @Component({
     selector: 'jhi-edit-text-unit',
     templateUrl: './edit-text-unit.component.html',
     styles: [],
-    standalone: false,
+    imports: [LectureUnitLayoutComponent, TextUnitFormComponent],
 })
 export class EditTextUnitComponent implements OnInit {
     private activatedRoute = inject(ActivatedRoute);

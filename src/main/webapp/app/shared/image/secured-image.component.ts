@@ -4,6 +4,7 @@ import { catchError, filter, map, switchMap, tap } from 'rxjs/operators';
 import { DomSanitizer } from '@angular/platform-browser';
 import { CacheableImageService } from 'app/shared/image/cacheable-image.service';
 import { base64StringToBlob } from 'app/utils/blob-util';
+import { AsyncPipe } from '@angular/common';
 
 // Status that is emitted to the client to describe the loading status of the picture
 export const enum ImageLoadingStatus {
@@ -36,7 +37,7 @@ export enum CachingStrategy {
             <img [attr.src]="dataUrl | async" class="dnd-drag-start" draggable="true" alt="alt" cdkDrag />
         }
     `,
-    standalone: false,
+    imports: [AsyncPipe],
 })
 export class SecuredImageComponent implements OnChanges, OnInit {
     private domSanitizer = inject(DomSanitizer);

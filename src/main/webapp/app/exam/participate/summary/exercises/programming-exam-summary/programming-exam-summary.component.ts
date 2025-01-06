@@ -15,11 +15,17 @@ import { createCommitUrl } from 'app/exercises/programming/shared/utils/programm
 import { faCodeBranch } from '@fortawesome/free-solid-svg-icons';
 import { Router } from '@angular/router';
 import { PROFILE_LOCALVC } from 'app/app.constants';
+import { TranslateDirective } from '../../../../../shared/language/translate.directive';
+import { CodeButtonComponent } from '../../../../../shared/components/code-button/code-button.component';
+import { FeedbackComponent } from '../../../../../exercises/shared/feedback/feedback.component';
+import { ProgrammingExerciseInstructionComponent } from '../../../../../exercises/programming/shared/instructions-render/programming-exercise-instruction.component';
+import { ComplaintsStudentViewComponent } from '../../../../../complaints/complaints-for-students/complaints-student-view.component';
+import { ArtemisTranslatePipe } from '../../../../../shared/pipes/artemis-translate.pipe';
 
 @Component({
     selector: 'jhi-programming-exam-summary',
     templateUrl: './programming-exam-summary.component.html',
-    standalone: false,
+    imports: [TranslateDirective, CodeButtonComponent, FeedbackComponent, ProgrammingExerciseInstructionComponent, ComplaintsStudentViewComponent, ArtemisTranslatePipe],
 })
 export class ProgrammingExamSummaryComponent implements OnInit {
     private exerciseService = inject(ExerciseService);

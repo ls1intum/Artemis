@@ -7,11 +7,28 @@ import { ASC, DESC, SORT } from 'app/shared/constants/pagination.constants';
 import { ActivatedRoute, Router } from '@angular/router';
 import { combineLatest } from 'rxjs';
 import { SortService } from 'app/shared/service/sort.service';
+import { TranslateDirective } from '../../shared/language/translate.directive';
+import { FormsModule } from '@angular/forms';
+import { SortDirective } from '../../shared/sort/sort.directive';
+import { SortByDirective } from '../../shared/sort/sort-by.directive';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { CoursePrerequisitesButtonComponent } from './course-prerequisites-button/course-prerequisites-button.component';
+import { CourseRegistrationButtonComponent } from './course-registration-button/course-registration-button.component';
+import { ArtemisTranslatePipe } from '../../shared/pipes/artemis-translate.pipe';
 
 @Component({
     selector: 'jhi-course-registration-selector',
     templateUrl: './course-registration.component.html',
-    standalone: false,
+    imports: [
+        TranslateDirective,
+        FormsModule,
+        SortDirective,
+        SortByDirective,
+        FaIconComponent,
+        CoursePrerequisitesButtonComponent,
+        CourseRegistrationButtonComponent,
+        ArtemisTranslatePipe,
+    ],
 })
 export class CourseRegistrationComponent implements OnInit {
     private accountService = inject(AccountService);

@@ -6,25 +6,51 @@ import { ArtemisNavigationUtilService } from 'app/utils/navigation.utils';
 import { OrganizationManagementService } from 'app/admin/organization-management/organization-management.service';
 import { OrganizationSelectorComponent } from 'app/shared/organization-selector/organization-selector.component';
 import { Organization } from 'app/entities/organization.model';
-import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
+import { NgbModal, NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { PASSWORD_MAX_LENGTH, PASSWORD_MIN_LENGTH, USERNAME_MAX_LENGTH, USERNAME_MIN_LENGTH } from 'app/app.constants';
 import { faBan, faSave, faTimes } from '@fortawesome/free-solid-svg-icons';
 import { COMMA, ENTER, TAB } from '@angular/cdk/keycodes';
-import { FormBuilder, FormControl, FormGroup, Validators } from '@angular/forms';
-import { MatChipInputEvent } from '@angular/material/chips';
-import { MatAutocompleteSelectedEvent } from '@angular/material/autocomplete';
+import { FormBuilder, FormControl, FormGroup, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
+import { MatChipGrid, MatChipInput, MatChipInputEvent, MatChipRemove, MatChipRow } from '@angular/material/chips';
+import { MatAutocomplete, MatAutocompleteSelectedEvent, MatAutocompleteTrigger } from '@angular/material/autocomplete';
 import { AlertService, AlertType } from 'app/core/util/alert.service';
 import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
 import { AdminUserService } from 'app/core/user/admin-user.service';
 import { Observable } from 'rxjs';
 import { map, startWith } from 'rxjs/operators';
 import { CourseAdminService } from 'app/course/manage/course-admin.service';
+import { TranslateDirective } from '../../shared/language/translate.directive';
+import { HelpIconComponent } from '../../shared/components/help-icon.component';
+import { MatFormField } from '@angular/material/form-field';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { MatOption } from '@angular/material/core';
+import { AsyncPipe } from '@angular/common';
+import { FindLanguageFromKeyPipe } from 'app/shared/language/find-language-from-key.pipe';
+import { ArtemisTranslatePipe } from '../../shared/pipes/artemis-translate.pipe';
 
 @Component({
     selector: 'jhi-user-management-update',
     templateUrl: './user-management-update.component.html',
     styleUrls: ['./user-management-update.component.scss'],
-    standalone: false,
+    imports: [
+        FormsModule,
+        ReactiveFormsModule,
+        TranslateDirective,
+        NgbTooltip,
+        HelpIconComponent,
+        MatFormField,
+        MatChipGrid,
+        MatChipRow,
+        MatChipRemove,
+        FaIconComponent,
+        MatAutocompleteTrigger,
+        MatChipInput,
+        MatAutocomplete,
+        MatOption,
+        AsyncPipe,
+        FindLanguageFromKeyPipe,
+        ArtemisTranslatePipe,
+    ],
 })
 export class UserManagementUpdateComponent implements OnInit {
     private languageHelper = inject(JhiLanguageHelper);

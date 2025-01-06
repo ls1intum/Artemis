@@ -8,12 +8,14 @@ import { onError } from 'app/shared/util/global.utils';
 import { AlertService } from 'app/core/util/alert.service';
 import { finalize } from 'rxjs/operators';
 import { combineLatest } from 'rxjs';
+import { LectureUnitLayoutComponent } from '../lecture-unit-layout/lecture-unit-layout.component';
+import { OnlineUnitFormComponent } from '../online-unit-form/online-unit-form.component';
 
 @Component({
     selector: 'jhi-create-online-unit',
     templateUrl: './create-online-unit.component.html',
     styles: [],
-    standalone: false,
+    imports: [LectureUnitLayoutComponent, OnlineUnitFormComponent],
 })
 export class CreateOnlineUnitComponent implements OnInit {
     private activatedRoute = inject(ActivatedRoute);

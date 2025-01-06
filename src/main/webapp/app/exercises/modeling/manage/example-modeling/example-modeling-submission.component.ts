@@ -28,12 +28,31 @@ import { forkJoin } from 'rxjs';
 import { filterInvalidFeedback } from 'app/exercises/modeling/assess/modeling-assessment.util';
 import { Theme, ThemeService } from 'app/core/theme/theme.service';
 import { scrollToTopOfPage } from 'app/shared/util/utils';
+import { TranslateDirective } from '../../../../shared/language/translate.directive';
+import { HelpIconComponent } from '../../../../shared/components/help-icon.component';
+import { FormsModule } from '@angular/forms';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { ModelingEditorComponent as ModelingEditorComponent_1 } from '../../shared/modeling-editor.component';
+import { ModelingAssessmentComponent as ModelingAssessmentComponent_1 } from '../../assess/modeling-assessment.component';
+import { UnreferencedFeedbackComponent } from '../../../shared/unreferenced-feedback/unreferenced-feedback.component';
+import { CollapsableAssessmentInstructionsComponent } from '../../../../assessment/assessment-instructions/collapsable-assessment-instructions/collapsable-assessment-instructions.component';
+import { ArtemisTranslatePipe } from '../../../../shared/pipes/artemis-translate.pipe';
 
 @Component({
     selector: 'jhi-example-modeling-submission',
     templateUrl: './example-modeling-submission.component.html',
     styleUrls: ['./example-modeling-submission.component.scss'],
-    standalone: false,
+    imports: [
+        TranslateDirective,
+        HelpIconComponent,
+        FormsModule,
+        FaIconComponent,
+        ModelingEditorComponent_1,
+        ModelingAssessmentComponent_1,
+        UnreferencedFeedbackComponent,
+        CollapsableAssessmentInstructionsComponent,
+        ArtemisTranslatePipe,
+    ],
 })
 export class ExampleModelingSubmissionComponent implements OnInit, FeedbackMarker {
     private exerciseService = inject(ExerciseService);

@@ -7,12 +7,15 @@ import { ProgrammingExercise } from 'app/entities/programming/programming-exerci
 import { ProgrammingExerciseResetOptions, ProgrammingExerciseService } from 'app/exercises/programming/manage/services/programming-exercise.service';
 import { faBan, faCircleNotch, faSpinner, faUndo } from '@fortawesome/free-solid-svg-icons';
 import { PROFILE_AEOLUS, PROFILE_LOCALCI } from 'app/app.constants';
+import { FormsModule } from '@angular/forms';
+import { TranslateDirective } from '../../../../shared/language/translate.directive';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 
 @Component({
     selector: 'jhi-programming-exercise-reset-dialog',
     templateUrl: './programming-exercise-reset-dialog.component.html',
     styles: ['textarea { width: 100%; }'],
-    standalone: false,
+    imports: [FormsModule, TranslateDirective, FaIconComponent],
 })
 export class ProgrammingExerciseResetDialogComponent implements OnInit {
     private alertService = inject(AlertService);

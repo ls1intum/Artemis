@@ -1,12 +1,17 @@
 import { Component, EventEmitter, Input, OnInit, Output, inject } from '@angular/core';
-import { FormBuilder, FormControl, FormGroup, Validators } from '@angular/forms';
+import { FormBuilder, FormControl, FormGroup, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
 import { faQuestionCircle } from '@fortawesome/free-solid-svg-icons';
 import { ButtonType } from 'app/shared/components/button.component';
+import { TranslateDirective } from '../../../shared/language/translate.directive';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
+import { IrisLogoButtonComponent } from '../../../iris/iris-logo-button/iris-logo-button.component';
+import { ArtemisTranslatePipe } from '../../../shared/pipes/artemis-translate.pipe';
 
 @Component({
     selector: 'jhi-course-description-form',
     templateUrl: './course-description-form.component.html',
-    standalone: false,
+    imports: [FormsModule, ReactiveFormsModule, TranslateDirective, FaIconComponent, NgbTooltip, IrisLogoButtonComponent, ArtemisTranslatePipe],
 })
 export class CourseDescriptionFormComponent implements OnInit {
     private formBuilder = inject(FormBuilder);

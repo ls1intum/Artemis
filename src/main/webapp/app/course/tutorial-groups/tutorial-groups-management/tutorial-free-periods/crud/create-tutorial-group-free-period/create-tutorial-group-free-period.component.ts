@@ -9,12 +9,15 @@ import { Course } from 'app/entities/course.model';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import { Subject } from 'rxjs';
 import { captureException } from '@sentry/angular';
+import { LoadingIndicatorContainerComponent } from '../../../../../../shared/loading-indicator-container/loading-indicator-container.component';
+import { TranslateDirective } from '../../../../../../shared/language/translate.directive';
+import { TutorialGroupFreePeriodFormComponent } from '../tutorial-free-period-form/tutorial-group-free-period-form.component';
 
 @Component({
     selector: 'jhi-create-tutorial-group-free-day',
     templateUrl: './create-tutorial-group-free-period.component.html',
     changeDetection: ChangeDetectionStrategy.OnPush,
-    standalone: false,
+    imports: [LoadingIndicatorContainerComponent, TranslateDirective, TutorialGroupFreePeriodFormComponent],
 })
 export class CreateTutorialGroupFreePeriodComponent implements OnDestroy {
     private activeModal = inject(NgbActiveModal);

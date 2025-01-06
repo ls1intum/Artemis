@@ -8,10 +8,7 @@ export const PLACEHOLDER_USER_REACTED = 'REPLACE_WITH_TRANSLATED_YOU';
 /**
  * Pipe to show list of reacting users when hovering over emojis.
  */
-@Pipe({
-    name: 'reactingUsersOnPosting',
-    standalone: false,
-})
+@Pipe({ name: 'reactingUsersOnPosting' })
 export class ReactingUsersOnPostingPipe implements PipeTransform {
     private translateService = inject(TranslateService);
 

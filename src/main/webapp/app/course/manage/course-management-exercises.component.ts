@@ -4,11 +4,40 @@ import { ActivatedRoute } from '@angular/router';
 import { ExerciseFilter } from 'app/entities/exercise-filter.model';
 import { DocumentationType } from 'app/shared/components/documentation-button/documentation-button.component';
 import { ExerciseType } from 'app/entities/exercise.model';
+import { DocumentationButtonComponent } from '../../shared/components/documentation-button/documentation-button.component';
+import { CourseManagementExercisesSearchComponent } from './course-management-exercises-search.component';
+import { TranslateDirective } from '../../shared/language/translate.directive';
+import { CourseExerciseCardComponent } from './course-exercise-card.component';
+import { ExtensionPointDirective } from '../../shared/extension-point/extension-point.directive';
+import { ProgrammingExerciseCreateButtonsComponent } from '../../exercises/programming/manage/programming-exercise-create-buttons.component';
+import { ProgrammingExerciseComponent } from '../../exercises/programming/manage/programming-exercise.component';
+import { QuizExerciseCreateButtonsComponent } from '../../exercises/quiz/manage/quiz-exercise-create-buttons.component';
+import { QuizExerciseComponent } from '../../exercises/quiz/manage/quiz-exercise.component';
+import { ExerciseCreateButtonsComponent } from '../../exercises/shared/manage/exercise-create-buttons.component';
+import { ModelingExerciseComponent } from '../../exercises/modeling/manage/modeling-exercise.component';
+import { TextExerciseComponent } from '../../exercises/text/manage/text-exercise/text-exercise.component';
+import { FileUploadExerciseComponent } from '../../exercises/file-upload/manage/file-upload-exercise.component';
+import { ArtemisTranslatePipe } from '../../shared/pipes/artemis-translate.pipe';
 
 @Component({
     selector: 'jhi-course-management-exercises',
     templateUrl: './course-management-exercises.component.html',
-    standalone: false,
+    imports: [
+        DocumentationButtonComponent,
+        CourseManagementExercisesSearchComponent,
+        TranslateDirective,
+        CourseExerciseCardComponent,
+        ExtensionPointDirective,
+        ProgrammingExerciseCreateButtonsComponent,
+        ProgrammingExerciseComponent,
+        QuizExerciseCreateButtonsComponent,
+        QuizExerciseComponent,
+        ExerciseCreateButtonsComponent,
+        ModelingExerciseComponent,
+        TextExerciseComponent,
+        FileUploadExerciseComponent,
+        ArtemisTranslatePipe,
+    ],
 })
 export class CourseManagementExercisesComponent implements OnInit {
     readonly ExerciseType = ExerciseType;

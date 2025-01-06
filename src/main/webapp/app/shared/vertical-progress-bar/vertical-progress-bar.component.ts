@@ -1,4 +1,5 @@
 import { ChangeDetectionStrategy, ChangeDetectorRef, Component, HostBinding, Input, OnInit, inject } from '@angular/core';
+import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 
 /**
  * Simple Vertical Progress Bar without any external dependencies
@@ -14,7 +15,7 @@ import { ChangeDetectionStrategy, ChangeDetectorRef, Component, HostBinding, Inp
     templateUrl: './vertical-progress-bar.component.html',
     styleUrls: ['./vertical-progress-bar.component.scss'],
     changeDetection: ChangeDetectionStrategy.OnPush,
-    standalone: false,
+    imports: [NgbTooltip],
 })
 export class VerticalProgressBarComponent implements OnInit {
     private cdr = inject(ChangeDetectorRef);

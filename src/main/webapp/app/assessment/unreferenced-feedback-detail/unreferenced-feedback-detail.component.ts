@@ -5,12 +5,36 @@ import { StructuredGradingCriterionService } from 'app/exercises/shared/structur
 import { ButtonSize } from 'app/shared/components/button.component';
 import { Subject } from 'rxjs';
 import { FeedbackService } from 'app/exercises/shared/feedback/feedback.service';
+import { FeedbackSuggestionBadgeComponent } from '../../exercises/shared/feedback/feedback-suggestion-badge/feedback-suggestion-badge.component';
+import { GradingInstructionLinkIconComponent } from '../../shared/grading-instruction-link-icon/grading-instruction-link-icon.component';
+import { DeleteButtonDirective } from '../../shared/delete-dialog/delete-button.directive';
+import { FaIconComponent, FaLayersComponent } from '@fortawesome/angular-fontawesome';
+import { TranslateDirective } from '../../shared/language/translate.directive';
+import { FormsModule } from '@angular/forms';
+import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
+import { AssessmentCorrectionRoundBadgeComponent } from './assessment-correction-round-badge/assessment-correction-round-badge.component';
+import { ArtemisTranslatePipe } from '../../shared/pipes/artemis-translate.pipe';
+import { FeedbackContentPipe } from '../../shared/pipes/feedback-content.pipe';
+import { QuotePipe } from '../../shared/pipes/quote.pipe';
 
 @Component({
     selector: 'jhi-unreferenced-feedback-detail',
     templateUrl: './unreferenced-feedback-detail.component.html',
     styleUrls: ['./unreferenced-feedback-detail.component.scss'],
-    standalone: false,
+    imports: [
+        FeedbackSuggestionBadgeComponent,
+        GradingInstructionLinkIconComponent,
+        DeleteButtonDirective,
+        FaIconComponent,
+        TranslateDirective,
+        FormsModule,
+        NgbTooltip,
+        FaLayersComponent,
+        AssessmentCorrectionRoundBadgeComponent,
+        ArtemisTranslatePipe,
+        FeedbackContentPipe,
+        QuotePipe,
+    ],
 })
 export class UnreferencedFeedbackDetailComponent implements OnInit {
     structuredGradingCriterionService = inject(StructuredGradingCriterionService);

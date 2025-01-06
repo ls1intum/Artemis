@@ -7,11 +7,13 @@ import { Subscription, from } from 'rxjs';
 import { Exam } from 'app/entities/exam/exam.model';
 import { AlertService } from 'app/core/util/alert.service';
 import { ExamEditWorkingTimeDialogComponent } from './exam-edit-working-time-dialog.component';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { TranslateDirective } from '../../../../../shared/language/translate.directive';
 
 @Component({
     selector: 'jhi-exam-edit-working-time',
     templateUrl: './exam-edit-working-time.component.html',
-    standalone: false,
+    imports: [FaIconComponent, TranslateDirective],
 })
 export class ExamEditWorkingTimeComponent implements OnInit, OnDestroy {
     private modalService = inject(NgbModal);

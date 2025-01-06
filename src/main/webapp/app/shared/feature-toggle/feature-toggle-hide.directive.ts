@@ -2,10 +2,7 @@ import { Directive, HostBinding, Input, OnDestroy, OnInit, inject } from '@angul
 import { FeatureToggle, FeatureToggleService } from 'app/shared/feature-toggle/feature-toggle.service';
 import { Subscription } from 'rxjs/internal/Subscription';
 
-@Directive({
-    selector: '[jhiFeatureToggleHide]',
-    standalone: false,
-})
+@Directive({ selector: '[jhiFeatureToggleHide]' })
 export class FeatureToggleHideDirective implements OnInit, OnDestroy {
     private featureToggleService = inject(FeatureToggleService);
 

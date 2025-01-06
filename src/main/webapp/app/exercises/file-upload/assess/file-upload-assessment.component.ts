@@ -1,7 +1,7 @@
-import { Location } from '@angular/common';
+import { Location, UpperCasePipe } from '@angular/common';
 import { HttpErrorResponse } from '@angular/common/http';
 import { ChangeDetectorRef, Component, OnDestroy, OnInit, ViewEncapsulation, inject } from '@angular/core';
-import { ActivatedRoute, Router } from '@angular/router';
+import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { faListAlt } from '@fortawesome/free-regular-svg-icons';
 import { TranslateService } from '@ngx-translate/core';
 import { isAllowedToModifyFeedback } from 'app/assessment/assessment.service';
@@ -29,13 +29,32 @@ import { onError } from 'app/shared/util/global.utils';
 import { getExerciseDashboardLink, getLinkToSubmissionAssessment } from 'app/utils/navigation.utils';
 import dayjs from 'dayjs/esm';
 import { filter, finalize } from 'rxjs/operators';
+import { AssessmentLayoutComponent } from '../../../assessment/assessment-layout/assessment-layout.component';
+import { ResizeableContainerComponent } from '../../../shared/resizeable-container/resizeable-container.component';
+import { ScoreDisplayComponent } from '../../../shared/score-display/score-display.component';
+import { TranslateDirective } from '../../../shared/language/translate.directive';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { AssessmentInstructionsComponent } from '../../../assessment/assessment-instructions/assessment-instructions/assessment-instructions.component';
+import { UnreferencedFeedbackComponent } from '../../shared/unreferenced-feedback/unreferenced-feedback.component';
+import { ArtemisTranslatePipe } from '../../../shared/pipes/artemis-translate.pipe';
 
 @Component({
     providers: [FileUploadAssessmentService],
     templateUrl: './file-upload-assessment.component.html',
     styles: [],
     encapsulation: ViewEncapsulation.None,
-    standalone: false,
+    imports: [
+        AssessmentLayoutComponent,
+        ResizeableContainerComponent,
+        ScoreDisplayComponent,
+        TranslateDirective,
+        FaIconComponent,
+        AssessmentInstructionsComponent,
+        UnreferencedFeedbackComponent,
+        RouterLink,
+        UpperCasePipe,
+        ArtemisTranslatePipe,
+    ],
 })
 export class FileUploadAssessmentComponent implements OnInit, OnDestroy {
     private changeDetectorRef = inject(ChangeDetectorRef);

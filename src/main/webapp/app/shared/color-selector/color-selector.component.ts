@@ -1,5 +1,6 @@
 import { Component, ElementRef, EventEmitter, Input, OnInit, Output, Renderer2, inject } from '@angular/core';
 import { ARTEMIS_DEFAULT_COLOR } from 'app/app.constants';
+import { NgStyle } from '@angular/common';
 
 export interface Coordinates {
     left: number;
@@ -29,7 +30,7 @@ const DEFAULT_COLORS = [
     selector: 'jhi-color-selector',
     templateUrl: './color-selector.component.html',
     styleUrls: ['./color-selector.scss'],
-    standalone: false,
+    imports: [NgStyle],
 })
 export class ColorSelectorComponent implements OnInit {
     private elementRef = inject(ElementRef);

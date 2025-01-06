@@ -10,12 +10,16 @@ import { base64StringToBlob } from 'app/utils/blob-util';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { UserSettingsService } from 'app/shared/user-settings/user-settings.service';
 import { AlertService, AlertType } from 'app/core/util/alert.service';
+import { TranslateDirective } from '../../language/translate.directive';
+import { SecuredImageComponent } from '../../image/secured-image.component';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 
 @Component({
     selector: 'jhi-account-information',
     templateUrl: './account-information.component.html',
     styleUrls: ['../user-settings.scss'],
-    standalone: false,
+    imports: [TranslateDirective, SecuredImageComponent, FaIconComponent, ArtemisDatePipe],
 })
 export class AccountInformationComponent implements OnInit {
     private accountService = inject(AccountService);

@@ -10,12 +10,15 @@ import { finalize, switchMap, take, takeUntil } from 'rxjs/operators';
 import { HttpErrorResponse } from '@angular/common/http';
 import { Course } from 'app/entities/course.model';
 import { CourseStorageService } from 'app/course/manage/course-storage.service';
+import { LoadingIndicatorContainerComponent } from '../../../../../../shared/loading-indicator-container/loading-indicator-container.component';
+import { TranslateDirective } from '../../../../../../shared/language/translate.directive';
+import { TutorialGroupsConfigurationFormComponent } from '../tutorial-groups-configuration-form/tutorial-groups-configuration-form.component';
 
 @Component({
     selector: 'jhi-edit-tutorial-groups-configuration',
     templateUrl: './edit-tutorial-groups-configuration.component.html',
     changeDetection: ChangeDetectionStrategy.OnPush,
-    standalone: false,
+    imports: [LoadingIndicatorContainerComponent, TranslateDirective, TutorialGroupsConfigurationFormComponent],
 })
 export class EditTutorialGroupsConfigurationComponent implements OnInit, OnDestroy {
     private activatedRoute = inject(ActivatedRoute);

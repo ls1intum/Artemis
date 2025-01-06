@@ -17,12 +17,19 @@ import { faBars, faCheck, faEdit } from '@fortawesome/free-solid-svg-icons';
 import { ProgrammingSubmission } from 'app/entities/programming/programming-submission.model';
 import { SubmissionVersion } from 'app/entities/submission-version.model';
 import { FileUploadSubmission } from 'app/entities/file-upload-submission.model';
+import { TranslateDirective } from '../../../shared/language/translate.directive';
+import { ExamLiveEventsButtonComponent } from '../events/exam-live-events-button.component';
+import { NgClass } from '@angular/common';
+import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { ExamTimerComponent } from '../timer/exam-timer.component';
+import { ArtemisTranslatePipe } from '../../../shared/pipes/artemis-translate.pipe';
 
 @Component({
     selector: 'jhi-exam-navigation-bar',
     templateUrl: './exam-navigation-bar.component.html',
     styleUrls: ['./exam-navigation-bar.component.scss'],
-    standalone: false,
+    imports: [TranslateDirective, ExamLiveEventsButtonComponent, NgClass, NgbTooltip, FaIconComponent, ExamTimerComponent, ArtemisTranslatePipe],
 })
 export class ExamNavigationBarComponent implements OnInit, AfterViewInit {
     private layoutService = inject(LayoutService);

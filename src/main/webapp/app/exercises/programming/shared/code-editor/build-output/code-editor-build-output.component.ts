@@ -19,12 +19,15 @@ import { faChevronDown, faCircleNotch, faTerminal } from '@fortawesome/free-soli
 import { hasParticipationChanged } from 'app/exercises/shared/participation/participation.utils';
 import { AssessmentType } from 'app/entities/assessment-type.model';
 import { Annotation } from '../monaco/code-editor-monaco.component';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { TranslateDirective } from '../../../../../shared/language/translate.directive';
+import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 
 @Component({
     selector: 'jhi-code-editor-build-output',
     templateUrl: './code-editor-build-output.component.html',
     styleUrls: ['./code-editor-build-output.scss'],
-    standalone: false,
+    imports: [FaIconComponent, TranslateDirective, ArtemisDatePipe],
 })
 export class CodeEditorBuildOutputComponent implements AfterViewInit, OnInit, OnChanges, OnDestroy {
     private buildLogService = inject(CodeEditorBuildLogService);

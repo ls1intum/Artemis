@@ -6,12 +6,16 @@ import { ExerciseImportWrapperComponent } from 'app/exercises/shared/import/exer
 import { ExerciseType } from 'app/entities/exercise.model';
 import { ProgrammingExercise } from 'app/entities/programming/programming-exercise.model';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
-import { Router } from '@angular/router';
+import { Router, RouterLink } from '@angular/router';
+import { FeatureToggleLinkDirective } from '../../../shared/feature-toggle/feature-toggle-link.directive';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { TranslateDirective } from '../../../shared/language/translate.directive';
+import { FeatureToggleDirective } from '../../../shared/feature-toggle/feature-toggle.directive';
 
 @Component({
     selector: 'jhi-programming-exercise-create-buttons',
     templateUrl: './programming-exercise-create-buttons.component.html',
-    standalone: false,
+    imports: [FeatureToggleLinkDirective, RouterLink, FaIconComponent, TranslateDirective, FeatureToggleDirective],
 })
 export class ProgrammingExerciseCreateButtonsComponent {
     private router = inject(Router);

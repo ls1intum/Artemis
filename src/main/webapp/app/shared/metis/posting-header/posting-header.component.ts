@@ -13,12 +13,19 @@ import { faUser, faUserCheck, faUserGraduate } from '@fortawesome/free-solid-svg
 import { UserRole } from 'app/shared/metis/metis.util';
 import { AnswerPost } from 'app/entities/metis/answer-post.model';
 import { Post } from 'app/entities/metis/post.model';
+import { ProfilePictureComponent } from '../../profile-picture/profile-picture.component';
+import { NgClass } from '@angular/common';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
+import { TranslateDirective } from '../../language/translate.directive';
+import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
+import { ArtemisTranslatePipe } from '../../pipes/artemis-translate.pipe';
 
 @Component({
     selector: 'jhi-posting-header',
     templateUrl: './posting-header.component.html',
     styleUrls: ['../metis.component.scss'],
-    standalone: false,
+    imports: [ProfilePictureComponent, NgClass, FaIconComponent, NgbTooltip, TranslateDirective, ArtemisDatePipe, ArtemisTranslatePipe],
 })
 export class PostingHeaderComponent implements OnInit, OnDestroy, OnChanges {
     readOnlyMode = input<boolean>(false);

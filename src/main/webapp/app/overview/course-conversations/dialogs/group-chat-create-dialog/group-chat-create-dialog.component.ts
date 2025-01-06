@@ -1,12 +1,15 @@
 import { Component, Input, inject } from '@angular/core';
 import { Course } from 'app/entities/course.model';
-import { FormBuilder, FormGroup, Validators } from '@angular/forms';
+import { FormBuilder, FormGroup, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
 import { AbstractDialogComponent } from 'app/overview/course-conversations/dialogs/abstract-dialog.component';
+import { TranslateDirective } from '../../../../shared/language/translate.directive';
+import { CourseUsersSelectorComponent } from '../../../../shared/course-users-selector/course-users-selector.component';
+import { ArtemisTranslatePipe } from '../../../../shared/pipes/artemis-translate.pipe';
 
 @Component({
     selector: 'jhi-group-chat-create-dialog',
     templateUrl: './group-chat-create-dialog.component.html',
-    standalone: false,
+    imports: [TranslateDirective, FormsModule, ReactiveFormsModule, CourseUsersSelectorComponent, ArtemisTranslatePipe],
 })
 export class GroupChatCreateDialogComponent extends AbstractDialogComponent {
     private fb = inject(FormBuilder);

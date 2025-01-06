@@ -3,11 +3,12 @@ import { IconProp } from '@fortawesome/fontawesome-svg-core';
 import { NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
 import { htmlForMarkdown } from 'app/shared/util/markdown.conversion.util';
 import { ConfirmAutofocusModalComponent } from 'app/shared/components/confirm-autofocus-modal.component';
+import { ButtonComponent } from './button.component';
 
 @Component({
     selector: 'jhi-confirm-button',
     templateUrl: './confirm-autofocus-button.component.html',
-    standalone: false,
+    imports: [ButtonComponent],
 })
 export class ConfirmAutofocusButtonComponent {
     private modalService = inject(NgbModal);

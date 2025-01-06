@@ -4,7 +4,7 @@ import { SecuredImageComponent } from 'app/shared/image/secured-image.component'
 import { MockComponent } from 'ng-mocks';
 import { DragDropModule } from '@angular/cdk/drag-drop';
 import { ArtemisTestModule } from '../../test.module';
-import { FitTextModule } from 'app/exercises/quiz/shared/fit-text/fit-text.module';
+import { FitTextDirective } from 'app/exercises/quiz/shared/fit-text/fit-text.directive';
 
 describe('DragItemComponent', () => {
     let fixture: ComponentFixture<DragItemComponent>;
@@ -12,7 +12,7 @@ describe('DragItemComponent', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule, DragDropModule, FitTextModule],
+            imports: [ArtemisTestModule, DragDropModule, FitTextDirective],
             declarations: [MockComponent(SecuredImageComponent), DragItemComponent],
         })
             .compileComponents()

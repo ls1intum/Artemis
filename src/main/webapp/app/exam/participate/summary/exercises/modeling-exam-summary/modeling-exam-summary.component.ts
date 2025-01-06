@@ -1,11 +1,12 @@
 import { Component, Input } from '@angular/core';
 import { ModelingSubmission } from 'app/entities/modeling-submission.model';
 import { ModelingExercise } from 'app/entities/modeling-exercise.model';
+import { ModelingSubmissionComponent } from '../../../../../exercises/modeling/participate/modeling-submission.component';
 
 @Component({
     selector: 'jhi-modeling-exam-summary',
     templateUrl: './modeling-exam-summary.component.html',
-    standalone: false,
+    imports: [ModelingSubmissionComponent],
 })
 export class ModelingExamSummaryComponent {
     @Input() exercise: ModelingExercise;

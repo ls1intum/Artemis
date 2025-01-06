@@ -13,7 +13,7 @@ import { AdminStandardizedCompetencyService } from 'app/admin/standardized-compe
 import { HttpErrorResponse } from '@angular/common/http';
 import { AlertService } from 'app/core/util/alert.service';
 import { Subject, forkJoin, map } from 'rxjs';
-import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
+import { NgbModal, NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { ConfirmAutofocusModalComponent } from 'app/shared/components/confirm-autofocus-modal.component';
 import { getIcon } from 'app/entities/competency.model';
 import { ButtonSize, ButtonType } from 'app/shared/components/button.component';
@@ -22,13 +22,35 @@ import { StandardizedCompetencyFilterPageComponent } from 'app/shared/standardiz
 import { ComponentCanDeactivate } from 'app/shared/guard/can-deactivate.model';
 import { StandardizedCompetencyService } from 'app/shared/standardized-competencies/standardized-competency.service';
 import { DocumentationType } from 'app/shared/components/documentation-button/documentation-button.component';
+import { TranslateDirective } from '../../shared/language/translate.directive';
+import { DocumentationButtonComponent } from '../../shared/components/documentation-button/documentation-button.component';
+import { RouterLink } from '@angular/router';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { StandardizedCompetencyFilterComponent } from '../../shared/standardized-competencies/standardized-competency-filter.component';
+import { ButtonComponent } from '../../shared/components/button.component';
+import { KnowledgeAreaTreeComponent } from '../../shared/standardized-competencies/knowledge-area-tree.component';
+import { StandardizedCompetencyEditComponent } from './standardized-competency-edit.component';
+import { KnowledgeAreaEditComponent } from './knowledge-area-edit.component';
+import { ArtemisTranslatePipe } from '../../shared/pipes/artemis-translate.pipe';
 
 @Component({
     selector: 'jhi-standardized-competency-management',
     templateUrl: './standardized-competency-management.component.html',
     styleUrls: ['standardized-competency-management.component.scss'],
     changeDetection: ChangeDetectionStrategy.OnPush,
-    standalone: false,
+    imports: [
+        TranslateDirective,
+        DocumentationButtonComponent,
+        RouterLink,
+        FaIconComponent,
+        StandardizedCompetencyFilterComponent,
+        ButtonComponent,
+        KnowledgeAreaTreeComponent,
+        NgbTooltip,
+        StandardizedCompetencyEditComponent,
+        KnowledgeAreaEditComponent,
+        ArtemisTranslatePipe,
+    ],
 })
 export class StandardizedCompetencyManagementComponent extends StandardizedCompetencyFilterPageComponent implements OnInit, OnDestroy, ComponentCanDeactivate {
     private adminStandardizedCompetencyService = inject(AdminStandardizedCompetencyService);

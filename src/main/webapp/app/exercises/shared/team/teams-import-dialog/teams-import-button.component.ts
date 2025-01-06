@@ -5,6 +5,7 @@ import { Exercise } from 'app/entities/exercise.model';
 import { ButtonSize, ButtonType } from 'app/shared/components/button.component';
 import { TeamsImportDialogComponent } from 'app/exercises/shared/team/teams-import-dialog/teams-import-dialog.component';
 import { faPlus } from '@fortawesome/free-solid-svg-icons';
+import { ButtonComponent } from '../../../../shared/components/button.component';
 
 @Component({
     selector: 'jhi-teams-import-button',
@@ -17,7 +18,7 @@ import { faPlus } from '@fortawesome/free-solid-svg-icons';
             (onClick)="openTeamsImportDialog($event)"
         />
     `,
-    standalone: false,
+    imports: [ButtonComponent],
 })
 export class TeamsImportButtonComponent {
     private modalService = inject(NgbModal);

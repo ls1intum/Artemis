@@ -7,6 +7,9 @@ import { Course } from 'app/entities/course.model';
 import { GradingInstruction } from 'app/exercises/shared/structured-grading-criterion/grading-instruction.model';
 import { ModelingComponent } from 'app/exercises/modeling/shared/modeling.component';
 import { filterInvalidFeedback } from 'app/exercises/modeling/assess/modeling-assessment.util';
+import { ScoreDisplayComponent } from '../../../shared/score-display/score-display.component';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { ModelingExplanationEditorComponent } from '../shared/modeling-explanation-editor.component';
 
 export interface DropInfo {
     instruction: GradingInstruction;
@@ -19,7 +22,7 @@ export interface DropInfo {
     selector: 'jhi-modeling-assessment',
     templateUrl: './modeling-assessment.component.html',
     styleUrls: ['./modeling-assessment.component.scss'],
-    standalone: false,
+    imports: [ScoreDisplayComponent, FaIconComponent, ModelingExplanationEditorComponent],
 })
 export class ModelingAssessmentComponent extends ModelingComponent implements AfterViewInit, OnDestroy, OnChanges {
     private artemisTranslatePipe = inject(ArtemisTranslatePipe);

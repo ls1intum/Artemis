@@ -9,12 +9,17 @@ import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service'
 import { SubmissionExportOptions, SubmissionExportService } from './submission-export.service';
 import { downloadZipFileFromResponse } from 'app/shared/util/download.util';
 import { faCircleNotch } from '@fortawesome/free-solid-svg-icons';
+import { FormsModule } from '@angular/forms';
+import { TranslateDirective } from '../../../shared/language/translate.directive';
+import { HelpIconComponent } from '../../../shared/components/help-icon.component';
+import { FormDateTimePickerComponent } from '../../../shared/date-time-picker/date-time-picker.component';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 
 @Component({
     selector: 'jhi-exercise-submission-export-dialog',
     templateUrl: './submission-export-dialog.component.html',
     styles: ['textarea { width: 100%; }'],
-    standalone: false,
+    imports: [FormsModule, TranslateDirective, HelpIconComponent, FormDateTimePickerComponent, FaIconComponent],
 })
 export class SubmissionExportDialogComponent implements OnInit {
     private exerciseService = inject(ExerciseService);

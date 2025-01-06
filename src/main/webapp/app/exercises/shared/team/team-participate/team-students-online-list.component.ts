@@ -9,13 +9,16 @@ import dayjs from 'dayjs/esm';
 import { JhiWebsocketService } from 'app/core/websocket/websocket.service';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
 import { faCircle, faHistory } from '@fortawesome/free-solid-svg-icons';
+import { NgClass } from '@angular/common';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 
 @Component({
     selector: 'jhi-team-students-online-list',
     templateUrl: './team-students-online-list.component.html',
     styleUrls: ['./team-students-online-list.component.scss'],
     encapsulation: ViewEncapsulation.None,
-    standalone: false,
+    imports: [NgClass, FaIconComponent, NgbTooltip],
 })
 export class TeamStudentsOnlineListComponent implements OnInit, OnDestroy {
     private accountService = inject(AccountService);

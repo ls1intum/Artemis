@@ -14,12 +14,20 @@ import { EXAM_START_WAIT_TIME_MINUTES } from 'app/app.constants';
 import { UI_RELOAD_TIME } from 'app/shared/constants/exercise-exam-constants';
 import { faArrowLeft, faCircleExclamation, faDoorClosed, faSpinner } from '@fortawesome/free-solid-svg-icons';
 import { Subscription } from 'rxjs';
+import { NgClass } from '@angular/common';
+import { ExamLiveEventsButtonComponent } from '../events/exam-live-events-button.component';
+import { ExamStartInformationComponent } from '../exam-start-information/exam-start-information.component';
+import { FormsModule } from '@angular/forms';
+import { TranslateDirective } from '../../../shared/language/translate.directive';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
+import { ArtemisTranslatePipe } from '../../../shared/pipes/artemis-translate.pipe';
 
 @Component({
     selector: 'jhi-exam-participation-cover',
     templateUrl: './exam-participation-cover.component.html',
     styleUrls: ['./exam-participation-cover.scss'],
-    standalone: false,
+    imports: [NgClass, ExamLiveEventsButtonComponent, ExamStartInformationComponent, FormsModule, TranslateDirective, FaIconComponent, ArtemisDatePipe, ArtemisTranslatePipe],
 })
 export class ExamParticipationCoverComponent implements OnChanges, OnDestroy, OnInit {
     private courseService = inject(CourseManagementService);

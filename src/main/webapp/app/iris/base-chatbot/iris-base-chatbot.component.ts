@@ -1,5 +1,5 @@
 import { faArrowDown, faCircle, faCircleInfo, faCompress, faExpand, faPaperPlane, faRedo, faThumbsDown, faThumbsUp, faTrash, faXmark } from '@fortawesome/free-solid-svg-icons';
-import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
+import { NgbModal, NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { AfterViewInit, Component, ElementRef, EventEmitter, Input, OnDestroy, OnInit, Output, ViewChild, inject } from '@angular/core';
 import { IrisAssistantMessage, IrisMessage, IrisSender } from 'app/entities/iris/iris-message.model';
 import { Subscription } from 'rxjs';
@@ -15,6 +15,16 @@ import { AccountService } from 'app/core/auth/account.service';
 import { animate, group, style, transition, trigger } from '@angular/animations';
 import { IrisChatService } from 'app/iris/iris-chat.service';
 import * as _ from 'lodash-es';
+import { IrisLogoComponent } from '../iris-logo/iris-logo.component';
+import { RouterLink } from '@angular/router';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { TranslateDirective } from '../../shared/language/translate.directive';
+import { ChatStatusBarComponent } from './chat-status-bar/chat-status-bar.component';
+import { FormsModule } from '@angular/forms';
+import { ButtonComponent } from '../../shared/components/button.component';
+import { ArtemisTranslatePipe } from '../../shared/pipes/artemis-translate.pipe';
+import { AsPipe } from 'app/shared/pipes/as.pipe';
+import { HtmlForMarkdownPipe } from '../../shared/pipes/html-for-markdown.pipe';
 
 @Component({
     selector: 'jhi-iris-base-chatbot',
@@ -70,7 +80,19 @@ import * as _ from 'lodash-es';
             ]),
         ]),
     ],
-    standalone: false,
+    imports: [
+        IrisLogoComponent,
+        RouterLink,
+        FaIconComponent,
+        NgbTooltip,
+        TranslateDirective,
+        ChatStatusBarComponent,
+        FormsModule,
+        ButtonComponent,
+        ArtemisTranslatePipe,
+        AsPipe,
+        HtmlForMarkdownPipe,
+    ],
 })
 export class IrisBaseChatbotComponent implements OnInit, OnDestroy, AfterViewInit {
     protected accountService = inject(AccountService);

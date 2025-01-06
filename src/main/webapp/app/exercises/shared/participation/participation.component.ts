@@ -1,7 +1,7 @@
 import { Component, OnDestroy, OnInit, inject } from '@angular/core';
 import { Subject, Subscription } from 'rxjs';
 import { ParticipationService } from './participation.service';
-import { ActivatedRoute } from '@angular/router';
+import { ActivatedRoute, RouterLink } from '@angular/router';
 import { StudentParticipation, isPracticeMode } from 'app/entities/participation/student-participation.model';
 import { ExerciseSubmissionState, ProgrammingSubmissionService, ProgrammingSubmissionState } from 'app/exercises/programming/participate/programming-submission.service';
 import { ActionType } from 'app/shared/delete-dialog/delete-dialog.model';
@@ -22,6 +22,20 @@ import { faCircleNotch, faCodeBranch, faEraser, faFilePowerpoint, faTable, faTim
 import { GradingSystemService } from 'app/grading-system/grading-system.service';
 import { GradeStepsDTO } from 'app/entities/grade-step.model';
 import { PROFILE_LOCALVC } from 'app/app.constants';
+import { TranslateDirective } from '../../../shared/language/translate.directive';
+import { FormsModule } from '@angular/forms';
+import { ProgrammingExerciseInstructorSubmissionStateComponent } from '../../programming/shared/actions/programming-exercise-instructor-submission-state.component';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { DataTableComponent } from '../../../shared/data-table/data-table.component';
+import { NgxDatatableModule } from '@siemens/ngx-datatable';
+import { CodeButtonComponent } from '../../../shared/components/code-button/code-button.component';
+import { TeamStudentsListComponent } from '../team/team-participate/team-students-list.component';
+import { FormDateTimePickerComponent } from '../../../shared/date-time-picker/date-time-picker.component';
+import { ProgrammingExerciseInstructorTriggerBuildButtonComponent } from '../../programming/shared/actions/programming-exercise-instructor-trigger-build-button.component';
+import { DeleteButtonDirective } from '../../../shared/delete-dialog/delete-button.directive';
+import { FeatureToggleDirective } from '../../../shared/feature-toggle/feature-toggle.directive';
+import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
+import { ArtemisTranslatePipe } from '../../../shared/pipes/artemis-translate.pipe';
 
 enum FilterProp {
     ALL = 'all',
@@ -33,7 +47,23 @@ enum FilterProp {
 @Component({
     selector: 'jhi-participation',
     templateUrl: './participation.component.html',
-    standalone: false,
+    imports: [
+        TranslateDirective,
+        FormsModule,
+        ProgrammingExerciseInstructorSubmissionStateComponent,
+        RouterLink,
+        FaIconComponent,
+        DataTableComponent,
+        NgxDatatableModule,
+        CodeButtonComponent,
+        TeamStudentsListComponent,
+        FormDateTimePickerComponent,
+        ProgrammingExerciseInstructorTriggerBuildButtonComponent,
+        DeleteButtonDirective,
+        FeatureToggleDirective,
+        ArtemisDatePipe,
+        ArtemisTranslatePipe,
+    ],
 })
 export class ParticipationComponent implements OnInit, OnDestroy {
     private route = inject(ActivatedRoute);

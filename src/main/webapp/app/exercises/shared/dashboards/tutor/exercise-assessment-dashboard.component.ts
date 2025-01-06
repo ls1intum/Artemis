@@ -1,6 +1,6 @@
 import { Component, ContentChild, OnInit, TemplateRef, inject } from '@angular/core';
 import { SafeHtml } from '@angular/platform-browser';
-import { ActivatedRoute, Router } from '@angular/router';
+import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
 import { AlertService } from 'app/core/util/alert.service';
 import { User } from 'app/core/user/user.model';
@@ -40,7 +40,7 @@ import { onError } from 'app/shared/util/global.utils';
 import { roundValueSpecifiedByCourseSettings } from 'app/shared/util/utils';
 import { ArtemisNavigationUtilService, getLinkToSubmissionAssessment } from 'app/utils/navigation.utils';
 import { AssessmentType } from 'app/entities/assessment-type.model';
-import { LegendPosition } from '@swimlane/ngx-charts';
+import { LegendPosition, PieChartModule } from '@swimlane/ngx-charts';
 import { AssessmentDashboardInformationEntry } from 'app/course/dashboards/assessment-dashboard/assessment-dashboard-information.component';
 import dayjs from 'dayjs/esm';
 import { faCheckCircle, faExclamationTriangle, faFolderOpen, faListAlt, faQuestionCircle, faSort, faSpinner } from '@fortawesome/free-solid-svg-icons';
@@ -48,6 +48,31 @@ import { GraphColors } from 'app/entities/statistics.model';
 import { PROFILE_LOCALVC } from 'app/app.constants';
 import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
 import { isManualResult } from 'app/exercises/shared/result/result.utils';
+import { HeaderExercisePageWithDetailsComponent } from '../../exercise-headers/header-exercise-page-with-details.component';
+import { TutorParticipationGraphComponent } from '../../../../shared/dashboards/tutor-participation-graph/tutor-participation-graph.component';
+import { SecondCorrectionEnableButtonComponent } from './second-correction-button/second-correction-enable-button.component';
+import { SidePanelComponent } from '../../../../shared/side-panel/side-panel.component';
+import { TranslateDirective } from '../../../../shared/language/translate.directive';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { InfoPanelComponent } from '../../../../shared/info-panel/info-panel.component';
+import { ProgrammingExerciseInstructionComponent } from '../../../programming/shared/instructions-render/programming-exercise-instruction.component';
+import { ModelingEditorComponent } from '../../../modeling/shared/modeling-editor.component';
+import { SecureLinkDirective } from '../../../../shared/http/secure-link.directive';
+import { ButtonComponent } from '../../../../shared/components/button.component';
+import { CodeButtonComponent } from '../../../../shared/components/code-button/code-button.component';
+import { StructuredGradingInstructionsAssessmentLayoutComponent } from '../../../../assessment/structured-grading-instructions-assessment-layout/structured-grading-instructions-assessment-layout.component';
+import { ExtensionPointDirective } from '../../../../shared/extension-point/extension-point.directive';
+import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
+import { SortDirective } from '../../../../shared/sort/sort.directive';
+import { SortByDirective } from '../../../../shared/sort/sort-by.directive';
+import { LanguageTableCellComponent } from './language-table-cell/language-table-cell.component';
+import { NgStyle } from '@angular/common';
+import { ResultComponent } from '../../result/result.component';
+import { AssessmentWarningComponent } from '../../../../assessment/assessment-warning/assessment-warning.component';
+import { CollapsableAssessmentInstructionsComponent } from '../../../../assessment/assessment-instructions/collapsable-assessment-instructions/collapsable-assessment-instructions.component';
+import { TutorLeaderboardComponent } from '../../../../shared/dashboards/tutor-leaderboard/tutor-leaderboard.component';
+import { ArtemisTranslatePipe } from '../../../../shared/pipes/artemis-translate.pipe';
+import { ArtemisDurationFromSecondsPipe } from 'app/shared/pipes/artemis-duration-from-seconds.pipe';
 
 export interface ExampleSubmissionQueryParams {
     readOnly?: boolean;
@@ -59,7 +84,36 @@ export interface ExampleSubmissionQueryParams {
     templateUrl: './exercise-assessment-dashboard.component.html',
     styleUrls: ['./exercise-assessment-dashboard.component.scss'],
     providers: [CourseManagementService],
-    standalone: false,
+    imports: [
+        HeaderExercisePageWithDetailsComponent,
+        TutorParticipationGraphComponent,
+        SecondCorrectionEnableButtonComponent,
+        PieChartModule,
+        SidePanelComponent,
+        TranslateDirective,
+        RouterLink,
+        FaIconComponent,
+        InfoPanelComponent,
+        ProgrammingExerciseInstructionComponent,
+        ModelingEditorComponent,
+        SecureLinkDirective,
+        ButtonComponent,
+        CodeButtonComponent,
+        StructuredGradingInstructionsAssessmentLayoutComponent,
+        ExtensionPointDirective,
+        NgbTooltip,
+        SortDirective,
+        SortByDirective,
+        LanguageTableCellComponent,
+        NgStyle,
+        ResultComponent,
+        AssessmentWarningComponent,
+        CollapsableAssessmentInstructionsComponent,
+        TutorLeaderboardComponent,
+        ArtemisDatePipe,
+        ArtemisTranslatePipe,
+        ArtemisDurationFromSecondsPipe,
+    ],
 })
 export class ExerciseAssessmentDashboardComponent implements OnInit {
     complaintService = inject(ComplaintService);

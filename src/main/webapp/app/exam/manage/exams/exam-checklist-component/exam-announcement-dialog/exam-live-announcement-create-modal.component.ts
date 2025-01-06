@@ -12,12 +12,17 @@ import { UnderlineAction } from 'app/shared/monaco-editor/model/actions/underlin
 import { CodeAction } from 'app/shared/monaco-editor/model/actions/code.action';
 import { CodeBlockAction } from 'app/shared/monaco-editor/model/actions/code-block.action';
 import { OrderedListAction } from 'app/shared/monaco-editor/model/actions/ordered-list.action';
+import { FormsModule } from '@angular/forms';
+import { TranslateDirective } from '../../../../../shared/language/translate.directive';
+import { MarkdownEditorMonacoComponent } from '../../../../../shared/markdown-editor/monaco/markdown-editor-monaco.component';
+import { ExamLiveEventComponent } from '../../../../shared/events/exam-live-event.component';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 
 @Component({
     selector: 'jhi-exam-live-announcement-create-modal',
     templateUrl: './exam-live-announcement-create-modal.component.html',
     styleUrls: ['./exam-live-announcement-create-modal.component.scss'],
-    standalone: false,
+    imports: [FormsModule, TranslateDirective, MarkdownEditorMonacoComponent, ExamLiveEventComponent, FaIconComponent],
 })
 export class ExamLiveAnnouncementCreateModalComponent {
     private activeModal = inject(NgbActiveModal);

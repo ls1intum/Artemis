@@ -42,6 +42,19 @@ import { LayoutService } from 'app/shared/breakpoints/layout.service';
 import { CustomBreakpointNames } from 'app/shared/breakpoints/breakpoints.service';
 import { Posting, PostingType, SavedPostStatus, SavedPostStatusMap } from 'app/entities/metis/posting.model';
 import { canCreateChannel } from 'app/shared/metis/conversations/conversation-permissions.utils';
+import { LoadingIndicatorContainerComponent } from '../../shared/loading-indicator-container/loading-indicator-container.component';
+import { FormsModule } from '@angular/forms';
+import { ButtonComponent } from '../../shared/components/button.component';
+import { CourseConversationsCodeOfConductComponent } from './code-of-conduct/course-conversations-code-of-conduct.component';
+import { TranslateDirective } from '../../shared/language/translate.directive';
+import { NgClass } from '@angular/common';
+import { SidebarComponent } from '../../shared/sidebar/sidebar.component';
+import { ConversationHeaderComponent } from './layout/conversation-header/conversation-header.component';
+import { ConversationMessagesComponent } from './layout/conversation-messages/conversation-messages.component';
+import { CourseWideSearchComponent as CourseWideSearchComponent_1 } from './course-wide-search/course-wide-search.component';
+import { SavedPostsComponent } from './saved-posts/saved-posts.component';
+import { ConversationThreadSidebarComponent } from './layout/conversation-thread-sidebar/conversation-thread-sidebar.component';
+import { ArtemisTranslatePipe } from '../../shared/pipes/artemis-translate.pipe';
 
 const DEFAULT_CHANNEL_GROUPS: AccordionGroups = {
     favoriteChannels: { entityData: [] },
@@ -99,7 +112,21 @@ const DEFAULT_SHOW_ALWAYS: SidebarItemShowAlways = {
     styleUrls: ['../course-overview.scss', './course-conversations.component.scss'],
     encapsulation: ViewEncapsulation.None,
     providers: [MetisService],
-    standalone: false,
+    imports: [
+        LoadingIndicatorContainerComponent,
+        FormsModule,
+        ButtonComponent,
+        CourseConversationsCodeOfConductComponent,
+        TranslateDirective,
+        NgClass,
+        SidebarComponent,
+        ConversationHeaderComponent,
+        ConversationMessagesComponent,
+        CourseWideSearchComponent_1,
+        SavedPostsComponent,
+        ConversationThreadSidebarComponent,
+        ArtemisTranslatePipe,
+    ],
 })
 export class CourseConversationsComponent implements OnInit, OnDestroy {
     private router = inject(Router);

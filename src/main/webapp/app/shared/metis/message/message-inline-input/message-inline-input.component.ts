@@ -1,17 +1,21 @@
 import { Component, OnInit, ViewEncapsulation, inject } from '@angular/core';
 import { AnswerPost } from 'app/entities/metis/answer-post.model';
-import { Validators } from '@angular/forms';
+import { FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
 import { Post } from 'app/entities/metis/post.model';
 import { PostContentValidationPattern } from 'app/shared/metis/metis.util';
 import { PostingCreateEditDirective } from 'app/shared/metis/posting-create-edit.directive';
 import { LocalStorageService } from 'ngx-webstorage';
+import { PostingMarkdownEditorComponent } from '../../posting-markdown-editor/posting-markdown-editor.component';
+import { TranslateDirective } from '../../../language/translate.directive';
+import { PostingButtonComponent } from '../../posting-button/posting-button.component';
+import { ArtemisTranslatePipe } from '../../../pipes/artemis-translate.pipe';
 
 @Component({
     selector: 'jhi-message-inline-input',
     templateUrl: './message-inline-input.component.html',
     styleUrls: ['./message-inline-input.component.scss'],
     encapsulation: ViewEncapsulation.None,
-    standalone: false,
+    imports: [FormsModule, ReactiveFormsModule, PostingMarkdownEditorComponent, TranslateDirective, PostingButtonComponent, ArtemisTranslatePipe],
 })
 export class MessageInlineInputComponent extends PostingCreateEditDirective<Post | AnswerPost> implements OnInit {
     protected localStorageService = inject(LocalStorageService);

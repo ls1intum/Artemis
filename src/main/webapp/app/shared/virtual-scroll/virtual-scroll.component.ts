@@ -13,7 +13,6 @@ import { ITEMS_PER_PAGE } from 'app/shared/constants/pagination.constants';
     selector: 'jhi-virtual-scroll',
     templateUrl: './virtual-scroll.component.html',
     styleUrls: ['virtual-scroll.style.scss'],
-    standalone: false,
 })
 
 /**

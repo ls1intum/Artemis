@@ -2,7 +2,7 @@ import { ArtemisTestModule } from '../../../test.module';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { MockProvider } from 'ng-mocks';
 import { ImportCourseCompetenciesComponent } from 'app/course/competencies/import/import-course-competencies.component';
-import { FormsModule } from 'app/forms/forms.module';
+import { ArtemisFormsModule } from '../../../../../../main/webapp/app/forms/artemis-forms.module';
 import { MockRouter } from '../../../helpers/mocks/mock-router';
 import { ActivatedRoute, Router, convertToParamMap } from '@angular/router';
 import { CompetencyService } from 'app/course/competencies/competency.service';
@@ -31,7 +31,7 @@ describe('ImportCourseCompetenciesComponent', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule, FormsModule],
+            imports: [ArtemisTestModule, ArtemisFormsModule],
             declarations: [ImportCourseCompetenciesComponent],
             providers: [
                 {

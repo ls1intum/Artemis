@@ -1,5 +1,5 @@
 import { Component, OnDestroy, OnInit, inject, input } from '@angular/core';
-import { ActivatedRoute } from '@angular/router';
+import { ActivatedRoute, RouterLink } from '@angular/router';
 import { HttpErrorResponse } from '@angular/common/http';
 import { AlertService } from 'app/core/util/alert.service';
 import { ParticipationService } from 'app/exercises/shared/participation/participation.service';
@@ -33,13 +33,51 @@ import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
 import { PROFILE_IRIS } from 'app/app.constants';
 import { IrisSettingsService } from 'app/iris/settings/shared/iris-settings.service';
 import { AssessmentType } from 'app/entities/assessment-type.model';
+import { HeaderParticipationPageComponent } from '../../shared/exercise-headers/header-participation-page.component';
+import { ButtonComponent } from '../../../shared/components/button.component';
+import { RequestFeedbackButtonComponent } from '../../../overview/exercise-details/request-feedback-button/request-feedback-button.component';
+import { ResultHistoryComponent } from '../../../overview/result-history/result-history.component';
+import { ResizeableContainerComponent } from '../../../shared/resizeable-container/resizeable-container.component';
+import { TeamParticipateInfoBoxComponent } from '../../shared/team/team-participate/team-participate-info-box.component';
+import { TranslateDirective } from '../../../shared/language/translate.directive';
+import { FormsModule } from '@angular/forms';
+import { TeamSubmissionSyncComponent } from '../../shared/team-submission-sync/team-submission-sync.component';
+import { TextResultComponent } from './text-result/text-result.component';
+import { AdditionalFeedbackComponent } from '../../../shared/additional-feedback/additional-feedback.component';
+import { RatingComponent } from '../../shared/rating/rating.component';
+import { ComplaintsStudentViewComponent } from '../../../complaints/complaints-for-students/complaints-student-view.component';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { IrisExerciseChatbotButtonComponent } from '../../../iris/exercise-chatbot/exercise-chatbot-button.component';
+import { UpperCasePipe } from '@angular/common';
+import { ArtemisTranslatePipe } from '../../../shared/pipes/artemis-translate.pipe';
+import { HtmlForMarkdownPipe } from '../../../shared/pipes/html-for-markdown.pipe';
 
 @Component({
     selector: 'jhi-text-editor',
     templateUrl: './text-editor.component.html',
     providers: [ParticipationService],
     styleUrls: ['./text-editor.component.scss'],
-    standalone: false,
+    imports: [
+        HeaderParticipationPageComponent,
+        ButtonComponent,
+        RouterLink,
+        RequestFeedbackButtonComponent,
+        ResultHistoryComponent,
+        ResizeableContainerComponent,
+        TeamParticipateInfoBoxComponent,
+        TranslateDirective,
+        FormsModule,
+        TeamSubmissionSyncComponent,
+        TextResultComponent,
+        AdditionalFeedbackComponent,
+        RatingComponent,
+        ComplaintsStudentViewComponent,
+        FaIconComponent,
+        IrisExerciseChatbotButtonComponent,
+        UpperCasePipe,
+        ArtemisTranslatePipe,
+        HtmlForMarkdownPipe,
+    ],
 })
 export class TextEditorComponent implements OnInit, OnDestroy, ComponentCanDeactivate {
     private route = inject(ActivatedRoute);

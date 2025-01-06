@@ -7,17 +7,46 @@ import { IncludedInOverallScore, getCourseFromExercise } from 'app/entities/exer
 import { faQuestionCircle } from '@fortawesome/free-solid-svg-icons';
 import { ProgrammingExerciseCreationConfig } from 'app/exercises/programming/manage/update/programming-exercise-creation-config';
 import { Subject, Subscription } from 'rxjs';
-import { NgModel } from '@angular/forms';
+import { FormsModule, NgModel } from '@angular/forms';
 import { SubmissionPolicyUpdateComponent } from 'app/exercises/shared/submission-policy/submission-policy-update.component';
 import { ProgrammingExerciseLifecycleComponent } from 'app/exercises/programming/shared/lifecycle/programming-exercise-lifecycle.component';
 import { ImportOptions } from 'app/types/programming-exercises';
 import { ProgrammingExerciseInputField } from 'app/exercises/programming/manage/update/programming-exercise-update.helper';
+import { TranslateDirective } from '../../../../../../shared/language/translate.directive';
+import { IncludedInOverallScorePickerComponent } from '../../../../../shared/included-in-overall-score-picker/included-in-overall-score-picker.component';
+import { CustomMinDirective } from '../../../../../../shared/validators/custom-min-validator.directive';
+import { CustomMaxDirective } from '../../../../../../shared/validators/custom-max-validator.directive';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { NgbAlert, NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
+import { SubmissionPolicyUpdateComponent as SubmissionPolicyUpdateComponent_1 } from '../../../../../shared/submission-policy/submission-policy-update.component';
+import { HelpIconComponent } from '../../../../../../shared/components/help-icon.component';
+import { ProgrammingExerciseLifecycleComponent as ProgrammingExerciseLifecycleComponent_1 } from '../../../../shared/lifecycle/programming-exercise-lifecycle.component';
+import { GradingInstructionsDetailsComponent } from '../../../../../shared/structured-grading-criterion/grading-instructions-details/grading-instructions-details.component';
+import { PresentationScoreComponent } from '../../../../../shared/presentation-score/presentation-score.component';
+import { KeyValuePipe } from '@angular/common';
+import { ArtemisTranslatePipe } from '../../../../../../shared/pipes/artemis-translate.pipe';
 
 @Component({
     selector: 'jhi-programming-exercise-grading',
     templateUrl: './programming-exercise-grading.component.html',
     styleUrls: ['../../../programming-exercise-form.scss'],
-    standalone: false,
+    imports: [
+        TranslateDirective,
+        IncludedInOverallScorePickerComponent,
+        FormsModule,
+        CustomMinDirective,
+        CustomMaxDirective,
+        FaIconComponent,
+        NgbTooltip,
+        SubmissionPolicyUpdateComponent_1,
+        NgbAlert,
+        HelpIconComponent,
+        ProgrammingExerciseLifecycleComponent_1,
+        GradingInstructionsDetailsComponent,
+        PresentationScoreComponent,
+        KeyValuePipe,
+        ArtemisTranslatePipe,
+    ],
 })
 export class ProgrammingExerciseGradingComponent implements AfterViewInit, OnDestroy {
     private translateService = inject(TranslateService);

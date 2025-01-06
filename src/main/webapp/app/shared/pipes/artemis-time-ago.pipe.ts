@@ -6,7 +6,6 @@ import { TranslateService } from '@ngx-translate/core';
 @Pipe({
     name: 'artemisTimeAgo',
     pure: false,
-    standalone: false,
 })
 export class ArtemisTimeAgoPipe implements PipeTransform, OnDestroy {
     private cdRef = inject(ChangeDetectorRef);

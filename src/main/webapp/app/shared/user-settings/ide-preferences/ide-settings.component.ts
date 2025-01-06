@@ -3,13 +3,29 @@ import { ProgrammingLanguage } from 'app/entities/programming/programming-exerci
 import { Ide, ideEquals } from 'app/shared/user-settings/ide-preferences/ide.model';
 import { faPlus, faTrash } from '@fortawesome/free-solid-svg-icons';
 import { IdeSettingsService } from 'app/shared/user-settings/ide-preferences/ide-settings.service';
+import { TranslateDirective } from '../../language/translate.directive';
+import { HelpIconComponent } from '../../components/help-icon.component';
+import { NgClass, NgTemplateOutlet } from '@angular/common';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { NgbDropdown, NgbDropdownButtonItem, NgbDropdownItem, NgbDropdownMenu, NgbDropdownToggle } from '@ng-bootstrap/ng-bootstrap';
 
 @Component({
     selector: 'jhi-ide-preferences',
     templateUrl: './ide-settings.component.html',
     styleUrls: ['./ide-settings.scss'],
     changeDetection: ChangeDetectionStrategy.OnPush,
-    standalone: false,
+    imports: [
+        TranslateDirective,
+        HelpIconComponent,
+        NgTemplateOutlet,
+        FaIconComponent,
+        NgbDropdown,
+        NgbDropdownToggle,
+        NgbDropdownMenu,
+        NgbDropdownButtonItem,
+        NgbDropdownItem,
+        NgClass,
+    ],
 })
 export class IdeSettingsComponent implements OnInit {
     private ideSettingsService = inject(IdeSettingsService);

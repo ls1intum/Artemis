@@ -4,12 +4,34 @@ import { PostingsReactionsBarDirective } from 'app/shared/metis/posting-reaction
 import { AnswerPost } from 'app/entities/metis/answer-post.model';
 import { faCheck, faPencilAlt, faSmile } from '@fortawesome/free-solid-svg-icons';
 import { getAsChannelDTO } from 'app/entities/metis/conversation/channel.model';
+import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
+import { EmojiComponent } from '../../emoji/emoji.component';
+import { CdkConnectedOverlay, CdkOverlayOrigin } from '@angular/cdk/overlay';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { EmojiPickerComponent } from '../../emoji/emoji-picker.component';
+import { AsyncPipe, KeyValuePipe, NgClass } from '@angular/common';
+import { ConfirmIconComponent } from '../../../confirm-icon/confirm-icon.component';
+import { ArtemisTranslatePipe } from '../../../pipes/artemis-translate.pipe';
+import { ReactingUsersOnPostingPipe } from 'app/shared/pipes/reacting-users-on-posting.pipe';
 
 @Component({
     selector: 'jhi-answer-post-reactions-bar',
     templateUrl: './answer-post-reactions-bar.component.html',
     styleUrls: ['../posting-reactions-bar.component.scss'],
-    standalone: false,
+    imports: [
+        NgbTooltip,
+        EmojiComponent,
+        CdkOverlayOrigin,
+        FaIconComponent,
+        CdkConnectedOverlay,
+        EmojiPickerComponent,
+        NgClass,
+        ConfirmIconComponent,
+        AsyncPipe,
+        KeyValuePipe,
+        ArtemisTranslatePipe,
+        ReactingUsersOnPostingPipe,
+    ],
 })
 export class AnswerPostReactionsBarComponent extends PostingsReactionsBarDirective<AnswerPost> implements OnInit, OnChanges {
     @Input() isReadOnlyMode = false;

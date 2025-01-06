@@ -4,10 +4,7 @@ import { Observable } from 'rxjs';
 import { DataExportConfirmationDialogData } from 'app/core/legal/data-export/confirmation/data-export-confirmation-dialog.model';
 import { DataExportConfirmationDialogService } from 'app/core/legal/data-export/confirmation/data-export-confirmation-dialog.service';
 
-@Directive({
-    selector: '[jhiDataExportRequestButton]',
-    standalone: false,
-})
+@Directive({ selector: '[jhiDataExportRequestButton]' })
 export class DataExportRequestButtonDirective implements OnInit {
     private dataExportConfirmationDialogService = inject(DataExportConfirmationDialogService);
     private renderer = inject(Renderer2);

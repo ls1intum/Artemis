@@ -16,12 +16,27 @@ import { Submission } from 'app/entities/submission.model';
 import { faListAlt } from '@fortawesome/free-regular-svg-icons';
 import { SubmissionVersion } from 'app/entities/submission-version.model';
 import { htmlForMarkdown } from 'app/shared/util/markdown.conversion.util';
+import { TranslateDirective } from '../../../../shared/language/translate.directive';
+import { IncludedInScoreBadgeComponent } from '../../../../exercises/shared/exercise-headers/included-in-score-badge.component';
+import { ResizeableContainerComponent } from '../../../../shared/resizeable-container/resizeable-container.component';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { ExamExerciseUpdateHighlighterComponent } from '../exam-exercise-update-highlighter/exam-exercise-update-highlighter.component';
+import { UpperCasePipe } from '@angular/common';
+import { ArtemisTranslatePipe } from '../../../../shared/pipes/artemis-translate.pipe';
 
 @Component({
     selector: 'jhi-file-upload-submission-exam',
     templateUrl: './file-upload-exam-submission.component.html',
     providers: [{ provide: ExamSubmissionComponent, useExisting: FileUploadExamSubmissionComponent }],
-    standalone: false,
+    imports: [
+        TranslateDirective,
+        IncludedInScoreBadgeComponent,
+        ResizeableContainerComponent,
+        FaIconComponent,
+        ExamExerciseUpdateHighlighterComponent,
+        UpperCasePipe,
+        ArtemisTranslatePipe,
+    ],
 })
 export class FileUploadExamSubmissionComponent extends ExamSubmissionComponent implements OnInit {
     private fileUploadSubmissionService = inject(FileUploadSubmissionService);

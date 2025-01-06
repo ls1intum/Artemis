@@ -6,11 +6,12 @@ import { downloadZipFileFromResponse } from 'app/shared/util/download.util';
 import { AlertService } from 'app/core/util/alert.service';
 import { faDownload } from '@fortawesome/free-solid-svg-icons';
 import { take } from 'rxjs';
+import { ButtonComponent } from '../../../../shared/components/button.component';
 
 @Component({
     selector: 'jhi-programming-exercise-student-repo-download',
     templateUrl: './programming-exercise-student-repo-download.component.html',
-    standalone: false,
+    imports: [ButtonComponent],
 })
 export class ProgrammingExerciseStudentRepoDownloadComponent {
     protected programmingExerciseService = inject(ProgrammingExerciseService);

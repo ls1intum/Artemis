@@ -1,6 +1,6 @@
 import dayjs from 'dayjs/esm';
 import { Component, OnDestroy, OnInit, inject } from '@angular/core';
-import { ActivatedRoute } from '@angular/router';
+import { ActivatedRoute, RouterLink } from '@angular/router';
 import {
     Competency,
     CompetencyJol,
@@ -26,12 +26,46 @@ import { FeatureToggle, FeatureToggleService } from 'app/shared/feature-toggle/f
 import { CourseStorageService } from 'app/course/manage/course-storage.service';
 import { Course } from 'app/entities/course.model';
 import { CourseCompetencyService } from 'app/course/competencies/course-competency.service';
+import { FireworksComponent } from '../../shared/fireworks/fireworks.component';
+import { TranslateDirective } from '../../shared/language/translate.directive';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
+import { NgClass } from '@angular/common';
+import { ExerciseUnitComponent } from '../course-lectures/exercise-unit/exercise-unit.component';
+import { AttachmentUnitComponent } from '../course-lectures/attachment-unit/attachment-unit.component';
+import { VideoUnitComponent } from '../course-lectures/video-unit/video-unit.component';
+import { TextUnitComponent } from '../course-lectures/text-unit/text-unit.component';
+import { OnlineUnitComponent } from '../course-lectures/online-unit/online-unit.component';
+import { CompetencyRingsComponent } from '../../course/competencies/competency-rings/competency-rings.component';
+import { SidePanelComponent } from '../../shared/side-panel/side-panel.component';
+import { HelpIconComponent } from '../../shared/components/help-icon.component';
+import { ArtemisTranslatePipe } from '../../shared/pipes/artemis-translate.pipe';
+import { ArtemisTimeAgoPipe } from 'app/shared/pipes/artemis-time-ago.pipe';
+import { HtmlForMarkdownPipe } from '../../shared/pipes/html-for-markdown.pipe';
 
 @Component({
     selector: 'jhi-course-competencies-details',
     templateUrl: './course-competencies-details.component.html',
     styleUrls: ['../course-overview.scss'],
-    standalone: false,
+    imports: [
+        FireworksComponent,
+        TranslateDirective,
+        FaIconComponent,
+        NgbTooltip,
+        NgClass,
+        RouterLink,
+        ExerciseUnitComponent,
+        AttachmentUnitComponent,
+        VideoUnitComponent,
+        TextUnitComponent,
+        OnlineUnitComponent,
+        CompetencyRingsComponent,
+        SidePanelComponent,
+        HelpIconComponent,
+        ArtemisTranslatePipe,
+        ArtemisTimeAgoPipe,
+        HtmlForMarkdownPipe,
+    ],
 })
 export class CourseCompetenciesDetailsComponent implements OnInit, OnDestroy {
     private featureToggleService = inject(FeatureToggleService);

@@ -2,12 +2,14 @@ import { Component, Input, OnChanges, OnDestroy, OnInit, inject } from '@angular
 import { TranslateService } from '@ngx-translate/core';
 import { IncludedInOverallScore } from 'app/entities/exercise.model';
 import { Subscription } from 'rxjs';
+import { NgClass } from '@angular/common';
+import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 
 @Component({
     selector: 'jhi-included-in-score-badge',
     templateUrl: './included-in-score-badge.component.html',
     styleUrls: ['./included-in-score-badge.component.scss'],
-    standalone: false,
+    imports: [NgClass, NgbTooltip],
 })
 export class IncludedInScoreBadgeComponent implements OnInit, OnDestroy, OnChanges {
     private translateService = inject(TranslateService);

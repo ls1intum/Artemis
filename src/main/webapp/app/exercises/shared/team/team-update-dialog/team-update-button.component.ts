@@ -5,6 +5,7 @@ import { Team } from 'app/entities/team.model';
 import { Exercise } from 'app/entities/exercise.model';
 import { ButtonSize, ButtonType } from 'app/shared/components/button.component';
 import { faPencilAlt, faPlus } from '@fortawesome/free-solid-svg-icons';
+import { ButtonComponent } from '../../../../shared/components/button.component';
 
 @Component({
     selector: 'jhi-team-update-button',
@@ -17,7 +18,7 @@ import { faPencilAlt, faPlus } from '@fortawesome/free-solid-svg-icons';
             (onClick)="openTeamCreateDialog($event)"
         />
     `,
-    standalone: false,
+    imports: [ButtonComponent],
 })
 export class TeamUpdateButtonComponent {
     private modalService = inject(NgbModal);

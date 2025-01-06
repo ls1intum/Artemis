@@ -2,14 +2,14 @@ import { Component, HostListener, OnDestroy, OnInit, inject } from '@angular/cor
 import { AccountService } from 'app/core/auth/account.service';
 import { Subscription } from 'rxjs';
 import { filter, map, tap } from 'rxjs/operators';
-import { NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
+import { NgbCollapse, NgbDropdown, NgbDropdownMenu, NgbDropdownToggle, NgbModalRef, NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { User } from 'app/core/user/user.model';
 import { GuidedTourService } from 'app/guided-tour/guided-tour.service';
 import { PROFILE_IRIS, PROFILE_LOCALCI, PROFILE_LTI, VERSION } from 'app/app.constants';
 import { ParticipationWebsocketService } from 'app/overview/participation-websocket.service';
 import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
 import { LoginService } from 'app/core/login/login.service';
-import { ActivatedRoute, Event, NavigationEnd, Router } from '@angular/router';
+import { ActivatedRoute, Event, NavigationEnd, Router, RouterLink, RouterLinkActive } from '@angular/router';
 import { ExamParticipationService } from 'app/exam/participate/exam-participation.service';
 import { ArtemisServerDateService } from 'app/shared/server-date.service';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
@@ -52,12 +52,45 @@ import { onError } from 'app/shared/util/global.utils';
 import { StudentExam } from 'app/entities/student-exam.model';
 import { Title } from '@angular/platform-browser';
 import { FeatureToggle, FeatureToggleService } from 'app/shared/feature-toggle/feature-toggle.service';
+import { NgClass, NgTemplateOutlet } from '@angular/common';
+import { NotificationSidebarComponent } from '../../notification/notification-sidebar/notification-sidebar.component';
+import { ThemeSwitchComponent } from 'app/core/theme/theme-switch.component';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { TranslateDirective } from '../../language/translate.directive';
+import { ActiveMenuDirective } from './active-menu.directive';
+import { JhiConnectionWarningComponent } from '../../connection-warning/connection-warning.component';
+import { LoadingNotificationComponent } from '../../notification/loading-notification/loading-notification.component';
+import { SystemNotificationComponent } from '../../notification/system-notification/system-notification.component';
+import { GuidedTourComponent } from 'app/guided-tour/guided-tour.component';
+import { FindLanguageFromKeyPipe } from 'app/shared/language/find-language-from-key.pipe';
+import { ArtemisTranslatePipe } from '../../pipes/artemis-translate.pipe';
 
 @Component({
     selector: 'jhi-navbar',
     templateUrl: './navbar.component.html',
     styleUrls: ['navbar.scss'],
-    standalone: false,
+    imports: [
+        NgClass,
+        NotificationSidebarComponent,
+        ThemeSwitchComponent,
+        NgbDropdown,
+        RouterLinkActive,
+        NgbDropdownToggle,
+        FaIconComponent,
+        TranslateDirective,
+        NgbDropdownMenu,
+        RouterLink,
+        ActiveMenuDirective,
+        NgbTooltip,
+        JhiConnectionWarningComponent,
+        LoadingNotificationComponent,
+        NgTemplateOutlet,
+        NgbCollapse,
+        SystemNotificationComponent,
+        GuidedTourComponent,
+        FindLanguageFromKeyPipe,
+        ArtemisTranslatePipe,
+    ],
 })
 export class NavbarComponent implements OnInit, OnDestroy {
     guidedTourService = inject(GuidedTourService);

@@ -1,6 +1,6 @@
 import { Component, Injector, Input, OnChanges, OnInit, SimpleChanges, inject } from '@angular/core';
 import { HttpErrorResponse } from '@angular/common/http';
-import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
+import { NgbActiveModal, NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { catchError, map, switchMap, tap } from 'rxjs/operators';
 import { of, throwError } from 'rxjs';
 import { BuildLogEntry, BuildLogEntryArray, BuildLogType } from 'app/entities/programming/build-log.model';
@@ -16,7 +16,7 @@ import { createCommitUrl, isProgrammingExerciseParticipation } from 'app/exercis
 import { AssessmentType } from 'app/entities/assessment-type.model';
 import { roundValueSpecifiedByCourseSettings } from 'app/shared/util/utils';
 import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
-import { LegendPosition, ScaleType } from '@swimlane/ngx-charts';
+import { BarChartModule, LegendPosition, ScaleType } from '@swimlane/ngx-charts';
 import { faCircleNotch, faExclamationTriangle, faXmark } from '@fortawesome/free-solid-svg-icons';
 import { GraphColors } from 'app/entities/statistics.model';
 import { axisTickFormattingWithPercentageSign } from 'app/shared/statistics-graph/statistics-graph.utils';
@@ -31,13 +31,32 @@ import { ChartData } from 'app/exercises/shared/feedback/chart/feedback-chart-da
 import { FeedbackChartService } from 'app/exercises/shared/feedback/chart/feedback-chart.service';
 import { isFeedbackGroup } from 'app/exercises/shared/feedback/group/feedback-group';
 import { cloneDeep } from 'lodash-es';
+import { TranslateDirective } from '../../../shared/language/translate.directive';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { NgClass, NgTemplateOutlet, UpperCasePipe } from '@angular/common';
+import { FeedbackNodeComponent } from './node/feedback-node.component';
+import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
+import { ArtemisTranslatePipe } from '../../../shared/pipes/artemis-translate.pipe';
+import { ArtemisTimeAgoPipe } from 'app/shared/pipes/artemis-time-ago.pipe';
 
 // Modal -> Result details view
 @Component({
     selector: 'jhi-result-detail',
     templateUrl: './feedback.component.html',
     styleUrls: ['./feedback.scss'],
-    standalone: false,
+    imports: [
+        TranslateDirective,
+        FaIconComponent,
+        NgClass,
+        NgbTooltip,
+        BarChartModule,
+        NgTemplateOutlet,
+        FeedbackNodeComponent,
+        UpperCasePipe,
+        ArtemisDatePipe,
+        ArtemisTranslatePipe,
+        ArtemisTimeAgoPipe,
+    ],
 })
 export class FeedbackComponent implements OnInit, OnChanges {
     private resultService = inject(ResultService);

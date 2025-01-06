@@ -6,12 +6,14 @@ import { KnowledgeAreaForTree } from 'app/entities/competency/standardized-compe
 import { ArtemisSharedCommonModule } from 'app/shared/shared-common.module';
 import { ArtemisMarkdownModule } from 'app/shared/markdown.module';
 import { MatTreeModule } from '@angular/material/tree';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { NgbCollapse } from '@ng-bootstrap/ng-bootstrap';
 
 @Component({
     selector: 'jhi-knowledge-area-tree',
     templateUrl: './knowledge-area-tree.component.html',
     styleUrls: ['./knowledge-area-tree.component.scss'],
-    imports: [ArtemisSharedCommonModule, MatTreeModule, ArtemisMarkdownModule],
+    imports: [ArtemisSharedCommonModule, MatTreeModule, ArtemisMarkdownModule, FaIconComponent, NgbCollapse],
 })
 export class KnowledgeAreaTreeComponent {
     @Input() dataSource: MatTreeNestedDataSource<KnowledgeAreaForTree> = new MatTreeNestedDataSource<KnowledgeAreaForTree>();

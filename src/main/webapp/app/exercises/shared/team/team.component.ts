@@ -1,5 +1,5 @@
 import { Component, OnInit, ViewEncapsulation, inject } from '@angular/core';
-import { ActivatedRoute, Router } from '@angular/router';
+import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { Team } from 'app/entities/team.model';
 import { TeamService } from 'app/exercises/shared/team/team.service';
 import { Exercise } from 'app/entities/exercise.model';
@@ -8,13 +8,35 @@ import { User } from 'app/core/user/user.model';
 import { ButtonSize } from 'app/shared/components/button.component';
 import { AccountService } from 'app/core/auth/account.service';
 import { AlertService } from 'app/core/util/alert.service';
+import { TranslateDirective } from '../../../shared/language/translate.directive';
+import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
+import { TeamUpdateButtonComponent } from './team-update-dialog/team-update-button.component';
+import { TeamDeleteButtonComponent } from './team-update-dialog/team-delete-button.component';
+import { DataTableComponent } from '../../../shared/data-table/data-table.component';
+import { NgxDatatableModule } from '@siemens/ngx-datatable';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { TeamParticipationTableComponent } from './team-participation-table/team-participation-table.component';
+import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
+import { ArtemisTranslatePipe } from '../../../shared/pipes/artemis-translate.pipe';
 
 @Component({
     selector: 'jhi-team',
     templateUrl: './team.component.html',
     styleUrls: ['./team.component.scss'],
     encapsulation: ViewEncapsulation.None,
-    standalone: false,
+    imports: [
+        RouterLink,
+        TranslateDirective,
+        NgbTooltip,
+        TeamUpdateButtonComponent,
+        TeamDeleteButtonComponent,
+        DataTableComponent,
+        NgxDatatableModule,
+        FaIconComponent,
+        TeamParticipationTableComponent,
+        ArtemisDatePipe,
+        ArtemisTranslatePipe,
+    ],
 })
 export class TeamComponent implements OnInit {
     private route = inject(ActivatedRoute);

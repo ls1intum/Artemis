@@ -24,6 +24,9 @@ import { RouteComponents } from 'app/shared/metis/metis.util';
 import { NotificationSettingsService } from 'app/shared/user-settings/notification-settings/notification-settings.service';
 import { translationNotFoundMessage } from 'app/core/config/translation.config';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { TranslateDirective } from '../../language/translate.directive';
+import { ArtemisTranslatePipe as ArtemisTranslatePipe_1 } from '../../pipes/artemis-translate.pipe';
 
 const conversationMessageNotificationTitles = [
     MENTIONED_IN_MESSAGE_TITLE,
@@ -44,7 +47,7 @@ const conversationMessageNotificationTitles = [
     selector: 'jhi-notification-popup',
     templateUrl: './notification-popup.component.html',
     styleUrls: ['./notification-popup.scss'],
-    standalone: false,
+    imports: [FaIconComponent, TranslateDirective, ArtemisTranslatePipe_1],
 })
 export class NotificationPopupComponent implements OnInit {
     private notificationService = inject(NotificationService);

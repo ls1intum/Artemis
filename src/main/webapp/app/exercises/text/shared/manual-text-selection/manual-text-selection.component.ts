@@ -19,7 +19,6 @@ const SPACE = ' ';
     selector: 'jhi-manual-text-selection',
     templateUrl: './manual-text-selection.component.html',
     styleUrls: ['./manual-text-selection.component.scss'],
-    standalone: false,
 })
 export class ManualTextSelectionComponent {
     protected route = inject(ActivatedRoute);

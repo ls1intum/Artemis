@@ -1,6 +1,6 @@
 import { Component, ContentChild, OnDestroy, OnInit, TemplateRef, inject } from '@angular/core';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
-import { ActivatedRoute } from '@angular/router';
+import { ActivatedRoute, RouterLink } from '@angular/router';
 import { Subscription, combineLatest } from 'rxjs';
 import { filter, skip } from 'rxjs/operators';
 import { Result } from 'app/entities/result.model';
@@ -42,6 +42,27 @@ import { ScienceEventType } from 'app/shared/science/science.model';
 import { PROFILE_IRIS } from 'app/app.constants';
 import { ChatServiceMode } from 'app/iris/iris-chat.service';
 import { IconProp } from '@fortawesome/fontawesome-svg-core';
+import { NgClass } from '@angular/common';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { NgbDropdown, NgbDropdownItem, NgbDropdownMenu, NgbDropdownToggle, NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
+import { TranslateDirective } from '../../shared/language/translate.directive';
+import { ExtensionPointDirective } from '../../shared/extension-point/extension-point.directive';
+import { ExerciseDetailsStudentActionsComponent } from './exercise-details-student-actions.component';
+import { ExerciseHeadersInformationComponent } from '../../exercises/shared/exercise-headers/exercise-headers-information/exercise-headers-information.component';
+import { ResultHistoryComponent } from '../result-history/result-history.component';
+import { ResultComponent } from '../../exercises/shared/result/result.component';
+import { ProblemStatementComponent } from './problem-statement/problem-statement.component';
+import { ResetRepoButtonComponent } from '../../shared/components/reset-repo-button/reset-repo-button.component';
+import { ModelingEditorComponent } from '../../exercises/modeling/shared/modeling-editor.component';
+import { ProgrammingExerciseExampleSolutionRepoDownloadComponent } from '../../exercises/programming/shared/actions/programming-exercise-example-solution-repo-download.component';
+import { ExerciseInfoComponent } from '../../exercises/shared/exercise-info/exercise-info.component';
+import { ComplaintsStudentViewComponent } from '../../complaints/complaints-for-students/complaints-student-view.component';
+import { RatingComponent } from '../../exercises/shared/rating/rating.component';
+import { IrisExerciseChatbotButtonComponent } from '../../iris/exercise-chatbot/exercise-chatbot-button.component';
+import { DiscussionSectionComponent } from '../discussion-section/discussion-section.component';
+import { LtiInitializerComponent } from './lti-initializer.component';
+import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
+import { ArtemisTranslatePipe } from '../../shared/pipes/artemis-translate.pipe';
 
 interface InstructorActionItem {
     routerLink: string;
@@ -53,7 +74,34 @@ interface InstructorActionItem {
     templateUrl: './course-exercise-details.component.html',
     styleUrls: ['../course-overview.scss', './course-exercise-details.component.scss'],
     providers: [ExerciseCacheService],
-    standalone: false,
+    imports: [
+        NgClass,
+        FaIconComponent,
+        NgbDropdown,
+        NgbDropdownToggle,
+        NgbDropdownMenu,
+        NgbDropdownItem,
+        RouterLink,
+        TranslateDirective,
+        ExtensionPointDirective,
+        ExerciseDetailsStudentActionsComponent,
+        ExerciseHeadersInformationComponent,
+        ResultHistoryComponent,
+        ResultComponent,
+        ProblemStatementComponent,
+        ResetRepoButtonComponent,
+        ModelingEditorComponent,
+        ProgrammingExerciseExampleSolutionRepoDownloadComponent,
+        NgbTooltip,
+        ExerciseInfoComponent,
+        ComplaintsStudentViewComponent,
+        RatingComponent,
+        IrisExerciseChatbotButtonComponent,
+        DiscussionSectionComponent,
+        LtiInitializerComponent,
+        ArtemisDatePipe,
+        ArtemisTranslatePipe,
+    ],
 })
 export class CourseExerciseDetailsComponent extends AbstractScienceComponent implements OnInit, OnDestroy {
     private exerciseService = inject(ExerciseService);

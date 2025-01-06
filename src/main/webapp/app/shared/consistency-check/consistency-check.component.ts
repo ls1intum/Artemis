@@ -6,11 +6,14 @@ import { ConsistencyCheckError } from 'app/entities/consistency-check-result.mod
 import { ProgrammingExercise } from 'app/entities/programming/programming-exercise.model';
 import { getCourseId } from 'app/entities/exercise.model';
 import { faCheck, faTimes } from '@fortawesome/free-solid-svg-icons';
+import { TranslateDirective } from '../language/translate.directive';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { RouterLink } from '@angular/router';
 
 @Component({
     selector: 'jhi-consistency-check',
     templateUrl: './consistency-check.component.html',
-    standalone: false,
+    imports: [TranslateDirective, FaIconComponent, RouterLink],
 })
 export class ConsistencyCheckComponent implements OnInit {
     private activeModal = inject(NgbActiveModal);

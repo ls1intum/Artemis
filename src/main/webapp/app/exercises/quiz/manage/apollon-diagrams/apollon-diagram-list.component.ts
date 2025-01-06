@@ -14,12 +14,17 @@ import { Course } from 'app/entities/course.model';
 import { faPlus, faSort, faTimes, faX } from '@fortawesome/free-solid-svg-icons';
 import { ButtonSize } from 'app/shared/components/button.component';
 import { UMLDiagramType } from '@ls1intum/apollon';
+import { TranslateDirective } from '../../../../shared/language/translate.directive';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { SortDirective } from '../../../../shared/sort/sort.directive';
+import { SortByDirective } from '../../../../shared/sort/sort-by.directive';
+import { DeleteButtonDirective } from '../../../../shared/delete-dialog/delete-button.directive';
 
 @Component({
     selector: 'jhi-apollon-diagram-list',
     templateUrl: './apollon-diagram-list.component.html',
     providers: [ApollonDiagramService],
-    standalone: false,
+    imports: [TranslateDirective, FaIconComponent, SortDirective, SortByDirective, DeleteButtonDirective],
 })
 export class ApollonDiagramListComponent implements OnInit {
     private apollonDiagramsService = inject(ApollonDiagramService);

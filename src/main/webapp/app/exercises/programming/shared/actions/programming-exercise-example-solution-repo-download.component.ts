@@ -1,6 +1,7 @@
 import { Component, Input } from '@angular/core';
 import { downloadZipFileFromResponse } from 'app/shared/util/download.util';
 import { ProgrammingExerciseInstructorRepoDownloadComponent } from 'app/exercises/programming/shared/actions/programming-exercise-instructor-repo-download.component';
+import { ButtonComponent } from '../../../../shared/components/button.component';
 
 @Component({
     selector: 'jhi-programming-exercise-example-solution-repo-download',
@@ -14,7 +15,7 @@ import { ProgrammingExerciseInstructorRepoDownloadComponent } from 'app/exercise
         [title]="title"
         (onClick)="exportRepository()"
     />`,
-    standalone: false,
+    imports: [ButtonComponent],
 })
 export class ProgrammingExerciseExampleSolutionRepoDownloadComponent extends ProgrammingExerciseInstructorRepoDownloadComponent {
     @Input() includeTests?: boolean;

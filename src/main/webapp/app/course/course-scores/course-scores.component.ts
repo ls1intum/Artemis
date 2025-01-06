@@ -1,6 +1,6 @@
 import { ChangeDetectionStrategy, ChangeDetectorRef, Component, OnDestroy, OnInit, inject } from '@angular/core';
 import { Subscription, forkJoin, of } from 'rxjs';
-import { ActivatedRoute } from '@angular/router';
+import { ActivatedRoute, RouterLink } from '@angular/router';
 import dayjs from 'dayjs/esm';
 import { sum } from 'lodash-es';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
@@ -48,6 +48,15 @@ import { PlagiarismCasesService } from 'app/course/plagiarism-cases/shared/plagi
 import { GradeStep } from 'app/entities/grade-step.model';
 import { PlagiarismCase } from 'app/exercises/shared/plagiarism/types/PlagiarismCase';
 import { PlagiarismVerdict } from 'app/exercises/shared/plagiarism/types/PlagiarismVerdict';
+import { TranslateDirective } from '../../shared/language/translate.directive';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { ParticipantScoresDistributionComponent } from '../../shared/participant-scores/participant-scores-distribution/participant-scores-distribution.component';
+import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
+import { NgClass } from '@angular/common';
+import { ExportButtonComponent } from '../../shared/export/export-button.component';
+import { SortDirective } from '../../shared/sort/sort.directive';
+import { SortByDirective } from '../../shared/sort/sort-by.directive';
+import { ArtemisTranslatePipe } from '../../shared/pipes/artemis-translate.pipe';
 
 export enum HighlightType {
     AVERAGE = 'average',
@@ -60,7 +69,18 @@ export enum HighlightType {
     templateUrl: './course-scores.component.html',
     styleUrls: ['./course-scores.component.scss'],
     changeDetection: ChangeDetectionStrategy.OnPush,
-    standalone: false,
+    imports: [
+        TranslateDirective,
+        RouterLink,
+        FaIconComponent,
+        ParticipantScoresDistributionComponent,
+        NgbTooltip,
+        NgClass,
+        ExportButtonComponent,
+        SortDirective,
+        SortByDirective,
+        ArtemisTranslatePipe,
+    ],
 })
 export class CourseScoresComponent implements OnInit, OnDestroy {
     private route = inject(ActivatedRoute);

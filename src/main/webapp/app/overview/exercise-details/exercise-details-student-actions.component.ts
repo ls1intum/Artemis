@@ -1,5 +1,5 @@
 import { Component, ContentChild, EventEmitter, HostBinding, Input, OnChanges, OnInit, Output, TemplateRef, inject } from '@angular/core';
-import { Router } from '@angular/router';
+import { Router, RouterLink } from '@angular/router';
 import { AlertService } from 'app/core/util/alert.service';
 import { ExternalCloningService } from 'app/exercises/programming/shared/service/external-cloning.service';
 import { FeatureToggle } from 'app/shared/feature-toggle/feature-toggle.service';
@@ -21,13 +21,39 @@ import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
 import { PROFILE_ATHENA, PROFILE_LOCALVC, PROFILE_THEIA } from 'app/app.constants';
 import { AssessmentType } from 'app/entities/assessment-type.model';
 import { ButtonType } from 'app/shared/components/button.component';
+import { NgTemplateOutlet } from '@angular/common';
+import { ExerciseActionButtonComponent } from '../../shared/components/exercise-action-button.component';
+import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
+import { FeatureToggleDirective } from '../../shared/feature-toggle/feature-toggle.directive';
+import { StartPracticeModeButtonComponent } from '../../shared/components/start-practice-mode-button/start-practice-mode-button.component';
+import { ExtensionPointDirective } from '../../shared/extension-point/extension-point.directive';
+import { OpenCodeEditorButtonComponent } from '../../shared/components/open-code-editor-button/open-code-editor-button.component';
+import { CodeButtonComponent } from '../../shared/components/code-button/code-button.component';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { TranslateDirective } from '../../shared/language/translate.directive';
+import { RequestFeedbackButtonComponent } from './request-feedback-button/request-feedback-button.component';
+import { ArtemisTranslatePipe } from '../../shared/pipes/artemis-translate.pipe';
 
 @Component({
     selector: 'jhi-exercise-details-student-actions',
     templateUrl: './exercise-details-student-actions.component.html',
     styleUrls: ['../course-overview.scss'],
     providers: [ExternalCloningService],
-    standalone: false,
+    imports: [
+        NgTemplateOutlet,
+        ExerciseActionButtonComponent,
+        RouterLink,
+        NgbTooltip,
+        FeatureToggleDirective,
+        StartPracticeModeButtonComponent,
+        ExtensionPointDirective,
+        OpenCodeEditorButtonComponent,
+        CodeButtonComponent,
+        FaIconComponent,
+        TranslateDirective,
+        RequestFeedbackButtonComponent,
+        ArtemisTranslatePipe,
+    ],
 })
 export class ExerciseDetailsStudentActionsComponent implements OnInit, OnChanges {
     private alertService = inject(AlertService);

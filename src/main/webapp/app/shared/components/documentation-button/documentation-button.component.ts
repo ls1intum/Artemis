@@ -1,6 +1,8 @@
 import { Component, Input, inject } from '@angular/core';
 import { faCircleInfo } from '@fortawesome/free-solid-svg-icons';
 import { TranslateService } from '@ngx-translate/core';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 
 // The routes here are used to build the link to the documentation.
 // Therefore, it's important that they exactly match the url to the subpage of the documentation.
@@ -39,7 +41,7 @@ export type DocumentationType = keyof typeof DocumentationLinks;
             <fa-icon [icon]="faCircleInfo" ngbTooltip="{{ getTooltipForType() }}" />
         </a>
     `,
-    standalone: false,
+    imports: [FaIconComponent, NgbTooltip],
 })
 export class DocumentationButtonComponent {
     private translateService = inject(TranslateService);

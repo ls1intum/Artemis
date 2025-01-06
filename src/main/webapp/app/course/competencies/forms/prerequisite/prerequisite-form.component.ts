@@ -4,12 +4,13 @@ import { ArtemisSharedModule } from 'app/shared/shared.module';
 import { CommonCourseCompetencyFormComponent } from 'app/course/competencies/forms/common-course-competency-form.component';
 import { CourseCompetencyType } from 'app/entities/competency.model';
 import { Prerequisite } from 'app/entities/prerequisite.model';
+import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 
 @Component({
     selector: 'jhi-prerequisite-form',
     templateUrl: './prerequisite-form.component.html',
     styleUrls: ['./prerequisite-form.component.scss'],
-    imports: [ArtemisSharedModule, CommonCourseCompetencyFormComponent],
+    imports: [ArtemisSharedModule, CommonCourseCompetencyFormComponent, FormsModule, ReactiveFormsModule],
 })
 export class PrerequisiteFormComponent extends CourseCompetencyFormComponent implements OnInit, OnChanges {
     @Input() formData: CourseCompetencyFormData = {

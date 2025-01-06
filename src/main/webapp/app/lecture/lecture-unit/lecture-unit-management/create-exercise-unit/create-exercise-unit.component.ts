@@ -11,12 +11,17 @@ import { SortService } from 'app/shared/service/sort.service';
 import { combineLatest, forkJoin, from } from 'rxjs';
 import { ExerciseUnitService } from 'app/lecture/lecture-unit/lecture-unit-management/exerciseUnit.service';
 import { faSort, faTimes } from '@fortawesome/free-solid-svg-icons';
+import { TranslateDirective } from '../../../../shared/language/translate.directive';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { SortDirective } from '../../../../shared/sort/sort.directive';
+import { SortByDirective } from '../../../../shared/sort/sort-by.directive';
+import { ArtemisTranslatePipe } from '../../../../shared/pipes/artemis-translate.pipe';
 
 @Component({
     selector: 'jhi-create-exercise-unit',
     templateUrl: './create-exercise-unit.component.html',
     styleUrls: ['./create-exercise-unit.component.scss'],
-    standalone: false,
+    imports: [TranslateDirective, FaIconComponent, SortDirective, SortByDirective, ArtemisTranslatePipe],
 })
 export class CreateExerciseUnitComponent implements OnInit {
     private activatedRoute = inject(ActivatedRoute);

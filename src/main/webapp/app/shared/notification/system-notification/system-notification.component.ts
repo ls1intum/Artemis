@@ -9,6 +9,8 @@ import { SystemNotificationService } from 'app/shared/notification/system-notifi
 import { faExclamationTriangle, faInfoCircle, faTimes } from '@fortawesome/free-solid-svg-icons';
 import { Subscription, filter } from 'rxjs';
 import { convertDateFromServer } from 'app/utils/date.utils';
+import { NgClass } from '@angular/common';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 
 export const WEBSOCKET_CHANNEL = '/topic/system-notification';
 
@@ -16,7 +18,7 @@ export const WEBSOCKET_CHANNEL = '/topic/system-notification';
     selector: 'jhi-system-notification',
     templateUrl: './system-notification.component.html',
     styleUrls: ['system-notification.scss'],
-    standalone: false,
+    imports: [NgClass, FaIconComponent],
 })
 export class SystemNotificationComponent implements OnInit, OnDestroy {
     private route = inject(ActivatedRoute);

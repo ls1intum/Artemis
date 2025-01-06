@@ -1,5 +1,5 @@
 import { Component, OnDestroy, OnInit, inject } from '@angular/core';
-import { ActivatedRoute, Router } from '@angular/router';
+import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { SafeHtml } from '@angular/platform-browser';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { Observable, Subject, map } from 'rxjs';
@@ -18,11 +18,17 @@ import { DetailOverviewSection, DetailType } from 'app/detail-overview-list/deta
 import { ArtemisDurationFromSecondsPipe } from 'app/shared/pipes/artemis-duration-from-seconds.pipe';
 import { scrollToTopOfPage } from 'app/shared/util/utils';
 import { ExerciseType } from 'app/entities/exercise.model';
+import { TranslateDirective } from '../../../shared/language/translate.directive';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { DeleteButtonDirective } from '../../../shared/delete-dialog/delete-button.directive';
+import { CourseExamArchiveButtonComponent } from '../../../shared/components/course-exam-archive-button/course-exam-archive-button.component';
+import { ExamChecklistComponent } from './exam-checklist-component/exam-checklist.component';
+import { DetailOverviewListComponent } from '../../../detail-overview-list/detail-overview-list.component';
 
 @Component({
     selector: 'jhi-exam-detail',
     templateUrl: './exam-detail.component.html',
-    standalone: false,
+    imports: [TranslateDirective, RouterLink, FaIconComponent, DeleteButtonDirective, CourseExamArchiveButtonComponent, ExamChecklistComponent, DetailOverviewListComponent],
 })
 export class ExamDetailComponent implements OnInit, OnDestroy {
     private route = inject(ActivatedRoute);

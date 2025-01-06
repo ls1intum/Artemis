@@ -1,11 +1,14 @@
 import { Component, inject } from '@angular/core';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import { HealthDetails, HealthKey } from 'app/admin/health/health.model';
+import { TranslateDirective } from '../../shared/language/translate.directive';
+import { KeyValuePipe } from '@angular/common';
+import { ArtemisTranslatePipe } from '../../shared/pipes/artemis-translate.pipe';
 
 @Component({
     selector: 'jhi-health-modal',
     templateUrl: './health-modal.component.html',
-    standalone: false,
+    imports: [TranslateDirective, KeyValuePipe, ArtemisTranslatePipe],
 })
 export class HealthModalComponent {
     private activeModal = inject(NgbActiveModal);

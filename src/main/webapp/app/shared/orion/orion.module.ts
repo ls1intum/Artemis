@@ -6,7 +6,7 @@ import { ModalConfirmAutofocusComponent } from './modal-confirm-autofocus/modal-
 import { TranslateModule } from '@ngx-translate/core';
 import { OrionFilterDirective } from './orion-filter.directive';
 import { OrionBuildAndTestService } from 'app/shared/orion/orion-build-and-test.service';
-import { FeatureToggleModule } from 'app/shared/feature-toggle/feature-toggle.module';
+
 import { ArtemisSharedModule } from 'app/shared/shared.module';
 import { OrionAssessmentService } from 'app/orion/assessment/orion-assessment.service';
 
@@ -15,8 +15,7 @@ export function initOrionConnector(connector: OrionConnectorService) {
 }
 
 @NgModule({
-    declarations: [OrionButtonComponent, ModalConfirmAutofocusComponent, OrionFilterDirective],
-    imports: [CommonModule, ArtemisSharedModule, TranslateModule, FeatureToggleModule],
+    imports: [CommonModule, ArtemisSharedModule, TranslateModule, OrionButtonComponent, ModalConfirmAutofocusComponent, OrionFilterDirective],
     exports: [OrionButtonComponent, OrionFilterDirective],
     providers: [
         provideAppInitializer(() => {

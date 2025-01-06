@@ -24,6 +24,7 @@ import { ArtemisSharedComponentModule } from 'app/shared/components/shared-compo
 import { StandardizedCompetencyDetailComponent } from 'app/shared/standardized-competencies/standardized-competency-detail.component';
 import { KnowledgeAreaTreeComponent } from 'app/shared/standardized-competencies/knowledge-area-tree.component';
 import { ArtemisMarkdownModule } from 'app/shared/markdown.module';
+import { NgbCollapse } from '@ng-bootstrap/ng-bootstrap';
 
 interface ImportCount {
     knowledgeAreas: number;
@@ -33,7 +34,15 @@ interface ImportCount {
 @Component({
     selector: 'jhi-admin-import-standardized-competencies',
     templateUrl: './admin-import-standardized-competencies.component.html',
-    imports: [ArtemisSharedModule, ArtemisSharedComponentModule, ArtemisMarkdownModule, FontAwesomeModule, StandardizedCompetencyDetailComponent, KnowledgeAreaTreeComponent],
+    imports: [
+        ArtemisSharedModule,
+        ArtemisSharedComponentModule,
+        ArtemisMarkdownModule,
+        FontAwesomeModule,
+        StandardizedCompetencyDetailComponent,
+        KnowledgeAreaTreeComponent,
+        NgbCollapse,
+    ],
 })
 export class AdminImportStandardizedCompetenciesComponent {
     protected isLoading = false;
@@ -59,7 +68,7 @@ export class AdminImportStandardizedCompetenciesComponent {
     protected readonly importExample = `\`\`\`
 {
     "knowledgeAreas": [{
-        "title": "Artifical Intelligence",
+        "title": "Artificial Intelligence",
         "shortTitle": "AI",
         "description": "AI is a field in computer science...", //(optional)
         "competencies": [{

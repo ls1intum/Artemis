@@ -1,12 +1,12 @@
 import { Component, OnInit, inject } from '@angular/core';
-import { ActivatedRoute } from '@angular/router';
+import { ActivatedRoute, RouterLink } from '@angular/router';
 import { Course } from 'app/entities/course.model';
 import { StudentExam } from 'app/entities/student-exam.model';
 import { SortService } from 'app/shared/service/sort.service';
 import { Exam } from 'app/entities/exam/exam.model';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { AlertService } from 'app/core/util/alert.service';
-import { NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
+import { NgbModal, NgbModalRef, NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { CreateTestRunModalComponent } from 'app/exam/manage/test-runs/create-test-run-modal.component';
 import { ExamManagementService } from 'app/exam/manage/exam-management.service';
 import { AccountService } from 'app/core/auth/account.service';
@@ -14,11 +14,30 @@ import { Subject } from 'rxjs';
 import { User } from 'app/core/user/user.model';
 import { onError } from 'app/shared/util/global.utils';
 import { faSort, faTimes } from '@fortawesome/free-solid-svg-icons';
+import { TranslateDirective } from '../../../shared/language/translate.directive';
+import { SortDirective } from '../../../shared/sort/sort.directive';
+import { SortByDirective } from '../../../shared/sort/sort-by.directive';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { DeleteButtonDirective } from '../../../shared/delete-dialog/delete-button.directive';
+import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
+import { ArtemisTranslatePipe } from '../../../shared/pipes/artemis-translate.pipe';
+import { ArtemisDurationFromSecondsPipe } from 'app/shared/pipes/artemis-duration-from-seconds.pipe';
 
 @Component({
     selector: 'jhi-test-run-management',
     templateUrl: './test-run-management.component.html',
-    standalone: false,
+    imports: [
+        TranslateDirective,
+        NgbTooltip,
+        RouterLink,
+        SortDirective,
+        SortByDirective,
+        FaIconComponent,
+        DeleteButtonDirective,
+        ArtemisDatePipe,
+        ArtemisTranslatePipe,
+        ArtemisDurationFromSecondsPipe,
+    ],
 })
 export class TestRunManagementComponent implements OnInit {
     private route = inject(ActivatedRoute);

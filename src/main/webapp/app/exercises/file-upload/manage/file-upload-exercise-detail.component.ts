@@ -25,11 +25,16 @@ import {
     getExerciseProblemDetailSection,
 } from 'app/exercises/shared/utils';
 import { ArtemisMarkdownService } from 'app/shared/markdown.service';
+import { TranslateDirective } from '../../../shared/language/translate.directive';
+import { DocumentationButtonComponent } from '../../../shared/components/documentation-button/documentation-button.component';
+import { NonProgrammingExerciseDetailCommonActionsComponent } from '../../shared/exercise-detail-common-actions/non-programming-exercise-detail-common-actions.component';
+import { ExerciseDetailStatisticsComponent } from '../../shared/statistics/exercise-detail-statistics.component';
+import { DetailOverviewListComponent } from '../../../detail-overview-list/detail-overview-list.component';
 
 @Component({
     selector: 'jhi-file-upload-exercise-detail',
     templateUrl: './file-upload-exercise-detail.component.html',
-    standalone: false,
+    imports: [TranslateDirective, DocumentationButtonComponent, NonProgrammingExerciseDetailCommonActionsComponent, ExerciseDetailStatisticsComponent, DetailOverviewListComponent],
 })
 export class FileUploadExerciseDetailComponent implements OnInit, OnDestroy {
     private eventManager = inject(EventManager);

@@ -10,13 +10,30 @@ import { faListAlt } from '@fortawesome/free-solid-svg-icons';
 import { MAX_SUBMISSION_TEXT_LENGTH } from 'app/shared/constants/input.constants';
 import { SubmissionVersion } from 'app/entities/submission-version.model';
 import { htmlForMarkdown } from 'app/shared/util/markdown.conversion.util';
+import { TranslateDirective } from '../../../../shared/language/translate.directive';
+import { IncludedInScoreBadgeComponent } from '../../../../exercises/shared/exercise-headers/included-in-score-badge.component';
+import { ExerciseSaveButtonComponent } from '../exercise-save-button/exercise-save-button.component';
+import { ResizeableContainerComponent } from '../../../../shared/resizeable-container/resizeable-container.component';
+import { FormsModule } from '@angular/forms';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { ExamExerciseUpdateHighlighterComponent } from '../exam-exercise-update-highlighter/exam-exercise-update-highlighter.component';
+import { ArtemisTranslatePipe } from '../../../../shared/pipes/artemis-translate.pipe';
 
 @Component({
     selector: 'jhi-text-editor-exam',
     templateUrl: './text-exam-submission.component.html',
     providers: [{ provide: ExamSubmissionComponent, useExisting: TextExamSubmissionComponent }],
     styleUrls: ['./text-exam-submission.component.scss'],
-    standalone: false,
+    imports: [
+        TranslateDirective,
+        IncludedInScoreBadgeComponent,
+        ExerciseSaveButtonComponent,
+        ResizeableContainerComponent,
+        FormsModule,
+        FaIconComponent,
+        ExamExerciseUpdateHighlighterComponent,
+        ArtemisTranslatePipe,
+    ],
 })
 export class TextExamSubmissionComponent extends ExamSubmissionComponent implements OnInit {
     private textService = inject(TextEditorService);

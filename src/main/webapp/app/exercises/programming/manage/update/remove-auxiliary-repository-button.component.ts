@@ -3,13 +3,14 @@ import { ButtonSize, ButtonType } from 'app/shared/components/button.component';
 import { ProgrammingExercise } from 'app/entities/programming/programming-exercise.model';
 import { AuxiliaryRepository } from 'app/entities/programming/programming-exercise-auxiliary-repository-model';
 import { faTrash } from '@fortawesome/free-solid-svg-icons';
+import { ButtonComponent } from '../../../../shared/components/button.component';
 
 @Component({
     selector: 'jhi-remove-auxiliary-repository-button',
     template: `
         <jhi-button [btnType]="ButtonType.ERROR" [btnSize]="ButtonSize.SMALL" [icon]="faTrash" [title]="'entity.action.remove'" (onClick)="removeAuxiliaryRepository()" />
     `,
-    standalone: false,
+    imports: [ButtonComponent],
 })
 export class RemoveAuxiliaryRepositoryButtonComponent {
     ButtonType = ButtonType;

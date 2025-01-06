@@ -4,11 +4,16 @@ import { ActivatedRoute } from '@angular/router';
 import { Exercise } from 'app/entities/exercise.model';
 import { ExampleSolutionInfo, ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
 import { ArtemisMarkdownService } from 'app/shared/markdown.service';
+import { HeaderExercisePageWithDetailsComponent } from '../exercise-headers/header-exercise-page-with-details.component';
+import { TranslateDirective } from '../../../shared/language/translate.directive';
+import { ModelingEditorComponent } from '../../modeling/shared/modeling-editor.component';
+import { ArtemisTranslatePipe } from '../../../shared/pipes/artemis-translate.pipe';
+import { HtmlForMarkdownPipe } from '../../../shared/pipes/html-for-markdown.pipe';
 
 @Component({
     selector: 'jhi-example-solution',
     templateUrl: './example-solution.component.html',
-    standalone: false,
+    imports: [HeaderExercisePageWithDetailsComponent, TranslateDirective, ModelingEditorComponent, ArtemisTranslatePipe, HtmlForMarkdownPipe],
 })
 export class ExampleSolutionComponent implements OnInit {
     private exerciseService = inject(ExerciseService);

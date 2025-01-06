@@ -8,7 +8,7 @@ import {
     getTextColorClass,
     isAthenaAIResult,
 } from 'app/exercises/shared/result/result.utils';
-import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
+import { NgbModal, NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { TranslateService } from '@ngx-translate/core';
 import { Router } from '@angular/router';
 import { ProgrammingExercise } from 'app/entities/programming/programming-exercise.model';
@@ -32,12 +32,31 @@ import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service'
 import { isPracticeMode } from 'app/entities/participation/student-participation.model';
 import { prepareFeedbackComponentParameters } from 'app/exercises/shared/feedback/feedback.utils';
 import { CsvDownloadService } from 'app/shared/util/CsvDownloadService';
+import { ResultProgressBarComponent } from './result-progress-bar/result-progress-bar.component';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { TranslateDirective } from '../../../shared/language/translate.directive';
+import { NgClass, UpperCasePipe } from '@angular/common';
+import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
+import { ArtemisTranslatePipe } from '../../../shared/pipes/artemis-translate.pipe';
+import { ArtemisTimeAgoPipe } from 'app/shared/pipes/artemis-time-ago.pipe';
+import { ArtemisDurationFromSecondsPipe } from 'app/shared/pipes/artemis-duration-from-seconds.pipe';
 
 @Component({
     selector: 'jhi-result',
     templateUrl: './result.component.html',
     styleUrls: ['./result.component.scss'],
-    standalone: false,
+    imports: [
+        ResultProgressBarComponent,
+        FaIconComponent,
+        TranslateDirective,
+        NgClass,
+        NgbTooltip,
+        UpperCasePipe,
+        ArtemisDatePipe,
+        ArtemisTranslatePipe,
+        ArtemisTimeAgoPipe,
+        ArtemisDurationFromSecondsPipe,
+    ],
 })
 
 /**

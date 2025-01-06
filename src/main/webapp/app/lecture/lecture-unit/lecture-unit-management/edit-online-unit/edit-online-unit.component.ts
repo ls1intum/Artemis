@@ -8,12 +8,14 @@ import { onError } from 'app/shared/util/global.utils';
 import { finalize, switchMap, take } from 'rxjs/operators';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { combineLatest } from 'rxjs';
+import { LectureUnitLayoutComponent } from '../lecture-unit-layout/lecture-unit-layout.component';
+import { OnlineUnitFormComponent } from '../online-unit-form/online-unit-form.component';
 
 @Component({
     selector: 'jhi-edit-online-unit',
     templateUrl: './edit-online-unit.component.html',
     styles: [],
-    standalone: false,
+    imports: [LectureUnitLayoutComponent, OnlineUnitFormComponent],
 })
 export class EditOnlineUnitComponent implements OnInit {
     private activatedRoute = inject(ActivatedRoute);

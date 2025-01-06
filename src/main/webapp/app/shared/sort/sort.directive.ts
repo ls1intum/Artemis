@@ -1,9 +1,6 @@
 import { Directive, EventEmitter, Input, Output } from '@angular/core';
 
-@Directive({
-    selector: '[jhiSort]',
-    standalone: false,
-})
+@Directive({ selector: '[jhiSort]' })
 export class SortDirective<T> {
     @Input()
     get predicate(): T | undefined {

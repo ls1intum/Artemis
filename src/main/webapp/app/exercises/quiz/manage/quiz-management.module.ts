@@ -27,7 +27,7 @@ import { QuizConfirmImportInvalidQuestionsModalComponent } from 'app/exercises/q
 import { ArtemisIncludedInOverallScorePickerModule } from 'app/exercises/shared/included-in-overall-score-picker/included-in-overall-score-picker.module';
 import { MatchPercentageInfoModalComponent } from 'app/exercises/quiz/manage/match-percentage-info-modal/match-percentage-info-modal.component';
 import { ArtemisMarkdownModule } from 'app/shared/markdown.module';
-import { FitTextModule } from 'app/exercises/quiz/shared/fit-text/fit-text.module';
+
 import { ArtemisSharedComponentModule } from 'app/shared/components/shared-component.module';
 import { ExerciseCategoriesModule } from 'app/shared/exercise-categories/exercise-categories.module';
 import { QuizPoolMappingComponent } from 'app/exercises/quiz/manage/quiz-pool-mapping.component';
@@ -59,14 +59,11 @@ const ENTITY_STATES = [...quizManagementRoute];
         ArtemisIncludedInOverallScorePickerModule,
         ArtemisQuizParticipationModule,
         ArtemisMarkdownModule,
-        FitTextModule,
         ArtemisSharedComponentModule,
         ExerciseCategoriesModule,
         ExerciseTitleChannelNameModule,
         DetailModule,
         ArtemisExerciseModule,
-    ],
-    declarations: [
         QuizExerciseManageButtonsComponent,
         QuizExerciseComponent,
         QuizExerciseCreateButtonsComponent,

@@ -4,7 +4,7 @@ import { ExerciseType } from 'app/entities/exercise.model';
 import { TextExercise } from 'app/entities/text/text-exercise.model';
 import { TextExerciseService } from './text-exercise.service';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
-import { Router } from '@angular/router';
+import { Router, RouterLink } from '@angular/router';
 import { ExerciseComponent } from 'app/exercises/shared/exercise/exercise.component';
 import { onError } from 'app/shared/util/global.utils';
 import { AccountService } from 'app/core/auth/account.service';
@@ -14,11 +14,31 @@ import { AlertService } from 'app/core/util/alert.service';
 import { faPlus, faSort, faTrash } from '@fortawesome/free-solid-svg-icons';
 import { CourseExerciseService } from 'app/exercises/shared/course-exercises/course-exercise.service';
 import { ExerciseImportWrapperComponent } from 'app/exercises/shared/import/exercise-import-wrapper/exercise-import-wrapper.component';
+import { SortDirective } from '../../../../shared/sort/sort.directive';
+import { FormsModule } from '@angular/forms';
+import { SortByDirective } from '../../../../shared/sort/sort-by.directive';
+import { TranslateDirective } from '../../../../shared/language/translate.directive';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { ExerciseCategoriesComponent } from '../../../../shared/exercise-categories/exercise-categories.component';
+import { TextExerciseRowButtonsComponent } from './text-exercise-row-buttons.component';
+import { DeleteButtonDirective } from '../../../../shared/delete-dialog/delete-button.directive';
+import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 
 @Component({
     selector: 'jhi-text-exercise',
     templateUrl: './text-exercise.component.html',
-    standalone: false,
+    imports: [
+        SortDirective,
+        FormsModule,
+        SortByDirective,
+        TranslateDirective,
+        FaIconComponent,
+        RouterLink,
+        ExerciseCategoriesComponent,
+        TextExerciseRowButtonsComponent,
+        DeleteButtonDirective,
+        ArtemisDatePipe,
+    ],
 })
 export class TextExerciseComponent extends ExerciseComponent {
     protected exerciseService = inject(ExerciseService);

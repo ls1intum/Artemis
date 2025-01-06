@@ -2,7 +2,7 @@ import { Component, ContentChild, EventEmitter, Input, OnDestroy, OnInit, Output
 import { Observable, Subscription, firstValueFrom } from 'rxjs';
 import dayjs from 'dayjs/esm';
 import { TranslateService } from '@ngx-translate/core';
-import { ActivatedRoute, Router } from '@angular/router';
+import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { AlertService } from 'app/core/util/alert.service';
 import { ButtonSize } from 'app/shared/components/button.component';
 import { DomainService } from 'app/exercises/programming/shared/code-editor/service/code-editor-domain.service';
@@ -15,7 +15,7 @@ import { Complaint } from 'app/entities/complaint.model';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { ProgrammingAssessmentManualResultService } from 'app/exercises/programming/assess/manual-result/programming-assessment-manual-result.service';
 import { ProgrammingSubmission } from 'app/entities/programming/programming-submission.model';
-import { Location } from '@angular/common';
+import { Location, NgTemplateOutlet } from '@angular/common';
 import { AccountService } from 'app/core/auth/account.service';
 import { ProgrammingSubmissionService } from 'app/exercises/programming/participate/programming-submission.service';
 import { ComplaintService } from 'app/complaints/complaint.service';
@@ -41,11 +41,34 @@ import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
 import { AthenaService } from 'app/assessment/athena.service';
 import { FeedbackSuggestionsPendingConfirmationDialogComponent } from 'app/exercises/shared/feedback/feedback-suggestions-pending-confirmation-dialog/feedback-suggestions-pending-confirmation-dialog.component';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { TranslateDirective } from '../../../shared/language/translate.directive';
+import { AssessmentLayoutComponent } from '../../../assessment/assessment-layout/assessment-layout.component';
+import { ExtensionPointDirective } from '../../../shared/extension-point/extension-point.directive';
+import { CodeEditorContainerComponent as CodeEditorContainerComponent_1 } from '../shared/code-editor/container/code-editor-container.component';
+import { IncludedInScoreBadgeComponent } from '../../shared/exercise-headers/included-in-score-badge.component';
+import { ProgrammingAssessmentRepoExportButtonComponent } from './repo-export/programming-assessment-repo-export-button.component';
+import { ResultComponent } from '../../shared/result/result.component';
+import { AssessmentInstructionsComponent } from '../../../assessment/assessment-instructions/assessment-instructions/assessment-instructions.component';
+import { UnreferencedFeedbackComponent } from '../../shared/unreferenced-feedback/unreferenced-feedback.component';
 
 @Component({
     selector: 'jhi-code-editor-tutor-assessment',
     templateUrl: './code-editor-tutor-assessment-container.component.html',
-    standalone: false,
+    imports: [
+        FaIconComponent,
+        TranslateDirective,
+        AssessmentLayoutComponent,
+        NgTemplateOutlet,
+        ExtensionPointDirective,
+        CodeEditorContainerComponent_1,
+        IncludedInScoreBadgeComponent,
+        RouterLink,
+        ProgrammingAssessmentRepoExportButtonComponent,
+        ResultComponent,
+        AssessmentInstructionsComponent,
+        UnreferencedFeedbackComponent,
+    ],
 })
 export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDestroy {
     private manualResultService = inject(ProgrammingAssessmentManualResultService);

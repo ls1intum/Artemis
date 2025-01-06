@@ -2,7 +2,7 @@ import { Component, Input, OnInit, inject } from '@angular/core';
 import { GraphColors, SpanType } from 'app/entities/statistics.model';
 import { CourseManagementStatisticsModel } from 'app/entities/quiz/course-management-statistics-model';
 import { faArrowLeft, faArrowRight, faFilter } from '@fortawesome/free-solid-svg-icons';
-import { Color, ScaleType } from '@swimlane/ngx-charts';
+import { BarChartModule, Color, ScaleType } from '@swimlane/ngx-charts';
 import { ExerciseType } from 'app/entities/exercise.model';
 import { NgxChartsSingleSeriesDataEntry } from 'app/shared/chart/ngx-charts-datatypes';
 import { axisTickFormattingWithPercentageSign } from 'app/shared/statistics-graph/statistics-graph.utils';
@@ -10,6 +10,11 @@ import { ChartExerciseTypeFilter } from 'app/shared/chart/chart-exercise-type-fi
 import { ArtemisNavigationUtilService } from 'app/utils/navigation.utils';
 import { ThemeService } from 'app/core/theme/theme.service';
 import { ChartCategoryFilter } from 'app/shared/chart/chart-category-filter';
+import { TranslateDirective } from '../language/translate.directive';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { NgbDropdown, NgbDropdownMenu, NgbDropdownToggle } from '@ng-bootstrap/ng-bootstrap';
+import { NgClass } from '@angular/common';
+import { ArtemisTranslatePipe } from '../pipes/artemis-translate.pipe';
 
 interface ExerciseStatisticsEntry extends NgxChartsSingleSeriesDataEntry {
     exerciseType: ExerciseType;
@@ -26,7 +31,7 @@ export enum PerformanceInterval {
     selector: 'jhi-statistics-average-score-graph',
     templateUrl: './statistics-average-score-graph.component.html',
     styleUrls: ['./statistics-average-score-graph.component.scss', '../chart/vertical-bar-chart.scss'],
-    standalone: false,
+    imports: [TranslateDirective, FaIconComponent, BarChartModule, NgbDropdown, NgbDropdownToggle, NgbDropdownMenu, NgClass, ArtemisTranslatePipe],
 })
 export class StatisticsAverageScoreGraphComponent implements OnInit {
     private themeService = inject(ThemeService);

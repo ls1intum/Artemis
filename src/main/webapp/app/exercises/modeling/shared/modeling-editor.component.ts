@@ -9,13 +9,17 @@ import { faQuestionCircle } from '@fortawesome/free-regular-svg-icons';
 import { ModelingComponent } from 'app/exercises/modeling/shared/modeling.component';
 import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
 import { Patch } from '@ls1intum/apollon';
+import { TranslateDirective } from '../../../shared/language/translate.directive';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { NgClass, NgStyle } from '@angular/common';
+import { ModelingExplanationEditorComponent } from './modeling-explanation-editor.component';
 
 @Component({
     selector: 'jhi-modeling-editor',
     templateUrl: './modeling-editor.component.html',
     styleUrls: ['./modeling-editor.component.scss'],
     encapsulation: ViewEncapsulation.None,
-    standalone: false,
+    imports: [TranslateDirective, FaIconComponent, NgStyle, NgClass, ModelingExplanationEditorComponent],
 })
 export class ModelingEditorComponent extends ModelingComponent implements AfterViewInit, OnDestroy, OnChanges {
     private modalService = inject(NgbModal);

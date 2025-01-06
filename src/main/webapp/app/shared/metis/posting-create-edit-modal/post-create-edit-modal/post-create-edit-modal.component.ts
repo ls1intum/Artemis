@@ -1,7 +1,7 @@
 import { Component, Input, OnChanges, OnInit } from '@angular/core';
 import { PostingCreateEditModalDirective } from 'app/shared/metis/posting-create-edit-modal/posting-create-edit-modal.directive';
 import { Post } from 'app/entities/metis/post.model';
-import { Validators } from '@angular/forms';
+import { FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
 import { Lecture } from 'app/entities/lecture.model';
 import { Exercise } from 'app/entities/exercise.model';
 import { Course } from 'app/entities/course.model';
@@ -9,6 +9,23 @@ import { faAngleDown, faAngleUp } from '@fortawesome/free-solid-svg-icons';
 import { PageType, PostContentValidationPattern, PostTitleValidationPattern, PostingEditType } from 'app/shared/metis/metis.util';
 import { Conversation } from 'app/entities/metis/conversation/conversation.model';
 import { getAsChannelDTO } from 'app/entities/metis/conversation/channel.model';
+import { TranslateDirective } from '../../../language/translate.directive';
+import { HelpIconComponent } from '../../../components/help-icon.component';
+import { PostTagSelectorComponent } from './post-tag-selector/post-tag-selector.component';
+import {
+    NgbAccordionBody,
+    NgbAccordionButton,
+    NgbAccordionCollapse,
+    NgbAccordionDirective,
+    NgbAccordionHeader,
+    NgbAccordionItem,
+    NgbAccordionToggle,
+    NgbCollapse,
+} from '@ng-bootstrap/ng-bootstrap';
+import { PostComponent } from '../../post/post.component';
+import { PostingMarkdownEditorComponent } from '../../posting-markdown-editor/posting-markdown-editor.component';
+import { PostingButtonComponent } from '../../posting-button/posting-button.component';
+import { ArtemisTranslatePipe } from '../../../pipes/artemis-translate.pipe';
 
 const TITLE_MAX_LENGTH = 200;
 
@@ -20,7 +37,25 @@ export interface ContextSelectorOption {
     selector: 'jhi-post-create-edit-modal',
     templateUrl: './post-create-edit-modal.component.html',
     styleUrls: ['../../metis.component.scss'],
-    standalone: false,
+    imports: [
+        FormsModule,
+        ReactiveFormsModule,
+        TranslateDirective,
+        HelpIconComponent,
+        PostTagSelectorComponent,
+        NgbAccordionDirective,
+        NgbAccordionItem,
+        NgbAccordionHeader,
+        NgbAccordionToggle,
+        NgbAccordionButton,
+        NgbCollapse,
+        NgbAccordionCollapse,
+        NgbAccordionBody,
+        PostComponent,
+        PostingMarkdownEditorComponent,
+        PostingButtonComponent,
+        ArtemisTranslatePipe,
+    ],
 })
 export class PostCreateEditModalComponent extends PostingCreateEditModalDirective<Post> implements OnInit, OnChanges {
     @Input() isCommunicationPage: boolean;

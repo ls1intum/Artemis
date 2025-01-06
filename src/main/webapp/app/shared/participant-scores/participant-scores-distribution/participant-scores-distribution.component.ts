@@ -1,11 +1,14 @@
 import { Component, EventEmitter, HostListener, Input, OnChanges, OnInit, Output, inject } from '@angular/core';
-import { Color, ScaleType } from '@swimlane/ngx-charts';
+import { BarChartModule, Color, ScaleType } from '@swimlane/ngx-charts';
 import { NgxChartsSingleSeriesDataEntry } from 'app/shared/chart/ngx-charts-datatypes';
 import { GradeType, GradingScale } from 'app/entities/grading-scale.model';
 import { GradingSystemService } from 'app/grading-system/grading-system.service';
 import { TranslateService } from '@ngx-translate/core';
 import { GradeStep } from 'app/entities/grade-step.model';
 import { GraphColors } from 'app/entities/statistics.model';
+import { TranslateDirective } from '../../language/translate.directive';
+import { HelpIconComponent } from '../../components/help-icon.component';
+import { ArtemisTranslatePipe } from '../../pipes/artemis-translate.pipe';
 
 interface NgxClickEvent {
     name: string;
@@ -17,7 +20,7 @@ interface NgxClickEvent {
     selector: 'jhi-participant-scores-distribution',
     templateUrl: './participant-scores-distribution.component.html',
     styleUrls: ['./participant-score-distribution.component.scss', '../../chart/vertical-bar-chart.scss'],
-    standalone: false,
+    imports: [BarChartModule, TranslateDirective, HelpIconComponent, ArtemisTranslatePipe],
 })
 export class ParticipantScoresDistributionComponent implements OnInit, OnChanges {
     private gradingSystemService = inject(GradingSystemService);

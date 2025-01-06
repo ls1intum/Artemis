@@ -3,13 +3,19 @@ import { MultipleChoiceQuestion } from 'app/entities/quiz/multiple-choice-questi
 import { faCheck, faExclamationCircle, faExclamationTriangle, faPlus, faQuestionCircle, faTrash, faXmark } from '@fortawesome/free-solid-svg-icons';
 import { faCircle } from '@fortawesome/free-regular-svg-icons';
 import { AnswerOption } from 'app/entities/quiz/answer-option.model';
+import { TranslateDirective } from '../../../../../shared/language/translate.directive';
+import { FormsModule } from '@angular/forms';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
+import { NgClass } from '@angular/common';
+import { ArtemisTranslatePipe } from '../../../../../shared/pipes/artemis-translate.pipe';
 
 @Component({
     selector: 'jhi-multiple-choice-visual-question',
     templateUrl: './multiple-choice-visual-question.component.html',
     styleUrls: ['./multiple-choice-question.component.scss', '../../../participate/quiz-participation.scss'],
     encapsulation: ViewEncapsulation.None,
-    standalone: false,
+    imports: [TranslateDirective, FormsModule, FaIconComponent, NgbTooltip, NgClass, ArtemisTranslatePipe],
 })
 export class MultipleChoiceVisualQuestionComponent {
     _question: MultipleChoiceQuestion;

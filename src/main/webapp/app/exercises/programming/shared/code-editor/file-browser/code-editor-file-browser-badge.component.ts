@@ -1,15 +1,16 @@
 import { Component, Input, inject } from '@angular/core';
 import { IconDefinition, faLightbulb } from '@fortawesome/free-solid-svg-icons';
-import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
+import { NgbModal, NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { TranslateService } from '@ngx-translate/core';
 import { FileBadge, FileBadgeType } from 'app/exercises/programming/shared/code-editor/model/code-editor.model';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 
 @Component({
     selector: 'jhi-file-browser-badge',
     templateUrl: './code-editor-file-browser-badge.component.html',
     styleUrls: ['./code-editor-file-browser-badge.component.scss'],
     providers: [NgbModal],
-    standalone: false,
+    imports: [NgbTooltip, FaIconComponent],
 })
 export class CodeEditorFileBrowserBadgeComponent {
     private translateService = inject(TranslateService);

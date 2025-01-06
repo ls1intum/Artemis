@@ -3,11 +3,13 @@ import { ActivatedRoute } from '@angular/router';
 import { IrisSettingsType } from 'app/entities/iris/settings/iris-settings.model';
 import { ComponentCanDeactivate } from 'app/shared/guard/can-deactivate.model';
 import { IrisSettingsUpdateComponent } from 'app/iris/settings/iris-settings-update/iris-settings-update.component';
+import { TranslateDirective } from '../../../shared/language/translate.directive';
+import { IrisSettingsUpdateComponent as IrisSettingsUpdateComponent_1 } from '../iris-settings-update/iris-settings-update.component';
 
 @Component({
     selector: 'jhi-iris-course-settings-update',
     templateUrl: './iris-course-settings-update.component.html',
-    standalone: false,
+    imports: [TranslateDirective, IrisSettingsUpdateComponent_1],
 })
 export class IrisCourseSettingsUpdateComponent implements OnInit, ComponentCanDeactivate {
     private route = inject(ActivatedRoute);

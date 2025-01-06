@@ -3,11 +3,12 @@ import { NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
 import { ButtonSize, ButtonType } from 'app/shared/components/button.component';
 import { CsvExportOptions, ExportModalComponent } from 'app/shared/export/export-modal.component';
 import { IconProp } from '@fortawesome/fontawesome-svg-core';
+import { ButtonComponent } from '../components/button.component';
 
 @Component({
     selector: 'jhi-csv-export-button',
     template: ` <jhi-button [btnType]="ButtonType.PRIMARY" [btnSize]="buttonSize" [icon]="icon" [disabled]="disabled" [title]="title" (onClick)="openExportModal($event)" /> `,
-    standalone: false,
+    imports: [ButtonComponent],
 })
 export class ExportButtonComponent {
     private modalService = inject(NgbModal);

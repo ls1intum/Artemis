@@ -8,12 +8,15 @@ import { TutorialGroupSessionDTO, TutorialGroupSessionService } from 'app/course
 import { Course } from 'app/entities/course.model';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import { Subject } from 'rxjs';
+import { LoadingIndicatorContainerComponent } from '../../../../../../shared/loading-indicator-container/loading-indicator-container.component';
+import { TranslateDirective } from '../../../../../../shared/language/translate.directive';
+import { TutorialGroupSessionFormComponent } from '../tutorial-group-session-form/tutorial-group-session-form.component';
 
 @Component({
     selector: 'jhi-create-tutorial-group-session',
     templateUrl: './create-tutorial-group-session.component.html',
     changeDetection: ChangeDetectionStrategy.OnPush,
-    standalone: false,
+    imports: [LoadingIndicatorContainerComponent, TranslateDirective, TutorialGroupSessionFormComponent],
 })
 export class CreateTutorialGroupSessionComponent implements OnDestroy {
     private activeModal = inject(NgbActiveModal);

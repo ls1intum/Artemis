@@ -8,7 +8,7 @@ import { DragAndDropQuestionUtil } from 'app/exercises/quiz/shared/drag-and-drop
 import { ShortAnswerQuestionUtil } from 'app/exercises/quiz/shared/short-answer-question-util.service';
 import { TranslateService } from '@ngx-translate/core';
 import { Duration } from './quiz-exercise-interfaces';
-import { NgbDate, NgbModal, NgbModalOptions, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
+import { NgbDate, NgbModal, NgbModalOptions, NgbModalRef, NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import dayjs from 'dayjs/esm';
 import { AlertService } from 'app/core/util/alert.service';
 import { ComponentCanDeactivate } from 'app/shared/guard/can-deactivate.model';
@@ -33,6 +33,21 @@ import { QuizQuestionListEditComponent } from 'app/exercises/quiz/manage/quiz-qu
 import { DragAndDropQuestion } from 'app/entities/quiz/drag-and-drop-question.model';
 import { GenericConfirmationDialogComponent } from 'app/overview/course-conversations/dialogs/generic-confirmation-dialog/generic-confirmation-dialog.component';
 import { ShortAnswerQuestion } from 'app/entities/quiz/short-answer-question.model';
+import { TranslateDirective } from '../../../shared/language/translate.directive';
+import { DocumentationButtonComponent } from '../../../shared/components/documentation-button/documentation-button.component';
+import { FormsModule } from '@angular/forms';
+import { ExerciseTitleChannelNameComponent } from '../../shared/exercise-title-channel-name/exercise-title-channel-name.component';
+import { HelpIconComponent } from '../../../shared/components/help-icon.component';
+import { CategorySelectorComponent } from '../../../shared/category-selector/category-selector.component';
+import { DifficultyPickerComponent } from '../../shared/difficulty-picker/difficulty-picker.component';
+import { FormDateTimePickerComponent } from '../../../shared/date-time-picker/date-time-picker.component';
+import { ButtonComponent } from '../../../shared/components/button.component';
+import { IncludedInOverallScorePickerComponent } from '../../shared/included-in-overall-score-picker/included-in-overall-score-picker.component';
+import { CompetencySelectionComponent } from '../../../shared/competency-selection/competency-selection.component';
+import { QuizQuestionListEditComponent as QuizQuestionListEditComponent_1 } from './quiz-question-list-edit.component';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { JsonPipe, NgClass } from '@angular/common';
+import { ArtemisTranslatePipe } from '../../../shared/pipes/artemis-translate.pipe';
 
 @Component({
     selector: 'jhi-quiz-exercise-detail',
@@ -41,7 +56,25 @@ import { ShortAnswerQuestion } from 'app/entities/quiz/short-answer-question.mod
     providers: [DragAndDropQuestionUtil, ShortAnswerQuestionUtil],
     styleUrls: ['./quiz-exercise-update.component.scss', '../shared/quiz.scss'],
     encapsulation: ViewEncapsulation.None,
-    standalone: false,
+    imports: [
+        TranslateDirective,
+        DocumentationButtonComponent,
+        FormsModule,
+        ExerciseTitleChannelNameComponent,
+        HelpIconComponent,
+        CategorySelectorComponent,
+        DifficultyPickerComponent,
+        FormDateTimePickerComponent,
+        ButtonComponent,
+        IncludedInOverallScorePickerComponent,
+        CompetencySelectionComponent,
+        QuizQuestionListEditComponent_1,
+        NgbTooltip,
+        FaIconComponent,
+        NgClass,
+        JsonPipe,
+        ArtemisTranslatePipe,
+    ],
 })
 export class QuizExerciseUpdateComponent extends QuizExerciseValidationDirective implements OnInit, OnChanges, ComponentCanDeactivate {
     private route = inject(ActivatedRoute);

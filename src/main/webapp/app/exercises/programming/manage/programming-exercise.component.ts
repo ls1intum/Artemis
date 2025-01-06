@@ -36,11 +36,48 @@ import {
 import { CourseExerciseService } from 'app/exercises/shared/course-exercises/course-exercise.service';
 import { downloadZipFileFromResponse } from 'app/shared/util/download.util';
 import { PROFILE_LOCALCI, PROFILE_LOCALVC, PROFILE_THEIA } from 'app/app.constants';
+import { SortDirective } from '../../../shared/sort/sort.directive';
+import { FormsModule } from '@angular/forms';
+import { SortByDirective } from '../../../shared/sort/sort-by.directive';
+import { TranslateDirective } from '../../../shared/language/translate.directive';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { ExtensionPointDirective } from '../../../shared/extension-point/extension-point.directive';
+import { RouterLink } from '@angular/router';
+import { ProgrammingExerciseGradingDirtyWarningComponent } from './grading/programming-exercise-grading-dirty-warning.component';
+import { ProgrammingExerciseInstructorStatusComponent } from './status/programming-exercise-instructor-status.component';
+import { ExerciseCategoriesComponent } from '../../../shared/exercise-categories/exercise-categories.component';
+import { FeatureToggleLinkDirective } from '../../../shared/feature-toggle/feature-toggle-link.directive';
+import { ProgrammingExerciseResetButtonDirective } from './reset/programming-exercise-reset-button.directive';
+import { FeatureToggleDirective } from '../../../shared/feature-toggle/feature-toggle.directive';
+import { DeleteButtonDirective } from '../../../shared/delete-dialog/delete-button.directive';
+import { ProgrammingAssessmentRepoExportButtonComponent } from '../assess/repo-export/programming-assessment-repo-export-button.component';
+import { ExerciseScoresExportButtonComponent } from '../../shared/exercise-scores/exercise-scores-export-button.component';
+import { SlicePipe } from '@angular/common';
+import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 
 @Component({
     selector: 'jhi-programming-exercise',
     templateUrl: './programming-exercise.component.html',
-    standalone: false,
+    imports: [
+        SortDirective,
+        FormsModule,
+        SortByDirective,
+        TranslateDirective,
+        FaIconComponent,
+        ExtensionPointDirective,
+        RouterLink,
+        ProgrammingExerciseGradingDirtyWarningComponent,
+        ProgrammingExerciseInstructorStatusComponent,
+        ExerciseCategoriesComponent,
+        FeatureToggleLinkDirective,
+        ProgrammingExerciseResetButtonDirective,
+        FeatureToggleDirective,
+        DeleteButtonDirective,
+        ProgrammingAssessmentRepoExportButtonComponent,
+        ExerciseScoresExportButtonComponent,
+        SlicePipe,
+        ArtemisDatePipe,
+    ],
 })
 export class ProgrammingExerciseComponent extends ExerciseComponent implements OnInit, OnDestroy {
     protected exerciseService = inject(ExerciseService);

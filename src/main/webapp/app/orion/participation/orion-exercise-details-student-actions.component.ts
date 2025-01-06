@@ -8,12 +8,15 @@ import { OrionConnectorService } from 'app/shared/orion/orion-connector.service'
 import { OrionBuildAndTestService } from 'app/shared/orion/orion-build-and-test.service';
 import { Exercise } from 'app/entities/exercise.model';
 import { OrionButtonType } from 'app/shared/orion/orion-button/orion-button.component';
+import { ExerciseDetailsStudentActionsComponent } from '../../overview/exercise-details/exercise-details-student-actions.component';
+import { OrionButtonComponent } from '../../shared/orion/orion-button/orion-button.component';
+import { ArtemisTranslatePipe } from '../../shared/pipes/artemis-translate.pipe';
 
 @Component({
     selector: 'jhi-orion-exercise-details-student-actions',
     templateUrl: './orion-exercise-details-student-actions.component.html',
     styleUrls: ['../../overview/course-overview.scss'],
-    standalone: false,
+    imports: [ExerciseDetailsStudentActionsComponent, OrionButtonComponent, ArtemisTranslatePipe],
 })
 export class OrionExerciseDetailsStudentActionsComponent implements OnInit {
     private orionConnectorService = inject(OrionConnectorService);

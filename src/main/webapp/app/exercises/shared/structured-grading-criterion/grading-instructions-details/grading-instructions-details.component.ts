@@ -13,12 +13,20 @@ import { GradingUsageCountAction } from 'app/shared/monaco-editor/model/actions/
 import { MarkdownEditorHeight, MarkdownEditorMonacoComponent, TextWithDomainAction } from 'app/shared/markdown-editor/monaco/markdown-editor-monaco.component';
 import { GradingCriterionAction } from 'app/shared/monaco-editor/model/actions/grading-criteria/grading-criterion.action';
 import { GradingInstructionAction } from 'app/shared/monaco-editor/model/actions/grading-criteria/grading-instruction.action';
+import { NgClass } from '@angular/common';
+import { TranslateDirective } from '../../../../shared/language/translate.directive';
+import { FormsModule } from '@angular/forms';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { HelpIconComponent } from '../../../../shared/components/help-icon.component';
+import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
+import { MarkdownEditorMonacoComponent as MarkdownEditorMonacoComponent_1 } from '../../../../shared/markdown-editor/monaco/markdown-editor-monaco.component';
+import { ArtemisTranslatePipe } from '../../../../shared/pipes/artemis-translate.pipe';
 
 @Component({
     selector: 'jhi-grading-instructions-details',
     templateUrl: './grading-instructions-details.component.html',
     styleUrls: ['./grading-instructions-details.component.scss'],
-    standalone: false,
+    imports: [NgClass, TranslateDirective, FormsModule, FaIconComponent, HelpIconComponent, NgbTooltip, MarkdownEditorMonacoComponent_1, ArtemisTranslatePipe],
 })
 export class GradingInstructionsDetailsComponent implements OnInit, AfterContentInit {
     private changeDetector = inject(ChangeDetectorRef);

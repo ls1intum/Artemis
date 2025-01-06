@@ -4,7 +4,7 @@ import { ProgrammingSubmission } from 'app/entities/programming/programming-subm
 import { FeatureToggle } from 'app/shared/feature-toggle/feature-toggle.service';
 import { ButtonSize } from 'app/shared/components/button.component';
 import { GitDiffReportModalComponent } from 'app/exercises/programming/git-diff-report/git-diff-report-modal.component';
-import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
+import { NgbModal, NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { ProgrammingExerciseService } from 'app/exercises/programming/manage/services/programming-exercise.service';
 import { IncludedInOverallScore } from 'app/entities/exercise.model';
 import { ExamSubmissionComponent } from 'app/exam/participate/exercises/exam-submission.component';
@@ -14,12 +14,18 @@ import { ProgrammingExerciseGitDiffReport } from 'app/entities/programming-exerc
 import { ExamPageComponent } from 'app/exam/participate/exercises/exam-page.component';
 import { Observable, Subject, Subscription, debounceTime, take } from 'rxjs';
 import { CachedRepositoryFilesService } from 'app/exercises/programming/manage/services/cached-repository-files.service';
+import { IncludedInScoreBadgeComponent } from '../../../../../exercises/shared/exercise-headers/included-in-score-badge.component';
+import { CommitsInfoComponent } from '../../../../../exercises/programming/shared/commits-info/commits-info.component';
+import { TranslateDirective } from '../../../../../shared/language/translate.directive';
+import { GitDiffLineStatComponent } from '../../../../../exercises/programming/git-diff-report/git-diff-line-stat.component';
+import { ButtonComponent } from '../../../../../shared/components/button.component';
+import { ArtemisTranslatePipe } from '../../../../../shared/pipes/artemis-translate.pipe';
 
 @Component({
     selector: 'jhi-programming-exam-diff',
     templateUrl: './programming-exercise-exam-diff.component.html',
     providers: [{ provide: ExamSubmissionComponent, useExisting: ProgrammingExerciseExamDiffComponent }],
-    standalone: false,
+    imports: [IncludedInScoreBadgeComponent, CommitsInfoComponent, TranslateDirective, GitDiffLineStatComponent, NgbTooltip, ButtonComponent, ArtemisTranslatePipe],
 })
 export class ProgrammingExerciseExamDiffComponent extends ExamPageComponent implements OnInit, OnDestroy {
     private programmingExerciseService = inject(ProgrammingExerciseService);

@@ -1,6 +1,6 @@
 import { Component, OnDestroy, OnInit, inject } from '@angular/core';
 import { Course } from 'app/entities/course.model';
-import { ActivatedRoute, Router } from '@angular/router';
+import { ActivatedRoute, Router, RouterOutlet } from '@angular/router';
 import { Subscription } from 'rxjs';
 import { GuidedTourService } from 'app/guided-tour/guided-tour.service';
 import { courseExerciseOverviewTour } from 'app/guided-tour/tours/course-exercise-overview-tour';
@@ -10,6 +10,9 @@ import { CourseStorageService } from 'app/course/manage/course-storage.service';
 import { AccordionGroups, CollapseState, SidebarCardElement, SidebarData, SidebarItemShowAlways } from 'app/types/sidebar';
 import { CourseOverviewService } from '../course-overview.service';
 import { LtiService } from 'app/shared/service/lti.service';
+import { NgClass, NgStyle } from '@angular/common';
+import { SidebarComponent } from '../../shared/sidebar/sidebar.component';
+import { TranslateDirective } from '../../shared/language/translate.directive';
 
 const DEFAULT_UNIT_GROUPS: AccordionGroups = {
     future: { entityData: [] },
@@ -39,7 +42,7 @@ const DEFAULT_SHOW_ALWAYS: SidebarItemShowAlways = {
     selector: 'jhi-course-exercises',
     templateUrl: './course-exercises.component.html',
     styleUrls: ['../course-overview.scss'],
-    standalone: false,
+    imports: [NgClass, SidebarComponent, NgStyle, RouterOutlet, TranslateDirective],
 })
 export class CourseExercisesComponent implements OnInit, OnDestroy {
     private courseStorageService = inject(CourseStorageService);

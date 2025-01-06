@@ -12,13 +12,30 @@ import { EventManager } from 'app/core/util/event-manager.service';
 import { faAngleDown, faAngleUp, faPlus } from '@fortawesome/free-solid-svg-icons';
 import { DocumentationType } from 'app/shared/components/documentation-button/documentation-button.component';
 import { CourseAccessStorageService } from 'app/course/course-access-storage.service';
+import { TranslateDirective } from '../../shared/language/translate.directive';
+import { DocumentationButtonComponent } from '../../shared/components/documentation-button/documentation-button.component';
+import { HasAnyAuthorityDirective } from '../../shared/auth/has-any-authority.directive';
+import { OrionFilterDirective } from '../../shared/orion/orion-filter.directive';
+import { RouterLink } from '@angular/router';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { CourseManagementCardComponent } from './overview/course-management-card.component';
+import { ArtemisTranslatePipe } from '../../shared/pipes/artemis-translate.pipe';
 
 @Component({
     selector: 'jhi-course',
     templateUrl: './course-management.component.html',
     styles: ['.course-table {padding-bottom: 5rem}'],
     styleUrls: ['./course-management.component.scss'],
-    standalone: false,
+    imports: [
+        TranslateDirective,
+        DocumentationButtonComponent,
+        HasAnyAuthorityDirective,
+        OrionFilterDirective,
+        RouterLink,
+        FaIconComponent,
+        CourseManagementCardComponent,
+        ArtemisTranslatePipe,
+    ],
 })
 export class CourseManagementComponent implements OnInit, OnDestroy, AfterViewInit {
     private courseManagementService = inject(CourseManagementService);

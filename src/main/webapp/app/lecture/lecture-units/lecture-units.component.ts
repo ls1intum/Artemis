@@ -21,11 +21,28 @@ import { HttpErrorResponse } from '@angular/common/http';
 import { AttachmentUnitService } from 'app/lecture/lecture-unit/lecture-unit-management/attachmentUnit.service';
 import dayjs from 'dayjs/esm';
 import { ActivatedRoute } from '@angular/router';
+import { TranslateDirective } from '../../shared/language/translate.directive';
+import { LectureUnitManagementComponent as LectureUnitManagementComponent_1 } from '../lecture-unit/lecture-unit-management/lecture-unit-management.component';
+import { UnitCreationCardComponent } from '../lecture-unit/lecture-unit-management/unit-creation-card/unit-creation-card.component';
+import { TextUnitFormComponent as TextUnitFormComponent_1 } from '../lecture-unit/lecture-unit-management/text-unit-form/text-unit-form.component';
+import { VideoUnitFormComponent as VideoUnitFormComponent_1 } from '../lecture-unit/lecture-unit-management/video-unit-form/video-unit-form.component';
+import { OnlineUnitFormComponent as OnlineUnitFormComponent_1 } from '../lecture-unit/lecture-unit-management/online-unit-form/online-unit-form.component';
+import { AttachmentUnitFormComponent as AttachmentUnitFormComponent_1 } from '../lecture-unit/lecture-unit-management/attachment-unit-form/attachment-unit-form.component';
+import { CreateExerciseUnitComponent } from '../lecture-unit/lecture-unit-management/create-exercise-unit/create-exercise-unit.component';
 
 @Component({
     selector: 'jhi-lecture-update-units',
     templateUrl: './lecture-units.component.html',
-    standalone: false,
+    imports: [
+        TranslateDirective,
+        LectureUnitManagementComponent_1,
+        UnitCreationCardComponent,
+        TextUnitFormComponent_1,
+        VideoUnitFormComponent_1,
+        OnlineUnitFormComponent_1,
+        AttachmentUnitFormComponent_1,
+        CreateExerciseUnitComponent,
+    ],
 })
 export class LectureUpdateUnitsComponent implements OnInit {
     protected activatedRoute = inject(ActivatedRoute);

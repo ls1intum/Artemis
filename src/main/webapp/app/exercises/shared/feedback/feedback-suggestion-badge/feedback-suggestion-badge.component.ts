@@ -2,12 +2,15 @@ import { Component, Input, inject } from '@angular/core';
 import { faLightbulb } from '@fortawesome/free-solid-svg-icons';
 import { TranslateService } from '@ngx-translate/core';
 import { Feedback, FeedbackSuggestionType } from 'app/entities/feedback.model';
+import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { TranslateDirective } from '../../../../shared/language/translate.directive';
 
 @Component({
     selector: 'jhi-feedback-suggestion-badge',
     templateUrl: './feedback-suggestion-badge.component.html',
     styleUrls: ['./feedback-suggestion-badge.component.scss'],
-    standalone: false,
+    imports: [NgbTooltip, FaIconComponent, TranslateDirective],
 })
 export class FeedbackSuggestionBadgeComponent {
     private translateService = inject(TranslateService);

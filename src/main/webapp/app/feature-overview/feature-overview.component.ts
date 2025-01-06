@@ -35,12 +35,15 @@ import {
     faWrench,
 } from '@fortawesome/free-solid-svg-icons';
 import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
+import { TranslateDirective } from '../shared/language/translate.directive';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { ArtemisTranslatePipe } from '../shared/pipes/artemis-translate.pipe';
 
 @Component({
     selector: 'jhi-feature-overview',
     templateUrl: './feature-overview.component.html',
     styleUrls: ['./feature-overview.scss'],
-    standalone: false,
+    imports: [TranslateDirective, FaIconComponent, ArtemisTranslatePipe],
 })
 export class FeatureOverviewComponent implements OnInit {
     private route = inject(ActivatedRoute);

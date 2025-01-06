@@ -15,6 +15,10 @@ import { Subject } from 'rxjs';
 import { AccountService } from 'app/core/auth/account.service';
 import { faArchive, faCircleNotch, faDownload, faEraser } from '@fortawesome/free-solid-svg-icons';
 import { FeatureToggle } from 'app/shared/feature-toggle/feature-toggle.service';
+import { TranslateDirective } from '../../language/translate.directive';
+import { FeatureToggleDirective } from '../../feature-toggle/feature-toggle.directive';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { DeleteButtonDirective } from '../../delete-dialog/delete-button.directive';
 
 export type CourseExamArchiveState = {
     exportState: 'COMPLETED' | 'RUNNING' | 'COMPLETED_WITH_WARNINGS' | 'COMPLETED_WITH_ERRORS';
@@ -27,7 +31,7 @@ export type CourseExamArchiveState = {
     templateUrl: './course-exam-archive-button.component.html',
     styleUrls: ['./course-exam-archive-button.component.scss'],
     styles: [':host {display: contents}'],
-    standalone: false,
+    imports: [TranslateDirective, FeatureToggleDirective, FaIconComponent, DeleteButtonDirective],
 })
 export class CourseExamArchiveButtonComponent implements OnInit, OnDestroy {
     private courseService = inject(CourseManagementService);

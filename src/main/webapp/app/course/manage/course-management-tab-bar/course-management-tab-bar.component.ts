@@ -1,5 +1,5 @@
 import { AfterViewInit, Component, OnDestroy, OnInit, inject } from '@angular/core';
-import { ActivatedRoute, Router } from '@angular/router';
+import { ActivatedRoute, Router, RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
 import { HttpErrorResponse } from '@angular/common/http';
 import { Observable, Subject, Subscription, map, of } from 'rxjs';
 import { Course, isCommunicationEnabled } from 'app/entities/course.model';
@@ -36,12 +36,32 @@ import { CourseAccessStorageService } from 'app/course/course-access-storage.ser
 import { scrollToTopOfPage } from 'app/shared/util/utils';
 import { ExerciseType } from 'app/entities/exercise.model';
 import { EntitySummary } from 'app/shared/delete-dialog/delete-dialog.model';
+import { HeaderCourseComponent } from '../../../overview/header-course.component';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { TranslateDirective } from '../../../shared/language/translate.directive';
+import { FeatureToggleLinkDirective } from '../../../shared/feature-toggle/feature-toggle-link.directive';
+import { FeatureToggleHideDirective } from '../../../shared/feature-toggle/feature-toggle-hide.directive';
+import { CourseExamArchiveButtonComponent } from '../../../shared/components/course-exam-archive-button/course-exam-archive-button.component';
+import { HasAnyAuthorityDirective } from '../../../shared/auth/has-any-authority.directive';
+import { DeleteButtonDirective } from '../../../shared/delete-dialog/delete-button.directive';
 
 @Component({
     selector: 'jhi-course-management-tab-bar',
     templateUrl: './course-management-tab-bar.component.html',
     styleUrls: ['./course-management-tab-bar.component.scss'],
-    standalone: false,
+    imports: [
+        HeaderCourseComponent,
+        RouterLinkActive,
+        RouterLink,
+        FaIconComponent,
+        TranslateDirective,
+        FeatureToggleLinkDirective,
+        FeatureToggleHideDirective,
+        CourseExamArchiveButtonComponent,
+        HasAnyAuthorityDirective,
+        DeleteButtonDirective,
+        RouterOutlet,
+    ],
 })
 export class CourseManagementTabBarComponent implements OnInit, OnDestroy, AfterViewInit {
     private eventManager = inject(EventManager);

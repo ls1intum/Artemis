@@ -1,9 +1,14 @@
 import { ChangeDetectionStrategy, Component, EventEmitter, Input, OnChanges, OnInit, Output, inject } from '@angular/core';
-import { FormBuilder, FormGroup, Validators } from '@angular/forms';
-import { NgbTimeAdapter } from '@ng-bootstrap/ng-bootstrap';
+import { FormBuilder, FormGroup, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
+import { NgbTimeAdapter, NgbTimepicker } from '@ng-bootstrap/ng-bootstrap';
 import { faCalendarAlt } from '@fortawesome/free-solid-svg-icons';
 import { NgbTimeStringAdapter } from 'app/course/tutorial-groups/shared/ngbTimeStringAdapter';
 import { validTimeRange } from 'app/course/tutorial-groups/shared/timeRangeValidator';
+import { TranslateDirective } from '../../../../../../shared/language/translate.directive';
+import { OwlDateTimeModule } from '@danielmoncada/angular-datetime-picker';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
+import { ArtemisTranslatePipe } from '../../../../../../shared/pipes/artemis-translate.pipe';
 
 export interface TutorialGroupSessionFormData {
     date?: Date;
@@ -17,7 +22,7 @@ export interface TutorialGroupSessionFormData {
     templateUrl: './tutorial-group-session-form.component.html',
     providers: [{ provide: NgbTimeAdapter, useClass: NgbTimeStringAdapter }],
     changeDetection: ChangeDetectionStrategy.OnPush,
-    standalone: false,
+    imports: [TranslateDirective, FormsModule, ReactiveFormsModule, OwlDateTimeModule, FaIconComponent, NgbTimepicker, ArtemisDatePipe, ArtemisTranslatePipe],
 })
 export class TutorialGroupSessionFormComponent implements OnInit, OnChanges {
     private fb = inject(FormBuilder);

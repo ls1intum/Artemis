@@ -29,7 +29,7 @@ const routes: Routes = [
         ArtemisCompetenciesModule,
         CourseRegistrationButtonModule,
         CoursePrerequisitesButtonModule,
+        CourseRegistrationComponent,
     ],
-    declarations: [CourseRegistrationComponent],
 })
 export class CourseRegistrationModule {}

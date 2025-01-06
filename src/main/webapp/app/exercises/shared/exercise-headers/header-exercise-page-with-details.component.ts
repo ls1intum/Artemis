@@ -16,12 +16,31 @@ import { ComplaintService } from 'app/complaints/complaint.service';
 import { SubmissionType } from 'app/entities/submission.model';
 import { ProgrammingSubmission } from 'app/entities/programming/programming-submission.model';
 import { roundValueSpecifiedByCourseSettings } from 'app/shared/util/utils';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
+import { ExerciseCategoriesComponent } from '../../../shared/exercise-categories/exercise-categories.component';
+import { NgClass } from '@angular/common';
+import { IncludedInScoreBadgeComponent } from './included-in-score-badge.component';
+import { TranslateDirective } from '../../../shared/language/translate.directive';
+import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
+import { ArtemisTranslatePipe } from '../../../shared/pipes/artemis-translate.pipe';
+import { ArtemisTimeAgoPipe } from 'app/shared/pipes/artemis-time-ago.pipe';
 
 @Component({
     selector: 'jhi-header-exercise-page-with-details',
     templateUrl: './header-exercise-page-with-details.component.html',
     styleUrls: ['./header-exercise-page-with-details.component.scss'],
-    standalone: false,
+    imports: [
+        FaIconComponent,
+        NgbTooltip,
+        ExerciseCategoriesComponent,
+        NgClass,
+        IncludedInScoreBadgeComponent,
+        TranslateDirective,
+        ArtemisDatePipe,
+        ArtemisTranslatePipe,
+        ArtemisTimeAgoPipe,
+    ],
 })
 export class HeaderExercisePageWithDetailsComponent implements OnChanges, OnInit {
     private sortService = inject(SortService);

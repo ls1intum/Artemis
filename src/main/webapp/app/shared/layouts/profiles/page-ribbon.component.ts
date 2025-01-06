@@ -1,5 +1,6 @@
 import { Component, OnInit, inject } from '@angular/core';
 import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
+import { TranslateDirective } from '../../language/translate.directive';
 
 @Component({
     selector: 'jhi-page-ribbon',
@@ -13,7 +14,7 @@ import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
         </div>
     `,
     styleUrls: ['page-ribbon.scss'],
-    standalone: false,
+    imports: [TranslateDirective],
 })
 export class PageRibbonComponent implements OnInit {
     private profileService = inject(ProfileService);

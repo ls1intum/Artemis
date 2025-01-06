@@ -6,6 +6,10 @@ import { debounceTime, distinctUntilChanged, filter, switchMap, takeUntil, tap }
 import { User, UserPublicInfoDTO } from 'app/core/user/user.model';
 import { NgbTypeahead, NgbTypeaheadSelectItemEvent } from '@ng-bootstrap/ng-bootstrap';
 import { faX } from '@fortawesome/free-solid-svg-icons';
+import { ProfilePictureComponent } from '../profile-picture/profile-picture.component';
+import { TranslateDirective } from '../language/translate.directive';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { ArtemisTranslatePipe } from '../pipes/artemis-translate.pipe';
 
 let selectorId = 0;
 
@@ -33,7 +37,7 @@ export type SearchRoleGroup = 'tutors' | 'students' | 'instructors';
         },
     ],
     encapsulation: ViewEncapsulation.None,
-    standalone: false,
+    imports: [NgbTypeahead, ProfilePictureComponent, TranslateDirective, FaIconComponent, ArtemisTranslatePipe],
 })
 export class CourseUsersSelectorComponent implements ControlValueAccessor, OnInit, OnDestroy {
     private courseManagementService = inject(CourseManagementService);

@@ -8,12 +8,15 @@ import { ActivatedRoute, Router } from '@angular/router';
 import { HttpErrorResponse } from '@angular/common/http';
 import { Course } from 'app/entities/course.model';
 import { takeUntil } from 'rxjs/operators';
+import { LoadingIndicatorContainerComponent } from '../../../../../shared/loading-indicator-container/loading-indicator-container.component';
+import { TutorialGroupDetailComponent } from '../../../shared/tutorial-group-detail/tutorial-group-detail.component';
+import { TutorialGroupRowButtonsComponent } from '../tutorial-groups-management/tutorial-group-row-buttons/tutorial-group-row-buttons.component';
 
 @Component({
     selector: 'jhi-tutorial-group-management-detail',
     templateUrl: './tutorial-group-management-detail.component.html',
     changeDetection: ChangeDetectionStrategy.OnPush,
-    standalone: false,
+    imports: [LoadingIndicatorContainerComponent, TutorialGroupDetailComponent, TutorialGroupRowButtonsComponent],
 })
 export class TutorialGroupManagementDetailComponent implements OnInit, OnDestroy {
     private activatedRoute = inject(ActivatedRoute);

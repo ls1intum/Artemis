@@ -13,11 +13,24 @@ import { ExerciseManagementStatisticsDto } from 'app/exercises/shared/statistics
 import { StatisticsService } from 'app/shared/statistics-graph/statistics.service';
 import { TranslateService } from '@ngx-translate/core';
 import { QuizQuestionType } from 'app/entities/quiz/quiz-question.model';
+import { TranslateDirective } from '../../../shared/language/translate.directive';
+import { DocumentationButtonComponent } from '../../../shared/components/documentation-button/documentation-button.component';
+import { QuizExerciseManageButtonsComponent } from './quiz-exercise-manage-buttons.component';
+import { QuizExerciseLifecycleButtonsComponent } from './quiz-exercise-lifecycle-buttons.component';
+import { ExerciseDetailStatisticsComponent } from '../../shared/statistics/exercise-detail-statistics.component';
+import { DetailOverviewListComponent } from '../../../detail-overview-list/detail-overview-list.component';
 
 @Component({
     selector: 'jhi-quiz-exercise-detail',
     templateUrl: './quiz-exercise-detail.component.html',
-    standalone: false,
+    imports: [
+        TranslateDirective,
+        DocumentationButtonComponent,
+        QuizExerciseManageButtonsComponent,
+        QuizExerciseLifecycleButtonsComponent,
+        ExerciseDetailStatisticsComponent,
+        DetailOverviewListComponent,
+    ],
 })
 export class QuizExerciseDetailComponent implements OnInit {
     private route = inject(ActivatedRoute);

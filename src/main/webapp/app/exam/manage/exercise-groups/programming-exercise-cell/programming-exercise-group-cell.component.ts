@@ -10,12 +10,16 @@ import { downloadZipFileFromResponse } from 'app/shared/util/download.util';
 import { AlertService } from 'app/core/util/alert.service';
 import { faDownload } from '@fortawesome/free-solid-svg-icons';
 import { PROFILE_LOCALVC, PROFILE_THEIA } from 'app/app.constants';
+import { RouterLink } from '@angular/router';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { ProgrammingExerciseInstructorStatusComponent } from '../../../../exercises/programming/manage/status/programming-exercise-instructor-status.component';
+import { TranslateDirective } from '../../../../shared/language/translate.directive';
 
 @Component({
     selector: 'jhi-programming-exercise-group-cell',
     templateUrl: './programming-exercise-group-cell.component.html',
     styles: [':host{display: contents}'],
-    standalone: false,
+    imports: [RouterLink, FaIconComponent, ProgrammingExerciseInstructorStatusComponent, TranslateDirective],
 })
 export class ProgrammingExerciseGroupCellComponent implements OnInit {
     private profileService = inject(ProfileService);

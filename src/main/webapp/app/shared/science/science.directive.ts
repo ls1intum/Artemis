@@ -1,10 +1,7 @@
 import { Directive, HostListener, Input, inject } from '@angular/core';
 import { ScienceService } from 'app/shared/science/science.service';
 import { ScienceEventType } from 'app/shared/science/science.model';
-@Directive({
-    selector: '[jhiScience]',
-    standalone: false,
-})
+@Directive({ selector: '[jhiScience]' })
 export class ScienceDirective {
     private scienceService = inject(ScienceService);
 

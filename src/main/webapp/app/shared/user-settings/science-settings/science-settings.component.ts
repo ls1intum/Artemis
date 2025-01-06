@@ -7,12 +7,16 @@ import { ScienceSetting } from 'app/shared/user-settings/science-settings/scienc
 import { ScienceSettingsService } from 'app/shared/user-settings/science-settings/science-settings.service';
 import { FeatureToggle, FeatureToggleService } from 'app/shared/feature-toggle/feature-toggle.service';
 import { Subscription } from 'rxjs';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { TranslateDirective } from '../../language/translate.directive';
+import { HasAnyAuthorityDirective } from '../../auth/has-any-authority.directive';
+import { ArtemisTranslatePipe } from '../../pipes/artemis-translate.pipe';
 
 @Component({
     selector: 'jhi-science-settings',
     templateUrl: 'science-settings.component.html',
     styleUrls: ['../user-settings.scss'],
-    standalone: false,
+    imports: [FaIconComponent, TranslateDirective, HasAnyAuthorityDirective, ArtemisTranslatePipe],
 })
 export class ScienceSettingsComponent extends UserSettingsDirective implements OnInit, OnDestroy {
     private scienceSettingsService = inject(ScienceSettingsService);

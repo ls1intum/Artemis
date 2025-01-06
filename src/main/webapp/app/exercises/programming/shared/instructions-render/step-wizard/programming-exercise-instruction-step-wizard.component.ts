@@ -1,17 +1,19 @@
 import { Component, Input, OnChanges, SimpleChanges, inject } from '@angular/core';
-import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
+import { NgbModal, NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { ProgrammingExerciseInstructionService, TestCaseState } from 'app/exercises/programming/shared/instructions-render/service/programming-exercise-instruction.service';
 import { TaskArray } from 'app/exercises/programming/shared/instructions-render/task/programming-exercise-task.model';
 import { FeedbackComponent } from 'app/exercises/shared/feedback/feedback.component';
 import { Exercise, ExerciseType } from 'app/entities/exercise.model';
 import { Result } from 'app/entities/result.model';
 import { faCheck, faCircle, faTimes } from '@fortawesome/free-solid-svg-icons';
+import { TranslateDirective } from '../../../../../shared/language/translate.directive';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 
 @Component({
     selector: 'jhi-programming-exercise-instructions-step-wizard',
     templateUrl: './programming-exercise-instruction-step-wizard.component.html',
     styleUrls: ['./programming-exercise-instruction-step-wizard.scss'],
-    standalone: false,
+    imports: [TranslateDirective, NgbTooltip, FaIconComponent],
 })
 export class ProgrammingExerciseInstructionStepWizardComponent implements OnChanges {
     private modalService = inject(NgbModal);

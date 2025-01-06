@@ -4,11 +4,12 @@ import { Exercise } from 'app/entities/exercise.model';
 import { TitleChannelNameComponent } from 'app/shared/form/title-channel-name/title-channel-name.component';
 import { ProgrammingExerciseInputField } from 'app/exercises/programming/manage/update/programming-exercise-update.helper';
 import { CourseExistingExerciseDetailsType, ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
+import { TitleChannelNameComponent as TitleChannelNameComponent_1 } from '../../../shared/form/title-channel-name/title-channel-name.component';
 
 @Component({
     selector: 'jhi-exercise-title-channel-name',
     templateUrl: './exercise-title-channel-name.component.html',
-    standalone: false,
+    imports: [TitleChannelNameComponent_1],
 })
 export class ExerciseTitleChannelNameComponent implements OnChanges {
     @Input() exercise: Exercise;

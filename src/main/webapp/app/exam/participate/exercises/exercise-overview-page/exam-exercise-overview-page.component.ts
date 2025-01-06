@@ -7,12 +7,18 @@ import { ButtonTooltipType, ExamParticipationService } from 'app/exam/participat
 import { faHourglassHalf } from '@fortawesome/free-solid-svg-icons';
 import { facSaveSuccess, facSaveWarning } from '../../../../../content/icons/icons';
 import { ExerciseButtonStatus } from 'app/exam/participate/exam-navigation-sidebar/exam-navigation-sidebar.component';
+import { TranslateDirective } from '../../../../shared/language/translate.directive';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
+import { NgClass } from '@angular/common';
+import { UpdatingResultComponent } from '../../../../exercises/shared/result/updating-result.component';
+import { ArtemisTranslatePipe } from '../../../../shared/pipes/artemis-translate.pipe';
 
 @Component({
     selector: 'jhi-exam-exercise-overview-page',
     templateUrl: './exam-exercise-overview-page.component.html',
     styleUrls: ['./exam-exercise-overview-page.scss', '../../exam-navigation-sidebar/exam-navigation-sidebar.component.scss'],
-    standalone: false,
+    imports: [TranslateDirective, FaIconComponent, NgbTooltip, NgClass, UpdatingResultComponent, ArtemisTranslatePipe],
 })
 export class ExamExerciseOverviewPageComponent extends ExamPageComponent implements OnInit, OnChanges {
     private examParticipationService = inject(ExamParticipationService);

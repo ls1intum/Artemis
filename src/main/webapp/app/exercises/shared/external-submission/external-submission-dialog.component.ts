@@ -12,11 +12,16 @@ import { SCORE_PATTERN } from 'app/app.constants';
 import { User } from 'app/core/user/user.model';
 import { EventManager } from 'app/core/util/event-manager.service';
 import { faBan, faSave } from '@fortawesome/free-solid-svg-icons';
+import { FormsModule } from '@angular/forms';
+import { TranslateDirective } from '../../../shared/language/translate.directive';
+import { NgClass } from '@angular/common';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { HtmlForMarkdownPipe } from '../../../shared/pipes/html-for-markdown.pipe';
 
 @Component({
     selector: 'jhi-external-submission-dialog',
     templateUrl: './external-submission-dialog.component.html',
-    standalone: false,
+    imports: [FormsModule, TranslateDirective, NgClass, FaIconComponent, HtmlForMarkdownPipe],
 })
 export class ExternalSubmissionDialogComponent implements OnInit {
     private participationService = inject(ParticipationService);

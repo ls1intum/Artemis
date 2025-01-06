@@ -1,6 +1,19 @@
 import { Component, Input, OnDestroy, OnInit, inject } from '@angular/core';
-import { ControlValueAccessor, FormBuilder, FormControl, NG_VALIDATORS, NG_VALUE_ACCESSOR, ValidationErrors, Validator, Validators } from '@angular/forms';
+import {
+    ControlValueAccessor,
+    FormBuilder,
+    FormControl,
+    FormsModule,
+    NG_VALIDATORS,
+    NG_VALUE_ACCESSOR,
+    ReactiveFormsModule,
+    ValidationErrors,
+    Validator,
+    Validators,
+} from '@angular/forms';
 import { Subscription } from 'rxjs';
+import { NgClass } from '@angular/common';
+import { TranslateDirective } from '../language/translate.directive';
 
 @Component({
     selector: 'jhi-confirm-entity-name',
@@ -18,7 +31,7 @@ import { Subscription } from 'rxjs';
             useExisting: ConfirmEntityNameComponent,
         },
     ],
-    standalone: false,
+    imports: [NgClass, TranslateDirective, FormsModule, ReactiveFormsModule],
 })
 export class ConfirmEntityNameComponent implements OnInit, OnDestroy, ControlValueAccessor, Validator {
     private fb = inject(FormBuilder);

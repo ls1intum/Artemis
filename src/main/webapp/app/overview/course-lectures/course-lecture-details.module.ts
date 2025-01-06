@@ -40,8 +40,8 @@ const routes: Routes = [
         OnlineUnitComponent,
         AttachmentUnitComponent,
         DiscussionSectionComponent,
+        CourseLectureDetailsComponent,
     ],
-    declarations: [CourseLectureDetailsComponent],
     exports: [CourseLectureDetailsComponent],
 })
 export class ArtemisCourseLectureDetailsModule {}

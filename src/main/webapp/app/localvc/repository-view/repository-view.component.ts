@@ -1,6 +1,6 @@
 import { Component, OnDestroy, OnInit, ViewChild, inject } from '@angular/core';
 import { Observable, Subscription } from 'rxjs';
-import { ActivatedRoute, Router } from '@angular/router';
+import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { DomainService } from 'app/exercises/programming/shared/code-editor/service/code-editor-domain.service';
 import { ExerciseType, getCourseFromExercise } from 'app/entities/exercise.model';
 import { ProgrammingExercise } from 'app/entities/programming/programming-exercise.model';
@@ -18,11 +18,31 @@ import { ButtonSize, ButtonType } from 'app/shared/components/button.component';
 import { Feedback } from 'app/entities/feedback.model';
 import { PROFILE_LOCALVC } from 'app/app.constants';
 import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
+import { CodeEditorContainerComponent as CodeEditorContainerComponent_1 } from '../../exercises/programming/shared/code-editor/container/code-editor-container.component';
+import { TranslateDirective } from '../../shared/language/translate.directive';
+import { ButtonComponent } from '../../shared/components/button.component';
+import { ResultComponent } from '../../exercises/shared/result/result.component';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { CodeButtonComponent } from '../../shared/components/code-button/code-button.component';
+import { ProgrammingExerciseStudentRepoDownloadComponent } from '../../exercises/programming/shared/actions/programming-exercise-student-repo-download.component';
+import { ProgrammingExerciseInstructorRepoDownloadComponent } from '../../exercises/programming/shared/actions/programming-exercise-instructor-repo-download.component';
+import { ProgrammingExerciseInstructionComponent } from '../../exercises/programming/shared/instructions-render/programming-exercise-instruction.component';
 
 @Component({
     selector: 'jhi-repository-view',
     templateUrl: './repository-view.component.html',
-    standalone: false,
+    imports: [
+        CodeEditorContainerComponent_1,
+        TranslateDirective,
+        ButtonComponent,
+        ResultComponent,
+        RouterLink,
+        FaIconComponent,
+        CodeButtonComponent,
+        ProgrammingExerciseStudentRepoDownloadComponent,
+        ProgrammingExerciseInstructorRepoDownloadComponent,
+        ProgrammingExerciseInstructionComponent,
+    ],
 })
 export class RepositoryViewComponent implements OnInit, OnDestroy {
     private accountService = inject(AccountService);

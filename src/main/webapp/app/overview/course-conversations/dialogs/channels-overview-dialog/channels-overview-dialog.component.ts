@@ -9,6 +9,9 @@ import { ChannelDTO, ChannelSubType } from 'app/entities/metis/conversation/chan
 import { Course } from 'app/entities/course.model';
 import { canCreateChannel } from 'app/shared/metis/conversations/conversation-permissions.utils';
 import { AbstractDialogComponent } from 'app/overview/course-conversations/dialogs/abstract-dialog.component';
+import { LoadingIndicatorContainerComponent } from '../../../../shared/loading-indicator-container/loading-indicator-container.component';
+import { ChannelItemComponent } from './channel-item/channel-item.component';
+import { ArtemisTranslatePipe } from '../../../../shared/pipes/artemis-translate.pipe';
 
 export type ChannelActionType = 'register' | 'deregister' | 'view' | 'create';
 export type ChannelAction = {
@@ -19,7 +22,7 @@ export type ChannelAction = {
     selector: 'jhi-channels-overview-dialog',
     templateUrl: './channels-overview-dialog.component.html',
     styleUrls: ['./channels-overview-dialog.component.scss'],
-    standalone: false,
+    imports: [LoadingIndicatorContainerComponent, ChannelItemComponent, ArtemisTranslatePipe],
 })
 export class ChannelsOverviewDialogComponent extends AbstractDialogComponent implements OnInit, OnDestroy {
     private channelService = inject(ChannelService);

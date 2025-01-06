@@ -3,11 +3,13 @@ import { round } from 'app/shared/util/utils';
 import { Theme, ThemeService } from 'app/core/theme/theme.service';
 import { Subscription } from 'rxjs';
 import { toObservable } from '@angular/core/rxjs-interop';
+import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
+import { NgClass } from '@angular/common';
 
 @Component({
     selector: 'jhi-progress-bar',
     templateUrl: './progress-bar.component.html',
-    standalone: false,
+    imports: [NgbTooltip, NgClass],
 })
 export class ProgressBarComponent implements OnChanges, OnDestroy {
     private themeService = inject(ThemeService);

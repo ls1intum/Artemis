@@ -1,5 +1,5 @@
 import { Component, OnInit, inject } from '@angular/core';
-import { ActivatedRoute, Router } from '@angular/router';
+import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { Course } from 'app/entities/course.model';
 import { faExclamationTriangle, faPencilAlt, faPlus, faSort, faTrash, faWrench } from '@fortawesome/free-solid-svg-icons';
 import { LtiPlatformConfiguration } from 'app/admin/lti-configuration/lti-configuration.model';
@@ -11,11 +11,39 @@ import { AlertService } from 'app/core/util/alert.service';
 import { LTI_URLS } from 'app/admin/lti-configuration/lti-configuration.urls';
 import { ITEMS_PER_PAGE } from 'app/shared/constants/pagination.constants';
 import { combineLatest } from 'rxjs';
+import { FormsModule } from '@angular/forms';
+import { TranslateDirective } from '../../shared/language/translate.directive';
+import { NgbNav, NgbNavContent, NgbNavItem, NgbNavLink, NgbNavLinkBase, NgbNavOutlet, NgbPagination } from '@ng-bootstrap/ng-bootstrap';
+import { HelpIconComponent } from '../../shared/components/help-icon.component';
+import { CopyIconButtonComponent } from '../../shared/components/copy-icon-button/copy-icon-button.component';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { SortDirective } from '../../shared/sort/sort.directive';
+import { SortByDirective } from '../../shared/sort/sort-by.directive';
+import { DeleteButtonDirective } from '../../shared/delete-dialog/delete-button.directive';
+import { ItemCountComponent } from '../../shared/pagination/item-count.component';
 
 @Component({
     selector: 'jhi-lti-configuration',
     templateUrl: './lti-configuration.component.html',
-    standalone: false,
+    imports: [
+        FormsModule,
+        TranslateDirective,
+        NgbNav,
+        NgbNavItem,
+        NgbNavLink,
+        NgbNavLinkBase,
+        NgbNavContent,
+        HelpIconComponent,
+        CopyIconButtonComponent,
+        RouterLink,
+        FaIconComponent,
+        SortDirective,
+        SortByDirective,
+        DeleteButtonDirective,
+        ItemCountComponent,
+        NgbPagination,
+        NgbNavOutlet,
+    ],
 })
 export class LtiConfigurationComponent implements OnInit {
     private router = inject(Router);

@@ -6,7 +6,6 @@ import { RouterModule } from '@angular/router';
 import { ArtemisSharedModule } from 'app/shared/shared.module';
 
 @NgModule({
-    declarations: [AboutUsComponent],
     imports: [
         RouterModule.forChild([
             {
@@ -21,6 +20,7 @@ import { ArtemisSharedModule } from 'app/shared/shared.module';
         TranslateModule,
         CommonModule,
         ArtemisSharedModule,
+        AboutUsComponent,
     ],
 })
 export class ArtemisAboutUsModule {}

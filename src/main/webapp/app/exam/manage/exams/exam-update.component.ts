@@ -4,7 +4,7 @@ import { combineLatest, takeWhile } from 'rxjs';
 import { map } from 'rxjs/operators';
 import { Component, OnDestroy, OnInit, TemplateRef, ViewChild, inject } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
-import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
+import { NgbModal, NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { faBan, faExclamationTriangle, faSave } from '@fortawesome/free-solid-svg-icons';
 import { Exam } from 'app/entities/exam/exam.model';
 import { ExamManagementService } from 'app/exam/manage/exam-management.service';
@@ -18,11 +18,41 @@ import { DocumentationType } from 'app/shared/components/documentation-button/do
 import { ConfirmAutofocusModalComponent } from 'app/shared/components/confirm-autofocus-modal.component';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { examWorkingTime, normalWorkingTime } from 'app/exam/participate/exam.utils';
+import { FormsModule } from '@angular/forms';
+import { TranslateDirective } from '../../../shared/language/translate.directive';
+import { DocumentationButtonComponent } from '../../../shared/components/documentation-button/documentation-button.component';
+import { TitleChannelNameComponent } from '../../../shared/form/title-channel-name/title-channel-name.component';
+import { HelpIconComponent } from '../../../shared/components/help-icon.component';
+import { ExamModePickerComponent } from './exam-mode-picker/exam-mode-picker.component';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { WorkingTimeChangeComponent } from '../../shared/working-time-change/working-time-change.component';
+import { FormDateTimePickerComponent } from '../../../shared/date-time-picker/date-time-picker.component';
+import { CustomMinDirective } from '../../../shared/validators/custom-min-validator.directive';
+import { CustomMaxDirective } from '../../../shared/validators/custom-max-validator.directive';
+import { ExamExerciseImportComponent as ExamExerciseImportComponent_1 } from './exam-exercise-import/exam-exercise-import.component';
+import { MarkdownEditorMonacoComponent } from '../../../shared/markdown-editor/monaco/markdown-editor-monaco.component';
+import { ArtemisTranslatePipe as ArtemisTranslatePipe_1 } from '../../../shared/pipes/artemis-translate.pipe';
 
 @Component({
     selector: 'jhi-exam-update',
     templateUrl: './exam-update.component.html',
-    standalone: false,
+    imports: [
+        FormsModule,
+        TranslateDirective,
+        DocumentationButtonComponent,
+        TitleChannelNameComponent,
+        HelpIconComponent,
+        ExamModePickerComponent,
+        NgbTooltip,
+        FaIconComponent,
+        WorkingTimeChangeComponent,
+        FormDateTimePickerComponent,
+        CustomMinDirective,
+        CustomMaxDirective,
+        ExamExerciseImportComponent_1,
+        MarkdownEditorMonacoComponent,
+        ArtemisTranslatePipe_1,
+    ],
 })
 export class ExamUpdateComponent implements OnInit, OnDestroy {
     private route = inject(ActivatedRoute);

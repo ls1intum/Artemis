@@ -1,10 +1,13 @@
 import { Component, Input, TemplateRef, inject } from '@angular/core';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
+import { NgTemplateOutlet } from '@angular/common';
+import { TranslateDirective } from '../language/translate.directive';
+import { ArtemisTranslatePipe } from '../pipes/artemis-translate.pipe';
 
 @Component({
     selector: 'jhi-confirm-modal',
     templateUrl: './confirm-autofocus-modal.component.html',
-    standalone: false,
+    imports: [NgTemplateOutlet, TranslateDirective, ArtemisTranslatePipe],
 })
 export class ConfirmAutofocusModalComponent {
     modal = inject(NgbActiveModal);

@@ -2,11 +2,15 @@ import { Component, Input, OnInit, inject } from '@angular/core';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import { ExerciseType } from 'app/entities/exercise.model';
 import { ProgrammingLanguage } from 'app/entities/programming/programming-exercise.model';
+import { FormsModule } from '@angular/forms';
+import { TranslateDirective } from '../../../../shared/language/translate.directive';
+import { ExerciseImportTabsComponent } from '../exercise-import-tabs.component';
+import { ExerciseImportComponent } from '../exercise-import.component';
 
 @Component({
     selector: 'jhi-exercise-import-wrapper',
     templateUrl: './exercise-import-wrapper.component.html',
-    standalone: false,
+    imports: [FormsModule, TranslateDirective, ExerciseImportTabsComponent, ExerciseImportComponent],
 })
 export class ExerciseImportWrapperComponent implements OnInit {
     private activeModal = inject(NgbActiveModal);

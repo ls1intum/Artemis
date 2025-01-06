@@ -4,15 +4,17 @@ import dayjs from 'dayjs/esm';
 import { GraphColors, Graphs, SpanType, StatisticsView } from 'app/entities/statistics.model';
 import { faArrowLeft, faArrowRight } from '@fortawesome/free-solid-svg-icons';
 import { yAxisTickFormatting } from 'app/shared/statistics-graph/statistics-graph.utils';
-import { Color, ScaleType } from '@swimlane/ngx-charts';
+import { BarChartModule, Color, ScaleType } from '@swimlane/ngx-charts';
 import { TranslateService } from '@ngx-translate/core';
 import { NgxChartsSingleSeriesDataEntry } from 'app/shared/chart/ngx-charts-datatypes';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { ArtemisTranslatePipe } from '../pipes/artemis-translate.pipe';
 
 @Component({
     selector: 'jhi-statistics-graph',
     templateUrl: './statistics-graph.component.html',
     styleUrls: ['../chart/vertical-bar-chart.scss'],
-    standalone: false,
+    imports: [FaIconComponent, BarChartModule, ArtemisTranslatePipe],
 })
 export class StatisticsGraphComponent implements OnChanges {
     private service = inject(StatisticsService);

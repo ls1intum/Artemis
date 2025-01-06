@@ -23,6 +23,17 @@ import { faEdit, faSave } from '@fortawesome/free-solid-svg-icons';
 import { faListAlt } from '@fortawesome/free-regular-svg-icons';
 import { Observable, of } from 'rxjs';
 import { ArtemisNavigationUtilService } from 'app/utils/navigation.utils';
+import { TranslateDirective } from '../../../../shared/language/translate.directive';
+import { HelpIconComponent } from '../../../../shared/components/help-icon.component';
+import { FormsModule } from '@angular/forms';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { ConfirmAutofocusButtonComponent } from '../../../../shared/components/confirm-autofocus-button.component';
+import { ResizeableContainerComponent } from '../../../../shared/resizeable-container/resizeable-container.component';
+import { ScoreDisplayComponent } from '../../../../shared/score-display/score-display.component';
+import { TextAssessmentAreaComponent } from '../../assess/text-assessment-area/text-assessment-area.component';
+import { AssessmentInstructionsComponent } from '../../../../assessment/assessment-instructions/assessment-instructions/assessment-instructions.component';
+import { UnreferencedFeedbackComponent } from '../../../shared/unreferenced-feedback/unreferenced-feedback.component';
+import { ArtemisTranslatePipe } from '../../../../shared/pipes/artemis-translate.pipe';
 
 type ExampleSubmissionResponseType = EntityResponseType;
 
@@ -30,7 +41,19 @@ type ExampleSubmissionResponseType = EntityResponseType;
     selector: 'jhi-example-text-submission',
     templateUrl: './example-text-submission.component.html',
     styleUrls: ['./example-text-submission.component.scss'],
-    standalone: false,
+    imports: [
+        TranslateDirective,
+        HelpIconComponent,
+        FormsModule,
+        FaIconComponent,
+        ConfirmAutofocusButtonComponent,
+        ResizeableContainerComponent,
+        ScoreDisplayComponent,
+        TextAssessmentAreaComponent,
+        AssessmentInstructionsComponent,
+        UnreferencedFeedbackComponent,
+        ArtemisTranslatePipe,
+    ],
 })
 export class ExampleTextSubmissionComponent extends TextAssessmentBaseComponent implements OnInit, Context, FeedbackMarker {
     private route = inject(ActivatedRoute);

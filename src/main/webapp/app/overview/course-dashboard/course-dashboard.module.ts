@@ -14,7 +14,7 @@ import { ArtemisSharedComponentModule } from 'app/shared/components/shared-compo
 import { NgxDatatableModule } from '@siemens/ngx-datatable';
 import { LineChartModule } from '@swimlane/ngx-charts';
 import { IrisModule } from 'app/iris/iris.module';
-import { FeatureToggleModule } from 'app/shared/feature-toggle/feature-toggle.module';
+
 import { ArtemisCompetenciesModule } from 'app/course/competencies/competency.module';
 
 const routes: Routes = [
@@ -31,7 +31,6 @@ const routes: Routes = [
 ];
 
 @NgModule({
-    declarations: [CourseDashboardComponent, CourseExercisePerformanceComponent, CourseExerciseLatenessComponent],
     exports: [CourseDashboardComponent],
     imports: [
         CommonModule,
@@ -44,8 +43,10 @@ const routes: Routes = [
         ArtemisSharedComponentModule,
         LineChartModule,
         IrisModule,
-        FeatureToggleModule,
         ArtemisCompetenciesModule,
+        CourseDashboardComponent,
+        CourseExercisePerformanceComponent,
+        CourseExerciseLatenessComponent,
     ],
 })
 export class CourseDashboardModule {}

@@ -14,13 +14,17 @@ import dayjs from 'dayjs/esm';
 import { NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
 import { CreateTutorialGroupFreePeriodComponent } from 'app/course/tutorial-groups/tutorial-groups-management/tutorial-free-periods/crud/create-tutorial-group-free-period/create-tutorial-group-free-period.component';
 import { catchError, takeUntil } from 'rxjs/operators';
+import { LoadingIndicatorContainerComponent } from '../../../../../shared/loading-indicator-container/loading-indicator-container.component';
+import { TranslateDirective } from '../../../../../shared/language/translate.directive';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { TutorialGroupFreePeriodsTableComponent } from './tutorial-group-free-periods-table/tutorial-group-free-periods-table.component';
 
 @Component({
     selector: 'jhi-tutorial-free-periods',
     templateUrl: './tutorial-group-free-periods-management.component.html',
     styleUrls: ['./tutorial-group-free-periods-management.component.scss'],
     changeDetection: ChangeDetectionStrategy.OnPush,
-    standalone: false,
+    imports: [LoadingIndicatorContainerComponent, TranslateDirective, FaIconComponent, TutorialGroupFreePeriodsTableComponent],
 })
 export class TutorialGroupFreePeriodsManagementComponent implements OnInit, OnDestroy {
     private activatedRoute = inject(ActivatedRoute);

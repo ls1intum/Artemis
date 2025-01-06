@@ -1,17 +1,21 @@
 import { Component, EventEmitter, OnChanges, OnInit, Output, SimpleChanges, ViewEncapsulation, inject, input } from '@angular/core';
 import { AnswerPost } from 'app/entities/metis/answer-post.model';
-import { Validators } from '@angular/forms';
+import { FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
 import { PostContentValidationPattern } from 'app/shared/metis/metis.util';
 import { PostingCreateEditDirective } from 'app/shared/metis/posting-create-edit.directive';
 import { LocalStorageService } from 'ngx-webstorage';
 import { ConversationDTO } from 'app/entities/metis/conversation/conversation.model';
+import { PostingMarkdownEditorComponent } from '../../posting-markdown-editor/posting-markdown-editor.component';
+import { TranslateDirective } from '../../../language/translate.directive';
+import { PostingButtonComponent } from '../../posting-button/posting-button.component';
+import { ArtemisTranslatePipe } from '../../../pipes/artemis-translate.pipe';
 
 @Component({
     selector: 'jhi-message-reply-inline-input',
     templateUrl: './message-reply-inline-input.component.html',
     styleUrls: ['./message-reply-inline-input.component.scss'],
     encapsulation: ViewEncapsulation.None,
-    standalone: false,
+    imports: [FormsModule, ReactiveFormsModule, PostingMarkdownEditorComponent, TranslateDirective, PostingButtonComponent, ArtemisTranslatePipe],
 })
 export class MessageReplyInlineInputComponent extends PostingCreateEditDirective<AnswerPost> implements OnInit, OnChanges {
     protected localStorageService = inject(LocalStorageService);

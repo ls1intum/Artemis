@@ -1,4 +1,6 @@
 import { Component } from '@angular/core';
+import { CourseExerciseDetailsComponent } from '../../overview/exercise-details/course-exercise-details.component';
+import { OrionExerciseDetailsStudentActionsComponent } from './orion-exercise-details-student-actions.component';
 
 @Component({
     selector: 'jhi-orion-course-exercise-details',
@@ -9,7 +11,7 @@ import { Component } from '@angular/core';
             </ng-template>
         </jhi-course-exercise-details>
     `,
-    standalone: false,
+    imports: [CourseExerciseDetailsComponent, OrionExerciseDetailsStudentActionsComponent],
 })
 export class OrionCourseExerciseDetailsComponent {
     // only replaces the student actions with Orion student actions in the overview

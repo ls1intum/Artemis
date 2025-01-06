@@ -1,11 +1,14 @@
 import { Component, Input, OnInit, inject } from '@angular/core';
 import { faAngleDown, faAngleRight } from '@fortawesome/free-solid-svg-icons';
 import { LocalStorageService } from 'ngx-webstorage';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { NgbCollapse } from '@ng-bootstrap/ng-bootstrap';
+import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 
 @Component({
     selector: 'jhi-expandable-section',
     templateUrl: './expandable-section.component.html',
-    standalone: false,
+    imports: [FaIconComponent, NgbCollapse, ArtemisTranslatePipe],
 })
 export class ExpandableSectionComponent implements OnInit {
     private localStorageService = inject(LocalStorageService);

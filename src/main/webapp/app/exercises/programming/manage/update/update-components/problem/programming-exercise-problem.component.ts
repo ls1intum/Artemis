@@ -5,12 +5,27 @@ import { faQuestionCircle } from '@fortawesome/free-solid-svg-icons';
 import { ProgrammingExerciseCreationConfig } from 'app/exercises/programming/manage/update/programming-exercise-creation-config';
 import { MarkdownEditorHeight } from 'app/shared/markdown-editor/monaco/markdown-editor-monaco.component';
 import { ProgrammingExerciseInputField } from 'app/exercises/programming/manage/update/programming-exercise-update.helper';
+import { TranslateDirective } from '../../../../../../shared/language/translate.directive';
+import { NgbAlert } from '@ng-bootstrap/ng-bootstrap';
+import { ProgrammingExerciseInstructionComponent } from '../../../../shared/instructions-render/programming-exercise-instruction.component';
+import { ProgrammingExerciseEditableInstructionComponent } from '../../../instructions-editor/programming-exercise-editable-instruction.component';
+import { CompetencySelectionComponent } from '../../../../../../shared/competency-selection/competency-selection.component';
+import { FormsModule } from '@angular/forms';
+import { ArtemisTranslatePipe } from '../../../../../../shared/pipes/artemis-translate.pipe';
 
 @Component({
     selector: 'jhi-programming-exercise-problem',
     templateUrl: './programming-exercise-problem.component.html',
     styleUrls: ['../../../programming-exercise-form.scss'],
-    standalone: false,
+    imports: [
+        TranslateDirective,
+        NgbAlert,
+        ProgrammingExerciseInstructionComponent,
+        ProgrammingExerciseEditableInstructionComponent,
+        CompetencySelectionComponent,
+        FormsModule,
+        ArtemisTranslatePipe,
+    ],
 })
 export class ProgrammingExerciseProblemComponent {
     protected readonly ProgrammingLanguage = ProgrammingLanguage;

@@ -10,12 +10,15 @@ import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service'
 import { onError } from 'app/shared/util/global.utils';
 import { OrionAssessmentService } from 'app/orion/assessment/orion-assessment.service';
 import { OrionButtonType } from 'app/shared/orion/orion-button/orion-button.component';
+import { ExerciseAssessmentDashboardComponent } from '../../exercises/shared/dashboards/tutor/exercise-assessment-dashboard.component';
+import { OrionButtonComponent } from '../../shared/orion/orion-button/orion-button.component';
+import { ArtemisTranslatePipe } from '../../shared/pipes/artemis-translate.pipe';
 
 @Component({
     selector: 'jhi-orion-exercise-assessment-dashboard',
     templateUrl: './orion-exercise-assessment-dashboard.component.html',
     providers: [CourseManagementService],
-    standalone: false,
+    imports: [ExerciseAssessmentDashboardComponent, OrionButtonComponent, ArtemisTranslatePipe],
 })
 export class OrionExerciseAssessmentDashboardComponent implements OnInit {
     private route = inject(ActivatedRoute);

@@ -7,6 +7,13 @@ import { onError } from 'app/shared/util/global.utils';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { AlertService } from 'app/core/util/alert.service';
 import { map } from 'rxjs';
+import { NgbPopover } from '@ng-bootstrap/ng-bootstrap';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { FormsModule } from '@angular/forms';
+import { TranslateDirective } from '../../../../../shared/language/translate.directive';
+import { NgTemplateOutlet } from '@angular/common';
+import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
+import { ArtemisTranslatePipe } from '../../../../../shared/pipes/artemis-translate.pipe';
 
 @Component({
     // this is intended and an attribute selector because otherwise the rendered table breaks
@@ -16,7 +23,7 @@ import { map } from 'rxjs';
     styleUrls: ['./tutorial-group-session-row.component.scss'],
     encapsulation: ViewEncapsulation.None,
     changeDetection: ChangeDetectionStrategy.OnPush,
-    standalone: false,
+    imports: [NgbPopover, FaIconComponent, FormsModule, TranslateDirective, NgTemplateOutlet, ArtemisDatePipe, ArtemisTranslatePipe],
 })
 export class TutorialGroupSessionRowComponent implements OnChanges {
     private changeDetectorRef = inject(ChangeDetectorRef);

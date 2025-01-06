@@ -1,5 +1,5 @@
 import { Component, OnDestroy, OnInit, inject } from '@angular/core';
-import { ActivatedRoute } from '@angular/router';
+import { ActivatedRoute, RouterLink } from '@angular/router';
 import { faFile, faFileExport, faPencilAlt, faPuzzlePiece } from '@fortawesome/free-solid-svg-icons';
 import { PROFILE_IRIS } from 'app/app.constants';
 import { Lecture } from 'app/entities/lecture.model';
@@ -10,10 +10,13 @@ import { LectureService } from 'app/lecture/lecture.service';
 import { IrisSettingsService } from 'app/iris/settings/shared/iris-settings.service';
 import { Subscription } from 'rxjs';
 import { AlertService } from 'app/core/util/alert.service';
+import { TranslateDirective } from '../shared/language/translate.directive';
+import { DetailOverviewListComponent } from '../detail-overview-list/detail-overview-list.component';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 @Component({
     selector: 'jhi-lecture-detail',
     templateUrl: './lecture-detail.component.html',
-    standalone: false,
+    imports: [TranslateDirective, DetailOverviewListComponent, RouterLink, FaIconComponent],
 })
 export class LectureDetailComponent implements OnInit, OnDestroy {
     private activatedRoute = inject(ActivatedRoute);

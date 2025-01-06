@@ -1,10 +1,7 @@
 import { Pipe, PipeTransform } from '@angular/core';
 import dayjs from 'dayjs/esm';
 
-@Pipe({
-    name: 'durationTo',
-    standalone: false,
-})
+@Pipe({ name: 'durationTo' })
 export class DurationPipe implements PipeTransform {
     /**
      * Calculate the duration of an event from the diff of two dates.

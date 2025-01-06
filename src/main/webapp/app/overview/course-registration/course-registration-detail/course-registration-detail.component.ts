@@ -5,11 +5,14 @@ import { AccountService } from 'app/core/auth/account.service';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
 import { Course } from 'app/entities/course.model';
 import { Observable, catchError, map, of, throwError } from 'rxjs';
+import { TranslateDirective } from '../../../shared/language/translate.directive';
+import { CoursePrerequisitesButtonComponent } from '../course-prerequisites-button/course-prerequisites-button.component';
+import { CourseRegistrationButtonComponent } from '../course-registration-button/course-registration-button.component';
 
 @Component({
     selector: 'jhi-course-registration-detail-selector',
     templateUrl: './course-registration-detail.component.html',
-    standalone: false,
+    imports: [TranslateDirective, CoursePrerequisitesButtonComponent, CourseRegistrationButtonComponent],
 })
 export class CourseRegistrationDetailComponent implements OnInit, OnDestroy {
     private accountService = inject(AccountService);

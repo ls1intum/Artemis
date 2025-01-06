@@ -5,12 +5,15 @@ import { Exercise, ExerciseType } from 'app/entities/exercise.model';
 import { Result } from 'app/entities/result.model';
 import { ProgrammingExerciseInstructionService, TestCaseState } from 'app/exercises/programming/shared/instructions-render/service/programming-exercise-instruction.service';
 import { FeedbackComponent } from 'app/exercises/shared/feedback/feedback.component';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { ArtemisTranslatePipe } from '../../../../../shared/pipes/artemis-translate.pipe';
+import { SafeHtmlPipe } from '../../../../../shared/pipes/safe-html.pipe';
 
 @Component({
     selector: 'jhi-programming-exercise-instructions-task-status',
     templateUrl: './programming-exercise-instruction-task-status.component.html',
     styleUrls: ['./programming-exercise-instruction-task-status.scss'],
-    standalone: false,
+    imports: [FaIconComponent, ArtemisTranslatePipe, SafeHtmlPipe],
 })
 export class ProgrammingExerciseInstructionTaskStatusComponent {
     private programmingExerciseInstructionService = inject(ProgrammingExerciseInstructionService);

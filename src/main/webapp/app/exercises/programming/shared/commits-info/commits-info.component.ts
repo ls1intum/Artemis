@@ -6,11 +6,14 @@ import { createCommitUrl } from 'app/exercises/programming/shared/utils/programm
 import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
 import { PROFILE_LOCALVC } from 'app/app.constants';
 import { Subscription } from 'rxjs';
+import { TranslateDirective } from '../../../../shared/language/translate.directive';
+import { CommitsInfoGroupComponent } from './commits-info-group/commits-info-group.component';
+import { NgStyle } from '@angular/common';
 
 @Component({
     selector: 'jhi-commits-info',
     templateUrl: './commits-info.component.html',
-    standalone: false,
+    imports: [TranslateDirective, CommitsInfoGroupComponent, NgStyle],
 })
 export class CommitsInfoComponent implements OnInit, OnDestroy {
     private programmingExerciseParticipationService = inject(ProgrammingExerciseParticipationService);

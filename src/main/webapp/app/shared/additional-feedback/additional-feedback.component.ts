@@ -6,12 +6,16 @@ import { faCommentDots } from '@fortawesome/free-regular-svg-icons';
 import { faExclamationTriangle } from '@fortawesome/free-solid-svg-icons';
 import { LocaleConversionService } from 'app/shared/service/locale-conversion.service';
 import { TranslateService } from '@ngx-translate/core';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { TranslateDirective } from '../language/translate.directive';
+import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
+import { ArtemisTranslatePipe } from '../pipes/artemis-translate.pipe';
 
 @Component({
     selector: 'jhi-additional-feedback',
     templateUrl: './additional-feedback.component.html',
     styleUrls: ['./additional-feedback.component.scss'],
-    standalone: false,
+    imports: [FaIconComponent, TranslateDirective, NgbTooltip, ArtemisTranslatePipe],
 })
 export class AdditionalFeedbackComponent {
     private translateService = inject(TranslateService);

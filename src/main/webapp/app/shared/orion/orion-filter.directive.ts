@@ -1,10 +1,7 @@
 import { Directive, ElementRef, Input, OnInit, inject } from '@angular/core';
 import { isOrion } from 'app/shared/orion/orion';
 
-@Directive({
-    selector: '[jhiOrionFilter]',
-    standalone: false,
-})
+@Directive({ selector: '[jhiOrionFilter]' })
 export class OrionFilterDirective implements OnInit {
     private el = inject(ElementRef);
 

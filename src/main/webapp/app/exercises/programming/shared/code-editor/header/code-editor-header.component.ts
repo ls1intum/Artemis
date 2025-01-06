@@ -1,13 +1,14 @@
 import { ChangeDetectionStrategy, Component, input, model, output } from '@angular/core';
 import { faFileAlt } from '@fortawesome/free-regular-svg-icons';
 import { faCircleNotch, faGear } from '@fortawesome/free-solid-svg-icons';
+import { NgbDropdown } from '@ng-bootstrap/ng-bootstrap';
 import { MAX_TAB_SIZE } from 'app/shared/monaco-editor/monaco-editor.component';
 import { ArtemisSharedModule } from 'app/shared/shared.module';
 
 @Component({
     selector: 'jhi-code-editor-header',
     templateUrl: './code-editor-header.component.html',
-    imports: [ArtemisSharedModule],
+    imports: [ArtemisSharedModule, NgbDropdown],
     changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class CodeEditorHeaderComponent {

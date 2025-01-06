@@ -8,11 +8,13 @@ import { CourseManagementService } from 'app/course/manage/course-management.ser
 import { NgbTypeahead } from '@ng-bootstrap/ng-bootstrap';
 import { orderBy } from 'lodash-es';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
+import { FormsModule } from '@angular/forms';
+import { ArtemisTranslatePipe } from '../../../../shared/pipes/artemis-translate.pipe';
 
 @Component({
     selector: 'jhi-team-exercise-search',
     templateUrl: './team-exercise-search.component.html',
-    standalone: false,
+    imports: [FormsModule, NgbTypeahead, ArtemisTranslatePipe],
 })
 export class TeamExerciseSearchComponent {
     private courseService = inject(CourseManagementService);

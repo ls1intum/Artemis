@@ -8,13 +8,18 @@ import { PatternMatch, PostingContentPart, ReferenceType } from '../metis.util';
 import { User } from 'app/core/user/user.model';
 import { Posting } from 'app/entities/metis/posting.model';
 import { isCommunicationEnabled } from 'app/entities/course.model';
+import { TranslateDirective } from '../../language/translate.directive';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { NgStyle } from '@angular/common';
+import { PostingContentPartComponent } from './posting-content-part/posting-content-part.components';
+import { LinkPreviewContainerComponent } from '../../link-preview/components/link-preview-container/link-preview-container.component';
 
 @Component({
     selector: 'jhi-posting-content',
     templateUrl: './posting-content.component.html',
     styleUrls: ['./posting-content.component.scss'],
     changeDetection: ChangeDetectionStrategy.OnPush,
-    standalone: false,
+    imports: [TranslateDirective, FaIconComponent, NgStyle, PostingContentPartComponent, LinkPreviewContainerComponent],
 })
 export class PostingContentComponent implements OnInit, OnChanges, OnDestroy {
     private metisService = inject(MetisService);

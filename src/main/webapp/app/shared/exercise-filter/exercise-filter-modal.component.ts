@@ -1,5 +1,5 @@
 import { Component, EventEmitter, OnInit, Output, ViewChild, inject } from '@angular/core';
-import { NgbActiveModal, NgbTypeahead } from '@ng-bootstrap/ng-bootstrap';
+import { NgbActiveModal, NgbModule, NgbTypeahead } from '@ng-bootstrap/ng-bootstrap';
 import { faBackward, faFilter } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
 import { ArtemisSharedCommonModule } from 'app/shared/shared-common.module';
@@ -37,6 +37,7 @@ import { isRangeFilterApplied } from 'app/shared/sidebar/sidebar.helper';
         ArtemisSharedComponentModule,
         CustomExerciseCategoryBadgeComponent,
         RangeSliderComponent,
+        NgbModule,
     ],
 })
 export class ExerciseFilterModalComponent implements OnInit {

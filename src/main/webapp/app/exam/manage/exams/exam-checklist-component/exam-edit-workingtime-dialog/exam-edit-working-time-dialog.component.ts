@@ -6,11 +6,17 @@ import { faBan, faCheck, faSpinner } from '@fortawesome/free-solid-svg-icons';
 import { Exam } from 'app/entities/exam/exam.model';
 import { ExamManagementService } from 'app/exam/manage/exam-management.service';
 import { examWorkingTime } from 'app/exam/participate/exam.utils';
+import { FormsModule } from '@angular/forms';
+import { TranslateDirective } from '../../../../../shared/language/translate.directive';
+import { WorkingTimeControlComponent } from '../../../../shared/working-time-control/working-time-control.component';
+import { WorkingTimeChangeComponent } from '../../../../shared/working-time-change/working-time-change.component';
+import { ConfirmEntityNameComponent } from '../../../../../shared/confirm-entity-name/confirm-entity-name.component';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 
 @Component({
     selector: 'jhi-edit-working-time-dialog',
     templateUrl: './exam-edit-working-time-dialog.component.html',
-    standalone: false,
+    imports: [FormsModule, TranslateDirective, WorkingTimeControlComponent, WorkingTimeChangeComponent, ConfirmEntityNameComponent, FaIconComponent],
 })
 export class ExamEditWorkingTimeDialogComponent {
     private activeModal = inject(NgbActiveModal);

@@ -11,12 +11,15 @@ import { AccountService } from 'app/core/auth/account.service';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import { Subject } from 'rxjs';
+import { LoadingIndicatorContainerComponent } from '../../../../shared/loading-indicator-container/loading-indicator-container.component';
+import { TranslateDirective } from '../../../../shared/language/translate.directive';
+import { CourseGroupComponent } from '../../../../shared/course-group/course-group.component';
 
 @Component({
     selector: 'jhi-registered-students',
     templateUrl: './registered-students.component.html',
     changeDetection: ChangeDetectionStrategy.OnPush,
-    standalone: false,
+    imports: [LoadingIndicatorContainerComponent, TranslateDirective, CourseGroupComponent],
 })
 export class RegisteredStudentsComponent implements OnDestroy {
     private activeModal = inject(NgbActiveModal);

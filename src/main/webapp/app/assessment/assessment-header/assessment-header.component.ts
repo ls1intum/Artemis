@@ -3,12 +3,17 @@ import { Result } from 'app/entities/result.model';
 import { Exercise, ExerciseType } from 'app/entities/exercise.model';
 import { TextAssessmentAnalytics } from 'app/exercises/text/assess/analytics/text-assesment-analytics.service';
 import { TextAssessmentEventType } from 'app/entities/text/text-assesment-event.model';
-import { ActivatedRoute } from '@angular/router';
+import { ActivatedRoute, RouterLink } from '@angular/router';
 import { ComplaintType } from 'app/entities/complaint.model';
 import { AssessmentType } from 'app/entities/assessment-type.model';
 import { TranslateService } from '@ngx-translate/core';
 import { faSave, faSpinner } from '@fortawesome/free-solid-svg-icons';
 import { faSquareCaretRight } from '@fortawesome/free-regular-svg-icons';
+import { TranslateDirective } from '../../shared/language/translate.directive';
+import { NgbAlert, NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { AssessmentWarningComponent } from '../assessment-warning/assessment-warning.component';
+import { ArtemisTranslatePipe } from '../../shared/pipes/artemis-translate.pipe';
 
 /**
  * The <jhi-assessment-header> component is used in the shared assessment layout.
@@ -20,7 +25,7 @@ import { faSquareCaretRight } from '@fortawesome/free-regular-svg-icons';
     selector: 'jhi-assessment-header',
     templateUrl: './assessment-header.component.html',
     styleUrls: ['./assessment-header.component.scss'],
-    standalone: false,
+    imports: [TranslateDirective, NgbAlert, NgbTooltip, FaIconComponent, RouterLink, AssessmentWarningComponent, ArtemisTranslatePipe],
 })
 export class AssessmentHeaderComponent {
     textAssessmentAnalytics = inject(TextAssessmentAnalytics);

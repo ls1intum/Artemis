@@ -5,11 +5,12 @@ import { catchError } from 'rxjs/operators';
 import { of } from 'rxjs';
 import { SubmissionType } from 'app/entities/submission.model';
 import { faRedo } from '@fortawesome/free-solid-svg-icons';
+import { ButtonComponent } from '../../../../shared/components/button.component';
 
 @Component({
     selector: 'jhi-programming-exercise-student-trigger-build-button',
     templateUrl: './programming-exercise-trigger-build-button.component.html',
-    standalone: false,
+    imports: [ButtonComponent],
 })
 export class ProgrammingExerciseStudentTriggerBuildButtonComponent extends ProgrammingExerciseTriggerBuildButtonComponent {
     private alertService = inject(AlertService);

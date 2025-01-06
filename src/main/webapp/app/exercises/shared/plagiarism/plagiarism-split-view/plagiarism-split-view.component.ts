@@ -12,11 +12,11 @@ import { SimpleMatch } from 'app/exercises/shared/plagiarism/types/PlagiarismMat
 import dayjs from 'dayjs/esm';
 import { TextPlagiarismFileElement } from 'app/exercises/shared/plagiarism/types/text/TextPlagiarismFileElement';
 import { IconDefinition, faLock, faUnlock } from '@fortawesome/free-solid-svg-icons';
+import { ModelingSubmissionViewerComponent } from './modeling-submission-viewer/modeling-submission-viewer.component';
+import { TextSubmissionViewerComponent } from './text-submission-viewer/text-submission-viewer.component';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 
-@Directive({
-    selector: '[jhiPane]',
-    standalone: false,
-})
+@Directive({ selector: '[jhiPane]' })
 export class SplitPaneDirective {
     elementRef = inject(ElementRef);
 }
@@ -25,7 +25,7 @@ export class SplitPaneDirective {
     selector: 'jhi-plagiarism-split-view',
     styleUrls: ['./plagiarism-split-view.component.scss'],
     templateUrl: './plagiarism-split-view.component.html',
-    standalone: false,
+    imports: [SplitPaneDirective, ModelingSubmissionViewerComponent, TextSubmissionViewerComponent, FaIconComponent],
 })
 export class PlagiarismSplitViewComponent implements AfterViewInit, OnChanges, OnInit, OnDestroy {
     private plagiarismCasesService = inject(PlagiarismCasesService);

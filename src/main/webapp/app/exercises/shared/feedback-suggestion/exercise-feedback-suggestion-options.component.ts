@@ -5,11 +5,15 @@ import { Observable } from 'rxjs';
 import { AthenaService } from 'app/assessment/athena.service';
 import { ActivatedRoute } from '@angular/router';
 import dayjs from 'dayjs/esm';
+import { TranslateDirective } from '../../../shared/language/translate.directive';
+import { AsyncPipe, NgStyle } from '@angular/common';
+import { HelpIconComponent } from '../../../shared/components/help-icon.component';
+import { FormsModule } from '@angular/forms';
 
 @Component({
     selector: 'jhi-exercise-feedback-suggestion-options',
     templateUrl: './exercise-feedback-suggestion-options.component.html',
-    standalone: false,
+    imports: [TranslateDirective, NgStyle, HelpIconComponent, FormsModule, AsyncPipe],
 })
 export class ExerciseFeedbackSuggestionOptionsComponent implements OnInit, OnChanges {
     private athenaService = inject(AthenaService);

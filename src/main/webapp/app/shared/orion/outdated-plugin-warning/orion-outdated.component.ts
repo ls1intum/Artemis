@@ -1,6 +1,8 @@
 import { Component, OnInit, inject } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
+import { TranslateDirective } from '../../language/translate.directive';
+import { ArtemisTranslatePipe } from '../../pipes/artemis-translate.pipe';
 
 @Component({
     selector: 'jhi-orion-outdated',
@@ -14,7 +16,7 @@ import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
             {{ 'artemisApp.orion.version.allowedVersion' | artemisTranslate }}<span class="badge bg-pill bg-info">{{ allowedMinimumVersion }}</span>
         </div>
     `,
-    standalone: false,
+    imports: [TranslateDirective, ArtemisTranslatePipe],
 })
 export class OrionOutdatedComponent implements OnInit {
     private activatedRoute = inject(ActivatedRoute);

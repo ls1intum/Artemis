@@ -8,11 +8,17 @@ import { ProgrammingExerciseService } from 'app/exercises/programming/manage/ser
 import { AlertService, AlertType } from 'app/core/util/alert.service';
 import { faSave } from '@fortawesome/free-solid-svg-icons';
 import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
+import { TranslateDirective } from '../../../shared/language/translate.directive';
+import { FormsModule } from '@angular/forms';
+import { HelpIconComponent } from '../../../shared/components/help-icon.component';
+import { ProgrammingExerciseLifecycleComponent } from '../shared/lifecycle/programming-exercise-lifecycle.component';
+import { ButtonComponent } from '../../../shared/components/button.component';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 
 @Component({
     selector: 'jhi-programming-exercise-edit-selected',
     templateUrl: './programming-exercise-edit-selected.component.html',
-    standalone: false,
+    imports: [TranslateDirective, FormsModule, HelpIconComponent, ProgrammingExerciseLifecycleComponent, ButtonComponent, FaIconComponent],
 })
 export class ProgrammingExerciseEditSelectedComponent implements OnInit {
     private activeModal = inject(NgbActiveModal);

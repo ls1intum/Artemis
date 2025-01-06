@@ -1,10 +1,13 @@
 import { Component, Input, OnChanges, OnDestroy, OnInit, inject } from '@angular/core';
 import { TranslateService } from '@ngx-translate/core';
-import { Color, ScaleType } from '@swimlane/ngx-charts';
+import { Color, LineChartModule, ScaleType } from '@swimlane/ngx-charts';
 import { GraphColors } from 'app/entities/statistics.model';
 import { NgxChartsMultiSeriesDataEntry } from 'app/shared/chart/ngx-charts-datatypes';
 import { round } from 'app/shared/util/utils';
 import { Subscription } from 'rxjs';
+import { TranslateDirective } from '../../../shared/language/translate.directive';
+import { HelpIconComponent } from '../../../shared/components/help-icon.component';
+import { ArtemisTranslatePipe } from '../../../shared/pipes/artemis-translate.pipe';
 
 export interface ExercisePerformance {
     exerciseId: number;
@@ -21,7 +24,7 @@ const AVERAGE_GRAPH_COLOR = GraphColors.YELLOW;
     selector: 'jhi-course-exercise-performance',
     templateUrl: './course-exercise-performance.component.html',
     styleUrls: ['./course-exercise-performance.component.scss'],
-    standalone: false,
+    imports: [TranslateDirective, HelpIconComponent, LineChartModule, ArtemisTranslatePipe],
 })
 export class CourseExercisePerformanceComponent implements OnInit, OnChanges, OnDestroy {
     private translateService = inject(TranslateService);

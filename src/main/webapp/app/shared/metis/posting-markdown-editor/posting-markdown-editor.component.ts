@@ -44,6 +44,9 @@ import { Overlay, OverlayPositionBuilder } from '@angular/cdk/overlay';
 import { BulletedListAction } from 'app/shared/monaco-editor/model/actions/bulleted-list.action';
 import { OrderedListAction } from 'app/shared/monaco-editor/model/actions/ordered-list.action';
 import { StrikethroughAction } from 'app/shared/monaco-editor/model/actions/strikethrough.action';
+import { MarkdownEditorMonacoComponent as MarkdownEditorMonacoComponent_1 } from '../../markdown-editor/monaco/markdown-editor-monaco.component';
+import { PostingContentComponent } from '../posting-content/posting-content.components';
+import { NgStyle } from '@angular/common';
 
 @Component({
     selector: 'jhi-posting-markdown-editor',
@@ -57,7 +60,7 @@ import { StrikethroughAction } from 'app/shared/monaco-editor/model/actions/stri
     ],
     encapsulation: ViewEncapsulation.None,
     changeDetection: ChangeDetectionStrategy.OnPush,
-    standalone: false,
+    imports: [MarkdownEditorMonacoComponent_1, PostingContentComponent, NgStyle],
 })
 export class PostingMarkdownEditorComponent implements OnInit, ControlValueAccessor, AfterContentChecked, AfterViewInit {
     private cdref = inject(ChangeDetectorRef);

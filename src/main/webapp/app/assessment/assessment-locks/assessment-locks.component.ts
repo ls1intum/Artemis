@@ -1,5 +1,5 @@
 import { Component, OnInit, inject } from '@angular/core';
-import { ActivatedRoute } from '@angular/router';
+import { ActivatedRoute, RouterLink } from '@angular/router';
 import { FileUploadAssessmentService } from 'app/exercises/file-upload/assess/file-upload-assessment.service';
 import { TranslateService } from '@ngx-translate/core';
 import { Submission, SubmissionExerciseType } from 'app/entities/submission.model';
@@ -14,11 +14,16 @@ import { ProgrammingAssessmentManualResultService } from 'app/exercises/programm
 import { ExamManagementService } from 'app/exam/manage/exam-management.service';
 import { faBan, faFolderOpen } from '@fortawesome/free-solid-svg-icons';
 import { combineLatest } from 'rxjs';
+import { TranslateDirective } from '../../shared/language/translate.directive';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
+import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
+import { ArtemisTranslatePipe } from '../../shared/pipes/artemis-translate.pipe';
 
 @Component({
     selector: 'jhi-assessment-locks',
     templateUrl: './assessment-locks.component.html',
-    standalone: false,
+    imports: [TranslateDirective, FaIconComponent, NgbTooltip, RouterLink, ArtemisDatePipe, ArtemisTranslatePipe],
 })
 export class AssessmentLocksComponent implements OnInit {
     private route = inject(ActivatedRoute);

@@ -6,12 +6,16 @@ import dayjs from 'dayjs/esm';
 import { Course } from 'app/entities/course.model';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
 import { AlertService } from 'app/core/util/alert.service';
-import { AbstractControl, FormControl, FormGroup, ValidationErrors, ValidatorFn, Validators } from '@angular/forms';
+import { AbstractControl, FormControl, FormGroup, FormsModule, ReactiveFormsModule, ValidationErrors, ValidatorFn, Validators } from '@angular/forms';
+import { TranslateDirective } from '../shared/language/translate.directive';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
+import { ArtemisTranslatePipe } from '../shared/pipes/artemis-translate.pipe';
 
 @Component({
     selector: 'jhi-course-unenrollment-modal',
     templateUrl: './course-unenrollment-modal.component.html',
-    standalone: false,
+    imports: [TranslateDirective, FormsModule, ReactiveFormsModule, FaIconComponent, ArtemisDatePipe, ArtemisTranslatePipe],
 })
 export class CourseUnenrollmentModalComponent implements OnInit {
     private activeModal = inject(NgbActiveModal);

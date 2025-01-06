@@ -10,6 +10,15 @@ import { Exercise, ExerciseType, IncludedInOverallScore } from 'app/entities/exe
 import { faListAlt } from '@fortawesome/free-regular-svg-icons';
 import { SubmissionVersion } from 'app/entities/submission-version.model';
 import { htmlForMarkdown } from 'app/shared/util/markdown.conversion.util';
+import { TranslateDirective } from '../../../../shared/language/translate.directive';
+import { IncludedInScoreBadgeComponent } from '../../../../exercises/shared/exercise-headers/included-in-score-badge.component';
+import { ExerciseSaveButtonComponent } from '../exercise-save-button/exercise-save-button.component';
+import { ResizeableContainerComponent } from '../../../../shared/resizeable-container/resizeable-container.component';
+import { FullscreenComponent } from '../../../../shared/fullscreen/fullscreen.component';
+import { ModelingEditorComponent as ModelingEditorComponent_1 } from '../../../../exercises/modeling/shared/modeling-editor.component';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { ExamExerciseUpdateHighlighterComponent } from '../exam-exercise-update-highlighter/exam-exercise-update-highlighter.component';
+import { ArtemisTranslatePipe } from '../../../../shared/pipes/artemis-translate.pipe';
 
 @Component({
     selector: 'jhi-modeling-submission-exam',
@@ -18,7 +27,17 @@ import { htmlForMarkdown } from 'app/shared/util/markdown.conversion.util';
     styleUrls: ['./modeling-exam-submission.component.scss'],
     // change deactivation must be triggered manually
     changeDetection: ChangeDetectionStrategy.OnPush,
-    standalone: false,
+    imports: [
+        TranslateDirective,
+        IncludedInScoreBadgeComponent,
+        ExerciseSaveButtonComponent,
+        ResizeableContainerComponent,
+        FullscreenComponent,
+        ModelingEditorComponent_1,
+        FaIconComponent,
+        ExamExerciseUpdateHighlighterComponent,
+        ArtemisTranslatePipe,
+    ],
 })
 export class ModelingExamSubmissionComponent extends ExamSubmissionComponent implements OnInit {
     exerciseType = ExerciseType.MODELING;

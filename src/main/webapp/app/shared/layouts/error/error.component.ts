@@ -1,10 +1,11 @@
 import { Component, OnInit, inject } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
+import { TranslateDirective } from '../../language/translate.directive';
 
 @Component({
     selector: 'jhi-error',
     templateUrl: './error.component.html',
-    standalone: false,
+    imports: [TranslateDirective],
 })
 export class ErrorComponent implements OnInit {
     private route = inject(ActivatedRoute);

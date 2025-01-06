@@ -1,12 +1,13 @@
 import { Component, Input, OnInit, inject } from '@angular/core';
 import { FeedbackItem } from 'app/exercises/shared/feedback/item/feedback-item';
 import { LongFeedbackTextService } from 'app/exercises/shared/feedback/long-feedback-text.service';
+import { TranslateDirective } from '../../../../shared/language/translate.directive';
 
 @Component({
     selector: 'jhi-feedback-text',
     styleUrls: ['./feedback-text.scss'],
     templateUrl: './feedback-text.component.html',
-    standalone: false,
+    imports: [TranslateDirective],
 })
 export class FeedbackTextComponent implements OnInit {
     private longFeedbackService = inject(LongFeedbackTextService);

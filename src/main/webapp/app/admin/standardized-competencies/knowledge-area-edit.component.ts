@@ -2,13 +2,19 @@ import { Component, EventEmitter, Input, Output, inject } from '@angular/core';
 import { faBan, faPencil, faPlus, faSave, faTrash } from '@fortawesome/free-solid-svg-icons';
 import { KnowledgeArea, KnowledgeAreaDTO, KnowledgeAreaValidators } from 'app/entities/competency/standardized-competency.model';
 import { ButtonSize, ButtonType } from 'app/shared/components/button.component';
-import { FormBuilder, FormControl, FormGroup, Validators } from '@angular/forms';
+import { FormBuilder, FormControl, FormGroup, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
 import { Observable } from 'rxjs';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { ButtonComponent } from 'app/shared/components/button.component';
+import { DeleteButtonDirective } from 'app/shared/delete-dialog/delete-button.directive';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { MarkdownEditorMonacoComponent } from 'app/shared/markdown-editor/monaco/markdown-editor-monaco.component';
+import { HtmlForMarkdownPipe } from 'app/shared/pipes/html-for-markdown.pipe';
 
 @Component({
     selector: 'jhi-knowledge-area-edit',
     templateUrl: './knowledge-area-edit.component.html',
-    standalone: false,
+    imports: [TranslateDirective, ButtonComponent, DeleteButtonDirective, FaIconComponent, FormsModule, ReactiveFormsModule, MarkdownEditorMonacoComponent, HtmlForMarkdownPipe],
 })
 export class KnowledgeAreaEditComponent {
     private formBuilder = inject(FormBuilder);
@@ -129,7 +135,7 @@ export class KnowledgeAreaEditComponent {
         // if the knowledgeArea is new, no validator is needed.
         if (this.knowledgeArea.id === undefined) {
             // eslint-disable-next-line @typescript-eslint/no-unused-vars
-            return (parentIdControl: FormControl<number | undefined>) => null;
+            return (_parentIdControl: FormControl<number | undefined>) => null;
         }
         return (parentIdControl: FormControl<number | undefined>) => {
             if (parentIdControl.value === undefined) {

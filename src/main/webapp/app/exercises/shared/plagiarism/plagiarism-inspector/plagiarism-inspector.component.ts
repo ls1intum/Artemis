@@ -22,9 +22,17 @@ import { FeatureToggle } from 'app/shared/feature-toggle/feature-toggle.service'
 import { Range } from 'app/shared/util/utils';
 import { PlagiarismInspectorService } from 'app/exercises/shared/plagiarism/plagiarism-inspector/plagiarism-inspector.service';
 import { PlagiarismCasesService } from 'app/course/plagiarism-cases/shared/plagiarism-cases.service';
-import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
+import { NgbDropdown, NgbDropdownButtonItem, NgbDropdownItem, NgbDropdownMenu, NgbDropdownToggle, NgbModal, NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { AlertService, AlertType } from 'app/core/util/alert.service';
 import { PlagiarismResultDTO, PlagiarismResultStats } from 'app/exercises/shared/plagiarism/types/PlagiarismResultDTO';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { TranslateDirective } from '../../../../shared/language/translate.directive';
+import { FeatureToggleDirective } from '../../../../shared/feature-toggle/feature-toggle.directive';
+import { FormsModule } from '@angular/forms';
+import { PlagiarismSidebarComponent as PlagiarismSidebarComponent_1 } from '../plagiarism-sidebar/plagiarism-sidebar.component';
+import { PlagiarismDetailsComponent } from '../plagiarism-details/plagiarism-details.component';
+import { PlagiarismRunDetailsComponent as PlagiarismRunDetailsComponent_1 } from '../plagiarism-run-details/plagiarism-run-details.component';
+import { ArtemisTranslatePipe } from '../../../../shared/pipes/artemis-translate.pipe';
 
 export type PlagiarismCheckState = {
     state: 'COMPLETED' | 'RUNNING';
@@ -35,7 +43,22 @@ export type PlagiarismCheckState = {
     selector: 'jhi-plagiarism-inspector',
     styleUrls: ['./plagiarism-inspector.component.scss'],
     templateUrl: './plagiarism-inspector.component.html',
-    standalone: false,
+    imports: [
+        FaIconComponent,
+        TranslateDirective,
+        FeatureToggleDirective,
+        NgbDropdown,
+        NgbDropdownToggle,
+        NgbDropdownMenu,
+        NgbDropdownButtonItem,
+        NgbDropdownItem,
+        NgbTooltip,
+        FormsModule,
+        PlagiarismSidebarComponent_1,
+        PlagiarismDetailsComponent,
+        PlagiarismRunDetailsComponent_1,
+        ArtemisTranslatePipe,
+    ],
 })
 export class PlagiarismInspectorComponent implements OnInit {
     private route = inject(ActivatedRoute);

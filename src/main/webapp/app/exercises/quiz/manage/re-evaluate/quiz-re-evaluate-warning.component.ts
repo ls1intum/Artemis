@@ -10,12 +10,14 @@ import { QuizExercise } from 'app/entities/quiz/quiz-exercise.model';
 import { EventManager } from 'app/core/util/event-manager.service';
 import { faBan, faCheck, faCheckCircle, faSpinner, faTimes } from '@fortawesome/free-solid-svg-icons';
 import { ArtemisNavigationUtilService } from 'app/utils/navigation.utils';
+import { TranslateDirective } from '../../../../shared/language/translate.directive';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 
 @Component({
     selector: 'jhi-quiz-re-evaluate-warning',
     templateUrl: './quiz-re-evaluate-warning.component.html',
     styleUrls: ['../../shared/quiz.scss'],
-    standalone: false,
+    imports: [TranslateDirective, FaIconComponent],
 })
 export class QuizReEvaluateWarningComponent implements OnInit {
     activeModal = inject(NgbActiveModal);

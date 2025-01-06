@@ -20,12 +20,36 @@ import cloneDeep from 'lodash-es/cloneDeep';
 import { FormSectionStatus, FormStatusBarComponent } from 'app/forms/form-status-bar/form-status-bar.component';
 import { LectureAttachmentsComponent } from 'app/lecture/lecture-attachments.component';
 import { LectureUpdateUnitsComponent } from 'app/lecture/lecture-units/lecture-units.component';
+import { FormsModule } from '@angular/forms';
+import { TranslateDirective } from '../shared/language/translate.directive';
+import { DocumentationButtonComponent } from '../shared/components/documentation-button/documentation-button.component';
+import { FormStatusBarComponent as FormStatusBarComponent_1 } from '../forms/form-status-bar/form-status-bar.component';
+import { MarkdownEditorMonacoComponent } from '../shared/markdown-editor/monaco/markdown-editor-monaco.component';
+import { LectureUpdatePeriodComponent as LectureUpdatePeriodComponent_1 } from './lecture-period/lecture-period.component';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { LectureAttachmentsComponent as LectureAttachmentsComponent_1 } from './lecture-attachments.component';
+import { LectureUpdateUnitsComponent as LectureUpdateUnitsComponent_1 } from './lecture-units/lecture-units.component';
+import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
+import { ArtemisTranslatePipe } from '../shared/pipes/artemis-translate.pipe';
 
 @Component({
     selector: 'jhi-lecture-update',
     templateUrl: './lecture-update.component.html',
     styleUrls: ['./lecture-update.component.scss'],
-    standalone: false,
+    imports: [
+        FormsModule,
+        TranslateDirective,
+        DocumentationButtonComponent,
+        FormStatusBarComponent_1,
+        LectureTitleChannelNameComponent,
+        MarkdownEditorMonacoComponent,
+        LectureUpdatePeriodComponent_1,
+        FaIconComponent,
+        LectureAttachmentsComponent_1,
+        LectureUpdateUnitsComponent_1,
+        NgbTooltip,
+        ArtemisTranslatePipe,
+    ],
 })
 export class LectureUpdateComponent implements OnInit, OnDestroy {
     protected readonly documentationType: DocumentationType = 'Lecture';

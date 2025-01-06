@@ -3,13 +3,20 @@ import { faFile, faFilePdf, faList } from '@fortawesome/free-solid-svg-icons';
 import { MIN_SCORE_GREEN } from 'app/app.constants';
 import { Competency, CompetencyJol, CompetencyProgress, getConfidence, getIcon, getMastery, getProgress } from 'app/entities/competency.model';
 import { Course } from 'app/entities/course.model';
-import { Router } from '@angular/router';
+import { Router, RouterLink } from '@angular/router';
 import { CompetencyInformation, LectureUnitInformation, StudentMetrics } from 'app/entities/student-metrics.model';
 import { round } from 'app/shared/util/utils';
 import { Exercise } from 'app/entities/exercise.model';
 import dayjs from 'dayjs/esm';
 import { LectureUnitType, lectureUnitIcons, lectureUnitTooltips } from 'app/entities/lecture-unit/lectureUnit.model';
 import { isStartPracticeAvailable } from 'app/exercises/shared/exercise/exercise.utils';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { NgbProgressbar, NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
+import { CompetencyRingsComponent } from '../competency-rings/competency-rings.component';
+import { JudgementOfLearningRatingComponent } from '../judgement-of-learning-rating/judgement-of-learning-rating.component';
+import { TranslateDirective } from '../../../shared/language/translate.directive';
+import { CourseExerciseRowComponent } from '../../../overview/course-exercises/course-exercise-row.component';
+import { ArtemisTranslatePipe } from '../../../shared/pipes/artemis-translate.pipe';
 
 export interface CompetencyAccordionToggleEvent {
     opened: boolean;
@@ -20,7 +27,17 @@ export interface CompetencyAccordionToggleEvent {
     selector: 'jhi-competency-accordion',
     templateUrl: './competency-accordion.component.html',
     styleUrl: './competency-accordion.component.scss',
-    standalone: false,
+    imports: [
+        FaIconComponent,
+        NgbTooltip,
+        NgbProgressbar,
+        CompetencyRingsComponent,
+        JudgementOfLearningRatingComponent,
+        TranslateDirective,
+        CourseExerciseRowComponent,
+        RouterLink,
+        ArtemisTranslatePipe,
+    ],
 })
 export class CompetencyAccordionComponent implements OnChanges {
     private router = inject(Router);

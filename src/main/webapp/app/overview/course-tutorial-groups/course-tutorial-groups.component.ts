@@ -2,7 +2,7 @@ import { ChangeDetectionStrategy, ChangeDetectorRef, Component, OnDestroy, OnIni
 import { Subject, finalize } from 'rxjs';
 import { Course } from 'app/entities/course.model';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
-import { ActivatedRoute, Router } from '@angular/router';
+import { ActivatedRoute, Router, RouterOutlet } from '@angular/router';
 import { TutorialGroup } from 'app/entities/tutorial-group/tutorial-group.model';
 import { TutorialGroupsService } from 'app/course/tutorial-groups/services/tutorial-groups.service';
 import { map, takeUntil } from 'rxjs/operators';
@@ -15,6 +15,9 @@ import { TutorialGroupsConfiguration } from 'app/entities/tutorial-group/tutoria
 import { AccordionGroups, CollapseState, SidebarCardElement, SidebarData, SidebarItemShowAlways, TutorialGroupCategory } from 'app/types/sidebar';
 import { CourseOverviewService } from '../course-overview.service';
 import { cloneDeep } from 'lodash-es';
+import { NgClass } from '@angular/common';
+import { SidebarComponent } from '../../shared/sidebar/sidebar.component';
+import { TranslateDirective } from '../../shared/language/translate.directive';
 
 const TUTORIAL_UNIT_GROUPS: AccordionGroups = {
     registered: { entityData: [] },
@@ -38,7 +41,7 @@ const DEFAULT_SHOW_ALWAYS: SidebarItemShowAlways = {
     selector: 'jhi-course-tutorial-groups',
     templateUrl: './course-tutorial-groups.component.html',
     changeDetection: ChangeDetectionStrategy.OnPush,
-    standalone: false,
+    imports: [NgClass, SidebarComponent, RouterOutlet, TranslateDirective],
 })
 export class CourseTutorialGroupsComponent implements OnInit, OnDestroy {
     private router = inject(Router);

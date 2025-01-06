@@ -9,11 +9,16 @@ import { AlertService } from 'app/core/util/alert.service';
 import { DataExport, DataExportState } from 'app/entities/data-export.model';
 import { ActivatedRoute } from '@angular/router';
 import { convertDateFromServer } from 'app/utils/date.utils';
+import { DataExportRequestButtonDirective } from './confirmation/data-export-request-button.directive';
+import { ButtonComponent } from '../../../shared/components/button.component';
+import { TranslateDirective } from '../../../shared/language/translate.directive';
+import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
+import { ArtemisTranslatePipe } from '../../../shared/pipes/artemis-translate.pipe';
 
 @Component({
     selector: 'jhi-data-export',
     templateUrl: './data-export.component.html',
-    standalone: false,
+    imports: [DataExportRequestButtonDirective, ButtonComponent, TranslateDirective, ArtemisDatePipe, ArtemisTranslatePipe],
 })
 export class DataExportComponent implements OnInit {
     private dataExportService = inject(DataExportService);

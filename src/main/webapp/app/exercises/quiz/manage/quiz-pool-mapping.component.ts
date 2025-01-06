@@ -4,12 +4,18 @@ import { QuizGroup } from 'app/entities/quiz/quiz-group.model';
 import { Subject } from 'rxjs';
 import { QuizQuestion } from 'app/entities/quiz/quiz-question.model';
 import { AlertService } from 'app/core/util/alert.service';
+import { CdkDropListGroup } from '@angular/cdk/drag-drop';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { TranslateDirective } from '../../../shared/language/translate.directive';
+import { QuizPoolMappingQuestionListComponent } from './quiz-pool-mapping-question-list.component';
+import { DeleteButtonDirective } from '../../../shared/delete-dialog/delete-button.directive';
+import { NgStyle } from '@angular/common';
 
 @Component({
     selector: 'jhi-quiz-pool-mapping',
     templateUrl: './quiz-pool-mapping.component.html',
     styleUrls: ['./quiz-pool-mapping.component.scss'],
-    standalone: false,
+    imports: [CdkDropListGroup, FaIconComponent, TranslateDirective, QuizPoolMappingQuestionListComponent, DeleteButtonDirective, NgStyle],
 })
 export class QuizPoolMappingComponent implements OnInit, OnChanges, OnDestroy {
     private alertService = inject(AlertService);

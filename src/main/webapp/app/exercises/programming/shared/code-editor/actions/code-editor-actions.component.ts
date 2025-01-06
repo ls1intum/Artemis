@@ -1,6 +1,6 @@
 import { Component, EventEmitter, Input, OnChanges, OnDestroy, OnInit, Output, SimpleChanges, inject, input } from '@angular/core';
 import { HttpErrorResponse } from '@angular/common/http';
-import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
+import { NgbModal, NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { catchError, switchMap, tap } from 'rxjs/operators';
 import { Observable, Subscription, of, throwError } from 'rxjs';
 import { isEmpty as _isEmpty } from 'lodash-es';
@@ -15,11 +15,16 @@ import { AUTOSAVE_CHECK_INTERVAL, AUTOSAVE_EXERCISE_INTERVAL } from 'app/shared/
 import { faCircleNotch, faSync, faTimes } from '@fortawesome/free-solid-svg-icons';
 import { faPlayCircle } from '@fortawesome/free-regular-svg-icons';
 import { Participation } from 'app/entities/participation/participation.model';
+import { RequestFeedbackButtonComponent } from '../../../../../overview/exercise-details/request-feedback-button/request-feedback-button.component';
+import { FeatureToggleDirective } from '../../../../../shared/feature-toggle/feature-toggle.directive';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { TranslateDirective } from '../../../../../shared/language/translate.directive';
+import { ArtemisTranslatePipe } from '../../../../../shared/pipes/artemis-translate.pipe';
 
 @Component({
     selector: 'jhi-code-editor-actions',
     templateUrl: './code-editor-actions.component.html',
-    standalone: false,
+    imports: [RequestFeedbackButtonComponent, FeatureToggleDirective, NgbTooltip, FaIconComponent, TranslateDirective, ArtemisTranslatePipe],
 })
 export class CodeEditorActionsComponent implements OnInit, OnDestroy, OnChanges {
     private repositoryService = inject(CodeEditorRepositoryService);

@@ -1,6 +1,6 @@
 import { Component, OnDestroy, OnInit, inject } from '@angular/core';
 import { HttpErrorResponse, HttpHeaders, HttpResponse } from '@angular/common/http';
-import { ActivatedRoute, Router } from '@angular/router';
+import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { Subject, Subscription } from 'rxjs';
 import { User } from 'app/core/user/user.model';
 import { AccountService } from 'app/core/auth/account.service';
@@ -14,6 +14,14 @@ import { EventManager } from 'app/core/util/event-manager.service';
 import { ParseLinks } from 'app/core/util/parse-links.service';
 import { faEye, faPlus, faSort, faTimes, faWrench } from '@fortawesome/free-solid-svg-icons';
 import { AdminSystemNotificationService } from 'app/shared/notification/system-notification/admin-system-notification.service';
+import { TranslateDirective } from '../../shared/language/translate.directive';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { SortDirective } from '../../shared/sort/sort.directive';
+import { SortByDirective } from '../../shared/sort/sort-by.directive';
+import { DeleteButtonDirective } from '../../shared/delete-dialog/delete-button.directive';
+import { ItemCountComponent } from '../../shared/pagination/item-count.component';
+import { NgbPagination } from '@ng-bootstrap/ng-bootstrap';
+import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 
 enum NotificationState {
     SCHEDULED = 'SCHEDULED',
@@ -24,7 +32,7 @@ enum NotificationState {
 @Component({
     selector: 'jhi-system-notification-management',
     templateUrl: './system-notification-management.component.html',
-    standalone: false,
+    imports: [TranslateDirective, RouterLink, FaIconComponent, SortDirective, SortByDirective, DeleteButtonDirective, ItemCountComponent, NgbPagination, ArtemisDatePipe],
 })
 export class SystemNotificationManagementComponent implements OnInit, OnDestroy {
     private systemNotificationService = inject(SystemNotificationService);

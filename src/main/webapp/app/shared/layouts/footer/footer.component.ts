@@ -1,11 +1,14 @@
 import { Component, OnInit, inject } from '@angular/core';
 import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
+import { TranslateDirective } from '../../language/translate.directive';
+import { RouterLink } from '@angular/router';
+import { ArtemisTranslatePipe } from '../../pipes/artemis-translate.pipe';
 
 @Component({
     selector: 'jhi-footer',
     templateUrl: './footer.component.html',
     styleUrls: ['./footer.scss'],
-    standalone: false,
+    imports: [TranslateDirective, RouterLink, ArtemisTranslatePipe],
 })
 export class FooterComponent implements OnInit {
     private profileService = inject(ProfileService);

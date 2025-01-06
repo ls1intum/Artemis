@@ -5,12 +5,14 @@ import { VERSION } from 'app/app.constants';
 import { StaticContentService } from 'app/shared/service/static-content.service';
 import { AboutUsModel } from 'app/core/about-us/models/about-us-model';
 import { ContributorModel } from 'app/core/about-us/models/contributor-model';
+import { TranslateDirective } from '../../shared/language/translate.directive';
+import { ArtemisTranslatePipe } from '../../shared/pipes/artemis-translate.pipe';
 
 @Component({
     selector: 'jhi-about-us',
     templateUrl: './about-us.component.html',
     styleUrls: ['./about-us.component.scss'],
-    standalone: false,
+    imports: [TranslateDirective, ArtemisTranslatePipe],
 })
 export class AboutUsComponent implements OnInit {
     private route = inject(ActivatedRoute);

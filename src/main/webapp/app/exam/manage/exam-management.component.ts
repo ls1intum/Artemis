@@ -1,6 +1,6 @@
 import { Component, OnDestroy, OnInit, inject } from '@angular/core';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
-import { ActivatedRoute, Router } from '@angular/router';
+import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { Subject, Subscription } from 'rxjs';
 import { ExamManagementService } from 'app/exam/manage/exam-management.service';
 import { Exam } from 'app/entities/exam/exam.model';
@@ -17,12 +17,18 @@ import { faClipboard, faEye, faFileImport, faListAlt, faPlus, faSort, faThList, 
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { ExamImportComponent } from 'app/exam/manage/exams/exam-import/exam-import.component';
 import { DocumentationType } from 'app/shared/components/documentation-button/documentation-button.component';
+import { TranslateDirective } from '../../shared/language/translate.directive';
+import { DocumentationButtonComponent } from '../../shared/components/documentation-button/documentation-button.component';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { SortDirective } from '../../shared/sort/sort.directive';
+import { SortByDirective } from '../../shared/sort/sort-by.directive';
+import { ExamStatusComponent } from './exam-status.component';
 
 @Component({
     selector: 'jhi-exam-management',
     templateUrl: './exam-management.component.html',
     styleUrls: ['./exam-management.component.scss'],
-    standalone: false,
+    imports: [TranslateDirective, DocumentationButtonComponent, FaIconComponent, RouterLink, SortDirective, SortByDirective, ExamStatusComponent],
 })
 export class ExamManagementComponent implements OnInit, OnDestroy {
     private route = inject(ActivatedRoute);

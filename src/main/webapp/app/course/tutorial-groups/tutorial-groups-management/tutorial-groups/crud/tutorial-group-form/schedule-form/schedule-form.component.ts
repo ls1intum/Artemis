@@ -1,7 +1,7 @@
 import { ChangeDetectionStrategy, ChangeDetectorRef, Component, Input, OnInit, inject } from '@angular/core';
-import { FormBuilder, FormGroup, Validators } from '@angular/forms';
+import { FormBuilder, FormGroup, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
 import { faCalendarAlt } from '@fortawesome/free-solid-svg-icons';
-import { NgbDateParserFormatter, NgbTimeAdapter } from '@ng-bootstrap/ng-bootstrap';
+import { NgbDateParserFormatter, NgbTimeAdapter, NgbTimepicker } from '@ng-bootstrap/ng-bootstrap';
 import { weekDays } from 'app/course/tutorial-groups/shared/weekdays';
 import { Course } from 'app/entities/course.model';
 import * as _ from 'lodash-es';
@@ -9,6 +9,12 @@ import dayjs from 'dayjs/esm';
 import { dayOfWeekZeroSundayToZeroMonday } from 'app/utils/date.utils';
 import { NgbTimeStringAdapter } from 'app/course/tutorial-groups/shared/ngbTimeStringAdapter';
 import { validTimeRange } from 'app/course/tutorial-groups/shared/timeRangeValidator';
+import { TranslateDirective } from '../../../../../../../shared/language/translate.directive';
+import { OwlDateTimeModule } from '@danielmoncada/angular-datetime-picker';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
+import { ArtemisDateRangePipe } from 'app/shared/pipes/artemis-date-range.pipe';
+import { ArtemisTranslatePipe } from '../../../../../../../shared/pipes/artemis-translate.pipe';
 
 export interface ScheduleFormData {
     dayOfWeek?: number;
@@ -25,7 +31,7 @@ export interface ScheduleFormData {
     styleUrls: ['./schedule-form.component.scss'],
     providers: [{ provide: NgbTimeAdapter, useClass: NgbTimeStringAdapter }],
     changeDetection: ChangeDetectionStrategy.OnPush,
-    standalone: false,
+    imports: [FormsModule, ReactiveFormsModule, TranslateDirective, NgbTimepicker, OwlDateTimeModule, FaIconComponent, ArtemisDatePipe, ArtemisDateRangePipe, ArtemisTranslatePipe],
 })
 export class ScheduleFormComponent implements OnInit {
     private fb = inject(FormBuilder);

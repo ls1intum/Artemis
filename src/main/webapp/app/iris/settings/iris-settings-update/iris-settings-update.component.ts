@@ -16,11 +16,15 @@ import {
     IrisTextExerciseChatSubSettings,
 } from 'app/entities/iris/settings/iris-sub-settings.model';
 import { AccountService } from 'app/core/auth/account.service';
+import { ButtonComponent } from '../../../shared/components/button.component';
+import { TranslateDirective } from '../../../shared/language/translate.directive';
+import { IrisCommonSubSettingsUpdateComponent } from './iris-common-sub-settings-update/iris-common-sub-settings-update.component';
+import { FormsModule } from '@angular/forms';
 
 @Component({
     selector: 'jhi-iris-settings-update',
     templateUrl: './iris-settings-update.component.html',
-    standalone: false,
+    imports: [ButtonComponent, TranslateDirective, IrisCommonSubSettingsUpdateComponent, FormsModule],
 })
 export class IrisSettingsUpdateComponent implements OnInit, DoCheck, ComponentCanDeactivate {
     private irisSettingsService = inject(IrisSettingsService);

@@ -1,5 +1,5 @@
 import { Component, Input, OnDestroy, OnInit, ViewChild, ViewEncapsulation, inject } from '@angular/core';
-import { NgForm } from '@angular/forms';
+import { FormsModule, NgForm } from '@angular/forms';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import { AlertService } from 'app/core/util/alert.service';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
@@ -11,13 +11,33 @@ import { ActionType } from 'app/shared/delete-dialog/delete-dialog.model';
 import { flatMap } from 'lodash-es';
 import { User } from 'app/core/user/user.model';
 import { faBan, faCircleNotch, faSpinner, faUpload } from '@fortawesome/free-solid-svg-icons';
+import { TranslateDirective } from '../../../../shared/language/translate.directive';
+import { NgClass } from '@angular/common';
+import { TeamsImportFromFileFormComponent } from './teams-import-from-file-form.component';
+import { HelpIconComponent } from '../../../../shared/components/help-icon.component';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { TeamExerciseSearchComponent } from '../team-exercise-search/team-exercise-search.component';
+import { TeamStudentsListComponent } from '../team-participate/team-students-list.component';
+import { DeleteButtonDirective } from '../../../../shared/delete-dialog/delete-button.directive';
+import { ArtemisTranslatePipe } from '../../../../shared/pipes/artemis-translate.pipe';
 
 @Component({
     selector: 'jhi-teams-import-dialog',
     templateUrl: './teams-import-dialog.component.html',
     styleUrls: ['./teams-import-dialog.component.scss'],
     encapsulation: ViewEncapsulation.None,
-    standalone: false,
+    imports: [
+        FormsModule,
+        TranslateDirective,
+        NgClass,
+        TeamsImportFromFileFormComponent,
+        HelpIconComponent,
+        FaIconComponent,
+        TeamExerciseSearchComponent,
+        TeamStudentsListComponent,
+        DeleteButtonDirective,
+        ArtemisTranslatePipe,
+    ],
 })
 export class TeamsImportDialogComponent implements OnInit, OnDestroy {
     private teamService = inject(TeamService);

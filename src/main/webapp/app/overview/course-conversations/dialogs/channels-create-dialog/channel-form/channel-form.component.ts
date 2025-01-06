@@ -1,6 +1,9 @@
 import { Component, EventEmitter, OnChanges, OnDestroy, OnInit, Output, inject } from '@angular/core';
-import { FormBuilder, FormGroup, Validators } from '@angular/forms';
+import { FormBuilder, FormGroup, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
 import { Subject, takeUntil } from 'rxjs';
+import { TranslateDirective } from '../../../../../shared/language/translate.directive';
+import { ChannelIconComponent } from '../../../other/channel-icon/channel-icon.component';
+import { ArtemisTranslatePipe } from '../../../../../shared/pipes/artemis-translate.pipe';
 
 export interface ChannelFormData {
     name?: string;
@@ -16,7 +19,7 @@ export const channelRegex = new RegExp('^[a-z0-9-]{1}[a-z0-9-]{0,30}$');
 @Component({
     selector: 'jhi-channel-form',
     templateUrl: './channel-form.component.html',
-    standalone: false,
+    imports: [FormsModule, ReactiveFormsModule, TranslateDirective, ChannelIconComponent, ArtemisTranslatePipe],
 })
 export class ChannelFormComponent implements OnInit, OnChanges, OnDestroy {
     private fb = inject(FormBuilder);

@@ -4,7 +4,6 @@ import { ArtemisDatePipe, DateFormat, DateType } from 'app/shared/pipes/artemis-
 @Pipe({
     name: 'artemisDateRange',
     pure: false,
-    standalone: false,
 })
 export class ArtemisDateRangePipe implements PipeTransform {
     private artemisDatePipe = inject(ArtemisDatePipe);

@@ -3,6 +3,9 @@ import { ProgrammingExerciseWebsocketService } from 'app/exercises/programming/m
 import { tap } from 'rxjs/operators';
 import { Subscription } from 'rxjs';
 import { faExclamationTriangle } from '@fortawesome/free-solid-svg-icons';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
+import { ArtemisTranslatePipe } from '../../../../shared/pipes/artemis-translate.pipe';
 
 /**
  * Two status indicators for the test case table:
@@ -21,7 +24,7 @@ import { faExclamationTriangle } from '@fortawesome/free-solid-svg-icons';
             />
         }
     `,
-    standalone: false,
+    imports: [FaIconComponent, NgbTooltip, ArtemisTranslatePipe],
 })
 export class ProgrammingExerciseGradingDirtyWarningComponent implements OnChanges, OnDestroy {
     private programmingExerciseWebsocketService = inject(ProgrammingExerciseWebsocketService);

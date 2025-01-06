@@ -40,7 +40,7 @@ const routes: Routes = [
         BarChartModule,
         PieChartModule,
         ArtemisSharedComponentModule,
+        CourseStatisticsComponent,
     ],
-    declarations: [CourseStatisticsComponent],
 })
 export class CourseStatisticsModule {}

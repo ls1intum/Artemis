@@ -7,11 +7,13 @@ import { Subscription, from } from 'rxjs';
 import { Exam } from 'app/entities/exam/exam.model';
 import { AlertService } from 'app/core/util/alert.service';
 import { ExamLiveAnnouncementCreateModalComponent } from 'app/exam/manage/exams/exam-checklist-component/exam-announcement-dialog/exam-live-announcement-create-modal.component';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { TranslateDirective } from '../../../../../shared/language/translate.directive';
 
 @Component({
     selector: 'jhi-exam-live-announcement-create-button',
     templateUrl: './exam-live-announcement-create-button.component.html',
-    standalone: false,
+    imports: [FaIconComponent, TranslateDirective],
 })
 export class ExamLiveAnnouncementCreateButtonComponent implements OnInit, OnDestroy {
     private modalService = inject(NgbModal);

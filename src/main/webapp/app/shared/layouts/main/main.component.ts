@@ -1,20 +1,25 @@
 import { Component, OnDestroy, OnInit, Renderer2, inject } from '@angular/core';
-import { ActivatedRouteSnapshot, NavigationEnd, NavigationError, NavigationStart, Router } from '@angular/router';
+import { ActivatedRouteSnapshot, NavigationEnd, NavigationError, NavigationStart, Router, RouterOutlet } from '@angular/router';
 import { JhiLanguageHelper } from 'app/core/language/language.helper';
 import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
 import { SentryErrorHandler } from 'app/core/sentry/sentry.error-handler';
 import { ThemeService } from 'app/core/theme/theme.service';
-import { DOCUMENT } from '@angular/common';
+import { DOCUMENT, NgClass, NgStyle } from '@angular/common';
 import { Subscription } from 'rxjs';
 import { ExamParticipationService } from 'app/exam/participate/exam-participation.service';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
 import { LtiService } from 'app/shared/service/lti.service';
+import { AlertOverlayComponent } from '../../alert/alert-overlay.component';
+import { CdkScrollable } from '@angular/cdk/scrolling';
+import { PageRibbonComponent } from '../profiles/page-ribbon.component';
+import { NotificationPopupComponent } from '../../notification/notification-popup/notification-popup.component';
+import { FooterComponent } from '../footer/footer.component';
 
 @Component({
     selector: 'jhi-main',
     templateUrl: './main.component.html',
     styleUrls: ['./main.component.scss'],
-    standalone: false,
+    imports: [AlertOverlayComponent, CdkScrollable, NgClass, NgStyle, PageRibbonComponent, RouterOutlet, NotificationPopupComponent, FooterComponent],
 })
 export class JhiMainComponent implements OnInit, OnDestroy {
     private jhiLanguageHelper = inject(JhiLanguageHelper);

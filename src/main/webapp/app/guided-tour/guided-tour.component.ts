@@ -21,13 +21,18 @@ import {
     faPlayCircle,
     faVideo,
 } from '@fortawesome/free-solid-svg-icons';
+import { NgStyle } from '@angular/common';
+import { TranslateDirective } from '../shared/language/translate.directive';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { ArtemisTranslatePipe } from '../shared/pipes/artemis-translate.pipe';
+import { SafeResourceUrlPipe } from 'app/shared/pipes/safe-resource-url.pipe';
 
 @Component({
     selector: 'jhi-guided-tour',
     templateUrl: './guided-tour.component.html',
     styleUrls: ['./guided-tour.component.scss'],
     encapsulation: ViewEncapsulation.None,
-    standalone: false,
+    imports: [NgStyle, TranslateDirective, FaIconComponent, ArtemisTranslatePipe, SafeResourceUrlPipe],
 })
 export class GuidedTourComponent implements AfterViewInit, OnDestroy {
     guidedTourService = inject(GuidedTourService);

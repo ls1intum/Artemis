@@ -11,11 +11,29 @@ import { onError } from 'app/shared/util/global.utils';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
 import { AlertService } from 'app/core/util/alert.service';
+import { TranslateDirective } from '../../../../shared/language/translate.directive';
+import { NgClass } from '@angular/common';
+import { FormsModule } from '@angular/forms';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { NgbDropdown, NgbDropdownButtonItem, NgbDropdownItem, NgbDropdownMenu, NgbDropdownToggle, NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
+import { ArtemisTranslatePipe } from '../../../../shared/pipes/artemis-translate.pipe';
 
 @Component({
     selector: 'jhi-iris-common-sub-settings-update',
     templateUrl: './iris-common-sub-settings-update.component.html',
-    standalone: false,
+    imports: [
+        TranslateDirective,
+        NgClass,
+        FormsModule,
+        FaIconComponent,
+        NgbTooltip,
+        NgbDropdown,
+        NgbDropdownToggle,
+        NgbDropdownMenu,
+        NgbDropdownButtonItem,
+        NgbDropdownItem,
+        ArtemisTranslatePipe,
+    ],
 })
 export class IrisCommonSubSettingsUpdateComponent implements OnInit, OnChanges {
     private irisSettingsService = inject(IrisSettingsService);

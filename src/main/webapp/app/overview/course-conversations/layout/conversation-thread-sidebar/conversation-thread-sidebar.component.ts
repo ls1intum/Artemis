@@ -5,12 +5,18 @@ import { faArrowLeft, faChevronLeft, faGripLinesVertical, faXmark } from '@forta
 import { AnswerPost } from 'app/entities/metis/answer-post.model';
 import { Conversation, ConversationDTO } from 'app/entities/metis/conversation/conversation.model';
 import { getAsChannelDTO } from 'app/entities/metis/conversation/channel.model';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { TranslateDirective } from '../../../../shared/language/translate.directive';
+import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
+import { PostComponent } from '../../../../shared/metis/post/post.component';
+import { MessageReplyInlineInputComponent } from '../../../../shared/metis/message/message-reply-inline-input/message-reply-inline-input.component';
+import { ArtemisTranslatePipe } from '../../../../shared/pipes/artemis-translate.pipe';
 
 @Component({
     selector: 'jhi-conversation-thread-sidebar',
     templateUrl: './conversation-thread-sidebar.component.html',
     styleUrls: ['./conversation-thread-sidebar.component.scss'],
-    standalone: false,
+    imports: [FaIconComponent, TranslateDirective, NgbTooltip, PostComponent, MessageReplyInlineInputComponent, ArtemisTranslatePipe],
 })
 export class ConversationThreadSidebarComponent implements AfterViewInit {
     @ViewChild('scrollBody', { static: false }) scrollBody?: ElementRef<HTMLDivElement>;

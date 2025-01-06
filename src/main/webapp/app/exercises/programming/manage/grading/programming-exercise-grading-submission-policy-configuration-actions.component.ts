@@ -3,6 +3,7 @@ import { faSave } from '@fortawesome/free-solid-svg-icons';
 import { ProgrammingExercise } from 'app/entities/programming/programming-exercise.model';
 import { SubmissionPolicyType } from 'app/entities/submission-policy.model';
 import { ButtonType } from 'app/shared/components/button.component';
+import { ButtonComponent } from '../../../../shared/components/button.component';
 
 /**
  * The actions of the submission policy configuration:
@@ -43,7 +44,7 @@ import { ButtonType } from 'app/shared/components/button.component';
             }
         </div>
     `,
-    standalone: false,
+    imports: [ButtonComponent],
 })
 export class ProgrammingExerciseGradingSubmissionPolicyConfigurationActionsComponent {
     readonly ButtonType = ButtonType;

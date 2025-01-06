@@ -3,8 +3,7 @@ import { ExerciseUpdateNotificationComponent } from 'app/exercises/shared/exerci
 import { ArtemisSharedCommonModule } from 'app/shared/shared-common.module';
 
 @NgModule({
-    declarations: [ExerciseUpdateNotificationComponent],
-    imports: [ArtemisSharedCommonModule],
+    imports: [ArtemisSharedCommonModule, ExerciseUpdateNotificationComponent],
     exports: [ExerciseUpdateNotificationComponent],
 })
 export class ExerciseUpdateNotificationModule {}

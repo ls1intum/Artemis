@@ -9,13 +9,21 @@ import { QuizExercisePagingService } from 'app/exercises/quiz/manage/quiz-exerci
 import { ExercisePagingService } from 'app/exercises/shared/manage/exercise-paging.service';
 import { TextExercisePagingService } from 'app/exercises/text/manage/text-exercise/text-exercise-paging.service';
 import { ImportComponent } from 'app/shared/import/import.component';
+import { TranslateDirective } from '../../../shared/language/translate.directive';
+import { FormsModule } from '@angular/forms';
+import { SortDirective } from '../../../shared/sort/sort.directive';
+import { SortByDirective } from '../../../shared/sort/sort-by.directive';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { NgbHighlight, NgbPagination } from '@ng-bootstrap/ng-bootstrap';
+import { ButtonComponent } from '../../../shared/components/button.component';
+import { ExerciseCourseTitlePipe } from 'app/shared/pipes/exercise-course-title.pipe';
 
 const DEFAULT_SORT_COLUMN = 'ID';
 
 @Component({
     selector: 'jhi-exercise-import',
     templateUrl: './exercise-import.component.html',
-    standalone: false,
+    imports: [TranslateDirective, FormsModule, SortDirective, SortByDirective, FaIconComponent, NgbHighlight, ButtonComponent, NgbPagination, ExerciseCourseTitlePipe],
 })
 export class ExerciseImportComponent extends ImportComponent<Exercise> implements OnInit {
     private injector = inject(Injector);

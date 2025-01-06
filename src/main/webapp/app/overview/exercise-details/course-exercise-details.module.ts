@@ -5,7 +5,7 @@ import { NgModule } from '@angular/core';
 import { ArtemisSharedModule } from 'app/shared/shared.module';
 import { ArtemisSidePanelModule } from 'app/shared/side-panel/side-panel.module';
 import { OrionModule } from 'app/shared/orion/orion.module';
-import { FeatureToggleModule } from 'app/shared/feature-toggle/feature-toggle.module';
+
 import { ArtemisHeaderExercisePageWithDetailsModule } from 'app/exercises/shared/exercise-headers/exercise-headers.module';
 import { ArtemisResultModule } from 'app/exercises/shared/result/result.module';
 import { ArtemisComplaintsModule } from 'app/complaints/complaints.module';
@@ -59,7 +59,6 @@ const standaloneComponents = [ExerciseHeadersInformationComponent];
         ArtemisHeaderExercisePageWithDetailsModule,
         OrionModule,
         ArtemisComplaintsModule,
-        FeatureToggleModule,
         FontAwesomeModule,
         RatingModule,
         ArtemisProgrammingExerciseInstructionsRenderModule,
@@ -73,8 +72,12 @@ const standaloneComponents = [ExerciseHeadersInformationComponent];
         IrisModule,
         DiscussionSectionComponent,
         [...standaloneComponents],
+        CourseExerciseDetailsComponent,
+        OrionCourseExerciseDetailsComponent,
+        LtiInitializerComponent,
+        LtiInitializerModalComponent,
+        ProblemStatementComponent,
     ],
-    declarations: [CourseExerciseDetailsComponent, OrionCourseExerciseDetailsComponent, LtiInitializerComponent, LtiInitializerModalComponent, ProblemStatementComponent],
     exports: [CourseExerciseDetailsComponent, OrionCourseExerciseDetailsComponent, ProblemStatementComponent],
 })
 export class CourseExerciseDetailsModule {}

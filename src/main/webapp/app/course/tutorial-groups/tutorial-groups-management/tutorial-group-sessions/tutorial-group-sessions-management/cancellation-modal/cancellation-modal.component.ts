@@ -5,16 +5,18 @@ import { onError } from 'app/shared/util/global.utils';
 import { TutorialGroupSessionService } from 'app/course/tutorial-groups/services/tutorial-group-session.service';
 import { HttpErrorResponse } from '@angular/common/http';
 import { AlertService } from 'app/core/util/alert.service';
-import { FormBuilder, FormGroup, Validators } from '@angular/forms';
+import { FormBuilder, FormGroup, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
 import { Course } from 'app/entities/course.model';
 import { Subject } from 'rxjs';
 import { takeUntil } from 'rxjs/operators';
+import { TranslateDirective } from '../../../../../../shared/language/translate.directive';
+import { ArtemisTranslatePipe } from '../../../../../../shared/pipes/artemis-translate.pipe';
 
 @Component({
     selector: 'jhi-cancellation-modal',
     templateUrl: './cancellation-modal.component.html',
     changeDetection: ChangeDetectionStrategy.OnPush,
-    standalone: false,
+    imports: [FormsModule, ReactiveFormsModule, TranslateDirective, ArtemisTranslatePipe],
 })
 export class CancellationModalComponent implements OnInit, OnDestroy {
     activeModal = inject(NgbActiveModal);

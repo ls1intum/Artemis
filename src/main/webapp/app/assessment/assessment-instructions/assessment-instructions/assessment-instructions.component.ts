@@ -9,11 +9,28 @@ import { FileUploadExercise } from 'app/entities/file-upload-exercise.model';
 import { ProgrammingExercise } from 'app/entities/programming/programming-exercise.model';
 import { GradingCriterion } from 'app/exercises/shared/structured-grading-criterion/grading-criterion.model';
 import { ProgrammingExerciseStudentParticipation } from 'app/entities/participation/programming-exercise-student-participation.model';
+import { ExpandableSectionComponent } from '../expandable-section/expandable-section.component';
+import { StructuredGradingInstructionsAssessmentLayoutComponent } from '../../structured-grading-instructions-assessment-layout/structured-grading-instructions-assessment-layout.component';
+import { ExtensionPointDirective } from '../../../shared/extension-point/extension-point.directive';
+import { ProgrammingExerciseInstructionComponent } from '../../../exercises/programming/shared/instructions-render/programming-exercise-instruction.component';
+import { SecureLinkDirective } from '../../../shared/http/secure-link.directive';
+import { ButtonComponent } from '../../../shared/components/button.component';
+import { TranslateDirective } from '../../../shared/language/translate.directive';
+import { ModelingEditorComponent } from '../../../exercises/modeling/shared/modeling-editor.component';
 
 @Component({
     selector: 'jhi-assessment-instructions',
     templateUrl: './assessment-instructions.component.html',
-    standalone: false,
+    imports: [
+        ExpandableSectionComponent,
+        StructuredGradingInstructionsAssessmentLayoutComponent,
+        ExtensionPointDirective,
+        ProgrammingExerciseInstructionComponent,
+        SecureLinkDirective,
+        ButtonComponent,
+        TranslateDirective,
+        ModelingEditorComponent,
+    ],
 })
 export class AssessmentInstructionsComponent {
     private markdownService = inject(ArtemisMarkdownService);

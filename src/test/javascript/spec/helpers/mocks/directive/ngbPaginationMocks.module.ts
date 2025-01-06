@@ -26,28 +26,20 @@ export class NgbPaginationPagesMockDirective {}
 })
 export class NgbPaginationMockComponent {
     @Input() disabled: boolean;
-
     @Input() boundaryLinks: boolean;
-
     @Input() directionLinks: boolean;
     @Input() ellipses: boolean;
     @Input() rotate: boolean;
-
     @Input() collectionSize: number;
-
     @Input() maxSize: number;
-
     @Input() page = 1;
-
     @Input() pageSize: number;
-
     @Output() pageChange = new EventEmitter<number>(true);
-
     @Input() size: 'sm' | 'lg' | string | null;
 }
 
 @NgModule({
-    declarations: [
+    imports: [
         NgbPaginationMockComponent,
         NgbPaginationPagesMockDirective,
         NgbPaginationLastMockDirective,

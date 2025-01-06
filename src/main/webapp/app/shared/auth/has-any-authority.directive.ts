@@ -12,10 +12,7 @@ import { AccountService } from 'app/core/auth/account.service';
  *     <some-element *jhiHasAnyAuthority="[Authority.ADMIN, Authority.USER]">...</some-element>
  * ```
  */
-@Directive({
-    selector: '[jhiHasAnyAuthority]',
-    standalone: false,
-})
+@Directive({ selector: '[jhiHasAnyAuthority]' })
 export class HasAnyAuthorityDirective {
     private accountService = inject(AccountService);
     private templateRef = inject<TemplateRef<any>>(TemplateRef);

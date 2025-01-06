@@ -10,7 +10,7 @@ import { FormsModule } from '@angular/forms';
 import { Lti13SelectContentComponent } from 'app/lti/lti13-select-content.component';
 import { ArtemisSharedComponentModule } from 'app/shared/components/shared-component.module';
 import { LtiCoursesComponent } from 'app/lti/lti13-select-course.component';
-import { ArtemisSharedLibsModule } from 'app/shared/shared-libs.module';
+
 import { LtiCourseCardComponent } from 'app/lti/lti-course-card.component';
 
 const LTI_LAUNCH_ROUTES = [...ltiLaunchState];
@@ -22,7 +22,6 @@ const LTI_LAUNCH_ROUTES = [...ltiLaunchState];
         ArtemisSharedModule,
         FormsModule,
         ArtemisSharedComponentModule,
-        ArtemisSharedLibsModule,
         Lti13ExerciseLaunchComponent,
         Lti13DynamicRegistrationComponent,
         Lti13DeepLinkingComponent,

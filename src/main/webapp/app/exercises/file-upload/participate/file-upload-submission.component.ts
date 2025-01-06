@@ -1,5 +1,5 @@
 import { Component, ElementRef, Input, OnInit, ViewChild, inject } from '@angular/core';
-import { Location } from '@angular/common';
+import { Location, UpperCasePipe } from '@angular/common';
 import { TranslateService } from '@ngx-translate/core';
 import { ActivatedRoute } from '@angular/router';
 import { HttpErrorResponse } from '@angular/common/http';
@@ -29,11 +29,37 @@ import { getCourseFromExercise } from 'app/entities/exercise.model';
 import { Course } from 'app/entities/course.model';
 import { faListAlt } from '@fortawesome/free-regular-svg-icons';
 import { faDownload } from '@fortawesome/free-solid-svg-icons';
+import { HeaderParticipationPageComponent } from '../../shared/exercise-headers/header-participation-page.component';
+import { ButtonComponent } from '../../../shared/components/button.component';
+import { ResizeableContainerComponent } from '../../../shared/resizeable-container/resizeable-container.component';
+import { TranslateDirective } from '../../../shared/language/translate.directive';
+import { ExerciseActionButtonComponent } from '../../../shared/components/exercise-action-button.component';
+import { AdditionalFeedbackComponent } from '../../../shared/additional-feedback/additional-feedback.component';
+import { RatingComponent } from '../../shared/rating/rating.component';
+import { ComplaintsStudentViewComponent } from '../../../complaints/complaints-for-students/complaints-student-view.component';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { ArtemisTranslatePipe } from '../../../shared/pipes/artemis-translate.pipe';
+import { ArtemisTimeAgoPipe } from 'app/shared/pipes/artemis-time-ago.pipe';
+import { HtmlForMarkdownPipe } from '../../../shared/pipes/html-for-markdown.pipe';
 
 @Component({
     selector: 'jhi-file-upload-submission',
     templateUrl: './file-upload-submission.component.html',
-    standalone: false,
+    imports: [
+        HeaderParticipationPageComponent,
+        ButtonComponent,
+        ResizeableContainerComponent,
+        TranslateDirective,
+        ExerciseActionButtonComponent,
+        AdditionalFeedbackComponent,
+        RatingComponent,
+        ComplaintsStudentViewComponent,
+        FaIconComponent,
+        UpperCasePipe,
+        ArtemisTranslatePipe,
+        ArtemisTimeAgoPipe,
+        HtmlForMarkdownPipe,
+    ],
 })
 export class FileUploadSubmissionComponent implements OnInit, ComponentCanDeactivate {
     private route = inject(ActivatedRoute);

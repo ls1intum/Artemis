@@ -2,7 +2,7 @@ import { Component, Input, OnChanges, inject } from '@angular/core';
 import { TranslateService } from '@ngx-translate/core';
 import dayjs from 'dayjs/esm';
 import { CourseManagementService } from '../course-management.service';
-import { Color, ScaleType } from '@swimlane/ngx-charts';
+import { Color, LineChartModule, ScaleType } from '@swimlane/ngx-charts';
 import { roundScorePercentSpecifiedByCourseSettings } from 'app/shared/util/utils';
 import { Course } from 'app/entities/course.model';
 import { faArrowLeft, faArrowRight, faSpinner } from '@fortawesome/free-solid-svg-icons';
@@ -10,6 +10,13 @@ import * as shape from 'd3-shape';
 import { GraphColors } from 'app/entities/statistics.model';
 import { ActiveStudentsChart } from 'app/shared/chart/active-students-chart';
 import { mean } from 'simple-statistics';
+import { RouterLink } from '@angular/router';
+import { TranslateDirective } from '../../../shared/language/translate.directive';
+import { HelpIconComponent } from '../../../shared/components/help-icon.component';
+import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
+import { ArtemisTranslatePipe } from '../../../shared/pipes/artemis-translate.pipe';
 
 export enum SwitchTimeSpanDirection {
     LEFT,
@@ -20,7 +27,7 @@ export enum SwitchTimeSpanDirection {
     selector: 'jhi-course-detail-line-chart',
     templateUrl: './course-detail-line-chart.component.html',
     styleUrls: ['./course-detail-line-chart.component.scss'],
-    standalone: false,
+    imports: [RouterLink, TranslateDirective, HelpIconComponent, NgbTooltip, FaIconComponent, LineChartModule, ArtemisDatePipe, ArtemisTranslatePipe],
 })
 export class CourseDetailLineChartComponent extends ActiveStudentsChart implements OnChanges {
     private service = inject(CourseManagementService);

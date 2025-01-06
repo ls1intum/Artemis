@@ -9,12 +9,15 @@ import { HttpErrorResponse } from '@angular/common/http';
 import { onError } from 'app/shared/util/global.utils';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
 import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
+import { LoadingIndicatorContainerComponent } from '../../../shared/loading-indicator-container/loading-indicator-container.component';
+import { AsyncPipe, NgClass } from '@angular/common';
+import { TutorialGroupDetailComponent } from '../../../course/tutorial-groups/shared/tutorial-group-detail/tutorial-group-detail.component';
 
 @Component({
     selector: 'jhi-course-tutorial-group-detail',
     templateUrl: './course-tutorial-group-detail.component.html',
     styleUrls: ['./course-tutorial-group-detail.component.scss'],
-    standalone: false,
+    imports: [LoadingIndicatorContainerComponent, NgClass, TutorialGroupDetailComponent, AsyncPipe],
 })
 export class CourseTutorialGroupDetailComponent implements OnInit, OnDestroy {
     private route = inject(ActivatedRoute);

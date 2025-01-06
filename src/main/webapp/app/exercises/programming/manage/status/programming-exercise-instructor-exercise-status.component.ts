@@ -7,6 +7,9 @@ import { ProgrammingExercise } from 'app/entities/programming/programming-exerci
 import { findLatestResult } from 'app/shared/util/utils';
 import { faCheckCircle, faExclamationTriangle } from '@fortawesome/free-solid-svg-icons';
 import { hasSolutionParticipationChanged, hasTemplateParticipationChanged } from 'app/exercises/shared/participation/participation.utils';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
+import { TranslateDirective } from '../../../../shared/language/translate.directive';
 
 /**
  * Describes programming exercise issues
@@ -19,7 +22,7 @@ enum ProgrammingExerciseIssues {
 @Component({
     selector: 'jhi-programming-exercise-instructor-exercise-status',
     templateUrl: './programming-exercise-instructor-exercise-status.component.html',
-    standalone: false,
+    imports: [FaIconComponent, NgbTooltip, TranslateDirective],
 })
 export class ProgrammingExerciseInstructorExerciseStatusComponent implements OnChanges {
     private participationWebsocketService = inject(ParticipationWebsocketService);

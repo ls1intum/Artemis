@@ -6,11 +6,18 @@ import { AccountService } from 'app/core/auth/account.service';
 import { SortService } from 'app/shared/service/sort.service';
 import { Exam } from 'app/entities/exam/exam.model';
 import { faExclamationTriangle, faSort } from '@fortawesome/free-solid-svg-icons';
+import { SortDirective } from '../../sort/sort.directive';
+import { SortByDirective } from '../../sort/sort-by.directive';
+import { TranslateDirective } from '../../language/translate.directive';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
+import { RouterLink } from '@angular/router';
+import { ArtemisTranslatePipe } from '../../pipes/artemis-translate.pipe';
 
 @Component({
     selector: 'jhi-tutor-leaderboard',
     templateUrl: './tutor-leaderboard.component.html',
-    standalone: false,
+    imports: [SortDirective, SortByDirective, TranslateDirective, FaIconComponent, NgbTooltip, RouterLink, ArtemisTranslatePipe],
 })
 export class TutorLeaderboardComponent implements OnInit {
     private accountService = inject(AccountService);

@@ -1,6 +1,6 @@
 import { Component, computed, effect, inject, input, signal, untracked } from '@angular/core';
 import { FeedbackAnalysisService, FeedbackChannelRequestDTO, FeedbackDetail } from './feedback-analysis.service';
-import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
+import { NgbModal, NgbModule, NgbPagination } from '@ng-bootstrap/ng-bootstrap';
 import { AlertService } from 'app/core/util/alert.service';
 import { faCircleQuestion, faFilter, faMessage, faSort, faSortDown, faSortUp, faSpinner, faUsers } from '@fortawesome/free-solid-svg-icons';
 import { facDetails } from '../../../../../../content/icons/icons';
@@ -20,7 +20,7 @@ import { Router } from '@angular/router';
     selector: 'jhi-feedback-analysis',
     templateUrl: './feedback-analysis.component.html',
     styleUrls: ['./feedback-analysis.component.scss'],
-    imports: [ArtemisSharedCommonModule, SortIconComponent],
+    imports: [ArtemisSharedCommonModule, SortIconComponent, NgbModule, NgbPagination],
     providers: [FeedbackAnalysisService],
 })
 export class FeedbackAnalysisComponent {

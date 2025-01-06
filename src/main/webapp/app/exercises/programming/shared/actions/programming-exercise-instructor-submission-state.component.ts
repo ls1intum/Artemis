@@ -7,6 +7,13 @@ import { ProgrammingExercise } from 'app/entities/programming/programming-exerci
 import { hasExerciseChanged } from 'app/exercises/shared/exercise/exercise.utils';
 import { ButtonType } from 'app/shared/components/button.component';
 import { faCircleNotch, faClock, faRedo } from '@fortawesome/free-solid-svg-icons';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
+import { NgClass } from '@angular/common';
+import { ProgrammingExerciseTriggerAllButtonComponent } from './programming-exercise-trigger-all-button.component';
+import { ButtonComponent } from '../../../../shared/components/button.component';
+import { ArtemisTranslatePipe } from '../../../../shared/pipes/artemis-translate.pipe';
+import { DurationPipe } from 'app/shared/pipes/duration.pipe';
 
 /**
  * This components provides two buttons to the instructor to interact with the students' submissions:
@@ -18,7 +25,7 @@ import { faCircleNotch, faClock, faRedo } from '@fortawesome/free-solid-svg-icon
 @Component({
     selector: 'jhi-programming-exercise-instructor-submission-state',
     templateUrl: './programming-exercise-instructor-submission-state.component.html',
-    standalone: false,
+    imports: [FaIconComponent, NgbTooltip, NgClass, ProgrammingExerciseTriggerAllButtonComponent, ButtonComponent, ArtemisTranslatePipe, DurationPipe],
 })
 export class ProgrammingExerciseInstructorSubmissionStateComponent implements OnChanges, OnInit {
     private programmingSubmissionService = inject(ProgrammingSubmissionService);

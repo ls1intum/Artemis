@@ -14,7 +14,7 @@ import {
     ViewContainerRef,
     inject,
 } from '@angular/core';
-import { ActivatedRoute, Router } from '@angular/router';
+import { ActivatedRoute, Router, RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
 import {
     IconDefinition,
     faChalkboardUser,
@@ -39,7 +39,7 @@ import {
     faTimes,
     faWrench,
 } from '@fortawesome/free-solid-svg-icons';
-import { NgbDropdown, NgbModal } from '@ng-bootstrap/ng-bootstrap';
+import { NgbDropdown, NgbDropdownButtonItem, NgbDropdownItem, NgbDropdownMenu, NgbDropdownToggle, NgbModal, NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { AlertService, AlertType } from 'app/core/util/alert.service';
 import { JhiWebsocketService } from 'app/core/websocket/websocket.service';
 import { CourseAccessStorageService } from 'app/course/course-access-storage.service';
@@ -69,6 +69,13 @@ import { sortCourses } from 'app/shared/util/course.util';
 import { CourseUnenrollmentModalComponent } from './course-unenrollment-modal.component';
 import { LtiService } from 'app/shared/service/lti.service';
 import { CourseSidebarService } from 'app/overview/course-sidebar.service';
+import { NgClass, NgStyle, NgTemplateOutlet, SlicePipe } from '@angular/common';
+import { MatSidenav, MatSidenavContainer, MatSidenavContent } from '@angular/material/sidenav';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { TranslateDirective } from '../shared/language/translate.directive';
+import { SecuredImageComponent } from '../shared/image/secured-image.component';
+import { OrionFilterDirective } from '../shared/orion/orion-filter.directive';
+import { FeatureToggleHideDirective } from '../shared/feature-toggle/feature-toggle-hide.directive';
 
 interface CourseActionItem {
     title: string;
@@ -95,7 +102,29 @@ interface SidebarItem {
     templateUrl: './course-overview.component.html',
     styleUrls: ['course-overview.scss', 'course-overview.component.scss'],
     providers: [MetisConversationService],
-    standalone: false,
+    imports: [
+        NgClass,
+        MatSidenavContainer,
+        MatSidenav,
+        NgbDropdown,
+        NgbDropdownToggle,
+        NgTemplateOutlet,
+        NgbDropdownMenu,
+        NgbDropdownButtonItem,
+        NgbDropdownItem,
+        FaIconComponent,
+        TranslateDirective,
+        NgbTooltip,
+        MatSidenavContent,
+        NgStyle,
+        RouterLink,
+        RouterOutlet,
+        SecuredImageComponent,
+        OrionFilterDirective,
+        RouterLinkActive,
+        FeatureToggleHideDirective,
+        SlicePipe,
+    ],
 })
 export class CourseOverviewComponent implements OnInit, OnDestroy, AfterViewInit {
     private courseService = inject(CourseManagementService);

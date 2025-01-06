@@ -1,5 +1,5 @@
 import { ChangeDetectionStrategy, Component, EventEmitter, Input, OnChanges, OnDestroy, OnInit, Output, ViewChild, inject } from '@angular/core';
-import { FormBuilder, FormControl, FormGroup, Validators } from '@angular/forms';
+import { FormBuilder, FormControl, FormGroup, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
 import { Course, CourseGroup } from 'app/entities/course.model';
 import { User } from 'app/core/user/user.model';
@@ -16,6 +16,11 @@ import {
 import { isEqual } from 'lodash-es';
 import { TutorialGroupsService } from 'app/course/tutorial-groups/services/tutorial-groups.service';
 import { faSave } from '@fortawesome/free-solid-svg-icons';
+import { TranslateDirective } from '../../../../../../shared/language/translate.directive';
+import { MarkdownEditorMonacoComponent } from '../../../../../../shared/markdown-editor/monaco/markdown-editor-monaco.component';
+import { ScheduleFormComponent as ScheduleFormComponent_1 } from './schedule-form/schedule-form.component';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { ArtemisTranslatePipe } from '../../../../../../shared/pipes/artemis-translate.pipe';
 
 export interface TutorialGroupFormData {
     title?: string;
@@ -40,7 +45,7 @@ export const titleRegex = new RegExp('^[a-zA-Z0-9]{1}[a-zA-Z0-9- ]{0,19}$');
     selector: 'jhi-tutorial-group-form',
     templateUrl: './tutorial-group-form.component.html',
     changeDetection: ChangeDetectionStrategy.OnPush,
-    standalone: false,
+    imports: [FormsModule, ReactiveFormsModule, TranslateDirective, NgbTypeahead, MarkdownEditorMonacoComponent, ScheduleFormComponent_1, FaIconComponent, ArtemisTranslatePipe],
 })
 export class TutorialGroupFormComponent implements OnInit, OnChanges, OnDestroy {
     private fb = inject(FormBuilder);

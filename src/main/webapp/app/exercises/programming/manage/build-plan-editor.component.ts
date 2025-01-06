@@ -8,13 +8,20 @@ import { ActivatedRoute } from '@angular/router';
 import { ProgrammingExercise } from 'app/entities/programming/programming-exercise.model';
 import { ProgrammingExerciseService } from 'app/exercises/programming/manage/services/programming-exercise.service';
 import { MonacoEditorComponent } from 'app/shared/monaco-editor/monaco-editor.component';
+import { TranslateDirective } from '../../../shared/language/translate.directive';
+import { UpdatingResultComponent } from '../../shared/result/updating-result.component';
+import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { CodeEditorHeaderComponent } from '../shared/code-editor/header/code-editor-header.component';
+import { MonacoEditorComponent as MonacoEditorComponent_1 } from '../../../shared/monaco-editor/monaco-editor.component';
+import { ArtemisTranslatePipe } from '../../../shared/pipes/artemis-translate.pipe';
 
 @Component({
     selector: 'jhi-build-plan-editor',
     templateUrl: './build-plan-editor.component.html',
     styleUrls: ['./build-plan-editor.scss'],
     encapsulation: ViewEncapsulation.None,
-    standalone: false,
+    imports: [TranslateDirective, UpdatingResultComponent, NgbTooltip, FaIconComponent, CodeEditorHeaderComponent, MonacoEditorComponent_1, ArtemisTranslatePipe],
 })
 export class BuildPlanEditorComponent implements AfterViewInit, OnInit {
     private buildPlanService = inject(BuildPlanService);

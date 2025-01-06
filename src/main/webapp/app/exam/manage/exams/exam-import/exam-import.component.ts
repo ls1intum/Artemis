@@ -7,11 +7,19 @@ import { ExamManagementService } from 'app/exam/manage/exam-management.service';
 import { ExamExerciseImportComponent } from 'app/exam/manage/exams/exam-exercise-import/exam-exercise-import.component';
 import { ImportComponent } from 'app/shared/import/import.component';
 import { onError } from 'app/shared/util/global.utils';
+import { FormsModule } from '@angular/forms';
+import { TranslateDirective } from '../../../../shared/language/translate.directive';
+import { SortDirective } from '../../../../shared/sort/sort.directive';
+import { SortByDirective } from '../../../../shared/sort/sort-by.directive';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { NgbHighlight, NgbPagination } from '@ng-bootstrap/ng-bootstrap';
+import { ButtonComponent } from '../../../../shared/components/button.component';
+import { ExamExerciseImportComponent as ExamExerciseImportComponent_1 } from '../exam-exercise-import/exam-exercise-import.component';
 
 @Component({
     selector: 'jhi-exam-import',
     templateUrl: './exam-import.component.html',
-    standalone: false,
+    imports: [FormsModule, TranslateDirective, SortDirective, SortByDirective, FaIconComponent, NgbHighlight, ButtonComponent, NgbPagination, ExamExerciseImportComponent_1],
 })
 export class ExamImportComponent extends ImportComponent<Exam> {
     private examManagementService = inject(ExamManagementService);

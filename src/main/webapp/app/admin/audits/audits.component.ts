@@ -8,11 +8,19 @@ import { ITEMS_PER_PAGE } from 'app/shared/constants/pagination.constants';
 import { Audit } from './audit.model';
 import { AuditsService } from './audits.service';
 import { faSort } from '@fortawesome/free-solid-svg-icons';
+import { TranslateDirective } from '../../shared/language/translate.directive';
+import { FormsModule } from '@angular/forms';
+import { SortDirective } from '../../shared/sort/sort.directive';
+import { SortByDirective } from '../../shared/sort/sort-by.directive';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { ItemCountComponent } from '../../shared/pagination/item-count.component';
+import { NgbPagination } from '@ng-bootstrap/ng-bootstrap';
+import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 
 @Component({
     selector: 'jhi-audit',
     templateUrl: './audits.component.html',
-    standalone: false,
+    imports: [TranslateDirective, FormsModule, SortDirective, SortByDirective, FaIconComponent, ItemCountComponent, NgbPagination, ArtemisDatePipe],
 })
 export class AuditsComponent implements OnInit {
     private auditsService = inject(AuditsService);

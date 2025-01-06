@@ -1,6 +1,6 @@
 import { HttpErrorResponse } from '@angular/common/http';
 import { Component, Input, OnDestroy, OnInit, ViewChild, inject } from '@angular/core';
-import { ActivatedRoute } from '@angular/router';
+import { ActivatedRoute, RouterLink } from '@angular/router';
 import { Patch, Selection, UMLDiagramType, UMLElementType, UMLModel, UMLRelationshipType } from '@ls1intum/apollon';
 import { TranslateService } from '@ngx-translate/core';
 import { JhiWebsocketService } from 'app/core/websocket/websocket.service';
@@ -39,12 +39,53 @@ import { AssessmentType } from 'app/entities/assessment-type.model';
 import { catchError, filter, skip, switchMap, tap } from 'rxjs/operators';
 import { onError } from 'app/shared/util/global.utils';
 import { of } from 'rxjs';
+import { HeaderParticipationPageComponent } from '../../shared/exercise-headers/header-participation-page.component';
+import { ButtonComponent } from '../../../shared/components/button.component';
+import { RequestFeedbackButtonComponent } from '../../../overview/exercise-details/request-feedback-button/request-feedback-button.component';
+import { ResultHistoryComponent } from '../../../overview/result-history/result-history.component';
+import { ResizeableContainerComponent } from '../../../shared/resizeable-container/resizeable-container.component';
+import { TeamParticipateInfoBoxComponent } from '../../shared/team/team-participate/team-participate-info-box.component';
+import { FullscreenComponent } from '../../../shared/fullscreen/fullscreen.component';
+import { ModelingEditorComponent as ModelingEditorComponent_1 } from '../shared/modeling-editor.component';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { TeamSubmissionSyncComponent } from '../../shared/team-submission-sync/team-submission-sync.component';
+import { ModelingAssessmentComponent } from '../assess/modeling-assessment.component';
+import { TranslateDirective } from '../../../shared/language/translate.directive';
+import { DecimalPipe, NgClass } from '@angular/common';
+import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
+import { AdditionalFeedbackComponent } from '../../../shared/additional-feedback/additional-feedback.component';
+import { RatingComponent } from '../../shared/rating/rating.component';
+import { ComplaintsStudentViewComponent } from '../../../complaints/complaints-for-students/complaints-student-view.component';
+import { ArtemisTranslatePipe } from '../../../shared/pipes/artemis-translate.pipe';
+import { HtmlForMarkdownPipe } from '../../../shared/pipes/html-for-markdown.pipe';
 
 @Component({
     selector: 'jhi-modeling-submission',
     templateUrl: './modeling-submission.component.html',
     styleUrls: ['./modeling-submission.component.scss'],
-    standalone: false,
+    imports: [
+        HeaderParticipationPageComponent,
+        ButtonComponent,
+        RouterLink,
+        RequestFeedbackButtonComponent,
+        ResultHistoryComponent,
+        ResizeableContainerComponent,
+        TeamParticipateInfoBoxComponent,
+        FullscreenComponent,
+        ModelingEditorComponent_1,
+        FaIconComponent,
+        TeamSubmissionSyncComponent,
+        ModelingAssessmentComponent,
+        TranslateDirective,
+        NgClass,
+        NgbTooltip,
+        AdditionalFeedbackComponent,
+        RatingComponent,
+        ComplaintsStudentViewComponent,
+        DecimalPipe,
+        ArtemisTranslatePipe,
+        HtmlForMarkdownPipe,
+    ],
 })
 export class ModelingSubmissionComponent implements OnInit, OnDestroy, ComponentCanDeactivate {
     private jhiWebsocketService = inject(JhiWebsocketService);

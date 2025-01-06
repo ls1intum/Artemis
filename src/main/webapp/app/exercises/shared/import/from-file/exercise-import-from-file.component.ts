@@ -7,11 +7,13 @@ import { AlertService } from 'app/core/util/alert.service';
 import { faUpload } from '@fortawesome/free-solid-svg-icons';
 import { ProgrammingExercise, copyBuildConfigFromExerciseJson } from 'app/entities/programming/programming-exercise.model';
 import JSZip from 'jszip';
+import { ButtonComponent } from '../../../../shared/components/button.component';
+import { HelpIconComponent } from '../../../../shared/components/help-icon.component';
 
 @Component({
     selector: 'jhi-exercise-import-from-file',
     templateUrl: './exercise-import-from-file.component.html',
-    standalone: false,
+    imports: [ButtonComponent, HelpIconComponent],
 })
 export class ExerciseImportFromFileComponent implements OnInit {
     private activeModal = inject(NgbActiveModal);

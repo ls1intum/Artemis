@@ -22,8 +22,18 @@ import { animate, style, transition, trigger } from '@angular/animations';
 import { Posting } from 'app/entities/metis/posting.model';
 import { Reaction } from 'app/entities/metis/reaction.model';
 import { faBookmark, faPencilAlt, faSmile, faTrash } from '@fortawesome/free-solid-svg-icons';
-import { DOCUMENT } from '@angular/common';
+import { DOCUMENT, NgClass, NgIf, NgStyle } from '@angular/common';
 import { AnswerPostReactionsBarComponent } from 'app/shared/metis/posting-reactions-bar/answer-post-reactions-bar/answer-post-reactions-bar.component';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { TranslateDirective } from '../../language/translate.directive';
+import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
+import { PostingHeaderComponent } from '../posting-header/posting-header.component';
+import { PostingContentComponent } from '../posting-content/posting-content.components';
+import { AnswerPostReactionsBarComponent as AnswerPostReactionsBarComponent_1 } from '../posting-reactions-bar/answer-post-reactions-bar/answer-post-reactions-bar.component';
+import { AnswerPostCreateEditModalComponent } from '../posting-create-edit-modal/answer-post-create-edit-modal/answer-post-create-edit-modal.component';
+import { CdkConnectedOverlay, CdkOverlayOrigin } from '@angular/cdk/overlay';
+import { EmojiPickerComponent } from '../emoji/emoji-picker.component';
+import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 
 @Component({
     selector: 'jhi-answer-post',
@@ -36,7 +46,22 @@ import { AnswerPostReactionsBarComponent } from 'app/shared/metis/posting-reacti
             transition(':leave', [animate('300ms ease-out', style({ opacity: 0 }))]),
         ]),
     ],
-    standalone: false,
+    imports: [
+        NgClass,
+        FaIconComponent,
+        TranslateDirective,
+        NgbTooltip,
+        PostingHeaderComponent,
+        PostingContentComponent,
+        AnswerPostReactionsBarComponent_1,
+        AnswerPostCreateEditModalComponent,
+        NgIf,
+        NgStyle,
+        CdkOverlayOrigin,
+        CdkConnectedOverlay,
+        EmojiPickerComponent,
+        ArtemisDatePipe,
+    ],
 })
 export class AnswerPostComponent extends PostingDirective<AnswerPost> implements OnInit, OnChanges, OnDestroy {
     changeDetector = inject(ChangeDetectorRef);

@@ -17,6 +17,9 @@ import { onError } from 'app/shared/util/global.utils';
 import { checkForInvalidFlaggedQuestions } from 'app/exercises/quiz/shared/quiz-manage-util.service';
 import { FileService } from 'app/shared/http/file.service';
 import JSZip from 'jszip';
+import { KeyValuePipe, NgClass } from '@angular/common';
+import { TranslateDirective } from '../../../shared/language/translate.directive';
+import { FormsModule } from '@angular/forms';
 
 export enum State {
     COURSE = 'Course',
@@ -30,7 +33,7 @@ export enum State {
     changeDetection: ChangeDetectionStrategy.OnPush,
     styleUrls: ['../shared/quiz.scss'],
     encapsulation: ViewEncapsulation.None,
-    standalone: false,
+    imports: [NgClass, TranslateDirective, FormsModule, KeyValuePipe],
 })
 export class QuizQuestionListEditExistingComponent implements OnChanges {
     private modalService = inject(NgbModal);

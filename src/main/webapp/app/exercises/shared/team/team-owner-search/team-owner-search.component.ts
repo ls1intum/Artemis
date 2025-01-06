@@ -8,11 +8,13 @@ import { Team } from 'app/entities/team.model';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
 import { cloneDeep } from 'lodash-es';
 import { NgbTypeahead } from '@ng-bootstrap/ng-bootstrap';
+import { FormsModule } from '@angular/forms';
+import { ArtemisTranslatePipe } from '../../../../shared/pipes/artemis-translate.pipe';
 
 @Component({
     selector: 'jhi-team-owner-search',
     templateUrl: './team-owner-search.component.html',
-    standalone: false,
+    imports: [FormsModule, NgbTypeahead, ArtemisTranslatePipe],
 })
 export class TeamOwnerSearchComponent implements OnInit {
     private courseService = inject(CourseManagementService);

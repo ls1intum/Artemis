@@ -7,6 +7,12 @@ import dayjs from 'dayjs/esm';
 import { round } from 'app/shared/util/utils';
 import { Course } from 'app/entities/course.model';
 import { JhiWebsocketService } from 'app/core/websocket/websocket.service';
+import { NgClass } from '@angular/common';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { TranslateDirective } from '../../shared/language/translate.directive';
+import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
+import { ArtemisTranslatePipe } from '../../shared/pipes/artemis-translate.pipe';
+import { ArtemisDurationFromSecondsPipe } from 'app/shared/pipes/artemis-duration-from-seconds.pipe';
 
 export enum ExamReviewState {
     UNSET = 'unset',
@@ -26,7 +32,7 @@ export enum ExamConductionState {
     selector: 'jhi-exam-status',
     templateUrl: './exam-status.component.html',
     styleUrls: ['./exam-status.component.scss'],
-    standalone: false,
+    imports: [NgClass, FaIconComponent, TranslateDirective, ArtemisDatePipe, ArtemisTranslatePipe, ArtemisDurationFromSecondsPipe],
 })
 export class ExamStatusComponent implements OnChanges, OnInit, OnDestroy {
     private examChecklistService = inject(ExamChecklistService);

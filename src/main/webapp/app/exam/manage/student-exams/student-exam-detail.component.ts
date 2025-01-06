@@ -1,24 +1,43 @@
 import { Component, OnDestroy, OnInit, inject } from '@angular/core';
-import { ActivatedRoute } from '@angular/router';
+import { ActivatedRoute, RouterLink } from '@angular/router';
 import { StudentExam } from 'app/entities/student-exam.model';
 import { StudentExamService } from 'app/exam/manage/student-exams/student-exam.service';
 import { Course } from 'app/entities/course.model';
 import { User } from 'app/core/user/user.model';
 import { AlertService } from 'app/core/util/alert.service';
 import dayjs from 'dayjs/esm';
-import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
+import { NgbModal, NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { getLatestSubmissionResult, setLatestSubmissionResult } from 'app/entities/submission.model';
 import { GradeType } from 'app/entities/grading-scale.model';
 import { faSave } from '@fortawesome/free-solid-svg-icons';
 import { Exercise } from 'app/entities/exercise.model';
 import { StudentExamWithGradeDTO } from 'app/exam/exam-scores/exam-score-dtos.model';
 import { combineLatest, takeWhile } from 'rxjs';
+import { TranslateDirective } from '../../../shared/language/translate.directive';
+import { FormsModule } from '@angular/forms';
+import { WorkingTimeControlComponent } from '../../shared/working-time-control/working-time-control.component';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { TestexamWorkingTimeComponent } from '../../shared/testExam-workingTime/testexam-working-time.component';
+import { StudentExamDetailTableRowComponent } from './student-exam-detail-table-row/student-exam-detail-table-row.component';
+import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
+import { ArtemisTranslatePipe } from '../../../shared/pipes/artemis-translate.pipe';
 
 @Component({
     selector: 'jhi-student-exam-detail',
     templateUrl: './student-exam-detail.component.html',
     styleUrls: ['./student-exam-detail.component.scss'],
-    standalone: false,
+    imports: [
+        TranslateDirective,
+        FormsModule,
+        WorkingTimeControlComponent,
+        FaIconComponent,
+        TestexamWorkingTimeComponent,
+        NgbTooltip,
+        RouterLink,
+        StudentExamDetailTableRowComponent,
+        ArtemisDatePipe,
+        ArtemisTranslatePipe,
+    ],
 })
 export class StudentExamDetailComponent implements OnInit, OnDestroy {
     private route = inject(ActivatedRoute);

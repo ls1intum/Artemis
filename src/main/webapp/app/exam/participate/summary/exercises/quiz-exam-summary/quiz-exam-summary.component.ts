@@ -14,11 +14,15 @@ import { ArtemisServerDateService } from 'app/shared/server-date.service';
 import { Result } from 'app/entities/result.model';
 import { roundValueSpecifiedByCourseSettings } from 'app/shared/util/utils';
 import { QuizParticipation } from 'app/entities/quiz/quiz-participation.model';
+import { TranslateDirective } from '../../../../../shared/language/translate.directive';
+import { MultipleChoiceQuestionComponent } from '../../../../../exercises/quiz/shared/questions/multiple-choice-question/multiple-choice-question.component';
+import { DragAndDropQuestionComponent } from '../../../../../exercises/quiz/shared/questions/drag-and-drop-question/drag-and-drop-question.component';
+import { ShortAnswerQuestionComponent } from '../../../../../exercises/quiz/shared/questions/short-answer-question/short-answer-question.component';
 
 @Component({
     selector: 'jhi-quiz-exam-summary',
     templateUrl: './quiz-exam-summary.component.html',
-    standalone: false,
+    imports: [TranslateDirective, MultipleChoiceQuestionComponent, DragAndDropQuestionComponent, ShortAnswerQuestionComponent],
 })
 export class QuizExamSummaryComponent implements OnChanges {
     private exerciseService = inject(QuizExerciseService);

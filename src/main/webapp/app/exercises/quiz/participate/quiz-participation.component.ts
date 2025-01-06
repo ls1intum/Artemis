@@ -38,13 +38,39 @@ import { captureException } from '@sentry/angular';
 import { getCourseFromExercise } from 'app/entities/exercise.model';
 import { faCircleNotch, faSync } from '@fortawesome/free-solid-svg-icons';
 import { ArtemisServerDateService } from 'app/shared/server-date.service';
+import { NgClass, NgTemplateOutlet } from '@angular/common';
+import { TranslateDirective } from '../../../shared/language/translate.directive';
+import { ButtonComponent } from '../../../shared/components/button.component';
+import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
+import { MultipleChoiceQuestionComponent as MultipleChoiceQuestionComponent_1 } from '../shared/questions/multiple-choice-question/multiple-choice-question.component';
+import { DragAndDropQuestionComponent as DragAndDropQuestionComponent_1 } from '../shared/questions/drag-and-drop-question/drag-and-drop-question.component';
+import { ShortAnswerQuestionComponent as ShortAnswerQuestionComponent_1 } from '../shared/questions/short-answer-question/short-answer-question.component';
+import { JhiConnectionStatusComponent } from '../../../shared/connection-status/connection-status.component';
+import { FormsModule } from '@angular/forms';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
+import { ArtemisTranslatePipe } from '../../../shared/pipes/artemis-translate.pipe';
 
 @Component({
     selector: 'jhi-quiz',
     templateUrl: './quiz-participation.component.html',
     providers: [ParticipationService],
     styleUrls: ['./quiz-participation.component.scss'],
-    standalone: false,
+    imports: [
+        NgClass,
+        NgTemplateOutlet,
+        TranslateDirective,
+        ButtonComponent,
+        NgbTooltip,
+        MultipleChoiceQuestionComponent_1,
+        DragAndDropQuestionComponent_1,
+        ShortAnswerQuestionComponent_1,
+        JhiConnectionStatusComponent,
+        FormsModule,
+        FaIconComponent,
+        ArtemisDatePipe,
+        ArtemisTranslatePipe,
+    ],
 })
 export class QuizParticipationComponent implements OnInit, OnDestroy {
     private jhiWebsocketService = inject(JhiWebsocketService);

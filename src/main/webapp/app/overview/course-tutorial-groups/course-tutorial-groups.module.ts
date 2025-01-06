@@ -7,7 +7,13 @@ import { ArtemisSidebarModule } from 'app/shared/sidebar/sidebar.module';
 import { ArtemisAppRoutingModule } from 'app/app-routing.module';
 
 @NgModule({
-    imports: [ArtemisAppRoutingModule, ArtemisSharedModule, ArtemisTutorialGroupsSharedModule, ArtemisSidebarModule],
-    declarations: [CourseTutorialGroupsComponent, CourseTutorialGroupCardComponent],
+    imports: [
+        ArtemisAppRoutingModule,
+        ArtemisSharedModule,
+        ArtemisTutorialGroupsSharedModule,
+        ArtemisSidebarModule,
+        CourseTutorialGroupsComponent,
+        CourseTutorialGroupCardComponent,
+    ],
 })
 export class CourseTutorialGroupsModule {}

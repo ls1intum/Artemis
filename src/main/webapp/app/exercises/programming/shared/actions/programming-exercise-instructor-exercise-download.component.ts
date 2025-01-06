@@ -5,6 +5,7 @@ import { ProgrammingExerciseService } from 'app/exercises/programming/manage/ser
 import { downloadZipFileFromResponse } from 'app/shared/util/download.util';
 import { AlertService } from 'app/core/util/alert.service';
 import { faDownload } from '@fortawesome/free-solid-svg-icons';
+import { ButtonComponent } from '../../../../shared/components/button.component';
 
 @Component({
     selector: 'jhi-programming-exercise-instructor-exercise-download',
@@ -20,7 +21,7 @@ import { faDownload } from '@fortawesome/free-solid-svg-icons';
             (onClick)="exportExercise()"
         />
     `,
-    standalone: false,
+    imports: [ButtonComponent],
 })
 export class ProgrammingExerciseInstructorExerciseDownloadComponent {
     private programmingExerciseService = inject(ProgrammingExerciseService);

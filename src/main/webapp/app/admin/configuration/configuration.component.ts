@@ -3,11 +3,17 @@ import { Component, OnInit, inject } from '@angular/core';
 import { ConfigurationService } from './configuration.service';
 import { Bean, PropertySource } from './configuration.model';
 import { faSort } from '@fortawesome/free-solid-svg-icons';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { FormsModule } from '@angular/forms';
+import { SortDirective } from 'app/shared/sort/sort.directive';
+import { SortByDirective } from 'app/shared/sort/sort-by.directive';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { JsonPipe, KeyValuePipe } from '@angular/common';
 
 @Component({
     selector: 'jhi-configuration',
     templateUrl: './configuration.component.html',
-    standalone: false,
+    imports: [TranslateDirective, FormsModule, SortDirective, SortByDirective, FaIconComponent, JsonPipe, KeyValuePipe],
 })
 export class ConfigurationComponent implements OnInit {
     private configurationService = inject(ConfigurationService);

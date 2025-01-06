@@ -1,13 +1,16 @@
 import { Component, Input, OnChanges, OnInit, inject } from '@angular/core';
-import { Router } from '@angular/router';
+import { Router, RouterLink } from '@angular/router';
 import { DoughnutChartType } from 'app/course/manage/detail/course-detail.component';
 import { roundValueSpecifiedByCourseSettings } from 'app/shared/util/utils';
 import { ExerciseType } from 'app/entities/exercise.model';
 import { faSpinner } from '@fortawesome/free-solid-svg-icons';
 import { Course } from 'app/entities/course.model';
-import { Color, ScaleType } from '@swimlane/ngx-charts';
+import { Color, PieChartModule, ScaleType } from '@swimlane/ngx-charts';
 import { NgxChartsSingleSeriesDataEntry } from 'app/shared/chart/ngx-charts-datatypes';
 import { GraphColors } from 'app/entities/statistics.model';
+import { NgClass } from '@angular/common';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { ArtemisTranslatePipe } from '../../../shared/pipes/artemis-translate.pipe';
 
 const PIE_CHART_NA_FALLBACK_VALUE = [0, 0, 1];
 
@@ -15,7 +18,7 @@ const PIE_CHART_NA_FALLBACK_VALUE = [0, 0, 1];
     selector: 'jhi-doughnut-chart',
     templateUrl: './doughnut-chart.component.html',
     styleUrls: ['./doughnut-chart.component.scss'],
-    standalone: false,
+    imports: [RouterLink, NgClass, FaIconComponent, PieChartModule, ArtemisTranslatePipe],
 })
 export class DoughnutChartComponent implements OnChanges, OnInit {
     private router = inject(Router);

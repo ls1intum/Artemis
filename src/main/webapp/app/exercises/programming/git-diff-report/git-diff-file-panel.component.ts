@@ -5,6 +5,7 @@ import { GitDiffFilePanelTitleComponent } from 'app/exercises/programming/git-di
 import { GitDiffLineStatComponent } from 'app/exercises/programming/git-diff-report/git-diff-line-stat.component';
 import { GitDiffFileComponent } from 'app/exercises/programming/git-diff-report/git-diff-file.component';
 import { ArtemisSharedModule } from 'app/shared/shared.module';
+import { NgbAccordionModule, NgbCollapse } from '@ng-bootstrap/ng-bootstrap';
 
 @Component({
     selector: 'jhi-git-diff-file-panel',
@@ -12,7 +13,7 @@ import { ArtemisSharedModule } from 'app/shared/shared.module';
     styleUrls: ['./git-diff-file-panel.component.scss'],
     encapsulation: ViewEncapsulation.None,
     changeDetection: ChangeDetectionStrategy.OnPush,
-    imports: [GitDiffFilePanelTitleComponent, GitDiffLineStatComponent, GitDiffFileComponent, ArtemisSharedModule],
+    imports: [GitDiffFilePanelTitleComponent, GitDiffLineStatComponent, GitDiffFileComponent, ArtemisSharedModule, NgbAccordionModule, NgbCollapse],
 })
 export class GitDiffFilePanelComponent {
     protected readonly faAngleUp = faAngleUp;

@@ -15,11 +15,15 @@ import { GroupChatService } from 'app/shared/metis/conversations/group-chat.serv
 import { Subject, takeUntil } from 'rxjs';
 import { AbstractDialogComponent } from 'app/overview/course-conversations/dialogs/abstract-dialog.component';
 import { finalize } from 'rxjs/operators';
+import { ChannelIconComponent } from '../../other/channel-icon/channel-icon.component';
+import { TranslateDirective } from '../../../../shared/language/translate.directive';
+import { ConversationAddUsersFormComponent } from './add-users-form/conversation-add-users-form.component';
+import { ArtemisTranslatePipe } from '../../../../shared/pipes/artemis-translate.pipe';
 
 @Component({
     selector: 'jhi-conversation-add-users-dialog',
     templateUrl: './conversation-add-users-dialog.component.html',
-    standalone: false,
+    imports: [ChannelIconComponent, TranslateDirective, ConversationAddUsersFormComponent, ArtemisTranslatePipe],
 })
 export class ConversationAddUsersDialogComponent extends AbstractDialogComponent implements OnDestroy {
     private alertService = inject(AlertService);

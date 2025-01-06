@@ -11,11 +11,32 @@ import dayjs from 'dayjs/esm';
 import { StudentExamService } from 'app/exam/manage/student-exams/student-exam.service';
 import { Subject, Subscription } from 'rxjs';
 import { captureException } from '@sentry/angular';
+import { TranslateDirective } from '../../../../shared/language/translate.directive';
+import { ChecklistCheckComponent } from '../../../../shared/components/checklist-check/checklist-check.component';
+import { ExamChecklistExerciseGroupTableComponent } from './exam-checklist-exercisegroup-table/exam-checklist-exercisegroup-table.component';
+import { RouterLink } from '@angular/router';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { ProgressBarComponent } from '../../../../shared/dashboards/tutor-participation-graph/progress-bar/progress-bar.component';
+import { ExamEditWorkingTimeComponent } from './exam-edit-workingtime-dialog/exam-edit-working-time.component';
+import { ExamLiveAnnouncementCreateButtonComponent } from './exam-announcement-dialog/exam-live-announcement-create-button.component';
+import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
+import { ArtemisTranslatePipe } from '../../../../shared/pipes/artemis-translate.pipe';
 
 @Component({
     selector: 'jhi-exam-checklist',
     templateUrl: './exam-checklist.component.html',
-    standalone: false,
+    imports: [
+        TranslateDirective,
+        ChecklistCheckComponent,
+        ExamChecklistExerciseGroupTableComponent,
+        RouterLink,
+        FaIconComponent,
+        ProgressBarComponent,
+        ExamEditWorkingTimeComponent,
+        ExamLiveAnnouncementCreateButtonComponent,
+        ArtemisDatePipe,
+        ArtemisTranslatePipe,
+    ],
 })
 export class ExamChecklistComponent implements OnChanges, OnInit, OnDestroy {
     private examChecklistService = inject(ExamChecklistService);

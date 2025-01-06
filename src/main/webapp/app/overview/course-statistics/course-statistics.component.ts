@@ -1,8 +1,8 @@
 import { AfterViewInit, Component, OnDestroy, OnInit, TemplateRef, ViewChild, inject } from '@angular/core';
-import { ActivatedRoute } from '@angular/router';
+import { ActivatedRoute, RouterLink } from '@angular/router';
 import { faClipboard, faFilter, faQuestionCircle } from '@fortawesome/free-solid-svg-icons';
 import { TranslateService } from '@ngx-translate/core';
-import { Color, ScaleType } from '@swimlane/ngx-charts';
+import { BarChartModule, Color, PieChartModule, ScaleType } from '@swimlane/ngx-charts';
 import { CourseScores } from 'app/course/course-scores/course-scores';
 import { ScoresStorageService } from 'app/course/course-scores/scores-storage.service';
 import { ParticipationResultDTO } from 'app/course/manage/course-for-dashboard-dto';
@@ -25,6 +25,13 @@ import { ArtemisNavigationUtilService } from 'app/utils/navigation.utils';
 import dayjs from 'dayjs/esm';
 import { sortBy } from 'lodash-es';
 import { Subject, Subscription } from 'rxjs';
+import { NgbDropdown, NgbDropdownMenu, NgbDropdownToggle, NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { TranslateDirective } from '../../shared/language/translate.directive';
+import { DocumentationButtonComponent } from '../../shared/components/documentation-button/documentation-button.component';
+import { ExerciseScoresChartComponent } from '../visualizations/exercise-scores-chart/exercise-scores-chart.component';
+import { KeyValuePipe } from '@angular/common';
+import { ArtemisTranslatePipe } from '../../shared/pipes/artemis-translate.pipe';
 
 const QUIZ_EXERCISE_COLOR = '#17a2b8';
 const PROGRAMMING_EXERCISE_COLOR = '#fd7e14';
@@ -92,7 +99,21 @@ enum ChartBarTitle {
     selector: 'jhi-course-statistics',
     templateUrl: './course-statistics.component.html',
     styleUrls: ['../course-overview.scss'],
-    standalone: false,
+    imports: [
+        NgbDropdown,
+        NgbDropdownToggle,
+        FaIconComponent,
+        TranslateDirective,
+        NgbDropdownMenu,
+        DocumentationButtonComponent,
+        PieChartModule,
+        NgbTooltip,
+        RouterLink,
+        ExerciseScoresChartComponent,
+        BarChartModule,
+        KeyValuePipe,
+        ArtemisTranslatePipe,
+    ],
 })
 export class CourseStatisticsComponent implements OnInit, OnDestroy, AfterViewInit, BarControlConfigurationProvider {
     private courseStorageService = inject(CourseStorageService);

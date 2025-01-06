@@ -1,11 +1,16 @@
 import dayjs from 'dayjs/esm';
 import { Component, computed, effect, inject, input, output, untracked, viewChild } from '@angular/core';
-import { AbstractControl, FormBuilder, FormGroup, ValidationErrors, Validators } from '@angular/forms';
+import { AbstractControl, FormBuilder, FormGroup, FormsModule, ReactiveFormsModule, ValidationErrors, Validators } from '@angular/forms';
 import urlParser from 'js-video-url-parser';
 import { faArrowLeft, faTimes } from '@fortawesome/free-solid-svg-icons';
 import { CompetencyLectureUnitLink } from 'app/entities/competency.model';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { FormDateTimePickerComponent } from 'app/shared/date-time-picker/date-time-picker.component';
+import { TranslateDirective } from '../../../../shared/language/translate.directive';
+import { FormDateTimePickerComponent as FormDateTimePickerComponent_1 } from '../../../../shared/date-time-picker/date-time-picker.component';
+import { CompetencySelectionComponent } from '../../../../shared/competency-selection/competency-selection.component';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { ArtemisTranslatePipe } from '../../../../shared/pipes/artemis-translate.pipe';
 
 export interface VideoUnitFormData {
     name?: string;
@@ -58,7 +63,7 @@ function videoSourceUrlValidator(control: AbstractControl): ValidationErrors | u
 @Component({
     selector: 'jhi-video-unit-form',
     templateUrl: './video-unit-form.component.html',
-    standalone: false,
+    imports: [FormsModule, ReactiveFormsModule, TranslateDirective, FormDateTimePickerComponent_1, CompetencySelectionComponent, FaIconComponent, ArtemisTranslatePipe],
 })
 export class VideoUnitFormComponent {
     protected readonly faTimes = faTimes;

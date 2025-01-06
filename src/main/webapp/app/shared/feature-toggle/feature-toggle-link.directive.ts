@@ -3,10 +3,7 @@ import { FeatureToggle, FeatureToggleService } from 'app/shared/feature-toggle/f
 import { tap } from 'rxjs/operators';
 import { Subscription } from 'rxjs';
 
-@Directive({
-    selector: '[jhiFeatureToggleLink]',
-    standalone: false,
-})
+@Directive({ selector: '[jhiFeatureToggleLink]' })
 export class FeatureToggleLinkDirective implements OnInit, OnDestroy {
     private featureToggleService = inject(FeatureToggleService);
 

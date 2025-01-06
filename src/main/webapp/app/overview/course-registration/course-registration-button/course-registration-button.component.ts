@@ -5,11 +5,13 @@ import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
 import { Course } from 'app/entities/course.model';
 import { matchesRegexFully } from 'app/utils/regex.util';
 import { AlertService } from 'app/core/util/alert.service';
+import { ConfirmAutofocusButtonComponent } from '../../../shared/components/confirm-autofocus-button.component';
+import { TranslateDirective } from '../../../shared/language/translate.directive';
 
 @Component({
     selector: 'jhi-course-registration-button',
     templateUrl: './course-registration-button.component.html',
-    standalone: false,
+    imports: [ConfirmAutofocusButtonComponent, TranslateDirective],
 })
 export class CourseRegistrationButtonComponent implements OnInit {
     private accountService = inject(AccountService);

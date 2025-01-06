@@ -3,7 +3,7 @@ import { Location } from '@angular/common';
 import { firstValueFrom } from 'rxjs';
 import { AlertService } from 'app/core/util/alert.service';
 import { UMLDiagramType, UMLModel } from '@ls1intum/apollon';
-import { ActivatedRoute, Router } from '@angular/router';
+import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { AccountService } from 'app/core/auth/account.service';
 import { HttpErrorResponse } from '@angular/common/http';
 import { TranslateService } from '@ngx-translate/core';
@@ -31,12 +31,30 @@ import { isAllowedToModifyFeedback } from 'app/assessment/assessment.service';
 import { AssessmentAfterComplaint } from 'app/complaints/complaints-for-tutor/complaints-for-tutor.component';
 import { AthenaService } from 'app/assessment/athena.service';
 import { faCircleNotch, faQuestionCircle } from '@fortawesome/free-solid-svg-icons';
+import { AssessmentLayoutComponent } from '../../../../assessment/assessment-layout/assessment-layout.component';
+import { TranslateDirective } from '../../../../shared/language/translate.directive';
+import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { ModelingAssessmentComponent } from '../modeling-assessment.component';
+import { CollapsableAssessmentInstructionsComponent } from '../../../../assessment/assessment-instructions/collapsable-assessment-instructions/collapsable-assessment-instructions.component';
+import { UnreferencedFeedbackComponent } from '../../../shared/unreferenced-feedback/unreferenced-feedback.component';
+import { ArtemisTranslatePipe } from '../../../../shared/pipes/artemis-translate.pipe';
 
 @Component({
     selector: 'jhi-modeling-assessment-editor',
     templateUrl: './modeling-assessment-editor.component.html',
     styleUrls: ['./modeling-assessment-editor.component.scss'],
-    standalone: false,
+    imports: [
+        AssessmentLayoutComponent,
+        TranslateDirective,
+        NgbTooltip,
+        FaIconComponent,
+        ModelingAssessmentComponent,
+        CollapsableAssessmentInstructionsComponent,
+        UnreferencedFeedbackComponent,
+        RouterLink,
+        ArtemisTranslatePipe,
+    ],
 })
 export class ModelingAssessmentEditorComponent implements OnInit {
     private alertService = inject(AlertService);

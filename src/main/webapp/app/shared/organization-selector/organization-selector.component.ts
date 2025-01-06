@@ -4,11 +4,12 @@ import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import { TranslateService } from '@ngx-translate/core';
 import { AlertService } from 'app/core/util/alert.service';
 import { Organization } from 'app/entities/organization.model';
+import { TranslateDirective } from '../language/translate.directive';
 
 @Component({
     selector: 'jhi-organization-selector',
     templateUrl: './organization-selector.component.html',
-    standalone: false,
+    imports: [TranslateDirective],
 })
 export class OrganizationSelectorComponent implements OnInit {
     private activeModal = inject(NgbActiveModal);

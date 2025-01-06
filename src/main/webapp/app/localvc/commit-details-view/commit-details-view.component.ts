@@ -7,11 +7,14 @@ import { ActivatedRoute } from '@angular/router';
 import { CommitInfo } from 'app/entities/programming/programming-submission.model';
 import dayjs from 'dayjs/esm';
 import { catchError, map, tap } from 'rxjs/operators';
+import { GitDiffReportComponent } from '../../exercises/programming/git-diff-report/git-diff-report.component';
+import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
+import { ArtemisTranslatePipe } from '../../shared/pipes/artemis-translate.pipe';
 
 @Component({
     selector: 'jhi-commit-details-view',
     templateUrl: './commit-details-view.component.html',
-    standalone: false,
+    imports: [GitDiffReportComponent, ArtemisDatePipe, ArtemisTranslatePipe],
 })
 export class CommitDetailsViewComponent implements OnDestroy, OnInit {
     private programmingExerciseService = inject(ProgrammingExerciseService);

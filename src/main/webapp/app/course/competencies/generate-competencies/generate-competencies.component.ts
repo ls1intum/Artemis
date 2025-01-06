@@ -6,7 +6,7 @@ import { HttpErrorResponse } from '@angular/common/http';
 import { Competency, CompetencyTaxonomy } from 'app/entities/competency.model';
 import { ActivatedRoute, Router } from '@angular/router';
 import { faBan, faSave, faTimes } from '@fortawesome/free-solid-svg-icons';
-import { FormArray, FormBuilder, FormControl, FormGroup } from '@angular/forms';
+import { FormArray, FormBuilder, FormControl, FormGroup, FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { ButtonType } from 'app/shared/components/button.component';
 import { ComponentCanDeactivate } from 'app/shared/guard/can-deactivate.model';
 import { ConfirmAutofocusModalComponent } from 'app/shared/components/confirm-autofocus-modal.component';
@@ -49,7 +49,7 @@ type CompetencyGenerationStatusUpdate = {
 @Component({
     selector: 'jhi-generate-competencies',
     templateUrl: './generate-competencies.component.html',
-    imports: [ArtemisSharedCommonModule, ArtemisSharedComponentModule, ArtemisCompetenciesModule],
+    imports: [ArtemisSharedCommonModule, ArtemisSharedComponentModule, ArtemisCompetenciesModule, FormsModule, ReactiveFormsModule],
 })
 export class GenerateCompetenciesComponent implements OnInit, ComponentCanDeactivate {
     private courseManagementService = inject(CourseManagementService);

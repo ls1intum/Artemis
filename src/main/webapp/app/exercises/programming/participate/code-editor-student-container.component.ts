@@ -22,11 +22,30 @@ import { SubmissionPolicyService } from 'app/exercises/programming/manage/servic
 import { hasExerciseDueDatePassed } from 'app/exercises/shared/exercise/exercise.utils';
 import { faCircleNotch, faTimesCircle } from '@fortawesome/free-solid-svg-icons';
 import { isManualResult as isManualResultFunction } from 'app/exercises/shared/result/result.utils';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { TranslateDirective } from '../../../shared/language/translate.directive';
+import { CodeEditorContainerComponent as CodeEditorContainerComponent_1 } from '../shared/code-editor/container/code-editor-container.component';
+import { IncludedInScoreBadgeComponent } from '../../shared/exercise-headers/included-in-score-badge.component';
+import { CodeEditorRepositoryIsLockedComponent } from '../shared/code-editor/layout/code-editor-repository-is-locked.component';
+import { UpdatingResultComponent } from '../../shared/result/updating-result.component';
+import { ProgrammingExerciseStudentTriggerBuildButtonComponent } from '../shared/actions/programming-exercise-student-trigger-build-button.component';
+import { ProgrammingExerciseInstructionComponent } from '../shared/instructions-render/programming-exercise-instruction.component';
+import { AdditionalFeedbackComponent } from '../../../shared/additional-feedback/additional-feedback.component';
 
 @Component({
     selector: 'jhi-code-editor-student',
     templateUrl: './code-editor-student-container.component.html',
-    standalone: false,
+    imports: [
+        FaIconComponent,
+        TranslateDirective,
+        CodeEditorContainerComponent_1,
+        IncludedInScoreBadgeComponent,
+        CodeEditorRepositoryIsLockedComponent,
+        UpdatingResultComponent,
+        ProgrammingExerciseStudentTriggerBuildButtonComponent,
+        ProgrammingExerciseInstructionComponent,
+        AdditionalFeedbackComponent,
+    ],
 })
 export class CodeEditorStudentContainerComponent implements OnInit, OnDestroy {
     private domainService = inject(DomainService);

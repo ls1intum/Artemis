@@ -5,13 +5,14 @@ import { ResizeType } from 'app/exercises/programming/shared/code-editor/model/c
 import { InteractableEvent } from 'app/exercises/programming/shared/code-editor/file-browser/code-editor-file-browser.component';
 import { faGripLines, faGripLinesVertical } from '@fortawesome/free-solid-svg-icons';
 import { CollapsableCodeEditorElement } from 'app/exercises/programming/shared/code-editor/container/code-editor-container.component';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 
 @Component({
     selector: 'jhi-code-editor-grid',
     templateUrl: './code-editor-grid.component.html',
     styleUrls: ['./code-editor-grid.scss'],
     encapsulation: ViewEncapsulation.None,
-    standalone: false,
+    imports: [FaIconComponent],
 })
 export class CodeEditorGridComponent implements AfterViewInit {
     private renderer = inject(Renderer2);

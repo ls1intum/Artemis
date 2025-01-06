@@ -1,15 +1,17 @@
 import { ChangeDetectionStrategy, Component, EventEmitter, Input, OnDestroy, Output, TemplateRef, ViewChild, inject } from '@angular/core';
-import { NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
+import { NgbDropdownButtonItem, NgbDropdownItem, NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
 import { EMPTY, Subject, from } from 'rxjs';
 import { catchError, takeUntil } from 'rxjs/operators';
 import { TutorialGroupsService } from 'app/course/tutorial-groups/services/tutorial-groups.service';
 import { AlertService } from 'app/core/util/alert.service';
+import { TranslateDirective } from '../../../../../../shared/language/translate.directive';
+import { FormsModule } from '@angular/forms';
 
 @Component({
     selector: 'jhi-tutorial-groups-export-button',
     templateUrl: './tutorial-groups-export-button.component.html',
     changeDetection: ChangeDetectionStrategy.OnPush,
-    standalone: false,
+    imports: [NgbDropdownButtonItem, NgbDropdownItem, TranslateDirective, FormsModule],
 })
 export class TutorialGroupsExportButtonComponent implements OnDestroy {
     private modalService = inject(NgbModal);

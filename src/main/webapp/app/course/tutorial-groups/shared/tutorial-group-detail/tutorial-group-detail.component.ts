@@ -9,12 +9,33 @@ import { TranslateService } from '@ngx-translate/core';
 import { faCircle, faCircleInfo, faCircleXmark, faPercent, faQuestionCircle, faUserCheck } from '@fortawesome/free-solid-svg-icons';
 import dayjs from 'dayjs/esm';
 import { SortService } from 'app/shared/service/sort.service';
+import { NgClass, NgStyle, NgTemplateOutlet } from '@angular/common';
+import { IconCardComponent } from '../../../../shared/icon-card/icon-card.component';
+import { ProfilePictureComponent } from '../../../../shared/profile-picture/profile-picture.component';
+import { TranslateDirective } from '../../../../shared/language/translate.directive';
+import { RouterLink } from '@angular/router';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
+import { TutorialGroupSessionsTableComponent } from '../tutorial-group-sessions-table/tutorial-group-sessions-table.component';
+import { ArtemisTranslatePipe } from '../../../../shared/pipes/artemis-translate.pipe';
 
 @Component({
     selector: 'jhi-tutorial-group-detail',
     templateUrl: './tutorial-group-detail.component.html',
     styleUrls: ['./tutorial-group-detail.component.scss'],
-    standalone: false,
+    imports: [
+        NgTemplateOutlet,
+        IconCardComponent,
+        ProfilePictureComponent,
+        TranslateDirective,
+        RouterLink,
+        FaIconComponent,
+        NgbTooltip,
+        NgClass,
+        NgStyle,
+        TutorialGroupSessionsTableComponent,
+        ArtemisTranslatePipe,
+    ],
 })
 export class TutorialGroupDetailComponent implements OnChanges {
     private artemisMarkdownService = inject(ArtemisMarkdownService);

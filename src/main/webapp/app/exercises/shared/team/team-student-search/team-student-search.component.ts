@@ -8,11 +8,13 @@ import { Exercise } from 'app/entities/exercise.model';
 import { TeamService } from 'app/exercises/shared/team/team.service';
 import { TeamSearchUser } from 'app/entities/team-search-user.model';
 import { Team } from 'app/entities/team.model';
+import { NgbTypeahead } from '@ng-bootstrap/ng-bootstrap';
+import { ArtemisTranslatePipe } from '../../../../shared/pipes/artemis-translate.pipe';
 
 @Component({
     selector: 'jhi-team-student-search',
     templateUrl: './team-student-search.component.html',
-    standalone: false,
+    imports: [NgbTypeahead, ArtemisTranslatePipe],
 })
 export class TeamStudentSearchComponent {
     private teamService = inject(TeamService);

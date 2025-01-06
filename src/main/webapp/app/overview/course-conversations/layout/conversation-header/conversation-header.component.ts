@@ -20,12 +20,17 @@ import { MetisService } from 'app/shared/metis/metis.service';
 import { CourseSidebarService } from 'app/overview/course-sidebar.service';
 import { getAsOneToOneChatDTO } from 'app/entities/metis/conversation/one-to-one-chat.model';
 import { ConversationUserDTO } from 'app/entities/metis/conversation/conversation-user-dto.model';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { ChannelIconComponent } from '../../other/channel-icon/channel-icon.component';
+import { ProfilePictureComponent } from '../../../../shared/profile-picture/profile-picture.component';
+import { TranslateDirective } from '../../../../shared/language/translate.directive';
+import { RouterLink } from '@angular/router';
 
 @Component({
     selector: 'jhi-conversation-header',
     templateUrl: './conversation-header.component.html',
     styleUrls: ['./conversation-header.component.scss'],
-    standalone: false,
+    imports: [FaIconComponent, ChannelIconComponent, ProfilePictureComponent, TranslateDirective, RouterLink],
 })
 export class ConversationHeaderComponent implements OnInit, OnDestroy {
     private modalService = inject(NgbModal);

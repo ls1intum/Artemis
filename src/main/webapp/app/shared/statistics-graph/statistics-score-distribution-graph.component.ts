@@ -2,15 +2,16 @@ import { Component, Input, OnInit, inject } from '@angular/core';
 import { round } from 'app/shared/util/utils';
 import { GraphColors } from 'app/entities/statistics.model';
 import { axisTickFormattingWithPercentageSign } from 'app/shared/statistics-graph/statistics-graph.utils';
-import { Color, ScaleType } from '@swimlane/ngx-charts';
+import { BarChartModule, Color, ScaleType } from '@swimlane/ngx-charts';
 import { ExerciseType } from 'app/entities/exercise.model';
 import { ArtemisNavigationUtilService } from 'app/utils/navigation.utils';
+import { TranslateDirective } from '../language/translate.directive';
 
 @Component({
     selector: 'jhi-statistics-score-distribution-graph',
     templateUrl: './statistics-score-distribution-graph.component.html',
     styleUrls: ['../chart/vertical-bar-chart.scss'],
-    standalone: false,
+    imports: [TranslateDirective, BarChartModule],
 })
 export class StatisticsScoreDistributionGraphComponent implements OnInit {
     private navigationService = inject(ArtemisNavigationUtilService);

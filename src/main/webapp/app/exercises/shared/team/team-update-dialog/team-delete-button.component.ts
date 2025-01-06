@@ -6,6 +6,8 @@ import { TeamService } from 'app/exercises/shared/team/team.service';
 import { Exercise } from 'app/entities/exercise.model';
 import { AlertService } from 'app/core/util/alert.service';
 import { faTrashAlt } from '@fortawesome/free-solid-svg-icons';
+import { DeleteButtonDirective } from '../../../../shared/delete-dialog/delete-button.directive';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 
 @Component({
     selector: 'jhi-team-delete-button',
@@ -24,7 +26,7 @@ import { faTrashAlt } from '@fortawesome/free-solid-svg-icons';
             </button>
         }
     `,
-    standalone: false,
+    imports: [DeleteButtonDirective, FaIconComponent],
 })
 export class TeamDeleteButtonComponent implements OnDestroy {
     private alertService = inject(AlertService);

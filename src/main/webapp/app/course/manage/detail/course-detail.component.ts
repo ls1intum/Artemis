@@ -19,6 +19,9 @@ import { DetailOverviewSection, DetailType } from 'app/detail-overview-list/deta
 import { ArtemisMarkdownService } from 'app/shared/markdown.service';
 import { IrisSubSettingsType } from 'app/entities/iris/settings/iris-sub-settings.model';
 import { Detail } from 'app/detail-overview-list/detail.model';
+import { CourseDetailDoughnutChartComponent } from './course-detail-doughnut-chart.component';
+import { CourseDetailLineChartComponent } from './course-detail-line-chart.component';
+import { DetailOverviewListComponent } from '../../../detail-overview-list/detail-overview-list.component';
 
 export enum DoughnutChartType {
     ASSESSMENT = 'ASSESSMENT',
@@ -35,7 +38,7 @@ export enum DoughnutChartType {
     selector: 'jhi-course-detail',
     templateUrl: './course-detail.component.html',
     styleUrls: ['./course-detail.component.scss'],
-    standalone: false,
+    imports: [CourseDetailDoughnutChartComponent, CourseDetailLineChartComponent, DetailOverviewListComponent],
 })
 export class CourseDetailComponent implements OnInit, OnDestroy {
     private eventManager = inject(EventManager);

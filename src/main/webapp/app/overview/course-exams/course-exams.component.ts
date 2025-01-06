@@ -1,6 +1,6 @@
 import { Component, OnDestroy, OnInit, inject } from '@angular/core';
 import { Course } from 'app/entities/course.model';
-import { ActivatedRoute, Router } from '@angular/router';
+import { ActivatedRoute, Router, RouterOutlet } from '@angular/router';
 import { Subscription } from 'rxjs';
 import { Exam } from 'app/entities/exam/exam.model';
 import dayjs from 'dayjs/esm';
@@ -13,6 +13,9 @@ import { AccordionGroups, CollapseState, SidebarCardElement, SidebarData } from 
 import { CourseOverviewService } from '../course-overview.service';
 import { cloneDeep } from 'lodash-es';
 import { lastValueFrom } from 'rxjs';
+import { NgClass } from '@angular/common';
+import { SidebarComponent } from '../../shared/sidebar/sidebar.component';
+import { TranslateDirective } from '../../shared/language/translate.directive';
 
 const DEFAULT_UNIT_GROUPS: AccordionGroups = {
     real: { entityData: [] },
@@ -33,7 +36,7 @@ const DEFAULT_SHOW_ALWAYS: CollapseState = {
     selector: 'jhi-course-exams',
     templateUrl: './course-exams.component.html',
     styleUrls: ['./course-exams.component.scss'],
-    standalone: false,
+    imports: [NgClass, SidebarComponent, RouterOutlet, TranslateDirective],
 })
 export class CourseExamsComponent implements OnInit, OnDestroy {
     private route = inject(ActivatedRoute);

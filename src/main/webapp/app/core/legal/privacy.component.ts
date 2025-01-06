@@ -1,10 +1,12 @@
 import { AfterViewInit, Component, OnDestroy, OnInit, inject } from '@angular/core';
-import { ActivatedRoute } from '@angular/router';
+import { ActivatedRoute, RouterLink } from '@angular/router';
 import { Subscription } from 'rxjs';
 import { JhiLanguageHelper } from 'app/core/language/language.helper';
 import { AccountService } from 'app/core/auth/account.service';
 import { LegalDocumentService } from 'app/shared/service/legal-document.service';
 import { LegalDocumentLanguage } from 'app/entities/legal-document.model';
+import { TranslateDirective } from '../../shared/language/translate.directive';
+import { HtmlForMarkdownPipe } from '../../shared/pipes/html-for-markdown.pipe';
 
 @Component({
     selector: 'jhi-privacy',
@@ -14,7 +16,7 @@ import { LegalDocumentLanguage } from 'app/entities/legal-document.model';
             <a jhiTranslate="artemisApp.dataExport.title" [routerLink]="['/privacy/data-exports']"> </a>
         }
     `,
-    standalone: false,
+    imports: [TranslateDirective, RouterLink, HtmlForMarkdownPipe],
 })
 export class PrivacyComponent implements AfterViewInit, OnInit, OnDestroy {
     private route = inject(ActivatedRoute);

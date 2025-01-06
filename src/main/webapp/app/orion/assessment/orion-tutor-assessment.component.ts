@@ -4,11 +4,14 @@ import { Feedback } from 'app/entities/feedback.model';
 import { OrionConnectorService } from 'app/shared/orion/orion-connector.service';
 import { OrionAssessmentService } from 'app/orion/assessment/orion-assessment.service';
 import { AlertService } from 'app/core/util/alert.service';
+import { CodeEditorTutorAssessmentContainerComponent as CodeEditorTutorAssessmentContainerComponent_1 } from '../../exercises/programming/assess/code-editor-tutor-assessment-container.component';
+import { NgTemplateOutlet } from '@angular/common';
+import { OrionAssessmentInstructionsComponent } from './orion-assessment-instructions.component';
 
 @Component({
     selector: 'jhi-orion-course-management-exercises',
     templateUrl: './orion-tutor-assessment.component.html',
-    standalone: false,
+    imports: [CodeEditorTutorAssessmentContainerComponent_1, NgTemplateOutlet, OrionAssessmentInstructionsComponent],
 })
 export class OrionTutorAssessmentComponent {
     private orionConnectorService = inject(OrionConnectorService);

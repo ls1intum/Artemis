@@ -18,12 +18,32 @@ import { ProgrammingExerciseExamDiffComponent } from 'app/exam/manage/student-ex
 import { ProgrammingExerciseParticipationService } from 'app/exercises/programming/manage/services/programming-exercise-participation.service';
 import { ExamPageComponent } from 'app/exam/participate/exercises/exam-page.component';
 import { ProgrammingExerciseGitDiffReport } from 'app/entities/programming-exercise-git-diff-report.model';
+import { TranslateDirective } from '../../../../shared/language/translate.directive';
+import { MatSlider, MatSliderThumb } from '@angular/material/slider';
+import { FormsModule } from '@angular/forms';
+import { ExamNavigationBarComponent as ExamNavigationBarComponent_1 } from '../../../participate/exam-navigation-bar/exam-navigation-bar.component';
+import { QuizExamSubmissionComponent } from '../../../participate/exercises/quiz/quiz-exam-submission.component';
+import { FileUploadExamSubmissionComponent as FileUploadExamSubmissionComponent_1 } from '../../../participate/exercises/file-upload/file-upload-exam-submission.component';
+import { TextExamSubmissionComponent } from '../../../participate/exercises/text/text-exam-submission.component';
+import { ModelingExamSubmissionComponent } from '../../../participate/exercises/modeling/modeling-exam-submission.component';
+import { ProgrammingExerciseExamDiffComponent as ProgrammingExerciseExamDiffComponent_1 } from './programming-exam-diff/programming-exercise-exam-diff.component';
 
 @Component({
     selector: 'jhi-student-exam-timeline',
     templateUrl: './student-exam-timeline.component.html',
     styleUrls: ['./student-exam-timeline.component.scss'],
-    standalone: false,
+    imports: [
+        TranslateDirective,
+        MatSlider,
+        MatSliderThumb,
+        FormsModule,
+        ExamNavigationBarComponent_1,
+        QuizExamSubmissionComponent,
+        FileUploadExamSubmissionComponent_1,
+        TextExamSubmissionComponent,
+        ModelingExamSubmissionComponent,
+        ProgrammingExerciseExamDiffComponent_1,
+    ],
 })
 export class StudentExamTimelineComponent implements OnInit, AfterViewInit, OnDestroy {
     private activatedRoute = inject(ActivatedRoute);

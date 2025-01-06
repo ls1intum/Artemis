@@ -4,12 +4,13 @@ import { ExamExerciseUpdateService } from 'app/exam/manage/exam-exercise-update.
 import { Exercise, ExerciseType } from 'app/entities/exercise.model';
 import { htmlForMarkdown } from 'app/shared/util/markdown.conversion.util';
 import diff from 'html-diff-ts';
+import { ArtemisTranslatePipe } from '../../../../shared/pipes/artemis-translate.pipe';
 
 @Component({
     selector: 'jhi-exam-exercise-update-highlighter',
     templateUrl: './exam-exercise-update-highlighter.component.html',
     styleUrls: ['./exam-exercise-update-highlighter.component.scss'],
-    standalone: false,
+    imports: [ArtemisTranslatePipe],
 })
 export class ExamExerciseUpdateHighlighterComponent implements OnInit, OnDestroy {
     private examExerciseUpdateService = inject(ExamExerciseUpdateService);

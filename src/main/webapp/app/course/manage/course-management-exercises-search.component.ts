@@ -1,12 +1,15 @@
 import { Component, EventEmitter, OnInit, Output } from '@angular/core';
 import { ExerciseFilter } from 'app/entities/exercise-filter.model';
 import { exerciseTypes } from 'app/entities/exercise.model';
+import { TranslateDirective } from '../../shared/language/translate.directive';
+import { FormsModule } from '@angular/forms';
+import { ArtemisTranslatePipe } from '../../shared/pipes/artemis-translate.pipe';
 
 @Component({
     selector: 'jhi-course-management-exercises-search',
     templateUrl: './course-management-exercises-search.component.html',
     styleUrls: ['./course-management-exercises-search.component.scss'],
-    standalone: false,
+    imports: [TranslateDirective, FormsModule, ArtemisTranslatePipe],
 })
 export class CourseManagementExercisesSearchComponent implements OnInit {
     typeOptions: string[];

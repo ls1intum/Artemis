@@ -4,11 +4,12 @@ import { Subscription } from 'rxjs';
 import { JhiLanguageHelper } from 'app/core/language/language.helper';
 import { LegalDocumentLanguage } from 'app/entities/legal-document.model';
 import { LegalDocumentService } from 'app/shared/service/legal-document.service';
+import { HtmlForMarkdownPipe } from '../../shared/pipes/html-for-markdown.pipe';
 
 @Component({
     selector: 'jhi-imprint',
     template: ` <div [innerHTML]="imprint | htmlForMarkdown"></div> `,
-    standalone: false,
+    imports: [HtmlForMarkdownPipe],
 })
 export class ImprintComponent implements AfterViewInit, OnInit, OnDestroy {
     private route = inject(ActivatedRoute);

@@ -8,12 +8,14 @@ import { onError } from 'app/shared/util/global.utils';
 import { AlertService } from 'app/core/util/alert.service';
 import { finalize } from 'rxjs/operators';
 import { combineLatest } from 'rxjs';
+import { LectureUnitLayoutComponent } from '../lecture-unit-layout/lecture-unit-layout.component';
+import { VideoUnitFormComponent } from '../video-unit-form/video-unit-form.component';
 
 @Component({
     selector: 'jhi-create-video-unit',
     templateUrl: './create-video-unit.component.html',
     styles: [],
-    standalone: false,
+    imports: [LectureUnitLayoutComponent, VideoUnitFormComponent],
 })
 export class CreateVideoUnitComponent implements OnInit {
     private activatedRoute = inject(ActivatedRoute);

@@ -6,6 +6,7 @@ import { Subscription, from } from 'rxjs';
 import { ExamLiveEvent, ExamLiveEventType, ExamParticipationLiveEventsService } from 'app/exam/participate/exam-participation-live-events.service';
 import { ExamLiveEventsOverlayComponent } from 'app/exam/participate/events/exam-live-events-overlay.component';
 import dayjs from 'dayjs/esm';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 
 export const USER_DISPLAY_RELEVANT_EVENTS = [
     ExamLiveEventType.EXAM_WIDE_ANNOUNCEMENT,
@@ -20,7 +21,7 @@ export const USER_DISPLAY_RELEVANT_EVENTS_REOPEN = [ExamLiveEventType.EXAM_WIDE_
     templateUrl: './exam-live-events-button.component.html',
     styleUrls: ['./exam-live-events-button.component.scss'],
     encapsulation: ViewEncapsulation.None,
-    standalone: false,
+    imports: [FaIconComponent],
 })
 export class ExamLiveEventsButtonComponent implements OnInit, OnDestroy {
     private alertService = inject(AlertService);

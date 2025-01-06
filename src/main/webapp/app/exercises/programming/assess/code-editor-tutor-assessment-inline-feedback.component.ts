@@ -8,11 +8,34 @@ import { roundValueSpecifiedByCourseSettings } from 'app/shared/util/utils';
 import { Course } from 'app/entities/course.model';
 import { faBan, faExclamationTriangle, faPencilAlt, faQuestionCircle, faSave, faTrashAlt } from '@fortawesome/free-solid-svg-icons';
 import { Subject } from 'rxjs';
+import { FeedbackSuggestionBadgeComponent } from '../../shared/feedback/feedback-suggestion-badge/feedback-suggestion-badge.component';
+import { TranslateDirective } from '../../../shared/language/translate.directive';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
+import { GradingInstructionLinkIconComponent } from '../../../shared/grading-instruction-link-icon/grading-instruction-link-icon.component';
+import { FormsModule } from '@angular/forms';
+import { DeleteButtonDirective } from '../../../shared/delete-dialog/delete-button.directive';
+import { AssessmentCorrectionRoundBadgeComponent } from '../../../assessment/unreferenced-feedback-detail/assessment-correction-round-badge/assessment-correction-round-badge.component';
+import { ArtemisTranslatePipe } from '../../../shared/pipes/artemis-translate.pipe';
+import { FeedbackContentPipe } from '../../../shared/pipes/feedback-content.pipe';
+import { QuotePipe } from '../../../shared/pipes/quote.pipe';
 
 @Component({
     selector: 'jhi-code-editor-tutor-assessment-inline-feedback',
     templateUrl: './code-editor-tutor-assessment-inline-feedback.component.html',
-    standalone: false,
+    imports: [
+        FeedbackSuggestionBadgeComponent,
+        TranslateDirective,
+        FaIconComponent,
+        NgbTooltip,
+        GradingInstructionLinkIconComponent,
+        FormsModule,
+        DeleteButtonDirective,
+        AssessmentCorrectionRoundBadgeComponent,
+        ArtemisTranslatePipe,
+        FeedbackContentPipe,
+        QuotePipe,
+    ],
 })
 export class CodeEditorTutorAssessmentInlineFeedbackComponent {
     private translateService = inject(TranslateService);

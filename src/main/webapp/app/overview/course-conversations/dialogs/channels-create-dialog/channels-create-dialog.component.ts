@@ -3,11 +3,14 @@ import { ChannelFormData, ChannelType } from 'app/overview/course-conversations/
 import { Course } from 'app/entities/course.model';
 import { ChannelDTO } from 'app/entities/metis/conversation/channel.model';
 import { AbstractDialogComponent } from 'app/overview/course-conversations/dialogs/abstract-dialog.component';
+import { TranslateDirective } from '../../../../shared/language/translate.directive';
+import { ChannelFormComponent } from './channel-form/channel-form.component';
+import { ArtemisTranslatePipe } from '../../../../shared/pipes/artemis-translate.pipe';
 
 @Component({
     selector: 'jhi-channels-create-dialog',
     templateUrl: './channels-create-dialog.component.html',
-    standalone: false,
+    imports: [TranslateDirective, ChannelFormComponent, ArtemisTranslatePipe],
 })
 export class ChannelsCreateDialogComponent extends AbstractDialogComponent {
     @Input() course: Course;

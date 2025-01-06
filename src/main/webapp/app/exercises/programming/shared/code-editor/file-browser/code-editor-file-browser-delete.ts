@@ -5,13 +5,17 @@ import { CodeEditorRepositoryFileService } from 'app/exercises/programming/share
 import { IFileDeleteDelegate } from 'app/exercises/programming/shared/code-editor/file-browser/code-editor-file-browser-on-file-delete-delegate';
 import { captureException } from '@sentry/angular';
 import { faBan, faTrashAlt } from '@fortawesome/free-solid-svg-icons';
+import { FormsModule } from '@angular/forms';
+import { TranslateDirective } from '../../../../../shared/language/translate.directive';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { ArtemisTranslatePipe } from '../../../../../shared/pipes/artemis-translate.pipe';
 
 // Modal -> Delete repository file
 @Component({
     selector: 'jhi-code-editor-file-browser-delete',
     templateUrl: './code-editor-file-browser-delete.component.html',
     providers: [CodeEditorRepositoryFileService],
-    standalone: false,
+    imports: [FormsModule, TranslateDirective, FaIconComponent, ArtemisTranslatePipe],
 })
 export class CodeEditorFileBrowserDeleteComponent implements OnInit {
     activeModal = inject(NgbActiveModal);

@@ -21,6 +21,11 @@ import { BaseEntity, StringBaseEntity } from 'app/shared/model/base-entity';
 import { LocalStorageService } from 'ngx-webstorage';
 import { SortService } from 'app/shared/service/sort.service';
 import { faCircleNotch, faSort, faSortDown, faSortUp } from '@fortawesome/free-solid-svg-icons';
+import { NgbDropdown, NgbDropdownButtonItem, NgbDropdownItem, NgbDropdownMenu, NgbDropdownToggle, NgbTypeahead } from '@ng-bootstrap/ng-bootstrap';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { TranslateDirective } from '../language/translate.directive';
+import { NgTemplateOutlet } from '@angular/common';
+import { ArtemisTranslatePipe } from '../pipes/artemis-translate.pipe';
 
 /**
  * Enum for ascending and descending order.
@@ -60,7 +65,18 @@ type PagingValue = number | 'all';
     templateUrl: './data-table.component.html',
     styleUrls: ['data-table.component.scss'],
     encapsulation: ViewEncapsulation.None,
-    standalone: false,
+    imports: [
+        NgbDropdown,
+        NgbDropdownToggle,
+        NgbDropdownMenu,
+        NgbDropdownButtonItem,
+        NgbDropdownItem,
+        NgbTypeahead,
+        FaIconComponent,
+        TranslateDirective,
+        NgTemplateOutlet,
+        ArtemisTranslatePipe,
+    ],
 })
 export class DataTableComponent implements OnInit, OnChanges {
     private sortService = inject(SortService);

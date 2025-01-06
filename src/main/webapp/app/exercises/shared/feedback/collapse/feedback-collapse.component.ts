@@ -1,12 +1,15 @@
 import { Component, Input, OnInit } from '@angular/core';
 import { faAngleDown, faAngleRight } from '@fortawesome/free-solid-svg-icons';
 import { FeedbackItem } from 'app/exercises/shared/feedback/item/feedback-item';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { FeedbackTextComponent } from '../text/feedback-text.component';
+import { ArtemisTranslatePipe } from '../../../../shared/pipes/artemis-translate.pipe';
 
 @Component({
     selector: 'jhi-feedback-collapse',
     styleUrls: ['./feedback-collapse.scss'],
     templateUrl: './feedback-collapse.component.html',
-    standalone: false,
+    imports: [FaIconComponent, FeedbackTextComponent, ArtemisTranslatePipe],
 })
 /**
  * smallCharacterLimit can be adjusted make smaller or bigger items collapsable

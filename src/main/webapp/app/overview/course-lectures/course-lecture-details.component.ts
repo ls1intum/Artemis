@@ -20,6 +20,19 @@ import { ScienceService } from 'app/shared/science/science.service';
 import { ScienceEventType } from 'app/shared/science/science.model';
 import { Subscription } from 'rxjs';
 import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
+import { TranslateDirective } from '../../shared/language/translate.directive';
+import { NgClass, UpperCasePipe } from '@angular/common';
+import { ExerciseUnitComponent } from './exercise-unit/exercise-unit.component';
+import { AttachmentUnitComponent } from './attachment-unit/attachment-unit.component';
+import { VideoUnitComponent } from './video-unit/video-unit.component';
+import { TextUnitComponent } from './text-unit/text-unit.component';
+import { OnlineUnitComponent } from './online-unit/online-unit.component';
+import { CompetenciesPopoverComponent } from '../../course/competencies/competencies-popover/competencies-popover.component';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { DiscussionSectionComponent } from '../discussion-section/discussion-section.component';
+import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
+import { ArtemisTranslatePipe } from '../../shared/pipes/artemis-translate.pipe';
+import { HtmlForMarkdownPipe } from '../../shared/pipes/html-for-markdown.pipe';
 
 export interface LectureUnitCompletionEvent {
     lectureUnit: LectureUnit;
@@ -30,7 +43,22 @@ export interface LectureUnitCompletionEvent {
     selector: 'jhi-course-lecture-details',
     templateUrl: './course-lecture-details.component.html',
     styleUrls: ['../course-overview.scss', './course-lectures.scss'],
-    standalone: false,
+    imports: [
+        TranslateDirective,
+        NgClass,
+        ExerciseUnitComponent,
+        AttachmentUnitComponent,
+        VideoUnitComponent,
+        TextUnitComponent,
+        OnlineUnitComponent,
+        CompetenciesPopoverComponent,
+        FaIconComponent,
+        DiscussionSectionComponent,
+        UpperCasePipe,
+        ArtemisDatePipe,
+        ArtemisTranslatePipe,
+        HtmlForMarkdownPipe,
+    ],
 })
 export class CourseLectureDetailsComponent extends AbstractScienceComponent implements OnInit, OnDestroy {
     private alertService = inject(AlertService);

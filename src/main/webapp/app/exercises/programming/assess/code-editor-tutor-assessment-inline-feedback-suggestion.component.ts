@@ -3,12 +3,15 @@ import { Feedback, buildFeedbackTextForReview } from 'app/entities/feedback.mode
 import { roundValueSpecifiedByCourseSettings } from 'app/shared/util/utils';
 import { Course } from 'app/entities/course.model';
 import { faCheck, faTrash } from '@fortawesome/free-solid-svg-icons';
+import { FeedbackSuggestionBadgeComponent } from '../../shared/feedback/feedback-suggestion-badge/feedback-suggestion-badge.component';
+import { TranslateDirective } from '../../../shared/language/translate.directive';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 
 @Component({
     selector: 'jhi-code-editor-tutor-assessment-inline-feedback-suggestion',
     templateUrl: './code-editor-tutor-assessment-inline-feedback-suggestion.component.html',
     styleUrls: ['./code-editor-tutor-assessment-inline-feedback-suggestion.component.scss'],
-    standalone: false,
+    imports: [FeedbackSuggestionBadgeComponent, TranslateDirective, FaIconComponent],
 })
 export class CodeEditorTutorAssessmentInlineFeedbackSuggestionComponent {
     @Input()

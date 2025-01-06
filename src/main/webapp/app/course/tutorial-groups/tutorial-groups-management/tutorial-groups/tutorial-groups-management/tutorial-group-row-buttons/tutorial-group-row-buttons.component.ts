@@ -9,12 +9,16 @@ import { NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
 import { RegisteredStudentsComponent } from 'app/course/tutorial-groups/tutorial-groups-management/registered-students/registered-students.component';
 import { TutorialGroupSessionsManagementComponent } from 'app/course/tutorial-groups/tutorial-groups-management/tutorial-group-sessions/tutorial-group-sessions-management/tutorial-group-sessions-management.component';
 import { catchError, takeUntil } from 'rxjs/operators';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { TranslateDirective } from '../../../../../../shared/language/translate.directive';
+import { RouterLink } from '@angular/router';
+import { DeleteButtonDirective } from '../../../../../../shared/delete-dialog/delete-button.directive';
 
 @Component({
     selector: 'jhi-tutorial-group-row-buttons',
     templateUrl: './tutorial-group-row-buttons.component.html',
     changeDetection: ChangeDetectionStrategy.OnPush,
-    standalone: false,
+    imports: [FaIconComponent, TranslateDirective, RouterLink, DeleteButtonDirective],
 })
 export class TutorialGroupRowButtonsComponent implements OnDestroy {
     private tutorialGroupsService = inject(TutorialGroupsService);

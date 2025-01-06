@@ -1,12 +1,14 @@
 import { Component, Input, OnChanges } from '@angular/core';
 import { faArrowsRotate, faCircleXmark } from '@fortawesome/free-solid-svg-icons';
 import { IrisStageDTO, IrisStageStateDTO } from 'app/entities/iris/iris-stage-dto.model';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { NgClass } from '@angular/common';
 
 @Component({
     selector: 'jhi-chat-status-bar',
     templateUrl: './chat-status-bar.component.html',
     styleUrl: './chat-status-bar.component.scss',
-    standalone: false,
+    imports: [FaIconComponent, NgClass],
 })
 export class ChatStatusBarComponent implements OnChanges {
     open = false;

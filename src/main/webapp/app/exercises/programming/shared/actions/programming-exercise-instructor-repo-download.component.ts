@@ -7,11 +7,12 @@ import { AlertService } from 'app/core/util/alert.service';
 import { faDownload } from '@fortawesome/free-solid-svg-icons';
 import { catchError } from 'rxjs/operators';
 import { of } from 'rxjs';
+import { ButtonComponent } from '../../../../shared/components/button.component';
 
 @Component({
     selector: 'jhi-programming-exercise-instructor-repo-download',
     templateUrl: './programming-exercise-instructor-repo-download.component.html',
-    standalone: false,
+    imports: [ButtonComponent],
 })
 export class ProgrammingExerciseInstructorRepoDownloadComponent {
     protected programmingExerciseService = inject(ProgrammingExerciseService);

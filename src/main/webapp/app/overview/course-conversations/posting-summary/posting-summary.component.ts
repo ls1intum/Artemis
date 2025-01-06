@@ -3,12 +3,20 @@ import { Posting, PostingType, SavedPostStatus } from 'app/entities/metis/postin
 import { faBookmark, faBoxArchive, faCheckSquare, faEllipsis, faHashtag, faLock } from '@fortawesome/free-solid-svg-icons';
 import { ConversationType } from 'app/entities/metis/conversation/conversation.model';
 import dayjs from 'dayjs/esm';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { TranslateDirective } from '../../../shared/language/translate.directive';
+import { NgClass } from '@angular/common';
+import { ProfilePictureComponent } from '../../../shared/profile-picture/profile-picture.component';
+import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
+import { PostingContentComponent } from '../../../shared/metis/posting-content/posting-content.components';
+import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
+import { ArtemisTranslatePipe } from '../../../shared/pipes/artemis-translate.pipe';
 
 @Component({
     selector: 'jhi-posting-summary',
     templateUrl: './posting-summary.component.html',
     styleUrls: ['./posting-summary.component.scss'],
-    standalone: false,
+    imports: [FaIconComponent, TranslateDirective, NgClass, ProfilePictureComponent, NgbTooltip, PostingContentComponent, ArtemisDatePipe, ArtemisTranslatePipe],
 })
 export class PostingSummaryComponent {
     readonly post = input<Posting>();

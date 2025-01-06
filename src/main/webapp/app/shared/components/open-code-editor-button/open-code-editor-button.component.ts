@@ -4,11 +4,17 @@ import { faFolderOpen } from '@fortawesome/free-solid-svg-icons';
 import { ProgrammingExerciseStudentParticipation } from 'app/entities/participation/programming-exercise-student-participation.model';
 import { ParticipationService } from 'app/exercises/shared/participation/participation.service';
 import { Exercise } from 'app/entities/exercise.model';
+import { ExerciseActionButtonComponent } from '../exercise-action-button.component';
+import { FeatureToggleDirective } from '../../feature-toggle/feature-toggle.directive';
+import { RouterLink } from '@angular/router';
+import { NgbPopover } from '@ng-bootstrap/ng-bootstrap';
+import { TranslateDirective } from '../../language/translate.directive';
+import { ArtemisTranslatePipe } from '../../pipes/artemis-translate.pipe';
 
 @Component({
     selector: 'jhi-open-code-editor-button',
     templateUrl: './open-code-editor-button.component.html',
-    standalone: false,
+    imports: [ExerciseActionButtonComponent, FeatureToggleDirective, RouterLink, NgbPopover, TranslateDirective, ArtemisTranslatePipe],
 })
 export class OpenCodeEditorButtonComponent implements OnChanges {
     private participationService = inject(ParticipationService);

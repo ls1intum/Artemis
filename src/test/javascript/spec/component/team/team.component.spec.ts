@@ -12,10 +12,10 @@ import { TeamUpdateButtonComponent } from 'app/exercises/shared/team/team-update
 import { TeamComponent } from 'app/exercises/shared/team/team.component';
 import { TeamService } from 'app/exercises/shared/team/team.service';
 import { DataTableComponent } from 'app/shared/data-table/data-table.component';
-import { FeatureToggleModule } from 'app/shared/feature-toggle/feature-toggle.module';
+import { FeatureToggleDirective } from 'app/shared/feature-toggle/feature-toggle.directive';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
-import { MockComponent, MockModule, MockPipe, MockProvider } from 'ng-mocks';
+import { MockComponent, MockDirective, MockModule, MockPipe, MockProvider } from 'ng-mocks';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { of, throwError } from 'rxjs';
 import { Exercise } from '../../../../../main/webapp/app/entities/exercise.model';
@@ -39,7 +39,7 @@ describe('TeamComponent', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule, MockModule(NgbModule), MockModule(FeatureToggleModule), MockModule(NgxDatatableModule), MockModule(RouterModule)],
+            imports: [ArtemisTestModule, MockModule(NgbModule), MockDirective(FeatureToggleDirective), MockModule(NgxDatatableModule), MockModule(RouterModule)],
             declarations: [
                 TeamComponent,
                 MockComponent(TeamUpdateButtonComponent),

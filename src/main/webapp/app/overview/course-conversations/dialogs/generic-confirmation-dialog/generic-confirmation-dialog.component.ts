@@ -1,5 +1,7 @@
 import { Component, Input } from '@angular/core';
 import { AbstractDialogComponent } from 'app/overview/course-conversations/dialogs/abstract-dialog.component';
+import { TranslateDirective } from '../../../../shared/language/translate.directive';
+import { ArtemisTranslatePipe } from '../../../../shared/pipes/artemis-translate.pipe';
 
 export interface GenericConfirmationTranslationKeys {
     titleKey: string;
@@ -10,7 +12,7 @@ export interface GenericConfirmationTranslationKeys {
 @Component({
     selector: 'jhi-generic-confirmation-dialog',
     templateUrl: './generic-confirmation-dialog.component.html',
-    standalone: false,
+    imports: [TranslateDirective, ArtemisTranslatePipe],
 })
 export class GenericConfirmationDialogComponent extends AbstractDialogComponent {
     @Input() translationParameters = {};

@@ -15,6 +15,7 @@ import { getExerciseDueDate } from 'app/exercises/shared/exercise/exercise.utils
 import { getLatestResultOfStudentParticipation, hasParticipationChanged } from 'app/exercises/shared/participation/participation.utils';
 import { MissingResultInformation, isAIResultAndIsBeingProcessed, isAthenaAIResult } from 'app/exercises/shared/result/result.utils';
 import { convertDateFromServer } from 'app/utils/date.utils';
+import { ResultComponent } from './result.component';
 
 /**
  * A component that wraps the result component, updating its result on every websocket result event for the logged-in user.
@@ -25,7 +26,7 @@ import { convertDateFromServer } from 'app/utils/date.utils';
     selector: 'jhi-updating-result',
     templateUrl: './updating-result.component.html',
     providers: [ResultService, RepositoryService],
-    standalone: false,
+    imports: [ResultComponent],
 })
 export class UpdatingResultComponent implements OnChanges, OnDestroy {
     private participationWebsocketService = inject(ParticipationWebsocketService);

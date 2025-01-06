@@ -13,11 +13,14 @@ import { ProgrammingAssessmentManualResultService } from 'app/exercises/programm
 import { areManualResultsAllowed } from 'app/exercises/shared/exercise/exercise.utils';
 import { TextAssessmentService } from 'app/exercises/text/assess/text-assessment.service';
 import { getLinkToSubmissionAssessment } from 'app/utils/navigation.utils';
+import { RouterLink } from '@angular/router';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { ArtemisTranslatePipe } from '../../../shared/pipes/artemis-translate.pipe';
 
 @Component({
     selector: 'jhi-manage-assessment-buttons',
     templateUrl: './manage-assessment-buttons.component.html',
-    standalone: false,
+    imports: [RouterLink, FaIconComponent, ArtemisTranslatePipe],
 })
 export class ManageAssessmentButtonsComponent implements OnInit {
     private programmingAssessmentManualResultService = inject(ProgrammingAssessmentManualResultService);

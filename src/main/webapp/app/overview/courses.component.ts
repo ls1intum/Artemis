@@ -9,17 +9,35 @@ import { TeamService } from 'app/exercises/shared/team/team.service';
 import { JhiWebsocketService } from 'app/core/websocket/websocket.service';
 import dayjs from 'dayjs/esm';
 import { Exam } from 'app/entities/exam/exam.model';
-import { Router } from '@angular/router';
+import { Router, RouterLink } from '@angular/router';
 import { faArrowDownAZ, faArrowUpAZ, faDoorOpen, faPenAlt } from '@fortawesome/free-solid-svg-icons';
 import { CourseAccessStorageService } from 'app/course/course-access-storage.service';
 import { CourseForDashboardDTO } from 'app/course/manage/course-for-dashboard-dto';
 import { sortCourses } from 'app/shared/util/course.util';
+import { TranslateDirective } from '../shared/language/translate.directive';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { SearchFilterComponent } from '../shared/search-filter/search-filter.component';
+import { NgTemplateOutlet } from '@angular/common';
+import { CourseCardComponent } from './course-card.component';
+import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
+import { ArtemisTranslatePipe } from '../shared/pipes/artemis-translate.pipe';
+import { SearchFilterPipe } from 'app/shared/pipes/search-filter.pipe';
 
 @Component({
     selector: 'jhi-overview',
     templateUrl: './courses.component.html',
     styleUrls: ['./courses.component.scss'],
-    standalone: false,
+    imports: [
+        TranslateDirective,
+        FaIconComponent,
+        SearchFilterComponent,
+        RouterLink,
+        NgTemplateOutlet,
+        CourseCardComponent,
+        ArtemisDatePipe,
+        ArtemisTranslatePipe,
+        SearchFilterPipe,
+    ],
 })
 export class CoursesComponent implements OnInit, OnDestroy {
     private courseService = inject(CourseManagementService);

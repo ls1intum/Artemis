@@ -9,11 +9,13 @@ import { CourseManagementService } from 'app/course/manage/course-management.ser
 import { UserService } from 'app/core/user/user.service';
 import { Subscription } from 'rxjs';
 import { capitalize } from 'lodash-es';
+import { CourseGroupComponent } from '../../../shared/course-group/course-group.component';
+import { TranslateDirective } from '../../../shared/language/translate.directive';
 
 @Component({
     selector: 'jhi-course-group-membership',
     templateUrl: './course-group-membership.component.html',
-    standalone: false,
+    imports: [CourseGroupComponent, TranslateDirective],
 })
 export class CourseGroupMembershipComponent implements OnInit {
     private router = inject(Router);

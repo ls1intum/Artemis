@@ -10,12 +10,16 @@ import { AbstractQuizStatisticComponent } from 'app/exercises/quiz/manage/statis
 import { faSync } from '@fortawesome/free-solid-svg-icons';
 import { calculateMaxScore } from 'app/exercises/quiz/manage/statistics/quiz-statistic/quiz-statistics.utils';
 import { round } from 'app/shared/util/utils';
+import { TranslateDirective } from '../../../../../shared/language/translate.directive';
+import { BarChartModule } from '@swimlane/ngx-charts';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { QuizStatisticsFooterComponent } from '../quiz-statistics-footer/quiz-statistics-footer.component';
 
 @Component({
     selector: 'jhi-quiz-statistic',
     templateUrl: './quiz-statistic.component.html',
     styleUrls: ['../quiz-point-statistic/quiz-point-statistic.component.scss', '../../../../../shared/chart/vertical-bar-chart.scss'],
-    standalone: false,
+    imports: [TranslateDirective, BarChartModule, FaIconComponent, QuizStatisticsFooterComponent],
 })
 export class QuizStatisticComponent extends AbstractQuizStatisticComponent implements OnInit, OnDestroy {
     private route = inject(ActivatedRoute);

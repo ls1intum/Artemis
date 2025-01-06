@@ -7,13 +7,17 @@ import { MultipleChoiceQuestion } from 'app/entities/quiz/multiple-choice-questi
 import { QuizExercise } from 'app/entities/quiz/quiz-exercise.model';
 import { QuestionStatisticComponent, blueColor, greenColor, redColor } from 'app/exercises/quiz/manage/statistics/question-statistic.component';
 import { faCheckCircle, faSync, faTimesCircle } from '@fortawesome/free-solid-svg-icons';
+import { TranslateDirective } from '../../../../../shared/language/translate.directive';
+import { BarChartModule } from '@swimlane/ngx-charts';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { QuizStatisticsFooterComponent } from '../quiz-statistics-footer/quiz-statistics-footer.component';
 
 @Component({
     selector: 'jhi-multiple-choice-question-statistic',
     templateUrl: './multiple-choice-question-statistic.component.html',
     styleUrls: ['../quiz-point-statistic/quiz-point-statistic.component.scss', '../../../../../shared/chart/vertical-bar-chart.scss'],
     providers: [QuizStatisticUtil],
-    standalone: false,
+    imports: [TranslateDirective, BarChartModule, FaIconComponent, QuizStatisticsFooterComponent],
 })
 export class MultipleChoiceQuestionStatisticComponent extends QuestionStatisticComponent {
     private artemisMarkdown = inject(ArtemisMarkdownService);

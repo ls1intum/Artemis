@@ -5,12 +5,14 @@ import { ModelingSubmissionElement } from 'app/exercises/shared/plagiarism/types
 import { ModelingExercise } from 'app/entities/modeling-exercise.model';
 import { ModelingSubmission } from 'app/entities/modeling-submission.model';
 import { UMLModel } from '@ls1intum/apollon';
+import { SplitPaneHeaderComponent } from '../split-pane-header/split-pane-header.component';
+import { ModelingEditorComponent } from '../../../../modeling/shared/modeling-editor.component';
 
 @Component({
     selector: 'jhi-modeling-submission-viewer',
     styleUrls: ['./modeling-submission-viewer.component.scss'],
     templateUrl: './modeling-submission-viewer.component.html',
-    standalone: false,
+    imports: [SplitPaneHeaderComponent, ModelingEditorComponent],
 })
 export class ModelingSubmissionViewerComponent implements OnChanges {
     private modelingSubmissionService = inject(ModelingSubmissionService);

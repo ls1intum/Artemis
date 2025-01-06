@@ -4,6 +4,7 @@ import { ButtonSize, ButtonType } from 'app/shared/components/button.component';
 import { AlertService } from 'app/core/util/alert.service';
 import { TeamService } from '../team.service';
 import { faFileExport } from '@fortawesome/free-solid-svg-icons';
+import { ButtonComponent } from '../../../../shared/components/button.component';
 
 @Component({
     selector: 'jhi-teams-export-button',
@@ -16,7 +17,7 @@ import { faFileExport } from '@fortawesome/free-solid-svg-icons';
             (onClick)="exportTeams($event)"
         />
     `,
-    standalone: false,
+    imports: [ButtonComponent],
 })
 export class TeamsExportButtonComponent {
     private teamService = inject(TeamService);

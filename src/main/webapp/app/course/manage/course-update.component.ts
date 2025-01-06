@@ -1,6 +1,6 @@
 import { ActivatedRoute, Router } from '@angular/router';
 import { Component, ElementRef, OnInit, ViewChild, inject } from '@angular/core';
-import { FormControl, FormGroup, ValidatorFn, Validators } from '@angular/forms';
+import { FormControl, FormGroup, FormsModule, ReactiveFormsModule, ValidatorFn, Validators } from '@angular/forms';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { AlertService, AlertType } from 'app/core/util/alert.service';
 import { Observable, OperatorFunction, Subject, debounceTime, distinctUntilChanged, filter, map, merge, tap } from 'rxjs';
@@ -15,7 +15,7 @@ import dayjs from 'dayjs/esm';
 import { ArtemisNavigationUtilService } from 'app/utils/navigation.utils';
 import { SHORT_NAME_PATTERN } from 'app/shared/constants/input.constants';
 import { Organization } from 'app/entities/organization.model';
-import { NgbModal, NgbTypeahead } from '@ng-bootstrap/ng-bootstrap';
+import { NgbModal, NgbTooltip, NgbTypeahead } from '@ng-bootstrap/ng-bootstrap';
 import { OrganizationManagementService } from 'app/admin/organization-management/organization-management.service';
 import { OrganizationSelectorComponent } from 'app/shared/organization-selector/organization-selector.component';
 import { faBan, faExclamationTriangle, faPen, faQuestionCircle, faSave, faTimes, faTrash } from '@fortawesome/free-solid-svg-icons';
@@ -32,6 +32,18 @@ import { getSemesters } from 'app/utils/semester-utils';
 import { ImageCropperModalComponent } from 'app/course/manage/image-cropper-modal.component';
 import { scrollToTopOfPage } from 'app/shared/util/utils';
 import { CourseStorageService } from 'app/course/manage/course-storage.service';
+import { SecuredImageComponent } from '../../shared/image/secured-image.component';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { TranslateDirective } from '../../shared/language/translate.directive';
+import { KeyValuePipe, NgClass, NgStyle, NgTemplateOutlet } from '@angular/common';
+import { ColorSelectorComponent as ColorSelectorComponent_1 } from '../../shared/color-selector/color-selector.component';
+import { FormDateTimePickerComponent } from '../../shared/date-time-picker/date-time-picker.component';
+import { HasAnyAuthorityDirective } from '../../shared/auth/has-any-authority.directive';
+import { HelpIconComponent } from '../../shared/components/help-icon.component';
+import { MarkdownEditorMonacoComponent } from '../../shared/markdown-editor/monaco/markdown-editor-monaco.component';
+import { FeatureToggleHideDirective } from '../../shared/feature-toggle/feature-toggle-hide.directive';
+import { ArtemisTranslatePipe } from '../../shared/pipes/artemis-translate.pipe';
+import { RemoveKeysPipe } from 'app/shared/pipes/remove-keys.pipe';
 
 const DEFAULT_CUSTOM_GROUP_NAME = 'artemis-dev';
 
@@ -39,7 +51,27 @@ const DEFAULT_CUSTOM_GROUP_NAME = 'artemis-dev';
     selector: 'jhi-course-update',
     templateUrl: './course-update.component.html',
     styleUrls: ['./course-update.component.scss'],
-    standalone: false,
+    imports: [
+        FormsModule,
+        ReactiveFormsModule,
+        SecuredImageComponent,
+        FaIconComponent,
+        TranslateDirective,
+        NgStyle,
+        ColorSelectorComponent_1,
+        NgClass,
+        NgbTooltip,
+        FormDateTimePickerComponent,
+        HasAnyAuthorityDirective,
+        HelpIconComponent,
+        MarkdownEditorMonacoComponent,
+        FeatureToggleHideDirective,
+        NgbTypeahead,
+        NgTemplateOutlet,
+        KeyValuePipe,
+        ArtemisTranslatePipe,
+        RemoveKeysPipe,
+    ],
 })
 export class CourseUpdateComponent implements OnInit {
     private eventManager = inject(EventManager);

@@ -1,11 +1,13 @@
 import { Component, Input, OnChanges } from '@angular/core';
 import { Submission, getLatestSubmissionResult } from 'app/entities/submission.model';
 import { isManualResult } from 'app/exercises/shared/result/result.utils';
+import { TranslateDirective } from '../../../shared/language/translate.directive';
+import { DecimalPipe, NgClass } from '@angular/common';
 
 @Component({
     selector: 'jhi-assessment-progress-label',
     templateUrl: './assessment-progress-label.component.html',
-    standalone: false,
+    imports: [TranslateDirective, NgClass, DecimalPipe],
 })
 export class AssessmentProgressLabelComponent implements OnChanges {
     @Input()

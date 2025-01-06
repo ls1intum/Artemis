@@ -14,6 +14,10 @@ import { faExclamationTriangle } from '@fortawesome/free-solid-svg-icons';
 import { TEXT_FILE_EXTENSIONS } from 'app/shared/constants/file-extensions.constants';
 import { Subject } from 'rxjs';
 import { TextPlagiarismFileElement } from 'app/exercises/shared/plagiarism/types/text/TextPlagiarismFileElement';
+import { SplitPaneHeaderComponent } from '../split-pane-header/split-pane-header.component';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { TranslateDirective } from '../../../../../shared/language/translate.directive';
+import { NgClass } from '@angular/common';
 
 type FilesWithType = { [p: string]: FileType };
 
@@ -22,7 +26,7 @@ type FilesWithType = { [p: string]: FileType };
     styleUrls: ['./text-submission-viewer.component.scss'],
     templateUrl: './text-submission-viewer.component.html',
     encapsulation: ViewEncapsulation.None,
-    standalone: false,
+    imports: [SplitPaneHeaderComponent, FaIconComponent, TranslateDirective, NgClass],
 })
 export class TextSubmissionViewerComponent implements OnChanges {
     private repositoryService = inject(CodeEditorRepositoryFileService);

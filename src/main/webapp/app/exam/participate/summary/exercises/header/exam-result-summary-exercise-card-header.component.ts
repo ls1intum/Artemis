@@ -2,11 +2,15 @@ import { Component, Input } from '@angular/core';
 import { Exercise } from 'app/entities/exercise.model';
 import { ResultSummaryExerciseInfo } from 'app/exam/participate/summary/exam-result-summary.component';
 import { SubmissionType } from 'app/entities/submission.model';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { NgClass } from '@angular/common';
+import { TranslateDirective } from '../../../../../shared/language/translate.directive';
+import { ArtemisTranslatePipe } from '../../../../../shared/pipes/artemis-translate.pipe';
 
 @Component({
     selector: 'jhi-result-summary-exercise-card-header',
     templateUrl: './exam-result-summary-exercise-card-header.component.html',
-    standalone: false,
+    imports: [FaIconComponent, NgClass, TranslateDirective, ArtemisTranslatePipe],
 })
 export class ExamResultSummaryExerciseCardHeaderComponent {
     @Input() index: number;

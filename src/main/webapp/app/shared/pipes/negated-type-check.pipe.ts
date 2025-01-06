@@ -1,9 +1,6 @@
 import { Pipe, PipeTransform } from '@angular/core';
 
-@Pipe({
-    name: 'negatedTypeCheck',
-    standalone: false,
-})
+@Pipe({ name: 'negatedTypeCheck' })
 export class NegatedTypeCheckPipe implements PipeTransform {
     /**
      * Filters items from an array that are an instance of the specified classType.

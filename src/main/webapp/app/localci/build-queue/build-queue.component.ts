@@ -1,5 +1,5 @@
 import { Component, OnDestroy, OnInit, ViewChild, inject } from '@angular/core';
-import { ActivatedRoute } from '@angular/router';
+import { ActivatedRoute, RouterLink } from '@angular/router';
 import { BuildJob, BuildJobStatistics, FinishedBuildJob, SpanType } from 'app/entities/programming/build-job.model';
 import { faAngleDown, faAngleRight, faCircleCheck, faExclamationCircle, faExclamationTriangle, faFilter, faSort, faSync, faTimes } from '@fortawesome/free-solid-svg-icons';
 import { JhiWebsocketService } from 'app/core/websocket/websocket.service';
@@ -13,13 +13,28 @@ import { HttpErrorResponse, HttpHeaders, HttpParams, HttpResponse } from '@angul
 import { AlertService } from 'app/core/util/alert.service';
 import dayjs from 'dayjs/esm';
 import { GraphColors } from 'app/entities/statistics.model';
-import { Color, ScaleType } from '@swimlane/ngx-charts';
+import { Color, PieChartModule, ScaleType } from '@swimlane/ngx-charts';
 import { NgxChartsSingleSeriesDataEntry } from 'app/shared/chart/ngx-charts-datatypes';
-import { NgbModal, NgbTypeahead } from '@ng-bootstrap/ng-bootstrap';
+import { NgbCollapse, NgbModal, NgbPagination, NgbTypeahead } from '@ng-bootstrap/ng-bootstrap';
 import { LocalStorageService } from 'ngx-webstorage';
 import { Observable, OperatorFunction, Subject, Subscription, merge } from 'rxjs';
 import { UI_RELOAD_TIME } from 'app/shared/constants/exercise-exam-constants';
 import { BuildLogEntry, BuildLogLines } from 'app/entities/programming/build-log.model';
+import { TranslateDirective } from '../../shared/language/translate.directive';
+import { HelpIconComponent } from '../../shared/components/help-icon.component';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { DataTableComponent } from '../../shared/data-table/data-table.component';
+import { NgxDatatableModule } from '@siemens/ngx-datatable';
+import { NgClass } from '@angular/common';
+import { FormsModule } from '@angular/forms';
+import { SortDirective } from '../../shared/sort/sort.directive';
+import { SortByDirective } from '../../shared/sort/sort-by.directive';
+import { ResultComponent } from '../../exercises/shared/result/result.component';
+import { ItemCountComponent } from '../../shared/pagination/item-count.component';
+import { FormDateTimePickerComponent } from '../../shared/date-time-picker/date-time-picker.component';
+import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
+import { ArtemisTranslatePipe } from '../../shared/pipes/artemis-translate.pipe';
+import { ArtemisDurationFromSecondsPipe } from 'app/shared/pipes/artemis-duration-from-seconds.pipe';
 
 export class FinishedBuildJobFilter {
     status?: string = undefined;
@@ -105,7 +120,28 @@ export enum FinishedBuildJobFilterStorageKey {
     selector: 'jhi-build-queue',
     templateUrl: './build-queue.component.html',
     styleUrl: './build-queue.component.scss',
-    standalone: false,
+    imports: [
+        TranslateDirective,
+        HelpIconComponent,
+        FaIconComponent,
+        NgbCollapse,
+        PieChartModule,
+        DataTableComponent,
+        NgxDatatableModule,
+        NgClass,
+        RouterLink,
+        FormsModule,
+        SortDirective,
+        SortByDirective,
+        ResultComponent,
+        ItemCountComponent,
+        NgbPagination,
+        NgbTypeahead,
+        FormDateTimePickerComponent,
+        ArtemisDatePipe,
+        ArtemisTranslatePipe,
+        ArtemisDurationFromSecondsPipe,
+    ],
 })
 export class BuildQueueComponent implements OnInit, OnDestroy {
     private route = inject(ActivatedRoute);

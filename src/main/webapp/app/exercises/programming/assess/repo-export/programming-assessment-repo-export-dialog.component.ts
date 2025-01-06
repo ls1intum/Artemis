@@ -8,12 +8,18 @@ import { ProgrammingExercise } from 'app/entities/programming/programming-exerci
 import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
 import { downloadZipFileFromResponse } from 'app/shared/util/download.util';
 import { faCircleNotch } from '@fortawesome/free-solid-svg-icons';
+import { FormsModule } from '@angular/forms';
+import { TranslateDirective } from '../../../../shared/language/translate.directive';
+import { HelpIconComponent } from '../../../../shared/components/help-icon.component';
+import { FormDateTimePickerComponent } from '../../../../shared/date-time-picker/date-time-picker.component';
+import { FeatureToggleDirective } from '../../../../shared/feature-toggle/feature-toggle.directive';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 
 @Component({
     selector: 'jhi-exercise-scores-repo-export-dialog',
     templateUrl: './programming-assessment-repo-export-dialog.component.html',
     styles: ['textarea { width: 100%; }'],
-    standalone: false,
+    imports: [FormsModule, TranslateDirective, HelpIconComponent, FormDateTimePickerComponent, FeatureToggleDirective, FaIconComponent],
 })
 export class ProgrammingAssessmentRepoExportDialogComponent implements OnInit {
     private exerciseService = inject(ExerciseService);

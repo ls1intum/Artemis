@@ -12,11 +12,15 @@ import { ResultWithPointsPerGradingCriterion } from 'app/entities/result-with-po
 import { faDownload } from '@fortawesome/free-solid-svg-icons';
 import { download, generateCsv, mkConfig } from 'export-to-csv';
 import { TestCaseResult } from 'app/entities/programming/test-case-result.model';
+import { NgbDropdown, NgbDropdownButtonItem, NgbDropdownItem, NgbDropdownMenu, NgbDropdownToggle, NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { TranslateDirective } from '../../../shared/language/translate.directive';
+import { ArtemisTranslatePipe } from '../../../shared/pipes/artemis-translate.pipe';
 
 @Component({
     selector: 'jhi-exercise-scores-export-button',
     templateUrl: './exercise-scores-export-button.component.html',
-    standalone: false,
+    imports: [NgbDropdown, NgbDropdownToggle, FaIconComponent, TranslateDirective, NgbDropdownMenu, NgbDropdownButtonItem, NgbDropdownItem, NgbTooltip, ArtemisTranslatePipe],
 })
 export class ExerciseScoresExportButtonComponent implements OnInit {
     private resultService = inject(ResultService);

@@ -7,6 +7,13 @@ import { isOneToOneChatDTO } from 'app/entities/metis/conversation/one-to-one-ch
 import { getAsGroupChatDTO } from 'app/entities/metis/conversation/group-chat.model';
 import { AbstractDialogComponent } from 'app/overview/course-conversations/dialogs/abstract-dialog.component';
 import { faPeopleGroup } from '@fortawesome/free-solid-svg-icons';
+import { ChannelIconComponent } from '../../other/channel-icon/channel-icon.component';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { TranslateDirective } from '../../../../shared/language/translate.directive';
+import { RouterLink } from '@angular/router';
+import { ConversationMembersComponent } from './tabs/conversation-members/conversation-members.component';
+import { ConversationInfoComponent } from './tabs/conversation-info/conversation-info.component';
+import { ConversationSettingsComponent } from './tabs/conversation-settings/conversation-settings.component';
 
 export enum ConversationDetailTabs {
     MEMBERS = 'members',
@@ -17,7 +24,7 @@ export enum ConversationDetailTabs {
 @Component({
     selector: 'jhi-conversation-detail-dialog',
     templateUrl: './conversation-detail-dialog.component.html',
-    standalone: false,
+    imports: [ChannelIconComponent, FaIconComponent, TranslateDirective, RouterLink, ConversationMembersComponent, ConversationInfoComponent, ConversationSettingsComponent],
 })
 export class ConversationDetailDialogComponent extends AbstractDialogComponent {
     conversationService = inject(ConversationService);

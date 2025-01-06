@@ -1,5 +1,5 @@
 import { Component, OnDestroy, OnInit, ViewEncapsulation, inject } from '@angular/core';
-import { ActivatedRoute, Router } from '@angular/router';
+import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { SafeHtml } from '@angular/platform-browser';
 import { ProgrammingExerciseBuildConfig } from 'app/entities/programming/programming-exercise-build.config';
 import { Subject, Subscription, of } from 'rxjs';
@@ -13,7 +13,7 @@ import { ActionType } from 'app/shared/delete-dialog/delete-dialog.model';
 import { FeatureToggle } from 'app/shared/feature-toggle/feature-toggle.service';
 import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
 import { ExerciseType, IncludedInOverallScore } from 'app/entities/exercise.model';
-import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
+import { NgbModal, NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { ConfirmAutofocusModalComponent } from 'app/shared/components/confirm-autofocus-modal.component';
 import { TranslateService } from '@ngx-translate/core';
 import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
@@ -58,13 +58,40 @@ import { AeolusService } from 'app/exercises/programming/shared/service/aeolus.s
 import { catchError, mergeMap, tap } from 'rxjs/operators';
 import { ProgrammingExerciseGitDiffReport } from 'app/entities/programming-exercise-git-diff-report.model';
 import { BuildLogStatisticsDTO } from 'app/entities/programming/build-log-statistics-dto';
+import { TranslateDirective } from '../../../shared/language/translate.directive';
+import { DocumentationButtonComponent } from '../../../shared/components/documentation-button/documentation-button.component';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { OrionFilterDirective } from '../../../shared/orion/orion-filter.directive';
+import { FeatureToggleLinkDirective } from '../../../shared/feature-toggle/feature-toggle-link.directive';
+import { ProgrammingExerciseInstructorExerciseDownloadComponent } from '../shared/actions/programming-exercise-instructor-exercise-download.component';
+import { FeatureToggleDirective } from '../../../shared/feature-toggle/feature-toggle.directive';
+import { ProgrammingExerciseResetButtonDirective } from './reset/programming-exercise-reset-button.directive';
+import { DeleteButtonDirective } from '../../../shared/delete-dialog/delete-button.directive';
+import { ExerciseDetailStatisticsComponent } from '../../shared/statistics/exercise-detail-statistics.component';
+import { DetailOverviewListComponent } from '../../../detail-overview-list/detail-overview-list.component';
+import { ArtemisTranslatePipe } from '../../../shared/pipes/artemis-translate.pipe';
 
 @Component({
     selector: 'jhi-programming-exercise-detail',
     templateUrl: './programming-exercise-detail.component.html',
     styleUrls: ['./programming-exercise-detail.component.scss'],
     encapsulation: ViewEncapsulation.None,
-    standalone: false,
+    imports: [
+        TranslateDirective,
+        DocumentationButtonComponent,
+        RouterLink,
+        FaIconComponent,
+        OrionFilterDirective,
+        FeatureToggleLinkDirective,
+        NgbTooltip,
+        ProgrammingExerciseInstructorExerciseDownloadComponent,
+        FeatureToggleDirective,
+        ProgrammingExerciseResetButtonDirective,
+        DeleteButtonDirective,
+        ExerciseDetailStatisticsComponent,
+        DetailOverviewListComponent,
+        ArtemisTranslatePipe,
+    ],
 })
 export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
     private activatedRoute = inject(ActivatedRoute);

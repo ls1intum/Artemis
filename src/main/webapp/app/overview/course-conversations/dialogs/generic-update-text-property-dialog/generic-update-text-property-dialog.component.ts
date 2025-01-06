@@ -1,7 +1,9 @@
 import { Component, Input, inject } from '@angular/core';
-import { FormGroup, Validators } from '@angular/forms';
+import { FormGroup, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
 import { FormBuilder } from '@angular/forms';
 import { AbstractDialogComponent } from 'app/overview/course-conversations/dialogs/abstract-dialog.component';
+import { TranslateDirective } from '../../../../shared/language/translate.directive';
+import { ArtemisTranslatePipe } from '../../../../shared/pipes/artemis-translate.pipe';
 
 export interface GenericUpdateTextPropertyTranslationKeys {
     labelKey: string;
@@ -19,7 +21,7 @@ export interface GenericUpdateTextPropertyTranslationKeys {
 @Component({
     selector: 'jhi-generic-update-text-property-dialog',
     templateUrl: './generic-update-text-property-dialog.component.html',
-    standalone: false,
+    imports: [FormsModule, ReactiveFormsModule, TranslateDirective, ArtemisTranslatePipe],
 })
 export class GenericUpdateTextPropertyDialogComponent extends AbstractDialogComponent {
     private fb = inject(FormBuilder);

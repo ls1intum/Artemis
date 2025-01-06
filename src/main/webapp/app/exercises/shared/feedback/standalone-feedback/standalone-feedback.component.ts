@@ -7,12 +7,13 @@ import { ActivatedRoute } from '@angular/router';
 import { HttpResponse } from '@angular/common/http';
 import { ExerciseCacheService } from 'app/exercises/shared/exercise/exercise-cache.service';
 import { ResultTemplateStatus, evaluateTemplateStatus } from 'app/exercises/shared/result/result.utils';
+import { FeedbackComponent } from '../feedback.component';
 
 @Component({
     selector: 'jhi-standalone-feedback',
     templateUrl: './standalone-feedback.component.html',
     styleUrls: ['./../feedback.scss', 'standalone-feedback.scss'],
-    standalone: false,
+    imports: [FeedbackComponent],
 })
 export class StandaloneFeedbackComponent implements OnInit {
     route = inject(ActivatedRoute);

@@ -7,11 +7,14 @@ import { Course } from 'app/entities/course.model';
 import { ProgrammingExerciseService } from 'app/exercises/programming/manage/services/programming-exercise.service';
 import { ExerciseFilter } from 'app/entities/exercise-filter.model';
 import { OrionButtonType } from 'app/shared/orion/orion-button/orion-button.component';
+import { ProgrammingExerciseComponent } from '../../exercises/programming/manage/programming-exercise.component';
+import { OrionButtonComponent } from '../../shared/orion/orion-button/orion-button.component';
+import { ArtemisTranslatePipe } from '../../shared/pipes/artemis-translate.pipe';
 
 @Component({
     selector: 'jhi-orion-programming-exercise',
     templateUrl: './orion-programming-exercise.component.html',
-    standalone: false,
+    imports: [ProgrammingExerciseComponent, OrionButtonComponent, ArtemisTranslatePipe],
 })
 export class OrionProgrammingExerciseComponent implements OnInit {
     private orionConnectorService = inject(OrionConnectorService);

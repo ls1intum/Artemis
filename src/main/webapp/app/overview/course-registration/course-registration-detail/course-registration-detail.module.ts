@@ -21,7 +21,13 @@ const routes: Routes = [
 ];
 
 @NgModule({
-    imports: [ArtemisSharedModule, ArtemisSharedComponentModule, RouterModule.forChild(routes), CoursePrerequisitesButtonModule, CourseRegistrationButtonModule],
-    declarations: [CourseRegistrationDetailComponent],
+    imports: [
+        ArtemisSharedModule,
+        ArtemisSharedComponentModule,
+        RouterModule.forChild(routes),
+        CoursePrerequisitesButtonModule,
+        CourseRegistrationButtonModule,
+        CourseRegistrationDetailComponent,
+    ],
 })
 export class CourseRegistrationDetailModule {}

@@ -6,12 +6,14 @@ import { ArtemisServerDateService } from 'app/shared/server-date.service';
 import { cloneDeep } from 'lodash-es';
 import { ArtemisDurationFromSecondsPipe } from 'app/shared/pipes/artemis-duration-from-seconds.pipe';
 import { round } from 'app/shared/util/utils';
+import { AsyncPipe } from '@angular/common';
+import { ArtemisTranslatePipe } from '../../../shared/pipes/artemis-translate.pipe';
 
 @Component({
     selector: 'jhi-exam-timer',
     templateUrl: './exam-timer.component.html',
     styleUrls: ['./exam-timer.scss'],
-    standalone: false,
+    imports: [AsyncPipe, ArtemisTranslatePipe],
 })
 export class ExamTimerComponent implements OnInit, OnDestroy {
     private serverDateService = inject(ArtemisServerDateService);

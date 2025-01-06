@@ -6,12 +6,35 @@ import { OrionState } from 'app/shared/orion/orion';
 import { faCircleNotch, faTimesCircle } from '@fortawesome/free-solid-svg-icons';
 
 import { MarkdownEditorHeight } from 'app/shared/markdown-editor/monaco/markdown-editor-monaco.component';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { TranslateDirective } from '../../shared/language/translate.directive';
+import { UpdatingResultComponent } from '../../exercises/shared/result/updating-result.component';
+import { ProgrammingExerciseInstructorExerciseStatusComponent } from '../../exercises/programming/manage/status/programming-exercise-instructor-exercise-status.component';
+import { NgbDropdown, NgbDropdownButtonItem, NgbDropdownItem, NgbDropdownMenu, NgbDropdownToggle } from '@ng-bootstrap/ng-bootstrap';
+import { ProgrammingExerciseStudentTriggerBuildButtonComponent } from '../../exercises/programming/shared/actions/programming-exercise-student-trigger-build-button.component';
+import { OrionButtonComponent } from '../../shared/orion/orion-button/orion-button.component';
+import { ProgrammingExerciseEditableInstructionComponent } from '../../exercises/programming/manage/instructions-editor/programming-exercise-editable-instruction.component';
+import { ArtemisTranslatePipe } from '../../shared/pipes/artemis-translate.pipe';
 
 @Component({
     selector: 'jhi-code-editor-instructor-orion',
     templateUrl: './code-editor-instructor-and-editor-orion-container.component.html',
     styles: ['.instructions-orion { height: 700px }'],
-    standalone: false,
+    imports: [
+        FaIconComponent,
+        TranslateDirective,
+        UpdatingResultComponent,
+        ProgrammingExerciseInstructorExerciseStatusComponent,
+        NgbDropdown,
+        NgbDropdownToggle,
+        NgbDropdownMenu,
+        NgbDropdownButtonItem,
+        NgbDropdownItem,
+        ProgrammingExerciseStudentTriggerBuildButtonComponent,
+        OrionButtonComponent,
+        ProgrammingExerciseEditableInstructionComponent,
+        ArtemisTranslatePipe,
+    ],
 })
 export class CodeEditorInstructorAndEditorOrionContainerComponent extends CodeEditorInstructorBaseContainerComponent implements OnInit {
     private orionConnectorService = inject(OrionConnectorService);

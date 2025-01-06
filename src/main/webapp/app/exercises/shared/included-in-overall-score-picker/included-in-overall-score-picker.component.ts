@@ -1,11 +1,13 @@
 import { Component, EventEmitter, Input, Output } from '@angular/core';
 import { IncludedInOverallScore } from 'app/entities/exercise.model';
+import { TranslateDirective } from '../../../shared/language/translate.directive';
+import { NgClass } from '@angular/common';
 
 @Component({
     selector: 'jhi-included-in-overall-score-picker',
     templateUrl: './included-in-overall-score-picker.component.html',
     styles: [],
-    standalone: false,
+    imports: [TranslateDirective, NgClass],
 })
 export class IncludedInOverallScorePickerComponent {
     readonly IncludedInOverallScore = IncludedInOverallScore;

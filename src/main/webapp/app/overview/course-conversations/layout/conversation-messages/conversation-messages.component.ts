@@ -36,6 +36,14 @@ import { CustomBreakpointNames } from 'app/shared/breakpoints/breakpoints.servic
 import dayjs from 'dayjs/esm';
 import { User } from 'app/core/user/user.model';
 import { PostingThreadComponent } from 'app/shared/metis/posting-thread/posting-thread.component';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { TranslateDirective } from '../../../../shared/language/translate.directive';
+import { InfiniteScrollDirective } from 'ngx-infinite-scroll';
+import { NgClass } from '@angular/common';
+import { PostingThreadComponent as PostingThreadComponent_1 } from '../../../../shared/metis/posting-thread/posting-thread.component';
+import { PostCreateEditModalComponent } from '../../../../shared/metis/posting-create-edit-modal/post-create-edit-modal/post-create-edit-modal.component';
+import { MessageInlineInputComponent } from '../../../../shared/metis/message/message-inline-input/message-inline-input.component';
+import { ArtemisTranslatePipe } from '../../../../shared/pipes/artemis-translate.pipe';
 
 interface PostGroup {
     author: User | undefined;
@@ -47,7 +55,16 @@ interface PostGroup {
     templateUrl: './conversation-messages.component.html',
     styleUrls: ['./conversation-messages.component.scss'],
     encapsulation: ViewEncapsulation.None,
-    standalone: false,
+    imports: [
+        FaIconComponent,
+        TranslateDirective,
+        InfiniteScrollDirective,
+        NgClass,
+        PostingThreadComponent_1,
+        PostCreateEditModalComponent,
+        MessageInlineInputComponent,
+        ArtemisTranslatePipe,
+    ],
 })
 export class ConversationMessagesComponent implements OnInit, AfterViewInit, OnDestroy {
     metisService = inject(MetisService);

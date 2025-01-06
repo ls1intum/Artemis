@@ -14,12 +14,30 @@ import { ActivatedRoute } from '@angular/router';
 import { tap } from 'rxjs/operators';
 import { ImportOptions } from 'app/types/programming-exercises';
 import { ProgrammingExerciseInputField } from 'app/exercises/programming/manage/update/programming-exercise-update.helper';
+import { ProgrammingExerciseTestScheduleDatePickerComponent as ProgrammingExerciseTestScheduleDatePickerComponent_1 } from './programming-exercise-test-schedule-date-picker.component';
+import { FormsModule } from '@angular/forms';
+import { TranslateDirective } from '../../../../shared/language/translate.directive';
+import { HelpIconComponent } from '../../../../shared/components/help-icon.component';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { AsyncPipe, NgStyle } from '@angular/common';
+import { ExerciseFeedbackSuggestionOptionsComponent } from '../../../shared/feedback-suggestion/exercise-feedback-suggestion-options.component';
+import { ArtemisTranslatePipe } from '../../../../shared/pipes/artemis-translate.pipe';
 
 @Component({
     selector: 'jhi-programming-exercise-lifecycle',
     templateUrl: './programming-exercise-lifecycle.component.html',
     styleUrls: ['./programming-exercise-test-schedule-picker.scss'],
-    standalone: false,
+    imports: [
+        ProgrammingExerciseTestScheduleDatePickerComponent_1,
+        FormsModule,
+        TranslateDirective,
+        HelpIconComponent,
+        FaIconComponent,
+        NgStyle,
+        ExerciseFeedbackSuggestionOptionsComponent,
+        AsyncPipe,
+        ArtemisTranslatePipe,
+    ],
 })
 export class ProgrammingExerciseLifecycleComponent implements AfterViewInit, OnDestroy, OnInit, OnChanges {
     private translateService = inject(TranslateService);

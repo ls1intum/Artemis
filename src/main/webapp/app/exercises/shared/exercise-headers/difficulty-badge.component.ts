@@ -2,11 +2,12 @@ import { Component, Input, OnChanges, OnDestroy, OnInit, inject } from '@angular
 import { TranslateService } from '@ngx-translate/core';
 import { Subscription } from 'rxjs';
 import { DifficultyLevel, Exercise } from 'app/entities/exercise.model';
+import { NgClass } from '@angular/common';
 
 @Component({
     selector: 'jhi-difficulty-badge',
     templateUrl: './difficulty-badge.component.html',
-    standalone: false,
+    imports: [NgClass],
 })
 export class DifficultyBadgeComponent implements OnInit, OnDestroy, OnChanges {
     private translateService = inject(TranslateService);

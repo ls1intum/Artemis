@@ -13,12 +13,37 @@ import { AccountService } from 'app/core/auth/account.service';
 import { isOneToOneChatDTO } from 'app/entities/metis/conversation/one-to-one-chat.model';
 import { ConversationDTO } from 'app/entities/metis/conversation/conversation.model';
 import { PostCreateEditModalComponent } from 'app/shared/metis/posting-create-edit-modal/post-create-edit-modal/post-create-edit-modal.component';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { TranslateDirective } from '../../../language/translate.directive';
+import { EmojiComponent } from '../../emoji/emoji.component';
+import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
+import { CdkConnectedOverlay, CdkOverlayOrigin } from '@angular/cdk/overlay';
+import { EmojiPickerComponent } from '../../emoji/emoji-picker.component';
+import { PostCreateEditModalComponent as PostCreateEditModalComponent_1 } from '../../posting-create-edit-modal/post-create-edit-modal/post-create-edit-modal.component';
+import { ConfirmIconComponent } from '../../../confirm-icon/confirm-icon.component';
+import { AsyncPipe, KeyValuePipe } from '@angular/common';
+import { ArtemisTranslatePipe } from '../../../pipes/artemis-translate.pipe';
+import { ReactingUsersOnPostingPipe } from 'app/shared/pipes/reacting-users-on-posting.pipe';
 
 @Component({
     selector: 'jhi-post-reactions-bar',
     templateUrl: './post-reactions-bar.component.html',
     styleUrls: ['../posting-reactions-bar.component.scss'],
-    standalone: false,
+    imports: [
+        FaIconComponent,
+        TranslateDirective,
+        EmojiComponent,
+        NgbTooltip,
+        CdkOverlayOrigin,
+        CdkConnectedOverlay,
+        EmojiPickerComponent,
+        PostCreateEditModalComponent_1,
+        ConfirmIconComponent,
+        AsyncPipe,
+        KeyValuePipe,
+        ArtemisTranslatePipe,
+        ReactingUsersOnPostingPipe,
+    ],
 })
 export class PostReactionsBarComponent extends PostingsReactionsBarDirective<Post> implements OnInit, OnChanges, OnDestroy {
     private accountService = inject(AccountService);

@@ -4,12 +4,14 @@ import { finalize } from 'rxjs/operators';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import { PrerequisiteService } from 'app/course/competencies/prerequisite.service';
 import { Prerequisite } from 'app/entities/prerequisite.model';
+import { TranslateDirective } from '../../../shared/language/translate.directive';
+import { CompetencyCardComponent } from '../../../course/competencies/competency-card/competency-card.component';
 
 @Component({
     selector: 'jhi-course-prerequisites-modal',
     templateUrl: './course-prerequisites-modal.component.html',
     styles: [],
-    standalone: false,
+    imports: [TranslateDirective, CompetencyCardComponent],
 })
 export class CoursePrerequisitesModalComponent implements OnInit {
     private alertService = inject(AlertService);

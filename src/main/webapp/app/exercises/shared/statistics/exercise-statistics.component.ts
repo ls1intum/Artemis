@@ -8,12 +8,17 @@ import { ExerciseManagementStatisticsDto } from 'app/exercises/shared/statistics
 import { Exercise, getCourseFromExercise } from 'app/entities/exercise.model';
 import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
 import { HttpResponse } from '@angular/common/http';
+import { TranslateDirective } from '../../../shared/language/translate.directive';
+import { ExerciseDetailStatisticsComponent } from './exercise-detail-statistics.component';
+import { StatisticsScoreDistributionGraphComponent } from '../../../shared/statistics-graph/statistics-score-distribution-graph.component';
+import { StatisticsGraphComponent } from '../../../shared/statistics-graph/statistics-graph.component';
+import { ArtemisTranslatePipe } from '../../../shared/pipes/artemis-translate.pipe';
 
 @Component({
     selector: 'jhi-exercise-statistics',
     templateUrl: './exercise-statistics.component.html',
     styleUrls: ['../../../course/manage/course-management-statistics.component.scss'],
-    standalone: false,
+    imports: [TranslateDirective, ExerciseDetailStatisticsComponent, StatisticsScoreDistributionGraphComponent, StatisticsGraphComponent, ArtemisTranslatePipe],
 })
 export class ExerciseStatisticsComponent implements OnInit {
     private service = inject(StatisticsService);

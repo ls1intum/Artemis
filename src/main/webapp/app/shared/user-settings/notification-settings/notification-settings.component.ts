@@ -5,6 +5,10 @@ import { NotificationSetting } from 'app/shared/user-settings/notification-setti
 import { UserSettingsStructure } from 'app/shared/user-settings/user-settings.model';
 import { faInfoCircle, faSave } from '@fortawesome/free-solid-svg-icons';
 import { NotificationSettingsService, reloadNotificationSideBarMessage } from 'app/shared/user-settings/notification-settings/notification-settings.service';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { TranslateDirective } from '../../language/translate.directive';
+import { HasAnyAuthorityDirective } from '../../auth/has-any-authority.directive';
+import { ArtemisTranslatePipe } from '../../pipes/artemis-translate.pipe';
 
 export enum NotificationSettingsCommunicationChannel {
     WEBAPP,
@@ -15,7 +19,7 @@ export enum NotificationSettingsCommunicationChannel {
     selector: 'jhi-notification-settings',
     templateUrl: 'notification-settings.component.html',
     styleUrls: ['../user-settings.scss'],
-    standalone: false,
+    imports: [FaIconComponent, TranslateDirective, HasAnyAuthorityDirective, ArtemisTranslatePipe],
 })
 export class NotificationSettingsComponent extends UserSettingsDirective implements OnInit {
     private notificationSettingsService = inject(NotificationSettingsService);

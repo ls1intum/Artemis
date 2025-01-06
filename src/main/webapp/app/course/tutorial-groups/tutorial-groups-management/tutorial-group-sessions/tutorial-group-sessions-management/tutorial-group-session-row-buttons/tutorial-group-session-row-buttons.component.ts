@@ -10,12 +10,17 @@ import { Course } from 'app/entities/course.model';
 import { TutorialGroup } from 'app/entities/tutorial-group/tutorial-group.model';
 import { EditTutorialGroupSessionComponent } from 'app/course/tutorial-groups/tutorial-groups-management/tutorial-group-sessions/crud/edit-tutorial-group-session/edit-tutorial-group-session.component';
 import { catchError, takeUntil } from 'rxjs/operators';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { TranslateDirective } from '../../../../../../shared/language/translate.directive';
+import { DeleteButtonDirective } from '../../../../../../shared/delete-dialog/delete-button.directive';
+import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
+import { ArtemisTranslatePipe } from '../../../../../../shared/pipes/artemis-translate.pipe';
 
 @Component({
     selector: 'jhi-tutorial-group-session-row-buttons',
     templateUrl: './tutorial-group-session-row-buttons.component.html',
     changeDetection: ChangeDetectionStrategy.OnPush,
-    standalone: false,
+    imports: [FaIconComponent, TranslateDirective, DeleteButtonDirective, ArtemisDatePipe, ArtemisTranslatePipe],
 })
 export class TutorialGroupSessionRowButtonsComponent implements OnDestroy {
     private tutorialGroupSessionService = inject(TutorialGroupSessionService);

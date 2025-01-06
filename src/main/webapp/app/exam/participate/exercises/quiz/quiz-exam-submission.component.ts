@@ -20,13 +20,32 @@ import { ButtonSize, ButtonType } from 'app/shared/components/button.component';
 import { ArtemisQuizService } from 'app/shared/quiz/quiz.service';
 import { cloneDeep } from 'lodash-es';
 import * as smoothscroll from 'smoothscroll-polyfill';
+import { TranslateDirective } from '../../../../shared/language/translate.directive';
+import { IncludedInScoreBadgeComponent } from '../../../../exercises/shared/exercise-headers/included-in-score-badge.component';
+import { ExerciseSaveButtonComponent } from '../exercise-save-button/exercise-save-button.component';
+import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
+import { NgClass } from '@angular/common';
+import { MultipleChoiceQuestionComponent as MultipleChoiceQuestionComponent_1 } from '../../../../exercises/quiz/shared/questions/multiple-choice-question/multiple-choice-question.component';
+import { DragAndDropQuestionComponent as DragAndDropQuestionComponent_1 } from '../../../../exercises/quiz/shared/questions/drag-and-drop-question/drag-and-drop-question.component';
+import { ShortAnswerQuestionComponent as ShortAnswerQuestionComponent_1 } from '../../../../exercises/quiz/shared/questions/short-answer-question/short-answer-question.component';
+import { ArtemisTranslatePipe } from '../../../../shared/pipes/artemis-translate.pipe';
 
 @Component({
     selector: 'jhi-quiz-submission-exam',
     templateUrl: './quiz-exam-submission.component.html',
     providers: [{ provide: ExamSubmissionComponent, useExisting: QuizExamSubmissionComponent }],
     styleUrls: ['./quiz-exam-submission.component.scss'],
-    standalone: false,
+    imports: [
+        TranslateDirective,
+        IncludedInScoreBadgeComponent,
+        ExerciseSaveButtonComponent,
+        NgbTooltip,
+        NgClass,
+        MultipleChoiceQuestionComponent_1,
+        DragAndDropQuestionComponent_1,
+        ShortAnswerQuestionComponent_1,
+        ArtemisTranslatePipe,
+    ],
 })
 export class QuizExamSubmissionComponent extends ExamSubmissionComponent implements OnInit {
     private quizService = inject(ArtemisQuizService);

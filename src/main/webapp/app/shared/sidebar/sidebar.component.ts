@@ -5,7 +5,7 @@ import { Subscription, distinctUntilChanged } from 'rxjs';
 import { ProfileService } from '../layouts/profiles/profile.service';
 import { ChannelTypeIcons, CollapseState, SidebarCardSize, SidebarData, SidebarItemShowAlways, SidebarTypes } from 'app/types/sidebar';
 import { SidebarEventService } from './sidebar-event.service';
-import { NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
+import { NgbDropdown, NgbDropdownButtonItem, NgbDropdownItem, NgbDropdownMenu, NgbDropdownToggle, NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
 import { cloneDeep } from 'lodash-es';
 import { ExerciseFilterOptions, ExerciseFilterResults } from 'app/types/exercise-filter';
 import {
@@ -15,12 +15,32 @@ import {
     getExerciseTypeFilterOptions,
 } from 'app/shared/sidebar/sidebar.helper';
 import { ExerciseFilterModalComponent } from 'app/shared/exercise-filter/exercise-filter-modal.component';
+import { NgClass } from '@angular/common';
+import { SearchFilterComponent } from '../search-filter/search-filter.component';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { TranslateDirective } from '../language/translate.directive';
+import { SidebarAccordionComponent } from './sidebar-accordion/sidebar-accordion.component';
+import { SidebarCardDirective } from './sidebar-card.directive';
+import { SearchFilterPipe } from 'app/shared/pipes/search-filter.pipe';
 
 @Component({
     selector: 'jhi-sidebar',
     templateUrl: './sidebar.component.html',
     styleUrls: ['./sidebar.component.scss'],
-    standalone: false,
+    imports: [
+        NgClass,
+        SearchFilterComponent,
+        FaIconComponent,
+        TranslateDirective,
+        NgbDropdown,
+        NgbDropdownToggle,
+        NgbDropdownMenu,
+        NgbDropdownButtonItem,
+        NgbDropdownItem,
+        SidebarAccordionComponent,
+        SidebarCardDirective,
+        SearchFilterPipe,
+    ],
 })
 export class SidebarComponent implements OnDestroy, OnChanges, OnInit {
     private route = inject(ActivatedRoute);

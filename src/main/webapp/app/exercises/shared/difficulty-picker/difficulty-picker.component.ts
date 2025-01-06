@@ -1,11 +1,13 @@
 import { Component, EventEmitter, Input, Output } from '@angular/core';
 import { DifficultyLevel, Exercise } from 'app/entities/exercise.model';
+import { TranslateDirective } from '../../../shared/language/translate.directive';
+import { NgClass } from '@angular/common';
 
 @Component({
     selector: 'jhi-difficulty-picker',
     templateUrl: './difficulty-picker.component.html',
     styles: ['div { cursor: pointer; }'],
-    standalone: false,
+    imports: [TranslateDirective, NgClass],
 })
 export class DifficultyPickerComponent {
     readonly DifficultyLevel = DifficultyLevel;

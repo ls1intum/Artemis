@@ -1,11 +1,14 @@
 import { ChangeDetectionStrategy, Component, Input } from '@angular/core';
 import { TutorialGroup } from 'app/entities/tutorial-group/tutorial-group.model';
+import { SidePanelComponent } from '../../../../../../shared/side-panel/side-panel.component';
+import { TranslateDirective } from '../../../../../../shared/language/translate.directive';
+import { ArtemisTranslatePipe } from '../../../../../../shared/pipes/artemis-translate.pipe';
 
 @Component({
     selector: 'jhi-tutorial-groups-course-information',
     templateUrl: './tutorial-groups-course-information.component.html',
     changeDetection: ChangeDetectionStrategy.OnPush,
-    standalone: false,
+    imports: [SidePanelComponent, TranslateDirective, ArtemisTranslatePipe],
 })
 export class TutorialGroupsCourseInformationComponent {
     @Input()

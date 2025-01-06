@@ -11,7 +11,7 @@ import { AlertService } from 'app/core/util/alert.service';
 import { onError } from 'app/shared/util/global.utils';
 import { HttpErrorResponse } from '@angular/common/http';
 import { getAsGroupChatDTO } from 'app/entities/metis/conversation/group-chat.model';
-import { NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
+import { NgbDropdown, NgbDropdownButtonItem, NgbDropdownItem, NgbDropdownMenu, NgbDropdownToggle, NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
 import {
     ConversationDetailDialogComponent,
     ConversationDetailTabs,
@@ -20,6 +20,9 @@ import { isOneToOneChatDTO } from 'app/entities/metis/conversation/one-to-one-ch
 import { defaultFirstLayerDialogOptions, getChannelSubTypeReferenceTranslationKey } from 'app/overview/course-conversations/other/conversation.util';
 import { MetisService } from 'app/shared/metis/metis.service';
 import { NotificationService } from 'app/shared/notification/notification.service';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { RouterLink } from '@angular/router';
+import { ArtemisTranslatePipe } from '../../pipes/artemis-translate.pipe';
 
 @Component({
     selector: 'jhi-conversation-options',
@@ -27,7 +30,7 @@ import { NotificationService } from 'app/shared/notification/notification.servic
     styleUrls: ['./conversation-options.component.scss'],
     encapsulation: ViewEncapsulation.None,
     changeDetection: ChangeDetectionStrategy.OnPush,
-    standalone: false,
+    imports: [FaIconComponent, NgbDropdown, NgbDropdownToggle, NgbDropdownMenu, NgbDropdownItem, RouterLink, NgbDropdownButtonItem, ArtemisTranslatePipe],
 })
 export class ConversationOptionsComponent implements OnInit, OnDestroy {
     conversationService = inject(ConversationService);

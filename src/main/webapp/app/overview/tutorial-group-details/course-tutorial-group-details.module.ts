@@ -19,7 +19,6 @@ const routes: Routes = [
 ];
 
 @NgModule({
-    imports: [ArtemisTutorialGroupsSharedModule, RouterModule.forChild(routes), ArtemisSharedModule],
-    declarations: [CourseTutorialGroupDetailComponent],
+    imports: [ArtemisTutorialGroupsSharedModule, RouterModule.forChild(routes), ArtemisSharedModule, CourseTutorialGroupDetailComponent],
 })
 export class CourseTutorialGroupDetailsModule {}

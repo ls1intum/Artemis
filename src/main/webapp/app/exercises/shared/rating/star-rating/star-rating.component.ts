@@ -7,7 +7,6 @@ import { Subject } from 'rxjs';
     template: `<div #starMain></div>`,
     styleUrls: ['./star-rating.component.scss'],
     encapsulation: ViewEncapsulation.ShadowDom,
-    standalone: false,
 })
 export class StarRatingComponent {
     private stars: Array<HTMLElement> = [];

@@ -11,6 +11,13 @@ import { roundScorePercentSpecifiedByCourseSettings } from 'app/shared/util/util
 import { IconProp } from '@fortawesome/fontawesome-svg-core';
 import { captureException } from '@sentry/angular';
 import { isExamResultPublished } from 'app/exam/participate/exam.utils';
+import { TranslateDirective } from '../../../../shared/language/translate.directive';
+import { CollapsibleCardComponent } from '../collapsible-card.component';
+import { NgClass } from '@angular/common';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { NoDataComponent } from '../../../../shared/no-data-component';
+import { GradingKeyTableComponent } from '../../../../grading-system/grading-key-overview/grading-key/grading-key-table.component';
+import { ArtemisTranslatePipe } from '../../../../shared/pipes/artemis-translate.pipe';
 
 type ExerciseInfo = {
     icon: IconProp;
@@ -24,7 +31,7 @@ type ResultOverviewSection = 'grading-table' | 'grading-key' | 'bonus-grading-ke
     selector: 'jhi-exam-result-overview',
     styleUrls: ['./exam-result-overview.component.scss'],
     templateUrl: './exam-result-overview.component.html',
-    standalone: false,
+    imports: [TranslateDirective, CollapsibleCardComponent, NgClass, FaIconComponent, NoDataComponent, GradingKeyTableComponent, ArtemisTranslatePipe],
 })
 export class ExamResultOverviewComponent implements OnInit, OnChanges {
     private serverDateService = inject(ArtemisServerDateService);

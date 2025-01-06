@@ -18,7 +18,7 @@ import {
 import { Post } from 'app/entities/metis/post.model';
 import { PostingDirective } from 'app/shared/metis/posting.directive';
 import { MetisService } from 'app/shared/metis/metis.service';
-import { NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
+import { NgbModalRef, NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { ContextInformation, DisplayPriority, PageType, RouteComponents } from '../metis.util';
 import { faBookmark, faBullhorn, faCheckSquare, faComments, faPencilAlt, faSmile, faThumbtack, faTrash } from '@fortawesome/free-solid-svg-icons';
 import dayjs from 'dayjs/esm';
@@ -30,8 +30,19 @@ import { AnswerPostCreateEditModalComponent } from 'app/shared/metis/posting-cre
 import { animate, style, transition, trigger } from '@angular/animations';
 import { PostCreateEditModalComponent } from 'app/shared/metis/posting-create-edit-modal/post-create-edit-modal/post-create-edit-modal.component';
 import { PostReactionsBarComponent } from 'app/shared/metis/posting-reactions-bar/post-reactions-bar/post-reactions-bar.component';
-import { CdkOverlayOrigin } from '@angular/cdk/overlay';
-import { DOCUMENT } from '@angular/common';
+import { CdkConnectedOverlay, CdkOverlayOrigin } from '@angular/cdk/overlay';
+import { DOCUMENT, NgClass, NgIf, NgStyle } from '@angular/common';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { TranslateDirective } from '../../language/translate.directive';
+import { PostingHeaderComponent } from '../posting-header/posting-header.component';
+import { RouterLink, RouterLinkActive } from '@angular/router';
+import { PostingContentComponent } from '../posting-content/posting-content.components';
+import { PostReactionsBarComponent as PostReactionsBarComponent_1 } from '../posting-reactions-bar/post-reactions-bar/post-reactions-bar.component';
+import { MessageInlineInputComponent } from '../message/message-inline-input/message-inline-input.component';
+import { PostingFooterComponent as PostingFooterComponent_1 } from '../posting-footer/posting-footer.component';
+import { EmojiPickerComponent } from '../emoji/emoji-picker.component';
+import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
+import { ArtemisTranslatePipe } from '../../pipes/artemis-translate.pipe';
 
 @Component({
     selector: 'jhi-post',
@@ -44,7 +55,26 @@ import { DOCUMENT } from '@angular/common';
             transition(':leave', [animate('300ms ease-out', style({ opacity: 0 }))]),
         ]),
     ],
-    standalone: false,
+    imports: [
+        NgClass,
+        FaIconComponent,
+        TranslateDirective,
+        NgbTooltip,
+        PostingHeaderComponent,
+        RouterLinkActive,
+        RouterLink,
+        PostingContentComponent,
+        PostReactionsBarComponent_1,
+        MessageInlineInputComponent,
+        PostingFooterComponent_1,
+        NgIf,
+        NgStyle,
+        CdkOverlayOrigin,
+        CdkConnectedOverlay,
+        EmojiPickerComponent,
+        ArtemisDatePipe,
+        ArtemisTranslatePipe,
+    ],
 })
 export class PostComponent extends PostingDirective<Post> implements OnInit, OnChanges, AfterContentChecked {
     metisService = inject(MetisService);

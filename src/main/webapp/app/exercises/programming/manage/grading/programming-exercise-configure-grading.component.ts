@@ -1,4 +1,4 @@
-import { Location } from '@angular/common';
+import { Location, NgClass, NgTemplateOutlet } from '@angular/common';
 import { Component, OnDestroy, OnInit, ViewEncapsulation, inject } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { faQuestionCircle, faSort, faSortDown, faSortUp, faSquare } from '@fortawesome/free-solid-svg-icons';
@@ -23,6 +23,23 @@ import { differenceBy as _differenceBy, differenceWith as _differenceWith, inter
 import { Observable, Subscription, of, zip } from 'rxjs';
 import { catchError, distinctUntilChanged, map, take, tap } from 'rxjs/operators';
 import { ProgrammingExerciseTaskService } from 'app/exercises/programming/manage/grading/tasks/programming-exercise-task.service';
+import { TranslateDirective } from '../../../../shared/language/translate.directive';
+import { ProgrammingExerciseConfigureGradingStatusComponent } from './programming-exercise-configure-grading-status.component';
+import { ProgrammingExerciseConfigureGradingActionsComponent } from './programming-exercise-configure-grading-actions.component';
+import { ProgrammingExerciseGradingSubmissionPolicyConfigurationActionsComponent } from './programming-exercise-grading-submission-policy-configuration-actions.component';
+import { SubmissionPolicyUpdateComponent } from '../../../shared/submission-policy/submission-policy-update.component';
+import { NgbAlert, NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
+import { ProgrammingExerciseGradingTasksTableComponent } from './tasks/programming-exercise-grading-tasks-table.component';
+import { TestCaseDistributionChartComponent } from './charts/test-case-distribution-chart.component';
+import { ProgrammingExerciseGradingTableActionsComponent } from './programming-exercise-grading-table-actions.component';
+import { NgxDatatableModule } from '@siemens/ngx-datatable';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { FormsModule } from '@angular/forms';
+import { TableEditableFieldComponent } from '../../../../shared/table/table-editable-field.component';
+import { CategoryIssuesChartComponent } from './charts/category-issues-chart.component';
+import { ScaCategoryDistributionChartComponent } from './charts/sca-category-distribution-chart.component';
+import { FeedbackAnalysisComponent } from './feedback-analysis/feedback-analysis.component';
+import { ArtemisTranslatePipe } from '../../../../shared/pipes/artemis-translate.pipe';
 
 /**
  * Describes the editableField
@@ -65,7 +82,28 @@ export type Table = 'testCases' | 'codeAnalysis';
     styleUrls: ['./programming-exercise-configure-grading.scss'],
     encapsulation: ViewEncapsulation.None,
     providers: [ProgrammingExerciseTaskService],
-    standalone: false,
+    imports: [
+        NgClass,
+        TranslateDirective,
+        NgTemplateOutlet,
+        ProgrammingExerciseConfigureGradingStatusComponent,
+        ProgrammingExerciseConfigureGradingActionsComponent,
+        ProgrammingExerciseGradingSubmissionPolicyConfigurationActionsComponent,
+        SubmissionPolicyUpdateComponent,
+        NgbAlert,
+        ProgrammingExerciseGradingTasksTableComponent,
+        TestCaseDistributionChartComponent,
+        ProgrammingExerciseGradingTableActionsComponent,
+        NgxDatatableModule,
+        FaIconComponent,
+        NgbTooltip,
+        FormsModule,
+        TableEditableFieldComponent,
+        CategoryIssuesChartComponent,
+        ScaCategoryDistributionChartComponent,
+        FeedbackAnalysisComponent,
+        ArtemisTranslatePipe,
+    ],
 })
 export class ProgrammingExerciseConfigureGradingComponent implements OnInit, OnDestroy, ComponentCanDeactivate {
     private accountService = inject(AccountService);

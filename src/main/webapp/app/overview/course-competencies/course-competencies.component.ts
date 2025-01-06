@@ -10,12 +10,16 @@ import { faAngleDown, faAngleUp } from '@fortawesome/free-solid-svg-icons';
 import { CourseStorageService } from 'app/course/manage/course-storage.service';
 import { FeatureToggle, FeatureToggleService } from 'app/shared/feature-toggle/feature-toggle.service';
 import { CourseCompetencyService } from 'app/course/competencies/course-competency.service';
+import { CompetencyCardComponent } from '../../course/competencies/competency-card/competency-card.component';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { TranslateDirective } from '../../shared/language/translate.directive';
+import { ArtemisTranslatePipe } from '../../shared/pipes/artemis-translate.pipe';
 
 @Component({
     selector: 'jhi-course-competencies',
     templateUrl: './course-competencies.component.html',
     styleUrls: ['../course-overview.scss'],
-    standalone: false,
+    imports: [CompetencyCardComponent, FaIconComponent, TranslateDirective, ArtemisTranslatePipe],
 })
 export class CourseCompetenciesComponent implements OnInit, OnDestroy {
     private featureToggleService = inject(FeatureToggleService);

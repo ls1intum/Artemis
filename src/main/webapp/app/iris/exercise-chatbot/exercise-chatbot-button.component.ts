@@ -9,6 +9,11 @@ import { IrisLogoLookDirection, IrisLogoSize } from 'app/iris/iris-logo/iris-log
 import { ChatServiceMode, IrisChatService } from 'app/iris/iris-chat.service';
 import { animate, state, style, transition, trigger } from '@angular/animations';
 import { IrisTextMessageContent } from 'app/entities/iris/iris-content-type.model';
+import { NgClass } from '@angular/common';
+import { TranslateDirective } from '../../shared/language/translate.directive';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { IrisLogoComponent } from '../iris-logo/iris-logo.component';
+import { HtmlForMarkdownPipe } from '../../shared/pipes/html-for-markdown.pipe';
 
 @Component({
     selector: 'jhi-exercise-chatbot-button',
@@ -36,7 +41,7 @@ import { IrisTextMessageContent } from 'app/entities/iris/iris-content-type.mode
             transition('visible => hidden', animate('300ms ease-in')),
         ]),
     ],
-    standalone: false,
+    imports: [NgClass, TranslateDirective, FaIconComponent, IrisLogoComponent, HtmlForMarkdownPipe],
 })
 export class IrisExerciseChatbotButtonComponent implements OnInit, OnDestroy {
     dialog = inject(MatDialog);

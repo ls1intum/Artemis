@@ -10,12 +10,14 @@ import { CourseManagementService } from 'app/course/manage/course-management.ser
 import { QuizQuestion } from 'app/entities/quiz/quiz-question.model';
 import { Course } from 'app/entities/course.model';
 import { onError } from 'app/shared/util/global.utils';
+import { TranslateDirective } from '../../../shared/language/translate.directive';
+import { FormsModule } from '@angular/forms';
 
 @Component({
     selector: 'jhi-quiz-exercise-export',
     templateUrl: './quiz-exercise-export.component.html',
     styleUrls: ['./quiz-exercise-export.component.scss', '../shared/quiz.scss'],
-    standalone: false,
+    imports: [TranslateDirective, FormsModule],
 })
 export class QuizExerciseExportComponent implements OnInit {
     private route = inject(ActivatedRoute);

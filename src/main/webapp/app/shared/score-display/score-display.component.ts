@@ -2,12 +2,16 @@ import { Component, Input, OnChanges } from '@angular/core';
 import { roundScorePercentSpecifiedByCourseSettings, roundValueSpecifiedByCourseSettings } from 'app/shared/util/utils';
 import { Course } from 'app/entities/course.model';
 import { faQuestionCircle } from '@fortawesome/free-solid-svg-icons';
+import { TranslateDirective } from '../language/translate.directive';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
+import { ArtemisTranslatePipe } from '../pipes/artemis-translate.pipe';
 
 @Component({
     selector: 'jhi-score-display',
     templateUrl: './score-display.component.html',
     styleUrls: ['./score-display.component.scss'],
-    standalone: false,
+    imports: [TranslateDirective, FaIconComponent, NgbTooltip, ArtemisTranslatePipe],
 })
 export class ScoreDisplayComponent implements OnChanges {
     @Input() maxBonusPoints = 0;

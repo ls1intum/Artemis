@@ -2,14 +2,31 @@ import { Component, EventEmitter, Input, OnInit, Output } from '@angular/core';
 import { CourseCompetencyValidators } from 'app/entities/competency.model';
 import { faChevronRight, faPencilAlt, faSave, faTrash, faWrench } from '@fortawesome/free-solid-svg-icons';
 import { ButtonSize, ButtonType } from 'app/shared/components/button.component';
-import { FormGroup, Validators } from '@angular/forms';
+import { FormGroup, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
 import { CompetencyFormControlsWithViewed } from 'app/course/competencies/generate-competencies/generate-competencies.component';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { TranslateDirective } from '../../../shared/language/translate.directive';
+import { ButtonComponent } from '../../../shared/components/button.component';
+import { NgbCollapse } from '@ng-bootstrap/ng-bootstrap';
+import { MarkdownEditorMonacoComponent } from '../../../shared/markdown-editor/monaco/markdown-editor-monaco.component';
+import { TaxonomySelectComponent } from '../taxonomy-select/taxonomy-select.component';
+import { HtmlForMarkdownPipe } from '../../../shared/pipes/html-for-markdown.pipe';
 
 @Component({
     selector: 'jhi-competency-recommendation',
     templateUrl: './competency-recommendation-detail.component.html',
     styleUrls: ['competency-recommendation-detail.component.scss'],
-    standalone: false,
+    imports: [
+        FormsModule,
+        ReactiveFormsModule,
+        FaIconComponent,
+        TranslateDirective,
+        ButtonComponent,
+        NgbCollapse,
+        MarkdownEditorMonacoComponent,
+        TaxonomySelectComponent,
+        HtmlForMarkdownPipe,
+    ],
 })
 export class CompetencyRecommendationDetailComponent implements OnInit {
     @Input({ required: true }) form: FormGroup<CompetencyFormControlsWithViewed>;

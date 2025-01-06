@@ -1,10 +1,7 @@
 import { Directive, ElementRef, Input, OnDestroy, OnInit, Renderer2, TemplateRef, inject } from '@angular/core';
 import { NgbPopover } from '@ng-bootstrap/ng-bootstrap';
 
-@Directive({
-    selector: '[jhiStickyPopover]',
-    standalone: false,
-})
+@Directive({ selector: '[jhiStickyPopover]' })
 export class StickyPopoverDirective extends NgbPopover implements OnInit, OnDestroy {
     private _elRef = inject(ElementRef);
     private _render = inject(Renderer2);

@@ -8,6 +8,7 @@ import { onError } from 'app/shared/util/global.utils';
 import { ArtemisSharedCommonModule } from 'app/shared/shared-common.module';
 import { faSort, faSortDown, faSortUp, faSpinner } from '@fortawesome/free-solid-svg-icons';
 import { BaseApiHttpService } from 'app/course/learning-paths/services/base-api-http.service';
+import { NgbPagination } from '@ng-bootstrap/ng-bootstrap';
 
 /**
  * An abstract component intended for cases where a resource needs to be imported from one course into another.
@@ -21,7 +22,7 @@ export type Column<T extends BaseEntity> = {
 
 @Component({
     selector: 'jhi-import-table',
-    imports: [ArtemisSharedCommonModule],
+    imports: [ArtemisSharedCommonModule, NgbPagination],
     templateUrl: './import-table.component.html',
     styleUrl: './import-table.component.scss',
 })
@@ -36,9 +37,9 @@ export class ImportTableComponent<T extends BaseEntity> {
     private readonly alertService = inject(AlertService);
     private readonly pagingService = inject(PagingService);
 
-    readonly columns = input.required<Column<T>[]>();
+    columns = input.required<Column<T>[]>();
     readonly columnBaseTranslationKey = input.required<string>();
-    readonly disabledIds = input<number[]>([]);
+    disabledIds = input<number[]>([]);
     readonly numberOfColumns = computed(() => this.columns().length + 2);
 
     readonly onRowSelection = output<T>();

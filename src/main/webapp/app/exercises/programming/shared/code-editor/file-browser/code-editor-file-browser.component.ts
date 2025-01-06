@@ -27,6 +27,15 @@ import { TreeItem, TreeviewItem } from 'app/exercises/programming/shared/code-ed
 import { TreeviewComponent } from 'app/exercises/programming/shared/code-editor/treeview/components/treeview/treeview.component';
 import { findItemInList } from 'app/exercises/programming/shared/code-editor/treeview/helpers/treeview-helper';
 import { TEXT_FILE_EXTENSIONS } from 'app/shared/constants/file-extensions.constants';
+import { NgStyle } from '@angular/common';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { TranslateDirective } from '../../../../../shared/language/translate.directive';
+import { CodeEditorFileBrowserCreateNodeComponent } from './code-editor-file-browser-create-node.component';
+import { TreeviewComponent as TreeviewComponent_1 } from '../treeview/components/treeview/treeview.component';
+import { CodeEditorStatusComponent as CodeEditorStatusComponent_1 } from '../status/code-editor-status.component';
+import { CodeEditorFileBrowserFolderComponent } from './code-editor-file-browser-folder.component';
+import { CodeEditorFileBrowserFileComponent } from './code-editor-file-browser-file.component';
+import { ArtemisTranslatePipe } from '../../../../../shared/pipes/artemis-translate.pipe';
 
 export type InteractableEvent = {
     // Click event object; contains target information
@@ -47,7 +56,17 @@ export interface FileTreeItem extends TreeItem<string> {
     templateUrl: './code-editor-file-browser.component.html',
     styleUrls: ['./code-editor-file-browser.scss'],
     providers: [NgbModal],
-    standalone: false,
+    imports: [
+        NgStyle,
+        FaIconComponent,
+        TranslateDirective,
+        CodeEditorFileBrowserCreateNodeComponent,
+        TreeviewComponent_1,
+        CodeEditorStatusComponent_1,
+        CodeEditorFileBrowserFolderComponent,
+        CodeEditorFileBrowserFileComponent,
+        ArtemisTranslatePipe,
+    ],
 })
 export class CodeEditorFileBrowserComponent implements OnInit, OnChanges, AfterViewInit, IFileDeleteDelegate {
     modalService = inject(NgbModal);

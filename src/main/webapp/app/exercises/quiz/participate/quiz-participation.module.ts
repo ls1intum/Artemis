@@ -7,7 +7,6 @@ import { ArtemisSharedModule } from 'app/shared/shared.module';
 import { ArtemisQuizQuestionTypesModule } from 'app/exercises/quiz/shared/questions/artemis-quiz-question-types.module';
 
 @NgModule({
-    imports: [ArtemisSharedModule, RouterModule.forChild(quizParticipationRoute), ArtemisSharedComponentModule, ArtemisQuizQuestionTypesModule],
-    declarations: [QuizParticipationComponent],
+    imports: [ArtemisSharedModule, RouterModule.forChild(quizParticipationRoute), ArtemisSharedComponentModule, ArtemisQuizQuestionTypesModule, QuizParticipationComponent],
 })
 export class ArtemisQuizParticipationModule {}

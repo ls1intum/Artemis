@@ -7,10 +7,7 @@ type Duration = {
     seconds: number;
 };
 
-@Pipe({
-    name: 'artemisDurationFromSeconds',
-    standalone: false,
-})
+@Pipe({ name: 'artemisDurationFromSeconds' })
 export class ArtemisDurationFromSecondsPipe implements PipeTransform {
     private readonly SECONDS_IN_DAY = 60 * 60 * 24;
     private readonly SECONDS_IN_HOUR = 60 * 60;

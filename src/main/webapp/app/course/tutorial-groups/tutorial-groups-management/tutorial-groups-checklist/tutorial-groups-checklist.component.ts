@@ -1,5 +1,5 @@
 import { ChangeDetectionStrategy, ChangeDetectorRef, Component, OnDestroy, OnInit, inject } from '@angular/core';
-import { ActivatedRoute } from '@angular/router';
+import { ActivatedRoute, RouterLink } from '@angular/router';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
 import { Course } from 'app/entities/course.model';
 import { AlertService } from 'app/core/util/alert.service';
@@ -9,12 +9,16 @@ import { HttpErrorResponse } from '@angular/common/http';
 import { faPlus, faWrench } from '@fortawesome/free-solid-svg-icons';
 import { TutorialGroupsConfigurationService } from 'app/course/tutorial-groups/services/tutorial-groups-configuration.service';
 import { takeUntil } from 'rxjs/operators';
+import { LoadingIndicatorContainerComponent } from '../../../../shared/loading-indicator-container/loading-indicator-container.component';
+import { TranslateDirective } from '../../../../shared/language/translate.directive';
+import { ChecklistCheckComponent } from '../../../../shared/components/checklist-check/checklist-check.component';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 
 @Component({
     selector: 'jhi-tutorial-groups-checklist',
     templateUrl: './tutorial-groups-checklist.component.html',
     changeDetection: ChangeDetectionStrategy.OnPush,
-    standalone: false,
+    imports: [LoadingIndicatorContainerComponent, TranslateDirective, ChecklistCheckComponent, RouterLink, FaIconComponent],
 })
 export class TutorialGroupsChecklistComponent implements OnInit, OnDestroy {
     private activatedRoute = inject(ActivatedRoute);

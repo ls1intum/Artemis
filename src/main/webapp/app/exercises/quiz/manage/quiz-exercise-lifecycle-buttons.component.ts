@@ -6,11 +6,14 @@ import { ActionType } from 'app/shared/delete-dialog/delete-dialog.model';
 import { AlertService } from 'app/core/util/alert.service';
 import { faEye, faFileExport, faPlayCircle, faPlus, faSignal, faSort, faStopCircle, faTable, faTimes, faWrench } from '@fortawesome/free-solid-svg-icons';
 import { Subject } from 'rxjs';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { TranslateDirective } from '../../../shared/language/translate.directive';
+import { DeleteButtonDirective } from '../../../shared/delete-dialog/delete-button.directive';
 
 @Component({
     selector: 'jhi-quiz-exercise-lifecycle-buttons',
     templateUrl: './quiz-exercise-lifecycle-buttons.component.html',
-    standalone: false,
+    imports: [FaIconComponent, TranslateDirective, DeleteButtonDirective],
 })
 export class QuizExerciseLifecycleButtonsComponent {
     private quizExerciseService = inject(QuizExerciseService);

@@ -3,12 +3,17 @@ import { Observable, OperatorFunction, catchError, of, switchMap, tap } from 'rx
 import { UserService } from 'app/core/user/user.service';
 import { faCircleNotch } from '@fortawesome/free-solid-svg-icons';
 import { User } from 'app/core/user/user.model';
+import { TranslateDirective } from '../language/translate.directive';
+import { FormsModule } from '@angular/forms';
+import { NgbTypeahead } from '@ng-bootstrap/ng-bootstrap';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { ArtemisTranslatePipe } from '../pipes/artemis-translate.pipe';
 
 @Component({
     selector: 'jhi-type-ahead-user-search-field',
     templateUrl: './type-ahead-user-search-field.component.html',
     styleUrls: ['./type-ahead-user-search-field.component.scss'],
-    standalone: false,
+    imports: [TranslateDirective, FormsModule, NgbTypeahead, FaIconComponent, ArtemisTranslatePipe],
 })
 export class TypeAheadUserSearchFieldComponent {
     private userService = inject(UserService);

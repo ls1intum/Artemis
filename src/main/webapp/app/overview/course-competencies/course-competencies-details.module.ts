@@ -10,7 +10,7 @@ import { RouterModule, Routes } from '@angular/router';
 import { ArtemisMarkdownModule } from 'app/shared/markdown.module';
 import { CourseCompetenciesDetailsComponent } from 'app/overview/course-competencies/course-competencies-details.component';
 import { ArtemisSidePanelModule } from 'app/shared/side-panel/side-panel.module';
-import { FireworksModule } from 'app/shared/fireworks/fireworks.module';
+
 import { JudgementOfLearningRatingComponent } from 'app/course/competencies/judgement-of-learning-rating/judgement-of-learning-rating.component';
 import { AttachmentUnitComponent } from 'app/overview/course-lectures/attachment-unit/attachment-unit.component';
 import { VideoUnitComponent } from 'app/overview/course-lectures/video-unit/video-unit.component';
@@ -38,14 +38,13 @@ const routes: Routes = [
         ArtemisCompetenciesModule,
         ArtemisMarkdownModule,
         ArtemisSidePanelModule,
-        FireworksModule,
         JudgementOfLearningRatingComponent,
         AttachmentUnitComponent,
         VideoUnitComponent,
         TextUnitComponent,
         OnlineUnitComponent,
+        CourseCompetenciesDetailsComponent,
     ],
-    declarations: [CourseCompetenciesDetailsComponent],
     exports: [CourseCompetenciesDetailsComponent],
 })
 export class ArtemisCourseCompetenciesDetailsModule {}

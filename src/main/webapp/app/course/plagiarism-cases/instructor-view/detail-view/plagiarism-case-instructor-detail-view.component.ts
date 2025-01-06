@@ -1,7 +1,7 @@
 import { Component, OnDestroy, OnInit, inject } from '@angular/core';
 import { PlagiarismCase } from 'app/exercises/shared/plagiarism/types/PlagiarismCase';
 import { PlagiarismCasesService } from 'app/course/plagiarism-cases/shared/plagiarism-cases.service';
-import { ActivatedRoute } from '@angular/router';
+import { ActivatedRoute, RouterLink } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
 import { HttpResponse } from '@angular/common/http';
 import { getCourseFromExercise, getExerciseUrlSegment, getIcon } from 'app/entities/exercise.model';
@@ -17,13 +17,55 @@ import { abbreviateString } from 'app/utils/text.utils';
 import { AccountService } from 'app/core/auth/account.service';
 import { User } from 'app/core/user/user.model';
 import dayjs from 'dayjs/esm';
+import { TranslateDirective } from '../../../../shared/language/translate.directive';
+import { PlagiarismCaseVerdictComponent } from '../../shared/verdict/plagiarism-case-verdict.component';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import {
+    NgbDropdown,
+    NgbDropdownItem,
+    NgbDropdownMenu,
+    NgbDropdownToggle,
+    NgbNav,
+    NgbNavContent,
+    NgbNavItem,
+    NgbNavItemRole,
+    NgbNavLink,
+    NgbNavLinkBase,
+    NgbNavOutlet,
+} from '@ng-bootstrap/ng-bootstrap';
+import { PostingThreadComponent } from '../../../../shared/metis/posting-thread/posting-thread.component';
+import { PostCreateEditModalComponent } from '../../../../shared/metis/posting-create-edit-modal/post-create-edit-modal/post-create-edit-modal.component';
+import { ConfirmAutofocusButtonComponent } from '../../../../shared/components/confirm-autofocus-button.component';
+import { FormsModule } from '@angular/forms';
+import { PlagiarismCaseReviewComponent } from '../../shared/review/plagiarism-case-review.component';
 
 @Component({
     selector: 'jhi-plagiarism-case-instructor-detail-view',
     templateUrl: './plagiarism-case-instructor-detail-view.component.html',
     styleUrls: ['./plagiarism-case-instructor-detail-view.component.scss'],
     providers: [MetisService],
-    standalone: false,
+    imports: [
+        TranslateDirective,
+        PlagiarismCaseVerdictComponent,
+        FaIconComponent,
+        RouterLink,
+        NgbDropdown,
+        NgbDropdownToggle,
+        NgbDropdownMenu,
+        NgbDropdownItem,
+        PostingThreadComponent,
+        PostCreateEditModalComponent,
+        NgbNav,
+        NgbNavItem,
+        NgbNavItemRole,
+        NgbNavLink,
+        NgbNavLinkBase,
+        NgbNavContent,
+        ConfirmAutofocusButtonComponent,
+        FormsModule,
+        NgbNavOutlet,
+        PlagiarismCaseReviewComponent,
+    ],
 })
 export class PlagiarismCaseInstructorDetailViewComponent implements OnInit, OnDestroy {
     protected metisService = inject(MetisService);

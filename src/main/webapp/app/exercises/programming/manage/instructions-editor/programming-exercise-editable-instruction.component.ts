@@ -18,13 +18,30 @@ import { FormulaAction } from 'app/shared/monaco-editor/model/actions/formula.ac
 import { TaskAction } from 'app/shared/monaco-editor/model/actions/task.action';
 import { TestCaseAction } from 'app/shared/monaco-editor/model/actions/test-case.action';
 import { TextEditorDomainAction } from 'app/shared/monaco-editor/model/actions/text-editor-domain-action.model';
+import { MarkdownEditorMonacoComponent as MarkdownEditorMonacoComponent_1 } from '../../../../shared/markdown-editor/monaco/markdown-editor-monaco.component';
+import { ProgrammingExerciseInstructionComponent } from '../../shared/instructions-render/programming-exercise-instruction.component';
+import { NgClass } from '@angular/common';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { TranslateDirective } from '../../../../shared/language/translate.directive';
+import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
+import { ProgrammingExerciseInstructionAnalysisComponent } from './analysis/programming-exercise-instruction-analysis.component';
+import { ArtemisTranslatePipe } from '../../../../shared/pipes/artemis-translate.pipe';
 
 @Component({
     selector: 'jhi-programming-exercise-editable-instructions',
     templateUrl: './programming-exercise-editable-instruction.component.html',
     styleUrls: ['./programming-exercise-editable-instruction.scss'],
     encapsulation: ViewEncapsulation.None,
-    standalone: false,
+    imports: [
+        MarkdownEditorMonacoComponent_1,
+        ProgrammingExerciseInstructionComponent,
+        NgClass,
+        FaIconComponent,
+        TranslateDirective,
+        NgbTooltip,
+        ProgrammingExerciseInstructionAnalysisComponent,
+        ArtemisTranslatePipe,
+    ],
 })
 export class ProgrammingExerciseEditableInstructionComponent implements AfterViewInit, OnChanges, OnDestroy {
     private programmingExerciseService = inject(ProgrammingExerciseService);

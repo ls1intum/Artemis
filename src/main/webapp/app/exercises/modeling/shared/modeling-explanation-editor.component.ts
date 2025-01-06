@@ -1,11 +1,13 @@
 import { Component, EventEmitter, Input, Output } from '@angular/core';
 import { MAX_SUBMISSION_TEXT_LENGTH } from 'app/shared/constants/input.constants';
+import { TranslateDirective } from '../../../shared/language/translate.directive';
+import { FormsModule } from '@angular/forms';
 
 @Component({
     selector: 'jhi-modeling-explanation-editor',
     templateUrl: './modeling-explanation-editor.component.html',
     styleUrls: ['./modeling-explanation-editor.component.scss'],
-    standalone: false,
+    imports: [TranslateDirective, FormsModule],
 })
 export class ModelingExplanationEditorComponent {
     @Input()

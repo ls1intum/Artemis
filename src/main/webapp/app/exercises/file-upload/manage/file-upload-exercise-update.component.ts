@@ -10,7 +10,7 @@ import { Exercise, ExerciseMode, IncludedInOverallScore, getCourseId, resetForIm
 import { ArtemisNavigationUtilService } from 'app/utils/navigation.utils';
 import { ExerciseCategory } from 'app/entities/exercise-category.model';
 import { cloneDeep } from 'lodash-es';
-import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
+import { NgbModal, NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { ExerciseUpdateWarningService } from 'app/exercises/shared/exercise-update-warning/exercise-update-warning.service';
 import { onError } from 'app/shared/util/global.utils';
 import { EditType, SaveExerciseCommand } from 'app/exercises/shared/exercise/exercise.utils';
@@ -22,16 +22,57 @@ import { scrollToTopOfPage } from 'app/shared/util/utils';
 import { FormDateTimePickerComponent } from 'app/shared/date-time-picker/date-time-picker.component';
 import { ExerciseTitleChannelNameComponent } from 'app/exercises/shared/exercise-title-channel-name/exercise-title-channel-name.component';
 import { TeamConfigFormGroupComponent } from 'app/exercises/shared/team-config-form-group/team-config-form-group.component';
-import { NgModel } from '@angular/forms';
+import { FormsModule, NgModel } from '@angular/forms';
 import { Subscription } from 'rxjs';
 import { FormSectionStatus } from 'app/forms/form-status-bar/form-status-bar.component';
 import { FormulaAction } from 'app/shared/monaco-editor/model/actions/formula.action';
+import { TranslateDirective } from '../../../shared/language/translate.directive';
+import { DocumentationButtonComponent } from '../../../shared/components/documentation-button/documentation-button.component';
+import { FormStatusBarComponent } from '../../../forms/form-status-bar/form-status-bar.component';
+import { ExerciseTitleChannelNameComponent as ExerciseTitleChannelNameComponent_1 } from '../../shared/exercise-title-channel-name/exercise-title-channel-name.component';
+import { HelpIconComponent } from '../../../shared/components/help-icon.component';
+import { CategorySelectorComponent } from '../../../shared/category-selector/category-selector.component';
+import { DifficultyPickerComponent } from '../../shared/difficulty-picker/difficulty-picker.component';
+import { TeamConfigFormGroupComponent as TeamConfigFormGroupComponent_1 } from '../../shared/team-config-form-group/team-config-form-group.component';
+import { MarkdownEditorMonacoComponent } from '../../../shared/markdown-editor/monaco/markdown-editor-monaco.component';
+import { CompetencySelectionComponent } from '../../../shared/competency-selection/competency-selection.component';
+import { FormDateTimePickerComponent as FormDateTimePickerComponent_1 } from '../../../shared/date-time-picker/date-time-picker.component';
+import { IncludedInOverallScorePickerComponent } from '../../shared/included-in-overall-score-picker/included-in-overall-score-picker.component';
+import { CustomMinDirective } from '../../../shared/validators/custom-min-validator.directive';
+import { CustomMaxDirective } from '../../../shared/validators/custom-max-validator.directive';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { PresentationScoreComponent } from '../../shared/presentation-score/presentation-score.component';
+import { GradingInstructionsDetailsComponent } from '../../shared/structured-grading-criterion/grading-instructions-details/grading-instructions-details.component';
+import { FormFooterComponent } from '../../../forms/form-footer/form-footer.component';
+import { ArtemisTranslatePipe } from '../../../shared/pipes/artemis-translate.pipe';
 
 @Component({
     selector: 'jhi-file-upload-exercise-update',
     templateUrl: './file-upload-exercise-update.component.html',
     changeDetection: ChangeDetectionStrategy.OnPush,
-    standalone: false,
+    imports: [
+        FormsModule,
+        TranslateDirective,
+        DocumentationButtonComponent,
+        FormStatusBarComponent,
+        ExerciseTitleChannelNameComponent_1,
+        HelpIconComponent,
+        CategorySelectorComponent,
+        DifficultyPickerComponent,
+        TeamConfigFormGroupComponent_1,
+        MarkdownEditorMonacoComponent,
+        CompetencySelectionComponent,
+        FormDateTimePickerComponent_1,
+        IncludedInOverallScorePickerComponent,
+        CustomMinDirective,
+        CustomMaxDirective,
+        FaIconComponent,
+        NgbTooltip,
+        PresentationScoreComponent,
+        GradingInstructionsDetailsComponent,
+        FormFooterComponent,
+        ArtemisTranslatePipe,
+    ],
 })
 export class FileUploadExerciseUpdateComponent implements AfterViewInit, OnDestroy, OnInit {
     private fileUploadExerciseService = inject(FileUploadExerciseService);

@@ -5,6 +5,8 @@ import { ExerciseType } from 'app/entities/exercise.model';
 import { ProgrammingExercise } from 'app/entities/programming/programming-exercise.model';
 import { GradingTab } from 'app/exercises/programming/manage/grading/programming-exercise-configure-grading.component';
 import { ExerciseImportWrapperComponent } from 'app/exercises/shared/import/exercise-import-wrapper/exercise-import-wrapper.component';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { TranslateDirective } from '../../../../shared/language/translate.directive';
 
 /**
  * The actions of the test case table:
@@ -14,7 +16,7 @@ import { ExerciseImportWrapperComponent } from 'app/exercises/shared/import/exer
 @Component({
     selector: 'jhi-programming-exercise-grading-table-actions',
     templateUrl: './programming-exercise-grading-table-actions.component.html',
-    standalone: false,
+    imports: [FaIconComponent, TranslateDirective],
 })
 export class ProgrammingExerciseGradingTableActionsComponent {
     private modalService = inject(NgbModal);

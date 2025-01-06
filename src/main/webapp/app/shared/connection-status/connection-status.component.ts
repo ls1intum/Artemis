@@ -2,12 +2,15 @@ import { Component, ContentChild, ElementRef, Input, OnDestroy, OnInit, inject }
 import { faCircle, faExclamation, faTowerBroadcast } from '@fortawesome/free-solid-svg-icons';
 import { Subscription } from 'rxjs';
 import { JhiWebsocketService } from 'app/core/websocket/websocket.service';
+import { NgClass } from '@angular/common';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { TranslateDirective } from '../language/translate.directive';
 
 @Component({
     selector: 'jhi-connection-status',
     templateUrl: './connection-status.component.html',
     styleUrls: ['./connection-status.component.scss'],
-    standalone: false,
+    imports: [NgClass, FaIconComponent, TranslateDirective],
 })
 export class JhiConnectionStatusComponent implements OnInit, OnDestroy {
     private websocketService = inject(JhiWebsocketService);

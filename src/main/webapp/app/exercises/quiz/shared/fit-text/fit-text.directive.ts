@@ -2,10 +2,7 @@ import { AfterViewInit, Directive, ElementRef, HostListener, Input, OnChanges, O
 
 // NOTE: this code was taken from https://github.com/sollenne/angular-fittext because the repository was not maintained any more since June 2018
 
-@Directive({
-    selector: '[fitText]',
-    standalone: false,
-})
+@Directive({ selector: '[fitText]' })
 export class FitTextDirective implements AfterViewInit, OnInit, OnChanges, OnDestroy {
     private renderer = inject(Renderer2);
 

@@ -3,10 +3,7 @@ import { ProgrammingExerciseResetDialogComponent } from 'app/exercises/programmi
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { ProgrammingExercise } from 'app/entities/programming/programming-exercise.model';
 
-@Directive({
-    selector: '[jhiProgrammingExerciseResetButton]',
-    standalone: false,
-})
+@Directive({ selector: '[jhiProgrammingExerciseResetButton]' })
 export class ProgrammingExerciseResetButtonDirective implements OnInit {
     private modalService = inject(NgbModal);
     private renderer = inject(Renderer2);

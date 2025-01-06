@@ -20,12 +20,15 @@ import { GroupChatDTO, getAsGroupChatDTO, isGroupChatDTO } from 'app/entities/me
 import { GroupChatService } from 'app/shared/metis/conversations/group-chat.service';
 import { catchError } from 'rxjs/operators';
 import { ConversationUserDTO } from 'app/entities/metis/conversation/conversation-user-dto.model';
+import { TranslateDirective } from '../../../../../../shared/language/translate.directive';
+import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
+import { ArtemisTranslatePipe } from '../../../../../../shared/pipes/artemis-translate.pipe';
 
 @Component({
     selector: 'jhi-conversation-info',
     templateUrl: './conversation-info.component.html',
     styleUrls: ['./conversation-info.component.scss'],
-    standalone: false,
+    imports: [TranslateDirective, ArtemisDatePipe, ArtemisTranslatePipe],
 })
 export class ConversationInfoComponent implements OnInit, OnDestroy {
     private ngUnsubscribe = new Subject<void>();

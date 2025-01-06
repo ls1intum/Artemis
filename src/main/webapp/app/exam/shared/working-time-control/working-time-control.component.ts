@@ -1,10 +1,11 @@
 import { Component, Input, inject } from '@angular/core';
-import { ControlValueAccessor, NG_VALUE_ACCESSOR } from '@angular/forms';
+import { ControlValueAccessor, FormsModule, NG_VALUE_ACCESSOR } from '@angular/forms';
 
 import { Exam } from 'app/entities/exam/exam.model';
 import { round } from 'app/shared/util/utils';
 import { ArtemisDurationFromSecondsPipe } from 'app/shared/pipes/artemis-duration-from-seconds.pipe';
 import { getRelativeWorkingTimeExtension } from 'app/exam/participate/exam.utils';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
 
 @Component({
     selector: 'jhi-working-time-control',
@@ -18,7 +19,7 @@ import { getRelativeWorkingTimeExtension } from 'app/exam/participate/exam.utils
             useExisting: WorkingTimeControlComponent,
         },
     ],
-    standalone: false,
+    imports: [TranslateDirective, FormsModule],
 })
 export class WorkingTimeControlComponent implements ControlValueAccessor {
     private artemisDurationFromSecondsPipe = inject(ArtemisDurationFromSecondsPipe);

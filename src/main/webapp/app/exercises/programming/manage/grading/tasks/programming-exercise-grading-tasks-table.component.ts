@@ -9,6 +9,13 @@ import { Observable, Subject } from 'rxjs';
 import { ProgrammingExerciseTestCase } from 'app/entities/programming/programming-exercise-test-case.model';
 import { isExamExercise } from 'app/shared/util/utils';
 import { ProgrammingExerciseServerSideTask } from 'app/entities/programming-exercise-task.model';
+import { ButtonComponent } from '../../../../../shared/components/button.component';
+import { TranslateDirective } from '../../../../../shared/language/translate.directive';
+import { FormsModule } from '@angular/forms';
+import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { ProgrammingExerciseTaskComponent } from './programming-exercise-task/programming-exercise-task.component';
+import { ArtemisTranslatePipe } from '../../../../../shared/pipes/artemis-translate.pipe';
 
 type Sort = {
     by: 'name' | 'weight' | 'multiplier' | 'bonusPoints' | 'visibility' | 'resulting' | 'type';
@@ -21,7 +28,7 @@ type TaskComparator = (a: ProgrammingExerciseTask | ProgrammingExerciseTestCase,
     selector: 'jhi-programming-exercise-grading-tasks-table',
     templateUrl: './programming-exercise-grading-tasks-table.component.html',
     styleUrls: ['./programming-exercise-grading-tasks-table.scss'],
-    standalone: false,
+    imports: [ButtonComponent, TranslateDirective, FormsModule, NgbTooltip, FaIconComponent, ProgrammingExerciseTaskComponent, ArtemisTranslatePipe],
 })
 export class ProgrammingExerciseGradingTasksTableComponent implements OnInit {
     private taskService = inject(ProgrammingExerciseTaskService);

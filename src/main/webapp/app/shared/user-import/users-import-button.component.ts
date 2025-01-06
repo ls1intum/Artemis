@@ -6,13 +6,14 @@ import { CourseGroup } from 'app/entities/course.model';
 import { Exam } from 'app/entities/exam/exam.model';
 import { faFileImport } from '@fortawesome/free-solid-svg-icons';
 import { TutorialGroup } from 'app/entities/tutorial-group/tutorial-group.model';
+import { ButtonComponent } from '../components/button.component';
 
 @Component({
     selector: 'jhi-user-import-button',
     template: `
         <jhi-button [btnType]="buttonType" [btnSize]="buttonSize" [icon]="faFileImport" [title]="'artemisApp.importUsers.buttonLabel'" (onClick)="openUsersImportDialog($event)" />
     `,
-    standalone: false,
+    imports: [ButtonComponent],
 })
 export class UsersImportButtonComponent {
     private modalService = inject(NgbModal);

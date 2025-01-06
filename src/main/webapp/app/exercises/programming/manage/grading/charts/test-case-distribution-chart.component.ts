@@ -8,6 +8,9 @@ import { ProgrammingGradingChartsDirective } from 'app/exercises/programming/man
 import { getTotalMaxPoints } from 'app/exercises/shared/exercise/exercise.utils';
 import { NgxChartsMultiSeriesDataEntry } from 'app/shared/chart/ngx-charts-datatypes';
 import { ArtemisNavigationUtilService } from 'app/utils/navigation.utils';
+import { TranslateDirective } from '../../../../../shared/language/translate.directive';
+import { BarChartModule } from '@swimlane/ngx-charts';
+import { ArtemisTranslatePipe } from '../../../../../shared/pipes/artemis-translate.pipe';
 
 enum TestCaseBarTitle {
     WEIGHT_EN = 'Weight',
@@ -24,7 +27,7 @@ type TestCaseColors = {
     selector: 'jhi-test-case-distribution-chart',
     styleUrls: ['./sca-category-distribution-chart.scss'],
     templateUrl: './test-case-distribution-chart.component.html',
-    standalone: false,
+    imports: [TranslateDirective, BarChartModule, ArtemisTranslatePipe],
 })
 export class TestCaseDistributionChartComponent extends ProgrammingGradingChartsDirective implements OnInit, OnChanges {
     private translateService = inject(TranslateService);

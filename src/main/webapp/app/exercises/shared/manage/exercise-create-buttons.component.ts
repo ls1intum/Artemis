@@ -5,12 +5,14 @@ import { ExerciseImportWrapperComponent } from 'app/exercises/shared/import/exer
 import { getIcon } from 'app/entities/exercise.model';
 import { Exercise, ExerciseType } from 'app/entities/exercise.model';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
-import { Router } from '@angular/router';
+import { Router, RouterLink } from '@angular/router';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { TranslateDirective } from '../../../shared/language/translate.directive';
 
 @Component({
     selector: 'jhi-exercise-create-buttons',
     templateUrl: './exercise-create-buttons.component.html',
-    standalone: false,
+    imports: [RouterLink, FaIconComponent, TranslateDirective],
 })
 export class ExerciseCreateButtonsComponent implements OnInit {
     private router = inject(Router);

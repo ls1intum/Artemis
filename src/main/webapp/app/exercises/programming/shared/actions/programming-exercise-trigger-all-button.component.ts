@@ -9,6 +9,10 @@ import { FeatureToggle } from 'app/shared/feature-toggle/feature-toggle.service'
 import { ProgrammingExercise } from 'app/entities/programming/programming-exercise.model';
 import { ButtonType } from 'app/shared/components/button.component';
 import { faBan, faRedo, faTimes } from '@fortawesome/free-solid-svg-icons';
+import { FormsModule } from '@angular/forms';
+import { TranslateDirective } from '../../../../shared/language/translate.directive';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { ButtonComponent } from '../../../../shared/components/button.component';
 
 /**
  * A button that triggers the build for all participations of the given programming exercise.
@@ -29,7 +33,7 @@ import { faBan, faRedo, faTimes } from '@fortawesome/free-solid-svg-icons';
             (onClick)="openTriggerAllModal()"
         />
     `,
-    standalone: false,
+    imports: [ButtonComponent],
 })
 export class ProgrammingExerciseTriggerAllButtonComponent implements OnInit {
     private submissionService = inject(ProgrammingSubmissionService);
@@ -109,7 +113,7 @@ export class ProgrammingExerciseTriggerAllButtonComponent implements OnInit {
             </div>
         </form>
     `,
-    standalone: false,
+    imports: [FormsModule, TranslateDirective, FaIconComponent],
 })
 export class ProgrammingExerciseInstructorTriggerAllDialogComponent {
     private activeModal = inject(NgbActiveModal);

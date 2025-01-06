@@ -3,11 +3,15 @@ import { GradingInstruction } from 'app/exercises/shared/structured-grading-crit
 import { Feedback } from 'app/entities/feedback.model';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { faLink, faTrash } from '@fortawesome/free-solid-svg-icons';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
+import { NgClass } from '@angular/common';
+import { ArtemisTranslatePipe as ArtemisTranslatePipe_1 } from '../pipes/artemis-translate.pipe';
 
 @Component({
     selector: 'jhi-grading-instruction-link-icon',
     templateUrl: './grading-instruction-link-icon.component.html',
-    standalone: false,
+    imports: [FaIconComponent, NgbTooltip, NgClass, ArtemisTranslatePipe_1],
 })
 export class GradingInstructionLinkIconComponent implements OnInit {
     private artemisTranslatePipe = inject(ArtemisTranslatePipe);

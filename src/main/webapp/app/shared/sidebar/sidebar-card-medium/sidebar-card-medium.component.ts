@@ -2,14 +2,15 @@ import { Component, EventEmitter, Input, Output, inject } from '@angular/core';
 import { DifficultyLevel } from 'app/entities/exercise.model';
 import { SidebarCardElement, SidebarTypes } from 'app/types/sidebar';
 import { SidebarEventService } from '../sidebar-event.service';
-import { ActivatedRoute, Router } from '@angular/router';
-import { Location } from '@angular/common';
+import { ActivatedRoute, Router, RouterLink, RouterLinkActive } from '@angular/router';
+import { Location, NgClass } from '@angular/common';
+import { SidebarCardItemComponent } from '../sidebar-card-item/sidebar-card-item.component';
 
 @Component({
     selector: 'jhi-medium-sidebar-card',
     templateUrl: './sidebar-card-medium.component.html',
     styleUrls: ['./sidebar-card-medium.component.scss'],
-    standalone: false,
+    imports: [NgClass, SidebarCardItemComponent, RouterLink, RouterLinkActive],
 })
 export class SidebarCardMediumComponent {
     private sidebarEventService = inject(SidebarEventService);

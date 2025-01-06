@@ -3,12 +3,13 @@ import { CourseCompetencyFormComponent, CourseCompetencyFormData } from 'app/cou
 import { ArtemisSharedModule } from 'app/shared/shared.module';
 import { CommonCourseCompetencyFormComponent } from 'app/course/competencies/forms/common-course-competency-form.component';
 import { Competency } from 'app/entities/competency.model';
+import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 
 @Component({
     selector: 'jhi-competency-form',
     templateUrl: './competency-form.component.html',
     styleUrls: ['./competency-form.component.scss'],
-    imports: [ArtemisSharedModule, CommonCourseCompetencyFormComponent],
+    imports: [ArtemisSharedModule, CommonCourseCompetencyFormComponent, FormsModule, ReactiveFormsModule],
 })
 export class CompetencyFormComponent extends CourseCompetencyFormComponent implements OnInit, OnChanges {
     @Input() formData: CourseCompetencyFormData = {

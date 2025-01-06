@@ -1,6 +1,6 @@
 import { ChangeDetectionStrategy, ChangeDetectorRef, Component, OnDestroy, OnInit, inject } from '@angular/core';
 import { TutorialGroup } from 'app/entities/tutorial-group/tutorial-group.model';
-import { ActivatedRoute, Router } from '@angular/router';
+import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { TutorialGroupsService } from 'app/course/tutorial-groups/services/tutorial-groups.service';
 import { HttpErrorResponse } from '@angular/common/http';
 import { Subject, combineLatest, finalize } from 'rxjs';
@@ -12,12 +12,40 @@ import { TutorialGroupFreePeriod } from 'app/entities/tutorial-group/tutorial-gr
 import { TutorialGroupsConfigurationService } from 'app/course/tutorial-groups/services/tutorial-groups-configuration.service';
 import { takeUntil } from 'rxjs/operators';
 import { TutorialGroupsConfiguration } from 'app/entities/tutorial-group/tutorial-groups-configuration.model';
+import { LoadingIndicatorContainerComponent } from '../../../../../shared/loading-indicator-container/loading-indicator-container.component';
+import { NgbDropdown, NgbDropdownItem, NgbDropdownMenu, NgbDropdownToggle, NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { TranslateDirective } from '../../../../../shared/language/translate.directive';
+import { TutorialGroupsImportButtonComponent } from './tutorial-groups-import-button/tutorial-groups-import-button.component';
+import { TutorialGroupsExportButtonComponent } from './tutorial-groups-export-button.component/tutorial-groups-export-button.component';
+import { TutorialGroupsTableComponent } from '../../../shared/tutorial-groups-table/tutorial-groups-table.component';
+import { TutorialGroupRowButtonsComponent } from './tutorial-group-row-buttons/tutorial-group-row-buttons.component';
+import { TutorialGroupsCourseInformationComponent } from './tutorial-groups-course-information/tutorial-groups-course-information.component';
+import { TutorialGroupFreeDaysOverviewComponent } from '../../../shared/tutorial-group-free-days-overview/tutorial-group-free-days-overview.component';
+import { ArtemisTranslatePipe } from '../../../../../shared/pipes/artemis-translate.pipe';
 
 @Component({
     selector: 'jhi-tutorial-groups-management',
     templateUrl: './tutorial-groups-management.component.html',
     changeDetection: ChangeDetectionStrategy.OnPush,
-    standalone: false,
+    imports: [
+        LoadingIndicatorContainerComponent,
+        NgbTooltip,
+        RouterLink,
+        FaIconComponent,
+        TranslateDirective,
+        NgbDropdown,
+        NgbDropdownToggle,
+        NgbDropdownMenu,
+        NgbDropdownItem,
+        TutorialGroupsImportButtonComponent,
+        TutorialGroupsExportButtonComponent,
+        TutorialGroupsTableComponent,
+        TutorialGroupRowButtonsComponent,
+        TutorialGroupsCourseInformationComponent,
+        TutorialGroupFreeDaysOverviewComponent,
+        ArtemisTranslatePipe,
+    ],
 })
 export class TutorialGroupsManagementComponent implements OnInit, OnDestroy {
     private tutorialGroupService = inject(TutorialGroupsService);

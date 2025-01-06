@@ -18,12 +18,38 @@ import { IdeSettingsService } from 'app/shared/user-settings/ide-preferences/ide
 import { Ide } from 'app/shared/user-settings/ide-preferences/ide.model';
 import { SshUserSettingsService } from 'app/shared/user-settings/ssh-settings/ssh-user-settings.service';
 import { UserSshPublicKey } from 'app/entities/programming/user-ssh-public-key.model';
+import { ExerciseActionButtonComponent } from '../exercise-action-button.component';
+import { FeatureToggleDirective } from '../../feature-toggle/feature-toggle.directive';
+import { NgbDropdown, NgbDropdownMenu, NgbDropdownToggle, NgbPopover } from '@ng-bootstrap/ng-bootstrap';
+import { TranslateDirective } from '../../language/translate.directive';
+import { NgClass } from '@angular/common';
+import { CdkCopyToClipboard } from '@angular/cdk/clipboard';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { RouterLink } from '@angular/router';
+import { HelpIconComponent } from '../help-icon.component';
+import { ArtemisTranslatePipe } from '../../pipes/artemis-translate.pipe';
+import { SafeUrlPipe } from 'app/shared/pipes/safe-url.pipe';
 
 @Component({
     selector: 'jhi-code-button',
     templateUrl: './code-button.component.html',
     styleUrls: ['./code-button.component.scss'],
-    standalone: false,
+    imports: [
+        ExerciseActionButtonComponent,
+        FeatureToggleDirective,
+        NgbPopover,
+        TranslateDirective,
+        NgbDropdown,
+        NgbDropdownToggle,
+        NgbDropdownMenu,
+        NgClass,
+        CdkCopyToClipboard,
+        FaIconComponent,
+        RouterLink,
+        HelpIconComponent,
+        ArtemisTranslatePipe,
+        SafeUrlPipe,
+    ],
 })
 export class CodeButtonComponent implements OnInit, OnChanges {
     private translateService = inject(TranslateService);
