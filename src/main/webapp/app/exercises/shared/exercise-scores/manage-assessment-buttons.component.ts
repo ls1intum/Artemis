@@ -17,6 +17,7 @@ import { getLinkToSubmissionAssessment } from 'app/utils/navigation.utils';
 @Component({
     selector: 'jhi-manage-assessment-buttons',
     templateUrl: './manage-assessment-buttons.component.html',
+    standalone: false,
 })
 export class ManageAssessmentButtonsComponent implements OnInit {
     @Input() exercise: Exercise;

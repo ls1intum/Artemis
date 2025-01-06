@@ -10,7 +10,6 @@ import { TranslateDirective } from 'app/shared/language/translate.directive';
 @Component({
     selector: 'jhi-vcs-repository-access-log-view',
     templateUrl: './vcs-repository-access-log-view.component.html',
-    standalone: true,
     imports: [TranslateDirective],
 })
 export class VcsRepositoryAccessLogViewComponent {

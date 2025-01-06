@@ -18,6 +18,7 @@ import { ExerciseImportWrapperComponent } from 'app/exercises/shared/import/exer
 @Component({
     selector: 'jhi-text-exercise',
     templateUrl: './text-exercise.component.html',
+    standalone: false,
 })
 export class TextExerciseComponent extends ExerciseComponent {
     protected exerciseService = inject(ExerciseService);

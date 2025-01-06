@@ -14,6 +14,7 @@ import { ChangeDetectionStrategy, ChangeDetectorRef, Component, HostBinding, Inp
     templateUrl: './vertical-progress-bar.component.html',
     styleUrls: ['./vertical-progress-bar.component.scss'],
     changeDetection: ChangeDetectionStrategy.OnPush,
+    standalone: false,
 })
 export class VerticalProgressBarComponent implements OnInit {
     // CSS VARIABLES START

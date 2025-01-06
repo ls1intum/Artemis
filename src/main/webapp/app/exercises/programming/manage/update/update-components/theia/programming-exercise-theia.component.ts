@@ -8,7 +8,6 @@ import { ArtemisSharedLibsModule } from 'app/shared/shared-libs.module';
     selector: 'jhi-programming-exercise-theia',
     templateUrl: './programming-exercise-theia.component.html',
     styleUrls: ['../../../programming-exercise-form.scss'],
-    standalone: true,
     imports: [ArtemisSharedLibsModule],
 })
 export class ProgrammingExerciseTheiaComponent implements OnChanges {

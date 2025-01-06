@@ -7,7 +7,6 @@ type NavigationDirection = 'next' | 'prev';
     selector: 'jhi-pdf-preview-enlarged-canvas-component',
     templateUrl: './pdf-preview-enlarged-canvas.component.html',
     styleUrls: ['./pdf-preview-enlarged-canvas.component.scss'],
-    standalone: true,
     imports: [ArtemisSharedModule],
 })
 export class PdfPreviewEnlargedCanvasComponent {

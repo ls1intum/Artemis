@@ -5,7 +5,10 @@ import { ActionType, DeleteDialogData, EntitySummary } from 'app/shared/delete-d
 import { Observable } from 'rxjs';
 import { ButtonSize, ButtonType } from 'app/shared/components/button.component';
 
-@Directive({ selector: '[jhiDeleteButton]' })
+@Directive({
+    selector: '[jhiDeleteButton]',
+    standalone: false,
+})
 export class DeleteButtonDirective implements OnInit {
     @Input() entityTitle?: string;
     @Input() deleteQuestion: string;

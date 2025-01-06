@@ -10,6 +10,7 @@ import { getAsChannelDTO } from 'app/entities/metis/conversation/channel.model';
     selector: 'jhi-answer-post-reactions-bar',
     templateUrl: './answer-post-reactions-bar.component.html',
     styleUrls: ['../posting-reactions-bar.component.scss'],
+    standalone: false,
 })
 export class AnswerPostReactionsBarComponent extends PostingsReactionsBarDirective<AnswerPost> implements OnInit, OnChanges {
     @Input()

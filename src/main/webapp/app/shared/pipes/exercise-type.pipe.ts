@@ -3,6 +3,7 @@ import { ExerciseType } from 'app/entities/exercise.model';
 
 @Pipe({
     name: 'exerciseTypeLabel',
+    standalone: false,
 })
 export class ExerciseTypePipe implements PipeTransform {
     /**

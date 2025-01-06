@@ -18,6 +18,7 @@ import { QuizParticipation } from 'app/entities/quiz/quiz-participation.model';
 @Component({
     selector: 'jhi-quiz-exam-summary',
     templateUrl: './quiz-exam-summary.component.html',
+    standalone: false,
 })
 export class QuizExamSummaryComponent implements OnChanges {
     readonly DRAG_AND_DROP = QuizQuestionType.DRAG_AND_DROP;

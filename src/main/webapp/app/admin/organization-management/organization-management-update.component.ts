@@ -7,6 +7,7 @@ import { faBan, faSave } from '@fortawesome/free-solid-svg-icons';
 @Component({
     selector: 'jhi-organization-management-update',
     templateUrl: './organization-management-update.component.html',
+    standalone: false,
 })
 export class OrganizationManagementUpdateComponent implements OnInit {
     organization: Organization;

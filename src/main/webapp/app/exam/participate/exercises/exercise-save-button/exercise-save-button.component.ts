@@ -9,7 +9,6 @@ import { TranslateDirective } from 'app/shared/language/translate.directive';
     selector: 'jhi-exercise-save-button',
     templateUrl: './exercise-save-button.component.html',
     styleUrls: ['./exercise-save-button.component.scss'],
-    standalone: true,
     imports: [FaIconComponent, TranslateDirective],
 })
 export class ExerciseSaveButtonComponent {

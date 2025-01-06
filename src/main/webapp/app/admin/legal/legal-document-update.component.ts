@@ -13,6 +13,7 @@ import { MarkdownEditorHeight, MarkdownEditorMonacoComponent } from 'app/shared/
     selector: 'jhi-privacy-statement-update-component',
     styleUrls: ['./legal-document-update.component.scss'],
     templateUrl: './legal-document-update.component.html',
+    standalone: false,
 })
 export class LegalDocumentUpdateComponent implements OnInit, AfterContentChecked {
     readonly SUPPORTED_LANGUAGES: LegalDocumentLanguage[] = [LegalDocumentLanguage.GERMAN, LegalDocumentLanguage.ENGLISH];

@@ -31,6 +31,7 @@ import { FeatureToggle } from 'app/shared/feature-toggle/feature-toggle.service'
     templateUrl: './course-management-card.component.html',
     styleUrls: ['course-management-card.scss'],
     changeDetection: ChangeDetectionStrategy.OnPush,
+    standalone: false,
 })
 export class CourseManagementCardComponent implements OnChanges {
     readonly ARTEMIS_DEFAULT_COLOR = ARTEMIS_DEFAULT_COLOR;

@@ -10,6 +10,7 @@ import { TutorialGroupFreePeriodsManagementComponent } from 'app/course/tutorial
     templateUrl: './tutorial-group-free-periods-table.component.html',
     styleUrls: ['../tutorial-group-free-periods-management.component.scss'],
     changeDetection: ChangeDetectionStrategy.OnPush,
+    standalone: false,
 })
 export class TutorialGroupFreePeriodsTableComponent {
     @Input() course: Course;

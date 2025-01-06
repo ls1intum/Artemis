@@ -12,6 +12,7 @@ import { SortService } from 'app/shared/service/sort.service';
 @Component({
     selector: 'jhi-example-submission-import',
     templateUrl: './example-submission-import.component.html',
+    standalone: false,
 })
 export class ExampleSubmissionImportComponent extends ImportComponent<Submission> {
     exercise: Exercise;

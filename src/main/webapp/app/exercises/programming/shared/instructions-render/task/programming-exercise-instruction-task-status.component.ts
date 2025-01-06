@@ -10,6 +10,7 @@ import { FeedbackComponent } from 'app/exercises/shared/feedback/feedback.compon
     selector: 'jhi-programming-exercise-instructions-task-status',
     templateUrl: './programming-exercise-instruction-task-status.component.html',
     styleUrls: ['./programming-exercise-instruction-task-status.scss'],
+    standalone: false,
 })
 export class ProgrammingExerciseInstructionTaskStatusComponent {
     TestCaseState = TestCaseState;

@@ -9,6 +9,7 @@ import { Component, Input } from '@angular/core';
         </div>
     }`,
     styleUrls: ['./fireworks.component.scss'],
+    standalone: false,
 })
 export class FireworksComponent {
     @Input() active = false;

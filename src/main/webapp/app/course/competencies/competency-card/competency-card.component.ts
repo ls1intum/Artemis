@@ -7,6 +7,7 @@ import { CompetencyProgress, CourseCompetency, getIcon, getMastery, getProgress 
     selector: 'jhi-competency-card',
     templateUrl: './competency-card.component.html',
     styleUrls: ['../../../overview/course-exercises/course-exercise-row.scss'],
+    standalone: false,
 })
 export class CompetencyCardComponent {
     courseId = input<number | undefined>();

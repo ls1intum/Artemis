@@ -20,7 +20,6 @@ import { Router } from '@angular/router';
     selector: 'jhi-feedback-analysis',
     templateUrl: './feedback-analysis.component.html',
     styleUrls: ['./feedback-analysis.component.scss'],
-    standalone: true,
     imports: [ArtemisSharedCommonModule, SortIconComponent],
     providers: [FeedbackAnalysisService],
 })

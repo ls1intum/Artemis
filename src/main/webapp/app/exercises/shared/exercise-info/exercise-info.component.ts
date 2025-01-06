@@ -10,6 +10,7 @@ import { AssessmentType } from 'app/entities/assessment-type.model';
     selector: 'jhi-exercise-info',
     templateUrl: './exercise-info.component.html',
     styleUrls: ['../../../shared/side-panel/side-panel.scss'],
+    standalone: false,
 })
 export class ExerciseInfoComponent implements OnInit {
     @Input() exercise: Exercise;

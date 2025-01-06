@@ -8,7 +8,6 @@ import { ArtemisMarkdownModule } from 'app/shared/markdown.module';
     selector: 'jhi-standardized-competency-detail',
     templateUrl: './standardized-competency-detail.component.html',
     styleUrls: ['./standardized-competency-detail.component.scss'],
-    standalone: true,
     imports: [ArtemisSharedCommonModule, ArtemisMarkdownModule],
 })
 export class StandardizedCompetencyDetailComponent {

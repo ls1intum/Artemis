@@ -11,6 +11,7 @@ import { faTimes } from '@fortawesome/free-solid-svg-icons';
     selector: 'jhi-post-tag-selector',
     templateUrl: './post-tag-selector.component.html',
     styleUrls: ['./post-tag-selector.component.scss'],
+    standalone: false,
 })
 export class PostTagSelectorComponent implements OnInit, OnChanges, OnDestroy, AfterContentChecked {
     @Input() postTags?: string[];

@@ -29,6 +29,7 @@ import { ArtemisMarkdownService } from 'app/shared/markdown.service';
 @Component({
     selector: 'jhi-file-upload-exercise-detail',
     templateUrl: './file-upload-exercise-detail.component.html',
+    standalone: false,
 })
 export class FileUploadExerciseDetailComponent implements OnInit, OnDestroy {
     readonly documentationType: DocumentationType = 'FileUpload';

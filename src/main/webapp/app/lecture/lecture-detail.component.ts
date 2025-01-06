@@ -13,6 +13,7 @@ import { AlertService } from 'app/core/util/alert.service';
 @Component({
     selector: 'jhi-lecture-detail',
     templateUrl: './lecture-detail.component.html',
+    standalone: false,
 })
 export class LectureDetailComponent implements OnInit, OnDestroy {
     lecture: Lecture;

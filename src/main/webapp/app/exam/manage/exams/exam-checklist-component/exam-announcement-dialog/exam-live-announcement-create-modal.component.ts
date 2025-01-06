@@ -17,6 +17,7 @@ import { OrderedListAction } from 'app/shared/monaco-editor/model/actions/ordere
     selector: 'jhi-exam-live-announcement-create-modal',
     templateUrl: './exam-live-announcement-create-modal.component.html',
     styleUrls: ['./exam-live-announcement-create-modal.component.scss'],
+    standalone: false,
 })
 export class ExamLiveAnnouncementCreateModalComponent {
     actions = [new BoldAction(), new ItalicAction(), new UnderlineAction(), new CodeAction(), new CodeBlockAction(), new OrderedListAction(), new OrderedListAction()];

@@ -20,6 +20,7 @@ import { catchError } from 'rxjs/operators';
     selector: 'jhi-conversation-settings',
     templateUrl: './conversation-settings.component.html',
     styleUrls: ['./conversation-settings.component.scss'],
+    standalone: false,
 })
 export class ConversationSettingsComponent implements OnInit, OnDestroy {
     private ngUnsubscribe = new Subject<void>();

@@ -23,6 +23,7 @@ import { faCheckCircle, faSync, faTimesCircle } from '@fortawesome/free-solid-sv
         '../quiz-point-statistic/quiz-point-statistic.component.scss',
         './short-answer-question-statistic.component.scss',
     ],
+    standalone: false,
 })
 export class ShortAnswerQuestionStatisticComponent extends QuestionStatisticComponent {
     declare question: ShortAnswerQuestion;

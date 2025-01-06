@@ -11,7 +11,6 @@ import { CourseCompetenciesRelationGraphComponent } from '../course-competencies
 
 @Component({
     selector: 'jhi-course-competencies-relation-modal',
-    standalone: true,
     imports: [ArtemisSharedCommonModule, CompetencyGraphComponent, CourseCompetenciesRelationGraphComponent, CourseCompetencyRelationFormComponent],
     templateUrl: './course-competencies-relation-modal.component.html',
     styleUrl: './course-competencies-relation-modal.component.scss',

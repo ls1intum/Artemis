@@ -37,6 +37,7 @@ import { CsvDownloadService } from 'app/shared/util/CsvDownloadService';
     selector: 'jhi-result',
     templateUrl: './result.component.html',
     styleUrls: ['./result.component.scss'],
+    standalone: false,
 })
 
 /**

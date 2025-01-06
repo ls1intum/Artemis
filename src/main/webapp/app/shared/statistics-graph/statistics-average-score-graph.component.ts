@@ -26,6 +26,7 @@ export enum PerformanceInterval {
     selector: 'jhi-statistics-average-score-graph',
     templateUrl: './statistics-average-score-graph.component.html',
     styleUrls: ['./statistics-average-score-graph.component.scss', '../chart/vertical-bar-chart.scss'],
+    standalone: false,
 })
 export class StatisticsAverageScoreGraphComponent implements OnInit {
     @Input()

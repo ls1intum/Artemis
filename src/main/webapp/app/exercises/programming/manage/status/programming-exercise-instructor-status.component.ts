@@ -15,6 +15,7 @@ import { hasParticipationChanged } from 'app/exercises/shared/participation/part
 @Component({
     selector: 'jhi-programming-exercise-instructor-status',
     templateUrl: './programming-exercise-instructor-status.component.html',
+    standalone: false,
 })
 export class ProgrammingExerciseInstructorStatusComponent implements OnChanges, OnDestroy {
     ProgrammingExerciseParticipationType = ProgrammingExerciseParticipationType;

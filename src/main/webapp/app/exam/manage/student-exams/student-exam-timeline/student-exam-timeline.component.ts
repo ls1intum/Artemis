@@ -23,6 +23,7 @@ import { ProgrammingExerciseGitDiffReport } from 'app/entities/programming-exerc
     selector: 'jhi-student-exam-timeline',
     templateUrl: './student-exam-timeline.component.html',
     styleUrls: ['./student-exam-timeline.component.scss'],
+    standalone: false,
 })
 export class StudentExamTimelineComponent implements OnInit, AfterViewInit, OnDestroy {
     readonly ExerciseType = ExerciseType;

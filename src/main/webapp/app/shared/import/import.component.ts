@@ -19,7 +19,10 @@ export type Column<T extends BaseEntity> = {
     getProperty(entity: T): string | undefined;
 };
 
-@Component({ template: '' })
+@Component({
+    template: '',
+    standalone: false,
+})
 export abstract class ImportComponent<T extends BaseEntity> implements OnInit {
     loading = false;
     content: SearchResult<T>;

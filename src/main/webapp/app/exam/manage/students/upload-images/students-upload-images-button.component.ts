@@ -16,6 +16,7 @@ import { faPlus, faUpload } from '@fortawesome/free-solid-svg-icons';
             (onClick)="openUploadImagesDialog($event)"
         />
     `,
+    standalone: false,
 })
 export class StudentsUploadImagesButtonComponent {
     ButtonType = ButtonType;

@@ -11,6 +11,7 @@ import { ExamLiveAnnouncementCreateModalComponent } from 'app/exam/manage/exams/
 @Component({
     selector: 'jhi-exam-live-announcement-create-button',
     templateUrl: './exam-live-announcement-create-button.component.html',
+    standalone: false,
 })
 export class ExamLiveAnnouncementCreateButtonComponent implements OnInit, OnDestroy {
     @Input() exam: Exam;

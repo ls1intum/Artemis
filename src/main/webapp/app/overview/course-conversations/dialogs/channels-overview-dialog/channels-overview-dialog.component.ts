@@ -20,6 +20,7 @@ export type ChannelAction = {
     selector: 'jhi-channels-overview-dialog',
     templateUrl: './channels-overview-dialog.component.html',
     styleUrls: ['./channels-overview-dialog.component.scss'],
+    standalone: false,
 })
 export class ChannelsOverviewDialogComponent extends AbstractDialogComponent implements OnInit, OnDestroy {
     private ngUnsubscribe = new Subject<void>();

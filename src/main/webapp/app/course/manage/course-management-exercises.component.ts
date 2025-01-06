@@ -8,6 +8,7 @@ import { ExerciseType } from 'app/entities/exercise.model';
 @Component({
     selector: 'jhi-course-management-exercises',
     templateUrl: './course-management-exercises.component.html',
+    standalone: false,
 })
 export class CourseManagementExercisesComponent implements OnInit {
     readonly ExerciseType = ExerciseType;

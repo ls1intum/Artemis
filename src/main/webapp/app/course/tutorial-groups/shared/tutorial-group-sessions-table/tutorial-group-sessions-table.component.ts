@@ -22,6 +22,7 @@ import dayjs from 'dayjs/esm';
     styleUrls: ['./tutorial-group-sessions-table.component.scss'],
     changeDetection: ChangeDetectionStrategy.OnPush,
     encapsulation: ViewEncapsulation.None,
+    standalone: false,
 })
 export class TutorialGroupSessionsTableComponent implements OnChanges {
     @ContentChild(TemplateRef, { static: true }) extraColumn: TemplateRef<any>;

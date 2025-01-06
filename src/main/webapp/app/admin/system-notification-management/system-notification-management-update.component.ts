@@ -10,6 +10,7 @@ import { AdminSystemNotificationService } from 'app/shared/notification/system-n
 @Component({
     selector: 'jhi-system-notification-management-update',
     templateUrl: './system-notification-management-update.component.html',
+    standalone: false,
 })
 export class SystemNotificationManagementUpdateComponent implements OnInit {
     notification: SystemNotification;

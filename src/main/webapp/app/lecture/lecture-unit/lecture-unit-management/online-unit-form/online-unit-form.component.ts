@@ -33,6 +33,7 @@ function urlValidator(control: AbstractControl) {
 @Component({
     selector: 'jhi-online-unit-form',
     templateUrl: './online-unit-form.component.html',
+    standalone: false,
 })
 export class OnlineUnitFormComponent implements OnChanges {
     protected readonly faArrowLeft = faArrowLeft;

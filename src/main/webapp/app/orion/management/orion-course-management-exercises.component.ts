@@ -24,6 +24,7 @@ import { Component } from '@angular/core';
             </ng-template>
         </jhi-course-management-exercises>
     `,
+    standalone: false,
 })
 export class OrionCourseManagementExercisesComponent {
     // only overrides the programming exercise list with Orion's programming exercise list and suppresses the other exercises

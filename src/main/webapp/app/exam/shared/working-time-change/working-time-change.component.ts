@@ -3,6 +3,7 @@ import { Component, Input } from '@angular/core';
 @Component({
     selector: 'jhi-working-time-change',
     templateUrl: './working-time-change.component.html',
+    standalone: false,
 })
 export class WorkingTimeChangeComponent {
     @Input() oldWorkingTime: number;

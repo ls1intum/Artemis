@@ -57,6 +57,7 @@ import { FeatureToggle, FeatureToggleService } from 'app/shared/feature-toggle/f
     selector: 'jhi-navbar',
     templateUrl: './navbar.component.html',
     styleUrls: ['navbar.scss'],
+    standalone: false,
 })
 export class NavbarComponent implements OnInit, OnDestroy {
     inProduction: boolean;

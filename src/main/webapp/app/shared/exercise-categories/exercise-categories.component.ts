@@ -15,6 +15,7 @@ interface ShowTagsConfig {
     selector: 'jhi-exercise-categories',
     templateUrl: './exercise-categories.component.html',
     styleUrls: ['./exercise-categories.component.scss'],
+    standalone: false,
 })
 export class ExerciseCategoriesComponent {
     readonly IncludedInOverallScore = IncludedInOverallScore;

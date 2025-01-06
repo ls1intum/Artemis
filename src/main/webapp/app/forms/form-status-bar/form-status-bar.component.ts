@@ -11,6 +11,7 @@ export type FormSectionStatus = {
     selector: 'jhi-form-status-bar',
     templateUrl: './form-status-bar.component.html',
     styleUrl: './form-status-bar.component.scss',
+    standalone: false,
 })
 export class FormStatusBarComponent implements AfterViewInit {
     formStatusSections = input.required<FormSectionStatus[]>();

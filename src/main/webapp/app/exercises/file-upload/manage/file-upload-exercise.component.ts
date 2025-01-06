@@ -16,6 +16,7 @@ import { CourseExerciseService } from 'app/exercises/shared/course-exercises/cou
 @Component({
     selector: 'jhi-file-upload-exercise',
     templateUrl: './file-upload-exercise.component.html',
+    standalone: false,
 })
 export class FileUploadExerciseComponent extends ExerciseComponent {
     protected exerciseService = inject(ExerciseService);

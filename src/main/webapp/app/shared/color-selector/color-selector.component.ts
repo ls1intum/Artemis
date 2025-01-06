@@ -29,6 +29,7 @@ const DEFAULT_COLORS = [
     selector: 'jhi-color-selector',
     templateUrl: './color-selector.component.html',
     styleUrls: ['./color-selector.scss'],
+    standalone: false,
 })
 export class ColorSelectorComponent implements OnInit {
     colorSelectorPosition: Coordinates;

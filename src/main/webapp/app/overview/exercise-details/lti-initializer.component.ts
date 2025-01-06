@@ -9,6 +9,7 @@ import { AccountService } from 'app/core/auth/account.service';
 @Component({
     selector: 'jhi-lti-initializer',
     template: '',
+    standalone: false,
 })
 export class LtiInitializerComponent implements OnInit {
     private modalService = inject(NgbModal);

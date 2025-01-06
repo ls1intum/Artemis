@@ -12,6 +12,7 @@ import { ExerciseButtonStatus } from 'app/exam/participate/exam-navigation-sideb
     selector: 'jhi-exam-exercise-overview-page',
     templateUrl: './exam-exercise-overview-page.component.html',
     styleUrls: ['./exam-exercise-overview-page.scss', '../../exam-navigation-sidebar/exam-navigation-sidebar.component.scss'],
+    standalone: false,
 })
 export class ExamExerciseOverviewPageComponent extends ExamPageComponent implements OnInit, OnChanges {
     @Input() studentExam: StudentExam;

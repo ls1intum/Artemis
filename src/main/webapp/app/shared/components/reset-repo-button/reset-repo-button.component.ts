@@ -15,6 +15,7 @@ import dayjs from 'dayjs/esm';
     selector: 'jhi-reset-repo-button',
     templateUrl: './reset-repo-button.component.html',
     styleUrls: ['./reset-repo-button.component.scss'],
+    standalone: false,
 })
 export class ResetRepoButtonComponent implements OnInit {
     readonly FeatureToggle = FeatureToggle;

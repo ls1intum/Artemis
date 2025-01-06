@@ -10,6 +10,7 @@ import { faEye, faSync } from '@fortawesome/free-solid-svg-icons';
 @Component({
     selector: 'jhi-health',
     templateUrl: './health.component.html',
+    standalone: false,
 })
 export class HealthComponent implements OnInit {
     health?: Health;

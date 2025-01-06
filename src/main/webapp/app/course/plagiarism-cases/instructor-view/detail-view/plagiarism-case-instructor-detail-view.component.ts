@@ -23,6 +23,7 @@ import dayjs from 'dayjs/esm';
     templateUrl: './plagiarism-case-instructor-detail-view.component.html',
     styleUrls: ['./plagiarism-case-instructor-detail-view.component.scss'],
     providers: [MetisService],
+    standalone: false,
 })
 export class PlagiarismCaseInstructorDetailViewComponent implements OnInit, OnDestroy {
     courseId: number;

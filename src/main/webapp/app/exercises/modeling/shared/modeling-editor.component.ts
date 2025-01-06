@@ -15,6 +15,7 @@ import { Patch } from '@ls1intum/apollon';
     templateUrl: './modeling-editor.component.html',
     styleUrls: ['./modeling-editor.component.scss'],
     encapsulation: ViewEncapsulation.None,
+    standalone: false,
 })
 export class ModelingEditorComponent extends ModelingComponent implements AfterViewInit, OnDestroy, OnChanges {
     @Input() showHelpButton = true;

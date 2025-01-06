@@ -9,6 +9,7 @@ import { AnswerOption } from 'app/entities/quiz/answer-option.model';
     templateUrl: './multiple-choice-visual-question.component.html',
     styleUrls: ['./multiple-choice-question.component.scss', '../../../participate/quiz-participation.scss'],
     encapsulation: ViewEncapsulation.None,
+    standalone: false,
 })
 export class MultipleChoiceVisualQuestionComponent {
     _question: MultipleChoiceQuestion;

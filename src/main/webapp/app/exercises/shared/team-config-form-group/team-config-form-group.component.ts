@@ -10,6 +10,7 @@ import { Subject, Subscription } from 'rxjs';
     selector: 'jhi-team-config-form-group',
     templateUrl: './team-config-form-group.component.html',
     styleUrls: ['./team-config-form-group.component.scss'],
+    standalone: false,
 })
 export class TeamConfigFormGroupComponent implements AfterViewChecked, OnDestroy, OnInit {
     readonly INDIVIDUAL = ExerciseMode.INDIVIDUAL;

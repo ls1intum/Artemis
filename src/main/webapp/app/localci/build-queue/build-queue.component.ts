@@ -105,6 +105,7 @@ export enum FinishedBuildJobFilterStorageKey {
     selector: 'jhi-build-queue',
     templateUrl: './build-queue.component.html',
     styleUrl: './build-queue.component.scss',
+    standalone: false,
 })
 export class BuildQueueComponent implements OnInit, OnDestroy {
     protected readonly TriggeredByPushTo = TriggeredByPushTo;

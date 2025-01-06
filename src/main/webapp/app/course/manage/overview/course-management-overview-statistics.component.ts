@@ -11,6 +11,7 @@ import { ActiveStudentsChart } from 'app/shared/chart/active-students-chart';
     selector: 'jhi-course-management-overview-statistics',
     templateUrl: './course-management-overview-statistics.component.html',
     styleUrls: ['./course-management-overview-statistics.component.scss', '../detail/course-detail-line-chart.component.scss'],
+    standalone: false,
 })
 export class CourseManagementOverviewStatisticsComponent extends ActiveStudentsChart implements OnInit, OnChanges {
     @Input()

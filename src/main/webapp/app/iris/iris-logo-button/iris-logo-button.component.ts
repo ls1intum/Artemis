@@ -7,6 +7,7 @@ import { IrisLogoSize } from 'app/iris/iris-logo/iris-logo.component';
 @Component({
     selector: 'jhi-iris-logo-button',
     templateUrl: './iris-logo-button.component.html',
+    standalone: false,
 })
 export class IrisLogoButtonComponent {
     @Input() btnType = ButtonType.PRIMARY;

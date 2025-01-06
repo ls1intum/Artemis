@@ -39,6 +39,7 @@ import { AssessmentType } from 'app/entities/assessment-type.model';
     templateUrl: './text-editor.component.html',
     providers: [ParticipationService],
     styleUrls: ['./text-editor.component.scss'],
+    standalone: false,
 })
 export class TextEditorComponent implements OnInit, OnDestroy, ComponentCanDeactivate {
     private route = inject(ActivatedRoute);

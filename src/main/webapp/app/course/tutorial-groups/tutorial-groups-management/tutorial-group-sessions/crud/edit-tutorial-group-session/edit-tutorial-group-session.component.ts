@@ -14,6 +14,7 @@ import { Subject } from 'rxjs';
     selector: 'jhi-edit-tutorial-group-session',
     templateUrl: './edit-tutorial-group-session.component.html',
     changeDetection: ChangeDetectionStrategy.OnPush,
+    standalone: false,
 })
 export class EditTutorialGroupSessionComponent implements OnDestroy {
     ngUnsubscribe = new Subject<void>();

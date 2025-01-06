@@ -15,7 +15,6 @@ import { TranslateDirective } from 'app/shared/language/translate.directive';
 
 @Component({
     selector: 'jhi-learning-path-instructor-page',
-    standalone: true,
     changeDetection: ChangeDetectionStrategy.OnPush,
     imports: [LearningPathsConfigurationComponent, LearningPathsStateComponent, LearningPathsTableComponent, LearningPathsAnalyticsComponent, TranslateDirective],
     templateUrl: './learning-path-instructor-page.component.html',

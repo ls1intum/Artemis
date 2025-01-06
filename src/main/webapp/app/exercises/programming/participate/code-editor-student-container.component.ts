@@ -26,6 +26,7 @@ import { isManualResult as isManualResultFunction } from 'app/exercises/shared/r
 @Component({
     selector: 'jhi-code-editor-student',
     templateUrl: './code-editor-student-container.component.html',
+    standalone: false,
 })
 export class CodeEditorStudentContainerComponent implements OnInit, OnDestroy {
     @ViewChild(CodeEditorContainerComponent, { static: false }) codeEditorContainer: CodeEditorContainerComponent;

@@ -79,6 +79,7 @@ import { faCheckCircle, faExclamationTriangle, faQuestionCircle } from '@fortawe
             </ng-template>
         </div>
     `,
+    standalone: false,
 })
 export class ProgrammingExerciseConfigureGradingStatusComponent {
     @Input() exerciseIsReleasedAndHasResults: boolean;

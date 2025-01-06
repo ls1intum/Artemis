@@ -16,6 +16,7 @@ import { PROFILE_IRIS } from 'app/app.constants';
 @Component({
     selector: 'jhi-non-programming-exercise-detail-common-actions',
     templateUrl: './non-programming-exercise-detail-common-actions.component.html',
+    standalone: false,
 })
 export class NonProgrammingExerciseDetailCommonActionsComponent implements OnInit {
     @Input()

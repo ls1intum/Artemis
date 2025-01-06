@@ -25,6 +25,7 @@ import { ActivatedRoute } from '@angular/router';
 @Component({
     selector: 'jhi-lecture-update-units',
     templateUrl: './lecture-units.component.html',
+    standalone: false,
 })
 export class LectureUpdateUnitsComponent implements OnInit {
     @Input() lecture: Lecture;

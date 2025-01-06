@@ -14,6 +14,7 @@ import { faCircleNotch } from '@fortawesome/free-solid-svg-icons';
     selector: 'jhi-exercise-submission-export-dialog',
     templateUrl: './submission-export-dialog.component.html',
     styles: ['textarea { width: 100%; }'],
+    standalone: false,
 })
 export class SubmissionExportDialogComponent implements OnInit {
     @Input() exerciseId: number;

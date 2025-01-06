@@ -13,6 +13,7 @@ import { faCircleNotch } from '@fortawesome/free-solid-svg-icons';
     selector: 'jhi-exercise-scores-repo-export-dialog',
     templateUrl: './programming-assessment-repo-export-dialog.component.html',
     styles: ['textarea { width: 100%; }'],
+    standalone: false,
 })
 export class ProgrammingAssessmentRepoExportDialogComponent implements OnInit {
     @Input() programmingExercises: ProgrammingExercise[];

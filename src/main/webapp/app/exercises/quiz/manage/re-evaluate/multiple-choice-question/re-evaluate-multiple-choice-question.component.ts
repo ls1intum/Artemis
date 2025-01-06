@@ -13,6 +13,7 @@ import { WrongMultipleChoiceAnswerAction } from 'app/shared/monaco-editor/model/
     selector: 'jhi-re-evaluate-multiple-choice-question',
     templateUrl: './re-evaluate-multiple-choice-question.component.html',
     styleUrls: ['./re-evaluate-multiple-choice-question.component.scss', '../../../shared/quiz.scss'],
+    standalone: false,
 })
 export class ReEvaluateMultipleChoiceQuestionComponent implements OnInit {
     @Input() question: MultipleChoiceQuestion;

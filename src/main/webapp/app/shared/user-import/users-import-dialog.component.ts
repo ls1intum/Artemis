@@ -34,6 +34,7 @@ interface CsvUser {
     templateUrl: './users-import-dialog.component.html',
     styleUrls: ['./users-import-dialog.component.scss'],
     encapsulation: ViewEncapsulation.None,
+    standalone: false,
 })
 export class UsersImportDialogComponent implements OnDestroy {
     readonly ActionType = ActionType;

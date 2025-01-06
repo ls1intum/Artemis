@@ -8,6 +8,7 @@ import { FileType } from 'app/exercises/programming/shared/code-editor/model/cod
     templateUrl: './code-editor-file-browser-create-node.component.html',
     styleUrls: ['./code-editor-file-browser-create-node.component.scss'],
     providers: [NgbModal],
+    standalone: false,
 })
 export class CodeEditorFileBrowserCreateNodeComponent implements AfterViewInit {
     FileType = FileType;

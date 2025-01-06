@@ -14,6 +14,7 @@ import { LegalDocumentLanguage } from 'app/entities/legal-document.model';
             <a jhiTranslate="artemisApp.dataExport.title" [routerLink]="['/privacy/data-exports']"> </a>
         }
     `,
+    standalone: false,
 })
 export class PrivacyComponent implements AfterViewInit, OnInit, OnDestroy {
     privacyStatement?: string;

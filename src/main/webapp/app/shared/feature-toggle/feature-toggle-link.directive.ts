@@ -5,6 +5,7 @@ import { Subscription } from 'rxjs';
 
 @Directive({
     selector: '[jhiFeatureToggleLink]',
+    standalone: false,
 })
 export class FeatureToggleLinkDirective implements OnInit, OnDestroy {
     @Input('jhiFeatureToggleLink') feature: FeatureToggle;

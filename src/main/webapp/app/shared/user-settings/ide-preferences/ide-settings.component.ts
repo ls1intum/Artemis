@@ -9,6 +9,7 @@ import { IdeSettingsService } from 'app/shared/user-settings/ide-preferences/ide
     templateUrl: './ide-settings.component.html',
     styleUrls: ['./ide-settings.scss'],
     changeDetection: ChangeDetectionStrategy.OnPush,
+    standalone: false,
 })
 export class IdeSettingsComponent implements OnInit {
     protected readonly ProgrammingLanguage = ProgrammingLanguage;

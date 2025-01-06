@@ -13,6 +13,7 @@ import { Course } from 'app/entities/course.model';
     selector: 'jhi-text-result',
     templateUrl: './text-result.component.html',
     styleUrls: ['./text-result.component.scss'],
+    standalone: false,
 })
 export class TextResultComponent {
     private translateService = inject(TranslateService);

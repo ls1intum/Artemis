@@ -12,6 +12,7 @@ import { TutorialGroup } from 'app/entities/tutorial-group/tutorial-group.model'
     template: `
         <jhi-button [btnType]="buttonType" [btnSize]="buttonSize" [icon]="faFileImport" [title]="'artemisApp.importUsers.buttonLabel'" (onClick)="openUsersImportDialog($event)" />
     `,
+    standalone: false,
 })
 export class UsersImportButtonComponent {
     ButtonType = ButtonType;

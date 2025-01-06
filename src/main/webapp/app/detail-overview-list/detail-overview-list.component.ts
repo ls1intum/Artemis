@@ -43,6 +43,7 @@ export enum DetailType {
     templateUrl: './detail-overview-list.component.html',
     styleUrls: ['./detail-overview-list.component.scss'],
     encapsulation: ViewEncapsulation.None,
+    standalone: false,
 })
 export class DetailOverviewListComponent implements OnInit, OnDestroy {
     protected readonly isEmpty = isEmpty;

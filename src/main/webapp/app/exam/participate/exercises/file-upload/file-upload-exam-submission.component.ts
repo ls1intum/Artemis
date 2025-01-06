@@ -25,7 +25,7 @@ import { htmlForMarkdown } from 'app/shared/util/markdown.conversion.util';
     selector: 'jhi-file-upload-submission-exam',
     templateUrl: './file-upload-exam-submission.component.html',
     providers: [{ provide: ExamSubmissionComponent, useExisting: FileUploadExamSubmissionComponent }],
-    // change deactivation must be triggered manually
+    standalone: false,
 })
 export class FileUploadExamSubmissionComponent extends ExamSubmissionComponent implements OnInit {
     exerciseType = ExerciseType.FILE_UPLOAD;

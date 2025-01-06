@@ -7,7 +7,6 @@ import { TranslateDirective } from 'app/shared/language/translate.directive';
 
 @Component({
     selector: 'jhi-course-competency-explanation-modal',
-    standalone: true,
     imports: [CompetencyGraphComponent, TranslateDirective, FontAwesomeModule],
     templateUrl: './course-competency-explanation-modal.component.html',
     styleUrl: './course-competency-explanation-modal.component.scss',

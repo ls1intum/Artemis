@@ -8,6 +8,7 @@ import { Location } from '@angular/common';
     selector: 'jhi-large-sidebar-card',
     templateUrl: './sidebar-card-large.component.html',
     styleUrls: ['./sidebar-card-large.component.scss'],
+    standalone: false,
 })
 export class SidebarCardLargeComponent {
     @Input({ required: true }) sidebarItem: SidebarCardElement;

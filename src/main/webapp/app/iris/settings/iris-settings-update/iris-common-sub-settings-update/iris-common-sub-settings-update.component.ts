@@ -15,6 +15,7 @@ import { AlertService } from 'app/core/util/alert.service';
 @Component({
     selector: 'jhi-iris-common-sub-settings-update',
     templateUrl: './iris-common-sub-settings-update.component.html',
+    standalone: false,
 })
 export class IrisCommonSubSettingsUpdateComponent implements OnInit, OnChanges {
     @Input()

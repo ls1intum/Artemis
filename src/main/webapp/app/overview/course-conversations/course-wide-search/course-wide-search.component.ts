@@ -31,6 +31,7 @@ import { CourseSidebarService } from 'app/overview/course-sidebar.service';
     templateUrl: './course-wide-search.component.html',
     styleUrls: ['./course-wide-search.component.scss'],
     encapsulation: ViewEncapsulation.None,
+    standalone: false,
 })
 export class CourseWideSearchComponent implements OnInit, AfterViewInit, OnDestroy {
     @Input()

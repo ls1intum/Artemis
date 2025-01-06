@@ -5,6 +5,7 @@ import { Subject } from 'rxjs';
 @Component({
     selector: 'jhi-plagiarism-case-review',
     templateUrl: './plagiarism-case-review.component.html',
+    standalone: false,
 })
 export class PlagiarismCaseReviewComponent {
     @Input() plagiarismCase: PlagiarismCase;

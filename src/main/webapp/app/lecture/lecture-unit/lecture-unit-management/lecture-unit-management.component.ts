@@ -22,6 +22,7 @@ import { IrisSettingsService } from 'app/iris/settings/shared/iris-settings.serv
     selector: 'jhi-lecture-unit-management',
     templateUrl: './lecture-unit-management.component.html',
     styleUrls: ['./lecture-unit-management.component.scss'],
+    standalone: false,
 })
 export class LectureUnitManagementComponent implements OnInit, OnDestroy {
     protected readonly faTrash = faTrash;

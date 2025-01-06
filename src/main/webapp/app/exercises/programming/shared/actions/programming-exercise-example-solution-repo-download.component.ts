@@ -14,6 +14,7 @@ import { ProgrammingExerciseInstructorRepoDownloadComponent } from 'app/exercise
         [title]="title"
         (onClick)="exportRepository()"
     />`,
+    standalone: false,
 })
 export class ProgrammingExerciseExampleSolutionRepoDownloadComponent extends ProgrammingExerciseInstructorRepoDownloadComponent {
     @Input() includeTests?: boolean;

@@ -6,6 +6,7 @@ import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
     selector: 'jhi-code-editor-resolve-conflict-modal',
     templateUrl: './code-editor-resolve-conflict-modal.component.html',
     styleUrls: ['./code-editor-resolve-conflict-modal.scss'],
+    standalone: false,
 })
 export class CodeEditorResolveConflictModalComponent {
     // Icons

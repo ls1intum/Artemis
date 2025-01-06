@@ -18,6 +18,7 @@ import { htmlForMarkdown } from 'app/shared/util/markdown.conversion.util';
     styleUrls: ['./modeling-exam-submission.component.scss'],
     // change deactivation must be triggered manually
     changeDetection: ChangeDetectionStrategy.OnPush,
+    standalone: false,
 })
 export class ModelingExamSubmissionComponent extends ExamSubmissionComponent implements OnInit {
     exerciseType = ExerciseType.MODELING;

@@ -10,6 +10,7 @@ import { Subscription } from 'rxjs';
 @Component({
     selector: 'jhi-commits-info',
     templateUrl: './commits-info.component.html',
+    standalone: false,
 })
 export class CommitsInfoComponent implements OnInit, OnDestroy {
     @Input() commits?: CommitInfo[];

@@ -47,6 +47,7 @@ export interface FileTreeItem extends TreeItem<string> {
     templateUrl: './code-editor-file-browser.component.html',
     styleUrls: ['./code-editor-file-browser.scss'],
     providers: [NgbModal],
+    standalone: false,
 })
 export class CodeEditorFileBrowserComponent implements OnInit, OnChanges, AfterViewInit, IFileDeleteDelegate {
     CommitState = CommitState;

@@ -20,6 +20,7 @@ import { finalize } from 'rxjs/operators';
 @Component({
     selector: 'jhi-conversation-add-users-dialog',
     templateUrl: './conversation-add-users-dialog.component.html',
+    standalone: false,
 })
 export class ConversationAddUsersDialogComponent extends AbstractDialogComponent implements OnDestroy {
     private ngUnsubscribe = new Subject<void>();

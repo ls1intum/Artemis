@@ -40,6 +40,7 @@ import { Subscription } from 'rxjs';
     selector: 'jhi-text-submission-assessment',
     templateUrl: './text-submission-assessment.component.html',
     styleUrls: ['./text-submission-assessment.component.scss'],
+    standalone: false,
 })
 export class TextSubmissionAssessmentComponent extends TextAssessmentBaseComponent implements OnInit, OnDestroy {
     private activatedRoute = inject(ActivatedRoute);

@@ -9,6 +9,7 @@ import { NavigationEnd, Router } from '@angular/router';
     selector: 'jhi-connection-warning',
     templateUrl: './connection-warning.component.html',
     styleUrls: ['./connection-warning.component.scss'],
+    standalone: false,
 })
 export class JhiConnectionWarningComponent implements OnInit, OnDestroy {
     @ViewChild('popover') popover: NgbPopover;

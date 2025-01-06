@@ -7,6 +7,7 @@ import { toObservable } from '@angular/core/rxjs-interop';
 @Component({
     selector: 'jhi-progress-bar',
     templateUrl: './progress-bar.component.html',
+    standalone: false,
 })
 export class ProgressBarComponent implements OnChanges, OnDestroy {
     @Input() public tooltip: string;

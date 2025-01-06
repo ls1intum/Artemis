@@ -20,6 +20,7 @@ import { MultipleChoiceVisualQuestionComponent } from 'app/exercises/quiz/shared
     styleUrls: ['../quiz-exercise.scss', '../../shared/quiz.scss'],
     encapsulation: ViewEncapsulation.None,
     changeDetection: ChangeDetectionStrategy.OnPush,
+    standalone: false,
 })
 export class MultipleChoiceQuestionEditComponent implements OnInit, QuizQuestionEdit {
     @ViewChild('markdownEditor', { static: false })

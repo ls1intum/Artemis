@@ -34,6 +34,7 @@ export enum TimeFrame {
     templateUrl: './tutorial-group-free-period-form.component.html',
     changeDetection: ChangeDetectionStrategy.OnPush,
     providers: [{ provide: OWL_DATE_TIME_FORMATS, useValue: MY_NATIVE_FORMATS }],
+    standalone: false,
 })
 export class TutorialGroupFreePeriodFormComponent implements OnInit, OnChanges {
     @Input()

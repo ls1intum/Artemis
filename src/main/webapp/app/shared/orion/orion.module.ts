@@ -1,4 +1,4 @@
-import { APP_INITIALIZER, NgModule } from '@angular/core';
+import { NgModule, inject, provideAppInitializer } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { OrionButtonComponent } from 'app/shared/orion/orion-button/orion-button.component';
 import { OrionConnectorService } from 'app/shared/orion/orion-connector.service';
@@ -18,6 +18,13 @@ export function initOrionConnector(connector: OrionConnectorService) {
     declarations: [OrionButtonComponent, ModalConfirmAutofocusComponent, OrionFilterDirective],
     imports: [CommonModule, ArtemisSharedModule, TranslateModule, FeatureToggleModule],
     exports: [OrionButtonComponent, OrionFilterDirective],
-    providers: [{ provide: APP_INITIALIZER, useFactory: initOrionConnector, deps: [OrionConnectorService], multi: true }, OrionBuildAndTestService, OrionAssessmentService],
+    providers: [
+        provideAppInitializer(() => {
+            const initializerFn = initOrionConnector(inject(OrionConnectorService));
+            return initializerFn();
+        }),
+        OrionBuildAndTestService,
+        OrionAssessmentService,
+    ],
 })
 export class OrionModule {}

@@ -11,7 +11,6 @@ import { ArtemisSharedModule } from 'app/shared/shared.module';
     templateUrl: './git-diff-file-panel.component.html',
     styleUrls: ['./git-diff-file-panel.component.scss'],
     encapsulation: ViewEncapsulation.None,
-    standalone: true,
     changeDetection: ChangeDetectionStrategy.OnPush,
     imports: [GitDiffFilePanelTitleComponent, GitDiffLineStatComponent, GitDiffFileComponent, ArtemisSharedModule],
 })

@@ -11,6 +11,7 @@ import { TranslateService } from '@ngx-translate/core';
     selector: 'jhi-additional-feedback',
     templateUrl: './additional-feedback.component.html',
     styleUrls: ['./additional-feedback.component.scss'],
+    standalone: false,
 })
 export class AdditionalFeedbackComponent {
     @Input()

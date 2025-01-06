@@ -16,7 +16,6 @@ import { CourseCompetencyFormData } from 'app/course/competencies/forms/course-c
 @Component({
     selector: 'jhi-edit-competency',
     templateUrl: './edit-competency.component.html',
-    standalone: true,
     imports: [ArtemisSharedModule, CompetencyFormComponent],
 })
 export class EditCompetencyComponent extends EditCourseCompetencyComponent implements OnInit {

@@ -19,6 +19,7 @@ import { ProgrammingExerciseInputField } from 'app/exercises/programming/manage/
     selector: 'jhi-programming-exercise-lifecycle',
     templateUrl: './programming-exercise-lifecycle.component.html',
     styleUrls: ['./programming-exercise-test-schedule-picker.scss'],
+    standalone: false,
 })
 export class ProgrammingExerciseLifecycleComponent implements AfterViewInit, OnDestroy, OnInit, OnChanges {
     protected readonly assessmentType = AssessmentType;

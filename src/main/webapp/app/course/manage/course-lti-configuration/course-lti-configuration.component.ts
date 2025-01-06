@@ -17,7 +17,6 @@ import { ArtemisTranslatePipe } from '../../../shared/pipes/artemis-translate.pi
 @Component({
     selector: 'jhi-course-lti-configuration',
     templateUrl: './course-lti-configuration.component.html',
-    standalone: true,
     imports: [
         FormsModule,
         TranslateDirective,

@@ -20,6 +20,7 @@ export interface GenericUpdateTextPropertyTranslationKeys {
 @Component({
     selector: 'jhi-generic-update-text-property-dialog',
     templateUrl: './generic-update-text-property-dialog.component.html',
+    standalone: false,
 })
 export class GenericUpdateTextPropertyDialogComponent extends AbstractDialogComponent {
     @Input()

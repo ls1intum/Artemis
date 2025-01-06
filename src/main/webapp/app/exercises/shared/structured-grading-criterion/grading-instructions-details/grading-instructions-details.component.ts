@@ -18,6 +18,7 @@ import { GradingInstructionAction } from 'app/shared/monaco-editor/model/actions
     selector: 'jhi-grading-instructions-details',
     templateUrl: './grading-instructions-details.component.html',
     styleUrls: ['./grading-instructions-details.component.scss'],
+    standalone: false,
 })
 export class GradingInstructionsDetailsComponent implements OnInit, AfterContentInit {
     @ViewChildren('markdownEditors')

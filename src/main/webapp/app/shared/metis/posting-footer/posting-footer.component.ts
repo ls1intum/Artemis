@@ -16,6 +16,7 @@ interface PostGroup {
 @Component({
     selector: 'jhi-posting-footer',
     templateUrl: './posting-footer.component.html',
+    standalone: false,
 })
 export class PostingFooterComponent implements OnInit, OnDestroy, AfterContentChecked, OnChanges {
     lastReadDate = input<dayjs.Dayjs | undefined>();

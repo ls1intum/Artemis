@@ -9,6 +9,7 @@ import { faArrowDown } from '@fortawesome/free-solid-svg-icons';
     selector: 'jhi-header-course',
     templateUrl: './header-course.component.html',
     styleUrls: ['./header-course.component.scss'],
+    standalone: false,
 })
 export class HeaderCourseComponent implements OnChanges {
     readonly ARTEMIS_DEFAULT_COLOR = ARTEMIS_DEFAULT_COLOR;

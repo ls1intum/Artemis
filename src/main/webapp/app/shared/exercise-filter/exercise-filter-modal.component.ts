@@ -29,7 +29,6 @@ import { isRangeFilterApplied } from 'app/shared/sidebar/sidebar.helper';
     selector: 'jhi-exercise-filter-modal',
     templateUrl: './exercise-filter-modal.component.html',
     styleUrls: ['./exercise-filter-modal.component.scss'],
-    standalone: true,
     imports: [
         FormsModule,
         ReactiveFormsModule,

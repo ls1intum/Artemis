@@ -35,6 +35,7 @@ import { filter, finalize } from 'rxjs/operators';
     templateUrl: './file-upload-assessment.component.html',
     styles: [],
     encapsulation: ViewEncapsulation.None,
+    standalone: false,
 })
 export class FileUploadAssessmentComponent implements OnInit, OnDestroy {
     text: string;

@@ -36,6 +36,7 @@ import { AnswerPostReactionsBarComponent } from 'app/shared/metis/posting-reacti
             transition(':leave', [animate('300ms ease-out', style({ opacity: 0 }))]),
         ]),
     ],
+    standalone: false,
 })
 export class AnswerPostComponent extends PostingDirective<AnswerPost> implements OnInit, OnChanges, OnDestroy {
     @Input() lastReadDate?: dayjs.Dayjs;

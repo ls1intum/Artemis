@@ -5,6 +5,7 @@ import { Directive, ElementRef } from '@angular/core';
  */
 @Directive({
     selector: '[jhiSecureLink]',
+    standalone: false,
 })
 export class SecureLinkDirective {
     constructor(el: ElementRef) {

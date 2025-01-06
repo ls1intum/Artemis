@@ -13,7 +13,10 @@ interface DeletionServiceInterface {
     delete: (id: number) => Observable<HttpResponse<any>>;
 }
 
-@Component({ template: '' })
+@Component({
+    template: '',
+    standalone: false,
+})
 export abstract class ExerciseComponent implements OnInit, OnDestroy {
     protected translateService = inject(TranslateService);
     protected eventManager = inject(EventManager);

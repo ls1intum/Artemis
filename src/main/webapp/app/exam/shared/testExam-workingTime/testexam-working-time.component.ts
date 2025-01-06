@@ -7,6 +7,7 @@ import dayjs from 'dayjs/esm';
     selector: 'jhi-testexam-working-time',
     templateUrl: './testexam-working-time.component.html',
     providers: [],
+    standalone: false,
 })
 export class TestexamWorkingTimeComponent implements OnInit {
     @Input() studentExam: StudentExam;

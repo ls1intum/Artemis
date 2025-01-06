@@ -20,6 +20,7 @@ import { FeatureToggle } from 'app/shared/feature-toggle/feature-toggle.service'
             (onClick)="openSubmissionExportDialog($event)"
         />
     `,
+    standalone: false,
 })
 export class SubmissionExportButtonComponent {
     readonly ButtonType = ButtonType;

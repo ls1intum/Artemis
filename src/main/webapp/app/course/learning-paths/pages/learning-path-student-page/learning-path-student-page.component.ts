@@ -17,7 +17,6 @@ import { TranslateDirective } from 'app/shared/language/translate.directive';
     templateUrl: './learning-path-student-page.component.html',
     styleUrl: './learning-path-student-page.component.scss',
     changeDetection: ChangeDetectionStrategy.OnPush,
-    standalone: true,
     imports: [LearningPathNavComponent, LearningPathLectureUnitComponent, LearningPathExerciseComponent, TranslateDirective],
 })
 export class LearningPathStudentPageComponent {

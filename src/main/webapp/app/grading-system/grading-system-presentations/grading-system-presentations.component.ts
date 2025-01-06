@@ -26,7 +26,6 @@ export interface PresentationsConfig {
     selector: 'jhi-grading-system-presentations',
     templateUrl: './grading-system-presentations.component.html',
     styleUrls: ['./grading-system-presentations.component.scss'],
-    standalone: true,
     imports: [TranslateDirective, ArtemisSharedComponentModule, ArtemisModePickerModule, FormsModule],
 })
 export class GradingSystemPresentationsComponent implements OnChanges {

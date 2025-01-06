@@ -21,6 +21,7 @@ const cssClasses = {
 @Component({
     selector: 'jhi-organization-management-detail',
     templateUrl: './organization-management-detail.component.html',
+    standalone: false,
 })
 export class OrganizationManagementDetailComponent implements OnInit {
     @ViewChild(DataTableComponent) dataTable: DataTableComponent;

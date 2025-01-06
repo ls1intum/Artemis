@@ -15,6 +15,7 @@ import { MAX_QUIZ_SHORT_ANSWER_TEXT_LENGTH } from 'app/shared/constants/input.co
     providers: [ShortAnswerQuestionUtil],
     styleUrls: ['./short-answer-question.component.scss', '../../../participate/quiz-participation.scss'],
     encapsulation: ViewEncapsulation.None,
+    standalone: false,
 })
 export class ShortAnswerQuestionComponent {
     shortAnswerQuestion: ShortAnswerQuestion;

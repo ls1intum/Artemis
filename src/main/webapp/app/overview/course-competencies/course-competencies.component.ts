@@ -15,6 +15,7 @@ import { CourseCompetencyService } from 'app/course/competencies/course-competen
     selector: 'jhi-course-competencies',
     templateUrl: './course-competencies.component.html',
     styleUrls: ['../course-overview.scss'],
+    standalone: false,
 })
 export class CourseCompetenciesComponent implements OnInit, OnDestroy {
     @Input()

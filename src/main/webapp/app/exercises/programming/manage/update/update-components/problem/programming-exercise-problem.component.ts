@@ -10,6 +10,7 @@ import { ProgrammingExerciseInputField } from 'app/exercises/programming/manage/
     selector: 'jhi-programming-exercise-problem',
     templateUrl: './programming-exercise-problem.component.html',
     styleUrls: ['../../../programming-exercise-form.scss'],
+    standalone: false,
 })
 export class ProgrammingExerciseProblemComponent {
     protected readonly ProgrammingLanguage = ProgrammingLanguage;

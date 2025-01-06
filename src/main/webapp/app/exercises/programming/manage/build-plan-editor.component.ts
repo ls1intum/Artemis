@@ -14,6 +14,7 @@ import { MonacoEditorComponent } from 'app/shared/monaco-editor/monaco-editor.co
     templateUrl: './build-plan-editor.component.html',
     styleUrls: ['./build-plan-editor.scss'],
     encapsulation: ViewEncapsulation.None,
+    standalone: false,
 })
 export class BuildPlanEditorComponent implements AfterViewInit, OnInit {
     // Icons

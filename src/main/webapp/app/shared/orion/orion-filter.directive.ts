@@ -3,6 +3,7 @@ import { isOrion } from 'app/shared/orion/orion';
 
 @Directive({
     selector: '[jhiOrionFilter]',
+    standalone: false,
 })
 export class OrionFilterDirective implements OnInit {
     @Input() showInOrionWindow: boolean;

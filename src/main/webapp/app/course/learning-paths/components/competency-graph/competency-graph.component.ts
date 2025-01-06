@@ -6,7 +6,6 @@ import { CompetencyNodeComponent, SizeUpdate } from 'app/course/learning-paths/c
 
 @Component({
     selector: 'jhi-competency-graph',
-    standalone: true,
     changeDetection: ChangeDetectionStrategy.OnPush,
     imports: [CompetencyNodeComponent, NgxGraphModule],
     templateUrl: './competency-graph.component.html',

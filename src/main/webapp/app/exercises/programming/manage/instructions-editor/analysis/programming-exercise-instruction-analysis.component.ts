@@ -8,6 +8,7 @@ import { faCheckCircle, faExclamationTriangle } from '@fortawesome/free-solid-sv
 @Component({
     selector: 'jhi-programming-exercise-instruction-instructor-analysis',
     templateUrl: './programming-exercise-instruction-analysis.component.html',
+    standalone: false,
 })
 export class ProgrammingExerciseInstructionAnalysisComponent implements OnInit, OnChanges, OnDestroy {
     @Input() exerciseTestCases: string[];

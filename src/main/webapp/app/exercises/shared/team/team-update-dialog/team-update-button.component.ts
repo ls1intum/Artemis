@@ -17,6 +17,7 @@ import { faPencilAlt, faPlus } from '@fortawesome/free-solid-svg-icons';
             (onClick)="openTeamCreateDialog($event)"
         />
     `,
+    standalone: false,
 })
 export class TeamUpdateButtonComponent {
     ButtonType = ButtonType;

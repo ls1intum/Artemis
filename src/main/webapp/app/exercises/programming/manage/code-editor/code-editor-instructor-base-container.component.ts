@@ -42,7 +42,10 @@ export enum LOADING_STATE {
     DELETING_ASSIGNMENT_REPO = 'DELETING_ASSIGNMENT_REPO',
 }
 
-@Component({ template: '' })
+@Component({
+    template: '',
+    standalone: false,
+})
 export abstract class CodeEditorInstructorBaseContainerComponent implements OnInit, OnDestroy {
     @ViewChild(CodeEditorContainerComponent, { static: false }) codeEditorContainer: CodeEditorContainerComponent;
 

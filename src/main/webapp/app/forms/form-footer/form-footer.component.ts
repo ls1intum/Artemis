@@ -7,6 +7,7 @@ import { ButtonSize } from 'app/shared/components/button.component';
     selector: 'jhi-form-footer',
     templateUrl: 'form-footer.component.html',
     styleUrls: ['form-footer.component.scss'],
+    standalone: false,
 })
 export class FormFooterComponent {
     protected readonly ButtonSize = ButtonSize;

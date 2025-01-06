@@ -20,7 +20,6 @@ type NameToValueMap = { [name: string]: any };
 @Component({
     selector: 'jhi-exam-scores-average-scores-graph',
     templateUrl: './exam-scores-average-scores-graph.component.html',
-    standalone: true,
     imports: [TranslateDirective, BarChartModule, ArtemisSharedCommonModule],
 })
 export class ExamScoresAverageScoresGraphComponent implements OnInit {

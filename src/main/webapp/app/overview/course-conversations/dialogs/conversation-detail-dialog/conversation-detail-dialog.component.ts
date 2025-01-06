@@ -18,6 +18,7 @@ export enum ConversationDetailTabs {
 @Component({
     selector: 'jhi-conversation-detail-dialog',
     templateUrl: './conversation-detail-dialog.component.html',
+    standalone: false,
 })
 export class ConversationDetailDialogComponent extends AbstractDialogComponent {
     @Input() public activeConversation: ConversationDTO;

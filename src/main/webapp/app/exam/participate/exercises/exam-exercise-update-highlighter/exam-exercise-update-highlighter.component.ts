@@ -9,6 +9,7 @@ import diff from 'html-diff-ts';
     selector: 'jhi-exam-exercise-update-highlighter',
     templateUrl: './exam-exercise-update-highlighter.component.html',
     styleUrls: ['./exam-exercise-update-highlighter.component.scss'],
+    standalone: false,
 })
 export class ExamExerciseUpdateHighlighterComponent implements OnInit, OnDestroy {
     subscriptionToLiveExamExerciseUpdates: Subscription;

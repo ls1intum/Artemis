@@ -16,7 +16,6 @@ import { TranslateDirective } from 'app/shared/language/translate.directive';
 
 @Component({
     selector: 'jhi-learning-path-lecture-unit',
-    standalone: true,
     changeDetection: ChangeDetectionStrategy.OnPush,
     imports: [ArtemisLectureUnitsModule, VideoUnitComponent, TextUnitComponent, AttachmentUnitComponent, OnlineUnitComponent, DiscussionSectionComponent, TranslateDirective],
     templateUrl: './learning-path-lecture-unit.component.html',

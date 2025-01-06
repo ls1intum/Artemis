@@ -5,6 +5,7 @@ import { faAngleRight } from '@fortawesome/free-solid-svg-icons';
     selector: 'jhi-collapsible-card',
     templateUrl: './collapsible-card.component.html',
     styleUrls: ['../../../course/manage/course-exercise-card.component.scss', '../../../exercises/quiz/shared/quiz.scss', 'exam-result-summary.component.scss'],
+    standalone: false,
 })
 export class CollapsibleCardComponent {
     @Input() isCardContentCollapsed: boolean;

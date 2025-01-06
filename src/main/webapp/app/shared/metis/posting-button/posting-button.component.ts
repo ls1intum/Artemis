@@ -6,6 +6,7 @@ import { faCircleNotch } from '@fortawesome/free-solid-svg-icons';
     /* eslint-disable-next-line  @angular-eslint/component-selector */
     selector: 'button[jhi-posting-button]',
     templateUrl: './posting-button.component.html',
+    standalone: false,
 })
 export class PostingButtonComponent {
     @Input() buttonIcon: IconProp;

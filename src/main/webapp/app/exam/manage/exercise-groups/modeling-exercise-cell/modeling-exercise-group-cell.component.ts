@@ -6,6 +6,7 @@ import { ModelingExercise } from 'app/entities/modeling-exercise.model';
     selector: 'jhi-modeling-exercise-group-cell',
     templateUrl: './modeling-exercise-group-cell.component.html',
     styles: [':host{display: contents}'],
+    standalone: false,
 })
 export class ModelingExerciseGroupCellComponent {
     exerciseType = ExerciseType;

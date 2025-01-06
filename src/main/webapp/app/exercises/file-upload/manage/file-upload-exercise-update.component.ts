@@ -31,6 +31,7 @@ import { FormulaAction } from 'app/shared/monaco-editor/model/actions/formula.ac
     selector: 'jhi-file-upload-exercise-update',
     templateUrl: './file-upload-exercise-update.component.html',
     changeDetection: ChangeDetectionStrategy.OnPush,
+    standalone: false,
 })
 export class FileUploadExerciseUpdateComponent implements AfterViewInit, OnDestroy, OnInit {
     protected readonly faQuestionCircle = faQuestionCircle;

@@ -7,6 +7,7 @@ import { ValidationReason } from 'app/entities/exercise.model';
     selector: 'jhi-quiz-confirm-import-invalid-questions-modal',
     templateUrl: './quiz-confirm-import-invalid-questions-modal.component.html',
     styleUrls: ['./quiz-confirm-import-invalid-questions-modal.scss'],
+    standalone: false,
 })
 export class QuizConfirmImportInvalidQuestionsModalComponent {
     // Icons

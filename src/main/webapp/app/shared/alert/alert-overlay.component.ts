@@ -44,6 +44,7 @@ import { animate, group, style, transition, trigger } from '@angular/animations'
             ]),
         ]),
     ],
+    standalone: false,
 })
 export class AlertOverlayComponent implements OnInit, OnDestroy {
     alerts: Alert[] = [];

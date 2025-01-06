@@ -9,6 +9,7 @@ import { Subject } from 'rxjs';
     selector: 'jhi-programming-exercise-task',
     templateUrl: './programming-exercise-task.component.html',
     styleUrls: ['../programming-exercise-grading-tasks-table.scss'],
+    standalone: false,
 })
 export class ProgrammingExerciseTaskComponent implements OnInit {
     @Input() index: number;

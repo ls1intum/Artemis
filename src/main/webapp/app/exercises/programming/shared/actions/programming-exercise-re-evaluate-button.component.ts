@@ -26,6 +26,7 @@ import { faRedo } from '@fortawesome/free-solid-svg-icons';
             (onClick)="triggerReEvaluate()"
         />
     `,
+    standalone: false,
 })
 export class ProgrammingExerciseReEvaluateButtonComponent {
     FeatureToggle = FeatureToggle;

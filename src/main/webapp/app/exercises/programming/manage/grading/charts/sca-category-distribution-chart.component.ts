@@ -83,6 +83,7 @@ enum ScaChartBarTitle {
             </div>
         </div>
     `,
+    standalone: false,
 })
 export class ScaCategoryDistributionChartComponent extends ProgrammingGradingChartsDirective implements OnChanges {
     @Input() categories: StaticCodeAnalysisCategory[];

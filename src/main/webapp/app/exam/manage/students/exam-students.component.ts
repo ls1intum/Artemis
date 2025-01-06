@@ -29,6 +29,7 @@ const cssClasses = {
     templateUrl: './exam-students.component.html',
     styleUrls: ['./exam-students.component.scss'],
     encapsulation: ViewEncapsulation.None,
+    standalone: false,
 })
 export class ExamStudentsComponent implements OnInit, OnDestroy {
     @ViewChild(DataTableComponent) dataTable: DataTableComponent;

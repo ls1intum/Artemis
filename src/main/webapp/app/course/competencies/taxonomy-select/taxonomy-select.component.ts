@@ -5,6 +5,7 @@ import { CompetencyTaxonomy } from 'app/entities/competency.model';
 @Component({
     selector: 'jhi-taxonomy-select',
     templateUrl: './taxonomy-select.component.html',
+    standalone: false,
 })
 export class TaxonomySelectComponent {
     /**

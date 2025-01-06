@@ -46,6 +46,7 @@ type PagingValue = number | 'all';
     templateUrl: './data-table.component.html',
     styleUrls: ['data-table.component.scss'],
     encapsulation: ViewEncapsulation.None,
+    standalone: false,
 })
 export class DataTableComponent implements OnInit, OnChanges {
     /**

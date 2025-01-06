@@ -15,6 +15,7 @@ import { ProgrammingExerciseStudentParticipation } from 'app/entities/participat
 @Component({
     selector: 'jhi-commit-history',
     templateUrl: './commit-history.component.html',
+    standalone: false,
 })
 export class CommitHistoryComponent implements OnInit, OnDestroy {
     readonly PROGRAMMING = ExerciseType.PROGRAMMING;

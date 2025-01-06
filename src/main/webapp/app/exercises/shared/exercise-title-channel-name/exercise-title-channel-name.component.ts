@@ -8,6 +8,7 @@ import { CourseExistingExerciseDetailsType, ExerciseService } from 'app/exercise
 @Component({
     selector: 'jhi-exercise-title-channel-name',
     templateUrl: './exercise-title-channel-name.component.html',
+    standalone: false,
 })
 export class ExerciseTitleChannelNameComponent implements OnChanges {
     @Input() exercise: Exercise;

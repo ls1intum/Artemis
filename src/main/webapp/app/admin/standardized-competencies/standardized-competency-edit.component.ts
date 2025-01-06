@@ -9,6 +9,7 @@ import { Observable } from 'rxjs';
 @Component({
     selector: 'jhi-standardized-competency-edit',
     templateUrl: './standardized-competency-edit.component.html',
+    standalone: false,
 })
 export class StandardizedCompetencyEditComponent {
     // values for the knowledge area select

@@ -2,6 +2,7 @@ import { Pipe, PipeTransform } from '@angular/core';
 
 @Pipe({
     name: 'searchFilter',
+    standalone: false,
 })
 export class SearchFilterPipe implements PipeTransform {
     transform(array: any[] | undefined, fields: string[], value: string): any[] {

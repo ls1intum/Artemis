@@ -14,6 +14,7 @@ import { ExerciseImportWrapperComponent } from 'app/exercises/shared/import/exer
 @Component({
     selector: 'jhi-programming-exercise-grading-table-actions',
     templateUrl: './programming-exercise-grading-table-actions.component.html',
+    standalone: false,
 })
 export class ProgrammingExerciseGradingTableActionsComponent {
     readonly faCopy = faCopy;

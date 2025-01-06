@@ -22,6 +22,7 @@ import { ArtemisServerDateService } from 'app/shared/server-date.service';
     selector: 'jhi-quiz-point-statistic',
     templateUrl: './quiz-point-statistic.component.html',
     styleUrls: ['./quiz-point-statistic.component.scss', '../../../../../shared/chart/vertical-bar-chart.scss'],
+    standalone: false,
 })
 export class QuizPointStatisticComponent extends QuizStatistics implements OnInit, OnDestroy {
     readonly round = round;

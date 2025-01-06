@@ -13,6 +13,7 @@ import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
         </div>
     `,
     styleUrls: ['page-ribbon.scss'],
+    standalone: false,
 })
 export class PageRibbonComponent implements OnInit {
     ribbonEnv: string;

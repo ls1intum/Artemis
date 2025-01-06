@@ -16,6 +16,7 @@ import { faInfoCircle } from '@fortawesome/free-solid-svg-icons';
         </span>
     `,
     styles: ['.locked-lable {font-size: 1.2rem; color: white}'],
+    standalone: false,
 })
 export class CodeEditorRepositoryIsLockedComponent {
     // Icons

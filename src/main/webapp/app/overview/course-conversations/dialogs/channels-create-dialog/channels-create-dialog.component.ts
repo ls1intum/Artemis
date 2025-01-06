@@ -7,6 +7,7 @@ import { AbstractDialogComponent } from 'app/overview/course-conversations/dialo
 @Component({
     selector: 'jhi-channels-create-dialog',
     templateUrl: './channels-create-dialog.component.html',
+    standalone: false,
 })
 export class ChannelsCreateDialogComponent extends AbstractDialogComponent {
     @Input()

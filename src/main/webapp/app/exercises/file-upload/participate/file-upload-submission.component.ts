@@ -33,6 +33,7 @@ import { faDownload } from '@fortawesome/free-solid-svg-icons';
 @Component({
     selector: 'jhi-file-upload-submission',
     templateUrl: './file-upload-submission.component.html',
+    standalone: false,
 })
 export class FileUploadSubmissionComponent implements OnInit, ComponentCanDeactivate {
     readonly addParticipationToResult = addParticipationToResult;

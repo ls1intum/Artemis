@@ -7,6 +7,7 @@ import { ProgrammingExerciseInputField } from 'app/exercises/programming/manage/
     selector: 'jhi-title-channel-name',
     templateUrl: './title-channel-name.component.html',
     viewProviders: [{ provide: ControlContainer, useExisting: NgForm }],
+    standalone: false,
 })
 export class TitleChannelNameComponent implements AfterViewInit, OnDestroy, OnInit {
     @Input() title?: string;

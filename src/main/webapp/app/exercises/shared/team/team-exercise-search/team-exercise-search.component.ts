@@ -12,6 +12,7 @@ import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 @Component({
     selector: 'jhi-team-exercise-search',
     templateUrl: './team-exercise-search.component.html',
+    standalone: false,
 })
 export class TeamExerciseSearchComponent {
     @ViewChild('instance', { static: true }) ngbTypeahead: NgbTypeahead;

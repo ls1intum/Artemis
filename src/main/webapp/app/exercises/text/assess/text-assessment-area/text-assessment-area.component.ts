@@ -14,6 +14,7 @@ import { GradingCriterion } from 'app/exercises/shared/structured-grading-criter
             }
         `,
     ],
+    standalone: false,
 })
 export class TextAssessmentAreaComponent implements OnChanges {
     private stringCountService = inject(StringCountService);

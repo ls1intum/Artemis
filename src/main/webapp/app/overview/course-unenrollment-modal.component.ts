@@ -11,6 +11,7 @@ import { AbstractControl, FormControl, FormGroup, ValidationErrors, ValidatorFn,
 @Component({
     selector: 'jhi-course-unenrollment-modal',
     templateUrl: './course-unenrollment-modal.component.html',
+    standalone: false,
 })
 export class CourseUnenrollmentModalComponent implements OnInit {
     public course: Course;

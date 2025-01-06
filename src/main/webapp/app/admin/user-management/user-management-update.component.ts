@@ -24,6 +24,7 @@ import { CourseAdminService } from 'app/course/manage/course-admin.service';
     selector: 'jhi-user-management-update',
     templateUrl: './user-management-update.component.html',
     styleUrls: ['./user-management-update.component.scss'],
+    standalone: false,
 })
 export class UserManagementUpdateComponent implements OnInit {
     readonly USERNAME_MIN_LENGTH = USERNAME_MIN_LENGTH;

@@ -6,6 +6,7 @@ import { Exercise, ExerciseType } from 'app/entities/exercise.model';
     selector: 'jhi-file-upload-exercise-group-cell',
     templateUrl: './file-upload-exercise-group-cell.component.html',
     styles: [':host{display: contents}'],
+    standalone: false,
 })
 export class FileUploadExerciseGroupCellComponent {
     exerciseType = ExerciseType;

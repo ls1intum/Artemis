@@ -10,6 +10,7 @@ import { faCheck, faTimes } from '@fortawesome/free-solid-svg-icons';
 @Component({
     selector: 'jhi-consistency-check',
     templateUrl: './consistency-check.component.html',
+    standalone: false,
 })
 export class ConsistencyCheckComponent implements OnInit {
     @Input() exercisesToCheck: ProgrammingExercise[];

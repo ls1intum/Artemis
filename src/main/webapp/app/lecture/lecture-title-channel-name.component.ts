@@ -6,6 +6,7 @@ import { TitleChannelNameComponent } from 'app/shared/form/title-channel-name/ti
 @Component({
     selector: 'jhi-lecture-title-channel-name',
     templateUrl: './lecture-title-channel-name.component.html',
+    standalone: false,
 })
 export class LectureTitleChannelNameComponent implements OnInit {
     @Input() lecture: Lecture;

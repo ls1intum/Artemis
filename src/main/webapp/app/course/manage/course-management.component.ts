@@ -18,6 +18,7 @@ import { CourseAccessStorageService } from 'app/course/course-access-storage.ser
     templateUrl: './course-management.component.html',
     styles: ['.course-table {padding-bottom: 5rem}'],
     styleUrls: ['./course-management.component.scss'],
+    standalone: false,
 })
 export class CourseManagementComponent implements OnInit, OnDestroy, AfterViewInit {
     showOnlyActive = true;

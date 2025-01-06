@@ -31,6 +31,7 @@ import { CourseCompetencyService } from 'app/course/competencies/course-competen
     selector: 'jhi-course-competencies-details',
     templateUrl: './course-competencies-details.component.html',
     styleUrls: ['../course-overview.scss'],
+    standalone: false,
 })
 export class CourseCompetenciesDetailsComponent implements OnInit, OnDestroy {
     competencyId?: number;

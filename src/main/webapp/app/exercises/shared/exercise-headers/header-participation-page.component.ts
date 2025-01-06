@@ -12,6 +12,7 @@ import { roundValueSpecifiedByCourseSettings } from 'app/shared/util/utils';
     templateUrl: './header-participation-page.component.html',
     styleUrls: ['./header-participation-page.component.scss'],
     encapsulation: ViewEncapsulation.None,
+    standalone: false,
 })
 export class HeaderParticipationPageComponent implements OnInit, OnChanges {
     readonly ButtonType = ButtonType;

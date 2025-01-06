@@ -6,6 +6,7 @@ import { ButtonType } from 'app/shared/components/button.component';
 @Component({
     selector: 'jhi-course-description-form',
     templateUrl: './course-description-form.component.html',
+    standalone: false,
 })
 export class CourseDescriptionFormComponent implements OnInit {
     @Input() isLoading = false;

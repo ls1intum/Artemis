@@ -10,6 +10,7 @@ import { take } from 'rxjs';
 @Component({
     selector: 'jhi-programming-exercise-student-repo-download',
     templateUrl: './programming-exercise-student-repo-download.component.html',
+    standalone: false,
 })
 export class ProgrammingExerciseStudentRepoDownloadComponent {
     ButtonType = ButtonType;

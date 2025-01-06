@@ -10,6 +10,7 @@ import { ButtonType } from 'app/shared/components/button.component';
     selector: 'jhi-chatbot-widget',
     templateUrl: './chatbot-widget.component.html',
     styleUrls: ['./chatbot-widget.component.scss'],
+    standalone: false,
 })
 export class IrisChatbotWidgetComponent implements OnDestroy, AfterViewInit {
     // User preferences

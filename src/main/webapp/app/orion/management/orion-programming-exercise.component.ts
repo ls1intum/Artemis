@@ -11,6 +11,7 @@ import { OrionButtonType } from 'app/shared/orion/orion-button/orion-button.comp
 @Component({
     selector: 'jhi-orion-programming-exercise',
     templateUrl: './orion-programming-exercise.component.html',
+    standalone: false,
 })
 export class OrionProgrammingExerciseComponent implements OnInit {
     @Input() embedded = false;

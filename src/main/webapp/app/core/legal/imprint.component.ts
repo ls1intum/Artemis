@@ -8,6 +8,7 @@ import { LegalDocumentService } from 'app/shared/service/legal-document.service'
 @Component({
     selector: 'jhi-imprint',
     template: ` <div [innerHTML]="imprint | htmlForMarkdown"></div> `,
+    standalone: false,
 })
 export class ImprintComponent implements AfterViewInit, OnInit, OnDestroy {
     imprint?: string;

@@ -13,6 +13,7 @@ import { AlertService } from 'app/core/util/alert.service';
     selector: 'jhi-plagiarism-cases-instructor-view',
     templateUrl: './plagiarism-cases-instructor-view.component.html',
     styleUrls: ['./plagiarism-cases-instructor-view.component.scss'],
+    standalone: false,
 })
 export class PlagiarismCasesInstructorViewComponent implements OnInit {
     courseId: number;

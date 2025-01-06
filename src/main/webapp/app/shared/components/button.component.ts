@@ -46,6 +46,7 @@ export enum TooltipPlacement {
 @Component({
     selector: 'jhi-button',
     templateUrl: './button.component.html',
+    standalone: false,
 })
 export class ButtonComponent {
     @Input() btnType = ButtonType.PRIMARY;

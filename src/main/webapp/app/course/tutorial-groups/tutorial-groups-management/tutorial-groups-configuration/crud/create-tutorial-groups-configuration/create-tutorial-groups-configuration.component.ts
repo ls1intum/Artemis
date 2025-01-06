@@ -16,6 +16,7 @@ import { CourseStorageService } from 'app/course/manage/course-storage.service';
     selector: 'jhi-create-tutorial-groups-configuration',
     templateUrl: './create-tutorial-groups-configuration.component.html',
     changeDetection: ChangeDetectionStrategy.OnPush,
+    standalone: false,
 })
 export class CreateTutorialGroupsConfigurationComponent implements OnInit, OnDestroy {
     ngUnsubscribe = new Subject<void>();

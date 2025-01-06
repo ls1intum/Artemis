@@ -44,6 +44,7 @@ import { of } from 'rxjs';
     selector: 'jhi-modeling-submission',
     templateUrl: './modeling-submission.component.html',
     styleUrls: ['./modeling-submission.component.scss'],
+    standalone: false,
 })
 export class ModelingSubmissionComponent implements OnInit, OnDestroy, ComponentCanDeactivate {
     readonly addParticipationToResult = addParticipationToResult;

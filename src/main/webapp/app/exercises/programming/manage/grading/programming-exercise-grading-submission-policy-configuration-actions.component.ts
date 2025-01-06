@@ -43,6 +43,7 @@ import { ButtonType } from 'app/shared/components/button.component';
             }
         </div>
     `,
+    standalone: false,
 })
 export class ProgrammingExerciseGradingSubmissionPolicyConfigurationActionsComponent {
     readonly ButtonType = ButtonType;

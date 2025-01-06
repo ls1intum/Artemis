@@ -21,6 +21,7 @@ export enum FilterProp {
 @Component({
     selector: 'jhi-teams',
     templateUrl: './teams.component.html',
+    standalone: false,
 })
 export class TeamsComponent implements OnInit, OnDestroy {
     readonly FilterProp = FilterProp;

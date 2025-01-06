@@ -1,4 +1,4 @@
-import { APP_INITIALIZER, ErrorHandler, LOCALE_ID, NgModule } from '@angular/core';
+import { ErrorHandler, LOCALE_ID, NgModule, inject, provideAppInitializer } from '@angular/core';
 import { DatePipe, registerLocaleData } from '@angular/common';
 import { HTTP_INTERCEPTORS, HttpClient, provideHttpClient, withInterceptorsFromDi } from '@angular/common/http';
 import { Title } from '@angular/platform-browser';
@@ -49,12 +49,10 @@ import isMobile from 'ismobilejs-es5';
         { provide: ErrorHandler, useClass: SentryErrorHandler },
         { provide: WINDOW_INJECTOR_TOKEN, useValue: window },
         DatePipe,
-        {
-            provide: APP_INITIALIZER,
-            useFactory: () => () => {},
-            deps: [TraceService],
-            multi: true,
-        },
+        provideAppInitializer(() => {
+            const initializerFn = (() => () => {})(inject(TraceService));
+            return initializerFn();
+        }),
         /**
          * @description Interceptor declarations:
          * Interceptors are located at 'blocks/interceptor/.

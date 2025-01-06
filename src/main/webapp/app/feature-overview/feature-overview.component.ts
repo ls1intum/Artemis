@@ -40,6 +40,7 @@ import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
     selector: 'jhi-feature-overview',
     templateUrl: './feature-overview.component.html',
     styleUrls: ['./feature-overview.scss'],
+    standalone: false,
 })
 export class FeatureOverviewComponent implements OnInit {
     features: Feature[];

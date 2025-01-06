@@ -9,6 +9,7 @@ import { faTrash } from '@fortawesome/free-solid-svg-icons';
     template: `
         <jhi-button [btnType]="ButtonType.ERROR" [btnSize]="ButtonSize.SMALL" [icon]="faTrash" [title]="'entity.action.remove'" (onClick)="removeAuxiliaryRepository()" />
     `,
+    standalone: false,
 })
 export class RemoveAuxiliaryRepositoryButtonComponent {
     ButtonType = ButtonType;

@@ -24,6 +24,7 @@ import { TextEditorDomainAction } from 'app/shared/monaco-editor/model/actions/t
     templateUrl: './programming-exercise-editable-instruction.component.html',
     styleUrls: ['./programming-exercise-editable-instruction.scss'],
     encapsulation: ViewEncapsulation.None,
+    standalone: false,
 })
 export class ProgrammingExerciseEditableInstructionComponent implements AfterViewInit, OnChanges, OnDestroy {
     participationValue: Participation;

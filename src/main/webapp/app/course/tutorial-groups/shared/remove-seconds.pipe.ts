@@ -5,6 +5,7 @@ import { Pipe, PipeTransform } from '@angular/core';
  */
 @Pipe({
     name: 'removeSeconds',
+    standalone: false,
 })
 export class RemoveSecondsPipe implements PipeTransform {
     /**

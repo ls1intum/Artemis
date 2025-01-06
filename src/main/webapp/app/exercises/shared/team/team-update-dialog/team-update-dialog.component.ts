@@ -21,6 +21,7 @@ export type StudentTeamConflict = { studentLogin: string; teamId: string };
     templateUrl: './team-update-dialog.component.html',
     styleUrls: ['./team-update-dialog.component.scss'],
     encapsulation: ViewEncapsulation.None,
+    standalone: false,
 })
 export class TeamUpdateDialogComponent implements OnInit {
     @ViewChild('editForm', { static: false }) editForm: NgForm;

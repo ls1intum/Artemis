@@ -6,6 +6,7 @@ import { exerciseTypes } from 'app/entities/exercise.model';
     selector: 'jhi-course-management-exercises-search',
     templateUrl: './course-management-exercises-search.component.html',
     styleUrls: ['./course-management-exercises-search.component.scss'],
+    standalone: false,
 })
 export class CourseManagementExercisesSearchComponent implements OnInit {
     typeOptions: string[];

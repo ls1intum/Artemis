@@ -10,6 +10,7 @@ import { faListAlt } from '@fortawesome/free-regular-svg-icons';
 @Component({
     selector: 'jhi-text-exercise-row-buttons',
     templateUrl: './text-exercise-row-buttons.component.html',
+    standalone: false,
 })
 export class TextExerciseRowButtonsComponent {
     private eventManager = inject(EventManager);

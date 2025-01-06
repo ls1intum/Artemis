@@ -46,6 +46,7 @@ export enum FilterProp {
     templateUrl: './exercise-scores.component.html',
     providers: [ExerciseCacheService],
     encapsulation: ViewEncapsulation.None,
+    standalone: false,
 })
 export class ExerciseScoresComponent implements OnInit, OnDestroy {
     // make constants available to html for comparison

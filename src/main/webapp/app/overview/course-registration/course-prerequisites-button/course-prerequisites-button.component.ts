@@ -6,6 +6,7 @@ import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 @Component({
     selector: 'jhi-course-prerequisites-button',
     templateUrl: './course-prerequisites-button.component.html',
+    standalone: false,
 })
 export class CoursePrerequisitesButtonComponent {
     @Input() course: Course;

@@ -14,6 +14,7 @@ import { InitializationState } from 'app/entities/participation/participation.mo
     selector: 'jhi-start-practice-mode-button',
     templateUrl: './start-practice-mode-button.component.html',
     styleUrls: ['./start-practice-mode-button.component.scss'],
+    standalone: false,
 })
 export class StartPracticeModeButtonComponent implements OnInit {
     readonly FeatureToggle = FeatureToggle;

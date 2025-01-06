@@ -11,7 +11,6 @@ import { AlertService } from 'app/core/util/alert.service';
     selector: 'jhi-feedback-detail-channel-modal',
     templateUrl: './feedback-detail-channel-modal.component.html',
     imports: [ArtemisSharedCommonModule],
-    standalone: true,
 })
 export class FeedbackDetailChannelModalComponent {
     protected readonly TRANSLATION_BASE = 'artemisApp.programmingExercise.configureGrading.feedbackAnalysis.feedbackDetailChannel';

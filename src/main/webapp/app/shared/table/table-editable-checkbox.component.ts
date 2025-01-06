@@ -11,6 +11,7 @@ import { Component, EventEmitter, Input, Output } from '@angular/core';
             <input class="table-editable-field__checkbox form-check-input" type="checkbox" [disabled]="disabled" [ngModel]="value" (ngModelChange)="sendValueUpdate()" />
         </div>
     `,
+    standalone: false,
 })
 export class TableEditableCheckboxComponent {
     @Input() value: boolean;

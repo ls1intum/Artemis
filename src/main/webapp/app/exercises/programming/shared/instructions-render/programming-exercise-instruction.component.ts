@@ -46,6 +46,7 @@ import { toObservable } from '@angular/core/rxjs-interop';
     selector: 'jhi-programming-exercise-instructions',
     templateUrl: './programming-exercise-instruction.component.html',
     styleUrls: ['./programming-exercise-instruction.scss'],
+    standalone: false,
 })
 export class ProgrammingExerciseInstructionComponent implements OnChanges, OnDestroy {
     private themeService = inject(ThemeService);

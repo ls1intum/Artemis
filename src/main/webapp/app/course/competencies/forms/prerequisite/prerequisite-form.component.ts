@@ -13,7 +13,6 @@ import { Prerequisite } from 'app/entities/prerequisite.model';
     selector: 'jhi-prerequisite-form',
     templateUrl: './prerequisite-form.component.html',
     styleUrls: ['./prerequisite-form.component.scss'],
-    standalone: true,
     imports: [ArtemisSharedModule, CommonCourseCompetencyFormComponent],
 })
 export class PrerequisiteFormComponent extends CourseCompetencyFormComponent implements OnInit, OnChanges {

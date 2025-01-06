@@ -19,6 +19,7 @@ import { UMLDiagramType } from '@ls1intum/apollon';
     selector: 'jhi-apollon-diagram-list',
     templateUrl: './apollon-diagram-list.component.html',
     providers: [ApollonDiagramService],
+    standalone: false,
 })
 export class ApollonDiagramListComponent implements OnInit {
     apollonDiagrams: ApollonDiagram[] = [];

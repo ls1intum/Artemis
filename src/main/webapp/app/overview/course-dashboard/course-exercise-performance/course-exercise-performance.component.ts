@@ -21,6 +21,7 @@ const AVERAGE_GRAPH_COLOR = GraphColors.YELLOW;
     selector: 'jhi-course-exercise-performance',
     templateUrl: './course-exercise-performance.component.html',
     styleUrls: ['./course-exercise-performance.component.scss'],
+    standalone: false,
 })
 export class CourseExercisePerformanceComponent implements OnInit, OnChanges, OnDestroy {
     @Input() exercisePerformance: ExercisePerformance[] = [];

@@ -24,6 +24,7 @@ import { faTrashAlt } from '@fortawesome/free-solid-svg-icons';
             </button>
         }
     `,
+    standalone: false,
 })
 export class TeamDeleteButtonComponent implements OnDestroy {
     ButtonType = ButtonType;

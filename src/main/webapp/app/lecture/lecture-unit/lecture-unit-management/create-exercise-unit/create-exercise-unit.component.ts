@@ -16,6 +16,7 @@ import { faSort, faTimes } from '@fortawesome/free-solid-svg-icons';
     selector: 'jhi-create-exercise-unit',
     templateUrl: './create-exercise-unit.component.html',
     styleUrls: ['./create-exercise-unit.component.scss'],
+    standalone: false,
 })
 export class CreateExerciseUnitComponent implements OnInit {
     protected readonly faTimes = faTimes;

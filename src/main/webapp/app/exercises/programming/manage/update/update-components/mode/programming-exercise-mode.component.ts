@@ -11,6 +11,7 @@ import { ProgrammingExerciseInputField } from 'app/exercises/programming/manage/
     selector: 'jhi-programming-exercise-mode',
     templateUrl: './programming-exercise-mode.component.html',
     styleUrls: ['../../../programming-exercise-form.scss'],
+    standalone: false,
 })
 export class ProgrammingExerciseModeComponent implements OnInit {
     protected readonly ProjectType = ProjectType;

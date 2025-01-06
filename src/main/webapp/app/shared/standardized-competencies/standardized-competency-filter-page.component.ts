@@ -8,7 +8,10 @@ import { KnowledgeAreaDTO, KnowledgeAreaForTree, StandardizedCompetencyDTO } fro
  * One way to set such filters is the {@link StandardizedCompetencyFilterComponent}
  *
  */
-@Component({ template: '' })
+@Component({
+    template: '',
+    standalone: false,
+})
 export abstract class StandardizedCompetencyFilterPageComponent {
     protected knowledgeAreaFilter?: KnowledgeAreaDTO;
     protected competencyTitleFilter = '';

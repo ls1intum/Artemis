@@ -20,6 +20,7 @@ import { MarkdownEditorHeight } from 'app/shared/markdown-editor/monaco/markdown
     selector: 'jhi-code-editor-instructor-orion',
     templateUrl: './code-editor-instructor-and-editor-orion-container.component.html',
     styles: ['.instructions-orion { height: 700px }'],
+    standalone: false,
 })
 export class CodeEditorInstructorAndEditorOrionContainerComponent extends CodeEditorInstructorBaseContainerComponent implements OnInit {
     orionState: OrionState;

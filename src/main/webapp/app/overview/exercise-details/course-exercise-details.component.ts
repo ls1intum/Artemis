@@ -53,6 +53,7 @@ interface InstructorActionItem {
     templateUrl: './course-exercise-details.component.html',
     styleUrls: ['../course-overview.scss', './course-exercise-details.component.scss'],
     providers: [ExerciseCacheService],
+    standalone: false,
 })
 export class CourseExerciseDetailsComponent extends AbstractScienceComponent implements OnInit, OnDestroy {
     readonly AssessmentType = AssessmentType;

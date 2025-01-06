@@ -8,6 +8,7 @@ import dayjs from 'dayjs/esm';
     selector: 'jhi-posting-summary',
     templateUrl: './posting-summary.component.html',
     styleUrls: ['./posting-summary.component.scss'],
+    standalone: false,
 })
 export class PostingSummaryComponent {
     readonly post = input<Posting>();

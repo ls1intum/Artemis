@@ -9,6 +9,7 @@ import { Component } from '@angular/core';
             </ng-template>
         </jhi-course-exercise-details>
     `,
+    standalone: false,
 })
 export class OrionCourseExerciseDetailsComponent {
     // only replaces the student actions with Orion student actions in the overview

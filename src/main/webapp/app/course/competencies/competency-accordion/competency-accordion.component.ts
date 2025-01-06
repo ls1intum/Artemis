@@ -20,6 +20,7 @@ export interface CompetencyAccordionToggleEvent {
     selector: 'jhi-competency-accordion',
     templateUrl: './competency-accordion.component.html',
     styleUrl: './competency-accordion.component.scss',
+    standalone: false,
 })
 export class CompetencyAccordionComponent implements OnChanges {
     @Input() course: Course | undefined;

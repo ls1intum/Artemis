@@ -6,6 +6,7 @@ import { StructuredGradingCriterionService } from 'app/exercises/shared/structur
     selector: 'jhi-unreferenced-feedback',
     templateUrl: './unreferenced-feedback.component.html',
     styleUrls: [],
+    standalone: false,
 })
 export class UnreferencedFeedbackComponent {
     FeedbackType = FeedbackType;

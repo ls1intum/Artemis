@@ -30,6 +30,7 @@ const tableColumns: Column<Lecture>[] = [
 @Component({
     selector: 'jhi-lecture-import',
     templateUrl: '../shared/import/import.component.html',
+    standalone: false,
 })
 export class LectureImportComponent extends ImportComponent<Lecture> {
     constructor(router: Router, sortService: SortService, activeModal: NgbActiveModal, pagingService: LecturePagingService) {

@@ -4,6 +4,7 @@ import { Graphs, SpanType, StatisticsView } from 'app/entities/statistics.model'
 @Component({
     selector: 'jhi-statistics',
     templateUrl: './statistics.component.html',
+    standalone: false,
 })
 export class StatisticsComponent {
     // html properties

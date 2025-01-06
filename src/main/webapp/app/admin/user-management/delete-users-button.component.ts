@@ -16,7 +16,6 @@ import { ArtemisSharedComponentModule } from 'app/shared/components/shared-compo
  * that shows a list of the logins of the users which will be deleted.
  */
 @Component({
-    standalone: true,
     selector: 'jhi-delete-users-button',
     templateUrl: './delete-users-button.component.html',
     imports: [ArtemisSharedModule, ArtemisSharedComponentModule],

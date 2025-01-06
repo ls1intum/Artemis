@@ -14,6 +14,7 @@ import { SortService } from 'app/shared/service/sort.service';
     selector: 'jhi-tutorial-group-detail',
     templateUrl: './tutorial-group-detail.component.html',
     styleUrls: ['./tutorial-group-detail.component.scss'],
+    standalone: false,
 })
 export class TutorialGroupDetailComponent implements OnChanges {
     @ContentChild(TemplateRef, { static: true }) header: TemplateRef<any>;

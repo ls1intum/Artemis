@@ -25,6 +25,7 @@ export type DateFormat = 'short' | 'long' | 'short-date' | 'long-date' | 'time';
 @Pipe({
     name: 'artemisDate',
     pure: false,
+    standalone: false,
 })
 export class ArtemisDatePipe implements PipeTransform, OnDestroy {
     private dateTime: dayjs.Dayjs;

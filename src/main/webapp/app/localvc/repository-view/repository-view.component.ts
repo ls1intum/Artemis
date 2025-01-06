@@ -22,6 +22,7 @@ import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
 @Component({
     selector: 'jhi-repository-view',
     templateUrl: './repository-view.component.html',
+    standalone: false,
 })
 export class RepositoryViewComponent implements OnInit, OnDestroy {
     @ViewChild(CodeEditorContainerComponent, { static: false }) codeEditorContainer: CodeEditorContainerComponent;

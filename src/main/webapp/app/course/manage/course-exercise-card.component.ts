@@ -6,6 +6,7 @@ import { Course } from 'app/entities/course.model';
     selector: 'jhi-course-exercise-card',
     templateUrl: './course-exercise-card.component.html',
     styleUrls: ['./course-exercise-card.component.scss', '../../exercises/quiz/shared/quiz.scss'],
+    standalone: false,
 })
 export class CourseExerciseCardComponent {
     @Input() headingJhiTranslate: string;

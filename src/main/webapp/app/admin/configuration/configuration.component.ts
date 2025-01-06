@@ -7,6 +7,7 @@ import { faSort } from '@fortawesome/free-solid-svg-icons';
 @Component({
     selector: 'jhi-configuration',
     templateUrl: './configuration.component.html',
+    standalone: false,
 })
 export class ConfigurationComponent implements OnInit {
     allBeans!: Bean[];

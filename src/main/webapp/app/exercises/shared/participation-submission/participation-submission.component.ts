@@ -31,6 +31,7 @@ import { faTrash } from '@fortawesome/free-solid-svg-icons';
 @Component({
     selector: 'jhi-participation-submission',
     templateUrl: './participation-submission.component.html',
+    standalone: false,
 })
 export class ParticipationSubmissionComponent implements OnInit {
     readonly ParticipationType = ParticipationType;

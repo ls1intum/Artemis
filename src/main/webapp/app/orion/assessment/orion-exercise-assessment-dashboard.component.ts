@@ -15,6 +15,7 @@ import { OrionButtonType } from 'app/shared/orion/orion-button/orion-button.comp
     selector: 'jhi-orion-exercise-assessment-dashboard',
     templateUrl: './orion-exercise-assessment-dashboard.component.html',
     providers: [CourseManagementService],
+    standalone: false,
 })
 export class OrionExerciseAssessmentDashboardComponent implements OnInit {
     readonly ExerciseView = ExerciseView;

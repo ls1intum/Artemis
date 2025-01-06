@@ -19,6 +19,7 @@ import { PostCreateEditModalComponent } from 'app/shared/metis/posting-create-ed
     selector: 'jhi-post-reactions-bar',
     templateUrl: './post-reactions-bar.component.html',
     styleUrls: ['../posting-reactions-bar.component.scss'],
+    standalone: false,
 })
 export class PostReactionsBarComponent extends PostingsReactionsBarDirective<Post> implements OnInit, OnChanges, OnDestroy {
     pinTooltip: string;

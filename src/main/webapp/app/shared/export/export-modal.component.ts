@@ -33,6 +33,7 @@ export interface CsvExportOptions {
     selector: 'jhi-csv-export-modal',
     templateUrl: './export-modal.component.html',
     styleUrls: ['./export-modal.component.scss'],
+    standalone: false,
 })
 export class ExportModalComponent implements OnInit {
     readonly CsvFieldSeparator = CsvFieldSeparator;

@@ -18,6 +18,7 @@ import { ButtonSize, ButtonType } from 'app/shared/components/button.component';
             />
         }
     `,
+    standalone: false,
 })
 export class ExternalSubmissionButtonComponent {
     ButtonType = ButtonType;

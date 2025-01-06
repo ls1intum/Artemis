@@ -15,6 +15,7 @@ import { round } from 'app/shared/util/utils';
         '.passed-bar { position: absolute; top: 0; left: 0; height: 10px; background-color: #28a745 }',
         '.failed-bar { position: absolute; top: 0; height: 10px; background-color: #dc3545 }',
     ],
+    standalone: false,
 })
 export class TestCasePassedBuildsChartComponent implements OnChanges {
     @Input() testCaseStats?: TestCaseStats;

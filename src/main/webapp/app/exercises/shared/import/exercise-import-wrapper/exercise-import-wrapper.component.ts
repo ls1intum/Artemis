@@ -6,6 +6,7 @@ import { ProgrammingLanguage } from 'app/entities/programming/programming-exerci
 @Component({
     selector: 'jhi-exercise-import-wrapper',
     templateUrl: './exercise-import-wrapper.component.html',
+    standalone: false,
 })
 export class ExerciseImportWrapperComponent implements OnInit {
     readonly ExerciseType = ExerciseType;

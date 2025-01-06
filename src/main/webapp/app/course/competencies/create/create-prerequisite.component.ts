@@ -16,7 +16,6 @@ import { CourseCompetencyFormData } from 'app/course/competencies/forms/course-c
 @Component({
     selector: 'jhi-create-prerequisite',
     templateUrl: './create-prerequisite.component.html',
-    standalone: true,
     imports: [ArtemisSharedModule, PrerequisiteFormComponent, ArtemisSharedComponentModule],
 })
 export class CreatePrerequisiteComponent extends CreateCourseCompetencyComponent {

@@ -18,6 +18,7 @@ import { ApollonDiagramImportDialogComponent } from 'app/exercises/quiz/manage/a
     changeDetection: ChangeDetectionStrategy.OnPush,
     styleUrls: ['./quiz-question-list-edit.component.scss', '../shared/quiz.scss'],
     encapsulation: ViewEncapsulation.None,
+    standalone: false,
 })
 export class QuizQuestionListEditComponent {
     @Input() courseId: number;

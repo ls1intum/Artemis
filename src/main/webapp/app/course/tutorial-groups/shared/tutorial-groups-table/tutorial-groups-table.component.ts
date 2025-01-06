@@ -10,6 +10,7 @@ import dayjs from 'dayjs/esm';
     templateUrl: './tutorial-groups-table.component.html',
     styleUrls: ['./tutorial-groups-table.component.scss'],
     changeDetection: ChangeDetectionStrategy.OnPush,
+    standalone: false,
 })
 export class TutorialGroupsTableComponent implements OnChanges {
     @ContentChild(TemplateRef, { static: true }) extraColumn: TemplateRef<any>;

@@ -9,8 +9,6 @@ import { ArtemisMarkdownModule } from 'app/shared/markdown.module';
     selector: 'jhi-course-faq-accordion',
     templateUrl: './course-faq-accordion.component.html',
     styleUrl: './course-faq-accordion.component.scss',
-    standalone: true,
-
     imports: [TranslateDirective, CustomExerciseCategoryBadgeComponent, ArtemisMarkdownModule],
 })
 export class CourseFaqAccordionComponent implements OnDestroy {

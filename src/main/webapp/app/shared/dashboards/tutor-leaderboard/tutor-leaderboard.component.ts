@@ -10,6 +10,7 @@ import { faExclamationTriangle, faSort } from '@fortawesome/free-solid-svg-icons
 @Component({
     selector: 'jhi-tutor-leaderboard',
     templateUrl: './tutor-leaderboard.component.html',
+    standalone: false,
 })
 export class TutorLeaderboardComponent implements OnInit {
     @Input() public tutorsData: TutorLeaderboardElement[] = [];

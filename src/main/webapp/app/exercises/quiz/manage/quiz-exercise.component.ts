@@ -14,6 +14,7 @@ import { isQuizEditable } from 'app/exercises/quiz/shared/quiz-manage-util.servi
 @Component({
     selector: 'jhi-quiz-exercise',
     templateUrl: './quiz-exercise.component.html',
+    standalone: false,
 })
 export class QuizExerciseComponent extends ExerciseComponent {
     protected exerciseService = inject(ExerciseService);

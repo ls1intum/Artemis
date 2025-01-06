@@ -15,6 +15,7 @@ import { APP_NAME_PATTERN_FOR_SWIFT } from 'app/shared/constants/input.constants
     selector: 'jhi-programming-exercise-language',
     templateUrl: './programming-exercise-language.component.html',
     styleUrls: ['../../../programming-exercise-form.scss'],
+    standalone: false,
 })
 export class ProgrammingExerciseLanguageComponent implements AfterViewChecked, AfterViewInit, OnDestroy {
     readonly ProgrammingLanguage = ProgrammingLanguage;

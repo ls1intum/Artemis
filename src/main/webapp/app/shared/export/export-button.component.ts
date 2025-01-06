@@ -7,6 +7,7 @@ import { IconProp } from '@fortawesome/fontawesome-svg-core';
 @Component({
     selector: 'jhi-csv-export-button',
     template: ` <jhi-button [btnType]="ButtonType.PRIMARY" [btnSize]="buttonSize" [icon]="icon" [disabled]="disabled" [title]="title" (onClick)="openExportModal($event)" /> `,
+    standalone: false,
 })
 export class ExportButtonComponent {
     ButtonType = ButtonType;

@@ -37,7 +37,6 @@ export class AssessmentDashboardInformationEntry {
     selector: 'jhi-assessment-dashboard-information',
     templateUrl: './assessment-dashboard-information.component.html',
     styleUrls: ['./assessment-dashboard-information.component.scss'],
-    standalone: true,
     imports: [TranslateDirective, PieChartModule, ArtemisSidePanelModule, RouterLink, ArtemisTranslatePipe],
 })
 export class AssessmentDashboardInformationComponent implements OnInit, OnChanges, OnDestroy {

@@ -17,6 +17,7 @@ import { QuizQuestionType } from 'app/entities/quiz/quiz-question.model';
 @Component({
     selector: 'jhi-quiz-exercise-detail',
     templateUrl: './quiz-exercise-detail.component.html',
+    standalone: false,
 })
 export class QuizExerciseDetailComponent implements OnInit {
     readonly documentationType: DocumentationType = 'Quiz';

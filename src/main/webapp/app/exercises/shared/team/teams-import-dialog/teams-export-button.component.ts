@@ -16,6 +16,7 @@ import { faFileExport } from '@fortawesome/free-solid-svg-icons';
             (onClick)="exportTeams($event)"
         />
     `,
+    standalone: false,
 })
 export class TeamsExportButtonComponent {
     ButtonType = ButtonType;

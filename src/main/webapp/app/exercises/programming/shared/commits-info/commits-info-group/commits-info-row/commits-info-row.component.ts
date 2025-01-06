@@ -6,6 +6,7 @@ import { faAngleDown, faAngleLeft } from '@fortawesome/free-solid-svg-icons';
 @Component({
     selector: 'jhi-commits-info-row',
     templateUrl: './commits-info-row.component.html',
+    standalone: false,
 })
 export class CommitsInfoRowComponent {
     @Input() commit: CommitInfo;

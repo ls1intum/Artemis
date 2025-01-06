@@ -8,7 +8,10 @@ import { LectureService } from 'app/lecture/lecture.service';
 import { Lecture } from 'app/entities/lecture.model';
 import { LectureUnitType } from 'app/entities/lecture-unit/lectureUnit.model';
 
-@Component({ template: '' })
+@Component({
+    template: '',
+    standalone: false,
+})
 export abstract class EditCourseCompetencyComponent implements OnInit {
     isLoading = false;
     lecturesWithLectureUnits: Lecture[] = [];

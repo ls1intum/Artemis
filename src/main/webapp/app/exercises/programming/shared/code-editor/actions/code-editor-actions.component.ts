@@ -19,6 +19,7 @@ import { Participation } from 'app/entities/participation/participation.model';
 @Component({
     selector: 'jhi-code-editor-actions',
     templateUrl: './code-editor-actions.component.html',
+    standalone: false,
 })
 export class CodeEditorActionsComponent implements OnInit, OnDestroy, OnChanges {
     CommitState = CommitState;

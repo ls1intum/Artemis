@@ -8,6 +8,7 @@ import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 @Component({
     selector: 'jhi-data-export-confirmation-dialog',
     templateUrl: './data-export-confirmation-dialog.component.html',
+    standalone: false,
 })
 export class DataExportConfirmationDialogComponent implements OnInit, OnDestroy {
     private dialogErrorSubscription: Subscription;

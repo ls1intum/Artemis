@@ -16,7 +16,6 @@ import { KnowledgeAreaTreeComponent } from 'app/shared/standardized-competencies
 @Component({
     selector: 'jhi-course-import-standardized-prerequisites',
     templateUrl: './course-import-standardized-prerequisites.component.html',
-    standalone: true,
     imports: [
         ArtemisSharedCommonModule,
         ArtemisSharedComponentModule,

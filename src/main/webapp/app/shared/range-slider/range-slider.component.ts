@@ -7,7 +7,6 @@ const DEFAULT_STEP = 1;
     selector: 'jhi-range-slider',
     templateUrl: './range-slider.component.html',
     styleUrls: ['./range-slider.component.scss'],
-    standalone: true,
     imports: [FormsModule, ReactiveFormsModule],
 })
 export class RangeSliderComponent implements OnInit, OnDestroy {

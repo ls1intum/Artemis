@@ -5,6 +5,7 @@ import { User } from 'app/core/user/user.model';
     selector: 'jhi-team-students-list',
     templateUrl: './team-students-list.component.html',
     styleUrls: ['./team-students-list.component.scss'],
+    standalone: false,
 })
 export class TeamStudentsListComponent {
     @Input() students: User[];

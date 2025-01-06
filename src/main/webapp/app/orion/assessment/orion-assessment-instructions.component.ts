@@ -9,6 +9,7 @@ import { Exercise } from 'app/entities/exercise.model';
             <ng-template #overrideTitle />
         </jhi-assessment-instructions>
     `,
+    standalone: false,
 })
 export class OrionAssessmentInstructionsComponent {
     @Input() readOnly: boolean;

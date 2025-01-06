@@ -19,6 +19,7 @@ class NotFoundExamUserType {
     selector: 'jhi-student-upload-images-dialog',
     templateUrl: './students-upload-images-dialog.component.html',
     encapsulation: ViewEncapsulation.None,
+    standalone: false,
 })
 export class StudentsUploadImagesDialogComponent implements OnDestroy {
     readonly ActionType = ActionType;

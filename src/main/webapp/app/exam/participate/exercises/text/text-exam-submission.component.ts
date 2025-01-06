@@ -16,6 +16,7 @@ import { htmlForMarkdown } from 'app/shared/util/markdown.conversion.util';
     templateUrl: './text-exam-submission.component.html',
     providers: [{ provide: ExamSubmissionComponent, useExisting: TextExamSubmissionComponent }],
     styleUrls: ['./text-exam-submission.component.scss'],
+    standalone: false,
 })
 export class TextExamSubmissionComponent extends ExamSubmissionComponent implements OnInit {
     exerciseType = ExerciseType.TEXT;

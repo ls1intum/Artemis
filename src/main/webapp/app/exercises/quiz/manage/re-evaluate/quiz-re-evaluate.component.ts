@@ -25,6 +25,7 @@ import { ReEvaluateDragAndDropQuestionComponent } from 'app/exercises/quiz/manag
     styleUrls: ['./quiz-re-evaluate.component.scss', '../../shared/quiz.scss'],
     encapsulation: ViewEncapsulation.None,
     providers: [DragAndDropQuestionUtil, ShortAnswerQuestionUtil],
+    standalone: false,
 })
 export class QuizReEvaluateComponent extends QuizExerciseValidationDirective implements OnInit, OnChanges, OnDestroy {
     private subscription: Subscription;

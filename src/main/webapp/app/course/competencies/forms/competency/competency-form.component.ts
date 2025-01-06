@@ -12,7 +12,6 @@ import { Competency } from 'app/entities/competency.model';
     selector: 'jhi-competency-form',
     templateUrl: './competency-form.component.html',
     styleUrls: ['./competency-form.component.scss'],
-    standalone: true,
     imports: [ArtemisSharedModule, CommonCourseCompetencyFormComponent],
 })
 export class CompetencyFormComponent extends CourseCompetencyFormComponent implements OnInit, OnChanges {

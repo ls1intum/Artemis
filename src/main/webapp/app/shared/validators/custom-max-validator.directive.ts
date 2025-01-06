@@ -9,6 +9,7 @@ import { FormControl, NG_VALIDATORS, Validator } from '@angular/forms';
     // eslint-disable-next-line @angular-eslint/directive-selector
     selector: '[customMax][formControlName],[customMax][formControl],[customMax][ngModel]',
     providers: [{ provide: NG_VALIDATORS, useExisting: CustomMaxDirective, multi: true }],
+    standalone: false,
 })
 export class CustomMaxDirective implements Validator {
     @Input()

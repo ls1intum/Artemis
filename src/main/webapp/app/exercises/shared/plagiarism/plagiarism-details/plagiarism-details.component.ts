@@ -9,6 +9,7 @@ import { ModelingSubmissionElement } from 'app/exercises/shared/plagiarism/types
     selector: 'jhi-plagiarism-details',
     styleUrls: ['./plagiarism-details.component.scss'],
     templateUrl: './plagiarism-details.component.html',
+    standalone: false,
 })
 export class PlagiarismDetailsComponent {
     @Input() comparison?: PlagiarismComparison<TextSubmissionElement | ModelingSubmissionElement>;

@@ -44,6 +44,7 @@ const conversationMessageNotificationTitles = [
     selector: 'jhi-notification-popup',
     templateUrl: './notification-popup.component.html',
     styleUrls: ['./notification-popup.scss'],
+    standalone: false,
 })
 export class NotificationPopupComponent implements OnInit {
     notifications: Notification[] = [];

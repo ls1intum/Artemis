@@ -21,7 +21,6 @@ export type Column<T extends BaseEntity> = {
 
 @Component({
     selector: 'jhi-import-table',
-    standalone: true,
     imports: [ArtemisSharedCommonModule],
     templateUrl: './import-table.component.html',
     styleUrl: './import-table.component.scss',

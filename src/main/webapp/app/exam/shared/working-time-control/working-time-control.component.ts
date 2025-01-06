@@ -18,6 +18,7 @@ import { getRelativeWorkingTimeExtension } from 'app/exam/participate/exam.utils
             useExisting: WorkingTimeControlComponent,
         },
     ],
+    standalone: false,
 })
 export class WorkingTimeControlComponent implements ControlValueAccessor {
     // Control disabled state

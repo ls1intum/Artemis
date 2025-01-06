@@ -16,7 +16,10 @@ import { CourseCompetencyService } from 'app/course/competencies/course-competen
  * An abstract component used to import course competencies. Its concrete implementations are
  * {@link ImportCompetenciesComponent} and {@link ImportPrerequisitesComponent}
  */
-@Component({ template: '' })
+@Component({
+    template: '',
+    standalone: false,
+})
 export abstract class ImportCourseCompetenciesComponent implements OnInit, ComponentCanDeactivate {
     // this attribute has to be set when using the common template (import-course-competencies.component.html)
     abstract entityType: string;

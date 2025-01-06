@@ -22,6 +22,7 @@ export class IssueColumn {
             </div>
         </div>
     `,
+    standalone: false,
 })
 export class CategoryIssuesChartComponent implements OnChanges {
     @Input() issuesMap?: IssuesMap;

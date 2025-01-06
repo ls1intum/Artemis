@@ -11,6 +11,7 @@ import { Router } from '@angular/router';
 @Component({
     selector: 'jhi-programming-exercise-create-buttons',
     templateUrl: './programming-exercise-create-buttons.component.html',
+    standalone: false,
 })
 export class ProgrammingExerciseCreateButtonsComponent {
     readonly FeatureToggle = FeatureToggle;

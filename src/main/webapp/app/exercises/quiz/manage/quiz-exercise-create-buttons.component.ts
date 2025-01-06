@@ -10,6 +10,7 @@ import { QuizExercise } from 'app/entities/quiz/quiz-exercise.model';
 @Component({
     selector: 'jhi-quiz-exercise-create-buttons',
     templateUrl: './quiz-exercise-create-buttons.component.html',
+    standalone: false,
 })
 export class QuizExerciseCreateButtonsComponent {
     @Input() course: Course;

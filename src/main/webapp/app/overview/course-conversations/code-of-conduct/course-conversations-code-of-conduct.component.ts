@@ -9,6 +9,7 @@ import { ConversationService } from 'app/shared/metis/conversations/conversation
 @Component({
     selector: 'jhi-course-conversations-code-of-conduct',
     templateUrl: './course-conversations-code-of-conduct.component.html',
+    standalone: false,
 })
 export class CourseConversationsCodeOfConductComponent implements OnInit {
     @Input()

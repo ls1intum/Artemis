@@ -14,6 +14,7 @@ import { isCommunicationEnabled } from 'app/entities/course.model';
     templateUrl: './posting-content.component.html',
     styleUrls: ['./posting-content.component.scss'],
     changeDetection: ChangeDetectionStrategy.OnPush,
+    standalone: false,
 })
 export class PostingContentComponent implements OnInit, OnChanges, OnDestroy {
     @Input() content?: string;

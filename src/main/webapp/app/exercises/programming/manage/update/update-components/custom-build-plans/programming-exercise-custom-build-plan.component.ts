@@ -11,6 +11,7 @@ import { ASSIGNMENT_REPO_NAME, TEST_REPO_NAME } from 'app/shared/constants/input
     selector: 'jhi-programming-exercise-custom-build-plan',
     templateUrl: './programming-exercise-custom-build-plan.component.html',
     styleUrls: ['../../../programming-exercise-form.scss'],
+    standalone: false,
 })
 export class ProgrammingExerciseCustomBuildPlanComponent implements OnChanges {
     @Input() programmingExercise: ProgrammingExercise;

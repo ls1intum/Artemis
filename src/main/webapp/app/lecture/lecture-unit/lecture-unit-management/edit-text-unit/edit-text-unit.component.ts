@@ -13,6 +13,7 @@ import { combineLatest } from 'rxjs';
     selector: 'jhi-edit-text-unit',
     templateUrl: './edit-text-unit.component.html',
     styles: [],
+    standalone: false,
 })
 export class EditTextUnitComponent implements OnInit {
     isLoading = false;

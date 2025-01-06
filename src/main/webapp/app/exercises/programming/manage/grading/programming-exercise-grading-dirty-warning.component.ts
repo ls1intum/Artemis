@@ -21,6 +21,7 @@ import { faExclamationTriangle } from '@fortawesome/free-solid-svg-icons';
             />
         }
     `,
+    standalone: false,
 })
 export class ProgrammingExerciseGradingDirtyWarningComponent implements OnChanges, OnDestroy {
     @Input() programmingExerciseId: number;

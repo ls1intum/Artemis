@@ -36,6 +36,7 @@ export enum CachingStrategy {
             <img [attr.src]="dataUrl | async" class="dnd-drag-start" draggable="true" alt="alt" cdkDrag />
         }
     `,
+    standalone: false,
 })
 export class SecuredImageComponent implements OnChanges, OnInit {
     // This part just creates an rxjs stream from the src

@@ -1,6 +1,9 @@
 import { Pipe, PipeTransform } from '@angular/core';
 
-@Pipe({ name: 'keys' })
+@Pipe({
+    name: 'keys',
+    standalone: false,
+})
 export class KeysPipe implements PipeTransform {
     /**
      * Returns an array containing the property names of the given object.

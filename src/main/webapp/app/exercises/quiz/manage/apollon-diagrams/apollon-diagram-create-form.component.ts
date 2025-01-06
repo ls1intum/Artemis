@@ -9,6 +9,7 @@ import { faSave } from '@fortawesome/free-solid-svg-icons';
     selector: 'jhi-apollon-diagram-create-form',
     templateUrl: './apollon-diagram-create-form.component.html',
     providers: [ApollonDiagramService],
+    standalone: false,
 })
 export class ApollonDiagramCreateFormComponent implements AfterViewInit {
     apollonDiagram: ApollonDiagram;

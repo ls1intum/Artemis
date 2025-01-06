@@ -8,6 +8,7 @@ import { Observable } from 'rxjs';
 @Component({
     selector: 'jhi-knowledge-area-edit',
     templateUrl: './knowledge-area-edit.component.html',
+    standalone: false,
 })
 export class KnowledgeAreaEditComponent {
     // values for the knowledge area select

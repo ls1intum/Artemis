@@ -22,6 +22,7 @@ import { ArtemisServerDateService } from 'app/shared/server-date.service';
     templateUrl: './quiz-statistics-footer.component.html',
     providers: [QuizStatisticUtil, ShortAnswerQuestionUtil],
     styleUrls: ['./quiz-statistics-footer.component.scss', '../../../shared/quiz.scss'],
+    standalone: false,
 })
 export class QuizStatisticsFooterComponent implements OnInit, OnDestroy {
     @Input() isQuizPointStatistic: boolean;

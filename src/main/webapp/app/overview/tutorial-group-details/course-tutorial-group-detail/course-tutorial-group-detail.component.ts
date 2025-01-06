@@ -14,6 +14,7 @@ import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
     selector: 'jhi-course-tutorial-group-detail',
     templateUrl: './course-tutorial-group-detail.component.html',
     styleUrls: ['./course-tutorial-group-detail.component.scss'],
+    standalone: false,
 })
 export class CourseTutorialGroupDetailComponent implements OnInit, OnDestroy {
     isLoading$ = new BehaviorSubject<boolean>(false);

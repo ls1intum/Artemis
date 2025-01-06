@@ -15,6 +15,7 @@ import { faCircle, faHistory } from '@fortawesome/free-solid-svg-icons';
     templateUrl: './team-students-online-list.component.html',
     styleUrls: ['./team-students-online-list.component.scss'],
     encapsulation: ViewEncapsulation.None,
+    standalone: false,
 })
 export class TeamStudentsOnlineListComponent implements OnInit, OnDestroy {
     readonly SHOW_TYPING_DURATION = 2000; // ms

@@ -16,6 +16,7 @@ const DEFAULT_COLORS = ['#6ae8ac', '#9dca53', '#94a11c', '#691b0b', '#ad5658', '
     templateUrl: './category-selector.component.html',
     styleUrls: ['./category-selector.component.scss'],
     encapsulation: ViewEncapsulation.None,
+    standalone: false,
 })
 export class CategorySelectorComponent implements OnChanges {
     protected readonly faTimes = faTimes;

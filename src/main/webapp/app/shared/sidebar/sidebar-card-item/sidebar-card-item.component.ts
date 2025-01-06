@@ -7,6 +7,7 @@ import { faPeopleGroup } from '@fortawesome/free-solid-svg-icons';
     selector: 'jhi-sidebar-card-item',
     templateUrl: './sidebar-card-item.component.html',
     styleUrls: ['./sidebar-card-item.component.scss', '../sidebar.component.scss'],
+    standalone: false,
 })
 export class SidebarCardItemComponent implements OnInit, OnChanges {
     @Input() sidebarItem: SidebarCardElement;

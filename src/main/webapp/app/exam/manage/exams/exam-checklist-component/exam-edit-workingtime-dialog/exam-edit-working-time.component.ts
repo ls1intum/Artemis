@@ -11,6 +11,7 @@ import { ExamEditWorkingTimeDialogComponent } from './exam-edit-working-time-dia
 @Component({
     selector: 'jhi-exam-edit-working-time',
     templateUrl: './exam-edit-working-time.component.html',
+    standalone: false,
 })
 export class ExamEditWorkingTimeComponent implements OnInit, OnDestroy {
     @Input() exam: Exam;

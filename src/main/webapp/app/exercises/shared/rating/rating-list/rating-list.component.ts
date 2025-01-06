@@ -10,6 +10,7 @@ import { faFolderOpen, faSort } from '@fortawesome/free-solid-svg-icons';
     selector: 'jhi-rating-list',
     templateUrl: './rating-list.component.html',
     styleUrls: [],
+    standalone: false,
 })
 export class RatingListComponent implements OnInit {
     public ratings: Rating[] = [];

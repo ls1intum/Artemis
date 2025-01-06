@@ -13,7 +13,6 @@ import { TranslateDirective } from 'app/shared/language/translate.directive';
 
 @Component({
     selector: 'jhi-learning-path-nav-overview',
-    standalone: true,
     changeDetection: ChangeDetectionStrategy.OnPush,
     imports: [FontAwesomeModule, CommonModule, NgbDropdownModule, NgbAccordionModule, LearningPathNavOverviewLearningObjectsComponent, TranslateDirective],
     templateUrl: './learning-path-nav-overview.component.html',

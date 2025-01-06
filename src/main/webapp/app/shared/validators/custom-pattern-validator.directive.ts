@@ -8,6 +8,7 @@ import { AbstractControl, NG_VALIDATORS, Validator } from '@angular/forms';
     // eslint-disable-next-line @angular-eslint/directive-selector
     selector: '[validPattern][ngModel],[validPattern][formControl]',
     providers: [{ provide: NG_VALIDATORS, useExisting: CustomPatternValidatorDirective, multi: true }],
+    standalone: false,
 })
 export class CustomPatternValidatorDirective implements Validator {
     validate(control: AbstractControl): { [key: string]: any } | null {

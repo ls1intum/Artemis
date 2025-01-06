@@ -4,6 +4,7 @@ import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 @Component({
     selector: 'jhi-unsaved-changes-warning',
     templateUrl: './unsaved-changes-warning.component.html',
+    standalone: false,
 })
 export class UnsavedChangesWarningComponent {
     @Input()

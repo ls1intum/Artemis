@@ -9,6 +9,7 @@ import { CompetencyFormControlsWithViewed } from 'app/course/competencies/genera
     selector: 'jhi-competency-recommendation',
     templateUrl: './competency-recommendation-detail.component.html',
     styleUrls: ['competency-recommendation-detail.component.scss'],
+    standalone: false,
 })
 export class CompetencyRecommendationDetailComponent implements OnInit {
     @Input({ required: true }) form: FormGroup<CompetencyFormControlsWithViewed>;

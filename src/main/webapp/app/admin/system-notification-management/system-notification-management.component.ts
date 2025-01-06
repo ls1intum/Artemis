@@ -24,6 +24,7 @@ enum NotificationState {
 @Component({
     selector: 'jhi-system-notification-management',
     templateUrl: './system-notification-management.component.html',
+    standalone: false,
 })
 export class SystemNotificationManagementComponent implements OnInit, OnDestroy {
     readonly SCHEDULED = NotificationState.SCHEDULED;

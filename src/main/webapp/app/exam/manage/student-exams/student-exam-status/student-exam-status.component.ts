@@ -8,6 +8,7 @@ import { faCheckCircle, faExclamationTriangle, faInfoCircle } from '@fortawesome
 @Component({
     selector: 'jhi-student-exam-status',
     templateUrl: `./student-exam-status.component.html`,
+    standalone: false,
 })
 export class StudentExamStatusComponent {
     @Input() hasStudentsWithoutExam: boolean;

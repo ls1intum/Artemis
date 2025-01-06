@@ -6,6 +6,7 @@ import { AlertService } from 'app/core/util/alert.service';
 @Component({
     selector: 'jhi-lti-initializer-modal',
     templateUrl: './lti-initializer-modal.component.html',
+    standalone: false,
 })
 export class LtiInitializerModalComponent {
     private activeModal = inject(NgbActiveModal);

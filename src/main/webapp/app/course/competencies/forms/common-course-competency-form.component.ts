@@ -21,7 +21,6 @@ import { DateTimePickerType } from 'app/shared/date-time-picker/date-time-picker
     selector: 'jhi-common-course-competency-form',
     templateUrl: './common-course-competency-form.component.html',
     styleUrls: ['./common-course-competency-form.component.scss'],
-    standalone: true,
     imports: [
         ArtemisSharedModule,
         FormDateTimePickerModule,

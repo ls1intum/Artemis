@@ -33,6 +33,7 @@ export type SearchRoleGroup = 'tutors' | 'students' | 'instructors';
         },
     ],
     encapsulation: ViewEncapsulation.None,
+    standalone: false,
 })
 export class CourseUsersSelectorComponent implements ControlValueAccessor, OnInit, OnDestroy {
     @HostBinding('class.course-users-selector') hostClass = true;

@@ -13,6 +13,7 @@ import { combineLatest } from 'rxjs';
     selector: 'jhi-create-video-unit',
     templateUrl: './create-video-unit.component.html',
     styles: [],
+    standalone: false,
 })
 export class CreateVideoUnitComponent implements OnInit {
     videoUnitToCreate: VideoUnit = new VideoUnit();

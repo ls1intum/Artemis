@@ -9,6 +9,7 @@ import { AlertService } from 'app/core/util/alert.service';
     selector: 'jhi-quiz-pool-mapping',
     templateUrl: './quiz-pool-mapping.component.html',
     styleUrls: ['./quiz-pool-mapping.component.scss'],
+    standalone: false,
 })
 export class QuizPoolMappingComponent implements OnInit, OnChanges, OnDestroy {
     @Input() quizGroups: QuizGroup[] = [];

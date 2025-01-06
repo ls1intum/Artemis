@@ -95,6 +95,7 @@ interface SidebarItem {
     templateUrl: './course-overview.component.html',
     styleUrls: ['course-overview.scss', 'course-overview.component.scss'],
     providers: [MetisConversationService],
+    standalone: false,
 })
 export class CourseOverviewComponent implements OnInit, OnDestroy, AfterViewInit {
     private ngUnsubscribe = new Subject<void>();

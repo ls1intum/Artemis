@@ -16,6 +16,7 @@ import { ShortAnswerQuestion } from 'app/entities/quiz/short-answer-question.mod
         />
     `,
     providers: [],
+    standalone: false,
 })
 export class ReEvaluateShortAnswerQuestionComponent {
     shortAnswerQuestion: ShortAnswerQuestion;

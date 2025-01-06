@@ -7,6 +7,7 @@ import { ConfirmAutofocusModalComponent } from 'app/shared/components/confirm-au
 @Component({
     selector: 'jhi-confirm-button',
     templateUrl: './confirm-autofocus-button.component.html',
+    standalone: false,
 })
 export class ConfirmAutofocusButtonComponent {
     @Input() icon: IconProp;

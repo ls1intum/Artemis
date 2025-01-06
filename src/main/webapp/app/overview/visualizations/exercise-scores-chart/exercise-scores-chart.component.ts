@@ -35,6 +35,7 @@ type SeriesDatapoint = {
     selector: 'jhi-exercise-scores-chart',
     templateUrl: './exercise-scores-chart.component.html',
     styleUrls: ['./exercise-scores-chart.component.scss'],
+    standalone: false,
 })
 export class ExerciseScoresChartComponent implements AfterViewInit, OnChanges {
     @Input() filteredExerciseIDs: number[];

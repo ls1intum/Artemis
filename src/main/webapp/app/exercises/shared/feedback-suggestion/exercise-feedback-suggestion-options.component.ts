@@ -9,6 +9,7 @@ import dayjs from 'dayjs/esm';
 @Component({
     selector: 'jhi-exercise-feedback-suggestion-options',
     templateUrl: './exercise-feedback-suggestion-options.component.html',
+    standalone: false,
 })
 export class ExerciseFeedbackSuggestionOptionsComponent implements OnInit, OnChanges {
     @Input() exercise: Exercise;

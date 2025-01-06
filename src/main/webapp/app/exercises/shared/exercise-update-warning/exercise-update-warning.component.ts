@@ -6,6 +6,7 @@ import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
     selector: 'jhi-exercise-update-warning',
     templateUrl: './exercise-update-warning.component.html',
     styleUrls: ['./exercise-update-warning.component.scss'],
+    standalone: false,
 })
 export class ExerciseUpdateWarningComponent {
     instructionDeleted = false;

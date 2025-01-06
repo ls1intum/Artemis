@@ -15,6 +15,7 @@ import { CourseExerciseService } from 'app/exercises/shared/course-exercises/cou
 @Component({
     selector: 'jhi-modeling-exercise',
     templateUrl: './modeling-exercise.component.html',
+    standalone: false,
 })
 export class ModelingExerciseComponent extends ExerciseComponent {
     protected exerciseService = inject(ExerciseService);

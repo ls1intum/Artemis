@@ -29,6 +29,7 @@ import { DetailOverviewSection, DetailType } from 'app/detail-overview-list/deta
 @Component({
     selector: 'jhi-modeling-exercise-detail',
     templateUrl: './modeling-exercise-detail.component.html',
+    standalone: false,
 })
 export class ModelingExerciseDetailComponent implements OnInit, OnDestroy {
     readonly documentationType: DocumentationType = 'Model';

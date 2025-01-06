@@ -5,6 +5,7 @@ import { IncludedInOverallScore } from 'app/entities/exercise.model';
     selector: 'jhi-included-in-overall-score-picker',
     templateUrl: './included-in-overall-score-picker.component.html',
     styles: [],
+    standalone: false,
 })
 export class IncludedInOverallScorePickerComponent {
     readonly IncludedInOverallScore = IncludedInOverallScore;

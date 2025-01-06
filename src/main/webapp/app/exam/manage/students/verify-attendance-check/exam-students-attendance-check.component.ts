@@ -19,6 +19,7 @@ import dayjs from 'dayjs/esm';
     selector: 'jhi-exam-students-attendance-check',
     templateUrl: './exam-students-attendance-check.component.html',
     encapsulation: ViewEncapsulation.None,
+    standalone: false,
 })
 export class ExamStudentsAttendanceCheckComponent implements OnInit, OnDestroy {
     readonly ButtonType = ButtonType;

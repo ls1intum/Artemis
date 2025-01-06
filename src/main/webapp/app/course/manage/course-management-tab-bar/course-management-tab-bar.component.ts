@@ -41,6 +41,7 @@ import { EntitySummary } from 'app/shared/delete-dialog/delete-dialog.model';
     selector: 'jhi-course-management-tab-bar',
     templateUrl: './course-management-tab-bar.component.html',
     styleUrls: ['./course-management-tab-bar.component.scss'],
+    standalone: false,
 })
 export class CourseManagementTabBarComponent implements OnInit, OnDestroy, AfterViewInit {
     readonly FeatureToggle = FeatureToggle;

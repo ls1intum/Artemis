@@ -16,6 +16,7 @@ import { TestCaseResult } from 'app/entities/programming/test-case-result.model'
 @Component({
     selector: 'jhi-exercise-scores-export-button',
     templateUrl: './exercise-scores-export-button.component.html',
+    standalone: false,
 })
 export class ExerciseScoresExportButtonComponent implements OnInit {
     @Input() exercises: Exercise[] = []; // Used to export multiple scores together

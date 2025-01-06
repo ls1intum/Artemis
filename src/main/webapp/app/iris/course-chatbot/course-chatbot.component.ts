@@ -5,6 +5,7 @@ import { ChatServiceMode, IrisChatService } from 'app/iris/iris-chat.service';
     selector: 'jhi-course-chatbot',
     templateUrl: './course-chatbot.component.html',
     styleUrl: './course-chatbot.component.scss',
+    standalone: false,
 })
 export class CourseChatbotComponent implements OnChanges {
     @Input() courseId?: number;

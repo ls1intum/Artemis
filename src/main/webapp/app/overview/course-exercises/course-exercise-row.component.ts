@@ -16,6 +16,7 @@ import { ExerciseCategory } from 'app/entities/exercise-category.model';
     selector: 'jhi-course-exercise-row',
     templateUrl: './course-exercise-row.component.html',
     styleUrls: ['./course-exercise-row.scss'],
+    standalone: false,
 })
 export class CourseExerciseRowComponent implements OnInit, OnDestroy, OnChanges {
     readonly IncludedInOverallScore = IncludedInOverallScore;

@@ -8,6 +8,7 @@ import { IrisSettingsService } from 'app/iris/settings/shared/iris-settings.serv
 @Component({
     selector: 'jhi-iris-enabled',
     templateUrl: './iris-enabled.component.html',
+    standalone: false,
 })
 export class IrisEnabledComponent implements OnInit {
     @Input() exercise?: Exercise;

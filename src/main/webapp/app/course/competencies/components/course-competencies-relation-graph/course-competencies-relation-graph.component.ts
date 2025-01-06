@@ -11,7 +11,6 @@ import { CourseCompetencyRelationNodeComponent } from 'app/course/competencies/c
 
 @Component({
     selector: 'jhi-course-competencies-relation-graph',
-    standalone: true,
     imports: [FontAwesomeModule, NgbAccordionModule, NgxGraphModule, ArtemisSharedModule, CourseCompetencyRelationNodeComponent],
     templateUrl: './course-competencies-relation-graph.component.html',
     styleUrl: './course-competencies-relation-graph.component.scss',

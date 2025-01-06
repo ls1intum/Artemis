@@ -8,6 +8,7 @@ import dayjs from 'dayjs/esm';
     templateUrl: './tutorial-group-free-days-overview.component.html',
     styleUrls: ['./tutorial-group-free-days-overview.component.scss'],
     changeDetection: ChangeDetectionStrategy.OnPush,
+    standalone: false,
 })
 export class TutorialGroupFreeDaysOverviewComponent implements OnInit, DoCheck {
     constructor(

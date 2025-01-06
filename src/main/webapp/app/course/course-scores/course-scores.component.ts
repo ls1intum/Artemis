@@ -60,6 +60,7 @@ export enum HighlightType {
     templateUrl: './course-scores.component.html',
     styleUrls: ['./course-scores.component.scss'],
     changeDetection: ChangeDetectionStrategy.OnPush,
+    standalone: false,
 })
 export class CourseScoresComponent implements OnInit, OnDestroy {
     private paramSub: Subscription;

@@ -12,7 +12,6 @@ import { ArtemisSharedCommonModule } from 'app/shared/shared-common.module';
     selector: 'jhi-thread-modal',
     templateUrl: './metrics-modal-threads.component.html',
     changeDetection: ChangeDetectionStrategy.OnPush,
-    standalone: true,
     imports: [TranslateDirective, FaIconComponent, FormsModule, NgClass, ArtemisSharedCommonModule],
 })
 export class MetricsModalThreadsComponent implements OnInit {

@@ -16,6 +16,7 @@ export const channelRegex = new RegExp('^[a-z0-9-]{1}[a-z0-9-]{0,30}$');
 @Component({
     selector: 'jhi-channel-form',
     templateUrl: './channel-form.component.html',
+    standalone: false,
 })
 export class ChannelFormComponent implements OnInit, OnChanges, OnDestroy {
     private ngUnsubscribe = new Subject<void>();

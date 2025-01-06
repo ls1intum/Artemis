@@ -12,6 +12,7 @@ import { Team } from 'app/entities/team.model';
 @Component({
     selector: 'jhi-team-student-search',
     templateUrl: './team-student-search.component.html',
+    standalone: false,
 })
 export class TeamStudentSearchComponent {
     @ViewChild('ngbTypeahead', { static: false }) ngbTypeahead: ElementRef;

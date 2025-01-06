@@ -27,6 +27,7 @@ import {
 @Component({
     selector: 'jhi-text-exercise-detail',
     templateUrl: './text-exercise-detail.component.html',
+    standalone: false,
 })
 export class TextExerciseDetailComponent implements OnInit, OnDestroy {
     private route = inject(ActivatedRoute);

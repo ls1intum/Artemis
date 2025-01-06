@@ -8,6 +8,7 @@ import interact from 'interactjs';
     selector: 'jhi-collapsable-assessment-instructions',
     templateUrl: './collapsable-assessment-instructions.component.html',
     styleUrls: ['./collapsable-assessment-instructions.scss'],
+    standalone: false,
 })
 export class CollapsableAssessmentInstructionsComponent implements AfterViewInit {
     @Input() isAssessmentTraining = false;

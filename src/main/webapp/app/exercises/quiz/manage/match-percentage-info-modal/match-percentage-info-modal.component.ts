@@ -5,6 +5,7 @@ import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 @Component({
     selector: 'jhi-match-percentage-info-modal',
     templateUrl: './match-percentage-info-modal.component.html',
+    standalone: false,
 })
 export class MatchPercentageInfoModalComponent {
     // Icons

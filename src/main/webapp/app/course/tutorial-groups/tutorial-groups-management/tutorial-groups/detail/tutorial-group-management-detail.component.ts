@@ -13,6 +13,7 @@ import { takeUntil } from 'rxjs/operators';
     selector: 'jhi-tutorial-group-management-detail',
     templateUrl: './tutorial-group-management-detail.component.html',
     changeDetection: ChangeDetectionStrategy.OnPush,
+    standalone: false,
 })
 export class TutorialGroupManagementDetailComponent implements OnInit, OnDestroy {
     ngUnsubscribe = new Subject<void>();

@@ -59,6 +59,7 @@ export interface ExampleSubmissionQueryParams {
     templateUrl: './exercise-assessment-dashboard.component.html',
     styleUrls: ['./exercise-assessment-dashboard.component.scss'],
     providers: [CourseManagementService],
+    standalone: false,
 })
 export class ExerciseAssessmentDashboardComponent implements OnInit {
     readonly roundScoreSpecifiedByCourseSettings = roundValueSpecifiedByCourseSettings;

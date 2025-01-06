@@ -33,6 +33,7 @@ type CsvEntry = { [column: string]: string };
     selector: 'jhi-teams-import-from-file-form',
     templateUrl: './teams-import-from-file-form.component.html',
     styleUrls: ['./teams-import-from-file-form.component.scss'],
+    standalone: false,
 })
 export class TeamsImportFromFileFormComponent {
     @Output() teamsChanged = new EventEmitter<Team[]>();

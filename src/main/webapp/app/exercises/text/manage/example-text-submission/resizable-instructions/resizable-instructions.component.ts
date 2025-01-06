@@ -7,6 +7,7 @@ import { GradingCriterion } from 'app/exercises/shared/structured-grading-criter
     selector: 'jhi-resizable-instructions',
     templateUrl: './resizable-instructions.component.html',
     styleUrls: ['./resizable-instructions.component.scss'],
+    standalone: false,
 })
 export class ResizableInstructionsComponent {
     @Input() public criteria: GradingCriterion[];

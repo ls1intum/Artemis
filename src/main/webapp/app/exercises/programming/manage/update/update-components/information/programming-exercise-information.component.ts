@@ -39,6 +39,7 @@ const MAXIMUM_TRIES_TO_GENERATE_UNIQUE_SHORT_NAME = 200;
     selector: 'jhi-programming-exercise-info',
     templateUrl: './programming-exercise-information.component.html',
     styleUrls: ['../../../programming-exercise-form.scss', 'programming-exercise-information.component.scss'],
+    standalone: false,
 })
 export class ProgrammingExerciseInformationComponent implements AfterViewInit, OnChanges, OnDestroy {
     protected readonly ProjectType = ProjectType;

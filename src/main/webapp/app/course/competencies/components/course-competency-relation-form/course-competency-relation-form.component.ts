@@ -7,7 +7,6 @@ import { faSpinner } from '@fortawesome/free-solid-svg-icons';
 
 @Component({
     selector: 'jhi-course-competency-relation-form',
-    standalone: true,
     imports: [ArtemisSharedCommonModule],
     templateUrl: './course-competency-relation-form.component.html',
     styleUrl: './course-competency-relation-form.component.scss',

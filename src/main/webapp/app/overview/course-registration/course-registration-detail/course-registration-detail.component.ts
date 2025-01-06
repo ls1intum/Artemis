@@ -9,6 +9,7 @@ import { Observable, catchError, map, of, throwError } from 'rxjs';
 @Component({
     selector: 'jhi-course-registration-detail-selector',
     templateUrl: './course-registration-detail.component.html',
+    standalone: false,
 })
 export class CourseRegistrationDetailComponent implements OnInit, OnDestroy {
     loading = false;

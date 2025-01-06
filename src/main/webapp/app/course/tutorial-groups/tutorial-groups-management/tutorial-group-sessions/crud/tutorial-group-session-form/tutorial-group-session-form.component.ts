@@ -17,6 +17,7 @@ export interface TutorialGroupSessionFormData {
     templateUrl: './tutorial-group-session-form.component.html',
     providers: [{ provide: NgbTimeAdapter, useClass: NgbTimeStringAdapter }],
     changeDetection: ChangeDetectionStrategy.OnPush,
+    standalone: false,
 })
 export class TutorialGroupSessionFormComponent implements OnInit, OnChanges {
     @Input()

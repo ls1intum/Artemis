@@ -70,6 +70,7 @@ import * as _ from 'lodash-es';
             ]),
         ]),
     ],
+    standalone: false,
 })
 export class IrisBaseChatbotComponent implements OnInit, OnDestroy, AfterViewInit {
     // Icons

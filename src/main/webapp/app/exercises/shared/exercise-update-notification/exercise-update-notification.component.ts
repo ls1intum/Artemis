@@ -3,6 +3,7 @@ import { Component, EventEmitter, Input, Output } from '@angular/core';
 @Component({
     selector: 'jhi-exercise-update-notification',
     templateUrl: './exercise-update-notification.component.html',
+    standalone: false,
 })
 export class ExerciseUpdateNotificationComponent {
     @Input() isCreation: boolean = false;

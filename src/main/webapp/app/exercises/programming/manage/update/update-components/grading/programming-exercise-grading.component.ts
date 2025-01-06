@@ -17,6 +17,7 @@ import { ProgrammingExerciseInputField } from 'app/exercises/programming/manage/
     selector: 'jhi-programming-exercise-grading',
     templateUrl: './programming-exercise-grading.component.html',
     styleUrls: ['../../../programming-exercise-form.scss'],
+    standalone: false,
 })
 export class ProgrammingExerciseGradingComponent implements AfterViewInit, OnDestroy {
     protected readonly IncludedInOverallScore = IncludedInOverallScore;

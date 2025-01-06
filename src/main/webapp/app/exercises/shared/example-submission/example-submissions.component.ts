@@ -14,6 +14,7 @@ import { faExclamationTriangle, faFont, faPlus, faQuestionCircle, faTimes } from
 
 @Component({
     templateUrl: 'example-submissions.component.html',
+    standalone: false,
 })
 export class ExampleSubmissionsComponent implements OnInit, OnDestroy {
     exercise: Exercise;

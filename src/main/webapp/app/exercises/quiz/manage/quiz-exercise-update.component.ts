@@ -41,6 +41,7 @@ import { ShortAnswerQuestion } from 'app/entities/quiz/short-answer-question.mod
     providers: [DragAndDropQuestionUtil, ShortAnswerQuestionUtil],
     styleUrls: ['./quiz-exercise-update.component.scss', '../shared/quiz.scss'],
     encapsulation: ViewEncapsulation.None,
+    standalone: false,
 })
 export class QuizExerciseUpdateComponent extends QuizExerciseValidationDirective implements OnInit, OnChanges, ComponentCanDeactivate {
     @ViewChild('quizQuestionsEdit')

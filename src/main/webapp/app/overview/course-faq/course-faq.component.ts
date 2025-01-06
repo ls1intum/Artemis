@@ -25,7 +25,6 @@ import { Renderer2 } from '@angular/core';
     templateUrl: './course-faq.component.html',
     styleUrls: ['../course-overview.scss', 'course-faq.component.scss'],
     encapsulation: ViewEncapsulation.None,
-    standalone: true,
     imports: [ArtemisSharedComponentModule, ArtemisSharedModule, CourseFaqAccordionComponent, CustomExerciseCategoryBadgeComponent, SearchFilterComponent, ArtemisMarkdownModule],
 })
 export class CourseFaqComponent implements OnInit, OnDestroy {

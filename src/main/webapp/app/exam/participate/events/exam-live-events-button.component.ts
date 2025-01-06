@@ -20,6 +20,7 @@ export const USER_DISPLAY_RELEVANT_EVENTS_REOPEN = [ExamLiveEventType.EXAM_WIDE_
     templateUrl: './exam-live-events-button.component.html',
     styleUrls: ['./exam-live-events-button.component.scss'],
     encapsulation: ViewEncapsulation.None,
+    standalone: false,
 })
 export class ExamLiveEventsButtonComponent implements OnInit, OnDestroy {
     private modalRef?: NgbModalRef;

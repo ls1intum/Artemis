@@ -5,6 +5,7 @@ import { MAX_SUBMISSION_TEXT_LENGTH } from 'app/shared/constants/input.constants
     selector: 'jhi-modeling-explanation-editor',
     templateUrl: './modeling-explanation-editor.component.html',
     styleUrls: ['./modeling-explanation-editor.component.scss'],
+    standalone: false,
 })
 export class ModelingExplanationEditorComponent {
     @Input()

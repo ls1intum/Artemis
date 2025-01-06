@@ -33,6 +33,7 @@ import { scrollToTopOfPage } from 'app/shared/util/utils';
     selector: 'jhi-example-modeling-submission',
     templateUrl: './example-modeling-submission.component.html',
     styleUrls: ['./example-modeling-submission.component.scss'],
+    standalone: false,
 })
 export class ExampleModelingSubmissionComponent implements OnInit, FeedbackMarker {
     @ViewChild(ModelingEditorComponent, { static: false })

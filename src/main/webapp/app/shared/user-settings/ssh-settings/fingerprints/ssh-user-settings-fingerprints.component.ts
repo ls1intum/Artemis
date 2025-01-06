@@ -7,6 +7,7 @@ import { SshUserSettingsFingerprintsService } from 'app/shared/user-settings/ssh
     selector: 'jhi-account-information',
     templateUrl: './ssh-user-settings-fingerprints.component.html',
     styleUrls: ['./ssh-user-settings-fingerprints.component.scss', '../ssh-user-settings.component.scss'],
+    standalone: false,
 })
 export class SshUserSettingsFingerprintsComponent implements OnInit {
     readonly sshUserSettingsService = inject(SshUserSettingsFingerprintsService);

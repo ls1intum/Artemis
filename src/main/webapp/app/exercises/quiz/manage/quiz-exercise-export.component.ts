@@ -15,6 +15,7 @@ import { onError } from 'app/shared/util/global.utils';
     selector: 'jhi-quiz-exercise-export',
     templateUrl: './quiz-exercise-export.component.html',
     styleUrls: ['./quiz-exercise-export.component.scss', '../shared/quiz.scss'],
+    standalone: false,
 })
 export class QuizExerciseExportComponent implements OnInit {
     questions: QuizQuestion[] = new Array(0);

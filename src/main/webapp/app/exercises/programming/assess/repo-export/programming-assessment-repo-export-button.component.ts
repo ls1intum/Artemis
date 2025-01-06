@@ -20,6 +20,7 @@ import { ProgrammingExercise } from 'app/entities/programming/programming-exerci
             (onClick)="openRepoExportDialog($event)"
         />
     `,
+    standalone: false,
 })
 export class ProgrammingAssessmentRepoExportButtonComponent {
     readonly ButtonType = ButtonType;

@@ -22,6 +22,7 @@ import { NgModel } from '@angular/forms';
     selector: 'jhi-apollon-diagram-detail',
     templateUrl: './apollon-diagram-detail.component.html',
     providers: [ApollonDiagramService],
+    standalone: false,
 })
 export class ApollonDiagramDetailComponent implements OnInit, OnDestroy {
     @ViewChild('editorContainer', { static: false }) editorContainer: ElementRef;

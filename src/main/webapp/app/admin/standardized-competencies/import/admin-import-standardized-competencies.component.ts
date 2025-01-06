@@ -32,7 +32,6 @@ interface ImportCount {
 
 @Component({
     selector: 'jhi-admin-import-standardized-competencies',
-    standalone: true,
     templateUrl: './admin-import-standardized-competencies.component.html',
     imports: [ArtemisSharedModule, ArtemisSharedComponentModule, ArtemisMarkdownModule, FontAwesomeModule, StandardizedCompetencyDetailComponent, KnowledgeAreaTreeComponent],
 })

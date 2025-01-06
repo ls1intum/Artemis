@@ -8,7 +8,10 @@ import { LectureService } from 'app/lecture/lecture.service';
 import { Lecture } from 'app/entities/lecture.model';
 import { DocumentationType } from 'app/shared/components/documentation-button/documentation-button.component';
 
-@Component({ template: '' })
+@Component({
+    template: '',
+    standalone: false,
+})
 export abstract class CreateCourseCompetencyComponent implements OnInit {
     readonly documentationType: DocumentationType = 'Competencies';
 

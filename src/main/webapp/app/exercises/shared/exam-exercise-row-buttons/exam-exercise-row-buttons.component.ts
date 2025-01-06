@@ -20,6 +20,7 @@ import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
 @Component({
     selector: 'jhi-exam-exercise-row-buttons',
     templateUrl: './exam-exercise-row-buttons.component.html',
+    standalone: false,
 })
 export class ExamExerciseRowButtonsComponent implements OnInit {
     @Input() course: Course;

@@ -4,7 +4,10 @@ import { Observable } from 'rxjs';
 import { DataExportConfirmationDialogData } from 'app/core/legal/data-export/confirmation/data-export-confirmation-dialog.model';
 import { DataExportConfirmationDialogService } from 'app/core/legal/data-export/confirmation/data-export-confirmation-dialog.service';
 
-@Directive({ selector: '[jhiDataExportRequestButton]' })
+@Directive({
+    selector: '[jhiDataExportRequestButton]',
+    standalone: false,
+})
 export class DataExportRequestButtonDirective implements OnInit {
     @Input() expectedLogin: string;
     @Input() dialogError: Observable<string>;

@@ -17,6 +17,7 @@ export enum NotificationSettingsCommunicationChannel {
     selector: 'jhi-notification-settings',
     templateUrl: 'notification-settings.component.html',
     styleUrls: ['../user-settings.scss'],
+    standalone: false,
 })
 export class NotificationSettingsComponent extends UserSettingsDirective implements OnInit {
     // Icons

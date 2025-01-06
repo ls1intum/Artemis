@@ -12,6 +12,7 @@ import { SshUserSettingsService } from 'app/shared/user-settings/ssh-settings/ss
     selector: 'jhi-account-information',
     templateUrl: './ssh-user-settings.component.html',
     styleUrls: ['../user-settings.scss', './ssh-user-settings.component.scss'],
+    standalone: false,
 })
 export class SshUserSettingsComponent implements OnInit, OnDestroy {
     private sshUserSettingsService = inject(SshUserSettingsService);

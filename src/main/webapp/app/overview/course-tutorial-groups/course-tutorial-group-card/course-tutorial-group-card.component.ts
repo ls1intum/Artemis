@@ -9,6 +9,7 @@ import { Course, isMessagingEnabled } from 'app/entities/course.model';
     styleUrls: ['./course-tutorial-group-card.component.scss'],
     host: { class: 'card tutorial-group-card' },
     changeDetection: ChangeDetectionStrategy.OnPush,
+    standalone: false,
 })
 export class CourseTutorialGroupCardComponent {
     @Input()

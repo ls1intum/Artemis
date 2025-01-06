@@ -21,6 +21,7 @@ import { roundValueSpecifiedByCourseSettings } from 'app/shared/util/utils';
     selector: 'jhi-header-exercise-page-with-details',
     templateUrl: './header-exercise-page-with-details.component.html',
     styleUrls: ['./header-exercise-page-with-details.component.scss'],
+    standalone: false,
 })
 export class HeaderExercisePageWithDetailsComponent implements OnChanges, OnInit {
     readonly IncludedInOverallScore = IncludedInOverallScore;

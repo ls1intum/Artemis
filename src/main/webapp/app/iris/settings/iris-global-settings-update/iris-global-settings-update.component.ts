@@ -6,6 +6,7 @@ import { IrisSettingsUpdateComponent } from 'app/iris/settings/iris-settings-upd
 @Component({
     selector: 'jhi-iris-global-settings-update',
     templateUrl: './iris-global-settings-update.component.html',
+    standalone: false,
 })
 export class IrisGlobalSettingsUpdateComponent implements ComponentCanDeactivate {
     @ViewChild(IrisSettingsUpdateComponent)

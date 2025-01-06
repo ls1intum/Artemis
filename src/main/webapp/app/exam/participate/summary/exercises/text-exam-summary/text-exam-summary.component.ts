@@ -5,6 +5,7 @@ import { Exercise } from 'app/entities/exercise.model';
 @Component({
     selector: 'jhi-text-exam-summary',
     templateUrl: './text-exam-summary.component.html',
+    standalone: false,
 })
 export class TextExamSummaryComponent {
     @Input() exercise: Exercise;

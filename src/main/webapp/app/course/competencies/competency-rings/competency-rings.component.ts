@@ -5,6 +5,7 @@ import { faQuestion } from '@fortawesome/free-solid-svg-icons';
     selector: 'jhi-competency-rings',
     templateUrl: './competency-rings.component.html',
     styleUrls: ['./competency-rings.component.scss'],
+    standalone: false,
 })
 export class CompetencyRingsComponent {
     @Input() progress = 0;

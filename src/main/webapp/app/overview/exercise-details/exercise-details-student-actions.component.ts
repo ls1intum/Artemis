@@ -27,6 +27,7 @@ import { ButtonType } from 'app/shared/components/button.component';
     templateUrl: './exercise-details-student-actions.component.html',
     styleUrls: ['../course-overview.scss'],
     providers: [ExternalCloningService],
+    standalone: false,
 })
 export class ExerciseDetailsStudentActionsComponent implements OnInit, OnChanges {
     readonly FeatureToggle = FeatureToggle;

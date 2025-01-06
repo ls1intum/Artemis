@@ -12,6 +12,7 @@ import { NgbTypeahead } from '@ng-bootstrap/ng-bootstrap';
 @Component({
     selector: 'jhi-team-owner-search',
     templateUrl: './team-owner-search.component.html',
+    standalone: false,
 })
 export class TeamOwnerSearchComponent implements OnInit {
     @ViewChild('instance', { static: true }) ngbTypeahead: NgbTypeahead;

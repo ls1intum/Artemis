@@ -25,7 +25,6 @@ import { ArtemisSharedPipesModule } from '../../../shared/pipes/shared-pipes.mod
 @Component({
     selector: 'jhi-edit-course-lti-configuration',
     templateUrl: './edit-course-lti-configuration.component.html',
-    standalone: true,
     imports: [
         FormsModule,
         ReactiveFormsModule,

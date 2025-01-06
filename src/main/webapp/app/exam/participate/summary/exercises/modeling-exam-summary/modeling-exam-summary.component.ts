@@ -5,6 +5,7 @@ import { ModelingExercise } from 'app/entities/modeling-exercise.model';
 @Component({
     selector: 'jhi-modeling-exam-summary',
     templateUrl: './modeling-exam-summary.component.html',
+    standalone: false,
 })
 export class ModelingExamSummaryComponent {
     @Input() exercise: ModelingExercise;

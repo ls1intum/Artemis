@@ -19,6 +19,7 @@ import dayjs from 'dayjs/esm';
     templateUrl: './plagiarism-case-student-detail-view.component.html',
     styleUrls: ['./plagiarism-case-student-detail-view.component.scss'],
     providers: [MetisService],
+    standalone: false,
 })
 export class PlagiarismCaseStudentDetailViewComponent implements OnInit, OnDestroy {
     @ViewChild('post') postComponent: PostComponent;

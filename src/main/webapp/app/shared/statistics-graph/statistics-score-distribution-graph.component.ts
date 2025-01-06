@@ -10,6 +10,7 @@ import { ArtemisNavigationUtilService } from 'app/utils/navigation.utils';
     selector: 'jhi-statistics-score-distribution-graph',
     templateUrl: './statistics-score-distribution-graph.component.html',
     styleUrls: ['../chart/vertical-bar-chart.scss'],
+    standalone: false,
 })
 export class StatisticsScoreDistributionGraphComponent implements OnInit {
     @Input()

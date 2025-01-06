@@ -20,7 +20,6 @@ import { FormsModule } from '@angular/forms';
 @Component({
     selector: 'jhi-deep-linking',
     templateUrl: './lti13-deep-linking.component.html',
-    standalone: true,
     imports: [ArtemisSharedModule, TranslateDirective, ArtemisSharedComponentModule, ArtemisSharedCommonModule, FaIconComponent, FormsModule],
 })
 export class Lti13DeepLinkingComponent implements OnInit {

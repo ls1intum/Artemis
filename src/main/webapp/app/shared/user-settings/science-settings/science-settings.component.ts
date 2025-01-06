@@ -14,6 +14,7 @@ import { Subscription } from 'rxjs';
     selector: 'jhi-science-settings',
     templateUrl: 'science-settings.component.html',
     styleUrls: ['../user-settings.scss'],
+    standalone: false,
 })
 export class ScienceSettingsComponent extends UserSettingsDirective implements OnInit, OnDestroy {
     // Icons

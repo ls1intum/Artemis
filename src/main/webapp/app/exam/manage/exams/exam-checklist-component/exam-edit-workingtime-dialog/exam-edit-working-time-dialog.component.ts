@@ -10,6 +10,7 @@ import { examWorkingTime } from 'app/exam/participate/exam.utils';
 @Component({
     selector: 'jhi-edit-working-time-dialog',
     templateUrl: './exam-edit-working-time-dialog.component.html',
+    standalone: false,
 })
 export class ExamEditWorkingTimeDialogComponent {
     @Input() exam: Exam;

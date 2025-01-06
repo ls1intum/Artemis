@@ -36,6 +36,7 @@ import { ImageCroppedEvent } from 'app/shared/image-cropper/interfaces/image-cro
     templateUrl: './image-cropper.component.html',
     styleUrls: ['./image-cropper.component.scss'],
     changeDetection: ChangeDetectionStrategy.OnPush,
+    standalone: false,
 })
 export class ImageCropperComponent implements OnChanges, OnInit {
     settings = new CropperSettings();

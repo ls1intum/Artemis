@@ -27,6 +27,7 @@ export type CourseExamArchiveState = {
     templateUrl: './course-exam-archive-button.component.html',
     styleUrls: ['./course-exam-archive-button.component.scss'],
     styles: [':host {display: contents}'],
+    standalone: false,
 })
 export class CourseExamArchiveButtonComponent implements OnInit, OnDestroy {
     ButtonSize = ButtonSize;

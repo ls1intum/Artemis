@@ -5,6 +5,7 @@ import { round } from 'app/shared/util/utils';
     selector: 'jhi-circular-progress-bar',
     templateUrl: './circular-progress-bar.component.html',
     styleUrls: ['./circular-progress-bar.component.scss'],
+    standalone: false,
 })
 export class CircularProgressBarComponent implements OnChanges {
     @Input()

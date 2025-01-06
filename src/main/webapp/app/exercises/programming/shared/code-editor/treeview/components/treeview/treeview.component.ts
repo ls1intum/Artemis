@@ -7,6 +7,7 @@ import { TreeviewItemTemplateContext } from '../../models/treeview-item-template
     selector: 'treeview',
     templateUrl: './treeview.component.html',
     styleUrls: ['./treeview.component.scss'],
+    standalone: false,
 })
 export class TreeviewComponent<T> {
     @Input() itemTemplate: TemplateRef<TreeviewItemTemplateContext<T>>;

@@ -9,6 +9,7 @@ import { Posting } from 'app/entities/metis/posting.model';
     templateUrl: './link-preview-container.component.html',
     styleUrls: ['./link-preview-container.component.scss'],
     changeDetection: ChangeDetectionStrategy.OnPush,
+    standalone: false,
 })
 export class LinkPreviewContainerComponent implements OnInit, OnChanges {
     private readonly linkPreviewService: LinkPreviewService = inject(LinkPreviewService);

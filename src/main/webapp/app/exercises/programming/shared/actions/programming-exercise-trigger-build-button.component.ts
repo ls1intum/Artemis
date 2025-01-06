@@ -20,7 +20,10 @@ import { isManualResult } from 'app/exercises/shared/result/result.utils';
  * The participation given as input needs to have the results attached as this component checks if there is at least one result.
  * If there is no result, the button is disabled because this would mean that the student has not made a commit yet.
  */
-@Component({ template: '' })
+@Component({
+    template: '',
+    standalone: false,
+})
 export abstract class ProgrammingExerciseTriggerBuildButtonComponent implements OnChanges, OnDestroy {
     FeatureToggle = FeatureToggle;
     ButtonType = ButtonType;

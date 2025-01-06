@@ -25,6 +25,7 @@ import { convertDateFromServer } from 'app/utils/date.utils';
     selector: 'jhi-updating-result',
     templateUrl: './updating-result.component.html',
     providers: [ResultService, RepositoryService],
+    standalone: false,
 })
 export class UpdatingResultComponent implements OnChanges, OnDestroy {
     @Input() exercise: Exercise;

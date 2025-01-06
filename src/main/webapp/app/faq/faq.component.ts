@@ -24,7 +24,6 @@ import { TranslateService } from '@ngx-translate/core';
     selector: 'jhi-faq',
     templateUrl: './faq.component.html',
     styleUrls: [],
-    standalone: true,
     imports: [ArtemisSharedModule, CustomExerciseCategoryBadgeComponent, ArtemisSharedComponentModule, ArtemisMarkdownModule, SearchFilterComponent],
 })
 export class FaqComponent implements OnInit, OnDestroy {

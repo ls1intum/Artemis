@@ -92,6 +92,7 @@ import { FormControl, FormGroup, Validators } from '@angular/forms';
         }
     `,
     styleUrls: ['../../programming/manage/programming-exercise-form.scss'],
+    standalone: false,
 })
 export class SubmissionPolicyUpdateComponent implements OnInit {
     @Input() programmingExercise: ProgrammingExercise;

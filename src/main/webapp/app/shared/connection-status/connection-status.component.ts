@@ -7,6 +7,7 @@ import { JhiWebsocketService } from 'app/core/websocket/websocket.service';
     selector: 'jhi-connection-status',
     templateUrl: './connection-status.component.html',
     styleUrls: ['./connection-status.component.scss'],
+    standalone: false,
 })
 export class JhiConnectionStatusComponent implements OnInit, OnDestroy {
     @ContentChild('innerContent', { static: false }) innerContent: ElementRef;

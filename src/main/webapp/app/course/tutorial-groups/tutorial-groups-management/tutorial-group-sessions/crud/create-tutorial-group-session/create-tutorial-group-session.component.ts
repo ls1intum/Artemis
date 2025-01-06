@@ -13,6 +13,7 @@ import { Subject } from 'rxjs';
     selector: 'jhi-create-tutorial-group-session',
     templateUrl: './create-tutorial-group-session.component.html',
     changeDetection: ChangeDetectionStrategy.OnPush,
+    standalone: false,
 })
 export class CreateTutorialGroupSessionComponent implements OnDestroy {
     ngUnsubscribe = new Subject<void>();

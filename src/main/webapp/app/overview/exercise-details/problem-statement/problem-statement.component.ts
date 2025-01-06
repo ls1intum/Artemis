@@ -10,6 +10,7 @@ import { ParticipationService } from 'app/exercises/shared/participation/partici
     selector: 'jhi-problem-statement',
     templateUrl: './problem-statement.component.html',
     styleUrls: ['../../course-overview.scss'],
+    standalone: false,
 })
 export class ProblemStatementComponent implements OnInit {
     @Input()

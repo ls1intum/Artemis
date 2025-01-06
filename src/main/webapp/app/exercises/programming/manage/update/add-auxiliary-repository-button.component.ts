@@ -15,6 +15,7 @@ import { faPlus } from '@fortawesome/free-solid-svg-icons';
             (onClick)="addAuxiliaryRepositoryRow()"
         />
     `,
+    standalone: false,
 })
 export class AddAuxiliaryRepositoryButtonComponent {
     protected readonly ButtonType = ButtonType;

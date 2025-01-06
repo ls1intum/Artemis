@@ -40,6 +40,7 @@ export const titleRegex = new RegExp('^[a-zA-Z0-9]{1}[a-zA-Z0-9- ]{0,19}$');
     selector: 'jhi-tutorial-group-form',
     templateUrl: './tutorial-group-form.component.html',
     changeDetection: ChangeDetectionStrategy.OnPush,
+    standalone: false,
 })
 export class TutorialGroupFormComponent implements OnInit, OnChanges, OnDestroy {
     @Input()

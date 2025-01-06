@@ -15,6 +15,7 @@ import { catchError, takeUntil } from 'rxjs/operators';
     selector: 'jhi-tutorial-group-session-row-buttons',
     templateUrl: './tutorial-group-session-row-buttons.component.html',
     changeDetection: ChangeDetectionStrategy.OnPush,
+    standalone: false,
 })
 export class TutorialGroupSessionRowButtonsComponent implements OnDestroy {
     ngUnsubscribe = new Subject<void>();

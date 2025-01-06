@@ -13,7 +13,6 @@ export interface ColoredDifficultyLevel {
     selector: 'jhi-difficulty-level',
     templateUrl: './difficulty-level.component.html',
     styleUrls: ['./difficulty-level.component.scss'],
-    standalone: true,
     imports: [ArtemisSharedModule, ArtemisSharedComponentModule],
 })
 export class DifficultyLevelComponent implements OnInit, OnDestroy {

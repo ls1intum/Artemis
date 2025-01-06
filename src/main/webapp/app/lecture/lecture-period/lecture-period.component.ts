@@ -5,6 +5,7 @@ import { FormDateTimePickerComponent } from 'app/shared/date-time-picker/date-ti
 @Component({
     selector: 'jhi-lecture-update-period',
     templateUrl: './lecture-period.component.html',
+    standalone: false,
 })
 export class LectureUpdatePeriodComponent {
     lecture = input.required<Lecture>();

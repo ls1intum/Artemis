@@ -14,6 +14,7 @@ import { GradingCriterion } from 'app/exercises/shared/structured-grading-criter
     selector: 'jhi-textblock-feedback-editor',
     templateUrl: './textblock-feedback-editor.component.html',
     styleUrls: ['./textblock-feedback-editor.component.scss'],
+    standalone: false,
 })
 export class TextblockFeedbackEditorComponent implements AfterViewInit {
     protected route = inject(ActivatedRoute);

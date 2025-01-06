@@ -7,6 +7,7 @@ import { LogsService } from 'app/admin/logs/logs.service';
     selector: 'jhi-logs',
     templateUrl: './logs.component.html',
     styleUrls: ['./logs.component.scss'],
+    standalone: false,
 })
 export class LogsComponent implements OnInit {
     loggers?: Log[];

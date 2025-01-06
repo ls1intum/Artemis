@@ -26,6 +26,7 @@ import * as smoothscroll from 'smoothscroll-polyfill';
     templateUrl: './quiz-exam-submission.component.html',
     providers: [{ provide: ExamSubmissionComponent, useExisting: QuizExamSubmissionComponent }],
     styleUrls: ['./quiz-exam-submission.component.scss'],
+    standalone: false,
 })
 export class QuizExamSubmissionComponent extends ExamSubmissionComponent implements OnInit {
     exerciseType = ExerciseType.QUIZ;

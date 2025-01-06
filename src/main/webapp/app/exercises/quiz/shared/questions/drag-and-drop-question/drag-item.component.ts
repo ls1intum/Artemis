@@ -7,6 +7,7 @@ import { DragItem } from 'app/entities/quiz/drag-item.model';
     templateUrl: './drag-item.component.html',
     styleUrls: ['./drag-item.component.scss'],
     encapsulation: ViewEncapsulation.None,
+    standalone: false,
 })
 export class DragItemComponent implements OnInit {
     @Input() minWidth: string;

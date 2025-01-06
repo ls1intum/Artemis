@@ -8,7 +8,6 @@ import { RouterLink } from '@angular/router';
 
 @Component({
     selector: 'jhi-profile-picture',
-    standalone: true,
     templateUrl: './profile-picture.component.html',
     styleUrls: ['./profile-picture.component.scss'],
     imports: [ArtemisSharedCommonModule, RouterLink, ArtemisSharedPipesModule],

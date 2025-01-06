@@ -25,6 +25,7 @@ import dayjs from 'dayjs/esm';
     changeDetection: ChangeDetectionStrategy.OnPush,
     styleUrls: ['./quiz-pool.component.scss', '../shared/quiz.scss'],
     encapsulation: ViewEncapsulation.None,
+    standalone: false,
 })
 export class QuizPoolComponent implements OnInit {
     @ViewChild('quizPoolQuestionMapping')

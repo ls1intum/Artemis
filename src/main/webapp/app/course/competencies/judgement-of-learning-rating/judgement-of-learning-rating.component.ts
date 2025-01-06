@@ -8,7 +8,6 @@ import { CourseCompetencyService } from 'app/course/competencies/course-competen
 
 @Component({
     selector: 'jhi-judgement-of-learning-rating',
-    standalone: true,
     imports: [RatingModule, ArtemisSharedCommonModule, ArtemisSharedComponentModule],
     templateUrl: './judgement-of-learning-rating.component.html',
 })

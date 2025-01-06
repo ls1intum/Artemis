@@ -7,6 +7,7 @@ import { DragAndDropQuestion } from 'app/entities/quiz/drag-and-drop-question.mo
     selector: 'jhi-apollon-diagram-import-dialog',
     templateUrl: './apollon-diagram-import-dialog.component.html',
     providers: [ApollonDiagramService],
+    standalone: false,
 })
 export class ApollonDiagramImportDialogComponent {
     @Input()

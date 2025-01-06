@@ -27,6 +27,7 @@ import {
     templateUrl: './guided-tour.component.html',
     styleUrls: ['./guided-tour.component.scss'],
     encapsulation: ViewEncapsulation.None,
+    standalone: false,
 })
 export class GuidedTourComponent implements AfterViewInit, OnDestroy {
     @ViewChild('tourStep', { static: false }) private tourStep: ElementRef;

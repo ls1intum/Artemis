@@ -9,6 +9,7 @@ import { delay, startWith } from 'rxjs';
     selector: 'jhi-structured-grading-instructions-assessment-layout',
     templateUrl: './structured-grading-instructions-assessment-layout.component.html',
     styleUrls: ['./structured-grading-instructions-assessment-layout.component.scss'],
+    standalone: false,
 })
 export class StructuredGradingInstructionsAssessmentLayoutComponent implements OnInit, AfterViewInit {
     @Input() public criteria: GradingCriterion[];

@@ -25,6 +25,7 @@ import { ConversationUserDTO } from 'app/entities/metis/conversation/conversatio
     selector: 'jhi-conversation-header',
     templateUrl: './conversation-header.component.html',
     styleUrls: ['./conversation-header.component.scss'],
+    standalone: false,
 })
 export class ConversationHeaderComponent implements OnInit, OnDestroy {
     private ngUnsubscribe = new Subject<void>();

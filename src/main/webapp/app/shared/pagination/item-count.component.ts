@@ -6,6 +6,7 @@ import { Component, Input } from '@angular/core';
 @Component({
     selector: 'jhi-item-count',
     template: ` <div jhiTranslate="global.item-count" [translateValues]="{ first: itemRangeBegin, second: itemRangeEnd, total: itemTotal }"></div> `,
+    standalone: false,
 })
 export class ItemCountComponent {
     /**

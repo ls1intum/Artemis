@@ -20,6 +20,7 @@ import { AccountService } from 'app/core/auth/account.service';
 @Component({
     selector: 'jhi-iris-settings-update',
     templateUrl: './iris-settings-update.component.html',
+    standalone: false,
 })
 export class IrisSettingsUpdateComponent implements OnInit, DoCheck, ComponentCanDeactivate {
     @Input()

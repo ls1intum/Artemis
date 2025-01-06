@@ -37,6 +37,7 @@ import { cloneDeep } from 'lodash-es';
     selector: 'jhi-result-detail',
     templateUrl: './feedback.component.html',
     styleUrls: ['./feedback.scss'],
+    standalone: false,
 })
 export class FeedbackComponent implements OnInit, OnChanges {
     readonly BuildLogType = BuildLogType;

@@ -8,6 +8,7 @@ import { SortDirective } from './sort.directive';
 
 @Directive({
     selector: '[jhiSortBy]',
+    standalone: false,
 })
 export class SortByDirective<T> implements AfterContentInit, OnDestroy {
     @Input() jhiSortBy!: T;

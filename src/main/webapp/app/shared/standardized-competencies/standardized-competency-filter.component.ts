@@ -6,7 +6,6 @@ import { ArtemisSharedCommonModule } from 'app/shared/shared-common.module';
 @Component({
     selector: 'jhi-standardized-competency-filter',
     templateUrl: './standardized-competency-filter.component.html',
-    standalone: true,
     imports: [ArtemisSharedCommonModule],
 })
 export class StandardizedCompetencyFilterComponent implements OnInit, OnDestroy {

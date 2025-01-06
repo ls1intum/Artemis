@@ -16,7 +16,6 @@ import { CourseCompetencyFormData } from 'app/course/competencies/forms/course-c
 @Component({
     selector: 'jhi-edit-prerequisite',
     templateUrl: './edit-prerequisite.component.html',
-    standalone: true,
     imports: [ArtemisSharedModule, PrerequisiteFormComponent],
 })
 export class EditPrerequisiteComponent extends EditCourseCompetencyComponent implements OnInit {

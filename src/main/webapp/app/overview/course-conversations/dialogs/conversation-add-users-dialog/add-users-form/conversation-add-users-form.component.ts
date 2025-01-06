@@ -16,6 +16,7 @@ export interface AddUsersFormData {
 @Component({
     selector: 'jhi-conversation-add-users-form',
     templateUrl: './conversation-add-users-form.component.html',
+    standalone: false,
 })
 export class ConversationAddUsersFormComponent implements OnInit, OnChanges {
     @Output() formSubmitted: EventEmitter<AddUsersFormData> = new EventEmitter<AddUsersFormData>();

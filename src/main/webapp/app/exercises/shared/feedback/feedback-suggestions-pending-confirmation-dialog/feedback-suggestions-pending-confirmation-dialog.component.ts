@@ -5,6 +5,7 @@ import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 @Component({
     selector: 'jhi-feedback-suggestions-pending-confirmation-dialog',
     templateUrl: './feedback-suggestions-pending-confirmation-dialog.component.html',
+    standalone: false,
 })
 export class FeedbackSuggestionsPendingConfirmationDialogComponent {
     // Icons

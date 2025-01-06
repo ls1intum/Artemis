@@ -7,6 +7,7 @@ import { faBookmark, faInfoCircle } from '@fortawesome/free-solid-svg-icons';
     selector: 'jhi-saved-posts',
     templateUrl: './saved-posts.component.html',
     styleUrls: ['./saved-posts.component.scss'],
+    standalone: false,
 })
 export class SavedPostsComponent {
     readonly savedPostStatus = input<SavedPostStatus>();

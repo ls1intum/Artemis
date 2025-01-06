@@ -39,6 +39,7 @@ const DEFAULT_CUSTOM_GROUP_NAME = 'artemis-dev';
     selector: 'jhi-course-update',
     templateUrl: './course-update.component.html',
     styleUrls: ['./course-update.component.scss'],
+    standalone: false,
 })
 export class CourseUpdateComponent implements OnInit {
     CachingStrategy = CachingStrategy;

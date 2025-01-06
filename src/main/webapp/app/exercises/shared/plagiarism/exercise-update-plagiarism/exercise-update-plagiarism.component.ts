@@ -7,6 +7,7 @@ import { Subject, Subscription } from 'rxjs';
 @Component({
     selector: 'jhi-exercise-update-plagiarism',
     templateUrl: './exercise-update-plagiarism.component.html',
+    standalone: false,
 })
 export class ExerciseUpdatePlagiarismComponent implements OnInit, OnDestroy, AfterViewInit {
     @Input() exercise: Exercise;

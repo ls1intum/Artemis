@@ -19,6 +19,7 @@ enum ProgrammingExerciseIssues {
 @Component({
     selector: 'jhi-programming-exercise-instructor-exercise-status',
     templateUrl: './programming-exercise-instructor-exercise-status.component.html',
+    standalone: false,
 })
 export class ProgrammingExerciseInstructorExerciseStatusComponent implements OnChanges {
     ProgrammingExerciseIssues = ProgrammingExerciseIssues;

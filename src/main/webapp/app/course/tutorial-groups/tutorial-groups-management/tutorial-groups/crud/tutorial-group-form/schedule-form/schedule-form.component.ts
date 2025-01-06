@@ -25,6 +25,7 @@ export interface ScheduleFormData {
     styleUrls: ['./schedule-form.component.scss'],
     providers: [{ provide: NgbTimeAdapter, useClass: NgbTimeStringAdapter }],
     changeDetection: ChangeDetectionStrategy.OnPush,
+    standalone: false,
 })
 export class ScheduleFormComponent implements OnInit {
     @Input() course: Course;

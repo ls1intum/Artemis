@@ -11,6 +11,7 @@ import JSZip from 'jszip';
 @Component({
     selector: 'jhi-exercise-import-from-file',
     templateUrl: './exercise-import-from-file.component.html',
+    standalone: false,
 })
 export class ExerciseImportFromFileComponent implements OnInit {
     @Input() exerciseType: ExerciseType;

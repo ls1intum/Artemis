@@ -13,6 +13,7 @@ import { faFolderOpen } from '@fortawesome/free-solid-svg-icons';
     selector: '[jhi-student-exam-detail-table-row]',
     templateUrl: './student-exam-detail-table-row.component.html',
     providers: [],
+    standalone: false,
 })
 export class StudentExamDetailTableRowComponent implements OnChanges {
     @Input() exercise: Exercise;

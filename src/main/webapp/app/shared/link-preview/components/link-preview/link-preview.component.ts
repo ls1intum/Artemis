@@ -9,6 +9,7 @@ import { urlRegex } from 'app/shared/link-preview/services/linkify.service';
     selector: 'jhi-link-preview',
     templateUrl: './link-preview.component.html',
     styleUrls: ['./link-preview.component.scss'],
+    standalone: false,
 })
 export class LinkPreviewComponent implements OnInit {
     @Input() linkPreview: LinkPreview;

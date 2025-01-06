@@ -24,6 +24,7 @@ import { faCheckCircle, faSync, faTimesCircle } from '@fortawesome/free-solid-sv
         './drag-and-drop-question-statistic.component.scss',
     ],
     encapsulation: ViewEncapsulation.None,
+    standalone: false,
 })
 export class DragAndDropQuestionStatisticComponent extends QuestionStatisticComponent {
     declare question: DragAndDropQuestion;

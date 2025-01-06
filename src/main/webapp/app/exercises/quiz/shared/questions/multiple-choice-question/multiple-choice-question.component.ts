@@ -12,6 +12,7 @@ import { faCheckSquare, faCircle, faDotCircle, faSquare } from '@fortawesome/fre
     templateUrl: './multiple-choice-question.component.html',
     styleUrls: ['./multiple-choice-question.component.scss', '../../../participate/quiz-participation.scss'],
     encapsulation: ViewEncapsulation.None,
+    standalone: false,
 })
 export class MultipleChoiceQuestionComponent {
     _question: MultipleChoiceQuestion;

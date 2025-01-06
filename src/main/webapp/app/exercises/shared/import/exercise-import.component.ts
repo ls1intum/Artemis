@@ -18,6 +18,7 @@ const DEFAULT_SORT_COLUMN = 'ID';
 @Component({
     selector: 'jhi-exercise-import',
     templateUrl: './exercise-import.component.html',
+    standalone: false,
 })
 export class ExerciseImportComponent extends ImportComponent<Exercise> implements OnInit {
     readonly ExerciseType = ExerciseType;

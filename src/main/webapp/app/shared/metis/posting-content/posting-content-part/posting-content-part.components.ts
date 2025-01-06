@@ -26,6 +26,7 @@ import { AccountService } from 'app/core/auth/account.service';
     selector: 'jhi-posting-content-part',
     templateUrl: './posting-content-part.component.html',
     styleUrls: ['./../../metis.component.scss'],
+    standalone: false,
 })
 export class PostingContentPartComponent implements OnInit {
     @Input() postingContentPart: PostingContentPart;

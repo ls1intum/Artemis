@@ -7,6 +7,7 @@ import { Feedback, FeedbackSuggestionType } from 'app/entities/feedback.model';
     selector: 'jhi-feedback-suggestion-badge',
     templateUrl: './feedback-suggestion-badge.component.html',
     styleUrls: ['./feedback-suggestion-badge.component.scss'],
+    standalone: false,
 })
 export class FeedbackSuggestionBadgeComponent {
     @Input()

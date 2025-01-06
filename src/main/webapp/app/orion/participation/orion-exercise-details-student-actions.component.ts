@@ -13,6 +13,7 @@ import { OrionButtonType } from 'app/shared/orion/orion-button/orion-button.comp
     selector: 'jhi-orion-exercise-details-student-actions',
     templateUrl: './orion-exercise-details-student-actions.component.html',
     styleUrls: ['../../overview/course-overview.scss'],
+    standalone: false,
 })
 export class OrionExerciseDetailsStudentActionsComponent implements OnInit {
     readonly ExerciseView = ExerciseView;

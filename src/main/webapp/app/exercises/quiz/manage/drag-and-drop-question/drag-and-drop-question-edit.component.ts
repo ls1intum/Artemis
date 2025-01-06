@@ -59,6 +59,7 @@ import { MarkdownEditorMonacoComponent, TextWithDomainAction } from 'app/shared/
     providers: [DragAndDropQuestionUtil],
     styleUrls: ['./drag-and-drop-question-edit.component.scss', '../quiz-exercise.scss', '../../shared/quiz.scss'],
     encapsulation: ViewEncapsulation.None,
+    standalone: false,
 })
 export class DragAndDropQuestionEditComponent implements OnInit, OnChanges, AfterViewInit, QuizQuestionEdit {
     @ViewChild('clickLayer', { static: false }) private clickLayer: ElementRef;

@@ -4,6 +4,7 @@ import { faBoxArchive, faBullhorn, faHashtag, faLock } from '@fortawesome/free-s
 @Component({
     selector: 'jhi-channel-icon',
     templateUrl: './channel-icon.component.html',
+    standalone: false,
 })
 export class ChannelIconComponent {
     @Input()

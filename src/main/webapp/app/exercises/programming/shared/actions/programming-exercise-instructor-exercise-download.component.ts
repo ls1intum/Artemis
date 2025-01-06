@@ -20,6 +20,7 @@ import { faDownload } from '@fortawesome/free-solid-svg-icons';
             (onClick)="exportExercise()"
         />
     `,
+    standalone: false,
 })
 export class ProgrammingExerciseInstructorExerciseDownloadComponent {
     ButtonType = ButtonType;

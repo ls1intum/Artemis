@@ -11,7 +11,6 @@ type CategoryFontSize = 'default' | 'small';
     selector: 'jhi-custom-exercise-category-badge',
     templateUrl: './custom-exercise-category-badge.component.html',
     styleUrls: ['custom-exercise-category-badge.component.scss'],
-    standalone: true,
     imports: [CommonModule, FontAwesomeModule],
 })
 export class CustomExerciseCategoryBadgeComponent {

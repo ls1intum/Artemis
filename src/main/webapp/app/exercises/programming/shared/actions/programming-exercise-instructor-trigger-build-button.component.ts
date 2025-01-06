@@ -12,6 +12,7 @@ import { faRedo } from '@fortawesome/free-solid-svg-icons';
 @Component({
     selector: 'jhi-programming-exercise-instructor-trigger-build-button',
     templateUrl: './programming-exercise-trigger-build-button.component.html',
+    standalone: false,
 })
 export class ProgrammingExerciseInstructorTriggerBuildButtonComponent extends ProgrammingExerciseTriggerBuildButtonComponent {
     // Icons

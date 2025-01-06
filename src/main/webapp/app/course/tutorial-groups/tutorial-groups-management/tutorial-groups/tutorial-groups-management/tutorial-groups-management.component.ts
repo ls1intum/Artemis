@@ -17,6 +17,7 @@ import { TutorialGroupsConfiguration } from 'app/entities/tutorial-group/tutoria
     selector: 'jhi-tutorial-groups-management',
     templateUrl: './tutorial-groups-management.component.html',
     changeDetection: ChangeDetectionStrategy.OnPush,
+    standalone: false,
 })
 export class TutorialGroupsManagementComponent implements OnInit, OnDestroy {
     ngUnsubscribe = new Subject<void>();

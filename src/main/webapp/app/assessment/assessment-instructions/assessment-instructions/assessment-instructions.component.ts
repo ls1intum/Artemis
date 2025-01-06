@@ -13,6 +13,7 @@ import { ProgrammingExerciseStudentParticipation } from 'app/entities/participat
 @Component({
     selector: 'jhi-assessment-instructions',
     templateUrl: './assessment-instructions.component.html',
+    standalone: false,
 })
 export class AssessmentInstructionsComponent {
     exercise: Exercise;

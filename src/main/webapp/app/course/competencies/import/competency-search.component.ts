@@ -7,6 +7,7 @@ import { CourseCompetencyFilter } from 'app/shared/table/pageable-table';
 @Component({
     selector: 'jhi-competency-search',
     templateUrl: './competency-search.component.html',
+    standalone: false,
 })
 export class CompetencySearchComponent {
     @Input() search: CourseCompetencyFilter;

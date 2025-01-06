@@ -10,6 +10,7 @@ import { Router } from '@angular/router';
 @Component({
     selector: 'jhi-exercise-create-buttons',
     templateUrl: './exercise-create-buttons.component.html',
+    standalone: false,
 })
 export class ExerciseCreateButtonsComponent implements OnInit {
     @Input() course: Course;

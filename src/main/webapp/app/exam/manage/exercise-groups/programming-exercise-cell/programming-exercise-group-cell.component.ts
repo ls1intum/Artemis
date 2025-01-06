@@ -15,6 +15,7 @@ import { PROFILE_LOCALVC, PROFILE_THEIA } from 'app/app.constants';
     selector: 'jhi-programming-exercise-group-cell',
     templateUrl: './programming-exercise-group-cell.component.html',
     styles: [':host{display: contents}'],
+    standalone: false,
 })
 export class ProgrammingExerciseGroupCellComponent implements OnInit {
     participationType = ProgrammingExerciseParticipationType;

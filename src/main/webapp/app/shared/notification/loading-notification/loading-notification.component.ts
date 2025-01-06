@@ -10,6 +10,7 @@ import { debounceTime } from 'rxjs/operators';
             <div class="spinner-border" role="status" style="width: 18px; height: 18px; color: white"></div>
         }
     `,
+    standalone: false,
 })
 export class LoadingNotificationComponent implements OnInit, OnDestroy {
     isLoading = false;

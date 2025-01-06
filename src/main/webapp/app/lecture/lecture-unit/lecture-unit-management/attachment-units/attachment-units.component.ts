@@ -28,6 +28,7 @@ export type LectureUnitInformationDTO = {
     selector: 'jhi-attachment-units',
     templateUrl: './attachment-units.component.html',
     styleUrls: [],
+    standalone: false,
 })
 export class AttachmentUnitsComponent implements OnInit {
     lectureId: number;

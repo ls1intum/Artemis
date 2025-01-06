@@ -64,6 +64,7 @@ import { BuildLogStatisticsDTO } from 'app/entities/programming/build-log-statis
     templateUrl: './programming-exercise-detail.component.html',
     styleUrls: ['./programming-exercise-detail.component.scss'],
     encapsulation: ViewEncapsulation.None,
+    standalone: false,
 })
 export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
     protected readonly dayjs = dayjs;

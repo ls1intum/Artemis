@@ -9,6 +9,7 @@ import { Course } from 'app/entities/course.model';
     styleUrls: ['./tutorial-group-row.component.scss'],
     encapsulation: ViewEncapsulation.None,
     changeDetection: ChangeDetectionStrategy.OnPush,
+    standalone: false,
 })
 export class TutorialGroupRowComponent {
     readonly Math = Math;

@@ -21,6 +21,7 @@ type TaskComparator = (a: ProgrammingExerciseTask | ProgrammingExerciseTestCase,
     selector: 'jhi-programming-exercise-grading-tasks-table',
     templateUrl: './programming-exercise-grading-tasks-table.component.html',
     styleUrls: ['./programming-exercise-grading-tasks-table.scss'],
+    standalone: false,
 })
 export class ProgrammingExerciseGradingTasksTableComponent implements OnInit {
     @Input() exercise: ProgrammingExercise;

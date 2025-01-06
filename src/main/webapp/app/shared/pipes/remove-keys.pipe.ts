@@ -1,6 +1,9 @@
 import { Pipe, PipeTransform } from '@angular/core';
 
-@Pipe({ name: 'removekeys' })
+@Pipe({
+    name: 'removekeys',
+    standalone: false,
+})
 export class RemoveKeysPipe implements PipeTransform {
     /**
      * Removes the specified keys from the array of objects.

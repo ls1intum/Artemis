@@ -10,6 +10,7 @@ import { FeedbackNode } from 'app/exercises/shared/feedback/node/feedback-node';
     selector: 'jhi-feedback-node',
     templateUrl: './feedback-node.component.html',
     styleUrls: ['./feedback-node.scss'],
+    standalone: false,
 })
 export class FeedbackNodeComponent implements OnInit {
     readonly roundValueSpecifiedByCourseSettings = roundValueSpecifiedByCourseSettings;

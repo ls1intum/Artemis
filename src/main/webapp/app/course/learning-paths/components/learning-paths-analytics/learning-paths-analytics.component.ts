@@ -9,7 +9,6 @@ import { CommonModule } from '@angular/common';
 
 @Component({
     selector: 'jhi-learning-paths-analytics',
-    standalone: true,
     changeDetection: ChangeDetectionStrategy.OnPush,
     imports: [CompetencyGraphComponent, TranslateDirective, CommonModule],
     templateUrl: './learning-paths-analytics.component.html',

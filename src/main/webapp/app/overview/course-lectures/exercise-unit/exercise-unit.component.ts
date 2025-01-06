@@ -7,6 +7,7 @@ import { ExerciseUnit } from 'app/entities/lecture-unit/exerciseUnit.model';
     templateUrl: './exercise-unit.component.html',
     encapsulation: ViewEncapsulation.None,
     styleUrls: ['./exercise-unit.component.scss'],
+    standalone: false,
 })
 export class ExerciseUnitComponent {
     @HostBinding('className') componentClass: string;

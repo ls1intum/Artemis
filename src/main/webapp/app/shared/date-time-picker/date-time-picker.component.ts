@@ -20,6 +20,7 @@ export enum DateTimePickerType {
             useExisting: forwardRef(() => FormDateTimePickerComponent),
         },
     ],
+    standalone: false,
 })
 export class FormDateTimePickerComponent implements ControlValueAccessor {
     protected readonly faCalendarAlt = faCalendarAlt;

@@ -15,6 +15,7 @@ import { SubmissionPatchPayload, isSubmissionPatchPayload } from 'app/entities/s
 @Component({
     selector: 'jhi-team-submission-sync',
     template: '',
+    standalone: false,
 })
 export class TeamSubmissionSyncComponent implements OnInit {
     // Sync settings

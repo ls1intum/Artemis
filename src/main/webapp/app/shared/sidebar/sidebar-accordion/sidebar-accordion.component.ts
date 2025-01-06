@@ -7,6 +7,7 @@ import { Params } from '@angular/router';
     selector: 'jhi-sidebar-accordion',
     templateUrl: './sidebar-accordion.component.html',
     styleUrls: ['./sidebar-accordion.component.scss'],
+    standalone: false,
 })
 export class SidebarAccordionComponent implements OnChanges, OnInit {
     protected readonly Object = Object;

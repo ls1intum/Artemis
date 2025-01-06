@@ -16,6 +16,7 @@ import { AssessmentNote } from 'app/entities/assessment-note.model';
     selector: 'jhi-assessment-layout',
     templateUrl: './assessment-layout.component.html',
     styleUrls: ['./assessment-layout.component.scss'],
+    standalone: false,
 })
 export class AssessmentLayoutComponent {
     @HostBinding('class.assessment-container') readonly assessmentContainerClass = true;

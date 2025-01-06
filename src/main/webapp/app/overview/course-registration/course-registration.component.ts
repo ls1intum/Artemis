@@ -11,6 +11,7 @@ import { SortService } from 'app/shared/service/sort.service';
 @Component({
     selector: 'jhi-course-registration-selector',
     templateUrl: './course-registration.component.html',
+    standalone: false,
 })
 export class CourseRegistrationComponent implements OnInit {
     coursesToSelect: Course[] = [];

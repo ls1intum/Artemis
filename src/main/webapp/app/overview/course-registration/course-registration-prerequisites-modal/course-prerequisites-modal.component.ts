@@ -9,6 +9,7 @@ import { Prerequisite } from 'app/entities/prerequisite.model';
     selector: 'jhi-course-prerequisites-modal',
     templateUrl: './course-prerequisites-modal.component.html',
     styles: [],
+    standalone: false,
 })
 export class CoursePrerequisitesModalComponent implements OnInit {
     @Input()

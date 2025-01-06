@@ -21,6 +21,7 @@ export interface TextUnitFormData {
     selector: 'jhi-text-unit-form',
     templateUrl: './text-unit-form.component.html',
     styles: [],
+    standalone: false,
 })
 export class TextUnitFormComponent implements OnInit, OnChanges, OnDestroy {
     protected readonly faTimes = faTimes;

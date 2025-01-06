@@ -25,7 +25,10 @@ import { Directive, EmbeddedViewRef, Input, OnChanges, SimpleChanges, TemplateRe
  * ```
  * produces a child component looking exactly like the parent component but with the marked element overridden
  */
-@Directive({ selector: '[jhiExtensionPoint]' })
+@Directive({
+    selector: '[jhiExtensionPoint]',
+    standalone: false,
+})
 export class ExtensionPointDirective implements OnChanges {
     private viewRef: EmbeddedViewRef<any> | undefined = undefined;
 

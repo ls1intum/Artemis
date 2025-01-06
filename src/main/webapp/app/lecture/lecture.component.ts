@@ -28,6 +28,7 @@ export enum LectureDateFilter {
 @Component({
     selector: 'jhi-lecture',
     templateUrl: './lecture.component.html',
+    standalone: false,
 })
 export class LectureComponent implements OnInit, OnDestroy {
     lectures: Lecture[];

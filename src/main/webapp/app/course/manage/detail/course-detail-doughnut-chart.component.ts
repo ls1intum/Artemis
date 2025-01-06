@@ -14,6 +14,7 @@ const PIE_CHART_NA_FALLBACK_VALUE = [0, 0, 1];
     selector: 'jhi-course-detail-doughnut-chart',
     templateUrl: './course-detail-doughnut-chart.component.html',
     styleUrls: ['./course-detail-doughnut-chart.component.scss'],
+    standalone: false,
 })
 export class CourseDetailDoughnutChartComponent implements OnChanges, OnInit {
     @Input() contentType: DoughnutChartType;

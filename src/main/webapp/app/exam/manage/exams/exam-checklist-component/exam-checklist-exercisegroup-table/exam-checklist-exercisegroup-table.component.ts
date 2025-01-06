@@ -8,6 +8,7 @@ import { faExclamationTriangle } from '@fortawesome/free-solid-svg-icons';
     selector: 'jhi-exam-checklist-exercisegroup-table',
     templateUrl: './exam-checklist-exercisegroup-table.component.html',
     styleUrls: ['./exam-checklist-exercisegroup-table.component.scss'],
+    standalone: false,
 })
 export class ExamChecklistExerciseGroupTableComponent implements OnChanges {
     @Input() quizExamMaxPoints: number;

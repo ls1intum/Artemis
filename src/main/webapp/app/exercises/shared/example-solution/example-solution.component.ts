@@ -8,6 +8,7 @@ import { ArtemisMarkdownService } from 'app/shared/markdown.service';
 @Component({
     selector: 'jhi-example-solution',
     templateUrl: './example-solution.component.html',
+    standalone: false,
 })
 export class ExampleSolutionComponent implements OnInit {
     private displayedExerciseId: number;

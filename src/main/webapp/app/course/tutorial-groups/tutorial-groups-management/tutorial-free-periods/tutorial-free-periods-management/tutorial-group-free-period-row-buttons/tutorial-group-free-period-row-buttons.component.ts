@@ -14,6 +14,7 @@ import { catchError, takeUntil } from 'rxjs/operators';
     selector: 'jhi-tutorial-group-free-period-row-buttons',
     templateUrl: './tutorial-group-free-period-row-buttons.component.html',
     changeDetection: ChangeDetectionStrategy.OnPush,
+    standalone: false,
 })
 export class TutorialGroupFreePeriodRowButtonsComponent implements OnDestroy {
     @Input() course: Course;

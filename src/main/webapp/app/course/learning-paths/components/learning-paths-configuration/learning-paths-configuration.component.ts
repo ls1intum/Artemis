@@ -10,7 +10,6 @@ import { TranslateDirective } from 'app/shared/language/translate.directive';
 
 @Component({
     selector: 'jhi-learning-paths-configuration',
-    standalone: true,
     changeDetection: ChangeDetectionStrategy.OnPush,
     imports: [FontAwesomeModule, ArtemisSharedComponentModule, TranslateDirective],
     templateUrl: './learning-paths-configuration.component.html',

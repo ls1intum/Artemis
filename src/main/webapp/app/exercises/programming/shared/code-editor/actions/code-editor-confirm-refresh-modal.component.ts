@@ -9,6 +9,7 @@ import { faBan, faExclamationTriangle, faTimes } from '@fortawesome/free-solid-s
     templateUrl: './code-editor-confirm-refresh-modal.component.html',
     styleUrls: ['./code-editor-resolve-conflict-modal.scss'],
     providers: [CodeEditorRepositoryFileService],
+    standalone: false,
 })
 export class CodeEditorConfirmRefreshModalComponent {
     // Icons

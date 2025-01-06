@@ -15,6 +15,7 @@ import { combineLatest } from 'rxjs';
 @Component({
     selector: 'jhi-lti-configuration',
     templateUrl: './lti-configuration.component.html',
+    standalone: false,
 })
 export class LtiConfigurationComponent implements OnInit {
     private router = inject(Router);

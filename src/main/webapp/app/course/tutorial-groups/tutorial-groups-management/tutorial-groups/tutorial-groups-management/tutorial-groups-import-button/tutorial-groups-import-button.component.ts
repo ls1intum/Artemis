@@ -8,6 +8,7 @@ import { catchError, takeUntil } from 'rxjs/operators';
     selector: 'jhi-tutorial-groups-import-button',
     templateUrl: './tutorial-groups-import-button.component.html',
     changeDetection: ChangeDetectionStrategy.OnPush,
+    standalone: false,
 })
 export class TutorialGroupsImportButtonComponent implements OnDestroy {
     ngUnsubscribe = new Subject<void>();

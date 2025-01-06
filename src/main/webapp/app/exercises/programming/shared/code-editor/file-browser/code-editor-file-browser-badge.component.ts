@@ -9,6 +9,7 @@ import { FileBadge, FileBadgeType } from 'app/exercises/programming/shared/code-
     templateUrl: './code-editor-file-browser-badge.component.html',
     styleUrls: ['./code-editor-file-browser-badge.component.scss'],
     providers: [NgbModal],
+    standalone: false,
 })
 export class CodeEditorFileBrowserBadgeComponent {
     @Input() badge: FileBadge;

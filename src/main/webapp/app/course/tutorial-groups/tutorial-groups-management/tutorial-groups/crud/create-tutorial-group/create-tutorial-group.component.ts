@@ -16,6 +16,7 @@ import { Subject } from 'rxjs';
     selector: 'jhi-create-tutorial-group',
     templateUrl: './create-tutorial-group.component.html',
     changeDetection: ChangeDetectionStrategy.OnPush,
+    standalone: false,
 })
 export class CreateTutorialGroupComponent implements OnInit, OnDestroy {
     tutorialGroupToCreate: TutorialGroup = new TutorialGroup();

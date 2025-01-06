@@ -20,6 +20,7 @@ import { catchError, takeUntil } from 'rxjs/operators';
     templateUrl: './tutorial-group-free-periods-management.component.html',
     styleUrls: ['./tutorial-group-free-periods-management.component.scss'],
     changeDetection: ChangeDetectionStrategy.OnPush,
+    standalone: false,
 })
 export class TutorialGroupFreePeriodsManagementComponent implements OnInit, OnDestroy {
     isLoading = false;

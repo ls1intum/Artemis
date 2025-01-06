@@ -30,6 +30,7 @@ export enum State {
     changeDetection: ChangeDetectionStrategy.OnPush,
     styleUrls: ['../shared/quiz.scss'],
     encapsulation: ViewEncapsulation.None,
+    standalone: false,
 })
 export class QuizQuestionListEditExistingComponent implements OnChanges {
     @Input() show: boolean;

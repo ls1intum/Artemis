@@ -92,6 +92,7 @@ enum ChartBarTitle {
     selector: 'jhi-course-statistics',
     templateUrl: './course-statistics.component.html',
     styleUrls: ['../course-overview.scss'],
+    standalone: false,
 })
 export class CourseStatisticsComponent implements OnInit, OnDestroy, AfterViewInit, BarControlConfigurationProvider {
     readonly documentationType: DocumentationType = 'Statistics';

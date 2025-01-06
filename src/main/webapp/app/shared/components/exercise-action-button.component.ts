@@ -7,6 +7,7 @@ import { faCircleNotch } from '@fortawesome/free-solid-svg-icons';
     selector: 'button[jhi-exercise-action-button]',
     templateUrl: './exercise-action-button.component.html',
     styleUrls: ['../../overview/course-overview.scss'],
+    standalone: false,
 })
 export class ExerciseActionButtonComponent {
     @Input() buttonIcon: IconProp;

@@ -11,6 +11,7 @@ import { RemoveSecondsPipe } from 'app/course/tutorial-groups/shared/remove-seco
  */
 @Pipe({
     name: 'meetingPattern',
+    standalone: false,
 })
 export class MeetingPatternPipe implements PipeTransform {
     removeSecondsPipe = new RemoveSecondsPipe();

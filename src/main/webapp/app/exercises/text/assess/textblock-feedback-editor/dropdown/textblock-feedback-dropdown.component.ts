@@ -7,6 +7,7 @@ import { GradingInstruction } from 'app/exercises/shared/structured-grading-crit
     selector: 'jhi-textblock-feedback-dropdown',
     templateUrl: './textblock-feedback-dropdown.component.html',
     styleUrls: ['./textblock-feedback-dropdown.component.scss'],
+    standalone: false,
 })
 export class TextblockFeedbackDropdownComponent {
     @Output() didChange = new EventEmitter();

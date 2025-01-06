@@ -11,6 +11,7 @@ import { NgForm } from '@angular/forms';
 @Component({
     selector: 'jhi-delete-dialog',
     templateUrl: './delete-dialog.component.html',
+    standalone: false,
 })
 export class DeleteDialogComponent implements OnInit, OnDestroy {
     readonly actionTypes = ActionType;

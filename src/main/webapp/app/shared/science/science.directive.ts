@@ -3,6 +3,7 @@ import { ScienceService } from 'app/shared/science/science.service';
 import { ScienceEventType } from 'app/shared/science/science.model';
 @Directive({
     selector: '[jhiScience]',
+    standalone: false,
 })
 export class ScienceDirective {
     @Input() jhiScience: ScienceEventType;

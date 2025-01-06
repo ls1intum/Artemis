@@ -39,6 +39,7 @@ export type DocumentationType = keyof typeof DocumentationLinks;
             <fa-icon [icon]="faCircleInfo" ngbTooltip="{{ getTooltipForType() }}" />
         </a>
     `,
+    standalone: false,
 })
 export class DocumentationButtonComponent {
     readonly BASE_URL = 'https://docs.artemis.cit.tum.de/user/';

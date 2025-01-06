@@ -11,6 +11,7 @@ import { catchError, map, tap } from 'rxjs/operators';
 @Component({
     selector: 'jhi-commit-details-view',
     templateUrl: './commit-details-view.component.html',
+    standalone: false,
 })
 export class CommitDetailsViewComponent implements OnDestroy, OnInit {
     report: ProgrammingExerciseGitDiffReport;

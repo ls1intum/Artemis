@@ -24,6 +24,7 @@ type ResultOverviewSection = 'grading-table' | 'grading-key' | 'bonus-grading-ke
     selector: 'jhi-exam-result-overview',
     styleUrls: ['./exam-result-overview.component.scss'],
     templateUrl: './exam-result-overview.component.html',
+    standalone: false,
 })
 export class ExamResultOverviewComponent implements OnInit, OnChanges {
     readonly IncludedInOverallScore = IncludedInOverallScore;

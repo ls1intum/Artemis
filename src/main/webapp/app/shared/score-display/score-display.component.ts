@@ -7,6 +7,7 @@ import { faQuestionCircle } from '@fortawesome/free-solid-svg-icons';
     selector: 'jhi-score-display',
     templateUrl: './score-display.component.html',
     styleUrls: ['./score-display.component.scss'],
+    standalone: false,
 })
 export class ScoreDisplayComponent implements OnChanges {
     @Input() maxBonusPoints = 0;

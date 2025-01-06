@@ -13,6 +13,7 @@ import { combineLatest } from 'rxjs';
     selector: 'jhi-create-text-unit',
     templateUrl: './create-text-unit.component.html',
     styles: [],
+    standalone: false,
 })
 export class CreateTextUnitComponent implements OnInit {
     textUnitToCreate: TextUnit = new TextUnit();

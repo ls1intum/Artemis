@@ -4,5 +4,6 @@ import { Component } from '@angular/core';
     selector: 'jhi-close-circle',
     templateUrl: './close-circle.component.html',
     styleUrls: ['./close-circle.component.scss'],
+    standalone: false,
 })
 export class CloseCircleComponent {}

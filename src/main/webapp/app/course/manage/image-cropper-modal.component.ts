@@ -6,6 +6,7 @@ import { OutputFormat } from 'app/shared/image-cropper/interfaces/cropper-option
 @Component({
     selector: 'jhi-image-cropper-modal',
     templateUrl: './image-cropper-modal.component.html',
+    standalone: false,
 })
 export class ImageCropperModalComponent {
     uploadFile?: File;

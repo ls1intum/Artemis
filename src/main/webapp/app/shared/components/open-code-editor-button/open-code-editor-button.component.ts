@@ -8,6 +8,7 @@ import { Exercise } from 'app/entities/exercise.model';
 @Component({
     selector: 'jhi-open-code-editor-button',
     templateUrl: './open-code-editor-button.component.html',
+    standalone: false,
 })
 export class OpenCodeEditorButtonComponent implements OnChanges {
     readonly FeatureToggle = FeatureToggle;

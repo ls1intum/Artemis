@@ -6,6 +6,7 @@ import { FeedbackItem } from 'app/exercises/shared/feedback/item/feedback-item';
     selector: 'jhi-feedback-collapse',
     styleUrls: ['./feedback-collapse.scss'],
     templateUrl: './feedback-collapse.component.html',
+    standalone: false,
 })
 /**
  * smallCharacterLimit can be adjusted make smaller or bigger items collapsable

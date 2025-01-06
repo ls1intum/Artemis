@@ -22,6 +22,7 @@ type FilesWithType = { [p: string]: FileType };
     styleUrls: ['./text-submission-viewer.component.scss'],
     templateUrl: './text-submission-viewer.component.html',
     encapsulation: ViewEncapsulation.None,
+    standalone: false,
 })
 export class TextSubmissionViewerComponent implements OnChanges {
     @Input() exercise: ProgrammingExercise | TextExercise;

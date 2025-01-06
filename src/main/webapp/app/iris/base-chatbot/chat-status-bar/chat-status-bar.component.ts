@@ -6,6 +6,7 @@ import { IrisStageDTO, IrisStageStateDTO } from 'app/entities/iris/iris-stage-dt
     selector: 'jhi-chat-status-bar',
     templateUrl: './chat-status-bar.component.html',
     styleUrl: './chat-status-bar.component.scss',
+    standalone: false,
 })
 export class ChatStatusBarComponent implements OnChanges {
     open = false;

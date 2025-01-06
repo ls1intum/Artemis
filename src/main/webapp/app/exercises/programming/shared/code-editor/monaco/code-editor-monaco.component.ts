@@ -52,7 +52,6 @@ export type Annotation = { fileName: string; row: number; column: number; text: 
     encapsulation: ViewEncapsulation.None,
     imports: [ArtemisSharedModule, ArtemisProgrammingManualAssessmentModule, MonacoEditorComponent, CodeEditorHeaderComponent],
     providers: [RepositoryFileService],
-    standalone: true,
     changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class CodeEditorMonacoComponent implements OnChanges {

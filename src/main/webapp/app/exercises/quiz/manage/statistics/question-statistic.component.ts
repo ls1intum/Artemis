@@ -19,7 +19,10 @@ export const blueColor = '#428bca';
 export const lightBlueColor = '#5bc0de';
 export const greyColor = '#838383';
 
-@Component({ template: '' })
+@Component({
+    template: '',
+    standalone: false,
+})
 export abstract class QuestionStatisticComponent extends QuizStatistics implements OnInit, OnDestroy {
     question: QuizQuestion;
     questionStatistic: QuizQuestionStatistic;

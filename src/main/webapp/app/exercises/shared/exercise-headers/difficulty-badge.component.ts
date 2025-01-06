@@ -6,6 +6,7 @@ import { DifficultyLevel, Exercise } from 'app/entities/exercise.model';
 @Component({
     selector: 'jhi-difficulty-badge',
     templateUrl: './difficulty-badge.component.html',
+    standalone: false,
 })
 export class DifficultyBadgeComponent implements OnInit, OnDestroy, OnChanges {
     @Input() exercise: Exercise;

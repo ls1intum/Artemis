@@ -18,6 +18,7 @@ import { combineLatest } from 'rxjs';
 @Component({
     selector: 'jhi-assessment-locks',
     templateUrl: './assessment-locks.component.html',
+    standalone: false,
 })
 export class AssessmentLocksComponent implements OnInit {
     readonly ExerciseType = ExerciseType;

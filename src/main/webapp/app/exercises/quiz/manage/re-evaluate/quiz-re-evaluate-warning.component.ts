@@ -15,6 +15,7 @@ import { ArtemisNavigationUtilService } from 'app/utils/navigation.utils';
     selector: 'jhi-quiz-re-evaluate-warning',
     templateUrl: './quiz-re-evaluate-warning.component.html',
     styleUrls: ['../../shared/quiz.scss'],
+    standalone: false,
 })
 export class QuizReEvaluateWarningComponent implements OnInit {
     isSaving: boolean;

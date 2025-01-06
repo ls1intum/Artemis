@@ -23,6 +23,7 @@ import { UserSshPublicKey } from 'app/entities/programming/user-ssh-public-key.m
     selector: 'jhi-code-button',
     templateUrl: './code-button.component.html',
     styleUrls: ['./code-button.component.scss'],
+    standalone: false,
 })
 export class CodeButtonComponent implements OnInit, OnChanges {
     readonly FeatureToggle = FeatureToggle;

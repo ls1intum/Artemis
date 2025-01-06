@@ -10,6 +10,7 @@ import { Observable } from 'rxjs';
     selector: 'jhi-rating',
     templateUrl: './rating.component.html',
     styleUrls: ['./rating.component.scss'],
+    standalone: false,
 })
 export class RatingComponent implements OnInit, OnChanges {
     public rating: number;

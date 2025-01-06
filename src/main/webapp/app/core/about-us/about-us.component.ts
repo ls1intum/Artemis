@@ -10,6 +10,7 @@ import { ContributorModel } from 'app/core/about-us/models/contributor-model';
     selector: 'jhi-about-us',
     templateUrl: './about-us.component.html',
     styleUrls: ['./about-us.component.scss'],
+    standalone: false,
 })
 export class AboutUsComponent implements OnInit {
     private readonly ISSUE_BASE_URL = 'https://github.com/ls1intum/Artemis/issues/new?projects=ls1intum/1';

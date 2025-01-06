@@ -18,6 +18,7 @@ import { faSort, faTimes } from '@fortawesome/free-solid-svg-icons';
 @Component({
     selector: 'jhi-test-run-management',
     templateUrl: './test-run-management.component.html',
+    standalone: false,
 })
 export class TestRunManagementComponent implements OnInit {
     course: Course;

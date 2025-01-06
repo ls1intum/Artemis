@@ -13,6 +13,7 @@ import { HttpResponse } from '@angular/common/http';
     selector: 'jhi-exercise-statistics',
     templateUrl: './exercise-statistics.component.html',
     styleUrls: ['../../../course/manage/course-management-statistics.component.scss'],
+    standalone: false,
 })
 export class ExerciseStatisticsComponent implements OnInit {
     // html properties

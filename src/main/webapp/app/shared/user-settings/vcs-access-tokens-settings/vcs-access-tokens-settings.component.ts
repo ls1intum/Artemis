@@ -11,6 +11,7 @@ import { AlertService } from 'app/core/util/alert.service';
     selector: 'jhi-account-information',
     templateUrl: './vcs-access-tokens-settings.component.html',
     styleUrls: ['../user-settings.scss'],
+    standalone: false,
 })
 export class VcsAccessTokensSettingsComponent implements OnInit, OnDestroy {
     currentUser?: User;

@@ -16,6 +16,7 @@ import { Subject } from 'rxjs';
     selector: 'jhi-registered-students',
     templateUrl: './registered-students.component.html',
     changeDetection: ChangeDetectionStrategy.OnPush,
+    standalone: false,
 })
 export class RegisteredStudentsComponent implements OnDestroy {
     @Input()

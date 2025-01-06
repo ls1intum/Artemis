@@ -14,6 +14,7 @@ import { captureException } from '@sentry/angular';
     selector: 'jhi-create-tutorial-group-free-day',
     templateUrl: './create-tutorial-group-free-period.component.html',
     changeDetection: ChangeDetectionStrategy.OnPush,
+    standalone: false,
 })
 export class CreateTutorialGroupFreePeriodComponent implements OnDestroy {
     ngUnsubscribe = new Subject<void>();

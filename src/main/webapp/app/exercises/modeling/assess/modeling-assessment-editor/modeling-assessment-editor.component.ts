@@ -36,6 +36,7 @@ import { faCircleNotch, faQuestionCircle } from '@fortawesome/free-solid-svg-ico
     selector: 'jhi-modeling-assessment-editor',
     templateUrl: './modeling-assessment-editor.component.html',
     styleUrls: ['./modeling-assessment-editor.component.scss'],
+    standalone: false,
 })
 export class ModelingAssessmentEditorComponent implements OnInit {
     totalScore = 0;

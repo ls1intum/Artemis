@@ -6,6 +6,7 @@ import { Exercise } from 'app/entities/exercise.model';
     selector: 'jhi-not-released-tag',
     templateUrl: './not-released-tag.component.html',
     styleUrls: ['./not-released-tag.component.scss'],
+    standalone: false,
 })
 export class NotReleasedTagComponent {
     @Input() public exercise: Exercise;

@@ -12,6 +12,7 @@ import { faBook, faChalkboardTeacher } from '@fortawesome/free-solid-svg-icons';
     templateUrl: './tutor-participation-graph.component.html',
     styleUrls: ['./tutor-participation-graph.component.scss'],
     encapsulation: ViewEncapsulation.None,
+    standalone: false,
 })
 export class TutorParticipationGraphComponent implements OnInit, OnChanges {
     @Input() public tutorParticipation: TutorParticipation;

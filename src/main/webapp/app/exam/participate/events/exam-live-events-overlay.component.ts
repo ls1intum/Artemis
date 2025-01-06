@@ -11,6 +11,7 @@ import dayjs from 'dayjs/esm';
     selector: 'jhi-exam-live-events-overlay',
     templateUrl: './exam-live-events-overlay.component.html',
     styleUrls: ['./exam-live-events-overlay.component.scss'],
+    standalone: false,
 })
 export class ExamLiveEventsOverlayComponent implements OnInit, OnDestroy {
     private allLiveEventsSubscription?: Subscription;

@@ -27,6 +27,7 @@ import { CourseCompetencyService } from 'app/course/competencies/course-competen
             useExisting: forwardRef(() => CompetencySelectionComponent),
         },
     ],
+    standalone: false,
 })
 export class CompetencySelectionComponent implements OnInit, ControlValueAccessor {
     @Input() labelName: string;

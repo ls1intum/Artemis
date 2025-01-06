@@ -13,7 +13,6 @@ import { GitDiffLineStatComponent } from 'app/exercises/programming/git-diff-rep
 @Component({
     selector: 'jhi-programming-diff-report-detail',
     templateUrl: 'programming-diff-report-detail.component.html',
-    standalone: true,
     imports: [ArtemisSharedModule, ArtemisSharedComponentModule, GitDiffLineStatComponent],
 })
 export class ProgrammingDiffReportDetailComponent implements OnDestroy {

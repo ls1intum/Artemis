@@ -13,6 +13,7 @@ import { combineLatest } from 'rxjs';
     selector: 'jhi-edit-online-unit',
     templateUrl: './edit-online-unit.component.html',
     styles: [],
+    standalone: false,
 })
 export class EditOnlineUnitComponent implements OnInit {
     isLoading = false;

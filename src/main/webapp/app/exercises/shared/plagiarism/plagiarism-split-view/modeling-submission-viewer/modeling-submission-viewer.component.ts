@@ -10,6 +10,7 @@ import { UMLModel } from '@ls1intum/apollon';
     selector: 'jhi-modeling-submission-viewer',
     styleUrls: ['./modeling-submission-viewer.component.scss'],
     templateUrl: './modeling-submission-viewer.component.html',
+    standalone: false,
 })
 export class ModelingSubmissionViewerComponent implements OnChanges {
     @Input() exercise: ModelingExercise;

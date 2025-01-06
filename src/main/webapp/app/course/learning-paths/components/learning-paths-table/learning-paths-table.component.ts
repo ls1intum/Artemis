@@ -21,7 +21,6 @@ enum TableColumn {
 
 @Component({
     selector: 'jhi-learning-paths-table',
-    standalone: true,
     changeDetection: ChangeDetectionStrategy.OnPush,
     imports: [NgbPaginationModule, NgbTypeaheadModule, FormsModule, FontAwesomeModule, ArtemisSharedModule],
     templateUrl: './learning-paths-table.component.html',

@@ -44,6 +44,7 @@ import { ArtemisServerDateService } from 'app/shared/server-date.service';
     templateUrl: './quiz-participation.component.html',
     providers: [ParticipationService],
     styleUrls: ['./quiz-participation.component.scss'],
+    standalone: false,
 })
 export class QuizParticipationComponent implements OnInit, OnDestroy {
     // make constants available to html for comparison

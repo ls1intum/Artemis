@@ -8,6 +8,7 @@ import { FileBadge } from 'app/exercises/programming/shared/code-editor/model/co
     selector: 'jhi-code-editor-file-browser-file',
     templateUrl: './code-editor-file-browser-file.component.html',
     providers: [NgbModal],
+    standalone: false,
 })
 export class CodeEditorFileBrowserFileComponent extends CodeEditorFileBrowserNodeComponent {
     @Input() disableActions: boolean;

@@ -6,6 +6,7 @@ import { CommitState, EditorState } from 'app/exercises/programming/shared/code-
     selector: 'jhi-code-editor-status',
     templateUrl: './code-editor-status.component.html',
     providers: [],
+    standalone: false,
 })
 export class CodeEditorStatusComponent {
     CommitState = CommitState;

@@ -16,6 +16,7 @@ import { Course } from 'app/entities/course.model';
     selector: 'jhi-edit-tutorial-group',
     templateUrl: './edit-tutorial-group.component.html',
     changeDetection: ChangeDetectionStrategy.OnPush,
+    standalone: false,
 })
 export class EditTutorialGroupComponent implements OnInit, OnDestroy {
     ngUnsubscribe = new Subject<void>();

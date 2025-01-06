@@ -10,7 +10,6 @@ import { ArtemisSharedModule } from 'app/shared/shared.module';
     selector: 'jhi-saml2-login',
     templateUrl: './saml2-login.component.html',
     styles: [],
-    standalone: true,
     imports: [ArtemisSharedModule],
 })
 export class Saml2LoginComponent implements OnInit {

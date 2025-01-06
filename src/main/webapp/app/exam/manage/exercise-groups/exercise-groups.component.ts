@@ -39,6 +39,7 @@ import { PROFILE_LOCALCI, PROFILE_LOCALVC } from 'app/app.constants';
     selector: 'jhi-exercise-groups',
     templateUrl: './exercise-groups.component.html',
     styleUrls: ['./exercise-groups.component.scss'],
+    standalone: false,
 })
 export class ExerciseGroupsComponent implements OnInit {
     participationType = ProgrammingExerciseParticipationType;

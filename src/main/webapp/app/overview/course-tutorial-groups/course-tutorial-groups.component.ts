@@ -38,6 +38,7 @@ const DEFAULT_SHOW_ALWAYS: SidebarItemShowAlways = {
     selector: 'jhi-course-tutorial-groups',
     templateUrl: './course-tutorial-groups.component.html',
     changeDetection: ChangeDetectionStrategy.OnPush,
+    standalone: false,
 })
 export class CourseTutorialGroupsComponent implements OnInit, OnDestroy {
     ngUnsubscribe = new Subject<void>();

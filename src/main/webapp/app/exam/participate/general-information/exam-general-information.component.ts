@@ -8,6 +8,7 @@ import dayjs from 'dayjs/esm';
     selector: 'jhi-exam-general-information',
     styleUrls: ['./exam-general-information.component.scss'],
     templateUrl: './exam-general-information.component.html',
+    standalone: false,
 })
 export class ExamGeneralInformationComponent implements OnChanges {
     @Input() exam: Exam;

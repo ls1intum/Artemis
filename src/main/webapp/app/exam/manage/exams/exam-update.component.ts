@@ -22,6 +22,7 @@ import { examWorkingTime, normalWorkingTime } from 'app/exam/participate/exam.ut
 @Component({
     selector: 'jhi-exam-update',
     templateUrl: './exam-update.component.html',
+    standalone: false,
 })
 export class ExamUpdateComponent implements OnInit, OnDestroy {
     protected readonly faSave = faSave;

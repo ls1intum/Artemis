@@ -12,7 +12,6 @@ import { StudentExam } from 'app/entities/student-exam.model';
 
 @Component({
     selector: 'jhi-exam-bar',
-    standalone: true,
     imports: [CommonModule, ArtemisSharedCommonModule, ArtemisExamTimerModule, ArtemisExamLiveEventsModule],
     templateUrl: './exam-bar.component.html',
     styleUrl: './exam-bar.component.scss',

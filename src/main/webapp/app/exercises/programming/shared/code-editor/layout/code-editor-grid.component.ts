@@ -11,6 +11,7 @@ import { CollapsableCodeEditorElement } from 'app/exercises/programming/shared/c
     templateUrl: './code-editor-grid.component.html',
     styleUrls: ['./code-editor-grid.scss'],
     encapsulation: ViewEncapsulation.None,
+    standalone: false,
 })
 export class CodeEditorGridComponent implements AfterViewInit {
     @ContentChild('editorSidebarRight', { static: false }) editorSidebarRight: ElementRef;

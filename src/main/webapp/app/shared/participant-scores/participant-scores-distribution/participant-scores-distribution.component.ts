@@ -17,6 +17,7 @@ interface NgxClickEvent {
     selector: 'jhi-participant-scores-distribution',
     templateUrl: './participant-scores-distribution.component.html',
     styleUrls: ['./participant-score-distribution.component.scss', '../../chart/vertical-bar-chart.scss'],
+    standalone: false,
 })
 export class ParticipantScoresDistributionComponent implements OnInit, OnChanges {
     @Input()

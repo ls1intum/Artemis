@@ -18,6 +18,7 @@ import { combineLatest, takeWhile } from 'rxjs';
     selector: 'jhi-student-exam-detail',
     templateUrl: './student-exam-detail.component.html',
     styleUrls: ['./student-exam-detail.component.scss'],
+    standalone: false,
 })
 export class StudentExamDetailComponent implements OnInit, OnDestroy {
     examId: number;

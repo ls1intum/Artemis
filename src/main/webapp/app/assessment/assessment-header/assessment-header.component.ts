@@ -20,6 +20,7 @@ import { faSquareCaretRight } from '@fortawesome/free-regular-svg-icons';
     selector: 'jhi-assessment-header',
     templateUrl: './assessment-header.component.html',
     styleUrls: ['./assessment-header.component.scss'],
+    standalone: false,
 })
 export class AssessmentHeaderComponent {
     @Input() isLoading: boolean;

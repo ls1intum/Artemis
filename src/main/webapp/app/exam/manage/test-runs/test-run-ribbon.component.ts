@@ -10,5 +10,6 @@ import { Component } from '@angular/core';
         </div>
     `,
     styleUrls: ['../../../shared/layouts/profiles/page-ribbon.scss'],
+    standalone: false,
 })
 export class TestRunRibbonComponent {}

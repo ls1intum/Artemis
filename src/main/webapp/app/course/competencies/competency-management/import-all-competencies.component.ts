@@ -38,7 +38,6 @@ export type ImportAllFromCourseResult = {
 @Component({
     selector: 'jhi-import-all-competencies',
     templateUrl: './import-all-competencies.component.html',
-    standalone: true,
     imports: [ArtemisSharedCommonModule, ArtemisSharedComponentModule],
 })
 export class ImportAllCompetenciesComponent extends ImportComponent<CourseForImportDTO> {

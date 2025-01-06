@@ -6,6 +6,7 @@ import { SubmissionType } from 'app/entities/submission.model';
 @Component({
     selector: 'jhi-result-summary-exercise-card-header',
     templateUrl: './exam-result-summary-exercise-card-header.component.html',
+    standalone: false,
 })
 export class ExamResultSummaryExerciseCardHeaderComponent {
     @Input() index: number;

@@ -20,6 +20,7 @@ import { CachedRepositoryFilesService } from 'app/exercises/programming/manage/s
     selector: 'jhi-programming-exam-diff',
     templateUrl: './programming-exercise-exam-diff.component.html',
     providers: [{ provide: ExamSubmissionComponent, useExisting: ProgrammingExerciseExamDiffComponent }],
+    standalone: false,
 })
 export class ProgrammingExerciseExamDiffComponent extends ExamPageComponent implements OnInit, OnDestroy {
     @Input() exercise: ProgrammingExercise;

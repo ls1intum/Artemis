@@ -15,6 +15,7 @@ import { AlertService, AlertType } from 'app/core/util/alert.service';
     selector: 'jhi-account-information',
     templateUrl: './account-information.component.html',
     styleUrls: ['../user-settings.scss'],
+    standalone: false,
 })
 export class AccountInformationComponent implements OnInit {
     currentUser?: User;

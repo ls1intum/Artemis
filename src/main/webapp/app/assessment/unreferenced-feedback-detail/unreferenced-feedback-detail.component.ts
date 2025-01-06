@@ -10,6 +10,7 @@ import { FeedbackService } from 'app/exercises/shared/feedback/feedback.service'
     selector: 'jhi-unreferenced-feedback-detail',
     templateUrl: './unreferenced-feedback-detail.component.html',
     styleUrls: ['./unreferenced-feedback-detail.component.scss'],
+    standalone: false,
 })
 export class UnreferencedFeedbackDetailComponent implements OnInit {
     @Input() public feedback: Feedback;

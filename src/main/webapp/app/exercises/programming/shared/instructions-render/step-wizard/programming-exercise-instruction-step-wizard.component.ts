@@ -11,6 +11,7 @@ import { faCheck, faCircle, faTimes } from '@fortawesome/free-solid-svg-icons';
     selector: 'jhi-programming-exercise-instructions-step-wizard',
     templateUrl: './programming-exercise-instruction-step-wizard.component.html',
     styleUrls: ['./programming-exercise-instruction-step-wizard.scss'],
+    standalone: false,
 })
 export class ProgrammingExerciseInstructionStepWizardComponent implements OnChanges {
     TestCaseState = TestCaseState;

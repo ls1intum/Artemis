@@ -7,6 +7,7 @@ import { faLink, faTrash } from '@fortawesome/free-solid-svg-icons';
 @Component({
     selector: 'jhi-grading-instruction-link-icon',
     templateUrl: './grading-instruction-link-icon.component.html',
+    standalone: false,
 })
 export class GradingInstructionLinkIconComponent implements OnInit {
     @Input() linkIcon = faLink;

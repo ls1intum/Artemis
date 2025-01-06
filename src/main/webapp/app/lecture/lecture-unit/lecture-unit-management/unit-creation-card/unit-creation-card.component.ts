@@ -6,6 +6,7 @@ import { LectureUnitType } from 'app/entities/lecture-unit/lectureUnit.model';
 @Component({
     selector: 'jhi-unit-creation-card',
     templateUrl: './unit-creation-card.component.html',
+    standalone: false,
 })
 export class UnitCreationCardComponent {
     readonly documentationType: DocumentationType = 'Units';

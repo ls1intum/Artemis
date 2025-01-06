@@ -8,6 +8,7 @@ import { CdkDragDrop, moveItemInArray, transferArrayItem } from '@angular/cdk/dr
     templateUrl: './quiz-pool-mapping-question-list.component.html',
     styleUrls: ['./quiz-pool-mapping-question-list.component.scss'],
     encapsulation: ViewEncapsulation.None,
+    standalone: false,
 })
 export class QuizPoolMappingQuestionListComponent {
     @Input() quizQuestions: Array<QuizQuestion>;

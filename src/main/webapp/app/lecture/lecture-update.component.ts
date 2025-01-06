@@ -25,6 +25,7 @@ import { LectureUpdateUnitsComponent } from 'app/lecture/lecture-units/lecture-u
     selector: 'jhi-lecture-update',
     templateUrl: './lecture-update.component.html',
     styleUrls: ['./lecture-update.component.scss'],
+    standalone: false,
 })
 export class LectureUpdateComponent implements OnInit, OnDestroy {
     protected readonly documentationType: DocumentationType = 'Lecture';

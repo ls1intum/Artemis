@@ -10,7 +10,6 @@ import { ArtemisSharedModule } from 'app/shared/shared.module';
 @Component({
     selector: 'jhi-programming-auxiliary-repository-buttons-detail',
     templateUrl: 'programming-auxiliary-repository-buttons-detail.component.html',
-    standalone: true,
     imports: [NoDataComponent, RouterModule, ArtemisSharedComponentModule, ArtemisProgrammingExerciseActionsModule, ArtemisSharedModule],
 })
 export class ProgrammingAuxiliaryRepositoryButtonsDetailComponent {

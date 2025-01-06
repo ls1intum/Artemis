@@ -8,6 +8,7 @@ import { Organization } from 'app/entities/organization.model';
 @Component({
     selector: 'jhi-organization-selector',
     templateUrl: './organization-selector.component.html',
+    standalone: false,
 })
 export class OrganizationSelectorComponent implements OnInit {
     organizations: Organization[];

@@ -4,6 +4,7 @@ import { faCopy } from '@fortawesome/free-regular-svg-icons';
 @Component({
     selector: 'jhi-copy-icon-button',
     templateUrl: './copy-icon-button.component.html',
+    standalone: false,
 })
 export class CopyIconButtonComponent {
     @Input() copyText: string;

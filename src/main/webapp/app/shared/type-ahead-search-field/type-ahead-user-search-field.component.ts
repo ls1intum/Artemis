@@ -8,6 +8,7 @@ import { User } from 'app/core/user/user.model';
     selector: 'jhi-type-ahead-user-search-field',
     templateUrl: './type-ahead-user-search-field.component.html',
     styleUrls: ['./type-ahead-user-search-field.component.scss'],
+    standalone: false,
 })
 export class TypeAheadUserSearchFieldComponent {
     @Input() loginOrName: string;

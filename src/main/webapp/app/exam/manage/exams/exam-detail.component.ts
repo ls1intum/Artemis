@@ -22,6 +22,7 @@ import { ExerciseType } from 'app/entities/exercise.model';
 @Component({
     selector: 'jhi-exam-detail',
     templateUrl: './exam-detail.component.html',
+    standalone: false,
 })
 export class ExamDetailComponent implements OnInit, OnDestroy {
     exam: Exam;

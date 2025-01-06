@@ -17,6 +17,7 @@ import { TutorialGroupFreePeriodsManagementComponent } from 'app/course/tutorial
     selector: 'jhi-edit-tutorial-group-free-period',
     templateUrl: './edit-tutorial-group-free-period.component.html',
     changeDetection: ChangeDetectionStrategy.OnPush,
+    standalone: false,
 })
 export class EditTutorialGroupFreePeriodComponent implements OnDestroy {
     isLoading = false;

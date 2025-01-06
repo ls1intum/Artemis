@@ -16,7 +16,6 @@ import { ArtemisMarkdownModule } from 'app/shared/markdown.module';
 @Component({
     selector: 'jhi-competency-management-table',
     templateUrl: './competency-management-table.component.html',
-    standalone: true,
     imports: [ArtemisSharedModule, ArtemisMarkdownModule],
 })
 export class CompetencyManagementTableComponent implements OnInit, OnDestroy {

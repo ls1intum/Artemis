@@ -5,6 +5,7 @@ import { StringCountService } from 'app/exercises/text/participate/string-count.
     selector: 'jhi-textarea-counter',
     templateUrl: './textarea-counter.component.html',
     providers: [],
+    standalone: false,
 })
 export class TextareaCounterComponent {
     @Input() maxLength: number;

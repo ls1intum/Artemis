@@ -8,7 +8,6 @@ import { ArtemisSharedModule } from 'app/shared/shared.module';
     selector: 'jhi-code-editor-header',
     templateUrl: './code-editor-header.component.html',
     imports: [ArtemisSharedModule],
-    standalone: true,
     changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class CodeEditorHeaderComponent {

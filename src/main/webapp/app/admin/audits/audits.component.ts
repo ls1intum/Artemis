@@ -12,6 +12,7 @@ import { faSort } from '@fortawesome/free-solid-svg-icons';
 @Component({
     selector: 'jhi-audit',
     templateUrl: './audits.component.html',
+    standalone: false,
 })
 export class AuditsComponent implements OnInit {
     audits?: Audit[];

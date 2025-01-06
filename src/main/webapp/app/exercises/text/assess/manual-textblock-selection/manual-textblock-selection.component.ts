@@ -8,6 +8,7 @@ import { wordSelection } from 'app/exercises/text/shared/manual-text-selection/m
 @Component({
     selector: 'jhi-manual-textblock-selection',
     templateUrl: './manual-textblock-selection.component.html',
+    standalone: false,
 })
 export class ManualTextblockSelectionComponent {
     @Input() set textBlockRefs(textBlockRefs: TextBlockRef[]) {

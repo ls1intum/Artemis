@@ -7,6 +7,7 @@ import dayjs from 'dayjs/esm';
     templateUrl: './posting-thread.component.html',
     styleUrls: ['../metis.component.scss'],
     changeDetection: ChangeDetectionStrategy.OnPush,
+    standalone: false,
 })
 export class PostingThreadComponent {
     @Input() lastReadDate?: dayjs.Dayjs;

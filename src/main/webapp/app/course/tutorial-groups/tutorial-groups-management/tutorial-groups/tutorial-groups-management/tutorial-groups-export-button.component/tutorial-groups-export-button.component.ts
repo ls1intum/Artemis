@@ -9,6 +9,7 @@ import { AlertService } from 'app/core/util/alert.service';
     selector: 'jhi-tutorial-groups-export-button',
     templateUrl: './tutorial-groups-export-button.component.html',
     changeDetection: ChangeDetectionStrategy.OnPush,
+    standalone: false,
 })
 export class TutorialGroupsExportButtonComponent implements OnDestroy {
     ngUnsubscribe = new Subject<void>();

@@ -20,6 +20,7 @@ const IRRELEVANT_NOTIFICATION_TITLES = [NEW_MESSAGE_TITLE, LIVE_EXAM_EXERCISE_UP
     selector: 'jhi-notification-sidebar',
     templateUrl: './notification-sidebar.component.html',
     styleUrls: ['./notification-sidebar.scss'],
+    standalone: false,
 })
 export class NotificationSidebarComponent implements OnInit, OnDestroy {
     // HTML template related

@@ -65,6 +65,7 @@ export type Table = 'testCases' | 'codeAnalysis';
     styleUrls: ['./programming-exercise-configure-grading.scss'],
     encapsulation: ViewEncapsulation.None,
     providers: [ProgrammingExerciseTaskService],
+    standalone: false,
 })
 export class ProgrammingExerciseConfigureGradingComponent implements OnInit, OnDestroy, ComponentCanDeactivate {
     readonly EditableField = EditableField;

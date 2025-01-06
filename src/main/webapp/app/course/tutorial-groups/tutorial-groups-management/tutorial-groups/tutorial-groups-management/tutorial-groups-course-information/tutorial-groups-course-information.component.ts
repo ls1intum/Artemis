@@ -5,6 +5,7 @@ import { TutorialGroup } from 'app/entities/tutorial-group/tutorial-group.model'
     selector: 'jhi-tutorial-groups-course-information',
     templateUrl: './tutorial-groups-course-information.component.html',
     changeDetection: ChangeDetectionStrategy.OnPush,
+    standalone: false,
 })
 export class TutorialGroupsCourseInformationComponent {
     @Input()

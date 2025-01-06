@@ -27,6 +27,7 @@ import { NotificationService } from 'app/shared/notification/notification.servic
     styleUrls: ['./conversation-options.component.scss'],
     encapsulation: ViewEncapsulation.None,
     changeDetection: ChangeDetectionStrategy.OnPush,
+    standalone: false,
 })
 export class ConversationOptionsComponent implements OnInit, OnDestroy {
     private ngUnsubscribe = new Subject<void>();

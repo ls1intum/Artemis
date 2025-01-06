@@ -22,7 +22,6 @@ import { RouterLink } from '@angular/router';
     selector: 'jhi-overview-course-card',
     templateUrl: './course-card.component.html',
     styleUrls: ['course-card.scss'],
-    standalone: true,
     imports: [CourseCardHeaderComponent, ArtemisSharedCommonModule, NgxChartsModule, PieChartModule, TranslateDirective, RouterLink],
 })
 export class CourseCardComponent implements OnChanges {

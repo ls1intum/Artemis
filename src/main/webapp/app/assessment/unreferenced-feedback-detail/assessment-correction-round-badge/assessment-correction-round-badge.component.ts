@@ -5,6 +5,7 @@ import { Feedback } from 'app/entities/feedback.model';
     selector: 'jhi-assessment-correction-round-badge',
     templateUrl: './assessment-correction-round-badge.component.html',
     styleUrls: ['./assessment-correction-round-badge.component.scss'],
+    standalone: false,
 })
 export class AssessmentCorrectionRoundBadgeComponent {
     @Input() feedback: Feedback;

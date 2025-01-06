@@ -9,6 +9,7 @@ import dayjs from 'dayjs/esm';
 @Component({
     selector: 'jhi-submission-result-status',
     templateUrl: './submission-result-status.component.html',
+    standalone: false,
 })
 export class SubmissionResultStatusComponent implements OnChanges {
     private readonly initializationStatesToShowProgrammingResult = [InitializationState.INITIALIZED, InitializationState.INACTIVE, InitializationState.FINISHED];

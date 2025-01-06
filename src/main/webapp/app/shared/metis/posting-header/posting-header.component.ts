@@ -18,6 +18,7 @@ import { Post } from 'app/entities/metis/post.model';
     selector: 'jhi-posting-header',
     templateUrl: './posting-header.component.html',
     styleUrls: ['../metis.component.scss'],
+    standalone: false,
 })
 export class PostingHeaderComponent implements OnInit, OnDestroy, OnChanges {
     readOnlyMode = input<boolean>(false);

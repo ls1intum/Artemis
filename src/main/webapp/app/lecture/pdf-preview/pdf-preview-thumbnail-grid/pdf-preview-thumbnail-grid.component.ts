@@ -10,7 +10,6 @@ import { PdfPreviewEnlargedCanvasComponent } from 'app/lecture/pdf-preview/pdf-p
     selector: 'jhi-pdf-preview-thumbnail-grid-component',
     templateUrl: './pdf-preview-thumbnail-grid.component.html',
     styleUrls: ['./pdf-preview-thumbnail-grid.component.scss'],
-    standalone: true,
     imports: [ArtemisSharedModule, PdfPreviewEnlargedCanvasComponent],
 })
 export class PdfPreviewThumbnailGridComponent {

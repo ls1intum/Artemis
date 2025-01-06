@@ -12,6 +12,7 @@ import { ArtemisDurationFromSecondsPipe } from 'app/shared/pipes/artemis-duratio
     templateUrl: './create-test-run-modal.component.html',
     providers: [ArtemisDurationFromSecondsPipe],
     styles: ['.table tr.active td { background-color:#3e8acc; color: white; }'],
+    standalone: false,
 })
 export class CreateTestRunModalComponent implements OnInit {
     exam: Exam;

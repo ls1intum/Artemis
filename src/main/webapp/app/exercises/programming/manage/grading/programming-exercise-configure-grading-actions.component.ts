@@ -12,6 +12,7 @@ import { ProgrammingExercise } from 'app/entities/programming/programming-exerci
         <jhi-programming-exercise-re-evaluate-button [exercise]="exercise" [disabled]="isSaving" />
         <jhi-programming-exercise-trigger-all-button [exercise]="exercise" [disabled]="isSaving" (onBuildTriggered)="onBuildTriggered.emit()" />
     `,
+    standalone: false,
 })
 export class ProgrammingExerciseConfigureGradingActionsComponent {
     @Input() exercise: ProgrammingExercise;

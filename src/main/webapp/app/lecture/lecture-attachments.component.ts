@@ -25,6 +25,7 @@ export interface LectureAttachmentFormData {
     selector: 'jhi-lecture-attachments',
     templateUrl: './lecture-attachments.component.html',
     styleUrls: ['./lecture-attachments.component.scss'],
+    standalone: false,
 })
 export class LectureAttachmentsComponent implements OnDestroy {
     protected readonly faSpinner = faSpinner;

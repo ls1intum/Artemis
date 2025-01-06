@@ -4,6 +4,7 @@ import type { CommitInfo } from 'app/entities/programming/programming-submission
 @Component({
     selector: 'jhi-commits-info-group',
     templateUrl: './commits-info-group.component.html',
+    standalone: false,
 })
 export class CommitsInfoGroupComponent {
     @Input() commits: CommitInfo[];

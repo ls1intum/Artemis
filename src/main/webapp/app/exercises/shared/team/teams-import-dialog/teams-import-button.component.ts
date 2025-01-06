@@ -17,6 +17,7 @@ import { faPlus } from '@fortawesome/free-solid-svg-icons';
             (onClick)="openTeamsImportDialog($event)"
         />
     `,
+    standalone: false,
 })
 export class TeamsImportButtonComponent {
     ButtonType = ButtonType;

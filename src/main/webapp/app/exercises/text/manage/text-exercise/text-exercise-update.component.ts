@@ -35,6 +35,7 @@ import { FormulaAction } from 'app/shared/monaco-editor/model/actions/formula.ac
     selector: 'jhi-text-exercise-update',
     templateUrl: './text-exercise-update.component.html',
     changeDetection: ChangeDetectionStrategy.OnPush,
+    standalone: false,
 })
 export class TextExerciseUpdateComponent implements OnInit, OnDestroy, AfterViewInit {
     private activatedRoute = inject(ActivatedRoute);

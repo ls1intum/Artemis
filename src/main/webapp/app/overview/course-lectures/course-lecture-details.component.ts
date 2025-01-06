@@ -30,6 +30,7 @@ export interface LectureUnitCompletionEvent {
     selector: 'jhi-course-lecture-details',
     templateUrl: './course-lecture-details.component.html',
     styleUrls: ['../course-overview.scss', './course-lectures.scss'],
+    standalone: false,
 })
 export class CourseLectureDetailsComponent extends AbstractScienceComponent implements OnInit, OnDestroy {
     lectureId?: number;

@@ -7,6 +7,7 @@ import { AbstractDialogComponent } from 'app/overview/course-conversations/dialo
 @Component({
     selector: 'jhi-group-chat-create-dialog',
     templateUrl: './group-chat-create-dialog.component.html',
+    standalone: false,
 })
 export class GroupChatCreateDialogComponent extends AbstractDialogComponent {
     @Input()

@@ -26,6 +26,7 @@ import { Submission } from 'app/entities/submission.model';
             }
         </h6>
     `,
+    standalone: false,
 })
 export class AssessmentWarningComponent implements OnChanges {
     @Input() exercise: Exercise;

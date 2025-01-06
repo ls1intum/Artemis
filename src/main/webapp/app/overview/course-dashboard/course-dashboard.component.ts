@@ -23,6 +23,7 @@ import { AccountService } from 'app/core/auth/account.service';
     selector: 'jhi-course-dashboard',
     templateUrl: './course-dashboard.component.html',
     styleUrls: ['./course-dashboard.component.scss'],
+    standalone: false,
 })
 export class CourseDashboardComponent implements OnInit, OnDestroy {
     courseId: number;

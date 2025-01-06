@@ -20,6 +20,7 @@ export enum SwitchTimeSpanDirection {
     selector: 'jhi-course-detail-line-chart',
     templateUrl: './course-detail-line-chart.component.html',
     styleUrls: ['./course-detail-line-chart.component.scss'],
+    standalone: false,
 })
 export class CourseDetailLineChartComponent extends ActiveStudentsChart implements OnChanges {
     @Input()

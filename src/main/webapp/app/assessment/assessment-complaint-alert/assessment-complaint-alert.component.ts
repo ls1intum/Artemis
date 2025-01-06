@@ -8,6 +8,7 @@ import { Complaint, ComplaintType } from 'app/entities/complaint.model';
     selector: 'jhi-assessment-complaint-alert',
     templateUrl: './assessment-complaint-alert.component.html',
     styleUrls: [],
+    standalone: false,
 })
 export class AssessmentComplaintAlertComponent {
     ComplaintType = ComplaintType;

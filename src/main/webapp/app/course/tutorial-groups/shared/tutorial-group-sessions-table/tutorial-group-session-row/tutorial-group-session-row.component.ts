@@ -16,6 +16,7 @@ import { map } from 'rxjs';
     styleUrls: ['./tutorial-group-session-row.component.scss'],
     encapsulation: ViewEncapsulation.None,
     changeDetection: ChangeDetectionStrategy.OnPush,
+    standalone: false,
 })
 export class TutorialGroupSessionRowComponent implements OnChanges {
     @HostBinding('class') class = 'tutorial-group-session-row';

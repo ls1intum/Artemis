@@ -6,7 +6,6 @@ import { ArtemisSharedComponentModule } from 'app/shared/components/shared-compo
 @Component({
     selector: 'jhi-boolean-detail',
     templateUrl: 'boolean-detail.component.html',
-    standalone: true,
     imports: [NoDataComponent, ArtemisSharedComponentModule],
 })
 export class BooleanDetailComponent {

@@ -11,6 +11,7 @@ export interface GenericConfirmationTranslationKeys {
 @Component({
     selector: 'jhi-generic-confirmation-dialog',
     templateUrl: './generic-confirmation-dialog.component.html',
+    standalone: false,
 })
 export class GenericConfirmationDialogComponent extends AbstractDialogComponent {
     @Input()

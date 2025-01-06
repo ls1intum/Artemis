@@ -7,6 +7,7 @@ import { canJoinChannel, canLeaveConversation } from 'app/shared/metis/conversat
     selector: 'jhi-channel-item',
     templateUrl: './channel-item.component.html',
     styleUrls: ['./channel-item.component.scss'],
+    standalone: false,
 })
 export class ChannelItemComponent {
     canJoinChannel = canJoinChannel;

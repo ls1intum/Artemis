@@ -8,7 +8,6 @@ import { NgModel } from '@angular/forms';
 
 @Component({
     selector: 'jhi-programming-exercise-edit-checkout-directories',
-    standalone: true,
     imports: [ArtemisSharedComponentModule, ArtemisSharedCommonModule],
     templateUrl: './programming-exercise-edit-checkout-directories.component.html',
     styleUrls: ['../../../manage/programming-exercise-form.scss'],

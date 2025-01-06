@@ -21,6 +21,7 @@ const AVERAGE_GRAPH_COLOR = GraphColors.YELLOW;
     selector: 'jhi-course-exercise-lateness',
     templateUrl: './course-exercise-lateness.component.html',
     styleUrls: ['./course-exercise-lateness.component.scss'],
+    standalone: false,
 })
 export class CourseExerciseLatenessComponent implements OnInit, OnChanges, OnDestroy {
     @Input() exerciseLateness: ExerciseLateness[] = [];

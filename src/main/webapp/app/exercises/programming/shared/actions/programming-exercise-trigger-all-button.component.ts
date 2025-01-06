@@ -29,6 +29,7 @@ import { faBan, faRedo, faTimes } from '@fortawesome/free-solid-svg-icons';
             (onClick)="openTriggerAllModal()"
         />
     `,
+    standalone: false,
 })
 export class ProgrammingExerciseTriggerAllButtonComponent implements OnInit {
     FeatureToggle = FeatureToggle;
@@ -110,6 +111,7 @@ export class ProgrammingExerciseTriggerAllButtonComponent implements OnInit {
             </div>
         </form>
     `,
+    standalone: false,
 })
 export class ProgrammingExerciseInstructorTriggerAllDialogComponent {
     @Input() exerciseId: number;

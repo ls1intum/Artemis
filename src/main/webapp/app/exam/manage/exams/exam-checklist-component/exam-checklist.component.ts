@@ -15,6 +15,7 @@ import { captureException } from '@sentry/angular';
 @Component({
     selector: 'jhi-exam-checklist',
     templateUrl: './exam-checklist.component.html',
+    standalone: false,
 })
 export class ExamChecklistComponent implements OnChanges, OnInit, OnDestroy {
     @Input() exam: Exam;

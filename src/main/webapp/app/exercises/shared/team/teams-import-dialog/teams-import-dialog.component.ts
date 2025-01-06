@@ -17,6 +17,7 @@ import { faBan, faCircleNotch, faSpinner, faUpload } from '@fortawesome/free-sol
     templateUrl: './teams-import-dialog.component.html',
     styleUrls: ['./teams-import-dialog.component.scss'],
     encapsulation: ViewEncapsulation.None,
+    standalone: false,
 })
 export class TeamsImportDialogComponent implements OnInit, OnDestroy {
     readonly ImportStrategy = ImportStrategy;

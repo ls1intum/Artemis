@@ -9,6 +9,7 @@ import { Location } from '@angular/common';
     selector: 'jhi-small-sidebar-card',
     templateUrl: './sidebar-card-small.component.html',
     styleUrls: ['./sidebar-card-small.component.scss'],
+    standalone: false,
 })
 export class SidebarCardSmallComponent {
     DifficultyLevel = DifficultyLevel;

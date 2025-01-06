@@ -11,6 +11,7 @@ import { round } from 'app/shared/util/utils';
     selector: 'jhi-exam-timer',
     templateUrl: './exam-timer.component.html',
     styleUrls: ['./exam-timer.scss'],
+    standalone: false,
 })
 export class ExamTimerComponent implements OnInit, OnDestroy {
     @HostBinding('class.row') readonly row = true;

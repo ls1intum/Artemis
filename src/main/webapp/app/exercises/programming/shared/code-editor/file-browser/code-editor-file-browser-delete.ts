@@ -11,6 +11,7 @@ import { faBan, faTrashAlt } from '@fortawesome/free-solid-svg-icons';
     selector: 'jhi-code-editor-file-browser-delete',
     templateUrl: './code-editor-file-browser-delete.component.html',
     providers: [CodeEditorRepositoryFileService],
+    standalone: false,
 })
 export class CodeEditorFileBrowserDeleteComponent implements OnInit {
     @Input() fileNameToDelete: string;

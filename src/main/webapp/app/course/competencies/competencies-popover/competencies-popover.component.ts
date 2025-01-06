@@ -7,6 +7,7 @@ import { CompetencyLectureUnitLink } from 'app/entities/competency.model';
     templateUrl: './competencies-popover.component.html',
     styleUrls: ['./competencies-popover.component.scss'],
     encapsulation: ViewEncapsulation.None,
+    standalone: false,
 })
 export class CompetenciesPopoverComponent implements OnInit {
     @Input()

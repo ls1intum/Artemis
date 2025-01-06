@@ -24,7 +24,6 @@ import { InfiniteScrollModule } from 'ngx-infinite-scroll';
     templateUrl: './discussion-section.component.html',
     styleUrls: ['./discussion-section.component.scss'],
     imports: [FontAwesomeModule, ArtemisSharedModule, ArtemisPlagiarismCasesSharedModule, InfiniteScrollModule],
-    standalone: true,
     providers: [MetisService],
 })
 export class DiscussionSectionComponent extends CourseDiscussionDirective implements AfterViewInit, OnDestroy {

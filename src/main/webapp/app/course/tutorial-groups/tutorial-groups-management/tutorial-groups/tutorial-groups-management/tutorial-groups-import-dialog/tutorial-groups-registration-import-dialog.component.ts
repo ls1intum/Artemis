@@ -42,6 +42,7 @@ type filterValues = 'all' | 'onlyImported' | 'onlyNotImported';
     selector: 'jhi-tutorial-groups-import-dialog',
     templateUrl: './tutorial-groups-registration-import-dialog.component.html',
     styleUrls: ['./tutorial-groups-registration-import-dialog.component.scss'],
+    standalone: false,
 })
 export class TutorialGroupsRegistrationImportDialogComponent implements OnInit, OnDestroy {
     ngUnsubscribe = new Subject<void>();

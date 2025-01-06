@@ -7,6 +7,7 @@ import { AbstractDialogComponent } from 'app/overview/course-conversations/dialo
 @Component({
     selector: 'jhi-one-to-one-chat-create-dialog',
     templateUrl: './one-to-one-chat-create-dialog.component.html',
+    standalone: false,
 })
 export class OneToOneChatCreateDialogComponent extends AbstractDialogComponent {
     @Input()

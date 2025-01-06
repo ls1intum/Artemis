@@ -11,7 +11,6 @@ import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
 
 @Component({
     selector: 'jhi-learning-paths-state',
-    standalone: true,
     changeDetection: ChangeDetectionStrategy.OnPush,
     imports: [TranslateDirective, CommonModule, FontAwesomeModule],
     templateUrl: './learning-paths-state.component.html',

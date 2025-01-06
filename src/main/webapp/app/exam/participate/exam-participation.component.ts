@@ -52,6 +52,7 @@ type GenerateParticipationStatus = 'generating' | 'failed' | 'success';
     selector: 'jhi-exam-participation',
     templateUrl: './exam-participation.component.html',
     styleUrls: ['./exam-participation.scss'],
+    standalone: false,
 })
 export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentCanDeactivate {
     @ViewChildren(ExamSubmissionComponent)

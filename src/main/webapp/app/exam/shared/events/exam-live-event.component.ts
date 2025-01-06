@@ -13,6 +13,7 @@ import {
     selector: 'jhi-exam-live-event',
     templateUrl: './exam-live-event.component.html',
     styleUrls: ['./exam-live-event.component.scss'],
+    standalone: false,
 })
 export class ExamLiveEventComponent {
     @Input()

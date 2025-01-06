@@ -8,6 +8,7 @@ import { faEye, faPlus, faTimes, faWrench } from '@fortawesome/free-solid-svg-ic
 @Component({
     selector: 'jhi-organization-management',
     templateUrl: './organization-management.component.html',
+    standalone: false,
 })
 export class OrganizationManagementComponent implements OnInit {
     organizations: Organization[];

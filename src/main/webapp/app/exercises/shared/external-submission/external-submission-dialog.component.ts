@@ -16,6 +16,7 @@ import { faBan, faSave } from '@fortawesome/free-solid-svg-icons';
 @Component({
     selector: 'jhi-external-submission-dialog',
     templateUrl: './external-submission-dialog.component.html',
+    standalone: false,
 })
 export class ExternalSubmissionDialogComponent implements OnInit {
     readonly SCORE_PATTERN = SCORE_PATTERN;

@@ -36,6 +36,7 @@ import { IrisTextMessageContent } from 'app/entities/iris/iris-content-type.mode
             transition('visible => hidden', animate('300ms ease-in')),
         ]),
     ],
+    standalone: false,
 })
 export class IrisExerciseChatbotButtonComponent implements OnInit, OnDestroy {
     @Input()

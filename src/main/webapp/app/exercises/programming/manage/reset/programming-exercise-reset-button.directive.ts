@@ -5,6 +5,7 @@ import { ProgrammingExercise } from 'app/entities/programming/programming-exerci
 
 @Directive({
     selector: '[jhiProgrammingExerciseResetButton]',
+    standalone: false,
 })
 export class ProgrammingExerciseResetButtonDirective implements OnInit {
     @Input() programmingExercise: ProgrammingExercise;

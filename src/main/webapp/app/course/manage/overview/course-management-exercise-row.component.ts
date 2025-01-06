@@ -19,6 +19,7 @@ export enum ExerciseRowType {
     templateUrl: './course-management-exercise-row.component.html',
     styleUrls: ['course-management-exercise-row.scss'],
     changeDetection: ChangeDetectionStrategy.OnPush,
+    standalone: false,
 })
 export class CourseManagementExerciseRowComponent implements OnChanges {
     @Input() course: Course;

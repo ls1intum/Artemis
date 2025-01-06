@@ -13,6 +13,7 @@ import { convertDateFromServer } from 'app/utils/date.utils';
 @Component({
     selector: 'jhi-data-export',
     templateUrl: './data-export.component.html',
+    standalone: false,
 })
 export class DataExportComponent implements OnInit {
     readonly ActionType = ActionType;

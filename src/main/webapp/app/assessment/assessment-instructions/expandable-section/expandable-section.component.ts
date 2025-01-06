@@ -5,6 +5,7 @@ import { LocalStorageService } from 'ngx-webstorage';
 @Component({
     selector: 'jhi-expandable-section',
     templateUrl: './expandable-section.component.html',
+    standalone: false,
 })
 export class ExpandableSectionComponent implements OnInit {
     @Input() headerKey: string;

@@ -12,6 +12,7 @@ import { faBan, faSave } from '@fortawesome/free-solid-svg-icons';
 @Component({
     selector: 'jhi-exercise-group-update',
     templateUrl: './exercise-group-update.component.html',
+    standalone: false,
 })
 export class ExerciseGroupUpdateComponent implements OnInit {
     readonly alertType = 'info';

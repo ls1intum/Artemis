@@ -11,6 +11,7 @@ import { MonacoEditorComponent } from 'app/shared/monaco-editor/monaco-editor.co
     selector: 'jhi-programming-exercise-custom-aeolus-build-plan',
     templateUrl: './programming-exercise-custom-aeolus-build-plan.component.html',
     styleUrls: ['../../../programming-exercise-form.scss'],
+    standalone: false,
 })
 export class ProgrammingExerciseCustomAeolusBuildPlanComponent implements OnChanges {
     @Input() programmingExercise: ProgrammingExercise;

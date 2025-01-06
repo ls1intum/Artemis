@@ -12,6 +12,7 @@ import { NgxChartsSingleSeriesDataEntry } from 'app/shared/chart/ngx-charts-data
     selector: 'jhi-statistics-graph',
     templateUrl: './statistics-graph.component.html',
     styleUrls: ['../chart/vertical-bar-chart.scss'],
+    standalone: false,
 })
 export class StatisticsGraphComponent implements OnChanges {
     @Input()

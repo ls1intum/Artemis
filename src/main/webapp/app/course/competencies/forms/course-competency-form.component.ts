@@ -49,7 +49,10 @@ export interface CourseCompetencyFormData {
     masteryThreshold?: number;
 }
 
-@Component({ template: '' })
+@Component({
+    template: '',
+    standalone: false,
+})
 export abstract class CourseCompetencyFormComponent {
     abstract formData: CourseCompetencyFormData;
 

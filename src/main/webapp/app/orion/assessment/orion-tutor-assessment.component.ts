@@ -8,6 +8,7 @@ import { AlertService } from 'app/core/util/alert.service';
 @Component({
     selector: 'jhi-orion-course-management-exercises',
     templateUrl: './orion-tutor-assessment.component.html',
+    standalone: false,
 })
 export class OrionTutorAssessmentComponent {
     @ViewChild(CodeEditorTutorAssessmentContainerComponent) container: CodeEditorTutorAssessmentContainerComponent;

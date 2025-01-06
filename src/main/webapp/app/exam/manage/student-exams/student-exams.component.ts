@@ -35,6 +35,7 @@ export type ExamExerciseStartPreparationStatus = {
 @Component({
     selector: 'jhi-student-exams',
     templateUrl: './student-exams.component.html',
+    standalone: false,
 })
 export class StudentExamsComponent implements OnInit, OnDestroy {
     courseId: number;

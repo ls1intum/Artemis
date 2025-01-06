@@ -7,6 +7,7 @@ import { Observable } from 'rxjs';
     selector: 'jhi-team-participate-info-box',
     templateUrl: './team-participate-info-box.component.html',
     styleUrls: ['./team-participate-info-box.component.scss'],
+    standalone: false,
 })
 export class TeamParticipateInfoBoxComponent {
     @Input() exercise: Exercise;

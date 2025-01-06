@@ -33,6 +33,7 @@ const DEFAULT_SHOW_ALWAYS: CollapseState = {
     selector: 'jhi-course-exams',
     templateUrl: './course-exams.component.html',
     styleUrls: ['./course-exams.component.scss'],
+    standalone: false,
 })
 export class CourseExamsComponent implements OnInit, OnDestroy {
     courseId: number;

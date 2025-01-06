@@ -31,7 +31,6 @@ export enum ExerciseButtonStatus {
 
 @Component({
     selector: 'jhi-exam-navigation-sidebar',
-    standalone: true,
     imports: [ArtemisSidebarModule, ArtemisSharedModule, SidebarCardDirective],
     templateUrl: './exam-navigation-sidebar.component.html',
     styleUrl: './exam-navigation-sidebar.component.scss',

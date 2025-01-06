@@ -18,6 +18,7 @@ import { faCircleNotch, faClock, faRedo } from '@fortawesome/free-solid-svg-icon
 @Component({
     selector: 'jhi-programming-exercise-instructor-submission-state',
     templateUrl: './programming-exercise-instructor-submission-state.component.html',
+    standalone: false,
 })
 export class ProgrammingExerciseInstructorSubmissionStateComponent implements OnChanges, OnInit {
     FeatureToggle = FeatureToggle;

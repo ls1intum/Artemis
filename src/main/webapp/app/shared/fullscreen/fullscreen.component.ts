@@ -6,6 +6,7 @@ import { enterFullscreen, exitFullscreen, isFullScreen } from 'app/shared/util/f
     selector: 'jhi-fullscreen',
     templateUrl: './fullscreen.component.html',
     styleUrls: ['./fullscreen.scss'],
+    standalone: false,
 })
 export class FullscreenComponent {
     @Input()

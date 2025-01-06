@@ -4,6 +4,7 @@ import { faCheckCircle, faExclamationTriangle } from '@fortawesome/free-solid-sv
 @Component({
     selector: 'jhi-task-count-warning',
     templateUrl: './task-count-warning.component.html',
+    standalone: false,
 })
 export class TaskCountWarningComponent {
     readonly faExclamationTriangle = faExclamationTriangle;

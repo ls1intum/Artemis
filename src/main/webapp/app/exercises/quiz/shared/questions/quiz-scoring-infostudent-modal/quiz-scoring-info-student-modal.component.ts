@@ -16,6 +16,7 @@ import { faQuestionCircle } from '@fortawesome/free-regular-svg-icons';
     selector: 'jhi-quiz-scoring-infostudent-modal',
     templateUrl: './quiz-scoring-info-student-modal.component.html',
     styleUrls: ['./quiz-scoring-info-student-modal.component.scss'],
+    standalone: false,
 })
 export class QuizScoringInfoStudentModalComponent implements AfterViewInit {
     QuizQuestionType = QuizQuestionType;

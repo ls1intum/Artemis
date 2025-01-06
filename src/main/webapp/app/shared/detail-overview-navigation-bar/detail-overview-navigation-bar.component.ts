@@ -5,6 +5,7 @@ import { updateHeaderHeight } from 'app/shared/util/navbar.util';
     selector: 'jhi-detail-overview-navigation-bar',
     templateUrl: './detail-overview-navigation-bar.component.html',
     styleUrls: ['./detail-overview-navigation-bar.scss'],
+    standalone: false,
 })
 export class DetailOverviewNavigationBarComponent implements AfterViewInit {
     @Input()

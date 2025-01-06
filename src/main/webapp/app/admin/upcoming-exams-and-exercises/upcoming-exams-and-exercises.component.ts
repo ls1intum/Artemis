@@ -10,6 +10,7 @@ import { ExamManagementService } from 'app/exam/manage/exam-management.service';
     selector: 'jhi-upcoming-exams-and-exercises',
     templateUrl: './upcoming-exams-and-exercises.component.html',
     styles: ['.table {table-layout: fixed}'],
+    standalone: false,
 })
 export class UpcomingExamsAndExercisesComponent implements OnInit {
     upcomingExercises: Exercise[] = [];

@@ -5,6 +5,7 @@ import { isManualResult } from 'app/exercises/shared/result/result.utils';
 @Component({
     selector: 'jhi-assessment-progress-label',
     templateUrl: './assessment-progress-label.component.html',
+    standalone: false,
 })
 export class AssessmentProgressLabelComponent implements OnChanges {
     @Input()

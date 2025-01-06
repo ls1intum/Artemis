@@ -24,6 +24,7 @@ type FeatureToggleState = {
             </ngx-datatable-column>
         </ngx-datatable>
     `,
+    standalone: false,
 })
 export class AdminFeatureToggleComponent implements OnInit {
     public availableToggles: FeatureToggleState[] = [];

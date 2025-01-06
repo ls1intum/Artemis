@@ -14,6 +14,7 @@ import { takeUntil } from 'rxjs/operators';
     selector: 'jhi-tutorial-groups-checklist',
     templateUrl: './tutorial-groups-checklist.component.html',
     changeDetection: ChangeDetectionStrategy.OnPush,
+    standalone: false,
 })
 export class TutorialGroupsChecklistComponent implements OnInit, OnDestroy {
     isLoading = false;

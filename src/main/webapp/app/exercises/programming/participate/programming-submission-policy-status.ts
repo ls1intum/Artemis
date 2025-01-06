@@ -20,6 +20,7 @@ import { SubmissionPolicyType } from 'app/entities/submission-policy.model';
             </div>
         }
     `,
+    standalone: false,
 })
 export class ProgrammingSubmissionPolicyStatusComponent {
     @Input()

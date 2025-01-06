@@ -14,6 +14,7 @@ import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
             {{ 'artemisApp.orion.version.allowedVersion' | artemisTranslate }}<span class="badge bg-pill bg-info">{{ allowedMinimumVersion }}</span>
         </div>
     `,
+    standalone: false,
 })
 export class OrionOutdatedComponent implements OnInit {
     versionString: string;

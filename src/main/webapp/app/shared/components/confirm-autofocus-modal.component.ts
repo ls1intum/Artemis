@@ -4,6 +4,7 @@ import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 @Component({
     selector: 'jhi-confirm-modal',
     templateUrl: './confirm-autofocus-modal.component.html',
+    standalone: false,
 })
 export class ConfirmAutofocusModalComponent {
     @Input() title: string;

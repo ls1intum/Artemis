@@ -8,6 +8,7 @@ import { faCheck, faTrash } from '@fortawesome/free-solid-svg-icons';
     selector: 'jhi-code-editor-tutor-assessment-inline-feedback-suggestion',
     templateUrl: './code-editor-tutor-assessment-inline-feedback-suggestion.component.html',
     styleUrls: ['./code-editor-tutor-assessment-inline-feedback-suggestion.component.scss'],
+    standalone: false,
 })
 export class CodeEditorTutorAssessmentInlineFeedbackSuggestionComponent {
     @Input()

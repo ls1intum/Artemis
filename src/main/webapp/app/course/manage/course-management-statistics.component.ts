@@ -11,6 +11,7 @@ import { Course, isCommunicationEnabled } from 'app/entities/course.model';
     selector: 'jhi-course-management-statistics',
     templateUrl: './course-management-statistics.component.html',
     styleUrls: ['./course-management-statistics.component.scss'],
+    standalone: false,
 })
 export class CourseManagementStatisticsComponent implements OnInit {
     readonly documentationType: DocumentationType = 'Statistics';

@@ -6,6 +6,7 @@ import { Competency } from 'app/entities/competency.model';
 @Component({
     selector: 'jhi-import-competencies-table',
     templateUrl: './import-competencies-table.component.html',
+    standalone: false,
 })
 export class ImportCompetenciesTableComponent implements OnInit {
     @Input() content: SearchResult<Competency>;

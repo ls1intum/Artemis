@@ -58,6 +58,7 @@ function videoSourceUrlValidator(control: AbstractControl): ValidationErrors | u
 @Component({
     selector: 'jhi-video-unit-form',
     templateUrl: './video-unit-form.component.html',
+    standalone: false,
 })
 export class VideoUnitFormComponent {
     protected readonly faTimes = faTimes;

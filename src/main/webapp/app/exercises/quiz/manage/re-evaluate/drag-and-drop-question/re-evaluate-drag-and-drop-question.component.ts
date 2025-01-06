@@ -19,6 +19,7 @@ import { DragAndDropQuestionEditComponent } from 'app/exercises/quiz/manage/drag
         />
     `,
     providers: [],
+    standalone: false,
 })
 export class ReEvaluateDragAndDropQuestionComponent {
     /**

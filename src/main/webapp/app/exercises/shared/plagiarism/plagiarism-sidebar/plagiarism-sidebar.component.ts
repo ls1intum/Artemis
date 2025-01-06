@@ -9,6 +9,7 @@ import { faArrowLeft, faArrowRight, faChevronRight, faExclamationTriangle } from
     selector: 'jhi-plagiarism-sidebar',
     styleUrls: ['./plagiarism-sidebar.component.scss'],
     templateUrl: './plagiarism-sidebar.component.html',
+    standalone: false,
 })
 export class PlagiarismSidebarComponent implements OnChanges {
     @Input() activeID: number;

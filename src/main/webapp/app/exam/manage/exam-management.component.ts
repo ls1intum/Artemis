@@ -22,6 +22,7 @@ import { DocumentationType } from 'app/shared/components/documentation-button/do
     selector: 'jhi-exam-management',
     templateUrl: './exam-management.component.html',
     styleUrls: ['./exam-management.component.scss'],
+    standalone: false,
 })
 export class ExamManagementComponent implements OnInit, OnDestroy {
     readonly documentationType: DocumentationType = 'Exams';

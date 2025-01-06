@@ -12,6 +12,7 @@ import { PROFILE_AEOLUS, PROFILE_LOCALCI } from 'app/app.constants';
     selector: 'jhi-programming-exercise-reset-dialog',
     templateUrl: './programming-exercise-reset-dialog.component.html',
     styles: ['textarea { width: 100%; }'],
+    standalone: false,
 })
 export class ProgrammingExerciseResetDialogComponent implements OnInit {
     readonly FeatureToggle = FeatureToggle;

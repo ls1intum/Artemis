@@ -39,6 +39,7 @@ class ExerciseForTeam extends Exercise {
     templateUrl: './team-participation-table.component.html',
     styleUrls: ['./team-participation-table.component.scss'],
     encapsulation: ViewEncapsulation.None,
+    standalone: false,
 })
 export class TeamParticipationTableComponent implements OnInit {
     readonly ExerciseType = ExerciseType;

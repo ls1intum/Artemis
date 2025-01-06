@@ -19,6 +19,7 @@ import { PROFILE_LOCALVC } from 'app/app.constants';
 @Component({
     selector: 'jhi-programming-exam-summary',
     templateUrl: './programming-exam-summary.component.html',
+    standalone: false,
 })
 export class ProgrammingExamSummaryComponent implements OnInit {
     @Input() exercise: ProgrammingExercise;

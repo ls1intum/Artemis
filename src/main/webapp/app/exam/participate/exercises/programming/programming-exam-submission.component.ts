@@ -32,6 +32,7 @@ import { SubmissionVersion } from 'app/entities/submission-version.model';
         CodeEditorRepositoryService,
     ],
     styleUrls: ['./programming-exam-submission.component.scss'],
+    standalone: false,
 })
 export class ProgrammingExamSubmissionComponent extends ExamSubmissionComponent implements OnChanges, OnInit {
     exerciseType = ExerciseType.PROGRAMMING;

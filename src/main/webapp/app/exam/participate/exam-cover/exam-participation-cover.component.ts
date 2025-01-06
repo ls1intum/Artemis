@@ -19,6 +19,7 @@ import { Subscription } from 'rxjs';
     selector: 'jhi-exam-participation-cover',
     templateUrl: './exam-participation-cover.component.html',
     styleUrls: ['./exam-participation-cover.scss'],
+    standalone: false,
 })
 export class ExamParticipationCoverComponent implements OnChanges, OnDestroy, OnInit {
     /**

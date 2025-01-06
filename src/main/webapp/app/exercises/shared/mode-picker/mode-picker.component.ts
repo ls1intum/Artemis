@@ -11,6 +11,7 @@ export type ModePickerOption<TMode> = {
     selector: 'jhi-mode-picker',
     templateUrl: './mode-picker.component.html',
     styles: ['.btn.disabled { pointer-events: none }', '.btn-group.disabled { cursor: not-allowed; }'],
+    standalone: false,
 })
 export class ModePickerComponent<TMode> {
     @Input() options: ModePickerOption<TMode>[];

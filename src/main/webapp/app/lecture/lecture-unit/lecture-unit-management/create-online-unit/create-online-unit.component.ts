@@ -13,6 +13,7 @@ import { combineLatest } from 'rxjs';
     selector: 'jhi-create-online-unit',
     templateUrl: './create-online-unit.component.html',
     styles: [],
+    standalone: false,
 })
 export class CreateOnlineUnitComponent implements OnInit {
     onlineUnitToCreate: OnlineUnit = new OnlineUnit();

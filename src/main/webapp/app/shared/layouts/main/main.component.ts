@@ -14,6 +14,7 @@ import { LtiService } from 'app/shared/service/lti.service';
     selector: 'jhi-main',
     templateUrl: './main.component.html',
     styleUrls: ['./main.component.scss'],
+    standalone: false,
 })
 export class JhiMainComponent implements OnInit, OnDestroy {
     /**

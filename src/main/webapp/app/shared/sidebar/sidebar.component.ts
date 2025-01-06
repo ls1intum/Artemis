@@ -20,6 +20,7 @@ import { ExerciseFilterModalComponent } from 'app/shared/exercise-filter/exercis
     selector: 'jhi-sidebar',
     templateUrl: './sidebar.component.html',
     styleUrls: ['./sidebar.component.scss'],
+    standalone: false,
 })
 export class SidebarComponent implements OnDestroy, OnChanges, OnInit {
     @Output() onSelectConversation = new EventEmitter<number | string>();

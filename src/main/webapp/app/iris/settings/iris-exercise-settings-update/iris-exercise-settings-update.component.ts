@@ -7,6 +7,7 @@ import { ActivatedRoute } from '@angular/router';
 @Component({
     selector: 'jhi-iris-exercise-settings-update',
     templateUrl: './iris-exercise-settings-update.component.html',
+    standalone: false,
 })
 export class IrisExerciseSettingsUpdateComponent implements OnInit, ComponentCanDeactivate {
     @ViewChild(IrisSettingsUpdateComponent)

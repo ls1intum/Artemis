@@ -8,6 +8,7 @@ import { faChalkboardTeacher } from '@fortawesome/free-solid-svg-icons';
     selector: 'jhi-course-lecture-row',
     templateUrl: './course-lecture-row.component.html',
     styleUrls: ['../course-exercises/course-exercise-row.scss'],
+    standalone: false,
 })
 export class CourseLectureRowComponent {
     @HostBinding('class') classes = 'exercise-row';

@@ -5,6 +5,7 @@ import { Exam } from 'app/entities/exam/exam.model';
     selector: 'jhi-exam-mode-picker',
     templateUrl: './exam-mode-picker.component.html',
     styleUrls: ['./exam-mode-picker.component.scss'],
+    standalone: false,
 })
 export class ExamModePickerComponent {
     @Input() exam: Exam;

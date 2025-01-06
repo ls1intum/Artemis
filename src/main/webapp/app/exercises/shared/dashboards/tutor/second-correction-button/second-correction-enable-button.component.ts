@@ -5,6 +5,7 @@ import { faSpinner, faToggleOff, faToggleOn } from '@fortawesome/free-solid-svg-
     selector: 'jhi-second-correction-enable-button',
     templateUrl: './second-correction-enable-button.component.html',
     styles: ['div { cursor: pointer; }'],
+    standalone: false,
 })
 export class SecondCorrectionEnableButtonComponent {
     @Input() secondCorrectionEnabled: boolean;

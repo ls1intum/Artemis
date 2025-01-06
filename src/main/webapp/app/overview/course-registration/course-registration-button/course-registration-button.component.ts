@@ -9,6 +9,7 @@ import { AlertService } from 'app/core/util/alert.service';
 @Component({
     selector: 'jhi-course-registration-button',
     templateUrl: './course-registration-button.component.html',
+    standalone: false,
 })
 export class CourseRegistrationButtonComponent implements OnInit {
     @Input() course: Course;

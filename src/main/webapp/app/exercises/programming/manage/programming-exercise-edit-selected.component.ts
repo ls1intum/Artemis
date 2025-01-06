@@ -12,6 +12,7 @@ import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service'
 @Component({
     selector: 'jhi-programming-exercise-edit-selected',
     templateUrl: './programming-exercise-edit-selected.component.html',
+    standalone: false,
 })
 export class ProgrammingExerciseEditSelectedComponent implements OnInit {
     newProgrammingExercise: ProgrammingExercise;

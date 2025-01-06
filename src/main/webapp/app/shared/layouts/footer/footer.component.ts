@@ -5,6 +5,7 @@ import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
     selector: 'jhi-footer',
     templateUrl: './footer.component.html',
     styleUrls: ['./footer.scss'],
+    standalone: false,
 })
 export class FooterComponent implements OnInit {
     readonly RELEASE_URL = 'https://github.com/ls1intum/Artemis/releases';

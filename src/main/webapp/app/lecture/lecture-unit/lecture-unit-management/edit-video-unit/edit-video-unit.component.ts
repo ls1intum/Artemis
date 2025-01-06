@@ -13,6 +13,7 @@ import { combineLatest } from 'rxjs';
     selector: 'jhi-edit-video-unit',
     templateUrl: './edit-video-unit.component.html',
     styles: [],
+    standalone: false,
 })
 export class EditVideoUnitComponent implements OnInit {
     isLoading = false;

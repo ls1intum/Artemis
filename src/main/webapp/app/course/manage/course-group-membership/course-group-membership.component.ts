@@ -13,6 +13,7 @@ import { capitalize } from 'lodash-es';
 @Component({
     selector: 'jhi-course-group-membership',
     templateUrl: './course-group-membership.component.html',
+    standalone: false,
 })
 export class CourseGroupMembershipComponent implements OnInit {
     allCourseGroupUsers: User[] = [];

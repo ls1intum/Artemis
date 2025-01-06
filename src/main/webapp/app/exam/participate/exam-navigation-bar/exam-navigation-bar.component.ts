@@ -22,6 +22,7 @@ import { FileUploadSubmission } from 'app/entities/file-upload-submission.model'
     selector: 'jhi-exam-navigation-bar',
     templateUrl: './exam-navigation-bar.component.html',
     styleUrls: ['./exam-navigation-bar.component.scss'],
+    standalone: false,
 })
 export class ExamNavigationBarComponent implements OnInit, AfterViewInit {
     @Input() exercises: Exercise[] = [];

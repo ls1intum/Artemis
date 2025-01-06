@@ -14,6 +14,7 @@ import { ButtonSize, ButtonType } from 'app/shared/components/button.component';
 @Component({
     selector: 'jhi-quiz-exercise-manage-buttons',
     templateUrl: './quiz-exercise-manage-buttons.component.html',
+    standalone: false,
 })
 export class QuizExerciseManageButtonsComponent implements OnInit {
     protected readonly ActionType = ActionType;

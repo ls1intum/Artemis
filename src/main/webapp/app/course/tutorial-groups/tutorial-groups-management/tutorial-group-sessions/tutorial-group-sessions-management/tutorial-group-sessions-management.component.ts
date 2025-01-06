@@ -20,6 +20,7 @@ import { CreateTutorialGroupSessionComponent } from 'app/course/tutorial-groups/
     styleUrls: ['./tutorial-group-sessions-management.component.scss'],
     changeDetection: ChangeDetectionStrategy.OnPush,
     encapsulation: ViewEncapsulation.None,
+    standalone: false,
 })
 export class TutorialGroupSessionsManagementComponent implements OnDestroy {
     ngUnsubscribe = new Subject<void>();

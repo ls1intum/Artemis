@@ -6,6 +6,7 @@ import { LongFeedbackTextService } from 'app/exercises/shared/feedback/long-feed
     selector: 'jhi-feedback-text',
     styleUrls: ['./feedback-text.scss'],
     templateUrl: './feedback-text.component.html',
+    standalone: false,
 })
 export class FeedbackTextComponent implements OnInit {
     private readonly MAX_DISPLAYABLE_LENGTH = 20_000;

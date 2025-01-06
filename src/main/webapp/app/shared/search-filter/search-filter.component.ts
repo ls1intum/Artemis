@@ -7,7 +7,6 @@ import { ArtemisSharedModule } from 'app/shared/shared.module';
     selector: 'jhi-search-filter',
     templateUrl: './search-filter.component.html',
     styleUrls: ['./search-filter.component.scss'],
-    standalone: true,
     imports: [ArtemisSharedModule],
 })
 export class SearchFilterComponent {

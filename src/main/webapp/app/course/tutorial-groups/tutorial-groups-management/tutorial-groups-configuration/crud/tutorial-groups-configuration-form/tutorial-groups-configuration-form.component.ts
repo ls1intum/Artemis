@@ -14,6 +14,7 @@ export interface TutorialGroupsConfigurationFormData {
     templateUrl: './tutorial-groups-configuration-form.component.html',
     styleUrls: ['./tutorial-groups-configuration-form.component.scss'],
     changeDetection: ChangeDetectionStrategy.OnPush,
+    standalone: false,
 })
 export class TutorialGroupsConfigurationFormComponent implements OnInit, OnChanges {
     @Input()

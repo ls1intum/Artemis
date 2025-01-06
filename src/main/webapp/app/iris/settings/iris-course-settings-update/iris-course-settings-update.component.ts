@@ -7,6 +7,7 @@ import { IrisSettingsUpdateComponent } from 'app/iris/settings/iris-settings-upd
 @Component({
     selector: 'jhi-iris-course-settings-update',
     templateUrl: './iris-course-settings-update.component.html',
+    standalone: false,
 })
 export class IrisCourseSettingsUpdateComponent implements OnInit, ComponentCanDeactivate {
     @ViewChild(IrisSettingsUpdateComponent)

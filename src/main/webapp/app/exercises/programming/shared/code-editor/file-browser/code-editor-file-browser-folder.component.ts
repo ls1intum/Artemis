@@ -9,6 +9,7 @@ import { TreeviewItem } from 'app/exercises/programming/shared/code-editor/treev
     selector: 'jhi-code-editor-file-browser-folder',
     templateUrl: './code-editor-file-browser-folder.component.html',
     providers: [NgbModal],
+    standalone: false,
 })
 export class CodeEditorFileBrowserFolderComponent extends CodeEditorFileBrowserNodeComponent {
     @Input() onCollapseExpand: () => void;

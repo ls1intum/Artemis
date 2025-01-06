@@ -11,6 +11,7 @@ import { faRedo } from '@fortawesome/free-solid-svg-icons';
 @Component({
     selector: 'jhi-programming-exercise-student-trigger-build-button',
     templateUrl: './programming-exercise-trigger-build-button.component.html',
+    standalone: false,
 })
 export class ProgrammingExerciseStudentTriggerBuildButtonComponent extends ProgrammingExerciseTriggerBuildButtonComponent {
     @Input() triggerLastGraded = false;

@@ -15,6 +15,7 @@ import { objectToJsonBlob } from 'app/utils/blob-util';
     selector: 'jhi-edit-attachment-unit',
     templateUrl: './edit-attachment-unit.component.html',
     styles: [],
+    standalone: false,
 })
 export class EditAttachmentUnitComponent implements OnInit {
     @ViewChild('attachmentUnitForm')

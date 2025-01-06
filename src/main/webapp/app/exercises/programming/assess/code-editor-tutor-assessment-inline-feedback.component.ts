@@ -12,6 +12,7 @@ import { Subject } from 'rxjs';
 @Component({
     selector: 'jhi-code-editor-tutor-assessment-inline-feedback',
     templateUrl: './code-editor-tutor-assessment-inline-feedback.component.html',
+    standalone: false,
 })
 export class CodeEditorTutorAssessmentInlineFeedbackComponent {
     @Input()

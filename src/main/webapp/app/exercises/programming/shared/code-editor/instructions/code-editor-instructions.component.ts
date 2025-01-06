@@ -8,6 +8,7 @@ import interact from 'interactjs';
     selector: 'jhi-code-editor-instructions',
     styleUrls: ['./code-editor-instructions.scss'],
     templateUrl: './code-editor-instructions.component.html',
+    standalone: false,
 })
 export class CodeEditorInstructionsComponent implements AfterViewInit {
     @Output()

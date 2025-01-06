@@ -14,6 +14,7 @@ import { takeUntil } from 'rxjs/operators';
     selector: 'jhi-cancellation-modal',
     templateUrl: './cancellation-modal.component.html',
     changeDetection: ChangeDetectionStrategy.OnPush,
+    standalone: false,
 })
 export class CancellationModalComponent implements OnInit, OnDestroy {
     ngUnsubscribe = new Subject<void>();

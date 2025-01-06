@@ -15,6 +15,7 @@ import { faCalendarCheck, faCalendarMinus, faCalendarPlus } from '@fortawesome/f
         },
     ],
     styleUrls: ['./programming-exercise-test-schedule-picker.scss'],
+    standalone: false,
 })
 export class ProgrammingExerciseTestScheduleDatePickerComponent implements ControlValueAccessor {
     @ViewChild('dateInput', { static: false }) dateInput: NgModel;

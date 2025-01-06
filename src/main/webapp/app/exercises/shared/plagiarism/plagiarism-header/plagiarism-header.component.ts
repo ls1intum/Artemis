@@ -13,6 +13,7 @@ import { Exercise, getCourseId } from 'app/entities/exercise.model';
     selector: 'jhi-plagiarism-header',
     styleUrls: ['./plagiarism-header.component.scss'],
     templateUrl: './plagiarism-header.component.html',
+    standalone: false,
 })
 export class PlagiarismHeaderComponent {
     @Input() comparison: PlagiarismComparison<TextSubmissionElement | ModelingSubmissionElement>;

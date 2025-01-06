@@ -26,6 +26,7 @@ export enum ExamConductionState {
     selector: 'jhi-exam-status',
     templateUrl: './exam-status.component.html',
     styleUrls: ['./exam-status.component.scss'],
+    standalone: false,
 })
 export class ExamStatusComponent implements OnChanges, OnInit, OnDestroy {
     @Input()

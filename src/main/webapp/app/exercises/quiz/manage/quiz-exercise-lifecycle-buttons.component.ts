@@ -10,6 +10,7 @@ import { Subject } from 'rxjs';
 @Component({
     selector: 'jhi-quiz-exercise-lifecycle-buttons',
     templateUrl: './quiz-exercise-lifecycle-buttons.component.html',
+    standalone: false,
 })
 export class QuizExerciseLifecycleButtonsComponent {
     protected readonly QuizMode = QuizMode;

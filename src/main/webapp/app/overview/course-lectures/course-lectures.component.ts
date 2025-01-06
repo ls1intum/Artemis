@@ -35,6 +35,7 @@ const DEFAULT_SHOW_ALWAYS: SidebarItemShowAlways = {
     selector: 'jhi-course-lectures',
     templateUrl: './course-lectures.component.html',
     styleUrls: ['../course-overview.scss'],
+    standalone: false,
 })
 export class CourseLecturesComponent implements OnInit, OnDestroy {
     private parentParamSubscription: Subscription;

@@ -3,6 +3,7 @@ import { NgbPopover } from '@ng-bootstrap/ng-bootstrap';
 
 @Directive({
     selector: '[jhiStickyPopover]',
+    standalone: false,
 })
 export class StickyPopoverDirective extends NgbPopover implements OnInit, OnDestroy {
     @Input() jhiStickyPopover: TemplateRef<any>;

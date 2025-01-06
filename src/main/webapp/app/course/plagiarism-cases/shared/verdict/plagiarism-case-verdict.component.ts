@@ -5,6 +5,7 @@ import { PlagiarismVerdict } from 'app/exercises/shared/plagiarism/types/Plagiar
 @Component({
     selector: 'jhi-plagiarism-case-verdict',
     templateUrl: './plagiarism-case-verdict.component.html',
+    standalone: false,
 })
 export class PlagiarismCaseVerdictComponent {
     @Input() plagiarismCase: PlagiarismCase;

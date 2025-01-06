@@ -10,6 +10,7 @@ import { LtiConfigurationService } from 'app/admin/lti-configuration/lti-configu
 @Component({
     selector: 'jhi-edit-lti-configuration',
     templateUrl: './edit-lti-configuration.component.html',
+    standalone: false,
 })
 export class EditLtiConfigurationComponent implements OnInit {
     private route = inject(ActivatedRoute);

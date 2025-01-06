@@ -9,6 +9,7 @@ import { EXERCISE_TITLE_NAME_REGEX, SHORT_NAME_PATTERN } from 'app/shared/consta
     selector: 'jhi-exam-exercise-import',
     templateUrl: './exam-exercise-import.component.html',
     styleUrls: ['./exam-exercise-import.component.scss'],
+    standalone: false,
 })
 export class ExamExerciseImportComponent implements OnInit {
     @Input() exam: Exam;

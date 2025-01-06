@@ -6,6 +6,7 @@ import { getRelativeWorkingTimeExtension } from 'app/exam/participate/exam.utils
     selector: 'jhi-student-exam-working-time',
     templateUrl: './student-exam-working-time.component.html',
     providers: [],
+    standalone: false,
 })
 export class StudentExamWorkingTimeComponent implements OnInit {
     @Input() studentExam: StudentExam;

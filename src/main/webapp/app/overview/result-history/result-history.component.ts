@@ -10,6 +10,7 @@ export const MAX_RESULT_HISTORY_LENGTH = 5;
     selector: 'jhi-result-history',
     templateUrl: './result-history.component.html',
     styleUrls: ['./result-history.scss'],
+    standalone: false,
 })
 export class ResultHistoryComponent implements OnChanges {
     readonly getTextColorClass = getTextColorClass;

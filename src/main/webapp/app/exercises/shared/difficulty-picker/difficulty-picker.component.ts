@@ -5,6 +5,7 @@ import { DifficultyLevel, Exercise } from 'app/entities/exercise.model';
     selector: 'jhi-difficulty-picker',
     templateUrl: './difficulty-picker.component.html',
     styles: ['div { cursor: pointer; }'],
+    standalone: false,
 })
 export class DifficultyPickerComponent {
     readonly DifficultyLevel = DifficultyLevel;

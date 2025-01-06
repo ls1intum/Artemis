@@ -15,6 +15,7 @@ interface DockerFlags {
     selector: 'jhi-programming-exercise-build-configuration',
     templateUrl: './programming-exercise-build-configuration.component.html',
     styleUrls: ['../../../../programming-exercise-form.scss'],
+    standalone: false,
 })
 export class ProgrammingExerciseBuildConfigurationComponent implements OnInit {
     private profileService = inject(ProfileService);

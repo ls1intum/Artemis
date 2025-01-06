@@ -18,6 +18,7 @@ import { Subscription } from 'rxjs';
             useExisting: ConfirmEntityNameComponent,
         },
     ],
+    standalone: false,
 })
 export class ConfirmEntityNameComponent implements OnInit, OnDestroy, ControlValueAccessor, Validator {
     @Input() warningTextColor: string;

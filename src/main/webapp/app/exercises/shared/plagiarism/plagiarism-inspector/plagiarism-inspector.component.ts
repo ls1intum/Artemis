@@ -35,6 +35,7 @@ export type PlagiarismCheckState = {
     selector: 'jhi-plagiarism-inspector',
     styleUrls: ['./plagiarism-inspector.component.scss'],
     templateUrl: './plagiarism-inspector.component.html',
+    standalone: false,
 })
 export class PlagiarismInspectorComponent implements OnInit {
     /**

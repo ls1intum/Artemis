@@ -14,6 +14,7 @@ import { AlertService } from 'app/core/util/alert.service';
     templateUrl: './team.component.html',
     styleUrls: ['./team.component.scss'],
     encapsulation: ViewEncapsulation.None,
+    standalone: false,
 })
 export class TeamComponent implements OnInit {
     ButtonSize = ButtonSize;

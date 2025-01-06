@@ -9,7 +9,6 @@ import { ArtemisSharedModule } from 'app/shared/shared.module';
     selector: '[jhi-suspicious-sessions]',
     templateUrl: './suspicious-sessions.component.html',
     styleUrls: ['./suspicious-sessions.component.scss'],
-    standalone: true,
     imports: [ArtemisSharedModule],
 })
 export class SuspiciousSessionsComponent implements OnInit {

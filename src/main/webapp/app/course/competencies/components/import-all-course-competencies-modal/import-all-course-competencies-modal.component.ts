@@ -35,7 +35,6 @@ export interface ImportAllCourseCompetenciesResult {
 
 @Component({
     selector: 'jhi-import-all-course-competencies-modal',
-    standalone: true,
     imports: [ArtemisSharedCommonModule, ImportTableComponent, ImportCourseCompetenciesSettingsComponent],
     providers: [
         {

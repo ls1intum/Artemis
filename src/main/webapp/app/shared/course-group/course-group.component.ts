@@ -29,6 +29,7 @@ export type GroupUserInformationRow = {
     templateUrl: './course-group.component.html',
     styleUrls: ['./course-group.component.scss'],
     encapsulation: ViewEncapsulation.None,
+    standalone: false,
 })
 export class CourseGroupComponent implements OnDestroy {
     @ViewChild(DataTableComponent) dataTable: DataTableComponent;

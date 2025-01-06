@@ -14,6 +14,7 @@ import { AccountService } from 'app/core/auth/account.service';
  */
 @Directive({
     selector: '[jhiHasAnyAuthority]',
+    standalone: false,
 })
 export class HasAnyAuthorityDirective {
     private authorities: string[];

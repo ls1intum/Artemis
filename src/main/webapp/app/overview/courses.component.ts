@@ -19,6 +19,7 @@ import { sortCourses } from 'app/shared/util/course.util';
     selector: 'jhi-overview',
     templateUrl: './courses.component.html',
     styleUrls: ['./courses.component.scss'],
+    standalone: false,
 })
 export class CoursesComponent implements OnInit, OnDestroy {
     protected readonly faPenAlt = faPenAlt;

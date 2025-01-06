@@ -7,6 +7,7 @@ import { Course, isCommunicationEnabled } from 'app/entities/course.model';
 @Component({
     selector: 'jhi-exercise-detail-statistics',
     templateUrl: './exercise-detail-statistics.component.html',
+    standalone: false,
 })
 export class ExerciseDetailStatisticsComponent implements OnInit {
     @Input() exercise: Exercise;

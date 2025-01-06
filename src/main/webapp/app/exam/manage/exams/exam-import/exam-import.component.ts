@@ -15,6 +15,7 @@ import { onError } from 'app/shared/util/global.utils';
 @Component({
     selector: 'jhi-exam-import',
     templateUrl: './exam-import.component.html',
+    standalone: false,
 })
 export class ExamImportComponent extends ImportComponent<Exam> {
     // boolean to indicate, if the import modal should include the exerciseGroup selection subsequently.

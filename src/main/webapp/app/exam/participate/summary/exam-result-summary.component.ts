@@ -50,6 +50,7 @@ type StateBeforeResetting = {
     selector: 'jhi-exam-participation-summary',
     templateUrl: './exam-result-summary.component.html',
     styleUrls: ['../../../course/manage/course-exercise-card.component.scss', '../../../exercises/quiz/shared/quiz.scss', 'exam-result-summary.component.scss'],
+    standalone: false,
 })
 export class ExamResultSummaryComponent implements OnInit {
     // make constants available to html for comparison
