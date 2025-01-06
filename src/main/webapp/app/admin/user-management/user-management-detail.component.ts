@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, inject } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { faWrench } from '@fortawesome/free-solid-svg-icons';
 import { User } from 'app/core/user/user.model';
@@ -9,11 +9,11 @@ import { User } from 'app/core/user/user.model';
     standalone: false,
 })
 export class UserManagementDetailComponent implements OnInit {
+    private route = inject(ActivatedRoute);
+
     user: User;
     // Icons
     faWrench = faWrench;
-
-    constructor(private route: ActivatedRoute) {}
 
     /**
      * Retrieve the user from the user management activated route data subscription

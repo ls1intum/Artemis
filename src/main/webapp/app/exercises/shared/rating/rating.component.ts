@@ -1,4 +1,4 @@
-import { Component, Input, OnChanges, OnInit, SimpleChanges } from '@angular/core';
+import { Component, Input, OnChanges, OnInit, SimpleChanges, inject } from '@angular/core';
 import { RatingService } from 'app/exercises/shared/rating/rating.service';
 import { StarRatingComponent } from 'app/exercises/shared/rating/star-rating/star-rating.component';
 import { Result } from 'app/entities/result.model';
@@ -13,15 +13,13 @@ import { Observable } from 'rxjs';
     standalone: false,
 })
 export class RatingComponent implements OnInit, OnChanges {
+    private ratingService = inject(RatingService);
+    private accountService = inject(AccountService);
+
     public rating: number;
     public disableRating = false;
     @Input() result?: Result;
     private previousResultId?: number;
-
-    constructor(
-        private ratingService: RatingService,
-        private accountService: AccountService,
-    ) {}
 
     ngOnInit(): void {
         this.loadRating();

@@ -1,4 +1,4 @@
-import { AfterViewInit, ChangeDetectionStrategy, Component, OnDestroy, OnInit, ViewChild } from '@angular/core';
+import { AfterViewInit, ChangeDetectionStrategy, Component, OnDestroy, OnInit, ViewChild, inject } from '@angular/core';
 import { ActivatedRoute, Params } from '@angular/router';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { AlertService, AlertType } from 'app/core/util/alert.service';
@@ -34,6 +34,16 @@ import { FormulaAction } from 'app/shared/monaco-editor/model/actions/formula.ac
     standalone: false,
 })
 export class FileUploadExerciseUpdateComponent implements AfterViewInit, OnDestroy, OnInit {
+    private fileUploadExerciseService = inject(FileUploadExerciseService);
+    private modalService = inject(NgbModal);
+    private popupService = inject(ExerciseUpdateWarningService);
+    private activatedRoute = inject(ActivatedRoute);
+    private courseService = inject(CourseManagementService);
+    private exerciseService = inject(ExerciseService);
+    private alertService = inject(AlertService);
+    private navigationUtilService = inject(ArtemisNavigationUtilService);
+    private exerciseGroupService = inject(ExerciseGroupService);
+
     protected readonly faQuestionCircle = faQuestionCircle;
 
     readonly IncludedInOverallScore = IncludedInOverallScore;
@@ -68,18 +78,6 @@ export class FileUploadExerciseUpdateComponent implements AfterViewInit, OnDestr
     pointsSubscription?: Subscription;
     bonusPointsSubscription?: Subscription;
     teamSubscription?: Subscription;
-
-    constructor(
-        private fileUploadExerciseService: FileUploadExerciseService,
-        private modalService: NgbModal,
-        private popupService: ExerciseUpdateWarningService,
-        private activatedRoute: ActivatedRoute,
-        private courseService: CourseManagementService,
-        private exerciseService: ExerciseService,
-        private alertService: AlertService,
-        private navigationUtilService: ArtemisNavigationUtilService,
-        private exerciseGroupService: ExerciseGroupService,
-    ) {}
 
     get editType(): EditType {
         if (this.isImport) {

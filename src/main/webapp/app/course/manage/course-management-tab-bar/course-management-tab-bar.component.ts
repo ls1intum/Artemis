@@ -1,4 +1,4 @@
-import { AfterViewInit, Component, OnDestroy, OnInit } from '@angular/core';
+import { AfterViewInit, Component, OnDestroy, OnInit, inject } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { HttpErrorResponse } from '@angular/common/http';
 import { Observable, Subject, Subscription, map, of } from 'rxjs';
@@ -44,6 +44,15 @@ import { EntitySummary } from 'app/shared/delete-dialog/delete-dialog.model';
     standalone: false,
 })
 export class CourseManagementTabBarComponent implements OnInit, OnDestroy, AfterViewInit {
+    private eventManager = inject(EventManager);
+    private courseManagementService = inject(CourseManagementService);
+    private courseAdminService = inject(CourseAdminService);
+    private route = inject(ActivatedRoute);
+    private router = inject(Router);
+    private modalService = inject(NgbModal);
+    private profileService = inject(ProfileService);
+    private courseAccessStorageService = inject(CourseAccessStorageService);
+
     readonly FeatureToggle = FeatureToggle;
     readonly ButtonSize = ButtonSize;
 
@@ -83,17 +92,6 @@ export class CourseManagementTabBarComponent implements OnInit, OnDestroy, After
 
     irisEnabled = false;
     ltiEnabled = false;
-
-    constructor(
-        private eventManager: EventManager,
-        private courseManagementService: CourseManagementService,
-        private courseAdminService: CourseAdminService,
-        private route: ActivatedRoute,
-        private router: Router,
-        private modalService: NgbModal,
-        private profileService: ProfileService,
-        private courseAccessStorageService: CourseAccessStorageService,
-    ) {}
 
     /**
      * On init load the course information and subscribe to listen for changes in course.

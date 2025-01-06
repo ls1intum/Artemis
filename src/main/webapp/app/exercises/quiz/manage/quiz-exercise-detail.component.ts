@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, inject } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import dayjs from 'dayjs/esm';
 import { QuizExerciseService } from 'app/exercises/quiz/manage/quiz-exercise.service';
@@ -20,6 +20,11 @@ import { QuizQuestionType } from 'app/entities/quiz/quiz-question.model';
     standalone: false,
 })
 export class QuizExerciseDetailComponent implements OnInit {
+    private route = inject(ActivatedRoute);
+    private quizExerciseService = inject(QuizExerciseService);
+    private statisticsService = inject(StatisticsService);
+    private translateService = inject(TranslateService);
+
     readonly documentationType: DocumentationType = 'Quiz';
     readonly dayjs = dayjs;
 
@@ -33,13 +38,6 @@ export class QuizExerciseDetailComponent implements OnInit {
     statistics: ExerciseManagementStatisticsDto;
 
     detailOverviewSections: DetailOverviewSection[];
-
-    constructor(
-        private route: ActivatedRoute,
-        private quizExerciseService: QuizExerciseService,
-        private statisticsService: StatisticsService,
-        private translateService: TranslateService,
-    ) {}
 
     /**
      * Load the quizzes of the course for export on init.

@@ -1,10 +1,9 @@
-import { Component, Input, OnDestroy, OnInit } from '@angular/core';
+import { Component, Input, OnDestroy, OnInit, inject } from '@angular/core';
 import { Observable, Subject, debounceTime, distinctUntilChanged, finalize, map, takeUntil } from 'rxjs';
 import { faChevronRight } from '@fortawesome/free-solid-svg-icons';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { onError } from 'app/shared/util/global.utils';
 import { AlertService } from 'app/core/util/alert.service';
-import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import { ChannelService } from 'app/shared/metis/conversations/channel.service';
 import { ChannelDTO, ChannelSubType } from 'app/entities/metis/conversation/channel.model';
 import { Course } from 'app/entities/course.model';
@@ -23,17 +22,16 @@ export type ChannelAction = {
     standalone: false,
 })
 export class ChannelsOverviewDialogComponent extends AbstractDialogComponent implements OnInit, OnDestroy {
+    private channelService = inject(ChannelService);
+    private alertService = inject(AlertService);
+
     private ngUnsubscribe = new Subject<void>();
 
     canCreateChannel = canCreateChannel;
-    @Input()
-    createChannelFn?: (channel: ChannelDTO) => Observable<never>;
 
-    @Input()
-    course: Course;
-
-    @Input()
-    channelSubType: ChannelSubType;
+    @Input() createChannelFn?: (channel: ChannelDTO) => Observable<never>;
+    @Input() course: Course;
+    @Input() channelSubType: ChannelSubType;
 
     channelActions$ = new Subject<ChannelAction>();
 
@@ -51,15 +49,6 @@ export class ChannelsOverviewDialogComponent extends AbstractDialogComponent imp
         if (this.isInitialized) {
             this.loadChannelsOfCourse();
         }
-    }
-
-    constructor(
-        private channelService: ChannelService,
-        private alertService: AlertService,
-
-        activeModal: NgbActiveModal,
-    ) {
-        super(activeModal);
     }
 
     ngOnInit(): void {

@@ -1,4 +1,4 @@
-import { Component, OnDestroy, OnInit, TemplateRef, ViewChild } from '@angular/core';
+import { Component, OnDestroy, OnInit, TemplateRef, ViewChild, inject } from '@angular/core';
 import { HttpErrorResponse, HttpHeaders, HttpParams, HttpResponse } from '@angular/common/http';
 import { ActivatedRoute, Router } from '@angular/router';
 import { Subject, Subscription, combineLatest } from 'rxjs';
@@ -89,6 +89,16 @@ type Filter = typeof AuthorityFilter | typeof OriginFilter | typeof StatusFilter
     standalone: false,
 })
 export class UserManagementComponent implements OnInit, OnDestroy {
+    private adminUserService = inject(AdminUserService);
+    private alertService = inject(AlertService);
+    private accountService = inject(AccountService);
+    private activatedRoute = inject(ActivatedRoute);
+    private router = inject(Router);
+    private eventManager = inject(EventManager);
+    private localStorage = inject(LocalStorageService);
+    private modalService = inject(NgbModal);
+    private profileService = inject(ProfileService);
+
     @ViewChild('filterModal') filterModal: TemplateRef<any>;
 
     search = new Subject<void>();
@@ -127,18 +137,6 @@ export class UserManagementComponent implements OnInit, OnDestroy {
 
     readonly medium = ButtonSize.MEDIUM;
     readonly ButtonType = ButtonType;
-
-    constructor(
-        private adminUserService: AdminUserService,
-        private alertService: AlertService,
-        private accountService: AccountService,
-        private activatedRoute: ActivatedRoute,
-        private router: Router,
-        private eventManager: EventManager,
-        private localStorage: LocalStorageService,
-        private modalService: NgbModal,
-        private profileService: ProfileService,
-    ) {}
 
     /**
      * Retrieves the current user and calls the {@link loadAll} and {@link registerChangeInUsers} methods on init

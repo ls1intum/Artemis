@@ -1,4 +1,4 @@
-import { Component, EventEmitter, Input, Output, ViewEncapsulation } from '@angular/core';
+import { Component, EventEmitter, Input, Output, ViewEncapsulation, inject } from '@angular/core';
 import { ArtemisMarkdownService } from 'app/shared/markdown.service';
 import { ShortAnswerQuestionUtil } from 'app/exercises/quiz/shared/short-answer-question-util.service';
 import { ShortAnswerSolution } from 'app/entities/quiz/short-answer-solution.model';
@@ -18,6 +18,9 @@ import { MAX_QUIZ_SHORT_ANSWER_TEXT_LENGTH } from 'app/shared/constants/input.co
     standalone: false,
 })
 export class ShortAnswerQuestionComponent {
+    private artemisMarkdown = inject(ArtemisMarkdownService);
+    shortAnswerQuestionUtil = inject(ShortAnswerQuestionUtil);
+
     shortAnswerQuestion: ShortAnswerQuestion;
     _forceSampleSolution: boolean;
 
@@ -65,11 +68,6 @@ export class ShortAnswerQuestionComponent {
     // Icons
     faExclamationCircle = faExclamationCircle;
     farQuestionCircle = faQuestionCircle;
-
-    constructor(
-        private artemisMarkdown: ArtemisMarkdownService,
-        public shortAnswerQuestionUtil: ShortAnswerQuestionUtil,
-    ) {}
 
     /**
      * Update html for text, hint and explanation for the question and every answer option

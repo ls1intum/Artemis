@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, inject } from '@angular/core';
 import { ActionType } from 'app/shared/delete-dialog/delete-dialog.model';
 import { Subject } from 'rxjs';
 import { ButtonSize, ButtonType } from 'app/shared/components/button.component';
@@ -16,6 +16,11 @@ import { convertDateFromServer } from 'app/utils/date.utils';
     standalone: false,
 })
 export class DataExportComponent implements OnInit {
+    private dataExportService = inject(DataExportService);
+    private accountService = inject(AccountService);
+    private alertService = inject(AlertService);
+    private route = inject(ActivatedRoute);
+
     readonly ActionType = ActionType;
     readonly ButtonSize = ButtonSize;
     readonly ButtonType = ButtonType;
@@ -34,13 +39,6 @@ export class DataExportComponent implements OnInit {
     state?: DataExportState;
     dataExport: DataExport = new DataExport();
     isAdmin = false;
-
-    constructor(
-        private dataExportService: DataExportService,
-        private accountService: AccountService,
-        private alertService: AlertService,
-        private route: ActivatedRoute,
-    ) {}
 
     ngOnInit() {
         this.currentLogin = this.accountService.userIdentity?.login;

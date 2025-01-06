@@ -58,8 +58,6 @@ export class CourseManagementExerciseRowComponent implements OnChanges {
     faExclamationTriangle = faExclamationTriangle;
     faFileSignature = faFileSignature;
 
-    constructor() {}
-
     ngOnChanges() {
         if (this.details && !this.detailsLoaded) {
             this.detailsLoaded = true;

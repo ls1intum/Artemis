@@ -1,4 +1,4 @@
-import { Component, OnDestroy, OnInit } from '@angular/core';
+import { Component, OnDestroy, OnInit, inject } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { SafeHtml } from '@angular/platform-browser';
@@ -32,6 +32,13 @@ import { ArtemisMarkdownService } from 'app/shared/markdown.service';
     standalone: false,
 })
 export class FileUploadExerciseDetailComponent implements OnInit, OnDestroy {
+    private eventManager = inject(EventManager);
+    private fileUploadExerciseService = inject(FileUploadExerciseService);
+    private route = inject(ActivatedRoute);
+    private alertService = inject(AlertService);
+    private statisticsService = inject(StatisticsService);
+    private artemisMarkdown = inject(ArtemisMarkdownService);
+
     readonly documentationType: DocumentationType = 'FileUpload';
     readonly ExerciseType = ExerciseType;
     readonly dayjs = dayjs;
@@ -47,15 +54,6 @@ export class FileUploadExerciseDetailComponent implements OnInit, OnDestroy {
     formattedProblemStatement: SafeHtml | null;
     formattedExampleSolution: SafeHtml | null;
     formattedGradingInstructions: SafeHtml | null;
-
-    constructor(
-        private eventManager: EventManager,
-        private fileUploadExerciseService: FileUploadExerciseService,
-        private route: ActivatedRoute,
-        private alertService: AlertService,
-        private statisticsService: StatisticsService,
-        private artemisMarkdown: ArtemisMarkdownService,
-    ) {}
 
     /**
      * Initializes subscription for file upload exercise

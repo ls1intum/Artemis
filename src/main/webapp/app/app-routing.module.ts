@@ -1,4 +1,4 @@
-import { NgModule } from '@angular/core';
+import { NgModule, inject } from '@angular/core';
 import { RouterModule, Routes } from '@angular/router';
 import { UserRouteAccessService } from 'app/core/auth/user-route-access-service';
 import { Authority } from 'app/shared/constants/authority.constants';
@@ -193,6 +193,7 @@ const LAYOUT_ROUTES: Routes = [navbarRoute, ...errorRoute];
     exports: [RouterModule],
 })
 export class ArtemisAppRoutingModule {
+    private _ = inject(ArtemisNavigationUtilService);
+
     // Ensure the service is initialized before any routing happens
-    constructor(private _: ArtemisNavigationUtilService) {}
 }

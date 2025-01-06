@@ -42,8 +42,6 @@ export class ExamExerciseImportComponent implements OnInit {
 
     getExerciseIcon = getIcon;
 
-    constructor() {}
-
     ngOnInit(): void {
         this.initializeSelectedExercisesAndContainsProgrammingExercisesMaps();
         // If the exam is imported into the same course, the title + shortName of Programming Exercises must be changed

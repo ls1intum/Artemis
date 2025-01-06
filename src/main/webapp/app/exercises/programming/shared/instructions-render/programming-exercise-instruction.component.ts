@@ -49,6 +49,18 @@ import { toObservable } from '@angular/core/rxjs-interop';
     standalone: false,
 })
 export class ProgrammingExerciseInstructionComponent implements OnChanges, OnDestroy {
+    viewContainerRef = inject(ViewContainerRef);
+    private resultService = inject(ResultService);
+    private participationWebsocketService = inject(ParticipationWebsocketService);
+    private programmingExerciseTaskWrapper = inject(ProgrammingExerciseTaskExtensionWrapper);
+    private programmingExercisePlantUmlWrapper = inject(ProgrammingExercisePlantUmlExtensionWrapper);
+    private programmingExerciseParticipationService = inject(ProgrammingExerciseParticipationService);
+    private programmingExerciseGradingService = inject(ProgrammingExerciseGradingService);
+    private sanitizer = inject(DomSanitizer);
+    private programmingExerciseInstructionService = inject(ProgrammingExerciseInstructionService);
+    private appRef = inject(ApplicationRef);
+    private injector = inject(EnvironmentInjector);
+
     private themeService = inject(ThemeService);
 
     @Input() public exercise: ProgrammingExercise;
@@ -99,19 +111,7 @@ export class ProgrammingExerciseInstructionComponent implements OnChanges, OnDes
     // Icons
     faSpinner = faSpinner;
 
-    constructor(
-        public viewContainerRef: ViewContainerRef,
-        private resultService: ResultService,
-        private participationWebsocketService: ParticipationWebsocketService,
-        private programmingExerciseTaskWrapper: ProgrammingExerciseTaskExtensionWrapper,
-        private programmingExercisePlantUmlWrapper: ProgrammingExercisePlantUmlExtensionWrapper,
-        private programmingExerciseParticipationService: ProgrammingExerciseParticipationService,
-        private programmingExerciseGradingService: ProgrammingExerciseGradingService,
-        private sanitizer: DomSanitizer,
-        private programmingExerciseInstructionService: ProgrammingExerciseInstructionService,
-        private appRef: ApplicationRef,
-        private injector: EnvironmentInjector,
-    ) {
+    constructor() {
         this.programmingExerciseTaskWrapper.viewContainerRef = this.viewContainerRef;
     }
 

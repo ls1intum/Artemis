@@ -22,8 +22,6 @@ export class CompetenciesPopoverComponent implements OnInit {
     // Icons
     faFlag = faFlag;
 
-    constructor() {}
-
     ngOnInit(): void {
         if (this.courseId) {
             switch (this.navigateTo) {

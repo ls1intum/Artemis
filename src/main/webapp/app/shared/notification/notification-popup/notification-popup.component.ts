@@ -1,4 +1,4 @@
-import { Component, ElementRef, OnInit, ViewChild } from '@angular/core';
+import { Component, ElementRef, OnInit, ViewChild, inject } from '@angular/core';
 import { ActivatedRoute, IsActiveMatchOptions, Params, Router, UrlTree } from '@angular/router';
 import { NotificationService } from 'app/shared/notification/notification.service';
 import {
@@ -47,6 +47,12 @@ const conversationMessageNotificationTitles = [
     standalone: false,
 })
 export class NotificationPopupComponent implements OnInit {
+    private notificationService = inject(NotificationService);
+    private router = inject(Router);
+    private activatedRoute = inject(ActivatedRoute);
+    private notificationSettingsService = inject(NotificationSettingsService);
+    private artemisTranslatePipe = inject(ArtemisTranslatePipe);
+
     notifications: Notification[] = [];
     QuizNotificationTitleHtmlConst = 'Quiz started';
 
@@ -62,14 +68,6 @@ export class NotificationPopupComponent implements OnInit {
     faMessage = faMessage;
     faCheckDouble = faCheckDouble;
     faExclamationTriangle = faExclamationTriangle;
-
-    constructor(
-        private notificationService: NotificationService,
-        private router: Router,
-        private activatedRoute: ActivatedRoute,
-        private notificationSettingsService: NotificationSettingsService,
-        private artemisTranslatePipe: ArtemisTranslatePipe,
-    ) {}
 
     ngOnInit(): void {
         this.notificationService.subscribeToSingleIncomingNotifications().subscribe((notification: Notification) => {

@@ -1,4 +1,4 @@
-import { Component, EventEmitter, Input, OnChanges, Output } from '@angular/core';
+import { Component, EventEmitter, Input, OnChanges, Output, inject } from '@angular/core';
 import { ProgrammingExercise } from 'app/entities/programming/programming-exercise.model';
 import { StaticCodeAnalysisCategory, StaticCodeAnalysisCategoryState } from 'app/entities/programming/static-code-analysis-category.model';
 import { CategoryIssuesMap } from 'app/entities/programming/programming-exercise-test-case-statistics.model';
@@ -86,6 +86,9 @@ enum ScaChartBarTitle {
     standalone: false,
 })
 export class ScaCategoryDistributionChartComponent extends ProgrammingGradingChartsDirective implements OnChanges {
+    private translateService = inject(TranslateService);
+    private navigationUtilsService = inject(ArtemisNavigationUtilService);
+
     @Input() categories: StaticCodeAnalysisCategory[];
     @Input() categoryIssuesMap?: CategoryIssuesMap;
     @Input() exercise: ProgrammingExercise;
@@ -98,11 +101,10 @@ export class ScaCategoryDistributionChartComponent extends ProgrammingGradingCha
     // ngx
     ngxData: NgxChartsMultiSeriesDataEntry[] = [];
 
-    constructor(
-        private translateService: TranslateService,
-        private navigationUtilsService: ArtemisNavigationUtilService,
-    ) {
+    constructor() {
         super();
+        const translateService = this.translateService;
+
         translateService.onLangChange.subscribe(() => {
             this.updateTranslations();
         });

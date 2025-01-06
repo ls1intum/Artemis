@@ -35,6 +35,4 @@ export class ReEvaluateShortAnswerQuestionComponent {
     questionMoveUp = new EventEmitter();
     @Output()
     questionMoveDown = new EventEmitter();
-
-    constructor() {}
 }

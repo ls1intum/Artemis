@@ -1,4 +1,4 @@
-import { Component, EventEmitter, HostListener, Input, OnChanges, OnInit, Output } from '@angular/core';
+import { Component, EventEmitter, HostListener, Input, OnChanges, OnInit, Output, inject } from '@angular/core';
 import { Color, ScaleType } from '@swimlane/ngx-charts';
 import { NgxChartsSingleSeriesDataEntry } from 'app/shared/chart/ngx-charts-datatypes';
 import { GradeType, GradingScale } from 'app/entities/grading-scale.model';
@@ -20,6 +20,9 @@ interface NgxClickEvent {
     standalone: false,
 })
 export class ParticipantScoresDistributionComponent implements OnInit, OnChanges {
+    private gradingSystemService = inject(GradingSystemService);
+    private translateService = inject(TranslateService);
+
     @Input()
     scores?: number[];
 
@@ -62,11 +65,6 @@ export class ParticipantScoresDistributionComponent implements OnInit, OnChanges
         domain: [],
     } as Color;
     backupDomain: string[];
-
-    constructor(
-        private gradingSystemService: GradingSystemService,
-        private translateService: TranslateService,
-    ) {}
 
     ngOnInit() {
         this.setupAxisLabels();

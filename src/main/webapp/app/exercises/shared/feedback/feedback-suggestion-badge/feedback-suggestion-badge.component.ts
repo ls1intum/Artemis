@@ -1,4 +1,4 @@
-import { Component, Input } from '@angular/core';
+import { Component, Input, inject } from '@angular/core';
 import { faLightbulb } from '@fortawesome/free-solid-svg-icons';
 import { TranslateService } from '@ngx-translate/core';
 import { Feedback, FeedbackSuggestionType } from 'app/entities/feedback.model';
@@ -10,6 +10,8 @@ import { Feedback, FeedbackSuggestionType } from 'app/entities/feedback.model';
     standalone: false,
 })
 export class FeedbackSuggestionBadgeComponent {
+    private translateService = inject(TranslateService);
+
     @Input()
     feedback: Feedback;
 
@@ -18,8 +20,6 @@ export class FeedbackSuggestionBadgeComponent {
 
     // Icons
     faLightbulb = faLightbulb;
-
-    constructor(private translateService: TranslateService) {}
 
     get text(): string {
         const feedbackSuggestionType = Feedback.getFeedbackSuggestionType(this.feedback);

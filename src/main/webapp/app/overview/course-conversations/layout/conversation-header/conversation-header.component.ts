@@ -28,6 +28,11 @@ import { ConversationUserDTO } from 'app/entities/metis/conversation/conversatio
     standalone: false,
 })
 export class ConversationHeaderComponent implements OnInit, OnDestroy {
+    private modalService = inject(NgbModal);
+    metisConversationService = inject(MetisConversationService);
+    conversationService = inject(ConversationService);
+    private metisService = inject(MetisService);
+
     private ngUnsubscribe = new Subject<void>();
 
     @Output() collapseSearch = new EventEmitter<void>();
@@ -51,14 +56,6 @@ export class ConversationHeaderComponent implements OnInit, OnDestroy {
     readonly faPeopleGroup = faPeopleGroup;
 
     private courseSidebarService: CourseSidebarService = inject(CourseSidebarService);
-
-    constructor(
-        private modalService: NgbModal,
-        // instantiated at course-conversation.component.ts
-        public metisConversationService: MetisConversationService,
-        public conversationService: ConversationService,
-        private metisService: MetisService,
-    ) {}
 
     getAsGroupChat = getAsGroupChatDTO;
     getAsOneToOneChat = getAsOneToOneChatDTO;

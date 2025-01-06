@@ -1,4 +1,4 @@
-import { Component, OnDestroy, OnInit } from '@angular/core';
+import { Component, OnDestroy, OnInit, inject } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { HttpErrorResponse } from '@angular/common/http';
 import { AlertService } from 'app/core/util/alert.service';
@@ -17,6 +17,13 @@ import { faExclamationTriangle, faFont, faPlus, faQuestionCircle, faTimes } from
     standalone: false,
 })
 export class ExampleSubmissionsComponent implements OnInit, OnDestroy {
+    private alertService = inject(AlertService);
+    private exampleSubmissionService = inject(ExampleSubmissionService);
+    private activatedRoute = inject(ActivatedRoute);
+    private courseService = inject(CourseManagementService);
+    private modalService = inject(NgbModal);
+    private accountService = inject(AccountService);
+
     exercise: Exercise;
     readonly exerciseType = ExerciseType;
     createdExampleAssessment: boolean[];
@@ -27,15 +34,6 @@ export class ExampleSubmissionsComponent implements OnInit, OnDestroy {
     faFont = faFont;
     faQuestionCircle = faQuestionCircle;
     faExclamationTriangle = faExclamationTriangle;
-
-    constructor(
-        private alertService: AlertService,
-        private exampleSubmissionService: ExampleSubmissionService,
-        private activatedRoute: ActivatedRoute,
-        private courseService: CourseManagementService,
-        private modalService: NgbModal,
-        private accountService: AccountService,
-    ) {}
 
     /**
      * Initializes all relevant data for the exercise

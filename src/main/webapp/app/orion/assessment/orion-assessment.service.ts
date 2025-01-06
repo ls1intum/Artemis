@@ -1,4 +1,4 @@
-import { Injectable } from '@angular/core';
+import { Injectable, inject } from '@angular/core';
 import { ProgrammingSubmission } from 'app/entities/programming/programming-submission.model';
 import { ProgrammingAssessmentRepoExportService, RepositoryExportOptions } from 'app/exercises/programming/assess/repo-export/programming-assessment-repo-export.service';
 import { OrionConnectorService } from 'app/shared/orion/orion-connector.service';
@@ -10,17 +10,17 @@ import { AlertService } from 'app/core/util/alert.service';
 
 @Injectable({ providedIn: 'root' })
 export class OrionAssessmentService {
+    private orionConnectorService = inject(OrionConnectorService);
+    private programmingSubmissionService = inject(ProgrammingSubmissionService);
+    private repositoryExportService = inject(ProgrammingAssessmentRepoExportService);
+    private manualAssessmentService = inject(ProgrammingAssessmentManualResultService);
+    private alertService = inject(AlertService);
+
     orionState: OrionState;
     // Stores which submission has been lastly opened
     activeSubmissionId: number | undefined = undefined;
 
-    constructor(
-        private orionConnectorService: OrionConnectorService,
-        private programmingSubmissionService: ProgrammingSubmissionService,
-        private repositoryExportService: ProgrammingAssessmentRepoExportService,
-        private manualAssessmentService: ProgrammingAssessmentManualResultService,
-        private alertService: AlertService,
-    ) {
+    constructor() {
         this.orionConnectorService.state().subscribe((state) => {
             if (this.orionState?.cloning && !state.cloning && this.activeSubmissionId !== undefined) {
                 // If the client sends a cloning = false the download was cancelled, unlock the pending submission

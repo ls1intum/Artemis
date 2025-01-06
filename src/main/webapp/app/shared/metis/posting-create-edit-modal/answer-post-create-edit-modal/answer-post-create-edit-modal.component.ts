@@ -1,9 +1,7 @@
 import { Component, EventEmitter, Input, Output, ViewContainerRef, ViewEncapsulation } from '@angular/core';
 import { PostingCreateEditModalDirective } from 'app/shared/metis/posting-create-edit-modal/posting-create-edit-modal.directive';
 import { AnswerPost } from 'app/entities/metis/answer-post.model';
-import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
-import { MetisService } from 'app/shared/metis/metis.service';
-import { FormBuilder, Validators } from '@angular/forms';
+import { Validators } from '@angular/forms';
 import { PostContentValidationPattern } from 'app/shared/metis/metis.util';
 import { Posting } from 'app/entities/metis/posting.model';
 
@@ -16,16 +14,8 @@ import { Posting } from 'app/entities/metis/posting.model';
 })
 export class AnswerPostCreateEditModalComponent extends PostingCreateEditModalDirective<AnswerPost> {
     @Input() createEditAnswerPostContainerRef: ViewContainerRef;
-    isInputOpen = false;
     @Output() postingUpdated = new EventEmitter<Posting>();
-
-    constructor(
-        protected metisService: MetisService,
-        protected modalService: NgbModal,
-        protected formBuilder: FormBuilder,
-    ) {
-        super(metisService, modalService, formBuilder);
-    }
+    isInputOpen = false;
 
     /**
      * renders the ng-template to edit or create an answerPost

@@ -1,16 +1,12 @@
-import { ChangeDetectorRef, Component, ElementRef, Input, OnInit, ViewChild } from '@angular/core';
-import { Location } from '@angular/common';
+import { Component, ElementRef, Input, OnInit, ViewChild, inject } from '@angular/core';
 import { TranslateService } from '@ngx-translate/core';
-import { ActivatedRoute } from '@angular/router';
 import { AlertService } from 'app/core/util/alert.service';
 import dayjs from 'dayjs/esm';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
 import { FileUploadSubmissionService } from 'app/exercises/file-upload/participate/file-upload-submission.service';
-import { FileUploaderService } from 'app/shared/http/file-uploader.service';
 import { MAX_SUBMISSION_FILE_SIZE } from 'app/shared/constants/input.constants';
 import { FileUploadExercise } from 'app/entities/file-upload-exercise.model';
 import { FileService } from 'app/shared/http/file.service';
-import { ResultService } from 'app/exercises/shared/result/result.service';
 import { FileUploadSubmission } from 'app/entities/file-upload-submission.model';
 import { ButtonType } from 'app/shared/components/button.component';
 import { Result } from 'app/entities/result.model';
@@ -28,14 +24,17 @@ import { htmlForMarkdown } from 'app/shared/util/markdown.conversion.util';
     standalone: false,
 })
 export class FileUploadExamSubmissionComponent extends ExamSubmissionComponent implements OnInit {
+    private fileUploadSubmissionService = inject(FileUploadSubmissionService);
+    private alertService = inject(AlertService);
+    private translateService = inject(TranslateService);
+    private fileService = inject(FileService);
+
     exerciseType = ExerciseType.FILE_UPLOAD;
 
     @ViewChild('fileInput', { static: false }) fileInput: ElementRef;
 
-    @Input()
-    studentSubmission: FileUploadSubmission;
-    @Input()
-    exercise: FileUploadExercise;
+    @Input() studentSubmission: FileUploadSubmission;
+    @Input() exercise: FileUploadExercise;
     problemStatementHtml: string;
 
     submittedFileName: string;
@@ -51,20 +50,6 @@ export class FileUploadExamSubmissionComponent extends ExamSubmissionComponent i
 
     // Icons
     farListAlt = faListAlt;
-
-    constructor(
-        private route: ActivatedRoute,
-        private fileUploadSubmissionService: FileUploadSubmissionService,
-        private fileUploaderService: FileUploaderService,
-        private resultService: ResultService,
-        private alertService: AlertService,
-        private location: Location,
-        private translateService: TranslateService,
-        private fileService: FileService,
-        changeDetectorReference: ChangeDetectorRef,
-    ) {
-        super(changeDetectorReference);
-    }
 
     /**
      * Initializes data for file upload editor

@@ -1,4 +1,4 @@
-import { Injectable } from '@angular/core';
+import { Injectable, inject } from '@angular/core';
 import { HttpResponse } from '@angular/common/http';
 import { ActivatedRouteSnapshot, Resolve, Routes } from '@angular/router';
 import { Observable, of } from 'rxjs';
@@ -16,14 +16,14 @@ import { EditVideoUnitComponent } from 'app/lecture/lecture-unit/lecture-unit-ma
 import { CreateOnlineUnitComponent } from 'app/lecture/lecture-unit/lecture-unit-management/create-online-unit/create-online-unit.component';
 import { EditOnlineUnitComponent } from 'app/lecture/lecture-unit/lecture-unit-management/edit-online-unit/edit-online-unit.component';
 import { AttachmentUnitsComponent } from 'app/lecture/lecture-unit/lecture-unit-management/attachment-units/attachment-units.component';
-import { PdfPreviewComponent } from 'app/lecture/pdf-preview/pdf-preview.component';
+
 import { AttachmentUnit } from 'app/entities/lecture-unit/attachmentUnit.model';
 import { AttachmentUnitService } from 'app/lecture/lecture-unit/lecture-unit-management/attachmentUnit.service';
 import { CourseManagementResolve } from 'app/course/manage/course-management-resolve.service';
 
 @Injectable({ providedIn: 'root' })
 export class AttachmentUnitResolve implements Resolve<AttachmentUnit> {
-    constructor(private attachmentUnitService: AttachmentUnitService) {}
+    private attachmentUnitService = inject(AttachmentUnitService);
 
     resolve(route: ActivatedRouteSnapshot): Observable<AttachmentUnit> {
         const lectureId = route.params['lectureId'];
@@ -113,7 +113,7 @@ export const lectureUnitRoute: Routes = [
             },
             {
                 path: 'attachment-units/:attachmentUnitId/view',
-                component: PdfPreviewComponent,
+                loadComponent: () => import('app/lecture/pdf-preview/pdf-preview.component').then((m) => m.PdfPreviewComponent),
                 resolve: {
                     course: CourseManagementResolve,
                     attachmentUnit: AttachmentUnitResolve,

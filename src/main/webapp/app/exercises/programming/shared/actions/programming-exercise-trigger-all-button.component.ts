@@ -1,4 +1,4 @@
-import { Component, EventEmitter, Input, OnInit, Output } from '@angular/core';
+import { Component, EventEmitter, Input, OnInit, Output, inject } from '@angular/core';
 import { catchError, tap } from 'rxjs/operators';
 import { ProgrammingSubmissionService } from 'app/exercises/programming/participate/programming-submission.service';
 import { of } from 'rxjs';
@@ -32,6 +32,10 @@ import { faBan, faRedo, faTimes } from '@fortawesome/free-solid-svg-icons';
     standalone: false,
 })
 export class ProgrammingExerciseTriggerAllButtonComponent implements OnInit {
+    private submissionService = inject(ProgrammingSubmissionService);
+    private programmingBuildRunService = inject(ProgrammingBuildRunService);
+    private modalService = inject(NgbModal);
+
     FeatureToggle = FeatureToggle;
     ButtonType = ButtonType;
     @Input() exercise: ProgrammingExercise;
@@ -40,12 +44,6 @@ export class ProgrammingExerciseTriggerAllButtonComponent implements OnInit {
     isTriggeringBuildAll = false;
     // Icons
     faRedo = faRedo;
-
-    constructor(
-        private submissionService: ProgrammingSubmissionService,
-        private programmingBuildRunService: ProgrammingBuildRunService,
-        private modalService: NgbModal,
-    ) {}
 
     ngOnInit() {
         // The info that the builds were triggered comes from a websocket channel.
@@ -114,14 +112,14 @@ export class ProgrammingExerciseTriggerAllButtonComponent implements OnInit {
     standalone: false,
 })
 export class ProgrammingExerciseInstructorTriggerAllDialogComponent {
+    private activeModal = inject(NgbActiveModal);
+
     @Input() exerciseId: number;
     @Input() dueDatePassed: boolean;
 
     // Icons
     faBan = faBan;
     faTimes = faTimes;
-
-    constructor(private activeModal: NgbActiveModal) {}
 
     cancel() {
         this.activeModal.dismiss('cancel');

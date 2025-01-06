@@ -1,9 +1,8 @@
-import { Component, EventEmitter, Input, OnChanges, OnDestroy, OnInit, Output, ViewChild, output } from '@angular/core';
+import { Component, EventEmitter, Input, OnChanges, OnDestroy, OnInit, Output, ViewChild, inject, output } from '@angular/core';
 import { Reaction } from 'app/entities/metis/reaction.model';
 import { Post } from 'app/entities/metis/post.model';
 import { PostingsReactionsBarDirective } from 'app/shared/metis/posting-reactions-bar/posting-reactions-bar.directive';
 import { DisplayPriority } from 'app/shared/metis/metis.util';
-import { MetisService } from 'app/shared/metis/metis.service';
 import { faTrashAlt } from '@fortawesome/free-regular-svg-icons';
 import { faArrowRight, faPencilAlt, faSmile } from '@fortawesome/free-solid-svg-icons';
 import { AnswerPost } from 'app/entities/metis/answer-post.model';
@@ -22,6 +21,8 @@ import { PostCreateEditModalComponent } from 'app/shared/metis/posting-create-ed
     standalone: false,
 })
 export class PostReactionsBarComponent extends PostingsReactionsBarDirective<Post> implements OnInit, OnChanges, OnDestroy {
+    private accountService = inject(AccountService);
+
     pinTooltip: string;
     displayPriority: DisplayPriority;
     canPin = false;
@@ -33,35 +34,29 @@ export class PostReactionsBarComponent extends PostingsReactionsBarDirective<Pos
     faPencilAlt = faPencilAlt;
     faTrash = faTrashAlt;
 
-    @Input()
-    readOnlyMode = false;
+    @Input() readOnlyMode = false;
     @Input() showAnswers: boolean;
     @Input() sortedAnswerPosts: AnswerPost[];
     @Input() isCommunicationPage: boolean;
     @Input() lastReadDate?: dayjs.Dayjs;
+    @Input() previewMode: boolean;
+    @Input() isEmojiCount = false;
+    @Input() hoverBar: boolean = true;
 
     @Output() showAnswersChange = new EventEmitter<boolean>();
     @Output() openPostingCreateEditModal = new EventEmitter<void>();
     @Output() closePostingCreateEditModal = new EventEmitter<void>();
     @Output() openThread = new EventEmitter<void>();
-    @Input() previewMode: boolean;
+    @Output() canPinOutput = new EventEmitter<boolean>();
+
+    @ViewChild(PostCreateEditModalComponent) postCreateEditModal?: PostCreateEditModalComponent;
+    @ViewChild('createEditModal') createEditModal!: PostCreateEditModalComponent;
+
     isAtLeastInstructorInCourse: boolean;
     mayDeleteOutput = output<boolean>();
     mayEditOutput = output<boolean>();
-    @Output() canPinOutput = new EventEmitter<boolean>();
     mayEdit: boolean;
     mayDelete: boolean;
-    @ViewChild(PostCreateEditModalComponent) postCreateEditModal?: PostCreateEditModalComponent;
-    @Input() isEmojiCount = false;
-    @Input() hoverBar: boolean = true;
-    @ViewChild('createEditModal') createEditModal!: PostCreateEditModalComponent;
-
-    constructor(
-        metisService: MetisService,
-        private accountService: AccountService,
-    ) {
-        super(metisService);
-    }
 
     isAnyReactionCountAboveZero(): boolean {
         return Object.values(this.reactionMetaDataMap).some((reaction) => reaction.count >= 1);

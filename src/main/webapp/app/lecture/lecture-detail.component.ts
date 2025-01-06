@@ -1,4 +1,4 @@
-import { Component, OnDestroy, OnInit } from '@angular/core';
+import { Component, OnDestroy, OnInit, inject } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { faFile, faFileExport, faPencilAlt, faPuzzlePiece } from '@fortawesome/free-solid-svg-icons';
 import { PROFILE_IRIS } from 'app/app.constants';
@@ -16,6 +16,13 @@ import { AlertService } from 'app/core/util/alert.service';
     standalone: false,
 })
 export class LectureDetailComponent implements OnInit, OnDestroy {
+    private activatedRoute = inject(ActivatedRoute);
+    private artemisMarkdown = inject(ArtemisMarkdownService);
+    private alertService = inject(AlertService);
+    protected lectureService = inject(LectureService);
+    private profileService = inject(ProfileService);
+    private irisSettingsService = inject(IrisSettingsService);
+
     lecture: Lecture;
     lectureIngestionEnabled = false;
 
@@ -28,15 +35,6 @@ export class LectureDetailComponent implements OnInit, OnDestroy {
     detailSections: DetailOverviewSection[];
     irisEnabled = false;
     private profileInfoSubscription: Subscription;
-
-    constructor(
-        private activatedRoute: ActivatedRoute,
-        private artemisMarkdown: ArtemisMarkdownService,
-        private alertService: AlertService,
-        protected lectureService: LectureService,
-        private profileService: ProfileService,
-        private irisSettingsService: IrisSettingsService,
-    ) {}
 
     /**
      * Life cycle hook called by Angular to indicate that Angular is done creating the component

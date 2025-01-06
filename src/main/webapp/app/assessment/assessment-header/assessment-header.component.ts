@@ -1,4 +1,4 @@
-import { Component, EventEmitter, HostListener, Input, Output } from '@angular/core';
+import { Component, EventEmitter, HostListener, Input, Output, inject } from '@angular/core';
 import { Result } from 'app/entities/result.model';
 import { Exercise, ExerciseType } from 'app/entities/exercise.model';
 import { TextAssessmentAnalytics } from 'app/exercises/text/assess/analytics/text-assesment-analytics.service';
@@ -23,6 +23,10 @@ import { faSquareCaretRight } from '@fortawesome/free-regular-svg-icons';
     standalone: false,
 })
 export class AssessmentHeaderComponent {
+    textAssessmentAnalytics = inject(TextAssessmentAnalytics);
+    protected route = inject(ActivatedRoute);
+    private translateService = inject(TranslateService);
+
     @Input() isLoading: boolean;
     @Input() saveBusy: boolean;
     @Input() submitBusy: boolean;
@@ -69,12 +73,8 @@ export class AssessmentHeaderComponent {
         this.highlightDifferencesChange.emit(this.highlightDifferences);
     }
 
-    constructor(
-        public textAssessmentAnalytics: TextAssessmentAnalytics,
-        protected route: ActivatedRoute,
-        private translateService: TranslateService,
-    ) {
-        textAssessmentAnalytics.setComponentRoute(route);
+    constructor() {
+        this.textAssessmentAnalytics.setComponentRoute(this.route);
     }
 
     get highlightDifferences() {

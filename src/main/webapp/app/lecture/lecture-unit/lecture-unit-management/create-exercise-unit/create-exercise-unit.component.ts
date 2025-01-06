@@ -1,4 +1,4 @@
-import { Component, Input, OnInit, input, output } from '@angular/core';
+import { Component, Input, OnInit, inject, input, output } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { ExerciseUnit } from 'app/entities/lecture-unit/exerciseUnit.model';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
@@ -19,6 +19,13 @@ import { faSort, faTimes } from '@fortawesome/free-solid-svg-icons';
     standalone: false,
 })
 export class CreateExerciseUnitComponent implements OnInit {
+    private activatedRoute = inject(ActivatedRoute);
+    private router = inject(Router);
+    private courseManagementService = inject(CourseManagementService);
+    private alertService = inject(AlertService);
+    private sortService = inject(SortService);
+    private exerciseUnitService = inject(ExerciseUnitService);
+
     protected readonly faTimes = faTimes;
     protected readonly faSort = faSort;
 
@@ -36,15 +43,6 @@ export class CreateExerciseUnitComponent implements OnInit {
 
     exercisesAvailableForUnitCreation: Exercise[] = [];
     exercisesToCreateUnitFor: Exercise[] = [];
-
-    constructor(
-        private activatedRoute: ActivatedRoute,
-        private router: Router,
-        private courseManagementService: CourseManagementService,
-        private alertService: AlertService,
-        private sortService: SortService,
-        private exerciseUnitService: ExerciseUnitService,
-    ) {}
 
     ngOnInit(): void {
         this.isLoading = true;

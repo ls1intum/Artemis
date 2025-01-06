@@ -1,4 +1,4 @@
-import { AfterViewInit, Component, OnDestroy, OnInit } from '@angular/core';
+import { AfterViewInit, Component, OnDestroy, OnInit, inject } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { Subscription } from 'rxjs';
 import { JhiLanguageHelper } from 'app/core/language/language.helper';
@@ -17,16 +17,14 @@ import { LegalDocumentLanguage } from 'app/entities/legal-document.model';
     standalone: false,
 })
 export class PrivacyComponent implements AfterViewInit, OnInit, OnDestroy {
+    private route = inject(ActivatedRoute);
+    private legalDocumentService = inject(LegalDocumentService);
+    private languageHelper = inject(JhiLanguageHelper);
+    private accountService = inject(AccountService);
+
     privacyStatement?: string;
     private languageChangeSubscription?: Subscription;
     isAuthenticated: boolean;
-
-    constructor(
-        private route: ActivatedRoute,
-        private legalDocumentService: LegalDocumentService,
-        private languageHelper: JhiLanguageHelper,
-        private accountService: AccountService,
-    ) {}
 
     /**
      * On init get the privacy statement file from the Artemis server and set up a subscription to fetch the file again if the language was changed.

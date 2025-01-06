@@ -1,4 +1,4 @@
-import { Component, EventEmitter, Input, Output } from '@angular/core';
+import { Component, EventEmitter, Input, Output, inject } from '@angular/core';
 import { DifficultyLevel } from 'app/entities/exercise.model';
 import { SidebarCardElement, SidebarTypes } from 'app/types/sidebar';
 import { SidebarEventService } from '../sidebar-event.service';
@@ -12,6 +12,11 @@ import { Location } from '@angular/common';
     standalone: false,
 })
 export class SidebarCardMediumComponent {
+    private sidebarEventService = inject(SidebarEventService);
+    private router = inject(Router);
+    private route = inject(ActivatedRoute);
+    private location = inject(Location);
+
     DifficultyLevel = DifficultyLevel;
     @Input({ required: true }) sidebarItem: SidebarCardElement;
     @Input() sidebarType?: SidebarTypes;
@@ -19,13 +24,6 @@ export class SidebarCardMediumComponent {
     @Output() pageChange = new EventEmitter<number>();
     /** Key used for grouping or categorizing sidebar items */
     @Input() groupKey?: string;
-
-    constructor(
-        private sidebarEventService: SidebarEventService,
-        private router: Router,
-        private route: ActivatedRoute,
-        private location: Location,
-    ) {}
 
     emitStoreAndRefresh(itemId: number | string) {
         this.sidebarEventService.emitSidebarCardEvent(itemId);

@@ -1,4 +1,4 @@
-import { Component, EventEmitter, Input, OnChanges, OnDestroy, Output, SimpleChanges } from '@angular/core';
+import { Component, EventEmitter, Input, OnChanges, OnDestroy, Output, SimpleChanges, inject } from '@angular/core';
 import { Subscription } from 'rxjs';
 import { filter, map, tap } from 'rxjs/operators';
 import { ParticipationWebsocketService } from 'app/overview/participation-websocket.service';
@@ -28,6 +28,9 @@ import { convertDateFromServer } from 'app/utils/date.utils';
     standalone: false,
 })
 export class UpdatingResultComponent implements OnChanges, OnDestroy {
+    private participationWebsocketService = inject(ParticipationWebsocketService);
+    private submissionService = inject(ProgrammingSubmissionService);
+
     @Input() exercise: Exercise;
     @Input() participation: StudentParticipation;
     @Input() short = true;
@@ -55,11 +58,6 @@ export class UpdatingResultComponent implements OnChanges, OnDestroy {
     missingResultInfo = MissingResultInformation.NONE;
     public resultSubscription: Subscription;
     public submissionSubscription: Subscription;
-
-    constructor(
-        private participationWebsocketService: ParticipationWebsocketService,
-        private submissionService: ProgrammingSubmissionService,
-    ) {}
 
     /**
      * If there are changes, reorders the participation results and subscribes for new participation results.

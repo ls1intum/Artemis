@@ -1,4 +1,4 @@
-import { Component, EventEmitter, Input, OnInit, Output, ViewChild } from '@angular/core';
+import { Component, EventEmitter, Input, OnInit, Output, ViewChild, inject } from '@angular/core';
 import { Observable, Subject, combineLatest, merge, of } from 'rxjs';
 import { User } from 'app/core/user/user.model';
 import { catchError, filter, map, switchMap, tap } from 'rxjs/operators';
@@ -15,6 +15,8 @@ import { NgbTypeahead } from '@ng-bootstrap/ng-bootstrap';
     standalone: false,
 })
 export class TeamOwnerSearchComponent implements OnInit {
+    private courseService = inject(CourseManagementService);
+
     @ViewChild('instance', { static: true }) ngbTypeahead: NgbTypeahead;
     focus = new Subject<string>();
     click = new Subject<string>();
@@ -36,8 +38,6 @@ export class TeamOwnerSearchComponent implements OnInit {
     ownerOptionsLoaded = false;
 
     inputDisplayValue: string;
-
-    constructor(private courseService: CourseManagementService) {}
 
     /**
      * Life cycle hook to indicate component creation is done

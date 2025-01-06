@@ -36,6 +36,14 @@ import { cloneDeep } from 'lodash-es';
 
 @Injectable()
 export class MetisService implements OnDestroy {
+    protected postService = inject(PostService);
+    protected answerPostService = inject(AnswerPostService);
+    protected reactionService = inject(ReactionService);
+    protected accountService = inject(AccountService);
+    protected exerciseService = inject(ExerciseService);
+    private jhiWebsocketService = inject(JhiWebsocketService);
+    private conversationService = inject(ConversationService);
+
     private posts$: ReplaySubject<Post[]> = new ReplaySubject<Post[]>(1);
     private tags$: BehaviorSubject<string[]> = new BehaviorSubject<string[]>([]);
     private totalNumberOfPosts$: ReplaySubject<number> = new ReplaySubject<number>(1);
@@ -54,16 +62,9 @@ export class MetisService implements OnDestroy {
 
     course: Course;
 
-    constructor(
-        protected postService: PostService,
-        protected answerPostService: AnswerPostService,
-        protected reactionService: ReactionService,
-        protected accountService: AccountService,
-        protected exerciseService: ExerciseService,
-        private jhiWebsocketService: JhiWebsocketService,
-        private conversationService: ConversationService,
-        notificationService: NotificationService,
-    ) {
+    constructor() {
+        const notificationService = inject(NotificationService);
+
         this.accountService.identity().then((user: User) => {
             this.user = user!;
         });

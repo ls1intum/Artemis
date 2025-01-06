@@ -50,6 +50,10 @@ interface PostGroup {
     standalone: false,
 })
 export class ConversationMessagesComponent implements OnInit, AfterViewInit, OnDestroy {
+    metisService = inject(MetisService);
+    metisConversationService = inject(MetisConversationService);
+    cdr = inject(ChangeDetectorRef);
+
     private ngUnsubscribe = new Subject<void>();
     readonly sessionStorageKey = 'conversationId.scrollPosition.';
 
@@ -112,11 +116,7 @@ export class ConversationMessagesComponent implements OnInit, AfterViewInit, OnD
     private layoutService: LayoutService = inject(LayoutService);
     private renderer = inject(Renderer2);
 
-    constructor(
-        public metisService: MetisService, // instance from course-conversations.component
-        public metisConversationService: MetisConversationService, // instance from course-conversations.component
-        public cdr: ChangeDetectorRef,
-    ) {
+    constructor() {
         effect(() => {
             this.focusOnPostId = this.focusPostId();
             this.isOpenThreadOnFocus = this.openThreadOnFocus();

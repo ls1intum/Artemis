@@ -1,4 +1,4 @@
-import { Component, Input, OnInit, ViewChild, computed, signal, viewChild } from '@angular/core';
+import { Component, Input, OnInit, ViewChild, computed, inject, signal, viewChild } from '@angular/core';
 import { Lecture } from 'app/entities/lecture.model';
 import { TextUnit } from 'app/entities/lecture-unit/textUnit.model';
 import { VideoUnit } from 'app/entities/lecture-unit/videoUnit.model';
@@ -28,6 +28,13 @@ import { ActivatedRoute } from '@angular/router';
     standalone: false,
 })
 export class LectureUpdateUnitsComponent implements OnInit {
+    protected activatedRoute = inject(ActivatedRoute);
+    protected alertService = inject(AlertService);
+    protected textUnitService = inject(TextUnitService);
+    protected videoUnitService = inject(VideoUnitService);
+    protected onlineUnitService = inject(OnlineUnitService);
+    protected attachmentUnitService = inject(AttachmentUnitService);
+
     @Input() lecture: Lecture;
 
     @ViewChild(LectureUnitManagementComponent, { static: false }) unitManagementComponent: LectureUnitManagementComponent;
@@ -60,15 +67,6 @@ export class LectureUpdateUnitsComponent implements OnInit {
     videoUnitFormData: VideoUnitFormData;
     onlineUnitFormData: OnlineUnitFormData;
     attachmentUnitFormData: AttachmentUnitFormData;
-
-    constructor(
-        protected activatedRoute: ActivatedRoute,
-        protected alertService: AlertService,
-        protected textUnitService: TextUnitService,
-        protected videoUnitService: VideoUnitService,
-        protected onlineUnitService: OnlineUnitService,
-        protected attachmentUnitService: AttachmentUnitService,
-    ) {}
 
     ngOnInit() {
         this.activatedRoute.queryParams.subscribe((params) => {

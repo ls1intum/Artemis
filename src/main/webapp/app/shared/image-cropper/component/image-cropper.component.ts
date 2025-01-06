@@ -12,6 +12,7 @@ import {
     Output,
     SimpleChanges,
     ViewChild,
+    inject,
 } from '@angular/core';
 import { DomSanitizer, SafeStyle, SafeUrl } from '@angular/platform-browser';
 import { OutputFormat } from '../interfaces/cropper-options.interface';
@@ -39,6 +40,12 @@ import { ImageCroppedEvent } from 'app/shared/image-cropper/interfaces/image-cro
     standalone: false,
 })
 export class ImageCropperComponent implements OnChanges, OnInit {
+    private cropService = inject(CropService);
+    private cropperPositionService = inject(CropperPositionService);
+    private loadImageService = inject(LoadImageService);
+    private sanitizer = inject(DomSanitizer);
+    private changeDetector = inject(ChangeDetectorRef);
+
     settings = new CropperSettings();
     setImageMaxSizeRetries = 0;
     moveStart: MoveStart;
@@ -99,13 +106,7 @@ export class ImageCropperComponent implements OnChanges, OnInit {
     @Output() cropperReady = new EventEmitter<Dimensions>();
     @Output() loadImageFailed = new EventEmitter<void>();
 
-    constructor(
-        private cropService: CropService,
-        private cropperPositionService: CropperPositionService,
-        private loadImageService: LoadImageService,
-        private sanitizer: DomSanitizer,
-        private changeDetector: ChangeDetectorRef,
-    ) {
+    constructor() {
         this.reset();
     }
 

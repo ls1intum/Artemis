@@ -1,5 +1,5 @@
 import { HttpResponse } from '@angular/common/http';
-import { Component, EventEmitter, Input, Output } from '@angular/core';
+import { Component, EventEmitter, Input, Output, inject } from '@angular/core';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import { faBan, faCheck, faSpinner } from '@fortawesome/free-solid-svg-icons';
 
@@ -13,6 +13,9 @@ import { examWorkingTime } from 'app/exam/participate/exam.utils';
     standalone: false,
 })
 export class ExamEditWorkingTimeDialogComponent {
+    private activeModal = inject(NgbActiveModal);
+    private examManagementService = inject(ExamManagementService);
+
     @Input() exam: Exam;
     @Output() examChange = new EventEmitter<Exam>();
 
@@ -32,11 +35,6 @@ export class ExamEditWorkingTimeDialogComponent {
     get newWorkingTime() {
         return this.oldWorkingTime ? this.oldWorkingTime + this.workingTimeSeconds : undefined;
     }
-
-    constructor(
-        private activeModal: NgbActiveModal,
-        private examManagementService: ExamManagementService,
-    ) {}
 
     clear(): void {
         this.activeModal.close();

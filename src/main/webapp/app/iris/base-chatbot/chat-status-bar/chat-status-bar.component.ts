@@ -25,8 +25,6 @@ export class ChatStatusBarComponent implements OnChanges {
     protected readonly JSON = JSON;
     protected readonly IrisStageStateDTO = IrisStageStateDTO;
 
-    constructor() {}
-
     ngOnChanges() {
         // Lower case state for scss classes, avoid function calling in template
         this.stages?.forEach((stage) => (stage.lowerCaseState = stage.state?.toLowerCase()));

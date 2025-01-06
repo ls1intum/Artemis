@@ -1,4 +1,4 @@
-import { AfterViewInit, Component, Directive, ElementRef, Input, OnChanges, OnDestroy, OnInit, QueryList, SimpleChanges, ViewChildren } from '@angular/core';
+import { AfterViewInit, Component, Directive, ElementRef, Input, OnChanges, OnDestroy, OnInit, QueryList, SimpleChanges, ViewChildren, inject } from '@angular/core';
 import * as Split from 'split.js';
 import { Subject } from 'rxjs';
 import { PlagiarismComparison } from 'app/exercises/shared/plagiarism/types/PlagiarismComparison';
@@ -18,7 +18,7 @@ import { IconDefinition, faLock, faUnlock } from '@fortawesome/free-solid-svg-ic
     standalone: false,
 })
 export class SplitPaneDirective {
-    constructor(public elementRef: ElementRef) {}
+    elementRef = inject(ElementRef);
 }
 
 @Component({
@@ -28,6 +28,8 @@ export class SplitPaneDirective {
     standalone: false,
 })
 export class PlagiarismSplitViewComponent implements AfterViewInit, OnChanges, OnInit, OnDestroy {
+    private plagiarismCasesService = inject(PlagiarismCasesService);
+
     @Input() comparison: PlagiarismComparison<TextSubmissionElement | ModelingSubmissionElement>;
     @Input() exercise: Exercise;
     @Input() splitControlSubject: Subject<string>;
@@ -53,8 +55,6 @@ export class PlagiarismSplitViewComponent implements AfterViewInit, OnChanges, O
     readonly dayjs = dayjs;
     protected readonly faLock: IconDefinition = faLock;
     protected readonly faUnlock: IconDefinition = faUnlock;
-
-    constructor(private plagiarismCasesService: PlagiarismCasesService) {}
 
     /**
      * Initialize third-party libraries inside this lifecycle hook.

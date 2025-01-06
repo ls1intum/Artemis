@@ -1,4 +1,4 @@
-import { Component, Input, OnInit } from '@angular/core';
+import { Component, Input, OnInit, inject } from '@angular/core';
 import { GraphColors, SpanType } from 'app/entities/statistics.model';
 import { CourseManagementStatisticsModel } from 'app/entities/quiz/course-management-statistics-model';
 import { faArrowLeft, faArrowRight, faFilter } from '@fortawesome/free-solid-svg-icons';
@@ -29,6 +29,11 @@ export enum PerformanceInterval {
     standalone: false,
 })
 export class StatisticsAverageScoreGraphComponent implements OnInit {
+    private themeService = inject(ThemeService);
+    private navigationUtilService = inject(ArtemisNavigationUtilService);
+    readonly exerciseTypeFilter = inject(ChartExerciseTypeFilter);
+    readonly chartCategoryFilter = inject(ChartCategoryFilter);
+
     @Input()
     exerciseAverageScores: CourseManagementStatisticsModel[];
     @Input()
@@ -77,13 +82,6 @@ export class StatisticsAverageScoreGraphComponent implements OnInit {
     faArrowLeft = faArrowLeft;
     faArrowRight = faArrowRight;
     faFilter = faFilter;
-
-    constructor(
-        private themeService: ThemeService,
-        private navigationUtilService: ArtemisNavigationUtilService,
-        readonly exerciseTypeFilter: ChartExerciseTypeFilter,
-        readonly chartCategoryFilter: ChartCategoryFilter,
-    ) {}
 
     ngOnInit(): void {
         this.initializeChart();

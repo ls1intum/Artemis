@@ -1,4 +1,4 @@
-import { Directive, ElementRef, Input, OnDestroy, OnInit, Renderer2, TemplateRef } from '@angular/core';
+import { Directive, ElementRef, Input, OnDestroy, OnInit, Renderer2, TemplateRef, inject } from '@angular/core';
 import { NgbPopover } from '@ng-bootstrap/ng-bootstrap';
 
 @Directive({
@@ -6,6 +6,9 @@ import { NgbPopover } from '@ng-bootstrap/ng-bootstrap';
     standalone: false,
 })
 export class StickyPopoverDirective extends NgbPopover implements OnInit, OnDestroy {
+    private _elRef = inject(ElementRef);
+    private _render = inject(Renderer2);
+
     @Input() jhiStickyPopover: TemplateRef<any>;
 
     popoverTitle: string;
@@ -25,10 +28,7 @@ export class StickyPopoverDirective extends NgbPopover implements OnInit, OnDest
         return super.isOpen();
     }
 
-    constructor(
-        private _elRef: ElementRef,
-        private _render: Renderer2,
-    ) {
+    constructor() {
         super();
         this.triggers = 'manual';
         this.popoverTitle = '';

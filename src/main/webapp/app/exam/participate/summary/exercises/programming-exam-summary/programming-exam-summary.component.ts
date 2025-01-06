@@ -1,4 +1,4 @@
-import { Component, Input, OnInit, Optional } from '@angular/core';
+import { Component, Input, OnInit, inject } from '@angular/core';
 import { ProgrammingExercise } from 'app/entities/programming/programming-exercise.model';
 import { ProgrammingExerciseStudentParticipation } from 'app/entities/participation/programming-exercise-student-participation.model';
 import { ProgrammingSubmission } from 'app/entities/programming/programming-submission.model';
@@ -22,6 +22,11 @@ import { PROFILE_LOCALVC } from 'app/app.constants';
     standalone: false,
 })
 export class ProgrammingExamSummaryComponent implements OnInit {
+    private exerciseService = inject(ExerciseService);
+    private exerciseCacheService = inject(ExerciseCacheService, { optional: true });
+    private profileService = inject(ProfileService);
+    private router = inject(Router);
+
     @Input() exercise: ProgrammingExercise;
 
     @Input() participation: ProgrammingExerciseStudentParticipation;
@@ -58,13 +63,6 @@ export class ProgrammingExamSummaryComponent implements OnInit {
 
     routerLink: string;
     localVCEnabled = false;
-
-    constructor(
-        private exerciseService: ExerciseService,
-        @Optional() private exerciseCacheService: ExerciseCacheService,
-        private profileService: ProfileService,
-        private router: Router,
-    ) {}
 
     ngOnInit() {
         this.routerLink = this.router.url;

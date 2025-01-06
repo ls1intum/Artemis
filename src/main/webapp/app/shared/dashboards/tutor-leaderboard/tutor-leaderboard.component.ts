@@ -1,4 +1,4 @@
-import { Component, Input, OnInit } from '@angular/core';
+import { Component, Input, OnInit, inject } from '@angular/core';
 import { TutorLeaderboardElement } from 'app/shared/dashboards/tutor-leaderboard/tutor-leaderboard.model';
 import { Course } from 'app/entities/course.model';
 import { Exercise, getCourseFromExercise } from 'app/entities/exercise.model';
@@ -13,6 +13,9 @@ import { faExclamationTriangle, faSort } from '@fortawesome/free-solid-svg-icons
     standalone: false,
 })
 export class TutorLeaderboardComponent implements OnInit {
+    private accountService = inject(AccountService);
+    private sortService = inject(SortService);
+
     @Input() public tutorsData: TutorLeaderboardElement[] = [];
     @Input() public course?: Course;
     @Input() public exercise?: Exercise;
@@ -26,11 +29,6 @@ export class TutorLeaderboardComponent implements OnInit {
     // Icons
     faSort = faSort;
     faExclamationTriangle = faExclamationTriangle;
-
-    constructor(
-        private accountService: AccountService,
-        private sortService: SortService,
-    ) {}
 
     /**
      * Life cycle hook called by Angular to indicate that Angular is done creating the component

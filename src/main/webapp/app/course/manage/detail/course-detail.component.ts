@@ -1,4 +1,4 @@
-import { Component, OnDestroy, OnInit } from '@angular/core';
+import { Component, OnDestroy, OnInit, inject } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { PROFILE_ATHENA, PROFILE_IRIS, PROFILE_LTI } from 'app/app.constants';
@@ -38,6 +38,17 @@ export enum DoughnutChartType {
     standalone: false,
 })
 export class CourseDetailComponent implements OnInit, OnDestroy {
+    private eventManager = inject(EventManager);
+    private courseManagementService = inject(CourseManagementService);
+    private organizationService = inject(OrganizationManagementService);
+    private route = inject(ActivatedRoute);
+    private alertService = inject(AlertService);
+    private profileService = inject(ProfileService);
+    private accountService = inject(AccountService);
+    private irisSettingsService = inject(IrisSettingsService);
+    private markdownService = inject(ArtemisMarkdownService);
+    private featureToggleService = inject(FeatureToggleService);
+
     readonly DoughnutChartType = DoughnutChartType;
     readonly FeatureToggle = FeatureToggle;
 
@@ -69,19 +80,6 @@ export class CourseDetailComponent implements OnInit, OnDestroy {
     faListAlt = faListAlt;
     faChartBar = faChartBar;
     faClipboard = faClipboard;
-
-    constructor(
-        private eventManager: EventManager,
-        private courseManagementService: CourseManagementService,
-        private organizationService: OrganizationManagementService,
-        private route: ActivatedRoute,
-        private alertService: AlertService,
-        private profileService: ProfileService,
-        private accountService: AccountService,
-        private irisSettingsService: IrisSettingsService,
-        private markdownService: ArtemisMarkdownService,
-        private featureToggleService: FeatureToggleService,
-    ) {}
 
     /**
      * On init load the course information and subscribe to listen for changes in courses.

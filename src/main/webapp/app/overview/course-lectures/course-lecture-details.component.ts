@@ -1,4 +1,4 @@
-import { Component, OnDestroy, OnInit } from '@angular/core';
+import { Component, OnDestroy, OnInit, inject } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { HttpErrorResponse } from '@angular/common/http';
 import { downloadStream } from 'app/shared/util/download.util';
@@ -33,6 +33,14 @@ export interface LectureUnitCompletionEvent {
     standalone: false,
 })
 export class CourseLectureDetailsComponent extends AbstractScienceComponent implements OnInit, OnDestroy {
+    private alertService = inject(AlertService);
+    private lectureService = inject(LectureService);
+    private lectureUnitService = inject(LectureUnitService);
+    private activatedRoute = inject(ActivatedRoute);
+    private fileService = inject(FileService);
+    private router = inject(Router);
+    private profileService = inject(ProfileService);
+
     lectureId?: number;
     courseId?: number;
     isLoading = false;
@@ -54,16 +62,9 @@ export class CourseLectureDetailsComponent extends AbstractScienceComponent impl
     // Icons
     faSpinner = faSpinner;
 
-    constructor(
-        private alertService: AlertService,
-        private lectureService: LectureService,
-        private lectureUnitService: LectureUnitService,
-        private activatedRoute: ActivatedRoute,
-        private fileService: FileService,
-        private router: Router,
-        scienceService: ScienceService,
-        private profileService: ProfileService,
-    ) {
+    constructor() {
+        const scienceService = inject(ScienceService);
+
         super(scienceService, ScienceEventType.LECTURE__OPEN);
     }
 

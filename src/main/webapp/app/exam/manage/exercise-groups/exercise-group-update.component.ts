@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, inject } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { AlertService } from 'app/core/util/alert.service';
@@ -15,6 +15,11 @@ import { faBan, faSave } from '@fortawesome/free-solid-svg-icons';
     standalone: false,
 })
 export class ExerciseGroupUpdateComponent implements OnInit {
+    private route = inject(ActivatedRoute);
+    private router = inject(Router);
+    private exerciseGroupService = inject(ExerciseGroupService);
+    private alertService = inject(AlertService);
+
     readonly alertType = 'info';
     courseId: number;
     exam: Exam;
@@ -23,13 +28,6 @@ export class ExerciseGroupUpdateComponent implements OnInit {
     // Icons
     faBan = faBan;
     faSave = faSave;
-
-    constructor(
-        private route: ActivatedRoute,
-        private router: Router,
-        private exerciseGroupService: ExerciseGroupService,
-        private alertService: AlertService,
-    ) {}
 
     /**
      * Initialize the courseId and exerciseGroup

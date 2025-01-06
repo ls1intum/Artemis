@@ -1,4 +1,4 @@
-import { Component, EventEmitter, Input, OnInit, Output } from '@angular/core';
+import { Component, EventEmitter, Input, OnInit, Output, inject } from '@angular/core';
 import { JhiWebsocketService } from 'app/core/websocket/websocket.service';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
 import { throttleTime } from 'rxjs/operators';
@@ -18,6 +18,10 @@ import { SubmissionPatchPayload, isSubmissionPatchPayload } from 'app/entities/s
     standalone: false,
 })
 export class TeamSubmissionSyncComponent implements OnInit {
+    private accountService = inject(AccountService);
+    private teamSubmissionWebsocketService = inject(JhiWebsocketService);
+    private alertService = inject(AlertService);
+
     // Sync settings
     readonly THROTTLE_TIME = 2000; // ms
 
@@ -32,11 +36,7 @@ export class TeamSubmissionSyncComponent implements OnInit {
     currentUser: User;
     websocketTopic: string;
 
-    constructor(
-        private accountService: AccountService,
-        private teamSubmissionWebsocketService: JhiWebsocketService,
-        private alertService: AlertService,
-    ) {
+    constructor() {
         this.accountService.identity().then((user: User) => (this.currentUser = user));
     }
 

@@ -1,4 +1,4 @@
-import { Component, OnDestroy, OnInit, ViewEncapsulation } from '@angular/core';
+import { Component, OnDestroy, OnInit, ViewEncapsulation, inject } from '@angular/core';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { ExamUserAttendanceCheckDTO } from 'app/entities/exam/exam-users-attendance-check-dto.model';
 import { SortService } from 'app/shared/service/sort.service';
@@ -22,6 +22,15 @@ import dayjs from 'dayjs/esm';
     standalone: false,
 })
 export class ExamStudentsAttendanceCheckComponent implements OnInit, OnDestroy {
+    private router = inject(Router);
+    private route = inject(ActivatedRoute);
+    private alertService = inject(AlertService);
+    private eventManager = inject(EventManager);
+    private examManagementService = inject(ExamManagementService);
+    private userService = inject(UserService);
+    private accountService = inject(AccountService);
+    private sortService = inject(SortService);
+
     readonly ButtonType = ButtonType;
     readonly ButtonSize = ButtonSize;
     readonly ActionType = ActionType;
@@ -57,17 +66,6 @@ export class ExamStudentsAttendanceCheckComponent implements OnInit, OnDestroy {
     faTimes = faTimes;
     faXmark = faXmark;
     faSort = faSort;
-
-    constructor(
-        private router: Router,
-        private route: ActivatedRoute,
-        private alertService: AlertService,
-        private eventManager: EventManager,
-        private examManagementService: ExamManagementService,
-        private userService: UserService,
-        private accountService: AccountService,
-        private sortService: SortService,
-    ) {}
 
     ngOnInit() {
         this.isLoading = true;

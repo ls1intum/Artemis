@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, ChangeDetectorRef, Component, OnDestroy, OnInit } from '@angular/core';
+import { ChangeDetectionStrategy, ChangeDetectorRef, Component, OnDestroy, OnInit, inject } from '@angular/core';
 import { Subject, finalize } from 'rxjs';
 import { Course } from 'app/entities/course.model';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
@@ -41,6 +41,15 @@ const DEFAULT_SHOW_ALWAYS: SidebarItemShowAlways = {
     standalone: false,
 })
 export class CourseTutorialGroupsComponent implements OnInit, OnDestroy {
+    private router = inject(Router);
+    private courseStorageService = inject(CourseStorageService);
+    private courseManagementService = inject(CourseManagementService);
+    private tutorialGroupService = inject(TutorialGroupsService);
+    private route = inject(ActivatedRoute);
+    private alertService = inject(AlertService);
+    private cdr = inject(ChangeDetectorRef);
+    private courseOverviewService = inject(CourseOverviewService);
+
     ngUnsubscribe = new Subject<void>();
 
     tutorialGroups: TutorialGroup[] = [];
@@ -58,17 +67,6 @@ export class CourseTutorialGroupsComponent implements OnInit, OnDestroy {
     readonly DEFAULT_COLLAPSE_STATE = DEFAULT_COLLAPSE_STATE;
     protected readonly DEFAULT_SHOW_ALWAYS = DEFAULT_SHOW_ALWAYS;
     sidebarTutorialGroups: SidebarCardElement[] = [];
-
-    constructor(
-        private router: Router,
-        private courseStorageService: CourseStorageService,
-        private courseManagementService: CourseManagementService,
-        private tutorialGroupService: TutorialGroupsService,
-        private route: ActivatedRoute,
-        private alertService: AlertService,
-        private cdr: ChangeDetectorRef,
-        private courseOverviewService: CourseOverviewService,
-    ) {}
 
     get registeredTutorialGroups() {
         if (this.course?.isAtLeastTutor) {

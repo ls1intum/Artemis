@@ -1,4 +1,4 @@
-import { Component, OnInit, ViewChild } from '@angular/core';
+import { Component, OnInit, ViewChild, inject } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { HttpErrorResponse } from '@angular/common/http';
 import { Organization } from 'app/entities/organization.model';
@@ -24,6 +24,11 @@ const cssClasses = {
     standalone: false,
 })
 export class OrganizationManagementDetailComponent implements OnInit {
+    private organizationService = inject(OrganizationManagementService);
+    private userService = inject(UserService);
+    private alertService = inject(AlertService);
+    private route = inject(ActivatedRoute);
+
     @ViewChild(DataTableComponent) dataTable: DataTableComponent;
     organization: Organization;
 
@@ -42,13 +47,6 @@ export class OrganizationManagementDetailComponent implements OnInit {
 
     // Icons
     faUserSlash = faUserSlash;
-
-    constructor(
-        private organizationService: OrganizationManagementService,
-        private userService: UserService,
-        private alertService: AlertService,
-        private route: ActivatedRoute,
-    ) {}
 
     /**
      * Retrieve the organization from the organization management activated route data subscription

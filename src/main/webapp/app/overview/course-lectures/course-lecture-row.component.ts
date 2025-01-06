@@ -18,8 +18,6 @@ export class CourseLectureRowComponent {
     // Icons
     faChalkboardTeacher = faChalkboardTeacher;
 
-    constructor() {}
-
     getUrgentClass(date?: dayjs.Dayjs) {
         if (!date) {
             return '';

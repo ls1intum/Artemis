@@ -1,4 +1,4 @@
-import { Component, Input, OnInit } from '@angular/core';
+import { Component, Input, OnInit, inject } from '@angular/core';
 import { FeedbackItem } from 'app/exercises/shared/feedback/item/feedback-item';
 import { LongFeedbackTextService } from 'app/exercises/shared/feedback/long-feedback-text.service';
 
@@ -9,6 +9,8 @@ import { LongFeedbackTextService } from 'app/exercises/shared/feedback/long-feed
     standalone: false,
 })
 export class FeedbackTextComponent implements OnInit {
+    private longFeedbackService = inject(LongFeedbackTextService);
+
     private readonly MAX_DISPLAYABLE_LENGTH = 20_000;
 
     @Input() feedback: FeedbackItem;
@@ -17,8 +19,6 @@ export class FeedbackTextComponent implements OnInit {
 
     downloadText?: string;
     downloadFilename?: string;
-
-    constructor(private longFeedbackService: LongFeedbackTextService) {}
 
     ngOnInit(): void {
         this.text = this.feedback.text ?? '';

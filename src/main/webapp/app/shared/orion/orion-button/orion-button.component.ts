@@ -35,8 +35,6 @@ export class OrionButtonComponent {
     faUpload = faUpload;
     faDownload = faDownload;
 
-    constructor() {}
-
     public get btnPrimary(): boolean {
         return !this.outlined;
     }

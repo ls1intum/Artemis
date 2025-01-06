@@ -1,4 +1,4 @@
-import { ChangeDetectorRef, Component, EventEmitter, Input, OnChanges, OnInit, Output } from '@angular/core';
+import { Component, EventEmitter, Input, OnChanges, OnInit, Output, inject } from '@angular/core';
 import { Exercise, ExerciseType, getIcon, getIconTooltip } from 'app/entities/exercise.model';
 import { ExamPageComponent } from 'app/exam/participate/exercises/exam-page.component';
 import { StudentExam } from 'app/entities/student-exam.model';
@@ -15,21 +15,15 @@ import { ExerciseButtonStatus } from 'app/exam/participate/exam-navigation-sideb
     standalone: false,
 })
 export class ExamExerciseOverviewPageComponent extends ExamPageComponent implements OnInit, OnChanges {
+    private examParticipationService = inject(ExamParticipationService);
+
     @Input() studentExam: StudentExam;
     @Output() onPageChanged = new EventEmitter<{ overViewChange: boolean; exercise: Exercise; forceSave: boolean }>();
     getIcon = getIcon;
     getIconTooltip = getIconTooltip;
-    readonly ExerciseButtonStatus = ExerciseButtonStatus;
     showResultWidth = 10;
 
     examExerciseOverviewItems: ExamExerciseOverviewItem[] = [];
-
-    constructor(
-        protected changeDetectorReference: ChangeDetectorRef,
-        private examParticipationService: ExamParticipationService,
-    ) {
-        super(changeDetectorReference);
-    }
 
     ngOnInit() {
         this.studentExam.exercises?.forEach((exercise) => {

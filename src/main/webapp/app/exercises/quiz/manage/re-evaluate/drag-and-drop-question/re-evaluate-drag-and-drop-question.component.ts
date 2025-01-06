@@ -50,8 +50,6 @@ export class ReEvaluateDragAndDropQuestionComponent {
 
     fileMap = new Map<string, { path?: string; file: File }>();
 
-    constructor() {}
-
     /**
      * Add the given file to the fileMap for later upload.
      * @param event the event containing the file and its name. The name provided may be different from the actual file name but has to correspond to the name set in the entity object.

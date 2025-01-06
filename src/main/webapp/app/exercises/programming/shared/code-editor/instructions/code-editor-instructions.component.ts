@@ -28,8 +28,6 @@ export class CodeEditorInstructionsComponent implements AfterViewInit {
     faChevronLeft = faChevronLeft;
     farListAlt = faListAlt;
 
-    constructor() {}
-
     /**
      * After the view was initialized, we create an interact.js resizable object,
      * designate the edges which can be used to resize the target element and set min and max values.

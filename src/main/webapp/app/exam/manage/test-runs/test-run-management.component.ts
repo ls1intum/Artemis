@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, inject } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { Course } from 'app/entities/course.model';
 import { StudentExam } from 'app/entities/student-exam.model';
@@ -21,6 +21,13 @@ import { faSort, faTimes } from '@fortawesome/free-solid-svg-icons';
     standalone: false,
 })
 export class TestRunManagementComponent implements OnInit {
+    private route = inject(ActivatedRoute);
+    private alertService = inject(AlertService);
+    private examManagementService = inject(ExamManagementService);
+    private accountService = inject(AccountService);
+    private sortService = inject(SortService);
+    private modalService = inject(NgbModal);
+
     course: Course;
     exam: Exam;
     isLoading: boolean;
@@ -36,14 +43,7 @@ export class TestRunManagementComponent implements OnInit {
     faSort = faSort;
     faTimes = faTimes;
 
-    constructor(
-        private route: ActivatedRoute,
-        private alertService: AlertService,
-        private examManagementService: ExamManagementService,
-        private accountService: AccountService,
-        private sortService: SortService,
-        private modalService: NgbModal,
-    ) {
+    constructor() {
         this.predicate = 'id';
         this.ascending = true;
     }

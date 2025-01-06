@@ -10,6 +10,7 @@ import {
     SimpleChanges,
     TemplateRef,
     ViewEncapsulation,
+    inject,
 } from '@angular/core';
 import { TutorialGroupSession } from 'app/entities/tutorial-group/tutorial-group-session.model';
 import { TutorialGroup } from 'app/entities/tutorial-group/tutorial-group.model';
@@ -25,6 +26,9 @@ import dayjs from 'dayjs/esm';
     standalone: false,
 })
 export class TutorialGroupSessionsTableComponent implements OnChanges {
+    private sortService = inject(SortService);
+    private changeDetectorRef = inject(ChangeDetectorRef);
+
     @ContentChild(TemplateRef, { static: true }) extraColumn: TemplateRef<any>;
 
     @Input()
@@ -62,11 +66,6 @@ export class TutorialGroupSessionsTableComponent implements OnChanges {
         }
         return numberOfColumns;
     }
-
-    constructor(
-        private sortService: SortService,
-        private changeDetectorRef: ChangeDetectorRef,
-    ) {}
 
     ngOnChanges(changes: SimpleChanges) {
         for (const propName in changes) {

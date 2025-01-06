@@ -1,4 +1,4 @@
-import { Component, OnInit, ViewChild } from '@angular/core';
+import { Component, OnInit, ViewChild, inject } from '@angular/core';
 import { CompetencyService } from 'app/course/competencies/competency.service';
 import { AlertService } from 'app/core/util/alert.service';
 import { onError } from 'app/shared/util/global.utils';
@@ -52,6 +52,18 @@ type CompetencyGenerationStatusUpdate = {
     imports: [ArtemisSharedCommonModule, ArtemisSharedComponentModule, ArtemisCompetenciesModule],
 })
 export class GenerateCompetenciesComponent implements OnInit, ComponentCanDeactivate {
+    private courseManagementService = inject(CourseManagementService);
+    private courseCompetencyService = inject(CourseCompetencyService);
+    private competencyService = inject(CompetencyService);
+    private alertService = inject(AlertService);
+    private activatedRoute = inject(ActivatedRoute);
+    private router = inject(Router);
+    private formBuilder = inject(FormBuilder);
+    private modalService = inject(NgbModal);
+    private artemisTranslatePipe = inject(ArtemisTranslatePipe);
+    private translateService = inject(TranslateService);
+    private jhiWebsocketService = inject(JhiWebsocketService);
+
     @ViewChild(CourseDescriptionFormComponent) courseDescriptionForm: CourseDescriptionFormComponent;
 
     courseId: number;
@@ -67,20 +79,6 @@ export class GenerateCompetenciesComponent implements OnInit, ComponentCanDeacti
     //Other constants
     protected readonly ButtonType = ButtonType;
     readonly documentationType: DocumentationType = 'GenerateCompetencies';
-
-    constructor(
-        private courseManagementService: CourseManagementService,
-        private courseCompetencyService: CourseCompetencyService,
-        private competencyService: CompetencyService,
-        private alertService: AlertService,
-        private activatedRoute: ActivatedRoute,
-        private router: Router,
-        private formBuilder: FormBuilder,
-        private modalService: NgbModal,
-        private artemisTranslatePipe: ArtemisTranslatePipe,
-        private translateService: TranslateService,
-        private jhiWebsocketService: JhiWebsocketService,
-    ) {}
 
     ngOnInit(): void {
         this.activatedRoute.params.subscribe((params) => {

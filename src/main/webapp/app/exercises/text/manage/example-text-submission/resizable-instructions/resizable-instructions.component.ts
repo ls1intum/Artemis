@@ -21,6 +21,4 @@ export class ResizableInstructionsComponent {
     // Icons
     faChevronRight = faChevronRight;
     farListAlt = faListAlt;
-
-    constructor() {}
 }

@@ -1,4 +1,4 @@
-import { AfterViewInit, Component, Input, OnChanges, OnDestroy, OnInit, QueryList, SimpleChanges, ViewChildren, input } from '@angular/core';
+import { AfterViewInit, Component, Input, OnChanges, OnDestroy, OnInit, QueryList, SimpleChanges, ViewChildren, inject, input } from '@angular/core';
 import dayjs from 'dayjs/esm';
 import { TranslateService } from '@ngx-translate/core';
 import { AssessmentType } from 'app/entities/assessment-type.model';
@@ -22,6 +22,11 @@ import { ProgrammingExerciseInputField } from 'app/exercises/programming/manage/
     standalone: false,
 })
 export class ProgrammingExerciseLifecycleComponent implements AfterViewInit, OnDestroy, OnInit, OnChanges {
+    private translateService = inject(TranslateService);
+    private exerciseService = inject(ExerciseService);
+    private athenaService = inject(AthenaService);
+    private activatedRoute = inject(ActivatedRoute);
+
     protected readonly assessmentType = AssessmentType;
     protected readonly IncludedInOverallScore = IncludedInOverallScore;
     protected readonly faCogs = faCogs;
@@ -47,13 +52,6 @@ export class ProgrammingExerciseLifecycleComponent implements AfterViewInit, OnD
 
     isImport: boolean = false;
     private urlSubscription: Subscription;
-
-    constructor(
-        private translateService: TranslateService,
-        private exerciseService: ExerciseService,
-        private athenaService: AthenaService,
-        private activatedRoute: ActivatedRoute,
-    ) {}
 
     /**
      * If the programming exercise does not have an id, set the assessment Type to AUTOMATIC

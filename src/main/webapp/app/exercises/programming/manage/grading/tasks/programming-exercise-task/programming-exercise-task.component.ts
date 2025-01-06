@@ -1,4 +1,4 @@
-import { Component, EventEmitter, Input, OnInit, Output } from '@angular/core';
+import { Component, EventEmitter, Input, OnInit, Output, inject } from '@angular/core';
 import { faAngleDown, faAngleRight } from '@fortawesome/free-solid-svg-icons';
 import { ProgrammingExerciseTask } from 'app/exercises/programming/manage/grading/tasks/programming-exercise-task';
 import { ProgrammingExerciseTestCase, Visibility } from 'app/entities/programming/programming-exercise-test-case.model';
@@ -12,6 +12,8 @@ import { Subject } from 'rxjs';
     standalone: false,
 })
 export class ProgrammingExerciseTaskComponent implements OnInit {
+    private programmingExerciseTaskService = inject(ProgrammingExerciseTaskService);
+
     @Input() index: number;
     @Input() task: ProgrammingExerciseTask;
     @Input() openSubject: Subject<boolean>;
@@ -31,8 +33,6 @@ export class ProgrammingExerciseTaskComponent implements OnInit {
     get numParticipations(): number {
         return this.programmingExerciseTaskService?.gradingStatistics?.numParticipations ?? 0;
     }
-
-    constructor(private programmingExerciseTaskService: ProgrammingExerciseTaskService) {}
 
     ngOnInit(): void {
         this.openSubject.subscribe((open) => (this.open = open));

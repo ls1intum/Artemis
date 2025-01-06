@@ -1,4 +1,4 @@
-import { Directive, HostBinding, Input, OnDestroy, OnInit } from '@angular/core';
+import { Directive, HostBinding, Input, OnDestroy, OnInit, inject } from '@angular/core';
 import { FeatureToggle, FeatureToggleService } from 'app/shared/feature-toggle/feature-toggle.service';
 import { Subscription } from 'rxjs/internal/Subscription';
 
@@ -7,13 +7,13 @@ import { Subscription } from 'rxjs/internal/Subscription';
     standalone: false,
 })
 export class FeatureToggleHideDirective implements OnInit, OnDestroy {
+    private featureToggleService = inject(FeatureToggleService);
+
     @Input('jhiFeatureToggleHide') feature?: FeatureToggle;
 
     private featureActive = true;
 
     private featureToggleActiveSubscription: Subscription;
-
-    constructor(private featureToggleService: FeatureToggleService) {}
 
     ngOnInit() {
         if (this.feature) {

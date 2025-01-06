@@ -18,7 +18,7 @@ describe(`ErrorHandlerInterceptor`, () => {
             isAuthenticated: jest.fn(),
         } as any as AccountService;
 
-        errorHandlerInterceptor = new ErrorHandlerInterceptor(eventManagerMock, accountServiceMock);
+        errorHandlerInterceptor = new ErrorHandlerInterceptor();
     });
 
     afterEach(() => {

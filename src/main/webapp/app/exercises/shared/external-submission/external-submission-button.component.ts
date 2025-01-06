@@ -1,4 +1,4 @@
-import { Component, Input } from '@angular/core';
+import { Component, Input, inject } from '@angular/core';
 import { faPlus } from '@fortawesome/free-solid-svg-icons';
 import { NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
 import { Exercise } from 'app/entities/exercise.model';
@@ -21,6 +21,8 @@ import { ButtonSize, ButtonType } from 'app/shared/components/button.component';
     standalone: false,
 })
 export class ExternalSubmissionButtonComponent {
+    private modalService = inject(NgbModal);
+
     ButtonType = ButtonType;
     ButtonSize = ButtonSize;
 
@@ -28,8 +30,6 @@ export class ExternalSubmissionButtonComponent {
 
     // Icons
     faPlus = faPlus;
-
-    constructor(private modalService: NgbModal) {}
 
     /**
      * Opens modal window for external exercise submission.

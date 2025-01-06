@@ -42,6 +42,20 @@ const DEFAULT_CUSTOM_GROUP_NAME = 'artemis-dev';
     standalone: false,
 })
 export class CourseUpdateComponent implements OnInit {
+    private eventManager = inject(EventManager);
+    private courseManagementService = inject(CourseManagementService);
+    private courseAdminService = inject(CourseAdminService);
+    private activatedRoute = inject(ActivatedRoute);
+    private fileService = inject(FileService);
+    private alertService = inject(AlertService);
+    private profileService = inject(ProfileService);
+    private organizationService = inject(OrganizationManagementService);
+    private modalService = inject(NgbModal);
+    private navigationUtilService = inject(ArtemisNavigationUtilService);
+    private router = inject(Router);
+    private featureToggleService = inject(FeatureToggleService);
+    private accountService = inject(AccountService);
+
     CachingStrategy = CachingStrategy;
     ProgrammingLanguage = ProgrammingLanguage;
 
@@ -91,22 +105,6 @@ export class CourseUpdateComponent implements OnInit {
     readonly COMPLAINT_TEXT_LIMIT = 65535;
 
     readonly COURSE_TITLE_LIMIT = 255;
-
-    constructor(
-        private eventManager: EventManager,
-        private courseManagementService: CourseManagementService,
-        private courseAdminService: CourseAdminService,
-        private activatedRoute: ActivatedRoute,
-        private fileService: FileService,
-        private alertService: AlertService,
-        private profileService: ProfileService,
-        private organizationService: OrganizationManagementService,
-        private modalService: NgbModal,
-        private navigationUtilService: ArtemisNavigationUtilService,
-        private router: Router,
-        private featureToggleService: FeatureToggleService,
-        private accountService: AccountService,
-    ) {}
 
     ngOnInit() {
         this.timeZones = (Intl as any).supportedValuesOf('timeZone');

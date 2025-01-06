@@ -1,4 +1,4 @@
-import { Component, Input, OnChanges, OnDestroy, OnInit } from '@angular/core';
+import { Component, Input, OnChanges, OnDestroy, OnInit, inject } from '@angular/core';
 import { Exam } from 'app/entities/exam/exam.model';
 import { ExamChecklist } from 'app/entities/exam/exam-checklist.model';
 import { faChartBar, faEye, faListAlt, faThList, faUser, faWrench } from '@fortawesome/free-solid-svg-icons';
@@ -18,6 +18,12 @@ import { captureException } from '@sentry/angular';
     standalone: false,
 })
 export class ExamChecklistComponent implements OnChanges, OnInit, OnDestroy {
+    private examChecklistService = inject(ExamChecklistService);
+    private websocketService = inject(JhiWebsocketService);
+    private examManagementService = inject(ExamManagementService);
+    private alertService = inject(AlertService);
+    private studentExamService = inject(StudentExamService);
+
     @Input() exam: Exam;
     @Input() getExamRoutesByIdentifier: any;
     private longestWorkingTimeSub: Subscription | null = null;
@@ -54,14 +60,6 @@ export class ExamChecklistComponent implements OnChanges, OnInit, OnDestroy {
 
     private dialogErrorSource = new Subject<string>();
     dialogError$ = this.dialogErrorSource.asObservable();
-
-    constructor(
-        private examChecklistService: ExamChecklistService,
-        private websocketService: JhiWebsocketService,
-        private examManagementService: ExamManagementService,
-        private alertService: AlertService,
-        private studentExamService: StudentExamService,
-    ) {}
 
     ngOnInit() {
         const submittedTopic = this.examChecklistService.getSubmittedTopic(this.exam);

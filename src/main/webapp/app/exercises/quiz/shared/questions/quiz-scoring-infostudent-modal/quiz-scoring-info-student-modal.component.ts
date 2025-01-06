@@ -1,4 +1,4 @@
-import { AfterViewInit, Component, Input } from '@angular/core';
+import { AfterViewInit, Component, Input, inject } from '@angular/core';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { TranslateService } from '@ngx-translate/core';
 import { Result } from 'app/entities/result.model';
@@ -19,6 +19,9 @@ import { faQuestionCircle } from '@fortawesome/free-regular-svg-icons';
     standalone: false,
 })
 export class QuizScoringInfoStudentModalComponent implements AfterViewInit {
+    private modalService = inject(NgbModal);
+    private translateService = inject(TranslateService);
+
     QuizQuestionType = QuizQuestionType;
     ScoringType = ScoringType;
 
@@ -68,11 +71,6 @@ export class QuizScoringInfoStudentModalComponent implements AfterViewInit {
 
     // Icons
     farQuestionCircle = faQuestionCircle;
-
-    constructor(
-        private modalService: NgbModal,
-        private translateService: TranslateService,
-    ) {}
 
     /**
      * Count the variables depending on the quiz question type

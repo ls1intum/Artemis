@@ -1,9 +1,5 @@
 import { Component, EventEmitter, Input, OnChanges, OnInit, Output } from '@angular/core';
-import { FormBuilder } from '@angular/forms';
-import { CompetencyService } from 'app/course/competencies/competency.service';
-import { LectureUnitService } from 'app/lecture/lecture-unit/lecture-unit-management/lectureUnit.service';
 import { CourseCompetencyFormComponent, CourseCompetencyFormData } from 'app/course/competencies/forms/course-competency-form.component';
-import { TranslateService } from '@ngx-translate/core';
 import { ArtemisSharedModule } from 'app/shared/shared.module';
 import { CommonCourseCompetencyFormComponent } from 'app/course/competencies/forms/common-course-competency-form.component';
 import { Competency } from 'app/entities/competency.model';
@@ -15,8 +11,7 @@ import { Competency } from 'app/entities/competency.model';
     imports: [ArtemisSharedModule, CommonCourseCompetencyFormComponent],
 })
 export class CompetencyFormComponent extends CourseCompetencyFormComponent implements OnInit, OnChanges {
-    @Input()
-    formData: CourseCompetencyFormData = {
+    @Input() formData: CourseCompetencyFormData = {
         id: undefined,
         title: undefined,
         description: undefined,
@@ -25,15 +20,9 @@ export class CompetencyFormComponent extends CourseCompetencyFormComponent imple
         masteryThreshold: undefined,
         optional: false,
     };
-    @Input()
-    competency: Competency;
+    @Input() competency: Competency;
 
-    @Output()
-    formSubmitted: EventEmitter<CourseCompetencyFormData> = new EventEmitter<CourseCompetencyFormData>();
-
-    constructor(fb: FormBuilder, lectureUnitService: LectureUnitService, competencyService: CompetencyService, translateService: TranslateService) {
-        super(fb, lectureUnitService, competencyService, translateService);
-    }
+    @Output() formSubmitted: EventEmitter<CourseCompetencyFormData> = new EventEmitter<CourseCompetencyFormData>();
 
     ngOnChanges(): void {
         this.initializeForm();

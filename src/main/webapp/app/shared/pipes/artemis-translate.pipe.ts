@@ -1,4 +1,4 @@
-import { ChangeDetectorRef, OnDestroy, Pipe, PipeTransform } from '@angular/core';
+import { ChangeDetectorRef, OnDestroy, Pipe, PipeTransform, inject } from '@angular/core';
 import { TranslatePipe, TranslateService } from '@ngx-translate/core';
 
 @Pipe({
@@ -17,7 +17,10 @@ export class ArtemisTranslatePipe implements PipeTransform, OnDestroy {
      * However, in this case due to being a wrapper class for TranslatePipe, which implements the same constructor
      * this exception should be okay.
      */
-    constructor(translateService: TranslateService, changeDetectorRef: ChangeDetectorRef) {
+    constructor() {
+        const translateService = inject(TranslateService);
+        const changeDetectorRef = inject(ChangeDetectorRef);
+
         this.translatePipe = new TranslatePipe(translateService, changeDetectorRef);
     }
 

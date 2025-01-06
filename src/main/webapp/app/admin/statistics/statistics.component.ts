@@ -25,8 +25,6 @@ export class StatisticsComponent {
     currentSpan: SpanType = SpanType.WEEK;
     statisticsView: StatisticsView = StatisticsView.ARTEMIS;
 
-    constructor() {}
-
     onTabChanged(span: SpanType): void {
         this.currentSpan = span;
     }

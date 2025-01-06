@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, Input, OnDestroy } from '@angular/core';
+import { ChangeDetectionStrategy, Component, Input, OnDestroy, inject } from '@angular/core';
 import { TutorialGroup } from 'app/entities/tutorial-group/tutorial-group.model';
 import { AlertService } from 'app/core/util/alert.service';
 import { finalize, takeUntil } from 'rxjs/operators';
@@ -16,6 +16,10 @@ import { Subject } from 'rxjs';
     standalone: false,
 })
 export class CreateTutorialGroupSessionComponent implements OnDestroy {
+    private activeModal = inject(NgbActiveModal);
+    private tutorialGroupSessionService = inject(TutorialGroupSessionService);
+    private alertService = inject(AlertService);
+
     ngUnsubscribe = new Subject<void>();
 
     tutorialGroupSessionToCreate: TutorialGroupSessionDTO = new TutorialGroupSessionDTO();
@@ -28,12 +32,6 @@ export class CreateTutorialGroupSessionComponent implements OnDestroy {
     course: Course;
 
     isInitialized = false;
-
-    constructor(
-        private activeModal: NgbActiveModal,
-        private tutorialGroupSessionService: TutorialGroupSessionService,
-        private alertService: AlertService,
-    ) {}
 
     initialize() {
         if (!this.course || !this.tutorialGroup) {

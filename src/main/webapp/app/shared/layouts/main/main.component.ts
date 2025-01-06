@@ -1,4 +1,4 @@
-import { Component, Inject, OnDestroy, OnInit, Renderer2 } from '@angular/core';
+import { Component, OnDestroy, OnInit, Renderer2, inject } from '@angular/core';
 import { ActivatedRouteSnapshot, NavigationEnd, NavigationError, NavigationStart, Router } from '@angular/router';
 import { JhiLanguageHelper } from 'app/core/language/language.helper';
 import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
@@ -17,6 +17,17 @@ import { LtiService } from 'app/shared/service/lti.service';
     standalone: false,
 })
 export class JhiMainComponent implements OnInit, OnDestroy {
+    private jhiLanguageHelper = inject(JhiLanguageHelper);
+    private router = inject(Router);
+    private profileService = inject(ProfileService);
+    private examParticipationService = inject(ExamParticipationService);
+    private sentryErrorHandler = inject(SentryErrorHandler);
+    private themeService = inject(ThemeService);
+    private document = inject<Document>(DOCUMENT);
+    private renderer = inject(Renderer2);
+    private courseService = inject(CourseManagementService);
+    private ltiService = inject(LtiService);
+
     /**
      * If the footer and header should be shown.
      * Only set to false on specific pages designed for the native Android and iOS applications where the footer and header are not wanted.
@@ -35,19 +46,7 @@ export class JhiMainComponent implements OnInit, OnDestroy {
     isCourseOverview = false;
     isShownViaLti = false;
 
-    constructor(
-        private jhiLanguageHelper: JhiLanguageHelper,
-        private router: Router,
-        private profileService: ProfileService,
-        private examParticipationService: ExamParticipationService,
-        private sentryErrorHandler: SentryErrorHandler,
-        private themeService: ThemeService,
-        @Inject(DOCUMENT)
-        private document: Document,
-        private renderer: Renderer2,
-        private courseService: CourseManagementService,
-        private ltiService: LtiService,
-    ) {
+    constructor() {
         this.setupErrorHandling().then(undefined);
     }
 

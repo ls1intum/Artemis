@@ -1,4 +1,4 @@
-import { ChangeDetectorRef, Component, EventEmitter, Input, OnInit, Output, forwardRef } from '@angular/core';
+import { ChangeDetectorRef, Component, EventEmitter, Input, OnInit, Output, forwardRef, inject } from '@angular/core';
 import { ControlValueAccessor, NG_VALUE_ACCESSOR } from '@angular/forms';
 import { faQuestionCircle } from '@fortawesome/free-solid-svg-icons';
 import {
@@ -30,6 +30,11 @@ import { CourseCompetencyService } from 'app/course/competencies/course-competen
     standalone: false,
 })
 export class CompetencySelectionComponent implements OnInit, ControlValueAccessor {
+    private route = inject(ActivatedRoute);
+    private courseStorageService = inject(CourseStorageService);
+    private courseCompetencyService = inject(CourseCompetencyService);
+    private changeDetector = inject(ChangeDetectorRef);
+
     @Input() labelName: string;
     @Input() labelTooltip: string;
 
@@ -54,14 +59,8 @@ export class CompetencySelectionComponent implements OnInit, ControlValueAccesso
     protected readonly MEDIUM_COMPETENCY_LINK_WEIGHT = MEDIUM_COMPETENCY_LINK_WEIGHT;
     protected readonly LOW_COMPETENCY_LINK_WEIGHT = LOW_COMPETENCY_LINK_WEIGHT;
     protected readonly LOW_COMPETENCY_LINK_WEIGHT_CUT_OFF = LOW_COMPETENCY_LINK_WEIGHT_CUT_OFF; // halfway between low and medium
-    protected readonly MEDIUM_COMPETENCY_LINK_WEIGHT_CUT_OFF = MEDIUM_COMPETENCY_LINK_WEIGHT_CUT_OFF; // halfway between medium and high
-
-    constructor(
-        private route: ActivatedRoute,
-        private courseStorageService: CourseStorageService,
-        private courseCompetencyService: CourseCompetencyService,
-        private changeDetector: ChangeDetectorRef,
-    ) {}
+    protected readonly MEDIUM_COMPETENCY_LINK_WEIGHT_CUT_OFF = MEDIUM_COMPETENCY_LINK_WEIGHT_CUT_OFF;
+    // halfway between medium and high
 
     ngOnInit(): void {
         const courseId = Number(this.route.snapshot.paramMap.get('courseId'));

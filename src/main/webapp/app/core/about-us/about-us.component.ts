@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, inject } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
 import { VERSION } from 'app/app.constants';
@@ -13,6 +13,10 @@ import { ContributorModel } from 'app/core/about-us/models/contributor-model';
     standalone: false,
 })
 export class AboutUsComponent implements OnInit {
+    private route = inject(ActivatedRoute);
+    private profileService = inject(ProfileService);
+    private staticContentService = inject(StaticContentService);
+
     private readonly ISSUE_BASE_URL = 'https://github.com/ls1intum/Artemis/issues/new?projects=ls1intum/1';
     readonly BUG_REPORT_URL = `${this.ISSUE_BASE_URL}&labels=bug&template=bug-report.yml`;
     readonly FEATURE_REQUEST_URL = `${this.ISSUE_BASE_URL}&labels=feature&template=feature-request.yml`;
@@ -51,12 +55,6 @@ export class AboutUsComponent implements OnInit {
         ['customizable', { customizableUrl: 'https://docs.artemis.cit.tum.de/user/courses/customizable' }],
         ['openSource', { openSourceUrl: 'https://docs.artemis.cit.tum.de/dev/open-source/' }],
     ];
-
-    constructor(
-        private route: ActivatedRoute,
-        private profileService: ProfileService,
-        private staticContentService: StaticContentService,
-    ) {}
 
     /**
      * On init get the json file from the Artemis server and save it.

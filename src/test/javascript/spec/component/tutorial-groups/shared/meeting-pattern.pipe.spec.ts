@@ -4,7 +4,7 @@ import { TutorialGroupSchedule } from 'app/entities/tutorial-group/tutorial-grou
 describe('MeetingPatternPipe', () => {
     const translateService = { instant: jest.fn() };
 
-    const pipe = new MeetingPatternPipe(translateService as any);
+    const pipe = new MeetingPatternPipe();
 
     beforeEach(() => {
         translateService.instant.mockClear();

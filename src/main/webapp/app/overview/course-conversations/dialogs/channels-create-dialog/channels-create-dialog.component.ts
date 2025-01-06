@@ -10,8 +10,7 @@ import { AbstractDialogComponent } from 'app/overview/course-conversations/dialo
     standalone: false,
 })
 export class ChannelsCreateDialogComponent extends AbstractDialogComponent {
-    @Input()
-    course: Course;
+    @Input() course: Course;
 
     initialize() {
         super.initialize(['course']);
@@ -20,6 +19,7 @@ export class ChannelsCreateDialogComponent extends AbstractDialogComponent {
     channelToCreate: ChannelDTO = new ChannelDTO();
     isPublicChannel = true;
     isAnnouncementChannel = false;
+
     onChannelTypeChanged($event: ChannelType) {
         this.isPublicChannel = $event === 'PUBLIC';
     }

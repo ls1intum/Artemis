@@ -1,4 +1,4 @@
-import { Component, OnDestroy, OnInit, ViewChild } from '@angular/core';
+import { Component, OnDestroy, OnInit, ViewChild, inject } from '@angular/core';
 import { Observable, Subscription } from 'rxjs';
 import { map, tap } from 'rxjs/operators';
 import { ProgrammingExerciseParticipationService } from 'app/exercises/programming/manage/services/programming-exercise-participation.service';
@@ -29,6 +29,12 @@ import { isManualResult as isManualResultFunction } from 'app/exercises/shared/r
     standalone: false,
 })
 export class CodeEditorStudentContainerComponent implements OnInit, OnDestroy {
+    private domainService = inject(DomainService);
+    private programmingExerciseParticipationService = inject(ProgrammingExerciseParticipationService);
+    private guidedTourService = inject(GuidedTourService);
+    private submissionPolicyService = inject(SubmissionPolicyService);
+    private route = inject(ActivatedRoute);
+
     @ViewChild(CodeEditorContainerComponent, { static: false }) codeEditorContainer: CodeEditorContainerComponent;
     readonly IncludedInOverallScore = IncludedInOverallScore;
     readonly SubmissionPolicyType = SubmissionPolicyType;
@@ -54,14 +60,6 @@ export class CodeEditorStudentContainerComponent implements OnInit, OnDestroy {
     // Icons
     faCircleNotch = faCircleNotch;
     faTimesCircle = faTimesCircle;
-
-    constructor(
-        private domainService: DomainService,
-        private programmingExerciseParticipationService: ProgrammingExerciseParticipationService,
-        private guidedTourService: GuidedTourService,
-        private submissionPolicyService: SubmissionPolicyService,
-        private route: ActivatedRoute,
-    ) {}
 
     /**
      * On init set up the route param subscription.

@@ -1,7 +1,5 @@
-import { MockRouter } from '../../../../helpers/mocks/mock-router';
 import { StudentExamService } from 'app/exam/manage/student-exams/student-exam.service';
-import { Router } from '@angular/router';
-import { HttpClient, HttpResponse } from '@angular/common/http';
+import { HttpResponse } from '@angular/common/http';
 import { AccountService } from 'app/core/auth/account.service';
 import { of } from 'rxjs';
 import { StudentExam } from 'app/entities/student-exam.model';
@@ -23,7 +21,7 @@ describe('Student Exam Service', () => {
             setAccessRightsForCourse: jest.fn(),
         } as any as AccountService;
         httpClientPutSpy = jest.spyOn(httpClient, 'put');
-        service = new StudentExamService(new MockRouter() as any as Router, httpClient as HttpClient, accountService);
+        service = new StudentExamService();
     });
 
     afterEach(() => {

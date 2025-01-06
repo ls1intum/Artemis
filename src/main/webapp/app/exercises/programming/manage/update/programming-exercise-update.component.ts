@@ -1,5 +1,5 @@
 import { ActivatedRoute, Params } from '@angular/router';
-import { AfterViewInit, Component, OnDestroy, OnInit, ViewChild, computed, effect, signal } from '@angular/core';
+import { AfterViewInit, Component, OnDestroy, OnInit, ViewChild, computed, effect, inject, signal } from '@angular/core';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { AlertService, AlertType } from 'app/core/util/alert.service';
 import { ProgrammingExerciseBuildConfig } from 'app/entities/programming/programming-exercise-build.config';
@@ -58,6 +58,21 @@ export const LOCAL_STORAGE_KEY_IS_SIMPLE_MODE = 'isSimpleMode';
     standalone: false,
 })
 export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDestroy, OnInit {
+    private programmingExerciseService = inject(ProgrammingExerciseService);
+    private modalService = inject(NgbModal);
+    private popupService = inject(ExerciseUpdateWarningService);
+    private courseService = inject(CourseManagementService);
+    private alertService = inject(AlertService);
+    private exerciseService = inject(ExerciseService);
+    private fileService = inject(FileService);
+    private activatedRoute = inject(ActivatedRoute);
+    private translateService = inject(TranslateService);
+    private profileService = inject(ProfileService);
+    private exerciseGroupService = inject(ExerciseGroupService);
+    private programmingLanguageFeatureService = inject(ProgrammingLanguageFeatureService);
+    private navigationUtilService = inject(ArtemisNavigationUtilService);
+    private aeolusService = inject(AeolusService);
+
     protected readonly documentationType: DocumentationType = 'Programming';
     protected readonly maxPenaltyPattern = MAX_PENALTY_PATTERN;
     protected readonly invalidRepositoryNamePattern = INVALID_REPOSITORY_NAME_PATTERN;
@@ -164,22 +179,7 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
 
     public modePickerOptions?: ModePickerOption<ProjectType>[] = [];
 
-    constructor(
-        private programmingExerciseService: ProgrammingExerciseService,
-        private modalService: NgbModal,
-        private popupService: ExerciseUpdateWarningService,
-        private courseService: CourseManagementService,
-        private alertService: AlertService,
-        private exerciseService: ExerciseService,
-        private fileService: FileService,
-        private activatedRoute: ActivatedRoute,
-        private translateService: TranslateService,
-        private profileService: ProfileService,
-        private exerciseGroupService: ExerciseGroupService,
-        private programmingLanguageFeatureService: ProgrammingLanguageFeatureService,
-        private navigationUtilService: ArtemisNavigationUtilService,
-        private aeolusService: AeolusService,
-    ) {
+    constructor() {
         effect(
             function updateStatusBarSectionsWhenEditModeChanges() {
                 if (this.isSimpleMode()) {

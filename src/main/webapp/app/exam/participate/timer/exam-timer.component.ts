@@ -1,4 +1,4 @@
-import { Component, EventEmitter, HostBinding, Input, OnDestroy, OnInit, Output } from '@angular/core';
+import { Component, EventEmitter, HostBinding, Input, OnDestroy, OnInit, Output, inject } from '@angular/core';
 import { Observable, Subject, timer } from 'rxjs';
 import { distinctUntilChanged, first, map, takeUntil } from 'rxjs/operators';
 import dayjs from 'dayjs/esm';
@@ -14,6 +14,8 @@ import { round } from 'app/shared/util/utils';
     standalone: false,
 })
 export class ExamTimerComponent implements OnInit, OnDestroy {
+    private serverDateService = inject(ArtemisServerDateService);
+
     @HostBinding('class.row') readonly row = true;
 
     @Input()
@@ -40,7 +42,7 @@ export class ExamTimerComponent implements OnInit, OnDestroy {
 
     timePipe: ArtemisDurationFromSecondsPipe = new ArtemisDurationFromSecondsPipe();
 
-    constructor(private serverDateService: ArtemisServerDateService) {
+    constructor() {
         this.timer
             .pipe(
                 map((timeLeft: plugin.Duration) => timeLeft.asSeconds()),

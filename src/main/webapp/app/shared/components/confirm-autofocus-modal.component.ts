@@ -1,4 +1,4 @@
-import { Component, Input, TemplateRef } from '@angular/core';
+import { Component, Input, TemplateRef, inject } from '@angular/core';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 
 @Component({
@@ -7,12 +7,12 @@ import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
     standalone: false,
 })
 export class ConfirmAutofocusModalComponent {
+    modal = inject(NgbActiveModal);
+
     @Input() title: string;
     @Input() titleTranslationParams?: Record<string, string>;
     @Input() text: string;
     @Input() translateText: boolean;
     @Input() textIsMarkdown: boolean;
     @Input() contentRef?: TemplateRef<any>;
-
-    constructor(public modal: NgbActiveModal) {}
 }

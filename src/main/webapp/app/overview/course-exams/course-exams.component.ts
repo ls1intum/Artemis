@@ -1,4 +1,4 @@
-import { Component, OnDestroy, OnInit } from '@angular/core';
+import { Component, OnDestroy, OnInit, inject } from '@angular/core';
 import { Course } from 'app/entities/course.model';
 import { ActivatedRoute, Router } from '@angular/router';
 import { Subscription } from 'rxjs';
@@ -36,6 +36,13 @@ const DEFAULT_SHOW_ALWAYS: CollapseState = {
     standalone: false,
 })
 export class CourseExamsComponent implements OnInit, OnDestroy {
+    private route = inject(ActivatedRoute);
+    private courseStorageService = inject(CourseStorageService);
+    private serverDateService = inject(ArtemisServerDateService);
+    private examParticipationService = inject(ExamParticipationService);
+    private courseOverviewService = inject(CourseOverviewService);
+    private router = inject(Router);
+
     courseId: number;
     public course?: Course;
     private parentParamSubscription?: Subscription;
@@ -64,15 +71,6 @@ export class CourseExamsComponent implements OnInit, OnDestroy {
 
     readonly DEFAULT_COLLAPSE_STATE = DEFAULT_COLLAPSE_STATE;
     protected readonly DEFAULT_SHOW_ALWAYS = DEFAULT_SHOW_ALWAYS;
-
-    constructor(
-        private route: ActivatedRoute,
-        private courseStorageService: CourseStorageService,
-        private serverDateService: ArtemisServerDateService,
-        private examParticipationService: ExamParticipationService,
-        private courseOverviewService: CourseOverviewService,
-        private router: Router,
-    ) {}
 
     /**
      * subscribe to changes in the course and fetch course by the path parameter

@@ -3,7 +3,7 @@ import { roundValueSpecifiedByCourseSettings, scrollToTopOfPage } from 'app/shar
 import { AlertService } from 'app/core/util/alert.service';
 import { ProgrammingExerciseStudentParticipation } from 'app/entities/participation/programming-exercise-student-participation.model';
 import { Exercise, ExerciseType, getCourseFromExercise } from 'app/entities/exercise.model';
-import { Component, Input, OnInit } from '@angular/core';
+import { Component, Input, OnInit, inject } from '@angular/core';
 import { ResultService } from 'app/exercises/shared/result/result.service';
 import { getTestCaseNamesFromResults, getTestCaseResults } from 'app/exercises/shared/result/result.utils';
 import { ProgrammingExercise } from 'app/entities/programming/programming-exercise.model';
@@ -19,6 +19,9 @@ import { TestCaseResult } from 'app/entities/programming/test-case-result.model'
     standalone: false,
 })
 export class ExerciseScoresExportButtonComponent implements OnInit {
+    private resultService = inject(ResultService);
+    private alertService = inject(AlertService);
+
     @Input() exercises: Exercise[] = []; // Used to export multiple scores together
     @Input() exercise: Exercise | ProgrammingExercise;
 
@@ -26,11 +29,6 @@ export class ExerciseScoresExportButtonComponent implements OnInit {
 
     // Icons
     faDownload = faDownload;
-
-    constructor(
-        private resultService: ResultService,
-        private alertService: AlertService,
-    ) {}
 
     ngOnInit(): void {
         this.isProgrammingExerciseResults = this.exercises.concat(this.exercise).every((exercise) => exercise?.type === ExerciseType.PROGRAMMING);

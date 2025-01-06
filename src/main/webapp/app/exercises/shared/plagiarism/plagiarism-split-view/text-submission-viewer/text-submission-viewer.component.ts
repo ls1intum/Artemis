@@ -1,4 +1,4 @@
-import { Component, Input, OnChanges, SimpleChanges, ViewEncapsulation } from '@angular/core';
+import { Component, Input, OnChanges, SimpleChanges, ViewEncapsulation, inject } from '@angular/core';
 import { TextSubmissionService } from 'app/exercises/text/participate/text-submission.service';
 import { PlagiarismSubmission } from 'app/exercises/shared/plagiarism/types/PlagiarismSubmission';
 import { TextSubmission } from 'app/entities/text/text-submission.model';
@@ -25,6 +25,9 @@ type FilesWithType = { [p: string]: FileType };
     standalone: false,
 })
 export class TextSubmissionViewerComponent implements OnChanges {
+    private repositoryService = inject(CodeEditorRepositoryFileService);
+    private textSubmissionService = inject(TextSubmissionService);
+
     @Input() exercise: ProgrammingExercise | TextExercise;
     @Input() matches: Map<string, FromToElement[]>;
     @Input() plagiarismSubmission: PlagiarismSubmission<TextSubmissionElement>;
@@ -81,11 +84,6 @@ export class TextSubmissionViewerComponent implements OnChanges {
     cannotLoadFiles: boolean = false;
 
     faExclamationTriangle = faExclamationTriangle;
-
-    constructor(
-        private repositoryService: CodeEditorRepositoryFileService,
-        private textSubmissionService: TextSubmissionService,
-    ) {}
 
     ngOnChanges(changes: SimpleChanges): void {
         if (changes.plagiarismSubmission) {

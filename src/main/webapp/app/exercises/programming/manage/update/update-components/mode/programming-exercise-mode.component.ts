@@ -1,4 +1,4 @@
-import { Component, EventEmitter, Input, OnInit, Output, ViewChild, input } from '@angular/core';
+import { Component, EventEmitter, Input, OnInit, Output, ViewChild, inject, input } from '@angular/core';
 import { ProgrammingExercise, ProjectType } from 'app/entities/programming/programming-exercise.model';
 import { faQuestionCircle } from '@fortawesome/free-solid-svg-icons';
 import { ProgrammingExerciseCreationConfig } from 'app/exercises/programming/manage/update/programming-exercise-creation-config';
@@ -14,6 +14,8 @@ import { ProgrammingExerciseInputField } from 'app/exercises/programming/manage/
     standalone: false,
 })
 export class ProgrammingExerciseModeComponent implements OnInit {
+    private profileService = inject(ProfileService);
+
     protected readonly ProjectType = ProjectType;
     protected readonly faQuestionCircle = faQuestionCircle;
 
@@ -26,8 +28,6 @@ export class ProgrammingExerciseModeComponent implements OnInit {
     @Output() triggerValidation = new EventEmitter<void>();
 
     theiaEnabled: boolean = false;
-
-    constructor(private profileService: ProfileService) {}
 
     ngOnInit(): void {
         this.profileService.getProfileInfo().subscribe((profileInfo) => {

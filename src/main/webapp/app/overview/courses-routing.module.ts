@@ -11,7 +11,7 @@ import { CourseTutorialGroupsComponent } from './course-tutorial-groups/course-t
 import { CourseTutorialGroupDetailComponent } from './tutorial-group-details/course-tutorial-group-detail/course-tutorial-group-detail.component';
 import { ExamParticipationComponent } from 'app/exam/participate/exam-participation.component';
 import { PendingChangesGuard } from 'app/shared/guard/pending-changes.guard';
-import { CourseArchiveComponent } from './course-archive/course-archive.component';
+
 import { CourseOverviewGuard } from 'app/overview/course-overview-guard';
 
 export enum CourseOverviewRoutePath {
@@ -45,7 +45,7 @@ const routes: Routes = [
     },
     {
         path: CourseOverviewRoutePath.ARCHIVE,
-        component: CourseArchiveComponent,
+        loadComponent: () => import('./course-archive/course-archive.component').then((m) => m.CourseArchiveComponent),
         data: {
             authorities: [Authority.USER],
             pageTitle: 'overview.archive',

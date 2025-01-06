@@ -12,15 +12,13 @@ import { LogsComponent } from 'app/admin/logs/logs.component';
 import { StatisticsComponent } from 'app/admin/statistics/statistics.component';
 import { DocsComponent } from 'app/admin/docs/docs.component';
 import { organizationMgmtRoute } from 'app/admin/organization-management/organization-management.route';
-import { MetricsComponent } from 'app/admin/metrics/metrics.component';
+
 import { BuildQueueComponent } from 'app/localci/build-queue/build-queue.component';
 import { LocalCIGuard } from 'app/localci/localci-guard.service';
 import { ltiConfigurationRoute } from 'app/admin/lti-configuration/lti-configuration.route';
-import { BuildAgentSummaryComponent } from 'app/localci/build-agents/build-agent-summary/build-agent-summary.component';
+
 import { StandardizedCompetencyManagementComponent } from 'app/admin/standardized-competencies/standardized-competency-management.component';
-import { BuildAgentDetailsComponent } from 'app/localci/build-agents/build-agent-details/build-agent-details/build-agent-details.component';
-import { AdminImportStandardizedCompetenciesComponent } from 'app/admin/standardized-competencies/import/admin-import-standardized-competencies.component';
-import { CleanupServiceComponent } from 'app/admin/cleanup-service/cleanup-service.component';
+
 import { PendingChangesGuard } from 'app/shared/guard/pending-changes.guard';
 
 export const adminState: Routes = [
@@ -76,7 +74,7 @@ export const adminState: Routes = [
             },
             {
                 path: 'metrics',
-                component: MetricsComponent,
+                loadComponent: () => import('app/admin/metrics/metrics.component').then((m) => m.MetricsComponent),
                 data: {
                     pageTitle: 'metrics.title',
                 },
@@ -98,7 +96,7 @@ export const adminState: Routes = [
             },
             {
                 path: 'build-agents',
-                component: BuildAgentSummaryComponent,
+                loadComponent: () => import('app/localci/build-agents/build-agent-summary/build-agent-summary.component').then((m) => m.BuildAgentSummaryComponent),
                 data: {
                     pageTitle: 'artemisApp.buildAgents.title',
                 },
@@ -106,7 +104,8 @@ export const adminState: Routes = [
             },
             {
                 path: 'build-agents/details',
-                component: BuildAgentDetailsComponent,
+                loadComponent: () =>
+                    import('app/localci/build-agents/build-agent-details/build-agent-details/build-agent-details.component').then((m) => m.BuildAgentDetailsComponent),
                 data: {
                     pageTitle: 'artemisApp.buildAgents.title',
                 },
@@ -129,7 +128,10 @@ export const adminState: Routes = [
                 children: [
                     {
                         path: 'import',
-                        component: AdminImportStandardizedCompetenciesComponent,
+                        loadComponent: () =>
+                            import('app/admin/standardized-competencies/import/admin-import-standardized-competencies.component').then(
+                                (m) => m.AdminImportStandardizedCompetenciesComponent,
+                            ),
                         data: {
                             pageTitle: 'artemisApp.standardizedCompetency.import.title',
                         },
@@ -153,7 +155,7 @@ export const adminState: Routes = [
             },
             {
                 path: 'cleanup-service',
-                component: CleanupServiceComponent,
+                loadComponent: () => import('app/admin/cleanup-service/cleanup-service.component').then((m) => m.CleanupServiceComponent),
                 data: {
                     pageTitle: 'cleanupService.title',
                 },

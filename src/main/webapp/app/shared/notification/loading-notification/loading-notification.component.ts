@@ -1,4 +1,4 @@
-import { Component, OnDestroy, OnInit } from '@angular/core';
+import { Component, OnDestroy, OnInit, inject } from '@angular/core';
 import { Subscription } from 'rxjs';
 import { LoadingNotificationService } from 'app/shared/notification/loading-notification/loading-notification.service';
 import { debounceTime } from 'rxjs/operators';
@@ -13,10 +13,10 @@ import { debounceTime } from 'rxjs/operators';
     standalone: false,
 })
 export class LoadingNotificationComponent implements OnInit, OnDestroy {
+    private loadingNotificationService = inject(LoadingNotificationService);
+
     isLoading = false;
     loadingSubscription: Subscription;
-
-    constructor(private loadingNotificationService: LoadingNotificationService) {}
 
     ngOnInit() {
         /**

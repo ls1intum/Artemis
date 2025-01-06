@@ -24,6 +24,9 @@ export interface TextUnitFormData {
     standalone: false,
 })
 export class TextUnitFormComponent implements OnInit, OnChanges, OnDestroy {
+    private router = inject(Router);
+    private translateService = inject(TranslateService);
+
     protected readonly faTimes = faTimes;
 
     formData = input<TextUnitFormData>();
@@ -54,11 +57,6 @@ export class TextUnitFormComponent implements OnInit, OnChanges, OnDestroy {
 
     private markdownChanges = new Subject<string>();
     private markdownChangesSubscription: Subscription;
-
-    constructor(
-        private router: Router,
-        private translateService: TranslateService,
-    ) {}
 
     get nameControl() {
         return this.form.get('name');

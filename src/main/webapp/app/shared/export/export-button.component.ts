@@ -1,4 +1,4 @@
-import { Component, EventEmitter, Input, Output } from '@angular/core';
+import { Component, EventEmitter, Input, Output, inject } from '@angular/core';
 import { NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
 import { ButtonSize, ButtonType } from 'app/shared/components/button.component';
 import { CsvExportOptions, ExportModalComponent } from 'app/shared/export/export-modal.component';
@@ -10,6 +10,8 @@ import { IconProp } from '@fortawesome/fontawesome-svg-core';
     standalone: false,
 })
 export class ExportButtonComponent {
+    private modalService = inject(NgbModal);
+
     ButtonType = ButtonType;
     ButtonSize = ButtonSize;
 
@@ -19,8 +21,6 @@ export class ExportButtonComponent {
     @Input() icon: IconProp;
 
     @Output() onExport: EventEmitter<CsvExportOptions> = new EventEmitter();
-
-    constructor(private modalService: NgbModal) {}
 
     /**
      * Open up export option modal

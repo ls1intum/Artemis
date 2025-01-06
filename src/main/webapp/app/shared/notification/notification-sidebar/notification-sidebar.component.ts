@@ -1,4 +1,4 @@
-import { ChangeDetectorRef, Component, OnDestroy, OnInit } from '@angular/core';
+import { ChangeDetectorRef, Component, OnDestroy, OnInit, inject } from '@angular/core';
 import { User } from 'app/core/user/user.model';
 import { UserService } from 'app/core/user/user.service';
 import dayjs from 'dayjs/esm';
@@ -23,6 +23,13 @@ const IRRELEVANT_NOTIFICATION_TITLES = [NEW_MESSAGE_TITLE, LIVE_EXAM_EXERCISE_UP
     standalone: false,
 })
 export class NotificationSidebarComponent implements OnInit, OnDestroy {
+    private notificationService = inject(NotificationService);
+    private userService = inject(UserService);
+    private accountService = inject(AccountService);
+    private sessionStorageService = inject(SessionStorageService);
+    private changeDetector = inject(ChangeDetectorRef);
+    private artemisTranslatePipe = inject(ArtemisTranslatePipe);
+
     // HTML template related
     showSidebar = false;
     showButtonToHideCurrentlyDisplayedNotifications = true;
@@ -47,15 +54,6 @@ export class NotificationSidebarComponent implements OnInit, OnDestroy {
     faCog = faCog;
     faArchive = faArchive;
     faEye = faEye;
-
-    constructor(
-        private notificationService: NotificationService,
-        private userService: UserService,
-        private accountService: AccountService,
-        private sessionStorageService: SessionStorageService,
-        private changeDetector: ChangeDetectorRef,
-        private artemisTranslatePipe: ArtemisTranslatePipe,
-    ) {}
 
     ngOnDestroy(): void {
         this.subscriptions.forEach((subscription) => subscription.unsubscribe());

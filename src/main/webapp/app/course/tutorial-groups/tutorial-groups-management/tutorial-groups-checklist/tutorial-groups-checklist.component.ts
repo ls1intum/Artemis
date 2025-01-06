@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, ChangeDetectorRef, Component, OnDestroy, OnInit } from '@angular/core';
+import { ChangeDetectionStrategy, ChangeDetectorRef, Component, OnDestroy, OnInit, inject } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
 import { Course } from 'app/entities/course.model';
@@ -17,6 +17,12 @@ import { takeUntil } from 'rxjs/operators';
     standalone: false,
 })
 export class TutorialGroupsChecklistComponent implements OnInit, OnDestroy {
+    private activatedRoute = inject(ActivatedRoute);
+    private courseManagementService = inject(CourseManagementService);
+    private alertService = inject(AlertService);
+    private tutorialGroupsConfigurationService = inject(TutorialGroupsConfigurationService);
+    private cdr = inject(ChangeDetectorRef);
+
     isLoading = false;
     course: Course;
     isTimeZoneConfigured = false;
@@ -26,13 +32,6 @@ export class TutorialGroupsChecklistComponent implements OnInit, OnDestroy {
     faPlus = faPlus;
 
     ngUnsubscribe = new Subject<void>();
-    constructor(
-        private activatedRoute: ActivatedRoute,
-        private courseManagementService: CourseManagementService,
-        private alertService: AlertService,
-        private tutorialGroupsConfigurationService: TutorialGroupsConfigurationService,
-        private cdr: ChangeDetectorRef,
-    ) {}
 
     get isFullyConfigured(): boolean {
         return this.isTimeZoneConfigured && this.isTutorialGroupConfigurationCreated;

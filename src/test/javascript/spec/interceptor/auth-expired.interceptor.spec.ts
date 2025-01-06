@@ -13,6 +13,7 @@ describe(`AuthExpiredInterceptor`, () => {
     let stateStorageServiceMock: StateStorageService;
     let accountServiceMock: AccountService;
 
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const routerMock = {
         routerState: {
             snapshot: {
@@ -32,7 +33,7 @@ describe(`AuthExpiredInterceptor`, () => {
             isAuthenticated: jest.fn(),
         } as any as AccountService;
 
-        authInterceptor = new AuthExpiredInterceptor(loginServiceMock, stateStorageServiceMock, routerMock, accountServiceMock);
+        authInterceptor = new AuthExpiredInterceptor();
     });
 
     afterEach(() => {

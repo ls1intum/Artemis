@@ -1,5 +1,5 @@
 import { NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
-import { Component, EventEmitter, Input, OnDestroy, OnInit, Output } from '@angular/core';
+import { Component, EventEmitter, Input, OnDestroy, OnInit, Output, inject } from '@angular/core';
 import { faHourglassHalf } from '@fortawesome/free-solid-svg-icons';
 import dayjs from 'dayjs/esm';
 import { Subscription, from } from 'rxjs';
@@ -14,6 +14,9 @@ import { ExamEditWorkingTimeDialogComponent } from './exam-edit-working-time-dia
     standalone: false,
 })
 export class ExamEditWorkingTimeComponent implements OnInit, OnDestroy {
+    private modalService = inject(NgbModal);
+    alertService = inject(AlertService);
+
     @Input() exam: Exam;
     @Output() examChange = new EventEmitter<Exam>();
 
@@ -23,11 +26,6 @@ export class ExamEditWorkingTimeComponent implements OnInit, OnDestroy {
     private modalRef: NgbModalRef | undefined;
     private timeoutRef: any;
     private subscription: Subscription;
-
-    constructor(
-        private modalService: NgbModal,
-        public alertService: AlertService,
-    ) {}
 
     ngOnInit() {
         this.checkWorkingTimeChangeAllowed();

@@ -1,4 +1,4 @@
-import { Component } from '@angular/core';
+import { Component, inject } from '@angular/core';
 import { faBan, faTimes } from '@fortawesome/free-solid-svg-icons';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 
@@ -8,11 +8,11 @@ import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
     standalone: false,
 })
 export class FeedbackSuggestionsPendingConfirmationDialogComponent {
+    private activeModal = inject(NgbActiveModal);
+
     // Icons
     faBan = faBan;
     faTimes = faTimes;
-
-    constructor(private activeModal: NgbActiveModal) {}
 
     /**
      * Close the confirmation dialog

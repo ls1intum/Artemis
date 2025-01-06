@@ -1,4 +1,4 @@
-import { Component, EventEmitter, Input, Output, ViewEncapsulation } from '@angular/core';
+import { Component, EventEmitter, Input, Output, ViewEncapsulation, inject } from '@angular/core';
 import { ArtemisMarkdownService } from 'app/shared/markdown.service';
 import { AnswerOption } from 'app/entities/quiz/answer-option.model';
 import { MultipleChoiceQuestion } from 'app/entities/quiz/multiple-choice-question.model';
@@ -15,6 +15,8 @@ import { faCheckSquare, faCircle, faDotCircle, faSquare } from '@fortawesome/fre
     standalone: false,
 })
 export class MultipleChoiceQuestionComponent {
+    private artemisMarkdown = inject(ArtemisMarkdownService);
+
     _question: MultipleChoiceQuestion;
 
     @Input()
@@ -58,8 +60,6 @@ export class MultipleChoiceQuestionComponent {
     faCheckSquare = faCheckSquare;
     faCircle = faCircle;
     faDotCircle = faDotCircle;
-
-    constructor(private artemisMarkdown: ArtemisMarkdownService) {}
 
     /**
      * Update html for text, hint and explanation for the question and every answer option

@@ -1,4 +1,4 @@
-import { ChangeDetectorRef, Component, Input, OnInit, output } from '@angular/core';
+import { Component, Input, OnInit, inject, output } from '@angular/core';
 import { TextEditorService } from 'app/exercises/text/participate/text-editor.service';
 import { Subject } from 'rxjs';
 import { TextSubmission } from 'app/entities/text/text-submission.model';
@@ -19,13 +19,14 @@ import { htmlForMarkdown } from 'app/shared/util/markdown.conversion.util';
     standalone: false,
 })
 export class TextExamSubmissionComponent extends ExamSubmissionComponent implements OnInit {
+    private textService = inject(TextEditorService);
+    private stringCountService = inject(StringCountService);
+
     exerciseType = ExerciseType.TEXT;
 
     // IMPORTANT: this reference must be contained in this.studentParticipation.submissions[0] otherwise the parent component will not be able to react to changes
-    @Input()
-    studentSubmission: TextSubmission;
-    @Input()
-    exercise: Exercise;
+    @Input() studentSubmission: TextSubmission;
+    @Input() exercise: Exercise;
 
     saveCurrentExercise = output<void>();
 
@@ -39,14 +40,6 @@ export class TextExamSubmissionComponent extends ExamSubmissionComponent impleme
 
     // Icons
     protected readonly faListAlt = faListAlt;
-
-    constructor(
-        private textService: TextEditorService,
-        private stringCountService: StringCountService,
-        changeDetectorReference: ChangeDetectorRef,
-    ) {
-        super(changeDetectorReference);
-    }
 
     ngOnInit(): void {
         // show submission answers in UI

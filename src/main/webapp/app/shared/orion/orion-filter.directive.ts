@@ -1,4 +1,4 @@
-import { Directive, ElementRef, Input, OnInit } from '@angular/core';
+import { Directive, ElementRef, Input, OnInit, inject } from '@angular/core';
 import { isOrion } from 'app/shared/orion/orion';
 
 @Directive({
@@ -6,9 +6,9 @@ import { isOrion } from 'app/shared/orion/orion';
     standalone: false,
 })
 export class OrionFilterDirective implements OnInit {
-    @Input() showInOrionWindow: boolean;
+    private el = inject(ElementRef);
 
-    constructor(private el: ElementRef) {}
+    @Input() showInOrionWindow: boolean;
 
     ngOnInit(): void {
         if ((!this.showInOrionWindow && isOrion) || (this.showInOrionWindow && !isOrion)) {

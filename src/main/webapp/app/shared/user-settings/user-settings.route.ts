@@ -1,5 +1,5 @@
 import { Routes } from '@angular/router';
-import { UserSettingsContainerComponent } from 'app/shared/user-settings/user-settings-container/user-settings-container.component';
+
 import { AccountInformationComponent } from 'app/shared/user-settings/account-information/account-information.component';
 import { NotificationSettingsComponent } from 'app/shared/user-settings/notification-settings/notification-settings.component';
 import { UserRouteAccessService } from 'app/core/auth/user-route-access-service';
@@ -14,7 +14,7 @@ import { SshUserSettingsFingerprintsComponent } from 'app/shared/user-settings/s
 export const userSettingsState: Routes = [
     {
         path: 'user-settings',
-        component: UserSettingsContainerComponent,
+        loadComponent: () => import('app/shared/user-settings/user-settings-container/user-settings-container.component').then((m) => m.UserSettingsContainerComponent),
         canActivate: [UserRouteAccessService],
         data: {
             authorities: [Authority.USER],

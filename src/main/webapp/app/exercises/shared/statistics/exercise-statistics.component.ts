@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, inject } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { Course } from 'app/entities/course.model';
 import { Graphs, SpanType, StatisticsView } from 'app/entities/statistics.model';
@@ -16,6 +16,10 @@ import { HttpResponse } from '@angular/common/http';
     standalone: false,
 })
 export class ExerciseStatisticsComponent implements OnInit {
+    private service = inject(StatisticsService);
+    private route = inject(ActivatedRoute);
+    private exerciseService = inject(ExerciseService);
+
     // html properties
     SpanType = SpanType;
     graphTypes = [Graphs.SUBMISSIONS, Graphs.ACTIVE_USERS, Graphs.ACTIVE_TUTORS, Graphs.CREATED_RESULTS, Graphs.CREATED_FEEDBACKS];
@@ -26,12 +30,6 @@ export class ExerciseStatisticsComponent implements OnInit {
     exercise: Exercise;
     course: Course;
     exerciseStatistics: ExerciseManagementStatisticsDto;
-
-    constructor(
-        private service: StatisticsService,
-        private route: ActivatedRoute,
-        private exerciseService: ExerciseService,
-    ) {}
 
     ngOnInit() {
         let exerciseId = 0;

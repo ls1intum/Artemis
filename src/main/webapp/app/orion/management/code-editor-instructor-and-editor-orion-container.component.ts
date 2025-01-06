@@ -1,18 +1,9 @@
-import { Component, OnInit } from '@angular/core';
-import { ProgrammingExerciseParticipationService } from 'app/exercises/programming/manage/services/programming-exercise-participation.service';
-import { ProgrammingExerciseService } from 'app/exercises/programming/manage/services/programming-exercise.service';
-import { ParticipationService } from 'app/exercises/shared/participation/participation.service';
-import { ActivatedRoute, Router } from '@angular/router';
-import { Location } from '@angular/common';
-import { TranslateService } from '@ngx-translate/core';
-import { AlertService } from 'app/core/util/alert.service';
+import { Component, OnInit, inject } from '@angular/core';
 import { CodeEditorInstructorBaseContainerComponent, REPOSITORY } from 'app/exercises/programming/manage/code-editor/code-editor-instructor-base-container.component';
-import { DomainService } from 'app/exercises/programming/shared/code-editor/service/code-editor-domain.service';
 import { OrionConnectorService } from 'app/shared/orion/orion-connector.service';
 import { OrionBuildAndTestService } from 'app/shared/orion/orion-build-and-test.service';
 import { OrionState } from 'app/shared/orion/orion';
 import { faCircleNotch, faTimesCircle } from '@fortawesome/free-solid-svg-icons';
-import { CourseExerciseService } from 'app/exercises/shared/course-exercises/course-exercise.service';
 
 import { MarkdownEditorHeight } from 'app/shared/markdown-editor/monaco/markdown-editor-monaco.component';
 
@@ -23,6 +14,9 @@ import { MarkdownEditorHeight } from 'app/shared/markdown-editor/monaco/markdown
     standalone: false,
 })
 export class CodeEditorInstructorAndEditorOrionContainerComponent extends CodeEditorInstructorBaseContainerComponent implements OnInit {
+    private orionConnectorService = inject(OrionConnectorService);
+    private orionBuildAndTestService = inject(OrionBuildAndTestService);
+
     orionState: OrionState;
 
     // Icons
@@ -30,23 +24,6 @@ export class CodeEditorInstructorAndEditorOrionContainerComponent extends CodeEd
     faTimesCircle = faTimesCircle;
 
     protected readonly MarkdownEditorHeight = MarkdownEditorHeight;
-
-    constructor(
-        private orionConnectorService: OrionConnectorService,
-        private orionBuildAndTestService: OrionBuildAndTestService,
-        router: Router,
-        exerciseService: ProgrammingExerciseService,
-        courseExerciseService: CourseExerciseService,
-        domainService: DomainService,
-        programmingExerciseParticipationService: ProgrammingExerciseParticipationService,
-        location: Location,
-        participationService: ParticipationService,
-        translateService: TranslateService,
-        route: ActivatedRoute,
-        alertService: AlertService,
-    ) {
-        super(router, exerciseService, courseExerciseService, domainService, programmingExerciseParticipationService, location, participationService, route, alertService);
-    }
 
     /**
      * Calls ngOnInit of its superclass and initialize the subscription to

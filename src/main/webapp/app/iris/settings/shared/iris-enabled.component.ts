@@ -1,4 +1,4 @@
-import { Component, Input, OnInit } from '@angular/core';
+import { Component, Input, OnInit, inject } from '@angular/core';
 import { IrisSubSettings, IrisSubSettingsType } from 'app/entities/iris/settings/iris-sub-settings.model';
 import { Exercise } from 'app/entities/exercise.model';
 import { IrisSettings } from 'app/entities/iris/settings/iris-settings.model';
@@ -11,6 +11,8 @@ import { IrisSettingsService } from 'app/iris/settings/shared/iris-settings.serv
     standalone: false,
 })
 export class IrisEnabledComponent implements OnInit {
+    private irisSettingsService = inject(IrisSettingsService);
+
     @Input() exercise?: Exercise;
     @Input() course?: Course;
     @Input() irisSubSettingsType: IrisSubSettingsType;
@@ -18,8 +20,6 @@ export class IrisEnabledComponent implements OnInit {
 
     irisSettings?: IrisSettings;
     irisSubSettings?: IrisSubSettings;
-
-    constructor(private irisSettingsService: IrisSettingsService) {}
 
     ngOnInit(): void {
         if (this.exercise) {

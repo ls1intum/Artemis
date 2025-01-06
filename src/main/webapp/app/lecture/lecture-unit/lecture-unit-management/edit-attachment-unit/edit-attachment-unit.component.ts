@@ -1,4 +1,4 @@
-import { Component, OnInit, ViewChild } from '@angular/core';
+import { Component, OnInit, ViewChild, inject } from '@angular/core';
 import { onError } from 'app/shared/util/global.utils';
 import { ActivatedRoute, Router } from '@angular/router';
 import { finalize, switchMap, take } from 'rxjs/operators';
@@ -18,6 +18,11 @@ import { objectToJsonBlob } from 'app/utils/blob-util';
     standalone: false,
 })
 export class EditAttachmentUnitComponent implements OnInit {
+    private activatedRoute = inject(ActivatedRoute);
+    private router = inject(Router);
+    private attachmentUnitService = inject(AttachmentUnitService);
+    private alertService = inject(AlertService);
+
     @ViewChild('attachmentUnitForm')
     attachmentUnitForm: AttachmentUnitFormComponent;
     isLoading = false;
@@ -26,13 +31,6 @@ export class EditAttachmentUnitComponent implements OnInit {
     formData: AttachmentUnitFormData;
     lectureId: number;
     notificationText: string;
-
-    constructor(
-        private activatedRoute: ActivatedRoute,
-        private router: Router,
-        private attachmentUnitService: AttachmentUnitService,
-        private alertService: AlertService,
-    ) {}
 
     ngOnInit(): void {
         this.isLoading = true;

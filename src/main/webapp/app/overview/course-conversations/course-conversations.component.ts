@@ -102,6 +102,14 @@ const DEFAULT_SHOW_ALWAYS: SidebarItemShowAlways = {
     standalone: false,
 })
 export class CourseConversationsComponent implements OnInit, OnDestroy {
+    private router = inject(Router);
+    private activatedRoute = inject(ActivatedRoute);
+    private metisConversationService = inject(MetisConversationService);
+    private metisService = inject(MetisService);
+    private courseOverviewService = inject(CourseOverviewService);
+    private modalService = inject(NgbModal);
+    private profileService = inject(ProfileService);
+
     private ngUnsubscribe = new Subject<void>();
     private closeSidebarEventSubscription: Subscription;
     private openSidebarEventSubscription: Subscription;
@@ -158,16 +166,6 @@ export class CourseConversationsComponent implements OnInit, OnDestroy {
     private courseSidebarService: CourseSidebarService = inject(CourseSidebarService);
     private layoutService: LayoutService = inject(LayoutService);
     private changeDetector: ChangeDetectorRef = inject(ChangeDetectorRef);
-
-    constructor(
-        private router: Router,
-        private activatedRoute: ActivatedRoute,
-        private metisConversationService: MetisConversationService,
-        private metisService: MetisService,
-        private courseOverviewService: CourseOverviewService,
-        private modalService: NgbModal,
-        private profileService: ProfileService,
-    ) {}
 
     getAsChannel = getAsChannelDTO;
 

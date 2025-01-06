@@ -1,4 +1,4 @@
-import { Component, EventEmitter, Input, OnChanges, OnInit, Output } from '@angular/core';
+import { Component, EventEmitter, Input, OnChanges, OnInit, Output, inject } from '@angular/core';
 import { ProgrammingExerciseTestCase, Visibility } from 'app/entities/programming/programming-exercise-test-case.model';
 import { ProgrammingExercise } from 'app/entities/programming/programming-exercise.model';
 import { TestCaseStatsMap } from 'app/entities/programming/programming-exercise-test-case-statistics.model';
@@ -27,6 +27,9 @@ type TestCaseColors = {
     standalone: false,
 })
 export class TestCaseDistributionChartComponent extends ProgrammingGradingChartsDirective implements OnInit, OnChanges {
+    private translateService = inject(TranslateService);
+    private navigationUtilService = inject(ArtemisNavigationUtilService);
+
     @Input() testCases: ProgrammingExerciseTestCase[];
     @Input() testCaseStatsMap?: TestCaseStatsMap;
     @Input() totalParticipations?: number;
@@ -48,10 +51,7 @@ export class TestCaseDistributionChartComponent extends ProgrammingGradingCharts
     // array containing the ngx-dedicated objects in order to display the points chart
     ngxPointsData: NgxChartsMultiSeriesDataEntry[] = [{ name: '', series: [] as any[] }];
 
-    constructor(
-        private translateService: TranslateService,
-        private navigationUtilService: ArtemisNavigationUtilService,
-    ) {
+    constructor() {
         super();
 
         this.translateService.onLangChange.subscribe(() => {

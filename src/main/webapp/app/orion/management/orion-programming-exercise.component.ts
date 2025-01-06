@@ -1,4 +1,4 @@
-import { Component, EventEmitter, Input, OnInit, Output } from '@angular/core';
+import { Component, EventEmitter, Input, OnInit, Output, inject } from '@angular/core';
 import { ProgrammingExercise } from 'app/entities/programming/programming-exercise.model';
 import { OrionConnectorService } from 'app/shared/orion/orion-connector.service';
 import { ExerciseView, OrionState } from 'app/shared/orion/orion';
@@ -14,6 +14,10 @@ import { OrionButtonType } from 'app/shared/orion/orion-button/orion-button.comp
     standalone: false,
 })
 export class OrionProgrammingExerciseComponent implements OnInit {
+    private orionConnectorService = inject(OrionConnectorService);
+    private router = inject(Router);
+    private programmingExerciseService = inject(ProgrammingExerciseService);
+
     @Input() embedded = false;
     @Input() course: Course;
     @Input() exerciseFilter: ExerciseFilter;
@@ -23,12 +27,6 @@ export class OrionProgrammingExerciseComponent implements OnInit {
     readonly ExerciseView = ExerciseView;
     protected readonly OrionButtonType = OrionButtonType;
     orionState: OrionState;
-
-    constructor(
-        private orionConnectorService: OrionConnectorService,
-        private router: Router,
-        private programmingExerciseService: ProgrammingExerciseService,
-    ) {}
 
     ngOnInit() {
         this.orionConnectorService.state().subscribe((state) => {

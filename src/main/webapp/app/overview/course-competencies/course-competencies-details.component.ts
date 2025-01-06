@@ -1,5 +1,5 @@
 import dayjs from 'dayjs/esm';
-import { Component, OnDestroy, OnInit } from '@angular/core';
+import { Component, OnDestroy, OnInit, inject } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import {
     Competency,
@@ -34,6 +34,13 @@ import { CourseCompetencyService } from 'app/course/competencies/course-competen
     standalone: false,
 })
 export class CourseCompetenciesDetailsComponent implements OnInit, OnDestroy {
+    private featureToggleService = inject(FeatureToggleService);
+    private courseStorageService = inject(CourseStorageService);
+    private alertService = inject(AlertService);
+    private activatedRoute = inject(ActivatedRoute);
+    private courseCompetencyService = inject(CourseCompetencyService);
+    private lectureUnitService = inject(LectureUnitService);
+
     competencyId?: number;
     course?: Course;
     courseId?: number;
@@ -51,15 +58,6 @@ export class CourseCompetenciesDetailsComponent implements OnInit, OnDestroy {
 
     faPencilAlt = faPencilAlt;
     getIcon = getIcon;
-
-    constructor(
-        private featureToggleService: FeatureToggleService,
-        private courseStorageService: CourseStorageService,
-        private alertService: AlertService,
-        private activatedRoute: ActivatedRoute,
-        private courseCompetencyService: CourseCompetencyService,
-        private lectureUnitService: LectureUnitService,
-    ) {}
 
     ngOnInit(): void {
         // example route looks like: /courses/1/competencies/10

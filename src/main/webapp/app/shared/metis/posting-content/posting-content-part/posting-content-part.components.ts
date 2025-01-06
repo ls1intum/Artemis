@@ -1,4 +1,4 @@
-import { Component, EventEmitter, Input, OnInit, Output } from '@angular/core';
+import { Component, EventEmitter, Input, OnInit, Output, inject } from '@angular/core';
 import { PostingContentPart, ReferenceType } from '../../metis.util';
 import { FileService } from 'app/shared/http/file.service';
 
@@ -29,6 +29,10 @@ import { AccountService } from 'app/core/auth/account.service';
     standalone: false,
 })
 export class PostingContentPartComponent implements OnInit {
+    private fileService = inject(FileService);
+    private dialog = inject(MatDialog);
+    private accountService = inject(AccountService);
+
     @Input() postingContentPart: PostingContentPart;
     @Output() userReferenceClicked = new EventEmitter<string>();
     @Output() channelReferenceClicked = new EventEmitter<number>();
@@ -50,12 +54,6 @@ export class PostingContentPartComponent implements OnInit {
     protected readonly ReferenceType = ReferenceType;
     processedContentBeforeReference: string;
     processedContentAfterReference: string;
-
-    constructor(
-        private fileService: FileService,
-        private dialog: MatDialog,
-        private accountService: AccountService,
-    ) {}
 
     ngOnInit() {
         this.processContent();

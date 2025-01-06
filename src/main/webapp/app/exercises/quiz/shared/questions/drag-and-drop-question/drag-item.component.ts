@@ -17,8 +17,6 @@ export class DragItemComponent implements OnInit {
     @Input() filePreviewPaths: Map<string, string> = new Map<string, string>();
     isMobile = false;
 
-    constructor() {}
-
     /**
      * Initializes device information and whether the device is a mobile device
      */

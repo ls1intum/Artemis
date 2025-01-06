@@ -1,4 +1,4 @@
-import { Component, ElementRef, EventEmitter, Input, OnDestroy, OnInit, Output, ViewChild } from '@angular/core';
+import { Component, ElementRef, EventEmitter, Input, OnDestroy, OnInit, Output, ViewChild, inject } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { ApollonEditor, ApollonMode, Locale, UMLModel } from '@ls1intum/apollon';
 import { NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
@@ -25,6 +25,14 @@ import { NgModel } from '@angular/forms';
     standalone: false,
 })
 export class ApollonDiagramDetailComponent implements OnInit, OnDestroy {
+    private apollonDiagramService = inject(ApollonDiagramService);
+    private courseService = inject(CourseManagementService);
+    private alertService = inject(AlertService);
+    private translateService = inject(TranslateService);
+    private languageHelper = inject(JhiLanguageHelper);
+    private modalService = inject(NgbModal);
+    private route = inject(ActivatedRoute);
+
     @ViewChild('editorContainer', { static: false }) editorContainer: ElementRef;
     @ViewChild('titleField') titleField?: NgModel;
 
@@ -71,16 +79,6 @@ export class ApollonDiagramDetailComponent implements OnInit, OnDestroy {
     faQuestionCircle = faQuestionCircle;
     faArrow = faArrowLeft;
     faX = faX;
-
-    constructor(
-        private apollonDiagramService: ApollonDiagramService,
-        private courseService: CourseManagementService,
-        private alertService: AlertService,
-        private translateService: TranslateService,
-        private languageHelper: JhiLanguageHelper,
-        private modalService: NgbModal,
-        private route: ActivatedRoute,
-    ) {}
 
     /**
      * Initializes Apollon Editor and sets auto save timer

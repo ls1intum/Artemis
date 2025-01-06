@@ -98,6 +98,23 @@ interface SidebarItem {
     standalone: false,
 })
 export class CourseOverviewComponent implements OnInit, OnDestroy, AfterViewInit {
+    private courseService = inject(CourseManagementService);
+    private courseExerciseService = inject(CourseExerciseService);
+    private courseStorageService = inject(CourseStorageService);
+    private route = inject(ActivatedRoute);
+    private teamService = inject(TeamService);
+    private jhiWebsocketService = inject(JhiWebsocketService);
+    private serverDateService = inject(ArtemisServerDateService);
+    private alertService = inject(AlertService);
+    private changeDetectorRef = inject(ChangeDetectorRef);
+    private metisConversationService = inject(MetisConversationService);
+    private router = inject(Router);
+    private courseAccessStorageService = inject(CourseAccessStorageService);
+    private profileService = inject(ProfileService);
+    private modalService = inject(NgbModal);
+    private examParticipationService = inject(ExamParticipationService);
+    private ltiService = inject(LtiService);
+
     private ngUnsubscribe = new Subject<void>();
     private closeSidebarEventSubscription: Subscription;
     private openSidebarEventSubscription: Subscription;
@@ -189,25 +206,6 @@ export class CourseOverviewComponent implements OnInit, OnDestroy, AfterViewInit
     readonly isCommunicationEnabled = isCommunicationEnabled;
 
     private courseSidebarService: CourseSidebarService = inject(CourseSidebarService);
-
-    constructor(
-        private courseService: CourseManagementService,
-        private courseExerciseService: CourseExerciseService,
-        private courseStorageService: CourseStorageService,
-        private route: ActivatedRoute,
-        private teamService: TeamService,
-        private jhiWebsocketService: JhiWebsocketService,
-        private serverDateService: ArtemisServerDateService,
-        private alertService: AlertService,
-        private changeDetectorRef: ChangeDetectorRef,
-        private metisConversationService: MetisConversationService,
-        private router: Router,
-        private courseAccessStorageService: CourseAccessStorageService,
-        private profileService: ProfileService,
-        private modalService: NgbModal,
-        private examParticipationService: ExamParticipationService,
-        private ltiService: LtiService,
-    ) {}
 
     async ngOnInit() {
         this.openSidebarEventSubscription = this.courseSidebarService.openSidebar$.subscribe(() => {

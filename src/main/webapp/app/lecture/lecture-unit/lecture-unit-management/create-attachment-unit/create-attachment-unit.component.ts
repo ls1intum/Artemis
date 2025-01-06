@@ -1,4 +1,4 @@
-import { Component, OnInit, ViewChild } from '@angular/core';
+import { Component, OnInit, ViewChild, inject } from '@angular/core';
 import { Attachment, AttachmentType } from 'app/entities/attachment.model';
 import { ActivatedRoute, Router } from '@angular/router';
 import { HttpErrorResponse } from '@angular/common/http';
@@ -18,6 +18,11 @@ import { objectToJsonBlob } from 'app/utils/blob-util';
     standalone: false,
 })
 export class CreateAttachmentUnitComponent implements OnInit {
+    private activatedRoute = inject(ActivatedRoute);
+    private router = inject(Router);
+    private attachmentUnitService = inject(AttachmentUnitService);
+    private alertService = inject(AlertService);
+
     @ViewChild('attachmentUnitForm')
     attachmentUnitForm: AttachmentUnitFormComponent;
     attachmentUnitToCreate: AttachmentUnit = new AttachmentUnit();
@@ -26,13 +31,6 @@ export class CreateAttachmentUnitComponent implements OnInit {
     isLoading: boolean;
     lectureId: number;
     courseId: number;
-
-    constructor(
-        private activatedRoute: ActivatedRoute,
-        private router: Router,
-        private attachmentUnitService: AttachmentUnitService,
-        private alertService: AlertService,
-    ) {}
 
     ngOnInit() {
         const lectureRoute = this.activatedRoute.parent!.parent!;

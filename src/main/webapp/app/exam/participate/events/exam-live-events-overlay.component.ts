@@ -1,4 +1,4 @@
-import { Component, Input, OnDestroy, OnInit } from '@angular/core';
+import { Component, Input, OnDestroy, OnInit, inject } from '@angular/core';
 import { faCheck } from '@fortawesome/free-solid-svg-icons';
 import { Subscription } from 'rxjs';
 import { ExamLiveEvent, ExamLiveEventType, ExamParticipationLiveEventsService, ProblemStatementUpdateEvent } from 'app/exam/participate/exam-participation-live-events.service';
@@ -14,6 +14,10 @@ import dayjs from 'dayjs/esm';
     standalone: false,
 })
 export class ExamLiveEventsOverlayComponent implements OnInit, OnDestroy {
+    private liveEventsService = inject(ExamParticipationLiveEventsService);
+    private activeModal = inject(NgbActiveModal);
+    private examExerciseUpdateService = inject(ExamExerciseUpdateService);
+
     private allLiveEventsSubscription?: Subscription;
     private newLiveEventsSubscription?: Subscription;
 
@@ -26,12 +30,6 @@ export class ExamLiveEventsOverlayComponent implements OnInit, OnDestroy {
     faCheck = faCheck;
 
     protected readonly ExamLiveEventType = ExamLiveEventType;
-
-    constructor(
-        private liveEventsService: ExamParticipationLiveEventsService,
-        private activeModal: NgbActiveModal,
-        private examExerciseUpdateService: ExamExerciseUpdateService,
-    ) {}
 
     ngOnDestroy(): void {
         this.allLiveEventsSubscription?.unsubscribe();

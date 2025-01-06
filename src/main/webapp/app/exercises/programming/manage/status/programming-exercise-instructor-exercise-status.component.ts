@@ -1,4 +1,4 @@
-import { Component, Input, OnChanges, SimpleChanges } from '@angular/core';
+import { Component, Input, OnChanges, SimpleChanges, inject } from '@angular/core';
 import { Subscription } from 'rxjs';
 import { filter, tap } from 'rxjs/operators';
 import { ParticipationWebsocketService } from 'app/overview/participation-websocket.service';
@@ -22,6 +22,8 @@ enum ProgrammingExerciseIssues {
     standalone: false,
 })
 export class ProgrammingExerciseInstructorExerciseStatusComponent implements OnChanges {
+    private participationWebsocketService = inject(ParticipationWebsocketService);
+
     ProgrammingExerciseIssues = ProgrammingExerciseIssues;
     @Input() templateParticipation: Participation;
     @Input() solutionParticipation: Participation;
@@ -34,8 +36,6 @@ export class ProgrammingExerciseInstructorExerciseStatusComponent implements OnC
     // Icons
     faExclamationTriangle = faExclamationTriangle;
     faCheckCircle = faCheckCircle;
-
-    constructor(private participationWebsocketService: ParticipationWebsocketService) {}
 
     /**
      * If there are changes for the template or solution participation, check if there are issues

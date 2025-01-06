@@ -1,4 +1,4 @@
-import { Component, EventEmitter, Input, OnInit, Output } from '@angular/core';
+import { Component, EventEmitter, Input, OnInit, Output, inject } from '@angular/core';
 import { FormBuilder, FormControl, FormGroup, Validators } from '@angular/forms';
 import { faQuestionCircle } from '@fortawesome/free-solid-svg-icons';
 import { ButtonType } from 'app/shared/components/button.component';
@@ -9,6 +9,8 @@ import { ButtonType } from 'app/shared/components/button.component';
     standalone: false,
 })
 export class CourseDescriptionFormComponent implements OnInit {
+    private formBuilder = inject(FormBuilder);
+
     @Input() isLoading = false;
     @Input() placeholder = '';
     @Output() formSubmitted: EventEmitter<string> = new EventEmitter<string>();
@@ -23,8 +25,6 @@ export class CourseDescriptionFormComponent implements OnInit {
     protected readonly DESCRIPTION_MAX = 10000;
     protected readonly DESCRIPTION_MIN = 100;
     protected readonly ButtonType = ButtonType;
-
-    constructor(private formBuilder: FormBuilder) {}
 
     ngOnInit(): void {
         this.form = this.formBuilder.group({

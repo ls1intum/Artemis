@@ -1,4 +1,4 @@
-import { Component, EventEmitter, Input, OnChanges, Output, SimpleChanges } from '@angular/core';
+import { Component, EventEmitter, Input, OnChanges, Output, SimpleChanges, inject } from '@angular/core';
 import { faFile, faFilePdf, faList } from '@fortawesome/free-solid-svg-icons';
 import { MIN_SCORE_GREEN } from 'app/app.constants';
 import { Competency, CompetencyJol, CompetencyProgress, getConfidence, getIcon, getMastery, getProgress } from 'app/entities/competency.model';
@@ -23,6 +23,8 @@ export interface CompetencyAccordionToggleEvent {
     standalone: false,
 })
 export class CompetencyAccordionComponent implements OnChanges {
+    private router = inject(Router);
+
     @Input() course: Course | undefined;
     @Input() competency: CompetencyInformation;
     @Input() metrics: StudentMetrics;
@@ -53,8 +55,6 @@ export class CompetencyAccordionComponent implements OnChanges {
     protected readonly getConfidence = getConfidence;
     protected readonly getMastery = getMastery;
     protected readonly round = round;
-
-    constructor(private router: Router) {}
 
     ngOnChanges(changes: SimpleChanges) {
         if (changes.openedIndex && this.index !== this.openedIndex) {

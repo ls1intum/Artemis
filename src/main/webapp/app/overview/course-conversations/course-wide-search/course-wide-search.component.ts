@@ -34,6 +34,11 @@ import { CourseSidebarService } from 'app/overview/course-sidebar.service';
     standalone: false,
 })
 export class CourseWideSearchComponent implements OnInit, AfterViewInit, OnDestroy {
+    metisService = inject(MetisService);
+    metisConversationService = inject(MetisConversationService);
+    private formBuilder = inject(FormBuilder);
+    cdr = inject(ChangeDetectorRef);
+
     @Input()
     courseWideSearchConfig: CourseWideSearchConfig;
 
@@ -74,13 +79,6 @@ export class CourseWideSearchComponent implements OnInit, AfterViewInit, OnDestr
     getAsChannel = getAsChannelDTO;
 
     private courseSidebarService: CourseSidebarService = inject(CourseSidebarService);
-
-    constructor(
-        public metisService: MetisService, // instance from course-conversations.component
-        public metisConversationService: MetisConversationService, // instance from course-conversations.component
-        private formBuilder: FormBuilder,
-        public cdr: ChangeDetectorRef,
-    ) {}
 
     ngOnInit() {
         this.subscribeToMetis();

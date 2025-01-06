@@ -1,4 +1,4 @@
-import { Component, Input, OnChanges, SimpleChanges, ViewChild } from '@angular/core';
+import { Component, Input, OnChanges, SimpleChanges, ViewChild, inject } from '@angular/core';
 import { BuildAction, ScriptAction } from 'app/entities/programming/build.action';
 import { ProgrammingExercise, ProgrammingLanguage, ProjectType } from 'app/entities/programming/programming-exercise.model';
 import { faQuestionCircle } from '@fortawesome/free-solid-svg-icons';
@@ -14,6 +14,8 @@ import { MonacoEditorComponent } from 'app/shared/monaco-editor/monaco-editor.co
     standalone: false,
 })
 export class ProgrammingExerciseCustomAeolusBuildPlanComponent implements OnChanges {
+    private aeolusService = inject(AeolusService);
+
     @Input() programmingExercise: ProgrammingExercise;
     @Input() programmingExerciseCreationConfig: ProgrammingExerciseCreationConfig;
 
@@ -23,8 +25,6 @@ export class ProgrammingExerciseCustomAeolusBuildPlanComponent implements OnChan
     projectType?: ProjectType;
     staticCodeAnalysisEnabled?: boolean;
     sequentialTestRuns?: boolean;
-
-    constructor(private aeolusService: AeolusService) {}
 
     code: string = '#!/bin/bash\n\n# Add your custom build plan action here';
     active?: BuildAction = undefined;

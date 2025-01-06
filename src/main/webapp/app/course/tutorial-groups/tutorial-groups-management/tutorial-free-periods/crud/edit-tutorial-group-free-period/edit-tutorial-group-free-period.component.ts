@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, Input, OnDestroy } from '@angular/core';
+import { ChangeDetectionStrategy, Component, Input, OnDestroy, inject } from '@angular/core';
 import { TutorialGroupsConfiguration } from 'app/entities/tutorial-group/tutorial-groups-configuration.model';
 import { AlertService } from 'app/core/util/alert.service';
 import { onError } from 'app/shared/util/global.utils';
@@ -20,6 +20,10 @@ import { TutorialGroupFreePeriodsManagementComponent } from 'app/course/tutorial
     standalone: false,
 })
 export class EditTutorialGroupFreePeriodComponent implements OnDestroy {
+    private activeModal = inject(NgbActiveModal);
+    private tutorialGroupFreePeriodService = inject(TutorialGroupFreePeriodService);
+    private alertService = inject(AlertService);
+
     isLoading = false;
 
     @Input()
@@ -35,11 +39,6 @@ export class EditTutorialGroupFreePeriodComponent implements OnDestroy {
 
     ngUnsubscribe = new Subject<void>();
     formData: TutorialGroupFreePeriodFormData;
-    constructor(
-        private activeModal: NgbActiveModal,
-        private tutorialGroupFreePeriodService: TutorialGroupFreePeriodService,
-        private alertService: AlertService,
-    ) {}
 
     /**
      * Initializes the component by setting up the form data based on the tutorial group free period, course, and tutorial groups configuration.

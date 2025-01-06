@@ -1,4 +1,4 @@
-import { Component, ContentChild, OnDestroy, OnInit, TemplateRef } from '@angular/core';
+import { Component, ContentChild, OnDestroy, OnInit, TemplateRef, inject } from '@angular/core';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { ActivatedRoute } from '@angular/router';
 import { Subscription, combineLatest } from 'rxjs';
@@ -56,6 +56,18 @@ interface InstructorActionItem {
     standalone: false,
 })
 export class CourseExerciseDetailsComponent extends AbstractScienceComponent implements OnInit, OnDestroy {
+    private exerciseService = inject(ExerciseService);
+    private participationWebsocketService = inject(ParticipationWebsocketService);
+    private participationService = inject(ParticipationService);
+    private route = inject(ActivatedRoute);
+    private profileService = inject(ProfileService);
+    private guidedTourService = inject(GuidedTourService);
+    private alertService = inject(AlertService);
+    private teamService = inject(TeamService);
+    private quizExerciseService = inject(QuizExerciseService);
+    private complaintService = inject(ComplaintService);
+    private artemisMarkdown = inject(ArtemisMarkdownService);
+
     readonly AssessmentType = AssessmentType;
     readonly PlagiarismVerdict = PlagiarismVerdict;
     readonly QuizStatus = QuizStatus;
@@ -118,20 +130,9 @@ export class CourseExerciseDetailsComponent extends AbstractScienceComponent imp
     faAngleDown = faAngleDown;
     faAngleUp = faAngleUp;
 
-    constructor(
-        private exerciseService: ExerciseService,
-        private participationWebsocketService: ParticipationWebsocketService,
-        private participationService: ParticipationService,
-        private route: ActivatedRoute,
-        private profileService: ProfileService,
-        private guidedTourService: GuidedTourService,
-        private alertService: AlertService,
-        private teamService: TeamService,
-        private quizExerciseService: QuizExerciseService,
-        private complaintService: ComplaintService,
-        private artemisMarkdown: ArtemisMarkdownService,
-        scienceService: ScienceService,
-    ) {
+    constructor() {
+        const scienceService = inject(ScienceService);
+
         super(scienceService, ScienceEventType.EXERCISE__OPEN);
     }
 

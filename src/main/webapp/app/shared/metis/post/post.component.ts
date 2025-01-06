@@ -5,7 +5,6 @@ import {
     Component,
     EventEmitter,
     HostListener,
-    Inject,
     Input,
     OnChanges,
     OnInit,
@@ -13,6 +12,7 @@ import {
     Renderer2,
     ViewChild,
     ViewContainerRef,
+    inject,
     input,
 } from '@angular/core';
 import { Post } from 'app/entities/metis/post.model';
@@ -47,6 +47,11 @@ import { DOCUMENT } from '@angular/common';
     standalone: false,
 })
 export class PostComponent extends PostingDirective<Post> implements OnInit, OnChanges, AfterContentChecked {
+    metisService = inject(MetisService);
+    changeDetector = inject(ChangeDetectorRef);
+    renderer = inject(Renderer2);
+    private document = inject<Document>(DOCUMENT);
+
     @Input() lastReadDate?: dayjs.Dayjs;
     @Input() readOnlyMode: boolean;
     @Input() previewMode: boolean;
@@ -93,12 +98,7 @@ export class PostComponent extends PostingDirective<Post> implements OnInit, OnC
     dropdownPosition = { x: 0, y: 0 };
     @ViewChild(PostReactionsBarComponent) protected reactionsBarComponent!: PostReactionsBarComponent;
 
-    constructor(
-        public metisService: MetisService,
-        public changeDetector: ChangeDetectorRef,
-        public renderer: Renderer2,
-        @Inject(DOCUMENT) private document: Document,
-    ) {
+    constructor() {
         super();
     }
 

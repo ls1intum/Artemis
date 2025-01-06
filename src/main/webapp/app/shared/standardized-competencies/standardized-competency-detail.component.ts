@@ -22,8 +22,6 @@ export class StandardizedCompetencyDetailComponent {
     protected readonly ButtonSize = ButtonSize;
     protected readonly ButtonType = ButtonType;
 
-    constructor() {}
-
     close() {
         this.onClose.emit();
     }

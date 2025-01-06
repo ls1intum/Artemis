@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, EventEmitter, Input, OnDestroy, Output, TemplateRef, ViewChild } from '@angular/core';
+import { ChangeDetectionStrategy, Component, EventEmitter, Input, OnDestroy, Output, TemplateRef, ViewChild, inject } from '@angular/core';
 import { NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
 import { EMPTY, Subject, from } from 'rxjs';
 import { catchError, takeUntil } from 'rxjs/operators';
@@ -12,6 +12,10 @@ import { AlertService } from 'app/core/util/alert.service';
     standalone: false,
 })
 export class TutorialGroupsExportButtonComponent implements OnDestroy {
+    private modalService = inject(NgbModal);
+    private tutorialGroupsService = inject(TutorialGroupsService);
+    private alertService = inject(AlertService);
+
     ngUnsubscribe = new Subject<void>();
 
     @ViewChild('exportDialog') exportDialogRef: TemplateRef<any>;
@@ -37,12 +41,6 @@ export class TutorialGroupsExportButtonComponent implements OnDestroy {
         { value: 'Is Online', selected: false },
         { value: 'Students', selected: false },
     ];
-
-    constructor(
-        private modalService: NgbModal,
-        private tutorialGroupsService: TutorialGroupsService,
-        private alertService: AlertService,
-    ) {}
 
     openExportDialog(event: MouseEvent) {
         event.stopPropagation();

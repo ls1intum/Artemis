@@ -2,7 +2,7 @@ import dayjs from 'dayjs/esm';
 import { omit } from 'lodash-es';
 import { combineLatest, takeWhile } from 'rxjs';
 import { map } from 'rxjs/operators';
-import { Component, OnDestroy, OnInit, TemplateRef, ViewChild } from '@angular/core';
+import { Component, OnDestroy, OnInit, TemplateRef, ViewChild, inject } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { faBan, faExclamationTriangle, faSave } from '@fortawesome/free-solid-svg-icons';
@@ -25,6 +25,14 @@ import { examWorkingTime, normalWorkingTime } from 'app/exam/participate/exam.ut
     standalone: false,
 })
 export class ExamUpdateComponent implements OnInit, OnDestroy {
+    private route = inject(ActivatedRoute);
+    private examManagementService = inject(ExamManagementService);
+    private alertService = inject(AlertService);
+    private navigationUtilService = inject(ArtemisNavigationUtilService);
+    private modalService = inject(NgbModal);
+    private router = inject(Router);
+    private artemisTranslatePipe = inject(ArtemisTranslatePipe);
+
     protected readonly faSave = faSave;
     protected readonly faBan = faBan;
     protected readonly faExclamationTriangle = faExclamationTriangle;
@@ -46,16 +54,6 @@ export class ExamUpdateComponent implements OnInit, OnDestroy {
     @ViewChild(ExamExerciseImportComponent) examExerciseImportComponent: ExamExerciseImportComponent;
 
     @ViewChild('workingTimeConfirmationContent') public workingTimeConfirmationContent: TemplateRef<any>;
-
-    constructor(
-        private route: ActivatedRoute,
-        private examManagementService: ExamManagementService,
-        private alertService: AlertService,
-        private navigationUtilService: ArtemisNavigationUtilService,
-        private modalService: NgbModal,
-        private router: Router,
-        private artemisTranslatePipe: ArtemisTranslatePipe,
-    ) {}
 
     ngOnInit(): void {
         combineLatest([this.route.url, this.route.data])

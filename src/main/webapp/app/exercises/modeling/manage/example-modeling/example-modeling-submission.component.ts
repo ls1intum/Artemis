@@ -36,6 +36,15 @@ import { scrollToTopOfPage } from 'app/shared/util/utils';
     standalone: false,
 })
 export class ExampleModelingSubmissionComponent implements OnInit, FeedbackMarker {
+    private exerciseService = inject(ExerciseService);
+    private exampleSubmissionService = inject(ExampleSubmissionService);
+    private modelingAssessmentService = inject(ModelingAssessmentService);
+    private tutorParticipationService = inject(TutorParticipationService);
+    private alertService = inject(AlertService);
+    private route = inject(ActivatedRoute);
+    private router = inject(Router);
+    private navigationUtilService = inject(ArtemisNavigationUtilService);
+
     @ViewChild(ModelingEditorComponent, { static: false })
     modelingEditor: ModelingEditorComponent;
     @ViewChild(ModelingAssessmentComponent, { static: false })
@@ -107,16 +116,7 @@ export class ExampleModelingSubmissionComponent implements OnInit, FeedbackMarke
     faCodeBranch = faCodeBranch;
     faChalkboardTeacher = faChalkboardTeacher;
 
-    constructor(
-        private exerciseService: ExerciseService,
-        private exampleSubmissionService: ExampleSubmissionService,
-        private modelingAssessmentService: ModelingAssessmentService,
-        private tutorParticipationService: TutorParticipationService,
-        private alertService: AlertService,
-        private route: ActivatedRoute,
-        private router: Router,
-        private navigationUtilService: ArtemisNavigationUtilService,
-    ) {
+    constructor() {
         effect(() => {
             // Update highlighted elements as soon as current theme changes
             const highlightColor = this.highlightColor();

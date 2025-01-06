@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, ChangeDetectorRef, Component, Input, OnInit } from '@angular/core';
+import { ChangeDetectionStrategy, ChangeDetectorRef, Component, Input, OnInit, inject } from '@angular/core';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { faCalendarAlt } from '@fortawesome/free-solid-svg-icons';
 import { NgbDateParserFormatter, NgbTimeAdapter } from '@ng-bootstrap/ng-bootstrap';
@@ -28,6 +28,10 @@ export interface ScheduleFormData {
     standalone: false,
 })
 export class ScheduleFormComponent implements OnInit {
+    private fb = inject(FormBuilder);
+    formatter = inject(NgbDateParserFormatter);
+    cdr = inject(ChangeDetectorRef);
+
     @Input() course: Course;
     @Input() parentFormGroup: FormGroup;
     formGroup: FormGroup;
@@ -87,12 +91,6 @@ export class ScheduleFormComponent implements OnInit {
 
         return sessions;
     }
-
-    constructor(
-        private fb: FormBuilder,
-        public formatter: NgbDateParserFormatter,
-        public cdr: ChangeDetectorRef,
-    ) {}
 
     ngOnInit(): void {
         if (this.course.tutorialGroupsConfiguration) {

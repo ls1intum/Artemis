@@ -1,4 +1,4 @@
-import { Component, OnDestroy, OnInit, ViewChild } from '@angular/core';
+import { Component, OnDestroy, OnInit, ViewChild, inject } from '@angular/core';
 import { Observable, Subscription, of, throwError } from 'rxjs';
 import { ActivatedRoute, Router } from '@angular/router';
 import { Location } from '@angular/common';
@@ -9,7 +9,6 @@ import { Participation } from 'app/entities/participation/participation.model';
 import { ButtonSize } from 'app/shared/components/button.component';
 import { DomainService } from 'app/exercises/programming/shared/code-editor/service/code-editor-domain.service';
 import { TemplateProgrammingExerciseParticipation } from 'app/entities/participation/template-programming-exercise-participation.model';
-import { ProgrammingExerciseParticipationService } from 'app/exercises/programming/manage/services/programming-exercise-participation.service';
 import { ExerciseType } from 'app/entities/exercise.model';
 import { ProgrammingExerciseService } from 'app/exercises/programming/manage/services/programming-exercise.service';
 import { ProgrammingExercise } from 'app/entities/programming/programming-exercise.model';
@@ -49,6 +48,15 @@ export enum LOADING_STATE {
 export abstract class CodeEditorInstructorBaseContainerComponent implements OnInit, OnDestroy {
     @ViewChild(CodeEditorContainerComponent, { static: false }) codeEditorContainer: CodeEditorContainerComponent;
 
+    private router = inject(Router);
+    private exerciseService = inject(ProgrammingExerciseService);
+    private courseExerciseService = inject(CourseExerciseService);
+    private domainService = inject(DomainService);
+    private location = inject(Location);
+    private participationService = inject(ParticipationService);
+    private route = inject(ActivatedRoute);
+    private alertService = inject(AlertService);
+
     ButtonSize = ButtonSize;
     REPOSITORY = REPOSITORY;
     LOADING_STATE = LOADING_STATE;
@@ -77,18 +85,6 @@ export abstract class CodeEditorInstructorBaseContainerComponent implements OnIn
 
     // State variables
     loadingState = LOADING_STATE.CLEAR;
-
-    protected constructor(
-        protected router: Router,
-        private exerciseService: ProgrammingExerciseService,
-        private courseExerciseService: CourseExerciseService,
-        private domainService: DomainService,
-        private programmingExerciseParticipationService: ProgrammingExerciseParticipationService,
-        private location: Location,
-        private participationService: ParticipationService,
-        protected route: ActivatedRoute,
-        private alertService: AlertService,
-    ) {}
 
     /**
      * Initialize the route params subscription.

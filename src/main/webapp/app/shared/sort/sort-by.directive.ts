@@ -1,4 +1,4 @@
-import { AfterContentInit, ContentChild, Directive, Host, HostListener, Input, OnDestroy } from '@angular/core';
+import { AfterContentInit, ContentChild, Directive, HostListener, Input, OnDestroy, inject } from '@angular/core';
 import { Subject } from 'rxjs';
 import { takeUntil } from 'rxjs/operators';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
@@ -11,6 +11,8 @@ import { SortDirective } from './sort.directive';
     standalone: false,
 })
 export class SortByDirective<T> implements AfterContentInit, OnDestroy {
+    private sort = inject<SortDirective<T>>(SortDirective, { host: true });
+
     @Input() jhiSortBy!: T;
 
     @ContentChild(FaIconComponent, { static: false })
@@ -22,7 +24,9 @@ export class SortByDirective<T> implements AfterContentInit, OnDestroy {
 
     private readonly destroy = new Subject<void>();
 
-    constructor(@Host() private sort: SortDirective<T>) {
+    constructor() {
+        const sort = this.sort;
+
         sort.predicateChange.pipe(takeUntil(this.destroy)).subscribe(() => this.updateIconDefinition());
         sort.ascendingChange.pipe(takeUntil(this.destroy)).subscribe(() => this.updateIconDefinition());
     }

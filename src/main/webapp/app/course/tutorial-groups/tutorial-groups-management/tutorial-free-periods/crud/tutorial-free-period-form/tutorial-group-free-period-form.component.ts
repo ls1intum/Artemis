@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, EventEmitter, Input, OnChanges, OnInit, Output } from '@angular/core';
+import { ChangeDetectionStrategy, Component, EventEmitter, Input, OnChanges, OnInit, Output, inject } from '@angular/core';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { faCalendarAlt } from '@fortawesome/free-solid-svg-icons';
 import { OWL_DATE_TIME_FORMATS } from '@danielmoncada/angular-datetime-picker';
@@ -37,6 +37,8 @@ export enum TimeFrame {
     standalone: false,
 })
 export class TutorialGroupFreePeriodFormComponent implements OnInit, OnChanges {
+    private fb = inject(FormBuilder);
+
     @Input()
     formData: TutorialGroupFreePeriodFormData = {
         startDate: undefined,
@@ -150,8 +152,6 @@ export class TutorialGroupFreePeriodFormComponent implements OnInit, OnChanges {
         }
         return false;
     }
-
-    constructor(private fb: FormBuilder) {}
 
     ngOnInit(): void {
         this.initializeForm();

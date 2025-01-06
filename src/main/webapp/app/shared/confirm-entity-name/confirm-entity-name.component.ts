@@ -1,4 +1,4 @@
-import { Component, Input, OnDestroy, OnInit } from '@angular/core';
+import { Component, Input, OnDestroy, OnInit, inject } from '@angular/core';
 import { ControlValueAccessor, FormBuilder, FormControl, NG_VALIDATORS, NG_VALUE_ACCESSOR, ValidationErrors, Validator, Validators } from '@angular/forms';
 import { Subscription } from 'rxjs';
 
@@ -21,6 +21,8 @@ import { Subscription } from 'rxjs';
     standalone: false,
 })
 export class ConfirmEntityNameComponent implements OnInit, OnDestroy, ControlValueAccessor, Validator {
+    private fb = inject(FormBuilder);
+
     @Input() warningTextColor: string;
     @Input() confirmationText: string;
 
@@ -35,8 +37,6 @@ export class ConfirmEntityNameComponent implements OnInit, OnDestroy, ControlVal
     }
 
     control: FormControl<string>;
-
-    constructor(private fb: FormBuilder) {}
 
     onTouched = () => {};
 

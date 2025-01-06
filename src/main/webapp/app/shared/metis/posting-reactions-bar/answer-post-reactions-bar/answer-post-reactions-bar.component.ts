@@ -3,7 +3,6 @@ import { Reaction } from 'app/entities/metis/reaction.model';
 import { PostingsReactionsBarDirective } from 'app/shared/metis/posting-reactions-bar/posting-reactions-bar.directive';
 import { AnswerPost } from 'app/entities/metis/answer-post.model';
 import { faCheck, faPencilAlt, faSmile } from '@fortawesome/free-solid-svg-icons';
-import { MetisService } from 'app/shared/metis/metis.service';
 import { getAsChannelDTO } from 'app/entities/metis/conversation/channel.model';
 
 @Component({
@@ -13,28 +12,25 @@ import { getAsChannelDTO } from 'app/entities/metis/conversation/channel.model';
     standalone: false,
 })
 export class AnswerPostReactionsBarComponent extends PostingsReactionsBarDirective<AnswerPost> implements OnInit, OnChanges {
-    @Input()
-    isReadOnlyMode = false;
-
+    @Input() isReadOnlyMode = false;
+    @Input() isEmojiCount: boolean = false;
     @Input() isLastAnswer = false;
+
+    @Output() openPostingCreateEditModal = new EventEmitter<void>();
+    @Output() postingUpdated = new EventEmitter<void>();
+
     // Icons
     readonly farSmile = faSmile;
     readonly faCheck = faCheck;
+    readonly faPencilAlt = faPencilAlt;
 
-    @Output() openPostingCreateEditModal = new EventEmitter<void>();
     isAuthorOfOriginalPost: boolean;
     isAnswerOfAnnouncement: boolean;
-    mayDeleteOutput = output<boolean>();
     mayDelete: boolean;
-    mayEditOutput = output<boolean>();
     mayEdit: boolean;
-    readonly faPencilAlt = faPencilAlt;
-    @Input() isEmojiCount: boolean = false;
-    @Output() postingUpdated = new EventEmitter<void>();
 
-    constructor(metisService: MetisService) {
-        super(metisService);
-    }
+    mayDeleteOutput = output<boolean>();
+    mayEditOutput = output<boolean>();
 
     ngOnInit() {
         super.ngOnInit();

@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, ChangeDetectorRef, Component, Input, OnInit, ViewChild, input, output } from '@angular/core';
+import { ChangeDetectionStrategy, Component, Input, OnInit, ViewChild, input, output } from '@angular/core';
 import { UMLModel } from '@ls1intum/apollon';
 import dayjs from 'dayjs/esm';
 import { ModelingSubmission } from 'app/entities/modeling-submission.model';
@@ -23,16 +23,13 @@ import { htmlForMarkdown } from 'app/shared/util/markdown.conversion.util';
 export class ModelingExamSubmissionComponent extends ExamSubmissionComponent implements OnInit {
     exerciseType = ExerciseType.MODELING;
 
-    @ViewChild(ModelingEditorComponent, { static: false })
-    modelingEditor: ModelingEditorComponent;
+    @ViewChild(ModelingEditorComponent, { static: false }) modelingEditor: ModelingEditorComponent;
 
     // IMPORTANT: this reference must be contained in this.studentParticipation.submissions[0] otherwise the parent component will not be able to react to changes
-    @Input()
-    studentSubmission: ModelingSubmission;
+    @Input() studentSubmission: ModelingSubmission;
     problemStatementHtml: string;
 
-    @Input()
-    exercise: ModelingExercise;
+    @Input() exercise: ModelingExercise;
     umlModel: UMLModel; // input model for Apollon+
 
     // explicitly needed to track if submission.isSynced is changed, otherwise component
@@ -46,10 +43,6 @@ export class ModelingExamSubmissionComponent extends ExamSubmissionComponent imp
 
     // Icons
     protected readonly faListAlt = faListAlt;
-
-    constructor(changeDetectorReference: ChangeDetectorRef) {
-        super(changeDetectorReference);
-    }
 
     ngOnInit(): void {
         // show submission answers in UI
@@ -123,7 +116,7 @@ export class ModelingExamSubmissionComponent extends ExamSubmissionComponent imp
     }
 
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    modelChanged(model: UMLModel) {
+    modelChanged(_model: UMLModel) {
         this.studentSubmission.isSynced = false;
     }
 

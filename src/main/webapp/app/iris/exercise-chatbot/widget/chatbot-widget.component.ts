@@ -1,4 +1,4 @@
-import { AfterViewInit, Component, HostListener, Inject, OnDestroy } from '@angular/core';
+import { AfterViewInit, Component, HostListener, OnDestroy, inject } from '@angular/core';
 import interact from 'interactjs';
 import { DOCUMENT } from '@angular/common';
 import { MatDialog } from '@angular/material/dialog';
@@ -13,6 +13,10 @@ import { ButtonType } from 'app/shared/components/button.component';
     standalone: false,
 })
 export class IrisChatbotWidgetComponent implements OnDestroy, AfterViewInit {
+    private document = inject<Document>(DOCUMENT);
+    private router = inject(Router);
+    private dialog = inject(MatDialog);
+
     // User preferences
     initialWidth = 400;
     initialHeight = 600;
@@ -24,11 +28,7 @@ export class IrisChatbotWidgetComponent implements OnDestroy, AfterViewInit {
 
     protected navigationSubscription: Subscription;
 
-    constructor(
-        @Inject(DOCUMENT) private document: Document,
-        private router: Router,
-        private dialog: MatDialog,
-    ) {
+    constructor() {
         this.navigationSubscription = this.router.events.subscribe((event) => {
             if (event instanceof NavigationStart) {
                 this.dialog.closeAll();

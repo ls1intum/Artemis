@@ -1,4 +1,4 @@
-import { Component, Input, OnInit } from '@angular/core';
+import { Component, Input, OnInit, inject } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { FeatureToggle } from 'app/shared/feature-toggle/feature-toggle.service';
 import { ProgrammingExercise } from 'app/entities/programming/programming-exercise.model';
@@ -16,6 +16,10 @@ import { OrionButtonType } from 'app/shared/orion/orion-button/orion-button.comp
     standalone: false,
 })
 export class OrionExerciseDetailsStudentActionsComponent implements OnInit {
+    private orionConnectorService = inject(OrionConnectorService);
+    private ideBuildAndTestService = inject(OrionBuildAndTestService);
+    private route = inject(ActivatedRoute);
+
     readonly ExerciseView = ExerciseView;
     orionState: OrionState;
     FeatureToggle = FeatureToggle;
@@ -25,12 +29,6 @@ export class OrionExerciseDetailsStudentActionsComponent implements OnInit {
     @Input() smallButtons: boolean;
     @Input() examMode: boolean;
     protected readonly OrionButtonType = OrionButtonType;
-
-    constructor(
-        private orionConnectorService: OrionConnectorService,
-        private ideBuildAndTestService: OrionBuildAndTestService,
-        private route: ActivatedRoute,
-    ) {}
 
     /**
      * get orionState and submit changes if withIdeSubmit set in route query

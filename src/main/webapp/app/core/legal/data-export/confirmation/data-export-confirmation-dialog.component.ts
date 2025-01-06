@@ -1,4 +1,4 @@
-import { Component, EventEmitter, OnDestroy, OnInit, Output, ViewChild } from '@angular/core';
+import { Component, EventEmitter, OnDestroy, OnInit, Output, ViewChild, inject } from '@angular/core';
 import { Observable, Subscription } from 'rxjs';
 import { AlertService } from 'app/core/util/alert.service';
 import { NgForm } from '@angular/forms';
@@ -11,6 +11,9 @@ import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
     standalone: false,
 })
 export class DataExportConfirmationDialogComponent implements OnInit, OnDestroy {
+    private activeModal = inject(NgbActiveModal);
+    private alertService = inject(AlertService);
+
     private dialogErrorSubscription: Subscription;
     dialogError: Observable<string>;
     @Output() dataExportRequest: EventEmitter<void>;
@@ -31,11 +34,6 @@ export class DataExportConfirmationDialogComponent implements OnInit, OnDestroy 
     faBan = faBan;
     faSpinner = faSpinner;
     faCheck = faCheck;
-
-    constructor(
-        private activeModal: NgbActiveModal,
-        private alertService: AlertService,
-    ) {}
 
     /**
      * Life cycle hook called by Angular to indicate that Angular is done creating the component

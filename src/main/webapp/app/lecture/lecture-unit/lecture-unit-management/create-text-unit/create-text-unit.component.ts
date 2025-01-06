@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, inject } from '@angular/core';
 import { TextUnit } from 'app/entities/lecture-unit/textUnit.model';
 import { TextUnitService } from 'app/lecture/lecture-unit/lecture-unit-management/textUnit.service';
 import { ActivatedRoute, Router } from '@angular/router';
@@ -16,16 +16,15 @@ import { combineLatest } from 'rxjs';
     standalone: false,
 })
 export class CreateTextUnitComponent implements OnInit {
+    private activatedRoute = inject(ActivatedRoute);
+    private router = inject(Router);
+    private textUnitService = inject(TextUnitService);
+    private alertService = inject(AlertService);
+
     textUnitToCreate: TextUnit = new TextUnit();
     isLoading: boolean;
     lectureId: number;
     courseId: number;
-    constructor(
-        private activatedRoute: ActivatedRoute,
-        private router: Router,
-        private textUnitService: TextUnitService,
-        private alertService: AlertService,
-    ) {}
 
     ngOnInit(): void {
         const lectureRoute = this.activatedRoute.parent!.parent!;

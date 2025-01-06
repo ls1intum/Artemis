@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, inject } from '@angular/core';
 import { Course, CourseGroup, courseGroups } from 'app/entities/course.model';
 import { User } from 'app/core/user/user.model';
 import { AccountService } from 'app/core/auth/account.service';
@@ -16,6 +16,14 @@ import { capitalize } from 'lodash-es';
     standalone: false,
 })
 export class CourseGroupMembershipComponent implements OnInit {
+    private router = inject(Router);
+    private route = inject(ActivatedRoute);
+    private alertService = inject(AlertService);
+    private eventManager = inject(EventManager);
+    private courseService = inject(CourseManagementService);
+    private userService = inject(UserService);
+    private accountService = inject(AccountService);
+
     allCourseGroupUsers: User[] = [];
     course: Course;
     courseGroup: CourseGroup;
@@ -25,16 +33,6 @@ export class CourseGroupMembershipComponent implements OnInit {
     filteredUsersSize = 0;
 
     readonly capitalize = capitalize;
-
-    constructor(
-        private router: Router,
-        private route: ActivatedRoute,
-        private alertService: AlertService,
-        private eventManager: EventManager,
-        private courseService: CourseManagementService,
-        private userService: UserService,
-        private accountService: AccountService,
-    ) {}
 
     ngOnInit(): void {
         this.loadAll();

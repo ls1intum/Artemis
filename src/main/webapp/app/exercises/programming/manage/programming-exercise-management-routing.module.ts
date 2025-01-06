@@ -1,6 +1,6 @@
 import { ActivatedRouteSnapshot, Resolve, RouterModule, Routes } from '@angular/router';
 import { UserRouteAccessService } from 'app/core/auth/user-route-access-service';
-import { Injectable, NgModule } from '@angular/core';
+import { Injectable, NgModule, inject } from '@angular/core';
 import { ProgrammingExerciseDetailComponent } from 'app/exercises/programming/manage/programming-exercise-detail.component';
 import { ProgrammingExerciseUpdateComponent } from 'app/exercises/programming/manage/update/programming-exercise-update.component';
 import { ProgrammingExercise } from 'app/entities/programming/programming-exercise.model';
@@ -17,11 +17,10 @@ import { RepositoryViewComponent } from 'app/localvc/repository-view/repository-
 import { CommitHistoryComponent } from 'app/localvc/commit-history/commit-history.component';
 import { CommitDetailsViewComponent } from 'app/localvc/commit-details-view/commit-details-view.component';
 import { LocalVCGuard } from 'app/localvc/localvc-guard.service';
-import { VcsRepositoryAccessLogViewComponent } from 'app/localvc/vcs-repository-access-log-view/vcs-repository-access-log-view.component';
 
 @Injectable({ providedIn: 'root' })
 export class ProgrammingExerciseResolve implements Resolve<ProgrammingExercise> {
-    constructor(private service: ProgrammingExerciseService) {}
+    private service = inject(ProgrammingExerciseService);
 
     resolve(route: ActivatedRouteSnapshot) {
         const exerciseId = route.params['exerciseId'] ? route.params['exerciseId'] : undefined;
@@ -185,7 +184,7 @@ export const routes: Routes = [
     },
     {
         path: ':courseId/programming-exercises/:exerciseId/repository/:repositoryType/vcs-access-log',
-        component: VcsRepositoryAccessLogViewComponent,
+        loadComponent: () => import('app/localvc/vcs-repository-access-log-view/vcs-repository-access-log-view.component').then((m) => m.VcsRepositoryAccessLogViewComponent),
         data: {
             authorities: [Authority.ADMIN, Authority.INSTRUCTOR],
             pageTitle: 'artemisApp.repository.title',
@@ -194,7 +193,7 @@ export const routes: Routes = [
     },
     {
         path: ':courseId/programming-exercises/:exerciseId/repository/:repositoryType/repo/:repositoryId/vcs-access-log',
-        component: VcsRepositoryAccessLogViewComponent,
+        loadComponent: () => import('app/localvc/vcs-repository-access-log-view/vcs-repository-access-log-view.component').then((m) => m.VcsRepositoryAccessLogViewComponent),
         data: {
             authorities: [Authority.ADMIN, Authority.INSTRUCTOR],
             pageTitle: 'artemisApp.repository.title',
@@ -230,7 +229,7 @@ export const routes: Routes = [
     },
     {
         path: ':courseId/programming-exercises/:exerciseId/participations/:participationId/repository/vcs-access-log',
-        component: VcsRepositoryAccessLogViewComponent,
+        loadComponent: () => import('app/localvc/vcs-repository-access-log-view/vcs-repository-access-log-view.component').then((m) => m.VcsRepositoryAccessLogViewComponent),
         data: {
             authorities: [Authority.ADMIN, Authority.INSTRUCTOR],
             pageTitle: 'artemisApp.repository.title',

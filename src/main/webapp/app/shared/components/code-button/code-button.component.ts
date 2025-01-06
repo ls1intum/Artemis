@@ -1,4 +1,4 @@
-import { Component, Input, OnChanges, OnInit } from '@angular/core';
+import { Component, Input, OnChanges, OnInit, inject } from '@angular/core';
 import { ProgrammingExercise, ProgrammingLanguage } from 'app/entities/programming/programming-exercise.model';
 import { FeatureToggle } from 'app/shared/feature-toggle/feature-toggle.service';
 import { ExternalCloningService } from 'app/exercises/programming/shared/service/external-cloning.service';
@@ -26,6 +26,15 @@ import { UserSshPublicKey } from 'app/entities/programming/user-ssh-public-key.m
     standalone: false,
 })
 export class CodeButtonComponent implements OnInit, OnChanges {
+    private translateService = inject(TranslateService);
+    private externalCloningService = inject(ExternalCloningService);
+    private sshUserSettingsService = inject(SshUserSettingsService);
+    private accountService = inject(AccountService);
+    private profileService = inject(ProfileService);
+    private localStorage = inject(LocalStorageService);
+    private participationService = inject(ParticipationService);
+    private ideSettingsService = inject(IdeSettingsService);
+
     readonly FeatureToggle = FeatureToggle;
     readonly ProgrammingLanguage = ProgrammingLanguage;
 
@@ -76,17 +85,6 @@ export class CodeButtonComponent implements OnInit, OnChanges {
     readonly faCode = faCode;
     readonly faExternalLink = faExternalLink;
     ideName: string;
-
-    constructor(
-        private translateService: TranslateService,
-        private externalCloningService: ExternalCloningService,
-        private sshUserSettingsService: SshUserSettingsService,
-        private accountService: AccountService,
-        private profileService: ProfileService,
-        private localStorage: LocalStorageService,
-        private participationService: ParticipationService,
-        private ideSettingsService: IdeSettingsService,
-    ) {}
 
     async ngOnInit() {
         const user = await this.accountService.identity();

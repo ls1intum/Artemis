@@ -2,7 +2,6 @@ import { ProgrammingExercise } from 'app/entities/programming/programming-exerci
 import { FeedbackGroup } from 'app/exercises/shared/feedback/group/feedback-group';
 import { ProgrammingFeedbackItemService } from 'app/exercises/shared/feedback/item/programming-feedback-item.service';
 import { Feedback, FeedbackType, STATIC_CODE_ANALYSIS_FEEDBACK_IDENTIFIER, SUBMISSION_POLICY_FEEDBACK_IDENTIFIER } from 'app/entities/feedback.model';
-import { TranslateService } from '@ngx-translate/core';
 import { FeedbackItem } from 'app/exercises/shared/feedback/item/feedback-item';
 import { GradingInstruction } from 'app/exercises/shared/structured-grading-criterion/grading-instruction.model';
 
@@ -11,8 +10,7 @@ describe('ProgrammingFeedbackItemService', () => {
     const exercise = new ProgrammingExercise(undefined, undefined);
 
     beforeEach(() => {
-        const fake = { instant: (key: string) => key };
-        service = new ProgrammingFeedbackItemService(fake as TranslateService);
+        service = new ProgrammingFeedbackItemService();
     });
 
     it('should create submission policy feedback item', () => {

@@ -1,4 +1,4 @@
-import { Component, EventEmitter, Input, Output } from '@angular/core';
+import { Component, EventEmitter, Input, Output, inject } from '@angular/core';
 import { NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
 import { TeamUpdateDialogComponent } from 'app/exercises/shared/team/team-update-dialog/team-update-dialog.component';
 import { Team } from 'app/entities/team.model';
@@ -20,6 +20,8 @@ import { faPencilAlt, faPlus } from '@fortawesome/free-solid-svg-icons';
     standalone: false,
 })
 export class TeamUpdateButtonComponent {
+    private modalService = inject(NgbModal);
+
     ButtonType = ButtonType;
     ButtonSize = ButtonSize;
 
@@ -32,8 +34,6 @@ export class TeamUpdateButtonComponent {
     // Icons
     faPencilAlt = faPencilAlt;
     faPlus = faPlus;
-
-    constructor(private modalService: NgbModal) {}
 
     /**
      * Open the dialog for team creation

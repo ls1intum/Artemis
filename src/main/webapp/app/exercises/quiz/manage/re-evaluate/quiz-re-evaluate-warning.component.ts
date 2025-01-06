@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, inject } from '@angular/core';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import { QuizReEvaluateService } from './quiz-re-evaluate.service';
 import { ShortAnswerQuestion } from 'app/entities/quiz/short-answer-question.model';
@@ -18,6 +18,12 @@ import { ArtemisNavigationUtilService } from 'app/utils/navigation.utils';
     standalone: false,
 })
 export class QuizReEvaluateWarningComponent implements OnInit {
+    activeModal = inject(NgbActiveModal);
+    private eventManager = inject(EventManager);
+    private quizExerciseService = inject(QuizExerciseService);
+    private quizReEvaluateService = inject(QuizReEvaluateService);
+    private navigationUtilService = inject(ArtemisNavigationUtilService);
+
     isSaving: boolean;
 
     successful = false;
@@ -43,14 +49,6 @@ export class QuizReEvaluateWarningComponent implements OnInit {
     faTimes = faTimes;
     faCheck = faCheck;
     faCheckCircle = faCheckCircle;
-
-    constructor(
-        public activeModal: NgbActiveModal,
-        private eventManager: EventManager,
-        private quizExerciseService: QuizExerciseService,
-        private quizReEvaluateService: QuizReEvaluateService,
-        private navigationUtilService: ArtemisNavigationUtilService,
-    ) {}
 
     /**
      * Reset saving status, load the quiz by id and back it up.

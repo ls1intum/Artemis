@@ -1,4 +1,4 @@
-import { Component, OnDestroy, OnInit, ViewChild } from '@angular/core';
+import { Component, OnDestroy, OnInit, ViewChild, inject } from '@angular/core';
 import { Observable, Subscription } from 'rxjs';
 import { ActivatedRoute, Router } from '@angular/router';
 import { DomainService } from 'app/exercises/programming/shared/code-editor/service/code-editor-domain.service';
@@ -25,6 +25,14 @@ import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
     standalone: false,
 })
 export class RepositoryViewComponent implements OnInit, OnDestroy {
+    private accountService = inject(AccountService);
+    domainService = inject(DomainService);
+    private route = inject(ActivatedRoute);
+    private profileService = inject(ProfileService);
+    private programmingExerciseParticipationService = inject(ProgrammingExerciseParticipationService);
+    private programmingExerciseService = inject(ProgrammingExerciseService);
+    private router = inject(Router);
+
     @ViewChild(CodeEditorContainerComponent, { static: false }) codeEditorContainer: CodeEditorContainerComponent;
 
     PROGRAMMING = ExerciseType.PROGRAMMING;
@@ -56,16 +64,6 @@ export class RepositoryViewComponent implements OnInit, OnDestroy {
     faClockRotateLeft = faClockRotateLeft;
     participationWithLatestResultSub: Subscription;
     differentParticipationSub: Subscription;
-
-    constructor(
-        private accountService: AccountService,
-        public domainService: DomainService,
-        private route: ActivatedRoute,
-        private profileService: ProfileService,
-        private programmingExerciseParticipationService: ProgrammingExerciseParticipationService,
-        private programmingExerciseService: ProgrammingExerciseService,
-        private router: Router,
-    ) {}
 
     /**
      * Unsubscribe from all subscriptions when the component is destroyed

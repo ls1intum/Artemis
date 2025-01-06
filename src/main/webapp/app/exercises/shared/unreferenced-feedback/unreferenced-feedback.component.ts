@@ -1,4 +1,4 @@
-import { Component, EventEmitter, Input, Output } from '@angular/core';
+import { Component, EventEmitter, Input, Output, inject } from '@angular/core';
 import { FEEDBACK_SUGGESTION_ACCEPTED_IDENTIFIER, FEEDBACK_SUGGESTION_IDENTIFIER, Feedback, FeedbackType } from 'app/entities/feedback.model';
 import { StructuredGradingCriterionService } from 'app/exercises/shared/structured-grading-criterion/structured-grading-criterion.service';
 
@@ -9,6 +9,8 @@ import { StructuredGradingCriterionService } from 'app/exercises/shared/structur
     standalone: false,
 })
 export class UnreferencedFeedbackComponent {
+    private structuredGradingCriterionService = inject(StructuredGradingCriterionService);
+
     FeedbackType = FeedbackType;
 
     unreferencedFeedback: Feedback[] = [];
@@ -34,8 +36,6 @@ export class UnreferencedFeedbackComponent {
     @Output() feedbacksChange = new EventEmitter<Feedback[]>();
     @Output() onAcceptSuggestion = new EventEmitter<Feedback>();
     @Output() onDiscardSuggestion = new EventEmitter<Feedback>();
-
-    constructor(private structuredGradingCriterionService: StructuredGradingCriterionService) {}
 
     public deleteFeedback(feedbackToDelete: Feedback): void {
         const indexToDelete = this.unreferencedFeedback.indexOf(feedbackToDelete);

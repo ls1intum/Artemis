@@ -1,4 +1,4 @@
-import { Component, EventEmitter, Input, Output } from '@angular/core';
+import { Component, EventEmitter, Input, Output, inject } from '@angular/core';
 import { faBan, faPencil, faPlus, faSave, faTrash } from '@fortawesome/free-solid-svg-icons';
 import { KnowledgeArea, KnowledgeAreaDTO, KnowledgeAreaValidators } from 'app/entities/competency/standardized-competency.model';
 import { ButtonSize, ButtonType } from 'app/shared/components/button.component';
@@ -11,6 +11,8 @@ import { Observable } from 'rxjs';
     standalone: false,
 })
 export class KnowledgeAreaEditComponent {
+    private formBuilder = inject(FormBuilder);
+
     // values for the knowledge area select
     @Input() knowledgeAreas: KnowledgeArea[] = [];
     @Input({ required: true }) set knowledgeArea(knowledgeArea: KnowledgeAreaDTO) {
@@ -72,8 +74,6 @@ export class KnowledgeAreaEditComponent {
     protected readonly ButtonSize = ButtonSize;
     protected readonly ButtonType = ButtonType;
     protected readonly validators = KnowledgeAreaValidators;
-
-    constructor(private formBuilder: FormBuilder) {}
 
     save() {
         const updatedValues = this.form.getRawValue();

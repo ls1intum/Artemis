@@ -1,4 +1,4 @@
-import { Component, OnDestroy, OnInit, ViewChild } from '@angular/core';
+import { Component, OnDestroy, OnInit, ViewChild, inject } from '@angular/core';
 import { faExclamationCircle, faWifi } from '@fortawesome/free-solid-svg-icons';
 import { Subscription, filter } from 'rxjs';
 import { JhiWebsocketService } from 'app/core/websocket/websocket.service';
@@ -12,6 +12,9 @@ import { NavigationEnd, Router } from '@angular/router';
     standalone: false,
 })
 export class JhiConnectionWarningComponent implements OnInit, OnDestroy {
+    private websocketService = inject(JhiWebsocketService);
+    private router = inject(Router);
+
     @ViewChild('popover') popover: NgbPopover;
 
     disconnected = false;
@@ -24,10 +27,9 @@ export class JhiConnectionWarningComponent implements OnInit, OnDestroy {
     faExclamationCircle = faExclamationCircle;
     faWifi = faWifi;
 
-    constructor(
-        private websocketService: JhiWebsocketService,
-        private router: Router,
-    ) {
+    constructor() {
+        const router = this.router;
+
         this.routerSubscription = router.events
             .pipe(filter((event) => event instanceof NavigationEnd))
             .subscribe((event: NavigationEnd) => (this.isOnExamParticipationPage = !!event.url.match('^/courses/\\d+/exams/\\d+')));

@@ -1,4 +1,4 @@
-import { AfterViewInit, Component, ElementRef, HostListener, OnDestroy, QueryList, Renderer2, ViewChild, ViewChildren, ViewEncapsulation } from '@angular/core';
+import { AfterViewInit, Component, ElementRef, HostListener, OnDestroy, QueryList, Renderer2, ViewChild, ViewChildren, ViewEncapsulation, inject } from '@angular/core';
 import { Subscription, fromEvent } from 'rxjs';
 import { take, tap } from 'rxjs/operators';
 import { Direction, Orientation, OverlayPosition, UserInteractionEvent } from './guided-tour.constants';
@@ -30,6 +30,10 @@ import {
     standalone: false,
 })
 export class GuidedTourComponent implements AfterViewInit, OnDestroy {
+    guidedTourService = inject(GuidedTourService);
+    private accountService = inject(AccountService);
+    private renderer = inject(Renderer2);
+
     @ViewChild('tourStep', { static: false }) private tourStep: ElementRef;
     @ViewChild('dotNavigation', { static: false }) private dotNavigation: ElementRef;
     @ViewChildren('dotElements') private dotElements: QueryList<ElementRef>;
@@ -82,12 +86,6 @@ export class GuidedTourComponent implements AfterViewInit, OnDestroy {
     faICursor = faICursor;
     faHandPointUp = faHandPointUp;
     faPlayCircle = faPlayCircle;
-
-    constructor(
-        public guidedTourService: GuidedTourService,
-        private accountService: AccountService,
-        private renderer: Renderer2,
-    ) {}
 
     /**
      * Enable tour navigation with left and right keyboard arrows and escape key

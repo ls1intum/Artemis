@@ -1,4 +1,4 @@
-import { Component, EventEmitter, Input, OnChanges, OnDestroy, OnInit, Output, effect, input, output } from '@angular/core';
+import { Component, EventEmitter, Input, OnChanges, OnDestroy, OnInit, Output, effect, inject, input, output } from '@angular/core';
 import { faCheckDouble, faFilter, faFilterCircleXmark, faHashtag, faPeopleGroup, faPlusCircle, faSearch, faUser } from '@fortawesome/free-solid-svg-icons';
 import { ActivatedRoute, Params } from '@angular/router';
 import { Subscription, distinctUntilChanged } from 'rxjs';
@@ -23,6 +23,11 @@ import { ExerciseFilterModalComponent } from 'app/shared/exercise-filter/exercis
     standalone: false,
 })
 export class SidebarComponent implements OnDestroy, OnChanges, OnInit {
+    private route = inject(ActivatedRoute);
+    private profileService = inject(ProfileService);
+    private sidebarEventService = inject(SidebarEventService);
+    private modalService = inject(NgbModal);
+
     @Output() onSelectConversation = new EventEmitter<number | string>();
     @Output() onUpdateSidebar = new EventEmitter<void>();
     onDirectChatPressed = output<void>();
@@ -69,12 +74,7 @@ export class SidebarComponent implements OnDestroy, OnChanges, OnInit {
     exerciseFilters?: ExerciseFilterOptions;
     isFilterActive: boolean = false;
 
-    constructor(
-        private route: ActivatedRoute,
-        private profileService: ProfileService,
-        private sidebarEventService: SidebarEventService,
-        private modalService: NgbModal,
-    ) {
+    constructor() {
         effect(() => {
             this.subscribeToSidebarEvents();
         });

@@ -17,7 +17,7 @@ import { ProgrammingExerciseUpdateComponent } from 'app/exercises/programming/ma
 import { ProgrammingExerciseResolve } from 'app/exercises/programming/manage/programming-exercise-management-routing.module';
 import { ModelingExerciseUpdateComponent } from 'app/exercises/modeling/manage/modeling-exercise-update.component';
 import { StudentExamSummaryComponent } from 'app/exam/manage/student-exams/student-exam-summary.component';
-import { AssessmentDashboardComponent } from 'app/course/dashboards/assessment-dashboard/assessment-dashboard.component';
+
 import { TestRunManagementComponent } from 'app/exam/manage/test-runs/test-run-management.component';
 import { ExamParticipationComponent } from 'app/exam/participate/exam-participation.component';
 import { PendingChangesGuard } from 'app/shared/guard/pending-changes.guard';
@@ -35,9 +35,9 @@ import { ModelingExerciseDetailComponent } from 'app/exercises/modeling/manage/m
 import { ProgrammingExerciseDetailComponent } from 'app/exercises/programming/manage/programming-exercise-detail.component';
 import { TextExerciseDetailComponent } from 'app/exercises/text/manage/text-exercise/text-exercise-detail.component';
 import { PlagiarismInspectorComponent } from 'app/exercises/shared/plagiarism/plagiarism-inspector/plagiarism-inspector.component';
-import { GradingSystemComponent } from 'app/grading-system/grading-system.component';
+
 import { ExampleSubmissionsComponent } from 'app/exercises/shared/example-submission/example-submissions.component';
-import { GradingKeyOverviewComponent } from 'app/grading-system/grading-key-overview/grading-key-overview.component';
+
 import { ExerciseStatisticsComponent } from 'app/exercises/shared/statistics/exercise-statistics.component';
 import { ProgrammingExerciseConfigureGradingComponent } from 'app/exercises/programming/manage/grading/programming-exercise-configure-grading.component';
 import { ExampleModelingSubmissionComponent } from 'app/exercises/modeling/manage/example-modeling/example-modeling-submission.component';
@@ -54,9 +54,7 @@ import { isOrion } from 'app/shared/orion/orion';
 import { FileUploadExerciseManagementResolve } from 'app/exercises/file-upload/manage/file-upload-exercise-management-resolve.service';
 import { ModelingExerciseResolver } from 'app/exercises/modeling/manage/modeling-exercise-resolver.service';
 import { CourseResolve, ExamResolve, ExerciseGroupResolve, StudentExamResolve } from 'app/exam/manage/exam-management-resolve.service';
-import { BonusComponent } from 'app/grading-system/bonus/bonus.component';
-import { SuspiciousBehaviorComponent } from 'app/exam/manage/suspicious-behavior/suspicious-behavior.component';
-import { SuspiciousSessionsOverviewComponent } from 'app/exam/manage/suspicious-behavior/suspicious-sessions-overview/suspicious-sessions-overview.component';
+
 import { StudentExamTimelineComponent } from 'app/exam/manage/student-exams/student-exam-timeline/student-exam-timeline.component';
 import { QuizPoolComponent } from 'app/exercises/quiz/manage/quiz-pool.component';
 import { BuildPlanEditorComponent } from 'app/exercises/programming/manage/build-plan-editor.component';
@@ -65,7 +63,6 @@ import { RepositoryViewComponent } from 'app/localvc/repository-view/repository-
 import { LocalVCGuard } from 'app/localvc/localvc-guard.service';
 import { CommitHistoryComponent } from 'app/localvc/commit-history/commit-history.component';
 import { CommitDetailsViewComponent } from 'app/localvc/commit-details-view/commit-details-view.component';
-import { VcsRepositoryAccessLogViewComponent } from 'app/localvc/vcs-repository-access-log-view/vcs-repository-access-log-view.component';
 
 export const examManagementRoute: Routes = [
     {
@@ -212,7 +209,7 @@ export const examManagementRoute: Routes = [
     },
     {
         path: ':examId/grading-system',
-        component: GradingSystemComponent,
+        loadComponent: () => import('app/grading-system/grading-system.component').then((m) => m.GradingSystemComponent),
         data: {
             authorities: [Authority.INSTRUCTOR, Authority.ADMIN],
             pageTitle: 'artemisApp.examManagement.gradingSystem',
@@ -222,7 +219,7 @@ export const examManagementRoute: Routes = [
     },
     {
         path: ':examId/bonus',
-        component: BonusComponent,
+        loadComponent: () => import('app/grading-system/bonus/bonus.component').then((m) => m.BonusComponent),
         data: {
             authorities: [Authority.INSTRUCTOR, Authority.ADMIN],
             pageTitle: 'artemisApp.bonus.title',
@@ -231,7 +228,7 @@ export const examManagementRoute: Routes = [
     },
     {
         path: ':examId/suspicious-behavior',
-        component: SuspiciousBehaviorComponent,
+        loadComponent: () => import('app/exam/manage/suspicious-behavior/suspicious-behavior.component').then((m) => m.SuspiciousBehaviorComponent),
         data: {
             authorities: [Authority.ADMIN, Authority.INSTRUCTOR],
             pageTitle: 'artemisApp.examManagement.suspiciousBehavior.title',
@@ -240,7 +237,8 @@ export const examManagementRoute: Routes = [
     },
     {
         path: ':examId/suspicious-behavior/suspicious-sessions',
-        component: SuspiciousSessionsOverviewComponent,
+        loadComponent: () =>
+            import('app/exam/manage/suspicious-behavior/suspicious-sessions-overview/suspicious-sessions-overview.component').then((m) => m.SuspiciousSessionsOverviewComponent),
         data: {
             authorities: [Authority.ADMIN, Authority.INSTRUCTOR],
             pageTitle: 'artemisApp.examManagement.suspiciousBehavior.suspiciousSessions.title',
@@ -261,7 +259,7 @@ export const examManagementRoute: Routes = [
     },
     {
         path: ':examId/test-runs/assess',
-        component: AssessmentDashboardComponent,
+        loadComponent: () => import('app/course/dashboards/assessment-dashboard/assessment-dashboard.component').then((m) => m.AssessmentDashboardComponent),
         data: {
             authorities: [Authority.ADMIN, Authority.INSTRUCTOR, Authority.TA],
             pageTitle: 'artemisApp.examManagement.assessmentDashboard',
@@ -345,7 +343,7 @@ export const examManagementRoute: Routes = [
     },
     {
         path: ':examId/student-exams/:studentExamId/summary/overview/grading-key',
-        component: GradingKeyOverviewComponent,
+        loadComponent: () => import('app/grading-system/grading-key-overview/grading-key-overview.component').then((m) => m.GradingKeyOverviewComponent),
         data: {
             authorities: [Authority.INSTRUCTOR, Authority.ADMIN],
             pageTitle: 'artemisApp.examManagement.title',
@@ -354,7 +352,7 @@ export const examManagementRoute: Routes = [
     },
     {
         path: ':examId/student-exams/:studentExamId/summary/overview/bonus-grading-key',
-        component: GradingKeyOverviewComponent,
+        loadComponent: () => import('app/grading-system/grading-key-overview/grading-key-overview.component').then((m) => m.GradingKeyOverviewComponent),
         data: {
             authorities: [Authority.INSTRUCTOR, Authority.ADMIN],
             pageTitle: 'artemisApp.examManagement.title',
@@ -643,7 +641,7 @@ export const examManagementRoute: Routes = [
     },
     {
         path: ':examId/exercise-groups/:exerciseGroupId/programming-exercises/:exerciseId/repository/:repositoryType/vcs-access-log',
-        component: VcsRepositoryAccessLogViewComponent,
+        loadComponent: () => import('app/localvc/vcs-repository-access-log-view/vcs-repository-access-log-view.component').then((m) => m.VcsRepositoryAccessLogViewComponent),
         data: {
             authorities: [Authority.ADMIN, Authority.INSTRUCTOR],
             pageTitle: 'artemisApp.repository.title',
@@ -688,7 +686,7 @@ export const examManagementRoute: Routes = [
     },
     {
         path: ':examId/exercise-groups/:exerciseGroupId/programming-exercises/:exerciseId/participations/:participationId/repository/vcs-access-log',
-        component: VcsRepositoryAccessLogViewComponent,
+        loadComponent: () => import('app/localvc/vcs-repository-access-log-view/vcs-repository-access-log-view.component').then((m) => m.VcsRepositoryAccessLogViewComponent),
         data: {
             authorities: [Authority.ADMIN, Authority.INSTRUCTOR],
             pageTitle: 'artemisApp.repository.title',
@@ -852,7 +850,7 @@ export const examManagementRoute: Routes = [
     },
     {
         path: ':examId/assessment-dashboard',
-        component: AssessmentDashboardComponent,
+        loadComponent: () => import('app/course/dashboards/assessment-dashboard/assessment-dashboard.component').then((m) => m.AssessmentDashboardComponent),
         data: {
             authorities: [Authority.ADMIN, Authority.INSTRUCTOR, Authority.EDITOR, Authority.TA],
             pageTitle: 'artemisApp.examManagement.assessmentDashboard',

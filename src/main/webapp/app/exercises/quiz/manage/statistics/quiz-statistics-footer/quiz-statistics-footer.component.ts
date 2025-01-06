@@ -1,4 +1,4 @@
-import { Component, Input, OnDestroy, OnInit } from '@angular/core';
+import { Component, Input, OnDestroy, OnInit, inject } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { QuizStatisticUtil } from 'app/exercises/quiz/shared/quiz-statistic-util.service';
 import { ShortAnswerQuestionUtil } from 'app/exercises/quiz/shared/short-answer-question-util.service';
@@ -25,6 +25,15 @@ import { ArtemisServerDateService } from 'app/shared/server-date.service';
     standalone: false,
 })
 export class QuizStatisticsFooterComponent implements OnInit, OnDestroy {
+    private route = inject(ActivatedRoute);
+    private router = inject(Router);
+    private accountService = inject(AccountService);
+    private translateService = inject(TranslateService);
+    private quizExerciseService = inject(QuizExerciseService);
+    private quizStatisticUtil = inject(QuizStatisticUtil);
+    private jhiWebsocketService = inject(JhiWebsocketService);
+    private serverDateService = inject(ArtemisServerDateService);
+
     @Input() isQuizPointStatistic: boolean;
     @Input() isQuizStatistic: boolean;
 
@@ -47,17 +56,6 @@ export class QuizStatisticsFooterComponent implements OnInit, OnDestroy {
 
     // Icons
     farListAlt = faListAlt;
-
-    constructor(
-        private route: ActivatedRoute,
-        private router: Router,
-        private accountService: AccountService,
-        private translateService: TranslateService,
-        private quizExerciseService: QuizExerciseService,
-        private quizStatisticUtil: QuizStatisticUtil,
-        private jhiWebsocketService: JhiWebsocketService,
-        private serverDateService: ArtemisServerDateService,
-    ) {}
 
     ngOnInit() {
         this.sub = this.route.params.subscribe((params) => {

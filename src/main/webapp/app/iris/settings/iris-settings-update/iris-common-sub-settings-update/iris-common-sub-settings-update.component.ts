@@ -1,4 +1,4 @@
-import { Component, EventEmitter, Input, OnChanges, OnInit, Output, SimpleChanges } from '@angular/core';
+import { Component, EventEmitter, Input, OnChanges, OnInit, Output, SimpleChanges, inject } from '@angular/core';
 import { IrisEventType, IrisSubSettings, IrisSubSettingsType } from 'app/entities/iris/settings/iris-sub-settings.model';
 import { IrisVariant } from 'app/entities/iris/settings/iris-variant';
 import { AccountService } from 'app/core/auth/account.service';
@@ -18,6 +18,11 @@ import { AlertService } from 'app/core/util/alert.service';
     standalone: false,
 })
 export class IrisCommonSubSettingsUpdateComponent implements OnInit, OnChanges {
+    private irisSettingsService = inject(IrisSettingsService);
+    private courseManagementService = inject(CourseManagementService);
+    private exerciseService = inject(ExerciseService);
+    private alertService = inject(AlertService);
+
     @Input()
     subSettings?: IrisSubSettings;
 
@@ -69,13 +74,9 @@ export class IrisCommonSubSettingsUpdateComponent implements OnInit, OnChanges {
         [IrisEventType.PROGRESS_STALLED]: 'artemisApp.iris.settings.subSettings.proactivityProgressStalledEventEnabled.label',
     };
 
-    constructor(
-        accountService: AccountService,
-        private irisSettingsService: IrisSettingsService,
-        private courseManagementService: CourseManagementService,
-        private exerciseService: ExerciseService,
-        private alertService: AlertService,
-    ) {
+    constructor() {
+        const accountService = inject(AccountService);
+
         this.isAdmin = accountService.isAdmin();
     }
 

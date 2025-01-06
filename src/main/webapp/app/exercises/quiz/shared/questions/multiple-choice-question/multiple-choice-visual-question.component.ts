@@ -34,8 +34,6 @@ export class MultipleChoiceVisualQuestionComponent {
     faTrash = faTrash;
     faXmark = faXmark;
 
-    constructor() {}
-
     parseQuestion() {
         let markdown = this.question.text ?? '';
 

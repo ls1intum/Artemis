@@ -7,7 +7,7 @@ import { RouterModule, Routes } from '@angular/router';
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
 import { ArtemisExerciseScoresChartModule } from 'app/overview/visualizations/exercise-scores-chart.module';
 import { BarChartModule, PieChartModule } from '@swimlane/ngx-charts';
-import { GradingKeyOverviewComponent } from 'app/grading-system/grading-key-overview/grading-key-overview.component';
+
 import { ArtemisSharedComponentModule } from 'app/shared/components/shared-component.module';
 
 const routes: Routes = [
@@ -22,7 +22,7 @@ const routes: Routes = [
     },
     {
         path: 'grading-key',
-        component: GradingKeyOverviewComponent,
+        loadComponent: () => import('app/grading-system/grading-key-overview/grading-key-overview.component').then((m) => m.GradingKeyOverviewComponent),
         data: {
             authorities: [Authority.USER],
             pageTitle: 'artemisApp.gradingSystem.title',

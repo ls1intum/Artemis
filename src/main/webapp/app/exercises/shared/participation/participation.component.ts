@@ -1,4 +1,4 @@
-import { Component, OnDestroy, OnInit } from '@angular/core';
+import { Component, OnDestroy, OnInit, inject } from '@angular/core';
 import { Subject, Subscription } from 'rxjs';
 import { ParticipationService } from './participation.service';
 import { ActivatedRoute } from '@angular/router';
@@ -36,6 +36,16 @@ enum FilterProp {
     standalone: false,
 })
 export class ParticipationComponent implements OnInit, OnDestroy {
+    private route = inject(ActivatedRoute);
+    private participationService = inject(ParticipationService);
+    private alertService = inject(AlertService);
+    private eventManager = inject(EventManager);
+    private exerciseService = inject(ExerciseService);
+    private programmingSubmissionService = inject(ProgrammingSubmissionService);
+    private accountService = inject(AccountService);
+    private profileService = inject(ProfileService);
+    private gradingSystemService = inject(GradingSystemService);
+
     // make constants available to html for comparison
     readonly FilterProp = FilterProp;
     readonly ExerciseType = ExerciseType;
@@ -84,17 +94,7 @@ export class ParticipationComponent implements OnInit, OnDestroy {
     faFilePowerpoint = faFilePowerpoint;
     faCodeBranch = faCodeBranch;
 
-    constructor(
-        private route: ActivatedRoute,
-        private participationService: ParticipationService,
-        private alertService: AlertService,
-        private eventManager: EventManager,
-        private exerciseService: ExerciseService,
-        private programmingSubmissionService: ProgrammingSubmissionService,
-        private accountService: AccountService,
-        private profileService: ProfileService,
-        private gradingSystemService: GradingSystemService,
-    ) {
+    constructor() {
         this.participationCriteria = {
             filterProp: FilterProp.ALL,
         };

@@ -1,4 +1,4 @@
-import { Component, EventEmitter, Input, OnChanges, OnDestroy, OnInit, Output } from '@angular/core';
+import { Component, EventEmitter, Input, OnChanges, OnDestroy, OnInit, Output, inject } from '@angular/core';
 import { SafeHtml } from '@angular/platform-browser';
 import { ArtemisMarkdownService } from 'app/shared/markdown.service';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
@@ -22,6 +22,13 @@ import { Subscription } from 'rxjs';
     standalone: false,
 })
 export class ExamParticipationCoverComponent implements OnChanges, OnDestroy, OnInit {
+    private courseService = inject(CourseManagementService);
+    private artemisMarkdown = inject(ArtemisMarkdownService);
+    private translateService = inject(TranslateService);
+    private accountService = inject(AccountService);
+    private examParticipationService = inject(ExamParticipationService);
+    private serverDateService = inject(ArtemisServerDateService);
+
     /**
      * if startView is set to true: startText and confirmationStartText will be displayed
      * if startView is set to false: endText and confirmationEndText will be displayed
@@ -65,15 +72,6 @@ export class ExamParticipationCoverComponent implements OnChanges, OnDestroy, On
     faArrowLeft = faArrowLeft;
     faCircleExclamation = faCircleExclamation;
     faDoorClosed = faDoorClosed;
-
-    constructor(
-        private courseService: CourseManagementService,
-        private artemisMarkdown: ArtemisMarkdownService,
-        private translateService: TranslateService,
-        private accountService: AccountService,
-        private examParticipationService: ExamParticipationService,
-        private serverDateService: ArtemisServerDateService,
-    ) {}
 
     ngOnInit(): void {
         this.isAttendanceChecked = this.exam.testExam || !this.exam.examWithAttendanceCheck || this.attendanceChecked;

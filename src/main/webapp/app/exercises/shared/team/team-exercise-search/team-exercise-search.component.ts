@@ -1,4 +1,4 @@
-import { Component, EventEmitter, Input, Output, ViewChild } from '@angular/core';
+import { Component, EventEmitter, Input, Output, ViewChild, inject } from '@angular/core';
 import { Observable, Subject, combineLatest, merge, of } from 'rxjs';
 import { catchError, filter, map, switchMap, tap } from 'rxjs/operators';
 import { TranslateService } from '@ngx-translate/core';
@@ -15,6 +15,9 @@ import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
     standalone: false,
 })
 export class TeamExerciseSearchComponent {
+    private courseService = inject(CourseManagementService);
+    private translateService = inject(TranslateService);
+
     @ViewChild('instance', { static: true }) ngbTypeahead: NgbTypeahead;
     focus$ = new Subject<string>();
     click$ = new Subject<string>();
@@ -33,11 +36,6 @@ export class TeamExerciseSearchComponent {
     exerciseOptionsLoaded = false;
 
     inputDisplayValue: string;
-
-    constructor(
-        private courseService: CourseManagementService,
-        private translateService: TranslateService,
-    ) {}
 
     onAutocompleteSelect = (exercise: Exercise) => {
         this.inputDisplayValue = this.searchResultFormatter(exercise);

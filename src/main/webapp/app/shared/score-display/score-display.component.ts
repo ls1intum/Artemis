@@ -21,8 +21,6 @@ export class ScoreDisplayComponent implements OnChanges {
     // Icons
     faQuestionCircle = faQuestionCircle;
 
-    constructor() {}
-
     /**
      * Calculate the bonus points just for display reasons
      */

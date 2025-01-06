@@ -1,4 +1,4 @@
-import { Component, Input, OnInit, ViewEncapsulation } from '@angular/core';
+import { Component, Input, OnInit, ViewEncapsulation, inject } from '@angular/core';
 import { Router } from '@angular/router';
 import { Team } from 'app/entities/team.model';
 import { Exercise, ExerciseType } from 'app/entities/exercise.model';
@@ -42,6 +42,11 @@ class ExerciseForTeam extends Exercise {
     standalone: false,
 })
 export class TeamParticipationTableComponent implements OnInit {
+    private teamService = inject(TeamService);
+    private alertService = inject(AlertService);
+    private router = inject(Router);
+    private accountService = inject(AccountService);
+
     readonly ExerciseType = ExerciseType;
     readonly dayjs = dayjs;
 
@@ -58,13 +63,6 @@ export class TeamParticipationTableComponent implements OnInit {
     // Icons
     faFolderOpen = faFolderOpen;
     faFlag = faFlag;
-
-    constructor(
-        private teamService: TeamService,
-        private alertService: AlertService,
-        private router: Router,
-        private accountService: AccountService,
-    ) {}
 
     /**
      * Loads all needed data from the server for this component

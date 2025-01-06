@@ -1,4 +1,4 @@
-import { Component, Input } from '@angular/core';
+import { Component, Input, inject } from '@angular/core';
 import { Feedback, buildFeedbackTextForReview } from 'app/entities/feedback.model';
 import { getCourseFromExercise } from 'app/entities/exercise.model';
 import { Course } from 'app/entities/course.model';
@@ -14,6 +14,9 @@ import { TranslateService } from '@ngx-translate/core';
     standalone: false,
 })
 export class AdditionalFeedbackComponent {
+    private translateService = inject(TranslateService);
+    private localeConversionService = inject(LocaleConversionService);
+
     @Input()
     feedback: Feedback[];
     @Input()
@@ -28,11 +31,6 @@ export class AdditionalFeedbackComponent {
     // Expose the function to the template
     readonly getCourseFromExercise = getCourseFromExercise;
     readonly buildFeedbackTextForReview = buildFeedbackTextForReview;
-
-    constructor(
-        private translateService: TranslateService,
-        private localeConversionService: LocaleConversionService,
-    ) {}
 
     /**
      * Translates the points string based on the singularity of the given points.

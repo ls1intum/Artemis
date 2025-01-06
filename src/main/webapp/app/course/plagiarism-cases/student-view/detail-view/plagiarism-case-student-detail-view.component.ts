@@ -1,4 +1,4 @@
-import { Component, OnDestroy, OnInit, ViewChild } from '@angular/core';
+import { Component, OnDestroy, OnInit, ViewChild, inject } from '@angular/core';
 import { PlagiarismCase } from 'app/exercises/shared/plagiarism/types/PlagiarismCase';
 import { PlagiarismCasesService } from 'app/course/plagiarism-cases/shared/plagiarism-cases.service';
 import { ActivatedRoute, Params } from '@angular/router';
@@ -22,6 +22,10 @@ import dayjs from 'dayjs/esm';
     standalone: false,
 })
 export class PlagiarismCaseStudentDetailViewComponent implements OnInit, OnDestroy {
+    protected metisService = inject(MetisService);
+    private plagiarismCasesService = inject(PlagiarismCasesService);
+    private activatedRoute = inject(ActivatedRoute);
+
     @ViewChild('post') postComponent: PostComponent;
     readonly ButtonType = ButtonType;
 
@@ -44,12 +48,6 @@ export class PlagiarismCaseStudentDetailViewComponent implements OnInit, OnDestr
     isAfterDueDate: boolean;
 
     readonly dayjs = dayjs;
-
-    constructor(
-        protected metisService: MetisService,
-        private plagiarismCasesService: PlagiarismCasesService,
-        private activatedRoute: ActivatedRoute,
-    ) {}
 
     ngOnInit(): void {
         this.paramSubscription = combineLatest({

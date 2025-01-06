@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, ChangeDetectorRef, Component, EventEmitter, Input, OnChanges, Output, ViewEncapsulation } from '@angular/core';
+import { ChangeDetectionStrategy, ChangeDetectorRef, Component, EventEmitter, Input, OnChanges, Output, ViewEncapsulation, inject } from '@angular/core';
 import { QuizQuestion, QuizQuestionType } from 'app/entities/quiz/quiz-question.model';
 import { DragAndDropQuestion } from 'app/entities/quiz/drag-and-drop-question.model';
 import { MultipleChoiceQuestion } from 'app/entities/quiz/multiple-choice-question.model';
@@ -33,6 +33,14 @@ export enum State {
     standalone: false,
 })
 export class QuizQuestionListEditExistingComponent implements OnChanges {
+    private modalService = inject(NgbModal);
+    private fileService = inject(FileService);
+    private courseManagementService = inject(CourseManagementService);
+    private examManagementService = inject(ExamManagementService);
+    private quizExerciseService = inject(QuizExerciseService);
+    private alertService = inject(AlertService);
+    private changeDetectorRef = inject(ChangeDetectorRef);
+
     @Input() show: boolean;
     @Input() courseId: number;
     @Input() filePool: Map<string, { path?: string; file: File }>;
@@ -59,16 +67,6 @@ export class QuizQuestionListEditExistingComponent implements OnChanges {
     shortAnswerFilterEnabled = true;
     importFile?: File;
     importFileName: string;
-
-    constructor(
-        private modalService: NgbModal,
-        private fileService: FileService,
-        private courseManagementService: CourseManagementService,
-        private examManagementService: ExamManagementService,
-        private quizExerciseService: QuizExerciseService,
-        private alertService: AlertService,
-        private changeDetectorRef: ChangeDetectorRef,
-    ) {}
 
     ngOnChanges(): void {
         if (this.show) {

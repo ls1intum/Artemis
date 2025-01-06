@@ -13,6 +13,8 @@ import { FeedbackService } from 'app/exercises/shared/feedback/feedback.service'
     standalone: false,
 })
 export class UnreferencedFeedbackDetailComponent implements OnInit {
+    structuredGradingCriterionService = inject(StructuredGradingCriterionService);
+
     @Input() public feedback: Feedback;
     resultId: InputSignal<number> = input.required<number>();
     @Input() isSuggestion: boolean;
@@ -40,8 +42,6 @@ export class UnreferencedFeedbackDetailComponent implements OnInit {
 
     private dialogErrorSource = new Subject<string>();
     dialogError$ = this.dialogErrorSource.asObservable();
-
-    constructor(public structuredGradingCriterionService: StructuredGradingCriterionService) {}
 
     ngOnInit() {
         this.loadLongFeedback();

@@ -1,4 +1,4 @@
-import { Component, OnDestroy, OnInit } from '@angular/core';
+import { Component, OnDestroy, OnInit, inject } from '@angular/core';
 import { SafeHtml } from '@angular/platform-browser';
 import { ActivatedRoute } from '@angular/router';
 import { HttpResponse } from '@angular/common/http';
@@ -32,6 +32,15 @@ import { DetailOverviewSection, DetailType } from 'app/detail-overview-list/deta
     standalone: false,
 })
 export class ModelingExerciseDetailComponent implements OnInit, OnDestroy {
+    private eventManager = inject(EventManager);
+    private modelingExerciseService = inject(ModelingExerciseService);
+    private route = inject(ActivatedRoute);
+    private artemisMarkdown = inject(ArtemisMarkdownService);
+    private alertService = inject(AlertService);
+    private statisticsService = inject(StatisticsService);
+    private accountService = inject(AccountService);
+    private profileService = inject(ProfileService);
+
     readonly documentationType: DocumentationType = 'Model';
     readonly ExerciseType = ExerciseType;
     readonly dayjs = dayjs;
@@ -52,17 +61,6 @@ export class ModelingExerciseDetailComponent implements OnInit, OnDestroy {
 
     isAdmin = false;
     isApollonProfileActive = false;
-
-    constructor(
-        private eventManager: EventManager,
-        private modelingExerciseService: ModelingExerciseService,
-        private route: ActivatedRoute,
-        private artemisMarkdown: ArtemisMarkdownService,
-        private alertService: AlertService,
-        private statisticsService: StatisticsService,
-        private accountService: AccountService,
-        private profileService: ProfileService,
-    ) {}
 
     ngOnInit() {
         this.isAdmin = this.accountService.isAdmin();

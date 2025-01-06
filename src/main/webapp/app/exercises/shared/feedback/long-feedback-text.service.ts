@@ -1,4 +1,4 @@
-import { Injectable, OnDestroy } from '@angular/core';
+import { Injectable, OnDestroy, inject } from '@angular/core';
 import { HttpClient, HttpResponse } from '@angular/common/http';
 import { Observable, Subject, Subscription, distinctUntilChanged, tap } from 'rxjs';
 import { Cacheable } from 'ts-cacheable';
@@ -10,12 +10,10 @@ const logoutSubject = new Subject<void>();
 
 @Injectable({ providedIn: 'root' })
 export class LongFeedbackTextService implements OnDestroy {
-    private userChangeSubscription: Subscription;
+    private http = inject(HttpClient);
+    private accountService = inject(AccountService);
 
-    constructor(
-        private http: HttpClient,
-        private accountService: AccountService,
-    ) {}
+    private userChangeSubscription: Subscription;
 
     init() {
         this.userChangeSubscription = this.accountService

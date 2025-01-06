@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, ChangeDetectorRef, Component, HostBinding, Input, OnInit } from '@angular/core';
+import { ChangeDetectionStrategy, ChangeDetectorRef, Component, HostBinding, Input, OnInit, inject } from '@angular/core';
 
 /**
  * Simple Vertical Progress Bar without any external dependencies
@@ -17,6 +17,8 @@ import { ChangeDetectionStrategy, ChangeDetectorRef, Component, HostBinding, Inp
     standalone: false,
 })
 export class VerticalProgressBarComponent implements OnInit {
+    private cdr = inject(ChangeDetectorRef);
+
     // CSS VARIABLES START
     @HostBinding('style.--progress-bar-height')
     heightCSS = '50px';
@@ -30,8 +32,8 @@ export class VerticalProgressBarComponent implements OnInit {
     fillDurationCSS = '1s';
     @HostBinding('style.--border-radius')
     borderRadiusCSS = '16px';
+
     // CSS VARIABLES END
-    constructor(private cdr: ChangeDetectorRef) {}
 
     ngOnInit(): void {
         this.setFillColor();

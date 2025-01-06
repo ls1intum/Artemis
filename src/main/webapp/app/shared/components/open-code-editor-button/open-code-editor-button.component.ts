@@ -1,4 +1,4 @@
-import { Component, Input, OnChanges } from '@angular/core';
+import { Component, Input, OnChanges, inject } from '@angular/core';
 import { FeatureToggle } from 'app/shared/feature-toggle/feature-toggle.service';
 import { faFolderOpen } from '@fortawesome/free-solid-svg-icons';
 import { ProgrammingExerciseStudentParticipation } from 'app/entities/participation/programming-exercise-student-participation.model';
@@ -11,6 +11,8 @@ import { Exercise } from 'app/entities/exercise.model';
     standalone: false,
 })
 export class OpenCodeEditorButtonComponent implements OnChanges {
+    private participationService = inject(ParticipationService);
+
     readonly FeatureToggle = FeatureToggle;
 
     @Input()
@@ -32,8 +34,6 @@ export class OpenCodeEditorButtonComponent implements OnChanges {
 
     // Icons
     faFolderOpen = faFolderOpen;
-
-    constructor(private participationService: ParticipationService) {}
 
     ngOnChanges() {
         this.courseAndExerciseNavigationUrl = this.courseAndExerciseNavigationUrlSegment.reduce((acc, segment) => `${acc}/${segment}`);

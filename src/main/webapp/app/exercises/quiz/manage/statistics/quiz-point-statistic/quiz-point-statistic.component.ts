@@ -1,7 +1,6 @@
-import { ChangeDetectorRef, Component, OnDestroy, OnInit } from '@angular/core';
+import { ChangeDetectorRef, Component, OnDestroy, OnInit, inject } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
-import { Subscription } from 'rxjs';
-import { QuizStatisticUtil } from 'app/exercises/quiz/shared/quiz-statistic-util.service';
+import { AbstractQuizStatisticComponent } from 'app/exercises/quiz/manage/statistics/quiz-statistics';
 import { AccountService } from 'app/core/auth/account.service';
 import { JhiWebsocketService } from 'app/core/websocket/websocket.service';
 import { PointCounter } from 'app/entities/quiz/point-counter.model';
@@ -12,8 +11,6 @@ import { Authority } from 'app/shared/constants/authority.constants';
 import { blueColor } from 'app/exercises/quiz/manage/statistics/question-statistic.component';
 import { UI_RELOAD_TIME } from 'app/shared/constants/exercise-exam-constants';
 import { round } from 'app/shared/util/utils';
-import { QuizStatistics } from 'app/exercises/quiz/manage/statistics/quiz-statistics';
-import { TranslateService } from '@ngx-translate/core';
 import { faSync } from '@fortawesome/free-solid-svg-icons';
 import { calculateMaxScore } from 'app/exercises/quiz/manage/statistics/quiz-statistic/quiz-statistics.utils';
 import { ArtemisServerDateService } from 'app/shared/server-date.service';
@@ -24,12 +21,19 @@ import { ArtemisServerDateService } from 'app/shared/server-date.service';
     styleUrls: ['./quiz-point-statistic.component.scss', '../../../../../shared/chart/vertical-bar-chart.scss'],
     standalone: false,
 })
-export class QuizPointStatisticComponent extends QuizStatistics implements OnInit, OnDestroy {
+export class QuizPointStatisticComponent extends AbstractQuizStatisticComponent implements OnInit, OnDestroy {
+    private route = inject(ActivatedRoute);
+    private router = inject(Router);
+    private accountService = inject(AccountService);
+    private quizExerciseService = inject(QuizExerciseService);
+    private jhiWebsocketService = inject(JhiWebsocketService);
+    private changeDetector = inject(ChangeDetectorRef);
+    private serverDateService = inject(ArtemisServerDateService);
+
     readonly round = round;
 
     quizExercise: QuizExercise;
     quizPointStatistic: QuizPointStatistic;
-    private sub: Subscription;
 
     labels: string[] = [];
 
@@ -49,7 +53,6 @@ export class QuizPointStatisticComponent extends QuizStatistics implements OnIni
     roundEdges = true;
     showDataLabel = true;
     height = 500;
-    tooltipDisabled = true;
     animations = false;
 
     // timer
@@ -61,25 +64,11 @@ export class QuizPointStatisticComponent extends QuizStatistics implements OnIni
     // Icons
     faSync = faSync;
 
-    constructor(
-        private route: ActivatedRoute,
-        private router: Router,
-        private accountService: AccountService,
-        protected translateService: TranslateService,
-        private quizExerciseService: QuizExerciseService,
-        private quizStatisticUtil: QuizStatisticUtil,
-        private jhiWebsocketService: JhiWebsocketService,
-        protected changeDetector: ChangeDetectorRef,
-        private serverDateService: ArtemisServerDateService,
-    ) {
-        super(translateService);
+    ngOnInit() {
         this.translateService.onLangChange.subscribe(() => {
             this.setAxisLabels('showStatistic.quizPointStatistic.xAxes', 'showStatistic.quizPointStatistic.yAxes');
         });
-    }
-
-    ngOnInit() {
-        this.sub = this.route.params.subscribe((params) => {
+        this.route.params.subscribe((params) => {
             // use different REST-call if the User is a Student
             if (this.accountService.hasAnyAuthorityDirect([Authority.ADMIN, Authority.INSTRUCTOR, Authority.EDITOR, Authority.TA])) {
                 this.quizExerciseService.find(params['exerciseId']).subscribe((res) => {
@@ -143,8 +132,8 @@ export class QuizPointStatisticComponent extends QuizStatistics implements OnIni
     /**
      * Express the given timespan as humanized text
      *
-     * @param remainingTimeSeconds {number} the amount of seconds to display
-     * @return {string} humanized text for the given amount of seconds
+     * @param remainingTimeSeconds the amount of seconds to display
+     * @return humanized text for the given amount of seconds
      */
     relativeTimeText(remainingTimeSeconds: number) {
         if (remainingTimeSeconds > 210) {
@@ -164,8 +153,7 @@ export class QuizPointStatisticComponent extends QuizStatistics implements OnIni
     /**
      * load the new quizPointStatistic from the server if the Websocket has been notified
      *
-     * @param {QuizPointStatistic} statistic: the new quizPointStatistic
-     *                                          from the server with the new Data.
+     * @param statistic the new quizPointStatistic from the server with the new Data.
      */
     loadNewData(statistic: QuizPointStatistic) {
         // if the Student finds a way to the Website
@@ -180,8 +168,7 @@ export class QuizPointStatisticComponent extends QuizStatistics implements OnIni
     /**
      * This functions loads the Quiz, which is necessary to build the Web-Template
      *
-     * @param {QuizExercise} quizExercise: the quizExercise,
-     *                              which this quiz-point-statistic presents.
+     * @param quizExercise the quizExercise, which this quiz-point-statistic presents.
      */
     loadQuizSuccess(quizExercise: QuizExercise) {
         // if the Student finds a way to the Website

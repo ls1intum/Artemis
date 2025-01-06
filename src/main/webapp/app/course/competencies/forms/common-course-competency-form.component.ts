@@ -1,4 +1,4 @@
-import { Component, EventEmitter, Input, OnChanges, OnInit, Output } from '@angular/core';
+import { Component, EventEmitter, Input, OnChanges, OnInit, Output, inject } from '@angular/core';
 import { FormControl, FormGroup } from '@angular/forms';
 import { Lecture } from 'app/entities/lecture.model';
 import { TranslateService } from '@ngx-translate/core';
@@ -33,6 +33,9 @@ import { DateTimePickerType } from 'app/shared/date-time-picker/date-time-picker
     ],
 })
 export class CommonCourseCompetencyFormComponent implements OnInit, OnChanges {
+    private translateService = inject(TranslateService);
+    lectureUnitService = inject(LectureUnitService);
+
     @Input()
     formData: CourseCompetencyFormData;
     @Input()
@@ -64,11 +67,6 @@ export class CommonCourseCompetencyFormComponent implements OnInit, OnChanges {
     // Constants
     protected readonly DEFAULT_MASTERY_THRESHOLD = DEFAULT_MASTERY_THRESHOLD;
     protected readonly competencyTaxonomy = CompetencyTaxonomy;
-
-    constructor(
-        private translateService: TranslateService,
-        public lectureUnitService: LectureUnitService,
-    ) {}
 
     get titleControl() {
         return this.form.get('title');

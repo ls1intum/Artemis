@@ -1,4 +1,4 @@
-import { Component, Input, OnChanges, OnDestroy, SimpleChanges } from '@angular/core';
+import { Component, Input, OnChanges, OnDestroy, SimpleChanges, inject } from '@angular/core';
 import { Subscription } from 'rxjs';
 import { filter } from 'rxjs/operators';
 import { ParticipationWebsocketService } from 'app/overview/participation-websocket.service';
@@ -18,6 +18,8 @@ import { hasParticipationChanged } from 'app/exercises/shared/participation/part
     standalone: false,
 })
 export class ProgrammingExerciseInstructorStatusComponent implements OnChanges, OnDestroy {
+    private participationWebsocketService = inject(ParticipationWebsocketService);
+
     ProgrammingExerciseParticipationType = ProgrammingExerciseParticipationType;
 
     @Input()
@@ -32,8 +34,6 @@ export class ProgrammingExerciseInstructorStatusComponent implements OnChanges, 
 
     // Icons
     faExclamationTriangle = faExclamationTriangle;
-
-    constructor(private participationWebsocketService: ParticipationWebsocketService) {}
 
     /**
      * When the participation changes, get the latestResult from it and setup the result subscription for new results.

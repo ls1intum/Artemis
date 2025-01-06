@@ -4,7 +4,6 @@ import {
     Component,
     EventEmitter,
     HostListener,
-    Inject,
     Input,
     OnChanges,
     OnDestroy,
@@ -13,6 +12,7 @@ import {
     Renderer2,
     ViewChild,
     ViewContainerRef,
+    inject,
     input,
 } from '@angular/core';
 import { AnswerPost } from 'app/entities/metis/answer-post.model';
@@ -39,6 +39,10 @@ import { AnswerPostReactionsBarComponent } from 'app/shared/metis/posting-reacti
     standalone: false,
 })
 export class AnswerPostComponent extends PostingDirective<AnswerPost> implements OnInit, OnChanges, OnDestroy {
+    changeDetector = inject(ChangeDetectorRef);
+    renderer = inject(Renderer2);
+    private document = inject<Document>(DOCUMENT);
+
     @Input() lastReadDate?: dayjs.Dayjs;
     @Input() isLastAnswer: boolean;
     @Output() openPostingCreateEditModal = new EventEmitter<void>();
@@ -63,11 +67,7 @@ export class AnswerPostComponent extends PostingDirective<AnswerPost> implements
     mayDelete: boolean = false;
     @ViewChild(AnswerPostReactionsBarComponent) private reactionsBarComponent!: AnswerPostReactionsBarComponent;
 
-    constructor(
-        public changeDetector: ChangeDetectorRef,
-        public renderer: Renderer2,
-        @Inject(DOCUMENT) private document: Document,
-    ) {
+    constructor() {
         super();
     }
 

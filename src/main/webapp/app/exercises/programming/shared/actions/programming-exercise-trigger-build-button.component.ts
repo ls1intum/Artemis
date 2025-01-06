@@ -1,4 +1,4 @@
-import { Component, Input, OnChanges, OnDestroy, SimpleChanges } from '@angular/core';
+import { Component, Input, OnChanges, OnDestroy, SimpleChanges, inject } from '@angular/core';
 import { filter, tap } from 'rxjs/operators';
 import { Subscription } from 'rxjs';
 import { head, orderBy } from 'lodash-es';
@@ -11,7 +11,6 @@ import { Result } from 'app/entities/result.model';
 import { FeatureToggle } from 'app/shared/feature-toggle/feature-toggle.service';
 import { SubmissionType } from 'app/entities/submission.model';
 import { ProgrammingExercise } from 'app/entities/programming/programming-exercise.model';
-import { AlertService } from 'app/core/util/alert.service';
 import { hasParticipationChanged } from 'app/exercises/shared/participation/participation.utils';
 import { isManualResult } from 'app/exercises/shared/result/result.utils';
 
@@ -27,6 +26,9 @@ import { isManualResult } from 'app/exercises/shared/result/result.utils';
 export abstract class ProgrammingExerciseTriggerBuildButtonComponent implements OnChanges, OnDestroy {
     FeatureToggle = FeatureToggle;
     ButtonType = ButtonType;
+
+    private submissionService = inject(ProgrammingSubmissionService);
+    private participationWebsocketService = inject(ParticipationWebsocketService);
 
     @Input() exercise: ProgrammingExercise;
     @Input() participation: Participation;
@@ -46,12 +48,6 @@ export abstract class ProgrammingExerciseTriggerBuildButtonComponent implements 
 
     // True if the student triggers. false if an instructor triggers it
     protected personalParticipation: boolean;
-
-    protected constructor(
-        protected submissionService: ProgrammingSubmissionService,
-        protected participationWebsocketService: ParticipationWebsocketService,
-        protected alertService: AlertService,
-    ) {}
 
     /**
      * Check if the participation has changed, if so set up the websocket connections.

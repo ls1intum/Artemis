@@ -1,4 +1,4 @@
-import { Component, Input, OnChanges, OnDestroy, OnInit } from '@angular/core';
+import { Component, Input, OnChanges, OnDestroy, OnInit, inject } from '@angular/core';
 import { TranslateService } from '@ngx-translate/core';
 import { IncludedInOverallScore } from 'app/entities/exercise.model';
 import { Subscription } from 'rxjs';
@@ -10,13 +10,13 @@ import { Subscription } from 'rxjs';
     standalone: false,
 })
 export class IncludedInScoreBadgeComponent implements OnInit, OnDestroy, OnChanges {
+    private translateService = inject(TranslateService);
+
     @Input() includedInOverallScore: IncludedInOverallScore | undefined;
     public translatedEnum = '';
     public translatedTooltip = '';
     public badgeClass: string;
     private translateSubscription: Subscription;
-
-    constructor(private translateService: TranslateService) {}
 
     /**
      * Sets the badge attributes based on the included in score enum

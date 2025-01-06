@@ -1,4 +1,4 @@
-import { Component, Input } from '@angular/core';
+import { Component, Input, inject } from '@angular/core';
 import { Course } from 'app/entities/course.model';
 import { FeatureToggle } from 'app/shared/feature-toggle/feature-toggle.service';
 import { faFileImport, faKeyboard, faPlus } from '@fortawesome/free-solid-svg-icons';
@@ -14,6 +14,9 @@ import { Router } from '@angular/router';
     standalone: false,
 })
 export class ProgrammingExerciseCreateButtonsComponent {
+    private router = inject(Router);
+    private modalService = inject(NgbModal);
+
     readonly FeatureToggle = FeatureToggle;
 
     @Input()
@@ -22,11 +25,6 @@ export class ProgrammingExerciseCreateButtonsComponent {
     faPlus = faPlus;
     faFileImport = faFileImport;
     faKeyboard = faKeyboard;
-
-    constructor(
-        private router: Router,
-        private modalService: NgbModal,
-    ) {}
 
     openImportModal() {
         const modalRef = this.modalService.open(ExerciseImportWrapperComponent, { size: 'lg', backdrop: 'static' });

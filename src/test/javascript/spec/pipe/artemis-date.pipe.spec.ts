@@ -19,7 +19,7 @@ describe('ArtemisDatePipe', () => {
             .compileComponents()
             .then(() => {
                 translateService = TestBed.inject(TranslateService);
-                pipe = new ArtemisDatePipe(translateService);
+                pipe = new ArtemisDatePipe();
             });
     });
 

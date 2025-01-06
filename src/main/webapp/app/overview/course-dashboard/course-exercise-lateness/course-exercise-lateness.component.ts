@@ -1,4 +1,4 @@
-import { Component, Input, OnChanges, OnDestroy, OnInit } from '@angular/core';
+import { Component, Input, OnChanges, OnDestroy, OnInit, inject } from '@angular/core';
 import { TranslateService } from '@ngx-translate/core';
 import { Color, ScaleType } from '@swimlane/ngx-charts';
 import { GraphColors } from 'app/entities/statistics.model';
@@ -24,6 +24,8 @@ const AVERAGE_GRAPH_COLOR = GraphColors.YELLOW;
     standalone: false,
 })
 export class CourseExerciseLatenessComponent implements OnInit, OnChanges, OnDestroy {
+    private translateService = inject(TranslateService);
+
     @Input() exerciseLateness: ExerciseLateness[] = [];
 
     yourLatenessLabel: string;
@@ -43,7 +45,7 @@ export class CourseExerciseLatenessComponent implements OnInit, OnChanges, OnDes
     protected readonly YOUR_GRAPH_COLOR = YOUR_GRAPH_COLOR;
     protected readonly AVERAGE_GRAPH_COLOR = AVERAGE_GRAPH_COLOR;
 
-    constructor(private translateService: TranslateService) {
+    constructor() {
         this.translateServiceSubscription = this.translateService.onLangChange.subscribe(() => {
             this.setupChart();
         });

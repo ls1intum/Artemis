@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, ChangeDetectorRef, Component, EventEmitter, Input, OnInit, Output, ViewChild, ViewEncapsulation } from '@angular/core';
+import { ChangeDetectionStrategy, ChangeDetectorRef, Component, EventEmitter, Input, OnInit, Output, ViewChild, ViewEncapsulation, inject } from '@angular/core';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { AnswerOption } from 'app/entities/quiz/answer-option.model';
 import { MultipleChoiceQuestion } from 'app/entities/quiz/multiple-choice-question.model';
@@ -23,6 +23,9 @@ import { MultipleChoiceVisualQuestionComponent } from 'app/exercises/quiz/shared
     standalone: false,
 })
 export class MultipleChoiceQuestionEditComponent implements OnInit, QuizQuestionEdit {
+    private modalService = inject(NgbModal);
+    private changeDetector = inject(ChangeDetectorRef);
+
     @ViewChild('markdownEditor', { static: false })
     private markdownEditor: MarkdownEditorMonacoComponent;
 
@@ -63,11 +66,6 @@ export class MultipleChoiceQuestionEditComponent implements OnInit, QuizQuestion
     faQuestionCircle = faQuestionCircle;
 
     readonly MAX_POINTS = MAX_QUIZ_QUESTION_POINTS;
-
-    constructor(
-        private modalService: NgbModal,
-        private changeDetector: ChangeDetectorRef,
-    ) {}
 
     /**
      * Init the question editor text by parsing the markdown.

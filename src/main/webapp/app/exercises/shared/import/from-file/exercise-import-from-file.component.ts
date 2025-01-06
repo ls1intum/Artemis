@@ -1,4 +1,4 @@
-import { Component, Input, OnInit } from '@angular/core';
+import { Component, Input, OnInit, inject } from '@angular/core';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import { Exercise, ExerciseType } from 'app/entities/exercise.model';
 import { ProgrammingExerciseBuildConfig } from 'app/entities/programming/programming-exercise-build.config';
@@ -14,6 +14,9 @@ import JSZip from 'jszip';
     standalone: false,
 })
 export class ExerciseImportFromFileComponent implements OnInit {
+    private activeModal = inject(NgbActiveModal);
+    private alertService = inject(AlertService);
+
     @Input() exerciseType: ExerciseType;
     @Input() exercise: Exercise;
 
@@ -21,11 +24,6 @@ export class ExerciseImportFromFileComponent implements OnInit {
     fileForImport?: File;
     //Icons
     faUpload = faUpload;
-
-    constructor(
-        private activeModal: NgbActiveModal,
-        private alertService: AlertService,
-    ) {}
 
     ngOnInit(): void {
         this.titleKey =
