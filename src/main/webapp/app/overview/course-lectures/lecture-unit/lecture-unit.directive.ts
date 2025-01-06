@@ -10,12 +10,12 @@ import { LectureUnitCompletionEvent } from 'app/overview/course-lectures/course-
     standalone: true,
 })
 export class LectureUnitDirective<T extends LectureUnit> extends AbstractScienceComponent {
-    readonly lectureUnit = input.required<T>();
+    lectureUnit = input.required<T>();
 
     readonly onCompletion = output<LectureUnitCompletionEvent>();
     readonly onCollapse = output<boolean>();
 
-    readonly isPresentationMode = input<boolean>(false);
+    isPresentationMode = input<boolean>(false);
 
     constructor(scienceService: ScienceService) {
         super(scienceService, ScienceEventType.LECTURE__OPEN_UNIT);

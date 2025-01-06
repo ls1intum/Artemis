@@ -21,6 +21,7 @@ import { JhiLanguageHelper } from 'app/core/language/language.helper';
 import { TraceService } from '@sentry/angular';
 import { Router } from '@angular/router';
 import isMobile from 'ismobilejs-es5';
+import * as Sentry from '@sentry/angular';
 
 @NgModule({
     imports: [
@@ -45,13 +46,12 @@ import isMobile from 'ismobilejs-es5';
             useValue: 'en',
         },
         { provide: NgbDateAdapter, useClass: NgbDateDayjsAdapter },
-        { provide: TraceService, deps: [Router] },
+        { provide: Sentry.TraceService, deps: [Router] },
         { provide: ErrorHandler, useClass: SentryErrorHandler },
         { provide: WINDOW_INJECTOR_TOKEN, useValue: window },
         DatePipe,
         provideAppInitializer(() => {
-            const initializerFn = (() => () => {})(inject(TraceService));
-            return initializerFn();
+            inject(TraceService);
         }),
         /**
          * @description Interceptor declarations:
