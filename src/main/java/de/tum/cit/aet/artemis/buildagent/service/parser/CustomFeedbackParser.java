@@ -9,13 +9,13 @@ import org.slf4j.LoggerFactory;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 
-import de.tum.cit.aet.artemis.buildagent.dto.BuildResult;
+import de.tum.cit.aet.artemis.buildagent.dto.LocalCITestJobDTO;
 import de.tum.cit.aet.artemis.buildagent.dto.testsuite.CustomFeedback;
 import de.tum.cit.aet.artemis.buildagent.dto.testsuite.Failure;
 import de.tum.cit.aet.artemis.buildagent.dto.testsuite.TestCase;
 import de.tum.cit.aet.artemis.buildagent.dto.testsuite.TestSuite;
 
-public final class CustomFeedbackParser extends AbstractParser {
+public final class CustomFeedbackParser {
 
     private static final Logger log = LoggerFactory.getLogger(CustomFeedbackParser.class);
 
@@ -32,8 +32,8 @@ public final class CustomFeedbackParser extends AbstractParser {
      * @param failedTests          A list of failed tests. This list will be populated by the method.
      * @param successfulTests      A list of successful tests. This list will be populated by the method.
      */
-    public static void processTestResultFile(final String fileName, final String testResultFileString, final List<BuildResult.LocalCITestJobDTO> failedTests,
-            final List<BuildResult.LocalCITestJobDTO> successfulTests) {
+    public static void processTestResultFile(final String fileName, final String testResultFileString, final List<LocalCITestJobDTO> failedTests,
+            final List<LocalCITestJobDTO> successfulTests) {
         final CustomFeedback feedback;
         try {
             feedback = mapper.readValue(testResultFileString, CustomFeedback.class);
@@ -45,7 +45,7 @@ public final class CustomFeedbackParser extends AbstractParser {
         }
         // Only create TestSuite if there was no exception during the custom feedback extraction
         final TestSuite testSuite = customFeedbackToTestSuite(feedback);
-        processTestSuite(testSuite, failedTests, successfulTests);
+        processCustomTestSuite(testSuite, failedTests, successfulTests);
     }
 
     /**
@@ -84,5 +84,24 @@ public final class CustomFeedbackParser extends AbstractParser {
             testCase = new TestCase(feedback.name(), failure, null, null, null);
         }
         return new TestSuite(List.of(testCase), List.of());
+    }
+
+    private static void processCustomTestSuite(TestSuite testSuite, List<LocalCITestJobDTO> failedTests, List<LocalCITestJobDTO> successfulTests) {
+        for (TestCase testCase : testSuite.testCases()) {
+            if (testCase.isSkipped()) {
+                continue;
+            }
+            Failure failure = testCase.extractFailure();
+            if (failure != null) {
+                failedTests.add(new LocalCITestJobDTO(testCase.name(), List.of(failure.extractMessage())));
+            }
+            else {
+                successfulTests.add(new LocalCITestJobDTO(testCase.name(), List.of(testCase.extractSuccessMessage())));
+            }
+        }
+
+        for (TestSuite suite : testSuite.testSuites()) {
+            processCustomTestSuite(suite, failedTests, successfulTests);
+        }
     }
 }

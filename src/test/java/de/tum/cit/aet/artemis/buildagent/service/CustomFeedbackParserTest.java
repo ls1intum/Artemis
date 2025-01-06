@@ -10,14 +10,14 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
 
-import de.tum.cit.aet.artemis.buildagent.dto.BuildResult;
+import de.tum.cit.aet.artemis.buildagent.dto.LocalCITestJobDTO;
 import de.tum.cit.aet.artemis.buildagent.service.parser.CustomFeedbackParser;
 
 class CustomFeedbackParserTest {
 
-    private final List<BuildResult.LocalCITestJobDTO> failedTests = new ArrayList<>();
+    private final List<LocalCITestJobDTO> failedTests = new ArrayList<>();
 
-    private final List<BuildResult.LocalCITestJobDTO> successfulTests = new ArrayList<>();
+    private final List<LocalCITestJobDTO> successfulTests = new ArrayList<>();
 
     private final String fileName = "name.json";
 
@@ -45,9 +45,9 @@ class CustomFeedbackParserTest {
         assertThat(failedTests).hasSize(successful ? 0 : 1);
         assertThat(successfulTests).hasSize(successful ? 1 : 0);
         var parsedTest = successful ? successfulTests.getFirst() : failedTests.getFirst();
-        assertThat(parsedTest.getName()).isEqualTo(testCaseName);
-        assertThat(parsedTest.getTestMessages()).hasSize(1);
-        var testMessage = parsedTest.getTestMessages().getFirst();
+        assertThat(parsedTest.name()).isEqualTo(testCaseName);
+        assertThat(parsedTest.testMessages()).hasSize(1);
+        var testMessage = parsedTest.testMessages().getFirst();
         assertThat(testMessage).isEqualTo(message);
     }
 
@@ -64,8 +64,8 @@ class CustomFeedbackParserTest {
 
         assertThat(successfulTests).hasSize(1);
         var successfulTest = successfulTests.getFirst();
-        assertThat(successfulTest.getName()).isEqualTo(testCaseName);
-        assertThat(successfulTest.getTestMessages()).hasSize(1);
+        assertThat(successfulTest.name()).isEqualTo(testCaseName);
+        assertThat(successfulTest.testMessages()).hasSize(1);
     }
 
     @Test

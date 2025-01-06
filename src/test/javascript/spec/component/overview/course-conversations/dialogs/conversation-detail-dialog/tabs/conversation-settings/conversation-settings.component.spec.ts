@@ -20,7 +20,7 @@ import { defaultSecondLayerDialogOptions } from 'app/overview/course-conversatio
 import * as ConversationPermissionUtils from 'app/shared/metis/conversations/conversation-permissions.utils';
 import { input, runInInjectionContext } from '@angular/core';
 
-const examples: ConversationDTO[] = [generateExampleGroupChatDTO({}), generateExampleChannelDTO({})];
+const examples: ConversationDTO[] = [generateExampleGroupChatDTO({}), generateExampleChannelDTO({} as ChannelDTO)];
 
 examples.forEach((activeConversation) => {
     describe('ConversationSettingsComponent with ' + activeConversation.type, () => {

@@ -22,6 +22,8 @@ logging:
         org.springframework.web.socket.config: INFO
         liquibase: INFO
         de.jplag.Submission: ERROR
+        de.jplag.logging: WARN
+        de.jplag.reporting: WARN
     logback:
         rollingpolicy:
             max-history: 90
@@ -71,7 +73,7 @@ artemis:
                 empty:
                     default: "ubuntu:24.04"
                 python:
-                    default: "ls1tum/artemis-python-docker:v1.0.0"
+                    default: "ls1tum/artemis-python-docker:v1.1.0"
                 c:
                     # possible overrides: gcc, fact
                     default: "ls1tum/artemis-c-docker:v1.0.0"
@@ -99,6 +101,8 @@ artemis:
                     default: "ghcr.io/ls1intum/artemis-csharp-docker:v1.0.0"
                 typescript:
                     default: "ghcr.io/ls1intum/artemis-javascript-docker:v1.0.0"
+                go:
+                    default: "ghcr.io/ls1intum/artemis-go-docker:v1.0.0"
 
         # The following properties are used to configure the Artemis build agent.
         # The build agent is responsible for executing the buildJob to test student submissions.
@@ -283,7 +287,7 @@ info:
     # Comma separated list of profiles that will trigger the ribbon to show
     display-ribbon-on-profiles: "dev"
     sentry:
-        dsn: https://8c6b41ec2d4245e8bd3ec9541d53f625@sentry.io/1440029 # Leave empty to disable Sentry, must be a valid URI
+        dsn: https://e52d0b9b6b61769f50b088634b4bc781@sentry.ase.in.tum.de/2 # Leave empty to disable Sentry, must be a valid URI
     # Allowed Orion version range. Should only be changed on major version releases
     allowed-minimum-orion-version: 1.0.0
     # Specifies whether text assessment analytics service (TextAssessmentEventResource) is enabled/disabled
