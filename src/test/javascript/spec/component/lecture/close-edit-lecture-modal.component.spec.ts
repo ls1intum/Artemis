@@ -1,6 +1,6 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ArtemisTestModule } from '../../test.module';
-import { CloseEditLectureModalComponent } from '../../../../../main/webapp/app/lecture/close-edit-lecture-dialog/close-edit-lecture-modal.component';
+import { CloseEditLectureModalComponent } from '../../../../../main/webapp/app/lecture/close-edit-lecture-modal/close-edit-lecture-modal.component';
 
 describe('CloseEditLectureModalComponent', () => {
     let component: CloseEditLectureModalComponent;
