@@ -1,4 +1,4 @@
-import { Component, ContentChild, OnInit, TemplateRef, inject } from '@angular/core';
+import { Component, OnInit, inject } from '@angular/core';
 import { SafeHtml } from '@angular/platform-browser';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
@@ -10,7 +10,6 @@ import { ProgrammingExerciseInstructionComponent } from 'app/exercises/programmi
 import { TutorParticipationService } from 'app/exercises/shared/dashboards/tutor/tutor-participation.service';
 import { TextSubmissionService } from 'app/exercises/text/participate/text-submission.service';
 import { ExampleSubmission } from 'app/entities/example-submission.model';
-import { ExtensionPointDirective } from 'app/shared/extension-point/extension-point.directive';
 import { ArtemisMarkdownService } from 'app/shared/markdown.service';
 import { TextExercise } from 'app/entities/text/text-exercise.model';
 import { ModelingExercise } from 'app/entities/modeling-exercise.model';
@@ -112,8 +111,8 @@ export interface ExampleSubmissionQueryParams {
         ArtemisDatePipe,
         ArtemisTranslatePipe,
         ArtemisDurationFromSecondsPipe,
-        // NOTE: this is actually used
-        ExtensionPointDirective,
+        // TODO: the extension point for Orion does not work with Angular 19, we need to find a different solution
+        // ExtensionPointDirective,
     ],
 })
 export class ExerciseAssessmentDashboardComponent implements OnInit {
@@ -233,8 +232,9 @@ export class ExerciseAssessmentDashboardComponent implements OnInit {
     moreFeedbackRequestsLink: any[];
 
     // extension points, see shared/extension-point
-    @ContentChild('overrideAssessmentTable') overrideAssessmentTable: TemplateRef<any>;
-    @ContentChild('overrideOpenAssessmentButton') overrideOpenAssessmentButton: TemplateRef<any>;
+    // TODO: the extension point for Orion does not work with Angular 19, we need to find a different solution -->
+    // @ContentChild('overrideAssessmentTable') overrideAssessmentTable: TemplateRef<any>;
+    // @ContentChild('overrideOpenAssessmentButton') overrideOpenAssessmentButton: TemplateRef<any>;
 
     // Icons
     faSpinner = faSpinner;

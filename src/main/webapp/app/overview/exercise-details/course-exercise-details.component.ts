@@ -1,4 +1,4 @@
-import { Component, ContentChild, OnDestroy, OnInit, TemplateRef, inject } from '@angular/core';
+import { Component, OnDestroy, OnInit, inject } from '@angular/core';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { Subscription, combineLatest } from 'rxjs';
@@ -17,13 +17,11 @@ import { ExampleSolutionInfo, ExerciseDetailsType, ExerciseService } from 'app/e
 import { AssessmentType } from 'app/entities/assessment-type.model';
 import { hasExerciseDueDatePassed } from 'app/exercises/shared/exercise/exercise.utils';
 import { ProgrammingExercise } from 'app/entities/programming/programming-exercise.model';
-import { GradingCriterion } from 'app/exercises/shared/structured-grading-criterion/grading-criterion.model';
 import { AlertService } from 'app/core/util/alert.service';
 import { TeamAssignmentPayload } from 'app/entities/team.model';
 import { TeamService } from 'app/exercises/shared/team/team.service';
 import { QuizExercise, QuizStatus } from 'app/entities/quiz/quiz-exercise.model';
 import { QuizExerciseService } from 'app/exercises/quiz/manage/quiz-exercise.service';
-import { ExerciseCategory } from 'app/entities/exercise-category.model';
 import { getFirstResultWithComplaintFromResults } from 'app/entities/submission.model';
 import { ComplaintService } from 'app/complaints/complaint.service';
 import { Complaint } from 'app/entities/complaint.model';
@@ -37,7 +35,6 @@ import { isCommunicationEnabled, isMessagingEnabled } from 'app/entities/course.
 import { ExerciseCacheService } from 'app/exercises/shared/exercise/exercise-cache.service';
 import { IrisSettings } from 'app/entities/iris/settings/iris-settings.model';
 import { AbstractScienceComponent } from 'app/shared/science/science.component';
-import { ScienceService } from 'app/shared/science/science.service';
 import { ScienceEventType } from 'app/shared/science/science.model';
 import { PROFILE_IRIS } from 'app/app.constants';
 import { ChatServiceMode } from 'app/iris/iris-chat.service';
@@ -46,7 +43,6 @@ import { NgClass } from '@angular/common';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { NgbDropdown, NgbDropdownItem, NgbDropdownMenu, NgbDropdownToggle, NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
-import { ExtensionPointDirective } from 'app/shared/extension-point/extension-point.directive';
 import { ExerciseDetailsStudentActionsComponent } from './exercise-details-student-actions.component';
 import { ExerciseHeadersInformationComponent } from 'app/exercises/shared/exercise-headers/exercise-headers-information/exercise-headers-information.component';
 import { ResultHistoryComponent } from '../result-history/result-history.component';
@@ -83,8 +79,8 @@ interface InstructorActionItem {
         NgbDropdownItem,
         RouterLink,
         TranslateDirective,
-        // NOTE: this is actually used
-        ExtensionPointDirective,
+        // TODO: the extension point for Orion does not work with Angular 19, we need to find a different solution
+        // ExtensionPointDirective,
         ExerciseDetailsStudentActionsComponent,
         ExerciseHeadersInformationComponent,
         ResultHistoryComponent,
@@ -137,12 +133,11 @@ export class CourseExerciseDetailsComponent extends AbstractScienceComponent imp
     public exerciseId: number;
     public courseId: number;
     public exercise: Exercise;
-    public resultWithComplaint?: Result;
-    public latestRatedResult?: Result;
-    public complaint?: Complaint;
-    public showMoreResults = false;
+    resultWithComplaint?: Result;
+    latestRatedResult?: Result;
+    complaint?: Complaint;
+    showMoreResults = false;
     public sortedHistoryResults: Result[];
-    public exerciseCategories: ExerciseCategory[];
     private participationUpdateListener: Subscription;
     private teamAssignmentUpdateListener: Subscription;
     private submissionSubscription: Subscription;
@@ -151,9 +146,7 @@ export class CourseExerciseDetailsComponent extends AbstractScienceComponent imp
     practiceStudentParticipation?: StudentParticipation;
     isAfterAssessmentDueDate: boolean;
     allowComplaintsForAutomaticAssessments: boolean;
-    public gradingCriteria: GradingCriterion[];
     baseResource: string;
-    isExamExercise: boolean;
     submissionPolicy?: SubmissionPolicy;
     exampleSolutionCollapsed: boolean;
     plagiarismCaseInfo?: PlagiarismCaseInfo;
@@ -162,14 +155,15 @@ export class CourseExerciseDetailsComponent extends AbstractScienceComponent imp
     profileSubscription?: Subscription;
     isProduction = true;
     isTestServer = false;
-    isGeneratingFeedback: boolean = false;
     instructorActionItems: InstructorActionItem[] = [];
     exerciseIcon: IconProp;
 
     exampleSolutionInfo?: ExampleSolutionInfo;
 
     // extension points, see shared/extension-point
-    @ContentChild('overrideStudentActions') overrideStudentActions: TemplateRef<any>;
+    // TODO: the extension point for Orion does not work with Angular 19, we need to find a different solution
+    // @ContentChild('overrideStudentActions') overrideStudentActions: TemplateRef<any>;
+
     // Icons
     faBook = faBook;
     faEye = faEye;
@@ -180,9 +174,7 @@ export class CourseExerciseDetailsComponent extends AbstractScienceComponent imp
     faAngleUp = faAngleUp;
 
     constructor() {
-        const scienceService = inject(ScienceService);
-
-        super(scienceService, ScienceEventType.EXERCISE__OPEN);
+        super(ScienceEventType.EXERCISE__OPEN);
     }
 
     ngOnInit() {
@@ -233,7 +225,6 @@ export class CourseExerciseDetailsComponent extends AbstractScienceComponent imp
         this.filterUnfinishedResults(this.exercise.studentParticipations);
         this.mergeResultsAndSubmissionsForParticipations();
         this.isAfterAssessmentDueDate = !this.exercise.assessmentDueDate || dayjs().isAfter(this.exercise.assessmentDueDate);
-        this.exerciseCategories = this.exercise.categories ?? [];
         this.allowComplaintsForAutomaticAssessments = false;
         this.plagiarismCaseInfo = newExerciseDetails.plagiarismCaseInfo;
         if (this.exercise.type === ExerciseType.PROGRAMMING) {
@@ -346,7 +337,6 @@ export class CourseExerciseDetailsComponent extends AbstractScienceComponent imp
                         changedParticipation.id === this.gradedStudentParticipation?.id &&
                         (changedParticipation.results?.length || 0) > (this.gradedStudentParticipation?.results?.length || 0)
                     ) {
-                        this.isGeneratingFeedback = false;
                         this.alertService.success('artemisApp.exercise.lateSubmissionResultReceived');
                     }
                     if (
@@ -355,7 +345,6 @@ export class CourseExerciseDetailsComponent extends AbstractScienceComponent imp
                         changedParticipation.results?.last()?.assessmentType === AssessmentType.AUTOMATIC_ATHENA &&
                         changedParticipation.results?.last()?.successful !== undefined
                     ) {
-                        this.isGeneratingFeedback = false;
                         if (changedParticipation.results?.last()?.successful === true) {
                             this.alertService.success('artemisApp.exercise.athenaFeedbackSuccessful');
                         } else {

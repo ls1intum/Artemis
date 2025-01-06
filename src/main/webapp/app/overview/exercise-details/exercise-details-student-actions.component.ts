@@ -1,4 +1,4 @@
-import { Component, ContentChild, EventEmitter, HostBinding, Input, OnChanges, OnInit, Output, TemplateRef, inject } from '@angular/core';
+import { Component, EventEmitter, HostBinding, Input, OnChanges, OnInit, Output, inject } from '@angular/core';
 import { Router, RouterLink } from '@angular/router';
 import { AlertService } from 'app/core/util/alert.service';
 import { ExternalCloningService } from 'app/exercises/programming/shared/service/external-cloning.service';
@@ -25,7 +25,6 @@ import { ExerciseActionButtonComponent } from 'app/shared/components/exercise-ac
 import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { FeatureToggleDirective } from 'app/shared/feature-toggle/feature-toggle.directive';
 import { StartPracticeModeButtonComponent } from 'app/shared/components/start-practice-mode-button/start-practice-mode-button.component';
-import { ExtensionPointDirective } from 'app/shared/extension-point/extension-point.directive';
 import { OpenCodeEditorButtonComponent } from 'app/shared/components/open-code-editor-button/open-code-editor-button.component';
 import { CodeButtonComponent } from 'app/shared/components/code-button/code-button.component';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
@@ -41,8 +40,8 @@ import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
         NgbTooltip,
         FeatureToggleDirective,
         StartPracticeModeButtonComponent,
-        // NOTE: this is actually used
-        ExtensionPointDirective,
+        // TODO: the extension point for Orion does not work with Angular 19, we need to find a different solution
+        // ExtensionPointDirective,
         OpenCodeEditorButtonComponent,
         CodeButtonComponent,
         FaIconComponent,
@@ -79,7 +78,8 @@ export class ExerciseDetailsStudentActionsComponent implements OnInit, OnChanges
     @Output() generatingFeedback: EventEmitter<void> = new EventEmitter<void>();
 
     // extension points, see shared/extension-point
-    @ContentChild('overrideCodeAndOnlineEditorButton') overrideCodeAndOnlineEditorButton: TemplateRef<any>;
+    // TODO: the extension point for Orion does not work with Angular 19, we need to find a different solution
+    // @ContentChild('overrideCodeAndOnlineEditorButton') overrideCodeAndOnlineEditorButton: TemplateRef<any>;
 
     uninitializedQuiz: boolean;
     quizNotStarted: boolean;

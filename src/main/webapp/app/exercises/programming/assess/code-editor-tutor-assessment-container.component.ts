@@ -1,8 +1,7 @@
-import { Component, ContentChild, EventEmitter, Input, OnDestroy, OnInit, Output, TemplateRef, ViewChild, inject } from '@angular/core';
+import { Component, EventEmitter, Input, OnDestroy, OnInit, Output, ViewChild, inject } from '@angular/core';
 import { IncludedInScoreBadgeComponent } from 'app/exercises/shared/exercise-headers/included-in-score-badge.component';
 import { ResultComponent } from 'app/exercises/shared/result/result.component';
 import { UnreferencedFeedbackComponent } from 'app/exercises/shared/unreferenced-feedback/unreferenced-feedback.component';
-import { ExtensionPointDirective } from 'app/shared/extension-point/extension-point.directive';
 import { Observable, Subscription, firstValueFrom } from 'rxjs';
 import dayjs from 'dayjs/esm';
 import { TranslateService } from '@ngx-translate/core';
@@ -66,8 +65,8 @@ import { AssessmentInstructionsComponent } from 'app/assessment/assessment-instr
         ResultComponent,
         AssessmentInstructionsComponent,
         UnreferencedFeedbackComponent,
-        // NOTE: this is actually used
-        ExtensionPointDirective,
+        // TODO: the extension point for Orion does not work with Angular 19, we need to find a different solution
+        // ExtensionPointDirective,
     ],
 })
 export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDestroy {
@@ -144,8 +143,9 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
     templateFileSession: { [fileName: string]: string } = {};
 
     // extension points, see shared/extension-point
-    @ContentChild('overrideCodeEditor') overrideCodeEditor: TemplateRef<any>;
-    @ContentChild('overrideExportGoToRepository') overrideExportGoToRepository: TemplateRef<any>;
+    // TODO: the extension point for Orion does not work with Angular 19, we need to find a different solution
+    // @ContentChild('overrideCodeEditor') overrideCodeEditor: TemplateRef<any>;
+    // @ContentChild('overrideExportGoToRepository') overrideExportGoToRepository: TemplateRef<any>;
     // listener, will get notified upon loading of feedback
     @Output() onFeedbackLoaded = new EventEmitter();
     // function override, if set will be executed instead of going to the next submission page

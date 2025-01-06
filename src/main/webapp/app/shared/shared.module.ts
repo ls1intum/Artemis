@@ -15,7 +15,6 @@ import { OrganizationSelectorComponent } from './organization-selector/organizat
 import { AdditionalFeedbackComponent } from './additional-feedback/additional-feedback.component';
 import { ResizeableContainerComponent } from './resizeable-container/resizeable-container.component';
 import { RouterModule } from '@angular/router';
-import { ExtensionPointDirective } from 'app/shared/extension-point/extension-point.directive';
 import { CustomPatternValidatorDirective } from 'app/shared/validators/custom-pattern-validator.directive';
 import { ItemCountComponent } from 'app/shared/pagination/item-count.component';
 import { ConsistencyCheckComponent } from 'app/shared/consistency-check/consistency-check.component';
@@ -39,7 +38,6 @@ import { ScienceDirective } from 'app/shared/science/science.directive';
         CompetencySelectionComponent,
         AdditionalFeedbackComponent,
         HasAnyAuthorityDirective,
-        ExtensionPointDirective,
         SecuredImageComponent,
         DeleteButtonDirective,
         DeleteDialogComponent,
@@ -68,7 +66,6 @@ import { ScienceDirective } from 'app/shared/science/science.directive';
         LoadingIndicatorContainerComponent,
         AdditionalFeedbackComponent,
         HasAnyAuthorityDirective,
-        ExtensionPointDirective,
         SecuredImageComponent,
         DeleteButtonDirective,
         DeleteDialogComponent,

@@ -1,4 +1,4 @@
-import { Component, ContentChild, OnInit, TemplateRef, inject } from '@angular/core';
+import { Component, OnInit, inject } from '@angular/core';
 import { Course } from 'app/entities/course.model';
 import { ActivatedRoute } from '@angular/router';
 import { ExerciseFilter } from 'app/entities/exercise-filter.model';
@@ -8,7 +8,6 @@ import { DocumentationButtonComponent } from 'app/shared/components/documentatio
 import { CourseManagementExercisesSearchComponent } from './course-management-exercises-search.component';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { CourseExerciseCardComponent } from './course-exercise-card.component';
-import { ExtensionPointDirective } from 'app/shared/extension-point/extension-point.directive';
 import { ProgrammingExerciseCreateButtonsComponent } from 'app/exercises/programming/manage/programming-exercise-create-buttons.component';
 import { ProgrammingExerciseComponent } from 'app/exercises/programming/manage/programming-exercise.component';
 import { QuizExerciseCreateButtonsComponent } from 'app/exercises/quiz/manage/quiz-exercise-create-buttons.component';
@@ -27,8 +26,8 @@ import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
         CourseManagementExercisesSearchComponent,
         TranslateDirective,
         CourseExerciseCardComponent,
-        // NOTE: this is actually used
-        ExtensionPointDirective,
+        // TODO: the extension point for Orion does not work with Angular 19, we need to find a different solution
+        // ExtensionPointDirective,
         ProgrammingExerciseCreateButtonsComponent,
         ProgrammingExerciseComponent,
         QuizExerciseCreateButtonsComponent,
@@ -59,9 +58,10 @@ export class CourseManagementExercisesComponent implements OnInit {
     exerciseFilter: ExerciseFilter;
 
     // extension points, see shared/extension-point
-    @ContentChild('overrideGenerateAndImportButton') overrideGenerateAndImportButton: TemplateRef<any>;
-    @ContentChild('overrideProgrammingExerciseCard') overrideProgrammingExerciseCard: TemplateRef<any>;
-    @ContentChild('overrideNonProgrammingExerciseCard') overrideNonProgrammingExerciseCard: TemplateRef<any>;
+    // TODO: the extension point for Orion does not work with Angular 19, we need to find a different solution
+    // @ContentChild('overrideGenerateAndImportButton') overrideGenerateAndImportButton: TemplateRef<any>;
+    // @ContentChild('overrideProgrammingExerciseCard') overrideProgrammingExerciseCard: TemplateRef<any>;
+    // @ContentChild('overrideNonProgrammingExerciseCard') overrideNonProgrammingExerciseCard: TemplateRef<any>;
 
     private readonly route = inject(ActivatedRoute);
 

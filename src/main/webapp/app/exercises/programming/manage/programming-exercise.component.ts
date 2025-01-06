@@ -1,7 +1,6 @@
-import { Component, ContentChild, Input, OnDestroy, OnInit, TemplateRef, inject } from '@angular/core';
+import { Component, Input, OnDestroy, OnInit, inject } from '@angular/core';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { ExerciseScoresExportButtonComponent } from 'app/exercises/shared/exercise-scores/exercise-scores-export-button.component';
-import { ExtensionPointDirective } from 'app/shared/extension-point/extension-point.directive';
 import { merge } from 'rxjs';
 import { ProgrammingExercise } from 'app/entities/programming/programming-exercise.model';
 import { ProgrammingExerciseInstructorRepositoryType, ProgrammingExerciseService } from './services/programming-exercise.service';
@@ -75,8 +74,8 @@ import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
         ExerciseScoresExportButtonComponent,
         SlicePipe,
         ArtemisDatePipe,
-        // NOTE: this is actually used
-        ExtensionPointDirective,
+        // TODO: the extension point for Orion does not work with Angular 19, we need to find a different solution
+        // ExtensionPointDirective,
     ],
 })
 export class ProgrammingExerciseComponent extends ExerciseComponent implements OnInit, OnDestroy {
@@ -101,8 +100,9 @@ export class ProgrammingExerciseComponent extends ExerciseComponent implements O
     onlineIdeEnabled = false;
 
     // extension points, see shared/extension-point
-    @ContentChild('overrideRepositoryAndBuildPlan') overrideRepositoryAndBuildPlan: TemplateRef<any>;
-    @ContentChild('overrideButtons') overrideButtons: TemplateRef<any>;
+    // TODO: the extension point for Orion does not work with Angular 19, we need to find a different solution
+    // @ContentChild('overrideRepositoryAndBuildPlan') overrideRepositoryAndBuildPlan: TemplateRef<any>;
+    // @ContentChild('overrideButtons') overrideButtons: TemplateRef<any>;
     private buildPlanLinkTemplate: string;
 
     // Icons

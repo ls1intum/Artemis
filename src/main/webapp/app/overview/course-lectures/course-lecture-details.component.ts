@@ -16,7 +16,6 @@ import { faSpinner } from '@fortawesome/free-solid-svg-icons';
 import { LectureUnitService } from 'app/lecture/lecture-unit/lecture-unit-management/lectureUnit.service';
 import { isCommunicationEnabled, isMessagingEnabled } from 'app/entities/course.model';
 import { AbstractScienceComponent } from 'app/shared/science/science.component';
-import { ScienceService } from 'app/shared/science/science.service';
 import { ScienceEventType } from 'app/shared/science/science.model';
 import { Subscription } from 'rxjs';
 import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
@@ -27,7 +26,7 @@ import { AttachmentUnitComponent } from './attachment-unit/attachment-unit.compo
 import { VideoUnitComponent } from './video-unit/video-unit.component';
 import { TextUnitComponent } from './text-unit/text-unit.component';
 import { OnlineUnitComponent } from './online-unit/online-unit.component';
-import { CompetenciesPopoverComponent } from '../../course/competencies/competencies-popover/competencies-popover.component';
+import { CompetenciesPopoverComponent } from 'app/course/competencies/competencies-popover/competencies-popover.component';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { DiscussionSectionComponent } from '../discussion-section/discussion-section.component';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
@@ -91,9 +90,7 @@ export class CourseLectureDetailsComponent extends AbstractScienceComponent impl
     faSpinner = faSpinner;
 
     constructor() {
-        const scienceService = inject(ScienceService);
-
-        super(scienceService, ScienceEventType.LECTURE__OPEN);
+        super(ScienceEventType.LECTURE__OPEN);
     }
 
     ngOnInit(): void {

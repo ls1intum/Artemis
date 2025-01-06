@@ -1,4 +1,4 @@
-import { Component, ContentChild, Input, TemplateRef, inject } from '@angular/core';
+import { Component, Input, inject } from '@angular/core';
 import { SafeHtml } from '@angular/platform-browser';
 import { UMLDiagramType, UMLModel } from '@ls1intum/apollon';
 import { ArtemisMarkdownService } from 'app/shared/markdown.service';
@@ -11,7 +11,6 @@ import { GradingCriterion } from 'app/exercises/shared/structured-grading-criter
 import { ProgrammingExerciseStudentParticipation } from 'app/entities/participation/programming-exercise-student-participation.model';
 import { ExpandableSectionComponent } from '../expandable-section/expandable-section.component';
 import { StructuredGradingInstructionsAssessmentLayoutComponent } from '../../structured-grading-instructions-assessment-layout/structured-grading-instructions-assessment-layout.component';
-import { ExtensionPointDirective } from 'app/shared/extension-point/extension-point.directive';
 import { ProgrammingExerciseInstructionComponent } from 'app/exercises/programming/shared/instructions-render/programming-exercise-instruction.component';
 import { SecureLinkDirective } from 'app/shared/http/secure-link.directive';
 import { ButtonComponent } from 'app/shared/components/button.component';
@@ -24,8 +23,8 @@ import { ModelingEditorComponent } from 'app/exercises/modeling/shared/modeling-
     imports: [
         ExpandableSectionComponent,
         StructuredGradingInstructionsAssessmentLayoutComponent,
-        // NOTE: this is actually used
-        ExtensionPointDirective,
+        // TODO: the extension point for Orion does not work with Angular 19, we need to find a different solution
+        // ExtensionPointDirective,
         ProgrammingExerciseInstructionComponent,
         SecureLinkDirective,
         ButtonComponent,
@@ -55,7 +54,8 @@ export class AssessmentInstructionsComponent {
     readonly ExerciseType = ExerciseType;
 
     // extension points, see shared/extension-point
-    @ContentChild('overrideTitle') overrideTitle: TemplateRef<any>;
+    // TODO: the extension point for Orion does not work with Angular 19, we need to find a different solution
+    // @ContentChild('overrideTitle') overrideTitle: TemplateRef<any>;
 
     // eslint-disable-next-line @angular-eslint/no-input-rename
     @Input('exercise') set exerciseInput(exercise: Exercise) {
