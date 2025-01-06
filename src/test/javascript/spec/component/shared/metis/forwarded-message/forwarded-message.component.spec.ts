@@ -1,4 +1,4 @@
-import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
+import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { input, runInInjectionContext } from '@angular/core';
 import { MockComponent, MockPipe } from 'ng-mocks';
 import dayjs from 'dayjs';
@@ -6,11 +6,10 @@ import { Post } from 'app/entities/metis/post.model';
 import { AnswerPost } from 'app/entities/metis/answer-post.model';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { ForwardedMessageComponent } from 'app/shared/metis/forwarded-message/forwarded-message.component';
-import { Posting } from 'app/entities/metis/posting.model';
+import { Posting, PostingType } from 'app/entities/metis/posting.model';
 import { ProfilePictureComponent } from 'app/shared/profile-picture/profile-picture.component';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
-import { By } from '@angular/platform-browser';
 import { PostingContentComponent } from 'app/shared/metis/posting-content/posting-content.components';
 
 describe('ForwardedMessageComponent', () => {
@@ -78,12 +77,31 @@ describe('ForwardedMessageComponent', () => {
         });
     });
 
-    it('should set sourceName correctly for a one-to-one chat post', () => {
-        const oneToOnePost = { ...mockPost, conversation: { type: 'oneToOneChat' } } as Post;
+    it('should set sourceName correctly for a one-to-one chat post when isAnswerPost is false', () => {
+        const oneToOnePost: Post = {
+            id: 3,
+            creationDate: dayjs(),
+            conversation: { type: 'oneToOneChat' } as any,
+        } as Post;
+
         runInInjectionContext(fixture.debugElement.injector, () => {
             component.originalPostDetails = input<Posting>(oneToOnePost);
             fixture.detectChanges();
             expect(component.sourceName).toBe('a direct message ');
+        });
+    });
+
+    it('should set sourceName correctly for a one-to-one chat post when isAnswerPost is true', () => {
+        const oneToOneAnswerPost: AnswerPost = {
+            id: 4,
+            creationDate: dayjs(),
+            post: { ...mockPost, conversation: { type: 'oneToOneChat' } as any },
+        } as AnswerPost;
+
+        runInInjectionContext(fixture.debugElement.injector, () => {
+            component.originalPostDetails = input<Posting>(oneToOneAnswerPost);
+            fixture.detectChanges();
+            expect(component.sourceName).toBe('a thread in a direct message ');
         });
     });
 
@@ -105,36 +123,87 @@ describe('ForwardedMessageComponent', () => {
         });
     });
 
-    it('should set isContentLong to true if content overflows', () => {
-        expect(component.messageContent()).toBeDefined();
+    it('should set sourceName correctly for a group chat post when isAnswerPost is true', () => {
+        const groupChatAnswerPost: AnswerPost = {
+            id: 5,
+            creationDate: dayjs(),
+            post: { ...mockPost, conversation: { type: 'groupChat' } as any },
+        } as AnswerPost;
 
-        const messageContentDebugElement = fixture.debugElement.query(By.css('#messageContent'));
-        expect(messageContentDebugElement).toBeTruthy();
-
-        const nativeElement = messageContentDebugElement.nativeElement as HTMLElement;
-
-        Object.defineProperty(nativeElement, 'scrollHeight', { value: 200, configurable: true });
-        Object.defineProperty(nativeElement, 'clientHeight', { value: 100, configurable: true });
-
-        component.checkIfContentOverflows();
-
-        expect(component.isContentLong).toBeTrue();
+        runInInjectionContext(fixture.debugElement.injector, () => {
+            component.originalPostDetails = input<Posting>(groupChatAnswerPost);
+            fixture.detectChanges();
+            expect(component.sourceName).toBe('a thread in a group message ');
+        });
     });
 
-    it('should call checkIfContentOverflows in ngAfterViewInit', fakeAsync(() => {
-        jest.spyOn(component, 'checkIfContentOverflows');
-        component.ngAfterViewInit();
-        tick();
+    it('should set sourceName correctly for a group chat post when isAnswerPost is false', () => {
+        const groupChatPost: Post = {
+            id: 6,
+            creationDate: dayjs(),
+            conversation: { type: 'groupChat', name: 'dev-team' } as any,
+        } as Post;
 
-        expect(component.checkIfContentOverflows).toHaveBeenCalled();
-    }));
-
-    it('should set sourceName to "a group message |" for group conversation', () => {
-        const groupPost = { ...mockPost, conversation: { type: 'groupChat' } } as Post;
         runInInjectionContext(fixture.debugElement.injector, () => {
-            component.originalPostDetails = input<Posting>(groupPost);
+            component.originalPostDetails = input<Posting>(groupChatPost);
             fixture.detectChanges();
             expect(component.sourceName).toBe('a group message ');
+        });
+    });
+
+    it('should set sourceName to "#unknown |" for channel post without name and isAnswerPost false', () => {
+        const channelPostWithoutName: Post = {
+            id: 7,
+            creationDate: dayjs(),
+            conversation: { type: 'channel', name: undefined } as any,
+        } as Post;
+
+        runInInjectionContext(fixture.debugElement.injector, () => {
+            component.originalPostDetails = input<Posting>(channelPostWithoutName);
+            fixture.detectChanges();
+            expect(component.sourceName).toBe('#unknown |');
+        });
+    });
+
+    it('should set sourceName correctly for an unknown conversation type when isAnswerPost is true', () => {
+        const unknownTypeAnswerPost: AnswerPost = {
+            id: 8,
+            creationDate: dayjs(),
+            post: { ...mockPost, conversation: { type: 'unknownType' } as any },
+        } as AnswerPost;
+
+        runInInjectionContext(fixture.debugElement.injector, () => {
+            component.originalPostDetails = input<Posting>(unknownTypeAnswerPost);
+            fixture.detectChanges();
+            expect(component.sourceName).toBe('a thread in a group message ');
+        });
+    });
+
+    it('should set sourceName correctly for an unknown conversation type when isAnswerPost is false', () => {
+        const unknownTypePost: Post = {
+            id: 9,
+            creationDate: dayjs(),
+            conversation: { type: 'unknownType' } as any,
+        } as Post;
+
+        runInInjectionContext(fixture.debugElement.injector, () => {
+            component.originalPostDetails = input<Posting>(unknownTypePost);
+            fixture.detectChanges();
+            expect(component.sourceName).toBe('a group message ');
+        });
+    });
+
+    it('should set sourceName to empty string when conversation is undefined', () => {
+        const postWithoutConversation: Post = {
+            id: 10,
+            creationDate: dayjs(),
+            conversation: undefined,
+        } as Post;
+
+        runInInjectionContext(fixture.debugElement.injector, () => {
+            component.originalPostDetails = input<Posting>(postWithoutConversation);
+            fixture.detectChanges();
+            expect(component.sourceName).toBe('');
         });
     });
 
@@ -145,6 +214,66 @@ describe('ForwardedMessageComponent', () => {
             component.onTriggerNavigateToPost();
 
             expect(spy).toHaveBeenCalledWith(mockPost);
+        });
+    });
+
+    it('should update sourceName correctly based on isAnswerPost flag (true case)', () => {
+        const channelAnswerPost: AnswerPost = {
+            id: 12,
+            creationDate: dayjs(),
+            postingType: PostingType.ANSWER,
+            conversation: { type: 'channel', name: 'general' } as any,
+            post: mockPost,
+        };
+
+        runInInjectionContext(fixture.debugElement.injector, () => {
+            component.originalPostDetails = input<Posting>(channelAnswerPost);
+            fixture.detectChanges();
+            expect(component.sourceName).toBe('a thread in #general |');
+        });
+    });
+
+    it('should update sourssceName correctly based on isAnswerPost flag (false case)', () => {
+        const channelPost: Posting = {
+            id: 11,
+            creationDate: dayjs(),
+            conversation: { type: 'channel', name: 'general' } as any,
+            postingType: PostingType.POST,
+        };
+
+        runInInjectionContext(fixture.debugElement.injector, () => {
+            component.originalPostDetails = input<Posting>(channelPost);
+            fixture.detectChanges();
+            expect(component.sourceName).toBe('#general |');
+        });
+    });
+
+    it('should update sourceName correctly when updateSourceName is called manually', () => {
+        const oneToOnePost: Post = {
+            id: 13,
+            creationDate: dayjs(),
+            conversation: { type: 'oneToOneChat' } as any,
+        } as Post;
+
+        runInInjectionContext(fixture.debugElement.injector, () => {
+            component.originalPostDetails = input<Posting>(oneToOnePost);
+            fixture.detectChanges();
+            component.updateSourceName();
+            expect(component.sourceName).toBe('a direct message ');
+        });
+    });
+
+    it('should handle missing conversation gracefully in updateSourceName', () => {
+        const postWithoutConversation: Post = {
+            id: 14,
+            creationDate: dayjs(),
+            conversation: undefined,
+        } as Post;
+
+        runInInjectionContext(fixture.debugElement.injector, () => {
+            component.originalPostDetails = input<Posting>(postWithoutConversation);
+            fixture.detectChanges();
+            expect(component.sourceName).toBe('');
         });
     });
 });

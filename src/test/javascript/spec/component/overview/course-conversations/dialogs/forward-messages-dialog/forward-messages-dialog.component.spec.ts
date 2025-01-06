@@ -227,4 +227,44 @@ describe('ForwardMessageDialogComponent', () => {
             messageContent: 'Test content',
         });
     });
+
+    it('should not add duplicate channels or users to selected lists', () => {
+        const channelOption = component.combinedOptions.find((opt) => opt.type === 'channel' && opt.name === 'General');
+        component.selectOption(channelOption!);
+        component.selectOption(channelOption!);
+
+        expect(component.selectedChannels).toHaveLength(1);
+
+        const userOption = component.combinedOptions.find((opt) => opt.type === 'user' && opt.name === 'User1');
+        component.selectOption(userOption!);
+        component.selectOption(userOption!);
+
+        expect(component.selectedUsers).toHaveLength(1);
+    });
+
+    it('should toggle showFullForwardedMessage and reflect changes', () => {
+        expect(component.showFullForwardedMessage).toBeFalse();
+
+        component.toggleShowFullForwardedMessage();
+        expect(component.showFullForwardedMessage).toBeTrue();
+
+        component.toggleShowFullForwardedMessage();
+        expect(component.showFullForwardedMessage).toBeFalse();
+    });
+
+    it('should update newPost.content with the provided value', () => {
+        const testContent = 'Updated content';
+        component.updateField(testContent);
+
+        expect(component.newPost.content).toBe(testContent);
+    });
+
+    it('should filter channels and users based on the search term', () => {
+        const event = { target: { value: 'General' } } as unknown as Event;
+        component.filterItems(event);
+
+        expect(component.filteredChannels).toHaveLength(1);
+        expect(component.filteredChannels[0].name).toBe('General');
+        expect(component.filteredUsers).toHaveLength(0);
+    });
 });

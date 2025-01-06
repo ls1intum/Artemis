@@ -89,7 +89,9 @@ export class ForwardedMessageComponent implements AfterViewInit {
     }
 
     updateSourceName() {
-        if (this.conversation?.type?.valueOf() === 'channel') {
+        if (!this.conversation) {
+            this.sourceName = '';
+        } else if (this.conversation?.type?.valueOf() === 'channel') {
             if (this.isAnswerPost) {
                 this.sourceName = (this.conversation as any)?.name ? `a thread in #${(this.conversation as any)?.name} |` : 'a thread in #unknown |';
             } else {
