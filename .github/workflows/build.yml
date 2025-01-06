@@ -60,6 +60,8 @@ jobs:
     name: Build .war artifact
     runs-on: ubuntu-latest
     steps:
+    - name: Print Event
+      run: echo "Event name is ${{ github.event_name }}"
     # If this is a workflow_call, override RAW_URL
     - name: Override RAW_URL for workflow_call
       if: ${{ github.event_name == 'workflow_call' && inputs.raw_url != '' }}
