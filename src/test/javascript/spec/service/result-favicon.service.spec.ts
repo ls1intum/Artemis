@@ -64,7 +64,9 @@ describe('ResultFaviconService', () => {
             // Mock result utils
             jest.spyOn(resultUtils, 'evaluateTemplateStatus').mockReturnValue(ResultTemplateStatus.IS_BUILDING);
             jest.spyOn(resultUtils, 'getResultIconClass').mockReturnValue({
-                icon: [1024, 1024, [], '', 'M0 0 H1024 V1024 H0 Z'], // A mock shape
+                icon: [1024, 1024, [], '', 'M0 0 H1024 V1024 H0 Z'],
+                prefix: 'fas',
+                iconName: '0',
             });
             jest.spyOn(resultUtils, 'getTextColorClass').mockReturnValue('text-success');
             jest.spyOn(global, 'setInterval');
@@ -90,6 +92,8 @@ describe('ResultFaviconService', () => {
             jest.spyOn(resultUtils, 'evaluateTemplateStatus').mockReturnValue(ResultTemplateStatus.HAS_FEEDBACK);
             jest.spyOn(resultUtils, 'getResultIconClass').mockReturnValue({
                 icon: [1024, 1024, [], '', 'M0 0 H1024 V1024 H0 Z'],
+                prefix: 'fas',
+                iconName: '0',
             });
             jest.spyOn(resultUtils, 'getTextColorClass').mockReturnValue('text-success');
             jest.spyOn(global, 'setInterval');
@@ -115,6 +119,8 @@ describe('ResultFaviconService', () => {
             jest.spyOn(resultUtils, 'evaluateTemplateStatus').mockReturnValue(ResultTemplateStatus.IS_BUILDING);
             jest.spyOn(resultUtils, 'getResultIconClass').mockReturnValue({
                 icon: [1024, 1024, [], '', 'M0 0 H1024 V1024 H0 Z'],
+                prefix: 'fas',
+                iconName: '0',
             });
             jest.spyOn(resultUtils, 'getTextColorClass').mockReturnValue('text-success');
 
