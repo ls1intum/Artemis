@@ -10,6 +10,7 @@ import org.springframework.stereotype.Service;
 import de.tum.cit.aet.artemis.communication.domain.Faq;
 import de.tum.cit.aet.artemis.communication.domain.FaqState;
 import de.tum.cit.aet.artemis.communication.repository.FaqRepository;
+import de.tum.cit.aet.artemis.core.service.ProfileService;
 import de.tum.cit.aet.artemis.iris.service.pyris.PyrisWebhookService;
 
 @Profile(PROFILE_CORE)
@@ -20,17 +21,20 @@ public class FaqService {
 
     private final Optional<PyrisWebhookService> pyrisWebhookService;
 
+    private final ProfileService profileService;
+
     private final FaqRepository faqRepository;
 
-    public FaqService(FaqRepository faqRepository, Optional<PyrisWebhookService> pyrisWebhookService) {
+    public FaqService(FaqRepository faqRepository, Optional<PyrisWebhookService> pyrisWebhookService, ProfileService profileService) {
 
         this.pyrisWebhookService = pyrisWebhookService;
         this.faqRepository = faqRepository;
+        this.profileService = profileService;
 
     }
 
     public void ingestFaqsIntoPyris(Long courseId, Optional<Long> faqId) {
-        if (!pyrisWebhookService.isPresent()) {
+        if (pyrisWebhookService.isEmpty()) {
             return;
         }
 
@@ -44,7 +48,11 @@ public class FaqService {
     }
 
     public void deleteFaqInPyris(Faq existingFaq) {
-        if (!pyrisWebhookService.isPresent()) {
+        if (!profileService.isIrisActive()) {
+            return;
+        }
+
+        if (pyrisWebhookService.isEmpty()) {
             return;
         }
 
@@ -52,7 +60,7 @@ public class FaqService {
     }
 
     public void autoIngestFaqsIntoPyris(Long courseId, Faq faq) {
-        if (!pyrisWebhookService.isPresent()) {
+        if (pyrisWebhookService.isEmpty()) {
             return;
         }
 

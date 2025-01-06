@@ -12,6 +12,7 @@ import {
     IrisChatSubSettings,
     IrisCompetencyGenerationSubSettings,
     IrisCourseChatSubSettings,
+    IrisFaqIngestionSubSettings,
     IrisLectureIngestionSubSettings,
     IrisTextExerciseChatSubSettings,
 } from 'app/entities/iris/settings/iris-sub-settings.model';
@@ -118,6 +119,9 @@ export class IrisSettingsUpdateComponent implements OnInit, DoCheck, ComponentCa
         }
         if (!this.irisSettings.irisCompetencyGenerationSettings) {
             this.irisSettings.irisCompetencyGenerationSettings = new IrisCompetencyGenerationSubSettings();
+        }
+        if (!this.irisSettings.irisFaqIngestionSettings) {
+            this.irisSettings.irisFaqIngestionSettings = new IrisFaqIngestionSubSettings();
         }
     }
 

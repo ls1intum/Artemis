@@ -16,6 +16,7 @@ import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.util.LinkedMultiValueMap;
 
 import de.tum.cit.aet.artemis.communication.domain.Faq;
+import de.tum.cit.aet.artemis.communication.domain.FaqState;
 import de.tum.cit.aet.artemis.communication.repository.FaqRepository;
 import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.user.util.UserUtilService;
@@ -65,6 +66,7 @@ class PyrisFaqIngestionTest extends AbstractIrisIntegrationTest {
         this.faq1.setQuestionAnswer("Answer 1");
         this.faq1.setQuestionTitle("Title 1");
         this.faq1.setCourse(course1);
+        this.faq1.setFaqState(FaqState.ACCEPTED);
         this.faq1 = faqRepository.save(this.faq1);
         // Add users that are not in the course
         userUtilService.createAndSaveUser(TEST_PREFIX + "student42");

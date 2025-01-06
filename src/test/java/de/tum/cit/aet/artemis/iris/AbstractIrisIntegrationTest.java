@@ -63,6 +63,7 @@ public abstract class AbstractIrisIntegrationTest extends AbstractSpringIntegrat
         activateSubSettings(globalSettings.getIrisCourseChatSettings());
         activateSubSettings(globalSettings.getIrisLectureIngestionSettings());
         activateSubSettings(globalSettings.getIrisCompetencyGenerationSettings());
+        activateSubSettings(globalSettings.getIrisFaqIngestionSettings());
         irisSettingsRepository.save(globalSettings);
     }
 
