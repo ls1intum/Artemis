@@ -299,6 +299,13 @@ public class LocalCIResultProcessingService {
                         buildStatisticsDto.buildCountWhenUpdated());
             }
             else {
+                // Only update the build duration if the number of builds has increased by a certain threshold
+                boolean shouldUpdateBuildDuration = buildStatisticsDto.buildCountWhenUpdated()
+                        - programmingExerciseBuildStatistics.getBuildCountWhenUpdated() >= BUILD_STATISTICS_UPDATE_THRESHOLD;
+                if (!shouldUpdateBuildDuration) {
+                    return;
+                }
+
                 programmingExerciseBuildStatistics.setBuildDurationSeconds(buildStatisticsDto.buildDurationSeconds());
                 programmingExerciseBuildStatistics.setBuildCountWhenUpdated(buildStatisticsDto.buildCountWhenUpdated());
             }

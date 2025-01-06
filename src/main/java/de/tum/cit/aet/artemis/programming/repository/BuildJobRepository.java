@@ -124,9 +124,10 @@ public interface BuildJobRepository extends ArtemisJpaRepository<BuildJob, Long>
 
     @Query("""
             SELECT new de.tum.cit.aet.artemis.programming.dto.BuildJobStatisticsDTO(
-                ROUND(AVG(FUNCTION('TIMESTAMPDIFF', 'SECOND', b.buildStartDate, b.buildCompletionDate))),
+                ROUND(AVG(TIMESTAMPDIFF(SECOND, b.buildStartDate, b.buildCompletionDate))),
                 COUNT(b),
-                b.exerciseId)
+                b.exerciseId
+            )
             FROM BuildJob b
             WHERE b.exerciseId = :exerciseId
                 AND b.buildStatus = de.tum.cit.aet.artemis.programming.domain.build.BuildStatus.SUCCESSFUL
