@@ -31,7 +31,10 @@ on:
     types:
     - created
   # workflow_call makes it possible to trigger this build workflow from another workflow
-  # workflow_call is used to build the Artemis used for deployments handled by Helios for specific cases
+  # workflow_call is used to build the Artemis for deployments handled by Helios for specific cases
+  # Inconsistent behavior of the workflow_call is that it inherits the event name of the calling workflow
+  # That's why we need to check for the event name in the steps as workflow_dispatch but not as workflow_call
+  # Since the testserver.yml is triggered by a workflow_dispatch, the build.yml will also be triggered by a workflow_dispatch
   workflow_call:
     inputs:
       sha:
@@ -62,14 +65,14 @@ jobs:
     steps:
     - name: Print Event
       run: echo "Event name is ${{ github.event_name }}"
-    # If this is a workflow_call, override RAW_URL
-    - name: Override RAW_URL for workflow_call
-      if: ${{ github.event_name == 'workflow_call' && inputs.raw_url != '' }}
+    # If this is a workflow_dispatch, override RAW_URL
+    - name: Override RAW_URL for workflow_dispatch
+      if: ${{ github.event_name == 'workflow_dispatch' && inputs.raw_url != '' }}
       run: echo "RAW_URL=${{ inputs.raw_url }}" >> $GITHUB_ENV
 
-    # If this workflow is called via `workflow_call`, checkout the specified branch
-    - name: Git Checkout (for workflow_call)
-      if: ${{ github.event_name == 'workflow_call' }}
+    # If this workflow is called via `workflow_dispatch`, checkout the specified branch
+    - name: Git Checkout (for workflow_dispatch)
+      if: ${{ github.event_name == 'workflow_dispatch' }}
       uses: actions/checkout@v4
       with:
         ref: ${{ inputs.sha }}
@@ -112,9 +115,9 @@ jobs:
     if: ${{ github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == 'ls1intum/Artemis' }}
     runs-on: ubuntu-latest
     steps:
-    # If this is a workflow_call and a 'sha' is provided, override RAW_URL
-    - name: Override RAW_URL for workflow_call
-      if: ${{ github.event_name == 'workflow_call' && inputs.raw_url != '' }}
+    # If this is a workflow_dispatch and a 'sha' is provided, override RAW_URL
+    - name: Override RAW_URL for workflow_dispatch
+      if: ${{ github.event_name == 'workflow_dispatch' && inputs.raw_url != '' }}
       run: echo "RAW_URL=${{ inputs.raw_url }}" >> $GITHUB_ENV
 
     - name: Compute Tag
@@ -123,8 +126,8 @@ jobs:
       with:
         result-encoding: string
         script: |
-          if (context.eventName === "workflow_call") {
-            // Use the "tag" passed in via the workflow_call
+          if (context.eventName === "workflow_dispatch") {
+            // Use the "tag" passed in via the workflow_dispatch
             return context.payload.inputs.tag;
           }
           if (context.eventName === "pull_request") {
@@ -142,8 +145,8 @@ jobs:
             }
           }
           return "FALSE";
-    - name: Git Checkout for workflow_call
-      if: ${{ github.event_name == 'workflow_call' }}
+    - name: Git Checkout for workflow_dispatch
+      if: ${{ github.event_name == 'workflow_dispatch' }}
       uses: actions/checkout@v4
       with:
         ref: ${{ inputs.sha }}
