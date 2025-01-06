@@ -19,7 +19,24 @@ export default defineConfig({
     retries: parseNumber(process.env.TEST_RETRIES) ?? 2,
     workers: parseNumber(process.env.TEST_WORKER_PROCESSES) ?? 3,
     /* Reporter to use. See https://playwright.dev/docs/test-reporters */
-    reporter: [['junit', { outputFile: process.env.PLAYWRIGHT_JUNIT_OUTPUT_NAME ?? './test-reports/results.xml' }]],
+    reporter: [
+        ['list'],
+        ['junit', { outputFile: process.env.PLAYWRIGHT_JUNIT_OUTPUT_NAME ?? './test-reports/results.xml' }],
+        [
+            'monocart-reporter',
+            {
+                outputFile: './test-reports/monocart-report',
+                coverage: {
+                    reports: ['json', 'lcov', 'text-summary'],
+                    filter: {
+                        '**/src/**': true,
+                        '**/node_modules/**': false,
+                        '**/**': true,
+                    },
+                },
+            },
+        ],
+    ],
 
     /* Shared settings for all the projects below. See https://playwright.dev/docs/api/class-testoptions. */
     use: {
