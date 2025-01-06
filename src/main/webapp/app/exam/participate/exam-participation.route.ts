@@ -1,15 +1,13 @@
 import { Routes } from '@angular/router';
 import { UserRouteAccessService } from 'app/core/auth/user-route-access-service';
-import { ExamParticipationComponent } from 'app/exam/participate/exam-participation.component';
+
 import { PendingChangesGuard } from 'app/shared/guard/pending-changes.guard';
 import { Authority } from 'app/shared/constants/authority.constants';
-
-import { ExampleSolutionComponent } from 'app/exercises/shared/example-solution/example-solution.component';
 
 export const examParticipationRoute: Routes = [
     {
         path: '',
-        component: ExamParticipationComponent,
+        loadComponent: () => import('app/exam/participate/exam-participation.component').then((m) => m.ExamParticipationComponent),
         data: {
             authorities: [Authority.USER],
             pageTitle: 'artemisApp.exam.title',
@@ -37,7 +35,7 @@ export const examParticipationRoute: Routes = [
     },
     {
         path: 'test-exam/:studentExamId',
-        component: ExamParticipationComponent,
+        loadComponent: () => import('app/exam/participate/exam-participation.component').then((m) => m.ExamParticipationComponent),
         data: {
             authorities: [Authority.USER],
             pageTitle: 'artemisApp.exam.title',
@@ -47,7 +45,7 @@ export const examParticipationRoute: Routes = [
     },
     {
         path: 'exercises/:exerciseId/example-solution',
-        component: ExampleSolutionComponent,
+        loadComponent: () => import('app/exercises/shared/example-solution/example-solution.component').then((m) => m.ExampleSolutionComponent),
         data: {
             authorities: [Authority.USER],
             pageTitle: 'artemisApp.exam.title',

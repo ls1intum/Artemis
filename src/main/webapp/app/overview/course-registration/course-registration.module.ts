@@ -1,6 +1,7 @@
 import { NgModule } from '@angular/core';
 import { RouterModule, Routes } from '@angular/router';
 import { CourseRegistrationComponent } from 'app/overview/course-registration/course-registration.component';
+
 import { Authority } from 'app/shared/constants/authority.constants';
 import { UserRouteAccessService } from 'app/core/auth/user-route-access-service';
 import { ArtemisSharedModule } from 'app/shared/shared.module';
@@ -12,7 +13,7 @@ import { CoursePrerequisitesButtonModule } from 'app/overview/course-registratio
 const routes: Routes = [
     {
         path: '',
-        component: CourseRegistrationComponent,
+        loadComponent: () => import('app/overview/course-registration/course-registration.component').then((m) => m.CourseRegistrationComponent),
         data: {
             authorities: [Authority.USER],
             pageTitle: 'artemisApp.studentDashboard.enroll.title',

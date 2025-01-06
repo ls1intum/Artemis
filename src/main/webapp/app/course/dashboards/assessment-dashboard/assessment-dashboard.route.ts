@@ -3,12 +3,11 @@ import { UserRouteAccessService } from 'app/core/auth/user-route-access-service'
 
 import { Authority } from 'app/shared/constants/authority.constants';
 import { CourseManagementResolve } from 'app/course/manage/course-management-resolve.service';
-import { CourseManagementTabBarComponent } from 'app/course/manage/course-management-tab-bar/course-management-tab-bar.component';
 
 export const assessmentDashboardRoute: Routes = [
     {
         path: ':courseId/assessment-dashboard',
-        component: CourseManagementTabBarComponent,
+        loadComponent: () => import('app/course/manage/course-management-tab-bar/course-management-tab-bar.component').then((m) => m.CourseManagementTabBarComponent),
         children: [
             {
                 path: '',

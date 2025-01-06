@@ -1,6 +1,7 @@
 import { NgModule } from '@angular/core';
-import { ArtemisSharedModule } from 'app/shared/shared.module';
 import { CourseStatisticsComponent } from 'app/overview/course-statistics/course-statistics.component';
+import { ArtemisSharedModule } from 'app/shared/shared.module';
+
 import { Authority } from 'app/shared/constants/authority.constants';
 import { UserRouteAccessService } from 'app/core/auth/user-route-access-service';
 import { RouterModule, Routes } from '@angular/router';
@@ -13,7 +14,7 @@ import { ArtemisSharedComponentModule } from 'app/shared/components/shared-compo
 const routes: Routes = [
     {
         path: '',
-        component: CourseStatisticsComponent,
+        loadComponent: () => import('app/overview/course-statistics/course-statistics.component').then((m) => m.CourseStatisticsComponent),
         data: {
             authorities: [Authority.USER],
             pageTitle: 'overview.statistics',

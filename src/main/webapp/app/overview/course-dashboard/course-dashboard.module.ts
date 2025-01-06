@@ -2,6 +2,7 @@ import { NgModule } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { NgbModule } from '@ng-bootstrap/ng-bootstrap';
 import { CourseDashboardComponent } from 'app/overview/course-dashboard/course-dashboard.component';
+
 import { ArtemisSharedModule } from 'app/shared/shared.module';
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
 import { RouterModule, Routes } from '@angular/router';
@@ -21,7 +22,7 @@ const routes: Routes = [
     {
         path: '',
         pathMatch: 'full',
-        component: CourseDashboardComponent,
+        loadComponent: () => import('app/overview/course-dashboard/course-dashboard.component').then((m) => m.CourseDashboardComponent),
         data: {
             authorities: [Authority.USER],
             pageTitle: 'overview.dashboard',

@@ -1,9 +1,10 @@
+import { CourseConversationsComponent } from 'app/overview/course-conversations/course-conversations.component';
 import { MetisModule } from 'app/shared/metis/metis.module';
 import { ArtemisSharedModule } from 'app/shared/shared.module';
 import { NgModule } from '@angular/core';
 import { RouterModule, Routes } from '@angular/router';
 import { ArtemisSharedComponentModule } from 'app/shared/components/shared-component.module';
-import { CourseConversationsComponent } from 'app/overview/course-conversations/course-conversations.component';
+
 import { ArtemisDataTableModule } from 'app/shared/data-table/data-table.module';
 import { ConversationMessagesComponent } from 'app/overview/course-conversations/layout/conversation-messages/conversation-messages.component';
 import { ConversationThreadSidebarComponent } from 'app/overview/course-conversations/layout/conversation-thread-sidebar/conversation-thread-sidebar.component';
@@ -41,7 +42,7 @@ const routes: Routes = [
         data: {
             pageTitle: 'artemisApp.conversationsLayout.tabTitle',
         },
-        component: CourseConversationsComponent,
+        loadComponent: () => import('app/overview/course-conversations/course-conversations.component').then((m) => m.CourseConversationsComponent),
     },
 ];
 
