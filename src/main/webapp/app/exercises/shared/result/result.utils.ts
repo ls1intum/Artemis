@@ -8,7 +8,6 @@ import { ProgrammingExercise } from 'app/entities/programming/programming-exerci
 import { Submission, SubmissionExerciseType } from 'app/entities/submission.model';
 import { ProgrammingSubmission } from 'app/entities/programming/programming-submission.model';
 import { AssessmentType } from 'app/entities/assessment-type.model';
-import { IconProp } from '@fortawesome/fontawesome-svg-core';
 import { faCheckCircle, faQuestionCircle, faTimesCircle } from '@fortawesome/free-regular-svg-icons';
 import { faCircleNotch } from '@fortawesome/free-solid-svg-icons';
 import { isModelingOrTextOrFileUpload, isParticipationInDueTime, isProgrammingOrQuiz } from 'app/exercises/shared/participation/participation.utils';
@@ -315,7 +314,7 @@ export const getTextColorClass = (result: Result | undefined, templateStatus: Re
  * Get the icon type for the result icon as an array
  *
  */
-export const getResultIconClass = (result: Result | undefined, templateStatus: ResultTemplateStatus): IconProp => {
+export const getResultIconClass = (result: Result | undefined, templateStatus: ResultTemplateStatus) => {
     if (!result) {
         return faQuestionCircle;
     }

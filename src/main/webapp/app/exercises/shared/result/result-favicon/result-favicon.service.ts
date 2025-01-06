@@ -3,7 +3,7 @@ import { Result } from 'app/entities/result.model';
 import { MissingResultInformation, ResultTemplateStatus, evaluateTemplateStatus, getResultIconClass, getTextColorClass } from '../result.utils';
 import { Exercise } from 'app/entities/exercise.model';
 import { Participation } from 'app/entities/participation/participation.model';
-import { IconProp } from '@fortawesome/angular-fontawesome/types';
+import { IconDefinition } from '@fortawesome/fontawesome-common-types';
 
 /**
  * A service that updates the favicon of the page based on the result of an exercise. Adds a small badge to the favicon that indicates the status of the result.
@@ -23,14 +23,12 @@ export class ResultFaviconService {
 
     constructor() {}
 
-    private getSVGPathFromIcon(icon: IconProp) {
-        // todo: find a better way to do this. this is bad.
-        return (icon as any).icon[4];
+    private getSVGPathFromIcon(icon: IconDefinition) {
+        return icon.icon[4].toString();
     }
 
-    private getIconSize(icon: IconProp) {
-        // todo: again, this isn't ideal
-        return Math.max((icon as any).icon[0], (icon as any).icon[1]);
+    private getIconSize(icon: IconDefinition) {
+        return Math.max(icon.icon[0], icon.icon[1]);
     }
 
     private getColorFromClass(className: string) {
@@ -98,7 +96,7 @@ export class ResultFaviconService {
 
                     context.fillStyle = iconColor;
 
-                    const iconPathObject = new Path2D(iconPath);
+                    const iconPathObject = new Path2D(iconPath as string);
 
                     context.translate(faviconSize - iconSize / 2, faviconSize - iconSize / 2);
                     if (shouldBeLoading) {
