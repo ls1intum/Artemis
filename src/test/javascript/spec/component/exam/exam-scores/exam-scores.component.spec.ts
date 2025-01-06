@@ -2,7 +2,6 @@ import { HttpResponse, provideHttpClient } from '@angular/common/http';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { ActivatedRoute, Router } from '@angular/router';
-import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { TranslateService } from '@ngx-translate/core';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { JhiLanguageHelper } from 'app/core/language/language.helper';
@@ -15,7 +14,7 @@ import {
     ExerciseResult,
     StudentResult,
 } from 'app/exam/exam-scores/exam-score-dtos.model';
-import { MockComponent, MockDirective, MockModule, MockPipe, MockProvider } from 'ng-mocks';
+import { MockDirective, MockModule, MockPipe, MockProvider } from 'ng-mocks';
 import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
 import { ExamScoresComponent, MedianType } from 'app/exam/exam-scores/exam-scores.component';
 import { ExamManagementService } from 'app/exam/manage/exam-management.service';
@@ -27,14 +26,12 @@ import { EMPTY, of } from 'rxjs';
 import { GradingSystemService } from 'app/grading-system/grading-system.service';
 import { GradingScale } from 'app/entities/grading-scale.model';
 import { GradeStep } from 'app/entities/grade-step.model';
-import { ExamScoresAverageScoresGraphComponent } from 'app/exam/exam-scores/exam-scores-average-scores-graph.component';
 import { SortDirective } from 'app/shared/sort/sort.directive';
 import { SortByDirective } from 'app/shared/sort/sort-by.directive';
 import { AlertService } from 'app/core/util/alert.service';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
 import { MockRouter } from '../../../helpers/mocks/mock-router';
 import { AccountService } from 'app/core/auth/account.service';
-import { MockRouterLinkDirective } from '../../../helpers/mocks/directive/mock-router-link.directive';
 import { LocaleConversionService } from 'app/shared/service/locale-conversion.service';
 import { ArtemisNavigationUtilService } from 'app/utils/navigation.utils';
 import { CsvDecimalSeparator, CsvExportOptions, CsvFieldSeparator, CsvQuoteStrings } from 'app/shared/export/export-modal.component';
@@ -275,17 +272,8 @@ describe('ExamScoresComponent', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [MockModule(BrowserAnimationsModule)],
-            declarations: [
-                ExamScoresComponent,
-                MockPipe(ArtemisTranslatePipe),
-                MockComponent(FaIconComponent),
-                MockDirective(TranslateDirective),
-                MockDirective(SortByDirective),
-                MockDirective(SortDirective),
-                MockComponent(ExamScoresAverageScoresGraphComponent),
-                MockRouterLinkDirective,
-            ],
+            imports: [MockModule(BrowserAnimationsModule), MockPipe(ArtemisTranslatePipe), MockDirective(TranslateDirective)],
+            declarations: [MockDirective(SortByDirective), MockDirective(SortDirective)],
             providers: [
                 { provide: ActivatedRoute, useValue: { params: of({ courseId: 1, examId: 1 }) } },
                 { provide: Router, useClass: MockRouter },

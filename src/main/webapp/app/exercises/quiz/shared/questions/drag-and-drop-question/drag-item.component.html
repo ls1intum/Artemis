@@ -9,7 +9,7 @@
     }
     @if (dragItem && !dragItem.pictureFilePath) {
         <div class="drag-item-text">
-            <div [fitText]="true" [activateOnResize]="true" [maxFontSize]="17" [minFontSize]="15" [delay]="150">
+            <div [jhiFitText]="true" [activateOnResize]="true" [maxFontSize]="17" [minFontSize]="15" [delay]="150">
                 <div class="drag-box" [cdkDragDisabled]="clickDisabled" [cdkDragData]="dragItem" cdkDrag>
                     <span>{{ dragItem.text }}</span>
                     <div *cdkDragPlaceholder></div>

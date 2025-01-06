@@ -1,6 +1,4 @@
 import { Component, OnInit, inject, input } from '@angular/core';
-import { StatisticsService } from 'app/shared/statistics-graph/statistics.service';
-import { TranslateService } from '@ngx-translate/core';
 import { GraphColors } from 'app/entities/statistics.model';
 import { AggregatedExerciseGroupResult } from 'app/exam/exam-scores/exam-score-dtos.model';
 import { LocaleConversionService } from 'app/shared/service/locale-conversion.service';
@@ -25,8 +23,6 @@ type NameToValueMap = { [name: string]: any };
 export class ExamScoresAverageScoresGraphComponent implements OnInit {
     private navigationUtilService = inject(ArtemisNavigationUtilService);
     private activatedRoute = inject(ActivatedRoute);
-    private service = inject(StatisticsService);
-    private translateService = inject(TranslateService);
     private localeConversionService = inject(LocaleConversionService);
 
     averageScores = input.required<AggregatedExerciseGroupResult>();
