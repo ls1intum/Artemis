@@ -42,6 +42,10 @@ on:
         description: "Tag to use when building Docker image"
         required: true
         type: string
+      raw_url:
+        description: "URL to use for fetching files in the format https://raw.githubusercontent.com/:owner/:repo/:sha"
+        required: true
+        type: string
 
 # Keep in sync with codeql-analysis.yml and test.yml and analysis-of-endpoint-connections.yml
 env:
@@ -56,10 +60,10 @@ jobs:
     name: Build .war artifact
     runs-on: ubuntu-latest
     steps:
-    # If this is a workflow_call and a 'sha' is provided, override RAW_URL
+    # If this is a workflow_call, override RAW_URL
     - name: Override RAW_URL for workflow_call
-      if: ${{ github.event_name == 'workflow_call' && inputs.sha != '' }}
-      run: echo "RAW_URL=https://raw.githubusercontent.com/${{ github.repository }}/${{ inputs.sha }}" >> $GITHUB_ENV
+      if: ${{ github.event_name == 'workflow_call' && inputs.raw_url != '' }}
+      run: echo "RAW_URL=${{ inputs.raw_url }}" >> $GITHUB_ENV
 
     # If this workflow is called via `workflow_call`, checkout the specified branch
     - name: Git Checkout (for workflow_call)
@@ -108,8 +112,8 @@ jobs:
     steps:
     # If this is a workflow_call and a 'sha' is provided, override RAW_URL
     - name: Override RAW_URL for workflow_call
-      if: ${{ github.event_name == 'workflow_call' && inputs.sha != '' }}
-      run: echo "RAW_URL=https://raw.githubusercontent.com/${{ github.repository }}/${{ inputs.sha }}" >> $GITHUB_ENV
+      if: ${{ github.event_name == 'workflow_call' && inputs.raw_url != '' }}
+      run: echo "RAW_URL=${{ inputs.raw_url }}" >> $GITHUB_ENV
 
     - name: Compute Tag
       uses: actions/github-script@v7
@@ -185,3 +189,28 @@ jobs:
     # TODO: Push to Docker Hub (develop + tag)
 
     # TODO: Push to Chair Harbour (??)
+
+  add-build-error-comment:
+    name: Add Build Error Comment
+    needs: [build, docker]
+    runs-on: ubuntu-latest
+    if: ${{ always() && github.event_name == 'pull_request' }}
+    steps:
+      - name: Post comment about build/docker failure
+        if: failure()
+        uses: marocchino/sticky-pull-request-comment@v2
+        with:
+          number: ${{ github.event.pull_request.number }}
+          header: build-failure
+          message: |
+            ### 🚨 Build or Docker step failed 🚨
+
+            Please check the logs of the failed step for more information.
+
+      - name: Remove sticky comment if build/docker succeed
+        if: success()
+        uses: marocchino/sticky-pull-request-comment@v2
+        with:
+          number: ${{ github.event.pull_request.number }}
+          header: build-failure
+          delete: true

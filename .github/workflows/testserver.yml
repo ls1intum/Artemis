@@ -32,11 +32,15 @@ on:
         description: "Docker tag to use if we are building or pulling an existing image"
         required: false
         type: string
+      HELIOS_RAW_URL:
+        description: "URL to the raw content of the repository in the format https://raw.githubusercontent.com/:owner/:repo/:sha"
+        required: false
+        type: string
 
 concurrency: test-servers
 
 env:
-  RAW_URL: https://raw.githubusercontent.com/${{ github.repository }}/${{ github.sha }}
+  RAW_URL: ${{ github.event.inputs.HELIOS_RAW_URL }}
 
 jobs:
   # Print the inputs for debugging
@@ -53,10 +57,6 @@ jobs:
         run: |
           echo "HELIOS_BUILD is false but no HELIOS_PR_NUMBER was provided."
           exit 1
-
-      # If this is a workflow_call and a 'sha' is provided, override RAW_URL
-      - name: Override RAW_URL
-        run: echo "RAW_URL=https://raw.githubusercontent.com/${{ github.repository }}/${{ github.event.inputs.HELIOS_BRANCH_HEAD_SHA }}" >> $GITHUB_ENV
 
       - name: Print Inputs
         run: |
@@ -81,6 +81,7 @@ jobs:
         with:
           sha: ${{ github.event.inputs.HELIOS_BRANCH_HEAD_SHA }}
           tag: ${{ github.event.inputs.HELIOS_BUILD_TAG }}
+          raw_url: ${{ env.RAW_URL }}
       - name: Echo build failure
         if: failure() && github.event.inputs.HELIOS_BUILD == 'true'
         run: echo "Build failed."
@@ -316,8 +317,8 @@ jobs:
             ./artemis-server-cli docker-deploy "$DEPLOYMENT_USER@$host" -g "$GATEWAY_USER@$GATEWAY_HOST" -t $TAG -b ${{ github.event.inputs.HELIOS_BRANCH_NAME }} -d $DEPLOYMENT_FOLDER -y
           done
 
-  # Check that the build job has run successfully before deploying
-  add-error-label:
+  # Add a sticky comment to the PR if the deployment fails
+  add-deployment-error-comment:
     if: ${{ github.event.inputs.HELIOS_PR_NUMBER != '' }}
     needs: [ deploy ]
     runs-on: ubuntu-latest
@@ -333,7 +334,7 @@ jobs:
 
             Please check the logs and try again.
 
-      - name: Remove sticky comment on deployment failure
+      - name: Remove sticky comment for deployment failure on success
         if: success()
         uses: marocchino/sticky-pull-request-comment@v2
         with:
