@@ -54,23 +54,23 @@ public class PublicLtiResource {
     @EnforceNothing
     public ResponseEntity<Void> lti13LaunchRedirect(HttpServletRequest request, HttpServletResponse response) throws IOException {
         String state = request.getParameter("state");
-        response.sendError(HttpStatus.CONTINUE.value(), "test1");
+
         if (state == null) {
             errorOnMissingParameter(response, "state");
             return ResponseEntity.ok().build();
         }
-        response.sendError(HttpStatus.CONTINUE.value(), "test2");
+
         String idToken = request.getParameter("id_token");
         if (idToken == null) {
             errorOnMissingParameter(response, "id_token");
             return ResponseEntity.ok().build();
         }
-        response.sendError(HttpStatus.CONTINUE.value(), "test3");
+
         if (!isValidJwtIgnoreSignature(idToken)) {
             errorOnIllegalParameter(response);
             return ResponseEntity.ok().build();
         }
-        response.sendError(HttpStatus.CONTINUE.value(), "test4");
+
         UriComponentsBuilder uriBuilder = buildRedirect(request);
         uriBuilder.path(LOGIN_REDIRECT_CLIENT_PATH);
         uriBuilder.queryParam("state", UriComponent.encode(state, UriComponent.Type.QUERY_PARAM));
