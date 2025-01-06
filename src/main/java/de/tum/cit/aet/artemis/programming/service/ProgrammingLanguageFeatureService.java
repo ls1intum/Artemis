@@ -76,7 +76,6 @@ public abstract class ProgrammingLanguageFeatureService implements InfoContribut
                         feature.packageNameRequired(),
                         feature.checkoutSolutionRepositoryAllowed(),
                         filteredProjectTypes,
-                        feature.testwiseCoverageAnalysisSupported(),
                         feature.auxiliaryRepositoriesSupported()
                     );
                     // @formatter:on
