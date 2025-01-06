@@ -128,7 +128,7 @@ public class AttachmentUnitService {
             throw new BadRequestAlertException("Attachment unit must be associated to an attachment", "AttachmentUnit", "attachmentMissing");
         }
 
-        updateAttachment(existingAttachment, updateAttachment, savedAttachmentUnit);
+        updateAttachment(existingAttachment, updateAttachment, savedAttachmentUnit, hiddenPages);
         handleFile(updateFile, existingAttachment, keepFilename, savedAttachmentUnit.getId());
         handleStudentVersionFile(studentVersionFile, existingAttachment, savedAttachmentUnit.getId());
         final int revision = existingAttachment.getVersion() == null ? 1 : existingAttachment.getVersion() + 1;
@@ -168,14 +168,18 @@ public class AttachmentUnitService {
      * @param existingAttachment the existing attachment
      * @param updateAttachment   the new attachment containing updated information
      * @param attachmentUnit     the attachment unit to update
+     * @param hiddenPages        the hidden pages in the attachment
      */
-    private void updateAttachment(Attachment existingAttachment, Attachment updateAttachment, AttachmentUnit attachmentUnit) {
+    private void updateAttachment(Attachment existingAttachment, Attachment updateAttachment, AttachmentUnit attachmentUnit, String hiddenPages) {
         // Make sure that the original references are preserved.
         existingAttachment.setAttachmentUnit(attachmentUnit);
         existingAttachment.setReleaseDate(updateAttachment.getReleaseDate());
         existingAttachment.setName(updateAttachment.getName());
         existingAttachment.setReleaseDate(updateAttachment.getReleaseDate());
         existingAttachment.setAttachmentType(updateAttachment.getAttachmentType());
+        if (hiddenPages == null && existingAttachment.getStudentVersion() != null) {
+            existingAttachment.setStudentVersion(null);
+        }
     }
 
     /**
