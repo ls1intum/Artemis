@@ -1,9 +1,7 @@
 import { TestBed } from '@angular/core/testing';
 import { ResultFaviconService } from 'app/exercises/shared/result/result-favicon/result-favicon.service';
-import { MissingResultInformation, Result, ResultTemplateStatus } from 'app/exercises/shared/result/result.utils';
+import { ResultTemplateStatus } from 'app/exercises/shared/result/result.utils';
 import * as resultUtils from 'app/exercises/shared/result/result.utils';
-import { Exercise } from 'app/entities/exercise.model';
-import { Participation } from 'app/entities/participation/participation.model';
 
 describe('ResultFaviconService', () => {
     let service: ResultFaviconService;
@@ -54,10 +52,6 @@ describe('ResultFaviconService', () => {
 
     describe('updateFavicon()', () => {
         it('should replace the favicon and set up intervals when building', () => {
-            const mockResult: Result = {};
-            const mockExercise: Exercise = {};
-            const mockParticipation: Participation = {};
-            const mockMissingResult: MissingResultInformation = {};
             const isBuilding = true;
             const isQueued = false;
 
@@ -71,7 +65,8 @@ describe('ResultFaviconService', () => {
             jest.spyOn(resultUtils, 'getTextColorClass').mockReturnValue('text-success');
             jest.spyOn(global, 'setInterval');
 
-            service.updateFavicon(mockResult, mockExercise, mockParticipation, isBuilding, isQueued, mockMissingResult);
+            // The exact values of these arguments are not important for this test suite, since the functions that use them are mocked anyway
+            service.updateFavicon(undefined, undefined, undefined, isBuilding, isQueued, undefined);
 
             // Both favicons should have been replaced with a data URL
             expect(faviconLink1.href).toContain('data:image/png');
@@ -82,14 +77,10 @@ describe('ResultFaviconService', () => {
         });
 
         it('should not set intervals if not building or queued', () => {
-            const mockResult: Result = {};
-            const mockExercise: Exercise = {};
-            const mockParticipation: Participation = {};
-            const mockMissingResult: MissingResultInformation = {};
             const isBuilding = false;
             const isQueued = false;
 
-            jest.spyOn(resultUtils, 'evaluateTemplateStatus').mockReturnValue(ResultTemplateStatus.HAS_FEEDBACK);
+            jest.spyOn(resultUtils, 'evaluateTemplateStatus').mockReturnValue(ResultTemplateStatus.HAS_RESULT);
             jest.spyOn(resultUtils, 'getResultIconClass').mockReturnValue({
                 icon: [1024, 1024, [], '', 'M0 0 H1024 V1024 H0 Z'],
                 prefix: 'fas',
@@ -98,7 +89,7 @@ describe('ResultFaviconService', () => {
             jest.spyOn(resultUtils, 'getTextColorClass').mockReturnValue('text-success');
             jest.spyOn(global, 'setInterval');
 
-            service.updateFavicon(mockResult, mockExercise, mockParticipation, isBuilding, isQueued, mockMissingResult);
+            service.updateFavicon(undefined, undefined, undefined, isBuilding, isQueued, undefined);
 
             // Both favicons should have been replaced with a data URL
             expect(faviconLink1.href).toContain('data:image/png');
@@ -111,10 +102,8 @@ describe('ResultFaviconService', () => {
 
     describe('removeFavicon()', () => {
         it('should restore original favicons', () => {
-            const mockResult: Result = {};
-            const mockExercise: Exercise = {};
-            const mockParticipation: Participation = {};
-            const mockMissingResult: MissingResultInformation = {};
+            const isBuilding = false;
+            const isQueued = false;
 
             jest.spyOn(resultUtils, 'evaluateTemplateStatus').mockReturnValue(ResultTemplateStatus.IS_BUILDING);
             jest.spyOn(resultUtils, 'getResultIconClass').mockReturnValue({
@@ -124,7 +113,7 @@ describe('ResultFaviconService', () => {
             });
             jest.spyOn(resultUtils, 'getTextColorClass').mockReturnValue('text-success');
 
-            service.updateFavicon(mockResult, mockExercise, mockParticipation, true, false, mockMissingResult);
+            service.updateFavicon(undefined, undefined, undefined, isBuilding, isQueued, undefined);
 
             // Confirm it replaced the favicons
             expect(faviconLink1.href).toContain('data:image/png');

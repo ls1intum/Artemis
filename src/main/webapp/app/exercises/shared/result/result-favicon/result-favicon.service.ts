@@ -51,8 +51,8 @@ export class ResultFaviconService {
      */
     updateFavicon(
         result: Result | undefined,
-        exercise: Exercise,
-        participation: Participation,
+        exercise: Exercise | undefined,
+        participation: Participation | undefined,
         isBuilding: boolean,
         isQueued: boolean,
         missingResultInfo: MissingResultInformation | undefined,
