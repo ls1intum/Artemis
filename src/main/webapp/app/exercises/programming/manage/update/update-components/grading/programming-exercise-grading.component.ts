@@ -1,4 +1,4 @@
-import { AfterViewInit, Component, Input, OnDestroy, ViewChild, inject, input, signal } from '@angular/core';
+import { AfterContentInit, Component, Input, OnDestroy, ViewChild, inject, input, signal } from '@angular/core';
 import { ProgrammingExercise } from 'app/entities/programming/programming-exercise.model';
 import { AssessmentType } from 'app/entities/assessment-type.model';
 import { SubmissionPolicyType } from 'app/entities/submission-policy.model';
@@ -46,7 +46,7 @@ import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
         ArtemisTranslatePipe,
     ],
 })
-export class ProgrammingExerciseGradingComponent implements AfterViewInit, OnDestroy {
+export class ProgrammingExerciseGradingComponent implements AfterContentInit, OnDestroy {
     private translateService = inject(TranslateService);
 
     protected readonly IncludedInOverallScore = IncludedInOverallScore;
@@ -76,7 +76,7 @@ export class ProgrammingExerciseGradingComponent implements AfterViewInit, OnDes
 
     editPolicyUrl: string;
 
-    ngAfterViewInit(): void {
+    ngAfterContentInit(): void {
         this.inputFieldSubscriptions.push(this.maxScoreField?.valueChanges?.subscribe(() => this.calculateFormStatus()));
         this.inputFieldSubscriptions.push(this.bonusPointsField?.valueChanges?.subscribe(() => this.calculateFormStatus()));
         this.inputFieldSubscriptions.push(this.maxPenaltyField?.valueChanges?.subscribe(() => this.calculateFormStatus()));
