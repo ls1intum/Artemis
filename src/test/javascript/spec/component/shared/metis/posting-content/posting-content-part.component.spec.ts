@@ -9,8 +9,6 @@ import { MockQueryParamsDirective, MockRouterLinkDirective } from '../../../../h
 import { FileService } from 'app/shared/http/file.service';
 import { MockFileService } from '../../../../helpers/mocks/service/mock-file.service';
 import { MockRouter } from '../../../../helpers/mocks/mock-router';
-import { MatDialogModule } from '@angular/material/dialog';
-import { MatMenuModule } from '@angular/material/menu';
 import { AccountService } from 'app/core/auth/account.service';
 import { User } from 'app/core/user/user.model';
 import { MockProvider } from 'ng-mocks';
@@ -32,14 +30,9 @@ describe('PostingContentPartComponent', () => {
         await TestBed.configureTestingModule({
             imports: [
                 ArtemisTestModule,
-                MatDialogModule,
-                MatMenuModule,
                 HtmlForPostingMarkdownPipe, // we want to test against the rendered string, therefore we cannot mock the pipe
                 MockRouterLinkDirective,
                 MockQueryParamsDirective,
-            ],
-            declarations: [
-                // FaIconComponent, // we want to test the type of rendered icons, therefore we cannot mock the component
             ],
             providers: [
                 { provide: FileService, useClass: MockFileService },
