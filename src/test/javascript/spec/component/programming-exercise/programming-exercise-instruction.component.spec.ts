@@ -245,6 +245,7 @@ describe('ProgrammingExerciseInstructionComponent', () => {
         expect(comp.isLoading).toBeFalse();
     });
 
+    // TODO check if this is an issue with the client itself here
     it('should create the steps task icons for the tasks in problem statement markdown', fakeAsync(() => {
         const result: Result = {
             id: 1,
