@@ -1,5 +1,6 @@
 package de.tum.cit.aet.artemis.iris;
 
+import static de.tum.cit.aet.artemis.communication.FaqFactory.generateFaq;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import java.util.List;
@@ -62,12 +63,9 @@ class PyrisFaqIngestionTest extends AbstractIrisIntegrationTest {
         userUtilService.addUsers(TEST_PREFIX, 1, 1, 0, 1);
         List<Course> courses = courseUtilService.createCoursesWithExercisesAndLectures(TEST_PREFIX, true, true, 1);
         Course course1 = this.courseRepository.findByIdWithExercisesAndExerciseDetailsAndLecturesElseThrow(courses.getFirst().getId());
-        this.faq1 = new Faq();
-        this.faq1.setQuestionAnswer("Answer 1");
-        this.faq1.setQuestionTitle("Title 1");
-        this.faq1.setCourse(course1);
-        this.faq1.setFaqState(FaqState.ACCEPTED);
-        this.faq1 = faqRepository.save(this.faq1);
+
+        this.faq1 = generateFaq(course1, FaqState.ACCEPTED, "Faq 1 title", "Faq 1 content");
+        faqRepository.save(faq1);
         // Add users that are not in the course
         userUtilService.createAndSaveUser(TEST_PREFIX + "student42");
         userUtilService.createAndSaveUser(TEST_PREFIX + "tutor42");
@@ -100,22 +98,12 @@ class PyrisFaqIngestionTest extends AbstractIrisIntegrationTest {
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
-    void testIngestFaqsButtonInPyris() throws Exception {
+    void testIngestFaqButtonInPyris() throws Exception {
         activateIrisFor(faq1.getCourse());
         irisRequestMockProvider.mockFaqIngestionWebhookRunResponse(dto -> {
             assertThat(dto.settings().authenticationToken()).isNotNull();
         });
-        request.postWithResponseBody("/api/courses/" + faq1.getCourse().getId() + "faqs/ingest", Optional.empty(), boolean.class, HttpStatus.OK);
-    }
-
-    @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
-    void testIngestFaqUnitButtonInPyris() {
-        activateIrisFor(faq1.getCourse());
-        irisRequestMockProvider.mockFaqIngestionWebhookRunResponse(dto -> {
-            assertThat(dto.settings().authenticationToken()).isNotNull();
-        });
-
+        request.postWithResponseBody("/api/courses/" + faq1.getCourse().getId() + "/faqs/ingest", Optional.empty(), boolean.class, HttpStatus.OK);
     }
 
     @Test
@@ -139,7 +127,7 @@ class PyrisFaqIngestionTest extends AbstractIrisIntegrationTest {
         irisRequestMockProvider.mockFaqIngestionWebhookRunResponse(dto -> {
             assertThat(dto.settings().authenticationToken()).isNotNull();
         });
-        request.postWithResponseBody("/api/courses/" + faq1.getCourse().getId() + "faqs/ingest", Optional.empty(), boolean.class, HttpStatus.OK);
+        request.postWithResponseBody("/api/courses/" + faq1.getCourse().getId() + "/faqs/ingest", Optional.empty(), boolean.class, HttpStatus.OK);
     }
 
     @Test
@@ -209,7 +197,7 @@ class PyrisFaqIngestionTest extends AbstractIrisIntegrationTest {
     @Test
     void testErrorStageRemovesDeletionIngestionJob() throws Exception {
         activateIrisFor(faq1.getCourse());
-        irisRequestMockProvider.mockFaqIngestionWebhookRunResponse(dto -> {
+        irisRequestMockProvider.mockFaqDeletionWebhookRunResponse(dto -> {
             assertThat(dto.settings().authenticationToken()).isNotNull();
         });
 
