@@ -473,8 +473,7 @@ public class SharedQueueProcessingService {
             buildLogsMap.removeBuildLogs(buildJob.id());
 
             BuildResult failedResult = new BuildResult(buildJob.buildConfig().branch(), buildJob.buildConfig().assignmentCommitHash(), buildJob.buildConfig().testCommitHash(),
-                    false);
-            failedResult.setBuildLogEntries(buildLogs);
+                    buildLogs, false);
 
             ResultQueueItem resultQueueItem = new ResultQueueItem(failedResult, job, buildLogs, ex);
             if (processResults.get()) {

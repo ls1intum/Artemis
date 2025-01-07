@@ -11,6 +11,7 @@ import java.nio.file.Path;
 import java.time.ZonedDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.List;
 
 import org.junit.jupiter.api.AfterEach;
@@ -88,7 +89,7 @@ class LocalCIResourceIntegrationTest extends AbstractProgrammingIntegrationLocal
         JobTimingInfo jobTimingInfo2 = new JobTimingInfo(ZonedDateTime.now(), ZonedDateTime.now().plusMinutes(1), ZonedDateTime.now().plusMinutes(2), null, 20);
         JobTimingInfo jobTimingInfo3 = new JobTimingInfo(ZonedDateTime.now().minusMinutes(10), ZonedDateTime.now().minusMinutes(9), ZonedDateTime.now().plusSeconds(150), null, 20);
 
-        BuildConfig buildConfig = new BuildConfig("echo 'test'", "test", "test", "test", "test", "test", null, null, false, false, false, null, 0, null, null, null, null);
+        BuildConfig buildConfig = new BuildConfig("echo 'test'", "test", "test", "test", "test", "test", null, null, false, false, null, 0, null, null, null, null);
         RepositoryInfo repositoryInfo = new RepositoryInfo("test", null, RepositoryType.USER, "test", "test", "test", null, null);
 
         String memberAddress = hazelcastInstance.getCluster().getLocalMember().getAddress().toString();
@@ -282,7 +283,7 @@ class LocalCIResourceIntegrationTest extends AbstractProgrammingIntegrationLocal
         // Create a failed job to filter for
         JobTimingInfo jobTimingInfo = new JobTimingInfo(ZonedDateTime.now().plusDays(1), ZonedDateTime.now().plusDays(1).plusMinutes(2),
                 ZonedDateTime.now().plusDays(1).plusMinutes(10), null, 0);
-        BuildConfig buildConfig = new BuildConfig("echo 'test'", "test", "test", "test", "test", "test", null, null, false, false, false, null, 0, null, null, null, null);
+        BuildConfig buildConfig = new BuildConfig("echo 'test'", "test", "test", "test", "test", "test", null, null, false, false, null, 0, null, null, null, null);
         RepositoryInfo repositoryInfo = new RepositoryInfo("test", null, RepositoryType.USER, "test", "test", "test", null, null);
         var failedJob1 = new BuildJobQueueItem("5", "job5", buildAgent, 1, course.getId(), 1, 1, 1, BuildStatus.FAILED, repositoryInfo, jobTimingInfo, buildConfig, null);
         var jobResult = new Result().successful(false).rated(true).score(0D).assessmentType(AssessmentType.AUTOMATIC).completionDate(ZonedDateTime.now());
@@ -347,6 +348,30 @@ class LocalCIResourceIntegrationTest extends AbstractProgrammingIntegrationLocal
     }
 
     @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testGetBuildLogsEntriesForResult() throws Exception {
+        try {
+            buildJobRepository.save(finishedJobForLogs);
+            BuildLogDTO buildLogEntry = new BuildLogDTO(ZonedDateTime.now(), "Dummy log");
+            buildLogEntryService.saveBuildLogsToFile(List.of(buildLogEntry), "6", programmingExercise);
+            var response = request.get("/api/build-log/6/entries", HttpStatus.OK, List.class);
+
+            LinkedHashMap<?, ?> responseMap = ((LinkedHashMap<?, ?>) response.getFirst());
+            String log = responseMap.get("log").toString();
+            ZonedDateTime time = ZonedDateTime.parse(responseMap.get("time").toString());
+            assertThat(response).hasSize(1);
+            assertThat(buildLogEntry.log()).isEqualTo(log);
+            assertThat(buildLogEntry.time()).isEqualTo(time);
+
+        }
+        finally {
+            Path buildLogFile = Path.of("build-logs").resolve(programmingExercise.getCourseViaExerciseGroupOrCourseMember().getShortName())
+                    .resolve(programmingExercise.getShortName()).resolve("6.log");
+            Files.deleteIfExists(buildLogFile);
+        }
+    }
+
+    @Test
     @WithMockUser(username = TEST_PREFIX + "admin", roles = "ADMIN")
     void testGetBuildJobStatistics() throws Exception {
         buildJobRepository.deleteAll();
@@ -402,7 +427,7 @@ class LocalCIResourceIntegrationTest extends AbstractProgrammingIntegrationLocal
         JobTimingInfo jobTimingInfo4 = new JobTimingInfo(now.plusSeconds(2), null, null, null, 24);
         JobTimingInfo jobTimingInfo5 = new JobTimingInfo(now.plusSeconds(3), null, null, null, 24);
 
-        BuildConfig buildConfig = new BuildConfig("echo 'test'", "test", "test", "test", "test", "test", null, null, false, false, false, null, 0, null, null, null, null);
+        BuildConfig buildConfig = new BuildConfig("echo 'test'", "test", "test", "test", "test", "test", null, null, false, false, null, 0, null, null, null, null);
         RepositoryInfo repositoryInfo = new RepositoryInfo("test", null, RepositoryType.USER, "test", "test", "test", null, null);
 
         var job1 = new BuildJobQueueItem("1", "job1", buildAgent, 1, course.getId(), 1, 1, 1, BuildStatus.SUCCESSFUL, repositoryInfo, jobTimingInfo1, buildConfig, null);

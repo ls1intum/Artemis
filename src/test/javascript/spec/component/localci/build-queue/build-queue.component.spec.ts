@@ -14,6 +14,7 @@ import { HttpResponse } from '@angular/common/http';
 import { SortingOrder } from 'app/shared/table/pageable-table';
 import { LocalStorageService } from 'ngx-webstorage';
 import { MockLocalStorageService } from '../../../helpers/mocks/service/mock-local-storage.service';
+import { BuildLogEntry, BuildLogLines } from '../../../../../../main/webapp/app/entities/programming/build-log.model';
 
 describe('BuildQueueComponent', () => {
     let component: BuildQueueComponent;
@@ -35,6 +36,7 @@ describe('BuildQueueComponent', () => {
         getFinishedBuildJobs: jest.fn(),
         getBuildJobStatistics: jest.fn(),
         getBuildJobStatisticsForCourse: jest.fn(),
+        getBuildJobLogs: jest.fn(),
     };
 
     const mockLocalStorageService = new MockLocalStorageService();
@@ -84,7 +86,6 @@ describe('BuildQueueComponent', () => {
                 projectType: 'Maven',
                 scaEnabled: false,
                 sequentialTestRunsEnabled: false,
-                testwiseCoverageEnabled: false,
                 resultPaths: [],
             },
         },
@@ -120,7 +121,6 @@ describe('BuildQueueComponent', () => {
                 projectType: 'Maven',
                 scaEnabled: false,
                 sequentialTestRunsEnabled: false,
-                testwiseCoverageEnabled: false,
                 resultPaths: [],
             },
         },
@@ -158,7 +158,6 @@ describe('BuildQueueComponent', () => {
                 projectType: 'Maven',
                 scaEnabled: false,
                 sequentialTestRunsEnabled: false,
-                testwiseCoverageEnabled: false,
                 resultPaths: [],
             },
         },
@@ -194,7 +193,6 @@ describe('BuildQueueComponent', () => {
                 projectType: 'Maven',
                 scaEnabled: false,
                 sequentialTestRunsEnabled: false,
-                testwiseCoverageEnabled: false,
                 resultPaths: [],
             },
         },
@@ -259,6 +257,17 @@ describe('BuildQueueComponent', () => {
         areDurationFiltersValid: true,
         numberOfAppliedFilters: 0,
     };
+
+    const buildLogEntries: BuildLogEntry[] = [
+        {
+            time: dayjs('2024-01-01'),
+            log: 'log1',
+        },
+        {
+            time: dayjs('2024-01-02'),
+            log: 'log2',
+        },
+    ];
 
     beforeEach(waitForAsync(() => {
         mockActivatedRoute = { params: of({ courseId: testCourseId }) };
@@ -623,5 +632,25 @@ describe('BuildQueueComponent', () => {
 
         expect(component.finishedBuildJobFilter.areDatesValid).toBeFalsy();
         expect(component.finishedBuildJobFilter.areDurationFiltersValid).toBeFalsy();
+    });
+
+    it('should download build logs', () => {
+        const buildJobId = '1';
+        jest.spyOn(window, 'open').mockImplementation();
+
+        mockBuildQueueService.getBuildJobLogs = jest.fn().mockReturnValue(of(buildLogEntries));
+
+        const buildLogsMultiLines: BuildLogLines[] = buildLogEntries.map((entry) => {
+            return { time: entry.time, logLines: entry.log.split('\n') };
+        });
+
+        component.viewBuildLogs(undefined, buildJobId);
+
+        expect(mockBuildQueueService.getBuildJobLogs).toHaveBeenCalledWith(buildJobId);
+        expect(component.rawBuildLogs).toEqual(buildLogsMultiLines);
+
+        component.downloadBuildLogs();
+
+        expect(window.open).toHaveBeenCalledWith(`/api/build-log/${component.displayedBuildJobId}`, '_blank');
     });
 });

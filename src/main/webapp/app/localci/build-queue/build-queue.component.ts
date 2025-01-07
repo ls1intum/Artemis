@@ -23,6 +23,7 @@ import { SubmissionResultStatusModule } from 'app/overview/submission-result-sta
 import { ArtemisSharedComponentModule } from 'app/shared/components/shared-component.module';
 import { NgxDatatableModule } from '@siemens/ngx-datatable';
 import { ArtemisDataTableModule } from 'app/shared/data-table/data-table.module';
+import { BuildLogEntry, BuildLogLines } from 'app/entities/programming/build-log.model';
 
 export class FinishedBuildJobFilter {
     status?: string = undefined;
@@ -164,6 +165,9 @@ export class BuildQueueComponent implements OnInit, OnDestroy {
     search = new Subject<void>();
     searchSubscription: Subscription;
     searchTerm?: string = undefined;
+
+    rawBuildLogs: BuildLogLines[] = [];
+    displayedBuildJobId?: string;
 
     ngOnInit() {
         this.buildStatusFilterValues = Object.values(BuildJobStatusFilter);
@@ -382,11 +386,33 @@ export class BuildQueueComponent implements OnInit, OnDestroy {
 
     /**
      * View the build logs of a specific build job
-     * @param resultId The id of the build job
+     * @param modal The modal to open
+     * @param buildJobId The id of the build job
      */
-    viewBuildLogs(resultId: string | undefined): void {
-        if (resultId) {
-            const url = `/api/build-log/${resultId}`;
+    viewBuildLogs(modal: any, buildJobId: string | undefined): void {
+        if (buildJobId) {
+            this.openModal(modal, true);
+            this.displayedBuildJobId = buildJobId;
+            this.buildQueueService.getBuildJobLogs(buildJobId).subscribe({
+                next: (buildLogs: BuildLogEntry[]) => {
+                    this.rawBuildLogs = buildLogs.map((entry) => {
+                        const logLines = entry.log ? entry.log.split('\n') : [];
+                        return { time: entry.time, logLines: logLines };
+                    });
+                },
+                error: (res: HttpErrorResponse) => {
+                    onError(this.alertService, res, false);
+                },
+            });
+        }
+    }
+
+    /**
+     * Download the build logs of a specific build job
+     */
+    downloadBuildLogs(): void {
+        if (this.displayedBuildJobId) {
+            const url = `/api/build-log/${this.displayedBuildJobId}`;
             window.open(url, '_blank');
         }
     }
@@ -439,8 +465,8 @@ export class BuildQueueComponent implements OnInit, OnDestroy {
     /**
      * Opens the modal.
      */
-    open(content: any) {
-        this.modalService.open(content);
+    openModal(modal: any, fullscreen?: boolean, size?: 'sm' | 'lg' | 'xl', scrollable = true, keyboard = true) {
+        this.modalService.open(modal, { size, keyboard, scrollable, fullscreen });
     }
 
     /**
