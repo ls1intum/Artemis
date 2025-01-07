@@ -10,7 +10,6 @@ import { HttpErrorResponse, HttpResponse, provideHttpClient } from '@angular/com
 import { MockComponent, MockDirective, MockModule, MockPipe, MockProvider } from 'ng-mocks';
 
 import { ExamUpdateComponent, prepareExamForImport } from 'app/exam/manage/exams/exam-update.component';
-import { FeatureToggleDirective } from 'app/shared/feature-toggle/feature-toggle.directive';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { MockSyncStorage } from '../../helpers/mocks/service/mock-sync-storage.service';
 import { ExamManagementService } from 'app/exam/manage/exam-management.service';
@@ -35,8 +34,6 @@ import { StudentExam } from 'app/entities/student-exam.model';
 import { ExerciseGroup } from 'app/entities/exercise-group.model';
 import { ModelingExercise } from 'app/entities/modeling-exercise.model';
 import { ExamExerciseImportComponent } from 'app/exam/manage/exams/exam-exercise-import/exam-exercise-import.component';
-import { ButtonComponent } from 'app/shared/components/button.component';
-import { DifficultyBadgeComponent } from 'app/exercises/shared/exercise-headers/difficulty-badge.component';
 import { DocumentationButtonComponent } from 'app/shared/components/documentation-button/documentation-button.component';
 import { TitleChannelNameComponent } from 'app/shared/form/title-channel-name/title-channel-name.component';
 import { UMLDiagramType } from '@ls1intum/apollon';
@@ -44,6 +41,7 @@ import { TextExercise } from 'app/entities/text/text-exercise.model';
 import { MarkdownEditorMonacoComponent } from 'app/shared/markdown-editor/monaco/markdown-editor-monaco.component';
 import { CustomNotIncludedInValidatorDirective } from '../../../../../main/webapp/app/shared/validators/custom-not-included-in-validator.directive';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
+import { ArtemisSharedComponentModule } from '../../../../../main/webapp/app/shared/components/shared-component.module';
 
 @Component({
     template: '',
@@ -86,7 +84,6 @@ describe('ExamUpdateComponent', () => {
                     MockComponent(DocumentationButtonComponent),
                     MockDirective(CustomMinDirective),
                     MockDirective(CustomMaxDirective),
-                    MockDirective(FeatureToggleDirective),
                     MockDirective(CustomNotIncludedInValidatorDirective),
                 ],
                 providers: [
@@ -605,7 +602,7 @@ describe('ExamUpdateComponent', () => {
 
         beforeEach(() => {
             TestBed.configureTestingModule({
-                imports: [MockModule(NgbModule), TranslateModule.forRoot(), FormsModule, ArtemisExamModePickerModule, TitleChannelNameComponent],
+                imports: [MockModule(NgbModule), TranslateModule.forRoot(), FormsModule, ArtemisExamModePickerModule, TitleChannelNameComponent, ArtemisSharedComponentModule],
                 declarations: [
                     ExamUpdateComponent,
                     ExamExerciseImportComponent,
@@ -614,14 +611,8 @@ describe('ExamUpdateComponent', () => {
                     MockComponent(DataTableComponent),
                     DummyComponent,
                     MockPipe(ArtemisTranslatePipe),
-                    MockComponent(HelpIconComponent),
                     MockDirective(CustomMinDirective),
                     MockDirective(CustomMaxDirective),
-                    MockComponent(ButtonComponent),
-                    MockComponent(HelpIconComponent),
-                    MockComponent(DifficultyBadgeComponent),
-                    MockComponent(DocumentationButtonComponent),
-                    MockDirective(FeatureToggleDirective),
                     MockDirective(CustomNotIncludedInValidatorDirective),
                 ],
                 providers: [
