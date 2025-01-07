@@ -124,7 +124,7 @@ public class TokenProvider {
      * Convert JWT Authorization Token into UsernamePasswordAuthenticationToken, including a USer object and its authorities
      *
      * @param token JWT Authorization Token
-     * @return UsernamePasswordAuthenticationToken
+     * @return UsernamePasswordAuthenticationToken with principal, token and authorities that were stored in the token or null if no authorities were found
      */
     public Authentication getAuthentication(String token) {
         Claims claims = parseClaims(token);
@@ -136,7 +136,6 @@ public class TokenProvider {
         List<? extends GrantedAuthority> authorities = Arrays.stream(authorityClaim.toString().split(",")).map(SimpleGrantedAuthority::new).toList();
 
         User principal = new User(claims.getSubject(), "", authorities);
-
         return new UsernamePasswordAuthenticationToken(principal, token, authorities);
     }
 
@@ -144,19 +143,21 @@ public class TokenProvider {
      * Validate an JWT Authorization Token
      *
      * @param authToken JWT Authorization Token
+     * @param source    the source of the token
      * @return boolean indicating if token is valid
      */
-    public boolean validateTokenForAuthority(String authToken) {
-        return validateJwsToken(authToken);
+    public boolean validateTokenForAuthority(String authToken, @Nullable String source) {
+        return validateJwsToken(authToken, source);
     }
 
     /**
      * Validate an JWT Authorization Token
      *
      * @param authToken JWT Authorization Token
+     * @param source    the source of the token
      * @return boolean indicating if token is valid
      */
-    private boolean validateJwsToken(String authToken) {
+    private boolean validateJwsToken(String authToken, @Nullable String source) {
         try {
             parseClaims(authToken);
             return true;
@@ -180,7 +181,7 @@ public class TokenProvider {
         catch (IllegalArgumentException e) {
             log.error("Token validation error {}", e.getMessage());
         }
-        log.info("Invalid JWT token: {}", authToken);
+        log.info("Invalid JWT token: {} from source {}", authToken, source);
         return false;
     }
 
@@ -188,13 +189,7 @@ public class TokenProvider {
         return Jwts.parser().verifyWith(key).build().parseSignedClaims(authToken).getPayload();
     }
 
-    public <T> T getClaim(String token, String claimName, Class<T> claimType) {
-        Claims claims = parseClaims(token);
-        return claims.get(claimName, claimType);
-    }
-
     public Date getExpirationDate(String authToken) {
         return parseClaims(authToken).getExpiration();
     }
-
 }

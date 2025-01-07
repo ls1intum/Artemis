@@ -43,9 +43,10 @@ import com.github.dockerjava.api.model.Container;
 import com.github.dockerjava.api.model.Frame;
 import com.github.dockerjava.api.model.HostConfig;
 
+import de.tum.cit.aet.artemis.buildagent.BuildAgentConfiguration;
+import de.tum.cit.aet.artemis.buildagent.dto.BuildLogDTO;
 import de.tum.cit.aet.artemis.core.exception.LocalCIException;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingLanguage;
-import de.tum.cit.aet.artemis.programming.domain.build.BuildLogEntry;
 import de.tum.cit.aet.artemis.programming.service.ci.ContinuousIntegrationService.RepositoryCheckoutPath;
 
 /**
@@ -58,7 +59,7 @@ public class BuildJobContainerService {
 
     private static final Logger log = LoggerFactory.getLogger(BuildJobContainerService.class);
 
-    private final DockerClient dockerClient;
+    private final BuildAgentConfiguration buildAgentConfiguration;
 
     private final HostConfig hostConfig;
 
@@ -76,8 +77,8 @@ public class BuildJobContainerService {
     @Value("${artemis.continuous-integration.proxies.default.no-proxy:}")
     private String noProxy;
 
-    public BuildJobContainerService(DockerClient dockerClient, HostConfig hostConfig, BuildLogsMap buildLogsMap) {
-        this.dockerClient = dockerClient;
+    public BuildJobContainerService(BuildAgentConfiguration buildAgentConfiguration, HostConfig hostConfig, BuildLogsMap buildLogsMap) {
+        this.buildAgentConfiguration = buildAgentConfiguration;
         this.hostConfig = hostConfig;
         this.buildLogsMap = buildLogsMap;
     }
@@ -85,12 +86,13 @@ public class BuildJobContainerService {
     /**
      * Configure a container with the Docker image, the container name, optional proxy config variables, and set the command that runs when the container starts.
      *
-     * @param containerName the name of the container to be created
-     * @param image         the Docker image to use for the container
-     * @param buildScript   the build script to be executed in the container
+     * @param containerName   the name of the container to be created
+     * @param image           the Docker image to use for the container
+     * @param buildScript     the build script to be executed in the container
+     * @param exerciseEnvVars the environment variables provided by the instructor
      * @return {@link CreateContainerResponse} that can be used to start the container
      */
-    public CreateContainerResponse configureContainer(String containerName, String image, String buildScript) {
+    public CreateContainerResponse configureContainer(String containerName, String image, String buildScript, List<String> exerciseEnvVars) {
         List<String> envVars = new ArrayList<>();
         if (useSystemProxy) {
             envVars.add("HTTP_PROXY=" + httpProxy);
@@ -98,7 +100,10 @@ public class BuildJobContainerService {
             envVars.add("NO_PROXY=" + noProxy);
         }
         envVars.add("SCRIPT=" + buildScript);
-        return dockerClient.createContainerCmd(image).withName(containerName).withHostConfig(hostConfig).withEnv(envVars)
+        if (exerciseEnvVars != null && !exerciseEnvVars.isEmpty()) {
+            envVars.addAll(exerciseEnvVars);
+        }
+        return buildAgentConfiguration.getDockerClient().createContainerCmd(image).withName(containerName).withHostConfig(hostConfig).withEnv(envVars)
                 // Command to run when the container starts. This is the command that will be executed in the container's main process, which runs in the foreground and blocks the
                 // container from exiting until it finishes.
                 // It waits until the script that is running the tests (see below execCreateCmdResponse) is completed, and until the result files are extracted which is indicated
@@ -115,17 +120,29 @@ public class BuildJobContainerService {
      * @param containerId the ID of the container to be started
      */
     public void startContainer(String containerId) {
-        dockerClient.startContainerCmd(containerId).exec();
+        buildAgentConfiguration.getDockerClient().startContainerCmd(containerId).exec();
     }
 
     /**
      * Run the script in the container and wait for it to finish before returning.
      *
-     * @param containerId the id of the container in which the script should be run
-     * @param buildJobId  the id of the build job that is currently being executed
+     * @param containerId       the id of the container in which the script should be run
+     * @param buildJobId        the id of the build job that is currently being executed
+     * @param isNetworkDisabled whether the network should be disabled for the container
      */
+    public void runScriptInContainer(String containerId, String buildJobId, boolean isNetworkDisabled) {
+        if (isNetworkDisabled) {
+            log.info("disconnecting container with id {} from network", containerId);
+            try {
+                buildAgentConfiguration.getDockerClient().disconnectFromNetworkCmd().withContainerId(containerId).withNetworkId("bridge").exec();
+            }
+            catch (Exception e) {
+                log.error("Failed to disconnect container with id {} from network: {}", containerId, e.getMessage());
+                buildLogsMap.appendBuildLogEntry(buildJobId, "Failed to disconnect container from default network 'bridge': " + e.getMessage());
+                throw new LocalCIException("Failed to disconnect container from default network 'bridge': " + e.getMessage());
+            }
+        }
 
-    public void runScriptInContainer(String containerId, String buildJobId) {
         log.info("Started running the build script for build job in container with id {}", containerId);
         // The "sh script.sh" execution command specified here is run inside the container as an additional process. This command runs in the background, independent of the
         // container's
@@ -160,7 +177,7 @@ public class BuildJobContainerService {
      * @return a {@link TarArchiveInputStream} that can be used to read the archive.
      */
     public TarArchiveInputStream getArchiveFromContainer(String containerId, String path) throws NotFoundException {
-        return new TarArchiveInputStream(dockerClient.copyArchiveFromContainerCmd(containerId, path).exec());
+        return new TarArchiveInputStream(buildAgentConfiguration.getDockerClient().copyArchiveFromContainerCmd(containerId, path).exec());
     }
 
     /**
@@ -190,6 +207,8 @@ public class BuildJobContainerService {
         // Get the container ID.
         String containerId = container.getId();
 
+        log.info("Stopping container with id {}", containerId);
+
         // Create a file "stop_container.txt" in the root directory of the container to indicate that the test results have been extracted or that the container should be stopped
         // for some other reason.
         // The container's main process is waiting for this file to appear and then stops the main process, thus stopping and removing the container.
@@ -204,43 +223,44 @@ public class BuildJobContainerService {
      * @param containerId The ID of the container to stop or kill.
      */
     public void stopUnresponsiveContainer(String containerId) {
-        ExecutorService executor = Executors.newSingleThreadExecutor();
-        try {
-            // Attempt to stop the container. It should stop the container and auto-remove it.
-            // {@link DockerClient#stopContainerCmd(String)} first sends a SIGTERM command to the container to gracefully stop it,
-            // and if it does not stop within the timeout, it sends a SIGKILL command to kill the container.
-            log.info("Stopping container with id {}", containerId);
-
-            // Submit Docker stop command to executor service
-            Future<Void> future = executor.submit(() -> {
-                dockerClient.stopContainerCmd(containerId).withTimeout(5).exec();
-                return null;  // Return type to match Future<Void>
-            });
-
-            // Await the future with a timeout
-            future.get(10, TimeUnit.SECONDS);  // Wait for the stop command to complete with a timeout
-        }
-        catch (NotFoundException | NotModifiedException e) {
-            log.debug("Container with id {} is already stopped: {}", containerId, e.getMessage());
-        }
-        catch (Exception e) {
-            log.warn("Failed to stop container with id {}. Attempting to kill container: {}", containerId, e.getMessage());
-
-            // Attempt to kill the container if stop fails
+        try (ExecutorService executor = Executors.newSingleThreadExecutor()) {
             try {
-                Future<Void> killFuture = executor.submit(() -> {
-                    dockerClient.killContainerCmd(containerId).exec();
-                    return null;
+                // Attempt to stop the container. It should stop the container and auto-remove it.
+                // {@link DockerClient#stopContainerCmd(String)} first sends a SIGTERM command to the container to gracefully stop it,
+                // and if it does not stop within the timeout, it sends a SIGKILL command to kill the container.
+                log.info("Stopping container with id {}", containerId);
+
+                // Submit Docker stop command to executor service
+                Future<Void> future = executor.submit(() -> {
+                    buildAgentConfiguration.getDockerClient().stopContainerCmd(containerId).withTimeout(15).exec();
+                    return null;  // Return type to match Future<Void>
                 });
 
-                killFuture.get(5, TimeUnit.SECONDS);  // Wait for the kill command to complete with a timeout
+                // Await the future with a timeout
+                future.get(20, TimeUnit.SECONDS);  // Wait for the stop command to complete with a timeout
             }
-            catch (Exception killException) {
-                log.warn("Failed to kill container with id {}: {}", containerId, killException.getMessage());
+            catch (NotFoundException | NotModifiedException e) {
+                log.warn("Container with id {} is already stopped.", containerId, e);
             }
-        }
-        finally {
-            executor.shutdown();
+            catch (Exception e) {
+                log.error("Failed to stop container with id {}. Attempting to kill container.", containerId, e);
+
+                // Attempt to kill the container if stop fails
+                try {
+                    Future<Void> killFuture = executor.submit(() -> {
+                        buildAgentConfiguration.getDockerClient().killContainerCmd(containerId).exec();
+                        return null;
+                    });
+
+                    killFuture.get(10, TimeUnit.SECONDS);  // Wait for the kill command to complete with a timeout
+                }
+                catch (Exception killException) {
+                    log.error("Failed to kill container with id {}.", containerId, killException);
+                }
+            }
+            finally {
+                executor.shutdown();
+            }
         }
     }
 
@@ -324,16 +344,11 @@ public class BuildJobContainerService {
     private void addAndPrepareDirectoryAndReplaceContent(String containerId, Path repositoryPath, String newDirectoryName) {
         copyToContainer(repositoryPath.toString(), containerId);
         addDirectory(containerId, newDirectoryName, true);
-        removeDirectoryAndFiles(containerId, newDirectoryName);
-        renameDirectoryOrFile(containerId, LOCALCI_WORKING_DIRECTORY + "/" + repositoryPath.getFileName().toString(), newDirectoryName);
+        insertRepositoryFiles(containerId, LOCALCI_WORKING_DIRECTORY + "/" + repositoryPath.getFileName().toString(), newDirectoryName);
     }
 
-    private void removeDirectoryAndFiles(String containerId, String newName) {
-        executeDockerCommand(containerId, null, false, false, true, "rm", "-rf", newName);
-    }
-
-    private void renameDirectoryOrFile(String containerId, String oldName, String newName) {
-        executeDockerCommand(containerId, null, false, false, true, "mv", oldName, newName);
+    private void insertRepositoryFiles(String containerId, String oldName, String newName) {
+        executeDockerCommand(containerId, null, false, false, true, "cp", "-r", oldName + (oldName.endsWith("/") ? "." : "/."), newName);
     }
 
     private void addDirectory(String containerId, String directoryName, boolean createParentsIfNecessary) {
@@ -343,7 +358,7 @@ public class BuildJobContainerService {
 
     private void copyToContainer(String sourcePath, String containerId) {
         try (InputStream uploadStream = new ByteArrayInputStream(createTarArchive(sourcePath).toByteArray())) {
-            dockerClient.copyArchiveToContainerCmd(containerId).withRemotePath(LOCALCI_WORKING_DIRECTORY).withTarInputStream(uploadStream).exec();
+            buildAgentConfiguration.getDockerClient().copyArchiveToContainerCmd(containerId).withRemotePath(LOCALCI_WORKING_DIRECTORY).withTarInputStream(uploadStream).exec();
         }
         catch (IOException e) {
             throw new LocalCIException("Could not copy to container " + containerId, e);
@@ -395,11 +410,13 @@ public class BuildJobContainerService {
     }
 
     private void executeDockerCommandWithoutAwaitingResponse(String containerId, String... command) {
+        DockerClient dockerClient = buildAgentConfiguration.getDockerClient();
         ExecCreateCmdResponse createCmdResponse = dockerClient.execCreateCmd(containerId).withCmd(command).exec();
         dockerClient.execStartCmd(createCmdResponse.getId()).withDetach(true).exec(new ResultCallback.Adapter<>());
     }
 
     private void executeDockerCommand(String containerId, String buildJobId, boolean attachStdout, boolean attachStderr, boolean forceRoot, String... command) {
+        DockerClient dockerClient = buildAgentConfiguration.getDockerClient();
         boolean detach = !attachStdout && !attachStderr;
 
         ExecCreateCmd execCreateCmd = dockerClient.execCreateCmd(containerId).withAttachStdout(attachStdout).withAttachStderr(attachStderr).withCmd(command);
@@ -414,7 +431,7 @@ public class BuildJobContainerService {
                 @Override
                 public void onNext(Frame item) {
                     String text = new String(item.getPayload());
-                    BuildLogEntry buildLogEntry = new BuildLogEntry(ZonedDateTime.now(), text);
+                    BuildLogDTO buildLogEntry = new BuildLogDTO(ZonedDateTime.now(), text);
                     if (buildJobId != null) {
                         buildLogsMap.appendBuildLogEntry(buildJobId, buildLogEntry);
                     }
@@ -445,12 +462,7 @@ public class BuildJobContainerService {
     }
 
     private Container getContainerForName(String containerName) {
-        List<Container> containers = dockerClient.listContainersCmd().withShowAll(true).exec();
+        List<Container> containers = buildAgentConfiguration.getDockerClient().listContainersCmd().withShowAll(true).exec();
         return containers.stream().filter(container -> container.getNames()[0].equals("/" + containerName)).findFirst().orElse(null);
-    }
-
-    private String getParentFolderPath(String path) {
-        Path parentPath = Paths.get(path).normalize().getParent();
-        return parentPath != null ? parentPath.toString() : "";
     }
 }

@@ -16,6 +16,7 @@ import jakarta.persistence.ManyToOne;
 import jakarta.persistence.OneToMany;
 import jakarta.persistence.OneToOne;
 import jakarta.persistence.Table;
+import jakarta.persistence.Transient;
 import jakarta.validation.constraints.Size;
 
 import org.hibernate.annotations.Cache;
@@ -24,6 +25,7 @@ import org.hibernate.annotations.CacheConcurrencyStrategy;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonIncludeProperties;
+import com.fasterxml.jackson.annotation.JsonProperty;
 
 import de.tum.cit.aet.artemis.communication.domain.conversation.Conversation;
 import de.tum.cit.aet.artemis.core.domain.Course;
@@ -95,6 +97,9 @@ public class Post extends Posting {
 
     @Column(name = "vote_count")
     private int voteCount;
+
+    @Transient
+    private boolean isSaved = false;
 
     public Post() {
     }
@@ -220,6 +225,15 @@ public class Post extends Posting {
     public void setVoteCount(Integer voteCount) {
         // the case "null" should NOT happen and is only a safety measurement
         this.voteCount = voteCount != null ? voteCount : 0;
+    }
+
+    @JsonProperty("isSaved")
+    public boolean getIsSaved() {
+        return isSaved;
+    }
+
+    public void setIsSaved(boolean isSaved) {
+        this.isSaved = isSaved;
     }
 
     /**

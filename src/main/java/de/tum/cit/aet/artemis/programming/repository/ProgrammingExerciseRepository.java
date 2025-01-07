@@ -269,6 +269,9 @@ public interface ProgrammingExerciseRepository extends DynamicSpecificationRepos
             """)
     Optional<ProgrammingExercise> findWithEagerStudentParticipationsStudentAndLegalSubmissionsById(@Param("exerciseId") long exerciseId);
 
+    @EntityGraph(type = LOAD, attributePaths = { "templateParticipation", "solutionParticipation", "studentParticipations.team.students", "buildConfig" })
+    Optional<ProgrammingExercise> findWithAllParticipationsAndBuildConfigById(long exerciseId);
+
     @Query("""
             SELECT pe
             FROM ProgrammingExercise pe
@@ -330,11 +333,9 @@ public interface ProgrammingExerciseRepository extends DynamicSpecificationRepos
             FROM ProgrammingExercise p
                 LEFT JOIN FETCH p.testCases tc
                 LEFT JOIN FETCH p.staticCodeAnalysisCategories
-                LEFT JOIN FETCH p.exerciseHints
                 LEFT JOIN FETCH p.templateParticipation
                 LEFT JOIN FETCH p.solutionParticipation
                 LEFT JOIN FETCH p.auxiliaryRepositories
-                LEFT JOIN FETCH tc.solutionEntries
                 LEFT JOIN FETCH p.buildConfig
             WHERE p.id = :exerciseId
             """)
@@ -346,15 +347,13 @@ public interface ProgrammingExerciseRepository extends DynamicSpecificationRepos
             FROM ProgrammingExercise p
                 LEFT JOIN FETCH p.testCases tc
                 LEFT JOIN FETCH p.staticCodeAnalysisCategories
-                LEFT JOIN FETCH p.exerciseHints
                 LEFT JOIN FETCH p.templateParticipation
                 LEFT JOIN FETCH p.solutionParticipation
                 LEFT JOIN FETCH p.auxiliaryRepositories
-                LEFT JOIN FETCH tc.solutionEntries
                 LEFT JOIN FETCH p.buildConfig
             WHERE p.id = :exerciseId
             """)
-    Optional<ProgrammingExercise> findByIdWithEagerBuildConfigTestCasesStaticCodeAnalysisCategoriesHintsAndTemplateAndSolutionParticipationsAndAuxReposAndSolutionEntriesAndBuildConfig(
+    Optional<ProgrammingExercise> findByIdWithEagerBuildConfigTestCasesStaticCodeAnalysisCategoriesAndTemplateAndSolutionParticipationsAndAuxReposAndAndBuildConfig(
             @Param("exerciseId") long exerciseId);
 
     @Query("""
@@ -362,11 +361,9 @@ public interface ProgrammingExerciseRepository extends DynamicSpecificationRepos
             FROM ProgrammingExercise p
                 LEFT JOIN FETCH p.testCases tc
                 LEFT JOIN FETCH p.staticCodeAnalysisCategories
-                LEFT JOIN FETCH p.exerciseHints
                 LEFT JOIN FETCH p.templateParticipation
                 LEFT JOIN FETCH p.solutionParticipation
                 LEFT JOIN FETCH p.auxiliaryRepositories
-                LEFT JOIN FETCH tc.solutionEntries
                 LEFT JOIN FETCH p.buildConfig
                 LEFT JOIN FETCH p.plagiarismDetectionConfig
             WHERE p.id = :exerciseId
@@ -992,7 +989,6 @@ public interface ProgrammingExerciseRepository extends DynamicSpecificationRepos
         Tasks(ProgrammingExercise_.TASKS),
         StaticCodeAnalysisCategories(ProgrammingExercise_.STATIC_CODE_ANALYSIS_CATEGORIES),
         SubmissionPolicy(ProgrammingExercise_.SUBMISSION_POLICY),
-        ExerciseHints(ProgrammingExercise_.EXERCISE_HINTS),
         CompetencyLinks(ProgrammingExercise_.COMPETENCY_LINKS),
         Teams(ProgrammingExercise_.TEAMS),
         TutorParticipations(ProgrammingExercise_.TUTOR_PARTICIPATIONS),

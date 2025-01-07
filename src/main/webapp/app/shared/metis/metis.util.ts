@@ -106,6 +106,7 @@ export enum ReferenceType {
     FILE_UPLOAD = 'file-upload',
     USER = 'USER',
     CHANNEL = 'CHANNEL',
+    FAQ = 'FAQ',
     IMAGE = 'IMAGE',
 }
 

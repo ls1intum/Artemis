@@ -6,7 +6,7 @@ import { admin, studentOne } from '../../../support/users';
 import { test } from '../../../support/fixtures';
 import { expect } from '@playwright/test';
 
-test.describe('Static code analysis tests', { tag: '@slow' }, () => {
+test.describe('Static code analysis tests', { tag: '@sequential' }, () => {
     let course: Course;
     let exercise: ProgrammingExercise;
 

@@ -6,6 +6,7 @@ import static de.tum.cit.aet.artemis.core.config.Constants.SETUP_COMMIT_MESSAGE;
 
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -66,7 +67,6 @@ import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseStudentP
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingSubmissionRepository;
 import de.tum.cit.aet.artemis.programming.repository.SubmissionPolicyRepository;
 import de.tum.cit.aet.artemis.programming.service.ci.ContinuousIntegrationTriggerService;
-import de.tum.cit.aet.artemis.programming.service.hestia.ProgrammingExerciseGitDiffReportService;
 import de.tum.cit.aet.artemis.programming.service.vcs.VersionControlService;
 
 // TODO: this class has too many dependencies to other services. We should reduce this
@@ -341,14 +341,16 @@ public class ProgrammingSubmissionService extends SubmissionService {
      * @return a Map of {[participationId]: ProgrammingSubmission | null}. Will contain an entry for every student participation of the exercise and a submission object if a
      *         pending submission exists or null if not.
      */
-    public Map<Long, Optional<ProgrammingSubmission>> getLatestPendingSubmissionsForProgrammingExercise(Long programmingExerciseId) {
-        List<ProgrammingExerciseStudentParticipation> participations = programmingExerciseStudentParticipationRepository.findWithSubmissionsByExerciseId(programmingExerciseId);
-        // TODO: find the latest pending submission directly using Java (the submissions are available now) and not with additional db queries
-        return participations.stream().collect(Collectors.toMap(Participation::getId, p -> findLatestPendingSubmissionForParticipation(p.getId())));
-    }
-
-    private Optional<ProgrammingSubmission> findLatestPendingSubmissionForParticipation(final long participationId) {
-        return findLatestPendingSubmissionForParticipation(participationId, false);
+    public Map<Long, Optional<Submission>> getLatestPendingSubmissionsForProgrammingExercise(Long programmingExerciseId) {
+        var participations = programmingExerciseStudentParticipationRepository.findWithSubmissionsAndResultsByExerciseId(programmingExerciseId);
+        return participations.stream().collect(Collectors.toMap(Participation::getId, p -> {
+            var latestSubmission = p.getSubmissions().stream().max(Comparator.comparing(Submission::getSubmissionDate));
+            if (latestSubmission.isEmpty() || latestSubmission.get().getLatestResult() != null) {
+                // This is not an error case, it is very likely that there is no pending submission for a participation.
+                return Optional.empty();
+            }
+            return latestSubmission;
+        }));
     }
 
     private Optional<ProgrammingSubmission> findLatestPendingSubmissionForParticipation(final long participationId, final boolean isGraded) {

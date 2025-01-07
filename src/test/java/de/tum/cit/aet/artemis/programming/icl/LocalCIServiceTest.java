@@ -33,7 +33,7 @@ import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseStudentParti
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingLanguage;
 import de.tum.cit.aet.artemis.programming.domain.RepositoryType;
 import de.tum.cit.aet.artemis.programming.dto.CheckoutDirectoriesDTO;
-import de.tum.cit.aet.artemis.programming.service.aeolus.Windfile;
+import de.tum.cit.aet.artemis.programming.dto.aeolus.Windfile;
 import de.tum.cit.aet.artemis.programming.service.ci.ContinuousIntegrationService.BuildStatus;
 
 class LocalCIServiceTest extends AbstractProgrammingIntegrationLocalCILocalVCTest {
@@ -70,8 +70,8 @@ class LocalCIServiceTest extends AbstractProgrammingIntegrationLocalCILocalVCTes
         ProgrammingExercise exercise = exerciseUtilService.getFirstExerciseWithType(course, ProgrammingExercise.class);
         ProgrammingExerciseStudentParticipation participation = participationUtilService.addStudentParticipationForProgrammingExercise(exercise, TEST_PREFIX + "student1");
 
-        JobTimingInfo jobTimingInfo = new JobTimingInfo(ZonedDateTime.now(), ZonedDateTime.now().plusMinutes(1), ZonedDateTime.now().plusMinutes(2));
-        BuildConfig buildConfig = new BuildConfig("echo 'test'", "test", "test", "test", "test", "test", null, null, false, false, false, null, 0, null, null, null);
+        JobTimingInfo jobTimingInfo = new JobTimingInfo(ZonedDateTime.now(), ZonedDateTime.now().plusMinutes(1), ZonedDateTime.now().plusMinutes(2), null, 0);
+        BuildConfig buildConfig = new BuildConfig("echo 'test'", "test", "test", "test", "test", "test", null, null, false, false, null, 0, null, null, null, null);
         RepositoryInfo repositoryInfo = new RepositoryInfo("test", null, RepositoryType.USER, "test", "test", "test", null, null);
 
         String memberAddress = hazelcastInstance.getCluster().getLocalMember().getAddress().toString();
@@ -114,7 +114,7 @@ class LocalCIServiceTest extends AbstractProgrammingIntegrationLocalCILocalVCTes
         exercise.getBuildConfig().setBuildPlanConfiguration(null);
         continuousIntegrationService.recreateBuildPlansForExercise(exercise);
         script = buildScriptProviderService.getScriptFor(exercise.getProgrammingLanguage(), Optional.ofNullable(exercise.getProjectType()), exercise.isStaticCodeAnalysisEnabled(),
-                exercise.getBuildConfig().hasSequentialTestRuns(), exercise.getBuildConfig().isTestwiseCoverageEnabled());
+                exercise.getBuildConfig().hasSequentialTestRuns());
         Windfile windfile = aeolusTemplateService.getDefaultWindfileFor(exercise);
         String actualBuildConfig = exercise.getBuildConfig().getBuildPlanConfiguration();
         String expectedBuildConfig = new ObjectMapper().writeValueAsString(windfile);
@@ -133,7 +133,6 @@ class LocalCIServiceTest extends AbstractProgrammingIntegrationLocalCILocalVCTes
         programmingExercise.setProjectType(null);
         programmingExercise.setStaticCodeAnalysisEnabled(false);
         programmingExercise.getBuildConfig().setSequentialTestRuns(false);
-        programmingExercise.getBuildConfig().setTestwiseCoverageEnabled(false);
         String script = buildScriptProviderService.getScriptFor(programmingExercise);
         assertThat(script).isNotNull();
     }

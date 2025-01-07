@@ -50,7 +50,7 @@ class ProgrammingExerciseTest extends AbstractProgrammingIntegrationJenkinsGitla
     }
 
     void updateProgrammingExercise(ProgrammingExercise programmingExercise, String newProblem, String newTitle) throws Exception {
-        jenkinsRequestMockProvider.enableMockingOfRequests(jenkinsServer);
+        jenkinsRequestMockProvider.enableMockingOfRequests(jenkinsServer, jenkinsJobPermissionsService);
         gitlabRequestMockProvider.enableMockingOfRequests();
         programmingExercise.setProblemStatement(newProblem);
         programmingExercise.setTitle(newTitle);
@@ -171,7 +171,7 @@ class ProgrammingExerciseTest extends AbstractProgrammingIntegrationJenkinsGitla
         programmingExercise.setAssessmentType(assessmentType);
 
         if (assessmentType == AssessmentType.AUTOMATIC) {
-            jenkinsRequestMockProvider.enableMockingOfRequests(jenkinsServer);
+            jenkinsRequestMockProvider.enableMockingOfRequests(jenkinsServer, jenkinsJobPermissionsService);
             gitlabRequestMockProvider.enableMockingOfRequests();
             jenkinsRequestMockProvider.mockCheckIfBuildPlanExists(programmingExercise.getProjectKey(), programmingExercise.getTemplateBuildPlanId(), true, false);
             jenkinsRequestMockProvider.mockCheckIfBuildPlanExists(programmingExercise.getProjectKey(), programmingExercise.getSolutionBuildPlanId(), true, false);

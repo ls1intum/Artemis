@@ -10,14 +10,17 @@ import jakarta.persistence.FetchType;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
+import jakarta.persistence.Transient;
 
 import org.hibernate.annotations.Cache;
 import org.hibernate.annotations.CacheConcurrencyStrategy;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonIncludeProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
+import de.tum.cit.aet.artemis.communication.domain.conversation.Conversation;
 import de.tum.cit.aet.artemis.core.domain.Course;
 
 /**
@@ -38,6 +41,9 @@ public class AnswerPost extends Posting {
     @ManyToOne
     @JsonIncludeProperties({ "id", "exercise", "lecture", "course", "courseWideContext", "conversation", "author" })
     private Post post;
+
+    @Transient
+    private boolean isSaved = false;
 
     @JsonProperty("resolvesPost")
     public Boolean doesResolvePost() {
@@ -74,6 +80,20 @@ public class AnswerPost extends Posting {
 
     public void setPost(Post post) {
         this.post = post;
+    }
+
+    @JsonProperty("isSaved")
+    public boolean getIsSaved() {
+        return isSaved;
+    }
+
+    public void setIsSaved(boolean isSaved) {
+        this.isSaved = isSaved;
+    }
+
+    @JsonIgnore
+    public Conversation getConversation() {
+        return getPost().getConversation();
     }
 
     /**

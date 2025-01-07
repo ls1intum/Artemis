@@ -76,6 +76,7 @@ import { TitleChannelNameComponent } from 'app/shared/form/title-channel-name/ti
 import { ExerciseTitleChannelNameModule } from 'app/exercises/shared/exercise-title-channel-name/exercise-title-channel-name.module';
 import { CustomNotIncludedInValidatorDirective } from '../../../../../main/webapp/app/shared/validators/custom-not-included-in-validator.directive';
 import { ProgrammingExerciseDifficultyComponent } from '../../../../../main/webapp/app/exercises/programming/manage/update/update-components/difficulty/programming-exercise-difficulty.component';
+import { APP_NAME_PATTERN_FOR_SWIFT, PACKAGE_NAME_PATTERN_FOR_JAVA_KOTLIN } from '../../../../../main/webapp/app/shared/constants/input.constants';
 
 describe('ProgrammingExerciseUpdateComponent', () => {
     const courseId = 1;
@@ -196,7 +197,6 @@ describe('ProgrammingExerciseUpdateComponent', () => {
                     packageNameRequired: true,
                     checkoutSolutionRepositoryAllowed: true,
                     projectTypes: [ProjectType.PLAIN_MAVEN, ProjectType.MAVEN_MAVEN],
-                    testwiseCoverageAnalysisSupported: true,
                     auxiliaryRepositoriesSupported: true,
                 } as ProgrammingLanguageFeature);
             });
@@ -534,7 +534,7 @@ describe('ProgrammingExerciseUpdateComponent', () => {
             expect(courseService.find).toHaveBeenCalledWith(courseId);
             expect(comp.selectedProgrammingLanguage).toBe(ProgrammingLanguage.SWIFT);
             expect(comp.staticCodeAnalysisAllowed).toBeTrue();
-            expect(comp.packageNamePattern).toBe(comp.appNamePatternForSwift);
+            expect(comp.packageNamePattern).toBe(APP_NAME_PATTERN_FOR_SWIFT);
         }));
 
         it('should activate SCA for C', fakeAsync(() => {
@@ -560,7 +560,7 @@ describe('ProgrammingExerciseUpdateComponent', () => {
             // THEN
             expect(comp.selectedProgrammingLanguage).toBe(ProgrammingLanguage.JAVA);
             expect(comp.staticCodeAnalysisAllowed).toBeTrue();
-            expect(comp.packageNamePattern).toBe(comp.packageNamePatternForJavaKotlin);
+            expect(comp.packageNamePattern).toBe(PACKAGE_NAME_PATTERN_FOR_JAVA_KOTLIN);
         }));
 
         it('should deactivate SCA for C (FACT)', fakeAsync(() => {
@@ -1194,7 +1194,6 @@ describe('ProgrammingExerciseUpdateComponent', () => {
             tick();
 
             expect(comp.programmingExercise.staticCodeAnalysisEnabled).toBeFalse();
-            expect(comp.programmingExercise.buildConfig?.testwiseCoverageEnabled).toBeFalse();
         }));
 
         it('should disable options for java dejagnu project type and re-enable them after changing back to maven or gradle', fakeAsync(() => {
@@ -1202,19 +1201,15 @@ describe('ProgrammingExerciseUpdateComponent', () => {
             getFeaturesStub.mockImplementation((language: ProgrammingLanguage) => getProgrammingLanguageFeature(language));
             comp.selectedProjectType = ProjectType.MAVEN_BLACKBOX;
             expect(comp.sequentialTestRunsAllowed).toBeFalse();
-            expect(comp.testwiseCoverageAnalysisSupported).toBeFalse();
 
             comp.selectedProjectType = ProjectType.MAVEN_MAVEN;
             expect(comp.sequentialTestRunsAllowed).toBeTrue();
-            expect(comp.testwiseCoverageAnalysisSupported).toBeTrue();
 
             comp.selectedProjectType = ProjectType.MAVEN_BLACKBOX;
             expect(comp.sequentialTestRunsAllowed).toBeFalse();
-            expect(comp.testwiseCoverageAnalysisSupported).toBeFalse();
 
             comp.selectedProjectType = ProjectType.GRADLE_GRADLE;
             expect(comp.sequentialTestRunsAllowed).toBeTrue();
-            expect(comp.testwiseCoverageAnalysisSupported).toBeTrue();
         }));
     });
 
@@ -1391,7 +1386,6 @@ const getProgrammingLanguageFeature = (programmingLanguage: ProgrammingLanguage)
                 packageNameRequired: true,
                 checkoutSolutionRepositoryAllowed: false,
                 projectTypes: [ProjectType.PLAIN, ProjectType.XCODE],
-                testwiseCoverageAnalysisSupported: false,
                 auxiliaryRepositoriesSupported: true,
             } as ProgrammingLanguageFeature;
         case ProgrammingLanguage.JAVA:
@@ -1403,7 +1397,6 @@ const getProgrammingLanguageFeature = (programmingLanguage: ProgrammingLanguage)
                 packageNameRequired: true,
                 checkoutSolutionRepositoryAllowed: true,
                 projectTypes: [ProjectType.PLAIN_MAVEN, ProjectType.MAVEN_MAVEN],
-                testwiseCoverageAnalysisSupported: true,
                 auxiliaryRepositoriesSupported: true,
             } as ProgrammingLanguageFeature;
         case ProgrammingLanguage.HASKELL:
@@ -1414,7 +1407,6 @@ const getProgrammingLanguageFeature = (programmingLanguage: ProgrammingLanguage)
                 plagiarismCheckSupported: false,
                 packageNameRequired: false,
                 checkoutSolutionRepositoryAllowed: true,
-                testwiseCoverageAnalysisSupported: false,
                 auxiliaryRepositoriesSupported: true,
             } as ProgrammingLanguageFeature;
         case ProgrammingLanguage.C:
@@ -1426,7 +1418,6 @@ const getProgrammingLanguageFeature = (programmingLanguage: ProgrammingLanguage)
                 packageNameRequired: false,
                 checkoutSolutionRepositoryAllowed: true,
                 projectTypes: [ProjectType.FACT, ProjectType.GCC],
-                testwiseCoverageAnalysisSupported: false,
                 auxiliaryRepositoriesSupported: true,
             } as ProgrammingLanguageFeature;
         default:

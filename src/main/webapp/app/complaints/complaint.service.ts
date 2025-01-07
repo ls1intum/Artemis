@@ -1,4 +1,4 @@
-import { Injectable } from '@angular/core';
+import { Injectable, inject } from '@angular/core';
 import { HttpClient, HttpResponse } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import dayjs from 'dayjs/esm';
@@ -31,12 +31,10 @@ export interface IComplaintService {
 
 @Injectable({ providedIn: 'root' })
 export class ComplaintService implements IComplaintService {
-    private resourceUrl = 'api/complaints';
+    private http = inject(HttpClient);
+    private complaintResponseService = inject(ComplaintResponseService);
 
-    constructor(
-        private http: HttpClient,
-        private complaintResponseService: ComplaintResponseService,
-    ) {}
+    private resourceUrl = 'api/complaints';
 
     /**
      * Checks if a complaint is locked for the currently logged-in user

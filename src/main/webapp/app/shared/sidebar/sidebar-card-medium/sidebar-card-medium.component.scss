@@ -6,6 +6,12 @@
     border-color: var(--module-bg) !important;
 }
 
+.hover-effect {
+    &:hover {
+        background-color: var(--hover-slightly-darker-body-bg);
+    }
+}
+
 .bg-selected {
     background-color: var(--sidebar-card-selected-bg);
 

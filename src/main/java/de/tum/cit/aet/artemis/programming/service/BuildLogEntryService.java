@@ -2,12 +2,15 @@ package de.tum.cit.aet.artemis.programming.service;
 
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
+import java.io.BufferedReader;
 import java.io.IOException;
+import java.io.InputStreamReader;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.DirectoryStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.ZonedDateTime;
+import java.time.format.DateTimeParseException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -23,6 +26,7 @@ import org.springframework.core.io.FileSystemResource;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 
+import de.tum.cit.aet.artemis.buildagent.dto.BuildLogDTO;
 import de.tum.cit.aet.artemis.core.service.ProfileService;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingLanguage;
@@ -300,14 +304,14 @@ public class BuildLogEntryService {
      * and the build job ID. If the directory structure for the logs does not already exist, it is created.
      * Each log entry is written to the log file in the format of "time\tlog message".
      *
-     * @param buildLogEntries     A list of {@link BuildLogEntry} objects containing the build log information to be saved.
+     * @param buildLogEntries     A list of {@link BuildLogDTO} objects containing the build log information to be saved.
      * @param buildJobId          The unique identifier of the build job whose logs are being saved.
      * @param programmingExercise The programming exercise associated with the build job, used to
      *                                retrieve the course and exercise short names.
      * @throws IllegalStateException If the directory for storing the logs could not be created.
      * @throws RuntimeException      If an I/O error occurs while writing the log file.
      */
-    public void saveBuildLogsToFile(List<BuildLogEntry> buildLogEntries, String buildJobId, ProgrammingExercise programmingExercise) {
+    public void saveBuildLogsToFile(List<BuildLogDTO> buildLogEntries, String buildJobId, ProgrammingExercise programmingExercise) {
         String courseShortName = programmingExercise.getCourseViaExerciseGroupOrCourseMember().getShortName();
         String exerciseShortName = programmingExercise.getShortName();
         Path exerciseLogsPath = buildLogsPath.resolve(courseShortName).resolve(exerciseShortName);
@@ -323,8 +327,8 @@ public class BuildLogEntryService {
         Path logPath = exerciseLogsPath.resolve(buildJobId + ".log");
 
         StringBuilder logsStringBuilder = new StringBuilder();
-        for (BuildLogEntry buildLogEntry : buildLogEntries) {
-            logsStringBuilder.append(buildLogEntry.getTime()).append("\t").append(buildLogEntry.getLog());
+        for (BuildLogDTO buildLogEntry : buildLogEntries) {
+            logsStringBuilder.append(buildLogEntry.time()).append("\t").append(buildLogEntry.log());
         }
 
         try {
@@ -398,8 +402,6 @@ public class BuildLogEntryService {
      * In case of an error during file deletion, it logs the error and continues processing.
      * </p>
      *
-     * @throws IOException if an I/O error occurs while accessing the build log files directory or
-     *                         deleting files.
      */
     @Scheduled(cron = "${artemis.continuous-integration.build-log.cleanup-schedule:0 0 3 * * ?}")
     public void deleteOldBuildLogsFiles() {
@@ -488,6 +490,55 @@ public class BuildLogEntryService {
         // Check parent folder for backwards compatibility
         logPath = buildLogsPath.resolve(buildJobId + ".log");
         return Files.exists(logPath);
+    }
+
+    /**
+     * Parses the build log entries from a given file and returns them as a list of {@link BuildLogDTO} objects.
+     *
+     * <p>
+     * The method reads the file line by line and splits each line into a timestamp and a log message.
+     * The timestamp is expected to be separated from the log message by a tab character.
+     * If the timestamp cannot be parsed, the log message is appended to the previous entry.
+     * </p>
+     *
+     * @param buildLog The {@link FileSystemResource} representing the build log file.
+     * @return A list of {@link BuildLogDTO} objects containing the parsed build log entries.
+     */
+    public List<BuildLogDTO> parseBuildLogEntries(FileSystemResource buildLog) {
+        try {
+            List<BuildLogDTO> buildLogEntries = new ArrayList<>();
+            try (BufferedReader reader = new BufferedReader(new InputStreamReader(buildLog.getInputStream()))) {
+                String line;
+                while ((line = reader.readLine()) != null) {
+                    // split into timestamp and log message
+                    int logMessageParts = 2;
+                    String[] parts = line.split("\t", logMessageParts);
+                    if (parts.length == logMessageParts) {
+                        try {
+                            ZonedDateTime time = ZonedDateTime.parse(parts[0]);
+                            buildLogEntries.add(new BuildLogDTO(time, parts[1]));
+                        }
+                        catch (DateTimeParseException e) {
+                            // If the time cannot be parsed, append the line to the last entry
+                            if (!buildLogEntries.isEmpty()) {
+                                BuildLogDTO lastEntry = buildLogEntries.getLast();
+                                buildLogEntries.set(buildLogEntries.size() - 1, new BuildLogDTO(lastEntry.time(), lastEntry.log() + "\n\t" + line));
+                            }
+                        }
+                    }
+                    else {
+                        // If the line does not contain a tab, add it to in a new entry
+                        BuildLogDTO lastEntry = buildLogEntries.getLast();
+                        buildLogEntries.add(new BuildLogDTO(lastEntry.time(), line));
+                    }
+                }
+            }
+            return buildLogEntries;
+        }
+        catch (IOException e) {
+            log.error("Error occurred while trying to parse build log entries", e);
+            return new ArrayList<>();
+        }
     }
 
 }

@@ -3,8 +3,6 @@ package de.tum.cit.aet.artemis.communication.service;
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
 import java.time.ZonedDateTime;
-import java.util.Comparator;
-import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
@@ -24,13 +22,12 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 
-import com.google.common.collect.Lists;
-
 import de.tum.cit.aet.artemis.communication.domain.ConversationNotificationRecipientSummary;
 import de.tum.cit.aet.artemis.communication.domain.CreatedConversationMessage;
 import de.tum.cit.aet.artemis.communication.domain.DisplayPriority;
 import de.tum.cit.aet.artemis.communication.domain.NotificationType;
 import de.tum.cit.aet.artemis.communication.domain.Post;
+import de.tum.cit.aet.artemis.communication.domain.PostingType;
 import de.tum.cit.aet.artemis.communication.domain.conversation.Channel;
 import de.tum.cit.aet.artemis.communication.domain.conversation.Conversation;
 import de.tum.cit.aet.artemis.communication.domain.conversation.GroupChat;
@@ -44,12 +41,12 @@ import de.tum.cit.aet.artemis.communication.dto.PostContextFilterDTO;
 import de.tum.cit.aet.artemis.communication.dto.PostDTO;
 import de.tum.cit.aet.artemis.communication.repository.ConversationMessageRepository;
 import de.tum.cit.aet.artemis.communication.repository.ConversationParticipantRepository;
+import de.tum.cit.aet.artemis.communication.repository.SavedPostRepository;
 import de.tum.cit.aet.artemis.communication.repository.SingleUserNotificationRepository;
 import de.tum.cit.aet.artemis.communication.service.conversation.ConversationService;
 import de.tum.cit.aet.artemis.communication.service.conversation.auth.ChannelAuthorizationService;
 import de.tum.cit.aet.artemis.communication.service.notifications.ConversationNotificationService;
 import de.tum.cit.aet.artemis.communication.service.notifications.GroupNotificationService;
-import de.tum.cit.aet.artemis.communication.service.similarity.PostSimilarityComparisonStrategy;
 import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.exception.AccessForbiddenException;
@@ -66,8 +63,6 @@ import de.tum.cit.aet.artemis.lecture.repository.LectureRepository;
 @Service
 public class ConversationMessagingService extends PostingService {
 
-    private static final int TOP_K_SIMILARITY_RESULTS = 5;
-
     private static final Logger log = LoggerFactory.getLogger(ConversationMessagingService.class);
 
     private final ConversationService conversationService;
@@ -82,22 +77,19 @@ public class ConversationMessagingService extends PostingService {
 
     private final SingleUserNotificationRepository singleUserNotificationRepository;
 
-    private final PostSimilarityComparisonStrategy postContentCompareStrategy;
-
     protected ConversationMessagingService(CourseRepository courseRepository, ExerciseRepository exerciseRepository, LectureRepository lectureRepository,
             ConversationMessageRepository conversationMessageRepository, AuthorizationCheckService authorizationCheckService, WebsocketMessagingService websocketMessagingService,
             UserRepository userRepository, ConversationService conversationService, ConversationParticipantRepository conversationParticipantRepository,
-            ConversationNotificationService conversationNotificationService, ChannelAuthorizationService channelAuthorizationService,
-            GroupNotificationService groupNotificationService, SingleUserNotificationRepository singleUserNotificationRepository,
-            PostSimilarityComparisonStrategy postContentCompareStrategy) {
-        super(courseRepository, userRepository, exerciseRepository, lectureRepository, authorizationCheckService, websocketMessagingService, conversationParticipantRepository);
+            ConversationNotificationService conversationNotificationService, ChannelAuthorizationService channelAuthorizationService, SavedPostRepository savedPostRepository,
+            GroupNotificationService groupNotificationService, SingleUserNotificationRepository singleUserNotificationRepository) {
+        super(courseRepository, userRepository, exerciseRepository, lectureRepository, authorizationCheckService, websocketMessagingService, conversationParticipantRepository,
+                savedPostRepository);
         this.conversationService = conversationService;
         this.conversationMessageRepository = conversationMessageRepository;
         this.conversationNotificationService = conversationNotificationService;
         this.channelAuthorizationService = channelAuthorizationService;
         this.groupNotificationService = groupNotificationService;
         this.singleUserNotificationRepository = singleUserNotificationRepository;
-        this.postContentCompareStrategy = postContentCompareStrategy;
     }
 
     /**
@@ -165,6 +157,7 @@ public class ConversationMessagingService extends PostingService {
         Set<ConversationNotificationRecipientSummary> recipientSummaries;
         ConversationNotification notification = conversationNotificationService.createNotification(createdMessage, conversation, course,
                 createdConversationMessage.mentionedUsers());
+        preparePostForBroadcast(createdMessage);
         PostDTO postDTO = new PostDTO(createdMessage, MetisCrudAction.CREATE, notification);
         createdMessage.getConversation().hideDetails();
         if (createdConversationMessage.completeConversation() instanceof Channel channel && channel.getIsCourseWide()) {
@@ -295,7 +288,6 @@ public class ConversationMessagingService extends PostingService {
     public Page<Post> getMessages(Pageable pageable, @Valid PostContextFilterDTO postContextFilter, User requestingUser, Long courseId) {
         conversationService.isMemberOrCreateForCourseWideElseThrow(postContextFilter.conversationId(), requestingUser, Optional.of(ZonedDateTime.now()));
 
-        // The following query loads posts, answerPosts and reactions to avoid too many database calls (due to eager references)
         Page<Post> conversationPosts = conversationMessageRepository.findMessages(postContextFilter, pageable, requestingUser.getId());
         setAuthorRoleOfPostings(conversationPosts.getContent(), courseId);
 
@@ -353,6 +345,7 @@ public class ConversationMessagingService extends PostingService {
         updatedPost.setConversation(conversation);
 
         // emit a post update via websocket
+        preparePostForBroadcast(updatedPost);
         broadcastForPost(new PostDTO(updatedPost, MetisCrudAction.UPDATE), course.getId(), null, null);
 
         return updatedPost;
@@ -379,8 +372,12 @@ public class ConversationMessagingService extends PostingService {
         conversationParticipantRepository.decrementUnreadMessagesCountOfParticipants(conversation.getId(), user.getId());
         conversation = conversationService.getConversationById(conversation.getId());
 
-        conversationService.notifyAllConversationMembersAboutUpdate(conversation);
+        // Delete all connected saved posts
+        var savedPosts = savedPostRepository.findSavedPostByPostIdAndPostType(postId, PostingType.POST);
+        savedPostRepository.deleteAll(savedPosts);
 
+        conversationService.notifyAllConversationMembersAboutUpdate(conversation);
+        preparePostForBroadcast(post);
         broadcastForPost(new PostDTO(post, MetisCrudAction.DELETE), course.getId(), null, null);
     }
 
@@ -411,6 +408,8 @@ public class ConversationMessagingService extends PostingService {
 
         Post updatedMessage = conversationMessageRepository.save(message);
         message.getConversation().hideDetails();
+        preparePostForBroadcast(message);
+        preparePostForBroadcast(updatedMessage);
         broadcastForPost(new PostDTO(message, MetisCrudAction.UPDATE), course.getId(), null, null);
         return updatedMessage;
     }
@@ -431,41 +430,6 @@ public class ConversationMessagingService extends PostingService {
         else {
             throw new AccessForbiddenException("You are not allowed to edit or delete this message");
         }
-    }
-
-    /**
-     * Calculates k similar posts based on the underlying content comparison strategy
-     *
-     * @param courseId id of the course in which similar posts are searched for
-     * @param post     post that is to be created and check for similar posts beforehand
-     * @return list of similar posts
-     */
-    // TODO: unused, remove
-    public List<Post> getSimilarPosts(Long courseId, Post post) {
-        PostContextFilterDTO postContextFilter = new PostContextFilterDTO(courseId, null, null, null, null, false, false, false, null, null);
-        List<Post> coursePosts = this.getCourseWideMessages(Pageable.unpaged(), postContextFilter, userRepository.getUser(), courseId).stream()
-                .sorted(Comparator.comparing(coursePost -> postContentCompareStrategy.performSimilarityCheck(post, coursePost))).toList();
-
-        // sort course posts by calculated similarity scores
-        setAuthorRoleOfPostings(coursePosts, courseId);
-        return Lists.reverse(coursePosts).stream().limit(TOP_K_SIMILARITY_RESULTS).toList();
-    }
-
-    /**
-     * Checks course and user validity,
-     * retrieves all tags for posts in a certain course
-     *
-     * @param courseId id of the course the tags belongs to
-     * @return tags of all posts that belong to the course
-     */
-    // TODO: unused, delete
-    public List<String> getAllCourseTags(Long courseId) {
-        final User user = userRepository.getUserWithGroupsAndAuthorities();
-        final Course course = courseRepository.findByIdElseThrow(courseId);
-
-        // checks
-        preCheckUserAndCourseForCommunicationOrMessaging(user, course);
-        return conversationMessageRepository.findPostTagsForCourse(courseId);
     }
 
     @Override
