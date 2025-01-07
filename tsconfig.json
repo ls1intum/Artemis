@@ -25,7 +25,7 @@
         "paths": {
             "app/*": ["src/main/webapp/app/*"]
         },
-        "importHelpers": true,
+        "importHelpers": true
     },
     "angularCompilerOptions": {
         "genDir": "build/resources/main/aot",
