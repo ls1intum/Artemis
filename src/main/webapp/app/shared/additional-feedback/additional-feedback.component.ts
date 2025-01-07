@@ -21,12 +21,9 @@ export class AdditionalFeedbackComponent {
     private translateService = inject(TranslateService);
     private localeConversionService = inject(LocaleConversionService);
 
-    @Input()
-    feedback: Feedback[];
-    @Input()
-    additional: boolean;
-    @Input()
-    course?: Course;
+    @Input() feedback: Feedback[];
+    @Input() additional: boolean;
+    @Input() course?: Course;
 
     // Icons
     faCommentDots = faCommentDots;
