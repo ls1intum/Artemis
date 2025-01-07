@@ -79,6 +79,7 @@ export class ExerciseHeadersInformationComponent implements OnInit, OnChanges {
             const latestRatedResult = this.studentParticipation.results.filter((result) => result.rated).first();
             if (latestRatedResult) {
                 this.achievedPoints = roundValueSpecifiedByCourseSettings((latestRatedResult.score! * this.exercise.maxPoints!) / 100, this.course) ?? 0;
+                this.updatePointsItem();
             }
         }
     }
@@ -92,7 +93,12 @@ export class ExerciseHeadersInformationComponent implements OnInit, OnChanges {
         this.addDifficultyItem();
         this.addCategoryItems();
     }
-
+    updatePointsItem() {
+        const pointsItemIndex = this.informationBoxItems.findIndex((item) => item.title === 'artemisApp.courseOverview.exerciseDetails.points');
+        if (pointsItemIndex !== -1) {
+            this.informationBoxItems[pointsItemIndex] = this.getPointsItem('points', this.exercise.maxPoints!, this.achievedPoints);
+        }
+    }
     addPointsItems() {
         const { maxPoints, bonusPoints } = this.exercise;
         if (maxPoints) {
