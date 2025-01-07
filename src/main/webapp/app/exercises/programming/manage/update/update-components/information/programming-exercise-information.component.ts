@@ -121,19 +121,13 @@ export class ProgrammingExerciseInformationComponent implements AfterViewInit, O
     submissionBuildPlanCheckoutRepositories: BuildPlanCheckoutDirectoriesDTO;
 
     constructor() {
-        effect(
-            () => {
-                this.defineShortNameOnEditModeChangeIfNotDefinedInAdvancedMode();
-            },
-            { allowSignalWrites: true },
-        );
+        effect(() => {
+            this.defineShortNameOnEditModeChangeIfNotDefinedInAdvancedMode();
+        });
 
-        effect(
-            () => {
-                this.generateShortNameWhenInSimpleMode();
-            },
-            { allowSignalWrites: true },
-        );
+        effect(() => {
+            this.generateShortNameWhenInSimpleMode();
+        });
 
         effect(() => {
             this.registerInputFieldsWhenChildComponentsAreReady();

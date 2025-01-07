@@ -42,7 +42,6 @@ export class ExerciseTitleChannelNameComponent implements OnChanges {
                     });
                 }
             }.bind(this),
-            { allowSignalWrites: true },
         );
     }
 

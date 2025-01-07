@@ -204,7 +204,6 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
                     this.calculateFormStatusSections();
                 }
             }.bind(this),
-            { allowSignalWrites: true },
         );
 
         effect(
@@ -217,7 +216,6 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
                     this.isSimpleMode.set(DEFAULT_EDIT_MODE_IS_SIMPLE_MODE);
                 }
             }.bind(this),
-            { allowSignalWrites: true },
         );
     }
 
