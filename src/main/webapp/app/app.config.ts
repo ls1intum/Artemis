@@ -9,7 +9,7 @@ import { HTTP_INTERCEPTORS, HttpClient, provideHttpClient, withInterceptorsFromD
 import { ApplicationConfig, ErrorHandler, LOCALE_ID, importProvidersFrom, inject, provideAppInitializer } from '@angular/core';
 import { BrowserModule, Title } from '@angular/platform-browser';
 import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
-import { Router, RouterModule, provideRouter, withComponentInputBinding, withRouterConfig } from '@angular/router';
+import { Router, RouterModule, provideRouter, withRouterConfig } from '@angular/router';
 import { ServiceWorkerModule } from '@angular/service-worker';
 import { NgbDateAdapter } from '@ng-bootstrap/ng-bootstrap';
 import { MissingTranslationHandler, TranslateLoader, TranslateModule } from '@ngx-translate/core';
@@ -62,7 +62,7 @@ export const appConfig: ApplicationConfig = {
             }),
         ),
 
-        provideRouter(routes, withComponentInputBinding(), withRouterConfig({ onSameUrlNavigation: 'reload' })),
+        provideRouter(routes, withRouterConfig({ onSameUrlNavigation: 'reload' })),
         // This enables service worker (PWA)
         importProvidersFrom(ServiceWorkerModule.register('ngsw-worker.js', { enabled: true })),
         provideHttpClient(withInterceptorsFromDi()),
