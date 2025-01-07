@@ -37,7 +37,6 @@ describe('ExerciseGroupUpdateComponent', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            // imports: [HttpClientModule, FormsModule, NgbAlertsMocksModule],
             imports: [ArtemisTestModule],
             providers: [
                 { provide: SessionStorageService, useClass: MockSyncStorage },
