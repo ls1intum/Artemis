@@ -17,15 +17,15 @@ import { generateExampleChannelDTO, generateExampleGroupChatDTO, generateOneToOn
 import { Directive, EventEmitter, Input, Output, QueryList } from '@angular/core';
 import { By } from '@angular/platform-browser';
 import { Course } from 'app/entities/course.model';
-import { getAsChannelDTO } from 'app/entities/metis/conversation/channel.model';
+import { ChannelDTO, getAsChannelDTO } from 'app/entities/metis/conversation/channel.model';
 import { PostCreateEditModalComponent } from 'app/shared/metis/posting-create-edit-modal/post-create-edit-modal/post-create-edit-modal.component';
 import dayjs from 'dayjs';
 
 const examples: ConversationDTO[] = [
     generateOneToOneChatDTO({}),
     generateExampleGroupChatDTO({}),
-    generateExampleChannelDTO({}),
-    generateExampleChannelDTO({ isAnnouncementChannel: true }),
+    generateExampleChannelDTO({} as ChannelDTO),
+    generateExampleChannelDTO({ isAnnouncementChannel: true } as ChannelDTO),
 ];
 
 @Directive({
@@ -284,5 +284,14 @@ examples.forEach((activeConversation) => {
                 expect(inlineInput).toBeTruthy(); // Check if the inline input component is present
             }));
         }
+
+        it('should scroll to bottom and set canStartSaving to true when lastScrollPosition is falsy', async () => {
+            const scrollToBottomSpy = jest.spyOn(component, 'scrollToBottomOfMessages');
+
+            await component.goToLastSelectedElement(0, false);
+
+            expect(scrollToBottomSpy).toHaveBeenCalledOnce();
+            expect(component.canStartSaving).toBeTrue();
+        });
     });
 });
