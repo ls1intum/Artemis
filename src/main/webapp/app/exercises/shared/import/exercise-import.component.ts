@@ -44,6 +44,13 @@ export class ExerciseImportComponent extends ImportComponent<Exercise> implement
 
     titleKey: string;
 
+    constructor() {
+        // The exercise import component does not know yet which paging service to use
+        // This gets determined based on the exercise type, which is not set when invoking the constructor
+        // Therefore we temporaily use this empty paging service which directly gets overwritten in ngOnInit().
+        super(undefined);
+    }
+
     ngOnInit(): void {
         if (!this.exerciseType) {
             return;

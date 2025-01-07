@@ -4,8 +4,7 @@ import { IrisSettingsUpdateComponent } from 'app/iris/settings/iris-settings-upd
 import { IrisSettingsType } from 'app/entities/iris/settings/iris-settings.model';
 import { mockSettings, mockVariants } from './mock-settings';
 import { ArtemisTestModule } from '../../../test.module';
-import { NgModel } from '@angular/forms';
-import { MockComponent, MockDirective, MockPipe, MockProvider } from 'ng-mocks';
+import { MockComponent, MockPipe, MockProvider } from 'ng-mocks';
 import { IrisCommonSubSettingsUpdateComponent } from 'app/iris/settings/iris-settings-update/iris-common-sub-settings-update/iris-common-sub-settings-update.component';
 import { ButtonComponent } from 'app/shared/components/button.component';
 import { IrisSettingsService } from 'app/iris/settings/shared/iris-settings.service';
@@ -32,7 +31,7 @@ describe('IrisSettingsUpdateComponent', () => {
                 IrisSettingsUpdateComponent,
                 IrisCommonSubSettingsUpdateComponent,
             ],
-            declarations: [MockPipe(ArtemisTranslatePipe), MockComponent(ButtonComponent), MockDirective(NgModel)],
+            declarations: [MockPipe(ArtemisTranslatePipe), MockComponent(ButtonComponent)],
             providers: [
                 MockProvider(IrisSettingsService, {
                     getGlobalSettings: () => of(mockSettings()),

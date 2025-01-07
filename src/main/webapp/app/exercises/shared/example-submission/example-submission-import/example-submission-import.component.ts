@@ -14,6 +14,7 @@ import { ResultComponent } from '../../result/result.component';
 import { ButtonComponent } from 'app/shared/components/button.component';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
+import { ExampleSubmissionImportPagingService } from 'app/exercises/shared/example-submission/example-submission-import/example-submission-import-paging.service';
 
 @Component({
     selector: 'jhi-example-submission-import',
@@ -39,6 +40,11 @@ export class ExampleSubmissionImportComponent extends ImportComponent<Submission
 
     readonly faQuestionCircle = faQuestionCircle;
     readonly ExerciseType = ExerciseType;
+
+    constructor() {
+        const pagingService = inject(ExampleSubmissionImportPagingService);
+        super(pagingService);
+    }
 
     get searchTermEntered() {
         return !!(this.state?.searchTerm?.length && this.state.searchTerm.length > 0);

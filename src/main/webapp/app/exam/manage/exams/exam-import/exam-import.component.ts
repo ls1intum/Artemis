@@ -14,6 +14,7 @@ import { SortByDirective } from 'app/shared/sort/sort-by.directive';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { NgbHighlight, NgbPagination } from '@ng-bootstrap/ng-bootstrap';
 import { ButtonComponent } from 'app/shared/components/button.component';
+import { ExamImportPagingService } from 'app/exam/manage/exams/exam-import/exam-import-paging.service';
 
 @Component({
     selector: 'jhi-exam-import',
@@ -36,6 +37,11 @@ export class ExamImportComponent extends ImportComponent<Exam> {
     exam?: Exam;
     isImportingExercises = false;
     isImportInSameCourse = false;
+
+    constructor() {
+        const pagingService = inject(ExamImportPagingService);
+        super(pagingService);
+    }
 
     /**
      * After the user has chosen an Exam, this method is called to load the exercise groups for the selected exam

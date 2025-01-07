@@ -1,4 +1,4 @@
-import { Component } from '@angular/core';
+import { Component, inject } from '@angular/core';
 import { Lecture } from 'app/entities/lecture.model';
 import { Column, ImportComponent } from 'app/shared/import/import.component';
 import { FormsModule } from '@angular/forms';
@@ -8,6 +8,7 @@ import { SortByDirective } from '../shared/sort/sort-by.directive';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { NgbHighlight, NgbPagination } from '@ng-bootstrap/ng-bootstrap';
 import { ButtonComponent } from '../shared/components/button.component';
+import { LecturePagingService } from 'app/lecture/lecture-paging.service';
 
 const tableColumns: Column<Lecture>[] = [
     {
@@ -37,7 +38,8 @@ const tableColumns: Column<Lecture>[] = [
 })
 export class LectureImportComponent extends ImportComponent<Lecture> {
     constructor() {
-        super();
+        const pagingService = inject(LecturePagingService);
+        super(pagingService);
         this.columns = tableColumns;
         this.entityName = 'lecture';
     }
