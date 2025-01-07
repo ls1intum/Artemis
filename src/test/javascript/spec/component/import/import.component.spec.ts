@@ -1,4 +1,4 @@
-import { Component } from '@angular/core';
+import { Component, inject } from '@angular/core';
 import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
 import { FormsModule } from '@angular/forms';
 import { NgbActiveModal, NgbPagination } from '@ng-bootstrap/ng-bootstrap';
@@ -16,7 +16,12 @@ import { ArtemisTestModule } from '../../test.module';
 import { DummyPagingService } from '../manage/dummy-paging-service';
 
 @Component({ template: '' })
-class DummyImportComponent extends ImportComponent<BaseEntity> {}
+class DummyImportComponent extends ImportComponent<BaseEntity> {
+    constructor() {
+        const pagingService = inject(DummyPagingService);
+        super(pagingService);
+    }
+}
 describe('ImportComponent', () => {
     let fixture: ComponentFixture<DummyImportComponent>;
     let comp: DummyImportComponent;
