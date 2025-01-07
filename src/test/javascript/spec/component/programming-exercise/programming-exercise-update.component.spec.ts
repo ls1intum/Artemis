@@ -45,7 +45,7 @@ describe('ProgrammingExerciseUpdateComponent', () => {
     const courseId = 1;
     const course = { id: courseId } as Course;
     const route = {
-        snapshot: { paramMap: convertToParamMap({ platformId: '1' }) },
+        snapshot: { paramMap: convertToParamMap({ courseId: '1' }) },
         url: {
             pipe: () => ({
                 subscribe: () => {},
