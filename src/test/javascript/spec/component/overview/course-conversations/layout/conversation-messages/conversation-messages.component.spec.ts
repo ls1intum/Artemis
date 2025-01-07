@@ -1,7 +1,7 @@
 import { ConversationMessagesComponent } from 'app/overview/course-conversations/layout/conversation-messages/conversation-messages.component';
 import { ComponentFixture, TestBed, fakeAsync, tick, waitForAsync } from '@angular/core/testing';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
-import { MockComponent, MockPipe, MockProvider } from 'ng-mocks';
+import { MockComponent, MockDirective, MockPipe, MockProvider } from 'ng-mocks';
 import { ButtonComponent } from 'app/shared/components/button.component';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
@@ -20,6 +20,7 @@ import { Course } from 'app/entities/course.model';
 import { ChannelDTO, getAsChannelDTO } from 'app/entities/metis/conversation/channel.model';
 import { PostCreateEditModalComponent } from 'app/shared/metis/posting-create-edit-modal/post-create-edit-modal/post-create-edit-modal.component';
 import dayjs from 'dayjs';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
 
 const examples: ConversationDTO[] = [
     generateOneToOneChatDTO({}),
@@ -67,6 +68,7 @@ examples.forEach((activeConversation) => {
                     MockComponent(PostingThreadComponent),
                     MockComponent(MessageInlineInputComponent),
                     MockComponent(PostCreateEditModalComponent),
+                    MockDirective(TranslateDirective),
                 ],
                 providers: [MockProvider(MetisConversationService), MockProvider(MetisService), MockProvider(NgbModal)],
             }).compileComponents();
