@@ -18,7 +18,7 @@ public interface IrisExerciseSettingsRepository extends ArtemisJpaRepository<Iri
             SELECT COUNT(s) > 0
             FROM IrisExerciseSettings s
             WHERE s.exercise.id = :exerciseId
-                AND s.irisTextExerciseChatSettings.enabled = TRUE
+                AND (s.irisTextExerciseChatSettings.enabled = TRUE OR s.irisChatSettings.enabled = TRUE)
             """)
     boolean isExerciseChatEnabled(@Param("exerciseId") long exerciseId);
 }
