@@ -1,9 +1,9 @@
-import { Component, Input, OnChanges, SimpleChanges, ViewChild, effect, input, output, signal } from '@angular/core';
+import { Component, Input, OnChanges, SimpleChanges, ViewChild, effect, inject, input, output, signal } from '@angular/core';
 import { Course, isCommunicationEnabled } from 'app/entities/course.model';
 import { Exercise } from 'app/entities/exercise.model';
 import { TitleChannelNameComponent } from 'app/shared/form/title-channel-name/title-channel-name.component';
 import { ProgrammingExerciseInputField } from 'app/exercises/programming/manage/update/programming-exercise-update.helper';
-import { CourseExistingExerciseDetailsType } from 'app/exercises/shared/exercise/exercise.service';
+import { CourseExistingExerciseDetailsType, ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
 
 @Component({
     selector: 'jhi-exercise-title-channel-name',
@@ -11,6 +11,8 @@ import { CourseExistingExerciseDetailsType } from 'app/exercises/shared/exercise
     imports: [TitleChannelNameComponent],
 })
 export class ExerciseTitleChannelNameComponent implements OnChanges {
+    protected readonly exerciseService: ExerciseService = inject(ExerciseService);
+
     course = input<Course>();
     isEditFieldDisplayedRecord = input<Record<ProgrammingExerciseInputField, boolean>>();
     courseId = input<number>();
