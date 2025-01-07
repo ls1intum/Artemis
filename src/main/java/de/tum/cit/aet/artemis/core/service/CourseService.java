@@ -221,7 +221,6 @@ public class CourseService {
 
     private final LLMTokenUsageTraceRepository llmTokenUsageTraceRepository;
 
-
     public CourseService(CourseRepository courseRepository, ExerciseService exerciseService, ExerciseDeletionService exerciseDeletionService,
             AuthorizationCheckService authCheckService, UserRepository userRepository, LectureService lectureService, GroupNotificationRepository groupNotificationRepository,
             ExerciseGroupRepository exerciseGroupRepository, AuditEventRepository auditEventRepository, UserService userService, ExamDeletionService examDeletionService,
