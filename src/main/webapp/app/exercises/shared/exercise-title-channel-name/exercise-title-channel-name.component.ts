@@ -1,9 +1,9 @@
-import { Component, Input, OnChanges, SimpleChanges, ViewChild, effect, input, output, signal } from '@angular/core';
+import { Component, Input, OnChanges, SimpleChanges, ViewChild, effect, inject, input, output, signal } from '@angular/core';
 import { Course, isCommunicationEnabled } from 'app/entities/course.model';
 import { Exercise } from 'app/entities/exercise.model';
 import { TitleChannelNameComponent } from 'app/shared/form/title-channel-name/title-channel-name.component';
 import { ProgrammingExerciseInputField } from 'app/exercises/programming/manage/update/programming-exercise-update.helper';
-import { CourseExistingExerciseDetailsType } from 'app/exercises/shared/exercise/exercise.service';
+import { CourseExistingExerciseDetailsType, ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
 
 @Component({
     selector: 'jhi-exercise-title-channel-name',
@@ -32,11 +32,12 @@ export class ExerciseTitleChannelNameComponent implements OnChanges {
     hideChannelNameInput = false;
 
     constructor() {
+        const exerciseService = inject(ExerciseService);
         effect(
             function fetchExistingExerciseNamesOnInit() {
                 const courseId = this.courseId() ?? this.course()?.id;
                 if (courseId && this.exercise.type) {
-                    this.exerciseService.getExistingExerciseDetailsInCourse(courseId, this.exercise.type).subscribe((exerciseDetails: CourseExistingExerciseDetailsType) => {
+                    exerciseService.getExistingExerciseDetailsInCourse(courseId, this.exercise.type).subscribe((exerciseDetails: CourseExistingExerciseDetailsType) => {
                         this.alreadyUsedExerciseNames.set(exerciseDetails.exerciseTitles ?? new Set());
                     });
                 }

@@ -91,7 +91,7 @@ import { ArtemisTranslatePipe } from '../../pipes/artemis-translate.pipe';
         GuidedTourComponent,
         FindLanguageFromKeyPipe,
         ArtemisTranslatePipe,
-        // NOTE: this is not unused
+        // NOTE: this is actually used in the html template, otherwise *jhiHasAnyAuthority would not work
         HasAnyAuthorityDirective,
     ],
 })

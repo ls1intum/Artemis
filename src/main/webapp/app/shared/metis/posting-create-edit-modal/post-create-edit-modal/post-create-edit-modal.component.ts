@@ -1,7 +1,6 @@
 import { Component, Input, OnChanges, OnInit } from '@angular/core';
 import { HelpIconComponent } from 'app/shared/components/help-icon.component';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
-import { PostComponent } from 'app/shared/metis/post/post.component';
 import { PostingButtonComponent } from 'app/shared/metis/posting-button/posting-button.component';
 import { PostingCreateEditModalDirective } from 'app/shared/metis/posting-create-edit-modal/posting-create-edit-modal.directive';
 import { Post } from 'app/entities/metis/post.model';
@@ -16,16 +15,6 @@ import { getAsChannelDTO } from 'app/entities/metis/conversation/channel.model';
 import { PostingMarkdownEditorComponent } from 'app/shared/metis/posting-markdown-editor/posting-markdown-editor.component';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { PostTagSelectorComponent } from './post-tag-selector/post-tag-selector.component';
-import {
-    NgbAccordionBody,
-    NgbAccordionButton,
-    NgbAccordionCollapse,
-    NgbAccordionDirective,
-    NgbAccordionHeader,
-    NgbAccordionItem,
-    NgbAccordionToggle,
-    NgbCollapse,
-} from '@ng-bootstrap/ng-bootstrap';
 
 const TITLE_MAX_LENGTH = 200;
 
@@ -43,15 +32,6 @@ export interface ContextSelectorOption {
         TranslateDirective,
         HelpIconComponent,
         PostTagSelectorComponent,
-        NgbAccordionDirective,
-        NgbAccordionItem,
-        NgbAccordionHeader,
-        NgbAccordionToggle,
-        NgbAccordionButton,
-        NgbCollapse,
-        NgbAccordionCollapse,
-        NgbAccordionBody,
-        PostComponent,
         PostingMarkdownEditorComponent,
         PostingButtonComponent,
         ArtemisTranslatePipe,

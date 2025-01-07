@@ -19,14 +19,13 @@
         "skipLibCheck": true,
         "outDir": "build/resources/main/static/app",
         "forceConsistentCasingInFileNames": true,
-        "lib": ["es2022", "dom"],
+        "lib": ["es2023", "dom"],
         "typeRoots": ["node_modules/@types"],
         "baseUrl": "./",
         "paths": {
             "app/*": ["src/main/webapp/app/*"]
         },
-        "importHelpers": true,
-        "ignoreDeprecations": "5.0"
+        "importHelpers": true
     },
     "angularCompilerOptions": {
         "genDir": "build/resources/main/aot",
