@@ -1,6 +1,5 @@
 import { DebugElement } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { NgModel } from '@angular/forms';
 import { By } from '@angular/platform-browser';
 import { ActivatedRoute, Params, Router } from '@angular/router';
 import { NgxDatatableModule } from '@siemens/ngx-datatable';
@@ -209,7 +208,6 @@ describe('ProgrammingExerciseConfigureGradingComponent', () => {
                 MockComponent(CategoryIssuesChartComponent),
                 MockComponent(ScaCategoryDistributionChartComponent),
                 MockPipe(RemoveKeysPipe),
-                MockDirective(NgModel),
                 MockDirective(TranslateDirective),
             ],
             providers: [
@@ -225,44 +223,42 @@ describe('ProgrammingExerciseConfigureGradingComponent', () => {
                 { provide: NgbModal, useClass: MockNgbModalService },
                 MockProvider(AlertService),
             ],
-        })
-            .compileComponents()
-            .then(() => {
-                fixture = TestBed.createComponent(ProgrammingExerciseConfigureGradingComponent);
-                debugElement = fixture.debugElement;
-                comp = fixture.componentInstance as ProgrammingExerciseConfigureGradingComponent;
+        }).compileComponents();
 
-                gradingService = debugElement.injector.get(ProgrammingExerciseGradingService);
-                route = debugElement.injector.get(ActivatedRoute);
-                const router = debugElement.injector.get(Router);
-                programmingExerciseWebsocketService = debugElement.injector.get(ProgrammingExerciseWebsocketService);
-                programmingExerciseService = debugElement.injector.get(ProgrammingExerciseService);
-                modalService = debugElement.injector.get(NgbModal);
+        fixture = TestBed.createComponent(ProgrammingExerciseConfigureGradingComponent);
+        debugElement = fixture.debugElement;
+        comp = fixture.componentInstance as ProgrammingExerciseConfigureGradingComponent;
 
-                updateCategoriesStub = jest.spyOn(gradingService, 'updateCodeAnalysisCategories');
-                resetCategoriesStub = jest.spyOn(gradingService, 'resetCategories');
-                loadStatisticsStub = jest.spyOn(gradingService, 'getGradingStatistics');
-                importCategoriesFromExerciseStub = jest.spyOn(gradingService, 'importCategoriesFromExercise');
+        gradingService = debugElement.injector.get(ProgrammingExerciseGradingService);
+        route = debugElement.injector.get(ActivatedRoute);
+        const router = debugElement.injector.get(Router);
+        programmingExerciseWebsocketService = debugElement.injector.get(ProgrammingExerciseWebsocketService);
+        programmingExerciseService = debugElement.injector.get(ProgrammingExerciseService);
+        modalService = debugElement.injector.get(NgbModal);
 
-                // @ts-ignore
-                (router as MockRouter).setUrl('/');
-                routeSubject = new Subject();
-                // @ts-ignore
-                (route as MockActivatedRouteWithSubjects).setSubject(routeSubject);
+        updateCategoriesStub = jest.spyOn(gradingService, 'updateCodeAnalysisCategories');
+        resetCategoriesStub = jest.spyOn(gradingService, 'resetCategories');
+        loadStatisticsStub = jest.spyOn(gradingService, 'getGradingStatistics');
+        importCategoriesFromExerciseStub = jest.spyOn(gradingService, 'importCategoriesFromExercise');
 
-                testCasesChangedStub = jest.spyOn(programmingExerciseWebsocketService, 'getTestCaseState');
-                getExerciseTestCaseStateStub = jest.spyOn(programmingExerciseService, 'getProgrammingExerciseTestCaseState');
-                loadExerciseStub = jest.spyOn(programmingExerciseService, 'find');
+        // @ts-ignore
+        (router as MockRouter).setUrl('/');
+        routeSubject = new Subject();
+        // @ts-ignore
+        (route as MockActivatedRouteWithSubjects).setSubject(routeSubject);
 
-                getExerciseTestCaseStateSubject = new Subject();
+        testCasesChangedStub = jest.spyOn(programmingExerciseWebsocketService, 'getTestCaseState');
+        getExerciseTestCaseStateStub = jest.spyOn(programmingExerciseService, 'getProgrammingExerciseTestCaseState');
+        loadExerciseStub = jest.spyOn(programmingExerciseService, 'find');
 
-                testCasesChangedSubject = new Subject<boolean>();
-                testCasesChangedStub.mockReturnValue(testCasesChangedSubject);
-                getExerciseTestCaseStateStub.mockReturnValue(getExerciseTestCaseStateSubject);
+        getExerciseTestCaseStateSubject = new Subject();
 
-                loadStatisticsStub.mockReturnValue(of(gradingStatistics));
-                loadExerciseStub.mockReturnValue(of({ body: exercise }));
-            });
+        testCasesChangedSubject = new Subject<boolean>();
+        testCasesChangedStub.mockReturnValue(testCasesChangedSubject);
+        getExerciseTestCaseStateStub.mockReturnValue(getExerciseTestCaseStateSubject);
+
+        loadStatisticsStub.mockReturnValue(of(gradingStatistics));
+        loadExerciseStub.mockReturnValue(of({ body: exercise }));
     });
 
     afterEach(() => {
