@@ -24,7 +24,6 @@ describe('PostingContentPartComponent', () => {
     let fileService: FileService;
     let openAttachmentSpy: jest.SpyInstance;
     let navigateByUrlSpy: jest.SpyInstance;
-    let enlargeImageSpy: jest.SpyInstance;
 
     let contentBeforeReference: string;
     let contentAfterReference: string;
@@ -36,12 +35,11 @@ describe('PostingContentPartComponent', () => {
                 MatDialogModule,
                 MatMenuModule,
                 HtmlForPostingMarkdownPipe, // we want to test against the rendered string, therefore we cannot mock the pipe
-            ],
-            declarations: [
-                PostingContentPartComponent,
-                // FaIconComponent, // we want to test the type of rendered icons, therefore we cannot mock the component
                 MockRouterLinkDirective,
                 MockQueryParamsDirective,
+            ],
+            declarations: [
+                // FaIconComponent, // we want to test the type of rendered icons, therefore we cannot mock the component
             ],
             providers: [
                 { provide: FileService, useClass: MockFileService },
@@ -59,7 +57,6 @@ describe('PostingContentPartComponent', () => {
         fileService = TestBed.inject(FileService);
         navigateByUrlSpy = jest.spyOn(router, 'navigateByUrl');
         openAttachmentSpy = jest.spyOn(fileService, 'downloadFile');
-        enlargeImageSpy = jest.spyOn(component, 'enlargeImage');
         contentBeforeReference = '**Be aware**\n\n I want to reference the following Post ';
         contentAfterReference = 'in my content,\n\n does it *actually* work?';
     });
@@ -219,6 +216,10 @@ describe('PostingContentPartComponent', () => {
             const referenceLink = getElement(debugElement, '.reference');
             expect(referenceLink).not.toBeNull();
             expect(referenceLink.innerHTML).toInclude(referenceStr);
+
+            component.enlargeImage = jest.fn();
+
+            const enlargeImageSpy = jest.spyOn(component, 'enlargeImage');
 
             // on click should open referenced attachment unit slide
             referenceLink.click();
