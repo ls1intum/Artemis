@@ -3,6 +3,7 @@ package de.tum.cit.aet.artemis.lti.service;
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_LTI;
 
 import org.springframework.context.annotation.Profile;
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 
 import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
@@ -22,6 +23,7 @@ public class LtiNewResultService {
      *
      * @param participation The exercise participation for which a new build result is available
      */
+    @Async
     public void onNewResult(StudentParticipation participation) {
         if (!participation.getExercise().getCourseViaExerciseGroupOrCourseMember().isOnlineCourse()) {
             return;

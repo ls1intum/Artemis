@@ -314,7 +314,7 @@ public class GitLabCIService extends AbstractContinuousIntegrationService {
     @Override
     public String getPlanKey(Object requestBody) throws ContinuousIntegrationException {
         TestResultsDTO dto = TestResultsDTO.convert(requestBody);
-        return dto.getFullName();
+        return dto.fullName();
     }
 
     @Override

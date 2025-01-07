@@ -32,13 +32,7 @@ describe('ComplaintsFormComponent', () => {
     beforeEach(() => {
         TestBed.configureTestingModule({
             imports: [ArtemisTestModule],
-            declarations: [
-                ComplaintsFormComponent,
-                MockPipe(ArtemisTranslatePipe),
-                MockDirective(NgModel),
-                MockDirective(TranslateDirective),
-                MockComponent(TextareaCounterComponent),
-            ],
+            declarations: [MockPipe(ArtemisTranslatePipe), MockDirective(NgModel), MockDirective(TranslateDirective), MockComponent(TextareaCounterComponent)],
             providers: [
                 MockProvider(AlertService),
                 {

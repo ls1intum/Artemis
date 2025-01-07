@@ -13,6 +13,5 @@ import de.tum.cit.aet.artemis.programming.domain.ProjectType;
  */
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public record ProgrammingLanguageFeature(ProgrammingLanguage programmingLanguage, boolean sequentialTestRuns, boolean staticCodeAnalysis, boolean plagiarismCheckSupported,
-        boolean packageNameRequired, boolean checkoutSolutionRepositoryAllowed, List<ProjectType> projectTypes, boolean testwiseCoverageAnalysisSupported,
-        boolean auxiliaryRepositoriesSupported) {
+        boolean packageNameRequired, boolean checkoutSolutionRepositoryAllowed, List<ProjectType> projectTypes, boolean auxiliaryRepositoriesSupported) {
 }
