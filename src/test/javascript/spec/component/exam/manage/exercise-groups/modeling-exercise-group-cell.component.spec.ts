@@ -1,7 +1,5 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { ArtemisTestModule } from '../../../../test.module';
 import { ExerciseType } from 'app/entities/exercise.model';
-import { TranslatePipeMock } from '../../../../helpers/mocks/service/mock-translate.service';
 import { ModelingExercise } from 'app/entities/modeling-exercise.model';
 import { ModelingExerciseGroupCellComponent } from 'app/exam/manage/exercise-groups/modeling-exercise-cell/modeling-exercise-group-cell.component';
 import { UMLDiagramType } from '@ls1intum/apollon';
@@ -11,11 +9,7 @@ describe('Modeling Exercise Group Cell Component', () => {
     let fixture: ComponentFixture<ModelingExerciseGroupCellComponent>;
 
     beforeEach(() => {
-        TestBed.configureTestingModule({
-            imports: [ArtemisTestModule],
-            declarations: [ModelingExerciseGroupCellComponent, TranslatePipeMock],
-            providers: [],
-        })
+        TestBed.configureTestingModule({})
             .compileComponents()
             .then(() => {
                 fixture = TestBed.createComponent(ModelingExerciseGroupCellComponent);

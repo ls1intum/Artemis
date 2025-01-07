@@ -1,5 +1,4 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { ArtemisTestModule } from '../../../../test.module';
 import { ExerciseType } from 'app/entities/exercise.model';
 import { FileUploadExerciseGroupCellComponent } from 'app/exam/manage/exercise-groups/file-upload-exercise-cell/file-upload-exercise-group-cell.component';
 import { FileUploadExercise } from 'app/entities/file-upload-exercise.model';
@@ -9,9 +8,7 @@ describe('File Upload Exercise Group Cell Component', () => {
     let fixture: ComponentFixture<FileUploadExerciseGroupCellComponent>;
 
     beforeEach(() => {
-        TestBed.configureTestingModule({
-            imports: [ArtemisTestModule],
-        })
+        TestBed.configureTestingModule({})
             .compileComponents()
             .then(() => {
                 fixture = TestBed.createComponent(FileUploadExerciseGroupCellComponent);
