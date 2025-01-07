@@ -1,7 +1,7 @@
 import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
 import { MetisService } from 'app/shared/metis/metis.service';
-import { MockModule, MockPipe } from 'ng-mocks';
-import { FormBuilder, FormsModule, ReactiveFormsModule } from '@angular/forms';
+import { MockPipe } from 'ng-mocks';
+import { FormBuilder } from '@angular/forms';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { MockMetisService } from '../../../../helpers/mocks/service/mock-metis-service.service';
 import { directMessageUser1, metisPostToCreateUser1 } from '../../../../helpers/sample/metis-sample-data';
@@ -23,7 +23,6 @@ describe('MessageReplyInlineInputComponent', () => {
 
     beforeEach(() => {
         return TestBed.configureTestingModule({
-            imports: [MockModule(FormsModule), MockModule(ReactiveFormsModule)],
             declarations: [MessageReplyInlineInputComponent, MockPipe(ArtemisTranslatePipe)],
             providers: [
                 provideHttpClient(),
