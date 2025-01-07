@@ -127,19 +127,13 @@ export class CodeEditorMonacoComponent implements OnChanges {
     annotationsArray: Array<Annotation> = [];
 
     constructor() {
-        effect(
-            () => {
-                this.feedbackInternal.set(this.feedbacks());
-            },
-            { allowSignalWrites: true },
-        );
+        effect(() => {
+            this.feedbackInternal.set(this.feedbacks());
+        });
 
-        effect(
-            () => {
-                this.feedbackSuggestionsInternal.set(this.feedbackSuggestions());
-            },
-            { allowSignalWrites: true },
-        );
+        effect(() => {
+            this.feedbackSuggestionsInternal.set(this.feedbackSuggestions());
+        });
 
         effect(() => {
             const annotations = this.buildAnnotations();
