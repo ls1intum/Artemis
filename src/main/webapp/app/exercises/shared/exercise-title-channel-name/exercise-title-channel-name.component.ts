@@ -11,8 +11,6 @@ import { CourseExistingExerciseDetailsType, ExerciseService } from 'app/exercise
     imports: [TitleChannelNameComponent],
 })
 export class ExerciseTitleChannelNameComponent implements OnChanges {
-    protected readonly exerciseService: ExerciseService = inject(ExerciseService);
-
     course = input<Course>();
     isEditFieldDisplayedRecord = input<Record<ProgrammingExerciseInputField, boolean>>();
     courseId = input<number>();
@@ -34,11 +32,12 @@ export class ExerciseTitleChannelNameComponent implements OnChanges {
     hideChannelNameInput = false;
 
     constructor() {
+        const exerciseService = inject(ExerciseService);
         effect(
             function fetchExistingExerciseNamesOnInit() {
                 const courseId = this.courseId() ?? this.course()?.id;
                 if (courseId && this.exercise.type) {
-                    this.exerciseService.getExistingExerciseDetailsInCourse(courseId, this.exercise.type).subscribe((exerciseDetails: CourseExistingExerciseDetailsType) => {
+                    exerciseService.getExistingExerciseDetailsInCourse(courseId, this.exercise.type).subscribe((exerciseDetails: CourseExistingExerciseDetailsType) => {
                         this.alreadyUsedExerciseNames.set(exerciseDetails.exerciseTitles ?? new Set());
                     });
                 }
