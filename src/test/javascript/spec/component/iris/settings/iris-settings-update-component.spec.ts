@@ -24,15 +24,15 @@ describe('IrisSettingsUpdateComponent', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule, NgbTooltipMockDirective, MockJhiTranslateDirective],
-            declarations: [
+            imports: [
+                ArtemisTestModule,
+                NgbTooltipMockDirective,
+                MockJhiTranslateDirective,
                 IrisCourseSettingsUpdateComponent,
                 IrisSettingsUpdateComponent,
                 IrisCommonSubSettingsUpdateComponent,
-                MockPipe(ArtemisTranslatePipe),
-                MockComponent(ButtonComponent),
-                MockDirective(NgModel),
             ],
+            declarations: [MockPipe(ArtemisTranslatePipe), MockComponent(ButtonComponent), MockDirective(NgModel)],
             providers: [
                 MockProvider(IrisSettingsService, {
                     getGlobalSettings: () => of(mockSettings()),
