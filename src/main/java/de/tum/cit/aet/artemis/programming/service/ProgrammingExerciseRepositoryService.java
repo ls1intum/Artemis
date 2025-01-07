@@ -404,8 +404,6 @@ public class ProgrammingExerciseRepositoryService {
         final Map<String, Boolean> sectionsMap = new HashMap<>();
         // Keep or delete static code analysis configuration in the build configuration file
         sectionsMap.put("static-code-analysis", Boolean.TRUE.equals(programmingExercise.isStaticCodeAnalysisEnabled()));
-        // Keep or delete testwise coverage configuration in the build file
-        sectionsMap.put("record-testwise-coverage", Boolean.TRUE.equals(programmingExercise.getBuildConfig().isTestwiseCoverageEnabled()));
 
         if (programmingExercise.getBuildConfig().hasSequentialTestRuns()) {
             setupTestTemplateSequentialTestRuns(resources, templatePath, projectTemplatePath, projectType, sectionsMap);
@@ -674,6 +672,7 @@ public class ProgrammingExerciseRepositoryService {
                 replacements.put(PACKAGE_NAME_PLACEHOLDER, programmingExercise.getPackageName());
             }
             case SWIFT -> replaceSwiftPlaceholders(replacements, programmingExercise, repository);
+            case GO -> replacements.put(PACKAGE_NAME_PLACEHOLDER, programmingExercise.getPackageName());
             default -> {
                 // no special package name replacements needed for other programming languages
             }
