@@ -6,6 +6,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.context.annotation.Profile;
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 
 import de.tum.cit.aet.artemis.iris.domain.settings.event.IrisEventType;
@@ -38,6 +39,7 @@ public class PyrisEventPublisherService {
      *
      * @param event the event to publish
      */
+    @Async
     public void publishEvent(PyrisEvent event) {
         if (!isEventEnabled(event)) {
             log.debug("Skipping event publication as conditions are not met: {}", event.getClass().getSimpleName());
