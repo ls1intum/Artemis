@@ -19,7 +19,13 @@ export enum NotificationSettingsCommunicationChannel {
     selector: 'jhi-notification-settings',
     templateUrl: 'notification-settings.component.html',
     styleUrls: ['../user-settings.scss'],
-    imports: [FaIconComponent, TranslateDirective, HasAnyAuthorityDirective, ArtemisTranslatePipe],
+    imports: [
+        FaIconComponent,
+        TranslateDirective,
+        // NOTE: this is actually used in the html template, otherwise *jhiHasAnyAuthority would not work
+        HasAnyAuthorityDirective,
+        ArtemisTranslatePipe,
+    ],
 })
 export class NotificationSettingsComponent extends UserSettingsDirective implements OnInit {
     private notificationSettingsService = inject(NotificationSettingsService);

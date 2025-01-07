@@ -1,6 +1,7 @@
 import { Component, ElementRef, OnInit, ViewChild, inject } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { Course } from 'app/entities/course.model';
+import { HasAnyAuthorityDirective } from 'app/shared/auth/has-any-authority.directive';
 import { finalize } from 'rxjs';
 import { OnlineCourseConfiguration } from 'app/entities/online-course-configuration.model';
 import { FormControl, FormGroup, FormsModule, ReactiveFormsModule } from '@angular/forms';
@@ -42,6 +43,8 @@ import { ArtemisSharedPipesModule } from 'app/shared/pipes/shared-pipes.module';
         KeyValuePipe,
         ArtemisTranslatePipe,
         ArtemisSharedPipesModule,
+        // NOTE: this is actually used in the html template, otherwise *jhiHasAnyAuthority would not work
+        HasAnyAuthorityDirective,
     ],
 })
 export class EditCourseLtiConfigurationComponent implements OnInit {

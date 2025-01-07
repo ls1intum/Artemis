@@ -3,6 +3,7 @@ import { Component, ElementRef, OnInit, ViewChild, inject } from '@angular/core'
 import { FormControl, FormGroup, FormsModule, ReactiveFormsModule, ValidatorFn, Validators } from '@angular/forms';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { AlertService, AlertType } from 'app/core/util/alert.service';
+import { HasAnyAuthorityDirective } from 'app/shared/auth/has-any-authority.directive';
 import { Observable, OperatorFunction, Subject, debounceTime, distinctUntilChanged, filter, map, merge, tap } from 'rxjs';
 import { regexValidator } from 'app/shared/form/shortname-validator.directive';
 import { Course, CourseInformationSharingConfiguration, isCommunicationEnabled, isMessagingEnabled } from 'app/entities/course.model';
@@ -20,7 +21,6 @@ import { OrganizationManagementService } from 'app/admin/organization-management
 import { OrganizationSelectorComponent } from 'app/shared/organization-selector/organization-selector.component';
 import { faBan, faExclamationTriangle, faPen, faQuestionCircle, faSave, faTimes, faTrash } from '@fortawesome/free-solid-svg-icons';
 import { base64StringToBlob } from 'app/utils/blob-util';
-import { ImageCroppedEvent } from 'app/shared/image-cropper/interfaces/image-cropped-event.interface';
 import { ProgrammingLanguage } from 'app/entities/programming/programming-exercise.model';
 import { CourseAdminService } from 'app/course/manage/course-admin.service';
 import { FeatureToggle, FeatureToggleService } from 'app/shared/feature-toggle/feature-toggle.service';
@@ -68,6 +68,8 @@ const DEFAULT_CUSTOM_GROUP_NAME = 'artemis-dev';
         KeyValuePipe,
         ArtemisTranslatePipe,
         RemoveKeysPipe,
+        // NOTE: this is actually used in the html template, otherwise *jhiHasAnyAuthority would not work
+        HasAnyAuthorityDirective,
     ],
 })
 export class CourseUpdateComponent implements OnInit {
@@ -88,15 +90,17 @@ export class CourseUpdateComponent implements OnInit {
     CachingStrategy = CachingStrategy;
     ProgrammingLanguage = ProgrammingLanguage;
 
+    @ViewChild('fileInput', { static: false }) fileInput: ElementRef<HTMLInputElement>;
+    @ViewChild(ColorSelectorComponent, { static: false }) colorSelector: ColorSelectorComponent;
     @ViewChild('timeZoneInput') tzTypeAhead: NgbTypeahead;
+
     tzFocus$ = new Subject<string>();
     tzClick$ = new Subject<string>();
     timeZones: string[] = [];
     originalTimeZone?: string;
 
-    @ViewChild('fileInput', { static: false }) fileInput: ElementRef<HTMLInputElement>;
-    @ViewChild(ColorSelectorComponent, { static: false }) colorSelector: ColorSelectorComponent;
     readonly ARTEMIS_DEFAULT_COLOR = ARTEMIS_DEFAULT_COLOR;
+
     courseForm: FormGroup;
     course: Course;
     isSaving: boolean;
@@ -123,7 +127,7 @@ export class CourseUpdateComponent implements OnInit {
     isAthenaEnabled = false;
     tutorialGroupsFeatureActivated = false;
 
-    private courseStorageServivce = inject(CourseStorageService);
+    private courseStorageService = inject(CourseStorageService);
 
     readonly semesters = getSemesters();
 
@@ -132,7 +136,6 @@ export class CourseUpdateComponent implements OnInit {
     // Currently set to 65535 as this is the limit of TEXT
     readonly COMPLAINT_RESPONSE_TEXT_LIMIT = 65535;
     readonly COMPLAINT_TEXT_LIMIT = 65535;
-
     readonly COURSE_TITLE_LIMIT = 255;
 
     ngOnInit() {
@@ -375,7 +378,7 @@ export class CourseUpdateComponent implements OnInit {
                 name: 'courseModification',
                 content: 'Changed a course',
             });
-            this.courseStorageServivce.updateCourse(updatedCourse!);
+            this.courseStorageService.updateCourse(updatedCourse!);
         }
 
         this.router.navigate(['course-management', updatedCourse?.id?.toString()]);
@@ -393,13 +396,6 @@ export class CourseUpdateComponent implements OnInit {
             this.openCropper();
         }
         element.value = '';
-    }
-
-    /**
-     * @param event
-     */
-    imageCropped(event: ImageCroppedEvent) {
-        this.croppedImage = event.base64;
     }
 
     /**

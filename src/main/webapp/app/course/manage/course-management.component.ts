@@ -29,6 +29,7 @@ import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
     imports: [
         TranslateDirective,
         DocumentationButtonComponent,
+        // NOTE: this is actually used in the html template, otherwise *jhiHasAnyAuthority would not work
         HasAnyAuthorityDirective,
         OrionFilterDirective,
         RouterLink,

@@ -1,6 +1,7 @@
 import { AfterViewInit, Component, OnDestroy, OnInit, inject } from '@angular/core';
 import { ActivatedRoute, Router, RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
 import { HttpErrorResponse } from '@angular/common/http';
+import { HasAnyAuthorityDirective } from 'app/shared/auth/has-any-authority.directive';
 import { Observable, Subject, Subscription, map, of } from 'rxjs';
 import { Course, isCommunicationEnabled } from 'app/entities/course.model';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
@@ -58,6 +59,8 @@ import { DeleteButtonDirective } from 'app/shared/delete-dialog/delete-button.di
         CourseExamArchiveButtonComponent,
         DeleteButtonDirective,
         RouterOutlet,
+        // NOTE: this is actually used in the html template, otherwise *jhiHasAnyAuthority would not work
+        HasAnyAuthorityDirective,
     ],
 })
 export class CourseManagementTabBarComponent implements OnInit, OnDestroy, AfterViewInit {

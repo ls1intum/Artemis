@@ -16,7 +16,13 @@ import { ArtemisTranslatePipe } from '../../pipes/artemis-translate.pipe';
     selector: 'jhi-science-settings',
     templateUrl: 'science-settings.component.html',
     styleUrls: ['../user-settings.scss'],
-    imports: [FaIconComponent, TranslateDirective, HasAnyAuthorityDirective, ArtemisTranslatePipe],
+    imports: [
+        FaIconComponent,
+        TranslateDirective,
+        // NOTE: this is actually used in the html template, otherwise *jhiHasAnyAuthority would not work
+        HasAnyAuthorityDirective,
+        ArtemisTranslatePipe,
+    ],
 })
 export class ScienceSettingsComponent extends UserSettingsDirective implements OnInit, OnDestroy {
     private scienceSettingsService = inject(ScienceSettingsService);

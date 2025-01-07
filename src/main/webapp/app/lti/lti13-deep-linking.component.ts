@@ -3,6 +3,7 @@ import { ActivatedRoute, Router } from '@angular/router';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
 import { Exercise } from 'app/entities/exercise.model';
 import { faExclamationTriangle, faSort, faWrench } from '@fortawesome/free-solid-svg-icons';
+import { HasAnyAuthorityDirective } from 'app/shared/auth/has-any-authority.directive';
 import { SortService } from 'app/shared/service/sort.service';
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { AccountService } from 'app/core/auth/account.service';
@@ -20,7 +21,16 @@ import { FormsModule } from '@angular/forms';
 @Component({
     selector: 'jhi-deep-linking',
     templateUrl: './lti13-deep-linking.component.html',
-    imports: [ArtemisSharedModule, TranslateDirective, ArtemisSharedComponentModule, ArtemisSharedCommonModule, FaIconComponent, FormsModule],
+    imports: [
+        ArtemisSharedModule,
+        TranslateDirective,
+        ArtemisSharedComponentModule,
+        ArtemisSharedCommonModule,
+        FaIconComponent,
+        FormsModule,
+        // NOTE: this is actually used in the html template, otherwise *jhiHasAnyAuthority would not work
+        HasAnyAuthorityDirective,
+    ],
 })
 export class Lti13DeepLinkingComponent implements OnInit {
     route = inject(ActivatedRoute);
