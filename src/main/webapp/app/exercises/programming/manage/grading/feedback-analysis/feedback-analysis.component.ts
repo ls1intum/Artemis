@@ -14,7 +14,7 @@ import { AffectedStudentsModalComponent } from 'app/exercises/programming/manage
 import { FeedbackDetailChannelModalComponent } from 'app/exercises/programming/manage/grading/feedback-analysis/Modal/feedback-detail-channel-modal.component';
 import { ChannelDTO } from 'app/entities/metis/conversation/channel.model';
 import { Router } from '@angular/router';
-import { facDetails } from 'src/main/webapp/content/icons/icons';
+import { facDetails } from 'app/icons/icons';
 
 @Component({
     selector: 'jhi-feedback-analysis',

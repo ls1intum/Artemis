@@ -20,7 +20,7 @@ import { ProgrammingExercise } from 'app/entities/programming/programming-exerci
 import { IconProp } from '@fortawesome/fontawesome-svg-core';
 import { faChevronRight, faFileLines, faHourglassHalf } from '@fortawesome/free-solid-svg-icons';
 import { getIconTooltip } from 'app/entities/exercise.model';
-import { facSaveSuccess, facSaveWarning } from 'src/main/webapp/content/icons/icons';
+import { facSaveSuccess, facSaveWarning } from 'app/icons/icons';
 
 export enum ExerciseButtonStatus {
     Synced = 'synced',

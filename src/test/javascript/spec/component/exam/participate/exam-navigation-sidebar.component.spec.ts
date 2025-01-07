@@ -17,7 +17,7 @@ import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { MockSyncStorage } from '../../../helpers/mocks/service/mock-sync-storage.service';
 import { CommitState } from 'app/exercises/programming/shared/code-editor/model/code-editor.model';
 import { TranslateService } from '@ngx-translate/core';
-import { facSaveSuccess, facSaveWarning } from 'src/main/webapp/content/icons/icons';
+import { facSaveSuccess, facSaveWarning } from 'app/icons/icons';
 import { NgbTooltipModule } from '@ng-bootstrap/ng-bootstrap';
 import { ExamLiveEventsButtonComponent } from 'app/exam/participate/events/exam-live-events-button.component';
 import { ArtemisSharedCommonModule } from 'app/shared/shared-common.module';
