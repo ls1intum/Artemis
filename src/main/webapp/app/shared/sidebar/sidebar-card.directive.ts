@@ -6,7 +6,6 @@ import { SidebarCardElement, SidebarTypes } from 'app/types/sidebar';
 
 @Directive({
     selector: '[jhiSidebarCard]',
-    standalone: true,
 })
 export class SidebarCardDirective implements OnInit, OnDestroy {
     viewContainerRef = inject(ViewContainerRef);

@@ -36,7 +36,6 @@ interface KnowledgeAreaForImport extends KnowledgeAreaForTree {
 
 @Component({
     template: '',
-    standalone: false,
 })
 export abstract class CourseImportStandardizedCourseCompetenciesComponent extends StandardizedCompetencyFilterPageComponent implements OnInit, ComponentCanDeactivate {
     protected router = inject(Router);

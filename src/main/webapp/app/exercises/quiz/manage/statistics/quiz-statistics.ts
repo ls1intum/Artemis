@@ -7,7 +7,6 @@ import { NgxChartsSingleSeriesDataEntry } from 'app/shared/chart/ngx-charts-data
 
 @Component({
     template: '',
-    standalone: false,
 })
 export abstract class AbstractQuizStatisticComponent {
     protected translateService = inject(TranslateService);

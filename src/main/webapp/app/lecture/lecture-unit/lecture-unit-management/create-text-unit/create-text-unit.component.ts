@@ -14,7 +14,6 @@ import { TextUnitFormComponent } from '../text-unit-form/text-unit-form.componen
 @Component({
     selector: 'jhi-create-text-unit',
     templateUrl: './create-text-unit.component.html',
-    styles: [],
     imports: [LectureUnitLayoutComponent, TextUnitFormComponent],
 })
 export class CreateTextUnitComponent implements OnInit {

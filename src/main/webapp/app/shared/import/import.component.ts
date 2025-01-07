@@ -21,7 +21,6 @@ export type Column<T extends BaseEntity> = {
 
 @Component({
     template: '',
-    standalone: false,
 })
 export abstract class ImportComponent<T extends BaseEntity> implements OnInit {
     protected router = inject(Router);

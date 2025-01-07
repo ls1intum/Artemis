@@ -4,7 +4,6 @@ import { TreeviewItem } from 'app/exercises/programming/shared/code-editor/treev
 
 @Component({
     template: '',
-    standalone: false,
 })
 export abstract class CodeEditorFileBrowserNodeComponent implements OnChanges {
     FileType = FileType;

@@ -6,7 +6,6 @@ import interact from 'interactjs';
 
 @Component({
     template: '',
-    standalone: false,
 })
 export abstract class ModelingComponent {
     @ViewChild('editorContainer', { static: false }) editorContainer: ElementRef;

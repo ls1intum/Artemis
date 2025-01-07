@@ -13,7 +13,6 @@ import { CourseCompetencyFormData } from 'app/course/competencies/forms/course-c
 @Component({
     selector: 'jhi-create-competency',
     templateUrl: './create-competency.component.html',
-    styles: [],
     imports: [ArtemisSharedModule, CompetencyFormComponent, ArtemisSharedComponentModule],
 })
 export class CreateCompetencyComponent extends CreateCourseCompetencyComponent {

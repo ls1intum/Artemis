@@ -9,7 +9,6 @@ import { AbstractControl, NG_VALIDATORS, Validator } from '@angular/forms';
 @Directive({
     selector: '[notIncludedIn][ngModel],[notIncludedIn][formControl]',
     providers: [{ provide: NG_VALIDATORS, useExisting: CustomNotIncludedInValidatorDirective, multi: true }],
-    standalone: true,
 })
 export class CustomNotIncludedInValidatorDirective implements Validator {
     disallowedValues = input.required<Set<unknown>>();

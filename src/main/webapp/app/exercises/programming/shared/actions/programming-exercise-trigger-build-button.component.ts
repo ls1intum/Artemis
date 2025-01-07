@@ -21,7 +21,6 @@ import { isManualResult } from 'app/exercises/shared/result/result.utils';
  */
 @Component({
     template: '',
-    standalone: false,
 })
 export abstract class ProgrammingExerciseTriggerBuildButtonComponent implements OnChanges, OnDestroy {
     FeatureToggle = FeatureToggle;

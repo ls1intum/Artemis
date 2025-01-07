@@ -18,7 +18,6 @@ import { CourseCompetencyService } from 'app/course/competencies/course-competen
  */
 @Component({
     template: '',
-    standalone: false,
 })
 export abstract class ImportCourseCompetenciesComponent implements OnInit, ComponentCanDeactivate {
     // this attribute has to be set when using the common template (import-course-competencies.component.html)

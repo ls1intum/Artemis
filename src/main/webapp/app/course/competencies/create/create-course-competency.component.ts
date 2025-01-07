@@ -10,7 +10,6 @@ import { DocumentationType } from 'app/shared/components/documentation-button/do
 
 @Component({
     template: '',
-    standalone: false,
 })
 export abstract class CreateCourseCompetencyComponent implements OnInit {
     protected activatedRoute = inject(ActivatedRoute);

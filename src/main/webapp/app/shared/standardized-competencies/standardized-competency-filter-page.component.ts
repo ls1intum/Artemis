@@ -10,7 +10,6 @@ import { KnowledgeAreaDTO, KnowledgeAreaForTree, StandardizedCompetencyDTO } fro
  */
 @Component({
     template: '',
-    standalone: false,
 })
 export abstract class StandardizedCompetencyFilterPageComponent {
     protected knowledgeAreaFilter?: KnowledgeAreaDTO;

@@ -39,7 +39,6 @@ export enum GradeEditMode {
 
 @Component({
     template: '',
-    standalone: false,
 })
 export abstract class BaseGradingSystemComponent implements OnInit {
     protected gradingSystemService = inject(GradingSystemService);

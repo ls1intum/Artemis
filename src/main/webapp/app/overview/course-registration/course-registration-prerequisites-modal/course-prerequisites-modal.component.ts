@@ -10,7 +10,6 @@ import { CompetencyCardComponent } from 'app/course/competencies/competency-card
 @Component({
     selector: 'jhi-course-prerequisites-modal',
     templateUrl: './course-prerequisites-modal.component.html',
-    styles: [],
     imports: [TranslateDirective, CompetencyCardComponent],
 })
 export class CoursePrerequisitesModalComponent implements OnInit {

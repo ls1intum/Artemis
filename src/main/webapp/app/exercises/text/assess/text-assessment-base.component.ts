@@ -15,7 +15,6 @@ import { getCourseFromExercise } from 'app/entities/exercise.model';
 
 @Component({
     template: '',
-    standalone: false,
 })
 export abstract class TextAssessmentBaseComponent implements OnInit {
     protected alertService = inject(AlertService);

@@ -5,9 +5,7 @@ import { effect, input, output } from '@angular/core';
 import { Directive } from '@angular/core';
 import { LectureUnitCompletionEvent } from 'app/overview/course-lectures/course-lecture-details.component';
 
-@Directive({
-    standalone: true,
-})
+@Directive()
 export class LectureUnitDirective<T extends LectureUnit> extends AbstractScienceComponent {
     lectureUnit = input.required<T>();
 

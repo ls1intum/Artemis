@@ -6,7 +6,6 @@ import { NgClass } from '@angular/common';
 @Component({
     selector: 'jhi-included-in-overall-score-picker',
     templateUrl: './included-in-overall-score-picker.component.html',
-    styles: [],
     imports: [TranslateDirective, NgClass],
 })
 export class IncludedInOverallScorePickerComponent {

@@ -41,7 +41,6 @@ import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 @Component({
     providers: [FileUploadAssessmentService],
     templateUrl: './file-upload-assessment.component.html',
-    styles: [],
     encapsulation: ViewEncapsulation.None,
     imports: [
         AssessmentLayoutComponent,

@@ -58,8 +58,6 @@ module.exports = [
             '@typescript-eslint/no-floating-promises': 'off',
             '@typescript-eslint/no-unsafe-assignment': 'off',
             '@angular-eslint/no-output-on-prefix': 'off',
-            // TODO: remove this line when all components have been converted to standalone
-            '@angular-eslint/prefer-standalone': 'off',
             '@typescript-eslint/ban-ts-comment': 'warn',
             '@typescript-eslint/no-empty-function': 'off',
             '@typescript-eslint/no-non-null-asserted-optional-chain': 'warn',

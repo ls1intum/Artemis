@@ -4,7 +4,6 @@ import { TranslatePipe, TranslateService } from '@ngx-translate/core';
 @Pipe({
     name: 'artemisTranslate',
     pure: false,
-    standalone: true,
 })
 /**
  * a simple wrapper to prevent compile errors in IntelliJ

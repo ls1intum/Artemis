@@ -12,7 +12,6 @@ import { ProgrammingDiffReportDetailComponent } from 'app/detail-overview-list/c
 
 @Directive({
     selector: '[jhiExerciseDetail]',
-    standalone: true,
 })
 export class ExerciseDetailDirective implements OnInit, OnDestroy {
     viewContainerRef = inject(ViewContainerRef);

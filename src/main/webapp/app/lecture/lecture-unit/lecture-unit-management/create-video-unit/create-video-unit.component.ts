@@ -14,7 +14,6 @@ import { VideoUnitFormComponent } from '../video-unit-form/video-unit-form.compo
 @Component({
     selector: 'jhi-create-video-unit',
     templateUrl: './create-video-unit.component.html',
-    styles: [],
     imports: [LectureUnitLayoutComponent, VideoUnitFormComponent],
 })
 export class CreateVideoUnitComponent implements OnInit {

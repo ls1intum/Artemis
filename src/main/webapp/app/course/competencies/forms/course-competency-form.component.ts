@@ -49,7 +49,6 @@ export interface CourseCompetencyFormData {
 
 @Component({
     template: '',
-    standalone: false,
 })
 export abstract class CourseCompetencyFormComponent {
     abstract formData: CourseCompetencyFormData;

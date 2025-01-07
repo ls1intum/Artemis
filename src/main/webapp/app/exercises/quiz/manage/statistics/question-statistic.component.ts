@@ -20,7 +20,6 @@ export const greyColor = '#838383';
 
 @Component({
     template: '',
-    standalone: false,
 })
 export abstract class QuestionStatisticComponent extends AbstractQuizStatisticComponent implements OnInit, OnDestroy {
     protected route = inject(ActivatedRoute);

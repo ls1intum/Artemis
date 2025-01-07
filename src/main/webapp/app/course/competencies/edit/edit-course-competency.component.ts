@@ -10,7 +10,6 @@ import { LectureUnitType } from 'app/entities/lecture-unit/lectureUnit.model';
 
 @Component({
     template: '',
-    standalone: false,
 })
 export abstract class EditCourseCompetencyComponent implements OnInit {
     protected activatedRoute = inject(ActivatedRoute);

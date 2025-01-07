@@ -15,7 +15,6 @@ interface DeletionServiceInterface {
 
 @Component({
     template: '',
-    standalone: false,
 })
 export abstract class ExerciseComponent implements OnInit, OnDestroy {
     protected translateService = inject(TranslateService);

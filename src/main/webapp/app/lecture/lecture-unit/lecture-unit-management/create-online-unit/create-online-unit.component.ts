@@ -14,7 +14,6 @@ import { OnlineUnitFormComponent } from '../online-unit-form/online-unit-form.co
 @Component({
     selector: 'jhi-create-online-unit',
     templateUrl: './create-online-unit.component.html',
-    styles: [],
     imports: [LectureUnitLayoutComponent, OnlineUnitFormComponent],
 })
 export class CreateOnlineUnitComponent implements OnInit {

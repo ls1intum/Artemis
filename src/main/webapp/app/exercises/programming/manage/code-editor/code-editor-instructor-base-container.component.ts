@@ -43,7 +43,6 @@ export enum LOADING_STATE {
 
 @Component({
     template: '',
-    standalone: false,
 })
 export abstract class CodeEditorInstructorBaseContainerComponent implements OnInit, OnDestroy {
     @ViewChild(CodeEditorContainerComponent, { static: false }) codeEditorContainer: CodeEditorContainerComponent;

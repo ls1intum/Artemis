@@ -10,7 +10,6 @@ import { MetisService } from 'app/shared/metis/metis.service';
 
 @Directive({
     providers: [MetisService],
-    standalone: false,
 })
 export abstract class CourseDiscussionDirective {
     protected metisService = inject(MetisService);

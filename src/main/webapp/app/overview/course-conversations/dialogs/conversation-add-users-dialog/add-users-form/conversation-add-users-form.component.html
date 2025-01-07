@@ -8,17 +8,9 @@
                 <div class="mode-switch" [hidden]="!getAsChannel(activeConversation)">
                     <div class="form-group">
                         <div class="btn-group" role="group">
-                            <input
-                                [(ngModel)]="mode"
-                                type="radio"
-                                class="btn-check"
-                                id="individual"
-                                autocomplete="off"
-                                [value]="'individual'"
-                                [ngModelOptions]="{ standalone: true }"
-                            />
+                            <input [(ngModel)]="mode" type="radio" class="btn-check" id="individual" autocomplete="off" [value]="'individual'" />
                             <label class="btn btn-secondary" for="individual" jhiTranslate="artemisApp.dialogs.addUsers.addUsersForm.addIndividualUsers"></label>
-                            <input [(ngModel)]="mode" type="radio" class="btn-check" id="group" autocomplete="off" [value]="'group'" [ngModelOptions]="{ standalone: true }" />
+                            <input [(ngModel)]="mode" type="radio" class="btn-check" id="group" autocomplete="off" [value]="'group'" />
                             <label class="btn btn-secondary" for="group" jhiTranslate="artemisApp.dialogs.addUsers.addUsersForm.addWholeGroups"></label>
                         </div>
                     </div>
