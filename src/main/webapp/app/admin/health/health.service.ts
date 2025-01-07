@@ -6,11 +6,7 @@ import { Observable } from 'rxjs';
 export class HealthService {
     private http = inject(HttpClient);
 
-    separator: string;
-
-    constructor() {
-        this.separator = '.';
-    }
+    separator = '.';
 
     checkHealth(): Observable<any> {
         return this.http.get('management/health');
