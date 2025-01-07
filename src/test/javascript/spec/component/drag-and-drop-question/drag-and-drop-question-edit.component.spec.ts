@@ -8,7 +8,7 @@ import { DropLocation } from 'app/entities/quiz/drop-location.model';
 import { ScoringType } from 'app/entities/quiz/quiz-question.model';
 import { DragAndDropMouseEvent } from 'app/exercises/quiz/manage/drag-and-drop-question/drag-and-drop-mouse-event.class';
 import { DragAndDropQuestionEditComponent } from 'app/exercises/quiz/manage/drag-and-drop-question/drag-and-drop-question-edit.component';
-import { MockComponent, MockProvider } from 'ng-mocks';
+import { MockProvider } from 'ng-mocks';
 import { MockNgbModalService } from '../../helpers/mocks/service/mock-ngb-modal.service';
 import { triggerChanges } from '../../helpers/utils/general.utils';
 import { ArtemisTestModule } from '../../test.module';
@@ -17,7 +17,7 @@ import { clone } from 'lodash-es';
 import { CdkDragDrop } from '@angular/cdk/drag-drop';
 import { QuizExplanationAction } from 'app/shared/monaco-editor/model/actions/quiz/quiz-explanation.action';
 import { QuizHintAction } from 'app/shared/monaco-editor/model/actions/quiz/quiz-hint.action';
-import { MarkdownEditorMonacoComponent, TextWithDomainAction } from 'app/shared/markdown-editor/monaco/markdown-editor-monaco.component';
+import { TextWithDomainAction } from 'app/shared/markdown-editor/monaco/markdown-editor-monaco.component';
 import { MockResizeObserver } from '../../helpers/mocks/service/mock-resize-observer';
 
 describe('DragAndDropQuestionEditComponent', () => {
@@ -61,7 +61,6 @@ describe('DragAndDropQuestionEditComponent', () => {
     beforeEach(async () => {
         await TestBed.configureTestingModule({
             imports: [ArtemisTestModule],
-            declarations: [MockComponent(MarkdownEditorMonacoComponent)],
         })
             .overrideComponent(DragAndDropQuestionEditComponent, {
                 set: {
