@@ -9,8 +9,7 @@ import { ComplaintResponseComponent } from 'app/complaints/response/complaint-re
 import { TextareaModule } from 'app/shared/textarea/textarea.module';
 
 @NgModule({
-    imports: [ArtemisSharedModule, TextareaModule],
-    declarations: [ComplaintsFormComponent, ComplaintsStudentViewComponent, ComplaintRequestComponent, ComplaintResponseComponent],
+    imports: [ArtemisSharedModule, TextareaModule, ComplaintsFormComponent, ComplaintsStudentViewComponent, ComplaintRequestComponent, ComplaintResponseComponent],
     exports: [ComplaintsStudentViewComponent],
     providers: [ComplaintService],
 })

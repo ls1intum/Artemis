@@ -59,7 +59,7 @@ spec:
       terminationGracePeriodSeconds: 30
       initContainers:
         - name: init-ds
-          image: busybox:latest
+          image: docker.io/library/busybox:1.37.0
           command:
               - '/bin/sh'
               - '-c'

@@ -1,0 +1,93 @@
+spotless {
+    // allows to execute the code formatting commands ./gradlew spotlessApply and ./gradlew spotlessCheck
+    java {
+        target {
+            fileTree(rootDir) {
+                include (
+                    "src/main/java/**/*.java",
+                    "src/test/java/**/*.java",
+                )
+                exclude(
+                    "**/src/test/resources/test-data/repository-export/EncodingISO_8559_1.java",
+                    "**/node_modules/**",
+                    "**/out/**",
+                    "**/repos/**",
+                    "**/repos-download/**",
+                    "**/build/**",
+                    "**/src/main/generated/**",
+                    "**/src/main/resources/templates/**",
+                    "/docker/**",
+                    "checked-out-repos/**",
+                    "supporting_scripts/**"
+                )
+            }
+        }
+        importOrderFile "artemis-spotless.importorder"
+        eclipse("4.34").configFile "artemis-spotless-style.xml"
+
+        removeUnusedImports()
+
+        custom "Remove commented-out import statements", {
+            it.replaceAll(/\n\/\/ import .*?;.*/, "")
+        }
+
+        custom "Refuse wildcard imports", { code ->
+            // Wildcard imports cannot be resolved by spotless itself.
+            // This will require the developer themselves to adhere to best practices.
+            if (code =~ /\nimport .*\*;/) {
+                throw new IllegalArgumentException("Do not use wildcard imports. \"spotlessApply\" cannot resolve this issue.")
+            }
+            return code // make sure to avoid a warning and always
+        }
+
+        custom "Remove unhelpful javadoc stubs", {
+            // e.g., remove the following lines:
+            // "* @param paramName"
+            // "* @throws ExceptionType"
+            // "* @return returnType""
+            // Multiline to allow anchors on newlines
+            it.replaceAll(/(?m)^ *\* *@(?:param|throws|return) *\w* *\n/, "")
+        }
+
+        custom "Remove any empty Javadocs and block comments", {
+            // Matches any /** [...] */ or /* [...] */ that contains:
+            // (a) only whitespace
+            // (b) trivial information, such as "@param paramName" or @throws ExceptionType
+            //     without any additional information.  This information is implicit in the signature.
+            it.replaceAll(/\/\*+\s*\n(\s*\*\s*\n)*\s*\*+\/\s*\n/, "")
+        }
+
+        // Enforce style modifier order
+        custom "Modifier ordering", {
+            def modifierRanking = [
+                "public"      : 1,
+                "protected"   : 2,
+                "private"     : 3,
+                "abstract"    : 4,
+                "default"     : 5,
+                "static"      : 6,
+                "final"       : 7,
+                "transient"   : 8,
+                "volatile"    : 9,
+                "synchronized": 10,
+                "native"      : 11,
+                "strictfp"    : 12]
+            // Find any instance of multiple modifiers. Lead with a non-word character to avoid
+            // accidental matching against for instance, "an alternative default value"
+            it.replaceAll(/\W(?:public |protected |private |abstract |default |static |final |transient |volatile |synchronized |native |strictfp ){2,}/, {
+                // Do not replace the leading non-word character.  Identify the modifiers
+                it.replaceAll(/(?:public |protected |private |abstract |default |static |final |transient |volatile |synchronized |native |strictfp ){2,}/, {
+                    // Sort the modifiers according to the ranking above
+                    it.split().sort({ modifierRanking[it] }).join(" ") + " "
+                }
+                )
+            }
+            )
+        }
+
+        trimTrailingWhitespace()
+        endWithNewline()
+    }
+}
+
+
