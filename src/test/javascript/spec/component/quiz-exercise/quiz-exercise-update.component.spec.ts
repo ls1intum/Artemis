@@ -147,7 +147,6 @@ describe('QuizExerciseUpdateComponent', () => {
     const configureTestBed = (testRoute?: ActivatedRoute) => {
         TestBed.configureTestingModule({
             imports: [ArtemisTestModule],
-            declarations: [QuizExerciseUpdateComponent],
             providers: [
                 MockProvider(NgbModal),
                 MockProvider(ChangeDetectorRef),
@@ -1015,7 +1014,8 @@ describe('QuizExerciseUpdateComponent', () => {
                 comp.cacheValidation();
                 comp.pendingChangesCache = true;
                 if (comp.courseId) {
-                    comp.quizQuestionListEditComponent = new QuizQuestionListEditComponent();
+                    const childFixture = TestBed.createComponent(QuizQuestionListEditComponent);
+                    comp.quizQuestionListEditComponent = childFixture.componentInstance;
                     jest.spyOn(comp.quizQuestionListEditComponent, 'parseAllQuestions').mockImplementation();
                 }
                 comp.save();
