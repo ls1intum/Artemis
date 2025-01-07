@@ -3,7 +3,7 @@ import { ExternalCloningService } from 'app/exercises/programming/shared/service
 
 describe('ExternalCloningService', () => {
     let service: ExternalCloningService;
-    const baseUrl = 'https://artemis.cit.tum.de';
+    const baseUrl = 'https://artemis.tum.de';
 
     beforeEach(() => {
         TestBed.configureTestingModule({});
@@ -12,7 +12,7 @@ describe('ExternalCloningService', () => {
 
     it('should build source tree url correctly', () => {
         const cloneUrl = baseUrl + '/git/reo.git';
-        const expectedUrl = `sourcetree://cloneRepo?type=stash&cloneUrl=https://artemis.cit.tum.de/git/reo.git&baseWebUrl=https://artemis.cit.tum.de`;
+        const expectedUrl = `sourcetree://cloneRepo?type=stash&cloneUrl=https://artemis.tum.de/git/reo.git&baseWebUrl=https://artemis.tum.de`;
         expect(service.buildSourceTreeUrl(baseUrl, cloneUrl)).toEqual(expectedUrl);
     });
 
