@@ -62,6 +62,10 @@ export const appConfig: ApplicationConfig = {
             }),
         ),
 
+        // TODO: we should add withComponentInputBinding here
+        //  this would set non-route inputs to undefined, which not all components can handle, currently
+        //  see https://angular.dev/api/router/withComponentInputBinding?tab=usage-notes
+        //  provideRouter(routes, withComponentInputBinding(), withRouterConfig({ onSameUrlNavigation: 'reload' })),
         provideRouter(routes, withRouterConfig({ onSameUrlNavigation: 'reload' })),
         // This enables service worker (PWA)
         importProvidersFrom(ServiceWorkerModule.register('ngsw-worker.js', { enabled: true })),
