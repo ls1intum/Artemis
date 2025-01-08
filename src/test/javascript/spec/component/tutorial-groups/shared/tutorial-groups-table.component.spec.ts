@@ -18,6 +18,7 @@ import { NgbTooltipMocksModule } from '../../../helpers/mocks/directive/ngbToolt
 import { TutorialGroupUtilizationIndicatorComponent } from 'app/course/tutorial-groups/shared/tutorial-group-utilization-indicator/tutorial-group-utilization-indicator.component';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { ArtemisTestModule } from '../../../test.module';
+import { ActivatedRoute } from '@angular/router';
 
 @Component({ selector: 'jhi-mock-extra-column', template: '' })
 class MockExtraColumnComponent {
@@ -123,21 +124,8 @@ describe('TutorialGroupsTableComponent', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [NgbTooltipMocksModule],
-            declarations: [
-                TutorialGroupsTableComponent,
-                TutorialGroupRowStubComponent,
-                MockPipe(ArtemisTranslatePipe),
-                MockPipe(ArtemisDatePipe),
-                MockComponent(FaIconComponent),
-                MockRouterLinkDirective,
-                MockDirective(SortDirective),
-                MockDirective(SortByDirective),
-                MockComponent(TutorialGroupUtilizationIndicatorComponent),
-                MockComponent(FaIconComponent),
-                MockDirective(TranslateDirective),
-            ],
-            providers: [MockProvider(SortService)],
+            imports: [ArtemisTestModule, NgbTooltipMocksModule],
+            providers: [MockProvider(SortService), MockProvider(ActivatedRoute)],
         })
             .compileComponents()
             .then(() => {
