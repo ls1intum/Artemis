@@ -248,7 +248,7 @@ export class ConversationMessagesComponent implements OnInit, AfterViewInit, OnD
             return;
         }
 
-        // new code: separate pinned posts into their own group
+        // Separate pinned posts into their own group
         const pinnedPosts = this.posts.filter((post) => post.displayPriority === DisplayPriority.PINNED);
         const unpinnedPosts = this.posts.filter((post) => post.displayPriority !== DisplayPriority.PINNED);
 
@@ -289,7 +289,7 @@ export class ConversationMessagesComponent implements OnInit, AfterViewInit, OnD
 
         groups.push(currentGroup);
 
-        // only add pinned group if pinned posts exist
+        // Only add pinned group if pinned posts exist
         if (pinnedPosts.length > 0) {
             groups.unshift({ author: undefined, posts: pinnedPosts });
         }
