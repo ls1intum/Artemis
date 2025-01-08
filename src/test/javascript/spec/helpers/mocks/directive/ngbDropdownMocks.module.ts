@@ -46,7 +46,7 @@ class NgbDropdownMockDirective {
 class NgbDropdownAnchorMockDirective {}
 
 @NgModule({
-    declarations: [NgbDropdownItemMockDirective, NgbDropdownMenuMockDirective, NgbDropdownToggleMockDirective, NgbDropdownMockDirective, NgbDropdownAnchorMockDirective],
     exports: [NgbDropdownItemMockDirective, NgbDropdownMenuMockDirective, NgbDropdownToggleMockDirective, NgbDropdownMockDirective, NgbDropdownAnchorMockDirective],
+    imports: [NgbDropdownItemMockDirective, NgbDropdownMenuMockDirective, NgbDropdownToggleMockDirective, NgbDropdownMockDirective, NgbDropdownAnchorMockDirective],
 })
 export class NgbDropdownMocksModule {}
