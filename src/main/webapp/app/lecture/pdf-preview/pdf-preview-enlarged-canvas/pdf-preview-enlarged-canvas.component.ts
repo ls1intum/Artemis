@@ -28,13 +28,10 @@ export class PdfPreviewEnlargedCanvasComponent {
     isEnlargedViewOutput = output<boolean>();
 
     constructor() {
-        effect(
-            () => {
-                this.enlargedContainer().nativeElement.style.top = `${this.pdfContainer().scrollTop}px`;
-                this.displayEnlargedCanvas(this.originalCanvas()!);
-            },
-            { allowSignalWrites: true },
-        );
+        effect(() => {
+            this.enlargedContainer().nativeElement.style.top = `${this.pdfContainer().scrollTop}px`;
+            this.displayEnlargedCanvas(this.originalCanvas()!);
+        });
     }
 
     /**
