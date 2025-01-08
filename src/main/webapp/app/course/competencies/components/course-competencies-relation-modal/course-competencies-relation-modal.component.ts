@@ -30,7 +30,7 @@ export class CourseCompetenciesRelationModalComponent {
     readonly relations = signal<CompetencyRelationDTO[]>([]);
 
     constructor() {
-        effect(() => this.loadRelations(this.courseId()), { allowSignalWrites: true });
+        effect(() => this.loadRelations(this.courseId()));
     }
 
     private async loadRelations(courseId: number): Promise<void> {

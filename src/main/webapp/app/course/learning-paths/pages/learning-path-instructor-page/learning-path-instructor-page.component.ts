@@ -32,13 +32,10 @@ export class LearningPathInstructorPageComponent {
     readonly isLoading = signal<boolean>(false);
 
     constructor() {
-        effect(
-            () => {
-                const courseId = this.courseId();
-                untracked(() => this.loadCourse(courseId));
-            },
-            { allowSignalWrites: true },
-        );
+        effect(() => {
+            const courseId = this.courseId();
+            untracked(() => this.loadCourse(courseId));
+        });
     }
 
     private async loadCourse(courseId: number): Promise<void> {

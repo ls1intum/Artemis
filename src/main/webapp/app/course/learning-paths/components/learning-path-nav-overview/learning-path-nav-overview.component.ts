@@ -40,13 +40,10 @@ export class LearningPathNavOverviewComponent {
     readonly currentCompetencyOnPath = computed(() => this.competencies()?.find((competency) => competency.masteryProgress < 1));
 
     constructor() {
-        effect(
-            () => {
-                const learningPathId = this.learningPathId();
-                untracked(() => this.loadCompetencies(learningPathId));
-            },
-            { allowSignalWrites: true },
-        );
+        effect(() => {
+            const learningPathId = this.learningPathId();
+            untracked(() => this.loadCompetencies(learningPathId));
+        });
     }
 
     async loadCompetencies(learningPathId: number): Promise<void> {

@@ -43,7 +43,7 @@ export class CourseCompetencyRelationFormComponent {
     readonly showCircularDependencyError = computed(() => this.tailCompetencyId() && !this.selectableTailCourseCompetencyIds().includes(this.tailCompetencyId()!));
 
     constructor() {
-        effect(() => this.selectRelation(this.selectedRelationId()), { allowSignalWrites: true });
+        effect(() => this.selectRelation(this.selectedRelationId()));
     }
 
     protected isCourseCompetencySelectable(courseCompetencyId: number): boolean {

@@ -36,13 +36,10 @@ export class LearningPathLectureUnitComponent {
     readonly isCommunicationEnabled = computed(() => isCommunicationEnabled(this.lecture()?.course));
 
     constructor() {
-        effect(
-            () => {
-                const lectureUnitId = this.lectureUnitId();
-                untracked(() => this.loadLectureUnit(lectureUnitId));
-            },
-            { allowSignalWrites: true },
-        );
+        effect(() => {
+            const lectureUnitId = this.lectureUnitId();
+            untracked(() => this.loadLectureUnit(lectureUnitId));
+        });
     }
 
     async loadLectureUnit(lectureUnitId: number): Promise<void> {

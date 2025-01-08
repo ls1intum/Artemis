@@ -40,12 +40,9 @@ export class LearningPathNavOverviewLearningObjectsComponent {
     readonly onLearningObjectSelected = output<void>();
 
     constructor() {
-        effect(
-            () => {
-                untracked(() => this.loadLearningObjects());
-            },
-            { allowSignalWrites: true },
-        );
+        effect(() => {
+            untracked(() => this.loadLearningObjects());
+        });
     }
 
     async loadLearningObjects(): Promise<void> {

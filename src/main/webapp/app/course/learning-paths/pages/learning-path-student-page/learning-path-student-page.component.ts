@@ -34,13 +34,10 @@ export class LearningPathStudentPageComponent {
     readonly isLearningPathNavigationLoading = this.learningPathNavigationService.isLoading;
 
     constructor() {
-        effect(
-            () => {
-                const courseId = this.courseId();
-                untracked(() => this.loadLearningPath(courseId));
-            },
-            { allowSignalWrites: true },
-        );
+        effect(() => {
+            const courseId = this.courseId();
+            untracked(() => this.loadLearningPath(courseId));
+        });
     }
 
     private async loadLearningPath(courseId: number): Promise<void> {

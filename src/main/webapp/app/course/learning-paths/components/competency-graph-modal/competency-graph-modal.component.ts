@@ -28,13 +28,10 @@ export class CompetencyGraphModalComponent {
     private readonly activeModal: NgbActiveModal = inject(NgbActiveModal);
 
     constructor() {
-        effect(
-            () => {
-                const learningPathId = this.learningPathId();
-                untracked(() => this.loadCompetencyGraph(learningPathId));
-            },
-            { allowSignalWrites: true },
-        );
+        effect(() => {
+            const learningPathId = this.learningPathId();
+            untracked(() => this.loadCompetencyGraph(learningPathId));
+        });
     }
 
     private async loadCompetencyGraph(learningPathId: number): Promise<void> {
