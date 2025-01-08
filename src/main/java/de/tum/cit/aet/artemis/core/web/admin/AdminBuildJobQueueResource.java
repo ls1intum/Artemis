@@ -283,10 +283,10 @@ public class AdminBuildJobQueueResource {
      * @return {@link ResponseEntity} with status code 200 (OK) if the distributed data was successfully cleared
      *         or an appropriate error response if something went wrong
      */
-    @PutMapping("clear-distributed-data")
+    @DeleteMapping("clear-distributed-data")
     public ResponseEntity<Void> clearDistributedData() {
         log.debug("REST request to clear distributed data");
         localCIBuildJobQueueService.clearDistributedData();
-        return ResponseEntity.ok().build();
+        return ResponseEntity.noContent().build();
     }
 }
