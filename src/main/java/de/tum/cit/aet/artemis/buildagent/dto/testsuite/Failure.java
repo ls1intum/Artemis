@@ -13,6 +13,11 @@ public final class Failure {
 
     private String detailedMessage;
 
+    /**
+     * Extracts the relevant error message.
+     *
+     * @return Returns the message if it exists. Otherwise, an empty string is returned.
+     */
     public String extractMessage() {
         if (message != null) {
             return message;
