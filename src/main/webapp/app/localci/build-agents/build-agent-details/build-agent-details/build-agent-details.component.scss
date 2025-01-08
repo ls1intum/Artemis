@@ -2,3 +2,7 @@
     word-break: break-all; /* This will break the text at any character */
     overflow-wrap: break-word; /* This will only break the text at whitespace */
 }
+
+.stats-column {
+    min-width: 250px;
+}

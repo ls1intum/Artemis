@@ -128,7 +128,7 @@ public class LocalCIQueueWebsocketService {
         for (BuildAgentInformation agent : buildAgentSummary) {
             var runningJobs = removeUnnecessaryInformation(agent.runningBuildJobs());
             filteredBuildAgentSummary.add(new BuildAgentInformation(agent.buildAgent(), agent.maxNumberOfConcurrentBuildJobs(), agent.numberOfCurrentBuildJobs(), runningJobs,
-                    agent.status(), null, null));
+                    agent.status(), null, null, null));
         }
         return filteredBuildAgentSummary;
     }
