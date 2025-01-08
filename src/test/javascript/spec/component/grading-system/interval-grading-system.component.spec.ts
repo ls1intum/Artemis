@@ -71,15 +71,6 @@ describe('Interval Grading System Component', () => {
     beforeEach(() => {
         TestBed.configureTestingModule({
             imports: [ArtemisTestModule],
-            // declarations: [
-            //     MockDirective(NgModel),
-            //     MockDirective(NgSelectOption),
-            //     MockComponent(GradingSystemInfoModalComponent),
-            //     MockComponent(HelpIconComponent),
-            //     MockComponent(ModePickerComponent),
-            //     MockDirective(DeleteButtonDirective),
-            //     MockPipe(ArtemisTranslatePipe),
-            // ],
             providers: [
                 { provide: ActivatedRoute, useValue: route },
                 MockProvider(ExamManagementService),
