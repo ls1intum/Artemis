@@ -21,7 +21,6 @@ class NgbCollapseMockDirective {
 }
 
 @NgModule({
-    declarations: [NgbCollapseMockDirective],
-    exports: [NgbCollapseMockDirective],
+    imports: [NgbCollapseMockDirective],
 })
 export class NgbCollapseMocksModule {}
