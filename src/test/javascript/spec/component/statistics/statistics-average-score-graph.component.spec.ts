@@ -9,7 +9,6 @@ import { ArtemisNavigationUtilService } from 'app/utils/navigation.utils';
 import { ChartExerciseTypeFilter } from 'app/shared/chart/chart-exercise-type-filter';
 import { ChartCategoryFilter } from 'app/shared/chart/chart-category-filter';
 import { ExerciseCategory } from 'app/entities/exercise-category.model';
-import { provideRouter } from '@angular/router';
 
 describe('StatisticsAverageScoreGraphComponent', () => {
     let fixture: ComponentFixture<StatisticsAverageScoreGraphComponent>;
@@ -76,7 +75,7 @@ describe('StatisticsAverageScoreGraphComponent', () => {
     beforeEach(() => {
         TestBed.configureTestingModule({
             imports: [ArtemisTestModule],
-            providers: [provideRouter([]), MockProvider(ArtemisNavigationUtilService), MockProvider(ChartExerciseTypeFilter), MockProvider(ChartCategoryFilter)],
+            providers: [MockProvider(ArtemisNavigationUtilService)],
         })
             .compileComponents()
             .then(() => {
