@@ -13,6 +13,7 @@ import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 import { NgbCollapseMocksModule } from '../../../helpers/mocks/directive/ngbCollapseMocks.module';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { ArtemisTestModule } from '../../../test.module';
+import { provideHttpClient } from '@angular/common/http';
 
 @Component({ selector: 'jhi-mock-extra-column', template: '' })
 class MockExtraColumnComponent {
@@ -115,7 +116,7 @@ describe('TutorialGroupSessionTableComponent', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [NgbCollapseMocksModule],
+            imports: [ArtemisTestModule, NgbCollapseMocksModule],
             declarations: [
                 TutorialGroupSessionsTableComponent,
                 TutorialGroupSessionRowStubComponent,
@@ -123,6 +124,7 @@ describe('TutorialGroupSessionTableComponent', () => {
                 MockPipe(ArtemisDatePipe),
                 MockDirective(TranslateDirective),
             ],
+            providers: [provideHttpClient()],
         })
             .compileComponents()
             .then(() => {

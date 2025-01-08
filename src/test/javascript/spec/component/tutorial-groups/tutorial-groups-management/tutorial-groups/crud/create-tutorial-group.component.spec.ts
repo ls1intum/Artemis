@@ -14,6 +14,7 @@ import { LoadingIndicatorContainerStubComponent } from '../../../../../helpers/s
 import { TutorialGroupFormStubComponent } from '../../../stubs/tutorial-group-form-stub.component';
 import { generateExampleTutorialGroup, tutorialGroupToTutorialGroupFormData } from '../../../helpers/tutorialGroupExampleModels';
 import { mockedActivatedRoute } from '../../../../../helpers/mocks/activated-route/mock-activated-route-query-param-map';
+import { ArtemisTestModule } from '../../../../../test.module';
 
 describe('CreateTutorialGroupComponent', () => {
     let fixture: ComponentFixture<CreateTutorialGroupComponent>;
@@ -25,17 +26,15 @@ describe('CreateTutorialGroupComponent', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [],
+            imports: [ArtemisTestModule],
             declarations: [CreateTutorialGroupComponent, LoadingIndicatorContainerStubComponent, TutorialGroupFormStubComponent, MockPipe(ArtemisTranslatePipe)],
             providers: [MockProvider(TutorialGroupsService), MockProvider(AlertService), { provide: Router, useValue: router }, mockedActivatedRoute({}, {}, { course }, {})],
-        })
-            .compileComponents()
-            .then(() => {
-                fixture = TestBed.createComponent(CreateTutorialGroupComponent);
-                component = fixture.componentInstance;
-                tutorialGroupService = TestBed.inject(TutorialGroupsService);
-                fixture.detectChanges();
-            });
+        }).compileComponents();
+
+        fixture = TestBed.createComponent(CreateTutorialGroupComponent);
+        component = fixture.componentInstance;
+        tutorialGroupService = TestBed.inject(TutorialGroupsService);
+        fixture.detectChanges();
     });
 
     afterEach(() => {

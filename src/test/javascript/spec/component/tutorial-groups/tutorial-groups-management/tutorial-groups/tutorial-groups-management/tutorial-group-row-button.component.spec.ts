@@ -16,6 +16,7 @@ import { TutorialGroupSessionsManagementComponent } from 'app/course/tutorial-gr
 import { MockRouter } from '../../../../../helpers/mocks/mock-router';
 import { Router } from '@angular/router';
 import { RegisteredStudentsComponent } from 'app/course/tutorial-groups/tutorial-groups-management/registered-students/registered-students.component';
+import { ArtemisTestModule } from '../../../../../test.module';
 
 describe('TutorialGroupRowButtonsComponent', () => {
     let fixture: ComponentFixture<TutorialGroupRowButtonsComponent>;
@@ -29,6 +30,7 @@ describe('TutorialGroupRowButtonsComponent', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
+            imports: [ArtemisTestModule],
             declarations: [
                 TutorialGroupRowButtonsComponent,
                 MockComponent(FaIconComponent),
@@ -37,15 +39,13 @@ describe('TutorialGroupRowButtonsComponent', () => {
                 MockPipe(ArtemisTranslatePipe),
             ],
             providers: [MockProvider(TutorialGroupsService), MockProvider(NgbModal), { provide: Router, useValue: router }],
-        })
-            .compileComponents()
-            .then(() => {
-                fixture = TestBed.createComponent(TutorialGroupRowButtonsComponent);
-                component = fixture.componentInstance;
-                tutorialGroup = generateExampleTutorialGroup({});
-                setInputValues();
-                fixture.detectChanges();
-            });
+        }).compileComponents();
+
+        fixture = TestBed.createComponent(TutorialGroupRowButtonsComponent);
+        component = fixture.componentInstance;
+        tutorialGroup = generateExampleTutorialGroup({});
+        setInputValues();
+        fixture.detectChanges();
     });
     const setInputValues = () => {
         component.course = course;
