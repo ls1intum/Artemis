@@ -5,9 +5,9 @@ import { TranslateService } from '@ngx-translate/core';
 describe('MeetingPatternPipe', () => {
     const translateService = {
         instant: jest.fn(),
-    } as unknown as TranslateService;
+    };
 
-    const pipe = new MeetingPatternPipe(translateService);
+    const pipe = new MeetingPatternPipe(translateService as unknown as TranslateService);
 
     beforeEach(() => {
         translateService.instant.mockClear();
