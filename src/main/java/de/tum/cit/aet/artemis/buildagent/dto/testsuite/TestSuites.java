@@ -9,12 +9,9 @@ import com.fasterxml.jackson.dataformat.xml.annotation.JacksonXmlElementWrapper;
 import com.fasterxml.jackson.dataformat.xml.annotation.JacksonXmlProperty;
 
 @JsonIgnoreProperties(ignoreUnknown = true)
-public record TestSuite(@JacksonXmlProperty(isAttribute = true, localName = "name") String name,
-        @JacksonXmlElementWrapper(useWrapping = false) @JacksonXmlProperty(localName = "testcase") List<TestCase> testCases,
-        @JacksonXmlElementWrapper(useWrapping = false) @JacksonXmlProperty(localName = "testsuite") List<TestSuite> testSuites) {
+public record TestSuites(@JacksonXmlElementWrapper(useWrapping = false) @JacksonXmlProperty(localName = "testsuite") List<TestSuite> testSuites) {
 
-    public TestSuite {
-        testCases = Objects.requireNonNullElse(testCases, Collections.emptyList());
+    public TestSuites {
         testSuites = Objects.requireNonNullElse(testSuites, Collections.emptyList());
     }
 }

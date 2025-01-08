@@ -12,11 +12,11 @@ main_method_checker () {
   main_method="$(echo "$main_checker_output" | head -n1)"
 
   if [ "${line_count}" -eq 2 ]; then
-      echo "main method found: ${main_method}"
-    else
-      echo "no main method found. quitting the test run."
-      exit 1
-    fi
+    echo "${main_method}"
+  else
+    echo "no main method found. quitting the test run."
+    exit 1
+  fi
 }
 
 custom_checkers () {
@@ -87,6 +87,7 @@ main () {
   bash -c "source ${_script_name} aeolus_sourcing; build"
 
   MAIN_CLASS=$(bash -c "source ${_script_name} aeolus_sourcing; main_method_checker")
+  echo "main method found in class: ${MAIN_CLASS}"
   bash -c "source ${_script_name} aeolus_sourcing; custom_checkers"
 
   if [ -d ./testsuite ]; then

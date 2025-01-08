@@ -12,7 +12,7 @@ main_method_checker () {
   main_method="$(echo "$main_checker_output" | head -n1)"
 
   if [ "${line_count}" -eq 2 ]; then
-    echo "main method found: ${main_method}"
+    echo "${main_method}"
   else
     echo "no main method found. quitting the test run."
     exit 1
@@ -75,7 +75,7 @@ static_code_analysis () {
   cp target/checkstyle-result.xml staticCodeAnalysisReports
 }
 
-replace_script_parameters () {
+replace_script_variables () {
     JAVA_FLAGS="-Djdk.console=java.base"
 
     sed -i "s#JAVA_FLAGS#${JAVA_FLAGS}#;s#CLASSPATH#../target/classes#" testsuite/config/default.exp
@@ -94,13 +94,14 @@ main () {
   bash -c "source ${_script_name} aeolus_sourcing; build"
 
   MAIN_CLASS=$(bash -c "source ${_script_name} aeolus_sourcing; main_method_checker")
+  echo "main method found in class: ${MAIN_CLASS}"
   bash -c "source ${_script_name} aeolus_sourcing; custom_checkers"
 
   if [ -d ./testsuite ]; then
     export tool=$(find testsuite -name "*.tests" -type d -printf "%f" | sed 's#.tests$##')
     export testfiles_base_path="./testsuite/testfiles"
 
-    applyExpectScriptReplacements
+    replace_script_variables
     bash -c "source ${_script_name} aeolus_sourcing; secret_tests"
     bash -c "source ${_script_name} aeolus_sourcing; public_tests"
     bash -c "source ${_script_name} aeolus_sourcing; advanced_tests"

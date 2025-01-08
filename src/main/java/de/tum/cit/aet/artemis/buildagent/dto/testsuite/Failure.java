@@ -7,11 +7,11 @@ import com.fasterxml.jackson.dataformat.xml.annotation.JacksonXmlText;
 // Due to issues with Jackson this currently cannot be a record.
 // See https://github.com/FasterXML/jackson-module-kotlin/issues/138#issuecomment-1062725140
 @JsonIgnoreProperties(ignoreUnknown = true)
-public class Failure {
+public final class Failure {
 
-    String message;
+    private String message;
 
-    String detailedMessage;
+    private String detailedMessage;
 
     public String extractMessage() {
         if (message != null) {

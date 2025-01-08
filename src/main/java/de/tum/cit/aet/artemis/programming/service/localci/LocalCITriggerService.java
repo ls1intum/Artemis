@@ -206,9 +206,9 @@ public class LocalCITriggerService implements ContinuousIntegrationTriggerServic
 
         var programmingExerciseBuildConfig = loadBuildConfig(programmingExercise);
 
-        var buildStatics = loadBuildStatistics(programmingExercise);
+        var buildStatistics = loadBuildStatistics(programmingExercise);
 
-        long estimatedDuration = (buildStatics != null && buildStatics.getBuildDurationSeconds() > 0) ? buildStatics.getBuildDurationSeconds() : DEFAULT_BUILD_DURATION;
+        long estimatedDuration = (buildStatistics != null && buildStatistics.getBuildDurationSeconds() > 0) ? buildStatistics.getBuildDurationSeconds() : DEFAULT_BUILD_DURATION;
         estimatedDuration = Math.round(estimatedDuration * BUILD_DURATION_SAFETY_FACTOR);
 
         JobTimingInfo jobTimingInfo = new JobTimingInfo(submissionDate, null, null, null, estimatedDuration);

@@ -83,7 +83,7 @@ public final class CustomFeedbackParser {
             failure.setMessage(feedback.message());
             testCase = new TestCase(feedback.name(), failure, null, null, null);
         }
-        return new TestSuite(List.of(testCase), List.of());
+        return new TestSuite(null, List.of(testCase), List.of());
     }
 
     private static void processCustomTestSuite(TestSuite testSuite, List<LocalCITestJobDTO> failedTests, List<LocalCITestJobDTO> successfulTests) {

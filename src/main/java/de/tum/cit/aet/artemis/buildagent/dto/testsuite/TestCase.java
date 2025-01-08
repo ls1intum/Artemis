@@ -15,6 +15,11 @@ public record TestCase(@JacksonXmlProperty(isAttribute = true, localName = "name
         return failure != null ? failure : error;
     }
 
+    // Intentionally empty record to represent the skipped tag (<skipped/>)
+    @JsonIgnoreProperties(ignoreUnknown = true)
+    record Skip() {
+    }
+
     public String extractSuccessMessage() {
         return successMessage != null ? successMessage : "";
     }
