@@ -14,9 +14,7 @@ describe('FitTextDirective', () => {
     let fixture: ComponentFixture<TestFitTextComponent>;
 
     beforeEach(() => {
-        TestBed.configureTestingModule({
-            declarations: [TestFitTextComponent],
-        });
+        TestBed.configureTestingModule({});
         fixture = TestBed.createComponent(TestFitTextComponent);
     });
 
