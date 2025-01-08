@@ -36,12 +36,9 @@ export class PdfPreviewThumbnailGridComponent {
     private readonly alertService = inject(AlertService);
 
     constructor() {
-        effect(
-            () => {
-                this.loadOrAppendPdf(this.currentPdfUrl()!, this.appendFile());
-            },
-            { allowSignalWrites: true },
-        );
+        effect(() => {
+            this.loadOrAppendPdf(this.currentPdfUrl()!, this.appendFile());
+        });
     }
 
     /**
