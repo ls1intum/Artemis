@@ -219,9 +219,13 @@ export class Lti13DeepLinkingComponent implements OnInit {
                     })
                     .subscribe({
                         next: (response) => {
+                            //TODO remove
+                            console.log(httpParams);
                             if (response.status === 200) {
                                 if (response.body) {
                                     const targetLink = response.body.targetLinkUri;
+                                    //TODO remove
+                                    console.log(targetLink);
                                     window.location.replace(targetLink);
                                 }
                             } else {
