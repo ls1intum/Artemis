@@ -15,7 +15,6 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Profile;
 import org.springframework.security.oauth2.client.registration.ClientRegistration;
 import org.springframework.security.oauth2.client.registration.ClientRegistrationRepository;
-import org.springframework.security.oauth2.core.AuthorizationGrantType;
 import org.springframework.stereotype.Service;
 
 import de.tum.cit.aet.artemis.core.domain.Course;
@@ -24,6 +23,7 @@ import de.tum.cit.aet.artemis.lti.config.CustomLti13Configurer;
 import de.tum.cit.aet.artemis.lti.domain.LtiPlatformConfiguration;
 import de.tum.cit.aet.artemis.lti.domain.OnlineCourseConfiguration;
 import de.tum.cit.aet.artemis.lti.repository.LtiPlatformConfigurationRepository;
+import uk.ac.ox.ctl.lti13.security.oauth2.client.lti.web.LTIAuthorizationGrantType;
 
 /**
  * Service Implementation for OnlineCourseConfiguration.
@@ -104,7 +104,7 @@ public class OnlineCourseConfigurationService implements ClientRegistrationRepos
                     .tokenUri(ltiPlatformConfiguration.getTokenUri()) //
                     .redirectUri(artemisServerUrl + "/" + CustomLti13Configurer.LTI13_LOGIN_REDIRECT_PROXY_PATH) //
                     .scope("openid") //
-                    .authorizationGrantType(AuthorizationGrantType.AUTHORIZATION_CODE) //
+                    .authorizationGrantType(LTIAuthorizationGrantType.IMPLICIT) //
                     .build();
         }
         catch (IllegalArgumentException e) {
