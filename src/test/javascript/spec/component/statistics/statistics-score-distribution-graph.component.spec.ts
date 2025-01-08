@@ -13,7 +13,6 @@ describe('StatisticsScoreDistributionGraphComponent', () => {
     beforeEach(() => {
         TestBed.configureTestingModule({
             imports: [ArtemisTestModule],
-            // providers: [MockProvider(ArtemisNavigationUtilService)],
         })
             .compileComponents()
             .then(() => {
