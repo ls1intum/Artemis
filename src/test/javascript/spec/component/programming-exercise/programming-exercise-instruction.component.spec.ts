@@ -58,7 +58,7 @@ describe('ProgrammingExerciseInstructionComponent', () => {
     const modalRef = { componentInstance: {} };
 
     beforeEach(() => {
-        return TestBed.configureTestingModule({
+        TestBed.configureTestingModule({
             imports: [ArtemisTestModule, MockModule(NgbTooltipModule)],
             declarations: [
                 ProgrammingExerciseInstructionComponent,
@@ -81,23 +81,22 @@ describe('ProgrammingExerciseInstructionComponent', () => {
             ],
         })
             .overrideModule(BrowserDynamicTestingModule, { set: {} })
-            .compileComponents()
-            .then(() => {
-                fixture = TestBed.createComponent(ProgrammingExerciseInstructionComponent);
-                comp = fixture.componentInstance;
-                debugElement = fixture.debugElement;
-                participationWebsocketService = debugElement.injector.get(ParticipationWebsocketService);
-                programmingExerciseParticipationService = debugElement.injector.get(ProgrammingExerciseParticipationService);
-                programmingExerciseGradingService = debugElement.injector.get(ProgrammingExerciseGradingService);
-                modalService = debugElement.injector.get(NgbModal);
-                themeService = debugElement.injector.get(ThemeService);
+            .compileComponents();
 
-                subscribeForLatestResultOfParticipationStub = jest.spyOn(participationWebsocketService, 'subscribeForLatestResultOfParticipation');
-                openModalStub = jest.spyOn(modalService, 'open');
-                getLatestResultWithFeedbacks = jest.spyOn(programmingExerciseParticipationService, 'getLatestResultWithFeedback');
+        fixture = TestBed.createComponent(ProgrammingExerciseInstructionComponent);
+        comp = fixture.componentInstance;
+        debugElement = fixture.debugElement;
+        participationWebsocketService = debugElement.injector.get(ParticipationWebsocketService);
+        programmingExerciseParticipationService = debugElement.injector.get(ProgrammingExerciseParticipationService);
+        programmingExerciseGradingService = debugElement.injector.get(ProgrammingExerciseGradingService);
+        modalService = debugElement.injector.get(NgbModal);
+        themeService = debugElement.injector.get(ThemeService);
 
-                comp.personalParticipation = true;
-            });
+        subscribeForLatestResultOfParticipationStub = jest.spyOn(participationWebsocketService, 'subscribeForLatestResultOfParticipation');
+        openModalStub = jest.spyOn(modalService, 'open');
+        getLatestResultWithFeedbacks = jest.spyOn(programmingExerciseParticipationService, 'getLatestResultWithFeedback');
+
+        comp.personalParticipation = true;
     });
 
     afterEach(() => {
@@ -246,6 +245,7 @@ describe('ProgrammingExerciseInstructionComponent', () => {
         expect(comp.isLoading).toBeFalse();
     });
 
+    // TODO check if this is an issue with the client itself here
     it('should create the steps task icons for the tasks in problem statement markdown', fakeAsync(() => {
         const result: Result = {
             id: 1,

@@ -2,15 +2,24 @@ import { ProgrammingExercise } from 'app/entities/programming/programming-exerci
 import { FeedbackGroup } from 'app/exercises/shared/feedback/group/feedback-group';
 import { ProgrammingFeedbackItemService } from 'app/exercises/shared/feedback/item/programming-feedback-item.service';
 import { Feedback, FeedbackType, STATIC_CODE_ANALYSIS_FEEDBACK_IDENTIFIER, SUBMISSION_POLICY_FEEDBACK_IDENTIFIER } from 'app/entities/feedback.model';
+import { TranslateService } from '@ngx-translate/core';
 import { FeedbackItem } from 'app/exercises/shared/feedback/item/feedback-item';
 import { GradingInstruction } from 'app/exercises/shared/structured-grading-criterion/grading-instruction.model';
+import { TestBed } from '@angular/core/testing';
+import { MockTranslateService } from '../../helpers/mocks/service/mock-translate.service';
 
 describe('ProgrammingFeedbackItemService', () => {
     let service: ProgrammingFeedbackItemService;
     const exercise = new ProgrammingExercise(undefined, undefined);
 
     beforeEach(() => {
-        service = new ProgrammingFeedbackItemService();
+        TestBed.configureTestingModule({
+            providers: [{ provide: TranslateService, useClass: MockTranslateService }],
+        })
+            .compileComponents()
+            .then(() => {
+                service = TestBed.inject(ProgrammingFeedbackItemService);
+            });
     });
 
     it('should create submission policy feedback item', () => {

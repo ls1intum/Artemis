@@ -26,7 +26,6 @@ export abstract class ImportComponent<T extends BaseEntity> implements OnInit {
     protected router = inject(Router);
     private sortService = inject(SortService);
     protected activeModal = inject(NgbActiveModal);
-    protected pagingService? = inject<PagingService<T>>(PagingService);
 
     loading = false;
     content: SearchResult<T>;
@@ -50,6 +49,8 @@ export abstract class ImportComponent<T extends BaseEntity> implements OnInit {
     readonly faCheck = faCheck;
     protected readonly search = new Subject<void>();
     protected readonly sort = new Subject<void>();
+
+    protected constructor(protected pagingService?: PagingService<T>) {}
 
     get page(): number {
         return this.state.page;

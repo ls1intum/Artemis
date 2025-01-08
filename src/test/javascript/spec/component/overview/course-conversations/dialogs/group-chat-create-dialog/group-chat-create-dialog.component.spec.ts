@@ -3,9 +3,10 @@ import { GroupChatCreateDialogComponent } from 'app/overview/course-conversation
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { CourseUsersSelectorComponent } from 'app/shared/course-users-selector/course-users-selector.component';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
-import { MockComponent, MockPipe, MockProvider } from 'ng-mocks';
+import { MockComponent, MockDirective, MockPipe, MockProvider } from 'ng-mocks';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import { initializeDialog } from '../dialog-test-helpers';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
 
 describe('GroupChatCreateDialogComponent', () => {
     let component: GroupChatCreateDialogComponent;
@@ -15,7 +16,7 @@ describe('GroupChatCreateDialogComponent', () => {
     beforeEach(waitForAsync(() => {
         TestBed.configureTestingModule({
             imports: [FormsModule, ReactiveFormsModule],
-            declarations: [GroupChatCreateDialogComponent, MockComponent(CourseUsersSelectorComponent), MockPipe(ArtemisTranslatePipe)],
+            declarations: [GroupChatCreateDialogComponent, MockComponent(CourseUsersSelectorComponent), MockPipe(ArtemisTranslatePipe), MockDirective(TranslateDirective)],
             providers: [MockProvider(NgbActiveModal)],
         }).compileComponents();
     }));

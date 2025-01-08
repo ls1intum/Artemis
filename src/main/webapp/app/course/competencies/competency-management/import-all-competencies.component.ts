@@ -1,10 +1,11 @@
-import { Component, Input } from '@angular/core';
+import { Component, Input, inject } from '@angular/core';
 import { Course, CourseForImportDTO } from 'app/entities/course.model';
 import { Column, ImportComponent } from 'app/shared/import/import.component';
 import { ArtemisSharedCommonModule } from 'app/shared/shared-common.module';
 import { ArtemisSharedComponentModule } from 'app/shared/components/shared-component.module';
 import { CourseCompetencyType } from 'app/entities/competency.model';
 import { NgbPagination } from '@ng-bootstrap/ng-bootstrap';
+import { CourseForImportDTOPagingService } from 'app/course/course-for-import-dto-paging-service';
 
 const tableColumns: Column<Course>[] = [
     {
@@ -44,7 +45,8 @@ export class ImportAllCompetenciesComponent extends ImportComponent<CourseForImp
     @Input() public competencyType: CourseCompetencyType | 'courseCompetency' = CourseCompetencyType.COMPETENCY;
 
     constructor() {
-        super();
+        const pagingService = inject(CourseForImportDTOPagingService);
+        super(pagingService);
         this.columns = tableColumns;
     }
 
