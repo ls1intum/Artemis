@@ -316,7 +316,6 @@ public class SharedQueueManagementService {
      */
     public void clearDistributedData() {
         queue.clear();
-        cancelAllRunningBuildJobs();
         processingJobs.clear();
         dockerImageCleanupInfo.clear();
         resultQueue.clear();
