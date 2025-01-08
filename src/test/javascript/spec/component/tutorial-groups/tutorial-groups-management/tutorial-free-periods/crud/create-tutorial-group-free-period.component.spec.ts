@@ -17,6 +17,7 @@ import {
 } from '../../../helpers/tutorialGroupFreePeriodExampleModel';
 import { Course } from 'app/entities/course.model';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
+import { ArtemisTestModule } from '../../../../../test.module';
 
 describe('CreateTutorialGroupFreePeriodComponent', () => {
     let fixture: ComponentFixture<CreateTutorialGroupFreePeriodComponent>;
@@ -28,7 +29,7 @@ describe('CreateTutorialGroupFreePeriodComponent', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [],
+            imports: [ArtemisTestModule],
             declarations: [
                 CreateTutorialGroupFreePeriodComponent,
                 LoadingIndicatorContainerStubComponent,

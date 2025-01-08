@@ -17,6 +17,7 @@ import { runOnPushChangeDetection } from '../../../helpers/on-push-change-detect
 import { NgbTooltipMocksModule } from '../../../helpers/mocks/directive/ngbTooltipMocks.module';
 import { TutorialGroupUtilizationIndicatorComponent } from 'app/course/tutorial-groups/shared/tutorial-group-utilization-indicator/tutorial-group-utilization-indicator.component';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { ArtemisTestModule } from '../../../test.module';
 
 @Component({ selector: 'jhi-mock-extra-column', template: '' })
 class MockExtraColumnComponent {
@@ -32,6 +33,7 @@ class MockExtraColumnComponent {
             </ng-template>
         </jhi-tutorial-groups-table>
     `,
+    imports: [TutorialGroupsTableComponent, MockExtraColumnComponent],
 })
 class MockWrapperComponent {
     @Input()
@@ -61,7 +63,7 @@ describe('TutorialGroupTableWrapperTest', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [NgbTooltipMocksModule],
+            imports: [ArtemisTestModule, NgbTooltipMocksModule],
             declarations: [
                 TutorialGroupsTableComponent,
                 TutorialGroupRowStubComponent,

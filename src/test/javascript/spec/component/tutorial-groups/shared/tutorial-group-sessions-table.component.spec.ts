@@ -12,6 +12,7 @@ import { generateExampleTutorialGroup } from '../helpers/tutorialGroupExampleMod
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 import { NgbCollapseMocksModule } from '../../../helpers/mocks/directive/ngbCollapseMocks.module';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { ArtemisTestModule } from '../../../test.module';
 
 @Component({ selector: 'jhi-mock-extra-column', template: '' })
 class MockExtraColumnComponent {
@@ -27,6 +28,7 @@ class MockExtraColumnComponent {
             </ng-template>
         </jhi-tutorial-group-sessions-table>
     `,
+    imports: [TutorialGroupSessionsTableComponent, MockExtraColumnComponent],
 })
 class MockWrapperComponent {
     @Input()
@@ -56,8 +58,8 @@ describe('TutorialGroupSessionsTableWrapperTest', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [NgbCollapseMocksModule],
-            declarations: [
+            imports: [
+                ArtemisTestModule,
                 TutorialGroupSessionsTableComponent,
                 TutorialGroupSessionRowStubComponent,
                 MockWrapperComponent,
