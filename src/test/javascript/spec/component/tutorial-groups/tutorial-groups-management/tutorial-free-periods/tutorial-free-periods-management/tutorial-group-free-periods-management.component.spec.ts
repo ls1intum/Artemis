@@ -9,7 +9,6 @@ import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { MockRouterLinkDirective } from '../../../../../helpers/mocks/directive/mock-router-link.directive';
 import { SortService } from 'app/shared/service/sort.service';
 import { LoadingIndicatorContainerStubComponent } from '../../../../../helpers/stubs/loading-indicator-container-stub.component';
-import { Component, Input } from '@angular/core';
 import { TutorialGroupsConfiguration } from 'app/entities/tutorial-group/tutorial-groups-configuration.model';
 import { TutorialGroupFreePeriod } from 'app/entities/tutorial-group/tutorial-group-free-day.model';
 import { TutorialGroupFreePeriodsManagementComponent } from 'app/course/tutorial-groups/tutorial-groups-management/tutorial-free-periods/tutorial-free-periods-management/tutorial-group-free-periods-management.component';
@@ -27,13 +26,6 @@ import { CreateTutorialGroupFreePeriodComponent } from 'app/course/tutorial-grou
 import { TutorialGroupFreePeriodsTableComponent } from 'app/course/tutorial-groups/tutorial-groups-management/tutorial-free-periods/tutorial-free-periods-management/tutorial-group-free-periods-table/tutorial-group-free-periods-table.component';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { ArtemisTestModule } from '../../../../../test.module';
-
-@Component({ selector: 'jhi-tutorial-group-free-period-row-buttons', template: '' })
-class TutorialGroupRowButtonsStubComponent {
-    @Input() course: Course;
-    @Input() tutorialGroupConfiguration: TutorialGroupsConfiguration;
-    @Input() tutorialFreePeriod: TutorialGroupFreePeriod;
-}
 
 describe('TutorialGroupFreePeriodsManagementComponent', () => {
     let fixture: ComponentFixture<TutorialGroupFreePeriodsManagementComponent>;
@@ -58,7 +50,6 @@ describe('TutorialGroupFreePeriodsManagementComponent', () => {
             declarations: [
                 TutorialGroupFreePeriodsManagementComponent,
                 LoadingIndicatorContainerStubComponent,
-                TutorialGroupRowButtonsStubComponent,
                 MockPipe(ArtemisTranslatePipe),
                 MockPipe(ArtemisDatePipe),
                 MockComponent(FaIconComponent),
@@ -143,7 +134,7 @@ describe('TutorialGroupFreePeriodsManagementComponent', () => {
     });
 
     it('should display three rows for three free periods', () => {
-        const rowButtons = fixture.debugElement.queryAll(By.directive(TutorialGroupRowButtonsStubComponent));
+        const rowButtons = fixture.debugElement.queryAll(By.css('jhi-tutorial-group-free-period-row-buttons'));
         expect(rowButtons).toHaveLength(3);
         expect(rowButtons[0].componentInstance.tutorialFreePeriod).toEqual(thirdOfJanuaryPeriod);
         expect(rowButtons[1].componentInstance.tutorialFreePeriod).toEqual(secondOfJanuaryPeriod);
