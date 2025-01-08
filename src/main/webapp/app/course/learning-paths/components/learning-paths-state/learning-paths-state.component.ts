@@ -44,13 +44,10 @@ export class LearningPathsStateComponent {
     readonly learningPathHealthState = computed(() => this.learningPathHealth()?.status ?? []);
 
     constructor() {
-        effect(
-            () => {
-                const courseId = this.courseId();
-                untracked(() => this.loadLearningPathHealthState(courseId));
-            },
-            { allowSignalWrites: true },
-        );
+        effect(() => {
+            const courseId = this.courseId();
+            untracked(() => this.loadLearningPathHealthState(courseId));
+        });
     }
 
     protected async loadLearningPathHealthState(courseId: number): Promise<void> {

@@ -43,23 +43,20 @@ export class CourseCompetenciesRelationGraphComponent {
     });
 
     constructor() {
-        effect(
-            () => {
-                return this.nodes.set(
-                    this.courseCompetencies().map(
-                        (courseCompetency): Node => ({
-                            id: courseCompetency.id!.toString(),
-                            label: courseCompetency.title,
-                            data: {
-                                id: courseCompetency.id,
-                                type: courseCompetency.type,
-                            },
-                        }),
-                    ),
-                );
-            },
-            { allowSignalWrites: true },
-        );
+        effect(() => {
+            return this.nodes.set(
+                this.courseCompetencies().map(
+                    (courseCompetency): Node => ({
+                        id: courseCompetency.id!.toString(),
+                        label: courseCompetency.title,
+                        data: {
+                            id: courseCompetency.id,
+                            type: courseCompetency.type,
+                        },
+                    }),
+                ),
+            );
+        });
     }
 
     protected selectRelation(relationId: number): void {

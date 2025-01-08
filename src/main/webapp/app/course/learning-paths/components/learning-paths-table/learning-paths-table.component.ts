@@ -50,14 +50,11 @@ export class LearningPathsTableComponent {
     private readonly debounceLoadLearningPaths = BaseApiHttpService.debounce(this.loadLearningPaths.bind(this), 300);
 
     constructor() {
-        effect(
-            () => {
-                // Load learning paths whenever the courseId changes
-                const courseId = this.courseId();
-                untracked(() => this.loadLearningPaths(courseId));
-            },
-            { allowSignalWrites: true },
-        );
+        effect(() => {
+            // Load learning paths whenever the courseId changes
+            const courseId = this.courseId();
+            untracked(() => this.loadLearningPaths(courseId));
+        });
     }
 
     private async loadLearningPaths(courseId: number): Promise<void> {

@@ -32,13 +32,10 @@ export class LearningPathsConfigurationComponent {
     readonly includeAllGradedExercisesEnabled = computed(() => this.learningPathsConfiguration()?.includeAllGradedExercises ?? false);
 
     constructor() {
-        effect(
-            () => {
-                const courseId = this.courseId();
-                untracked(() => this.loadLearningPathsConfiguration(courseId));
-            },
-            { allowSignalWrites: true },
-        );
+        effect(() => {
+            const courseId = this.courseId();
+            untracked(() => this.loadLearningPathsConfiguration(courseId));
+        });
     }
 
     private async loadLearningPathsConfiguration(courseId: number): Promise<void> {

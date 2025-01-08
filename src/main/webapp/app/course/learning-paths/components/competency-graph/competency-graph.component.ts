@@ -33,7 +33,7 @@ export class CompetencyGraphComponent {
     readonly zoomToFit$ = new Subject<NgxGraphZoomOptions>();
 
     constructor() {
-        effect(() => this.internalCompetencyGraph.set(this.competencyGraph()), { allowSignalWrites: true });
+        effect(() => this.internalCompetencyGraph.set(this.competencyGraph()));
     }
 
     setNodeDimension(sizeUpdate: SizeUpdate): void {

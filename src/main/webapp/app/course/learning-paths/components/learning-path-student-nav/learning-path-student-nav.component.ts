@@ -40,13 +40,10 @@ export class LearningPathNavComponent {
     readonly isDropdownOpen = signal<boolean>(false);
 
     constructor() {
-        effect(
-            () => {
-                const learningPathId = this.learningPathId();
-                untracked(() => this.learningPathNavigationService.loadLearningPathNavigation(learningPathId));
-            },
-            { allowSignalWrites: true },
-        );
+        effect(() => {
+            const learningPathId = this.learningPathId();
+            untracked(() => this.learningPathNavigationService.loadLearningPathNavigation(learningPathId));
+        });
     }
 
     async selectLearningObject(selectedLearningObject: LearningPathNavigationObjectDTO, isSuccessor: boolean): Promise<void> {

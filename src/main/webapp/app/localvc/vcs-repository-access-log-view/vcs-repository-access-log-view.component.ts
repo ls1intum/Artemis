@@ -31,16 +31,13 @@ export class VcsRepositoryAccessLogViewComponent {
     private readonly repositoryType = computed(() => String(this.params().repositoryType));
 
     constructor() {
-        effect(
-            async () => {
-                if (this.participationId()) {
-                    await this.loadVcsAccessLogForParticipation(this.participationId()!);
-                } else {
-                    await this.loadVcsAccessLog(this.exerciseId(), this.repositoryType());
-                }
-            },
-            { allowSignalWrites: true },
-        );
+        effect(async () => {
+            if (this.participationId()) {
+                await this.loadVcsAccessLogForParticipation(this.participationId()!);
+            } else {
+                await this.loadVcsAccessLog(this.exerciseId(), this.repositoryType());
+            }
+        });
     }
 
     public async loadVcsAccessLogForParticipation(participationId: number) {

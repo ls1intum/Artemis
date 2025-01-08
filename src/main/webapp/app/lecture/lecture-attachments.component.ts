@@ -105,24 +105,21 @@ export class LectureAttachmentsComponent implements OnDestroy {
     );
 
     constructor() {
-        effect(
-            () => {
-                this.notificationText = undefined;
-                this.routeDataSubscription?.unsubscribe(); // in case the subscription was already defined
-                this.routeDataSubscription = this.activatedRoute.parent!.data.subscribe(({ lecture }) => {
-                    if (this.lectureId()) {
-                        this.lectureService.findWithDetails(this.lectureId()!).subscribe((lectureResponse: HttpResponse<Lecture>) => {
-                            this.lecture.set(lectureResponse.body!);
-                            this.loadAttachments();
-                        });
-                    } else {
-                        this.lecture.set(lecture);
+        effect(() => {
+            this.notificationText = undefined;
+            this.routeDataSubscription?.unsubscribe(); // in case the subscription was already defined
+            this.routeDataSubscription = this.activatedRoute.parent!.data.subscribe(({ lecture }) => {
+                if (this.lectureId()) {
+                    this.lectureService.findWithDetails(this.lectureId()!).subscribe((lectureResponse: HttpResponse<Lecture>) => {
+                        this.lecture.set(lectureResponse.body!);
                         this.loadAttachments();
-                    }
-                });
-            },
-            { allowSignalWrites: true },
-        );
+                    });
+                } else {
+                    this.lecture.set(lecture);
+                    this.loadAttachments();
+                }
+            });
+        });
     }
 
     loadAttachments(): void {
