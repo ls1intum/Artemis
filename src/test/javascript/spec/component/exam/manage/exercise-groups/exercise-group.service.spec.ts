@@ -1,4 +1,7 @@
+import { TestBed } from '@angular/core/testing';
 import { ExerciseGroupService } from 'app/exam/manage/exercise-groups/exercise-group.service';
+import { ArtemisTestModule } from '../../../../test.module';
+import { HttpClient } from '@angular/common/http';
 
 describe('Exercise Group Service', () => {
     let httpClient: any;
@@ -6,11 +9,15 @@ describe('Exercise Group Service', () => {
     let service: ExerciseGroupService;
 
     beforeEach(() => {
-        httpClient = {
-            delete: jest.fn(),
-        };
-        httpClientDeleteSpy = jest.spyOn(httpClient, 'delete');
-        service = new ExerciseGroupService();
+        TestBed.configureTestingModule({
+            imports: [ArtemisTestModule],
+        });
+
+        service = TestBed.inject(ExerciseGroupService);
+        httpClient = TestBed.inject(HttpClient);
+        httpClientDeleteSpy = jest.spyOn(httpClient, 'delete').mockImplementation(() => {
+            return {};
+        });
     });
 
     it('should set additional parameters correctly in delete', () => {
