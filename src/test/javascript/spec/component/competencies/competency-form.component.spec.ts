@@ -1,7 +1,5 @@
 import { HttpResponse } from '@angular/common/http';
 import { ComponentFixture, TestBed, discardPeriodicTasks, fakeAsync, flush, tick } from '@angular/core/testing';
-import { ReactiveFormsModule } from '@angular/forms';
-import { NgbDropdownModule } from '@ng-bootstrap/ng-bootstrap';
 import { CompetencyService } from 'app/course/competencies/competency.service';
 import { Competency, CompetencyTaxonomy } from 'app/entities/competency.model';
 import { TextUnit } from 'app/entities/lecture-unit/textUnit.model';
@@ -10,7 +8,6 @@ import { LectureUnitService } from 'app/lecture/lecture-unit/lecture-unit-manage
 import { MockComponent, MockProvider } from 'ng-mocks';
 import { of } from 'rxjs';
 import { ArtemisTestModule } from '../../test.module';
-import { MockTranslateService } from '../../helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
 import dayjs from 'dayjs/esm';
 import { CompetencyFormComponent } from 'app/course/competencies/forms/competency/competency-form.component';
@@ -28,9 +25,9 @@ describe('CompetencyFormComponent', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [CompetencyFormComponent, ArtemisTestModule, ReactiveFormsModule, NgbDropdownModule],
+            imports: [ArtemisTestModule],
             declarations: [],
-            providers: [MockProvider(CompetencyService), MockProvider(LectureUnitService), { provide: TranslateService, useClass: MockTranslateService }],
+            providers: [MockProvider(CompetencyService), MockProvider(LectureUnitService)],
         })
             .overrideModule(ArtemisMarkdownEditorModule, {
                 remove: { exports: [MarkdownEditorMonacoComponent] },
