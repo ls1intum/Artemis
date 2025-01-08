@@ -3,6 +3,7 @@ package de.tum.cit.aet.artemis.modeling.web;
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
@@ -31,6 +32,8 @@ import de.tum.cit.aet.artemis.assessment.domain.AssessmentType;
 import de.tum.cit.aet.artemis.assessment.domain.GradingCriterion;
 import de.tum.cit.aet.artemis.assessment.domain.Result;
 import de.tum.cit.aet.artemis.assessment.repository.GradingCriterionRepository;
+import de.tum.cit.aet.artemis.assessment.repository.ResultRepository;
+import de.tum.cit.aet.artemis.assessment.service.ResultService;
 import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.exception.AccessForbiddenException;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
@@ -67,6 +70,8 @@ public class ModelingSubmissionResource extends AbstractSubmissionResource {
 
     private static final String ENTITY_NAME = "modelingSubmission";
 
+    private final ResultRepository resultRepository;
+
     @Value("${jhipster.clientApp.name}")
     private String applicationName;
 
@@ -82,10 +87,12 @@ public class ModelingSubmissionResource extends AbstractSubmissionResource {
 
     private final PlagiarismService plagiarismService;
 
+    private final ResultService resultService;
+
     public ModelingSubmissionResource(SubmissionRepository submissionRepository, ModelingSubmissionService modelingSubmissionService,
             ModelingExerciseRepository modelingExerciseRepository, AuthorizationCheckService authCheckService, UserRepository userRepository, ExerciseRepository exerciseRepository,
             GradingCriterionRepository gradingCriterionRepository, ExamSubmissionService examSubmissionService, StudentParticipationRepository studentParticipationRepository,
-            ModelingSubmissionRepository modelingSubmissionRepository, PlagiarismService plagiarismService) {
+            ModelingSubmissionRepository modelingSubmissionRepository, PlagiarismService plagiarismService, ResultService resultService, ResultRepository resultRepository) {
         super(submissionRepository, authCheckService, userRepository, exerciseRepository, modelingSubmissionService, studentParticipationRepository);
         this.modelingSubmissionService = modelingSubmissionService;
         this.modelingExerciseRepository = modelingExerciseRepository;
@@ -93,6 +100,8 @@ public class ModelingSubmissionResource extends AbstractSubmissionResource {
         this.examSubmissionService = examSubmissionService;
         this.modelingSubmissionRepository = modelingSubmissionRepository;
         this.plagiarismService = plagiarismService;
+        this.resultService = resultService;
+        this.resultRepository = resultRepository;
     }
 
     /**
@@ -366,5 +375,82 @@ public class ModelingSubmissionResource extends AbstractSubmissionResource {
         }
 
         return ResponseEntity.ok(modelingSubmission);
+    }
+
+    /**
+     * GET /participations/{participationId}/submissions-with-results : get submissions with results for a particular student participation.
+     * When the assessment period is not over yet, only submissions with Athena results are returned.
+     * When the assessment period is over, both Athena and normal results are returned.
+     *
+     * @param participationId the id of the participation for which to get the submissions with results
+     * @return the ResponseEntity with status 200 (OK) and with body the list of submissions with results and feedbacks, or with status 404 (Not Found) if the participation could
+     *         not be found
+     */
+    @GetMapping("participations/{participationId}/submissions-with-results")
+    @EnforceAtLeastStudent
+    public ResponseEntity<List<Submission>> getSubmissionsWithResultsForParticipation(@PathVariable long participationId) {
+        log.debug("REST request to get submissions with results for participation: {}", participationId);
+
+        // Retrieve and check the participation
+        StudentParticipation participation = studentParticipationRepository.findByIdWithLegalSubmissionsResultsFeedbackElseThrow(participationId);
+        User user = userRepository.getUserWithGroupsAndAuthorities();
+
+        if (participation.getExercise() == null) {
+            return ResponseEntity.badRequest()
+                    .headers(HeaderUtil.createFailureAlert(applicationName, true, "modelingExercise", "exerciseEmpty", "The exercise belonging to the participation is null."))
+                    .body(null);
+        }
+
+        if (!(participation.getExercise() instanceof ModelingExercise modelingExercise)) {
+            return ResponseEntity.badRequest().headers(
+                    HeaderUtil.createFailureAlert(applicationName, true, "modelingExercise", "wrongExerciseType", "The exercise of the participation is not a modeling exercise."))
+                    .body(null);
+        }
+
+        // Students can only see their own models (to prevent cheating). TAs, instructors and admins can see all models.
+        boolean isAtLeastTutor = authCheckService.isAtLeastTeachingAssistantForExercise(modelingExercise, user);
+        if (!(authCheckService.isOwnerOfParticipation(participation) || isAtLeastTutor)) {
+            throw new AccessForbiddenException();
+        }
+
+        // Exam exercises cannot be seen by students between the endDate and the publishResultDate
+        if (!authCheckService.isAllowedToGetExamResult(modelingExercise, participation, user)) {
+            throw new AccessForbiddenException();
+        }
+
+        boolean isStudent = !isAtLeastTutor;
+
+        // Get the submissions associated with the participation
+        Set<Submission> submissions = participation.getSubmissions();
+
+        // Filter submissions to only include those with relevant results
+        List<Submission> submissionsWithResults = submissions.stream().filter(submission -> {
+
+            submission.setParticipation(participation);
+
+            // Filter results within each submission based on assessment type and period
+            List<Result> filteredResults = submission.getResults().stream().filter(result -> {
+                if (isStudent) {
+                    if (ExerciseDateService.isAfterAssessmentDueDate(modelingExercise)) {
+                        return true; // Include all results if the assessment period is over
+                    }
+                    else {
+                        return result.getAssessmentType() == AssessmentType.AUTOMATIC_ATHENA; // Only include Athena results if the assessment period is not over
+                    }
+                }
+                else {
+                    return true; // Tutors and above can see all results
+                }
+            }).peek(Result::filterSensitiveInformation).sorted(Comparator.comparing(Result::getCompletionDate).reversed()).toList();
+
+            // Set filtered results back into the submission if any results remain after filtering
+            if (!filteredResults.isEmpty()) {
+                submission.setResults(filteredResults);
+                return true; // Include submission as it has relevant results
+            }
+            return false;
+        }).toList();
+
+        return ResponseEntity.ok().body(submissionsWithResults);
     }
 }

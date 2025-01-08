@@ -114,7 +114,8 @@
                 "noCourseCases": "Keine Plagiatsfälle in diesem Kurs",
                 "noExamCases": "Keine Plagiatsfälle in dieser Prüfung",
                 "notifyStudent": "Studierende:n benachrichtigen",
-                "studentNotified": "Studierende:r wurde benachrichtigt."
+                "studentNotified": "Studierende:r wurde benachrichtigt.",
+                "viewComparisons": "Vergleiche ansehen"
             },
             "cases": {
                 "pageTitle": "Plagiatsfälle",
@@ -130,6 +131,9 @@
                 "exportCsv": "CSV exportieren",
                 "confirm": "Fall bestätigen",
                 "discard": "Fall verwerfen"
+            },
+            "export": {
+                "error": "Fehler beim Exportieren der CSV-Datei."
             }
         }
     }

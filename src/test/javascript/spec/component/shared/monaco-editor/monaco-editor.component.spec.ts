@@ -289,4 +289,42 @@ describe('MonacoEditorComponent', () => {
         comp.setText(originalText);
         expect(comp.getText()).toBe(originalText);
     });
+
+    it('should register a listener for model content changes', () => {
+        const listenerStub = jest.fn();
+        fixture.detectChanges();
+        const disposable = comp.onDidChangeModelContent(listenerStub);
+        comp.setText(singleLineText);
+        expect(listenerStub).toHaveBeenCalled();
+        disposable.dispose();
+    });
+
+    it('should retrieve the editor model', () => {
+        fixture.detectChanges();
+        comp.setText(singleLineText);
+        const model = comp.getModel();
+        expect(model).not.toBeNull();
+        expect(model?.getValue()).toBe(singleLineText);
+    });
+
+    it('should get the content of a specific line', () => {
+        fixture.detectChanges();
+        comp.setText(multiLineText);
+        const lineContent = comp.getLineContent(2);
+        expect(lineContent).toBe('static void main() {');
+    });
+
+    it('should handle invalid line numbers in getLineContent', () => {
+        fixture.detectChanges();
+        comp.setText(multiLineText);
+
+        // Invalid line numbers
+        expect(() => comp.getLineContent(0)).toThrow();
+        expect(() => comp.getLineContent(-1)).toThrow();
+        expect(() => comp.getLineContent(999)).toThrow();
+
+        // Empty line
+        comp.setText('line1\n\nline3');
+        expect(comp.getLineContent(2)).toBe('');
+    });
 });

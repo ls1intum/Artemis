@@ -38,15 +38,14 @@ Learning Paths
 --------------
 
 Students can access their learning path in the learning path tab. Here, they can access recommended lecture units and participate in exercises.
-Recommendations (visualized on the left) are generated via an intelligent agent that accounts for multiple metrics, e.g. prior performance, confidence, relations, and due dates, to support students in their selection of learning resources.
-Students can use the up and down buttons to navigate to the previous or next recommendation respectively. Hovering over a node in the list will display more information about the learning resource.
+Recommendations are generated via an intelligent agent that accounts for multiple metrics, e.g. prior performance, confidence, relations, and due dates, to support students in their selection of learning resources.
+Students can use the "Previous" and "Next" buttons to navigate to the previous or next recommendation respectively.
 
 |students-learning-path-participation|
 
-Students can access their learning path graph via the eye icon on the top left. The graph displays all competencies, lecture units, exercises, and their relations. Each competency consists of a start node, visualized by the competency rings displaying progress, confidence, and overall mastery, and an end node represented by a checkered flag. Edges link learning resources to a competency via the respective start and end nodes. If the resource is still pending, it displays as a play symbol. Upon completion of the task, it appears as a checkmark.
-Users can read the graph from top to bottom, starting with the competencies that have no prerequisites, continuing downwards toward competencies that build upon prior knowledge. Students can zoom, pan, and drag the graph to navigate. For better orientation, the top right corner contains a mini-map.
-On the bottom right of the graph, users can view a legend describing the different types of nodes.
-Hovering over any node, e.g. exercise or competency, opens a popover containing essential information about the item, e.g. the type of exercise and title, or for competencies, the details, including the description.
+Students can access all scheduled competencies and prerequisites by clicking on the title of the learning object they are currently viewing. Expanding a competency or prerequisite in the list reveals its associated learning objects, each indicating whether it has been completed.
+To navigate to a specific learning object, students can simply click on its title.
+For a broader view of how competencies and prerequisites are interconnected, students can open the course competency graph. This graph starts with competencies that have no prerequisites and progresses to those that build upon earlier knowledge. To aid navigation, a mini-map is available in the top-right corner.
 
 |students-learning-path-graph|
 

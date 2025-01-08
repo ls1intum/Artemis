@@ -12,7 +12,6 @@ import { ProgrammingExerciseConfigureGradingComponent } from 'app/exercises/prog
 import { Authority } from 'app/shared/constants/authority.constants';
 import { PlagiarismInspectorComponent } from 'app/exercises/shared/plagiarism/plagiarism-inspector/plagiarism-inspector.component';
 import { ExerciseStatisticsComponent } from 'app/exercises/shared/statistics/exercise-statistics.component';
-import { CodeHintGenerationOverviewComponent } from 'app/exercises/programming/hestia/generation-overview/code-hint-generation-overview/code-hint-generation-overview.component';
 import { BuildPlanEditorComponent } from 'app/exercises/programming/manage/build-plan-editor.component';
 import { RepositoryViewComponent } from 'app/localvc/repository-view/repository-view.component';
 import { CommitHistoryComponent } from 'app/localvc/commit-history/commit-history.component';
@@ -132,18 +131,6 @@ export const routes: Routes = [
         canActivate: [UserRouteAccessService],
     },
     {
-        path: ':courseId/programming-exercises/:exerciseId/exercise-hints/code-hint-management',
-        component: CodeHintGenerationOverviewComponent,
-        resolve: {
-            exercise: ProgrammingExerciseResolve,
-        },
-        data: {
-            authorities: [Authority.TA, Authority.EDITOR, Authority.INSTRUCTOR, Authority.ADMIN],
-            pageTitle: 'artemisApp.codeHint.management.title',
-        },
-        canActivate: [UserRouteAccessService],
-    },
-    {
         path: ':courseId/programming-exercises/:exerciseId/iris-settings',
         loadChildren: () =>
             import('app/iris/settings/iris-exercise-settings-update/iris-exercise-settings-update-routing.module').then((m) => m.IrisExerciseSettingsUpdateRoutingModule),
@@ -166,9 +153,6 @@ export const routes: Routes = [
         data: {
             authorities: [Authority.ADMIN, Authority.INSTRUCTOR, Authority.EDITOR, Authority.TA],
             pageTitle: 'artemisApp.repository.title',
-            flushRepositoryCacheAfter: 900000, // 15 min
-            participationCache: {},
-            repositoryCache: {},
         },
         canActivate: [UserRouteAccessService, LocalVCGuard],
     },
@@ -178,9 +162,6 @@ export const routes: Routes = [
         data: {
             authorities: [Authority.ADMIN, Authority.INSTRUCTOR, Authority.EDITOR, Authority.TA],
             pageTitle: 'artemisApp.repository.title',
-            flushRepositoryCacheAfter: 900000, // 15 min
-            participationCache: {},
-            repositoryCache: {},
         },
         canActivate: [UserRouteAccessService, LocalVCGuard],
     },
@@ -190,9 +171,6 @@ export const routes: Routes = [
         data: {
             authorities: [Authority.ADMIN, Authority.INSTRUCTOR, Authority.EDITOR],
             pageTitle: 'artemisApp.repository.title',
-            flushRepositoryCacheAfter: 900000, // 15 min
-            participationCache: {},
-            repositoryCache: {},
         },
         canActivate: [LocalVCGuard],
     },
@@ -202,9 +180,6 @@ export const routes: Routes = [
         data: {
             authorities: [Authority.ADMIN, Authority.INSTRUCTOR, Authority.EDITOR],
             pageTitle: 'artemisApp.repository.title',
-            flushRepositoryCacheAfter: 900000, // 15 min
-            participationCache: {},
-            repositoryCache: {},
         },
         canActivate: [LocalVCGuard],
     },
@@ -214,9 +189,6 @@ export const routes: Routes = [
         data: {
             authorities: [Authority.ADMIN, Authority.INSTRUCTOR],
             pageTitle: 'artemisApp.repository.title',
-            flushRepositoryCacheAfter: 900000, // 15 min
-            participationCache: {},
-            repositoryCache: {},
         },
         canActivate: [LocalVCGuard],
     },
@@ -226,9 +198,6 @@ export const routes: Routes = [
         data: {
             authorities: [Authority.ADMIN, Authority.INSTRUCTOR],
             pageTitle: 'artemisApp.repository.title',
-            flushRepositoryCacheAfter: 900000, // 15 min
-            participationCache: {},
-            repositoryCache: {},
         },
         canActivate: [LocalVCGuard],
     },
@@ -238,9 +207,6 @@ export const routes: Routes = [
         data: {
             authorities: [Authority.ADMIN, Authority.INSTRUCTOR, Authority.EDITOR],
             pageTitle: 'artemisApp.repository.title',
-            flushRepositoryCacheAfter: 900000, // 15 min
-            participationCache: {},
-            repositoryCache: {},
         },
         canActivate: [LocalVCGuard],
     },
@@ -250,9 +216,6 @@ export const routes: Routes = [
         data: {
             authorities: [Authority.ADMIN, Authority.INSTRUCTOR, Authority.EDITOR, Authority.TA],
             pageTitle: 'artemisApp.repository.title',
-            flushRepositoryCacheAfter: 900000, // 15 min
-            participationCache: {},
-            repositoryCache: {},
         },
         canActivate: [UserRouteAccessService, LocalVCGuard],
     },
@@ -262,9 +225,6 @@ export const routes: Routes = [
         data: {
             authorities: [Authority.ADMIN, Authority.INSTRUCTOR, Authority.EDITOR, Authority.TA],
             pageTitle: 'artemisApp.repository.title',
-            flushRepositoryCacheAfter: 900000, // 15 min
-            participationCache: {},
-            repositoryCache: {},
         },
         canActivate: [UserRouteAccessService, LocalVCGuard],
     },
@@ -274,9 +234,6 @@ export const routes: Routes = [
         data: {
             authorities: [Authority.ADMIN, Authority.INSTRUCTOR],
             pageTitle: 'artemisApp.repository.title',
-            flushRepositoryCacheAfter: 900000, // 15 min
-            participationCache: {},
-            repositoryCache: {},
         },
         canActivate: [UserRouteAccessService, LocalVCGuard],
     },
@@ -286,9 +243,6 @@ export const routes: Routes = [
         data: {
             authorities: [Authority.ADMIN, Authority.INSTRUCTOR, Authority.EDITOR, Authority.TA],
             pageTitle: 'artemisApp.repository.title',
-            flushRepositoryCacheAfter: 900000, // 15 min
-            participationCache: {},
-            repositoryCache: {},
         },
         canActivate: [UserRouteAccessService, LocalVCGuard],
     },

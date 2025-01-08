@@ -8,10 +8,6 @@
     border-radius: 7px;
 }
 
-.answer-post-content-margin {
-    padding-left: 3.42rem;
-}
-
 @include media-breakpoint-down(sm) {
     .answer-post-content-margin {
         padding-left: 0.5rem;
@@ -25,6 +21,7 @@
     display: flex;
     gap: 10px;
     visibility: hidden;
+    max-height: 2.2rem;
     transition:
         opacity 0.2s ease-in-out,
         visibility 0.2s ease-in-out;
@@ -56,15 +53,22 @@
     padding-left: 0.25rem;
 }
 
-.message-content {
-    &.force-hover {
-        background: var(--metis-selection-option-hover-background);
+.non-consecutive .hover-actions {
+    top: -2rem;
+}
 
-        .hover-actions {
-            opacity: 1;
-            visibility: visible;
-        }
-    }
+.hover-container {
+    position: relative;
+}
+
+.hover-container:hover {
+    background: var(--metis-selection-option-hover-background);
+    transition: background-color 0.2s ease-in-out;
+}
+
+.hover-container:hover .hover-actions {
+    visibility: visible;
+    opacity: 1;
 }
 
 .message-content:hover {
@@ -84,4 +88,23 @@
     width: 20px;
     height: 20px;
     margin-right: 0.2rem;
+}
+
+.post-time {
+    position: absolute;
+    top: 5%;
+    left: 0.5rem;
+    margin-left: 0.7rem;
+    visibility: hidden;
+    opacity: 0;
+    transition:
+        visibility 0.2s ease-in-out,
+        opacity 0.2s ease-in-out;
+    font-size: 0.75rem;
+    color: var(--metis-gray-dark);
+}
+
+.hover-container:hover .post-time {
+    visibility: visible;
+    opacity: 1;
 }
