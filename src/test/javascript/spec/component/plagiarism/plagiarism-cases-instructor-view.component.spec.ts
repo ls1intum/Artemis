@@ -244,8 +244,6 @@ describe('Plagiarism Cases Instructor View Component', () => {
     }));
 
     it('should scroll to the correct exercise element when scrollToExercise is called', () => {
-        component.exerciseId = 1;
-
         const nativeElement1 = { id: 'exercise-with-plagiarism-case-1', scrollIntoView: jest.fn() };
         const nativeElement2 = { id: 'exercise-with-plagiarism-case-2', scrollIntoView: jest.fn() };
 
@@ -254,7 +252,7 @@ describe('Plagiarism Cases Instructor View Component', () => {
 
         component.exerciseWithPlagCasesElements = signal([elementRef1, elementRef2]);
 
-        component.scrollToExercise();
+        component.scrollToExerciseAfterViewInit(1);
 
         expect(nativeElement1.scrollIntoView).toHaveBeenCalledWith({
             behavior: 'smooth',
