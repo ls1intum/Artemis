@@ -13,7 +13,6 @@ import de.tum.cit.aet.artemis.buildagent.dto.LocalCITestJobDTO;
 import de.tum.cit.aet.artemis.buildagent.dto.testsuite.CustomFeedback;
 import de.tum.cit.aet.artemis.buildagent.dto.testsuite.Failure;
 import de.tum.cit.aet.artemis.buildagent.dto.testsuite.TestCase;
-import de.tum.cit.aet.artemis.buildagent.dto.testsuite.TestSuite;
 
 public final class CustomFeedbackParser {
 
@@ -43,9 +42,9 @@ public final class CustomFeedbackParser {
             log.error("Error during custom Feedback creation. {}", e.getMessage(), e);
             return;
         }
-        // Only create TestSuite if there was no exception during the custom feedback extraction
-        final TestSuite testSuite = customFeedbackToTestSuite(feedback);
-        processCustomTestSuite(testSuite, failedTests, successfulTests);
+        // Only create TestCase if there was no exception during the custom feedback extraction
+        final TestCase testCase = customFeedbackToTestCase(feedback);
+        processTestCase(testCase, failedTests, successfulTests);
     }
 
     /**
@@ -68,12 +67,12 @@ public final class CustomFeedbackParser {
     }
 
     /**
-     * Convert a feedback into {@link TestCase}s and wrap them in a {@link TestSuite}.
+     * Convert a custom feedback into {@link TestCase}.
      *
-     * @param feedback the custom feedback to wrap
-     * @return a Testsuite in the same format as used by JUnit reports
+     * @param feedback the custom feedback to convert
+     * @return A Testsuite in the same format as used by JUnit reports
      */
-    private static TestSuite customFeedbackToTestSuite(final CustomFeedback feedback) {
+    private static TestCase customFeedbackToTestCase(final CustomFeedback feedback) {
         final TestCase testCase;
         if (feedback.successful()) {
             testCase = new TestCase(feedback.name(), null, null, null, feedback.message());
@@ -83,25 +82,19 @@ public final class CustomFeedbackParser {
             failure.setMessage(feedback.message());
             testCase = new TestCase(feedback.name(), failure, null, null, null);
         }
-        return new TestSuite(null, List.of(testCase), List.of());
+        return testCase;
     }
 
-    private static void processCustomTestSuite(TestSuite testSuite, List<LocalCITestJobDTO> failedTests, List<LocalCITestJobDTO> successfulTests) {
-        for (TestCase testCase : testSuite.testCases()) {
-            if (testCase.isSkipped()) {
-                continue;
-            }
-            Failure failure = testCase.extractFailure();
-            if (failure != null) {
-                failedTests.add(new LocalCITestJobDTO(testCase.name(), List.of(failure.extractMessage())));
-            }
-            else {
-                successfulTests.add(new LocalCITestJobDTO(testCase.name(), List.of(testCase.extractSuccessMessage())));
-            }
+    private static void processTestCase(final TestCase testCase, final List<LocalCITestJobDTO> failedTests, final List<LocalCITestJobDTO> successfulTests) {
+        if (testCase.isSkipped()) {
+            return;
         }
-
-        for (TestSuite suite : testSuite.testSuites()) {
-            processCustomTestSuite(suite, failedTests, successfulTests);
+        Failure failure = testCase.extractFailure();
+        if (failure != null) {
+            failedTests.add(new LocalCITestJobDTO(testCase.name(), List.of(failure.extractMessage())));
+        }
+        else {
+            successfulTests.add(new LocalCITestJobDTO(testCase.name(), List.of(testCase.extractSuccessMessage())));
         }
     }
 }
