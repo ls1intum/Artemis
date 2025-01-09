@@ -29,6 +29,7 @@ import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
     imports: [TranslateDirective, FaIconComponent, ComplaintsFormComponent, ComplaintRequestComponent, ComplaintResponseComponent, ArtemisTranslatePipe],
 })
 export class ComplaintsStudentViewComponent implements OnInit {
+    private cdr = inject(ChangeDetectorRef);
     private complaintService = inject(ComplaintService);
     private serverDateService = inject(ArtemisServerDateService);
     private accountService = inject(AccountService);
@@ -60,7 +61,7 @@ export class ComplaintsStudentViewComponent implements OnInit {
 
     // Icons
     faInfoCircle = faInfoCircle;
-  
+
     /**
      * Loads the number of allowed complaints and feedback requests
      */
@@ -101,8 +102,7 @@ export class ComplaintsStudentViewComponent implements OnInit {
      * Sets the complaint if a complaint and a valid result exists
      */
     loadPotentialComplaint(): void {
-        this.
-      
+        this.complaintService
             .findBySubmissionId(this.submission.id!)
             .pipe(filter((res) => !!res.body))
             .subscribe((res: HttpResponse<Complaint>) => {
