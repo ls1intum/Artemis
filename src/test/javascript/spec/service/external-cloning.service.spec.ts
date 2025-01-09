@@ -23,7 +23,7 @@ describe('ExternalCloningService', () => {
     it('should build ide deeplink url correctly', () => {
         const cloneUrl = baseUrl + '/git/repo.git';
         const ide = { name: 'VS Code', deepLink: 'vscode://vscode.git/clone?url={cloneUrl}' };
-        const expectedUrl = 'vscode://vscode.git/clone?url=https%3A%2F%2Fartemis.cit.tum.de%2Fgit%2Frepo.git';
+        const expectedUrl = 'vscode://vscode.git/clone?url=https%3A%2F%2Fartemis.tum.de%2Fgit%2Frepo.git';
         expect(service.buildIdeUrl(cloneUrl, ide)).toEqual(expectedUrl);
     });
 
