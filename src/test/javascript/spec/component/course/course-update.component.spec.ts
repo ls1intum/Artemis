@@ -20,7 +20,7 @@ import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { MockComponent, MockDirective, MockModule, MockPipe, MockProvider } from 'ng-mocks';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { BehaviorSubject, of } from 'rxjs';
-import { ImageCropperComponent } from '../../../../../main/webapp/app/shared/image-cropper/component/image-cropper.component';
+import { ImageCropperComponent } from 'app/shared/image-cropper/component/image-cropper.component';
 import { MockSyncStorage } from '../../helpers/mocks/service/mock-sync-storage.service';
 import { ArtemisTestModule } from '../../test.module';
 import { RemoveKeysPipe } from 'app/shared/pipes/remove-keys.pipe';
@@ -42,6 +42,8 @@ import { MockNgbModalService } from '../../helpers/mocks/service/mock-ngb-modal.
 import { ImageCropperModalComponent } from 'app/course/manage/image-cropper-modal.component';
 import { FeatureToggle, FeatureToggleService } from 'app/shared/feature-toggle/feature-toggle.service';
 import { MockFeatureToggleService } from '../../helpers/mocks/service/mock-feature-toggle.service';
+import { MockTranslateService } from '../../helpers/mocks/service/mock-translate.service';
+import { MockResizeObserver } from '../../helpers/mocks/service/mock-resize-observer';
 
 @Component({ selector: 'jhi-markdown-editor-monaco', template: '' })
 class MarkdownEditorStubComponent {
@@ -117,7 +119,8 @@ describe('Course Management Update Component', () => {
                 { provide: SessionStorageService, useClass: MockSyncStorage },
                 { provide: AccountService, useClass: MockAccountService },
                 { provide: NgbModal, useClass: MockNgbModalService },
-                MockProvider(TranslateService),
+                { provide: TranslateService, useClass: MockTranslateService },
+
                 MockProvider(LoadImageService),
                 provideHttpClient(),
                 provideHttpClientTesting(),
@@ -150,6 +153,9 @@ describe('Course Management Update Component', () => {
                 accountService = TestBed.inject(AccountService);
                 eventManager = TestBed.inject(EventManager);
                 modalService = TestBed.inject(NgbModal);
+                global.ResizeObserver = jest.fn().mockImplementation((callback: ResizeObserverCallback) => {
+                    return new MockResizeObserver(callback);
+                });
             });
     });
 
@@ -984,7 +990,7 @@ describe('Course Management Update Component Create', () => {
                 { provide: LocalStorageService, useClass: MockSyncStorage },
                 { provide: SessionStorageService, useClass: MockSyncStorage },
                 { provide: AccountService, useClass: MockAccountService },
-                MockProvider(TranslateService),
+                { provide: TranslateService, useClass: MockTranslateService },
                 MockProvider(LoadImageService),
             ],
             declarations: [
