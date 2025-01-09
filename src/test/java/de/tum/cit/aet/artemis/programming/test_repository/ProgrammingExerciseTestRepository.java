@@ -30,17 +30,13 @@ public interface ProgrammingExerciseTestRepository extends ProgrammingExerciseRe
                 LEFT JOIN FETCH p.templateParticipation
                 LEFT JOIN FETCH p.solutionParticipation
                 LEFT JOIN FETCH p.exampleSubmissions
-                LEFT JOIN FETCH p.exerciseHints eh
-                LEFT JOIN FETCH eh.solutionEntries
                 LEFT JOIN FETCH p.tutorParticipations
                 LEFT JOIN FETCH p.posts
-                LEFT JOIN FETCH p.testCases tc
-                LEFT JOIN FETCH tc.solutionEntries
+                LEFT JOIN FETCH p.testCases
                 LEFT JOIN FETCH p.staticCodeAnalysisCategories
                 LEFT JOIN FETCH p.auxiliaryRepositories
                 LEFT JOIN FETCH p.tasks t
                 LEFT JOIN FETCH t.testCases
-                LEFT JOIN FETCH t.exerciseHints
                 LEFT JOIN FETCH p.plagiarismDetectionConfig
                 LEFT JOIN FETCH p.buildConfig
             WHERE p.id = :exerciseId
