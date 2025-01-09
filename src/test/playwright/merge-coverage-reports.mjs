@@ -1,39 +1,37 @@
-// merge-coverage.js
-import fs from 'fs';
+// merge-coverage-reports.mjs
 import path from 'path';
 import { fileURLToPath } from 'url';
-import CoverageReport from 'monocart-coverage-reports';
 import archiver from 'archiver';
+import coverage from 'istanbul-lib-coverage';
+import reports from 'istanbul-reports';
+import libReport from 'istanbul-lib-report';
+import fs from 'fs';
 
-const inputDir = ['./test-reports/monocart-report-parallel/coverage/raw', './test-reports/monocart-report-sequential/coverage/raw'];
-const coverageOptions = {
-    name: 'E2E Coverage Report',
-    inputDir,
-    outputDir: './test-reports/monocart-report',
+const coverageJsonParallel = './test-reports/monocart-report-parallel/coverage/coverage-final.json';
+const coverageJsonSequential = './test-reports/monocart-report-sequential/coverage/coverage-final.json';
+const outputDir = './test-reports/monocart-report/coverage';
 
-    filter: {
-        '**/src/**': true,
-        '**/node_modules/**': false,
-        '**/**': true,
-    },
-
-    sourcePath: (filePath) => {
-        return filePath;
-    },
-
-    reports: ['json', 'lcov'],
-
-    onEnd: () => {
-        inputDir.forEach((p) => {
-            fs.rmSync(p, {
-                recursive: true,
-                force: true,
-            });
-        });
-    },
-};
 console.log(`Merging coverage reports`);
-await new CoverageReport(coverageOptions).generate();
+
+const coverageParallel = JSON.parse(fs.readFileSync(coverageJsonParallel, 'utf8'));
+const coverageSequential = JSON.parse(fs.readFileSync(coverageJsonSequential, 'utf8'));
+
+const mapA = coverage.createCoverageMap(coverageParallel);
+const mapB = coverage.createCoverageMap(coverageSequential);
+mapA.merge(mapB);
+
+const context = libReport.createContext({
+    dir: outputDir,
+    coverageMap: mapA,
+});
+
+const htmlReport = reports.create('html');
+const lcovReport = reports.create('lcovonly', { file: 'lcov.info' });
+
+htmlReport.execute(context);
+lcovReport.execute(context);
+
+console.log(`Merged coverage reports successfully`);
 
 // Archive the lcov coverage report
 const __filename = fileURLToPath(import.meta.url);
@@ -54,5 +52,5 @@ archive.on('error', (err) => {
 });
 
 archive.pipe(output);
-archive.directory(path.join(__dirname, 'test-reports/monocart-report/lcov-report/'), false);
+archive.directory(path.join(__dirname, 'test-reports/monocart-report/coverage'), false);
 await archive.finalize();
