@@ -17,6 +17,7 @@ import { DataExportConfirmationDialogComponent } from 'app/core/legal/data-expor
 @Component({
     selector: 'jhi-test-component',
     template: '<button jhiDataExportRequestButton [adminDialog]="true" expectedLogin="login"></button>',
+    imports: [DataExportRequestButtonDirective],
 })
 class TestComponent {}
 
