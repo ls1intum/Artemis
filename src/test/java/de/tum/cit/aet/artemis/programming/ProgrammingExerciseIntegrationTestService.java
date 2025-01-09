@@ -2309,7 +2309,7 @@ public class ProgrammingExerciseIntegrationTestService {
                 "/api/repository/" + savedExercise.getSolutionParticipation().getId() + "/file-names");
     }
 
-    void test_redirectGetTemplateRepositoryFilesWithContent(boolean omitBinaries) throws Exception {
+    void test_redirectGetTemplateRepositoryFilesWithContentOmitBinaries() throws Exception {
         BiFunction<ProgrammingExercise, Map<String, String>, LocalRepository> redirectFnc = (exercise, files) -> {
             LocalRepository localRepository = new LocalRepository("main");
             try {
@@ -2321,12 +2321,24 @@ public class ProgrammingExerciseIntegrationTestService {
             return localRepository;
         };
 
-        if (omitBinaries) {
-            test_redirectGetTemplateRepositoryFilesWithContentOmitBinary(redirectFnc);
-        }
-        else {
-            test_redirectGetTemplateRepositoryFilesWithContent(redirectFnc);
-        }
+        test_redirectGetTemplateRepositoryFilesWithContentOmitBinaries(redirectFnc);
+
+    }
+
+    void test_redirectGetTemplateRepositoryFilesWithContent() throws Exception {
+        BiFunction<ProgrammingExercise, Map<String, String>, LocalRepository> redirectFnc = (exercise, files) -> {
+            LocalRepository localRepository = new LocalRepository("main");
+            try {
+                hestiaUtilTestService.setupTemplate(files, exercise, localRepository);
+            }
+            catch (Exception e) {
+                fail("Setup template threw unexpected exception: " + e.getMessage());
+            }
+            return localRepository;
+        };
+
+        test_redirectGetTemplateRepositoryFilesWithContent(redirectFnc);
+
     }
 
     private void test_redirectGetTemplateRepositoryFilesWithContent(BiFunction<ProgrammingExercise, Map<String, String>, LocalRepository> setupRepositoryMock) throws Exception {
@@ -2338,7 +2350,7 @@ public class ProgrammingExerciseIntegrationTestService {
                 "/api/repository/" + savedExercise.getTemplateParticipation().getId() + "/files-content");
     }
 
-    private void test_redirectGetTemplateRepositoryFilesWithContentOmitBinary(BiFunction<ProgrammingExercise, Map<String, String>, LocalRepository> setupRepositoryMock)
+    private void test_redirectGetTemplateRepositoryFilesWithContentOmitBinaries(BiFunction<ProgrammingExercise, Map<String, String>, LocalRepository> setupRepositoryMock)
             throws Exception {
         setupRepositoryMock.apply(programmingExercise, Map.ofEntries(Map.entry("A.java", "abc"), Map.entry("B.jar", "binaryContent")));
 

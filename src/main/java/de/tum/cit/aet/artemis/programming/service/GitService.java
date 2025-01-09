@@ -96,6 +96,8 @@ public class GitService extends AbstractGitService {
 
     private static final Logger log = LoggerFactory.getLogger(GitService.class);
 
+    private static final List<String> BINARY_EXTENSIONS = List.of(".exe", ".jar", ".dll", ".so", ".class", ".bin", ".msi");
+
     private final ProfileService profileService;
 
     @Value("${artemis.version-control.local-vcs-repo-path:#{null}}")
@@ -1027,12 +1029,10 @@ public class GitService extends AbstractGitService {
      * @return A {@link Map} where each key is a {@link File} object representing a file or directory, and each value is
      *         the corresponding {@link FileType} (FILE or FOLDER). The map excludes symbolic links.
      */
-    public Map<File, FileType> listFilesAndFolders(Repository repo, Boolean omitBinaries) {
+    public Map<File, FileType> listFilesAndFolders(Repository repo, boolean omitBinaries) {
         FileAndDirectoryFilter filter = new FileAndDirectoryFilter();
         Iterator<java.io.File> itr = FileUtils.iterateFilesAndDirs(repo.getLocalPath().toFile(), filter, filter);
         Map<File, FileType> files = new HashMap<>();
-
-        List<String> binaryExtensions = List.of(".exe", ".jar", ".dll", ".so", ".class", ".bin");
 
         while (itr.hasNext()) {
             File nextFile = new File(itr.next(), repo);
@@ -1043,8 +1043,8 @@ public class GitService extends AbstractGitService {
                 continue;
             }
 
-            if (Boolean.TRUE.equals(omitBinaries) && nextFile.isFile() && binaryExtensions.stream().anyMatch(nextFile.getName()::endsWith)) {
-                log.info("Omitting binary file: {}", nextFile);
+            if (omitBinaries && nextFile.isFile() && BINARY_EXTENSIONS.stream().anyMatch(nextFile.getName()::endsWith)) {
+                log.debug("Omitting binary file: {}", nextFile);
                 continue;
             }
 

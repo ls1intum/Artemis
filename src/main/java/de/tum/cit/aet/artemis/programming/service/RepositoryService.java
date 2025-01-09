@@ -157,7 +157,7 @@ public class RepositoryService {
      * @return A {@link Map} where each key is a file path (as a {@link String}) and each value is the content of the file (also as a {@link String}).
      *         The map includes only those files that could successfully have their contents read; files that cause an IOException are logged but not included.
      */
-    public Map<String, String> getFilesContentFromWorkingCopy(Repository repository, Boolean omitBinaries) {
+    public Map<String, String> getFilesContentFromWorkingCopy(Repository repository, boolean omitBinaries) {
         var files = gitService.listFilesAndFolders(repository, omitBinaries).entrySet().stream().filter(entry -> entry.getValue() == FileType.FILE).map(Map.Entry::getKey).toList();
         Map<String, String> fileListWithContent = new HashMap<>();
 

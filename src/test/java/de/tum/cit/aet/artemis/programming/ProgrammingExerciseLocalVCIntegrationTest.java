@@ -184,13 +184,13 @@ class ProgrammingExerciseLocalVCIntegrationTest extends AbstractProgrammingInteg
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void test_redirectGetTemplateRepositoryFilesWithContent() throws Exception {
-        programmingExerciseIntegrationTestService.test_redirectGetTemplateRepositoryFilesWithContent(false);
+        programmingExerciseIntegrationTestService.test_redirectGetTemplateRepositoryFilesWithContent();
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
-    void test_redirectGetTemplateRepositoryFilesWithContentAndOmitBinary() throws Exception {
-        programmingExerciseIntegrationTestService.test_redirectGetTemplateRepositoryFilesWithContent(true);
+    void test_redirectGetTemplateRepositoryFilesWithContentAndOmitBinaries() throws Exception {
+        programmingExerciseIntegrationTestService.test_redirectGetTemplateRepositoryFilesWithContentOmitBinaries();
     }
 
     @Test
