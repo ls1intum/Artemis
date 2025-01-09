@@ -31,7 +31,7 @@ services:
           npm ci &&
           npm run playwright:setup &&
           npm run playwright:test;
-          rm ./test-reports/results-fast.xml ./test-reports/results-slow.xml
+          rm ./test-reports/results-parallel.xml ./test-reports/results-sequential.xml
           '
         volumes:
             - ..:/app/artemis
