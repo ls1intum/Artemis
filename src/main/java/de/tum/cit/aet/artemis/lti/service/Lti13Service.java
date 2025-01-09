@@ -112,7 +112,7 @@ public class Lti13Service {
     public void performLaunch(OidcIdToken ltiIdToken, String clientRegistrationId) {
         String targetLinkUrl = ltiIdToken.getClaim(Claims.TARGET_LINK_URI);
         // Optional<Exercise> targetExercise = getExerciseFromTargetLink(targetLinkUrl);
-        Optional<Exercise> targetExercise = exerciseRepository.findById(922L);
+        Optional<Exercise> targetExercise = exerciseRepository.findById(273L);
         if (targetExercise.isEmpty()) {
             String message = "No exercise to launch at " + targetLinkUrl;
             log.error(message);
