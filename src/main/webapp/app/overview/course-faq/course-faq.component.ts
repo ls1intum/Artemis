@@ -19,13 +19,22 @@ import { SearchFilterComponent } from 'app/shared/search-filter/search-filter.co
 import { ArtemisMarkdownModule } from 'app/shared/markdown.module';
 import { SortService } from 'app/shared/service/sort.service';
 import { Renderer2 } from '@angular/core';
+import { NgbModule } from '@ng-bootstrap/ng-bootstrap';
 
 @Component({
     selector: 'jhi-course-faq',
     templateUrl: './course-faq.component.html',
     styleUrls: ['../course-overview.scss', 'course-faq.component.scss'],
     encapsulation: ViewEncapsulation.None,
-    imports: [ArtemisSharedComponentModule, ArtemisSharedModule, CourseFaqAccordionComponent, CustomExerciseCategoryBadgeComponent, SearchFilterComponent, ArtemisMarkdownModule],
+    imports: [
+        ArtemisSharedComponentModule,
+        ArtemisSharedModule,
+        CourseFaqAccordionComponent,
+        CustomExerciseCategoryBadgeComponent,
+        SearchFilterComponent,
+        ArtemisMarkdownModule,
+        NgbModule,
+    ],
 })
 export class CourseFaqComponent implements OnInit, OnDestroy {
     faqElements = viewChildren<ElementRef>('faqElement');
