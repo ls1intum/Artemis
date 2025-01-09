@@ -116,16 +116,16 @@ export const addParticipationToResult = (result: Result | undefined, participati
 };
 
 /**
- * searches for all unreferenced feedback in an array of feedbacks of a result
+ * searches for all manual unreferenced feedback in an array of feedbacks of a result
  * @param feedbacks the feedback of a result
  * @returns an array with the unreferenced feedback of the result
  */
-export const getUnreferencedFeedback = (feedbacks: Feedback[] | undefined): Feedback[] | undefined => {
+export const getManualUnreferencedFeedback = (feedbacks: Feedback[] | undefined): Feedback[] | undefined => {
     return feedbacks ? feedbacks.filter((feedbackElement) => !feedbackElement.reference && feedbackElement.type === FeedbackType.MANUAL_UNREFERENCED) : undefined;
 };
 
 /**
- * searches for all unreferenced feedback of type AUTOMATIC in an array of feedbacks of a result
+ * searches for all automatic unreferenced feedback in an array of feedbacks of a result
  * @param feedbacks the feedback of a result
  * @returns an array with the unreferenced feedback of the result
  */

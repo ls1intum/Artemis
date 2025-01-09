@@ -1,9 +1,9 @@
 import {
     ResultTemplateStatus,
     breakCircularResultBackReferences,
+    getManualUnreferencedFeedback,
     getResultIconClass,
     getTextColorClass,
-    getUnreferencedFeedback,
     isOnlyCompilationTested,
 } from 'app/exercises/shared/result/result.utils';
 import { Feedback, FeedbackType, STATIC_CODE_ANALYSIS_FEEDBACK_IDENTIFIER } from 'app/entities/feedback.model';
@@ -20,7 +20,7 @@ import dayjs from 'dayjs/esm';
 describe('ResultUtils', () => {
     it('should filter out all non unreferenced feedbacks', () => {
         const feedbacks = [{ reference: 'foo' }, { reference: 'foo', type: FeedbackType.MANUAL_UNREFERENCED }, { type: FeedbackType.MANUAL_UNREFERENCED }, {}];
-        const unreferencedFeedbacks = getUnreferencedFeedback(feedbacks);
+        const unreferencedFeedbacks = getManualUnreferencedFeedback(feedbacks);
         expect(unreferencedFeedbacks).toEqual([{ type: FeedbackType.MANUAL_UNREFERENCED }]);
     });
 
