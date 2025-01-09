@@ -371,6 +371,11 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
                 },
                 {
                     type: DetailType.Boolean,
+                    title: 'artemisApp.programmingExercise.enableStaticCodeAnalysis.title',
+                    data: { boolean: exercise.staticCodeAnalysisEnabled },
+                },
+                {
+                    type: DetailType.Boolean,
                     title: 'artemisApp.programmingExercise.sequentialTestRuns.title',
                     data: { boolean: exercise.buildConfig?.sequentialTestRuns },
                 },
