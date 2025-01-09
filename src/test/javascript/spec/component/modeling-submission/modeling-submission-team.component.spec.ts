@@ -505,7 +505,7 @@ describe('ModelingSubmissionComponent', () => {
                 detailText: 'feedback1',
                 credits: 1,
                 gradingInstruction,
-                type: FeedbackType.MANUAL_UNREFERENCED,
+                type: FeedbackType.AUTOMATIC,
             } as Feedback,
             {
                 id: 2,
