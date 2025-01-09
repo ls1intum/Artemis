@@ -62,8 +62,6 @@ export class Lti13ExerciseLaunchComponent implements OnInit {
             .subscribe({
                 next: (data) => {
                     this.handleLtiLaunchSuccess(data);
-                    //TODO remove
-                    console.log(data.targetLinkUri);
                 },
                 error: (error) => {
                     if (error.status === 401) {
