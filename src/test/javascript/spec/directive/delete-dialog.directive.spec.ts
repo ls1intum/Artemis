@@ -18,6 +18,7 @@ import { MockComponent, MockDirective } from 'ng-mocks';
 @Component({
     selector: 'jhi-test-component',
     template: '<button jhiDeleteButton [actionType]="actionType" entityTitle="title" deleteQuestion="question" deleteConfirmationText="text"></button>',
+    imports: [DeleteButtonDirective],
 })
 class TestComponent {
     actionType = ActionType.Delete;
