@@ -6,6 +6,7 @@ import { slice } from 'lodash-es';
 import { TreeviewItemComponent } from 'app/exercises/programming/shared/code-editor/treeview/components/treeview-item/treeview-item.component';
 import { TreeviewItem } from 'app/exercises/programming/shared/code-editor/treeview/models/treeview-item';
 import { createGenericTestComponent } from './common';
+import { ArtemisSharedCommonModule } from 'app/shared/shared-common.module';
 
 const fakeItemTemplate = `
 <ng-template #itemTemplate let-item="item"
@@ -39,6 +40,7 @@ const testTemplate = fakeItemTemplate + '<treeview-item [item]="item" [template]
 @Component({
     selector: 'test',
     template: '',
+    imports: [TreeviewItemComponent, ArtemisSharedCommonModule],
 })
 class TestComponent {
     item = fakeData.item;
@@ -51,7 +53,6 @@ describe('TreeviewItemComponent', () => {
     beforeEach(() => {
         TestBed.configureTestingModule({
             imports: [FormsModule, BrowserModule],
-            declarations: [TestComponent, TreeviewItemComponent],
         });
     });
 
