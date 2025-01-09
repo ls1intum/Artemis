@@ -17,7 +17,6 @@ import { AlertService } from 'app/core/util/alert.service';
 export class PlagiarismCasesInstructorViewComponent implements OnInit {
     courseId: number;
     examId?: number;
-    exerciseId?: number;
     plagiarismCases: PlagiarismCase[] = [];
     groupedPlagiarismCases: GroupedPlagiarismCases;
     exercisesWithPlagiarismCases: Exercise[] = [];
@@ -36,9 +35,12 @@ export class PlagiarismCasesInstructorViewComponent implements OnInit {
         private route: ActivatedRoute,
         private alertService: AlertService,
     ) {
+        // effect needs to be in constructor context, due to the possibility of ngOnInit being called from a non-injection
+        //context
         effect(() => {
-            if (this.exerciseId) {
-                this.scrollToExercise();
+            const exerciseId = Number(this.route.snapshot.queryParamMap?.get('exerciseId'));
+            if (exerciseId) {
+                this.scrollToExerciseAfterViewInit(exerciseId);
             }
         });
     }
@@ -46,8 +48,6 @@ export class PlagiarismCasesInstructorViewComponent implements OnInit {
     ngOnInit(): void {
         this.courseId = Number(this.route.snapshot.paramMap.get('courseId'));
         this.examId = Number(this.route.snapshot.paramMap.get('examId'));
-        this.exerciseId = Number(this.route.snapshot.queryParamMap?.get('exerciseId'));
-
         const plagiarismCasesForInstructor$ = this.examId
             ? this.plagiarismCasesService.getExamPlagiarismCasesForInstructor(this.courseId, this.examId)
             : this.plagiarismCasesService.getCoursePlagiarismCasesForInstructor(this.courseId);
@@ -60,8 +60,11 @@ export class PlagiarismCasesInstructorViewComponent implements OnInit {
         });
     }
 
-    scrollToExercise() {
-        const element = this.exerciseWithPlagCasesElements().find((elem) => elem.nativeElement.id === 'exercise-with-plagiarism-case-' + this.exerciseId);
+    /**
+     * scroll to the exercise with
+     */
+    scrollToExerciseAfterViewInit(exerciseId: number) {
+        const element = this.exerciseWithPlagCasesElements().find((elem) => elem.nativeElement.id === 'exercise-with-plagiarism-case-' + exerciseId);
         if (element) {
             element.nativeElement.scrollIntoView({
                 behavior: 'smooth',
