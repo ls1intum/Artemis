@@ -1013,6 +1013,9 @@ describe('Course Management Update Component Create', () => {
                 fixture = TestBed.createComponent(CourseUpdateComponent);
                 component = fixture.componentInstance;
                 httpMock = TestBed.inject(HttpTestingController);
+                global.ResizeObserver = jest.fn().mockImplementation((callback: ResizeObserverCallback) => {
+                    return new MockResizeObserver(callback);
+                });
             });
     });
 
