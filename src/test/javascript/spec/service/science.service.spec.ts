@@ -33,7 +33,7 @@ describe('ScienceService', () => {
                 httpService = TestBed.inject(HttpClient);
                 featureToggleService = TestBed.inject(FeatureToggleService);
                 jest.spyOn(featureToggleService, 'getFeatureToggleActive').mockReturnValue(of(true));
-                scienceService = new ScienceService();
+                scienceService = TestBed.inject(ScienceService);
                 putStub = jest.spyOn(httpService, 'put');
             });
     });
