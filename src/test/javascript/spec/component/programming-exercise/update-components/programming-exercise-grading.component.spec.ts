@@ -193,11 +193,13 @@ describe('ProgrammingExerciseGradingComponent', () => {
         testCases.forEach(({ name, selector, field, extraCondition }) => {
             describe('should handle input field ' + name + ' properly', () => {
                 it('should be displayed', () => {
+                    fixture.detectChanges();
                     extraCondition?.();
                     checkFieldVisibility(selector, true);
                 });
 
                 it('should NOT be displayed', () => {
+                    fixture.detectChanges();
                     extraCondition?.();
                     comp.isEditFieldDisplayedRecord()[field] = false;
                     checkFieldVisibility(selector, false);
