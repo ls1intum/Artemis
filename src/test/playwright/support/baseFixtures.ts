@@ -10,18 +10,12 @@ const test = baseTest.extend<{
                 page.coverage.startJSCoverage({
                     resetOnNavigation: false,
                 }),
-                page.coverage.startCSSCoverage({
-                    resetOnNavigation: false,
-                }),
             ]);
 
             await use('autoTestFixture');
 
-            const [jsCoverage, cssCoverage] = await Promise.all([page.coverage.stopJSCoverage(), page.coverage.stopCSSCoverage()]);
-
-            const coverageList = [...jsCoverage, ...cssCoverage];
-
-            await addCoverageReport(coverageList, test.info());
+            const jsCoverage = await page.coverage.stopJSCoverage();
+            await addCoverageReport(jsCoverage, test.info());
         },
         {
             scope: 'test',
