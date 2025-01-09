@@ -32,6 +32,7 @@ const coverageOptions = {
         });
     },
 };
+console.log(`Merging coverage reports`);
 await new CoverageReport(coverageOptions).generate();
 
 // Archive the lcov coverage report
@@ -45,7 +46,7 @@ const archive = archiver('zip', {
 });
 
 output.on('close', () => {
-    console.log(`E2E Client Coverage report archive created: ${zipFilePath}`);
+    console.log(`Coverage report archived on: ${zipFilePath}`);
 });
 
 archive.on('error', (err) => {
