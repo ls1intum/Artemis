@@ -62,6 +62,10 @@ public class Lti13Service {
 
     private static final String EXERCISE_PATH_PATTERN = "/courses/{courseId}/exercises/{exerciseId}";
 
+    private static final String COMPETENCY_PATH_PATTERN = "/courses/{courseId}/competencies";
+
+    private static final String COURSE_PATH_PATTERN = "/courses/{courseId}";
+
     private static final Logger log = LoggerFactory.getLogger(Lti13Service.class);
 
     private final UserRepository userRepository;
@@ -111,19 +115,19 @@ public class Lti13Service {
      */
     public void performLaunch(OidcIdToken ltiIdToken, String clientRegistrationId) {
         String targetLinkUrl = ltiIdToken.getClaim(Claims.TARGET_LINK_URI);
-        // Optional<Exercise> targetExercise = getExerciseFromTargetLink(targetLinkUrl);
-        Optional<Exercise> targetExercise = exerciseRepository.findById(273L);
-        if (targetExercise.isEmpty()) {
-            String message = "No exercise to launch at " + targetLinkUrl;
-            log.error(message);
-            throw new BadRequestAlertException("Exercise not found", "LTI", "ltiExerciseNotFound");
-        }
-        Exercise exercise = targetExercise.get();
+        Optional<Exercise> targetExercise = getExerciseFromTargetLink(targetLinkUrl);
+        Optional<Course> targetCourse = getCourseFromTargetLink(targetLinkUrl);
 
-        Course course = courseRepository.findByIdWithEagerOnlineCourseConfigurationElseThrow(exercise.getCourseViaExerciseGroupOrCourseMember().getId());
+        if (targetCourse.isEmpty()) {
+            String message = "No course to launch at " + targetLinkUrl;
+            log.error(message);
+            throw new BadRequestAlertException("Course not found", "LTI", "ltiCourseNotFound");
+        }
+
+        Course course = targetCourse.get();
         OnlineCourseConfiguration onlineCourseConfiguration = course.getOnlineCourseConfiguration();
         if (onlineCourseConfiguration == null) {
-            String message = "Exercise is not related to course for target link url: " + targetLinkUrl;
+            String message = "LTI is not configured for course with target link URL: " + targetLinkUrl;
             log.error(message);
             throw new BadRequestAlertException("LTI is not configured for this course", "LTI", "ltiNotConfigured");
         }
@@ -134,18 +138,24 @@ public class Lti13Service {
         if (!onlineCourseConfiguration.isRequireExistingUser() && optionalUsername.isEmpty()) {
             SecurityContextHolder.getContext().setAuthentication(ltiService.createNewUserFromLaunchRequest(ltiIdToken.getEmail(),
                     createUsernameFromLaunchRequest(ltiIdToken, onlineCourseConfiguration), ltiIdToken.getGivenName(), ltiIdToken.getFamilyName()));
-
         }
 
         String username = optionalUsername.orElseGet(() -> createUsernameFromLaunchRequest(ltiIdToken, onlineCourseConfiguration));
         User user = userRepository.findOneWithGroupsAndAuthoritiesByLogin(username).orElseThrow();
-        ltiService.onSuccessfulLtiAuthentication(user, targetExercise.get());
         Lti13LaunchRequest launchRequest = launchRequestFrom(ltiIdToken, clientRegistrationId);
 
-        createOrUpdateResourceLaunch(launchRequest, user, targetExercise.get());
-
-        ltiService.authenticateLtiUser(ltiIdToken.getEmail(), createUsernameFromLaunchRequest(ltiIdToken, onlineCourseConfiguration), ltiIdToken.getGivenName(),
-                ltiIdToken.getFamilyName(), onlineCourseConfiguration.isRequireExistingUser());
+        if (targetExercise.isPresent()) {
+            Exercise exercise = targetExercise.get();
+            handleLaunchRequest(launchRequest, user, exercise, ltiIdToken, onlineCourseConfiguration);
+        }
+        else if (getCompetencyFromTargetLink(targetLinkUrl)) {
+            handleLaunchRequest(launchRequest, user, null, ltiIdToken, onlineCourseConfiguration);
+        }
+        else {
+            String message = "No exercise or competency to launch at " + targetLinkUrl;
+            log.error(message);
+            throw new BadRequestAlertException("Exercise not found", "LTI", "ltiExerciseNotFound");
+        }
     }
 
     /**
@@ -312,6 +322,59 @@ public class Lti13Service {
         return exerciseOpt;
     }
 
+    private Optional<Course> getCourseFromTargetLink(String targetLinkUrl) {
+        AntPathMatcher matcher = new AntPathMatcher();
+
+        String targetLinkPath;
+        try {
+            targetLinkPath = new URI(targetLinkUrl).getPath();
+        }
+        catch (URISyntaxException ex) {
+            log.info("Malformed target link url: {}", targetLinkUrl);
+            return Optional.empty();
+        }
+
+        Map<String, String> pathVariables = null;
+        if (matcher.match(COURSE_PATH_PATTERN, targetLinkPath)) {
+            pathVariables = matcher.extractUriTemplateVariables(COURSE_PATH_PATTERN, targetLinkPath);
+        }
+        else if (matcher.match(COMPETENCY_PATH_PATTERN, targetLinkPath)) {
+            pathVariables = matcher.extractUriTemplateVariables(COMPETENCY_PATH_PATTERN, targetLinkPath);
+        }
+        else if (matcher.match(EXERCISE_PATH_PATTERN, targetLinkPath)) {
+            pathVariables = matcher.extractUriTemplateVariables(EXERCISE_PATH_PATTERN, targetLinkPath);
+        }
+
+        if (pathVariables == null || !pathVariables.containsKey("courseId")) {
+            log.info("Could not extract courseId from target link: {}", targetLinkUrl);
+            return Optional.empty();
+        }
+
+        String courseId = pathVariables.get("courseId");
+        return courseRepository.findById(Long.valueOf(courseId));
+    }
+
+    private boolean getCompetencyFromTargetLink(String targetLinkUrl) {
+        AntPathMatcher matcher = new AntPathMatcher();
+
+        String targetLinkPath;
+        try {
+            targetLinkPath = new URI(targetLinkUrl).getPath();
+        }
+        catch (URISyntaxException ex) {
+            log.info("Malformed target link url: {}", targetLinkUrl);
+            return false;
+        }
+
+        if (!matcher.match(COMPETENCY_PATH_PATTERN, targetLinkPath)) {
+            log.info("Could not extract competency from target link: {}", targetLinkUrl);
+            return false;
+        }
+
+        log.info("Competency link detected: {}", targetLinkUrl);
+        return true;
+    }
+
     private void createOrUpdateResourceLaunch(Lti13LaunchRequest launchRequest, User user, Exercise exercise) {
         Optional<LtiResourceLaunch> launchOpt = launchRepository.findByIssAndSubAndDeploymentIdAndResourceLinkId(launchRequest.iss(), launchRequest.sub(),
                 launchRequest.deploymentId(), launchRequest.resourceLinkId());
@@ -331,6 +394,17 @@ public class Lti13Service {
         ltiPlatformConfiguration.ifPresent(launch::setLtiPlatformConfiguration);
 
         launchRepository.save(launch);
+    }
+
+    private void handleLaunchRequest(Lti13LaunchRequest launchRequest, User user, Exercise exercise, OidcIdToken ltiIdToken, OnlineCourseConfiguration onlineCourseConfiguration) {
+        createOrUpdateResourceLaunch(launchRequest, user, exercise);
+
+        ltiService.authenticateLtiUser(ltiIdToken.getEmail(), createUsernameFromLaunchRequest(ltiIdToken, onlineCourseConfiguration), ltiIdToken.getGivenName(),
+                ltiIdToken.getFamilyName(), onlineCourseConfiguration.isRequireExistingUser());
+
+        if (exercise != null) {
+            ltiService.onSuccessfulLtiAuthentication(user, exercise);
+        }
     }
 
     /**
