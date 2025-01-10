@@ -2,11 +2,12 @@ import { ArtemisTestModule } from '../../test.module';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { UnreferencedFeedbackComponent } from 'app/exercises/shared/unreferenced-feedback/unreferenced-feedback.component';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
-import { MockComponent, MockPipe } from 'ng-mocks';
+import { MockPipe } from 'ng-mocks';
 import { Feedback, FeedbackType } from 'app/entities/feedback.model';
 import { GradingInstruction } from 'app/exercises/shared/structured-grading-criterion/grading-instruction.model';
-import { UnreferencedFeedbackDetailComponent } from 'app/assessment/unreferenced-feedback-detail/unreferenced-feedback-detail.component';
 import { StructuredGradingCriterionService } from 'app/exercises/shared/structured-grading-criterion/structured-grading-criterion.service';
+import { By } from '@angular/platform-browser';
+import { UnreferencedFeedbackDetailStubComponent } from '../../helpers/stubs/unreferenced-feedback-detail-stub.component';
 
 describe('UnreferencedFeedbackComponent', () => {
     let comp: UnreferencedFeedbackComponent;
@@ -16,8 +17,7 @@ describe('UnreferencedFeedbackComponent', () => {
     beforeEach(() => {
         TestBed.configureTestingModule({
             imports: [ArtemisTestModule],
-            declarations: [UnreferencedFeedbackComponent, MockPipe(ArtemisTranslatePipe), MockComponent(UnreferencedFeedbackDetailComponent)],
-            providers: [],
+            declarations: [UnreferencedFeedbackComponent, UnreferencedFeedbackDetailStubComponent, MockPipe(ArtemisTranslatePipe)],
         })
             .compileComponents()
             .then(() => {
@@ -93,9 +93,9 @@ describe('UnreferencedFeedbackComponent', () => {
         beforeEach(() => {
             instruction = { id: 1, credits: 2, feedback: 'test', gradingScale: 'good', instructionDescription: 'description of instruction', usageCount: 0 };
             comp.unreferencedFeedback = [];
-            jest.spyOn(sgiService, 'updateFeedbackWithStructuredGradingInstructionEvent').mockImplementation(() => {
-                comp.unreferencedFeedback[0].gradingInstruction = instruction;
-                comp.unreferencedFeedback[0].credits = instruction.credits;
+            jest.spyOn(sgiService, 'updateFeedbackWithStructuredGradingInstructionEvent').mockImplementation((feedback) => {
+                feedback.gradingInstruction = instruction;
+                feedback.credits = instruction.credits;
             });
         });
 
@@ -107,19 +107,22 @@ describe('UnreferencedFeedbackComponent', () => {
             expect(comp.unreferencedFeedback[0].credits).toBe(instruction.credits);
         });
 
-        it('should add feedback via drag and drop after changing another one', () => {
+        it('should only replace feedback on drop, not add another one', () => {
             comp.createAssessmentOnDrop(new Event(''));
-            expect(comp.unreferencedFeedback).toHaveLength(1);
-            expect(comp.unreferencedFeedback[0].gradingInstruction).toBe(instruction);
-            expect(comp.unreferencedFeedback[0].credits).toBe(instruction.credits);
+            fixture.detectChanges();
 
-            const updatedFeedback: Feedback = comp.unreferencedFeedback[0];
-            updatedFeedback.text = updatedFeedback.text + '1';
-            comp.updateFeedback(updatedFeedback);
-            expect(comp.unreferencedFeedback[0]).toBe(updatedFeedback);
+            const unreferencedFeedbackDetailDebugElement = fixture.debugElement.query(By.directive(UnreferencedFeedbackDetailStubComponent));
+            const unreferencedFeedbackDetailComp: UnreferencedFeedbackDetailStubComponent = unreferencedFeedbackDetailDebugElement.componentInstance;
 
-            comp.createAssessmentOnDrop(new Event(''));
-            expect(comp.unreferencedFeedback).toHaveLength(2);
+            const createAssessmentOnDropStub: jest.SpyInstance = jest.spyOn(comp, 'createAssessmentOnDrop');
+            const updateFeedbackOnDropStub: jest.SpyInstance = jest.spyOn(unreferencedFeedbackDetailComp, 'updateFeedbackOnDrop');
+
+            const dropEvent = new Event('drop', { bubbles: true, cancelable: true });
+            unreferencedFeedbackDetailDebugElement.nativeElement.querySelector('div').dispatchEvent(dropEvent); // Event auf Subkomponente auslösen
+            fixture.detectChanges();
+
+            expect(updateFeedbackOnDropStub).toHaveBeenCalledOnce();
+            expect(createAssessmentOnDropStub).not.toHaveBeenCalled();
         });
     });
 
