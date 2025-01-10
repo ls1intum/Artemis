@@ -5,6 +5,7 @@ import { TranslateService } from '@ngx-translate/core';
 import { ChangeDetectorRef, NgZone } from '@angular/core';
 import { ArtemisServerDateService } from 'app/shared/server-date.service';
 import dayjs from 'dayjs/esm';
+import { MockArtemisServerDateService } from '../helpers/mocks/service/mock-artemis-server-date.service';
 
 describe('ArtemisTimeAgoPipe', () => {
     let pipe: ArtemisTimeAgoPipe;
@@ -15,7 +16,10 @@ describe('ArtemisTimeAgoPipe', () => {
     beforeEach(() => {
         TestBed.configureTestingModule({
             declarations: [ArtemisTimeAgoPipe],
-            providers: [{ provide: TranslateService, useClass: MockTranslateService }],
+            providers: [
+                { provide: TranslateService, useClass: MockTranslateService },
+                { provide: ArtemisServerDateService, useClass: MockArtemisServerDateService },
+            ],
         })
             .compileComponents()
             .then(() => {
