@@ -4,7 +4,6 @@ import { UnreferencedFeedbackComponent } from 'app/exercises/shared/unreferenced
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { MockPipe } from 'ng-mocks';
 import { Feedback, FeedbackType } from 'app/entities/feedback.model';
-import { GradingInstruction } from 'app/exercises/shared/structured-grading-criterion/grading-instruction.model';
 import { StructuredGradingCriterionService } from 'app/exercises/shared/structured-grading-criterion/structured-grading-criterion.service';
 import { By } from '@angular/platform-browser';
 import { UnreferencedFeedbackDetailStubComponent } from '../../helpers/stubs/unreferenced-feedback-detail-stub.component';
@@ -88,43 +87,53 @@ describe('UnreferencedFeedbackComponent', () => {
         expect(comp.unreferencedFeedback).toHaveLength(0);
     });
 
-    describe('Drag and drop assessment criteria', () => {
-        let instruction: GradingInstruction;
-        beforeEach(() => {
-            instruction = { id: 1, credits: 2, feedback: 'test', gradingScale: 'good', instructionDescription: 'description of instruction', usageCount: 0 };
-            comp.unreferencedFeedback = [];
-            jest.spyOn(sgiService, 'updateFeedbackWithStructuredGradingInstructionEvent').mockImplementation((feedback) => {
-                feedback.gradingInstruction = instruction;
-                feedback.credits = instruction.credits;
-            });
+    it('should add unreferenced feedback on dropping assessment instruction', () => {
+        const instruction = { id: 1, credits: 2, feedback: 'test', gradingScale: 'good', instructionDescription: 'description of instruction', usageCount: 0 };
+        comp.unreferencedFeedback = [];
+        jest.spyOn(sgiService, 'updateFeedbackWithStructuredGradingInstructionEvent').mockImplementation((feedback) => {
+            feedback.gradingInstruction = instruction;
+            feedback.credits = instruction.credits;
         });
 
-        it('should add unreferenced feedback on dropping assessment instruction', () => {
-            // Call spy function with empty event
-            comp.createAssessmentOnDrop(new Event(''));
-            expect(comp.unreferencedFeedback).toHaveLength(1);
-            expect(comp.unreferencedFeedback[0].gradingInstruction).toBe(instruction);
-            expect(comp.unreferencedFeedback[0].credits).toBe(instruction.credits);
-        });
+        // Call spy function with empty event
+        comp.createAssessmentOnDrop(new Event(''));
+        expect(comp.unreferencedFeedback).toHaveLength(1);
+        expect(comp.unreferencedFeedback[0].gradingInstruction).toBe(instruction);
+        expect(comp.unreferencedFeedback[0].credits).toBe(instruction.credits);
+    });
 
-        it('should only replace feedback on drop, not add another one', () => {
-            comp.createAssessmentOnDrop(new Event(''));
-            fixture.detectChanges();
+    it('should convert an accepted feedback suggestion to a marked manual feedback', () => {
+        const suggestion = { text: 'FeedbackSuggestion:', detailText: 'test', type: FeedbackType.AUTOMATIC };
+        comp.feedbackSuggestions = [suggestion];
+        comp.acceptSuggestion(suggestion);
+        expect(comp.feedbackSuggestions).toBeEmpty();
+        expect(comp.unreferencedFeedback).toEqual([
+            {
+                text: 'FeedbackSuggestion:accepted:',
+                detailText: 'test',
+                type: FeedbackType.MANUAL_UNREFERENCED,
+            },
+        ]);
+    });
 
-            const unreferencedFeedbackDetailDebugElement = fixture.debugElement.query(By.directive(UnreferencedFeedbackDetailStubComponent));
-            const unreferencedFeedbackDetailComp: UnreferencedFeedbackDetailStubComponent = unreferencedFeedbackDetailDebugElement.componentInstance;
+    it('should only replace feedback on drop, not add another one', () => {
+        jest.spyOn(sgiService, 'updateFeedbackWithStructuredGradingInstructionEvent').mockImplementation();
+        comp.createAssessmentOnDrop(new Event(''));
+        fixture.detectChanges();
 
-            const createAssessmentOnDropStub: jest.SpyInstance = jest.spyOn(comp, 'createAssessmentOnDrop');
-            const updateFeedbackOnDropStub: jest.SpyInstance = jest.spyOn(unreferencedFeedbackDetailComp, 'updateFeedbackOnDrop');
+        const unreferencedFeedbackDetailDebugElement = fixture.debugElement.query(By.directive(UnreferencedFeedbackDetailStubComponent));
+        const unreferencedFeedbackDetailComp: UnreferencedFeedbackDetailStubComponent = unreferencedFeedbackDetailDebugElement.componentInstance;
 
-            const dropEvent = new Event('drop', { bubbles: true, cancelable: true });
-            unreferencedFeedbackDetailDebugElement.nativeElement.querySelector('div').dispatchEvent(dropEvent);
-            fixture.detectChanges();
+        const createAssessmentOnDropStub: jest.SpyInstance = jest.spyOn(comp, 'createAssessmentOnDrop');
+        const updateFeedbackOnDropStub: jest.SpyInstance = jest.spyOn(unreferencedFeedbackDetailComp, 'updateFeedbackOnDrop');
 
-            expect(updateFeedbackOnDropStub).toHaveBeenCalledOnce();
-            // do not propagate the event to the parent component
-            expect(createAssessmentOnDropStub).not.toHaveBeenCalled();
-        });
+        const dropEvent = new Event('drop', { bubbles: true, cancelable: true });
+        unreferencedFeedbackDetailDebugElement.nativeElement.querySelector('div').dispatchEvent(dropEvent);
+        fixture.detectChanges();
+
+        expect(updateFeedbackOnDropStub).toHaveBeenCalledOnce();
+        // do not propagate the event to the parent component
+        expect(createAssessmentOnDropStub).not.toHaveBeenCalled();
     });
 
     it('should remove discarded suggestions', () => {
