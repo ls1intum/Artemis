@@ -131,7 +131,8 @@ public class Lti13Service {
             log.error(message);
             // TODO remove
             if (targetExercise.isPresent()) {
-                String message2 = "Link course:" + course + "exercise course:" + courseRepository.findByIdWithEagerOnlineCourseConfigurationElseThrow(targetExercise.get().getId());
+                String message2 = "Link course:" + course.getId() + "exercise course:"
+                        + courseRepository.findByIdWithEagerOnlineCourseConfigurationElseThrow(targetExercise.get().getId()).getId();
                 log.error(message2);
 
                 String message3 = "configCourse:" + course.getOnlineCourseConfiguration() + "conficEx:"
