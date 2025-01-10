@@ -8,7 +8,7 @@ services:
         pull_policy: missing
         environment:
             CI: 'true'
-            BASE_URL: 'https://artemis-nginx'
+            BASE_URL: 'http://artemis-app'
             ADMIN_USERNAME: '${bamboo_artemis_admin_username}'
             ADMIN_PASSWORD: '${bamboo_artemis_admin_password}'
             PLAYWRIGHT_USERNAME_TEMPLATE: '${bamboo_playwright_username_template}'
