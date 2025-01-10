@@ -23,6 +23,7 @@ describe('ArtemisTimeAgoPipe', () => {
 
                 translateService = TestBed.inject(TranslateService);
                 translateService.use('en');
+                serverTimeService = TestBed.inject(ArtemisServerDateService);
                 const ngZone = TestBed.inject(NgZone);
                 pipe = new ArtemisTimeAgoPipe(cdRef, ngZone, translateService, serverTimeService);
             });
