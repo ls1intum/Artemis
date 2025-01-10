@@ -132,11 +132,11 @@ public class Lti13Service {
             // TODO remove
             if (targetExercise.isPresent()) {
                 String message2 = "Link course:" + course.getId() + "exercise course:"
-                        + courseRepository.findByIdWithEagerOnlineCourseConfigurationElseThrow(targetExercise.get().getId()).getId();
+                        + courseRepository.findByIdWithEagerOnlineCourseConfigurationElseThrow(targetExercise.get().getCourseViaExerciseGroupOrCourseMember().getId()).getId();
                 log.error(message2);
 
-                String message3 = "configCourse:" + course.getOnlineCourseConfiguration() + "conficEx:"
-                        + courseRepository.findByIdWithEagerOnlineCourseConfigurationElseThrow(targetExercise.get().getId()).getOnlineCourseConfiguration();
+                String message3 = "configCourse:" + course.getOnlineCourseConfiguration() + "conficEx:" + courseRepository
+                        .findByIdWithEagerOnlineCourseConfigurationElseThrow(targetExercise.get().getCourseViaExerciseGroupOrCourseMember().getId()).getOnlineCourseConfiguration();
                 log.error(message3);
             }
             throw new BadRequestAlertException("LTI is not configured for this course", "LTI", "ltiNotConfigured");
