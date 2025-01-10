@@ -19,7 +19,7 @@ plugins {
     id "com.google.cloud.tools.jib" version "3.4.4"
     id "com.gorylenko.gradle-git-properties" version "2.4.2"
     id "io.spring.dependency-management" version "1.1.7"
-    id "nebula.lint" version "20.3.1"
+    id "nebula.lint" version "20.5.4"
     id "org.liquibase.gradle" version "${liquibase_plugin_version}"
     id "org.owasp.dependencycheck" version "11.1.1"
     id "org.springframework.boot" version "${spring_boot_version}"
@@ -150,8 +150,9 @@ configurations.configureEach {
 
 dependencies {
 
+    // Required by Spring cloud
     implementation "org.apache.httpcomponents.client5:httpclient5:5.4.1"
-    implementation "org.apache.httpcomponents.core5:httpcore5:5.3.1"
+    implementation "org.apache.httpcomponents.core5:httpcore5:5.3.2"
     implementation "org.apache.httpcomponents:httpmime:4.5.14"
 
     implementation "org.gitlab4j:gitlab4j-api:6.0.0-rc.8"
@@ -220,7 +221,7 @@ dependencies {
     implementation "org.apache.santuario:xmlsec:4.0.3"
 
     implementation "org.jsoup:jsoup:1.18.3"
-    implementation "commons-codec:commons-codec:1.17.1"   // needed for spring security saml2
+    implementation "commons-codec:commons-codec:1.17.2"   // needed for spring security saml2
 
     // use the latest version to avoid security vulnerabilities
     implementation "org.springframework:spring-webmvc:${spring_framework_version}"
@@ -343,7 +344,7 @@ dependencies {
     implementation "org.commonmark:commonmark:0.24.0"
     implementation "commons-fileupload:commons-fileupload:1.5"
     implementation "net.lingala.zip4j:zip4j:2.11.5"
-    
+
     // use newest version of guava to avoid security issues through outdated dependencies
     implementation "com.google.guava:guava:33.4.0-jre"
     implementation "com.sun.activation:jakarta.activation:2.0.1"
@@ -419,7 +420,7 @@ dependencies {
     testImplementation "com.h2database:h2:2.2.224"
 
     // Lightweight JSON library needed for the internals of the MockRestServiceServer
-    testImplementation "org.json:json:20241224"
+    testImplementation "org.json:json:20250107"
 
     // NOTE: make sure this corresponds to the version used for JUnit in the testImplementation
     testRuntimeOnly "org.junit.platform:junit-platform-launcher:${junit_platform_version}"
