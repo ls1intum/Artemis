@@ -75,6 +75,7 @@ const ENTITY_STATES = [...adminState];
         StandardizedCompetencyDetailComponent,
         DeleteUsersButtonComponent,
         ProfilePictureComponent,
+        AdminImportStandardizedCompetenciesComponent,
         BuildAgentSummaryComponent,
         BuildAgentDetailsComponent,
     ],
@@ -102,7 +103,6 @@ const ENTITY_STATES = [...adminState];
         StandardizedCompetencyEditComponent,
         KnowledgeAreaEditComponent,
         StandardizedCompetencyManagementComponent,
-        AdminImportStandardizedCompetenciesComponent,
     ],
 })
 export class ArtemisAdminModule {}

@@ -29,7 +29,6 @@ import de.tum.cit.aet.artemis.exam.domain.ExerciseGroup;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.lecture.domain.Lecture;
 import de.tum.cit.aet.artemis.modeling.domain.ApollonDiagram;
-import de.tum.cit.aet.artemis.programming.domain.hestia.ExerciseHint;
 
 /**
  * Listens to Hibernate events and invalidates the cached titles of an entity if the title changed.
@@ -120,15 +119,6 @@ public class TitleCacheEvictionService implements PostUpdateEventListener, PostD
         }
         else if (entity instanceof Exam exam) {
             evictIdFromCache("examTitle", exam.getId());
-        }
-        else if (entity instanceof ExerciseHint hint) {
-            if (hint.getExercise() == null) {
-                log.warn("Unable to clear title of exercise hint {}: Exercise not present", hint.getId());
-                return;
-            }
-
-            var combinedId = hint.getExercise().getId() + "-" + hint.getId();
-            evictIdFromCache("exerciseHintTitle", combinedId);
         }
         else if (entity instanceof ExerciseGroup exerciseGroup) {
             if (!Hibernate.isInitialized(exerciseGroup.getExercises())) {

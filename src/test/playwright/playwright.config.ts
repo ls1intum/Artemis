@@ -49,6 +49,7 @@ export default defineConfig({
             },
         ],
     ],
+    globalSetup: require.resolve('./init/global-setup.ts'),
 
     /* Shared settings for all the projects below. See https://playwright.dev/docs/api/class-testoptions. */
     use: {
