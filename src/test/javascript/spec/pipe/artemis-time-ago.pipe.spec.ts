@@ -3,12 +3,14 @@ import { ArtemisTimeAgoPipe } from 'app/shared/pipes/artemis-time-ago.pipe';
 import { TestBed, fakeAsync, tick } from '@angular/core/testing';
 import { TranslateService } from '@ngx-translate/core';
 import { ChangeDetectorRef, NgZone } from '@angular/core';
+import { ArtemisServerDateService } from 'app/shared/server-date.service';
 import dayjs from 'dayjs/esm';
 
 describe('ArtemisTimeAgoPipe', () => {
     let pipe: ArtemisTimeAgoPipe;
     let translateService: TranslateService;
     let cdRef: ChangeDetectorRef;
+    let serverTimeService: ArtemisServerDateService;
 
     beforeEach(() => {
         TestBed.configureTestingModule({
@@ -22,7 +24,7 @@ describe('ArtemisTimeAgoPipe', () => {
                 translateService = TestBed.inject(TranslateService);
                 translateService.use('en');
                 const ngZone = TestBed.inject(NgZone);
-                pipe = new ArtemisTimeAgoPipe(cdRef, ngZone, translateService);
+                pipe = new ArtemisTimeAgoPipe(cdRef, ngZone, translateService, serverTimeService);
             });
     });
 
