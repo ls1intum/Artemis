@@ -5,12 +5,14 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { EditOnlineUnitComponent } from 'app/lecture/lecture-unit/lecture-unit-management/edit-online-unit/edit-online-unit.component';
 import { MockProvider } from 'ng-mocks';
 import { AlertService } from 'app/core/util/alert.service';
-import { ActivatedRoute, Router } from '@angular/router';
+import { ActivatedRoute, Router, convertToParamMap } from '@angular/router';
 import { of } from 'rxjs';
 import { OnlineUnit } from 'app/entities/lecture-unit/onlineUnit.model';
 import { HttpResponse } from '@angular/common/http';
 import { By } from '@angular/platform-browser';
 import { ArtemisTestModule } from '../../../test.module';
+import { OnlineUnitFormComponent } from '../../../../../../main/webapp/app/lecture/lecture-unit/lecture-unit-management/online-unit-form/online-unit-form.component';
+import { OwlNativeDateTimeModule } from '@danielmoncada/angular-datetime-picker';
 
 describe('EditOnlineUnitComponent', () => {
     let editOnlineUnitComponentFixture: ComponentFixture<EditOnlineUnitComponent>;
@@ -18,7 +20,7 @@ describe('EditOnlineUnitComponent', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule],
+            imports: [ArtemisTestModule, OwlNativeDateTimeModule],
             providers: [
                 MockProvider(OnlineUnitService),
                 MockProvider(AlertService),
@@ -26,6 +28,9 @@ describe('EditOnlineUnitComponent', () => {
                 {
                     provide: ActivatedRoute,
                     useValue: {
+                        snapshot: {
+                            paramMap: convertToParamMap({ courseId: 1 }),
+                        },
                         paramMap: of({
                             get: (key: string) => {
                                 switch (key) {
@@ -83,9 +88,8 @@ describe('EditOnlineUnitComponent', () => {
         });
 
         const findByIdStub = jest.spyOn(onlineUnitService, 'findById').mockReturnValue(of(response));
-        const onlineUnitFormStubComponent: OnlineUnitFormStubComponent = editOnlineUnitComponentFixture.debugElement.query(
-            By.directive(OnlineUnitFormStubComponent),
-        ).componentInstance;
+        editOnlineUnitComponentFixture.detectChanges();
+        const onlineUnitFormStubComponent: OnlineUnitFormComponent = editOnlineUnitComponentFixture.debugElement.query(By.directive(OnlineUnitFormComponent)).componentInstance;
         editOnlineUnitComponentFixture.detectChanges(); // onInit
         expect(editOnlineUnitComponent.onlineUnit).toEqual(onlineUnitOfResponse);
         expect(findByIdStub).toHaveBeenCalledOnce();
@@ -93,7 +97,7 @@ describe('EditOnlineUnitComponent', () => {
         expect(editOnlineUnitComponent.formData.releaseDate).toEqual(onlineUnitOfResponse.releaseDate);
         expect(editOnlineUnitComponent.formData.description).toEqual(onlineUnitOfResponse.description);
         expect(editOnlineUnitComponent.formData.source).toEqual(onlineUnitOfResponse.source);
-        expect(onlineUnitFormStubComponent.formData).toEqual(editOnlineUnitComponent.formData);
+        expect(onlineUnitFormStubComponent.formData()).toEqual(editOnlineUnitComponent.formData);
     });
 
     it('should send PUT request upon form submission and navigate', () => {
@@ -129,7 +133,7 @@ describe('EditOnlineUnitComponent', () => {
         const updatedStub = jest.spyOn(onlineUnitService, 'update').mockReturnValue(of(updateResponse));
         const navigateSpy = jest.spyOn(router, 'navigate');
 
-        const textUnitForm: OnlineUnitFormStubComponent = editOnlineUnitComponentFixture.debugElement.query(By.directive(OnlineUnitFormStubComponent)).componentInstance;
+        const textUnitForm: OnlineUnitFormComponent = editOnlineUnitComponentFixture.debugElement.query(By.directive(OnlineUnitFormComponent)).componentInstance;
         textUnitForm.formSubmitted.emit({
             name: changedUnit.name,
             description: changedUnit.description,
