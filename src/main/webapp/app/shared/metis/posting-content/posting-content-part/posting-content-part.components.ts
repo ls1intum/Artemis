@@ -1,4 +1,4 @@
-import { Component, EventEmitter, Input, OnInit, Output } from '@angular/core';
+import { Component, EventEmitter, Input, OnChanges, OnInit, Output } from '@angular/core';
 import { PostingContentPart, ReferenceType } from '../../metis.util';
 import { FileService } from 'app/shared/http/file.service';
 
@@ -27,7 +27,7 @@ import { AccountService } from 'app/core/auth/account.service';
     templateUrl: './posting-content-part.component.html',
     styleUrls: ['./../../metis.component.scss'],
 })
-export class PostingContentPartComponent implements OnInit {
+export class PostingContentPartComponent implements OnInit, OnChanges {
     @Input() postingContentPart: PostingContentPart;
     @Output() userReferenceClicked = new EventEmitter<string>();
     @Output() channelReferenceClicked = new EventEmitter<number>();
@@ -57,6 +57,10 @@ export class PostingContentPartComponent implements OnInit {
     ) {}
 
     ngOnInit() {
+        this.processContent();
+    }
+
+    ngOnChanges(): void {
         this.processContent();
     }
 
