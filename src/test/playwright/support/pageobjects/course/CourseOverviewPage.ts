@@ -25,6 +25,7 @@ export class CourseOverviewPage {
      * @param exerciseId The ID of the exercise to start.
      */
     async startExercise(exerciseId: number) {
+        await this.getStartExerciseButton(exerciseId).waitFor({ state: 'visible', timeout: 5000 });
         await this.getStartExerciseButton(exerciseId).click();
     }
 

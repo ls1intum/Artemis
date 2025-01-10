@@ -152,9 +152,9 @@ test.describe('Exam assessment', () => {
             await login(instructor);
             await examManagement.verifySubmitted(course.id!, exam.id!, studentOneName);
             if (dayjs().isBefore(examEnd)) {
-                await page.waitForTimeout(examEnd.diff(dayjs(), 'ms') + 10000);
+                await page.waitForTimeout(examEnd.diff(dayjs(), 'ms') + 4000);
             }
-            await examManagement.openAssessmentDashboard(course.id!, exam.id!, 60000);
+            await examManagement.openAssessmentDashboard(course.id!, exam.id!, 5000);
             await page.goto(`/course-management/${course.id}/exams/${exam.id}/assessment-dashboard`);
             const response = await courseAssessment.clickEvaluateQuizzes();
             expect(response.status()).toBe(200);

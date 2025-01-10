@@ -93,7 +93,7 @@ test.describe('Exam test run', { tag: '@fast' }, () => {
             expect(updatedTestRun.workingTime).toBe(hour * 3600 + minutes * 60 + seconds);
 
             await examTestRun.openTestRunPage(course, exam);
-            await examTestRun.getTestRun(testRun.id!).waitFor({ state: 'visible' });
+            await examTestRun.getTestRun(testRun.id!).waitFor({ state: 'visible', timeout: 5000 });
             await expect(examTestRun.getWorkingTime(testRun.id!).filter({ hasText: `${hour}h ${minutes}min ${seconds}s` })).toBeVisible();
             await expect(examTestRun.getStarted(testRun.id!).filter({ hasText: 'No' })).toBeVisible();
             await expect(examTestRun.getSubmitted(testRun.id!).filter({ hasText: 'No' })).toBeVisible();
