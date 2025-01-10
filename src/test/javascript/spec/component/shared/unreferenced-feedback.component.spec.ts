@@ -118,10 +118,11 @@ describe('UnreferencedFeedbackComponent', () => {
             const updateFeedbackOnDropStub: jest.SpyInstance = jest.spyOn(unreferencedFeedbackDetailComp, 'updateFeedbackOnDrop');
 
             const dropEvent = new Event('drop', { bubbles: true, cancelable: true });
-            unreferencedFeedbackDetailDebugElement.nativeElement.querySelector('div').dispatchEvent(dropEvent); // Event auf Subkomponente auslösen
+            unreferencedFeedbackDetailDebugElement.nativeElement.querySelector('div').dispatchEvent(dropEvent);
             fixture.detectChanges();
 
             expect(updateFeedbackOnDropStub).toHaveBeenCalledOnce();
+            // do not propagate the event to the parent component
             expect(createAssessmentOnDropStub).not.toHaveBeenCalled();
         });
     });
