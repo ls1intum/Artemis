@@ -10,7 +10,6 @@ import { RepositoryViewComponent } from 'app/localvc/repository-view/repository-
 import { ArtemisProgrammingRepositoryRoutingModule } from 'app/exercises/programming/participate/programming-repository-routing.module';
 import { FormDateTimePickerModule } from 'app/shared/date-time-picker/date-time-picker.module';
 import { FeatureToggleModule } from 'app/shared/feature-toggle/feature-toggle.module';
-import { ArtemisComplaintsForTutorModule } from 'app/complaints/complaints-for-tutor/complaints-for-tutor.module';
 import { ArtemisAssessmentSharedModule } from 'app/assessment/assessment-shared.module';
 import { ArtemisProgrammingManualAssessmentModule } from 'app/exercises/programming/assess/programming-manual-assessment.module';
 import { AssessmentInstructionsModule } from 'app/assessment/assessment-instructions/assessment-instructions.module';
@@ -19,7 +18,8 @@ import { ArtemisProgrammingExerciseModule } from 'app/exercises/programming/shar
 import { CommitHistoryComponent } from 'app/localvc/commit-history/commit-history.component';
 import { CommitDetailsViewComponent } from 'app/localvc/commit-details-view/commit-details-view.component';
 import { ArtemisProgrammingExerciseActionsModule } from 'app/exercises/programming/shared/actions/programming-exercise-actions.module';
-import { GitDiffReportComponent } from 'app/exercises/programming/hestia/git-diff-report/git-diff-report.component';
+import { GitDiffReportComponent } from 'app/exercises/programming/git-diff-report/git-diff-report.component';
+import { ComplaintsForTutorComponent } from 'app/complaints/complaints-for-tutor/complaints-for-tutor.component';
 
 @NgModule({
     imports: [
@@ -28,7 +28,7 @@ import { GitDiffReportComponent } from 'app/exercises/programming/hestia/git-dif
         FormDateTimePickerModule,
         FormsModule,
         FeatureToggleModule,
-        ArtemisComplaintsForTutorModule,
+        ComplaintsForTutorComponent,
         ArtemisProgrammingRepositoryRoutingModule,
         ArtemisAssessmentSharedModule,
         ArtemisCodeEditorModule,
