@@ -89,7 +89,7 @@ describe('EditOnlineUnitComponent', () => {
 
         const findByIdStub = jest.spyOn(onlineUnitService, 'findById').mockReturnValue(of(response));
         editOnlineUnitComponentFixture.detectChanges();
-        const onlineUnitFormStubComponent: OnlineUnitFormComponent = editOnlineUnitComponentFixture.debugElement.query(By.directive(OnlineUnitFormComponent)).componentInstance;
+        const onlineUnitFormComponent: OnlineUnitFormComponent = editOnlineUnitComponentFixture.debugElement.query(By.directive(OnlineUnitFormComponent)).componentInstance;
         editOnlineUnitComponentFixture.detectChanges(); // onInit
         expect(editOnlineUnitComponent.onlineUnit).toEqual(onlineUnitOfResponse);
         expect(findByIdStub).toHaveBeenCalledOnce();
@@ -97,7 +97,7 @@ describe('EditOnlineUnitComponent', () => {
         expect(editOnlineUnitComponent.formData.releaseDate).toEqual(onlineUnitOfResponse.releaseDate);
         expect(editOnlineUnitComponent.formData.description).toEqual(onlineUnitOfResponse.description);
         expect(editOnlineUnitComponent.formData.source).toEqual(onlineUnitOfResponse.source);
-        expect(onlineUnitFormStubComponent.formData()).toEqual(editOnlineUnitComponent.formData);
+        expect(onlineUnitFormComponent.formData()).toEqual(editOnlineUnitComponent.formData);
     });
 
     it('should send PUT request upon form submission and navigate', () => {

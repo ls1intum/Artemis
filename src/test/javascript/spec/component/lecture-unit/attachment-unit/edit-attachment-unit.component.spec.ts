@@ -109,20 +109,20 @@ describe('EditAttachmentUnitComponent', () => {
 
     it('should set form data correctly', async () => {
         fixture.detectChanges();
-        const attachmentUnitFormStubComponent: AttachmentUnitFormComponent = fixture.debugElement.query(By.directive(AttachmentUnitFormComponent)).componentInstance;
+        const attachmentUnitFormComponent: AttachmentUnitFormComponent = fixture.debugElement.query(By.directive(AttachmentUnitFormComponent)).componentInstance;
 
-        expect(attachmentUnitFormStubComponent.formData()?.formProperties.name).toEqual(attachment.name);
-        expect(attachmentUnitFormStubComponent.formData()?.formProperties.releaseDate).toEqual(attachment.releaseDate);
-        expect(attachmentUnitFormStubComponent.formData()?.formProperties.updateNotificationText).toBeUndefined();
-        expect(attachmentUnitFormStubComponent.formData()?.formProperties.version).toBe(1);
-        expect(attachmentUnitFormStubComponent.formData()?.formProperties.description).toEqual(attachmentUnit.description);
-        expect(attachmentUnitFormStubComponent.formData()?.fileProperties.fileName).toEqual(attachment.link);
-        expect(attachmentUnitFormStubComponent.formData()?.fileProperties.file).toBeUndefined();
+        expect(attachmentUnitFormComponent.formData()?.formProperties.name).toEqual(attachment.name);
+        expect(attachmentUnitFormComponent.formData()?.formProperties.releaseDate).toEqual(attachment.releaseDate);
+        expect(attachmentUnitFormComponent.formData()?.formProperties.updateNotificationText).toBeUndefined();
+        expect(attachmentUnitFormComponent.formData()?.formProperties.version).toBe(1);
+        expect(attachmentUnitFormComponent.formData()?.formProperties.description).toEqual(attachmentUnit.description);
+        expect(attachmentUnitFormComponent.formData()?.fileProperties.fileName).toEqual(attachment.link);
+        expect(attachmentUnitFormComponent.formData()?.fileProperties.file).toBeUndefined();
     });
 
     it('should update attachment unit with file change without notification', async () => {
         fixture.detectChanges();
-        const attachmentUnitFormStubComponent: AttachmentUnitFormComponent = fixture.debugElement.query(By.directive(AttachmentUnitFormComponent)).componentInstance;
+        const attachmentUnitFormComponent: AttachmentUnitFormComponent = fixture.debugElement.query(By.directive(AttachmentUnitFormComponent)).componentInstance;
 
         const fileName = 'updated file';
 
@@ -141,7 +141,7 @@ describe('EditAttachmentUnitComponent', () => {
         };
 
         updateAttachmentUnitSpy.mockReturnValue(of({ body: attachmentUnit, status: 200 }));
-        attachmentUnitFormStubComponent.formSubmitted.emit(attachmentUnitFormData);
+        attachmentUnitFormComponent.formSubmitted.emit(attachmentUnitFormData);
         fixture.detectChanges();
 
         expect(updateAttachmentUnitSpy).toHaveBeenCalledWith(1, 1, baseFormData, undefined);
@@ -150,7 +150,7 @@ describe('EditAttachmentUnitComponent', () => {
 
     it('should update attachment unit with file change with notification', async () => {
         fixture.detectChanges();
-        const attachmentUnitFormStubComponent: AttachmentUnitFormComponent = fixture.debugElement.query(By.directive(AttachmentUnitFormComponent)).componentInstance;
+        const attachmentUnitFormComponent: AttachmentUnitFormComponent = fixture.debugElement.query(By.directive(AttachmentUnitFormComponent)).componentInstance;
 
         const fileName = 'updated file';
 
@@ -171,7 +171,7 @@ describe('EditAttachmentUnitComponent', () => {
         };
 
         updateAttachmentUnitSpy.mockReturnValue(of({ body: attachmentUnit, status: 200 }));
-        attachmentUnitFormStubComponent.formSubmitted.emit(attachmentUnitFormData);
+        attachmentUnitFormComponent.formSubmitted.emit(attachmentUnitFormData);
         fixture.detectChanges();
 
         expect(updateAttachmentUnitSpy).toHaveBeenCalledWith(1, 1, baseFormData, notification);
@@ -180,7 +180,7 @@ describe('EditAttachmentUnitComponent', () => {
 
     it('should update attachment unit without file change without notification', async () => {
         fixture.detectChanges();
-        const attachmentUnitFormStubComponent: AttachmentUnitFormComponent = fixture.debugElement.query(By.directive(AttachmentUnitFormComponent)).componentInstance;
+        const attachmentUnitFormComponent: AttachmentUnitFormComponent = fixture.debugElement.query(By.directive(AttachmentUnitFormComponent)).componentInstance;
 
         const attachmentUnitFormData: AttachmentUnitFormData = {
             formProperties: {
@@ -198,7 +198,7 @@ describe('EditAttachmentUnitComponent', () => {
         formData.append('attachmentUnit', objectToJsonBlob(attachmentUnit));
 
         updateAttachmentUnitSpy.mockReturnValue(of({ body: attachmentUnit, status: 200 }));
-        attachmentUnitFormStubComponent.formSubmitted.emit(attachmentUnitFormData);
+        attachmentUnitFormComponent.formSubmitted.emit(attachmentUnitFormData);
         fixture.detectChanges();
 
         expect(updateAttachmentUnitSpy).toHaveBeenCalledWith(1, 1, formData, undefined);
