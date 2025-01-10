@@ -31,13 +31,13 @@ describe('CompetencyFormComponent', () => {
         })
             .overrideModule(ArtemisMarkdownEditorModule, {
                 remove: { exports: [MarkdownEditorMonacoComponent] },
-                add: { exports: [MockComponent(MarkdownEditorMonacoComponent)], declarations: [MockComponent(MarkdownEditorMonacoComponent)] },
+                add: { exports: [MockComponent(MarkdownEditorMonacoComponent)], imports: [MockComponent(MarkdownEditorMonacoComponent)] },
             })
-            .compileComponents()
-            .then(() => {
-                competencyFormComponentFixture = TestBed.createComponent(CompetencyFormComponent);
-                competencyFormComponent = competencyFormComponentFixture.componentInstance;
-            });
+            .compileComponents();
+
+        competencyFormComponentFixture = TestBed.createComponent(CompetencyFormComponent);
+        competencyFormComponent = competencyFormComponentFixture.componentInstance;
+
         translateService = TestBed.inject(TranslateService);
     });
 

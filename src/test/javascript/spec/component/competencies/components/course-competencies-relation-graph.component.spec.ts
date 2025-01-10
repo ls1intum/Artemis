@@ -10,8 +10,15 @@ describe('CourseCompetenciesRelationGraphComponent', () => {
     let fixture: ComponentFixture<CourseCompetenciesRelationGraphComponent>;
 
     const courseCompetencies: CourseCompetency[] = [
-        { id: 1, type: CourseCompetencyType.COMPETENCY, title: 'Competency' },
-        { id: 2, type: CourseCompetencyType.PREREQUISITE, title: 'Prerequisite' },
+        { id: 1, type: CourseCompetencyType.COMPETENCY, title: 'Competency', dimension: { height: 45.59, width: 0 }, meta: { forceDimensions: false }, position: { x: 0, y: 0 } },
+        {
+            id: 2,
+            type: CourseCompetencyType.PREREQUISITE,
+            title: 'Prerequisite',
+            dimension: { height: 45.59, width: 0 },
+            meta: { forceDimensions: false },
+            position: { x: 0, y: 0 },
+        },
     ];
 
     const relations: CompetencyRelationDTO[] = [
@@ -80,6 +87,9 @@ describe('CourseCompetenciesRelationGraphComponent', () => {
                         id: cc.id,
                         type: cc.type,
                     },
+                    dimension: cc.dimension,
+                    meta: cc.meta,
+                    position: cc.position,
                 };
             }),
         );
