@@ -565,8 +565,8 @@ export class CourseConversationsComponent implements OnInit, OnDestroy {
         this.channelSearchCollapsed = !this.channelSearchCollapsed;
     }
 
-    openThread(e: Post | undefined) {
-        this.postInThread = e;
+    openThread(postToOpen: Post | undefined) {
+        this.postInThread = postToOpen;
     }
 
     @HostListener('document:keydown', ['$event'])
