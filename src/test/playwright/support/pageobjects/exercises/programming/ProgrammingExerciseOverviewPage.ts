@@ -15,16 +15,21 @@ export class ProgrammingExerciseOverviewPage {
         this.courseOverview = courseOverview;
     }
 
+    async checkIfSubmissionIsBuilding() {
+        const isBuilding = this.page.locator('#test-building');
+        await isBuilding.waitFor({ state: 'visible', timeout: 10000 });
+    }
+
     async getResultScore() {
         const resultScore = this.page.locator('#exercise-headers-information').locator('#result-score');
-        await resultScore.waitFor({ state: 'visible' });
+        await resultScore.waitFor({ state: 'visible', timeout: 5000 });
         return resultScore;
     }
 
     async startParticipation(courseId: number, exerciseId: number, credentials: UserCredentials) {
         await Commands.login(this.page, credentials, '/');
         await this.page.waitForURL(/\/courses/);
-        await this.courseList.openCourse(courseId!);
+        await this.courseList.openCourseAndFirstExercise(courseId!);
         await this.courseOverview.startExercise(exerciseId);
     }
 

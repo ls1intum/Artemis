@@ -102,13 +102,13 @@ test.describe('Exam Results', () => {
                         switch (testCase.exerciseType) {
                             case ExerciseType.TEXT:
                                 await login(tutor);
-                                await startAssessing(course.id!, exam.id!, 0, 60000, examManagement, courseAssessment, exerciseAssessment);
+                                await startAssessing(course.id!, exam.id!, 0, 5000, examManagement, courseAssessment, exerciseAssessment);
                                 await examAssessment.addNewFeedback(7, 'Good job');
                                 await examAssessment.submitTextAssessment();
                                 break;
                             case ExerciseType.MODELING:
                                 await login(tutor);
-                                await startAssessing(course.id!, exam.id!, 0, 60000, examManagement, courseAssessment, exerciseAssessment);
+                                await startAssessing(course.id!, exam.id!, 0, 5000, examManagement, courseAssessment, exerciseAssessment);
                                 await modelingExerciseAssessment.addNewFeedback(5, 'Good');
                                 await modelingExerciseAssessment.openAssessmentForComponent(0);
                                 await modelingExerciseAssessment.assessComponent(-1, 'Wrong');
