@@ -870,7 +870,6 @@ describe('Course Management Student Course Analytics Dashboard Update', () => {
                 { provide: SessionStorageService, useClass: MockSyncStorage },
                 { provide: AccountService, useClass: MockAccountService },
                 { provide: FeatureToggleService, useClass: MockFeatureToggleService },
-                MockProvider(TranslateService),
                 MockProvider(LoadImageService),
             ],
             declarations: [
