@@ -191,6 +191,16 @@ export async function drag(page: Page, draggable: Locator, droppable: Locator) {
     await page.mouse.up();
 }
 
+/**
+ * Retries a given function up to 5 times, navigating to a specified URL on each failure.
+ *
+ * @async
+ * @param {Page} page - The Puppeteer `Page` instance used for navigation and context.
+ * @param {Function} fn - The asynchronous function to be retried.
+ * @param {string} goToUrl - The URL to navigate to upon each retry attempt failure.
+ * @param {string} msg - The error message prefix to include in the final thrown error if all retries fail.
+ * @throws {Error} Throws an error with the provided message, the current page URL, and a list of accumulated error messages if all retries fail.
+ */
 export async function retry(page: Page, fn: any, goToUrl: string, msg: string) {
     const accumulatedErrors: string[] = [];
 

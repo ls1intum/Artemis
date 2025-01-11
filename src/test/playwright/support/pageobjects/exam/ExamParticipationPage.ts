@@ -100,7 +100,7 @@ export class ExamParticipationPage extends ExamParticipationActions {
         await Commands.login(this.page, student, '/');
         await this.courseList.openCoursesPage();
         await this.courseList.openCourse(course.id!);
-        await this.courseOverview.openExamsTab();
+        await this.courseOverview.openExamsTab(course.id!);
         await this.courseOverview.openExam(exam.title!);
         await retry(
             this.page,

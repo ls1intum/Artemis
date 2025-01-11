@@ -1,5 +1,6 @@
 import { BASE_API } from '../../constants';
 import { Locator, Page } from '@playwright/test';
+import { retry } from '../../utils';
 
 /**
  * A class which encapsulates UI selectors and actions for the Course Overview page (/courses/*).
@@ -101,15 +102,22 @@ export class CourseOverviewPage {
     /**
      * Navigates to the Exams tab on the course overview page.
      */
-    async openExamsTab() {
-        await this.page.locator('#exam-tab').click();
+    async openExamsTab(courseId: number) {
+        await retry(
+            this.page,
+            async () => {
+                await this.page.locator('#exam-tab').click({ timeout: 3_000 });
+            },
+            `/courses/${courseId}/exams`,
+            'Could not open exams page ' + this.page.url(),
+        );
     }
 
     /**
      * Opens an exam given its title.
      */
     async openExam(examTitle: string): Promise<void> {
-        await this.page.locator('span').filter({ hasText: examTitle }).click();
+        await this.page.locator('span').filter({ hasText: examTitle }).click({ timeout: 3_000 });
     }
 
     /**

@@ -46,7 +46,7 @@ test.describe('Exam date verification', { tag: '@fast' }, () => {
             await examAPIRequests.registerStudentForExam(exam, studentOne);
             await login(studentOne);
             await page.goto(`/courses/${course.id}`);
-            await courseOverview.openExamsTab();
+            await courseOverview.openExamsTab(course.id!);
             await page.waitForURL(`**/exams/${exam.id}`);
         });
 
@@ -75,7 +75,7 @@ test.describe('Exam date verification', { tag: '@fast' }, () => {
             await examAPIRequests.prepareExerciseStartForExam(exam);
             await login(studentOne);
             await page.goto(`/courses/${course.id}/exams`);
-            await courseOverview.openExamsTab();
+            await courseOverview.openExamsTab(course.id!);
             await courseOverview.openExam(exam.title!);
             await page.waitForURL(`**/exams/${exam.id}`);
             await expect(page.getByText(exam.title!).first()).toBeVisible();
