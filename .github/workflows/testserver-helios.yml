@@ -1,4 +1,4 @@
-name: Deploy to Testserver
+name: Deploy to Testserver with Helios
 
 on:
   workflow_dispatch:
