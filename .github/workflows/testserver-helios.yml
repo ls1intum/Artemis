@@ -1,0 +1,364 @@
+name: Deploy to Testserver
+
+on:
+  workflow_dispatch:
+    inputs:
+      HELIOS_TRIGGERED_BY:
+        description: "Username that triggered deployment"
+        required: true
+        type: string
+      HELIOS_BRANCH_NAME:
+        description: "Which branch to deploy"
+        required: true
+        type: string
+      HELIOS_BRANCH_HEAD_SHA:
+        description: "Which branch to deploy"
+        required: true
+        type: string
+      HELIOS_PR_NUMBER:
+        description: "PR number that triggered deployment"
+        required: false
+        type: string
+      HELIOS_ENVIRONMENT_NAME:
+        description: "Which environment to deploy (e.g. artemis-test7.artemis.cit.tum.de, etc.)."
+        required: true
+        type: string
+      HELIOS_BUILD:
+        description: "Whether to also build or just deploy the existing Docker image"
+        required: true
+        type: boolean
+        default: false
+      HELIOS_BUILD_TAG:
+        description: "Docker tag to use if we are building or pulling an existing image"
+        required: false
+        type: string
+      HELIOS_RAW_URL:
+        description: "URL to the raw content of the repository in the format https://raw.githubusercontent.com/:owner/:repo/:sha"
+        required: false
+        type: string
+
+concurrency: test-servers
+
+env:
+  CI: true
+  RAW_URL: ${{ github.event.inputs.HELIOS_RAW_URL }}
+
+jobs:
+  # Print the inputs for debugging
+  validate-inputs:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Validate Build Tag Input Exists
+        if: ${{ github.event.inputs.HELIOS_BUILD == 'true' && github.event.inputs.HELIOS_BUILD_TAG == '' }}
+        run: |
+          echo "HELIOS_BUILD is true but no HELIOS_BUILD_TAG was provided."
+          exit 1
+      - name: Validate PR Number Input Exists
+        if: ${{ github.event.inputs.HELIOS_BUILD == 'false' && github.event.inputs.HELIOS_PR_NUMBER == '' }}
+        run: |
+          echo "HELIOS_BUILD is false but no HELIOS_PR_NUMBER was provided."
+          exit 1
+
+      - name: Print Inputs
+        run: |
+          echo "RAW_URL: ${{ env.RAW_URL }}"
+          echo "Triggered by: ${{ github.event.inputs.HELIOS_TRIGGERED_BY }}"
+          echo "Branch: ${{ github.event.inputs.HELIOS_BRANCH_NAME }}"
+          echo "SHA: ${{ github.event.inputs.HELIOS_BRANCH_HEAD_SHA }}"
+          echo "PR Number: ${{ github.event.inputs.HELIOS_PR_NUMBER }}"
+          echo "Environment: ${{ github.event.inputs.HELIOS_ENVIRONMENT_NAME }}"
+          echo "Need Build? ${{ github.event.inputs.HELIOS_BUILD }}"
+          echo "Build Tag? ${{ github.event.inputs.HELIOS_BUILD_TAG }}"
+
+
+  # Build the Docker image (branch without PR) or check if the build has run successfully (PR)
+  build-or-check-existing-build:
+    needs: [ validate-inputs ]
+    runs-on: ubuntu-latest
+    steps:
+      # Build the Docker image (branch without PR)
+      - name: Git Checkout
+        if: ${{ github.event.inputs.HELIOS_BUILD == 'true' }}
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.inputs.HELIOS_BRANCH_HEAD_SHA }}
+      - name: Set up QEMU
+        if: ${{ github.event.inputs.HELIOS_BUILD == 'true' }}
+        uses: docker/setup-qemu-action@v3
+      - name: Set up Docker Buildx
+        if: ${{ github.event.inputs.HELIOS_BUILD == 'true' }}
+        uses: docker/setup-buildx-action@v3
+      # Build and Push to GitHub Container Registry
+      - name: Login to GitHub Container Registry
+        if: ${{ github.event.inputs.HELIOS_BUILD == 'true' }}
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.repository_owner }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - name: Build and Push to GitHub Container Registry
+        if: ${{ github.event.inputs.HELIOS_BUILD == 'true' }}
+        uses: docker/build-push-action@v5
+        with:
+          # beware that the linux/arm64 build from the registry is using an amd64 compiled .war file as
+          # the GitHub runners don't support arm64 and QEMU takes too long for emulating the build
+          platforms: linux/amd64,linux/arm64
+          file: ./docker/artemis/Dockerfile
+          context: .
+          tags: ghcr.io/ls1intum/artemis:${{ github.event.inputs.HELIOS_BUILD_TAG }}
+          push: true
+          cache-from: type=gha
+          cache-to: type=gha,mode=min
+
+      # Check if the build has run successfully (PR)
+      - name: Get latest successful build for branch
+        if: ${{ github.event.inputs.HELIOS_BUILD == 'false' }}
+        id: check_build
+        uses: octokit/request-action@v2.x
+        with:
+          route: GET /repos/${{ github.repository }}/actions/workflows/build.yml/runs?event=pull_request&status=success&head_sha=${{ github.event.inputs.HELIOS_BRANCH_HEAD_SHA }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - name: Fail if no successful build found
+        if: ${{ steps.check_build.conclusion == 'success' && github.event.inputs.HELIOS_BUILD == 'false' && fromJSON(steps.check_build.outputs.data).total_count == 0 }}
+        run: |
+          echo "No successful build found for branch '${{ github.event.inputs.HELIOS_BRANCH_NAME }}' with SHA '${{ github.event.inputs.HELIOS_BRANCH_HEAD_SHA }}'."
+          exit 1
+      - name: Post comment about build validation failure
+        if: failure() && github.event.inputs.HELIOS_BUILD == 'false'
+        uses: marocchino/sticky-pull-request-comment@v2
+        with:
+          number: ${{ github.event.inputs.HELIOS_PR_NUMBER }}
+          header: build-validation-failed
+          message: |
+            ### ⚠️ Unable to deploy to test servers ⚠️
+
+            The build needs to run through first. Please wait for the build to finish and then try again.
+      - name: Remove sticky comment on build validation failure
+        if: success() && github.event.inputs.HELIOS_BUILD == 'false'
+        uses: marocchino/sticky-pull-request-comment@v2
+        with:
+          number: ${{ github.event.inputs.HELIOS_PR_NUMBER }}
+          header: build-validation-failed
+          delete: true
+
+
+  # Check which test server to deploy to based on the label
+  filter-matrix:
+    needs: [ build-or-check-existing-build ]
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        include:
+          # TODO: Add those variables under the repository environment settings (GitHub) or set it under Helios repository settings
+          # Commented out environments are not yet available and will be enabled in the future
+          - environment: artemis-test1.artemis.cit.tum.de
+            label-identifier: artemis-test1
+            url: https://artemis-test1.artemis.cit.tum.de
+            user: deployment
+            hosts: artemis-test1.artemis.cit.tum.de
+            folder: /opt/artemis
+
+          - environment: artemis-test2.artemis.cit.tum.de
+            label-identifier: artemis-test2
+            url: https://artemis-test2.artemis.cit.tum.de
+            user: deployment
+            hosts: artemis-test2.artemis.cit.tum.de
+            folder: /opt/artemis
+
+          - environment: artemis-test3.artemis.cit.tum.de
+            label-identifier: artemis-test3
+            url: https://artemis-test3.artemis.cit.tum.de
+            user: deployment
+            hosts: artemis-test3.artemis.cit.tum.de
+            folder: /opt/artemis
+
+          - environment: artemis-test4.artemis.cit.tum.de
+            label-identifier: artemis-test4
+            url: https://artemis-test4.artemis.cit.tum.de
+            user: deployment
+            hosts: artemis-test4.artemis.cit.tum.de
+            folder: /opt/artemis
+
+          - environment: artemis-test5.artemis.cit.tum.de
+            label-identifier: artemis-test5
+            url: https://artemis-test5.artemis.cit.tum.de
+            user: deployment
+            hosts: artemis-test5.artemis.cit.tum.de
+            folder: /opt/artemis
+
+          - environment: artemis-test6.artemis.cit.tum.de
+            label-identifier: artemis-test6
+            url: https://artemis-test6.artemis.cit.tum.de
+            user: deployment
+            hosts: artemis-test6.artemis.cit.tum.de
+            folder: /opt/artemis
+            host_keys: |
+
+          - environment: artemis-test7.artemis.cit.tum.de
+            label-identifier: artemis-test7
+            url: https://artemis-test7.artemis.cit.tum.de
+            user: deployment
+            hosts: artemis-test7.artemis.cit.tum.de
+            folder: /opt/artemis
+            host_keys: |
+
+          #- environment: artemis-test8.artemis.cit.tum.de
+          #  label-identifier: artemis-test8
+          #  url: https://artemis-test8.artemis.cit.tum.de
+          #  user: deployment
+          #  hosts: artemis-test8.artemis.cit.tum.de
+          #  folder: /opt/artemis
+
+          - environment: artemis-test9.artemis.cit.tum.de
+            label-identifier: artemis-test9
+            url: https://artemis-test9.artemis.cit.tum.de
+            user: deployment
+            hosts: artemis-test9.artemis.cit.tum.de
+            folder: /opt/artemis
+            host_keys: |
+
+          #- environment: artemis-test10.artemis.cit.tum.de
+          #  label-identifier: artemis-test10
+          #  url: https://artemis-test10.artemis.cit.tum.de
+          #  user: deployment
+          #  hosts: artemis-test10.artemis.cit.tum.de
+          #  folder: /opt/artemis
+    outputs:
+      TS1: ${{ steps.filter.outputs.artemis-test1 || '' }}
+      TS2: ${{ steps.filter.outputs.artemis-test2 || '' }}
+      TS3: ${{ steps.filter.outputs.artemis-test3 || '' }}
+      TS4: ${{ steps.filter.outputs.artemis-test4 || '' }}
+      TS5: ${{ steps.filter.outputs.artemis-test5 || '' }}
+      TS6: ${{ steps.filter.outputs.artemis-test6 || '' }}
+      TS7: ${{ steps.filter.outputs.artemis-test7 || '' }}
+      #TS8: ${{ steps.filter.outputs.artemis-test8 || '' }}
+      TS9: ${{ steps.filter.outputs.artemis-test9 || '' }}
+      #TS10: ${{ steps.filter.outputs.artemis-test10 || '' }}
+    steps:
+      - run: |
+          echo "matrix.hosts = ${{ matrix.hosts }}"
+          echo "HELIOS_ENVIRONMENT_NAME = ${{ github.event.inputs.HELIOS_ENVIRONMENT_NAME }}"
+          echo "$DEPLOY_LABEL"
+          echo '${{ github.event.inputs.HELIOS_ENVIRONMENT_NAME == matrix.hosts }}'
+      - id: filter
+        env:
+          MATRIX_JSON: ${{ toJSON(matrix) }}
+        if: ${{ github.event.inputs.HELIOS_ENVIRONMENT_NAME == matrix.hosts }}
+        run: |
+          MATRIX_JSON=${MATRIX_JSON//$'\n'/}
+          echo "${{ matrix.label-identifier }}=$MATRIX_JSON" >> $GITHUB_OUTPUT
+
+
+  # Process the output of the filter step to create a valid matrix for the deploy step
+  process-matrix:
+    needs: [ filter-matrix ]
+    runs-on: ubuntu-latest
+    outputs:
+      matrix: ${{ steps.process.outputs.matrix }}
+    steps:
+      - id: process
+        env:
+          MATRIX_JSON: ${{ toJSON(needs.filter-matrix.outputs.*) }}
+        run: |
+          MATRIX_JSON=${MATRIX_JSON//$'\n'/}
+          MATRIX_JSON=${MATRIX_JSON//$'"{'/'{'}
+          MATRIX_JSON=${MATRIX_JSON//$'}"'/'}'}
+          MATRIX_JSON=${MATRIX_JSON//$'\\"'/'"'}
+          echo "$MATRIX_JSON"
+          echo "matrix=$MATRIX_JSON" >> $GITHUB_OUTPUT
+
+
+  # Deploy to the test servers
+  deploy:
+    needs: [ process-matrix ]
+    runs-on: ubuntu-latest
+    concurrency: test-servers-deploy
+    strategy:
+      fail-fast: false
+      matrix:
+        include: ${{ fromJSON(needs.process-matrix.outputs.matrix) }}
+
+    environment:
+      name: ${{ matrix.environment }}
+      url: ${{ matrix.url }}
+
+    env:
+      DEPLOYMENT_USER: ${{ matrix.user }}
+      DEPLOYMENT_HOSTS: ${{ matrix.hosts }}
+      DEPLOYMENT_FOLDER: ${{ matrix.folder }}
+      GATEWAY_USER: "jump"
+      GATEWAY_HOST: "gateway.artemis.in.tum.de:2010"
+      GATEWAY_HOST_PUBLIC_KEY: "[gateway.artemis.in.tum.de]:2010 ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIKtTLiKRILjKZ+Qg4ReWKsG7mLDXkzHfeY5nalSQUNQ4"
+
+    steps:
+      - name: Compute Tag
+        uses: actions/github-script@v7
+        id: compute-tag
+        with:
+          result-encoding: string
+          script: |
+            // Check if HELIOS_BUILD input is true
+            if (context.payload.inputs.HELIOS_BUILD === 'true') {
+              return context.payload.inputs.HELIOS_BUILD_TAG;
+            }
+            // Use the "pr-<pr-number>" format for pull requests
+            if (context.payload.inputs.HELIOS_BUILD === 'false') {
+              const prNumber = '${{ github.event.inputs.HELIOS_PR_NUMBER }}';
+              return `pr-${prNumber}`;
+            }
+
+            return "FALSE";
+
+      # Download artemis-server-cli from GH without cloning the Repo
+      - name: Fetch Artemis CLI
+        run: |
+          wget ${{ env.RAW_URL }}/artemis-server-cli
+          chmod +x artemis-server-cli
+
+      # Configure SSH Key
+      - name: Setup SSH Keys and known_hosts
+        env:
+          SSH_AUTH_SOCK: /tmp/ssh_agent.sock
+          GATEWAY_SSH_KEY: "${{ secrets.DEPLOYMENT_GATEWAY_SSH_KEY }}"
+          DEPLOYMENT_SSH_KEY: "${{ secrets.DEPLOYMENT_SSH_KEY }}"
+        run: |
+          mkdir -p ~/.ssh
+          ssh-agent -a $SSH_AUTH_SOCK > /dev/null
+          ssh-add - <<< $GATEWAY_SSH_KEY
+          ssh-add - <<< $DEPLOYMENT_SSH_KEY
+          cat - <<< $GATEWAY_HOST_PUBLIC_KEY >> ~/.ssh/known_hosts
+
+      - name: Deploy Artemis with Docker
+        env:
+          SSH_AUTH_SOCK: /tmp/ssh_agent.sock
+          TAG: ${{ steps.compute-tag.outputs.result }}
+        run: |
+          for host in $DEPLOYMENT_HOSTS; do
+            ./artemis-server-cli docker-deploy "$DEPLOYMENT_USER@$host" -g "$GATEWAY_USER@$GATEWAY_HOST" -t $TAG -b ${{ github.event.inputs.HELIOS_BRANCH_NAME }} -d $DEPLOYMENT_FOLDER -y
+          done
+
+  # Add a sticky comment to the PR if the deployment fails
+  add-deployment-error-comment:
+    if: ${{ github.event.inputs.HELIOS_PR_NUMBER != '' }}
+    needs: [ deploy ]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Post comment about deployment failure
+        if: failure()
+        uses: marocchino/sticky-pull-request-comment@v2
+        with:
+          number: ${{ github.event.inputs.HELIOS_PR_NUMBER }}
+          header: deployment-error
+          message: |
+            ### 🚨 Deployment Failed 🚨
+
+            Please check the logs and try again.
+
+      - name: Remove sticky comment for deployment failure on success
+        if: success()
+        uses: marocchino/sticky-pull-request-comment@v2
+        with:
+          number: ${{ github.event.inputs.HELIOS_PR_NUMBER }}
+          header: deployment-error
+          delete: true
