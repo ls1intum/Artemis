@@ -663,9 +663,12 @@ describe('Detailed Grading System Component', () => {
         // Csv without header
         const invalidCsv = `4.0,10,10,TRUE`;
 
+        const warnLogSpy = jest.spyOn(console, 'warn').mockImplementation();
+
         const event = { target: { files: [invalidCsv] } };
         await comp.onCSVFileSelect(event);
 
+        expect(warnLogSpy).toHaveBeenCalledOnce();
         expect(comp.gradingScale.gradeSteps).toHaveLength(0);
     });
 

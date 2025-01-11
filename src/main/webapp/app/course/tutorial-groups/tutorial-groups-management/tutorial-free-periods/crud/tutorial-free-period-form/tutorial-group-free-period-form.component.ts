@@ -101,9 +101,21 @@ export class TutorialGroupFreePeriodFormComponent implements OnInit, OnChanges {
      */
     get isStartBeforeEnd(): boolean {
         if (this.timeFrame === TimeFrame.PeriodWithinDay && this.endTimeControl?.value && this.startTimeControl?.value) {
-            return this.endTimeControl.value.setSeconds(0, 0) > this.startTimeControl.value.setSeconds(0, 0);
+            const endTime = new Date(this.endTimeControl.value.getTime());
+            const startTime = new Date(this.startTimeControl.value.getTime());
+
+            endTime.setSeconds(0, 0);
+            startTime.setSeconds(0, 0);
+
+            return endTime > startTime;
         } else if (this.timeFrame === TimeFrame.Period && this.endDateControl?.value && this.startDateControl?.value) {
-            return this.endDateControl.value.setHours(0, 0, 0, 0) > this.startDateControl.value.setHours(0, 0, 0, 0);
+            const endDate = new Date(this.endDateControl.value.getTime());
+            const startDate = new Date(this.startDateControl.value.getTime());
+
+            endDate.setHours(0, 0, 0, 0);
+            startDate.setHours(0, 0, 0, 0);
+
+            return endDate > startDate;
         }
         return true;
     }
