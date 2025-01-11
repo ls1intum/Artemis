@@ -186,7 +186,7 @@ test.describe('Programming exercise participation', { tag: '@sequential' }, () =
             for (let i = 1; i < submissions.length; i++) {
                 const { student, submission, commitMessage } = submissions[i];
                 await login(student, '/');
-                await page.waitForURL(/\/courses/, { timeout: 1000 });
+                await courseList.openCoursesPage();
                 await courseList.openCourseAndFirstExercise(course.id!);
                 await courseOverview.openExercise(exercise.title!);
                 submission.deleteFiles = [];
@@ -200,9 +200,9 @@ test.describe('Programming exercise participation', { tag: '@sequential' }, () =
             await expect(programmingExerciseOverview.getCodeButton()).not.toBeVisible();
         });
 
-        test('Students without a team can not participate in the team exercise', async ({ login, page, courseList, courseOverview, programmingExerciseOverview }) => {
+        test('Students without a team can not participate in the team exercise', async ({ login, courseList, courseOverview, programmingExerciseOverview }) => {
             await login(studentFour, '/');
-            await page.waitForURL(/\/courses/);
+            await courseList.openCoursesPage();
             await courseList.openCourseAndFirstExercise(course.id!);
             await courseOverview.openExercise(exercise.title!);
             await expect(programmingExerciseOverview.getExerciseDetails().getByText('No team yet')).toBeVisible();
@@ -214,7 +214,6 @@ test.describe('Programming exercise participation', { tag: '@sequential' }, () =
             login,
             userManagementAPIRequests,
             exerciseAPIRequests,
-            page,
             courseList,
             courseOverview,
             programmingExerciseOverview,
@@ -225,7 +224,7 @@ test.describe('Programming exercise participation', { tag: '@sequential' }, () =
             await exerciseAPIRequests.createTeam(exercise.id!, [studentFourUser], tutorUser);
 
             await login(studentFour, '/');
-            await page.waitForURL(/\/courses/);
+            await courseList.openCoursesPage();
             await courseList.openCourseAndFirstExercise(course.id!);
             await courseOverview.openExercise(exercise.title!);
             await expect(programmingExerciseOverview.getCodeButton()).not.toBeVisible();
@@ -284,14 +283,17 @@ async function makeGitExerciseSubmission(
     cloneMethod: GitCloneMethod = GitCloneMethod.https,
     sshAlgorithm: SshEncryptionAlgorithm = SshEncryptionAlgorithm.ed25519,
 ) {
-    await programmingExerciseOverview.openCloneMenu(cloneMethod);
+    const programmingExerciseUrl = page.url();
+    expect(/courses\/\d+\/exercises\/\d+/.test(programmingExerciseUrl)).toBe(true);
+
+    await programmingExerciseOverview.openCloneMenu(cloneMethod, programmingExerciseUrl);
     if (cloneMethod == GitCloneMethod.ssh) {
         await expect(programmingExerciseOverview.getCloneUrlButton()).toBeDisabled();
         const sshKeyNotFoundAlert = page.locator('.alert', { hasText: 'To use ssh, you need to add an ssh key to your account' });
         await expect(sshKeyNotFoundAlert).toBeVisible();
         await setupSSHCredentials(page.context(), sshAlgorithm);
         await page.reload();
-        await programmingExerciseOverview.openCloneMenu(cloneMethod);
+        await programmingExerciseOverview.openCloneMenu(cloneMethod, programmingExerciseUrl);
     }
     let repoUrl = await programmingExerciseOverview.copyCloneUrl();
     if (cloneMethod == GitCloneMethod.https) {

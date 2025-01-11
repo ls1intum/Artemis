@@ -28,7 +28,7 @@ export class ProgrammingExerciseOverviewPage {
 
     async startParticipation(courseId: number, exerciseId: number, credentials: UserCredentials) {
         await Commands.login(this.page, credentials, '/');
-        await this.page.waitForURL(/\/courses/);
+        await this.courseList.openCoursesPage();
         await this.courseList.openCourseAndFirstExercise(courseId!);
         await this.courseOverview.startExercise(exerciseId);
     }
@@ -38,7 +38,7 @@ export class ProgrammingExerciseOverviewPage {
         await this.courseOverview.openRunningProgrammingExercise(exerciseId);
     }
 
-    async openCloneMenu(cloneMethod: GitCloneMethod) {
+    async openCloneMenu(cloneMethod: GitCloneMethod, pageUrl?: string) {
         const gitCloneMethodSelector = {
             [GitCloneMethod.https]: '#useHTTPSButton',
             [GitCloneMethod.httpsWithToken]: '#useHTTPSWithTokenButton',
@@ -46,7 +46,7 @@ export class ProgrammingExerciseOverviewPage {
         };
 
         const codeButtonLocator = this.getCodeButton();
-        await Commands.reloadUntilFound(this.page, codeButtonLocator, 4000, 20000);
+        await Commands.reloadUntilFound(this.page, codeButtonLocator, 2000, 10000, pageUrl);
         await codeButtonLocator.click();
         await this.page.locator('.popover-body').waitFor({ state: 'visible' });
         await this.page.locator('.https-or-ssh-button').click();

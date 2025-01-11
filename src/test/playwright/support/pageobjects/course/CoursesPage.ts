@@ -10,16 +10,59 @@ export class CoursesPage {
         this.page = page;
     }
 
+    async openCoursesPage() {
+        await this.page.goto('/courses');
+        for (let retry = 0; retry < 3; retry++) {
+            try {
+                await this.page.locator('#test-your-current-courses').waitFor({ state: 'visible', timeout: 3000 });
+            } catch (timeoutError) {
+                await this.page.goto('/courses');
+                continue;
+            }
+            return;
+        }
+        throw new Error('Failed to open course page');
+    }
+
+    async openCourse(courseId: number) {
+        for (let retry = 0; retry < 5; retry++) {
+            if (/\/exercises\/\d+/.test(this.page.url()) || /\/exercises/.test(this.page.url())) {
+                return;
+            } else {
+                await this.tryToOpenCourseFromCoursesOverviewPage(courseId);
+            }
+            await this.page.waitForTimeout(250);
+        }
+        throw new Error('Could not access exercise');
+    }
+
     async openCourseAndFirstExercise(courseId: number) {
-        for (let i = 0; i < 10; i++) {
+        for (let retry = 0; retry < 5; retry++) {
             if (/\/exercises\/\d+/.test(this.page.url())) {
                 return;
             } else if (/\/exercises/.test(this.page.url())) {
-                await this.page.locator('#test-sidebar-card-medium').click();
+                await this.tryToOpenFirstExercise();
             } else {
-                await this.page.locator(`#course-${courseId}-header`).click();
+                await this.tryToOpenCourseFromCoursesOverviewPage(courseId);
             }
-            await this.page.waitForTimeout(1000);
+            await this.page.waitForTimeout(250);
         }
+        throw new Error('Could not access exercise');
+    }
+
+    async tryToOpenCourseFromCoursesOverviewPage(courseId: number) {
+        try {
+            if (await this.page.locator(`#course-${courseId}-header`).isVisible({ timeout: 3000 })) {
+                await this.page.locator(`#course-${courseId}-header`).click({ timeout: 100 });
+            }
+        } catch (timeoutError) {}
+    }
+
+    async tryToOpenFirstExercise() {
+        try {
+            if (await this.page.locator('#test-sidebar-card-medium').isVisible({ timeout: 3000 })) {
+                await this.page.locator('#test-sidebar-card-medium').click({ timeout: 100 });
+            }
+        } catch (timeoutError) {}
     }
 }

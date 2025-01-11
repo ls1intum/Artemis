@@ -50,7 +50,7 @@ export class Commands {
         await page.request.post(`${BASE_API}/public/logout`);
     };
 
-    static reloadUntilFound = async (page: Page, locator: Locator, interval = 2000, timeout = 20000) => {
+    static reloadUntilFound = async (page: Page, locator: Locator, interval = 1500, timeout = 10000, pageUrl?: string) => {
         const startTime = Date.now();
 
         while (Date.now() - startTime < timeout) {
@@ -58,7 +58,11 @@ export class Commands {
                 await locator.waitFor({ state: 'visible', timeout: interval });
                 return;
             } catch (error) {
-                await page.reload();
+                if (pageUrl) {
+                    await page.goto(pageUrl);
+                } else {
+                    await page.reload();
+                }
             }
         }
 

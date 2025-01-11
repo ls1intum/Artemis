@@ -6,13 +6,15 @@ export class RepositoryPage {
     private readonly page: Page;
 
     private static readonly CHECK_BUILD_RESULT_INTERVAL = 2000;
-    private static readonly CHECK_BUILD_RESULT_TIMEOUT = 90000;
+    private static readonly CHECK_BUILD_RESULT_TIMEOUT = 30000;
 
     constructor(page: Page) {
         this.page = page;
     }
 
     async openCommitHistory() {
+        const currentPageUrl = this.page.url();
+        expect(currentPageUrl).toContain('repository');
         await this.page.locator('a', { hasText: 'Open Commit History' }).click();
     }
 
