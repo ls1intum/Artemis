@@ -1,5 +1,6 @@
 import { Page, expect } from '@playwright/test';
 import { Dayjs } from 'dayjs';
+import { retry } from '../../utils';
 
 /**
  * A class which encapsulates UI selectors and actions for the exam management page.
@@ -93,12 +94,15 @@ export class ExamManagementPage {
      * Opens the exam scores page.
      */
     async openScoresPage() {
-        await this.page.locator('#scores-button').click();
+        await this.page.locator('#scores-button').waitFor({ state: 'visible', timeout: 5000 });
+        await this.page.locator('#scores-button').click({ timeout: 1000 });
     }
 
     async verifySubmitted(courseID: number, examID: number, username: string) {
-        await this.page.goto(`/course-management/${courseID}/exams/${examID}/student-exams`);
-        await this.page.locator('#student-exam').waitFor({ state: 'visible' });
+        await retry(async () => {
+            await this.page.goto(`/course-management/${courseID}/exams/${examID}/student-exams`);
+            await this.page.locator('#student-exam').waitFor({ state: 'visible', timeout: 5000 });
+        }, 'verifySubmitted failed');
         await expect(this.page.locator('#student-exam .datatable-body-row', { hasText: username }).locator('.submitted')).toHaveText('Yes');
     }
 

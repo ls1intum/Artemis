@@ -66,11 +66,12 @@ export class ExamExerciseGroupsPage {
 
     async visitPageViaUrl(courseId: number, examId: number) {
         await this.page.goto(`course-management/${courseId}/exams/${examId}/exercise-groups`);
+        await this.page.locator('#test-exercise-groups-title').waitFor({ timeout: 5000 });
     }
 
     async shouldContainExerciseWithTitle(groupID: number, exerciseTitle: string) {
         const exerciseElement = this.page.locator(`#group-${groupID} #exercises`, { hasText: exerciseTitle });
-        await exerciseElement.scrollIntoViewIfNeeded();
+        await exerciseElement.scrollIntoViewIfNeeded({ timeout: 5000 });
         await expect(exerciseElement).toBeVisible();
     }
 }

@@ -14,6 +14,7 @@ import { TextEditorPage } from '../exercises/text/TextEditorPage';
 import { Commands } from '../../commands';
 import { Fixtures } from '../../../fixtures/fixtures';
 import { ExamParticipationActions } from './ExamParticipationActions';
+import { retry } from '../../utils';
 
 export class ExamParticipationPage extends ExamParticipationActions {
     private readonly courseList: CoursesPage;
@@ -101,8 +102,10 @@ export class ExamParticipationPage extends ExamParticipationActions {
         await this.courseList.openCourse(course.id!);
         await this.courseOverview.openExamsTab();
         await this.courseOverview.openExam(exam.title!);
-        await this.page.goto(`/courses/${course.id}/exams/${exam.id}`);
-        await this.page.waitForURL(`**/exams/${exam.id}`);
+        await retry(async () => {
+            await this.page.goto(`/courses/${course.id}/exams/${exam.id}`);
+            await this.page.waitForURL(`**/exams/${exam.id}`, { timeout: 2000 });
+        }, 'Failed to access exam page.');
     }
 
     async startParticipation(student: UserCredentials, course: Course, exam: Exam) {

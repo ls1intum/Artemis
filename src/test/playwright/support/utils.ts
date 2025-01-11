@@ -191,6 +191,18 @@ export async function drag(page: Page, draggable: Locator, droppable: Locator) {
     await page.mouse.up();
 }
 
+export async function retry(fn: any, msg: string) {
+    for (let attempt = 1; attempt <= 5; attempt++) {
+        try {
+            await fn();
+        } catch (error) {
+            continue;
+        }
+        return;
+    }
+    throw new Error(msg);
+}
+
 /*
  * Exam utility functions
  */

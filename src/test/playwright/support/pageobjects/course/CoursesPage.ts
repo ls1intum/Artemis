@@ -33,7 +33,7 @@ export class CoursesPage {
             }
             await this.page.waitForTimeout(250);
         }
-        throw new Error('Could not access exercise');
+        throw new Error('Could not access course. URL:' + this.page.url());
     }
 
     async openCourseAndFirstExercise(courseId: number) {
@@ -47,7 +47,7 @@ export class CoursesPage {
             }
             await this.page.waitForTimeout(250);
         }
-        throw new Error('Could not access exercise');
+        throw new Error('Could not access exercise. URL:' + this.page.url());
     }
 
     async tryToOpenCourseFromCoursesOverviewPage(courseId: number) {

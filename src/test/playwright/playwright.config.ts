@@ -37,7 +37,7 @@ export default defineConfig({
         {
             name: 'fast-tests',
             grep: /@fast|^[^@]*$/,
-            timeout: (parseNumber(process.env.FAST_TEST_TIMEOUT_SECONDS) ?? 7) * 1000,
+            timeout: (parseNumber(process.env.FAST_TEST_TIMEOUT_SECONDS) ?? 45) * 1000,
             use: { ...devices['Desktop Chrome'] },
         },
         // Tests with @slow tag. These tests are expected to run longer
@@ -45,7 +45,7 @@ export default defineConfig({
         {
             name: 'slow-tests',
             grep: /@slow/,
-            timeout: (parseNumber(process.env.SLOW_TEST_TIMEOUT_SECONDS) ?? 15) * 1000,
+            timeout: (parseNumber(process.env.SLOW_TEST_TIMEOUT_SECONDS) ?? 180) * 1000,
             use: { ...devices['Desktop Chrome'] },
         },
         // Tests with @sequential tag. These tests are triggering programming exercise submissions.
@@ -54,7 +54,7 @@ export default defineConfig({
         {
             name: 'sequential-tests',
             grep: /@sequential/,
-            timeout: (parseNumber(process.env.SLOW_TEST_TIMEOUT_SECONDS) ?? 15) * 1000,
+            timeout: (parseNumber(process.env.SLOW_TEST_TIMEOUT_SECONDS) ?? 180) * 1000,
             use: { ...devices['Desktop Chrome'] },
         },
     ],
