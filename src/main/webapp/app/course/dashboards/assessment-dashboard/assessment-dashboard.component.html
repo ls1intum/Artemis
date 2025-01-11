@@ -6,7 +6,7 @@
                     <h2>{{ 'artemisApp.assessmentDashboard.pageHeader' | artemisTranslate }} {{ course?.title }}</h2>
                 }
                 @if (isExamMode) {
-                    <h2>
+                    <h2 id="test-exam-assessment-dashboard">
                         {{
                             !isTestRun
                                 ? ('artemisApp.assessmentDashboard.pageHeaderExam' | artemisTranslate)

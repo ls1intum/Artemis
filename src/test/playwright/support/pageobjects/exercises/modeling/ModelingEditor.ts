@@ -1,6 +1,6 @@
 import { Page } from '@playwright/test';
 import { EXERCISE_BASE, MODELING_EDITOR_CANVAS } from '../../../constants';
-import { getExercise } from '../../../utils';
+import { getExercise, retry } from '../../../utils';
 
 export class ModelingEditor {
     private readonly page: Page;
@@ -37,8 +37,16 @@ export class ModelingEditor {
         await this.page.locator('#new-modeling-example-submission').click();
     }
 
-    async clickCreateExampleSubmission() {
-        await this.page.locator('#create-example-submission').click();
+    async clickCreateExampleSubmission(url: string) {
+        await retry(
+            this.page,
+            async () => {
+                await this.page.waitForSelector('#create-example-submission', { timeout: 3_000 });
+            },
+            url,
+            'Could not open example submission page',
+        );
+        await this.page.locator('#create-example-submission').click({ timeout: 2_000 });
     }
 
     async showExampleAssessment() {

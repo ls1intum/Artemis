@@ -1,4 +1,5 @@
 import { Page, expect } from '@playwright/test';
+import { retry } from '../../utils';
 
 export class ExamExerciseGroupsPage {
     private readonly page: Page;
@@ -65,8 +66,14 @@ export class ExamExerciseGroupsPage {
     }
 
     async visitPageViaUrl(courseId: number, examId: number) {
-        await this.page.goto(`course-management/${courseId}/exams/${examId}/exercise-groups`);
-        await this.page.locator('#test-exercise-groups-title').waitFor({ timeout: 5000 });
+        const exerciseGroupsUrl = `course-management/${courseId}/exams/${examId}/exercise-groups`;
+        await this.page.goto(exerciseGroupsUrl);
+        await retry(
+            this.page,
+            async () => await this.page.locator('#test-exercise-groups-title').waitFor({ timeout: 3_000 }),
+            exerciseGroupsUrl,
+            'Failed to open exercise groups page.',
+        );
     }
 
     async shouldContainExerciseWithTitle(groupID: number, exerciseTitle: string) {

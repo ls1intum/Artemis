@@ -37,8 +37,9 @@ test.describe('Modeling Exercise Management', { tag: '@fast' }, () => {
             await expect(page.locator(MODELING_EDITOR_CANVAS).locator('g').nth(0)).toBeAttached();
             await modelingExerciseCreation.save();
 
-            await page.goto(`/course-management/${course.id}/modeling-exercises/${modelingExercise.id}/example-submissions`);
-            await modelingExerciseEditor.clickCreateExampleSubmission();
+            const exampleSubmissionUrl = `/course-management/${course.id}/modeling-exercises/${modelingExercise.id}/example-submissions`;
+            await page.goto(exampleSubmissionUrl);
+            await modelingExerciseEditor.clickCreateExampleSubmission(exampleSubmissionUrl);
             await modelingExerciseEditor.addComponentToExampleSolutionModel(1);
             await modelingExerciseEditor.addComponentToExampleSolutionModel(2);
             await modelingExerciseEditor.addComponentToExampleSolutionModel(3);

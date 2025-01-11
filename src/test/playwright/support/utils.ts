@@ -192,7 +192,7 @@ export async function drag(page: Page, draggable: Locator, droppable: Locator) {
 }
 
 /**
- * Retries a given function up to 5 times, navigating to a specified URL on each failure.
+ * Retries a given function up to 7 times, navigating to a specified URL on each failure.
  *
  * @async
  * @param {Page} page - The Puppeteer `Page` instance used for navigation and context.
@@ -204,17 +204,17 @@ export async function drag(page: Page, draggable: Locator, droppable: Locator) {
 export async function retry(page: Page, fn: any, goToUrl: string, msg: string) {
     const accumulatedErrors: string[] = [];
 
-    for (let attempt = 1; attempt <= 5; attempt++) {
+    for (let attempt = 1; attempt <= 7; attempt++) {
         try {
             await fn();
         } catch (error) {
-            accumulatedErrors.push(error.message);
+            accumulatedErrors.push(error.message + '\n' + 'page URL: ' + page.url());
             await page.goto(goToUrl);
             continue;
         }
         return;
     }
-    throw new Error(msg + ' ' + page.url() + ' errors: ' + accumulatedErrors.join('; '));
+    throw new Error(msg + ' ' + page.url() + ' errors: ' + accumulatedErrors.join('--\n'));
 }
 
 /*
@@ -253,7 +253,7 @@ export async function prepareExam(course: Course, end: dayjs.Dayjs, exerciseType
         endDate: end,
         numberOfCorrectionRoundsInExam: numberOfCorrectionRounds,
         examStudentReviewStart: resultDate,
-        examStudentReviewEnd: resultDate.add(1, 'minute'),
+        examStudentReviewEnd: resultDate.add(2, 'minute'),
         publishResultsDate: resultDate,
         gracePeriod: 10,
     };
