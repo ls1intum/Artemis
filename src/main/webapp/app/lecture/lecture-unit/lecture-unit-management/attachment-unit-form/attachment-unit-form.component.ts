@@ -65,6 +65,7 @@ export class AttachmentUnitFormComponent implements OnChanges {
     private readonly formBuilder = inject(FormBuilder);
     form: FormGroup = this.formBuilder.group({
         name: [undefined as string | undefined, [Validators.required, Validators.maxLength(255)]],
+        fileName: [undefined as string | undefined, [Validators.required]],
         description: [undefined as string | undefined, [Validators.maxLength(1000)]],
         releaseDate: [undefined as dayjs.Dayjs | undefined],
         version: [{ value: 1, disabled: true }],
@@ -74,7 +75,7 @@ export class AttachmentUnitFormComponent implements OnChanges {
     private readonly statusChanges = toSignal(this.form.statusChanges ?? 'INVALID');
     private readonly name = toSignal(this.nameControl?.valueChanges ?? of(''));
     isFormValid = computed(() => {
-        return this.statusChanges() === 'VALID' && !this.isFileTooBig() && this.name() && this.fileName();
+        return this.statusChanges() === 'VALID' && !this.isFileTooBig();
     });
 
     ngOnChanges(): void {
@@ -92,6 +93,9 @@ export class AttachmentUnitFormComponent implements OnChanges {
         }
         this.file = input.files[0];
         this.fileName.set(this.file.name);
+        this.form.patchValue({
+            fileName: this.file.name,
+        });
         // automatically set the name in case it is not yet specified
         if (this.form && !this.name()) {
             this.form.patchValue({
@@ -159,6 +163,9 @@ export class AttachmentUnitFormComponent implements OnChanges {
         }
         if (formData?.fileProperties?.fileName) {
             this.fileName.set(formData?.fileProperties?.fileName);
+            this.form.patchValue({
+                fileName: formData?.fileProperties?.fileName,
+            });
         }
     }
 
