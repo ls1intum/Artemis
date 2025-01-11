@@ -5,11 +5,26 @@ import { CompetencyRelationDTO, CompetencyRelationType, CourseCompetency, Course
 import { MockTranslateService } from '../../../helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
 
+interface CourseCompetencyStyle {
+    dimension: {
+        height: number;
+        width: number;
+    };
+    meta: {
+        forceDimensions: boolean;
+    };
+    position: {
+        x: number;
+        y: number;
+    };
+}
+type StyledCourseCompetency = CourseCompetency & CourseCompetencyStyle;
+
 describe('CourseCompetenciesRelationGraphComponent', () => {
     let component: CourseCompetenciesRelationGraphComponent;
     let fixture: ComponentFixture<CourseCompetenciesRelationGraphComponent>;
 
-    const courseCompetencies: CourseCompetency[] = [
+    const courseCompetencies: StyledCourseCompetency[] = [
         {
             id: 1,
             type: CourseCompetencyType.COMPETENCY,
