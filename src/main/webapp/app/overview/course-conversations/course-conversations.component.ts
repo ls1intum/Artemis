@@ -588,6 +588,10 @@ export class CourseConversationsComponent implements OnInit, OnDestroy {
         this.channelSearchCollapsed = !this.channelSearchCollapsed;
     }
 
+    openThread(postToOpen: Post | undefined) {
+        this.postInThread = postToOpen;
+    }
+
     @HostListener('document:keydown', ['$event'])
     handleSearchShortcut(event: KeyboardEvent) {
         if ((event.metaKey || event.ctrlKey) && event.key === 'k') {

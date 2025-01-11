@@ -11,7 +11,11 @@ describe('CourseCompetenciesRelationGraphComponent', () => {
 
     const courseCompetencies: CourseCompetency[] = [
         { id: 1, type: CourseCompetencyType.COMPETENCY, title: 'Competency' },
-        { id: 2, type: CourseCompetencyType.PREREQUISITE, title: 'Prerequisite' },
+        {
+            id: 2,
+            type: CourseCompetencyType.PREREQUISITE,
+            title: 'Prerequisite',
+        },
     ];
 
     const relations: CompetencyRelationDTO[] = [

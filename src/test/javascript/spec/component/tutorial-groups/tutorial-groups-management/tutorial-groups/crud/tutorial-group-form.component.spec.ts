@@ -256,10 +256,11 @@ describe('TutorialGroupFormComponent', () => {
         it('should submit valid form', fakeAsync(() => {
             setValidFormValues();
             runOnPushChangeDetection(fixture);
-            expect(component.form.valid).toBeTrue();
-            expect(component.isSubmitPossible).toBeTrue();
-
-            clickSubmit(true);
+            fixture.whenStable().then(() => {
+                expect(component.form.valid).toBeTrue();
+                expect(component.isSubmitPossible).toBeTrue();
+                clickSubmit(true);
+            });
         }));
     });
 

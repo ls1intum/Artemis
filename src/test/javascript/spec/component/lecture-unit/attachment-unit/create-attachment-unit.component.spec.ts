@@ -112,8 +112,8 @@ describe('CreateAttachmentUnitComponent', () => {
         const navigateSpy = jest.spyOn(router, 'navigate');
         createAttachmentUnitComponentFixture.detectChanges();
 
-        const attachmentUnitFormStubComponent = createAttachmentUnitComponentFixture.debugElement.query(By.directive(AttachmentUnitFormComponent)).componentInstance;
-        attachmentUnitFormStubComponent.formSubmitted.emit(attachmentUnitFormData);
+        const attachmentUnitFormComponent = createAttachmentUnitComponentFixture.debugElement.query(By.directive(AttachmentUnitFormComponent)).componentInstance;
+        attachmentUnitFormComponent.formSubmitted.emit(attachmentUnitFormData);
 
         createAttachmentUnitComponentFixture.whenStable().then(() => {
             expect(createAttachmentUnitStub).toHaveBeenCalledWith(formData, 1);
