@@ -20,6 +20,12 @@ import { AlertService } from 'app/core/util/alert.service';
 import { SortService } from 'app/shared/service/sort.service';
 import { MockAccountService } from '../../helpers/mocks/service/mock-account.service';
 import { AccountService } from 'app/core/auth/account.service';
+import { IrisSettingsService } from 'app/iris/settings/shared/iris-settings.service';
+import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
+import { PROFILE_IRIS } from 'app/app.constants';
+import { ProfileInfo } from 'app/shared/layouts/profiles/profile-info.model';
+import { IrisCourseSettings } from 'app/entities/iris/settings/iris-settings.model';
+import { MockProfileService } from '../../helpers/mocks/service/mock-profile.service';
 
 function createFaq(id: number, category: string, color: string): Faq {
     const faq = new Faq();
@@ -39,6 +45,8 @@ describe('FaqComponent', () => {
     let alertServiceStub: jest.SpyInstance;
     let alertService: AlertService;
     let sortService: SortService;
+    let profileService: ProfileService;
+    let irisSettingsService: IrisSettingsService;
 
     let faq1: Faq;
     let faq2: Faq;
@@ -53,6 +61,10 @@ describe('FaqComponent', () => {
         faq3 = createFaq(3, 'category3', '#0ab84f');
 
         courseId = 1;
+
+        const profileInfo = {
+            activeProfiles: [],
+        } as unknown as ProfileInfo;
 
         TestBed.configureTestingModule({
             imports: [ArtemisTestModule, MockModule(ArtemisMarkdownEditorModule), MockModule(BrowserAnimationsModule)],
@@ -72,6 +84,7 @@ describe('FaqComponent', () => {
                         },
                     },
                 },
+                { provide: ProfileService, useValue: new MockProfileService() },
                 MockProvider(FaqService, {
                     findAllByCourseId: () => {
                         return of(
@@ -109,6 +122,12 @@ describe('FaqComponent', () => {
                 faqService = TestBed.inject(FaqService);
                 alertService = TestBed.inject(AlertService);
                 sortService = TestBed.inject(SortService);
+
+                profileService = TestBed.inject(ProfileService);
+                irisSettingsService = TestBed.inject(IrisSettingsService);
+
+                profileService = faqComponentFixture.debugElement.injector.get(ProfileService);
+                jest.spyOn(profileService, 'getProfileInfo').mockReturnValue(of(profileInfo));
             });
     });
 
@@ -223,5 +242,38 @@ describe('FaqComponent', () => {
         faqComponent.acceptProposedFaq(courseId, faq1);
         expect(faqService.update).toHaveBeenCalledExactlyOnceWith(courseId, faq1);
         expect(faq1.faqState).toEqual(FaqState.PROPOSED);
+    });
+
+    it('should call the service to ingest lectures when ingestLecturesInPyris is called', () => {
+        faqComponent.faqs = [faq1];
+        const ingestSpy = jest.spyOn(faqService, 'ingestFaqsInPyris').mockImplementation(() => of(new HttpResponse<void>({ status: 200 })));
+        faqComponent.ingestFaqsInPyris();
+        expect(ingestSpy).toHaveBeenCalledWith(faq1.course?.id);
+        expect(ingestSpy).toHaveBeenCalledOnce();
+    });
+
+    it('should log error when error occurs', () => {
+        alertServiceStub = jest.spyOn(alertService, 'error');
+        faqComponent.faqs = [faq1];
+        jest.spyOn(faqService, 'ingestFaqsInPyris').mockReturnValue(throwError(() => new Error('Error while ingesting')));
+        faqComponent.ingestFaqsInPyris();
+        expect(alertServiceStub).toHaveBeenCalledOnce();
+    });
+
+    it('should set faqIngestionEnabled based on service response', () => {
+        faqComponent.faqs = [faq1];
+        const profileInfoResponse = {
+            activeProfiles: [PROFILE_IRIS],
+        } as ProfileInfo;
+        const irisSettingsResponse = {
+            irisFaqIngestionSettings: {
+                enabled: true,
+            },
+        } as IrisCourseSettings;
+        jest.spyOn(profileService, 'getProfileInfo').mockReturnValue(of(profileInfoResponse));
+        jest.spyOn(irisSettingsService, 'getCombinedCourseSettings').mockImplementation(() => of(irisSettingsResponse));
+        faqComponent.ngOnInit();
+        expect(irisSettingsService.getCombinedCourseSettings).toHaveBeenCalledWith(faqComponent.courseId);
+        expect(faqComponent.faqIngestionEnabled).toBeTrue();
     });
 });

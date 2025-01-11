@@ -12,6 +12,7 @@ import {
     IrisChatSubSettings,
     IrisCompetencyGenerationSubSettings,
     IrisCourseChatSubSettings,
+    IrisFaqIngestionSubSettings,
     IrisLectureIngestionSubSettings,
     IrisTextExerciseChatSubSettings,
 } from 'app/entities/iris/settings/iris-sub-settings.model';
@@ -34,6 +35,7 @@ export class IrisSettingsUpdateComponent implements OnInit, DoCheck, ComponentCa
     originalIrisSettings?: IrisSettings;
 
     public autoLectureIngestion = false;
+    public autoFaqIngestion = false;
 
     // Status bools
     isLoading = false;
@@ -88,6 +90,7 @@ export class IrisSettingsUpdateComponent implements OnInit, DoCheck, ComponentCa
             this.fillEmptyIrisSubSettings();
             this.originalIrisSettings = cloneDeep(settings);
             this.autoLectureIngestion = this.irisSettings?.irisLectureIngestionSettings?.autoIngestOnLectureAttachmentUpload ?? false;
+            this.autoFaqIngestion = this.irisSettings?.irisFaqIngestionSettings?.autoIngestOnFaqCreation ?? false;
             this.isDirty = false;
         });
         this.loadParentIrisSettingsObservable().subscribe((settings) => {
@@ -117,12 +120,18 @@ export class IrisSettingsUpdateComponent implements OnInit, DoCheck, ComponentCa
         if (!this.irisSettings.irisCompetencyGenerationSettings) {
             this.irisSettings.irisCompetencyGenerationSettings = new IrisCompetencyGenerationSubSettings();
         }
+        if (!this.irisSettings.irisFaqIngestionSettings) {
+            this.irisSettings.irisFaqIngestionSettings = new IrisFaqIngestionSubSettings();
+        }
     }
 
     saveIrisSettings(): void {
         this.isSaving = true;
         if (this.irisSettings && this.irisSettings.irisLectureIngestionSettings) {
             this.irisSettings.irisLectureIngestionSettings.autoIngestOnLectureAttachmentUpload = this.autoLectureIngestion;
+        }
+        if (this.irisSettings && this.irisSettings.irisFaqIngestionSettings) {
+            this.irisSettings.irisFaqIngestionSettings.autoIngestOnFaqCreation = this.autoFaqIngestion;
         }
         this.saveIrisSettingsObservable().subscribe(
             (response) => {
