@@ -200,7 +200,7 @@ export async function retry(fn: any, msg: string) {
         }
         return;
     }
-    throw new Error(msg);
+    throw new Error(msg + ' ' + this.page.url());
 }
 
 /*

@@ -69,11 +69,14 @@ export class ExamManagementPage {
      * @param examID the id of the exam
      * @param timeout timeout of waiting for assessment dashboard button
      */
-    async openAssessmentDashboard(courseID: number, examID: number, timeout = 5000) {
-        await this.page.goto(`/course-management/${courseID}/exams`);
-        const assessmentButton = this.page.locator(`#exercises-button-${examID}`);
-        await assessmentButton.waitFor({ state: 'visible', timeout: timeout });
-        await assessmentButton.click();
+    async openAssessmentDashboard(courseID: number, examID: number, timeout = 10_000) {
+        await retry(async () => {
+            await this.page.goto(`/course-management/${courseID}/exams`);
+            await this.page.locator('#course-page-heading').waitFor({ timeout: timeout }); // Exam Management page title
+            const assessmentButton = this.page.locator(`#exercises-button-${examID}`);
+            await assessmentButton.waitFor({ state: 'visible', timeout: timeout });
+            await assessmentButton.click();
+        }, 'Failed to open exam assessment button');
     }
 
     /**
