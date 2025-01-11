@@ -13,8 +13,7 @@ export class StudentAssessmentPage {
     }
 
     async startComplaint() {
-        // await this.page.waitForTimeout(100000000);
-        await this.page.locator('#complain').click({ timeout: 30000 });
+        await this.page.locator('#complain').click({ timeout: 10_000 });
     }
 
     async enterComplaint(text: string) {

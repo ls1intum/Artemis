@@ -2,7 +2,7 @@ import { test } from '../../support/fixtures';
 import { admin, instructor, studentOne } from '../../support/users';
 import { Course } from 'app/entities/course.model';
 import { Exam } from 'app/entities/exam/exam.model';
-import { generateUUID, prepareExam, startAssessing } from '../../support/utils';
+import { generateUUID, prepareExam, retry, startAssessing } from '../../support/utils';
 import dayjs from 'dayjs';
 import { ExamChecklistItem } from '../../support/pageobjects/exam/ExamDetailsPage';
 import { ExerciseType } from '../../support/constants';
@@ -80,7 +80,7 @@ test.describe('Exam Checklists', async () => {
             await navigateToExamDetailsPage(page, course, exam);
             await examDetails.checkItemUnchecked(ExamChecklistItem.EACH_EXERCISE_GROUP_HAS_EXERCISES);
             await examExerciseGroupCreation.addGroupWithExercise(exam, ExerciseType.TEXT);
-            await page.reload();
+            await navigateToExamDetailsPage(page, course, exam);
             await examDetails.checkItemChecked(ExamChecklistItem.EACH_EXERCISE_GROUP_HAS_EXERCISES);
             await examDetails.openExerciseGroups();
             await examExerciseGroups.clickAddExerciseGroup();
@@ -103,7 +103,7 @@ test.describe('Exam Checklists', async () => {
             await examDetails.checkItemUnchecked(ExamChecklistItem.POINTS_IN_EXERCISE_GROUPS_EQUAL);
             const exerciseGroup = await examAPIRequests.addExerciseGroupForExam(exam);
             await exerciseAPIRequests.createTextExercise({ exerciseGroup }, 'Exercise ' + generateUUID(), textExerciseTemplate);
-            await page.reload();
+            await navigateToExamDetailsPage(page, course, exam);
             await examDetails.checkItemChecked(ExamChecklistItem.POINTS_IN_EXERCISE_GROUPS_EQUAL);
             const maxPointsOfFirstExercise = textExerciseTemplate.maxPoints;
             const exerciseTemplate = { ...textExerciseTemplate };
@@ -295,7 +295,16 @@ async function createExam(course: Course, page: Page, customConfig?: any) {
 }
 
 async function navigateToExamDetailsPage(page: Page, course: Course, exam: Exam) {
-    await page.goto(`/course-management/${course.id}/exams/${exam.id}`);
+    const checklistUrl = `/course-management/${course.id}/exams/${exam.id}`;
+    await page.goto(checklistUrl);
+    await retry(
+        page,
+        async () => {
+            await page.waitForSelector('#test-exam-checklist-title', { timeout: 3_000 });
+        },
+        checklistUrl,
+        'Failed to navigate to exam details page',
+    );
 }
 
 async function addExamExerciseGroup(examExerciseGroups: ExamExerciseGroupsPage, examExerciseGroupCreation: ExamExerciseGroupCreationPage, isMandatory?: boolean) {

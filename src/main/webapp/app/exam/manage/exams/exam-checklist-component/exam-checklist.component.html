@@ -1,6 +1,6 @@
 @if (exam?.course?.isAtLeastInstructor) {
     <div>
-        <h2>
+        <h2 id="test-exam-checklist-title">
             <span jhiTranslate="artemisApp.examManagement.checklist.{{ isTestExam ? 'testExam.' : '' }}title"></span>
         </h2>
         @if (!isTestExam) {

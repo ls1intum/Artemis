@@ -16,7 +16,7 @@ export class ExamStartEndPage {
 
     async setConfirmCheckmark() {
         await this.page.waitForSelector('#confirmBox', { timeout: 5_000 });
-        await this.page.locator('#confirmBox').check({ timeout: 100 });
+        await this.page.locator('#confirmBox').check({ timeout: 1_000 });
     }
 
     async pressStartWithWait() {
