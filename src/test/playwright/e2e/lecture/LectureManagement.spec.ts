@@ -4,7 +4,7 @@ import { Course } from 'app/entities/course.model';
 import { Lecture } from 'app/entities/lecture.model';
 
 import { admin, instructor } from '../../support/users';
-import { generateUUID } from '../../support/utils';
+import { generateUUID, retry } from '../../support/utils';
 
 import { expect } from '@playwright/test';
 import { test } from '../../support/fixtures';
@@ -61,7 +61,9 @@ test.describe('Lecture management', { tag: '@fast' }, () => {
     test('Deletes a lecture', async ({ page, login, courseManagementAPIRequests, lectureManagement }) => {
         await login(instructor, '/');
         const lecture = await courseManagementAPIRequests.createLecture(course);
-        await page.goto('/course-management/' + course.id + '/lectures');
+        const lecturesUrl = `/course-management/${course.id}/lectures`;
+        await page.goto(lecturesUrl);
+        await retry(page, async () => await page.waitForSelector(`#test-lecture-page-heading`, { timeout: 3_000 }), lecturesUrl, 'Failed to access lecture page');
         const resp = await lectureManagement.deleteLecture(lecture);
         expect(resp.status()).toBe(200);
         await expect(lectureManagement.getLecture(lecture.id!)).not.toBeVisible();

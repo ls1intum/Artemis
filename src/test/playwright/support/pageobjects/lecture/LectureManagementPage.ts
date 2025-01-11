@@ -27,7 +27,7 @@ export class LectureManagementPage {
      * @returns A promise that resolves with the response of the delete action.
      */
     async deleteLecture(lecture: Lecture) {
-        await this.getLecture(lecture.id!).locator('#delete-lecture').click();
+        await this.getLecture(lecture.id!).locator('#delete-lecture').click({ timeout: 3_000 });
         await expect(this.page.locator('#delete')).toBeDisabled();
         await this.page.fill('#confirm-entity-name', lecture.title!);
         const responsePromise = this.page.waitForResponse(`${BASE_API}/lectures/*`);
