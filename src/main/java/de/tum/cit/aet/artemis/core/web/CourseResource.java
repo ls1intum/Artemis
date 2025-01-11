@@ -888,7 +888,7 @@ public class CourseResource {
      * zip file. It immediately returns and runs this task asynchronously. When the task is done, the course is marked as archived, which means the zip file can be downloaded.
      *
      * @param courseId the id of the course
-     * @return empty
+     * @return the ResponseEntity with status 200 (OK) when no exception occurred
      */
     @PutMapping("courses/{courseId}/archive")
     @EnforceAtLeastInstructor

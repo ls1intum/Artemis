@@ -14,6 +14,8 @@ import java.util.stream.Stream;
 
 import jakarta.validation.constraints.NotNull;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Profile;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -44,10 +46,13 @@ import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.core.repository.CourseRepository;
 import de.tum.cit.aet.artemis.core.repository.UserRepository;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
+import de.tum.cit.aet.artemis.core.util.TimeLogUtil;
 
 @Profile(PROFILE_CORE)
 @Service
 public class ConversationService {
+
+    private static final Logger log = LoggerFactory.getLogger(ConversationService.class);
 
     private static final String METIS_WEBSOCKET_CHANNEL_PREFIX = "/topic/metis/";
 
@@ -112,18 +117,6 @@ public class ConversationService {
     }
 
     /**
-     * Checks if a user is a member of a conversation and therefore can access it else throws an exception
-     *
-     * @param conversationId the id of the conversation
-     * @param userId         the id of the user
-     */
-    public void isMemberElseThrow(Long conversationId, Long userId) {
-        if (!isMember(conversationId, userId)) {
-            throw new AccessForbiddenException("User not allowed to access this conversation!");
-        }
-    }
-
-    /**
      * Checks whether the user is a member of the conversation.
      * <p>
      * If the user is not a member, but the conversation is course-wide, a participant entry will be created.
@@ -171,11 +164,11 @@ public class ConversationService {
     }
 
     /**
-     * Gets the conversation in a course for which the user is a member
+     * Gets the conversations in a course for which the user is a member
      *
      * @param course         the course
      * @param requestingUser the user for which the conversations are requested
-     * @return the conversation in the course for which the user is a member
+     * @return list of conversations in the course for which the user is a member
      */
     public List<ConversationDTO> getConversationsOfUser(Course course, User requestingUser) {
         var conversationsOfUser = new ArrayList<Conversation>();
@@ -285,17 +278,6 @@ public class ConversationService {
     }
 
     /**
-     * Notify all members of a conversation about a new message in the conversation
-     *
-     * @param course       the course in which the conversation takes place
-     * @param conversation conversation which members to notify about the new message (except the author)
-     * @param recipients   users to which the notification should be sent
-     */
-    public void notifyAllConversationMembersAboutNewMessage(Course course, Conversation conversation, Set<User> recipients) {
-        broadcastOnConversationMembershipChannel(course, MetisCrudAction.NEW_MESSAGE, conversation, recipients);
-    }
-
-    /**
      * Removes users from a conversation
      *
      * @param course       the course in which the conversation is located
@@ -335,6 +317,7 @@ public class ConversationService {
      * @param conversation    the conversation that was affected
      * @param recipients      the users to be messaged
      */
+    // TODO: this should be Async
     public void broadcastOnConversationMembershipChannel(Course course, MetisCrudAction metisCrudAction, Conversation conversation, Set<User> recipients) {
         String conversationParticipantTopicName = getConversationParticipantTopicName(course.getId());
         recipients.forEach(user -> sendToConversationMembershipChannel(metisCrudAction, conversation, user, conversationParticipantTopicName));
@@ -445,6 +428,39 @@ public class ConversationService {
     }
 
     /**
+     * Mark all conversation of a user as read in the given course
+     *
+     * @param courseId       the id of the course
+     * @param requestingUser the user that wants to mark the conversation as read
+     */
+    public void markAllConversationOfAUserAsRead(Long courseId, User requestingUser) {
+        long start = System.nanoTime();
+        // First, update all existing conversation participants with only two database queries
+        ZonedDateTime now = ZonedDateTime.now();
+        var userId = requestingUser.getId();
+        List<Long> conversationIds = conversationParticipantRepository.findConversationIdsByUserIdAndCourseId(userId, courseId);
+        conversationParticipantRepository.updateMultipleLastReadAsync(userId, conversationIds, now);
+
+        log.debug("Marking all conversations with existing participants as read took {} ms", TimeLogUtil.formatDurationFrom(start));
+        start = System.nanoTime();
+
+        // Then, find all course-wide channels that the user has not yet accessed and create conversation participants for them
+        List<Channel> courseWideChannelsWithoutParticipants = conversationRepository.findAllCourseWideChannelsByUserIdAndCourseIdWithoutConversationParticipant(courseId, userId);
+        List<ConversationParticipant> participants = new ArrayList<>();
+        for (Channel channel : courseWideChannelsWithoutParticipants) {
+            var newParticipant = ConversationParticipant.createWithDefaultValues(requestingUser, channel);
+            newParticipant.setUnreadMessagesCount(0L);
+            newParticipant.setLastRead(now);
+            participants.add(newParticipant);
+        }
+        // save all new conversation participants (i.e. for course-wide channels that the user has not yet accessed)
+        if (!participants.isEmpty()) {
+            conversationParticipantRepository.saveAll(participants);
+        }
+        log.debug("Marking all conversations without participants (i.e. creating new ones) as read took {} ms", TimeLogUtil.formatDurationFrom(start));
+    }
+
+    /**
      * The user can select one of these roles to filter the conversation members by role
      */
     public enum ConversationMemberSearchFilters {
@@ -458,7 +474,7 @@ public class ConversationService {
      * @param findAllStudents    if true, result includes all users with the student role in the course
      * @param findAllTutors      if true, result includes all users with the tutor role in the course
      * @param findAllInstructors if true, result includes all users with the instructor role in the course
-     * @return the list of users found
+     * @return the set of users found in the database
      */
     public Set<User> findUsersInDatabase(Course course, boolean findAllStudents, boolean findAllTutors, boolean findAllInstructors) {
         Set<User> users = new HashSet<>();

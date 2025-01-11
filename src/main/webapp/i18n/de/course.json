@@ -259,7 +259,8 @@
                 "assessmentsTitle": "Insgesamte Bewertungen",
                 "complaintsTitle": "Insgesamte Beschwerden",
                 "moreFeedbackTitle": "Insgesamte Feedbackanfragen",
-                "averageStudentScoreTitle": "Durchschnittliche Punktzahl der Studierenden"
+                "averageStudentScoreTitle": "Durchschnittliche Punktzahl der Studierenden",
+                "currentTotalLLMCostTitle": "Insgesamte LLM Kosten"
             },
             "activeStudents": "Aktive Studierende: {{ students }}",
             "notStartedYet": "Der Kurs hat noch nicht offiziell begonnen. Offizieller Kursstart:",

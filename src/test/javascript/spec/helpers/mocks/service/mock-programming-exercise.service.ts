@@ -17,15 +17,12 @@ export class MockProgrammingExerciseService {
     exportInstructorRepository = (exerciseId: number, repositoryType: ProgrammingExerciseInstructorRepositoryType) => of({ body: undefined });
     exportStudentRepository = (exerciseId: number, participationId: number) => of({ body: undefined });
     exportStudentRequestedRepository = (exerciseId: number, includeTests: boolean) => of({ body: undefined });
-    getTasksAndTestsExtractedFromProblemStatement = (exerciseId: number) => of();
-    deleteTasksWithSolutionEntries = (exerciseId: number) => of();
     getDiffReport = (exerciseId: number) => of({});
     getBuildLogStatistics = (exerciseId: number) => of({});
     getBuildConfig = (exerciseId: number) => of({});
     createStructuralSolutionEntries = (exerciseId: number) => of({});
     createBehavioralSolutionEntries = (exerciseId: number) => of({});
     getLatestResult = (participation: Participation) => of({});
-    getLatestFullTestwiseCoverageReport = (exerciseId: number) => of({});
     combineTemplateRepositoryCommits = (exerciseId: number) => of({});
     delete = (programmingExerciseId: number, deleteStudentReposBuildPlans: boolean, deleteBaseReposBuildPlans: boolean) => of({});
     generateStructureOracle = (exerciseId: number) => of({});

@@ -1,20 +1,17 @@
-import { Injectable } from '@angular/core';
+import { Injectable, inject } from '@angular/core';
 import { HttpClient, HttpParams, HttpResponse } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { ChannelDTO, ChannelIdAndNameDTO } from 'app/entities/metis/conversation/channel.model';
-import { ConversationService } from 'app/shared/metis/conversations/conversation.service';
 import { map } from 'rxjs/operators';
 import { AccountService } from 'app/core/auth/account.service';
+import { convertDateFromServer } from 'app/utils/date.utils';
 
 @Injectable({ providedIn: 'root' })
 export class ChannelService {
     public resourceUrl = '/api/courses/';
 
-    constructor(
-        private http: HttpClient,
-        private conversationService: ConversationService,
-        private accountService: AccountService,
-    ) {}
+    private http = inject(HttpClient);
+    private accountService = inject(AccountService);
 
     getChannelsOfCourse(courseId: number): Observable<HttpResponse<ChannelDTO[]>> {
         return this.http.get<ChannelDTO[]>(`${this.resourceUrl}${courseId}/channels/overview`, {
@@ -53,13 +50,11 @@ export class ChannelService {
     }
 
     create(courseId: number, channelDTO: ChannelDTO): Observable<HttpResponse<ChannelDTO>> {
-        return this.http.post<ChannelDTO>(`${this.resourceUrl}${courseId}/channels`, channelDTO, { observe: 'response' }).pipe(map(this.conversationService.convertDateFromServer));
+        return this.http.post<ChannelDTO>(`${this.resourceUrl}${courseId}/channels`, channelDTO, { observe: 'response' }).pipe(map(this.convertDateFromServer));
     }
 
     update(courseId: number, channelId: number, channelDTO: ChannelDTO): Observable<HttpResponse<ChannelDTO>> {
-        return this.http
-            .put<ChannelDTO>(`${this.resourceUrl}${courseId}/channels/${channelId}`, channelDTO, { observe: 'response' })
-            .pipe(map(this.conversationService.convertDateFromServer));
+        return this.http.put<ChannelDTO>(`${this.resourceUrl}${courseId}/channels/${channelId}`, channelDTO, { observe: 'response' }).pipe(map(this.convertDateFromServer));
     }
     deregisterUsersFromChannel(courseId: number, channelId: number, logins?: string[]): Observable<HttpResponse<void>> {
         // if no explicit login is give we assume self deregistration
@@ -102,5 +97,19 @@ export class ChannelService {
         // if no explicit login is give we assume trying to revoke channel moderator role from self
         const userLogins = logins ? logins : [this.accountService.userIdentity?.login];
         return this.http.post<void>(`${this.resourceUrl}${courseId}/channels/${channelId}/revoke-channel-moderator`, userLogins, { observe: 'response' });
+    }
+
+    public convertDateFromServer = (res: HttpResponse<ChannelDTO>): HttpResponse<ChannelDTO> => {
+        if (res.body) {
+            this.convertServerDates(res.body);
+        }
+        return res;
+    };
+
+    public convertServerDates(conversation: ChannelDTO) {
+        conversation.creationDate = convertDateFromServer(conversation.creationDate);
+        conversation.lastMessageDate = convertDateFromServer(conversation.lastMessageDate);
+        conversation.lastReadDate = convertDateFromServer(conversation.lastReadDate);
+        return conversation;
     }
 }

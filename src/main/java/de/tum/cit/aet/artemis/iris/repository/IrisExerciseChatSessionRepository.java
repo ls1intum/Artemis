@@ -36,7 +36,6 @@ public interface IrisExerciseChatSessionRepository extends ArtemisJpaRepository<
      * @return A list of chat sessions sorted by creation date in descending order.
      */
     @Query("""
-
             SELECT s
                 FROM IrisExerciseChatSession s
                 WHERE s.exercise.id = :exerciseId
@@ -68,11 +67,9 @@ public interface IrisExerciseChatSessionRepository extends ArtemisJpaRepository<
      */
     default List<IrisExerciseChatSession> findLatestByExerciseIdAndUserIdWithMessages(Long exerciseId, Long userId, Pageable pageable) {
         List<Long> ids = findSessionsByExerciseIdAndUserId(exerciseId, userId, pageable).stream().map(DomainObject::getId).toList();
-
         if (ids.isEmpty()) {
             return Collections.emptyList();
         }
-
         return findSessionsWithMessagesByIdIn(ids);
     }
 
