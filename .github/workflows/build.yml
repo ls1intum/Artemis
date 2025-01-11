@@ -32,7 +32,7 @@ on:
     - created
 
 
-# Keep build.yml in sync with test-server.yml
+# Keep build.yml in sync with testserver-helios.yml
 
 # Keep in sync with codeql-analysis.yml and test.yml and analysis-of-endpoint-connections.yml
 env:
@@ -48,7 +48,6 @@ jobs:
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v4
-
     - name: Setup Node.js
       uses: actions/setup-node@v4
       with:
@@ -150,28 +149,3 @@ jobs:
     # TODO: Push to Docker Hub (develop + tag)
 
     # TODO: Push to Chair Harbour (??)
-
-  add-build-error-comment:
-    name: Add Build Error Comment
-    needs: [build, docker]
-    runs-on: ubuntu-latest
-    if: ${{ always() && github.event_name == 'pull_request' }}
-    steps:
-      - name: Post comment about build/docker failure
-        if: failure()
-        uses: marocchino/sticky-pull-request-comment@v2
-        with:
-          number: ${{ github.event.pull_request.number }}
-          header: build-failure
-          message: |
-            ### 🚨 Build or Docker step failed 🚨
-
-            Please check the logs of the failed step for more information.
-
-      - name: Remove sticky comment if build/docker succeed
-        if: success()
-        uses: marocchino/sticky-pull-request-comment@v2
-        with:
-          number: ${{ github.event.pull_request.number }}
-          header: build-failure
-          delete: true

@@ -34,32 +34,32 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           script: |
-            const labelsToRemove = [];
-            const labelsToProcess = [];
+              const labelsToRemove = [];
+              const labelsToProcess = [];
 
-            // Get the PR number
-            const prNumber = context.payload.pull_request.number;
+              // Get the PR number
+              const prNumber = context.payload.pull_request.number;
 
-            // Iterate through labels on the PR
-            for (const label of context.payload.pull_request.labels) {
-              const labelName = label.name;
-              const regex = /^lock:artemis-test(\d+)$/;
+              // Iterate through labels on the PR
+              for (const label of context.payload.pull_request.labels) {
+                const labelName = label.name;
+                const regex = /^lock:artemis-test(\d+)$/;
 
-              if (regex.test(labelName)) {
-                // Extract the part after "lock:" using capture groups
-                const extractedLabel = labelName.match(regex)[1];
-                labelsToProcess.push(extractedLabel);
-                labelsToRemove.push(labelName);
+                if (regex.test(labelName)) {
+                  // Extract the part after "lock:" using capture groups
+                  const extractedLabel = labelName.match(regex)[1];
+                  labelsToProcess.push(extractedLabel);
+                  labelsToRemove.push(labelName);
+                }
               }
-            }
 
-            // Do something with the extracted labels
-            console.log('Badges to process:', labelsToProcess);
-            console.log('Labels to remove:', labelsToRemove);
+              // Do something with the extracted labels
+              console.log('Badges to process:', labelsToProcess);
+              console.log('Labels to remove:', labelsToRemove);
 
-            // Use the labelsToRemove array to remove the matching labels
-            core.setOutput('badges', JSON.stringify(labelsToProcess));
-            core.setOutput('labels', labelsToRemove.join(', '));
+              // Use the labelsToRemove array to remove the matching labels
+              core.setOutput('badges', JSON.stringify(labelsToProcess));
+              core.setOutput('labels', labelsToRemove.join(', '));
 
 
   remove_labels:
