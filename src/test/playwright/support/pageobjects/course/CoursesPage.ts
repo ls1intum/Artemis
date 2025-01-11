@@ -36,6 +36,19 @@ export class CoursesPage {
         throw new Error('Could not access course. URL:' + this.page.url());
     }
 
+    async openSpecificExercise(url: string) {
+        for (let retry = 0; retry < 5; retry++) {
+            await this.tryToWaitForExerciseToOpen();
+            if (/\/exercises\/\d+/.test(this.page.url())) {
+                return;
+            } else {
+                await this.page.goto(url);
+            }
+            await this.page.waitForTimeout(250);
+        }
+        throw new Error('Could open exercise directly. URL:' + this.page.url());
+    }
+
     async openCourseAndFirstExercise(courseId: number) {
         for (let retry = 0; retry < 5; retry++) {
             if (/\/exercises\/\d+/.test(this.page.url())) {
@@ -63,6 +76,12 @@ export class CoursesPage {
             if (await this.page.locator('#test-sidebar-card-medium').isVisible({ timeout: 3000 })) {
                 await this.page.locator('#test-sidebar-card-medium').click({ timeout: 100 });
             }
+        } catch (timeoutError) {}
+    }
+
+    async tryToWaitForExerciseToOpen() {
+        try {
+            await this.page.waitForSelector('#test-sidebar-card-medium', { state: 'visible', timeout: 3000 });
         } catch (timeoutError) {}
     }
 }

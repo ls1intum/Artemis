@@ -15,7 +15,9 @@ export class RepositoryPage {
     async openCommitHistory() {
         const currentPageUrl = this.page.url();
         expect(currentPageUrl).toContain('repository');
-        await this.page.locator('a', { hasText: 'Open Commit History' }).click();
+        const commitHistoryBtn = this.page.locator('a', { hasText: 'Open Commit History' });
+        await commitHistoryBtn.waitFor({ state: 'visible', timeout: 5_000 });
+        await commitHistoryBtn.click({ timeout: 100 });
     }
 
     async checkCommitHistory(commits: ExerciseCommit[]) {

@@ -14,8 +14,9 @@ export class ExamStartEndPage {
         await this.page.locator('#fullname').fill((account.firstName ?? '') + ' ' + (account.lastName ?? ''));
     }
 
-    async setConfirmCheckmark(timeout?: number) {
-        await this.page.locator('#confirmBox').check({ timeout: timeout });
+    async setConfirmCheckmark() {
+        await this.page.waitForSelector('#confirmBox', { timeout: 5_000 });
+        await this.page.locator('#confirmBox').check({ timeout: 100 });
     }
 
     async pressStartWithWait() {

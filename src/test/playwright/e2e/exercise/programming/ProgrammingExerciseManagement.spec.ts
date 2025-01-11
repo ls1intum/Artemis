@@ -107,7 +107,16 @@ test.describe('Programming Exercise Management', { tag: '@fast' }, () => {
             });
         });
 
-        test('Create an exercise team', async ({ login, page, navigationBar, courseManagement, courseManagementExercises, exerciseTeams, programmingExerciseOverview }) => {
+        test('Create an exercise team', async ({
+            login,
+            page,
+            navigationBar,
+            courseList,
+            courseManagement,
+            courseManagementExercises,
+            exerciseTeams,
+            programmingExerciseOverview,
+        }) => {
             await login(instructor);
             await navigationBar.openCourseManagement();
             await courseManagement.openExercisesOfCourse(course.id!);
@@ -135,9 +144,11 @@ test.describe('Programming Exercise Management', { tag: '@fast' }, () => {
             await exerciseTeams.getSaveButton().click();
             await exerciseTeams.checkTeamOnList(teamShortName);
 
-            await login(studentOne, `/courses/${course.id}/exercises/${exercise.id}`);
+            await login(studentOne, `/`);
+            await courseList.openSpecificExercise(`/courses/${course.id}/exercises/${exercise.id}`);
             await expect(programmingExerciseOverview.getExerciseDetails().locator('.view-team')).toBeVisible();
-            await login(studentFour, `/courses/${course.id}/exercises/${exercise.id}`);
+            await login(studentFour, `/`);
+            await courseList.openSpecificExercise(`/courses/${course.id}/exercises/${exercise.id}`);
             await expect(programmingExerciseOverview.getExerciseDetails()).toHaveText(/No team yet/);
         });
     });
