@@ -15,11 +15,15 @@ export class NavigationBar {
      * Opens the course management page via the menu at the top and waits until it is loaded.
      */
     async openCourseManagement() {
-        await retry(async () => {
-            await this.page.goto('/course-management');
-            await this.page.locator('#course-page-heading').waitFor({ timeout: 3_000 });
-            await this.page.waitForURL('**/course-management**');
-        }, 'Could not open course management page ' + this.page.url());
+        await retry(
+            this.page,
+            async () => {
+                await this.page.locator('#course-page-heading').waitFor({ timeout: 3_000 });
+                await this.page.waitForURL('**/course-management**');
+            },
+            '/course-management',
+            'Could not open course management page ' + this.page.url(),
+        );
     }
 
     /**

@@ -50,7 +50,7 @@ export class Commands {
         await page.request.post(`${BASE_API}/public/logout`);
     };
 
-    static reloadUntilFound = async (page: Page, locator: Locator, interval = 1500, timeout = 10000, pageUrl?: string) => {
+    static reloadUntilFound = async (page: Page, locator: Locator, interval = 3_000, timeout = 10000, pageUrl?: string) => {
         const startTime = Date.now();
 
         while (Date.now() - startTime < timeout) {
@@ -66,7 +66,7 @@ export class Commands {
             }
         }
 
-        throw new Error(`Timed out finding an element matching the "${locator}" locator`);
+        throw new Error(`Timed out finding an element matching the "${locator}" locator after ${timeout} ms.`);
     };
 
     /**

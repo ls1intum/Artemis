@@ -1,6 +1,7 @@
 import { Page, expect } from '@playwright/test';
 import { ExerciseCommit } from '../../../constants';
 import { Commands } from '../../../commands';
+import { retry } from '../../../utils';
 
 export class RepositoryPage {
     private readonly page: Page;
@@ -15,9 +16,16 @@ export class RepositoryPage {
     async openCommitHistory() {
         const currentPageUrl = this.page.url();
         expect(currentPageUrl).toContain('repository');
-        const commitHistoryBtn = this.page.locator('a', { hasText: 'Open Commit History' });
-        await commitHistoryBtn.waitFor({ state: 'visible', timeout: 5_000 });
-        await commitHistoryBtn.click({ timeout: 100 });
+        await retry(
+            this.page,
+            async () => {
+                const commitHistoryBtn = this.page.locator('a', { hasText: 'Open Commit History' });
+                await commitHistoryBtn.waitFor({ state: 'visible', timeout: 5_000 });
+                await commitHistoryBtn.click({ timeout: 1000 });
+            },
+            currentPageUrl,
+            'Failed to open commit history',
+        );
     }
 
     async checkCommitHistory(commits: ExerciseCommit[]) {

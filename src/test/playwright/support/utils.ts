@@ -191,16 +191,20 @@ export async function drag(page: Page, draggable: Locator, droppable: Locator) {
     await page.mouse.up();
 }
 
-export async function retry(fn: any, msg: string) {
+export async function retry(page: Page, fn: any, goToUrl: string, msg: string) {
+    const accumulatedErrors: string[] = [];
+
     for (let attempt = 1; attempt <= 5; attempt++) {
         try {
             await fn();
         } catch (error) {
+            accumulatedErrors.push(error.message);
+            await page.goto(goToUrl);
             continue;
         }
         return;
     }
-    throw new Error(msg + ' ' + this.page.url());
+    throw new Error(msg + ' ' + page.url() + ' errors: ' + accumulatedErrors.join('; '));
 }
 
 /*

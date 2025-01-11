@@ -51,6 +51,7 @@ test.describe('Programming exercise assessment', { tag: '@sequential' }, () => {
     test('Assesses the programming exercise submission and verifies it', async ({
         login,
         page,
+        navigationBar,
         courseManagement,
         courseAssessment,
         exerciseAssessment,
@@ -60,7 +61,7 @@ test.describe('Programming exercise assessment', { tag: '@sequential' }, () => {
         exerciseResult,
     }) => {
         // Asses submission
-        await login(tutor, '/course-management');
+        await navigationBar.openCourseManagement();
         await courseManagement.openAssessmentDashboardOfCourse(course.id!);
         await courseAssessment.clickExerciseDashboardButton();
         await exerciseAssessment.clickHaveReadInstructionsButton();

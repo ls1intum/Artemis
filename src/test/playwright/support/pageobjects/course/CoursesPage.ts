@@ -1,4 +1,5 @@
 import { Page } from '@playwright/test';
+import { retry } from '../../utils';
 
 /**
  * A class which encapsulates UI selectors and actions for the courses page (/courses).
@@ -12,76 +13,44 @@ export class CoursesPage {
 
     async openCoursesPage() {
         await this.page.goto('/courses');
-        for (let retry = 0; retry < 3; retry++) {
-            try {
+        await retry(
+            this.page,
+            async () => {
                 await this.page.locator('#test-your-current-courses').waitFor({ state: 'visible', timeout: 3000 });
-            } catch (timeoutError) {
-                await this.page.goto('/courses');
-                continue;
-            }
-            return;
-        }
-        throw new Error('Failed to open course page');
+            },
+            '/courses',
+            'Could not open course page ' + this.page.url(),
+        );
     }
 
     async openCourse(courseId: number) {
-        for (let retry = 0; retry < 5; retry++) {
-            if (/\/exercises\/\d+/.test(this.page.url()) || /\/exercises/.test(this.page.url())) {
-                return;
-            } else {
-                await this.tryToOpenCourseFromCoursesOverviewPage(courseId);
-            }
-            await this.page.waitForTimeout(250);
-        }
-        throw new Error('Could not access course. URL:' + this.page.url());
+        await retry(
+            this.page,
+            async () => {
+                if (/\/exercises\/\d+/.test(this.page.url()) || /\/exercises/.test(this.page.url())) {
+                    return;
+                } else {
+                    if (await this.page.locator(`#course-${courseId}-header`).isVisible({ timeout: 3000 })) {
+                        await this.page.locator(`#course-${courseId}-header`).click({ timeout: 1000 });
+                    }
+                }
+            },
+            `/courses/${courseId}`,
+            'Could not access course. URL:' + this.page.url(),
+        );
     }
 
-    async openSpecificExercise(url: string) {
-        for (let retry = 0; retry < 5; retry++) {
-            await this.tryToWaitForExerciseToOpen();
-            if (/\/exercises\/\d+/.test(this.page.url())) {
-                return;
-            } else {
-                await this.page.goto(url);
-            }
-            await this.page.waitForTimeout(250);
-        }
-        throw new Error('Could open exercise directly. URL:' + this.page.url());
-    }
-
-    async openCourseAndFirstExercise(courseId: number) {
-        for (let retry = 0; retry < 5; retry++) {
-            if (/\/exercises\/\d+/.test(this.page.url())) {
-                return;
-            } else if (/\/exercises/.test(this.page.url())) {
-                await this.tryToOpenFirstExercise();
-            } else {
-                await this.tryToOpenCourseFromCoursesOverviewPage(courseId);
-            }
-            await this.page.waitForTimeout(250);
-        }
-        throw new Error('Could not access exercise. URL:' + this.page.url());
-    }
-
-    async tryToOpenCourseFromCoursesOverviewPage(courseId: number) {
-        try {
-            if (await this.page.locator(`#course-${courseId}-header`).isVisible({ timeout: 3000 })) {
-                await this.page.locator(`#course-${courseId}-header`).click({ timeout: 100 });
-            }
-        } catch (timeoutError) {}
-    }
-
-    async tryToOpenFirstExercise() {
-        try {
-            if (await this.page.locator('#test-sidebar-card-medium').isVisible({ timeout: 3000 })) {
-                await this.page.locator('#test-sidebar-card-medium').click({ timeout: 100 });
-            }
-        } catch (timeoutError) {}
-    }
-
-    async tryToWaitForExerciseToOpen() {
-        try {
-            await this.page.waitForSelector('#test-sidebar-card-medium', { state: 'visible', timeout: 3000 });
-        } catch (timeoutError) {}
+    async openSpecificExerciseDirectly(url: string) {
+        await this.page.goto(url);
+        await this.page.waitForURL(url, { timeout: 3000 });
+        await retry(
+            this.page,
+            async () => {
+                console.log(this);
+                await this.page.waitForSelector('#test-sidebar-card-medium', { state: 'visible', timeout: 3000 });
+            },
+            url,
+            'Could open exercise directly. URL:' + this.page.url(),
+        );
     }
 }

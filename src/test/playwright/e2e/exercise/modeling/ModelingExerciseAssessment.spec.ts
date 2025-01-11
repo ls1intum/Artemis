@@ -43,11 +43,13 @@ test.describe('Modeling Exercise Assessment', { tag: '@fast' }, () => {
         //     modelingExercise = await response.json();
         // });
 
-        test('Tutor can assess a submission', async ({ login, courseManagement, courseAssessment, exerciseAssessment, modelingExerciseAssessment }) => {
-            await login(tutor, '/course-management');
+        test('Tutor can assess a submission', async ({ login, courseManagement, courseAssessment, navigationBar, exerciseAssessment, modelingExerciseAssessment }) => {
+            await login(tutor, '/');
+            await navigationBar.openCourseManagement();
             await courseManagement.openSubmissionsForExerciseAndCourse(course.id!, modelingExercise.id!);
             await courseManagement.checkIfStudentSubmissionExists(studentOne.username);
-            await login(tutor, '/course-management');
+            await login(tutor, '/');
+            await navigationBar.openCourseManagement();
             await courseManagement.openAssessmentDashboardOfCourse(course.id!);
             await courseAssessment.clickExerciseDashboardButton();
             await exerciseAssessment.clickHaveReadInstructionsButton();

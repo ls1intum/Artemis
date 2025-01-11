@@ -29,7 +29,7 @@ export class ProgrammingExerciseOverviewPage {
     async startParticipation(courseId: number, exerciseId: number, credentials: UserCredentials) {
         await Commands.login(this.page, credentials, '/');
         await this.courseList.openCoursesPage();
-        await this.courseList.openCourseAndFirstExercise(courseId!);
+        await this.courseList.openSpecificExerciseDirectly(`/courses/${courseId}/exercises/${exerciseId}`);
         await this.courseOverview.startExercise(exerciseId);
     }
 

@@ -70,13 +70,17 @@ export class ExamManagementPage {
      * @param timeout timeout of waiting for assessment dashboard button
      */
     async openAssessmentDashboard(courseID: number, examID: number, timeout = 10_000) {
-        await retry(async () => {
-            await this.page.goto(`/course-management/${courseID}/exams`);
-            await this.page.locator('#course-page-heading').waitFor({ timeout: timeout }); // Exam Management page title
-            const assessmentButton = this.page.locator(`#exercises-button-${examID}`);
-            await assessmentButton.waitFor({ state: 'visible', timeout: timeout });
-            await assessmentButton.click();
-        }, 'Failed to open exam assessment button');
+        await retry(
+            this.page,
+            async () => {
+                await this.page.locator('#course-page-heading').waitFor({ timeout: timeout }); // Exam Management page title
+                const assessmentButton = this.page.locator(`#exercises-button-${examID}`);
+                await assessmentButton.waitFor({ state: 'visible', timeout: timeout });
+                await assessmentButton.click();
+            },
+            `/course-management/${courseID}/exams`,
+            'Failed to open exam assessment button',
+        );
     }
 
     /**
@@ -102,10 +106,15 @@ export class ExamManagementPage {
     }
 
     async verifySubmitted(courseID: number, examID: number, username: string) {
-        await retry(async () => {
-            await this.page.goto(`/course-management/${courseID}/exams/${examID}/student-exams`);
-            await this.page.locator('#student-exam').waitFor({ state: 'visible', timeout: 5000 });
-        }, 'verifySubmitted failed');
+        await this.page.goto(`/course-management/${courseID}/exams/${examID}/student-exams`);
+        await retry(
+            this.page,
+            async () => {
+                await this.page.locator('#student-exam').waitFor({ state: 'visible', timeout: 5000 });
+            },
+            `/course-management/${courseID}/exams/${examID}/student-exams`,
+            'verifySubmitted failed',
+        );
         await expect(this.page.locator('#student-exam .datatable-body-row', { hasText: username }).locator('.submitted')).toHaveText('Yes');
     }
 

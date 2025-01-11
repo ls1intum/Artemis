@@ -187,15 +187,15 @@ test.describe('Programming exercise participation', { tag: '@sequential' }, () =
                 const { student, submission, commitMessage } = submissions[i];
                 await login(student, '/');
                 await courseList.openCoursesPage();
-                await courseList.openCourseAndFirstExercise(course.id!);
+                await courseList.openCourse(course.id!);
                 await courseOverview.openExercise(exercise.title!);
                 submission.deleteFiles = [];
                 await makeGitExerciseSubmission(page, programmingExerciseOverview, course, exercise, student, submission, commitMessage);
             }
 
             await login(studentFour, '/');
-            await page.waitForURL(/\/courses/);
-            await courseList.openCourseAndFirstExercise(course.id!);
+            await courseList.openCoursesPage();
+            await courseList.openCourse(course.id!);
             await courseOverview.openExercise(exercise.title!);
             await expect(programmingExerciseOverview.getCodeButton()).not.toBeVisible();
         });
@@ -203,7 +203,7 @@ test.describe('Programming exercise participation', { tag: '@sequential' }, () =
         test('Students without a team can not participate in the team exercise', async ({ login, courseList, courseOverview, programmingExerciseOverview }) => {
             await login(studentFour, '/');
             await courseList.openCoursesPage();
-            await courseList.openCourseAndFirstExercise(course.id!);
+            await courseList.openCourse(course.id!);
             await courseOverview.openExercise(exercise.title!);
             await expect(programmingExerciseOverview.getExerciseDetails().getByText('No team yet')).toBeVisible();
             await expect(courseOverview.getStartExerciseButton(exercise.id!)).not.toBeVisible();
@@ -225,7 +225,7 @@ test.describe('Programming exercise participation', { tag: '@sequential' }, () =
 
             await login(studentFour, '/');
             await courseList.openCoursesPage();
-            await courseList.openCourseAndFirstExercise(course.id!);
+            await courseList.openCourse(course.id!);
             await courseOverview.openExercise(exercise.title!);
             await expect(programmingExerciseOverview.getCodeButton()).not.toBeVisible();
             await expect(programmingExerciseOverview.getExerciseDetails().getByText('Not yet started')).toBeVisible();

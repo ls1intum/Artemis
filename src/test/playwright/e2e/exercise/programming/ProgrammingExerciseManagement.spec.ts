@@ -145,10 +145,10 @@ test.describe('Programming Exercise Management', { tag: '@fast' }, () => {
             await exerciseTeams.checkTeamOnList(teamShortName);
 
             await login(studentOne, `/`);
-            await courseList.openSpecificExercise(`/courses/${course.id}/exercises/${exercise.id}`);
+            await courseList.openSpecificExerciseDirectly(`/courses/${course.id}/exercises/${exercise.id}`);
             await expect(programmingExerciseOverview.getExerciseDetails().locator('.view-team')).toBeVisible();
             await login(studentFour, `/`);
-            await courseList.openSpecificExercise(`/courses/${course.id}/exercises/${exercise.id}`);
+            await courseList.openSpecificExerciseDirectly(`/courses/${course.id}/exercises/${exercise.id}`);
             await expect(programmingExerciseOverview.getExerciseDetails()).toHaveText(/No team yet/);
         });
     });

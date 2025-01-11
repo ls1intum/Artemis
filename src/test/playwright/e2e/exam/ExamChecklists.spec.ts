@@ -221,7 +221,7 @@ test.describe('Exam Checklists', async () => {
             await examAPIRequests.finishExam(exam);
             await navigateToExamDetailsPage(page, course, exam);
             await examDetails.checkItemUnchecked(ExamChecklistItem.UNFINISHED_ASSESSMENTS);
-            await startAssessing(course.id!, exam.id!, 60000, examManagement, courseAssessment, exerciseAssessment);
+            await startAssessing(course.id!, exam.id!, 10_000, examManagement, courseAssessment, exerciseAssessment);
             await textExerciseAssessment.addNewFeedback(5, 'OK');
             await textExerciseAssessment.submit();
             await navigateToExamDetailsPage(page, course, exam);

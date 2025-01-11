@@ -83,6 +83,7 @@ export class CourseOverviewPage {
      * @param exerciseName The title of the exercise to open.
      */
     async openExercise(exerciseName: string) {
+        await this.page.waitForURL('**/courses/*/exercises/**', { timeout: 1000 });
         await this.page.locator('jhi-course-exercise-details').waitFor({ state: 'visible' });
         await this.getExercise(exerciseName).click();
     }
