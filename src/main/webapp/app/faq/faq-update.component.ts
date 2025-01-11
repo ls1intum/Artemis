@@ -17,6 +17,9 @@ import { ArtemisCategorySelectorModule } from 'app/shared/category-selector/cate
 import { ArtemisSharedModule } from 'app/shared/shared.module';
 import { ArtemisSharedComponentModule } from 'app/shared/components/shared-component.module';
 import { AccountService } from 'app/core/auth/account.service';
+import { RephraseAction } from 'app/shared/monaco-editor/model/actions/rephrase.action';
+import { FullscreenAction } from 'app/shared/monaco-editor/model/actions/fullscreen.action';
+import { RephraseService } from 'app/shared/monaco-editor/rephrase.service';
 
 @Component({
     selector: 'jhi-faq-update',
@@ -47,6 +50,9 @@ export class FaqUpdateComponent implements OnInit {
     private router = inject(Router);
     private translateService = inject(TranslateService);
     private accountService = inject(AccountService);
+    private rephraseService = inject(RephraseService);
+
+    metaActions = [new RephraseAction(this.rephraseService), new FullscreenAction()];
 
     ngOnInit() {
         this.isSaving = false;

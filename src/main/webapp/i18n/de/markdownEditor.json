@@ -3,7 +3,8 @@
         "markdownEditor": {
             "commands": {
                 "katex": "Formel",
-                "fullscreen": "Vollbild"
+                "fullscreen": "Vollbild",
+                "rephrase": "Umformulieren"
             },
             "fileUpload": "Füge Dateien durch Drag-and-Drop oder durch Auswählen hinzu.",
             "guide": "Formatierungen mit Markdown sind möglich",
