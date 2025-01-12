@@ -76,7 +76,7 @@ export class PostCreateEditModalComponent extends PostingCreateEditModalDirectiv
     /**
      * on initialization: reset all input field of the modal, determine the post context;
      */
-    ngOnChanges(): void {
+    ngOnChanges() {
         super.ngOnChanges();
     }
 

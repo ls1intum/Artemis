@@ -55,17 +55,17 @@ export class SidebarComponent implements OnDestroy, OnChanges, OnInit {
     onBrowsePressed = output<void>();
     onCreateChannelPressed = output<void>();
     onMarkAllChannelsAsRead = output<void>();
-    @Input() searchFieldEnabled: boolean = true;
+    @Input() searchFieldEnabled = true;
     @Input() sidebarData: SidebarData;
     @Input() courseId?: number;
     @Input() itemSelected?: boolean;
     @Input() channelTypeIcon?: ChannelTypeIcons;
     @Input() collapseState: CollapseState;
     sidebarItemAlwaysShow = input.required<SidebarItemShowAlways>();
-    @Input() showFilter: boolean = false;
+    @Input() showFilter = false;
     inCommunication = input<boolean>(false);
     searchValue = '';
-    isCollapsed: boolean = false;
+    isCollapsed = false;
     readonly reEmitNonDistinctSidebarEvents = input<boolean>(false);
 
     exerciseId: string;
@@ -92,7 +92,7 @@ export class SidebarComponent implements OnDestroy, OnChanges, OnInit {
     sidebarDataBeforeFiltering: SidebarData;
 
     exerciseFilters?: ExerciseFilterOptions;
-    isFilterActive: boolean = false;
+    isFilterActive = false;
 
     constructor() {
         effect(() => {

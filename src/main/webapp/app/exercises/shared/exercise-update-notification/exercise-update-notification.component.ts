@@ -8,7 +8,7 @@ import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
     imports: [FormsModule, ArtemisTranslatePipe],
 })
 export class ExerciseUpdateNotificationComponent {
-    @Input() isCreation: boolean = false;
+    @Input() isCreation = false;
     @Input() isImport: boolean;
     @Input() notificationText?: string;
     @Output() notificationTextChange: EventEmitter<string> = new EventEmitter<string>();

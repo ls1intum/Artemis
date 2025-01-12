@@ -28,7 +28,7 @@ export class ProgrammingExerciseCustomBuildPlanComponent implements OnChanges {
     projectType?: ProjectType;
     staticCodeAnalysisEnabled?: boolean;
     sequentialTestRuns?: boolean;
-    isImportFromFile: boolean = false;
+    isImportFromFile = false;
 
     code: string = '#!/bin/bash\n\n# Add your custom build plan action here';
     private _editor?: MonacoEditorComponent;

@@ -12,7 +12,7 @@ export class LocalVCGuard implements CanActivate {
     private profileService = inject(ProfileService);
     private router = inject(Router);
 
-    localVCActive: boolean = false;
+    localVCActive = false;
 
     async canActivate(): Promise<boolean> {
         try {

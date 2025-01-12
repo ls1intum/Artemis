@@ -136,7 +136,7 @@ export class NavbarComponent implements OnInit, OnDestroy {
     isExamActive = false;
     examActiveCheckFuture?: ReturnType<typeof setTimeout>;
     irisEnabled: boolean;
-    localCIActive: boolean = false;
+    localCIActive = false;
     ltiEnabled: boolean;
     standardizedCompetenciesEnabled = false;
     agentName?: string;

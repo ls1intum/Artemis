@@ -27,7 +27,7 @@ export class DifficultyBadgeComponent implements OnInit, OnDestroy, OnChanges {
         });
     }
 
-    ngOnChanges(): void {
+    ngOnChanges() {
         this.setBadgeAttributes();
     }
 

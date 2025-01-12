@@ -19,13 +19,13 @@ import { ArtemisDurationFromSecondsPipe } from 'app/shared/pipes/artemis-duratio
 export class ExamGeneralInformationComponent implements OnChanges {
     @Input() exam: Exam;
     @Input() studentExam: StudentExam;
-    @Input() reviewIsOpen?: boolean = false;
+    @Input() reviewIsOpen = false;
 
     /**
      * The exam cover will contain e.g. the number of exercises which is hidden in the exam summary as
      * the information is shown in the {@link ExamResultOverviewComponent}
      */
-    @Input() displayOnExamCover?: boolean = false;
+    @Input() displayOnExamCover = false;
 
     examEndDate?: dayjs.Dayjs;
     normalWorkingTime?: number;
@@ -34,7 +34,7 @@ export class ExamGeneralInformationComponent implements OnChanges {
     isTestExam?: boolean;
     currentDate?: dayjs.Dayjs;
 
-    ngOnChanges(): void {
+    ngOnChanges() {
         this.examEndDate = endTime(this.exam, this.studentExam);
         this.normalWorkingTime = examWorkingTime(this.exam);
         this.additionalWorkingTime = getAdditionalWorkingTime(this.exam, this.studentExam);

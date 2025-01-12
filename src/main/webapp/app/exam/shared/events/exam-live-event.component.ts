@@ -27,7 +27,7 @@ export class ExamLiveEventComponent {
     event: ExamLiveEvent;
 
     @Input()
-    showAcknowledge: boolean = false;
+    showAcknowledge = false;
 
     @Output()
     onAcknowledge = new EventEmitter<ExamLiveEvent>();

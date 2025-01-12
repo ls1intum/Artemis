@@ -45,7 +45,7 @@ export class ProgrammingExerciseBuildConfigurationComponent implements OnInit {
     timeoutMaxValue?: number;
     timeoutDefaultValue?: number;
 
-    isLanguageSupported: boolean = false;
+    isLanguageSupported = false;
 
     faPlus = faPlus;
     faTrash = faTrash;

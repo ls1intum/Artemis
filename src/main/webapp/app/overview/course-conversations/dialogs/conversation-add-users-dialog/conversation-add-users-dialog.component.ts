@@ -38,7 +38,7 @@ export class ConversationAddUsersDialogComponent extends AbstractDialogComponent
 
     isInitialized = false;
     maxSelectable: number | undefined;
-    protected isLoading: boolean = false;
+    protected isLoading = false;
 
     initialize() {
         super.initialize(['course', 'activeConversation']);

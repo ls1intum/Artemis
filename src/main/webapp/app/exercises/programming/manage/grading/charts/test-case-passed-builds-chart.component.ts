@@ -26,7 +26,7 @@ export class TestCasePassedBuildsChartComponent implements OnChanges {
     failedPercent = 0;
     tooltip = '';
 
-    ngOnChanges(): void {
+    ngOnChanges() {
         const totalPassedAndFailed = (this.testCaseStats?.numPassed ?? 0) + (this.testCaseStats?.numFailed ?? 0);
         if (totalPassedAndFailed > this.totalParticipations) {
             this.totalParticipations = totalPassedAndFailed;

@@ -42,10 +42,10 @@ export class ExamResultOverviewComponent implements OnInit, OnChanges {
     readonly BonusStrategy = BonusStrategy;
 
     @Input() studentExamWithGrade: StudentExamWithGradeDTO;
-    @Input() isGradingKeyCollapsed: boolean = true;
-    @Input() isBonusGradingKeyCollapsed: boolean = true;
+    @Input() isGradingKeyCollapsed = true;
+    @Input() isBonusGradingKeyCollapsed = true;
     @Input() exerciseInfos: Record<number, ExerciseInfo>;
-    @Input() isTestRun: boolean = false;
+    @Input() isTestRun = false;
 
     gradingScaleExists = false;
     isBonus = false;

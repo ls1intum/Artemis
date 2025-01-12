@@ -113,7 +113,7 @@ export class ScaCategoryDistributionChartComponent extends ProgrammingGradingCha
         });
     }
 
-    ngOnChanges(): void {
+    ngOnChanges() {
         this.ngxData = [];
         this.ngxColors.domain = [];
         // update colors for category table

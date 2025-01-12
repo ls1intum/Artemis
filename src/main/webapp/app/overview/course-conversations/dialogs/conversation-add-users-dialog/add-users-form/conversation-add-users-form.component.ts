@@ -58,7 +58,7 @@ export class ConversationAddUsersFormComponent implements OnInit, OnChanges {
         this.initializeForm();
     }
 
-    ngOnChanges(): void {
+    ngOnChanges() {
         this.initializeForm();
     }
 

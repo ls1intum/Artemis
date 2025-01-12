@@ -97,7 +97,7 @@ export class PostComponent extends PostingDirective<Post> implements OnInit, OnC
     @ViewChild('emojiPickerTrigger') emojiPickerTrigger!: CdkOverlayOrigin;
     @ViewChild(PostReactionsBarComponent) protected reactionsBarComponent!: PostReactionsBarComponent;
 
-    static activeDropdownPost: PostComponent | null = null;
+    static activeDropdownPost: PostComponent | undefined = undefined;
 
     showReactionSelector = false;
     displayInlineInput = false;
@@ -112,9 +112,9 @@ export class PostComponent extends PostingDirective<Post> implements OnInit, OnC
     contextInformation: ContextInformation;
     readonly PageType = PageType;
     readonly DisplayPriority = DisplayPriority;
-    mayEdit: boolean = false;
-    mayDelete: boolean = false;
-    canPin: boolean = false;
+    mayEdit = false;
+    mayDelete = false;
+    canPin = false;
 
     // Icons
     readonly faBullhorn = faBullhorn;
@@ -127,9 +127,6 @@ export class PostComponent extends PostingDirective<Post> implements OnInit, OnC
 
     isConsecutive = input<boolean>(false);
     dropdownPosition = { x: 0, y: 0 };
-    constructor() {
-        super();
-    }
 
     get reactionsBar() {
         return this.reactionsBarComponent;

@@ -125,7 +125,7 @@ export abstract class PostingsReactionsBarDirective<T extends Posting> implement
      * on changes: updates the current posting and its reactions,
      * invokes metis service to check user authority
      */
-    ngOnChanges(): void {
+    ngOnChanges() {
         this.updatePostingWithReactions();
         this.currentUserIsAtLeastTutor = this.metisService.metisUserIsAtLeastTutorInCourse();
     }

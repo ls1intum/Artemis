@@ -199,7 +199,7 @@ export class TutorialGroupFormComponent implements OnInit, OnChanges, OnDestroy 
         this.ngUnsubscribe.complete();
     }
 
-    ngOnChanges(): void {
+    ngOnChanges() {
         this.initializeForm();
         if (this.isEditMode && this.formData) {
             this.setFormValues(this.formData);

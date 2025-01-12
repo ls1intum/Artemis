@@ -61,9 +61,9 @@ export class CourseTutorialGroupsComponent implements OnInit, OnDestroy {
     configuration?: TutorialGroupsConfiguration;
     isLoading = false;
     tutorialGroupFreeDays: TutorialGroupFreePeriod[] = [];
-    isCollapsed: boolean = false;
+    isCollapsed = false;
 
-    tutorialGroupSelected: boolean = true;
+    tutorialGroupSelected = true;
     sidebarData: SidebarData;
     sortedTutorialGroups: TutorialGroup[] = [];
     accordionTutorialGroupsGroups: AccordionGroups = TUTORIAL_UNIT_GROUPS;

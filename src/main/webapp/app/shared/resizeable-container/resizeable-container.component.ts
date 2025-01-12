@@ -32,14 +32,14 @@ export class ResizeableContainerComponent implements AfterViewInit {
      *
      * <i>e.g. the case for printing the exam summary</i>
      */
-    @Input() isBeingPrinted?: boolean = false;
+    @Input() isBeingPrinted = false;
 
     /**
      * Forces the problem statement to be expanded when the component is printed as PDF
      *
      * <i>e.g. the case for printing the exam summary</i>
      */
-    @Input() expandProblemStatement?: boolean = false;
+    @Input() expandProblemStatement = false;
 
     // Icons
     faChevronRight = faChevronRight;

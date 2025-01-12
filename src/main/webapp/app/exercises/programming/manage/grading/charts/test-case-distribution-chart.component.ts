@@ -66,7 +66,7 @@ export class TestCaseDistributionChartComponent extends ProgrammingGradingCharts
         this.updateTranslation();
     }
 
-    ngOnChanges(): void {
+    ngOnChanges() {
         if (this.testCases == undefined) {
             this.testCases = [];
         }

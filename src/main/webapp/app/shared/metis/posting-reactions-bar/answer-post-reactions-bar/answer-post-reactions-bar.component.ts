@@ -35,7 +35,7 @@ import { ReactingUsersOnPostingPipe } from 'app/shared/pipes/reacting-users-on-p
 })
 export class AnswerPostReactionsBarComponent extends PostingsReactionsBarDirective<AnswerPost> implements OnInit, OnChanges {
     @Input() isReadOnlyMode = false;
-    @Input() isEmojiCount: boolean = false;
+    @Input() isEmojiCount = false;
     @Input() isLastAnswer = false;
 
     @Output() openPostingCreateEditModal = new EventEmitter<void>();

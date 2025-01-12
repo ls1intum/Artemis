@@ -28,7 +28,7 @@ export class TranslateDirective implements OnChanges, OnInit, OnDestroy {
         });
     }
 
-    ngOnChanges(): void {
+    ngOnChanges() {
         this.getTranslation();
     }
 

@@ -95,7 +95,7 @@ export class ExerciseDetailsStudentActionsComponent implements OnInit, OnChanges
     routerLink: string;
     repositoryLink: string;
 
-    theiaEnabled: boolean = false;
+    theiaEnabled = false;
     theiaPortalURL: string;
 
     // Icons

@@ -174,7 +174,7 @@ export class TutorialGroupFreePeriodFormComponent implements OnInit, OnChanges {
         this.initializeForm();
     }
 
-    ngOnChanges(): void {
+    ngOnChanges() {
         this.initializeForm();
         if (this.isEditMode && this.formData) {
             this.setFormValues(this.formData);

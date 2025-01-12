@@ -15,7 +15,7 @@ export class StickyPopoverDirective extends NgbPopover implements OnInit, OnDest
     canClosePopover: boolean;
 
     private closeTimeout: any;
-    private clickInPopover: boolean = false;
+    private clickInPopover = false;
 
     toggle(): void {
         super.toggle();

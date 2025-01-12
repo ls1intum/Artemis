@@ -16,7 +16,7 @@ export class CodeEditorFileBrowserBadgeComponent {
     private translateService = inject(TranslateService);
 
     @Input() badge: FileBadge;
-    @Input() onColoredBackground: boolean = false;
+    @Input() onColoredBackground = false;
     // Only slightly darken the background and use white text
 
     get tooltip(): string | undefined {

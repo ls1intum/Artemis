@@ -11,7 +11,7 @@ export class LocalCIGuard implements CanActivate {
     private profileService = inject(ProfileService);
     private router = inject(Router);
 
-    localCIActive: boolean = false;
+    localCIActive = false;
 
     async canActivate(): Promise<boolean> {
         this.profileService.getProfileInfo().subscribe((profileInfo) => {

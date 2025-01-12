@@ -81,7 +81,7 @@ export class CourseManagementTabBarComponent implements OnInit, OnDestroy, After
     private courseSub?: Subscription;
     private eventSubscriber: Subscription;
 
-    localCIActive: boolean = false;
+    localCIActive = false;
 
     private dialogErrorSource = new Subject<string>();
     dialogError$ = this.dialogErrorSource.asObservable();

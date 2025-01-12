@@ -70,7 +70,7 @@ export class HeaderParticipationPageComponent implements OnInit, OnChanges {
     /**
      * Sets the status badge and categories of the exercise on changes
      */
-    ngOnChanges(): void {
+    ngOnChanges() {
         if (this.exercise) {
             this.exerciseStatusBadge = hasExerciseDueDatePassed(this.exercise, this.participation) ? 'bg-danger' : 'bg-success';
             this.exerciseCategories = this.exercise.categories || [];

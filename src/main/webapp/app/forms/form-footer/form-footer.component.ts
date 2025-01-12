@@ -32,8 +32,8 @@ export class FormFooterComponent {
     protected readonly faBan = faBan;
     protected readonly faExclamationCircle = faExclamationCircle;
 
-    @Input() isSaving: boolean = false;
-    @Input() isDisabled: boolean = false;
+    @Input() isSaving = false;
+    @Input() isDisabled = false;
     @Input() invalidReasons: ValidationReason[] = [];
     @Input() notificationText?: string;
     @Input() switchEditMode?: () => void;

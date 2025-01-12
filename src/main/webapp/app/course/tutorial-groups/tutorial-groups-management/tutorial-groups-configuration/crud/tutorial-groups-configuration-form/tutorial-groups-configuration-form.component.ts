@@ -62,7 +62,7 @@ export class TutorialGroupsConfigurationFormComponent implements OnInit, OnChang
     ngOnInit(): void {
         this.initializeForm();
     }
-    ngOnChanges(): void {
+    ngOnChanges() {
         this.initializeForm();
         if (this.isEditMode && this.formData) {
             this.setFormValues(this.formData);

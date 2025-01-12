@@ -78,9 +78,9 @@ export class FileUploadSubmissionComponent implements OnInit, ComponentCanDeacti
     @ViewChild('fileInput', { static: false }) fileInput: ElementRef;
 
     @Input() participationId?: number;
-    @Input() displayHeader: boolean = true;
-    @Input() expandProblemStatement?: boolean = true;
-    @Input() displayedInExamSummary?: boolean = false;
+    @Input() displayHeader = true;
+    @Input() expandProblemStatement = true;
+    @Input() displayedInExamSummary = false;
 
     @Input() inputExercise?: FileUploadExercise;
     @Input() inputSubmission?: FileUploadSubmission;

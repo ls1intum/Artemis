@@ -37,7 +37,7 @@ export class ProfilePictureComponent implements OnInit, OnChanges {
         this.updateImageData();
     }
 
-    ngOnChanges(): void {
+    ngOnChanges() {
         this.updateImageData();
     }
 

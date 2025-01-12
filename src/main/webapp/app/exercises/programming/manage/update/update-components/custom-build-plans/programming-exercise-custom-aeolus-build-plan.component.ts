@@ -33,7 +33,7 @@ export class ProgrammingExerciseCustomAeolusBuildPlanComponent implements OnChan
 
     code: string = '#!/bin/bash\n\n# Add your custom build plan action here';
     active?: BuildAction = undefined;
-    isScriptAction: boolean = false;
+    isScriptAction = false;
 
     private _editor?: MonacoEditorComponent;
 

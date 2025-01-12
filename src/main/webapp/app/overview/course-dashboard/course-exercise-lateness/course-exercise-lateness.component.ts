@@ -62,7 +62,7 @@ export class CourseExerciseLatenessComponent implements OnInit, OnChanges, OnDes
         this.translateServiceSubscription.unsubscribe();
     }
 
-    ngOnChanges(): void {
+    ngOnChanges() {
         this.setupChart();
     }
 

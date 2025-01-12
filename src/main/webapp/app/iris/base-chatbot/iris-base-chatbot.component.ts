@@ -129,12 +129,12 @@ export class IrisBaseChatbotComponent implements OnInit, OnDestroy, AfterViewIni
     error?: IrisErrorMessageKey;
     numNewMessages: number = 0;
     rateLimitInfo: IrisRateLimitInformation;
-    active: boolean = true;
+    active = true;
 
     newMessageTextContent = '';
     isLoading: boolean;
-    shouldAnimate: boolean = false;
-    hasActiveStage: boolean = false;
+    shouldAnimate = false;
+    hasActiveStage = false;
 
     // User preferences
     userAccepted: boolean;
@@ -144,7 +144,7 @@ export class IrisBaseChatbotComponent implements OnInit, OnDestroy, AfterViewIni
     public ButtonType = ButtonType;
 
     @Input() fullSize: boolean | undefined;
-    @Input() showCloseButton: boolean = false;
+    @Input() showCloseButton = false;
     @Output() fullSizeToggle = new EventEmitter<void>();
     @Output() closeClicked = new EventEmitter<void>();
 

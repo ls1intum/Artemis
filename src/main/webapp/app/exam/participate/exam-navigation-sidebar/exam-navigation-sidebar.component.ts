@@ -70,7 +70,7 @@ export class ExamNavigationSidebarComponent implements OnDestroy, OnInit {
     profileSubscription?: Subscription;
     isProduction = true;
     isTestServer = false;
-    isCollapsed: boolean = false;
+    isCollapsed = false;
     exerciseId: string;
     numberOfSavedExercises: number = 0;
 

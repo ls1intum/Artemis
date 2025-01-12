@@ -139,8 +139,8 @@ export class ExamResultSummaryComponent implements OnInit {
      */
     studentExamGradeInfoDTO: StudentExamWithGradeDTO;
 
-    isGradingKeyCollapsed: boolean = true;
-    isBonusGradingKeyCollapsed: boolean = true;
+    isGradingKeyCollapsed = true;
+    isBonusGradingKeyCollapsed = true;
 
     @Input()
     instructorView = false;

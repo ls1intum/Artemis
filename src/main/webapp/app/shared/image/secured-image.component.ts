@@ -68,7 +68,7 @@ export class SecuredImageComponent implements OnChanges, OnInit {
         );
     }
 
-    ngOnChanges(): void {
+    ngOnChanges() {
         if (this.srcSubject) {
             this.srcSubject.next(this.src);
         }

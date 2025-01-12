@@ -96,7 +96,7 @@ export class ExerciseScoresChartComponent implements AfterViewInit, OnChanges {
         });
     }
 
-    ngOnChanges(): void {
+    ngOnChanges() {
         this.initializeChart();
     }
 

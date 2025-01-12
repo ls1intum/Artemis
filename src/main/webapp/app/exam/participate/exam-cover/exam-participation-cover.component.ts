@@ -90,7 +90,7 @@ export class ExamParticipationCoverComponent implements OnChanges, OnDestroy, On
      * changes in the exam and subscription is handled in the exam-participation.component
      * if the student exam changes, we need to update the displayed times
      */
-    ngOnChanges(): void {
+    ngOnChanges() {
         this.confirmed = false;
         this.startEnabled = false;
         this.testRun = this.studentExam.testRun;

@@ -14,6 +14,6 @@ import { ArtemisTranslatePipe } from '../pipes/artemis-translate.pipe';
 })
 export class NotReleasedTagComponent {
     @Input() public exercise: Exercise;
-    @Input() public noMargin: boolean = true;
+    @Input() public noMargin = true;
     readonly dayjs = dayjs;
 }

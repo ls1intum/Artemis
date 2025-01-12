@@ -85,7 +85,7 @@ export class OnlineUnitFormComponent implements OnChanges {
         return this.form.get('source');
     }
 
-    ngOnChanges(): void {
+    ngOnChanges() {
         if (this.isEditMode() && this.formData()) {
             this.setFormValues(this.formData()!);
         }

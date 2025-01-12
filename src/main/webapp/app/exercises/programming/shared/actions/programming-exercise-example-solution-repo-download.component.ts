@@ -20,7 +20,7 @@ import { ButtonComponent } from 'app/shared/components/button.component';
 export class ProgrammingExerciseExampleSolutionRepoDownloadComponent extends ProgrammingExerciseInstructorRepoDownloadComponent {
     @Input() includeTests?: boolean;
 
-    @Input() displayedOnExamSummary: boolean = false;
+    @Input() displayedOnExamSummary = false;
 
     exportRepository() {
         if (this.exerciseId) {

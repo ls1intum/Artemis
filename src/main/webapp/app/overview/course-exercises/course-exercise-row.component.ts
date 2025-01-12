@@ -91,7 +91,7 @@ export class CourseExerciseRowComponent implements OnInit, OnDestroy, OnChanges 
         this.routerLink = ['/courses', this.course.id!.toString(), 'exercises', this.exercise.id!.toString()];
     }
 
-    ngOnChanges(): void {
+    ngOnChanges() {
         const cachedParticipations = this.participationWebsocketService.getParticipationsForExercise(this.exercise.id!);
         if (cachedParticipations?.length) {
             this.exercise.studentParticipations = cachedParticipations;

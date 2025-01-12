@@ -17,11 +17,11 @@ export class UnreferencedFeedbackComponent {
 
     unreferencedFeedback: Feedback[] = [];
     assessmentsAreValid: boolean;
-    feedbackDetailChanges: boolean = false;
+    feedbackDetailChanges = false;
 
     @Input() readOnly: boolean;
     @Input() highlightDifferences: boolean;
-    @Input() useDefaultFeedbackSuggestionBadgeText: boolean = false;
+    @Input() useDefaultFeedbackSuggestionBadgeText = false;
     @Input() resultId: number;
 
     /**
