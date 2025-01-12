@@ -22,7 +22,7 @@ import { ButtonType } from 'app/shared/components/button.component';
 import { Result } from 'app/entities/result.model';
 import { AccountService } from 'app/core/auth/account.service';
 import { getFirstResultWithComplaint, getLatestSubmissionResult } from 'app/entities/submission.model';
-import { addParticipationToResult, getUnreferencedFeedback } from 'app/exercises/shared/result/result.utils';
+import { addParticipationToResult, getManualUnreferencedFeedback } from 'app/exercises/shared/result/result.utils';
 import { Feedback, checkSubsequentFeedbackInAssessment } from 'app/entities/feedback.model';
 import { onError } from 'app/shared/util/global.utils';
 import { getCourseFromExercise } from 'app/entities/exercise.model';
@@ -247,7 +247,7 @@ export class FileUploadSubmissionComponent implements OnInit, ComponentCanDeacti
     get unreferencedFeedback(): Feedback[] | undefined {
         if (this.result?.feedbacks) {
             checkSubsequentFeedbackInAssessment(this.result.feedbacks);
-            return getUnreferencedFeedback(this.result.feedbacks);
+            return getManualUnreferencedFeedback(this.result.feedbacks);
         }
         return undefined;
     }
