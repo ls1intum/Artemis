@@ -51,7 +51,7 @@ import { FaIconComponent } from '@fortawesome/angular-fontawesome';
     imports: [ProgrammingExerciseInstructionStepWizardComponent, ExamExerciseUpdateHighlighterComponent, FaIconComponent],
 })
 export class ProgrammingExerciseInstructionComponent implements OnChanges, OnDestroy {
-    viewContainerRef = inject(ViewContainerRef);
+    private viewContainerRef = inject(ViewContainerRef);
     private resultService = inject(ResultService);
     private participationWebsocketService = inject(ParticipationWebsocketService);
     private programmingExerciseTaskWrapper = inject(ProgrammingExerciseTaskExtensionWrapper);
@@ -62,26 +62,25 @@ export class ProgrammingExerciseInstructionComponent implements OnChanges, OnDes
     private programmingExerciseInstructionService = inject(ProgrammingExerciseInstructionService);
     private appRef = inject(ApplicationRef);
     private injector = inject(EnvironmentInjector);
-
     private themeService = inject(ThemeService);
 
     @Input() public exercise: ProgrammingExercise;
     @Input() public participation: Participation;
     @Input() generateHtmlEvents: Observable<void>;
     @Input() personalParticipation: boolean;
+
     // Emits an event if the instructions are not available via the problemStatement
-    @Output()
-    public onNoInstructionsAvailable = new EventEmitter();
+    @Output() public onNoInstructionsAvailable = new EventEmitter();
 
     @ViewChild(ExamExerciseUpdateHighlighterComponent) examExerciseUpdateHighlighterComponent: ExamExerciseUpdateHighlighterComponent;
 
-    public problemStatement: string;
-    public participationSubscription?: Subscription;
+    private problemStatement: string;
+    private participationSubscription?: Subscription;
     private testCasesSubscription?: Subscription;
 
     public isInitial = true;
     public isLoading: boolean;
-    public latestResultValue?: Result;
+    latestResultValue?: Result;
     // unique index, even if multiple tasks are shown from different problem statements on the same page (in different tabs)
     private taskIndex = 0;
     public tasks: TaskArray;
@@ -92,7 +91,7 @@ export class ProgrammingExerciseInstructionComponent implements OnChanges, OnDes
 
     set latestResult(result: Result | undefined) {
         this.latestResultValue = result;
-        this.programmingExercisePlantUmlWrapper.setLatestResult(this.latestResult);
+        this.programmingExercisePlantUmlWrapper.setLatestResult(this.latestResultValue);
         this.programmingExercisePlantUmlWrapper.setTestCases(this.testCases);
     }
 
@@ -121,7 +120,7 @@ export class ProgrammingExerciseInstructionComponent implements OnChanges, OnDes
      * subscription for the participation's result needs to be set up.
      * @param changes
      */
-    public ngOnChanges(changes: SimpleChanges) {
+    ngOnChanges(changes: SimpleChanges) {
         if (this.exercise?.isAtLeastTutor) {
             if (this.testCasesSubscription) {
                 this.testCasesSubscription.unsubscribe();
@@ -234,10 +233,10 @@ export class ProgrammingExerciseInstructionComponent implements OnChanges, OnDes
     /**
      * Render the markdown into html.
      */
-    updateMarkdown(): void {
+    updateMarkdown() {
         // make sure that always the correct result is set, before updating markdown
         // looks weird, but in setter of latestResult are setters of sub components invoked
-        this.latestResult = this.latestResult;
+        this.latestResult = this.latestResultValue;
 
         this.injectableContentForMarkdownCallbacks = [];
         this.renderMarkdown();

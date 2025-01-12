@@ -83,11 +83,11 @@ export class CommonCourseCompetencyFormComponent implements OnInit, OnChanges {
         this.descriptionControl?.markAsDirty();
     }
 
-    ngOnInit(): void {
+    ngOnInit() {
         merge(this.titleControl!.valueChanges, this.descriptionControl!.valueChanges).subscribe(() => this.suggestTaxonomies());
     }
 
-    ngOnChanges(): void {
+    ngOnChanges() {
         if (this.isEditMode && this.formData) {
             this.setFormValues(this.formData);
         }

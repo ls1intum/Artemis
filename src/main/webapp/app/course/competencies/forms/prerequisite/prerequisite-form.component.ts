@@ -28,14 +28,14 @@ export class PrerequisiteFormComponent extends CourseCompetencyFormComponent imp
 
     readonly CourseCompetencyType = CourseCompetencyType;
 
-    ngOnChanges(): void {
+    ngOnChanges() {
         this.initializeForm();
         if (this.isEditMode && this.formData) {
             this.setFormValues(this.formData);
         }
     }
 
-    ngOnInit(): void {
+    ngOnInit() {
         this.initializeForm();
     }
 

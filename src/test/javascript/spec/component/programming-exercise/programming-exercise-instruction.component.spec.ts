@@ -40,6 +40,7 @@ import { MockTranslateService, TranslatePipeMock } from '../../helpers/mocks/ser
 import { MockModule } from 'ng-mocks';
 import { ProgrammingExerciseGradingService } from 'app/exercises/programming/manage/services/programming-exercise-grading.service';
 import { SafeHtmlPipe } from 'app/shared/pipes/safe-html.pipe';
+import 'jest-extended';
 
 describe('ProgrammingExerciseInstructionComponent', () => {
     let comp: ProgrammingExerciseInstructionComponent;
@@ -120,6 +121,7 @@ describe('ProgrammingExerciseInstructionComponent', () => {
         subscribeForLatestResultOfParticipationStub.mockReturnValue(of());
         comp.exercise = exercise;
         comp.participation = participation;
+        // @ts-ignore
         comp.participationSubscription = oldSubscription;
 
         triggerChanges(comp, { property: 'participation', currentValue: participation, previousValue: oldParticipation, firstChange: false });
@@ -128,6 +130,7 @@ describe('ProgrammingExerciseInstructionComponent', () => {
         expect(getTestCasesSpy).toHaveBeenCalledOnce();
         expect(subscribeForLatestResultOfParticipationStub).toHaveBeenCalledOnce();
         expect(subscribeForLatestResultOfParticipationStub).toHaveBeenCalledWith(participation.id, true, exercise.id);
+        // @ts-ignore
         expect(comp.participationSubscription).not.toEqual(oldSubscription);
         flush();
         expect(comp.isInitial).toBeTrue();
@@ -153,6 +156,7 @@ describe('ProgrammingExerciseInstructionComponent', () => {
 
         fixture.detectChanges();
         triggerChanges(comp);
+        // @ts-ignore
         expect(comp.problemStatement).toBeUndefined();
         expect(loadInitialResultStub).not.toHaveBeenCalled();
         expect(comp.latestResult).toBeUndefined();
@@ -262,6 +266,7 @@ describe('ProgrammingExerciseInstructionComponent', () => {
             studentAssignedTeamIdComputed: false,
         };
 
+        // @ts-ignore
         comp.problemStatement = exercise.problemStatement!;
         comp.exercise = exercise;
         comp.latestResult = result;
@@ -341,6 +346,7 @@ describe('ProgrammingExerciseInstructionComponent', () => {
             studentAssignedTeamIdComputed: false,
         };
 
+        // @ts-ignore
         comp.problemStatement = exercise.problemStatement!;
         comp.exercise = exercise;
         comp.latestResult = result;
@@ -416,6 +422,7 @@ describe('ProgrammingExerciseInstructionComponent', () => {
             studentAssignedTeamIdComputed: false,
         };
 
+        // @ts-ignore
         comp.problemStatement = exercise.problemStatement!;
         comp.exercise = exercise;
         comp.latestResult = result;
@@ -438,6 +445,7 @@ describe('ProgrammingExerciseInstructionComponent', () => {
         const problemStatement = 'lorem ipsum';
         const updatedProblemStatement = 'new lorem ipsum';
         const updateMarkdownStub = jest.spyOn(comp, 'updateMarkdown');
+        // @ts-ignore
         comp.problemStatement = problemStatement;
         comp.exercise = { problemStatement: updatedProblemStatement } as ProgrammingExercise;
         comp.renderUpdatedProblemStatement();

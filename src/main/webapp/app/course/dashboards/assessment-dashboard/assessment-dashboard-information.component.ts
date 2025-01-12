@@ -96,11 +96,11 @@ export class AssessmentDashboardInformationComponent implements OnInit, OnChange
         ];
     }
 
-    ngOnChanges(): void {
+    ngOnChanges() {
         this.setup();
     }
 
-    ngOnDestroy(): void {
+    ngOnDestroy() {
         this.themeSubscription?.unsubscribe();
     }
 

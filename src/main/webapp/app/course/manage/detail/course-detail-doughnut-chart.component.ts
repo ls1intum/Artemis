@@ -51,7 +51,7 @@ export class CourseDetailDoughnutChartComponent implements OnChanges, OnInit {
     } as Color;
     bindFormatting = this.valueFormatting.bind(this);
 
-    ngOnChanges(): void {
+    ngOnChanges() {
         // [0, 0, 0] will lead to the chart not being displayed,
         // assigning [0, 0, 1] (PIE_CHART_NA_FALLBACK_VALUE) works around this issue and displays 0 %, 0 / 0 with a grey circle
         if (this.currentAbsolute == undefined && !this.receivedStats && !this.showText) {

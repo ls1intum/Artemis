@@ -1,4 +1,5 @@
 import { Component, OnChanges, OnDestroy, OnInit, ViewChild, computed, inject, input, output } from '@angular/core';
+import { EmojiComponent } from 'app/shared/metis/emoji/emoji.component';
 import { PostCreateEditModalComponent } from 'app/shared/metis/posting-create-edit-modal/post-create-edit-modal/post-create-edit-modal.component';
 import { faCheckSquare, faPencilAlt } from '@fortawesome/free-solid-svg-icons';
 import dayjs from 'dayjs/esm';
@@ -25,23 +26,23 @@ import { ArtemisTranslatePipe } from '../../pipes/artemis-translate.pipe';
     selector: 'jhi-posting-header',
     templateUrl: './posting-header.component.html',
     styleUrls: ['../metis.component.scss'],
-    imports: [ProfilePictureComponent, NgClass, FaIconComponent, NgbTooltip, TranslateDirective, ArtemisDatePipe, ArtemisTranslatePipe],
+    imports: [ProfilePictureComponent, NgClass, FaIconComponent, NgbTooltip, TranslateDirective, ArtemisDatePipe, ArtemisTranslatePipe, EmojiComponent],
 })
 export class PostingHeaderComponent implements OnInit, OnDestroy, OnChanges {
-    readOnlyMode = input<boolean>(false);
-    lastReadDate = input<dayjs.Dayjs>();
-    previewMode = input<boolean>(false);
     @ViewChild(PostCreateEditModalComponent) postCreateEditModal?: PostCreateEditModalComponent;
-    isAtLeastInstructorInCourse: boolean;
-    posting = input<Posting>();
-    isCommunicationPage = input<boolean>();
-    hasChannelModerationRights = input<boolean>(false);
-    isModalOpen = output<void>();
 
+    lastReadDate = input<dayjs.Dayjs>();
+    posting = input<Posting>();
+    readOnlyMode = input<boolean>(false);
+    previewMode = input<boolean>(false);
+    hasChannelModerationRights = input<boolean>(false);
+    isCommunicationPage = input<boolean>();
     isDeleted = input<boolean>(false);
 
+    isModalOpen = output<void>();
     readonly onUserNameClicked = output<void>();
 
+    isAtLeastInstructorInCourse: boolean;
     isAtLeastTutorInCourse: boolean;
     isAuthorOfPosting: boolean;
     postingIsOfToday: boolean;
@@ -60,13 +61,13 @@ export class PostingHeaderComponent implements OnInit, OnDestroy, OnChanges {
     protected accountService: AccountService = inject(AccountService);
 
     isPostResolved = computed<boolean>(() => {
-        const p = this.posting();
-        return this.isPost(p) && p.resolved === true;
+        const posting = this.posting();
+        return this.isPost(posting) && posting.resolved === true;
     });
 
     isPostPinned = computed<boolean>(() => {
-        const p = this.posting();
-        return this.isPost(p) && p.displayPriority == DisplayPriority.PINNED;
+        const posting = this.posting();
+        return this.isPost(posting) && posting.displayPriority == DisplayPriority.PINNED;
     });
 
     /**

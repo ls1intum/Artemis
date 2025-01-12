@@ -25,14 +25,14 @@ export class CompetencyFormComponent extends CourseCompetencyFormComponent imple
 
     @Output() formSubmitted: EventEmitter<CourseCompetencyFormData> = new EventEmitter<CourseCompetencyFormData>();
 
-    ngOnChanges(): void {
+    ngOnChanges() {
         this.initializeForm();
         if (this.isEditMode && this.formData) {
             this.setFormValues(this.formData);
         }
     }
 
-    ngOnInit(): void {
+    ngOnInit() {
         this.initializeForm();
     }
 
