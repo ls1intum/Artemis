@@ -14,7 +14,7 @@ import { DomainType } from 'app/exercises/programming/shared/code-editor/model/c
 import { ActivatedRoute } from '@angular/router';
 import { CodeEditorContainerComponent } from 'app/exercises/programming/shared/code-editor/container/code-editor-container.component';
 import { ProgrammingExerciseStudentParticipation } from 'app/entities/participation/programming-exercise-student-participation.model';
-import { getUnreferencedFeedback } from 'app/exercises/shared/result/result.utils';
+import { getManualUnreferencedFeedback } from 'app/exercises/shared/result/result.utils';
 import { SubmissionType } from 'app/entities/submission.model';
 import { SubmissionPolicyType } from 'app/entities/submission-policy.model';
 import { Course } from 'app/entities/course.model';
@@ -160,7 +160,7 @@ export class CodeEditorStudentContainerComponent implements OnInit, OnDestroy {
     get unreferencedFeedback(): Feedback[] {
         if (this.latestResult?.feedbacks) {
             checkSubsequentFeedbackInAssessment(this.latestResult.feedbacks);
-            return getUnreferencedFeedback(this.latestResult.feedbacks) ?? [];
+            return getManualUnreferencedFeedback(this.latestResult.feedbacks) ?? [];
         }
         return [];
     }
