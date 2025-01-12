@@ -124,6 +124,11 @@
                         }
                         <span jhiTranslate="entity.action.submit"></span>
                     </button>
+                    @if (exercise && exercise.type === 'text' && exercise.allowFeedbackRequests) {
+                        <button class="btn m-1 btn-secondary" (click)="sendToAthena.emit()" [disabled]="!(exercise?.isAtLeastInstructor || isAssessor)">
+                            <span jhiTranslate="Send To Athena"></span>
+                        </button>
+                    }
                     @if (!isTestRun) {
                         <button
                             class="btn m-1 btn-danger"
