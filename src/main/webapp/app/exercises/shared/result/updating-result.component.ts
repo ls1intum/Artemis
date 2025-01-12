@@ -15,6 +15,7 @@ import { getExerciseDueDate } from 'app/exercises/shared/exercise/exercise.utils
 import { getLatestResultOfStudentParticipation, hasParticipationChanged } from 'app/exercises/shared/participation/participation.utils';
 import { MissingResultInformation, isAIResultAndIsBeingProcessed, isAthenaAIResult } from 'app/exercises/shared/result/result.utils';
 import { convertDateFromServer } from 'app/utils/date.utils';
+import { ResultFaviconService } from './result-favicon/result-favicon.service';
 
 /**
  * A component that wraps the result component, updating its result on every websocket result event for the logged-in user.
@@ -37,6 +38,7 @@ export class UpdatingResultComponent implements OnChanges, OnDestroy {
     @Input() showCompletion = true;
     @Input() showProgressBar = false;
     @Input() showProgressBarBorder = false;
+    @Input() updateFavicon = false;
     @Output() showResult = new EventEmitter<void>();
     /**
      * @property personalParticipation Whether the participation belongs to the user (by being a student) or not (by being an instructor)
@@ -58,6 +60,7 @@ export class UpdatingResultComponent implements OnChanges, OnDestroy {
     constructor(
         private participationWebsocketService: ParticipationWebsocketService,
         private submissionService: ProgrammingSubmissionService,
+        private resultFaviconService: ResultFaviconService,
     ) {}
 
     /**
@@ -96,6 +99,9 @@ export class UpdatingResultComponent implements OnChanges, OnDestroy {
         if (this.submissionSubscription) {
             this.submissionService.unsubscribeForLatestSubmissionOfParticipation(this.participation.id!);
             this.submissionSubscription.unsubscribe();
+        }
+        if (this.updateFavicon) {
+            this.resultFaviconService.removeFavicon();
         }
     }
 
@@ -195,6 +201,10 @@ export class UpdatingResultComponent implements OnChanges, OnDestroy {
         } else {
             // everything ok, remove the warning
             this.missingResultInfo = MissingResultInformation.NONE;
+        }
+
+        if (this.updateFavicon) {
+            this.resultFaviconService.updateFavicon(this.result, this.exercise, this.participation, this.isBuilding, this.isQueued, this.missingResultInfo);
         }
     }
 
