@@ -31,7 +31,7 @@ describe('ResultUtils', () => {
         expect(unreferencedFeedbacks).toEqual([{ type: FeedbackType.MANUAL_UNREFERENCED }]);
     });
 
-    it('should filter out all non unreferenced feedbacks that do not have type AUTOMATIC', () => {
+    it('should filter out all non unreferenced feedbacks', () => {
         const feedbacks = [
             { reference: 'foo' },
             { reference: 'foo', type: FeedbackType.AUTOMATIC },
@@ -40,7 +40,7 @@ describe('ResultUtils', () => {
             {},
         ];
         const unreferencedFeedbacks = getUnreferencedFeedback(feedbacks);
-        expect(unreferencedFeedbacks).toEqual([{ type: FeedbackType.AUTOMATIC }]);
+        expect(unreferencedFeedbacks).toEqual([{ type: FeedbackType.AUTOMATIC }, { type: FeedbackType.MANUAL_UNREFERENCED }]);
     });
 
     it.each([
