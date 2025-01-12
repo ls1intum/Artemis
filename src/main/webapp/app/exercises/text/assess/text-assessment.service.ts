@@ -51,7 +51,7 @@ export class TextAssessmentService {
      * @param assessmentNote of the result
      */
     public submit(participationId: number, resultId: number, feedbacks: Feedback[], textBlocks: TextBlock[], assessmentNote?: string): Observable<EntityResponseType> {
-        return this.submitFeedback(participationId, resultId, feedbacks, textBlocks, assessmentNote, false);
+        return this.submitFeedback(participationId, resultId, feedbacks, textBlocks, false, assessmentNote);
     }
 
     /**
@@ -63,7 +63,7 @@ export class TextAssessmentService {
      * @param assessmentNote of the result
      */
     public submitWithAthena(participationId: number, resultId: number, feedbacks: Feedback[], textBlocks: TextBlock[], assessmentNote?: string): Observable<EntityResponseType> {
-        return this.submitFeedback(participationId, resultId, feedbacks, textBlocks, assessmentNote, true);
+        return this.submitFeedback(participationId, resultId, feedbacks, textBlocks, true, assessmentNote);
     }
 
     private submitFeedback(
@@ -71,8 +71,8 @@ export class TextAssessmentService {
         resultId: number,
         feedbacks: Feedback[],
         textBlocks: TextBlock[],
-        assessmentNote?: string,
         sendFeedback: boolean,
+        assessmentNote?: string,
     ): Observable<EntityResponseType> {
         const body = TextAssessmentService.prepareFeedbacksAndTextblocksForRequest(feedbacks, textBlocks, assessmentNote);
         return this.http
