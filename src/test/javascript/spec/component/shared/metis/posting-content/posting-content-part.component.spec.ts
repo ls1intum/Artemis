@@ -316,4 +316,44 @@ describe('PostingContentPartComponent', () => {
             expect(escapedContent).toBe('1\\.  Numbered item\n\\- Unordered item\n2\\.  Another numbered item\n\\- Another unordered item');
         });
     });
+
+    describe('PostingContentPart Reactivity', () => {
+        it('should update display when postingContentPart changes', () => {
+            component.postingContentPart = {
+                contentBeforeReference: 'Initial content',
+                linkToReference: undefined,
+                queryParams: undefined,
+                referenceStr: undefined,
+                contentAfterReference: undefined,
+            } as PostingContentPart;
+            fixture.detectChanges();
+
+            const initialMarkdownElements = getElements(debugElement, '.markdown-preview');
+            expect(initialMarkdownElements).toHaveLength(1);
+            expect(initialMarkdownElements![0].innerHTML).toBe('<p class="inline-paragraph">Initial content</p>');
+
+            fixture.componentRef.setInput('postingContentPart', {
+                contentBeforeReference: 'Updated content before',
+                linkToReference: ['/course/1'],
+                queryParams: { searchText: '#123' },
+                referenceStr: '#123',
+                referenceType: ReferenceType.POST,
+                contentAfterReference: 'Updated content after',
+            } as PostingContentPart);
+            fixture.detectChanges();
+
+            const updatedMarkdownElements = getElements(debugElement, '.markdown-preview');
+            expect(updatedMarkdownElements).toHaveLength(2);
+            expect(updatedMarkdownElements![0].innerHTML).toBe('<p class="inline-paragraph">Updated content before</p>');
+            expect(updatedMarkdownElements![1].innerHTML).toBe('<p class="inline-paragraph">Updated content after</p>');
+
+            const referenceLink = getElement(debugElement, '.reference');
+            expect(referenceLink).not.toBeNull();
+            expect(referenceLink.innerHTML).toInclude('#123');
+
+            const icon = getElement(debugElement, 'fa-icon');
+            expect(icon).not.toBeNull();
+            expect(icon.innerHTML).toInclude('fa fa-message');
+        });
+    });
 });
