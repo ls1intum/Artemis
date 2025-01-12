@@ -240,7 +240,8 @@ public class TextAssessmentResource extends AssessmentResource {
      */
     @PostMapping("participations/{participationId}/results/{resultId}/submit-text-assessment")
     @EnforceAtLeastTutor
-    public ResponseEntity<Result> submitTextAssessment(@PathVariable Long participationId, @PathVariable Long resultId, @RequestBody TextAssessmentDTO textAssessment) {
+    public ResponseEntity<Result> submitTextAssessment(@PathVariable Long participationId, @PathVariable Long resultId, @RequestBody TextAssessmentDTO textAssessment,
+            @RequestParam boolean sendFeedback) {
         final boolean hasAssessmentWithTooLongReference = textAssessment.getFeedbacks().stream().filter(Feedback::hasReference)
                 .anyMatch(feedback -> feedback.getReference().length() > Feedback.MAX_REFERENCE_LENGTH);
         if (hasAssessmentWithTooLongReference) {
@@ -262,45 +263,11 @@ public class TextAssessmentResource extends AssessmentResource {
         if (response.getStatusCode().is2xxSuccessful()) {
             final var feedbacksWithIds = response.getBody().getFeedbacks();
             saveTextBlocks(textAssessment.getTextBlocks(), textSubmission, feedbacksWithIds);
-            // sendFeedbackToAthena(exercise, textSubmission, feedbacksWithIds);
+            if (sendFeedback) {
+                sendFeedbackToAthena(exercise, textSubmission, feedbacksWithIds);
+            }
         }
 
-        return response;
-    }
-
-    /**
-     * POST participations/:participationId/results/:resultId/submit-text-assessment : Saves the Assessment and sends it to Athena
-     *
-     * @param participationId the participationId of the participation whose assessment shall be saved
-     * @param resultId        the resultId the assessment belongs to
-     * @param textAssessment  the assessments which should be submitted
-     * @return 200 Ok if successful with the corresponding result as a body, but sensitive information are filtered out
-     */
-    @PostMapping("participations/{participationId}/results/{resultId}/send-text-assessment-to-athena")
-    @EnforceAtLeastTutor
-    public ResponseEntity<Result> sendTextAssesmentToAthena(@PathVariable Long participationId, @PathVariable Long resultId, @RequestBody TextAssessmentDTO textAssessment) {
-        final boolean hasAssessmentWithTooLongReference = textAssessment.getFeedbacks().stream().filter(Feedback::hasReference)
-                .anyMatch(feedback -> feedback.getReference().length() > Feedback.MAX_REFERENCE_LENGTH);
-        if (hasAssessmentWithTooLongReference) {
-            throw new BadRequestAlertException("Please select a text block shorter than " + Feedback.MAX_REFERENCE_LENGTH + " characters.", "feedbackList",
-                    "feedbackReferenceTooLong");
-        }
-        Result result = resultRepository.findByIdElseThrow(resultId);
-        if (!(result.getParticipation().getExercise() instanceof final TextExercise exercise)) {
-            throw new BadRequestAlertException("This exercise isn't a TextExercise!", "Exercise", "wrongExerciseType");
-        }
-        else if (!result.getParticipation().getId().equals(participationId)) {
-            throw new BadRequestAlertException("participationId in Result of resultId " + resultId + " doesn't match the paths participationId!", "participationId",
-                    "participationIdMismatch");
-        }
-        checkAuthorization(exercise, null);
-        final TextSubmission textSubmission = textSubmissionRepository.getTextSubmissionWithResultAndTextBlocksAndFeedbackByResultIdElseThrow(resultId);
-        ResponseEntity<Result> response = super.saveAssessment(textSubmission, true, textAssessment.getFeedbacks(), resultId, textAssessment.getAssessmentNote());
-
-        if (response.getStatusCode().is2xxSuccessful()) {
-            final var feedbacksWithIds = response.getBody().getFeedbacks();
-            sendFeedbackToAthena(exercise, textSubmission, feedbacksWithIds);
-        }
         return response;
     }
 
