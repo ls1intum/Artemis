@@ -8,7 +8,7 @@ import { MockWebsocketService } from '../../../helpers/mocks/service/mock-websoc
 import { MockAccountService } from '../../../helpers/mocks/service/mock-account.service';
 import { TranslateTestingModule } from '../../../helpers/mocks/service/mock-translate.service';
 import { NotificationSetting } from 'app/shared/user-settings/notification-settings/notification-settings-structure';
-import { ChangeDetectorRef, Component, inject } from '@angular/core';
+import { ChangeDetectorRef, Component } from '@angular/core';
 import { UserSettingsDirective } from 'app/shared/user-settings/user-settings.directive';
 import { MockRouter } from '../../../helpers/mocks/mock-router';
 import { Router } from '@angular/router';
@@ -28,7 +28,7 @@ import { AlertService } from 'app/core/util/alert.service';
 class UserSettingsMockComponent extends UserSettingsDirective {}
 
 describe('User Settings Directive', () => {
-    const alertService = inject(AlertService);
+    let alertService: AlertService;
     let comp: UserSettingsMockComponent;
     let fixture: ComponentFixture<UserSettingsMockComponent>;
 
@@ -54,7 +54,7 @@ describe('User Settings Directive', () => {
     beforeEach(() => {
         TestBed.configureTestingModule({
             imports: [TranslateTestingModule],
-            declarations: [UserSettingsMockComponent],
+            declarations: [],
             providers: [
                 provideHttpClient(),
                 provideHttpClientTesting(),
@@ -72,6 +72,7 @@ describe('User Settings Directive', () => {
                 // can be any other category, it does not change the logic
                 comp.userSettingsCategory = UserSettingsCategory.NOTIFICATION_SETTINGS;
                 userSettingsService = TestBed.inject(UserSettingsService);
+                alertService = TestBed.inject(AlertService);
                 httpMock = TestBed.inject(HttpTestingController);
                 changeDetectorDetectChangesSpy = jest.spyOn(changeDetector.constructor.prototype, 'detectChanges');
             });
