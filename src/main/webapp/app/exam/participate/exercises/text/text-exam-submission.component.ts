@@ -18,6 +18,7 @@ import { FormsModule } from '@angular/forms';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { ExamExerciseUpdateHighlighterComponent } from '../exam-exercise-update-highlighter/exam-exercise-update-highlighter.component';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
+import { onTextEditorTab } from 'app/utils/text.utils';
 
 @Component({
     selector: 'jhi-text-editor-exam',
@@ -57,6 +58,9 @@ export class TextExamSubmissionComponent extends ExamSubmissionComponent impleme
 
     // Icons
     protected readonly faListAlt = faListAlt;
+
+    // used in the html template
+    protected readonly onTextEditorTab = onTextEditorTab;
 
     ngOnInit(): void {
         // show submission answers in UI
@@ -104,16 +108,6 @@ export class TextExamSubmissionComponent extends ExamSubmissionComponent impleme
 
     get characterCount(): number {
         return this.stringCountService.countCharacters(this.answer);
-    }
-
-    onTextEditorTab(editor: HTMLTextAreaElement, event: Event) {
-        event.preventDefault();
-        const value = editor.value;
-        const start = editor.selectionStart;
-        const end = editor.selectionEnd;
-
-        editor.value = value.substring(0, start) + '\t' + value.substring(end);
-        editor.selectionStart = editor.selectionEnd = start + 1;
     }
 
     onTextEditorInput(event: Event) {

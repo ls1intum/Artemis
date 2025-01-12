@@ -5,8 +5,6 @@ import dayjs from 'dayjs/esm';
 import { getDayTranslationKey } from 'app/course/tutorial-groups/shared/weekdays';
 import { dayOfWeekZeroSundayToZeroMonday } from 'app/utils/date.utils';
 
-export const defaultLongDateTimeFormat = 'YYYY-MM-DD HH:mm:ss';
-
 export type DateType = Date | dayjs.Dayjs | string | number | null | undefined;
 export type DateFormat = 'short' | 'long' | 'short-date' | 'long-date' | 'time';
 
@@ -90,6 +88,7 @@ export class ArtemisDatePipe implements PipeTransform, OnDestroy {
      * @param locale The locale string of the desired language. Defaults to 'en'.
      * @param format Format of the localized date time. Defaults to 'long'.
      * @param seconds Should seconds be displayed? Defaults to false.
+     * @param showMilliSeconds whether to show milliseconds. Defaults to false.
      */
     static format(locale = 'en', format: DateFormat = 'long', seconds = false, showMilliSeconds = false): string {
         const long = format === 'long' || format === 'long-date';

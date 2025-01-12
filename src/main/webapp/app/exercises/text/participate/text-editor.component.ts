@@ -51,6 +51,7 @@ import { IrisExerciseChatbotButtonComponent } from 'app/iris/exercise-chatbot/ex
 import { UpperCasePipe } from '@angular/common';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { HtmlForMarkdownPipe } from 'app/shared/pipes/html-for-markdown.pipe';
+import { onTextEditorTab } from 'app/utils/text.utils';
 
 @Component({
     selector: 'jhi-text-editor',
@@ -137,6 +138,10 @@ export class TextEditorComponent implements OnInit, OnDestroy, ComponentCanDeact
     faCircleNotch = faCircleNotch;
     faTimeline = faTimeline;
     faEye = faEye;
+
+    // used in the html template
+    protected readonly onTextEditorTab = onTextEditorTab;
+
     participationUpdateListener: Subscription;
     sortedHistoryResults: Result[];
     hasAthenaResultForLatestSubmission: boolean = false;
@@ -443,16 +448,6 @@ export class TextEditorComponent implements OnInit, OnDestroy, ComponentCanDeact
         submission.participation!.exercise = this.textExercise;
         submission.participation!.submissions = [submission];
         this.updateParticipation(submission.participation as StudentParticipation);
-    }
-
-    onTextEditorTab(editor: HTMLTextAreaElement, event: Event) {
-        event.preventDefault();
-        const value = editor.value;
-        const start = editor.selectionStart;
-        const end = editor.selectionEnd;
-
-        editor.value = value.substring(0, start) + '\t' + value.substring(end);
-        editor.selectionStart = editor.selectionEnd = start + 1;
     }
 
     onTextEditorInput(event: Event) {
