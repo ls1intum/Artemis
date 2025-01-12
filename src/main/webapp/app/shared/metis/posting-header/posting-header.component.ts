@@ -10,7 +10,7 @@ import { MetisService } from 'app/shared/metis/metis.service';
 import { AccountService } from 'app/core/auth/account.service';
 import { tap } from 'rxjs';
 import { faUser, faUserCheck, faUserGraduate } from '@fortawesome/free-solid-svg-icons';
-import { UserRole } from 'app/shared/metis/metis.util';
+import { DisplayPriority, UserRole } from 'app/shared/metis/metis.util';
 import { AnswerPost } from 'app/entities/metis/answer-post.model';
 import { Post } from 'app/entities/metis/post.model';
 import { ProfilePictureComponent } from '../../profile-picture/profile-picture.component';
@@ -62,6 +62,11 @@ export class PostingHeaderComponent implements OnInit, OnDestroy, OnChanges {
     isPostResolved = computed<boolean>(() => {
         const p = this.posting();
         return this.isPost(p) && p.resolved === true;
+    });
+
+    isPostPinned = computed<boolean>(() => {
+        const p = this.posting();
+        return this.isPost(p) && p.displayPriority == DisplayPriority.PINNED;
     });
 
     /**

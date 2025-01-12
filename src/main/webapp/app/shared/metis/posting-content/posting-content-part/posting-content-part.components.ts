@@ -63,7 +63,7 @@ export class PostingContentPartComponent implements OnInit, OnChanges {
         this.processContent();
     }
 
-    ngOnChanges(): void {
+    ngOnChanges() {
         this.processContent();
     }
 

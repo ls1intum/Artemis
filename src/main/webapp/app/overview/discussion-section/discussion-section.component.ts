@@ -2,7 +2,7 @@ import { AfterViewInit, Component, ElementRef, OnDestroy, QueryList, ViewChild, 
 import interact from 'interactjs';
 import { Exercise } from 'app/entities/exercise.model';
 import { Lecture } from 'app/entities/lecture.model';
-import { PageType, PostSortCriterion, SortDirection } from 'app/shared/metis/metis.util';
+import { DisplayPriority, PageType, PostSortCriterion, SortDirection } from 'app/shared/metis/metis.util';
 import { ActivatedRoute, Params, Router } from '@angular/router';
 import { Subject, combineLatest, map, takeUntil } from 'rxjs';
 import { MetisService } from 'app/shared/metis/metis.service';
@@ -89,7 +89,18 @@ export class DiscussionSectionComponent extends CourseDiscussionDirective implem
             if (this.content) {
                 this.previousScrollDistanceFromTop = this.content.nativeElement.scrollHeight - this.content.nativeElement.scrollTop;
             }
-            this.posts = posts.slice().reverse();
+            this.posts = posts
+                .slice()
+                .sort((a, b) => {
+                    if (a.displayPriority === DisplayPriority.PINNED && b.displayPriority !== DisplayPriority.PINNED) {
+                        return 1;
+                    }
+                    if (a.displayPriority !== DisplayPriority.PINNED && b.displayPriority === DisplayPriority.PINNED) {
+                        return -1;
+                    }
+                    return 0;
+                })
+                .reverse();
             this.isLoading = false;
             if (this.currentPostId && this.posts.length > 0) {
                 this.currentPost = this.posts.find((post) => post.id === this.currentPostId);
