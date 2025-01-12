@@ -7,7 +7,7 @@ import { TextEditorRange } from 'app/shared/monaco-editor/model/actions/adapter/
 import { TextEditorPosition } from 'app/shared/monaco-editor/model/actions/adapter/text-editor-position.model';
 import { TextEditorCompletionItem } from 'app/shared/monaco-editor/model/actions/adapter/text-editor-completion-item.model';
 import { TextEditorKeybinding } from 'app/shared/monaco-editor/model/actions/adapter/text-editor-keybinding.model';
-import { RephraseService } from 'app/shared/monaco-editor/rephrase.service';
+import RephrasingVariant, { RephraseService } from 'app/shared/monaco-editor/rephrase.service';
 
 export abstract class TextEditorAction implements Disposable {
     id: string;
@@ -298,12 +298,13 @@ export abstract class TextEditorAction implements Disposable {
     /**
      * Toggles the rephrasing of the given text. If no text is provided, the editor's will return undefined.
      * @param editor The editor to toggle the text rephrasing for.
+     * @param variant The variant to use for rephrasing the text.
      * @param rephraseService The service to use for rephrasing the text.
      */
-    rephraseMarkdown(editor: TextEditor, rephraseService: RephraseService): void {
+    rephraseMarkdown(editor: TextEditor, variant: RephrasingVariant, rephraseService: RephraseService): void {
         const text = editor.getFullText();
         if (text) {
-            rephraseService.rephraseMarkdown(text).subscribe({
+            rephraseService.rephraseMarkdown(text, variant).subscribe({
                 next: (rephrasedText) => {
                     this.replaceTextAtRange(editor, new TextEditorRange(new TextEditorPosition(1, 1), editor.getEndPosition()), rephrasedText);
                 },

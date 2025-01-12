@@ -2,7 +2,7 @@ import { TextEditorAction } from 'app/shared/monaco-editor/model/actions/text-ed
 
 import { faReceipt } from '@fortawesome/free-solid-svg-icons';
 import { TextEditor } from 'app/shared/monaco-editor/model/actions/adapter/text-editor.interface';
-import { RephraseService } from 'app/shared/monaco-editor/rephrase.service';
+import RephrasingVariant, { RephraseService } from 'app/shared/monaco-editor/rephrase.service';
 
 /**
  * Action to toggle fullscreen mode in the editor.
@@ -12,15 +12,19 @@ export class RephraseAction extends TextEditorAction {
 
     element?: HTMLElement;
 
-    constructor(private readonly rephraseService: RephraseService) {
+    constructor(
+        private readonly rephraseService: RephraseService,
+        private readonly rephrasingVariant: RephrasingVariant,
+    ) {
         super(RephraseAction.ID, 'artemisApp.markdownEditor.commands.rephrase', faReceipt);
     }
 
     /**
      * Toggles the fullscreen mode of the editor.
      * @param editor The editor in which to rephrase the markdown.
+     * @param variant The variant of the rephrasing.
      */
     run(editor: TextEditor): void {
-        this.rephraseMarkdown(editor, this.rephraseService);
+        this.rephraseMarkdown(editor, this.rephrasingVariant, this.rephraseService);
     }
 }

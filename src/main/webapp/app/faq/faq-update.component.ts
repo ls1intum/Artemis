@@ -1,7 +1,7 @@
 import { Component, OnInit, inject } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
-import { Observable } from 'rxjs';
+import { Observable, Subscription } from 'rxjs';
 import { AlertService } from 'app/core/util/alert.service';
 import { onError } from 'app/shared/util/global.utils';
 import { ArtemisNavigationUtilService } from 'app/utils/navigation.utils';
@@ -19,7 +19,10 @@ import { ArtemisSharedComponentModule } from 'app/shared/components/shared-compo
 import { AccountService } from 'app/core/auth/account.service';
 import { RephraseAction } from 'app/shared/monaco-editor/model/actions/rephrase.action';
 import { FullscreenAction } from 'app/shared/monaco-editor/model/actions/fullscreen.action';
-import { RephraseService } from 'app/shared/monaco-editor/rephrase.service';
+import RephrasingVariant, { RephraseService } from 'app/shared/monaco-editor/rephrase.service';
+
+import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
+import { PROFILE_IRIS } from 'app/app.constants';
 
 @Component({
     selector: 'jhi-faq-update',
@@ -37,6 +40,7 @@ export class FaqUpdateComponent implements OnInit {
     courseId: number;
     isAtLeastInstructor: boolean = false;
     domainActionsDescription = [new FormulaAction()];
+    irisEnabled = false;
 
     // Icons
     readonly faQuestionCircle = faQuestionCircle;
@@ -51,8 +55,11 @@ export class FaqUpdateComponent implements OnInit {
     private translateService = inject(TranslateService);
     private accountService = inject(AccountService);
     private rephraseService = inject(RephraseService);
+    private profileService = inject(ProfileService);
 
-    metaActions = [new RephraseAction(this.rephraseService), new FullscreenAction()];
+    private profileInfoSubscription: Subscription;
+
+    metaActions = [new FullscreenAction()];
 
     ngOnInit() {
         this.isSaving = false;
@@ -70,6 +77,12 @@ export class FaqUpdateComponent implements OnInit {
             this.faqCategories = faq?.categories ? faq.categories : [];
         });
         this.validate();
+        this.profileInfoSubscription = this.profileService.getProfileInfo().subscribe(async (profileInfo) => {
+            this.irisEnabled = profileInfo.activeProfiles.includes(PROFILE_IRIS);
+            if (this.irisEnabled) {
+                this.metaActions = [new RephraseAction(this.rephraseService, RephrasingVariant.FAQ), new FullscreenAction()];
+            }
+        });
     }
 
     /**

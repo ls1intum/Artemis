@@ -5,7 +5,6 @@ import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_IRIS;
 
 import java.net.URI;
 import java.net.URISyntaxException;
-import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
@@ -245,20 +244,6 @@ public class FaqResource {
         authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.INSTRUCTOR, course, null);
         faqService.ingestFaqsIntoPyris(courseId, faqId);
         return ResponseEntity.ok().build();
-    }
-
-    /**
-     * GET /courses/rephraseText : Rephrases the given text.
-     *
-     * @param text the text to rephrase
-     * @return the ResponseEntity with status 200 (OK) and with the rephrased text
-     */
-    @GetMapping("courses/rephraseText")
-    public ResponseEntity<Map<String, String>> rephraseText(@RequestParam String text) {
-        log.debug("REST request to rephrase text: {}", text);
-        // Hier könnte eine Umformulierung implementiert werden
-        Map<String, String> response = Map.of("rephrasedText", "Rephrased: " + text);
-        return ResponseEntity.ok(response);
     }
 
     /**
