@@ -51,30 +51,34 @@ export class TextAssessmentService {
      * @param assessmentNote of the result
      */
     public submit(participationId: number, resultId: number, feedbacks: Feedback[], textBlocks: TextBlock[], assessmentNote?: string): Observable<EntityResponseType> {
-        const body = TextAssessmentService.prepareFeedbacksAndTextblocksForRequest(feedbacks, textBlocks, assessmentNote);
-        return this.http
-            .post<Result>(`${this.RESOURCE_URL}/participations/${participationId}/results/${resultId}/submit-text-assessment`, body, { observe: 'response' })
-            .pipe(map((res: EntityResponseType) => this.convertResultEntityResponseTypeFromServer(res)));
+        return this.submitFeedback(participationId, resultId, feedbacks, textBlocks, assessmentNote, false);
     }
 
     /**
-     * Sends the Text Assessment to Athena so that it can be used to learn.
+     * Submits the passed feedback items of the assessment and sends feedback to Athena.
      * @param participationId the assessed submission was made to of type {number}
      * @param resultId of the corresponding result of type {number}
      * @param feedbacks made during assessment of type {Feedback[]}
      * @param textBlocks of type {TextBlock[]}
      * @param assessmentNote of the result
      */
-    public sendFeedbackToAthenaICL(
+    public submitWithAthena(participationId: number, resultId: number, feedbacks: Feedback[], textBlocks: TextBlock[], assessmentNote?: string): Observable<EntityResponseType> {
+        return this.submitFeedback(participationId, resultId, feedbacks, textBlocks, assessmentNote, true);
+    }
+
+    private submitFeedback(
         participationId: number,
         resultId: number,
         feedbacks: Feedback[],
         textBlocks: TextBlock[],
         assessmentNote?: string,
+        sendFeedback: boolean,
     ): Observable<EntityResponseType> {
         const body = TextAssessmentService.prepareFeedbacksAndTextblocksForRequest(feedbacks, textBlocks, assessmentNote);
         return this.http
-            .post<Result>(`${this.RESOURCE_URL}/participations/${participationId}/results/${resultId}/send-text-assessment-to-athena`, body, { observe: 'response' })
+            .post<Result>(`${this.RESOURCE_URL}/participations/${participationId}/results/${resultId}/submit-text-assessment?sendFeedback=${sendFeedback}`, body, {
+                observe: 'response',
+            })
             .pipe(map((res: EntityResponseType) => this.convertResultEntityResponseTypeFromServer(res)));
     }
 
