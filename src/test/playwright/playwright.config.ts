@@ -16,7 +16,7 @@ export default defineConfig({
     /* Run tests in files in parallel */
     fullyParallel: true,
     timeout: (parseNumber(process.env.TEST_TIMEOUT_SECONDS) ?? 3 * 60) * 1000,
-    retries: 0, // parseNumber(process.env.TEST_RETRIES) ?? 2, TODO: remove hard coded 0 again
+    retries: parseNumber(process.env.TEST_RETRIES) ?? 2,
     workers: parseNumber(process.env.TEST_WORKER_PROCESSES) ?? 3,
     /* Reporter to use. See https://playwright.dev/docs/test-reporters */
     reporter: [['junit', { outputFile: process.env.PLAYWRIGHT_JUNIT_OUTPUT_NAME ?? './test-reports/results.xml' }]],
