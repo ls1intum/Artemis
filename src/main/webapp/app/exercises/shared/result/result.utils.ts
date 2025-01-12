@@ -130,7 +130,11 @@ export const getManualUnreferencedFeedback = (feedbacks: Feedback[] | undefined)
  * @returns an array with the unreferenced feedback of the result
  */
 export const getAutomaticUnreferencedFeedback = (feedbacks: Feedback[] | undefined): Feedback[] | undefined => {
-    return feedbacks ? feedbacks.filter((feedbackElement) => !feedbackElement.reference && feedbackElement.type === FeedbackType.AUTOMATIC) : undefined;
+    return feedbacks
+        ? feedbacks.filter(
+              (feedbackElement) => !feedbackElement.reference && (feedbackElement.type === FeedbackType.AUTOMATIC || feedbackElement.type === FeedbackType.MANUAL_UNREFERENCED),
+          )
+        : undefined;
 };
 
 export function isAIResultAndFailed(result: Result | undefined): boolean {
