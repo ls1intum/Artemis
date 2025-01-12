@@ -27,12 +27,12 @@ import de.tum.cit.aet.artemis.iris.service.pyris.dto.rephrasing.RephrasingVarian
 @Profile(PROFILE_IRIS)
 @RestController
 @RequestMapping("api/")
-public class RephrasingRessource {
+public class RephrasingResource {
 
     @Value("${jhipster.clientApp.name}")
     private String applicationName;
 
-    private static final Logger log = LoggerFactory.getLogger(RephrasingRessource.class);
+    private static final Logger log = LoggerFactory.getLogger(RephrasingResource.class);
 
     private static final String ENTITY_NAME = "rephrasing";
 
@@ -42,7 +42,7 @@ public class RephrasingRessource {
 
     private final Optional<IrisRephrasingService> irisRephrasingService;
 
-    public RephrasingRessource(UserRepository userRepository, CourseRepository courseRepository, Optional<IrisRephrasingService> irisRephrasingService) {
+    public RephrasingResource(UserRepository userRepository, CourseRepository courseRepository, Optional<IrisRephrasingService> irisRephrasingService) {
         this.userRepository = userRepository;
         this.courseRepository = courseRepository;
         this.irisRephrasingService = irisRephrasingService;
