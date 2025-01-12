@@ -140,6 +140,7 @@ services:
       environment:
         _JAVA_OPTIONS=-Dlogging.level.org.springframework: DEBUG
         EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: "http://admin:admin@artemis-jhipster-registry:8761/eureka/"
+        SERVER_ERROR_INCLUDE_STACKTRACE: "always"
       networks:
         - artemis
 
