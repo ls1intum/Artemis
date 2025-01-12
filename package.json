@@ -216,7 +216,7 @@
         "vitest": "npm run prebuild && npx vitest --run",
         "testw8": "npm run prebuild && ng test --coverage --log-heap-usage -w=8",
         "update": "ncu -i --format group",
-        "webapp:build": "npm run clean-www && npm run prebuild -- --develop && NG_BUILD_OPTIMIZE_CHUNKS=1 ng build --configuration development",
+        "webapp:build": "npm run clean-www && npm run prebuild -- --develop && ng build --configuration development",
         "webapp:prod": "npm run clean-www && npm run prebuild && NG_BUILD_OPTIMIZE_CHUNKS=1 ng build --configuration production"
     }
 }
