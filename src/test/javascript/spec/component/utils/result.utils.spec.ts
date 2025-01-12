@@ -1,9 +1,10 @@
 import {
     ResultTemplateStatus,
     breakCircularResultBackReferences,
+    getAutomaticUnreferencedFeedback,
+    getManualUnreferencedFeedback,
     getResultIconClass,
     getTextColorClass,
-    getUnreferencedFeedback,
     isOnlyCompilationTested,
 } from 'app/exercises/shared/result/result.utils';
 import { Feedback, FeedbackType, STATIC_CODE_ANALYSIS_FEEDBACK_IDENTIFIER } from 'app/entities/feedback.model';
@@ -18,10 +19,28 @@ import { Result } from 'app/entities/result.model';
 import dayjs from 'dayjs/esm';
 
 describe('ResultUtils', () => {
-    it('should filter out all non unreferenced feedbacks', () => {
-        const feedbacks = [{ reference: 'foo' }, { reference: 'foo', type: FeedbackType.MANUAL_UNREFERENCED }, { type: FeedbackType.MANUAL_UNREFERENCED }, {}];
-        const unreferencedFeedbacks = getUnreferencedFeedback(feedbacks);
+    it('should filter out all non unreferenced feedbacks that do not have type MANUAL_UNREFERENCED', () => {
+        const feedbacks = [
+            { reference: 'foo' },
+            { reference: 'foo', type: FeedbackType.MANUAL_UNREFERENCED },
+            { type: FeedbackType.AUTOMATIC },
+            { type: FeedbackType.MANUAL_UNREFERENCED },
+            {},
+        ];
+        const unreferencedFeedbacks = getManualUnreferencedFeedback(feedbacks);
         expect(unreferencedFeedbacks).toEqual([{ type: FeedbackType.MANUAL_UNREFERENCED }]);
+    });
+
+    it('should filter out all non unreferenced feedbacks that do not have type AUTOMATIC', () => {
+        const feedbacks = [
+            { reference: 'foo' },
+            { reference: 'foo', type: FeedbackType.AUTOMATIC },
+            { type: FeedbackType.AUTOMATIC },
+            { type: FeedbackType.MANUAL_UNREFERENCED },
+            {},
+        ];
+        const unreferencedFeedbacks = getAutomaticUnreferencedFeedback(feedbacks);
+        expect(unreferencedFeedbacks).toEqual([{ type: FeedbackType.AUTOMATIC }]);
     });
 
     it.each([
