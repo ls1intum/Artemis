@@ -18,6 +18,7 @@ export abstract class CodeEditorFileBrowserNodeComponent implements OnChanges {
     @Output() onClearRenamingNode = new EventEmitter<void>();
     @Output() onRenameNode = new EventEmitter<{ item: TreeviewItem<string>; newFileName: string }>();
     @Output() onDeleteNode = new EventEmitter<TreeviewItem<string>>();
+    @Output() onReopenFeedbackNode = new EventEmitter<TreeviewItem<string>>();
 
     /**
      * Check if the node is being renamed now, if so, focus the input when the view is rendered.
@@ -73,5 +74,14 @@ export abstract class CodeEditorFileBrowserNodeComponent implements OnChanges {
     deleteNode(event: any) {
         event.stopPropagation();
         this.onDeleteNode.emit(this.item);
+    }
+
+    /**
+     * Reopen feedback for this file
+     * @param event
+     */
+    reopenFeedback(event: any) {
+        event.stopPropagation();
+        this.onReopenFeedbackNode.emit(this.item);
     }
 }

@@ -47,6 +47,7 @@
             "fileLoadedSuccess": "Datei erfolgreich geladen",
             "fetchingParticipation": "Deine Teilnahme wird geladen, bitte warte einen Moment...",
             "tabSize": "Tabulatorweite:",
+            "showReopenFeedbackHint": "Du kannst Feedback erneut öffnen, indem du auf die entsprechende Schaltfläche im Dateibrowser für die gewünschte Datei klickst.",
             "conflict": {
                 "resetRepository": "Setze Dein Repository zurück, um Deine Teilnahme fortzusetzen",
                 "resolveConflict": "Konflikt beheben",
@@ -77,10 +78,11 @@
                 "renameFolderDisabledTooltip": "Um Verzeichnisse umzubenennen, deaktiviere das Zusammenfassen von Verzeichnissen in der obigen Leiste.",
                 "deleteFolder": "Verzeichnis löschen",
                 "deleteFile": "Datei löschen",
+                "reopenFeedback": "Feedback erneut anzeigen",
                 "compressTree": "Leere Verzeichnisse zusammenfassen",
                 "fileBadgeTooltips": {
                     "feedbackSuggestions": "Anzahl von Feedback-Vorschlägen in dieser Datei / diesem Ordner",
-                    "feedback": "Anzahl von Feedback Elementen in dieser Datei / diesem Ordner"
+                    "preliminaryFeedback": "Anzahl von vorläufigen Feedback Elementen in dieser Datei / diesem Ordner"
                 }
             },
             "errors": {

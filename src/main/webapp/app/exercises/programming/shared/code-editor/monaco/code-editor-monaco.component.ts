@@ -457,4 +457,10 @@ export class CodeEditorMonacoComponent implements OnChanges {
     getLineHighlights(): MonacoEditorLineHighlight[] {
         return this.editor().getLineHighlights();
     }
+
+    refreshFeedback() {
+        this.feedbackInternal.set(this.feedbacks());
+        this.onUpdateFeedback.emit(this.feedbackInternal());
+        this.renderFeedbackWidgets();
+    }
 }

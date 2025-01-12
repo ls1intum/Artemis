@@ -92,6 +92,8 @@ export class CodeEditorFileBrowserComponent implements OnInit, OnChanges, AfterV
     commitStateChange = new EventEmitter<CommitState>();
     @Output()
     onError = new EventEmitter<string>();
+    @Output()
+    onReopenFeedback = new EventEmitter<string>();
 
     isLoadingFiles: boolean;
     selectedFileValue?: string;
@@ -540,6 +542,10 @@ export class CodeEditorFileBrowserComponent implements OnInit, OnChanges, AfterV
 
     createFolder = (folderName: string): Observable<void> => {
         return this.repositoryFileService.createFolder(folderName);
+    };
+
+    reopenFeedback = (fileName: string): void => {
+        this.onReopenFeedback.emit(fileName);
     };
 
     /**

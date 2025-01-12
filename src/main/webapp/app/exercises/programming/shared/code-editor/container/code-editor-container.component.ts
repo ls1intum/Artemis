@@ -312,4 +312,12 @@ export class CodeEditorContainerComponent implements OnChanges {
         this.annotations = annotations;
         this.errorFiles = uniq(annotations.filter((a) => a.type === 'error').map((a) => a.fileName));
     }
+
+    /**
+     * Forces the code editor to refresh the feedback it shows.
+     * @param fileName The name of the file
+     */
+    onReopenFeedback(fileName: string) {
+        this.monacoEditor.refreshFeedback();
+    }
 }

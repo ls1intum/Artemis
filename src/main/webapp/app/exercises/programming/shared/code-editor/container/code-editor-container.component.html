@@ -41,13 +41,14 @@
         (onFileChange)="onFileChange($event)"
         (onError)="onError($event)"
         (onToggleCollapse)="onToggleCollapse($event, CollapsableCodeEditorElement.FileBrowser)"
+        (onReopenFeedback)="onReopenFeedback($event)"
     />
     <ng-container editorCenter>
         <jhi-code-editor-monaco
             [commitState]="commitState"
             [editorState]="editorState"
             [course]="course"
-            [feedbacks]="showInlineFeedback ? (participation?.results?.[0]?.feedbacks ?? []) : []"
+            [feedbacks]="showInlineFeedback ? (this.latestResult?.feedbacks ?? []) : []"
             [feedbackSuggestions]="feedbackSuggestions"
             [readOnlyManualFeedback]="readOnlyManualFeedback"
             [disableActions]="!editable"

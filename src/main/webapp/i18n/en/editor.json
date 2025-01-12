@@ -47,6 +47,7 @@
             "fileLoadedSuccess": "File loaded successfully",
             "fetchingParticipation": "Your participation is being loaded, please wait a moment...",
             "tabSize": "Tab size:",
+            "showReopenFeedbackHint": "You can reopen feedback by clicking the corresponding button in the file browser for the desired file.",
             "conflict": {
                 "resetRepository": "Reset your repository to continue with your participation",
                 "resolveConflict": "Resolve conflict",
@@ -77,6 +78,7 @@
                 "renameFolderDisabledTooltip": "To rename this folder, deactivate the combining of folders in the toolbar above.",
                 "deleteFolder": "Delete folder",
                 "deleteFile": "Delete file",
+                "reopenFeedback": "Reopen feedback",
                 "compressTree": "Combine empty folders",
                 "fileBadgeTooltips": {
                     "feedbackSuggestions": "Number of feedback suggestions in this file/folder",

@@ -8,6 +8,8 @@ import { roundValueSpecifiedByCourseSettings } from 'app/shared/util/utils';
 import { Course } from 'app/entities/course.model';
 import { faBan, faExclamationTriangle, faPencilAlt, faQuestionCircle, faSave, faTrashAlt } from '@fortawesome/free-solid-svg-icons';
 import { Subject } from 'rxjs';
+import { LocalStorageService } from 'ngx-webstorage';
+import { AlertService } from 'app/core/util/alert.service';
 
 @Component({
     selector: 'jhi-code-editor-tutor-assessment-inline-feedback',
@@ -69,6 +71,8 @@ export class CodeEditorTutorAssessmentInlineFeedbackComponent {
     constructor(
         private translateService: TranslateService,
         public structuredGradingCriterionService: StructuredGradingCriterionService,
+        private localStorage: LocalStorageService,
+        private alertService: AlertService,
         elementRef: ElementRef,
     ) {
         this.elementRef = elementRef;
@@ -106,6 +110,13 @@ export class CodeEditorTutorAssessmentInlineFeedbackComponent {
      * Deletes feedback after confirmation and emits to parent component
      */
     deleteFeedback() {
+        const storageKey = 'jhi-code-editor-tutor-assessment-inline-feedback.showReopenHint';
+
+        if (!localStorage.getItem(storageKey)) {
+            this.alertService.success('artemisApp.editor.showReopenFeedbackHint');
+            localStorage.setItem(storageKey, 'true');
+        }
+
         this.onDeleteFeedback.emit(this.feedback);
         this.dialogErrorSource.next('');
     }
