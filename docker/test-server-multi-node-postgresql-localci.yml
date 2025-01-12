@@ -113,6 +113,8 @@ services:
         _JAVA_OPTIONS=-Dlogging.level.org.springframework: DEBUG
         EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: "http://admin:admin@artemis-jhipster-registry:8761/eureka/"
         SERVER_ERROR_INCLUDE_STACKTRACE: "always"
+        JHIPSTER_REGISTRY_PASSWORD: "admin"
+        JHIPSTER_SECURITY_AUTHENTICATION_JWT_BASE64SECRET: "bXktc2VjcmV0LWtleS13aGljaC1zaG91bGQtYmUtY2hhbmdlZC1pbi1wcm9kdWN0aW9uLWFuZC1iZS1iYXNlNjQtZW5jb2RlZAo="
       networks:
         - artemis
 
