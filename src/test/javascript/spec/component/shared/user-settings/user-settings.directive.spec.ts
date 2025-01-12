@@ -36,8 +36,6 @@ describe('User Settings Directive', () => {
     let httpMock: HttpTestingController;
     let changeDetector: ChangeDetectorRef;
 
-    let changeDetectorDetectChangesSpy: jest.SpyInstance;
-
     const router = new MockRouter();
 
     const notificationSettingA: NotificationSetting = {
@@ -54,7 +52,6 @@ describe('User Settings Directive', () => {
     beforeEach(() => {
         TestBed.configureTestingModule({
             imports: [TranslateTestingModule],
-            declarations: [],
             providers: [
                 provideHttpClient(),
                 provideHttpClientTesting(),
@@ -74,7 +71,7 @@ describe('User Settings Directive', () => {
                 userSettingsService = TestBed.inject(UserSettingsService);
                 alertService = TestBed.inject(AlertService);
                 httpMock = TestBed.inject(HttpTestingController);
-                changeDetectorDetectChangesSpy = jest.spyOn(changeDetector.constructor.prototype, 'detectChanges');
+                changeDetector = fixture.debugElement.injector.get(ChangeDetectorRef);
             });
     });
 
@@ -90,6 +87,7 @@ describe('User Settings Directive', () => {
                 jest.spyOn(userSettingsService, 'loadSettings').mockReturnValue(of(new HttpResponse({ body: notificationSettingsForTesting })));
                 const loadSettingsSuccessAsSettingsStructureSpy = jest.spyOn(userSettingsService, 'loadSettingsSuccessAsSettingsStructure');
                 const extractIndividualSettingsFromSettingsStructureSpy = jest.spyOn(userSettingsService, 'extractIndividualSettingsFromSettingsStructure');
+                const changeDetectorDetectChangesSpy = jest.spyOn(changeDetector.constructor.prototype, 'detectChanges');
 
                 comp.ngOnInit();
 
