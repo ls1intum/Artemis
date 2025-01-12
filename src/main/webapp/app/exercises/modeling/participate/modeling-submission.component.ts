@@ -16,7 +16,7 @@ import { ModelingEditorComponent } from 'app/exercises/modeling/shared/modeling-
 import { HeaderParticipationPageComponent } from 'app/exercises/shared/exercise-headers/header-participation-page.component';
 import { getExerciseDueDate, hasExerciseDueDatePassed } from 'app/exercises/shared/exercise/exercise.utils';
 import { RatingComponent } from 'app/exercises/shared/rating/rating.component';
-import { addParticipationToResult, getAutomaticUnreferencedFeedback } from 'app/exercises/shared/result/result.utils';
+import { addParticipationToResult, getAutomaticAndManualUnreferencedFeedback } from 'app/exercises/shared/result/result.utils';
 import { AccountService } from 'app/core/auth/account.service';
 import { TeamSubmissionSyncComponent } from 'app/exercises/shared/team-submission-sync/team-submission-sync.component';
 import { TeamParticipateInfoBoxComponent } from 'app/exercises/shared/team/team-participate/team-participate-info-box.component';
@@ -698,7 +698,7 @@ export class ModelingSubmissionComponent implements OnInit, OnDestroy, Component
     get unreferencedFeedback(): Feedback[] | undefined {
         if (this.assessmentResult?.feedbacks) {
             checkSubsequentFeedbackInAssessment(this.assessmentResult.feedbacks);
-            return getAutomaticUnreferencedFeedback(this.assessmentResult.feedbacks);
+            return getAutomaticAndManualUnreferencedFeedback(this.assessmentResult.feedbacks);
         }
         return undefined;
     }
