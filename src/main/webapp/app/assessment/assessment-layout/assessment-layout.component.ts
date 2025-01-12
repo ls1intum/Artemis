@@ -68,4 +68,5 @@ export class AssessmentLayoutComponent {
     @Output() updateAssessmentAfterComplaint = new EventEmitter<AssessmentAfterComplaint>();
     @Output() highlightDifferencesChange = new EventEmitter<boolean>();
     @Output() useAsExampleSubmission = new EventEmitter<void>();
+    @Output() sendToAthena = new EventEmitter<void>();
 }
