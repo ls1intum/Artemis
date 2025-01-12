@@ -79,7 +79,7 @@ export class TextUnitFormComponent implements OnInit, OnChanges, OnDestroy {
         return this.form.get('releaseDate');
     }
 
-    ngOnChanges(): void {
+    ngOnChanges() {
         if (this.isEditMode() && this.formData()) {
             this.setFormValues(this.formData()!);
         }

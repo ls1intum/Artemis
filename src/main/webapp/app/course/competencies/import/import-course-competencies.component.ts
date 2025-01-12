@@ -23,7 +23,7 @@ export abstract class ImportCourseCompetenciesComponent implements OnInit, Compo
     // this attribute has to be set when using the common template (import-course-competencies.component.html)
     abstract entityType: string;
     // set this attribute to hide the options to import relation
-    allowRelationImport: boolean = false;
+    allowRelationImport = false;
 
     courseId: number;
     isLoading = false;

@@ -65,7 +65,7 @@ export class PostReactionsBarComponent extends PostingsReactionsBarDirective<Pos
     @Input() lastReadDate?: dayjs.Dayjs;
     @Input() previewMode: boolean;
     @Input() isEmojiCount = false;
-    @Input() hoverBar: boolean = true;
+    @Input() hoverBar = true;
 
     @Output() showAnswersChange = new EventEmitter<boolean>();
     @Output() openPostingCreateEditModal = new EventEmitter<void>();

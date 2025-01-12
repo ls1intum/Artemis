@@ -50,7 +50,7 @@ export class ApollonDiagramDetailComponent implements OnInit, OnDestroy {
     apollonDiagram?: ApollonDiagram;
     apollonEditor?: ApollonEditor;
 
-    isSaved: boolean = true;
+    isSaved = true;
 
     /**  */
     autoSaveInterval: number;

@@ -165,7 +165,7 @@ export class CourseOverviewComponent implements OnInit, OnDestroy, AfterViewInit
     isProduction = true;
     isTestServer = false;
     pageTitle: string;
-    hasSidebar: boolean = false;
+    hasSidebar = false;
     sidebarItems: SidebarItem[];
     courseActionItems: CourseActionItem[];
     isNotManagementView: boolean;
@@ -173,7 +173,7 @@ export class CourseOverviewComponent implements OnInit, OnDestroy, AfterViewInit
     isNavbarCollapsed = false;
     isSidebarCollapsed = false;
     profileSubscription?: Subscription;
-    showRefreshButton: boolean = false;
+    showRefreshButton = false;
     isExamStarted = false;
     private examStartedSubscription: Subscription;
     readonly MIN_DISPLAYED_COURSES: number = 6;

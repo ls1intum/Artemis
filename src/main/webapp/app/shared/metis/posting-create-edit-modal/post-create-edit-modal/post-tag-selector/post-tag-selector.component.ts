@@ -75,7 +75,7 @@ export class PostTagSelectorComponent implements OnInit, OnChanges, OnDestroy, A
     /**
      * on changes: updates tags (selected in selector) and post tags (input)
      */
-    ngOnChanges(): void {
+    ngOnChanges() {
         this.tags = this.postTags ? this.postTags : [];
     }
 

@@ -29,7 +29,7 @@ export class IncludedInScoreBadgeComponent implements OnInit, OnDestroy, OnChang
         });
     }
 
-    ngOnChanges(): void {
+    ngOnChanges() {
         this.setBadgeAttributes();
     }
 

@@ -23,7 +23,7 @@ export class SavedPostsComponent {
     protected posts: Posting[];
     protected hiddenPosts: number[] = [];
     protected savedPostStatusMap: SavedPostStatusMap = SavedPostStatusMap.PROGRESS;
-    protected isShowDeleteNotice: boolean = false;
+    protected isShowDeleteNotice = false;
 
     // Icons
     readonly faBookmark = faBookmark;

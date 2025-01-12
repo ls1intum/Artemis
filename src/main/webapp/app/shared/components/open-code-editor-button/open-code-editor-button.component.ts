@@ -36,7 +36,7 @@ export class OpenCodeEditorButtonComponent implements OnChanges {
 
     courseAndExerciseNavigationUrl: string;
     activeParticipation: ProgrammingExerciseStudentParticipation;
-    isPracticeMode: boolean = true;
+    isPracticeMode = true;
 
     // Icons
     faFolderOpen = faFolderOpen;

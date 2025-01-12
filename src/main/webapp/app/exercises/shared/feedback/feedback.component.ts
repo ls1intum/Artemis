@@ -101,8 +101,8 @@ export class FeedbackComponent implements OnInit, OnChanges {
     @Input() taskName?: string;
     @Input() numberOfNotExecutedTests?: number;
 
-    @Input() isExamReviewPage?: boolean = false;
-    @Input() isPrinting?: boolean = false;
+    @Input() isExamReviewPage = false;
+    @Input() isPrinting = false;
 
     // Icons
     faXmark = faXmark;

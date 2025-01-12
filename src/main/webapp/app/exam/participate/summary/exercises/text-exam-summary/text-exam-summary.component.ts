@@ -11,6 +11,6 @@ import { TextEditorComponent } from 'app/exercises/text/participate/text-editor.
 export class TextExamSummaryComponent {
     @Input() exercise: Exercise;
     @Input() submission: TextSubmission;
-    @Input() expandProblemStatement?: boolean = false;
-    @Input() isAfterResultsArePublished?: boolean = false;
+    @Input() expandProblemStatement = false;
+    @Input() isAfterResultsArePublished = false;
 }

@@ -85,7 +85,7 @@ export class TextSubmissionViewerComponent implements OnChanges {
     /**
      * True if fetching submission files resulted in an error.
      */
-    cannotLoadFiles: boolean = false;
+    cannotLoadFiles = false;
 
     faExclamationTriangle = faExclamationTriangle;
 

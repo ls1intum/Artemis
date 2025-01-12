@@ -29,7 +29,7 @@ export class ResultHistoryComponent implements OnChanges {
     displayedResults: Result[];
     movedLastRatedResult: boolean;
 
-    ngOnChanges(): void {
+    ngOnChanges() {
         this.showPreviousDivider = this.results().length > MAX_RESULT_HISTORY_LENGTH;
         if (this.exercise()?.type === ExerciseType.TEXT || this.exercise()?.type === ExerciseType.MODELING) {
             this.displayedResults = this.results().filter((result) => result.successful !== undefined);

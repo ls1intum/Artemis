@@ -37,7 +37,7 @@ export class ManageAssessmentButtonsComponent implements OnInit {
 
     correctionRoundIndices: number[];
     cancelConfirmationText: string;
-    newManualResultAllowed: boolean = false;
+    newManualResultAllowed = false;
     examMode = false;
 
     readonly faBan = faBan;

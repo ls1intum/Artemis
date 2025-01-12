@@ -43,7 +43,7 @@ export abstract class PostingCreateEditDirective<T extends Posting> implements O
     /**
      * on changes: sets the content, and the modal title (edit or create), resets the form
      */
-    ngOnChanges(): void {
+    ngOnChanges() {
         this.content = this.posting?.content ?? '';
         this.resetFormGroup();
     }

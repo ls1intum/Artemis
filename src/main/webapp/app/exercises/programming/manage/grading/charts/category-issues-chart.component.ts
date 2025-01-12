@@ -34,7 +34,7 @@ export class CategoryIssuesChartComponent implements OnChanges {
 
     columns: IssueColumn[] = [];
 
-    ngOnChanges(): void {
+    ngOnChanges() {
         // set a minimum of 10 columns
         const numColumns = Math.max(this.maxNumberOfIssues, 10) + 1;
 

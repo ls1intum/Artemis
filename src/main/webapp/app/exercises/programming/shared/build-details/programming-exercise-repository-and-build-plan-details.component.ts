@@ -23,7 +23,7 @@ export class ProgrammingExerciseRepositoryAndBuildPlanDetailsComponent implement
     @Input() programmingExerciseBuildConfig?: ProgrammingExerciseBuildConfig;
     @Input() programmingLanguage?: ProgrammingLanguage;
     @Input() isLocal: boolean;
-    @Input() checkoutSolutionRepository?: boolean = true;
+    @Input() checkoutSolutionRepository = true;
     @Input() isCreateOrEdit = false;
     @Input() isEditMode = false;
     @Output() submissionBuildPlanEvent = new EventEmitter<BuildPlanCheckoutDirectoriesDTO>();

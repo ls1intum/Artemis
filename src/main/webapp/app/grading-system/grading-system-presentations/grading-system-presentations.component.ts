@@ -57,7 +57,7 @@ export class GradingSystemPresentationsComponent implements OnChanges {
     @Input()
     presentationsConfig: PresentationsConfig;
 
-    ngOnChanges(): void {
+    ngOnChanges() {
         this.initializePresentationConfig();
     }
 

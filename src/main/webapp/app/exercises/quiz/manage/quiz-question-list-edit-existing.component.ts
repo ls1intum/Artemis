@@ -71,7 +71,7 @@ export class QuizQuestionListEditExistingComponent implements OnChanges {
     importFile?: File;
     importFileName: string;
 
-    ngOnChanges(): void {
+    ngOnChanges() {
         if (this.show) {
             this.courseManagementService.getAllCoursesWithQuizExercises().subscribe((res: HttpResponse<Course[]>) => {
                 this.courses = res.body!;

@@ -41,7 +41,7 @@ export class QuizPoolMappingComponent implements OnInit, OnChanges, OnDestroy {
         this.handleUpdate();
     }
 
-    ngOnChanges(): void {
+    ngOnChanges() {
         this.handleUpdate();
     }
 

@@ -68,7 +68,7 @@ export class GenerateCompetenciesComponent implements OnInit, ComponentCanDeacti
 
     courseId: number;
     isLoading = false;
-    submitted: boolean = false;
+    submitted = false;
     form = new FormGroup({ competencies: new FormArray<FormGroup<CompetencyFormControlsWithViewed>>([]) });
 
     //Icons

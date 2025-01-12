@@ -61,7 +61,7 @@ export class CourseExercisePerformanceComponent implements OnInit, OnChanges, On
         this.translateServiceSubscription.unsubscribe();
     }
 
-    ngOnChanges(): void {
+    ngOnChanges() {
         this.setupChart();
     }
 

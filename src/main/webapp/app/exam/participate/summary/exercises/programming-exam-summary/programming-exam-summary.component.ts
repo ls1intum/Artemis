@@ -38,19 +38,19 @@ export class ProgrammingExamSummaryComponent implements OnInit {
 
     @Input() submission: ProgrammingSubmission;
 
-    @Input() isTestRun?: boolean = false;
+    @Input() isTestRun = false;
 
     @Input() exam: Exam;
 
-    @Input() isAfterStudentReviewStart?: boolean = false;
+    @Input() isAfterStudentReviewStart = false;
 
-    @Input() resultsPublished?: boolean = false;
+    @Input() resultsPublished = false;
 
-    @Input() isPrinting?: boolean = false;
+    @Input() isPrinting = false;
 
-    @Input() isAfterResultsArePublished?: boolean = false;
+    @Input() isAfterResultsArePublished = false;
 
-    @Input() instructorView?: boolean = false;
+    @Input() instructorView = false;
 
     readonly PROGRAMMING: ExerciseType = ExerciseType.PROGRAMMING;
 

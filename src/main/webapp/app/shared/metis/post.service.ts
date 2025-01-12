@@ -1,5 +1,6 @@
 import { Injectable, inject } from '@angular/core';
 import { HttpClient, HttpParams, HttpResponse } from '@angular/common/http';
+import { Posting } from 'app/entities/metis/posting.model';
 import { Observable } from 'rxjs';
 import { map } from 'rxjs/operators';
 import { Post } from 'app/entities/metis/post.model';
@@ -90,7 +91,7 @@ export class PostService extends PostingService<Post> {
      * @param {Post} post
      * @return {Observable<EntityResponseType>}
      */
-    update(courseId: number, post: Post): Observable<EntityResponseType> {
+    update<T extends Posting>(courseId: number, post: T): Observable<EntityResponseType> {
         const copy = this.convertPostingDateFromClient(post);
         return this.http
             .put<Post>(`${this.resourceUrl}${courseId}${PostService.getResourceEndpoint(undefined, post)}/${post.id}`, copy, { observe: 'response' })

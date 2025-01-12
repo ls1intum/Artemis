@@ -53,7 +53,7 @@ export class ExerciseFilterModalComponent implements OnInit {
     selectedCategoryOptions: ExerciseCategoryFilterOption[] = [];
     selectableCategoryOptions: ExerciseCategoryFilterOption[] = [];
 
-    noFiltersAvailable: boolean = false;
+    noFiltersAvailable = false;
 
     focus$ = new Subject<string>();
     click$ = new Subject<string>();

@@ -51,7 +51,7 @@ export class ProgrammingExerciseGradingTasksTableComponent implements OnInit {
 
     currentSort: Sort | undefined;
 
-    isExamExercise: boolean = false;
+    isExamExercise = false;
 
     get ignoreInactive() {
         return this.taskService.ignoreInactive;

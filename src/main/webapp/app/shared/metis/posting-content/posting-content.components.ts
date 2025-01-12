@@ -65,7 +65,7 @@ export class PostingContentComponent implements OnInit, OnChanges, OnDestroy {
     /**
      * on changes: update posting parts to be displayed
      */
-    ngOnChanges(): void {
+    ngOnChanges() {
         if (!this.isSubscribeToMetis()) {
             this.computeContentPartsOfPosts();
         }

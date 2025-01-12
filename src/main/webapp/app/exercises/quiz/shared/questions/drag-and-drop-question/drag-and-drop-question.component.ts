@@ -126,7 +126,7 @@ export class DragAndDropQuestionComponent implements OnChanges, OnInit {
         this.evaluateDropLocations();
     }
 
-    ngOnChanges(): void {
+    ngOnChanges() {
         this.evaluateDropLocations();
     }
 

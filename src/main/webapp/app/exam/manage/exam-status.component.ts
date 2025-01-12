@@ -87,7 +87,7 @@ export class ExamStatusComponent implements OnChanges, OnInit, OnDestroy {
         this.websocketService.receive(startedTopic).subscribe(() => (this.numberOfStarted += 1));
     }
 
-    ngOnChanges(): void {
+    ngOnChanges() {
         this.examChecklistService.getExamStatistics(this.exam).subscribe((examStats) => {
             this.examChecklist = examStats;
             this.numberOfGeneratedStudentExams = this.examChecklist.numberOfGeneratedStudentExams ?? 0;

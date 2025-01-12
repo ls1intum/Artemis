@@ -18,10 +18,10 @@ export class LinkPreviewComponent implements OnInit {
     private metisService = inject(MetisService);
 
     @Input() linkPreview: LinkPreview;
+    @Input() posting?: Posting;
     @Input() showLoadingsProgress: boolean;
     @Input() loaded: boolean;
     @Input() hasError: boolean;
-    @Input() posting?: Posting;
     @Input() isReply?: boolean;
     @Input() multiple?: boolean;
 

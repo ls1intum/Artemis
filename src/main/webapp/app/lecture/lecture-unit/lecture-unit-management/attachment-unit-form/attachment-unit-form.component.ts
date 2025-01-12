@@ -80,7 +80,7 @@ export class AttachmentUnitFormComponent implements OnChanges {
         return (this.statusChanges() === 'VALID' || this.fileName()) && !this.isFileTooBig() && this.datePickerComponent()?.isValid();
     });
 
-    ngOnChanges(): void {
+    ngOnChanges() {
         if (this.isEditMode() && this.formData()) {
             this.setFormValues(this.formData()!);
         }

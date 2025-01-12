@@ -31,7 +31,7 @@ export class FaqUpdateComponent implements OnInit {
     existingCategories: FaqCategory[];
     faqCategories: FaqCategory[];
     courseId: number;
-    isAtLeastInstructor: boolean = false;
+    isAtLeastInstructor = false;
     domainActionsDescription = [new FormulaAction()];
 
     // Icons

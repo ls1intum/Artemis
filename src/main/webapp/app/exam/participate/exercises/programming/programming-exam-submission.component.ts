@@ -101,7 +101,7 @@ export class ProgrammingExamSubmissionComponent extends ExamSubmissionComponent 
         this.setSubmissionCountAndLockIfNeeded();
     }
 
-    ngOnChanges(): void {
+    ngOnChanges() {
         this.setSubmissionCountAndLockIfNeeded();
     }
 

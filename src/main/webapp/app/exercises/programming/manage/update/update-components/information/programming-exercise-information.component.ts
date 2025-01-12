@@ -117,7 +117,7 @@ export class ProgrammingExerciseInformationComponent implements AfterViewInit, O
 
     exerciseTitle = signal<string | undefined>(undefined);
 
-    editRepositoryCheckoutPath: boolean = false;
+    editRepositoryCheckoutPath = false;
     submissionBuildPlanCheckoutRepositories: BuildPlanCheckoutDirectoriesDTO;
 
     constructor() {

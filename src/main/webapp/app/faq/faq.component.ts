@@ -34,7 +34,7 @@ export class FaqComponent implements OnInit, OnDestroy {
     filteredFaqs: Faq[];
     existingCategories: FaqCategory[];
     courseId: number;
-    hasCategories: boolean = false;
+    hasCategories = false;
     isAtLeastInstructor = false;
 
     private dialogErrorSource = new Subject<string>();

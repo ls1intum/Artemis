@@ -42,9 +42,9 @@ export class MetisConversationService implements OnDestroy {
     // Stores the currently selected conversation
     private activeConversation: ConversationDTO | undefined = undefined;
     _activeConversation$: ReplaySubject<ConversationDTO | undefined> = new ReplaySubject<ConversationDTO | undefined>(1);
-    private isCodeOfConductAccepted: boolean = false;
+    private isCodeOfConductAccepted = false;
     _isCodeOfConductAccepted$: ReplaySubject<boolean> = new ReplaySubject<boolean>(1);
-    private isCodeOfConductPresented: boolean = false;
+    private isCodeOfConductPresented = false;
     _isCodeOfConductPresented$: ReplaySubject<boolean> = new ReplaySubject<boolean>(1);
     private hasUnreadMessages = false;
     _hasUnreadMessages$: Subject<boolean> = new ReplaySubject<boolean>(1);

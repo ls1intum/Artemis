@@ -43,7 +43,7 @@ export class ProgrammingExerciseModeComponent implements OnInit {
 
     @Output() triggerValidation = new EventEmitter<void>();
 
-    theiaEnabled: boolean = false;
+    theiaEnabled = false;
 
     ngOnInit(): void {
         this.profileService.getProfileInfo().subscribe((profileInfo) => {

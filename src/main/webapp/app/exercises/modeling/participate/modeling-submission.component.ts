@@ -97,7 +97,7 @@ export class ModelingSubmissionComponent implements OnInit, OnDestroy, Component
 
     readonly addParticipationToResult = addParticipationToResult;
     readonly buildFeedbackTextForReview = buildFeedbackTextForReview;
-    ButtonType = ButtonType;
+    readonly ButtonType = ButtonType;
 
     @ViewChild(ModelingEditorComponent, { static: false }) modelingEditor: ModelingEditorComponent;
 
@@ -107,9 +107,9 @@ export class ModelingSubmissionComponent implements OnInit, OnDestroy, Component
     @Input() inputParticipation?: StudentParticipation;
 
     @Input() isExamSummary = false;
-    @Input() displayHeader: boolean = true;
-    @Input() isPrinting: boolean = false;
-    @Input() expandProblemStatement: boolean = false;
+    @Input() displayHeader = true;
+    @Input() isPrinting = false;
+    @Input() expandProblemStatement = false;
 
     private subscription: Subscription;
     private manualResultUpdateListener: Subscription;
@@ -287,11 +287,7 @@ export class ModelingSubmissionComponent implements OnInit, OnDestroy, Component
             this.participation = this.inputParticipation;
         }
 
-        if (this.submission.model) {
-            this.umlModel = JSON.parse(this.submission.model);
-            this.hasElements = this.umlModel.elements && Object.values(this.umlModel.elements).length !== 0;
-        }
-        this.explanation = this.submission.explanationText ?? '';
+        this.updateModelAndExplanation();
     }
 
     /**
@@ -346,11 +342,9 @@ export class ModelingSubmissionComponent implements OnInit, OnDestroy, Component
             dayjs(this.participation.initializationDate).isAfter(getExerciseDueDate(this.modelingExercise, this.participation));
 
         this.isAfterAssessmentDueDate = !this.modelingExercise.assessmentDueDate || dayjs().isAfter(this.modelingExercise.assessmentDueDate);
-        if (this.submission.model) {
-            this.umlModel = JSON.parse(this.submission.model);
-            this.hasElements = this.umlModel.elements && Object.values(this.umlModel.elements).length !== 0;
-        }
-        this.explanation = this.submission.explanationText ?? '';
+
+        this.updateModelAndExplanation();
+
         this.subscribeToWebsockets();
         if ((getLatestSubmissionResult(this.submission) && this.isAfterAssessmentDueDate) || this.isFeedbackView) {
             this.result = getLatestSubmissionResult(this.submission);
@@ -372,6 +366,14 @@ export class ModelingSubmissionComponent implements OnInit, OnDestroy, Component
         }
         this.isLoading = false;
         this.guidedTourService.enableTourForExercise(this.modelingExercise, modelingTour, true);
+    }
+
+    private updateModelAndExplanation(): void {
+        if (this.submission.model) {
+            this.umlModel = JSON.parse(this.submission.model);
+            this.hasElements = this.umlModel.elements && Object.values(this.umlModel.elements).length !== 0;
+        }
+        this.explanation = this.submission.explanationText ?? '';
     }
 
     /**

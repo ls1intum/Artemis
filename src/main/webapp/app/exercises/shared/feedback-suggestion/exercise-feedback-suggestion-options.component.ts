@@ -21,7 +21,7 @@ export class ExerciseFeedbackSuggestionOptionsComponent implements OnInit, OnCha
 
     @Input() exercise: Exercise;
     @Input() dueDate?: dayjs.Dayjs;
-    @Input() readOnly: boolean = false;
+    @Input() readOnly = false;
 
     protected readonly ExerciseType = ExerciseType;
 

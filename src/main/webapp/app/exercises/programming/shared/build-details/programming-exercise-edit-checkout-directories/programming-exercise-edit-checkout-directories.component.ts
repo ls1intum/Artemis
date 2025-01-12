@@ -24,11 +24,11 @@ export class ProgrammingExerciseEditCheckoutDirectoriesComponent {
     testCheckoutPath: string;
     solutionCheckoutPath: string;
 
-    isAssigmentRepositoryEditable: boolean = false;
-    isTestRepositoryEditable: boolean = false;
-    isSolutionRepositoryEditable: boolean = false;
+    isAssigmentRepositoryEditable = false;
+    isTestRepositoryEditable = false;
+    isSolutionRepositoryEditable = false;
 
-    formValid: boolean = true;
+    formValid = true;
     formValidChanges = new Subject();
 
     field_assignmentRepositoryCheckoutPath = viewChild<NgModel>('field_assignmentRepositoryCheckoutPath');

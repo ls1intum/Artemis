@@ -67,7 +67,7 @@ export class ProgrammingExerciseLifecycleComponent implements AfterViewInit, OnD
 
     isAthenaEnabled$: Observable<boolean> | undefined;
 
-    isImport: boolean = false;
+    isImport = false;
     private urlSubscription: Subscription;
 
     /**

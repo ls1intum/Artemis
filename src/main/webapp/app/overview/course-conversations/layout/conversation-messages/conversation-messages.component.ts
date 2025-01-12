@@ -88,7 +88,7 @@ export class ConversationMessagesComponent implements OnInit, AfterViewInit, OnD
 
     @Input() course?: Course;
     @Input() searchbarCollapsed = false;
-    @Input() contentHeightDev: boolean = false;
+    @Input() contentHeightDev = false;
 
     readonly focusPostId = input<number | undefined>(undefined);
     readonly openThreadOnFocus = input<boolean>(false);
@@ -121,7 +121,7 @@ export class ConversationMessagesComponent implements OnInit, AfterViewInit, OnD
     isHiddenInputWithCallToAction = false;
     isHiddenInputFull = false;
     focusOnPostId: number | undefined = undefined;
-    isOpenThreadOnFocus: boolean = false;
+    isOpenThreadOnFocus = false;
 
     private layoutService: LayoutService = inject(LayoutService);
 

@@ -247,8 +247,8 @@ export class MetisService implements OnDestroy {
 
     /**
      * updates a given posts by invoking the post service
-     * @param {Post} post to be updated
-     * @return {Observable<Post>} updated post
+     * @param post to be updated
+     * @return updated post
      */
     updatePost(post: Post): Observable<Post> {
         return this.postService.update(this.courseId, post).pipe(

@@ -17,7 +17,7 @@ export class CustomExerciseCategoryBadgeComponent {
     protected readonly faTimes = faTimes;
 
     @Input({ required: true }) category: ExerciseCategory | FaqCategory;
-    @Input() displayRemoveButton: boolean = false;
+    @Input() displayRemoveButton = false;
     @Input() onClick: () => void = () => {};
     @Input() fontSize: CategoryFontSize = 'default';
 }

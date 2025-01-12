@@ -19,7 +19,6 @@ import { AnswerPost } from 'app/entities/metis/answer-post.model';
 import { PostingDirective } from 'app/shared/metis/posting.directive';
 import dayjs from 'dayjs/esm';
 import { animate, style, transition, trigger } from '@angular/animations';
-import { Posting } from 'app/entities/metis/posting.model';
 import { Reaction } from 'app/entities/metis/reaction.model';
 import { faBookmark, faPencilAlt, faSmile, faTrash } from '@fortawesome/free-solid-svg-icons';
 import { DOCUMENT, NgClass, NgIf, NgStyle } from '@angular/common';
@@ -74,33 +73,29 @@ export class AnswerPostComponent extends PostingDirective<AnswerPost> implements
     @Output() channelReferenceClicked = new EventEmitter<number>();
     isAnswerPost = true;
 
-    @Input()
-    isReadOnlyMode = false;
+    @Input() isReadOnlyMode = false;
+
     // ng-container to render answerPostCreateEditModalComponent
+    @ViewChild('createEditAnswerPostContainer', { read: ViewContainerRef }) containerRef: ViewContainerRef;
+    @ViewChild(AnswerPostReactionsBarComponent) private reactionsBarComponent!: AnswerPostReactionsBarComponent;
 
     // Icons
     faBookmark = faBookmark;
 
-    @ViewChild('createEditAnswerPostContainer', { read: ViewContainerRef }) containerRef: ViewContainerRef;
     isConsecutive = input<boolean>(false);
     readonly faPencilAlt = faPencilAlt;
     readonly faSmile = faSmile;
     readonly faTrash = faTrash;
     static activeDropdownPost: AnswerPostComponent | null = null;
-    mayEdit: boolean = false;
-    mayDelete: boolean = false;
-    @ViewChild(AnswerPostReactionsBarComponent) private reactionsBarComponent!: AnswerPostReactionsBarComponent;
-
-    constructor() {
-        super();
-    }
+    mayEdit = false;
+    mayDelete = false;
 
     ngOnInit() {
         super.ngOnInit();
         this.assignPostingToAnswerPost();
     }
 
-    ngOnChanges(): void {
+    ngOnChanges() {
         this.assignPostingToAnswerPost();
     }
 
@@ -108,7 +103,7 @@ export class AnswerPostComponent extends PostingDirective<AnswerPost> implements
         return this.reactionsBarComponent;
     }
 
-    onPostingUpdated(updatedPosting: Posting) {
+    onPostingUpdated(updatedPosting: AnswerPost) {
         this.posting = updatedPosting;
     }
 

@@ -100,7 +100,7 @@ export class TextEditorComponent implements OnInit, OnDestroy, ComponentCanDeact
 
     participationId = input<number>();
     displayHeader = input<boolean>(true);
-    expandProblemStatement = input<boolean | undefined>(true);
+    expandProblemStatement = input<boolean>(true);
     inputExercise = input<TextExercise>();
     inputSubmission = input<TextSubmission>();
     inputParticipation = input<StudentParticipation>();
@@ -112,7 +112,7 @@ export class TextEditorComponent implements OnInit, OnDestroy, ComponentCanDeact
     resultWithComplaint?: Result;
     submission: TextSubmission;
     course?: Course;
-    isSaving: boolean = false;
+    isSaving = false;
     private textEditorInput = new Subject<string>();
     textEditorInputObservable = this.textEditorInput.asObservable();
     private submissionChange = new Subject<TextSubmission>();
@@ -131,7 +131,7 @@ export class TextEditorComponent implements OnInit, OnDestroy, ComponentCanDeact
     // indicates, that it is an exam exercise and the publishResults date is in the past
     isAfterPublishDate: boolean;
     isOwnerOfParticipation: boolean;
-    isReadOnlyWithShowResult: boolean = false;
+    isReadOnlyWithShowResult = false;
     // Icon
     farListAlt = faListAlt;
     faChevronDown = faChevronDown;
@@ -144,8 +144,8 @@ export class TextEditorComponent implements OnInit, OnDestroy, ComponentCanDeact
 
     participationUpdateListener: Subscription;
     sortedHistoryResults: Result[];
-    hasAthenaResultForLatestSubmission: boolean = false;
-    showHistory: boolean = false;
+    hasAthenaResultForLatestSubmission = false;
+    showHistory = false;
     submissionId: number | undefined;
 
     ngOnInit() {
@@ -172,20 +172,20 @@ export class TextEditorComponent implements OnInit, OnDestroy, ComponentCanDeact
             this.isReadOnlyWithShowResult = !!this.submissionId;
         }
         this.participationUpdateListener?.unsubscribe();
-        // Triggers on new result recieved
+        // Triggers on new result received
         this.participationUpdateListener = this.participationWebsocketService
             .subscribeForParticipationChanges()
             .pipe(skip(1))
             .subscribe((changedParticipation: StudentParticipation) => {
+                const results = changedParticipation.results;
                 if (
-                    changedParticipation.results &&
-                    ((changedParticipation.results?.length || 0) > (this.participation?.results?.length || 0) ||
-                        changedParticipation.results?.last()?.completionDate === undefined) &&
-                    changedParticipation.results?.last()?.assessmentType === AssessmentType.AUTOMATIC_ATHENA &&
-                    changedParticipation.results.last()?.successful !== undefined
+                    results &&
+                    ((results?.length || 0) > (this.participation?.results?.length || 0) || results?.last()?.completionDate === undefined) &&
+                    results?.last()?.assessmentType === AssessmentType.AUTOMATIC_ATHENA &&
+                    results.last()?.successful !== undefined
                 ) {
                     this.isGeneratingFeedback = false;
-                    if (changedParticipation.results.last()?.successful === false) {
+                    if (results.last()?.successful === false) {
                         this.alertService.error('artemisApp.exercise.athenaFeedbackFailed');
                     } else {
                         this.alertService.success('artemisApp.exercise.athenaFeedbackSuccessful');

@@ -25,7 +25,7 @@ export class ExampleSolutionComponent implements OnInit {
     public exampleSolutionInfo?: ExampleSolutionInfo;
 
     @Input() exerciseId?: number;
-    @Input() displayHeader?: boolean = true;
+    @Input() displayHeader = true;
 
     ngOnInit() {
         this.route.params.subscribe((params) => {

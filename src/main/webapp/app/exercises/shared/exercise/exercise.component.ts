@@ -31,7 +31,7 @@ export abstract class ExerciseComponent implements OnInit, OnDestroy {
     showHeading: boolean;
     courseId: number;
     predicate: string = 'id';
-    reverse: boolean = true;
+    reverse = true;
 
     selectedExercises: Exercise[] = [];
     allChecked = false;

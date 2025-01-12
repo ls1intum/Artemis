@@ -45,8 +45,8 @@ export class FinishedBuildJobFilter {
     buildDurationFilterUpperBound?: number = undefined;
     numberOfAppliedFilters = 0;
     appliedFilters = new Map<string, boolean>();
-    areDurationFiltersValid: boolean = true;
-    areDatesValid: boolean = true;
+    areDurationFiltersValid = true;
+    areDatesValid = true;
 
     /**
      * Adds the http param options
