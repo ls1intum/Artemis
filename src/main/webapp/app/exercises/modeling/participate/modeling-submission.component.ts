@@ -2,7 +2,6 @@ import { HttpErrorResponse } from '@angular/common/http';
 import { Component, Input, OnDestroy, OnInit, ViewChild, inject } from '@angular/core';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { Patch, Selection, UMLDiagramType, UMLElementType, UMLModel, UMLRelationshipType } from '@ls1intum/apollon';
-import { TranslateService } from '@ngx-translate/core';
 import { JhiWebsocketService } from 'app/core/websocket/websocket.service';
 import { ComplaintType } from 'app/entities/complaint.model';
 import { Feedback, buildFeedbackTextForReview, checkSubsequentFeedbackInAssessment } from 'app/entities/feedback.model';
@@ -17,7 +16,7 @@ import { ModelingEditorComponent } from 'app/exercises/modeling/shared/modeling-
 import { HeaderParticipationPageComponent } from 'app/exercises/shared/exercise-headers/header-participation-page.component';
 import { getExerciseDueDate, hasExerciseDueDatePassed } from 'app/exercises/shared/exercise/exercise.utils';
 import { RatingComponent } from 'app/exercises/shared/rating/rating.component';
-import { addParticipationToResult, getUnreferencedFeedback } from 'app/exercises/shared/result/result.utils';
+import { addParticipationToResult, getAutomaticUnreferencedFeedback } from 'app/exercises/shared/result/result.utils';
 import { AccountService } from 'app/core/auth/account.service';
 import { TeamSubmissionSyncComponent } from 'app/exercises/shared/team-submission-sync/team-submission-sync.component';
 import { TeamParticipateInfoBoxComponent } from 'app/exercises/shared/team/team-participate/team-participate-info-box.component';
@@ -92,7 +91,6 @@ export class ModelingSubmissionComponent implements OnInit, OnDestroy, Component
     private modelingAssessmentService = inject(ModelingAssessmentService);
     private alertService = inject(AlertService);
     private route = inject(ActivatedRoute);
-    private translateService = inject(TranslateService);
     private participationWebsocketService = inject(ParticipationWebsocketService);
     private guidedTourService = inject(GuidedTourService);
     private accountService = inject(AccountService);
@@ -104,14 +102,14 @@ export class ModelingSubmissionComponent implements OnInit, OnDestroy, Component
     @ViewChild(ModelingEditorComponent, { static: false }) modelingEditor: ModelingEditorComponent;
 
     @Input() participationId?: number;
-    @Input() displayHeader: boolean = true;
-    @Input() isPrinting?: boolean = false;
-    @Input() expandProblemStatement?: boolean = false;
-
     @Input() inputExercise?: ModelingExercise;
     @Input() inputSubmission?: ModelingSubmission;
     @Input() inputParticipation?: StudentParticipation;
+
     @Input() isExamSummary = false;
+    @Input() displayHeader: boolean = true;
+    @Input() isPrinting: boolean = false;
+    @Input() expandProblemStatement: boolean = false;
 
     private subscription: Subscription;
     private manualResultUpdateListener: Subscription;
@@ -141,11 +139,11 @@ export class ModelingSubmissionComponent implements OnInit, OnDestroy, Component
 
     umlModel: UMLModel; // input model for Apollon
     hasElements = false; // indicates if the current model has at least one element
-    isSaving: boolean;
+    isSaving = false;
     isChanged: boolean;
     retryStarted = false;
     autoSaveInterval: number;
-    autoSaveTimer: number;
+    autoSaveTimer = 0;
 
     explanation: string; // current explanation on text editor
 
@@ -153,7 +151,7 @@ export class ModelingSubmissionComponent implements OnInit, OnDestroy, Component
 
     // indicates if the assessment due date is in the past. the assessment will not be loaded and displayed to the student if it is not.
     isAfterAssessmentDueDate: boolean;
-    isLoading: boolean;
+    isLoading = true;
     isLate: boolean; // indicates if the submission is late
     isGeneratingFeedback: boolean;
     ComplaintType = ComplaintType;
@@ -161,8 +159,8 @@ export class ModelingSubmissionComponent implements OnInit, OnDestroy, Component
 
     // submission sync with team members
     private submissionChange = new Subject<ModelingSubmission>();
-    submissionObservable = this.submissionChange.asObservable();
-    submissionPatchObservable = new Subject<SubmissionPatch>();
+    protected submissionObservable = this.submissionChange.asObservable();
+    protected submissionPatchObservable = new Subject<SubmissionPatch>();
 
     // private modelingEditorInitialized = new ReplaySubject<void>();
     resizeOptions = { verticalResize: true };
@@ -174,14 +172,8 @@ export class ModelingSubmissionComponent implements OnInit, OnDestroy, Component
     faTimeline = faTimeline;
 
     // mode
-    isFeedbackView: boolean = false;
-    showResultHistory: boolean = false;
-
-    constructor() {
-        this.isSaving = false;
-        this.autoSaveTimer = 0;
-        this.isLoading = true;
-    }
+    isFeedbackView = false;
+    showResultHistory = false;
 
     ngOnInit(): void {
         if (this.inputValuesArePresent()) {
@@ -704,7 +696,7 @@ export class ModelingSubmissionComponent implements OnInit, OnDestroy, Component
     get unreferencedFeedback(): Feedback[] | undefined {
         if (this.assessmentResult?.feedbacks) {
             checkSubsequentFeedbackInAssessment(this.assessmentResult.feedbacks);
-            return getUnreferencedFeedback(this.assessmentResult.feedbacks);
+            return getAutomaticUnreferencedFeedback(this.assessmentResult.feedbacks);
         }
         return undefined;
     }
