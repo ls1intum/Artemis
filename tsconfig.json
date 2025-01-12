@@ -6,7 +6,6 @@
         "moduleResolution": "node",
         "esModuleInterop": true,
         "sourceMap": true,
-        "inlineSources": true,
         "emitDecoratorMetadata": true,
         "downlevelIteration": true,
         "declaration": false,
