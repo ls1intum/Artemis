@@ -114,7 +114,7 @@ services:
       extends:
         file: ./api-gateway.yml
         service: artemis-api-gateway
-      image: ghcr.io/ls1intum/api-gateway:${API_GATEWAY_DOCKER_TAG:-latest}
+      image: ghcr.io/ls1intum/api-gateway:${ARTEMIS_API_GATEWAY_DOCKER_TAG:-latest}
       env_file:
         # ToDo: Replace with prod.env once the values are known
         - ${ARTEMIS_ENV_FILE:-./artemis/config/prod-multinode.env} # the (eureka) config is overridden on the TS. as a workaround, we use the artemis env file

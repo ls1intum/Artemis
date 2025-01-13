@@ -5,7 +5,7 @@
 services:
     artemis-api-gateway:
         container_name: artemis-api-gateway
-        image: ghcr.io/ls1intum/api-gateway:${API_GATEWAY_DOCKER_TAG:-latest}
+        image: ghcr.io/ls1intum/api-gateway:${ARTEMIS_API_GATEWAY_DOCKER_TAG:-latest}
         env_file:
             - ./api-gateway/prod.env
         healthcheck:
