@@ -305,8 +305,11 @@ export abstract class TextEditorAction implements Disposable {
         const text = editor.getFullText();
         if (text) {
             rephraseService.rephraseMarkdown(text, variant).subscribe({
-                next: (rephrasedText) => {
-                    this.replaceTextAtRange(editor, new TextEditorRange(new TextEditorPosition(1, 1), editor.getEndPosition()), rephrasedText);
+                next: (message) => {
+                    this.replaceTextAtRange(editor, new TextEditorRange(new TextEditorPosition(1, 1), this.getEndPosition(editor)), message);
+                },
+                error: (error) => {
+                    console.error('Error during rephrasing:', error);
                 },
             });
         }
