@@ -583,7 +583,7 @@ describe('CodeEditorContainerIntegration', () => {
             { reference: 'file:src/Test3.java_line:10' },
             { reference: 'file:src/Test3.java_line:11' },
         ];
-        container.updateFileBadges();
+        container.updateFileBadgesForFeedbackSuggestions();
         expect(container.fileBadges).toEqual({
             'src/Test1.java': [new FileBadge(FileBadgeType.FEEDBACK_SUGGESTION, 1)],
             'src/Test2.java': [new FileBadge(FileBadgeType.FEEDBACK_SUGGESTION, 2)],
