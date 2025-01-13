@@ -7,7 +7,6 @@ import { ArtemisSharedModule } from 'app/shared/shared.module';
     selector: 'jhi-course-card-header',
     templateUrl: './course-card-header.component.html',
     styleUrls: ['./course-card-header.component.scss'],
-    standalone: true,
     imports: [ArtemisSharedModule],
 })
 export class CourseCardHeaderComponent implements OnInit {

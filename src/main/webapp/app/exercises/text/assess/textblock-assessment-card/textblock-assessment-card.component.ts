@@ -15,6 +15,7 @@ type OptionalTextBlockRef = TextBlockRef | undefined;
     selector: 'jhi-textblock-assessment-card',
     templateUrl: './textblock-assessment-card.component.html',
     styleUrls: ['./textblock-assessment-card.component.scss'],
+    imports: [TextblockFeedbackEditorComponent],
 })
 export class TextblockAssessmentCardComponent {
     protected route = inject(ActivatedRoute);

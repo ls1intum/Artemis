@@ -11,7 +11,6 @@ import { TranslateDirective } from 'app/shared/language/translate.directive';
 
 @Component({
     selector: 'jhi-learning-path-nav-overview-learning-objects',
-    standalone: true,
     changeDetection: ChangeDetectionStrategy.OnPush,
     imports: [NgbAccordionModule, FontAwesomeModule, CommonModule, TranslateDirective],
     templateUrl: './learning-path-nav-overview-learning-objects.component.html',
@@ -41,12 +40,9 @@ export class LearningPathNavOverviewLearningObjectsComponent {
     readonly onLearningObjectSelected = output<void>();
 
     constructor() {
-        effect(
-            () => {
-                untracked(() => this.loadLearningObjects());
-            },
-            { allowSignalWrites: true },
-        );
+        effect(() => {
+            untracked(() => this.loadLearningObjects());
+        });
     }
 
     async loadLearningObjects(): Promise<void> {

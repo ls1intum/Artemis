@@ -1,5 +1,6 @@
 import { NgModule } from '@angular/core';
 import { RouterModule } from '@angular/router';
+import { ArtemisFormsModule } from 'app/forms/artemis-forms.module';
 import { adminState } from './admin.route';
 import { ArtemisSharedModule } from 'app/shared/shared.module';
 import { FormDateTimePickerModule } from 'app/shared/date-time-picker/date-time-picker.module';
@@ -56,6 +57,7 @@ const ENTITY_STATES = [...adminState];
         RouterModule.forChild(ENTITY_STATES),
         ArtemisSharedModule,
         FormDateTimePickerModule,
+        ArtemisFormsModule,
         NgxDatatableModule,
         ArtemisDataTableModule,
         ArtemisChartsModule,
@@ -78,8 +80,6 @@ const ENTITY_STATES = [...adminState];
         AdminImportStandardizedCompetenciesComponent,
         BuildAgentSummaryComponent,
         BuildAgentDetailsComponent,
-    ],
-    declarations: [
         AuditsComponent,
         UserManagementComponent,
         UserManagementDetailComponent,

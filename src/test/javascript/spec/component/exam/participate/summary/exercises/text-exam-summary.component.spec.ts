@@ -3,15 +3,15 @@ import { TextExamSummaryComponent } from 'app/exam/participate/summary/exercises
 import { TextSubmission } from 'app/entities/text/text-submission.model';
 import { Exercise } from 'app/entities/exercise.model';
 import { TextEditorComponent } from 'app/exercises/text/participate/text-editor.component';
-import { MockComponent } from 'ng-mocks';
-import { By } from '@angular/platform-browser'; // Import By
+import { By } from '@angular/platform-browser';
+import { ArtemisTestModule } from '../../../../../test.module';
 
 describe('TextExamSummaryComponent', () => {
     let fixture: ComponentFixture<TextExamSummaryComponent>;
     let component: TextExamSummaryComponent;
 
     beforeEach(() => {
-        TestBed.configureTestingModule({ declarations: [TextExamSummaryComponent, MockComponent(TextEditorComponent)] })
+        TestBed.configureTestingModule({ imports: [ArtemisTestModule] })
             .compileComponents()
             .then(() => {
                 fixture = TestBed.createComponent(TextExamSummaryComponent);
@@ -33,7 +33,7 @@ describe('TextExamSummaryComponent', () => {
 
         const textEditorComponent = fixture.debugElement.query(By.directive(TextEditorComponent)).componentInstance;
         expect(textEditorComponent).not.toBeNull();
-        expect(textEditorComponent.participationId).toBe(1);
-        expect(textEditorComponent.inputSubmission.text).toBe(submissionText);
+        expect(textEditorComponent.participationId()).toBe(1);
+        expect(textEditorComponent.inputSubmission().text).toBe(submissionText);
     });
 });

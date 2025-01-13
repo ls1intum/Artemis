@@ -20,8 +20,9 @@ import { QuotePipe } from 'app/shared/pipes/quote.pipe';
         ArtemisFeedbackModule,
         FeedbackContentPipe,
         QuotePipe,
+        CodeEditorTutorAssessmentInlineFeedbackComponent,
+        CodeEditorTutorAssessmentInlineFeedbackSuggestionComponent,
     ],
-    declarations: [CodeEditorTutorAssessmentInlineFeedbackComponent, CodeEditorTutorAssessmentInlineFeedbackSuggestionComponent],
     exports: [CodeEditorTutorAssessmentInlineFeedbackComponent, CodeEditorTutorAssessmentInlineFeedbackSuggestionComponent],
 })
 export class ArtemisProgrammingManualAssessmentModule {}

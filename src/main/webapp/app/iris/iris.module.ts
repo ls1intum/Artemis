@@ -16,14 +16,23 @@ import { IrisExerciseChatbotButtonComponent } from 'app/iris/exercise-chatbot/ex
 import { IrisChatbotWidgetComponent } from 'app/iris/exercise-chatbot/widget/chatbot-widget.component';
 import { IrisEnabledComponent } from 'app/iris/settings/shared/iris-enabled.component';
 import { IrisLogoButtonComponent } from 'app/iris/iris-logo-button/iris-logo-button.component';
-import { FeatureToggleModule } from 'app/shared/feature-toggle/feature-toggle.module';
+
 import { IrisBaseChatbotComponent } from 'app/iris/base-chatbot/iris-base-chatbot.component';
 import { ChatStatusBarComponent } from 'app/iris/base-chatbot/chat-status-bar/chat-status-bar.component';
 import { CourseChatbotComponent } from 'app/iris/course-chatbot/course-chatbot.component';
 import { IrisLogoComponent } from 'app/iris/iris-logo/iris-logo.component';
 
 @NgModule({
-    declarations: [
+    imports: [
+        CommonModule,
+        MatDialogModule,
+        FormsModule,
+        FontAwesomeModule,
+        ArtemisSharedModule,
+        ArtemisMarkdownModule,
+        ArtemisSharedComponentModule,
+        RouterModule,
+        IrisLogoComponent,
         IrisBaseChatbotComponent,
         IrisChatbotWidgetComponent,
         IrisExerciseChatbotButtonComponent,
@@ -36,18 +45,6 @@ import { IrisLogoComponent } from 'app/iris/iris-logo/iris-logo.component';
         ChatStatusBarComponent,
         IrisLogoButtonComponent,
         CourseChatbotComponent,
-    ],
-    imports: [
-        CommonModule,
-        MatDialogModule,
-        FormsModule,
-        FontAwesomeModule,
-        ArtemisSharedModule,
-        ArtemisMarkdownModule,
-        ArtemisSharedComponentModule,
-        RouterModule,
-        FeatureToggleModule,
-        IrisLogoComponent,
     ],
     exports: [IrisExerciseChatbotButtonComponent, IrisEnabledComponent, IrisLogoButtonComponent, IrisBaseChatbotComponent, CourseChatbotComponent],
 })

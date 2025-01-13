@@ -7,7 +7,6 @@ import { ArtemisSharedCommonModule } from 'app/shared/shared-common.module';
     selector: 'jhi-feedback-modal',
     templateUrl: './feedback-modal.component.html',
     imports: [ArtemisSharedCommonModule],
-    standalone: true,
 })
 export class FeedbackModalComponent {
     feedbackDetail = input.required<FeedbackDetail>();

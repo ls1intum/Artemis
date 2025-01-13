@@ -1,19 +1,24 @@
-import { ChangeDetectionStrategy, Component, DoCheck, Input, IterableDiffer, IterableDiffers, OnInit } from '@angular/core';
+import { ChangeDetectionStrategy, Component, DoCheck, Input, IterableDiffer, IterableDiffers, OnInit, inject } from '@angular/core';
 import { TutorialGroupFreePeriod } from 'app/entities/tutorial-group/tutorial-group-free-day.model';
 import { SortService } from 'app/shared/service/sort.service';
 import dayjs from 'dayjs/esm';
+import { SidePanelComponent } from 'app/shared/side-panel/side-panel.component';
+import { NgClass } from '@angular/common';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { NgbPopover } from '@ng-bootstrap/ng-bootstrap';
+import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
+import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 
 @Component({
     selector: 'jhi-tutorial-group-free-days-overview',
     templateUrl: './tutorial-group-free-days-overview.component.html',
     styleUrls: ['./tutorial-group-free-days-overview.component.scss'],
     changeDetection: ChangeDetectionStrategy.OnPush,
+    imports: [SidePanelComponent, NgClass, TranslateDirective, NgbPopover, ArtemisDatePipe, ArtemisTranslatePipe],
 })
 export class TutorialGroupFreeDaysOverviewComponent implements OnInit, DoCheck {
-    constructor(
-        private sortService: SortService,
-        private iterableDiffers: IterableDiffers,
-    ) {}
+    private sortService = inject(SortService);
+    private iterableDiffers = inject(IterableDiffers);
 
     @Input()
     tutorialGroupFreeDays: TutorialGroupFreePeriod[] = [];

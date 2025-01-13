@@ -15,7 +15,6 @@ import { NgxDatatableModule } from '@siemens/ngx-datatable';
 
 @Component({
     selector: 'jhi-build-agents',
-    standalone: true,
     templateUrl: './build-agent-summary.component.html',
     styleUrl: './build-agent-summary.component.scss',
     imports: [ArtemisSharedModule, NgxDatatableModule, ArtemisDataTableModule],

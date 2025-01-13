@@ -27,9 +27,9 @@ describe('AdminImportStandardizedCompetenciesComponent', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule, NgbCollapseMocksModule],
-            declarations: [
-                AdminImportStandardizedCompetenciesComponent,
+            imports: [ArtemisTestModule],
+            providers: [
+                NgbCollapseMocksModule,
                 MockPipe(HtmlForMarkdownPipe),
                 KnowledgeAreaTreeStubComponent,
                 MockComponent(ButtonComponent),
@@ -40,8 +40,9 @@ describe('AdminImportStandardizedCompetenciesComponent', () => {
                 MockModule(FontAwesomeModule),
                 MockComponent(StandardizedCompetencyDetailComponent),
                 MockComponent(KnowledgeAreaTreeComponent),
+                MockProvider(AlertService),
+                { provide: Router, useClass: MockRouter },
             ],
-            providers: [{ provide: Router, useClass: MockRouter }, MockProvider(AlertService)],
         })
             .compileComponents()
             .then(() => {

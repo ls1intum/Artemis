@@ -6,7 +6,6 @@ import { ArtemisParticipantScoresModule } from 'app/shared/participant-scores/pa
 import { ExportModule } from 'app/shared/export/export.module';
 
 @NgModule({
-    imports: [ArtemisSharedModule, ArtemisCourseScoresRoutingModule, ArtemisParticipantScoresModule, ExportModule],
-    declarations: [CourseScoresComponent],
+    imports: [ArtemisSharedModule, ArtemisCourseScoresRoutingModule, ArtemisParticipantScoresModule, ExportModule, CourseScoresComponent],
 })
 export class ArtemisCourseScoresModule {}
