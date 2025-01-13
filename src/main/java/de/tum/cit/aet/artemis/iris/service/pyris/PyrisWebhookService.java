@@ -30,11 +30,14 @@ import de.tum.cit.aet.artemis.iris.service.pyris.dto.PyrisPipelineExecutionSetti
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.lectureingestionwebhook.PyrisLectureUnitWebhookDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.lectureingestionwebhook.PyrisWebhookLectureDeletionExecutionDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.lectureingestionwebhook.PyrisWebhookLectureIngestionExecutionDTO;
+import de.tum.cit.aet.artemis.iris.service.pyris.dto.transcriptionIngestion.PyrisTranscriptionIngestionWebhookDTO;
+import de.tum.cit.aet.artemis.iris.service.pyris.dto.transcriptionIngestion.PyrisWebhookTranscriptionIngestionExecutionDTO;
 import de.tum.cit.aet.artemis.iris.service.settings.IrisSettingsService;
 import de.tum.cit.aet.artemis.lecture.domain.AttachmentType;
 import de.tum.cit.aet.artemis.lecture.domain.AttachmentUnit;
 import de.tum.cit.aet.artemis.lecture.domain.Lecture;
 import de.tum.cit.aet.artemis.lecture.domain.LectureUnit;
+import de.tum.cit.aet.artemis.lecture.domain.Transcription;
 import de.tum.cit.aet.artemis.lecture.repository.LectureRepository;
 import de.tum.cit.aet.artemis.lecture.repository.LectureUnitRepository;
 
@@ -67,6 +70,38 @@ public class PyrisWebhookService {
         this.irisSettingsRepository = irisSettingsRepository;
         this.lectureUnitRepository = lectureUnitRepository;
         this.lectureRepository = lectureRepository;
+    }
+
+    private boolean transcriptionIngestionEnabled(Course course) {
+        // WIP
+        return true;
+    }
+
+    /**
+     * adds the transcription to the vector database in Pyris
+     *
+     * @param transcription The transcription that got Updated
+     * @return jobToken if the job was created else null
+     */
+    public String addTranscriptionToPyrisDB(Transcription transcription) {
+        if (lectureIngestionEnabled(transcription.getLecture().getCourse())) {
+            return executeTranscriptionAdditionWebhook(new PyrisTranscriptionIngestionWebhookDTO(transcription, 0, "", 0, "", ""));
+        }
+        return null;
+    }
+
+    /**
+     * executes executeTranscriptionAdditionWebhook add transcription from to the vector database on pyris
+     *
+     * @param toUpdateTranscription The transcription that are going to be Updated
+     * @return jobToken if the job was created
+     */
+    private String executeTranscriptionAdditionWebhook(PyrisTranscriptionIngestionWebhookDTO toUpdateTranscription) {
+        String jobToken = pyrisJobService.addTranscriptionIngestionWebhookJob(toUpdateTranscription.courseId(), toUpdateTranscription.lectureId());
+        PyrisPipelineExecutionSettingsDTO settingsDTO = new PyrisPipelineExecutionSettingsDTO(jobToken, List.of(), artemisBaseUrl);
+        PyrisWebhookTranscriptionIngestionExecutionDTO executionDTO = new PyrisWebhookTranscriptionIngestionExecutionDTO(toUpdateTranscription, settingsDTO, List.of());
+        pyrisConnectorService.executeTranscriptionAddtionWebhook("fullIngestion", executionDTO);
+        return jobToken;
     }
 
     private boolean lectureIngestionEnabled(Course course) {

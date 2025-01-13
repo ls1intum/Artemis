@@ -109,6 +109,22 @@ public class PyrisJobService {
     }
 
     /**
+     * Adds a new transcription ingestion webhook job to the job map with a timeout.
+     *
+     * @param courseId  the ID of the course associated with the webhook job
+     * @param lectureId the ID of the lecture associated with the webhook job
+     * @return a unique token identifying the created webhook job
+     */
+    public String addTranscriptionIngestionWebhookJob(long courseId, long lectureId) {
+        var token = generateJobIdToken();
+        var job = new IngestionWebhookJob(token, courseId, lectureId, 0); // TODO: check whether this job can be reused
+        long timeoutWebhookJob = 60;
+        TimeUnit unitWebhookJob = TimeUnit.MINUTES;
+        jobMap.put(token, job, timeoutWebhookJob, unitWebhookJob);
+        return token;
+    }
+
+    /**
      * Remove a job from the job map.
      *
      * @param job the job to remove

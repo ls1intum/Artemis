@@ -31,6 +31,7 @@ import de.tum.cit.aet.artemis.iris.exception.IrisInternalPyrisErrorException;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.PyrisVariantDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.lectureingestionwebhook.PyrisWebhookLectureDeletionExecutionDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.lectureingestionwebhook.PyrisWebhookLectureIngestionExecutionDTO;
+import de.tum.cit.aet.artemis.iris.service.pyris.dto.transcriptionIngestion.PyrisWebhookTranscriptionIngestionExecutionDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.job.IngestionWebhookJob;
 import de.tum.cit.aet.artemis.iris.web.open.PublicPyrisStatusUpdateResource;
 
@@ -105,6 +106,27 @@ public class PyrisConnectorService {
         catch (RestClientException | IllegalArgumentException e) {
             log.error("Failed to send request to Pyris", e);
             throw new PyrisConnectorException("Could not fetch response from Iris");
+        }
+    }
+
+    /**
+     * Executes a webhook and send transcription to the webhook with the given variant
+     *
+     * @param variant      The variant of the feature to execute
+     * @param executionDTO The DTO sent as a body for the execution
+     */
+    public void executeTranscriptionAddtionWebhook(String variant, PyrisWebhookTranscriptionIngestionExecutionDTO executionDTO) {
+        var endpoint = "/api/v1/webhooks/transcriptions/" + variant;
+        try {
+            restTemplate.postForEntity(pyrisUrl + endpoint, objectMapper.valueToTree(executionDTO), Void.class);
+        }
+        catch (HttpStatusCodeException e) {
+            log.error("Failed to send lecture unit {} to Pyris: {}", executionDTO.transcription().lectureName(), e.getMessage());
+            throw toIrisException(e);
+        }
+        catch (RestClientException | IllegalArgumentException e) {
+            log.error("Failed to send lecture unit {} to Pyris: {}", executionDTO.transcription().lectureName(), e.getMessage());
+            throw new PyrisConnectorException("Could not fetch response from Pyris");
         }
     }
 
