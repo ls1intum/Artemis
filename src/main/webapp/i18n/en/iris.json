@@ -36,7 +36,6 @@
                         "title": "Lecture Ingestion Settings",
                         "autoIngestOnAttachmentUpload": "Send Lectures To Pyris Automatically"
                     },
-                    "hestiaSettings": "Hestia Settings",
                     "competencyGenerationSettings": "Competency Generation Settings",
                     "proactivityBuildFailedEventEnabled": {
                         "label": "Monitor submission build failures",
@@ -75,8 +74,7 @@
                     "enabled": {
                         "on": "Enabled",
                         "off": "Disabled",
-                        "chat": "Iris Chat",
-                        "hestia": "Hestia Integration"
+                        "chat": "Iris Chat"
                     },
                     "disabled": {
                         "course": "IRIS is disabled in course IRIS settings",

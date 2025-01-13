@@ -5,7 +5,7 @@ import java.util.stream.Collectors;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 
-import de.tum.cit.aet.artemis.programming.domain.hestia.ProgrammingExerciseGitDiffReport;
+import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseGitDiffReport;
 
 /**
  * DTO for a git diff report.

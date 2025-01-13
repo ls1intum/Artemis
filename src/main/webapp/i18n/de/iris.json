@@ -36,7 +36,6 @@
                         "title": "Vorlesungen Erfassung Einstellungen",
                         "autoIngestOnAttachmentUpload": "Vorlesungen automatisch an Pyris senden"
                     },
-                    "hestiaSettings": "Hestia Einstellungen",
                     "competencyGenerationSettings": "Kompetenzgenerierung Einstellungen",
                     "proactivityBuildFailedEventEnabled": {
                         "label": "Build-Fehler überwachen",
@@ -75,8 +74,7 @@
                     "enabled": {
                         "on": "Aktiviert",
                         "off": "Deaktiviert",
-                        "chat": "Iris Chat",
-                        "hestia": "Hestia Integration"
+                        "chat": "Iris Chat"
                     },
                     "disabled": {
                         "course": "IRIS ist in den Kurs-IRIS-Einstellungen deaktiviert",

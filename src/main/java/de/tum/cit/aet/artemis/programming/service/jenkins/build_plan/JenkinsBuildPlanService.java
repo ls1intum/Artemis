@@ -48,12 +48,13 @@ import de.tum.cit.aet.artemis.programming.domain.ProgrammingLanguage;
 import de.tum.cit.aet.artemis.programming.domain.ProjectType;
 import de.tum.cit.aet.artemis.programming.domain.RepositoryType;
 import de.tum.cit.aet.artemis.programming.domain.VcsRepositoryUri;
+import de.tum.cit.aet.artemis.programming.dto.aeolus.AeolusRepository;
+import de.tum.cit.aet.artemis.programming.dto.aeolus.Windfile;
+import de.tum.cit.aet.artemis.programming.dto.aeolus.WindfileMetadata;
 import de.tum.cit.aet.artemis.programming.repository.BuildPlanRepository;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseBuildConfigRepository;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseRepository;
 import de.tum.cit.aet.artemis.programming.service.aeolus.AeolusBuildPlanService;
-import de.tum.cit.aet.artemis.programming.service.aeolus.AeolusRepository;
-import de.tum.cit.aet.artemis.programming.service.aeolus.Windfile;
 import de.tum.cit.aet.artemis.programming.service.ci.ContinuousIntegrationService;
 import de.tum.cit.aet.artemis.programming.service.ci.notification.dto.TestResultsDTO;
 import de.tum.cit.aet.artemis.programming.service.jenkins.JenkinsEndpoints;
@@ -184,8 +185,8 @@ public class JenkinsBuildPlanService {
             throw new UnsupportedOperationException("Xcode templates are not available for Jenkins.");
         }
         return switch (programmingLanguage) {
-            case JAVA, KOTLIN, PYTHON, C, HASKELL, SWIFT, EMPTY, RUST, JAVASCRIPT, R, C_PLUS_PLUS, TYPESCRIPT, C_SHARP -> jenkinsBuildPlanCreator;
-            case VHDL, ASSEMBLER, OCAML, SQL, GO, MATLAB, BASH, RUBY, POWERSHELL, ADA, DART, PHP ->
+            case JAVA, KOTLIN, PYTHON, C, HASKELL, SWIFT, EMPTY, RUST, JAVASCRIPT, R, C_PLUS_PLUS, TYPESCRIPT, C_SHARP, GO, BASH -> jenkinsBuildPlanCreator;
+            case VHDL, ASSEMBLER, OCAML, SQL, MATLAB, RUBY, POWERSHELL, ADA, DART, PHP ->
                 throw new UnsupportedOperationException(programmingLanguage + " templates are not available for Jenkins.");
         };
     }
@@ -287,7 +288,7 @@ public class JenkinsBuildPlanService {
      * @return the build plan key
      */
     public String getBuildPlanKeyFromTestResults(TestResultsDTO testResultsDTO) throws JsonProcessingException {
-        final var nameParams = testResultsDTO.getFullName().split(" ");
+        final var nameParams = testResultsDTO.fullName().split(" ");
         /*
          * Jenkins gives the full name of a job as <FOLDER NAME> » <JOB NAME> <Build Number> E.g. the third build of an exercise (projectKey = TESTEXC) for its solution build
          * (TESTEXC-SOLUTION) would be: TESTEXC » TESTEXC-SOLUTION #3 ==> This would mean that at index 2, we have the actual job/plan key, i.e. TESTEXC-SOLUTION
@@ -394,7 +395,7 @@ public class JenkinsBuildPlanService {
         }
 
         try {
-            var uri = UriComponentsBuilder.fromHttpUrl(serverUrl.toString()).pathSegment("job", projectKey, "job", planKey, "lastBuild", "api", "json").build().toUri();
+            var uri = UriComponentsBuilder.fromUriString(serverUrl.toString()).pathSegment("job", projectKey, "job", planKey, "lastBuild", "api", "json").build().toUri();
             var response = restTemplate.getForObject(uri, JsonNode.class);
             var isJobBuilding = response.get("building").asBoolean();
             return isJobBuilding ? ContinuousIntegrationService.BuildStatus.BUILDING : ContinuousIntegrationService.BuildStatus.INACTIVE;
@@ -475,7 +476,7 @@ public class JenkinsBuildPlanService {
      */
     public void enablePlan(String projectKey, String planKey) {
         try {
-            var uri = UriComponentsBuilder.fromHttpUrl(serverUrl.toString()).pathSegment("job", projectKey, "job", planKey, "enable").build(true).toUri();
+            var uri = UriComponentsBuilder.fromUriString(serverUrl.toString()).pathSegment("job", projectKey, "job", planKey, "enable").build(true).toUri();
             restTemplate.postForEntity(uri, null, String.class);
         }
         catch (HttpClientErrorException e) {
@@ -507,8 +508,9 @@ public class JenkinsBuildPlanService {
                     buildConfig.getBranch(), buildConfig.getCheckoutSolutionRepository(), repositoryUri, testRepositoryUri, solutionRepositoryUri, List.of());
 
             String resultHookUrl = artemisServerUrl + NEW_RESULT_RESOURCE_API_PATH;
-            windfile.setPreProcessingMetadata(buildPlanId, programmingExercise.getProjectName(), this.vcsCredentials, resultHookUrl, "planDescription", repositories,
-                    this.artemisAuthenticationTokenKey);
+            var metadata = new WindfileMetadata(programmingExercise.getProjectName(), buildPlanId, "planDescription", null, vcsCredentials, null, resultHookUrl,
+                    artemisAuthenticationTokenKey);
+            windfile = new Windfile(windfile, metadata, repositories);
             String generatedKey = aeolusBuildPlanService.get().publishBuildPlan(windfile, AeolusTarget.JENKINS);
 
             if (generatedKey != null && generatedKey.contains("-")) {

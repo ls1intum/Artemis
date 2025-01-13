@@ -10,7 +10,7 @@ Mobile Applications
 Overview
 --------
 
-Artemis supports native mobile applications available for both `Android <https://github.com/ls1intum/artemis-android>`_ and `iOS <https://github.com/ls1intum/artemis-ios>`_. We designed them to be applicable in lecture usage. Users can, for example, participate in quizzes and write questions. Furthermore, they can communicate with each other.
+Artemis supports native mobile applications available for both `Android <https://github.com/ls1intum/artemis-android>`_ and `iOS <https://github.com/ls1intum/artemis-ios>`_. We designed them to be applicable in lecture usage. Users can, for example, participate in quizzes and write questions. Furthermore, they can communicate with each other (available communication features on iOS and Android can be checked using :ref:`this list <communication features availability list>`).
 
 Both apps use native user interface components and are adapted to their associated operating system. Therefore, they can differ in their usage.
 
@@ -59,7 +59,7 @@ Server Selection
 
 After installation, users have to first decide which Artemis server they want to connect to. Per default, the user can choose between the following instances:
 
-* TUM: https://artemis.cit.tum.de
+* TUM: https://artemis.tum.de
 * CodeAbility: https://artemis.codeability.uibk.ac.at
 * KIT: https://artemis.praktomat.cs.kit.edu
 
@@ -170,7 +170,7 @@ Server Selection
 
 After installation, users have to first decide which Artemis server they want to connect to. Per default, the user can choose between the following instances:
 
-* TUM: https://artemis.cit.tum.de
+* TUM: https://artemis.tum.de
 * CodeAbility: https://artemis.codeability.uibk.ac.at
 * KIT: https://artemis.praktomat.cs.kit.edu
 * Hochschule Munich: https://artemis.cs.hm.edu/

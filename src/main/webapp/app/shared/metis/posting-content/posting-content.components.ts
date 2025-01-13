@@ -63,6 +63,9 @@ export class PostingContentComponent implements OnInit, OnChanges, OnDestroy {
         if (!this.isSubscribeToMetis()) {
             this.computeContentPartsOfPosts();
         }
+
+        const patternMatches: PatternMatch[] = this.getPatternMatches();
+        this.computePostingContentParts(patternMatches);
     }
 
     /**
@@ -252,5 +255,9 @@ export class PostingContentComponent implements OnInit, OnChanges, OnDestroy {
             match = pattern.exec(this.content!);
         }
         return patternMatches;
+    }
+
+    contentPartTrack(index: number) {
+        return this.posting?.id + '_' + index;
     }
 }

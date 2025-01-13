@@ -40,7 +40,10 @@ import com.github.dockerjava.api.command.CreateContainerResponse;
 import com.github.dockerjava.api.exception.NotFoundException;
 
 import de.tum.cit.aet.artemis.buildagent.dto.BuildJobQueueItem;
+import de.tum.cit.aet.artemis.buildagent.dto.BuildLogDTO;
 import de.tum.cit.aet.artemis.buildagent.dto.BuildResult;
+import de.tum.cit.aet.artemis.buildagent.dto.LocalCIJobDTO;
+import de.tum.cit.aet.artemis.buildagent.dto.LocalCITestJobDTO;
 import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
 import de.tum.cit.aet.artemis.core.exception.GitException;
 import de.tum.cit.aet.artemis.core.exception.LocalCIException;
@@ -320,10 +323,16 @@ public class BuildJobExecutionService {
         buildLogsMap.appendBuildLogEntry(buildJob.id(), msg);
         log.info(msg);
 
-        TarArchiveInputStream testResultsTarInputStream;
+        TarArchiveInputStream testResultsTarInputStream = null;
+
+        BuildResult buildResult;
 
         try {
             testResultsTarInputStream = buildJobContainerService.getArchiveFromContainer(containerId, LOCALCI_WORKING_DIRECTORY + LOCALCI_RESULTS_DIRECTORY);
+
+            var buildLogs = buildLogsMap.getAndTruncateBuildLogs(buildJob.id());
+            buildResult = parseTestResults(testResultsTarInputStream, buildJob.buildConfig().branch(), assignmentRepoCommitHash, testRepoCommitHash, buildCompletedDate,
+                    buildJob.id(), buildLogs);
         }
         catch (NotFoundException e) {
             msg = "Could not find test results in container " + containerName;
@@ -332,7 +341,22 @@ public class BuildJobExecutionService {
             // If the test results are not found, this means that something went wrong during the build and testing of the submission.
             return constructFailedBuildResult(buildJob.buildConfig().branch(), assignmentRepoCommitHash, testRepoCommitHash, buildCompletedDate);
         }
+        catch (IOException | IllegalStateException e) {
+            msg = "Error while parsing test results";
+            buildLogsMap.appendBuildLogEntry(buildJob.id(), msg);
+            throw new LocalCIException(msg, e);
+        }
         finally {
+            try {
+                if (testResultsTarInputStream != null) {
+                    testResultsTarInputStream.close();
+                }
+            }
+            catch (IOException e) {
+                msg = "Could not close test results tar input stream";
+                buildLogsMap.appendBuildLogEntry(buildJob.id(), msg);
+                log.error(msg, e);
+            }
             buildJobContainerService.stopContainer(containerName);
 
             // Delete the cloned repositories
@@ -357,22 +381,6 @@ public class BuildJobExecutionService {
             }
         }
 
-        msg = "~~~~~~~~~~~~~~~~~~~~ Parsing test results for build job " + buildJob.id() + " ~~~~~~~~~~~~~~~~~~~~";
-        buildLogsMap.appendBuildLogEntry(buildJob.id(), msg);
-        log.info(msg);
-
-        BuildResult buildResult;
-        try {
-            buildResult = parseTestResults(testResultsTarInputStream, buildJob.buildConfig().branch(), assignmentRepoCommitHash, testRepoCommitHash, buildCompletedDate,
-                    buildJob.id());
-            buildResult.setBuildLogEntries(buildLogsMap.getAndTruncateBuildLogs(buildJob.id()));
-        }
-        catch (IOException | IllegalStateException e) {
-            msg = "Error while parsing test results";
-            buildLogsMap.appendBuildLogEntry(buildJob.id(), msg);
-            throw new LocalCIException(msg, e);
-        }
-
         msg = "Building and testing submission for repository " + assignmentRepositoryUri.repositorySlug() + " and commit hash " + assignmentRepoCommitHash + " took "
                 + TimeLogUtil.formatDurationFrom(timeNanoStart) + " for build job " + buildJob.id();
         buildLogsMap.appendBuildLogEntry(buildJob.id(), msg);
@@ -384,10 +392,10 @@ public class BuildJobExecutionService {
     // --- Helper methods ----
 
     private BuildResult parseTestResults(TarArchiveInputStream testResultsTarInputStream, String assignmentRepoBranchName, String assignmentRepoCommitHash,
-            String testsRepoCommitHash, ZonedDateTime buildCompletedDate, String buildJobId) throws IOException {
+            String testsRepoCommitHash, ZonedDateTime buildCompletedDate, String buildJobId, List<BuildLogDTO> buildLogs) throws IOException {
 
-        List<BuildResult.LocalCITestJobDTO> failedTests = new ArrayList<>();
-        List<BuildResult.LocalCITestJobDTO> successfulTests = new ArrayList<>();
+        List<LocalCITestJobDTO> failedTests = new ArrayList<>();
+        List<LocalCITestJobDTO> successfulTests = new ArrayList<>();
         List<StaticCodeAnalysisReportDTO> staticCodeAnalysisReports = new ArrayList<>();
 
         TarArchiveEntry tarEntry;
@@ -429,7 +437,7 @@ public class BuildJobExecutionService {
         }
 
         return constructBuildResult(failedTests, successfulTests, assignmentRepoBranchName, assignmentRepoCommitHash, testsRepoCommitHash, !failedTests.isEmpty(),
-                buildCompletedDate, staticCodeAnalysisReports);
+                buildCompletedDate, staticCodeAnalysisReports, buildLogs);
     }
 
     private boolean isValidTestResultFile(TarArchiveEntry tarArchiveEntry) {
@@ -494,7 +502,7 @@ public class BuildJobExecutionService {
      */
     private BuildResult constructFailedBuildResult(String assignmentRepoBranchName, @Nullable String assignmentRepoCommitHash, @Nullable String testsRepoCommitHash,
             ZonedDateTime buildRunDate) {
-        return constructBuildResult(List.of(), List.of(), assignmentRepoBranchName, assignmentRepoCommitHash, testsRepoCommitHash, false, buildRunDate, List.of());
+        return constructBuildResult(List.of(), List.of(), assignmentRepoBranchName, assignmentRepoCommitHash, testsRepoCommitHash, false, buildRunDate, List.of(), null);
     }
 
     /**
@@ -508,14 +516,15 @@ public class BuildJobExecutionService {
      * @param isBuildSuccessful         Whether the build was successful or not.
      * @param buildRunDate              The date when the build was completed.
      * @param staticCodeAnalysisReports The static code analysis reports
+     * @param buildLogs                 the build logs
      * @return a {@link BuildResult}
      */
-    private BuildResult constructBuildResult(List<BuildResult.LocalCITestJobDTO> failedTests, List<BuildResult.LocalCITestJobDTO> successfulTests, String assignmentRepoBranchName,
+    private BuildResult constructBuildResult(List<LocalCITestJobDTO> failedTests, List<LocalCITestJobDTO> successfulTests, String assignmentRepoBranchName,
             String assignmentRepoCommitHash, String testsRepoCommitHash, boolean isBuildSuccessful, ZonedDateTime buildRunDate,
-            List<StaticCodeAnalysisReportDTO> staticCodeAnalysisReports) {
-        BuildResult.LocalCIJobDTO job = new BuildResult.LocalCIJobDTO(failedTests, successfulTests);
-
-        return new BuildResult(assignmentRepoBranchName, assignmentRepoCommitHash, testsRepoCommitHash, isBuildSuccessful, buildRunDate, List.of(job), staticCodeAnalysisReports);
+            List<StaticCodeAnalysisReportDTO> staticCodeAnalysisReports, List<BuildLogDTO> buildLogs) {
+        LocalCIJobDTO job = new LocalCIJobDTO(failedTests, successfulTests);
+        return new BuildResult(assignmentRepoBranchName, assignmentRepoCommitHash, testsRepoCommitHash, isBuildSuccessful, buildRunDate, List.of(job), buildLogs,
+                staticCodeAnalysisReports, true);
     }
 
     private Path cloneRepository(VcsRepositoryUri repositoryUri, @Nullable String commitHash, boolean checkout, String buildJobId) {
