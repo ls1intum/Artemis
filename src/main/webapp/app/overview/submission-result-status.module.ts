@@ -8,8 +8,15 @@ import { ArtemisSharedComponentModule } from 'app/shared/components/shared-compo
 import { ResultProgressBarComponent } from 'app/exercises/shared/result/result-progress-bar/result-progress-bar.component';
 
 @NgModule({
-    imports: [ArtemisSharedModule, ArtemisProgrammingExerciseActionsModule, ArtemisSharedComponentModule, ResultProgressBarComponent],
-    declarations: [SubmissionResultStatusComponent, UpdatingResultComponent, ResultComponent],
+    imports: [
+        ArtemisSharedModule,
+        ArtemisProgrammingExerciseActionsModule,
+        ArtemisSharedComponentModule,
+        ResultProgressBarComponent,
+        SubmissionResultStatusComponent,
+        UpdatingResultComponent,
+        ResultComponent,
+    ],
     exports: [SubmissionResultStatusComponent, UpdatingResultComponent, ResultComponent],
 })
 export class SubmissionResultStatusModule {}

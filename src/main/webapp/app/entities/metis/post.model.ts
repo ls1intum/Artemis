@@ -5,7 +5,6 @@ import { PlagiarismCase } from 'app/exercises/shared/plagiarism/types/Plagiarism
 
 export class Post extends Posting {
     public title?: string;
-    public visibleForStudents?: boolean;
     public answers?: AnswerPost[];
     public tags?: string[];
     public plagiarismCase?: PlagiarismCase;
@@ -17,7 +16,6 @@ export class Post extends Posting {
     constructor() {
         super();
         // set default values
-        this.visibleForStudents = true;
         this.displayPriority = DisplayPriority.NONE;
     }
 }

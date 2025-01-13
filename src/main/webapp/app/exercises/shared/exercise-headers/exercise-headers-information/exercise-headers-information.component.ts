@@ -1,4 +1,4 @@
-import { Component, Input, OnChanges, OnInit } from '@angular/core';
+import { Component, Input, OnChanges, OnInit, inject } from '@angular/core';
 import { SortService } from 'app/shared/service/sort.service';
 import dayjs from 'dayjs/esm';
 import { Exercise, IncludedInOverallScore, getCourseFromExercise } from 'app/entities/exercise.model';
@@ -22,7 +22,6 @@ import { ArtemisServerDateService } from 'app/shared/server-date.service';
 @Component({
     selector: 'jhi-exercise-headers-information',
     templateUrl: './exercise-headers-information.component.html',
-    standalone: true,
     imports: [SubmissionResultStatusModule, ExerciseCategoriesModule, InformationBoxComponent, DifficultyLevelComponent, ArtemisSharedCommonModule],
     styleUrls: ['./exercise-headers-information.component.scss'],
     /* Our tsconfig file has `preserveWhitespaces: 'true'` which causes whitespace to affect content projection.
@@ -31,6 +30,9 @@ import { ArtemisServerDateService } from 'app/shared/server-date.service';
     preserveWhitespaces: false,
 })
 export class ExerciseHeadersInformationComponent implements OnInit, OnChanges {
+    private sortService = inject(SortService);
+    private serverDateService = inject(ArtemisServerDateService);
+
     readonly IncludedInOverallScore = IncludedInOverallScore;
     readonly dayjs = dayjs;
 
@@ -46,11 +48,6 @@ export class ExerciseHeadersInformationComponent implements OnInit, OnChanges {
     achievedPoints: number = 0;
     numberOfSubmissions: number;
     informationBoxItems: InformationBox[] = [];
-
-    constructor(
-        private sortService: SortService,
-        private serverDateService: ArtemisServerDateService,
-    ) {}
 
     ngOnInit() {
         this.dueDate = getExerciseDueDate(this.exercise, this.studentParticipation);

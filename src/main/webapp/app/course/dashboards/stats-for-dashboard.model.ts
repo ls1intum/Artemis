@@ -20,8 +20,6 @@ export class StatsForDashboard {
 
     public tutorLeaderboardEntries: TutorLeaderboardElement[] = [];
 
-    constructor() {}
-
     /**
      * Correctly initializes a class instance from a typecasted object.
      * Returns a 'real' class instance that supports all class methods.

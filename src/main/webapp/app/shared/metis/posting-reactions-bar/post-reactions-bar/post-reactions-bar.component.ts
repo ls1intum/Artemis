@@ -1,12 +1,16 @@
-import { Component, EventEmitter, Input, OnChanges, OnDestroy, OnInit, Output, ViewChild, input, output } from '@angular/core';
+import { Component, EventEmitter, Input, OnChanges, OnDestroy, OnInit, Output, ViewChild, inject, input, output } from '@angular/core';
 import { Reaction } from 'app/entities/metis/reaction.model';
 import { Post } from 'app/entities/metis/post.model';
+import { ConfirmIconComponent } from 'app/shared/confirm-icon/confirm-icon.component';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { EmojiPickerComponent } from 'app/shared/metis/emoji/emoji-picker.component';
+import { EmojiComponent } from 'app/shared/metis/emoji/emoji.component';
 import { PostingsReactionsBarDirective } from 'app/shared/metis/posting-reactions-bar/posting-reactions-bar.directive';
 import { DisplayPriority } from 'app/shared/metis/metis.util';
-import { MetisService } from 'app/shared/metis/metis.service';
 import { faTrashAlt } from '@fortawesome/free-regular-svg-icons';
 import { faArrowRight, faPencilAlt, faShare, faSmile } from '@fortawesome/free-solid-svg-icons';
 import { AnswerPost } from 'app/entities/metis/answer-post.model';
+import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import dayjs from 'dayjs/esm';
 import { getAsChannelDTO, isChannelDTO } from 'app/entities/metis/conversation/channel.model';
 import { isGroupChatDTO } from 'app/entities/metis/conversation/group-chat.model';
@@ -14,14 +18,36 @@ import { AccountService } from 'app/core/auth/account.service';
 import { isOneToOneChatDTO } from 'app/entities/metis/conversation/one-to-one-chat.model';
 import { ConversationDTO } from 'app/entities/metis/conversation/conversation.model';
 import { PostCreateEditModalComponent } from 'app/shared/metis/posting-create-edit-modal/post-create-edit-modal/post-create-edit-modal.component';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
+import { CdkConnectedOverlay, CdkOverlayOrigin } from '@angular/cdk/overlay';
+import { AsyncPipe, KeyValuePipe } from '@angular/common';
+import { ReactingUsersOnPostingPipe } from 'app/shared/pipes/reacting-users-on-posting.pipe';
 import { Posting } from 'app/entities/metis/posting.model';
 
 @Component({
     selector: 'jhi-post-reactions-bar',
     templateUrl: './post-reactions-bar.component.html',
     styleUrls: ['../posting-reactions-bar.component.scss'],
+    imports: [
+        FaIconComponent,
+        TranslateDirective,
+        EmojiComponent,
+        NgbTooltip,
+        CdkOverlayOrigin,
+        CdkConnectedOverlay,
+        EmojiPickerComponent,
+        PostCreateEditModalComponent,
+        ConfirmIconComponent,
+        AsyncPipe,
+        KeyValuePipe,
+        ArtemisTranslatePipe,
+        ReactingUsersOnPostingPipe,
+    ],
 })
 export class PostReactionsBarComponent extends PostingsReactionsBarDirective<Post> implements OnInit, OnChanges, OnDestroy {
+    private accountService = inject(AccountService);
+
     pinTooltip: string;
     displayPriority: DisplayPriority;
     canPin = false;
@@ -35,35 +61,29 @@ export class PostReactionsBarComponent extends PostingsReactionsBarDirective<Pos
     readonly faTrash = faTrashAlt;
     readonly faShare = faShare;
 
-    @Input()
-    readOnlyMode = false;
+    @Input() readOnlyMode = false;
     @Input() showAnswers: boolean;
     @Input() sortedAnswerPosts: AnswerPost[];
     @Input() isCommunicationPage: boolean;
     @Input() lastReadDate?: dayjs.Dayjs;
+    @Input() previewMode: boolean;
+    @Input() isEmojiCount = false;
+    @Input() hoverBar = true;
 
     @Output() showAnswersChange = new EventEmitter<boolean>();
     @Output() openPostingCreateEditModal = new EventEmitter<void>();
     @Output() closePostingCreateEditModal = new EventEmitter<void>();
     @Output() openThread = new EventEmitter<void>();
-    @Input() previewMode: boolean;
+    @Output() canPinOutput = new EventEmitter<boolean>();
+
+    @ViewChild(PostCreateEditModalComponent) postCreateEditModal?: PostCreateEditModalComponent;
+    @ViewChild('createEditModal') createEditModal!: PostCreateEditModalComponent;
+
     isAtLeastInstructorInCourse: boolean;
     mayDeleteOutput = output<boolean>();
     mayEditOutput = output<boolean>();
-    @Output() canPinOutput = new EventEmitter<boolean>();
     mayEdit: boolean;
     mayDelete: boolean;
-    @ViewChild(PostCreateEditModalComponent) postCreateEditModal?: PostCreateEditModalComponent;
-    @Input() isEmojiCount = false;
-    @Input() hoverBar: boolean = true;
-    @ViewChild('createEditModal') createEditModal!: PostCreateEditModalComponent;
-
-    constructor(
-        metisService: MetisService,
-        private accountService: AccountService,
-    ) {
-        super(metisService);
-    }
 
     isAnyReactionCountAboveZero(): boolean {
         return Object.values(this.reactionMetaDataMap).some((reaction) => reaction.count >= 1);

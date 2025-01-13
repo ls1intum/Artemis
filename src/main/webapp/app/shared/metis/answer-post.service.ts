@@ -1,4 +1,4 @@
-import { Injectable } from '@angular/core';
+import { Injectable, inject } from '@angular/core';
 import { HttpClient, HttpParams, HttpResponse } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { AnswerPost } from 'app/entities/metis/answer-post.model';
@@ -10,9 +10,11 @@ type EntityResponseType = HttpResponse<AnswerPost>;
 
 @Injectable({ providedIn: 'root' })
 export class AnswerPostService extends PostingService<AnswerPost> {
+    protected http = inject(HttpClient);
+
     public resourceUrl = 'api/courses/';
 
-    constructor(protected http: HttpClient) {
+    constructor() {
         super();
     }
 

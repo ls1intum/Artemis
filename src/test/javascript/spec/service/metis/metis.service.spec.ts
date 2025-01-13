@@ -48,6 +48,7 @@ import { NotificationService } from 'app/shared/notification/notification.servic
 import { MockNotificationService } from '../../helpers/mocks/service/mock-notification.service';
 import { SavedPostService } from 'app/shared/metis/saved-post.service';
 import { SavedPostStatus } from 'app/entities/metis/posting.model';
+import 'jest-extended';
 import { ForwardedMessageService } from 'app/shared/metis/forwarded-message.service';
 import { MockForwardedMessageService } from '../../helpers/mocks/service/mock-forwarded-message.service';
 import { ForwardedMessage } from 'app/entities/metis/forwarded-message.model';

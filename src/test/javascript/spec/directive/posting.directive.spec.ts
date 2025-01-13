@@ -72,7 +72,6 @@ describe('PostingDirective', () => {
 
     beforeEach(async () => {
         await TestBed.configureTestingModule({
-            declarations: [TestPostingComponent],
             providers: [
                 provideHttpClient(),
                 provideHttpClientTesting(),

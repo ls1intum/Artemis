@@ -7,7 +7,13 @@ import { ArtemisParticipationSubmissionRoutingModule } from 'app/exercises/share
 import { SubmissionResultStatusModule } from 'app/overview/submission-result-status.module';
 
 @NgModule({
-    imports: [ArtemisSharedModule, ArtemisParticipationSubmissionRoutingModule, NgxDatatableModule, ArtemisResultModule, SubmissionResultStatusModule],
-    declarations: [ParticipationSubmissionComponent],
+    imports: [
+        ArtemisSharedModule,
+        ArtemisParticipationSubmissionRoutingModule,
+        NgxDatatableModule,
+        ArtemisResultModule,
+        SubmissionResultStatusModule,
+        ParticipationSubmissionComponent,
+    ],
 })
 export class ArtemisParticipationSubmissionModule {}

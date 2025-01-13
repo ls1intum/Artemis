@@ -1,4 +1,4 @@
-import { Injectable, OnDestroy } from '@angular/core';
+import { Injectable, OnDestroy, inject } from '@angular/core';
 import { EMPTY, Observable, ReplaySubject, Subject, Subscription, catchError, finalize, map, of, switchMap, tap } from 'rxjs';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { ConversationService } from 'app/shared/metis/conversations/conversation.service';
@@ -26,15 +26,25 @@ import { NotificationService } from 'app/shared/notification/notification.servic
  */
 @Injectable()
 export class MetisConversationService implements OnDestroy {
+    private groupChatService = inject(GroupChatService);
+    private oneToOneChatService = inject(OneToOneChatService);
+    private channelService = inject(ChannelService);
+    protected conversationService = inject(ConversationService);
+    private jhiWebsocketService = inject(JhiWebsocketService);
+    private accountService = inject(AccountService);
+    private alertService = inject(AlertService);
+    private router = inject(Router);
+    private notificationService = inject(NotificationService);
+
     // Stores the conversation of the course where the current user is a member
     private conversationsOfUser: ConversationDTO[] = [];
     _conversationsOfUser$: ReplaySubject<ConversationDTO[]> = new ReplaySubject<ConversationDTO[]>(1);
     // Stores the currently selected conversation
     private activeConversation: ConversationDTO | undefined = undefined;
     _activeConversation$: ReplaySubject<ConversationDTO | undefined> = new ReplaySubject<ConversationDTO | undefined>(1);
-    private isCodeOfConductAccepted: boolean = false;
+    private isCodeOfConductAccepted = false;
     _isCodeOfConductAccepted$: ReplaySubject<boolean> = new ReplaySubject<boolean>(1);
-    private isCodeOfConductPresented: boolean = false;
+    private isCodeOfConductPresented = false;
     _isCodeOfConductPresented$: ReplaySubject<boolean> = new ReplaySubject<boolean>(1);
     private hasUnreadMessages = false;
     _hasUnreadMessages$: Subject<boolean> = new ReplaySubject<boolean>(1);
@@ -52,17 +62,7 @@ export class MetisConversationService implements OnDestroy {
 
     private _isServiceSetup$: ReplaySubject<boolean> = new ReplaySubject<boolean>(1);
 
-    constructor(
-        private groupChatService: GroupChatService,
-        private oneToOneChatService: OneToOneChatService,
-        private channelService: ChannelService,
-        protected conversationService: ConversationService,
-        private jhiWebsocketService: JhiWebsocketService,
-        private accountService: AccountService,
-        private alertService: AlertService,
-        private router: Router,
-        private notificationService: NotificationService,
-    ) {
+    constructor() {
         this.accountService.identity().then((user: User) => {
             this.userId = user.id!;
         });

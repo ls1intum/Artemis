@@ -5,7 +5,6 @@ import { CoursePrerequisitesModalComponent } from 'app/overview/course-registrat
 import { ArtemisCompetenciesModule } from 'app/course/competencies/competency.module';
 
 @NgModule({
-    imports: [ArtemisSharedModule, ArtemisSharedComponentModule, ArtemisCompetenciesModule],
-    declarations: [CoursePrerequisitesModalComponent],
+    imports: [ArtemisSharedModule, ArtemisSharedComponentModule, ArtemisCompetenciesModule, CoursePrerequisitesModalComponent],
 })
 export class CoursePrerequisitesModalModule {}

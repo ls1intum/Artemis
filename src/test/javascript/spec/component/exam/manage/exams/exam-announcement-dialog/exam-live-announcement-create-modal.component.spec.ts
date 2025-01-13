@@ -3,13 +3,10 @@ import { Subject, throwError } from 'rxjs';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import { ExamLiveAnnouncementCreateModalComponent } from 'app/exam/manage/exams/exam-checklist-component/exam-announcement-dialog/exam-live-announcement-create-modal.component';
 import { ExamManagementService } from 'app/exam/manage/exam-management.service';
-import { AccountService } from 'app/core/auth/account.service';
 import { By } from '@angular/platform-browser';
-import { MockComponent } from 'ng-mocks';
-import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { ExamLiveEventComponent } from 'app/exam/shared/events/exam-live-event.component';
 import { ExamWideAnnouncementEvent } from 'app/exam/participate/exam-participation-live-events.service';
-import { MarkdownEditorMonacoComponent } from 'app/shared/markdown-editor/monaco/markdown-editor-monaco.component';
+import { ArtemisTestModule } from '../../../../../test.module';
+import { MockResizeObserver } from '../../../../../helpers/mocks/service/mock-resize-observer';
 
 describe('ExamLiveAnnouncementCreateModalComponent', () => {
     let component: ExamLiveAnnouncementCreateModalComponent;
@@ -19,27 +16,20 @@ describe('ExamLiveAnnouncementCreateModalComponent', () => {
 
     beforeEach(async () => {
         await TestBed.configureTestingModule({
-            declarations: [
-                ExamLiveAnnouncementCreateModalComponent,
-                MockComponent(FaIconComponent),
-                MockComponent(MarkdownEditorMonacoComponent),
-                MockComponent(ExamLiveEventComponent),
-            ],
-            providers: [
-                { provide: NgbActiveModal, useValue: { dismiss: jest.fn() } },
-                { provide: ExamManagementService, useValue: { createAnnouncement: jest.fn() } },
-                { provide: AccountService, useValue: { userIdentity: { name: 'John Doe' } } },
-            ],
+            imports: [ArtemisTestModule],
+            providers: [{ provide: NgbActiveModal, useValue: { dismiss: jest.fn() } }],
         }).compileComponents();
 
         fixture = TestBed.createComponent(ExamLiveAnnouncementCreateModalComponent);
         component = fixture.componentInstance;
+        global.ResizeObserver = jest.fn().mockImplementation((callback: ResizeObserverCallback) => {
+            return new MockResizeObserver(callback);
+        });
         mockActiveModal = TestBed.inject(NgbActiveModal);
         mockExamManagementService = TestBed.inject(ExamManagementService);
     });
 
     it('should initialize component with default properties', () => {
-        fixture.detectChanges();
         expect(component.status).toBe('not_submitted');
     });
 

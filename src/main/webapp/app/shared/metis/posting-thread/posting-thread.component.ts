@@ -1,6 +1,7 @@
 import { ChangeDetectionStrategy, Component, ElementRef, EventEmitter, Input, Output, inject, input, output } from '@angular/core';
 import { Post } from 'app/entities/metis/post.model';
 import dayjs from 'dayjs/esm';
+import { PostComponent } from '../post/post.component';
 import { AnswerPost } from 'app/entities/metis/answer-post.model';
 import { Posting } from 'app/entities/metis/posting.model';
 
@@ -9,6 +10,7 @@ import { Posting } from 'app/entities/metis/posting.model';
     templateUrl: './posting-thread.component.html',
     styleUrls: ['../metis.component.scss'],
     changeDetection: ChangeDetectionStrategy.OnPush,
+    imports: [PostComponent],
 })
 export class PostingThreadComponent {
     @Input() lastReadDate?: dayjs.Dayjs;

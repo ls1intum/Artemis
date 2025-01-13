@@ -19,6 +19,7 @@ import { GenericConfirmationDialogComponent } from 'app/overview/course-conversa
 import { defaultSecondLayerDialogOptions } from 'app/overview/course-conversations/other/conversation.util';
 import * as ConversationPermissionUtils from 'app/shared/metis/conversations/conversation-permissions.utils';
 import { input, runInInjectionContext } from '@angular/core';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
 
 const examples: ConversationDTO[] = [generateExampleGroupChatDTO({}), generateExampleChannelDTO({} as ChannelDTO)];
 
@@ -33,7 +34,13 @@ examples.forEach((activeConversation) => {
 
         beforeEach(waitForAsync(() => {
             TestBed.configureTestingModule({
-                declarations: [ConversationSettingsComponent, MockDirective(DeleteButtonDirective), MockComponent(FaIconComponent), MockPipe(ArtemisTranslatePipe)],
+                declarations: [
+                    ConversationSettingsComponent,
+                    MockDirective(DeleteButtonDirective),
+                    MockComponent(FaIconComponent),
+                    MockPipe(ArtemisTranslatePipe),
+                    MockDirective(TranslateDirective),
+                ],
                 providers: [MockProvider(NgbModal), MockProvider(ChannelService), MockProvider(GroupChatService), MockProvider(AlertService)],
             }).compileComponents();
         }));
