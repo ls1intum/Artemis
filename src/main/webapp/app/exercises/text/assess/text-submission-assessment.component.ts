@@ -292,6 +292,13 @@ export class TextSubmissionAssessmentComponent extends TextAssessmentBaseCompone
                     // ("squish" the existing text block)
                     existingBlockRef.block!.startIndex = end;
                     newTextBlockRefs.push(existingBlockRef);
+                } else if (exEnd == end) {
+                    // existing:       |-----|
+                    // to add:    |----------|
+                    // ->         |-add--|ex-|
+                    // ("squish" the new text block)
+                    refToAdd.block!.endIndex = exStart;
+                    newTextBlockRefs.push(existingBlockRef);
                 }
             }
         }
