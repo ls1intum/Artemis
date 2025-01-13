@@ -125,14 +125,14 @@ export const getManualUnreferencedFeedback = (feedbacks: Feedback[] | undefined)
 };
 
 /**
- * searches for all automatic and manual unreferenced feedback in an array of feedbacks of a result
+ * searches for all unreferenced feedback in an array of feedbacks of a result
  * @param feedbacks the feedback of a result
  * @returns an array with the unreferenced feedback of the result
  */
-export const getAutomaticAndManualUnreferencedFeedback = (feedbacks: Feedback[] | undefined): Feedback[] | undefined => {
+export const getUnreferencedFeedback = (feedbacks: Feedback[] | undefined): Feedback[] | undefined => {
     return feedbacks
         ? feedbacks.filter(
-              (feedbackElement) => !feedbackElement.reference && (feedbackElement.type === FeedbackType.AUTOMATIC || feedbackElement.type === FeedbackType.MANUAL_UNREFERENCED),
+              (feedbackElement) => !feedbackElement.reference && (feedbackElement.type === FeedbackType.MANUAL_UNREFERENCED || feedbackElement.type === FeedbackType.AUTOMATIC),
           )
         : undefined;
 };
