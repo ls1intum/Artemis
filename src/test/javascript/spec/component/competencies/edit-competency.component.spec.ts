@@ -60,13 +60,11 @@ describe('EditCompetencyComponent', () => {
         })
             .overrideModule(ArtemisMarkdownEditorModule, {
                 remove: { exports: [MarkdownEditorMonacoComponent] },
-                add: { exports: [MockComponent(MarkdownEditorMonacoComponent)], declarations: [MockComponent(MarkdownEditorMonacoComponent)] },
+                add: { exports: [MockComponent(MarkdownEditorMonacoComponent)], imports: [MockComponent(MarkdownEditorMonacoComponent)] },
             })
-            .compileComponents()
-            .then(() => {
-                editCompetencyComponentFixture = TestBed.createComponent(EditCompetencyComponent);
-                editCompetencyComponent = editCompetencyComponentFixture.componentInstance;
-            });
+            .compileComponents();
+        editCompetencyComponentFixture = TestBed.createComponent(EditCompetencyComponent);
+        editCompetencyComponent = editCompetencyComponentFixture.componentInstance;
     });
 
     afterEach(() => {

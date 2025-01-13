@@ -13,7 +13,7 @@ import { CodeEditorFileBrowserCreateNodeComponent } from 'app/exercises/programm
 import { CodeEditorFileBrowserFileComponent } from 'app/exercises/programming/shared/code-editor/file-browser/code-editor-file-browser-file.component';
 import { CodeEditorFileBrowserComponent } from 'app/exercises/programming/shared/code-editor/file-browser/code-editor-file-browser.component';
 import { CodeEditorStatusComponent } from 'app/exercises/programming/shared/code-editor/status/code-editor-status.component';
-import { FeatureToggleModule } from 'app/shared/feature-toggle/feature-toggle.module';
+
 import { CodeEditorConfirmRefreshModalComponent } from 'app/exercises/programming/shared/code-editor/actions/code-editor-confirm-refresh-modal.component';
 import { CodeEditorContainerComponent } from 'app/exercises/programming/shared/code-editor/container/code-editor-container.component';
 import { ArtemisProgrammingManualAssessmentModule } from 'app/exercises/programming/assess/programming-manual-assessment.module';
@@ -29,7 +29,6 @@ import { MonacoEditorComponent } from 'app/shared/monaco-editor/monaco-editor.co
     imports: [
         NgbModule,
         ArtemisSharedModule,
-        FeatureToggleModule,
         TreeviewModule.forRoot(),
         ArtemisProgrammingExerciseInstructionsEditorModule,
         ArtemisProgrammingManualAssessmentModule,
@@ -37,8 +36,6 @@ import { MonacoEditorComponent } from 'app/shared/monaco-editor/monaco-editor.co
         ArtemisSharedComponentModule,
         RequestFeedbackButtonComponent,
         CodeEditorMonacoComponent,
-    ],
-    declarations: [
         CodeEditorGridComponent,
         CodeEditorRepositoryIsLockedComponent,
         CodeEditorFileBrowserComponent,

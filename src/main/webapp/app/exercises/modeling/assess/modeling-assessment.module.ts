@@ -5,8 +5,7 @@ import { ArtemisAssessmentSharedModule } from 'app/assessment/assessment-shared.
 import { ArtemisModelingEditorModule } from 'app/exercises/modeling/shared/modeling-editor.module';
 
 @NgModule({
-    imports: [ArtemisSharedModule, ArtemisAssessmentSharedModule, ArtemisModelingEditorModule],
-    declarations: [ModelingAssessmentComponent],
+    imports: [ArtemisSharedModule, ArtemisAssessmentSharedModule, ArtemisModelingEditorModule, ModelingAssessmentComponent],
     exports: [ModelingAssessmentComponent],
 })
 export class ModelingAssessmentModule {}

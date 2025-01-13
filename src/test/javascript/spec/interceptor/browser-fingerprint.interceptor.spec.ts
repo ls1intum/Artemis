@@ -2,6 +2,7 @@ import { HttpRequest } from '@angular/common/http';
 import { BrowserFingerprintService } from 'app/shared/fingerprint/browser-fingerprint.service';
 import { BrowserFingerprintInterceptor } from 'app/core/interceptor/browser-fingerprint.interceptor.service';
 import { of } from 'rxjs';
+import { TestBed } from '@angular/core/testing';
 
 describe(`BrowserFingerprintInterceptor`, () => {
     let fingerprintInterceptor: BrowserFingerprintInterceptor;
@@ -14,8 +15,23 @@ describe(`BrowserFingerprintInterceptor`, () => {
         instanceIdentifier: of(instanceIdentifier),
     } as any as BrowserFingerprintService;
 
+    const falsyBrowserFingerPrintServiceMock = {
+        fingerprint: of(null),
+        instanceIdentifier: of(null),
+    } as any as BrowserFingerprintService;
+
     beforeEach(() => {
-        fingerprintInterceptor = new BrowserFingerprintInterceptor(browserFingerPrintServiceMock);
+        TestBed.configureTestingModule({
+            providers: [
+                BrowserFingerprintInterceptor,
+                {
+                    provide: BrowserFingerprintService,
+                    useValue: browserFingerPrintServiceMock,
+                },
+            ],
+        });
+
+        fingerprintInterceptor = TestBed.inject(BrowserFingerprintInterceptor);
     });
 
     afterEach(() => {
@@ -45,11 +61,20 @@ describe(`BrowserFingerprintInterceptor`, () => {
         testExpectedFingerprintAndInstanceID(fingerprint, instanceIdentifier);
     });
 
-    it('should not send headers if fingerprint service returnes falsy values', () => {
-        fingerprintInterceptor = new BrowserFingerprintInterceptor({
-            fingerprint: of(undefined),
-            instanceIdentifier: of(undefined),
-        } as any as BrowserFingerprintService);
+    it('should not send headers if fingerprint service returns falsy values', () => {
+        // We have to reset the full module to ensure that we use the falsy BrowserFingerprintService
+        TestBed.resetTestingModule();
+        TestBed.configureTestingModule({
+            providers: [
+                BrowserFingerprintInterceptor,
+                {
+                    provide: BrowserFingerprintService,
+                    useValue: falsyBrowserFingerPrintServiceMock,
+                },
+            ],
+        });
+
+        const otherFingerprintInterceptor = TestBed.inject(BrowserFingerprintInterceptor);
 
         const requestMock = new HttpRequest('GET', `test`);
         const cloneSpy = jest.spyOn(requestMock, 'clone');
@@ -57,7 +82,7 @@ describe(`BrowserFingerprintInterceptor`, () => {
             handle: jest.fn(),
         };
 
-        fingerprintInterceptor.intercept(requestMock, mockHandler);
+        otherFingerprintInterceptor.intercept(requestMock, mockHandler);
 
         expect(cloneSpy).not.toHaveBeenCalled();
         expect(mockHandler.handle).toHaveBeenCalledOnce();

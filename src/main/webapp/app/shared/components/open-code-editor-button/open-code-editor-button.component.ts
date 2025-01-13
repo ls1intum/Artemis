@@ -1,15 +1,24 @@
-import { Component, Input, OnChanges } from '@angular/core';
+import { Component, Input, OnChanges, inject } from '@angular/core';
 import { FeatureToggle } from 'app/shared/feature-toggle/feature-toggle.service';
 import { faFolderOpen } from '@fortawesome/free-solid-svg-icons';
 import { ProgrammingExerciseStudentParticipation } from 'app/entities/participation/programming-exercise-student-participation.model';
 import { ParticipationService } from 'app/exercises/shared/participation/participation.service';
 import { Exercise } from 'app/entities/exercise.model';
+import { ExerciseActionButtonComponent } from '../exercise-action-button.component';
+import { FeatureToggleDirective } from '../../feature-toggle/feature-toggle.directive';
+import { RouterLink } from '@angular/router';
+import { NgbPopover } from '@ng-bootstrap/ng-bootstrap';
+import { TranslateDirective } from '../../language/translate.directive';
+import { ArtemisTranslatePipe } from '../../pipes/artemis-translate.pipe';
 
 @Component({
     selector: 'jhi-open-code-editor-button',
     templateUrl: './open-code-editor-button.component.html',
+    imports: [ExerciseActionButtonComponent, FeatureToggleDirective, RouterLink, NgbPopover, TranslateDirective, ArtemisTranslatePipe],
 })
 export class OpenCodeEditorButtonComponent implements OnChanges {
+    private participationService = inject(ParticipationService);
+
     readonly FeatureToggle = FeatureToggle;
 
     @Input()
@@ -27,12 +36,10 @@ export class OpenCodeEditorButtonComponent implements OnChanges {
 
     courseAndExerciseNavigationUrl: string;
     activeParticipation: ProgrammingExerciseStudentParticipation;
-    isPracticeMode: boolean = true;
+    isPracticeMode = true;
 
     // Icons
     faFolderOpen = faFolderOpen;
-
-    constructor(private participationService: ParticipationService) {}
 
     ngOnChanges() {
         this.courseAndExerciseNavigationUrl = this.courseAndExerciseNavigationUrlSegment.reduce((acc, segment) => `${acc}/${segment}`);

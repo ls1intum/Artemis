@@ -11,7 +11,6 @@ import { faCheckCircle, faTimes } from '@fortawesome/free-solid-svg-icons';
 @Component({
     selector: 'jhi-cleanup-operation-modal',
     templateUrl: './cleanup-operation-modal.component.html',
-    standalone: true,
     imports: [TranslateDirective, ArtemisSharedModule],
 })
 export class CleanupOperationModalComponent implements OnInit {

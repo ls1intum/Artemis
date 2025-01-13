@@ -1,18 +1,17 @@
-import { ChangeDetectorRef, Component } from '@angular/core';
-import { ActivatedRoute, Router } from '@angular/router';
-import { TranslateService } from '@ngx-translate/core';
+import { Component, inject } from '@angular/core';
 import { QuizStatisticUtil } from 'app/exercises/quiz/shared/quiz-statistic-util.service';
 import { ShortAnswerQuestionUtil } from 'app/exercises/quiz/shared/short-answer-question-util.service';
 import { ArtemisMarkdownService } from 'app/shared/markdown.service';
-import { AccountService } from 'app/core/auth/account.service';
-import { JhiWebsocketService } from 'app/core/websocket/websocket.service';
 import { ShortAnswerQuestion } from 'app/entities/quiz/short-answer-question.model';
-import { QuizExerciseService } from 'app/exercises/quiz/manage/quiz-exercise.service';
 import { ShortAnswerQuestionStatistic } from 'app/entities/quiz/short-answer-question-statistic.model';
 import { ShortAnswerSolution } from 'app/entities/quiz/short-answer-solution.model';
 import { QuizExercise } from 'app/entities/quiz/quiz-exercise.model';
 import { QuestionStatisticComponent, blueColor, greenColor } from 'app/exercises/quiz/manage/statistics/question-statistic.component';
 import { faCheckCircle, faSync, faTimesCircle } from '@fortawesome/free-solid-svg-icons';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { BarChartModule } from '@swimlane/ngx-charts';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { QuizStatisticsFooterComponent } from '../quiz-statistics-footer/quiz-statistics-footer.component';
 
 @Component({
     selector: 'jhi-short-answer-question-statistic',
@@ -23,8 +22,12 @@ import { faCheckCircle, faSync, faTimesCircle } from '@fortawesome/free-solid-sv
         '../quiz-point-statistic/quiz-point-statistic.component.scss',
         './short-answer-question-statistic.component.scss',
     ],
+    imports: [TranslateDirective, BarChartModule, FaIconComponent, QuizStatisticsFooterComponent],
 })
 export class ShortAnswerQuestionStatisticComponent extends QuestionStatisticComponent {
+    shortAnswerQuestionUtil = inject(ShortAnswerQuestionUtil);
+    private artemisMarkdown = inject(ArtemisMarkdownService);
+
     declare question: ShortAnswerQuestion;
 
     textParts: string[][];
@@ -37,27 +40,6 @@ export class ShortAnswerQuestionStatisticComponent extends QuestionStatisticComp
     faCheckCircle = faCheckCircle;
     faTimesCircle = faTimesCircle;
 
-    constructor(
-        route: ActivatedRoute,
-        router: Router,
-        accountService: AccountService,
-        translateService: TranslateService,
-        quizExerciseService: QuizExerciseService,
-        jhiWebsocketService: JhiWebsocketService,
-        quizStatisticUtil: QuizStatisticUtil,
-        public shortAnswerQuestionUtil: ShortAnswerQuestionUtil,
-        private artemisMarkdown: ArtemisMarkdownService,
-        protected changeDetector: ChangeDetectorRef,
-    ) {
-        super(route, router, accountService, translateService, quizExerciseService, jhiWebsocketService, changeDetector);
-    }
-
-    /**
-     * This functions loads the Quiz, which is necessary to build the Web-Template
-     *
-     * @param {QuizExercise} quiz: the quizExercise, which the selected question is part of.
-     * @param {boolean} refresh: true if method is called from Websocket
-     */
     loadQuiz(quiz: QuizExercise, refresh: boolean) {
         const updatedQuestion = super.loadQuizCommon(quiz);
         if (!updatedQuestion) {
@@ -102,8 +84,8 @@ export class ShortAnswerQuestionStatisticComponent extends QuestionStatisticComp
     loadLayout() {
         this.resetLabelsColors();
 
-        // set label and backgroundcolor based on the spots
-        this.question.spots!.forEach((spot, i) => {
+        // set label and background color based on the spots
+        this.question.spots!.forEach((_spot, i) => {
             this.labels.push(this.getLetter(i) + '.');
             this.solutionLabels.push(this.getLetter(i) + '.');
             this.backgroundColors.push(blueColor);

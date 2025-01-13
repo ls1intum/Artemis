@@ -1,5 +1,7 @@
 import { Component, EventEmitter, Input, Output } from '@angular/core';
 import { ProgrammingExercise } from 'app/entities/programming/programming-exercise.model';
+import { ProgrammingExerciseReEvaluateButtonComponent } from 'app/exercises/programming/shared/actions/programming-exercise-re-evaluate-button.component';
+import { ProgrammingExerciseTriggerAllButtonComponent } from 'app/exercises/programming/shared/actions/programming-exercise-trigger-all-button.component';
 
 /**
  * The actions of the grading page:
@@ -12,6 +14,7 @@ import { ProgrammingExercise } from 'app/entities/programming/programming-exerci
         <jhi-programming-exercise-re-evaluate-button [exercise]="exercise" [disabled]="isSaving" />
         <jhi-programming-exercise-trigger-all-button [exercise]="exercise" [disabled]="isSaving" (onBuildTriggered)="onBuildTriggered.emit()" />
     `,
+    imports: [ProgrammingExerciseReEvaluateButtonComponent, ProgrammingExerciseTriggerAllButtonComponent],
 })
 export class ProgrammingExerciseConfigureGradingActionsComponent {
     @Input() exercise: ProgrammingExercise;

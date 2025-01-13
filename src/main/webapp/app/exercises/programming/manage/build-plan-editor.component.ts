@@ -1,5 +1,6 @@
-import { AfterViewInit, Component, OnInit, ViewChild, ViewEncapsulation } from '@angular/core';
+import { AfterViewInit, Component, OnInit, ViewChild, ViewEncapsulation, inject } from '@angular/core';
 import { faCircleNotch, faPlayCircle } from '@fortawesome/free-solid-svg-icons';
+import { UpdatingResultComponent } from 'app/exercises/shared/result/updating-result.component';
 import { onError } from 'app/shared/util/global.utils';
 import { AlertService } from 'app/core/util/alert.service';
 import { BuildPlanService } from 'app/exercises/programming/manage/services/build-plan.service';
@@ -8,14 +9,25 @@ import { ActivatedRoute } from '@angular/router';
 import { ProgrammingExercise } from 'app/entities/programming/programming-exercise.model';
 import { ProgrammingExerciseService } from 'app/exercises/programming/manage/services/programming-exercise.service';
 import { MonacoEditorComponent } from 'app/shared/monaco-editor/monaco-editor.component';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { CodeEditorHeaderComponent } from '../shared/code-editor/header/code-editor-header.component';
+import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 
 @Component({
     selector: 'jhi-build-plan-editor',
     templateUrl: './build-plan-editor.component.html',
     styleUrls: ['./build-plan-editor.scss'],
     encapsulation: ViewEncapsulation.None,
+    imports: [TranslateDirective, UpdatingResultComponent, NgbTooltip, FaIconComponent, CodeEditorHeaderComponent, MonacoEditorComponent, ArtemisTranslatePipe],
 })
 export class BuildPlanEditorComponent implements AfterViewInit, OnInit {
+    private buildPlanService = inject(BuildPlanService);
+    private programmingExerciseService = inject(ProgrammingExerciseService);
+    private alertService = inject(AlertService);
+    private activatedRoute = inject(ActivatedRoute);
+
     // Icons
     readonly faCircleNotch = faCircleNotch;
     readonly farPlayCircle = faPlayCircle;
@@ -28,13 +40,6 @@ export class BuildPlanEditorComponent implements AfterViewInit, OnInit {
     exerciseId: number;
     programmingExercise: ProgrammingExercise;
     buildPlan: BuildPlan | undefined;
-
-    constructor(
-        private buildPlanService: BuildPlanService,
-        private programmingExerciseService: ProgrammingExerciseService,
-        private alertService: AlertService,
-        private activatedRoute: ActivatedRoute,
-    ) {}
 
     /**
      * @function ngOnInit
