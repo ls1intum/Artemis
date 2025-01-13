@@ -37,6 +37,7 @@ describe('ResultUtils', () => {
             { reference: 'foo', type: FeedbackType.AUTOMATIC },
             { type: FeedbackType.AUTOMATIC },
             { type: FeedbackType.MANUAL_UNREFERENCED },
+            { reference: 'foo', type: FeedbackType.AUTOMATIC_ADAPTED },
             {},
         ];
         const unreferencedFeedbacks = getUnreferencedFeedback(feedbacks);

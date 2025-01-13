@@ -6,7 +6,6 @@ import { CompetencyNodeComponent, SizeUpdate } from 'app/course/learning-paths/c
 
 @Component({
     selector: 'jhi-competency-graph',
-    standalone: true,
     changeDetection: ChangeDetectionStrategy.OnPush,
     imports: [CompetencyNodeComponent, NgxGraphModule],
     templateUrl: './competency-graph.component.html',
@@ -34,7 +33,7 @@ export class CompetencyGraphComponent {
     readonly zoomToFit$ = new Subject<NgxGraphZoomOptions>();
 
     constructor() {
-        effect(() => this.internalCompetencyGraph.set(this.competencyGraph()), { allowSignalWrites: true });
+        effect(() => this.internalCompetencyGraph.set(this.competencyGraph()));
     }
 
     setNodeDimension(sizeUpdate: SizeUpdate): void {

@@ -7,7 +7,6 @@ import { faSpinner } from '@fortawesome/free-solid-svg-icons';
 
 @Component({
     selector: 'jhi-course-competency-relation-form',
-    standalone: true,
     imports: [ArtemisSharedCommonModule],
     templateUrl: './course-competency-relation-form.component.html',
     styleUrl: './course-competency-relation-form.component.scss',
@@ -44,7 +43,7 @@ export class CourseCompetencyRelationFormComponent {
     readonly showCircularDependencyError = computed(() => this.tailCompetencyId() && !this.selectableTailCourseCompetencyIds().includes(this.tailCompetencyId()!));
 
     constructor() {
-        effect(() => this.selectRelation(this.selectedRelationId()), { allowSignalWrites: true });
+        effect(() => this.selectRelation(this.selectedRelationId()));
     }
 
     protected isCourseCompetencySelectable(courseCompetencyId: number): boolean {

@@ -1,4 +1,4 @@
-import { Component, EventEmitter, Input, OnInit, Output } from '@angular/core';
+import { Component, EventEmitter, Input, OnInit, Output, inject } from '@angular/core';
 import { FeatureToggle } from 'app/shared/feature-toggle/feature-toggle.service';
 import { finalize } from 'rxjs/operators';
 import { faRedo } from '@fortawesome/free-solid-svg-icons';
@@ -9,33 +9,34 @@ import { AlertService } from 'app/core/util/alert.service';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
 import { ParticipationService } from 'app/exercises/shared/participation/participation.service';
 import { InitializationState } from 'app/entities/participation/participation.model';
+import { ExerciseActionButtonComponent } from '../exercise-action-button.component';
+import { FeatureToggleDirective } from '../../feature-toggle/feature-toggle.directive';
+import { NgbPopover } from '@ng-bootstrap/ng-bootstrap';
+import { TranslateDirective } from '../../language/translate.directive';
+import { ArtemisTranslatePipe } from '../../pipes/artemis-translate.pipe';
 
 @Component({
     selector: 'jhi-start-practice-mode-button',
     templateUrl: './start-practice-mode-button.component.html',
     styleUrls: ['./start-practice-mode-button.component.scss'],
+    imports: [ExerciseActionButtonComponent, FeatureToggleDirective, NgbPopover, TranslateDirective, ArtemisTranslatePipe],
 })
 export class StartPracticeModeButtonComponent implements OnInit {
+    private courseExerciseService = inject(CourseExerciseService);
+    private alertService = inject(AlertService);
+    private participationService = inject(ParticipationService);
+
     readonly FeatureToggle = FeatureToggle;
 
-    @Input()
-    smallButtons: boolean;
-    @Input()
-    exercise: Exercise;
-    @Output()
-    practiceModeStarted = new EventEmitter();
+    @Input() smallButtons: boolean;
+    @Input() exercise: Exercise;
+    @Output() practiceModeStarted = new EventEmitter();
 
     startingPracticeMode = false;
     gradedStudentParticipation?: StudentParticipation;
 
     // Icons
     faRedo = faRedo;
-
-    constructor(
-        private courseExerciseService: CourseExerciseService,
-        private alertService: AlertService,
-        private participationService: ParticipationService,
-    ) {}
 
     ngOnInit() {
         this.gradedStudentParticipation = this.participationService.getSpecificStudentParticipation(this.exercise.studentParticipations ?? [], false);

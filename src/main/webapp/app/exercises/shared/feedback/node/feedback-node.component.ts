@@ -5,11 +5,18 @@ import { faAngleDown, faAngleUp, faExclamationTriangle } from '@fortawesome/free
 import { FeedbackGroup, isFeedbackGroup } from 'app/exercises/shared/feedback/group/feedback-group';
 import { FeedbackItem } from 'app/exercises/shared/feedback/item/feedback-item';
 import { FeedbackNode } from 'app/exercises/shared/feedback/node/feedback-node';
+import { NgClass } from '@angular/common';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
+import { FeedbackCollapseComponent } from '../collapse/feedback-collapse.component';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 
 @Component({
     selector: 'jhi-feedback-node',
     templateUrl: './feedback-node.component.html',
     styleUrls: ['./feedback-node.scss'],
+    imports: [NgClass, FaIconComponent, NgbTooltip, FeedbackCollapseComponent, TranslateDirective, ArtemisTranslatePipe],
 })
 export class FeedbackNodeComponent implements OnInit {
     readonly roundValueSpecifiedByCourseSettings = roundValueSpecifiedByCourseSettings;

@@ -11,8 +11,6 @@ export class LearningPath implements BaseEntity {
     public user?: User;
     public course?: Course;
     public competencies?: CourseCompetency[];
-
-    constructor() {}
 }
 
 export class LearningPathInformationDTO {

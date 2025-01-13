@@ -2,7 +2,6 @@ import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testin
 import { of, throwError } from 'rxjs';
 import { HttpResponse } from '@angular/common/http';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
-import { MockComponent, MockDirective, MockPipe } from 'ng-mocks';
 import dayjs from 'dayjs/esm';
 import { ArtemisTestModule } from '../../test.module';
 import { ProgrammingExerciseResetDialogComponent } from 'app/exercises/programming/manage/reset/programming-exercise-reset-dialog.component';
@@ -11,15 +10,8 @@ import { Course } from 'app/entities/course.model';
 import { ProgrammingExerciseResetOptions, ProgrammingExerciseService } from 'app/exercises/programming/manage/services/programming-exercise.service';
 import { AlertService } from 'app/core/util/alert.service';
 import { MockSyncStorage } from '../../helpers/mocks/service/mock-sync-storage.service';
-import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
-import { MockTranslateValuesDirective } from '../../helpers/mocks/directive/mock-translate-values.directive';
 import { MockTranslateService } from '../../helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
-import { NgForm, NgModel } from '@angular/forms';
-import { FormDateTimePickerComponent } from 'app/shared/date-time-picker/date-time-picker.component';
-import { FeatureToggleDirective } from 'app/shared/feature-toggle/feature-toggle.directive';
-import { MockHasAnyAuthorityDirective } from '../../helpers/mocks/directive/mock-has-any-authority.directive';
-import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 
 describe('ProgrammingExerciseResetDialogComponent', () => {
@@ -35,38 +27,24 @@ describe('ProgrammingExerciseResetDialogComponent', () => {
     programmingExercise.dueDate = dayjs().add(7, 'days');
 
     beforeEach(() => {
-        return TestBed.configureTestingModule({
+        TestBed.configureTestingModule({
             imports: [ArtemisTestModule],
-            declarations: [
-                ProgrammingExerciseResetDialogComponent,
-                MockTranslateValuesDirective,
-                MockPipe(ArtemisTranslatePipe),
-                MockComponent(FormDateTimePickerComponent),
-                MockDirective(TranslateDirective),
-                MockDirective(FeatureToggleDirective),
-                MockDirective(NgModel),
-                MockDirective(NgForm),
-                MockDirective(MockHasAnyAuthorityDirective),
-            ],
             providers: [
                 { provide: TranslateService, useClass: MockTranslateService },
                 { provide: SessionStorageService, useClass: MockSyncStorage },
                 { provide: LocalStorageService, useClass: MockSyncStorage },
             ],
-        })
-            .compileComponents()
-            .then(() => {
-                // Ignore console errors
-                console.error = () => false;
-                fixture = TestBed.createComponent(ProgrammingExerciseResetDialogComponent);
-                comp = fixture.componentInstance;
-                programmingExerciseService = fixture.debugElement.injector.get(ProgrammingExerciseService);
+        }).compileComponents();
+        // Ignore console errors
+        console.error = () => false;
+        fixture = TestBed.createComponent(ProgrammingExerciseResetDialogComponent);
+        comp = fixture.componentInstance;
+        programmingExerciseService = fixture.debugElement.injector.get(ProgrammingExerciseService);
 
-                // stubs
-                jest.spyOn(programmingExerciseService, 'find').mockReturnValue(of({ body: programmingExercise } as HttpResponse<ProgrammingExercise>));
+        // stubs
+        jest.spyOn(programmingExerciseService, 'find').mockReturnValue(of({ body: programmingExercise } as HttpResponse<ProgrammingExercise>));
 
-                comp.programmingExercise = programmingExercise;
-            });
+        comp.programmingExercise = programmingExercise;
     });
 
     afterEach(() => {

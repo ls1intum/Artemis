@@ -10,7 +10,6 @@ import { TranslateDirective } from 'app/shared/language/translate.directive';
 
 @Component({
     selector: 'jhi-learning-paths-configuration',
-    standalone: true,
     changeDetection: ChangeDetectionStrategy.OnPush,
     imports: [FontAwesomeModule, ArtemisSharedComponentModule, TranslateDirective],
     templateUrl: './learning-paths-configuration.component.html',
@@ -33,13 +32,10 @@ export class LearningPathsConfigurationComponent {
     readonly includeAllGradedExercisesEnabled = computed(() => this.learningPathsConfiguration()?.includeAllGradedExercises ?? false);
 
     constructor() {
-        effect(
-            () => {
-                const courseId = this.courseId();
-                untracked(() => this.loadLearningPathsConfiguration(courseId));
-            },
-            { allowSignalWrites: true },
-        );
+        effect(() => {
+            const courseId = this.courseId();
+            untracked(() => this.loadLearningPathsConfiguration(courseId));
+        });
     }
 
     private async loadLearningPathsConfiguration(courseId: number): Promise<void> {

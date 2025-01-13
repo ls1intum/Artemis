@@ -19,7 +19,6 @@ interface DiffInformation {
 @Component({
     selector: 'jhi-git-diff-report',
     templateUrl: './git-diff-report.component.html',
-    standalone: true,
     changeDetection: ChangeDetectionStrategy.OnPush,
     imports: [GitDiffLineStatComponent, ArtemisSharedModule, ArtemisSharedComponentModule, GitDiffFilePanelComponent],
 })

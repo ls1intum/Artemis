@@ -16,22 +16,15 @@ import { ProgrammingExercise } from 'app/entities/programming/programming-exerci
 import { ProgrammingExerciseService } from 'app/exercises/programming/manage/services/programming-exercise.service';
 import { TextPlagiarismResult } from 'app/exercises/shared/plagiarism/types/text/TextPlagiarismResult';
 import { JhiWebsocketService } from 'app/core/websocket/websocket.service';
-import { MockComponent, MockDirective, MockPipe, MockProvider } from 'ng-mocks';
-import { TranslateService } from '@ngx-translate/core';
-import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
-import { PlagiarismDetailsComponent } from 'app/exercises/shared/plagiarism/plagiarism-details/plagiarism-details.component';
-import { PlagiarismRunDetailsComponent } from 'app/exercises/shared/plagiarism/plagiarism-run-details/plagiarism-run-details.component';
-import { PlagiarismSidebarComponent } from 'app/exercises/shared/plagiarism/plagiarism-sidebar/plagiarism-sidebar.component';
 import { NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
-import { NgModel } from '@angular/forms';
 import { PlagiarismInspectorService } from 'app/exercises/shared/plagiarism/plagiarism-inspector/plagiarism-inspector.service';
 import { PlagiarismComparison } from 'app/exercises/shared/plagiarism/types/PlagiarismComparison';
 import { TextSubmissionElement } from 'app/exercises/shared/plagiarism/types/text/TextSubmissionElement';
 import { PlagiarismCasesService } from 'app/course/plagiarism-cases/shared/plagiarism-cases.service';
 import { HttpResponse } from '@angular/common/http';
-import { MockNgbModalService } from '../../helpers/mocks/service/mock-ngb-modal.service';
 import { PlagiarismResultDTO } from 'app/exercises/shared/plagiarism/types/PlagiarismResultDTO';
 import { generateCsv } from 'export-to-csv';
+import { MockNgbModalService } from '../../helpers/mocks/service/mock-ngb-modal.service';
 
 jest.mock('app/shared/util/download.util', () => ({
     downloadFile: jest.fn(),
@@ -104,20 +97,9 @@ describe('Plagiarism Inspector Component', () => {
     beforeEach(() => {
         TestBed.configureTestingModule({
             imports: [ArtemisTestModule],
-            declarations: [
-                PlagiarismInspectorComponent,
-                MockPipe(ArtemisTranslatePipe),
-                MockDirective(NgModel),
-                MockComponent(PlagiarismDetailsComponent),
-                MockComponent(PlagiarismRunDetailsComponent),
-                MockComponent(PlagiarismSidebarComponent),
-            ],
             providers: [
                 { provide: ActivatedRoute, useValue: activatedRoute },
                 { provide: NgbModal, useClass: MockNgbModalService },
-                MockProvider(JhiWebsocketService),
-                MockProvider(TranslateService),
-                MockProvider(PlagiarismInspectorService),
             ],
         })
             .compileComponents()

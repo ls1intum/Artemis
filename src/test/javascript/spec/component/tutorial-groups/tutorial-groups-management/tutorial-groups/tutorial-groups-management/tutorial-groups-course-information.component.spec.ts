@@ -6,6 +6,8 @@ import { MockPipe } from 'ng-mocks';
 import { TutorialGroup } from 'app/entities/tutorial-group/tutorial-group.model';
 import { generateExampleTutorialGroup } from '../../../helpers/tutorialGroupExampleModels';
 import { Component, Input } from '@angular/core';
+import { MockTranslateService } from '../../../../../helpers/mocks/service/mock-translate.service';
+import { TranslateService } from '@ngx-translate/core';
 
 @Component({ selector: 'jhi-side-panel', template: '' })
 class MockSidePanelComponent {
@@ -23,6 +25,7 @@ describe('TutorialGroupsCourseInformationComponent', () => {
     beforeEach(async () => {
         await TestBed.configureTestingModule({
             declarations: [TutorialGroupsCourseInformationComponent, MockSidePanelComponent, MockPipe(ArtemisTranslatePipe)],
+            providers: [{ provide: TranslateService, useClass: MockTranslateService }],
         }).compileComponents();
 
         fixture = TestBed.createComponent(TutorialGroupsCourseInformationComponent);

@@ -1,10 +1,12 @@
-import { Component, ContentChild, OnInit, TemplateRef } from '@angular/core';
+import { Component, OnInit, inject } from '@angular/core';
 import { SafeHtml } from '@angular/platform-browser';
-import { ActivatedRoute, Router } from '@angular/router';
+import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
 import { AlertService } from 'app/core/util/alert.service';
 import { User } from 'app/core/user/user.model';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
+import { ModelingEditorComponent } from 'app/exercises/modeling/shared/modeling-editor.component';
+import { ProgrammingExerciseInstructionComponent } from 'app/exercises/programming/shared/instructions-render/programming-exercise-instruction.component';
 import { TutorParticipationService } from 'app/exercises/shared/dashboards/tutor/tutor-participation.service';
 import { TextSubmissionService } from 'app/exercises/text/participate/text-submission.service';
 import { ExampleSubmission } from 'app/entities/example-submission.model';
@@ -38,9 +40,9 @@ import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 import { SortService } from 'app/shared/service/sort.service';
 import { onError } from 'app/shared/util/global.utils';
 import { roundValueSpecifiedByCourseSettings } from 'app/shared/util/utils';
-import { ArtemisNavigationUtilService, getLinkToSubmissionAssessment } from 'app/utils/navigation.utils';
+import { getLinkToSubmissionAssessment } from 'app/utils/navigation.utils';
 import { AssessmentType } from 'app/entities/assessment-type.model';
-import { LegendPosition } from '@swimlane/ngx-charts';
+import { LegendPosition, PieChartModule } from '@swimlane/ngx-charts';
 import { AssessmentDashboardInformationEntry } from 'app/course/dashboards/assessment-dashboard/assessment-dashboard-information.component';
 import dayjs from 'dayjs/esm';
 import { faCheckCircle, faExclamationTriangle, faFolderOpen, faListAlt, faQuestionCircle, faSort, faSpinner } from '@fortawesome/free-solid-svg-icons';
@@ -48,6 +50,28 @@ import { GraphColors } from 'app/entities/statistics.model';
 import { PROFILE_LOCALVC } from 'app/app.constants';
 import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
 import { isManualResult } from 'app/exercises/shared/result/result.utils';
+import { HeaderExercisePageWithDetailsComponent } from '../../exercise-headers/header-exercise-page-with-details.component';
+import { TutorParticipationGraphComponent } from 'app/shared/dashboards/tutor-participation-graph/tutor-participation-graph.component';
+import { SecondCorrectionEnableButtonComponent } from './second-correction-button/second-correction-enable-button.component';
+import { SidePanelComponent } from 'app/shared/side-panel/side-panel.component';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { InfoPanelComponent } from 'app/shared/info-panel/info-panel.component';
+import { SecureLinkDirective } from 'app/shared/http/secure-link.directive';
+import { ButtonComponent } from 'app/shared/components/button.component';
+import { CodeButtonComponent } from 'app/shared/components/code-button/code-button.component';
+import { StructuredGradingInstructionsAssessmentLayoutComponent } from 'app/assessment/structured-grading-instructions-assessment-layout/structured-grading-instructions-assessment-layout.component';
+import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
+import { SortDirective } from 'app/shared/sort/sort.directive';
+import { SortByDirective } from 'app/shared/sort/sort-by.directive';
+import { LanguageTableCellComponent } from './language-table-cell/language-table-cell.component';
+import { NgStyle } from '@angular/common';
+import { ResultComponent } from '../../result/result.component';
+import { AssessmentWarningComponent } from 'app/assessment/assessment-warning/assessment-warning.component';
+import { CollapsableAssessmentInstructionsComponent } from 'app/assessment/assessment-instructions/collapsable-assessment-instructions/collapsable-assessment-instructions.component';
+import { TutorLeaderboardComponent } from 'app/shared/dashboards/tutor-leaderboard/tutor-leaderboard.component';
+import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
+import { ArtemisDurationFromSecondsPipe } from 'app/shared/pipes/artemis-duration-from-seconds.pipe';
 
 export interface ExampleSubmissionQueryParams {
     readOnly?: boolean;
@@ -59,10 +83,60 @@ export interface ExampleSubmissionQueryParams {
     templateUrl: './exercise-assessment-dashboard.component.html',
     styleUrls: ['./exercise-assessment-dashboard.component.scss'],
     providers: [CourseManagementService],
+    imports: [
+        HeaderExercisePageWithDetailsComponent,
+        TutorParticipationGraphComponent,
+        SecondCorrectionEnableButtonComponent,
+        PieChartModule,
+        SidePanelComponent,
+        TranslateDirective,
+        RouterLink,
+        FaIconComponent,
+        InfoPanelComponent,
+        ProgrammingExerciseInstructionComponent,
+        ModelingEditorComponent,
+        SecureLinkDirective,
+        ButtonComponent,
+        CodeButtonComponent,
+        StructuredGradingInstructionsAssessmentLayoutComponent,
+        NgbTooltip,
+        SortDirective,
+        SortByDirective,
+        LanguageTableCellComponent,
+        NgStyle,
+        ResultComponent,
+        AssessmentWarningComponent,
+        CollapsableAssessmentInstructionsComponent,
+        TutorLeaderboardComponent,
+        ArtemisDatePipe,
+        ArtemisTranslatePipe,
+        ArtemisDurationFromSecondsPipe,
+        // TODO: the extension point for Orion does not work with Angular 19, we need to find a different solution
+        // ExtensionPointDirective,
+    ],
 })
 export class ExerciseAssessmentDashboardComponent implements OnInit {
+    complaintService = inject(ComplaintService);
+    private exerciseService = inject(ExerciseService);
+    private alertService = inject(AlertService);
+    private translateService = inject(TranslateService);
+    private accountService = inject(AccountService);
+    private route = inject(ActivatedRoute);
+    private tutorParticipationService = inject(TutorParticipationService);
+    private submissionService = inject(SubmissionService);
+    private textSubmissionService = inject(TextSubmissionService);
+    private modelingSubmissionService = inject(ModelingSubmissionService);
+    private fileUploadSubmissionService = inject(FileUploadSubmissionService);
+    private artemisMarkdown = inject(ArtemisMarkdownService);
+    private router = inject(Router);
+    private programmingSubmissionService = inject(ProgrammingSubmissionService);
+    private guidedTourService = inject(GuidedTourService);
+    private sortService = inject(SortService);
+    private profileService = inject(ProfileService);
+
     readonly roundScoreSpecifiedByCourseSettings = roundValueSpecifiedByCourseSettings;
     readonly getCourseFromExercise = getCourseFromExercise;
+
     exercise: Exercise;
     modelingExercise: ModelingExercise;
     programmingExercise: ProgrammingExercise;
@@ -111,7 +185,6 @@ export class ExerciseAssessmentDashboardComponent implements OnInit {
     getSubmissionResultByCorrectionRound = getSubmissionResultByCorrectionRound;
 
     // helper variables to display information message about why no new assessments are possible anymore
-    remainingAssessments: number[] = [];
     lockedSubmissionsByOtherTutor: number[] = [];
     notYetAssessed: number[] = [];
     firstRoundAssessments: number;
@@ -159,8 +232,9 @@ export class ExerciseAssessmentDashboardComponent implements OnInit {
     moreFeedbackRequestsLink: any[];
 
     // extension points, see shared/extension-point
-    @ContentChild('overrideAssessmentTable') overrideAssessmentTable: TemplateRef<any>;
-    @ContentChild('overrideOpenAssessmentButton') overrideOpenAssessmentButton: TemplateRef<any>;
+    // TODO: the extension point for Orion does not work with Angular 19, we need to find a different solution -->
+    // @ContentChild('overrideAssessmentTable') overrideAssessmentTable: TemplateRef<any>;
+    // @ContentChild('overrideOpenAssessmentButton') overrideOpenAssessmentButton: TemplateRef<any>;
 
     // Icons
     faSpinner = faSpinner;
@@ -170,28 +244,6 @@ export class ExerciseAssessmentDashboardComponent implements OnInit {
     faSort = faSort;
     faExclamationTriangle = faExclamationTriangle;
     faListAlt = faListAlt;
-
-    constructor(
-        public complaintService: ComplaintService,
-        private exerciseService: ExerciseService,
-        private alertService: AlertService,
-        private translateService: TranslateService,
-        private accountService: AccountService,
-        private route: ActivatedRoute,
-        private tutorParticipationService: TutorParticipationService,
-        private submissionService: SubmissionService,
-        private textSubmissionService: TextSubmissionService,
-        private modelingSubmissionService: ModelingSubmissionService,
-        private fileUploadSubmissionService: FileUploadSubmissionService,
-        private artemisMarkdown: ArtemisMarkdownService,
-        private router: Router,
-        private programmingSubmissionService: ProgrammingSubmissionService,
-        private guidedTourService: GuidedTourService,
-        private artemisDatePipe: ArtemisDatePipe,
-        private sortService: SortService,
-        private navigationUtilService: ArtemisNavigationUtilService,
-        private profileService: ProfileService,
-    ) {}
 
     /**
      * Extracts the course and exercise ids from the route params and fetches the exercise from the server
