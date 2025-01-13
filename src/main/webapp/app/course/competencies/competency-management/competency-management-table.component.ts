@@ -7,7 +7,7 @@ import { filter, map } from 'rxjs/operators';
 import { onError } from 'app/shared/util/global.utils';
 import { Subject } from 'rxjs';
 import { faFileImport, faPencilAlt, faPlus, faTrash } from '@fortawesome/free-solid-svg-icons';
-import { NgbModal, NgbProgressbar } from '@ng-bootstrap/ng-bootstrap';
+import { NgbDropdown, NgbDropdownMenu, NgbDropdownToggle, NgbModal, NgbProgressbar } from '@ng-bootstrap/ng-bootstrap';
 import { ImportAllCompetenciesComponent, ImportAllFromCourseResult } from 'app/course/competencies/competency-management/import-all-competencies.component';
 import { PrerequisiteService } from 'app/course/competencies/prerequisite.service';
 import { ArtemisSharedModule } from 'app/shared/shared.module';
@@ -16,7 +16,7 @@ import { ArtemisMarkdownModule } from 'app/shared/markdown.module';
 @Component({
     selector: 'jhi-competency-management-table',
     templateUrl: './competency-management-table.component.html',
-    imports: [ArtemisSharedModule, ArtemisMarkdownModule, NgbProgressbar],
+    imports: [ArtemisSharedModule, ArtemisMarkdownModule, NgbProgressbar, NgbDropdown, NgbDropdownMenu, NgbDropdownToggle],
 })
 export class CompetencyManagementTableComponent implements OnInit, OnDestroy {
     @Input() courseId: number;
