@@ -114,9 +114,6 @@ services:
       image: oleve312/api-gateway
       container_name: api-gateway
       environment:
-        _JAVA_OPTIONS=-Dlogging.level.org.springframework: DEBUG
-        SERVER_ERROR_INCLUDE_STACKTRACE: "always"
-        JHIPSTER_REGISTRY_PASSWORD: "admin"
         EUREKA_INSTANCE_APPNAME: "API-Gateway"
       env_file:
         - ${ARTEMIS_ENV_FILE:-./artemis/config/prod-multinode.env} # the (eureka) config is overridden on the TS. as a workaround, we use the artemis env file
