@@ -91,13 +91,12 @@
         <div class="p-1 position-relative">
             <button
                 type="button"
-                class="btn-close position-absolute top-0 end-0 m-1 rounded-circle"
+                class="btn-close cross position-absolute top-0 end-0 m-1 rounded-circle"
                 aria-label="Close"
                 (click)="deleteFeedback()"
                 [ngbTooltip]="'artemisApp.assessment.subsequentFeedback' | artemisTranslate"
-                style="width: 20px; height: 20px; padding: 2px; display: flex; align-items: center; justify-content: center; border: 1px solid #000; color: #000"
             >
-                <span aria-hidden="true" style="font-size: 10px; line-height: 1">&times;</span>
+                <fa-icon [icon]="faTimes"></fa-icon>
             </button>
             <div class="row flex-nowrap align-items-top m-1">
                 <div class="col flex-grow-0 ps-0">

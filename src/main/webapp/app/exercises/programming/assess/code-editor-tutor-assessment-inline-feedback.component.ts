@@ -6,7 +6,7 @@ import { TranslateService } from '@ngx-translate/core';
 import { StructuredGradingCriterionService } from 'app/exercises/shared/structured-grading-criterion/structured-grading-criterion.service';
 import { roundValueSpecifiedByCourseSettings } from 'app/shared/util/utils';
 import { Course } from 'app/entities/course.model';
-import { faBan, faExclamationTriangle, faPencilAlt, faQuestionCircle, faSave, faTrashAlt } from '@fortawesome/free-solid-svg-icons';
+import { faBan, faExclamationTriangle, faPencilAlt, faQuestionCircle, faSave, faTrashAlt, faTimes } from '@fortawesome/free-solid-svg-icons';
 import { Subject } from 'rxjs';
 import { LocalStorageService } from 'ngx-webstorage';
 import { AlertService } from 'app/core/util/alert.service';
@@ -14,6 +14,7 @@ import { AlertService } from 'app/core/util/alert.service';
 @Component({
     selector: 'jhi-code-editor-tutor-assessment-inline-feedback',
     templateUrl: './code-editor-tutor-assessment-inline-feedback.component.html',
+    styleUrls: ['./code-editor-tutor-assessment-inline-feedback.component.scss'],
 })
 export class CodeEditorTutorAssessmentInlineFeedbackComponent {
     @Input()
@@ -67,6 +68,7 @@ export class CodeEditorTutorAssessmentInlineFeedbackComponent {
     faPencilAlt = faPencilAlt;
     faTrashAlt = faTrashAlt;
     faExclamationTriangle = faExclamationTriangle;
+    faTimes = faTimes;
 
     constructor(
         private translateService: TranslateService,
