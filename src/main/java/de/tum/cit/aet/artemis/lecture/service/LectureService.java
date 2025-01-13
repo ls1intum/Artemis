@@ -30,6 +30,7 @@ import de.tum.cit.aet.artemis.lecture.domain.AttachmentUnit;
 import de.tum.cit.aet.artemis.lecture.domain.ExerciseUnit;
 import de.tum.cit.aet.artemis.lecture.domain.Lecture;
 import de.tum.cit.aet.artemis.lecture.domain.LectureUnit;
+import de.tum.cit.aet.artemis.lecture.domain.Transcription;
 import de.tum.cit.aet.artemis.lecture.repository.LectureRepository;
 
 @Profile(PROFILE_CORE)
@@ -183,6 +184,19 @@ public class LectureService {
                     .map(unit -> (AttachmentUnit) unit).toList();
             for (AttachmentUnit attachmentUnit : attachmentUnitList) {
                 pyrisWebhookService.get().addLectureUnitToPyrisDB(attachmentUnit);
+            }
+        }
+    }
+
+    /**
+     * Ingest the transcriptions when triggered by the ingest transcription button
+     *
+     * @param transcriptions set of transcriptions to be ingested
+     */
+    public void ingestTranscriptionInPyris(Set<Transcription> transcriptions) {
+        if (pyrisWebhookService.isPresent()) {
+            for (Transcription transcription : transcriptions) {
+                pyrisWebhookService.get().addTranscriptionToPyrisDB(transcription);
             }
         }
     }

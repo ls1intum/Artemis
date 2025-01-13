@@ -51,6 +51,7 @@ import de.tum.cit.aet.artemis.lecture.domain.AttachmentUnit;
 import de.tum.cit.aet.artemis.lecture.domain.ExerciseUnit;
 import de.tum.cit.aet.artemis.lecture.domain.Lecture;
 import de.tum.cit.aet.artemis.lecture.domain.LectureUnit;
+import de.tum.cit.aet.artemis.lecture.domain.Transcription;
 import de.tum.cit.aet.artemis.lecture.repository.LectureRepository;
 import de.tum.cit.aet.artemis.lecture.service.LectureImportService;
 import de.tum.cit.aet.artemis.lecture.service.LectureService;
@@ -290,6 +291,33 @@ public class LectureResource {
             return ResponseEntity.badRequest().headers(HeaderUtil.createAlert(applicationName, "artemisApp.iris.ingestionAlert.allLecturesError", "idExists")).body(null);
         }
         lectureService.ingestLecturesInPyris(course.getLectures());
+        return ResponseEntity.ok().build();
+    }
+
+    /**
+     * POST /courses/{courseId}/ingest-transcription
+     * This endpoint is for starting the ingestion of all lectures or only one lecture when triggered in Artemis.
+     *
+     * @param courseId  the ID of the course for which all lectures should be ingested in pyris
+     * @param lectureId If this id is present then only ingest this one lecture of the respective course
+     * @return the ResponseEntity with status 200 (OK) and a message success or null if the operation failed
+     */
+    @Profile(PROFILE_IRIS)
+    @PutMapping("courses/{courseId}/ingest-transcription")
+    @EnforceAtLeastInstructorInCourse
+    public ResponseEntity<Void> ingestTranscriptions(@PathVariable Long courseId, @RequestParam(required = false) Optional<Long> lectureId) {
+        Course course = courseRepository.findByIdWithLecturesAndLectureUnitsElseThrow(courseId);
+        authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.INSTRUCTOR, course, null);
+        if (lectureId.isPresent()) {
+            Optional<Lecture> lectureToIngest = course.getLectures().stream().filter(lecture -> lecture.getId().equals(lectureId.get())).findFirst();
+            if (lectureToIngest.isPresent()) {
+                Set<Transcription> lecturesToIngest = new HashSet<>(lectureToIngest.get().getTranscriptions());
+                lectureService.ingestTranscriptionInPyris(lecturesToIngest);
+                return ResponseEntity.ok().build();
+            }
+            return ResponseEntity.badRequest().headers(HeaderUtil.createAlert(applicationName, "artemisApp.iris.ingestionAlert.allLecturesError", "idExists")).body(null);
+        }
+        lectureService.ingestTranscriptionInPyris(course.getLectures().stream().map(Lecture::getTranscriptions).flatMap(List::stream).collect(Collectors.toSet()));
         return ResponseEntity.ok().build();
     }
 
