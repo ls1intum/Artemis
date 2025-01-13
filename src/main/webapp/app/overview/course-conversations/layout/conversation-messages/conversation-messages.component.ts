@@ -23,7 +23,7 @@ import { Conversation, ConversationDTO } from 'app/entities/metis/conversation/c
 import { Subject, forkJoin, map, takeUntil } from 'rxjs';
 import { Post } from 'app/entities/metis/post.model';
 import { Course } from 'app/entities/course.model';
-import { PageType, PostContextFilter, PostSortCriterion, SortDirection } from 'app/shared/metis/metis.util';
+import { DisplayPriority, PageType, PostContextFilter, PostSortCriterion, SortDirection } from 'app/shared/metis/metis.util';
 import { MetisService } from 'app/shared/metis/metis.service';
 import { Channel, getAsChannelDTO, isChannelDTO } from 'app/entities/metis/conversation/channel.model';
 import { GroupChat, isGroupChatDTO } from 'app/entities/metis/conversation/group-chat.model';
@@ -253,7 +253,11 @@ export class ConversationMessagesComponent implements OnInit, AfterViewInit, OnD
             return;
         }
 
-        const sortedPosts = this.posts.sort((a, b) => {
+        // Separate pinned posts into their own group
+        const pinnedPosts = this.posts.filter((post) => post.displayPriority === DisplayPriority.PINNED);
+        const unpinnedPosts = this.posts.filter((post) => post.displayPriority !== DisplayPriority.PINNED);
+
+        const sortedPosts = unpinnedPosts.sort((a, b) => {
             const aDate = (a as any).creationDateDayjs;
             const bDate = (b as any).creationDateDayjs;
             return aDate?.valueOf() - bDate?.valueOf();
@@ -289,6 +293,12 @@ export class ConversationMessagesComponent implements OnInit, AfterViewInit, OnD
         }
 
         groups.push(currentGroup);
+
+        // Only add pinned group if pinned posts exist
+        if (pinnedPosts.length > 0) {
+            groups.unshift({ author: undefined, posts: pinnedPosts });
+        }
+
         this.groupedPosts = groups;
         this.cdr.detectChanges();
     }

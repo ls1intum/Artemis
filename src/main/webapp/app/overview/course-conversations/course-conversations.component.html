@@ -54,7 +54,7 @@
                     <jhi-conversation-header (collapseSearch)="toggleChannelSearch()" (onUpdateSidebar)="prepareSidebarData()" />
                     <jhi-conversation-messages
                         [contentHeightDev]="!isProduction || isTestServer"
-                        (openThread)="postInThread = $event"
+                        (openThread)="openThread($event)"
                         [course]="course"
                         [searchbarCollapsed]="channelSearchCollapsed"
                         (onNavigateToPost)="onTriggerNavigateToPost($event)"
