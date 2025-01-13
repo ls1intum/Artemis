@@ -29,7 +29,7 @@ public class Transcription extends DomainObject {
 
     @OneToMany(cascade = CascadeType.ALL)
     @OrderColumn(name = "start_time")
-    @JoinColumn(name = "transcrition_id")
+    @JoinColumn(name = "transcription_id")
     private List<TranscriptionSegment> segments = new ArrayList<>();
 
     public Transcription() {
