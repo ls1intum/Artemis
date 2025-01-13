@@ -18,7 +18,6 @@ export default RephrasingVariant;
 @Injectable({ providedIn: 'root' })
 export class RephraseService {
     public resourceUrl = 'api/courses';
-    private readonly topicPrefix = '/topic/iris/rephrasing/';
 
     private http = inject(HttpClient);
     private jhiWebsocketService = inject(JhiWebsocketService);
@@ -47,20 +46,19 @@ export class RephraseService {
                         this.jhiWebsocketService.receive(websocketTopic).subscribe({
                             next: (update: any) => {
                                 if (update.result) {
-                                    console.log('Rephrased text:', update.result);
-                                    observer.next(update.result); // Gib das Ergebnis an den Subscriber weiter
-                                    observer.complete(); // Beende das Observable
+                                    observer.next(update.result);
+                                    observer.complete();
                                 }
                             },
                             error: (error) => {
                                 console.error('WebSocket Error:', error);
-                                observer.error(error); // Fehler weitergeben
+                                observer.error(error);
                             },
                         });
                     },
                     error: (error) => {
                         console.error('HTTP Request Error:', error);
-                        observer.error(error); // Fehler weitergeben
+                        observer.error(error);
                     },
                 });
         });
