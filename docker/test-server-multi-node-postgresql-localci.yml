@@ -111,7 +111,7 @@ services:
               target: "/certs/priv_key.pem"
 
     api-gateway:
-      image: oleve312/api-gateway
+      image: ghcr.io/ls1intum/api-gateway:${API_GATEWAY_DOCKER_TAG:-latest}
       container_name: api-gateway
       environment:
         EUREKA_INSTANCE_APPNAME: "API-Gateway"
