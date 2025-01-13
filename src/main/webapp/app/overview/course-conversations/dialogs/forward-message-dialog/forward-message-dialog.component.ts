@@ -10,10 +10,18 @@ import { CodeAction } from 'app/shared/monaco-editor/model/actions/code.action';
 import { CodeBlockAction } from 'app/shared/monaco-editor/model/actions/code-block.action';
 import { UrlAction } from 'app/shared/monaco-editor/model/actions/url.action';
 import { TextEditorAction } from 'app/shared/monaco-editor/model/actions/text-editor-action.model';
-import { MarkdownEditorHeight } from 'app/shared/markdown-editor/monaco/markdown-editor-monaco.component';
+import { MarkdownEditorHeight, MarkdownEditorMonacoComponent } from 'app/shared/markdown-editor/monaco/markdown-editor-monaco.component';
 import { UserPublicInfoDTO } from 'app/core/user/user.model';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
 import { catchError, map, of } from 'rxjs';
+import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
+import { ProfilePictureComponent } from 'app/shared/profile-picture/profile-picture.component';
+import { NgClass } from '@angular/common';
+import { PostingContentComponent } from 'app/shared/metis/posting-content/posting-content.components';
+import { ArtemisSharedModule } from 'app/shared/shared.module';
+import { MetisService } from 'app/shared/metis/metis.service';
+import { LinkPreviewService } from 'app/shared/link-preview/services/link-preview.service';
+import { LinkifyService } from 'app/shared/link-preview/services/linkify.service';
 
 interface CombinedOption {
     id: number;
@@ -26,12 +34,14 @@ interface CombinedOption {
     selector: 'jhi-forward-message-dialog',
     templateUrl: './forward-message-dialog.component.html',
     styleUrls: ['./forward-message-dialog.component.scss'],
+    imports: [ArtemisTranslatePipe, ProfilePictureComponent, NgClass, PostingContentComponent, MarkdownEditorMonacoComponent, ArtemisSharedModule],
+    providers: [MetisService, LinkPreviewService, LinkifyService],
 })
 export class ForwardMessageDialogComponent implements OnInit, AfterViewInit {
     channels = signal<ChannelDTO[] | []>([]);
     users = signal<UserPublicInfoDTO[] | []>([]);
-    postToForward = signal<Post | null>(null);
-    courseId = signal<number | null>(null);
+    postToForward = signal<Post | undefined>(undefined);
+    courseId = signal<number | undefined>(undefined);
     filteredChannels: ChannelDTO[] = [];
     filteredUsers: UserPublicInfoDTO[] = [];
     selectedChannels: ChannelDTO[] = [];

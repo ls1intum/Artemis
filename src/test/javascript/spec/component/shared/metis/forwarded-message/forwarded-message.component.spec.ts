@@ -11,6 +11,8 @@ import { ProfilePictureComponent } from 'app/shared/profile-picture/profile-pict
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 import { PostingContentComponent } from 'app/shared/metis/posting-content/posting-content.components';
+import { MockTranslateService } from '../../../../helpers/mocks/service/mock-translate.service';
+import { TranslateService } from '@ngx-translate/core';
 
 describe('ForwardedMessageComponent', () => {
     let component: ForwardedMessageComponent;
@@ -38,6 +40,7 @@ describe('ForwardedMessageComponent', () => {
                 MockComponent(ProfilePictureComponent),
                 MockComponent(PostingContentComponent),
             ],
+            providers: [{ provide: TranslateService, useClass: MockTranslateService }],
         }).compileComponents();
 
         fixture = TestBed.createComponent(ForwardedMessageComponent);

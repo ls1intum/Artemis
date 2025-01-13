@@ -14,6 +14,8 @@ import { MarkdownEditorMonacoComponent } from 'app/shared/markdown-editor/monaco
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { ProfilePictureComponent } from 'app/shared/profile-picture/profile-picture.component';
 import { PostingContentComponent } from 'app/shared/metis/posting-content/posting-content.components';
+import { MockTranslateService } from '../../../../../helpers/mocks/service/mock-translate.service';
+import { TranslateService } from '@ngx-translate/core';
 
 describe('ForwardMessageDialogComponent', () => {
     let component: ForwardMessageDialogComponent;
@@ -29,7 +31,11 @@ describe('ForwardMessageDialogComponent', () => {
                 MockComponent(ProfilePictureComponent),
                 MockComponent(PostingContentComponent),
             ],
-            providers: [MockProvider(NgbActiveModal), { provide: CourseManagementService, useClass: MockCourseManagementService }],
+            providers: [
+                MockProvider(NgbActiveModal),
+                { provide: CourseManagementService, useClass: MockCourseManagementService },
+                { provide: TranslateService, useClass: MockTranslateService },
+            ],
             imports: [FormsModule],
         }).compileComponents();
 

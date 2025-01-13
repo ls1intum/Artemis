@@ -164,53 +164,48 @@ export abstract class PostingsReactionsBarDirective<T extends Posting> implement
                     modalRef.componentInstance.postToForward.set(post);
                     modalRef.componentInstance.courseId.set(this.course()?.id);
 
-                    modalRef.result.then(
-                        async (selection: { channels: Conversation[]; users: UserPublicInfoDTO[]; messageContent: string }) => {
-                            if (selection) {
-                                const allSelections: Conversation[] = [...selection.channels];
-                                const userLogins = selection.users.map((user) => user.login!);
+                    modalRef.result.then(async (selection: { channels: Conversation[]; users: UserPublicInfoDTO[]; messageContent: string }) => {
+                        if (selection) {
+                            const allSelections: Conversation[] = [...selection.channels];
+                            const userLogins = selection.users.map((user) => user.login!);
 
-                                if (userLogins.length > 0) {
-                                    let newConversation: Conversation | null = null;
+                            if (userLogins.length > 0) {
+                                let newConversation: Conversation | null = null;
 
-                                    if (userLogins.length === 1) {
-                                        try {
-                                            const response = await this.metisConversationService.createDirectConversation(userLogins[0]).toPromise();
-                                            newConversation = (response?.body ?? null) as Conversation;
-                                            if (newConversation) {
-                                                allSelections.push(newConversation);
-                                            }
-                                        } catch (error) {
-                                            console.error('Error creating one-to-one chat:', error);
-                                            return;
+                                if (userLogins.length === 1) {
+                                    try {
+                                        const response = await this.metisConversationService.createDirectConversation(userLogins[0]).toPromise();
+                                        newConversation = (response?.body ?? null) as Conversation;
+                                        if (newConversation) {
+                                            allSelections.push(newConversation);
                                         }
-                                    } else {
-                                        try {
-                                            const response = await this.metisConversationService.createGroupConversation(userLogins).toPromise();
-                                            if (response && response.body) {
-                                                newConversation = response.body as Conversation;
-                                                allSelections.push(newConversation);
-                                            } else {
-                                                console.error('Response body is undefined');
-                                            }
-                                        } catch (error) {
-                                            console.error('Error creating group chat:', error);
-                                            return;
+                                    } catch (error) {
+                                        console.error('Error creating one-to-one chat:', error);
+                                        return;
+                                    }
+                                } else {
+                                    try {
+                                        const response = await this.metisConversationService.createGroupConversation(userLogins).toPromise();
+                                        if (response && response.body) {
+                                            newConversation = response.body as Conversation;
+                                            allSelections.push(newConversation);
+                                        } else {
+                                            console.error('Response body is undefined');
                                         }
+                                    } catch (error) {
+                                        console.error('Error creating group chat:', error);
+                                        return;
                                     }
                                 }
-
-                                allSelections.forEach((conversation) => {
-                                    if (conversation && conversation.id) {
-                                        this.forwardPost(post, conversation, selection.messageContent, isAnswer);
-                                    }
-                                });
                             }
-                        },
-                        (reason) => {
-                            console.log('Modal dismissed:', reason);
-                        },
-                    );
+
+                            allSelections.forEach((conversation) => {
+                                if (conversation && conversation.id) {
+                                    this.forwardPost(post, conversation, selection.messageContent, isAnswer);
+                                }
+                            });
+                        }
+                    });
                 },
                 error: (error) => {
                     console.error('Error fetching conversations:', error);

@@ -44,6 +44,7 @@ import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 import { ArtemisTranslatePipe } from '../../pipes/artemis-translate.pipe';
 import { Posting } from 'app/entities/metis/posting.model';
 import { throwError } from 'rxjs';
+import { ForwardedMessageComponent } from 'app/shared/metis/forwarded-message/forwarded-message.component';
 
 @Component({
     selector: 'jhi-post',
@@ -75,6 +76,7 @@ import { throwError } from 'rxjs';
         EmojiPickerComponent,
         ArtemisDatePipe,
         ArtemisTranslatePipe,
+        ForwardedMessageComponent,
     ],
 })
 export class PostComponent extends PostingDirective<Post> implements OnInit, OnChanges, AfterContentChecked {

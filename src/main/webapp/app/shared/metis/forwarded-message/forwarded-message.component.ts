@@ -5,11 +5,20 @@ import { AnswerPost } from 'app/entities/metis/answer-post.model';
 import { Posting } from 'app/entities/metis/posting.model';
 import dayjs from 'dayjs';
 import { Conversation } from 'app/entities/metis/conversation/conversation.model';
+import { ProfilePictureComponent } from 'app/shared/profile-picture/profile-picture.component';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { PostingContentComponent } from 'app/shared/metis/posting-content/posting-content.components';
+import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
+import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
+import { NgClass } from '@angular/common';
+import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 
 @Component({
     selector: 'jhi-forwarded-message',
     templateUrl: './forwarded-message.component.html',
     styleUrls: ['./forwarded-message.component.scss'],
+    imports: [ProfilePictureComponent, TranslateDirective, NgClass, FaIconComponent, NgbTooltip, PostingContentComponent, ArtemisTranslatePipe, ArtemisDatePipe],
 })
 export class ForwardedMessageComponent implements AfterViewInit {
     readonly faShare = faShare;
