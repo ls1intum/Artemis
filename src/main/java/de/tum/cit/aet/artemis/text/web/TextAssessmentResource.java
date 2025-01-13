@@ -241,7 +241,7 @@ public class TextAssessmentResource extends AssessmentResource {
     @PostMapping("participations/{participationId}/results/{resultId}/submit-text-assessment")
     @EnforceAtLeastTutor
     public ResponseEntity<Result> submitTextAssessment(@PathVariable Long participationId, @PathVariable Long resultId, @RequestBody TextAssessmentDTO textAssessment,
-            @RequestParam boolean sendFeedback) {
+            @RequestParam(defaultValue = "false") boolean sendFeedback) {
         final boolean hasAssessmentWithTooLongReference = textAssessment.getFeedbacks().stream().filter(Feedback::hasReference)
                 .anyMatch(feedback -> feedback.getReference().length() > Feedback.MAX_REFERENCE_LENGTH);
         if (hasAssessmentWithTooLongReference) {
