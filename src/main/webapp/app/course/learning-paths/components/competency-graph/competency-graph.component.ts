@@ -29,7 +29,6 @@ export class CompetencyGraphComponent {
         );
     });
 
-    readonly layout = signal('dagreCluster');
     readonly update$ = new Subject<boolean>();
     readonly center$ = new Subject<boolean>();
     readonly zoomToFit$ = new Subject<NgxGraphZoomOptions>();

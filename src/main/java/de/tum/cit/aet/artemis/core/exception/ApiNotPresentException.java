@@ -9,8 +9,6 @@ import de.tum.cit.aet.artemis.core.api.AbstractApi;
 public class ApiNotPresentException extends RuntimeException {
 
     /**
-     * Constructor.
-     *
      * @param api     the api class that should be present
      * @param profile name of the Spring profile that needs to be enabled.
      */
