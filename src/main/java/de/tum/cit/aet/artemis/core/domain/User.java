@@ -3,6 +3,7 @@ package de.tum.cit.aet.artemis.core.domain;
 import static de.tum.cit.aet.artemis.core.config.Constants.USERNAME_MAX_LENGTH;
 import static de.tum.cit.aet.artemis.core.config.Constants.USERNAME_MIN_LENGTH;
 
+import java.time.Duration;
 import java.time.Instant;
 import java.time.ZonedDateTime;
 import java.util.HashSet;
@@ -210,6 +211,10 @@ public class User extends AbstractAuditingEntity implements Participant {
     @Nullable
     @Column(name = "iris_accepted")
     private ZonedDateTime irisAccepted = null;
+
+    @Nullable
+    @Column(name = "iris_proactive_events_disabled")
+    private Instant irisProactiveEventsDisabled = null;
 
     public User() {
     }
@@ -536,6 +541,33 @@ public class User extends AbstractAuditingEntity implements Participant {
 
     public boolean hasAcceptedIris() {
         return irisAccepted != null;
+    }
+
+    @Nullable
+    public Instant getIrisProactiveEventsDisabledTimestamp() {
+        return irisProactiveEventsDisabled;
+    }
+
+    public void setIrisProactiveEventsDisabledTimestamp(@Nullable Instant irisProactiveEventsDisabled) {
+        this.irisProactiveEventsDisabled = irisProactiveEventsDisabled;
+    }
+
+    /**
+     * Checks if the user has disabled Iris proactive events.
+     *
+     * @return true if the timestamp is set and in the future
+     */
+    public boolean hasDisabledIrisProactiveEvents() {
+        return irisProactiveEventsDisabled != null && irisProactiveEventsDisabled.isAfter(Instant.now());
+    }
+
+    /**
+     * Disables Iris proactive events for the user for the given duration.
+     *
+     * @param duration the duration for which the proactive events should be disabled
+     */
+    public void disableIrisProactiveEventsFor(Duration duration) {
+        irisProactiveEventsDisabled = Instant.now().plus(duration);
     }
 
     /**

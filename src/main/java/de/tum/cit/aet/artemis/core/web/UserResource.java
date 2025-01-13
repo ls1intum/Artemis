@@ -31,6 +31,8 @@ import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastInstructor
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastStudent;
 import de.tum.cit.aet.artemis.core.service.user.UserCreationService;
 import de.tum.cit.aet.artemis.core.service.user.UserService;
+import de.tum.cit.aet.artemis.iris.dto.IrisProactiveEventDisableDTO;
+import de.tum.cit.aet.artemis.iris.dto.IrisProactiveEventDisableDuration;
 import de.tum.cit.aet.artemis.lti.service.LtiService;
 import tech.jhipster.web.util.PaginationUtil;
 
@@ -101,6 +103,7 @@ public class UserResource {
             user.setCreatedBy(null);
             user.setCreatedDate(null);
             user.setIrisAccepted(null);
+            user.setIrisProactiveEventsDisabled(null);
         });
         HttpHeaders headers = PaginationUtil.generatePaginationHttpHeaders(ServletUriComponentsBuilder.fromCurrentRequest(), page);
         return new ResponseEntity<>(page.getContent(), headers, HttpStatus.OK);
@@ -168,5 +171,25 @@ public class UserResource {
         }
         userRepository.updateIrisAcceptedToDate(user.getId(), ZonedDateTime.now());
         return ResponseEntity.ok().build();
+    }
+
+    @PutMapping("users/disable-iris-proactive-events")
+    @EnforceAtLeastStudent
+    public ResponseEntity<Void> setIrisProactiveEventsDisabledToTimestamp(@RequestBody IrisProactiveEventDisableDTO disableDTO) {
+        User user = userRepository.getUser();
+
+        var duration = disableDTO.duration();
+        var timestamp = disableDTO.endTime();
+
+        if (duration == IrisProactiveEventDisableDuration.CUSTOM && timestamp == null) {
+            return ResponseEntity.badRequest().build();
+        }
+        try {
+            userService.updateIrisProactiveEventsDisabled(user.getId(), duration, timestamp);
+            return ResponseEntity.ok().build();
+        }
+        catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest().build();
+        }
     }
 }

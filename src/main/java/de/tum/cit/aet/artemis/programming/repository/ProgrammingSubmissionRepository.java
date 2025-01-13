@@ -95,6 +95,26 @@ public interface ProgrammingSubmissionRepository extends ArtemisJpaRepository<Pr
     List<ProgrammingSubmission> findSubmissionsWithResultsByIdIn(List<Long> ids);
 
     /**
+     * Find all programming submissions with results for a student participation where the build failed is false and the type is not illegal ordered by submission date in ascending
+     * order
+     *
+     * @return List of ProgrammingSubmission
+     */
+    @Query("""
+            SELECT s
+            FROM ProgrammingSubmission s
+                LEFT JOIN FETCH s.results r
+            WHERE s.participation.id = :participationId
+                AND s.buildFailed = FALSE
+                AND (s.type <> de.tum.cit.aet.artemis.exercise.domain.SubmissionType.ILLEGAL
+                    OR s.type IS NULL)
+                AND r IS NOT NULL
+            ORDER BY s.submissionDate ASC
+            """)
+    List<ProgrammingSubmission> findSubmissionsWithResultsByParticipationIdAndBuildFailedIsFalseAndTypeIsNotIllegalOrderBySubmissionDateAsc(
+            @Param("participationId") long participationId);
+
+    /**
      * Provide a list of graded submissions. To be graded a submission must:
      * - be of type 'INSTRUCTOR' or 'TEST'
      * - have a submission date before the exercise due date

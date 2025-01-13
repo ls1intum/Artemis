@@ -11,6 +11,7 @@ import static de.tum.cit.aet.artemis.core.repository.UserSpecs.getWithOrWithoutR
 import static de.tum.cit.aet.artemis.core.repository.UserSpecs.notSoftDeleted;
 import static org.springframework.data.jpa.repository.EntityGraph.EntityGraphType.LOAD;
 
+import java.time.Instant;
 import java.time.ZonedDateTime;
 import java.util.Collection;
 import java.util.Collections;
@@ -743,6 +744,15 @@ public interface UserRepository extends ArtemisJpaRepository<User, Long>, JpaSpe
             WHERE user.id = :userId
             """)
     void updateIrisAcceptedToDate(@Param("userId") long userId, @Param("acceptDatetime") ZonedDateTime acceptDatetime);
+
+    @Modifying
+    @Transactional // ok because of modifying query
+    @Query("""
+            UPDATE User user
+            SET user.irisProactiveEventsDisabled = :disabledUntil
+            WHERE user.id = :userId
+            """)
+    void updateIrisProactiveEventsDisabled(@Param("userId") long userId, @Param("disabledUntil") Instant disabledUntil);
 
     @Query("""
             SELECT DISTINCT user

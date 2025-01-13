@@ -3,4 +3,5 @@ import { IrisRateLimitInformation } from 'app/entities/iris/iris-ratelimit-info.
 export class IrisStatusDTO {
     active: boolean;
     rateLimitInfo: IrisRateLimitInformation;
+    proactiveEventsDisabledUntil: Date | null;
 }

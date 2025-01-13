@@ -22,6 +22,7 @@ export class IrisStatusService implements OnDestroy {
     activeSubject = new BehaviorSubject<boolean>(this.active);
 
     currentRatelimitInfoSubject = new BehaviorSubject<IrisRateLimitInformation>(new IrisRateLimitInformation(0, 0, 0));
+    proactiveEventsDisabledUntil = new BehaviorSubject<Date | null>(null);
 
     /**
      * Creates an instance of IrisHeartbeatService.
@@ -74,6 +75,10 @@ export class IrisStatusService implements OnDestroy {
         firstValueFrom(this.getIrisStatus()).then((response: HttpResponse<IrisStatusDTO>) => {
             if (response.body) {
                 this.active = Boolean(response.body.active);
+
+                if (response.body.proactiveEventsDisabledUntil) {
+                    this.proactiveEventsDisabledUntil.next(new Date(response.body.proactiveEventsDisabledUntil));
+                }
 
                 if (response.body.rateLimitInfo) {
                     this.currentRatelimitInfoSubject.next(response.body.rateLimitInfo);

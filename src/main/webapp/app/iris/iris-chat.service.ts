@@ -36,6 +36,8 @@ export class IrisChatService implements OnDestroy {
 
     rateLimitInfo?: IrisRateLimitInformation;
     rateLimitSubscription: Subscription;
+    proactiveEventsDisabledUntil: Date | null = null;
+    proactiveEventsDisabledUntilSubscription: Subscription;
 
     private sessionCreationIdentifier?: string;
 
@@ -57,10 +59,12 @@ export class IrisChatService implements OnDestroy {
         private accountService: AccountService,
     ) {
         this.rateLimitSubscription = this.status.currentRatelimitInfo().subscribe((info) => (this.rateLimitInfo = info));
+        this.proactiveEventsDisabledUntilSubscription = this.status.proactiveEventsDisabledUntil.subscribe((date) => (this.proactiveEventsDisabledUntil = date));
     }
 
     ngOnDestroy(): void {
         this.rateLimitSubscription.unsubscribe();
+        this.proactiveEventsDisabledUntilSubscription.unsubscribe();
     }
 
     protected start() {

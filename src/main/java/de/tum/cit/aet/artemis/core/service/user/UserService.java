@@ -14,6 +14,7 @@ import static de.tum.cit.aet.artemis.core.security.Role.STUDENT;
 import static org.apache.commons.lang3.StringUtils.lowerCase;
 
 import java.net.URI;
+import java.time.Duration;
 import java.time.Instant;
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
@@ -63,6 +64,7 @@ import de.tum.cit.aet.artemis.core.service.connectors.ldap.LdapAuthenticationPro
 import de.tum.cit.aet.artemis.core.service.ldap.LdapUserDto;
 import de.tum.cit.aet.artemis.core.service.ldap.LdapUserService;
 import de.tum.cit.aet.artemis.core.service.messaging.InstanceMessageSendService;
+import de.tum.cit.aet.artemis.iris.dto.IrisProactiveEventDisableDuration;
 import de.tum.cit.aet.artemis.programming.domain.ParticipationVCSAccessToken;
 import de.tum.cit.aet.artemis.programming.service.ParticipationVcsAccessTokenService;
 import de.tum.cit.aet.artemis.programming.service.ci.CIUserManagementService;
@@ -814,6 +816,29 @@ public class UserService {
 
     public void updateUserLanguageKey(Long userId, String languageKey) {
         userRepository.updateUserLanguageKey(userId, languageKey);
+    }
+
+    /**
+     * Update the user's iris proactive events disabled status
+     *
+     * @param userId   the id of the user
+     * @param duration type of duration for which the events are disabled
+     * @param endTime  the end time of the custom duration
+     */
+    public void updateIrisProactiveEventsDisabled(Long userId, IrisProactiveEventDisableDuration duration, Instant endTime) {
+        var currentTimestamp = Instant.now();
+        switch (duration) {
+            case THIRTY_MINUTES -> userRepository.updateIrisProactiveEventsDisabled(userId, currentTimestamp.plus(Duration.ofMinutes(30)));
+            case ONE_HOUR -> userRepository.updateIrisProactiveEventsDisabled(userId, currentTimestamp.plus(Duration.ofHours(1)));
+            case ONE_DAY -> userRepository.updateIrisProactiveEventsDisabled(userId, currentTimestamp.plus(Duration.ofDays(1)));
+            case FOREVER -> {
+                // Indefinite delay - using year 9999 as a practical "infinity"
+                var forever = Instant.parse("9999-12-31T23:59:59.999999999Z");
+                userRepository.updateIrisProactiveEventsDisabled(userId, forever);
+            }
+            case CUSTOM -> userRepository.updateIrisProactiveEventsDisabled(userId, endTime);
+            default -> throw new IllegalArgumentException("Invalid duration: " + duration);
+        }
     }
 
     /**

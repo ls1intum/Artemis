@@ -74,8 +74,6 @@ public class IrisExerciseChatSessionService extends AbstractIrisChatSessionServi
 
     private final IrisExerciseChatSessionRepository irisExerciseChatSessionRepository;
 
-    private final SubmissionRepository submissionRepository;
-
     public IrisExerciseChatSessionService(IrisMessageService irisMessageService, LLMTokenUsageService llmTokenUsageService, IrisSettingsService irisSettingsService,
             IrisChatWebsocketService irisChatWebsocketService, AuthorizationCheckService authCheckService, IrisSessionRepository irisSessionRepository,
             ProgrammingExerciseStudentParticipationRepository programmingExerciseStudentParticipationRepository, ProgrammingSubmissionRepository programmingSubmissionRepository,
@@ -92,7 +90,6 @@ public class IrisExerciseChatSessionService extends AbstractIrisChatSessionServi
         this.pyrisPipelineService = pyrisPipelineService;
         this.programmingExerciseRepository = programmingExerciseRepository;
         this.irisExerciseChatSessionRepository = irisExerciseChatSessionRepository;
-        this.submissionRepository = submissionRepository;
     }
 
     /**
@@ -213,20 +210,22 @@ public class IrisExerciseChatSessionService extends AbstractIrisChatSessionServi
 
         var exercise = validateExercise(participation.getExercise());
 
-        var recentSubmissions = submissionRepository.findAllWithResultsByParticipationIdOrderBySubmissionDateAsc(studentParticipation.getId());
+        var recentSubmissions = programmingSubmissionRepository
+                .findSubmissionsWithResultsByParticipationIdAndBuildFailedIsFalseAndTypeIsNotIllegalOrderBySubmissionDateAsc(studentParticipation.getId());
 
         double successThreshold = 100.0; // TODO: Retrieve configuration from Iris settings
 
         // Check if the user has already successfully submitted before
-        var successfulSubmission = recentSubmissions.stream()
-                .anyMatch(submission -> submission.getLatestResult() != null && submission.getLatestResult().getScore() == successThreshold);
-        if (!successfulSubmission && recentSubmissions.size() >= 3) {
+        var successfulSubmission = recentSubmissions.stream().anyMatch(submission -> Objects.requireNonNull(submission.getLatestResult()).getScore() == successThreshold);
+
+        // Check after every third non-build-failed submission
+        if (!successfulSubmission && recentSubmissions.size() >= 3 && recentSubmissions.size() % 3 == 0) {
             var listOfScores = recentSubmissions.stream().map(Submission::getLatestResult).filter(Objects::nonNull).map(Result::getScore).toList();
 
             // Check if the student needs intervention based on their recent score trajectory
             var needsIntervention = needsIntervention(listOfScores);
             if (needsIntervention) {
-                log.info("Scores in the last 3 submissions did not improve for user {}", studentParticipation.getParticipant().getName());
+                log.debug("Scores in the last 3 submissions did not improve for user {}", studentParticipation.getParticipant().getName());
                 var participant = ((ProgrammingExerciseStudentParticipation) participation).getParticipant();
                 if (participant instanceof User user) {
                     var session = getCurrentSessionOrCreateIfNotExistsInternal(exercise, user, false);
@@ -238,9 +237,9 @@ public class IrisExerciseChatSessionService extends AbstractIrisChatSessionServi
             }
         }
         else {
-            log.info("Submission was not successful for user {}", studentParticipation.getParticipant().getName());
+            log.debug("Submission was not successful for user {}", studentParticipation.getParticipant().getName());
             if (successfulSubmission) {
-                log.info("User {} has already successfully submitted before, so we do not inform Iris about the submission failure",
+                log.debug("User {} has already successfully submitted before, so we do not inform Iris about the submission failure",
                         studentParticipation.getParticipant().getName());
             }
         }

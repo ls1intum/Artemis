@@ -69,8 +69,9 @@ public class IrisResource {
         var user = userRepository.getUser();
         var health = pyrisHealthIndicator.health(true);
         var rateLimitInfo = irisRateLimitService.getRateLimitInformation(user);
+        var irisProactiveEventsDisabled = user.getIrisProactiveEventsDisabledTimestamp();
 
-        return ResponseEntity.ok(new IrisStatusDTO(health.getStatus() == Status.UP, rateLimitInfo));
+        return ResponseEntity.ok(new IrisStatusDTO(health.getStatus() == Status.UP, rateLimitInfo, irisProactiveEventsDisabled));
     }
 
     /**

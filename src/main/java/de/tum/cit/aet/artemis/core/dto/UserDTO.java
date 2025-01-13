@@ -78,6 +78,8 @@ public class UserDTO extends AuditingEntityDTO {
 
     private ZonedDateTime irisAccepted;
 
+    private Instant irisProactiveEventsDisabled;
+
     public UserDTO() {
         // Empty constructor needed for Jackson.
     }
@@ -85,12 +87,14 @@ public class UserDTO extends AuditingEntityDTO {
     public UserDTO(User user) {
         this(user.getId(), user.getLogin(), user.getName(), user.getFirstName(), user.getLastName(), user.getEmail(), user.getVisibleRegistrationNumber(), user.getActivated(),
                 user.getImageUrl(), user.getLangKey(), user.isInternal(), user.getCreatedBy(), user.getCreatedDate(), user.getLastModifiedBy(), user.getLastModifiedDate(),
-                user.getLastNotificationRead(), user.getAuthorities(), user.getGroups(), user.getGuidedTourSettings(), user.getOrganizations(), user.getIrisAcceptedTimestamp());
+                user.getLastNotificationRead(), user.getAuthorities(), user.getGroups(), user.getGuidedTourSettings(), user.getOrganizations(), user.getIrisAcceptedTimestamp(),
+                user.getIrisProactiveEventsDisabledTimestamp());
     }
 
     public UserDTO(Long id, String login, String name, String firstName, String lastName, String email, String visibleRegistrationNumber, boolean activated, String imageUrl,
             String langKey, boolean isInternal, String createdBy, Instant createdDate, String lastModifiedBy, Instant lastModifiedDate, ZonedDateTime lastNotificationRead,
-            Set<Authority> authorities, Set<String> groups, Set<GuidedTourSetting> guidedTourSettings, Set<Organization> organizations, ZonedDateTime irisAccepted) {
+            Set<Authority> authorities, Set<String> groups, Set<GuidedTourSetting> guidedTourSettings, Set<Organization> organizations, ZonedDateTime irisAccepted,
+            Instant irisProactiveEventsDisabled) {
 
         this.id = id;
         this.login = login;
@@ -115,6 +119,7 @@ public class UserDTO extends AuditingEntityDTO {
         this.guidedTourSettings = guidedTourSettings;
         this.organizations = organizations;
         this.irisAccepted = irisAccepted;
+        this.irisProactiveEventsDisabled = irisProactiveEventsDisabled;
     }
 
     public Long getId() {
@@ -280,5 +285,13 @@ public class UserDTO extends AuditingEntityDTO {
 
     public void setIrisAccepted(ZonedDateTime irisAccepted) {
         this.irisAccepted = irisAccepted;
+    }
+
+    public Instant getIrisProactiveEventsDisabled() {
+        return irisProactiveEventsDisabled;
+    }
+
+    public void setIrisProactiveEventsDisabled(Instant irisProactiveEventsDisabled) {
+        this.irisProactiveEventsDisabled = irisProactiveEventsDisabled;
     }
 }
