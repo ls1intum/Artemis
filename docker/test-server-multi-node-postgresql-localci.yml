@@ -63,10 +63,6 @@ services:
         extends:
             file: ./broker-registry.yml
             service: jhipster-registry
-        environment:
-          SERVER_ERROR_INCLUDE_STACKTRACE: "always"
-          _JAVA_OPTIONS=-Dlogging.level.org.springframework: TRACE
-          _JAVA_OPTIONS=-Dlogging.level.com.netflix: TRACE
         networks:
             - artemis
 
