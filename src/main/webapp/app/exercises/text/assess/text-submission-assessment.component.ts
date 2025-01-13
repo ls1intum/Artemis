@@ -352,24 +352,6 @@ export class TextSubmissionAssessmentComponent extends TextAssessmentBaseCompone
      * Submit the assessment
      */
     submit(): void {
-        this.checkAssessmentValidity();
-        this.assessmentsService.submit(this.participation!.id!, this.result!.id!, this.assessments, this.textBlocksWithFeedback, this.result!.assessmentNote?.note).subscribe({
-            next: (response) => this.handleSaveOrSubmitSuccessWithAlert(response, 'artemisApp.textAssessment.submitSuccessful'),
-            error: (error: HttpErrorResponse) => this.handleError(error),
-        });
-    }
-
-    submitAndSendToAthena(): void {
-        this.checkAssessmentValidity();
-        this.assessmentsService
-            .submitWithAthena(this.participation!.id!, this.result!.id!, this.assessments, this.textBlocksWithFeedback, this.result!.assessmentNote?.note)
-            .subscribe({
-                next: (response) => this.handleSaveOrSubmitSuccessWithAlert(response, 'artemisApp.textAssessment.submitSuccessful'),
-                error: (error: HttpErrorResponse) => this.handleError(error),
-            });
-    }
-
-    private checkAssessmentValidity() {
         if (!this.result?.id) {
             return;
         }
@@ -380,6 +362,32 @@ export class TextSubmissionAssessmentComponent extends TextAssessmentBaseCompone
         }
 
         this.submitBusy = true;
+        this.assessmentsService.submit(this.participation!.id!, this.result!.id!, this.assessments, this.textBlocksWithFeedback, this.result!.assessmentNote?.note).subscribe({
+            next: (response) => this.handleSaveOrSubmitSuccessWithAlert(response, 'artemisApp.textAssessment.submitSuccessful'),
+            error: (error: HttpErrorResponse) => this.handleError(error),
+        });
+    }
+
+    /**
+     * Submit the assessment and Send to Athena for llm learning
+     */
+    submitAndSendToAthena(): void {
+        if (!this.result?.id) {
+            return;
+        }
+
+        if (!this.assessmentsAreValid) {
+            this.alertService.error('artemisApp.textAssessment.error.invalidAssessments');
+            return;
+        }
+
+        this.submitBusy = true;
+        this.assessmentsService
+            .submitWithAthena(this.participation!.id!, this.result!.id!, this.assessments, this.textBlocksWithFeedback, this.result!.assessmentNote?.note)
+            .subscribe({
+                next: (response) => this.handleSaveOrSubmitSuccessWithAlert(response, 'artemisApp.textAssessment.submitSuccessful'),
+                error: (error: HttpErrorResponse) => this.handleError(error),
+            });
     }
 
     protected handleSaveOrSubmitSuccessWithAlert(response: HttpResponse<Result>, translationKey: string): void {
