@@ -111,7 +111,7 @@ describe('TextAssessment Service', () => {
             .pipe(take(1))
             .subscribe((resp) => (actualResponse = resp.body));
         const req = httpMock.expectOne({
-            url: `api/participations/${1}/results/${6}/submit-text-assessment`,
+            url: `api/participations/${1}/results/${6}/submit-text-assessment?sendFeedback=false`,
             method: 'POST',
         });
         req.flush(result);
