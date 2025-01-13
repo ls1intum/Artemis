@@ -2,6 +2,7 @@ package de.tum.cit.aet.artemis.programming.service.localci;
 
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_LOCALCI;
 import static de.tum.cit.aet.artemis.programming.domain.ProgrammingLanguage.ASSEMBLER;
+import static de.tum.cit.aet.artemis.programming.domain.ProgrammingLanguage.BASH;
 import static de.tum.cit.aet.artemis.programming.domain.ProgrammingLanguage.C;
 import static de.tum.cit.aet.artemis.programming.domain.ProgrammingLanguage.C_PLUS_PLUS;
 import static de.tum.cit.aet.artemis.programming.domain.ProgrammingLanguage.C_SHARP;
@@ -56,6 +57,7 @@ public class LocalCIProgrammingLanguageFeatureService extends ProgrammingLanguag
         EnumMap<ProgrammingLanguage, ProgrammingLanguageFeature> programmingLanguageFeatures = new EnumMap<>(ProgrammingLanguage.class);
         programmingLanguageFeatures.put(EMPTY, new ProgrammingLanguageFeature(EMPTY, false, false, false, false, false, List.of(), true));
         programmingLanguageFeatures.put(ASSEMBLER, new ProgrammingLanguageFeature(ASSEMBLER, false, false, false, false, false, List.of(), true));
+        programmingLanguageFeatures.put(BASH, new ProgrammingLanguageFeature(BASH, false, false, false, false, false, List.of(), true));
         programmingLanguageFeatures.put(C, new ProgrammingLanguageFeature(C, false, true, true, false, false, List.of(FACT, GCC), true));
         programmingLanguageFeatures.put(C_PLUS_PLUS, new ProgrammingLanguageFeature(C_PLUS_PLUS, false, false, true, false, false, List.of(), true));
         programmingLanguageFeatures.put(C_SHARP, new ProgrammingLanguageFeature(C_SHARP, false, false, true, false, false, List.of(), true));
