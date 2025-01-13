@@ -6,7 +6,7 @@ import markdownItClass from 'markdown-it-class';
 import markdownItKatex from '@vscode/markdown-it-katex';
 import markdownItHighlightjs from 'markdown-it-highlightjs';
 import TurndownService from 'turndown';
-
+import MarkdownItGitHubAlerts from 'markdown-it-github-alerts';
 /**
  * Add these classes to the converted html.
  */
@@ -72,6 +72,7 @@ export function htmlForMarkdown(
         .use(markdownItKatex, {
             enableMathInlineInHtml: true,
         })
+        .use(MarkdownItGitHubAlerts)
         .use(markdownItClass, classMap);
     let markdownRender = md.render(markdownText);
     if (markdownRender.endsWith('\n')) {
