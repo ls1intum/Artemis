@@ -130,7 +130,7 @@ public class PublicPyrisStatusUpdateResource {
     }
 
     /**
-     * POST public/pyris/pipelines/competency-extraction/runs/:runId/status : Send the competencies extracted from a course description in a status update
+     * POST public/pyris/pipelines/rephrasing/runs/:runId/status : Send the rephrased text in a status update
      * <p>
      * Uses custom token based authentication.
      *

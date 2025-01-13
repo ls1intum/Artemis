@@ -122,7 +122,6 @@ public class PyrisStatusUpdateService {
      */
     public void handleStatusUpdate(RephrasingJob job, PyrisRephrasingStatusUpdateDTO statusUpdate) {
         var updatedJob = rephrasingService.handleStatusUpdate(job, statusUpdate);
-
         removeJobIfTerminatedElseUpdate(statusUpdate.stages(), updatedJob);
     }
 

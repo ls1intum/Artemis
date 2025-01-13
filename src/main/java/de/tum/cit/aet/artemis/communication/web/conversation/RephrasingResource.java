@@ -49,7 +49,7 @@ public class RephrasingResource {
 
     }
 
-    @GetMapping("courses/{courseId}/rephraseText")
+    @GetMapping("courses/{courseId}/rephrase-text")
     public ResponseEntity<Map<String, String>> rephraseText(@RequestParam String toBeRephrased, @RequestParam RephrasingVariant variant, @PathVariable Long courseId) {
         var rephrasingService = irisRephrasingService.orElseThrow();
         var user = userRepository.getUserWithGroupsAndAuthorities();
