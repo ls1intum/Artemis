@@ -39,6 +39,7 @@ import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
 import de.tum.cit.aet.artemis.lti.domain.LtiPlatformConfiguration;
 import de.tum.cit.aet.artemis.lti.domain.OnlineCourseConfiguration;
 import de.tum.cit.aet.artemis.lti.repository.LtiPlatformConfigurationRepository;
+import de.tum.cit.aet.artemis.lti.service.DeepLinkingType;
 import de.tum.cit.aet.artemis.lti.service.LtiDeepLinkingService;
 import de.tum.cit.aet.artemis.lti.service.OnlineCourseConfigurationService;
 import tech.jhipster.web.util.PaginationUtil;
@@ -150,13 +151,22 @@ public class LtiResource {
 
         OidcIdToken idToken = new OidcIdToken(ltiIdToken, null, null, SignedJWT.parse(ltiIdToken).getJWTClaimsSet().getClaims());
 
-        String targetLink = "";
+        String targetLink;
 
         if (exerciseIds != null) {
-            targetLink = ltiDeepLinkingService.performExerciseDeepLinking(idToken, clientRegistrationId, courseId, exerciseIds);
+            targetLink = ltiDeepLinkingService.performExerciseDeepLinking(idToken, clientRegistrationId, courseId, exerciseIds, DeepLinkingType.EXERCISE);
         }
         else if (competency) {
-            targetLink = ltiDeepLinkingService.performCompetencyDeepLinking(idToken, clientRegistrationId, courseId);
+            targetLink = ltiDeepLinkingService.performExerciseDeepLinking(idToken, clientRegistrationId, courseId, null, DeepLinkingType.COMPETENCY);
+        }
+        else if (learningPath) {
+            targetLink = ltiDeepLinkingService.performExerciseDeepLinking(idToken, clientRegistrationId, courseId, null, DeepLinkingType.LEARNING_PATH);
+        }
+        else if (iris) {
+            targetLink = ltiDeepLinkingService.performExerciseDeepLinking(idToken, clientRegistrationId, courseId, null, DeepLinkingType.IRIS);
+        }
+        else {
+            throw new BadRequestAlertException("No valid deep linking type provided", "LTI", "invalidDeepLinkingType");
         }
 
         ObjectNode json = new ObjectMapper().createObjectNode();

@@ -64,6 +64,10 @@ public class Lti13Service {
 
     private static final String COMPETENCY_PATH_PATTERN = "/courses/{courseId}/competencies";
 
+    private static final String IRIS_PATH_PATTERN = "/about-iris";
+
+    private static final String LEARNING_PATH_PATH_PATTERN = "/courses/{courseId}/learning-path";
+
     private static final String COURSE_PATH_PATTERN = "/courses/{courseId}";
 
     private static final Logger log = LoggerFactory.getLogger(Lti13Service.class);
@@ -113,6 +117,7 @@ public class Lti13Service {
      * @param ltiIdToken           the id token for the user launching the request
      * @param clientRegistrationId the clientRegistrationId of the source LMS
      */
+    // TODO implement Iris support
     public void performLaunch(OidcIdToken ltiIdToken, String clientRegistrationId) {
         String targetLinkUrl = ltiIdToken.getClaim(Claims.TARGET_LINK_URI);
         Optional<Exercise> targetExercise = getExerciseFromTargetLink(targetLinkUrl);
@@ -148,7 +153,7 @@ public class Lti13Service {
             Exercise exercise = targetExercise.get();
             handleLaunchRequest(launchRequest, user, exercise, ltiIdToken, onlineCourseConfiguration);
         }
-        else if (getCompetencyFromTargetLink(targetLinkUrl)) {
+        else if (getCompetencyFromTargetLink(targetLinkUrl) || getLearningPathFromTargetLink(targetLinkUrl)) {
             handleLaunchRequest(launchRequest, user, null, ltiIdToken, onlineCourseConfiguration);
         }
         else {
@@ -344,6 +349,9 @@ public class Lti13Service {
         else if (matcher.match(EXERCISE_PATH_PATTERN, targetLinkPath)) {
             pathVariables = matcher.extractUriTemplateVariables(EXERCISE_PATH_PATTERN, targetLinkPath);
         }
+        else if (matcher.match(LEARNING_PATH_PATH_PATTERN, targetLinkPath)) {
+            pathVariables = matcher.extractUriTemplateVariables(LEARNING_PATH_PATH_PATTERN, targetLinkPath);
+        }
 
         if (pathVariables == null || !pathVariables.containsKey("courseId")) {
             log.info("Could not extract courseId from target link: {}", targetLinkUrl);
@@ -372,6 +380,27 @@ public class Lti13Service {
         }
 
         log.info("Competency link detected: {}", targetLinkUrl);
+        return true;
+    }
+
+    private boolean getLearningPathFromTargetLink(String targetLinkUrl) {
+        AntPathMatcher matcher = new AntPathMatcher();
+
+        String targetLinkPath;
+        try {
+            targetLinkPath = new URI(targetLinkUrl).getPath();
+        }
+        catch (URISyntaxException ex) {
+            log.info("Malformed target link URL: {}", targetLinkUrl);
+            return false;
+        }
+
+        if (!matcher.match(LEARNING_PATH_PATH_PATTERN, targetLinkPath)) {
+            log.info("Could not extract learning path from target link: {}", targetLinkUrl);
+            return false;
+        }
+
+        log.info("Learning path link detected: {}", targetLinkUrl);
         return true;
     }
 

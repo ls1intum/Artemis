@@ -77,7 +77,8 @@ class LtiDeepLinkingServiceTest {
         when(tokenRetriever.createDeepLinkingJWT(anyString(), anyMap())).thenReturn("test_jwt");
 
         DeepLinkCourseExercises result = createTestExercisesForDeepLinking();
-        String deepLinkResponse = ltiDeepLinkingService.performExerciseDeepLinking(oidcIdToken, "test_registration_id", result.courseId(), result.exerciseSet());
+        String deepLinkResponse = ltiDeepLinkingService.performExerciseDeepLinking(oidcIdToken, "test_registration_id", result.courseId(), result.exerciseSet(),
+                DeepLinkingType.EXERCISE);
 
         assertThat(deepLinkResponse).isNotNull();
         assertThat(deepLinkResponse).contains("test_jwt");
@@ -90,7 +91,8 @@ class LtiDeepLinkingServiceTest {
 
         DeepLinkCourseExercises result = createTestExercisesForDeepLinking();
         assertThatExceptionOfType(BadRequestAlertException.class)
-                .isThrownBy(() -> ltiDeepLinkingService.performExerciseDeepLinking(oidcIdToken, "test_registration_id", result.courseId, result.exerciseSet))
+                .isThrownBy(
+                        () -> ltiDeepLinkingService.performExerciseDeepLinking(oidcIdToken, "test_registration_id", result.courseId, result.exerciseSet, DeepLinkingType.EXERCISE))
                 .withMessage("Deep linking response cannot be created")
                 .matches(exception -> "LTI".equals(exception.getEntityName()) && "deepLinkingResponseFailed".equals(exception.getErrorKey()));
     }
@@ -129,7 +131,8 @@ class LtiDeepLinkingServiceTest {
 
         DeepLinkCourseExercises result = createTestExercisesForDeepLinking();
         assertThatExceptionOfType(BadRequestAlertException.class)
-                .isThrownBy(() -> ltiDeepLinkingService.performExerciseDeepLinking(oidcIdToken, "test_registration_id", result.courseId, result.exerciseSet))
+                .isThrownBy(
+                        () -> ltiDeepLinkingService.performExerciseDeepLinking(oidcIdToken, "test_registration_id", result.courseId, result.exerciseSet, DeepLinkingType.EXERCISE))
                 .withMessage("Cannot find platform return URL")
                 .matches(exception -> "LTI".equals(exception.getEntityName()) && "deepLinkReturnURLEmpty".equals(exception.getErrorKey()));
     }
@@ -142,7 +145,8 @@ class LtiDeepLinkingServiceTest {
 
         DeepLinkCourseExercises result = createTestExercisesForDeepLinking();
         assertThatExceptionOfType(IllegalArgumentException.class)
-                .isThrownBy(() -> ltiDeepLinkingService.performExerciseDeepLinking(oidcIdToken, "test_registration_id", result.courseId, result.exerciseSet))
+                .isThrownBy(
+                        () -> ltiDeepLinkingService.performExerciseDeepLinking(oidcIdToken, "test_registration_id", result.courseId, result.exerciseSet, DeepLinkingType.EXERCISE))
                 .withMessage("Missing claim: " + Claims.LTI_DEPLOYMENT_ID);
     }
 

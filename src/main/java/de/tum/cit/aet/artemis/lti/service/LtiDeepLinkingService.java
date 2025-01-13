@@ -4,6 +4,7 @@ import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_LTI;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
@@ -59,31 +60,22 @@ public class LtiDeepLinkingService {
      * @return Constructed deep linking response URL.
      * @throws BadRequestAlertException if there are issues with the OIDC ID token claims.
      */
-    public String performExerciseDeepLinking(OidcIdToken ltiIdToken, String clientRegistrationId, Long courseId, Set<Long> exerciseIds) {
+    public String performExerciseDeepLinking(OidcIdToken ltiIdToken, String clientRegistrationId, Long courseId, Set<Long> exerciseIds, DeepLinkingType type) {
         // Initialize DeepLinkingResponse
         Lti13DeepLinkingResponse lti13DeepLinkingResponse = Lti13DeepLinkingResponse.from(ltiIdToken, clientRegistrationId);
-        // Fill selected exercise link into content items
-        ArrayList<Map<String, Object>> contentItems = this.populateContentItems(String.valueOf(courseId), exerciseIds, false);
-        lti13DeepLinkingResponse = lti13DeepLinkingResponse.setContentItems(contentItems);
-
-        // Prepare return url with jwt and id parameters
-        return this.buildLtiDeepLinkResponse(clientRegistrationId, lti13DeepLinkingResponse);
-    }
-
-    /**
-     * Constructs an LTI Deep Linking response URL with JWT for the competencies of the course.
-     *
-     * @param ltiIdToken           OIDC ID token with the user's authentication claims.
-     * @param clientRegistrationId Client registration ID for the LTI tool.
-     * @param courseId             ID of the course for deep linking.
-     * @return Constructed deep linking response URL.
-     * @throws BadRequestAlertException if there are issues with the OIDC ID token claims.
-     */
-    public String performCompetencyDeepLinking(OidcIdToken ltiIdToken, String clientRegistrationId, Long courseId) {
-        // Initialize DeepLinkingResponse
-        Lti13DeepLinkingResponse lti13DeepLinkingResponse = Lti13DeepLinkingResponse.from(ltiIdToken, clientRegistrationId);
-        // Fill selected exercise link into content items
-        ArrayList<Map<String, Object>> contentItems = this.populateContentItems(String.valueOf(courseId), null, true);
+        // Dynamically populate content items based on the type
+        ArrayList<Map<String, Object>> contentItems = switch (type) {
+            case EXERCISE -> {
+                if (exerciseIds == null || exerciseIds.isEmpty()) {
+                    throw new BadRequestAlertException("No exercise IDs provided for deep linking", "LTI", "noExerciseIds");
+                }
+                yield populateExerciseContentItems(String.valueOf(courseId), exerciseIds);
+            }
+            case COMPETENCY -> populateCompetencyContentItems(String.valueOf(courseId));
+            case IRIS -> populateIrisContentItems(String.valueOf(courseId));
+            case LEARNING_PATH -> populateLearningPathsContentItems(String.valueOf(courseId));
+            default -> throw new BadRequestAlertException("Invalid deep linking type provided", "LTI", "invalidType");
+        };
         lti13DeepLinkingResponse = lti13DeepLinkingResponse.setContentItems(contentItems);
 
         // Prepare return url with jwt and id parameters
@@ -118,19 +110,40 @@ public class LtiDeepLinkingService {
      * @param courseId    The course ID.
      * @param exerciseIds The set of exercise IDs.
      */
-    private ArrayList<Map<String, Object>> populateContentItems(String courseId, Set<Long> exerciseIds, boolean competency) {
+    private ArrayList<Map<String, Object>> populateExerciseContentItems(String courseId, Set<Long> exerciseIds) {
         ArrayList<Map<String, Object>> contentItems = new ArrayList<>();
-        if (!(exerciseIds == null)) {
-            for (Long exerciseId : exerciseIds) {
-                Map<String, Object> item = setExerciseContentItem(courseId, String.valueOf(exerciseId));
-                contentItems.add(item);
-            }
+        for (Long exerciseId : exerciseIds) {
+            Map<String, Object> item = setExerciseContentItem(courseId, String.valueOf(exerciseId));
+            contentItems.add(item);
         }
-        else if (competency) {
-            contentItems.add(setCompetencyContentItem(courseId));
-        }
-
         return contentItems;
+    }
+
+    /**
+     * Populate content items for deep linking response with competencies.
+     *
+     * @param courseId The course ID.
+     */
+    private ArrayList<Map<String, Object>> populateCompetencyContentItems(String courseId) {
+        return new ArrayList<>(List.of(setCompetencyContentItem(courseId)));
+    }
+
+    /**
+     * Populate content items for deep linking response with Iris.
+     *
+     * @param courseId The course ID.
+     */
+    private ArrayList<Map<String, Object>> populateIrisContentItems(String courseId) {
+        return new ArrayList<>(List.of(setIrisContentItem(courseId)));
+    }
+
+    /**
+     * Populate content items for deep linking response with learning paths.
+     *
+     * @param courseId The course ID.
+     */
+    private ArrayList<Map<String, Object>> populateLearningPathsContentItems(String courseId) {
+        return new ArrayList<>(List.of(setLearningPathContentItem(courseId)));
     }
 
     private Map<String, Object> setExerciseContentItem(String courseId, String exerciseId) {
@@ -142,6 +155,18 @@ public class LtiDeepLinkingService {
     private Map<String, Object> setCompetencyContentItem(String courseId) {
         // TODO competency optional
         String launchUrl = String.format(artemisServerUrl + "/courses/%s/competencies", courseId);
+        return createCompetencyContentItem(launchUrl);
+    }
+
+    private Map<String, Object> setLearningPathContentItem(String courseId) {
+        // TODO Learning path optional
+        String launchUrl = String.format(artemisServerUrl + "/courses/%s/learning-path", courseId);
+        return createCompetencyContentItem(launchUrl);
+    }
+
+    private Map<String, Object> setIrisContentItem(String courseId) {
+        // TODO Iris optional + URL
+        String launchUrl = String.format(artemisServerUrl + "/about-iris", courseId);
         return createCompetencyContentItem(launchUrl);
     }
 
