@@ -1,0 +1,24 @@
+# ----------------------------------------------------------------------------------------------------------------------
+# API-Gateway base service
+# ----------------------------------------------------------------------------------------------------------------------
+
+services:
+    artemis-api-gateway:
+        container_name: artemis-api-gateway
+        image: ghcr.io/ls1intum/api-gateway:${API_GATEWAY_DOCKER_TAG:-latest}
+        env_file:
+            - ./api-gateway/prod.env
+        healthcheck:
+            test: wget -nv -t1 --spider http://localhost:8080/actuator/gateway/routes || exit 1
+            start_period: 600s
+            interval: 1s
+        # expose the port to make it reachable docker internally even if the external port mapping changes
+        expose:
+            - "8080"
+        networks:
+            - artemis
+
+networks:
+    artemis:
+        driver: "bridge"
+        name: artemis

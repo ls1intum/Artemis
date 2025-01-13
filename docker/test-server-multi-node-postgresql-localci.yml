@@ -110,15 +110,14 @@ services:
               source: ${NGINX_PROXY_SSL_CERTIFICATE_KEY_PATH:-../src/test/playwright/certs/artemis-nginx+4-key.pem}
               target: "/certs/priv_key.pem"
 
-    api-gateway:
+    artemis-api-gateway:
+      extends:
+        file: ./api-gateway.yml
+        service: artemis-api-gateway
       image: ghcr.io/ls1intum/api-gateway:${API_GATEWAY_DOCKER_TAG:-latest}
-      container_name: api-gateway
-      environment:
-        EUREKA_INSTANCE_APPNAME: "API-Gateway"
       env_file:
+        # ToDo: Replace with prod.env once the values are known
         - ${ARTEMIS_ENV_FILE:-./artemis/config/prod-multinode.env} # the (eureka) config is overridden on the TS. as a workaround, we use the artemis env file
-      networks:
-        - artemis
 
 networks:
     artemis:
