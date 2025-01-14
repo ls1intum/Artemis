@@ -17,7 +17,6 @@ import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.eq;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.timeout;
-import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 
 import java.time.Duration;
@@ -899,8 +898,7 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationJenkinsGitlabT
 
         assertThat(updatedExam).isNotNull();
         assertThat(updatedExam.getWorkingTime()).isEqualTo(newWorkingTime);
-
-        verify(programmingExerciseParticipationService, times(1)).unlockStudentRepositoryAndParticipation(participation);
+        assertThat(participation.isLocked()).isFalse();
     }
 
     private ExamLiveEventBaseDTO captureExamLiveEventForId(Long studentExamOrExamId, boolean examWide) {
