@@ -8,7 +8,7 @@ import { ArtemisModelingEditorModule } from 'app/exercises/modeling/shared/model
 import { ModelingAssessmentModule } from 'app/exercises/modeling/assess/modeling-assessment.module';
 import { ArtemisModelingParticipationRoutingModule } from 'app/exercises/modeling/participate/modeling-participation.route';
 import { ArtemisHeaderExercisePageWithDetailsModule } from 'app/exercises/shared/exercise-headers/exercise-headers.module';
-import { ArtemisTeamSubmissionSyncModule } from 'app/exercises/shared/team-submission-sync/team-submission-sync.module';
+
 import { ArtemisFullscreenModule } from 'app/shared/fullscreen/fullscreen.module';
 import { RatingModule } from 'app/exercises/shared/rating/rating.module';
 import { ArtemisMarkdownModule } from 'app/shared/markdown.module';
@@ -25,14 +25,13 @@ import { RequestFeedbackButtonComponent } from 'app/overview/exercise-details/re
         ArtemisModelingParticipationRoutingModule,
         ArtemisHeaderExercisePageWithDetailsModule,
         ModelingAssessmentModule,
-        ArtemisTeamSubmissionSyncModule,
         ArtemisFullscreenModule,
         RatingModule,
         ArtemisMarkdownModule,
         ArtemisTeamParticipeModule,
         RequestFeedbackButtonComponent,
+        ModelingSubmissionComponent,
     ],
-    declarations: [ModelingSubmissionComponent],
     exports: [ModelingSubmissionComponent],
 })
 export class ArtemisModelingParticipationModule {}

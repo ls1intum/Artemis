@@ -1,4 +1,4 @@
-import { Injectable } from '@angular/core';
+import { Injectable, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { ConsistencyCheckError } from 'app/entities/consistency-check-result.model';
 
@@ -6,9 +6,9 @@ import { ConsistencyCheckError } from 'app/entities/consistency-check-result.mod
     providedIn: 'root',
 })
 export class ConsistencyCheckService {
-    private readonly RESOURCE_URL = 'api/programming-exercises';
+    private http = inject(HttpClient);
 
-    constructor(private http: HttpClient) {}
+    private readonly RESOURCE_URL = 'api/programming-exercises';
 
     /**
      * Request consistency checks for a given programming exercise

@@ -29,16 +29,13 @@ describe('FileUploadExercise Management Component', () => {
     beforeEach(() => {
         TestBed.configureTestingModule({
             imports: [ArtemisTestModule],
-            declarations: [FileUploadExerciseComponent],
             providers: [
                 { provide: ActivatedRoute, useValue: route },
                 { provide: LocalStorageService, useClass: MockSyncStorage },
                 { provide: SessionStorageService, useClass: MockSyncStorage },
                 { provide: TranslateService, useClass: MockTranslateService },
             ],
-        })
-            .overrideTemplate(FileUploadExerciseComponent, '')
-            .compileComponents();
+        }).compileComponents();
 
         fixture = TestBed.createComponent(FileUploadExerciseComponent);
         comp = fixture.componentInstance;

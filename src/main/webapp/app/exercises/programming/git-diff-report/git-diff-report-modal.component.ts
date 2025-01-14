@@ -11,7 +11,6 @@ import { TranslateDirective } from 'app/shared/language/translate.directive';
 @Component({
     selector: 'jhi-git-diff-report-modal',
     templateUrl: './git-diff-report-modal.component.html',
-    standalone: true,
     changeDetection: ChangeDetectionStrategy.OnPush,
     imports: [GitDiffReportComponent, TranslateDirective],
 })
@@ -32,21 +31,18 @@ export class GitDiffReportModalComponent {
     readonly rightCommitFileContentByPath = signal<Map<string, string> | undefined>(undefined);
 
     constructor() {
-        effect(
-            () => {
-                // We call the signal here to ensure the effect always runs when the report changes.
-                this.report();
-                const diffBetweenTemplateAndSolution = this.diffForTemplateAndSolution();
-                untracked(async () => {
-                    if (diffBetweenTemplateAndSolution) {
-                        await this.loadFilesForTemplateAndSolution();
-                    } else {
-                        await this.loadRepositoryFilesForParticipationsFromCacheIfAvailable();
-                    }
-                });
-            },
-            { allowSignalWrites: true },
-        );
+        effect(() => {
+            // We call the signal here to ensure the effect always runs when the report changes.
+            this.report();
+            const diffBetweenTemplateAndSolution = this.diffForTemplateAndSolution();
+            untracked(async () => {
+                if (diffBetweenTemplateAndSolution) {
+                    await this.loadFilesForTemplateAndSolution();
+                } else {
+                    await this.loadRepositoryFilesForParticipationsFromCacheIfAvailable();
+                }
+            });
+        });
     }
 
     private async loadFilesForTemplateAndSolution(): Promise<void> {

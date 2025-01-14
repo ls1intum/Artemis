@@ -16,7 +16,6 @@ import { SearchFilterComponent } from 'app/shared/search-filter/search-filter.co
     selector: 'jhi-course-archive',
     templateUrl: './course-archive.component.html',
     styleUrls: ['./course-archive.component.scss'],
-    standalone: true,
     imports: [ArtemisSharedModule, CourseCardHeaderComponent, SearchFilterComponent],
 })
 export class CourseArchiveComponent implements OnInit, OnDestroy {

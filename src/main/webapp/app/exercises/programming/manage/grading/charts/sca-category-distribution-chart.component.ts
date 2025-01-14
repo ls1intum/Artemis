@@ -1,4 +1,4 @@
-import { Component, EventEmitter, Input, OnChanges, Output } from '@angular/core';
+import { Component, EventEmitter, Input, OnChanges, Output, inject } from '@angular/core';
 import { ProgrammingExercise } from 'app/entities/programming/programming-exercise.model';
 import { StaticCodeAnalysisCategory, StaticCodeAnalysisCategoryState } from 'app/entities/programming/static-code-analysis-category.model';
 import { CategoryIssuesMap } from 'app/entities/programming/programming-exercise-test-case-statistics.model';
@@ -7,6 +7,9 @@ import { getColor } from 'app/exercises/programming/manage/grading/charts/progra
 import { ProgrammingGradingChartsDirective } from 'app/exercises/programming/manage/grading/charts/programming-grading-charts.directive';
 import { NgxChartsMultiSeriesDataEntry } from 'app/shared/chart/ngx-charts-datatypes';
 import { ArtemisNavigationUtilService } from 'app/utils/navigation.utils';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { BarChartModule } from '@swimlane/ngx-charts';
+import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 
 enum ScaChartBarTitle {
     PENALTY = 'Penalty',
@@ -83,8 +86,12 @@ enum ScaChartBarTitle {
             </div>
         </div>
     `,
+    imports: [TranslateDirective, BarChartModule, ArtemisTranslatePipe],
 })
 export class ScaCategoryDistributionChartComponent extends ProgrammingGradingChartsDirective implements OnChanges {
+    private translateService = inject(TranslateService);
+    private navigationUtilsService = inject(ArtemisNavigationUtilService);
+
     @Input() categories: StaticCodeAnalysisCategory[];
     @Input() categoryIssuesMap?: CategoryIssuesMap;
     @Input() exercise: ProgrammingExercise;
@@ -97,17 +104,16 @@ export class ScaCategoryDistributionChartComponent extends ProgrammingGradingCha
     // ngx
     ngxData: NgxChartsMultiSeriesDataEntry[] = [];
 
-    constructor(
-        private translateService: TranslateService,
-        private navigationUtilsService: ArtemisNavigationUtilService,
-    ) {
+    constructor() {
         super();
+        const translateService = this.translateService;
+
         translateService.onLangChange.subscribe(() => {
             this.updateTranslations();
         });
     }
 
-    ngOnChanges(): void {
+    ngOnChanges() {
         this.ngxData = [];
         this.ngxColors.domain = [];
         // update colors for category table

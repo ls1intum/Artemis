@@ -1,23 +1,12 @@
-import { ChangeDetectorRef } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { MockComponent, MockPipe, MockProvider } from 'ng-mocks';
 import { Course } from 'app/entities/course.model';
 import { ExerciseGroup } from 'app/entities/exercise-group.model';
 import { ProgrammingExerciseStudentParticipation } from 'app/entities/participation/programming-exercise-student-participation.model';
 import { ProgrammingExercise } from 'app/entities/programming/programming-exercise.model';
 import { ProgrammingSubmission } from 'app/entities/programming/programming-submission.model';
 import { ProgrammingExamSubmissionComponent } from 'app/exam/participate/exercises/programming/programming-exam-submission.component';
-import { ModelingEditorComponent } from 'app/exercises/modeling/shared/modeling-editor.component';
-import { CodeEditorContainerComponent } from 'app/exercises/programming/shared/code-editor/container/code-editor-container.component';
 import { CommitState } from 'app/exercises/programming/shared/code-editor/model/code-editor.model';
-import { DomainService } from 'app/exercises/programming/shared/code-editor/service/code-editor-domain.service';
-import { IncludedInScoreBadgeComponent } from 'app/exercises/shared/exercise-headers/included-in-score-badge.component';
-import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
-import { ExerciseDetailsStudentActionsComponent } from 'app/overview/exercise-details/exercise-details-student-actions.component';
-import { UpdatingResultComponent } from 'app/exercises/shared/result/updating-result.component';
-import { ProgrammingExerciseInstructionComponent } from 'app/exercises/programming/shared/instructions-render/programming-exercise-instruction.component';
-import { SubmissionResultStatusComponent } from 'app/overview/submission-result-status.component';
-import { ProgrammingExerciseStudentTriggerBuildButtonComponent } from 'app/exercises/programming/shared/actions/programming-exercise-student-trigger-build-button.component';
+import { ArtemisTestModule } from '../../../../test.module';
 
 describe('ProgrammingExamSubmissionComponent', () => {
     let fixture: ComponentFixture<ProgrammingExamSubmissionComponent>;
@@ -25,20 +14,7 @@ describe('ProgrammingExamSubmissionComponent', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [],
-            declarations: [
-                ProgrammingExamSubmissionComponent,
-                MockComponent(CodeEditorContainerComponent),
-                MockComponent(ExerciseDetailsStudentActionsComponent),
-                MockComponent(IncludedInScoreBadgeComponent),
-                MockComponent(ModelingEditorComponent),
-                MockComponent(ProgrammingExerciseInstructionComponent),
-                MockComponent(ProgrammingExerciseStudentTriggerBuildButtonComponent),
-                MockComponent(SubmissionResultStatusComponent),
-                MockComponent(UpdatingResultComponent),
-                MockPipe(ArtemisTranslatePipe),
-            ],
-            providers: [MockProvider(ChangeDetectorRef), MockProvider(DomainService)],
+            imports: [ArtemisTestModule],
         })
             .compileComponents()
             .then(() => {

@@ -10,7 +10,6 @@ import { PdfPreviewEnlargedCanvasComponent } from 'app/lecture/pdf-preview/pdf-p
     selector: 'jhi-pdf-preview-thumbnail-grid-component',
     templateUrl: './pdf-preview-thumbnail-grid.component.html',
     styleUrls: ['./pdf-preview-thumbnail-grid.component.scss'],
-    standalone: true,
     imports: [ArtemisSharedModule, PdfPreviewEnlargedCanvasComponent],
 })
 export class PdfPreviewThumbnailGridComponent {
@@ -37,12 +36,9 @@ export class PdfPreviewThumbnailGridComponent {
     private readonly alertService = inject(AlertService);
 
     constructor() {
-        effect(
-            () => {
-                this.loadOrAppendPdf(this.currentPdfUrl()!, this.appendFile());
-            },
-            { allowSignalWrites: true },
-        );
+        effect(() => {
+            this.loadOrAppendPdf(this.currentPdfUrl()!, this.appendFile());
+        });
     }
 
     /**
