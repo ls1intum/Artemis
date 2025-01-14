@@ -105,6 +105,7 @@ services:
             - type: bind
               source: ${NGINX_PROXY_SSL_CERTIFICATE_KEY_PATH:-../src/test/playwright/certs/artemis-nginx+4-key.pem}
               target: "/certs/priv_key.pem"
+            - ./logs:/var/log/nginx
 
     artemis-api-gateway:
       extends:
