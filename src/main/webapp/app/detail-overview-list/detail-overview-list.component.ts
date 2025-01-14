@@ -11,6 +11,19 @@ import { UMLModel } from '@ls1intum/apollon';
 import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
 import { Subscription } from 'rxjs';
 import { PROFILE_LOCALVC } from 'app/app.constants';
+import { DetailOverviewNavigationBarComponent } from '../shared/detail-overview-navigation-bar/detail-overview-navigation-bar.component';
+import { HelpIconComponent } from '../shared/components/help-icon.component';
+import { ProgrammingExerciseInstructionComponent } from '../exercises/programming/shared/instructions-render/programming-exercise-instruction.component';
+import { ProgrammingExerciseLifecycleComponent } from '../exercises/programming/shared/lifecycle/programming-exercise-lifecycle.component';
+import { DecimalPipe, NgStyle, NgTemplateOutlet } from '@angular/common';
+import { StructuredGradingInstructionsAssessmentLayoutComponent } from '../assessment/structured-grading-instructions-assessment-layout/structured-grading-instructions-assessment-layout.component';
+import { TranslateDirective } from '../shared/language/translate.directive';
+import { IrisEnabledComponent } from '../iris/settings/shared/iris-enabled.component';
+import { ModelingEditorComponent } from '../exercises/modeling/shared/modeling-editor.component';
+import { ProgrammingExerciseRepositoryAndBuildPlanDetailsComponent } from '../exercises/programming/shared/build-details/programming-exercise-repository-and-build-plan-details.component';
+import { ExerciseDetailDirective } from './exercise-detail.directive';
+import { NoDataComponent } from '../shared/no-data-component';
+import { ArtemisTranslatePipe } from '../shared/pipes/artemis-translate.pipe';
 
 export interface DetailOverviewSection {
     headline: string;
@@ -43,6 +56,23 @@ export enum DetailType {
     templateUrl: './detail-overview-list.component.html',
     styleUrls: ['./detail-overview-list.component.scss'],
     encapsulation: ViewEncapsulation.None,
+    imports: [
+        DetailOverviewNavigationBarComponent,
+        HelpIconComponent,
+        ProgrammingExerciseInstructionComponent,
+        ProgrammingExerciseLifecycleComponent,
+        NgTemplateOutlet,
+        StructuredGradingInstructionsAssessmentLayoutComponent,
+        TranslateDirective,
+        IrisEnabledComponent,
+        ModelingEditorComponent,
+        ProgrammingExerciseRepositoryAndBuildPlanDetailsComponent,
+        NgStyle,
+        ExerciseDetailDirective,
+        NoDataComponent,
+        DecimalPipe,
+        ArtemisTranslatePipe,
+    ],
 })
 export class DetailOverviewListComponent implements OnInit, OnDestroy {
     protected readonly isEmpty = isEmpty;

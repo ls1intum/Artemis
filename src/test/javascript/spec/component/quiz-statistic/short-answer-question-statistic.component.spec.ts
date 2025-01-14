@@ -60,16 +60,19 @@ describe('QuizExercise Short Answer Question Statistic Component', () => {
     beforeEach(() => {
         TestBed.configureTestingModule({
             imports: [ArtemisTestModule],
-            declarations: [ShortAnswerQuestionStatisticComponent],
-            providers: [
-                { provide: ActivatedRoute, useValue: route },
-                { provide: LocalStorageService, useClass: MockSyncStorage },
-                { provide: SessionStorageService, useClass: MockSyncStorage },
-                { provide: TranslateService, useClass: MockTranslateService },
-                { provide: AccountService, useClass: MockAccountService },
-                MockProvider(ChangeDetectorRef),
-            ],
         })
+            .overrideComponent(ShortAnswerQuestionStatisticComponent, {
+                set: {
+                    providers: [
+                        { provide: ActivatedRoute, useValue: route },
+                        { provide: LocalStorageService, useClass: MockSyncStorage },
+                        { provide: SessionStorageService, useClass: MockSyncStorage },
+                        { provide: TranslateService, useClass: MockTranslateService },
+                        { provide: AccountService, useClass: MockAccountService },
+                        MockProvider(ChangeDetectorRef),
+                    ],
+                },
+            })
             .overrideTemplate(ShortAnswerQuestionStatisticComponent, '')
             .compileComponents()
             .then(() => {

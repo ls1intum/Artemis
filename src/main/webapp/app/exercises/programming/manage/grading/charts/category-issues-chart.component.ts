@@ -1,6 +1,7 @@
 import { Component, Input, OnChanges } from '@angular/core';
 import { IssuesMap } from 'app/entities/programming/programming-exercise-test-case-statistics.model';
 import { StaticCodeAnalysisCategory, StaticCodeAnalysisCategoryState } from 'app/entities/programming/static-code-analysis-category.model';
+import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 
 export class IssueColumn {
     w: string;
@@ -22,6 +23,7 @@ export class IssueColumn {
             </div>
         </div>
     `,
+    imports: [NgbTooltip],
 })
 export class CategoryIssuesChartComponent implements OnChanges {
     @Input() issuesMap?: IssuesMap;
@@ -32,7 +34,7 @@ export class CategoryIssuesChartComponent implements OnChanges {
 
     columns: IssueColumn[] = [];
 
-    ngOnChanges(): void {
+    ngOnChanges() {
         // set a minimum of 10 columns
         const numColumns = Math.max(this.maxNumberOfIssues, 10) + 1;
 

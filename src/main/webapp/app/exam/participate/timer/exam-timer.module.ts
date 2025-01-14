@@ -4,8 +4,7 @@ import { ExamTimerComponent } from 'app/exam/participate/timer/exam-timer.compon
 import { ArtemisSharedCommonModule } from 'app/shared/shared-common.module';
 
 @NgModule({
-    declarations: [ExamTimerComponent],
-    imports: [CommonModule, ArtemisSharedCommonModule],
+    imports: [CommonModule, ArtemisSharedCommonModule, ExamTimerComponent],
     exports: [ExamTimerComponent],
 })
 export class ArtemisExamTimerModule {}

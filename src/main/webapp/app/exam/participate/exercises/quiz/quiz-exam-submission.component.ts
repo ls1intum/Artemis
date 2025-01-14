@@ -1,4 +1,4 @@
-import { ChangeDetectorRef, Component, Input, OnInit, QueryList, ViewChildren, output } from '@angular/core';
+import { Component, Input, OnInit, QueryList, ViewChildren, inject, output } from '@angular/core';
 import { Exercise, ExerciseType, IncludedInOverallScore } from 'app/entities/exercise.model';
 import { AbstractQuizSubmission } from 'app/entities/quiz/abstract-quiz-exam-submission.model';
 import { AnswerOption } from 'app/entities/quiz/answer-option.model';
@@ -20,14 +20,33 @@ import { ButtonSize, ButtonType } from 'app/shared/components/button.component';
 import { ArtemisQuizService } from 'app/shared/quiz/quiz.service';
 import { cloneDeep } from 'lodash-es';
 import * as smoothscroll from 'smoothscroll-polyfill';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { IncludedInScoreBadgeComponent } from 'app/exercises/shared/exercise-headers/included-in-score-badge.component';
+import { ExerciseSaveButtonComponent } from '../exercise-save-button/exercise-save-button.component';
+import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
+import { NgClass } from '@angular/common';
+import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 
 @Component({
     selector: 'jhi-quiz-submission-exam',
     templateUrl: './quiz-exam-submission.component.html',
     providers: [{ provide: ExamSubmissionComponent, useExisting: QuizExamSubmissionComponent }],
     styleUrls: ['./quiz-exam-submission.component.scss'],
+    imports: [
+        TranslateDirective,
+        IncludedInScoreBadgeComponent,
+        ExerciseSaveButtonComponent,
+        NgbTooltip,
+        NgClass,
+        MultipleChoiceQuestionComponent,
+        DragAndDropQuestionComponent,
+        ShortAnswerQuestionComponent,
+        ArtemisTranslatePipe,
+    ],
 })
 export class QuizExamSubmissionComponent extends ExamSubmissionComponent implements OnInit {
+    private quizService = inject(ArtemisQuizService);
+
     exerciseType = ExerciseType.QUIZ;
 
     // make constants available to html for comparison
@@ -38,14 +57,9 @@ export class QuizExamSubmissionComponent extends ExamSubmissionComponent impleme
     readonly ButtonType = ButtonType;
     readonly IncludedInOverallScore = IncludedInOverallScore;
 
-    @ViewChildren(MultipleChoiceQuestionComponent)
-    mcQuestionComponents: QueryList<MultipleChoiceQuestionComponent>;
-
-    @ViewChildren(DragAndDropQuestionComponent)
-    dndQuestionComponents: QueryList<DragAndDropQuestionComponent>;
-
-    @ViewChildren(ShortAnswerQuestionComponent)
-    shortAnswerQuestionComponents: QueryList<ShortAnswerQuestionComponent>;
+    @ViewChildren(MultipleChoiceQuestionComponent) mcQuestionComponents: QueryList<MultipleChoiceQuestionComponent>;
+    @ViewChildren(DragAndDropQuestionComponent) dndQuestionComponents: QueryList<DragAndDropQuestionComponent>;
+    @ViewChildren(ShortAnswerQuestionComponent) shortAnswerQuestionComponents: QueryList<ShortAnswerQuestionComponent>;
 
     // IMPORTANT: this reference must be contained in this.studentParticipation.submissions[0] otherwise the parent component will not be able to react to changes
     @Input() studentSubmission: AbstractQuizSubmission;
@@ -59,15 +73,8 @@ export class QuizExamSubmissionComponent extends ExamSubmissionComponent impleme
     dragAndDropMappings = new Map<number, DragAndDropMapping[]>();
     shortAnswerSubmittedTexts = new Map<number, ShortAnswerSubmittedText[]>();
 
-    constructor(
-        private quizService: ArtemisQuizService,
-        changeDetectorReference: ChangeDetectorRef,
-    ) {
-        super(changeDetectorReference);
-        smoothscroll.polyfill();
-    }
-
     ngOnInit(): void {
+        smoothscroll.polyfill();
         this.initQuiz();
         this.updateViewFromSubmission();
     }

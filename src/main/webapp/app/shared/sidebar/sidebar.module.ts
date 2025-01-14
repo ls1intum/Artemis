@@ -31,8 +31,6 @@ import { ProfilePictureComponent } from 'app/shared/profile-picture/profile-pict
         ArtemisExamSharedModule,
         SearchFilterComponent,
         ProfilePictureComponent,
-    ],
-    declarations: [
         SidebarAccordionComponent,
         SidebarCardSmallComponent,
         SidebarCardMediumComponent,

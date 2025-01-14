@@ -6,8 +6,6 @@ import { BaseEntityWithTempId, DropLocation } from 'app/entities/quiz/drop-locat
 
 @Injectable({ providedIn: 'root' })
 export class DragAndDropQuestionUtil {
-    constructor() {}
-
     /**
      * Get a sample solution for the given drag and drop question
      *
