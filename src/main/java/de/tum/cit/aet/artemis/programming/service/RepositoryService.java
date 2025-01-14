@@ -12,6 +12,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Collectors;
@@ -140,7 +141,7 @@ public class RepositoryService {
                 repository = gitService.checkoutRepositoryAtCommit(participation.getVcsRepositoryUri(), commitId, true);
             }
             // Get the files content from the working copy of the repository
-            Map<String, String> filesWithContent = getFilesContentFromWorkingCopy(repository, false);
+            Map<String, String> filesWithContent = getFilesContentFromWorkingCopy(repository);
             // Switch back to the default branch head
             gitService.switchBackToDefaultBranchHead(repository);
             return filesWithContent;
@@ -159,6 +160,10 @@ public class RepositoryService {
      */
     public Map<String, String> getFilesContentFromWorkingCopy(Repository repository, boolean omitBinaries) {
         var files = gitService.listFilesAndFolders(repository, omitBinaries).entrySet().stream().filter(entry -> entry.getValue() == FileType.FILE).map(Map.Entry::getKey).toList();
+        return getFileListWithContent(files);
+    }
+
+    private Map<String, String> getFileListWithContent(List<File> files) {
         Map<String, String> fileListWithContent = new HashMap<>();
 
         files.forEach(file -> {
@@ -170,6 +175,11 @@ public class RepositoryService {
             }
         });
         return fileListWithContent;
+    }
+
+    public Map<String, String> getFilesContentFromWorkingCopy(Repository repository) {
+        var files = gitService.listFilesAndFolders(repository, false).entrySet().stream().filter(entry -> entry.getValue() == FileType.FILE).map(Map.Entry::getKey).toList();
+        return getFileListWithContent(files);
     }
 
     /**
