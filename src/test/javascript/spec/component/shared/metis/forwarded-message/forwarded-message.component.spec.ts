@@ -13,6 +13,7 @@ import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 import { PostingContentComponent } from 'app/shared/metis/posting-content/posting-content.components';
 import { MockTranslateService } from '../../../../helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
+import { By } from '@angular/platform-browser';
 
 describe('ForwardedMessageComponent', () => {
     let component: ForwardedMessageComponent;
@@ -227,7 +228,7 @@ describe('ForwardedMessageComponent', () => {
         });
     });
 
-    it('should update sourssceName correctly based on isAnswerPost flag (false case)', () => {
+    it('should update sourceName correctly based on isAnswerPost flag (false case)', () => {
         const channelPost: Posting = {
             id: 11,
             conversation: { type: 'channel', name: 'general' } as any,
@@ -266,5 +267,29 @@ describe('ForwardedMessageComponent', () => {
             fixture.detectChanges();
             expect(component.sourceName).toBe('');
         });
+    });
+
+    it('should toggle showFullForwardedMessage when toggleShowFullForwardedMessage is called', () => {
+        expect(component.showFullForwardedMessage).toBeFalse();
+        component.toggleShowFullForwardedMessage();
+        expect(component.showFullForwardedMessage).toBeTrue();
+        component.toggleShowFullForwardedMessage();
+        expect(component.showFullForwardedMessage).toBeFalse();
+    });
+
+    it('should set isContentLong to true if content overflows', () => {
+        fixture.detectChanges();
+        const messageContentDebugElement = fixture.debugElement.query(By.css('#messageContent'));
+
+        expect(messageContentDebugElement).toBeTruthy();
+
+        const messageContentElement = messageContentDebugElement.nativeElement;
+
+        Object.defineProperty(messageContentElement, 'scrollHeight', { value: 200, configurable: true });
+        Object.defineProperty(messageContentElement, 'clientHeight', { value: 100, configurable: true });
+
+        component.checkIfContentOverflows();
+
+        expect(component.isContentLong).toBeTrue();
     });
 });
