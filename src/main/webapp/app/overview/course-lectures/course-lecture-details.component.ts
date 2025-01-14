@@ -35,6 +35,7 @@ import { DiscussionSectionComponent } from '../discussion-section/discussion-sec
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { HtmlForMarkdownPipe } from 'app/shared/pipes/html-for-markdown.pipe';
+import { IrisExerciseChatbotButtonComponent } from 'app/iris/exercise-chatbot/exercise-chatbot-button.component';
 
 export interface LectureUnitCompletionEvent {
     lectureUnit: LectureUnit;
@@ -60,6 +61,7 @@ export interface LectureUnitCompletionEvent {
         ArtemisDatePipe,
         ArtemisTranslatePipe,
         HtmlForMarkdownPipe,
+        IrisExerciseChatbotButtonComponent,
     ],
 })
 export class CourseLectureDetailsComponent extends AbstractScienceComponent implements OnInit, OnDestroy {
