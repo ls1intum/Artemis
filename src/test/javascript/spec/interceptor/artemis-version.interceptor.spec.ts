@@ -1,20 +1,17 @@
 import { EMPTY, Subject, of } from 'rxjs';
-import { ArtemisVersionInterceptor } from 'app/core/interceptor/artemis-version.interceptor';
+import { ArtemisVersionInterceptor, WINDOW_INJECTOR_TOKEN } from 'app/core/interceptor/artemis-version.interceptor';
 import { AlertService, AlertType } from 'app/core/util/alert.service';
-import { MockService } from 'ng-mocks';
-import { ArtemisServerDateService } from '../../../../main/webapp/app/shared/server-date.service';
-import { discardPeriodicTasks, fakeAsync, tick } from '@angular/core/testing';
-import { HttpHeaders, HttpRequest, HttpResponse } from '@angular/common/http';
-import { ApplicationRef, inject } from '@angular/core';
+import { TestBed, discardPeriodicTasks, fakeAsync, tick } from '@angular/core/testing';
+import { HttpHeaders, HttpRequest, HttpResponse, provideHttpClient } from '@angular/common/http';
 import { ARTEMIS_VERSION_HEADER, VERSION } from 'app/app.constants';
+import { TranslateService } from '@ngx-translate/core';
+import { MockTranslateService } from '../helpers/mocks/service/mock-translate.service';
+import { SwUpdate } from '@angular/service-worker';
+import { provideHttpClientTesting } from '@angular/common/http/testing';
+import { ApplicationRef } from '@angular/core';
 
 describe(`ArtemisVersionInterceptor`, () => {
     let alertService: AlertService;
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    const appRef = inject(ApplicationRef);
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    const serverDateService = inject(ArtemisServerDateService);
-
     let swUpdate: any;
     let checkForUpdateSpy: any;
     let activateUpdateSpy: any;
@@ -37,7 +34,26 @@ describe(`ArtemisVersionInterceptor`, () => {
         };
         checkForUpdateSpy = jest.spyOn(swUpdate, 'checkForUpdate');
         activateUpdateSpy = jest.spyOn(swUpdate, 'activateUpdate');
-        alertService = MockService(AlertService);
+
+        TestBed.configureTestingModule({
+            providers: [
+                ArtemisVersionInterceptor,
+                { provide: SwUpdate, useValue: swUpdate },
+                { provide: TranslateService, useClass: MockTranslateService },
+                provideHttpClient(),
+                provideHttpClientTesting(),
+                {
+                    provide: WINDOW_INJECTOR_TOKEN,
+                    useValue: {
+                        location: {
+                            reload: jest.fn(),
+                        },
+                    },
+                },
+            ],
+        });
+
+        alertService = TestBed.inject(AlertService);
     });
 
     afterEach(() => {
@@ -45,9 +61,7 @@ describe(`ArtemisVersionInterceptor`, () => {
     });
 
     it('should check for an update immediately and after 60 seconds again if app is stable', fakeAsync(() => {
-        // TODO: mock the injected services in ArtemisVersionInterceptor
-        new ArtemisVersionInterceptor();
-
+        TestBed.inject(ArtemisVersionInterceptor);
         expect(checkForUpdateSpy).toHaveBeenCalledOnce();
         tick(60000);
         expect(checkForUpdateSpy).toHaveBeenCalledTimes(2);
@@ -55,10 +69,11 @@ describe(`ArtemisVersionInterceptor`, () => {
     }));
 
     it('should check for an update after 30s if app is not stable', fakeAsync(() => {
-        const sub = new Subject<boolean>();
-        // TODO: mock the injected services in ArtemisVersionInterceptor
-        new ArtemisVersionInterceptor();
-        sub.next(false);
+        const isStableSubject = new Subject<boolean>();
+        const appRef = TestBed.inject(ApplicationRef);
+        (appRef as any).isStable = isStableSubject.asObservable();
+        TestBed.inject(ArtemisVersionInterceptor);
+        isStableSubject.next(false);
         expect(checkForUpdateSpy).not.toHaveBeenCalled();
         tick(30000);
         expect(checkForUpdateSpy).toHaveBeenCalledOnce();
@@ -69,7 +84,7 @@ describe(`ArtemisVersionInterceptor`, () => {
         const funMock = jest.fn();
         const addAlertSpy = jest.spyOn(alertService, 'addAlert').mockImplementation(funMock);
         // TODO: mock the injected services in ArtemisVersionInterceptor
-        new ArtemisVersionInterceptor();
+        TestBed.inject(ArtemisVersionInterceptor);
         tick();
         expect(addAlertSpy).toHaveBeenCalledOnce();
         expect(funMock).toHaveBeenCalledOnce();
@@ -84,8 +99,7 @@ describe(`ArtemisVersionInterceptor`, () => {
     it('should tell the worker to look for updates in HTTP requests (only) if the version is not equal to current', fakeAsync(() => {
         const requestMock = new HttpRequest('GET', '/test');
 
-        // TODO: mock the injected services in ArtemisVersionInterceptor
-        const intercept = new ArtemisVersionInterceptor();
+        const intercept = TestBed.inject(ArtemisVersionInterceptor);
         tick();
         expect(checkForUpdateSpy).toHaveBeenCalledOnce();
 

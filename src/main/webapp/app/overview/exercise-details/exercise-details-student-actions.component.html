@@ -121,15 +121,15 @@
                             [hideLabelMobile]="true"
                         />
                     }
-                    @if (programmingExercise?.allowOfflineIde && exercise.studentParticipations && exercise.studentParticipations[0]) {
+                    @if (programmingExercise?.allowOfflineIde) {
                         <jhi-code-button
                             [loading]="!!exercise.loading"
                             [smallButtons]="smallButtons"
                             [participations]="exercise.studentParticipations!"
                             [exercise]="exercise"
-                            [routerLinkForRepositoryView]="[repositoryLink, 'repository', exercise.studentParticipations[0]!.id!]"
-                            [repositoryUri]="''"
+                            [routerLinkForRepositoryView]="repositoryLink + '/repository/' + exercise.studentParticipations![0].id"
                             [hideLabelMobile]="true"
+                            [useParticipationVcsAccessToken]="true"
                         />
                     }
                     @if (theiaEnabled) {
