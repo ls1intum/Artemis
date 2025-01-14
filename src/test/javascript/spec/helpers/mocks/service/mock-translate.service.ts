@@ -107,7 +107,7 @@ export class TranslateServiceStub {
 }
 
 @NgModule({
-    declarations: [TranslatePipeMock],
+    declarations: [],
     providers: [
         { provide: TranslateService, useClass: TranslateServiceStub },
         { provide: TranslatePipe, useClass: TranslatePipeMock },
@@ -117,6 +117,7 @@ export class TranslateServiceStub {
         TranslateModule.forRoot({
             loader: { provide: TranslateLoader, useClass: FakeLoader },
         }),
+        TranslatePipeMock,
     ],
     exports: [TranslatePipeMock, TranslateModule],
 })

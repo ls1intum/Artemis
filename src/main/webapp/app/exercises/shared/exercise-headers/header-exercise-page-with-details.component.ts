@@ -1,4 +1,4 @@
-import { Component, Input, OnChanges, OnInit } from '@angular/core';
+import { Component, Input, OnChanges, OnInit, inject } from '@angular/core';
 import { SortService } from 'app/shared/service/sort.service';
 import dayjs from 'dayjs/esm';
 import { Exercise, ExerciseType, IncludedInOverallScore, getCourseFromExercise, getIcon, getIconTooltip } from 'app/entities/exercise.model';
@@ -16,13 +16,35 @@ import { ComplaintService } from 'app/complaints/complaint.service';
 import { SubmissionType } from 'app/entities/submission.model';
 import { ProgrammingSubmission } from 'app/entities/programming/programming-submission.model';
 import { roundValueSpecifiedByCourseSettings } from 'app/shared/util/utils';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
+import { ExerciseCategoriesComponent } from 'app/shared/exercise-categories/exercise-categories.component';
+import { NgClass } from '@angular/common';
+import { IncludedInScoreBadgeComponent } from './included-in-score-badge.component';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
+import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
+import { ArtemisTimeAgoPipe } from 'app/shared/pipes/artemis-time-ago.pipe';
 
 @Component({
     selector: 'jhi-header-exercise-page-with-details',
     templateUrl: './header-exercise-page-with-details.component.html',
     styleUrls: ['./header-exercise-page-with-details.component.scss'],
+    imports: [
+        FaIconComponent,
+        NgbTooltip,
+        ExerciseCategoriesComponent,
+        NgClass,
+        IncludedInScoreBadgeComponent,
+        TranslateDirective,
+        ArtemisDatePipe,
+        ArtemisTranslatePipe,
+        ArtemisTimeAgoPipe,
+    ],
 })
 export class HeaderExercisePageWithDetailsComponent implements OnChanges, OnInit {
+    private sortService = inject(SortService);
+
     readonly IncludedInOverallScore = IncludedInOverallScore;
     readonly AssessmentType = AssessmentType;
     readonly ExerciseType = ExerciseType;
@@ -55,8 +77,6 @@ export class HeaderExercisePageWithDetailsComponent implements OnChanges, OnInit
 
     // Icons
     faQuestionCircle = faQuestionCircle;
-
-    constructor(private sortService: SortService) {}
 
     ngOnInit() {
         this.exerciseCategories = this.exercise.categories || [];

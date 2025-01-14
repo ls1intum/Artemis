@@ -30,8 +30,6 @@ import { ArtemisTeamParticipeModule } from 'app/exercises/shared/team/team-parti
         ArtemisSharedComponentModule,
         ArtemisResultModule,
         ArtemisTeamParticipeModule,
-    ],
-    declarations: [
         TeamsComponent,
         TeamUpdateButtonComponent,
         TeamUpdateDialogComponent,

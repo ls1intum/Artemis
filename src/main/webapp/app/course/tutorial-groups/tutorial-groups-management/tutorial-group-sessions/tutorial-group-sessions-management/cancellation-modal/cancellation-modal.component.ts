@@ -1,21 +1,29 @@
-import { ChangeDetectionStrategy, Component, Input, OnDestroy, OnInit } from '@angular/core';
+import { ChangeDetectionStrategy, Component, Input, OnDestroy, OnInit, inject } from '@angular/core';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import { TutorialGroupSession, TutorialGroupSessionStatus } from 'app/entities/tutorial-group/tutorial-group-session.model';
 import { onError } from 'app/shared/util/global.utils';
 import { TutorialGroupSessionService } from 'app/course/tutorial-groups/services/tutorial-group-session.service';
 import { HttpErrorResponse } from '@angular/common/http';
 import { AlertService } from 'app/core/util/alert.service';
-import { FormBuilder, FormGroup, Validators } from '@angular/forms';
+import { FormBuilder, FormGroup, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
 import { Course } from 'app/entities/course.model';
 import { Subject } from 'rxjs';
 import { takeUntil } from 'rxjs/operators';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 
 @Component({
     selector: 'jhi-cancellation-modal',
     templateUrl: './cancellation-modal.component.html',
     changeDetection: ChangeDetectionStrategy.OnPush,
+    imports: [FormsModule, ReactiveFormsModule, TranslateDirective, ArtemisTranslatePipe],
 })
 export class CancellationModalComponent implements OnInit, OnDestroy {
+    activeModal = inject(NgbActiveModal);
+    private tutorialGroupSessionService = inject(TutorialGroupSessionService);
+    private alertService = inject(AlertService);
+    private fb = inject(FormBuilder);
+
     ngUnsubscribe = new Subject<void>();
 
     tutorialGroupSessionStatus = TutorialGroupSessionStatus;
@@ -29,13 +37,6 @@ export class CancellationModalComponent implements OnInit, OnDestroy {
 
     @Input()
     tutorialGroupSession: TutorialGroupSession;
-
-    constructor(
-        public activeModal: NgbActiveModal,
-        private tutorialGroupSessionService: TutorialGroupSessionService,
-        private alertService: AlertService,
-        private fb: FormBuilder,
-    ) {}
 
     ngOnInit(): void {
         this.initializeForm();

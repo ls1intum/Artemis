@@ -1,4 +1,4 @@
-import { Component, Input, OnDestroy, OnInit } from '@angular/core';
+import { Component, Input, OnDestroy, OnInit, inject } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { AlertService } from 'app/core/util/alert.service';
 import { onError } from 'app/shared/util/global.utils';
@@ -10,13 +10,24 @@ import { faAngleDown, faAngleUp } from '@fortawesome/free-solid-svg-icons';
 import { CourseStorageService } from 'app/course/manage/course-storage.service';
 import { FeatureToggle, FeatureToggleService } from 'app/shared/feature-toggle/feature-toggle.service';
 import { CourseCompetencyService } from 'app/course/competencies/course-competency.service';
+import { CompetencyCardComponent } from '../../course/competencies/competency-card/competency-card.component';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 
 @Component({
     selector: 'jhi-course-competencies',
     templateUrl: './course-competencies.component.html',
     styleUrls: ['../course-overview.scss'],
+    imports: [CompetencyCardComponent, FaIconComponent, TranslateDirective, ArtemisTranslatePipe],
 })
 export class CourseCompetenciesComponent implements OnInit, OnDestroy {
+    private featureToggleService = inject(FeatureToggleService);
+    private activatedRoute = inject(ActivatedRoute);
+    private alertService = inject(AlertService);
+    private courseStorageService = inject(CourseStorageService);
+    private courseCompetencyService = inject(CourseCompetencyService);
+
     @Input()
     courseId: number;
 
@@ -34,14 +45,6 @@ export class CourseCompetenciesComponent implements OnInit, OnDestroy {
 
     private dashboardFeatureToggleActiveSubscription: Subscription;
     dashboardFeatureActive = false;
-
-    constructor(
-        private featureToggleService: FeatureToggleService,
-        private activatedRoute: ActivatedRoute,
-        private alertService: AlertService,
-        private courseStorageService: CourseStorageService,
-        private courseCompetencyService: CourseCompetencyService,
-    ) {}
 
     ngOnInit(): void {
         const courseIdParams$ = this.activatedRoute.parent?.parent?.parent?.params;

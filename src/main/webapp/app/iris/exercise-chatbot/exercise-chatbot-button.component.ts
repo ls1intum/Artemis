@@ -1,4 +1,4 @@
-import { Component, ElementRef, Input, OnDestroy, OnInit, ViewChild } from '@angular/core';
+import { Component, ElementRef, Input, OnDestroy, OnInit, ViewChild, inject } from '@angular/core';
 import { MatDialog, MatDialogRef } from '@angular/material/dialog';
 import { Overlay } from '@angular/cdk/overlay';
 import { ActivatedRoute } from '@angular/router';
@@ -9,6 +9,11 @@ import { IrisLogoLookDirection, IrisLogoSize } from 'app/iris/iris-logo/iris-log
 import { ChatServiceMode, IrisChatService } from 'app/iris/iris-chat.service';
 import { animate, state, style, transition, trigger } from '@angular/animations';
 import { IrisTextMessageContent } from 'app/entities/iris/iris-content-type.model';
+import { NgClass } from '@angular/common';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { IrisLogoComponent } from '../iris-logo/iris-logo.component';
+import { HtmlForMarkdownPipe } from 'app/shared/pipes/html-for-markdown.pipe';
 
 @Component({
     selector: 'jhi-exercise-chatbot-button',
@@ -36,8 +41,14 @@ import { IrisTextMessageContent } from 'app/entities/iris/iris-content-type.mode
             transition('visible => hidden', animate('300ms ease-in')),
         ]),
     ],
+    imports: [NgClass, TranslateDirective, FaIconComponent, IrisLogoComponent, HtmlForMarkdownPipe],
 })
 export class IrisExerciseChatbotButtonComponent implements OnInit, OnDestroy {
+    dialog = inject(MatDialog);
+    protected overlay = inject(Overlay);
+    protected readonly chatService = inject(IrisChatService);
+    private route = inject(ActivatedRoute);
+
     @Input()
     mode: ChatServiceMode;
 
@@ -62,13 +73,6 @@ export class IrisExerciseChatbotButtonComponent implements OnInit, OnDestroy {
 
     protected readonly IrisLogoLookDirection = IrisLogoLookDirection;
     protected readonly IrisLogoSize = IrisLogoSize;
-
-    constructor(
-        public dialog: MatDialog,
-        protected overlay: Overlay,
-        protected readonly chatService: IrisChatService,
-        private route: ActivatedRoute,
-    ) {}
 
     ngOnInit() {
         // Subscribes to route params and gets the exerciseId from the route

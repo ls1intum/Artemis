@@ -9,7 +9,6 @@ import { ArtemisSharedModule } from 'app/shared/shared.module';
 
 @Component({
     selector: 'jhi-course-competency-relation-node',
-    standalone: true,
     imports: [NgClass, TranslateDirective, NgbTooltipModule, ArtemisSharedModule],
     templateUrl: './course-competency-relation-node.component.html',
     styleUrl: './course-competency-relation-node.component.scss',

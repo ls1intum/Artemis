@@ -4,7 +4,7 @@
  *
  */
 
-import { Component, ElementRef, EventEmitter, HostListener, Input, OnChanges, OnDestroy, OnInit, Output, Renderer2, SimpleChanges, ViewChild } from '@angular/core';
+import { Component, ElementRef, EventEmitter, HostListener, Input, OnChanges, OnDestroy, OnInit, Output, Renderer2, SimpleChanges, ViewChild, inject } from '@angular/core';
 import { NavigationStart, Router } from '@angular/router';
 import { VirtualScrollRenderEvent } from 'app/shared/virtual-scroll/virtual-scroll-render-event.class';
 import { ITEMS_PER_PAGE } from 'app/shared/constants/pagination.constants';
@@ -38,6 +38,9 @@ import { ITEMS_PER_PAGE } from 'app/shared/constants/pagination.constants';
  * </jhi-virtual-scroll>
  */
 export class VirtualScrollComponent<T extends { id?: number }> implements OnInit, OnChanges, OnDestroy {
+    private renderer = inject(Renderer2);
+    private router = inject(Router);
+
     @ViewChild('itemsContainer', { static: true }) private itemsContainerElRef: ElementRef<HTMLElement>;
 
     /**
@@ -97,10 +100,7 @@ export class VirtualScrollComponent<T extends { id?: number }> implements OnInit
     screenHeight: any;
     windowScrollTop: any;
 
-    constructor(
-        private renderer: Renderer2,
-        private router: Router,
-    ) {
+    constructor() {
         this.getScreenSize();
     }
 

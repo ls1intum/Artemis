@@ -1,5 +1,5 @@
 import { ParticipationWebsocketService } from 'app/overview/participation-websocket.service';
-import { AfterViewInit, Component, EventEmitter, Input, OnChanges, OnDestroy, OnInit, Output, SimpleChanges } from '@angular/core';
+import { AfterViewInit, Component, EventEmitter, Input, OnChanges, OnDestroy, OnInit, Output, SimpleChanges, inject } from '@angular/core';
 import { Observable, Subscription, of } from 'rxjs';
 import { catchError, filter, map, switchMap, tap } from 'rxjs/operators';
 import { BuildLogEntry, BuildLogEntryArray } from 'app/entities/programming/build-log.model';
@@ -19,13 +19,22 @@ import { faChevronDown, faCircleNotch, faTerminal } from '@fortawesome/free-soli
 import { hasParticipationChanged } from 'app/exercises/shared/participation/participation.utils';
 import { AssessmentType } from 'app/entities/assessment-type.model';
 import { Annotation } from '../monaco/code-editor-monaco.component';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 
 @Component({
     selector: 'jhi-code-editor-build-output',
     templateUrl: './code-editor-build-output.component.html',
     styleUrls: ['./code-editor-build-output.scss'],
+    imports: [FaIconComponent, TranslateDirective, ArtemisDatePipe],
 })
 export class CodeEditorBuildOutputComponent implements AfterViewInit, OnInit, OnChanges, OnDestroy {
+    private buildLogService = inject(CodeEditorBuildLogService);
+    private resultService = inject(ResultService);
+    private participationWebsocketService = inject(ParticipationWebsocketService);
+    private submissionService = inject(CodeEditorSubmissionService);
+
     @Input()
     participation: Participation;
 
@@ -51,13 +60,6 @@ export class CodeEditorBuildOutputComponent implements AfterViewInit, OnInit, On
     faChevronDown = faChevronDown;
     faCircleNotch = faCircleNotch;
     faTerminal = faTerminal;
-
-    constructor(
-        private buildLogService: CodeEditorBuildLogService,
-        private resultService: ResultService,
-        private participationWebsocketService: ParticipationWebsocketService,
-        private submissionService: CodeEditorSubmissionService,
-    ) {}
 
     ngOnInit(): void {
         this.setupSubmissionWebsocket();

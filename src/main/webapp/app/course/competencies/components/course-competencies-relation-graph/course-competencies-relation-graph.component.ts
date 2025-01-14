@@ -11,7 +11,6 @@ import { CourseCompetencyRelationNodeComponent } from 'app/course/competencies/c
 
 @Component({
     selector: 'jhi-course-competencies-relation-graph',
-    standalone: true,
     imports: [FontAwesomeModule, NgbAccordionModule, NgxGraphModule, ArtemisSharedModule, CourseCompetencyRelationNodeComponent],
     templateUrl: './course-competencies-relation-graph.component.html',
     styleUrl: './course-competencies-relation-graph.component.scss',
@@ -44,23 +43,20 @@ export class CourseCompetenciesRelationGraphComponent {
     });
 
     constructor() {
-        effect(
-            () => {
-                return this.nodes.set(
-                    this.courseCompetencies().map(
-                        (courseCompetency): Node => ({
-                            id: courseCompetency.id!.toString(),
-                            label: courseCompetency.title,
-                            data: {
-                                id: courseCompetency.id,
-                                type: courseCompetency.type,
-                            },
-                        }),
-                    ),
-                );
-            },
-            { allowSignalWrites: true },
-        );
+        effect(() => {
+            return this.nodes.set(
+                this.courseCompetencies().map(
+                    (courseCompetency): Node => ({
+                        id: courseCompetency.id!.toString(),
+                        label: courseCompetency.title,
+                        data: {
+                            id: courseCompetency.id,
+                            type: courseCompetency.type,
+                        },
+                    }),
+                ),
+            );
+        });
     }
 
     protected selectRelation(relationId: number): void {

@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, inject } from '@angular/core';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
 import { AlertService } from 'app/core/util/alert.service';
 import { Submission } from 'app/entities/submission.model';
@@ -10,13 +10,23 @@ import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service'
 import { onError } from 'app/shared/util/global.utils';
 import { OrionAssessmentService } from 'app/orion/assessment/orion-assessment.service';
 import { OrionButtonType } from 'app/shared/orion/orion-button/orion-button.component';
+import { ExerciseAssessmentDashboardComponent } from '../../exercises/shared/dashboards/tutor/exercise-assessment-dashboard.component';
+import { OrionButtonComponent } from 'app/shared/orion/orion-button/orion-button.component';
+import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 
 @Component({
     selector: 'jhi-orion-exercise-assessment-dashboard',
     templateUrl: './orion-exercise-assessment-dashboard.component.html',
     providers: [CourseManagementService],
+    imports: [ExerciseAssessmentDashboardComponent, OrionButtonComponent, ArtemisTranslatePipe],
 })
 export class OrionExerciseAssessmentDashboardComponent implements OnInit {
+    private route = inject(ActivatedRoute);
+    private exerciseService = inject(ExerciseService);
+    private orionAssessmentService = inject(OrionAssessmentService);
+    private orionConnectorService = inject(OrionConnectorService);
+    private alertService = inject(AlertService);
+
     readonly ExerciseView = ExerciseView;
     readonly ExerciseType = ExerciseType;
     protected readonly OrionButtonType = OrionButtonType;
@@ -25,22 +35,15 @@ export class OrionExerciseAssessmentDashboardComponent implements OnInit {
     exerciseId: number;
     exercise: Exercise;
 
-    constructor(
-        private route: ActivatedRoute,
-        private exerciseService: ExerciseService,
-        private orionAssessmentService: OrionAssessmentService,
-        private orionConnectorService: OrionConnectorService,
-        private alertService: AlertService,
-    ) {}
-
     ngOnInit(): void {
         this.exerciseId = Number(this.route.snapshot.paramMap.get('exerciseId'));
         this.exerciseService.getForTutors(this.exerciseId).subscribe({
             next: (res) => (this.exercise = res.body!),
             error: (error) => onError(this.alertService, error),
         });
-
-        this.orionConnectorService.state().subscribe((state) => (this.orionState = state));
+        if (this.orionConnectorService && this.orionConnectorService.state()) {
+            this.orionConnectorService.state().subscribe((state) => (this.orionState = state));
+        }
     }
 
     /**

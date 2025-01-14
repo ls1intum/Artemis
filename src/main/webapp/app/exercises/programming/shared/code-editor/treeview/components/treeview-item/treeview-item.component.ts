@@ -1,12 +1,13 @@
 import { Component, EventEmitter, Input, Output, TemplateRef } from '@angular/core';
 import { TreeviewItem } from '../../models/treeview-item';
 import { TreeviewItemTemplateContext } from '../../models/treeview-item-template-context';
+import { NgTemplateOutlet } from '@angular/common';
 
 @Component({
-    // eslint-disable-next-line @angular-eslint/component-selector
     selector: 'treeview-item',
     templateUrl: './treeview-item.component.html',
     styleUrls: ['./treeview-item.component.scss'],
+    imports: [NgTemplateOutlet],
 })
 export class TreeviewItemComponent<T> {
     @Input() template: TemplateRef<TreeviewItemTemplateContext<T>>;

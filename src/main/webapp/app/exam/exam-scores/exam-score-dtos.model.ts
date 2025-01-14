@@ -12,8 +12,6 @@ export class ExamScoreDTO {
     public hasSecondCorrectionAndStarted: boolean;
     public exerciseGroups: ExerciseGroup[];
     public studentResults: StudentResult[];
-
-    constructor() {}
 }
 
 export class ExerciseGroup {
@@ -22,8 +20,6 @@ export class ExerciseGroup {
     public maxPoints: number;
     public numberOfParticipants: number;
     public containedExercises: ExerciseInfo[];
-
-    constructor() {}
 }
 
 export class ExerciseInfo {
@@ -32,8 +28,6 @@ export class ExerciseInfo {
     public maxPoints: number;
     public numberOfParticipants: number;
     public exerciseType: string;
-
-    constructor() {}
 }
 
 export class StudentResult {
@@ -52,8 +46,6 @@ export class StudentResult {
     public gradeWithBonus?: BonusResult;
     public exerciseGroupIdToExerciseResult: { [key: number]: ExerciseResult };
     public mostSeverePlagiarismVerdict?: PlagiarismVerdict;
-
-    constructor() {}
 }
 
 export class StudentExamWithGradeDTO {
@@ -72,8 +64,6 @@ export class ExerciseResult {
     public achievedScore?: number;
     public achievedPoints?: number;
     public hasNonEmptySubmission: boolean;
-
-    constructor() {}
 }
 
 export class AggregatedExamResult {
@@ -164,8 +154,6 @@ export class AggregatedExamResult {
     public standardGradeDeviationTotalInFirstCorrection?: number;
     public standardGradeDeviationNonEmptyInFirstCorrection?: number;
     public standardGradeDeviationSubmittedAndNonEmptyInFirstCorrection?: number;
-
-    constructor() {}
 }
 
 export class AggregatedExerciseGroupResult {

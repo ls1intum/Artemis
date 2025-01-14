@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, inject } from '@angular/core';
 import { TextUnit } from 'app/entities/lecture-unit/textUnit.model';
 import { TextUnitService } from 'app/lecture/lecture-unit/lecture-unit-management/textUnit.service';
 import { ActivatedRoute, Router } from '@angular/router';
@@ -8,23 +8,24 @@ import { onError } from 'app/shared/util/global.utils';
 import { finalize } from 'rxjs/operators';
 import { HttpErrorResponse } from '@angular/common/http';
 import { combineLatest } from 'rxjs';
+import { LectureUnitLayoutComponent } from '../lecture-unit-layout/lecture-unit-layout.component';
+import { TextUnitFormComponent } from '../text-unit-form/text-unit-form.component';
 
 @Component({
     selector: 'jhi-create-text-unit',
     templateUrl: './create-text-unit.component.html',
-    styles: [],
+    imports: [LectureUnitLayoutComponent, TextUnitFormComponent],
 })
 export class CreateTextUnitComponent implements OnInit {
+    private activatedRoute = inject(ActivatedRoute);
+    private router = inject(Router);
+    private textUnitService = inject(TextUnitService);
+    private alertService = inject(AlertService);
+
     textUnitToCreate: TextUnit = new TextUnit();
     isLoading: boolean;
     lectureId: number;
     courseId: number;
-    constructor(
-        private activatedRoute: ActivatedRoute,
-        private router: Router,
-        private textUnitService: TextUnitService,
-        private alertService: AlertService,
-    ) {}
 
     ngOnInit(): void {
         const lectureRoute = this.activatedRoute.parent!.parent!;

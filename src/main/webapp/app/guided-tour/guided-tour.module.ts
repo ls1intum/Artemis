@@ -3,8 +3,7 @@ import { ArtemisSharedModule } from 'app/shared/shared.module';
 import { GuidedTourComponent } from './guided-tour.component';
 
 @NgModule({
-    declarations: [GuidedTourComponent],
-    imports: [ArtemisSharedModule],
+    imports: [ArtemisSharedModule, GuidedTourComponent],
     exports: [GuidedTourComponent],
 })
 export class GuidedTourModule {}
