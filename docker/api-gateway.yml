@@ -9,7 +9,7 @@ services:
         env_file:
             - ./api-gateway/prod.env
         healthcheck:
-            test: wget -nv -t1 --spider http://localhost:8080/actuator/gateway/routes || exit 1
+            test: wget -nv -t1 --spider http://localhost:8080/ || exit 1
             start_period: 600s
             interval: 1s
         # expose the port to make it reachable docker internally even if the external port mapping changes
