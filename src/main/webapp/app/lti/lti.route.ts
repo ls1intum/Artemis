@@ -43,15 +43,6 @@ export const ltiLaunchRoutes: Routes = [
         },
         canActivate: [UserRouteAccessService],
     },
-    {
-        path: 'competencies',
-        component: Lti13DeepLinkingComponent,
-        data: {
-            authorities: [Authority.INSTRUCTOR, Authority.ADMIN],
-            pageTitle: 'artemisApp.lti13.deepLinking.title',
-        },
-        canActivate: [UserRouteAccessService],
-    },
 ];
 
 const LTI_LAUNCH_ROUTES = [...ltiLaunchRoutes];
