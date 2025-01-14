@@ -8,8 +8,17 @@ import { RouterModule } from '@angular/router';
 import { BarChartModule, LineChartModule, PieChartModule } from '@swimlane/ngx-charts';
 
 @NgModule({
-    imports: [ArtemisSharedModule, RouterModule, BarChartModule, LineChartModule, PieChartModule],
-    declarations: [DoughnutChartComponent, StatisticsAverageScoreGraphComponent, StatisticsGraphComponent, StatisticsScoreDistributionGraphComponent],
+    imports: [
+        ArtemisSharedModule,
+        RouterModule,
+        BarChartModule,
+        LineChartModule,
+        PieChartModule,
+        DoughnutChartComponent,
+        StatisticsAverageScoreGraphComponent,
+        StatisticsGraphComponent,
+        StatisticsScoreDistributionGraphComponent,
+    ],
     exports: [DoughnutChartComponent, StatisticsAverageScoreGraphComponent, StatisticsGraphComponent, StatisticsScoreDistributionGraphComponent],
 })
 export class ArtemisChartsModule {}

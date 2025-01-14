@@ -6,7 +6,6 @@ import { ApollonDiagramListComponent } from './apollon-diagram-list.component';
 import { ArtemisSharedModule } from 'app/shared/shared.module';
 
 @NgModule({
-    imports: [ArtemisSharedModule],
-    declarations: [ApollonDiagramCreateFormComponent, ApollonDiagramDetailComponent, ApollonDiagramListComponent, ApollonDiagramImportDialogComponent],
+    imports: [ArtemisSharedModule, ApollonDiagramCreateFormComponent, ApollonDiagramDetailComponent, ApollonDiagramListComponent, ApollonDiagramImportDialogComponent],
 })
 export class ArtemisApollonDiagramsModule {}

@@ -12,7 +12,6 @@ enum FileStatus {
     selector: 'jhi-git-diff-file-panel-title',
     templateUrl: './git-diff-file-panel-title.component.html',
     styleUrls: ['./git-diff-file-panel-title.component.scss'],
-    standalone: true,
     changeDetection: ChangeDetectionStrategy.OnPush,
     imports: [TranslateDirective, CommonModule],
 })

@@ -30,7 +30,7 @@ import { MockMetisService } from '../helpers/mocks/service/mock-metis-service.se
 import { TutorialGroup } from 'app/entities/tutorial-group/tutorial-group.model';
 import { OneToOneChat } from 'app/entities/metis/conversation/one-to-one-chat.model';
 import { GroupChat } from 'app/entities/metis/conversation/group-chat.model';
-import { MockPipe, MockProvider } from 'ng-mocks';
+import { MockProvider } from 'ng-mocks';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { ChangeDetectorRef } from '@angular/core';
 import { MetisPostDTO } from 'app/entities/metis/metis-post-dto.model';
@@ -156,7 +156,6 @@ describe('Notification Service', () => {
     beforeEach(() => {
         TestBed.configureTestingModule({
             imports: [TranslateTestingModule],
-            declarations: [MockPipe(ArtemisTranslatePipe)],
             providers: [
                 provideRouter([]),
                 provideHttpClient(),

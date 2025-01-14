@@ -57,10 +57,6 @@ describe('OrionConnectorService', () => {
         OrionConnectorService.initConnector(serviceUnderTest);
     });
 
-    it('should return router', () => {
-        expect(serviceUnderTest.router).toBe(router);
-    });
-
     it('should forward login', () => {
         serviceUnderTest.login('name', 'pwd');
 

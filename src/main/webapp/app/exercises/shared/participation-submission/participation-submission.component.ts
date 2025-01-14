@@ -1,4 +1,4 @@
-import { Component, Input, OnInit } from '@angular/core';
+import { Component, Input, OnInit, inject } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { SubmissionService } from 'app/exercises/shared/submission/submission.service';
 import { Subject, Subscription, combineLatest, of } from 'rxjs';
@@ -27,12 +27,35 @@ import { createCommitUrl } from 'app/exercises/programming/shared/utils/programm
 import { EventManager } from 'app/core/util/event-manager.service';
 import { getExerciseDueDate, hasExerciseDueDatePassed } from 'app/exercises/shared/exercise/exercise.utils';
 import { faTrash } from '@fortawesome/free-solid-svg-icons';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { NgClass } from '@angular/common';
+import { NgxDatatableModule } from '@siemens/ngx-datatable';
+import { ResultComponent } from '../result/result.component';
+import { DeleteButtonDirective } from 'app/shared/delete-dialog/delete-button.directive';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
+import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
+import { ArtemisTimeAgoPipe } from 'app/shared/pipes/artemis-time-ago.pipe';
 
 @Component({
     selector: 'jhi-participation-submission',
     templateUrl: './participation-submission.component.html',
+    imports: [TranslateDirective, NgClass, NgxDatatableModule, ResultComponent, DeleteButtonDirective, FaIconComponent, ArtemisDatePipe, ArtemisTranslatePipe, ArtemisTimeAgoPipe],
 })
 export class ParticipationSubmissionComponent implements OnInit {
+    private route = inject(ActivatedRoute);
+    private submissionService = inject(SubmissionService);
+    private translateService = inject(TranslateService);
+    private participationService = inject(ParticipationService);
+    private exerciseService = inject(ExerciseService);
+    private programmingExerciseService = inject(ProgrammingExerciseService);
+    private fileUploadAssessmentService = inject(FileUploadAssessmentService);
+    private modelingAssessmentsService = inject(ModelingAssessmentService);
+    private textAssessmentService = inject(TextAssessmentService);
+    private programmingAssessmentService = inject(ProgrammingAssessmentManualResultService);
+    private eventManager = inject(EventManager);
+    private profileService = inject(ProfileService);
+
     readonly ParticipationType = ParticipationType;
     readonly buttonSizeSmall = ButtonSize.SMALL;
     readonly actionTypeEmpty = ActionType.NoButtonTextDelete;
@@ -57,21 +80,6 @@ export class ParticipationSubmissionComponent implements OnInit {
 
     // Icons
     faTrash = faTrash;
-
-    constructor(
-        private route: ActivatedRoute,
-        private submissionService: SubmissionService,
-        private translateService: TranslateService,
-        private participationService: ParticipationService,
-        private exerciseService: ExerciseService,
-        private programmingExerciseService: ProgrammingExerciseService,
-        private fileUploadAssessmentService: FileUploadAssessmentService,
-        private modelingAssessmentsService: ModelingAssessmentService,
-        private textAssessmentService: TextAssessmentService,
-        private programmingAssessmentService: ProgrammingAssessmentManualResultService,
-        private eventManager: EventManager,
-        private profileService: ProfileService,
-    ) {}
 
     /**
      * Initialize component by setting up page and subscribe to eventManager

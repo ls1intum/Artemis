@@ -6,8 +6,7 @@ import { ArtemisSharedModule } from 'app/shared/shared.module';
 import { LineChartModule } from '@swimlane/ngx-charts';
 
 @NgModule({
-    imports: [TranslateModule, CommonModule, ArtemisSharedModule, LineChartModule],
-    declarations: [ExerciseScoresChartComponent],
+    imports: [TranslateModule, CommonModule, ArtemisSharedModule, LineChartModule, ExerciseScoresChartComponent],
     exports: [ExerciseScoresChartComponent],
 })
 export class ArtemisExerciseScoresChartModule {}

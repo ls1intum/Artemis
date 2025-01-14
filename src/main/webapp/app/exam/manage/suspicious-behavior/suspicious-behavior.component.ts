@@ -16,7 +16,6 @@ import { FormsModule } from '@angular/forms';
 @Component({
     selector: 'jhi-suspicious-behavior',
     templateUrl: './suspicious-behavior.component.html',
-    standalone: true,
     imports: [FormsModule, TranslateDirective, ArtemisTranslatePipe, ArtemisSharedComponentModule, PlagiarismCasesOverviewComponent],
 })
 export class SuspiciousBehaviorComponent implements OnInit {

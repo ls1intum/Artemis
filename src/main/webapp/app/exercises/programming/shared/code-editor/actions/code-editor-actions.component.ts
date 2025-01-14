@@ -1,6 +1,6 @@
-import { Component, EventEmitter, Input, OnChanges, OnDestroy, OnInit, Output, SimpleChanges, input } from '@angular/core';
+import { Component, EventEmitter, Input, OnChanges, OnDestroy, OnInit, Output, SimpleChanges, inject, input } from '@angular/core';
 import { HttpErrorResponse } from '@angular/common/http';
-import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
+import { NgbModal, NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { catchError, switchMap, tap } from 'rxjs/operators';
 import { Observable, Subscription, of, throwError } from 'rxjs';
 import { isEmpty as _isEmpty } from 'lodash-es';
@@ -15,12 +15,24 @@ import { AUTOSAVE_CHECK_INTERVAL, AUTOSAVE_EXERCISE_INTERVAL } from 'app/shared/
 import { faCircleNotch, faSync, faTimes } from '@fortawesome/free-solid-svg-icons';
 import { faPlayCircle } from '@fortawesome/free-regular-svg-icons';
 import { Participation } from 'app/entities/participation/participation.model';
+import { RequestFeedbackButtonComponent } from 'app/overview/exercise-details/request-feedback-button/request-feedback-button.component';
+import { FeatureToggleDirective } from 'app/shared/feature-toggle/feature-toggle.directive';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 
 @Component({
     selector: 'jhi-code-editor-actions',
     templateUrl: './code-editor-actions.component.html',
+    imports: [RequestFeedbackButtonComponent, FeatureToggleDirective, NgbTooltip, FaIconComponent, TranslateDirective, ArtemisTranslatePipe],
 })
 export class CodeEditorActionsComponent implements OnInit, OnDestroy, OnChanges {
+    private repositoryService = inject(CodeEditorRepositoryService);
+    private repositoryFileService = inject(CodeEditorRepositoryFileService);
+    private conflictService = inject(CodeEditorConflictStateService);
+    private modalService = inject(NgbModal);
+    private submissionService = inject(CodeEditorSubmissionService);
+
     CommitState = CommitState;
     EditorState = EditorState;
     FeatureToggle = FeatureToggle;
@@ -71,14 +83,6 @@ export class CodeEditorActionsComponent implements OnInit, OnDestroy, OnChanges 
         this.editorStateValue = editorState;
         this.editorStateChange.emit(editorState);
     }
-
-    constructor(
-        private repositoryService: CodeEditorRepositoryService,
-        private repositoryFileService: CodeEditorRepositoryFileService,
-        private conflictService: CodeEditorConflictStateService,
-        private modalService: NgbModal,
-        private submissionService: CodeEditorSubmissionService,
-    ) {}
 
     ngOnInit(): void {
         this.conflictStateSubscription = this.conflictService.subscribeConflictState().subscribe((gitConflictState: GitConflictState) => {
@@ -171,7 +175,7 @@ export class CodeEditorActionsComponent implements OnInit, OnDestroy, OnChanges 
     }
 
     /**
-     * @function saveFiles
+     * @param andCommit whether the saved changed in the files should be committed or not
      * @desc Saves all files that have unsaved changes in the editor.
      */
     saveChangedFiles(andCommit = false): Observable<any> {

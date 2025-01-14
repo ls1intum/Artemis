@@ -1,18 +1,17 @@
+import { NgClass } from '@angular/common';
 import { ChangeDetectionStrategy, Component, OnInit, inject } from '@angular/core';
+import { FormsModule } from '@angular/forms';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { faCheck } from '@fortawesome/free-solid-svg-icons';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
-import { Thread, ThreadState } from '../../metrics.model';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
-import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { FormsModule } from '@angular/forms';
-import { NgClass } from '@angular/common';
 import { ArtemisSharedCommonModule } from 'app/shared/shared-common.module';
+import { Thread, ThreadState } from '../../metrics.model';
 
 @Component({
     selector: 'jhi-thread-modal',
     templateUrl: './metrics-modal-threads.component.html',
     changeDetection: ChangeDetectionStrategy.OnPush,
-    standalone: true,
     imports: [TranslateDirective, FaIconComponent, FormsModule, NgClass, ArtemisSharedCommonModule],
 })
 export class MetricsModalThreadsComponent implements OnInit {

@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, inject } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { Graphs, SpanType, StatisticsView } from 'app/entities/statistics.model';
 import { Subscription } from 'rxjs';
@@ -6,13 +6,22 @@ import { StatisticsService } from 'app/shared/statistics-graph/statistics.servic
 import { CourseManagementStatisticsDTO } from './course-management-statistics-dto';
 import { DocumentationType } from 'app/shared/components/documentation-button/documentation-button.component';
 import { Course, isCommunicationEnabled } from 'app/entities/course.model';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { DocumentationButtonComponent } from 'app/shared/components/documentation-button/documentation-button.component';
+import { StatisticsAverageScoreGraphComponent } from 'app/shared/statistics-graph/statistics-average-score-graph.component';
+import { StatisticsGraphComponent } from 'app/shared/statistics-graph/statistics-graph.component';
+import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 
 @Component({
     selector: 'jhi-course-management-statistics',
     templateUrl: './course-management-statistics.component.html',
     styleUrls: ['./course-management-statistics.component.scss'],
+    imports: [TranslateDirective, DocumentationButtonComponent, StatisticsAverageScoreGraphComponent, StatisticsGraphComponent, ArtemisTranslatePipe],
 })
 export class CourseManagementStatisticsComponent implements OnInit {
+    private service = inject(StatisticsService);
+    private route = inject(ActivatedRoute);
+
     readonly documentationType: DocumentationType = 'Statistics';
     // html properties
     SpanType = SpanType;
@@ -39,11 +48,6 @@ export class CourseManagementStatisticsComponent implements OnInit {
     tutorNames: string[];
 
     courseStatistics: CourseManagementStatisticsDTO;
-
-    constructor(
-        private service: StatisticsService,
-        private route: ActivatedRoute,
-    ) {}
 
     ngOnInit() {
         this.paramSub = this.route.params.subscribe((params) => {

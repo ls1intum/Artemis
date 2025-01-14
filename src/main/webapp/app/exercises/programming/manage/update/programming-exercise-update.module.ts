@@ -28,7 +28,7 @@ import { ExerciseUpdatePlagiarismModule } from 'app/exercises/shared/plagiarism/
 import { ProgrammingExerciseCustomAeolusBuildPlanComponent } from 'app/exercises/programming/manage/update/update-components/custom-build-plans/programming-exercise-custom-aeolus-build-plan.component';
 import { ProgrammingExerciseCustomBuildPlanComponent } from 'app/exercises/programming/manage/update/update-components/custom-build-plans/programming-exercise-custom-build-plan.component';
 import { ProgrammingExerciseBuildConfigurationComponent } from 'app/exercises/programming/manage/update/update-components/custom-build-plans/programming-exercise-build-configuration/programming-exercise-build-configuration.component';
-import { FormsModule } from 'app/forms/forms.module';
+import { ArtemisFormsModule } from 'app/forms/artemis-forms.module';
 import { ProgrammingExerciseBuildPlanCheckoutDirectoriesComponent } from 'app/exercises/programming/shared/build-details/programming-exercise-build-plan-checkout-directories.component';
 import { ProgrammingExerciseRepositoryAndBuildPlanDetailsComponent } from 'app/exercises/programming/shared/build-details/programming-exercise-repository-and-build-plan-details.component';
 import { ProgrammingExerciseTheiaComponent } from 'app/exercises/programming/manage/update/update-components/theia/programming-exercise-theia.component';
@@ -59,7 +59,7 @@ import { CustomNotIncludedInValidatorDirective } from 'app/shared/validators/cus
         ExerciseTitleChannelNameModule,
         ExerciseUpdateNotificationModule,
         ExerciseUpdatePlagiarismModule,
-        FormsModule,
+        ArtemisFormsModule,
         ProgrammingExerciseBuildPlanCheckoutDirectoriesComponent,
         ProgrammingExerciseRepositoryAndBuildPlanDetailsComponent,
         MonacoEditorComponent,
@@ -69,8 +69,6 @@ import { CustomNotIncludedInValidatorDirective } from 'app/shared/validators/cus
         SwitchEditModeButtonComponent,
         TitleChannelNameModule,
         CustomNotIncludedInValidatorDirective,
-    ],
-    declarations: [
         ProgrammingExerciseUpdateComponent,
         ProgrammingExerciseInformationComponent,
         ProgrammingExerciseModeComponent,

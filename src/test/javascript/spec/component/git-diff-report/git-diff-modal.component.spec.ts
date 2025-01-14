@@ -19,15 +19,10 @@ describe('GitDiffReportModalComponent', () => {
     let loadTemplateFilesSpy: jest.SpyInstance;
     let loadParticipationFilesSpy: jest.SpyInstance;
     let loadSolutionFilesSpy: jest.SpyInstance;
-
-    const filesWithContentTemplate = new Map<string, string>();
-    filesWithContentTemplate.set('test', 'test');
-    const filesWithContentParticipation1 = new Map<string, string>();
-    filesWithContentParticipation1.set('test3', 'test3');
-    const filesWithContentParticipation2 = new Map<string, string>();
-    filesWithContentParticipation2.set('test4', 'test4');
-    const filesWithContentSolution = new Map<string, string>();
-    filesWithContentSolution.set('test2', 'test2');
+    let filesWithContentTemplate: Map<string, string>;
+    let filesWithContentParticipation1: Map<string, string>;
+    let filesWithContentParticipation2: Map<string, string>;
+    let filesWithContentSolution: Map<string, string>;
 
     beforeEach(() => {
         TestBed.configureTestingModule({
@@ -38,6 +33,17 @@ describe('GitDiffReportModalComponent', () => {
         comp = fixture.componentInstance;
         programmingExerciseService = TestBed.inject(ProgrammingExerciseService);
         programmingExerciseParticipationService = TestBed.inject(ProgrammingExerciseParticipationService);
+
+        modal = TestBed.inject(NgbActiveModal);
+
+        filesWithContentTemplate = new Map<string, string>();
+        filesWithContentTemplate.set('test', 'test');
+        filesWithContentParticipation1 = new Map<string, string>();
+        filesWithContentParticipation1.set('test3', 'test3');
+        filesWithContentParticipation2 = new Map<string, string>();
+        filesWithContentParticipation2.set('test4', 'test4');
+        filesWithContentSolution = new Map<string, string>();
+        filesWithContentSolution.set('test2', 'test2');
 
         loadSolutionFilesSpy = jest.spyOn(programmingExerciseService, 'getSolutionRepositoryTestFilesWithContent').mockReturnValue(of(filesWithContentSolution));
         loadTemplateFilesSpy = jest.spyOn(programmingExerciseService, 'getTemplateRepositoryTestFilesWithContent').mockReturnValue(of(filesWithContentTemplate));
@@ -103,8 +109,28 @@ describe('GitDiffReportModalComponent', () => {
         expect(comp.rightCommitFileContentByPath()).toEqual(filesWithContentParticipation1);
     });
 
+    /**
+     * For some reason, this test needs to be executed before the next one.
+     * Somehow, the mocked error-response leaks into this test, despite properly resetting the mocks.
+     * Also, other tests seem to not be affected by this.
+     */
+    it('should load files from cache if available for template and participation repo', async () => {
+        const cachedRepositoryFiles = new Map<string, Map<string, string>>();
+        cachedRepositoryFiles.set('1-template', filesWithContentTemplate);
+        cachedRepositoryFiles.set('def', filesWithContentParticipation1);
+        fixture.componentRef.setInput('cachedRepositoryFiles', cachedRepositoryFiles);
+        fixture.componentRef.setInput('report', { programmingExercise: { id: 1 }, participationIdForRightCommit: 3, rightCommitHash: 'def' } as ProgrammingExerciseGitDiffReport);
+        fixture.componentRef.setInput('diffForTemplateAndSolution', false);
+        fixture.detectChanges();
+        await finishEffects();
+        expect(loadParticipationFilesSpy).not.toHaveBeenCalled();
+        expect(loadTemplateFilesSpy).not.toHaveBeenCalled();
+        expect(comp.leftCommitFileContentByPath()).toEqual(filesWithContentTemplate);
+        expect(comp.rightCommitFileContentByPath()).toEqual(filesWithContentParticipation1);
+    });
+
     it('should set error flag if loading files fails', async () => {
-        jest.spyOn(programmingExerciseService, 'getTemplateRepositoryTestFilesWithContent').mockReturnValue(throwError('error'));
+        jest.spyOn(programmingExerciseService, 'getTemplateRepositoryTestFilesWithContent').mockReturnValue(throwError('error1'));
         jest.spyOn(programmingExerciseService, 'getSolutionRepositoryTestFilesWithContent').mockReturnValue(throwError('error'));
         jest.spyOn(programmingExerciseParticipationService, 'getParticipationRepositoryFilesWithContentAtCommit').mockReturnValue(throwError('error'));
         fixture.componentRef.setInput('report', { programmingExercise: { id: 1 }, participationIdForRightCommit: 3, rightCommitHash: 'abc' } as ProgrammingExerciseGitDiffReport);
@@ -132,21 +158,6 @@ describe('GitDiffReportModalComponent', () => {
         const modalServiceSpy = jest.spyOn(modal, 'dismiss');
         comp.close();
         expect(modalServiceSpy).toHaveBeenCalled();
-    });
-
-    it('should load files from cache if available for template and participation repo', async () => {
-        const cachedRepositoryFiles = new Map<string, Map<string, string>>();
-        cachedRepositoryFiles.set('1-template', filesWithContentTemplate);
-        cachedRepositoryFiles.set('def', filesWithContentParticipation1);
-        fixture.componentRef.setInput('cachedRepositoryFiles', cachedRepositoryFiles);
-        fixture.componentRef.setInput('report', { programmingExercise: { id: 1 }, participationIdForRightCommit: 3, rightCommitHash: 'def' } as ProgrammingExerciseGitDiffReport);
-        fixture.componentRef.setInput('diffForTemplateAndSolution', false);
-        fixture.detectChanges();
-        await finishEffects();
-        expect(loadParticipationFilesSpy).not.toHaveBeenCalled();
-        expect(loadTemplateFilesSpy).not.toHaveBeenCalled();
-        expect(comp.leftCommitFileContentByPath()).toEqual(filesWithContentTemplate);
-        expect(comp.rightCommitFileContentByPath()).toEqual(filesWithContentParticipation1);
     });
 
     it('should load files from cache if available for participation repo at both commits', async () => {

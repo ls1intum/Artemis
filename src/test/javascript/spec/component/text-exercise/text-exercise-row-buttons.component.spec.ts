@@ -18,14 +18,11 @@ describe('TextExercise Row Buttons Component', () => {
     beforeEach(() => {
         TestBed.configureTestingModule({
             imports: [ArtemisTestModule],
-            declarations: [TextExerciseRowButtonsComponent],
             providers: [
                 { provide: TextExerciseService, useValue: { delete: jest.fn() } },
                 { provide: EventManager, useValue: { broadcast: jest.fn() } },
             ],
-        })
-            .overrideTemplate(TextExerciseRowButtonsComponent, '')
-            .compileComponents();
+        }).compileComponents();
 
         fixture = TestBed.createComponent(TextExerciseRowButtonsComponent);
         comp = fixture.componentInstance;

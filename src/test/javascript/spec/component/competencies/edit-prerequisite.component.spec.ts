@@ -22,8 +22,8 @@ import { ArtemisMarkdownEditorModule } from 'app/shared/markdown-editor/markdown
 describe('EditPrerequisiteComponent', () => {
     let editPrerequisiteComponentFixture: ComponentFixture<EditPrerequisiteComponent>;
     let editPrerequisiteComponent: EditPrerequisiteComponent;
-    beforeEach(() => {
-        TestBed.configureTestingModule({
+    beforeEach(async () => {
+        await TestBed.configureTestingModule({
             imports: [ArtemisTestModule, EditPrerequisiteComponent, PrerequisiteFormStubComponent],
             declarations: [],
             providers: [
@@ -61,13 +61,12 @@ describe('EditPrerequisiteComponent', () => {
         })
             .overrideModule(ArtemisMarkdownEditorModule, {
                 remove: { exports: [MarkdownEditorMonacoComponent] },
-                add: { exports: [MockComponent(MarkdownEditorMonacoComponent)], declarations: [MockComponent(MarkdownEditorMonacoComponent)] },
+                add: { exports: [MockComponent(MarkdownEditorMonacoComponent)], imports: [MockComponent(MarkdownEditorMonacoComponent)] },
             })
-            .compileComponents()
-            .then(() => {
-                editPrerequisiteComponentFixture = TestBed.createComponent(EditPrerequisiteComponent);
-                editPrerequisiteComponent = editPrerequisiteComponentFixture.componentInstance;
-            });
+            .compileComponents();
+
+        editPrerequisiteComponentFixture = TestBed.createComponent(EditPrerequisiteComponent);
+        editPrerequisiteComponent = editPrerequisiteComponentFixture.componentInstance;
     });
 
     afterEach(() => {

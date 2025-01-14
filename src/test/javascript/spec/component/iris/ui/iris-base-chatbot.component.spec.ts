@@ -19,7 +19,7 @@ import { of } from 'rxjs';
 import dayjs from 'dayjs/esm';
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
 import { ButtonComponent } from 'app/shared/components/button.component';
-import { FormsModule } from 'app/forms/forms.module';
+import { ArtemisFormsModule } from '../../../../../../main/webapp/app/forms/artemis-forms.module';
 import {
     mockClientMessage,
     mockServerMessage,
@@ -62,7 +62,7 @@ describe('IrisBaseChatbotComponent', () => {
         } as any;
 
         await TestBed.configureTestingModule({
-            imports: [FormsModule, FontAwesomeModule, RouterModule, NoopAnimationsModule],
+            imports: [ArtemisFormsModule, FontAwesomeModule, RouterModule, NoopAnimationsModule],
             declarations: [
                 IrisBaseChatbotComponent,
                 MockPipe(ArtemisTranslatePipe),

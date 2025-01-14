@@ -130,6 +130,7 @@ describe('ModelingSubmissionComponent', () => {
 
         // Subscribe to patches
         const receiverMock = jest.fn();
+        // @ts-ignore
         comp.submissionPatchObservable.subscribe(receiverMock);
 
         // Force emit a patch

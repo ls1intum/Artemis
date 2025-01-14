@@ -3,8 +3,7 @@ import { TextareaCounterComponent } from 'app/shared/textarea/textarea-counter.c
 import { ArtemisSharedModule } from 'app/shared/shared.module';
 
 @NgModule({
-    imports: [ArtemisSharedModule],
-    declarations: [TextareaCounterComponent],
+    imports: [ArtemisSharedModule, TextareaCounterComponent],
     exports: [TextareaCounterComponent],
 })
 export class TextareaModule {}

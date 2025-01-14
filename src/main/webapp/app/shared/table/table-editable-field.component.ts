@@ -1,5 +1,8 @@
 import { Component, Input, ViewChild } from '@angular/core';
-import { NgModel } from '@angular/forms';
+import { FormsModule, NgModel } from '@angular/forms';
+import { TranslateDirective } from '../language/translate.directive';
+import { KeyValuePipe } from '@angular/common';
+import { RemoveKeysPipe } from 'app/shared/pipes/remove-keys.pipe';
 
 /**
  * An inline editing field to use for tables.
@@ -8,6 +11,7 @@ import { NgModel } from '@angular/forms';
     selector: 'jhi-table-editable-field',
     styles: ['.table-editable-field {display: flex; align-items: center}', '.table-editable-field__input {flex: 2 1 auto; margin-left: 0.25rem}'],
     templateUrl: './table-editable-field.component.html',
+    imports: [FormsModule, TranslateDirective, KeyValuePipe, RemoveKeysPipe],
 })
 export class TableEditableFieldComponent {
     @ViewChild('editingInput') editingInput: NgModel;

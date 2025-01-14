@@ -1,29 +1,23 @@
-import { MockTranslateService } from '../helpers/mocks/service/mock-translate.service';
 import { ArtemisTimeAgoPipe } from 'app/shared/pipes/artemis-time-ago.pipe';
 import { TestBed, fakeAsync, tick } from '@angular/core/testing';
 import { TranslateService } from '@ngx-translate/core';
-import { ChangeDetectorRef, NgZone } from '@angular/core';
+import { ChangeDetectorRef } from '@angular/core';
 import dayjs from 'dayjs/esm';
+import { ArtemisTestModule } from '../test.module';
 
 describe('ArtemisTimeAgoPipe', () => {
     let pipe: ArtemisTimeAgoPipe;
     let translateService: TranslateService;
-    let cdRef: ChangeDetectorRef;
+    const cdRef = { markForCheck: jest.fn() } as any as ChangeDetectorRef;
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            declarations: [ArtemisTimeAgoPipe],
-            providers: [{ provide: TranslateService, useClass: MockTranslateService }],
-        })
-            .compileComponents()
-            .then(() => {
-                cdRef = { markForCheck: jest.fn() } as any as ChangeDetectorRef;
-
-                translateService = TestBed.inject(TranslateService);
-                translateService.use('en');
-                const ngZone = TestBed.inject(NgZone);
-                pipe = new ArtemisTimeAgoPipe(cdRef, ngZone, translateService);
-            });
+            imports: [ArtemisTestModule],
+            providers: [ArtemisTimeAgoPipe, { provide: ChangeDetectorRef, useValue: cdRef }],
+        }).compileComponents();
+        translateService = TestBed.inject(TranslateService);
+        translateService.use('en');
+        pipe = TestBed.inject(ArtemisTimeAgoPipe);
     });
 
     it.each([

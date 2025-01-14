@@ -1,40 +1,26 @@
 import dayjs from 'dayjs/esm';
-
-import { VideoUnitFormData } from 'app/lecture/lecture-unit/lecture-unit-management/video-unit-form/video-unit-form.component';
 import { VideoUnitService } from 'app/lecture/lecture-unit/lecture-unit-management/videoUnit.service';
 import { MockRouter } from '../../../helpers/mocks/mock-router';
-import { Component, EventEmitter, Input, Output } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { EditVideoUnitComponent } from 'app/lecture/lecture-unit/lecture-unit-management/edit-video-unit/edit-video-unit.component';
 import { MockProvider } from 'ng-mocks';
 import { AlertService } from 'app/core/util/alert.service';
-import { ActivatedRoute, Router } from '@angular/router';
+import { ActivatedRoute, Router, convertToParamMap } from '@angular/router';
 import { of } from 'rxjs';
 import { VideoUnit } from 'app/entities/lecture-unit/videoUnit.model';
 import { HttpResponse } from '@angular/common/http';
 import { By } from '@angular/platform-browser';
-
-@Component({ selector: 'jhi-video-unit-form', template: '' })
-class VideoUnitFormStubComponent {
-    @Input() isEditMode = false;
-    @Input() formData: VideoUnitFormData;
-    @Output() formSubmitted: EventEmitter<VideoUnitFormData> = new EventEmitter<VideoUnitFormData>();
-}
-
-@Component({ selector: 'jhi-lecture-unit-layout', template: '<ng-content />' })
-class LectureUnitLayoutStubComponent {
-    @Input()
-    isLoading = false;
-}
+import { ArtemisTestModule } from '../../../test.module';
+import { VideoUnitFormComponent } from 'app/lecture/lecture-unit/lecture-unit-management/video-unit-form/video-unit-form.component';
+import { OwlNativeDateTimeModule } from '@danielmoncada/angular-datetime-picker';
 
 describe('EditVideoUnitComponent', () => {
-    let editVideoUnitComponentFixture: ComponentFixture<EditVideoUnitComponent>;
+    let fixture: ComponentFixture<EditVideoUnitComponent>;
     let editVideoUnitComponent: EditVideoUnitComponent;
 
-    beforeEach(() => {
-        TestBed.configureTestingModule({
-            imports: [],
-            declarations: [VideoUnitFormStubComponent, LectureUnitLayoutStubComponent, EditVideoUnitComponent],
+    beforeEach(async () => {
+        await TestBed.configureTestingModule({
+            imports: [ArtemisTestModule, OwlNativeDateTimeModule],
             providers: [
                 MockProvider(VideoUnitService),
                 MockProvider(AlertService),
@@ -42,6 +28,9 @@ describe('EditVideoUnitComponent', () => {
                 {
                     provide: ActivatedRoute,
                     useValue: {
+                        snapshot: {
+                            paramMap: convertToParamMap({ videoUnitId: 1 }),
+                        },
                         paramMap: of({
                             get: (key: string) => {
                                 switch (key) {
@@ -66,12 +55,10 @@ describe('EditVideoUnitComponent', () => {
                 },
             ],
             schemas: [],
-        })
-            .compileComponents()
-            .then(() => {
-                editVideoUnitComponentFixture = TestBed.createComponent(EditVideoUnitComponent);
-                editVideoUnitComponent = editVideoUnitComponentFixture.componentInstance;
-            });
+        }).compileComponents();
+
+        fixture = TestBed.createComponent(EditVideoUnitComponent);
+        editVideoUnitComponent = fixture.componentInstance;
     });
 
     afterEach(() => {
@@ -79,7 +66,7 @@ describe('EditVideoUnitComponent', () => {
     });
 
     it('should initialize', () => {
-        editVideoUnitComponentFixture.detectChanges();
+        fixture.detectChanges();
         expect(editVideoUnitComponent).not.toBeNull();
     });
 
@@ -99,15 +86,16 @@ describe('EditVideoUnitComponent', () => {
         });
 
         const findByIdStub = jest.spyOn(videoUnitService, 'findById').mockReturnValue(of(response));
-        const videoUnitFormStubComponent: VideoUnitFormStubComponent = editVideoUnitComponentFixture.debugElement.query(By.directive(VideoUnitFormStubComponent)).componentInstance;
-        editVideoUnitComponentFixture.detectChanges(); // onInit
+        fixture.detectChanges();
+        const videoUnitFormComponent: VideoUnitFormComponent = fixture.debugElement.query(By.directive(VideoUnitFormComponent)).componentInstance;
+        fixture.detectChanges(); // onInit
         expect(editVideoUnitComponent.videoUnit).toEqual(videoUnitOfResponse);
         expect(findByIdStub).toHaveBeenCalledOnce();
         expect(editVideoUnitComponent.formData.name).toEqual(videoUnitOfResponse.name);
         expect(editVideoUnitComponent.formData.releaseDate).toEqual(videoUnitOfResponse.releaseDate);
         expect(editVideoUnitComponent.formData.description).toEqual(videoUnitOfResponse.description);
         expect(editVideoUnitComponent.formData.source).toEqual(videoUnitOfResponse.source);
-        expect(videoUnitFormStubComponent.formData).toEqual(editVideoUnitComponent.formData);
+        expect(videoUnitFormComponent.formData()).toEqual(editVideoUnitComponent.formData);
     });
 
     it('should send PUT request upon form submission and navigate', () => {
@@ -127,7 +115,7 @@ describe('EditVideoUnitComponent', () => {
         });
         const findByIdStub = jest.spyOn(videoUnitService, 'findById').mockReturnValue(of(findByIdResponse));
 
-        editVideoUnitComponentFixture.detectChanges(); // onInit
+        fixture.detectChanges(); // onInit
         expect(findByIdStub).toHaveBeenCalledOnce();
         expect(editVideoUnitComponent.videoUnit).toEqual(videoUnitInDatabase);
 
@@ -143,7 +131,7 @@ describe('EditVideoUnitComponent', () => {
         const updatedStub = jest.spyOn(videoUnitService, 'update').mockReturnValue(of(updateResponse));
         const navigateSpy = jest.spyOn(router, 'navigate');
 
-        const textUnitForm: VideoUnitFormStubComponent = editVideoUnitComponentFixture.debugElement.query(By.directive(VideoUnitFormStubComponent)).componentInstance;
+        const textUnitForm: VideoUnitFormComponent = fixture.debugElement.query(By.directive(VideoUnitFormComponent)).componentInstance;
         textUnitForm.formSubmitted.emit({
             name: changedUnit.name,
             description: changedUnit.description,
