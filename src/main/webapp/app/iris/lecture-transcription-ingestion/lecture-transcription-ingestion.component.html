@@ -2,11 +2,11 @@
     <div>
         <h3>Ingest transcription by lecture id</h3>
         <input placeholder="Lecture ID" [(ngModel)]="lectureIdInput" />
-        <jhi-button id="ingest-transcription" [icon]="faCheck" [isLoading]="isIngestionLoading" (onClick)="ingestTranscription()" />
+        <jhi-button [icon]="faCheck" (onClick)="ingestTranscription()" />
     </div>
     <div class="insert-db-container">
         <h3>Insert transcription into DB</h3>
-        <textarea></textarea>
-        <jhi-button id="insert-db-transcription" [icon]="faCheck" [isLoading]="isIngestionLoading" (onClick)="ingestTranscription()" />
+        <textarea [(ngModel)]="transcriptionInput"></textarea>
+        <jhi-button [icon]="faCheck" (onClick)="createTranscription()" />
     </div>
 </div>

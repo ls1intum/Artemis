@@ -8,11 +8,13 @@ import jakarta.persistence.Entity;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.OneToMany;
-import jakarta.persistence.OrderColumn;
+import jakarta.persistence.OrderBy;
 import jakarta.persistence.Table;
 
 import org.hibernate.annotations.Cache;
 import org.hibernate.annotations.CacheConcurrencyStrategy;
+
+import com.fasterxml.jackson.annotation.JsonIgnore;
 
 import de.tum.cit.aet.artemis.core.domain.DomainObject;
 
@@ -20,27 +22,26 @@ import de.tum.cit.aet.artemis.core.domain.DomainObject;
 @Table(name = "transcription")
 public class Transcription extends DomainObject {
 
-    private String language;
-
     @ManyToOne
     @JoinColumn(name = "lecture_id")
     @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
+    @JsonIgnore
     private Lecture lecture;
 
+    private String language;
+
     @OneToMany(cascade = CascadeType.ALL)
-    @OrderColumn(name = "start_time")
+    @OrderBy("startTime asc")
     @JoinColumn(name = "transcription_id")
     private List<TranscriptionSegment> segments = new ArrayList<>();
 
     public Transcription() {
     }
 
-    public String getLanguage() {
-        return language;
-    }
-
-    public void setLanguage(String language) {
+    public Transcription(Lecture lecture, String language, List<TranscriptionSegment> segments) {
+        this.lecture = lecture;
         this.language = language;
+        this.segments = segments;
     }
 
     public Lecture getLecture() {
@@ -51,11 +52,24 @@ public class Transcription extends DomainObject {
         this.lecture = lecture;
     }
 
+    public String getLanguage() {
+        return language;
+    }
+
+    public void setLanguage(String language) {
+        this.language = language;
+    }
+
     public List<TranscriptionSegment> getSegments() {
         return segments;
     }
 
     public void setSegments(List<TranscriptionSegment> segments) {
         this.segments = segments;
+    }
+
+    @Override
+    public String toString() {
+        return "Transcription [language=" + language + ", segments=" + segments + "]";
     }
 }

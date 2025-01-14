@@ -32,6 +32,8 @@
                     type="DOUBLE"/>
             <column name="text"
                     type="CLOB"/>
+            <column name="slide_number"
+                    type="INT"/>
             <column name="lecture_unit_id"
                     type="BIGINT"/>
             <column name="transcription_id"

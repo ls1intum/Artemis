@@ -4,19 +4,21 @@ import { Observable } from 'rxjs';
 
 @Injectable({ providedIn: 'root' })
 export class IrisTranscriptionService {
-    private resourceURL = 'api';
-
     constructor(private httpClient: HttpClient) {}
 
     ingestTranscription(courseId: number, lectureId: number): Observable<string> {
-        console.log('inserting123');
-        console.log(`${this.resourceURL}/courses/${courseId}/ingest-transcription?lectureId=${lectureId}`);
         return this.httpClient.put(
-            `${this.resourceURL}/courses/${courseId}/ingest-transcription?lectureId=${lectureId}`,
+            `api/courses/${courseId}/ingest-transcription?lectureId=${lectureId}`,
             {},
             {
                 responseType: 'text',
             },
         );
+    }
+
+    createTranscription(transcription: any): Observable<string> {
+        return this.httpClient.post(`api/transcription`, transcription, {
+            responseType: 'text',
+        });
     }
 }

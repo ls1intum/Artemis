@@ -12,16 +12,17 @@ export class LectureTranscriptionIngestionComponent {
     public courseId: number;
 
     lectureIdInput = '';
-
-    isIngestionLoading = false;
+    transcriptionInput = '';
 
     faCheck = faCheck;
 
     constructor(private irisTranscriptionService: IrisTranscriptionService) {}
 
     ingestTranscription(): void {
-        this.irisTranscriptionService.ingestTranscription(this.courseId, Number(this.lectureIdInput)).subscribe((response) => {
-            console.log('Response received:', response);
-        });
+        this.irisTranscriptionService.ingestTranscription(this.courseId, Number(this.lectureIdInput)).subscribe(() => {});
+    }
+
+    createTranscription(): void {
+        this.irisTranscriptionService.createTranscription(JSON.parse(this.transcriptionInput)).subscribe(() => {});
     }
 }

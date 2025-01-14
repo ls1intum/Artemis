@@ -51,6 +51,7 @@ import de.tum.cit.aet.artemis.lecture.domain.AttachmentUnit;
 import de.tum.cit.aet.artemis.lecture.domain.ExerciseUnit;
 import de.tum.cit.aet.artemis.lecture.domain.Lecture;
 import de.tum.cit.aet.artemis.lecture.domain.LectureUnit;
+import de.tum.cit.aet.artemis.lecture.domain.Transcription;
 import de.tum.cit.aet.artemis.lecture.repository.LectureRepository;
 import de.tum.cit.aet.artemis.lecture.service.LectureImportService;
 import de.tum.cit.aet.artemis.lecture.service.LectureService;
@@ -310,13 +311,13 @@ public class LectureResource {
         if (lectureId.isPresent()) {
             Optional<Lecture> lectureToIngest = course.getLectures().stream().filter(lecture -> lecture.getId().equals(lectureId.get())).findFirst();
             if (lectureToIngest.isPresent()) {
-                // Set<Transcription> lecturesToIngest = new HashSet<>(lectureToIngest.get().getTranscriptions());
-                // lectureService.ingestTranscriptionInPyris(lecturesToIngest);
+                Set<Transcription> lecturesToIngest = new HashSet<>(lectureToIngest.get().getTranscriptions());
+                lectureService.ingestTranscriptionInPyris(lecturesToIngest);
                 return ResponseEntity.ok().build();
             }
             return ResponseEntity.badRequest().headers(HeaderUtil.createAlert(applicationName, "artemisApp.iris.ingestionAlert.allLecturesError", "idExists")).body(null);
         }
-        // lectureService.ingestTranscriptionInPyris(course.getLectures().stream().map(Lecture::getTranscriptions).flatMap(List::stream).collect(Collectors.toSet()));
+        lectureService.ingestTranscriptionInPyris(course.getLectures().stream().map(Lecture::getTranscriptions).flatMap(List::stream).collect(Collectors.toSet()));
         return ResponseEntity.ok().build();
     }
 
