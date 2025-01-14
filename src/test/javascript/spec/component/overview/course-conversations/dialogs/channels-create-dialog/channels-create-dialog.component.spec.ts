@@ -4,7 +4,7 @@ import { ChannelsCreateDialogComponent } from 'app/overview/course-conversations
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { MockPipe, MockProvider } from 'ng-mocks';
 import { Course } from 'app/entities/course.model';
-import { ChannelFormData } from 'app/overview/course-conversations/dialogs/channels-create-dialog/channel-form/channel-form.component';
+import { ChannelFormComponent, ChannelFormData } from 'app/overview/course-conversations/dialogs/channels-create-dialog/channel-form/channel-form.component';
 import { By } from '@angular/platform-browser';
 import { ChannelDTO } from 'app/entities/metis/conversation/channel.model';
 import { initializeDialog } from '../dialog-test-helpers';
@@ -77,7 +77,7 @@ describe('ChannelsCreateDialogComponent', () => {
 
     it('should change channel scope type when channel scope type is changed in channel form', () => {
         expect(component.isCourseWideChannel).toBeFalse();
-        const form: ChannelFormStubComponent = fixture.debugElement.query(By.directive(ChannelFormStubComponent)).componentInstance;
+        const form: ChannelFormComponent = fixture.debugElement.query(By.directive(ChannelFormComponent)).componentInstance;
         form.isCourseWideChannelChanged.emit(true);
         expect(component.isCourseWideChannel).toBeTrue();
     });
@@ -117,7 +117,7 @@ describe('ChannelsCreateDialogComponent', () => {
             isCourseWideChannel: false,
         };
 
-        const form: ChannelFormStubComponent = fixture.debugElement.query(By.directive(ChannelFormStubComponent)).componentInstance;
+        const form: ChannelFormComponent = fixture.debugElement.query(By.directive(ChannelFormComponent)).componentInstance;
         form.formSubmitted.emit(formData);
 
         expect(createChannelSpy).toHaveBeenCalledOnce();
