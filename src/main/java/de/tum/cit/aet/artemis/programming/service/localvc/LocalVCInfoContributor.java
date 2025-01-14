@@ -1,10 +1,12 @@
 package de.tum.cit.aet.artemis.programming.service.localvc;
 
+import static de.tum.cit.aet.artemis.core.config.Constants.INFO_CODE_BUTTON_AUTHENTICATION_MECHANISMS;
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_LOCALVC;
 
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
+import java.util.List;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -31,6 +33,9 @@ public class LocalVCInfoContributor implements InfoContributor {
     @Value("${artemis.version-control.use-version-control-access-token:false}")
     private boolean useVcsAccessToken;
 
+    @Value("${artemis.version-control.repository-authentication-mechanisms:password,token,ssh}")
+    private List<String> orderedAuthenticationMechanisms;
+
     @Value("${artemis.version-control.show-clone-url-without-token:true}")
     private boolean showCloneUrlWithoutToken;
 
@@ -47,10 +52,8 @@ public class LocalVCInfoContributor implements InfoContributor {
 
         // Show the access token in case it is available in the clone URL
         // with the account.service.ts and its check if the access token is required
-        // TODO: Find a better way to test this in LocalVCInfoContributorTest
-        builder.withDetail(Constants.INFO_VERSION_CONTROL_ACCESS_TOKEN_DETAIL, useVcsAccessToken);
-        builder.withDetail(Constants.INFO_SHOW_CLONE_URL_WITHOUT_TOKEN, showCloneUrlWithoutToken);
 
+        builder.withDetail(INFO_CODE_BUTTON_AUTHENTICATION_MECHANISMS, orderedAuthenticationMechanisms);
         // Store ssh url template
         try {
             var serverUri = new URI(artemisServerUrl);

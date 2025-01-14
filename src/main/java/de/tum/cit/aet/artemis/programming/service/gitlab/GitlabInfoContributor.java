@@ -1,6 +1,7 @@
 package de.tum.cit.aet.artemis.programming.service.gitlab;
 
 import java.net.URL;
+import java.util.List;
 import java.util.Optional;
 
 import org.springframework.beans.factory.annotation.Value;
@@ -29,6 +30,9 @@ public class GitlabInfoContributor implements InfoContributor {
 
     @Value("${artemis.version-control.use-version-control-access-token:#{false}}")
     private Boolean useVersionControlAccessToken;
+
+    @Value("${artemis.version-control.repository-authentication-mechanisms:password,token,ssh}")
+    private List<String> orderedAuthenticationMechanisms;
 
     @Value("${artemis.version-control.show-clone-url-without-token:true}")
     private boolean showCloneUrlWithoutToken;

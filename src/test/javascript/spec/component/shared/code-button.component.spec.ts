@@ -163,7 +163,7 @@ describe('CodeButtonComponent', () => {
         getVcsAccessTokenSpy = jest.spyOn(accountService, 'getVcsAccessToken').mockReturnValue(throwError(() => new HttpErrorResponse({ status: 404, statusText: 'Not found' })));
         stubServices();
         participation.id = 1;
-        component.useParticipationVcsAccessToken = true;
+        component.useParticipationToken = true;
         component.participations = [participation];
         await component.ngOnInit();
         component.ngOnChanges();
@@ -177,7 +177,7 @@ describe('CodeButtonComponent', () => {
     it('should not create new vcsAccessToken when it exists', async () => {
         participation.id = 1;
         component.participations = [participation];
-        component.useParticipationVcsAccessToken = true;
+        component.useParticipationToken = true;
         stubServices();
         await component.ngOnInit();
         component.ngOnChanges();
@@ -210,7 +210,7 @@ describe('CodeButtonComponent', () => {
     it('should not use ssh when ssh is not enabled (even if useSsh is set)', () => {
         participation.repositoryUri = `https://gitlab.ase.in.tum.de/scm/ITCPLEASE1/itcplease1-exercise-team1.git`;
         component.participations = [participation];
-        component.useParticipationVcsAccessToken = true;
+        component.useParticipationToken = true;
         component.useSsh = false;
         component.isTeamParticipation = false;
         component.accessTokensEnabled = true;
@@ -262,7 +262,7 @@ describe('CodeButtonComponent', () => {
     it('should insert the correct token in the repository uri', () => {
         participation.repositoryUri = `https://${component.user.login}@gitlab.ase.in.tum.de/scm/ITCPLEASE1/itcplease1-exercise-team1.git`;
         component.participations = [participation];
-        component.useParticipationVcsAccessToken = true;
+        component.useParticipationToken = true;
         component.useSsh = false;
         component.isTeamParticipation = false;
         component.accessTokensEnabled = true;
@@ -293,7 +293,7 @@ describe('CodeButtonComponent', () => {
     it('should add the user login and token to the URL', () => {
         participation.repositoryUri = `https://gitlab.ase.in.tum.de/scm/ITCPLEASE1/itcplease1-exercise-team1.git`;
         component.participations = [participation];
-        component.useParticipationVcsAccessToken = true;
+        component.useParticipationToken = true;
         component.useSsh = false;
         component.isTeamParticipation = false;
         component.accessTokensEnabled = true;

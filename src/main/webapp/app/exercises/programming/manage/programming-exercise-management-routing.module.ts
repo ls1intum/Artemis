@@ -109,10 +109,6 @@ export const routes: Routes = [
         canActivate: [UserRouteAccessService],
     },
     {
-        path: ':courseId/programming-exercises',
-        redirectTo: ':courseId/exercises',
-    },
-    {
         path: ':courseId/programming-exercises/:exerciseId/exercise-statistics',
         loadComponent: () => import('app/exercises/shared/statistics/exercise-statistics.component').then((m) => m.ExerciseStatisticsComponent),
         resolve: {
