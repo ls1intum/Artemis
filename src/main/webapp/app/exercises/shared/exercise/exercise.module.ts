@@ -9,8 +9,15 @@ import { ArtemisChartsModule } from 'app/shared/chart/artemis-charts.module';
 import { QuizExerciseLifecycleButtonsComponent } from 'app/exercises/quiz/manage/quiz-exercise-lifecycle-buttons.component';
 
 @NgModule({
-    imports: [ArtemisSharedModule, ArtemisSharedComponentModule, FormsModule, ArtemisChartsModule],
-    declarations: [ExerciseDetailStatisticsComponent, ExerciseStatisticsComponent, QuizExerciseLifecycleButtonsComponent],
+    imports: [
+        ArtemisSharedModule,
+        ArtemisSharedComponentModule,
+        FormsModule,
+        ArtemisChartsModule,
+        ExerciseDetailStatisticsComponent,
+        ExerciseStatisticsComponent,
+        QuizExerciseLifecycleButtonsComponent,
+    ],
     exports: [ExerciseDetailStatisticsComponent, ExerciseStatisticsComponent, QuizExerciseLifecycleButtonsComponent],
 })
 export class ArtemisExerciseModule {}

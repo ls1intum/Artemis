@@ -17,7 +17,6 @@ import { MockSyncStorage } from '../../helpers/mocks/service/mock-sync-storage.s
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { MockTranslateService, TranslateTestingModule } from '../../helpers/mocks/service/mock-translate.service';
 import { TextAssessmentEventType } from 'app/entities/text/text-assesment-event.model';
-import { NgModel } from '@angular/forms';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { TextblockFeedbackDropdownComponent } from 'app/exercises/text/assess/textblock-feedback-editor/dropdown/textblock-feedback-dropdown.component';
 
@@ -39,7 +38,6 @@ describe('TextblockFeedbackEditorComponent', () => {
                 MockComponent(FaLayersComponent),
                 MockComponent(GradingInstructionLinkIconComponent),
                 MockDirective(TranslateDirective),
-                MockDirective(NgModel),
             ],
             providers: [
                 MockProvider(ChangeDetectorRef),

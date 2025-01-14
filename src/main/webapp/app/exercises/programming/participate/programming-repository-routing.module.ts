@@ -1,15 +1,13 @@
 import { RouterModule, Routes } from '@angular/router';
 import { NgModule } from '@angular/core';
 import { Authority } from 'app/shared/constants/authority.constants';
-import { RepositoryViewComponent } from 'app/localvc/repository-view/repository-view.component';
-import { CommitHistoryComponent } from 'app/localvc/commit-history/commit-history.component';
-import { CommitDetailsViewComponent } from 'app/localvc/commit-details-view/commit-details-view.component';
+
 import { LocalVCGuard } from 'app/localvc/localvc-guard.service';
 import { UserRouteAccessService } from 'app/core/auth/user-route-access-service';
 const routes: Routes = [
     {
         path: ':participationId',
-        component: RepositoryViewComponent,
+        loadComponent: () => import('app/localvc/repository-view/repository-view.component').then((m) => m.RepositoryViewComponent),
         data: {
             authorities: [Authority.USER],
             pageTitle: 'artemisApp.repository.title',
@@ -18,7 +16,7 @@ const routes: Routes = [
     },
     {
         path: ':participationId/commit-history',
-        component: CommitHistoryComponent,
+        loadComponent: () => import('app/localvc/commit-history/commit-history.component').then((m) => m.CommitHistoryComponent),
         data: {
             authorities: [Authority.USER],
             pageTitle: 'artemisApp.repository.commitHistory.title',
@@ -27,7 +25,7 @@ const routes: Routes = [
     },
     {
         path: ':participationId/commit-history/:commitHash',
-        component: CommitDetailsViewComponent,
+        loadComponent: () => import('app/localvc/commit-details-view/commit-details-view.component').then((m) => m.CommitDetailsViewComponent),
         data: {
             authorities: [Authority.USER],
             pageTitle: 'artemisApp.repository.commitHistory.commitDetails.title',
@@ -36,7 +34,7 @@ const routes: Routes = [
     },
     {
         path: ':repositoryType',
-        component: RepositoryViewComponent,
+        loadComponent: () => import('app/localvc/repository-view/repository-view.component').then((m) => m.RepositoryViewComponent),
         data: {
             authorities: [Authority.ADMIN, Authority.INSTRUCTOR, Authority.TA],
             pageTitle: 'artemisApp.repository.title',

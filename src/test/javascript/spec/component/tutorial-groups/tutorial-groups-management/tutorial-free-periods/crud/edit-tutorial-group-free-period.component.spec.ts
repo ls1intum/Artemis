@@ -1,14 +1,11 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { MockPipe, MockProvider } from 'ng-mocks';
+import { MockProvider } from 'ng-mocks';
 import { AlertService } from 'app/core/util/alert.service';
 import { of } from 'rxjs';
-import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { HttpResponse } from '@angular/common/http';
 import { By } from '@angular/platform-browser';
-import { LoadingIndicatorContainerStubComponent } from '../../../../../helpers/stubs/loading-indicator-container-stub.component';
 import dayjs from 'dayjs/esm';
 import { EditTutorialGroupFreePeriodComponent } from 'app/course/tutorial-groups/tutorial-groups-management/tutorial-free-periods/crud/edit-tutorial-group-free-period/edit-tutorial-group-free-period.component';
-import { TutorialGroupFreePeriodFormStubComponent } from '../../../stubs/tutorial-group-free-period-form-stub.component';
 import { TutorialGroupFreePeriodService } from 'app/course/tutorial-groups/services/tutorial-group-free-period.service';
 import { TutorialGroupFreePeriod } from 'app/entities/tutorial-group/tutorial-group-free-day.model';
 import {
@@ -20,6 +17,9 @@ import { Course } from 'app/entities/course.model';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import { TutorialGroupsConfiguration } from 'app/entities/tutorial-group/tutorial-groups-configuration.model';
 import { generateExampleTutorialGroupsConfiguration } from '../../../helpers/tutorialGroupsConfigurationExampleModels';
+import { ArtemisTestModule } from '../../../../../test.module';
+import { TutorialGroupFreePeriodFormComponent } from '../../../../../../../../main/webapp/app/course/tutorial-groups/tutorial-groups-management/tutorial-free-periods/crud/tutorial-free-period-form/tutorial-group-free-period-form.component';
+import { OwlNativeDateTimeModule } from '@danielmoncada/angular-datetime-picker';
 
 describe('EditTutorialGroupFreePeriodComponent', () => {
     let fixture: ComponentFixture<EditTutorialGroupFreePeriodComponent>;
@@ -35,13 +35,10 @@ describe('EditTutorialGroupFreePeriodComponent', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            declarations: [EditTutorialGroupFreePeriodComponent, LoadingIndicatorContainerStubComponent, TutorialGroupFreePeriodFormStubComponent, MockPipe(ArtemisTranslatePipe)],
+            imports: [ArtemisTestModule, OwlNativeDateTimeModule],
             providers: [MockProvider(TutorialGroupFreePeriodService), MockProvider(AlertService), MockProvider(NgbActiveModal)],
-        })
-            .compileComponents()
-            .then(() => {
-                setUpTestComponent(generateExampleTutorialGroupFreePeriod({}));
-            });
+        }).compileComponents();
+        setUpTestComponent(generateExampleTutorialGroupFreePeriod({}));
     });
 
     afterEach(() => {
@@ -53,7 +50,7 @@ describe('EditTutorialGroupFreePeriodComponent', () => {
     });
 
     it('should set form data correctly for editing free days', () => {
-        const formStub: TutorialGroupFreePeriodFormStubComponent = fixture.debugElement.query(By.directive(TutorialGroupFreePeriodFormStubComponent)).componentInstance;
+        const formStub: TutorialGroupFreePeriodFormComponent = fixture.debugElement.query(By.directive(TutorialGroupFreePeriodFormComponent)).componentInstance;
         expect(component.formData).toEqual(tutorialGroupFreePeriodToTutorialGroupFreePeriodFormData(examplePeriod, 'Europe/Berlin'));
         expect(formStub.formData).toEqual(component.formData);
     });
@@ -68,7 +65,7 @@ describe('EditTutorialGroupFreePeriodComponent', () => {
 
         setUpTestComponent(periodToEdit);
 
-        const formStub: TutorialGroupFreePeriodFormStubComponent = fixture.debugElement.query(By.directive(TutorialGroupFreePeriodFormStubComponent)).componentInstance;
+        const formStub: TutorialGroupFreePeriodFormComponent = fixture.debugElement.query(By.directive(TutorialGroupFreePeriodFormComponent)).componentInstance;
         expect(component.formData).toEqual(tutorialGroupFreePeriodToTutorialGroupFreePeriodFormData(periodToEdit, 'Europe/Berlin'));
         expect(formStub.formData).toEqual(component.formData);
     });
@@ -81,7 +78,7 @@ describe('EditTutorialGroupFreePeriodComponent', () => {
             reason: 'TestReason',
         });
         setUpTestComponent(periodWithinDayToEdit);
-        const formStub: TutorialGroupFreePeriodFormStubComponent = fixture.debugElement.query(By.directive(TutorialGroupFreePeriodFormStubComponent)).componentInstance;
+        const formStub: TutorialGroupFreePeriodFormComponent = fixture.debugElement.query(By.directive(TutorialGroupFreePeriodFormComponent)).componentInstance;
         expect(component.formData).toEqual(tutorialGroupFreePeriodToTutorialGroupFreePeriodFormData(periodWithinDayToEdit, 'Europe/Berlin'));
         expect(formStub.formData).toEqual(component.formData);
     });
@@ -100,7 +97,7 @@ describe('EditTutorialGroupFreePeriodComponent', () => {
         const closeSpy = jest.spyOn(activeModal, 'close');
         const updatedStub = jest.spyOn(periodService, 'update').mockReturnValue(of(updateResponse));
 
-        const sessionForm: TutorialGroupFreePeriodFormStubComponent = fixture.debugElement.query(By.directive(TutorialGroupFreePeriodFormStubComponent)).componentInstance;
+        const sessionForm: TutorialGroupFreePeriodFormComponent = fixture.debugElement.query(By.directive(TutorialGroupFreePeriodFormComponent)).componentInstance;
 
         const formData = {
             startDate: dayjs('2021-01-01T00:00:00').tz('Europe/Berlin').toDate(),

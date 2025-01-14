@@ -1,5 +1,5 @@
-import { Component, Input, OnDestroy, OnInit } from '@angular/core';
-import { ActivatedRoute, Router } from '@angular/router';
+import { Component, Input, OnDestroy, OnInit, inject } from '@angular/core';
+import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { QuizStatisticUtil } from 'app/exercises/quiz/shared/quiz-statistic-util.service';
 import { ShortAnswerQuestionUtil } from 'app/exercises/quiz/shared/short-answer-question-util.service';
 import { TranslateService } from '@ngx-translate/core';
@@ -16,14 +16,30 @@ import { Authority } from 'app/shared/constants/authority.constants';
 import { UI_RELOAD_TIME } from 'app/shared/constants/exercise-exam-constants';
 import { faListAlt } from '@fortawesome/free-regular-svg-icons';
 import { ArtemisServerDateService } from 'app/shared/server-date.service';
+import { NgbDropdown, NgbDropdownMenu, NgbDropdownToggle } from '@ng-bootstrap/ng-bootstrap';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { NgClass } from '@angular/common';
+import { JhiConnectionStatusComponent } from 'app/shared/connection-status/connection-status.component';
+import { TruncatePipe } from 'app/shared/pipes/truncate.pipe';
 
 @Component({
     selector: 'jhi-quiz-statistics-footer',
     templateUrl: './quiz-statistics-footer.component.html',
     providers: [QuizStatisticUtil, ShortAnswerQuestionUtil],
     styleUrls: ['./quiz-statistics-footer.component.scss', '../../../shared/quiz.scss'],
+    imports: [NgbDropdown, NgbDropdownToggle, FaIconComponent, TranslateDirective, NgbDropdownMenu, RouterLink, NgClass, JhiConnectionStatusComponent, TruncatePipe],
 })
 export class QuizStatisticsFooterComponent implements OnInit, OnDestroy {
+    private route = inject(ActivatedRoute);
+    private router = inject(Router);
+    private accountService = inject(AccountService);
+    private translateService = inject(TranslateService);
+    private quizExerciseService = inject(QuizExerciseService);
+    private quizStatisticUtil = inject(QuizStatisticUtil);
+    private jhiWebsocketService = inject(JhiWebsocketService);
+    private serverDateService = inject(ArtemisServerDateService);
+
     @Input() isQuizPointStatistic: boolean;
     @Input() isQuizStatistic: boolean;
 
@@ -46,17 +62,6 @@ export class QuizStatisticsFooterComponent implements OnInit, OnDestroy {
 
     // Icons
     farListAlt = faListAlt;
-
-    constructor(
-        private route: ActivatedRoute,
-        private router: Router,
-        private accountService: AccountService,
-        private translateService: TranslateService,
-        private quizExerciseService: QuizExerciseService,
-        private quizStatisticUtil: QuizStatisticUtil,
-        private jhiWebsocketService: JhiWebsocketService,
-        private serverDateService: ArtemisServerDateService,
-    ) {}
 
     ngOnInit() {
         this.sub = this.route.params.subscribe((params) => {

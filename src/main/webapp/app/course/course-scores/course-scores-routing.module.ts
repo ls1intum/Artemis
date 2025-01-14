@@ -1,19 +1,18 @@
 import { RouterModule, Routes } from '@angular/router';
-import { CourseScoresComponent } from 'app/course/course-scores/course-scores.component';
+
 import { UserRouteAccessService } from 'app/core/auth/user-route-access-service';
 import { NgModule } from '@angular/core';
 import { Authority } from 'app/shared/constants/authority.constants';
 import { CourseManagementResolve } from 'app/course/manage/course-management-resolve.service';
-import { CourseManagementTabBarComponent } from 'app/course/manage/course-management-tab-bar/course-management-tab-bar.component';
 
 const routes: Routes = [
     {
         path: ':courseId/scores',
-        component: CourseManagementTabBarComponent,
+        loadComponent: () => import('app/course/manage/course-management-tab-bar/course-management-tab-bar.component').then((m) => m.CourseManagementTabBarComponent),
         children: [
             {
                 path: '',
-                component: CourseScoresComponent,
+                loadComponent: () => import('app/course/course-scores/course-scores.component').then((m) => m.CourseScoresComponent),
                 resolve: {
                     course: CourseManagementResolve,
                 },

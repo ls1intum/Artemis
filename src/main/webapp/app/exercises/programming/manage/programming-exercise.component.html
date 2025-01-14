@@ -16,10 +16,11 @@
                     <th class="d-md-table-cell" jhiSortBy="maxPoints"><span jhiTranslate="artemisApp.exercise.points"></span>&nbsp;<fa-icon [icon]="faSort" /></th>
                     <th jhiSortBy="bonusPoints"><span jhiTranslate="artemisApp.exercise.bonus"></span>&nbsp;<fa-icon [icon]="faSort" /></th>
                     <th jhiSortBy="includedInOverallScore"><span jhiTranslate="artemisApp.exercise.includedCompletely"></span>&nbsp;<fa-icon [icon]="faSort" /></th>
-                    <th *jhiExtensionPoint="overrideRepositoryAndBuildPlan"><span jhiTranslate="artemisApp.programmingExercise.repositories"></span></th>
-                    @if (!localVCEnabled) {
-                        <th *jhiExtensionPoint="overrideRepositoryAndBuildPlan"><span jhiTranslate="artemisApp.programmingExercise.buildplans"></span>&nbsp;</th>
-                    }
+                    <!-- TODO: the extension point for Orion does not work with Angular 19, we need to find a different solution -->
+                    <!--                    <th *jhiExtensionPoint="overrideRepositoryAndBuildPlan"><span jhiTranslate="artemisApp.programmingExercise.repositories"></span></th>-->
+                    <!--                    @if (!localVCEnabled) {-->
+                    <!--                        <th *jhiExtensionPoint="overrideRepositoryAndBuildPlan"><span jhiTranslate="artemisApp.programmingExercise.buildplans"></span>&nbsp;</th>-->
+                    <!--                    }-->
                     <th class="d-md-table-cell">
                         <span jhiTranslate="artemisApp.exercise.mode"></span>
                     </th>
@@ -76,7 +77,9 @@
                         <td class="d-md-table-cell">{{ programmingExercise.maxPoints }}</td>
                         <td>{{ programmingExercise.bonusPoints }}</td>
                         <td>{{ exerciseService.isIncludedInScore(programmingExercise) }}</td>
-                        <td *jhiExtensionPoint="overrideRepositoryAndBuildPlan">
+                        <!-- TODO: the extension point for Orion does not work with Angular 19, we need to find a different solution -->
+                        <!--                        <td *jhiExtensionPoint="overrideRepositoryAndBuildPlan">-->
+                        <td>
                             <div class="d-flex justify-content-between">
                                 @if (programmingExercise.templateParticipation && programmingExercise.templateParticipation.repositoryUri) {
                                     <span>
@@ -128,7 +131,9 @@
                             </div>
                         </td>
                         @if (!localVCEnabled) {
-                            <td *jhiExtensionPoint="overrideRepositoryAndBuildPlan">
+                            <!-- TODO: the extension point for Orion does not work with Angular 19, we need to find a different solution -->
+                            <!--                            <td *jhiExtensionPoint="overrideRepositoryAndBuildPlan">-->
+                            <td>
                                 @if (programmingExercise.templateParticipation?.buildPlanId) {
                                     <span> <a target="_blank" rel="noreferrer" href="{{ programmingExercise.templateParticipation!.buildPlanUrl }}">Template</a> </span>
                                 }
@@ -159,7 +164,9 @@
                         <td class="d-md-table-cell">
                             <jhi-exercise-categories [exercise]="programmingExercise" />
                         </td>
-                        <td *jhiExtensionPoint="overrideButtons; context: { exercise: programmingExercise }" class="text-end">
+                        <!-- TODO: the extension point for Orion does not work with Angular 19, we need to find a different solution -->
+                        <!--                        <td *jhiExtensionPoint="overrideButtons; context: { exercise: programmingExercise }" class="text-end">-->
+                        <td class="text-end">
                             <div class="btn-group flex-btn-group-container">
                                 <div class="btn-group-vertical me-1 mb-auto">
                                     @if (programmingExercise.teamMode && programmingExercise.isAtLeastTutor) {

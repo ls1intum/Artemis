@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, EventEmitter, Input, OnDestroy, Output } from '@angular/core';
+import { ChangeDetectionStrategy, Component, EventEmitter, Input, OnDestroy, Output, inject } from '@angular/core';
 import { EMPTY, Subject, from } from 'rxjs';
 import { faTrash, faUsers, faWrench } from '@fortawesome/free-solid-svg-icons';
 import { TutorialGroupSessionService } from 'app/course/tutorial-groups/services/tutorial-group-session.service';
@@ -10,13 +10,22 @@ import { Course } from 'app/entities/course.model';
 import { TutorialGroup } from 'app/entities/tutorial-group/tutorial-group.model';
 import { EditTutorialGroupSessionComponent } from 'app/course/tutorial-groups/tutorial-groups-management/tutorial-group-sessions/crud/edit-tutorial-group-session/edit-tutorial-group-session.component';
 import { catchError, takeUntil } from 'rxjs/operators';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { DeleteButtonDirective } from 'app/shared/delete-dialog/delete-button.directive';
+import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
+import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 
 @Component({
     selector: 'jhi-tutorial-group-session-row-buttons',
     templateUrl: './tutorial-group-session-row-buttons.component.html',
     changeDetection: ChangeDetectionStrategy.OnPush,
+    imports: [FaIconComponent, TranslateDirective, DeleteButtonDirective, ArtemisDatePipe, ArtemisTranslatePipe],
 })
 export class TutorialGroupSessionRowButtonsComponent implements OnDestroy {
+    private tutorialGroupSessionService = inject(TutorialGroupSessionService);
+    private modalService = inject(NgbModal);
+
     ngUnsubscribe = new Subject<void>();
 
     @Input() course: Course;
@@ -34,11 +43,6 @@ export class TutorialGroupSessionRowButtonsComponent implements OnDestroy {
     faWrench = faWrench;
     faUsers = faUsers;
     faTrash = faTrash;
-
-    constructor(
-        private tutorialGroupSessionService: TutorialGroupSessionService,
-        private modalService: NgbModal,
-    ) {}
 
     deleteTutorialGroupSession = () => {
         this.tutorialGroupSessionService

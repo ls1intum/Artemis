@@ -4,8 +4,7 @@ import { ModePickerComponent } from 'app/exercises/shared/mode-picker/mode-picke
 import { ArtemisSharedModule } from 'app/shared/shared.module';
 
 @NgModule({
-    imports: [ArtemisSharedModule],
-    declarations: [ModePickerComponent],
+    imports: [ArtemisSharedModule, ModePickerComponent],
     exports: [ModePickerComponent],
 })
 export class ArtemisModePickerModule {}

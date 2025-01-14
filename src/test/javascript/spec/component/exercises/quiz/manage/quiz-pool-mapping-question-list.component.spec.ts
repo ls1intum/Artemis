@@ -1,10 +1,6 @@
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
-import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
-import { MockDirective, MockPipe } from 'ng-mocks';
 import { ArtemisTestModule } from '../../../../test.module';
-import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { QuizPoolMappingQuestionListComponent } from 'app/exercises/quiz/manage/quiz-pool-mapping-question-list.component';
 import { QuizQuestion } from 'app/entities/quiz/quiz-question.model';
 // Mock before import to prevent errors
@@ -27,7 +23,6 @@ describe('QuizPoolMappingQuestionListComponent', () => {
     beforeEach(() => {
         TestBed.configureTestingModule({
             imports: [ArtemisTestModule, DragDrop.DragDropModule],
-            declarations: [QuizPoolMappingQuestionListComponent, MockPipe(ArtemisTranslatePipe), MockPipe(ArtemisDatePipe), MockDirective(TranslateDirective)],
             providers: [provideHttpClient(), provideHttpClientTesting()],
         })
             .compileComponents()

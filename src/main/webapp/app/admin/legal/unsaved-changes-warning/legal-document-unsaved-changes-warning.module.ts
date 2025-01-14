@@ -4,7 +4,6 @@ import { ArtemisSharedComponentModule } from 'app/shared/components/shared-compo
 import { ArtemisSharedCommonModule } from 'app/shared/shared-common.module';
 
 @NgModule({
-    imports: [ArtemisSharedComponentModule, ArtemisSharedCommonModule],
-    declarations: [UnsavedChangesWarningComponent],
+    imports: [ArtemisSharedComponentModule, ArtemisSharedCommonModule, UnsavedChangesWarningComponent],
 })
 export class LegalDocumentUnsavedChangesWarningModule {}

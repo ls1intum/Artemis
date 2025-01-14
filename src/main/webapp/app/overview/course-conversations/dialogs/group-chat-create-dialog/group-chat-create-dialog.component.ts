@@ -1,24 +1,21 @@
-import { Component, Input } from '@angular/core';
+import { Component, Input, inject } from '@angular/core';
 import { Course } from 'app/entities/course.model';
-import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
-import { FormBuilder, FormGroup, Validators } from '@angular/forms';
+import { FormBuilder, FormGroup, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
 import { AbstractDialogComponent } from 'app/overview/course-conversations/dialogs/abstract-dialog.component';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { CourseUsersSelectorComponent } from 'app/shared/course-users-selector/course-users-selector.component';
+import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 
 @Component({
     selector: 'jhi-group-chat-create-dialog',
     templateUrl: './group-chat-create-dialog.component.html',
+    imports: [TranslateDirective, FormsModule, ReactiveFormsModule, CourseUsersSelectorComponent, ArtemisTranslatePipe],
 })
 export class GroupChatCreateDialogComponent extends AbstractDialogComponent {
-    @Input()
-    course: Course;
-    form: FormGroup;
+    private fb = inject(FormBuilder);
 
-    constructor(
-        activeModal: NgbActiveModal,
-        private fb: FormBuilder,
-    ) {
-        super(activeModal);
-    }
+    @Input() course: Course;
+    form: FormGroup;
 
     initialize() {
         super.initialize(['course']);

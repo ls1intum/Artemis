@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, ChangeDetectorRef, Component, Input, OnDestroy } from '@angular/core';
+import { ChangeDetectionStrategy, ChangeDetectorRef, Component, Input, OnDestroy, inject } from '@angular/core';
 import { TutorialGroup } from 'app/entities/tutorial-group/tutorial-group.model';
 import { TutorialGroupsService } from 'app/course/tutorial-groups/services/tutorial-groups.service';
 import { AlertService } from 'app/core/util/alert.service';
@@ -11,13 +11,24 @@ import { AccountService } from 'app/core/auth/account.service';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import { Subject } from 'rxjs';
+import { LoadingIndicatorContainerComponent } from 'app/shared/loading-indicator-container/loading-indicator-container.component';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { CourseGroupComponent } from 'app/shared/course-group/course-group.component';
 
 @Component({
     selector: 'jhi-registered-students',
     templateUrl: './registered-students.component.html',
     changeDetection: ChangeDetectionStrategy.OnPush,
+    imports: [LoadingIndicatorContainerComponent, TranslateDirective, CourseGroupComponent],
 })
 export class RegisteredStudentsComponent implements OnDestroy {
+    private activeModal = inject(NgbActiveModal);
+    private tutorialGroupService = inject(TutorialGroupsService);
+    private alertService = inject(AlertService);
+    private accountService = inject(AccountService);
+    private courseService = inject(CourseManagementService);
+    private cdr = inject(ChangeDetectorRef);
+
     @Input()
     course: Course;
 
@@ -47,15 +58,6 @@ export class RegisteredStudentsComponent implements OnDestroy {
             return this.numberOfRegistrations >= this.tutorialGroup.capacity;
         }
     }
-
-    constructor(
-        private activeModal: NgbActiveModal,
-        private tutorialGroupService: TutorialGroupsService,
-        private alertService: AlertService,
-        private accountService: AccountService,
-        private courseService: CourseManagementService,
-        private cdr: ChangeDetectorRef,
-    ) {}
 
     ngOnDestroy(): void {
         this.ngUnsubscribe.next();
