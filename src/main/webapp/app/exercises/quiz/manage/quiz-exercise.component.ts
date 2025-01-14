@@ -10,10 +10,34 @@ import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service'
 import { AlertService } from 'app/core/util/alert.service';
 import { faSort, faTrash } from '@fortawesome/free-solid-svg-icons';
 import { isQuizEditable } from 'app/exercises/quiz/shared/quiz-manage-util.service';
+import { SortDirective } from 'app/shared/sort/sort.directive';
+import { FormsModule } from '@angular/forms';
+import { SortByDirective } from 'app/shared/sort/sort-by.directive';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { RouterLink } from '@angular/router';
+import { QuizExerciseLifecycleButtonsComponent } from './quiz-exercise-lifecycle-buttons.component';
+import { ExerciseCategoriesComponent } from 'app/shared/exercise-categories/exercise-categories.component';
+import { QuizExerciseManageButtonsComponent } from './quiz-exercise-manage-buttons.component';
+import { DeleteButtonDirective } from 'app/shared/delete-dialog/delete-button.directive';
+import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 
 @Component({
     selector: 'jhi-quiz-exercise',
     templateUrl: './quiz-exercise.component.html',
+    imports: [
+        SortDirective,
+        FormsModule,
+        SortByDirective,
+        TranslateDirective,
+        FaIconComponent,
+        RouterLink,
+        QuizExerciseLifecycleButtonsComponent,
+        ExerciseCategoriesComponent,
+        QuizExerciseManageButtonsComponent,
+        DeleteButtonDirective,
+        ArtemisDatePipe,
+    ],
 })
 export class QuizExerciseComponent extends ExerciseComponent {
     protected exerciseService = inject(ExerciseService);

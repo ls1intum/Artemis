@@ -17,7 +17,6 @@ describe('hasLectureUnsavedChanges', () => {
     beforeEach(() => {
         TestBed.configureTestingModule({
             imports: [],
-            declarations: [LectureUpdateComponent],
             providers: [
                 { provide: Router, useClass: MockRouter },
                 { provide: NgbModal, useClass: MockNgbModalService },

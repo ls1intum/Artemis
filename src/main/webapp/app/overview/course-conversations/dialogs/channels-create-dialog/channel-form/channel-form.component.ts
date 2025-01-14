@@ -1,6 +1,9 @@
-import { Component, EventEmitter, OnChanges, OnDestroy, OnInit, Output, output } from '@angular/core';
-import { FormBuilder, FormGroup, Validators } from '@angular/forms';
+import { Component, EventEmitter, OnChanges, OnDestroy, OnInit, Output, inject, output } from '@angular/core';
+import { FormBuilder, FormGroup, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
+import { ChannelIconComponent } from 'app/overview/course-conversations/other/channel-icon/channel-icon.component';
 import { Subject, takeUntil } from 'rxjs';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 
 export interface ChannelFormData {
     name?: string;
@@ -17,8 +20,11 @@ export const channelRegex = new RegExp('^[a-z0-9-]{1}[a-z0-9-]{0,30}$');
 @Component({
     selector: 'jhi-channel-form',
     templateUrl: './channel-form.component.html',
+    imports: [FormsModule, ReactiveFormsModule, TranslateDirective, ChannelIconComponent, ArtemisTranslatePipe],
 })
 export class ChannelFormComponent implements OnInit, OnChanges, OnDestroy {
+    private fb = inject(FormBuilder);
+
     private ngUnsubscribe = new Subject<void>();
 
     formData: ChannelFormData = {
@@ -34,8 +40,6 @@ export class ChannelFormComponent implements OnInit, OnChanges, OnDestroy {
     isCourseWideChannelChanged = output<boolean>();
 
     form: FormGroup;
-
-    constructor(private fb: FormBuilder) {}
 
     get nameControl() {
         return this.form.get('name');
@@ -70,7 +74,7 @@ export class ChannelFormComponent implements OnInit, OnChanges, OnDestroy {
         this.ngUnsubscribe.complete();
     }
 
-    ngOnChanges(): void {
+    ngOnChanges() {
         this.initializeForm();
     }
 

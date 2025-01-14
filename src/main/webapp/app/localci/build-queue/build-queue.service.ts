@@ -1,4 +1,4 @@
-import { Injectable } from '@angular/core';
+import { Injectable, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { catchError } from 'rxjs/operators';
@@ -11,11 +11,12 @@ import { BuildLogEntry } from 'app/entities/programming/build-log.model';
 
 @Injectable({ providedIn: 'root' })
 export class BuildQueueService {
+    private http = inject(HttpClient);
+
     public resourceUrl = 'api';
     public adminResourceUrl = 'api/admin';
     nestedDtoKey = 'pageable';
 
-    constructor(private http: HttpClient) {}
     /**
      * Get all build jobs of a course in the queue
      * @param courseId

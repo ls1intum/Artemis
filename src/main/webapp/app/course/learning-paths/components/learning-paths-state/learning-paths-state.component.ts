@@ -11,7 +11,6 @@ import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
 
 @Component({
     selector: 'jhi-learning-paths-state',
-    standalone: true,
     changeDetection: ChangeDetectionStrategy.OnPush,
     imports: [TranslateDirective, CommonModule, FontAwesomeModule],
     templateUrl: './learning-paths-state.component.html',
@@ -45,13 +44,10 @@ export class LearningPathsStateComponent {
     readonly learningPathHealthState = computed(() => this.learningPathHealth()?.status ?? []);
 
     constructor() {
-        effect(
-            () => {
-                const courseId = this.courseId();
-                untracked(() => this.loadLearningPathHealthState(courseId));
-            },
-            { allowSignalWrites: true },
-        );
+        effect(() => {
+            const courseId = this.courseId();
+            untracked(() => this.loadLearningPathHealthState(courseId));
+        });
     }
 
     protected async loadLearningPathHealthState(courseId: number): Promise<void> {

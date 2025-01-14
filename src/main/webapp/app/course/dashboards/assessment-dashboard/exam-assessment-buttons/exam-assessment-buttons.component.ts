@@ -21,7 +21,6 @@ import { TranslateDirective } from 'app/shared/language/translate.directive';
 @Component({
     selector: 'jhi-exam-assessment-buttons',
     templateUrl: './exam-assessment-buttons.component.html',
-    standalone: true,
     imports: [RouterLink, FaIconComponent, TranslateDirective],
 })
 export class ExamAssessmentButtonsComponent implements OnInit {

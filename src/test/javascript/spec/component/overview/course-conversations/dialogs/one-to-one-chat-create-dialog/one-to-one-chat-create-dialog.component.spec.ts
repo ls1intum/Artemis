@@ -1,12 +1,13 @@
 import { ComponentFixture, TestBed, waitForAsync } from '@angular/core/testing';
 import { OneToOneChatCreateDialogComponent } from 'app/overview/course-conversations/dialogs/one-to-one-chat-create-dialog/one-to-one-chat-create-dialog.component';
 import { Course } from 'app/entities/course.model';
-import { MockComponent, MockPipe, MockProvider } from 'ng-mocks';
+import { MockComponent, MockDirective, MockPipe, MockProvider } from 'ng-mocks';
 import { CourseUsersSelectorComponent } from 'app/shared/course-users-selector/course-users-selector.component';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { initializeDialog } from '../dialog-test-helpers';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
 
 describe('OneToOneChatCreateDialogComponent', () => {
     let component: OneToOneChatCreateDialogComponent;
@@ -16,7 +17,7 @@ describe('OneToOneChatCreateDialogComponent', () => {
     beforeEach(waitForAsync(() => {
         TestBed.configureTestingModule({
             imports: [FormsModule, ReactiveFormsModule],
-            declarations: [OneToOneChatCreateDialogComponent, MockComponent(CourseUsersSelectorComponent), MockPipe(ArtemisTranslatePipe)],
+            declarations: [OneToOneChatCreateDialogComponent, MockComponent(CourseUsersSelectorComponent), MockPipe(ArtemisTranslatePipe), MockDirective(TranslateDirective)],
             providers: [MockProvider(NgbActiveModal)],
         }).compileComponents();
     }));

@@ -6,8 +6,7 @@ import { RatingListComponent } from './rating-list/rating-list.component';
 import { StarRatingComponent } from 'app/exercises/shared/rating/star-rating/star-rating.component';
 
 @NgModule({
-    declarations: [RatingComponent, RatingListComponent, StarRatingComponent],
     exports: [RatingComponent, StarRatingComponent],
-    imports: [CommonModule, ArtemisSharedModule],
+    imports: [CommonModule, ArtemisSharedModule, RatingComponent, RatingListComponent, StarRatingComponent],
 })
 export class RatingModule {}

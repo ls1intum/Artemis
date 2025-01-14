@@ -4,8 +4,7 @@ import { NgxDatatableModule } from '@siemens/ngx-datatable';
 import { DataTableComponent } from './data-table.component';
 
 @NgModule({
-    imports: [ArtemisSharedModule, NgxDatatableModule],
-    declarations: [DataTableComponent],
+    imports: [ArtemisSharedModule, NgxDatatableModule, DataTableComponent],
     exports: [DataTableComponent],
 })
 export class ArtemisDataTableModule {}
