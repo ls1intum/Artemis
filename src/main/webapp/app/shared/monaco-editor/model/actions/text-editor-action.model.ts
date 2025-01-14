@@ -301,10 +301,10 @@ export abstract class TextEditorAction implements Disposable {
      * @param variant The variant to use for rephrasing the text.
      * @param rephraseService The service to use for rephrasing the text.
      */
-    rephraseMarkdown(editor: TextEditor, variant: RephrasingVariant, rephraseService: RephraseService): void {
+    rephraseMarkdown(editor: TextEditor, variant: RephrasingVariant, rephraseService: RephraseService, courseId: number): void {
         const text = editor.getFullText();
         if (text) {
-            rephraseService.rephraseMarkdown(text, variant).subscribe({
+            rephraseService.rephraseMarkdown(text, variant, courseId).subscribe({
                 next: (message) => {
                     this.replaceTextAtRange(editor, new TextEditorRange(new TextEditorPosition(1, 1), this.getEndPosition(editor)), message);
                 },

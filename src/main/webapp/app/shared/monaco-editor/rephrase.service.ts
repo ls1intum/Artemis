@@ -1,6 +1,6 @@
 import { HttpClient } from '@angular/common/http';
 import { Injectable, inject } from '@angular/core';
-import { Observable } from 'rxjs';
+import { BehaviorSubject, Observable } from 'rxjs';
 import { JhiWebsocketService } from 'app/core/websocket/websocket.service';
 
 enum RephrasingVariant {
@@ -19,6 +19,9 @@ export default RephrasingVariant;
 export class RephraseService {
     public resourceUrl = 'api/courses';
 
+    private isLoadingSubject = new BehaviorSubject<boolean>(false);
+    isLoading = this.isLoadingSubject.asObservable();
+
     private http = inject(HttpClient);
     private jhiWebsocketService = inject(JhiWebsocketService);
 
@@ -26,14 +29,14 @@ export class RephraseService {
      * Triggers the rephrasing pipeline via HTTP and subscribes to its WebSocket updates.
      * @param toBeRephrased The text to be rephrased.
      * @param rephrasingVariant The variant for rephrasing.
+     * @param courseId The ID of the course to which the rephrased text belongs.
      * @return Observable that emits the rephrased text when available.
      */
-    rephraseMarkdown(toBeRephrased: string, rephrasingVariant: string): Observable<string> {
-        const courseId = 1;
-
+    rephraseMarkdown(toBeRephrased: string, rephrasingVariant: string, courseId: number): Observable<string> {
+        this.isLoadingSubject.next(true);
         return new Observable<string>((observer) => {
             this.http
-                .get(`${this.resourceUrl}/${courseId}/rephrase-text`, {
+                .post(`${this.resourceUrl}/${courseId}/rephrase-text`, null, {
                     params: {
                         toBeRephrased: toBeRephrased,
                         variant: rephrasingVariant,
@@ -48,11 +51,15 @@ export class RephraseService {
                                 if (update.result) {
                                     observer.next(update.result);
                                     observer.complete();
+                                    this.isLoadingSubject.next(false);
+                                    this.jhiWebsocketService.unsubscribe(websocketTopic);
                                 }
                             },
                             error: (error) => {
                                 console.error('WebSocket Error:', error);
                                 observer.error(error);
+                                this.isLoadingSubject.next(false);
+                                this.jhiWebsocketService.unsubscribe(websocketTopic);
                             },
                         });
                     },

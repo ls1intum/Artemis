@@ -15,6 +15,7 @@ export class RephraseAction extends TextEditorAction {
     constructor(
         private readonly rephraseService: RephraseService,
         private readonly rephrasingVariant: RephrasingVariant,
+        private readonly courseId: number,
     ) {
         super(RephraseAction.ID, 'artemisApp.markdownEditor.commands.rephrase', faReceipt);
     }
@@ -25,6 +26,6 @@ export class RephraseAction extends TextEditorAction {
      * @param variant The variant of the rephrasing.
      */
     run(editor: TextEditor): void {
-        this.rephraseMarkdown(editor, this.rephrasingVariant, this.rephraseService);
+        this.rephraseMarkdown(editor, this.rephrasingVariant, this.rephraseService, this.courseId);
     }
 }

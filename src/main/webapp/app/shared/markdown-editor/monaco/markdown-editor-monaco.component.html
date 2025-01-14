@@ -43,6 +43,9 @@
                                         <a class="col-auto" href="https://markdown-it.github.io/">
                                             <fa-icon [icon]="faQuestionCircle" [ngbTooltip]="'artemisApp.markdownEditor.guide' | artemisTranslate" />
                                         </a>
+                                        <a *ngIf="isLoading" class="col-auto" href="https://markdown-it.github.io/">
+                                            <fa-icon [icon]="faSpinner" animation="spin" />
+                                        </a>
                                     </div>
                                 </label>
                             </div>

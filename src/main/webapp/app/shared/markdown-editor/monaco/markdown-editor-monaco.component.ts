@@ -7,6 +7,7 @@ import {
     EventEmitter,
     Input,
     OnDestroy,
+    OnInit,
     Output,
     Signal,
     ViewChild,
@@ -29,7 +30,7 @@ import { AttachmentAction } from 'app/shared/monaco-editor/model/actions/attachm
 import { BulletedListAction } from 'app/shared/monaco-editor/model/actions/bulleted-list.action';
 import { StrikethroughAction } from 'app/shared/monaco-editor/model/actions/strikethrough.action';
 import { OrderedListAction } from 'app/shared/monaco-editor/model/actions/ordered-list.action';
-import { faAngleDown, faGripLines, faQuestionCircle } from '@fortawesome/free-solid-svg-icons';
+import { faAngleDown, faGripLines, faQuestionCircle, faSpinner } from '@fortawesome/free-solid-svg-icons';
 import { v4 as uuid } from 'uuid';
 import { FileUploadResponse, FileUploaderService } from 'app/shared/http/file-uploader.service';
 import { AlertService, AlertType } from 'app/core/util/alert.service';
@@ -52,6 +53,7 @@ import { COMMUNICATION_MARKDOWN_EDITOR_OPTIONS, DEFAULT_MARKDOWN_EDITOR_OPTIONS 
 import { MetisService } from 'app/shared/metis/metis.service';
 import { UPLOAD_MARKDOWN_FILE_EXTENSIONS } from 'app/shared/constants/file-extensions.constants';
 import { EmojiAction } from 'app/shared/monaco-editor/model/actions/emoji.action';
+import { RephraseService } from 'app/shared/monaco-editor/rephrase.service';
 
 export enum MarkdownEditorHeight {
     INLINE = 125,
@@ -92,12 +94,13 @@ const BORDER_HEIGHT_OFFSET = 2;
     styleUrls: ['./markdown-editor-monaco.component.scss'],
     changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class MarkdownEditorMonacoComponent implements AfterContentInit, AfterViewInit, OnDestroy {
+export class MarkdownEditorMonacoComponent implements AfterContentInit, AfterViewInit, OnDestroy, OnInit {
     private readonly alertService = inject(AlertService);
     // We inject the MetisService here to avoid a NullInjectorError in the FileUploaderService.
     private readonly metisService = inject(MetisService, { optional: true });
     private readonly fileUploaderService = inject(FileUploaderService);
     private readonly artemisMarkdown = inject(ArtemisMarkdownService);
+    private readonly rephraseService = inject(RephraseService);
 
     @ViewChild(MonacoEditorComponent, { static: false }) monacoEditor: MonacoEditorComponent;
     @ViewChild('fullElement', { static: true }) fullElement: ElementRef<HTMLDivElement>;
@@ -253,6 +256,7 @@ export class MarkdownEditorMonacoComponent implements AfterContentInit, AfterVie
     readonly colorPickerHeight = 110;
     // Icons
     protected readonly faQuestionCircle = faQuestionCircle;
+    protected readonly faSpinner = faSpinner;
     protected readonly faGripLines = faGripLines;
     protected readonly faAngleDown = faAngleDown;
     // Types and values exposed to the template
@@ -265,6 +269,14 @@ export class MarkdownEditorMonacoComponent implements AfterContentInit, AfterVie
 
     constructor() {
         this.uniqueMarkdownEditorId = 'markdown-editor-' + uuid();
+    }
+
+    isLoading: boolean = false;
+
+    ngOnInit(): void {
+        this.rephraseService.isLoading.subscribe((loadingState) => {
+            this.isLoading = loadingState;
+        });
     }
 
     ngAfterContentInit(): void {

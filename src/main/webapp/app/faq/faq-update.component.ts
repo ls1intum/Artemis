@@ -80,7 +80,7 @@ export class FaqUpdateComponent implements OnInit {
         this.profileInfoSubscription = this.profileService.getProfileInfo().subscribe(async (profileInfo) => {
             this.irisEnabled = profileInfo.activeProfiles.includes(PROFILE_IRIS);
             if (this.irisEnabled) {
-                this.metaActions = [new RephraseAction(this.rephraseService, RephrasingVariant.FAQ), new FullscreenAction()];
+                this.metaActions = [new RephraseAction(this.rephraseService, RephrasingVariant.FAQ, this.courseId), new FullscreenAction()];
             }
         });
     }
