@@ -1,0 +1,35 @@
+<style>
+    .dot {
+        height: 20px;
+        width: 20px;
+        background-color: #bbb;
+        border-radius: 50%;
+        display: inline-block;
+    }
+</style>
+
+<div class="row">
+    <h2 class="col">Course Settings</h2>
+    <select class="form-select col-auto w-auto">
+        <option selected>Select Course...</option>
+        @for (course of courses; track course) {
+            <option value="{{ course.id }}">{{ course.title }}</option>
+        }
+    </select>
+</div>
+<hr />
+Here, you can set your learning preferences. This will impact how Artemis interacts with you as a learner. <br />
+<div class="d-flex align-items-center my-2"><span class="dot background-color ms-1 me-2"></span> Initial State <span class="dot bg-primary ms-3 me-2"></span> Current State</div>
+<div>
+    <div class="row row-cols-2 gx-5">
+        <div class="col">
+            <jhi-editable-slider [title]="'Aim for Grade or Bonus'" [min]="0" [max]="4" [initialValue]="0" [currentValue]="1" />
+        </div>
+        <div class="col">
+            <jhi-editable-slider [title]="'Time Investment'" [min]="0" [max]="4" [initialValue]="1" [currentValue]="2" />
+        </div>
+        <div class="col">
+            <jhi-editable-slider [title]="'Repition intensity'" [min]="0" [max]="4" [initialValue]="2" [currentValue]="3" />
+        </div>
+    </div>
+</div>

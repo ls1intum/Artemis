@@ -10,6 +10,7 @@ import { VcsAccessTokensSettingsComponent } from 'app/shared/user-settings/vcs-a
 import { IdeSettingsComponent } from 'app/shared/user-settings/ide-preferences/ide-settings.component';
 import { SshUserSettingsKeyDetailsComponent } from 'app/shared/user-settings/ssh-settings/details/ssh-user-settings-key-details.component';
 import { SshUserSettingsFingerprintsComponent } from 'app/shared/user-settings/ssh-settings/fingerprints/ssh-user-settings-fingerprints.component';
+import { LearnerProfileComponent } from 'app/shared/user-settings/learner-profile/learner-profile.component';
 
 export const userSettingsState: Routes = [
     {
@@ -31,6 +32,13 @@ export const userSettingsState: Routes = [
                 component: AccountInformationComponent,
                 data: {
                     pageTitle: 'artemisApp.userSettings.accountInformation',
+                },
+            },
+            {
+                path: 'profile',
+                component: LearnerProfileComponent,
+                data: {
+                    pageTitle: 'arteisApp.userSettings.accountInformation',
                 },
             },
             {

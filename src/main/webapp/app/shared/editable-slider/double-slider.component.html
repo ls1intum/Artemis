@@ -1,0 +1,43 @@
+<style>
+    .sliders_control {
+        position: relative;
+        min-height: 25px;
+    }
+
+    .editing > input[type='range']::-webkit-slider-thumb,
+    .editing > input[type='range']::-moz-range-thumb {
+        pointer-events: all;
+        cursor: pointer;
+    }
+    input[type='range']#currentSlider::-webkit-slider-thumb,
+    input[type='range']#currentSlider::-moz-range-thumb {
+        background-color: var(--bs-primary);
+    }
+
+    input[type='number']::-webkit-inner-spin-button,
+    input[type='number']::-webkit-outer-spin-button {
+        opacity: 1;
+    }
+
+    input[type='range'] {
+        position: absolute;
+        pointer-events: none;
+    }
+
+    #currentSlider {
+        z-index: 1;
+    }
+
+    :not(.editing) > #currentSlider::-moz-range-track {
+        background-color: transparent;
+    }
+
+    .editing > #initialSlider {
+        display: none;
+    }
+</style>
+
+<div #parentContainer class="sliders_control">
+    <input #initialSlider id="initialSlider" class="form-range" type="range" value="{{ initialValue() }}" min="{{ min() }}" max="{{ max() }}" disabled />
+    <input #currentSlider id="currentSlider" class="form-range" type="range" value="{{ currentValue() }}" min="{{ min() }}" max="{{ max() }}" disabled />
+</div>
