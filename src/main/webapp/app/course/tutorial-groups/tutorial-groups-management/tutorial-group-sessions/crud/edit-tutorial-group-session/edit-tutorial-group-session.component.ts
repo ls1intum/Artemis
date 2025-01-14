@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, Input, OnDestroy } from '@angular/core';
+import { ChangeDetectionStrategy, Component, Input, OnDestroy, inject } from '@angular/core';
 import { TutorialGroupSession } from 'app/entities/tutorial-group/tutorial-group-session.model';
 import { TutorialGroupSessionFormData } from 'app/course/tutorial-groups/tutorial-groups-management/tutorial-group-sessions/crud/tutorial-group-session-form/tutorial-group-session-form.component';
 import { AlertService } from 'app/core/util/alert.service';
@@ -9,13 +9,21 @@ import { Course } from 'app/entities/course.model';
 import { TutorialGroup } from 'app/entities/tutorial-group/tutorial-group.model';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import { Subject } from 'rxjs';
+import { LoadingIndicatorContainerComponent } from 'app/shared/loading-indicator-container/loading-indicator-container.component';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { TutorialGroupSessionFormComponent } from '../tutorial-group-session-form/tutorial-group-session-form.component';
 
 @Component({
     selector: 'jhi-edit-tutorial-group-session',
     templateUrl: './edit-tutorial-group-session.component.html',
     changeDetection: ChangeDetectionStrategy.OnPush,
+    imports: [LoadingIndicatorContainerComponent, TranslateDirective, TutorialGroupSessionFormComponent],
 })
 export class EditTutorialGroupSessionComponent implements OnDestroy {
+    private activeModal = inject(NgbActiveModal);
+    private tutorialGroupSessionService = inject(TutorialGroupSessionService);
+    private alertService = inject(AlertService);
+
     ngUnsubscribe = new Subject<void>();
 
     @Input()
@@ -31,12 +39,6 @@ export class EditTutorialGroupSessionComponent implements OnDestroy {
     formData?: TutorialGroupSessionFormData = undefined;
 
     isInitialized = false;
-
-    constructor(
-        private activeModal: NgbActiveModal,
-        private tutorialGroupSessionService: TutorialGroupSessionService,
-        private alertService: AlertService,
-    ) {}
 
     initialize() {
         if (!this.tutorialGroupSession || !this.course || !this.tutorialGroup) {

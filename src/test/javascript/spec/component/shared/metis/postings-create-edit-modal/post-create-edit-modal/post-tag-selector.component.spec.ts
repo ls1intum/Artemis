@@ -2,13 +2,9 @@ import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testin
 import { MetisService } from 'app/shared/metis/metis.service';
 import { MockMetisService } from '../../../../../helpers/mocks/service/mock-metis-service.service';
 import { PostTagSelectorComponent } from 'app/shared/metis/posting-create-edit-modal/post-create-edit-modal/post-tag-selector/post-tag-selector.component';
-import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
-import { MockModule, MockPipe } from 'ng-mocks';
-import { FormsModule } from '@angular/forms';
 import { metisTags } from '../../../../../helpers/sample/metis-sample-data';
-import { MatChipsModule } from '@angular/material/chips';
-import { MatAutocompleteModule } from '@angular/material/autocomplete';
-import { MatSelectModule } from '@angular/material/select';
+import { TranslateService } from '@ngx-translate/core';
+import { MockTranslateService } from '../../../../../helpers/mocks/service/mock-translate.service';
 
 describe('PostTagSelectorComponent', () => {
     let component: PostTagSelectorComponent;
@@ -18,9 +14,10 @@ describe('PostTagSelectorComponent', () => {
 
     beforeEach(() => {
         return TestBed.configureTestingModule({
-            imports: [MockModule(MatChipsModule), MockModule(MatAutocompleteModule), MockModule(MatSelectModule), MockModule(FormsModule)],
-            providers: [{ provide: MetisService, useClass: MockMetisService }],
-            declarations: [PostTagSelectorComponent, MockPipe(ArtemisTranslatePipe)],
+            providers: [
+                { provide: MetisService, useClass: MockMetisService },
+                { provide: TranslateService, useClass: MockTranslateService },
+            ],
         })
             .compileComponents()
             .then(() => {

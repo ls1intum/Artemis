@@ -4,8 +4,7 @@ import { ProgrammingExerciseInstructorStatusComponent } from 'app/exercises/prog
 import { ProgrammingExerciseInstructorExerciseStatusComponent } from 'app/exercises/programming/manage/status/programming-exercise-instructor-exercise-status.component';
 
 @NgModule({
-    imports: [ArtemisSharedModule],
-    declarations: [ProgrammingExerciseInstructorStatusComponent, ProgrammingExerciseInstructorExerciseStatusComponent],
+    imports: [ArtemisSharedModule, ProgrammingExerciseInstructorStatusComponent, ProgrammingExerciseInstructorExerciseStatusComponent],
     exports: [ProgrammingExerciseInstructorStatusComponent, ProgrammingExerciseInstructorExerciseStatusComponent],
 })
 export class ArtemisProgrammingExerciseStatusModule {}

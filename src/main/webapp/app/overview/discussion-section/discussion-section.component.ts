@@ -1,4 +1,4 @@
-import { AfterViewInit, Component, ElementRef, OnDestroy, QueryList, ViewChild, ViewChildren, effect, input } from '@angular/core';
+import { AfterViewInit, Component, ElementRef, OnDestroy, QueryList, ViewChild, ViewChildren, effect, inject, input } from '@angular/core';
 import interact from 'interactjs';
 import { Exercise } from 'app/entities/exercise.model';
 import { Lecture } from 'app/entities/lecture.model';
@@ -11,23 +11,27 @@ import { PostCreateEditModalComponent } from 'app/shared/metis/posting-create-ed
 import { HttpResponse } from '@angular/common/http';
 import { faArrowLeft, faChevronLeft, faChevronRight, faGripLinesVertical, faLongArrowRight } from '@fortawesome/free-solid-svg-icons';
 import { CourseDiscussionDirective } from 'app/shared/metis/course-discussion.directive';
-import { FormBuilder } from '@angular/forms';
+import { FormBuilder, FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { Channel, ChannelDTO } from 'app/entities/metis/conversation/channel.model';
 import { ChannelService } from 'app/shared/metis/conversations/channel.service';
 import { ArtemisSharedModule } from 'app/shared/shared.module';
 import { ArtemisPlagiarismCasesSharedModule } from 'app/course/plagiarism-cases/shared/plagiarism-cases-shared.module';
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
-import { InfiniteScrollModule } from 'ngx-infinite-scroll';
+import { InfiniteScrollDirective } from 'ngx-infinite-scroll';
 
 @Component({
     selector: 'jhi-discussion-section',
     templateUrl: './discussion-section.component.html',
     styleUrls: ['./discussion-section.component.scss'],
-    imports: [FontAwesomeModule, ArtemisSharedModule, ArtemisPlagiarismCasesSharedModule, InfiniteScrollModule],
-    standalone: true,
+    imports: [FontAwesomeModule, ArtemisSharedModule, ArtemisPlagiarismCasesSharedModule, InfiniteScrollDirective, FormsModule, ReactiveFormsModule],
     providers: [MetisService],
 })
 export class DiscussionSectionComponent extends CourseDiscussionDirective implements AfterViewInit, OnDestroy {
+    private channelService = inject(ChannelService);
+    private activatedRoute = inject(ActivatedRoute);
+    private router = inject(Router);
+    private formBuilder = inject(FormBuilder);
+
     exercise = input<Exercise>();
     lecture = input<Lecture>();
 
@@ -59,14 +63,8 @@ export class DiscussionSectionComponent extends CourseDiscussionDirective implem
     faArrowLeft = faArrowLeft;
     faLongArrowRight = faLongArrowRight;
 
-    constructor(
-        protected metisService: MetisService,
-        private channelService: ChannelService,
-        private activatedRoute: ActivatedRoute,
-        private router: Router,
-        private formBuilder: FormBuilder,
-    ) {
-        super(metisService);
+    constructor() {
+        super();
         effect(() => this.loadData(this.exercise(), this.lecture()));
     }
 

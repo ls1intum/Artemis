@@ -9,7 +9,6 @@ import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 @Component({
     selector: 'jhi-complaint-request',
     templateUrl: './complaint-request.component.html',
-    standalone: true,
     imports: [NgbTooltip, TranslateDirective, FormsModule, ArtemisSharedCommonModule, ArtemisTranslatePipe],
 })
 export class ComplaintRequestComponent {

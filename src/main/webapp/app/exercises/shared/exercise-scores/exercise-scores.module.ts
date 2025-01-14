@@ -6,7 +6,7 @@ import { NgbModule } from '@ng-bootstrap/ng-bootstrap';
 import { ArtemisProgrammingAssessmentModule } from 'app/exercises/programming/assess/programming-assessment.module';
 import { NgxDatatableModule } from '@siemens/ngx-datatable';
 import { ArtemisDataTableModule } from 'app/shared/data-table/data-table.module';
-import { FeatureToggleModule } from 'app/shared/feature-toggle/feature-toggle.module';
+
 import { ArtemisResultModule } from 'app/exercises/shared/result/result.module';
 import { FormDateTimePickerModule } from 'app/shared/date-time-picker/date-time-picker.module';
 import { ArtemisExerciseScoresRoutingModule } from 'app/exercises/shared/exercise-scores/exercise-scores-routing.module';
@@ -29,12 +29,9 @@ import { ExternalSubmissionButtonComponent } from 'app/exercises/shared/external
         NgxDatatableModule,
         ArtemisDataTableModule,
         ArtemisProgrammingAssessmentModule,
-        FeatureToggleModule,
         ArtemisSharedComponentModule,
         SubmissionResultStatusModule,
         ArtemisMarkdownModule,
-    ],
-    declarations: [
         ExerciseScoresComponent,
         SubmissionExportButtonComponent,
         SubmissionExportDialogComponent,

@@ -1,4 +1,4 @@
-import { Injectable } from '@angular/core';
+import { Injectable, inject } from '@angular/core';
 import { HttpClient, HttpResponse } from '@angular/common/http';
 
 import { ProfileInfo } from './profile-info.model';
@@ -12,14 +12,12 @@ import { BrowserFingerprintService } from 'app/shared/fingerprint/browser-finger
 
 @Injectable({ providedIn: 'root' })
 export class ProfileService {
+    private http = inject(HttpClient);
+    private featureToggleService = inject(FeatureToggleService);
+    private browserFingerprintService = inject(BrowserFingerprintService);
+
     private infoUrl = 'management/info';
     private profileInfo: BehaviorSubject<ProfileInfo | undefined>;
-
-    constructor(
-        private http: HttpClient,
-        private featureToggleService: FeatureToggleService,
-        private browserFingerprintService: BrowserFingerprintService,
-    ) {}
 
     getProfileInfo(): Observable<ProfileInfo> {
         if (!this.profileInfo) {

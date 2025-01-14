@@ -7,8 +7,14 @@ import { RouterModule } from '@angular/router';
 import { ArtemisAssessmentSharedModule } from 'app/assessment/assessment-shared.module';
 
 @NgModule({
-    declarations: [NonProgrammingExerciseDetailCommonActionsComponent],
     exports: [NonProgrammingExerciseDetailCommonActionsComponent],
-    imports: [ArtemisSharedCommonModule, ArtemisExerciseScoresModule, ArtemisSharedModule, RouterModule, ArtemisAssessmentSharedModule],
+    imports: [
+        ArtemisSharedCommonModule,
+        ArtemisExerciseScoresModule,
+        ArtemisSharedModule,
+        RouterModule,
+        ArtemisAssessmentSharedModule,
+        NonProgrammingExerciseDetailCommonActionsComponent,
+    ],
 })
 export class NonProgrammingExerciseDetailCommonActionsModule {}

@@ -18,7 +18,6 @@ import { SubmissionResultStatusModule } from 'app/overview/submission-result-sta
     selector: 'jhi-build-agent-details',
     templateUrl: './build-agent-details.component.html',
     styleUrl: './build-agent-details.component.scss',
-    standalone: true,
     imports: [ArtemisSharedModule, NgxDatatableModule, ArtemisDataTableModule, SubmissionResultStatusModule],
 })
 export class BuildAgentDetailsComponent implements OnInit, OnDestroy {

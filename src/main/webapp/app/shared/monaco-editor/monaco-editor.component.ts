@@ -1,26 +1,25 @@
 import { ChangeDetectionStrategy, Component, ElementRef, OnDestroy, OnInit, Renderer2, ViewEncapsulation, effect, inject, input, output } from '@angular/core';
-import * as monaco from 'monaco-editor';
-import { MonacoEditorLineWidget } from 'app/shared/monaco-editor/model/monaco-editor-inline-widget.model';
-import { MonacoEditorBuildAnnotation, MonacoEditorBuildAnnotationType } from 'app/shared/monaco-editor/model/monaco-editor-build-annotation.model';
-import { MonacoEditorLineHighlight } from 'app/shared/monaco-editor/model/monaco-editor-line-highlight.model';
-import { Annotation } from 'app/exercises/programming/shared/code-editor/monaco/code-editor-monaco.component';
-import { MonacoEditorLineDecorationsHoverButton } from './model/monaco-editor-line-decorations-hover-button.model';
-import { TextEditorAction } from 'app/shared/monaco-editor/model/actions/text-editor-action.model';
 import { TranslateService } from '@ngx-translate/core';
-import { MonacoEditorOptionPreset } from 'app/shared/monaco-editor/model/monaco-editor-option-preset.model';
-import { Disposable, EditorPosition, EditorRange, MonacoEditorTextModel } from 'app/shared/monaco-editor/model/actions/monaco-editor.util';
+import { Annotation } from 'app/exercises/programming/shared/code-editor/monaco/code-editor-monaco.component';
 import { MonacoTextEditorAdapter } from 'app/shared/monaco-editor/model/actions/adapter/monaco-text-editor.adapter';
+import { Disposable, EditorPosition, EditorRange, MonacoEditorTextModel } from 'app/shared/monaco-editor/model/actions/monaco-editor.util';
+import { TextEditorAction } from 'app/shared/monaco-editor/model/actions/text-editor-action.model';
+import { MonacoEditorBuildAnnotation, MonacoEditorBuildAnnotationType } from 'app/shared/monaco-editor/model/monaco-editor-build-annotation.model';
+import { MonacoEditorLineWidget } from 'app/shared/monaco-editor/model/monaco-editor-inline-widget.model';
+import { MonacoEditorLineHighlight } from 'app/shared/monaco-editor/model/monaco-editor-line-highlight.model';
+import { MonacoEditorOptionPreset } from 'app/shared/monaco-editor/model/monaco-editor-option-preset.model';
 import { MonacoEditorService } from 'app/shared/monaco-editor/monaco-editor.service';
 import { getOS } from 'app/shared/util/os-detector.util';
 
 import { EmojiConvertor } from 'emoji-js';
+import * as monaco from 'monaco-editor';
+import { MonacoEditorLineDecorationsHoverButton } from './model/monaco-editor-line-decorations-hover-button.model';
 
 export const MAX_TAB_SIZE = 8;
 
 @Component({
     selector: 'jhi-monaco-editor',
     template: '',
-    standalone: true,
     styleUrls: ['monaco-editor.component.scss'],
     changeDetection: ChangeDetectionStrategy.OnPush,
     encapsulation: ViewEncapsulation.None,

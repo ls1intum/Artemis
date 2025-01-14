@@ -3,14 +3,12 @@ import { ExerciseType } from 'app/entities/exercise.model';
 import { of } from 'rxjs';
 import { HttpHeaders, HttpResponse } from '@angular/common/http';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
-import { TranslateService } from '@ngx-translate/core';
 import { ActivatedRoute, convertToParamMap } from '@angular/router';
 import { NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
 import { ArtemisTestModule } from '../../test.module';
 import { TextExerciseComponent } from 'app/exercises/text/manage/text-exercise/text-exercise.component';
 import { TextExercise } from 'app/entities/text/text-exercise.model';
 import { MockSyncStorage } from '../../helpers/mocks/service/mock-sync-storage.service';
-import { MockTranslateService } from '../../helpers/mocks/service/mock-translate.service';
 import { Course } from 'app/entities/course.model';
 import { ExerciseFilter } from 'app/entities/exercise-filter.model';
 import { MockNgbModalService } from '../../helpers/mocks/service/mock-ngb-modal.service';
@@ -30,17 +28,13 @@ describe('TextExercise Management Component', () => {
     beforeEach(() => {
         TestBed.configureTestingModule({
             imports: [ArtemisTestModule],
-            declarations: [TextExerciseComponent],
             providers: [
                 { provide: ActivatedRoute, useValue: route },
                 { provide: LocalStorageService, useClass: MockSyncStorage },
                 { provide: SessionStorageService, useClass: MockSyncStorage },
-                { provide: TranslateService, useClass: MockTranslateService },
                 { provide: NgbModal, useClass: MockNgbModalService },
             ],
-        })
-            .overrideTemplate(TextExerciseComponent, '')
-            .compileComponents();
+        }).compileComponents();
 
         fixture = TestBed.createComponent(TextExerciseComponent);
         comp = fixture.componentInstance;

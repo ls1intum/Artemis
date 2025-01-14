@@ -1,4 +1,4 @@
-import { Component, Input, OnInit } from '@angular/core';
+import { Component, Input, OnInit, inject } from '@angular/core';
 import { Exercise, ExerciseType } from 'app/entities/exercise.model';
 import { Subject } from 'rxjs';
 import { TextExerciseService } from 'app/exercises/text/manage/text-exercise/text-exercise.service';
@@ -6,18 +6,31 @@ import { HttpErrorResponse } from '@angular/common/http';
 import { FileUploadExerciseService } from 'app/exercises/file-upload/manage/file-upload-exercise.service';
 import { ModelingExerciseService } from 'app/exercises/modeling/manage/modeling-exercise.service';
 import { Course } from 'app/entities/course.model';
-import { Router } from '@angular/router';
+import { Router, RouterLink } from '@angular/router';
 import { AssessmentType } from 'app/entities/assessment-type.model';
 import { EventManager } from 'app/core/util/event-manager.service';
 import { faBook, faChartBar, faListAlt, faRobot, faTable, faTrash, faUserCheck, faUsers, faWrench } from '@fortawesome/free-solid-svg-icons';
 import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
 import { PROFILE_IRIS } from 'app/app.constants';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
+import { DeleteButtonDirective } from 'app/shared/delete-dialog/delete-button.directive';
+import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 
 @Component({
     selector: 'jhi-non-programming-exercise-detail-common-actions',
     templateUrl: './non-programming-exercise-detail-common-actions.component.html',
+    imports: [RouterLink, FaIconComponent, TranslateDirective, NgbTooltip, DeleteButtonDirective, ArtemisTranslatePipe],
 })
 export class NonProgrammingExerciseDetailCommonActionsComponent implements OnInit {
+    private textExerciseService = inject(TextExerciseService);
+    private fileUploadExerciseService = inject(FileUploadExerciseService);
+    private modelingExerciseService = inject(ModelingExerciseService);
+    private profileService = inject(ProfileService);
+    private eventManager = inject(EventManager);
+    private router = inject(Router);
+
     @Input()
     exercise: Exercise;
 
@@ -47,15 +60,6 @@ export class NonProgrammingExerciseDetailCommonActionsComponent implements OnIni
     faChartBar = faChartBar;
     faUserCheck = faUserCheck;
     faRobot = faRobot;
-
-    constructor(
-        private textExerciseService: TextExerciseService,
-        private fileUploadExerciseService: FileUploadExerciseService,
-        private modelingExerciseService: ModelingExerciseService,
-        private profileService: ProfileService,
-        private eventManager: EventManager,
-        private router: Router,
-    ) {}
 
     ngOnInit(): void {
         if (!this.isExamExercise) {

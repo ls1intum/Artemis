@@ -1,6 +1,6 @@
-import { ChangeDetectionStrategy, ChangeDetectorRef, Component, OnDestroy, OnInit } from '@angular/core';
+import { ChangeDetectionStrategy, ChangeDetectorRef, Component, OnDestroy, OnInit, inject } from '@angular/core';
 import { Subscription, forkJoin, of } from 'rxjs';
-import { ActivatedRoute } from '@angular/router';
+import { ActivatedRoute, RouterLink } from '@angular/router';
 import dayjs from 'dayjs/esm';
 import { sum } from 'lodash-es';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
@@ -48,6 +48,15 @@ import { PlagiarismCasesService } from 'app/course/plagiarism-cases/shared/plagi
 import { GradeStep } from 'app/entities/grade-step.model';
 import { PlagiarismCase } from 'app/exercises/shared/plagiarism/types/PlagiarismCase';
 import { PlagiarismVerdict } from 'app/exercises/shared/plagiarism/types/PlagiarismVerdict';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { ParticipantScoresDistributionComponent } from 'app/shared/participant-scores/participant-scores-distribution/participant-scores-distribution.component';
+import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
+import { NgClass } from '@angular/common';
+import { ExportButtonComponent } from 'app/shared/export/export-button.component';
+import { SortDirective } from 'app/shared/sort/sort.directive';
+import { SortByDirective } from 'app/shared/sort/sort-by.directive';
+import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 
 export enum HighlightType {
     AVERAGE = 'average',
@@ -60,8 +69,31 @@ export enum HighlightType {
     templateUrl: './course-scores.component.html',
     styleUrls: ['./course-scores.component.scss'],
     changeDetection: ChangeDetectionStrategy.OnPush,
+    imports: [
+        TranslateDirective,
+        RouterLink,
+        FaIconComponent,
+        ParticipantScoresDistributionComponent,
+        NgbTooltip,
+        NgClass,
+        ExportButtonComponent,
+        SortDirective,
+        SortByDirective,
+        ArtemisTranslatePipe,
+    ],
 })
 export class CourseScoresComponent implements OnInit, OnDestroy {
+    private route = inject(ActivatedRoute);
+    private courseService = inject(CourseManagementService);
+    private sortService = inject(SortService);
+    private changeDetector = inject(ChangeDetectorRef);
+    private languageHelper = inject(JhiLanguageHelper);
+    private localeConversionService = inject(LocaleConversionService);
+    private participantScoresService = inject(ParticipantScoresService);
+    private gradingSystemService = inject(GradingSystemService);
+    private navigationUtilService = inject(ArtemisNavigationUtilService);
+    private plagiarismCasesService = inject(PlagiarismCasesService);
+
     private paramSub: Subscription;
     private languageChangeSubscription?: Subscription;
 
@@ -132,18 +164,7 @@ export class CourseScoresComponent implements OnInit, OnDestroy {
     faSpinner = faSpinner;
     faClipboard = faClipboard;
 
-    constructor(
-        private route: ActivatedRoute,
-        private courseService: CourseManagementService,
-        private sortService: SortService,
-        private changeDetector: ChangeDetectorRef,
-        private languageHelper: JhiLanguageHelper,
-        private localeConversionService: LocaleConversionService,
-        private participantScoresService: ParticipantScoresService,
-        private gradingSystemService: GradingSystemService,
-        private navigationUtilService: ArtemisNavigationUtilService,
-        private plagiarismCasesService: PlagiarismCasesService,
-    ) {
+    constructor() {
         this.reverse = false;
         this.predicate = 'id';
     }

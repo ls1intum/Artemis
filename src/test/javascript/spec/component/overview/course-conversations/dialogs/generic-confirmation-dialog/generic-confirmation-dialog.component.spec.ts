@@ -1,9 +1,10 @@
 import { ComponentFixture, TestBed, waitForAsync } from '@angular/core/testing';
 import { GenericConfirmationDialogComponent } from 'app/overview/course-conversations/dialogs/generic-confirmation-dialog/generic-confirmation-dialog.component';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
-import { MockPipe, MockProvider } from 'ng-mocks';
+import { MockDirective, MockPipe, MockProvider } from 'ng-mocks';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import { initializeDialog } from '../dialog-test-helpers';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
 
 describe('GenericConfirmationDialogComponent', () => {
     let component: GenericConfirmationDialogComponent;
@@ -11,7 +12,7 @@ describe('GenericConfirmationDialogComponent', () => {
 
     beforeEach(waitForAsync(() => {
         TestBed.configureTestingModule({
-            declarations: [GenericConfirmationDialogComponent, MockPipe(ArtemisTranslatePipe)],
+            declarations: [GenericConfirmationDialogComponent, MockPipe(ArtemisTranslatePipe), MockDirective(TranslateDirective)],
             providers: [MockProvider(NgbActiveModal)],
         }).compileComponents();
     }));
