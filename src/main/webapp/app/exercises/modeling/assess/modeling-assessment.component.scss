@@ -1,19 +1,20 @@
 $draggable-width: 15px;
 
-.modeling-assessment {
-    position: relative;
+.parent-container {
     display: flex;
-    flex-flow: column nowrap;
-    height: 100%;
+    flex-direction: column; /* Stack sections vertically */
+    gap: 1rem; /* Add spacing between sections */
+    position: relative; /* Prevent floating issues */
+    overflow: hidden; /* Ensure content stays contained */
+}
 
-    .card-header {
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        width: 100%;
-        font-size: 1rem;
-        font-weight: 500;
-    }
+.modeling-assessment {
+    position: relative; /* Keep in layout flow */
+    height: auto; /* Adjust height dynamically */
+    max-height: 80vh; /* Restrict height to prevent overlaps */
+    overflow-y: auto; /* Enable scrolling */
+    margin-bottom: 2rem; /* Add space below */
+    scroll-behavior: smooth; /* Smooth scrolling experience */
 }
 
 .resizable {
@@ -29,19 +30,24 @@ $draggable-width: 15px;
 }
 
 .apollon-container {
-    height: 100%;
+    height: auto; /* Adjust dynamically */
     width: 100%;
 }
 
 .apollon-row {
     display: flex;
-    height: 100%;
+    height: auto; /* Adjust dynamically */
 }
 
-/* Target the modeling-assessment class for print media */
+@media screen and (orientation: landscape) {
+    .modeling-assessment {
+        max-height: 70vh; /* Restrict height in landscape */
+        overflow-y: scroll; /* Ensure scrolling works */
+    }
+}
+
 @media print {
     .modeling-assessment {
-        /* Adjust the size of the container to fit the print area */
         height: auto !important;
         max-height: 100vh !important;
     }
