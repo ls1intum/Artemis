@@ -96,7 +96,7 @@ public class GitService extends AbstractGitService {
 
     private static final Logger log = LoggerFactory.getLogger(GitService.class);
 
-    private static final List<String> BINARY_EXTENSIONS = List.of(".exe", ".jar", ".dll", ".so", ".class", ".bin", ".msi");
+    private static final List<String> BINARY_EXTENSIONS = List.of(".exe", ".jar", ".dll", ".so", ".class", ".bin", ".msi", ".pyc", ".iso", ".o", ".app");
 
     private final ProfileService profileService;
 
