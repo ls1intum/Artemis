@@ -1,6 +1,6 @@
 import { CourseConversationsComponent } from 'app/overview/course-conversations/course-conversations.component';
 import { ComponentFixture, TestBed, fakeAsync, tick, waitForAsync } from '@angular/core/testing';
-import { ConversationDTO } from 'app/entities/metis/conversation/conversation.model';
+import { Conversation, ConversationDTO } from 'app/entities/metis/conversation/conversation.model';
 import { OneToOneChatDTO } from '../../../../../../main/webapp/app/entities/metis/conversation/one-to-one-chat.model';
 import { generateExampleChannelDTO, generateExampleGroupChatDTO, generateOneToOneChatDTO } from './helpers/conversationExampleModels';
 import { MockComponent, MockPipe, MockProvider } from 'ng-mocks';
@@ -661,6 +661,90 @@ examples.forEach((activeConversation) => {
                 component.onConversationSelected(invalidStatus);
                 expect(component.selectedSavedPostStatus).toBeNull();
                 expect(metisConversationService.setActiveConversation).not.toHaveBeenCalled();
+            });
+        });
+
+        describe('CourseConversationsComponent onTriggerNavigateToPost Tests', () => {
+            let component: CourseConversationsComponent;
+
+            beforeEach(() => {
+                fixture = TestBed.createComponent(CourseConversationsComponent);
+                component = fixture.componentInstance;
+            });
+
+            it('should do nothing if post.id is undefined', () => {
+                const post = {} as Posting;
+                const setActiveConversationSpy = jest.spyOn(metisConversationService, 'setActiveConversation');
+
+                component.onTriggerNavigateToPost(post);
+
+                expect(component.focusPostId).toBeUndefined();
+                expect(component.openThreadOnFocus).toBeFalsy();
+                expect(setActiveConversationSpy).not.toHaveBeenCalled();
+            });
+
+            it('4) should set openThreadOnFocus = true if postingType is ANSWER', () => {
+                const post = {
+                    id: 1,
+                    postingType: PostingType.ANSWER,
+                    post: { id: 2 } as Post,
+                } as Posting;
+
+                component.onTriggerNavigateToPost(post);
+                expect(component.openThreadOnFocus).toBeTrue();
+            });
+
+            it('5) should set openThreadOnFocus = false if postingType is POST (question post)', () => {
+                const post = {
+                    id: 1,
+                    postingType: PostingType.POST,
+                    conversation: { id: 1 } as Conversation,
+                } as Posting;
+
+                component.onTriggerNavigateToPost(post);
+                expect(component.openThreadOnFocus).toBeFalse();
+            });
+
+            it('6) should call setActiveConversation if conversation.id is defined', () => {
+                const post = {
+                    id: 1,
+                    conversation: { id: 999 },
+                } as Posting;
+                const setActiveConversationSpy = jest.spyOn(metisConversationService, 'setActiveConversation');
+
+                component.onTriggerNavigateToPost(post);
+
+                expect(setActiveConversationSpy).toHaveBeenCalledWith(999);
+            });
+
+            it('7) should NOT call setActiveConversation if post.id is undefined', () => {
+                const post = {
+                    id: undefined,
+                    conversation: {},
+                } as Posting;
+                const setActiveConversationSpy = jest.spyOn(metisConversationService, 'setActiveConversation');
+
+                component.onTriggerNavigateToPost(post);
+
+                expect(setActiveConversationSpy).not.toHaveBeenCalled();
+            });
+
+            it('should combine logic: set focusPostId and only set conversation if ID is present', () => {
+                const post = {
+                    id: 10,
+                    referencePostId: 888,
+                    postingType: PostingType.ANSWER,
+                    conversation: {
+                        id: 444,
+                    },
+                } as Posting;
+                const setActiveConversationSpy = jest.spyOn(metisConversationService, 'setActiveConversation');
+
+                component.onTriggerNavigateToPost(post);
+
+                expect(component.focusPostId).toBe(10);
+                expect(component.openThreadOnFocus).toBeFalse();
+                expect(setActiveConversationSpy).toHaveBeenCalledWith(444);
             });
         });
     });
