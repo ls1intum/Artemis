@@ -7,7 +7,8 @@ import { TextEditorRange } from 'app/shared/monaco-editor/model/actions/adapter/
 import { TextEditorPosition } from 'app/shared/monaco-editor/model/actions/adapter/text-editor-position.model';
 import { TextEditorCompletionItem } from 'app/shared/monaco-editor/model/actions/adapter/text-editor-completion-item.model';
 import { TextEditorKeybinding } from 'app/shared/monaco-editor/model/actions/adapter/text-editor-keybinding.model';
-import RephrasingVariant, { RephraseService } from 'app/shared/monaco-editor/rephrase.service';
+import RephrasingVariant from 'app/shared/monaco-editor/model/rephrasing-variant';
+import { RephraseService } from 'app/shared/monaco-editor/rephrase.service';
 
 export abstract class TextEditorAction implements Disposable {
     id: string;

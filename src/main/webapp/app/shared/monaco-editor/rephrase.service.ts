@@ -2,14 +2,7 @@ import { HttpClient } from '@angular/common/http';
 import { Injectable, inject } from '@angular/core';
 import { BehaviorSubject, Observable } from 'rxjs';
 import { JhiWebsocketService } from 'app/core/websocket/websocket.service';
-
-enum RephrasingVariant {
-    FAQ = 'FAQ',
-    PROBLEM_STATEMENT = 'PROBLEM_STATEMENT',
-}
-
-export default RephrasingVariant;
-
+import RephrasingVariant from 'app/shared/monaco-editor/model/rephrasing-variant';
 /**
  * Service providing shared functionality for rephrasing context of the markdown editor.
  * This service is intended to be used by components that need to rephrase text of the Monaco editors.
@@ -32,7 +25,7 @@ export class RephraseService {
      * @param courseId The ID of the course to which the rephrased text belongs.
      * @return Observable that emits the rephrased text when available.
      */
-    rephraseMarkdown(toBeRephrased: string, rephrasingVariant: string, courseId: number): Observable<string> {
+    rephraseMarkdown(toBeRephrased: string, rephrasingVariant: RephrasingVariant, courseId: number): Observable<string> {
         this.isLoadingSubject.next(true);
         return new Observable<string>((observer) => {
             this.http
@@ -56,7 +49,6 @@ export class RephraseService {
                                 }
                             },
                             error: (error) => {
-                                console.error('WebSocket Error:', error);
                                 observer.error(error);
                                 this.isLoadingSubject.next(false);
                                 this.jhiWebsocketService.unsubscribe(websocketTopic);
@@ -64,7 +56,6 @@ export class RephraseService {
                         });
                     },
                     error: (error) => {
-                        console.error('HTTP Request Error:', error);
                         observer.error(error);
                     },
                 });

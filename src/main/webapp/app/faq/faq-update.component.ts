@@ -19,10 +19,11 @@ import { ArtemisSharedComponentModule } from 'app/shared/components/shared-compo
 import { AccountService } from 'app/core/auth/account.service';
 import { RephraseAction } from 'app/shared/monaco-editor/model/actions/rephrase.action';
 import { FullscreenAction } from 'app/shared/monaco-editor/model/actions/fullscreen.action';
-import RephrasingVariant, { RephraseService } from 'app/shared/monaco-editor/rephrase.service';
+import { RephraseService } from 'app/shared/monaco-editor/rephrase.service';
 
 import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
 import { PROFILE_IRIS } from 'app/app.constants';
+import RephrasingVariant from 'app/shared/monaco-editor/model/rephrasing-variant';
 
 @Component({
     selector: 'jhi-faq-update',
