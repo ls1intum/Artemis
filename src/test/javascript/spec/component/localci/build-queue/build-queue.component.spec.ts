@@ -1,4 +1,4 @@
-import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { ComponentFixture, TestBed, waitForAsync } from '@angular/core/testing';
 import { ActivatedRoute } from '@angular/router';
 import { of } from 'rxjs';
 import { BuildQueueComponent, FinishedBuildJobFilter, FinishedBuildJobFilterStorageKey } from 'app/localci/build-queue/build-queue.component';
@@ -9,12 +9,13 @@ import { DataTableComponent } from 'app/shared/data-table/data-table.component';
 import { ArtemisTestModule } from '../../../test.module';
 import { FinishedBuildJob } from 'app/entities/programming/build-job.model';
 import { TriggeredByPushTo } from 'app/entities/programming/repository-info.model';
-import { waitForAsync } from '@angular/core/testing';
 import { HttpResponse } from '@angular/common/http';
 import { SortingOrder } from 'app/shared/table/pageable-table';
 import { LocalStorageService } from 'ngx-webstorage';
 import { MockLocalStorageService } from '../../../helpers/mocks/service/mock-local-storage.service';
 import { BuildLogEntry, BuildLogLines } from '../../../../../../main/webapp/app/entities/programming/build-log.model';
+import { MockNgbModalService } from '../../../helpers/mocks/service/mock-ngb-modal.service';
+import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 
 describe('BuildQueueComponent', () => {
     let component: BuildQueueComponent;
@@ -274,13 +275,13 @@ describe('BuildQueueComponent', () => {
 
         TestBed.configureTestingModule({
             imports: [ArtemisTestModule, BuildQueueComponent],
-            declarations: [],
             providers: [
                 { provide: BuildQueueService, useValue: mockBuildQueueService },
                 { provide: ActivatedRoute, useValue: mockActivatedRoute },
                 { provide: AccountService, useValue: accountServiceMock },
                 { provide: DataTableComponent, useClass: DataTableComponent },
                 { provide: LocalStorageService, useValue: mockLocalStorageService },
+                { provide: NgbModal, useClass: MockNgbModalService },
             ],
         }).compileComponents();
     }));

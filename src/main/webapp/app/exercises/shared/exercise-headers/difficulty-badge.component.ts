@@ -1,20 +1,22 @@
-import { Component, Input, OnChanges, OnDestroy, OnInit } from '@angular/core';
+import { Component, Input, OnChanges, OnDestroy, OnInit, inject } from '@angular/core';
 import { TranslateService } from '@ngx-translate/core';
 import { Subscription } from 'rxjs';
 import { DifficultyLevel, Exercise } from 'app/entities/exercise.model';
+import { NgClass } from '@angular/common';
 
 @Component({
     selector: 'jhi-difficulty-badge',
     templateUrl: './difficulty-badge.component.html',
+    imports: [NgClass],
 })
 export class DifficultyBadgeComponent implements OnInit, OnDestroy, OnChanges {
+    private translateService = inject(TranslateService);
+
     @Input() exercise: Exercise;
     @Input() showNoLevel: boolean;
     public translatedDifficulty: string;
     public badgeClass: string;
     private translateSubscription: Subscription;
-
-    constructor(private translateService: TranslateService) {}
 
     /**
      * Sets the badge attributes based on the exercise difficulty
@@ -25,7 +27,7 @@ export class DifficultyBadgeComponent implements OnInit, OnDestroy, OnChanges {
         });
     }
 
-    ngOnChanges(): void {
+    ngOnChanges() {
         this.setBadgeAttributes();
     }
 

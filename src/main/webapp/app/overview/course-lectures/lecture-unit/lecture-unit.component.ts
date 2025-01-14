@@ -7,7 +7,6 @@ import { LectureUnit } from 'app/entities/lecture-unit/lectureUnit.model';
 
 @Component({
     selector: 'jhi-lecture-unit-card',
-    standalone: true,
     imports: [FontAwesomeModule, ArtemisSharedCommonModule, NgbCollapseModule],
     templateUrl: './lecture-unit.component.html',
     styleUrl: './lecture-unit.component.scss',

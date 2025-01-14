@@ -8,7 +8,6 @@ import { LectureUnitComponent } from 'app/overview/course-lectures/lecture-unit/
 
 @Component({
     selector: 'jhi-video-unit',
-    standalone: true,
     imports: [ArtemisSharedPipesModule, LectureUnitComponent],
     templateUrl: './video-unit.component.html',
 })

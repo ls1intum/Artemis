@@ -1,6 +1,6 @@
 import { Component, OnDestroy, OnInit, ViewChild, inject } from '@angular/core';
-import { ActivatedRoute } from '@angular/router';
-import { BuildJob, FinishedBuildJob } from 'app/entities/programming/build-job.model';
+import { ActivatedRoute, RouterLink } from '@angular/router';
+import { BuildJob, BuildJobStatistics, FinishedBuildJob } from 'app/entities/programming/build-job.model';
 import { faCircleCheck, faExclamationCircle, faExclamationTriangle, faFilter, faSort, faSync, faTimes } from '@fortawesome/free-solid-svg-icons';
 import { JhiWebsocketService } from 'app/core/websocket/websocket.service';
 import { BuildQueueService } from 'app/localci/build-queue/build-queue.service';
@@ -12,18 +12,26 @@ import { onError } from 'app/shared/util/global.utils';
 import { HttpErrorResponse, HttpHeaders, HttpParams, HttpResponse } from '@angular/common/http';
 import { AlertService } from 'app/core/util/alert.service';
 import dayjs from 'dayjs/esm';
-import { NgbModal, NgbTypeahead } from '@ng-bootstrap/ng-bootstrap';
+import { NgbCollapse, NgbModal, NgbPagination, NgbTypeahead } from '@ng-bootstrap/ng-bootstrap';
 import { LocalStorageService } from 'ngx-webstorage';
 import { Observable, OperatorFunction, Subject, Subscription, merge } from 'rxjs';
 import { UI_RELOAD_TIME } from 'app/shared/constants/exercise-exam-constants';
-import { ArtemisSharedModule } from 'app/shared/shared.module';
-import { BuildJobStatisticsComponent } from 'app/localci/build-queue/build-job-statistics/build-job-statistics.component';
-import { FormDateTimePickerModule } from 'app/shared/date-time-picker/date-time-picker.module';
-import { SubmissionResultStatusModule } from 'app/overview/submission-result-status.module';
-import { ArtemisSharedComponentModule } from 'app/shared/components/shared-component.module';
-import { NgxDatatableModule } from '@siemens/ngx-datatable';
-import { ArtemisDataTableModule } from 'app/shared/data-table/data-table.module';
 import { BuildLogEntry, BuildLogLines } from 'app/entities/programming/build-log.model';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { HelpIconComponent } from 'app/shared/components/help-icon.component';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { DataTableComponent } from 'app/shared/data-table/data-table.component';
+import { NgxDatatableModule } from '@siemens/ngx-datatable';
+import { NgClass } from '@angular/common';
+import { FormsModule } from '@angular/forms';
+import { SortDirective } from 'app/shared/sort/sort.directive';
+import { SortByDirective } from 'app/shared/sort/sort-by.directive';
+import { ResultComponent } from 'app/exercises/shared/result/result.component';
+import { ItemCountComponent } from 'app/shared/pagination/item-count.component';
+import { FormDateTimePickerComponent } from 'app/shared/date-time-picker/date-time-picker.component';
+import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
+import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
+import { ArtemisDurationFromSecondsPipe } from 'app/shared/pipes/artemis-duration-from-seconds.pipe';
 
 export class FinishedBuildJobFilter {
     status?: string = undefined;
@@ -34,8 +42,8 @@ export class FinishedBuildJobFilter {
     buildDurationFilterUpperBound?: number = undefined;
     numberOfAppliedFilters = 0;
     appliedFilters = new Map<string, boolean>();
-    areDurationFiltersValid: boolean = true;
-    areDatesValid: boolean = true;
+    areDurationFiltersValid = true;
+    areDatesValid = true;
 
     /**
      * Adds the http param options
@@ -113,15 +121,27 @@ export enum FinishedBuildJobFilterStorageKey {
     selector: 'jhi-build-queue',
     templateUrl: './build-queue.component.html',
     styleUrl: './build-queue.component.scss',
-    standalone: true,
     imports: [
-        ArtemisSharedModule,
-        ArtemisSharedComponentModule,
-        BuildJobStatisticsComponent,
-        FormDateTimePickerModule,
-        SubmissionResultStatusModule,
+        TranslateDirective,
+        HelpIconComponent,
+        FaIconComponent,
+        NgbCollapse,
+        DataTableComponent,
         NgxDatatableModule,
-        ArtemisDataTableModule,
+        NgClass,
+        RouterLink,
+        FormsModule,
+        SortDirective,
+        SortByDirective,
+        ResultComponent,
+        ItemCountComponent,
+        NgbPagination,
+        NgbTypeahead,
+        FormDateTimePickerComponent,
+        ArtemisDatePipe,
+        ArtemisTranslatePipe,
+        ArtemisDurationFromSecondsPipe,
+        BuildJobStatistics,
     ],
 })
 export class BuildQueueComponent implements OnInit, OnDestroy {

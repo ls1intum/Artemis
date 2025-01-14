@@ -35,10 +35,6 @@ export class SentryErrorHandler extends ErrorHandler {
         });
     }
 
-    constructor() {
-        super();
-    }
-
     /**
      * Send an HttpError to Sentry. Only if it's not in the range 400-499.
      * @param error

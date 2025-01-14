@@ -8,8 +8,15 @@ import { PlagiarismCaseReviewComponent } from 'app/course/plagiarism-cases/share
 import { MetisModule } from 'app/shared/metis/metis.module';
 
 @NgModule({
-    imports: [ArtemisSharedModule, ArtemisSharedComponentModule, ArtemisPlagiarismModule, ArtemisTutorParticipationGraphModule, MetisModule],
-    declarations: [PlagiarismCaseVerdictComponent, PlagiarismCaseReviewComponent],
+    imports: [
+        ArtemisSharedModule,
+        ArtemisSharedComponentModule,
+        ArtemisPlagiarismModule,
+        ArtemisTutorParticipationGraphModule,
+        MetisModule,
+        PlagiarismCaseVerdictComponent,
+        PlagiarismCaseReviewComponent,
+    ],
     exports: [
         PlagiarismCaseVerdictComponent,
         PlagiarismCaseReviewComponent,

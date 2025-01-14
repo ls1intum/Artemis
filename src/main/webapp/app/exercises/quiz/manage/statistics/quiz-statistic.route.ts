@@ -1,16 +1,12 @@
 import { Routes } from '@angular/router';
 import { UserRouteAccessService } from 'app/core/auth/user-route-access-service';
-import { QuizStatisticComponent } from './quiz-statistic/quiz-statistic.component';
-import { QuizPointStatisticComponent } from './quiz-point-statistic/quiz-point-statistic.component';
-import { MultipleChoiceQuestionStatisticComponent } from './multiple-choice-question-statistic/multiple-choice-question-statistic.component';
-import { DragAndDropQuestionStatisticComponent } from './drag-and-drop-question-statistic/drag-and-drop-question-statistic.component';
-import { ShortAnswerQuestionStatisticComponent } from './short-answer-question-statistic/short-answer-question-statistic.component';
+
 import { Authority } from 'app/shared/constants/authority.constants';
 
 export const quizStatisticRoute: Routes = [
     {
         path: ':courseId/quiz-exercises/:exerciseId/quiz-statistic',
-        component: QuizStatisticComponent,
+        loadComponent: () => import('./quiz-statistic/quiz-statistic.component').then((m) => m.QuizStatisticComponent),
         data: {
             authorities: [Authority.USER],
             pageTitle: 'artemisApp.course.home.title',
@@ -19,7 +15,7 @@ export const quizStatisticRoute: Routes = [
     },
     {
         path: ':courseId/quiz-exercises/:exerciseId/quiz-point-statistic',
-        component: QuizPointStatisticComponent,
+        loadComponent: () => import('./quiz-point-statistic/quiz-point-statistic.component').then((m) => m.QuizPointStatisticComponent),
         data: {
             authorities: [Authority.USER],
             pageTitle: 'artemisApp.course.home.title',
@@ -28,7 +24,7 @@ export const quizStatisticRoute: Routes = [
     },
     {
         path: ':courseId/quiz-exercises/:exerciseId/mc-question-statistic/:questionId',
-        component: MultipleChoiceQuestionStatisticComponent,
+        loadComponent: () => import('./multiple-choice-question-statistic/multiple-choice-question-statistic.component').then((m) => m.MultipleChoiceQuestionStatisticComponent),
         data: {
             authorities: [Authority.USER],
             pageTitle: 'artemisApp.course.home.title',
@@ -37,7 +33,7 @@ export const quizStatisticRoute: Routes = [
     },
     {
         path: ':courseId/quiz-exercises/:exerciseId/dnd-question-statistic/:questionId',
-        component: DragAndDropQuestionStatisticComponent,
+        loadComponent: () => import('./drag-and-drop-question-statistic/drag-and-drop-question-statistic.component').then((m) => m.DragAndDropQuestionStatisticComponent),
         data: {
             authorities: [Authority.USER],
             pageTitle: 'artemisApp.course.home.title',
@@ -46,7 +42,7 @@ export const quizStatisticRoute: Routes = [
     },
     {
         path: ':courseId/quiz-exercises/:exerciseId/sa-question-statistic/:questionId',
-        component: ShortAnswerQuestionStatisticComponent,
+        loadComponent: () => import('./short-answer-question-statistic/short-answer-question-statistic.component').then((m) => m.ShortAnswerQuestionStatisticComponent),
         data: {
             authorities: [Authority.USER],
             pageTitle: 'artemisApp.course.home.title',

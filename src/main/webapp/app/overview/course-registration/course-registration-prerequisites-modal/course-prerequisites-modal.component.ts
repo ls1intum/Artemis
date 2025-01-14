@@ -1,27 +1,27 @@
-import { Component, Input, OnInit } from '@angular/core';
+import { Component, Input, OnInit, inject } from '@angular/core';
 import { AlertService } from 'app/core/util/alert.service';
 import { finalize } from 'rxjs/operators';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import { PrerequisiteService } from 'app/course/competencies/prerequisite.service';
 import { Prerequisite } from 'app/entities/prerequisite.model';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { CompetencyCardComponent } from 'app/course/competencies/competency-card/competency-card.component';
 
 @Component({
     selector: 'jhi-course-prerequisites-modal',
     templateUrl: './course-prerequisites-modal.component.html',
-    styles: [],
+    imports: [TranslateDirective, CompetencyCardComponent],
 })
 export class CoursePrerequisitesModalComponent implements OnInit {
+    private alertService = inject(AlertService);
+    private activeModal = inject(NgbActiveModal);
+    private prerequisiteService = inject(PrerequisiteService);
+
     @Input()
     courseId: number;
 
     isLoading = false;
     prerequisites: Prerequisite[] = [];
-
-    constructor(
-        private alertService: AlertService,
-        private activeModal: NgbActiveModal,
-        private prerequisiteService: PrerequisiteService,
-    ) {}
 
     ngOnInit(): void {
         if (this.courseId) {

@@ -1,4 +1,4 @@
-import { Injectable, OnDestroy } from '@angular/core';
+import { Injectable, OnDestroy, inject } from '@angular/core';
 import { DomainChange } from 'app/exercises/programming/shared/code-editor/model/code-editor.model';
 import { Subscription } from 'rxjs';
 import { filter, tap } from 'rxjs/operators';
@@ -9,10 +9,10 @@ import { DomainService } from 'app/exercises/programming/shared/code-editor/serv
  */
 @Injectable({ providedIn: 'root' })
 export abstract class DomainDependentService implements OnDestroy {
+    private domainService = inject(DomainService);
+
     protected domain: DomainChange;
     protected domainChangeSubscription: Subscription;
-
-    protected constructor(private domainService: DomainService) {}
 
     /**
      * Initializes a domain subscription.

@@ -2,11 +2,13 @@ import { Component, EventEmitter, Input, Output } from '@angular/core';
 import { Feedback } from 'app/entities/feedback.model';
 import { GradingCriterion } from 'app/exercises/shared/structured-grading-criterion/grading-criterion.model';
 import { GradingInstruction } from 'app/exercises/shared/structured-grading-criterion/grading-instruction.model';
+import { HelpIconComponent } from 'app/shared/components/help-icon.component';
 
 @Component({
     selector: 'jhi-textblock-feedback-dropdown',
     templateUrl: './textblock-feedback-dropdown.component.html',
     styleUrls: ['./textblock-feedback-dropdown.component.scss'],
+    imports: [HelpIconComponent],
 })
 export class TextblockFeedbackDropdownComponent {
     @Output() didChange = new EventEmitter();
