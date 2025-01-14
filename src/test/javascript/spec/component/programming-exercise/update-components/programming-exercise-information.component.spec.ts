@@ -1,27 +1,21 @@
 import { ComponentFixture, TestBed, fakeAsync } from '@angular/core/testing';
-import { MockComponent, MockDirective, MockModule, MockPipe, MockProvider } from 'ng-mocks';
+import { MockProvider } from 'ng-mocks';
 import { ActivatedRoute } from '@angular/router';
 import { Subject, of } from 'rxjs';
-import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
+import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
+
 import { ProgrammingExerciseInformationComponent } from 'app/exercises/programming/manage/update/update-components/information/programming-exercise-information.component';
-import { DefaultValueAccessor, NgModel } from '@angular/forms';
-import { RemoveKeysPipe } from 'app/shared/pipes/remove-keys.pipe';
+import { NgModel } from '@angular/forms';
 import { ProgrammingExercise } from 'app/entities/programming/programming-exercise.model';
 import { ProgrammingExerciseBuildConfig } from 'app/entities/programming/programming-exercise-build.config';
-import { HelpIconComponent } from 'app/shared/components/help-icon.component';
-import { CategorySelectorComponent } from 'app/shared/category-selector/category-selector.component';
-import { AddAuxiliaryRepositoryButtonComponent } from 'app/exercises/programming/manage/update/add-auxiliary-repository-button.component';
 import { programmingExerciseCreationConfigMock } from './programming-exercise-creation-config-mock';
-import { ExerciseTitleChannelNameComponent } from 'app/exercises/shared/exercise-title-channel-name/exercise-title-channel-name.component';
 import { TableEditableFieldComponent } from 'app/shared/table/table-editable-field.component';
 import { QueryList } from '@angular/core';
-import { ProgrammingExerciseRepositoryAndBuildPlanDetailsComponent } from 'app/exercises/programming/shared/build-details/programming-exercise-repository-and-build-plan-details.component';
 import { ProgrammingExerciseEditCheckoutDirectoriesComponent } from 'app/exercises/programming/shared/build-details/programming-exercise-edit-checkout-directories/programming-exercise-edit-checkout-directories.component';
-import { ArtemisProgrammingExerciseUpdateModule } from 'app/exercises/programming/manage/update/programming-exercise-update.module';
-import { CustomNotIncludedInValidatorDirective } from '../../../../../../main/webapp/app/shared/validators/custom-not-included-in-validator.directive';
 import { ExerciseService } from '../../../../../../main/webapp/app/exercises/shared/exercise/exercise.service';
 import { MockExerciseService } from '../../../helpers/mocks/service/mock-exercise.service';
 import { AlertService } from '../../../../../../main/webapp/app/core/util/alert.service';
+import { ArtemisTestModule } from '../../../test.module';
 
 describe('ProgrammingExerciseInformationComponent', () => {
     let fixture: ComponentFixture<ProgrammingExerciseInformationComponent>;
@@ -29,22 +23,7 @@ describe('ProgrammingExerciseInformationComponent', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [],
-            declarations: [
-                ProgrammingExerciseInformationComponent,
-                DefaultValueAccessor,
-                NgModel,
-                MockComponent(HelpIconComponent),
-                MockComponent(ExerciseTitleChannelNameComponent),
-                MockComponent(ProgrammingExerciseRepositoryAndBuildPlanDetailsComponent),
-                MockComponent(ProgrammingExerciseEditCheckoutDirectoriesComponent),
-                MockComponent(CategorySelectorComponent),
-                MockComponent(AddAuxiliaryRepositoryButtonComponent),
-                MockPipe(ArtemisTranslatePipe),
-                MockPipe(RemoveKeysPipe),
-                MockModule(ArtemisProgrammingExerciseUpdateModule),
-                MockDirective(CustomNotIncludedInValidatorDirective),
-            ],
+            imports: [ArtemisTestModule, BrowserAnimationsModule],
             providers: [
                 MockProvider(AlertService),
                 {
@@ -57,25 +36,21 @@ describe('ProgrammingExerciseInformationComponent', () => {
                 },
             ],
             schemas: [],
-        })
-            .compileComponents()
-            .then(() => {
-                fixture = TestBed.createComponent(ProgrammingExerciseInformationComponent);
-                comp = fixture.componentInstance;
+        }).compileComponents();
+        fixture = TestBed.createComponent(ProgrammingExerciseInformationComponent);
+        comp = fixture.componentInstance;
 
-                comp.programmingExerciseCreationConfig = programmingExerciseCreationConfigMock;
-
-                fixture.componentRef.setInput('programmingExercise', new ProgrammingExercise(undefined, undefined));
-                fixture.componentRef.setInput('isEditFieldDisplayedRecord', {
-                    shortName: true,
-                    categories: true,
-                });
-                fixture.componentRef.setInput('isSimpleMode', false);
-                fixture.componentRef.setInput('isExamMode', false);
-                fixture.componentRef.setInput('isImport', false);
-
-                comp.programmingExercise().buildConfig = new ProgrammingExerciseBuildConfig();
-            });
+        fixture.componentRef.setInput('programmingExercise', new ProgrammingExercise(undefined, undefined));
+        fixture.componentRef.setInput('isEditFieldDisplayedRecord', {
+            shortName: true,
+            categories: true,
+        });
+        fixture.componentRef.setInput('isSimpleMode', false);
+        fixture.componentRef.setInput('isExamMode', false);
+        fixture.componentRef.setInput('isImport', false);
+        fixture.componentRef.setInput('isLocal', false);
+        fixture.componentRef.setInput('programmingExerciseCreationConfig', programmingExerciseCreationConfigMock);
+        comp.programmingExercise().buildConfig = new ProgrammingExerciseBuildConfig();
     });
 
     afterEach(() => {

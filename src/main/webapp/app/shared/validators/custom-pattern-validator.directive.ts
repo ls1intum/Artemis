@@ -5,7 +5,6 @@ import { AbstractControl, NG_VALIDATORS, Validator } from '@angular/forms';
  * Custom validator for patterns (RegEx)
  */
 @Directive({
-    // eslint-disable-next-line @angular-eslint/directive-selector
     selector: '[validPattern][ngModel],[validPattern][formControl]',
     providers: [{ provide: NG_VALIDATORS, useExisting: CustomPatternValidatorDirective, multi: true }],
 })

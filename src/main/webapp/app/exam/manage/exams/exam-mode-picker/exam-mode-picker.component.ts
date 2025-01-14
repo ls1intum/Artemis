@@ -1,10 +1,13 @@
 import { Component, EventEmitter, Input, Output } from '@angular/core';
 import { Exam } from 'app/entities/exam/exam.model';
+import { NgClass } from '@angular/common';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
 
 @Component({
     selector: 'jhi-exam-mode-picker',
     templateUrl: './exam-mode-picker.component.html',
     styleUrls: ['./exam-mode-picker.component.scss'],
+    imports: [NgClass, TranslateDirective],
 })
 export class ExamModePickerComponent {
     @Input() exam: Exam;

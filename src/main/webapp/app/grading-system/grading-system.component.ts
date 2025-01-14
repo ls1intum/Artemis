@@ -17,7 +17,6 @@ import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
     selector: 'jhi-grading-system',
     templateUrl: './grading-system.component.html',
     styleUrls: ['./grading-system.component.scss'],
-    standalone: true,
     imports: [
         ArtemisSharedComponentModule,
         TranslateDirective,

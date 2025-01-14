@@ -1,4 +1,4 @@
-import { Component, Input, OnChanges, SimpleChanges, ViewChild } from '@angular/core';
+import { Component, Input, OnChanges, SimpleChanges, ViewChild, inject } from '@angular/core';
 import { ProgrammingExercise, ProgrammingLanguage, ProjectType } from 'app/entities/programming/programming-exercise.model';
 import { faQuestionCircle } from '@fortawesome/free-solid-svg-icons';
 import { ProgrammingExerciseCreationConfig } from 'app/exercises/programming/manage/update/programming-exercise-creation-config';
@@ -6,13 +6,19 @@ import { AeolusService } from 'app/exercises/programming/shared/service/aeolus.s
 import { ProgrammingExerciseBuildConfigurationComponent } from 'app/exercises/programming/manage/update/update-components/custom-build-plans/programming-exercise-build-configuration/programming-exercise-build-configuration.component';
 import { MonacoEditorComponent } from 'app/shared/monaco-editor/monaco-editor.component';
 import { ASSIGNMENT_REPO_NAME, TEST_REPO_NAME } from 'app/shared/constants/input.constants';
+import { FormsModule } from '@angular/forms';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { HelpIconComponent } from 'app/shared/components/help-icon.component';
 
 @Component({
     selector: 'jhi-programming-exercise-custom-build-plan',
     templateUrl: './programming-exercise-custom-build-plan.component.html',
     styleUrls: ['../../../programming-exercise-form.scss'],
+    imports: [FormsModule, TranslateDirective, HelpIconComponent, ProgrammingExerciseBuildConfigurationComponent, MonacoEditorComponent],
 })
 export class ProgrammingExerciseCustomBuildPlanComponent implements OnChanges {
+    private aeolusService = inject(AeolusService);
+
     @Input() programmingExercise: ProgrammingExercise;
     @Input() programmingExerciseCreationConfig: ProgrammingExerciseCreationConfig;
 
@@ -22,9 +28,7 @@ export class ProgrammingExerciseCustomBuildPlanComponent implements OnChanges {
     projectType?: ProjectType;
     staticCodeAnalysisEnabled?: boolean;
     sequentialTestRuns?: boolean;
-    isImportFromFile: boolean = false;
-
-    constructor(private aeolusService: AeolusService) {}
+    isImportFromFile = false;
 
     code: string = '#!/bin/bash\n\n# Add your custom build plan action here';
     private _editor?: MonacoEditorComponent;

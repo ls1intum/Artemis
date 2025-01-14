@@ -7,8 +7,14 @@ import { OwlDateTimeModule } from '@danielmoncada/angular-datetime-picker';
 import { ExerciseFeedbackSuggestionOptionsModule } from 'app/exercises/shared/feedback-suggestion/exercise-feedback-suggestion-options.module';
 
 @NgModule({
-    imports: [ArtemisSharedComponentModule, OwlDateTimeModule, ArtemisSharedModule, ExerciseFeedbackSuggestionOptionsModule],
-    declarations: [ProgrammingExerciseLifecycleComponent, ProgrammingExerciseTestScheduleDatePickerComponent],
+    imports: [
+        ArtemisSharedComponentModule,
+        OwlDateTimeModule,
+        ArtemisSharedModule,
+        ExerciseFeedbackSuggestionOptionsModule,
+        ProgrammingExerciseLifecycleComponent,
+        ProgrammingExerciseTestScheduleDatePickerComponent,
+    ],
     exports: [ProgrammingExerciseLifecycleComponent],
 })
 export class ArtemisProgrammingExerciseLifecycleModule {}

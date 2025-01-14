@@ -10,7 +10,8 @@ import { SidebarCardMediumComponent } from 'app/shared/sidebar/sidebar-card-medi
 import { SidebarCardLargeComponent } from 'app/shared/sidebar/sidebar-card-large/sidebar-card-large.component';
 
 @Component({
-    template: `<div jhiSidebarCard [size]="size" [itemSelected]="false"></div>`,
+    template: ` <div jhiSidebarCard [size]="size" [itemSelected]="false"></div>`,
+    imports: [SidebarCardDirective],
 })
 class TestHostComponent {
     @ViewChild(SidebarCardDirective) directive: SidebarCardDirective;

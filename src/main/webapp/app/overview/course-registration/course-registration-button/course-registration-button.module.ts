@@ -5,8 +5,7 @@ import { ArtemisCompetenciesModule } from 'app/course/competencies/competency.mo
 import { CourseRegistrationButtonComponent } from 'app/overview/course-registration/course-registration-button/course-registration-button.component';
 
 @NgModule({
-    imports: [ArtemisSharedModule, ArtemisSharedComponentModule, ArtemisCompetenciesModule],
-    declarations: [CourseRegistrationButtonComponent],
+    imports: [ArtemisSharedModule, ArtemisSharedComponentModule, ArtemisCompetenciesModule, CourseRegistrationButtonComponent],
     exports: [CourseRegistrationButtonComponent],
 })
 export class CourseRegistrationButtonModule {}

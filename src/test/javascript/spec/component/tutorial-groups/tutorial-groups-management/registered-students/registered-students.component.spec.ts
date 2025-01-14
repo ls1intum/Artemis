@@ -16,6 +16,7 @@ import { CourseManagementService } from 'app/course/manage/course-management.ser
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import { LoadingIndicatorContainerStubComponent } from '../../../../helpers/stubs/loading-indicator-container-stub.component';
+import { LocalStorageService } from 'ngx-webstorage';
 
 @Component({ selector: 'jhi-course-group', template: '' })
 class CourseGroupStubComponent {
@@ -66,7 +67,7 @@ describe('Registered Students Component', () => {
                 MockDirective(TranslateDirective),
                 MockPipe(ArtemisTranslatePipe),
             ],
-            providers: [MockProvider(TutorialGroupsService), MockProvider(CourseManagementService), MockProvider(NgbActiveModal)],
+            providers: [MockProvider(TutorialGroupsService), MockProvider(CourseManagementService), MockProvider(NgbActiveModal), MockProvider(LocalStorageService)],
         })
             .compileComponents()
             .then(() => {
