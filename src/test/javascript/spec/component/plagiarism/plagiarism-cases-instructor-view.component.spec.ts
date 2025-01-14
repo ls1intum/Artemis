@@ -22,9 +22,8 @@ import { ArtemisDatePipe } from '../../../../../main/webapp/app/shared/pipes/art
 import { ProgressBarComponent } from 'app/shared/dashboards/tutor-participation-graph/progress-bar/progress-bar.component';
 import { PlagiarismCaseVerdictComponent } from 'app/course/plagiarism-cases/shared/verdict/plagiarism-case-verdict.component';
 import { MockNotificationService } from '../../helpers/mocks/service/mock-notification.service';
-import { ElementRef, signal, Component } from '@angular/core';
+import { Component, ElementRef, signal } from '@angular/core';
 import { Location } from '@angular/common';
-
 
 @Component({ template: '' })
 class DummyComponent {}
