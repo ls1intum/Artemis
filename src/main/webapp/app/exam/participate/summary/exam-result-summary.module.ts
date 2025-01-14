@@ -57,8 +57,6 @@ import { NoDataComponent } from 'app/shared/no-data-component';
         ArtemisFileUploadParticipationModule,
         ArtemisFeedbackModule,
         NoDataComponent,
-    ],
-    declarations: [
         ExamResultSummaryComponent,
         ProgrammingExamSummaryComponent,
         ModelingExamSummaryComponent,

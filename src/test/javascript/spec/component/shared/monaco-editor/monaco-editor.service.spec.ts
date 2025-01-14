@@ -40,6 +40,7 @@ describe('MonacoEditorService', () => {
     });
 
     it('should correctly handle themes', () => {
+        TestBed.flushEffects();
         // Initialization: The editor should be in light mode since that is what we initialized the themeSubject with
         expect(setThemeSpy).toHaveBeenCalledExactlyOnceWith(MONACO_LIGHT_THEME_DEFINITION.id);
         // Switch to dark theme

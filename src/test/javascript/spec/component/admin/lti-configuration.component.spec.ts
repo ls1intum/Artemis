@@ -1,27 +1,19 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { LtiConfigurationService } from 'app/admin/lti-configuration/lti-configuration.service';
-import { Router } from '@angular/router';
+import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { SortService } from 'app/shared/service/sort.service';
 import { LtiConfigurationComponent } from 'app/admin/lti-configuration/lti-configuration.component';
 import { LtiPlatformConfiguration } from 'app/admin/lti-configuration/lti-configuration.model';
-import { NgbNavModule } from '@ng-bootstrap/ng-bootstrap';
-import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
-import { MockComponent, MockDirective, MockPipe } from 'ng-mocks';
-import { HelpIconComponent } from 'app/shared/components/help-icon.component';
-import { CopyIconButtonComponent } from 'app/shared/components/copy-icon-button/copy-icon-button.component';
-import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
-import { SortDirective } from 'app/shared/sort/sort.directive';
-import { SortByDirective } from 'app/shared/sort/sort-by.directive';
-import { MockRouterLinkDirective } from '../../helpers/mocks/directive/mock-router-link.directive';
-import { DeleteButtonDirective } from 'app/shared/delete-dialog/delete-button.directive';
 import { TranslateService } from '@ngx-translate/core';
 import { MockTranslateService } from '../../helpers/mocks/service/mock-translate.service';
-import { ActivatedRoute } from '@angular/router';
 import { of, throwError } from 'rxjs';
 import { HttpErrorResponse, HttpHeaders, HttpResponse } from '@angular/common/http';
 import { NO_ERRORS_SCHEMA } from '@angular/core';
 import { AlertService } from 'app/core/util/alert.service';
 import { MockAlertService } from '../../helpers/mocks/service/mock-alert.service';
+import { ArtemisTestModule } from '../../test.module';
+import '@angular/localize/init';
+import { MockDirective } from 'ng-mocks';
 
 describe('LtiConfigurationComponent', () => {
     let component: LtiConfigurationComponent;
@@ -56,17 +48,8 @@ describe('LtiConfigurationComponent', () => {
             deleteLtiPlatform: jest.fn().mockReturnValue(of({})),
         };
         await TestBed.configureTestingModule({
-            imports: [NgbNavModule, FontAwesomeModule],
-            declarations: [
-                LtiConfigurationComponent,
-                MockPipe(ArtemisTranslatePipe),
-                MockComponent(HelpIconComponent),
-                MockComponent(CopyIconButtonComponent),
-                MockDirective(SortDirective),
-                MockDirective(SortByDirective),
-                MockDirective(DeleteButtonDirective),
-                MockRouterLinkDirective,
-            ],
+            imports: [ArtemisTestModule],
+            declarations: [LtiConfigurationComponent, MockDirective(RouterLink)],
             providers: [
                 { provide: Router, useValue: mockRouter },
                 { provide: SortService, useValue: mockSortService },

@@ -53,8 +53,6 @@ import { ArtemisMarkdownEditorModule } from 'app/shared/markdown-editor/markdown
         ArtemisSidePanelModule,
         ArtemisSharedComponentModule,
         ArtemisMarkdownEditorModule,
-    ],
-    declarations: [
         TutorialGroupsManagementComponent,
         TutorialGroupFormComponent,
         CreateTutorialGroupComponent,

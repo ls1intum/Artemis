@@ -10,7 +10,6 @@ import { SafeHtml } from '@angular/platform-browser';
 
 @Component({
     selector: 'jhi-exam-start-information',
-    standalone: true,
     imports: [ArtemisSharedModule, ArtemisSharedComponentModule, InformationBoxComponent, ArtemisExamSharedModule],
     templateUrl: './exam-start-information.component.html',
 })

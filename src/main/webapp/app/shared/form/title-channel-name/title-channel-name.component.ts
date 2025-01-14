@@ -1,12 +1,16 @@
 import { AfterViewInit, Component, Input, OnDestroy, OnInit, ViewChild, computed, effect, input, output, signal, viewChild } from '@angular/core';
-import { ControlContainer, NgForm, NgModel } from '@angular/forms';
+import { ControlContainer, FormsModule, NgForm, NgModel } from '@angular/forms';
 import { Subject, Subscription } from 'rxjs';
 import { ProgrammingExerciseInputField } from 'app/exercises/programming/manage/update/programming-exercise-update.helper';
+import { TranslateDirective } from '../../language/translate.directive';
+import { CustomNotIncludedInValidatorDirective } from '../../validators/custom-not-included-in-validator.directive';
+import { HelpIconComponent } from '../../components/help-icon.component';
 
 @Component({
     selector: 'jhi-title-channel-name',
     templateUrl: './title-channel-name.component.html',
     viewProviders: [{ provide: ControlContainer, useExisting: NgForm }],
+    imports: [TranslateDirective, FormsModule, CustomNotIncludedInValidatorDirective, HelpIconComponent],
 })
 export class TitleChannelNameComponent implements AfterViewInit, OnDestroy, OnInit {
     @Input() title?: string;

@@ -1,14 +1,14 @@
 import { HttpClient } from '@angular/common/http';
-import { Injectable } from '@angular/core';
+import { Injectable, inject } from '@angular/core';
 import { Observable } from 'rxjs';
 
 import { ProgrammingLanguage } from 'app/entities/programming/programming-exercise.model';
 
 @Injectable({ providedIn: 'root' })
 export class TheiaService {
-    private resourceUrl = 'api/theia';
+    private http = inject(HttpClient);
 
-    constructor(private http: HttpClient) {}
+    private resourceUrl = 'api/theia';
 
     /**
      * Fetches the theia images for the given programming language

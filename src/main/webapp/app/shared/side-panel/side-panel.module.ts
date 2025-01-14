@@ -4,8 +4,7 @@ import { ArtemisSharedModule } from 'app/shared/shared.module';
 import { SidePanelComponent } from './side-panel.component';
 
 @NgModule({
-    imports: [ArtemisSharedModule],
-    declarations: [SidePanelComponent],
+    imports: [ArtemisSharedModule, SidePanelComponent],
     exports: [SidePanelComponent],
 })
 export class ArtemisSidePanelModule {}

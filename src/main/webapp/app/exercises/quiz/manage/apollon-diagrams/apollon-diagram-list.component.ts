@@ -1,4 +1,4 @@
-import { Component, EventEmitter, Input, OnInit, Output } from '@angular/core';
+import { Component, EventEmitter, Input, OnInit, Output, inject } from '@angular/core';
 import { HttpResponse } from '@angular/common/http';
 import { ActivatedRoute } from '@angular/router';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
@@ -14,13 +14,27 @@ import { Course } from 'app/entities/course.model';
 import { faPlus, faSort, faTimes, faX } from '@fortawesome/free-solid-svg-icons';
 import { ButtonSize } from 'app/shared/components/button.component';
 import { UMLDiagramType } from '@ls1intum/apollon';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { SortDirective } from 'app/shared/sort/sort.directive';
+import { SortByDirective } from 'app/shared/sort/sort-by.directive';
+import { DeleteButtonDirective } from 'app/shared/delete-dialog/delete-button.directive';
 
 @Component({
     selector: 'jhi-apollon-diagram-list',
     templateUrl: './apollon-diagram-list.component.html',
     providers: [ApollonDiagramService],
+    imports: [TranslateDirective, FaIconComponent, SortDirective, SortByDirective, DeleteButtonDirective],
 })
 export class ApollonDiagramListComponent implements OnInit {
+    private apollonDiagramsService = inject(ApollonDiagramService);
+    private alertService = inject(AlertService);
+    private modalService = inject(NgbModal);
+    private sortService = inject(SortService);
+    private route = inject(ActivatedRoute);
+    private courseService = inject(CourseManagementService);
+    private accountService = inject(AccountService);
+
     apollonDiagrams: ApollonDiagram[] = [];
     predicate: string;
     reverse: boolean;
@@ -43,15 +57,7 @@ export class ApollonDiagramListComponent implements OnInit {
 
     ButtonSize = ButtonSize;
 
-    constructor(
-        private apollonDiagramsService: ApollonDiagramService,
-        private alertService: AlertService,
-        private modalService: NgbModal,
-        private sortService: SortService,
-        private route: ActivatedRoute,
-        private courseService: CourseManagementService,
-        private accountService: AccountService,
-    ) {
+    constructor() {
         this.predicate = 'id';
         this.reverse = true;
     }
