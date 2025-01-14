@@ -1,16 +1,16 @@
 import { RouterModule, Routes } from '@angular/router';
 import { UserRouteAccessService } from 'app/core/auth/user-route-access-service';
-import { FileUploadExerciseDetailComponent } from './file-upload-exercise-detail.component';
+
 import { NgModule } from '@angular/core';
-import { FileUploadExerciseUpdateComponent } from 'app/exercises/file-upload/manage/file-upload-exercise-update.component';
+
 import { Authority } from 'app/shared/constants/authority.constants';
-import { ExerciseStatisticsComponent } from 'app/exercises/shared/statistics/exercise-statistics.component';
+
 import { FileUploadExerciseManagementResolve } from 'app/exercises/file-upload/manage/file-upload-exercise-management-resolve.service';
 
 const routes: Routes = [
     {
         path: ':courseId/file-upload-exercises/new',
-        component: FileUploadExerciseUpdateComponent,
+        loadComponent: () => import('app/exercises/file-upload/manage/file-upload-exercise-update.component').then((m) => m.FileUploadExerciseUpdateComponent),
         resolve: {
             fileUploadExercise: FileUploadExerciseManagementResolve,
         },
@@ -22,7 +22,7 @@ const routes: Routes = [
     },
     {
         path: ':courseId/file-upload-exercises/:exerciseId/import',
-        component: FileUploadExerciseUpdateComponent,
+        loadComponent: () => import('app/exercises/file-upload/manage/file-upload-exercise-update.component').then((m) => m.FileUploadExerciseUpdateComponent),
         resolve: {
             fileUploadExercise: FileUploadExerciseManagementResolve,
         },
@@ -35,7 +35,7 @@ const routes: Routes = [
 
     {
         path: ':courseId/file-upload-exercises/:exerciseId/edit',
-        component: FileUploadExerciseUpdateComponent,
+        loadComponent: () => import('app/exercises/file-upload/manage/file-upload-exercise-update.component').then((m) => m.FileUploadExerciseUpdateComponent),
         resolve: {
             fileUploadExercise: FileUploadExerciseManagementResolve,
         },
@@ -47,7 +47,7 @@ const routes: Routes = [
     },
     {
         path: ':courseId/file-upload-exercises/:exerciseId',
-        component: FileUploadExerciseDetailComponent,
+        loadComponent: () => import('./file-upload-exercise-detail.component').then((m) => m.FileUploadExerciseDetailComponent),
         data: {
             authorities: [Authority.TA, Authority.EDITOR, Authority.INSTRUCTOR, Authority.ADMIN],
             pageTitle: 'artemisApp.fileUploadExercise.home.title',
@@ -60,7 +60,7 @@ const routes: Routes = [
     },
     {
         path: ':courseId/file-upload-exercises/:exerciseId/exercise-statistics',
-        component: ExerciseStatisticsComponent,
+        loadComponent: () => import('app/exercises/shared/statistics/exercise-statistics.component').then((m) => m.ExerciseStatisticsComponent),
         resolve: {
             fileUploadExercise: FileUploadExerciseManagementResolve,
         },

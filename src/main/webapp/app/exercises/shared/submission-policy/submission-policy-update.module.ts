@@ -4,8 +4,7 @@ import { SubmissionPolicyUpdateComponent } from 'app/exercises/shared/submission
 import { ArtemisSharedComponentModule } from 'app/shared/components/shared-component.module';
 
 @NgModule({
-    imports: [ArtemisSharedModule, ArtemisSharedComponentModule],
-    declarations: [SubmissionPolicyUpdateComponent],
+    imports: [ArtemisSharedModule, ArtemisSharedComponentModule, SubmissionPolicyUpdateComponent],
     exports: [SubmissionPolicyUpdateComponent],
 })
 export class SubmissionPolicyUpdateModule {}

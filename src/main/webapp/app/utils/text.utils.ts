@@ -56,3 +56,18 @@ export const getInitialsFromString = (username: string): string => {
 
     return initials.toUpperCase();
 };
+
+/**
+ * Add tab to the value of textarea instead of moving to the next element in DOM
+ * @param event the tab event
+ * @param editor the text area as HTML element
+ */
+export const onTextEditorTab = (editor: HTMLTextAreaElement, event: Event) => {
+    event.preventDefault();
+    const value = editor.value;
+    const start = editor.selectionStart;
+    const end = editor.selectionEnd;
+
+    editor.value = value.substring(0, start) + '\t' + value.substring(end);
+    editor.selectionStart = editor.selectionEnd = start + 1;
+};

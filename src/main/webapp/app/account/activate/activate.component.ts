@@ -9,7 +9,6 @@ import { TranslateDirective } from 'app/shared/language/translate.directive';
 @Component({
     selector: 'jhi-activate',
     templateUrl: './activate.component.html',
-    standalone: true,
     imports: [TranslateDirective, RouterLink, ArtemisSharedModule],
 })
 export class ActivateComponent implements OnInit {

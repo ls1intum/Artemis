@@ -1,13 +1,11 @@
 import { Route } from '@angular/router';
-import { SystemNotificationManagementUpdateComponent } from 'app/admin/system-notification-management/system-notification-management-update.component';
-import { SystemNotificationManagementComponent } from 'app/admin/system-notification-management/system-notification-management.component';
-import { SystemNotificationManagementDetailComponent } from 'app/admin/system-notification-management/system-notification-management-detail.component';
+
 import { SystemNotificationManagementResolve } from 'app/admin/system-notification-management/system-notification-management-resolve.service';
 
 export const systemNotificationManagementRoute: Route[] = [
     {
         path: 'system-notification-management',
-        component: SystemNotificationManagementComponent,
+        loadComponent: () => import('app/admin/system-notification-management/system-notification-management.component').then((m) => m.SystemNotificationManagementComponent),
         data: {
             pageTitle: 'artemisApp.systemNotification.systemNotifications',
             defaultSort: 'id,asc',
@@ -22,14 +20,16 @@ export const systemNotificationManagementRoute: Route[] = [
         children: [
             {
                 path: 'new',
-                component: SystemNotificationManagementUpdateComponent,
+                loadComponent: () =>
+                    import('app/admin/system-notification-management/system-notification-management-update.component').then((m) => m.SystemNotificationManagementUpdateComponent),
                 data: {
                     pageTitle: 'global.generic.create',
                 },
             },
             {
                 path: ':id',
-                component: SystemNotificationManagementDetailComponent,
+                loadComponent: () =>
+                    import('app/admin/system-notification-management/system-notification-management-detail.component').then((m) => m.SystemNotificationManagementDetailComponent),
                 resolve: {
                     notification: SystemNotificationManagementResolve,
                 },
@@ -50,7 +50,10 @@ export const systemNotificationManagementRoute: Route[] = [
                 children: [
                     {
                         path: 'edit',
-                        component: SystemNotificationManagementUpdateComponent,
+                        loadComponent: () =>
+                            import('app/admin/system-notification-management/system-notification-management-update.component').then(
+                                (m) => m.SystemNotificationManagementUpdateComponent,
+                            ),
                         data: {
                             pageTitle: 'global.generic.edit',
                             breadcrumbLabelVariable: '',

@@ -5,7 +5,6 @@ import { faCircleNotch } from '@fortawesome/free-solid-svg-icons';
 
 @Component({
     selector: 'jhi-result-progress-bar',
-    standalone: true,
     imports: [CommonModule, ArtemisSharedCommonModule],
     templateUrl: './result-progress-bar.component.html',
     styleUrl: './result-progress-bar.component.scss',

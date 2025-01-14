@@ -8,7 +8,7 @@ import { TutorialGroupSessionRowComponent } from 'app/course/tutorial-groups/sha
 import { TutorialGroupFreeDaysOverviewComponent } from './tutorial-group-free-days-overview/tutorial-group-free-days-overview.component';
 import { ArtemisSidePanelModule } from 'app/shared/side-panel/side-panel.module';
 import { TutorialGroupRowComponent } from './tutorial-groups-table/tutorial-group-row/tutorial-group-row.component';
-import { VerticalProgressBarModule } from 'app/shared/vertical-progress-bar/vertical-progress-bar.module';
+
 import { TutorialGroupUtilizationIndicatorComponent } from './tutorial-group-utilization-indicator/tutorial-group-utilization-indicator.component';
 import { RemoveSecondsPipe } from 'app/course/tutorial-groups/shared/remove-seconds.pipe';
 import { MeetingPatternPipe } from 'app/course/tutorial-groups/shared/meeting-pattern.pipe';
@@ -17,8 +17,13 @@ import { IconCardComponent } from 'app/shared/icon-card/icon-card.component';
 import { ProfilePictureComponent } from 'app/shared/profile-picture/profile-picture.component';
 
 @NgModule({
-    imports: [ArtemisSharedModule, RouterModule, ArtemisSidePanelModule, VerticalProgressBarModule, DetailModule, IconCardComponent, ProfilePictureComponent],
-    declarations: [
+    imports: [
+        ArtemisSharedModule,
+        RouterModule,
+        ArtemisSidePanelModule,
+        DetailModule,
+        IconCardComponent,
+        ProfilePictureComponent,
         TutorialGroupsTableComponent,
         TutorialGroupDetailComponent,
         TutorialGroupSessionsTableComponent,

@@ -4,11 +4,16 @@ import { TextSubmissionElement } from 'app/exercises/shared/plagiarism/types/tex
 import { ModelingSubmissionElement } from 'app/exercises/shared/plagiarism/types/modeling/ModelingSubmissionElement';
 import { PlagiarismStatus } from 'app/exercises/shared/plagiarism/types/PlagiarismStatus';
 import { faArrowLeft, faArrowRight, faChevronRight, faExclamationTriangle } from '@fortawesome/free-solid-svg-icons';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { DecimalPipe, NgClass } from '@angular/common';
+import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 
 @Component({
     selector: 'jhi-plagiarism-sidebar',
     styleUrls: ['./plagiarism-sidebar.component.scss'],
     templateUrl: './plagiarism-sidebar.component.html',
+    imports: [FaIconComponent, TranslateDirective, NgClass, DecimalPipe, ArtemisTranslatePipe],
 })
 export class PlagiarismSidebarComponent implements OnChanges {
     @Input() activeID: number;
