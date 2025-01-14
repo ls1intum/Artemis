@@ -12,7 +12,17 @@ import { DataExportRequestButtonDirective } from 'app/core/legal/data-export/con
 import { TypeAheadUserSearchFieldModule } from 'app/shared/type-ahead-search-field/type-ahead-user-search-field.module';
 
 @NgModule({
-    declarations: [PrivacyComponent, DataExportComponent, DataExportConfirmationDialogComponent, DataExportRequestButtonDirective],
-    imports: [CommonModule, ArtemisSharedComponentModule, ArtemisSharedModule, PrivacyRoutingModule, ArtemisMarkdownModule, TypeAheadUserSearchFieldModule],
+    imports: [
+        CommonModule,
+        ArtemisSharedComponentModule,
+        ArtemisSharedModule,
+        PrivacyRoutingModule,
+        ArtemisMarkdownModule,
+        TypeAheadUserSearchFieldModule,
+        PrivacyComponent,
+        DataExportComponent,
+        DataExportConfirmationDialogComponent,
+        DataExportRequestButtonDirective,
+    ],
 })
 export class ArtemisPrivacyModule {}

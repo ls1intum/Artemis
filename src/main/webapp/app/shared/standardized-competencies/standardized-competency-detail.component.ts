@@ -8,7 +8,6 @@ import { ArtemisMarkdownModule } from 'app/shared/markdown.module';
     selector: 'jhi-standardized-competency-detail',
     templateUrl: './standardized-competency-detail.component.html',
     styleUrls: ['./standardized-competency-detail.component.scss'],
-    standalone: true,
     imports: [ArtemisSharedCommonModule, ArtemisMarkdownModule],
 })
 export class StandardizedCompetencyDetailComponent {
@@ -22,8 +21,6 @@ export class StandardizedCompetencyDetailComponent {
     // other constants
     protected readonly ButtonSize = ButtonSize;
     protected readonly ButtonType = ButtonType;
-
-    constructor() {}
 
     close() {
         this.onClose.emit();

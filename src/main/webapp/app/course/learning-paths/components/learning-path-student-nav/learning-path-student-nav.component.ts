@@ -10,7 +10,6 @@ import { TranslateDirective } from 'app/shared/language/translate.directive';
 
 @Component({
     selector: 'jhi-learning-path-student-nav',
-    standalone: true,
     changeDetection: ChangeDetectionStrategy.OnPush,
     imports: [CommonModule, NgbDropdownModule, NgbAccordionModule, FontAwesomeModule, LearningPathNavOverviewComponent, TranslateDirective],
     templateUrl: './learning-path-student-nav.component.html',
@@ -41,13 +40,10 @@ export class LearningPathNavComponent {
     readonly isDropdownOpen = signal<boolean>(false);
 
     constructor() {
-        effect(
-            () => {
-                const learningPathId = this.learningPathId();
-                untracked(() => this.learningPathNavigationService.loadLearningPathNavigation(learningPathId));
-            },
-            { allowSignalWrites: true },
-        );
+        effect(() => {
+            const learningPathId = this.learningPathId();
+            untracked(() => this.learningPathNavigationService.loadLearningPathNavigation(learningPathId));
+        });
     }
 
     async selectLearningObject(selectedLearningObject: LearningPathNavigationObjectDTO, isSuccessor: boolean): Promise<void> {

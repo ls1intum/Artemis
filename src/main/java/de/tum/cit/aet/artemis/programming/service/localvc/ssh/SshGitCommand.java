@@ -85,13 +85,13 @@ public class SshGitCommand extends GitPackCommand {
                     if (GenericUtils.isNotBlank(protocol)) {
                         uploadPack.setExtraParameters(Collections.singleton(protocol));
                     }
-                    uploadPack.setPreUploadHook(new LocalVCFetchPreUploadHookSSH(localVCServletService, getServerSession(), rootDir));
+                    uploadPack.setPreUploadHook(new LocalVCFetchPreUploadHookSSH(localVCServletService, getServerSession()));
                     uploadPack.upload(getInputStream(), getOutputStream(), getErrorStream());
                 }
                 else if (RemoteConfig.DEFAULT_RECEIVE_PACK.equals(subCommand)) {
                     var receivePack = new ReceivePack(repository);
                     receivePack.setPreReceiveHook(new LocalVCPrePushHook(localVCServletService, user));
-                    receivePack.setPostReceiveHook(new LocalVCPostPushHook(localVCServletService));
+                    receivePack.setPostReceiveHook(new LocalVCPostPushHook(localVCServletService, getServerSession()));
                     receivePack.receive(getInputStream(), getOutputStream(), getErrorStream());
                 }
                 else {

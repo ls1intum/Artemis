@@ -38,6 +38,7 @@ class MockHeaderComponent {
             </ng-template>
         </jhi-tutorial-group-detail>
     `,
+    imports: [TutorialGroupDetailComponent, MockHeaderComponent],
 })
 class MockWrapperComponent {
     @Input()

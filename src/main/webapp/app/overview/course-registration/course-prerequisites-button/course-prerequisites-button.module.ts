@@ -6,8 +6,7 @@ import { CoursePrerequisitesButtonComponent } from 'app/overview/course-registra
 import { CoursePrerequisitesModalModule } from 'app/overview/course-registration/course-registration-prerequisites-modal/course-prerequisites-modal.module';
 
 @NgModule({
-    imports: [ArtemisSharedModule, ArtemisSharedComponentModule, ArtemisCompetenciesModule, CoursePrerequisitesModalModule],
-    declarations: [CoursePrerequisitesButtonComponent],
+    imports: [ArtemisSharedModule, ArtemisSharedComponentModule, ArtemisCompetenciesModule, CoursePrerequisitesModalModule, CoursePrerequisitesButtonComponent],
     exports: [CoursePrerequisitesButtonComponent],
 })
 export class CoursePrerequisitesButtonModule {}

@@ -6,8 +6,7 @@ import { ExerciseCategoriesComponent } from 'app/shared/exercise-categories/exer
 import { CustomExerciseCategoryBadgeComponent } from 'app/shared/exercise-categories/custom-exercise-category-badge/custom-exercise-category-badge.component';
 
 @NgModule({
-    imports: [ArtemisSharedModule, RouterModule, ArtemisSharedComponentModule, CustomExerciseCategoryBadgeComponent],
-    declarations: [ExerciseCategoriesComponent],
+    imports: [ArtemisSharedModule, RouterModule, ArtemisSharedComponentModule, CustomExerciseCategoryBadgeComponent, ExerciseCategoriesComponent],
     exports: [ExerciseCategoriesComponent],
 })
 export class ExerciseCategoriesModule {}

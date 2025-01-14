@@ -21,7 +21,6 @@ import { ArtemisSharedComponentModule } from 'app/shared/components/shared-compo
     selector: 'jhi-grade-key-table',
     templateUrl: './grading-key-table.component.html',
     styleUrls: ['../grading-key-overview.scss'],
-    standalone: true,
     imports: [TranslateDirective, ArtemisTranslatePipe, GradeStepBoundsPipe, SafeHtmlPipe, ArtemisSharedComponentModule],
 })
 export class GradingKeyTableComponent implements OnInit {
