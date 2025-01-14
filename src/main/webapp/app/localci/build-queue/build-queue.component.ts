@@ -1,6 +1,6 @@
 import { Component, OnDestroy, OnInit, ViewChild, inject } from '@angular/core';
 import { ActivatedRoute, RouterLink } from '@angular/router';
-import { BuildJob, BuildJobStatistics, FinishedBuildJob } from 'app/entities/programming/build-job.model';
+import { BuildJob, FinishedBuildJob } from 'app/entities/programming/build-job.model';
 import { faCircleCheck, faExclamationCircle, faExclamationTriangle, faFilter, faSort, faSync, faTimes } from '@fortawesome/free-solid-svg-icons';
 import { JhiWebsocketService } from 'app/core/websocket/websocket.service';
 import { BuildQueueService } from 'app/localci/build-queue/build-queue.service';
@@ -12,7 +12,7 @@ import { onError } from 'app/shared/util/global.utils';
 import { HttpErrorResponse, HttpHeaders, HttpParams, HttpResponse } from '@angular/common/http';
 import { AlertService } from 'app/core/util/alert.service';
 import dayjs from 'dayjs/esm';
-import { NgbCollapse, NgbModal, NgbPagination, NgbTypeahead } from '@ng-bootstrap/ng-bootstrap';
+import { NgbModal, NgbPagination, NgbTypeahead } from '@ng-bootstrap/ng-bootstrap';
 import { LocalStorageService } from 'ngx-webstorage';
 import { Observable, OperatorFunction, Subject, Subscription, merge } from 'rxjs';
 import { UI_RELOAD_TIME } from 'app/shared/constants/exercise-exam-constants';
@@ -32,6 +32,7 @@ import { FormDateTimePickerComponent } from 'app/shared/date-time-picker/date-ti
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { ArtemisDurationFromSecondsPipe } from 'app/shared/pipes/artemis-duration-from-seconds.pipe';
+import { BuildJobStatisticsComponent } from 'app/localci/build-queue/build-job-statistics/build-job-statistics.component';
 
 export class FinishedBuildJobFilter {
     status?: string = undefined;
@@ -125,7 +126,6 @@ export enum FinishedBuildJobFilterStorageKey {
         TranslateDirective,
         HelpIconComponent,
         FaIconComponent,
-        NgbCollapse,
         DataTableComponent,
         NgxDatatableModule,
         NgClass,
@@ -141,7 +141,7 @@ export enum FinishedBuildJobFilterStorageKey {
         ArtemisDatePipe,
         ArtemisTranslatePipe,
         ArtemisDurationFromSecondsPipe,
-        BuildJobStatistics,
+        BuildJobStatisticsComponent,
     ],
 })
 export class BuildQueueComponent implements OnInit, OnDestroy {

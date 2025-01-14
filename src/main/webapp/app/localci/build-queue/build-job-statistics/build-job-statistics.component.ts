@@ -14,11 +14,12 @@ import { take } from 'rxjs/operators';
 import { HttpErrorResponse } from '@angular/common/http';
 import { ArtemisChartsModule } from 'app/shared/chart/artemis-charts.module';
 import { ArtemisSharedModule } from 'app/shared/shared.module';
+import { NgbCollapse } from '@ng-bootstrap/ng-bootstrap';
 
 @Component({
     selector: 'jhi-build-job-statistics',
     standalone: true,
-    imports: [ArtemisSharedComponentModule, TranslateDirective, ArtemisChartsModule, ArtemisSharedModule, NgxChartsModule],
+    imports: [ArtemisSharedComponentModule, TranslateDirective, ArtemisChartsModule, ArtemisSharedModule, NgxChartsModule, NgbCollapse],
     templateUrl: './build-job-statistics.component.html',
     styleUrl: './build-job-statistics.component.scss',
 })
