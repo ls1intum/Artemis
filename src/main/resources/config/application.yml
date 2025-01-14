@@ -172,7 +172,7 @@ spring:
             repositories:
                 bootstrap-mode: deferred
         redis:
-            host: redis
+            host: fcfe:0:0:0:0:0:b:2
             port: 6379
             username: artemis
             password: artemis
