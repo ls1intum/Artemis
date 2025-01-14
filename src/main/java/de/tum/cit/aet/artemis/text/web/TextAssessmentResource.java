@@ -233,9 +233,10 @@ public class TextAssessmentResource extends AssessmentResource {
      * POST participations/:participationId/results/:resultId/submit-text-assessment : Submits manual textAssessments for a given result
      * and notify the user if it's before the Assessment Due Date
      *
-     * @param participationId the participationId of the participation whose assessment shall be saved
-     * @param resultId        the resultId the assessment belongs to
-     * @param textAssessment  the assessments which should be submitted
+     * @param participationId          the participationId of the participation whose assessment shall be saved
+     * @param resultId                 the resultId the assessment belongs to
+     * @param textAssessment           the assessments which should be submitted
+     * @param useForContinuousLearning whether the feedback should be used by the llm to learn
      * @return 200 Ok if successful with the corresponding result as a body, but sensitive information are filtered out
      */
     @PostMapping("participations/{participationId}/results/{resultId}/submit-text-assessment")

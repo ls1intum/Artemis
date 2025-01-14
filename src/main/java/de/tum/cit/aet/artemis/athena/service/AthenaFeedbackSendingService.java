@@ -87,10 +87,11 @@ public class AthenaFeedbackSendingService {
      * Calls the remote Athena service to submit feedback given by a tutor
      * We send the feedback asynchronously because it's not important for the user => quicker response
      *
-     * @param exercise   the exercise the feedback is given for
-     * @param submission the submission the feedback is given for
-     * @param feedbacks  the feedback given by the tutor
-     * @param maxRetries number of retries before the request will be canceled
+     * @param exercise                 the exercise the feedback is given for
+     * @param submission               the submission the feedback is given for
+     * @param feedbacks                the feedback given by the tutor
+     * @param maxRetries               number of retries before the request will be canceled
+     * @param useForContinuousLearning whether the feedback should be used by the llm to learn
      */
     @Async
     public void sendFeedback(Exercise exercise, Submission submission, List<Feedback> feedbacks, int maxRetries, boolean useForContinuousLearning) {
