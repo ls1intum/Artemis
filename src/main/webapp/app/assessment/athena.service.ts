@@ -1,4 +1,4 @@
-import { Injectable } from '@angular/core';
+import { Injectable, inject } from '@angular/core';
 import { HttpClient, HttpResponse } from '@angular/common/http';
 import { Observable, map, of, switchMap } from 'rxjs';
 import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
@@ -13,12 +13,10 @@ import { ModelingSubmission } from 'app/entities/modeling-submission.model';
 
 @Injectable({ providedIn: 'root' })
 export class AthenaService {
-    public resourceUrl = 'api/athena';
+    protected http = inject(HttpClient);
+    private profileService = inject(ProfileService);
 
-    constructor(
-        protected http: HttpClient,
-        private profileService: ProfileService,
-    ) {}
+    public resourceUrl = 'api/athena';
 
     /**
      * Determine if the Athena service is available based on whether the corresponding profile is active

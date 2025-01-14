@@ -17,6 +17,4 @@ export class TutorParticipation implements BaseEntity {
     public assessedExercise?: Exercise;
     public tutor?: User;
     public trainedExampleSubmissions?: ExampleSubmission[];
-
-    constructor() {}
 }

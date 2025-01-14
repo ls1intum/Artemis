@@ -1,5 +1,5 @@
-import { Component, OnInit, ViewChild } from '@angular/core';
-import { ActivatedRoute } from '@angular/router';
+import { Component, OnInit, ViewChild, inject } from '@angular/core';
+import { ActivatedRoute, RouterLink } from '@angular/router';
 import { HttpErrorResponse } from '@angular/common/http';
 import { Organization } from 'app/entities/organization.model';
 import { OrganizationManagementService } from 'app/admin/organization-management/organization-management.service';
@@ -12,6 +12,10 @@ import { iconsAsHTML } from 'app/utils/icons.utils';
 import { UserService } from 'app/core/user/user.service';
 import { DataTableComponent } from 'app/shared/data-table/data-table.component';
 import { faUserSlash } from '@fortawesome/free-solid-svg-icons';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { NgxDatatableModule } from '@siemens/ngx-datatable';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { DeleteButtonDirective } from 'app/shared/delete-dialog/delete-button.directive';
 
 const cssClasses = {
     alreadyMember: 'already-member',
@@ -21,8 +25,14 @@ const cssClasses = {
 @Component({
     selector: 'jhi-organization-management-detail',
     templateUrl: './organization-management-detail.component.html',
+    imports: [TranslateDirective, RouterLink, DataTableComponent, NgxDatatableModule, FaIconComponent, DeleteButtonDirective],
 })
 export class OrganizationManagementDetailComponent implements OnInit {
+    private organizationService = inject(OrganizationManagementService);
+    private userService = inject(UserService);
+    private alertService = inject(AlertService);
+    private route = inject(ActivatedRoute);
+
     @ViewChild(DataTableComponent) dataTable: DataTableComponent;
     organization: Organization;
 
@@ -41,13 +51,6 @@ export class OrganizationManagementDetailComponent implements OnInit {
 
     // Icons
     faUserSlash = faUserSlash;
-
-    constructor(
-        private organizationService: OrganizationManagementService,
-        private userService: UserService,
-        private alertService: AlertService,
-        private route: ActivatedRoute,
-    ) {}
 
     /**
      * Retrieve the organization from the organization management activated route data subscription

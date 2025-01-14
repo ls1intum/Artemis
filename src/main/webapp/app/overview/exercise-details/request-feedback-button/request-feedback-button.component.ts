@@ -18,7 +18,6 @@ import { ParticipationService } from 'app/exercises/shared/participation/partici
 
 @Component({
     selector: 'jhi-request-feedback-button',
-    standalone: true,
     imports: [CommonModule, ArtemisSharedCommonModule, NgbTooltipModule, FontAwesomeModule],
     templateUrl: './request-feedback-button.component.html',
 })

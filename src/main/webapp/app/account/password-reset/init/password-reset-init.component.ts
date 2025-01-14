@@ -15,7 +15,6 @@ import { ArtemisSharedCommonModule } from 'app/shared/shared-common.module';
 @Component({
     selector: 'jhi-password-reset-init',
     templateUrl: './password-reset-init.component.html',
-    standalone: true,
     imports: [TranslateDirective, FormsModule, ArtemisSharedCommonModule, ArtemisSharedModule],
 })
 export class PasswordResetInitComponent implements OnInit, AfterViewInit {

@@ -1,8 +1,6 @@
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { DebugElement, SimpleChange } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
-import { BarChartModule } from '@swimlane/ngx-charts';
 import { Course } from 'app/entities/course.model';
 import { ExerciseType } from 'app/entities/exercise.model';
 import { Feedback, FeedbackType, STATIC_CODE_ANALYSIS_FEEDBACK_IDENTIFIER } from 'app/entities/feedback.model';
@@ -13,7 +11,6 @@ import { ProgrammingSubmission } from 'app/entities/programming/programming-subm
 import { Result } from 'app/entities/result.model';
 import { SubmissionType } from 'app/entities/submission.model';
 import { BuildLogService } from 'app/exercises/programming/shared/service/build-log.service';
-import { FeedbackCollapseComponent } from 'app/exercises/shared/feedback/collapse/feedback-collapse.component';
 import { FeedbackComponent } from 'app/exercises/shared/feedback/feedback.component';
 import { FeedbackItem } from 'app/exercises/shared/feedback/item/feedback-item';
 import { ProgrammingFeedbackItemService } from 'app/exercises/shared/feedback/item/programming-feedback-item.service';
@@ -21,10 +18,7 @@ import { FeedbackNode } from 'app/exercises/shared/feedback/node/feedback-node';
 import { ResultService } from 'app/exercises/shared/result/result.service';
 import { ProfileInfo } from 'app/shared/layouts/profiles/profile-info.model';
 import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
-import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
-import { MockComponent, MockModule, MockPipe, MockProvider } from 'ng-mocks';
 import { BehaviorSubject, of, throwError } from 'rxjs';
-import { TranslatePipeMock } from '../../../helpers/mocks/service/mock-translate.service';
 import { ArtemisTestModule } from '../../../test.module';
 import { FeedbackGroup } from 'app/exercises/shared/feedback/group/feedback-group';
 
@@ -175,9 +169,7 @@ describe('FeedbackComponent', () => {
 
     beforeEach(() => {
         return TestBed.configureTestingModule({
-            imports: [ArtemisTestModule, MockModule(BarChartModule)],
-            declarations: [FeedbackComponent, TranslatePipeMock, MockPipe(ArtemisDatePipe), MockComponent(FeedbackCollapseComponent)],
-            providers: [MockProvider(NgbActiveModal), MockProvider(ResultService), MockProvider(BuildLogService), MockProvider(ProfileService)],
+            imports: [ArtemisTestModule],
         })
             .compileComponents()
             .then(() => {

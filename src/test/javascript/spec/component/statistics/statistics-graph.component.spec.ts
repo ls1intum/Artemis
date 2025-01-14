@@ -1,18 +1,12 @@
 import { HttpTestingController } from '@angular/common/http/testing';
 import { SimpleChange } from '@angular/core';
 import { ArtemisTestModule } from '../../test.module';
-import { TranslateService } from '@ngx-translate/core';
 import { StatisticsGraphComponent } from 'app/shared/statistics-graph/statistics-graph.component';
 import { StatisticsService } from 'app/shared/statistics-graph/statistics.service';
 import { Graphs, SpanType, StatisticsView } from 'app/entities/statistics.model';
-import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import dayjs from 'dayjs/esm';
-import { MockModule, MockPipe } from 'ng-mocks';
 import { of } from 'rxjs';
-import { MockTranslateService } from '../../helpers/mocks/service/mock-translate.service';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { BarChartModule } from '@swimlane/ngx-charts';
-import { provideRouter } from '@angular/router';
 
 describe('StatisticsGraphComponent', () => {
     let fixture: ComponentFixture<StatisticsGraphComponent>;
@@ -22,9 +16,7 @@ describe('StatisticsGraphComponent', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule, MockModule(BarChartModule)],
-            declarations: [StatisticsGraphComponent, MockPipe(ArtemisTranslatePipe)],
-            providers: [provideRouter([]), { provide: TranslateService, useClass: MockTranslateService }],
+            imports: [ArtemisTestModule],
         })
             .compileComponents()
             .then(() => {

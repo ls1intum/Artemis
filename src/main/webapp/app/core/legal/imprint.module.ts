@@ -7,7 +7,6 @@ import { ImprintComponent } from 'app/core/legal/imprint.component';
 import { ArtemisMarkdownModule } from 'app/shared/markdown.module';
 
 @NgModule({
-    declarations: [ImprintComponent],
-    imports: [CommonModule, ArtemisSharedModule, ImprintRoutingModule, ArtemisMarkdownModule],
+    imports: [CommonModule, ArtemisSharedModule, ImprintRoutingModule, ArtemisMarkdownModule, ImprintComponent],
 })
 export class ArtemisImprintModule {}

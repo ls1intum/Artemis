@@ -1,18 +1,25 @@
-import { Component, Input, OnChanges, OnInit } from '@angular/core';
+import { Component, Input, OnChanges, OnInit, inject } from '@angular/core';
 import { GraphColors, Graphs } from 'app/entities/statistics.model';
 import { TranslateService } from '@ngx-translate/core';
-import { Color, ScaleType } from '@swimlane/ngx-charts';
+import { Color, LineChartModule, ScaleType } from '@swimlane/ngx-charts';
 import { faSpinner } from '@fortawesome/free-solid-svg-icons';
 import { Course } from 'app/entities/course.model';
 import * as shape from 'd3-shape';
 import { ActiveStudentsChart } from 'app/shared/chart/active-students-chart';
+import { RouterLink } from '@angular/router';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { HelpIconComponent } from 'app/shared/components/help-icon.component';
+import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 
 @Component({
     selector: 'jhi-course-management-overview-statistics',
     templateUrl: './course-management-overview-statistics.component.html',
     styleUrls: ['./course-management-overview-statistics.component.scss', '../detail/course-detail-line-chart.component.scss'],
+    imports: [RouterLink, TranslateDirective, HelpIconComponent, LineChartModule, ArtemisDatePipe],
 })
 export class CourseManagementOverviewStatisticsComponent extends ActiveStudentsChart implements OnInit, OnChanges {
+    private translateService = inject(TranslateService);
+
     @Input()
     amountOfStudentsInCourse: number;
 
@@ -39,7 +46,7 @@ export class CourseManagementOverviewStatisticsComponent extends ActiveStudentsC
     // Icons
     faSpinner = faSpinner;
 
-    constructor(private translateService: TranslateService) {
+    constructor() {
         super();
     }
 

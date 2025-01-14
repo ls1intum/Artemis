@@ -1,4 +1,4 @@
-import { Injectable } from '@angular/core';
+import { Injectable, inject } from '@angular/core';
 import { HttpErrorResponse, HttpEvent, HttpHandler, HttpInterceptor, HttpRequest } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { tap } from 'rxjs/operators';
@@ -7,10 +7,8 @@ import { AccountService } from 'app/core/auth/account.service';
 
 @Injectable()
 export class ErrorHandlerInterceptor implements HttpInterceptor {
-    constructor(
-        private eventManager: EventManager,
-        private accountService: AccountService,
-    ) {}
+    private eventManager = inject(EventManager);
+    private accountService = inject(AccountService);
 
     /**
      * Identifies and handles a given HTTP request. If the request's error status is not 401 while the user is not
