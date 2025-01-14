@@ -1,4 +1,4 @@
-import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
 import { EmojiComponent } from 'app/shared/metis/emoji/emoji.component';
 import { MetisService } from 'app/shared/metis/metis.service';
 import { MockComponent, MockModule, MockPipe, MockProvider } from 'ng-mocks';
@@ -31,8 +31,10 @@ import { ConfirmIconComponent } from 'app/shared/confirm-icon/confirm-icon.compo
 import { getElement } from '../../../../../helpers/utils/general.utils';
 import { DebugElement } from '@angular/core';
 import { UserRole } from 'app/shared/metis/metis.util';
-import { MetisConversationService } from '../../../../../../../../main/webapp/app/shared/metis/metis-conversation.service';
+import { MetisConversationService } from 'app/shared/metis/metis-conversation.service';
 import { MockMetisConversationService } from '../../../../../helpers/mocks/service/mock-metis-conversation.service';
+import { Conversation, ConversationType } from 'app/entities/metis/conversation/conversation.model';
+import { of } from 'rxjs';
 
 describe('AnswerPostReactionsBarComponent', () => {
     let component: AnswerPostReactionsBarComponent;
@@ -242,4 +244,29 @@ describe('AnswerPostReactionsBarComponent', () => {
         fixture.detectChanges();
         expect(forwardMessageSpy).toHaveBeenCalled();
     });
+
+    it('should not call openForwardMessageView when course id is not set', fakeAsync(() => {
+        metisService.setCourse(undefined);
+
+        const metisServiceSpy = jest.spyOn(metisService, 'createForwardedMessages').mockReturnValue(of([]));
+        const modalServiceSpy = jest.spyOn(component['modalService'], 'open').mockReturnValue({
+            componentInstance: {
+                users: { set: jest.fn() },
+                channels: { set: jest.fn() },
+                postToForward: { set: jest.fn() },
+                courseId: { set: jest.fn() },
+            },
+            result: Promise.resolve({
+                channels: [{ id: 1, type: ConversationType.CHANNEL } as Conversation],
+                users: [],
+                messageContent: 'Forwarded content to convo 1',
+            }),
+        } as any);
+
+        component.forwardMessage();
+        tick();
+
+        expect(modalServiceSpy).not.toHaveBeenCalled();
+        expect(metisServiceSpy).not.toHaveBeenCalled();
+    }));
 });

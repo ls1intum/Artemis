@@ -1,4 +1,4 @@
-import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
 import { input, runInInjectionContext } from '@angular/core';
 import { MockComponent, MockPipe } from 'ng-mocks';
 import dayjs from 'dayjs';
@@ -292,4 +292,27 @@ describe('ForwardedMessageComponent', () => {
 
         expect(component.isContentLong).toBeTrue();
     });
+
+    it('should set isContentLong to false if content does not overflow', () => {
+        fixture.detectChanges();
+
+        const messageContentDebugElement = fixture.debugElement.query(By.css('#messageContent'));
+        expect(messageContentDebugElement).toBeTruthy();
+
+        const messageContentElement = messageContentDebugElement.nativeElement;
+
+        Object.defineProperty(messageContentElement, 'scrollHeight', { value: 100, configurable: true });
+        Object.defineProperty(messageContentElement, 'clientHeight', { value: 200, configurable: true });
+
+        component.checkIfContentOverflows();
+
+        expect(component.isContentLong).toBeFalse();
+    });
+
+    it('should call checkIfContentOverflows in ngAfterViewInit', fakeAsync(() => {
+        const spy = jest.spyOn(component, 'checkIfContentOverflows');
+        component.ngAfterViewInit();
+        tick();
+        expect(spy).toHaveBeenCalled();
+    }));
 });

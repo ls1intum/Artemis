@@ -1,11 +1,11 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { MockComponent, MockDirective, MockModule, MockPipe, MockProvider } from 'ng-mocks';
-import { DebugElement } from '@angular/core';
+import { DebugElement, input, runInInjectionContext } from '@angular/core';
 import { HtmlForMarkdownPipe } from 'app/shared/pipes/html-for-markdown.pipe';
 import { PostComponent } from 'app/shared/metis/post/post.component';
 import { getElement } from '../../../../helpers/utils/general.utils';
-import { PostingFooterComponent } from '../../../../../../../main/webapp/app/shared/metis/posting-footer/posting-footer.component';
-import { PostingHeaderComponent } from '../../../../../../../main/webapp/app/shared/metis/posting-header/posting-header.component';
+import { PostingFooterComponent } from 'app/shared/metis/posting-footer/posting-footer.component';
+import { PostingHeaderComponent } from 'app/shared/metis/posting-header/posting-header.component';
 import { PostingContentComponent } from 'app/shared/metis/posting-content/posting-content.components';
 import { MockMetisService } from '../../../../helpers/mocks/service/mock-metis-service.service';
 import { MetisService } from 'app/shared/metis/metis.service';
@@ -38,12 +38,13 @@ import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
 import { DOCUMENT } from '@angular/common';
 import { Posting, PostingType } from 'app/entities/metis/posting.model';
 import { Post } from 'app/entities/metis/post.model';
-import { ArtemisTranslatePipe } from '../../../../../../../main/webapp/app/shared/pipes/artemis-translate.pipe';
-import { ArtemisDatePipe } from '../../../../../../../main/webapp/app/shared/pipes/artemis-date.pipe';
-import { TranslateDirective } from '../../../../../../../main/webapp/app/shared/language/translate.directive';
+import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
+import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { TranslateService } from '@ngx-translate/core';
 import { By } from '@angular/platform-browser';
 import dayjs from 'dayjs/esm';
+import { AnswerPost } from 'app/entities/metis/answer-post.model';
 
 describe('PostComponent', () => {
     let component: PostComponent;
@@ -431,5 +432,79 @@ describe('PostComponent', () => {
 
         const postTimeElement = debugElement.query(By.css('span.post-time'));
         expect(postTimeElement).toBeFalsy();
+    });
+
+    it('should do nothing if both forwardedPosts and forwardedAnswerPosts are empty', () => {
+        runInInjectionContext(fixture.debugElement.injector, () => {
+            component.forwardedPosts = input<Post[]>([]);
+            component.forwardedAnswerPosts = input<AnswerPost[]>([]);
+            component.fetchForwardedMessages();
+
+            expect(component.originalPostDetails).toBeUndefined();
+        });
+    });
+
+    it('should set originalPostDetails from first forwarded post if forwardedPosts is non-empty', () => {
+        const forwardedPost1 = { id: 11, content: 'Forwarded Post 1' } as Post;
+        const forwardedPost2 = { id: 22, content: 'Forwarded Post 2' } as Post;
+
+        runInInjectionContext(fixture.debugElement.injector, () => {
+            component.forwardedPosts = input<Post[]>([forwardedPost1, forwardedPost2]);
+            component.forwardedAnswerPosts = input<AnswerPost[]>([]);
+            component.fetchForwardedMessages();
+
+            expect(component.originalPostDetails).toEqual(forwardedPost1);
+        });
+    });
+
+    it('should set originalPostDetails from first forwarded answer if forwardedAnswerPosts is non-empty and forwardedPosts is empty', () => {
+        const forwardedAnswer1 = { id: 33, content: 'Forwarded Answer 1' } as AnswerPost;
+        const forwardedAnswer2 = { id: 44, content: 'Forwarded Answer 2' } as AnswerPost;
+
+        runInInjectionContext(fixture.debugElement.injector, () => {
+            component.forwardedPosts = input<Post[]>([]);
+            component.forwardedAnswerPosts = input<AnswerPost[]>([forwardedAnswer1, forwardedAnswer2]);
+            component.fetchForwardedMessages();
+
+            expect(component.originalPostDetails).toEqual(forwardedAnswer1);
+        });
+    });
+
+    it('should call markForCheck if a forwarded post is set', () => {
+        const markForCheckSpy = jest.spyOn(component['changeDetector'], 'markForCheck');
+        const forwardedPost = { id: 77, content: 'Forwarded Post MarkCheck' } as Post;
+
+        runInInjectionContext(fixture.debugElement.injector, () => {
+            component.forwardedPosts = input<Post[]>([forwardedPost]);
+            component.forwardedAnswerPosts = input<AnswerPost[]>([]);
+            component.fetchForwardedMessages();
+
+            expect(markForCheckSpy).toHaveBeenCalled();
+            expect(component.originalPostDetails).toBe(forwardedPost);
+        });
+    });
+
+    it('should call markForCheck if a forwarded answer is set', () => {
+        const markForCheckSpy = jest.spyOn(component['changeDetector'], 'markForCheck');
+        const forwardedAnswer = { id: 88, content: 'Forwarded Answer MarkCheck' } as AnswerPost;
+
+        runInInjectionContext(fixture.debugElement.injector, () => {
+            component.forwardedPosts = input<Post[]>([]);
+            component.forwardedAnswerPosts = input<AnswerPost[]>([forwardedAnswer]);
+            component.fetchForwardedMessages();
+
+            expect(markForCheckSpy).toHaveBeenCalled();
+            expect(component.originalPostDetails).toBe(forwardedAnswer);
+        });
+    });
+
+    it('should emit onNavigateToPost event when onTriggerNavigateToPost is called', () => {
+        const spyOnNavigateToPost = jest.spyOn(component.onNavigateToPost, 'emit');
+        const testPost = { id: 123, content: 'Test Content' } as Posting;
+
+        (component as any).onTriggerNavigateToPost(testPost);
+
+        expect(spyOnNavigateToPost).toHaveBeenCalledWith(testPost);
+        expect(spyOnNavigateToPost).toHaveBeenCalledOnce();
     });
 });
