@@ -49,7 +49,7 @@ public class AthenaFeedbackSendingService {
     }
 
     @JsonInclude(JsonInclude.Include.NON_EMPTY)
-    private record RequestDTO(ExerciseBaseDTO exercise, SubmissionBaseDTO submission, List<FeedbackBaseDTO> feedbacks) {
+    private record RequestDTO(ExerciseBaseDTO exercise, SubmissionBaseDTO submission, List<FeedbackBaseDTO> feedbacks, boolean useForContinuousLearning) {
     }
 
     @JsonInclude(JsonInclude.Include.NON_EMPTY)
@@ -111,7 +111,7 @@ public class AthenaFeedbackSendingService {
             // Only send manual feedback from tutors to Athena
             final RequestDTO request = new RequestDTO(athenaDTOConverterService.ofExercise(exercise), athenaDTOConverterService.ofSubmission(exercise.getId(), submission),
                     feedbacks.stream().filter(Feedback::isManualFeedback).map((feedback) -> athenaDTOConverterService.ofFeedback(exercise, submission.getId(), feedback)).toList(),
-                    useForContinousLearning);
+                    useForContinuousLearning);
             ResponseDTO response = connector.invokeWithRetry(athenaModuleService.getAthenaModuleUrl(exercise) + "/feedbacks", request, maxRetries);
             log.info("Athena responded to feedback: {}", response.data);
         }
