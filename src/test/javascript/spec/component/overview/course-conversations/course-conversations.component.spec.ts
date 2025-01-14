@@ -683,7 +683,7 @@ examples.forEach((activeConversation) => {
                 expect(setActiveConversationSpy).not.toHaveBeenCalled();
             });
 
-            it('4) should set openThreadOnFocus = true if postingType is ANSWER', () => {
+            it('should set openThreadOnFocus = true if postingType is ANSWER', () => {
                 const post = {
                     id: 1,
                     postingType: PostingType.ANSWER,
@@ -694,7 +694,7 @@ examples.forEach((activeConversation) => {
                 expect(component.openThreadOnFocus).toBeTrue();
             });
 
-            it('5) should set openThreadOnFocus = false if postingType is POST (question post)', () => {
+            it('should set openThreadOnFocus = false if postingType is POST (question post)', () => {
                 const post = {
                     id: 1,
                     postingType: PostingType.POST,
@@ -705,7 +705,7 @@ examples.forEach((activeConversation) => {
                 expect(component.openThreadOnFocus).toBeFalse();
             });
 
-            it('6) should call setActiveConversation if conversation.id is defined', () => {
+            it('should call setActiveConversation if conversation.id is defined', () => {
                 const post = {
                     id: 1,
                     conversation: { id: 999 },
@@ -717,7 +717,7 @@ examples.forEach((activeConversation) => {
                 expect(setActiveConversationSpy).toHaveBeenCalledWith(999);
             });
 
-            it('7) should NOT call setActiveConversation if post.id is undefined', () => {
+            it('should NOT call setActiveConversation if post.id is undefined', () => {
                 const post = {
                     id: undefined,
                     conversation: {},
