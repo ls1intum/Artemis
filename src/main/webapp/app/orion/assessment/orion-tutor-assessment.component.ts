@@ -1,22 +1,27 @@
-import { Component, ViewChild } from '@angular/core';
+import { Component, ViewChild, inject } from '@angular/core';
 import { CodeEditorTutorAssessmentContainerComponent } from 'app/exercises/programming/assess/code-editor-tutor-assessment-container.component';
 import { Feedback } from 'app/entities/feedback.model';
 import { OrionConnectorService } from 'app/shared/orion/orion-connector.service';
 import { OrionAssessmentService } from 'app/orion/assessment/orion-assessment.service';
 import { AlertService } from 'app/core/util/alert.service';
+import { NgTemplateOutlet } from '@angular/common';
+import { OrionAssessmentInstructionsComponent } from './orion-assessment-instructions.component';
 
 @Component({
     selector: 'jhi-orion-course-management-exercises',
     templateUrl: './orion-tutor-assessment.component.html',
+    imports: [CodeEditorTutorAssessmentContainerComponent, NgTemplateOutlet, OrionAssessmentInstructionsComponent],
 })
 export class OrionTutorAssessmentComponent {
+    private orionConnectorService = inject(OrionConnectorService);
+    private alertService = inject(AlertService);
+    private orionAssessmentService = inject(OrionAssessmentService);
+
     @ViewChild(CodeEditorTutorAssessmentContainerComponent) container: CodeEditorTutorAssessmentContainerComponent;
 
-    constructor(
-        private orionConnectorService: OrionConnectorService,
-        private alertService: AlertService,
-        private orionAssessmentService: OrionAssessmentService,
-    ) {
+    constructor() {
+        const orionConnectorService = this.orionConnectorService;
+
         // Register this component as receiver of updates from Orion
         orionConnectorService.activeAssessmentComponent = this;
     }

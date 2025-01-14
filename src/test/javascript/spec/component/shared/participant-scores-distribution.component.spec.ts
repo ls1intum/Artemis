@@ -1,13 +1,8 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ParticipantScoresDistributionComponent } from 'app/shared/participant-scores/participant-scores-distribution/participant-scores-distribution.component';
-import { MockComponent, MockModule, MockPipe, MockProvider } from 'ng-mocks';
+import { MockProvider } from 'ng-mocks';
 import { ArtemisTestModule } from '../../test.module';
 import { GradingSystemService } from 'app/grading-system/grading-system.service';
-import { MockTranslateService } from '../../helpers/mocks/service/mock-translate.service';
-import { TranslateService } from '@ngx-translate/core';
-import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
-import { BarChartModule } from '@swimlane/ngx-charts';
-import { HelpIconComponent } from 'app/shared/components/help-icon.component';
 import { GraphColors } from 'app/entities/statistics.model';
 import { GradeType, GradingScale } from 'app/entities/grading-scale.model';
 import { GradeStep } from 'app/entities/grade-step.model';
@@ -82,9 +77,8 @@ describe('ParticipantScoresDistributionComponent', () => {
 
     beforeEach(() => {
         return TestBed.configureTestingModule({
-            imports: [ArtemisTestModule, MockModule(BarChartModule)],
-            declarations: [ParticipantScoresDistributionComponent, MockPipe(ArtemisTranslatePipe), MockComponent(HelpIconComponent)],
-            providers: [MockProvider(GradingSystemService), { provide: TranslateService, useClass: MockTranslateService }],
+            imports: [ArtemisTestModule],
+            providers: [MockProvider(GradingSystemService)],
         })
             .compileComponents()
             .then(() => {

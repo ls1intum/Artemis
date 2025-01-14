@@ -1,5 +1,5 @@
 import { HttpClient, HttpResponse } from '@angular/common/http';
-import { Injectable } from '@angular/core';
+import { Injectable, inject } from '@angular/core';
 import { Observable } from 'rxjs';
 import { BuildPlan } from 'app/entities/programming/build-plan.model';
 
@@ -7,9 +7,9 @@ export type EntityResponseType = HttpResponse<BuildPlan>;
 
 @Injectable({ providedIn: 'root' })
 export class BuildPlanService {
-    public resourceUrl = `/api/programming-exercises`;
+    private http = inject(HttpClient);
 
-    constructor(private http: HttpClient) {}
+    public resourceUrl = `/api/programming-exercises`;
 
     getBuildPlan(programmingExerciseId: number): Observable<EntityResponseType> {
         return this.http.get<BuildPlan>(`${this.resourceUrl}/${programmingExerciseId}/build-plan/for-editor`, { observe: 'response' });

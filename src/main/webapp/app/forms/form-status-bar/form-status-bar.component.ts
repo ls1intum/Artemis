@@ -1,5 +1,7 @@
 import { AfterViewInit, Component, ElementRef, HostListener, ViewChild, input } from '@angular/core';
 import { updateHeaderHeight } from 'app/shared/util/navbar.util';
+import { ChecklistCheckComponent } from 'app/shared/components/checklist-check/checklist-check.component';
+import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 
 export type FormSectionStatus = {
     title: string;
@@ -11,6 +13,7 @@ export type FormSectionStatus = {
     selector: 'jhi-form-status-bar',
     templateUrl: './form-status-bar.component.html',
     styleUrl: './form-status-bar.component.scss',
+    imports: [ChecklistCheckComponent, ArtemisTranslatePipe],
 })
 export class FormStatusBarComponent implements AfterViewInit {
     formStatusSections = input.required<FormSectionStatus[]>();
