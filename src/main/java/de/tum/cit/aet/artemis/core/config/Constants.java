@@ -364,6 +364,11 @@ public final class Constants {
     public static final String PROFILE_THEIA = "theia";
 
     /**
+     * the sharing profile
+     */
+    public static final String PROFILE_SHARING = "sharing";
+
+    /**
      * The InfoContributor's detail key for the Theia Portal URL
      */
 

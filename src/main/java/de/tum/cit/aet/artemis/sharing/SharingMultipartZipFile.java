@@ -1,5 +1,6 @@
 package de.tum.cit.aet.artemis.sharing;
 
+import java.io.BufferedInputStream;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
@@ -23,8 +24,11 @@ public class SharingMultipartZipFile implements MultipartFile {
     private final InputStream inputStream;
 
     public SharingMultipartZipFile(String name, InputStream inputStream) {
+        if (name == null || inputStream == null) {
+            throw new IllegalArgumentException("Name and inputStream must not be null");
+        }
         this.name = name;
-        this.inputStream = inputStream;
+        this.inputStream = new BufferedInputStream(inputStream);
     }
 
     @Override

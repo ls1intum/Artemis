@@ -5,7 +5,7 @@ import java.util.Objects;
 import org.springframework.context.annotation.Profile;
 
 /**
- * the sharing info to request an specific exercise from the sharing platform.
+ * the sharing info to request a specific exercise from the sharing platform.
  */
 @Profile("sharing")
 public class SharingInfoDTO {
@@ -88,6 +88,8 @@ public class SharingInfoDTO {
 
     @Override
     public boolean equals(Object o) {
+        if (this == o)
+            return true;
         if (o == null || getClass() != o.getClass())
             return false;
         SharingInfoDTO that = (SharingInfoDTO) o;

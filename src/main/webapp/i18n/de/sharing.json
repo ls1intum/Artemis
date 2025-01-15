@@ -7,7 +7,10 @@
             "courseToImport": "Kurs in den die Aufgabe importiert werden soll",
             "noExercisesFound": "Keine importierten Aufgaben gefunden?",
             "exerciseToImport": "Bitte die zu importierende Aufgabe auswählen",
-            "loginAsInstructor": "Bitte melden Sie sich als Instruktor ein!"
+            "loginAsInstructor": "Bitte melden Sie sich als Instruktor ein!",
+            "error": {
+                "loadingStatus": "Sharing Profile ist nicht aktiv!"
+            }
         }
     }
 }

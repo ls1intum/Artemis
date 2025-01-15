@@ -181,11 +181,15 @@ const routes: Routes = [
         },
     },
     // ===== SHARING =====
-    {
-        path: 'sharing/import/:basketToken',
-        loadChildren: () => import('./sharing/sharing.module').then((m) => m.SharingModule),
-    },
-
+	{
+		path: 'sharing/import/:basketToken',
+		data: {
+			authorities: [Authority.USER],
+			pageTitle: 'sharing.import.title',
+		},
+		// canActivate: [UserRouteAccessService],
+		loadChildren: () => import('./sharing/sharing.module').then((m) => m.SharingModule),
+	},
 ];
 
 export default routes;

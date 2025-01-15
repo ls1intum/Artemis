@@ -57,8 +57,8 @@ import { IrisSubSettingsType } from 'app/entities/iris/settings/iris-sub-setting
 import { Detail } from 'app/detail-overview-list/detail.model';
 import { Competency } from 'app/entities/competency.model';
 import { AeolusService } from 'app/exercises/programming/shared/service/aeolus.service';
-import { catchError, mergeMap, tap } from 'rxjs/operators';
-import { ProgrammingExerciseGitDiffReport } from 'app/entities/programming-exercise-git-diff-report.model';
+import { catchError, map, mergeMap, tap } from 'rxjs/operators';
+import { ProgrammingExerciseGitDiffReport } from 'app/entities/hestia/programming-exercise-git-diff-report.model';
 import { BuildLogStatisticsDTO } from 'app/entities/programming/build-log-statistics-dto';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { DocumentationButtonComponent } from 'app/shared/components/documentation-button/documentation-button.component';
@@ -174,7 +174,7 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
     private templateAndSolutionParticipationSubscription: Subscription;
     private irisSettingsSubscription: Subscription;
     private exerciseStatisticsSubscription: Subscription;
-
+    private sharingEnabledSubscription: Subscription;
     private dialogErrorSource = new Subject<string>();
     dialogError$ = this.dialogErrorSource.asObservable();
 
@@ -292,11 +292,18 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
                 this.doughnutStats = statistics;
             });
         });
-        this.sharingService.isSharingEnabled().subscribe((isEnabled) => {
-            if (isEnabled.body) {
-                this.isExportToSharingEnabled = true;
-            }
-        });
+        this.sharingEnabledSubscription = this.sharingService
+            .isSharingEnabled()
+            .pipe(
+                map((response) => response.body ?? false),
+                catchError(() => {
+                    this.alertService.error('artemisApp.sharing.error.loadingStatus');
+                    return of(false);
+                }),
+            )
+            .subscribe((isEnabled) => {
+                this.isExportToSharingEnabled = isEnabled;
+            });
     }
 
     ngOnDestroy(): void {
@@ -305,6 +312,7 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
         this.templateAndSolutionParticipationSubscription?.unsubscribe();
         this.irisSettingsSubscription?.unsubscribe();
         this.exerciseStatisticsSubscription?.unsubscribe();
+        this.sharingEnabledSubscription?.unsubscribe();
     }
 
     /**

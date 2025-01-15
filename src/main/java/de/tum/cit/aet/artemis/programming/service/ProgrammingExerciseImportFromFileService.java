@@ -15,9 +15,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Stream;
 
-import javax.json.JsonObject;
-import javax.json.JsonString;
-
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.io.filefilter.NameFileFilter;
@@ -47,7 +44,7 @@ import de.tum.cit.aet.artemis.programming.domain.VcsRepositoryUri;
 import de.tum.cit.aet.artemis.programming.repository.BuildPlanRepository;
 
 /**
- * services to read exercises from a (zip-file)
+ * Service to read programming exercises from a zip file.
  */
 @Profile(PROFILE_CORE)
 @Service
@@ -125,10 +122,10 @@ public class ProgrammingExerciseImportFromFileService {
                 ObjectMapper mapper = new ObjectMapper();
                 var exerciseJsonPath = retrieveExerciseJsonPath(importExerciseDir);
 
-                JsonObject json = mapper.readValue(exerciseJsonPath.toFile(), JsonObject.class);
+                Map<String, Object> json = mapper.readValue(exerciseJsonPath.toFile(), Map.class);
 
                 if (json.get("type").toString().contains("programming")) {
-                    json.put("type", new JsonStringImpl("programming"));
+                    json.put("type", "programming");
                 }
 
                 // Write back into the file
@@ -346,31 +343,4 @@ public class ProgrammingExerciseImportFromFileService {
         return result.getFirst();
     }
 
-    /**
-     * just a dumb helper class to construct a simple json string.
-     * I'm happy to have a much simpler solution.
-     */
-    private static class JsonStringImpl implements JsonString {
-
-        final String s;
-
-        private JsonStringImpl(String s) {
-            this.s = s;
-        }
-
-        @Override
-        public String getString() {
-            return s;
-        }
-
-        @Override
-        public CharSequence getChars() {
-            return s;
-        }
-
-        @Override
-        public ValueType getValueType() {
-            return ValueType.STRING;
-        }
-    }
 }

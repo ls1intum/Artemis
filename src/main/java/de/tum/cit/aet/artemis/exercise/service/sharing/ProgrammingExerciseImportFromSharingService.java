@@ -65,6 +65,9 @@ public class ProgrammingExerciseImportFromSharingService {
      * @param sharingSetupInfo Containing sharing and exercise data needed for the import
      */
     public ProgrammingExercise importProgrammingExerciseFromSharing(SharingSetupInfo sharingSetupInfo) throws SharingException, IOException, GitAPIException, URISyntaxException {
+        if (sharingSetupInfo.getExercise() == null) {
+            throw new SharingException("Exercise is null?");
+        }
         SharingMultipartZipFile zipFile = exerciseSharingService.getCachedBasketItem(sharingSetupInfo.getSharingInfo());
         User user = userRepository.getUserWithGroupsAndAuthorities();
 

@@ -1,6 +1,7 @@
 package de.tum.cit.aet.artemis.exercise.service.sharing;
 
 import java.net.URL;
+import java.util.Objects;
 import java.util.concurrent.Executors;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -138,13 +139,17 @@ public class SharingConnectorService {
      * @return true if valid, false otherwise
      */
     public boolean validate(String apiKey) {
-        Pattern p = Pattern.compile("Bearer\\s*(.+)");
+        if (apiKey == null || apiKey.length() > 200) {
+            // this is just in case, somebody tries an attack
+            return false;
+        }
+        Pattern p = Pattern.compile("Bearer\\s(.+)");
         Matcher m = p.matcher(apiKey);
         if (m.matches()) {
             apiKey = m.group(1);
         }
 
-        return sharingApiKey.equals(apiKey);
+        return Objects.equals(sharingApiKey, apiKey);
     }
 
     /**
@@ -166,8 +171,12 @@ public class SharingConnectorService {
             log.info("Requesting reinitialization from Sharing Platform");
             String reInitUrlWithApiKey = UriComponentsBuilder.fromHttpUrl(sharingUrl).pathSegment("api", "pluginIF", "v0.1", "reInitialize").queryParam("apiKey", sharingApiKey)
                     .encode().toUriString();
-
-            restTemplate.getForObject(reInitUrlWithApiKey, Boolean.class);
+            try {
+                restTemplate.getForObject(reInitUrlWithApiKey, Boolean.class);
+            }
+            catch (Exception e) {
+                log.error("Failed to request reinitialization from Sharing Platform", e);
+            }
         }
     }
 

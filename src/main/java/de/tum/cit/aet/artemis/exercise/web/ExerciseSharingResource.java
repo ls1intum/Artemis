@@ -10,7 +10,6 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.Optional;
 
-import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.constraints.NotNull;
 import jakarta.ws.rs.core.UriBuilder;
 
@@ -132,14 +131,15 @@ public class ExerciseSharingResource {
      */
     @PostMapping(SHARINGEXPORT_RESOURCE_PATH + "/{exerciseId}")
     @PreAuthorize("hasAnyRole('INSTRUCTOR', 'ADMIN')")
-    public ResponseEntity<String> exportExerciseToSharing(HttpServletResponse response, @RequestBody String callBackUrl, @PathVariable("exerciseId") Long exerciseId) {
+    public ResponseEntity<String> exportExerciseToSharing(@RequestBody String callBackUrl, @PathVariable("exerciseId") Long exerciseId) {
         try {
             URI uriRedirect = exerciseSharingService.exportExerciseToSharing(exerciseId).toURI();
             uriRedirect = UriBuilder.fromUri(uriRedirect).queryParam("callBack", callBackUrl).build();
             return ResponseEntity.ok().body("\"" + uriRedirect.toString() + "\"");
         }
         catch (SharingException | URISyntaxException e) {
-            return ResponseEntity.internalServerError().body(e.getMessage());
+            log.error("Error exporting exercise to sharing platform", e);
+            return ResponseEntity.internalServerError().body("An error occurred while exporting the exercise.");
         }
 
     }

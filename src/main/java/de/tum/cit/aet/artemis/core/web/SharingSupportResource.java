@@ -74,7 +74,8 @@ public class SharingSupportResource {
             try {
                 apiBaseUrl1 = URI.create(apiBaseUrl).toURL();
             }
-            catch (MalformedURLException e) {
+            catch (IllegalArgumentException | MalformedURLException e) {
+                log.error("Bad URL", e);
                 return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(null);
             }
             return ResponseEntity.ok(sharingConnectorService.getPluginConfig(apiBaseUrl1, installationName));

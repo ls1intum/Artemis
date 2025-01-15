@@ -230,7 +230,8 @@ public class ExerciseSharingService {
     }
 
     /**
-     * this is just a weak implementation for local testing (within a docker). It replaces an localhost wit host.docker.internal.
+     * this is just a weak implementation for local testing (within a docker). It replaces an url to localhost with
+     * host.docker.internal.
      *
      * @param url the url to be corrected
      * @return an url, that points to host.docker.internal if previously directed to localhost.
