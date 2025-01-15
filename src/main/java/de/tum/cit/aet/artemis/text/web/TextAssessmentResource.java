@@ -266,7 +266,6 @@ public class TextAssessmentResource extends AssessmentResource {
             saveTextBlocks(textAssessment.getTextBlocks(), textSubmission, feedbacksWithIds);
             sendFeedbackToAthena(exercise, textSubmission, feedbacksWithIds, useForContinuousLearning);
         }
-
         return response;
     }
 
@@ -521,9 +520,14 @@ public class TextAssessmentResource extends AssessmentResource {
     /**
      * Send feedback to Athena (if enabled for both the Artemis instance and the exercise).
      */
-    private void sendFeedbackToAthena(final TextExercise exercise, final TextSubmission textSubmission, final List<Feedback> feedbacks, boolean useForContinuousLearning) {
+    private void sendFeedbackToAthena(final TextExercise exercise, final TextSubmission textSubmission, final List<Feedback> feedbacks, boolean useICL) {
         if (athenaFeedbackSendingService.isPresent() && exercise.areFeedbackSuggestionsEnabled()) {
-            athenaFeedbackSendingService.get().sendFeedback(exercise, textSubmission, feedbacks, useForContinuousLearning);
+            if (useICL) {
+                athenaFeedbackSendingService.get().sendFeedback(exercise, textSubmission, feedbacks);
+            }
+            else {
+                athenaFeedbackSendingService.get().sendFeedbackWithICL(exercise, textSubmission, feedbacks);
+            }
         }
     }
 }
