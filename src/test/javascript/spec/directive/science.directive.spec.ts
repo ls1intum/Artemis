@@ -10,6 +10,7 @@ import { LocalStorageService } from 'ngx-webstorage';
 
 @Component({
     template: '<div [jhiScience]="ScienceEventType.LECTURE__OPEN"></div>',
+    imports: [ScienceDirective],
 })
 class ScienceDirectiveComponent {
     protected readonly ScienceEventType = ScienceEventType;
@@ -23,7 +24,6 @@ describe('ScienceDirective', () => {
     beforeEach(() => {
         TestBed.configureTestingModule({
             imports: [ArtemisTestModule],
-            declarations: [ScienceDirective, ScienceDirectiveComponent],
             providers: [{ provide: LocalStorageService, useClass: MockLocalStorageService }],
         })
             .compileComponents()

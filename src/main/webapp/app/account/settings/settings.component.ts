@@ -12,7 +12,6 @@ import { ArtemisSharedModule } from 'app/shared/shared.module';
 @Component({
     selector: 'jhi-settings',
     templateUrl: './settings.component.html',
-    standalone: true,
     imports: [TranslateDirective, FormsModule, ReactiveFormsModule, ArtemisSharedCommonModule, ArtemisSharedModule],
 })
 export class SettingsComponent implements OnInit {

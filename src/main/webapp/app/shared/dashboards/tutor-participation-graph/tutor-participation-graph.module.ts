@@ -4,8 +4,7 @@ import { TutorParticipationGraphComponent } from 'app/shared/dashboards/tutor-pa
 import { ArtemisSharedModule } from 'app/shared/shared.module';
 
 @NgModule({
-    imports: [ArtemisSharedModule],
-    declarations: [ProgressBarComponent, TutorParticipationGraphComponent],
+    imports: [ArtemisSharedModule, ProgressBarComponent, TutorParticipationGraphComponent],
     exports: [TutorParticipationGraphComponent, ProgressBarComponent],
 })
 export class ArtemisTutorParticipationGraphModule {}

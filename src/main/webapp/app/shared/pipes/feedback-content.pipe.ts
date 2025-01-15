@@ -2,7 +2,6 @@ import { Pipe, PipeTransform } from '@angular/core';
 import { Feedback } from 'app/entities/feedback.model';
 
 @Pipe({
-    standalone: true,
     name: 'feedbackContent',
     // impure: we need to detect changes in attributes of the feedback
     pure: false,

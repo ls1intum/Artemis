@@ -13,7 +13,14 @@ import { SubmissionResultStatusModule } from 'app/overview/submission-result-sta
 const ENTITY_STATES = [...textExerciseRoutes, ...modelingExerciseRoutes];
 
 @NgModule({
-    imports: [ArtemisSharedModule, RouterModule.forChild(ENTITY_STATES), ArtemisSharedComponentModule, ArtemisResultModule, SubmissionResultStatusModule],
-    declarations: [ExampleSubmissionsComponent, ExampleSubmissionImportComponent],
+    imports: [
+        ArtemisSharedModule,
+        RouterModule.forChild(ENTITY_STATES),
+        ArtemisSharedComponentModule,
+        ArtemisResultModule,
+        SubmissionResultStatusModule,
+        ExampleSubmissionsComponent,
+        ExampleSubmissionImportComponent,
+    ],
 })
 export class ExampleSubmissionsModule {}

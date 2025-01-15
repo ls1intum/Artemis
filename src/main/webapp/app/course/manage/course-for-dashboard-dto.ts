@@ -13,13 +13,10 @@ export class CourseForDashboardDTO {
     quizScores: CourseScores;
 
     participationResults: ParticipationResultDTO[];
-
-    constructor() {}
 }
 
 export class ParticipationResultDTO {
     score?: number;
     rated?: boolean;
     participationId: number;
-    constructor() {}
 }

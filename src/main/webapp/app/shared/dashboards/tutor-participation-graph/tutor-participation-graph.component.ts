@@ -1,4 +1,4 @@
-import { Component, Input, OnChanges, OnInit, SimpleChanges, ViewEncapsulation } from '@angular/core';
+import { Component, Input, OnChanges, OnInit, SimpleChanges, ViewEncapsulation, inject } from '@angular/core';
 import { Router } from '@angular/router';
 import { get } from 'lodash-es';
 import { Exercise, ExerciseType } from 'app/entities/exercise.model';
@@ -6,14 +6,22 @@ import { TutorParticipation, TutorParticipationStatus } from 'app/entities/parti
 import { DueDateStat } from 'app/course/dashboards/due-date-stat.model';
 import { ProgrammingExercise } from 'app/entities/programming/programming-exercise.model';
 import { faBook, faChalkboardTeacher } from '@fortawesome/free-solid-svg-icons';
+import { NgClass } from '@angular/common';
+import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { ProgressBarComponent } from './progress-bar/progress-bar.component';
+import { ArtemisTranslatePipe } from '../../pipes/artemis-translate.pipe';
 
 @Component({
     selector: 'jhi-tutor-participation-graph',
     templateUrl: './tutor-participation-graph.component.html',
     styleUrls: ['./tutor-participation-graph.component.scss'],
     encapsulation: ViewEncapsulation.None,
+    imports: [NgClass, NgbTooltip, FaIconComponent, ProgressBarComponent, ArtemisTranslatePipe],
 })
 export class TutorParticipationGraphComponent implements OnInit, OnChanges {
+    private router = inject(Router);
+
     @Input() public tutorParticipation: TutorParticipation;
     @Input() public numberOfSubmissions?: DueDateStat;
     @Input() public totalNumberOfAssessments?: DueDateStat;
@@ -44,8 +52,6 @@ export class TutorParticipationGraphComponent implements OnInit, OnChanges {
     // Icons
     faBook = faBook;
     faChalkboardTeacher = faChalkboardTeacher;
-
-    constructor(private router: Router) {}
 
     /**
      * Life cycle hook called by Angular to indicate that Angular is done creating the component

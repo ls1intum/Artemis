@@ -1,4 +1,4 @@
-import { Injectable } from '@angular/core';
+import { Injectable, inject } from '@angular/core';
 import { HttpClient, HttpParams, HttpResponse } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { map } from 'rxjs/operators';
@@ -12,12 +12,10 @@ export type EntityResponseType = HttpResponse<ModelingSubmission>;
 
 @Injectable({ providedIn: 'root' })
 export class ModelingSubmissionService {
-    public resourceUrl = 'api';
+    private http = inject(HttpClient);
+    private submissionService = inject(SubmissionService);
 
-    constructor(
-        private http: HttpClient,
-        private submissionService: SubmissionService,
-    ) {}
+    public resourceUrl = 'api';
 
     /**
      * Create a new modeling submission

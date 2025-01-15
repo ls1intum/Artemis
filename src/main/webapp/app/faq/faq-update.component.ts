@@ -22,7 +22,6 @@ import { AccountService } from 'app/core/auth/account.service';
     selector: 'jhi-faq-update',
     templateUrl: './faq-update.component.html',
     styleUrls: ['./faq-update.component.scss'],
-    standalone: true,
     imports: [ArtemisSharedModule, ArtemisSharedComponentModule, ArtemisMarkdownEditorModule, ArtemisCategorySelectorModule],
 })
 export class FaqUpdateComponent implements OnInit {
@@ -32,7 +31,7 @@ export class FaqUpdateComponent implements OnInit {
     existingCategories: FaqCategory[];
     faqCategories: FaqCategory[];
     courseId: number;
-    isAtLeastInstructor: boolean = false;
+    isAtLeastInstructor = false;
     domainActionsDescription = [new FormulaAction()];
 
     // Icons
