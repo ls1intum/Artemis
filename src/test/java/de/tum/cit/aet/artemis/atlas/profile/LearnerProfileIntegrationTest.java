@@ -1,13 +1,14 @@
 package de.tum.cit.aet.artemis.atlas.profile;
 
-import de.tum.cit.aet.artemis.atlas.AbstractAtlasIntegrationTest;
-import de.tum.cit.aet.artemis.core.domain.User;
+import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
+
 import org.hibernate.Hibernate;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.security.test.context.support.WithMockUser;
-import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
 
+import de.tum.cit.aet.artemis.atlas.AbstractAtlasIntegrationTest;
+import de.tum.cit.aet.artemis.core.domain.User;
 
 class LearnerProfileIntegrationTest extends AbstractAtlasIntegrationTest {
 
@@ -27,7 +28,6 @@ class LearnerProfileIntegrationTest extends AbstractAtlasIntegrationTest {
 
         learnerProfileUtilService.createLearnerProfilesForUsers(TEST_PREFIX);
     }
-
 
     @Test
     @WithMockUser(username = STUDENT1_OF_COURSE, roles = "USER")
