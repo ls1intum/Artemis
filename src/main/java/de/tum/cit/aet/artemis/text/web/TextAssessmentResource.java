@@ -242,7 +242,7 @@ public class TextAssessmentResource extends AssessmentResource {
     @PostMapping("participations/{participationId}/results/{resultId}/submit-text-assessment")
     @EnforceAtLeastTutor
     public ResponseEntity<Result> submitTextAssessment(@PathVariable Long participationId, @PathVariable Long resultId, @RequestBody TextAssessmentDTO textAssessment,
-            @RequestParam(defaultValue = "false") boolean useForContinuousLearning) {
+            @RequestParam(defaultValue = "false") boolean sendFeedback) {
         final boolean hasAssessmentWithTooLongReference = textAssessment.getFeedbacks().stream().filter(Feedback::hasReference)
                 .anyMatch(feedback -> feedback.getReference().length() > Feedback.MAX_REFERENCE_LENGTH);
         if (hasAssessmentWithTooLongReference) {
@@ -264,7 +264,12 @@ public class TextAssessmentResource extends AssessmentResource {
         if (response.getStatusCode().is2xxSuccessful()) {
             final var feedbacksWithIds = response.getBody().getFeedbacks();
             saveTextBlocks(textAssessment.getTextBlocks(), textSubmission, feedbacksWithIds);
-            sendFeedbackToAthena(exercise, textSubmission, feedbacksWithIds, useForContinuousLearning);
+            if (sendFeedback) {
+                sendFeedbackToAthenaWithICL(exercise, textSubmission, feedbacksWithIds);
+            }
+            else {
+                sendFeedbackToAthena(exercise, textSubmission, feedbacksWithIds);
+            }
         }
         return response;
     }
@@ -520,14 +525,20 @@ public class TextAssessmentResource extends AssessmentResource {
     /**
      * Send feedback to Athena (if enabled for both the Artemis instance and the exercise).
      */
-    private void sendFeedbackToAthena(final TextExercise exercise, final TextSubmission textSubmission, final List<Feedback> feedbacks, boolean useICL) {
+    private void sendFeedbackToAthena(final TextExercise exercise, final TextSubmission textSubmission, final List<Feedback> feedbacks) {
         if (athenaFeedbackSendingService.isPresent() && exercise.areFeedbackSuggestionsEnabled()) {
-            if (useICL) {
-                athenaFeedbackSendingService.get().sendFeedback(exercise, textSubmission, feedbacks);
-            }
-            else {
-                athenaFeedbackSendingService.get().sendFeedbackWithICL(exercise, textSubmission, feedbacks);
-            }
+            athenaFeedbackSendingService.get().sendFeedback(exercise, textSubmission, feedbacks);
+
         }
     }
+
+    /**
+     * Send feedback to Athena with ICL (if enabled for both the Artemis instance and the exercise).
+     */
+    private void sendFeedbackToAthenaWithICL(final TextExercise exercise, final TextSubmission textSubmission, final List<Feedback> feedbacks) {
+        if (athenaFeedbackSendingService.isPresent() && exercise.areFeedbackSuggestionsEnabled()) {
+            athenaFeedbackSendingService.get().sendFeedbackWithICL(exercise, textSubmission, feedbacks);
+        }
+    }
+
 }
