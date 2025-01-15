@@ -6,7 +6,6 @@ import { FormControl, NG_VALIDATORS, Validator } from '@angular/forms';
  * See: https://github.com/angular/angular/issues/16352
  */
 @Directive({
-    // eslint-disable-next-line @angular-eslint/directive-selector
     selector: '[customMin][formControlName],[customMin][formControl],[customMin][ngModel]',
     providers: [{ provide: NG_VALIDATORS, useExisting: CustomMinDirective, multi: true }],
 })

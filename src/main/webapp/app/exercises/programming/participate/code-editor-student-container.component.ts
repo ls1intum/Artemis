@@ -1,4 +1,6 @@
-import { Component, OnDestroy, OnInit, ViewChild } from '@angular/core';
+import { Component, OnDestroy, OnInit, ViewChild, inject } from '@angular/core';
+import { IncludedInScoreBadgeComponent } from 'app/exercises/shared/exercise-headers/included-in-score-badge.component';
+import { UpdatingResultComponent } from 'app/exercises/shared/result/updating-result.component';
 import { Observable, Subscription } from 'rxjs';
 import { map, tap } from 'rxjs/operators';
 import { ProgrammingExerciseParticipationService } from 'app/exercises/programming/manage/services/programming-exercise-participation.service';
@@ -22,12 +24,35 @@ import { SubmissionPolicyService } from 'app/exercises/programming/manage/servic
 import { hasExerciseDueDatePassed } from 'app/exercises/shared/exercise/exercise.utils';
 import { faCircleNotch, faTimesCircle } from '@fortawesome/free-solid-svg-icons';
 import { isManualResult as isManualResultFunction } from 'app/exercises/shared/result/result.utils';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { CodeEditorRepositoryIsLockedComponent } from '../shared/code-editor/layout/code-editor-repository-is-locked.component';
+import { ProgrammingExerciseStudentTriggerBuildButtonComponent } from '../shared/actions/programming-exercise-student-trigger-build-button.component';
+import { ProgrammingExerciseInstructionComponent } from '../shared/instructions-render/programming-exercise-instruction.component';
+import { AdditionalFeedbackComponent } from 'app/shared/additional-feedback/additional-feedback.component';
 
 @Component({
     selector: 'jhi-code-editor-student',
     templateUrl: './code-editor-student-container.component.html',
+    imports: [
+        FaIconComponent,
+        TranslateDirective,
+        CodeEditorContainerComponent,
+        IncludedInScoreBadgeComponent,
+        CodeEditorRepositoryIsLockedComponent,
+        UpdatingResultComponent,
+        ProgrammingExerciseStudentTriggerBuildButtonComponent,
+        ProgrammingExerciseInstructionComponent,
+        AdditionalFeedbackComponent,
+    ],
 })
 export class CodeEditorStudentContainerComponent implements OnInit, OnDestroy {
+    private domainService = inject(DomainService);
+    private programmingExerciseParticipationService = inject(ProgrammingExerciseParticipationService);
+    private guidedTourService = inject(GuidedTourService);
+    private submissionPolicyService = inject(SubmissionPolicyService);
+    private route = inject(ActivatedRoute);
+
     @ViewChild(CodeEditorContainerComponent, { static: false }) codeEditorContainer: CodeEditorContainerComponent;
     readonly IncludedInOverallScore = IncludedInOverallScore;
     readonly SubmissionPolicyType = SubmissionPolicyType;
@@ -53,14 +78,6 @@ export class CodeEditorStudentContainerComponent implements OnInit, OnDestroy {
     // Icons
     faCircleNotch = faCircleNotch;
     faTimesCircle = faTimesCircle;
-
-    constructor(
-        private domainService: DomainService,
-        private programmingExerciseParticipationService: ProgrammingExerciseParticipationService,
-        private guidedTourService: GuidedTourService,
-        private submissionPolicyService: SubmissionPolicyService,
-        private route: ActivatedRoute,
-    ) {}
 
     /**
      * On init set up the route param subscription.

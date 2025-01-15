@@ -1,3 +1,4 @@
+import { TestBed } from '@angular/core/testing';
 import { HttpErrorResponse, HttpRequest } from '@angular/common/http';
 import { AuthExpiredInterceptor } from 'app/core/interceptor/auth-expired.interceptor';
 import { LoginService } from 'app/core/login/login.service';
@@ -5,8 +6,9 @@ import { AccountService } from 'app/core/auth/account.service';
 import { StateStorageService } from 'app/core/auth/state-storage.service';
 import { Router } from '@angular/router';
 import { throwError } from 'rxjs';
+import { ArtemisTestModule } from '../test.module';
 
-describe(`AuthExpiredInterceptor`, () => {
+describe('AuthExpiredInterceptor', () => {
     let authInterceptor: AuthExpiredInterceptor;
 
     let loginServiceMock: LoginService;
@@ -32,7 +34,18 @@ describe(`AuthExpiredInterceptor`, () => {
             isAuthenticated: jest.fn(),
         } as any as AccountService;
 
-        authInterceptor = new AuthExpiredInterceptor(loginServiceMock, stateStorageServiceMock, routerMock, accountServiceMock);
+        TestBed.configureTestingModule({
+            imports: [ArtemisTestModule],
+            providers: [
+                AuthExpiredInterceptor,
+                { provide: LoginService, useValue: loginServiceMock },
+                { provide: StateStorageService, useValue: stateStorageServiceMock },
+                { provide: AccountService, useValue: accountServiceMock },
+                { provide: Router, useValue: routerMock },
+            ],
+        });
+
+        authInterceptor = TestBed.inject(AuthExpiredInterceptor);
     });
 
     afterEach(() => {

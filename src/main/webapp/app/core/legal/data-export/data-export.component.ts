@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, inject } from '@angular/core';
 import { ActionType } from 'app/shared/delete-dialog/delete-dialog.model';
 import { Subject } from 'rxjs';
 import { ButtonSize, ButtonType } from 'app/shared/components/button.component';
@@ -9,12 +9,23 @@ import { AlertService } from 'app/core/util/alert.service';
 import { DataExport, DataExportState } from 'app/entities/data-export.model';
 import { ActivatedRoute } from '@angular/router';
 import { convertDateFromServer } from 'app/utils/date.utils';
+import { DataExportRequestButtonDirective } from './confirmation/data-export-request-button.directive';
+import { ButtonComponent } from 'app/shared/components/button.component';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
+import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 
 @Component({
     selector: 'jhi-data-export',
     templateUrl: './data-export.component.html',
+    imports: [DataExportRequestButtonDirective, ButtonComponent, TranslateDirective, ArtemisDatePipe, ArtemisTranslatePipe],
 })
 export class DataExportComponent implements OnInit {
+    private dataExportService = inject(DataExportService);
+    private accountService = inject(AccountService);
+    private alertService = inject(AlertService);
+    private route = inject(ActivatedRoute);
+
     readonly ActionType = ActionType;
     readonly ButtonSize = ButtonSize;
     readonly ButtonType = ButtonType;
@@ -33,13 +44,6 @@ export class DataExportComponent implements OnInit {
     state?: DataExportState;
     dataExport: DataExport = new DataExport();
     isAdmin = false;
-
-    constructor(
-        private dataExportService: DataExportService,
-        private accountService: AccountService,
-        private alertService: AlertService,
-        private route: ActivatedRoute,
-    ) {}
 
     ngOnInit() {
         this.currentLogin = this.accountService.userIdentity?.login;

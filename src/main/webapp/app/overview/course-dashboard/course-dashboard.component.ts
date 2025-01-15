@@ -1,4 +1,4 @@
-import { Component, ElementRef, OnDestroy, OnInit, QueryList, ViewChildren } from '@angular/core';
+import { Component, ElementRef, OnDestroy, OnInit, QueryList, ViewChildren, inject } from '@angular/core';
 import { CourseStorageService } from 'app/course/manage/course-storage.service';
 import { Subscription } from 'rxjs';
 import { ActivatedRoute, Router } from '@angular/router';
@@ -18,13 +18,38 @@ import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
 import { PROFILE_IRIS } from 'app/app.constants';
 import { CompetencyAccordionToggleEvent } from 'app/course/competencies/competency-accordion/competency-accordion.component';
 import { AccountService } from 'app/core/auth/account.service';
+import { CourseChatbotComponent } from '../../iris/course-chatbot/course-chatbot.component';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { NgbProgressbar } from '@ng-bootstrap/ng-bootstrap';
+import { CourseExercisePerformanceComponent } from './course-exercise-performance/course-exercise-performance.component';
+import { CourseExerciseLatenessComponent } from './course-exercise-lateness/course-exercise-lateness.component';
+import { CompetencyAccordionComponent } from '../../course/competencies/competency-accordion/competency-accordion.component';
+import { FeatureToggleHideDirective } from 'app/shared/feature-toggle/feature-toggle-hide.directive';
 
 @Component({
     selector: 'jhi-course-dashboard',
     templateUrl: './course-dashboard.component.html',
     styleUrls: ['./course-dashboard.component.scss'],
+    imports: [
+        CourseChatbotComponent,
+        TranslateDirective,
+        NgbProgressbar,
+        CourseExercisePerformanceComponent,
+        CourseExerciseLatenessComponent,
+        CompetencyAccordionComponent,
+        FeatureToggleHideDirective,
+    ],
 })
 export class CourseDashboardComponent implements OnInit, OnDestroy {
+    private courseStorageService = inject(CourseStorageService);
+    private alertService = inject(AlertService);
+    private route = inject(ActivatedRoute);
+    private router = inject(Router);
+    private courseDashboardService = inject(CourseDashboardService);
+    private irisSettingsService = inject(IrisSettingsService);
+    private profileService = inject(ProfileService);
+    private accountService = inject(AccountService);
+
     courseId: number;
     exerciseId: number;
     points: number = 0;
@@ -51,17 +76,6 @@ export class CourseDashboardComponent implements OnInit, OnDestroy {
     protected readonly round = round;
 
     @ViewChildren('competencyAccordionElement', { read: ElementRef }) competencyAccordions: QueryList<ElementRef>;
-
-    constructor(
-        private courseStorageService: CourseStorageService,
-        private alertService: AlertService,
-        private route: ActivatedRoute,
-        private router: Router,
-        private courseDashboardService: CourseDashboardService,
-        private irisSettingsService: IrisSettingsService,
-        private profileService: ProfileService,
-        private accountService: AccountService,
-    ) {}
 
     ngOnInit(): void {
         this.paramSubscription = this.route.parent?.parent?.params.subscribe((params) => {

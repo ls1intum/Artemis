@@ -4,7 +4,6 @@ import { ArtemisTestModule } from '../../test.module';
 import { FeatureOverviewComponent, TargetAudience } from 'app/feature-overview/feature-overview.component';
 import { By } from '@angular/platform-browser';
 import { DebugElement } from '@angular/core';
-import { TranslatePipeMock } from '../../helpers/mocks/service/mock-translate.service';
 import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
 import { MockProfileService } from '../../helpers/mocks/service/mock-profile.service';
 
@@ -19,7 +18,6 @@ describe('Feature Overview Component', () => {
         beforeEach(() => {
             TestBed.configureTestingModule({
                 imports: [ArtemisTestModule],
-                declarations: [FeatureOverviewComponent, TranslatePipeMock],
                 providers: [
                     { provide: ActivatedRoute, useValue: route },
                     { provide: ProfileService, useValue: MockProfileService },

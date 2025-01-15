@@ -18,7 +18,6 @@ type LtiLaunchResponse = {
 @Component({
     selector: 'jhi-lti-exercise-launch',
     templateUrl: './lti13-exercise-launch.component.html',
-    standalone: true,
     imports: [TranslateDirective, CommonModule],
 })
 export class Lti13ExerciseLaunchComponent implements OnInit {

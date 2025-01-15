@@ -7,8 +7,14 @@ import { SubmissionResultStatusModule } from 'app/overview/submission-result-sta
 import { ExerciseCategoriesModule } from 'app/shared/exercise-categories/exercise-categories.module';
 
 @NgModule({
-    imports: [ArtemisSharedModule, ArtemisSharedComponentModule, SubmissionResultStatusModule, ExerciseCategoriesModule],
-    declarations: [HeaderExercisePageWithDetailsComponent, HeaderParticipationPageComponent],
+    imports: [
+        ArtemisSharedModule,
+        ArtemisSharedComponentModule,
+        SubmissionResultStatusModule,
+        ExerciseCategoriesModule,
+        HeaderExercisePageWithDetailsComponent,
+        HeaderParticipationPageComponent,
+    ],
     exports: [HeaderExercisePageWithDetailsComponent, HeaderParticipationPageComponent],
 })
 export class ArtemisHeaderExercisePageWithDetailsModule {}

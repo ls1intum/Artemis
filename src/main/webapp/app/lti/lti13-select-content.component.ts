@@ -15,7 +15,6 @@ import { ArtemisSharedPipesModule } from '../shared/pipes/shared-pipes.module';
 @Component({
     selector: 'jhi-select-exercise',
     templateUrl: './lti13-select-content.component.html',
-    standalone: true,
     imports: [TranslateDirective, FormsModule, ArtemisSharedPipesModule],
 })
 export class Lti13SelectContentComponent implements OnInit {

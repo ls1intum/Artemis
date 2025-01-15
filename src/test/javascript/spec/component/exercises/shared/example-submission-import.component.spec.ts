@@ -1,5 +1,4 @@
 import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
-import { NgModel } from '@angular/forms';
 import { NgbPagination } from '@ng-bootstrap/ng-bootstrap';
 import { TranslateService } from '@ngx-translate/core';
 import { Exercise, ExerciseType } from 'app/entities/exercise.model';
@@ -40,7 +39,6 @@ describe('ExampleSubmissionImportComponent', () => {
                 MockComponent(ResultComponent),
                 MockDirective(SortByDirective),
                 MockDirective(SortDirective),
-                MockDirective(NgModel),
                 MockPipe(ArtemisDatePipe),
                 MockPipe(ArtemisTranslatePipe),
             ],
