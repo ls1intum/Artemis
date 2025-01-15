@@ -7,7 +7,6 @@ type NavigationDirection = 'next' | 'prev';
     selector: 'jhi-pdf-preview-enlarged-canvas-component',
     templateUrl: './pdf-preview-enlarged-canvas.component.html',
     styleUrls: ['./pdf-preview-enlarged-canvas.component.scss'],
-    standalone: true,
     imports: [ArtemisSharedModule],
 })
 export class PdfPreviewEnlargedCanvasComponent {
@@ -29,13 +28,10 @@ export class PdfPreviewEnlargedCanvasComponent {
     isEnlargedViewOutput = output<boolean>();
 
     constructor() {
-        effect(
-            () => {
-                this.enlargedContainer().nativeElement.style.top = `${this.pdfContainer().scrollTop}px`;
-                this.displayEnlargedCanvas(this.originalCanvas()!);
-            },
-            { allowSignalWrites: true },
-        );
+        effect(() => {
+            this.enlargedContainer().nativeElement.style.top = `${this.pdfContainer().scrollTop}px`;
+            this.displayEnlargedCanvas(this.originalCanvas()!);
+        });
     }
 
     /**

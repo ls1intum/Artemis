@@ -12,7 +12,6 @@ import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
     selector: 'jhi-detailed-grading-system',
     templateUrl: './detailed-grading-system.component.html',
     styleUrls: ['./detailed-grading-system.component.scss'],
-    standalone: true,
     imports: [TranslateDirective, ArtemisSharedComponentModule, FormsModule, FaIconComponent, ArtemisSharedModule, ArtemisTranslatePipe],
 })
 export class DetailedGradingSystemComponent extends BaseGradingSystemComponent {

@@ -10,7 +10,7 @@ import { ArtemisProgrammingExerciseInstructionsEditorModule } from 'app/exercise
 import { ArtemisProgrammingExerciseUpdateModule } from 'app/exercises/programming/manage/update/programming-exercise-update.module';
 import { ArtemisSharedComponentModule } from 'app/shared/components/shared-component.module';
 import { ArtemisProgrammingExerciseStatusModule } from 'app/exercises/programming/manage/status/programming-exercise-status.module';
-import { FeatureToggleModule } from 'app/shared/feature-toggle/feature-toggle.module';
+
 import { ArtemisProgrammingExerciseModule } from 'app/exercises/programming/shared/programming-exercise.module';
 import { AssessmentInstructionsModule } from 'app/assessment/assessment-instructions/assessment-instructions.module';
 import { ProgrammingExerciseEditSelectedComponent } from 'app/exercises/programming/manage/programming-exercise-edit-selected.component';
@@ -42,7 +42,6 @@ import { CodeEditorHeaderComponent } from 'app/exercises/programming/shared/code
         ArtemisProgrammingExerciseInstructionsEditorModule,
         ArtemisProgrammingExerciseUpdateModule,
         ArtemisProgrammingExerciseStatusModule,
-        FeatureToggleModule,
         AssessmentInstructionsModule,
         OrionModule,
         ArtemisProgrammingExerciseLifecycleModule,
@@ -53,8 +52,6 @@ import { CodeEditorHeaderComponent } from 'app/exercises/programming/shared/code
         IrisModule,
         MonacoEditorComponent,
         CodeEditorHeaderComponent,
-    ],
-    declarations: [
         ProgrammingExerciseDetailComponent,
         ProgrammingExerciseEditSelectedComponent,
         ProgrammingExerciseInstructorExerciseDownloadComponent,

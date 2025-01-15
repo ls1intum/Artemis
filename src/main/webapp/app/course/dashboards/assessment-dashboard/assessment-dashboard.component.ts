@@ -39,7 +39,6 @@ import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
     templateUrl: './assessment-dashboard.component.html',
     styleUrls: ['./exam-assessment-buttons/exam-assessment-buttons.component.scss'],
     providers: [CourseManagementService],
-    standalone: true,
     imports: [
         ArtemisSharedComponentModule,
         RouterLink,

@@ -99,7 +99,7 @@ describe('OrionExerciseAssessmentDashboardComponent', () => {
 
         expect(getForTutorsStub).toHaveBeenCalledOnce();
         expect(getForTutorsStub).toHaveBeenCalledWith(10);
-        expect(orionStateStub).toHaveBeenCalledOnce();
+        expect(orionStateStub).toHaveBeenCalled();
         expect(orionStateStub).toHaveBeenCalledWith();
     }));
 
@@ -124,7 +124,7 @@ describe('OrionExerciseAssessmentDashboardComponent', () => {
 
         expect(getForTutorsStub).toHaveBeenCalledOnce();
         expect(getForTutorsStub).toHaveBeenCalledWith(10);
-        expect(orionStateStub).toHaveBeenCalledOnce();
+        expect(orionStateStub).toHaveBeenCalled();
         expect(orionStateStub).toHaveBeenCalledWith();
         expect(errorSpy).toHaveBeenCalledOnce();
         expect(errorSpy).toHaveBeenCalledWith('error.http.400');

@@ -1,4 +1,4 @@
-import { Injectable } from '@angular/core';
+import { Injectable, inject } from '@angular/core';
 import { ProgrammingSubmissionService } from 'app/exercises/programming/participate/programming-submission.service';
 import { ParticipationWebsocketService } from 'app/overview/participation-websocket.service';
 import { filter, map, tap } from 'rxjs/operators';
@@ -20,17 +20,15 @@ import { ProgrammingSubmission } from 'app/entities/programming/programming-subm
     providedIn: 'root',
 })
 export class OrionBuildAndTestService {
+    private submissionService = inject(ProgrammingSubmissionService);
+    private participationWebsocketService = inject(ParticipationWebsocketService);
+    private orionConnectorService = inject(OrionConnectorService);
+    private buildLogService = inject(BuildLogService);
+
     private buildFinished = new Subject<void>();
     private resultSubscription: Subscription;
     private buildLogSubscription: Subscription;
     private latestResult: Result;
-
-    constructor(
-        private submissionService: ProgrammingSubmissionService,
-        private participationWebsocketService: ParticipationWebsocketService,
-        private orionConnectorService: OrionConnectorService,
-        private buildLogService: BuildLogService,
-    ) {}
 
     /**
      * Trigger a new build for a participation for an exercise and notify the IDE

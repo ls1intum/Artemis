@@ -6,8 +6,6 @@ export class DueDateStat {
     public inTime = 0;
     public late = 0;
 
-    constructor() {}
-
     /**
      * Computed property to get the total number of
      * both properties, inTime and late members.

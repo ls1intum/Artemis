@@ -1,12 +1,7 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { CourseExerciseCardComponent } from 'app/course/manage/course-exercise-card.component';
-import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
-import { MockComponent, MockDirective, MockPipe } from 'ng-mocks';
 import { ArtemisTestModule } from '../../test.module';
-import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { CourseManagementExercisesSearchComponent } from 'app/course/manage/course-management-exercises-search.component';
 import { ExerciseFilter } from 'app/entities/exercise-filter.model';
-import { NgModel } from '@angular/forms';
 
 describe('Course Management Exercises Search Component', () => {
     let comp: CourseManagementExercisesSearchComponent;
@@ -15,14 +10,6 @@ describe('Course Management Exercises Search Component', () => {
     beforeEach(() => {
         TestBed.configureTestingModule({
             imports: [ArtemisTestModule],
-            declarations: [
-                CourseManagementExercisesSearchComponent,
-                MockPipe(ArtemisTranslatePipe),
-                MockComponent(CourseExerciseCardComponent),
-                MockDirective(TranslateDirective),
-                MockDirective(NgModel),
-            ],
-            providers: [],
         }).compileComponents();
         fixture = TestBed.createComponent(CourseManagementExercisesSearchComponent);
         comp = fixture.componentInstance;

@@ -14,7 +14,6 @@ describe('WorkingTimeControlComponent', () => {
     beforeEach(async () => {
         await TestBed.configureTestingModule({
             imports: [FormsModule],
-            declarations: [WorkingTimeControlComponent],
         }).compileComponents();
         fixture = TestBed.createComponent(WorkingTimeControlComponent);
         component = fixture.componentInstance;

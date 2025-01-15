@@ -35,7 +35,7 @@ describe('CourseCompetenciesRelationModalComponent', () => {
 
     beforeEach(async () => {
         await TestBed.configureTestingModule({
-            imports: [CourseCompetenciesRelationModalComponent, NoopAnimationsModule],
+            imports: [NoopAnimationsModule],
             providers: [
                 provideHttpClient(),
                 provideHttpClientTesting(),
@@ -116,9 +116,11 @@ describe('CourseCompetenciesRelationModalComponent', () => {
         expect(closeSpy).toHaveBeenCalledOnce();
     });
 
-    it('should call selectCourseCompetency on courseCompetencyRelationFormComponent with valid courseCompetencyId', () => {
+    it('should call selectCourseCompetency on courseCompetencyRelationFormComponent with valid courseCompetencyId', async () => {
         fixture.detectChanges();
+        await fixture.whenStable();
 
+        fixture.detectChanges(); // required as the viewChild is only available after effect() has run (-> second update)
         const courseCompetencyId = 1;
         const selectSpy = jest.spyOn(component['courseCompetencyRelationFormComponent'](), 'selectCourseCompetency');
 

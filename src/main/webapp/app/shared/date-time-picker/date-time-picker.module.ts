@@ -15,9 +15,17 @@ export const MY_NATIVE_FORMATS = {
     monthYearA11yLabel: { year: 'numeric', month: 'long' },
 };
 @NgModule({
-    imports: [CommonModule, FormsModule, OwlDateTimeModule, OwlNativeDateTimeModule, ReactiveFormsModule, ArtemisSharedModule, ArtemisSharedComponentModule],
+    imports: [
+        CommonModule,
+        FormsModule,
+        OwlDateTimeModule,
+        OwlNativeDateTimeModule,
+        ReactiveFormsModule,
+        ArtemisSharedModule,
+        ArtemisSharedComponentModule,
+        FormDateTimePickerComponent,
+    ],
     exports: [FormDateTimePickerComponent],
-    declarations: [FormDateTimePickerComponent],
     providers: [{ provide: OWL_DATE_TIME_FORMATS, useValue: MY_NATIVE_FORMATS }],
 })
 export class FormDateTimePickerModule {}

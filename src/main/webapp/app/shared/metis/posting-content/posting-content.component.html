@@ -16,7 +16,7 @@
             <span class="toggle-content" jhiTranslate="{{ showContent ? 'artemisApp.metis.post.collapseContent' : 'artemisApp.metis.post.showContent' }}"></span>
             @if (showContent) {
                 <div>
-                    @for (postingContentPart of postingContentParts(); track $index) {
+                    @for (postingContentPart of postingContentParts(); track contentPartTrack($index)) {
                         <jhi-posting-content-part
                             [postingContentPart]="postingContentPart"
                             (userReferenceClicked)="userReferenceClicked.emit($event)"
@@ -33,7 +33,7 @@
     <!-- not in preview mode: content always shown -->
     @if (!previewMode) {
         <div class="pb-1">
-            @for (postingContentPart of postingContentParts(); track $index) {
+            @for (postingContentPart of postingContentParts(); track contentPartTrack($index)) {
                 <jhi-posting-content-part
                     [postingContentPart]="postingContentPart"
                     (userReferenceClicked)="userReferenceClicked.emit($event)"
