@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, inject } from '@angular/core';
 import { Router } from '@angular/router';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import { faXmark } from '@fortawesome/free-solid-svg-icons';
@@ -6,25 +6,28 @@ import dayjs from 'dayjs/esm';
 import { Course } from 'app/entities/course.model';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
 import { AlertService } from 'app/core/util/alert.service';
-import { AbstractControl, FormControl, FormGroup, ValidationErrors, ValidatorFn, Validators } from '@angular/forms';
+import { AbstractControl, FormControl, FormGroup, FormsModule, ReactiveFormsModule, ValidationErrors, ValidatorFn, Validators } from '@angular/forms';
+import { TranslateDirective } from '../shared/language/translate.directive';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
+import { ArtemisTranslatePipe } from '../shared/pipes/artemis-translate.pipe';
 
 @Component({
     selector: 'jhi-course-unenrollment-modal',
     templateUrl: './course-unenrollment-modal.component.html',
+    imports: [TranslateDirective, FormsModule, ReactiveFormsModule, FaIconComponent, ArtemisDatePipe, ArtemisTranslatePipe],
 })
 export class CourseUnenrollmentModalComponent implements OnInit {
+    private activeModal = inject(NgbActiveModal);
+    private courseService = inject(CourseManagementService);
+    private alertService = inject(AlertService);
+    private router = inject(Router);
+
     public course: Course;
     confirmationForm: FormGroup;
 
     // Icons
     faXmark = faXmark;
-
-    constructor(
-        private activeModal: NgbActiveModal,
-        private courseService: CourseManagementService,
-        private alertService: AlertService,
-        private router: Router,
-    ) {}
 
     ngOnInit(): void {
         this.confirmationForm = new FormGroup({

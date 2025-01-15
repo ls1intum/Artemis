@@ -1,4 +1,4 @@
-import { Injectable, OnDestroy } from '@angular/core';
+import { Injectable, OnDestroy, inject } from '@angular/core';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { IrisAssistantMessage, IrisMessage, IrisSender, IrisUserMessage } from 'app/entities/iris/iris-message.model';
 import { IrisErrorMessageKey } from 'app/entities/iris/iris-errors.model';
@@ -26,6 +26,12 @@ export enum ChatServiceMode {
  */
 @Injectable({ providedIn: 'root' })
 export class IrisChatService implements OnDestroy {
+    http = inject(IrisChatHttpService);
+    ws = inject(IrisWebsocketService);
+    status = inject(IrisStatusService);
+    private userService = inject(UserService);
+    private accountService = inject(AccountService);
+
     sessionId?: number;
     messages: BehaviorSubject<IrisMessage[]> = new BehaviorSubject([]);
     newIrisMessage: BehaviorSubject<IrisMessage | undefined> = new BehaviorSubject(undefined);
@@ -41,21 +47,7 @@ export class IrisChatService implements OnDestroy {
 
     hasJustAcceptedIris = false;
 
-    /**
-     * Creates an instance of IrisChatService.
-     * @param http The IrisChatHttpService for HTTP operations related to sessions.
-     * @param ws The IrisChatWebsocketService for websocket operations
-     * @param status The IrisStatusService for handling the status of the service.
-     * @param userService The UserService for handling user operations.
-     * @param accountService The AccountService for handling account operations.
-     */
-    protected constructor(
-        public http: IrisChatHttpService,
-        public ws: IrisWebsocketService,
-        public status: IrisStatusService,
-        private userService: UserService,
-        private accountService: AccountService,
-    ) {
+    protected constructor() {
         this.rateLimitSubscription = this.status.currentRatelimitInfo().subscribe((info) => (this.rateLimitInfo = info));
     }
 

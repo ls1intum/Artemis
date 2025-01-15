@@ -10,11 +10,16 @@ import {
     SimpleChanges,
     TemplateRef,
     ViewEncapsulation,
+    inject,
 } from '@angular/core';
 import { TutorialGroupSession } from 'app/entities/tutorial-group/tutorial-group-session.model';
 import { TutorialGroup } from 'app/entities/tutorial-group/tutorial-group.model';
 import { SortService } from 'app/shared/service/sort.service';
 import dayjs from 'dayjs/esm';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { TutorialGroupSessionRowComponent } from './tutorial-group-session-row/tutorial-group-session-row.component';
+import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
+import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 
 @Component({
     selector: 'jhi-tutorial-group-sessions-table',
@@ -22,8 +27,12 @@ import dayjs from 'dayjs/esm';
     styleUrls: ['./tutorial-group-sessions-table.component.scss'],
     changeDetection: ChangeDetectionStrategy.OnPush,
     encapsulation: ViewEncapsulation.None,
+    imports: [TranslateDirective, TutorialGroupSessionRowComponent, ArtemisDatePipe, ArtemisTranslatePipe],
 })
 export class TutorialGroupSessionsTableComponent implements OnChanges {
+    private sortService = inject(SortService);
+    private changeDetectorRef = inject(ChangeDetectorRef);
+
     @ContentChild(TemplateRef, { static: true }) extraColumn: TemplateRef<any>;
 
     @Input()
@@ -61,11 +70,6 @@ export class TutorialGroupSessionsTableComponent implements OnChanges {
         }
         return numberOfColumns;
     }
-
-    constructor(
-        private sortService: SortService,
-        private changeDetectorRef: ChangeDetectorRef,
-    ) {}
 
     ngOnChanges(changes: SimpleChanges) {
         for (const propName in changes) {

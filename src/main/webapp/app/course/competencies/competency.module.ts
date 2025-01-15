@@ -41,8 +41,6 @@ import { ArtemisMarkdownEditorModule } from 'app/shared/markdown-editor/markdown
         JudgementOfLearningRatingComponent,
         CompetencyManagementTableComponent,
         ArtemisMarkdownEditorModule,
-    ],
-    declarations: [
         CompetencyRingsComponent,
         CompetencySearchComponent,
         CompetencyRecommendationDetailComponent,

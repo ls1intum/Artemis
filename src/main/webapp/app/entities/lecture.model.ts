@@ -23,6 +23,4 @@ export class Lecture implements BaseEntity {
     isAtLeastEditor?: boolean;
     isAtLeastInstructor?: boolean;
     ingested?: IngestionState;
-
-    constructor() {}
 }

@@ -1,4 +1,5 @@
-import { AfterViewInit, Component, Input, OnChanges, OnDestroy, OnInit, QueryList, SimpleChanges, ViewChildren, input } from '@angular/core';
+import { AfterViewInit, Component, Input, OnChanges, OnDestroy, OnInit, QueryList, SimpleChanges, ViewChildren, inject, input } from '@angular/core';
+import { ExerciseFeedbackSuggestionOptionsComponent } from 'app/exercises/shared/feedback-suggestion/exercise-feedback-suggestion-options.component';
 import dayjs from 'dayjs/esm';
 import { TranslateService } from '@ngx-translate/core';
 import { AssessmentType } from 'app/entities/assessment-type.model';
@@ -14,13 +15,35 @@ import { ActivatedRoute } from '@angular/router';
 import { tap } from 'rxjs/operators';
 import { ImportOptions } from 'app/types/programming-exercises';
 import { ProgrammingExerciseInputField } from 'app/exercises/programming/manage/update/programming-exercise-update.helper';
+import { FormsModule } from '@angular/forms';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { HelpIconComponent } from 'app/shared/components/help-icon.component';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { AsyncPipe, NgStyle } from '@angular/common';
+import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 
 @Component({
     selector: 'jhi-programming-exercise-lifecycle',
     templateUrl: './programming-exercise-lifecycle.component.html',
     styleUrls: ['./programming-exercise-test-schedule-picker.scss'],
+    imports: [
+        ProgrammingExerciseTestScheduleDatePickerComponent,
+        FormsModule,
+        TranslateDirective,
+        HelpIconComponent,
+        FaIconComponent,
+        NgStyle,
+        ExerciseFeedbackSuggestionOptionsComponent,
+        AsyncPipe,
+        ArtemisTranslatePipe,
+    ],
 })
 export class ProgrammingExerciseLifecycleComponent implements AfterViewInit, OnDestroy, OnInit, OnChanges {
+    private translateService = inject(TranslateService);
+    private exerciseService = inject(ExerciseService);
+    private athenaService = inject(AthenaService);
+    private activatedRoute = inject(ActivatedRoute);
+
     protected readonly assessmentType = AssessmentType;
     protected readonly IncludedInOverallScore = IncludedInOverallScore;
     protected readonly faCogs = faCogs;
@@ -44,15 +67,8 @@ export class ProgrammingExerciseLifecycleComponent implements AfterViewInit, OnD
 
     isAthenaEnabled$: Observable<boolean> | undefined;
 
-    isImport: boolean = false;
+    isImport = false;
     private urlSubscription: Subscription;
-
-    constructor(
-        private translateService: TranslateService,
-        private exerciseService: ExerciseService,
-        private athenaService: AthenaService,
-        private activatedRoute: ActivatedRoute,
-    ) {}
 
     /**
      * If the programming exercise does not have an id, set the assessment Type to AUTOMATIC

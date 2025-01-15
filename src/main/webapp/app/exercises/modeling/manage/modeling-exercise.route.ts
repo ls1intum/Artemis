@@ -1,18 +1,15 @@
 import { NgModule } from '@angular/core';
 import { RouterModule, Routes } from '@angular/router';
 import { UserRouteAccessService } from 'app/core/auth/user-route-access-service';
-import { ModelingExerciseDetailComponent } from './modeling-exercise-detail.component';
-import { ModelingExerciseUpdateComponent } from 'app/exercises/modeling/manage/modeling-exercise-update.component';
-import { PlagiarismInspectorComponent } from 'app/exercises/shared/plagiarism/plagiarism-inspector/plagiarism-inspector.component';
+
 import { Authority } from 'app/shared/constants/authority.constants';
-import { ExerciseStatisticsComponent } from 'app/exercises/shared/statistics/exercise-statistics.component';
-import { ExampleSubmissionsComponent } from 'app/exercises/shared/example-submission/example-submissions.component';
+
 import { ModelingExerciseResolver } from 'app/exercises/modeling/manage/modeling-exercise-resolver.service';
 
 export const routes: Routes = [
     {
         path: ':courseId/modeling-exercises/new',
-        component: ModelingExerciseUpdateComponent,
+        loadComponent: () => import('app/exercises/modeling/manage/modeling-exercise-update.component').then((m) => m.ModelingExerciseUpdateComponent),
         resolve: {
             modelingExercise: ModelingExerciseResolver,
         },
@@ -24,7 +21,7 @@ export const routes: Routes = [
     },
     {
         path: ':courseId/modeling-exercises/:exerciseId/edit',
-        component: ModelingExerciseUpdateComponent,
+        loadComponent: () => import('app/exercises/modeling/manage/modeling-exercise-update.component').then((m) => m.ModelingExerciseUpdateComponent),
         resolve: {
             modelingExercise: ModelingExerciseResolver,
         },
@@ -36,7 +33,7 @@ export const routes: Routes = [
     },
     {
         path: ':courseId/modeling-exercises/:exerciseId/import',
-        component: ModelingExerciseUpdateComponent,
+        loadComponent: () => import('app/exercises/modeling/manage/modeling-exercise-update.component').then((m) => m.ModelingExerciseUpdateComponent),
         resolve: {
             modelingExercise: ModelingExerciseResolver,
         },
@@ -48,7 +45,7 @@ export const routes: Routes = [
     },
     {
         path: ':courseId/modeling-exercises/:exerciseId',
-        component: ModelingExerciseDetailComponent,
+        loadComponent: () => import('./modeling-exercise-detail.component').then((m) => m.ModelingExerciseDetailComponent),
         data: {
             authorities: [Authority.TA, Authority.EDITOR, Authority.INSTRUCTOR, Authority.ADMIN],
             pageTitle: 'artemisApp.modelingExercise.home.title',
@@ -57,7 +54,7 @@ export const routes: Routes = [
     },
     {
         path: ':courseId/modeling-exercises/:exerciseId/example-submissions',
-        component: ExampleSubmissionsComponent,
+        loadComponent: () => import('app/exercises/shared/example-submission/example-submissions.component').then((m) => m.ExampleSubmissionsComponent),
         resolve: {
             exercise: ModelingExerciseResolver,
         },
@@ -69,7 +66,7 @@ export const routes: Routes = [
     },
     {
         path: ':courseId/modeling-exercises/:exerciseId/plagiarism',
-        component: PlagiarismInspectorComponent,
+        loadComponent: () => import('app/exercises/shared/plagiarism/plagiarism-inspector/plagiarism-inspector.component').then((m) => m.PlagiarismInspectorComponent),
         resolve: {
             exercise: ModelingExerciseResolver,
         },
@@ -85,7 +82,7 @@ export const routes: Routes = [
     },
     {
         path: ':courseId/modeling-exercises/:exerciseId/exercise-statistics',
-        component: ExerciseStatisticsComponent,
+        loadComponent: () => import('app/exercises/shared/statistics/exercise-statistics.component').then((m) => m.ExerciseStatisticsComponent),
         resolve: {
             exercise: ModelingExerciseResolver,
         },

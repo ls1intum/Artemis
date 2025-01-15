@@ -42,6 +42,9 @@
                 [ngbTooltip]="'artemisApp.metis.post.postMarkedAsResolvedTooltip' | artemisTranslate"
             />
         }
+        @if (isPostPinned()) {
+            <jhi-emoji class="fs-x-small" emoji="pushpin" />
+        }
         @if ((!!isCommunicationPage() && !lastReadDate()) || (lastReadDate() && creationDate && isAfter && !isAuthorOfPosting)) {
             <span jhiTranslate="global.generic.new" class="badge bg-secondary hideAfter5Seconds"></span>
         }

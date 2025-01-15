@@ -33,8 +33,8 @@ import { NoDataComponent } from 'app/shared/no-data-component';
         ProgrammingExerciseRepositoryAndBuildPlanDetailsComponent,
         ExerciseDetailDirective,
         NoDataComponent,
+        DetailOverviewListComponent,
     ],
-    declarations: [DetailOverviewListComponent],
     exports: [DetailOverviewListComponent],
 })
 export class DetailModule {}

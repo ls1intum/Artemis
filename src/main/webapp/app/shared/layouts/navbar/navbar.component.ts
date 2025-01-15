@@ -1,15 +1,16 @@
-import { Component, HostListener, OnDestroy, OnInit } from '@angular/core';
+import { Component, HostListener, OnDestroy, OnInit, inject } from '@angular/core';
 import { AccountService } from 'app/core/auth/account.service';
+import { HasAnyAuthorityDirective } from 'app/shared/auth/has-any-authority.directive';
 import { Subscription } from 'rxjs';
 import { filter, map, tap } from 'rxjs/operators';
-import { NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
+import { NgbCollapse, NgbDropdown, NgbDropdownMenu, NgbDropdownToggle, NgbModalRef, NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { User } from 'app/core/user/user.model';
 import { GuidedTourService } from 'app/guided-tour/guided-tour.service';
 import { PROFILE_IRIS, PROFILE_LOCALCI, PROFILE_LTI, VERSION } from 'app/app.constants';
 import { ParticipationWebsocketService } from 'app/overview/participation-websocket.service';
 import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
 import { LoginService } from 'app/core/login/login.service';
-import { ActivatedRoute, Event, NavigationEnd, Router } from '@angular/router';
+import { ActivatedRoute, Event, NavigationEnd, Router, RouterLink, RouterLinkActive } from '@angular/router';
 import { ExamParticipationService } from 'app/exam/participate/exam-participation.service';
 import { ArtemisServerDateService } from 'app/shared/server-date.service';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
@@ -52,13 +53,65 @@ import { onError } from 'app/shared/util/global.utils';
 import { StudentExam } from 'app/entities/student-exam.model';
 import { Title } from '@angular/platform-browser';
 import { FeatureToggle, FeatureToggleService } from 'app/shared/feature-toggle/feature-toggle.service';
+import { NgClass, NgTemplateOutlet } from '@angular/common';
+import { NotificationSidebarComponent } from '../../notification/notification-sidebar/notification-sidebar.component';
+import { ThemeSwitchComponent } from 'app/core/theme/theme-switch.component';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { TranslateDirective } from '../../language/translate.directive';
+import { ActiveMenuDirective } from './active-menu.directive';
+import { JhiConnectionWarningComponent } from '../../connection-warning/connection-warning.component';
+import { LoadingNotificationComponent } from '../../notification/loading-notification/loading-notification.component';
+import { SystemNotificationComponent } from '../../notification/system-notification/system-notification.component';
+import { GuidedTourComponent } from 'app/guided-tour/guided-tour.component';
+import { FindLanguageFromKeyPipe } from 'app/shared/language/find-language-from-key.pipe';
+import { ArtemisTranslatePipe } from '../../pipes/artemis-translate.pipe';
 
 @Component({
     selector: 'jhi-navbar',
     templateUrl: './navbar.component.html',
     styleUrls: ['navbar.scss'],
+    imports: [
+        NgClass,
+        NotificationSidebarComponent,
+        ThemeSwitchComponent,
+        NgbDropdown,
+        RouterLinkActive,
+        NgbDropdownToggle,
+        FaIconComponent,
+        TranslateDirective,
+        NgbDropdownMenu,
+        RouterLink,
+        ActiveMenuDirective,
+        NgbTooltip,
+        JhiConnectionWarningComponent,
+        LoadingNotificationComponent,
+        NgTemplateOutlet,
+        NgbCollapse,
+        SystemNotificationComponent,
+        GuidedTourComponent,
+        FindLanguageFromKeyPipe,
+        ArtemisTranslatePipe,
+        // NOTE: this is actually used in the html template, otherwise *jhiHasAnyAuthority would not work
+        HasAnyAuthorityDirective,
+    ],
 })
 export class NavbarComponent implements OnInit, OnDestroy {
+    guidedTourService = inject(GuidedTourService);
+    private accountService = inject(AccountService);
+    private loginService = inject(LoginService);
+    private translateService = inject(TranslateService);
+    private profileService = inject(ProfileService);
+    private participationWebsocketService = inject(ParticipationWebsocketService);
+    private router = inject(Router);
+    private route = inject(ActivatedRoute);
+    private examParticipationService = inject(ExamParticipationService);
+    private serverDateService = inject(ArtemisServerDateService);
+    private alertService = inject(AlertService);
+    private exerciseService = inject(ExerciseService);
+    private entityTitleService = inject(EntityTitleService);
+    private titleService = inject(Title);
+    private featureToggleService = inject(FeatureToggleService);
+
     inProduction: boolean;
     testServer: boolean;
     isNavbarCollapsed: boolean;
@@ -83,7 +136,7 @@ export class NavbarComponent implements OnInit, OnDestroy {
     isExamActive = false;
     examActiveCheckFuture?: ReturnType<typeof setTimeout>;
     irisEnabled: boolean;
-    localCIActive: boolean = false;
+    localCIActive = false;
     ltiEnabled: boolean;
     standardizedCompetenciesEnabled = false;
     agentName?: string;
@@ -132,23 +185,7 @@ export class NavbarComponent implements OnInit, OnDestroy {
     private routeExamId = 0;
     private lastRouteUrlSegment?: string;
 
-    constructor(
-        public guidedTourService: GuidedTourService,
-        private accountService: AccountService,
-        private loginService: LoginService,
-        private translateService: TranslateService,
-        private profileService: ProfileService,
-        private participationWebsocketService: ParticipationWebsocketService,
-        private router: Router,
-        private route: ActivatedRoute,
-        private examParticipationService: ExamParticipationService,
-        private serverDateService: ArtemisServerDateService,
-        private alertService: AlertService,
-        private exerciseService: ExerciseService,
-        private entityTitleService: EntityTitleService,
-        private titleService: Title,
-        private featureToggleService: FeatureToggleService,
-    ) {
+    constructor() {
         this.version = VERSION ? VERSION : '';
         this.isNavbarCollapsed = true;
         this.subscribeToNavigationEventsForExamId();
