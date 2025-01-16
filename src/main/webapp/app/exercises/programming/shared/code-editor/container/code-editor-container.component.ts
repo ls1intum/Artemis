@@ -1,6 +1,6 @@
 import { Component, EventEmitter, Input, OnChanges, Output, SimpleChanges, ViewChild } from '@angular/core';
 import { TranslateService } from '@ngx-translate/core';
-import { isEmpty as _isEmpty, fromPairs, toPairs, uniq } from 'lodash-es';
+import { fromPairs, isEmpty as _isEmpty, toPairs, uniq } from 'lodash-es';
 import { CodeEditorFileService } from 'app/exercises/programming/shared/code-editor/service/code-editor-file.service';
 import { CodeEditorGridComponent } from 'app/exercises/programming/shared/code-editor/layout/code-editor-grid.component';
 import {
@@ -20,11 +20,12 @@ import { CodeEditorActionsComponent } from 'app/exercises/programming/shared/cod
 import { CodeEditorBuildOutputComponent } from 'app/exercises/programming/shared/code-editor/build-output/code-editor-build-output.component';
 import { Participation } from 'app/entities/participation/participation.model';
 import { CodeEditorInstructionsComponent } from 'app/exercises/programming/shared/code-editor/instructions/code-editor-instructions.component';
-import { Feedback } from 'app/entities/feedback.model';
+import { Feedback, PRELIMINARY_FEEDBACK_IDENTIFIER } from 'app/entities/feedback.model';
 import { Course } from 'app/entities/course.model';
 import { ConnectionError } from 'app/exercises/programming/shared/code-editor/service/code-editor-repository.service';
 import { Annotation, CodeEditorMonacoComponent } from 'app/exercises/programming/shared/code-editor/monaco/code-editor-monaco.component';
 import { Result } from 'app/entities/result.model';
+import { AssessmentType } from 'app/entities/assessment-type.model';
 
 export enum CollapsableCodeEditorElement {
     FileBrowser,
@@ -175,14 +176,19 @@ export class CodeEditorContainerComponent implements OnChanges {
      * Update the file badges for the code editor for preliminary feedback
      */
     updateFileBadgesForPreliminaryFeedback() {
+        if (this.latestResult?.assessmentType !== AssessmentType.AUTOMATIC_ATHENA) {
+            return;
+        }
         this.fileBadges = {};
         // Create badges for preliminary feedback
         const feedbacks = this.latestResult?.feedbacks ?? [];
+        // Count only preliminary feedback
+        const filteredFeedbacks = feedbacks.filter((feedback) => feedback.text?.startsWith(PRELIMINARY_FEEDBACK_IDENTIFIER));
         // Get file paths from feedback:
-        const filePaths = feedbacks.map((feedback) => Feedback.getReferenceFilePath(feedback)).filter((filePath) => filePath !== undefined) as string[];
+        const filePaths = filteredFeedbacks.map((feedback) => Feedback.getReferenceFilePath(feedback)).filter((filePath) => filePath !== undefined) as string[];
         for (const filePath of filePaths) {
             // Count the number of feedback for this file
-            const feedbackCount = feedbacks.filter((feedback) => Feedback.getReferenceFilePath(feedback) === filePath).length;
+            const feedbackCount = filteredFeedbacks.filter((feedback) => Feedback.getReferenceFilePath(feedback) === filePath).length;
             this.fileBadges[filePath] = [new FileBadge(FileBadgeType.PRELIMINARY_FEEDBACK, feedbackCount)];
         }
     }
@@ -318,6 +324,6 @@ export class CodeEditorContainerComponent implements OnChanges {
      * @param fileName The name of the file
      */
     onReopenFeedback(fileName: string) {
-        this.monacoEditor.refreshFeedback();
+        this.monacoEditor.refreshFeedback(fileName);
     }
 }

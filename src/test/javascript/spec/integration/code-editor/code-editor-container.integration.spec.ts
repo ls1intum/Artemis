@@ -76,6 +76,7 @@ import { MockResizeObserver } from '../../helpers/mocks/service/mock-resize-obse
 import { CodeEditorMonacoComponent } from 'app/exercises/programming/shared/code-editor/monaco/code-editor-monaco.component';
 import { RequestFeedbackButtonComponent } from 'app/overview/exercise-details/request-feedback-button/request-feedback-button.component';
 import { MonacoEditorComponent } from '../../../../../main/webapp/app/shared/monaco-editor/monaco-editor.component';
+import { AssessmentType } from 'app/entities/assessment-type.model';
 
 describe('CodeEditorContainerIntegration', () => {
     let container: CodeEditorContainerComponent;
@@ -588,6 +589,24 @@ describe('CodeEditorContainerIntegration', () => {
             'src/Test1.java': [new FileBadge(FileBadgeType.FEEDBACK_SUGGESTION, 1)],
             'src/Test2.java': [new FileBadge(FileBadgeType.FEEDBACK_SUGGESTION, 2)],
             'src/Test3.java': [new FileBadge(FileBadgeType.FEEDBACK_SUGGESTION, 3)],
+        });
+    });
+
+    it('should create file badges for preliminary feedback with various formats', () => {
+        container.latestResult = {
+            assessmentType: AssessmentType.AUTOMATIC_ATHENA,
+            feedbacks: [
+                { text: 'NonGradedFeedbackSuggestion:File src/Test1.java at lines 1-10', reference: 'file:src/Test1.java_line:1' },
+                { text: 'NonGradedFeedbackSuggestion:File src/Test2.java at line 5', reference: 'file:src/Test2.java_line:5' },
+                { text: 'NonGradedFeedbackSuggestion:File src/Test3.java', reference: 'file:src/Test3.java_line:0' },
+                { text: 'InvalidFeedbackPrefix:File src/Test4.java at lines 1-5', reference: 'file:src/Test4.java_line:1' },
+            ],
+        };
+        container.updateFileBadgesForPreliminaryFeedback();
+        expect(container.fileBadges).toEqual({
+            'src/Test1.java': [new FileBadge(FileBadgeType.PRELIMINARY_FEEDBACK, 1)],
+            'src/Test2.java': [new FileBadge(FileBadgeType.PRELIMINARY_FEEDBACK, 1)],
+            'src/Test3.java': [new FileBadge(FileBadgeType.PRELIMINARY_FEEDBACK, 1)],
         });
     });
 });

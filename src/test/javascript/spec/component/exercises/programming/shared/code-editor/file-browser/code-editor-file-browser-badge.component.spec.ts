@@ -20,31 +20,50 @@ describe('CodeEditorFileBrowserBadgeComponent', () => {
         translateService = TestBed.inject(TranslateService);
     });
 
-    beforeEach(() => {
-        fixture = TestBed.createComponent(CodeEditorFileBrowserBadgeComponent);
-        component = fixture.componentInstance;
-        component.badge = new FileBadge(FileBadgeType.FEEDBACK_SUGGESTION, 3);
-        fixture.detectChanges();
+    describe('Feedback Suggestion Section', () => {
+        beforeEach(() => {
+            fixture = TestBed.createComponent(CodeEditorFileBrowserBadgeComponent);
+            component = fixture.componentInstance;
+            component.badge = new FileBadge(FileBadgeType.FEEDBACK_SUGGESTION, 3);
+            fixture.detectChanges();
+        });
+
+        it('should correctly display the tooltip for a FEEDBACK_SUGGESTION badge', () => {
+            jest.spyOn(translateService, 'instant').mockReturnValue('Mocked Tooltip');
+            expect(component.tooltip).toBe('Mocked Tooltip');
+        });
+
+        it('should return faLightbulb icon for a FEEDBACK_SUGGESTION badge', () => {
+            expect(component.icon!.iconName).toBe('lightbulb');
+        });
+
+        it('should not have an icon for an unknown badge type', () => {
+            component.badge = new FileBadge('unknown' as FileBadgeType, 3);
+            fixture.detectChanges();
+            expect(component.icon).toBeUndefined();
+        });
+
+        it('should not have a tooltip for an unknown badge type', () => {
+            component.badge = new FileBadge('unknown' as FileBadgeType, 3);
+            fixture.detectChanges();
+            expect(component.tooltip).toBeUndefined();
+        });
     });
 
-    it('should correctly display the tooltip for a FEEDBACK_SUGGESTION badge', () => {
-        jest.spyOn(translateService, 'instant').mockReturnValue('Mocked Tooltip');
-        expect(component.tooltip).toBe('Mocked Tooltip');
-    });
+    describe('Preliminary Feedback Section', () => {
+        beforeEach(() => {
+            fixture = TestBed.createComponent(CodeEditorFileBrowserBadgeComponent);
+            component = fixture.componentInstance;
+            component.badge = new FileBadge(FileBadgeType.PRELIMINARY_FEEDBACK, 3);
+            fixture.detectChanges();
+        });
 
-    it('should return faLightbulb icon for a FEEDBACK_SUGGESTION badge', () => {
-        expect(component.icon!.iconName).toBe('lightbulb');
-    });
+        it('should correctly display the tooltip for a PRELIMINARY_FEEDBACK badge', () => {
+            expect(component.tooltip).toBe('artemisApp.editor.fileBrowser.fileBadgeTooltips.preliminaryFeedback');
+        });
 
-    it('should not have an icon for an unknown badge type', () => {
-        component.badge = new FileBadge('unknown' as FileBadgeType, 3);
-        fixture.detectChanges();
-        expect(component.icon).toBeUndefined();
-    });
-
-    it('should not have a tooltip for an unknown badge type', () => {
-        component.badge = new FileBadge('unknown' as FileBadgeType, 3);
-        fixture.detectChanges();
-        expect(component.tooltip).toBeUndefined();
+        it('should return faLightbulb icon for a PRELIMINARY_FEEDBACK badge', () => {
+            expect(component.icon!.iconName).toBe('lightbulb');
+        });
     });
 });

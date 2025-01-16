@@ -20,12 +20,7 @@ import { MockAccountService } from '../helpers/mocks/service/mock-account.servic
 import { SubmissionService } from 'app/exercises/shared/submission/submission.service';
 import { AssessmentType } from 'app/entities/assessment-type.model';
 import { ProgrammingSubmission } from 'app/entities/programming/programming-submission.model';
-import {
-    FeedbackType,
-    NON_GRADED_FEEDBACK_SUGGESTION_IDENTIFIER,
-    STATIC_CODE_ANALYSIS_FEEDBACK_IDENTIFIER,
-    SUBMISSION_POLICY_FEEDBACK_IDENTIFIER,
-} from 'app/entities/feedback.model';
+import { FeedbackType, PRELIMINARY_FEEDBACK_IDENTIFIER, STATIC_CODE_ANALYSIS_FEEDBACK_IDENTIFIER, SUBMISSION_POLICY_FEEDBACK_IDENTIFIER } from 'app/entities/feedback.model';
 import { ModelingExercise } from 'app/entities/modeling-exercise.model';
 import * as Sentry from '@sentry/angular';
 // Preliminary mock before import to prevent errors
@@ -90,14 +85,14 @@ describe('ResultService', () => {
         score: 80,
     };
     const result6: Result = {
-        feedbacks: [{ text: NON_GRADED_FEEDBACK_SUGGESTION_IDENTIFIER + 'AI feedback', type: FeedbackType.AUTOMATIC }],
+        feedbacks: [{ text: PRELIMINARY_FEEDBACK_IDENTIFIER + 'AI feedback', type: FeedbackType.AUTOMATIC }],
         participation: { type: ParticipationType.PROGRAMMING },
         completionDate: dayjs().subtract(5, 'minutes'),
         assessmentType: AssessmentType.AUTOMATIC_ATHENA,
         successful: true,
     };
     const result7: Result = {
-        feedbacks: [{ text: NON_GRADED_FEEDBACK_SUGGESTION_IDENTIFIER + 'AI feedback', type: FeedbackType.AUTOMATIC }],
+        feedbacks: [{ text: PRELIMINARY_FEEDBACK_IDENTIFIER + 'AI feedback', type: FeedbackType.AUTOMATIC }],
         participation: { type: ParticipationType.PROGRAMMING },
         completionDate: dayjs().subtract(5, 'minutes'),
         assessmentType: AssessmentType.AUTOMATIC_ATHENA,

@@ -2,7 +2,7 @@ import {
     Feedback,
     FeedbackSuggestionType,
     FeedbackType,
-    NON_GRADED_FEEDBACK_SUGGESTION_IDENTIFIER,
+    PRELIMINARY_FEEDBACK_IDENTIFIER,
     STATIC_CODE_ANALYSIS_FEEDBACK_IDENTIFIER,
     SUBMISSION_POLICY_FEEDBACK_IDENTIFIER,
     buildFeedbackTextForReview,
@@ -162,8 +162,37 @@ describe('Feedback', () => {
         });
 
         it('should correctly detect non graded automatically generated feedback', () => {
-            const feedback: Feedback = { type: FeedbackType.AUTOMATIC, text: NON_GRADED_FEEDBACK_SUGGESTION_IDENTIFIER + 'content' };
+            const feedback: Feedback = { type: FeedbackType.AUTOMATIC, text: PRELIMINARY_FEEDBACK_IDENTIFIER + 'content' };
             expect(Feedback.isNonGradedFeedbackSuggestion(feedback)).toBeTrue();
+        });
+    });
+
+    describe('Feedback with lines information', () => {
+        it('should include lines information in feedback text if text contains "lines"', () => {
+            const feedback = new Feedback();
+            feedback.detailText = 'This is a detailed feedback.';
+            feedback.text = 'NonGradedFeedbackSuggestion:File src/example/file.java at lines 10-20';
+
+            const expectedText = 'This is a detailed feedback. (lines 10-20)';
+            expect(buildFeedbackTextForReview(feedback)).toBe(expectedText);
+        });
+
+        it('should not include lines information if text does not contain "lines"', () => {
+            const feedback = new Feedback();
+            feedback.detailText = 'This is a detailed feedback.';
+            feedback.text = 'NonGradedFeedbackSuggestion:File src/example/file.java';
+
+            const expectedText = 'This is a detailed feedback.';
+            expect(buildFeedbackTextForReview(feedback)).toBe(expectedText);
+        });
+
+        it('should ignore feedback not starting with the expected prefix', () => {
+            const feedback = new Feedback();
+            feedback.detailText = 'This is another type of feedback.';
+            feedback.text = 'Some other feedback text unrelated to lines';
+
+            const expectedText = 'This is another type of feedback.';
+            expect(buildFeedbackTextForReview(feedback)).toBe(expectedText);
         });
     });
 });

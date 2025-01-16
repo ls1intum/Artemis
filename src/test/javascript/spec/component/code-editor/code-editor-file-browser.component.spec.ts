@@ -930,6 +930,8 @@ describe('CodeEditorFileBrowserComponent', () => {
             'folderA/file': [new FileBadge(FileBadgeType.FEEDBACK_SUGGESTION, 1)],
             'folderB/file1': [new FileBadge(FileBadgeType.FEEDBACK_SUGGESTION, 1)],
             'folderB/file2': [new FileBadge(FileBadgeType.FEEDBACK_SUGGESTION, 2)],
+            'folderC/file1': [new FileBadge(FileBadgeType.PRELIMINARY_FEEDBACK, 1)],
+            'folderC/file2': [new FileBadge(FileBadgeType.PRELIMINARY_FEEDBACK, 2)],
         };
 
         beforeEach(() => {
@@ -949,6 +951,11 @@ describe('CodeEditorFileBrowserComponent', () => {
         it('should aggregate file badges for a collapsed folder', () => {
             const result = comp.getFolderBadges({ value: 'folderB', collapsed: true } as TreeviewItem<string>);
             expect(result).toEqual([new FileBadge(FileBadgeType.FEEDBACK_SUGGESTION, 3)]); // 1 + 2
+        });
+
+        it('should aggregate file badges for a collapsed folder', () => {
+            const result = comp.getFolderBadges({ value: 'folderC', collapsed: true } as TreeviewItem<string>);
+            expect(result).toEqual([new FileBadge(FileBadgeType.PRELIMINARY_FEEDBACK, 3)]); // 1 + 2
         });
     });
 });

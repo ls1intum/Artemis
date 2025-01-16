@@ -33,7 +33,7 @@ export const SUBMISSION_POLICY_FEEDBACK_IDENTIFIER = 'SubPolFeedbackIdentifier:'
 export const FEEDBACK_SUGGESTION_IDENTIFIER = 'FeedbackSuggestion:';
 export const FEEDBACK_SUGGESTION_ACCEPTED_IDENTIFIER = 'FeedbackSuggestion:accepted:';
 export const FEEDBACK_SUGGESTION_ADAPTED_IDENTIFIER = 'FeedbackSuggestion:adapted:';
-export const NON_GRADED_FEEDBACK_SUGGESTION_IDENTIFIER = 'NonGradedFeedbackSuggestion:';
+export const PRELIMINARY_FEEDBACK_IDENTIFIER = 'NonGradedFeedbackSuggestion:';
 
 export interface DropInfo {
     instruction: GradingInstruction;
@@ -127,7 +127,7 @@ export class Feedback implements BaseEntity {
         if (!that.text) {
             return false;
         }
-        return that.text.startsWith(NON_GRADED_FEEDBACK_SUGGESTION_IDENTIFIER);
+        return that.text.startsWith(PRELIMINARY_FEEDBACK_IDENTIFIER);
     }
 
     /**

@@ -6,7 +6,7 @@ import {
     FEEDBACK_SUGGESTION_IDENTIFIER,
     Feedback,
     FeedbackType,
-    NON_GRADED_FEEDBACK_SUGGESTION_IDENTIFIER,
+    PRELIMINARY_FEEDBACK_IDENTIFIER,
     STATIC_CODE_ANALYSIS_FEEDBACK_IDENTIFIER,
     SUBMISSION_POLICY_FEEDBACK_IDENTIFIER,
 } from 'app/entities/feedback.model';
@@ -161,7 +161,7 @@ export class ProgrammingFeedbackItemService implements FeedbackItemService {
         return {
             type: 'Reviewer',
             name: this.translateService.instant('artemisApp.result.detail.feedback'),
-            title: feedback.text?.slice(NON_GRADED_FEEDBACK_SUGGESTION_IDENTIFIER.length),
+            title: feedback.text?.slice(PRELIMINARY_FEEDBACK_IDENTIFIER.length),
             text: feedback.detailText,
             positive: feedback.positive,
             credits: feedback.credits,

@@ -458,7 +458,10 @@ export class CodeEditorMonacoComponent implements OnChanges {
         return this.editor().getLineHighlights();
     }
 
-    refreshFeedback() {
+    refreshFeedback(fileName: string) {
+        if (this.selectedFile() !== fileName) {
+            return;
+        }
         this.feedbackInternal.set(this.feedbacks());
         this.onUpdateFeedback.emit(this.feedbackInternal());
         this.renderFeedbackWidgets();

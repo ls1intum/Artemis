@@ -22,7 +22,6 @@ import { SubmissionPolicyService } from 'app/exercises/programming/manage/servic
 import { hasExerciseDueDatePassed } from 'app/exercises/shared/exercise/exercise.utils';
 import { faCircleNotch, faTimesCircle } from '@fortawesome/free-solid-svg-icons';
 import { isManualResult as isManualResultFunction } from 'app/exercises/shared/result/result.utils';
-import { StudentParticipation } from 'app/entities/participation/student-participation.model';
 
 @Component({
     selector: 'jhi-code-editor-student',
