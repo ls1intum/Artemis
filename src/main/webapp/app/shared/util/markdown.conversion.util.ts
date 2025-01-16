@@ -66,7 +66,7 @@ export function htmlForMarkdown(
         md.use(extension);
     }
 
-    // Add default extensions (Code Highlight, Latex)
+    // Add default extensions (Code Highlight, Latex, Alerts)
     md.use(markdownItHighlightjs)
         .use(formulaCompatibilityPlugin.getExtension())
         .use(markdownItKatex, {
