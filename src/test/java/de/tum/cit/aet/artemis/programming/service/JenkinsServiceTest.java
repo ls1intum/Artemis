@@ -174,21 +174,20 @@ class JenkinsServiceTest extends AbstractProgrammingIntegrationJenkinsGitlabTest
 
     @Test
     @WithMockUser(roles = "INSTRUCTOR", username = TEST_PREFIX + "instructor1")
-    void testDeleteBuildPlan() throws Exception {
+    void testDeleteBuildPlan() {
         var programmingExercise = continuousIntegrationTestService.programmingExercise;
         programmingExerciseUtilService.addTemplateParticipationForProgrammingExercise(programmingExercise);
         programmingExerciseUtilService.addSolutionParticipationForProgrammingExercise(programmingExercise);
         programmingExerciseUtilService.addTestCasesToProgrammingExercise(programmingExercise);
 
-        jenkinsRequestMockProvider.mockCreateProjectForExercise(programmingExercise, false);
-        jenkinsRequestMockProvider.mockCopyBuildPlanFromTemplate(programmingExercise.getProjectKey(), programmingExercise.getProjectKey(),
-                programmingExercise.getTemplateBuildPlanId());
-        jenkinsRequestMockProvider.mockCopyBuildPlanFromTemplate(programmingExercise.getProjectKey(), programmingExercise.getProjectKey(),
-                programmingExercise.getSolutionBuildPlanId());
-        jenkinsRequestMockProvider.mockGivePlanPermissionsThrowException(programmingExercise.getProjectKey(), programmingExercise.getProjectKey());
+        final String projectKey = programmingExercise.getProjectKey();
+        final String solutionJobName = projectKey + "-" + SOLUTION.getName();
 
-        assertThatExceptionOfType(JenkinsException.class).isThrownBy(() -> programmingExerciseImportService.importBuildPlans(programmingExercise, programmingExercise))
-                .withMessageStartingWith("Cannot give assign permissions to plan");
+        jenkinsRequestMockProvider.mockDeleteBuildPlanPlain(projectKey, solutionJobName);
+
+        continuousIntegrationService.deleteBuildPlan(projectKey, solutionJobName);
+
+        jenkinsRequestMockProvider.verifyMocks();
     }
 
     @Test
