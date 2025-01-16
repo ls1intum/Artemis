@@ -197,7 +197,7 @@ public class JenkinsRequestMockProvider {
 
         URI uri = JenkinsEndpoints.PLAN_CONFIG.buildEndpoint(jenkinsServerUri, folderName, jobName).build(true).toUri();
         var mockXml = loadFileFromResources("test-data/jenkins-response/job-config.xml");
-        mockServer.expect(requestTo(uri)).andExpect(method(HttpMethod.POST)).andRespond(withSuccess().body(mockXml));
+        mockServer.expect(requestTo(uri)).andExpect(method(HttpMethod.GET)).andRespond(withSuccess().body(mockXml));
     }
 
     public void mockGetFolderConfig(String folderName) throws IOException {
