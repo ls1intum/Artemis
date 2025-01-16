@@ -1,4 +1,4 @@
-import { Pipe, PipeTransform } from '@angular/core';
+import { Pipe, PipeTransform, inject } from '@angular/core';
 import { ArtemisDatePipe, DateFormat, DateType } from 'app/shared/pipes/artemis-date.pipe';
 
 @Pipe({
@@ -6,7 +6,8 @@ import { ArtemisDatePipe, DateFormat, DateType } from 'app/shared/pipes/artemis-
     pure: false,
 })
 export class ArtemisDateRangePipe implements PipeTransform {
-    constructor(private artemisDatePipe: ArtemisDatePipe) {}
+    private artemisDatePipe = inject(ArtemisDatePipe);
+
     transform(range: [DateType, DateType] | undefined | null, format: DateFormat = 'long-date', timeZone: string | undefined = undefined, weekDay = false): string {
         if (!range) {
             return '';

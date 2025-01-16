@@ -1,4 +1,4 @@
-import { Component, Input, OnInit, Optional } from '@angular/core';
+import { Component, Input, OnInit, inject } from '@angular/core';
 import { ProgrammingExercise } from 'app/entities/programming/programming-exercise.model';
 import { ProgrammingExerciseStudentParticipation } from 'app/entities/participation/programming-exercise-student-participation.model';
 import { ProgrammingSubmission } from 'app/entities/programming/programming-submission.model';
@@ -12,34 +12,45 @@ import { ExerciseCacheService } from 'app/exercises/shared/exercise/exercise-cac
 import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
 import { Result } from 'app/entities/result.model';
 import { createCommitUrl } from 'app/exercises/programming/shared/utils/programming-exercise.utils';
-import { faCodeBranch } from '@fortawesome/free-solid-svg-icons';
 import { Router } from '@angular/router';
 import { PROFILE_LOCALVC } from 'app/app.constants';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { CodeButtonComponent } from 'app/shared/components/code-button/code-button.component';
+import { FeedbackComponent } from 'app/exercises/shared/feedback/feedback.component';
+import { ProgrammingExerciseInstructionComponent } from 'app/exercises/programming/shared/instructions-render/programming-exercise-instruction.component';
+import { ComplaintsStudentViewComponent } from 'app/complaints/complaints-for-students/complaints-student-view.component';
+import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 
 @Component({
     selector: 'jhi-programming-exam-summary',
     templateUrl: './programming-exam-summary.component.html',
+    imports: [TranslateDirective, CodeButtonComponent, FeedbackComponent, ProgrammingExerciseInstructionComponent, ComplaintsStudentViewComponent, ArtemisTranslatePipe],
 })
 export class ProgrammingExamSummaryComponent implements OnInit {
+    private exerciseService = inject(ExerciseService);
+    private exerciseCacheService = inject(ExerciseCacheService, { optional: true });
+    private profileService = inject(ProfileService);
+    private router = inject(Router);
+
     @Input() exercise: ProgrammingExercise;
 
     @Input() participation: ProgrammingExerciseStudentParticipation;
 
     @Input() submission: ProgrammingSubmission;
 
-    @Input() isTestRun?: boolean = false;
+    @Input() isTestRun = false;
 
     @Input() exam: Exam;
 
-    @Input() isAfterStudentReviewStart?: boolean = false;
+    @Input() isAfterStudentReviewStart = false;
 
-    @Input() resultsPublished?: boolean = false;
+    @Input() resultsPublished = false;
 
-    @Input() isPrinting?: boolean = false;
+    @Input() isPrinting = false;
 
-    @Input() isAfterResultsArePublished?: boolean = false;
+    @Input() isAfterResultsArePublished = false;
 
-    @Input() instructorView?: boolean = false;
+    @Input() instructorView = false;
 
     readonly PROGRAMMING: ExerciseType = ExerciseType.PROGRAMMING;
 
@@ -53,17 +64,9 @@ export class ProgrammingExamSummaryComponent implements OnInit {
 
     commitUrl: string | undefined;
     commitHash: string | undefined;
-    faCodeBranch = faCodeBranch;
 
     routerLink: string;
     localVCEnabled = false;
-
-    constructor(
-        private exerciseService: ExerciseService,
-        @Optional() private exerciseCacheService: ExerciseCacheService,
-        private profileService: ProfileService,
-        private router: Router,
-    ) {}
 
     ngOnInit() {
         this.routerLink = this.router.url;

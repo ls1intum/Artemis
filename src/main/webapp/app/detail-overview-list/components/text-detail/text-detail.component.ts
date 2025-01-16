@@ -5,7 +5,6 @@ import { NoDataComponent } from 'app/shared/no-data-component';
 @Component({
     selector: 'jhi-text-detail',
     templateUrl: 'text-detail.component.html',
-    standalone: true,
     imports: [NoDataComponent],
 })
 export class TextDetailComponent {

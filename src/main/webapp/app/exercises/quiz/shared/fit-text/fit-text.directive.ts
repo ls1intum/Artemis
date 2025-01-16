@@ -1,10 +1,11 @@
-import { AfterViewInit, Directive, ElementRef, HostListener, Input, OnChanges, OnInit, Renderer2, SimpleChanges } from '@angular/core';
+import { AfterViewInit, Directive, ElementRef, HostListener, Input, OnChanges, OnDestroy, OnInit, Renderer2, SimpleChanges, inject } from '@angular/core';
 
 // NOTE: this code was taken from https://github.com/sollenne/angular-fittext because the repository was not maintained any more since June 2018
 
-// eslint-disable-next-line @angular-eslint/directive-selector
 @Directive({ selector: '[fitText]' })
-export class FitTextDirective implements AfterViewInit, OnInit, OnChanges {
+export class FitTextDirective implements AfterViewInit, OnInit, OnChanges, OnDestroy {
+    private renderer = inject(Renderer2);
+
     @Input() fitText = true;
     @Input() compression = 1;
     @Input() activateOnResize = true;
@@ -23,12 +24,11 @@ export class FitTextDirective implements AfterViewInit, OnInit, OnChanges {
     private fitTextMinFontSize: number;
     private fitTextMaxFontSize: number;
     private calcSize = 10;
-    private resizeTimeout: any;
+    private resizeTimeout: NodeJS.Timeout;
 
-    constructor(
-        private el: ElementRef,
-        private renderer: Renderer2,
-    ) {
+    constructor() {
+        const el = inject(ElementRef);
+
         this.fitTextElement = el.nativeElement;
         this.fitTextParent = this.fitTextElement.parentElement!;
         this.computed = window.getComputedStyle(this.fitTextElement);
@@ -63,6 +63,10 @@ export class FitTextDirective implements AfterViewInit, OnInit, OnChanges {
                 this.setFontSize(0);
             }
         }
+    }
+
+    public ngOnDestroy() {
+        clearTimeout(this.resizeTimeout);
     }
 
     private setFontSize = (delay: number = this.delay): void => {

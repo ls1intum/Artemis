@@ -8,10 +8,9 @@ import { Authority } from 'app/shared/constants/authority.constants';
 import { Subscription } from 'rxjs';
 import { SafeHtml } from '@angular/platform-browser';
 import { ActivatedRoute, Router } from '@angular/router';
-import { TranslateService } from '@ngx-translate/core';
-import { ChangeDetectorRef, Component, OnDestroy, OnInit } from '@angular/core';
+import { ChangeDetectorRef, Component, OnDestroy, OnInit, inject } from '@angular/core';
 import { CanBecomeInvalid } from 'app/entities/quiz/drop-location.model';
-import { QuizStatistics } from 'app/exercises/quiz/manage/statistics/quiz-statistics';
+import { AbstractQuizStatisticComponent } from 'app/exercises/quiz/manage/statistics/quiz-statistics';
 
 export const redColor = '#d9534f';
 export const greenColor = '#5cb85c';
@@ -19,8 +18,17 @@ export const blueColor = '#428bca';
 export const lightBlueColor = '#5bc0de';
 export const greyColor = '#838383';
 
-@Component({ template: '' })
-export abstract class QuestionStatisticComponent extends QuizStatistics implements OnInit, OnDestroy {
+@Component({
+    template: '',
+})
+export abstract class QuestionStatisticComponent extends AbstractQuizStatisticComponent implements OnInit, OnDestroy {
+    protected route = inject(ActivatedRoute);
+    protected router = inject(Router);
+    protected accountService = inject(AccountService);
+    protected quizExerciseService = inject(QuizExerciseService);
+    protected jhiWebsocketService = inject(JhiWebsocketService);
+    protected changeDetector = inject(ChangeDetectorRef);
+
     question: QuizQuestion;
     questionStatistic: QuizQuestionStatistic;
 
@@ -45,22 +53,10 @@ export abstract class QuestionStatisticComponent extends QuizStatistics implemen
     backgroundColors: string[] = [];
     backgroundSolutionColors: string[] = [];
 
-    constructor(
-        protected route: ActivatedRoute,
-        protected router: Router,
-        protected accountService: AccountService,
-        protected translateService: TranslateService,
-        protected quizExerciseService: QuizExerciseService,
-        protected jhiWebsocketService: JhiWebsocketService,
-        protected changeDetector: ChangeDetectorRef,
-    ) {
-        super(translateService);
-        translateService.onLangChange.subscribe(() => {
+    ngOnInit() {
+        this.translateService.onLangChange.subscribe(() => {
             this.setAxisLabels('showStatistic.questionStatistic.xAxes', 'showStatistic.questionStatistic.yAxes');
         });
-    }
-
-    ngOnInit() {
         this.sub = this.route.params.subscribe((params) => {
             this.questionIdParam = +params['questionId'];
             // use different REST-call if the User is a Student
@@ -132,6 +128,12 @@ export abstract class QuestionStatisticComponent extends QuizStatistics implemen
         this.loadDataInDiagram();
     }
 
+    /**
+     * This functions loads the Quiz, which is necessary to build the Web-Template
+     *
+     * @param quiz the quizExercise, which the selected question is part of.
+     * @param refresh true if method is called from Websocket
+     */
     abstract loadQuiz(quiz: QuizExercise, refresh: boolean): void;
 
     loadQuizCommon(quiz: QuizExercise) {

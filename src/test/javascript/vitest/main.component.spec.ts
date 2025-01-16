@@ -1,6 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { render } from '@testing-library/angular';
-import { JhiMainComponent } from 'app/shared/layouts/main/main.component';
+import { AppComponent } from '../../../main/webapp/app/app.component';
 import { AlertOverlayComponent } from 'app/shared/alert/alert-overlay.component';
 import { PageRibbonComponent } from 'app/shared/layouts/profiles/page-ribbon.component';
 import { NotificationPopupComponent } from 'app/shared/notification/notification-popup/notification-popup.component';
@@ -20,12 +20,12 @@ class MockThemeService {
 }
 
 describe('JhiMainComponent', () => {
-    let component: JhiMainComponent;
-    let componentFixture: ComponentFixture<JhiMainComponent>;
+    let component: AppComponent;
+    let componentFixture: ComponentFixture<AppComponent>;
     let container: Element;
 
     beforeEach(async () => {
-        const { fixture, container: renderedContainer } = await render(JhiMainComponent, {
+        const { fixture, container: renderedContainer } = await render(AppComponent, {
             imports: [ArtemisTestModule],
             declarations: [AlertOverlayComponent, PageRibbonComponent, NotificationPopupComponent],
             providers: [

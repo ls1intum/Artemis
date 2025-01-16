@@ -17,7 +17,7 @@ import { TitleChannelNameModule } from 'app/shared/form/title-channel-name/title
 import { LectureTitleChannelNameComponent } from 'app/lecture/lecture-title-channel-name.component';
 import { DetailModule } from 'app/detail-overview-list/detail.module';
 import { CompetencyFormComponent } from 'app/course/competencies/forms/competency/competency-form.component';
-import { FormsModule } from 'app/forms/forms.module';
+import { ArtemisFormsModule } from 'app/forms/artemis-forms.module';
 import { LectureUpdateUnitsComponent } from 'app/lecture/lecture-units/lecture-units.component';
 import { LectureUpdatePeriodComponent } from 'app/lecture/lecture-period/lecture-period.component';
 
@@ -36,9 +36,7 @@ const ENTITY_STATES = [...lectureRoute];
         TitleChannelNameModule,
         DetailModule,
         CompetencyFormComponent,
-        FormsModule,
-    ],
-    declarations: [
+        ArtemisFormsModule,
         LectureComponent,
         LectureDetailComponent,
         LectureImportComponent,

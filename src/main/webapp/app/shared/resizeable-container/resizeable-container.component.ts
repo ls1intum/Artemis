@@ -1,6 +1,8 @@
 import { AfterViewInit, Component, HostBinding, HostListener, Input } from '@angular/core';
 import { faChevronLeft, faChevronRight, faGripLinesVertical } from '@fortawesome/free-solid-svg-icons';
 import interact from 'interactjs';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { NgTemplateOutlet } from '@angular/common';
 
 /**
  * Resizable Layout with collapsible panel on the right hand side.
@@ -17,6 +19,7 @@ import interact from 'interactjs';
     selector: 'jhi-resizeable-container',
     templateUrl: './resizeable-container.component.html',
     styleUrls: ['./resizeable-container.component.scss'],
+    imports: [FaIconComponent, NgTemplateOutlet],
 })
 export class ResizeableContainerComponent implements AfterViewInit {
     @HostBinding('class.flex-grow-1') flexGrow1 = true;
@@ -29,14 +32,14 @@ export class ResizeableContainerComponent implements AfterViewInit {
      *
      * <i>e.g. the case for printing the exam summary</i>
      */
-    @Input() isBeingPrinted?: boolean = false;
+    @Input() isBeingPrinted = false;
 
     /**
      * Forces the problem statement to be expanded when the component is printed as PDF
      *
      * <i>e.g. the case for printing the exam summary</i>
      */
-    @Input() expandProblemStatement?: boolean = false;
+    @Input() expandProblemStatement = false;
 
     // Icons
     faChevronRight = faChevronRight;

@@ -67,6 +67,7 @@ public class PublicUserJwtResource {
      *
      * @param loginVM   user credentials View Mode
      * @param userAgent User Agent
+     * @param tool      optional Tool Token Type to define the scope of the token
      * @param response  HTTP response
      * @return the ResponseEntity with status 200 (ok), 401 (unauthorized) or 403 (Captcha required)
      */

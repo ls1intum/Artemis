@@ -4,21 +4,12 @@ import { ChannelsCreateDialogComponent } from 'app/overview/course-conversations
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { MockPipe, MockProvider } from 'ng-mocks';
 import { Course } from 'app/entities/course.model';
-import { Component, EventEmitter, Output } from '@angular/core';
-import { ChannelFormData, ChannelType } from 'app/overview/course-conversations/dialogs/channels-create-dialog/channel-form/channel-form.component';
+import { ChannelFormData } from 'app/overview/course-conversations/dialogs/channels-create-dialog/channel-form/channel-form.component';
 import { By } from '@angular/platform-browser';
 import { ChannelDTO } from 'app/entities/metis/conversation/channel.model';
 import { initializeDialog } from '../dialog-test-helpers';
-
-@Component({
-    selector: 'jhi-channel-form',
-    template: '',
-})
-class ChannelFormStubComponent {
-    @Output() formSubmitted: EventEmitter<ChannelFormData> = new EventEmitter<ChannelFormData>();
-    @Output() channelTypeChanged: EventEmitter<ChannelType> = new EventEmitter<ChannelType>();
-    @Output() isAnnouncementChannelChanged: EventEmitter<boolean> = new EventEmitter<boolean>();
-}
+import { MockTranslateService } from '../../../../../helpers/mocks/service/mock-translate.service';
+import { TranslateService } from '@ngx-translate/core';
 
 describe('ChannelsCreateDialogComponent', () => {
     let component: ChannelsCreateDialogComponent;
@@ -27,17 +18,17 @@ describe('ChannelsCreateDialogComponent', () => {
 
     beforeEach(waitForAsync(() => {
         TestBed.configureTestingModule({
-            declarations: [ChannelsCreateDialogComponent, MockPipe(ArtemisTranslatePipe), ChannelFormStubComponent],
-            providers: [MockProvider(NgbActiveModal)],
-        }).compileComponents();
+            declarations: [ChannelsCreateDialogComponent, MockPipe(ArtemisTranslatePipe)],
+            providers: [MockProvider(NgbActiveModal), { provide: TranslateService, useClass: MockTranslateService }],
+        })
+            .compileComponents()
+            .then(() => {
+                fixture = TestBed.createComponent(ChannelsCreateDialogComponent);
+                component = fixture.componentInstance;
+                fixture.detectChanges();
+                initializeDialog(component, fixture, { course });
+            });
     }));
-
-    beforeEach(() => {
-        fixture = TestBed.createComponent(ChannelsCreateDialogComponent);
-        component = fixture.componentInstance;
-        fixture.detectChanges();
-        initializeDialog(component, fixture, { course });
-    });
 
     afterEach(() => {
         jest.restoreAllMocks();
@@ -54,18 +45,26 @@ describe('ChannelsCreateDialogComponent', () => {
         closeButton.click();
         expect(dismissSpy).toHaveBeenCalledOnce();
     });
+
     it('should change channel type when channel type is changed in channel form', () => {
         expect(component.isPublicChannel).toBeTrue();
         const channelTypeChangedEvent = 'PRIVATE';
-        const form: ChannelFormStubComponent = fixture.debugElement.query(By.directive(ChannelFormStubComponent)).componentInstance;
-        form.channelTypeChanged.emit(channelTypeChangedEvent);
+        const formComponentDebug = fixture.debugElement.query(By.css('jhi-channel-form'));
+        expect(formComponentDebug).toBeTruthy();
+
+        const formComponent = formComponentDebug.componentInstance;
+        expect(formComponent).toBeTruthy();
+        formComponent.channelTypeChanged.emit(channelTypeChangedEvent);
         expect(component.isPublicChannel).toBeFalse();
     });
 
     it('should change channel announcement type when channel announcement type is changed in channel form', () => {
         expect(component.isAnnouncementChannel).toBeFalse();
-        const form: ChannelFormStubComponent = fixture.debugElement.query(By.directive(ChannelFormStubComponent)).componentInstance;
-        form.isAnnouncementChannelChanged.emit(true);
+        const formComponentDebug = fixture.debugElement.query(By.css('jhi-channel-form'));
+        expect(formComponentDebug).toBeTruthy();
+
+        const formComponent = formComponentDebug.componentInstance;
+        formComponent.isAnnouncementChannelChanged.emit(true);
         expect(component.isAnnouncementChannel).toBeTrue();
     });
 
@@ -73,13 +72,16 @@ describe('ChannelsCreateDialogComponent', () => {
         const activeModal = TestBed.inject(NgbActiveModal);
         const closeSpy = jest.spyOn(activeModal, 'close');
 
-        const form: ChannelFormStubComponent = fixture.debugElement.query(By.directive(ChannelFormStubComponent)).componentInstance;
+        const formComponentDebug = fixture.debugElement.query(By.css('jhi-channel-form'));
+        expect(formComponentDebug).toBeTruthy();
+
+        const formComponent = formComponentDebug.componentInstance;
         const formData: ChannelFormData = {
             name: 'test',
             description: 'helloWorld',
             isPublic: true,
         };
-        form.formSubmitted.emit(formData);
+        formComponent.formSubmitted.emit(formData);
 
         const expectedChannel = new ChannelDTO();
         expectedChannel.name = formData.name;

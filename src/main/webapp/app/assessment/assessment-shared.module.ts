@@ -32,8 +32,6 @@ const ENTITY_STATES = [...assessmentLocksRoute];
         ArtemisFeedbackModule,
         FeedbackContentPipe,
         QuotePipe,
-    ],
-    declarations: [
         AssessmentHeaderComponent,
         AssessmentLayoutComponent,
         AssessmentComplaintAlertComponent,

@@ -5,8 +5,7 @@ import { IncludedInOverallScorePickerComponent } from 'app/exercises/shared/incl
 import { FormsModule } from '@angular/forms';
 
 @NgModule({
-    imports: [ArtemisSharedModule, FormsModule],
-    declarations: [IncludedInOverallScorePickerComponent],
+    imports: [ArtemisSharedModule, FormsModule, IncludedInOverallScorePickerComponent],
     exports: [IncludedInOverallScorePickerComponent],
 })
 export class ArtemisIncludedInOverallScorePickerModule {}

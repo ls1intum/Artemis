@@ -4,8 +4,7 @@ import { of } from 'rxjs';
 import { IdeSettingsComponent } from 'app/shared/user-settings/ide-preferences/ide-settings.component';
 import { IdeSettingsService } from 'app/shared/user-settings/ide-preferences/ide-settings.service';
 import { ProgrammingLanguage } from 'app/entities/programming/programming-exercise.model';
-import { provideHttpClientTesting } from '@angular/common/http/testing';
-import { provideHttpClient } from '@angular/common/http';
+import { ArtemisTestModule } from '../../../test.module';
 
 describe('IdeSettingsComponent', () => {
     let component: IdeSettingsComponent;
@@ -20,9 +19,8 @@ describe('IdeSettingsComponent', () => {
 
     beforeEach(async () => {
         await TestBed.configureTestingModule({
-            imports: [],
-            declarations: [IdeSettingsComponent],
-            providers: [provideHttpClient(), provideHttpClientTesting(), { provide: IdeSettingsService, useValue: mockIdeSettingsService }],
+            imports: [ArtemisTestModule],
+            providers: [{ provide: IdeSettingsService, useValue: mockIdeSettingsService }],
             schemas: [CUSTOM_ELEMENTS_SCHEMA],
         }).compileComponents();
 

@@ -1,4 +1,4 @@
-import { Component, Input, OnDestroy, OnInit } from '@angular/core';
+import { Component, Input, OnDestroy, OnInit, inject } from '@angular/core';
 import { CommitInfo, ProgrammingSubmission } from 'app/entities/programming/programming-submission.model';
 import { ProgrammingExerciseParticipationService } from 'app/exercises/programming/manage/services/programming-exercise-participation.service';
 import dayjs from 'dayjs/esm';
@@ -6,12 +6,19 @@ import { createCommitUrl } from 'app/exercises/programming/shared/utils/programm
 import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
 import { PROFILE_LOCALVC } from 'app/app.constants';
 import { Subscription } from 'rxjs';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { CommitsInfoGroupComponent } from './commits-info-group/commits-info-group.component';
+import { NgStyle } from '@angular/common';
 
 @Component({
     selector: 'jhi-commits-info',
     templateUrl: './commits-info.component.html',
+    imports: [TranslateDirective, CommitsInfoGroupComponent, NgStyle],
 })
 export class CommitsInfoComponent implements OnInit, OnDestroy {
+    private programmingExerciseParticipationService = inject(ProgrammingExerciseParticipationService);
+    private profileService = inject(ProfileService);
+
     @Input() commits?: CommitInfo[];
     @Input() currentSubmissionHash?: string;
     @Input() previousSubmissionHash?: string;
@@ -27,11 +34,6 @@ export class CommitsInfoComponent implements OnInit, OnDestroy {
     protected groupedCommits: { key: string; commits: CommitInfo[]; date: string }[] = [];
 
     localVC = false;
-
-    constructor(
-        private programmingExerciseParticipationService: ProgrammingExerciseParticipationService,
-        private profileService: ProfileService,
-    ) {}
 
     ngOnInit(): void {
         if (!this.commits) {
