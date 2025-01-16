@@ -4,6 +4,7 @@ import { By } from '@angular/platform-browser';
 import { CodeEditorFileBrowserFileComponent } from 'app/exercises/programming/shared/code-editor/file-browser/code-editor-file-browser-file.component';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { MockPipe } from 'ng-mocks';
+import { TreeviewItem } from 'app/exercises/programming/shared/code-editor/treeview/models/treeview-item';
 
 describe('CodeEditorFileBrowserFileComponent', () => {
     let component: CodeEditorFileBrowserFileComponent;
@@ -20,7 +21,7 @@ describe('CodeEditorFileBrowserFileComponent', () => {
         fixture = TestBed.createComponent(CodeEditorFileBrowserFileComponent);
         component = fixture.componentInstance;
         component.disableActions = false;
-        component.item = { value: 'TestFile', checked: true };
+        component.item = { value: 'TestFile', checked: true } as Partial<TreeviewItem<string>>;;
         fixture.detectChanges();
     });
 
