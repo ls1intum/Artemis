@@ -37,6 +37,7 @@ export class RephraseService {
                 })
                 .subscribe({
                     next: () => {
+                        this.isLoadingSubject.next(true);
                         const websocketTopic = `/user/topic/iris/rephrasing/${courseId}`;
                         this.jhiWebsocketService.subscribe(websocketTopic);
                         this.jhiWebsocketService.receive(websocketTopic).subscribe({
