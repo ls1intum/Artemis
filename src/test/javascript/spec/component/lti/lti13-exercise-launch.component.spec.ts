@@ -1,23 +1,22 @@
-import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
-import { ArtemisTestModule } from '../../test.module';
-import { Lti13ExerciseLaunchComponent } from 'app/lti/lti13-exercise-launch.component';
-import { ActivatedRoute, ActivatedRouteSnapshot, Router, convertToParamMap } from '@angular/router';
-import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { HttpClient, provideHttpClient } from '@angular/common/http';
-import { of, throwError } from 'rxjs';
-import { LoginService } from 'app/core/login/login.service';
+import { provideHttpClientTesting } from '@angular/common/http/testing';
+import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
+import { ActivatedRoute, ActivatedRouteSnapshot, Router, convertToParamMap } from '@angular/router';
 import { AccountService } from 'app/core/auth/account.service';
-import { MockAccountService } from '../../helpers/mocks/service/mock-account.service';
 import { User } from 'app/core/user/user.model';
+import { Lti13ExerciseLaunchComponent } from 'app/lti/lti13-exercise-launch.component';
 import { SessionStorageService } from 'ngx-webstorage';
+import { of, throwError } from 'rxjs';
+import { MockAccountService } from '../../helpers/mocks/service/mock-account.service';
 import { MockSyncStorage } from '../../helpers/mocks/service/mock-sync-storage.service';
+import { ArtemisTestModule } from '../../test.module';
+import 'jest-extended';
 
 describe('Lti13ExerciseLaunchComponent', () => {
     let fixture: ComponentFixture<Lti13ExerciseLaunchComponent>;
     let comp: Lti13ExerciseLaunchComponent;
     let route: ActivatedRoute;
     let http: HttpClient;
-    let loginService: LoginService;
     let accountService: AccountService;
     const mockRouter = {
         navigate: jest.fn(() => Promise.resolve(true)),
@@ -37,7 +36,6 @@ describe('Lti13ExerciseLaunchComponent', () => {
                 provideHttpClient(),
                 provideHttpClientTesting(),
                 { provide: ActivatedRoute, useValue: route },
-                { provide: LoginService, useValue: loginService },
                 { provide: AccountService, useClass: MockAccountService },
                 { provide: Router, useValue: mockRouter },
                 { provide: SessionStorageService, useClass: MockSyncStorage },
@@ -187,13 +185,12 @@ describe('Lti13ExerciseLaunchComponent', () => {
     }));
 
     function simulateLtiLaunchError(http: HttpClient, status: number, headers: any = {}, error = {}) {
-        const httpStub = jest.spyOn(http, 'post').mockReturnValue(
+        return jest.spyOn(http, 'post').mockReturnValue(
             throwError(() => ({
                 status,
                 headers: { get: () => 'lti_user', ...headers },
                 error: { targetLinkUri: 'mockTargetLinkUri', ...error },
             })),
         );
-        return httpStub;
     }
 });
