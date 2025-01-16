@@ -70,6 +70,7 @@ import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { MatMenu, MatMenuItem, MatMenuTrigger } from '@angular/material/menu';
 import { MatButton } from '@angular/material/button';
 import { ArtemisTranslatePipe } from '../../pipes/artemis-translate.pipe';
+import { facArtemisIntelligence } from 'app/icons/icons';
 
 export enum MarkdownEditorHeight {
     INLINE = 125,
@@ -89,6 +90,8 @@ interface MarkdownActionsByGroup {
     };
     // Special case due to the complex structure of lectures, attachments, and their slides
     lecture?: LectureAttachmentReferenceAction;
+    // AI assistance in the editor
+    artemisIntelligence: TextEditorAction[];
     meta: TextEditorAction[];
 }
 
@@ -229,6 +232,9 @@ export class MarkdownEditorMonacoComponent implements AfterContentInit, AfterVie
     domainActions: TextEditorDomainAction[] = [];
 
     @Input()
+    artemisIntelligenceActions: TextEditorAction[] = [];
+
+    @Input()
     metaActions: TextEditorAction[] = [new FullscreenAction()];
 
     readonly useCommunicationForFileUpload = input<boolean>(false);
@@ -271,6 +277,7 @@ export class MarkdownEditorMonacoComponent implements AfterContentInit, AfterVie
         color: undefined,
         domain: { withoutOptions: [], withOptions: [] },
         lecture: undefined,
+        artemisIntelligence: [],
         meta: [],
     };
 
@@ -297,6 +304,7 @@ export class MarkdownEditorMonacoComponent implements AfterContentInit, AfterVie
     protected readonly faQuestionCircle = faQuestionCircle;
     protected readonly faGripLines = faGripLines;
     protected readonly faAngleDown = faAngleDown;
+    protected readonly facArtemisIntelligence = facArtemisIntelligence;
     // Types and values exposed to the template
     protected readonly LectureUnitType = LectureUnitType;
     protected readonly ReferenceType = ReferenceType;
@@ -325,6 +333,7 @@ export class MarkdownEditorMonacoComponent implements AfterContentInit, AfterVie
                 ) as TextEditorDomainActionWithOptions[],
             },
             lecture: this.filterDisplayedAction(this.lectureReferenceAction),
+            artemisIntelligence: this.filterDisplayedActions(this.artemisIntelligenceActions ?? []),
             meta: this.filterDisplayedActions(this.metaActions),
         };
     }

@@ -25,6 +25,8 @@ import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { ProgrammingExerciseInstructionAnalysisComponent } from './analysis/programming-exercise-instruction-analysis.component';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
+import { AIRephraseAction } from 'app/shared/monaco-editor/model/actions/artemis-intelligence/AIRephraseAction';
+import { TextEditorAction } from 'app/shared/monaco-editor/model/actions/text-editor-action.model';
 
 @Component({
     selector: 'jhi-programming-exercise-editable-instructions',
@@ -56,6 +58,8 @@ export class ProgrammingExerciseEditableInstructionComponent implements AfterVie
     taskRegex = TaskAction.GLOBAL_TASK_REGEX;
     testCaseAction = new TestCaseAction();
     domainActions: TextEditorDomainAction[] = [new FormulaAction(), new TaskAction(), this.testCaseAction];
+
+    artemisIntelligenceActions: TextEditorAction[] = [new AIRephraseAction()];
 
     savingInstructions = false;
     unsavedChangesValue = false;
