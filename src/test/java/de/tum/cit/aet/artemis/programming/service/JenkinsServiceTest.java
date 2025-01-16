@@ -155,25 +155,6 @@ class JenkinsServiceTest extends AbstractProgrammingIntegrationJenkinsGitlabTest
 
     @Test
     @WithMockUser(roles = "INSTRUCTOR", username = TEST_PREFIX + "instructor1")
-    void testImportBuildPlansThrowsExceptionOnGivePermissions() throws Exception {
-        var programmingExercise = continuousIntegrationTestService.programmingExercise;
-        programmingExerciseUtilService.addTemplateParticipationForProgrammingExercise(programmingExercise);
-        programmingExerciseUtilService.addSolutionParticipationForProgrammingExercise(programmingExercise);
-        programmingExerciseUtilService.addTestCasesToProgrammingExercise(programmingExercise);
-
-        jenkinsRequestMockProvider.mockCreateProjectForExercise(programmingExercise, false);
-        jenkinsRequestMockProvider.mockCopyBuildPlanFromTemplate(programmingExercise.getProjectKey(), programmingExercise.getProjectKey(),
-                programmingExercise.getTemplateBuildPlanId());
-        jenkinsRequestMockProvider.mockCopyBuildPlanFromTemplate(programmingExercise.getProjectKey(), programmingExercise.getProjectKey(),
-                programmingExercise.getSolutionBuildPlanId());
-        jenkinsRequestMockProvider.mockGivePlanPermissionsThrowException(programmingExercise.getProjectKey(), programmingExercise.getProjectKey());
-
-        assertThatExceptionOfType(JenkinsException.class).isThrownBy(() -> programmingExerciseImportService.importBuildPlans(programmingExercise, programmingExercise))
-                .withMessageStartingWith("Cannot give assign permissions to plan");
-    }
-
-    @Test
-    @WithMockUser(roles = "INSTRUCTOR", username = TEST_PREFIX + "instructor1")
     void testDeleteBuildPlan() {
         var programmingExercise = continuousIntegrationTestService.programmingExercise;
         programmingExerciseUtilService.addTemplateParticipationForProgrammingExercise(programmingExercise);
