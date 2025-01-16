@@ -36,7 +36,7 @@ import { ConfirmIconComponent } from 'app/shared/confirm-icon/confirm-icon.compo
 import { MetisConversationService } from 'app/shared/metis/metis-conversation.service';
 import { MockMetisConversationService } from '../../../../../helpers/mocks/service/mock-metis-conversation.service';
 import { Posting } from 'app/entities/metis/posting.model';
-import { of } from 'rxjs';
+import { of, throwError } from 'rxjs';
 
 describe('PostReactionsBarComponent', () => {
     let component: PostReactionsBarComponent;
@@ -48,6 +48,8 @@ describe('PostReactionsBarComponent', () => {
     let metisServiceUserIsAtLeastTutorStub: jest.SpyInstance;
     let metisServiceUserIsAtLeastInstructorStub: jest.SpyInstance;
     let metisServiceUserIsAuthorOfPostingStub: jest.SpyInstance;
+    let consoleErrorSpy: jest.SpyInstance;
+    let createForwardedMessagesSpy: jest.SpyInstance;
     let post: Post;
     let reactionToCreate: Reaction;
     let reactionToDelete: Reaction;
@@ -94,6 +96,8 @@ describe('PostReactionsBarComponent', () => {
                 metisServiceUserIsAtLeastTutorStub = jest.spyOn(metisService, 'metisUserIsAtLeastTutorInCourse');
                 metisServiceUserIsAtLeastInstructorStub = jest.spyOn(metisService, 'metisUserIsAtLeastInstructorInCourse');
                 metisServiceUserIsAuthorOfPostingStub = jest.spyOn(metisService, 'metisUserIsAuthorOfPosting');
+                consoleErrorSpy = jest.spyOn(console, 'error').mockImplementation(() => {});
+                createForwardedMessagesSpy = jest.spyOn(metisService, 'createForwardedMessages');
                 post = new Post();
                 post.id = 1;
                 post.author = metisUser1;
@@ -447,7 +451,6 @@ describe('PostReactionsBarComponent', () => {
     it('should not call openForwardMessageView when course id is not set', fakeAsync(() => {
         metisService.setCourse(undefined);
 
-        const metisServiceSpy = jest.spyOn(metisService, 'createForwardedMessages').mockReturnValue(of([]));
         const modalServiceSpy = jest.spyOn(component['modalService'], 'open').mockReturnValue({
             componentInstance: {
                 users: { set: jest.fn() },
@@ -466,6 +469,61 @@ describe('PostReactionsBarComponent', () => {
         tick();
 
         expect(modalServiceSpy).not.toHaveBeenCalled();
-        expect(metisServiceSpy).not.toHaveBeenCalled();
+        expect(createForwardedMessagesSpy).not.toHaveBeenCalled();
     }));
+
+    it('should call createForwardedMessages with the correct arguments', () => {
+        const testPost = { id: 42 } as Posting;
+        const testConversation = { id: 1337 } as Conversation;
+        const content = 'Test content';
+        const isAnswer = true;
+
+        createForwardedMessagesSpy.mockReturnValue(of([]));
+
+        component.forwardPost(testPost, testConversation, content, isAnswer);
+
+        expect(createForwardedMessagesSpy).toHaveBeenCalledOnce();
+        expect(createForwardedMessagesSpy).toHaveBeenCalledWith([testPost], testConversation, isAnswer, content);
+        expect(consoleErrorSpy).not.toHaveBeenCalled();
+    });
+
+    it('should log an error if createForwardedMessages fails', () => {
+        const testPost = { id: 42 } as Posting;
+        const testConversation = { id: 1337 } as Conversation;
+
+        createForwardedMessagesSpy.mockReturnValue(throwError(() => new Error('Error forwarding post')));
+
+        component.forwardPost(testPost, testConversation, 'some content', false);
+
+        expect(createForwardedMessagesSpy).toHaveBeenCalledOnce();
+        expect(consoleErrorSpy).toHaveBeenCalledWith('Error forwarding post:', expect.any(Error));
+    });
+
+    it('should handle empty content without logging errors', () => {
+        const testPost = { id: 42 } as Posting;
+        const testConversation = { id: 1337 } as Conversation;
+        const emptyContent = '';
+        const isAnswer = true;
+
+        createForwardedMessagesSpy.mockReturnValue(of([]));
+        component.forwardPost(testPost, testConversation, emptyContent, isAnswer);
+
+        expect(createForwardedMessagesSpy).toHaveBeenCalledOnce();
+        expect(createForwardedMessagesSpy).toHaveBeenCalledWith([testPost], testConversation, isAnswer, emptyContent);
+        expect(consoleErrorSpy).not.toHaveBeenCalled();
+    });
+
+    it('should call createForwardedMessages with isAnswer set to false', () => {
+        const testPost = { id: 42 } as Posting;
+        const testConversation = { id: 1337 } as Conversation;
+        const content = 'my content';
+        const isAnswer = false;
+
+        createForwardedMessagesSpy.mockReturnValue(of([]));
+        component.forwardPost(testPost, testConversation, content, isAnswer);
+
+        expect(createForwardedMessagesSpy).toHaveBeenCalledOnce();
+        expect(createForwardedMessagesSpy).toHaveBeenCalledWith([testPost], testConversation, isAnswer, content);
+        expect(consoleErrorSpy).not.toHaveBeenCalled();
+    });
 });
