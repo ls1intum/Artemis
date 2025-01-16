@@ -7,6 +7,8 @@ import { TextEditorRange } from 'app/shared/monaco-editor/model/actions/adapter/
 import { TextEditorPosition } from 'app/shared/monaco-editor/model/actions/adapter/text-editor-position.model';
 import { TextEditorCompletionItem } from 'app/shared/monaco-editor/model/actions/adapter/text-editor-completion-item.model';
 import { TextEditorKeybinding } from 'app/shared/monaco-editor/model/actions/adapter/text-editor-keybinding.model';
+import RephrasingVariant from 'app/shared/monaco-editor/model/rephrasing-variant';
+import { RephraseService } from 'app/shared/monaco-editor/rephrase.service';
 
 export abstract class TextEditorAction implements Disposable {
     id: string;
@@ -292,5 +294,25 @@ export abstract class TextEditorAction implements Disposable {
             enterFullscreen(fullscreenElement);
         }
         editor.layout();
+    }
+
+    /**
+     * Toggles the rephrasing of the given text. If no text is provided, the editor's will return undefined.
+     * @param editor The editor to toggle the text rephrasing for.
+     * @param variant The variant to use for rephrasing the text.
+     * @param rephraseService The service to use for rephrasing the text.
+     */
+    rephraseMarkdown(editor: TextEditor, variant: RephrasingVariant, rephraseService: RephraseService, courseId: number): void {
+        const text = editor.getFullText();
+        if (text) {
+            rephraseService.rephraseMarkdown(text, variant, courseId).subscribe({
+                next: (message) => {
+                    this.replaceTextAtRange(editor, new TextEditorRange(new TextEditorPosition(1, 1), this.getEndPosition(editor)), message);
+                },
+                error: (error) => {
+                    console.error('Error during rephrasing:', error);
+                },
+            });
+        }
     }
 }

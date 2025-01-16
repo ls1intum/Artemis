@@ -37,6 +37,7 @@ import de.tum.cit.aet.artemis.iris.service.pyris.dto.chat.exercise.PyrisExercise
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.chat.textexercise.PyrisTextExerciseChatPipelineExecutionDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.competency.PyrisCompetencyExtractionPipelineExecutionDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.lectureingestionwebhook.PyrisWebhookLectureIngestionExecutionDTO;
+import de.tum.cit.aet.artemis.iris.service.pyris.dto.rephrasing.PyrisRephrasingPipelineExecutionDTO;
 
 @Component
 @Profile(PROFILE_IRIS)
@@ -156,6 +157,20 @@ public class IrisRequestMockProvider {
             .andRespond(request -> {
                 var mockRequest = (MockClientHttpRequest) request;
                 var dto = mapper.readValue(mockRequest.getBodyAsString(), PyrisCompetencyExtractionPipelineExecutionDTO.class);
+                executionDTOConsumer.accept(dto);
+                return MockRestResponseCreators.withRawStatus(HttpStatus.ACCEPTED.value()).createResponse(request);
+            });
+        // @formatter:on
+    }
+
+    public void mockRunRephrasingResponseAnd(Consumer<PyrisRephrasingPipelineExecutionDTO> executionDTOConsumer) {
+        // @formatter:off
+        mockServer
+            .expect(ExpectedCount.once(), requestTo(pipelinesApiURL + "/rephrasing/faq/run"))
+            .andExpect(method(HttpMethod.POST))
+            .andRespond(request -> {
+                var mockRequest = (MockClientHttpRequest) request;
+                var dto = mapper.readValue(mockRequest.getBodyAsString(), PyrisRephrasingPipelineExecutionDTO.class);
                 executionDTOConsumer.accept(dto);
                 return MockRestResponseCreators.withRawStatus(HttpStatus.ACCEPTED.value()).createResponse(request);
             });
