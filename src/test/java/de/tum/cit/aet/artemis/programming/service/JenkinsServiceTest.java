@@ -31,6 +31,7 @@ import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseBuildConfig;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingLanguage;
 import de.tum.cit.aet.artemis.programming.domain.build.BuildPlan;
 import de.tum.cit.aet.artemis.programming.service.jenkins.build_plan.JenkinsBuildPlanUtils;
+import de.tum.cit.aet.artemis.programming.service.jenkins.jobs.JenkinsJobService;
 
 class JenkinsServiceTest extends AbstractProgrammingIntegrationJenkinsGitlabTest {
 
@@ -198,17 +199,34 @@ class JenkinsServiceTest extends AbstractProgrammingIntegrationJenkinsGitlabTest
         programmingExerciseUtilService.addSolutionParticipationForProgrammingExercise(programmingExercise);
         programmingExerciseUtilService.addTestCasesToProgrammingExercise(programmingExercise);
 
-        final String templateJobName = programmingExercise.getProjectKey() + "-" + TEMPLATE.getName();
-        final String solutionJobName = programmingExercise.getProjectKey() + "-" + SOLUTION.getName();
+        final String projectKey = programmingExercise.getProjectKey();
+        final String templateJobName = projectKey + "-" + TEMPLATE.getName();
+        final String solutionJobName = projectKey + "-" + SOLUTION.getName();
+        final JenkinsJobService.JobWithDetails dummyJob = new JenkinsJobService.JobWithDetails("name", "desc", false);
+        final JenkinsJobService.FolderJob dummyFolder = new JenkinsJobService.FolderJob("name", "desc", "");
 
-        jenkinsRequestMockProvider.mockCreateProjectForExercise(programmingExercise, false);
-        jenkinsRequestMockProvider.mockGetJob(programmingExercise.getProjectKey(), templateJobName, null, false);
-        jenkinsRequestMockProvider.mockDeleteBuildPlan(programmingExercise.getProjectKey(), templateJobName, false);
-        jenkinsRequestMockProvider.mockDeleteBuildPlan(programmingExercise.getProjectKey(), solutionJobName, false);
-        jenkinsRequestMockProvider.mockCreateBuildPlan(programmingExercise.getProjectKey(), TEMPLATE.getName(), false);
-        jenkinsRequestMockProvider.mockCreateBuildPlan(programmingExercise.getProjectKey(), SOLUTION.getName(), false);
-        jenkinsRequestMockProvider.mockGetJob(programmingExercise.getProjectKey(), templateJobName, null, false);
-        jenkinsRequestMockProvider.mockGetJob(programmingExercise.getProjectKey(), solutionJobName, null, false);
+        jenkinsRequestMockProvider.mockGetFolderJob(projectKey, dummyFolder);
+        jenkinsRequestMockProvider.mockGetFolderConfigPlain(projectKey);
+        jenkinsRequestMockProvider.mockDeleteBuildPlanPlain(projectKey, solutionJobName);
+        jenkinsRequestMockProvider.mockDeleteBuildPlanPlain(projectKey, templateJobName);
+        jenkinsRequestMockProvider.mockGetFolderJob(projectKey, dummyFolder);
+        jenkinsRequestMockProvider.mockGetJobPlain(projectKey, templateJobName, dummyJob);
+        jenkinsRequestMockProvider.mockGetFolderJob(projectKey, dummyFolder);
+        jenkinsRequestMockProvider.mockGetJobConfigPlain(projectKey, templateJobName);
+        jenkinsRequestMockProvider.mockUpdatePlanConfigPlain(projectKey, templateJobName);
+        jenkinsRequestMockProvider.mockGetFolderJob(projectKey, dummyFolder);
+        jenkinsRequestMockProvider.mockGetFolderConfigPlain(projectKey);
+        jenkinsRequestMockProvider.mockUpdateFolderConfigPlain(projectKey);
+        jenkinsRequestMockProvider.mockTriggerBuildPlain(projectKey, templateJobName);
+        jenkinsRequestMockProvider.mockGetFolderJob(projectKey, dummyFolder);
+        jenkinsRequestMockProvider.mockGetJobPlain(projectKey, solutionJobName, dummyJob);
+        jenkinsRequestMockProvider.mockGetFolderJob(projectKey, dummyFolder);
+        jenkinsRequestMockProvider.mockGetJobConfigPlain(projectKey, solutionJobName);
+        jenkinsRequestMockProvider.mockUpdatePlanConfigPlain(projectKey, solutionJobName);
+        jenkinsRequestMockProvider.mockGetFolderJob(projectKey, dummyFolder);
+        jenkinsRequestMockProvider.mockGetFolderConfigPlain(projectKey);
+        jenkinsRequestMockProvider.mockUpdateFolderConfigPlain(projectKey);
+        jenkinsRequestMockProvider.mockTriggerBuildPlain(projectKey, solutionJobName);
 
         continuousIntegrationService.recreateBuildPlansForExercise(programmingExercise);
 

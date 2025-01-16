@@ -192,9 +192,18 @@ public class JenkinsRequestMockProvider {
         mockAddInstructorAndEditorAndTAPermissionsToUsersForFolder(folderName, false);
     }
 
-    private void mockGetJobConfig(String folderName, String jobName) throws IOException {
+    public void mockGetJobConfig(String folderName, String jobName) throws IOException {
         mockGetFolderJob(folderName);
+        mockGetJobConfigPlain(folderName, jobName);
+    }
 
+    /**
+     * Should only be used when explicitly only the single request is needed. Use {@link #mockGetJobConfig(String, String)} otherwise.
+     *
+     * @param folderName The name of the folder.
+     * @param jobName    The name of the build plan itself.
+     */
+    public void mockGetJobConfigPlain(String folderName, String jobName) throws IOException {
         URI uri = JenkinsEndpoints.PLAN_CONFIG.buildEndpoint(jenkinsServerUri, folderName, jobName).build(true).toUri();
         var mockXml = loadFileFromResources("test-data/jenkins-response/job-config.xml");
         mockServer.expect(requestTo(uri)).andExpect(method(HttpMethod.GET)).andRespond(withSuccess().body(mockXml));
@@ -202,9 +211,25 @@ public class JenkinsRequestMockProvider {
 
     public void mockGetFolderConfig(String folderName) throws IOException {
         mockGetFolderJob(folderName);
+        mockGetFolderConfigPlain(folderName);
+    }
+
+    /**
+     * Should only be used when explicitly only the single GET request is needed. Use {@link #mockGetFolderConfig(String)} otherwise.
+     *
+     * @param folderName The name of the folder.
+     * @throws IOException Required due to serialization, should never occur.
+     */
+    public void mockGetFolderConfigPlain(String folderName) throws IOException {
         URI uri = JenkinsEndpoints.FOLDER_CONFIG.buildEndpoint(jenkinsServerUri, folderName).build(true).toUri();
         var mockXml = loadFileFromResources("test-data/jenkins-response/job-config.xml");
         mockServer.expect(requestTo(uri)).andExpect(method(HttpMethod.GET)).andRespond(withSuccess().body(mockXml).contentType(MediaType.APPLICATION_XML));
+    }
+
+    public void mockUpdateFolderConfigPlain(String folderName) throws IOException {
+        URI uri = JenkinsEndpoints.FOLDER_CONFIG.buildEndpoint(jenkinsServerUri, folderName).build(true).toUri();
+        var mockXml = loadFileFromResources("test-data/jenkins-response/job-config.xml");
+        mockServer.expect(requestTo(uri)).andExpect(method(HttpMethod.POST)).andRespond(withSuccess().body(mockXml).contentType(MediaType.APPLICATION_XML));
     }
 
     public void mockCheckIfProjectExists(ProgrammingExercise exercise, boolean exists, boolean shouldFail) throws IOException {
@@ -288,6 +313,11 @@ public class JenkinsRequestMockProvider {
         mockTriggerBuild(projectKey, planName, false);
     }
 
+    public void mockUpdatePlanConfigPlain(String projectKey, String planName) {
+        URI uri = JenkinsEndpoints.PLAN_CONFIG.buildEndpoint(jenkinsServerUri, projectKey, planName).build(true).toUri();
+        mockServer.expect(requestTo(uri)).andExpect(method(HttpMethod.POST)).andRespond(withSuccess());
+    }
+
     public void mockUpdatePlanRepository(String projectKey, String planName, HttpStatus expectedHttpStatus) throws IOException {
         var mockXml = loadFileFromResources("test-data/jenkins-response/job-config.xml");
 
@@ -332,6 +362,19 @@ public class JenkinsRequestMockProvider {
         else {
             mockServer.expect(requestTo(uri)).andExpect(method(HttpMethod.GET)).andRespond(withBadRequest());
         }
+    }
+
+    /**
+     * Should only be used when explicitly only the single request is needed. Use {@link #mockGetJob(String, String, JenkinsJobService.JobWithDetails, boolean)} otherwise.
+     *
+     * @param projectKey  The name of the folder.
+     * @param jobName     The name of the build plan itself.
+     * @param jobToReturn The job that is returned by the mocked API.
+     */
+    public void mockGetJobPlain(String projectKey, String jobName, JenkinsJobService.JobWithDetails jobToReturn) throws IOException {
+        URI uri = JenkinsEndpoints.GET_JOB.buildEndpoint(jenkinsServerUri, projectKey, jobName).build(true).toUri();
+        var response = mapper.writeValueAsString(jobToReturn);
+        mockServer.expect(requestTo(uri)).andExpect(method(HttpMethod.GET)).andRespond(withSuccess().body(response).contentType(MediaType.APPLICATION_JSON));
     }
 
     public void mockGetFolderJob(String folderName) throws IOException {
@@ -514,6 +557,17 @@ public class JenkinsRequestMockProvider {
         }
     }
 
+    /**
+     * Should only be used when explicitly only the single POST request is needed. Use {@link #mockDeleteBuildPlan(String, String, boolean)} otherwise.
+     *
+     * @param projectKey The name of the folder.
+     * @param planName   The name of the build plan itself.
+     */
+    public void mockDeleteBuildPlanPlain(String projectKey, String planName) {
+        URI uri = JenkinsEndpoints.DELETE_JOB.buildEndpoint(jenkinsServerUri, projectKey, planName).build(true).toUri();
+        mockServer.expect(requestTo(uri)).andExpect(method(HttpMethod.POST)).andRespond(withSuccess());
+    }
+
     public void mockDeleteBuildPlanNotFound(String projectKey, String planName) throws IOException {
         mockGetFolderJob(projectKey);
         URI uri = JenkinsEndpoints.DELETE_JOB.buildEndpoint(jenkinsServerUri, projectKey, planName).build(true).toUri();
@@ -584,6 +638,17 @@ public class JenkinsRequestMockProvider {
             // simulate a client exception, because this is caught in the actual production code
             mockServer.expect(requestTo(uri)).andExpect(method(HttpMethod.POST)).andRespond(withStatus(HttpStatus.BAD_REQUEST));
         }
+    }
+
+    /**
+     * Should only be used when explicitly only the single request is needed. Use {@link #mockTriggerBuild(String, String, boolean)} otherwise.
+     *
+     * @param projectKey  The name of the folder.
+     * @param buildPlanId The name of the build plan itself.
+     */
+    public void mockTriggerBuildPlain(String projectKey, String buildPlanId) {
+        URI uri = JenkinsEndpoints.TRIGGER_BUILD.buildEndpoint(jenkinsServerUri, projectKey, buildPlanId).build(true).toUri();
+        mockServer.expect(requestTo(uri)).andExpect(method(HttpMethod.POST)).andRespond(withSuccess());
     }
 
     public void mockGivePlanPermissionsThrowException(String projectKey, String projectKey1) throws IOException {
