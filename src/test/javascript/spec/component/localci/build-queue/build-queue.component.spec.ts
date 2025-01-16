@@ -1,25 +1,21 @@
-import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { ComponentFixture, TestBed, waitForAsync } from '@angular/core/testing';
 import { ActivatedRoute } from '@angular/router';
 import { of } from 'rxjs';
 import { BuildQueueComponent, FinishedBuildJobFilter, FinishedBuildJobFilterStorageKey } from 'app/localci/build-queue/build-queue.component';
 import { BuildQueueService } from 'app/localci/build-queue/build-queue.service';
-import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
-import { MockComponent, MockPipe } from 'ng-mocks';
 import dayjs from 'dayjs/esm';
 import { AccountService } from 'app/core/auth/account.service';
 import { DataTableComponent } from 'app/shared/data-table/data-table.component';
-import { NgxDatatableModule } from '@siemens/ngx-datatable';
 import { ArtemisTestModule } from '../../../test.module';
 import { BuildJobStatistics, FinishedBuildJob, SpanType } from 'app/entities/programming/build-job.model';
 import { TriggeredByPushTo } from 'app/entities/programming/repository-info.model';
-import { waitForAsync } from '@angular/core/testing';
 import { HttpResponse } from '@angular/common/http';
 import { SortingOrder } from 'app/shared/table/pageable-table';
 import { LocalStorageService } from 'ngx-webstorage';
 import { MockLocalStorageService } from '../../../helpers/mocks/service/mock-local-storage.service';
-import { ArtemisSharedComponentModule } from 'app/shared/components/shared-component.module';
-import { PieChartModule } from '@swimlane/ngx-charts';
 import { BuildLogEntry, BuildLogLines } from '../../../../../../main/webapp/app/entities/programming/build-log.model';
+import { MockNgbModalService } from '../../../helpers/mocks/service/mock-ngb-modal.service';
+import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 
 describe('BuildQueueComponent', () => {
     let component: BuildQueueComponent;
@@ -284,14 +280,14 @@ describe('BuildQueueComponent', () => {
         mockActivatedRoute = { params: of({ courseId: testCourseId }) };
 
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule, NgxDatatableModule, ArtemisSharedComponentModule, PieChartModule],
-            declarations: [BuildQueueComponent, MockPipe(ArtemisTranslatePipe), MockComponent(DataTableComponent)],
+            imports: [ArtemisTestModule],
             providers: [
                 { provide: BuildQueueService, useValue: mockBuildQueueService },
                 { provide: ActivatedRoute, useValue: mockActivatedRoute },
                 { provide: AccountService, useValue: accountServiceMock },
                 { provide: DataTableComponent, useClass: DataTableComponent },
                 { provide: LocalStorageService, useValue: mockLocalStorageService },
+                { provide: NgbModal, useClass: MockNgbModalService },
             ],
         }).compileComponents();
     }));

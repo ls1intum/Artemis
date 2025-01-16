@@ -1,7 +1,7 @@
 import { NgModule } from '@angular/core';
 import { ChecklistCheckComponent } from 'app/shared/components/checklist-check/checklist-check.component';
 import { ArtemisSharedModule } from 'app/shared/shared.module';
-import { FeatureToggleModule } from 'app/shared/feature-toggle/feature-toggle.module';
+
 import { ConfirmAutofocusModalComponent } from 'app/shared/components/confirm-autofocus-modal.component';
 import { HelpIconComponent } from 'app/shared/components/help-icon.component';
 import { ButtonComponent } from 'app/shared/components/button.component';
@@ -24,8 +24,9 @@ import { ExerciseImportWrapperComponent } from 'app/exercises/shared/import/exer
 import { ConfirmAutofocusButtonComponent } from 'app/shared/components/confirm-autofocus-button.component';
 
 @NgModule({
-    imports: [ArtemisSharedModule, FeatureToggleModule, ClipboardModule],
-    declarations: [
+    imports: [
+        ArtemisSharedModule,
+        ClipboardModule,
         ButtonComponent,
         HelpIconComponent,
         ConfirmAutofocusButtonComponent,

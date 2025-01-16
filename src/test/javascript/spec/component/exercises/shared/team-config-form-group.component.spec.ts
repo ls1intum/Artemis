@@ -6,6 +6,7 @@ import { ExerciseGroup } from 'app/entities/exercise-group.model';
 import { TeamConfigFormGroupComponent } from 'app/exercises/shared/team-config-form-group/team-config-form-group.component';
 import { Subject } from 'rxjs';
 import { NgModel } from '@angular/forms';
+import { ArtemisTestModule } from '../../../test.module';
 
 describe('Team Config Form Group Component', () => {
     let fixture: ComponentFixture<TeamConfigFormGroupComponent>;
@@ -14,7 +15,9 @@ describe('Team Config Form Group Component', () => {
     let teamAssignmentConfig: TeamAssignmentConfig;
 
     beforeEach(() => {
-        TestBed.configureTestingModule({})
+        TestBed.configureTestingModule({
+            imports: [ArtemisTestModule],
+        })
             .compileComponents()
             .then(() => {
                 fixture = TestBed.createComponent(TeamConfigFormGroupComponent);

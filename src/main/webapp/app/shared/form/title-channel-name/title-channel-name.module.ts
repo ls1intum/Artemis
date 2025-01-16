@@ -7,8 +7,7 @@ import { CustomNotIncludedInValidatorDirective } from 'app/shared/validators/cus
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 
 @NgModule({
-    imports: [FormsModule, CommonModule, ArtemisSharedComponentModule, CustomNotIncludedInValidatorDirective, TranslateDirective],
-    declarations: [TitleChannelNameComponent],
+    imports: [FormsModule, CommonModule, ArtemisSharedComponentModule, CustomNotIncludedInValidatorDirective, TranslateDirective, TitleChannelNameComponent],
     exports: [TitleChannelNameComponent],
 })
 export class TitleChannelNameModule {}

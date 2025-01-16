@@ -59,7 +59,13 @@ describe('ShortAnswerQuestionEditComponent', () => {
                 MockComponent(MatchPercentageInfoModalComponent),
             ],
             providers: [MockProvider(NgbModal)],
-        }).compileComponents();
+        })
+            .overrideComponent(ShortAnswerQuestionEditComponent, {
+                set: {
+                    providers: [MockProvider(NgbModal)],
+                },
+            })
+            .compileComponents();
         global.ResizeObserver = jest.fn().mockImplementation((callback: ResizeObserverCallback) => {
             return new MockResizeObserver(callback);
         });
@@ -293,7 +299,7 @@ describe('ShortAnswerQuestionEditComponent', () => {
 
     it('should open', () => {
         const content = {};
-        const modalService = TestBed.inject(NgbModal);
+        const modalService = fixture.debugElement.injector.get(NgbModal);
         const modalSpy = jest.spyOn(modalService, 'open');
         component.open(content);
         expect(modalSpy).toHaveBeenCalledOnce();
