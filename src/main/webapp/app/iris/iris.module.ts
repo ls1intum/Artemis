@@ -21,7 +21,6 @@ import { IrisBaseChatbotComponent } from 'app/iris/base-chatbot/iris-base-chatbo
 import { ChatStatusBarComponent } from 'app/iris/base-chatbot/chat-status-bar/chat-status-bar.component';
 import { CourseChatbotComponent } from 'app/iris/course-chatbot/course-chatbot.component';
 import { IrisLogoComponent } from 'app/iris/iris-logo/iris-logo.component';
-import { LectureTranscriptionIngestionComponent } from 'app/iris/lecture-transcription-ingestion/lecture-transcription-ingestion.component';
 
 @NgModule({
     declarations: [
@@ -37,7 +36,6 @@ import { LectureTranscriptionIngestionComponent } from 'app/iris/lecture-transcr
         ChatStatusBarComponent,
         IrisLogoButtonComponent,
         CourseChatbotComponent,
-        LectureTranscriptionIngestionComponent,
     ],
     imports: [
         CommonModule,

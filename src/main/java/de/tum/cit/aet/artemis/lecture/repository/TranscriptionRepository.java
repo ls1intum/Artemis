@@ -23,9 +23,18 @@ public interface TranscriptionRepository extends ArtemisJpaRepository<Transcript
     @Query("""
             SELECT t
             FROM Transcription t
+            LEFT JOIN FETCH t.segments
+            WHERE t.id = :id
+            """)
+    Optional<Transcription> findByIdWithSegments(@Param("id") Long id);
+
+    @Query("""
+            SELECT t
+            FROM Transcription t
+            LEFT JOIN FETCH t.segments
             WHERE t.lecture.id = :lectureId
             """)
-    Optional<Transcription> findByLectureId(@Param("lectureId") Long lectureId);
+    List<Transcription> findAllByLectureIdWithSegments(@Param("lectureId") Long lectureId);
 
     @Query("""
             SELECT t

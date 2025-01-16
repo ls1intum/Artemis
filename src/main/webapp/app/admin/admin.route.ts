@@ -22,6 +22,7 @@ import { BuildAgentDetailsComponent } from 'app/localci/build-agents/build-agent
 import { AdminImportStandardizedCompetenciesComponent } from 'app/admin/standardized-competencies/import/admin-import-standardized-competencies.component';
 import { CleanupServiceComponent } from 'app/admin/cleanup-service/cleanup-service.component';
 import { PendingChangesGuard } from 'app/shared/guard/pending-changes.guard';
+import { LectureTranscriptionIngestionComponent } from 'app/admin/lecture-transcription-ingestion/lecture-transcription-ingestion.component';
 
 export const adminState: Routes = [
     {
@@ -154,6 +155,13 @@ export const adminState: Routes = [
             {
                 path: 'cleanup-service',
                 component: CleanupServiceComponent,
+                data: {
+                    pageTitle: 'cleanupService.title',
+                },
+            },
+            {
+                path: 'lecture-transcription-ingestion',
+                component: LectureTranscriptionIngestionComponent,
                 data: {
                     pageTitle: 'cleanupService.title',
                 },

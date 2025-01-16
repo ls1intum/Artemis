@@ -53,6 +53,7 @@ import de.tum.cit.aet.artemis.lecture.domain.Lecture;
 import de.tum.cit.aet.artemis.lecture.domain.LectureUnit;
 import de.tum.cit.aet.artemis.lecture.domain.Transcription;
 import de.tum.cit.aet.artemis.lecture.repository.LectureRepository;
+import de.tum.cit.aet.artemis.lecture.repository.TranscriptionRepository;
 import de.tum.cit.aet.artemis.lecture.service.LectureImportService;
 import de.tum.cit.aet.artemis.lecture.service.LectureService;
 
@@ -69,6 +70,8 @@ public class LectureResource {
     private static final String ENTITY_NAME = "lecture";
 
     private final CompetencyApi competencyApi;
+
+    private final TranscriptionRepository transcriptionRepository;
 
     @Value("${jhipster.clientApp.name}")
     private String applicationName;
@@ -93,7 +96,7 @@ public class LectureResource {
 
     public LectureResource(LectureRepository lectureRepository, LectureService lectureService, LectureImportService lectureImportService, CourseRepository courseRepository,
             UserRepository userRepository, AuthorizationCheckService authCheckService, ExerciseService exerciseService, ChannelService channelService,
-            ChannelRepository channelRepository, CompetencyApi competencyApi) {
+            ChannelRepository channelRepository, CompetencyApi competencyApi, TranscriptionRepository transcriptionRepository) {
         this.lectureRepository = lectureRepository;
         this.lectureService = lectureService;
         this.lectureImportService = lectureImportService;
@@ -104,6 +107,7 @@ public class LectureResource {
         this.channelService = channelService;
         this.channelRepository = channelRepository;
         this.competencyApi = competencyApi;
+        this.transcriptionRepository = transcriptionRepository;
     }
 
     /**
@@ -309,15 +313,15 @@ public class LectureResource {
         Course course = courseRepository.findByIdWithLecturesAndLectureUnitsElseThrow(courseId);
         authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.INSTRUCTOR, course, null);
         if (lectureId.isPresent()) {
-            Optional<Lecture> lectureToIngest = course.getLectures().stream().filter(lecture -> lecture.getId().equals(lectureId.get())).findFirst();
-            if (lectureToIngest.isPresent()) {
-                Set<Transcription> lecturesToIngest = new HashSet<>(lectureToIngest.get().getTranscriptions());
-                lectureService.ingestTranscriptionInPyris(lecturesToIngest);
-                return ResponseEntity.ok().build();
+            List<Transcription> transcriptions = transcriptionRepository.findAllByLectureIdWithSegments(lectureId.get());
+            if (transcriptions.isEmpty()) {
+                return ResponseEntity.badRequest().headers(HeaderUtil.createAlert(applicationName, "artemisApp.iris.ingestionAlert.allLecturesError", "idExists")).body(null);
             }
-            return ResponseEntity.badRequest().headers(HeaderUtil.createAlert(applicationName, "artemisApp.iris.ingestionAlert.allLecturesError", "idExists")).body(null);
+            Set<Transcription> transcriptionsToIngest = new HashSet<>(transcriptions);
+            lectureService.ingestTranscriptionInPyris(transcriptionsToIngest);
+            return ResponseEntity.ok().build();
         }
-        lectureService.ingestTranscriptionInPyris(course.getLectures().stream().map(Lecture::getTranscriptions).flatMap(List::stream).collect(Collectors.toSet()));
+        // lectureService.ingestTranscriptionInPyris(course.getLectures().stream().map(Lecture::getTranscriptions).flatMap(List::stream).collect(Collectors.toSet()));
         return ResponseEntity.ok().build();
     }
 

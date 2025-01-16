@@ -1,11 +1,15 @@
 import { Component, Input } from '@angular/core';
 import { faCheck } from '@fortawesome/free-solid-svg-icons';
 import { IrisTranscriptionService } from 'app/iris/iris-transcription.service';
+import { ArtemisSharedComponentModule } from 'app/shared/components/shared-component.module';
+import { FormsModule } from '@angular/forms';
 
 @Component({
     selector: 'jhi-lecture-transcription-ingestion',
     templateUrl: './lecture-transcription-ingestion.component.html',
     styleUrl: './lecture-transcription-ingestion.component.scss',
+    standalone: true,
+    imports: [ArtemisSharedComponentModule, FormsModule],
 })
 export class LectureTranscriptionIngestionComponent {
     @Input()
