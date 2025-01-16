@@ -7,17 +7,37 @@ import { NotificationPopupComponent } from 'app/shared/notification/notification
 import { TranslateService } from '@ngx-translate/core';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { ThemeService } from 'app/core/theme/theme.service';
+import { ProfileService } from '../../../main/webapp/app/shared/layouts/profiles/profile.service';
 import { ArtemisTranslatePipe } from '../../../main/webapp/app/shared/pipes/artemis-translate.pipe';
 import { MockSyncStorage } from '../spec/helpers/mocks/service/mock-sync-storage.service';
 import { MockTranslateService } from '../spec/helpers/mocks/service/mock-translate.service';
 import { ArtemisTestModule } from '../spec/test.module';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { of } from 'rxjs';
 
 // Mock the initialize method
 class MockThemeService {
     // Required because the real ThemeService uses this method, even though it's not called in the tests
     initialize(): void {}
 }
+
+// Mock ProfileService
+const mockProfileService = {
+    getProfileInfo: vi.fn(() =>
+        of({
+            contact: 'mock-contact',
+            git: {
+                branch: 'mock-branch',
+                commit: {
+                    id: { abbrev: 'mock-commit-id' },
+                    user: {
+                        name: 'test',
+                    },
+                },
+            },
+        }),
+    ),
+};
 
 describe('JhiMainComponent', () => {
     let component: AppComponent;
@@ -33,6 +53,7 @@ describe('JhiMainComponent', () => {
                 { provide: SessionStorageService, useClass: MockSyncStorage },
                 { provide: TranslateService, useClass: MockTranslateService },
                 { provide: ThemeService, useClass: MockThemeService },
+                { provide: ProfileService, useValue: mockProfileService }, // Provide the mock ProfileService
                 ArtemisTranslatePipe,
             ],
         });

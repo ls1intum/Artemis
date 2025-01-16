@@ -1,7 +1,7 @@
 {
     "compilerOptions": {
         "allowJs": false,
-        "target": "es2022",
+        "target": "es2024",
         "module": "es2020",
         "moduleResolution": "node",
         "esModuleInterop": true,
@@ -19,7 +19,7 @@
         "skipLibCheck": true,
         "outDir": "build/resources/main/static/app",
         "forceConsistentCasingInFileNames": true,
-        "lib": ["es2023", "dom"],
+        "lib": ["es2024", "dom"],
         "typeRoots": ["node_modules/@types"],
         "baseUrl": "./",
         "paths": {
