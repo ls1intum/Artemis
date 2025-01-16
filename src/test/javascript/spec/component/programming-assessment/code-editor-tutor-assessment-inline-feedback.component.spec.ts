@@ -17,11 +17,13 @@ import { FeedbackContentPipe } from 'app/shared/pipes/feedback-content.pipe';
 import { By } from '@angular/platform-browser';
 import { MockLocalStorageService } from '../../helpers/mocks/service/mock-local-storage.service';
 import { LocalStorageService } from 'ngx-webstorage';
+import { AlertService } from 'app/core/util/alert.service';
 
 describe('CodeEditorTutorAssessmentInlineFeedbackComponent', () => {
     let comp: CodeEditorTutorAssessmentInlineFeedbackComponent;
     let fixture: ComponentFixture<CodeEditorTutorAssessmentInlineFeedbackComponent>;
     let sgiService: StructuredGradingCriterionService;
+    let alertService: AlertService;
     const fileName = 'testFile';
     const codeLine = 1;
 
@@ -58,6 +60,7 @@ describe('CodeEditorTutorAssessmentInlineFeedbackComponent', () => {
                 comp.selectedFile = fileName;
                 comp.codeLine = codeLine;
                 sgiService = fixture.debugElement.injector.get(StructuredGradingCriterionService);
+                alertService = fixture.debugElement.injector.get(AlertService);
             });
     });
 
@@ -226,7 +229,8 @@ describe('CodeEditorTutorAssessmentInlineFeedbackComponent', () => {
 
             const buttonElement = fixture.debugElement.query(By.css('button.btn-close.cross'));
 
-            expect(buttonElement).not.toBe(null);
+            expect(buttonElement.attributes['type']).toBe('button');
+            expect(buttonElement.attributes['aria-label']).toBe('Close');
         });
 
         it('should call deleteFeedback method when delete button is clicked', () => {
@@ -250,20 +254,20 @@ describe('CodeEditorTutorAssessmentInlineFeedbackComponent', () => {
         });
 
         it('should not display a notification if localStorage key exists', () => {
-            jest.spyOn(comp.alertService, 'success');
+            jest.spyOn(alertService, 'success');
             localStorage.getItem = jest.fn().mockReturnValueOnce(true);
             comp.deleteFeedback();
 
-            expect(comp.alertService.success).not.toHaveBeenCalled();
+            expect(alertService.success).not.toHaveBeenCalled();
         });
 
         it('should display a success notification and set localStorage key on first delete', () => {
-            jest.spyOn(comp.alertService, 'success');
+            jest.spyOn(alertService, 'success');
             localStorage.setItem = jest.fn().mockReturnValueOnce(false);
 
             comp.deleteFeedback();
 
-            expect(comp.alertService.success).toHaveBeenCalledWith('artemisApp.editor.showReopenFeedbackHint');
+            expect(alertService.success).toHaveBeenCalledWith('artemisApp.editor.showReopenFeedbackHint');
             expect(localStorage.setItem).toHaveBeenCalledWith('jhi-code-editor-tutor-assessment-inline-feedback.showReopenHint', 'true');
         });
     });

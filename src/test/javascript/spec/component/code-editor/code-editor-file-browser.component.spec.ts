@@ -948,12 +948,12 @@ describe('CodeEditorFileBrowserComponent', () => {
             expect(result).toEqual([new FileBadge(FileBadgeType.FEEDBACK_SUGGESTION, 1)]);
         });
 
-        it('should aggregate file badges for a collapsed folder', () => {
+        it('should aggregate file badges for a collapsed folder for FEEDBACK_SUGGESTION', () => {
             const result = comp.getFolderBadges({ value: 'folderB', collapsed: true } as TreeviewItem<string>);
             expect(result).toEqual([new FileBadge(FileBadgeType.FEEDBACK_SUGGESTION, 3)]); // 1 + 2
         });
 
-        it('should aggregate file badges for a collapsed folder', () => {
+        it('should aggregate file badges for a collapsed folder for PRELIMINARY_FEEDBACK', () => {
             const result = comp.getFolderBadges({ value: 'folderC', collapsed: true } as TreeviewItem<string>);
             expect(result).toEqual([new FileBadge(FileBadgeType.PRELIMINARY_FEEDBACK, 3)]); // 1 + 2
         });

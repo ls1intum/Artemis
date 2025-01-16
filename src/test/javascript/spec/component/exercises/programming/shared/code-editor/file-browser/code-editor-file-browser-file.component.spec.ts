@@ -20,7 +20,7 @@ describe('CodeEditorFileBrowserFileComponent', () => {
         fixture = TestBed.createComponent(CodeEditorFileBrowserFileComponent);
         component = fixture.componentInstance;
         component.disableActions = false;
-        component.item = { id: 1, name: 'TestFile', checked: true };
+        component.item = { name: 'TestFile', checked: true };
         fixture.detectChanges();
     });
 
@@ -53,7 +53,7 @@ describe('CodeEditorFileBrowserFileComponent', () => {
             jest.spyOn(mockEvent, 'stopPropagation');
             component.reopenFeedback(mockEvent);
 
-            expect(mockEvent.stopPropagation).toHaveBeenCalledTimes(1);
+            expect(mockEvent.stopPropagation).toHaveBeenCalledOnce();
         });
 
         it('should emit onReopenFeedbackNode event with correct item', () => {
