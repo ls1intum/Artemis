@@ -23,7 +23,7 @@ import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { MockProvider } from 'ng-mocks';
 import { JhiWebsocketService } from 'app/core/websocket/websocket.service';
 import { MetisPostDTO } from 'app/entities/metis/metis-post-dto.model';
-import { Subject, of } from 'rxjs';
+import { Subject, of, throwError } from 'rxjs';
 import {
     metisChannel,
     metisCourse,
@@ -73,6 +73,10 @@ describe('Metis Service', () => {
     let course: Course;
     let savedPostService: SavedPostService;
     let setIsSavedAndStatusOfPostSpy: jest.SpyInstance;
+    let originalPosts: Posting[];
+    let targetConversation: Conversation;
+    let newContent: string;
+    let forwardedMessageCreateSpy: jest.SpyInstance;
 
     beforeEach(() => {
         TestBed.configureTestingModule({
@@ -113,6 +117,17 @@ describe('Metis Service', () => {
         answerPost = metisResolvingAnswerPostUser1;
         reaction = metisReactionUser2;
         course = metisCourse;
+        originalPosts = [{ id: 111 }, { id: 222 }] as Posting[];
+        targetConversation = { id: 999, type: ConversationType.CHANNEL } as Conversation;
+        newContent = 'Forwarded content';
+
+        forwardedMessageCreateSpy = jest.spyOn(forwardedMessageService, 'createForwardedMessage').mockImplementation((fm: ForwardedMessage) =>
+            of(
+                new HttpResponse({
+                    body: { ...fm, id: Math.floor(Math.random() * 10000) } as ForwardedMessage,
+                }),
+            ),
+        );
     });
 
     afterEach(() => {
@@ -718,7 +733,6 @@ describe('Metis Service', () => {
 
         const createdPost: Post = { id: 100, content: newContent, conversation: targetConversation } as Post;
         jest.spyOn(postService, 'create').mockReturnValue(of(new HttpResponse({ body: createdPost })));
-        jest.spyOn(forwardedMessageService, 'createForwardedMessage').mockImplementation((fm) => of(new HttpResponse({ body: { ...fm, id: Math.random() } as ForwardedMessage })));
 
         let result: ForwardedMessage[] | undefined;
         metisService.createForwardedMessages(originalPosts, targetConversation, isAnswer, newContent).subscribe((res) => (result = res));
@@ -728,6 +742,73 @@ describe('Metis Service', () => {
         expect(forwardedMessageService.createForwardedMessage).toHaveBeenCalledTimes(originalPosts.length);
         expect(result?.length).toBe(originalPosts.length);
         expect(result?.every((fm) => fm.destinationPost?.id === createdPost.id)).toBeTrue();
+    }));
+
+    it('should throw an error if course ID is not set before forwarding', fakeAsync(() => {
+        metisService.setCourse(undefined);
+        let errorThrown: Error | undefined;
+        metisService.createForwardedMessages(originalPosts, targetConversation, false, newContent).subscribe({
+            error: (err) => {
+                errorThrown = err;
+            },
+        });
+
+        tick();
+        expect(errorThrown).toBeDefined();
+        expect(errorThrown?.message).toContain('Course ID is not set');
+        expect(forwardedMessageCreateSpy).not.toHaveBeenCalled();
+    }));
+
+    it('should fail if any forwardedMessageService.createForwardedMessage fails', fakeAsync(() => {
+        metisService.setCourse(metisCourse);
+        forwardedMessageCreateSpy
+            .mockReturnValueOnce(
+                of(
+                    new HttpResponse({
+                        body: { id: 5678, sourcePostId: 111 } as unknown as ForwardedMessage,
+                    }),
+                ),
+            )
+            .mockReturnValueOnce(throwError(() => new Error('Some forwardedMessage creation error')));
+
+        let errorThrown: Error | undefined;
+        metisService.createForwardedMessages(originalPosts, targetConversation, false, newContent).subscribe({
+            error: (err) => {
+                errorThrown = err;
+            },
+        });
+
+        tick();
+        expect(errorThrown).toBeDefined();
+        expect(errorThrown?.message).toBe('Some forwardedMessage creation error');
+        expect(forwardedMessageCreateSpy).toHaveBeenCalledTimes(2);
+    }));
+
+    it('should NOT update local cache if target conversation differs from currentConversation', fakeAsync(() => {
+        metisService.setCourse(metisCourse);
+        metisService.getFilteredPosts({ conversationId: 101 } as PostContextFilter, false, { id: 101 } as ChannelDTO);
+
+        let result: ForwardedMessage[] | undefined;
+        metisService.createForwardedMessages(originalPosts, targetConversation, false, newContent).subscribe((res) => (result = res));
+        tick();
+
+        expect(result).toHaveLength(originalPosts.length);
+        expect(metisService['cachedPosts'].findIndex((p) => p.id === 123)).toBe(-1);
+    }));
+
+    it('should NOT add newly created post to cache if it already exists in cache', fakeAsync(() => {
+        metisService.setCourse(metisCourse);
+        metisService.getFilteredPosts({ conversationId: targetConversation.id } as PostContextFilter, false, targetConversation);
+
+        metisService['cachedPosts'] = [{ id: 123, content: 'cached content', conversation: targetConversation } as Post];
+
+        let result: ForwardedMessage[] | undefined;
+        metisService.createForwardedMessages(originalPosts, targetConversation, false, newContent).subscribe((res) => (result = res));
+        tick();
+
+        expect(result).toHaveLength(originalPosts.length);
+        const matchesInCache = metisService['cachedPosts'].filter((p) => p.id === 123);
+        expect(matchesInCache).toHaveLength(1);
     }));
 
     it('should create forwarded messages with sourceType=ANSWER if isAnswer=true', fakeAsync(() => {

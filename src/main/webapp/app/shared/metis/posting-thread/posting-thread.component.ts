@@ -28,7 +28,7 @@ export class PostingThreadComponent {
 
     elementRef = inject(ElementRef);
 
-    protected onTriggerNavigateToPost(post: Posting) {
+    onTriggerNavigateToPost(post: Posting) {
         this.onNavigateToPost.emit(post);
     }
 }
