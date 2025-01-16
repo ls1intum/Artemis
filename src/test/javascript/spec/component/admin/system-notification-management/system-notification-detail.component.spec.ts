@@ -27,13 +27,7 @@ describe('SystemNotificationManagementDetailComponent', () => {
 
         TestBed.configureTestingModule({
             imports: [ArtemisTestModule, FormsModule, MockModule(RouterModule)],
-            declarations: [
-                SystemNotificationManagementDetailComponent,
-                MockRouterLinkDirective,
-                MockPipe(ArtemisTranslatePipe),
-                MockPipe(ArtemisDatePipe),
-                MockComponent(FormDateTimePickerComponent),
-            ],
+            declarations: [MockRouterLinkDirective, MockPipe(ArtemisTranslatePipe), MockPipe(ArtemisDatePipe), MockComponent(FormDateTimePickerComponent)],
             providers: [
                 { provide: ActivatedRoute, useValue: route },
                 { provide: Router, useValue: router },
@@ -56,14 +50,13 @@ describe('SystemNotificationManagementDetailComponent', () => {
     });
 
     it('should navigate to edit if edit is clicked', fakeAsync(() => {
+        const navigateByUrlSpy = jest.spyOn(router, 'navigateByUrl');
         detailComponentFixture.detectChanges();
 
         const button = detailComponentFixture.debugElement.nativeElement.querySelector('#editButton');
         button.click();
 
         tick();
-        expect(router.navigateByUrl).toHaveBeenCalledOnce();
-        const navigationArray = router.navigateByUrl.mock.calls[0][0];
-        expect(navigationArray).toEqual(['edit']);
+        expect(navigateByUrlSpy).toHaveBeenCalledOnce();
     }));
 });

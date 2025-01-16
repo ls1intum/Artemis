@@ -1,16 +1,20 @@
-import { Component, EventEmitter, Input, OnDestroy, OnInit, Output } from '@angular/core';
+import { Component, EventEmitter, Input, OnDestroy, OnInit, Output, inject } from '@angular/core';
 import { Subscription } from 'rxjs';
 import { ExamExerciseUpdateService } from 'app/exam/manage/exam-exercise-update.service';
 import { Exercise, ExerciseType } from 'app/entities/exercise.model';
 import { htmlForMarkdown } from 'app/shared/util/markdown.conversion.util';
 import diff from 'html-diff-ts';
+import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 
 @Component({
     selector: 'jhi-exam-exercise-update-highlighter',
     templateUrl: './exam-exercise-update-highlighter.component.html',
     styleUrls: ['./exam-exercise-update-highlighter.component.scss'],
+    imports: [ArtemisTranslatePipe],
 })
 export class ExamExerciseUpdateHighlighterComponent implements OnInit, OnDestroy {
+    private examExerciseUpdateService = inject(ExamExerciseUpdateService);
+
     subscriptionToLiveExamExerciseUpdates: Subscription;
     themeSubscription: Subscription;
     updatedProblemStatementHTML: string;
@@ -22,8 +26,6 @@ export class ExamExerciseUpdateHighlighterComponent implements OnInit, OnDestroy
     @Input() exercise: Exercise;
 
     @Output() problemStatementUpdateEvent: EventEmitter<string> = new EventEmitter<string>();
-
-    constructor(private examExerciseUpdateService: ExamExerciseUpdateService) {}
 
     ngOnInit(): void {
         this.subscriptionToLiveExamExerciseUpdates = this.examExerciseUpdateService.currentExerciseIdAndProblemStatement.subscribe((update) => {

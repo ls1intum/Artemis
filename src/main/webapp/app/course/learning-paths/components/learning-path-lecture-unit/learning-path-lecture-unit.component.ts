@@ -16,7 +16,6 @@ import { TranslateDirective } from 'app/shared/language/translate.directive';
 
 @Component({
     selector: 'jhi-learning-path-lecture-unit',
-    standalone: true,
     changeDetection: ChangeDetectionStrategy.OnPush,
     imports: [ArtemisLectureUnitsModule, VideoUnitComponent, TextUnitComponent, AttachmentUnitComponent, OnlineUnitComponent, DiscussionSectionComponent, TranslateDirective],
     templateUrl: './learning-path-lecture-unit.component.html',
@@ -37,13 +36,10 @@ export class LearningPathLectureUnitComponent {
     readonly isCommunicationEnabled = computed(() => isCommunicationEnabled(this.lecture()?.course));
 
     constructor() {
-        effect(
-            () => {
-                const lectureUnitId = this.lectureUnitId();
-                untracked(() => this.loadLectureUnit(lectureUnitId));
-            },
-            { allowSignalWrites: true },
-        );
+        effect(() => {
+            const lectureUnitId = this.lectureUnitId();
+            untracked(() => this.loadLectureUnit(lectureUnitId));
+        });
     }
 
     async loadLectureUnit(lectureUnitId: number): Promise<void> {

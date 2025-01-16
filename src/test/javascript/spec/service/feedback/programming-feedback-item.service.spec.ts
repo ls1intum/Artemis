@@ -5,14 +5,21 @@ import { Feedback, FeedbackType, STATIC_CODE_ANALYSIS_FEEDBACK_IDENTIFIER, SUBMI
 import { TranslateService } from '@ngx-translate/core';
 import { FeedbackItem } from 'app/exercises/shared/feedback/item/feedback-item';
 import { GradingInstruction } from 'app/exercises/shared/structured-grading-criterion/grading-instruction.model';
+import { TestBed } from '@angular/core/testing';
+import { MockTranslateService } from '../../helpers/mocks/service/mock-translate.service';
 
 describe('ProgrammingFeedbackItemService', () => {
     let service: ProgrammingFeedbackItemService;
     const exercise = new ProgrammingExercise(undefined, undefined);
 
     beforeEach(() => {
-        const fake = { instant: (key: string) => key };
-        service = new ProgrammingFeedbackItemService(fake as TranslateService);
+        TestBed.configureTestingModule({
+            providers: [{ provide: TranslateService, useClass: MockTranslateService }],
+        })
+            .compileComponents()
+            .then(() => {
+                service = TestBed.inject(ProgrammingFeedbackItemService);
+            });
     });
 
     it('should create submission policy feedback item', () => {

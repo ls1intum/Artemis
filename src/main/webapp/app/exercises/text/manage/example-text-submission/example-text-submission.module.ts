@@ -23,7 +23,8 @@ const ENTITY_STATES = [...exampleTextSubmissionRoute];
         AssessmentInstructionsModule,
         ArtemisMarkdownModule,
         ArtemisSharedComponentModule,
+        ExampleTextSubmissionComponent,
+        ResizableInstructionsComponent,
     ],
-    declarations: [ExampleTextSubmissionComponent, ResizableInstructionsComponent],
 })
 export class ArtemisExampleTextSubmissionModule {}

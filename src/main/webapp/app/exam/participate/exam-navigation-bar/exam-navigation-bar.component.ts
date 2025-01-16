@@ -1,4 +1,4 @@
-import { AfterViewInit, Component, EventEmitter, Input, OnInit, Output } from '@angular/core';
+import { AfterViewInit, Component, EventEmitter, Input, OnInit, Output, inject } from '@angular/core';
 import { Exercise, ExerciseType } from 'app/entities/exercise.model';
 import { ProgrammingExercise } from 'app/entities/programming/programming-exercise.model';
 import { LayoutService } from 'app/shared/breakpoints/layout.service';
@@ -17,13 +17,27 @@ import { faBars, faCheck, faEdit } from '@fortawesome/free-solid-svg-icons';
 import { ProgrammingSubmission } from 'app/entities/programming/programming-submission.model';
 import { SubmissionVersion } from 'app/entities/submission-version.model';
 import { FileUploadSubmission } from 'app/entities/file-upload-submission.model';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { ExamLiveEventsButtonComponent } from '../events/exam-live-events-button.component';
+import { NgClass } from '@angular/common';
+import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { ExamTimerComponent } from '../timer/exam-timer.component';
+import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 
 @Component({
     selector: 'jhi-exam-navigation-bar',
     templateUrl: './exam-navigation-bar.component.html',
     styleUrls: ['./exam-navigation-bar.component.scss'],
+    imports: [TranslateDirective, ExamLiveEventsButtonComponent, NgClass, NgbTooltip, FaIconComponent, ExamTimerComponent, ArtemisTranslatePipe],
 })
 export class ExamNavigationBarComponent implements OnInit, AfterViewInit {
+    private layoutService = inject(LayoutService);
+    private examParticipationService = inject(ExamParticipationService);
+    private examExerciseUpdateService = inject(ExamExerciseUpdateService);
+    private repositoryService = inject(CodeEditorRepositoryService);
+    private conflictService = inject(CodeEditorConflictStateService);
+
     @Input() exercises: Exercise[] = [];
     @Input() exerciseIndex = 0;
     @Input() endDate: dayjs.Dayjs;
@@ -50,14 +64,6 @@ export class ExamNavigationBarComponent implements OnInit, AfterViewInit {
 
     // Icons
     faBars = faBars;
-
-    constructor(
-        private layoutService: LayoutService,
-        private examParticipationService: ExamParticipationService,
-        private examExerciseUpdateService: ExamExerciseUpdateService,
-        private repositoryService: CodeEditorRepositoryService,
-        private conflictService: CodeEditorConflictStateService,
-    ) {}
 
     ngOnInit(): void {
         if (!this.examTimeLineView) {

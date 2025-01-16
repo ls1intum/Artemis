@@ -7,8 +7,7 @@ import { ArtemisSharedComponentModule } from 'app/shared/components/shared-compo
 import { BarChartModule } from '@swimlane/ngx-charts';
 
 @NgModule({
-    imports: [ArtemisSharedModule, ArtemisDataTableModule, NgxDatatableModule, ArtemisSharedComponentModule, BarChartModule],
-    declarations: [ParticipantScoresDistributionComponent],
+    imports: [ArtemisSharedModule, ArtemisDataTableModule, NgxDatatableModule, ArtemisSharedComponentModule, BarChartModule, ParticipantScoresDistributionComponent],
     exports: [ParticipantScoresDistributionComponent],
 })
 export class ArtemisParticipantScoresModule {}

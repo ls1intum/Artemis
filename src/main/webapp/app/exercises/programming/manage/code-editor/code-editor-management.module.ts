@@ -28,7 +28,8 @@ import { IrisModule } from 'app/iris/iris.module';
         SubmissionResultStatusModule,
         ArtemisSharedComponentModule,
         IrisModule,
+        CodeEditorInstructorAndEditorContainerComponent,
+        CodeEditorInstructorAndEditorOrionContainerComponent,
     ],
-    declarations: [CodeEditorInstructorAndEditorContainerComponent, CodeEditorInstructorAndEditorOrionContainerComponent],
 })
 export class ArtemisCodeEditorManagementModule {}

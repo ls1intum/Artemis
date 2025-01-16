@@ -1,13 +1,8 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ExerciseType } from 'app/entities/exercise.model';
-import { MockComponent, MockPipe, MockProvider } from 'ng-mocks';
 import { ProgrammingExamSummaryComponent } from 'app/exam/participate/summary/exercises/programming-exam-summary/programming-exam-summary.component';
 import { CodeButtonComponent } from 'app/shared/components/code-button/code-button.component';
 import { FeedbackComponent } from 'app/exercises/shared/feedback/feedback.component';
-import { ProgrammingExerciseInstructionComponent } from 'app/exercises/programming/shared/instructions-render/programming-exercise-instruction.component';
-import { ComplaintsStudentViewComponent } from 'app/complaints/complaints-for-students/complaints-student-view.component';
-import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
-import { ExerciseCacheService } from 'app/exercises/shared/exercise/exercise-cache.service';
 import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
 import { ProgrammingExercise } from 'app/entities/programming/programming-exercise.model';
 import { ProgrammingSubmission } from 'app/entities/programming/programming-submission.model';
@@ -15,10 +10,8 @@ import { User } from 'app/core/user/user.model';
 import { ProgrammingExerciseStudentParticipation } from 'app/entities/participation/programming-exercise-student-participation.model';
 import { Exam } from 'app/entities/exam/exam.model';
 import { ExerciseGroup } from 'app/entities/exercise-group.model';
-import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { ProfileInfo } from 'app/shared/layouts/profiles/profile-info.model';
 import { BehaviorSubject } from 'rxjs';
-import { MockProfileService } from '../../../../../helpers/mocks/service/mock-profile.service';
 import { SubmissionType } from 'app/entities/submission.model';
 import { ParticipationType } from 'app/entities/participation/participation.model';
 import { By } from '@angular/platform-browser';
@@ -26,6 +19,9 @@ import dayjs from 'dayjs/esm';
 import { Result } from 'app/entities/result.model';
 import { Feedback } from 'app/entities/feedback.model';
 import { AssessmentType } from 'app/entities/assessment-type.model';
+import { ArtemisTestModule } from '../../../../../test.module';
+import { MockSyncStorage } from '../../../../../helpers/mocks/service/mock-sync-storage.service';
+import { LocalStorageService } from 'ngx-webstorage';
 
 const user = { id: 1, name: 'Test User' } as User;
 
@@ -99,22 +95,8 @@ describe('ProgrammingExamSummaryComponent', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            declarations: [
-                ProgrammingExamSummaryComponent,
-                MockComponent(CodeButtonComponent),
-                MockComponent(FeedbackComponent),
-                MockComponent(ProgrammingExerciseInstructionComponent),
-                MockComponent(ComplaintsStudentViewComponent),
-                MockPipe(ArtemisTranslatePipe),
-            ],
-            providers: [
-                MockProvider(ExerciseService),
-                MockProvider(ExerciseCacheService),
-                {
-                    provide: ProfileService,
-                    useValue: new MockProfileService(),
-                },
-            ],
+            imports: [ArtemisTestModule],
+            providers: [{ provide: LocalStorageService, useClass: MockSyncStorage }],
         })
             .compileComponents()
             .then(() => {

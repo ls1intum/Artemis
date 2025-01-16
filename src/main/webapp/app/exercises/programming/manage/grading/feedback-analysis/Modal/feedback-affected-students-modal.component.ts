@@ -11,7 +11,6 @@ import { faSpinner } from '@fortawesome/free-solid-svg-icons';
     templateUrl: './feedback-affected-students-modal.component.html',
     imports: [ArtemisSharedCommonModule, ArtemisSharedComponentModule],
     providers: [FeedbackAnalysisService],
-    standalone: true,
 })
 export class AffectedStudentsModalComponent {
     courseId = input.required<number>();

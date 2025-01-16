@@ -1,4 +1,4 @@
-import { Component, EventEmitter, Input, OnInit, Output } from '@angular/core';
+import { Component, EventEmitter, Input, OnInit, Output, inject } from '@angular/core';
 import { catchError, tap } from 'rxjs/operators';
 import { ProgrammingSubmissionService } from 'app/exercises/programming/participate/programming-submission.service';
 import { of } from 'rxjs';
@@ -9,6 +9,10 @@ import { FeatureToggle } from 'app/shared/feature-toggle/feature-toggle.service'
 import { ProgrammingExercise } from 'app/entities/programming/programming-exercise.model';
 import { ButtonType } from 'app/shared/components/button.component';
 import { faBan, faRedo, faTimes } from '@fortawesome/free-solid-svg-icons';
+import { FormsModule } from '@angular/forms';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { ButtonComponent } from 'app/shared/components/button.component';
 
 /**
  * A button that triggers the build for all participations of the given programming exercise.
@@ -29,8 +33,13 @@ import { faBan, faRedo, faTimes } from '@fortawesome/free-solid-svg-icons';
             (onClick)="openTriggerAllModal()"
         />
     `,
+    imports: [ButtonComponent],
 })
 export class ProgrammingExerciseTriggerAllButtonComponent implements OnInit {
+    private submissionService = inject(ProgrammingSubmissionService);
+    private programmingBuildRunService = inject(ProgrammingBuildRunService);
+    private modalService = inject(NgbModal);
+
     FeatureToggle = FeatureToggle;
     ButtonType = ButtonType;
     @Input() exercise: ProgrammingExercise;
@@ -39,12 +48,6 @@ export class ProgrammingExerciseTriggerAllButtonComponent implements OnInit {
     isTriggeringBuildAll = false;
     // Icons
     faRedo = faRedo;
-
-    constructor(
-        private submissionService: ProgrammingSubmissionService,
-        private programmingBuildRunService: ProgrammingBuildRunService,
-        private modalService: NgbModal,
-    ) {}
 
     ngOnInit() {
         // The info that the builds were triggered comes from a websocket channel.
@@ -110,16 +113,17 @@ export class ProgrammingExerciseTriggerAllButtonComponent implements OnInit {
             </div>
         </form>
     `,
+    imports: [FormsModule, TranslateDirective, FaIconComponent],
 })
 export class ProgrammingExerciseInstructorTriggerAllDialogComponent {
+    private activeModal = inject(NgbActiveModal);
+
     @Input() exerciseId: number;
     @Input() dueDatePassed: boolean;
 
     // Icons
     faBan = faBan;
     faTimes = faTimes;
-
-    constructor(private activeModal: NgbActiveModal) {}
 
     cancel() {
         this.activeModal.dismiss('cancel');

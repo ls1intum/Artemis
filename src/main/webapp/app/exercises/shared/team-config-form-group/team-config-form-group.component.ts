@@ -3,13 +3,19 @@ import { TeamAssignmentConfig } from 'app/entities/team-assignment-config.model'
 import { cloneDeep } from 'lodash-es';
 import { Exercise, ExerciseMode } from 'app/entities/exercise.model';
 import { ModePickerOption } from 'app/exercises/shared/mode-picker/mode-picker.component';
-import { NgModel } from '@angular/forms';
+import { FormsModule, NgModel } from '@angular/forms';
 import { Subject, Subscription } from 'rxjs';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { HelpIconComponent } from 'app/shared/components/help-icon.component';
+import { ModePickerComponent } from '../mode-picker/mode-picker.component';
+import { KeyValuePipe } from '@angular/common';
+import { RemoveKeysPipe } from 'app/shared/pipes/remove-keys.pipe';
 
 @Component({
     selector: 'jhi-team-config-form-group',
     templateUrl: './team-config-form-group.component.html',
     styleUrls: ['./team-config-form-group.component.scss'],
+    imports: [TranslateDirective, HelpIconComponent, ModePickerComponent, FormsModule, KeyValuePipe, RemoveKeysPipe],
 })
 export class TeamConfigFormGroupComponent implements AfterViewChecked, OnDestroy, OnInit {
     readonly INDIVIDUAL = ExerciseMode.INDIVIDUAL;

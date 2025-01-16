@@ -9,8 +9,16 @@ import { ExamExerciseUpdateHighlighterModule } from 'app/exam/participate/exerci
 import { SafeHtmlPipe } from 'app/shared/pipes/safe-html.pipe';
 
 @NgModule({
-    imports: [ArtemisSharedModule, ArtemisResultModule, ArtemisMarkdownModule, ExamExerciseUpdateHighlighterModule, SafeHtmlPipe],
-    declarations: [ProgrammingExerciseInstructionComponent, ProgrammingExerciseInstructionStepWizardComponent, ProgrammingExerciseInstructionTaskStatusComponent],
+    imports: [
+        ArtemisSharedModule,
+        ArtemisResultModule,
+        ArtemisMarkdownModule,
+        ExamExerciseUpdateHighlighterModule,
+        SafeHtmlPipe,
+        ProgrammingExerciseInstructionComponent,
+        ProgrammingExerciseInstructionStepWizardComponent,
+        ProgrammingExerciseInstructionTaskStatusComponent,
+    ],
     exports: [ProgrammingExerciseInstructionComponent],
 })
 export class ArtemisProgrammingExerciseInstructionsRenderModule {}

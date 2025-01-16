@@ -1,22 +1,27 @@
-import { Component, EventEmitter, Input, Output } from '@angular/core';
+import { Component, EventEmitter, Input, Output, inject } from '@angular/core';
 import { FEEDBACK_SUGGESTION_ACCEPTED_IDENTIFIER, FEEDBACK_SUGGESTION_IDENTIFIER, Feedback, FeedbackType } from 'app/entities/feedback.model';
 import { StructuredGradingCriterionService } from 'app/exercises/shared/structured-grading-criterion/structured-grading-criterion.service';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { UnreferencedFeedbackDetailComponent } from 'app/assessment/unreferenced-feedback-detail/unreferenced-feedback-detail.component';
 
 @Component({
     selector: 'jhi-unreferenced-feedback',
     templateUrl: './unreferenced-feedback.component.html',
     styleUrls: [],
+    imports: [TranslateDirective, UnreferencedFeedbackDetailComponent],
 })
 export class UnreferencedFeedbackComponent {
+    private structuredGradingCriterionService = inject(StructuredGradingCriterionService);
+
     FeedbackType = FeedbackType;
 
     unreferencedFeedback: Feedback[] = [];
     assessmentsAreValid: boolean;
-    feedbackDetailChanges: boolean = false;
+    feedbackDetailChanges = false;
 
     @Input() readOnly: boolean;
     @Input() highlightDifferences: boolean;
-    @Input() useDefaultFeedbackSuggestionBadgeText: boolean = false;
+    @Input() useDefaultFeedbackSuggestionBadgeText = false;
     @Input() resultId: number;
 
     /**
@@ -33,8 +38,6 @@ export class UnreferencedFeedbackComponent {
     @Output() feedbacksChange = new EventEmitter<Feedback[]>();
     @Output() onAcceptSuggestion = new EventEmitter<Feedback>();
     @Output() onDiscardSuggestion = new EventEmitter<Feedback>();
-
-    constructor(private structuredGradingCriterionService: StructuredGradingCriterionService) {}
 
     public deleteFeedback(feedbackToDelete: Feedback): void {
         const indexToDelete = this.unreferencedFeedback.indexOf(feedbackToDelete);

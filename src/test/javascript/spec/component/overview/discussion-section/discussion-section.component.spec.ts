@@ -48,7 +48,6 @@ import { ProfilePictureComponent } from 'app/shared/profile-picture/profile-pict
 import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
 
 @Directive({
-    // eslint-disable-next-line @angular-eslint/directive-selector
     selector: '[infinite-scroll]',
 })
 class InfiniteScrollStubDirective {
@@ -303,9 +302,9 @@ describe('DiscussionSectionComponent', () => {
         expect(component.collapsed).toBeTrue();
     }));
 
-    it('should react to srcoll up event', fakeAsync(() => {
-        component.course = { id: 1, courseInformationSharingConfiguration: CourseInformationSharingConfiguration.COMMUNICATION_ONLY } as Course;
-        fixture.componentRef.setInput('lecture', { id: 2 } as Lecture);
+    it('should react to scroll up event', fakeAsync(() => {
+        const course = { id: 1, courseInformationSharingConfiguration: CourseInformationSharingConfiguration.COMMUNICATION_ONLY } as Course;
+        fixture.componentRef.setInput('lecture', { id: 2, course: course } as Lecture);
         fixture.detectChanges();
         const fetchNextPageSpy = jest.spyOn(component, 'fetchNextPage');
 
@@ -333,8 +332,8 @@ describe('DiscussionSectionComponent', () => {
     });
 
     it('fetches new messages on scroll up if more messages are available', fakeAsync(() => {
-        component.course = { id: 1, courseInformationSharingConfiguration: CourseInformationSharingConfiguration.COMMUNICATION_ONLY } as Course;
-        fixture.componentRef.setInput('lecture', { id: 2 } as Lecture);
+        const course = { id: 1, courseInformationSharingConfiguration: CourseInformationSharingConfiguration.COMMUNICATION_ONLY } as Course;
+        fixture.componentRef.setInput('lecture', { id: 2, course: course } as Lecture);
         fixture.detectChanges();
         component.posts = [];
         const commandMetisToFetchPostsSpy = jest.spyOn(component, 'fetchNextPage');

@@ -3,11 +3,15 @@ import { faListAlt } from '@fortawesome/free-regular-svg-icons';
 import { faChevronLeft, faChevronRight, faGripLinesVertical } from '@fortawesome/free-solid-svg-icons';
 import { Exercise } from 'app/entities/exercise.model';
 import interact from 'interactjs';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { AssessmentInstructionsComponent } from '../assessment-instructions/assessment-instructions.component';
 
 @Component({
     selector: 'jhi-collapsable-assessment-instructions',
     templateUrl: './collapsable-assessment-instructions.component.html',
     styleUrls: ['./collapsable-assessment-instructions.scss'],
+    imports: [FaIconComponent, TranslateDirective, AssessmentInstructionsComponent],
 })
 export class CollapsableAssessmentInstructionsComponent implements AfterViewInit {
     @Input() isAssessmentTraining = false;
