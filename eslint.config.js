@@ -51,22 +51,6 @@ module.exports = [
             ...tsPlugin.configs.recommended.rules,
             ...angularPlugin.configs.recommended.rules,
             'custom-rules/enforce-no-http-client-testing-module': 'error',
-            '@angular-eslint/directive-selector': [
-                'warn',
-                {
-                    type: 'attribute',
-                    prefix: 'jhi',
-                    style: 'camelCase',
-                },
-            ],
-            '@angular-eslint/component-selector': [
-                'warn',
-                {
-                    type: 'element',
-                    prefix: 'jhi',
-                    style: 'kebab-case',
-                },
-            ],
             '@typescript-eslint/no-non-null-assertion': 'off',
             '@typescript-eslint/no-unsafe-return': 'off',
             '@typescript-eslint/no-unsafe-member-access': 'off',

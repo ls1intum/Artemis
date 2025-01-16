@@ -13,7 +13,6 @@ import { TranslateDirective } from 'app/shared/language/translate.directive';
 
 @Component({
     selector: 'jhi-learning-path-nav-overview',
-    standalone: true,
     changeDetection: ChangeDetectionStrategy.OnPush,
     imports: [FontAwesomeModule, CommonModule, NgbDropdownModule, NgbAccordionModule, LearningPathNavOverviewLearningObjectsComponent, TranslateDirective],
     templateUrl: './learning-path-nav-overview.component.html',
@@ -41,13 +40,10 @@ export class LearningPathNavOverviewComponent {
     readonly currentCompetencyOnPath = computed(() => this.competencies()?.find((competency) => competency.masteryProgress < 1));
 
     constructor() {
-        effect(
-            () => {
-                const learningPathId = this.learningPathId();
-                untracked(() => this.loadCompetencies(learningPathId));
-            },
-            { allowSignalWrites: true },
-        );
+        effect(() => {
+            const learningPathId = this.learningPathId();
+            untracked(() => this.loadCompetencies(learningPathId));
+        });
     }
 
     async loadCompetencies(learningPathId: number): Promise<void> {

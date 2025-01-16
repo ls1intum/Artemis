@@ -2,6 +2,11 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 
 import { CollapsableAssessmentInstructionsComponent } from 'app/assessment/assessment-instructions/collapsable-assessment-instructions/collapsable-assessment-instructions.component';
 import { NO_ERRORS_SCHEMA } from '@angular/core';
+import { MockTranslateService } from '../../helpers/mocks/service/mock-translate.service';
+import { TranslateService } from '@ngx-translate/core';
+import { MockLocalStorageService } from '../../helpers/mocks/service/mock-local-storage.service';
+import { LocalStorageService } from 'ngx-webstorage';
+import { mockExercise } from '../../helpers/mocks/service/mock-team.service';
 
 describe('CollapsableAssessmentInstructionsComponent', () => {
     let component: CollapsableAssessmentInstructionsComponent;
@@ -9,12 +14,16 @@ describe('CollapsableAssessmentInstructionsComponent', () => {
 
     beforeEach(async () => {
         await TestBed.configureTestingModule({
-            declarations: [CollapsableAssessmentInstructionsComponent],
             schemas: [NO_ERRORS_SCHEMA],
+            providers: [
+                { provide: TranslateService, useClass: MockTranslateService },
+                { provide: LocalStorageService, useClass: MockLocalStorageService },
+            ],
         }).compileComponents();
 
         fixture = TestBed.createComponent(CollapsableAssessmentInstructionsComponent);
         component = fixture.componentInstance;
+        component.exercise = mockExercise;
         fixture.detectChanges();
     });
 

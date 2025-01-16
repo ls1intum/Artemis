@@ -1,14 +1,20 @@
-import { ChangeDetectorRef, Component, Input, OnChanges, OnDestroy, SimpleChanges } from '@angular/core';
+import { ChangeDetectorRef, Component, Input, OnChanges, OnDestroy, SimpleChanges, inject } from '@angular/core';
 import { round } from 'app/shared/util/utils';
 import { Theme, ThemeService } from 'app/core/theme/theme.service';
 import { Subscription } from 'rxjs';
 import { toObservable } from '@angular/core/rxjs-interop';
+import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
+import { NgClass } from '@angular/common';
 
 @Component({
     selector: 'jhi-progress-bar',
     templateUrl: './progress-bar.component.html',
+    imports: [NgbTooltip, NgClass],
 })
 export class ProgressBarComponent implements OnChanges, OnDestroy {
+    private themeService = inject(ThemeService);
+    private ref = inject(ChangeDetectorRef);
+
     @Input() public tooltip: string;
     @Input() public percentage: number;
     @Input() public numerator: number;
@@ -18,10 +24,7 @@ export class ProgressBarComponent implements OnChanges, OnDestroy {
     backgroundColorClass: string;
     themeSubscription: Subscription;
 
-    constructor(
-        private themeService: ThemeService,
-        private ref: ChangeDetectorRef,
-    ) {
+    constructor() {
         this.themeSubscription = toObservable(this.themeService.currentTheme).subscribe(() => {
             this.chooseProgressBarTextColor();
 

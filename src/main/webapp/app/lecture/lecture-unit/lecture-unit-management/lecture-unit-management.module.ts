@@ -45,8 +45,6 @@ import { OnlineUnitComponent } from 'app/overview/course-lectures/online-unit/on
         VideoUnitComponent,
         TextUnitComponent,
         OnlineUnitComponent,
-    ],
-    declarations: [
         LectureUnitManagementComponent,
         UnitCreationCardComponent,
         LectureUnitLayoutComponent,

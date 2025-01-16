@@ -1,8 +1,6 @@
 import { NgModule } from '@angular/core';
 import { RouterModule, Routes } from '@angular/router';
 
-import { ImprintComponent } from 'app/core/legal/imprint.component';
-
 const routes: Routes = [
     {
         path: '',
@@ -10,7 +8,7 @@ const routes: Routes = [
             {
                 path: '',
                 pathMatch: 'full',
-                component: ImprintComponent,
+                loadComponent: () => import('app/core/legal/imprint.component').then((m) => m.ImprintComponent),
                 data: {
                     authorities: [],
                     pageTitle: 'artemisApp.legal.imprint.title',
@@ -18,7 +16,7 @@ const routes: Routes = [
             },
             {
                 path: ':fragment',
-                component: ImprintComponent,
+                loadComponent: () => import('app/core/legal/imprint.component').then((m) => m.ImprintComponent),
                 data: {
                     authorities: [],
                     pageTitle: 'artemisApp.legal.imprint.title',

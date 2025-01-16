@@ -1,7 +1,11 @@
-import { Component, OnDestroy, OnInit } from '@angular/core';
+import { Component, OnDestroy, OnInit, inject } from '@angular/core';
 import { Alert, AlertService } from 'app/core/util/alert.service';
 import { faTimes } from '@fortawesome/free-solid-svg-icons';
 import { animate, group, style, transition, trigger } from '@angular/animations';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { TranslateDirective } from '../language/translate.directive';
+import { NgClass, NgStyle } from '@angular/common';
+import { CloseCircleComponent } from '../close-circle/close-circle.component';
 
 @Component({
     selector: 'jhi-alert-overlay',
@@ -44,11 +48,12 @@ import { animate, group, style, transition, trigger } from '@angular/animations'
             ]),
         ]),
     ],
+    imports: [FaIconComponent, TranslateDirective, NgClass, CloseCircleComponent, NgStyle],
 })
 export class AlertOverlayComponent implements OnInit, OnDestroy {
-    alerts: Alert[] = [];
+    alertService = inject(AlertService);
 
-    constructor(public alertService: AlertService) {}
+    alerts: Alert[] = [];
 
     times = faTimes;
 

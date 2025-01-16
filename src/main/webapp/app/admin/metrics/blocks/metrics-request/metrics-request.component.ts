@@ -9,7 +9,6 @@ import { DecimalPipe, KeyValuePipe } from '@angular/common';
     selector: 'jhi-metrics-request',
     templateUrl: './metrics-request.component.html',
     changeDetection: ChangeDetectionStrategy.OnPush,
-    standalone: true,
     imports: [TranslateDirective, NgbProgressbar, DecimalPipe, KeyValuePipe],
 })
 export class MetricsRequestComponent {

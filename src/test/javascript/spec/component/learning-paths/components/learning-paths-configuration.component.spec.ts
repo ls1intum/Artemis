@@ -49,10 +49,9 @@ describe('LearningPathsConfigurationComponent', () => {
     it('should load learning paths configuration', async () => {
         fixture.detectChanges();
         await fixture.whenStable();
+        fixture.detectChanges();
 
         const includeAllExercisesCheckBox = fixture.nativeElement.querySelector('#include-all-graded-exercises-checkbox');
-
-        fixture.detectChanges();
 
         expect(includeAllExercisesCheckBox.checked).toEqual(learningPathsConfiguration.includeAllGradedExercises);
         expect(component.includeAllGradedExercisesEnabled()).toEqual(learningPathsConfiguration.includeAllGradedExercises);
@@ -82,6 +81,7 @@ describe('LearningPathsConfigurationComponent', () => {
     it('should enable edit mode', async () => {
         fixture.detectChanges();
         await fixture.whenStable();
+        fixture.detectChanges();
 
         const includeAllExercisesCheckBox = fixture.nativeElement.querySelector('#include-all-graded-exercises-checkbox');
         expect(includeAllExercisesCheckBox.disabled).toBeTrue();

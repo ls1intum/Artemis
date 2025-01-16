@@ -1,4 +1,4 @@
-import { Component, Input, OnInit } from '@angular/core';
+import { Component, Input, OnInit, inject } from '@angular/core';
 import { Router } from '@angular/router';
 import { faCheck, faSort } from '@fortawesome/free-solid-svg-icons';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
@@ -19,8 +19,14 @@ export type Column<T extends BaseEntity> = {
     getProperty(entity: T): string | undefined;
 };
 
-@Component({ template: '' })
+@Component({
+    template: '',
+})
 export abstract class ImportComponent<T extends BaseEntity> implements OnInit {
+    protected router = inject(Router);
+    private sortService = inject(SortService);
+    protected activeModal = inject(NgbActiveModal);
+
     loading = false;
     content: SearchResult<T>;
     total = 0;
@@ -44,12 +50,7 @@ export abstract class ImportComponent<T extends BaseEntity> implements OnInit {
     protected readonly search = new Subject<void>();
     protected readonly sort = new Subject<void>();
 
-    protected constructor(
-        protected router: Router,
-        private sortService: SortService,
-        protected activeModal: NgbActiveModal,
-        protected pagingService?: PagingService<T>,
-    ) {}
+    protected constructor(protected pagingService?: PagingService<T>) {}
 
     get page(): number {
         return this.state.page;
@@ -106,11 +107,11 @@ export abstract class ImportComponent<T extends BaseEntity> implements OnInit {
      * Gives the ID for any item in the table, so that it can be tracked/identified by ngFor
      *
      * @template T
-     * @param index The index of the element in the ngFor
+     * @param _index The index of the element in the ngFor
      * @param {T} item The item itself
      * @returns The ID of the item
      */
-    trackId(index: number, item: T): number {
+    trackId(_index: number, item: T): number {
         return item.id!;
     }
 

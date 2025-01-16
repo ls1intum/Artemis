@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, OnDestroy, OnInit } from '@angular/core';
+import { ChangeDetectionStrategy, Component, OnDestroy, OnInit, inject } from '@angular/core';
 import { AlertService } from 'app/core/util/alert.service';
 import { ActivatedRoute, Router } from '@angular/router';
 import { TutorialGroupsService } from 'app/course/tutorial-groups/services/tutorial-groups.service';
@@ -11,24 +11,27 @@ import { TutorialGroupSchedule } from 'app/entities/tutorial-group/tutorial-grou
 import dayjs from 'dayjs/esm';
 import { Course } from 'app/entities/course.model';
 import { Subject } from 'rxjs';
+import { LoadingIndicatorContainerComponent } from 'app/shared/loading-indicator-container/loading-indicator-container.component';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { TutorialGroupFormComponent } from '../tutorial-group-form/tutorial-group-form.component';
 
 @Component({
     selector: 'jhi-create-tutorial-group',
     templateUrl: './create-tutorial-group.component.html',
     changeDetection: ChangeDetectionStrategy.OnPush,
+    imports: [LoadingIndicatorContainerComponent, TranslateDirective, TutorialGroupFormComponent],
 })
 export class CreateTutorialGroupComponent implements OnInit, OnDestroy {
+    private activatedRoute = inject(ActivatedRoute);
+    private router = inject(Router);
+    private tutorialGroupService = inject(TutorialGroupsService);
+    private alertService = inject(AlertService);
+
     tutorialGroupToCreate: TutorialGroup = new TutorialGroup();
     isLoading: boolean;
     course: Course;
 
     ngUnsubscribe = new Subject<void>();
-    constructor(
-        private activatedRoute: ActivatedRoute,
-        private router: Router,
-        private tutorialGroupService: TutorialGroupsService,
-        private alertService: AlertService,
-    ) {}
 
     ngOnInit(): void {
         this.activatedRoute.data.pipe(takeUntil(this.ngUnsubscribe)).subscribe(({ course }) => {

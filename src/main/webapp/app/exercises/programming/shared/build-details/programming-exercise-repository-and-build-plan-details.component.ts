@@ -1,4 +1,4 @@
-import { Component, EventEmitter, Input, OnChanges, OnDestroy, OnInit, Output, SimpleChanges } from '@angular/core';
+import { Component, EventEmitter, Input, OnChanges, OnDestroy, OnInit, Output, SimpleChanges, inject } from '@angular/core';
 import { getCourseFromExercise } from 'app/entities/exercise.model';
 import type { ProgrammingExercise, ProgrammingLanguage } from 'app/entities/programming/programming-exercise.model';
 import { ProgrammingExerciseBuildConfig } from 'app/entities/programming/programming-exercise-build.config';
@@ -14,20 +14,19 @@ import { BuildPlanCheckoutDirectoriesDTO } from 'app/entities/programming/build-
     selector: 'jhi-programming-exercise-repository-and-build-plan-details',
     templateUrl: './programming-exercise-repository-and-build-plan-details.component.html',
     styleUrls: ['../../manage/programming-exercise-form.scss'],
-    standalone: true,
     imports: [ArtemisSharedComponentModule, ArtemisSharedCommonModule, ProgrammingExerciseBuildPlanCheckoutDirectoriesComponent],
 })
 export class ProgrammingExerciseRepositoryAndBuildPlanDetailsComponent implements OnInit, OnChanges, OnDestroy {
+    private programmingExerciseService = inject(ProgrammingExerciseService);
+
     @Input() programmingExercise: ProgrammingExercise;
     @Input() programmingExerciseBuildConfig?: ProgrammingExerciseBuildConfig;
     @Input() programmingLanguage?: ProgrammingLanguage;
     @Input() isLocal: boolean;
-    @Input() checkoutSolutionRepository?: boolean = true;
+    @Input() checkoutSolutionRepository = true;
     @Input() isCreateOrEdit = false;
     @Input() isEditMode = false;
     @Output() submissionBuildPlanEvent = new EventEmitter<BuildPlanCheckoutDirectoriesDTO>();
-
-    constructor(private programmingExerciseService: ProgrammingExerciseService) {}
 
     checkoutDirectorySubscription?: Subscription;
 

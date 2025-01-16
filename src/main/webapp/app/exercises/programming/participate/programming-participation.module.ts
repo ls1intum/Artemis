@@ -25,7 +25,7 @@ import { ArtemisProgrammingSubmissionPolicyStatusModule } from 'app/exercises/pr
         SubmissionResultStatusModule,
         ArtemisSharedComponentModule,
         ArtemisProgrammingSubmissionPolicyStatusModule,
+        CodeEditorStudentContainerComponent,
     ],
-    declarations: [CodeEditorStudentContainerComponent],
 })
 export class ArtemisProgrammingParticipationModule {}

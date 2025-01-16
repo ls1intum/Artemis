@@ -802,7 +802,7 @@ class ParticipationIntegrationTest extends AbstractAthenaTest {
 
         request.putWithResponseBody("/api/exercises/" + modelingExercise.getId() + "/request-feedback", null, StudentParticipation.class, HttpStatus.OK);
 
-        verify(resultWebsocketService, timeout(2000).times(1)).broadcastNewResult(any(), resultCaptor.capture());
+        verify(resultWebsocketService, timeout(2000).times(2)).broadcastNewResult(any(), resultCaptor.capture());
 
         Result invokedModelingResult = resultCaptor.getAllValues().getFirst();
         assertThat(invokedModelingResult).isNotNull();

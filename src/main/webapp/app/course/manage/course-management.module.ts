@@ -49,11 +49,11 @@ import { CourseManagementExercisesSearchComponent } from 'app/course/manage/cour
 import { LineChartModule, PieChartModule } from '@swimlane/ngx-charts';
 import { ArtemisPlagiarismModule } from 'app/exercises/shared/plagiarism/plagiarism.module';
 import { ArtemisChartsModule } from 'app/shared/chart/artemis-charts.module';
-import { ImageCropperModule } from 'app/shared/image-cropper/image-cropper.module';
+
 import { ArtemisFullscreenModule } from 'app/shared/fullscreen/fullscreen.module';
 import { ArtemisCourseGroupModule } from 'app/shared/course-group/course-group.module';
 import { CourseGroupMembershipComponent } from './course-group-membership/course-group-membership.component';
-import { FeatureToggleModule } from 'app/shared/feature-toggle/feature-toggle.module';
+
 import { CourseLtiConfigurationComponent } from 'app/course/manage/course-lti-configuration/course-lti-configuration.component';
 import { EditCourseLtiConfigurationComponent } from 'app/course/manage/course-lti-configuration/edit-course-lti-configuration.component';
 import { NgbNavModule } from '@ng-bootstrap/ng-bootstrap';
@@ -75,7 +75,6 @@ import { ComplaintsForTutorComponent } from 'app/complaints/complaints-for-tutor
         RouterModule.forChild(courseManagementState),
         FormDateTimePickerModule,
         ReactiveFormsModule,
-        ImageCropperModule,
         OrionModule,
         MatChipsModule,
         ArtemisExerciseModule,
@@ -112,7 +111,6 @@ import { ComplaintsForTutorComponent } from 'app/complaints/complaints-for-tutor
         ArtemisPlagiarismModule,
         ArtemisChartsModule,
         ArtemisCourseGroupModule,
-        FeatureToggleModule,
         ExerciseCategoriesModule,
         NgbNavModule,
         ArtemisExerciseCreateButtonsModule,
@@ -122,8 +120,6 @@ import { ComplaintsForTutorComponent } from 'app/complaints/complaints-for-tutor
         ArtemisMarkdownEditorModule,
         CourseLtiConfigurationComponent,
         EditCourseLtiConfigurationComponent,
-    ],
-    declarations: [
         CourseManagementComponent,
         CourseDetailComponent,
         CourseUpdateComponent,

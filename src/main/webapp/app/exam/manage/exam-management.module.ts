@@ -48,7 +48,7 @@ import { ArtemisExamModePickerModule } from 'app/exam/manage/exams/exam-mode-pic
 import { ExamImportComponent } from 'app/exam/manage/exams/exam-import/exam-import.component';
 import { ArtemisHeaderExercisePageWithDetailsModule } from 'app/exercises/shared/exercise-headers/exercise-headers.module';
 import { ExamExerciseImportComponent } from 'app/exam/manage/exams/exam-exercise-import/exam-exercise-import.component';
-import { FeatureToggleModule } from 'app/shared/feature-toggle/feature-toggle.module';
+
 import { BonusComponent } from 'app/grading-system/bonus/bonus.component';
 import { ArtemisModePickerModule } from 'app/exercises/shared/mode-picker/mode-picker.module';
 import { StudentExamTimelineComponent } from './student-exams/student-exam-timeline/student-exam-timeline.component';
@@ -66,6 +66,8 @@ import { ArtemisProgrammingExerciseModule } from 'app/exercises/programming/shar
 import { DetailModule } from 'app/detail-overview-list/detail.module';
 import { ArtemisDurationFromSecondsPipe } from 'app/shared/pipes/artemis-duration-from-seconds.pipe';
 import { NoDataComponent } from 'app/shared/no-data-component';
+import { SafeHtmlPipe } from 'app/shared/pipes/safe-html.pipe';
+import { GradeStepBoundsPipe } from 'app/shared/pipes/grade-step-bounds.pipe';
 import { examScoresState } from 'app/exam/exam-scores/exam-scores.route';
 import { GitDiffLineStatComponent } from 'app/exercises/programming/git-diff-report/git-diff-line-stat.component';
 
@@ -73,7 +75,7 @@ const ENTITY_STATES = [...examManagementState, ...examScoresState];
 
 @NgModule({
     // TODO: For better modularization we could define an exercise module with the corresponding exam routes
-    providers: [ArtemisDurationFromSecondsPipe],
+    providers: [ArtemisDurationFromSecondsPipe, SafeHtmlPipe, GradeStepBoundsPipe],
     imports: [
         RouterModule.forChild(ENTITY_STATES),
         ArtemisTextExerciseModule,
@@ -97,7 +99,6 @@ const ENTITY_STATES = [...examManagementState, ...examScoresState];
         ArtemisExamModePickerModule,
         ArtemisHeaderExercisePageWithDetailsModule,
         BarChartModule,
-        FeatureToggleModule,
         ArtemisModePickerModule,
         StudentsUploadImagesModule,
         TitleChannelNameModule,
@@ -108,8 +109,9 @@ const ENTITY_STATES = [...examManagementState, ...examScoresState];
         DetailModule,
         NoDataComponent,
         GitDiffLineStatComponent,
-    ],
-    declarations: [
+        SafeHtmlPipe,
+        GradeStepBoundsPipe,
+        BonusComponent,
         ExamManagementComponent,
         ExamUpdateComponent,
         ExamDetailComponent,
@@ -135,7 +137,6 @@ const ENTITY_STATES = [...examManagementState, ...examScoresState];
         StudentExamDetailTableRowComponent,
         ExamImportComponent,
         ExamExerciseImportComponent,
-        BonusComponent,
         ExamEditWorkingTimeComponent,
         ExamEditWorkingTimeDialogComponent,
         ExamLiveAnnouncementCreateModalComponent,

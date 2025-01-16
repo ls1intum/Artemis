@@ -1,7 +1,5 @@
 import { ActivatedRoute, Params } from '@angular/router';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
-import { NgModel } from '@angular/forms';
-import { NgxDatatableModule } from '@siemens/ngx-datatable';
 import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
 import { ParticipationService } from 'app/exercises/shared/participation/participation.service';
 import { ParticipationComponent } from 'app/exercises/shared/participation/participation.component';
@@ -16,26 +14,18 @@ import { Team } from 'app/entities/team.model';
 import { formatTeamAsSearchResult } from 'app/exercises/shared/team/team.utils';
 import { ProgrammingSubmissionService, ProgrammingSubmissionState, ProgrammingSubmissionStateObj } from 'app/exercises/programming/participate/programming-submission.service';
 import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
-import { MockComponent, MockDirective, MockModule, MockProvider } from 'ng-mocks';
+import { MockProvider } from 'ng-mocks';
 import { MockProgrammingSubmissionService } from '../../helpers/mocks/service/mock-programming-submission.service';
 import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
 import { MockProfileService } from '../../helpers/mocks/service/mock-profile.service';
-import { ProgrammingExerciseInstructorSubmissionStateComponent } from 'app/exercises/programming/shared/actions/programming-exercise-instructor-submission-state.component';
-import { DataTableComponent } from 'app/shared/data-table/data-table.component';
-import { TeamStudentsListComponent } from 'app/exercises/shared/team/team-participate/team-students-list.component';
-import { ProgrammingExerciseInstructorTriggerBuildButtonComponent } from 'app/exercises/programming/shared/actions/programming-exercise-instructor-trigger-build-button.component';
-import { MockRouterLinkDirective } from '../../helpers/mocks/directive/mock-router-link.directive';
-import { FeatureToggleDirective } from 'app/shared/feature-toggle/feature-toggle.directive';
-import { DeleteButtonDirective } from 'app/shared/delete-dialog/delete-button.directive';
-import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { ArtemisTestModule } from '../../test.module';
-import { TranslatePipeMock } from '../../helpers/mocks/service/mock-translate.service';
-import { FormDateTimePickerComponent } from 'app/shared/date-time-picker/date-time-picker.component';
 import { Exam } from 'app/entities/exam/exam.model';
 import { ExerciseGroup } from 'app/entities/exercise-group.model';
 import { GradeStepsDTO } from 'app/entities/grade-step.model';
 import { AlertService } from 'app/core/util/alert.service';
 import { MockAlertService } from '../../helpers/mocks/service/mock-alert.service';
+import { MockSyncStorage } from '../../helpers/mocks/service/mock-sync-storage.service';
+import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 
 describe('ParticipationComponent', () => {
     let component: ParticipationComponent;
@@ -56,26 +46,14 @@ describe('ParticipationComponent', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule, MockModule(NgxDatatableModule)],
-            declarations: [
-                ParticipationComponent,
-                MockComponent(DataTableComponent),
-                MockComponent(FormDateTimePickerComponent),
-                MockComponent(ProgrammingExerciseInstructorSubmissionStateComponent),
-                MockComponent(ProgrammingExerciseInstructorTriggerBuildButtonComponent),
-                MockComponent(TeamStudentsListComponent),
-                MockDirective(DeleteButtonDirective),
-                MockDirective(FeatureToggleDirective),
-                MockDirective(NgModel),
-                MockDirective(TranslateDirective),
-                MockRouterLinkDirective,
-                TranslatePipeMock,
-            ],
+            imports: [ArtemisTestModule],
             providers: [
                 { provide: ActivatedRoute, useValue: route },
                 { provide: ProfileService, useClass: MockProfileService },
                 { provide: ProgrammingSubmissionService, useClass: MockProgrammingSubmissionService },
                 { provide: AlertService, useClass: MockAlertService },
+                { provide: LocalStorageService, useClass: MockSyncStorage },
+                { provide: SessionStorageService, useClass: MockSyncStorage },
                 MockProvider(ExerciseService),
                 MockProvider(ParticipationService),
             ],
