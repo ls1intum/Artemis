@@ -21,7 +21,7 @@ describe('CodeEditorFileBrowserFileComponent', () => {
         fixture = TestBed.createComponent(CodeEditorFileBrowserFileComponent);
         component = fixture.componentInstance;
         component.disableActions = false;
-        component.item = { value: 'TestFile', checked: true } as Partial<TreeviewItem<string>>;;
+        component.item = { value: 'TestFile', checked: true } as unknown as TreeviewItem<string>;
         fixture.detectChanges();
     });
 
