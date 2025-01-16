@@ -13,5 +13,10 @@ import java.lang.annotation.Target;
 @Retention(RetentionPolicy.RUNTIME)
 public @interface AllowedTools {
 
+    /**
+     * Returns the allowed tools specified in the annotation of the method or class.
+     *
+     * @return the allowed tools specified by the annotation
+     */
     ToolTokenType[] value();
 }
