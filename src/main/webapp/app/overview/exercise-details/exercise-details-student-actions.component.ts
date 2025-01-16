@@ -53,7 +53,6 @@ import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
     selector: 'jhi-exercise-details-student-actions',
     templateUrl: './exercise-details-student-actions.component.html',
     styleUrls: ['../course-overview.scss'],
-    providers: [ExternalCloningService],
 })
 export class ExerciseDetailsStudentActionsComponent implements OnInit, OnChanges {
     private alertService = inject(AlertService);
