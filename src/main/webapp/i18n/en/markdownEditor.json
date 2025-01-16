@@ -13,7 +13,10 @@
                 "slideNotFound": "Referenced slide was not found",
                 "imageNotFound": "Referenced image was not found"
             },
-            "slideWithNumber": "Slide {{ number }}"
+            "slideWithNumber": "Slide {{ number }}",
+            "rephrasing": {
+                "success": "You have rephrased the text. Press Ctrl+Z to restore the original text"
+            }
         }
     }
 }

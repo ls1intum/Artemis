@@ -3,6 +3,7 @@ import { Injectable, inject } from '@angular/core';
 import { BehaviorSubject, Observable } from 'rxjs';
 import { JhiWebsocketService } from 'app/core/websocket/websocket.service';
 import RephrasingVariant from 'app/shared/monaco-editor/model/rephrasing-variant';
+import { AlertService } from 'app/core/util/alert.service';
 /**
  * Service providing shared functionality for rephrasing context of the markdown editor.
  * This service is intended to be used by components that need to rephrase text of the Monaco editors.
@@ -17,6 +18,7 @@ export class RephraseService {
 
     private http = inject(HttpClient);
     private jhiWebsocketService = inject(JhiWebsocketService);
+    private alertService = inject(AlertService);
 
     /**
      * Triggers the rephrasing pipeline via HTTP and subscribes to its WebSocket updates.
@@ -47,6 +49,7 @@ export class RephraseService {
                                     observer.complete();
                                     this.isLoadingSubject.next(false);
                                     this.jhiWebsocketService.unsubscribe(websocketTopic);
+                                    this.alertService.success('artemisApp.markdownEditor.rephrasing.success');
                                 }
                             },
                             error: (error) => {
