@@ -19,7 +19,7 @@ export enum ChatServiceMode {
     TEXT_EXERCISE = 'text-exercise-chat',
     EXERCISE = 'exercise-chat', // TODO: Rename to PROGRAMMING_EXERCISE
     COURSE = 'course-chat',
-    REPHRASE = 'rephrase',
+    REWRITE = 'rewrite',
 }
 
 /**

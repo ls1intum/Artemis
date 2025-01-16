@@ -15,10 +15,10 @@ import de.tum.cit.aet.artemis.core.repository.UserRepository;
 import de.tum.cit.aet.artemis.core.service.LLMTokenUsageService;
 import de.tum.cit.aet.artemis.iris.service.pyris.PyrisJobService;
 import de.tum.cit.aet.artemis.iris.service.pyris.PyrisPipelineService;
-import de.tum.cit.aet.artemis.iris.service.pyris.dto.rephrasing.PyrisRephrasingPipelineExecutionDTO;
-import de.tum.cit.aet.artemis.iris.service.pyris.dto.rephrasing.PyrisRephrasingStatusUpdateDTO;
-import de.tum.cit.aet.artemis.iris.service.pyris.dto.rephrasing.RephrasingVariant;
-import de.tum.cit.aet.artemis.iris.service.pyris.job.RephrasingJob;
+import de.tum.cit.aet.artemis.iris.service.pyris.dto.rewriting.PyrisRewritingPipelineExecutionDTO;
+import de.tum.cit.aet.artemis.iris.service.pyris.dto.rewriting.PyrisRewritingStatusUpdateDTO;
+import de.tum.cit.aet.artemis.iris.service.pyris.dto.rewriting.RewritingVariant;
+import de.tum.cit.aet.artemis.iris.service.pyris.job.RewritingJob;
 import de.tum.cit.aet.artemis.iris.service.websocket.IrisWebsocketService;
 
 /**
@@ -26,7 +26,7 @@ import de.tum.cit.aet.artemis.iris.service.websocket.IrisWebsocketService;
  */
 @Service
 @Profile(PROFILE_IRIS)
-public class IrisRephrasingService {
+public class IrisReWritingService {
 
     private final PyrisPipelineService pyrisPipelineService;
 
@@ -40,7 +40,7 @@ public class IrisRephrasingService {
 
     private final UserRepository userRepository;
 
-    public IrisRephrasingService(PyrisPipelineService pyrisPipelineService, LLMTokenUsageService llmTokenUsageService, CourseRepository courseRepository,
+    public IrisReWritingService(PyrisPipelineService pyrisPipelineService, LLMTokenUsageService llmTokenUsageService, CourseRepository courseRepository,
             IrisWebsocketService websocketService, PyrisJobService pyrisJobService, UserRepository userRepository) {
         this.pyrisPipelineService = pyrisPipelineService;
         this.llmTokenUsageService = llmTokenUsageService;
@@ -55,17 +55,17 @@ public class IrisRephrasingService {
      *
      * @param user          the user for which the pipeline should be executed
      * @param course        the course for which the pipeline should be executed
-     * @param toBeRephrased the description of the course
+     * @param toBeRewritten the description of the course
      */
-    public void executeRephrasingPipeline(User user, Course course, RephrasingVariant variant, String toBeRephrased) {
+    public void executeRewritingPipeline(User user, Course course, RewritingVariant variant, String toBeRewritten) {
         // @formatter:off
         pyrisPipelineService.executePipeline(
-                "rephrasing",
+                "rewriting",
                 variant.toString(),
                 Optional.empty(),
-                pyrisJobService.createTokenForJob(token -> new RephrasingJob(token, course.getId(), user.getId())),
-                executionDto -> new PyrisRephrasingPipelineExecutionDTO(executionDto, toBeRephrased),
-                stages -> websocketService.send(user.getLogin(), websocketTopic(course.getId()), new PyrisRephrasingStatusUpdateDTO(stages, null, null))
+                pyrisJobService.createTokenForJob(token -> new RewritingJob(token, course.getId(), user.getId())),
+                executionDto -> new PyrisRewritingPipelineExecutionDTO(executionDto, toBeRewritten),
+                stages -> websocketService.send(user.getLogin(), websocketTopic(course.getId()), new PyrisRewritingStatusUpdateDTO(stages, null, null))
         );
         // @formatter:on
     }
@@ -77,7 +77,7 @@ public class IrisRephrasingService {
      * @param statusUpdate the status update containing the new competency recommendations
      * @return the same job that was passed in
      */
-    public RephrasingJob handleStatusUpdate(RephrasingJob job, PyrisRephrasingStatusUpdateDTO statusUpdate) {
+    public RewritingJob handleStatusUpdate(RewritingJob job, PyrisRewritingStatusUpdateDTO statusUpdate) {
         Course course = courseRepository.findByIdForUpdateElseThrow(job.courseId());
         if (statusUpdate.tokens() != null && !statusUpdate.tokens().isEmpty()) {
             llmTokenUsageService.saveLLMTokenUsage(statusUpdate.tokens(), LLMServiceType.IRIS, builder -> builder.withCourse(course.getId()).withUser(job.userId()));
@@ -90,7 +90,7 @@ public class IrisRephrasingService {
     }
 
     private static String websocketTopic(long courseId) {
-        return "rephrasing/" + courseId;
+        return "rewriting/" + courseId;
     }
 
 }

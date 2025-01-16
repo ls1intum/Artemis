@@ -1,6 +1,6 @@
-enum RephrasingVariant {
+enum RewritingVariant {
     FAQ = 'FAQ',
     PROBLEM_STATEMENT = 'PROBLEM_STATEMENT',
 }
 
-export default RephrasingVariant;
+export default RewritingVariant;

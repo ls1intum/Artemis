@@ -71,7 +71,7 @@ import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { MatMenu, MatMenuItem, MatMenuTrigger } from '@angular/material/menu';
 import { MatButton } from '@angular/material/button';
 import { ArtemisTranslatePipe } from '../../pipes/artemis-translate.pipe';
-import { RephraseService } from 'app/shared/monaco-editor/rephrase.service';
+import { RewritingService } from 'app/shared/monaco-editor/rewriting.service';
 
 export enum MarkdownEditorHeight {
     INLINE = 125,
@@ -142,7 +142,7 @@ export class MarkdownEditorMonacoComponent implements AfterContentInit, AfterVie
     private readonly metisService = inject(MetisService, { optional: true });
     private readonly fileUploaderService = inject(FileUploaderService);
     private readonly artemisMarkdown = inject(ArtemisMarkdownService);
-    private readonly rephraseService = inject(RephraseService);
+    private readonly rewriteService = inject(RewritingService);
 
     @ViewChild(MonacoEditorComponent, { static: false }) monacoEditor: MonacoEditorComponent;
     @ViewChild('fullElement', { static: true }) fullElement: ElementRef<HTMLDivElement>;
@@ -316,7 +316,7 @@ export class MarkdownEditorMonacoComponent implements AfterContentInit, AfterVie
     isLoading: boolean = false;
 
     ngOnInit(): void {
-        this.rephraseService.isLoading.subscribe((loadingState) => {
+        this.rewriteService.isLoading.subscribe((loadingState) => {
             console.log(this.isLoading);
             this.isLoading = loadingState;
         });

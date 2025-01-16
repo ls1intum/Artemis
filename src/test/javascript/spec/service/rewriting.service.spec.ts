@@ -3,20 +3,20 @@ import { HttpTestingController, provideHttpClientTesting } from '@angular/common
 import { provideHttpClient } from '@angular/common/http';
 import { ArtemisTestModule } from '../test.module';
 
-import { RephraseService } from 'app/shared/monaco-editor/rephrase.service';
+import { RewritingService } from '../../../../main/webapp/app/shared/monaco-editor/rewriting.service';
 import { BehaviorSubject } from 'rxjs';
 import { JhiWebsocketService } from 'app/core/websocket/websocket.service';
-import RephrasingVariant from '../../../../main/webapp/app/shared/monaco-editor/model/rephrasing-variant';
+import RewritingVariant from '../../../../main/webapp/app/shared/monaco-editor/model/rewriting-variant';
 
-describe('Rephrase Service', () => {
+describe('Rewrite Service', () => {
     let httpMock: HttpTestingController;
-    let service: RephraseService;
+    let service: RewritingService;
 
     beforeEach(() => {
         const mockWebsocketService = {
             subscribe: jest.fn(),
             unsubscribe: jest.fn(),
-            receive: jest.fn().mockReturnValue(new BehaviorSubject({ result: 'Rephrased Text' })),
+            receive: jest.fn().mockReturnValue(new BehaviorSubject({ result: 'Rewritten Text' })),
         };
 
         TestBed.configureTestingModule({
@@ -25,7 +25,7 @@ describe('Rephrase Service', () => {
         });
 
         httpMock = TestBed.inject(HttpTestingController);
-        service = TestBed.inject(RephraseService);
+        service = TestBed.inject(RewritingService);
     });
 
     afterEach(() => {
@@ -33,17 +33,17 @@ describe('Rephrase Service', () => {
     });
 
     describe('Service methods', () => {
-        it('should trigger rephrasing pipeline and return rephrased text', () => {
-            const toBeRephrased = 'OriginalText';
-            const rephrasingVariant = RephrasingVariant.FAQ;
+        it('should trigger rewriting pipeline and return rewritten text', () => {
+            const toBeRewritten = 'OriginalText';
+            const rewritingVariant = RewritingVariant.FAQ;
             const courseId = 1;
 
-            service.rephraseMarkdown(toBeRephrased, rephrasingVariant, courseId).subscribe((rephrasedText) => {
-                expect(rephrasedText).toBe('Rephrased Text');
+            service.rewritteMarkdown(toBeRewritten, rewritingVariant, courseId).subscribe((rewrittenText) => {
+                expect(rewrittenText).toBe('Rewritten Text');
             });
 
             const req = httpMock.expectOne({
-                url: `api/courses/${courseId}/rephrase-text?toBeRephrased=${toBeRephrased}&variant=${rephrasingVariant}`,
+                url: `api/courses/${courseId}/rewrite-text?toBeRewritten=${toBeRewritten}&variant=${rewritingVariant}`,
                 method: 'POST',
             });
 
@@ -51,11 +51,11 @@ describe('Rephrase Service', () => {
         });
 
         it('should handle HTTP error correctly', () => {
-            const toBeRephrased = 'OriginalText';
-            const rephrasingVariant = RephrasingVariant.FAQ;
+            const toBeRewritten = 'OriginalText';
+            const rewritingVariant = RewritingVariant.FAQ;
             const courseId = 1;
 
-            service.rephraseMarkdown(toBeRephrased, rephrasingVariant, courseId).subscribe({
+            service.rewritteMarkdown(toBeRewritten, rewritingVariant, courseId).subscribe({
                 next: () => {
                     throw new Error('Expected error, but got success response');
                 },
@@ -65,7 +65,7 @@ describe('Rephrase Service', () => {
             });
 
             const req = httpMock.expectOne({
-                url: `api/courses/${courseId}/rephrase-text?toBeRephrased=${toBeRephrased}&variant=${rephrasingVariant}`,
+                url: `api/courses/${courseId}/rewrite-text?toBeRewritten=${toBeRewritten}&variant=${rewritingVariant}`,
                 method: 'POST',
             });
 

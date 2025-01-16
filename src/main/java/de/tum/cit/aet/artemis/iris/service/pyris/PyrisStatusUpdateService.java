@@ -10,12 +10,12 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
 import de.tum.cit.aet.artemis.iris.service.IrisCompetencyGenerationService;
-import de.tum.cit.aet.artemis.iris.service.IrisRephrasingService;
+import de.tum.cit.aet.artemis.iris.service.IrisReWritingService;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.chat.PyrisChatStatusUpdateDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.chat.textexercise.PyrisTextExerciseChatStatusUpdateDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.competency.PyrisCompetencyStatusUpdateDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.lectureingestionwebhook.PyrisLectureIngestionStatusUpdateDTO;
-import de.tum.cit.aet.artemis.iris.service.pyris.dto.rephrasing.PyrisRephrasingStatusUpdateDTO;
+import de.tum.cit.aet.artemis.iris.service.pyris.dto.rewriting.PyrisRewritingStatusUpdateDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.status.PyrisStageDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.status.PyrisStageState;
 import de.tum.cit.aet.artemis.iris.service.pyris.job.CompetencyExtractionJob;
@@ -23,7 +23,7 @@ import de.tum.cit.aet.artemis.iris.service.pyris.job.CourseChatJob;
 import de.tum.cit.aet.artemis.iris.service.pyris.job.ExerciseChatJob;
 import de.tum.cit.aet.artemis.iris.service.pyris.job.IngestionWebhookJob;
 import de.tum.cit.aet.artemis.iris.service.pyris.job.PyrisJob;
-import de.tum.cit.aet.artemis.iris.service.pyris.job.RephrasingJob;
+import de.tum.cit.aet.artemis.iris.service.pyris.job.RewritingJob;
 import de.tum.cit.aet.artemis.iris.service.pyris.job.TextExerciseChatJob;
 import de.tum.cit.aet.artemis.iris.service.pyris.job.TrackedSessionBasedPyrisJob;
 import de.tum.cit.aet.artemis.iris.service.session.IrisCourseChatSessionService;
@@ -44,19 +44,19 @@ public class PyrisStatusUpdateService {
 
     private final IrisCompetencyGenerationService competencyGenerationService;
 
-    private final IrisRephrasingService rephrasingService;
+    private final IrisReWritingService rewritingService;
 
     private static final Logger log = LoggerFactory.getLogger(PyrisStatusUpdateService.class);
 
     public PyrisStatusUpdateService(PyrisJobService pyrisJobService, IrisExerciseChatSessionService irisExerciseChatSessionService,
             IrisTextExerciseChatSessionService irisTextExerciseChatSessionService, IrisCourseChatSessionService courseChatSessionService,
-            IrisCompetencyGenerationService competencyGenerationService, IrisRephrasingService rephrasingService) {
+            IrisCompetencyGenerationService competencyGenerationService, IrisReWritingService rewritingService) {
         this.pyrisJobService = pyrisJobService;
         this.irisExerciseChatSessionService = irisExerciseChatSessionService;
         this.irisTextExerciseChatSessionService = irisTextExerciseChatSessionService;
         this.courseChatSessionService = courseChatSessionService;
         this.competencyGenerationService = competencyGenerationService;
-        this.rephrasingService = rephrasingService;
+        this.rewritingService = rewritingService;
     }
 
     /**
@@ -118,8 +118,8 @@ public class PyrisStatusUpdateService {
      * @param job          the job that is updated
      * @param statusUpdate the status update
      */
-    public void handleStatusUpdate(RephrasingJob job, PyrisRephrasingStatusUpdateDTO statusUpdate) {
-        var updatedJob = rephrasingService.handleStatusUpdate(job, statusUpdate);
+    public void handleStatusUpdate(RewritingJob job, PyrisRewritingStatusUpdateDTO statusUpdate) {
+        var updatedJob = rewritingService.handleStatusUpdate(job, statusUpdate);
         removeJobIfTerminatedElseUpdate(statusUpdate.stages(), updatedJob);
     }
 

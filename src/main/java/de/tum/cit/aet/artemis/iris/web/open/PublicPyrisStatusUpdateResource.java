@@ -23,13 +23,13 @@ import de.tum.cit.aet.artemis.iris.service.pyris.dto.chat.PyrisChatStatusUpdateD
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.chat.textexercise.PyrisTextExerciseChatStatusUpdateDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.competency.PyrisCompetencyStatusUpdateDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.lectureingestionwebhook.PyrisLectureIngestionStatusUpdateDTO;
-import de.tum.cit.aet.artemis.iris.service.pyris.dto.rephrasing.PyrisRephrasingStatusUpdateDTO;
+import de.tum.cit.aet.artemis.iris.service.pyris.dto.rewriting.PyrisRewritingStatusUpdateDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.job.CompetencyExtractionJob;
 import de.tum.cit.aet.artemis.iris.service.pyris.job.CourseChatJob;
 import de.tum.cit.aet.artemis.iris.service.pyris.job.ExerciseChatJob;
 import de.tum.cit.aet.artemis.iris.service.pyris.job.IngestionWebhookJob;
 import de.tum.cit.aet.artemis.iris.service.pyris.job.PyrisJob;
-import de.tum.cit.aet.artemis.iris.service.pyris.job.RephrasingJob;
+import de.tum.cit.aet.artemis.iris.service.pyris.job.RewritingJob;
 import de.tum.cit.aet.artemis.iris.service.pyris.job.TextExerciseChatJob;
 
 /**
@@ -152,7 +152,7 @@ public class PublicPyrisStatusUpdateResource {
     }
 
     /**
-     * POST public/pyris/pipelines/rephrasing/runs/:runId/status : Send the rephrased text in a status update
+     * POST public/pyris/pipelines/rewriting/runs/:runId/status : Send the rewritten text in a status update
      * <p>
      * Uses custom token based authentication.
      *
@@ -163,10 +163,10 @@ public class PublicPyrisStatusUpdateResource {
      * @throws AccessForbiddenException if the token is invalid
      * @return a {@link ResponseEntity} with status {@code 200 (OK)}
      */
-    @PostMapping("pipelines/rephrasing/runs/{runId}/status")
+    @PostMapping("pipelines/rewriting/runs/{runId}/status")
     @EnforceNothing
-    public ResponseEntity<Void> setRephrasingJobStatus(@PathVariable String runId, @RequestBody PyrisRephrasingStatusUpdateDTO statusUpdateDTO, HttpServletRequest request) {
-        var job = pyrisJobService.getAndAuthenticateJobFromHeaderElseThrow(request, RephrasingJob.class);
+    public ResponseEntity<Void> setRewritingJobStatus(@PathVariable String runId, @RequestBody PyrisRewritingStatusUpdateDTO statusUpdateDTO, HttpServletRequest request) {
+        var job = pyrisJobService.getAndAuthenticateJobFromHeaderElseThrow(request, RewritingJob.class);
         if (!Objects.equals(job.jobId(), runId)) {
             throw new ConflictException("Run ID in URL does not match run ID in request body", "Job", "runIdMismatch");
         }

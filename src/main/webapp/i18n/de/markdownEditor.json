@@ -4,7 +4,7 @@
             "commands": {
                 "katex": "Formel",
                 "fullscreen": "Vollbild",
-                "rephrase": "Umformulieren"
+                "rewrite": "Umformulieren"
             },
             "fileUpload": "Füge Dateien durch Drag-and-Drop oder durch Auswählen hinzu.",
             "guide": "Formatierungen mit Markdown sind möglich",
@@ -14,7 +14,7 @@
                 "imageNotFound": "Referenziertes Bild wurde nicht gefunden"
             },
             "slideWithNumber": "Folie {{ number }}",
-            "rephrasing": {
+            "rewriting": {
                 "success": "Sie haben den Text umformuliert. Drücken Sie Strg+Z, um den Originaltext wiederherzustellen"
             }
         }

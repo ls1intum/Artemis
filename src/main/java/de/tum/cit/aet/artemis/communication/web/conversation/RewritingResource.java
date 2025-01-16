@@ -17,44 +17,44 @@ import org.springframework.web.bind.annotation.RestController;
 
 import de.tum.cit.aet.artemis.core.repository.CourseRepository;
 import de.tum.cit.aet.artemis.core.repository.UserRepository;
-import de.tum.cit.aet.artemis.iris.service.IrisRephrasingService;
-import de.tum.cit.aet.artemis.iris.service.pyris.dto.rephrasing.RephrasingVariant;
+import de.tum.cit.aet.artemis.iris.service.IrisReWritingService;
+import de.tum.cit.aet.artemis.iris.service.pyris.dto.rewriting.RewritingVariant;
 
 /**
- * REST controller for managing Markdown Rephrasings.
+ * REST controller for managing Markdown Rewritings.
  */
 @Profile(PROFILE_IRIS)
 @RestController
 @RequestMapping("api/")
-public class RephrasingResource {
+public class RewritingResource {
 
     @Value("${jhipster.clientApp.name}")
     private String applicationName;
 
-    private static final Logger log = LoggerFactory.getLogger(RephrasingResource.class);
+    private static final Logger log = LoggerFactory.getLogger(RewritingResource.class);
 
-    private static final String ENTITY_NAME = "rephrasing";
+    private static final String ENTITY_NAME = "rewriting";
 
     private final UserRepository userRepository;
 
     private final CourseRepository courseRepository;
 
-    private final Optional<IrisRephrasingService> irisRephrasingService;
+    private final Optional<IrisReWritingService> irisRewritingService;
 
-    public RephrasingResource(UserRepository userRepository, CourseRepository courseRepository, Optional<IrisRephrasingService> irisRephrasingService) {
+    public RewritingResource(UserRepository userRepository, CourseRepository courseRepository, Optional<IrisReWritingService> irisRewritingService) {
         this.userRepository = userRepository;
         this.courseRepository = courseRepository;
-        this.irisRephrasingService = irisRephrasingService;
+        this.irisRewritingService = irisRewritingService;
 
     }
 
-    @PostMapping("courses/{courseId}/rephrase-text")
-    public ResponseEntity<Void> rephraseText(@RequestParam String toBeRephrased, @RequestParam RephrasingVariant variant, @PathVariable Long courseId) {
-        var rephrasingService = irisRephrasingService.orElseThrow();
+    @PostMapping("courses/{courseId}/rewrite-text")
+    public ResponseEntity<Void> rewriteText(@RequestParam String toBeRewritten, @RequestParam RewritingVariant variant, @PathVariable Long courseId) {
+        var rewritingService = irisRewritingService.orElseThrow();
         var user = userRepository.getUserWithGroupsAndAuthorities();
         var course = courseRepository.findByIdElseThrow(courseId);
-        rephrasingService.executeRephrasingPipeline(user, course, variant, toBeRephrased);
-        log.debug("REST request to rephrase text: {}", toBeRephrased);
+        rewritingService.executeRewritingPipeline(user, course, variant, toBeRewritten);
+        log.debug("REST request to rewrite text: {}", toBeRewritten);
         return ResponseEntity.ok().build();
     }
 

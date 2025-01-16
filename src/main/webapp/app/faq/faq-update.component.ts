@@ -17,13 +17,13 @@ import { ArtemisCategorySelectorModule } from 'app/shared/category-selector/cate
 import { ArtemisSharedModule } from 'app/shared/shared.module';
 import { ArtemisSharedComponentModule } from 'app/shared/components/shared-component.module';
 import { AccountService } from 'app/core/auth/account.service';
-import { RephraseAction } from 'app/shared/monaco-editor/model/actions/rephrase.action';
+import { RewriteAction } from 'app/shared/monaco-editor/model/actions/rewriteAction';
 import { FullscreenAction } from 'app/shared/monaco-editor/model/actions/fullscreen.action';
-import { RephraseService } from 'app/shared/monaco-editor/rephrase.service';
+import { RewritingService } from 'app/shared/monaco-editor/rewriting.service';
 
 import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
 import { PROFILE_IRIS } from 'app/app.constants';
-import RephrasingVariant from 'app/shared/monaco-editor/model/rephrasing-variant';
+import RewritingVariant from 'app/shared/monaco-editor/model/rewriting-variant';
 
 @Component({
     selector: 'jhi-faq-update',
@@ -54,7 +54,7 @@ export class FaqUpdateComponent implements OnInit {
     private router = inject(Router);
     private translateService = inject(TranslateService);
     private accountService = inject(AccountService);
-    private rephraseService = inject(RephraseService);
+    private rewriteService = inject(RewritingService);
     private profileService = inject(ProfileService);
 
     private profileInfoSubscription: Subscription;
@@ -80,7 +80,7 @@ export class FaqUpdateComponent implements OnInit {
         this.profileInfoSubscription = this.profileService.getProfileInfo().subscribe(async (profileInfo) => {
             this.irisEnabled = profileInfo.activeProfiles.includes(PROFILE_IRIS);
             if (this.irisEnabled) {
-                this.metaActions = [new RephraseAction(this.rephraseService, RephrasingVariant.FAQ, this.courseId), new FullscreenAction()];
+                this.metaActions = [new RewriteAction(this.rewriteService, RewritingVariant.FAQ, this.courseId), new FullscreenAction()];
             }
         });
     }

@@ -4,7 +4,7 @@
             "commands": {
                 "katex": "Formula",
                 "fullscreen": "Fullscreen",
-                "rephrase": "Rephrase"
+                "rewrite": "Rewrite"
             },
             "fileUpload": "Attach files by dragging & dropping or selecting them.",
             "guide": "Styling with Markdown is possible",
@@ -14,8 +14,8 @@
                 "imageNotFound": "Referenced image was not found"
             },
             "slideWithNumber": "Slide {{ number }}",
-            "rephrasing": {
-                "success": "You have rephrased the text. Press Ctrl+Z to restore the original text"
+            "rewriting": {
+                "success": "The text was rewritten. Press Ctrl+Z to restore the original text"
             }
         }
     }
