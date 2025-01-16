@@ -20,7 +20,7 @@ describe('CodeEditorFileBrowserFileComponent', () => {
         fixture = TestBed.createComponent(CodeEditorFileBrowserFileComponent);
         component = fixture.componentInstance;
         component.disableActions = false;
-        component.item = { name: 'TestFile', checked: true };
+        component.item = { value: 'TestFile', checked: true };
         fixture.detectChanges();
     });
 
