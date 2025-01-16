@@ -1,4 +1,4 @@
-import { AfterViewInit, Component, Input } from '@angular/core';
+import { AfterViewInit, Component, Input, inject } from '@angular/core';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { TranslateService } from '@ngx-translate/core';
 import { Result } from 'app/entities/result.model';
@@ -11,13 +11,20 @@ import { AnswerOption } from 'app/entities/quiz/answer-option.model';
 import { ShortAnswerSubmittedText } from 'app/entities/quiz/short-answer-submitted-text.model';
 import { MultipleChoiceQuestion } from 'app/entities/quiz/multiple-choice-question.model';
 import { faQuestionCircle } from '@fortawesome/free-regular-svg-icons';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { NgClass } from '@angular/common';
 
 @Component({
     selector: 'jhi-quiz-scoring-infostudent-modal',
     templateUrl: './quiz-scoring-info-student-modal.component.html',
     styleUrls: ['./quiz-scoring-info-student-modal.component.scss'],
+    imports: [TranslateDirective, FaIconComponent, NgClass],
 })
 export class QuizScoringInfoStudentModalComponent implements AfterViewInit {
+    private modalService = inject(NgbModal);
+    private translateService = inject(TranslateService);
+
     QuizQuestionType = QuizQuestionType;
     ScoringType = ScoringType;
 
@@ -67,11 +74,6 @@ export class QuizScoringInfoStudentModalComponent implements AfterViewInit {
 
     // Icons
     farQuestionCircle = faQuestionCircle;
-
-    constructor(
-        private modalService: NgbModal,
-        private translateService: TranslateService,
-    ) {}
 
     /**
      * Count the variables depending on the quiz question type

@@ -1,4 +1,4 @@
-import { AfterViewInit, Component, Directive, ElementRef, Input, OnChanges, OnDestroy, OnInit, QueryList, SimpleChanges, ViewChildren } from '@angular/core';
+import { AfterViewInit, Component, Directive, ElementRef, Input, OnChanges, OnDestroy, OnInit, QueryList, SimpleChanges, ViewChildren, inject } from '@angular/core';
 import * as Split from 'split.js';
 import { Subject } from 'rxjs';
 import { PlagiarismComparison } from 'app/exercises/shared/plagiarism/types/PlagiarismComparison';
@@ -12,18 +12,24 @@ import { SimpleMatch } from 'app/exercises/shared/plagiarism/types/PlagiarismMat
 import dayjs from 'dayjs/esm';
 import { TextPlagiarismFileElement } from 'app/exercises/shared/plagiarism/types/text/TextPlagiarismFileElement';
 import { IconDefinition, faLock, faUnlock } from '@fortawesome/free-solid-svg-icons';
+import { ModelingSubmissionViewerComponent } from './modeling-submission-viewer/modeling-submission-viewer.component';
+import { TextSubmissionViewerComponent } from './text-submission-viewer/text-submission-viewer.component';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 
 @Directive({ selector: '[jhiPane]' })
 export class SplitPaneDirective {
-    constructor(public elementRef: ElementRef) {}
+    elementRef = inject(ElementRef);
 }
 
 @Component({
     selector: 'jhi-plagiarism-split-view',
     styleUrls: ['./plagiarism-split-view.component.scss'],
     templateUrl: './plagiarism-split-view.component.html',
+    imports: [SplitPaneDirective, ModelingSubmissionViewerComponent, TextSubmissionViewerComponent, FaIconComponent],
 })
 export class PlagiarismSplitViewComponent implements AfterViewInit, OnChanges, OnInit, OnDestroy {
+    private plagiarismCasesService = inject(PlagiarismCasesService);
+
     @Input() comparison: PlagiarismComparison<TextSubmissionElement | ModelingSubmissionElement>;
     @Input() exercise: Exercise;
     @Input() splitControlSubject: Subject<string>;
@@ -49,8 +55,6 @@ export class PlagiarismSplitViewComponent implements AfterViewInit, OnChanges, O
     readonly dayjs = dayjs;
     protected readonly faLock: IconDefinition = faLock;
     protected readonly faUnlock: IconDefinition = faUnlock;
-
-    constructor(private plagiarismCasesService: PlagiarismCasesService) {}
 
     /**
      * Initialize third-party libraries inside this lifecycle hook.

@@ -6,7 +6,6 @@ import { ArtemisSharedCommonModule } from 'app/shared/shared-common.module';
     selector: 'jhi-confirm-feedback-channel-creation-modal',
     templateUrl: './confirm-feedback-channel-creation-modal.component.html',
     imports: [ArtemisSharedCommonModule],
-    standalone: true,
 })
 export class ConfirmFeedbackChannelCreationModalComponent {
     protected readonly TRANSLATION_BASE = 'artemisApp.programmingExercise.configureGrading.feedbackAnalysis.feedbackDetailChannel.confirmationModal';

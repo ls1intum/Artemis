@@ -11,8 +11,6 @@ export class ExampleSubmission implements BaseEntity {
     public submission?: Submission;
     public tutorParticipations?: TutorParticipation[];
     public assessmentExplanation?: string;
-
-    constructor() {}
 }
 
 export enum ExampleSubmissionMode {

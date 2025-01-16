@@ -8,8 +8,7 @@ import { RouterModule } from '@angular/router';
 import { ProfilePictureComponent } from 'app/shared/profile-picture/profile-picture.component';
 
 @NgModule({
-    imports: [ArtemisDataTableModule, UserImportModule, NgxDatatableModule, ArtemisSharedModule, RouterModule, ProfilePictureComponent],
-    declarations: [CourseGroupComponent],
+    imports: [ArtemisDataTableModule, UserImportModule, NgxDatatableModule, ArtemisSharedModule, RouterModule, ProfilePictureComponent, CourseGroupComponent],
     exports: [CourseGroupComponent],
 })
 export class ArtemisCourseGroupModule {}

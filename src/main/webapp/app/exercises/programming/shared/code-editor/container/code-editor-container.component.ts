@@ -1,4 +1,4 @@
-import { Component, EventEmitter, Input, OnChanges, Output, SimpleChanges, ViewChild } from '@angular/core';
+import { Component, EventEmitter, Input, OnChanges, Output, SimpleChanges, ViewChild, inject } from '@angular/core';
 import { TranslateService } from '@ngx-translate/core';
 import { isEmpty as _isEmpty, fromPairs, toPairs, uniq } from 'lodash-es';
 import { CodeEditorFileService } from 'app/exercises/programming/shared/code-editor/service/code-editor-file.service';
@@ -24,6 +24,7 @@ import { Feedback } from 'app/entities/feedback.model';
 import { Course } from 'app/entities/course.model';
 import { ConnectionError } from 'app/exercises/programming/shared/code-editor/service/code-editor-repository.service';
 import { Annotation, CodeEditorMonacoComponent } from 'app/exercises/programming/shared/code-editor/monaco/code-editor-monaco.component';
+import { KeysPipe } from 'app/shared/pipes/keys.pipe';
 
 export enum CollapsableCodeEditorElement {
     FileBrowser,
@@ -35,8 +36,21 @@ export enum CollapsableCodeEditorElement {
     selector: 'jhi-code-editor-container',
     templateUrl: './code-editor-container.component.html',
     styleUrls: ['./code-editor-container.component.scss'],
+    imports: [
+        CodeEditorGridComponent,
+        CodeEditorActionsComponent,
+        CodeEditorFileBrowserComponent,
+        CodeEditorMonacoComponent,
+        CodeEditorInstructionsComponent,
+        CodeEditorBuildOutputComponent,
+        KeysPipe,
+    ],
 })
 export class CodeEditorContainerComponent implements OnChanges {
+    private translateService = inject(TranslateService);
+    private alertService = inject(AlertService);
+    private fileService = inject(CodeEditorFileService);
+
     readonly CommitState = CommitState;
     readonly EditorState = EditorState;
     readonly CollapsableCodeEditorElement = CollapsableCodeEditorElement;
@@ -107,11 +121,7 @@ export class CodeEditorContainerComponent implements OnChanges {
     errorFiles: string[] = [];
     annotations: Array<Annotation> = [];
 
-    constructor(
-        private translateService: TranslateService,
-        private alertService: AlertService,
-        private fileService: CodeEditorFileService,
-    ) {
+    constructor() {
         this.initializeProperties();
     }
 

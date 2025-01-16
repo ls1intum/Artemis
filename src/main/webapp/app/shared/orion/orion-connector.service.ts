@@ -1,4 +1,4 @@
-import { Injectable, Injector } from '@angular/core';
+import { Injectable, inject } from '@angular/core';
 import { BehaviorSubject, Observable } from 'rxjs';
 import { ExerciseView, OrionState } from 'app/shared/orion/orion';
 import { Router } from '@angular/router';
@@ -34,31 +34,19 @@ function theWindow(): any {
     providedIn: 'root',
 })
 export class OrionConnectorService {
+    private router = inject(Router);
+    private alertService = inject(AlertService);
+
     private orionState: OrionState;
     private orionStateSubject: BehaviorSubject<OrionState>;
 
     // When loaded, the AssessmentComponent registers here to receive updates from the plugin
     activeAssessmentComponent: OrionTutorAssessmentComponent | undefined = undefined;
 
-    constructor(
-        private injector: Injector,
-        private alertService: AlertService,
-    ) {}
-
     static initConnector(connector: OrionConnectorService) {
         theWindow().artemisClientConnector = connector;
         connector.orionState = { opened: -1, view: ExerciseView.STUDENT, cloning: false, building: false };
         connector.orionStateSubject = new BehaviorSubject<OrionState>(connector.orionState);
-    }
-
-    /**
-     * Yes, this is not best practice. But since this bridge service is an APP_INITIALIZER and has to be set on
-     * the window object right in the beginning (so that the IDE can interact with Artemis as soon as the page has been
-     * loaded), it should be fine to actually load the router only when it is needed later in the process.
-     * Otherwise we would have a cyclic dependency problem on app startup
-     */
-    get router(): Router {
-        return this.injector.get(Router);
     }
 
     /**
@@ -260,10 +248,10 @@ export class OrionConnectorService {
      *
      * @param submissionId id of the submission, used to navigate to the corresponding URL
      * @param correctionRound correction round, also needed to navigate to the correct URL
-     * @param testRun test run flag, also needed for navigation
+     * @param _testRun test run flag, also needed for navigation
      * @param base64data the student's submission as base64
      */
-    downloadSubmission(submissionId: number, correctionRound: number, testRun: boolean, base64data: string) {
+    downloadSubmission(submissionId: number, correctionRound: number, _testRun: boolean, base64data: string) {
         // Uncomment this line to also transfer the testRun flag.
         // THIS IS A BREAKING CHANGE that will require all users to upgrade their Orion to a compatible version!
         // Also change in orion.ts

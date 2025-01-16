@@ -14,6 +14,7 @@ import dayjs from 'dayjs/esm';
 export enum ProgrammingLanguage {
     EMPTY = 'EMPTY',
     ASSEMBLER = 'ASSEMBLER',
+    BASH = 'BASH',
     C = 'C',
     C_PLUS_PLUS = 'C_PLUS_PLUS',
     C_SHARP = 'C_SHARP',

@@ -7,8 +7,14 @@ import { ExerciseUpdateNotificationModule } from 'app/exercises/shared/exercise-
 import { SwitchEditModeButtonComponent } from 'app/exercises/programming/manage/update/switch-edit-mode-button/switch-edit-mode-button.component';
 
 @NgModule({
-    imports: [ArtemisSharedCommonModule, ArtemisSharedComponentModule, ExerciseUpdateNotificationModule, SwitchEditModeButtonComponent],
-    declarations: [FormStatusBarComponent, FormFooterComponent],
+    imports: [
+        ArtemisSharedCommonModule,
+        ArtemisSharedComponentModule,
+        ExerciseUpdateNotificationModule,
+        SwitchEditModeButtonComponent,
+        FormStatusBarComponent,
+        FormFooterComponent,
+    ],
     exports: [FormStatusBarComponent, FormFooterComponent],
 })
-export class FormsModule {}
+export class ArtemisFormsModule {}

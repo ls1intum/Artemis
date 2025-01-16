@@ -15,7 +15,6 @@ import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
 @Component({
     selector: 'jhi-user-settings',
     templateUrl: 'user-settings-container.component.html',
-    standalone: true,
     styleUrls: ['user-settings-container.component.scss'],
     imports: [TranslateDirective, RouterModule, FontAwesomeModule],
 })

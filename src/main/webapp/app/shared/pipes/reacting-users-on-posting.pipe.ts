@@ -1,4 +1,4 @@
-import { Pipe, PipeTransform } from '@angular/core';
+import { Pipe, PipeTransform, inject } from '@angular/core';
 import { TranslateService } from '@ngx-translate/core';
 import { Observable } from 'rxjs';
 
@@ -8,11 +8,9 @@ export const PLACEHOLDER_USER_REACTED = 'REPLACE_WITH_TRANSLATED_YOU';
 /**
  * Pipe to show list of reacting users when hovering over emojis.
  */
-@Pipe({
-    name: 'reactingUsersOnPosting',
-})
+@Pipe({ name: 'reactingUsersOnPosting' })
 export class ReactingUsersOnPostingPipe implements PipeTransform {
-    constructor(private translateService: TranslateService) {}
+    private translateService = inject(TranslateService);
 
     /**
      * Transforms a given name list of reacting users to a prosaic, translated string
