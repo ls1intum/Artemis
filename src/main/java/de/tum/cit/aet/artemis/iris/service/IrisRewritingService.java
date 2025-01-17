@@ -55,6 +55,7 @@ public class IrisRewritingService {
      *
      * @param user          the user for which the pipeline should be executed
      * @param course        the course for which the pipeline should be executed
+     * @param variant       the rewriting variant to be used
      * @param toBeRewritten the text to be rewritten
      */
     public void executeRewritingPipeline(User user, Course course, RewritingVariant variant, String toBeRewritten) {
