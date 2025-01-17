@@ -16,12 +16,15 @@ import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
 import { AlertService } from 'app/core/util/alert.service';
 import { FaqCategory } from 'app/entities/faq-category.model';
 import { ArtemisMarkdownEditorModule } from 'app/shared/markdown-editor/markdown-editor.module';
+import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
+import { ProfileInfo } from 'app/shared/layouts/profiles/profile-info.model';
 
 describe('FaqUpdateComponent', () => {
     let faqUpdateComponentFixture: ComponentFixture<FaqUpdateComponent>;
     let faqUpdateComponent: FaqUpdateComponent;
     let faqService: FaqService;
     let activatedRoute: ActivatedRoute;
+    let profileService: ProfileService;
     let router: Router;
     let faq1: Faq;
     let courseId: number;
@@ -75,6 +78,10 @@ describe('FaqUpdateComponent', () => {
                 }),
             ],
         }).compileComponents();
+
+        profileService = TestBed.inject(ProfileService);
+        const mockProfileInfo = { activeProfiles: ['iris'] } as ProfileInfo;
+        jest.spyOn(profileService, 'getProfileInfo').mockReturnValue(of(mockProfileInfo));
 
         faqUpdateComponentFixture = TestBed.createComponent(FaqUpdateComponent);
         faqUpdateComponent = faqUpdateComponentFixture.componentInstance;
