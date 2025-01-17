@@ -10,15 +10,15 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import de.tum.cit.aet.artemis.core.repository.CourseRepository;
 import de.tum.cit.aet.artemis.core.repository.UserRepository;
 import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInCourse.EnforceAtLeastTutorInCourse;
 import de.tum.cit.aet.artemis.iris.service.IrisRewritingService;
-import de.tum.cit.aet.artemis.iris.service.pyris.dto.rewriting.RewritingVariant;
+import de.tum.cit.aet.artemis.iris.service.pyris.dto.data.PyrisRewriteTextRequest;
 
 /**
  * REST controller for managing Markdown Rewritings.
@@ -45,14 +45,21 @@ public class RewritingResource {
 
     }
 
+    /**
+     * POST /courses/{courseId}/rewrite-text : Rewrite a given text.
+     *
+     * @param request  the request containing the text to be rewritten and the corresponding variant
+     * @param courseId the id of the course
+     * @return the ResponseEntity with status 200 (OK)
+     */
     @EnforceAtLeastTutorInCourse
     @PostMapping("courses/{courseId}/rewrite-text")
-    public ResponseEntity<Void> rewriteText(@RequestParam String toBeRewritten, @RequestParam RewritingVariant variant, @PathVariable Long courseId) {
+    public ResponseEntity<Void> rewriteText(@RequestBody PyrisRewriteTextRequest request, @PathVariable Long courseId) {
         var rewritingService = irisRewritingService.orElseThrow();
         var user = userRepository.getUserWithGroupsAndAuthorities();
         var course = courseRepository.findByIdElseThrow(courseId);
-        rewritingService.executeRewritingPipeline(user, course, variant, toBeRewritten);
-        log.debug("REST request to rewrite text: {}", toBeRewritten);
+        rewritingService.executeRewritingPipeline(user, course, request.variant(), request.toBeRewritten());
+        log.debug("REST request to rewrite text: {}", request.toBeRewritten());
         return ResponseEntity.ok().build();
     }
 

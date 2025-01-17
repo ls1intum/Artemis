@@ -31,11 +31,9 @@ export class ArtemisIntelligenceService {
         this.isLoadingRewrite.set(true);
         return new Observable<string>((observer) => {
             this.http
-                .post(`${this.resourceUrl}/${courseId}/rewrite-text`, null, {
-                    params: {
-                        toBeRewritten: toBeRewritten,
-                        variant: rewritingVariant,
-                    },
+                .post(`${this.resourceUrl}/${courseId}/rewrite-text`, {
+                    toBeRewritten: toBeRewritten,
+                    variant: rewritingVariant,
                 })
                 .subscribe({
                     next: () => {
