@@ -40,7 +40,6 @@ import { StudentExamDetailTableRowComponent } from 'app/exam/manage/student-exam
 import { ExampleSubmissionsModule } from 'app/exercises/shared/example-submission/example-submissions.module';
 import { BarChartModule } from '@swimlane/ngx-charts';
 import { UserImportModule } from 'app/shared/user-import/user-import.module';
-import { ArtemisExamSharedModule } from 'app/exam/shared/exam-shared.module';
 import { ExamStatusComponent } from 'app/exam/manage/exam-status.component';
 import { ExamImportComponent } from 'app/exam/manage/exams/exam-import/exam-import.component';
 import { ArtemisHeaderExercisePageWithDetailsModule } from 'app/exercises/shared/exercise-headers/exercise-headers.module';
@@ -89,7 +88,6 @@ const ENTITY_STATES = [...examManagementState, ...examScoresState];
         ArtemisTextSubmissionAssessmentModule,
         ExampleSubmissionsModule,
         UserImportModule,
-        ArtemisExamSharedModule,
         ArtemisHeaderExercisePageWithDetailsModule,
         BarChartModule,
         ArtemisModePickerModule,
