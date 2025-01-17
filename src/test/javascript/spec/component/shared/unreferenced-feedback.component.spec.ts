@@ -121,7 +121,7 @@ describe('UnreferencedFeedbackComponent', () => {
         comp.createAssessmentOnDrop(new Event(''));
         fixture.detectChanges();
 
-        const unreferencedFeedbackDetailDebugElement = fixture.debugElement.query(By.directive(UnreferencedFeedbackDetailStubComponent));
+        const unreferencedFeedbackDetailDebugElement = fixture.debugElement.query(By.css('jhi-unreferenced-feedback-detail'));
         const unreferencedFeedbackDetailComp: UnreferencedFeedbackDetailStubComponent = unreferencedFeedbackDetailDebugElement.componentInstance;
 
         const createAssessmentOnDropStub: jest.SpyInstance = jest.spyOn(comp, 'createAssessmentOnDrop');
