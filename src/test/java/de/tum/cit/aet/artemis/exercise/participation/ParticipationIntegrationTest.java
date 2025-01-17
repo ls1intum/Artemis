@@ -645,6 +645,7 @@ class ParticipationIntegrationTest extends AbstractAthenaTest {
         Result resultText1 = participationUtilService.createSubmissionAndResult(textParticipation, 100, true);
         TextSubmission submission = (TextSubmission) resultText1.getSubmission();
         submission.setText("some random text");
+        submission.setSubmitted(true);
         Result resultText2 = participationUtilService.addResultToParticipation(textParticipation, submission);
         resultText2.setSuccessful(true);
         resultText2.setAssessmentType(AssessmentType.MANUAL);
@@ -682,6 +683,9 @@ class ParticipationIntegrationTest extends AbstractAthenaTest {
         participationRepo.save(modelingParticipation);
 
         Result resultModeling1 = participationUtilService.createSubmissionAndResult(modelingParticipation, 100, true);
+        ModelingSubmission submission = (ModelingSubmission) resultModeling1.getSubmission();
+        submission.setModel("some random model");
+        submission.setSubmitted(true);
         Result resultModeling2 = participationUtilService.addResultToParticipation(modelingParticipation, resultModeling1.getSubmission());
         resultModeling2.setAssessmentType(AssessmentType.MANUAL);
         resultModeling2.setCompletionDate(ZonedDateTime.now());
@@ -761,6 +765,9 @@ class ParticipationIntegrationTest extends AbstractAthenaTest {
         participationRepo.save(textParticipation);
 
         Result resultText1 = participationUtilService.createSubmissionAndResult(textParticipation, 100, false);
+        TextSubmission submission = (TextSubmission) resultText1.getSubmission();
+        submission.setText("some random text");
+        submission.setSubmitted(true);
         Result resultText2 = participationUtilService.addResultToParticipation(textParticipation, resultText1.getSubmission());
         resultText2.setAssessmentType(AssessmentType.MANUAL);
         resultText2.setCompletionDate(ZonedDateTime.now());
@@ -795,6 +802,9 @@ class ParticipationIntegrationTest extends AbstractAthenaTest {
         participationRepo.save(modelingParticipation);
 
         Result resultModeling1 = participationUtilService.createSubmissionAndResult(modelingParticipation, 100, false);
+        ModelingSubmission submission = (ModelingSubmission) resultModeling1.getSubmission();
+        submission.setModel("some random model");
+        submission.setSubmitted(true);
         Result resultModeling2 = participationUtilService.addResultToParticipation(modelingParticipation, resultModeling1.getSubmission());
         resultModeling2.setAssessmentType(AssessmentType.MANUAL);
         resultModeling2.setCompletionDate(ZonedDateTime.now());

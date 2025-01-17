@@ -74,7 +74,20 @@ public class TextExerciseFeedbackService {
     public StudentParticipation handleNonGradedFeedbackRequest(StudentParticipation participation, TextExercise textExercise) {
         if (this.athenaFeedbackSuggestionsService.isPresent()) {
             this.athenaFeedbackSuggestionsService.get().checkRateLimitOrThrow(participation);
-            CompletableFuture.runAsync(() -> this.generateAutomaticNonGradedFeedback(participation, textExercise));
+
+            var submissionOptional = participationService.findExerciseParticipationWithLatestSubmissionAndResultElseThrow(participation.getId()).findLatestSubmission();
+            if (submissionOptional.isEmpty()) {
+                throw new BadRequestAlertException("No legal submissions found", "submission", "noSubmissionExists");
+            }
+            TextSubmission textSubmission = (TextSubmission) submissionOptional.get();
+
+            this.athenaFeedbackSuggestionsService.orElseThrow().checkLatestSubmissionHasNoAthenaResultOrThrow(textSubmission);
+
+            if (textSubmission.isEmpty()) {
+                throw new BadRequestAlertException("Submission can not be empty for an AI feedback request", "submission", "noAthenaFeedbackOnEmptySubmission");
+            }
+
+            CompletableFuture.runAsync(() -> this.generateAutomaticNonGradedFeedback(textSubmission, participation, textExercise));
         }
         return participation;
     }
@@ -86,23 +99,10 @@ public class TextExerciseFeedbackService {
      * @param participation the student participation associated with the exercise.
      * @param textExercise  the text exercise object.
      */
-    public void generateAutomaticNonGradedFeedback(StudentParticipation participation, TextExercise textExercise) {
+    public void generateAutomaticNonGradedFeedback(TextSubmission textSubmission, StudentParticipation participation, TextExercise textExercise) {
         log.debug("Using athena to generate (text exercise) feedback request: {}", textExercise.getId());
 
         // athena takes over the control here
-        var submissionOptional = participationService.findExerciseParticipationWithLatestSubmissionAndResultElseThrow(participation.getId()).findLatestSubmission();
-
-        if (submissionOptional.isEmpty()) {
-            throw new BadRequestAlertException("No legal submissions found", "submission", "noSubmissionExists");
-        }
-        TextSubmission textSubmission = (TextSubmission) submissionOptional.get();
-
-        this.athenaFeedbackSuggestionsService.orElseThrow().checkLatestSubmissionHasNoAthenaResultOrThrow(textSubmission);
-
-        if (textSubmission.isEmpty()) {
-            throw new BadRequestAlertException("Submission can not be empty for an AI feedback request", "submission", "noAthenaFeedbackOnEmptySubmission");
-        }
-
         Result automaticResult = new Result();
         automaticResult.setAssessmentType(AssessmentType.AUTOMATIC_ATHENA);
         automaticResult.setRated(true);
