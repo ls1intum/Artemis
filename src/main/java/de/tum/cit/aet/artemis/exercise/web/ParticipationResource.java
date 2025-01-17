@@ -398,8 +398,9 @@ public class ParticipationResource {
 
         // Check submission requirements
         if (exercise instanceof TextExercise || exercise instanceof ModelingExercise) {
-            if (submissionRepository.findAllByParticipationId(participation.getId()).isEmpty()) {
-                throw new BadRequestAlertException("You need to submit at least once", "participation", "preconditions not met");
+            boolean hasSubmittedOnce = submissionRepository.findAllByParticipationId(participation.getId()).stream().anyMatch(Submission::isSubmitted);
+            if (!hasSubmittedOnce) {
+                throw new BadRequestAlertException("You need to submit at least once", "participation", "noSubmissionExists", true);
             }
         }
         else if (exercise instanceof ProgrammingExercise) {

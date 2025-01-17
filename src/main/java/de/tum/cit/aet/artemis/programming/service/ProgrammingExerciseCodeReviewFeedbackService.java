@@ -19,7 +19,6 @@ import org.springframework.stereotype.Service;
 import de.tum.cit.aet.artemis.assessment.domain.AssessmentType;
 import de.tum.cit.aet.artemis.assessment.domain.Feedback;
 import de.tum.cit.aet.artemis.assessment.domain.FeedbackType;
-import de.tum.cit.aet.artemis.assessment.domain.Result;
 import de.tum.cit.aet.artemis.assessment.repository.ResultRepository;
 import de.tum.cit.aet.artemis.assessment.service.ResultService;
 import de.tum.cit.aet.artemis.athena.service.AthenaFeedbackSuggestionsService;
@@ -91,7 +90,7 @@ public class ProgrammingExerciseCodeReviewFeedbackService {
     public ProgrammingExerciseStudentParticipation handleNonGradedFeedbackRequest(Long exerciseId, ProgrammingExerciseStudentParticipation participation,
             ProgrammingExercise programmingExercise) {
         if (this.athenaFeedbackSuggestionsService.isPresent()) {
-            this.checkRateLimitOrThrow(participation);
+            this.athenaFeedbackSuggestionsService.get().checkRateLimitOrThrow(participation);
             CompletableFuture.runAsync(() -> this.generateAutomaticNonGradedFeedback(participation, programmingExercise));
             return participation;
         }
@@ -110,7 +109,7 @@ public class ProgrammingExerciseCodeReviewFeedbackService {
      * @param programmingExercise the programming exercise object.
      */
     public void generateAutomaticNonGradedFeedback(ProgrammingExerciseStudentParticipation participation, ProgrammingExercise programmingExercise) {
-        log.debug("Using athena to generate feedback request: {}", programmingExercise.getId());
+        log.debug("Using athena to generate (programming exercise) feedback request: {}", programmingExercise.getId());
 
         // athena takes over the control here
         var submissionOptional = programmingExerciseParticipationService.findProgrammingExerciseParticipationWithLatestSubmissionAndResult(participation.getId())
@@ -220,17 +219,6 @@ public class ProgrammingExerciseCodeReviewFeedbackService {
             programmingExerciseParticipationService.unlockStudentRepositoryAndParticipation(participation);
             participation.setIndividualDueDate(null);
             this.programmingExerciseStudentParticipationRepository.save(participation);
-        }
-    }
-
-    private void checkRateLimitOrThrow(ProgrammingExerciseStudentParticipation participation) {
-
-        List<Result> athenaResults = participation.getResults().stream().filter(result -> result.getAssessmentType() == AssessmentType.AUTOMATIC_ATHENA).toList();
-
-        long countOfSuccessfulRequests = athenaResults.stream().filter(result -> result.isSuccessful() == Boolean.TRUE).count();
-
-        if (countOfSuccessfulRequests >= this.allowedFeedbackAttempts) {
-            throw new BadRequestAlertException("Maximum number of AI feedback requests reached.", "participation", "maxAthenaResultsReached", true);
         }
     }
 }
