@@ -16,7 +16,6 @@ import { ArtemisCodeEditorModule } from 'app/exercises/programming/shared/code-e
 import { ArtemisResultModule } from 'app/exercises/shared/result/result.module';
 import { ArtemisProgrammingExerciseActionsModule } from 'app/exercises/programming/shared/actions/programming-exercise-actions.module';
 import { ArtemisProgrammingExerciseInstructionsRenderModule } from 'app/exercises/programming/shared/instructions-render/programming-exercise-instructions-render.module';
-import { ArtemisParticipationSummaryModule } from 'app/exam/participate/summary/exam-result-summary.module';
 import { ArtemisExerciseButtonsModule } from 'app/overview/exercise-details/exercise-buttons.module';
 import { ArtemisHeaderExercisePageWithDetailsModule } from 'app/exercises/shared/exercise-headers/exercise-headers.module';
 import { ArtemisMarkdownModule } from 'app/shared/markdown.module';
@@ -49,7 +48,6 @@ const ENTITY_STATES = [...examParticipationState];
         ArtemisProgrammingExerciseInstructionsRenderModule,
         ArtemisExerciseButtonsModule,
         ArtemisProgrammingAssessmentModule,
-        ArtemisParticipationSummaryModule,
         ArtemisMarkdownModule,
         SubmissionResultStatusModule,
         ArtemisExamSubmissionComponentsModule,
