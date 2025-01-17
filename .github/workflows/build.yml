@@ -125,8 +125,8 @@ jobs:
       with:
         result-encoding: string
         script: |
-          console.log(`Github inputs ${JSON.stringify(github.inputs)}`);
-          console.log(`Github tag ${github.inputs.tag}`);
+          console.log(`Github inputs ${inputs}`);
+          console.log(`Github tag ${inputs.tag}`);
           console.log(`Event payload is ${JSON.stringify(context.payload)}`);
           if (context.eventName === "workflow_dispatch") {
             // Use the "tag" passed in via the workflow_call input
