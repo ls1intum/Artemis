@@ -114,7 +114,9 @@ jobs:
     # This if condition should be exactly like below, since one of the job is skipped
     if: always() && (needs.conditional-build.result == 'success' || needs.check-existing-build.result == 'success')
     runs-on: ubuntu-latest
-    environment: ${{ github.event.inputs.HELIOS_ENVIRONMENT_NAME }}
+    environment:
+      name: ${{ github.event.inputs.HELIOS_ENVIRONMENT_NAME }}
+      url: ${{ github.event.inputs.HELIOS_ENVIRONMENT_NAME }}
 
     env:
       GATEWAY_USER: "jump"
