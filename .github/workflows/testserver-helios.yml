@@ -15,25 +15,24 @@ on:
         description: "SHA of the branch to deploy"
         required: true
         type: string
-      HELIOS_PR_NUMBER:
-        description: "PR number that triggered deployment"
-        required: false
-        type: string
       HELIOS_ENVIRONMENT_NAME:
         description: "Which environment to deploy (e.g. artemis-test7.artemis.cit.tum.de, etc.)."
+        required: true
+        type: string
+      HELIOS_RAW_URL:
+        description: "URL to the raw content of the repository in the format https://raw.githubusercontent.com/:owner/:repo/:sha"
         required: true
         type: string
       HELIOS_BUILD:
         description: "Whether to also build or just deploy the existing Docker image"
         required: true
         type: boolean
-        default: false
-      HELIOS_BUILD_TAG:
-        description: "Docker tag to use if we are building or pulling an existing image"
+      HELIOS_PR_NUMBER:
+        description: "PR number that triggered deployment"
         required: false
         type: string
-      HELIOS_RAW_URL:
-        description: "URL to the raw content of the repository in the format https://raw.githubusercontent.com/:owner/:repo/:sha"
+      HELIOS_BUILD_TAG:
+        description: "Docker tag to use if we are building or pulling an existing image"
         required: false
         type: string
 
@@ -51,12 +50,12 @@ jobs:
       - name: Validate Build Tag Input Exists
         if: ${{ github.event.inputs.HELIOS_BUILD == 'true' && github.event.inputs.HELIOS_BUILD_TAG == '' }}
         run: |
-          echo "HELIOS_BUILD is true but no HELIOS_BUILD_TAG was provided."
+          echo "::error::HELIOS_BUILD is true but no HELIOS_BUILD_TAG was provided."
           exit 1
       - name: Validate PR Number Input Exists
         if: ${{ github.event.inputs.HELIOS_BUILD == 'false' && github.event.inputs.HELIOS_PR_NUMBER == '' }}
         run: |
-          echo "HELIOS_BUILD is false but no HELIOS_PR_NUMBER was provided."
+          echo "::error::HELIOS_BUILD is false but no HELIOS_PR_NUMBER was provided."
           exit 1
 
       - name: Print Inputs
@@ -122,7 +121,7 @@ jobs:
       - name: Fail if no successful build found
         if: ${{ steps.check_build.conclusion == 'success' && github.event.inputs.HELIOS_BUILD == 'false' && fromJSON(steps.check_build.outputs.data).total_count == 0 }}
         run: |
-          echo "No successful build found for branch '${{ github.event.inputs.HELIOS_BRANCH_NAME }}' with SHA '${{ github.event.inputs.HELIOS_BRANCH_HEAD_SHA }}'."
+          echo "::error::No successful build found for branch '${{ github.event.inputs.HELIOS_BRANCH_NAME }}' with SHA '${{ github.event.inputs.HELIOS_BRANCH_HEAD_SHA }}'."
           exit 1
       - name: Post comment about build validation failure
         if: failure() && github.event.inputs.HELIOS_BUILD == 'false'
