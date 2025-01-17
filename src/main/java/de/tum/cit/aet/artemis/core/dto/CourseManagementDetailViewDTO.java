@@ -8,5 +8,5 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 public record CourseManagementDetailViewDTO(Integer numberOfStudentsInCourse, Integer numberOfTeachingAssistantsInCourse, Integer numberOfEditorsInCourse,
         Integer numberOfInstructorsInCourse, Double currentPercentageAssessments, Long currentAbsoluteAssessments, Long currentMaxAssessments, Double currentPercentageComplaints,
         Long currentAbsoluteComplaints, Long currentMaxComplaints, Double currentPercentageMoreFeedbacks, Long currentAbsoluteMoreFeedbacks, Long currentMaxMoreFeedbacks,
-        Double currentPercentageAverageScore, Double currentAbsoluteAverageScore, Double currentMaxAverageScore, List<Integer> activeStudents) {
+        Double currentPercentageAverageScore, Double currentAbsoluteAverageScore, Double currentMaxAverageScore, List<Integer> activeStudents, Double currentTotalLlmCostInEur) {
 }

@@ -1,20 +1,20 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, inject } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { HttpClient, HttpParams } from '@angular/common/http';
+import { TranslateDirective } from '../shared/language/translate.directive';
 
 @Component({
     selector: 'jhi-dynamic-registration',
     templateUrl: './lti13-dynamic-registration.component.html',
+    imports: [TranslateDirective],
 })
 export class Lti13DynamicRegistrationComponent implements OnInit {
+    private route = inject(ActivatedRoute);
+    private http = inject(HttpClient);
+
     courseId: number;
     isRegistering = true;
     registeredSuccessfully: boolean;
-
-    constructor(
-        private route: ActivatedRoute,
-        private http: HttpClient,
-    ) {}
 
     /**
      * perform LTI 13 dynamic registration

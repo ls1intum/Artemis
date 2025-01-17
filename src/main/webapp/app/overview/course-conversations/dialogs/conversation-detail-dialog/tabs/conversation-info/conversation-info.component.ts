@@ -1,4 +1,4 @@
-import { Component, EventEmitter, Input, OnDestroy, OnInit, Output } from '@angular/core';
+import { Component, OnDestroy, OnInit, inject, input, output } from '@angular/core';
 import { ConversationDTO } from 'app/entities/metis/conversation/conversation.model';
 import { ChannelDTO, getAsChannelDTO, isChannelDTO } from 'app/entities/metis/conversation/channel.model';
 import { defaultSecondLayerDialogOptions, getUserLabel } from 'app/overview/course-conversations/other/conversation.util';
@@ -19,11 +19,16 @@ import { canChangeChannelProperties, canChangeGroupChatProperties } from 'app/sh
 import { GroupChatDTO, getAsGroupChatDTO, isGroupChatDTO } from 'app/entities/metis/conversation/group-chat.model';
 import { GroupChatService } from 'app/shared/metis/conversations/group-chat.service';
 import { catchError } from 'rxjs/operators';
+import { ConversationUserDTO } from 'app/entities/metis/conversation/conversation-user-dto.model';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
+import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 
 @Component({
     selector: 'jhi-conversation-info',
     templateUrl: './conversation-info.component.html',
     styleUrls: ['./conversation-info.component.scss'],
+    imports: [TranslateDirective, ArtemisDatePipe, ArtemisTranslatePipe],
 })
 export class ConversationInfoComponent implements OnInit, OnDestroy {
     private ngUnsubscribe = new Subject<void>();
@@ -39,27 +44,25 @@ export class ConversationInfoComponent implements OnInit, OnDestroy {
         return getAsChannelDTO(conversation) || getAsGroupChatDTO(conversation);
     }
 
-    @Input()
-    activeConversation: ConversationDTO;
+    getCreator(): ConversationUserDTO | null {
+        return this.activeConversation()?.creator as ConversationUserDTO | null;
+    }
 
-    @Input()
-    course: Course;
+    activeConversation = input.required<ConversationDTO>();
+    course = input<Course>();
+    changesPerformed = output<void>();
 
-    @Output()
-    changesPerformed = new EventEmitter<void>();
+    private channelService = inject(ChannelService);
+    private groupChatService = inject(GroupChatService);
+    private modalService = inject(NgbModal);
+    private alertService = inject(AlertService);
 
     readOnlyMode = false;
-    constructor(
-        private channelService: ChannelService,
-        private groupChatService: GroupChatService,
-        private modalService: NgbModal,
-        private alertService: AlertService,
-    ) {}
 
     ngOnInit(): void {
-        if (this.activeConversation) {
-            if (getAsChannelDTO(this.activeConversation)) {
-                this.readOnlyMode = !!getAsChannelDTO(this.activeConversation)?.isArchived;
+        if (this.activeConversation()) {
+            if (getAsChannelDTO(this.activeConversation())) {
+                this.readOnlyMode = !!getAsChannelDTO(this.activeConversation())?.isArchived;
             }
         }
     }
@@ -74,7 +77,7 @@ export class ConversationInfoComponent implements OnInit, OnDestroy {
     }
 
     openEditNameModal(event: MouseEvent) {
-        const channelOrGroupChat = this.getAsChannelOrGroupChat(this.activeConversation);
+        const channelOrGroupChat = this.getAsChannelOrGroupChat(this.activeConversation()!);
         if (!channelOrGroupChat) {
             return;
         }
@@ -93,7 +96,7 @@ export class ConversationInfoComponent implements OnInit, OnDestroy {
     }
 
     openEditTopicModal(event: MouseEvent) {
-        const channel = getAsChannelDTO(this.activeConversation);
+        const channel = getAsChannelDTO(this.activeConversation());
         if (!channel) {
             return;
         }
@@ -112,7 +115,7 @@ export class ConversationInfoComponent implements OnInit, OnDestroy {
     }
 
     openDescriptionTopicModal(event: MouseEvent) {
-        const channel = getAsChannelDTO(this.activeConversation);
+        const channel = getAsChannelDTO(this.activeConversation());
         if (!channel) {
             return;
         }
@@ -170,11 +173,15 @@ export class ConversationInfoComponent implements OnInit, OnDestroy {
     }
 
     private updateGroupChat<K extends keyof GroupChatDTO>(groupChat: GroupChatDTO, propertyName: K, updateValue: GroupChatDTO[K]) {
+        const courseId = this.course()?.id;
+        if (!courseId) {
+            return;
+        }
         const updateDTO = new GroupChatDTO();
         updateDTO[propertyName] = updateValue;
 
         this.groupChatService
-            .update(this.course.id!, groupChat.id!, updateDTO)
+            .update(courseId, groupChat.id!, updateDTO)
             .pipe(
                 map((res: HttpResponse<GroupChatDTO>) => res.body),
                 takeUntil(this.ngUnsubscribe),
@@ -189,10 +196,14 @@ export class ConversationInfoComponent implements OnInit, OnDestroy {
     }
 
     private updateChannel<K extends keyof ChannelDTO>(channel: ChannelDTO, propertyName: K, updateValue: ChannelDTO[K]) {
+        const courseId = this.course()?.id;
+        if (!courseId) {
+            return;
+        }
         const updateDTO = new ChannelDTO();
         updateDTO[propertyName] = updateValue;
         this.channelService
-            .update(this.course.id!, channel.id!, updateDTO)
+            .update(courseId, channel.id!, updateDTO)
             .pipe(
                 map((res: HttpResponse<ChannelDTO>) => res.body),
                 takeUntil(this.ngUnsubscribe),
@@ -209,4 +220,7 @@ export class ConversationInfoComponent implements OnInit, OnDestroy {
                 },
             });
     }
+
+    protected readonly ConversationDTO = ConversationDTO;
+    protected readonly ConversationUserDTO = ConversationUserDTO;
 }

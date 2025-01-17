@@ -7,11 +7,31 @@ import { AlertService } from 'app/core/util/alert.service';
 import { UserSshPublicKey } from 'app/entities/programming/user-ssh-public-key.model';
 import dayjs from 'dayjs/esm';
 import { SshUserSettingsService } from 'app/shared/user-settings/ssh-settings/ssh-user-settings.service';
+import { TranslateDirective } from '../../language/translate.directive';
+import { DocumentationLinkComponent } from '../../components/documentation-link/documentation-link.component';
+import { RouterLink } from '@angular/router';
+import { NgbDropdown, NgbDropdownButtonItem, NgbDropdownItem, NgbDropdownMenu, NgbDropdownToggle } from '@ng-bootstrap/ng-bootstrap';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { DeleteButtonDirective } from '../../delete-dialog/delete-button.directive';
+import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 
 @Component({
     selector: 'jhi-account-information',
     templateUrl: './ssh-user-settings.component.html',
     styleUrls: ['../user-settings.scss', './ssh-user-settings.component.scss'],
+    imports: [
+        TranslateDirective,
+        DocumentationLinkComponent,
+        RouterLink,
+        NgbDropdown,
+        NgbDropdownToggle,
+        FaIconComponent,
+        NgbDropdownMenu,
+        NgbDropdownItem,
+        NgbDropdownButtonItem,
+        DeleteButtonDirective,
+        ArtemisDatePipe,
+    ],
 })
 export class SshUserSettingsComponent implements OnInit, OnDestroy {
     private sshUserSettingsService = inject(SshUserSettingsService);

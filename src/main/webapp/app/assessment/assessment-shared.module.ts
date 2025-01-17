@@ -6,7 +6,6 @@ import { AssessmentComplaintAlertComponent } from './assessment-complaint-alert/
 import { ScoreDisplayComponent } from '../shared/score-display/score-display.component';
 import { UnreferencedFeedbackDetailComponent } from 'app/assessment/unreferenced-feedback-detail/unreferenced-feedback-detail.component';
 import { ArtemisSharedComponentModule } from 'app/shared/components/shared-component.module';
-import { ArtemisComplaintsForTutorModule } from 'app/complaints/complaints-for-tutor/complaints-for-tutor.module';
 import { AssessmentLocksComponent } from 'app/assessment/assessment-locks/assessment-locks.component';
 import { RouterModule } from '@angular/router';
 import { assessmentLocksRoute } from 'app/assessment/assessment-locks/assessment-locks.route';
@@ -18,13 +17,14 @@ import { ArtemisFeedbackModule } from 'app/exercises/shared/feedback/feedback.mo
 import { AssessmentNoteComponent } from 'app/assessment/assessment-note/assessment-note.component';
 import { FeedbackContentPipe } from 'app/shared/pipes/feedback-content.pipe';
 import { QuotePipe } from 'app/shared/pipes/quote.pipe';
+import { ComplaintsForTutorComponent } from 'app/complaints/complaints-for-tutor/complaints-for-tutor.component';
 
 const ENTITY_STATES = [...assessmentLocksRoute];
 
 @NgModule({
     imports: [
         ArtemisSharedModule,
-        ArtemisComplaintsForTutorModule,
+        ComplaintsForTutorComponent,
         ArtemisSharedComponentModule,
         RouterModule.forChild(ENTITY_STATES),
         ArtemisMarkdownModule,
@@ -32,8 +32,6 @@ const ENTITY_STATES = [...assessmentLocksRoute];
         ArtemisFeedbackModule,
         FeedbackContentPipe,
         QuotePipe,
-    ],
-    declarations: [
         AssessmentHeaderComponent,
         AssessmentLayoutComponent,
         AssessmentComplaintAlertComponent,

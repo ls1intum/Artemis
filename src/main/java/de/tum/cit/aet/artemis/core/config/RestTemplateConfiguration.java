@@ -108,6 +108,11 @@ public class RestTemplateConfiguration {
         return createShortTimeoutRestTemplate();
     }
 
+    @Bean
+    public RestTemplate shortTimeoutHermesRestTemplate() {
+        return createShortTimeoutRestTemplate();
+    }
+
     // Note: for certain requests, e.g. the Athena submission selection, we would like to have even shorter timeouts.
     // Therefore, we need additional rest templates. It is recommended to keep the timeout settings constant per rest template.
 

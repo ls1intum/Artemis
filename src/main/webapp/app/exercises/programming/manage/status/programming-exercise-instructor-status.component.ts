@@ -1,4 +1,4 @@
-import { Component, Input, OnChanges, OnDestroy, SimpleChanges } from '@angular/core';
+import { Component, Input, OnChanges, OnDestroy, SimpleChanges, inject } from '@angular/core';
 import { Subscription } from 'rxjs';
 import { filter } from 'rxjs/operators';
 import { ParticipationWebsocketService } from 'app/overview/participation-websocket.service';
@@ -11,12 +11,18 @@ import { SolutionProgrammingExerciseParticipation } from 'app/entities/participa
 import { TemplateProgrammingExerciseParticipation } from 'app/entities/participation/template-programming-exercise-participation.model';
 import { faExclamationTriangle } from '@fortawesome/free-solid-svg-icons';
 import { hasParticipationChanged } from 'app/exercises/shared/participation/participation.utils';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
+import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 
 @Component({
     selector: 'jhi-programming-exercise-instructor-status',
     templateUrl: './programming-exercise-instructor-status.component.html',
+    imports: [FaIconComponent, NgbTooltip, ArtemisTranslatePipe],
 })
 export class ProgrammingExerciseInstructorStatusComponent implements OnChanges, OnDestroy {
+    private participationWebsocketService = inject(ParticipationWebsocketService);
+
     ProgrammingExerciseParticipationType = ProgrammingExerciseParticipationType;
 
     @Input()
@@ -31,8 +37,6 @@ export class ProgrammingExerciseInstructorStatusComponent implements OnChanges, 
 
     // Icons
     faExclamationTriangle = faExclamationTriangle;
-
-    constructor(private participationWebsocketService: ParticipationWebsocketService) {}
 
     /**
      * When the participation changes, get the latestResult from it and setup the result subscription for new results.

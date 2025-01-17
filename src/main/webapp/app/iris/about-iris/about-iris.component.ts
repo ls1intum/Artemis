@@ -1,11 +1,14 @@
 import { Component } from '@angular/core';
 import { faRobot } from '@fortawesome/free-solid-svg-icons';
-import { IrisLogoSize } from '../iris-logo/iris-logo.component';
+import { IrisLogoComponent, IrisLogoSize } from '../iris-logo/iris-logo.component';
+import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
 
 @Component({
     selector: 'jhi-about-iris',
     templateUrl: './about-iris.component.html',
     styleUrls: ['about-iris.component.scss'],
+    imports: [IrisLogoComponent, ArtemisTranslatePipe, TranslateDirective],
 })
 export class AboutIrisComponent {
     faRobot = faRobot;

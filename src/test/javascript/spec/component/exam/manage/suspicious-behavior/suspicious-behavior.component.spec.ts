@@ -10,14 +10,12 @@ import { ArtemisTestModule } from '../../../../test.module';
 import { MockComponent, MockModule, MockPipe } from 'ng-mocks';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { PlagiarismCasesOverviewComponent } from 'app/exam/manage/suspicious-behavior/plagiarism-cases-overview/plagiarism-cases-overview.component';
-import { ButtonComponent } from 'app/shared/components/button.component';
 import { MockRouterLinkDirective } from '../../../../helpers/mocks/directive/mock-router-link.directive';
 import { ExamManagementService } from 'app/exam/manage/exam-management.service';
 import { Exercise } from 'app/entities/exercise.model';
 import { SuspiciousExamSessions, SuspiciousSessionReason } from 'app/entities/exam/exam-session.model';
 import { MockRouter } from '../../../../helpers/mocks/mock-router';
 import { FormsModule } from '@angular/forms';
-import { DocumentationButtonComponent } from 'app/shared/components/documentation-button/documentation-button.component';
 
 describe('SuspiciousBehaviorComponent', () => {
     let component: SuspiciousBehaviorComponent;
@@ -73,13 +71,7 @@ describe('SuspiciousBehaviorComponent', () => {
     beforeEach(() => {
         TestBed.configureTestingModule({
             imports: [ArtemisTestModule, MockRouterLinkDirective, MockModule(FormsModule)],
-            declarations: [
-                SuspiciousBehaviorComponent,
-                MockPipe(ArtemisTranslatePipe),
-                MockComponent(PlagiarismCasesOverviewComponent),
-                MockComponent(ButtonComponent),
-                MockComponent(DocumentationButtonComponent),
-            ],
+            declarations: [SuspiciousBehaviorComponent, MockPipe(ArtemisTranslatePipe), MockComponent(PlagiarismCasesOverviewComponent)],
             providers: [
                 { provide: ActivatedRoute, useValue: route },
                 { provide: Router, useClass: MockRouter },

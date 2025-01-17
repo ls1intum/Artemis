@@ -1,14 +1,23 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, inject } from '@angular/core';
 import { faSort } from '@fortawesome/free-solid-svg-icons';
 import { Level, Log, LoggersResponse } from 'app/admin/logs/log.model';
 import { LogsService } from 'app/admin/logs/logs.service';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { FormsModule } from '@angular/forms';
+import { SortDirective } from 'app/shared/sort/sort.directive';
+import { SortByDirective } from 'app/shared/sort/sort-by.directive';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { NgClass, SlicePipe } from '@angular/common';
 
 @Component({
     selector: 'jhi-logs',
     templateUrl: './logs.component.html',
     styleUrls: ['./logs.component.scss'],
+    imports: [TranslateDirective, FormsModule, SortDirective, SortByDirective, FaIconComponent, NgClass, SlicePipe],
 })
 export class LogsComponent implements OnInit {
+    private logsService = inject(LogsService);
+
     loggers?: Log[];
     filteredAndOrderedLoggers?: Log[];
     filter = '';
@@ -17,8 +26,6 @@ export class LogsComponent implements OnInit {
 
     // Icons
     faSort = faSort;
-
-    constructor(private logsService: LogsService) {}
 
     /**
      * Subscribe to the logsService to retrieve all logs

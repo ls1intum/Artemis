@@ -1,23 +1,33 @@
 import { RouterModule, Routes } from '@angular/router';
-import { CoursesComponent } from 'app/overview/courses.component';
+
 import { UserRouteAccessService } from 'app/core/auth/user-route-access-service';
-import { CourseLecturesComponent } from 'app/overview/course-lectures/course-lectures.component';
+
 import { NgModule } from '@angular/core';
 import { Authority } from 'app/shared/constants/authority.constants';
-import { CourseExercisesComponent } from 'app/overview/course-exercises/course-exercises.component';
-import { CourseOverviewComponent } from './course-overview.component';
-import { CourseExamsComponent } from './course-exams/course-exams.component';
-import { CourseTutorialGroupsComponent } from './course-tutorial-groups/course-tutorial-groups.component';
-import { CourseTutorialGroupDetailComponent } from './tutorial-group-details/course-tutorial-group-detail/course-tutorial-group-detail.component';
-import { ExamParticipationComponent } from 'app/exam/participate/exam-participation.component';
+
 import { PendingChangesGuard } from 'app/shared/guard/pending-changes.guard';
-import { CourseDashboardGuard } from 'app/overview/course-dashboard/course-dashboard-guard.service';
-import { CourseArchiveComponent } from './course-archive/course-archive.component';
+
+import { CourseOverviewGuard } from 'app/overview/course-overview-guard';
+
+export enum CourseOverviewRoutePath {
+    DASHBOARD = 'dashboard',
+    EXERCISES = 'exercises',
+    EXAMS = 'exams',
+    COMPETENCIES = 'competencies',
+    TUTORIAL_GROUPS = 'tutorial-groups',
+    FAQ = 'faq',
+    LEARNING_PATH = 'learning-path',
+    LECTURES = 'lectures',
+    ENROLL = 'enroll',
+    ARCHIVE = 'archive',
+    STATISTICS = 'statistics',
+    COMMUNICATION = 'communication',
+}
 
 const routes: Routes = [
     {
         path: '',
-        component: CoursesComponent,
+        loadComponent: () => import('app/overview/courses.component').then((m) => m.CoursesComponent),
         data: {
             authorities: [Authority.USER],
             pageTitle: 'overview.title',
@@ -25,12 +35,12 @@ const routes: Routes = [
         canActivate: [UserRouteAccessService],
     },
     {
-        path: 'enroll',
+        path: CourseOverviewRoutePath.ENROLL,
         loadChildren: () => import('./course-registration/course-registration.module').then((m) => m.CourseRegistrationModule),
     },
     {
-        path: 'archive',
-        component: CourseArchiveComponent,
+        path: CourseOverviewRoutePath.ARCHIVE,
+        loadComponent: () => import('./course-archive/course-archive.component').then((m) => m.CourseArchiveComponent),
         data: {
             authorities: [Authority.USER],
             pageTitle: 'overview.archive',
@@ -46,7 +56,7 @@ const routes: Routes = [
     },
     {
         path: ':courseId',
-        component: CourseOverviewComponent,
+        loadComponent: () => import('./course-overview.component').then((m) => m.CourseOverviewComponent),
         data: {
             authorities: [Authority.USER],
             pageTitle: 'overview.course',
@@ -54,8 +64,8 @@ const routes: Routes = [
         canActivate: [UserRouteAccessService],
         children: [
             {
-                path: 'exercises',
-                component: CourseExercisesComponent,
+                path: CourseOverviewRoutePath.EXERCISES,
+                loadComponent: () => import('app/overview/course-exercises/course-exercises.component').then((m) => m.CourseExercisesComponent),
                 data: {
                     authorities: [Authority.USER],
                     pageTitle: 'overview.exercises',
@@ -128,15 +138,15 @@ const routes: Routes = [
             },
 
             {
-                path: 'lectures',
-                component: CourseLecturesComponent,
+                path: CourseOverviewRoutePath.LECTURES,
+                loadComponent: () => import('app/overview/course-lectures/course-lectures.component').then((m) => m.CourseLecturesComponent),
                 data: {
                     authorities: [Authority.USER],
                     pageTitle: 'overview.lectures',
                     hasSidebar: true,
                     showRefreshButton: true,
                 },
-                canActivate: [UserRouteAccessService],
+                canActivate: [UserRouteAccessService, CourseOverviewGuard],
                 children: [
                     {
                         path: ':lectureId',
@@ -152,7 +162,7 @@ const routes: Routes = [
                 ],
             },
             {
-                path: 'statistics',
+                path: CourseOverviewRoutePath.STATISTICS,
                 loadChildren: () => import('./course-statistics/course-statistics.module').then((m) => m.CourseStatisticsModule),
                 data: {
                     authorities: [Authority.USER],
@@ -161,12 +171,13 @@ const routes: Routes = [
                 },
             },
             {
-                path: 'competencies',
+                path: CourseOverviewRoutePath.COMPETENCIES,
                 data: {
                     authorities: [Authority.USER],
                     pageTitle: 'overview.competencies',
                     showRefreshButton: true,
                 },
+                canActivate: [CourseOverviewGuard],
                 children: [
                     {
                         path: '',
@@ -179,16 +190,16 @@ const routes: Routes = [
                 ],
             },
             {
-                path: 'dashboard',
+                path: CourseOverviewRoutePath.DASHBOARD,
                 loadChildren: () => import('./course-dashboard/course-dashboard.module').then((m) => m.CourseDashboardModule),
                 data: {
                     authorities: [Authority.USER],
                     pageTitle: 'overview.dashboard',
                 },
-                canActivate: [UserRouteAccessService, CourseDashboardGuard],
+                canActivate: [UserRouteAccessService, CourseOverviewGuard],
             },
             {
-                path: 'learning-path',
+                path: CourseOverviewRoutePath.LEARNING_PATH,
                 loadComponent: () =>
                     import('app/course/learning-paths/pages/learning-path-student-page/learning-path-student-page.component').then((c) => c.LearningPathStudentPageComponent),
                 data: {
@@ -196,9 +207,10 @@ const routes: Routes = [
                     pageTitle: 'overview.learningPath',
                     showRefreshButton: true,
                 },
+                canActivate: [CourseOverviewGuard],
             },
             {
-                path: 'communication',
+                path: CourseOverviewRoutePath.COMMUNICATION,
                 loadChildren: () => import('./course-conversations/course-conversations.module').then((m) => m.CourseConversationsModule),
                 data: {
                     authorities: [Authority.USER],
@@ -208,19 +220,22 @@ const routes: Routes = [
                 },
             },
             {
-                path: 'tutorial-groups',
-                component: CourseTutorialGroupsComponent,
+                path: CourseOverviewRoutePath.TUTORIAL_GROUPS,
+                loadComponent: () => import('./course-tutorial-groups/course-tutorial-groups.component').then((m) => m.CourseTutorialGroupsComponent),
                 data: {
                     authorities: [Authority.USER],
                     pageTitle: 'overview.tutorialGroups',
                     hasSidebar: true,
                     showRefreshButton: true,
                 },
-                canActivate: [UserRouteAccessService],
+                canActivate: [UserRouteAccessService, CourseOverviewGuard],
                 children: [
                     {
                         path: ':tutorialGroupId',
-                        component: CourseTutorialGroupDetailComponent,
+                        loadComponent: () =>
+                            import('./tutorial-group-details/course-tutorial-group-detail/course-tutorial-group-detail.component').then(
+                                (m) => m.CourseTutorialGroupDetailComponent,
+                            ),
                         data: {
                             authorities: [Authority.USER],
                             pageTitle: 'overview.tutorialGroups',
@@ -233,19 +248,19 @@ const routes: Routes = [
                 ],
             },
             {
-                path: 'exams',
-                component: CourseExamsComponent,
+                path: CourseOverviewRoutePath.EXAMS,
+                loadComponent: () => import('./course-exams/course-exams.component').then((m) => m.CourseExamsComponent),
                 data: {
                     authorities: [Authority.USER],
                     pageTitle: 'overview.exams',
                     hasSidebar: true,
                     showRefreshButton: true,
                 },
-                canActivate: [UserRouteAccessService],
+                canActivate: [UserRouteAccessService, CourseOverviewGuard],
                 children: [
                     {
                         path: ':examId',
-                        component: ExamParticipationComponent,
+                        loadComponent: () => import('app/exam/participate/exam-participation.component').then((m) => m.ExamParticipationComponent),
                         data: {
                             authorities: [Authority.USER],
                             pageTitle: 'overview.exams',
@@ -267,7 +282,7 @@ const routes: Routes = [
                 },
             },
             {
-                path: 'faq',
+                path: CourseOverviewRoutePath.FAQ,
                 loadComponent: () => import('../overview/course-faq/course-faq.component').then((m) => m.CourseFaqComponent),
                 data: {
                     authorities: [Authority.USER],
@@ -275,10 +290,11 @@ const routes: Routes = [
                     hasSidebar: false,
                     showRefreshButton: true,
                 },
+                canActivate: [CourseOverviewGuard],
             },
             {
                 path: '',
-                redirectTo: 'dashboard', // dashboard will redirect to exercises if not enabled
+                redirectTo: CourseOverviewRoutePath.DASHBOARD, // dashboard will redirect to exercises if not enabled
                 pathMatch: 'full',
             },
         ],

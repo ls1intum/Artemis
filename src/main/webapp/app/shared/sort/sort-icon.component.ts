@@ -8,7 +8,6 @@ import { SortingOrder } from 'app/shared/table/pageable-table';
     selector: 'jhi-sort-icon',
     templateUrl: './sort-icon.component.html',
     styleUrls: ['./sort-icon.component.scss'],
-    standalone: true,
     imports: [FontAwesomeModule, CommonModule],
 })
 export class SortIconComponent {

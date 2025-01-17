@@ -1,7 +1,7 @@
 import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
 import { MetisService } from 'app/shared/metis/metis.service';
-import { MockModule, MockPipe } from 'ng-mocks';
-import { FormBuilder, FormsModule, ReactiveFormsModule } from '@angular/forms';
+import { MockDirective, MockPipe } from 'ng-mocks';
+import { FormBuilder } from '@angular/forms';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { MessageInlineInputComponent } from 'app/shared/metis/message/message-inline-input/message-inline-input.component';
 import { MockMetisService } from '../../../../helpers/mocks/service/mock-metis-service.service';
@@ -9,8 +9,11 @@ import { directMessageUser1, metisPostToCreateUser1 } from '../../../../helpers/
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { throwError } from 'rxjs';
 import { MockSyncStorage } from '../../../../helpers/mocks/service/mock-sync-storage.service';
-import { LocalStorageService } from 'ngx-webstorage';
+import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { provideHttpClient } from '@angular/common/http';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { TranslateService } from '@ngx-translate/core';
+import { MockTranslateService } from '../../../../helpers/mocks/service/mock-translate.service';
 
 describe('MessageInlineInputComponent', () => {
     let component: MessageInlineInputComponent;
@@ -21,14 +24,15 @@ describe('MessageInlineInputComponent', () => {
 
     beforeEach(() => {
         return TestBed.configureTestingModule({
-            imports: [MockModule(FormsModule), MockModule(ReactiveFormsModule)],
-            declarations: [MessageInlineInputComponent, MockPipe(ArtemisTranslatePipe)],
+            declarations: [MessageInlineInputComponent, MockPipe(ArtemisTranslatePipe), MockDirective(TranslateDirective)],
             providers: [
                 provideHttpClient(),
                 provideHttpClientTesting(),
                 FormBuilder,
                 { provide: MetisService, useClass: MockMetisService },
                 { provide: LocalStorageService, useClass: MockSyncStorage },
+                { provide: TranslateService, useClass: MockTranslateService },
+                { provide: SessionStorageService, useClass: MockSyncStorage },
             ],
         })
             .compileComponents()

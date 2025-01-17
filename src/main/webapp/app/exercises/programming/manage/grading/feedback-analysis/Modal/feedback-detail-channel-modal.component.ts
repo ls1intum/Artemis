@@ -1,5 +1,5 @@
 import { Component, inject, input, output, signal } from '@angular/core';
-import { FormBuilder, FormGroup, Validators } from '@angular/forms';
+import { FormBuilder, FormGroup, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
 import { NgbActiveModal, NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { ChannelDTO } from 'app/entities/metis/conversation/channel.model';
 import { FeedbackDetail } from 'app/exercises/programming/manage/grading/feedback-analysis/feedback-analysis.service';
@@ -10,13 +10,12 @@ import { AlertService } from 'app/core/util/alert.service';
 @Component({
     selector: 'jhi-feedback-detail-channel-modal',
     templateUrl: './feedback-detail-channel-modal.component.html',
-    imports: [ArtemisSharedCommonModule],
-    standalone: true,
+    imports: [ArtemisSharedCommonModule, FormsModule, ReactiveFormsModule],
 })
 export class FeedbackDetailChannelModalComponent {
     protected readonly TRANSLATION_BASE = 'artemisApp.programmingExercise.configureGrading.feedbackAnalysis.feedbackDetailChannel';
-    affectedStudentsCount = input.required<number>();
     feedbackDetail = input.required<FeedbackDetail>();
+    groupFeedback = input.required<boolean>();
     formSubmitted = output<{ channelDto: ChannelDTO; navigate: boolean }>();
 
     isConfirmModalOpen = signal(false);
@@ -40,8 +39,8 @@ export class FeedbackDetailChannelModalComponent {
                 const channelDTO = new ChannelDTO();
                 channelDTO.name = this.form.get('name')?.value;
                 channelDTO.description = this.form.get('description')?.value;
-                channelDTO.isPublic = this.form.get('isPublic')?.value;
-                channelDTO.isAnnouncementChannel = this.form.get('isAnnouncementChannel')?.value;
+                channelDTO.isPublic = this.form.get('isPublic')?.value || false;
+                channelDTO.isAnnouncementChannel = this.form.get('isAnnouncementChannel')?.value || false;
 
                 this.formSubmitted.emit({ channelDto: channelDTO, navigate });
                 this.closeModal();
@@ -53,7 +52,7 @@ export class FeedbackDetailChannelModalComponent {
     async handleModal(): Promise<boolean> {
         try {
             const modalRef = this.modalService.open(ConfirmFeedbackChannelCreationModalComponent, { centered: true });
-            modalRef.componentInstance.affectedStudentsCount = this.affectedStudentsCount;
+            modalRef.componentInstance.affectedStudentsCount = this.feedbackDetail().count;
             return await modalRef.result;
         } catch (error) {
             this.alertService.error(error);

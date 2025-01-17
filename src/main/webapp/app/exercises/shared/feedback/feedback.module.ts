@@ -12,8 +12,11 @@ import { FeedbackSuggestionBadgeComponent } from 'app/exercises/shared/feedback/
 import { FeedbackSuggestionsPendingConfirmationDialogComponent } from 'app/exercises/shared/feedback/feedback-suggestions-pending-confirmation-dialog/feedback-suggestions-pending-confirmation-dialog.component';
 
 @NgModule({
-    imports: [ArtemisSharedModule, ArtemisProgrammingExerciseActionsModule, ArtemisSharedComponentModule, BarChartModule],
-    declarations: [
+    imports: [
+        ArtemisSharedModule,
+        ArtemisProgrammingExerciseActionsModule,
+        ArtemisSharedComponentModule,
+        BarChartModule,
         FeedbackCollapseComponent,
         FeedbackNodeComponent,
         FeedbackComponent,

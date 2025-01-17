@@ -10,7 +10,7 @@ import { ArtemisProgrammingExerciseInstructionsEditorModule } from 'app/exercise
 import { ArtemisProgrammingExerciseUpdateModule } from 'app/exercises/programming/manage/update/programming-exercise-update.module';
 import { ArtemisSharedComponentModule } from 'app/shared/components/shared-component.module';
 import { ArtemisProgrammingExerciseStatusModule } from 'app/exercises/programming/manage/status/programming-exercise-status.module';
-import { FeatureToggleModule } from 'app/shared/feature-toggle/feature-toggle.module';
+
 import { ArtemisProgrammingExerciseModule } from 'app/exercises/programming/shared/programming-exercise.module';
 import { AssessmentInstructionsModule } from 'app/assessment/assessment-instructions/assessment-instructions.module';
 import { ProgrammingExerciseEditSelectedComponent } from 'app/exercises/programming/manage/programming-exercise-edit-selected.component';
@@ -20,8 +20,6 @@ import { ArtemisProgrammingExerciseLifecycleModule } from 'app/exercises/program
 import { ProgrammingExerciseInstructorExerciseDownloadComponent } from '../shared/actions/programming-exercise-instructor-exercise-download.component';
 import { SubmissionResultStatusModule } from 'app/overview/submission-result-status.module';
 import { ProgrammingExerciseExampleSolutionRepoDownloadComponent } from 'app/exercises/programming/shared/actions/programming-exercise-example-solution-repo-download.component';
-import { TestwiseCoverageReportModule } from 'app/exercises/programming/hestia/testwise-coverage-report/testwise-coverage-report.module';
-import { ArtemisCodeHintGenerationOverviewModule } from 'app/exercises/programming/hestia/generation-overview/code-hint-generation-overview/code-hint-generation-overview.module';
 import { BuildPlanEditorComponent } from 'app/exercises/programming/manage/build-plan-editor.component';
 import { ArtemisCodeEditorModule } from 'app/exercises/programming/shared/code-editor/code-editor.module';
 import { DetailModule } from 'app/detail-overview-list/detail.module';
@@ -44,21 +42,16 @@ import { CodeEditorHeaderComponent } from 'app/exercises/programming/shared/code
         ArtemisProgrammingExerciseInstructionsEditorModule,
         ArtemisProgrammingExerciseUpdateModule,
         ArtemisProgrammingExerciseStatusModule,
-        FeatureToggleModule,
         AssessmentInstructionsModule,
         OrionModule,
         ArtemisProgrammingExerciseLifecycleModule,
         SubmissionResultStatusModule,
-        TestwiseCoverageReportModule,
-        ArtemisCodeHintGenerationOverviewModule,
         ArtemisCodeEditorModule,
         ArtemisExerciseModule,
         DetailModule,
         IrisModule,
         MonacoEditorComponent,
         CodeEditorHeaderComponent,
-    ],
-    declarations: [
         ProgrammingExerciseDetailComponent,
         ProgrammingExerciseEditSelectedComponent,
         ProgrammingExerciseInstructorExerciseDownloadComponent,

@@ -1,13 +1,11 @@
 import { Route } from '@angular/router';
-import { UserManagementDetailComponent } from 'app/admin/user-management/user-management-detail.component';
-import { UserManagementComponent } from 'app/admin/user-management/user-management.component';
-import { UserManagementUpdateComponent } from 'app/admin/user-management/user-management-update.component';
+
 import { UserManagementResolve } from 'app/admin/user-management/user-management-resolve.service';
 
 export const userManagementRoute: Route[] = [
     {
         path: 'user-management',
-        component: UserManagementComponent,
+        loadComponent: () => import('app/admin/user-management/user-management.component').then((m) => m.UserManagementComponent),
         data: {
             pageTitle: 'artemisApp.userManagement.home.title',
             defaultSort: 'id,asc',
@@ -22,7 +20,7 @@ export const userManagementRoute: Route[] = [
         children: [
             {
                 path: 'new',
-                component: UserManagementUpdateComponent,
+                loadComponent: () => import('app/admin/user-management/user-management-update.component').then((m) => m.UserManagementUpdateComponent),
                 resolve: {
                     user: UserManagementResolve,
                 },
@@ -32,7 +30,7 @@ export const userManagementRoute: Route[] = [
             },
             {
                 path: ':login',
-                component: UserManagementDetailComponent,
+                loadComponent: () => import('app/admin/user-management/user-management-detail.component').then((m) => m.UserManagementDetailComponent),
                 resolve: {
                     user: UserManagementResolve,
                 },
@@ -49,7 +47,7 @@ export const userManagementRoute: Route[] = [
                 children: [
                     {
                         path: 'edit',
-                        component: UserManagementUpdateComponent,
+                        loadComponent: () => import('app/admin/user-management/user-management-update.component').then((m) => m.UserManagementUpdateComponent),
                         data: {
                             pageTitle: 'artemisApp.userManagement.home.editLabel',
                         },

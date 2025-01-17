@@ -1,14 +1,15 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
-import { MockPipe, MockProvider } from 'ng-mocks';
+import { MockComponent, MockPipe, MockProvider } from 'ng-mocks';
 import { of } from 'rxjs';
 import { By } from '@angular/platform-browser';
 import { CoursePrerequisitesModalComponent } from 'app/overview/course-registration/course-registration-prerequisites-modal/course-prerequisites-modal.component';
 import { AlertService } from 'app/core/util/alert.service';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
-import { CompetencyCardStubComponent } from '../../competencies/competency-card-stub.component';
 import { PrerequisiteService } from 'app/course/competencies/prerequisite.service';
 import { HttpResponse } from '@angular/common/http';
+import { ArtemisTestModule } from '../../../test.module';
+import { CompetencyCardComponent } from '../../../../../../main/webapp/app/course/competencies/competency-card/competency-card.component';
 
 describe('CoursePrerequisitesModal', () => {
     let coursePrerequisitesModalComponentFixture: ComponentFixture<CoursePrerequisitesModalComponent>;
@@ -22,8 +23,8 @@ describe('CoursePrerequisitesModal', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [],
-            declarations: [CoursePrerequisitesModalComponent, CompetencyCardStubComponent, MockPipe(ArtemisTranslatePipe)],
+            imports: [ArtemisTestModule],
+            declarations: [CoursePrerequisitesModalComponent, MockPipe(ArtemisTranslatePipe), MockComponent(CompetencyCardComponent)],
             providers: [
                 MockProvider(AlertService),
                 MockProvider(PrerequisiteService),
@@ -54,7 +55,7 @@ describe('CoursePrerequisitesModal', () => {
 
         coursePrerequisitesModalComponentFixture.detectChanges();
 
-        const competencyCards = coursePrerequisitesModalComponentFixture.debugElement.queryAll(By.directive(CompetencyCardStubComponent));
+        const competencyCards = coursePrerequisitesModalComponentFixture.debugElement.queryAll(By.directive(CompetencyCardComponent));
         expect(competencyCards).toHaveLength(2);
         expect(getAllPrerequisitesForCourseSpy).toHaveBeenCalledOnce();
         expect(coursePrerequisitesModalComponent.prerequisites).toHaveLength(2);

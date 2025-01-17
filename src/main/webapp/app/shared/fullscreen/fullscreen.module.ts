@@ -3,8 +3,7 @@ import { NgModule } from '@angular/core';
 import { ArtemisSharedModule } from 'app/shared/shared.module';
 
 @NgModule({
-    imports: [ArtemisSharedModule],
-    declarations: [FullscreenComponent],
+    imports: [ArtemisSharedModule, FullscreenComponent],
     exports: [FullscreenComponent],
 })
 export class ArtemisFullscreenModule {}

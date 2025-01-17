@@ -12,7 +12,6 @@ import { ArtemisSharedCommonModule } from 'app/shared/shared-common.module';
 @Component({
     selector: 'jhi-password',
     templateUrl: './password.component.html',
-    standalone: true,
     imports: [TranslateDirective, FormsModule, ReactiveFormsModule, PasswordStrengthBarComponent, ArtemisSharedCommonModule, ArtemisSharedModule],
 })
 export class PasswordComponent implements OnInit {

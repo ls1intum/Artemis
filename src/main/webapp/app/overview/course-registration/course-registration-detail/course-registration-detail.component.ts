@@ -1,27 +1,29 @@
 import { HttpErrorResponse } from '@angular/common/http';
-import { Component, OnDestroy, OnInit } from '@angular/core';
+import { Component, OnDestroy, OnInit, inject } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { AccountService } from 'app/core/auth/account.service';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
 import { Course } from 'app/entities/course.model';
 import { Observable, catchError, map, of, throwError } from 'rxjs';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { CoursePrerequisitesButtonComponent } from '../course-prerequisites-button/course-prerequisites-button.component';
+import { CourseRegistrationButtonComponent } from '../course-registration-button/course-registration-button.component';
 
 @Component({
     selector: 'jhi-course-registration-detail-selector',
     templateUrl: './course-registration-detail.component.html',
+    imports: [TranslateDirective, CoursePrerequisitesButtonComponent, CourseRegistrationButtonComponent],
 })
 export class CourseRegistrationDetailComponent implements OnInit, OnDestroy {
+    private accountService = inject(AccountService);
+    private courseService = inject(CourseManagementService);
+    private route = inject(ActivatedRoute);
+    private router = inject(Router);
+
     loading = false;
     courseId: number;
     course: Course | null = null;
     private paramSubscription: any;
-
-    constructor(
-        private accountService: AccountService,
-        private courseService: CourseManagementService,
-        private route: ActivatedRoute,
-        private router: Router,
-    ) {}
 
     ngOnInit(): void {
         this.loading = true;

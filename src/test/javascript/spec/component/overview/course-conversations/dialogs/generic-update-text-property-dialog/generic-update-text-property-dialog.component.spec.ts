@@ -2,9 +2,10 @@ import { ComponentFixture, TestBed, fakeAsync, tick, waitForAsync } from '@angul
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { GenericUpdateTextPropertyDialogComponent } from 'app/overview/course-conversations/dialogs/generic-update-text-property-dialog/generic-update-text-property-dialog.component';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
-import { MockPipe, MockProvider } from 'ng-mocks';
+import { MockDirective, MockPipe, MockProvider } from 'ng-mocks';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import { initializeDialog } from '../dialog-test-helpers';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
 
 describe('GenericUpdateTextPropertyDialog', () => {
     let component: GenericUpdateTextPropertyDialogComponent;
@@ -13,7 +14,7 @@ describe('GenericUpdateTextPropertyDialog', () => {
     beforeEach(waitForAsync(() => {
         TestBed.configureTestingModule({
             imports: [FormsModule, ReactiveFormsModule],
-            declarations: [GenericUpdateTextPropertyDialogComponent, MockPipe(ArtemisTranslatePipe)],
+            declarations: [GenericUpdateTextPropertyDialogComponent, MockPipe(ArtemisTranslatePipe), MockDirective(TranslateDirective)],
             providers: [MockProvider(NgbActiveModal)],
         }).compileComponents();
     }));

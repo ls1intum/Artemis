@@ -18,7 +18,6 @@ import { ParticipationService } from 'app/exercises/shared/participation/partici
 
 @Component({
     selector: 'jhi-request-feedback-button',
-    standalone: true,
     imports: [CommonModule, ArtemisSharedCommonModule, NgbTooltipModule, FontAwesomeModule],
     templateUrl: './request-feedback-button.component.html',
 })
@@ -98,7 +97,7 @@ export class RequestFeedbackButtonComponent implements OnInit {
      * @returns {boolean} `true` if all conditions are satisfied, otherwise `false`.
      */
     assureConditionsSatisfied(): boolean {
-        if (this.exercise().type === ExerciseType.PROGRAMMING || this.exercise().type === ExerciseType.MODELING || this.assureTextConditions()) {
+        if (this.exercise().type === ExerciseType.PROGRAMMING || this.assureTextModelingConditions()) {
             return true;
         }
         return false;
@@ -109,7 +108,7 @@ export class RequestFeedbackButtonComponent implements OnInit {
      * Not more than 1 request per submission.
      * No request with pending changes (these would be overwritten after participation update)
      */
-    assureTextConditions(): boolean {
+    assureTextModelingConditions(): boolean {
         if (this.hasAthenaResultForLatestSubmission()) {
             const submitFirstWarning = this.translateService.instant('artemisApp.exercise.submissionAlreadyHasAthenaResult');
             this.alertService.warning(submitFirstWarning);

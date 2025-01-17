@@ -20,11 +20,9 @@ import { ArtemisLectureModule } from 'app/lecture/lecture.module';
 import { ArtemisTextExerciseManagementModule } from 'app/exercises/text/manage/text-exercise-management.module';
 import { ArtemisDashboardsModule } from 'app/shared/dashboards/dashboards.module';
 import { ArtemisParticipationModule } from 'app/exercises/shared/participation/participation.module';
-import { ArtemisExerciseHintManagementModule } from 'app/exercises/shared/exercise-hint/manage/exercise-hint-management.module';
 import { ArtemisModelingExerciseManagementModule } from 'app/exercises/modeling/manage/modeling-exercise-management.module';
 import { ArtemisCourseScoresModule } from 'app/course/course-scores/course-scores.module';
 import { ArtemisExerciseScoresModule } from 'app/exercises/shared/exercise-scores/exercise-scores.module';
-import { ArtemisComplaintsForTutorModule } from 'app/complaints/complaints-for-tutor/complaints-for-tutor.module';
 import { ArtemisFileUploadAssessmentModule } from 'app/exercises/file-upload/assess/file-upload-assessment.module';
 import { ArtemisModelingAssessmentEditorModule } from 'app/exercises/modeling/assess/modeling-assessment-editor/modeling-assessment-editor.module';
 import { NgxDatatableModule } from '@siemens/ngx-datatable';
@@ -51,11 +49,11 @@ import { CourseManagementExercisesSearchComponent } from 'app/course/manage/cour
 import { LineChartModule, PieChartModule } from '@swimlane/ngx-charts';
 import { ArtemisPlagiarismModule } from 'app/exercises/shared/plagiarism/plagiarism.module';
 import { ArtemisChartsModule } from 'app/shared/chart/artemis-charts.module';
-import { ImageCropperModule } from 'app/shared/image-cropper/image-cropper.module';
+
 import { ArtemisFullscreenModule } from 'app/shared/fullscreen/fullscreen.module';
 import { ArtemisCourseGroupModule } from 'app/shared/course-group/course-group.module';
 import { CourseGroupMembershipComponent } from './course-group-membership/course-group-membership.component';
-import { FeatureToggleModule } from 'app/shared/feature-toggle/feature-toggle.module';
+
 import { CourseLtiConfigurationComponent } from 'app/course/manage/course-lti-configuration/course-lti-configuration.component';
 import { EditCourseLtiConfigurationComponent } from 'app/course/manage/course-lti-configuration/edit-course-lti-configuration.component';
 import { NgbNavModule } from '@ng-bootstrap/ng-bootstrap';
@@ -69,6 +67,7 @@ import { SubmissionResultStatusModule } from 'app/overview/submission-result-sta
 import { ImageCropperModalComponent } from 'app/course/manage/image-cropper-modal.component';
 import { HeaderCourseComponent } from 'app/overview/header-course.component';
 import { ArtemisMarkdownEditorModule } from 'app/shared/markdown-editor/markdown-editor.module';
+import { ComplaintsForTutorComponent } from 'app/complaints/complaints-for-tutor/complaints-for-tutor.component';
 
 @NgModule({
     imports: [
@@ -76,7 +75,6 @@ import { ArtemisMarkdownEditorModule } from 'app/shared/markdown-editor/markdown
         RouterModule.forChild(courseManagementState),
         FormDateTimePickerModule,
         ReactiveFormsModule,
-        ImageCropperModule,
         OrionModule,
         MatChipsModule,
         ArtemisExerciseModule,
@@ -95,9 +93,8 @@ import { ArtemisMarkdownEditorModule } from 'app/shared/markdown-editor/markdown
         ArtemisModelingExerciseModule,
         ArtemisColorSelectorModule,
         ArtemisDashboardsModule,
-        ArtemisExerciseHintManagementModule,
         ArtemisParticipationModule,
-        ArtemisComplaintsForTutorModule,
+        ComplaintsForTutorComponent,
         ArtemisListOfComplaintsModule,
         ArtemisFileUploadAssessmentModule,
         ArtemisModelingAssessmentEditorModule,
@@ -114,7 +111,6 @@ import { ArtemisMarkdownEditorModule } from 'app/shared/markdown-editor/markdown
         ArtemisPlagiarismModule,
         ArtemisChartsModule,
         ArtemisCourseGroupModule,
-        FeatureToggleModule,
         ExerciseCategoriesModule,
         NgbNavModule,
         ArtemisExerciseCreateButtonsModule,
@@ -122,8 +118,8 @@ import { ArtemisMarkdownEditorModule } from 'app/shared/markdown-editor/markdown
         DetailModule,
         SubmissionResultStatusModule,
         ArtemisMarkdownEditorModule,
-    ],
-    declarations: [
+        CourseLtiConfigurationComponent,
+        EditCourseLtiConfigurationComponent,
         CourseManagementComponent,
         CourseDetailComponent,
         CourseUpdateComponent,
@@ -138,8 +134,6 @@ import { ArtemisMarkdownEditorModule } from 'app/shared/markdown-editor/markdown
         CourseDetailLineChartComponent,
         CourseManagementExercisesSearchComponent,
         CourseGroupMembershipComponent,
-        CourseLtiConfigurationComponent,
-        EditCourseLtiConfigurationComponent,
         CourseManagementTabBarComponent,
         BuildQueueComponent,
         ImageCropperModalComponent,

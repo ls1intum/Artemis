@@ -1,10 +1,11 @@
-import { Component, EventEmitter, Input, Output } from '@angular/core';
+import { Component, EventEmitter, Input, Output, inject } from '@angular/core';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { ProgrammingAssessmentRepoExportDialogComponent } from 'app/exercises/programming/assess/repo-export/programming-assessment-repo-export-dialog.component';
 import { FeatureToggle } from 'app/shared/feature-toggle/feature-toggle.service';
 import { ButtonSize, ButtonType } from 'app/shared/components/button.component';
 import { faDownload } from '@fortawesome/free-solid-svg-icons';
 import { ProgrammingExercise } from 'app/entities/programming/programming-exercise.model';
+import { ButtonComponent } from 'app/shared/components/button.component';
 
 @Component({
     selector: 'jhi-programming-assessment-repo-export',
@@ -20,8 +21,11 @@ import { ProgrammingExercise } from 'app/entities/programming/programming-exerci
             (onClick)="openRepoExportDialog($event)"
         />
     `,
+    imports: [ButtonComponent],
 })
 export class ProgrammingAssessmentRepoExportButtonComponent {
+    private modalService = inject(NgbModal);
+
     readonly ButtonType = ButtonType;
     readonly ButtonSize = ButtonSize;
     readonly FeatureToggle = FeatureToggle;
@@ -35,8 +39,6 @@ export class ProgrammingAssessmentRepoExportButtonComponent {
 
     // Icons
     faDownload = faDownload;
-
-    constructor(private modalService: NgbModal) {}
 
     /**
      * Stops the propagation of the mouse event and updates the component instance

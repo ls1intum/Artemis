@@ -42,8 +42,7 @@ describe('System Notification Component', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule],
-            declarations: [SystemNotificationComponent],
+            imports: [ArtemisTestModule, SystemNotificationComponent],
             providers: [
                 { provide: LocalStorageService, useClass: MockSyncStorage },
                 { provide: SessionStorageService, useClass: MockSyncStorage },

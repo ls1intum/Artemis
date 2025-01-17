@@ -1,16 +1,16 @@
-import { Component, EventEmitter, HostBinding, Input, OnDestroy, OnInit, Output } from '@angular/core';
+import { Component, HostBinding, OnDestroy, OnInit, inject, input, output } from '@angular/core';
 import { faEllipsis, faUser, faUserCheck, faUserGear, faUserGraduate } from '@fortawesome/free-solid-svg-icons';
 import { User } from 'app/core/user/user.model';
 import { ConversationDTO } from 'app/entities/metis/conversation/conversation.model';
 import { AccountService } from 'app/core/auth/account.service';
-import { NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
+import { NgbDropdown, NgbDropdownButtonItem, NgbDropdownItem, NgbDropdownMenu, NgbDropdownToggle, NgbModal, NgbModalRef, NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { EMPTY, Observable, Subject, from, takeUntil } from 'rxjs';
 import { Course } from 'app/entities/course.model';
 import { canGrantChannelModeratorRole, canRemoveUsersFromConversation, canRevokeChannelModeratorRole } from 'app/shared/metis/conversations/conversation-permissions.utils';
 import { defaultSecondLayerDialogOptions, getUserLabel } from 'app/overview/course-conversations/other/conversation.util';
 import { ConversationUserDTO } from 'app/entities/metis/conversation/conversation-user-dto.model';
 import { IconProp } from '@fortawesome/fontawesome-svg-core';
-import { getAsChannelDTO, isChannelDTO } from 'app/entities/metis/conversation/channel.model';
+import { ChannelDTO, getAsChannelDTO, isChannelDTO } from 'app/entities/metis/conversation/channel.model';
 import { TranslateService } from '@ngx-translate/core';
 import { GenericConfirmationDialogComponent } from 'app/overview/course-conversations/dialogs/generic-confirmation-dialog/generic-confirmation-dialog.component';
 import { onError } from 'app/shared/util/global.utils';
@@ -20,27 +20,35 @@ import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { getAsGroupChatDTO, isGroupChatDTO } from 'app/entities/metis/conversation/group-chat.model';
 import { GroupChatService } from 'app/shared/metis/conversations/group-chat.service';
 import { catchError } from 'rxjs/operators';
+import { ProfilePictureComponent } from 'app/shared/profile-picture/profile-picture.component';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 
 @Component({
-    // eslint-disable-next-line @angular-eslint/component-selector
     selector: '[jhi-conversation-member-row]',
     templateUrl: './conversation-member-row.component.html',
     styleUrls: ['./conversation-member-row.component.scss'],
+    imports: [
+        ProfilePictureComponent,
+        FaIconComponent,
+        NgbTooltip,
+        NgbDropdown,
+        NgbDropdownToggle,
+        NgbDropdownMenu,
+        NgbDropdownButtonItem,
+        NgbDropdownItem,
+        TranslateDirective,
+        ArtemisTranslatePipe,
+    ],
 })
 export class ConversationMemberRowComponent implements OnInit, OnDestroy {
     private ngUnsubscribe = new Subject<void>();
 
-    @Input()
-    activeConversation: ConversationDTO;
-
-    @Input()
-    course: Course;
-
-    @Output()
-    changePerformed: EventEmitter<void> = new EventEmitter<void>();
-
-    @Input()
-    conversationMember: ConversationUserDTO;
+    activeConversation = input.required<ConversationDTO>();
+    course = input<Course>();
+    changePerformed = output<void>();
+    conversationMember = input<ConversationUserDTO>();
 
     idOfLoggedInUser: number;
 
@@ -71,40 +79,39 @@ export class ConversationMemberRowComponent implements OnInit, OnDestroy {
     canGrantChannelModeratorRole = canGrantChannelModeratorRole;
     canRevokeChannelModeratorRole = canRevokeChannelModeratorRole;
     canRemoveUsersFromConversation = canRemoveUsersFromConversation;
-    constructor(
-        private accountService: AccountService,
-        private modalService: NgbModal,
-        private translateService: TranslateService,
-        private channelService: ChannelService,
-        private groupChatService: GroupChatService,
-        private alertService: AlertService,
-    ) {}
+
+    private accountService = inject(AccountService);
+    private modalService = inject(NgbModal);
+    private translateService = inject(TranslateService);
+    private channelService = inject(ChannelService);
+    private groupChatService = inject(GroupChatService);
+    private alertService = inject(AlertService);
 
     ngOnInit(): void {
-        if (this.conversationMember && this.activeConversation) {
+        if (this.conversationMember() && this.activeConversation()) {
             this.accountService.identity().then((loggedInUser: User) => {
                 this.idOfLoggedInUser = loggedInUser.id!;
-                if (this.conversationMember.id === this.idOfLoggedInUser) {
+                if (this.conversationMember()?.id === this.idOfLoggedInUser) {
                     this.isCurrentUser = true;
                 }
-                if (this.conversationMember.id === this.activeConversation?.creator?.id) {
+                if (this.conversationMember()?.id === this.activeConversation()?.creator?.id) {
                     this.isCreator = true;
                 }
 
-                this.userImageUrl = this.conversationMember.imageUrl;
-                this.userId = this.conversationMember.id;
-                this.userName = this.conversationMember.name;
-                this.userLabel = getUserLabel(this.conversationMember);
+                this.userImageUrl = this.conversationMember()?.imageUrl;
+                this.userId = this.conversationMember()?.id;
+                this.userName = this.conversationMember()?.name;
+                this.userLabel = getUserLabel(this.conversationMember()!);
                 this.setUserAuthorityIconAndTooltip();
                 // the creator of a channel can not be removed from the channel
-                this.canBeRemovedFromConversation = !this.isCurrentUser && this.canRemoveUsersFromConversation(this.activeConversation);
-                if (isChannelDTO(this.activeConversation)) {
+                this.canBeRemovedFromConversation = !this.isCurrentUser && this.canRemoveUsersFromConversation(this.activeConversation()!);
+                if (isChannelDTO(this.activeConversation())) {
                     // the creator of a channel can not be removed from the channel
-                    this.canBeRemovedFromConversation = this.canBeRemovedFromConversation && !this.isCreator && !this.activeConversation.isCourseWide;
-                    this.canBeGrantedChannelModeratorRole = this.canGrantChannelModeratorRole(this.activeConversation) && !this.conversationMember.isChannelModerator;
+                    const channelDTO = this.activeConversation() as ChannelDTO;
+                    this.canBeRemovedFromConversation = this.canBeRemovedFromConversation && !this.isCreator && !channelDTO.isCourseWide;
+                    this.canBeGrantedChannelModeratorRole = this.canGrantChannelModeratorRole(channelDTO) && !this.conversationMember()?.isChannelModerator;
                     // the creator of a channel cannot be revoked the channel moderator role
-                    this.canBeRevokedChannelModeratorRole =
-                        this.canRevokeChannelModeratorRole(this.activeConversation) && !this.isCreator && !!this.conversationMember.isChannelModerator;
+                    this.canBeRevokedChannelModeratorRole = this.canRevokeChannelModeratorRole(channelDTO) && !this.isCreator && !!this.conversationMember()?.isChannelModerator;
                 }
             });
         }
@@ -117,7 +124,7 @@ export class ConversationMemberRowComponent implements OnInit, OnDestroy {
 
     openGrantChannelModeratorRoleDialog(event: MouseEvent) {
         event.stopPropagation();
-        const channel = getAsChannelDTO(this.activeConversation);
+        const channel = getAsChannelDTO(this.activeConversation()!);
         if (!channel) {
             return;
         }
@@ -131,13 +138,21 @@ export class ConversationMemberRowComponent implements OnInit, OnDestroy {
             channelName: channel.name!,
             userName: this.userLabel,
         };
-        const confirmedCallback = () => this.channelService.grantChannelModeratorRole(this.course.id!, channel.id!, [this.conversationMember.login!]);
+        const confirmedCallback = () => {
+            const courseId = this.course?.()?.id;
+            const channelId = channel?.id;
+            const memberLogin = this.conversationMember?.()?.login;
+            if (!courseId || !channelId || !memberLogin) {
+                throw new Error('Required parameters are missing');
+            }
+            return this.channelService.grantChannelModeratorRole(courseId, channelId, [memberLogin]);
+        };
         this.openConfirmationDialog(translationKeys, translationParams, confirmedCallback);
     }
 
     openRevokeChannelModeratorRoleDialog(event: MouseEvent) {
         event.stopPropagation();
-        const channel = getAsChannelDTO(this.activeConversation);
+        const channel = getAsChannelDTO(this.activeConversation()!);
         if (!channel) {
             return;
         }
@@ -151,13 +166,21 @@ export class ConversationMemberRowComponent implements OnInit, OnDestroy {
             channelName: channel.name!,
             userName: this.userLabel,
         };
-        const confirmedCallback = () => this.channelService.revokeChannelModeratorRole(this.course.id!, channel.id!, [this.conversationMember.login!]);
+        const confirmedCallback = () => {
+            const courseId = this.course?.()?.id;
+            const channelId = channel?.id;
+            const memberLogin = this.conversationMember?.()?.login;
+            if (!courseId || !channelId || !memberLogin) {
+                throw new Error('Required parameters are missing');
+            }
+            return this.channelService.revokeChannelModeratorRole(courseId, channelId, [memberLogin]);
+        };
         this.openConfirmationDialog(translationKeys, translationParams, confirmedCallback);
     }
 
     openRemoveFromChannelDialog(event: MouseEvent) {
         event.stopPropagation();
-        const channel = getAsChannelDTO(this.activeConversation);
+        const channel = getAsChannelDTO(this.activeConversation()!);
         if (!channel) {
             return;
         }
@@ -182,13 +205,21 @@ export class ConversationMemberRowComponent implements OnInit, OnDestroy {
             userName: this.userLabel,
             channelName: channel.name!,
         };
-        const confirmedCallback = () => this.channelService.deregisterUsersFromChannel(this.course.id!, this.activeConversation.id!, [this.conversationMember.login!]);
+        const confirmedCallback = () => {
+            const courseId = this.course?.()?.id;
+            const activeConversationId = this.activeConversation()?.id;
+            const memberLogin = this.conversationMember?.()?.login;
+            if (!courseId || !activeConversationId || !memberLogin) {
+                throw new Error('Required parameters are missing');
+            }
+            return this.channelService.deregisterUsersFromChannel(courseId, activeConversationId, [memberLogin]);
+        };
         this.openConfirmationDialog(translationKeys, translationParams, confirmedCallback);
     }
 
     openRemoveFromGroupChatDialog(event: MouseEvent) {
         event.stopPropagation();
-        const groupChat = getAsGroupChatDTO(this.activeConversation);
+        const groupChat = getAsGroupChatDTO(this.activeConversation()!);
         if (!groupChat) {
             return;
         }
@@ -201,7 +232,15 @@ export class ConversationMemberRowComponent implements OnInit, OnDestroy {
         const translationParams = {
             userName: this.userLabel,
         };
-        const confirmedCallback = () => this.groupChatService.removeUsersFromGroupChat(this.course.id!, this.activeConversation.id!, [this.conversationMember.login!]);
+        const confirmedCallback = () => {
+            const courseId = this.course?.()?.id;
+            const activeConversationId = this.activeConversation()?.id;
+            const memberLogin = this.conversationMember?.()?.login;
+            if (!courseId || !activeConversationId || !memberLogin) {
+                throw new Error('Required parameters are missing');
+            }
+            return this.groupChatService.removeUsersFromGroupChat(courseId, activeConversationId, [memberLogin]);
+        };
         this.openConfirmationDialog(translationKeys, translationParams, confirmedCallback);
     }
 
@@ -235,9 +274,9 @@ export class ConversationMemberRowComponent implements OnInit, OnDestroy {
     }
 
     openRemoveFromConversationDialog(event: MouseEvent) {
-        if (isChannelDTO(this.activeConversation)) {
+        if (isChannelDTO(this.activeConversation()!)) {
             this.openRemoveFromChannelDialog(event);
-        } else if (isGroupChatDTO(this.activeConversation)) {
+        } else if (isGroupChatDTO(this.activeConversation()!)) {
             this.openRemoveFromGroupChatDialog(event);
         } else {
             throw new Error('Unsupported conversation type');
@@ -247,10 +286,10 @@ export class ConversationMemberRowComponent implements OnInit, OnDestroy {
     setUserAuthorityIconAndTooltip(): void {
         const toolTipTranslationPath = 'artemisApp.metis.userAuthorityTooltips.';
         // highest authority is displayed
-        if (this.conversationMember.isInstructor) {
+        if (this.conversationMember()?.isInstructor) {
             this.userIcon = faUserGraduate;
             this.userTooltip = this.translateService.instant(toolTipTranslationPath + 'instructor');
-        } else if (this.conversationMember.isEditor || this.conversationMember.isTeachingAssistant) {
+        } else if (this.conversationMember()?.isEditor || this.conversationMember()?.isTeachingAssistant) {
             this.userIcon = faUserCheck;
             this.userTooltip = this.translateService.instant(toolTipTranslationPath + 'tutor');
         } else {

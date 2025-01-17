@@ -1,4 +1,4 @@
-import { Component, DoCheck, Input, OnInit } from '@angular/core';
+import { Component, DoCheck, Input, OnInit, inject } from '@angular/core';
 import { IrisSettings, IrisSettingsType } from 'app/entities/iris/settings/iris-settings.model';
 import { IrisSettingsService } from 'app/iris/settings/shared/iris-settings.service';
 import { HttpResponse } from '@angular/common/http';
@@ -11,16 +11,25 @@ import { cloneDeep, isEqual } from 'lodash-es';
 import {
     IrisChatSubSettings,
     IrisCompetencyGenerationSubSettings,
+    IrisCourseChatSubSettings,
     IrisLectureIngestionSubSettings,
     IrisTextExerciseChatSubSettings,
 } from 'app/entities/iris/settings/iris-sub-settings.model';
 import { AccountService } from 'app/core/auth/account.service';
+import { ButtonComponent } from 'app/shared/components/button.component';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { IrisCommonSubSettingsUpdateComponent } from './iris-common-sub-settings-update/iris-common-sub-settings-update.component';
+import { FormsModule } from '@angular/forms';
 
 @Component({
     selector: 'jhi-iris-settings-update',
     templateUrl: './iris-settings-update.component.html',
+    imports: [ButtonComponent, TranslateDirective, IrisCommonSubSettingsUpdateComponent, FormsModule],
 })
 export class IrisSettingsUpdateComponent implements OnInit, DoCheck, ComponentCanDeactivate {
+    private irisSettingsService = inject(IrisSettingsService);
+    private alertService = inject(AlertService);
+
     @Input()
     public settingsType: IrisSettingsType;
     @Input()
@@ -51,11 +60,9 @@ export class IrisSettingsUpdateComponent implements OnInit, DoCheck, ComponentCa
     COURSE = IrisSettingsType.COURSE;
     EXERCISE = IrisSettingsType.EXERCISE;
 
-    constructor(
-        private irisSettingsService: IrisSettingsService,
-        private alertService: AlertService,
-        accountService: AccountService,
-    ) {
+    constructor() {
+        const accountService = inject(AccountService);
+
         this.isAdmin = accountService.isAdmin();
     }
 
@@ -106,6 +113,9 @@ export class IrisSettingsUpdateComponent implements OnInit, DoCheck, ComponentCa
         }
         if (!this.irisSettings.irisTextExerciseChatSettings) {
             this.irisSettings.irisTextExerciseChatSettings = new IrisTextExerciseChatSubSettings();
+        }
+        if (!this.irisSettings.irisCourseChatSettings) {
+            this.irisSettings.irisCourseChatSettings = new IrisCourseChatSubSettings();
         }
         if (!this.irisSettings.irisLectureIngestionSettings) {
             this.irisSettings.irisLectureIngestionSettings = new IrisLectureIngestionSubSettings();

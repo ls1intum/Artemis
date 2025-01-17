@@ -541,6 +541,10 @@ public class User extends AbstractAuditingEntity implements Participant {
         this.irisAccepted = irisAccepted;
     }
 
+    public boolean hasAcceptedIris() {
+        return irisAccepted != null;
+    }
+
     /**
      * Checks if the user has accepted the Iris privacy policy.
      * If not, an {@link AccessForbiddenException} is thrown.

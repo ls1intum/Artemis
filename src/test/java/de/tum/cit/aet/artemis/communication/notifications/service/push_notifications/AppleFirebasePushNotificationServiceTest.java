@@ -12,7 +12,6 @@ import static org.mockito.Mockito.when;
 import java.util.Collections;
 import java.util.Date;
 import java.util.HexFormat;
-import java.util.Optional;
 
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -81,8 +80,8 @@ class AppleFirebasePushNotificationServiceTest {
         applePushNotificationService = new ApplePushNotificationService(repositoryMock, appleRestTemplateMock);
         firebasePushNotificationService = new FirebasePushNotificationService(repositoryMock, firebaseRestTemplateMock);
 
-        ReflectionTestUtils.setField(applePushNotificationService, "relayServerBaseUrl", Optional.of("test"));
-        ReflectionTestUtils.setField(firebasePushNotificationService, "relayServerBaseUrl", Optional.of("test"));
+        ReflectionTestUtils.setField(applePushNotificationService, "relayServerBaseUrl", "test");
+        ReflectionTestUtils.setField(firebasePushNotificationService, "relayServerBaseUrl", "test");
     }
 
     @AfterEach
