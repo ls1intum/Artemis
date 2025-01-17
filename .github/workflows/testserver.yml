@@ -99,14 +99,6 @@ jobs:
           echo "::error::No successful build found for branch '${{ github.event.inputs.HELIOS_BRANCH_NAME }}' with SHA '${{ github.event.inputs.HELIOS_BRANCH_HEAD_SHA }}'."
           exit 1
 
-
-#          - environment: artemis-test1.artemis.cit.tum.de
-#            label-identifier: artemis-test1
-#            url: https://artemis-test1.artemis.cit.tum.de
-#            user: deployment
-#            hosts: artemis-test1.artemis.cit.tum.de
-#            folder: /opt/artemis
-
   # Deploy to the test servers
   deploy:
     needs: [ conditional-build, check-existing-build ]
