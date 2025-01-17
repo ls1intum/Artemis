@@ -1,32 +1,49 @@
-import { Component, Inject, OnDestroy, OnInit, Renderer2 } from '@angular/core';
-import { ActivatedRouteSnapshot, NavigationEnd, NavigationError, NavigationStart, Router } from '@angular/router';
+import { Component, OnDestroy, OnInit, Renderer2, inject } from '@angular/core';
+import { ActivatedRouteSnapshot, NavigationEnd, NavigationError, NavigationStart, Router, RouterOutlet } from '@angular/router';
 import { JhiLanguageHelper } from 'app/core/language/language.helper';
 import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
 import { SentryErrorHandler } from 'app/core/sentry/sentry.error-handler';
 import { ThemeService } from 'app/core/theme/theme.service';
-import { DOCUMENT } from '@angular/common';
+import { DOCUMENT, NgClass, NgStyle } from '@angular/common';
 import { Subscription } from 'rxjs';
 import { ExamParticipationService } from 'app/exam/participate/exam-participation.service';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
 import { LtiService } from 'app/shared/service/lti.service';
+import { AlertOverlayComponent } from './shared/alert/alert-overlay.component';
+import { CdkScrollable } from '@angular/cdk/scrolling';
+import { PageRibbonComponent } from './shared/layouts/profiles/page-ribbon.component';
+import { NotificationPopupComponent } from './shared/notification/notification-popup/notification-popup.component';
+import { FooterComponent } from './shared/layouts/footer/footer.component';
 
 @Component({
-    selector: 'jhi-main',
-    templateUrl: './main.component.html',
-    styleUrls: ['./main.component.scss'],
+    selector: 'jhi-app',
+    templateUrl: './app.component.html',
+    styleUrls: ['./app.component.scss'],
+    imports: [AlertOverlayComponent, CdkScrollable, NgClass, NgStyle, PageRibbonComponent, RouterOutlet, NotificationPopupComponent, FooterComponent],
 })
-export class JhiMainComponent implements OnInit, OnDestroy {
+export class AppComponent implements OnInit, OnDestroy {
+    private jhiLanguageHelper = inject(JhiLanguageHelper);
+    private router = inject(Router);
+    private profileService = inject(ProfileService);
+    private examParticipationService = inject(ExamParticipationService);
+    private sentryErrorHandler = inject(SentryErrorHandler);
+    private themeService = inject(ThemeService);
+    private document = inject<Document>(DOCUMENT);
+    private renderer = inject(Renderer2);
+    private courseService = inject(CourseManagementService);
+    private ltiService = inject(LtiService);
+
+    private profileSubscription: Subscription;
+    private examStartedSubscription: Subscription;
+    private courseOverviewSubscription: Subscription;
+    private testRunSubscription: Subscription;
+    private ltiSubscription: Subscription;
     /**
      * If the footer and header should be shown.
      * Only set to false on specific pages designed for the native Android and iOS applications where the footer and header are not wanted.
      * The decision on whether to show the skeleton or not for a specific route is defined in shouldShowSkeleton.
      */
-    public showSkeleton = true;
-    profileSubscription: Subscription;
-    examStartedSubscription: Subscription;
-    courseOverviewSubscription: Subscription;
-    testRunSubscription: Subscription;
-    ltiSubscription: Subscription;
+    showSkeleton = true;
     isProduction = true;
     isTestServer = false;
     isExamStarted = false;
@@ -34,19 +51,7 @@ export class JhiMainComponent implements OnInit, OnDestroy {
     isCourseOverview = false;
     isShownViaLti = false;
 
-    constructor(
-        private jhiLanguageHelper: JhiLanguageHelper,
-        private router: Router,
-        private profileService: ProfileService,
-        private examParticipationService: ExamParticipationService,
-        private sentryErrorHandler: SentryErrorHandler,
-        private themeService: ThemeService,
-        @Inject(DOCUMENT)
-        private document: Document,
-        private renderer: Renderer2,
-        private courseService: CourseManagementService,
-        private ltiService: LtiService,
-    ) {
+    constructor() {
         this.setupErrorHandling().then(undefined);
     }
 

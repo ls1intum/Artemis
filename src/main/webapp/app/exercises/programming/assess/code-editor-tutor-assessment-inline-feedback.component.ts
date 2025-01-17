@@ -1,5 +1,6 @@
-import { Component, ElementRef, EventEmitter, Input, Output, ViewChild } from '@angular/core';
+import { Component, ElementRef, EventEmitter, Input, Output, ViewChild, inject } from '@angular/core';
 import { Feedback, FeedbackType, buildFeedbackTextForReview } from 'app/entities/feedback.model';
+import { FeedbackSuggestionBadgeComponent } from 'app/exercises/shared/feedback/feedback-suggestion-badge/feedback-suggestion-badge.component';
 import { ButtonSize } from 'app/shared/components/button.component';
 import { cloneDeep } from 'lodash-es';
 import { TranslateService } from '@ngx-translate/core';
@@ -8,12 +9,38 @@ import { roundValueSpecifiedByCourseSettings } from 'app/shared/util/utils';
 import { Course } from 'app/entities/course.model';
 import { faBan, faExclamationTriangle, faPencilAlt, faQuestionCircle, faSave, faTrashAlt } from '@fortawesome/free-solid-svg-icons';
 import { Subject } from 'rxjs';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
+import { GradingInstructionLinkIconComponent } from 'app/shared/grading-instruction-link-icon/grading-instruction-link-icon.component';
+import { FormsModule } from '@angular/forms';
+import { DeleteButtonDirective } from 'app/shared/delete-dialog/delete-button.directive';
+import { AssessmentCorrectionRoundBadgeComponent } from 'app/assessment/unreferenced-feedback-detail/assessment-correction-round-badge/assessment-correction-round-badge.component';
+import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
+import { FeedbackContentPipe } from 'app/shared/pipes/feedback-content.pipe';
+import { QuotePipe } from 'app/shared/pipes/quote.pipe';
 
 @Component({
     selector: 'jhi-code-editor-tutor-assessment-inline-feedback',
     templateUrl: './code-editor-tutor-assessment-inline-feedback.component.html',
+    imports: [
+        FeedbackSuggestionBadgeComponent,
+        TranslateDirective,
+        FaIconComponent,
+        NgbTooltip,
+        GradingInstructionLinkIconComponent,
+        FormsModule,
+        DeleteButtonDirective,
+        AssessmentCorrectionRoundBadgeComponent,
+        ArtemisTranslatePipe,
+        FeedbackContentPipe,
+        QuotePipe,
+    ],
 })
 export class CodeEditorTutorAssessmentInlineFeedbackComponent {
+    private translateService = inject(TranslateService);
+    structuredGradingCriterionService = inject(StructuredGradingCriterionService);
+
     @Input()
     get feedback(): Feedback {
         return this._feedback;
@@ -66,11 +93,9 @@ export class CodeEditorTutorAssessmentInlineFeedbackComponent {
     faTrashAlt = faTrashAlt;
     faExclamationTriangle = faExclamationTriangle;
 
-    constructor(
-        private translateService: TranslateService,
-        public structuredGradingCriterionService: StructuredGradingCriterionService,
-        elementRef: ElementRef,
-    ) {
+    constructor() {
+        const elementRef = inject(ElementRef);
+
         this.elementRef = elementRef;
     }
 

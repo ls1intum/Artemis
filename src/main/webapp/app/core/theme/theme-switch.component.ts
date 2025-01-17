@@ -20,7 +20,6 @@ import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
     styleUrls: ['theme-switch.component.scss'],
     imports: [TranslateModule, CommonModule, ArtemisSharedModule, NgbModule, FontAwesomeModule],
     changeDetection: ChangeDetectionStrategy.OnPush,
-    standalone: true,
 })
 export class ThemeSwitchComponent implements OnInit {
     protected readonly faSync = faSync;

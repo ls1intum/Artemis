@@ -337,7 +337,7 @@
     @if (!isExamStarted && !isExamActive && breadcrumbs && breadcrumbs.length > 0) {
         <div>
             <ol class="breadcrumb">
-                @for (breadcrumb of breadcrumbs; track breadcrumb; let i = $index) {
+                @for (breadcrumb of breadcrumbs; track breadcrumb.label; let i = $index) {
                     @if (i !== 0) {
                         <fa-icon [icon]="faChevronRight" size="xs" class="breadcrumb-divider mx-2" />
                     }

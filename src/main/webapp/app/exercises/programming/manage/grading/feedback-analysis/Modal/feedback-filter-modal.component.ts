@@ -17,7 +17,6 @@ export interface FilterData {
     templateUrl: './feedback-filter-modal.component.html',
     imports: [RangeSliderComponent, ArtemisSharedCommonModule],
     providers: [FeedbackAnalysisService],
-    standalone: true,
 })
 export class FeedbackFilterModalComponent {
     private localStorage = inject(LocalStorageService);

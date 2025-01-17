@@ -3,10 +3,18 @@ import { FeatureToggle } from 'app/shared/feature-toggle/feature-toggle.service'
 import { ButtonSize, ButtonType } from 'app/shared/components/button.component';
 import { faCircleNotch } from '@fortawesome/free-solid-svg-icons';
 import { IrisLogoSize } from 'app/iris/iris-logo/iris-logo.component';
+import { NgClass } from '@angular/common';
+import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
+import { FeatureToggleDirective } from 'app/shared/feature-toggle/feature-toggle.directive';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { IrisLogoComponent } from '../iris-logo/iris-logo.component';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 
 @Component({
     selector: 'jhi-iris-logo-button',
     templateUrl: './iris-logo-button.component.html',
+    imports: [NgClass, NgbTooltip, FeatureToggleDirective, FaIconComponent, IrisLogoComponent, TranslateDirective, ArtemisTranslatePipe],
 })
 export class IrisLogoButtonComponent {
     @Input() btnType = ButtonType.PRIMARY;

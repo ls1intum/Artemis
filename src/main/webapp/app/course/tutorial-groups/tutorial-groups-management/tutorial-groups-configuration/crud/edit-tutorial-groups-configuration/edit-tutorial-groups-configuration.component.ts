@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, ChangeDetectorRef, Component, OnDestroy, OnInit } from '@angular/core';
+import { ChangeDetectionStrategy, ChangeDetectorRef, Component, OnDestroy, OnInit, inject } from '@angular/core';
 import { TutorialGroupsConfiguration } from 'app/entities/tutorial-group/tutorial-groups-configuration.model';
 import { TutorialGroupsConfigurationFormData } from 'app/course/tutorial-groups/tutorial-groups-management/tutorial-groups-configuration/crud/tutorial-groups-configuration-form/tutorial-groups-configuration-form.component';
 import { AlertService } from 'app/core/util/alert.service';
@@ -10,13 +10,24 @@ import { finalize, switchMap, take, takeUntil } from 'rxjs/operators';
 import { HttpErrorResponse } from '@angular/common/http';
 import { Course } from 'app/entities/course.model';
 import { CourseStorageService } from 'app/course/manage/course-storage.service';
+import { LoadingIndicatorContainerComponent } from 'app/shared/loading-indicator-container/loading-indicator-container.component';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { TutorialGroupsConfigurationFormComponent } from '../tutorial-groups-configuration-form/tutorial-groups-configuration-form.component';
 
 @Component({
     selector: 'jhi-edit-tutorial-groups-configuration',
     templateUrl: './edit-tutorial-groups-configuration.component.html',
     changeDetection: ChangeDetectionStrategy.OnPush,
+    imports: [LoadingIndicatorContainerComponent, TranslateDirective, TutorialGroupsConfigurationFormComponent],
 })
 export class EditTutorialGroupsConfigurationComponent implements OnInit, OnDestroy {
+    private activatedRoute = inject(ActivatedRoute);
+    private router = inject(Router);
+    private tutorialGroupsConfigurationService = inject(TutorialGroupsConfigurationService);
+    private courseStorageService = inject(CourseStorageService);
+    private alertService = inject(AlertService);
+    private cdr = inject(ChangeDetectorRef);
+
     ngUnsubscribe = new Subject<void>();
 
     isLoading = false;
@@ -24,16 +35,6 @@ export class EditTutorialGroupsConfigurationComponent implements OnInit, OnDestr
     formData: TutorialGroupsConfigurationFormData;
     course: Course;
     tutorialGroupConfigurationId: number;
-
-    constructor(
-        private activatedRoute: ActivatedRoute,
-        private router: Router,
-        private tutorialGroupsConfigurationService: TutorialGroupsConfigurationService,
-        private courseStorageService: CourseStorageService,
-        private alertService: AlertService,
-
-        private cdr: ChangeDetectorRef,
-    ) {}
 
     ngOnInit(): void {
         this.isLoading = true;

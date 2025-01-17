@@ -22,13 +22,13 @@ import { TranslateService } from '@ngx-translate/core';
 import { PROFILE_IRIS } from 'app/app.constants';
 import { IrisSettingsService } from 'app/iris/settings/shared/iris-settings.service';
 import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
+import { NgbModule } from '@ng-bootstrap/ng-bootstrap';
 
 @Component({
     selector: 'jhi-faq',
     templateUrl: './faq.component.html',
     styleUrls: [],
-    standalone: true,
-    imports: [ArtemisSharedModule, CustomExerciseCategoryBadgeComponent, ArtemisSharedComponentModule, ArtemisMarkdownModule, SearchFilterComponent],
+    imports: [ArtemisSharedModule, CustomExerciseCategoryBadgeComponent, ArtemisSharedComponentModule, ArtemisMarkdownModule, SearchFilterComponent, NgbModule],
 })
 export class FaqComponent implements OnInit, OnDestroy {
     protected readonly FaqState = FaqState;
@@ -37,7 +37,7 @@ export class FaqComponent implements OnInit, OnDestroy {
     filteredFaqs: Faq[];
     existingCategories: FaqCategory[];
     courseId: number;
-    hasCategories: boolean = false;
+    hasCategories = false;
     isAtLeastInstructor = false;
     faqIngestionEnabled = false;
     irisEnabled = false;

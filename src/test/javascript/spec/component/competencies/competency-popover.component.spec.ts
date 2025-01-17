@@ -8,6 +8,7 @@ import { By } from '@angular/platform-browser';
 import { Component } from '@angular/core';
 import { NgbPopoverModule } from '@ng-bootstrap/ng-bootstrap';
 import { RouterModule } from '@angular/router';
+import { ArtemisTestModule } from '../../test.module';
 
 @Component({
     selector: 'jhi-statistics',
@@ -28,6 +29,7 @@ describe('CompetencyPopoverComponent', () => {
     beforeEach(() => {
         TestBed.configureTestingModule({
             imports: [
+                ArtemisTestModule,
                 NgbPopoverModule,
                 RouterModule.forRoot([
                     { path: 'courses/:courseId/competencies', component: DummyStatisticsComponent },

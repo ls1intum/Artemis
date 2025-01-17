@@ -26,6 +26,7 @@ import { PROFILE_IRIS } from 'app/app.constants';
 import { ProfileInfo } from 'app/shared/layouts/profiles/profile-info.model';
 import { IrisCourseSettings } from 'app/entities/iris/settings/iris-settings.model';
 import { MockProfileService } from '../../helpers/mocks/service/mock-profile.service';
+import 'jest-extended';
 
 function createFaq(id: number, category: string, color: string): Faq {
     const faq = new Faq();

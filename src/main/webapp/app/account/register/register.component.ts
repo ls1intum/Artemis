@@ -15,7 +15,6 @@ import { ArtemisSharedCommonModule } from 'app/shared/shared-common.module';
 @Component({
     selector: 'jhi-register',
     templateUrl: './register.component.html',
-    standalone: true,
     imports: [TranslateDirective, FormsModule, ReactiveFormsModule, PasswordStrengthBarComponent, ArtemisSharedCommonModule, ArtemisSharedModule],
 })
 export class RegisterComponent implements OnInit, AfterViewInit {

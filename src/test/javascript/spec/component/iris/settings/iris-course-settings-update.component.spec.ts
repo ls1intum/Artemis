@@ -2,13 +2,12 @@ import { ArtemisTestModule } from '../../../test.module';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { IrisSettingsUpdateComponent } from 'app/iris/settings/iris-settings-update/iris-settings-update.component';
 import { IrisSettingsService } from 'app/iris/settings/shared/iris-settings.service';
-import { MockComponent, MockDirective, MockProvider } from 'ng-mocks';
+import { MockComponent, MockProvider } from 'ng-mocks';
 import { BehaviorSubject, of } from 'rxjs';
 import { ButtonComponent } from 'app/shared/components/button.component';
 import { IrisCommonSubSettingsUpdateComponent } from 'app/iris/settings/iris-settings-update/iris-common-sub-settings-update/iris-common-sub-settings-update.component';
 import { mockEmptySettings, mockSettings } from './mock-settings';
 import { ActivatedRoute, Params, provideRouter } from '@angular/router';
-import { NgModel } from '@angular/forms';
 import { IrisCourseSettingsUpdateComponent } from 'app/iris/settings/iris-course-settings-update/iris-course-settings-update.component';
 import { By } from '@angular/platform-browser';
 import { IrisSettings } from 'app/entities/iris/settings/iris-settings.model';
@@ -28,13 +27,7 @@ describe('IrisCourseSettingsUpdateComponent Component', () => {
     beforeEach(() => {
         TestBed.configureTestingModule({
             imports: [ArtemisTestModule, MockJhiTranslateDirective],
-            declarations: [
-                IrisCourseSettingsUpdateComponent,
-                IrisSettingsUpdateComponent,
-                MockComponent(IrisCommonSubSettingsUpdateComponent),
-                MockComponent(ButtonComponent),
-                MockDirective(NgModel),
-            ],
+            declarations: [IrisCourseSettingsUpdateComponent, IrisSettingsUpdateComponent, MockComponent(IrisCommonSubSettingsUpdateComponent), MockComponent(ButtonComponent)],
             providers: [provideRouter([]), MockProvider(IrisSettingsService), { provide: ActivatedRoute, useValue: route }],
         })
             .compileComponents()

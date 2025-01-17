@@ -1,5 +1,5 @@
 import { NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
-import { Component, Input, OnDestroy, OnInit } from '@angular/core';
+import { Component, Input, OnDestroy, OnInit, inject } from '@angular/core';
 import { faBullhorn } from '@fortawesome/free-solid-svg-icons';
 import dayjs from 'dayjs/esm';
 import { Subscription, from } from 'rxjs';
@@ -7,12 +7,18 @@ import { Subscription, from } from 'rxjs';
 import { Exam } from 'app/entities/exam/exam.model';
 import { AlertService } from 'app/core/util/alert.service';
 import { ExamLiveAnnouncementCreateModalComponent } from 'app/exam/manage/exams/exam-checklist-component/exam-announcement-dialog/exam-live-announcement-create-modal.component';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
 
 @Component({
     selector: 'jhi-exam-live-announcement-create-button',
     templateUrl: './exam-live-announcement-create-button.component.html',
+    imports: [FaIconComponent, TranslateDirective],
 })
 export class ExamLiveAnnouncementCreateButtonComponent implements OnInit, OnDestroy {
+    private modalService = inject(NgbModal);
+    alertService = inject(AlertService);
+
     @Input() exam: Exam;
 
     faBullhorn = faBullhorn;
@@ -21,11 +27,6 @@ export class ExamLiveAnnouncementCreateButtonComponent implements OnInit, OnDest
     private modalRef: NgbModalRef | undefined;
     private timeoutRef: any;
     private subscription: Subscription;
-
-    constructor(
-        private modalService: NgbModal,
-        public alertService: AlertService,
-    ) {}
 
     ngOnInit() {
         this.checkAnnouncementCreationAllowed();
