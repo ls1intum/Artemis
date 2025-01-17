@@ -7,7 +7,6 @@ import {
     EventEmitter,
     Input,
     OnDestroy,
-    OnInit,
     Output,
     Signal,
     ViewChild,
@@ -139,7 +138,7 @@ const BORDER_HEIGHT_OFFSET = 2;
         ArtemisTranslatePipe,
     ],
 })
-export class MarkdownEditorMonacoComponent implements AfterContentInit, AfterViewInit, OnDestroy, OnInit {
+export class MarkdownEditorMonacoComponent implements AfterContentInit, AfterViewInit, OnDestroy {
     private readonly alertService = inject(AlertService);
     // We inject the MetisService here to avoid a NullInjectorError in the FileUploaderService.
     private readonly metisService = inject(MetisService, { optional: true });
@@ -317,16 +316,11 @@ export class MarkdownEditorMonacoComponent implements AfterContentInit, AfterVie
     protected readonly TAB_PREVIEW = MarkdownEditorMonacoComponent.TAB_PREVIEW;
     protected readonly TAB_VISUAL = MarkdownEditorMonacoComponent.TAB_VISUAL;
 
+    isLoading: Signal<boolean>;
+
     constructor() {
         this.uniqueMarkdownEditorId = 'markdown-editor-' + uuid();
-    }
-
-    isLoading: boolean = false;
-
-    ngOnInit(): void {
-        this.rewriteService.isLoading.subscribe((loadingState) => {
-            this.isLoading = loadingState;
-        });
+        this.isLoading = this.rewriteService.isLoadingSignal;
     }
 
     ngAfterContentInit(): void {

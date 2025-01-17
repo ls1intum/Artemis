@@ -1,6 +1,6 @@
 import { HttpClient } from '@angular/common/http';
-import { Injectable, inject } from '@angular/core';
-import { BehaviorSubject, Observable } from 'rxjs';
+import { Injectable, inject, signal } from '@angular/core';
+import { Observable } from 'rxjs';
 import { JhiWebsocketService } from 'app/core/websocket/websocket.service';
 import RewritingVariant from 'app/shared/monaco-editor/model/rewriting-variant';
 import { AlertService } from 'app/core/util/alert.service';
@@ -13,8 +13,7 @@ import { AlertService } from 'app/core/util/alert.service';
 export class RewritingService {
     public resourceUrl = 'api/courses';
 
-    private isLoadingSubject = new BehaviorSubject<boolean>(false);
-    isLoading = this.isLoadingSubject.asObservable();
+    isLoadingSignal = signal<boolean>(false);
 
     private http = inject(HttpClient);
     private jhiWebsocketService = inject(JhiWebsocketService);
@@ -28,7 +27,7 @@ export class RewritingService {
      * @return Observable that emits the rewritten text when available.
      */
     rewritteMarkdown(toBeRewritten: string, rewritingVariant: RewritingVariant, courseId: number): Observable<string> {
-        this.isLoadingSubject.next(true);
+        this.isLoadingSignal.set(true);
         return new Observable<string>((observer) => {
             this.http
                 .post(`${this.resourceUrl}/${courseId}/rewrite-text`, null, {
@@ -39,7 +38,6 @@ export class RewritingService {
                 })
                 .subscribe({
                     next: () => {
-                        this.isLoadingSubject.next(true);
                         const websocketTopic = `/user/topic/iris/rewriting/${courseId}`;
                         this.jhiWebsocketService.subscribe(websocketTopic);
                         this.jhiWebsocketService.receive(websocketTopic).subscribe({
@@ -47,14 +45,14 @@ export class RewritingService {
                                 if (update.result) {
                                     observer.next(update.result);
                                     observer.complete();
-                                    this.isLoadingSubject.next(false);
+                                    this.isLoadingSignal.set(false);
                                     this.jhiWebsocketService.unsubscribe(websocketTopic);
                                     this.alertService.success('artemisApp.markdownEditor.artemisIntelligence.alerts.rewrite.success');
                                 }
                             },
                             error: (error) => {
                                 observer.error(error);
-                                this.isLoadingSubject.next(false);
+                                this.isLoadingSignal.set(false);
                                 this.jhiWebsocketService.unsubscribe(websocketTopic);
                             },
                         });

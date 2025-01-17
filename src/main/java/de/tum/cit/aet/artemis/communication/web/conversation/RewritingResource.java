@@ -16,6 +16,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import de.tum.cit.aet.artemis.core.repository.CourseRepository;
 import de.tum.cit.aet.artemis.core.repository.UserRepository;
+import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInCourse.EnforceAtLeastTutorInCourse;
 import de.tum.cit.aet.artemis.iris.service.IrisRewritingService;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.rewriting.RewritingVariant;
 
@@ -44,6 +45,7 @@ public class RewritingResource {
 
     }
 
+    @EnforceAtLeastTutorInCourse
     @PostMapping("courses/{courseId}/rewrite-text")
     public ResponseEntity<Void> rewriteText(@RequestParam String toBeRewritten, @RequestParam RewritingVariant variant, @PathVariable Long courseId) {
         var rewritingService = irisRewritingService.orElseThrow();
