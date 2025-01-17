@@ -96,8 +96,9 @@ public class TextExerciseFeedbackService {
      * Generates automatic non-graded feedback for a text exercise submission.
      * This method leverages the Athena service to generate feedback based on the latest submission.
      *
-     * @param participation the student participation associated with the exercise.
-     * @param textExercise  the text exercise object.
+     * @param textSubmission the text submission associated with the student participation.
+     * @param participation  the student participation associated with the exercise.
+     * @param textExercise   the text exercise object.
      */
     public void generateAutomaticNonGradedFeedback(TextSubmission textSubmission, StudentParticipation participation, TextExercise textExercise) {
         log.debug("Using athena to generate (text exercise) feedback request: {}", textExercise.getId());

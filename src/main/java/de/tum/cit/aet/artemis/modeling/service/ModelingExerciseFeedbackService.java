@@ -95,8 +95,9 @@ public class ModelingExerciseFeedbackService {
      * Generates automatic non-graded feedback for a modeling exercise submission.
      * This method leverages the Athena service to generate feedback based on the latest submission.
      *
-     * @param participation    the student participation associated with the exercise.
-     * @param modelingExercise the modeling exercise object.
+     * @param modelingSubmission the modeling submission associated with the student participation.
+     * @param participation      the student participation associated with the exercise.
+     * @param modelingExercise   the modeling exercise object.
      */
     public void generateAutomaticNonGradedFeedback(ModelingSubmission modelingSubmission, StudentParticipation participation, ModelingExercise modelingExercise) {
         log.debug("Using athena to generate (modeling exercise) feedback request: {}", modelingExercise.getId());
