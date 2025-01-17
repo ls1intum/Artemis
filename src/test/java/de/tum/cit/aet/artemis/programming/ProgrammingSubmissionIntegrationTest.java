@@ -515,11 +515,15 @@ class ProgrammingSubmissionIntegrationTest extends AbstractProgrammingIntegratio
 
     }
 
-    // todo: only fails when running the whole test class rather than only this test
-    // some race condition on the mocked API due to parallel execution?
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testNotifyPush_studentCommitUpdatesSubmissionCount() throws Exception {
+        jenkinsRequestMockProvider.enableMockingOfRequests(jenkinsJobPermissionsService);
+
+        String buildPlanName = (exercise.getProjectKey() + "-" + TEST_PREFIX + "student1").toUpperCase();
+        jenkinsRequestMockProvider.mockTriggerBuild(exercise.getProjectKey(), buildPlanName, false);
+        jenkinsRequestMockProvider.mockTriggerBuild(exercise.getProjectKey(), buildPlanName, false);
+
         var participation = participationUtilService.addStudentParticipationForProgrammingExercise(exercise, TEST_PREFIX + "student1");
 
         Commit mockCommit = mock(Commit.class);
