@@ -51,11 +51,11 @@ public class IrisRewritingService {
     }
 
     /**
-     * Executes the rewriting pipeline on Pyris for a given course, user and course description
+     * Executes the rewriting pipeline on Pyris
      *
      * @param user          the user for which the pipeline should be executed
      * @param course        the course for which the pipeline should be executed
-     * @param toBeRewritten the description of the course
+     * @param toBeRewritten the text to be rewritten
      */
     public void executeRewritingPipeline(User user, Course course, RewritingVariant variant, String toBeRewritten) {
         // @formatter:off
