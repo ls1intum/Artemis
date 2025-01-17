@@ -1,137 +1,293 @@
-name: Deploy to Testserver with Helios
+name: Deploy to Testserver
 
 on:
-  workflow_dispatch:
-    inputs:
-      HELIOS_TRIGGERED_BY:
-        description: "Username that triggered deployment"
-        required: true
-        type: string
-      HELIOS_BRANCH_NAME:
-        description: "Which branch to deploy"
-        required: true
-        type: string
-      HELIOS_BRANCH_HEAD_SHA:
-        description: "SHA of the branch to deploy"
-        required: true
-        type: string
-      HELIOS_ENVIRONMENT_NAME:
-        description: "Which environment to deploy (e.g. artemis-test7.artemis.cit.tum.de, etc.)."
-        required: true
-        type: string
-      HELIOS_RAW_URL:
-        description: "URL to the raw content of the repository in the format https://raw.githubusercontent.com/:owner/:repo/:sha"
-        required: true
-        type: string
-      HELIOS_BUILD:
-        description: "Whether to also build or just deploy the existing Docker image"
-        required: true
-        type: boolean
-      HELIOS_PR_NUMBER:
-        description: "PR number that triggered deployment"
-        required: false
-        type: string
-      HELIOS_BUILD_TAG:
-        description: "Docker tag to use if we are building or pulling an existing image"
-        required: false
-        type: string
+  pull_request:
+    types: [labeled]
 
-concurrency: ${{ github.event.inputs.HELIOS_ENVIRONMENT_NAME }}
+concurrency: test-servers
 
 env:
-  CI: true
-  RAW_URL: ${{ github.event.inputs.HELIOS_RAW_URL }}
+  RAW_URL: https://raw.githubusercontent.com/${{ github.repository }}/${{ github.sha }}
 
 jobs:
-  # Print the inputs for debugging
-  validate-inputs:
+  # Get an up to date version of the label list. github.event.pull_request.labels seems to sometimes be outdated
+  # if the run was waiting for a while, which can cause duplicate deployments
+  get-labels:
     runs-on: ubuntu-latest
+    outputs:
+      labels: ${{ steps.get-labels.outputs.result }}
     steps:
-      - name: Validate Build Tag Input Exists
-        if: ${{ github.event.inputs.HELIOS_BUILD == 'true' && github.event.inputs.HELIOS_BUILD_TAG == '' }}
-        run: |
-          echo "::error::HELIOS_BUILD is true but no HELIOS_BUILD_TAG was provided."
-          exit 1
-      - name: Validate PR Number Input Exists
-        if: ${{ github.event.inputs.HELIOS_BUILD == 'false' && github.event.inputs.HELIOS_PR_NUMBER == '' }}
-        run: |
-          echo "::error::HELIOS_BUILD is false but no HELIOS_PR_NUMBER was provided."
-          exit 1
+      - name: Get PR labels
+        id: get-labels
+        uses: actions/github-script@v7
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            const response = await github.rest.issues.listLabelsOnIssue({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.issue.number
+            })
+            const labels = response.data
+            return labels.map(label => label.name)
 
-      - name: Print Inputs
-        run: |
-          echo "RAW_URL: ${{ env.RAW_URL }}"
-          echo "Triggered by: ${{ github.event.inputs.HELIOS_TRIGGERED_BY }}"
-          echo "Branch: ${{ github.event.inputs.HELIOS_BRANCH_NAME }}"
-          echo "SHA: ${{ github.event.inputs.HELIOS_BRANCH_HEAD_SHA }}"
-          echo "PR Number: ${{ github.event.inputs.HELIOS_PR_NUMBER }}"
-          echo "Environment: ${{ github.event.inputs.HELIOS_ENVIRONMENT_NAME }}"
-          echo "Need Build? ${{ github.event.inputs.HELIOS_BUILD }}"
-          echo "Build Tag? ${{ github.event.inputs.HELIOS_BUILD_TAG }}"
 
-  # Build the Docker image (branch without PR)
-  conditional-build:
-    if: ${{ github.event.inputs.HELIOS_BUILD == 'true' }}
-    needs: [ validate-inputs ]
-    uses: ./.github/workflows/build.yml
-    with:
-      sha: ${{ github.event.inputs.HELIOS_BRANCH_HEAD_SHA }}
-      tag: ${{ github.event.inputs.HELIOS_BUILD_TAG }}
-      raw_url: ${{ github.event.inputs.HELIOS_RAW_URL }}
-
-  # Check if the build has run successfully (PR)
-  check-existing-build:
-    if: ${{ github.event.inputs.HELIOS_BUILD == 'false' }}
-    needs: [ validate-inputs ]
+  # Check that the build job has run successfully before deploying
+  check-build-status:
+    needs: [ get-labels ]
     runs-on: ubuntu-latest
+    # Only run workflow if the added label is a deploy label
+    if: contains(needs.get-labels.outputs.labels, 'deploy:artemis-test')
     steps:
-      # Check if the build has run successfully (PR)
       - name: Get latest successful build for branch
         id: check_build
         uses: octokit/request-action@v2.x
         with:
-          route: GET /repos/${{ github.repository }}/actions/workflows/build.yml/runs?event=pull_request&status=success&head_sha=${{ github.event.inputs.HELIOS_BRANCH_HEAD_SHA }}
+          route: GET /repos/${{ github.repository }}/actions/workflows/build.yml/runs?event=pull_request&status=success&head_sha=${{ github.event.pull_request.head.sha }}
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      - name: Fail if no successful build found
-        if: ${{ steps.check_build.conclusion == 'success' && fromJSON(steps.check_build.outputs.data).total_count == 0 }}
+
+      # Remove deployment-error label if new run is started
+      - uses: actions-ecosystem/action-remove-labels@v1
+        if: fromJSON(steps.check_build.outputs.data).total_count > 0
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          labels: |
+            deployment-error
+
+      # In case of invalid build status, remove deploy labels
+      - uses: actions-ecosystem/action-remove-labels@v1
+        if: fromJSON(steps.check_build.outputs.data).total_count == 0
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          labels: |
+            deploy:artemis-test1
+            deploy:artemis-test2
+            deploy:artemis-test3
+            deploy:artemis-test4
+            deploy:artemis-test5
+            deploy:artemis-test6
+            deploy:artemis-test7
+            deploy:artemis-test8
+            deploy:artemis-test9
+            deploy:artemis-test10
+
+      - name: Check if latest push had successful build
+        if: fromJSON(steps.check_build.outputs.data).total_count == 0
+        uses: actions/github-script@v7
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: '### ⚠️ Unable to deploy to test servers ⚠️\nThe docker build needs to run through before deploying.'
+            })
+            core.setFailed('The build needs to run through first. Please wait for the build to finish and then try again.')
+
+
+  # Check which test server to deploy to based on the label
+  filter-matrix:
+    needs: [ get-labels, check-build-status ]
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        include:
+          # Commented out environments are not yet available and will be enabled in the future
+          - environment: artemis-test1.artemis.cit.tum.de
+            label-identifier: artemis-test1
+            url: https://artemis-test1.artemis.cit.tum.de
+            user: deployment
+            hosts: artemis-test1.artemis.cit.tum.de
+            folder: /opt/artemis
+
+          - environment: artemis-test2.artemis.cit.tum.de
+            label-identifier: artemis-test2
+            url: https://artemis-test2.artemis.cit.tum.de
+            user: deployment
+            hosts: artemis-test2.artemis.cit.tum.de
+            folder: /opt/artemis
+
+          - environment: artemis-test3.artemis.cit.tum.de
+            label-identifier: artemis-test3
+            url: https://artemis-test3.artemis.cit.tum.de
+            user: deployment
+            hosts: artemis-test3.artemis.cit.tum.de
+            folder: /opt/artemis
+
+          - environment: artemis-test4.artemis.cit.tum.de
+            label-identifier: artemis-test4
+            url: https://artemis-test4.artemis.cit.tum.de
+            user: deployment
+            hosts: artemis-test4.artemis.cit.tum.de
+            folder: /opt/artemis
+
+          - environment: artemis-test5.artemis.cit.tum.de
+            label-identifier: artemis-test5
+            url: https://artemis-test5.artemis.cit.tum.de
+            user: deployment
+            hosts: artemis-test5.artemis.cit.tum.de
+            folder: /opt/artemis
+
+          - environment: artemis-test6.artemis.cit.tum.de
+            label-identifier: artemis-test6
+            url: https://artemis-test6.artemis.cit.tum.de
+            user: deployment
+            hosts: artemis-test6.artemis.cit.tum.de
+            folder: /opt/artemis
+            host_keys: |
+
+          - environment: artemis-test7.artemis.cit.tum.de
+            label-identifier: artemis-test7
+            url: https://artemis-test7.artemis.cit.tum.de
+            user: deployment
+            hosts: artemis-test7.artemis.cit.tum.de
+            folder: /opt/artemis
+            host_keys: |
+
+          #- environment: artemis-test8.artemis.cit.tum.de
+          #  label-identifier: artemis-test8
+          #  url: https://artemis-test8.artemis.cit.tum.de
+          #  user: deployment
+          #  hosts: artemis-test8.artemis.cit.tum.de
+          #  folder: /opt/artemis
+
+          - environment: artemis-test9.artemis.cit.tum.de
+            label-identifier: artemis-test9
+            url: https://artemis-test9.artemis.cit.tum.de
+            user: deployment
+            hosts: artemis-test9.artemis.cit.tum.de
+            folder: /opt/artemis
+            host_keys: |
+
+          #- environment: artemis-test10.artemis.cit.tum.de
+          #  label-identifier: artemis-test10
+          #  url: https://artemis-test10.artemis.cit.tum.de
+          #  user: deployment
+          #  hosts: artemis-test10.artemis.cit.tum.de
+          #  folder: /opt/artemis
+    outputs:
+      TS1: ${{ steps.filter.outputs.artemis-test1 || '' }}
+      TS2: ${{ steps.filter.outputs.artemis-test2 || '' }}
+      TS3: ${{ steps.filter.outputs.artemis-test3 || '' }}
+      TS4: ${{ steps.filter.outputs.artemis-test4 || '' }}
+      TS5: ${{ steps.filter.outputs.artemis-test5 || '' }}
+      TS6: ${{ steps.filter.outputs.artemis-test6 || '' }}
+      #TS7: ${{ steps.filter.outputs.artemis-test7 || '' }}
+      #TS8: ${{ steps.filter.outputs.artemis-test8 || '' }}
+      TS9: ${{ steps.filter.outputs.artemis-test9 || '' }}
+      #TS10: ${{ steps.filter.outputs.artemis-test10 || '' }}
+    steps:
+      - run: |
+          echo "$DEPLOY_LABEL"
+          echo '${{ contains(fromJSON(needs.get-labels.outputs.labels), format('deploy:{0}', matrix.label-identifier)) }}'
+      - id: filter
+        env:
+          MATRIX_JSON: ${{ toJSON(matrix) }}
+        if: ${{ contains(fromJSON(needs.get-labels.outputs.labels), format('deploy:{0}', matrix.label-identifier)) }}
         run: |
-          echo "::error::No successful build found for branch '${{ github.event.inputs.HELIOS_BRANCH_NAME }}' with SHA '${{ github.event.inputs.HELIOS_BRANCH_HEAD_SHA }}'."
-          exit 1
+          MATRIX_JSON=${MATRIX_JSON//$'\n'/}
+          echo "${{ matrix.label-identifier }}=$MATRIX_JSON" >> $GITHUB_OUTPUT
+
+
+  # Process the output of the filter step to create a valid matrix for the deploy step
+  process-matrix:
+    needs: [ filter-matrix ]
+    runs-on: ubuntu-latest
+    outputs:
+      matrix: ${{ steps.process.outputs.matrix }}
+    steps:
+      - id: process
+        env:
+          MATRIX_JSON: ${{ toJSON(needs.filter-matrix.outputs.*) }}
+        run: |
+          MATRIX_JSON=${MATRIX_JSON//$'\n'/}
+          MATRIX_JSON=${MATRIX_JSON//$'"{'/'{'}
+          MATRIX_JSON=${MATRIX_JSON//$'}"'/'}'}
+          MATRIX_JSON=${MATRIX_JSON//$'\\"'/'"'}
+          echo "$MATRIX_JSON"
+          echo "matrix=$MATRIX_JSON" >> $GITHUB_OUTPUT
+
 
   # Deploy to the test servers
   deploy:
-    needs: [ conditional-build, check-existing-build ]
-    # Run if either job is successful
-    # This if condition should be exactly like below, since one of the job is skipped
-    if: always() && (needs.conditional-build.result == 'success' || needs.check-existing-build.result == 'success')
+    needs: [ process-matrix ]
     runs-on: ubuntu-latest
+    concurrency: test-servers-deploy
+    strategy:
+      fail-fast: false
+      matrix:
+        include: ${{ fromJSON(needs.process-matrix.outputs.matrix) }}
+
     environment:
-      name: ${{ github.event.inputs.HELIOS_ENVIRONMENT_NAME }}
-      url: ${{ vars.DEPLOYMENT_URL }}
+      name: ${{ matrix.environment }}
+      url: ${{ matrix.url }}
 
     env:
+      DEPLOYMENT_USER: ${{ matrix.user }}
+      DEPLOYMENT_HOSTS: ${{ matrix.hosts }}
+      DEPLOYMENT_FOLDER: ${{ matrix.folder }}
       GATEWAY_USER: "jump"
       GATEWAY_HOST: "gateway.artemis.in.tum.de:2010"
       GATEWAY_HOST_PUBLIC_KEY: "[gateway.artemis.in.tum.de]:2010 ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIKtTLiKRILjKZ+Qg4ReWKsG7mLDXkzHfeY5nalSQUNQ4"
 
     steps:
+      - uses: actions-ecosystem/action-remove-labels@v1
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          labels: |
+            deploy:${{ matrix.label-identifier }}
+
+      - name: Check "lock:${{ matrix.environment }}" label
+        uses: actions/github-script@v7
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            const opts = github.rest.issues.listForRepo.endpoint.merge({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              labels: ['lock:${{ matrix.label-identifier }}']
+            })
+            const issues = await github.paginate(opts)
+            if (issues.length == 1 && (!context.issue || issues[0].number != context.issue.number)) {
+              github.rest.issues.createComment({
+                issue_number: context.issue.number,
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                body: `#### ⚠️ Unable to deploy to test servers ⚠️\nTestserver "${{ matrix.environment }}" is already in use by PR #${issues[0].number}.`
+              })
+              core.setFailed(`Testserver "${{ matrix.environment }}" is already in use by PR #${issues[0].number}.`);
+            } else if (issues.length > 1) {
+              github.rest.issues.createComment({
+                  issue_number: context.issue.number,
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  body: '#### ⚠️ Unable to deploy to test servers ⚠️\nTestserver "${{ matrix.environment }}" is already in use by multiple PRs. Check PRs with label "lock:${{ matrix.label-identifier }}"!'
+                })
+              core.setFailed('Testserver "${{ matrix.environment }}" is already in use by multiple PRs. Check PRs with label "lock:${{ matrix.label-identifier }}"!');
+            }
+
       - name: Compute Tag
         uses: actions/github-script@v7
         id: compute-tag
         with:
           result-encoding: string
           script: |
-            // Check if HELIOS_BUILD input is true
-            if (context.payload.inputs.HELIOS_BUILD === 'true') {
-              return context.payload.inputs.HELIOS_BUILD_TAG;
+            if (context.eventName === "pull_request") {
+              return "pr-" + context.issue.number;
             }
-            // Use the "pr-<pr-number>" format for pull requests
-            if (context.payload.inputs.HELIOS_BUILD === 'false') {
-              const prNumber = '${{ github.event.inputs.HELIOS_PR_NUMBER }}';
-              return `pr-${prNumber}`;
+            if (context.eventName === "release") {
+              return "latest";
             }
-
+            if (context.eventName === "push") {
+              if (context.ref.startsWith("refs/tags/")) {
+                return context.ref.slice(10);
+              }
+              if (context.ref === "refs/heads/develop") {
+                return "develop";
+              }
+            }
             return "FALSE";
 
       # Download artemis-server-cli from GH without cloning the Repo
@@ -158,8 +314,40 @@ jobs:
           SSH_AUTH_SOCK: /tmp/ssh_agent.sock
           TAG: ${{ steps.compute-tag.outputs.result }}
         run: |
-          echo "DEPLOYMENT_HOSTS: ${{ vars.DEPLOYMENT_HOSTS }}"
-          echo "DEPLOYMENT_LABEL_IDENTIFIER: ${{ vars.DEPLOYMENT_LABEL_IDENTIFIER }}"
-          echo "DEPLOYMENT_URL: ${{ vars.DEPLOYMENT_URL }}"
-          echo "DEPLOYMENT_USER: ${{ vars.DEPLOYMENT_USER }}"
-          ./artemis-server-cli docker-deploy "${{ vars.DEPLOYMENT_USER }}@${{ vars.DEPLOYMENT_HOSTS }}" -g "$GATEWAY_USER@$GATEWAY_HOST" -t $TAG -b ${{ github.event.inputs.HELIOS_BRANCH_NAME }} -d ${{ vars.DEPLOYMENT_FOLDER }} -y
+          for host in $DEPLOYMENT_HOSTS; do
+            ./artemis-server-cli docker-deploy "$DEPLOYMENT_USER@$host" -g "$GATEWAY_USER@$GATEWAY_HOST" -t $TAG -b $GITHUB_HEAD_REF -d $DEPLOYMENT_FOLDER -y
+          done
+
+      - name: Add "lock:${{ matrix.environment }}" label
+        uses: actions/github-script@v7
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            if (context.issue && context.issue.number) {
+              await github.rest.issues.addLabels({
+                issue_number: context.issue.number,
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                labels: ['lock:${{ matrix.label-identifier }}']
+              })
+            }
+
+      - name: Update badge
+        uses: RubbaBoy/BYOB@v1.3.0
+        with:
+          NAME: ${{ matrix.label-identifier }}
+          LABEL: ${{ matrix.environment }}
+          STATUS: ${{ github.event.pull_request.head.ref }}
+          COLOR: red
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  # Check that the build job has run successfully before deploying
+  add-error-label:
+    needs: [ get-labels, check-build-status, filter-matrix, process-matrix, deploy ]
+    runs-on: ubuntu-latest
+    if: ${{ failure() }}
+    steps:
+      - name: Add error label
+        uses: actions-ecosystem/action-add-labels@v1
+        with:
+          labels: deployment-error
