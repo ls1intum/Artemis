@@ -3,14 +3,14 @@ import { HttpTestingController, provideHttpClientTesting } from '@angular/common
 import { provideHttpClient } from '@angular/common/http';
 import { ArtemisTestModule } from '../test.module';
 
-import { RewritingService } from '../../../../main/webapp/app/shared/monaco-editor/rewriting.service';
+import { ArtemisIntelligenceService } from 'app/shared/monaco-editor/model/actions/artemis-intelligence/artemis-intelligence.service';
 import { BehaviorSubject } from 'rxjs';
 import { JhiWebsocketService } from 'app/core/websocket/websocket.service';
-import RewritingVariant from '../../../../main/webapp/app/shared/monaco-editor/model/rewriting-variant';
+import RewritingVariant from 'app/shared/monaco-editor/model/actions/artemis-intelligence/rewriting-variant';
 
-describe('Rewrite Service', () => {
+describe('ArtemisIntelligenceService', () => {
     let httpMock: HttpTestingController;
-    let service: RewritingService;
+    let service: ArtemisIntelligenceService;
 
     beforeEach(() => {
         const mockWebsocketService = {
@@ -25,7 +25,7 @@ describe('Rewrite Service', () => {
         });
 
         httpMock = TestBed.inject(HttpTestingController);
-        service = TestBed.inject(RewritingService);
+        service = TestBed.inject(ArtemisIntelligenceService);
     });
 
     afterEach(() => {
@@ -38,7 +38,7 @@ describe('Rewrite Service', () => {
             const rewritingVariant = RewritingVariant.FAQ;
             const courseId = 1;
 
-            service.rewritteMarkdown(toBeRewritten, rewritingVariant, courseId).subscribe((rewrittenText) => {
+            service.rewrite(toBeRewritten, rewritingVariant, courseId).subscribe((rewrittenText) => {
                 expect(rewrittenText).toBe('Rewritten Text');
             });
 
@@ -55,7 +55,7 @@ describe('Rewrite Service', () => {
             const rewritingVariant = RewritingVariant.FAQ;
             const courseId = 1;
 
-            service.rewritteMarkdown(toBeRewritten, rewritingVariant, courseId).subscribe({
+            service.rewrite(toBeRewritten, rewritingVariant, courseId).subscribe({
                 next: () => {
                     throw new Error('Expected error, but got success response');
                 },

@@ -70,7 +70,7 @@ import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { MatMenu, MatMenuItem, MatMenuTrigger } from '@angular/material/menu';
 import { MatButton } from '@angular/material/button';
 import { ArtemisTranslatePipe } from '../../pipes/artemis-translate.pipe';
-import { RewritingService } from 'app/shared/monaco-editor/rewriting.service';
+import { ArtemisIntelligenceService } from 'app/shared/monaco-editor/model/actions/artemis-intelligence/artemis-intelligence.service';
 import { facArtemisIntelligence } from 'app/icons/icons';
 
 export enum MarkdownEditorHeight {
@@ -144,7 +144,7 @@ export class MarkdownEditorMonacoComponent implements AfterContentInit, AfterVie
     private readonly metisService = inject(MetisService, { optional: true });
     private readonly fileUploaderService = inject(FileUploaderService);
     private readonly artemisMarkdown = inject(ArtemisMarkdownService);
-    private readonly rewriteService = inject(RewritingService);
+    protected readonly artemisIntelligenceService = inject(ArtemisIntelligenceService);
 
     @ViewChild(MonacoEditorComponent, { static: false }) monacoEditor: MonacoEditorComponent;
     @ViewChild('fullElement', { static: true }) fullElement: ElementRef<HTMLDivElement>;
@@ -316,11 +316,8 @@ export class MarkdownEditorMonacoComponent implements AfterContentInit, AfterVie
     protected readonly TAB_PREVIEW = MarkdownEditorMonacoComponent.TAB_PREVIEW;
     protected readonly TAB_VISUAL = MarkdownEditorMonacoComponent.TAB_VISUAL;
 
-    isLoading: Signal<boolean>;
-
     constructor() {
         this.uniqueMarkdownEditorId = 'markdown-editor-' + uuid();
-        this.isLoading = this.rewriteService.isLoadingSignal;
     }
 
     ngAfterContentInit(): void {

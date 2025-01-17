@@ -1,23 +1,25 @@
 import { HttpClient } from '@angular/common/http';
-import { Injectable, inject, signal } from '@angular/core';
+import { Injectable, computed, inject, signal } from '@angular/core';
 import { Observable } from 'rxjs';
 import { JhiWebsocketService } from 'app/core/websocket/websocket.service';
-import RewritingVariant from 'app/shared/monaco-editor/model/rewriting-variant';
+import RewritingVariant from 'app/shared/monaco-editor/model/actions/artemis-intelligence/rewriting-variant';
 import { AlertService } from 'app/core/util/alert.service';
 
 /**
- * Service providing shared functionality for rewriting context of the markdown editor.
- * This service is intended to be used by components that need to rewrite text of the Monaco editors.
+ * Service providing shared functionality for Artemis Intelligence of the markdown editor.
+ * This service is intended to be used by the AI actions of the Monaco editors.
  */
 @Injectable({ providedIn: 'root' })
 export class RewritingService {
     public resourceUrl = 'api/courses';
 
-    isLoadingSignal = signal<boolean>(false);
 
     private http = inject(HttpClient);
     private jhiWebsocketService = inject(JhiWebsocketService);
     private alertService = inject(AlertService);
+
+    private isLoadingRewrite = signal(false);
+    isLoading = computed(() => this.isLoadingRewrite());
 
     /**
      * Triggers the rewriting pipeline via HTTP and subscribes to its WebSocket updates.
@@ -26,8 +28,8 @@ export class RewritingService {
      * @param courseId The ID of the course to which the rewritten text belongs.
      * @return Observable that emits the rewritten text when available.
      */
-    rewritteMarkdown(toBeRewritten: string, rewritingVariant: RewritingVariant, courseId: number): Observable<string> {
-        this.isLoadingSignal.set(true);
+    rewrite(toBeRewritten: string, rewritingVariant: RewritingVariant, courseId: number): Observable<string> {
+        this.isLoadingRewrite.set(true);
         return new Observable<string>((observer) => {
             this.http
                 .post(`${this.resourceUrl}/${courseId}/rewrite-text`, null, {
@@ -45,19 +47,20 @@ export class RewritingService {
                                 if (update.result) {
                                     observer.next(update.result);
                                     observer.complete();
-                                    this.isLoadingSignal.set(false);
+                                    this.isLoadingRewrite.set(false);
                                     this.jhiWebsocketService.unsubscribe(websocketTopic);
                                     this.alertService.success('artemisApp.markdownEditor.artemisIntelligence.alerts.rewrite.success');
                                 }
                             },
                             error: (error) => {
                                 observer.error(error);
-                                this.isLoadingSignal.set(false);
+                                this.isLoadingRewrite.set(false);
                                 this.jhiWebsocketService.unsubscribe(websocketTopic);
                             },
                         });
                     },
                     error: (error) => {
+                        this.isLoadingRewrite.set(false);
                         observer.error(error);
                     },
                 });

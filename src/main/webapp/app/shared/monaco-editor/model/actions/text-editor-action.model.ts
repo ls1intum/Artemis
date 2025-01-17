@@ -7,8 +7,8 @@ import { TextEditorRange } from 'app/shared/monaco-editor/model/actions/adapter/
 import { TextEditorPosition } from 'app/shared/monaco-editor/model/actions/adapter/text-editor-position.model';
 import { TextEditorCompletionItem } from 'app/shared/monaco-editor/model/actions/adapter/text-editor-completion-item.model';
 import { TextEditorKeybinding } from 'app/shared/monaco-editor/model/actions/adapter/text-editor-keybinding.model';
-import RewritingVariant from 'app/shared/monaco-editor/model/rewriting-variant';
-import { RewritingService } from 'app/shared/monaco-editor/rewriting.service';
+import RewritingVariant from 'app/shared/monaco-editor/model/actions/artemis-intelligence/rewriting-variant';
+import { ArtemisIntelligenceService } from 'app/shared/monaco-editor/model/actions/artemis-intelligence/artemis-intelligence.service';
 
 export abstract class TextEditorAction implements Disposable {
     id: string;
@@ -299,14 +299,14 @@ export abstract class TextEditorAction implements Disposable {
     /**
      * Rewrites the given text using Artemis Intelligence. If no text is provided, the editor's will return undefined.
      * @param editor The editor to toggle the text rewriting for.
-     * @param rewritingService The rewriting service to use for rewriting the text.
+     * @param artemisIntelligence The Artemis Intelligence service to use for rewriting the text.
      * @param variant The variant to use for rewriting the text.
      * @param courseId The ID of the course to use for rewriting the text (for tracking purposes).
      */
-    rewriteMarkdown(editor: TextEditor, rewritingService: RewritingService, variant: RewritingVariant, courseId: number): void {
+    rewriteMarkdown(editor: TextEditor, artemisIntelligence: ArtemisIntelligenceService, variant: RewritingVariant, courseId: number): void {
         const text = editor.getFullText();
         if (text) {
-            rewritingService.rewritteMarkdown(text, variant, courseId).subscribe({
+            artemisIntelligence.rewrite(text, variant, courseId).subscribe({
                 next: (message) => {
                     this.replaceTextAtRange(editor, new TextEditorRange(new TextEditorPosition(1, 1), this.getEndPosition(editor)), message);
                 },
