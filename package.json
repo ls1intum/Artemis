@@ -173,7 +173,7 @@
         "compile:ts": "npm run prebuild && tsc --project tsconfig.app.json",
         "compile:ts:tests": "npm run prebuild && tsc --project tsconfig.spec.json",
         "lint": "eslint",
-        "lint:fix": "eslint --fix",
+        "lint:fix": "NODE_OPTIONS='--max-old-space-size=4096' eslint --fix",
         "postinstall": "husky && patch-package",
         "prebuild": "node prebuild.mjs",
         "prepare": "husky",
