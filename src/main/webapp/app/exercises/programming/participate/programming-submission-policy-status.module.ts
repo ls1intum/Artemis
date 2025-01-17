@@ -4,8 +4,7 @@ import { ArtemisSharedCommonModule } from 'app/shared/shared-common.module';
 import { ProgrammingSubmissionPolicyStatusComponent } from 'app/exercises/programming/participate/programming-submission-policy-status';
 
 @NgModule({
-    declarations: [ProgrammingSubmissionPolicyStatusComponent],
-    imports: [CommonModule, ArtemisSharedCommonModule],
+    imports: [CommonModule, ArtemisSharedCommonModule, ProgrammingSubmissionPolicyStatusComponent],
     exports: [ProgrammingSubmissionPolicyStatusComponent],
 })
 export class ArtemisProgrammingSubmissionPolicyStatusModule {}

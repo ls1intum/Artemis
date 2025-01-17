@@ -6,7 +6,6 @@ import { ArtemisSharedModule } from 'app/shared/shared.module';
 @Component({
     selector: 'jhi-external-user-password-reset-modal',
     templateUrl: './external-user-password-reset-modal.component.html',
-    standalone: true,
     imports: [TranslateDirective, ArtemisSharedModule],
 })
 export class ExternalUserPasswordResetModalComponent {

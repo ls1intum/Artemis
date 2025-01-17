@@ -1,10 +1,9 @@
-import { HttpHeaders, HttpResponse } from '@angular/common/http';
+import { HttpResponse } from '@angular/common/http';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
-import { HelpIconComponent } from 'app/shared/components/help-icon.component';
 import { of } from 'rxjs';
 import { NgbNavModule } from '@ng-bootstrap/ng-bootstrap';
-import { MockComponent, MockDirective, MockModule, MockPipe, MockProvider } from 'ng-mocks';
+import { MockDirective, MockModule, MockPipe, MockProvider } from 'ng-mocks';
 import { FormControl, FormGroup, ReactiveFormsModule } from '@angular/forms';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { EditCourseLtiConfigurationComponent } from 'app/course/manage/course-lti-configuration/edit-course-lti-configuration.component';
@@ -14,19 +13,16 @@ import { mockedActivatedRoute } from '../../helpers/mocks/activated-route/mock-a
 import { MockRouter } from '../../helpers/mocks/mock-router';
 import { Router } from '@angular/router';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
-import { SortDirective } from 'app/shared/sort/sort.directive';
-import { SortByDirective } from 'app/shared/sort/sort-by.directive';
 import { ArtemisTestModule } from '../../test.module';
 import { regexValidator } from 'app/shared/form/shortname-validator.directive';
 import { LOGIN_PATTERN } from 'app/shared/constants/input.constants';
 import { MockHasAnyAuthorityDirective } from '../../helpers/mocks/directive/mock-has-any-authority.directive';
-import { LtiConfigurationService } from 'app/admin/lti-configuration/lti-configuration.service';
+import 'jest-extended';
 
 describe('Edit Course LTI Configuration Component', () => {
     let comp: EditCourseLtiConfigurationComponent;
     let fixture: ComponentFixture<EditCourseLtiConfigurationComponent>;
     let courseService: CourseManagementService;
-    let ltiConfigService: { query: any };
 
     const router = new MockRouter();
 
@@ -42,29 +38,10 @@ describe('Edit Course LTI Configuration Component', () => {
         onlineCourseConfiguration,
     } as Course;
 
-    beforeEach(() => {
-        ltiConfigService = {
-            query: jest.fn().mockReturnValue(
-                of(
-                    new HttpResponse({
-                        body: [],
-                        headers: new HttpHeaders({ 'X-Total-Count': '0' }),
-                    }),
-                ),
-            ),
-        };
-
-        TestBed.configureTestingModule({
+    beforeEach(async () => {
+        await TestBed.configureTestingModule({
             imports: [ArtemisTestModule, NgbNavModule, MockModule(ReactiveFormsModule)],
-            declarations: [
-                EditCourseLtiConfigurationComponent,
-                MockDirective(TranslateDirective),
-                MockPipe(ArtemisTranslatePipe),
-                MockDirective(SortDirective),
-                MockDirective(SortByDirective),
-                MockComponent(HelpIconComponent),
-                MockDirective(MockHasAnyAuthorityDirective),
-            ],
+            declarations: [EditCourseLtiConfigurationComponent, MockDirective(TranslateDirective), MockPipe(ArtemisTranslatePipe), MockDirective(MockHasAnyAuthorityDirective)],
             providers: [
                 MockProvider(CourseManagementService),
                 { provide: Router, useValue: router },
@@ -76,15 +53,12 @@ describe('Edit Course LTI Configuration Component', () => {
                     },
                     {},
                 ),
-                { provide: LtiConfigurationService, useValue: ltiConfigService },
             ],
-        })
-            .compileComponents()
-            .then(() => {
-                fixture = TestBed.createComponent(EditCourseLtiConfigurationComponent);
-                comp = fixture.componentInstance;
-                courseService = TestBed.inject(CourseManagementService);
-            });
+        }).compileComponents();
+
+        fixture = TestBed.createComponent(EditCourseLtiConfigurationComponent);
+        comp = fixture.componentInstance;
+        courseService = TestBed.inject(CourseManagementService);
     });
 
     afterEach(() => {

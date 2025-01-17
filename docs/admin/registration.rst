@@ -30,7 +30,7 @@ Example:
                     trust: <host>
     jhipster:
         mail:
-            base-url: https://artemis.cit.tum.de
+            base-url: https://artemis.tum.de
             from: artemis@xcit.tum.de
     management:
         health:

@@ -4,12 +4,36 @@ import { Posting } from 'app/entities/metis/posting.model';
 import { DisplayPriority } from 'app/shared/metis/metis.util';
 import { PostingDirective } from 'app/shared/metis/posting.directive';
 import { MetisService } from 'app/shared/metis/metis.service';
+import { MockTranslateService } from '../helpers/mocks/service/mock-translate.service';
+import { MockSyncStorage } from '../helpers/mocks/service/mock-sync-storage.service';
+import { provideHttpClientTesting } from '@angular/common/http/testing';
+import { provideHttpClient } from '@angular/common/http';
+import { TranslateService } from '@ngx-translate/core';
+import { SessionStorageService } from 'ngx-webstorage';
+import { MetisConversationService } from 'app/shared/metis/metis-conversation.service';
+import { MockMetisConversationService } from '../helpers/mocks/service/mock-metis-conversation.service';
+import { of } from 'rxjs';
+import { OneToOneChatService } from 'app/shared/metis/conversations/one-to-one-chat.service';
+import { Router } from '@angular/router';
+import { Course } from 'app/entities/course.model';
+import { MockProvider } from 'ng-mocks';
+import { User } from 'app/core/user/user.model';
+import * as courseModel from 'app/entities/course.model';
+
+class MockOneToOneChatService {
+    createWithId = jest.fn().mockReturnValue(of({ body: { id: 1 } }));
+    create = jest.fn().mockReturnValue(of({ body: { id: 1 } }));
+}
 
 class MockPosting implements Posting {
+    id: number;
     content: string;
+    author?: User;
 
-    constructor(content: string) {
+    constructor(id: number, content: string, author: User) {
+        this.id = id;
         this.content = content;
+        this.author = author;
     }
 }
 
@@ -20,8 +44,6 @@ class MockReactionsBar {
     checkIfPinned = jest.fn().mockReturnValue(DisplayPriority.NONE);
     selectReaction = jest.fn();
 }
-
-class MockMetisService {}
 
 @Component({
     template: `<div jhiPosting></div>`,
@@ -42,23 +64,47 @@ describe('PostingDirective', () => {
     let component: TestPostingComponent;
     let fixture: ComponentFixture<TestPostingComponent>;
     let mockReactionsBar: MockReactionsBar;
+    let mockMetisService: MetisService;
+    let mockOneToOneChatService: OneToOneChatService;
+    let mockMetisConversationService: MetisConversationService;
+    let mockRouter: Router;
 
     beforeEach(async () => {
         await TestBed.configureTestingModule({
-            declarations: [TestPostingComponent],
-            providers: [{ provide: MetisService, useClass: MockMetisService }],
+            providers: [
+                provideHttpClient(),
+                provideHttpClientTesting(),
+                { provide: TranslateService, useClass: MockTranslateService },
+                { provide: SessionStorageService, useClass: MockSyncStorage },
+                MockProvider(MetisService),
+                { provide: MetisConversationService, useClass: MockMetisConversationService },
+                { provide: OneToOneChatService, useClass: MockOneToOneChatService },
+                { provide: Router, useValue: { navigate: jest.fn() } },
+            ],
         }).compileComponents();
-    });
 
-    beforeEach(() => {
         fixture = TestBed.createComponent(TestPostingComponent);
         component = fixture.componentInstance;
+        jest.mock('app/entities/course.model', () => ({
+            ...jest.requireActual('app/entities/course.model'),
+            isMessagingEnabled: jest.fn(),
+        }));
         mockReactionsBar = new MockReactionsBar();
         component.reactionsBar = mockReactionsBar;
-        component.posting = new MockPosting('Test content');
+        const user = new User();
+        user.id = 123;
+        component.posting = new MockPosting(123, 'Test content', user);
         component.isCommunicationPage = false;
         component.isThreadSidebar = false;
         fixture.detectChanges();
+
+        mockMetisService = TestBed.inject(MetisService);
+        const course = new Course();
+        course.id = 1;
+        mockMetisService.course = course;
+        mockOneToOneChatService = TestBed.inject(OneToOneChatService);
+        mockMetisConversationService = TestBed.inject(MetisConversationService);
+        mockRouter = TestBed.inject(Router);
     });
 
     afterEach(() => {
@@ -125,5 +171,162 @@ describe('PostingDirective', () => {
 
         component.toggleEmojiSelect();
         expect(component.showReactionSelector).toBeFalse();
+    });
+
+    it('should not proceed in onUserNameClicked if author is not set', () => {
+        const isMessagingEnabledSpy = jest.spyOn(courseModel, 'isMessagingEnabled').mockReturnValue(true);
+
+        component.posting.author = undefined;
+        component.onUserNameClicked();
+
+        expect(isMessagingEnabledSpy).not.toHaveBeenCalled();
+    });
+
+    it('should not proceed in onUserNameClicked if messaging is not enabled', () => {
+        jest.spyOn(courseModel, 'isMessagingEnabled').mockReturnValue(false);
+        const createOneToOneChatSpy = jest.spyOn(mockMetisConversationService, 'createOneToOneChatWithId');
+        const createChatSpy = jest.spyOn(mockOneToOneChatService, 'createWithId');
+        const navigateSpy = jest.spyOn(mockRouter, 'navigate');
+
+        component.onUserNameClicked();
+
+        expect(createOneToOneChatSpy).not.toHaveBeenCalled();
+        expect(createChatSpy).not.toHaveBeenCalled();
+        expect(navigateSpy).not.toHaveBeenCalled();
+    });
+
+    it('should not proceed in onUserReferenceClicked if messaging is not enabled', () => {
+        jest.spyOn(courseModel, 'isMessagingEnabled').mockReturnValue(false);
+        const createOneToOneChatSpy = jest.spyOn(mockMetisConversationService, 'createOneToOneChat');
+        const createChatSpy = jest.spyOn(mockOneToOneChatService, 'create');
+        const navigateSpy = jest.spyOn(mockRouter, 'navigate');
+
+        component.onUserReferenceClicked('test');
+
+        expect(createOneToOneChatSpy).not.toHaveBeenCalled();
+        expect(createChatSpy).not.toHaveBeenCalled();
+        expect(navigateSpy).not.toHaveBeenCalled();
+    });
+
+    it('should create one-to-one chat in onUserNameClicked when messaging is enabled', () => {
+        jest.spyOn(courseModel, 'isMessagingEnabled').mockReturnValue(true);
+        component.isCommunicationPage = true;
+
+        const createOneToOneChatIdSpy = jest.spyOn(mockMetisConversationService, 'createOneToOneChatWithId');
+        const createWithIdSpy = jest.spyOn(mockOneToOneChatService, 'createWithId');
+
+        component.onUserNameClicked();
+
+        expect(createOneToOneChatIdSpy).toHaveBeenCalledWith(123);
+
+        component.isCommunicationPage = false;
+
+        component.onUserNameClicked();
+
+        expect(createWithIdSpy).toHaveBeenCalledWith(1, 123);
+    });
+
+    it('should create one-to-one chat in onUserReferenceClicked when messaging is enabled', () => {
+        jest.spyOn(courseModel, 'isMessagingEnabled').mockReturnValue(true);
+        component.isCommunicationPage = true;
+
+        const createOneToOneChatSpy = jest.spyOn(mockMetisConversationService, 'createOneToOneChat');
+        const createSpy = jest.spyOn(mockOneToOneChatService, 'create');
+
+        component.onUserReferenceClicked('test');
+
+        expect(createOneToOneChatSpy).toHaveBeenCalledWith('test');
+
+        component.isCommunicationPage = false;
+
+        component.onUserReferenceClicked('test');
+
+        expect(createSpy).toHaveBeenCalledWith(1, 'test');
+    });
+
+    it('should set isDeleted to true when delete event is triggered', () => {
+        component.onDeleteEvent(true);
+        expect(component.isDeleted).toBeTrue();
+    });
+
+    it('should set isDeleted to false when delete event is false', () => {
+        component.onDeleteEvent(false);
+        expect(component.isDeleted).toBeFalse();
+    });
+
+    it('should clear existing delete timer and interval before setting up new ones', () => {
+        const clearTimeoutSpy = jest.spyOn(global, 'clearTimeout');
+        const clearIntervalSpy = jest.spyOn(global, 'clearInterval');
+
+        component.deleteTimer = setTimeout(() => {}, 1000);
+        component.deleteInterval = setInterval(() => {}, 1000);
+
+        component.onDeleteEvent(true);
+
+        expect(clearTimeoutSpy).toHaveBeenCalledOnce();
+        expect(clearIntervalSpy).toHaveBeenCalledOnce();
+    });
+
+    it('should set delete timer to initial value when delete is true', () => {
+        component.onDeleteEvent(true);
+        expect(component.deleteTimerInSeconds).toBe(component.timeToDeleteInSeconds);
+    });
+
+    it('should call metisService.deletePost for regular post', () => {
+        const deletePostSpy = jest.spyOn(mockMetisService, 'deletePost');
+        jest.useFakeTimers();
+
+        component.isAnswerPost = false;
+        component.onDeleteEvent(true);
+
+        jest.runOnlyPendingTimers();
+
+        expect(deletePostSpy).toHaveBeenCalledWith(component.posting);
+    });
+
+    it('should call metisService.deleteAnswerPost for answer post', () => {
+        const deleteAnswerPostSpy = jest.spyOn(mockMetisService, 'deleteAnswerPost');
+        jest.useFakeTimers();
+
+        component.isAnswerPost = true;
+        component.onDeleteEvent(true);
+
+        jest.runOnlyPendingTimers();
+
+        expect(deleteAnswerPostSpy).toHaveBeenCalledWith(component.posting);
+    });
+
+    it('should set up interval to decrement delete timer', () => {
+        jest.useFakeTimers();
+
+        component.onDeleteEvent(true);
+
+        jest.advanceTimersByTime(1000);
+        expect(component.deleteTimerInSeconds).toBe(5);
+
+        jest.advanceTimersByTime(1000);
+        expect(component.deleteTimerInSeconds).toBe(4);
+    });
+
+    it('should stop timer at 0 when decrementing', () => {
+        jest.useFakeTimers();
+
+        component.onDeleteEvent(true);
+
+        jest.advanceTimersByTime(7000);
+
+        expect(component.deleteTimerInSeconds).toBe(0);
+
+        jest.useRealTimers();
+    });
+
+    it('should do nothing if delete event is false', () => {
+        const deletePostSpy = jest.spyOn(mockMetisService, 'deletePost');
+        const deleteAnswerPostSpy = jest.spyOn(mockMetisService, 'deleteAnswerPost');
+
+        component.onDeleteEvent(false);
+
+        expect(deletePostSpy).not.toHaveBeenCalled();
+        expect(deleteAnswerPostSpy).not.toHaveBeenCalled();
     });
 });

@@ -647,16 +647,16 @@ describe('CourseOverviewComponent', () => {
 
     it('should display content of dropdown when dropdownOpen changes', () => {
         if (component.itemsDrop) {
-            itemsDrop.open();
             fixture.detectChanges();
-            expect(component.itemsDrop.isOpen).toBeTrue();
+            itemsDrop.open();
+            expect(component.itemsDrop.isOpen()).toBeTrue();
         }
     });
     it('should hide content of dropdown when dropdownOpen changes', () => {
         if (component.itemsDrop) {
             itemsDrop.close();
             fixture.detectChanges();
-            expect(component.itemsDrop.isOpen).toBeFalse();
+            expect(component.itemsDrop.isOpen()).toBeFalse();
         }
     });
 
@@ -672,11 +672,11 @@ describe('CourseOverviewComponent', () => {
 
     it('should change dropdownOpen when clicking on More', () => {
         if (component.itemsDrop) {
+            fixture.detectChanges();
             itemsDrop.close();
             const clickOnMoreItem = fixture.nativeElement.querySelector('.three-dots');
             clickOnMoreItem.click();
-
-            expect(fixture.nativeElement.querySelector('.dropdown-content').hidden).toBeFalse();
+            expect(fixture.nativeElement.querySelector('.dropdown-content')).toBeNull();
         }
     });
 

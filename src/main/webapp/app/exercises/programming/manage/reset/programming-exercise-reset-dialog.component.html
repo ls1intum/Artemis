@@ -118,8 +118,8 @@
             <button type="button" class="btn btn-secondary" data-dismiss="modal" (click)="clear()" [disabled]="resetInProgress">
                 <fa-icon [icon]="faBan" />&nbsp;<span jhiTranslate="entity.action.cancel"></span>
             </button>
-            <div [style.cursor]="this.resetForm.form.invalid || !this.canSubmit ? 'not-allowed' : 'pointer'">
-                <button type="submit" class="btn btn-danger" [disabled]="this.resetForm.form.invalid || !this.canSubmit">
+            <div [style.cursor]="resetForm.form.invalid || !this.canSubmit ? 'not-allowed' : 'pointer'">
+                <button type="submit" class="btn btn-danger" [disabled]="resetForm.form.invalid || !this.canSubmit">
                     @if (resetInProgress) {
                         <span><fa-icon [icon]="faSpinner" animation="spin" />&nbsp;</span>
                     }

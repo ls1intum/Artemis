@@ -1,12 +1,16 @@
 <div class="d-flex pb-3 border-bottom">
     <div class="d-flex flex-column justify-content-center">
-        @if (!isTestRun) {
-            <h4 class="mb-0" jhiTranslate="artemisApp.studentExamDetail.studentExam" [translateValues]="{ examTitle: studentExam.exam!.title! }">
-                Student exam ({{ studentExam.exam!.title! }})
+        @if (isTestExam) {
+            <h4 class="mb-0" jhiTranslate="artemisApp.studentExamDetail.studentTestExam" [translateValues]="{ examTitle: studentExam.exam!.title! }">
+                Student test exam ({{ studentExam.exam!.title! }})
             </h4>
-        } @else {
+        } @else if (isTestRun) {
             <h4 class="mb-0" jhiTranslate="artemisApp.studentExamDetail.testRun" [translateValues]="{ examTitle: studentExam.exam!.title! }">
                 Test Run ({{ studentExam.exam!.title! }})
+            </h4>
+        } @else {
+            <h4 class="mb-0" jhiTranslate="artemisApp.studentExamDetail.studentExam" [translateValues]="{ examTitle: studentExam.exam!.title! }">
+                Student exam ({{ studentExam.exam!.title! }})
             </h4>
         }
     </div>
@@ -66,7 +70,7 @@
             <div class="mb-3">
                 <h5 jhiTranslate="artemisApp.studentExams.workingTime"></h5>
                 <span jhiTranslate="artemisApp.studentExams.usedWorkingTime"></span>:
-                <jhi-testexam-working-time [studentExam]="studentExam" />
+                <jhi-test-exam-working-time [studentExam]="studentExam" />
             </div>
         }
         <div class="mb-3">

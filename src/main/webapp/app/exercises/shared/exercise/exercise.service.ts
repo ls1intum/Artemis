@@ -1,4 +1,4 @@
-import { Injectable } from '@angular/core';
+import { Injectable, inject } from '@angular/core';
 import { HttpClient, HttpResponse } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import dayjs from 'dayjs/esm';
@@ -20,7 +20,6 @@ import { FileUploadExercise } from 'app/entities/file-upload-exercise.model';
 import { ArtemisMarkdownService } from 'app/shared/markdown.service';
 import { SafeHtml } from '@angular/platform-browser';
 import { PlagiarismCaseInfo } from 'app/exercises/shared/plagiarism/types/PlagiarismCaseInfo';
-import { ExerciseHint } from 'app/entities/hestia/exercise-hint.model';
 import { IrisExerciseSettings } from 'app/entities/iris/settings/iris-settings.model';
 
 export type EntityResponseType = HttpResponse<Exercise>;
@@ -38,8 +37,6 @@ export type ExerciseDetailsType = {
     exercise: Exercise;
     irisSettings?: IrisExerciseSettings;
     plagiarismCaseInfo?: PlagiarismCaseInfo;
-    availableExerciseHints?: ExerciseHint[];
-    activatedExerciseHints?: ExerciseHint[];
 };
 
 export type CourseExistingExerciseDetailsType = {
@@ -59,16 +56,14 @@ export interface ExerciseServicable<T extends Exercise> {
 
 @Injectable({ providedIn: 'root' })
 export class ExerciseService {
+    private http = inject(HttpClient);
+    private accountService = inject(AccountService);
+    private translateService = inject(TranslateService);
+    private entityTitleService = inject(EntityTitleService);
+
     public resourceUrl = 'api/exercises';
     public adminResourceUrl = 'api/admin/exercises';
     public courseResourceUrl = 'api/courses';
-
-    constructor(
-        private http: HttpClient,
-        private accountService: AccountService,
-        private translateService: TranslateService,
-        private entityTitleService: EntityTitleService,
-    ) {}
 
     /**
      * Persist a new exercise
@@ -175,9 +170,6 @@ export class ExerciseService {
                     // insert an empty list to avoid additional calls in case the list is empty on the server (because then it would be undefined in the client)
                     if (res.body.exercise.posts === undefined) {
                         res.body.exercise.posts = [];
-                    }
-                    for (const hint of res.body.activatedExerciseHints ?? []) {
-                        this.entityTitleService.setTitle(EntityType.HINT, [hint?.id, exerciseId], hint?.title);
                     }
                 }
                 return res;

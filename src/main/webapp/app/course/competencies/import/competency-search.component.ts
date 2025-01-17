@@ -3,10 +3,16 @@ import { faChevronDown, faChevronUp } from '@fortawesome/free-solid-svg-icons';
 import { ButtonType } from 'app/shared/components/button.component';
 import { getSemesters } from 'app/utils/semester-utils';
 import { CourseCompetencyFilter } from 'app/shared/table/pageable-table';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { FormsModule } from '@angular/forms';
+import { NgbCollapse } from '@ng-bootstrap/ng-bootstrap';
+import { ButtonComponent } from 'app/shared/components/button.component';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 
 @Component({
     selector: 'jhi-competency-search',
     templateUrl: './competency-search.component.html',
+    imports: [TranslateDirective, FormsModule, NgbCollapse, ButtonComponent, FaIconComponent],
 })
 export class CompetencySearchComponent {
     @Input() search: CourseCompetencyFilter;

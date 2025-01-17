@@ -1,5 +1,5 @@
-import { Component, OnDestroy, OnInit, ViewChild } from '@angular/core';
-import { ActivatedRoute } from '@angular/router';
+import { Component, OnDestroy, OnInit, ViewChild, inject } from '@angular/core';
+import { ActivatedRoute, RouterLink } from '@angular/router';
 import { BuildJob, BuildJobStatistics, FinishedBuildJob, SpanType } from 'app/entities/programming/build-job.model';
 import { faAngleDown, faAngleRight, faCircleCheck, faExclamationCircle, faExclamationTriangle, faFilter, faSort, faSync, faTimes } from '@fortawesome/free-solid-svg-icons';
 import { JhiWebsocketService } from 'app/core/websocket/websocket.service';
@@ -13,12 +13,28 @@ import { HttpErrorResponse, HttpHeaders, HttpParams, HttpResponse } from '@angul
 import { AlertService } from 'app/core/util/alert.service';
 import dayjs from 'dayjs/esm';
 import { GraphColors } from 'app/entities/statistics.model';
-import { Color, ScaleType } from '@swimlane/ngx-charts';
+import { Color, PieChartModule, ScaleType } from '@swimlane/ngx-charts';
 import { NgxChartsSingleSeriesDataEntry } from 'app/shared/chart/ngx-charts-datatypes';
-import { NgbModal, NgbTypeahead } from '@ng-bootstrap/ng-bootstrap';
+import { NgbCollapse, NgbModal, NgbPagination, NgbTypeahead } from '@ng-bootstrap/ng-bootstrap';
 import { LocalStorageService } from 'ngx-webstorage';
 import { Observable, OperatorFunction, Subject, Subscription, merge } from 'rxjs';
 import { UI_RELOAD_TIME } from 'app/shared/constants/exercise-exam-constants';
+import { BuildLogEntry, BuildLogLines } from 'app/entities/programming/build-log.model';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { HelpIconComponent } from 'app/shared/components/help-icon.component';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { DataTableComponent } from 'app/shared/data-table/data-table.component';
+import { NgxDatatableModule } from '@siemens/ngx-datatable';
+import { NgClass } from '@angular/common';
+import { FormsModule } from '@angular/forms';
+import { SortDirective } from 'app/shared/sort/sort.directive';
+import { SortByDirective } from 'app/shared/sort/sort-by.directive';
+import { ResultComponent } from '../../exercises/shared/result/result.component';
+import { ItemCountComponent } from 'app/shared/pagination/item-count.component';
+import { FormDateTimePickerComponent } from 'app/shared/date-time-picker/date-time-picker.component';
+import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
+import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
+import { ArtemisDurationFromSecondsPipe } from 'app/shared/pipes/artemis-duration-from-seconds.pipe';
 
 export class FinishedBuildJobFilter {
     status?: string = undefined;
@@ -29,8 +45,8 @@ export class FinishedBuildJobFilter {
     buildDurationFilterUpperBound?: number = undefined;
     numberOfAppliedFilters = 0;
     appliedFilters = new Map<string, boolean>();
-    areDurationFiltersValid: boolean = true;
-    areDatesValid: boolean = true;
+    areDurationFiltersValid = true;
+    areDatesValid = true;
 
     /**
      * Adds the http param options
@@ -104,8 +120,37 @@ export enum FinishedBuildJobFilterStorageKey {
     selector: 'jhi-build-queue',
     templateUrl: './build-queue.component.html',
     styleUrl: './build-queue.component.scss',
+    imports: [
+        TranslateDirective,
+        HelpIconComponent,
+        FaIconComponent,
+        NgbCollapse,
+        PieChartModule,
+        DataTableComponent,
+        NgxDatatableModule,
+        NgClass,
+        RouterLink,
+        FormsModule,
+        SortDirective,
+        SortByDirective,
+        ResultComponent,
+        ItemCountComponent,
+        NgbPagination,
+        NgbTypeahead,
+        FormDateTimePickerComponent,
+        ArtemisDatePipe,
+        ArtemisTranslatePipe,
+        ArtemisDurationFromSecondsPipe,
+    ],
 })
 export class BuildQueueComponent implements OnInit, OnDestroy {
+    private route = inject(ActivatedRoute);
+    private websocketService = inject(JhiWebsocketService);
+    private buildQueueService = inject(BuildQueueService);
+    private alertService = inject(AlertService);
+    private modalService = inject(NgbModal);
+    private localStorage = inject(LocalStorageService);
+
     protected readonly TriggeredByPushTo = TriggeredByPushTo;
 
     queuedBuildJobs: BuildJob[] = [];
@@ -159,14 +204,8 @@ export class BuildQueueComponent implements OnInit, OnDestroy {
     searchSubscription: Subscription;
     searchTerm?: string = undefined;
 
-    constructor(
-        private route: ActivatedRoute,
-        private websocketService: JhiWebsocketService,
-        private buildQueueService: BuildQueueService,
-        private alertService: AlertService,
-        private modalService: NgbModal,
-        private localStorage: LocalStorageService,
-    ) {}
+    rawBuildLogs: BuildLogLines[] = [];
+    displayedBuildJobId?: string;
 
     ngOnInit() {
         this.buildStatusFilterValues = Object.values(BuildJobStatusFilter);
@@ -386,11 +425,33 @@ export class BuildQueueComponent implements OnInit, OnDestroy {
 
     /**
      * View the build logs of a specific build job
-     * @param resultId The id of the build job
+     * @param modal The modal to open
+     * @param buildJobId The id of the build job
      */
-    viewBuildLogs(resultId: string | undefined): void {
-        if (resultId) {
-            const url = `/api/build-log/${resultId}`;
+    viewBuildLogs(modal: any, buildJobId: string | undefined): void {
+        if (buildJobId) {
+            this.openModal(modal, true);
+            this.displayedBuildJobId = buildJobId;
+            this.buildQueueService.getBuildJobLogs(buildJobId).subscribe({
+                next: (buildLogs: BuildLogEntry[]) => {
+                    this.rawBuildLogs = buildLogs.map((entry) => {
+                        const logLines = entry.log ? entry.log.split('\n') : [];
+                        return { time: entry.time, logLines: logLines };
+                    });
+                },
+                error: (res: HttpErrorResponse) => {
+                    onError(this.alertService, res, false);
+                },
+            });
+        }
+    }
+
+    /**
+     * Download the build logs of a specific build job
+     */
+    downloadBuildLogs(): void {
+        if (this.displayedBuildJobId) {
+            const url = `/api/build-log/${this.displayedBuildJobId}`;
             window.open(url, '_blank');
         }
     }
@@ -443,8 +504,8 @@ export class BuildQueueComponent implements OnInit, OnDestroy {
     /**
      * Opens the modal.
      */
-    open(content: any) {
-        this.modalService.open(content);
+    openModal(modal: any, fullscreen?: boolean, size?: 'sm' | 'lg' | 'xl', scrollable = true, keyboard = true) {
+        this.modalService.open(modal, { size, keyboard, scrollable, fullscreen });
     }
 
     /**

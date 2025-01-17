@@ -1,9 +1,12 @@
 import { Component, Input } from '@angular/core';
 import type { CommitInfo } from 'app/entities/programming/programming-submission.model';
+import { CommitsInfoRowComponent } from './commits-info-row/commits-info-row.component';
+import { NgStyle } from '@angular/common';
 
 @Component({
     selector: 'jhi-commits-info-group',
     templateUrl: './commits-info-group.component.html',
+    imports: [CommitsInfoRowComponent, NgStyle],
 })
 export class CommitsInfoGroupComponent {
     @Input() commits: CommitInfo[];

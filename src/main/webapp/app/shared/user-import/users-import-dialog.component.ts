@@ -1,5 +1,5 @@
-import { Component, Input, OnDestroy, ViewChild, ViewEncapsulation } from '@angular/core';
-import { NgForm } from '@angular/forms';
+import { Component, Input, OnDestroy, ViewChild, ViewEncapsulation, inject } from '@angular/core';
+import { FormsModule, NgForm } from '@angular/forms';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import { AlertService } from 'app/core/util/alert.service';
 import { HttpResponse } from '@angular/common/http';
@@ -16,6 +16,9 @@ import { faArrowRight, faBan, faCheck, faCircleNotch, faSpinner, faUpload } from
 import { TutorialGroup } from 'app/entities/tutorial-group/tutorial-group.model';
 import { TutorialGroupsService } from 'app/course/tutorial-groups/services/tutorial-groups.service';
 import { AdminUserService } from 'app/core/user/admin-user.service';
+import { TranslateDirective } from '../language/translate.directive';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { HelpIconComponent } from '../components/help-icon.component';
 
 const POSSIBLE_REGISTRATION_NUMBER_HEADERS = ['registrationnumber', 'matriculationnumber', 'matrikelnummer', 'number'];
 const POSSIBLE_LOGIN_HEADERS = ['login', 'user', 'username', 'benutzer', 'benutzername'];
@@ -34,8 +37,16 @@ interface CsvUser {
     templateUrl: './users-import-dialog.component.html',
     styleUrls: ['./users-import-dialog.component.scss'],
     encapsulation: ViewEncapsulation.None,
+    imports: [FormsModule, TranslateDirective, FaIconComponent, HelpIconComponent],
 })
 export class UsersImportDialogComponent implements OnDestroy {
+    private activeModal = inject(NgbActiveModal);
+    private alertService = inject(AlertService);
+    private examManagementService = inject(ExamManagementService);
+    private courseManagementService = inject(CourseManagementService);
+    private adminUserService = inject(AdminUserService);
+    private tutorialGroupService = inject(TutorialGroupsService);
+
     readonly ActionType = ActionType;
 
     @ViewChild('importForm', { static: false }) importForm: NgForm;
@@ -67,15 +78,6 @@ export class UsersImportDialogComponent implements OnDestroy {
     faCircleNotch = faCircleNotch;
     faUpload = faUpload;
     faArrowRight = faArrowRight;
-
-    constructor(
-        private activeModal: NgbActiveModal,
-        private alertService: AlertService,
-        private examManagementService: ExamManagementService,
-        private courseManagementService: CourseManagementService,
-        private adminUserService: AdminUserService,
-        private tutorialGroupService: TutorialGroupsService,
-    ) {}
 
     ngOnDestroy(): void {
         this.dialogErrorSource.unsubscribe();

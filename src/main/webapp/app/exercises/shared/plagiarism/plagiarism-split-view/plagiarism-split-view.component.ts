@@ -1,4 +1,4 @@
-import { AfterViewInit, Component, Directive, ElementRef, Input, OnChanges, OnInit, QueryList, SimpleChanges, ViewChildren } from '@angular/core';
+import { AfterViewInit, Component, Directive, ElementRef, Input, OnChanges, OnDestroy, OnInit, QueryList, SimpleChanges, ViewChildren, inject } from '@angular/core';
 import * as Split from 'split.js';
 import { Subject } from 'rxjs';
 import { PlagiarismComparison } from 'app/exercises/shared/plagiarism/types/PlagiarismComparison';
@@ -10,18 +10,26 @@ import { PlagiarismCasesService } from 'app/course/plagiarism-cases/shared/plagi
 import { HttpResponse } from '@angular/common/http';
 import { SimpleMatch } from 'app/exercises/shared/plagiarism/types/PlagiarismMatch';
 import dayjs from 'dayjs/esm';
+import { TextPlagiarismFileElement } from 'app/exercises/shared/plagiarism/types/text/TextPlagiarismFileElement';
+import { IconDefinition, faLock, faUnlock } from '@fortawesome/free-solid-svg-icons';
+import { ModelingSubmissionViewerComponent } from './modeling-submission-viewer/modeling-submission-viewer.component';
+import { TextSubmissionViewerComponent } from './text-submission-viewer/text-submission-viewer.component';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 
 @Directive({ selector: '[jhiPane]' })
 export class SplitPaneDirective {
-    constructor(public elementRef: ElementRef) {}
+    elementRef = inject(ElementRef);
 }
 
 @Component({
     selector: 'jhi-plagiarism-split-view',
     styleUrls: ['./plagiarism-split-view.component.scss'],
     templateUrl: './plagiarism-split-view.component.html',
+    imports: [SplitPaneDirective, ModelingSubmissionViewerComponent, TextSubmissionViewerComponent, FaIconComponent],
 })
-export class PlagiarismSplitViewComponent implements AfterViewInit, OnChanges, OnInit {
+export class PlagiarismSplitViewComponent implements AfterViewInit, OnChanges, OnInit, OnDestroy {
+    private plagiarismCasesService = inject(PlagiarismCasesService);
+
     @Input() comparison: PlagiarismComparison<TextSubmissionElement | ModelingSubmissionElement>;
     @Input() exercise: Exercise;
     @Input() splitControlSubject: Subject<string>;
@@ -31,6 +39,9 @@ export class PlagiarismSplitViewComponent implements AfterViewInit, OnChanges, O
     @ViewChildren(SplitPaneDirective) panes!: QueryList<SplitPaneDirective>;
 
     plagiarismComparison: PlagiarismComparison<TextSubmissionElement | ModelingSubmissionElement>;
+    fileSelectedSubject = new Subject<TextPlagiarismFileElement>();
+    showFilesSubject = new Subject<boolean>();
+    dropdownHoverSubject = new Subject<TextPlagiarismFileElement>();
 
     public split: Split.Instance;
 
@@ -39,13 +50,14 @@ export class PlagiarismSplitViewComponent implements AfterViewInit, OnChanges, O
 
     public matchesA: Map<string, FromToElement[]>;
     public matchesB: Map<string, FromToElement[]>;
+    isLockFilesEnabled = false;
 
     readonly dayjs = dayjs;
-
-    constructor(private plagiarismCasesService: PlagiarismCasesService) {}
+    protected readonly faLock: IconDefinition = faLock;
+    protected readonly faUnlock: IconDefinition = faUnlock;
 
     /**
-     * Initialize third party libs inside this lifecycle hook.
+     * Initialize third-party libraries inside this lifecycle hook.
      */
     ngAfterViewInit(): void {
         const paneElements = this.panes.map((pane: SplitPaneDirective) => pane.elementRef.nativeElement);
@@ -82,6 +94,12 @@ export class PlagiarismSplitViewComponent implements AfterViewInit, OnChanges, O
                     }
                 });
         }
+    }
+
+    ngOnDestroy() {
+        this.fileSelectedSubject.complete();
+        this.showFilesSubject.complete();
+        this.dropdownHoverSubject.complete();
     }
 
     /**
@@ -176,5 +194,12 @@ export class PlagiarismSplitViewComponent implements AfterViewInit, OnChanges, O
                 this.split.setSizes([50, 50]);
             }
         }
+    }
+
+    /**
+     * Toggles the state of file locking and emits the new state to the parent component.
+     */
+    toggleLockFiles() {
+        this.isLockFilesEnabled = !this.isLockFilesEnabled;
     }
 }

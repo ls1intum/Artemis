@@ -4,14 +4,17 @@ import { IrisSettingsUpdateComponent } from 'app/iris/settings/iris-settings-upd
 import { IrisSettingsType } from 'app/entities/iris/settings/iris-settings.model';
 import { mockSettings, mockVariants } from './mock-settings';
 import { ArtemisTestModule } from '../../../test.module';
-import { NgModel } from '@angular/forms';
-import { MockComponent, MockDirective, MockPipe, MockProvider } from 'ng-mocks';
+import { MockComponent, MockPipe, MockProvider } from 'ng-mocks';
 import { IrisCommonSubSettingsUpdateComponent } from 'app/iris/settings/iris-settings-update/iris-common-sub-settings-update/iris-common-sub-settings-update.component';
 import { ButtonComponent } from 'app/shared/components/button.component';
 import { IrisSettingsService } from 'app/iris/settings/shared/iris-settings.service';
 import { of } from 'rxjs';
 import { IrisCourseSettingsUpdateComponent } from 'app/iris/settings/iris-course-settings-update/iris-course-settings-update.component';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
+import { NgbTooltipMockDirective } from '../../../helpers/mocks/directive/ngbTooltipMocks.module';
+import { MockJhiTranslateDirective } from '../../../helpers/mocks/directive/mock-jhi-translate-directive.directive';
+import { provideHttpClient } from '@angular/common/http';
+import { provideHttpClientTesting } from '@angular/common/http/testing';
 
 describe('IrisSettingsUpdateComponent', () => {
     let component: IrisSettingsUpdateComponent;
@@ -20,28 +23,29 @@ describe('IrisSettingsUpdateComponent', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule],
-            declarations: [
+            imports: [
+                ArtemisTestModule,
+                NgbTooltipMockDirective,
+                MockJhiTranslateDirective,
                 IrisCourseSettingsUpdateComponent,
                 IrisSettingsUpdateComponent,
                 IrisCommonSubSettingsUpdateComponent,
-                MockPipe(ArtemisTranslatePipe),
-                MockComponent(ButtonComponent),
-                MockDirective(NgModel),
             ],
+            declarations: [MockPipe(ArtemisTranslatePipe), MockComponent(ButtonComponent)],
             providers: [
                 MockProvider(IrisSettingsService, {
                     getGlobalSettings: () => of(mockSettings()),
                     getUncombinedCourseSettings: () => of(mockSettings()),
                     getUncombinedExerciseSettings: () => of(mockSettings()),
                 }),
+                provideHttpClient(),
+                provideHttpClientTesting(),
             ],
         })
             .compileComponents()
             .then(() => {
                 fixture = TestBed.createComponent(IrisSettingsUpdateComponent);
                 component = fixture.componentInstance;
-
                 const irisSettingsService = TestBed.inject(IrisSettingsService);
                 getVariantsSpy = jest.spyOn(irisSettingsService, 'getVariantsForFeature').mockReturnValue(of(mockVariants()));
             });

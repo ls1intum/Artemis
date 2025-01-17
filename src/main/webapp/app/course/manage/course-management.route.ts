@@ -1,46 +1,17 @@
 import { Routes } from '@angular/router';
 import { UserRouteAccessService } from 'app/core/auth/user-route-access-service';
-import { CourseManagementComponent } from './course-management.component';
-import { CourseDetailComponent } from './detail/course-detail.component';
-import { CourseUpdateComponent } from './course-update.component';
-import { CourseManagementExercisesComponent } from './course-management-exercises.component';
 import { Authority } from 'app/shared/constants/authority.constants';
-import { RatingListComponent } from 'app/exercises/shared/rating/rating-list/rating-list.component';
-import { CompetencyManagementComponent } from 'app/course/competencies/competency-management/competency-management.component';
-import { CreateCompetencyComponent } from 'app/course/competencies/create/create-competency.component';
-import { EditCompetencyComponent } from 'app/course/competencies/edit/edit-competency.component';
-import { GenerateCompetenciesComponent } from 'app/course/competencies/generate-competencies/generate-competencies.component';
-import { CourseManagementStatisticsComponent } from './course-management-statistics.component';
-import { GradingSystemComponent } from 'app/grading-system/grading-system.component';
-import { isOrion } from 'app/shared/orion/orion';
-import { OrionCourseManagementExercisesComponent } from 'app/orion/management/orion-course-management-exercises.component';
 import { CourseManagementResolve } from 'app/course/manage/course-management-resolve.service';
-import { CourseGroupMembershipComponent } from 'app/course/manage/course-group-membership/course-group-membership.component';
 import { TutorialGroupManagementResolve } from 'app/course/tutorial-groups/tutorial-groups-management/tutorial-group-management-resolve.service';
-import { TutorialGroupsChecklistComponent } from 'app/course/tutorial-groups/tutorial-groups-management/tutorial-groups-checklist/tutorial-groups-checklist.component';
-import { CreateTutorialGroupsConfigurationComponent } from 'app/course/tutorial-groups/tutorial-groups-management/tutorial-groups-configuration/crud/create-tutorial-groups-configuration/create-tutorial-groups-configuration.component';
-import { CourseLtiConfigurationComponent } from 'app/course/manage/course-lti-configuration/course-lti-configuration.component';
-import { EditCourseLtiConfigurationComponent } from 'app/course/manage/course-lti-configuration/edit-course-lti-configuration.component';
-import { CourseManagementTabBarComponent } from 'app/course/manage/course-management-tab-bar/course-management-tab-bar.component';
 import { PendingChangesGuard } from 'app/shared/guard/pending-changes.guard';
-import { BuildQueueComponent } from 'app/localci/build-queue/build-queue.component';
-import { ImportCompetenciesComponent } from 'app/course/competencies/import/import-competencies.component';
 import { LocalCIGuard } from 'app/localci/localci-guard.service';
 import { IrisGuard } from 'app/iris/iris-guard.service';
-import { CourseImportStandardizedCompetenciesComponent } from 'app/course/competencies/import-standardized-competencies/course-import-standardized-competencies.component';
-import { ImportPrerequisitesComponent } from 'app/course/competencies/import/import-prerequisites.component';
-import { CreatePrerequisiteComponent } from 'app/course/competencies/create/create-prerequisite.component';
-import { EditPrerequisiteComponent } from 'app/course/competencies/edit/edit-prerequisite.component';
-import { CourseImportStandardizedPrerequisitesComponent } from 'app/course/competencies/import-standardized-competencies/course-import-standardized-prerequisites.component';
-import { LearningPathInstructorPageComponent } from 'app/course/learning-paths/pages/learning-path-instructor-page/learning-path-instructor-page.component';
-import { FaqComponent } from 'app/faq/faq.component';
-import { FaqUpdateComponent } from 'app/faq/faq-update.component';
 import { FaqResolve } from 'app/faq/faq.routes';
 
 export const courseManagementState: Routes = [
     {
         path: '',
-        component: CourseManagementComponent,
+        loadComponent: () => import('./course-management.component').then((m) => m.CourseManagementComponent),
         data: {
             authorities: [Authority.TA, Authority.EDITOR, Authority.INSTRUCTOR, Authority.ADMIN],
             pageTitle: 'artemisApp.course.home.title',
@@ -49,7 +20,7 @@ export const courseManagementState: Routes = [
     },
     {
         path: 'new',
-        component: CourseUpdateComponent,
+        loadComponent: () => import('./course-update.component').then((m) => m.CourseUpdateComponent),
         data: {
             authorities: [Authority.ADMIN],
             pageTitle: 'global.generic.create',
@@ -58,11 +29,11 @@ export const courseManagementState: Routes = [
     },
     {
         path: '',
-        component: CourseManagementTabBarComponent,
+        loadComponent: () => import('app/course/manage/course-management-tab-bar/course-management-tab-bar.component').then((m) => m.CourseManagementTabBarComponent),
         children: [
             {
                 path: ':courseId',
-                component: CourseDetailComponent,
+                loadComponent: () => import('./detail/course-detail.component').then((m) => m.CourseDetailComponent),
                 resolve: {
                     course: CourseManagementResolve,
                 },
@@ -74,7 +45,7 @@ export const courseManagementState: Routes = [
             },
             {
                 path: ':courseId/grading-system',
-                component: GradingSystemComponent,
+                loadComponent: () => import('app/grading-system/grading-system.component').then((m) => m.GradingSystemComponent),
                 data: {
                     authorities: [Authority.INSTRUCTOR, Authority.ADMIN],
                     pageTitle: 'artemisApp.course.gradingSystem',
@@ -109,7 +80,10 @@ export const courseManagementState: Routes = [
             },
             {
                 path: ':courseId/tutorial-groups-checklist',
-                component: TutorialGroupsChecklistComponent,
+                loadComponent: () =>
+                    import('app/course/tutorial-groups/tutorial-groups-management/tutorial-groups-checklist/tutorial-groups-checklist.component').then(
+                        (m) => m.TutorialGroupsChecklistComponent,
+                    ),
                 data: {
                     authorities: [Authority.INSTRUCTOR, Authority.ADMIN],
                     pageTitle: 'artemisApp.pages.checklist.title',
@@ -118,7 +92,10 @@ export const courseManagementState: Routes = [
             },
             {
                 path: ':courseId/create-tutorial-groups-configuration',
-                component: CreateTutorialGroupsConfigurationComponent,
+                loadComponent: () =>
+                    import(
+                        'app/course/tutorial-groups/tutorial-groups-management/tutorial-groups-configuration/crud/create-tutorial-groups-configuration/create-tutorial-groups-configuration.component'
+                    ).then((m) => m.CreateTutorialGroupsConfigurationComponent),
                 data: {
                     authorities: [Authority.INSTRUCTOR, Authority.ADMIN],
                     pageTitle: 'artemisApp.pages.createTutorialGroupsConfiguration.title',
@@ -127,7 +104,7 @@ export const courseManagementState: Routes = [
             },
             {
                 path: ':courseId/lti-configuration',
-                component: CourseLtiConfigurationComponent,
+                loadComponent: () => import('app/course/manage/course-lti-configuration/course-lti-configuration.component').then((m) => m.CourseLtiConfigurationComponent),
                 resolve: {
                     course: CourseManagementResolve,
                 },
@@ -139,7 +116,8 @@ export const courseManagementState: Routes = [
             },
             {
                 path: ':courseId/lti-configuration/edit',
-                component: EditCourseLtiConfigurationComponent,
+                loadComponent: () =>
+                    import('app/course/manage/course-lti-configuration/edit-course-lti-configuration.component').then((m) => m.EditCourseLtiConfigurationComponent),
                 resolve: {
                     course: CourseManagementResolve,
                 },
@@ -158,7 +136,7 @@ export const courseManagementState: Routes = [
                 children: [
                     {
                         path: 'exercises',
-                        component: !isOrion ? CourseManagementExercisesComponent : OrionCourseManagementExercisesComponent,
+                        loadComponent: () => import('app/orion/management/orion-course-management-exercises.component').then((m) => m.OrionCourseManagementExercisesComponent),
                         data: {
                             authorities: [Authority.TA, Authority.EDITOR, Authority.INSTRUCTOR, Authority.ADMIN],
                             pageTitle: 'artemisApp.course.exercises',
@@ -167,7 +145,7 @@ export const courseManagementState: Routes = [
                     },
                     {
                         path: 'course-statistics',
-                        component: CourseManagementStatisticsComponent,
+                        loadComponent: () => import('./course-management-statistics.component').then((m) => m.CourseManagementStatisticsComponent),
                         data: {
                             authorities: [Authority.TA, Authority.EDITOR, Authority.INSTRUCTOR, Authority.ADMIN],
                             pageTitle: 'artemisApp.courseStatistics.statistics',
@@ -177,7 +155,7 @@ export const courseManagementState: Routes = [
                     },
                     {
                         path: 'edit',
-                        component: CourseUpdateComponent,
+                        loadComponent: () => import('./course-update.component').then((m) => m.CourseUpdateComponent),
                         data: {
                             authorities: [Authority.INSTRUCTOR, Authority.ADMIN],
                             pageTitle: 'artemisApp.course.home.editLabel',
@@ -186,7 +164,7 @@ export const courseManagementState: Routes = [
                     },
                     {
                         path: 'groups/:courseGroup',
-                        component: CourseGroupMembershipComponent,
+                        loadComponent: () => import('app/course/manage/course-group-membership/course-group-membership.component').then((m) => m.CourseGroupMembershipComponent),
                         data: {
                             authorities: [Authority.INSTRUCTOR, Authority.ADMIN],
                             pageTitle: 'artemisApp.userManagement.groups',
@@ -195,7 +173,7 @@ export const courseManagementState: Routes = [
                     },
                     {
                         path: 'ratings',
-                        component: RatingListComponent,
+                        loadComponent: () => import('app/exercises/shared/rating/rating-list/rating-list.component').then((m) => m.RatingListComponent),
                         data: {
                             authorities: [Authority.INSTRUCTOR, Authority.ADMIN],
                             pageTitle: 'artemisApp.ratingList.pageTitle',
@@ -204,7 +182,7 @@ export const courseManagementState: Routes = [
                     },
                     {
                         path: 'competency-management',
-                        component: CompetencyManagementComponent,
+                        loadComponent: () => import('app/course/competencies/competency-management/competency-management.component').then((m) => m.CompetencyManagementComponent),
                         data: {
                             authorities: [Authority.INSTRUCTOR, Authority.ADMIN],
                             pageTitle: 'artemisApp.competency.manage.title',
@@ -220,7 +198,7 @@ export const courseManagementState: Routes = [
                         children: [
                             {
                                 path: 'create',
-                                component: CreateCompetencyComponent,
+                                loadComponent: () => import('app/course/competencies/create/create-competency.component').then((m) => m.CreateCompetencyComponent),
                                 data: {
                                     authorities: [Authority.INSTRUCTOR, Authority.ADMIN],
                                     pageTitle: 'artemisApp.competency.create.title',
@@ -229,7 +207,7 @@ export const courseManagementState: Routes = [
                             },
                             {
                                 path: ':competencyId/edit',
-                                component: EditCompetencyComponent,
+                                loadComponent: () => import('app/course/competencies/edit/edit-competency.component').then((m) => m.EditCompetencyComponent),
                                 data: {
                                     authorities: [Authority.INSTRUCTOR, Authority.ADMIN],
                                     pageTitle: 'artemisApp.competency.editCompetency.title',
@@ -238,7 +216,7 @@ export const courseManagementState: Routes = [
                             },
                             {
                                 path: 'import',
-                                component: ImportCompetenciesComponent,
+                                loadComponent: () => import('app/course/competencies/import/import-competencies.component').then((m) => m.ImportCompetenciesComponent),
                                 data: {
                                     authorities: [Authority.INSTRUCTOR, Authority.ADMIN],
                                     pageTitle: 'artemisApp.competency.import.title',
@@ -248,7 +226,10 @@ export const courseManagementState: Routes = [
                             },
                             {
                                 path: 'import-standardized',
-                                component: CourseImportStandardizedCompetenciesComponent,
+                                loadComponent: () =>
+                                    import('app/course/competencies/import-standardized-competencies/course-import-standardized-competencies.component').then(
+                                        (m) => m.CourseImportStandardizedCompetenciesComponent,
+                                    ),
                                 data: {
                                     authorities: [Authority.INSTRUCTOR, Authority.ADMIN],
                                     pageTitle: 'artemisApp.competency.import.title',
@@ -258,7 +239,8 @@ export const courseManagementState: Routes = [
                             },
                             {
                                 path: 'generate',
-                                component: GenerateCompetenciesComponent,
+                                loadComponent: () =>
+                                    import('app/course/competencies/generate-competencies/generate-competencies.component').then((m) => m.GenerateCompetenciesComponent),
                                 data: {
                                     authorities: [Authority.INSTRUCTOR, Authority.ADMIN],
                                     pageTitle: 'artemisApp.competency.generate.title',
@@ -281,7 +263,7 @@ export const courseManagementState: Routes = [
                         children: [
                             {
                                 path: 'create',
-                                component: CreatePrerequisiteComponent,
+                                loadComponent: () => import('app/course/competencies/create/create-prerequisite.component').then((m) => m.CreatePrerequisiteComponent),
                                 data: {
                                     authorities: [Authority.INSTRUCTOR, Authority.ADMIN],
                                     pageTitle: 'artemisApp.prerequisite.createPrerequisite.title',
@@ -290,7 +272,7 @@ export const courseManagementState: Routes = [
                             },
                             {
                                 path: ':prerequisiteId/edit',
-                                component: EditPrerequisiteComponent,
+                                loadComponent: () => import('app/course/competencies/edit/edit-prerequisite.component').then((m) => m.EditPrerequisiteComponent),
                                 data: {
                                     authorities: [Authority.INSTRUCTOR, Authority.ADMIN],
                                     pageTitle: 'artemisApp.prerequisite.editPrerequisite.title',
@@ -299,7 +281,7 @@ export const courseManagementState: Routes = [
                             },
                             {
                                 path: 'import',
-                                component: ImportPrerequisitesComponent,
+                                loadComponent: () => import('app/course/competencies/import/import-prerequisites.component').then((m) => m.ImportPrerequisitesComponent),
                                 data: {
                                     authorities: [Authority.INSTRUCTOR, Authority.ADMIN],
                                     pageTitle: 'artemisApp.prerequisite.import.title',
@@ -309,7 +291,10 @@ export const courseManagementState: Routes = [
                             },
                             {
                                 path: 'import-standardized',
-                                component: CourseImportStandardizedPrerequisitesComponent,
+                                loadComponent: () =>
+                                    import('app/course/competencies/import-standardized-competencies/course-import-standardized-prerequisites.component').then(
+                                        (m) => m.CourseImportStandardizedPrerequisitesComponent,
+                                    ),
                                 data: {
                                     authorities: [Authority.INSTRUCTOR, Authority.ADMIN],
                                     pageTitle: 'artemisApp.prerequisite.import.title',
@@ -321,7 +306,10 @@ export const courseManagementState: Routes = [
                     },
                     {
                         path: 'learning-path-management',
-                        component: LearningPathInstructorPageComponent,
+                        loadComponent: () =>
+                            import('app/course/learning-paths/pages/learning-path-instructor-page/learning-path-instructor-page.component').then(
+                                (m) => m.LearningPathInstructorPageComponent,
+                            ),
                         data: {
                             authorities: [Authority.INSTRUCTOR, Authority.ADMIN],
                             pageTitle: 'artemisApp.learningPath.manageLearningPaths.title',
@@ -330,7 +318,7 @@ export const courseManagementState: Routes = [
                     },
                     {
                         path: 'build-queue',
-                        component: BuildQueueComponent,
+                        loadComponent: () => import('app/localci/build-queue/build-queue.component').then((m) => m.BuildQueueComponent),
                         data: {
                             authorities: [Authority.INSTRUCTOR, Authority.ADMIN],
                             pageTitle: 'artemisApp.buildQueue.title',
@@ -342,7 +330,7 @@ export const courseManagementState: Routes = [
                         children: [
                             {
                                 path: '',
-                                component: FaqComponent,
+                                loadComponent: () => import('app/faq/faq.component').then((m) => m.FaqComponent),
                                 resolve: {
                                     course: CourseManagementResolve,
                                 },
@@ -361,7 +349,7 @@ export const courseManagementState: Routes = [
                                 children: [
                                     {
                                         path: 'new',
-                                        component: FaqUpdateComponent,
+                                        loadComponent: () => import('app/faq/faq-update.component').then((m) => m.FaqUpdateComponent),
                                         data: {
                                             authorities: [Authority.TA, Authority.EDITOR, Authority.INSTRUCTOR, Authority.ADMIN],
                                             pageTitle: 'global.generic.create',
@@ -376,7 +364,7 @@ export const courseManagementState: Routes = [
                                         children: [
                                             {
                                                 path: 'edit',
-                                                component: FaqUpdateComponent,
+                                                loadComponent: () => import('app/faq/faq-update.component').then((m) => m.FaqUpdateComponent),
                                                 data: {
                                                     authorities: [Authority.TA, Authority.EDITOR, Authority.INSTRUCTOR, Authority.ADMIN],
                                                     pageTitle: 'global.generic.edit',

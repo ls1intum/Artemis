@@ -1,7 +1,12 @@
-import { ChangeDetectionStrategy, Component, EventEmitter, Input, OnChanges, OnInit, Output } from '@angular/core';
-import { FormBuilder, FormGroup, Validators } from '@angular/forms';
+import { ChangeDetectionStrategy, Component, EventEmitter, Input, OnChanges, OnInit, Output, inject } from '@angular/core';
+import { FormBuilder, FormGroup, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
 import { faCalendarAlt } from '@fortawesome/free-solid-svg-icons';
-import { OWL_DATE_TIME_FORMATS } from '@danielmoncada/angular-datetime-picker';
+import { OWL_DATE_TIME_FORMATS, OwlDateTimeModule } from '@danielmoncada/angular-datetime-picker';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { NgClass } from '@angular/common';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
+import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 
 export const MY_NATIVE_FORMATS = {
     datePickerInput: { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' },
@@ -34,8 +39,11 @@ export enum TimeFrame {
     templateUrl: './tutorial-group-free-period-form.component.html',
     changeDetection: ChangeDetectionStrategy.OnPush,
     providers: [{ provide: OWL_DATE_TIME_FORMATS, useValue: MY_NATIVE_FORMATS }],
+    imports: [TranslateDirective, FormsModule, ReactiveFormsModule, OwlDateTimeModule, NgClass, FaIconComponent, ArtemisDatePipe, ArtemisTranslatePipe],
 })
 export class TutorialGroupFreePeriodFormComponent implements OnInit, OnChanges {
+    private fb = inject(FormBuilder);
+
     @Input()
     formData: TutorialGroupFreePeriodFormData = {
         startDate: undefined,
@@ -93,9 +101,21 @@ export class TutorialGroupFreePeriodFormComponent implements OnInit, OnChanges {
      */
     get isStartBeforeEnd(): boolean {
         if (this.timeFrame === TimeFrame.PeriodWithinDay && this.endTimeControl?.value && this.startTimeControl?.value) {
-            return this.endTimeControl.value.setSeconds(0, 0) > this.startTimeControl.value.setSeconds(0, 0);
+            const endTime = new Date(this.endTimeControl.value.getTime());
+            const startTime = new Date(this.startTimeControl.value.getTime());
+
+            endTime.setSeconds(0, 0);
+            startTime.setSeconds(0, 0);
+
+            return endTime > startTime;
         } else if (this.timeFrame === TimeFrame.Period && this.endDateControl?.value && this.startDateControl?.value) {
-            return this.endDateControl.value.setHours(0, 0, 0, 0) > this.startDateControl.value.setHours(0, 0, 0, 0);
+            const endDate = new Date(this.endDateControl.value.getTime());
+            const startDate = new Date(this.startDateControl.value.getTime());
+
+            endDate.setHours(0, 0, 0, 0);
+            startDate.setHours(0, 0, 0, 0);
+
+            return endDate > startDate;
         }
         return true;
     }
@@ -150,13 +170,11 @@ export class TutorialGroupFreePeriodFormComponent implements OnInit, OnChanges {
         return false;
     }
 
-    constructor(private fb: FormBuilder) {}
-
     ngOnInit(): void {
         this.initializeForm();
     }
 
-    ngOnChanges(): void {
+    ngOnChanges() {
         this.initializeForm();
         if (this.isEditMode && this.formData) {
             this.setFormValues(this.formData);

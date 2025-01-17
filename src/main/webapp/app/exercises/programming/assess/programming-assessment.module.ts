@@ -3,9 +3,8 @@ import { ArtemisSharedModule } from 'app/shared/shared.module';
 import { ArtemisSharedComponentModule } from 'app/shared/components/shared-component.module';
 import { FormDateTimePickerModule } from 'app/shared/date-time-picker/date-time-picker.module';
 import { FormsModule } from '@angular/forms';
-import { FeatureToggleModule } from 'app/shared/feature-toggle/feature-toggle.module';
+
 import { ProgrammingAssessmentRepoExportButtonComponent } from 'app/exercises/programming/assess/repo-export/programming-assessment-repo-export-button.component';
-import { ArtemisComplaintsForTutorModule } from 'app/complaints/complaints-for-tutor/complaints-for-tutor.module';
 import { ProgrammingAssessmentRepoExportDialogComponent } from 'app/exercises/programming/assess/repo-export/programming-assessment-repo-export-dialog.component';
 import { ArtemisProgrammingAssessmentRoutingModule } from 'app/exercises/programming/assess/programming-assessment.route';
 import { ArtemisAssessmentSharedModule } from 'app/assessment/assessment-shared.module';
@@ -18,6 +17,7 @@ import { AssessmentInstructionsModule } from 'app/assessment/assessment-instruct
 import { ArtemisHeaderExercisePageWithDetailsModule } from 'app/exercises/shared/exercise-headers/exercise-headers.module';
 import { OrionTutorAssessmentComponent } from 'app/orion/assessment/orion-tutor-assessment.component';
 import { SubmissionResultStatusModule } from 'app/overview/submission-result-status.module';
+import { ComplaintsForTutorComponent } from 'app/complaints/complaints-for-tutor/complaints-for-tutor.component';
 
 @NgModule({
     imports: [
@@ -25,8 +25,7 @@ import { SubmissionResultStatusModule } from 'app/overview/submission-result-sta
         ArtemisSharedComponentModule,
         FormDateTimePickerModule,
         FormsModule,
-        FeatureToggleModule,
-        ArtemisComplaintsForTutorModule,
+        ComplaintsForTutorComponent,
         ArtemisProgrammingAssessmentRoutingModule,
         ArtemisAssessmentSharedModule,
         ArtemisCodeEditorModule,
@@ -36,8 +35,6 @@ import { SubmissionResultStatusModule } from 'app/overview/submission-result-sta
         AssessmentInstructionsModule,
         ArtemisHeaderExercisePageWithDetailsModule,
         SubmissionResultStatusModule,
-    ],
-    declarations: [
         ProgrammingAssessmentRepoExportButtonComponent,
         ProgrammingAssessmentRepoExportDialogComponent,
         CodeEditorTutorAssessmentContainerComponent,

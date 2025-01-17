@@ -7,12 +7,14 @@ import { DragItemComponent } from './drag-and-drop-question/drag-item.component'
 import { DragDropModule } from '@angular/cdk/drag-drop';
 import { QuizScoringInfoStudentModalComponent } from 'app/exercises/quiz/shared/questions/quiz-scoring-infostudent-modal/quiz-scoring-info-student-modal.component';
 import { ArtemisMarkdownModule } from 'app/shared/markdown.module';
-import { FitTextModule } from 'app/exercises/quiz/shared/fit-text/fit-text.module';
+
 import { MultipleChoiceVisualQuestionComponent } from 'app/exercises/quiz/shared/questions/multiple-choice-question/multiple-choice-visual-question.component';
 
 @NgModule({
-    imports: [ArtemisSharedModule, DragDropModule, ArtemisMarkdownModule, FitTextModule],
-    declarations: [
+    imports: [
+        ArtemisSharedModule,
+        DragDropModule,
+        ArtemisMarkdownModule,
         DragItemComponent,
         DragAndDropQuestionComponent,
         MultipleChoiceQuestionComponent,

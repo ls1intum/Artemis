@@ -947,7 +947,7 @@ public interface UserRepository extends ArtemisJpaRepository<User, Long>, JpaSpe
     }
 
     /**
-     * Get user with user groups and authorities with the username (i.e. user.getLogin() or principal.getName())
+     * Get user with user groups and authorities with the username (i.e. user.getLogin() or principal.name())
      *
      * @param username the username of the user who should be retrieved from the database
      * @return the user that belongs to the given principal with eagerly loaded groups and authorities

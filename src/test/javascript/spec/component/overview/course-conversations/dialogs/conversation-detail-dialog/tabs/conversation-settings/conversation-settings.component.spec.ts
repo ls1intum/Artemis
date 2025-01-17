@@ -18,8 +18,10 @@ import { HttpResponse } from '@angular/common/http';
 import { GenericConfirmationDialogComponent } from 'app/overview/course-conversations/dialogs/generic-confirmation-dialog/generic-confirmation-dialog.component';
 import { defaultSecondLayerDialogOptions } from 'app/overview/course-conversations/other/conversation.util';
 import * as ConversationPermissionUtils from 'app/shared/metis/conversations/conversation-permissions.utils';
+import { input, runInInjectionContext } from '@angular/core';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
 
-const examples: ConversationDTO[] = [generateExampleGroupChatDTO({}), generateExampleChannelDTO({})];
+const examples: ConversationDTO[] = [generateExampleGroupChatDTO({}), generateExampleChannelDTO({} as ChannelDTO)];
 
 examples.forEach((activeConversation) => {
     describe('ConversationSettingsComponent with ' + activeConversation.type, () => {
@@ -32,7 +34,13 @@ examples.forEach((activeConversation) => {
 
         beforeEach(waitForAsync(() => {
             TestBed.configureTestingModule({
-                declarations: [ConversationSettingsComponent, MockDirective(DeleteButtonDirective), MockComponent(FaIconComponent), MockPipe(ArtemisTranslatePipe)],
+                declarations: [
+                    ConversationSettingsComponent,
+                    MockDirective(DeleteButtonDirective),
+                    MockComponent(FaIconComponent),
+                    MockPipe(ArtemisTranslatePipe),
+                    MockDirective(TranslateDirective),
+                ],
                 providers: [MockProvider(NgbModal), MockProvider(ChannelService), MockProvider(GroupChatService), MockProvider(AlertService)],
             }).compileComponents();
         }));
@@ -43,10 +51,17 @@ examples.forEach((activeConversation) => {
             canDeleteChannel.mockReturnValue(true);
             fixture = TestBed.createComponent(ConversationSettingsComponent);
             component = fixture.componentInstance;
-            component.course = course;
-            component.activeConversation = activeConversation;
-            component.ngOnInit();
+            TestBed.runInInjectionContext(() => {
+                component.course = input<Course>(course);
+                component.activeConversation = input<ConversationDTO>(activeConversation);
+                component.ngOnInit();
+            });
             fixture.detectChanges();
+        });
+
+        afterEach(() => {
+            // Reset injection context
+            TestBed.resetTestingModule();
         });
 
         it('should create', () => {
@@ -118,7 +133,11 @@ examples.forEach((activeConversation) => {
 
         it('should open unarchive dialog when button is pressed', fakeAsync(() => {
             if (isChannelDTO(activeConversation)) {
-                (component.activeConversation as ChannelDTO).isArchived = true;
+                runInInjectionContext(fixture.debugElement.injector, () => {
+                    const activeConversation = component.activeConversation();
+                    (activeConversation as ChannelDTO).isArchived = true;
+                    component.activeConversation = input<ConversationDTO>(activeConversation as ConversationDTO);
+                });
                 fixture.detectChanges();
                 const channelService = TestBed.inject(ChannelService);
                 const unarchivespy = jest.spyOn(channelService, 'unarchive').mockReturnValue(of(new HttpResponse({ status: 200 }) as HttpResponse<void>));
