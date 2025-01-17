@@ -9,6 +9,8 @@ import { Slide } from 'app/entities/lecture-unit/slide.model';
 import { LectureUnitType } from 'app/entities/lecture-unit/lectureUnit.model';
 import { TextEditor } from 'app/shared/monaco-editor/model/actions/adapter/text-editor.interface';
 import { sanitizeStringForMarkdownEditor } from 'app/shared/util/markdown.util';
+import { FileService } from 'app/shared/http/file.service';
+import { cloneDeep } from 'lodash-es';
 
 interface LectureWithDetails {
     id: number;
@@ -37,6 +39,7 @@ export class LectureAttachmentReferenceAction extends TextEditorAction {
     constructor(
         private readonly metisService: MetisService,
         private readonly lectureService: LectureService,
+        private readonly fileService: FileService,
     ) {
         super(LectureAttachmentReferenceAction.ID, 'artemisApp.metis.editor.lecture');
         firstValueFrom(this.lectureService.findAllByCourseIdWithSlides(this.metisService.getCourse().id!)).then((response) => {
@@ -44,12 +47,28 @@ export class LectureAttachmentReferenceAction extends TextEditorAction {
             if (lectures) {
                 this.lecturesWithDetails = lectures
                     .filter((lecture) => !!lecture.id && !!lecture.title)
-                    .map((lecture) => ({
-                        id: lecture.id!,
-                        title: lecture.title!,
-                        attachmentUnits: lecture.lectureUnits?.filter((unit) => unit.type === LectureUnitType.ATTACHMENT),
-                        attachments: lecture.attachments,
-                    }));
+                    .map((lecture) => {
+                        let attachmentCopy = cloneDeep(lecture.attachments);
+
+                        if (attachmentCopy) {
+                            attachmentCopy = attachmentCopy.map((attachment) => {
+                                if (attachment.link && attachment.name) {
+                                    attachment.link = this.fileService.createAttachmentFileUrl(attachment.link!, attachment.name!, false);
+                                }
+
+                                return attachment;
+                            });
+                        } else {
+                            attachmentCopy = lecture.attachments;
+                        }
+
+                        return {
+                            id: lecture.id!,
+                            title: lecture.title!,
+                            attachmentUnits: lecture.lectureUnits?.filter((unit) => unit.type === LectureUnitType.ATTACHMENT),
+                            attachments: attachmentCopy,
+                        };
+                    });
             }
         });
     }

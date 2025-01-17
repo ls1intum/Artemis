@@ -67,14 +67,19 @@ export class FileService {
      * @param downloadName the name given to the attachment
      */
     downloadFileByAttachmentName(downloadUrl: string, downloadName: string) {
+        const normalizedDownloadUrl = this.createAttachmentFileUrl(downloadUrl, downloadName, true);
+        const newWindow = window.open('about:blank');
+        newWindow!.location.href = normalizedDownloadUrl;
+        return newWindow;
+    }
+
+    createAttachmentFileUrl(downloadUrl: string, downloadName: string, encodeName: boolean) {
         const downloadUrlComponents = downloadUrl.split('/');
         // take the last element
         const extension = downloadUrlComponents.pop()!.split('.').pop();
         const restOfUrl = downloadUrlComponents.join('/');
-        const normalizedDownloadUrl = restOfUrl + '/' + encodeURIComponent(downloadName + '.' + extension);
-        const newWindow = window.open('about:blank');
-        newWindow!.location.href = normalizedDownloadUrl;
-        return newWindow;
+        const encodedDownloadName = encodeName ? encodeURIComponent(downloadName + '.' + extension) : downloadName + '.' + extension;
+        return restOfUrl + '/' + encodedDownloadName;
     }
 
     /**
