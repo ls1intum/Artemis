@@ -166,5 +166,10 @@ jobs:
           SSH_AUTH_SOCK: /tmp/ssh_agent.sock
           TAG: ${{ steps.compute-tag.outputs.result }}
         run: |
-          echo "DEPLOYMENT_HOSTS: $DEPLOYMENT_HOSTS"
+          echo "DEPLOYMENT_FOLDER: ${{ vars.DEPLOYMENT_FOLDER }}"
+          echo "DEPLOYMENT_HOST_PUBLIC_KEYS: ${{ vars.DEPLOYMENT_HOST_PUBLIC_KEYS }}"
+          echo "DEPLOYMENT_HOSTS: ${{ vars.DEPLOYMENT_HOSTS }}"
+          echo "DEPLOYMENT_LABEL_IDENTIFIER: ${{ vars.DEPLOYMENT_LABEL_IDENTIFIER }}"
+          echo "DEPLOYMENT_URL: ${{ vars.DEPLOYMENT_URL }}"
+          echo "DEPLOYMENT_USER: ${{ vars.DEPLOYMENT_USER }}"
           ./artemis-server-cli docker-deploy "$DEPLOYMENT_USER@$DEPLOYMENT_HOSTS" -g "$GATEWAY_USER@$GATEWAY_HOST" -t $TAG -b ${{ github.event.inputs.HELIOS_BRANCH_NAME }} -d $DEPLOYMENT_FOLDER -y
