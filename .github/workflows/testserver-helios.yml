@@ -36,7 +36,7 @@ on:
         required: false
         type: string
 
-concurrency: test-servers
+concurrency: ${{ github.event.inputs.HELIOS_ENVIRONMENT_NAME }}
 
 env:
   CI: true
@@ -123,24 +123,6 @@ jobs:
         run: |
           echo "::error::No successful build found for branch '${{ github.event.inputs.HELIOS_BRANCH_NAME }}' with SHA '${{ github.event.inputs.HELIOS_BRANCH_HEAD_SHA }}'."
           exit 1
-      - name: Post comment about build validation failure
-        if: failure() && github.event.inputs.HELIOS_BUILD == 'false'
-        uses: marocchino/sticky-pull-request-comment@v2
-        with:
-          number: ${{ github.event.inputs.HELIOS_PR_NUMBER }}
-          header: build-validation-failed
-          message: |
-            ### ⚠️ Unable to deploy to test servers ⚠️
-
-            The build needs to run through first. Please wait for the build to finish and then try again.
-      - name: Remove sticky comment on build validation failure
-        if: success() && github.event.inputs.HELIOS_BUILD == 'false'
-        uses: marocchino/sticky-pull-request-comment@v2
-        with:
-          number: ${{ github.event.inputs.HELIOS_PR_NUMBER }}
-          header: build-validation-failed
-          delete: true
-
 
   # Check which test server to deploy to based on the label
   filter-matrix:
@@ -272,7 +254,6 @@ jobs:
   deploy:
     needs: [ process-matrix ]
     runs-on: ubuntu-latest
-    concurrency: test-servers-deploy
     strategy:
       fail-fast: false
       matrix:
@@ -336,28 +317,3 @@ jobs:
           for host in $DEPLOYMENT_HOSTS; do
             ./artemis-server-cli docker-deploy "$DEPLOYMENT_USER@$host" -g "$GATEWAY_USER@$GATEWAY_HOST" -t $TAG -b ${{ github.event.inputs.HELIOS_BRANCH_NAME }} -d $DEPLOYMENT_FOLDER -y
           done
-
-  # Add a sticky comment to the PR if the deployment fails
-  add-deployment-error-comment:
-    if: ${{ github.event.inputs.HELIOS_PR_NUMBER != '' }}
-    needs: [ deploy ]
-    runs-on: ubuntu-latest
-    steps:
-      - name: Post comment about deployment failure
-        if: failure()
-        uses: marocchino/sticky-pull-request-comment@v2
-        with:
-          number: ${{ github.event.inputs.HELIOS_PR_NUMBER }}
-          header: deployment-error
-          message: |
-            ### 🚨 Deployment Failed 🚨
-
-            Please check the logs and try again.
-
-      - name: Remove sticky comment for deployment failure on success
-        if: success()
-        uses: marocchino/sticky-pull-request-comment@v2
-        with:
-          number: ${{ github.event.inputs.HELIOS_PR_NUMBER }}
-          header: deployment-error
-          delete: true
