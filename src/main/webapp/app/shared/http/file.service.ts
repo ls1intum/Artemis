@@ -73,6 +73,13 @@ export class FileService {
         return newWindow;
     }
 
+    /**
+     * Creates the URL to download a attachment file
+     *
+     * @param downloadUrl url that is stored in the attachment model
+     * @param downloadName the name given to the attachment
+     * @param encodeName whether or not to encode the downloadName
+     */
     createAttachmentFileUrl(downloadUrl: string, downloadName: string, encodeName: boolean) {
         const downloadUrlComponents = downloadUrl.split('/');
         // take the last element
