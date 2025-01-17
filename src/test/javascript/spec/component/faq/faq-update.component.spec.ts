@@ -24,7 +24,6 @@ describe('FaqUpdateComponent', () => {
     let faqUpdateComponent: FaqUpdateComponent;
     let faqService: FaqService;
     let activatedRoute: ActivatedRoute;
-    let profileService: ProfileService;
     let router: Router;
     let faq1: Faq;
     let courseId: number;
@@ -39,6 +38,7 @@ describe('FaqUpdateComponent', () => {
         faq1.questionAnswer = 'questionAnswer';
         faq1.categories = [new FaqCategory('category1', '#94a11c')];
         courseId = 1;
+        const mockProfileInfo = { activeProfiles: ['iris'] } as ProfileInfo;
         TestBed.configureTestingModule({
             imports: [ArtemisTestModule, MockModule(ArtemisMarkdownEditorModule), MockModule(BrowserAnimationsModule)],
             declarations: [FaqUpdateComponent, MockPipe(HtmlForMarkdownPipe), MockRouterLinkDirective],
@@ -76,12 +76,12 @@ describe('FaqUpdateComponent', () => {
                         );
                     },
                 }),
+
+                MockProvider(ProfileService, {
+                    getProfileInfo: () => of(mockProfileInfo),
+                }),
             ],
         }).compileComponents();
-
-        profileService = TestBed.inject(ProfileService);
-        const mockProfileInfo = { activeProfiles: ['iris'] } as ProfileInfo;
-        jest.spyOn(profileService, 'getProfileInfo').mockReturnValue(of(mockProfileInfo));
 
         faqUpdateComponentFixture = TestBed.createComponent(FaqUpdateComponent);
         faqUpdateComponent = faqUpdateComponentFixture.componentInstance;
