@@ -126,7 +126,9 @@ jobs:
         result-encoding: string
         script: |
           if (context.eventName === "workflow_dispatch") {
-            // Use the "tag" passed in via the workflow_call input
+            // When the workflow_call is triggered by another workflow,
+            // the parent's payload is passed to the child workflow
+            // This is why we are using the inputs from the parent workflow
             return context.payload.inputs.HELIOS_BUILD_TAG;
           }
           if (context.eventName === "pull_request") {
