@@ -22,7 +22,6 @@ import { ArtemisHeaderExercisePageWithDetailsModule } from 'app/exercises/shared
 import { ArtemisMarkdownModule } from 'app/shared/markdown.module';
 import { ExamExerciseOverviewPageComponent } from 'app/exam/participate/exercises/exercise-overview-page/exam-exercise-overview-page.component';
 import { SubmissionResultStatusModule } from 'app/overview/submission-result-status.module';
-import { ArtemisExamTimerModule } from 'app/exam/participate/timer/exam-timer.module';
 import { ArtemisExamSubmissionComponentsModule } from 'app/exam/participate/exercises/exam-submission-components.module';
 import { ExamExerciseUpdateHighlighterModule } from 'app/exam/participate/exercises/exam-exercise-update-highlighter/exam-exercise-update-highlighter.module';
 import { ArtemisExamSharedModule } from 'app/exam/shared/exam-shared.module';
@@ -54,7 +53,6 @@ const ENTITY_STATES = [...examParticipationState];
         ArtemisParticipationSummaryModule,
         ArtemisMarkdownModule,
         SubmissionResultStatusModule,
-        ArtemisExamTimerModule,
         ArtemisExamSubmissionComponentsModule,
         ExamExerciseUpdateHighlighterModule,
         ArtemisExamSharedModule,
