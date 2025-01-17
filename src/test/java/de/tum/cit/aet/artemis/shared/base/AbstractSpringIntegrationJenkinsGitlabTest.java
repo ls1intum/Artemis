@@ -135,7 +135,12 @@ public abstract class AbstractSpringIntegrationJenkinsGitlabTest extends Abstrac
 
         }
         else {
+            jenkinsRequestMockProvider.mockGetFolderJob(projectKey);
+            jenkinsRequestMockProvider.mockGetJobConfig(projectKey, projectKey + "-" + TEMPLATE.getName());
             jenkinsRequestMockProvider.mockCreateBuildPlan(projectKey, TEMPLATE.getName(), false);
+
+            jenkinsRequestMockProvider.mockGetFolderJob(projectKey);
+            jenkinsRequestMockProvider.mockGetJobConfig(projectKey, projectKey + "-" + SOLUTION.getName());
             jenkinsRequestMockProvider.mockCreateBuildPlan(projectKey, SOLUTION.getName(), false);
         }
         jenkinsRequestMockProvider.mockTriggerBuild(projectKey, TEMPLATE.getName(), false);

@@ -247,14 +247,7 @@ public class JenkinsRequestMockProvider {
     }
 
     public void mockCheckIfProjectExistsJobIsNull(ProgrammingExercise exercise) throws IOException {
-        mockGetFolderJob(exercise.getProjectKey());
-    }
-
-    public void mockCheckIfProjectExistsJobUrlEmptyOrNull(ProgrammingExercise exercise) throws IOException {
-        var job = new JenkinsJobService.JobWithDetails("name", "description", false);
-        URI uri = JenkinsEndpoints.GET_FOLDER_JOB.buildEndpoint(jenkinsServerUri, exercise.getProjectKey()).build(true).toUri();
-        var response = mapper.writeValueAsString(job);
-        mockServer.expect(requestTo(uri)).andExpect(method(HttpMethod.POST)).andRespond(withSuccess().body(response).contentType(MediaType.APPLICATION_JSON));
+        mockGetFolderJob(exercise.getProjectKey(), null);
     }
 
     public void mockCopyBuildPlanFromTemplate(String sourceProjectKey, String targetProjectKey, String planKey) throws IOException {
