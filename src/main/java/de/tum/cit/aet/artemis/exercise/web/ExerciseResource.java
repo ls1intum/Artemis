@@ -344,6 +344,13 @@ public class ExerciseResource {
                 .orElse(null);
         PlagiarismCaseInfoDTO plagiarismCaseInfo = plagiarismCaseService.getPlagiarismCaseInfoForExerciseAndUser(exercise.getId(), user.getId()).orElse(null);
 
+        // TODO TW: This "feature" is only temporary for a paper.
+        if (exercise.getProblemStatement().contains("ICER 2025 Paper")) {
+            if (user.getId() % 3 == 2) {
+                irisSettings = null;
+            }
+        }
+
         return ResponseEntity.ok(new ExerciseDetailsDTO(exercise, irisSettings, plagiarismCaseInfo));
     }
 

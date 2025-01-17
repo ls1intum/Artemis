@@ -171,6 +171,14 @@ public class IrisExerciseChatSessionService extends AbstractIrisChatSessionServi
         var latestSubmission = getLatestSubmissionIfExists(exercise, chatSession.getUser());
 
         var variant = irisSettingsService.getCombinedIrisSettingsFor(session.getExercise(), false).irisChatSettings().selectedVariant();
+
+        // TODO TW: This "feature" is only temporary for a paper.
+        if (exercise.getProblemStatement().contains("ICER 2025 Paper")) {
+            if (chatSession.getUser().getId() % 3 == 0) {
+                variant = "chat-gpt-wrapper";
+            }
+        }
+
         pyrisPipelineService.executeExerciseChatPipeline(variant, latestSubmission, exercise, chatSession, event);
     }
 
