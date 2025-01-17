@@ -119,7 +119,9 @@ public class PyrisJobService {
     public String addFaqIngestionWebhookJob(long courseId, long faqId) {
         var token = generateJobIdToken();
         var job = new FaqIngestionWebhookJob(token, courseId, faqId);
-        jobMap.put(token, job);
+        long timeoutWebhookJob = 60;
+        TimeUnit unitWebhookJob = TimeUnit.MINUTES;
+        jobMap.put(token, job, timeoutWebhookJob, unitWebhookJob);
         return token;
     }
 

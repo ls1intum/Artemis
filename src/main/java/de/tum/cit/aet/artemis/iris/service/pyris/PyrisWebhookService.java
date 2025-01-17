@@ -251,7 +251,7 @@ public class PyrisWebhookService {
     }
 
     /**
-     * send the updated / created attachment to Pyris for ingestion if autoLecturesUpdate is enabled
+     * send the updated / created faqs to Pyris for ingestion if autoLecturesUpdate is enabled
      *
      * @param courseId Id of the course where the attachment is added
      * @param newFaq   the new faqs to be sent to pyris for ingestion
@@ -265,7 +265,7 @@ public class PyrisWebhookService {
     }
 
     /**
-     * adds the lectures to the vector database in Pyris
+     * adds the faq to the vector database in Pyris
      *
      * @param faq The faq that got Updated
      * @return jobToken if the job was created else null
@@ -277,6 +277,13 @@ public class PyrisWebhookService {
         }
         return null;
     }
+
+    /**
+     * executes the faq addition webhook to add faq to the vector database on pyris
+     *
+     * @param toUpdateFaq The faq that got Updated as webhook DTO
+     * @return jobToken if the job was created else null
+     */
 
     private String executeFaqAdditionWebhook(PyrisFaqWebhookDTO toUpdateFaq) {
         String jobToken = pyrisJobService.addFaqIngestionWebhookJob(toUpdateFaq.courseId(), toUpdateFaq.faqId());
@@ -299,6 +306,12 @@ public class PyrisWebhookService {
 
     }
 
+    /**
+     * executes the faq deletion webhook to delete faq from the vector database on pyris
+     *
+     * @param toUpdateFaqs The faq that got Updated as webhook DTO
+     * @return jobToken if the job was created else null
+     */
     private String executeFaqDeletionWebhook(PyrisFaqWebhookDTO toUpdateFaqs) {
         String jobToken = pyrisJobService.addFaqIngestionWebhookJob(0, 0);
         PyrisPipelineExecutionSettingsDTO settingsDTO = new PyrisPipelineExecutionSettingsDTO(jobToken, List.of(), artemisBaseUrl);

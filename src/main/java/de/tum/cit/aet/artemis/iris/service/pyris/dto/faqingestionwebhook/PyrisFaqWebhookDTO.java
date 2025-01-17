@@ -4,8 +4,8 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 
 /**
  * Represents a webhook data transfer object for an FAQ in the Pyris system.
- * This DTO is used to encapsulate the information related to updates of lecture units,
- * providing necessary details such as lecture and course identifiers, names, and descriptions.
+ * This DTO is used to encapsulate the information related to the faqs
+ * providing necessary details such as faqId the content as questionTitle and questionAnswer as well as the course description.
  */
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 

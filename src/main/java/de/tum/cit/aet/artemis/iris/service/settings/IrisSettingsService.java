@@ -158,10 +158,23 @@ public class IrisSettingsService {
         settings.setIrisCompetencyGenerationSettings(irisCompetencyGenerationSettings);
     }
 
+    /**
+     * Get the combined Iris settings for a course.
+     * Combines the global settings with the course settings.
+     *
+     * @return The combined Iris settings for the course
+     */
     public IrisGlobalSettings getGlobalSettings() {
         return irisSettingsRepository.findGlobalSettingsElseThrow();
     }
 
+    /**
+     * Get the combined Iris settings for a course.
+     * Combines the global settings with the course settings.
+     *
+     * @param settings The course settings
+     * @return The combined Iris settings for the course
+     */
     private void initializeIrisFaqIngestionSettings(IrisGlobalSettings settings) {
         var irisFaqIngestionSubSettings = settings.getIrisFaqIngestionSettings();
         irisFaqIngestionSubSettings = initializeSettings(irisFaqIngestionSubSettings, IrisFaqIngestionSubSettings::new);
@@ -606,7 +619,7 @@ public class IrisSettingsService {
             irisSubSettingsService.combineCourseChatSettings(settingsList, false),
             irisSubSettingsService.combineLectureIngestionSubSettings(settingsList, false),
             irisSubSettingsService.combineCompetencyGenerationSettings(settingsList, false),
-            irisSubSettingsService.combinceFaqIngestionSubSettings(settingsList, false)
+            irisSubSettingsService.combineFaqIngestionSubSettings(settingsList, false)
         );
         // @formatter:on
     }
@@ -633,7 +646,7 @@ public class IrisSettingsService {
             irisSubSettingsService.combineCourseChatSettings(settingsList, minimal),
             irisSubSettingsService.combineLectureIngestionSubSettings(settingsList, minimal),
             irisSubSettingsService.combineCompetencyGenerationSettings(settingsList, minimal),
-            irisSubSettingsService.combinceFaqIngestionSubSettings(settingsList, minimal)
+            irisSubSettingsService.combineFaqIngestionSubSettings(settingsList, minimal)
         );
         // @formatter:on
     }
@@ -661,7 +674,7 @@ public class IrisSettingsService {
             irisSubSettingsService.combineCourseChatSettings(settingsList, minimal),
             irisSubSettingsService.combineLectureIngestionSubSettings(settingsList, minimal),
             irisSubSettingsService.combineCompetencyGenerationSettings(settingsList, minimal),
-            irisSubSettingsService.combinceFaqIngestionSubSettings(settingsList, minimal)
+            irisSubSettingsService.combineFaqIngestionSubSettings(settingsList, minimal)
         );
         // @formatter:on
     }

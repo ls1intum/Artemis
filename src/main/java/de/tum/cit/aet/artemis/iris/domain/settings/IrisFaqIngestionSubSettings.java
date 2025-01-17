@@ -22,8 +22,8 @@ public class IrisFaqIngestionSubSettings extends IrisSubSettings {
         return autoIngestOnFaqCreation;
     }
 
-    public void setAutoIngestOnFaqCreation(boolean autoIngestOnLectureAttachmentUpload) {
-        this.autoIngestOnFaqCreation = autoIngestOnLectureAttachmentUpload;
+    public void setAutoIngestOnFaqCreation(boolean autoIngestOnFaqCreation) {
+        this.autoIngestOnFaqCreation = autoIngestOnFaqCreation;
     }
 
 }

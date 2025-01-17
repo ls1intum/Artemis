@@ -368,7 +368,7 @@ public class IrisSubSettingsService {
     }
 
     /**
-     * Combines the Lecture Ingestion settings of multiple {@link IrisSettings} objects.
+     * Combines the FAQ Ingestion settings of multiple {@link IrisSettings} objects.
      * If minimal is true, the returned object will only contain the enabled and rateLimit fields.
      * The minimal version can safely be sent to students.
      *
@@ -376,7 +376,7 @@ public class IrisSubSettingsService {
      * @param minimal      Whether to return a minimal version of the combined settings.
      * @return Combined Lecture Ingestion settings.
      */
-    public IrisCombinedFaqIngestionSubSettingsDTO combinceFaqIngestionSubSettings(ArrayList<IrisSettings> settingsList, boolean minimal) {
+    public IrisCombinedFaqIngestionSubSettingsDTO combineFaqIngestionSubSettings(ArrayList<IrisSettings> settingsList, boolean minimal) {
         var enabled = getCombinedEnabled(settingsList, IrisSettings::getIrisFaqIngestionSettings);
         return new IrisCombinedFaqIngestionSubSettingsDTO(enabled);
     }

@@ -138,7 +138,7 @@ public class PyrisStatusUpdateService {
     }
 
     /**
-     * Handles the status update of a lecture ingestion job.
+     * Handles the status update of a FAQ ingestion job.
      *
      * @param job          the job that is updated
      * @param statusUpdate the status update

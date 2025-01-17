@@ -240,7 +240,7 @@ public class PyrisConnectorService {
     }
 
     /**
-     * Retrieves the ingestion state of the lecture unit specified by retrieving the ingestion state from the vector database in Pyris.
+     * Retrieves the ingestion state of the faq specified by retrieving the ingestion state from the vector database in Pyris.
      *
      * @param courseId id of the course
      * @return The ingestion state of the faq

@@ -245,7 +245,7 @@ describe('FaqComponent', () => {
         expect(faq1.faqState).toEqual(FaqState.PROPOSED);
     });
 
-    it('should call the service to ingest lectures when ingestLecturesInPyris is called', () => {
+    it('should call the service to ingest faqs when ingestFaqsInPyris is called', () => {
         faqComponent.faqs = [faq1];
         const ingestSpy = jest.spyOn(faqService, 'ingestFaqsInPyris').mockImplementation(() => of(new HttpResponse<void>({ status: 200 })));
         faqComponent.ingestFaqsInPyris();

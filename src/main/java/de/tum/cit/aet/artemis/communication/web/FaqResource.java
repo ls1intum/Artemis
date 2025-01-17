@@ -40,7 +40,6 @@ import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInCourse.Enfo
 import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInCourse.EnforceAtLeastTutorInCourse;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
 import de.tum.cit.aet.artemis.core.util.HeaderUtil;
-import de.tum.cit.aet.artemis.iris.service.settings.IrisSettingsService;
 
 /**
  * REST controller for managing Faqs.
@@ -65,8 +64,7 @@ public class FaqResource {
 
     private final FaqService faqService;
 
-    public FaqResource(CourseRepository courseRepository, AuthorizationCheckService authCheckService, FaqRepository faqRepository, FaqService faqService,
-            Optional<IrisSettingsService> irisSettingsService) {
+    public FaqResource(CourseRepository courseRepository, AuthorizationCheckService authCheckService, FaqRepository faqRepository, FaqService faqService) {
         this.faqRepository = faqRepository;
         this.courseRepository = courseRepository;
         this.authCheckService = authCheckService;

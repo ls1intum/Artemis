@@ -258,7 +258,7 @@ describe('Faq Service', () => {
             expect(service.hasSearchTokens(faq1, 'title answer missing')).toBeFalse();
         });
 
-        it('should send a POST request to ingest lectures and return an OK response', () => {
+        it('should send a POST request to ingest faqs and return an OK response', () => {
             const courseId = 123;
             const expectedUrl = `api/courses/${courseId}/faqs/ingest`;
             const expectedStatus = 200;
