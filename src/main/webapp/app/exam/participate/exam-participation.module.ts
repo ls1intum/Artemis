@@ -25,7 +25,6 @@ import { SubmissionResultStatusModule } from 'app/overview/submission-result-sta
 import { ArtemisExamSubmissionComponentsModule } from 'app/exam/participate/exercises/exam-submission-components.module';
 import { ExamExerciseUpdateHighlighterModule } from 'app/exam/participate/exercises/exam-exercise-update-highlighter/exam-exercise-update-highlighter.module';
 import { ArtemisExamSharedModule } from 'app/exam/shared/exam-shared.module';
-import { ArtemisExamLiveEventsModule } from 'app/exam/participate/events/exam-live-events.module';
 import { ExamStartInformationComponent } from 'app/exam/participate/exam-start-information/exam-start-information.component';
 import { ArtemisSidebarModule } from 'app/shared/sidebar/sidebar.module';
 import { ExamNavigationSidebarComponent } from 'app/exam/participate/exam-navigation-sidebar/exam-navigation-sidebar.component';
@@ -56,7 +55,6 @@ const ENTITY_STATES = [...examParticipationState];
         ArtemisExamSubmissionComponentsModule,
         ExamExerciseUpdateHighlighterModule,
         ArtemisExamSharedModule,
-        ArtemisExamLiveEventsModule,
         ExamStartInformationComponent,
         ArtemisSidebarModule,
         ExamNavigationSidebarComponent,
