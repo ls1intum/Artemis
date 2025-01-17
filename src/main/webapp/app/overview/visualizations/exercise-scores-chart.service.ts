@@ -1,4 +1,4 @@
-import { Injectable } from '@angular/core';
+import { Injectable, inject } from '@angular/core';
 import { HttpClient, HttpResponse } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import dayjs from 'dayjs/esm';
@@ -23,9 +23,10 @@ export class ExerciseScoresDTO {
  */
 @Injectable({ providedIn: 'root' })
 export class ExerciseScoresChartService {
+    private http = inject(HttpClient);
+
     public resourceUrl = 'api';
 
-    constructor(private http: HttpClient) {}
     /**
      * Get the course exercise performance statistics necessary for exercise-scores-chart.component.ts
      * @param courseId id of the course

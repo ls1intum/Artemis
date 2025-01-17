@@ -35,8 +35,6 @@ import { FeedbackAnalysisComponent } from 'app/exercises/programming/manage/grad
         SubmissionPolicyUpdateModule,
         BarChartModule,
         FeedbackAnalysisComponent,
-    ],
-    declarations: [
         ProgrammingExerciseConfigureGradingComponent,
         ProgrammingExerciseConfigureGradingStatusComponent,
         ProgrammingExerciseConfigureGradingActionsComponent,

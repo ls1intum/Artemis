@@ -1,15 +1,13 @@
 import { NgModule } from '@angular/core';
 import { RouterModule, Routes } from '@angular/router';
 
-import { PrivacyComponent } from 'app/core/legal/privacy.component';
-import { DataExportComponent } from 'app/core/legal/data-export/data-export.component';
 import { Authority } from 'app/shared/constants/authority.constants';
 import { UserRouteAccessService } from 'app/core/auth/user-route-access-service';
 
 const routes: Routes = [
     {
         path: 'data-exports/:id',
-        component: DataExportComponent,
+        loadComponent: () => import('app/core/legal/data-export/data-export.component').then((m) => m.DataExportComponent),
         data: {
             authorities: [Authority.USER],
             pageTitle: 'artemisApp.dataExport.title',
@@ -18,7 +16,7 @@ const routes: Routes = [
     },
     {
         path: 'data-exports',
-        component: DataExportComponent,
+        loadComponent: () => import('app/core/legal/data-export/data-export.component').then((m) => m.DataExportComponent),
         data: {
             authorities: [Authority.USER],
             pageTitle: 'artemisApp.dataExport.title',
@@ -31,7 +29,7 @@ const routes: Routes = [
             {
                 path: '',
                 pathMatch: 'full',
-                component: PrivacyComponent,
+                loadComponent: () => import('app/core/legal/privacy.component').then((m) => m.PrivacyComponent),
                 data: {
                     authorities: [],
                     pageTitle: 'artemisApp.legal.privacyStatement.title',
@@ -39,7 +37,7 @@ const routes: Routes = [
             },
             {
                 path: ':fragment',
-                component: PrivacyComponent,
+                loadComponent: () => import('app/core/legal/privacy.component').then((m) => m.PrivacyComponent),
                 data: {
                     authorities: [],
                     pageTitle: 'artemisApp.legal.privacyStatement.title',

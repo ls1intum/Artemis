@@ -1,4 +1,4 @@
-import { Component, OnDestroy, OnInit } from '@angular/core';
+import { Component, OnDestroy, OnInit, inject } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import dayjs from 'dayjs/esm';
 import { SystemNotification, SystemNotificationType } from 'app/entities/system-notification.model';
@@ -9,6 +9,8 @@ import { SystemNotificationService } from 'app/shared/notification/system-notifi
 import { faExclamationTriangle, faInfoCircle, faTimes } from '@fortawesome/free-solid-svg-icons';
 import { Subscription, filter } from 'rxjs';
 import { convertDateFromServer } from 'app/utils/date.utils';
+import { NgClass } from '@angular/common';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 
 export const WEBSOCKET_CHANNEL = '/topic/system-notification';
 
@@ -16,8 +18,14 @@ export const WEBSOCKET_CHANNEL = '/topic/system-notification';
     selector: 'jhi-system-notification',
     templateUrl: './system-notification.component.html',
     styleUrls: ['system-notification.scss'],
+    imports: [NgClass, FaIconComponent],
 })
 export class SystemNotificationComponent implements OnInit, OnDestroy {
+    private route = inject(ActivatedRoute);
+    private accountService = inject(AccountService);
+    private jhiWebsocketService = inject(JhiWebsocketService);
+    private systemNotificationService = inject(SystemNotificationService);
+
     readonly INFO = SystemNotificationType.INFO;
     readonly WARNING = SystemNotificationType.WARNING;
 
@@ -32,13 +40,6 @@ export class SystemNotificationComponent implements OnInit, OnDestroy {
     faExclamationTriangle = faExclamationTriangle;
     faInfoCircle = faInfoCircle;
     faTimes = faTimes;
-
-    constructor(
-        private route: ActivatedRoute,
-        private accountService: AccountService,
-        private jhiWebsocketService: JhiWebsocketService,
-        private systemNotificationService: SystemNotificationService,
-    ) {}
 
     ngOnInit() {
         this.loadActiveNotification();

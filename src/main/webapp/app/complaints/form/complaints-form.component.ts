@@ -16,7 +16,6 @@ import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
     selector: 'jhi-complaint-form',
     templateUrl: './complaints-form.component.html',
     styleUrls: ['../complaints.scss'],
-    standalone: true,
     imports: [TranslateDirective, FormsModule, TextareaModule, ArtemisTranslatePipe],
 })
 export class ComplaintsFormComponent implements OnInit {

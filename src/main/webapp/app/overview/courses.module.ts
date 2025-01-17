@@ -3,7 +3,7 @@ import { ArtemisSharedModule } from 'app/shared/shared.module';
 import { ArtemisSidePanelModule } from 'app/shared/side-panel/side-panel.module';
 import { CourseLectureRowComponent } from 'app/overview/course-lectures/course-lecture-row.component';
 import { OrionModule } from 'app/shared/orion/orion.module';
-import { FeatureToggleModule } from 'app/shared/feature-toggle/feature-toggle.module';
+
 import { CourseCardComponent } from 'app/overview/course-card.component';
 import { CourseOverviewComponent } from 'app/overview/course-overview.component';
 import { ArtemisHeaderExercisePageWithDetailsModule } from 'app/exercises/shared/exercise-headers/exercise-headers.module';
@@ -32,14 +32,18 @@ import { SearchFilterComponent } from 'app/shared/search-filter/search-filter.co
         ArtemisHeaderExercisePageWithDetailsModule,
         OrionModule,
         ArtemisComplaintsModule,
-        FeatureToggleModule,
         RatingModule,
         NgxChartsModule,
         PieChartModule,
         ArtemisSidebarModule,
         CourseCardComponent,
         SearchFilterComponent,
+        CoursesComponent,
+        CourseOverviewComponent,
+        CourseExercisesComponent,
+        CourseLecturesComponent,
+        CourseLectureRowComponent,
+        CourseUnenrollmentModalComponent,
     ],
-    declarations: [CoursesComponent, CourseOverviewComponent, CourseExercisesComponent, CourseLecturesComponent, CourseLectureRowComponent, CourseUnenrollmentModalComponent],
 })
 export class ArtemisCoursesModule {}

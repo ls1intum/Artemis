@@ -1,11 +1,13 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { MockProvider } from 'ng-mocks';
 import { ExamLiveEventsOverlayComponent } from 'app/exam/participate/events/exam-live-events-overlay.component';
 import { ExamLiveEvent, ExamLiveEventType, ExamParticipationLiveEventsService } from 'app/exam/participate/exam-participation-live-events.service';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import { of } from 'rxjs';
-import { MockExamParticipationLiveEventsService } from '../../../../helpers/mocks/service/mock-exam-participation-live-events.service';
 import { ExamExerciseUpdateService } from 'app/exam/manage/exam-exercise-update.service';
+import { ArtemisTestModule } from '../../../../test.module';
+import { MockLocalStorageService } from '../../../../helpers/mocks/service/mock-local-storage.service';
+import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
+import { MockSyncStorage } from '../../../../helpers/mocks/service/mock-sync-storage.service';
 
 describe('ExamLiveEventsOverlayComponent', () => {
     let component: ExamLiveEventsOverlayComponent;
@@ -16,8 +18,11 @@ describe('ExamLiveEventsOverlayComponent', () => {
 
     beforeEach(async () => {
         await TestBed.configureTestingModule({
-            declarations: [ExamLiveEventsOverlayComponent],
-            providers: [{ provide: ExamParticipationLiveEventsService, useClass: MockExamParticipationLiveEventsService }, MockProvider(NgbActiveModal)],
+            imports: [ArtemisTestModule],
+            providers: [
+                { provide: LocalStorageService, useClass: MockLocalStorageService },
+                { provide: SessionStorageService, useClass: MockSyncStorage },
+            ],
         }).compileComponents();
     });
 

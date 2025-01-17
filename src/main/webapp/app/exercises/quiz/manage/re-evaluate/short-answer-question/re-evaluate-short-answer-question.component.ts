@@ -1,6 +1,7 @@
 import { Component, EventEmitter, Input, Output } from '@angular/core';
 import { QuizQuestion } from 'app/entities/quiz/quiz-question.model';
 import { ShortAnswerQuestion } from 'app/entities/quiz/short-answer-question.model';
+import { ShortAnswerQuestionEditComponent } from '../../short-answer-question/short-answer-question-edit.component';
 
 @Component({
     selector: 'jhi-re-evaluate-short-answer-question',
@@ -16,6 +17,7 @@ import { ShortAnswerQuestion } from 'app/entities/quiz/short-answer-question.mod
         />
     `,
     providers: [],
+    imports: [ShortAnswerQuestionEditComponent],
 })
 export class ReEvaluateShortAnswerQuestionComponent {
     shortAnswerQuestion: ShortAnswerQuestion;
@@ -34,6 +36,4 @@ export class ReEvaluateShortAnswerQuestionComponent {
     questionMoveUp = new EventEmitter();
     @Output()
     questionMoveDown = new EventEmitter();
-
-    constructor() {}
 }

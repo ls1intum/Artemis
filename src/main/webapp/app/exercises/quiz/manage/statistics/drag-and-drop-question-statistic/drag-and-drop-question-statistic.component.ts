@@ -1,18 +1,20 @@
-import { ChangeDetectorRef, Component, ViewEncapsulation } from '@angular/core';
-import { ActivatedRoute, Router } from '@angular/router';
-import { TranslateService } from '@ngx-translate/core';
+import { Component, ViewEncapsulation, inject } from '@angular/core';
+import { DragItemComponent } from 'app/exercises/quiz/shared/questions/drag-and-drop-question/drag-item.component';
 import { QuizStatisticUtil } from 'app/exercises/quiz/shared/quiz-statistic-util.service';
 import { DragAndDropQuestionUtil } from 'app/exercises/quiz/shared/drag-and-drop-question-util.service';
 import { ArtemisMarkdownService } from 'app/shared/markdown.service';
-import { AccountService } from 'app/core/auth/account.service';
-import { JhiWebsocketService } from 'app/core/websocket/websocket.service';
-import { QuizExerciseService } from 'app/exercises/quiz/manage/quiz-exercise.service';
 import { DragAndDropQuestion } from 'app/entities/quiz/drag-and-drop-question.model';
 import { DragAndDropQuestionStatistic } from 'app/entities/quiz/drag-and-drop-question-statistic.model';
 import { DropLocation } from 'app/entities/quiz/drop-location.model';
 import { QuizExercise } from 'app/entities/quiz/quiz-exercise.model';
 import { QuestionStatisticComponent, blueColor, greenColor } from 'app/exercises/quiz/manage/statistics/question-statistic.component';
 import { faCheckCircle, faSync, faTimesCircle } from '@fortawesome/free-solid-svg-icons';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { BarChartModule } from '@swimlane/ngx-charts';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { SecuredImageComponent } from 'app/shared/image/secured-image.component';
+import { NgStyle } from '@angular/common';
+import { QuizStatisticsFooterComponent } from '../quiz-statistics-footer/quiz-statistics-footer.component';
 
 @Component({
     selector: 'jhi-drag-and-drop-question-statistic',
@@ -24,8 +26,12 @@ import { faCheckCircle, faSync, faTimesCircle } from '@fortawesome/free-solid-sv
         './drag-and-drop-question-statistic.component.scss',
     ],
     encapsulation: ViewEncapsulation.None,
+    imports: [TranslateDirective, BarChartModule, FaIconComponent, SecuredImageComponent, NgStyle, DragItemComponent, QuizStatisticsFooterComponent],
 })
 export class DragAndDropQuestionStatisticComponent extends QuestionStatisticComponent {
+    private dragAndDropQuestionUtil = inject(DragAndDropQuestionUtil);
+    private artemisMarkdown = inject(ArtemisMarkdownService);
+
     declare question: DragAndDropQuestion;
 
     // Icons
@@ -33,27 +39,6 @@ export class DragAndDropQuestionStatisticComponent extends QuestionStatisticComp
     faCheckCircle = faCheckCircle;
     faTimesCircle = faTimesCircle;
 
-    constructor(
-        route: ActivatedRoute,
-        router: Router,
-        accountService: AccountService,
-        translateService: TranslateService,
-        quizExerciseService: QuizExerciseService,
-        jhiWebsocketService: JhiWebsocketService,
-        quizStatisticUtil: QuizStatisticUtil,
-        private dragAndDropQuestionUtil: DragAndDropQuestionUtil,
-        private artemisMarkdown: ArtemisMarkdownService,
-        protected changeDetector: ChangeDetectorRef,
-    ) {
-        super(route, router, accountService, translateService, quizExerciseService, jhiWebsocketService, changeDetector);
-    }
-
-    /**
-     * load the Quiz, which is necessary to build the Web-Template
-     *
-     * @param {QuizExercise} quiz: the quizExercise, which the selected question is part of.
-     * @param {boolean} refresh: true if method is called from Websocket
-     */
     loadQuiz(quiz: QuizExercise, refresh: boolean) {
         const updatedQuestion = super.loadQuizCommon(quiz);
         if (!updatedQuestion) {
@@ -75,7 +60,7 @@ export class DragAndDropQuestionStatisticComponent extends QuestionStatisticComp
         this.resetLabelsColors();
 
         // set label and background color based on the dropLocations
-        this.question.dropLocations!.forEach((dropLocation, i) => {
+        this.question.dropLocations!.forEach((_dropLocation, i) => {
             this.labels.push(this.getLetter(i) + '.');
             this.solutionLabels.push(this.getLetter(i) + '.');
             this.backgroundColors.push(blueColor);
@@ -127,8 +112,8 @@ export class DragAndDropQuestionStatisticComponent extends QuestionStatisticComp
     /**
      * Get the drag item that was mapped to the given drop location in the sample solution
      *
-     * @param dropLocation {object} the drop location that the drag item should be mapped to
-     * @return {DragItem | undefined} the mapped drag item, or undefined if no drag item has been mapped to this location
+     * @param dropLocation the drop location that the drag item should be mapped to
+     * @return the mapped drag item, or undefined if no drag item has been mapped to this location
      */
     correctDragItemForDropLocation(dropLocation: DropLocation) {
         const currMapping = this.dragAndDropQuestionUtil.solve(this.question, undefined).filter((mapping) => mapping.dropLocation!.id === dropLocation.id)[0];

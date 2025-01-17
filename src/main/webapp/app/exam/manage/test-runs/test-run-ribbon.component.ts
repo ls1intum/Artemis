@@ -1,4 +1,5 @@
 import { Component } from '@angular/core';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
 
 @Component({
     selector: 'jhi-test-run-ribbon',
@@ -10,5 +11,6 @@ import { Component } from '@angular/core';
         </div>
     `,
     styleUrls: ['../../../shared/layouts/profiles/page-ribbon.scss'],
+    imports: [TranslateDirective],
 })
 export class TestRunRibbonComponent {}
