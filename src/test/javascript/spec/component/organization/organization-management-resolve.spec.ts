@@ -1,3 +1,4 @@
+import { TestBed } from '@angular/core/testing';
 import { ActivatedRouteSnapshot } from '@angular/router';
 import { OrganizationManagementResolve } from 'app/admin/organization-management/organization-management-resolve.service';
 import { OrganizationManagementService } from 'app/admin/organization-management/organization-management.service';
@@ -9,8 +10,20 @@ describe('OrganizationManagementResolve', () => {
     let organizationManagementResolve: OrganizationManagementResolve;
 
     beforeEach(() => {
-        organizationManagementService = { getOrganizationById: jest.fn() } as any as OrganizationManagementService;
-        organizationManagementResolve = new OrganizationManagementResolve(organizationManagementService);
+        TestBed.configureTestingModule({
+            providers: [
+                OrganizationManagementResolve,
+                {
+                    provide: OrganizationManagementService,
+                    useValue: {
+                        getOrganizationById: jest.fn(),
+                    },
+                },
+            ],
+        });
+
+        organizationManagementService = TestBed.inject(OrganizationManagementService);
+        organizationManagementResolve = TestBed.inject(OrganizationManagementResolve);
     });
 
     it('should search for organization by id', () => {

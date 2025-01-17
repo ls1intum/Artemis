@@ -1,28 +1,29 @@
-import { Component, EventEmitter, Input, OnInit, Output } from '@angular/core';
+import { Component, EventEmitter, Input, OnInit, Output, inject } from '@angular/core';
 import { AccountService } from 'app/core/auth/account.service';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
 import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
 import { Course } from 'app/entities/course.model';
 import { matchesRegexFully } from 'app/utils/regex.util';
 import { AlertService } from 'app/core/util/alert.service';
+import { ConfirmAutofocusButtonComponent } from 'app/shared/components/confirm-autofocus-button.component';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
 
 @Component({
     selector: 'jhi-course-registration-button',
     templateUrl: './course-registration-button.component.html',
+    imports: [ConfirmAutofocusButtonComponent, TranslateDirective],
 })
 export class CourseRegistrationButtonComponent implements OnInit {
+    private accountService = inject(AccountService);
+    private courseService = inject(CourseManagementService);
+    private profileService = inject(ProfileService);
+    private alertService = inject(AlertService);
+
     @Input() course: Course;
     @Output() onRegistration = new EventEmitter<void>();
 
     userIsAllowedToRegister = false;
     loading = false;
-
-    constructor(
-        private accountService: AccountService,
-        private courseService: CourseManagementService,
-        private profileService: ProfileService,
-        private alertService: AlertService,
-    ) {}
 
     loadUserIsAllowedToRegister() {
         this.loading = true;

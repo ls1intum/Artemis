@@ -1,4 +1,4 @@
-import { Component, Input, OnChanges, OnDestroy, OnInit, Optional, SimpleChanges } from '@angular/core';
+import { Component, Input, OnChanges, OnDestroy, OnInit, SimpleChanges, inject } from '@angular/core';
 import { ParticipationService } from 'app/exercises/shared/participation/participation.service';
 import {
     MissingResultInformation,
@@ -8,7 +8,7 @@ import {
     getTextColorClass,
     isAthenaAIResult,
 } from 'app/exercises/shared/result/result.utils';
-import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
+import { NgbModal, NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { TranslateService } from '@ngx-translate/core';
 import { Router } from '@angular/router';
 import { ProgrammingExercise } from 'app/entities/programming/programming-exercise.model';
@@ -32,11 +32,31 @@ import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service'
 import { isPracticeMode } from 'app/entities/participation/student-participation.model';
 import { prepareFeedbackComponentParameters } from 'app/exercises/shared/feedback/feedback.utils';
 import { CsvDownloadService } from 'app/shared/util/CsvDownloadService';
+import { ResultProgressBarComponent } from './result-progress-bar/result-progress-bar.component';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { NgClass, UpperCasePipe } from '@angular/common';
+import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
+import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
+import { ArtemisTimeAgoPipe } from 'app/shared/pipes/artemis-time-ago.pipe';
+import { ArtemisDurationFromSecondsPipe } from 'app/shared/pipes/artemis-duration-from-seconds.pipe';
 
 @Component({
     selector: 'jhi-result',
     templateUrl: './result.component.html',
     styleUrls: ['./result.component.scss'],
+    imports: [
+        ResultProgressBarComponent,
+        FaIconComponent,
+        TranslateDirective,
+        NgClass,
+        NgbTooltip,
+        UpperCasePipe,
+        ArtemisDatePipe,
+        ArtemisTranslatePipe,
+        ArtemisTimeAgoPipe,
+        ArtemisDurationFromSecondsPipe,
+    ],
 })
 
 /**
@@ -44,6 +64,15 @@ import { CsvDownloadService } from 'app/shared/util/CsvDownloadService';
  * e.g. by using Object.assign to trigger ngOnChanges which makes sure that the result is updated
  */
 export class ResultComponent implements OnInit, OnChanges, OnDestroy {
+    private participationService = inject(ParticipationService);
+    private translateService = inject(TranslateService);
+    private modalService = inject(NgbModal);
+    private exerciseService = inject(ExerciseService);
+    private exerciseCacheService = inject(ExerciseCacheService, { optional: true });
+    private resultService = inject(ResultService);
+    private csvDownloadService = inject(CsvDownloadService);
+    private router = inject(Router);
+
     // make constants available to html
     readonly ResultTemplateStatus = ResultTemplateStatus;
     readonly MissingResultInfo = MissingResultInformation;
@@ -91,17 +120,6 @@ export class ResultComponent implements OnInit, OnChanges, OnDestroy {
     readonly faExclamationTriangle = faExclamationTriangle;
 
     private resultUpdateSubscription?: ReturnType<typeof setTimeout>;
-
-    constructor(
-        private participationService: ParticipationService,
-        private translateService: TranslateService,
-        private modalService: NgbModal,
-        private exerciseService: ExerciseService,
-        @Optional() private exerciseCacheService: ExerciseCacheService,
-        private resultService: ResultService,
-        private csvDownloadService: CsvDownloadService,
-        private router: Router,
-    ) {}
 
     /**
      * Executed on initialization. It retrieves the results of a given

@@ -1,13 +1,12 @@
 import { Routes } from '@angular/router';
 import { UserRouteAccessService } from 'app/core/auth/user-route-access-service';
-import { TeamsComponent } from './teams.component';
-import { TeamComponent } from 'app/exercises/shared/team/team.component';
+
 import { Authority } from 'app/shared/constants/authority.constants';
 
 export const teamRoute: Routes = [
     {
         path: '',
-        component: TeamsComponent,
+        loadComponent: () => import('./teams.component').then((m) => m.TeamsComponent),
         data: {
             authorities: [Authority.TA, Authority.EDITOR, Authority.INSTRUCTOR, Authority.ADMIN],
             pageTitle: 'artemisApp.team.home.title',
@@ -16,7 +15,7 @@ export const teamRoute: Routes = [
     },
     {
         path: ':teamId',
-        component: TeamComponent,
+        loadComponent: () => import('app/exercises/shared/team/team.component').then((m) => m.TeamComponent),
         data: {
             authorities: [Authority.USER],
             pageTitle: 'artemisApp.team.detail.title',

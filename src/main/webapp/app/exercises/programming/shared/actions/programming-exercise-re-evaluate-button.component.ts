@@ -1,4 +1,4 @@
-import { Component, Input } from '@angular/core';
+import { Component, Input, inject } from '@angular/core';
 import { HttpErrorResponse } from '@angular/common/http';
 import { AlertService } from 'app/core/util/alert.service';
 import { ProgrammingExerciseGradingService } from 'app/exercises/programming/manage/services/programming-exercise-grading.service';
@@ -6,6 +6,7 @@ import { FeatureToggle } from 'app/shared/feature-toggle/feature-toggle.service'
 import { ProgrammingExercise } from 'app/entities/programming/programming-exercise.model';
 import { ButtonType } from 'app/shared/components/button.component';
 import { faRedo } from '@fortawesome/free-solid-svg-icons';
+import { ButtonComponent } from 'app/shared/components/button.component';
 
 /**
  * A button that re-evaluates all latest automatic results of the given programming exercise.
@@ -26,8 +27,12 @@ import { faRedo } from '@fortawesome/free-solid-svg-icons';
             (onClick)="triggerReEvaluate()"
         />
     `,
+    imports: [ButtonComponent],
 })
 export class ProgrammingExerciseReEvaluateButtonComponent {
+    private testCaseService = inject(ProgrammingExerciseGradingService);
+    private alertService = inject(AlertService);
+
     FeatureToggle = FeatureToggle;
     ButtonType = ButtonType;
     @Input() exercise: ProgrammingExercise;
@@ -37,11 +42,6 @@ export class ProgrammingExerciseReEvaluateButtonComponent {
 
     // Icons
     faRedo = faRedo;
-
-    constructor(
-        private testCaseService: ProgrammingExerciseGradingService,
-        private alertService: AlertService,
-    ) {}
 
     /**
      * Triggers the re-evaluation of the programming exercise and displays the result in the end using an alert.

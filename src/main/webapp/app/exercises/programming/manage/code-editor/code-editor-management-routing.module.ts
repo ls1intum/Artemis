@@ -1,14 +1,17 @@
 import { RouterModule, Routes } from '@angular/router';
-import { CodeEditorInstructorAndEditorContainerComponent } from 'app/exercises/programming/manage/code-editor/code-editor-instructor-and-editor-container.component';
+
 import { UserRouteAccessService } from 'app/core/auth/user-route-access-service';
-import { CodeEditorInstructorAndEditorOrionContainerComponent } from 'app/orion/management/code-editor-instructor-and-editor-orion-container.component';
+
 import { NgModule } from '@angular/core';
 import { Authority } from 'app/shared/constants/authority.constants';
 
 const routes: Routes = [
     {
         path: 'test',
-        component: CodeEditorInstructorAndEditorContainerComponent,
+        loadComponent: () =>
+            import('app/exercises/programming/manage/code-editor/code-editor-instructor-and-editor-container.component').then(
+                (m) => m.CodeEditorInstructorAndEditorContainerComponent,
+            ),
         data: {
             authorities: [Authority.EDITOR, Authority.INSTRUCTOR, Authority.ADMIN],
             pageTitle: 'artemisApp.editor.home.title',
@@ -17,7 +20,8 @@ const routes: Routes = [
     },
     {
         path: 'ide/test',
-        component: CodeEditorInstructorAndEditorOrionContainerComponent,
+        loadComponent: () =>
+            import('app/orion/management/code-editor-instructor-and-editor-orion-container.component').then((m) => m.CodeEditorInstructorAndEditorOrionContainerComponent),
         data: {
             authorities: [Authority.EDITOR, Authority.INSTRUCTOR, Authority.ADMIN],
             pageTitle: 'artemisApp.editor.home.title',
@@ -26,7 +30,8 @@ const routes: Routes = [
     },
     {
         path: 'ide/:participationId',
-        component: CodeEditorInstructorAndEditorOrionContainerComponent,
+        loadComponent: () =>
+            import('app/orion/management/code-editor-instructor-and-editor-orion-container.component').then((m) => m.CodeEditorInstructorAndEditorOrionContainerComponent),
         data: {
             authorities: [Authority.EDITOR, Authority.INSTRUCTOR, Authority.ADMIN],
             pageTitle: 'artemisApp.editor.home.title',
@@ -35,7 +40,10 @@ const routes: Routes = [
     },
     {
         path: ':participationId',
-        component: CodeEditorInstructorAndEditorContainerComponent,
+        loadComponent: () =>
+            import('app/exercises/programming/manage/code-editor/code-editor-instructor-and-editor-container.component').then(
+                (m) => m.CodeEditorInstructorAndEditorContainerComponent,
+            ),
         data: {
             authorities: [Authority.EDITOR, Authority.INSTRUCTOR, Authority.ADMIN],
             pageTitle: 'artemisApp.editor.home.title',
@@ -44,7 +52,10 @@ const routes: Routes = [
     },
     {
         path: 'auxiliary/:repositoryId',
-        component: CodeEditorInstructorAndEditorContainerComponent,
+        loadComponent: () =>
+            import('app/exercises/programming/manage/code-editor/code-editor-instructor-and-editor-container.component').then(
+                (m) => m.CodeEditorInstructorAndEditorContainerComponent,
+            ),
         data: {
             authorities: [Authority.EDITOR, Authority.INSTRUCTOR, Authority.ADMIN],
             pageTitle: 'artemisApp.editor.home.title',

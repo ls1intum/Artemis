@@ -3,6 +3,4 @@ export class OnlineCourseDtoModel {
     public title?: string;
     public shortName?: string;
     public registrationId?: string;
-
-    constructor() {}
 }

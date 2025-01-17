@@ -1,4 +1,4 @@
-import { Injectable } from '@angular/core';
+import { Injectable, inject } from '@angular/core';
 import { HttpClient, HttpResponse } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { QuizSubmission } from 'app/entities/quiz/quiz-submission.model';
@@ -11,10 +11,8 @@ export type ResultResponseType = HttpResponse<Result>;
 
 @Injectable({ providedIn: 'root' })
 export class QuizParticipationService {
-    constructor(
-        private http: HttpClient,
-        private submissionService: SubmissionService,
-    ) {}
+    private http = inject(HttpClient);
+    private submissionService = inject(SubmissionService);
 
     submitForPractice(quizSubmission: QuizSubmission, exerciseId: number): Observable<ResultResponseType> {
         const copy = this.submissionService.convert(quizSubmission);

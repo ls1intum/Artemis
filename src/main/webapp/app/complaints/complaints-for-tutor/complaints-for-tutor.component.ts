@@ -24,7 +24,6 @@ export type AssessmentAfterComplaint = { complaintResponse: ComplaintResponse; o
 @Component({
     selector: 'jhi-complaints-for-tutor-form',
     templateUrl: './complaints-for-tutor.component.html',
-    standalone: true,
     imports: [TranslateDirective, FormsModule, TextareaModule, ArtemisSharedCommonModule, ArtemisTranslatePipe],
 })
 export class ComplaintsForTutorComponent implements OnInit {

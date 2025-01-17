@@ -11,7 +11,6 @@ import { TranslateDirective } from 'app/shared/language/translate.directive';
         </div>
     `,
     styleUrls: ['../../../shared/layouts/profiles/page-ribbon.scss'],
-    standalone: true,
     imports: [TranslateDirective],
 })
 export class TestRunRibbonComponent {}

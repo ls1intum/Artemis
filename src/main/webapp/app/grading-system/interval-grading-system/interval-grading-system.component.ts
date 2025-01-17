@@ -17,7 +17,6 @@ import { GradeStepBoundsPipe } from 'app/shared/pipes/grade-step-bounds.pipe';
     selector: 'jhi-interval-grading-system',
     templateUrl: './interval-grading-system.component.html',
     styleUrls: ['./interval-grading-system.component.scss'],
-    standalone: true,
     imports: [
         TranslateDirective,
         ArtemisModePickerModule,

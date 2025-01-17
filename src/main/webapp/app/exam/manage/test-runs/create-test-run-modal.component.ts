@@ -4,8 +4,8 @@ import { StudentExam } from 'app/entities/student-exam.model';
 import { Exam } from 'app/entities/exam/exam.model';
 import { Exercise } from 'app/entities/exercise.model';
 import { ExerciseGroup } from 'app/entities/exercise-group.model';
+import { FormControl, FormGroup, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
 import { ArtemisDurationFromSecondsPipe } from 'app/shared/pipes/artemis-duration-from-seconds.pipe';
-import { FormControl, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 
 @Component({
@@ -13,8 +13,7 @@ import { TranslateDirective } from 'app/shared/language/translate.directive';
     templateUrl: './create-test-run-modal.component.html',
     providers: [ArtemisDurationFromSecondsPipe],
     styles: ['.table tr.active td { background-color:#3e8acc; color: white; }'],
-    imports: [ReactiveFormsModule, TranslateDirective],
-    standalone: true,
+    imports: [TranslateDirective, FormsModule, ReactiveFormsModule],
 })
 export class CreateTestRunModalComponent implements OnInit {
     private activeModal = inject(NgbActiveModal);

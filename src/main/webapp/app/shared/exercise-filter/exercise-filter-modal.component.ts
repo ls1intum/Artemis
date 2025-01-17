@@ -1,5 +1,5 @@
-import { Component, EventEmitter, OnInit, Output, ViewChild } from '@angular/core';
-import { NgbActiveModal, NgbTypeahead } from '@ng-bootstrap/ng-bootstrap';
+import { Component, EventEmitter, OnInit, Output, ViewChild, inject } from '@angular/core';
+import { NgbActiveModal, NgbModule, NgbTypeahead } from '@ng-bootstrap/ng-bootstrap';
 import { faBackward, faFilter } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
 import { ArtemisSharedCommonModule } from 'app/shared/shared-common.module';
@@ -29,7 +29,6 @@ import { isRangeFilterApplied } from 'app/shared/sidebar/sidebar.helper';
     selector: 'jhi-exercise-filter-modal',
     templateUrl: './exercise-filter-modal.component.html',
     styleUrls: ['./exercise-filter-modal.component.scss'],
-    standalone: true,
     imports: [
         FormsModule,
         ReactiveFormsModule,
@@ -38,9 +37,12 @@ import { isRangeFilterApplied } from 'app/shared/sidebar/sidebar.helper';
         ArtemisSharedComponentModule,
         CustomExerciseCategoryBadgeComponent,
         RangeSliderComponent,
+        NgbModule,
     ],
 })
 export class ExerciseFilterModalComponent implements OnInit {
+    private activeModal = inject(NgbActiveModal);
+
     readonly faFilter = faFilter;
     readonly faBackward = faBackward;
 
@@ -51,7 +53,7 @@ export class ExerciseFilterModalComponent implements OnInit {
     selectedCategoryOptions: ExerciseCategoryFilterOption[] = [];
     selectableCategoryOptions: ExerciseCategoryFilterOption[] = [];
 
-    noFiltersAvailable: boolean = false;
+    noFiltersAvailable = false;
 
     focus$ = new Subject<string>();
     click$ = new Subject<string>();
@@ -69,8 +71,6 @@ export class ExerciseFilterModalComponent implements OnInit {
     achievedScore?: RangeFilter;
 
     exerciseFilters?: ExerciseFilterOptions;
-
-    constructor(private activeModal: NgbActiveModal) {}
 
     ngOnInit() {
         this.categoryFilter = this.exerciseFilters?.categoryFilter;

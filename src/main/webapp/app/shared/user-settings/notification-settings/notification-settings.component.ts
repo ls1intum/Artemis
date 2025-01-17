@@ -1,12 +1,14 @@
-import { ChangeDetectorRef, Component, OnInit } from '@angular/core';
+import { Component, OnInit, inject } from '@angular/core';
 import { UserSettingsDirective } from 'app/shared/user-settings/user-settings.directive';
 import { UserSettingsCategory } from 'app/shared/constants/user-settings.constants';
 import { NotificationSetting } from 'app/shared/user-settings/notification-settings/notification-settings-structure';
-import { UserSettingsService } from 'app/shared/user-settings/user-settings.service';
 import { UserSettingsStructure } from 'app/shared/user-settings/user-settings.model';
-import { AlertService } from 'app/core/util/alert.service';
 import { faInfoCircle, faSave } from '@fortawesome/free-solid-svg-icons';
 import { NotificationSettingsService, reloadNotificationSideBarMessage } from 'app/shared/user-settings/notification-settings/notification-settings.service';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { TranslateDirective } from '../../language/translate.directive';
+import { HasAnyAuthorityDirective } from '../../auth/has-any-authority.directive';
+import { ArtemisTranslatePipe } from '../../pipes/artemis-translate.pipe';
 
 export enum NotificationSettingsCommunicationChannel {
     WEBAPP,
@@ -17,20 +19,20 @@ export enum NotificationSettingsCommunicationChannel {
     selector: 'jhi-notification-settings',
     templateUrl: 'notification-settings.component.html',
     styleUrls: ['../user-settings.scss'],
+    imports: [
+        FaIconComponent,
+        TranslateDirective,
+        // NOTE: this is actually used in the html template, otherwise *jhiHasAnyAuthority would not work
+        HasAnyAuthorityDirective,
+        ArtemisTranslatePipe,
+    ],
 })
 export class NotificationSettingsComponent extends UserSettingsDirective implements OnInit {
+    private notificationSettingsService = inject(NotificationSettingsService);
+
     // Icons
     faSave = faSave;
     faInfoCircle = faInfoCircle;
-
-    constructor(
-        userSettingsService: UserSettingsService,
-        changeDetector: ChangeDetectorRef,
-        alertService: AlertService,
-        private notificationSettingsService: NotificationSettingsService,
-    ) {
-        super(userSettingsService, alertService, changeDetector);
-    }
 
     declare userSettings: UserSettingsStructure<NotificationSetting>;
     declare settings: Array<NotificationSetting>;
