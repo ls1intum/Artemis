@@ -68,10 +68,10 @@ export const facArtemisIntelligence: IconDefinition = {
     ],
 } as IconDefinition;
 
-
 export const artemisIconPack: IconPack = {
     facSidebar,
     facSaveSuccess,
     facSaveWarning,
     facDetails,
+    facArtemisIntelligence,
 };
