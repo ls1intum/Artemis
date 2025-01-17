@@ -125,13 +125,9 @@ jobs:
       with:
         result-encoding: string
         script: |
-          console.log(`Inputs ${context.inputs}`);
-          console.log(`Github inputs ${inputs}`);
-          console.log(`Github tag ${inputs.tag}`);
-          console.log(`Event payload is ${JSON.stringify(context.payload)}`);
           if (context.eventName === "workflow_dispatch") {
             // Use the "tag" passed in via the workflow_call input
-            return context.payload.inputs.tag;
+            return context.payload.inputs.HELIOS_BUILD_TAG;
           }
           if (context.eventName === "pull_request") {
             return "pr-" + context.issue.number;
