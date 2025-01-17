@@ -58,7 +58,7 @@ import { Detail } from 'app/detail-overview-list/detail.model';
 import { Competency } from 'app/entities/competency.model';
 import { AeolusService } from 'app/exercises/programming/shared/service/aeolus.service';
 import { catchError, map, mergeMap, tap } from 'rxjs/operators';
-import { ProgrammingExerciseGitDiffReport } from 'app/entities/hestia/programming-exercise-git-diff-report.model';
+import { ProgrammingExerciseGitDiffReport } from 'app/entities/programming-exercise-git-diff-report.model';
 import { BuildLogStatisticsDTO } from 'app/entities/programming/build-log-statistics-dto';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { DocumentationButtonComponent } from 'app/shared/components/documentation-button/documentation-button.component';
@@ -71,6 +71,7 @@ import { ProgrammingExerciseResetButtonDirective } from './reset/programming-exe
 import { DeleteButtonDirective } from 'app/shared/delete-dialog/delete-button.directive';
 import { DetailOverviewListComponent } from 'app/detail-overview-list/detail-overview-list.component';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
+import { ProgrammingExerciseInstructorExerciseSharingComponent } from '../shared/actions/programming-exercise-instructor-exercise-sharing.component';
 
 @Component({
     selector: 'jhi-programming-exercise-detail',
@@ -92,6 +93,7 @@ import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
         ExerciseDetailStatisticsComponent,
         DetailOverviewListComponent,
         ArtemisTranslatePipe,
+        ProgrammingExerciseInstructorExerciseSharingComponent,
     ],
 })
 export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
@@ -180,9 +182,7 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
 
     exerciseDetailSections: DetailOverviewSection[];
 
-    constructor(
-        private sharingService: ProgrammingExerciseSharingService,
-    ) {}
+    constructor(private sharingService: ProgrammingExerciseSharingService) {}
 
     ngOnInit() {
         this.checkBuildPlanEditable();

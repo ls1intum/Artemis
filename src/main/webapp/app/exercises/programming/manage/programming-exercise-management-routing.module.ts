@@ -11,6 +11,7 @@ import { of } from 'rxjs';
 import { Authority } from 'app/shared/constants/authority.constants';
 
 import { LocalVCGuard } from 'app/localvc/localvc-guard.service';
+import { ProgrammingExerciseUpdateComponent } from 'app/exercises/programming/manage/update/programming-exercise-update.component';
 
 @Injectable({ providedIn: 'root' })
 export class ProgrammingExerciseResolve implements Resolve<ProgrammingExercise> {

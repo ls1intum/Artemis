@@ -36,12 +36,47 @@ import {
 import { CourseExerciseService } from 'app/exercises/shared/course-exercises/course-exercise.service';
 import { downloadZipFileFromResponse } from 'app/shared/util/download.util';
 import { PROFILE_LOCALCI, PROFILE_LOCALVC, PROFILE_THEIA } from 'app/app.constants';
+import { SortDirective } from 'app/shared/sort/sort.directive';
+import { FormsModule } from '@angular/forms';
+import { SortByDirective } from 'app/shared/sort/sort-by.directive';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { RouterLink } from '@angular/router';
+import { ProgrammingExerciseGradingDirtyWarningComponent } from './grading/programming-exercise-grading-dirty-warning.component';
+import { ProgrammingExerciseInstructorStatusComponent } from './status/programming-exercise-instructor-status.component';
+import { ExerciseCategoriesComponent } from 'app/shared/exercise-categories/exercise-categories.component';
+import { FeatureToggleLinkDirective } from 'app/shared/feature-toggle/feature-toggle-link.directive';
+import { ProgrammingExerciseResetButtonDirective } from './reset/programming-exercise-reset-button.directive';
+import { FeatureToggleDirective } from 'app/shared/feature-toggle/feature-toggle.directive';
+import { DeleteButtonDirective } from 'app/shared/delete-dialog/delete-button.directive';
+import { ProgrammingAssessmentRepoExportButtonComponent } from '../assess/repo-export/programming-assessment-repo-export-button.component';
+import { SlicePipe } from '@angular/common';
+import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 import { SharingInfo } from 'app/sharing/sharing.model';
 
 @Component({
     selector: 'jhi-programming-exercise',
     templateUrl: './programming-exercise.component.html',
     providers: [SharingInfo],
+    imports: [
+        SortDirective,
+        FormsModule,
+        SortByDirective,
+        TranslateDirective,
+        FaIconComponent,
+        RouterLink,
+        ProgrammingExerciseGradingDirtyWarningComponent,
+        ProgrammingExerciseInstructorStatusComponent,
+        ExerciseCategoriesComponent,
+        FeatureToggleLinkDirective,
+        ProgrammingExerciseResetButtonDirective,
+        FeatureToggleDirective,
+        DeleteButtonDirective,
+        ProgrammingAssessmentRepoExportButtonComponent,
+        ExerciseScoresExportButtonComponent,
+        SlicePipe,
+        ArtemisDatePipe,
+    ],
 })
 export class ProgrammingExerciseComponent extends ExerciseComponent implements OnInit, OnDestroy {
     protected exerciseService = inject(ExerciseService);

@@ -1,5 +1,5 @@
 import { Component, Input } from '@angular/core';
-import { ButtonSize, ButtonType } from 'app/shared/components/button.component';
+import { ButtonComponent, ButtonSize, ButtonType } from 'app/shared/components/button.component';
 import { FeatureToggle } from 'app/shared/feature-toggle/feature-toggle.service';
 import { AlertService } from 'app/core/util/alert.service';
 import { faDownload } from '@fortawesome/free-solid-svg-icons';
@@ -20,6 +20,7 @@ import { HttpResponse } from '@angular/common/http';
             (onClick)="preOpenSharingTab(); exportExerciseToSharing(exerciseId)"
         />
     `,
+    imports: [ButtonComponent],
 })
 export class ProgrammingExerciseInstructorExerciseSharingComponent {
     ButtonType = ButtonType;

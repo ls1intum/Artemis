@@ -56,6 +56,7 @@ import { FormStatusBarComponent } from 'app/forms/form-status-bar/form-status-ba
 import { FormsModule } from '@angular/forms';
 import { ProgrammingExerciseProblemComponent } from './update-components/problem/programming-exercise-problem.component';
 import { FormFooterComponent } from 'app/forms/form-footer/form-footer.component';
+import { ButtonComponent } from 'app/shared/components/button.component';
 
 export const LOCAL_STORAGE_KEY_IS_SIMPLE_MODE = 'isSimpleMode';
 
@@ -75,10 +76,12 @@ export const LOCAL_STORAGE_KEY_IS_SIMPLE_MODE = 'isSimpleMode';
         ProgrammingExerciseGradingComponent,
         ExerciseUpdatePlagiarismComponent,
         FormFooterComponent,
+        ButtonComponent,
     ],
 })
 export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDestroy, OnInit {
     private programmingExerciseService = inject(ProgrammingExerciseService);
+    private programmingExerciseSharingService = inject(ProgrammingExerciseSharingService);
     private modalService = inject(NgbModal);
     private popupService = inject(ExerciseUpdateWarningService);
     private courseService = inject(CourseManagementService);
@@ -204,27 +207,7 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
 
     public modePickerOptions?: ModePickerOption<ProjectType>[] = [];
 
-<<<<<<< HEAD
     constructor() {
-=======
-    constructor(
-        private programmingExerciseService: ProgrammingExerciseService,
-        private programmingExerciseSharingService: ProgrammingExerciseSharingService,
-        private modalService: NgbModal,
-        private popupService: ExerciseUpdateWarningService,
-        private courseService: CourseManagementService,
-        private alertService: AlertService,
-        private exerciseService: ExerciseService,
-        private fileService: FileService,
-        private activatedRoute: ActivatedRoute,
-        private translateService: TranslateService,
-        private profileService: ProfileService,
-        private exerciseGroupService: ExerciseGroupService,
-        private programmingLanguageFeatureService: ProgrammingLanguageFeatureService,
-        private navigationUtilService: ArtemisNavigationUtilService,
-        private aeolusService: AeolusService,
-    ) {
->>>>>>> 1a6699aa67 (Basic Sharing Connector Activation)
         effect(
             function updateStatusBarSectionsWhenEditModeChanges() {
                 if (this.isSimpleMode()) {
