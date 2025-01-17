@@ -9,7 +9,6 @@ import { ExerciseGroupUpdateComponent } from 'app/exam/manage/exercise-groups/ex
 import { ExamStudentsComponent } from 'app/exam/manage/students/exam-students.component';
 import { StudentExamsComponent } from 'app/exam/manage/student-exams/student-exams.component';
 import { StudentExamDetailComponent } from 'app/exam/manage/student-exams/student-exam-detail.component';
-import { StudentsUploadImagesModule } from 'app/exam/manage/students/upload-images/students-upload-images.module';
 import { ExamStudentsAttendanceCheckComponent } from 'app/exam/manage/students/verify-attendance-check/exam-students-attendance-check.component';
 import { ArtemisTextExerciseModule } from 'app/exercises/text/manage/text-exercise/text-exercise.module';
 import { ArtemisFileUploadExerciseManagementModule } from 'app/exercises/file-upload/manage/file-upload-exercise-management.module';
@@ -97,7 +96,6 @@ const ENTITY_STATES = [...examManagementState, ...examScoresState];
         ArtemisHeaderExercisePageWithDetailsModule,
         BarChartModule,
         ArtemisModePickerModule,
-        StudentsUploadImagesModule,
         TitleChannelNameModule,
         ArtemisExamSubmissionComponentsModule,
         MatSliderModule,
