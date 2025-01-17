@@ -43,6 +43,7 @@ export class FaqUpdateComponent implements OnInit {
     isAtLeastInstructor = false;
     domainActionsDescription = [new FormulaAction()];
     irisEnabled: Signal<boolean>;
+    activeProfilesSignal: Signal<any>;
 
     // Icons
     readonly faQuestionCircle = faQuestionCircle;
@@ -63,6 +64,10 @@ export class FaqUpdateComponent implements OnInit {
 
     metaActions: Signal<TextEditorAction[]> = signal([]);
 
+    constructor() {
+        this.activeProfilesSignal = toSignal(this.profileService.getProfileInfo(), { initialValue: null });
+    }
+
     ngOnInit() {
         this.isSaving = false;
         this.courseId = Number(this.activatedRoute.snapshot.paramMap.get('courseId'));
@@ -79,10 +84,8 @@ export class FaqUpdateComponent implements OnInit {
             this.faqCategories = faq?.categories ? faq.categories : [];
         });
         this.validate();
-        const activeProfilesSignal = toSignal(this.profileService.getProfileInfo(), { initialValue: null });
 
-        this.irisEnabled = computed(() => activeProfilesSignal()?.activeProfiles.includes(PROFILE_IRIS) ?? false);
-
+        this.irisEnabled = computed(() => this.activeProfilesSignal()?.activeProfiles.includes(PROFILE_IRIS) ?? false);
         this.metaActions = computed(() => (this.irisEnabled() ? [new RewriteAction(this.rewriteService, RewritingVariant.FAQ, this.courseId), new FullscreenAction()] : []));
     }
 
