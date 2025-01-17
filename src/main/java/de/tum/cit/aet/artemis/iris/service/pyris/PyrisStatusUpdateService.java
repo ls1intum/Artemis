@@ -112,8 +112,8 @@ public class PyrisStatusUpdateService {
     }
 
     /**
-     * Handles the status update of a competency extraction job and forwards it to
-     * {@link IrisCompetencyGenerationService#handleStatusUpdate(CompetencyExtractionJob, PyrisCompetencyStatusUpdateDTO)}
+     * Handles the status update of a rewriting job and forwards it to
+     * {@link IrisReWritingService#handleStatusUpdate(RewritingJob, PyrisRewritingStatusUpdateDTO)}
      *
      * @param job          the job that is updated
      * @param statusUpdate the status update

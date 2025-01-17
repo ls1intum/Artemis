@@ -15,7 +15,7 @@
             },
             "slideWithNumber": "Folie {{ number }}",
             "rewriting": {
-                "success": "Sie haben den Text umformuliert. Drücken Sie Strg+Z, um den Originaltext wiederherzustellen"
+                "success": "Der Text wurde umgeschrieben. Drücke Strg+Z / Cmd+Z, um den Originaltext wiederherzustellen."
             }
         }
     }

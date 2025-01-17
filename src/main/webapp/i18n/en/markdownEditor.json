@@ -15,7 +15,7 @@
             },
             "slideWithNumber": "Slide {{ number }}",
             "rewriting": {
-                "success": "The text was rewritten. Press Ctrl+Z to restore the original text"
+                "success": "The text was rewritten. Press Ctrl+Z / Cmd+Z to restore the original text."
             }
         }
     }

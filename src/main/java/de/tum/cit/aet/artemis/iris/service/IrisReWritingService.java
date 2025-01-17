@@ -22,7 +22,7 @@ import de.tum.cit.aet.artemis.iris.service.pyris.job.RewritingJob;
 import de.tum.cit.aet.artemis.iris.service.websocket.IrisWebsocketService;
 
 /**
- * Service to handle the Competency generation subsystem of Iris.
+ * Service to handle the rewriting subsystem of Iris.
  */
 @Service
 @Profile(PROFILE_IRIS)
@@ -51,7 +51,7 @@ public class IrisReWritingService {
     }
 
     /**
-     * Executes the competency extraction pipeline on Pyris for a given course, user and course description
+     * Executes the rewriting pipeline on Pyris for a given course, user and course description
      *
      * @param user          the user for which the pipeline should be executed
      * @param course        the course for which the pipeline should be executed
@@ -71,10 +71,10 @@ public class IrisReWritingService {
     }
 
     /**
-     * Takes a status update from Pyris containing a new competency extraction result and sends it to the client via websocket
+     * Takes a status update from Pyris containing a new rewriting result and sends it to the client via websocket
      *
      * @param job          Job related to the status update
-     * @param statusUpdate the status update containing the new competency recommendations
+     * @param statusUpdate the status update containing text recommendations
      * @return the same job that was passed in
      */
     public RewritingJob handleStatusUpdate(RewritingJob job, PyrisRewritingStatusUpdateDTO statusUpdate) {

@@ -1,4 +1,4 @@
-import { Component, OnInit, inject } from '@angular/core';
+import { Component, OnInit, Signal, computed, inject, signal } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { Observable, Subscription } from 'rxjs';
@@ -24,6 +24,8 @@ import { RewritingService } from 'app/shared/monaco-editor/rewriting.service';
 import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
 import { PROFILE_IRIS } from 'app/app.constants';
 import RewritingVariant from 'app/shared/monaco-editor/model/rewriting-variant';
+import { toSignal } from '@angular/core/rxjs-interop';
+import { TextEditorAction } from 'app/shared/monaco-editor/model/actions/text-editor-action.model';
 
 @Component({
     selector: 'jhi-faq-update',
@@ -40,7 +42,7 @@ export class FaqUpdateComponent implements OnInit {
     courseId: number;
     isAtLeastInstructor = false;
     domainActionsDescription = [new FormulaAction()];
-    irisEnabled = false;
+    irisEnabled: Signal<boolean>;
 
     // Icons
     readonly faQuestionCircle = faQuestionCircle;
@@ -59,7 +61,7 @@ export class FaqUpdateComponent implements OnInit {
 
     private profileInfoSubscription: Subscription;
 
-    metaActions = [new FullscreenAction()];
+    metaActions: Signal<TextEditorAction[]> = signal([]);
 
     ngOnInit() {
         this.isSaving = false;
@@ -77,12 +79,11 @@ export class FaqUpdateComponent implements OnInit {
             this.faqCategories = faq?.categories ? faq.categories : [];
         });
         this.validate();
-        this.profileInfoSubscription = this.profileService.getProfileInfo().subscribe(async (profileInfo) => {
-            this.irisEnabled = profileInfo.activeProfiles.includes(PROFILE_IRIS);
-            if (this.irisEnabled) {
-                this.metaActions = [new RewriteAction(this.rewriteService, RewritingVariant.FAQ, this.courseId), new FullscreenAction()];
-            }
-        });
+        const activeProfilesSignal = toSignal(this.profileService.getProfileInfo(), { initialValue: null });
+
+        this.irisEnabled = computed(() => activeProfilesSignal()?.activeProfiles.includes(PROFILE_IRIS) ?? false);
+
+        this.metaActions = computed(() => (this.irisEnabled() ? [new RewriteAction(this.rewriteService, RewritingVariant.FAQ, this.courseId), new FullscreenAction()] : []));
     }
 
     /**

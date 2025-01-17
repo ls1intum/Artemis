@@ -317,7 +317,6 @@ export class MarkdownEditorMonacoComponent implements AfterContentInit, AfterVie
 
     ngOnInit(): void {
         this.rewriteService.isLoading.subscribe((loadingState) => {
-            console.log(this.isLoading);
             this.isLoading = loadingState;
         });
     }
