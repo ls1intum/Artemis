@@ -16,12 +16,12 @@ import { ArtemisCategorySelectorModule } from 'app/shared/category-selector/cate
 import { ArtemisSharedModule } from 'app/shared/shared.module';
 import { ArtemisSharedComponentModule } from 'app/shared/components/shared-component.module';
 import { AccountService } from 'app/core/auth/account.service';
-import { RewriteAction } from 'app/shared/monaco-editor/model/actions/rewriteAction';
-import { FullscreenAction } from 'app/shared/monaco-editor/model/actions/fullscreen.action';
+import { RewriteAction } from 'app/shared/monaco-editor/model/actions/artemis-intelligence/rewriteAction';
 import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
 import { PROFILE_IRIS } from 'app/app.constants';
 import RewritingVariant from 'app/shared/monaco-editor/model/rewriting-variant';
 import { toSignal } from '@angular/core/rxjs-interop';
+import { RewritingService } from 'app/shared/monaco-editor/rewriting.service';
 
 @Component({
     selector: 'jhi-faq-update',
@@ -37,6 +37,7 @@ export class FaqUpdateComponent implements OnInit {
     private router = inject(Router);
     private profileService = inject(ProfileService);
     private accountService = inject(AccountService);
+    private rewriteService = inject(RewritingService);
 
     faq: Faq;
     isSaving: boolean;
@@ -48,7 +49,7 @@ export class FaqUpdateComponent implements OnInit {
     domainActionsDescription = [new FormulaAction()];
 
     irisEnabled = toSignal(this.profileService.getProfileInfo().pipe(map((profileInfo) => profileInfo.activeProfiles.includes(PROFILE_IRIS))), { initialValue: false });
-    metaActions = computed(() => (this.irisEnabled() ? [new RewriteAction(RewritingVariant.FAQ, this.courseId), new FullscreenAction()] : []));
+    artemisIntelligenceActions = computed(() => (this.irisEnabled() ? [new RewriteAction(this.rewriteService, RewritingVariant.FAQ, this.courseId)] : []));
 
     // Icons
     readonly faQuestionCircle = faQuestionCircle;

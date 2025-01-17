@@ -3,8 +3,7 @@
         "markdownEditor": {
             "commands": {
                 "katex": "Formel",
-                "fullscreen": "Vollbild",
-                "rewrite": "Umformulieren"
+                "fullscreen": "Vollbild"
             },
             "fileUpload": "Füge Dateien durch Drag-and-Drop oder durch Auswählen hinzu.",
             "guide": "Formatierungen mit Markdown sind möglich",
@@ -14,8 +13,16 @@
                 "imageNotFound": "Referenziertes Bild wurde nicht gefunden"
             },
             "slideWithNumber": "Folie {{ number }}",
-            "rewriting": {
-                "success": "Der Text wurde umgeschrieben. Drücke Strg+Z / Cmd+Z, um den Originaltext wiederherzustellen."
+            "artemisIntelligence": {
+                "tooltip": "Artemis Intelligence",
+                "commands": {
+                    "rewrite": "Umformulieren"
+                },
+                "alerts": {
+                    "rewrite": {
+                        "success": "Der Text wurde umgeschrieben. Drücke Strg+Z / Cmd+Z, um den Originaltext wiederherzustellen."
+                    }
+                }
             }
         }
     }

@@ -49,7 +49,7 @@ export class RewritingService {
                                     observer.complete();
                                     this.isLoadingSubject.next(false);
                                     this.jhiWebsocketService.unsubscribe(websocketTopic);
-                                    this.alertService.success('artemisApp.markdownEditor.rewriting.success');
+                                    this.alertService.success('artemisApp.markdownEditor.artemisIntelligence.alerts.rewrite.success');
                                 }
                             },
                             error: (error) => {

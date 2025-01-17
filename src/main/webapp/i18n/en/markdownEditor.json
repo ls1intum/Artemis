@@ -14,8 +14,16 @@
                 "imageNotFound": "Referenced image was not found"
             },
             "slideWithNumber": "Slide {{ number }}",
-            "rewriting": {
-                "success": "The text was rewritten. Press Ctrl+Z / Cmd+Z to restore the original text."
+            "artemisIntelligence": {
+                "tooltip": "Artemis Intelligence",
+                "commands": {
+                    "rewrite": "Rewrite"
+                },
+                "alerts": {
+                    "rewrite": {
+                        "success": "The text was rewritten. Press Ctrl+Z / Cmd+Z to restore the original text."
+                    }
+                }
             }
         }
     }
