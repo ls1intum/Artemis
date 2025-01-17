@@ -1708,6 +1708,64 @@ class ParticipationIntegrationTest extends AbstractAthenaTest {
         localRepo.resetLocalRepo();
     }
 
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void whenTextFeedbackRequestedAndNoSubmission_thenFail() throws Exception {
+        var textParticipation = ParticipationFactory.generateStudentParticipation(InitializationState.INACTIVE, textExercise,
+                userUtilService.getUserByLogin(TEST_PREFIX + "student1"));
+        participationRepo.save(textParticipation);
+
+        request.putWithResponseBody("/api/exercises/" + textExercise.getId() + "/request-feedback", null, StudentParticipation.class, HttpStatus.BAD_REQUEST);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void whenTextFeedbackRequestedAndNoSubmittedSubmission_thenFail() throws Exception {
+        var textParticipation = ParticipationFactory.generateStudentParticipation(InitializationState.INACTIVE, textExercise,
+                userUtilService.getUserByLogin(TEST_PREFIX + "student1"));
+        participationRepo.save(textParticipation);
+
+        TextSubmission submission = new TextSubmission();
+        submission.setParticipation(textParticipation);
+        submissionRepository.save(submission);
+
+        request.putWithResponseBody("/api/exercises/" + textExercise.getId() + "/request-feedback", null, StudentParticipation.class, HttpStatus.BAD_REQUEST);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void whenTextFeedbackRequestedAndSubmissionEmpty_thenFail() throws Exception {
+        var textParticipation = ParticipationFactory.generateStudentParticipation(InitializationState.INACTIVE, textExercise,
+                userUtilService.getUserByLogin(TEST_PREFIX + "student1"));
+        participationRepo.save(textParticipation);
+
+        TextSubmission submission = new TextSubmission();
+        submission.setParticipation(textParticipation);
+
+        submission.setText("");
+        submission.setSubmitted(true);
+        submissionRepository.save(submission);
+
+        request.putWithResponseBody("/api/exercises/" + textExercise.getId() + "/request-feedback", null, StudentParticipation.class, HttpStatus.BAD_REQUEST);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void whenModelingFeedbackRequestedAndSubmissionEmpty_thenFail() throws Exception {
+        var modelingParticipation = ParticipationFactory.generateStudentParticipation(InitializationState.INACTIVE, modelingExercise,
+                userUtilService.getUserByLogin(TEST_PREFIX + "student1"));
+        participationRepo.save(modelingParticipation);
+
+        ModelingSubmission submission = new ModelingSubmission();
+        submission.setParticipation(modelingParticipation);
+
+        submission.setModel("");
+        submission.setSubmitted(true);
+        submissionRepository.save(submission);
+
+        request.putWithResponseBody("/api/exercises/" + textExercise.getId() + "/request-feedback", null, StudentParticipation.class, HttpStatus.BAD_REQUEST);
+    }
+
     @Nested
     @Isolated
     class ParticipationIntegrationIsolatedTest {
