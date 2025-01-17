@@ -69,49 +69,24 @@ jobs:
           echo "Need Build? ${{ github.event.inputs.HELIOS_BUILD }}"
           echo "Build Tag? ${{ github.event.inputs.HELIOS_BUILD_TAG }}"
 
+  # Build the Docker image (branch without PR)
+  conditional-build:
+    if: ${{ github.event.inputs.HELIOS_BUILD == 'true' }}
+    needs: [ validate-inputs ]
+    uses: ./.github/workflows/build.yml
+    with:
+      sha: ${{ github.event.inputs.HELIOS_BRANCH_HEAD_SHA }}
+      tag: ${{ github.event.inputs.HELIOS_BUILD_TAG }}
+      raw_url: ${{ github.event.inputs.HELIOS_RAW_URL }}
 
-  # Build the Docker image (branch without PR) or check if the build has run successfully (PR)
-  build-or-check-existing-build:
+  # Check if the build has run successfully (PR)
+  check-existing-build:
+    if: ${{ github.event.inputs.HELIOS_BUILD == 'false' }}
     needs: [ validate-inputs ]
     runs-on: ubuntu-latest
     steps:
-      # Build the Docker image (branch without PR)
-      - name: Git Checkout
-        if: ${{ github.event.inputs.HELIOS_BUILD == 'true' }}
-        uses: actions/checkout@v4
-        with:
-          ref: ${{ github.event.inputs.HELIOS_BRANCH_HEAD_SHA }}
-      - name: Set up QEMU
-        if: ${{ github.event.inputs.HELIOS_BUILD == 'true' }}
-        uses: docker/setup-qemu-action@v3
-      - name: Set up Docker Buildx
-        if: ${{ github.event.inputs.HELIOS_BUILD == 'true' }}
-        uses: docker/setup-buildx-action@v3
-      # Build and Push to GitHub Container Registry
-      - name: Login to GitHub Container Registry
-        if: ${{ github.event.inputs.HELIOS_BUILD == 'true' }}
-        uses: docker/login-action@v3
-        with:
-          registry: ghcr.io
-          username: ${{ github.repository_owner }}
-          password: ${{ secrets.GITHUB_TOKEN }}
-      - name: Build and Push to GitHub Container Registry
-        if: ${{ github.event.inputs.HELIOS_BUILD == 'true' }}
-        uses: docker/build-push-action@v5
-        with:
-          # beware that the linux/arm64 build from the registry is using an amd64 compiled .war file as
-          # the GitHub runners don't support arm64 and QEMU takes too long for emulating the build
-          platforms: linux/amd64,linux/arm64
-          file: ./docker/artemis/Dockerfile
-          context: .
-          tags: ghcr.io/ls1intum/artemis:${{ github.event.inputs.HELIOS_BUILD_TAG }}
-          push: true
-          cache-from: type=gha
-          cache-to: type=gha,mode=min
-
       # Check if the build has run successfully (PR)
       - name: Get latest successful build for branch
-        if: ${{ github.event.inputs.HELIOS_BUILD == 'false' }}
         id: check_build
         uses: octokit/request-action@v2.x
         with:
@@ -119,14 +94,16 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       - name: Fail if no successful build found
-        if: ${{ steps.check_build.conclusion == 'success' && github.event.inputs.HELIOS_BUILD == 'false' && fromJSON(steps.check_build.outputs.data).total_count == 0 }}
+        if: ${{ steps.check_build.conclusion == 'success' && fromJSON(steps.check_build.outputs.data).total_count == 0 }}
         run: |
           echo "::error::No successful build found for branch '${{ github.event.inputs.HELIOS_BRANCH_NAME }}' with SHA '${{ github.event.inputs.HELIOS_BRANCH_HEAD_SHA }}'."
           exit 1
 
   # Check which test server to deploy to based on the label
   filter-matrix:
-    needs: [ build-or-check-existing-build ]
+    needs: [ conditional-build, check-existing-build ]
+    # Run if either job is successful
+    if: ${{ needs.conditional-build.result == 'success' || needs.check-existing-build.result == 'success'}}
     runs-on: ubuntu-latest
     strategy:
       matrix:
