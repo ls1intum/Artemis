@@ -103,7 +103,7 @@ jobs:
   filter-matrix:
     needs: [ conditional-build, check-existing-build ]
     # Run if either job is successful
-    if: always() && (needs.conditional-build.conclusion == 'success' || needs.check-existing-build.conclusion == 'success')
+    if: always() && (needs.conditional-build.result == 'success' || needs.check-existing-build.result == 'success')
     runs-on: ubuntu-latest
     strategy:
       matrix:
