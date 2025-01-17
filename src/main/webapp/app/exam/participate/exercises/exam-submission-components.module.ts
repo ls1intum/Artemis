@@ -7,7 +7,6 @@ import { TextExamSubmissionComponent } from 'app/exam/participate/exercises/text
 import { ModelingExamSubmissionComponent } from 'app/exam/participate/exercises/modeling/modeling-exam-submission.component';
 import { ArtemisSharedModule } from 'app/shared/shared.module';
 import { ArtemisMarkdownModule } from 'app/shared/markdown.module';
-import { ExamExerciseUpdateHighlighterModule } from 'app/exam/participate/exercises/exam-exercise-update-highlighter/exam-exercise-update-highlighter.module';
 import { ArtemisSharedComponentModule } from 'app/shared/components/shared-component.module';
 import { ArtemisQuizQuestionTypesModule } from 'app/exercises/quiz/shared/questions/artemis-quiz-question-types.module';
 import { SubmissionResultStatusModule } from 'app/overview/submission-result-status.module';
@@ -35,7 +34,6 @@ import { ExerciseSaveButtonComponent } from './exercise-save-button/exercise-sav
         ArtemisFullscreenModule,
         ArtemisModelingEditorModule,
         ArtemisProgrammingSubmissionPolicyStatusModule,
-        ExamExerciseUpdateHighlighterModule,
         ExerciseSaveButtonComponent,
         FileUploadExamSubmissionComponent,
         QuizExamSubmissionComponent,

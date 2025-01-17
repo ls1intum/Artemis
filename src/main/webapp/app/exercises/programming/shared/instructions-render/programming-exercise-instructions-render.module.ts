@@ -5,7 +5,6 @@ import { ProgrammingExerciseInstructionComponent } from 'app/exercises/programmi
 import { ProgrammingExerciseInstructionStepWizardComponent } from 'app/exercises/programming/shared/instructions-render/step-wizard/programming-exercise-instruction-step-wizard.component';
 import { ProgrammingExerciseInstructionTaskStatusComponent } from 'app/exercises/programming/shared/instructions-render/task/programming-exercise-instruction-task-status.component';
 import { ArtemisMarkdownModule } from 'app/shared/markdown.module';
-import { ExamExerciseUpdateHighlighterModule } from 'app/exam/participate/exercises/exam-exercise-update-highlighter/exam-exercise-update-highlighter.module';
 import { SafeHtmlPipe } from 'app/shared/pipes/safe-html.pipe';
 
 @NgModule({
@@ -13,7 +12,6 @@ import { SafeHtmlPipe } from 'app/shared/pipes/safe-html.pipe';
         ArtemisSharedModule,
         ArtemisResultModule,
         ArtemisMarkdownModule,
-        ExamExerciseUpdateHighlighterModule,
         SafeHtmlPipe,
         ProgrammingExerciseInstructionComponent,
         ProgrammingExerciseInstructionStepWizardComponent,
