@@ -257,9 +257,11 @@ class ProgrammingSubmissionAndResultGitlabJenkinsIntegrationTest extends Abstrac
         var firstCommitDate = ZonedDateTime.now().minusSeconds(60);
         var secondCommitDate = ZonedDateTime.now().minusSeconds(30);
 
+        String projectKey = testService.programmingExercise.getProjectKey();
+
         gitlabRequestMockProvider.mockGetDefaultBranch(defaultBranch);
         gitlabRequestMockProvider.mockGetPushDate(testService.participation, Map.of(firstCommitHash, firstCommitDate, secondCommitHash, secondCommitDate));
-        jenkinsRequestMockProvider.mockTriggerBuildPlain(exercise.getProjectKey(), exercise.getProjectKey() + "-" + userLogin.toUpperCase());
+        jenkinsRequestMockProvider.mockTriggerBuild(projectKey, projectKey, false);
 
         // First commit is pushed but not recorded
 
@@ -269,16 +271,16 @@ class ProgrammingSubmissionAndResultGitlabJenkinsIntegrationTest extends Abstrac
         // Build result for first commit is received
         var firstBuildCompleteDate = ZonedDateTime.now();
         var firstVcsDTO = new CommitDTO(firstCommitHash, uriService.getRepositorySlugFromRepositoryUri(testService.participation.getVcsRepositoryUri()), defaultBranch);
-        var notificationDTOFirstCommit = createJenkinsNewResultNotification(testService.programmingExercise.getProjectKey(), userLogin, JAVA, List.of(), new ArrayList<>(),
-                firstBuildCompleteDate, List.of(firstVcsDTO));
+        var notificationDTOFirstCommit = createJenkinsNewResultNotification(projectKey, userLogin, JAVA, List.of(), new ArrayList<>(), firstBuildCompleteDate,
+                List.of(firstVcsDTO));
 
         postResult(notificationDTOFirstCommit, HttpStatus.OK);
 
         // Build result for second commit is received
         var secondBuildCompleteDate = ZonedDateTime.now();
         var secondVcsDTO = new CommitDTO(secondCommitHash, uriService.getRepositorySlugFromRepositoryUri(testService.participation.getVcsRepositoryUri()), defaultBranch);
-        var notificationDTOSecondCommit = createJenkinsNewResultNotification(testService.programmingExercise.getProjectKey(), userLogin, JAVA, List.of(), new ArrayList<>(),
-                secondBuildCompleteDate, List.of(secondVcsDTO));
+        var notificationDTOSecondCommit = createJenkinsNewResultNotification(projectKey, userLogin, JAVA, List.of(), new ArrayList<>(), secondBuildCompleteDate,
+                List.of(secondVcsDTO));
 
         postResult(notificationDTOSecondCommit, HttpStatus.OK);
 
