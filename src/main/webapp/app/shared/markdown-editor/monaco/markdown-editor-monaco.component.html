@@ -40,14 +40,14 @@
                                 >
                                     <div class="row mx-0 align-items-baseline">
                                         <span class="col upload-subtitle" jhiTranslate="artemisApp.markdownEditor.fileUpload"></span>
-                                        <a class="col-auto" href="https://markdown-it.github.io/">
-                                            <fa-icon [icon]="faQuestionCircle" [ngbTooltip]="'artemisApp.markdownEditor.guide' | artemisTranslate" />
-                                        </a>
                                         @if (isLoading) {
                                             <a class="col-auto">
                                                 <fa-icon [icon]="faSpinner" animation="spin" />
                                             </a>
                                         }
+                                        <a class="col-auto" href="https://markdown-it.github.io/">
+                                            <fa-icon [icon]="faQuestionCircle" [ngbTooltip]="'artemisApp.markdownEditor.guide' | artemisTranslate" />
+                                        </a>
                                     </div>
                                 </label>
                             </div>

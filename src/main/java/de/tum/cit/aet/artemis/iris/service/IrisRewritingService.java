@@ -26,7 +26,7 @@ import de.tum.cit.aet.artemis.iris.service.websocket.IrisWebsocketService;
  */
 @Service
 @Profile(PROFILE_IRIS)
-public class IrisReWritingService {
+public class IrisRewritingService {
 
     private final PyrisPipelineService pyrisPipelineService;
 
@@ -40,7 +40,7 @@ public class IrisReWritingService {
 
     private final UserRepository userRepository;
 
-    public IrisReWritingService(PyrisPipelineService pyrisPipelineService, LLMTokenUsageService llmTokenUsageService, CourseRepository courseRepository,
+    public IrisRewritingService(PyrisPipelineService pyrisPipelineService, LLMTokenUsageService llmTokenUsageService, CourseRepository courseRepository,
             IrisWebsocketService websocketService, PyrisJobService pyrisJobService, UserRepository userRepository) {
         this.pyrisPipelineService = pyrisPipelineService;
         this.llmTokenUsageService = llmTokenUsageService;

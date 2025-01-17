@@ -6,7 +6,6 @@ import java.util.Optional;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Profile;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -17,7 +16,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import de.tum.cit.aet.artemis.core.repository.CourseRepository;
 import de.tum.cit.aet.artemis.core.repository.UserRepository;
-import de.tum.cit.aet.artemis.iris.service.IrisReWritingService;
+import de.tum.cit.aet.artemis.iris.service.IrisRewritingService;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.rewriting.RewritingVariant;
 
 /**
@@ -28,9 +27,6 @@ import de.tum.cit.aet.artemis.iris.service.pyris.dto.rewriting.RewritingVariant;
 @RequestMapping("api/")
 public class RewritingResource {
 
-    @Value("${jhipster.clientApp.name}")
-    private String applicationName;
-
     private static final Logger log = LoggerFactory.getLogger(RewritingResource.class);
 
     private static final String ENTITY_NAME = "rewriting";
@@ -39,9 +35,9 @@ public class RewritingResource {
 
     private final CourseRepository courseRepository;
 
-    private final Optional<IrisReWritingService> irisRewritingService;
+    private final Optional<IrisRewritingService> irisRewritingService;
 
-    public RewritingResource(UserRepository userRepository, CourseRepository courseRepository, Optional<IrisReWritingService> irisRewritingService) {
+    public RewritingResource(UserRepository userRepository, CourseRepository courseRepository, Optional<IrisRewritingService> irisRewritingService) {
         this.userRepository = userRepository;
         this.courseRepository = courseRepository;
         this.irisRewritingService = irisRewritingService;

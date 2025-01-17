@@ -4,11 +4,11 @@ import { BehaviorSubject, Observable } from 'rxjs';
 import { JhiWebsocketService } from 'app/core/websocket/websocket.service';
 import RewritingVariant from 'app/shared/monaco-editor/model/rewriting-variant';
 import { AlertService } from 'app/core/util/alert.service';
+
 /**
  * Service providing shared functionality for rewriting context of the markdown editor.
  * This service is intended to be used by components that need to rewrite text of the Monaco editors.
  */
-
 @Injectable({ providedIn: 'root' })
 export class RewritingService {
     public resourceUrl = 'api/courses';

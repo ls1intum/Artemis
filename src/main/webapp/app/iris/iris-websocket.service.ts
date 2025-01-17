@@ -12,7 +12,6 @@ export class IrisWebsocketService implements OnDestroy {
     protected jhiWebsocketService = inject(JhiWebsocketService);
 
     private subscribedChannels: Map<number, SubscribedChannel> = new Map();
-    private subscribedTopics: Map<string, SubscribedChannel> = new Map();
 
     /**
      * Cleans up resources before the service is destroyed.

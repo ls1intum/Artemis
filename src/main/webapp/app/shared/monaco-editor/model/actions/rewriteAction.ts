@@ -1,6 +1,5 @@
 import { TextEditorAction } from 'app/shared/monaco-editor/model/actions/text-editor-action.model';
 import { TextEditor } from 'app/shared/monaco-editor/model/actions/adapter/text-editor.interface';
-import { RewritingService } from 'app/shared/monaco-editor/rewriting.service';
 import RewritingVariant from 'app/shared/monaco-editor/model/rewriting-variant';
 import { facArtemisIntelligence } from 'app/icons/icons';
 
@@ -13,7 +12,6 @@ export class RewriteAction extends TextEditorAction {
     element?: HTMLElement;
 
     constructor(
-        private readonly rewriteService: RewritingService,
         private readonly rewritingVariant: RewritingVariant,
         private readonly courseId: number,
     ) {
@@ -21,11 +19,10 @@ export class RewriteAction extends TextEditorAction {
     }
 
     /**
-     * Toggles the rephrrewritingasing of the markdown content the editor.
+     * Runs the rewriting of the markdown content of the editor.
      * @param editor The editor in which to rewrite the markdown.
-     * @param variant The variant of the rewritingVariant.
      */
     run(editor: TextEditor): void {
-        this.rewriteMarkdown(editor, this.rewritingVariant, this.rewriteService, this.courseId);
+        this.rewriteMarkdown(editor, this.rewritingVariant, this.courseId);
     }
 }

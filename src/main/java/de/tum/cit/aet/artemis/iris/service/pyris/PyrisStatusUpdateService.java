@@ -10,7 +10,7 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
 import de.tum.cit.aet.artemis.iris.service.IrisCompetencyGenerationService;
-import de.tum.cit.aet.artemis.iris.service.IrisReWritingService;
+import de.tum.cit.aet.artemis.iris.service.IrisRewritingService;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.chat.PyrisChatStatusUpdateDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.chat.textexercise.PyrisTextExerciseChatStatusUpdateDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.competency.PyrisCompetencyStatusUpdateDTO;
@@ -44,13 +44,13 @@ public class PyrisStatusUpdateService {
 
     private final IrisCompetencyGenerationService competencyGenerationService;
 
-    private final IrisReWritingService rewritingService;
+    private final IrisRewritingService rewritingService;
 
     private static final Logger log = LoggerFactory.getLogger(PyrisStatusUpdateService.class);
 
     public PyrisStatusUpdateService(PyrisJobService pyrisJobService, IrisExerciseChatSessionService irisExerciseChatSessionService,
             IrisTextExerciseChatSessionService irisTextExerciseChatSessionService, IrisCourseChatSessionService courseChatSessionService,
-            IrisCompetencyGenerationService competencyGenerationService, IrisReWritingService rewritingService) {
+            IrisCompetencyGenerationService competencyGenerationService, IrisRewritingService rewritingService) {
         this.pyrisJobService = pyrisJobService;
         this.irisExerciseChatSessionService = irisExerciseChatSessionService;
         this.irisTextExerciseChatSessionService = irisTextExerciseChatSessionService;
@@ -113,7 +113,7 @@ public class PyrisStatusUpdateService {
 
     /**
      * Handles the status update of a rewriting job and forwards it to
-     * {@link IrisReWritingService#handleStatusUpdate(RewritingJob, PyrisRewritingStatusUpdateDTO)}
+     * {@link IrisRewritingService#handleStatusUpdate(RewritingJob, PyrisRewritingStatusUpdateDTO)}
      *
      * @param job          the job that is updated
      * @param statusUpdate the status update

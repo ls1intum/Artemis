@@ -5,7 +5,7 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import de.tum.cit.aet.artemis.core.domain.Course;
 
 /**
- * A pyris job that rewritten a text.
+ * A Pyris job to rewrite a text.
  *
  * @param jobId    the job id
  * @param courseId the course in which the rewriting is being done

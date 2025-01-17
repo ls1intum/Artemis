@@ -1,7 +1,7 @@
-import { Component, OnInit, Signal, computed, inject, signal } from '@angular/core';
+import { Component, OnInit, computed, inject } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
-import { Observable, Subscription } from 'rxjs';
+import { Observable, map } from 'rxjs';
 import { AlertService } from 'app/core/util/alert.service';
 import { onError } from 'app/shared/util/global.utils';
 import { ArtemisNavigationUtilService } from 'app/utils/navigation.utils';
@@ -9,7 +9,6 @@ import { faBan, faQuestionCircle, faSave } from '@fortawesome/free-solid-svg-ico
 import { FormulaAction } from 'app/shared/monaco-editor/model/actions/formula.action';
 import { Faq, FaqState } from 'app/entities/faq.model';
 import { FaqService } from 'app/faq/faq.service';
-import { TranslateService } from '@ngx-translate/core';
 import { FaqCategory } from 'app/entities/faq-category.model';
 import { loadCourseFaqCategories } from 'app/faq/faq.utils';
 import { ArtemisMarkdownEditorModule } from 'app/shared/markdown-editor/markdown-editor.module';
@@ -25,7 +24,6 @@ import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
 import { PROFILE_IRIS } from 'app/app.constants';
 import RewritingVariant from 'app/shared/monaco-editor/model/rewriting-variant';
 import { toSignal } from '@angular/core/rxjs-interop';
-import { TextEditorAction } from 'app/shared/monaco-editor/model/actions/text-editor-action.model';
 
 @Component({
     selector: 'jhi-faq-update',
@@ -34,6 +32,15 @@ import { TextEditorAction } from 'app/shared/monaco-editor/model/actions/text-ed
     imports: [ArtemisSharedModule, ArtemisSharedComponentModule, ArtemisMarkdownEditorModule, ArtemisCategorySelectorModule],
 })
 export class FaqUpdateComponent implements OnInit {
+    private alertService = inject(AlertService);
+    private faqService = inject(FaqService);
+    private activatedRoute = inject(ActivatedRoute);
+    private navigationUtilService = inject(ArtemisNavigationUtilService);
+    private router = inject(Router);
+    private profileService = inject(ProfileService);
+    private accountService = inject(AccountService);
+    private rewriteService = inject(RewritingService);
+
     faq: Faq;
     isSaving: boolean;
     isAllowedToSave: boolean;
@@ -42,31 +49,14 @@ export class FaqUpdateComponent implements OnInit {
     courseId: number;
     isAtLeastInstructor = false;
     domainActionsDescription = [new FormulaAction()];
-    irisEnabled: Signal<boolean>;
-    activeProfilesSignal: Signal<any>;
+
+    irisEnabled = toSignal(this.profileService.getProfileInfo().pipe(map((profileInfo) => profileInfo.activeProfiles.includes(PROFILE_IRIS))), { initialValue: false });
+    metaActions = computed(() => (this.irisEnabled() ? [new RewriteAction(this.rewriteService, RewritingVariant.FAQ, this.courseId), new FullscreenAction()] : []));
 
     // Icons
     readonly faQuestionCircle = faQuestionCircle;
     readonly faSave = faSave;
     readonly faBan = faBan;
-
-    private alertService = inject(AlertService);
-    private faqService = inject(FaqService);
-    private activatedRoute = inject(ActivatedRoute);
-    private navigationUtilService = inject(ArtemisNavigationUtilService);
-    private router = inject(Router);
-    private translateService = inject(TranslateService);
-    private accountService = inject(AccountService);
-    private rewriteService = inject(RewritingService);
-    private profileService = inject(ProfileService);
-
-    private profileInfoSubscription: Subscription;
-
-    metaActions: Signal<TextEditorAction[]> = signal([]);
-
-    constructor() {
-        this.activeProfilesSignal = toSignal(this.profileService.getProfileInfo(), { initialValue: null });
-    }
 
     ngOnInit() {
         this.isSaving = false;
@@ -84,9 +74,6 @@ export class FaqUpdateComponent implements OnInit {
             this.faqCategories = faq?.categories ? faq.categories : [];
         });
         this.validate();
-
-        this.irisEnabled = computed(() => this.activeProfilesSignal()?.activeProfiles.includes(PROFILE_IRIS) ?? false);
-        this.metaActions = computed(() => (this.irisEnabled() ? [new RewriteAction(this.rewriteService, RewritingVariant.FAQ, this.courseId), new FullscreenAction()] : []));
     }
 
     /**
