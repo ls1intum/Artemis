@@ -1191,6 +1191,7 @@ public class ProgrammingExerciseTestService {
         // Mock requests
         setupRepositoryMocks(sourceExercise, sourceExerciseRepo, sourceSolutionRepo, sourceTestRepo, sourceAuxRepo);
         setupRepositoryMocks(exerciseToBeImported, exerciseRepo, solutionRepo, testRepo, auxRepo);
+        mockDelegate.mockGetCiProjectMissing(exerciseToBeImported);
         mockDelegate.mockConnectorRequestsForImport(sourceExercise, exerciseToBeImported, false, false);
         doReturn(false).when(versionControlService).checkIfProjectExists(any(), any());
         // Import the exam

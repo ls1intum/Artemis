@@ -556,4 +556,9 @@ public abstract class AbstractSpringIntegrationJenkinsGitlabTest extends Abstrac
         }
         gitlabRequestMockProvider.mockDeleteProject(projectKey, false);
     }
+
+    @Override
+    public void mockGetCiProjectMissing(ProgrammingExercise exercise) throws IOException {
+        jenkinsRequestMockProvider.mockGetFolderJob(exercise.getProjectKey(), null);
+    }
 }

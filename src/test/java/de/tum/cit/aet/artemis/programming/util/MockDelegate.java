@@ -130,4 +130,6 @@ public interface MockDelegate {
     void mockDefaultBranch(ProgrammingExercise programmingExercise) throws IOException, GitLabApiException;
 
     void mockUserExists(String username) throws Exception;
+
+    void mockGetCiProjectMissing(ProgrammingExercise exercise) throws IOException;
 }

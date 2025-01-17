@@ -609,4 +609,9 @@ public abstract class AbstractSpringIntegrationLocalCILocalVCTest extends Abstra
     public void mockUserExists(String username) throws Exception {
         // Not implemented for local VC and local CI
     }
+
+    @Override
+    public void mockGetCiProjectMissing(ProgrammingExercise exercise) {
+        // not relevant for local VC and local CI
+    }
 }
