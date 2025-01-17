@@ -126,9 +126,7 @@ export class ForwardMessageDialogComponent implements OnInit, AfterViewInit {
                     .searchUsers(this.courseId()!, lowerCaseSearchTerm, ['students', 'tutors', 'instructors'])
                     .pipe(
                         map((response) => response.body || []),
-                        map(
-                            (users) => users.filter((user) => !this.selectedUsers.find((selectedUser) => selectedUser.id === user.id)), // Seçili kullanıcıları çıkar
-                        ),
+                        map((users) => users.filter((user) => !this.selectedUsers.find((selectedUser) => selectedUser.id === user.id))),
                         catchError(() => {
                             return of([]);
                         }),

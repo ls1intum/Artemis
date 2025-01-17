@@ -47,14 +47,6 @@
     font-weight: 500;
 }
 
-.list-group-item:hover {
-    background-color: var(--bs-gray-400);
-}
-
-.list-group-item.active:hover {
-    background-color: var(--bs-primary);
-}
-
 .autocomplete-container {
     position: relative;
 }
