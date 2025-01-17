@@ -58,7 +58,6 @@ import { ExamEditWorkingTimeComponent } from 'app/exam/manage/exams/exam-checkli
 import { ExamLiveAnnouncementCreateModalComponent } from 'app/exam/manage/exams/exam-checklist-component/exam-announcement-dialog/exam-live-announcement-create-modal.component';
 import { ExamLiveAnnouncementCreateButtonComponent } from 'app/exam/manage/exams/exam-checklist-component/exam-announcement-dialog/exam-live-announcement-create-button.component';
 
-import { ArtemisExamNavigationBarModule } from 'app/exam/participate/exam-navigation-bar/exam-navigation-bar.module';
 import { ArtemisExamSubmissionComponentsModule } from 'app/exam/participate/exercises/exam-submission-components.module';
 import { MatSliderModule } from '@angular/material/slider';
 import { ProgrammingExerciseExamDiffComponent } from './student-exams/student-exam-timeline/programming-exam-diff/programming-exercise-exam-diff.component';
@@ -102,7 +101,6 @@ const ENTITY_STATES = [...examManagementState, ...examScoresState];
         ArtemisModePickerModule,
         StudentsUploadImagesModule,
         TitleChannelNameModule,
-        ArtemisExamNavigationBarModule,
         ArtemisExamSubmissionComponentsModule,
         MatSliderModule,
         ArtemisProgrammingExerciseModule,

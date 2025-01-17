@@ -22,7 +22,6 @@ import { ArtemisHeaderExercisePageWithDetailsModule } from 'app/exercises/shared
 import { ArtemisMarkdownModule } from 'app/shared/markdown.module';
 import { ExamExerciseOverviewPageComponent } from 'app/exam/participate/exercises/exercise-overview-page/exam-exercise-overview-page.component';
 import { SubmissionResultStatusModule } from 'app/overview/submission-result-status.module';
-import { ArtemisExamNavigationBarModule } from 'app/exam/participate/exam-navigation-bar/exam-navigation-bar.module';
 import { ArtemisExamTimerModule } from 'app/exam/participate/timer/exam-timer.module';
 import { ArtemisExamSubmissionComponentsModule } from 'app/exam/participate/exercises/exam-submission-components.module';
 import { ExamExerciseUpdateHighlighterModule } from 'app/exam/participate/exercises/exam-exercise-update-highlighter/exam-exercise-update-highlighter.module';
@@ -32,6 +31,7 @@ import { ExamStartInformationComponent } from 'app/exam/participate/exam-start-i
 import { ArtemisSidebarModule } from 'app/shared/sidebar/sidebar.module';
 import { ExamNavigationSidebarComponent } from 'app/exam/participate/exam-navigation-sidebar/exam-navigation-sidebar.component';
 import { ExamBarComponent } from 'app/exam/participate/exam-bar/exam-bar.component';
+
 const ENTITY_STATES = [...examParticipationState];
 
 @NgModule({
@@ -54,7 +54,6 @@ const ENTITY_STATES = [...examParticipationState];
         ArtemisParticipationSummaryModule,
         ArtemisMarkdownModule,
         SubmissionResultStatusModule,
-        ArtemisExamNavigationBarModule,
         ArtemisExamTimerModule,
         ArtemisExamSubmissionComponentsModule,
         ExamExerciseUpdateHighlighterModule,
