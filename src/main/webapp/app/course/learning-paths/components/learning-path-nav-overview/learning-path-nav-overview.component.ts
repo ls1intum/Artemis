@@ -64,6 +64,6 @@ export class LearningPathNavOverviewComponent {
     }
 
     openCompetencyGraph(): void {
-        CompetencyGraphModalComponent.openCompetencyGraphModal(this.modalService, this.learningPathId());
+        CompetencyGraphModalComponent.openCompetencyGraphModal(this.modalService, this.learningPathId(), undefined);
     }
 }
