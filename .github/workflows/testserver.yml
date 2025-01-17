@@ -323,14 +323,14 @@ jobs:
         with:
             github-token: ${{ secrets.GITHUB_TOKEN }}
             script: |
-              if (context.issue && context.issue.number) {
-                await github.rest.issues.addLabels({
-                  issue_number: context.issue.number,
-                  owner: context.repo.owner,
-                  repo: context.repo.repo,
-                  labels: ['lock:${{ matrix.label-identifier }}']
-                })
-              }
+                if (context.issue && context.issue.number) {
+                  await github.rest.issues.addLabels({
+                    issue_number: context.issue.number,
+                    owner: context.repo.owner,
+                    repo: context.repo.repo,
+                    labels: ['lock:${{ matrix.label-identifier }}']
+                  })
+                }
 
       - name: Update badge
         uses: RubbaBoy/BYOB@v1.3.0
