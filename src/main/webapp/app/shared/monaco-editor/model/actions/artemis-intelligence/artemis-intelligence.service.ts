@@ -10,9 +10,8 @@ import { AlertService } from 'app/core/util/alert.service';
  * This service is intended to be used by the AI actions of the Monaco editors.
  */
 @Injectable({ providedIn: 'root' })
-export class RewritingService {
+export class ArtemisIntelligenceService {
     public resourceUrl = 'api/courses';
-
 
     private http = inject(HttpClient);
     private jhiWebsocketService = inject(JhiWebsocketService);
