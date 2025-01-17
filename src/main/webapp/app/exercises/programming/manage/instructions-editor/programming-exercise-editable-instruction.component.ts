@@ -1,8 +1,23 @@
-import { AfterViewInit, Component, EventEmitter, HostListener, Input, OnChanges, OnDestroy, Output, SimpleChanges, ViewChild, ViewEncapsulation, inject } from '@angular/core';
+import {
+    AfterViewInit,
+    Component,
+    EventEmitter,
+    HostListener,
+    Input,
+    OnChanges,
+    OnDestroy,
+    OnInit,
+    Output,
+    SimpleChanges,
+    ViewChild,
+    ViewEncapsulation,
+    computed,
+    inject,
+} from '@angular/core';
 import { AlertService } from 'app/core/util/alert.service';
 import { ProgrammingExerciseInstructionComponent } from 'app/exercises/programming/shared/instructions-render/programming-exercise-instruction.component';
 import { Observable, Subject, Subscription, of, throwError } from 'rxjs';
-import { catchError, map as rxMap, switchMap, tap } from 'rxjs/operators';
+import { catchError, map, map as rxMap, switchMap, tap } from 'rxjs/operators';
 import { ProgrammingExerciseTestCase } from 'app/entities/programming/programming-exercise-test-case.model';
 import { ProblemStatementAnalysis } from 'app/exercises/programming/manage/instructions-editor/analysis/programming-exercise-instruction-analysis.model';
 import { Participation } from 'app/entities/participation/participation.model';
@@ -25,8 +40,13 @@ import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { ProgrammingExerciseInstructionAnalysisComponent } from './analysis/programming-exercise-instruction-analysis.component';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
-import { AIRephraseAction } from 'app/shared/monaco-editor/model/actions/artemis-intelligence/AIRephraseAction';
-import { TextEditorAction } from 'app/shared/monaco-editor/model/actions/text-editor-action.model';
+import { RewriteAction } from 'app/shared/monaco-editor/model/actions/artemis-intelligence/rewrite.action';
+import { PROFILE_IRIS } from 'app/app.constants';
+import RewritingVariant from 'app/shared/monaco-editor/model/actions/artemis-intelligence/rewriting-variant';
+import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
+import { ArtemisIntelligenceService } from 'app/shared/monaco-editor/model/actions/artemis-intelligence/artemis-intelligence.service';
+import { toSignal } from '@angular/core/rxjs-interop';
+import { ActivatedRoute } from '@angular/router';
 
 @Component({
     selector: 'jhi-programming-exercise-editable-instructions',
@@ -44,11 +64,14 @@ import { TextEditorAction } from 'app/shared/monaco-editor/model/actions/text-ed
         ArtemisTranslatePipe,
     ],
 })
-export class ProgrammingExerciseEditableInstructionComponent implements AfterViewInit, OnChanges, OnDestroy {
+export class ProgrammingExerciseEditableInstructionComponent implements AfterViewInit, OnChanges, OnDestroy, OnInit {
+    private activatedRoute = inject(ActivatedRoute);
     private programmingExerciseService = inject(ProgrammingExerciseService);
     private alertService = inject(AlertService);
     private programmingExerciseParticipationService = inject(ProgrammingExerciseParticipationService);
     private testCaseService = inject(ProgrammingExerciseGradingService);
+    private profileService = inject(ProfileService);
+    private artemisIntelligenceService = inject(ArtemisIntelligenceService);
 
     participationValue: Participation;
     programmingExercise: ProgrammingExercise;
@@ -59,7 +82,11 @@ export class ProgrammingExerciseEditableInstructionComponent implements AfterVie
     testCaseAction = new TestCaseAction();
     domainActions: TextEditorDomainAction[] = [new FormulaAction(), new TaskAction(), this.testCaseAction];
 
-    artemisIntelligenceActions: TextEditorAction[] = [new AIRephraseAction()];
+    courseId: number;
+    irisEnabled = toSignal(this.profileService.getProfileInfo().pipe(map((profileInfo) => profileInfo.activeProfiles.includes(PROFILE_IRIS))), { initialValue: false });
+    artemisIntelligenceActions = computed(() =>
+        this.irisEnabled() ? [new RewriteAction(this.artemisIntelligenceService, RewritingVariant.PROBLEM_STATEMENT, this.courseId)] : [],
+    );
 
     savingInstructions = false;
     unsavedChangesValue = false;
@@ -120,6 +147,10 @@ export class ProgrammingExerciseEditableInstructionComponent implements AfterVie
     faGripLines = faGripLines;
 
     protected readonly MarkdownEditorHeight = MarkdownEditorHeight;
+
+    ngOnInit() {
+        this.courseId = Number(this.activatedRoute.snapshot.paramMap.get('courseId'));
+    }
 
     ngOnChanges(changes: SimpleChanges): void {
         if (hasExerciseChanged(changes)) {
