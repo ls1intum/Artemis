@@ -15,7 +15,7 @@ import {
     inject,
 } from '@angular/core';
 import { faChevronLeft, faCircleNotch, faEnvelope, faFilter, faLongArrowAltDown, faLongArrowAltUp, faPlus, faTimes } from '@fortawesome/free-solid-svg-icons';
-import { FormBuilder, FormGroup } from '@angular/forms';
+import { FormBuilder, FormGroup, FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { Subject, takeUntil } from 'rxjs';
 import { Course } from 'app/entities/course.model';
 import { ChannelDTO, getAsChannelDTO } from 'app/entities/metis/conversation/channel.model';
@@ -25,14 +25,27 @@ import { MetisConversationService } from 'app/shared/metis/metis-conversation.se
 import { PostContextFilter, PostSortCriterion, SortDirection } from 'app/shared/metis/metis.util';
 import { ConversationDTO } from 'app/entities/metis/conversation/conversation.model';
 import { CourseSidebarService } from 'app/overview/course-sidebar.service';
+import { NgClass } from '@angular/common';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
+import { InfiniteScrollDirective } from 'ngx-infinite-scroll';
+import { PostingThreadComponent } from 'app/shared/metis/posting-thread/posting-thread.component';
+import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 
 @Component({
     selector: 'jhi-course-wide-search',
     templateUrl: './course-wide-search.component.html',
     styleUrls: ['./course-wide-search.component.scss'],
     encapsulation: ViewEncapsulation.None,
+    imports: [NgClass, TranslateDirective, FaIconComponent, FormsModule, ReactiveFormsModule, NgbTooltip, InfiniteScrollDirective, PostingThreadComponent, ArtemisTranslatePipe],
 })
 export class CourseWideSearchComponent implements OnInit, AfterViewInit, OnDestroy {
+    metisService = inject(MetisService);
+    metisConversationService = inject(MetisConversationService);
+    private formBuilder = inject(FormBuilder);
+    cdr = inject(ChangeDetectorRef);
+
     @Input()
     courseWideSearchConfig: CourseWideSearchConfig;
 
@@ -73,13 +86,6 @@ export class CourseWideSearchComponent implements OnInit, AfterViewInit, OnDestr
     getAsChannel = getAsChannelDTO;
 
     private courseSidebarService: CourseSidebarService = inject(CourseSidebarService);
-
-    constructor(
-        public metisService: MetisService, // instance from course-conversations.component
-        public metisConversationService: MetisConversationService, // instance from course-conversations.component
-        private formBuilder: FormBuilder,
-        public cdr: ChangeDetectorRef,
-    ) {}
 
     ngOnInit() {
         this.subscribeToMetis();

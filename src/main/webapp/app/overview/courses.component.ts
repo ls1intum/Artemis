@@ -1,4 +1,4 @@
-import { Component, OnDestroy, OnInit } from '@angular/core';
+import { Component, OnDestroy, OnInit, inject } from '@angular/core';
 import { CoursesForDashboardDTO } from 'app/course/manage/courses-for-dashboard-dto';
 import { Course } from 'app/entities/course.model';
 import { CourseManagementService } from '../course/manage/course-management.service';
@@ -9,18 +9,44 @@ import { TeamService } from 'app/exercises/shared/team/team.service';
 import { JhiWebsocketService } from 'app/core/websocket/websocket.service';
 import dayjs from 'dayjs/esm';
 import { Exam } from 'app/entities/exam/exam.model';
-import { Router } from '@angular/router';
+import { Router, RouterLink } from '@angular/router';
 import { faArrowDownAZ, faArrowUpAZ, faDoorOpen, faPenAlt } from '@fortawesome/free-solid-svg-icons';
 import { CourseAccessStorageService } from 'app/course/course-access-storage.service';
 import { CourseForDashboardDTO } from 'app/course/manage/course-for-dashboard-dto';
 import { sortCourses } from 'app/shared/util/course.util';
+import { TranslateDirective } from '../shared/language/translate.directive';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { SearchFilterComponent } from '../shared/search-filter/search-filter.component';
+import { NgTemplateOutlet } from '@angular/common';
+import { CourseCardComponent } from './course-card.component';
+import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
+import { ArtemisTranslatePipe } from '../shared/pipes/artemis-translate.pipe';
+import { SearchFilterPipe } from 'app/shared/pipes/search-filter.pipe';
 
 @Component({
     selector: 'jhi-overview',
     templateUrl: './courses.component.html',
     styleUrls: ['./courses.component.scss'],
+    imports: [
+        TranslateDirective,
+        FaIconComponent,
+        SearchFilterComponent,
+        RouterLink,
+        NgTemplateOutlet,
+        CourseCardComponent,
+        ArtemisDatePipe,
+        ArtemisTranslatePipe,
+        SearchFilterPipe,
+    ],
 })
 export class CoursesComponent implements OnInit, OnDestroy {
+    private courseService = inject(CourseManagementService);
+    private guidedTourService = inject(GuidedTourService);
+    private teamService = inject(TeamService);
+    private jhiWebsocketService = inject(JhiWebsocketService);
+    private router = inject(Router);
+    private courseAccessStorageService = inject(CourseAccessStorageService);
+
     protected readonly faPenAlt = faPenAlt;
     protected readonly faArrowDownAZ = faArrowDownAZ;
     protected readonly faArrowUpAZ = faArrowUpAZ;
@@ -40,15 +66,6 @@ export class CoursesComponent implements OnInit, OnDestroy {
 
     coursesLoaded = false;
     isSortAscending = true;
-
-    constructor(
-        private courseService: CourseManagementService,
-        private guidedTourService: GuidedTourService,
-        private teamService: TeamService,
-        private jhiWebsocketService: JhiWebsocketService,
-        private router: Router,
-        private courseAccessStorageService: CourseAccessStorageService,
-    ) {}
 
     async ngOnInit() {
         this.loadAndFilterCourses();

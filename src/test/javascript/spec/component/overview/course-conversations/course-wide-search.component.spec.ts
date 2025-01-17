@@ -22,7 +22,6 @@ import { NgbTooltipMocksModule } from '../../../helpers/mocks/directive/ngbToolt
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 
 @Directive({
-    // eslint-disable-next-line @angular-eslint/directive-selector
     selector: '[infiniteScroll], [infinite-scroll], [data-infinite-scroll]',
 })
 class InfiniteScrollStubDirective {

@@ -8,7 +8,6 @@ import { ArtemisSharedPipesModule } from 'app/shared/pipes/shared-pipes.module';
     selector: 'jhi-icon-card',
     templateUrl: './icon-card.component.html',
     styleUrl: './icon-card.component.scss',
-    standalone: true,
     imports: [ArtemisSharedCommonModule, ArtemisSharedPipesModule],
 })
 export class IconCardComponent {

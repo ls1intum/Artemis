@@ -1,3 +1,4 @@
+import { CourseCompetenciesDetailsComponent } from 'app/overview/course-competencies/course-competencies-details.component';
 import { ArtemisSharedModule } from 'app/shared/shared.module';
 import { ArtemisSharedComponentModule } from 'app/shared/components/shared-component.module';
 import { ArtemisSharedPipesModule } from 'app/shared/pipes/shared-pipes.module';
@@ -8,9 +9,9 @@ import { UserRouteAccessService } from 'app/core/auth/user-route-access-service'
 import { Authority } from 'app/shared/constants/authority.constants';
 import { RouterModule, Routes } from '@angular/router';
 import { ArtemisMarkdownModule } from 'app/shared/markdown.module';
-import { CourseCompetenciesDetailsComponent } from 'app/overview/course-competencies/course-competencies-details.component';
+
 import { ArtemisSidePanelModule } from 'app/shared/side-panel/side-panel.module';
-import { FireworksModule } from 'app/shared/fireworks/fireworks.module';
+
 import { JudgementOfLearningRatingComponent } from 'app/course/competencies/judgement-of-learning-rating/judgement-of-learning-rating.component';
 import { AttachmentUnitComponent } from 'app/overview/course-lectures/attachment-unit/attachment-unit.component';
 import { VideoUnitComponent } from 'app/overview/course-lectures/video-unit/video-unit.component';
@@ -20,7 +21,7 @@ import { OnlineUnitComponent } from 'app/overview/course-lectures/online-unit/on
 const routes: Routes = [
     {
         path: '',
-        component: CourseCompetenciesDetailsComponent,
+        loadComponent: () => import('app/overview/course-competencies/course-competencies-details.component').then((m) => m.CourseCompetenciesDetailsComponent),
         data: {
             authorities: [Authority.USER],
             pageTitle: 'overview.competencies',
@@ -38,14 +39,13 @@ const routes: Routes = [
         ArtemisCompetenciesModule,
         ArtemisMarkdownModule,
         ArtemisSidePanelModule,
-        FireworksModule,
         JudgementOfLearningRatingComponent,
         AttachmentUnitComponent,
         VideoUnitComponent,
         TextUnitComponent,
         OnlineUnitComponent,
+        CourseCompetenciesDetailsComponent,
     ],
-    declarations: [CourseCompetenciesDetailsComponent],
     exports: [CourseCompetenciesDetailsComponent],
 })
 export class ArtemisCourseCompetenciesDetailsModule {}

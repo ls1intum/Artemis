@@ -3,6 +3,7 @@ import { ButtonSize, ButtonType } from 'app/shared/components/button.component';
 import { ProgrammingExercise } from 'app/entities/programming/programming-exercise.model';
 import { AuxiliaryRepository } from 'app/entities/programming/programming-exercise-auxiliary-repository-model';
 import { faPlus } from '@fortawesome/free-solid-svg-icons';
+import { ButtonComponent } from 'app/shared/components/button.component';
 
 @Component({
     selector: 'jhi-add-auxiliary-repository-button',
@@ -15,6 +16,7 @@ import { faPlus } from '@fortawesome/free-solid-svg-icons';
             (onClick)="addAuxiliaryRepositoryRow()"
         />
     `,
+    imports: [ButtonComponent],
 })
 export class AddAuxiliaryRepositoryButtonComponent {
     protected readonly ButtonType = ButtonType;

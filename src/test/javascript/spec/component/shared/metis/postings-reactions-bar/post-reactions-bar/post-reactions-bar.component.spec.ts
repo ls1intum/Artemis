@@ -2,19 +2,17 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { MetisService } from 'app/shared/metis/metis.service';
 import { DebugElement } from '@angular/core';
 import { Post } from 'app/entities/metis/post.model';
-import { MockComponent, MockDirective, MockModule, MockPipe, MockProvider } from 'ng-mocks';
+import { MockComponent, MockDirective, MockPipe, MockProvider } from 'ng-mocks';
 import { getElement } from '../../../../../helpers/utils/general.utils';
 import { PostReactionsBarComponent } from 'app/shared/metis/posting-reactions-bar/post-reactions-bar/post-reactions-bar.component';
-import { OverlayModule } from '@angular/cdk/overlay';
 import { Reaction } from 'app/entities/metis/reaction.model';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { ReactionService } from 'app/shared/metis/reaction.service';
 import { MockReactionService } from '../../../../../helpers/mocks/service/mock-reaction.service';
 import { AccountService } from 'app/core/auth/account.service';
 import { MockAccountService } from '../../../../../helpers/mocks/service/mock-account.service';
-import { EmojiData, EmojiModule } from '@ctrl/ngx-emoji-mart/ngx-emoji';
+import { EmojiData } from '@ctrl/ngx-emoji-mart/ngx-emoji';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { PickerModule } from '@ctrl/ngx-emoji-mart';
 import { DisplayPriority, UserRole } from 'app/shared/metis/metis.util';
 import { MockTranslateService, TranslatePipeMock } from '../../../../../helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
@@ -57,7 +55,7 @@ describe('PostReactionsBarComponent', () => {
 
     beforeEach(() => {
         return TestBed.configureTestingModule({
-            imports: [MockModule(OverlayModule), MockModule(EmojiModule), MockModule(PickerModule), MockDirective(NgbTooltip)],
+            imports: [MockDirective(NgbTooltip)],
             declarations: [
                 PostReactionsBarComponent,
                 TranslatePipeMock,

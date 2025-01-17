@@ -42,7 +42,6 @@ describe('QuizExercise Multiple Choice Question Statistic Component', () => {
     beforeEach(() => {
         TestBed.configureTestingModule({
             imports: [ArtemisTestModule],
-            declarations: [MultipleChoiceQuestionStatisticComponent],
             providers: [
                 { provide: ActivatedRoute, useValue: route },
                 { provide: LocalStorageService, useClass: MockSyncStorage },

@@ -16,7 +16,7 @@ import { LegalDocumentUnsavedChangesWarningModule } from 'app/admin/legal/unsave
         ArtemisMarkdownEditorModule,
         ArtemisModePickerModule,
         LegalDocumentUnsavedChangesWarningModule,
+        LegalDocumentUpdateComponent,
     ],
-    declarations: [LegalDocumentUpdateComponent],
 })
 export class LegalUpdateModule {}

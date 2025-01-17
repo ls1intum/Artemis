@@ -15,8 +15,6 @@ export class CircularProgressBarComponent implements OnChanges {
     progressText = 'Completed';
     circleColor = '#000000';
 
-    constructor() {}
-
     ngOnChanges() {
         if (this.progressInPercent > 100) {
             this.progressUsedForColorCalculation = 100;

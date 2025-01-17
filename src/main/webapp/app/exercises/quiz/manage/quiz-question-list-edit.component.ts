@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, EventEmitter, Input, Output, QueryList, ViewChildren, ViewEncapsulation } from '@angular/core';
+import { ChangeDetectionStrategy, Component, EventEmitter, Input, Output, QueryList, ViewChildren, ViewEncapsulation, inject } from '@angular/core';
 import { NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
 import { QuizQuestion, QuizQuestionType, ScoringType } from 'app/entities/quiz/quiz-question.model';
 import { MultipleChoiceQuestion } from 'app/entities/quiz/multiple-choice-question.model';
@@ -11,6 +11,10 @@ import { MultipleChoiceQuestionEditComponent } from 'app/exercises/quiz/manage/m
 import { DragAndDropQuestionEditComponent } from 'app/exercises/quiz/manage/drag-and-drop-question/drag-and-drop-question-edit.component';
 import { ShortAnswerQuestionEditComponent } from 'app/exercises/quiz/manage/short-answer-question/short-answer-question-edit.component';
 import { ApollonDiagramImportDialogComponent } from 'app/exercises/quiz/manage/apollon-diagrams/apollon-diagram-import-dialog.component';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { NgClass } from '@angular/common';
+import { QuizQuestionListEditExistingComponent } from './quiz-question-list-edit-existing.component';
 
 @Component({
     selector: 'jhi-quiz-question-list-edit',
@@ -18,8 +22,19 @@ import { ApollonDiagramImportDialogComponent } from 'app/exercises/quiz/manage/a
     changeDetection: ChangeDetectionStrategy.OnPush,
     styleUrls: ['./quiz-question-list-edit.component.scss', '../shared/quiz.scss'],
     encapsulation: ViewEncapsulation.None,
+    imports: [
+        TranslateDirective,
+        MultipleChoiceQuestionEditComponent,
+        DragAndDropQuestionEditComponent,
+        ShortAnswerQuestionEditComponent,
+        FaIconComponent,
+        NgClass,
+        QuizQuestionListEditExistingComponent,
+    ],
 })
 export class QuizQuestionListEditComponent {
+    private modalService = inject(NgbModal);
+
     @Input() courseId: number;
     @Input() quizQuestions: QuizQuestion[] = [];
     @Input() disabled = false;
@@ -46,8 +61,6 @@ export class QuizQuestionListEditComponent {
     showExistingQuestions = false;
 
     fileMap = new Map<string, { path?: string; file: File }>();
-
-    constructor(private modalService: NgbModal) {}
 
     /**
      * Emit onQuestionUpdated if there is an update of the question.

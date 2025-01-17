@@ -1,7 +1,7 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { FormsModule } from '@angular/forms';
 import { By } from '@angular/platform-browser';
 import { ModelingExplanationEditorComponent } from 'app/exercises/modeling/shared/modeling-explanation-editor.component';
+import { ArtemisTestModule } from '../../test.module';
 
 describe('ModelingExplanationEditorComponent', () => {
     let fixture: ComponentFixture<ModelingExplanationEditorComponent>;
@@ -9,9 +9,7 @@ describe('ModelingExplanationEditorComponent', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [FormsModule],
-            declarations: [ModelingExplanationEditorComponent],
-            schemas: [],
+            imports: [ArtemisTestModule],
         })
             .compileComponents()
             .then(() => {

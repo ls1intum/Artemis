@@ -95,6 +95,8 @@ artemis:
                     default: "ghcr.io/ls1intum/artemis-javascript-docker:v1.0.0"
                 r:
                     default: "ghcr.io/ls1intum/artemis-r-docker:v1.0.0"
+                bash:
+                    default: "ghcr.io/ls1intum/artemis-bash-docker:v1.0.0"
                 c_plus_plus:
                     default: "ghcr.io/ls1intum/artemis-cpp-docker:v1.0.0"
                 c_sharp:
@@ -209,7 +211,7 @@ spring:
     main:
         allow-bean-definition-overriding: false
         allow-circular-references: false
-        lazy-initialization: false # cannot set this to true (even if we would want, because then LocalCI does not process build results correctly)
+        lazy-initialization: false # cannot set this because of static inject in FilePathService
     task:
         execution:
             thread-name-prefix: artemis-task-

@@ -9,13 +9,12 @@ import { RemoveSecondsPipe } from 'app/course/tutorial-groups/shared/remove-seco
  * Example: 'Every Week, Monday from 14:00 to 15:00' English
  * Example: 'Jede Woche, Montag von 14:00 bis 15:00' German
  */
-@Pipe({
-    name: 'meetingPattern',
-})
+@Pipe({ name: 'meetingPattern' })
 export class MeetingPatternPipe implements PipeTransform {
     removeSecondsPipe = new RemoveSecondsPipe();
 
     constructor(private translateService: TranslateService) {}
+
     /**
      * Transforms a tutorial group schedule to a translated meeting pattern.
      * @param schedule The tutorial group schedule to transform.
