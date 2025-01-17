@@ -125,6 +125,7 @@ jobs:
       with:
         result-encoding: string
         script: |
+          console.log(`Inputs ${context.inputs}`);
           console.log(`Github inputs ${inputs}`);
           console.log(`Github tag ${inputs.tag}`);
           console.log(`Event payload is ${JSON.stringify(context.payload)}`);
