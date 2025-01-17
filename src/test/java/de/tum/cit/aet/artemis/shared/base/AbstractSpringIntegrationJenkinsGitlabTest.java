@@ -135,12 +135,7 @@ public abstract class AbstractSpringIntegrationJenkinsGitlabTest extends Abstrac
 
         }
         else {
-            jenkinsRequestMockProvider.mockGetFolderJob(projectKey);
-            jenkinsRequestMockProvider.mockGetJobConfig(projectKey, projectKey + "-" + TEMPLATE.getName());
             jenkinsRequestMockProvider.mockCreateBuildPlan(projectKey, TEMPLATE.getName(), false);
-
-            jenkinsRequestMockProvider.mockGetFolderJob(projectKey);
-            jenkinsRequestMockProvider.mockGetJobConfig(projectKey, projectKey + "-" + SOLUTION.getName());
             jenkinsRequestMockProvider.mockCreateBuildPlan(projectKey, SOLUTION.getName(), false);
         }
         jenkinsRequestMockProvider.mockTriggerBuild(projectKey, TEMPLATE.getName(), false);
@@ -454,6 +449,13 @@ public abstract class AbstractSpringIntegrationJenkinsGitlabTest extends Abstrac
     public void mockGetBuildPlan(String projectKey, String planName, boolean planExistsInCi, boolean planIsActive, boolean planIsBuilding, boolean failToGetBuild)
             throws Exception {
         jenkinsRequestMockProvider.mockGetBuildStatus(projectKey, planName, planExistsInCi, planIsActive, planIsBuilding, failToGetBuild);
+    }
+
+    @Override
+    public void mockGetBuildPlanConfig(String projectKey, String planName) throws Exception {
+        jenkinsRequestMockProvider.mockGetFolderJob(projectKey);
+        jenkinsRequestMockProvider.mockGetFolderConfig(projectKey);
+        jenkinsRequestMockProvider.mockGetJobConfig(projectKey, planName);
     }
 
     @Override

@@ -311,6 +311,11 @@ public abstract class AbstractSpringIntegrationGitlabCIGitlabSamlTest extends Ab
     }
 
     @Override
+    public void mockGetBuildPlanConfig(String projectKey, String planName) {
+        // Unsupported action in GitLab CI setup
+    }
+
+    @Override
     public void mockHealthInCiService(boolean isRunning, HttpStatus httpStatus) throws URISyntaxException, JsonProcessingException {
         gitlabRequestMockProvider.mockHealth(isRunning ? "ok" : "notok", httpStatus);
     }

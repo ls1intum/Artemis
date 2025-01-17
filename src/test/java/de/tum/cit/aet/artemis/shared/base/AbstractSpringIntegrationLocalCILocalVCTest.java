@@ -551,6 +551,11 @@ public abstract class AbstractSpringIntegrationLocalCILocalVCTest extends Abstra
     }
 
     @Override
+    public void mockGetBuildPlanConfig(String projectKey, String planName) {
+        // not needed for localVCS/CI
+    }
+
+    @Override
     public void mockHealthInCiService(boolean isRunning, HttpStatus httpStatus) {
         // Not implemented for local VC and local CI
     }

@@ -256,6 +256,11 @@ public abstract class AbstractSpringIntegrationIndependentTest extends AbstractA
     }
 
     @Override
+    public void mockGetBuildPlanConfig(String projectKey, String planName) {
+        log.debug("Called mockGetBuildPlanConfig with args {}, {}", projectKey, planName);
+    }
+
+    @Override
     public void mockHealthInCiService(boolean isRunning, HttpStatus httpStatus) {
         log.debug("Called mockHealthInCiService with args {}, {}", isRunning, httpStatus);
     }

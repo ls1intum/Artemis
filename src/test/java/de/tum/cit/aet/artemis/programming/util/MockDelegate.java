@@ -107,6 +107,8 @@ public interface MockDelegate {
 
     void mockGetBuildPlan(String projectKey, String planName, boolean planExistsInCi, boolean planIsActive, boolean planIsBuilding, boolean failToGetBuild) throws Exception;
 
+    void mockGetBuildPlanConfig(String projectKey, String planName) throws Exception;
+
     void mockHealthInCiService(boolean isRunning, HttpStatus httpStatus) throws Exception;
 
     void mockConfigureBuildPlan(ProgrammingExerciseParticipation participation, String defaultBranch) throws Exception;

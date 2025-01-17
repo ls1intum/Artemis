@@ -259,6 +259,7 @@ class ProgrammingSubmissionAndResultGitlabJenkinsIntegrationTest extends Abstrac
 
         gitlabRequestMockProvider.mockGetDefaultBranch(defaultBranch);
         gitlabRequestMockProvider.mockGetPushDate(testService.participation, Map.of(firstCommitHash, firstCommitDate, secondCommitHash, secondCommitDate));
+        jenkinsRequestMockProvider.mockTriggerBuildPlain(exercise.getProjectKey(), exercise.getProjectKey() + "-" + userLogin.toUpperCase());
 
         // First commit is pushed but not recorded
 
