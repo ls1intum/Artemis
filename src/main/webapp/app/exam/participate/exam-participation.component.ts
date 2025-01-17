@@ -62,6 +62,7 @@ import { JhiConnectionStatusComponent } from 'app/shared/connection-status/conne
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { ExamResultSummaryComponent } from './summary/exam-result-summary.component';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
+import { convertDateFromServer } from 'app/utils/date.utils';
 
 type GenerateParticipationStatus = 'generating' | 'failed' | 'success';
 
