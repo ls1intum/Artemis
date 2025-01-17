@@ -125,6 +125,7 @@ jobs:
       with:
         result-encoding: string
         script: |
+          console.log(`Event payload is ${JSON.stringify(context.payload)}`);
           if (context.eventName === "workflow_dispatch") {
             // Use the "tag" passed in via the workflow_call input
             return context.payload.inputs.tag;
