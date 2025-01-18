@@ -7,8 +7,7 @@ import { ArtemisSharedComponentModule } from 'app/shared/components/shared-compo
 import { ArtemisSidebarModule } from 'app/shared/sidebar/sidebar.module';
 
 @NgModule({
-    imports: [ArtemisSharedModule, ArtemisSharedCommonModule, ArtemisSharedComponentModule, ArtemisExamSharedModule, ArtemisSidebarModule],
-    declarations: [CourseExamsComponent],
+    imports: [ArtemisSharedModule, ArtemisSharedCommonModule, ArtemisSharedComponentModule, ArtemisExamSharedModule, ArtemisSidebarModule, CourseExamsComponent],
     exports: [CourseExamsComponent],
 })
 export class CourseExamsModule {}

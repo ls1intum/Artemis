@@ -5,8 +5,6 @@ import { ArtemisTestModule } from '../../test.module';
 import { MockExerciseService } from '../../helpers/mocks/service/mock-exercise.service';
 import { ExamManagementService } from 'app/exam/manage/exam-management.service';
 import { MockExamManagementService } from '../../helpers/mocks/service/mock-exam-management.service';
-import { TranslatePipeMock } from '../../helpers/mocks/service/mock-translate.service';
-import { MockRouterLinkDirective } from '../../helpers/mocks/directive/mock-router-link.directive';
 
 describe('UpcomingExamsAndExercisesComponent', () => {
     let component: UpcomingExamsAndExercisesComponent;
@@ -15,7 +13,6 @@ describe('UpcomingExamsAndExercisesComponent', () => {
     beforeEach(() => {
         return TestBed.configureTestingModule({
             imports: [ArtemisTestModule],
-            declarations: [UpcomingExamsAndExercisesComponent, TranslatePipeMock, MockRouterLinkDirective],
             providers: [
                 { provide: ExerciseService, useClass: MockExerciseService },
                 {

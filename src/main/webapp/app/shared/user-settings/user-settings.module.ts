@@ -16,8 +16,13 @@ import { SshUserSettingsKeyDetailsComponent } from 'app/shared/user-settings/ssh
 import { SshUserSettingsFingerprintsComponent } from 'app/shared/user-settings/ssh-settings/fingerprints/ssh-user-settings-fingerprints.component';
 
 @NgModule({
-    imports: [RouterModule.forChild(userSettingsState), ArtemisSharedModule, ArtemisSharedComponentModule, ClipboardModule, FormDateTimePickerModule, DocumentationLinkComponent],
-    declarations: [
+    imports: [
+        RouterModule.forChild(userSettingsState),
+        ArtemisSharedModule,
+        ArtemisSharedComponentModule,
+        ClipboardModule,
+        FormDateTimePickerModule,
+        DocumentationLinkComponent,
         AccountInformationComponent,
         NotificationSettingsComponent,
         ScienceSettingsComponent,

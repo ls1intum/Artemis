@@ -1,6 +1,7 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, inject } from '@angular/core';
 import { FeatureToggle, FeatureToggleService } from 'app/shared/feature-toggle/feature-toggle.service';
 import { tap } from 'rxjs/operators';
+import { NgxDatatableModule } from '@siemens/ngx-datatable';
 
 type FeatureToggleState = {
     index: number;
@@ -24,11 +25,12 @@ type FeatureToggleState = {
             </ngx-datatable-column>
         </ngx-datatable>
     `,
+    imports: [NgxDatatableModule],
 })
 export class AdminFeatureToggleComponent implements OnInit {
-    public availableToggles: FeatureToggleState[] = [];
+    private featureToggleService = inject(FeatureToggleService);
 
-    constructor(private featureToggleService: FeatureToggleService) {}
+    public availableToggles: FeatureToggleState[] = [];
 
     ngOnInit(): void {
         this.featureToggleService

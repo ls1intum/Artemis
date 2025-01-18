@@ -1,19 +1,22 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { MockPipe, MockProvider } from 'ng-mocks';
+import { MockProvider } from 'ng-mocks';
 import { AlertService } from 'app/core/util/alert.service';
 import { Router } from '@angular/router';
 import { MockRouter } from '../../../../../helpers/mocks/mock-router';
 import { of } from 'rxjs';
 import { TutorialGroupsService } from 'app/course/tutorial-groups/services/tutorial-groups.service';
-import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { HttpResponse } from '@angular/common/http';
 import { TutorialGroup } from 'app/entities/tutorial-group/tutorial-group.model';
 import { By } from '@angular/platform-browser';
 import { EditTutorialGroupComponent } from 'app/course/tutorial-groups/tutorial-groups-management/tutorial-groups/crud/edit-tutorial-group/edit-tutorial-group.component';
-import { TutorialGroupFormStubComponent } from '../../../stubs/tutorial-group-form-stub.component';
-import { LoadingIndicatorContainerStubComponent } from '../../../../../helpers/stubs/loading-indicator-container-stub.component';
 import { generateExampleTutorialGroup, tutorialGroupToTutorialGroupFormData } from '../../../helpers/tutorialGroupExampleModels';
 import { mockedActivatedRoute } from '../../../../../helpers/mocks/activated-route/mock-activated-route-query-param-map';
+import { ArtemisTestModule } from '../../../../../test.module';
+import '@angular/localize/init';
+import { OwlNativeDateTimeModule } from '@danielmoncada/angular-datetime-picker';
+import { ArtemisDatePipe } from '../../../../../../../../main/webapp/app/shared/pipes/artemis-date.pipe';
+import { MockResizeObserver } from '../../../../../helpers/mocks/service/mock-resize-observer';
+import { TutorialGroupFormComponent } from '../../../../../../../../main/webapp/app/course/tutorial-groups/tutorial-groups-management/tutorial-groups/crud/tutorial-group-form/tutorial-group-form.component';
 
 describe('EditTutorialGroupComponent', () => {
     let fixture: ComponentFixture<EditTutorialGroupComponent>;
@@ -26,12 +29,11 @@ describe('EditTutorialGroupComponent', () => {
 
     const router = new MockRouter();
 
-    beforeEach(() => {
-        TestBed.configureTestingModule({
-            imports: [],
-            declarations: [EditTutorialGroupComponent, LoadingIndicatorContainerStubComponent, TutorialGroupFormStubComponent, MockPipe(ArtemisTranslatePipe)],
+    beforeEach(async () => {
+        await TestBed.configureTestingModule({
+            imports: [ArtemisTestModule, EditTutorialGroupComponent, OwlNativeDateTimeModule],
             providers: [
-                MockProvider(TutorialGroupsService),
+                MockProvider(ArtemisDatePipe),
                 MockProvider(AlertService),
                 { provide: Router, useValue: router },
                 mockedActivatedRoute(
@@ -43,23 +45,25 @@ describe('EditTutorialGroupComponent', () => {
                     {},
                 ),
             ],
-        })
-            .compileComponents()
-            .then(() => {
-                fixture = TestBed.createComponent(EditTutorialGroupComponent);
-                component = fixture.componentInstance;
-                exampleTutorialGroup = generateExampleTutorialGroup({});
+        }).compileComponents();
 
-                tutorialGroupService = TestBed.inject(TutorialGroupsService);
+        fixture = TestBed.createComponent(EditTutorialGroupComponent);
+        component = fixture.componentInstance;
+        exampleTutorialGroup = generateExampleTutorialGroup({});
 
-                const response: HttpResponse<TutorialGroup> = new HttpResponse({
-                    body: exampleTutorialGroup,
-                    status: 200,
-                });
+        tutorialGroupService = TestBed.inject(TutorialGroupsService);
 
-                findTutorialGroupSpy = jest.spyOn(tutorialGroupService, 'getOneOfCourse').mockReturnValue(of(response));
-                fixture.detectChanges();
-            });
+        const response: HttpResponse<TutorialGroup> = new HttpResponse({
+            body: exampleTutorialGroup,
+            status: 200,
+        });
+
+        global.ResizeObserver = jest.fn().mockImplementation((callback: ResizeObserverCallback) => {
+            return new MockResizeObserver(callback);
+        });
+
+        findTutorialGroupSpy = jest.spyOn(tutorialGroupService, 'getOneOfCourse').mockReturnValue(of(response));
+        fixture.detectChanges();
     });
 
     afterEach(() => {
@@ -73,14 +77,14 @@ describe('EditTutorialGroupComponent', () => {
     });
 
     it('should set form data correctly', () => {
-        const tutorialGroupFormStubComponent: TutorialGroupFormStubComponent = fixture.debugElement.query(By.directive(TutorialGroupFormStubComponent)).componentInstance;
+        const tutorialGroupFormComponent: TutorialGroupFormComponent = fixture.debugElement.query(By.directive(TutorialGroupFormComponent)).componentInstance;
 
         expect(component.tutorialGroup).toEqual(exampleTutorialGroup);
         expect(findTutorialGroupSpy).toHaveBeenCalledWith(2, 1);
         expect(findTutorialGroupSpy).toHaveBeenCalledOnce();
 
         expect(component.formData).toEqual(tutorialGroupToTutorialGroupFormData(exampleTutorialGroup));
-        expect(tutorialGroupFormStubComponent.formData).toEqual(component.formData);
+        expect(tutorialGroupFormComponent.formData).toEqual(component.formData);
     });
 
     it('should send PUT request upon form submission and navigate', () => {
@@ -106,7 +110,7 @@ describe('EditTutorialGroupComponent', () => {
         const updatedStub = jest.spyOn(tutorialGroupService, 'update').mockReturnValue(of(updateResponse));
         const navigateSpy = jest.spyOn(router, 'navigate');
 
-        const tutorialGroupForm: TutorialGroupFormStubComponent = fixture.debugElement.query(By.directive(TutorialGroupFormStubComponent)).componentInstance;
+        const tutorialGroupForm: TutorialGroupFormComponent = fixture.debugElement.query(By.directive(TutorialGroupFormComponent)).componentInstance;
 
         const formData = tutorialGroupToTutorialGroupFormData(changedTutorialGroup);
 

@@ -1,4 +1,4 @@
-import { Component, ElementRef, OnInit, ViewChild } from '@angular/core';
+import { Component, ElementRef, OnInit, ViewChild, inject } from '@angular/core';
 import { User } from 'app/core/user/user.model';
 import { AccountService } from 'app/core/auth/account.service';
 import { Observable, Subscription, tap } from 'rxjs';
@@ -10,13 +10,23 @@ import { base64StringToBlob } from 'app/utils/blob-util';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { UserSettingsService } from 'app/shared/user-settings/user-settings.service';
 import { AlertService, AlertType } from 'app/core/util/alert.service';
+import { TranslateDirective } from '../../language/translate.directive';
+import { SecuredImageComponent } from '../../image/secured-image.component';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 
 @Component({
     selector: 'jhi-account-information',
     templateUrl: './account-information.component.html',
     styleUrls: ['../user-settings.scss'],
+    imports: [TranslateDirective, SecuredImageComponent, FaIconComponent, ArtemisDatePipe],
 })
 export class AccountInformationComponent implements OnInit {
+    private accountService = inject(AccountService);
+    private modalService = inject(NgbModal);
+    private userSettingsService = inject(UserSettingsService);
+    private alertService = inject(AlertService);
+
     currentUser?: User;
     croppedImage?: string;
     private authStateSubscription: Subscription;
@@ -26,13 +36,6 @@ export class AccountInformationComponent implements OnInit {
     faPen = faPencil;
     faTrash = faTrash;
     faPlus = faPlus;
-
-    constructor(
-        private accountService: AccountService,
-        private modalService: NgbModal,
-        private userSettingsService: UserSettingsService,
-        private alertService: AlertService,
-    ) {}
 
     ngOnInit() {
         this.authStateSubscription = this.accountService

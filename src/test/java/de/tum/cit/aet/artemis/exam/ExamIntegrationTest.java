@@ -991,7 +991,7 @@ class ExamIntegrationTest extends AbstractSpringIntegrationJenkinsGitlabTest {
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testDeleteExamWithMultipleTestRuns() throws Exception {
         gitlabRequestMockProvider.enableMockingOfRequests();
-        jenkinsRequestMockProvider.enableMockingOfRequests(jenkinsServer, jenkinsJobPermissionsService);
+        jenkinsRequestMockProvider.enableMockingOfRequests(jenkinsJobPermissionsService);
 
         var exam = examUtilService.addExam(course1);
         exam = examUtilService.addTextModelingProgrammingExercisesToExam(exam, true, true);

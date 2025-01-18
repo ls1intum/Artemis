@@ -37,7 +37,6 @@ export class AssessmentDashboardInformationEntry {
     selector: 'jhi-assessment-dashboard-information',
     templateUrl: './assessment-dashboard-information.component.html',
     styleUrls: ['./assessment-dashboard-information.component.scss'],
-    standalone: true,
     imports: [TranslateDirective, PieChartModule, ArtemisSidePanelModule, RouterLink, ArtemisTranslatePipe],
 })
 export class AssessmentDashboardInformationComponent implements OnInit, OnChanges, OnDestroy {
@@ -97,11 +96,11 @@ export class AssessmentDashboardInformationComponent implements OnInit, OnChange
         ];
     }
 
-    ngOnChanges(): void {
+    ngOnChanges() {
         this.setup();
     }
 
-    ngOnDestroy(): void {
+    ngOnDestroy() {
         this.themeSubscription?.unsubscribe();
     }
 

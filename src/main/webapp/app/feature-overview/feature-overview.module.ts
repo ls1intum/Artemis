@@ -6,7 +6,6 @@ import { ArtemisSharedModule } from 'app/shared/shared.module';
 
 const FEATURE_OVERVIEW_ROUTES = [...featureOverviewState];
 @NgModule({
-    imports: [RouterModule.forChild(FEATURE_OVERVIEW_ROUTES), ArtemisSharedModule],
-    declarations: [FeatureOverviewComponent],
+    imports: [RouterModule.forChild(FEATURE_OVERVIEW_ROUTES), ArtemisSharedModule, FeatureOverviewComponent],
 })
 export class FeatureOverviewModule {}
