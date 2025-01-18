@@ -123,7 +123,7 @@ public class DataExportExamCreationService {
         var gradingScale = gradingScaleRepository.findByExamId(studentExam.getExam().getId());
         List<String> headers = new ArrayList<>();
         var examResults = getExamResultsStreamToPrint(studentResult, headers, gradingScale);
-        CSVFormat csvFormat = CSVFormat.DEFAULT.builder().setHeader(headers.toArray(String[]::new)).build();
+        CSVFormat csvFormat = CSVFormat.DEFAULT.builder().setHeader(headers.toArray(String[]::new)).get();
         try (final CSVPrinter printer = new CSVPrinter(
                 Files.newBufferedWriter(examWorkingDir.resolve(EXAM_DIRECTORY_PREFIX + studentExam.getId() + "_result" + CSV_FILE_EXTENSION)), csvFormat)) {
             printer.printRecord(examResults);
@@ -176,7 +176,7 @@ public class DataExportExamCreationService {
     private void addGeneralExamInformation(StudentExam studentExam, Path examWorkingDir) throws IOException {
         List<String> headers = new ArrayList<>();
         var generalExamInformation = getGeneralExamInformationStreamToPrint(studentExam, headers);
-        CSVFormat csvFormat = CSVFormat.DEFAULT.builder().setHeader(headers.toArray(String[]::new)).build();
+        CSVFormat csvFormat = CSVFormat.DEFAULT.builder().setHeader(headers.toArray(String[]::new)).get();
 
         try (CSVPrinter printer = new CSVPrinter(Files.newBufferedWriter(examWorkingDir.resolve(EXAM_DIRECTORY_PREFIX + studentExam.getId() + CSV_FILE_EXTENSION)), csvFormat)) {
             printer.printRecord(generalExamInformation);
