@@ -115,7 +115,7 @@ public class ProgrammingExerciseCodeReviewFeedbackService {
         var submissionOptional = programmingExerciseParticipationService.findProgrammingExerciseParticipationWithLatestSubmissionAndResult(participation.getId())
                 .findLatestSubmission();
         if (submissionOptional.isEmpty()) {
-            throw new BadRequestAlertException("No legal submissions found", "submission", "noSubmissionExists");
+            throw new BadRequestAlertException("No legal submissions found", "submission", "noSubmissionExists", true);
         }
         var submission = submissionOptional.get();
 

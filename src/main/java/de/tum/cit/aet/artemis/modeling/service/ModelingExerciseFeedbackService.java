@@ -75,7 +75,7 @@ public class ModelingExerciseFeedbackService {
                     .findLatestSubmission();
 
             if (submissionOptional.isEmpty()) {
-                throw new BadRequestAlertException("No legal submissions found", "submission", "noSubmissionExists");
+                throw new BadRequestAlertException("No legal submissions found", "submission", "noSubmissionExists", true);
             }
 
             ModelingSubmission modelingSubmission = (ModelingSubmission) submissionOptional.get();
@@ -83,7 +83,7 @@ public class ModelingExerciseFeedbackService {
             this.athenaFeedbackSuggestionsService.orElseThrow().checkLatestSubmissionHasNoAthenaResultOrThrow(modelingSubmission);
 
             if (modelingSubmission.isEmpty()) {
-                throw new BadRequestAlertException("Submission can not be empty for an AI feedback request", "submission", "noAthenaFeedbackOnEmptySubmission");
+                throw new BadRequestAlertException("Submission can not be empty for an AI feedback request", "submission", "noAthenaFeedbackOnEmptySubmission", true);
             }
 
             CompletableFuture.runAsync(() -> this.generateAutomaticNonGradedFeedback(modelingSubmission, participation, modelingExercise));
