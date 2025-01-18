@@ -30,14 +30,8 @@ public class LocalVCInfoContributor implements InfoContributor {
     @Value("${server.url}")
     private String artemisServerUrl;
 
-    @Value("${artemis.version-control.use-version-control-access-token:false}")
-    private boolean useVcsAccessToken;
-
     @Value("${artemis.version-control.repository-authentication-mechanisms:password,token,ssh}")
     private List<String> orderedAuthenticationMechanisms;
-
-    @Value("${artemis.version-control.show-clone-url-without-token:true}")
-    private boolean showCloneUrlWithoutToken;
 
     @Value("${artemis.version-control.ssh-port:7921}")
     private int sshPort;

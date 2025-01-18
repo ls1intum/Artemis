@@ -135,6 +135,9 @@ export class CodeButtonComponent implements OnInit {
             this.sshSettingsUrl = profileInfo.sshKeysURL;
             this.sshTemplateUrl = profileInfo.sshCloneURLTemplate;
 
+            if (profileInfo.authenticationMechanisms?.length) {
+                this.authenticationMethods = profileInfo.authenticationMechanisms;
+            }
             if (profileInfo.versionControlUrl) {
                 this.versionControlUrl = profileInfo.versionControlUrl;
             }
@@ -163,7 +166,6 @@ export class CodeButtonComponent implements OnInit {
             }
             this.ideName = this.getIde().name;
         });
-        console.log(this.copyEnabled);
     }
 
     public useSshUrl() {
