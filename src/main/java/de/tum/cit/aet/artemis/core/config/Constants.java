@@ -317,6 +317,11 @@ public final class Constants {
     public static final String PROFILE_BUILDAGENT = "buildagent";
 
     /**
+     * The name of the Spring profile used to process build jobs in a Jenkins setup.
+     */
+    public static final String PROFILE_JENKINS = "jenkins";
+
+    /**
      * The name of the Spring profile used for Artemis functionality.
      */
     public static final String PROFILE_ARTEMIS = "artemis";
