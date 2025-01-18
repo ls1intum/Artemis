@@ -24,7 +24,7 @@
         @if (useToken && isInCourseManagement && !userTokenPresent) {
             <div class="alert alert-warning" [innerHTML]="tokenMissingTip"></div>
         }
-        @if (useToken && isInCourseManagement && !userTokenStillValid) {
+        @if (useToken && isInCourseManagement && userTokenPresent && !userTokenStillValid) {
             <div class="alert alert-warning" [innerHTML]="tokenExpiredTip"></div>
         }
         @if (participations()!.length > 1) {
