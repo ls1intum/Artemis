@@ -1,5 +1,6 @@
 package de.tum.cit.aet.artemis.core.util;
 
+import java.net.URI;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -13,7 +14,7 @@ public class UrlUtils {
      * Uses the given base URL and a list of path segments (i.e. /api/some/path would have [api, some, path] as the
      * segments) in order to create the builder. The given arguments will be used to replace variable path segments.
      * I.e. if you have a path of <code>/api/some/&lt;variable&gt;/endpoint/&lt;another variable&gt;</code> and
-     * <code>args=["firstArg", 42]</code>, then the returned builder will be based on this path: <code>/api/some/frstArg/endpoint/42</code>
+     * <code>args=["firstArg", 42]</code>, then the returned builder will be based on this path: <code>/api/some/firstArg/endpoint/42</code>
      *
      * @param baseUrl      The URL to take as basis when building the endpoints path
      * @param pathSegments The segments to be appended to the base URL
@@ -21,6 +22,39 @@ public class UrlUtils {
      * @return A URI builder which combines all parameters into one base path for a REST API endpoint
      */
     public static UriComponentsBuilder buildEndpoint(String baseUrl, List<String> pathSegments, Object... args) {
+        final var parsedSegments = getParsedSegments(pathSegments, args);
+        return UriComponentsBuilder.fromUriString(baseUrl).pathSegment(parsedSegments);
+    }
+
+    /**
+     * Creates a {@link UriComponentsBuilder} that can be used for creating complex URLs for REST API endpoints.
+     * Uses the given base URL and a list of path segments (i.e. /api/some/path would have [api, some, path] as the
+     * segments) in order to create the builder. The given arguments will be used to replace variable path segments.
+     * I.e. if you have a path of <code>/api/some/&lt;variable&gt;/endpoint/&lt;another variable&gt;</code> and
+     * <code>args=["firstArg", 42]</code>, then the returned builder will be based on this path: <code>/api/some/firstArg/endpoint/42</code>
+     *
+     * @param baseUri      The URI to take as basis when building the endpoints path
+     * @param pathSegments The segments to be appended to the base URL
+     * @param args         Arguments that should replace the variable path segments
+     * @return A URI builder which combines all parameters into one base path for a REST API endpoint
+     */
+    public static UriComponentsBuilder buildEndpoint(URI baseUri, List<String> pathSegments, Object... args) {
+        final var parsedSegments = getParsedSegments(pathSegments, args);
+        return UriComponentsBuilder.fromUri(baseUri).pathSegment(parsedSegments);
+    }
+
+    /**
+     * Creates a string array that can be used for creating complex URLs for REST API endpoints.
+     * Uses the given path segments (i.e. /api/some/path would have [api, some, path] as the
+     * segments) in order to create the string array. The given arguments will be used to replace variable path segments.
+     * I.e. if you have a path of <code>/api/some/&lt;variable&gt;/endpoint/&lt;another variable&gt;</code> and
+     * <code>args=["firstArg", 42]</code>, then the returned builder will be based on this path: <code>/api/some/firstArg/endpoint/42</code>
+     *
+     * @param pathSegments The segments to be appended to the base URL
+     * @param args         Arguments that should replace the variable path segments
+     * @return a string array with the parsed segments
+     */
+    private static String[] getParsedSegments(List<String> pathSegments, Object[] args) {
         // Counts how many variable segments we have in the URL, e.g. like ["some static var", "<some variable>"] has one variable segment
         int segmentCtr = 0;
         final var parsedSegments = new ArrayList<String>();
@@ -41,7 +75,6 @@ public class UrlUtils {
         if (segmentCtr != args.length) {
             throw new IllegalArgumentException("Unable to build endpoint. Too many arguments! " + Arrays.toString(args));
         }
-
-        return UriComponentsBuilder.fromHttpUrl(baseUrl).pathSegment(parsedSegments.toArray(String[]::new));
+        return parsedSegments.toArray(String[]::new);
     }
 }

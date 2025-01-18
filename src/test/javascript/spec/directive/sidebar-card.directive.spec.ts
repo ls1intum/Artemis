@@ -1,7 +1,7 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { Component, ViewChild } from '@angular/core';
 import { MockComponent } from 'ng-mocks';
-import { ActivatedRoute, Params, Router, convertToParamMap } from '@angular/router';
+import { ActivatedRoute, Router, convertToParamMap } from '@angular/router';
 import { BehaviorSubject } from 'rxjs';
 import { SidebarCardDirective } from 'app/shared/sidebar/sidebar-card.directive';
 import { MockRouter } from '../helpers/mocks/mock-router';
@@ -21,7 +21,6 @@ class TestHostComponent {
 describe('SidebarCardDirective', () => {
     let component: TestHostComponent;
     let fixture: ComponentFixture<TestHostComponent>;
-    let queryParamsSubject: BehaviorSubject<Params>;
     const router = new MockRouter();
 
     beforeEach(async () => {
@@ -47,7 +46,6 @@ describe('SidebarCardDirective', () => {
                                 ),
                             },
                         },
-                        queryParams: queryParamsSubject,
                     },
                 },
             ],
