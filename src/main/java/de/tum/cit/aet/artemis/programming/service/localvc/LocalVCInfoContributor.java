@@ -44,9 +44,7 @@ public class LocalVCInfoContributor implements InfoContributor {
         // Store name of the version control system
         builder.withDetail(Constants.VERSION_CONTROL_NAME, "Local VC");
 
-        // Show the access token in case it is available in the clone URL
-        // with the account.service.ts and its check if the access token is required
-
+        // Store the authentication mechanisms that should be used by the code-button and their order
         builder.withDetail(INFO_CODE_BUTTON_AUTHENTICATION_MECHANISMS, orderedAuthenticationMechanisms);
         // Store ssh url template
         try {
