@@ -349,4 +349,29 @@ describe('MarkdownEditorMonacoComponent', () => {
         comp.parseMarkdown();
         expect(comp.defaultPreviewHtml).toEqual(expectedSafeHtml);
     });
+    it('should handle invalid callout type gracefully', () => {
+        comp._markdown = `
+> [!INVALID]
+> This is an invalid callout type.`;
+        comp.parseMarkdown();
+
+        expect(comp.defaultPreviewHtml?.changingThisBreaksApplicationSecurity).toContain('<blockquote>');
+    });
+
+    it('should render nested content within callouts', () => {
+        comp._markdown = `
+> [!NOTE]
+> # Heading
+> - List item 1
+> - List item 2
+>
+> Nested blockquote:
+> > This is nested.`;
+
+        comp.parseMarkdown();
+
+        expect(comp.defaultPreviewHtml?.changingThisBreaksApplicationSecurity).toContain('<h1>Heading</h1>');
+        expect(comp.defaultPreviewHtml?.changingThisBreaksApplicationSecurity).toContain('<ul>');
+        expect(comp.defaultPreviewHtml?.changingThisBreaksApplicationSecurity).toContain('<blockquote>');
+    });
 });
