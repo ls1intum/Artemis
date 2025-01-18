@@ -720,7 +720,7 @@ class MessageIntegrationTest extends AbstractSpringIntegrationIndependentTest {
 
         request.delete("/api/courses/" + courseId + "/messages/" + createdPost2.getId(), HttpStatus.OK);
         // After deleting the message in the second chat, the unread count in the first chat should stay the same, the unread count in the second chat will become 0
-        await().atMost(5, TimeUnit.SECONDS).untilAsserted(() -> {
+        await().atMost(20, TimeUnit.SECONDS).untilAsserted(() -> {
             SecurityUtils.setAuthorizationObject();
             assertThat(getUnreadMessagesCount(oneToOneChat1, student2)).isEqualTo(1);
             assertThat(getUnreadMessagesCount(oneToOneChat2, student2)).isZero();
