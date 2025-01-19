@@ -48,25 +48,19 @@ export class LectureAttachmentReferenceAction extends TextEditorAction {
                 this.lecturesWithDetails = lectures
                     .filter((lecture) => !!lecture.id && !!lecture.title)
                     .map((lecture) => {
-                        let attachmentCopy = cloneDeep(lecture.attachments);
+                        const attachmentsWithFileUrls = cloneDeep(lecture.attachments)?.map((attachment) => {
+                            if (attachment.link && attachment.name) {
+                                attachment.link = this.fileService.createAttachmentFileUrl(attachment.link!, attachment.name!, false);
+                            }
 
-                        if (attachmentCopy) {
-                            attachmentCopy = attachmentCopy.map((attachment) => {
-                                if (attachment.link && attachment.name) {
-                                    attachment.link = this.fileService.createAttachmentFileUrl(attachment.link!, attachment.name!, false);
-                                }
-
-                                return attachment;
-                            });
-                        } else {
-                            attachmentCopy = lecture.attachments;
-                        }
+                            return attachment;
+                        });
 
                         return {
                             id: lecture.id!,
                             title: lecture.title!,
                             attachmentUnits: lecture.lectureUnits?.filter((unit) => unit.type === LectureUnitType.ATTACHMENT),
-                            attachments: attachmentCopy,
+                            attachments: attachmentsWithFileUrls,
                         };
                     });
             }
