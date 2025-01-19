@@ -217,7 +217,7 @@ public class CourseService {
 
     private final FaqRepository faqRepository;
 
-    private final LearnerProfileApi learnerProfileApi;
+    private final Optional<LearnerProfileApi> learnerProfileApi;
 
     private final LLMTokenUsageTraceRepository llmTokenUsageTraceRepository;
 
@@ -234,7 +234,7 @@ public class CourseService {
             Optional<LearningPathApi> learningPathApi, Optional<IrisSettingsService> irisSettingsService, LectureRepository lectureRepository,
             TutorialGroupNotificationRepository tutorialGroupNotificationRepository, TutorialGroupChannelManagementService tutorialGroupChannelManagementService,
             Optional<PrerequisitesApi> prerequisitesApi, Optional<CompetencyRelationApi> competencyRelationApi, PostRepository postRepository,
-            AnswerPostRepository answerPostRepository, BuildJobRepository buildJobRepository, FaqRepository faqRepository, LearnerProfileApi learnerProfileApi,
+            AnswerPostRepository answerPostRepository, BuildJobRepository buildJobRepository, FaqRepository faqRepository, Optional<LearnerProfileApi> learnerProfileApi,
             LLMTokenUsageTraceRepository llmTokenUsageTraceRepository) {
         this.courseRepository = courseRepository;
         this.exerciseService = exerciseService;
@@ -531,7 +531,7 @@ public class CourseService {
         deleteExamsOfCourse(course);
         deleteGradingScaleOfCourse(course);
         deleteFaqsOfCourse(course);
-        learnerProfileApi.deleteAllForCourse(course);
+        learnerProfileApi.ifPresent(api -> api.deleteAllForCourse(course));
         irisSettingsService.ifPresent(iss -> iss.deleteSettingsFor(course));
         courseRepository.deleteById(course.getId());
         log.debug("Successfully deleted course {}.", course.getTitle());
@@ -641,9 +641,9 @@ public class CourseService {
     public void enrollUserForCourseOrThrow(User user, Course course) {
         authCheckService.checkUserAllowedToEnrollInCourseElseThrow(user, course);
         userService.addUserToGroup(user, course.getStudentGroupName());
-        if (course.getLearningPathsEnabled() && learningPathApi.isPresent()) {
-            learnerProfileApi.createCourseLearnerProfile(course, user);
-            learningPathApi.get().generateLearningPathForUser(course, user);
+        if (course.getLearningPathsEnabled()) {
+            learnerProfileApi.ifPresent(api -> api.createCourseLearnerProfile(course, user));
+            learningPathApi.ifPresent(api -> api.generateLearningPathForUser(course, user));
         }
         final var auditEvent = new AuditEvent(user.getLogin(), Constants.ENROLL_IN_COURSE, "course=" + course.getTitle());
         auditEventRepository.add(auditEvent);
@@ -675,9 +675,10 @@ public class CourseService {
             if (optionalStudent.isEmpty()) {
                 notFoundStudentsDTOs.add(studentDto);
             }
-            else if (courseGroupRole == Role.STUDENT && course.getLearningPathsEnabled() && learningPathApi.isPresent()) {
-                learnerProfileApi.createCourseLearnerProfile(course, optionalStudent.get());
-                learningPathApi.get().generateLearningPathForUser(course, optionalStudent.get());
+            else if (courseGroupRole == Role.STUDENT && course.getLearningPathsEnabled()) {
+                final Course finalCourse = course;
+                learnerProfileApi.ifPresent(api -> api.createCourseLearnerProfile(finalCourse, optionalStudent.get()));
+                learningPathApi.ifPresent(api -> api.generateLearningPathForUser(finalCourse, optionalStudent.get()));
             }
         }
 
@@ -693,7 +694,7 @@ public class CourseService {
     public void unenrollUserForCourseOrThrow(User user, Course course) {
         authCheckService.checkUserAllowedToUnenrollFromCourseElseThrow(user, course);
         userService.removeUserFromGroup(user, course.getStudentGroupName());
-        learnerProfileApi.deleteCourseLearnerProfile(course, user);
+        learnerProfileApi.ifPresent(api -> api.deleteCourseLearnerProfile(course, user));
         final var auditEvent = new AuditEvent(user.getLogin(), Constants.UNENROLL_FROM_COURSE, "course=" + course.getTitle());
         auditEventRepository.add(auditEvent);
         log.info("User {} has successfully unenrolled from course {}", user.getLogin(), course.getTitle());
@@ -1080,8 +1081,8 @@ public class CourseService {
         userService.addUserToGroup(user, group);
         if (group.equals(course.getStudentGroupName()) && course.getLearningPathsEnabled()) {
             Course courseWithCompetencies = courseRepository.findWithEagerCompetenciesAndPrerequisitesByIdElseThrow(course.getId());
-            learnerProfileApi.createCourseLearnerProfile(course, user);
-            learningPathApi.generateLearningPathForUser(courseWithCompetencies, user);
+            learnerProfileApi.ifPresent(api -> api.createCourseLearnerProfile(course, user));
+            learningPathApi.ifPresent(api -> api.generateLearningPathForUser(courseWithCompetencies, user));
         }
     }
 
