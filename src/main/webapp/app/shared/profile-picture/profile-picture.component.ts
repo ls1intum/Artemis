@@ -15,9 +15,9 @@ import { RouterLink } from '@angular/router';
 export class ProfilePictureComponent implements OnInit, OnChanges {
     readonly imageSizeInRem = input<string>('2.15');
     readonly fontSizeInRem = input<string>('0.9');
-    readonly authorName = input<string | undefined>(undefined);
-    readonly authorId = input<number | undefined>(undefined);
-    readonly imageUrl = input<string | undefined>(undefined);
+    authorName = input<string | undefined>(undefined);
+    authorId = input<number | undefined>(undefined);
+    imageUrl = input<string | undefined>(undefined);
     readonly imageClass = input<string>('');
     readonly defaultPictureClass = input<string>('');
     readonly imageId = input<string>('');

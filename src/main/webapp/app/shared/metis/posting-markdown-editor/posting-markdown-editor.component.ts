@@ -172,7 +172,6 @@ export class PostingMarkdownEditorComponent implements OnInit, ControlValueAcces
     /**
      * the callback function to register on UI change
      */
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     onChange = (_val: string) => {};
 
     /**

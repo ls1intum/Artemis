@@ -1,5 +1,4 @@
 import { Component, OnInit, inject } from '@angular/core';
-import { AccountService } from 'app/core/auth/account.service';
 import { Course } from 'app/entities/course.model';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
 import { faCheckCircle, faSort } from '@fortawesome/free-solid-svg-icons';
@@ -31,7 +30,6 @@ import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
     ],
 })
 export class CourseRegistrationComponent implements OnInit {
-    private accountService = inject(AccountService);
     private courseService = inject(CourseManagementService);
     private activatedRoute = inject(ActivatedRoute);
     private router = inject(Router);
