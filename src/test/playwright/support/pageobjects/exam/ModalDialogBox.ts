@@ -1,5 +1,5 @@
 import { Page, expect } from '@playwright/test';
-import { Dayjs } from 'dayjs';
+import { Dayjs } from 'dayjs/esm';
 
 export class ModalDialogBox {
     private readonly page: Page;

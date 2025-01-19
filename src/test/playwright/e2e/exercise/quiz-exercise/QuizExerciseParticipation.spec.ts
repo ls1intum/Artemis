@@ -5,7 +5,7 @@ import shortAnswerQuizTemplate from '../../../fixtures/exercise/quiz/short_answe
 import { admin, instructor, studentOne } from '../../../support/users';
 import { test } from '../../../support/fixtures';
 import { expect } from '@playwright/test';
-import dayjs from 'dayjs';
+import dayjs from 'dayjs/esm';
 import { QuizMode } from '../../../support/constants';
 
 test.describe('Quiz Exercise Participation', { tag: '@fast' }, () => {

@@ -1,5 +1,5 @@
 import { expect } from '@playwright/test';
-import dayjs from 'dayjs';
+import dayjs from 'dayjs/esm';
 import { Course } from 'app/entities/course.model';
 import { test } from '../../support/fixtures';
 import { admin, studentOne } from '../../support/users';

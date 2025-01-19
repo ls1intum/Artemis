@@ -3,7 +3,7 @@ import { Exam } from 'app/entities/exam/exam.model';
 import { UserCredentials, admin, studentOne, studentThree, studentTwo, users } from '../../../support/users';
 import { generateUUID } from '../../../support/utils';
 import { Exercise, ExerciseType } from '../../../support/constants';
-import dayjs from 'dayjs';
+import dayjs from 'dayjs/esm';
 import { test } from '../../../support/fixtures';
 import { expect } from '@playwright/test';
 import { ExamParticipationPage } from '../../../support/pageobjects/exam/ExamParticipationPage';
