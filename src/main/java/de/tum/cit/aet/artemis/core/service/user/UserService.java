@@ -116,7 +116,7 @@ public class UserService {
 
     private final ParticipationVcsAccessTokenService participationVCSAccessTokenService;
 
-    private final LearnerProfileApi learnerProfileApi;
+    private final Optional<LearnerProfileApi> learnerProfileApi;
 
     private final SavedPostRepository savedPostRepository;
 
@@ -124,7 +124,7 @@ public class UserService {
             CacheManager cacheManager, Optional<LdapUserService> ldapUserService, GuidedTourSettingsRepository guidedTourSettingsRepository, PasswordService passwordService,
             Optional<VcsUserManagementService> optionalVcsUserManagementService, Optional<CIUserManagementService> optionalCIUserManagementService,
             InstanceMessageSendService instanceMessageSendService, FileService fileService, Optional<ScienceEventApi> scienceEventApi,
-            ParticipationVcsAccessTokenService participationVCSAccessTokenService, LearnerProfileApi learnerProfileApi, SavedPostRepository savedPostRepository) {
+            ParticipationVcsAccessTokenService participationVCSAccessTokenService, Optional<LearnerProfileApi> learnerProfileApi, SavedPostRepository savedPostRepository) {
         this.userCreationService = userCreationService;
         this.userRepository = userRepository;
         this.authorityService = authorityService;
@@ -473,7 +473,7 @@ public class UserService {
     public void softDeleteUser(String login) {
         userRepository.findOneWithGroupsByLogin(login).ifPresent(user -> {
             participationVCSAccessTokenService.deleteAllByUserId(user.getId());
-            learnerProfileApi.deleteProfile(user);
+            learnerProfileApi.ifPresent(api -> api.deleteProfile(user));
             user.setDeleted(true);
             user.setLearnerProfile(null);
             anonymizeUser(user);

@@ -40,14 +40,14 @@ public class UserScheduleService {
 
     private final ScheduledExecutorService scheduler;
 
-    private final LearnerProfileApi learnerProfileApi;
+    private final Optional<LearnerProfileApi> learnerProfileApi;
 
     // Used for tracking and canceling the non-activated accounts that will be cleaned up.
     // The key of the map is the user id.
     private final Map<Long, ScheduledFuture<?>> nonActivatedAccountsFutures = new ConcurrentHashMap<>();
 
     public UserScheduleService(UserRepository userRepository, Optional<VcsUserManagementService> optionalVcsUserManagementService, CacheManager cacheManager,
-            LearnerProfileApi learnerProfileApi) {
+            Optional<LearnerProfileApi> learnerProfileApi) {
         this.userRepository = userRepository;
         this.optionalVcsUserManagementService = optionalVcsUserManagementService;
         this.cacheManager = cacheManager;
@@ -119,7 +119,7 @@ public class UserScheduleService {
         userRepository.delete(user);
         clearUserCaches(user);
         userRepository.flush();
-        learnerProfileApi.deleteProfile(user);
+        learnerProfileApi.ifPresent(api -> api.deleteProfile(user));
     }
 
     /**
