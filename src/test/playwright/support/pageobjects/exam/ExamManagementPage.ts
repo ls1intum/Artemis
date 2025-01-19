@@ -1,5 +1,5 @@
 import { Page, expect } from '@playwright/test';
-import { Dayjs } from 'dayjs';
+import { Dayjs } from 'dayjs/esm';
 
 /**
  * A class which encapsulates UI selectors and actions for the exam management page.

@@ -1,5 +1,5 @@
 import { Component, ElementRef, OnDestroy, ViewChild, computed, effect, inject, input, signal, viewChild } from '@angular/core';
-import { ActivatedRoute } from '@angular/router';
+import { ActivatedRoute, RouterLink } from '@angular/router';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { Lecture } from 'app/entities/lecture.model';
 import dayjs from 'dayjs/esm';
@@ -10,9 +10,17 @@ import { AttachmentService } from 'app/lecture/attachment.service';
 import { faEye, faPaperclip, faPencilAlt, faQuestionCircle, faSpinner, faTimes, faTrash } from '@fortawesome/free-solid-svg-icons';
 import { ACCEPTED_FILE_EXTENSIONS_FILE_BROWSER, ALLOWED_FILE_EXTENSIONS_HUMAN_READABLE } from 'app/shared/constants/file-extensions.constants';
 import { LectureService } from 'app/lecture/lecture.service';
-import { FormBuilder, FormGroup, Validators } from '@angular/forms';
+import { FormBuilder, FormGroup, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { FormDateTimePickerComponent } from 'app/shared/date-time-picker/date-time-picker.component';
+import { TranslateDirective } from '../shared/language/translate.directive';
+import { NgClass } from '@angular/common';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
+import { DeleteButtonDirective } from '../shared/delete-dialog/delete-button.directive';
+import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
+import { ArtemisTranslatePipe } from '../shared/pipes/artemis-translate.pipe';
+import { HtmlForMarkdownPipe } from '../shared/pipes/html-for-markdown.pipe';
 
 export interface LectureAttachmentFormData {
     attachmentName?: string;
@@ -25,6 +33,20 @@ export interface LectureAttachmentFormData {
     selector: 'jhi-lecture-attachments',
     templateUrl: './lecture-attachments.component.html',
     styleUrls: ['./lecture-attachments.component.scss'],
+    imports: [
+        TranslateDirective,
+        NgClass,
+        FaIconComponent,
+        RouterLink,
+        NgbTooltip,
+        DeleteButtonDirective,
+        FormsModule,
+        ReactiveFormsModule,
+        FormDateTimePickerComponent,
+        ArtemisDatePipe,
+        ArtemisTranslatePipe,
+        HtmlForMarkdownPipe,
+    ],
 })
 export class LectureAttachmentsComponent implements OnDestroy {
     protected readonly faSpinner = faSpinner;
@@ -78,27 +100,26 @@ export class LectureAttachmentsComponent implements OnDestroy {
     });
 
     private readonly statusChanges = toSignal(this.form.statusChanges ?? 'INVALID');
-    isFormValid = computed(() => this.statusChanges() === 'VALID' && this.isFileSelectionValid() && this.datePickerComponent()?.isValid());
+    isFormValid = computed(
+        () => !this.attachmentToBeUpdatedOrCreated() || (this.statusChanges() === 'VALID' && this.isFileSelectionValid() && this.datePickerComponent()?.isValid()),
+    );
 
     constructor() {
-        effect(
-            () => {
-                this.notificationText = undefined;
-                this.routeDataSubscription?.unsubscribe(); // in case the subscription was already defined
-                this.routeDataSubscription = this.activatedRoute.parent!.data.subscribe(({ lecture }) => {
-                    if (this.lectureId()) {
-                        this.lectureService.findWithDetails(this.lectureId()!).subscribe((lectureResponse: HttpResponse<Lecture>) => {
-                            this.lecture.set(lectureResponse.body!);
-                            this.loadAttachments();
-                        });
-                    } else {
-                        this.lecture.set(lecture);
+        effect(() => {
+            this.notificationText = undefined;
+            this.routeDataSubscription?.unsubscribe(); // in case the subscription was already defined
+            this.routeDataSubscription = this.activatedRoute.parent!.data.subscribe(({ lecture }) => {
+                if (this.lectureId()) {
+                    this.lectureService.findWithDetails(this.lectureId()!).subscribe((lectureResponse: HttpResponse<Lecture>) => {
+                        this.lecture.set(lectureResponse.body!);
                         this.loadAttachments();
-                    }
-                });
-            },
-            { allowSignalWrites: true },
-        );
+                    });
+                } else {
+                    this.lecture.set(lecture);
+                    this.loadAttachments();
+                }
+            });
+        });
     }
 
     loadAttachments(): void {
@@ -250,7 +271,7 @@ export class LectureAttachmentsComponent implements OnDestroy {
         }
     }
 
-    trackId(index: number, item: Attachment): number | undefined {
+    trackId(_index: number, item: Attachment): number | undefined {
         return item.id;
     }
 

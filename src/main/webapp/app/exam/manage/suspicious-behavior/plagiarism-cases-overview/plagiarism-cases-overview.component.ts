@@ -6,7 +6,6 @@ import { TranslateDirective } from 'app/shared/language/translate.directive';
 @Component({
     selector: 'jhi-plagiarism-cases-overview',
     templateUrl: './plagiarism-cases-overview.component.html',
-    standalone: true,
     imports: [TranslateDirective],
 })
 export class PlagiarismCasesOverviewComponent {

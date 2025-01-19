@@ -1,6 +1,7 @@
 import { Routes } from '@angular/router';
-import { UserRouteAccessService } from 'app/core/auth/user-route-access-service';
 import { ListOfComplaintsComponent } from 'app/complaints/list-of-complaints/list-of-complaints.component';
+import { UserRouteAccessService } from 'app/core/auth/user-route-access-service';
+
 import { ComplaintType } from 'app/entities/complaint.model';
 import { Authority } from 'app/shared/constants/authority.constants';
 import { exerciseTypes } from 'app/entities/exercise.model';
@@ -9,7 +10,7 @@ import { CourseManagementResolve } from 'app/course/manage/course-management-res
 export const listOfComplaintsRoute: Routes = [
     {
         path: ':courseId/complaints',
-        component: ListOfComplaintsComponent,
+        loadComponent: () => import('app/complaints/list-of-complaints/list-of-complaints.component').then((m) => m.ListOfComplaintsComponent),
         resolve: {
             course: CourseManagementResolve,
         },
@@ -22,7 +23,7 @@ export const listOfComplaintsRoute: Routes = [
     },
     {
         path: ':courseId/exams/:examId/complaints',
-        component: ListOfComplaintsComponent,
+        loadComponent: () => import('app/complaints/list-of-complaints/list-of-complaints.component').then((m) => m.ListOfComplaintsComponent),
         resolve: {
             course: CourseManagementResolve,
         },
@@ -47,7 +48,7 @@ export const listOfComplaintsRoute: Routes = [
     }),
     {
         path: ':courseId/more-feedback-requests',
-        component: ListOfComplaintsComponent,
+        loadComponent: () => import('app/complaints/list-of-complaints/list-of-complaints.component').then((m) => m.ListOfComplaintsComponent),
         resolve: {
             course: CourseManagementResolve,
         },

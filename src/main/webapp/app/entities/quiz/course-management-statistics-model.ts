@@ -9,6 +9,4 @@ export class CourseManagementStatisticsModel {
     public averageScore: number;
     public exerciseType: ExerciseType;
     public categories?: ExerciseCategory[];
-
-    constructor() {}
 }

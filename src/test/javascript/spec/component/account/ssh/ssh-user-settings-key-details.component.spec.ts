@@ -4,7 +4,7 @@ import { of, throwError } from 'rxjs';
 import { ActivatedRoute, Router } from '@angular/router';
 import { ArtemisTestModule } from '../../../test.module';
 import { MockNgbModalService } from '../../../helpers/mocks/service/mock-ngb-modal.service';
-import { MockTranslateService, TranslatePipeMock } from '../../../helpers/mocks/service/mock-translate.service';
+import { MockTranslateService } from '../../../helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { SshUserSettingsKeyDetailsComponent } from 'app/shared/user-settings/ssh-settings/details/ssh-user-settings-key-details.component';
@@ -52,7 +52,6 @@ describe('SshUserSettingsComponent', () => {
         const routerMock = { navigate: jest.fn() };
         await TestBed.configureTestingModule({
             imports: [ArtemisTestModule],
-            declarations: [SshUserSettingsKeyDetailsComponent, TranslatePipeMock],
             providers: [
                 {
                     provide: ActivatedRoute,

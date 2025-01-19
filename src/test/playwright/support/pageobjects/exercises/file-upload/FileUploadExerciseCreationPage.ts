@@ -1,6 +1,6 @@
 import { Page } from 'playwright';
 import { UPLOAD_EXERCISE_BASE } from '../../../constants';
-import { Dayjs } from 'dayjs';
+import { Dayjs } from 'dayjs/esm';
 import { enterDate } from '../../../utils';
 
 export class FileUploadExerciseCreationPage {

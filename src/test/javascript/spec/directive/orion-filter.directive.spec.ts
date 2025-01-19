@@ -9,6 +9,7 @@ import { isOrion } from 'app/shared/orion/orion';
 @Component({
     selector: 'jhi-test-component',
     template: '<div id="shown" jhiOrionFilter [showInOrionWindow]="true"></div><div id="hidden" jhiOrionFilter [showInOrionWindow]="false"></div>',
+    imports: [OrionFilterDirective],
 })
 class TestComponent {}
 
@@ -17,11 +18,7 @@ describe('OrionFilterDirective', () => {
     let debugElement: DebugElement;
 
     beforeEach(() => {
-        TestBed.configureTestingModule({
-            imports: [],
-            declarations: [TestComponent, OrionFilterDirective],
-            providers: [],
-        })
+        TestBed.configureTestingModule({})
             .compileComponents()
             .then(() => {
                 fixture = TestBed.createComponent(TestComponent);

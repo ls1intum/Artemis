@@ -1,5 +1,5 @@
 import { Page } from '@playwright/test';
-import dayjs from 'dayjs';
+import dayjs from 'dayjs/esm';
 
 import { clearTextField, enterDate } from '../../utils';
 import { COURSE_BASE } from '../../constants';
@@ -49,6 +49,27 @@ export class ExamCreationPage {
      */
     async setEndDate(date: dayjs.Dayjs) {
         await enterDate(this.page, '#endDate', date);
+    }
+
+    /**
+     * @param date the date when the exam results will be published
+     */
+    async setPublishResultsDate(date: dayjs.Dayjs) {
+        await enterDate(this.page, '#publishResultsDate', date);
+    }
+
+    /**
+     * @param date the date when the exam student review starts
+     */
+    async setStudentReviewStartDate(date: dayjs.Dayjs) {
+        await enterDate(this.page, '#examStudentReviewStart', date);
+    }
+
+    /**
+     * @param date the date when the exam student review ends
+     */
+    async setStudentReviewEndDate(date: dayjs.Dayjs) {
+        await enterDate(this.page, '#examStudentReviewEnd', date);
     }
 
     /**

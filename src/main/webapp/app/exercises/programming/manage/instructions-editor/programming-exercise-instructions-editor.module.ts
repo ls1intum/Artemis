@@ -9,8 +9,15 @@ import { ProgrammingExerciseInstructionAnalysisService } from 'app/exercises/pro
 import { TaskCountWarningComponent } from './analysis/task-count-warning/task-count-warning.component';
 
 @NgModule({
-    imports: [ArtemisSharedModule, ArtemisProgrammingExerciseInstructionsRenderModule, ArtemisMarkdownEditorModule, ArtemisProgrammingExerciseStatusModule],
-    declarations: [ProgrammingExerciseEditableInstructionComponent, ProgrammingExerciseInstructionAnalysisComponent, TaskCountWarningComponent],
+    imports: [
+        ArtemisSharedModule,
+        ArtemisProgrammingExerciseInstructionsRenderModule,
+        ArtemisMarkdownEditorModule,
+        ArtemisProgrammingExerciseStatusModule,
+        ProgrammingExerciseEditableInstructionComponent,
+        ProgrammingExerciseInstructionAnalysisComponent,
+        TaskCountWarningComponent,
+    ],
     providers: [ProgrammingExerciseInstructionAnalysisService],
     exports: [ArtemisProgrammingExerciseInstructionsRenderModule, ProgrammingExerciseEditableInstructionComponent],
 })

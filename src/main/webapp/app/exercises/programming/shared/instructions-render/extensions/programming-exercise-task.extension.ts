@@ -1,7 +1,5 @@
 import { Injectable, ViewContainerRef } from '@angular/core';
-import { TaskArrayWithExercise } from 'app/exercises/programming/shared/instructions-render/task/programming-exercise-task.model';
 import { ArtemisTextReplacementPlugin } from 'app/shared/markdown-editor/extensions/ArtemisTextReplacementPlugin';
-import { Observable, Subject } from 'rxjs';
 
 /**
  * Regular expression for finding tasks.
@@ -20,15 +18,6 @@ export const taskRegex = /\[task]\[([^[\]]+)]\(((?:[^(),]+(?:\([^()]*\)[^(),]*)?
 export class ProgrammingExerciseTaskExtensionWrapper extends ArtemisTextReplacementPlugin {
     // We don't have a provider for ViewContainerRef, so we pass it from ProgrammingExerciseInstructionComponent
     viewContainerRef: ViewContainerRef;
-
-    private testsForTaskSubject = new Subject<TaskArrayWithExercise>();
-    private injectableElementsFoundSubject = new Subject<() => void>();
-    /**
-     * Subscribes to injectableElementsFoundSubject.
-     */
-    public subscribeForInjectableElementsFound(): Observable<() => void> {
-        return this.injectableElementsFoundSubject.asObservable();
-    }
 
     /**
      * The task regex is coupled to the value used in ProgrammingExerciseTaskService in the server

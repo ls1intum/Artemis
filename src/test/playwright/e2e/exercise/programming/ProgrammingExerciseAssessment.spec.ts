@@ -1,4 +1,4 @@
-import dayjs from 'dayjs';
+import dayjs from 'dayjs/esm';
 
 import { Course } from 'app/entities/course.model';
 import { ProgrammingExercise } from 'app/entities/programming/programming-exercise.model';
@@ -33,7 +33,6 @@ test.describe('Programming exercise assessment', { tag: '@sequential' }, () => {
         assessmentDueDate = dueDate.add(20, 'seconds');
         exercise = await exerciseAPIRequests.createProgrammingExercise({
             course,
-            recordTestwiseCoverage: false,
             releaseDate: dayjs(),
             dueDate: dueDate,
             assessmentDate: assessmentDueDate,

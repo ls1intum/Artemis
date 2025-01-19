@@ -1,6 +1,6 @@
 import { Page, expect } from '@playwright/test';
 import { clearTextField, drag, enterDate } from '../../../utils';
-import { Dayjs } from 'dayjs';
+import { Dayjs } from 'dayjs/esm';
 import { QUIZ_EXERCISE_BASE } from '../../../constants';
 import { Fixtures } from '../../../../fixtures/fixtures';
 

@@ -11,6 +11,13 @@ import { download, generateCsv, mkConfig } from 'export-to-csv';
 import { faDownload, faUserSlash } from '@fortawesome/free-solid-svg-icons';
 import { TutorialGroup } from 'app/entities/tutorial-group/tutorial-group.model';
 import { EMAIL_KEY, NAME_KEY, REGISTRATION_NUMBER_KEY, USERNAME_KEY } from 'app/shared/export/export-constants';
+import { UsersImportButtonComponent } from '../user-import/users-import-button.component';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { TranslateDirective } from '../language/translate.directive';
+import { NgxDatatableModule } from '@siemens/ngx-datatable';
+import { RouterLink } from '@angular/router';
+import { ProfilePictureComponent } from '../profile-picture/profile-picture.component';
+import { DeleteButtonDirective } from '../delete-dialog/delete-button.directive';
 
 const cssClasses = {
     alreadyMember: 'already-member',
@@ -29,36 +36,25 @@ export type GroupUserInformationRow = {
     templateUrl: './course-group.component.html',
     styleUrls: ['./course-group.component.scss'],
     encapsulation: ViewEncapsulation.None,
+    imports: [UsersImportButtonComponent, FaIconComponent, TranslateDirective, DataTableComponent, NgxDatatableModule, RouterLink, ProfilePictureComponent, DeleteButtonDirective],
 })
 export class CourseGroupComponent implements OnDestroy {
     @ViewChild(DataTableComponent) dataTable: DataTableComponent;
 
-    @Input()
-    allGroupUsers: User[] = [];
-    @Input()
-    isLoadingAllGroupUsers = false;
-    @Input()
-    isAdmin = false;
-    @Input()
-    course: Course;
-    @Input()
-    tutorialGroup: TutorialGroup | undefined = undefined;
-    @Input()
-    courseGroup: CourseGroup;
-    @Input()
-    exportFileName: string;
+    @Input() allGroupUsers: User[] = [];
+    @Input() isLoadingAllGroupUsers = false;
+    @Input() isAdmin = false;
+    @Input() course: Course;
+    @Input() tutorialGroup: TutorialGroup | undefined = undefined;
+    @Input() courseGroup: CourseGroup;
+    @Input() exportFileName: string;
 
-    @Input()
-    userSearch: (loginOrName: string) => Observable<HttpResponse<User[]>> = () => of(new HttpResponse<User[]>({ body: [] }));
-    @Input()
-    addUserToGroup: (login: string) => Observable<HttpResponse<void>> = () => of(new HttpResponse<void>());
-    @Input()
-    removeUserFromGroup: (login: string) => Observable<HttpResponse<void>> = () => of(new HttpResponse<void>());
-    @Input()
-    handleUsersSizeChange: (filteredUsersSize: number) => void = () => {};
+    @Input() userSearch: (loginOrName: string) => Observable<HttpResponse<User[]>> = () => of(new HttpResponse<User[]>({ body: [] }));
+    @Input() addUserToGroup: (login: string) => Observable<HttpResponse<void>> = () => of(new HttpResponse<void>());
+    @Input() removeUserFromGroup: (login: string) => Observable<HttpResponse<void>> = () => of(new HttpResponse<void>());
+    @Input() handleUsersSizeChange: (filteredUsersSize: number) => void = () => {};
 
-    @Output()
-    importFinish: EventEmitter<void> = new EventEmitter();
+    @Output() importFinish: EventEmitter<void> = new EventEmitter();
 
     readonly ActionType = ActionType;
 

@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, inject } from '@angular/core';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import { QuizReEvaluateService } from './quiz-re-evaluate.service';
 import { ShortAnswerQuestion } from 'app/entities/quiz/short-answer-question.model';
@@ -7,16 +7,23 @@ import { QuizQuestion, QuizQuestionType } from 'app/entities/quiz/quiz-question.
 import { DragAndDropQuestion } from 'app/entities/quiz/drag-and-drop-question.model';
 import { MultipleChoiceQuestion } from 'app/entities/quiz/multiple-choice-question.model';
 import { QuizExercise } from 'app/entities/quiz/quiz-exercise.model';
-import { EventManager } from 'app/core/util/event-manager.service';
 import { faBan, faCheck, faCheckCircle, faSpinner, faTimes } from '@fortawesome/free-solid-svg-icons';
 import { ArtemisNavigationUtilService } from 'app/utils/navigation.utils';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 
 @Component({
     selector: 'jhi-quiz-re-evaluate-warning',
     templateUrl: './quiz-re-evaluate-warning.component.html',
     styleUrls: ['../../shared/quiz.scss'],
+    imports: [TranslateDirective, FaIconComponent],
 })
 export class QuizReEvaluateWarningComponent implements OnInit {
+    private activeModal = inject(NgbActiveModal);
+    private quizExerciseService = inject(QuizExerciseService);
+    private quizReEvaluateService = inject(QuizReEvaluateService);
+    private navigationUtilService = inject(ArtemisNavigationUtilService);
+
     isSaving: boolean;
 
     successful = false;
@@ -42,14 +49,6 @@ export class QuizReEvaluateWarningComponent implements OnInit {
     faTimes = faTimes;
     faCheck = faCheck;
     faCheckCircle = faCheckCircle;
-
-    constructor(
-        public activeModal: NgbActiveModal,
-        private eventManager: EventManager,
-        private quizExerciseService: QuizExerciseService,
-        private quizReEvaluateService: QuizReEvaluateService,
-        private navigationUtilService: ArtemisNavigationUtilService,
-    ) {}
 
     /**
      * Reset saving status, load the quiz by id and back it up.
@@ -87,10 +86,10 @@ export class QuizReEvaluateWarningComponent implements OnInit {
         // check each question
         this.quizExercise.quizQuestions!.forEach((question) => {
             // find same question in backUp (necessary if the order has been changed)
-            // eslint-disable-next-line @typescript-eslint/no-non-null-asserted-optional-chain
-            const backUpQuestion = this.backUpQuiz.quizQuestions?.find((questionBackUp) => question.id === questionBackUp.id)!;
-
-            this.checkQuestion(question, backUpQuestion);
+            const backUpQuestion = this.backUpQuiz.quizQuestions?.find((questionBackUp) => question.id === questionBackUp.id);
+            if (backUpQuestion) {
+                this.checkQuestion(question, backUpQuestion);
+            }
         });
     }
 

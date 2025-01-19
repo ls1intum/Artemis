@@ -13,7 +13,9 @@ interface DeletionServiceInterface {
     delete: (id: number) => Observable<HttpResponse<any>>;
 }
 
-@Component({ template: '' })
+@Component({
+    template: '',
+})
 export abstract class ExerciseComponent implements OnInit, OnDestroy {
     protected translateService = inject(TranslateService);
     protected eventManager = inject(EventManager);
@@ -29,7 +31,7 @@ export abstract class ExerciseComponent implements OnInit, OnDestroy {
     showHeading: boolean;
     courseId: number;
     predicate: string = 'id';
-    reverse: boolean = true;
+    reverse = true;
 
     selectedExercises: Exercise[] = [];
     allChecked = false;

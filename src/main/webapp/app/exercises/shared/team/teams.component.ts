@@ -1,6 +1,5 @@
-import { Component, OnDestroy, OnInit } from '@angular/core';
-import { ParticipationService } from 'app/exercises/shared/participation/participation.service';
-import { ActivatedRoute, Router } from '@angular/router';
+import { Component, OnDestroy, OnInit, inject } from '@angular/core';
+import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { Subject } from 'rxjs';
 import { Team } from 'app/entities/team.model';
 import { TeamService } from 'app/exercises/shared/team/team.service';
@@ -10,8 +9,16 @@ import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service'
 import { formatTeamAsSearchResult } from 'app/exercises/shared/team/team.utils';
 import { AccountService } from 'app/core/auth/account.service';
 import { User } from 'app/core/user/user.model';
-import { AlertService } from 'app/core/util/alert.service';
-import { EventManager } from 'app/core/util/event-manager.service';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { FormsModule } from '@angular/forms';
+import { TeamsExportButtonComponent } from './teams-import-dialog/teams-export-button.component';
+import { TeamsImportButtonComponent } from './teams-import-dialog/teams-import-button.component';
+import { TeamUpdateButtonComponent } from './team-update-dialog/team-update-button.component';
+import { DataTableComponent } from 'app/shared/data-table/data-table.component';
+import { NgxDatatableModule } from '@siemens/ngx-datatable';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { TeamStudentsListComponent } from './team-participate/team-students-list.component';
+import { TeamDeleteButtonComponent } from './team-update-dialog/team-delete-button.component';
 
 export enum FilterProp {
     ALL = 'all',
@@ -21,8 +28,27 @@ export enum FilterProp {
 @Component({
     selector: 'jhi-teams',
     templateUrl: './teams.component.html',
+    imports: [
+        TranslateDirective,
+        FormsModule,
+        TeamsExportButtonComponent,
+        TeamsImportButtonComponent,
+        TeamUpdateButtonComponent,
+        DataTableComponent,
+        NgxDatatableModule,
+        FaIconComponent,
+        RouterLink,
+        TeamStudentsListComponent,
+        TeamDeleteButtonComponent,
+    ],
 })
 export class TeamsComponent implements OnInit, OnDestroy {
+    private route = inject(ActivatedRoute);
+    private router = inject(Router);
+    private exerciseService = inject(ExerciseService);
+    private teamService = inject(TeamService);
+    private accountService = inject(AccountService);
+
     readonly FilterProp = FilterProp;
     readonly ButtonSize = ButtonSize;
 
@@ -39,16 +65,7 @@ export class TeamsComponent implements OnInit, OnDestroy {
     currentUser: User;
     isAdmin = false;
 
-    constructor(
-        private route: ActivatedRoute,
-        private router: Router,
-        private participationService: ParticipationService,
-        private alertService: AlertService,
-        private eventManager: EventManager,
-        private exerciseService: ExerciseService,
-        private teamService: TeamService,
-        private accountService: AccountService,
-    ) {
+    constructor() {
         this.accountService.identity().then((user: User) => {
             this.currentUser = user;
             this.isAdmin = this.accountService.isAdmin();

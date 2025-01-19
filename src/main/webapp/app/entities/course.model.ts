@@ -169,8 +169,6 @@ export class CourseForImportDTO {
     title?: string;
     shortName?: string;
     semester?: string;
-
-    constructor() {}
 }
 
 export const enum CourseGroup {

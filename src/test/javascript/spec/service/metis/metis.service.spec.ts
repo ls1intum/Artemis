@@ -48,6 +48,7 @@ import { NotificationService } from 'app/shared/notification/notification.servic
 import { MockNotificationService } from '../../helpers/mocks/service/mock-notification.service';
 import { SavedPostService } from 'app/shared/metis/saved-post.service';
 import { SavedPostStatus } from 'app/entities/metis/posting.model';
+import 'jest-extended';
 
 describe('Metis Service', () => {
     let metisService: MetisService;

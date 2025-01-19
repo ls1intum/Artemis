@@ -1,6 +1,6 @@
-import { Component, OnDestroy, OnInit } from '@angular/core';
+import { Component, OnDestroy, OnInit, inject } from '@angular/core';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
-import { ActivatedRoute, Router } from '@angular/router';
+import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { Subject, Subscription } from 'rxjs';
 import { ExamManagementService } from 'app/exam/manage/exam-management.service';
 import { Exam } from 'app/entities/exam/exam.model';
@@ -8,7 +8,6 @@ import { onError } from 'app/shared/util/global.utils';
 import { AlertService } from 'app/core/util/alert.service';
 import { Course } from 'app/entities/course.model';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
-import { AccountService } from 'app/core/auth/account.service';
 import { SortService } from 'app/shared/service/sort.service';
 import { ExamInformationDTO } from 'app/entities/exam/exam-information.model';
 import dayjs from 'dayjs/esm';
@@ -17,13 +16,29 @@ import { faClipboard, faEye, faFileImport, faListAlt, faPlus, faSort, faThList, 
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { ExamImportComponent } from 'app/exam/manage/exams/exam-import/exam-import.component';
 import { DocumentationType } from 'app/shared/components/documentation-button/documentation-button.component';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { DocumentationButtonComponent } from 'app/shared/components/documentation-button/documentation-button.component';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { SortDirective } from 'app/shared/sort/sort.directive';
+import { SortByDirective } from 'app/shared/sort/sort-by.directive';
+import { ExamStatusComponent } from './exam-status.component';
 
 @Component({
     selector: 'jhi-exam-management',
     templateUrl: './exam-management.component.html',
     styleUrls: ['./exam-management.component.scss'],
+    imports: [TranslateDirective, DocumentationButtonComponent, FaIconComponent, RouterLink, SortDirective, SortByDirective, ExamStatusComponent],
 })
 export class ExamManagementComponent implements OnInit, OnDestroy {
+    private route = inject(ActivatedRoute);
+    private courseService = inject(CourseManagementService);
+    private examManagementService = inject(ExamManagementService);
+    private eventManager = inject(EventManager);
+    private alertService = inject(AlertService);
+    private sortService = inject(SortService);
+    private modalService = inject(NgbModal);
+    private router = inject(Router);
+
     readonly documentationType: DocumentationType = 'Exams';
 
     course: Course;
@@ -47,17 +62,7 @@ export class ExamManagementComponent implements OnInit, OnDestroy {
     faClipboard = faClipboard;
     faThList = faThList;
 
-    constructor(
-        private route: ActivatedRoute,
-        private courseService: CourseManagementService,
-        private examManagementService: ExamManagementService,
-        private eventManager: EventManager,
-        private accountService: AccountService,
-        private alertService: AlertService,
-        private sortService: SortService,
-        private modalService: NgbModal,
-        private router: Router,
-    ) {
+    constructor() {
         this.predicate = 'id';
         this.ascending = true;
     }
@@ -83,7 +88,7 @@ export class ExamManagementComponent implements OnInit, OnDestroy {
      * unsubscribe on component destruction
      */
     ngOnDestroy() {
-        if (!this.eventSubscriber === undefined) {
+        if (this.eventSubscriber !== undefined) {
             this.eventManager.destroy(this.eventSubscriber);
         }
         this.dialogErrorSource.unsubscribe();
@@ -120,11 +125,11 @@ export class ExamManagementComponent implements OnInit, OnDestroy {
 
     /**
      * Track the items on the Exams Table
-     * @param index {number}
-     * @param item {Exam}
+     * @param _index the index in the table
+     * @param exam the exam object to track
      */
-    trackId(index: number, item: Exam): number | undefined {
-        return item.id;
+    trackId(_index: number, exam: Exam): number | undefined {
+        return exam.id;
     }
 
     sortRows() {
