@@ -9,11 +9,11 @@ import { DoubleSliderComponent } from 'app/shared/editable-slider/double-slider.
     imports: [EditProcessComponent, DoubleSliderComponent],
 })
 export class EditableSliderComponent {
-    readonly title = input.required<string>();
-    readonly currentValue = input.required<number>();
-    readonly min = input.required<number>();
-    readonly max = input.required<number>();
-    readonly disabled = input<boolean>(true);
+    title = input.required<string>();
+    currentValue = input.required<number>();
+    min = input.required<number>();
+    max = input.required<number>();
+    disabled = input<boolean>(true);
     initialValue = model.required<number>();
     editStateTransition = model<EditStateTransition>(EditStateTransition.Abort);
 }

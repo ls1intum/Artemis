@@ -3,16 +3,18 @@ import { EditableSliderComponent } from 'app/shared/editable-slider/editable-sli
 import { CourseManagementService } from 'app/course/manage/course-management.service';
 import { Course } from 'app/entities/course.model';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
+import { TranslateService } from '@ngx-translate/core';
 import { LearnerProfileApiService } from 'app/atlas/service/learner-profile-api.service';
 import { CourseLearnerProfileDTO } from 'app/entities/learner-profile.model';
 import { EditStateTransition } from 'app/shared/editable-slider/edit-process.component';
 import { AlertService, AlertType } from 'app/core/util/alert.service';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
 
 @Component({
     selector: 'jhi-course-learner-profile',
     templateUrl: './course-learner-profile.component.html',
     standalone: true,
-    imports: [EditableSliderComponent],
+    imports: [EditableSliderComponent, TranslateDirective],
 })
 export class CourseLearnerProfileComponent implements OnInit {
     private readonly learnerProfileAPIService = inject(LearnerProfileApiService);
@@ -22,9 +24,9 @@ export class CourseLearnerProfileComponent implements OnInit {
     activeCourse: number;
 
     disabled = true;
-    readonly aimForGradeOrBonus = signal<number>(0);
-    readonly timeInvestment = signal<number>(0);
-    readonly repetitionIntensity = signal<number>(0);
+    aimForGradeOrBonus = signal<number>(0);
+    timeInvestment = signal<number>(0);
+    repetitionIntensity = signal<number>(0);
 
     aimForGradeOrBonusState = signal<EditStateTransition>(EditStateTransition.Abort);
     timeInvestmentState = signal<EditStateTransition>(EditStateTransition.Abort);
@@ -33,6 +35,7 @@ export class CourseLearnerProfileComponent implements OnInit {
     constructor(
         private courseService: CourseManagementService,
         private alertService: AlertService,
+        protected translateService: TranslateService,
     ) {}
 
     async ngOnInit() {
@@ -60,11 +63,7 @@ export class CourseLearnerProfileComponent implements OnInit {
     onCourseLearnerProfileUpdateError(error: HttpErrorResponse, stateSignal: WritableSignal<EditStateTransition>) {
         stateSignal.set(EditStateTransition.Abort);
 
-        console.log('Error');
-        console.log(error);
-
         const errorMessage = error.error ? error.error.title : error.headers?.get('x-artemisapp-alert');
-        console.log(errorMessage);
         if (errorMessage) {
             this.alertService.addAlert({
                 type: AlertType.DANGER,
@@ -75,6 +74,9 @@ export class CourseLearnerProfileComponent implements OnInit {
     }
 
     updateAimForGradeOrBonus(value: number) {
+        if (!this.courseLearnerProfiles) {
+            return;
+        }
         const clp = this.courseLearnerProfiles[this.activeCourse];
         clp.aimForGradeOrBonus = value;
         this.learnerProfileAPIService.putUpdatedCourseLearnerProfile(clp).then(
@@ -87,6 +89,9 @@ export class CourseLearnerProfileComponent implements OnInit {
     }
 
     updateTimeInvestment(value: number) {
+        if (!this.courseLearnerProfiles) {
+            return;
+        }
         const clp = this.courseLearnerProfiles[this.activeCourse];
         clp.timeInvestment = value;
         this.learnerProfileAPIService.putUpdatedCourseLearnerProfile(clp).then(
@@ -99,6 +104,9 @@ export class CourseLearnerProfileComponent implements OnInit {
     }
 
     updateRepetitionIntensity(value: number) {
+        if (!this.courseLearnerProfiles) {
+            return;
+        }
         const clp = this.courseLearnerProfiles[this.activeCourse];
         clp.repetitionIntensity = value;
         this.learnerProfileAPIService.putUpdatedCourseLearnerProfile(clp).then(

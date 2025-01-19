@@ -14,12 +14,13 @@ export enum EditStateTransition {
 @Component({
     selector: 'jhi-edit-process',
     templateUrl: './edit-process.component.html',
+    styleUrls: ['./edit-process.component.scss'],
     standalone: true,
     imports: [FontAwesomeModule, NgClass],
 })
 export class EditProcessComponent implements OnChanges {
     editStateTransition = model<EditStateTransition>();
-    readonly disabled = input<boolean>(false);
+    disabled = input<boolean>(false);
 
     protected readonly faXmark = faXmark;
     protected readonly faPencil = faPencil;

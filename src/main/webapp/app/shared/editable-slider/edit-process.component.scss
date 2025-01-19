@@ -1,0 +1,8 @@
+fa-icon {
+    cursor: pointer;
+}
+
+.disabled > fa-icon {
+    cursor: default;
+    pointer-events: none;
+}

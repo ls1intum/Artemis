@@ -8,6 +8,7 @@
             "sshSettings": "SSH",
             "vcsAccessTokenSettings": "VCS Token",
             "accountInformation": "Account Information",
+            "learnerProfile": "Learner Profile",
             "notificationSettings": "Notifications",
             "notificationSettingsFilterInfo": "These settings also filter the notification sidebar",
             "scienceSettings": "Science",

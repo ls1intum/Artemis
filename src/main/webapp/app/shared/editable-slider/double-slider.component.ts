@@ -4,20 +4,20 @@ import { EditStateTransition } from 'app/shared/editable-slider/edit-process.com
 @Component({
     selector: 'jhi-double-slider',
     templateUrl: './double-slider.component.html',
+    styleUrls: ['./double-slider.component.scss'],
     standalone: true,
 })
 export class DoubleSliderComponent implements OnChanges, OnInit {
-    readonly editStateTransition = input.required<EditStateTransition>();
-    readonly currentValue = input.required<number>();
-    readonly min = input.required<number>();
-    readonly max = input.required<number>();
+    editStateTransition = input.required<EditStateTransition>();
+    currentValue = input.required<number>();
+    min = input.required<number>();
+    max = input.required<number>();
 
     currentVal: number;
     initialVal: number;
 
     initialValue = model.required<number>();
 
-    initialSlider = viewChild.required<ElementRef>('initialSlider');
     currentSlider = viewChild.required<ElementRef>('currentSlider');
     parentDiv = viewChild.required<ElementRef>('parentContainer');
 
@@ -27,8 +27,6 @@ export class DoubleSliderComponent implements OnChanges, OnInit {
 
     ngOnChanges(changes: SimpleChanges): void {
         if (changes.editStateTransition) {
-            console.log(changes.editStateTransition.currentValue);
-
             switch (changes.editStateTransition.currentValue) {
                 case EditStateTransition.Edit:
                     this.currentSlider().nativeElement.disabled = false;
@@ -38,7 +36,6 @@ export class DoubleSliderComponent implements OnChanges, OnInit {
                     this.initialVal = this.initialValue();
                     break;
                 case EditStateTransition.Abort:
-                    console.log('this.current ' + this.currentVal);
                     this.currentSlider().nativeElement.disabled = true;
                     this.initialValue.set(this.initialVal);
                     this.currentSlider().nativeElement.value = this.currentVal;
