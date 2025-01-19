@@ -1,12 +1,13 @@
 import { NgClass } from '@angular/common';
-import { Component, output } from '@angular/core';
+import { Component, OnChanges, SimpleChanges, input, model } from '@angular/core';
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
 
 import { faCheck, faPencil, faXmark } from '@fortawesome/free-solid-svg-icons';
 
 export enum EditStateTransition {
     Edit,
-    Save,
+    TrySave,
+    Saved,
     Abort,
 }
 
@@ -16,8 +17,9 @@ export enum EditStateTransition {
     standalone: true,
     imports: [FontAwesomeModule, NgClass],
 })
-export class EditProcessComponent {
-    editStateTransition = output<EditStateTransition>();
+export class EditProcessComponent implements OnChanges {
+    editStateTransition = model<EditStateTransition>();
+    readonly disabled = input<boolean>(false);
 
     protected readonly faXmark = faXmark;
     protected readonly faPencil = faPencil;
@@ -25,18 +27,36 @@ export class EditProcessComponent {
 
     protected editing: boolean = false;
 
+    ngOnChanges(changes: SimpleChanges): void {
+        if (changes.editStateTransition) {
+            switch (changes.editStateTransition.currentValue) {
+                case EditStateTransition.Edit:
+                    this.editing = true;
+                    break;
+                case EditStateTransition.TrySave:
+                case EditStateTransition.Abort:
+                default:
+                    this.editing = false;
+                    break;
+            }
+        }
+    }
+
     onEdit() {
-        this.editing = true;
-        this.editStateTransition.emit(EditStateTransition.Edit);
+        if (!this.disabled()) {
+            this.editStateTransition.set(EditStateTransition.Edit);
+        }
     }
 
     onSave() {
-        this.editing = false;
-        this.editStateTransition.emit(EditStateTransition.Save);
+        if (!this.disabled()) {
+            this.editStateTransition.set(EditStateTransition.TrySave);
+        }
     }
 
     onAbort() {
-        this.editing = false;
-        this.editStateTransition.emit(EditStateTransition.Abort);
+        if (!this.disabled()) {
+            this.editStateTransition.set(EditStateTransition.Abort);
+        }
     }
 }

@@ -10,9 +10,9 @@
 
 <div class="row">
     <h2 class="col">Course Settings</h2>
-    <select class="form-select col-auto w-auto">
-        <option selected>Select Course...</option>
-        @for (course of courses; track course) {
+    <select class="form-select col-auto w-auto" (change)="courseChanged($event)">
+        <option value="-1" selected>Select Course...</option>
+        @for (course of courses; track course.id) {
             <option value="{{ course.id }}">{{ course.title }}</option>
         }
     </select>
@@ -23,13 +23,40 @@ Here, you can set your learning preferences. This will impact how Artemis intera
 <div>
     <div class="row row-cols-2 gx-5">
         <div class="col">
-            <jhi-editable-slider [title]="'Aim for Grade or Bonus'" [min]="0" [max]="4" [initialValue]="0" [currentValue]="1" />
+            <jhi-editable-slider
+                [title]="'Aim for Grade or Bonus'"
+                [min]="0"
+                [max]="4"
+                [(initialValue)]="aimForGradeOrBonus"
+                [currentValue]="aimForGradeOrBonus()"
+                [(editStateTransition)]="aimForGradeOrBonusState"
+                (initialValueChange)="updateAimForGradeOrBonus($event)"
+                [disabled]="disabled"
+            />
         </div>
         <div class="col">
-            <jhi-editable-slider [title]="'Time Investment'" [min]="0" [max]="4" [initialValue]="1" [currentValue]="2" />
+            <jhi-editable-slider
+                [title]="'Time Investment'"
+                [min]="0"
+                [max]="4"
+                [(initialValue)]="timeInvestment"
+                [currentValue]="timeInvestment()"
+                [(editStateTransition)]="repetitionIntensityState"
+                (initialValueChange)="updateRepetitionIntensity($event)"
+                [disabled]="disabled"
+            />
         </div>
         <div class="col">
-            <jhi-editable-slider [title]="'Repition intensity'" [min]="0" [max]="4" [initialValue]="2" [currentValue]="3" />
+            <jhi-editable-slider
+                [title]="'Repition intensity'"
+                [min]="0"
+                [max]="4"
+                [(initialValue)]="repetitionIntensity"
+                [currentValue]="repetitionIntensity()"
+                [(editStateTransition)]="timeInvestmentState"
+                (initialValueChange)="updateTimeInvestment($event)"
+                [disabled]="disabled"
+            />
         </div>
     </div>
 </div>

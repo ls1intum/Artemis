@@ -17,6 +17,8 @@ import de.tum.cit.aet.artemis.core.domain.DomainObject;
 @Table(name = "course_learner_profile")
 public class CourseLearnerProfile extends DomainObject {
 
+    public static final String ENTITY_NAME = "courseLEarnerProfile";
+
     @ManyToOne
     @JoinColumn(name = "learner_profile_id")
     private LearnerProfile learnerProfile;

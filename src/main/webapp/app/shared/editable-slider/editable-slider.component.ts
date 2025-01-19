@@ -13,16 +13,7 @@ export class EditableSliderComponent {
     readonly currentValue = input.required<number>();
     readonly min = input.required<number>();
     readonly max = input.required<number>();
-    readonly initialValue = model<number>();
-
-    editStateTransition = EditStateTransition.Abort;
-
-    valueSaved(val: number | undefined) {
-        console.log('Saved!! ' + val);
-    }
-
-    editStateChanged(editStateTransition: EditStateTransition) {
-        console.log(editStateTransition);
-        this.editStateTransition = editStateTransition;
-    }
+    readonly disabled = input<boolean>(true);
+    initialValue = model.required<number>();
+    editStateTransition = model<EditStateTransition>(EditStateTransition.Abort);
 }

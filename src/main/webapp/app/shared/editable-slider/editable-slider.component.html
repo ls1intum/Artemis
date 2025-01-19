@@ -2,15 +2,8 @@
     <div class="row">
         <div class="col">{{ title() }}</div>
         <div class="col-md-auto float-end">
-            <jhi-edit-process (editStateTransition)="editStateChanged($event)" />
+            <jhi-edit-process [(editStateTransition)]="editStateTransition" [disabled]="disabled()" />
         </div>
     </div>
-    <jhi-double-slider
-        [editStateTransition]="editStateTransition"
-        [currentValue]="this.currentValue()"
-        [initialValue]="this.initialValue()"
-        (initialValueChange)="valueSaved($event)"
-        [min]="this.min()"
-        [max]="this.max()"
-    />
+    <jhi-double-slider [editStateTransition]="editStateTransition()" [currentValue]="currentValue()" [(initialValue)]="initialValue" [min]="min()" [max]="max()" />
 </div>

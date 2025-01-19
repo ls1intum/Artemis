@@ -38,7 +38,7 @@ export const userSettingsState: Routes = [
                 path: 'profile',
                 component: LearnerProfileComponent,
                 data: {
-                    pageTitle: 'arteisApp.userSettings.accountInformation',
+                    pageTitle: 'artemisApp.userSettings.learnerProfile',
                 },
             },
             {

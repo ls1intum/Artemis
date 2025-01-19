@@ -12,46 +12,47 @@ export class DoubleSliderComponent implements OnChanges, OnInit {
     readonly min = input.required<number>();
     readonly max = input.required<number>();
 
-    currentVal = 0;
+    currentVal: number;
+    initialVal: number;
 
-    initialValue = model<number>();
+    initialValue = model.required<number>();
 
     initialSlider = viewChild.required<ElementRef>('initialSlider');
     currentSlider = viewChild.required<ElementRef>('currentSlider');
     parentDiv = viewChild.required<ElementRef>('parentContainer');
 
     ngOnInit(): void {
-        this.currentVal = this.currentValue();
-
-        console.log('abort');
         this.currentSlider().nativeElement.disabled = true;
-        this.currentSlider().nativeElement.value = this.currentVal;
-        this.parentDiv().nativeElement.classList.remove('editing');
     }
 
     ngOnChanges(changes: SimpleChanges): void {
-        console.log(changes);
+        if (changes.editStateTransition) {
+            console.log(changes.editStateTransition.currentValue);
 
-        switch (changes.editStateTransition.currentValue) {
-            case EditStateTransition.Edit:
-                console.log('edit');
-                this.currentSlider().nativeElement.disabled = false;
-                this.parentDiv().nativeElement.classList.add('editing');
-                break;
-            case EditStateTransition.Abort:
-                console.log('abort');
-                this.currentSlider().nativeElement.disabled = true;
-                this.currentSlider().nativeElement.value = this.currentVal;
-                this.parentDiv().nativeElement.classList.remove('editing');
-                break;
-            case EditStateTransition.Save:
-                console.log('save');
-                this.currentSlider().nativeElement.disabled = true;
-                this.initialValue.set(this.currentSlider().nativeElement.value);
-                this.currentVal = this.currentSlider().nativeElement.value;
-                this.initialSlider().nativeElement.value = this.initialValue();
-                this.parentDiv().nativeElement.classList.remove('editing');
-                break;
+            switch (changes.editStateTransition.currentValue) {
+                case EditStateTransition.Edit:
+                    this.currentSlider().nativeElement.disabled = false;
+                    this.parentDiv().nativeElement.classList.add('editing');
+                    //ensure, that current val is up-to-date.
+                    this.currentVal = this.currentValue();
+                    this.initialVal = this.initialValue();
+                    break;
+                case EditStateTransition.Abort:
+                    console.log('this.current ' + this.currentVal);
+                    this.currentSlider().nativeElement.disabled = true;
+                    this.initialValue.set(this.initialVal);
+                    this.currentSlider().nativeElement.value = this.currentVal;
+                    this.parentDiv().nativeElement.classList.remove('editing');
+                    break;
+                case EditStateTransition.TrySave:
+                    this.currentSlider().nativeElement.disabled = true;
+                    this.initialValue.set(this.currentSlider().nativeElement.value);
+                    break;
+                case EditStateTransition.Saved:
+                    this.currentVal = this.initialValue();
+                    this.parentDiv().nativeElement.classList.remove('editing');
+                    break;
+            }
         }
     }
 }
