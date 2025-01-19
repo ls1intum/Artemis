@@ -59,8 +59,8 @@ public interface UserTestRepository extends UserRepository {
         return new PageImpl<>(users, pageable, total);
     }
 
-    @EntityGraph(type = LOAD, attributePaths = { "learningPaths" })
-    Optional<User> findOneWithLearningPathsByLogin(String login);
+    @EntityGraph(type = LOAD, attributePaths = { "learningPaths", "learnerProfile", "learnerProfile.courseLearnerProfiles" })
+    Optional<User> findOneWithLearningPathsAndLearnerProfileByLogin(String login);
 
     @EntityGraph(type = LOAD, attributePaths = { "learningPaths" })
     Optional<User> findWithLearningPathsById(long userId);
@@ -75,4 +75,11 @@ public interface UserTestRepository extends UserRepository {
     default User findWithLearningPathsByIdElseThrow(long userId) {
         return getValueElseThrow(findWithLearningPathsById(userId), userId);
     }
+
+    @Query("""
+            SELECT user
+            FROM User user
+            WHERE user.login LIKE CONCAT(:userPrefix, '%')
+            """)
+    Set<User> findAllByUserPrefix(String userPrefix);
 }

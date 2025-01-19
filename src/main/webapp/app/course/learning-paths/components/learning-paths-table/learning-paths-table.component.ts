@@ -87,7 +87,7 @@ export class LearningPathsTableComponent {
         await this.loadLearningPaths(this.courseId());
     }
 
-    openCompetencyGraph(learningPathId: number): void {
-        CompetencyGraphModalComponent.openCompetencyGraphModal(this.modalService, learningPathId);
+    openCompetencyGraph(learningPathId: number, name: string | undefined): void {
+        CompetencyGraphModalComponent.openCompetencyGraphModal(this.modalService, learningPathId, name);
     }
 }
