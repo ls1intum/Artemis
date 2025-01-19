@@ -69,6 +69,7 @@ describe('EditTextUnitComponent', () => {
     }));
 
     it('should set form data correctly', async () => {
+        jest.spyOn(console, 'warn').mockImplementation(() => {});
         const textUnitService = TestBed.inject(TextUnitService);
 
         const originalTextUnit: TextUnit = new TextUnit();
