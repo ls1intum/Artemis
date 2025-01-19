@@ -14,7 +14,6 @@ import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.Objects;
 import java.util.Set;
-import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
 import jakarta.validation.ConstraintViolation;
@@ -710,7 +709,7 @@ class MessageIntegrationTest extends AbstractSpringIntegrationIndependentTest {
 
         request.delete("/api/courses/" + courseId + "/messages/" + createdPost1.getId(), HttpStatus.OK);
         // After deleting the message in the chat, the unread count in the chat should become 0
-        await().atMost(20, TimeUnit.SECONDS).untilAsserted(() -> {
+        await().untilAsserted(() -> {
             SecurityUtils.setAuthorizationObject();
             assertThat(getUnreadMessagesCount(oneToOneChat1, student2)).isZero();
             assertThat(getUnreadMessagesCount(oneToOneChat1, student1)).isZero();
