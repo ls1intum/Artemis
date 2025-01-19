@@ -188,8 +188,6 @@ export class CompetencyProgress {
     public progress?: number;
     public confidence?: number;
     public confidenceReason?: ConfidenceReason;
-
-    constructor() {}
 }
 
 export class CourseCompetencyProgress {
@@ -197,8 +195,6 @@ export class CourseCompetencyProgress {
     numberOfStudents?: number;
     numberOfMasteredStudents?: number;
     averageStudentScore?: number;
-
-    constructor() {}
 }
 
 export class CompetencyRelation implements BaseEntity {
@@ -242,8 +238,6 @@ export function dtoToCompetencyRelation(competencyRelationDTO: CompetencyRelatio
 export class CompetencyWithTailRelationDTO {
     competency?: CourseCompetency;
     tailRelations?: CompetencyRelationDTO[];
-
-    constructor() {}
 }
 
 export function getIcon(competencyTaxonomy?: CompetencyTaxonomy): IconProp {

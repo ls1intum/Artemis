@@ -14,7 +14,6 @@ import { CleanupOperationModalComponent } from 'app/admin/cleanup-service/cleanu
 @Component({
     selector: 'jhi-cleanup-service',
     templateUrl: './cleanup-service.component.html',
-    standalone: true,
     imports: [FormDateTimePickerModule, ArtemisSharedModule, ArtemisSharedComponentModule],
 })
 export class CleanupServiceComponent implements OnInit {

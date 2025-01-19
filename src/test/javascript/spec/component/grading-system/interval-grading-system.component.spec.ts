@@ -2,11 +2,7 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { IntervalGradingSystemComponent } from 'app/grading-system/interval-grading-system/interval-grading-system.component';
 import { ArtemisTestModule } from '../../test.module';
 import { GradeType, GradingScale } from 'app/entities/grading-scale.model';
-import { MockComponent, MockDirective, MockPipe, MockProvider } from 'ng-mocks';
-import { DeleteButtonDirective } from 'app/shared/delete-dialog/delete-button.directive';
-import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
-import { GradingSystemInfoModalComponent } from 'app/grading-system/grading-system-info-modal/grading-system-info-modal.component';
-import { NgModel, NgSelectOption } from '@angular/forms';
+import { MockProvider } from 'ng-mocks';
 import { GradeStep } from 'app/entities/grade-step.model';
 import { cloneDeep } from 'lodash-es';
 import { of } from 'rxjs';
@@ -16,8 +12,6 @@ import { Course } from 'app/entities/course.model';
 import { ExamManagementService } from 'app/exam/manage/exam-management.service';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
 import { MockCourseManagementService } from '../../helpers/mocks/service/mock-course-management.service';
-import { ModePickerComponent } from 'app/exercises/shared/mode-picker/mode-picker.component';
-import { HelpIconComponent } from 'app/shared/components/help-icon.component';
 
 describe('Interval Grading System Component', () => {
     let comp: IntervalGradingSystemComponent;
@@ -77,16 +71,6 @@ describe('Interval Grading System Component', () => {
     beforeEach(() => {
         TestBed.configureTestingModule({
             imports: [ArtemisTestModule],
-            declarations: [
-                MockDirective(NgModel),
-                MockDirective(NgSelectOption),
-                IntervalGradingSystemComponent,
-                MockComponent(GradingSystemInfoModalComponent),
-                MockComponent(HelpIconComponent),
-                MockComponent(ModePickerComponent),
-                MockDirective(DeleteButtonDirective),
-                MockPipe(ArtemisTranslatePipe),
-            ],
             providers: [
                 { provide: ActivatedRoute, useValue: route },
                 MockProvider(ExamManagementService),

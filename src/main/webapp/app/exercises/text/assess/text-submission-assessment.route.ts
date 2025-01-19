@@ -3,7 +3,7 @@ import { ActivatedRouteSnapshot, Resolve, Routes } from '@angular/router';
 import { TextSubmission } from 'app/entities/text/text-submission.model';
 import { of } from 'rxjs';
 import { UserRouteAccessService } from 'app/core/auth/user-route-access-service';
-import { TextSubmissionAssessmentComponent } from './text-submission-assessment.component';
+
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
 import { TextAssessmentService } from 'app/exercises/text/assess/text-assessment.service';
 import { TextSubmissionService } from 'app/exercises/text/participate/text-submission.service';
@@ -57,7 +57,7 @@ export const NEW_ASSESSMENT_PATH = 'submissions/new/assessment';
 export const textSubmissionAssessmentRoutes: Routes = [
     {
         path: NEW_ASSESSMENT_PATH,
-        component: TextSubmissionAssessmentComponent,
+        loadComponent: () => import('./text-submission-assessment.component').then((m) => m.TextSubmissionAssessmentComponent),
         data: {
             authorities: [Authority.ADMIN, Authority.INSTRUCTOR, Authority.EDITOR, Authority.TA],
             pageTitle: 'artemisApp.textAssessment.title',
@@ -70,7 +70,7 @@ export const textSubmissionAssessmentRoutes: Routes = [
     },
     {
         path: 'submissions/:submissionId/assessment',
-        component: TextSubmissionAssessmentComponent,
+        loadComponent: () => import('./text-submission-assessment.component').then((m) => m.TextSubmissionAssessmentComponent),
         data: {
             authorities: [Authority.ADMIN, Authority.INSTRUCTOR, Authority.EDITOR, Authority.TA],
             pageTitle: 'artemisApp.textAssessment.title',
@@ -83,7 +83,7 @@ export const textSubmissionAssessmentRoutes: Routes = [
     },
     {
         path: 'submissions/:submissionId/assessments/:resultId',
-        component: TextSubmissionAssessmentComponent,
+        loadComponent: () => import('./text-submission-assessment.component').then((m) => m.TextSubmissionAssessmentComponent),
         data: {
             authorities: [Authority.ADMIN, Authority.INSTRUCTOR],
             pageTitle: 'artemisApp.textAssessment.title',

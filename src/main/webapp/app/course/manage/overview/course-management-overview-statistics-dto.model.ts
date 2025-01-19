@@ -4,6 +4,4 @@ export class CourseManagementOverviewStatisticsDto {
     public courseId?: number;
     public exerciseDTOS: CourseManagementOverviewExerciseStatisticsDTO[];
     public activeStudents?: number[];
-
-    constructor() {}
 }

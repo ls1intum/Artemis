@@ -22,7 +22,7 @@ import { ExerciseTitleChannelNameModule } from 'app/exercises/shared/exercise-ti
 import { ExerciseUpdateNotificationModule } from 'app/exercises/shared/exercise-update-notification/exercise-update-notification.module';
 import { DetailModule } from 'app/detail-overview-list/detail.module';
 import { ArtemisExerciseModule } from 'app/exercises/shared/exercise/exercise.module';
-import { FormsModule } from 'app/forms/forms.module';
+import { ArtemisFormsModule } from 'app/forms/artemis-forms.module';
 
 @NgModule({
     imports: [
@@ -46,9 +46,11 @@ import { FormsModule } from 'app/forms/forms.module';
         ExerciseTitleChannelNameModule,
         ExerciseUpdateNotificationModule,
         DetailModule,
-        FormsModule,
+        ArtemisFormsModule,
+        FileUploadExerciseComponent,
+        FileUploadExerciseDetailComponent,
+        FileUploadExerciseUpdateComponent,
     ],
-    declarations: [FileUploadExerciseComponent, FileUploadExerciseDetailComponent, FileUploadExerciseUpdateComponent],
     exports: [FileUploadExerciseComponent],
 })
 export class ArtemisFileUploadExerciseManagementModule {}

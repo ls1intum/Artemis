@@ -9,8 +9,6 @@ import { MockQueryParamsDirective, MockRouterLinkDirective } from '../../../../h
 import { FileService } from 'app/shared/http/file.service';
 import { MockFileService } from '../../../../helpers/mocks/service/mock-file.service';
 import { MockRouter } from '../../../../helpers/mocks/mock-router';
-import { MatDialogModule } from '@angular/material/dialog';
-import { MatMenuModule } from '@angular/material/menu';
 import { AccountService } from 'app/core/auth/account.service';
 import { User } from 'app/core/user/user.model';
 import { MockProvider } from 'ng-mocks';
@@ -24,7 +22,6 @@ describe('PostingContentPartComponent', () => {
     let fileService: FileService;
     let openAttachmentSpy: jest.SpyInstance;
     let navigateByUrlSpy: jest.SpyInstance;
-    let enlargeImageSpy: jest.SpyInstance;
 
     let contentBeforeReference: string;
     let contentAfterReference: string;
@@ -33,13 +30,7 @@ describe('PostingContentPartComponent', () => {
         await TestBed.configureTestingModule({
             imports: [
                 ArtemisTestModule,
-                MatDialogModule,
-                MatMenuModule,
                 HtmlForPostingMarkdownPipe, // we want to test against the rendered string, therefore we cannot mock the pipe
-            ],
-            declarations: [
-                PostingContentPartComponent,
-                // FaIconComponent, // we want to test the type of rendered icons, therefore we cannot mock the component
                 MockRouterLinkDirective,
                 MockQueryParamsDirective,
             ],
@@ -59,7 +50,6 @@ describe('PostingContentPartComponent', () => {
         fileService = TestBed.inject(FileService);
         navigateByUrlSpy = jest.spyOn(router, 'navigateByUrl');
         openAttachmentSpy = jest.spyOn(fileService, 'downloadFile');
-        enlargeImageSpy = jest.spyOn(component, 'enlargeImage');
         contentBeforeReference = '**Be aware**\n\n I want to reference the following Post ';
         contentAfterReference = 'in my content,\n\n does it *actually* work?';
     });
@@ -220,6 +210,10 @@ describe('PostingContentPartComponent', () => {
             expect(referenceLink).not.toBeNull();
             expect(referenceLink.innerHTML).toInclude(referenceStr);
 
+            component.enlargeImage = jest.fn();
+
+            const enlargeImageSpy = jest.spyOn(component, 'enlargeImage');
+
             // on click should open referenced attachment unit slide
             referenceLink.click();
             expect(enlargeImageSpy).toHaveBeenCalledOnce();
@@ -314,6 +308,46 @@ describe('PostingContentPartComponent', () => {
             const content = '1. Numbered item\n- Unordered item\n2. Another numbered item\n- Another unordered item';
             const escapedContent = component.escapeNumberedList(component.escapeUnorderedList(content));
             expect(escapedContent).toBe('1\\.  Numbered item\n\\- Unordered item\n2\\.  Another numbered item\n\\- Another unordered item');
+        });
+    });
+
+    describe('PostingContentPart Reactivity', () => {
+        it('should update display when postingContentPart changes', () => {
+            component.postingContentPart = {
+                contentBeforeReference: 'Initial content',
+                linkToReference: undefined,
+                queryParams: undefined,
+                referenceStr: undefined,
+                contentAfterReference: undefined,
+            } as PostingContentPart;
+            fixture.detectChanges();
+
+            const initialMarkdownElements = getElements(debugElement, '.markdown-preview');
+            expect(initialMarkdownElements).toHaveLength(1);
+            expect(initialMarkdownElements![0].innerHTML).toBe('<p class="inline-paragraph">Initial content</p>');
+
+            fixture.componentRef.setInput('postingContentPart', {
+                contentBeforeReference: 'Updated content before',
+                linkToReference: ['/course/1'],
+                queryParams: { searchText: '#123' },
+                referenceStr: '#123',
+                referenceType: ReferenceType.POST,
+                contentAfterReference: 'Updated content after',
+            } as PostingContentPart);
+            fixture.detectChanges();
+
+            const updatedMarkdownElements = getElements(debugElement, '.markdown-preview');
+            expect(updatedMarkdownElements).toHaveLength(2);
+            expect(updatedMarkdownElements![0].innerHTML).toBe('<p class="inline-paragraph">Updated content before</p>');
+            expect(updatedMarkdownElements![1].innerHTML).toBe('<p class="inline-paragraph">Updated content after</p>');
+
+            const referenceLink = getElement(debugElement, '.reference');
+            expect(referenceLink).not.toBeNull();
+            expect(referenceLink.innerHTML).toInclude('#123');
+
+            const icon = getElement(debugElement, 'fa-icon');
+            expect(icon).not.toBeNull();
+            expect(icon.innerHTML).toInclude('fa fa-message');
         });
     });
 });

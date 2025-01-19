@@ -23,8 +23,6 @@ import { OrionAssessmentInstructionsComponent } from 'app/orion/assessment/orion
         ArtemisAssessmentSharedModule,
         ArtemisSharedComponentModule,
         ArtemisMarkdownModule,
-    ],
-    declarations: [
         ExpandableSectionComponent,
         AssessmentInstructionsComponent,
         OrionAssessmentInstructionsComponent,

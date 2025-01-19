@@ -1,4 +1,4 @@
-import { Component, Input, OnChanges, SimpleChanges, ViewChild } from '@angular/core';
+import { Component, Input, OnChanges, SimpleChanges, ViewChild, inject } from '@angular/core';
 import { BuildAction, ScriptAction } from 'app/entities/programming/build.action';
 import { ProgrammingExercise, ProgrammingLanguage, ProjectType } from 'app/entities/programming/programming-exercise.model';
 import { faQuestionCircle } from '@fortawesome/free-solid-svg-icons';
@@ -6,13 +6,21 @@ import { ProgrammingExerciseCreationConfig } from 'app/exercises/programming/man
 import { AeolusService } from 'app/exercises/programming/shared/service/aeolus.service';
 import { ProgrammingExerciseBuildConfigurationComponent } from 'app/exercises/programming/manage/update/update-components/custom-build-plans/programming-exercise-build-configuration/programming-exercise-build-configuration.component';
 import { MonacoEditorComponent } from 'app/shared/monaco-editor/monaco-editor.component';
+import { FormsModule } from '@angular/forms';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { HelpIconComponent } from 'app/shared/components/help-icon.component';
+import { NgClass } from '@angular/common';
+import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 
 @Component({
     selector: 'jhi-programming-exercise-custom-aeolus-build-plan',
     templateUrl: './programming-exercise-custom-aeolus-build-plan.component.html',
     styleUrls: ['../../../programming-exercise-form.scss'],
+    imports: [FormsModule, TranslateDirective, HelpIconComponent, ProgrammingExerciseBuildConfigurationComponent, NgClass, MonacoEditorComponent, ArtemisTranslatePipe],
 })
 export class ProgrammingExerciseCustomAeolusBuildPlanComponent implements OnChanges {
+    private aeolusService = inject(AeolusService);
+
     @Input() programmingExercise: ProgrammingExercise;
     @Input() programmingExerciseCreationConfig: ProgrammingExerciseCreationConfig;
 
@@ -22,13 +30,10 @@ export class ProgrammingExerciseCustomAeolusBuildPlanComponent implements OnChan
     projectType?: ProjectType;
     staticCodeAnalysisEnabled?: boolean;
     sequentialTestRuns?: boolean;
-    testwiseCoverageEnabled?: boolean;
-
-    constructor(private aeolusService: AeolusService) {}
 
     code: string = '#!/bin/bash\n\n# Add your custom build plan action here';
     active?: BuildAction = undefined;
-    isScriptAction: boolean = false;
+    isScriptAction = false;
 
     private _editor?: MonacoEditorComponent;
 
@@ -54,8 +59,7 @@ export class ProgrammingExerciseCustomAeolusBuildPlanComponent implements OnChan
             this.programmingExercise.programmingLanguage !== this.programmingLanguage ||
             this.programmingExercise.projectType !== this.projectType ||
             this.programmingExercise.staticCodeAnalysisEnabled !== this.staticCodeAnalysisEnabled ||
-            this.programmingExercise.buildConfig?.sequentialTestRuns !== this.sequentialTestRuns ||
-            this.programmingExercise.buildConfig?.testwiseCoverageEnabled !== this.testwiseCoverageEnabled
+            this.programmingExercise.buildConfig?.sequentialTestRuns !== this.sequentialTestRuns
         );
     }
 
@@ -92,18 +96,15 @@ export class ProgrammingExerciseCustomAeolusBuildPlanComponent implements OnChan
         this.projectType = this.programmingExercise.projectType;
         this.staticCodeAnalysisEnabled = this.programmingExercise.staticCodeAnalysisEnabled;
         this.sequentialTestRuns = this.programmingExercise.buildConfig?.sequentialTestRuns;
-        this.testwiseCoverageEnabled = this.programmingExercise.buildConfig?.testwiseCoverageEnabled;
         if (!isImportFromFile || !this.programmingExercise.buildConfig?.windfile) {
-            this.aeolusService
-                .getAeolusTemplateFile(this.programmingLanguage, this.projectType, this.staticCodeAnalysisEnabled, this.sequentialTestRuns, this.testwiseCoverageEnabled)
-                .subscribe({
-                    next: (file) => {
-                        this.programmingExercise.buildConfig!.windfile = this.aeolusService.parseWindFile(file);
-                    },
-                    error: () => {
-                        this.programmingExercise.buildConfig!.windfile = undefined;
-                    },
-                });
+            this.aeolusService.getAeolusTemplateFile(this.programmingLanguage, this.projectType, this.staticCodeAnalysisEnabled, this.sequentialTestRuns).subscribe({
+                next: (file) => {
+                    this.programmingExercise.buildConfig!.windfile = this.aeolusService.parseWindFile(file);
+                },
+                error: () => {
+                    this.programmingExercise.buildConfig!.windfile = undefined;
+                },
+            });
         }
         this.programmingExerciseCreationConfig.buildPlanLoaded = true;
     }

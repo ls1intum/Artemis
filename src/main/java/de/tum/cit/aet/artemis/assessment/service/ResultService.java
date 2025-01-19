@@ -67,16 +67,16 @@ import de.tum.cit.aet.artemis.modeling.service.compass.strategy.NameSimilarity;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseParticipation;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseStudentParticipation;
+import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseTask;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseTestCase;
 import de.tum.cit.aet.artemis.programming.domain.build.BuildPlanType;
-import de.tum.cit.aet.artemis.programming.domain.hestia.ProgrammingExerciseTask;
 import de.tum.cit.aet.artemis.programming.repository.BuildJobRepository;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseRepository;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseStudentParticipationRepository;
 import de.tum.cit.aet.artemis.programming.repository.SolutionProgrammingExerciseParticipationRepository;
 import de.tum.cit.aet.artemis.programming.repository.TemplateProgrammingExerciseParticipationRepository;
 import de.tum.cit.aet.artemis.programming.service.BuildLogEntryService;
-import de.tum.cit.aet.artemis.programming.service.hestia.ProgrammingExerciseTaskService;
+import de.tum.cit.aet.artemis.programming.service.ProgrammingExerciseTaskService;
 
 @Profile(PROFILE_CORE)
 @Service
@@ -198,8 +198,8 @@ public class ResultService {
         return savedResult;
     }
 
-    public Result createNewRatedManualResult(Result result) {
-        return createNewManualResult(result, true);
+    public void createNewRatedManualResult(Result result) {
+        createNewManualResult(result, true);
     }
 
     /**
@@ -522,23 +522,26 @@ public class ResultService {
         // Temporarily detach feedback from the parent result to avoid Hibernate issues
         feedback.setResult(null);
 
-        // Clear the long feedback if it exists in the map
+        // Connect old long feedback text to the feedback before saving, otherwise it would be deleted
         if (feedback.getId() != null && feedback.getHasLongFeedbackText()) {
-            LongFeedbackText longFeedback = longFeedbackTextMap.get(feedback.getId());
-            if (longFeedback != null) {
-                feedback.clearLongFeedback();
+
+            // If the long feedback is not empty, it means that changes have been made on the client, so we do not want
+            // to override the new long feedback with its previous version
+            if (feedback.getLongFeedback().isPresent()) {
+                // Delete the old long feedback so we don't get a duplicate key error
+                longFeedbackTextRepository.deleteByFeedbackId(feedback.getId());
+            }
+            else {
+                LongFeedbackText longFeedback = longFeedbackTextMap.get(feedback.getId());
+                feedback.setLongFeedbackText(Set.of(longFeedback));
             }
         }
 
         // Persist the feedback entity without the parent association
         feedback = feedbackRepository.saveAndFlush(feedback);
 
-        // Restore associations to the result and long feedback after persistence
+        // Restore associations to the result
         feedback.setResult(result);
-        LongFeedbackText longFeedback = longFeedbackTextMap.get(feedback.getId());
-        if (longFeedback != null) {
-            feedback.setDetailText(longFeedback.getText());
-        }
     }
 
     @NotNull

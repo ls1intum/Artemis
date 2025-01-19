@@ -1,19 +1,20 @@
 import { NgModule } from '@angular/core';
-import { ArtemisSharedModule } from 'app/shared/shared.module';
 import { CourseStatisticsComponent } from 'app/overview/course-statistics/course-statistics.component';
+import { ArtemisSharedModule } from 'app/shared/shared.module';
+
 import { Authority } from 'app/shared/constants/authority.constants';
 import { UserRouteAccessService } from 'app/core/auth/user-route-access-service';
 import { RouterModule, Routes } from '@angular/router';
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
 import { ArtemisExerciseScoresChartModule } from 'app/overview/visualizations/exercise-scores-chart.module';
 import { BarChartModule, PieChartModule } from '@swimlane/ngx-charts';
-import { GradingKeyOverviewComponent } from 'app/grading-system/grading-key-overview/grading-key-overview.component';
+
 import { ArtemisSharedComponentModule } from 'app/shared/components/shared-component.module';
 
 const routes: Routes = [
     {
         path: '',
-        component: CourseStatisticsComponent,
+        loadComponent: () => import('app/overview/course-statistics/course-statistics.component').then((m) => m.CourseStatisticsComponent),
         data: {
             authorities: [Authority.USER],
             pageTitle: 'overview.statistics',
@@ -22,7 +23,7 @@ const routes: Routes = [
     },
     {
         path: 'grading-key',
-        component: GradingKeyOverviewComponent,
+        loadComponent: () => import('app/grading-system/grading-key-overview/grading-key-overview.component').then((m) => m.GradingKeyOverviewComponent),
         data: {
             authorities: [Authority.USER],
             pageTitle: 'artemisApp.gradingSystem.title',
@@ -40,7 +41,7 @@ const routes: Routes = [
         BarChartModule,
         PieChartModule,
         ArtemisSharedComponentModule,
+        CourseStatisticsComponent,
     ],
-    declarations: [CourseStatisticsComponent],
 })
 export class CourseStatisticsModule {}

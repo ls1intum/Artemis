@@ -19,8 +19,8 @@ import { ArtemisMarkdownModule } from 'app/shared/markdown.module';
         ArtemisHeaderExercisePageWithDetailsModule,
         RatingModule,
         ArtemisMarkdownModule,
+        FileUploadSubmissionComponent,
     ],
-    declarations: [FileUploadSubmissionComponent],
     exports: [FileUploadSubmissionComponent],
 })
 export class ArtemisFileUploadParticipationModule {}

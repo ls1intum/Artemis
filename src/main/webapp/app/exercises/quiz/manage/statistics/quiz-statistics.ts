@@ -1,11 +1,15 @@
-import { ChangeDetectorRef } from '@angular/core';
+import { ChangeDetectorRef, Component, inject } from '@angular/core';
 import { Color, ScaleType } from '@swimlane/ngx-charts';
 import { round } from 'app/shared/util/utils';
 import { QuizStatistic } from 'app/entities/quiz/quiz-statistic.model';
 import { TranslateService } from '@ngx-translate/core';
 import { NgxChartsSingleSeriesDataEntry } from 'app/shared/chart/ngx-charts-datatypes';
 
-export abstract class QuizStatistics {
+@Component({
+    template: '',
+})
+export abstract class AbstractQuizStatisticComponent {
+    protected translateService = inject(TranslateService);
     data: number[] = [];
     ratedData: number[] = [];
     unratedData: number[] = [];
@@ -25,8 +29,6 @@ export abstract class QuizStatistics {
     maxScale: number;
     chartLabels: string[] = [];
     totalParticipants = 0;
-
-    constructor(protected translateService: TranslateService) {}
 
     /**
      * Depending on if the rated or unrated results should be displayed,

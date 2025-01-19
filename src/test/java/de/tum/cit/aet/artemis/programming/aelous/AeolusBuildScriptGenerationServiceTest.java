@@ -22,27 +22,23 @@ import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseBuildConfig;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingLanguage;
 import de.tum.cit.aet.artemis.programming.domain.ProjectType;
+import de.tum.cit.aet.artemis.programming.dto.aeolus.Windfile;
+import de.tum.cit.aet.artemis.programming.dto.aeolus.WindfileMetadata;
 import de.tum.cit.aet.artemis.programming.service.aeolus.AeolusBuildPlanService;
 import de.tum.cit.aet.artemis.programming.service.aeolus.AeolusBuildScriptGenerationService;
-import de.tum.cit.aet.artemis.programming.service.aeolus.AeolusTemplateService;
-import de.tum.cit.aet.artemis.programming.service.aeolus.Windfile;
-import de.tum.cit.aet.artemis.programming.service.aeolus.WindfileMetadata;
 import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationLocalCILocalVCTest;
 
 class AeolusBuildScriptGenerationServiceTest extends AbstractSpringIntegrationLocalCILocalVCTest {
 
     @Autowired
     @Qualifier("aeolusRestTemplate")
-    RestTemplate restTemplate;
+    private RestTemplate restTemplate;
 
     @Autowired
-    AeolusBuildPlanService aeolusBuildPlanService;
+    private AeolusBuildPlanService aeolusBuildPlanService;
 
     @Autowired
-    AeolusTemplateService aeolusTemplateService;
-
-    @Autowired
-    AeolusBuildScriptGenerationService aeolusBuildScriptGenerationService;
+    private AeolusBuildScriptGenerationService aeolusBuildScriptGenerationService;
 
     @Autowired
     private AeolusRequestMockProvider aeolusRequestMockProvider;
@@ -76,10 +72,7 @@ class AeolusBuildScriptGenerationServiceTest extends AbstractSpringIntegrationLo
     }
 
     private Windfile getWindfile() {
-        Windfile windfile = new Windfile();
-        windfile.setApi("v0.0.1");
-        windfile.setMetadata(new WindfileMetadata("test", "test", "test", null, null, null, null, null));
-        return windfile;
+        return new Windfile("v0.0.1", new WindfileMetadata("test", "test", "test", null, null, null, null, null), null, null);
     }
 
     private String getSerializedWindfile() throws JsonProcessingException {
@@ -97,7 +90,6 @@ class AeolusBuildScriptGenerationServiceTest extends AbstractSpringIntegrationLo
         programmingExercise.setProjectType(ProjectType.PLAIN_GRADLE);
         programmingExercise.setStaticCodeAnalysisEnabled(true);
         programmingExercise.getBuildConfig().setSequentialTestRuns(true);
-        programmingExercise.getBuildConfig().setTestwiseCoverageEnabled(true);
         String script = aeolusBuildScriptGenerationService.getScript(programmingExercise);
         assertThat(script).isNotNull();
         assertThat(script).isEqualTo("imagine a result here");
@@ -105,7 +97,6 @@ class AeolusBuildScriptGenerationServiceTest extends AbstractSpringIntegrationLo
         programmingExercise.setProjectType(null);
         programmingExercise.setStaticCodeAnalysisEnabled(false);
         programmingExercise.getBuildConfig().setSequentialTestRuns(false);
-        programmingExercise.getBuildConfig().setTestwiseCoverageEnabled(false);
         programmingExercise.getBuildConfig().setBuildPlanConfiguration(null);
         script = aeolusBuildScriptGenerationService.getScript(programmingExercise);
         assertThat(script).isNotNull();

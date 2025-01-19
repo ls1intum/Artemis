@@ -1,7 +1,6 @@
 import { ActivatedRouteSnapshot, Resolve, Routes } from '@angular/router';
 import { UserRouteAccessService } from 'app/core/auth/user-route-access-service';
-import { TextExerciseDetailComponent } from './text-exercise-detail.component';
-import { TextExerciseUpdateComponent } from './text-exercise-update.component';
+
 import { TextExercise } from 'app/entities/text/text-exercise.model';
 import { Injectable, inject } from '@angular/core';
 import { TextExerciseService } from 'app/exercises/text/manage/text-exercise/text-exercise.service';
@@ -13,9 +12,6 @@ import { Course } from 'app/entities/course.model';
 import { ExerciseGroup } from 'app/entities/exercise-group.model';
 import { ExerciseGroupService } from 'app/exam/manage/exercise-groups/exercise-group.service';
 import { Authority } from 'app/shared/constants/authority.constants';
-import { PlagiarismInspectorComponent } from 'app/exercises/shared/plagiarism/plagiarism-inspector/plagiarism-inspector.component';
-import { ExerciseStatisticsComponent } from 'app/exercises/shared/statistics/exercise-statistics.component';
-import { ExampleSubmissionsComponent } from 'app/exercises/shared/example-submission/example-submissions.component';
 
 @Injectable({ providedIn: 'root' })
 export class TextExerciseResolver implements Resolve<TextExercise> {
@@ -53,7 +49,7 @@ export class TextExerciseResolver implements Resolve<TextExercise> {
 export const textExerciseRoute: Routes = [
     {
         path: ':courseId/text-exercises/new',
-        component: TextExerciseUpdateComponent,
+        loadComponent: () => import('./text-exercise-update.component').then((m) => m.TextExerciseUpdateComponent),
         resolve: {
             textExercise: TextExerciseResolver,
         },
@@ -65,7 +61,7 @@ export const textExerciseRoute: Routes = [
     },
     {
         path: ':courseId/text-exercises/:exerciseId',
-        component: TextExerciseDetailComponent,
+        loadComponent: () => import('./text-exercise-detail.component').then((m) => m.TextExerciseDetailComponent),
         data: {
             authorities: [Authority.TA, Authority.EDITOR, Authority.INSTRUCTOR, Authority.ADMIN],
             pageTitle: 'artemisApp.textExercise.home.title',
@@ -74,7 +70,7 @@ export const textExerciseRoute: Routes = [
     },
     {
         path: ':courseId/text-exercises/:exerciseId/edit',
-        component: TextExerciseUpdateComponent,
+        loadComponent: () => import('./text-exercise-update.component').then((m) => m.TextExerciseUpdateComponent),
         resolve: {
             textExercise: TextExerciseResolver,
         },
@@ -86,7 +82,7 @@ export const textExerciseRoute: Routes = [
     },
     {
         path: ':courseId/text-exercises/:exerciseId/import',
-        component: TextExerciseUpdateComponent,
+        loadComponent: () => import('./text-exercise-update.component').then((m) => m.TextExerciseUpdateComponent),
         resolve: {
             textExercise: TextExerciseResolver,
         },
@@ -98,7 +94,7 @@ export const textExerciseRoute: Routes = [
     },
     {
         path: ':courseId/text-exercises/:exerciseId/plagiarism',
-        component: PlagiarismInspectorComponent,
+        loadComponent: () => import('app/exercises/shared/plagiarism/plagiarism-inspector/plagiarism-inspector.component').then((m) => m.PlagiarismInspectorComponent),
         resolve: {
             exercise: TextExerciseResolver,
         },
@@ -110,7 +106,7 @@ export const textExerciseRoute: Routes = [
     },
     {
         path: ':courseId/text-exercises/:exerciseId/example-submissions',
-        component: ExampleSubmissionsComponent,
+        loadComponent: () => import('app/exercises/shared/example-submission/example-submissions.component').then((m) => m.ExampleSubmissionsComponent),
         resolve: {
             exercise: TextExerciseResolver,
         },
@@ -131,7 +127,7 @@ export const textExerciseRoute: Routes = [
     },
     {
         path: ':courseId/text-exercises/:exerciseId/exercise-statistics',
-        component: ExerciseStatisticsComponent,
+        loadComponent: () => import('app/exercises/shared/statistics/exercise-statistics.component').then((m) => m.ExerciseStatisticsComponent),
         resolve: {
             exercise: TextExerciseResolver,
         },
