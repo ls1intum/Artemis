@@ -112,6 +112,7 @@
         },
         "express": "5.0.1",
         "jsdom": "26.0.0",
+        "katex": "0.16.21",
         "ng-mocks": {
             "@angular/common": "^19.1.0",
             "@angular/core": "^19.1.0",
