@@ -1,12 +1,23 @@
 import { TestBed, fakeAsync, tick } from '@angular/core/testing';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
-import { WebsocketService } from 'app/core/websocket/websocket.service';
-import { MockProvider } from 'ng-mocks';
+import { ConnectionState, WebsocketService } from 'app/core/websocket/websocket.service';
 import { AccountService } from 'app/core/auth/account.service';
 import { MockAccountService } from '../../helpers/mocks/service/mock-account.service';
 import { IrisWebsocketService } from 'app/iris/iris-websocket.service';
 import { defer, of } from 'rxjs';
 import { provideHttpClient } from '@angular/common/http';
+import { Message, Subscription as StompSubscription } from 'webstomp-client';
+
+jest.mock('sockjs-client');
+jest.mock('webstomp-client', () => ({
+    over: jest.fn().mockReturnValue({
+        connect: jest.fn(),
+        subscribe: jest.fn(),
+        send: jest.fn(),
+        disconnect: jest.fn(),
+        connected: false,
+    }),
+}));
 
 describe('WebsocketService', () => {
     let irisWebsocketService: IrisWebsocketService;
@@ -18,13 +29,7 @@ describe('WebsocketService', () => {
     beforeEach(() => {
         TestBed.configureTestingModule({
             imports: [],
-            providers: [
-                provideHttpClient(),
-                provideHttpClientTesting(),
-                IrisWebsocketService,
-                MockProvider(WebsocketService),
-                { provide: AccountService, useClass: MockAccountService },
-            ],
+            providers: [provideHttpClient(), provideHttpClientTesting(), IrisWebsocketService, WebsocketService, { provide: AccountService, useClass: MockAccountService }],
         });
         irisWebsocketService = TestBed.inject(IrisWebsocketService);
         websocketService = TestBed.inject(WebsocketService);
@@ -164,5 +169,162 @@ describe('WebsocketService', () => {
         // @ts-ignore
         const originalPayload = WebsocketService.decodeAndDecompress(compressedAndEncodedPayload);
         expect(originalPayload).toEqual(jsonPayload);
+    });
+
+    it('should handle reconnection with backoff', fakeAsync(() => {
+        jest.useFakeTimers();
+        const timeoutSpy = jest.spyOn(global, 'setTimeout');
+
+        websocketService.enableReconnect();
+        websocketService['consecutiveFailedAttempts'] = 0;
+
+        websocketService.stompFailureCallback();
+        expect(websocketService['consecutiveFailedAttempts']).toBe(1);
+        expect(timeoutSpy).toHaveBeenCalledWith(expect.any(Function), 5000);
+
+        websocketService.stompFailureCallback();
+        expect(websocketService['consecutiveFailedAttempts']).toBe(2);
+        expect(timeoutSpy).toHaveBeenCalledWith(expect.any(Function), 5000);
+
+        websocketService.stompFailureCallback();
+        expect(websocketService['consecutiveFailedAttempts']).toBe(3);
+        expect(timeoutSpy).toHaveBeenCalledWith(expect.any(Function), 10000);
+
+        websocketService['consecutiveFailedAttempts'] = 4;
+        websocketService.stompFailureCallback();
+        expect(timeoutSpy).toHaveBeenCalledWith(expect.any(Function), 20000);
+
+        websocketService['consecutiveFailedAttempts'] = 8;
+        websocketService.stompFailureCallback();
+        expect(timeoutSpy).toHaveBeenCalledWith(expect.any(Function), 60000);
+
+        websocketService['consecutiveFailedAttempts'] = 12;
+        websocketService.stompFailureCallback();
+        expect(timeoutSpy).toHaveBeenCalledWith(expect.any(Function), 120000);
+
+        websocketService['consecutiveFailedAttempts'] = 17;
+        websocketService.stompFailureCallback();
+        expect(timeoutSpy).toHaveBeenCalledWith(expect.any(Function), 300000);
+
+        websocketService['consecutiveFailedAttempts'] = 20;
+        websocketService.stompFailureCallback();
+        expect(timeoutSpy).toHaveBeenCalledWith(expect.any(Function), 600000);
+
+        jest.useRealTimers();
+    }));
+
+    it('should not reconnect when reconnect is disabled', fakeAsync(() => {
+        jest.useFakeTimers();
+        const connectSpy = jest.spyOn(websocketService, 'connect');
+        websocketService.disableReconnect();
+        websocketService.stompFailureCallback();
+        jest.runAllTimers();
+        expect(connectSpy).not.toHaveBeenCalled();
+        jest.useRealTimers();
+    }));
+
+    it('should handle sending message when disconnected', () => {
+        websocketService.connect();
+        const sendSpy = jest.spyOn(websocketService['stompClient']!, 'send');
+        websocketService['stompClient']!.connected = false;
+
+        websocketService.send('/test', { data: 'test' });
+        expect(sendSpy).not.toHaveBeenCalled();
+    });
+
+    it('should handle large messages with compression', () => {
+        websocketService.connect();
+        websocketService['stompClient']!.connected = true;
+        const sendSpy = jest.spyOn(websocketService['stompClient']!, 'send');
+        const largeData = { data: 'x'.repeat(2000) };
+
+        websocketService.send('/test', largeData);
+
+        expect(sendSpy).toHaveBeenCalledWith('/test', expect.any(String), { 'X-Compressed': 'true' });
+    });
+
+    it('should handle undefined channel subscription', () => {
+        // This test case is simply to hit the initial check in the function
+        const result = websocketService.subscribe(undefined!);
+        expect(result).toBe(websocketService);
+    });
+
+    it('should handle multiple subscriptions to same channel', fakeAsync(() => {
+        websocketService.connect();
+        websocketService['connectionStateInternal'].next(new ConnectionState(true, true, false));
+
+        const channel = '/test/channel';
+        websocketService.subscribe(channel);
+        websocketService.subscribe(channel);
+
+        tick();
+
+        expect(websocketService['stompSubscriptions'].size).toBe(1);
+        websocketService['stompSubscriptions'] = new Map<string, StompSubscription>();
+    }));
+
+    it('should handle unsubscribe from non-existent channel', () => {
+        const channel = '/non-existent';
+        expect(() => websocketService.unsubscribe(channel)).not.toThrow();
+    });
+
+    it('should handle multiple connect calls', () => {
+        const connectSpy = jest.spyOn(websocketService, 'connect');
+        websocketService.connect();
+        websocketService.connect();
+
+        expect(connectSpy).toHaveBeenCalledTimes(2);
+        expect(websocketService['connecting']).toBeTruthy();
+    });
+
+    it('should handle JSON parsing errors', () => {
+        const invalidJson = 'invalid-json';
+        // @ts-ignore
+        const result = WebsocketService.parseJSON(invalidJson);
+        expect(result).toBe(invalidJson);
+    });
+
+    it('should handle incoming message with no compression', () => {
+        const channel = '/topic/test';
+        const message: Message = {
+            body: JSON.stringify({ data: 'test' }),
+            headers: {},
+            ack: jest.fn(),
+            nack: jest.fn(),
+            command: '',
+        };
+        const subscriber = jest.fn();
+        // @ts-ignore
+        websocketService['subscribers'].set(channel, { next: subscriber });
+
+        websocketService['handleIncomingMessage'](channel)(message);
+
+        expect(subscriber).toHaveBeenCalledWith({ data: 'test' });
+    });
+
+    it('should update observables when calling receive', () => {
+        expect(websocketService['observables'].size).toBe(0);
+        websocketService.receive('/test/topic');
+        expect(websocketService['observables'].size).toBe(1);
+        websocketService.receive('/test/topic');
+        expect(websocketService['observables'].size).toBe(1);
+        websocketService.receive('/test/topictwo');
+        expect(websocketService['observables'].size).toBe(2);
+    });
+
+    it('should have default value for get session id if unsubscribed', () => {
+        expect(websocketService['getSessionId']()).toBe('unsubscribed');
+    });
+
+    it('should enable and disable reconnect when functions are called', () => {
+        let connectSpy = jest.spyOn(websocketService, 'connect');
+        websocketService.connect();
+        websocketService['stompClient']!.connected = false;
+        expect(websocketService['shouldReconnect']).toBeFalsy();
+        websocketService.enableReconnect();
+        expect(websocketService['shouldReconnect']).toBeTruthy();
+        expect(connectSpy).toHaveBeenCalledTimes(2);
+        websocketService.disableReconnect();
+        expect(websocketService['shouldReconnect']).toBeFalsy();
     });
 });
