@@ -1,4 +1,4 @@
-import dayjs from 'dayjs/esm';
+import dayjs from 'dayjs';
 import { MODELING_EDITOR_CANVAS } from '../../../support/constants';
 
 import { Course } from 'app/entities/course.model';
