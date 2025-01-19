@@ -46,7 +46,7 @@ on:
         required: true
         type: string
       raw_url:
-        description: "URL to use for fetching files in the format https://raw.githubusercontent.com/:owner/:repo/:sha"
+        description: "URL to the raw content of the repository in the format https://raw.githubusercontent.com/:owner/:repo/:sha"
         required: true
         type: string
 
