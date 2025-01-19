@@ -1,8 +1,8 @@
-import { Component, EventEmitter, Input, OnInit, Output } from '@angular/core';
+import { Component, EventEmitter, Input, OnInit, Output, inject } from '@angular/core';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { QuizExercise } from 'app/entities/quiz/quiz-exercise.model';
 import { QuizExerciseService } from './quiz-exercise.service';
-import { ActivatedRoute, Router } from '@angular/router';
+import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { ActionType } from 'app/shared/delete-dialog/delete-dialog.model';
 import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
 import { AlertService } from 'app/core/util/alert.service';
@@ -10,12 +10,24 @@ import { EventManager } from 'app/core/util/event-manager.service';
 import { faClipboardCheck, faEye, faFileExport, faListAlt, faSignal, faTable, faTrash, faUndo, faWrench } from '@fortawesome/free-solid-svg-icons';
 import { Subject } from 'rxjs';
 import { ButtonSize, ButtonType } from 'app/shared/components/button.component';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { ButtonComponent } from 'app/shared/components/button.component';
+import { DeleteButtonDirective } from 'app/shared/delete-dialog/delete-button.directive';
 
 @Component({
     selector: 'jhi-quiz-exercise-manage-buttons',
     templateUrl: './quiz-exercise-manage-buttons.component.html',
+    imports: [RouterLink, FaIconComponent, TranslateDirective, ButtonComponent, DeleteButtonDirective],
 })
 export class QuizExerciseManageButtonsComponent implements OnInit {
+    private quizExerciseService = inject(QuizExerciseService);
+    private eventManager = inject(EventManager);
+    private alertService = inject(AlertService);
+    private exerciseService = inject(ExerciseService);
+    private route = inject(ActivatedRoute);
+    private router = inject(Router);
+
     protected readonly ActionType = ActionType;
     readonly faEye = faEye;
     readonly faSignal = faSignal;
@@ -39,15 +51,6 @@ export class QuizExerciseManageButtonsComponent implements OnInit {
 
     baseUrl: string;
     isEvaluatingQuizExercise: boolean;
-
-    constructor(
-        private quizExerciseService: QuizExerciseService,
-        private eventManager: EventManager,
-        private alertService: AlertService,
-        private exerciseService: ExerciseService,
-        private route: ActivatedRoute,
-        private router: Router,
-    ) {}
 
     @Input()
     isDetailPage: boolean;

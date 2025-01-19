@@ -1,4 +1,4 @@
-import { AfterViewInit, Component, Input, OnChanges } from '@angular/core';
+import { AfterViewInit, Component, Input, OnChanges, inject } from '@angular/core';
 import { ExerciseScoresChartService, ExerciseScoresDTO } from 'app/overview/visualizations/exercise-scores-chart.service';
 import { AlertService } from 'app/core/util/alert.service';
 import { onError } from 'app/shared/util/global.utils';
@@ -7,13 +7,17 @@ import { HttpErrorResponse } from '@angular/common/http';
 import { ActivatedRoute } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
 import { cloneDeep, sortBy } from 'lodash-es';
-import { Color, ScaleType } from '@swimlane/ngx-charts';
+import { Color, LineChartModule, ScaleType } from '@swimlane/ngx-charts';
 import { round } from 'app/shared/util/utils';
 import { ExerciseType } from 'app/entities/exercise.model';
 import { faFilter } from '@fortawesome/free-solid-svg-icons';
 import { ChartExerciseTypeFilter } from 'app/shared/chart/chart-exercise-type-filter';
 import { GraphColors } from 'app/entities/statistics.model';
 import { ArtemisNavigationUtilService } from 'app/utils/navigation.utils';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { NgbDropdown, NgbDropdownMenu, NgbDropdownToggle } from '@ng-bootstrap/ng-bootstrap';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 
 type ChartSeries = {
     name: string;
@@ -35,8 +39,16 @@ type SeriesDatapoint = {
     selector: 'jhi-exercise-scores-chart',
     templateUrl: './exercise-scores-chart.component.html',
     styleUrls: ['./exercise-scores-chart.component.scss'],
+    imports: [TranslateDirective, NgbDropdown, NgbDropdownToggle, FaIconComponent, NgbDropdownMenu, LineChartModule, ArtemisTranslatePipe],
 })
 export class ExerciseScoresChartComponent implements AfterViewInit, OnChanges {
+    private navigationUtilService = inject(ArtemisNavigationUtilService);
+    private activatedRoute = inject(ActivatedRoute);
+    private alertService = inject(AlertService);
+    private exerciseScoresChartService = inject(ExerciseScoresChartService);
+    exerciseTypeFilter = inject(ChartExerciseTypeFilter);
+    private translateService = inject(TranslateService);
+
     @Input() filteredExerciseIDs: number[];
 
     courseId: number;
@@ -69,14 +81,7 @@ export class ExerciseScoresChartComponent implements AfterViewInit, OnChanges {
     maximumScoreLabel: string;
     maxScale = 101;
 
-    constructor(
-        private navigationUtilService: ArtemisNavigationUtilService,
-        private activatedRoute: ActivatedRoute,
-        private alertService: AlertService,
-        private exerciseScoresChartService: ExerciseScoresChartService,
-        public exerciseTypeFilter: ChartExerciseTypeFilter, // used in html, therefore it must be public
-        private translateService: TranslateService,
-    ) {
+    constructor() {
         this.translateService.onLangChange.subscribe(() => {
             this.setTranslations();
         });
@@ -91,7 +96,7 @@ export class ExerciseScoresChartComponent implements AfterViewInit, OnChanges {
         });
     }
 
-    ngOnChanges(): void {
+    ngOnChanges() {
         this.initializeChart();
     }
 

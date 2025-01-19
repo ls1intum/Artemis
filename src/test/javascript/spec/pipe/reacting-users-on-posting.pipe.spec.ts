@@ -15,12 +15,12 @@ describe('ReactingUsersOnPostingsPipe', () => {
     beforeEach(async () => {
         await TestBed.configureTestingModule({
             imports: [MockPipe(HtmlForPostingMarkdownPipe)],
-            providers: [{ provide: TranslateService, useClass: MockTranslateService }],
+            providers: [ReactingUsersOnPostingPipe, { provide: TranslateService, useClass: MockTranslateService }],
         })
             .compileComponents()
             .then(() => {
                 translateService = TestBed.inject(TranslateService);
-                reactingUsersPipe = new ReactingUsersOnPostingPipe(translateService);
+                reactingUsersPipe = TestBed.inject(ReactingUsersOnPostingPipe);
                 updateReactingUsersStringSpy = jest.spyOn(reactingUsersPipe as any, 'updateReactingUsersString');
             });
     });

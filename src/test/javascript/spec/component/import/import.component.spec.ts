@@ -1,7 +1,6 @@
-import { Component } from '@angular/core';
+import { Component, inject } from '@angular/core';
 import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
 import { FormsModule } from '@angular/forms';
-import { Router } from '@angular/router';
 import { NgbActiveModal, NgbPagination } from '@ng-bootstrap/ng-bootstrap';
 import { Exam } from 'app/entities/exam/exam.model';
 import { ButtonComponent } from 'app/shared/components/button.component';
@@ -18,8 +17,9 @@ import { DummyPagingService } from '../manage/dummy-paging-service';
 
 @Component({ template: '' })
 class DummyImportComponent extends ImportComponent<BaseEntity> {
-    constructor(router: Router, sortService: SortService, activeModal: NgbActiveModal, pagingService: DummyPagingService) {
-        super(router, sortService, activeModal, pagingService);
+    constructor() {
+        const pagingService = inject(DummyPagingService);
+        super(pagingService);
     }
 }
 describe('ImportComponent', () => {

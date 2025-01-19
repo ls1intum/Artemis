@@ -4,7 +4,6 @@ import { CourseExerciseDetailsModule } from 'app/overview/exercise-details/cours
 
 @Component({
     selector: 'jhi-learning-path-exercise',
-    standalone: true,
     changeDetection: ChangeDetectionStrategy.OnPush,
     imports: [CourseExerciseDetailsModule],
     templateUrl: './learning-path-exercise.component.html',

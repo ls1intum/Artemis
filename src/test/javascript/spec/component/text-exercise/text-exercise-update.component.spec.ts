@@ -14,8 +14,6 @@ import { Course } from 'app/entities/course.model';
 import dayjs from 'dayjs/esm';
 import { Subject, of, throwError } from 'rxjs';
 import { Exam } from 'app/entities/exam/exam.model';
-import { TranslateService } from '@ngx-translate/core';
-import { MockProvider } from 'ng-mocks';
 import { MockNgbModalService } from '../../helpers/mocks/service/mock-ngb-modal.service';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import * as Utils from 'app/exercises/shared/course-exercises/course-utils';
@@ -38,12 +36,8 @@ describe('TextExercise Management Update Component', () => {
                 { provide: SessionStorageService, useClass: MockSyncStorage },
                 { provide: ActivatedRoute, useValue: new MockActivatedRoute({}) },
                 { provide: NgbModal, useClass: MockNgbModalService },
-                MockProvider(TranslateService),
             ],
-            declarations: [TextExerciseUpdateComponent],
-        })
-            .overrideTemplate(TextExerciseUpdateComponent, '')
-            .compileComponents();
+        }).compileComponents();
 
         fixture = TestBed.createComponent(TextExerciseUpdateComponent);
         comp = fixture.componentInstance;

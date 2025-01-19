@@ -13,7 +13,7 @@ import { HttpResponse, provideHttpClient } from '@angular/common/http';
 import { QuizPool } from 'app/entities/quiz/quiz-pool.model';
 import { MultipleChoiceQuestion } from 'app/entities/quiz/multiple-choice-question.model';
 import { QuizGroup } from 'app/entities/quiz/quiz-group.model';
-import { NgbModal, NgbModule } from '@ng-bootstrap/ng-bootstrap';
+import { NgbModule } from '@ng-bootstrap/ng-bootstrap';
 import { ExamManagementService } from 'app/exam/manage/exam-management.service';
 import { Exam } from 'app/entities/exam/exam.model';
 import dayjs from 'dayjs/esm';
@@ -23,14 +23,12 @@ import { AnswerOption } from 'app/entities/quiz/answer-option.model';
 import { ChangeDetectorRef } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { AlertService } from 'app/core/util/alert.service';
-import { MockNgbModalService } from '../../../../helpers/mocks/service/mock-ngb-modal.service';
 
 describe('QuizPoolComponent', () => {
     let fixture: ComponentFixture<QuizPoolComponent>;
     let component: QuizPoolComponent;
     let quizPoolService: QuizPoolService;
     let examService: ExamManagementService;
-    let alertService: AlertService;
     let changeDetectorRef: ChangeDetectorRef;
 
     const courseId = 1;
@@ -56,7 +54,6 @@ describe('QuizPoolComponent', () => {
                 component = fixture.componentInstance;
                 quizPoolService = fixture.debugElement.injector.get(QuizPoolService);
                 examService = fixture.debugElement.injector.get(ExamManagementService);
-                alertService = fixture.debugElement.injector.get(AlertService);
                 changeDetectorRef = fixture.debugElement.injector.get(ChangeDetectorRef);
                 fixture.detectChanges();
             });
@@ -101,7 +98,8 @@ describe('QuizPoolComponent', () => {
 
     it('should call QuizGroupQuestionMappingComponent.addQuestion when there is a new question', () => {
         component.quizPool = new QuizPool();
-        component.quizPoolMappingComponent = new QuizPoolMappingComponent(alertService);
+        const quizPoolMappingFixture = TestBed.createComponent(QuizPoolMappingComponent);
+        component.quizPoolMappingComponent = quizPoolMappingFixture.componentInstance;
         const addQuestionSpy = jest.spyOn(component.quizPoolMappingComponent, 'addQuestion');
         const quizQuestion = new MultipleChoiceQuestion();
         component.handleQuestionAdded(quizQuestion);
@@ -111,7 +109,8 @@ describe('QuizPoolComponent', () => {
 
     it('should call QuizGroupQuestionMappingComponent.deleteQuestion when a question is deleted', () => {
         component.quizPool = new QuizPool();
-        component.quizPoolMappingComponent = new QuizPoolMappingComponent(alertService);
+        const quizPoolMappingFixture = TestBed.createComponent(QuizPoolMappingComponent);
+        component.quizPoolMappingComponent = quizPoolMappingFixture.componentInstance;
         const deleteQuestionSpy = jest.spyOn(component.quizPoolMappingComponent, 'deleteQuestion');
         const quizQuestion = new MultipleChoiceQuestion();
         component.handleQuestionDeleted(quizQuestion);
@@ -126,8 +125,10 @@ describe('QuizPoolComponent', () => {
         component.quizPool = quizPool;
         component.hasPendingChanges = true;
         component.isValid = true;
-        component.quizQuestionsEditComponent = new QuizQuestionListEditComponent(new MockNgbModalService() as any as NgbModal);
-        component.quizPoolMappingComponent = new QuizPoolMappingComponent(alertService);
+        const quizQuestionsEditFixture = TestBed.createComponent(QuizQuestionListEditComponent);
+        component.quizQuestionsEditComponent = quizQuestionsEditFixture.componentInstance;
+        const quizPoolMappingFixture = TestBed.createComponent(QuizPoolMappingComponent);
+        component.quizPoolMappingComponent = quizPoolMappingFixture.componentInstance;
         const parseAllQuestionsSpy = jest.spyOn(component.quizQuestionsEditComponent, 'parseAllQuestions').mockImplementation();
         const getMaxPointsSpy = jest.spyOn(component.quizPoolMappingComponent, 'getMaxPoints').mockImplementation();
         const updateQuizPoolSpy = jest.spyOn(quizPoolService, 'update').mockReturnValue(of(new HttpResponse<QuizPool>({ body: quizPool })));
@@ -159,7 +160,8 @@ describe('QuizPoolComponent', () => {
         question.answerOptions = [answerOption0, answerOption1];
         component.quizPool = new QuizPool();
         component.quizPool.quizQuestions = [question];
-        component.quizPoolMappingComponent = new QuizPoolMappingComponent(alertService);
+        const quizPoolMappingFixture = TestBed.createComponent(QuizPoolMappingComponent);
+        component.quizPoolMappingComponent = quizPoolMappingFixture.componentInstance;
         component.isValid = false;
         component.handleUpdate();
         component.isValid = true;
@@ -171,7 +173,8 @@ describe('QuizPoolComponent', () => {
         question.answerOptions = [];
         component.quizPool = new QuizPool();
         component.quizPool.quizQuestions = [question];
-        component.quizPoolMappingComponent = new QuizPoolMappingComponent(alertService);
+        const quizPoolMappingFixture = TestBed.createComponent(QuizPoolMappingComponent);
+        component.quizPoolMappingComponent = quizPoolMappingFixture.componentInstance;
         component.isValid = true;
         component.handleUpdate();
         component.isValid = false;
@@ -179,7 +182,8 @@ describe('QuizPoolComponent', () => {
 
     it('should set invalid reasons when there is a group that does not have any question', () => {
         component.quizPool = new QuizPool();
-        component.quizPoolMappingComponent = new QuizPoolMappingComponent(alertService);
+        const quizPoolMappingFixture = TestBed.createComponent(QuizPoolMappingComponent);
+        component.quizPoolMappingComponent = quizPoolMappingFixture.componentInstance;
         jest.spyOn(changeDetectorRef.constructor.prototype, 'detectChanges').mockImplementation();
         jest.spyOn(component.quizPoolMappingComponent, 'hasGroupsWithNoQuestion').mockReturnValue(true);
         jest.spyOn(component.quizPoolMappingComponent, 'getGroupNamesWithNoQuestion').mockReturnValue(['Test Group']);
@@ -196,7 +200,8 @@ describe('QuizPoolComponent', () => {
 
     it('should set invalid reasons when there is a group whose questions do not have the same points', () => {
         component.quizPool = new QuizPool();
-        component.quizPoolMappingComponent = new QuizPoolMappingComponent(alertService);
+        const quizPoolMappingFixture = TestBed.createComponent(QuizPoolMappingComponent);
+        component.quizPoolMappingComponent = quizPoolMappingFixture.componentInstance;
         jest.spyOn(changeDetectorRef.constructor.prototype, 'detectChanges').mockImplementation();
         jest.spyOn(component.quizPoolMappingComponent, 'hasGroupsWithNoQuestion').mockReturnValue(false);
         jest.spyOn(component.quizPoolMappingComponent, 'hasGroupsWithDifferentQuestionPoints').mockReturnValue(true);

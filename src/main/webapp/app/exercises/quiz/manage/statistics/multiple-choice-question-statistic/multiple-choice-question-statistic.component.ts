@@ -1,25 +1,26 @@
-import { ChangeDetectorRef, Component } from '@angular/core';
+import { Component, inject } from '@angular/core';
 import { SafeHtml } from '@angular/platform-browser';
-import { ActivatedRoute, Router } from '@angular/router';
-import { TranslateService } from '@ngx-translate/core';
 import { QuizStatisticUtil } from 'app/exercises/quiz/shared/quiz-statistic-util.service';
 import { ArtemisMarkdownService } from 'app/shared/markdown.service';
-import { AccountService } from 'app/core/auth/account.service';
-import { JhiWebsocketService } from 'app/core/websocket/websocket.service';
-import { QuizExerciseService } from 'app/exercises/quiz/manage/quiz-exercise.service';
 import { MultipleChoiceQuestionStatistic } from 'app/entities/quiz/multiple-choice-question-statistic.model';
 import { MultipleChoiceQuestion } from 'app/entities/quiz/multiple-choice-question.model';
 import { QuizExercise } from 'app/entities/quiz/quiz-exercise.model';
 import { QuestionStatisticComponent, blueColor, greenColor, redColor } from 'app/exercises/quiz/manage/statistics/question-statistic.component';
 import { faCheckCircle, faSync, faTimesCircle } from '@fortawesome/free-solid-svg-icons';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { BarChartModule } from '@swimlane/ngx-charts';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { QuizStatisticsFooterComponent } from '../quiz-statistics-footer/quiz-statistics-footer.component';
 
 @Component({
     selector: 'jhi-multiple-choice-question-statistic',
     templateUrl: './multiple-choice-question-statistic.component.html',
     styleUrls: ['../quiz-point-statistic/quiz-point-statistic.component.scss', '../../../../../shared/chart/vertical-bar-chart.scss'],
     providers: [QuizStatisticUtil],
+    imports: [TranslateDirective, BarChartModule, FaIconComponent, QuizStatisticsFooterComponent],
 })
 export class MultipleChoiceQuestionStatisticComponent extends QuestionStatisticComponent {
+    private artemisMarkdown = inject(ArtemisMarkdownService);
     declare question: MultipleChoiceQuestion;
 
     answerTextRendered: SafeHtml[];
@@ -29,26 +30,6 @@ export class MultipleChoiceQuestionStatisticComponent extends QuestionStatisticC
     faCheckCircle = faCheckCircle;
     faTimesCircle = faTimesCircle;
 
-    constructor(
-        route: ActivatedRoute,
-        router: Router,
-        accountService: AccountService,
-        translateService: TranslateService,
-        quizExerciseService: QuizExerciseService,
-        jhiWebsocketService: JhiWebsocketService,
-        private quizStatisticUtil: QuizStatisticUtil,
-        private artemisMarkdown: ArtemisMarkdownService,
-        protected changeDetector: ChangeDetectorRef,
-    ) {
-        super(route, router, accountService, translateService, quizExerciseService, jhiWebsocketService, changeDetector);
-    }
-
-    /**
-     * This functions loads the Quiz, which is necessary to build the Web-Template
-     *
-     * @param {QuizExercise} quiz: the quizExercise, which the selected question is part of.
-     * @param {boolean} refresh: true if method is called from Websocket
-     */
     loadQuiz(quiz: QuizExercise, refresh: boolean) {
         const updatedQuestion = super.loadQuizCommon(quiz);
         if (!updatedQuestion) {
@@ -73,7 +54,7 @@ export class MultipleChoiceQuestionStatisticComponent extends QuestionStatisticC
         const answerOptions = this.question.answerOptions!;
 
         // set label and background-Color based on the AnswerOptions
-        answerOptions.forEach((answerOption, i) => {
+        answerOptions.forEach((_answerOption, i) => {
             this.labels.push(this.getLetter(i) + '.');
             this.backgroundColors.push(blueColor);
         });

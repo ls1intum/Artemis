@@ -1,12 +1,12 @@
 import { Route, Routes } from '@angular/router';
-import { ExamScoresComponent } from 'app/exam/exam-scores/exam-scores.component';
+
 import { Authority } from 'app/shared/constants/authority.constants';
 import { UserRouteAccessService } from 'app/core/auth/user-route-access-service';
 
 export const examScoresRoute: Route[] = [
     {
         path: ':examId/scores',
-        component: ExamScoresComponent,
+        loadComponent: () => import('app/exam/exam-scores/exam-scores.component').then((m) => m.ExamScoresComponent),
     },
 ];
 

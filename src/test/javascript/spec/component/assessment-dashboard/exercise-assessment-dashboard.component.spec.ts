@@ -1,6 +1,6 @@
 import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
 import { ArtemisTestModule } from '../../test.module';
-import { MockComponent, MockDirective, MockModule, MockPipe, MockProvider } from 'ng-mocks';
+import { MockComponent, MockDirective, MockPipe, MockProvider } from 'ng-mocks';
 import { ActivatedRoute, Router, RouterModule, convertToParamMap } from '@angular/router';
 import { of, throwError } from 'rxjs';
 import { HttpErrorResponse, HttpHeaders, HttpResponse } from '@angular/common/http';
@@ -54,7 +54,6 @@ import { ComplaintService } from 'app/complaints/complaint.service';
 import { AssessmentType } from 'app/entities/assessment-type.model';
 import { ArtemisNavigationUtilService, getLinkToSubmissionAssessment } from 'app/utils/navigation.utils';
 import { MockTranslateValuesDirective } from '../../helpers/mocks/directive/mock-translate-values.directive';
-import { PieChartModule } from '@swimlane/ngx-charts';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { MockSyncStorage } from '../../helpers/mocks/service/mock-sync-storage.service';
 import { SortService } from 'app/shared/service/sort.service';
@@ -210,10 +209,9 @@ describe('ExerciseAssessmentDashboardComponent', () => {
             }),
         },
     } as any as ActivatedRoute;
-    const imports = [ArtemisTestModule, MockModule(PieChartModule), RouterModule.forRoot([])];
+    const imports = [ArtemisTestModule, RouterModule.forRoot([]), ExerciseAssessmentDashboardComponent];
 
     const declarations = [
-        ExerciseAssessmentDashboardComponent,
         MockComponent(TutorLeaderboardComponent),
         MockComponent(TutorParticipationGraphComponent),
         MockComponent(HeaderExercisePageWithDetailsComponent),

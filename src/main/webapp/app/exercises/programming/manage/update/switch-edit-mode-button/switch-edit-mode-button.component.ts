@@ -6,7 +6,6 @@ import { ArtemisSharedComponentModule } from 'app/shared/components/shared-compo
 
 @Component({
     selector: 'jhi-switch-edit-mode-button',
-    standalone: true,
     templateUrl: './switch-edit-mode-button.component.html',
     imports: [ArtemisSharedCommonModule, ArtemisSharedComponentModule],
 })

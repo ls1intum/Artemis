@@ -1,4 +1,4 @@
-import { Injectable } from '@angular/core';
+import { Injectable, inject } from '@angular/core';
 import { HttpClient, HttpResponse } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { map } from 'rxjs/operators';
@@ -10,13 +10,11 @@ type EntityResponseType = HttpResponse<SystemNotification>;
 
 @Injectable({ providedIn: 'root' })
 export class AdminSystemNotificationService {
-    public resourceUrl = 'api/admin/system-notifications';
+    private router = inject(Router);
+    private http = inject(HttpClient);
+    private systemNotificationService = inject(SystemNotificationService);
 
-    constructor(
-        private router: Router,
-        private http: HttpClient,
-        private systemNotificationService: SystemNotificationService,
-    ) {}
+    public resourceUrl = 'api/admin/system-notifications';
 
     /**
      * Create a notification on the server using a POST request.

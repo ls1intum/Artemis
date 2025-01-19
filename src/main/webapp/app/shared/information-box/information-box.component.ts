@@ -42,7 +42,6 @@ export interface StringNumberContent {
 export type InformationBoxContent = StudentExamContent | DateContent | ExerciseContent | DifficultyLevelContent | StringNumberContent;
 
 @Component({
-    standalone: true,
     imports: [ArtemisSharedModule, ArtemisSharedComponentModule],
     selector: 'jhi-information-box',
     templateUrl: './information-box.component.html',

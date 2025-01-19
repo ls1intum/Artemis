@@ -1,7 +1,6 @@
 import { Directive, EventEmitter, Input, NgModule, Output } from '@angular/core';
 
 @Directive({
-    // eslint-disable-next-line @angular-eslint/directive-selector
     selector: '[ngbDropdownItem]',
 })
 class NgbDropdownItemMockDirective {
@@ -9,19 +8,16 @@ class NgbDropdownItemMockDirective {
 }
 
 @Directive({
-    // eslint-disable-next-line @angular-eslint/directive-selector
     selector: '[ngbDropdownMenu]',
 })
 class NgbDropdownMenuMockDirective {}
 
 @Directive({
-    // eslint-disable-next-line @angular-eslint/directive-selector
     selector: '[ngbDropdownToggle]',
 })
 class NgbDropdownToggleMockDirective {}
 
 @Directive({
-    // eslint-disable-next-line @angular-eslint/directive-selector
     selector: '[ngbDropdown]',
     exportAs: 'ngbDropdown',
 })
@@ -45,13 +41,12 @@ class NgbDropdownMockDirective {
 }
 
 @Directive({
-    // eslint-disable-next-line @angular-eslint/directive-selector
     selector: '[ngbDropdownAnchor]',
 })
 class NgbDropdownAnchorMockDirective {}
 
 @NgModule({
-    declarations: [NgbDropdownItemMockDirective, NgbDropdownMenuMockDirective, NgbDropdownToggleMockDirective, NgbDropdownMockDirective, NgbDropdownAnchorMockDirective],
     exports: [NgbDropdownItemMockDirective, NgbDropdownMenuMockDirective, NgbDropdownToggleMockDirective, NgbDropdownMockDirective, NgbDropdownAnchorMockDirective],
+    imports: [NgbDropdownItemMockDirective, NgbDropdownMenuMockDirective, NgbDropdownToggleMockDirective, NgbDropdownMockDirective, NgbDropdownAnchorMockDirective],
 })
 export class NgbDropdownMocksModule {}

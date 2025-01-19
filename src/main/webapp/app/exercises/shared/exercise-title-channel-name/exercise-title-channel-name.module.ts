@@ -3,8 +3,7 @@ import { ExerciseTitleChannelNameComponent } from './exercise-title-channel-name
 import { TitleChannelNameModule } from 'app/shared/form/title-channel-name/title-channel-name.module';
 
 @NgModule({
-    declarations: [ExerciseTitleChannelNameComponent],
-    imports: [TitleChannelNameModule],
+    imports: [TitleChannelNameModule, ExerciseTitleChannelNameComponent],
     exports: [ExerciseTitleChannelNameComponent],
 })
 export class ExerciseTitleChannelNameModule {}

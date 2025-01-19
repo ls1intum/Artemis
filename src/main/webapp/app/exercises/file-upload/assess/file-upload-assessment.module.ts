@@ -21,7 +21,7 @@ import { ArtemisAssessmentProgressLabelModule } from 'app/exercises/shared/asses
         ArtemisMarkdownModule,
         SubmissionResultStatusModule,
         ArtemisAssessmentProgressLabelModule,
+        FileUploadAssessmentComponent,
     ],
-    declarations: [FileUploadAssessmentComponent],
 })
 export class ArtemisFileUploadAssessmentModule {}

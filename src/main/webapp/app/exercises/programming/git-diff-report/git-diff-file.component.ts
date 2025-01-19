@@ -7,7 +7,6 @@ import { TranslateDirective } from 'app/shared/language/translate.directive';
     selector: 'jhi-git-diff-file',
     templateUrl: './git-diff-file.component.html',
     encapsulation: ViewEncapsulation.None,
-    standalone: true,
     changeDetection: ChangeDetectionStrategy.OnPush,
     imports: [MonacoDiffEditorComponent, TranslateDirective],
 })

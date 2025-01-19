@@ -55,6 +55,7 @@ import de.tum.cit.aet.artemis.assessment.service.PresentationPointsCalculationSe
 import de.tum.cit.aet.artemis.assessment.service.TutorLeaderboardService;
 import de.tum.cit.aet.artemis.atlas.api.CompetencyProgressApi;
 import de.tum.cit.aet.artemis.atlas.api.CompetencyRelationApi;
+import de.tum.cit.aet.artemis.atlas.api.LearnerProfileApi;
 import de.tum.cit.aet.artemis.atlas.api.LearningPathApi;
 import de.tum.cit.aet.artemis.atlas.api.PrerequisitesApi;
 import de.tum.cit.aet.artemis.communication.domain.FaqState;
@@ -126,8 +127,6 @@ import de.tum.cit.aet.artemis.tutorialgroup.service.TutorialGroupChannelManageme
 public class CourseService {
 
     private static final Logger log = LoggerFactory.getLogger(CourseService.class);
-
-    private final FaqRepository faqRepository;
 
     @Value("${artemis.course-archives-path}")
     private Path courseArchivesDirPath;
@@ -216,6 +215,10 @@ public class CourseService {
 
     private final BuildJobRepository buildJobRepository;
 
+    private final FaqRepository faqRepository;
+
+    private final Optional<LearnerProfileApi> learnerProfileApi;
+
     private final LLMTokenUsageTraceRepository llmTokenUsageTraceRepository;
 
     public CourseService(CourseRepository courseRepository, ExerciseService exerciseService, ExerciseDeletionService exerciseDeletionService,
@@ -231,7 +234,7 @@ public class CourseService {
             Optional<LearningPathApi> learningPathApi, Optional<IrisSettingsService> irisSettingsService, LectureRepository lectureRepository,
             TutorialGroupNotificationRepository tutorialGroupNotificationRepository, TutorialGroupChannelManagementService tutorialGroupChannelManagementService,
             Optional<PrerequisitesApi> prerequisitesApi, Optional<CompetencyRelationApi> competencyRelationApi, PostRepository postRepository,
-            AnswerPostRepository answerPostRepository, BuildJobRepository buildJobRepository, FaqRepository faqRepository,
+            AnswerPostRepository answerPostRepository, BuildJobRepository buildJobRepository, FaqRepository faqRepository, Optional<LearnerProfileApi> learnerProfileApi,
             LLMTokenUsageTraceRepository llmTokenUsageTraceRepository) {
         this.courseRepository = courseRepository;
         this.exerciseService = exerciseService;
@@ -276,6 +279,7 @@ public class CourseService {
         this.postRepository = postRepository;
         this.answerPostRepository = answerPostRepository;
         this.faqRepository = faqRepository;
+        this.learnerProfileApi = learnerProfileApi;
         this.llmTokenUsageTraceRepository = llmTokenUsageTraceRepository;
     }
 
@@ -527,6 +531,7 @@ public class CourseService {
         deleteExamsOfCourse(course);
         deleteGradingScaleOfCourse(course);
         deleteFaqsOfCourse(course);
+        learnerProfileApi.ifPresent(api -> api.deleteAllForCourse(course));
         irisSettingsService.ifPresent(iss -> iss.deleteSettingsFor(course));
         courseRepository.deleteById(course.getId());
         log.debug("Successfully deleted course {}.", course.getTitle());
@@ -636,8 +641,9 @@ public class CourseService {
     public void enrollUserForCourseOrThrow(User user, Course course) {
         authCheckService.checkUserAllowedToEnrollInCourseElseThrow(user, course);
         userService.addUserToGroup(user, course.getStudentGroupName());
-        if (course.getLearningPathsEnabled() && learningPathApi.isPresent()) {
-            learningPathApi.get().generateLearningPathForUser(course, user);
+        if (course.getLearningPathsEnabled()) {
+            learnerProfileApi.ifPresent(api -> api.createCourseLearnerProfile(course, user));
+            learningPathApi.ifPresent(api -> api.generateLearningPathForUser(course, user));
         }
         final var auditEvent = new AuditEvent(user.getLogin(), Constants.ENROLL_IN_COURSE, "course=" + course.getTitle());
         auditEventRepository.add(auditEvent);
@@ -669,8 +675,10 @@ public class CourseService {
             if (optionalStudent.isEmpty()) {
                 notFoundStudentsDTOs.add(studentDto);
             }
-            else if (courseGroupRole == Role.STUDENT && course.getLearningPathsEnabled() && learningPathApi.isPresent()) {
-                learningPathApi.get().generateLearningPathForUser(course, optionalStudent.get());
+            else if (courseGroupRole == Role.STUDENT && course.getLearningPathsEnabled()) {
+                final Course finalCourse = course;
+                learnerProfileApi.ifPresent(api -> api.createCourseLearnerProfile(finalCourse, optionalStudent.get()));
+                learningPathApi.ifPresent(api -> api.generateLearningPathForUser(finalCourse, optionalStudent.get()));
             }
         }
 
@@ -686,6 +694,7 @@ public class CourseService {
     public void unenrollUserForCourseOrThrow(User user, Course course) {
         authCheckService.checkUserAllowedToUnenrollFromCourseElseThrow(user, course);
         userService.removeUserFromGroup(user, course.getStudentGroupName());
+        learnerProfileApi.ifPresent(api -> api.deleteCourseLearnerProfile(course, user));
         final var auditEvent = new AuditEvent(user.getLogin(), Constants.UNENROLL_FROM_COURSE, "course=" + course.getTitle());
         auditEventRepository.add(auditEvent);
         log.info("User {} has successfully unenrolled from course {}", user.getLogin(), course.getTitle());
@@ -1064,11 +1073,17 @@ public class CourseService {
     /**
      * adds a given user to a user group
      *
-     * @param user  user to be added to a group
-     * @param group user-group where the user should be added
+     * @param user   user to be added to a group
+     * @param group  user-group where the user should be added
+     * @param course the course in which the user should be added
      */
-    public void addUserToGroup(User user, String group) {
+    public void addUserToGroup(User user, String group, Course course) {
         userService.addUserToGroup(user, group);
+        if (group.equals(course.getStudentGroupName()) && course.getLearningPathsEnabled()) {
+            Course courseWithCompetencies = courseRepository.findWithEagerCompetenciesAndPrerequisitesByIdElseThrow(course.getId());
+            learnerProfileApi.ifPresent(api -> api.createCourseLearnerProfile(course, user));
+            learningPathApi.ifPresent(api -> api.generateLearningPathForUser(courseWithCompetencies, user));
+        }
     }
 
     /**
