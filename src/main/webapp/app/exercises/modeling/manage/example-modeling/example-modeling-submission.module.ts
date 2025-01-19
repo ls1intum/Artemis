@@ -19,7 +19,7 @@ import { ArtemisSharedComponentModule } from 'app/shared/components/shared-compo
         ArtemisAssessmentSharedModule,
         AssessmentInstructionsModule,
         ArtemisSharedComponentModule,
+        ExampleModelingSubmissionComponent,
     ],
-    declarations: [ExampleModelingSubmissionComponent],
 })
 export class ArtemisExampleModelingSubmissionModule {}

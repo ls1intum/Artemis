@@ -1,5 +1,5 @@
-import { HttpClient, HttpErrorResponse, HttpParams } from '@angular/common/http';
-import { Injectable, OnDestroy } from '@angular/core';
+import { HttpErrorResponse, HttpParams } from '@angular/common/http';
+import { Injectable, OnDestroy, inject } from '@angular/core';
 import { Observable, Subject, UnaryFunction, of, pipe, throwError } from 'rxjs';
 import { catchError, map, tap } from 'rxjs/operators';
 import {
@@ -14,8 +14,6 @@ import {
 } from 'app/exercises/programming/shared/code-editor/model/code-editor.model';
 import { CodeEditorConflictStateService } from 'app/exercises/programming/shared/code-editor/service/code-editor-conflict-state.service';
 import { BuildLogService } from 'app/exercises/programming/shared/service/build-log.service';
-import { JhiWebsocketService } from 'app/core/websocket/websocket.service';
-import { DomainService } from 'app/exercises/programming/shared/code-editor/service/code-editor-domain.service';
 import { DomainDependentEndpointService } from 'app/exercises/programming/shared/code-editor/service/code-editor-domain-dependent-endpoint.service';
 import { downloadFile } from 'app/shared/util/download.util';
 
@@ -79,13 +77,11 @@ const handleErrorResponse = <T>(conflictService: CodeEditorConflictStateService)
 
 @Injectable({ providedIn: 'root' })
 export class CodeEditorRepositoryService extends DomainDependentEndpointService implements ICodeEditorRepositoryService {
-    constructor(
-        http: HttpClient,
-        jhiWebsocketService: JhiWebsocketService,
-        domainService: DomainService,
-        private conflictService: CodeEditorConflictStateService,
-    ) {
-        super(http, jhiWebsocketService, domainService);
+    private conflictService = inject(CodeEditorConflictStateService);
+
+    // necessary to be used in providers array in component
+    constructor() {
+        super();
     }
 
     getStatus = () => {
@@ -118,13 +114,11 @@ export class CodeEditorRepositoryService extends DomainDependentEndpointService 
 
 @Injectable({ providedIn: 'root' })
 export class CodeEditorBuildLogService extends DomainDependentEndpointService {
-    constructor(
-        private buildLogService: BuildLogService,
-        http: HttpClient,
-        jhiWebsocketService: JhiWebsocketService,
-        domainService: DomainService,
-    ) {
-        super(http, jhiWebsocketService, domainService);
+    private buildLogService = inject(BuildLogService);
+
+    // necessary to be used in providers array in component
+    constructor() {
+        super();
     }
 
     getBuildLogs = () => {
@@ -138,14 +132,13 @@ export class CodeEditorBuildLogService extends DomainDependentEndpointService {
 
 @Injectable({ providedIn: 'root' })
 export class CodeEditorRepositoryFileService extends DomainDependentEndpointService implements ICodeEditorRepositoryFileService, OnDestroy {
+    private conflictService = inject(CodeEditorConflictStateService);
+
     fileUpdateSubject = new Subject<FileSubmission>();
-    constructor(
-        http: HttpClient,
-        jhiWebsocketService: JhiWebsocketService,
-        domainService: DomainService,
-        private conflictService: CodeEditorConflictStateService,
-    ) {
-        super(http, jhiWebsocketService, domainService);
+
+    // necessary to be used in providers array in component
+    constructor() {
+        super();
     }
 
     /**

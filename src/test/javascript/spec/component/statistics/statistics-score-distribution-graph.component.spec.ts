@@ -1,11 +1,6 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ArtemisTestModule } from '../../test.module';
-import { MockModule, MockPipe, MockProvider } from 'ng-mocks';
-import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
-import { MockTranslateService } from '../../helpers/mocks/service/mock-translate.service';
-import { TranslateService } from '@ngx-translate/core';
 import { StatisticsScoreDistributionGraphComponent } from 'app/shared/statistics-graph/statistics-score-distribution-graph.component';
-import { BarChartModule } from '@swimlane/ngx-charts';
 import { ExerciseType } from 'app/entities/exercise.model';
 import { ArtemisNavigationUtilService } from 'app/utils/navigation.utils';
 
@@ -17,9 +12,7 @@ describe('StatisticsScoreDistributionGraphComponent', () => {
     const expectedLabels = ['[0, 10)', '[10, 20)', '[20, 30)', '[30, 40)', '[40, 50)', '[50, 60)', '[60, 70)', '[70, 80)', '[80, 90)', '[90, 100]'];
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule, MockModule(BarChartModule)],
-            declarations: [StatisticsScoreDistributionGraphComponent, MockPipe(ArtemisTranslatePipe)],
-            providers: [MockProvider(ArtemisNavigationUtilService), { provide: TranslateService, useClass: MockTranslateService }],
+            imports: [ArtemisTestModule],
         })
             .compileComponents()
             .then(() => {

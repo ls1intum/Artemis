@@ -12,10 +12,6 @@ import {
 } from 'app/exercises/programming/shared/actions/programming-exercise-trigger-all-button.component';
 import { ProgrammingSubmissionService } from 'app/exercises/programming/participate/programming-submission.service';
 import { of } from 'rxjs';
-import { MockDirective, MockPipe } from 'ng-mocks';
-import { NgModel } from '@angular/forms';
-import { ButtonComponent } from 'app/shared/components/button.component';
-import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 
 describe('ProgrammingExercise Trigger All Button Component', () => {
     const course = { id: 123 } as Course;
@@ -31,7 +27,6 @@ describe('ProgrammingExercise Trigger All Button Component', () => {
     beforeEach(() => {
         TestBed.configureTestingModule({
             imports: [ArtemisTestModule],
-            declarations: [ProgrammingExerciseTriggerAllButtonComponent, ButtonComponent, MockPipe(ArtemisTranslatePipe), MockDirective(NgModel)],
             providers: [
                 { provide: NgbModal, useClass: MockNgbModalService },
                 { provide: LocalStorageService, useClass: MockSyncStorage },

@@ -1,11 +1,11 @@
-import { MockRouter } from '../../../../helpers/mocks/mock-router';
+import { TestBed } from '@angular/core/testing';
 import { StudentExamService } from 'app/exam/manage/student-exams/student-exam.service';
-import { Router } from '@angular/router';
-import { HttpClient, HttpResponse } from '@angular/common/http';
 import { AccountService } from 'app/core/auth/account.service';
+import { HttpClient, HttpResponse } from '@angular/common/http';
 import { of } from 'rxjs';
 import { StudentExam } from 'app/entities/student-exam.model';
 import { StudentExamWithGradeDTO } from 'app/exam/exam-scores/exam-score-dtos.model';
+import { ArtemisTestModule } from '../../../../test.module';
 
 describe('Student Exam Service', () => {
     let httpClient: any;
@@ -14,16 +14,22 @@ describe('Student Exam Service', () => {
     let accountService: AccountService;
 
     beforeEach(() => {
-        httpClient = {
-            put: jest.fn(),
-            get: jest.fn(),
-            patch: jest.fn(),
-        };
-        accountService = {
-            setAccessRightsForCourse: jest.fn(),
-        } as any as AccountService;
+        TestBed.configureTestingModule({
+            imports: [ArtemisTestModule],
+            providers: [
+                {
+                    provide: AccountService,
+                    useValue: {
+                        setAccessRightsForCourse: jest.fn(),
+                    },
+                },
+            ],
+        });
+
+        service = TestBed.inject(StudentExamService);
+        accountService = TestBed.inject(AccountService);
+        httpClient = TestBed.inject(HttpClient);
         httpClientPutSpy = jest.spyOn(httpClient, 'put');
-        service = new StudentExamService(new MockRouter() as any as Router, httpClient as HttpClient, accountService);
     });
 
     afterEach(() => {

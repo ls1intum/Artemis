@@ -5,7 +5,6 @@ import type { PluginSimple } from 'markdown-it';
 
 @Pipe({
     name: 'htmlForMarkdown',
-    standalone: true,
 })
 export class HtmlForMarkdownPipe implements PipeTransform {
     private readonly markdownService = inject(ArtemisMarkdownService);

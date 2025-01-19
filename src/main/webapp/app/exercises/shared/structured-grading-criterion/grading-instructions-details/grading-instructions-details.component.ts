@@ -1,4 +1,4 @@
-import { AfterContentInit, ChangeDetectorRef, Component, Input, OnInit, QueryList, ViewChild, ViewChildren } from '@angular/core';
+import { AfterContentInit, ChangeDetectorRef, Component, Input, OnInit, QueryList, ViewChild, ViewChildren, inject } from '@angular/core';
 import { GradingCriterion } from 'app/exercises/shared/structured-grading-criterion/grading-criterion.model';
 import { GradingInstruction } from 'app/exercises/shared/structured-grading-criterion/grading-instruction.model';
 import { Exercise } from 'app/entities/exercise.model';
@@ -13,13 +13,23 @@ import { GradingUsageCountAction } from 'app/shared/monaco-editor/model/actions/
 import { MarkdownEditorHeight, MarkdownEditorMonacoComponent, TextWithDomainAction } from 'app/shared/markdown-editor/monaco/markdown-editor-monaco.component';
 import { GradingCriterionAction } from 'app/shared/monaco-editor/model/actions/grading-criteria/grading-criterion.action';
 import { GradingInstructionAction } from 'app/shared/monaco-editor/model/actions/grading-criteria/grading-instruction.action';
+import { NgClass } from '@angular/common';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { FormsModule } from '@angular/forms';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { HelpIconComponent } from 'app/shared/components/help-icon.component';
+import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
+import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 
 @Component({
     selector: 'jhi-grading-instructions-details',
     templateUrl: './grading-instructions-details.component.html',
     styleUrls: ['./grading-instructions-details.component.scss'],
+    imports: [NgClass, TranslateDirective, FormsModule, FaIconComponent, HelpIconComponent, NgbTooltip, MarkdownEditorMonacoComponent, ArtemisTranslatePipe],
 })
 export class GradingInstructionsDetailsComponent implements OnInit, AfterContentInit {
+    private changeDetector = inject(ChangeDetectorRef);
+
     @ViewChildren('markdownEditors')
     private markdownEditors: QueryList<MarkdownEditorMonacoComponent>;
     @ViewChild('markdownEditor', { static: false })
@@ -65,8 +75,6 @@ export class GradingInstructionsDetailsComponent implements OnInit, AfterContent
     faUndo = faUndo;
 
     protected readonly MarkdownEditorHeight = MarkdownEditorHeight;
-
-    constructor(private changeDetector: ChangeDetectorRef) {}
 
     ngOnInit() {
         this.criteria = this.exercise.gradingCriteria || [];
@@ -128,8 +136,7 @@ export class GradingInstructionsDetailsComponent implements OnInit, AfterContent
     }
 
     generateInstructionText(instruction: GradingInstruction): string {
-        let markdownText = '';
-        markdownText =
+        return (
             GradingInstructionAction.IDENTIFIER +
             '\n' +
             '\t' +
@@ -147,8 +154,8 @@ export class GradingInstructionsDetailsComponent implements OnInit, AfterContent
             '\t' +
             this.generateUsageCount(instruction) +
             '\n' +
-            '\n';
-        return markdownText;
+            '\n'
+        );
     }
 
     generateCreditsText(instruction: GradingInstruction): string {

@@ -16,8 +16,6 @@ export class DomainService {
     protected domain: DomainChange;
     private subject = new BehaviorSubject<DomainParticipationChange | DomainTestRepositoryChange | DomainAuxiliaryRepositoryChange | undefined>(undefined);
 
-    constructor() {}
-
     /**
      * Sets domain and subject.next according to parameter.
      * @param domain - defines new domain of the service.
