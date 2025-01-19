@@ -53,6 +53,7 @@ import { ConversationHeaderComponent } from './layout/conversation-header/conver
 import { ConversationMessagesComponent } from './layout/conversation-messages/conversation-messages.component';
 import { ConversationThreadSidebarComponent } from './layout/conversation-thread-sidebar/conversation-thread-sidebar.component';
 import { SavedPostsComponent } from './saved-posts/saved-posts.component';
+import { captureException } from '@sentry/angular';
 
 const DEFAULT_CHANNEL_GROUPS: AccordionGroups = {
     favoriteChannels: { entityData: [] },
@@ -283,7 +284,7 @@ export class CourseConversationsComponent implements OnInit, OnDestroy {
                         this.prepareSidebarData();
                     },
                     error: (error) => {
-                        console.error('Error creating channel:', error);
+                        captureException('Error creating channel:', error);
                     },
                 });
         }

@@ -15,7 +15,7 @@ const classMap: { [key: string]: string } = {
 };
 
 // An inline math formula has some other characters before or after the formula and uses $$ as delimiters
-const inlineFormulaRegex = /(?:.+\$\$[^\$]+\$\$)|(?:\$\$[^\$]+\$\$.+)/g;
+const inlineFormulaRegex = /.+\$\$[^$]+\$\$|\$\$[^$]+\$\$.+/g;
 
 class FormulaCompatibilityPlugin extends ArtemisTextReplacementPlugin {
     replaceText(text: string): string {
