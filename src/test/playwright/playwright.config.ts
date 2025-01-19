@@ -27,18 +27,7 @@ export default defineConfig({
             {
                 outputFile: process.env.PLAYWRIGHT_TEST_TYPE ? `./test-reports/monocart-report-${process.env.PLAYWRIGHT_TEST_TYPE}` : './test-reports/monocart-report',
                 coverage: {
-                    reports: [
-                        // ...(process.env.PLAYWRIGHT_TEST_TYPE
-                        //     ? [
-                        //           'raw',
-                        //           {
-                        //               outputDir: 'raw',
-                        //           },
-                        //       ]
-                        //     : []),
-                        'lcov',
-                        'json',
-                    ],
+                    reports: ['lcov', 'json'],
                     filter: {
                         '**/src/**': true,
                         '**/node_modules/**': false,
