@@ -87,13 +87,13 @@ import de.tum.cit.aet.artemis.programming.icl.TestBuildAgentConfiguration;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseBuildConfigRepository;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseBuildStatisticsRepository;
 import de.tum.cit.aet.artemis.programming.repository.SolutionProgrammingExerciseParticipationRepository;
-import de.tum.cit.aet.artemis.programming.repository.TemplateProgrammingExerciseParticipationRepository;
 import de.tum.cit.aet.artemis.programming.service.ProgrammingMessagingService;
 import de.tum.cit.aet.artemis.programming.service.localci.LocalCIService;
 import de.tum.cit.aet.artemis.programming.service.localvc.LocalVCService;
 import de.tum.cit.aet.artemis.programming.test_repository.BuildJobTestRepository;
 import de.tum.cit.aet.artemis.programming.test_repository.ProgrammingExerciseStudentParticipationTestRepository;
 import de.tum.cit.aet.artemis.programming.test_repository.ProgrammingExerciseTestRepository;
+import de.tum.cit.aet.artemis.programming.test_repository.TemplateProgrammingExerciseParticipationTestRepository;
 
 // Must start up an actual web server such that the tests can communicate with the ArtemisGitServlet using JGit.
 // Otherwise, only MockMvc requests could be used. The port this runs on is defined at server.port (see @TestPropertySource).
@@ -130,7 +130,7 @@ public abstract class AbstractSpringIntegrationLocalCILocalVCTest extends Abstra
     protected ProgrammingExerciseBuildStatisticsRepository programmingExerciseBuildStatisticsRepository;
 
     @Autowired
-    protected TemplateProgrammingExerciseParticipationRepository templateProgrammingExerciseParticipationRepository;
+    protected TemplateProgrammingExerciseParticipationTestRepository templateProgrammingExerciseParticipationRepository;
 
     @Autowired
     protected SolutionProgrammingExerciseParticipationRepository solutionProgrammingExerciseParticipationRepository;
@@ -506,11 +506,6 @@ public abstract class AbstractSpringIntegrationLocalCILocalVCTest extends Abstra
     }
 
     @Override
-    public void mockDeleteUserInUserManagement(User user, boolean userExistsInUserManagement, boolean failInVcs, boolean failInCi) {
-        // Not implemented for local VC and local CI
-    }
-
-    @Override
     public void mockCreateGroupInUserManagement(String groupName) {
         // Not implemented for local VC and local CI
     }
@@ -553,6 +548,11 @@ public abstract class AbstractSpringIntegrationLocalCILocalVCTest extends Abstra
     @Override
     public void mockGetBuildPlan(String projectKey1, String planName, boolean planExistsInCi, boolean planIsActive, boolean planIsBuilding, boolean failToGetBuild) {
         // Not implemented for local VC and local CI
+    }
+
+    @Override
+    public void mockGetBuildPlanConfig(String projectKey, String planName) {
+        // not needed for localVCS/CI
     }
 
     @Override
@@ -613,5 +613,10 @@ public abstract class AbstractSpringIntegrationLocalCILocalVCTest extends Abstra
     @Override
     public void mockUserExists(String username) throws Exception {
         // Not implemented for local VC and local CI
+    }
+
+    @Override
+    public void mockGetCiProjectMissing(ProgrammingExercise exercise) {
+        // not relevant for local VC and local CI
     }
 }

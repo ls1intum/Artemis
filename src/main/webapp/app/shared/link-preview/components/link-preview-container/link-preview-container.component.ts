@@ -3,12 +3,14 @@ import { LinkPreview, LinkPreviewService } from 'app/shared/link-preview/service
 import { Link, LinkifyService } from 'app/shared/link-preview/services/linkify.service';
 import { User } from 'app/core/user/user.model';
 import { Posting } from 'app/entities/metis/posting.model';
+import { LinkPreviewComponent } from '../link-preview/link-preview.component';
 
 @Component({
     selector: 'jhi-link-preview-container',
     templateUrl: './link-preview-container.component.html',
     styleUrls: ['./link-preview-container.component.scss'],
     changeDetection: ChangeDetectionStrategy.OnPush,
+    imports: [LinkPreviewComponent],
 })
 export class LinkPreviewContainerComponent implements OnInit, OnChanges {
     private readonly linkPreviewService: LinkPreviewService = inject(LinkPreviewService);

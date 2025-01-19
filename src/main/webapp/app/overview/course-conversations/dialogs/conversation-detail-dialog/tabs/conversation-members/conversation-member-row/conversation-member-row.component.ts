@@ -3,7 +3,7 @@ import { faEllipsis, faUser, faUserCheck, faUserGear, faUserGraduate } from '@fo
 import { User } from 'app/core/user/user.model';
 import { ConversationDTO } from 'app/entities/metis/conversation/conversation.model';
 import { AccountService } from 'app/core/auth/account.service';
-import { NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
+import { NgbDropdown, NgbDropdownButtonItem, NgbDropdownItem, NgbDropdownMenu, NgbDropdownToggle, NgbModal, NgbModalRef, NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { EMPTY, Observable, Subject, from, takeUntil } from 'rxjs';
 import { Course } from 'app/entities/course.model';
 import { canGrantChannelModeratorRole, canRemoveUsersFromConversation, canRevokeChannelModeratorRole } from 'app/shared/metis/conversations/conversation-permissions.utils';
@@ -20,12 +20,27 @@ import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { getAsGroupChatDTO, isGroupChatDTO } from 'app/entities/metis/conversation/group-chat.model';
 import { GroupChatService } from 'app/shared/metis/conversations/group-chat.service';
 import { catchError } from 'rxjs/operators';
+import { ProfilePictureComponent } from 'app/shared/profile-picture/profile-picture.component';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 
 @Component({
-    // eslint-disable-next-line @angular-eslint/component-selector
     selector: '[jhi-conversation-member-row]',
     templateUrl: './conversation-member-row.component.html',
     styleUrls: ['./conversation-member-row.component.scss'],
+    imports: [
+        ProfilePictureComponent,
+        FaIconComponent,
+        NgbTooltip,
+        NgbDropdown,
+        NgbDropdownToggle,
+        NgbDropdownMenu,
+        NgbDropdownButtonItem,
+        NgbDropdownItem,
+        TranslateDirective,
+        ArtemisTranslatePipe,
+    ],
 })
 export class ConversationMemberRowComponent implements OnInit, OnDestroy {
     private ngUnsubscribe = new Subject<void>();

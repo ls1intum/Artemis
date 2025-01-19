@@ -1,4 +1,4 @@
-import { Component, OnDestroy, OnInit, QueryList, ViewChildren } from '@angular/core';
+import { Component, OnDestroy, OnInit, QueryList, ViewChildren, inject } from '@angular/core';
 import dayjs from 'dayjs/esm';
 import isMobile from 'ismobilejs-es5';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
@@ -38,14 +38,49 @@ import { captureException } from '@sentry/angular';
 import { getCourseFromExercise } from 'app/entities/exercise.model';
 import { faCircleNotch, faSync } from '@fortawesome/free-solid-svg-icons';
 import { ArtemisServerDateService } from 'app/shared/server-date.service';
+import { NgClass, NgTemplateOutlet } from '@angular/common';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { ButtonComponent } from 'app/shared/components/button.component';
+import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
+import { JhiConnectionStatusComponent } from 'app/shared/connection-status/connection-status.component';
+import { FormsModule } from '@angular/forms';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
+import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 
 @Component({
     selector: 'jhi-quiz',
     templateUrl: './quiz-participation.component.html',
     providers: [ParticipationService],
     styleUrls: ['./quiz-participation.component.scss'],
+    imports: [
+        NgClass,
+        NgTemplateOutlet,
+        TranslateDirective,
+        ButtonComponent,
+        NgbTooltip,
+        MultipleChoiceQuestionComponent,
+        DragAndDropQuestionComponent,
+        ShortAnswerQuestionComponent,
+        JhiConnectionStatusComponent,
+        FormsModule,
+        FaIconComponent,
+        ArtemisDatePipe,
+        ArtemisTranslatePipe,
+    ],
 })
 export class QuizParticipationComponent implements OnInit, OnDestroy {
+    private jhiWebsocketService = inject(JhiWebsocketService);
+    private quizExerciseService = inject(QuizExerciseService);
+    private participationService = inject(ParticipationService);
+    private route = inject(ActivatedRoute);
+    private router = inject(Router);
+    private alertService = inject(AlertService);
+    private quizParticipationService = inject(QuizParticipationService);
+    private translateService = inject(TranslateService);
+    private quizService = inject(ArtemisQuizService);
+    private serverDateService = inject(ArtemisServerDateService);
+
     // make constants available to html for comparison
     readonly DRAG_AND_DROP = QuizQuestionType.DRAG_AND_DROP;
     readonly MULTIPLE_CHOICE = QuizQuestionType.MULTIPLE_CHOICE;
@@ -128,18 +163,7 @@ export class QuizParticipationComponent implements OnInit, OnDestroy {
     faSync = faSync;
     faCircleNotch = faCircleNotch;
 
-    constructor(
-        private jhiWebsocketService: JhiWebsocketService,
-        private quizExerciseService: QuizExerciseService,
-        private participationService: ParticipationService,
-        private route: ActivatedRoute,
-        private router: Router,
-        private alertService: AlertService,
-        private quizParticipationService: QuizParticipationService,
-        private translateService: TranslateService,
-        private quizService: ArtemisQuizService,
-        private serverDateService: ArtemisServerDateService,
-    ) {
+    constructor() {
         smoothscroll.polyfill();
     }
 
@@ -481,7 +505,7 @@ export class QuizParticipationComponent implements OnInit, OnDestroy {
                         this.shortAnswerSubmittedTexts.set(question.id!, []);
                         break;
                     default:
-                        console.error('Unknown question type: ' + question);
+                        captureException('Unknown question type: ' + question);
                         break;
                 }
             }, this);
@@ -523,7 +547,7 @@ export class QuizParticipationComponent implements OnInit, OnDestroy {
                         this.shortAnswerSubmittedTexts.set(question.id!, (submittedAnswer as ShortAnswerSubmittedAnswer)?.submittedTexts || []);
                         break;
                     default:
-                        console.error('Unknown question type: ' + question);
+                        captureException('Unknown question type: ' + question);
                         break;
                 }
             }, this);
@@ -547,7 +571,7 @@ export class QuizParticipationComponent implements OnInit, OnDestroy {
                 return selectedQuestion.id === questionId;
             });
             if (!question) {
-                console.error('question not found for ID: ' + questionId);
+                captureException('question not found for ID: ' + questionId);
                 return;
             }
             // generate the submittedAnswer object
@@ -564,7 +588,7 @@ export class QuizParticipationComponent implements OnInit, OnDestroy {
                 return localQuestion.id === questionId;
             });
             if (!question) {
-                console.error('question not found for ID: ' + questionId);
+                captureException('question not found for ID: ' + questionId);
                 return;
             }
             // generate the submittedAnswer object
@@ -580,7 +604,7 @@ export class QuizParticipationComponent implements OnInit, OnDestroy {
                 return localQuestion.id === questionId;
             });
             if (!question) {
-                console.error('question not found for ID: ' + questionId);
+                captureException('question not found for ID: ' + questionId);
                 return;
             }
             // generate the submittedAnswer object

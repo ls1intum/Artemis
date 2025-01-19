@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, Input, OnDestroy } from '@angular/core';
+import { ChangeDetectionStrategy, Component, Input, OnDestroy, inject } from '@angular/core';
 import { TutorialGroup } from 'app/entities/tutorial-group/tutorial-group.model';
 import { AlertService } from 'app/core/util/alert.service';
 import { finalize, takeUntil } from 'rxjs/operators';
@@ -8,13 +8,22 @@ import { TutorialGroupSessionDTO, TutorialGroupSessionService } from 'app/course
 import { Course } from 'app/entities/course.model';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import { Subject } from 'rxjs';
+import { LoadingIndicatorContainerComponent } from 'app/shared/loading-indicator-container/loading-indicator-container.component';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { TutorialGroupSessionFormComponent } from '../tutorial-group-session-form/tutorial-group-session-form.component';
+import { captureException } from '@sentry/angular';
 
 @Component({
     selector: 'jhi-create-tutorial-group-session',
     templateUrl: './create-tutorial-group-session.component.html',
     changeDetection: ChangeDetectionStrategy.OnPush,
+    imports: [LoadingIndicatorContainerComponent, TranslateDirective, TutorialGroupSessionFormComponent],
 })
 export class CreateTutorialGroupSessionComponent implements OnDestroy {
+    private activeModal = inject(NgbActiveModal);
+    private tutorialGroupSessionService = inject(TutorialGroupSessionService);
+    private alertService = inject(AlertService);
+
     ngUnsubscribe = new Subject<void>();
 
     tutorialGroupSessionToCreate: TutorialGroupSessionDTO = new TutorialGroupSessionDTO();
@@ -28,15 +37,9 @@ export class CreateTutorialGroupSessionComponent implements OnDestroy {
 
     isInitialized = false;
 
-    constructor(
-        private activeModal: NgbActiveModal,
-        private tutorialGroupSessionService: TutorialGroupSessionService,
-        private alertService: AlertService,
-    ) {}
-
     initialize() {
         if (!this.course || !this.tutorialGroup) {
-            console.error('Error: Component not fully configured');
+            captureException('Error: Component not fully configured');
         } else {
             this.isInitialized = true;
         }

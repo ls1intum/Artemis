@@ -999,7 +999,7 @@ public class ProgrammingExerciseService {
      * @return true if a project with the same ProjectKey or ProjectName already exists, otherwise false
      */
     public boolean preCheckProjectExistsOnVCSOrCI(ProgrammingExercise programmingExercise, String courseShortName) {
-        String projectKey = courseShortName + programmingExercise.getShortName().toUpperCase().replaceAll("\\s+", "");
+        String projectKey = (courseShortName + programmingExercise.getShortName().replaceAll("\\s+", "")).toUpperCase();
         String projectName = courseShortName + " " + programmingExercise.getTitle();
         log.debug("Project Key: {}", projectKey);
         log.debug("Project Name: {}", projectName);

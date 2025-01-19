@@ -4,8 +4,7 @@ import { ArtemisSharedModule } from 'app/shared/shared.module';
 import { ArtemisFileUploadExerciseManagementRoutingModule } from 'app/exercises/file-upload/manage/file-upload-exercise-management.route';
 
 @NgModule({
-    imports: [ArtemisSharedModule, ArtemisFileUploadExerciseManagementRoutingModule],
-    declarations: [ExerciseCreateButtonsComponent],
+    imports: [ArtemisSharedModule, ArtemisFileUploadExerciseManagementRoutingModule, ExerciseCreateButtonsComponent],
     exports: [ExerciseCreateButtonsComponent],
 })
 export class ArtemisExerciseCreateButtonsModule {}

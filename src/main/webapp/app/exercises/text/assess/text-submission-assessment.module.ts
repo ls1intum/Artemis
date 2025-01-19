@@ -12,7 +12,7 @@ import { TextblockAssessmentCardComponent } from './textblock-assessment-card/te
 import { TextblockFeedbackEditorComponent } from 'app/exercises/text/assess/textblock-feedback-editor/textblock-feedback-editor.component';
 import { ManualTextblockSelectionComponent } from 'app/exercises/text/assess/manual-textblock-selection/manual-textblock-selection.component';
 import { ArtemisConfirmIconModule } from 'app/shared/confirm-icon/confirm-icon.module';
-import { TextSharedModule } from 'app/exercises/text/shared/text-shared.module';
+
 import { ArtemisResultModule } from 'app/exercises/shared/result/result.module';
 import { ArtemisSharedComponentModule } from 'app/shared/components/shared-component.module';
 import { ArtemisGradingInstructionLinkIconModule } from 'app/shared/grading-instruction-link-icon/grading-instruction-link-icon.module';
@@ -35,13 +35,10 @@ const ENTITY_STATES = [...textSubmissionAssessmentRoutes];
         ArtemisAssessmentSharedModule,
         AssessmentInstructionsModule,
         ArtemisConfirmIconModule,
-        TextSharedModule,
         ArtemisGradingInstructionLinkIconModule,
         SubmissionResultStatusModule,
         ArtemisAssessmentProgressLabelModule,
         ArtemisFeedbackModule,
-    ],
-    declarations: [
         TextSubmissionAssessmentComponent,
         TextAssessmentAreaComponent,
         TextblockAssessmentCardComponent,

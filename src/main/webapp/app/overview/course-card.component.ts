@@ -1,5 +1,5 @@
-import { Component, Input, OnChanges } from '@angular/core';
-import { ActivatedRoute, Router } from '@angular/router';
+import { Component, Input, OnChanges, inject } from '@angular/core';
+import { Router } from '@angular/router';
 import { Color, ScaleType } from '@swimlane/ngx-charts';
 import { ARTEMIS_DEFAULT_COLOR } from 'app/app.constants';
 import { Course } from 'app/entities/course.model';
@@ -22,10 +22,13 @@ import { RouterLink } from '@angular/router';
     selector: 'jhi-overview-course-card',
     templateUrl: './course-card.component.html',
     styleUrls: ['course-card.scss'],
-    standalone: true,
     imports: [CourseCardHeaderComponent, ArtemisSharedCommonModule, NgxChartsModule, PieChartModule, TranslateDirective, RouterLink],
 })
 export class CourseCardComponent implements OnChanges {
+    private router = inject(Router);
+    private scoresStorageService = inject(ScoresStorageService);
+    private exerciseService = inject(ExerciseService);
+
     protected readonly faArrowRight = faArrowRight;
 
     readonly ARTEMIS_DEFAULT_COLOR = ARTEMIS_DEFAULT_COLOR;
@@ -41,8 +44,6 @@ export class CourseCardComponent implements OnChanges {
     totalReachableScore: number;
     totalAbsoluteScore: number;
 
-    courseColor: string;
-
     // ngx
     ngxDoughnutData: any[] = [
         { name: 'achievedPointsLabel', value: 0 },
@@ -54,13 +55,6 @@ export class CourseCardComponent implements OnChanges {
         group: ScaleType.Ordinal,
         domain: [GraphColors.GREEN, GraphColors.RED],
     } as Color;
-
-    constructor(
-        private router: Router,
-        private route: ActivatedRoute,
-        private scoresStorageService: ScoresStorageService,
-        private exerciseService: ExerciseService,
-    ) {}
 
     ngOnChanges() {
         if (this.course.exercises && this.course.exercises.length > 0) {
@@ -94,15 +88,5 @@ export class CourseCardComponent implements OnChanges {
      */
     onSelect(): void {
         this.router.navigate(['courses', this.course.id]);
-    }
-
-    /**
-     * Navigates to the exam page of the course.
-     * We stop the propagation of the click event to avoid navigating to the exercise page.
-     * @param event the click event
-     */
-    navigateToExams(event: Event) {
-        event.stopPropagation();
-        this.router.navigate(['courses', this.course.id, 'exams']);
     }
 }

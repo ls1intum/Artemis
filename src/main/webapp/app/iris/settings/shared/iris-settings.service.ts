@@ -1,4 +1,4 @@
-import { Injectable } from '@angular/core';
+import { Injectable, inject } from '@angular/core';
 import { HttpClient, HttpResponse } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { map } from 'rxjs/operators';
@@ -11,9 +11,9 @@ import { IrisSubSettingsType } from 'app/entities/iris/settings/iris-sub-setting
  */
 @Injectable({ providedIn: 'root' })
 export class IrisSettingsService {
-    public resourceUrl = 'api';
+    private http = inject(HttpClient);
 
-    constructor(private http: HttpClient) {}
+    public resourceUrl = 'api';
 
     /**
      * Get the global Iris settings

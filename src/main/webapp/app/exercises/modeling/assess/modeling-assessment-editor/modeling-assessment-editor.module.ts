@@ -21,8 +21,8 @@ import { ArtemisAssessmentProgressLabelModule } from 'app/exercises/shared/asses
         ModelingAssessmentModule,
         SubmissionResultStatusModule,
         ArtemisAssessmentProgressLabelModule,
+        ModelingAssessmentEditorComponent,
     ],
-    declarations: [ModelingAssessmentEditorComponent],
     exports: [ModelingAssessmentEditorComponent],
 })
 export class ArtemisModelingAssessmentEditorModule {}

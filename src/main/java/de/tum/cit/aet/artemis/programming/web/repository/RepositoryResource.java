@@ -281,12 +281,14 @@ public abstract class RepositoryResource {
 
         return executeAndCheckForExceptions(() -> {
             Repository repository = getRepository(domainId, RepositoryActionType.WRITE, true);
-            repositoryService.commitChanges(repository, user, domainId);
+            repositoryService.commitChanges(repository, user);
+            var vcsAccessLog = repositoryService.savePreliminaryCodeEditorAccessLog(repository, user, domainId);
+
             // Trigger a build, and process the result. Only implemented for local CI.
             // For GitLab + Jenkins, webhooks were added when creating the repository,
             // that notify the CI system when the commit happens and thus trigger the build.
             if (profileService.isLocalVcsCiActive()) {
-                localVCServletService.orElseThrow().processNewPush(null, repository);
+                localVCServletService.orElseThrow().processNewPush(null, repository, Optional.empty(), Optional.empty(), vcsAccessLog);
             }
             return new ResponseEntity<>(HttpStatus.OK);
         });

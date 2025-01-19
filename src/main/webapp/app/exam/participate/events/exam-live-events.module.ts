@@ -7,8 +7,7 @@ import { ExamLiveEventsOverlayComponent } from 'app/exam/participate/events/exam
 import { ArtemisExamSharedModule } from 'app/exam/shared/exam-shared.module';
 
 @NgModule({
-    declarations: [ExamLiveEventsButtonComponent, ExamLiveEventsOverlayComponent],
-    imports: [CommonModule, ArtemisSharedCommonModule, ArtemisExamTimerModule, ArtemisExamSharedModule],
+    imports: [CommonModule, ArtemisSharedCommonModule, ArtemisExamTimerModule, ArtemisExamSharedModule, ExamLiveEventsButtonComponent, ExamLiveEventsOverlayComponent],
     exports: [ExamLiveEventsButtonComponent, ExamLiveEventsOverlayComponent],
 })
 export class ArtemisExamLiveEventsModule {}

@@ -1,4 +1,4 @@
-import { Injectable } from '@angular/core';
+import { Injectable, inject } from '@angular/core';
 import { CanActivate, Router } from '@angular/router';
 
 import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
@@ -9,10 +9,8 @@ import { first, lastValueFrom, of, switchMap } from 'rxjs';
     providedIn: 'root',
 })
 export class IrisGuard implements CanActivate {
-    constructor(
-        private profileService: ProfileService,
-        private router: Router,
-    ) {}
+    private profileService = inject(ProfileService);
+    private router = inject(Router);
 
     /**
      * Check if the client can activate a route.
