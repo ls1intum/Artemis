@@ -219,7 +219,7 @@ class ExerciseScoresRowBuilder {
     private setGradingCriteriaPoints() {
         let unnamedCriterionIndex = 1;
         this.gradingCriteria.forEach((criterion) => {
-            const points = this.resultWithPoints.pointsPerCriterion.get(criterion.id!) || 0;
+            const points = (this.resultWithPoints.pointsPerCriterion as Map<number, number>).get(criterion.id!) || 0;
             if (criterion.title) {
                 this.set(criterion.title, points);
             } else {
