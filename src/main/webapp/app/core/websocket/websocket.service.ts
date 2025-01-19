@@ -3,6 +3,7 @@ import { BehaviorSubject, Observable, Subscriber, Subscription, first } from 'rx
 import SockJS from 'sockjs-client';
 import Stomp, { Client, ConnectionHeaders, Message, Subscription as StompSubscription } from 'webstomp-client';
 import { gzip, ungzip } from 'pako';
+import { captureException } from '@sentry/angular';
 
 interface SockJSExtended extends WebSocket {
     _transport?: {
@@ -12,7 +13,7 @@ interface SockJSExtended extends WebSocket {
 
 // must be the same as in GzipMessageConverter.java
 export const COMPRESSION_HEADER_KEY = 'X-Compressed';
-export const COMPRESSION_HEADER_MAP = { COMPRESSION_HEADER_KEY: 'true' };
+export const COMPRESSION_HEADER: Record<string, string> = { [COMPRESSION_HEADER_KEY]: 'true' };
 
 export interface IWebsocketService {
     /**
@@ -38,10 +39,10 @@ export interface IWebsocketService {
 
     /**
      * Send data through the websocket connection
-     * @param path {string} the path for the websocket connection
-     * @param data {object} the data to send through the websocket connection
+     * @param path the path for the websocket connection
+     * @param data the data to send through the websocket connection
      */
-    send(path: string, data: any): void;
+    send<T>(path: string, data: T): void;
 
     /**
      * Subscribe to a channel.
@@ -87,7 +88,7 @@ export class ConnectionState {
  * Server <1--1> Stomp <1--1> websocket.service.ts <1--n*m> Angular components * channel topic
  */
 @Injectable({ providedIn: 'root' })
-export class JhiWebsocketService implements IWebsocketService, OnDestroy {
+export class WebsocketService implements IWebsocketService, OnDestroy {
     private stompClient?: Client;
 
     // we store the STOMP subscriptions per channel so that we can unsubscribe in case we are not interested any more
@@ -211,7 +212,10 @@ export class JhiWebsocketService implements IWebsocketService, OnDestroy {
     }
 
     /**
-     * Handle incoming messages from the server, which are potentially compressed.
+     * Handle incoming messages from the server, which are potentially compressed:
+     * 1. Decode the Base64 string to binary data
+     * 2. Decompress the binary data to a string payload (JSON)
+     * 3. Parse the JSON payload and pass it to the subscribers
      * @param channel the channel the message was received on
      */
     private handleIncomingMessage(channel: string) {
@@ -224,20 +228,66 @@ export class JhiWebsocketService implements IWebsocketService, OnDestroy {
 
                 if (isCompressed) {
                     try {
-                        // Decode the Base64 string to binary (ArrayBuffer) and convert to Uint8Array
-                        const binaryData = Uint8Array.from(window.atob(payload), (char) => char.charCodeAt(0));
-                        // Decompress using pako
-                        payload = ungzip(binaryData, { to: 'string' });
+                        payload = WebsocketService.decodeAndDecompress(payload);
                     } catch (error) {
-                        console.error('Failed to decompress message', error);
+                        captureException('Failed to decompress message', error);
                     }
                 }
 
-                this.subscribers.get(channel)!.next(JhiWebsocketService.parseJSON(payload));
+                this.subscribers.get(channel)!.next(WebsocketService.parseJSON<object>(payload));
             }
         };
     }
 
+    /**
+     * Compresses a given string payload using GZIP and encodes the compressed data into a Base64 string.
+     *
+     * <p>This method performs the following steps:
+     * <ol>
+     *   <li>Compresses the input string using GZIP.</li>
+     *   <li>Converts the compressed binary data into a Base64-encoded string.</li>
+     * </ol>
+     *
+     * @param payload The string payload to be compressed and encoded.
+     * @returns A Base64-encoded string representing the compressed payload.
+     * @throws Error If compression or Base64 encoding fails.
+     */
+    private static compressAndEncode(payload: string): string {
+        // 1. Compress if larger than 1 KB
+        const compressedPayload = gzip(payload);
+        // 2. Convert binary data to base64 string
+        return window.btoa(
+            Array.from(compressedPayload)
+                .map((byte) => String.fromCharCode(byte))
+                .join(''),
+        );
+    }
+
+    /**
+     * Decodes a Base64-encoded string and decompresses the resulting binary data using GZIP.
+     *
+     * <p>This method performs the following steps:
+     * <ol>
+     *   <li>Decodes the Base64-encoded string into binary data.</li>
+     *   <li>Decompresses the binary data using GZIP.</li>
+     * </ol>
+     *
+     * @param payload The Base64-encoded string representing compressed data.
+     * @returns The decompressed string.
+     * @throws Error If decoding or decompression fails.
+     */
+    private static decodeAndDecompress(payload: string): string {
+        // 1. Decode the Base64 string to binary (ArrayBuffer) and convert to Uint8Array
+        const binaryData = Uint8Array.from(window.atob(payload), (char) => char.charCodeAt(0));
+        // 2. Decompress using pako
+        return ungzip(binaryData, { to: 'string' });
+    }
+
+    /**
+     * Checks whether the WebSocket connection is currently established.
+     *
+     * @returns {boolean} `true` if the WebSocket connection is active; otherwise, `false`.
+     */
     public isConnected(): boolean {
         return this.stompClient?.connected || false;
     }
@@ -273,19 +323,27 @@ export class JhiWebsocketService implements IWebsocketService, OnDestroy {
     /**
      * Send data through the websocket connection, potentially compressing the payload.
      * Only compresses data if the JSON stringified payload size is larger than 1 KB.
+     * 1. Convert the data into JSON
+     * 2. Compress the JSON payload into binary data if it is larger than 1 KB
+     * 3. Convert the binary data into a Base64 string
      *
      * @param path {string} the path for the websocket connection
      * @param data {object} the data to send through the websocket connection
      */
-    send(path: string, data: any): void {
+    send<T>(path: string, data: T): void {
         if (this.isConnected()) {
             const jsonPayload = JSON.stringify(data);
             const payloadSize = new Blob([jsonPayload]).size; // Measure payload size
 
             if (payloadSize > 1024) {
-                // Compress if larger than 1 KB
-                const compressedPayload = btoa(String.fromCharCode.apply(null, gzip(jsonPayload)));
-                this.stompClient!.send(path, compressedPayload, COMPRESSION_HEADER_MAP);
+                try {
+                    const base64StringPayload = WebsocketService.compressAndEncode(jsonPayload);
+                    this.stompClient!.send(path, base64StringPayload, COMPRESSION_HEADER);
+                } catch (error) {
+                    captureException('Failed to compress websocket message', error);
+                    // Send uncompressed payload if an error occurs
+                    this.stompClient!.send(path, jsonPayload, {});
+                }
             } else {
                 // Send uncompressed payload
                 this.stompClient!.send(path, jsonPayload, {});
@@ -364,11 +422,23 @@ export class JhiWebsocketService implements IWebsocketService, OnDestroy {
         this.disconnect();
     }
 
-    private static parseJSON(response: string): any {
+    /**
+     * Parses a JSON string into an object of the specified generic type.
+     *
+     * <p>This method attempts to parse the provided JSON string. If parsing fails,
+     * it returns the input string cast to the specified type. This can be useful
+     * for handling cases where the response might not always be a valid JSON string.</p>
+     *
+     * @param response The JSON string to be parsed.
+     * @returns The parsed object of the specified type, or the input string cast to the type if parsing fails.
+     * @template T The type of the object to return after parsing.
+     * @throws Error If JSON parsing fails and the input is not a valid string cast to the specified type.
+     */
+    private static parseJSON<T>(response: string): T {
         try {
             return JSON.parse(response);
         } catch {
-            return response;
+            return response as T;
         }
     }
 

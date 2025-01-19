@@ -37,24 +37,27 @@ public class GzipMessageConverter extends MappingJackson2MessageConverter {
     // Incoming message from client, potentially compressed, needs to be decompressed
     @Override
     protected Object convertFromInternal(Message<?> message, Class<?> targetClass, Object conversionHint) {
-        final var messageIsCompressed = containsCompressionHeader(message.getHeaders());
-        if (messageIsCompressed) {
-            log.info("Decompressing message payload for incoming message");
-            Object payload = message.getPayload();
-            if (payload instanceof byte[]) {
-                byte[] decompressed = decompress((byte[]) payload);
-                return super.convertFromInternal(new Message<>() {
+        var nativeHeaders = message.getHeaders().get(NativeMessageHeaderAccessor.NATIVE_HEADERS);
+        if (nativeHeaders instanceof Map<?, ?> nativeMapHeaders) {
+            final var messageIsCompressed = containsCompressionHeader(nativeMapHeaders);
+            if (messageIsCompressed) {
+                log.info("Decompressing message payload for incoming message");
+                Object payload = message.getPayload();
+                if (payload instanceof byte[] bytePayload) {
+                    byte[] decompressed = decodeAndDecompress(bytePayload);
+                    return super.convertFromInternal(new Message<>() {
 
-                    @Override
-                    public Object getPayload() {
-                        return decompressed;
-                    }
+                        @Override
+                        public Object getPayload() {
+                            return decompressed;
+                        }
 
-                    @Override
-                    public MessageHeaders getHeaders() {
-                        return message.getHeaders();
-                    }
-                }, targetClass, conversionHint);
+                        @Override
+                        public MessageHeaders getHeaders() {
+                            return message.getHeaders();
+                        }
+                    }, targetClass, conversionHint);
+                }
             }
         }
         return super.convertFromInternal(message, targetClass, conversionHint);
@@ -92,7 +95,7 @@ public class GzipMessageConverter extends MappingJackson2MessageConverter {
                     String compressedBase64String = compressAndEncode(originalBytes);
                     byte[] compressed = compressedBase64String.getBytes();
                     double percentageSaved = 100 * (1 - (double) compressed.length / originalBytes.length);
-                    log.info("Compressed message payload from {} to {} (saved {}% payload size)", originalBytes.length, compressed.length, String.format("%.1f", percentageSaved));
+                    log.debug("Compressed message payload from {} to {} (saved {}% payload size)", originalBytes.length, compressed.length, String.format("%.1f", percentageSaved));
                     return compressed;
                 }
             }
@@ -115,9 +118,12 @@ public class GzipMessageConverter extends MappingJackson2MessageConverter {
         }
     }
 
-    // TODO: test if this works
-    private byte[] decompress(byte[] data) {
-        try (ByteArrayInputStream byteStream = new ByteArrayInputStream(data);
+    private byte[] decodeAndDecompress(byte[] data) {
+        // Step 1: Decode Base64 to binary
+        byte[] binaryData = Base64.getDecoder().decode(data);
+
+        // Step 2: Decompress the binary data
+        try (ByteArrayInputStream byteStream = new ByteArrayInputStream(binaryData);
                 GZIPInputStream gzipStream = new GZIPInputStream(byteStream);
                 ByteArrayOutputStream outStream = new ByteArrayOutputStream()) {
             // Efficiently transfers all bytes
@@ -125,7 +131,7 @@ public class GzipMessageConverter extends MappingJackson2MessageConverter {
             return outStream.toByteArray();
         }
         catch (Exception e) {
-            throw new RuntimeException("Failed to decompress message payload", e);
+            throw new RuntimeException("Failed to decodeAndDecompress message payload", e);
         }
     }
 }
