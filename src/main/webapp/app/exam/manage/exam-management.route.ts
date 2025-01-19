@@ -996,12 +996,3 @@ export const examManagementRoute: Routes = [
         canActivate: [UserRouteAccessService],
     },
 ];
-
-const EXAM_MANAGEMENT_ROUTES = [...examManagementRoute];
-
-export const examManagementState: Routes = [
-    {
-        path: '',
-        children: EXAM_MANAGEMENT_ROUTES,
-    },
-];

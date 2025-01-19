@@ -7,6 +7,7 @@ import { PendingChangesGuard } from 'app/shared/guard/pending-changes.guard';
 import { LocalCIGuard } from 'app/localci/localci-guard.service';
 import { IrisGuard } from 'app/iris/iris-guard.service';
 import { FaqResolve } from 'app/faq/faq.routes';
+import { examManagementRoute } from 'app/exam/manage/exam-management.route';
 
 export const courseManagementState: Routes = [
     {
@@ -76,7 +77,7 @@ export const courseManagementState: Routes = [
             },
             {
                 path: ':courseId/exams',
-                loadChildren: () => import('../../exam/manage/exam-management.module').then((m) => m.ArtemisExamManagementModule),
+                children: examManagementRoute,
             },
             {
                 path: ':courseId/tutorial-groups-checklist',
