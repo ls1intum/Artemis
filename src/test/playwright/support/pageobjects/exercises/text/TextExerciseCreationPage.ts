@@ -1,5 +1,5 @@
 import { Locator, Page } from '@playwright/test';
-import { Dayjs } from 'dayjs';
+import { Dayjs } from 'dayjs/esm';
 import { enterDate } from '../../../utils';
 import { TEXT_EXERCISE_BASE } from '../../../constants';
 

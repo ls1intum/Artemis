@@ -1,5 +1,5 @@
 import { Page } from '@playwright/test';
-import dayjs from 'dayjs';
+import dayjs from 'dayjs/esm';
 
 import { Course, CourseInformationSharingConfiguration } from 'app/entities/course.model';
 import { Lecture } from 'app/entities/lecture.model';

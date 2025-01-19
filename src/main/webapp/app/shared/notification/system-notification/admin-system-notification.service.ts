@@ -2,7 +2,6 @@ import { Injectable, inject } from '@angular/core';
 import { HttpClient, HttpResponse } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { map } from 'rxjs/operators';
-import { Router } from '@angular/router';
 import { SystemNotification } from 'app/entities/system-notification.model';
 import { SystemNotificationService } from 'app/shared/notification/system-notification/system-notification.service';
 
@@ -10,7 +9,6 @@ type EntityResponseType = HttpResponse<SystemNotification>;
 
 @Injectable({ providedIn: 'root' })
 export class AdminSystemNotificationService {
-    private router = inject(Router);
     private http = inject(HttpClient);
     private systemNotificationService = inject(SystemNotificationService);
 

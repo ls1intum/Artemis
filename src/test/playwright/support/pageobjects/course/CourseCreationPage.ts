@@ -1,5 +1,5 @@
 import { Page } from '@playwright/test';
-import dayjs from 'dayjs';
+import dayjs from 'dayjs/esm';
 
 import { COURSE_ADMIN_BASE, COURSE_BASE } from '../../constants';
 import { enterDate } from '../../utils';

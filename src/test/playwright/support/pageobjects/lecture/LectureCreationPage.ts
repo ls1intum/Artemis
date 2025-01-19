@@ -1,5 +1,5 @@
 import { Page } from 'playwright';
-import dayjs from 'dayjs';
+import dayjs from 'dayjs/esm';
 import { BASE_API } from '../../constants';
 
 /**
