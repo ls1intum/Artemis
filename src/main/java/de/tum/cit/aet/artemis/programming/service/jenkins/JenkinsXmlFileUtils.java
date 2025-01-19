@@ -30,7 +30,7 @@ public class JenkinsXmlFileUtils {
 
     private static final Logger log = LoggerFactory.getLogger(JenkinsXmlFileUtils.class);
 
-    public static Document readFromString(String xmlString) {
+    public static Document readFromString(@NotNull String xmlString) {
         return parseDocument(xmlString);
     }
 
@@ -60,7 +60,9 @@ public class JenkinsXmlFileUtils {
         }
     }
 
-    private static Document parseDocument(String configXmlText) {
+    // Since the XML configuration of build jobs can contain the additional config of any Jenkins-plugin that has folder/job-specific settings
+    // we parse the config into a document and not into a predefined DTO structure
+    private static Document parseDocument(@NotNull String configXmlText) {
         try {
             final DocumentBuilderFactory domFactory = getDocumentBuilderFactory();
             final var builder = domFactory.newDocumentBuilder();
