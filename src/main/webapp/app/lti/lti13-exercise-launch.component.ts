@@ -1,6 +1,6 @@
 import { Component, OnInit, inject } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
-import { CommonModule } from '@angular/common';
+
 import { HttpClient, HttpHeaders, HttpParams } from '@angular/common/http';
 import { AccountService } from 'app/core/auth/account.service';
 import { captureException } from '@sentry/angular';
@@ -18,7 +18,7 @@ type LtiLaunchResponse = {
 @Component({
     selector: 'jhi-lti-exercise-launch',
     templateUrl: './lti13-exercise-launch.component.html',
-    imports: [TranslateDirective, CommonModule],
+    imports: [TranslateDirective],
 })
 export class Lti13ExerciseLaunchComponent implements OnInit {
     private route = inject(ActivatedRoute);

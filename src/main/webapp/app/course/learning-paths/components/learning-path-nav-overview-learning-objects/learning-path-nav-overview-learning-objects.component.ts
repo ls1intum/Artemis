@@ -6,13 +6,13 @@ import { LearningPathNavigationObjectDTO } from 'app/entities/competency/learnin
 import { faCheckCircle, faLock } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
 import { NgbAccordionModule } from '@ng-bootstrap/ng-bootstrap';
-import { CommonModule } from '@angular/common';
+
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 
 @Component({
     selector: 'jhi-learning-path-nav-overview-learning-objects',
     changeDetection: ChangeDetectionStrategy.OnPush,
-    imports: [NgbAccordionModule, FontAwesomeModule, CommonModule, TranslateDirective],
+    imports: [NgbAccordionModule, FontAwesomeModule, TranslateDirective],
     templateUrl: './learning-path-nav-overview-learning-objects.component.html',
     styleUrl: './learning-path-nav-overview-learning-objects.component.scss',
 })
