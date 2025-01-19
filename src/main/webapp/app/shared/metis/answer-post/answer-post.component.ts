@@ -32,6 +32,7 @@ import { AnswerPostCreateEditModalComponent } from '../posting-create-edit-modal
 import { CdkConnectedOverlay, CdkOverlayOrigin } from '@angular/cdk/overlay';
 import { EmojiPickerComponent } from '../emoji/emoji-picker.component';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
+import { captureException } from '@sentry/angular';
 
 @Component({
     selector: 'jhi-answer-post',
@@ -144,7 +145,7 @@ export class AnswerPostComponent extends PostingDirective<AnswerPost> implements
         try {
             isPointerCursor = window.getComputedStyle(targetElement).cursor === 'pointer';
         } catch (error) {
-            console.error('Failed to compute style:', error);
+            captureException(error);
             isPointerCursor = true;
         }
 

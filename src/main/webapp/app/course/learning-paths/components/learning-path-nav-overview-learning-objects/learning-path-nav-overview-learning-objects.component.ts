@@ -8,11 +8,12 @@ import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
 import { NgbAccordionModule } from '@ng-bootstrap/ng-bootstrap';
 
 import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { NgClass } from '@angular/common';
 
 @Component({
     selector: 'jhi-learning-path-nav-overview-learning-objects',
     changeDetection: ChangeDetectionStrategy.OnPush,
-    imports: [NgbAccordionModule, FontAwesomeModule, TranslateDirective],
+    imports: [NgbAccordionModule, FontAwesomeModule, TranslateDirective, NgClass],
     templateUrl: './learning-path-nav-overview-learning-objects.component.html',
     styleUrl: './learning-path-nav-overview-learning-objects.component.scss',
 })

@@ -47,7 +47,7 @@ export class Lti13ExerciseLaunchComponent implements OnInit {
         const idToken = this.route.snapshot.queryParamMap.get('id_token');
 
         if (!state || !idToken) {
-            console.error('Required parameter for LTI launch missing');
+            captureException('Required parameter for LTI launch missing');
             this.isLaunching = false;
             return;
         }
@@ -120,7 +120,7 @@ export class Lti13ExerciseLaunchComponent implements OnInit {
             this.replaceWindowLocationWrapper(targetLinkUri);
         } else {
             this.isLaunching = false;
-            console.error('No LTI targetLinkUri received for a successful launch');
+            captureException('No LTI targetLinkUri received for a successful launch');
         }
     }
 
@@ -144,7 +144,7 @@ export class Lti13ExerciseLaunchComponent implements OnInit {
             this.sessionStorageService.store('ltiIdToken', ltiIdToken);
             this.sessionStorageService.store('clientRegistrationId', clientRegistrationId);
         } catch (error) {
-            console.error('Failed to store session data:', error);
+            captureException('Failed to store session data: ' + error);
         }
     }
 

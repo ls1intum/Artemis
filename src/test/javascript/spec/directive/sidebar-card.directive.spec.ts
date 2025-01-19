@@ -51,8 +51,6 @@ describe('SidebarCardDirective', () => {
             ],
         }).compileComponents();
 
-        jest.spyOn(console, 'warn').mockImplementation(() => {});
-
         fixture = TestBed.createComponent(TestHostComponent);
         component = fixture.componentInstance;
         TestBed.inject(ActivatedRoute);

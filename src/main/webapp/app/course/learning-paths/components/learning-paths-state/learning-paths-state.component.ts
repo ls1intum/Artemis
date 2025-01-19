@@ -8,11 +8,12 @@ import { faSpinner } from '@fortawesome/free-solid-svg-icons';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
+import { NgClass } from '@angular/common';
 
 @Component({
     selector: 'jhi-learning-paths-state',
     changeDetection: ChangeDetectionStrategy.OnPush,
-    imports: [TranslateDirective, FontAwesomeModule],
+    imports: [TranslateDirective, FontAwesomeModule, NgClass],
     templateUrl: './learning-paths-state.component.html',
     styleUrls: ['./learning-paths-state.component.scss', '../../pages/learning-path-instructor-page/learning-path-instructor-page.component.scss'],
 })
