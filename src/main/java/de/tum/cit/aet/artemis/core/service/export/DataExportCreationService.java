@@ -220,7 +220,7 @@ public class DataExportCreationService {
      */
     private void addGeneralUserInformation(User user, Path workingDirectory) throws IOException {
         String[] headers = { "login", "name", "email", "registration number" };
-        CSVFormat csvFormat = CSVFormat.DEFAULT.builder().setHeader(headers).build();
+        CSVFormat csvFormat = CSVFormat.DEFAULT.builder().setHeader(headers).get();
 
         try (CSVPrinter printer = new CSVPrinter(Files.newBufferedWriter(workingDirectory.resolve("general_user_information" + CSV_FILE_EXTENSION)), csvFormat)) {
             printer.printRecord(user.getLogin(), user.getName(), user.getEmail(), user.getRegistrationNumber());
