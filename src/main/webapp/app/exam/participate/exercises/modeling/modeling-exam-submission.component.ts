@@ -133,7 +133,6 @@ export class ModelingExamSubmissionComponent extends ExamSubmissionComponent imp
         return this.exercise && (!this.exercise.dueDate || dayjs(this.exercise.dueDate).isSameOrAfter(dayjs()));
     }
 
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     modelChanged(_model: UMLModel) {
         this.studentSubmission.isSynced = false;
     }
