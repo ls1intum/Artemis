@@ -6,7 +6,7 @@ import { TutorialGroupManagementResolve } from 'app/course/tutorial-groups/tutor
 import { PendingChangesGuard } from 'app/shared/guard/pending-changes.guard';
 import { LocalCIGuard } from 'app/localci/localci-guard.service';
 import { IrisGuard } from 'app/iris/iris-guard.service';
-import { FaqResolve } from 'app/faq/faq.routes';
+import { FaqResolve } from 'app/faq/faq-resolve.service';
 import { examManagementRoute } from 'app/exam/manage/exam-management.route';
 
 export const courseManagementState: Routes = [

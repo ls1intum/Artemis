@@ -81,6 +81,7 @@ export default tseslint.config(
             '@angular-eslint': angularPlugin,
             prettier: prettierPlugin,
         },
+        // TODO: adapt the rules of the newest jhipster version, e.g. no-inferrable-types, restrict-plus-operands, etc.
         rules: {
             ...prettierPlugin.configs.recommended.rules,
             ...tsPlugin.configs.recommended.rules,

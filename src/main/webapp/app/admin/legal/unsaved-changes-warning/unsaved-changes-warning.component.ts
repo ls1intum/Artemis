@@ -12,8 +12,7 @@ import { ButtonComponent } from 'app/shared/components/button.component';
 export class UnsavedChangesWarningComponent {
     private activeModal = inject(NgbActiveModal);
 
-    @Input()
-    textMessage: string;
+    @Input() textMessage: string;
 
     /**
      * Closes the modal in which the warning is shown and discards the changes
