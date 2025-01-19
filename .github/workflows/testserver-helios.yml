@@ -12,7 +12,7 @@ on:
         required: true
         type: string
       HELIOS_BRANCH_HEAD_SHA:
-        description: "SHA of the branch to deploy"
+        description: "SHA (Head commit) of the branch to deploy"
         required: true
         type: string
       HELIOS_ENVIRONMENT_NAME:
