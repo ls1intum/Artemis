@@ -1,6 +1,6 @@
 package de.tum.cit.aet.artemis.atlas.api;
 
-import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
+import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_ATLAS;
 
 import java.util.Set;
 
@@ -13,7 +13,7 @@ import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.domain.User;
 
 @Controller
-@Profile(PROFILE_CORE)
+@Profile(PROFILE_ATLAS)
 public class LearnerProfileApi extends AbstractAtlasApi {
 
     private final LearnerProfileService learnerProfileService;
