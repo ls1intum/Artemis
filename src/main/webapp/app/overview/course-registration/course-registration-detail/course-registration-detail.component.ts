@@ -1,7 +1,6 @@
 import { HttpErrorResponse } from '@angular/common/http';
 import { Component, OnDestroy, OnInit, inject } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
-import { AccountService } from 'app/core/auth/account.service';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
 import { Course } from 'app/entities/course.model';
 import { Observable, catchError, map, of, throwError } from 'rxjs';
@@ -15,14 +14,13 @@ import { CourseRegistrationButtonComponent } from '../course-registration-button
     imports: [TranslateDirective, CoursePrerequisitesButtonComponent, CourseRegistrationButtonComponent],
 })
 export class CourseRegistrationDetailComponent implements OnInit, OnDestroy {
-    private accountService = inject(AccountService);
     private courseService = inject(CourseManagementService);
     private route = inject(ActivatedRoute);
     private router = inject(Router);
 
     loading = false;
     courseId: number;
-    course: Course | null = null;
+    course: Course | undefined = undefined;
     private paramSubscription: any;
 
     ngOnInit(): void {
@@ -55,7 +53,7 @@ export class CourseRegistrationDetailComponent implements OnInit, OnDestroy {
                 if (res.status === 403) {
                     return of(false);
                 } else {
-                    return throwError(res);
+                    return throwError(() => res);
                 }
             }),
         );

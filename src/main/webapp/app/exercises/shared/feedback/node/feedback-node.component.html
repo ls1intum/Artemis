@@ -6,7 +6,7 @@
                 <span class="fw-bold feedback-item__credits">
                     {{ roundValueSpecifiedByCourseSettings(feedbackItem.credits, course) }}P
                     @if (feedbackItem.type === 'Subsequent') {
-                        <fa-icon [icon]="faExclamationTriangle" [ngbTooltip]="'artemisApp.assessment.subsequentFeedback' | artemisTranslate"></fa-icon>
+                        <fa-icon [icon]="faExclamationTriangle" [ngbTooltip]="'artemisApp.assessment.subsequentFeedback' | artemisTranslate" />
                     }
                 </span>
             }
@@ -21,7 +21,7 @@
     <div class="feedback-item-group">
         <div class="feedback-group" [ngClass]="'bg-' + feedbackItemGroup.color" (click)="feedbackItemGroup.open = !feedbackItemGroup.open">
             <div class="feedback-group__left">
-                <fa-icon class="me-2" [icon]="feedbackItemGroup.open ? faAngleUp : faAngleDown"></fa-icon>
+                <fa-icon class="me-2" [icon]="feedbackItemGroup.open ? faAngleUp : faAngleDown" />
                 <h4 class="feedback-item__category">{{ 'artemisApp.feedback.group.' + feedbackItemGroup.name | artemisTranslate }} ({{ feedbackItemGroup.members.length }})</h4>
             </div>
             @if (feedbackItemGroup.credits !== 0) {

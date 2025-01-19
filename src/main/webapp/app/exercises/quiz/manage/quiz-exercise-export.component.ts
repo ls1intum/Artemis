@@ -1,7 +1,6 @@
 import { Component, OnInit, inject } from '@angular/core';
-import { ActivatedRoute, Router } from '@angular/router';
+import { ActivatedRoute } from '@angular/router';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
-import { TranslateService } from '@ngx-translate/core';
 
 import { QuizExerciseService } from './quiz-exercise.service';
 import { QuizExercise } from 'app/entities/quiz/quiz-exercise.model';
@@ -24,8 +23,6 @@ export class QuizExerciseExportComponent implements OnInit {
     private quizExerciseService = inject(QuizExerciseService);
     private courseService = inject(CourseManagementService);
     private alertService = inject(AlertService);
-    private router = inject(Router);
-    private translateService = inject(TranslateService);
 
     questions: QuizQuestion[] = new Array(0);
     courseId: number;
