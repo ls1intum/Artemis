@@ -14,17 +14,12 @@ import { FaIconComponent } from '@fortawesome/angular-fontawesome';
     imports: [FeedbackSuggestionBadgeComponent, TranslateDirective, FaIconComponent],
 })
 export class CodeEditorTutorAssessmentInlineFeedbackSuggestionComponent {
-    @Input()
-    codeLine: number; // Needed for the outer editor to handle the DOM node of the component
-    @Input()
-    feedback: Feedback;
-    @Input()
-    course?: Course; // Needed for credit rounding settings
+    @Input() codeLine: number; // Needed for the outer editor to handle the DOM node of the component
+    @Input() feedback: Feedback;
+    @Input() course?: Course; // Needed for credit rounding settings
 
-    @Output()
-    onAcceptSuggestion = new EventEmitter<Feedback>();
-    @Output()
-    onDiscardSuggestion = new EventEmitter<Feedback>();
+    @Output() onAcceptSuggestion = new EventEmitter<Feedback>();
+    @Output() onDiscardSuggestion = new EventEmitter<Feedback>();
 
     // Expose functions to the template
     readonly roundScoreSpecifiedByCourseSettings = roundValueSpecifiedByCourseSettings;
@@ -34,12 +29,6 @@ export class CodeEditorTutorAssessmentInlineFeedbackSuggestionComponent {
     faCheck = faCheck;
     faTrash = faTrash;
 
-    public elementRef: ElementRef;
     // Needed for the outer editor to access the DOM node of this component
-
-    constructor() {
-        const elementRef = inject(ElementRef);
-
-        this.elementRef = elementRef;
-    }
+    public elementRef = inject(ElementRef);
 }

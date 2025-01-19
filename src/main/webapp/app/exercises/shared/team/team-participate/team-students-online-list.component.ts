@@ -12,6 +12,7 @@ import { faCircle, faHistory } from '@fortawesome/free-solid-svg-icons';
 import { NgClass } from '@angular/common';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
+import { captureException } from '@sentry/angular';
 
 @Component({
     selector: 'jhi-team-students-online-list',
@@ -64,7 +65,7 @@ export class TeamStudentsOnlineListComponent implements OnInit, OnDestroy {
                     this.onlineTeamStudents = students;
                     this.computeTypingTeamStudents();
                 },
-                error: (error) => console.error(error),
+                error: (error) => captureException(error),
             });
         setTimeout(() => {
             this.jhiWebsocketService.send(this.buildWebsocketTopic('/trigger'), {});
@@ -75,7 +76,7 @@ export class TeamStudentsOnlineListComponent implements OnInit, OnDestroy {
         if (this.typing$) {
             this.typing$.pipe(throttleTime(this.SEND_TYPING_INTERVAL)).subscribe({
                 next: () => this.jhiWebsocketService.send(this.buildWebsocketTopic('/typing'), {}),
-                error: (error) => console.error(error),
+                error: (error) => captureException(error),
             });
         }
     }
