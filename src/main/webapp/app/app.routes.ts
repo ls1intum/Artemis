@@ -17,7 +17,11 @@ const routes: Routes = [
     },
     {
         path: 'admin',
-        loadChildren: () => import('./admin/admin.module').then((m) => m.ArtemisAdminModule),
+        data: {
+            authorities: [Authority.ADMIN],
+        },
+        canActivate: [UserRouteAccessService],
+        loadChildren: () => import('./admin/admin.routes'),
     },
     {
         path: 'privacy',
