@@ -92,4 +92,3 @@ test {
 
 // Dynamic generation of jacoco test report generation-/coverage verification-tasks (per-module)
 apply from: "gradle/jacoco.gradle"
-
