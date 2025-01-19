@@ -1,6 +1,6 @@
 import { Page } from '@playwright/test';
 import { MODELING_EXERCISE_BASE } from '../../../constants';
-import { Dayjs } from 'dayjs/esm';
+import { Dayjs } from 'dayjs';
 import { enterDate } from '../../../utils';
 
 export class CreateModelingExercisePage {

@@ -1,5 +1,5 @@
 import { Course } from 'app/entities/course.model';
-import dayjs from 'dayjs/esm';
+import dayjs from 'dayjs';
 import { Exam } from 'app/entities/exam/exam.model';
 import { dayjsToString, generateUUID, titleLowercase } from '../utils';
 import examTemplate from '../../fixtures/exam/template.json';

@@ -1,5 +1,5 @@
 import { Page } from 'playwright';
-import dayjs from 'dayjs/esm';
+import dayjs from 'dayjs';
 import { Lecture } from 'app/entities/lecture.model';
 import { expect } from '@playwright/test';
 import { BASE_API } from '../../constants';
