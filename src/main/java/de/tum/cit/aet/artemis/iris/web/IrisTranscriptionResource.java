@@ -31,7 +31,7 @@ import de.tum.cit.aet.artemis.iris.service.pyris.PyrisWebhookService;
 @RequestMapping("api/iris/transcription-ingestion")
 public class IrisTranscriptionResource {
 
-    private static final Logger log = LoggerFactory.getLogger(IrisResource.class);
+    private static final Logger log = LoggerFactory.getLogger(IrisTranscriptionResource.class);
 
     protected final UserRepository userRepository;
 

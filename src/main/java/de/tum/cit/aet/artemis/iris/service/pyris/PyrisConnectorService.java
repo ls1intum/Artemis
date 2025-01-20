@@ -115,17 +115,17 @@ public class PyrisConnectorService {
      * @param variant      The variant of the feature to execute
      * @param executionDTO The DTO sent as a body for the execution
      */
-    public void executeTranscriptionAddtionWebhook(String variant, PyrisWebhookTranscriptionIngestionExecutionDTO executionDTO) {
+    public void executeTranscriptionAdditionWebhook(String variant, PyrisWebhookTranscriptionIngestionExecutionDTO executionDTO) {
         var endpoint = "/api/v1/webhooks/transcriptions/" + variant;
         try {
             restTemplate.postForEntity(pyrisUrl + endpoint, objectMapper.valueToTree(executionDTO), Void.class);
         }
         catch (HttpStatusCodeException e) {
-            log.error("Failed to send lecture unit {} to Pyris: {}", executionDTO.transcription().lectureName(), e.getMessage());
+            log.error("Failed to send transcription {} to Pyris: {}", executionDTO.transcription().lectureName(), e.getMessage());
             throw toIrisException(e);
         }
         catch (RestClientException | IllegalArgumentException e) {
-            log.error("Failed to send lecture unit {} to Pyris: {}", executionDTO.transcription().lectureName(), e.getMessage());
+            log.error("Failed to send transcription {} to Pyris: {}", executionDTO.transcription().lectureName(), e.getMessage());
             throw new PyrisConnectorException("Could not fetch response from Pyris");
         }
     }
