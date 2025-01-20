@@ -65,7 +65,7 @@ class PyrisTranscriptionIngestionTest extends AbstractIrisIntegrationTest {
         irisRequestMockProvider.mockTranscriptionIngestionWebhookRunResponse(dto -> {
             assertThat(dto.settings().authenticationToken()).isNotNull();
         });
-        request.put("/api/courses/" + lecture1.getCourse().getId() + "/ingest-transcription", Optional.empty(), HttpStatus.OK);
+        request.put("/api/courses/" + lecture1.getCourse().getId() + "/ingest-transcription", Optional.empty(), HttpStatus.BAD_REQUEST);
     }
 
     @Test
@@ -76,6 +76,13 @@ class PyrisTranscriptionIngestionTest extends AbstractIrisIntegrationTest {
             assertThat(dto.settings().authenticationToken()).isNotNull();
         });
         request.put("/api/courses/" + lecture1.getCourse().getId() + "/ingest-transcription?lectureId=" + lecture1.getId(), Optional.empty(), HttpStatus.OK);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testIngestTranscriptionWithInvalidLectureId() throws Exception {
+        activateIrisFor(lecture1.getCourse());
+        request.put("/api/courses/" + lecture1.getCourse().getId() + "/ingest-transcription?lectureId=" + 999999L, Optional.empty(), HttpStatus.BAD_REQUEST);
     }
 
     @Test

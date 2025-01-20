@@ -311,18 +311,21 @@ public class LectureResource {
     @EnforceAtLeastInstructorInCourse
     public ResponseEntity<Void> ingestTranscriptions(@PathVariable Long courseId, @RequestParam(required = false) Optional<Long> lectureId) {
         Course course = courseRepository.findByIdWithLecturesAndLectureUnitsElseThrow(courseId);
+        if (course == null) {
+            return ResponseEntity.notFound().build();
+        }
         authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.INSTRUCTOR, course, null);
         if (lectureId.isPresent()) {
             List<Transcription> transcriptions = transcriptionRepository.findAllByLectureIdWithSegments(lectureId.get());
             if (transcriptions.isEmpty()) {
-                return ResponseEntity.badRequest().headers(HeaderUtil.createAlert(applicationName, "artemisApp.iris.ingestionAlert.allLecturesError", "idExists")).body(null);
+                return ResponseEntity.badRequest().headers(HeaderUtil.createAlert(applicationName, "artemisApp.iris.ingestionAlert.noTranscriptionError", "noTranscription"))
+                        .body(null);
             }
             Set<Transcription> transcriptionsToIngest = new HashSet<>(transcriptions);
             lectureService.ingestTranscriptionInPyris(transcriptionsToIngest);
             return ResponseEntity.ok().build();
         }
-        // lectureService.ingestTranscriptionInPyris(course.getLectures().stream().map(Lecture::getTranscriptions).flatMap(List::stream).collect(Collectors.toSet()));
-        return ResponseEntity.ok().build();
+        return ResponseEntity.badRequest().build();
     }
 
     /**

@@ -79,8 +79,17 @@ public class PyrisWebhookService {
      * @return jobToken if the job was created else null
      */
     public String addTranscriptionToPyrisDB(Transcription transcription) {
+        if (transcription == null) {
+            throw new IllegalArgumentException("Transcription cannot be null");
+        }
+        if (transcription.getLecture() == null) {
+            throw new IllegalArgumentException("Transcription must be associated with a lecture");
+        }
         if (lectureIngestionEnabled(transcription.getLecture().getCourse())) {
-            return executeTranscriptionAdditionWebhook(new PyrisTranscriptionIngestionWebhookDTO(transcription, 0, "", 0, "", ""));
+            Lecture lecture = transcription.getLecture();
+            Course course = lecture.getCourse();
+            return executeTranscriptionAdditionWebhook(
+                    new PyrisTranscriptionIngestionWebhookDTO(transcription, lecture.getId(), lecture.getTitle(), course.getId(), course.getTitle(), course.getDescription()));
         }
         return null;
     }

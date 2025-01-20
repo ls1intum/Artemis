@@ -6,6 +6,8 @@ import jakarta.persistence.JoinColumn;
 import jakarta.persistence.Lob;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
+import jakarta.validation.constraints.AssertTrue;
+import jakarta.validation.constraints.NotNull;
 
 import org.hibernate.annotations.Cache;
 import org.hibernate.annotations.CacheConcurrencyStrategy;
@@ -19,11 +21,18 @@ import de.tum.cit.aet.artemis.core.domain.DomainObject;
 @Table(name = "transcription_segments")
 public class TranscriptionSegment extends DomainObject {
 
+    @NotNull
     @Column(name = "start_time")
     private Double startTime;
 
+    @NotNull
     @Column(name = "end_time")
     private Double endTime;
+
+    @AssertTrue(message = "End time must be greater than start time")
+    private boolean isTimeValid() {
+        return startTime == null || endTime == null || endTime > startTime;
+    }
 
     @Lob
     private String text;
