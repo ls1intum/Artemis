@@ -2,7 +2,7 @@ import { Component, OnDestroy, OnInit, inject } from '@angular/core';
 import dayjs from 'dayjs/esm';
 import { SystemNotification, SystemNotificationType } from 'app/entities/system-notification.model';
 import { AccountService } from 'app/core/auth/account.service';
-import { JhiWebsocketService } from 'app/core/websocket/websocket.service';
+import { WebsocketService } from 'app/core/websocket/websocket.service';
 import { User } from 'app/core/user/user.model';
 import { SystemNotificationService } from 'app/shared/notification/system-notification/system-notification.service';
 import { faExclamationTriangle, faInfoCircle, faTimes } from '@fortawesome/free-solid-svg-icons';
@@ -21,7 +21,7 @@ export const WEBSOCKET_CHANNEL = '/topic/system-notification';
 })
 export class SystemNotificationComponent implements OnInit, OnDestroy {
     private accountService = inject(AccountService);
-    private jhiWebsocketService = inject(JhiWebsocketService);
+    private jhiWebsocketService = inject(WebsocketService);
     private systemNotificationService = inject(SystemNotificationService);
 
     readonly INFO = SystemNotificationType.INFO;

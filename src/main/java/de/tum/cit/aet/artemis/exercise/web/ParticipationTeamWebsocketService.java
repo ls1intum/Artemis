@@ -184,7 +184,7 @@ public class ParticipationTeamWebsocketService {
     public void updateTextSubmission(@DestinationVariable Long participationId, @Payload TextSubmission textSubmission, Principal principal) {
         long start = System.currentTimeMillis();
         updateSubmission(participationId, textSubmission, principal, "/text-submissions", true);
-        log.info("Websocket endpoint updateTextSubmission took {}ms for submission with id {}", System.currentTimeMillis() - start, textSubmission.getId());
+        log.debug("Websocket endpoint updateTextSubmission took {}ms for submission with id {}", System.currentTimeMillis() - start, textSubmission.getId());
     }
 
     /**
