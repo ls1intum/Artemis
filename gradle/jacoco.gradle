@@ -23,7 +23,7 @@ ext {
         ],
         "communication": [
             "INSTRUCTION": 0.890,
-            "CLASS": 7
+            "CLASS": 8
         ],
         "core"         : [
             "INSTRUCTION": 0.657,
