@@ -234,7 +234,8 @@ examples.forEach((activeConversation) => {
                 { id: 3, creationDate: dayjs(), author: { id: 2 } } as Post,
             ];
 
-            component.setPosts(posts);
+            component.allPosts = posts;
+            component.setPosts();
 
             expect(component.posts).toHaveLength(4);
             expect(component.groupedPosts).toHaveLength(3);
@@ -261,7 +262,8 @@ examples.forEach((activeConversation) => {
                 { id: 3, creationDate: dayjs(), author: { id: 1 } } as Post,
             ];
 
-            component.setPosts(posts);
+            component.allPosts = posts;
+            component.setPosts();
 
             expect(component.groupedPosts).toHaveLength(3);
             expect(component.groupedPosts[0].posts).toHaveLength(1);
@@ -293,6 +295,88 @@ examples.forEach((activeConversation) => {
 
             expect(scrollToBottomSpy).toHaveBeenCalledOnce();
             expect(component.canStartSaving).toBeTrue();
+        });
+
+        it('should filter posts to show only pinned posts when showOnlyPinned is true', () => {
+            const pinnedPost = { id: 1, displayPriority: 'PINNED' } as Post;
+            const regularPost = { id: 2, displayPriority: 'NONE' } as Post;
+
+            component.allPosts = [pinnedPost, regularPost];
+            jest.spyOn(component, 'showOnlyPinned').mockReturnValue(true);
+            component.applyFilter();
+
+            expect(component.posts).toEqual([pinnedPost]);
+        });
+
+        it('should show all posts when showOnlyPinned is false', () => {
+            const pinnedPost = { id: 1, displayPriority: 'PINNED' } as Post;
+            const regularPost = { id: 2, displayPriority: 'NONE' } as Post;
+
+            component.allPosts = [pinnedPost, regularPost];
+            jest.spyOn(component, 'showOnlyPinned').mockReturnValue(false);
+            component.applyFilter();
+
+            expect(component.posts).toEqual([pinnedPost, regularPost]);
+        });
+
+        it('should emit the correct pinnedCount', () => {
+            const pinnedPost1 = { id: 1, displayPriority: 'PINNED' } as Post;
+            const pinnedPost2 = { id: 2, displayPriority: 'PINNED' } as Post;
+            const regularPost = { id: 3, displayPriority: 'NONE' } as Post;
+
+            const emitSpy = jest.spyOn(component.pinnedCount, 'emit');
+            component.allPosts = [pinnedPost1, pinnedPost2, regularPost];
+            component.applyFilter();
+
+            expect(emitSpy).toHaveBeenCalledWith(2);
+        });
+
+        it('should call setPosts when showOnlyPinned input changes and it is not the first change', () => {
+            const changes = {
+                showOnlyPinned: {
+                    currentValue: true,
+                    previousValue: false,
+                    firstChange: false,
+                    isFirstChange: () => false,
+                },
+            };
+
+            const setPostsSpy = jest.spyOn(component, 'setPosts');
+            component.ngOnChanges(changes);
+
+            expect(setPostsSpy).toHaveBeenCalled();
+        });
+
+        it('should not call setPosts when showOnlyPinned input changes for the first time', () => {
+            const changes = {
+                showOnlyPinned: {
+                    currentValue: true,
+                    previousValue: undefined,
+                    firstChange: true,
+                    isFirstChange: () => true,
+                },
+            };
+
+            const setPostsSpy = jest.spyOn(component, 'setPosts');
+            component.ngOnChanges(changes);
+
+            expect(setPostsSpy).not.toHaveBeenCalled();
+        });
+
+        it('should not call setPosts when showOnlyPinned input does not change', () => {
+            const changes = {
+                unrelatedInput: {
+                    currentValue: true,
+                    previousValue: false,
+                    firstChange: false,
+                    isFirstChange: () => false,
+                },
+            };
+
+            const setPostsSpy = jest.spyOn(component, 'setPosts');
+            component.ngOnChanges(changes);
+
+            expect(setPostsSpy).not.toHaveBeenCalled();
         });
     });
 });

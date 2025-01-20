@@ -657,6 +657,23 @@ examples.forEach((activeConversation) => {
                 expect(component.selectedSavedPostStatus).toBeNull();
                 expect(metisConversationService.setActiveConversation).not.toHaveBeenCalled();
             });
+
+            it('should toggle the value of showOnlyPinned', () => {
+                expect(component.showOnlyPinned).toBe(false);
+
+                component.togglePinnedView();
+                expect(component.showOnlyPinned).toBe(true);
+
+                component.togglePinnedView();
+                expect(component.showOnlyPinned).toBe(false);
+            });
+
+            it('should update pinnedCount when onPinnedCountChanged is called', () => {
+                const newPinnedCount = 5;
+
+                component.onPinnedCountChanged(newPinnedCount);
+                expect(component.pinnedCount).toBe(newPinnedCount);
+            });
         });
     });
 });

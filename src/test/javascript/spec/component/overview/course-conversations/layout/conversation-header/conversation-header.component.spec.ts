@@ -151,6 +151,26 @@ examples.forEach((activeConversation) => {
             expect(component.otherUser).toEqual(oneToOneChat.members[1]);
         });
 
+        it('should toggle pinned messages visibility', fakeAsync(() => {
+            const togglePinnedMessagesSpy = jest.spyOn(component, 'togglePinnedMessages');
+
+            expect(component.showPinnedMessages).toBe(false);
+
+            component.togglePinnedMessages();
+            expect(togglePinnedMessagesSpy).toHaveBeenCalled();
+            expect(component.showPinnedMessages).toBe(true);
+
+            component.togglePinnedMessages();
+            expect(component.showPinnedMessages).toBe(false);
+        }));
+
+        it('should emit togglePinnedMessage event', fakeAsync(() => {
+            const togglePinnedMessageSpy = jest.spyOn(component.togglePinnedMessage, 'emit');
+
+            component.togglePinnedMessages();
+            expect(togglePinnedMessageSpy).toHaveBeenCalled();
+        }));
+
         if (activeConversation instanceof ChannelDTO && activeConversation.subType !== ChannelSubType.GENERAL) {
             it(
                 'should navigate to ' + activeConversation.subType,
