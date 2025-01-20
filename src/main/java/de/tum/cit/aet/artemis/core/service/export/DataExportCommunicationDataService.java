@@ -179,7 +179,7 @@ public class DataExportCommunicationDataService {
             answerPostReactionsInCourse = List.of();
         }
         String[] headers = { "content/emoji", "creation date", "post content reaction/reply belongs to" };
-        CSVFormat csvFormat = CSVFormat.DEFAULT.builder().setHeader(headers).build();
+        CSVFormat csvFormat = CSVFormat.DEFAULT.builder().setHeader(headers).get();
         try (final CSVPrinter printer = new CSVPrinter(Files.newBufferedWriter(courseDir.resolve("messages_posts_reactions" + CSV_FILE_EXTENSION)), csvFormat)) {
             printer.println();
             printer.print("Messages/Posts");
