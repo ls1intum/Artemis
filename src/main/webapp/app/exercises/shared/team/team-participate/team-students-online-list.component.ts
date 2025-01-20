@@ -6,7 +6,7 @@ import { orderBy } from 'lodash-es';
 import { Observable } from 'rxjs';
 import { map, throttleTime } from 'rxjs/operators';
 import dayjs from 'dayjs/esm';
-import { JhiWebsocketService } from 'app/core/websocket/websocket.service';
+import { WebsocketService } from 'app/core/websocket/websocket.service';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
 import { faCircle, faHistory } from '@fortawesome/free-solid-svg-icons';
 import { NgClass } from '@angular/common';
@@ -23,7 +23,7 @@ import { captureException } from '@sentry/angular';
 })
 export class TeamStudentsOnlineListComponent implements OnInit, OnDestroy {
     private accountService = inject(AccountService);
-    private jhiWebsocketService = inject(JhiWebsocketService);
+    private jhiWebsocketService = inject(WebsocketService);
 
     readonly SHOW_TYPING_DURATION = 2000; // ms
     readonly SEND_TYPING_INTERVAL = this.SHOW_TYPING_DURATION / 1.5;
@@ -68,14 +68,14 @@ export class TeamStudentsOnlineListComponent implements OnInit, OnDestroy {
                 error: (error) => captureException(error),
             });
         setTimeout(() => {
-            this.jhiWebsocketService.send(this.buildWebsocketTopic('/trigger'), {});
+            this.jhiWebsocketService.send<object>(this.buildWebsocketTopic('/trigger'), {});
         }, 700);
     }
 
     private setupTypingIndicatorSender() {
         if (this.typing$) {
             this.typing$.pipe(throttleTime(this.SEND_TYPING_INTERVAL)).subscribe({
-                next: () => this.jhiWebsocketService.send(this.buildWebsocketTopic('/typing'), {}),
+                next: () => this.jhiWebsocketService.send<object>(this.buildWebsocketTopic('/typing'), {}),
                 error: (error) => captureException(error),
             });
         }
