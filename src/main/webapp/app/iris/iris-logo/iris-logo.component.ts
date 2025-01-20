@@ -16,7 +16,6 @@ export enum IrisLogoLookDirection {
     selector: 'jhi-iris-logo',
     templateUrl: './iris-logo.component.html',
     styleUrls: ['./iris-logo.component.scss'],
-    standalone: true,
 })
 export class IrisLogoComponent {
     size = input<IrisLogoSize | number>(IrisLogoSize.BIG);

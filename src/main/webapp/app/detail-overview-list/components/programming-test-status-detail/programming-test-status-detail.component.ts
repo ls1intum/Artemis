@@ -10,7 +10,6 @@ import { ProgrammingExerciseParticipationType } from 'app/entities/programming/p
 @Component({
     selector: 'jhi-programming-test-status-detail',
     templateUrl: 'programming-test-status-detail.component.html',
-    standalone: true,
     imports: [RouterModule, ArtemisProgrammingExerciseActionsModule, SubmissionResultStatusModule, ArtemisProgrammingExerciseStatusModule, TranslateDirective],
 })
 export class ProgrammingTestStatusDetailComponent {

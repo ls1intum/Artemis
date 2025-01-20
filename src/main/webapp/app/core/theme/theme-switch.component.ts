@@ -1,5 +1,5 @@
 import { ChangeDetectionStrategy, Component, OnInit, computed, inject, input, viewChild } from '@angular/core';
-import { CommonModule } from '@angular/common';
+
 import { ArtemisSharedModule } from 'app/shared/shared.module';
 import { TranslateModule } from '@ngx-translate/core';
 import { NgbModule, NgbPopover } from '@ng-bootstrap/ng-bootstrap';
@@ -18,9 +18,8 @@ import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
     selector: 'jhi-theme-switch',
     templateUrl: './theme-switch.component.html',
     styleUrls: ['theme-switch.component.scss'],
-    imports: [TranslateModule, CommonModule, ArtemisSharedModule, NgbModule, FontAwesomeModule],
+    imports: [TranslateModule, ArtemisSharedModule, NgbModule, FontAwesomeModule],
     changeDetection: ChangeDetectionStrategy.OnPush,
-    standalone: true,
 })
 export class ThemeSwitchComponent implements OnInit {
     protected readonly faSync = faSync;

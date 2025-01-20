@@ -45,8 +45,11 @@ const ENTITY_STATES = [...exerciseAssessmentDashboardRoute];
         OrionModule,
         SubmissionResultStatusModule,
         PieChartModule,
+        ExerciseAssessmentDashboardComponent,
+        OrionExerciseAssessmentDashboardComponent,
+        SecondCorrectionEnableButtonComponent,
+        LanguageTableCellComponent,
     ],
-    declarations: [ExerciseAssessmentDashboardComponent, OrionExerciseAssessmentDashboardComponent, SecondCorrectionEnableButtonComponent, LanguageTableCellComponent],
     providers: [],
     exports: [SecondCorrectionEnableButtonComponent, LanguageTableCellComponent],
 })

@@ -1,4 +1,4 @@
-import { Component, EventEmitter, Input, OnInit, Output } from '@angular/core';
+import { Component, EventEmitter, Input, OnInit, Output, inject } from '@angular/core';
 import { HttpResponse } from '@angular/common/http';
 import { ActivatedRoute } from '@angular/router';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
@@ -8,24 +8,36 @@ import { ApollonDiagramCreateFormComponent } from 'app/exercises/quiz/manage/apo
 import { ApollonDiagramService } from 'app/exercises/quiz/manage/apollon-diagrams/apollon-diagram.service';
 import { ApollonDiagram } from 'app/entities/apollon-diagram.model';
 import { SortService } from 'app/shared/service/sort.service';
-import { AccountService } from 'app/core/auth/account.service';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
 import { Course } from 'app/entities/course.model';
 import { faPlus, faSort, faTimes, faX } from '@fortawesome/free-solid-svg-icons';
 import { ButtonSize } from 'app/shared/components/button.component';
 import { UMLDiagramType } from '@ls1intum/apollon';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { SortDirective } from 'app/shared/sort/sort.directive';
+import { SortByDirective } from 'app/shared/sort/sort-by.directive';
+import { DeleteButtonDirective } from 'app/shared/delete-dialog/delete-button.directive';
 
 @Component({
     selector: 'jhi-apollon-diagram-list',
     templateUrl: './apollon-diagram-list.component.html',
     providers: [ApollonDiagramService],
+    imports: [TranslateDirective, FaIconComponent, SortDirective, SortByDirective, DeleteButtonDirective],
 })
 export class ApollonDiagramListComponent implements OnInit {
+    private apollonDiagramsService = inject(ApollonDiagramService);
+    private alertService = inject(AlertService);
+    private modalService = inject(NgbModal);
+    private sortService = inject(SortService);
+    private route = inject(ActivatedRoute);
+    private courseService = inject(CourseManagementService);
+
     apollonDiagrams: ApollonDiagram[] = [];
-    predicate: string;
-    reverse: boolean;
-    @Input()
-    courseId: number;
+    predicate = 'id';
+    reverse = true;
+
+    @Input() courseId: number;
 
     @Output() openDiagram = new EventEmitter<number>();
     @Output() closeDialog = new EventEmitter();
@@ -42,19 +54,6 @@ export class ApollonDiagramListComponent implements OnInit {
     faTimes = faTimes;
 
     ButtonSize = ButtonSize;
-
-    constructor(
-        private apollonDiagramsService: ApollonDiagramService,
-        private alertService: AlertService,
-        private modalService: NgbModal,
-        private sortService: SortService,
-        private route: ActivatedRoute,
-        private courseService: CourseManagementService,
-        private accountService: AccountService,
-    ) {
-        this.predicate = 'id';
-        this.reverse = true;
-    }
 
     /**
      * Initializes Apollon diagrams from the server
@@ -130,10 +129,10 @@ export class ApollonDiagramListComponent implements OnInit {
 
     /**
      * Returns the unique identifier for items in the collection
-     * @param index of a diagram in the collection
+     * @param _index of a diagram in the collection
      * @param item current diagram
      */
-    trackId(index: number, item: ApollonDiagram) {
+    trackId(_index: number, item: ApollonDiagram) {
         return item.id;
     }
 

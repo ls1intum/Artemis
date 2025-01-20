@@ -26,7 +26,6 @@ import { toSignal } from '@angular/core/rxjs-interop';
 @Component({
     selector: 'jhi-competency-management',
     templateUrl: './competency-management.component.html',
-    standalone: true,
     imports: [CompetencyManagementTableComponent, TranslateDirective, FontAwesomeModule, RouterModule, ArtemisSharedComponentModule],
 })
 export class CompetencyManagementComponent implements OnInit {

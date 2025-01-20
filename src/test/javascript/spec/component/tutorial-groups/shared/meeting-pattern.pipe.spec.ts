@@ -1,10 +1,13 @@
 import { MeetingPatternPipe } from 'app/course/tutorial-groups/shared/meeting-pattern.pipe';
 import { TutorialGroupSchedule } from 'app/entities/tutorial-group/tutorial-group-schedule.model';
+import { TranslateService } from '@ngx-translate/core';
 
 describe('MeetingPatternPipe', () => {
-    const translateService = { instant: jest.fn() };
+    const translateService = {
+        instant: jest.fn(),
+    };
 
-    const pipe = new MeetingPatternPipe(translateService as any);
+    const pipe = new MeetingPatternPipe(translateService as unknown as TranslateService);
 
     beforeEach(() => {
         translateService.instant.mockClear();

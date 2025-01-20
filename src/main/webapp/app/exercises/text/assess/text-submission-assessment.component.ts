@@ -1,7 +1,8 @@
 import { Component, OnDestroy, OnInit, inject } from '@angular/core';
 import { Location } from '@angular/common';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
-import { ActivatedRoute, Router } from '@angular/router';
+import { ActivatedRoute, Router, RouterLink } from '@angular/router';
+import { UnreferencedFeedbackComponent } from 'app/exercises/shared/unreferenced-feedback/unreferenced-feedback.component';
 import dayjs from 'dayjs/esm';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
 import { TextSubmission } from 'app/entities/text/text-submission.model';
@@ -35,11 +36,29 @@ import { TextBlockRef } from 'app/entities/text/text-block-ref.model';
 import { AthenaService } from 'app/assessment/athena.service';
 import { TextBlock } from 'app/entities/text/text-block.model';
 import { Subscription } from 'rxjs';
+import { AssessmentLayoutComponent } from 'app/assessment/assessment-layout/assessment-layout.component';
+import { ResizeableContainerComponent } from 'app/shared/resizeable-container/resizeable-container.component';
+import { ScoreDisplayComponent } from 'app/shared/score-display/score-display.component';
+import { TextAssessmentAreaComponent } from './text-assessment-area/text-assessment-area.component';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { AssessmentInstructionsComponent } from 'app/assessment/assessment-instructions/assessment-instructions/assessment-instructions.component';
 
 @Component({
     selector: 'jhi-text-submission-assessment',
     templateUrl: './text-submission-assessment.component.html',
     styleUrls: ['./text-submission-assessment.component.scss'],
+    imports: [
+        AssessmentLayoutComponent,
+        ResizeableContainerComponent,
+        ScoreDisplayComponent,
+        TextAssessmentAreaComponent,
+        FaIconComponent,
+        TranslateDirective,
+        AssessmentInstructionsComponent,
+        UnreferencedFeedbackComponent,
+        RouterLink,
+    ],
 })
 export class TextSubmissionAssessmentComponent extends TextAssessmentBaseComponent implements OnInit, OnDestroy {
     private activatedRoute = inject(ActivatedRoute);
@@ -150,7 +169,7 @@ export class TextSubmissionAssessmentComponent extends TextAssessmentBaseCompone
 
         this.activatedRoute.paramMap.subscribe((paramMap) => {
             this.exerciseId = Number(paramMap.get('exerciseId'));
-            this.resultId = Number(paramMap.get('resultId')) ?? 0;
+            this.resultId = Number(paramMap.get('resultId')) || 0;
             this.courseId = Number(paramMap.get('courseId'));
             if (paramMap.has('examId')) {
                 this.examId = Number(paramMap.get('examId'));
@@ -291,6 +310,13 @@ export class TextSubmissionAssessmentComponent extends TextAssessmentBaseCompone
                     // ->         |------|---|
                     // ("squish" the existing text block)
                     existingBlockRef.block!.startIndex = end;
+                    newTextBlockRefs.push(existingBlockRef);
+                } else if (exEnd == end) {
+                    // existing:       |-----|
+                    // to add:    |----------|
+                    // ->         |-add--|ex-|
+                    // ("squish" the new text block)
+                    refToAdd.block!.endIndex = exStart;
                     newTextBlockRefs.push(existingBlockRef);
                 }
             }

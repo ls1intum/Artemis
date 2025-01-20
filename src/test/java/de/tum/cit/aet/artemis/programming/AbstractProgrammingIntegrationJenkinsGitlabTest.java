@@ -1,5 +1,6 @@
 package de.tum.cit.aet.artemis.programming;
 
+import java.net.URI;
 import java.net.URL;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -66,7 +67,7 @@ public abstract class AbstractProgrammingIntegrationJenkinsGitlabTest extends Ab
     protected String artemisGitEmail;
 
     @Value("${artemis.continuous-integration.url}")
-    protected URL jenkinsServerUrl;
+    protected URI jenkinsServerUri;
 
     @Autowired
     protected RestTemplate restTemplate;
