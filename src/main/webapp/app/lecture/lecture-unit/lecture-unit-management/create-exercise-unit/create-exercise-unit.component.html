@@ -12,23 +12,8 @@
             </div>
         </div>
         <div class="row">
-            <div class="col-sm-6 mx-auto">
+            <div class="col-sm-6">
                 <p jhiTranslate="artemisApp.exerciseUnit.createExerciseUnit.description"></p>
-            </div>
-            <div class="col-sm-6 mx-auto text-end">
-                @if (hasCancelButton()) {
-                    <button type="button" (click)="cancelForm()" class="btn btn-default">
-                        <fa-icon [icon]="faTimes" />&nbsp;<span jhiTranslate="entity.action.cancel"></span>
-                    </button>
-                }
-                <button
-                    id="createButton"
-                    type="button"
-                    class="btn btn-primary"
-                    [disabled]="exercisesToCreateUnitFor.length === 0"
-                    (click)="createExerciseUnits()"
-                    jhiTranslate="entity.action.submit"
-                ></button>
             </div>
         </div>
         <div class="row">
@@ -86,6 +71,23 @@
                         </tbody>
                     </table>
                 </div>
+            </div>
+        </div>
+        <div class="row">
+            <div class="col-12">
+                <button
+                    id="createButton"
+                    type="button"
+                    class="btn btn-primary"
+                    [disabled]="exercisesToCreateUnitFor.length === 0"
+                    (click)="createExerciseUnits()"
+                    jhiTranslate="entity.action.submit"
+                ></button>
+                @if (hasCancelButton()) {
+                    <button type="button" (click)="cancelForm()" class="btn btn-default">
+                        <fa-icon [icon]="faTimes" />&nbsp;<span jhiTranslate="entity.action.cancel"></span>
+                    </button>
+                }
             </div>
         </div>
     </div>
