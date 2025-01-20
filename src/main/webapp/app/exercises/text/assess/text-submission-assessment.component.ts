@@ -169,7 +169,7 @@ export class TextSubmissionAssessmentComponent extends TextAssessmentBaseCompone
 
         this.activatedRoute.paramMap.subscribe((paramMap) => {
             this.exerciseId = Number(paramMap.get('exerciseId'));
-            this.resultId = Number(paramMap.get('resultId')) ?? 0;
+            this.resultId = Number(paramMap.get('resultId')) || 0;
             this.courseId = Number(paramMap.get('courseId'));
             if (paramMap.has('examId')) {
                 this.examId = Number(paramMap.get('examId'));
@@ -310,6 +310,13 @@ export class TextSubmissionAssessmentComponent extends TextAssessmentBaseCompone
                     // ->         |------|---|
                     // ("squish" the existing text block)
                     existingBlockRef.block!.startIndex = end;
+                    newTextBlockRefs.push(existingBlockRef);
+                } else if (exEnd == end) {
+                    // existing:       |-----|
+                    // to add:    |----------|
+                    // ->         |-add--|ex-|
+                    // ("squish" the new text block)
+                    refToAdd.block!.endIndex = exStart;
                     newTextBlockRefs.push(existingBlockRef);
                 }
             }

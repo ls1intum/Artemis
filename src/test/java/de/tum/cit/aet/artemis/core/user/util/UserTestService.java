@@ -27,6 +27,7 @@ import org.springframework.util.LinkedMultiValueMap;
 
 import de.tum.cit.aet.artemis.atlas.domain.science.ScienceEvent;
 import de.tum.cit.aet.artemis.atlas.domain.science.ScienceEventType;
+import de.tum.cit.aet.artemis.atlas.repository.LearnerProfileRepository;
 import de.tum.cit.aet.artemis.atlas.test_repository.ScienceEventTestRepository;
 import de.tum.cit.aet.artemis.core.config.Constants;
 import de.tum.cit.aet.artemis.core.domain.Authority;
@@ -110,21 +111,20 @@ public class UserTestService {
     @Autowired
     private MockMvc mockMvc;
 
-    private String TEST_PREFIX;
+    @Autowired
+    private ParticipationVCSAccessTokenRepository participationVCSAccessTokenRepository;
 
-    private MockDelegate mockDelegate;
+    @Autowired
+    private ParticipationTestRepository participationRepository;
 
-    public User student;
+    @Autowired
+    private SubmissionTestRepository submissionRepository;
 
-    private ScienceEvent scienceEvent;
+    @Autowired
+    private LearnerProfileRepository learnerProfileRepository;
 
-    private static final int NUMBER_OF_STUDENTS = 2;
-
-    private static final int NUMBER_OF_TUTORS = 1;
-
-    private static final int NUMBER_OF_EDITORS = 1;
-
-    private static final int NUMBER_OF_INSTRUCTORS = 1;
+    @Autowired
+    private ExerciseTestRepository exerciseTestRepository;
 
     @Autowired
     private ParticipationVCSAccessTokenRepository participationVCSAccessTokenRepository;
@@ -140,6 +140,22 @@ public class UserTestService {
 
     @Autowired
     private NotificationTestRepository notificationTestRepository;
+  
+    private String TEST_PREFIX;
+
+    private MockDelegate mockDelegate;
+
+    public User student;
+
+    private ScienceEvent scienceEvent;
+
+    private static final int NUMBER_OF_STUDENTS = 2;
+
+    private static final int NUMBER_OF_TUTORS = 1;
+
+    private static final int NUMBER_OF_EDITORS = 1;
+
+    private static final int NUMBER_OF_INSTRUCTORS = 1;
 
     public void setup(String testPrefix, MockDelegate mockDelegate) throws Exception {
         this.TEST_PREFIX = testPrefix;
@@ -229,8 +245,11 @@ public class UserTestService {
         userTestRepository.deleteAll(userTestRepository.searchAllByLoginOrName(Pageable.unpaged(), TEST_PREFIX));
         userUtilService.addUsers(TEST_PREFIX, 1, 1, 1, 1);
 
-        var users = Set.of(userUtilService.getUserByLogin(TEST_PREFIX + "student1"), userUtilService.getUserByLogin(TEST_PREFIX + "tutor1"),
-                userUtilService.getUserByLogin(TEST_PREFIX + "editor1"), userUtilService.getUserByLogin(TEST_PREFIX + "instructor1"));
+        var users = Stream.of("student1", "tutor1", "editor1", "instructor1").map(login -> {
+            final User user = userUtilService.getUserByLogin(TEST_PREFIX + login);
+            user.getGroups().clear();
+            return userTestRepository.save(user);
+        }).collect(Collectors.toSet());
 
         var logins = users.stream().map(User::getLogin).toList();
         request.delete("/api/admin/users", HttpStatus.OK, logins);
@@ -413,6 +432,8 @@ public class UserTestService {
 
         assertThat(student).as("New user is equal to request response").isEqualTo(response);
         assertThat(student).as("New user is equal to new user in DB").isEqualTo(userInDB);
+
+        assertThat(learnerProfileRepository.findByUser(student)).isNotEmpty();
 
         return userInDB;
     }

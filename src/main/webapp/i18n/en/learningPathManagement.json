@@ -1,6 +1,7 @@
 {
     "artemisApp": {
         "learningPathManagement": {
+            "noGraphAvailable": "No graph available because nodes or edges are empty. Add some competencies with relations first!",
             "learningPathsDisabled": {
                 "title": "Welcome to the learning path management!",
                 "description": "The learning path feature is currently disabled for this course. This feature enables students to follow a personalized learning path based on the competencies you have defined. Each learning path is generated based on the student's individual progress, the relationships between competencies, and the specified soft due dates. You can enable the learning path feature by clicking the button below.",
