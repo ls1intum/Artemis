@@ -17,7 +17,7 @@ import { TranslateDirective } from 'app/shared/language/translate.directive';
     imports: [EditableSliderComponent, TranslateDirective],
 })
 export class CourseLearnerProfileComponent implements OnInit {
-    private readonly learnerProfileAPIService = inject(LearnerProfileApiService);
+    private courseManagementService = inject(CourseManagementService);
 
     courses: Course[];
     courseLearnerProfiles: Record<number, CourseLearnerProfileDTO>;
@@ -33,8 +33,8 @@ export class CourseLearnerProfileComponent implements OnInit {
     repetitionIntensityState = signal<EditStateTransition>(EditStateTransition.Abort);
 
     constructor(
-        private courseService: CourseManagementService,
         private alertService: AlertService,
+        private learnerProfileAPIService: LearnerProfileApiService,
         protected translateService: TranslateService,
     ) {}
 
@@ -46,6 +46,8 @@ export class CourseLearnerProfileComponent implements OnInit {
     courseChanged(event: Event) {
         const val: string = (<HTMLSelectElement>event.target).value;
         this.aimForGradeOrBonusState.set(EditStateTransition.Abort);
+        this.timeInvestmentState.set(EditStateTransition.Abort);
+        this.repetitionIntensity.set(EditStateTransition.Abort);
 
         if (val != '-1') {
             this.activeCourse = Number(val);
@@ -123,7 +125,7 @@ export class CourseLearnerProfileComponent implements OnInit {
     }
 
     loadCourses() {
-        this.courseService.findAllForDropdown().subscribe({
+        this.courseManagementService.findAllForDropdown().subscribe({
             next: (res: HttpResponse<Course[]>) => {
                 if (!res.body || res.body.length === 0) {
                     return;
