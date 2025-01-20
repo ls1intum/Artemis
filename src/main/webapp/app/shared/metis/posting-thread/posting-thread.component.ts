@@ -1,12 +1,14 @@
 import { ChangeDetectionStrategy, Component, ElementRef, EventEmitter, Input, Output, inject } from '@angular/core';
 import { Post } from 'app/entities/metis/post.model';
 import dayjs from 'dayjs/esm';
+import { PostComponent } from '../post/post.component';
 
 @Component({
     selector: 'jhi-posting-thread',
     templateUrl: './posting-thread.component.html',
     styleUrls: ['../metis.component.scss'],
     changeDetection: ChangeDetectionStrategy.OnPush,
+    imports: [PostComponent],
 })
 export class PostingThreadComponent {
     @Input() lastReadDate?: dayjs.Dayjs;

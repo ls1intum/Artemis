@@ -7,8 +7,7 @@ import { CourseUsersSelectorComponent } from 'app/shared/course-users-selector/c
 import { ProfilePictureComponent } from 'app/shared/profile-picture/profile-picture.component';
 
 @NgModule({
-    imports: [CommonModule, FormsModule, ReactiveFormsModule, ArtemisSharedModule, ArtemisSharedComponentModule, ProfilePictureComponent],
+    imports: [CommonModule, FormsModule, ReactiveFormsModule, ArtemisSharedModule, ArtemisSharedComponentModule, ProfilePictureComponent, CourseUsersSelectorComponent],
     exports: [CourseUsersSelectorComponent],
-    declarations: [CourseUsersSelectorComponent],
 })
 export class CourseUsersSelectorModule {}

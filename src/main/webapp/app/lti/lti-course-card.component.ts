@@ -10,7 +10,6 @@ import { ArtemisSharedModule } from 'app/shared/shared.module';
     selector: 'jhi-overview-lti-course-card',
     templateUrl: './lti-course-card.component.html',
     styleUrls: ['../overview/course-card.scss'],
-    standalone: true,
     imports: [RouterLink, NgStyle, ArtemisSharedModule],
 })
 export class LtiCourseCardComponent {

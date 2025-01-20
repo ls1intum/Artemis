@@ -17,6 +17,7 @@ import { QuizQuestion, QuizQuestionType } from 'app/entities/quiz/quiz-question.
 import dayjs from 'dayjs/esm';
 import { firstValueFrom } from 'rxjs';
 import JSZip from 'jszip';
+import 'jest-extended';
 
 /**
  * create a QuizExercise that when used as an HTTP response can be deserialized as an equal object
@@ -39,7 +40,7 @@ describe('QuizExercise Service', () => {
     let service: QuizExerciseService;
     let httpMock: HttpTestingController;
     let elemDefault: QuizExercise;
-    let mockJSZip: jest.Mocked<JSZip>;
+    const mockJSZip: jest.Mocked<JSZip> = {} as jest.Mocked<JSZip>;
 
     beforeEach(() => {
         TestBed.configureTestingModule({

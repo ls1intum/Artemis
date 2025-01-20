@@ -5,11 +5,16 @@ import { getExerciseDueDate } from 'app/exercises/shared/exercise/exercise.utils
 import dayjs from 'dayjs/esm';
 import { ComplaintService } from 'app/complaints/complaint.service';
 import { AssessmentType } from 'app/entities/assessment-type.model';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { NgTemplateOutlet } from '@angular/common';
+import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
+import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 
 @Component({
     selector: 'jhi-exercise-info',
     templateUrl: './exercise-info.component.html',
     styleUrls: ['../../../shared/side-panel/side-panel.scss'],
+    imports: [TranslateDirective, NgTemplateOutlet, ArtemisDatePipe, ArtemisTranslatePipe],
 })
 export class ExerciseInfoComponent implements OnInit {
     @Input() exercise: Exercise;

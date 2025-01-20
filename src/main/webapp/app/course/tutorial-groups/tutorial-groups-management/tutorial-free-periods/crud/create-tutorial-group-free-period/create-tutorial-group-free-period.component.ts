@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, Input, OnDestroy } from '@angular/core';
+import { ChangeDetectionStrategy, Component, Input, OnDestroy, inject } from '@angular/core';
 import { TutorialGroupFreePeriodDTO, TutorialGroupFreePeriodService } from 'app/course/tutorial-groups/services/tutorial-group-free-period.service';
 import { TutorialGroupFreePeriodFormData } from 'app/course/tutorial-groups/tutorial-groups-management/tutorial-free-periods/crud/tutorial-free-period-form/tutorial-group-free-period-form.component';
 import { finalize, takeUntil } from 'rxjs/operators';
@@ -9,13 +9,21 @@ import { Course } from 'app/entities/course.model';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import { Subject } from 'rxjs';
 import { captureException } from '@sentry/angular';
+import { LoadingIndicatorContainerComponent } from 'app/shared/loading-indicator-container/loading-indicator-container.component';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { TutorialGroupFreePeriodFormComponent } from '../tutorial-free-period-form/tutorial-group-free-period-form.component';
 
 @Component({
     selector: 'jhi-create-tutorial-group-free-day',
     templateUrl: './create-tutorial-group-free-period.component.html',
     changeDetection: ChangeDetectionStrategy.OnPush,
+    imports: [LoadingIndicatorContainerComponent, TranslateDirective, TutorialGroupFreePeriodFormComponent],
 })
 export class CreateTutorialGroupFreePeriodComponent implements OnDestroy {
+    private activeModal = inject(NgbActiveModal);
+    private tutorialGroupFreePeriodService = inject(TutorialGroupFreePeriodService);
+    private alertService = inject(AlertService);
+
     ngUnsubscribe = new Subject<void>();
 
     tutorialGroupFreePeriodToCreate: TutorialGroupFreePeriodDTO = new TutorialGroupFreePeriodDTO();
@@ -29,15 +37,9 @@ export class CreateTutorialGroupFreePeriodComponent implements OnDestroy {
 
     isInitialized = false;
 
-    constructor(
-        private activeModal: NgbActiveModal,
-        private tutorialGroupFreePeriodService: TutorialGroupFreePeriodService,
-        private alertService: AlertService,
-    ) {}
-
     initialize() {
         if (!this.tutorialGroupConfigurationId || !this.course) {
-            console.error('Error: Component not fully configured');
+            captureException('Error: Component not fully configured');
         } else {
             this.isInitialized = true;
         }

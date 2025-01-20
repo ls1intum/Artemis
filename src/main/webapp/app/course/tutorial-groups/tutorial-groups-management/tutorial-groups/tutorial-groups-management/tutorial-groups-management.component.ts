@@ -1,6 +1,8 @@
-import { ChangeDetectionStrategy, ChangeDetectorRef, Component, OnDestroy, OnInit } from '@angular/core';
+import { ChangeDetectionStrategy, ChangeDetectorRef, Component, OnDestroy, OnInit, inject } from '@angular/core';
+import { TutorialGroupFreeDaysOverviewComponent } from 'app/course/tutorial-groups/shared/tutorial-group-free-days-overview/tutorial-group-free-days-overview.component';
+import { TutorialGroupsTableComponent } from 'app/course/tutorial-groups/shared/tutorial-groups-table/tutorial-groups-table.component';
 import { TutorialGroup } from 'app/entities/tutorial-group/tutorial-group.model';
-import { ActivatedRoute, Router } from '@angular/router';
+import { ActivatedRoute, RouterLink } from '@angular/router';
 import { TutorialGroupsService } from 'app/course/tutorial-groups/services/tutorial-groups.service';
 import { HttpErrorResponse } from '@angular/common/http';
 import { Subject, combineLatest, finalize } from 'rxjs';
@@ -12,13 +14,46 @@ import { TutorialGroupFreePeriod } from 'app/entities/tutorial-group/tutorial-gr
 import { TutorialGroupsConfigurationService } from 'app/course/tutorial-groups/services/tutorial-groups-configuration.service';
 import { takeUntil } from 'rxjs/operators';
 import { TutorialGroupsConfiguration } from 'app/entities/tutorial-group/tutorial-groups-configuration.model';
+import { LoadingIndicatorContainerComponent } from 'app/shared/loading-indicator-container/loading-indicator-container.component';
+import { NgbDropdown, NgbDropdownItem, NgbDropdownMenu, NgbDropdownToggle, NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { TutorialGroupsImportButtonComponent } from './tutorial-groups-import-button/tutorial-groups-import-button.component';
+import { TutorialGroupsExportButtonComponent } from './tutorial-groups-export-button.component/tutorial-groups-export-button.component';
+import { TutorialGroupRowButtonsComponent } from './tutorial-group-row-buttons/tutorial-group-row-buttons.component';
+import { TutorialGroupsCourseInformationComponent } from './tutorial-groups-course-information/tutorial-groups-course-information.component';
+import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 
 @Component({
     selector: 'jhi-tutorial-groups-management',
     templateUrl: './tutorial-groups-management.component.html',
     changeDetection: ChangeDetectionStrategy.OnPush,
+    imports: [
+        LoadingIndicatorContainerComponent,
+        NgbTooltip,
+        RouterLink,
+        FaIconComponent,
+        TranslateDirective,
+        NgbDropdown,
+        NgbDropdownToggle,
+        NgbDropdownMenu,
+        NgbDropdownItem,
+        TutorialGroupsImportButtonComponent,
+        TutorialGroupsExportButtonComponent,
+        TutorialGroupsTableComponent,
+        TutorialGroupRowButtonsComponent,
+        TutorialGroupsCourseInformationComponent,
+        TutorialGroupFreeDaysOverviewComponent,
+        ArtemisTranslatePipe,
+    ],
 })
 export class TutorialGroupsManagementComponent implements OnInit, OnDestroy {
+    private tutorialGroupService = inject(TutorialGroupsService);
+    private activatedRoute = inject(ActivatedRoute);
+    private alertService = inject(AlertService);
+    private tutorialGroupsConfigurationService = inject(TutorialGroupsConfigurationService);
+    private cdr = inject(ChangeDetectorRef);
+
     ngUnsubscribe = new Subject<void>();
 
     courseId: number;
@@ -35,15 +70,6 @@ export class TutorialGroupsManagementComponent implements OnInit, OnDestroy {
     readonly isMessagingEnabled = isMessagingEnabled;
 
     tutorialGroupFreeDays: TutorialGroupFreePeriod[] = [];
-
-    constructor(
-        private tutorialGroupService: TutorialGroupsService,
-        private router: Router,
-        private activatedRoute: ActivatedRoute,
-        private alertService: AlertService,
-        private tutorialGroupsConfigurationService: TutorialGroupsConfigurationService,
-        private cdr: ChangeDetectorRef,
-    ) {}
 
     ngOnInit(): void {
         this.activatedRoute.data.pipe(takeUntil(this.ngUnsubscribe)).subscribe(({ course }) => {

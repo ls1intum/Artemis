@@ -71,6 +71,7 @@ export class MockLanguageHelper {
     }
     updateTitle(titleKey?: string) {}
 
+    // @ts-ignore
     private getPageTitle(routeSnapshot: ActivatedRouteSnapshot) {
         return '';
     }
@@ -107,7 +108,7 @@ export class TranslateServiceStub {
 }
 
 @NgModule({
-    declarations: [TranslatePipeMock],
+    declarations: [],
     providers: [
         { provide: TranslateService, useClass: TranslateServiceStub },
         { provide: TranslatePipe, useClass: TranslatePipeMock },
@@ -117,6 +118,7 @@ export class TranslateServiceStub {
         TranslateModule.forRoot({
             loader: { provide: TranslateLoader, useClass: FakeLoader },
         }),
+        TranslatePipeMock,
     ],
     exports: [TranslatePipeMock, TranslateModule],
 })

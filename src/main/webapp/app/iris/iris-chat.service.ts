@@ -28,6 +28,13 @@ export enum ChatServiceMode {
  */
 @Injectable({ providedIn: 'root' })
 export class IrisChatService implements OnDestroy {
+    http = inject(IrisChatHttpService);
+    ws = inject(IrisWebsocketService);
+    status = inject(IrisStatusService);
+    private userService = inject(UserService);
+    private accountService = inject(AccountService);
+    private destroyRef = inject(DestroyRef);
+
     sessionId?: number;
     messages: BehaviorSubject<IrisMessage[]> = new BehaviorSubject([]);
     newIrisMessage: BehaviorSubject<IrisMessage | undefined> = new BehaviorSubject(undefined);
@@ -45,23 +52,7 @@ export class IrisChatService implements OnDestroy {
 
     hasJustAcceptedIris = false;
 
-    private destroyRef = inject(DestroyRef);
-
-    /**
-     * Creates an instance of IrisChatService.
-     * @param http The IrisChatHttpService for HTTP operations related to sessions.
-     * @param ws The IrisChatWebsocketService for websocket operations
-     * @param status The IrisStatusService for handling the status of the service.
-     * @param userService The UserService for handling user operations.
-     * @param accountService The AccountService for handling account operations.
-     */
-    protected constructor(
-        public http: IrisChatHttpService,
-        public ws: IrisWebsocketService,
-        public status: IrisStatusService,
-        private userService: UserService,
-        private accountService: AccountService,
-    ) {
+    protected constructor() {
         this.rateLimitSubscription = this.status.currentRatelimitInfo().subscribe((info) => (this.rateLimitInfo = info));
         this.proactiveEventsDisabledUntilSubscription = this.status.proactiveEventsDisabledUntil.subscribe((date) => (this.proactiveEventsDisabledUntil = date));
     }

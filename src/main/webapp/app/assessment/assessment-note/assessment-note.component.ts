@@ -1,10 +1,12 @@
 import { Component, EventEmitter, Input, Output } from '@angular/core';
 import { AssessmentNote } from 'app/entities/assessment-note.model';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
 
 @Component({
     selector: 'jhi-assessment-note',
     templateUrl: './assessment-note.component.html',
     styleUrls: ['./assessment-note.component.scss'],
+    imports: [TranslateDirective],
 })
 export class AssessmentNoteComponent {
     private _assessmentNote: AssessmentNote;

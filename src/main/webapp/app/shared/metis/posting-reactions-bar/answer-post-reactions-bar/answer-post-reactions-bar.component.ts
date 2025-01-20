@@ -1,39 +1,58 @@
 import { Component, EventEmitter, Input, OnChanges, OnInit, Output, output } from '@angular/core';
 import { Reaction } from 'app/entities/metis/reaction.model';
+import { ConfirmIconComponent } from 'app/shared/confirm-icon/confirm-icon.component';
+import { EmojiPickerComponent } from 'app/shared/metis/emoji/emoji-picker.component';
+import { EmojiComponent } from 'app/shared/metis/emoji/emoji.component';
 import { PostingsReactionsBarDirective } from 'app/shared/metis/posting-reactions-bar/posting-reactions-bar.directive';
 import { AnswerPost } from 'app/entities/metis/answer-post.model';
 import { faCheck, faPencilAlt, faSmile } from '@fortawesome/free-solid-svg-icons';
-import { MetisService } from 'app/shared/metis/metis.service';
 import { getAsChannelDTO } from 'app/entities/metis/conversation/channel.model';
+import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
+import { CdkConnectedOverlay, CdkOverlayOrigin } from '@angular/cdk/overlay';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { AsyncPipe, KeyValuePipe, NgClass } from '@angular/common';
+import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
+import { ReactingUsersOnPostingPipe } from 'app/shared/pipes/reacting-users-on-posting.pipe';
 
 @Component({
     selector: 'jhi-answer-post-reactions-bar',
     templateUrl: './answer-post-reactions-bar.component.html',
     styleUrls: ['../posting-reactions-bar.component.scss'],
+    imports: [
+        NgbTooltip,
+        EmojiComponent,
+        CdkOverlayOrigin,
+        FaIconComponent,
+        CdkConnectedOverlay,
+        EmojiPickerComponent,
+        NgClass,
+        ConfirmIconComponent,
+        AsyncPipe,
+        KeyValuePipe,
+        ArtemisTranslatePipe,
+        ReactingUsersOnPostingPipe,
+    ],
 })
 export class AnswerPostReactionsBarComponent extends PostingsReactionsBarDirective<AnswerPost> implements OnInit, OnChanges {
-    @Input()
-    isReadOnlyMode = false;
-
+    @Input() isReadOnlyMode = false;
+    @Input() isEmojiCount = false;
     @Input() isLastAnswer = false;
+
+    @Output() openPostingCreateEditModal = new EventEmitter<void>();
+    @Output() postingUpdated = new EventEmitter<void>();
+
     // Icons
     readonly farSmile = faSmile;
     readonly faCheck = faCheck;
+    readonly faPencilAlt = faPencilAlt;
 
-    @Output() openPostingCreateEditModal = new EventEmitter<void>();
     isAuthorOfOriginalPost: boolean;
     isAnswerOfAnnouncement: boolean;
-    mayDeleteOutput = output<boolean>();
     mayDelete: boolean;
-    mayEditOutput = output<boolean>();
     mayEdit: boolean;
-    readonly faPencilAlt = faPencilAlt;
-    @Input() isEmojiCount: boolean = false;
-    @Output() postingUpdated = new EventEmitter<void>();
 
-    constructor(metisService: MetisService) {
-        super(metisService);
-    }
+    mayDeleteOutput = output<boolean>();
+    mayEditOutput = output<boolean>();
 
     ngOnInit() {
         super.ngOnInit();

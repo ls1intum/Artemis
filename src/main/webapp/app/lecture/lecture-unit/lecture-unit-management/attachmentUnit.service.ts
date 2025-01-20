@@ -1,7 +1,7 @@
 import { LectureUnitService } from 'app/lecture/lecture-unit/lecture-unit-management/lectureUnit.service';
 import { AttachmentUnit } from 'app/entities/lecture-unit/attachmentUnit.model';
 import { HttpClient, HttpParams, HttpResponse } from '@angular/common/http';
-import { Injectable } from '@angular/core';
+import { Injectable, inject } from '@angular/core';
 import { Observable } from 'rxjs';
 import { map } from 'rxjs/operators';
 import { LectureUnitInformationDTO } from 'app/lecture/lecture-unit/lecture-unit-management/attachment-units/attachment-units.component';
@@ -12,12 +12,10 @@ type EntityResponseType = HttpResponse<AttachmentUnit>;
     providedIn: 'root',
 })
 export class AttachmentUnitService {
-    private resourceURL = 'api';
+    private httpClient = inject(HttpClient);
+    private lectureUnitService = inject(LectureUnitService);
 
-    constructor(
-        private httpClient: HttpClient,
-        private lectureUnitService: LectureUnitService,
-    ) {}
+    private resourceURL = 'api';
 
     findById(attachmentUnitId: number, lectureId: number) {
         return this.httpClient

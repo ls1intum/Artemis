@@ -22,7 +22,6 @@ import { FileService } from 'app/shared/http/file.service';
 
 @Component({
     selector: 'jhi-attachment-unit',
-    standalone: true,
     imports: [LectureUnitComponent, ArtemisSharedCommonModule],
     templateUrl: './attachment-unit.component.html',
 })

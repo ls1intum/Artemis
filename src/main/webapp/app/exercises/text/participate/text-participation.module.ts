@@ -8,7 +8,7 @@ import { ArtemisSharedComponentModule } from 'app/shared/components/shared-compo
 import { TextEditorComponent } from 'app/exercises/text/participate/text-editor.component';
 import { TextResultComponent } from 'app/exercises/text/participate/text-result/text-result.component';
 import { ArtemisHeaderExercisePageWithDetailsModule } from 'app/exercises/shared/exercise-headers/exercise-headers.module';
-import { ArtemisTeamSubmissionSyncModule } from 'app/exercises/shared/team-submission-sync/team-submission-sync.module';
+
 import { RatingModule } from 'app/exercises/shared/rating/rating.module';
 import { ArtemisMarkdownModule } from 'app/shared/markdown.module';
 import { ArtemisTeamParticipeModule } from 'app/exercises/shared/team/team-participate/team-participate.module';
@@ -24,15 +24,15 @@ import { ArtemisExerciseButtonsModule } from 'app/overview/exercise-details/exer
         ArtemisComplaintsModule,
         ArtemisSharedComponentModule,
         ArtemisHeaderExercisePageWithDetailsModule,
-        ArtemisTeamSubmissionSyncModule,
         RatingModule,
         ArtemisMarkdownModule,
         ArtemisTeamParticipeModule,
         IrisModule,
         RequestFeedbackButtonComponent,
         ArtemisExerciseButtonsModule,
+        TextEditorComponent,
+        TextResultComponent,
     ],
-    declarations: [TextEditorComponent, TextResultComponent],
     exports: [TextEditorComponent],
 })
 export class ArtemisTextParticipationModule {}

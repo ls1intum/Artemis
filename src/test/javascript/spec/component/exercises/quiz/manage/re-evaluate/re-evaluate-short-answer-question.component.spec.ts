@@ -1,25 +1,18 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { TranslateService } from '@ngx-translate/core';
-import { MockComponent, MockProvider } from 'ng-mocks';
+import { MockBuilder, MockProvider } from 'ng-mocks';
 import { ArtemisTestModule } from '../../../../../test.module';
-import { ShortAnswerQuestionEditComponent } from 'app/exercises/quiz/manage/short-answer-question/short-answer-question-edit.component';
+
 import { ReEvaluateShortAnswerQuestionComponent } from 'app/exercises/quiz/manage/re-evaluate/short-answer-question/re-evaluate-short-answer-question.component';
 
 describe('ReEvaluateShortAnswerQuestionComponent', () => {
     let fixture: ComponentFixture<ReEvaluateShortAnswerQuestionComponent>;
     let component: ReEvaluateShortAnswerQuestionComponent;
 
-    beforeEach(() => {
-        TestBed.configureTestingModule({
-            imports: [ArtemisTestModule],
-            declarations: [ReEvaluateShortAnswerQuestionComponent, MockComponent(ShortAnswerQuestionEditComponent)],
-            providers: [MockProvider(TranslateService)],
-        })
-            .compileComponents()
-            .then(() => {
-                fixture = TestBed.createComponent(ReEvaluateShortAnswerQuestionComponent);
-                component = fixture.componentInstance;
-            });
+    beforeEach(async () => {
+        await MockBuilder(ReEvaluateShortAnswerQuestionComponent, ArtemisTestModule).provide(MockProvider(TranslateService));
+        fixture = TestBed.createComponent(ReEvaluateShortAnswerQuestionComponent);
+        component = fixture.componentInstance;
     });
 
     afterEach(() => {
