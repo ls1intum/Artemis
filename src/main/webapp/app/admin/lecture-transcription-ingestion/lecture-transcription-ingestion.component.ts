@@ -1,8 +1,8 @@
-import { Component, Input } from '@angular/core';
+import { Component } from '@angular/core';
 import { faCheck } from '@fortawesome/free-solid-svg-icons';
-import { IrisTranscriptionService } from 'app/iris/iris-transcription.service';
 import { ArtemisSharedComponentModule } from 'app/shared/components/shared-component.module';
 import { FormsModule } from '@angular/forms';
+import { LectureTranscriptionService } from 'app/admin/lecture-transcription-ingestion/lecture-transcription.service';
 
 @Component({
     selector: 'jhi-lecture-transcription-ingestion',
@@ -12,21 +12,25 @@ import { FormsModule } from '@angular/forms';
     imports: [ArtemisSharedComponentModule, FormsModule],
 })
 export class LectureTranscriptionIngestionComponent {
-    @Input()
-    public courseId: number;
-
+    courseIdInput = '';
     lectureIdInput = '';
+
     transcriptionInput = '';
 
     faCheck = faCheck;
 
-    constructor(private irisTranscriptionService: IrisTranscriptionService) {}
+    constructor(private lectureTranscriptionService: LectureTranscriptionService) {}
 
     ingestTranscription(): void {
-        this.irisTranscriptionService.ingestTranscription(this.courseId, Number(this.lectureIdInput)).subscribe(() => {});
+        this.lectureTranscriptionService.ingestTranscription(Number(this.courseIdInput), Number(this.lectureIdInput)).subscribe(() => {
+            this.courseIdInput = '';
+            this.lectureIdInput = '';
+        });
     }
 
     createTranscription(): void {
-        this.irisTranscriptionService.createTranscription(JSON.parse(this.transcriptionInput)).subscribe(() => {});
+        this.lectureTranscriptionService.createTranscription(JSON.parse(this.transcriptionInput)).subscribe(() => {
+            this.transcriptionInput = '';
+        });
     }
 }
