@@ -144,7 +144,7 @@ export class ConversationMessagesComponent implements OnInit, AfterViewInit, OnD
         }
     }
 
-    applyFilter(): void {
+    applyPinnedMessageFilter(): void {
         if (this.showOnlyPinned()) {
             this.posts = this.allPosts.filter((post) => post.displayPriority === DisplayPriority.PINNED);
         } else {
@@ -326,7 +326,7 @@ export class ConversationMessagesComponent implements OnInit, AfterViewInit, OnD
             this.previousScrollDistanceFromTop = this.content.nativeElement.scrollHeight - this.content.nativeElement.scrollTop;
         }
 
-        this.applyFilter();
+        this.applyPinnedMessageFilter();
 
         this.posts = this.posts
             .slice()

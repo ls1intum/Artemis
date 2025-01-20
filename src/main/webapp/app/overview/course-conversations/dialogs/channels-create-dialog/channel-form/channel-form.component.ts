@@ -57,7 +57,7 @@ export class ChannelFormComponent implements OnInit, OnChanges, OnDestroy {
         return this.form.get('isAnnouncementChannel');
     }
 
-    get isisCourseWideChannelControl() {
+    get isCourseWideChannelControl() {
         return this.form.get('isCourseWideChannel');
     }
 
@@ -107,8 +107,8 @@ export class ChannelFormComponent implements OnInit, OnChanges, OnDestroy {
             });
         }
 
-        if (this.isisCourseWideChannelControl) {
-            this.isisCourseWideChannelControl.valueChanges.pipe(takeUntil(this.ngUnsubscribe)).subscribe((value) => {
+        if (this.isCourseWideChannelControl) {
+            this.isCourseWideChannelControl.valueChanges.pipe(takeUntil(this.ngUnsubscribe)).subscribe((value) => {
                 this.isCourseWideChannelChanged.emit(value);
             });
         }

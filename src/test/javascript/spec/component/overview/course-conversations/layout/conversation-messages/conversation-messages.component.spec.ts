@@ -303,7 +303,7 @@ examples.forEach((activeConversation) => {
 
             component.allPosts = [pinnedPost, regularPost];
             jest.spyOn(component, 'showOnlyPinned').mockReturnValue(true);
-            component.applyFilter();
+            component.applyPinnedMessageFilter();
 
             expect(component.posts).toEqual([pinnedPost]);
         });
@@ -314,7 +314,7 @@ examples.forEach((activeConversation) => {
 
             component.allPosts = [pinnedPost, regularPost];
             jest.spyOn(component, 'showOnlyPinned').mockReturnValue(false);
-            component.applyFilter();
+            component.applyPinnedMessageFilter();
 
             expect(component.posts).toEqual([pinnedPost, regularPost]);
         });
@@ -326,7 +326,7 @@ examples.forEach((activeConversation) => {
 
             const emitSpy = jest.spyOn(component.pinnedCount, 'emit');
             component.allPosts = [pinnedPost1, pinnedPost2, regularPost];
-            component.applyFilter();
+            component.applyPinnedMessageFilter();
 
             expect(emitSpy).toHaveBeenCalledWith(2);
         });
