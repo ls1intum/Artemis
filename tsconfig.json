@@ -1,8 +1,8 @@
 {
     "compilerOptions": {
         "allowJs": false,
-        "target": "es2022",
-        "module": "es2020",
+        "target": "es2024",
+        "module": "es2022",
         "moduleResolution": "node",
         "esModuleInterop": true,
         "sourceMap": true,
@@ -12,6 +12,7 @@
         "removeComments": true,
         "strict": false,
         "noImplicitReturns": false,
+        "noUnusedLocals": true,
         "noFallthroughCasesInSwitch": true,
         "noImplicitAny": true,
         "strictNullChecks": true,
@@ -19,7 +20,7 @@
         "skipLibCheck": true,
         "outDir": "build/resources/main/static/app",
         "forceConsistentCasingInFileNames": true,
-        "lib": ["es2023", "dom"],
+        "lib": ["es2024", "dom"],
         "typeRoots": ["node_modules/@types"],
         "baseUrl": "./",
         "paths": {
