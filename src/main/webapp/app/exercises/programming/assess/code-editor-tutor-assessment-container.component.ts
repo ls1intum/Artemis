@@ -458,8 +458,6 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
                     return;
                 }
 
-                // navigate to the new assessment page to trigger re-initialization of the components
-                this.router.onSameUrlNavigation = 'reload';
                 const url = getLinkToSubmissionAssessment(
                     ExerciseType.PROGRAMMING,
                     this.courseId,

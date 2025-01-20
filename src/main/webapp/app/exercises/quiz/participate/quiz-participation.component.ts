@@ -505,7 +505,7 @@ export class QuizParticipationComponent implements OnInit, OnDestroy {
                         this.shortAnswerSubmittedTexts.set(question.id!, []);
                         break;
                     default:
-                        console.error('Unknown question type: ' + question);
+                        captureException('Unknown question type: ' + question);
                         break;
                 }
             }, this);
@@ -547,7 +547,7 @@ export class QuizParticipationComponent implements OnInit, OnDestroy {
                         this.shortAnswerSubmittedTexts.set(question.id!, (submittedAnswer as ShortAnswerSubmittedAnswer)?.submittedTexts || []);
                         break;
                     default:
-                        console.error('Unknown question type: ' + question);
+                        captureException('Unknown question type: ' + question);
                         break;
                 }
             }, this);
@@ -571,7 +571,7 @@ export class QuizParticipationComponent implements OnInit, OnDestroy {
                 return selectedQuestion.id === questionId;
             });
             if (!question) {
-                console.error('question not found for ID: ' + questionId);
+                captureException('question not found for ID: ' + questionId);
                 return;
             }
             // generate the submittedAnswer object
@@ -588,7 +588,7 @@ export class QuizParticipationComponent implements OnInit, OnDestroy {
                 return localQuestion.id === questionId;
             });
             if (!question) {
-                console.error('question not found for ID: ' + questionId);
+                captureException('question not found for ID: ' + questionId);
                 return;
             }
             // generate the submittedAnswer object
@@ -604,7 +604,7 @@ export class QuizParticipationComponent implements OnInit, OnDestroy {
                 return localQuestion.id === questionId;
             });
             if (!question) {
-                console.error('question not found for ID: ' + questionId);
+                captureException('question not found for ID: ' + questionId);
                 return;
             }
             // generate the submittedAnswer object

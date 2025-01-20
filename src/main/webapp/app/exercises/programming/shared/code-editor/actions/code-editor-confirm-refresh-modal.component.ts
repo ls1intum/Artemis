@@ -1,7 +1,6 @@
 import { Component, EventEmitter, inject } from '@angular/core';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
-import { CodeEditorRepositoryFileService, CodeEditorRepositoryService } from 'app/exercises/programming/shared/code-editor/service/code-editor-repository.service';
-import { CodeEditorConflictStateService } from 'app/exercises/programming/shared/code-editor/service/code-editor-conflict-state.service';
+import { CodeEditorRepositoryFileService } from 'app/exercises/programming/shared/code-editor/service/code-editor-repository.service';
 import { faBan, faExclamationTriangle, faTimes } from '@fortawesome/free-solid-svg-icons';
 import { FormsModule } from '@angular/forms';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
@@ -15,9 +14,7 @@ import { FaIconComponent } from '@fortawesome/angular-fontawesome';
     imports: [FormsModule, TranslateDirective, FaIconComponent],
 })
 export class CodeEditorConfirmRefreshModalComponent {
-    activeModal = inject(NgbActiveModal);
-    private repositoryService = inject(CodeEditorRepositoryService);
-    private conflictService = inject(CodeEditorConflictStateService);
+    private activeModal = inject(NgbActiveModal);
 
     // Icons
     faExclamationTriangle = faExclamationTriangle;
