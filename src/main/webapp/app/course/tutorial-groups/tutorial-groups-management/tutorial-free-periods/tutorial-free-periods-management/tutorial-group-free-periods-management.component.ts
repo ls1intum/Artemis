@@ -3,7 +3,7 @@ import { onError } from 'app/shared/util/global.utils';
 import { TutorialGroupsConfiguration } from 'app/entities/tutorial-group/tutorial-groups-configuration.model';
 import { EMPTY, Subject, combineLatest, finalize, from, switchMap, take } from 'rxjs';
 import { TutorialGroupsConfigurationService } from 'app/course/tutorial-groups/services/tutorial-groups-configuration.service';
-import { ActivatedRoute, Router } from '@angular/router';
+import { ActivatedRoute } from '@angular/router';
 import { HttpErrorResponse } from '@angular/common/http';
 import { AlertService } from 'app/core/util/alert.service';
 import { TutorialGroupFreePeriod } from 'app/entities/tutorial-group/tutorial-group-free-day.model';
@@ -28,7 +28,6 @@ import { TutorialGroupFreePeriodsTableComponent } from './tutorial-group-free-pe
 })
 export class TutorialGroupFreePeriodsManagementComponent implements OnInit, OnDestroy {
     private activatedRoute = inject(ActivatedRoute);
-    private router = inject(Router);
     private tutorialGroupsConfigurationService = inject(TutorialGroupsConfigurationService);
     private alertService = inject(AlertService);
     private sortService = inject(SortService);

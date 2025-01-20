@@ -12,12 +12,13 @@ enum FeedbackType {
 }
 
 export class TextResultBlock {
-    public readonly text: string;
+    readonly text: string;
+    private textBlock: TextBlock;
+    readonly feedback?: Feedback;
 
-    constructor(
-        public textBlock: TextBlock,
-        public feedback?: Feedback,
-    ) {
+    constructor(textBlock: TextBlock, feedback?: Feedback) {
+        this.textBlock = textBlock;
+        this.feedback = feedback;
         this.text = convertToHtmlLinebreaks(escapeString(textBlock.text ?? ''));
     }
 
@@ -56,6 +57,8 @@ export class TextResultBlock {
                 return faTimes;
             case FeedbackType.NEUTRAL:
                 return faCircle;
+            default:
+                return undefined;
         }
     }
 
@@ -67,6 +70,8 @@ export class TextResultBlock {
                 return faTimesCircle;
             case FeedbackType.NEUTRAL:
                 return faDotCircle;
+            default:
+                return undefined;
         }
     }
 

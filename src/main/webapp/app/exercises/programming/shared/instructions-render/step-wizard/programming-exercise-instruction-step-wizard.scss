@@ -79,7 +79,8 @@ $step-button-size: 21px; // Make sure to keep it uneven so that centering works
     }
 
     & &--no-result.btn,
-    .btn.not-done {
+    .btn.not-done,
+    & &--not-executed.btn {
         color: $gray-600;
         font-size: 0.4rem;
     }
