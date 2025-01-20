@@ -8,7 +8,6 @@ import { Authority } from 'app/shared/constants/authority.constants';
 import { PendingChangesGuard } from 'app/shared/guard/pending-changes.guard';
 
 import { CourseOverviewGuard } from 'app/overview/course-overview-guard';
-import { examParticipationRoute } from 'app/exam/participate/exam-participation.route';
 
 export enum CourseOverviewRoutePath {
     DASHBOARD = 'dashboard',
@@ -270,7 +269,7 @@ const routes: Routes = [
                         },
                         canActivate: [UserRouteAccessService],
                         canDeactivate: [PendingChangesGuard],
-                        children: examParticipationRoute,
+                        loadChildren: () => import('../exam/participate/exam-participation.route').then((m) => m.examParticipationRoute),
                     },
                 ],
             },
