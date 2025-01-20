@@ -9,8 +9,7 @@ import { DragDropModule } from '@angular/cdk/drag-drop';
 import { MonacoEditorComponent } from 'app/shared/monaco-editor/monaco-editor.component';
 
 @NgModule({
-    imports: [ArtemisSharedModule, MonacoEditorComponent, FormsModule, ArtemisColorSelectorModule, MatMenuModule, MatButtonModule, DragDropModule],
-    declarations: [MarkdownEditorMonacoComponent],
+    imports: [ArtemisSharedModule, MonacoEditorComponent, FormsModule, ArtemisColorSelectorModule, MatMenuModule, MatButtonModule, DragDropModule, MarkdownEditorMonacoComponent],
     exports: [MarkdownEditorMonacoComponent],
 })
 export class ArtemisMarkdownEditorModule {}

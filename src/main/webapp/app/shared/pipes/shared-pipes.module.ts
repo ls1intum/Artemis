@@ -13,7 +13,7 @@ import { SearchFilterPipe } from 'app/shared/pipes/search-filter.pipe';
 import { AsPipe } from 'app/shared/pipes/as.pipe';
 
 @NgModule({
-    declarations: [
+    imports: [
         SafeUrlPipe,
         SafeResourceUrlPipe,
         RemoveKeysPipe,

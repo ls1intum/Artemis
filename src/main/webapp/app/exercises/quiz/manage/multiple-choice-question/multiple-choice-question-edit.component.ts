@@ -1,8 +1,9 @@
-import { ChangeDetectionStrategy, ChangeDetectorRef, Component, EventEmitter, Input, OnInit, Output, ViewChild, ViewEncapsulation } from '@angular/core';
-import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
+import { ChangeDetectionStrategy, ChangeDetectorRef, Component, EventEmitter, Input, OnInit, Output, ViewChild, ViewEncapsulation, inject } from '@angular/core';
+import { NgbCollapse, NgbModal, NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { AnswerOption } from 'app/entities/quiz/answer-option.model';
 import { MultipleChoiceQuestion } from 'app/entities/quiz/multiple-choice-question.model';
 import { QuizQuestionEdit } from 'app/exercises/quiz/manage/quiz-question-edit.interface';
+import { MultipleChoiceQuestionComponent } from 'app/exercises/quiz/shared/questions/multiple-choice-question/multiple-choice-question.component';
 import { generateExerciseHintExplanation } from 'app/shared/util/markdown.util';
 import { faAngleDown, faAngleRight, faQuestionCircle, faTrash } from '@fortawesome/free-solid-svg-icons';
 import { ScoringType } from 'app/entities/quiz/quiz-question.model';
@@ -13,6 +14,11 @@ import { CorrectMultipleChoiceAnswerAction } from 'app/shared/monaco-editor/mode
 import { QuizExplanationAction } from 'app/shared/monaco-editor/model/actions/quiz/quiz-explanation.action';
 import { MarkdownEditorMonacoComponent, TextWithDomainAction } from 'app/shared/markdown-editor/monaco/markdown-editor-monaco.component';
 import { MultipleChoiceVisualQuestionComponent } from 'app/exercises/quiz/shared/questions/multiple-choice-question/multiple-choice-visual-question.component';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { FormsModule } from '@angular/forms';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { QuizScoringInfoModalComponent } from '../quiz-scoring-info-modal/quiz-scoring-info-modal.component';
+import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 
 @Component({
     selector: 'jhi-multiple-choice-question-edit',
@@ -20,8 +26,23 @@ import { MultipleChoiceVisualQuestionComponent } from 'app/exercises/quiz/shared
     styleUrls: ['../quiz-exercise.scss', '../../shared/quiz.scss'],
     encapsulation: ViewEncapsulation.None,
     changeDetection: ChangeDetectionStrategy.OnPush,
+    imports: [
+        FaIconComponent,
+        FormsModule,
+        TranslateDirective,
+        NgbCollapse,
+        QuizScoringInfoModalComponent,
+        NgbTooltip,
+        MarkdownEditorMonacoComponent,
+        MultipleChoiceQuestionComponent,
+        MultipleChoiceVisualQuestionComponent,
+        ArtemisTranslatePipe,
+    ],
 })
 export class MultipleChoiceQuestionEditComponent implements OnInit, QuizQuestionEdit {
+    private modalService = inject(NgbModal);
+    private changeDetector = inject(ChangeDetectorRef);
+
     @ViewChild('markdownEditor', { static: false })
     private markdownEditor: MarkdownEditorMonacoComponent;
 
@@ -62,11 +83,6 @@ export class MultipleChoiceQuestionEditComponent implements OnInit, QuizQuestion
     faQuestionCircle = faQuestionCircle;
 
     readonly MAX_POINTS = MAX_QUIZ_QUESTION_POINTS;
-
-    constructor(
-        private modalService: NgbModal,
-        private changeDetector: ChangeDetectorRef,
-    ) {}
 
     /**
      * Init the question editor text by parsing the markdown.

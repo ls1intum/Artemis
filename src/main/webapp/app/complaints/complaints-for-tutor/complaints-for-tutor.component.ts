@@ -6,7 +6,7 @@ import { ComplaintResponse } from 'app/entities/complaint-response.model';
 import { Complaint, ComplaintType } from 'app/entities/complaint.model';
 import { finalize } from 'rxjs/operators';
 import { Exercise, getCourseFromExercise } from 'app/entities/exercise.model';
-import { ActivatedRoute, Router } from '@angular/router';
+import { Router } from '@angular/router';
 import { assessmentNavigateBack } from 'app/exercises/shared/navigate-back.util';
 import { Location } from '@angular/common';
 import { Submission } from 'app/entities/submission.model';
@@ -24,13 +24,11 @@ export type AssessmentAfterComplaint = { complaintResponse: ComplaintResponse; o
 @Component({
     selector: 'jhi-complaints-for-tutor-form',
     templateUrl: './complaints-for-tutor.component.html',
-    standalone: true,
     imports: [TranslateDirective, FormsModule, TextareaModule, ArtemisSharedCommonModule, ArtemisTranslatePipe],
 })
 export class ComplaintsForTutorComponent implements OnInit {
     private alertService = inject(AlertService);
     private complaintResponseService = inject(ComplaintResponseService);
-    private activatedRoute = inject(ActivatedRoute);
     private router = inject(Router);
     private location = inject(Location);
 

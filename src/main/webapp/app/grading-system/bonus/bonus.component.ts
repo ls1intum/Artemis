@@ -32,7 +32,6 @@ export enum BonusStrategyDiscreteness {
     selector: 'jhi-bonus',
     templateUrl: './bonus.component.html',
     styleUrls: ['./bonus.component.scss'],
-    standalone: true,
     imports: [ArtemisSharedModule, ArtemisSharedComponentModule, ArtemisModePickerModule, SafeHtmlPipe, GradeStepBoundsPipe],
 })
 export class BonusComponent implements OnInit {

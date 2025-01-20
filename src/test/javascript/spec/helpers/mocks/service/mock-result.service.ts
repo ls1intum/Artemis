@@ -1,4 +1,4 @@
-import { EMPTY, Observable, of } from 'rxjs';
+import { EMPTY, Observable } from 'rxjs';
 import { IResultService, ResultsWithPointsArrayResponseType } from 'app/exercises/shared/result/result.service';
 import { Result } from 'app/entities/result.model';
 import { Exercise } from 'app/entities/exercise.model';

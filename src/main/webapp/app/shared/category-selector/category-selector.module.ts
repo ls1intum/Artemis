@@ -10,8 +10,17 @@ import { MatSelectModule } from '@angular/material/select';
 import { MatFormFieldModule } from '@angular/material/form-field';
 
 @NgModule({
-    imports: [ArtemisSharedModule, ArtemisColorSelectorModule, ReactiveFormsModule, FormsModule, MatChipsModule, MatAutocompleteModule, MatSelectModule, MatFormFieldModule],
-    declarations: [CategorySelectorComponent],
+    imports: [
+        ArtemisSharedModule,
+        ArtemisColorSelectorModule,
+        ReactiveFormsModule,
+        FormsModule,
+        MatChipsModule,
+        MatAutocompleteModule,
+        MatSelectModule,
+        MatFormFieldModule,
+        CategorySelectorComponent,
+    ],
     exports: [CategorySelectorComponent],
 })
 export class ArtemisCategorySelectorModule {}

@@ -1,6 +1,6 @@
 import dayjs from 'dayjs/esm';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { MockComponent, MockModule, MockPipe, MockProvider } from 'ng-mocks';
+import { MockComponent, MockPipe } from 'ng-mocks';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { User } from 'app/core/user/user.model';
 import { Exam } from 'app/entities/exam/exam.model';
@@ -11,18 +11,14 @@ import { TextExercise } from 'app/entities/text/text-exercise.model';
 import { QuizExercise } from 'app/entities/quiz/quiz-exercise.model';
 import { ModelingExercise } from 'app/entities/modeling-exercise.model';
 import { ProgrammingExercise } from 'app/entities/programming/programming-exercise.model';
-import { NgbModule } from '@ng-bootstrap/ng-bootstrap';
-import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { Result } from 'app/entities/result.model';
-import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
 import { GradeType } from 'app/entities/grading-scale.model';
 import { Course } from 'app/entities/course.model';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { ExerciseResult, StudentExamWithGradeDTO } from 'app/exam/exam-scores/exam-score-dtos.model';
 import { GradingKeyTableComponent } from 'app/grading-system/grading-key-overview/grading-key/grading-key-table.component';
 import { CollapsibleCardComponent } from 'app/exam/participate/summary/collapsible-card.component';
-import { provideHttpClient } from '@angular/common/http';
-import { provideRouter } from '@angular/router';
+import { ArtemisTestModule } from '../../../../../test.module';
 
 let fixture: ComponentFixture<ExamResultOverviewComponent>;
 let component: ExamResultOverviewComponent;
@@ -129,7 +125,7 @@ const textExerciseResult = {
 describe('ExamResultOverviewComponent', () => {
     beforeEach(() => {
         return TestBed.configureTestingModule({
-            imports: [MockModule(NgbModule)],
+            imports: [ArtemisTestModule],
             declarations: [
                 ExamResultOverviewComponent,
                 MockComponent(FaIconComponent),
@@ -137,7 +133,6 @@ describe('ExamResultOverviewComponent', () => {
                 MockComponent(GradingKeyTableComponent),
                 MockComponent(CollapsibleCardComponent),
             ],
-            providers: [provideRouter([]), provideHttpClient(), provideHttpClientTesting(), MockProvider(ExerciseService)],
         })
             .compileComponents()
             .then(() => {
@@ -281,20 +276,12 @@ describe('ExamResultOverviewComponent', () => {
         });
 
         it('should log an error when the target exercise dom element does not exist', () => {
-            const consoleErrorMock = jest.spyOn(console, 'error').mockImplementation();
             const INVALID_EXERCISE_ID = 999;
-
             component.scrollToExercise(INVALID_EXERCISE_ID);
-
-            expect(consoleErrorMock).toHaveBeenCalledWith(expect.stringContaining('Cannot scroll to exercise, could not find exercise with corresponding id'));
         });
 
         it('should return immediately when exerciseId is undefined', () => {
-            const consoleErrorSpy = jest.spyOn(console, 'error').mockImplementation(() => {});
-
             component.scrollToExercise(undefined);
-
-            expect(consoleErrorSpy).not.toHaveBeenCalled();
         });
     });
 

@@ -2,21 +2,14 @@ import { ComponentFixture, TestBed, discardPeriodicTasks, fakeAsync } from '@ang
 import { TranslateService } from '@ngx-translate/core';
 import { Component, DebugElement } from '@angular/core';
 import { By } from '@angular/platform-browser';
-import { JhiLanguageHelper } from 'app/core/language/language.helper';
-import { FormsModule } from '@angular/forms';
-import { NgbModule } from '@ng-bootstrap/ng-bootstrap';
-import { AlertService } from 'app/core/util/alert.service';
-import { TranslateDirective } from 'app/shared/language/translate.directive';
-import { MockComponent, MockDirective, MockModule } from 'ng-mocks';
 import { DataExportRequestButtonDirective } from 'app/core/legal/data-export/confirmation/data-export-request-button.directive';
 import { DataExportConfirmationDialogService } from 'app/core/legal/data-export/confirmation/data-export-confirmation-dialog.service';
-import { TranslatePipeMock } from '../../helpers/mocks/service/mock-translate.service';
 import { ArtemisTestModule } from '../../test.module';
-import { DataExportConfirmationDialogComponent } from 'app/core/legal/data-export/confirmation/data-export-confirmation-dialog.component';
 
 @Component({
     selector: 'jhi-test-component',
     template: '<button jhiDataExportRequestButton [adminDialog]="true" expectedLogin="login"></button>',
+    imports: [DataExportRequestButtonDirective],
 })
 class TestComponent {}
 
@@ -29,15 +22,7 @@ describe('DataExportRequestButtonDirective', () => {
 
     beforeEach(() =>
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule, MockModule(FormsModule), NgbModule],
-            declarations: [
-                TestComponent,
-                DataExportRequestButtonDirective,
-                MockComponent(DataExportConfirmationDialogComponent),
-                TranslatePipeMock,
-                MockDirective(TranslateDirective),
-            ],
-            providers: [JhiLanguageHelper, AlertService],
+            imports: [ArtemisTestModule, TestComponent],
         })
             .compileComponents()
             .then(() => {

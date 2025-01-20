@@ -1,17 +1,25 @@
-import { Component, OnInit } from '@angular/core';
-import { FormControl, FormGroup, Validators } from '@angular/forms';
+import { Component, OnInit, inject } from '@angular/core';
+import { FormControl, FormGroup, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
 import { faBan, faSave } from '@fortawesome/free-solid-svg-icons';
-import { UserService } from 'app/core/user/user.service';
 import { SystemNotification, SystemNotificationType } from 'app/entities/system-notification.model';
 import dayjs from 'dayjs/esm';
 import { AdminSystemNotificationService } from 'app/shared/notification/system-notification/admin-system-notification.service';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { FormDateTimePickerComponent } from 'app/shared/date-time-picker/date-time-picker.component';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 
 @Component({
     selector: 'jhi-system-notification-management-update',
     templateUrl: './system-notification-management-update.component.html',
+    imports: [FormsModule, ReactiveFormsModule, TranslateDirective, FormDateTimePickerComponent, FaIconComponent, ArtemisTranslatePipe],
 })
 export class SystemNotificationManagementUpdateComponent implements OnInit {
+    private systemNotificationService = inject(AdminSystemNotificationService);
+    private route = inject(ActivatedRoute);
+    private router = inject(Router);
+
     notification: SystemNotification;
     isSaving: boolean;
 
@@ -25,13 +33,6 @@ export class SystemNotificationManagementUpdateComponent implements OnInit {
     // Icons
     faSave = faSave;
     faBan = faBan;
-
-    constructor(
-        private userService: UserService,
-        private systemNotificationService: AdminSystemNotificationService,
-        private route: ActivatedRoute,
-        private router: Router,
-    ) {}
 
     /**
      * Loads notification from route data
