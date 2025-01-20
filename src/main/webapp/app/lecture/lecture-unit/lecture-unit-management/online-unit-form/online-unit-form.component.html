@@ -1,4 +1,4 @@
-<form class="container">
+<form class="row">
     @if (form) {
         <form [formGroup]="form" (ngSubmit)="submitForm()">
             <div class="form-group">
@@ -24,7 +24,7 @@
                 }
             </div>
             <div class="form-group">
-                <label class="required" for="name">{{ 'artemisApp.onlineUnit.createOnlineUnit.name' | artemisTranslate }} *</label>
+                <label class="required" for="name">{{ 'artemisApp.onlineUnit.createOnlineUnit.name' | artemisTranslate }}*</label>
                 <input
                     type="text"
                     class="form-control"
