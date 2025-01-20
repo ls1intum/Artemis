@@ -2,6 +2,7 @@ package de.tum.cit.aet.artemis.core.config.websocket;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
+import java.nio.charset.StandardCharsets;
 import java.util.Base64;
 import java.util.List;
 import java.util.Map;
@@ -93,7 +94,7 @@ public class GzipMessageConverter extends MappingJackson2MessageConverter {
                 boolean shouldCompress = containsCompressionHeader(nativeMapHeaders);
                 if (shouldCompress) {
                     String compressedBase64String = compressAndEncode(originalBytes);
-                    byte[] compressed = compressedBase64String.getBytes();
+                    byte[] compressed = compressedBase64String.getBytes(StandardCharsets.UTF_8);
                     double percentageSaved = 100 * (1 - (double) compressed.length / originalBytes.length);
                     log.debug("Compressed message payload from {} to {} (saved {}% payload size)", originalBytes.length, compressed.length, String.format("%.1f", percentageSaved));
                     return compressed;

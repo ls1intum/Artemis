@@ -144,7 +144,6 @@ public class WebsocketConfiguration extends DelegatingWebSocketMessageBrokerConf
 
     @Override
     protected boolean configureMessageConverters(List<MessageConverter> messageConverters) {
-        // TODO: is it necessary to add the GzipMessageConverter here? we already do that below in the method createJacksonConverter
         GzipMessageConverter gzipMessageConverter = new GzipMessageConverter(objectMapper);
         messageConverters.add(gzipMessageConverter);
         return false;

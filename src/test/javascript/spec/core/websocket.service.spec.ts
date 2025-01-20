@@ -1,8 +1,8 @@
 import { TestBed, fakeAsync, tick } from '@angular/core/testing';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
-import { ConnectionState, WebsocketService } from 'app/core/websocket/websocket.service';
+import { COMPRESSION_HEADER, ConnectionState, WebsocketService } from 'app/core/websocket/websocket.service';
 import { AccountService } from 'app/core/auth/account.service';
-import { MockAccountService } from '../../helpers/mocks/service/mock-account.service';
+import { MockAccountService } from '../helpers/mocks/service/mock-account.service';
 import { IrisWebsocketService } from 'app/iris/iris-websocket.service';
 import { defer, of } from 'rxjs';
 import { provideHttpClient } from '@angular/common/http';
@@ -289,6 +289,26 @@ describe('WebsocketService', () => {
         const message: Message = {
             body: JSON.stringify({ data: 'test' }),
             headers: {},
+            ack: jest.fn(),
+            nack: jest.fn(),
+            command: '',
+        };
+        const subscriber = jest.fn();
+        // @ts-ignore
+        websocketService['subscribers'].set(channel, { next: subscriber });
+
+        websocketService['handleIncomingMessage'](channel)(message);
+
+        expect(subscriber).toHaveBeenCalledWith({ data: 'test' });
+    });
+
+    it('should handle incoming message with compression', () => {
+        const channel = '/topic/test';
+        // @ts-ignore
+        const messageBody = WebsocketService.compressAndEncode(JSON.stringify({ data: 'test' }));
+        const message: Message = {
+            body: messageBody,
+            headers: COMPRESSION_HEADER,
             ack: jest.fn(),
             nack: jest.fn(),
             command: '',

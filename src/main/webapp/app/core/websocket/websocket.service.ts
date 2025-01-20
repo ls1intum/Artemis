@@ -46,13 +46,13 @@ export interface IWebsocketService {
 
     /**
      * Subscribe to a channel.
-     * @param channel
+     * @param channel topic
      */
     subscribe(channel: string): IWebsocketService;
 
     /**
      * Unsubscribe a channel.
-     * @param channel
+     * @param channel topic
      */
     unsubscribe(channel: string): void;
 
@@ -286,7 +286,7 @@ export class WebsocketService implements IWebsocketService, OnDestroy {
     /**
      * Checks whether the WebSocket connection is currently established.
      *
-     * @returns {boolean} `true` if the WebSocket connection is active; otherwise, `false`.
+     * @returns true if the WebSocket connection is active; otherwise, false.
      */
     public isConnected(): boolean {
         return this.stompClient?.connected || false;
@@ -327,8 +327,8 @@ export class WebsocketService implements IWebsocketService, OnDestroy {
      * 2. Compress the JSON payload into binary data if it is larger than 1 KB
      * 3. Convert the binary data into a Base64 string
      *
-     * @param path {string} the path for the websocket connection
-     * @param data {object} the data to send through the websocket connection
+     * @param path the path for the websocket connection
+     * @param data the data to send through the websocket connection
      */
     send<T>(path: string, data: T): void {
         if (this.isConnected()) {
@@ -372,8 +372,8 @@ export class WebsocketService implements IWebsocketService, OnDestroy {
     }
 
     /**
-     * Unsubscribe a channel.
-     * @param channel
+     * Unsubscribe a channel if the component is not interested in the messages anymore
+     * @param channel topic for which the component wants to unsubscribe
      */
     unsubscribe(channel: string) {
         if (this && this.stompSubscriptions && this.stompSubscriptions.has(channel)) {
@@ -442,7 +442,7 @@ export class WebsocketService implements IWebsocketService, OnDestroy {
         }
     }
 
-    // https://stackoverflow.com/a/35651029/3802758
+    // see https://stackoverflow.com/a/35651029/3802758
     private getSessionId(): string {
         const url = this.socket?._transport?.url;
         const match = url?.match('.*\\/websocket\\/\\d*\\/(.*)\\/websocket.*');
