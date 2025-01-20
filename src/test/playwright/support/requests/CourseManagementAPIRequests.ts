@@ -1,5 +1,5 @@
 import { Page } from '@playwright/test';
-import dayjs from 'dayjs/esm';
+import dayjs from 'dayjs';
 
 import { Course, CourseInformationSharingConfiguration } from 'app/entities/course.model';
 import { Lecture } from 'app/entities/lecture.model';
@@ -94,6 +94,7 @@ export class CourseManagementAPIRequests {
         };
 
         if (iconFileName) {
+            // @ts-ignore
             multipart['file'] = {
                 name: iconFileName,
                 mimeType: 'application/octet-stream',

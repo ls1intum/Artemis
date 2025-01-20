@@ -1,6 +1,6 @@
 import { Locator, Page, expect } from '@playwright/test';
 import { PROGRAMMING_EXERCISE_BASE, ProgrammingLanguage } from '../../../constants';
-import { Dayjs } from 'dayjs/esm';
+import { Dayjs } from 'dayjs';
 
 const OWL_DATEPICKER_ARIA_LABEL_DATE_FORMAT = 'MMMM D, YYYY';
 
