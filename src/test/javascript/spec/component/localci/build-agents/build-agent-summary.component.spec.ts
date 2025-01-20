@@ -28,6 +28,7 @@ describe('BuildAgentSummaryComponent', () => {
         getBuildAgentSummary: jest.fn().mockReturnValue(of([])),
         pauseAllBuildAgents: jest.fn().mockReturnValue(of({})),
         resumeAllBuildAgents: jest.fn().mockReturnValue(of({})),
+        clearDistributedData: jest.fn().mockReturnValue(of({})),
     };
 
     const repositoryInfo: RepositoryInfo = {
@@ -253,6 +254,24 @@ describe('BuildAgentSummaryComponent', () => {
         expect(alertServiceAddAlertStub).toHaveBeenCalledWith({
             type: AlertType.DANGER,
             message: 'artemisApp.buildAgents.alerts.buildAgentResumeFailed',
+        });
+    });
+
+    it('should call correct service method when clearing distributed data', () => {
+        component.clearDistributedData();
+        expect(alertServiceAddAlertStub).toHaveBeenCalledWith({
+            type: AlertType.SUCCESS,
+            message: 'artemisApp.buildAgents.alerts.distributedDataCleared',
+        });
+    });
+
+    it('should show alert when error in clearing distributed data', () => {
+        mockBuildAgentsService.clearDistributedData.mockReturnValue(throwError(() => new Error()));
+
+        component.clearDistributedData();
+        expect(alertServiceAddAlertStub).toHaveBeenCalledWith({
+            type: AlertType.DANGER,
+            message: 'artemisApp.buildAgents.alerts.distributedDataClearFailed',
         });
     });
 });

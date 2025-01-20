@@ -74,6 +74,9 @@ export class BuildAgentsService {
         );
     }
 
+    /**
+     * Clears distributed data. This includes BuildJobQueue, ProcessingJobs, resultQueue, build agent Information, docker image clean up.
+     */
     clearDistributedData(): Observable<void> {
         return this.http.delete<void>(`${this.adminResourceUrl}/clear-distributed-data`).pipe(
             catchError((err) => {
