@@ -14,6 +14,8 @@ import org.springframework.http.ResponseCookie;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 
+import de.tum.cit.aet.artemis.core.security.allowedTools.ToolTokenType;
+
 @Profile(PROFILE_CORE)
 @Service
 public class JWTCookieService {
@@ -36,9 +38,30 @@ public class JWTCookieService {
      * @return the login ResponseCookie containing the JWT
      */
     public ResponseCookie buildLoginCookie(boolean rememberMe) {
-        String jwt = tokenProvider.createToken(SecurityContextHolder.getContext().getAuthentication(), rememberMe);
-        Duration duration = Duration.of(tokenProvider.getTokenValidity(rememberMe), ChronoUnit.MILLIS);
-        return buildJWTCookie(jwt, duration);
+        return buildLoginCookie(rememberMe, null);
+    }
+
+    /**
+     * Builds the cookie containing the jwt for a login
+     *
+     * @param rememberMe boolean used to determine the duration of the jwt.
+     * @param tool       the tool claim in the jwt
+     * @return the login ResponseCookie containing the JWT
+     */
+    public ResponseCookie buildLoginCookie(boolean rememberMe, ToolTokenType tool) {
+        return buildLoginCookie(tokenProvider.getTokenValidity(rememberMe), tool);
+    }
+
+    /**
+     * Builds a cookie with the tool claim in the jwt
+     *
+     * @param duration the duration of the cookie in milli seconds and the jwt
+     * @param tool     the tool claim in the jwt
+     * @return the login ResponseCookie containing the JWT
+     */
+    public ResponseCookie buildLoginCookie(long duration, ToolTokenType tool) {
+        String jwt = tokenProvider.createToken(SecurityContextHolder.getContext().getAuthentication(), duration, tool);
+        return buildJWTCookie(jwt, Duration.of(duration, ChronoUnit.MILLIS));
     }
 
     /**

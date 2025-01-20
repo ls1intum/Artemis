@@ -18,7 +18,6 @@ import { ArtemisMarkdownModule } from 'app/shared/markdown.module';
 import { SearchFilterComponent } from 'app/shared/search-filter/search-filter.component';
 import { AccountService } from 'app/core/auth/account.service';
 import { Course } from 'app/entities/course.model';
-import { TranslateService } from '@ngx-translate/core';
 import { NgbModule } from '@ng-bootstrap/ng-bootstrap';
 
 @Component({
@@ -43,8 +42,8 @@ export class FaqComponent implements OnInit, OnDestroy {
 
     activeFilters = new Set<string>();
     searchInput = new BehaviorSubject<string>('');
-    predicate: string;
-    ascending: boolean;
+    predicate = 'id';
+    ascending = true;
 
     // Icons
     protected readonly faEdit = faEdit;
@@ -61,12 +60,6 @@ export class FaqComponent implements OnInit, OnDestroy {
     private alertService = inject(AlertService);
     private sortService = inject(SortService);
     private accountService = inject(AccountService);
-    private translateService = inject(TranslateService);
-
-    constructor() {
-        this.predicate = 'id';
-        this.ascending = true;
-    }
 
     ngOnInit() {
         this.courseId = Number(this.route.snapshot.paramMap.get('courseId'));

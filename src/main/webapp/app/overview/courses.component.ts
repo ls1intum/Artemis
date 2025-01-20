@@ -136,8 +136,8 @@ export class CoursesComponent implements OnInit, OnDestroy {
                 })[0];
             }
             this.nextRelevantCourseForExam = relevantExam.course!;
-            return relevantExam;
         }
+        return relevantExam;
     }
 
     /**
