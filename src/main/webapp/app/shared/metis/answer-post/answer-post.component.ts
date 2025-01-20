@@ -21,7 +21,7 @@ import dayjs from 'dayjs/esm';
 import { animate, style, transition, trigger } from '@angular/animations';
 import { Reaction } from 'app/entities/metis/reaction.model';
 import { faBookmark, faPencilAlt, faShare, faSmile, faTrash } from '@fortawesome/free-solid-svg-icons';
-import { DOCUMENT, NgClass, NgIf, NgStyle } from '@angular/common';
+import { DOCUMENT, NgClass, NgStyle } from '@angular/common';
 import { AnswerPostReactionsBarComponent } from 'app/shared/metis/posting-reactions-bar/answer-post-reactions-bar/answer-post-reactions-bar.component';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { TranslateDirective } from '../../language/translate.directive';
@@ -32,6 +32,7 @@ import { AnswerPostCreateEditModalComponent } from '../posting-create-edit-modal
 import { CdkConnectedOverlay, CdkOverlayOrigin } from '@angular/cdk/overlay';
 import { EmojiPickerComponent } from '../emoji/emoji-picker.component';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
+import { captureException } from '@sentry/angular';
 import { Course } from 'app/entities/course.model';
 
 @Component({
@@ -54,7 +55,6 @@ import { Course } from 'app/entities/course.model';
         PostingContentComponent,
         AnswerPostReactionsBarComponent,
         AnswerPostCreateEditModalComponent,
-        NgIf,
         NgStyle,
         CdkOverlayOrigin,
         CdkConnectedOverlay,
@@ -153,7 +153,7 @@ export class AnswerPostComponent extends PostingDirective<AnswerPost> implements
         try {
             isPointerCursor = window.getComputedStyle(targetElement).cursor === 'pointer';
         } catch (error) {
-            console.error('Failed to compute style:', error);
+            captureException(error);
             isPointerCursor = true;
         }
 

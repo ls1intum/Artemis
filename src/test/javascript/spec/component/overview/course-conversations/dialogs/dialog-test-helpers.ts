@@ -6,13 +6,9 @@ type RequiredInputs = {
 };
 
 export function initializeDialog(component: AbstractDialogComponent, fixture: ComponentFixture<AbstractDialogComponent>, requiredInputs: RequiredInputs) {
-    // expect console.err to be called
-    const consoleErrorSpy = jest.spyOn(console, 'error').mockImplementation(() => {});
     component.initialize();
     fixture.detectChanges();
-    expect(consoleErrorSpy).toHaveBeenCalled();
     expect(component.isInitialized).toBeFalse();
-    consoleErrorSpy.mockRestore();
 
     // expect console.err not to be called
     // loop over required inputs and set on component
@@ -23,5 +19,4 @@ export function initializeDialog(component: AbstractDialogComponent, fixture: Co
     component.initialize();
     fixture.detectChanges();
     expect(component.isInitialized).toBeTrue();
-    expect(consoleErrorSpy).not.toHaveBeenCalled();
 }

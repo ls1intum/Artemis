@@ -32,7 +32,7 @@ import { animate, style, transition, trigger } from '@angular/animations';
 import { PostCreateEditModalComponent } from 'app/shared/metis/posting-create-edit-modal/post-create-edit-modal/post-create-edit-modal.component';
 import { PostReactionsBarComponent } from 'app/shared/metis/posting-reactions-bar/post-reactions-bar/post-reactions-bar.component';
 import { CdkConnectedOverlay, CdkOverlayOrigin } from '@angular/cdk/overlay';
-import { DOCUMENT, NgClass, NgIf, NgStyle } from '@angular/common';
+import { DOCUMENT, NgClass, NgStyle } from '@angular/common';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { TranslateDirective } from '../../language/translate.directive';
 import { PostingHeaderComponent } from '../posting-header/posting-header.component';
@@ -69,7 +69,6 @@ import { ForwardedMessageComponent } from 'app/shared/metis/forwarded-message/fo
         PostReactionsBarComponent,
         MessageInlineInputComponent,
         PostingFooterComponent,
-        NgIf,
         NgStyle,
         CdkOverlayOrigin,
         CdkConnectedOverlay,

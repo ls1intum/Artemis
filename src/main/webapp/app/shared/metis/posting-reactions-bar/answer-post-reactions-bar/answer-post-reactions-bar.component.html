@@ -27,7 +27,7 @@
                     #trigger="cdkOverlayOrigin"
                     [title]="'artemisApp.metis.chooseReaction' | artemisTranslate"
                 >
-                    <fa-icon [icon]="farSmile" [class.open-selector]="showReactionSelector" [title]="'artemisApp.metis.chooseReaction' | artemisTranslate"></fa-icon>
+                    <fa-icon [icon]="farSmile" [class.open-selector]="showReactionSelector" [title]="'artemisApp.metis.chooseReaction' | artemisTranslate" />
                 </button>
                 @if (!isReadOnlyMode) {
                     <ng-template
@@ -75,7 +75,7 @@
             }
             @if (mayEdit) {
                 <button class="reaction-button clickable px-2 fs-small edit" (click)="editPosting()" [ngbTooltip]="'artemisApp.metis.editPosting' | artemisTranslate">
-                    <fa-icon [icon]="faPencilAlt" cdkOverlayOrigin></fa-icon>
+                    <fa-icon [icon]="faPencilAlt" cdkOverlayOrigin />
                 </button>
             }
             @if (mayDelete) {
@@ -93,7 +93,7 @@
                 (click)="bookmarkPosting()"
                 [ngbTooltip]="(posting.isSaved ? 'artemisApp.metis.post.removeBookmarkPost' : 'artemisApp.metis.post.bookmarkPost') | artemisTranslate"
             >
-                <fa-icon [icon]="posting.isSaved ? faBookmark : farBookmark" cdkOverlayOrigin></fa-icon>
+                <fa-icon [icon]="posting.isSaved ? faBookmark : farBookmark" cdkOverlayOrigin />
             </button>
             @if (!isEmojiCount) {
                 <button

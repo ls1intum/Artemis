@@ -181,13 +181,6 @@ export class NotificationSidebarComponent implements OnInit, OnDestroy {
         return this.notificationService.getNotificationTextTranslation(notification, this.maxNotificationLength);
     }
 
-    private getParsedPlaceholderValues(notification: Notification): string[] {
-        if (notification.placeholderValues) {
-            return JSON.parse(notification.placeholderValues);
-        }
-        return [];
-    }
-
     private subscribeToNotificationUpdates(): void {
         this.subscriptions.push(
             this.notificationService.subscribeToNotificationUpdates().subscribe((notifications: Notification[]) => {

@@ -19,7 +19,7 @@ import { By } from '@angular/platform-browser';
 import { Course } from 'app/entities/course.model';
 import { ChannelDTO, getAsChannelDTO } from 'app/entities/metis/conversation/channel.model';
 import { PostCreateEditModalComponent } from 'app/shared/metis/posting-create-edit-modal/post-create-edit-modal/post-create-edit-modal.component';
-import dayjs from 'dayjs';
+import dayjs from 'dayjs/esm';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { HttpResponse } from '@angular/common/http';
 import { ForwardedMessage } from 'app/entities/metis/forwarded-message.model';
