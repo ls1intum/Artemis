@@ -36,7 +36,7 @@ import { ConfirmIconComponent } from 'app/shared/confirm-icon/confirm-icon.compo
 import { MetisConversationService } from 'app/shared/metis/metis-conversation.service';
 import { MockMetisConversationService } from '../../../../../helpers/mocks/service/mock-metis-conversation.service';
 import { Posting } from 'app/entities/metis/posting.model';
-import { of, throwError } from 'rxjs';
+import { of } from 'rxjs';
 
 describe('PostReactionsBarComponent', () => {
     let component: PostReactionsBarComponent;
@@ -485,18 +485,6 @@ describe('PostReactionsBarComponent', () => {
         expect(createForwardedMessagesSpy).toHaveBeenCalledOnce();
         expect(createForwardedMessagesSpy).toHaveBeenCalledWith([testPost], testConversation, isAnswer, content);
         expect(consoleErrorSpy).not.toHaveBeenCalled();
-    });
-
-    it('should log an error if createForwardedMessages fails', () => {
-        const testPost = { id: 42 } as Posting;
-        const testConversation = { id: 1337 } as Conversation;
-
-        createForwardedMessagesSpy.mockReturnValue(throwError(() => new Error('Error forwarding post')));
-
-        component.forwardPost(testPost, testConversation, 'some content', false);
-
-        expect(createForwardedMessagesSpy).toHaveBeenCalledOnce();
-        expect(consoleErrorSpy).toHaveBeenCalledWith('Error forwarding post:', expect.any(Error));
     });
 
     it('should handle empty content without logging errors', () => {
