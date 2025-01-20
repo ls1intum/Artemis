@@ -153,6 +153,13 @@ const routes: Routes = [
             pageTitle: 'cleanupService.title',
         },
     },
+    {
+        path: 'lecture-transcription-ingestion',
+        loadComponent: () => import('app/admin/lecture-transcription-ingestion/lecture-transcription-ingestion.component').then((m) => m.LectureTranscriptionIngestionComponent),
+        data: {
+            authorities: [Authority.ADMIN],
+        },
+    },
     ...organizationMgmtRoute,
     ...userManagementRoute,
     ...systemNotificationManagementRoute,
