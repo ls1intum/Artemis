@@ -5,7 +5,6 @@ import { ProgrammingAssessmentRepoExportService, RepositoryExportOptions } from 
 import { HttpResponse } from '@angular/common/http';
 import { FeatureToggle } from 'app/shared/feature-toggle/feature-toggle.service';
 import { ProgrammingExercise } from 'app/entities/programming/programming-exercise.model';
-import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
 import { downloadZipFileFromResponse } from 'app/shared/util/download.util';
 import { faCircleNotch } from '@fortawesome/free-solid-svg-icons';
 import { FormsModule } from '@angular/forms';
@@ -22,9 +21,8 @@ import { FaIconComponent } from '@fortawesome/angular-fontawesome';
     imports: [FormsModule, TranslateDirective, HelpIconComponent, FormDateTimePickerComponent, FeatureToggleDirective, FaIconComponent],
 })
 export class ProgrammingAssessmentRepoExportDialogComponent implements OnInit {
-    private exerciseService = inject(ExerciseService);
     private repoExportService = inject(ProgrammingAssessmentRepoExportService);
-    activeModal = inject(NgbActiveModal);
+    private activeModal = inject(NgbActiveModal);
     private alertService = inject(AlertService);
 
     @Input() programmingExercises: ProgrammingExercise[];

@@ -1,5 +1,5 @@
 import { Component, OnInit, inject, input, output } from '@angular/core';
-import { CommonModule } from '@angular/common';
+
 import { NgbTooltipModule } from '@ng-bootstrap/ng-bootstrap';
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
 import { faPenSquare } from '@fortawesome/free-solid-svg-icons';
@@ -18,7 +18,7 @@ import { ParticipationService } from 'app/exercises/shared/participation/partici
 
 @Component({
     selector: 'jhi-request-feedback-button',
-    imports: [CommonModule, ArtemisSharedCommonModule, NgbTooltipModule, FontAwesomeModule],
+    imports: [ArtemisSharedCommonModule, NgbTooltipModule, FontAwesomeModule],
     templateUrl: './request-feedback-button.component.html',
 })
 export class RequestFeedbackButtonComponent implements OnInit {

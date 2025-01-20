@@ -12,6 +12,7 @@ import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.doThrow;
 import static tech.jhipster.config.JHipsterConstants.SPRING_PROFILE_TEST;
 
+import java.io.IOException;
 import java.net.URISyntaxException;
 import java.util.Set;
 
@@ -254,11 +255,6 @@ public abstract class AbstractSpringIntegrationGitlabCIGitlabSamlTest extends Ab
     }
 
     @Override
-    public void mockDeleteUserInUserManagement(User user, boolean userExistsInUserManagement, boolean failInVcs, boolean failInCi) throws GitLabApiException {
-        gitlabRequestMockProvider.mockDeleteVcsUser(user.getLogin(), userExistsInUserManagement, failInVcs);
-    }
-
-    @Override
     public void mockUpdateCoursePermissions(Course updatedCourse, String oldInstructorGroup, String oldEditorGroup, String oldTeachingAssistantGroup) throws GitLabApiException {
         gitlabRequestMockProvider.mockUpdateCoursePermissions(updatedCourse, oldInstructorGroup, oldEditorGroup, oldTeachingAssistantGroup);
     }
@@ -311,6 +307,11 @@ public abstract class AbstractSpringIntegrationGitlabCIGitlabSamlTest extends Ab
 
     @Override
     public void mockGetBuildPlan(String projectKey, String planName, boolean planExistsInCi, boolean planIsActive, boolean planIsBuilding, boolean failToGetBuild) {
+        // Unsupported action in GitLab CI setup
+    }
+
+    @Override
+    public void mockGetBuildPlanConfig(String projectKey, String planName) {
         // Unsupported action in GitLab CI setup
     }
 
@@ -403,5 +404,10 @@ public abstract class AbstractSpringIntegrationGitlabCIGitlabSamlTest extends Ab
     @Override
     public void mockUserExists(String username) throws Exception {
         gitlabRequestMockProvider.mockUserExists(username, true);
+    }
+
+    @Override
+    public void mockGetCiProjectMissing(ProgrammingExercise exercise) throws IOException {
+        // not needed for GitLab
     }
 }

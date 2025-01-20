@@ -69,7 +69,7 @@ describe('EditTextUnitComponent', () => {
     }));
 
     it('should set form data correctly', async () => {
-        const warnSpy = jest.spyOn(console, 'warn').mockImplementation(() => {});
+        jest.spyOn(console, 'warn').mockImplementation(() => {});
         const textUnitService = TestBed.inject(TextUnitService);
 
         const originalTextUnit: TextUnit = new TextUnit();
@@ -94,7 +94,6 @@ describe('EditTextUnitComponent', () => {
             expect(editTextUnitComponent.formData.releaseDate).toEqual(originalTextUnit.releaseDate);
             expect(editTextUnitComponent.formData.content).toEqual(originalTextUnit.content);
             expect(textUnitFormComponent.formData()).toEqual(editTextUnitComponent.formData);
-            warnSpy.mockRestore();
         });
     });
 
