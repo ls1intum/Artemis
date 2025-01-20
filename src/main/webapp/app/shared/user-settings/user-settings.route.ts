@@ -2,7 +2,6 @@ import { Routes } from '@angular/router';
 
 import { UserRouteAccessService } from 'app/core/auth/user-route-access-service';
 import { Authority } from 'app/shared/constants/authority.constants';
-import { LearnerProfileComponent } from 'app/shared/user-settings/learner-profile/learner-profile.component';
 
 export const userSettingsState: Routes = [
     {
@@ -28,7 +27,7 @@ export const userSettingsState: Routes = [
             },
             {
                 path: 'profile',
-                component: LearnerProfileComponent,
+                loadComponent: () => import('app/shared/user-settings/learner-profile/learner-profile.component').then((m) => m.LearnerProfileComponent),
                 data: {
                     pageTitle: 'artemisApp.userSettings.learnerProfile',
                 },
