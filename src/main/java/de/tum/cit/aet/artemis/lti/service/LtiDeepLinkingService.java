@@ -20,6 +20,8 @@ import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.domain.IncludedInOverallScore;
 import de.tum.cit.aet.artemis.exercise.repository.ExerciseRepository;
+import de.tum.cit.aet.artemis.lecture.domain.Lecture;
+import de.tum.cit.aet.artemis.lecture.repository.LectureRepository;
 import de.tum.cit.aet.artemis.lti.config.Lti13TokenRetriever;
 import de.tum.cit.aet.artemis.lti.dto.Lti13DeepLinkingResponse;
 
@@ -37,6 +39,8 @@ public class LtiDeepLinkingService {
 
     private final ExerciseRepository exerciseRepository;
 
+    private final LectureRepository lectureRepository;
+
     private final Lti13TokenRetriever tokenRetriever;
 
     /**
@@ -45,8 +49,9 @@ public class LtiDeepLinkingService {
      * @param exerciseRepository The repository for exercises.
      * @param tokenRetriever     The LTI 1.3 token retriever.
      */
-    public LtiDeepLinkingService(ExerciseRepository exerciseRepository, Lti13TokenRetriever tokenRetriever) {
+    public LtiDeepLinkingService(ExerciseRepository exerciseRepository, LectureRepository lectureRepository, Lti13TokenRetriever tokenRetriever) {
         this.exerciseRepository = exerciseRepository;
+        this.lectureRepository = lectureRepository;
         this.tokenRetriever = tokenRetriever;
     }
 
@@ -56,20 +61,26 @@ public class LtiDeepLinkingService {
      * @param ltiIdToken           OIDC ID token with the user's authentication claims.
      * @param clientRegistrationId Client registration ID for the LTI tool.
      * @param courseId             ID of the course for deep linking.
-     * @param exerciseIds          Set of IDs of the exercises for deep linking.
+     * @param unitIds              Set of IDs of the exercises/lectures for deep linking.
      * @return Constructed deep linking response URL.
      * @throws BadRequestAlertException if there are issues with the OIDC ID token claims.
      */
-    public String performExerciseDeepLinking(OidcIdToken ltiIdToken, String clientRegistrationId, Long courseId, Set<Long> exerciseIds, DeepLinkingType type) {
+    public String performDeepLinking(OidcIdToken ltiIdToken, String clientRegistrationId, Long courseId, Set<Long> unitIds, DeepLinkingType type) {
         // Initialize DeepLinkingResponse
         Lti13DeepLinkingResponse lti13DeepLinkingResponse = Lti13DeepLinkingResponse.from(ltiIdToken, clientRegistrationId);
         // Dynamically populate content items based on the type
         ArrayList<Map<String, Object>> contentItems = switch (type) {
             case EXERCISE -> {
-                if (exerciseIds == null || exerciseIds.isEmpty()) {
+                if (unitIds == null || unitIds.isEmpty()) {
                     throw new BadRequestAlertException("No exercise IDs provided for deep linking", "LTI", "noExerciseIds");
                 }
-                yield populateExerciseContentItems(String.valueOf(courseId), exerciseIds);
+                yield populateExerciseContentItems(String.valueOf(courseId), unitIds);
+            }
+            case LECTURE -> {
+                if (unitIds == null || unitIds.isEmpty()) {
+                    throw new BadRequestAlertException("No lecture IDs provided for deep linking", "LTI", "noLectureIds");
+                }
+                yield populateLectureContentItems(String.valueOf(courseId), unitIds);
             }
             case COMPETENCY -> populateCompetencyContentItems(String.valueOf(courseId));
             case IRIS -> populateIrisContentItems(String.valueOf(courseId));
@@ -120,6 +131,22 @@ public class LtiDeepLinkingService {
     }
 
     /**
+     * Populate content items for deep linking response with lectures.
+     *
+     * @param courseId   The course ID.
+     * @param lectureIds The set of lecture IDs.
+     */
+    private ArrayList<Map<String, Object>> populateLectureContentItems(String courseId, Set<Long> lectureIds) {
+        ArrayList<Map<String, Object>> contentItems = new ArrayList<>();
+        for (Long lectureId : lectureIds) {
+            Map<String, Object> item = setLectureContentItem(courseId, String.valueOf(lectureId));
+            contentItems.add(item);
+
+        }
+        return contentItems;
+    }
+
+    /**
      * Populate content items for deep linking response with competencies.
      *
      * @param courseId The course ID.
@@ -152,22 +179,28 @@ public class LtiDeepLinkingService {
         return exerciseOpt.map(exercise -> createExerciseContentItem(exerciseOpt.get(), launchUrl)).orElse(null);
     }
 
+    private Map<String, Object> setLectureContentItem(String courseId, String lectureId) {
+        Optional<Lecture> lectureOpt = lectureRepository.findById(Long.valueOf(lectureId));
+        String launchUrl = String.format(artemisServerUrl + "/courses/%s/lectures/%s", courseId, lectureId);
+        return lectureOpt.map(lecture -> createLectureContentItem(lectureOpt.get(), launchUrl)).orElse(null);
+    }
+
     private Map<String, Object> setCompetencyContentItem(String courseId) {
         // TODO competency optional
         String launchUrl = String.format(artemisServerUrl + "/courses/%s/competencies", courseId);
-        return createCompetencyContentItem(launchUrl);
+        return createSingleUnitContentItem(launchUrl);
     }
 
     private Map<String, Object> setLearningPathContentItem(String courseId) {
         // TODO Learning path optional
         String launchUrl = String.format(artemisServerUrl + "/courses/%s/learning-path", courseId);
-        return createCompetencyContentItem(launchUrl);
+        return createSingleUnitContentItem(launchUrl);
     }
 
     private Map<String, Object> setIrisContentItem(String courseId) {
         // TODO Iris optional + URL
         String launchUrl = String.format(artemisServerUrl + "/about-iris", courseId);
-        return createCompetencyContentItem(launchUrl);
+        return createSingleUnitContentItem(launchUrl);
     }
 
     private Map<String, Object> createExerciseContentItem(Exercise exercise, String url) {
@@ -181,7 +214,17 @@ public class LtiDeepLinkingService {
         return item;
     }
 
-    private Map<String, Object> createCompetencyContentItem(String url) {
+    private Map<String, Object> createLectureContentItem(Lecture lecture, String url) {
+
+        Map<String, Object> item = new HashMap<>();
+        item.put("type", "ltiResourceLink");
+        item.put("title", lecture.getTitle());
+        item.put("url", url);
+
+        return item;
+    }
+
+    private Map<String, Object> createSingleUnitContentItem(String url) {
 
         Map<String, Object> item = new HashMap<>();
         item.put("type", "ltiResourceLink");

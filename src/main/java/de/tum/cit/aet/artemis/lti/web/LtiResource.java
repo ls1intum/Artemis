@@ -154,16 +154,19 @@ public class LtiResource {
         String targetLink;
 
         if (exerciseIds != null) {
-            targetLink = ltiDeepLinkingService.performExerciseDeepLinking(idToken, clientRegistrationId, courseId, exerciseIds, DeepLinkingType.EXERCISE);
+            targetLink = ltiDeepLinkingService.performDeepLinking(idToken, clientRegistrationId, courseId, exerciseIds, DeepLinkingType.EXERCISE);
+        }
+        else if (lectureIds != null) {
+            targetLink = ltiDeepLinkingService.performDeepLinking(idToken, clientRegistrationId, courseId, lectureIds, DeepLinkingType.LECTURE);
         }
         else if (competency) {
-            targetLink = ltiDeepLinkingService.performExerciseDeepLinking(idToken, clientRegistrationId, courseId, null, DeepLinkingType.COMPETENCY);
+            targetLink = ltiDeepLinkingService.performDeepLinking(idToken, clientRegistrationId, courseId, null, DeepLinkingType.COMPETENCY);
         }
         else if (learningPath) {
-            targetLink = ltiDeepLinkingService.performExerciseDeepLinking(idToken, clientRegistrationId, courseId, null, DeepLinkingType.LEARNING_PATH);
+            targetLink = ltiDeepLinkingService.performDeepLinking(idToken, clientRegistrationId, courseId, null, DeepLinkingType.LEARNING_PATH);
         }
         else if (iris) {
-            targetLink = ltiDeepLinkingService.performExerciseDeepLinking(idToken, clientRegistrationId, courseId, null, DeepLinkingType.IRIS);
+            targetLink = ltiDeepLinkingService.performDeepLinking(idToken, clientRegistrationId, courseId, null, DeepLinkingType.IRIS);
         }
         else {
             throw new BadRequestAlertException("No valid deep linking type provided", "LTI", "invalidDeepLinkingType");
