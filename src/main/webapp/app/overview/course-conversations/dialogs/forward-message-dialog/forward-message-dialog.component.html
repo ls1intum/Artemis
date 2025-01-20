@@ -76,7 +76,7 @@
         [initialEditorHeight]="editorHeight()"
         [resizableMinHeight]="editorHeight()"
         [resizableMaxHeight]="MarkdownEditorHeight.MEDIUM"
-    ></jhi-markdown-editor-monaco>
+    />
 
     @if (postToForward()) {
         <div class="forwarded-message-container">
@@ -92,8 +92,7 @@
                         [authorName]="postToForward()?.author?.name"
                         [imageUrl]="postToForward()?.author?.imageUrl"
                         style="margin-right: 0.2rem"
-                    >
-                    </jhi-profile-picture>
+                    />
                     <span class="forwarded-message-author">{{ postToForward()?.author?.name }}</span>
                 </div>
                 <div class="forwarded-message-body" [ngClass]="{ expanded: showFullForwardedMessage }" id="messageContent" #messageContent>

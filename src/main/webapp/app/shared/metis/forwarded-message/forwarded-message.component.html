@@ -2,7 +2,7 @@
     <div class="left-border-line"></div>
     <div class="forwarded-message-content">
         <span class="forwarded-message-channel fs-x-small d-flex align-items-center">
-            <fa-icon [icon]="faShare" class="item-icon" style="margin-right: 0.3rem"></fa-icon>
+            <fa-icon [icon]="faShare" class="item-icon" style="margin-right: 0.3rem" />
             {{ 'artemisApp.metis.forward.forwardedFrom' | artemisTranslate }} {{ sourceName }}
             @if (viewButtonVisible) {
                 <button
@@ -24,8 +24,7 @@
                 [authorName]="originalPostDetails()?.author?.name"
                 [imageUrl]="originalPostDetails()?.author?.imageUrl"
                 style="margin-right: 0.2rem"
-            >
-            </jhi-profile-picture>
+            />
             <span class="forwarded-message-author">{{ originalPostDetails()?.author?.name }}</span>
             <span class="post-header-date-separator">-</span>
             <span class="post-header-date">

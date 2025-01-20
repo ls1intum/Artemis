@@ -362,6 +362,4 @@ export class PostComponent extends PostingDirective<Post> implements OnInit, OnC
     protected onTriggerNavigateToPost(post: Posting) {
         this.onNavigateToPost.emit(post);
     }
-
-    protected readonly origin = origin;
 }

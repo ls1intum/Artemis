@@ -180,7 +180,6 @@ export abstract class PostingsReactionsBarDirective<T extends Posting> implement
                                             allSelections.push(newConversation);
                                         }
                                     } catch (error) {
-                                        console.error('Error creating one-to-one chat:', error);
                                         return;
                                     }
                                 } else {
@@ -189,11 +188,8 @@ export abstract class PostingsReactionsBarDirective<T extends Posting> implement
                                         if (response && response.body) {
                                             newConversation = response.body as Conversation;
                                             allSelections.push(newConversation);
-                                        } else {
-                                            console.error('Response body is undefined');
                                         }
                                     } catch (error) {
-                                        console.error('Error creating group chat:', error);
                                         return;
                                     }
                                 }
@@ -207,18 +203,11 @@ export abstract class PostingsReactionsBarDirective<T extends Posting> implement
                         }
                     });
                 },
-                error: (error) => {
-                    console.error('Error fetching conversations:', error);
-                },
             });
     }
 
     forwardPost(post: Posting, conversation: Conversation, content: string, isAnswer: boolean): void {
-        this.metisService.createForwardedMessages([post], conversation, isAnswer, content).subscribe({
-            error: (error) => {
-                console.error('Error forwarding post:', error);
-            },
-        });
+        this.metisService.createForwardedMessages([post], conversation, isAnswer, content).subscribe({});
     }
 
     /**
