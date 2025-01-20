@@ -196,7 +196,7 @@ public class LectureService {
     public void ingestTranscriptionInPyris(Set<Transcription> transcriptions) {
         if (pyrisWebhookService.isPresent()) {
             for (Transcription transcription : transcriptions) {
-                pyrisWebhookService.get().addTranscriptionToPyrisDB(transcription);
+                String jobToken = pyrisWebhookService.get().addTranscriptionToPyrisDB(transcription);
             }
         }
     }

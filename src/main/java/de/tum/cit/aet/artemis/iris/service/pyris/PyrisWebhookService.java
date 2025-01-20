@@ -72,11 +72,6 @@ public class PyrisWebhookService {
         this.lectureRepository = lectureRepository;
     }
 
-    private boolean transcriptionIngestionEnabled(Course course) {
-        // WIP
-        return true;
-    }
-
     /**
      * adds the transcription to the vector database in Pyris
      *
@@ -100,7 +95,7 @@ public class PyrisWebhookService {
         String jobToken = pyrisJobService.addTranscriptionIngestionWebhookJob(toUpdateTranscription.courseId(), toUpdateTranscription.lectureId());
         PyrisPipelineExecutionSettingsDTO settingsDTO = new PyrisPipelineExecutionSettingsDTO(jobToken, List.of(), artemisBaseUrl);
         PyrisWebhookTranscriptionIngestionExecutionDTO executionDTO = new PyrisWebhookTranscriptionIngestionExecutionDTO(toUpdateTranscription, settingsDTO, List.of());
-        pyrisConnectorService.executeTranscriptionAddtionWebhook("fullIngestion", executionDTO);
+        pyrisConnectorService.executeTranscriptionAdditionWebhook("fullIngestion", executionDTO);
         return jobToken;
     }
 
