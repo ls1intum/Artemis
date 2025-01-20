@@ -52,7 +52,7 @@ public class IrisLectureChatSessionResource {
     }
 
     /**
-     * GET lecture-chat/{lectureId}/sessions/current: Retrieve the current iris session for the lecture
+     * GET api/iris/lecture-chat/{lectureId}/sessions/current: Retrieve the current iris session for the lecture
      *
      * @param lectureId of the lecture
      * @return the {@link ResponseEntity} with status {@code 200 (Ok)} and with body the current iris session for the lecture or {@code 404 (Not Found)} if no session exists
@@ -77,7 +77,7 @@ public class IrisLectureChatSessionResource {
     }
 
     /**
-     * POST lecture-chat/{lectureId}/session: Create a new iris session for a lecture and user.
+     * POST api/iris/lecture-chat/{lectureId}/session: Create a new iris session for a lecture and user.
      * If there already exists an iris session for the lecture and user, a new one is created.
      * Note: The old session including messages is not deleted and can still be retrieved
      *
@@ -100,7 +100,7 @@ public class IrisLectureChatSessionResource {
     }
 
     /**
-     * GET lecture-chat/{lectureId}/sessions: Retrieve all Iris Sessions for the lecture
+     * GET api/iris/lecture-chat/{lectureId}/sessions: Retrieve all Iris Sessions for the lecture
      *
      * @param lectureId of the exercise
      * @return the {@link ResponseEntity} with status {@code 200 (Ok)} and with body a list of the iris sessions for the exercise or {@code 404 (Not Found)} if no session exists
