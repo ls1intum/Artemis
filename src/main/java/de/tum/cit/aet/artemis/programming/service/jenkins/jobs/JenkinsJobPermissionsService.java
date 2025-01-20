@@ -1,14 +1,17 @@
 package de.tum.cit.aet.artemis.programming.service.jenkins.jobs;
 
+import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_JENKINS;
+
 import java.io.IOException;
 import java.util.Set;
 
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 import org.w3c.dom.DOMException;
+import org.w3c.dom.Document;
 
 @Service
-@Profile("jenkins")
+@Profile(PROFILE_JENKINS)
 public class JenkinsJobPermissionsService {
 
     private final JenkinsJobService jenkinsJobService;
@@ -29,7 +32,7 @@ public class JenkinsJobPermissionsService {
      */
     public void addInstructorAndEditorAndTAPermissionsToUsersForJob(Set<String> taLogins, Set<String> editorLogins, Set<String> instructorLogins, String folderName, String jobName)
             throws IOException {
-        var jobConfig = jenkinsJobService.getJobConfig(folderName, jobName);
+        Document jobConfig = jenkinsJobService.getJobConfig(folderName, jobName);
         if (jobConfig == null) {
             // Job doesn't exist so do nothing.
             return;

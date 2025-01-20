@@ -27,6 +27,7 @@ import { MarkdownEditorMonacoComponent } from '../shared/markdown-editor/monaco/
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { ArtemisTranslatePipe } from '../shared/pipes/artemis-translate.pipe';
+import { captureException } from '@sentry/angular';
 
 @Component({
     selector: 'jhi-lecture-update',
@@ -294,7 +295,7 @@ export class LectureUpdateComponent implements OnInit, OnDestroy {
         this.isSaving = false;
 
         if (!lecture.course?.id) {
-            console.error('Lecture has no course id', lecture);
+            captureException('Lecture has no course id: ' + lecture);
             return;
         }
 

@@ -1,23 +1,22 @@
-import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
-import { ArtemisTestModule } from '../../test.module';
-import { Lti13ExerciseLaunchComponent } from 'app/lti/lti13-exercise-launch.component';
-import { ActivatedRoute, ActivatedRouteSnapshot, Router, convertToParamMap } from '@angular/router';
-import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { HttpClient, provideHttpClient } from '@angular/common/http';
-import { of, throwError } from 'rxjs';
-import { LoginService } from 'app/core/login/login.service';
+import { provideHttpClientTesting } from '@angular/common/http/testing';
+import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
+import { ActivatedRoute, ActivatedRouteSnapshot, Router, convertToParamMap } from '@angular/router';
 import { AccountService } from 'app/core/auth/account.service';
-import { MockAccountService } from '../../helpers/mocks/service/mock-account.service';
 import { User } from 'app/core/user/user.model';
+import { Lti13ExerciseLaunchComponent } from 'app/lti/lti13-exercise-launch.component';
 import { SessionStorageService } from 'ngx-webstorage';
+import { of, throwError } from 'rxjs';
+import { MockAccountService } from '../../helpers/mocks/service/mock-account.service';
 import { MockSyncStorage } from '../../helpers/mocks/service/mock-sync-storage.service';
+import { ArtemisTestModule } from '../../test.module';
+import 'jest-extended';
 
 describe('Lti13ExerciseLaunchComponent', () => {
     let fixture: ComponentFixture<Lti13ExerciseLaunchComponent>;
     let comp: Lti13ExerciseLaunchComponent;
     let route: ActivatedRoute;
     let http: HttpClient;
-    let loginService: LoginService;
     let accountService: AccountService;
     const mockRouter = {
         navigate: jest.fn(() => Promise.resolve(true)),
@@ -37,7 +36,6 @@ describe('Lti13ExerciseLaunchComponent', () => {
                 provideHttpClient(),
                 provideHttpClientTesting(),
                 { provide: ActivatedRoute, useValue: route },
-                { provide: LoginService, useValue: loginService },
                 { provide: AccountService, useClass: MockAccountService },
                 { provide: Router, useValue: mockRouter },
                 { provide: SessionStorageService, useClass: MockSyncStorage },
@@ -61,42 +59,33 @@ describe('Lti13ExerciseLaunchComponent', () => {
 
     it('onInit fail without state', () => {
         const httpStub = jest.spyOn(http, 'post');
-        const consoleSpy = jest.spyOn(console, 'error').mockImplementation();
 
         route.snapshot = { queryParamMap: convertToParamMap({ id_token: 'id_token' }) } as ActivatedRouteSnapshot;
 
         comp.ngOnInit();
 
-        expect(consoleSpy).toHaveBeenCalledOnce();
-        expect(consoleSpy).toHaveBeenCalledWith('Required parameter for LTI launch missing');
         expect(comp.isLaunching).toBeFalse();
         expect(httpStub).not.toHaveBeenCalled();
     });
 
     it('onInit fail without token', () => {
         const httpStub = jest.spyOn(http, 'post');
-        const consoleSpy = jest.spyOn(console, 'error').mockImplementation();
 
         route.snapshot = { queryParamMap: convertToParamMap({ state: 'state' }) } as ActivatedRouteSnapshot;
 
         comp.ngOnInit();
 
-        expect(consoleSpy).toHaveBeenCalledOnce();
-        expect(consoleSpy).toHaveBeenCalledWith('Required parameter for LTI launch missing');
         expect(comp.isLaunching).toBeFalse();
         expect(httpStub).not.toHaveBeenCalled();
     });
 
     it('onInit no targetLinkUri', () => {
         const httpStub = jest.spyOn(http, 'post').mockReturnValue(of({ ltiIdToken: 'id-token', clientRegistrationId: 'client-id' }));
-        const consoleSpy = jest.spyOn(console, 'error').mockImplementation();
 
         expect(comp.isLaunching).toBeTrue();
 
         comp.ngOnInit();
 
-        expect(consoleSpy).toHaveBeenCalled();
-        expect(consoleSpy).toHaveBeenCalledWith('No LTI targetLinkUri received for a successful launch');
         expect(httpStub).toHaveBeenCalledOnce();
         expect(httpStub).toHaveBeenCalledWith('api/public/lti13/auth-login', expect.anything(), expect.anything());
 
@@ -187,13 +176,12 @@ describe('Lti13ExerciseLaunchComponent', () => {
     }));
 
     function simulateLtiLaunchError(http: HttpClient, status: number, headers: any = {}, error = {}) {
-        const httpStub = jest.spyOn(http, 'post').mockReturnValue(
+        return jest.spyOn(http, 'post').mockReturnValue(
             throwError(() => ({
                 status,
                 headers: { get: () => 'lti_user', ...headers },
                 error: { targetLinkUri: 'mockTargetLinkUri', ...error },
             })),
         );
-        return httpStub;
     }
 });

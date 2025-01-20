@@ -4,7 +4,7 @@ import { ChannelsCreateDialogComponent } from 'app/overview/course-conversations
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { MockPipe, MockProvider } from 'ng-mocks';
 import { Course } from 'app/entities/course.model';
-import { ChannelFormData } from 'app/overview/course-conversations/dialogs/channels-create-dialog/channel-form/channel-form.component';
+import { ChannelFormComponent, ChannelFormData } from 'app/overview/course-conversations/dialogs/channels-create-dialog/channel-form/channel-form.component';
 import { By } from '@angular/platform-browser';
 import { ChannelDTO } from 'app/entities/metis/conversation/channel.model';
 import { initializeDialog } from '../dialog-test-helpers';
@@ -38,6 +38,13 @@ describe('ChannelsCreateDialogComponent', () => {
         expect(component).toBeTruthy();
     });
 
+    it('should initialize the dialog correctly', () => {
+        const initializeSpy = jest.spyOn(component, 'initialize');
+        component.initialize();
+        expect(initializeSpy).toHaveBeenCalledOnce();
+        expect(component.course).toBe(course);
+    });
+
     it('clicking close button in modal header should dismiss the modal', () => {
         const closeButton = fixture.debugElement.nativeElement.querySelector('.modal-header button');
         const activeModal = TestBed.inject(NgbActiveModal);
@@ -68,6 +75,13 @@ describe('ChannelsCreateDialogComponent', () => {
         expect(component.isAnnouncementChannel).toBeTrue();
     });
 
+    it('should change channel scope type when channel scope type is changed in channel form', () => {
+        expect(component.isCourseWideChannel).toBeFalse();
+        const form: ChannelFormComponent = fixture.debugElement.query(By.directive(ChannelFormComponent)).componentInstance;
+        form.isCourseWideChannelChanged.emit(true);
+        expect(component.isCourseWideChannel).toBeTrue();
+    });
+
     it('should close modal with the channel to create when form is submitted', () => {
         const activeModal = TestBed.inject(NgbActiveModal);
         const closeSpy = jest.spyOn(activeModal, 'close');
@@ -90,5 +104,47 @@ describe('ChannelsCreateDialogComponent', () => {
 
         expect(closeSpy).toHaveBeenCalledOnce();
         expect(closeSpy).toHaveBeenCalledWith(expectedChannel);
+    });
+
+    it('should call createChannel with correct data', () => {
+        const createChannelSpy = jest.spyOn(component, 'createChannel');
+
+        const formData: ChannelFormData = {
+            name: 'testChannel',
+            description: 'Test description',
+            isPublic: false,
+            isAnnouncementChannel: true,
+            isCourseWideChannel: false,
+        };
+
+        const form: ChannelFormComponent = fixture.debugElement.query(By.directive(ChannelFormComponent)).componentInstance;
+        form.formSubmitted.emit(formData);
+
+        expect(createChannelSpy).toHaveBeenCalledOnce();
+        expect(createChannelSpy).toHaveBeenCalledWith(formData);
+    });
+
+    it('should close modal when createChannel is called', () => {
+        const activeModal = TestBed.inject(NgbActiveModal);
+        const closeSpy = jest.spyOn(activeModal, 'close');
+
+        const formData: ChannelFormData = {
+            name: 'testChannel',
+            description: 'Test description',
+            isPublic: true,
+            isAnnouncementChannel: false,
+            isCourseWideChannel: true,
+        };
+
+        component.createChannel(formData);
+
+        expect(closeSpy).toHaveBeenCalledOnce();
+        expect(closeSpy).toHaveBeenCalledWith(
+            expect.objectContaining({
+                name: formData.name,
+                description: formData.description,
+                isPublic: formData.isPublic,
+            }),
+        );
     });
 });

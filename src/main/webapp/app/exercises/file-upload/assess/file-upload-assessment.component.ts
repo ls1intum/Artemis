@@ -133,7 +133,7 @@ export class FileUploadAssessmentComponent implements OnInit, OnDestroy {
         this.route.params.subscribe((params) => {
             this.courseId = Number(params['courseId']);
             const exerciseId = Number(params['exerciseId']);
-            this.resultId = Number(params['resultId']) ?? 0;
+            this.resultId = Number(params['resultId']) || 0;
             this.exerciseId = exerciseId;
 
             const examId = params['examId'];
@@ -290,9 +290,6 @@ export class FileUploadAssessmentComponent implements OnInit, OnDestroy {
                     this.submission = undefined;
                     return;
                 }
-
-                // navigate to the new assessment page to trigger re-initialization of the components
-                this.router.onSameUrlNavigation = 'reload';
 
                 const url = getLinkToSubmissionAssessment(
                     ExerciseType.FILE_UPLOAD,
