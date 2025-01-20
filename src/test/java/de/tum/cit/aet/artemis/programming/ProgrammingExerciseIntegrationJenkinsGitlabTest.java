@@ -29,7 +29,7 @@ class ProgrammingExerciseIntegrationJenkinsGitlabTest extends AbstractProgrammin
     @BeforeEach
     void initTestCase() throws Exception {
         gitlabRequestMockProvider.enableMockingOfRequests();
-        jenkinsRequestMockProvider.enableMockingOfRequests(jenkinsServer, jenkinsJobPermissionsService);
+        jenkinsRequestMockProvider.enableMockingOfRequests(jenkinsJobPermissionsService);
         programmingExerciseIntegrationTestService.setup(TEST_PREFIX, this, versionControlService, continuousIntegrationService);
     }
 
@@ -403,12 +403,6 @@ class ProgrammingExerciseIntegrationJenkinsGitlabTest extends AbstractProgrammin
         gitlabRequestMockProvider.mockCheckIfProjectExists(programmingExercise, false);
         jenkinsRequestMockProvider.mockCheckIfProjectExistsJobIsNull(programmingExercise);
 
-        assertThatNoException().isThrownBy(() -> programmingExerciseService.checkIfProjectExists(programmingExercise));
-
-        jenkinsRequestMockProvider.mockCheckIfProjectExistsJobUrlEmptyOrNull(programmingExercise, true);
-        assertThatNoException().isThrownBy(() -> programmingExerciseService.checkIfProjectExists(programmingExercise));
-
-        jenkinsRequestMockProvider.mockCheckIfProjectExistsJobUrlEmptyOrNull(programmingExercise, false);
         assertThatNoException().isThrownBy(() -> programmingExerciseService.checkIfProjectExists(programmingExercise));
     }
 

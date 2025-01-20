@@ -4,7 +4,6 @@ import { Result } from 'app/entities/result.model';
 import { Feedback, FeedbackType } from 'app/entities/feedback.model';
 import { HttpResponse } from '@angular/common/http';
 import { Observable } from 'rxjs';
-import { ParticipationService } from 'app/exercises/shared/participation/participation.service';
 import { Complaint } from 'app/entities/complaint.model';
 import { Exercise } from 'app/entities/exercise.model';
 import { ExternalSubmissionService } from 'app/exercises/shared/external-submission/external-submission.service';
@@ -24,7 +23,6 @@ import { HtmlForMarkdownPipe } from 'app/shared/pipes/html-for-markdown.pipe';
     imports: [FormsModule, TranslateDirective, NgClass, FaIconComponent, HtmlForMarkdownPipe],
 })
 export class ExternalSubmissionDialogComponent implements OnInit {
-    private participationService = inject(ParticipationService);
     private externalSubmissionService = inject(ExternalSubmissionService);
     private activeModal = inject(NgbActiveModal);
     private eventManager = inject(EventManager);

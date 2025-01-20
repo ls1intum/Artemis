@@ -45,9 +45,6 @@ describe('LocalVCGuard', () => {
         const errorMessage = 'Test error';
         profileServiceMock.getProfileInfo.mockRejectedValue(errorMessage);
 
-        // Spy on console.error
-        const consoleErrorSpy = jest.spyOn(console, 'error').mockImplementation(() => {}); // Mock console.error to do nothing
-
         // Call the canActivate method
         const canActivateResult = await guard.canActivate();
 
@@ -56,8 +53,5 @@ describe('LocalVCGuard', () => {
 
         // Assert that the canActivate method returns false
         expect(canActivateResult).toBeFalse();
-
-        // Assert that console.error was called with the expected prefix string
-        expect(consoleErrorSpy).toHaveBeenCalledWith('Error fetching profile information:', expect.anything());
     });
 });

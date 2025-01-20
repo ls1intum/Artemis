@@ -71,6 +71,7 @@ export class MockLanguageHelper {
     }
     updateTitle(titleKey?: string) {}
 
+    // @ts-ignore
     private getPageTitle(routeSnapshot: ActivatedRouteSnapshot) {
         return '';
     }

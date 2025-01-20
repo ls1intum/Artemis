@@ -1,5 +1,4 @@
 import { Component, OnDestroy, OnInit, inject } from '@angular/core';
-import { ActivatedRoute } from '@angular/router';
 import dayjs from 'dayjs/esm';
 import { SystemNotification, SystemNotificationType } from 'app/entities/system-notification.model';
 import { AccountService } from 'app/core/auth/account.service';
@@ -21,7 +20,6 @@ export const WEBSOCKET_CHANNEL = '/topic/system-notification';
     imports: [NgClass, FaIconComponent],
 })
 export class SystemNotificationComponent implements OnInit, OnDestroy {
-    private route = inject(ActivatedRoute);
     private accountService = inject(AccountService);
     private jhiWebsocketService = inject(JhiWebsocketService);
     private systemNotificationService = inject(SystemNotificationService);

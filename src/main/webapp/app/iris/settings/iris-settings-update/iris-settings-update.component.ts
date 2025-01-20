@@ -20,6 +20,7 @@ import { ButtonComponent } from 'app/shared/components/button.component';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { IrisCommonSubSettingsUpdateComponent } from './iris-common-sub-settings-update/iris-common-sub-settings-update.component';
 import { FormsModule } from '@angular/forms';
+import { captureException } from '@sentry/angular';
 
 @Component({
     selector: 'jhi-iris-settings-update',
@@ -141,7 +142,7 @@ export class IrisSettingsUpdateComponent implements OnInit, DoCheck, ComponentCa
             },
             (error) => {
                 this.isSaving = false;
-                console.error('Error saving iris settings', error);
+                captureException('Error saving iris settings', error);
                 if (error.status === 400 && error.error && error.error.message) {
                     this.alertService.error(error.error.message);
                 } else {
