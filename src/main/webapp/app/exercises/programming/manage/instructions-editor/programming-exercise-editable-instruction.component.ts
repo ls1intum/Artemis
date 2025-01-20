@@ -17,7 +17,7 @@ import {
 import { AlertService } from 'app/core/util/alert.service';
 import { ProgrammingExerciseInstructionComponent } from 'app/exercises/programming/shared/instructions-render/programming-exercise-instruction.component';
 import { Observable, Subject, Subscription, of, throwError } from 'rxjs';
-import { catchError, map, map as rxMap, switchMap, tap } from 'rxjs/operators';
+import { catchError, map, switchMap, tap } from 'rxjs/operators';
 import { ProgrammingExerciseTestCase } from 'app/entities/programming/programming-exercise-test-case.model';
 import { ProblemStatementAnalysis } from 'app/exercises/programming/manage/instructions-editor/analysis/programming-exercise-instruction-analysis.model';
 import { Participation } from 'app/entities/participation/participation.model';
@@ -271,9 +271,9 @@ export class ProgrammingExerciseEditableInstructionComponent implements AfterVie
     loadTestCasesFromTemplateParticipationResult = (templateParticipationId: number): Observable<Array<string | undefined>> => {
         // Fallback for exercises that don't have test cases yet.
         return this.programmingExerciseParticipationService.getLatestResultWithFeedback(templateParticipationId).pipe(
-            rxMap((result) => (!result?.feedbacks ? throwError(() => new Error('no result available')) : result)),
+            map((result) => (!result?.feedbacks ? throwError(() => new Error('no result available')) : result)),
             // use the text (legacy case) or the name of the provided test case attribute
-            rxMap(({ feedbacks }: Result) => feedbacks!.map((feedback) => feedback.text ?? feedback.testCase?.testName).sort()),
+            map(({ feedbacks }: Result) => feedbacks!.map((feedback) => feedback.text ?? feedback.testCase?.testName).sort()),
             catchError(() => of([])),
         );
     };
