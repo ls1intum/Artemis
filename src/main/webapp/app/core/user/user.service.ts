@@ -42,9 +42,9 @@ export class UserService {
     }
 
     /**
-     * Accept Iris policy.
+     * Accept external LLM policy.
      */
-    acceptIris(): Observable<HttpResponse<void>> {
-        return this.http.put<HttpResponse<void>>(`${this.resourceUrl}/accept-iris`, { observe: 'response' });
+    acceptExternalLLM(): Observable<HttpResponse<void>> {
+        return this.http.put<HttpResponse<void>>(`${this.resourceUrl}/accept-external-llm`, { observe: 'response' });
     }
 }

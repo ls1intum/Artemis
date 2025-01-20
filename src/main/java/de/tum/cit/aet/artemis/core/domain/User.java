@@ -211,7 +211,7 @@ public class User extends AbstractAuditingEntity implements Participant {
 
     @Nullable
     @Column(name = "iris_accepted")
-    private ZonedDateTime irisAccepted = null;
+    private ZonedDateTime externalLLMAccepted = null;
 
     @OneToOne(fetch = FetchType.LAZY, cascade = CascadeType.ALL, orphanRemoval = true)
     @JsonIgnoreProperties("user")
@@ -533,25 +533,25 @@ public class User extends AbstractAuditingEntity implements Participant {
     }
 
     @Nullable
-    public ZonedDateTime getIrisAcceptedTimestamp() {
-        return irisAccepted;
+    public ZonedDateTime getExternalLLMAcceptedTimestamp() {
+        return externalLLMAccepted;
     }
 
-    public void setIrisAcceptedTimestamp(@Nullable ZonedDateTime irisAccepted) {
-        this.irisAccepted = irisAccepted;
+    public void setExternalLLMAcceptedTimestamp(@Nullable ZonedDateTime externalLLMAccepted) {
+        this.externalLLMAccepted = externalLLMAccepted;
     }
 
-    public boolean hasAcceptedIris() {
-        return irisAccepted != null;
+    public boolean hasAcceptedExternalLLM() {
+        return externalLLMAccepted != null;
     }
 
     /**
      * Checks if the user has accepted the Iris privacy policy.
      * If not, an {@link AccessForbiddenException} is thrown.
      */
-    public void hasAcceptedIrisElseThrow() {
-        if (irisAccepted == null) {
-            throw new AccessForbiddenException("The user has not accepted the Iris privacy policy yet.");
+    public void hasAcceptedExternalLLMElseThrow() {
+        if (externalLLMAccepted == null) {
+            throw new AccessForbiddenException("The user has not accepted the external LLM privacy policy yet.");
         }
     }
 

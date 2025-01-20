@@ -56,10 +56,10 @@ describe('User Service', () => {
             expect(req.request.url).toBe(`${resourceUrl}`);
         });
 
-        it('should call correct URL to accept Iris', () => {
-            service.acceptIris().subscribe();
+        it('should call correct URL to accept external LLM', () => {
+            service.acceptExternalLLM().subscribe();
             const req = httpMock.expectOne({ method: 'PUT' });
-            const resourceUrl = 'api/users/accept-iris';
+            const resourceUrl = 'api/users/accept-external-llm';
             expect(req.request.url).toBe(`${resourceUrl}`);
         });
     });

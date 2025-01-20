@@ -68,7 +68,7 @@ public class IrisSessionService {
         if (user == null) {
             user = userRepository.getUserWithGroupsAndAuthorities();
         }
-        user.hasAcceptedIrisElseThrow();
+        user.hasAcceptedExternalLLMElseThrow();
         var wrapper = getIrisSessionSubService(session);
         wrapper.irisSubFeatureInterface.checkHasAccessTo(user, wrapper.irisSession);
     }

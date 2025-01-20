@@ -50,15 +50,15 @@ describe('IrisBaseChatbotComponent', () => {
         getActiveStatus: jest.fn().mockReturnValue(of({})),
     } as any;
     const mockUserService = {
-        acceptIris: jest.fn(),
+        acceptExternalLLM: jest.fn(),
     } as any;
     let accountMock = {
-        userIdentity: { irisAccepted: dayjs() },
+        userIdentity: { externalLLMAccepted: dayjs() },
     } as any;
 
     beforeEach(async () => {
         accountMock = {
-            userIdentity: { irisAccepted: dayjs() },
+            userIdentity: { externalLLMAccepted: dayjs() },
         } as any;
 
         await TestBed.configureTestingModule({
@@ -114,7 +114,7 @@ describe('IrisBaseChatbotComponent', () => {
     });
 
     it('should set userAccepted to false if user has not accepted the policy', () => {
-        accountMock.userIdentity.irisAccepted = undefined;
+        accountMock.userIdentity.externalLLMAccepted = undefined;
         component.ngOnInit();
         expect(component.userAccepted).toBeFalse();
     });
@@ -125,7 +125,7 @@ describe('IrisBaseChatbotComponent', () => {
     });
 
     it('should call API when user accept the policy', () => {
-        const stub = jest.spyOn(mockUserService, 'acceptIris');
+        const stub = jest.spyOn(mockUserService, 'acceptExternalLLM');
         stub.mockReturnValue(of(new HttpResponse<void>()));
 
         component.acceptPermission();

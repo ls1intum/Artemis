@@ -78,11 +78,11 @@ export class RequestFeedbackButtonComponent implements OnInit {
     }
 
     setUserAcceptedExternalLLMs(): void {
-        this.userAccepted = !!this.accountService.userIdentity?.irisAccepted;
+        this.userAccepted = !!this.accountService.userIdentity?.externalLLMAccepted;
     }
 
     acceptExternalLLMs(modal: any) {
-        this.userService.acceptIris();
+        this.userService.acceptExternalLLM();
         this.userAccepted = true;
         modal.close();
         // Proceed with feedback request after accepting

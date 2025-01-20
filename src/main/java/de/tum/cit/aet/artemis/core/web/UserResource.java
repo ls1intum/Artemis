@@ -100,7 +100,7 @@ public class UserResource {
             user.setLastModifiedDate(null);
             user.setCreatedBy(null);
             user.setCreatedDate(null);
-            user.setIrisAccepted(null);
+            user.setExternalLLMAccepted(null);
         });
         HttpHeaders headers = PaginationUtil.generatePaginationHttpHeaders(ServletUriComponentsBuilder.fromCurrentRequest(), page);
         return new ResponseEntity<>(page.getContent(), headers, HttpStatus.OK);
@@ -159,14 +159,15 @@ public class UserResource {
      *
      * @return the ResponseEntity with status 200 (OK), with status 404 (Not Found), or with status 400 (Bad Request) if Iris was already accepted
      */
-    @PutMapping("users/accept-iris")
+    @PutMapping("users/accept-external-llm")
     @EnforceAtLeastStudent
-    public ResponseEntity<Void> setIrisAcceptedToTimestamp() {
+    public ResponseEntity<Void> setExternalLLMAcceptedToTimestamp() {
+        log.debug("======== Set IRIS accepted =========");
         User user = userRepository.getUser();
-        if (user.getIrisAcceptedTimestamp() != null) {
+        if (user.getExternalLLMAcceptedTimestamp() != null) {
             return ResponseEntity.badRequest().build();
         }
-        userRepository.updateIrisAcceptedToDate(user.getId(), ZonedDateTime.now());
+        userRepository.updateExternalLLMAcceptedToDate(user.getId(), ZonedDateTime.now());
         return ResponseEntity.ok().build();
     }
 }

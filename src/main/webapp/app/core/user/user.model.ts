@@ -15,7 +15,7 @@ export class User extends Account {
     public password?: string;
     public vcsAccessToken?: string;
     public vcsAccessTokenExpiryDate?: string;
-    public irisAccepted?: dayjs.Dayjs;
+    public externalLLMAccepted?: dayjs.Dayjs;
 
     constructor(
         id?: number,
@@ -36,7 +36,7 @@ export class User extends Account {
         imageUrl?: string,
         vcsAccessToken?: string,
         vcsAccessTokenExpiryDate?: string,
-        irisAccepted?: dayjs.Dayjs,
+        externalLLMAccepted?: dayjs.Dayjs,
     ) {
         super(activated, authorities, email, firstName, langKey, lastName, login, imageUrl);
         this.id = id;
@@ -49,7 +49,7 @@ export class User extends Account {
         this.password = password;
         this.vcsAccessToken = vcsAccessToken;
         this.vcsAccessTokenExpiryDate = vcsAccessTokenExpiryDate;
-        this.irisAccepted = irisAccepted;
+        this.externalLLMAccepted = externalLLMAccepted;
     }
 }
 /**

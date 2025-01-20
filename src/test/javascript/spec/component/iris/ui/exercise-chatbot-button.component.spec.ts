@@ -39,10 +39,10 @@ describe('ExerciseChatbotButtonComponent', () => {
         handleRateLimitInfo: jest.fn(),
     };
     const userMock = {
-        acceptIris: jest.fn(),
+        acceptExternalLLM: jest.fn(),
     };
     const accountMock = {
-        userIdentity: { irisAccepted: dayjs() },
+        userIdentity: { externalLLMAccepted: dayjs() },
     };
 
     beforeEach(async () => {
