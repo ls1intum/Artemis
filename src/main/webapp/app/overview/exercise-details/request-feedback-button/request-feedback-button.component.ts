@@ -1,5 +1,4 @@
-import { Component, OnInit, inject, input, output } from '@angular/core';
-
+import { Component, OnInit, TemplateRef, inject, input, output } from '@angular/core';
 import { NgbTooltipModule } from '@ng-bootstrap/ng-bootstrap';
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
 import { faPenSquare } from '@fortawesome/free-solid-svg-icons';
@@ -15,6 +14,9 @@ import { isExamExercise } from 'app/shared/util/utils';
 import { ExerciseDetailsType, ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { ParticipationService } from 'app/exercises/shared/participation/participation.service';
+import { AccountService } from 'app/core/auth/account.service';
+import { UserService } from 'app/core/user/user.service';
+import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 
 @Component({
     selector: 'jhi-request-feedback-button',
@@ -27,6 +29,7 @@ export class RequestFeedbackButtonComponent implements OnInit {
     requestFeedbackEnabled = false;
     isExamExercise: boolean;
     participation?: StudentParticipation;
+    userAccepted: boolean;
 
     isSubmitted = input<boolean>();
     pendingChanges = input<boolean>(false);
@@ -42,6 +45,9 @@ export class RequestFeedbackButtonComponent implements OnInit {
     private translateService = inject(TranslateService);
     private exerciseService = inject(ExerciseService);
     private participationService = inject(ParticipationService);
+    private accountService = inject(AccountService);
+    private userService = inject(UserService);
+    private modalService = inject(NgbModal);
 
     protected readonly ExerciseType = ExerciseType;
 
@@ -55,6 +61,7 @@ export class RequestFeedbackButtonComponent implements OnInit {
         }
         this.requestFeedbackEnabled = this.exercise().allowFeedbackRequests ?? false;
         this.updateParticipation();
+        this.setUserAcceptedExternalLLMs();
     }
 
     private updateParticipation() {
@@ -70,11 +77,32 @@ export class RequestFeedbackButtonComponent implements OnInit {
         }
     }
 
-    requestFeedback() {
+    setUserAcceptedExternalLLMs(): void {
+        this.userAccepted = !!this.accountService.userIdentity?.irisAccepted;
+    }
+
+    acceptExternalLLMs(modal: any) {
+        this.userService.acceptIris();
+        this.userAccepted = true;
+        modal.close();
+        // Proceed with feedback request after accepting
+        if (this.assureConditionsSatisfied()) {
+            this.processFeedbackRequest();
+        }
+    }
+
+    requestFeedback(content: TemplateRef<any>) {
+        if (!this.userAccepted) {
+            this.modalService.open(content, { ariaLabelledBy: 'modal-title' });
+            return;
+        }
         if (!this.assureConditionsSatisfied()) {
             return;
         }
+        this.processFeedbackRequest();
+    }
 
+    private processFeedbackRequest() {
         this.courseExerciseService.requestFeedback(this.exercise().id!).subscribe({
             next: (participation: StudentParticipation) => {
                 if (participation) {
