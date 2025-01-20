@@ -3,7 +3,6 @@ package de.tum.cit.aet.artemis.core.domain;
 import static de.tum.cit.aet.artemis.core.config.Constants.USERNAME_MAX_LENGTH;
 import static de.tum.cit.aet.artemis.core.config.Constants.USERNAME_MIN_LENGTH;
 
-import java.time.Duration;
 import java.time.Instant;
 import java.time.ZonedDateTime;
 import java.util.HashSet;
@@ -559,15 +558,6 @@ public class User extends AbstractAuditingEntity implements Participant {
      */
     public boolean hasDisabledIrisProactiveEvents() {
         return irisProactiveEventsDisabled != null && irisProactiveEventsDisabled.isAfter(Instant.now());
-    }
-
-    /**
-     * Disables Iris proactive events for the user for the given duration.
-     *
-     * @param duration the duration for which the proactive events should be disabled
-     */
-    public void disableIrisProactiveEventsFor(Duration duration) {
-        irisProactiveEventsDisabled = Instant.now().plus(duration);
     }
 
     /**

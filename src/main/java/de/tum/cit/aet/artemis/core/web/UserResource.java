@@ -2,6 +2,7 @@ package de.tum.cit.aet.artemis.core.web;
 
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
+import java.time.Instant;
 import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.Optional;
@@ -31,7 +32,8 @@ import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastInstructor
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastStudent;
 import de.tum.cit.aet.artemis.core.service.user.UserCreationService;
 import de.tum.cit.aet.artemis.core.service.user.UserService;
-import de.tum.cit.aet.artemis.iris.dto.IrisProactiveEventDisableDTO;
+import de.tum.cit.aet.artemis.iris.dto.IrisDisableProactiveEventsDTO;
+import de.tum.cit.aet.artemis.iris.dto.IrisDisableProactiveEventsResponseDTO;
 import de.tum.cit.aet.artemis.iris.dto.IrisProactiveEventDisableDuration;
 import de.tum.cit.aet.artemis.lti.service.LtiService;
 import tech.jhipster.web.util.PaginationUtil;
@@ -175,18 +177,24 @@ public class UserResource {
 
     @PutMapping("users/disable-iris-proactive-events")
     @EnforceAtLeastStudent
-    public ResponseEntity<Void> setIrisProactiveEventsDisabledToTimestamp(@RequestBody IrisProactiveEventDisableDTO disableDTO) {
+    public ResponseEntity<IrisDisableProactiveEventsResponseDTO> setIrisProactiveEventsDisabledToTimestamp(@RequestBody IrisDisableProactiveEventsDTO disableDTO) {
         User user = userRepository.getUser();
 
         var duration = disableDTO.duration();
         var timestamp = disableDTO.endTime();
+        if (duration == null) {
+            return ResponseEntity.badRequest().build();
+        }
 
         if (duration == IrisProactiveEventDisableDuration.CUSTOM && timestamp == null) {
             return ResponseEntity.badRequest().build();
         }
         try {
-            userService.updateIrisProactiveEventsDisabled(user.getId(), duration, timestamp);
-            return ResponseEntity.ok().build();
+            Instant endTime = timestamp != null ? timestamp.toInstant() : null;
+            var updatedTimestamp = userService.updateIrisProactiveEventsDisabled(user.getId(), duration, endTime);
+            // Return the updated timestamp to the client
+            return ResponseEntity.ok().body(new IrisDisableProactiveEventsResponseDTO(updatedTimestamp));
+
         }
         catch (IllegalArgumentException e) {
             return ResponseEntity.badRequest().build();

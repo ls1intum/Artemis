@@ -824,21 +824,20 @@ public class UserService {
      * @param userId   the id of the user
      * @param duration type of duration for which the events are disabled
      * @param endTime  the end time of the custom duration
+     * @return the updated timestamp of the end time
      */
-    public void updateIrisProactiveEventsDisabled(Long userId, IrisProactiveEventDisableDuration duration, Instant endTime) {
+    public Instant updateIrisProactiveEventsDisabled(Long userId, IrisProactiveEventDisableDuration duration, Instant endTime) {
         var currentTimestamp = Instant.now();
-        switch (duration) {
-            case THIRTY_MINUTES -> userRepository.updateIrisProactiveEventsDisabled(userId, currentTimestamp.plus(Duration.ofMinutes(30)));
-            case ONE_HOUR -> userRepository.updateIrisProactiveEventsDisabled(userId, currentTimestamp.plus(Duration.ofHours(1)));
-            case ONE_DAY -> userRepository.updateIrisProactiveEventsDisabled(userId, currentTimestamp.plus(Duration.ofDays(1)));
-            case FOREVER -> {
-                // Indefinite delay - using year 9999 as a practical "infinity"
-                var forever = Instant.parse("9999-12-31T23:59:59.999999999Z");
-                userRepository.updateIrisProactiveEventsDisabled(userId, forever);
-            }
-            case CUSTOM -> userRepository.updateIrisProactiveEventsDisabled(userId, endTime);
-            default -> throw new IllegalArgumentException("Invalid duration: " + duration);
-        }
+        Instant updatedTimestamp = switch (duration) {
+            case THIRTY_MINUTES -> currentTimestamp.plus(Duration.ofMinutes(30));
+            case ONE_HOUR -> currentTimestamp.plus(Duration.ofHours(1));
+            case ONE_DAY -> currentTimestamp.plus(Duration.ofDays(1));
+            case FOREVER -> // Indefinite delay - using year 9999 as a practical "infinity"
+                Instant.parse("9999-12-31T23:59:59.999999999Z");
+            case CUSTOM -> endTime;
+        };
+        userRepository.updateIrisProactiveEventsDisabled(userId, updatedTimestamp);
+        return updatedTimestamp;
     }
 
     /**

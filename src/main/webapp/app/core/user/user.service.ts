@@ -2,6 +2,7 @@ import { Injectable } from '@angular/core';
 import { HttpClient, HttpResponse } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { User } from 'app/core/user/user.model';
+import { IrisDisableProactiveEventsDTO, IrisDisableProactiveEventsResponseDTO } from 'app/entities/iris/iris-disable-proactive-events-dto.model';
 
 @Injectable({ providedIn: 'root' })
 export class UserService {
@@ -46,5 +47,12 @@ export class UserService {
      */
     acceptIris(): Observable<HttpResponse<void>> {
         return this.http.put<HttpResponse<void>>(`${this.resourceUrl}/accept-iris`, { observe: 'response' });
+    }
+
+    /**
+     * Disable proactive Iris events.
+     */
+    disableProactiveEvents(disableProactiveEventsDTO: IrisDisableProactiveEventsDTO): Observable<HttpResponse<IrisDisableProactiveEventsResponseDTO>> {
+        return this.http.put<IrisDisableProactiveEventsResponseDTO>(`${this.resourceUrl}/disable-iris-proactive-events`, disableProactiveEventsDTO, { observe: 'response' });
     }
 }
