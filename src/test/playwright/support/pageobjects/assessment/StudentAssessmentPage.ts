@@ -6,8 +6,6 @@ import { expect } from '@playwright/test';
  */
 export class StudentAssessmentPage {
     protected readonly page: Page;
-    private complaintResponseSelector = '#complainResponseTextArea';
-
     constructor(page: Page) {
         this.page = page;
     }

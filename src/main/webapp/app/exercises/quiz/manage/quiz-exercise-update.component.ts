@@ -556,7 +556,6 @@ export class QuizExerciseUpdateComponent extends QuizExerciseValidationDirective
         if (errorRes?.error && errorRes.error.title) {
             this.alertService.addErrorAlert(errorRes.error.title, errorRes.error.message, errorRes.error.params);
         }
-        console.error('Saving Quiz Failed! Please try again later.');
         this.alertService.error('artemisApp.quizExercise.saveError');
         this.isSaving = false;
         this.changeDetector.detectChanges();
@@ -631,25 +630,7 @@ export class QuizExerciseUpdateComponent extends QuizExerciseValidationDirective
         if (!this.quizExercise) {
             return [];
         }
-        // Release Date valid but lies in the past
-        if (false /*this.quizExercise.isPlannedToStart*/) {
-            // TODO: quiz cleanup: properly validate dates and deduplicate the checks (see isValidQuiz)
-            if (!this.quizExercise.releaseDate || !dayjs(this.quizExercise.releaseDate).isValid()) {
-                invalidReasons.push({
-                    translateKey: 'artemisApp.quizExercise.invalidReasons.invalidStartTime',
-                    translateValues: {},
-                });
-            }
-            // Release Date valid but lies in the past
-            if (this.quizExercise.releaseDate && dayjs(this.quizExercise.releaseDate).isValid()) {
-                if (dayjs(this.quizExercise.releaseDate).isBefore(dayjs())) {
-                    invalidReasons.push({
-                        translateKey: 'artemisApp.quizExercise.invalidReasons.startTimeInPast',
-                        translateValues: {},
-                    });
-                }
-            }
-        }
+        // TODO: quiz cleanup: properly validate dates and deduplicate the checks (see isValidQuiz)
         return super.computeInvalidReasons().concat(invalidReasons);
     }
 

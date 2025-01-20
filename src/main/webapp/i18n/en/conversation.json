@@ -208,6 +208,7 @@
             "createChannel": {
                 "titlePublicChannel": "Create a public",
                 "titlePrivateChannel": "Create a private",
+                "titleCourseWideChannel": "course-wide",
                 "titleAnnouncementChannel": "announcement channel",
                 "titleRegularChannel": "channel",
                 "description": "A channel is a way to group people together around a project, a topic, or just for fun. You can create as many channels as you want. You will become the first channel moderator. You will not be able to leave the channel.",
@@ -235,6 +236,12 @@
                         "explanation": "Only instructors and channel moderators can create new messages in an announcement channel. Students can only read the messages and answer to them.",
                         "true": "Announcement Channel",
                         "false": "Unrestricted Channel"
+                    },
+                    "isCourseWideChannelInput": {
+                        "label": "Channel Scope",
+                        "explanation": "In a course-wide channel, all users in the course are automatically added. In a selective channel, you can manually select the users to be added after creation.",
+                        "true": "Course-wide Channel",
+                        "false": "Selective Channel"
                     },
                     "createButton": "Create Channel"
                 }
