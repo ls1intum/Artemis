@@ -20,7 +20,7 @@ import de.tum.cit.aet.artemis.lecture.domain.TranscriptionSegment;
 import de.tum.cit.aet.artemis.lecture.repository.LectureRepository;
 import de.tum.cit.aet.artemis.lecture.repository.TranscriptionRepository;
 
-public class PyrisTranscriptionIngestionTest extends AbstractIrisIntegrationTest {
+class PyrisTranscriptionIngestionTest extends AbstractIrisIntegrationTest {
 
     private static final String TEST_PREFIX = "pyristranscriptioningestiontest";
 
