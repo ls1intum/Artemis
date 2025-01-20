@@ -52,6 +52,9 @@ export class IrisExerciseChatbotButtonComponent implements OnInit, OnDestroy {
     @Input()
     mode: ChatServiceMode;
 
+    @Input()
+    isChatGptWrapper: boolean = false; // TODO TW: This "feature" is only temporary for a paper.
+
     dialogRef: MatDialogRef<IrisChatbotWidgetComponent> | null = null;
     chatOpen = false;
     isOverflowing = false;
