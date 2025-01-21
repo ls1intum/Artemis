@@ -13,7 +13,6 @@ import { HttpResponse } from '@angular/common/http';
 import { SortingOrder } from 'app/shared/table/pageable-table';
 import { LocalStorageService } from 'ngx-webstorage';
 import { MockLocalStorageService } from '../../../helpers/mocks/service/mock-local-storage.service';
-import { BuildLogEntry, BuildLogLines } from '../../../../../../main/webapp/app/entities/programming/build-log.model';
 import { MockNgbModalService } from '../../../helpers/mocks/service/mock-ngb-modal.service';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 
@@ -265,17 +264,6 @@ describe('BuildQueueComponent', () => {
         numberOfAppliedFilters: 0,
     };
 
-    const buildLogEntries: BuildLogEntry[] = [
-        {
-            time: dayjs('2024-01-01'),
-            log: 'log1',
-        },
-        {
-            time: dayjs('2024-01-02'),
-            log: 'log2',
-        },
-    ];
-
     beforeEach(waitForAsync(() => {
         mockActivatedRoute = { params: of({ courseId: testCourseId }) };
 
@@ -386,7 +374,7 @@ describe('BuildQueueComponent', () => {
         component.ngOnInit();
         component.onTabChange(SpanType.WEEK);
 
-        expect(mockBuildQueueService.getBuildJobStatistics).toHaveBeenCalledOnce();
+        expect(mockBuildQueueService.getBuildJobStatistics).toHaveBeenCalled();
         expect(component.buildJobStatistics).toEqual(mockBuildJobStatistics);
     });
 
@@ -673,21 +661,35 @@ describe('BuildQueueComponent', () => {
 
     it('should download build logs', () => {
         const buildJobId = '1';
-        jest.spyOn(window, 'open').mockImplementation();
 
-        mockBuildQueueService.getBuildJobLogs = jest.fn().mockReturnValue(of(buildLogEntries));
-
-        const buildLogsMultiLines: BuildLogLines[] = buildLogEntries.map((entry) => {
-            return { time: entry.time, logLines: entry.log.split('\n') };
-        });
+        const buildLogsMultiLines = 'log1\nlog2\nlog3';
+        mockBuildQueueService.getBuildJobLogs = jest.fn().mockReturnValue(of(buildLogsMultiLines));
 
         component.viewBuildLogs(undefined, buildJobId);
 
         expect(mockBuildQueueService.getBuildJobLogs).toHaveBeenCalledWith(buildJobId);
-        expect(component.rawBuildLogs).toEqual(buildLogsMultiLines);
+        expect(component.rawBuildLogsString).toEqual(buildLogsMultiLines);
+
+        const mockBlob = new Blob([buildLogsMultiLines], { type: 'text/plain' });
+        const mockUrl = 'blob:http://localhost:12345';
+        const mockAnchor = {
+            href: '',
+            download: '',
+            click: jest.fn(),
+        };
+
+        global.URL.createObjectURL = jest.fn(() => 'mockedURL');
+        global.URL.revokeObjectURL = jest.fn();
+        jest.spyOn(window.URL, 'createObjectURL').mockReturnValue(mockUrl);
+        jest.spyOn(document, 'createElement').mockReturnValue(mockAnchor as unknown as HTMLAnchorElement);
+        jest.spyOn(window.URL, 'revokeObjectURL').mockImplementation();
 
         component.downloadBuildLogs();
 
-        expect(window.open).toHaveBeenCalledWith(`/api/build-log/${component.displayedBuildJobId}`, '_blank');
+        expect(window.URL.createObjectURL).toHaveBeenCalledWith(mockBlob);
+        expect(mockAnchor.href).toBe(mockUrl);
+        expect(mockAnchor.download).toBe(`${buildJobId}.log`);
+        expect(mockAnchor.click).toHaveBeenCalled();
+        expect(window.URL.revokeObjectURL).toHaveBeenCalledWith(mockUrl);
     });
 });

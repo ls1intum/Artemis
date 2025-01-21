@@ -891,22 +891,10 @@
     <div class="modal-body">
         <table class="table table-borderless">
             <tbody>
-                @for (logEntry of rawBuildLogs; track logEntry) {
-                    <tr class="build-output__entry">
-                        <td class="build-output__entry-date">{{ logEntry.time | artemisDate: 'long' : true : undefined : false : true }}</td>
-                        <td class="build-output__entry-text">
-                            @for (line of logEntry.logLines; track line) {
-                                <span>{{ line }}</span>
-                                <br />
-                            }
-                        </td>
-                    </tr>
-                } @empty {
-                    <tr class="build-output__entry">
-                        <td class="build-output__entry-text">
-                            <span jhiTranslate="artemisApp.buildQueue.logs.noLogs"></span>
-                        </td>
-                    </tr>
+                @if (rawBuildLogsString) {
+                    <pre>{{ rawBuildLogsString }}</pre>
+                } @else {
+                    <span jhiTranslate="artemisApp.buildQueue.logs.noLogs"></span>
                 }
             </tbody>
         </table>

@@ -19,7 +19,6 @@ import { NgbCollapse, NgbModal, NgbPagination, NgbTypeahead } from '@ng-bootstra
 import { LocalStorageService } from 'ngx-webstorage';
 import { Observable, OperatorFunction, Subject, Subscription, merge } from 'rxjs';
 import { UI_RELOAD_TIME } from 'app/shared/constants/exercise-exam-constants';
-import { BuildLogEntry, BuildLogLines } from 'app/entities/programming/build-log.model';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { HelpIconComponent } from 'app/shared/components/help-icon.component';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
@@ -204,8 +203,8 @@ export class BuildQueueComponent implements OnInit, OnDestroy {
     searchSubscription: Subscription;
     searchTerm?: string = undefined;
 
-    rawBuildLogs: BuildLogLines[] = [];
     displayedBuildJobId?: string;
+    rawBuildLogsString: string = '';
 
     ngOnInit() {
         this.buildStatusFilterValues = Object.values(BuildJobStatusFilter);
@@ -429,15 +428,14 @@ export class BuildQueueComponent implements OnInit, OnDestroy {
      * @param buildJobId The id of the build job
      */
     viewBuildLogs(modal: any, buildJobId: string | undefined): void {
+        this.rawBuildLogsString = '';
+        this.displayedBuildJobId = undefined;
         if (buildJobId) {
             this.openModal(modal, true);
             this.displayedBuildJobId = buildJobId;
             this.buildQueueService.getBuildJobLogs(buildJobId).subscribe({
-                next: (buildLogs: BuildLogEntry[]) => {
-                    this.rawBuildLogs = buildLogs.map((entry) => {
-                        const logLines = entry.log ? entry.log.split('\n') : [];
-                        return { time: entry.time, logLines: logLines };
-                    });
+                next: (buildLogs: string) => {
+                    this.rawBuildLogsString = buildLogs;
                 },
                 error: (res: HttpErrorResponse) => {
                     onError(this.alertService, res, false);
@@ -445,14 +443,24 @@ export class BuildQueueComponent implements OnInit, OnDestroy {
             });
         }
     }
-
     /**
      * Download the build logs of a specific build job
      */
     downloadBuildLogs(): void {
-        if (this.displayedBuildJobId) {
-            const url = `/api/build-log/${this.displayedBuildJobId}`;
-            window.open(url, '_blank');
+        if (this.displayedBuildJobId && this.rawBuildLogsString) {
+            const blob = new Blob([this.rawBuildLogsString], { type: 'text/plain' });
+
+            const url = window.URL.createObjectURL(blob);
+
+            const anchor = document.createElement('a');
+            anchor.href = url;
+            anchor.download = `${this.displayedBuildJobId}.log`;
+
+            // Programmatically click the link to trigger download
+            anchor.click();
+
+            // Clean up the URL object
+            window.URL.revokeObjectURL(url);
         }
     }
 
