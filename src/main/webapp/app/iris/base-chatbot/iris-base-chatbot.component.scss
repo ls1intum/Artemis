@@ -189,6 +189,10 @@
         ::ng-deep > p:not(:last-child) {
             margin-bottom: 7px;
         }
+
+        ::ng-deep pre code {
+            line-height: 0.8;
+        }
     }
 }
 
