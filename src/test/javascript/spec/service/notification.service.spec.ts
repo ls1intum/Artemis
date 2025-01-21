@@ -20,7 +20,7 @@ import { CourseManagementService } from 'app/course/manage/course-management.ser
 import { BehaviorSubject, Subject } from 'rxjs';
 import { AccountService } from 'app/core/auth/account.service';
 import { MockAccountService } from '../helpers/mocks/service/mock-account.service';
-import { JhiWebsocketService } from 'app/core/websocket/websocket.service';
+import { WebsocketService } from 'app/core/websocket/websocket.service';
 import { MockWebsocketService } from '../helpers/mocks/service/mock-websocket.service';
 import { Course } from 'app/entities/course.model';
 import { QuizExercise } from 'app/entities/quiz/quiz-exercise.model';
@@ -50,7 +50,7 @@ describe('Notification Service', () => {
     let artemisTranslatePipe: ArtemisTranslatePipe;
     let accountService: MockAccountService;
 
-    let websocketService: JhiWebsocketService;
+    let websocketService: WebsocketService;
     let wsSubscribeStub: jest.SpyInstance;
     let wsUnsubscribeStub: jest.SpyInstance;
     let wsReceiveNotificationStub: jest.SpyInstance;
@@ -171,7 +171,7 @@ describe('Notification Service', () => {
                 { provide: AccountService, useClass: MockAccountService },
                 { provide: ArtemisTranslatePipe, useClass: ArtemisTranslatePipe },
                 { provide: ChangeDetectorRef, useValue: {} },
-                { provide: JhiWebsocketService, useClass: MockWebsocketService },
+                { provide: WebsocketService, useClass: MockWebsocketService },
                 { provide: MetisService, useClass: MockMetisService },
                 {
                     provide: ActivatedRoute,
@@ -191,7 +191,7 @@ describe('Notification Service', () => {
         httpMock = TestBed.inject(HttpTestingController);
         router = TestBed.inject(Router) as any;
 
-        websocketService = TestBed.inject(JhiWebsocketService);
+        websocketService = TestBed.inject(WebsocketService);
         artemisTranslatePipe = TestBed.inject(ArtemisTranslatePipe);
         accountService = TestBed.inject(AccountService) as any;
         wsSubscribeStub = jest.spyOn(websocketService, 'subscribe');
