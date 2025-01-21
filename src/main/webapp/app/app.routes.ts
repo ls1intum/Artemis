@@ -151,7 +151,7 @@ const routes: Routes = [
     },
     {
         path: 'courses',
-        loadChildren: () => import('./overview/courses.module').then((m) => m.ArtemisCoursesModule),
+        loadChildren: () => import('./overview/courses.route').then((m) => m.coursesState),
     },
     {
         path: 'course-management/:courseId/lectures/:lectureId/attachments/:attachmentId',

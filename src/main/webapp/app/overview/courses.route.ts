@@ -1,8 +1,6 @@
-import { RouterModule, Routes } from '@angular/router';
+import { Routes } from '@angular/router';
 
 import { UserRouteAccessService } from 'app/core/auth/user-route-access-service';
-
-import { NgModule } from '@angular/core';
 import { Authority } from 'app/shared/constants/authority.constants';
 
 import { PendingChangesGuard } from 'app/shared/guard/pending-changes.guard';
@@ -301,8 +299,11 @@ const routes: Routes = [
     },
 ];
 
-@NgModule({
-    imports: [RouterModule.forChild(routes)],
-    exports: [RouterModule],
-})
-export class ArtemisCoursesRoutingModule {}
+const COURSE_ROUTES = [...routes];
+
+export const coursesState: Routes = [
+    {
+        path: '',
+        children: COURSE_ROUTES,
+    },
+];
