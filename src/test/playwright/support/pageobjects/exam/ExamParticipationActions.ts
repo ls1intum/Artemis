@@ -2,7 +2,7 @@ import { Page, expect } from '@playwright/test';
 import { Fixtures } from '../../../fixtures/fixtures';
 import { Commands } from '../../commands';
 import { getExercise } from '../../utils';
-import { Dayjs } from 'dayjs/esm';
+import { Dayjs } from 'dayjs';
 
 export class ExamParticipationActions {
     protected readonly page: Page;

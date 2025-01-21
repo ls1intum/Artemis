@@ -1,4 +1,4 @@
-import dayjs, { Dayjs } from 'dayjs/esm';
+import dayjs, { Dayjs } from 'dayjs';
 import { Exercise, ExerciseType } from '../../support/constants';
 import { admin, instructor, studentFour, studentOne, studentThree, studentTwo, tutor, users } from '../../support/users';
 import { Page, expect } from '@playwright/test';
