@@ -273,7 +273,7 @@ const routes: Routes = [
             },
             {
                 path: 'plagiarism-cases',
-                loadChildren: () => import('../course/plagiarism-cases/student-view/plagiarism-cases-student-view.module').then((m) => m.ArtemisPlagiarismCasesStudentViewModule),
+                loadChildren: () => import('../course/plagiarism-cases/student-view/plagiarism-cases-student-view.route').then((m) => m.routes),
                 data: {
                     authorities: [Authority.USER],
                     pageTitle: 'overview.plagiarismCases',
