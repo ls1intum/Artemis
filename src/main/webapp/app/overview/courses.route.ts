@@ -241,7 +241,7 @@ const routes: Routes = [
                             showRefreshButton: true,
                         },
                         canActivate: [UserRouteAccessService],
-                        loadChildren: () => import('../overview/tutorial-group-details/course-tutorial-group-details.module').then((m) => m.CourseTutorialGroupDetailsModule),
+                        loadChildren: () => import('../overview/tutorial-group-details/course-tutorial-group-details.route').then((m) => m.routes),
                     },
                 ],
             },
