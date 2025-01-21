@@ -116,7 +116,7 @@ const routes: Routes = [
                     authorities: [Authority.USER],
                     pageTitle: 'overview.modelingExercise',
                 },
-                loadChildren: () => import('../exercises/modeling/participate/modeling-participation.module').then((m) => m.ArtemisModelingParticipationModule),
+                loadChildren: () => import('../exercises/modeling/participate/modeling-participation.route').then((m) => m.routes),
             },
             {
                 path: 'exercises/quiz-exercises/:exerciseId',
@@ -124,7 +124,7 @@ const routes: Routes = [
                     authorities: [Authority.USER],
                     pageTitle: 'overview.quizExercise',
                 },
-                loadChildren: () => import('../exercises/quiz/participate/quiz-participation.module').then((m) => m.ArtemisQuizParticipationModule),
+                loadChildren: () => import('../exercises/quiz/participate/quiz-participation.route').then((m) => m.quizParticipationRoute),
             },
             {
                 path: 'exercises/file-upload-exercises/:exerciseId',
@@ -132,7 +132,7 @@ const routes: Routes = [
                     authorities: [Authority.USER],
                     pageTitle: 'overview.fileUploadExercise',
                 },
-                loadChildren: () => import('../exercises/file-upload/participate/file-upload-participation.module').then((m) => m.ArtemisFileUploadParticipationModule),
+                loadChildren: () => import('../exercises/file-upload/participate/file-upload-participation.route').then((m) => m.routes),
             },
 
             {
