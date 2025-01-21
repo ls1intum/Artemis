@@ -229,7 +229,6 @@ export class CourseExerciseDetailsComponent extends AbstractScienceComponent imp
         if (this.exercise.problemStatement?.includes(ICER_PAPER_FLAG)) {
             this.accountService.identity().then((user) => {
                 this.isChatGptWrapper = user && user.id ? user.id % 3 == 0 : false;
-                this.isChatGptWrapper = true;
             });
         }
 
