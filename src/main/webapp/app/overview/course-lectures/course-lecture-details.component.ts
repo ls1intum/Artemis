@@ -72,7 +72,6 @@ export class CourseLectureDetailsComponent extends AbstractScienceComponent impl
     private fileService = inject(FileService);
     private router = inject(Router);
     private profileService = inject(ProfileService);
-    private route = inject(ActivatedRoute);
     private irisSettingsService = inject(IrisSettingsService);
 
     lectureId?: number;
