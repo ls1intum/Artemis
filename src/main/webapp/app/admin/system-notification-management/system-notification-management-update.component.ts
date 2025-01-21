@@ -2,7 +2,6 @@ import { Component, OnInit, inject } from '@angular/core';
 import { FormControl, FormGroup, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
 import { faBan, faSave } from '@fortawesome/free-solid-svg-icons';
-import { UserService } from 'app/core/user/user.service';
 import { SystemNotification, SystemNotificationType } from 'app/entities/system-notification.model';
 import dayjs from 'dayjs/esm';
 import { AdminSystemNotificationService } from 'app/shared/notification/system-notification/admin-system-notification.service';
@@ -17,7 +16,6 @@ import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
     imports: [FormsModule, ReactiveFormsModule, TranslateDirective, FormDateTimePickerComponent, FaIconComponent, ArtemisTranslatePipe],
 })
 export class SystemNotificationManagementUpdateComponent implements OnInit {
-    private userService = inject(UserService);
     private systemNotificationService = inject(AdminSystemNotificationService);
     private route = inject(ActivatedRoute);
     private router = inject(Router);

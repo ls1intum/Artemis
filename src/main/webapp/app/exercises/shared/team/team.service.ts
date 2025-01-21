@@ -2,7 +2,7 @@ import { HttpClient, HttpResponse } from '@angular/common/http';
 import { Injectable, OnDestroy, inject } from '@angular/core';
 import { AccountService } from 'app/core/auth/account.service';
 import { User } from 'app/core/user/user.model';
-import { JhiWebsocketService } from 'app/core/websocket/websocket.service';
+import { WebsocketService } from 'app/core/websocket/websocket.service';
 import { Course } from 'app/entities/course.model';
 import { Exercise } from 'app/entities/exercise.model';
 import { StudentWithTeam, Team, TeamAssignmentPayload, TeamImportStrategyType } from 'app/entities/team.model';
@@ -103,7 +103,7 @@ export interface ITeamService {
 @Injectable({ providedIn: 'root' })
 export class TeamService implements ITeamService, OnDestroy {
     protected http = inject(HttpClient);
-    private websocketService = inject(JhiWebsocketService);
+    private websocketService = inject(WebsocketService);
     private accountService = inject(AccountService);
 
     // Team Assignment Update Stream

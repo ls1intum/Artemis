@@ -1027,7 +1027,6 @@ describe('QuizExerciseUpdateComponent', () => {
                 saveQuizWithPendingChangesCache();
                 expect(alertServiceStub).toHaveBeenCalledOnce();
                 expect(comp.isSaving).toBeFalse();
-                expect(console.error).toHaveBeenCalledOnce();
             };
 
             beforeEach(() => {

@@ -22,6 +22,7 @@ import static org.mockito.Mockito.when;
 import static org.springframework.test.web.client.match.MockRestRequestMatchers.method;
 import static org.springframework.test.web.client.match.MockRestRequestMatchers.requestTo;
 import static org.springframework.test.web.client.response.MockRestResponseCreators.withStatus;
+import static org.springframework.test.web.client.response.MockRestResponseCreators.withSuccess;
 
 import java.net.URISyntaxException;
 import java.net.URL;
@@ -365,7 +366,7 @@ public class GitlabRequestMockProvider {
         final var response = new ObjectMapper().writeValueAsString(accessTokenResponseDTO);
 
         mockServer.expect(requestTo(gitLabApi.getGitLabServerUrl() + "/api/v4/users/" + userId + "/personal_access_tokens")).andExpect(method(HttpMethod.POST))
-                .andRespond(withStatus(HttpStatus.OK).contentType(MediaType.APPLICATION_JSON).body(response));
+                .andRespond(withSuccess().contentType(MediaType.APPLICATION_JSON).body(response));
     }
 
     public void mockCreatePersonalAccessTokenError() throws GitLabApiException {

@@ -26,6 +26,7 @@ import { ExerciseSaveButtonComponent } from '../exercise-save-button/exercise-sa
 import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { NgClass } from '@angular/common';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
+import { captureException } from '@sentry/angular';
 
 @Component({
     selector: 'jhi-quiz-submission-exam',
@@ -121,7 +122,7 @@ export class QuizExamSubmissionComponent extends ExamSubmissionComponent impleme
                         this.shortAnswerSubmittedTexts.set(question.id!, []);
                         break;
                     default:
-                        console.error('Unknown question type: ' + question);
+                        captureException('Unknown question type: ' + question);
                         break;
                 }
             }, this);
@@ -200,7 +201,7 @@ export class QuizExamSubmissionComponent extends ExamSubmissionComponent impleme
                         }
                         break;
                     default:
-                        console.error('Unknown question type: ' + question);
+                        captureException('Unknown question type: ' + question);
                         break;
                 }
             }, this);
@@ -241,7 +242,7 @@ export class QuizExamSubmissionComponent extends ExamSubmissionComponent impleme
                 return selectedQuestion.id === Number(questionID);
             });
             if (!question) {
-                console.error('question not found for ID: ' + questionID);
+                captureException('question not found for ID: ' + questionID);
                 return;
             }
             // generate the submittedAnswer object
@@ -258,7 +259,7 @@ export class QuizExamSubmissionComponent extends ExamSubmissionComponent impleme
                 return localQuestion.id === Number(questionID);
             });
             if (!question) {
-                console.error('question not found for ID: ' + questionID);
+                captureException('question not found for ID: ' + questionID);
                 return;
             }
             // generate the submittedAnswer object
@@ -274,7 +275,7 @@ export class QuizExamSubmissionComponent extends ExamSubmissionComponent impleme
                 return localQuestion.id === Number(questionID);
             });
             if (!question) {
-                console.error('question not found for ID: ' + questionID);
+                captureException('question not found for ID: ' + questionID);
                 return;
             }
             // generate the submittedAnswer object
