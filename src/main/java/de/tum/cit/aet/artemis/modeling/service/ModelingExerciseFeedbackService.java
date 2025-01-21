@@ -69,9 +69,24 @@ public class ModelingExerciseFeedbackService {
      */
     public StudentParticipation handleNonGradedFeedbackRequest(StudentParticipation participation, ModelingExercise modelingExercise) {
         if (this.athenaFeedbackSuggestionsService.isPresent()) {
-            this.checkRateLimitOrThrow(participation);
-            this.checkLatestSubmissionHasAthenaResultOrThrow(participation);
-            CompletableFuture.runAsync(() -> this.generateAutomaticNonGradedFeedback(participation, modelingExercise));
+            this.athenaFeedbackSuggestionsService.get().checkRateLimitOrThrow(participation);
+
+            Optional<Submission> submissionOptional = participationService.findExerciseParticipationWithLatestSubmissionAndResultElseThrow(participation.getId())
+                    .findLatestSubmission();
+
+            if (submissionOptional.isEmpty()) {
+                throw new BadRequestAlertException("No legal submissions found", "submission", "noSubmissionExists", true);
+            }
+
+            ModelingSubmission modelingSubmission = (ModelingSubmission) submissionOptional.get();
+
+            this.athenaFeedbackSuggestionsService.orElseThrow().checkLatestSubmissionHasNoAthenaResultOrThrow(modelingSubmission);
+
+            if (modelingSubmission.isEmpty()) {
+                throw new BadRequestAlertException("Submission can not be empty for an AI feedback request", "submission", "noAthenaFeedbackOnEmptySubmission", true);
+            }
+
+            CompletableFuture.runAsync(() -> this.generateAutomaticNonGradedFeedback(modelingSubmission, participation, modelingExercise));
         }
         return participation;
     }
@@ -80,29 +95,21 @@ public class ModelingExerciseFeedbackService {
      * Generates automatic non-graded feedback for a modeling exercise submission.
      * This method leverages the Athena service to generate feedback based on the latest submission.
      *
-     * @param participation    the student participation associated with the exercise.
-     * @param modelingExercise the modeling exercise object.
+     * @param modelingSubmission the modeling submission associated with the student participation.
+     * @param participation      the student participation associated with the exercise.
+     * @param modelingExercise   the modeling exercise object.
      */
-    public void generateAutomaticNonGradedFeedback(StudentParticipation participation, ModelingExercise modelingExercise) {
+    public void generateAutomaticNonGradedFeedback(ModelingSubmission modelingSubmission, StudentParticipation participation, ModelingExercise modelingExercise) {
         log.debug("Using athena to generate (modeling exercise) feedback request: {}", modelingExercise.getId());
 
-        Optional<Submission> submissionOptional = participationService.findExerciseParticipationWithLatestSubmissionAndResultElseThrow(participation.getId())
-                .findLatestSubmission();
-
-        if (submissionOptional.isEmpty()) {
-            throw new BadRequestAlertException("No legal submissions found", "submission", "noSubmission");
-        }
-
-        Submission submission = submissionOptional.get();
-
-        Result automaticResult = createInitialResult(participation, submission);
+        Result automaticResult = createInitialResult(participation, modelingSubmission);
 
         try {
             this.resultWebsocketService.broadcastNewResult(participation, automaticResult);
 
-            log.debug("Submission id: {}", submission.getId());
+            log.debug("Submission id: {}", modelingSubmission.getId());
 
-            List<Feedback> feedbacks = getAthenaFeedback(modelingExercise, (ModelingSubmission) submission);
+            List<Feedback> feedbacks = getAthenaFeedback(modelingExercise, modelingSubmission);
 
             double totalFeedbackScore = calculateTotalFeedbackScore(feedbacks, modelingExercise);
 
@@ -112,7 +119,7 @@ public class ModelingExerciseFeedbackService {
 
             automaticResult = this.resultRepository.save(automaticResult);
             resultService.storeFeedbackInResult(automaticResult, feedbacks, true);
-            submissionService.saveNewResult(submission, automaticResult);
+            submissionService.saveNewResult(modelingSubmission, automaticResult);
             this.resultWebsocketService.broadcastNewResult(participation, automaticResult);
         }
         catch (Exception e) {
@@ -190,45 +197,4 @@ public class ModelingExerciseFeedbackService {
 
         return (totalCredits / maxPoints) * 100;
     }
-
-    /**
-     * Checks if the number of Athena results for the given participation exceeds
-     * the allowed threshold and throws an exception if the limit is reached.
-     *
-     * @param participation the student participation to check
-     * @throws BadRequestAlertException if the maximum number of Athena feedback requests is exceeded
-     */
-    private void checkRateLimitOrThrow(StudentParticipation participation) {
-        List<Result> athenaResults = participation.getResults().stream().filter(result -> result.getAssessmentType() == AssessmentType.AUTOMATIC_ATHENA).toList();
-
-        if (athenaResults.size() >= 10) {
-            throw new BadRequestAlertException("Maximum number of AI feedback requests reached.", "participation", "maxAthenaResultsReached", true);
-        }
-    }
-
-    /**
-     * Ensures that the latest submission associated with the participation does not already
-     * have an Athena-generated result. Throws an exception if Athena result already exists.
-     *
-     * @param participation the student participation to validate
-     * @throws BadRequestAlertException if no legal submissions exist or if an Athena result is already present
-     */
-    private void checkLatestSubmissionHasAthenaResultOrThrow(StudentParticipation participation) {
-        Optional<Submission> submissionOptional = participationService.findExerciseParticipationWithLatestSubmissionAndResultElseThrow(participation.getId())
-                .findLatestSubmission();
-
-        if (submissionOptional.isEmpty()) {
-            throw new BadRequestAlertException("No legal submissions found", "submission", "noSubmission");
-        }
-
-        Submission submission = submissionOptional.get();
-
-        Result latestResult = submission.getLatestResult();
-
-        if (latestResult != null && latestResult.getAssessmentType() == AssessmentType.AUTOMATIC_ATHENA) {
-            log.debug("Submission ID: {} already has an Athena result. Skipping feedback generation.", submission.getId());
-            throw new BadRequestAlertException("Submission already has an Athena result", "submission", "submissionAlreadyHasAthenaResult", true);
-        }
-    }
-
 }
