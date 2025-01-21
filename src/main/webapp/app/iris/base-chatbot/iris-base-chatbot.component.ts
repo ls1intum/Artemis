@@ -145,6 +145,7 @@ export class IrisBaseChatbotComponent implements OnInit, OnDestroy, AfterViewIni
 
     @Input() fullSize: boolean | undefined;
     @Input() showCloseButton = false;
+    @Input() isChatGptWrapper = false;
     @Output() fullSizeToggle = new EventEmitter<void>();
     @Output() closeClicked = new EventEmitter<void>();
 

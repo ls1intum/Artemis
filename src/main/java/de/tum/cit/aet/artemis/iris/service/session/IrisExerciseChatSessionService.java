@@ -1,5 +1,6 @@
 package de.tum.cit.aet.artemis.iris.service.session;
 
+import static de.tum.cit.aet.artemis.core.config.Constants.ICER_PAPER_FLAG;
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_IRIS;
 
 import java.util.List;
@@ -173,7 +174,7 @@ public class IrisExerciseChatSessionService extends AbstractIrisChatSessionServi
         var variant = irisSettingsService.getCombinedIrisSettingsFor(session.getExercise(), false).irisChatSettings().selectedVariant();
 
         // TODO TW: This "feature" is only temporary for a paper.
-        if (exercise.getProblemStatement().contains("ICER 2025 Paper")) {
+        if (exercise.getProblemStatement().contains(ICER_PAPER_FLAG)) {
             if (chatSession.getUser().getId() % 3 == 0) {
                 variant = "chat-gpt-wrapper";
             }

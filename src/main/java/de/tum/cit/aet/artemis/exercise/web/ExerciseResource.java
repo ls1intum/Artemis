@@ -1,5 +1,6 @@
 package de.tum.cit.aet.artemis.exercise.web;
 
+import static de.tum.cit.aet.artemis.core.config.Constants.ICER_PAPER_FLAG;
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
 import java.time.ZonedDateTime;
@@ -345,7 +346,7 @@ public class ExerciseResource {
         PlagiarismCaseInfoDTO plagiarismCaseInfo = plagiarismCaseService.getPlagiarismCaseInfoForExerciseAndUser(exercise.getId(), user.getId()).orElse(null);
 
         // TODO TW: This "feature" is only temporary for a paper.
-        if (exercise.getProblemStatement().contains("ICER 2025 Paper")) {
+        if (exercise.getProblemStatement().contains(ICER_PAPER_FLAG)) {
             if (user.getId() % 3 == 2) {
                 irisSettings = null;
             }
