@@ -63,8 +63,10 @@ public class LectureTranscriptionResource {
     /**
      * POST /transcription : Create a new transcription.
      *
-     * @param transcriptionDTO the transcription object to create
-     * @return the ResponseEntity with status 201 (Created) and with body the new transcription, or with status 400 (Bad Request) if the transcription has already an ID
+     * @param courseId         The id of the course
+     * @param lectureId        The id of the lecture
+     * @param transcriptionDTO The transcription object to create
+     * @return The ResponseEntity with status 201 (Created) and with body the new transcription, or with status 400 (Bad Request) if the transcription has already an ID
      * @throws URISyntaxException if the Location URI syntax is incorrect
      */
     @PostMapping(value = "courses/{courseId}/lecture/{lectureId}/transcriptions")

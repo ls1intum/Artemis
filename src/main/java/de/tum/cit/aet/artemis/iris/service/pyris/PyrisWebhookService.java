@@ -76,6 +76,8 @@ public class PyrisWebhookService {
      * adds the transcription to the vector database in Pyris
      *
      * @param transcriptions The transcription that got Updated
+     * @param course         The course of the transcriptions
+     * @param lecture        The lecture of the transcriptions
      * @return jobToken if the job was created else null
      */
     public String addTranscriptionsToPyrisDB(Set<LectureTranscription> transcriptions, Course course, Lecture lecture) {

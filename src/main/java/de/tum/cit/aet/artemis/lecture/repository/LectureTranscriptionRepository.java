@@ -8,6 +8,7 @@ import java.util.Set;
 
 import org.springframework.context.annotation.Profile;
 import org.springframework.data.jpa.repository.EntityGraph;
+import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import de.tum.cit.aet.artemis.core.repository.base.ArtemisJpaRepository;
@@ -21,12 +22,12 @@ import de.tum.cit.aet.artemis.lecture.domain.LectureTranscription;
 public interface LectureTranscriptionRepository extends ArtemisJpaRepository<LectureTranscription, Long> {
 
     @EntityGraph(type = LOAD, attributePaths = { "segments" })
-    Optional<LectureTranscription> findOneWithTranscriptionSegmentsById(Long id);
+    Optional<LectureTranscription> findOneWithTranscriptionSegmentsById(@Param("id") Long id);
 
     @EntityGraph(type = LOAD, attributePaths = { "segments" })
-    Set<LectureTranscription> findAllWithTranscriptionSegmentsByLectureId(Long lectureId);
+    Set<LectureTranscription> findAllWithTranscriptionSegmentsByLectureId(@Param("lectureId") Long lectureId);
 
     @EntityGraph(type = LOAD, attributePaths = {})
-    Set<LectureTranscription> findAllByLectureId(Long lectureId);
+    Set<LectureTranscription> findAllByLectureId(@Param("lectureId") Long lectureId);
 
 }

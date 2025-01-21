@@ -302,6 +302,7 @@ public class LectureResource {
      * POST /lectures/{lectureId}/ingest-transcription
      * This endpoint is for starting the ingestion of all lectures or only one lecture when triggered in Artemis.
      *
+     * @param courseId  The id of the course of the lecture
      * @param lectureId If this id is present then only ingest this one lecture of the respective course
      * @return the ResponseEntity with status 200 (OK) and a message success or null if the operation failed
      */
