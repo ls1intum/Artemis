@@ -1,9 +1,8 @@
-import { Component, Input, OnInit, ViewChild, ViewEncapsulation } from '@angular/core';
-import { AbstractControl, NgForm } from '@angular/forms';
+import { Component, Input, OnInit, ViewChild, ViewEncapsulation, inject } from '@angular/core';
+import { AbstractControl, FormsModule, NgForm } from '@angular/forms';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { Observable, Subject } from 'rxjs';
-import { ParticipationService } from 'app/exercises/shared/participation/participation.service';
 import { TeamService } from 'app/exercises/shared/team/team.service';
 import { Team } from 'app/entities/team.model';
 import { User } from 'app/core/user/user.model';
@@ -13,6 +12,13 @@ import { debounceTime, switchMap } from 'rxjs/operators';
 import { Exercise } from 'app/entities/exercise.model';
 import { SHORT_NAME_PATTERN } from 'app/shared/constants/input.constants';
 import { faBan, faExclamationTriangle, faSave, faSpinner, faTrashAlt } from '@fortawesome/free-solid-svg-icons';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { HelpIconComponent } from 'app/shared/components/help-icon.component';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { TeamOwnerSearchComponent } from '../team-owner-search/team-owner-search.component';
+import { TeamStudentSearchComponent } from '../team-student-search/team-student-search.component';
+import { KeyValuePipe } from '@angular/common';
+import { RemoveKeysPipe } from 'app/shared/pipes/remove-keys.pipe';
 
 export type StudentTeamConflict = { studentLogin: string; teamId: string };
 
@@ -21,8 +27,12 @@ export type StudentTeamConflict = { studentLogin: string; teamId: string };
     templateUrl: './team-update-dialog.component.html',
     styleUrls: ['./team-update-dialog.component.scss'],
     encapsulation: ViewEncapsulation.None,
+    imports: [FormsModule, TranslateDirective, HelpIconComponent, FaIconComponent, TeamOwnerSearchComponent, TeamStudentSearchComponent, KeyValuePipe, RemoveKeysPipe],
 })
 export class TeamUpdateDialogComponent implements OnInit {
+    private teamService = inject(TeamService);
+    private activeModal = inject(NgbActiveModal);
+
     @ViewChild('editForm', { static: false }) editForm: NgForm;
 
     @Input() team: Team;
@@ -54,12 +64,6 @@ export class TeamUpdateDialogComponent implements OnInit {
     faSpinner = faSpinner;
     faExclamationTriangle = faExclamationTriangle;
     faTrashAlt = faTrashAlt;
-
-    constructor(
-        private participationService: ParticipationService,
-        private teamService: TeamService,
-        private activeModal: NgbActiveModal,
-    ) {}
 
     /**
      * Life cycle hook to indicate component creation is done

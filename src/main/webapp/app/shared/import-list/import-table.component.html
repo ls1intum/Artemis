@@ -25,18 +25,14 @@
                 <th class="col-1 clickable">
                     <div class="d-flex align-items-center" (click)="setSortedColumn('ID')">
                         <span>#</span>
-                        <ng-container
-                            *ngTemplateOutlet="sortIcon; context: { sortedColumn: 'ID', currentSortedColumn: sortedColumn(), sortingOrder: sortingOrder() }"
-                        ></ng-container>
+                        <ng-container *ngTemplateOutlet="sortIcon; context: { sortedColumn: 'ID', currentSortedColumn: sortedColumn(), sortingOrder: sortingOrder() }" />
                     </div>
                 </th>
                 @for (column of columns(); track column) {
                     <th class="col-4 clickable" (click)="setSortedColumn(column.name)">
                         <div class="d-flex align-items-center">
                             <span [jhiTranslate]="columnBaseTranslationKey() + '.table.columns.' + column.name"></span>
-                            <ng-container
-                                *ngTemplateOutlet="sortIcon; context: { sortedColumn: column.name, currentSortedColumn: sortedColumn(), sortingOrder: sortingOrder() }"
-                            ></ng-container>
+                            <ng-container *ngTemplateOutlet="sortIcon; context: { sortedColumn: column.name, currentSortedColumn: sortedColumn(), sortingOrder: sortingOrder() }" />
                         </div>
                     </th>
                 }
@@ -77,8 +73,8 @@
 
 <ng-template #sortIcon let-sortedColumn="sortedColumn" let-currentSortedColumn="currentSortedColumn" let-sortingOrder="sortingOrder">
     @if (sortedColumn !== currentSortedColumn) {
-        <fa-icon [icon]="faSort" class="ms-1"></fa-icon>
+        <fa-icon [icon]="faSort" class="ms-1" />
     } @else {
-        <fa-icon [icon]="sortingOrder === SortingOrder.DESCENDING ? faSortDown : faSortUp" class="ms-1"></fa-icon>
+        <fa-icon [icon]="sortingOrder === SortingOrder.DESCENDING ? faSortDown : faSortUp" class="ms-1" />
     }
 </ng-template>

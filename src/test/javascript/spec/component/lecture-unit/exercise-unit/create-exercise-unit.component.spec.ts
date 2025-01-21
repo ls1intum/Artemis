@@ -22,6 +22,7 @@ import { SortByDirective } from 'app/shared/sort/sort-by.directive';
 import { SortDirective } from 'app/shared/sort/sort.directive';
 import { AlertService } from 'app/core/util/alert.service';
 import { UMLDiagramType } from '@ls1intum/apollon';
+import { ArtemisTestModule } from '../../../test.module';
 
 describe('CreateExerciseUnitComponent', () => {
     let createExerciseUnitComponentFixture: ComponentFixture<CreateExerciseUnitComponent>;
@@ -36,7 +37,7 @@ describe('CreateExerciseUnitComponent', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [],
+            imports: [ArtemisTestModule],
             declarations: [
                 CreateExerciseUnitComponent,
                 MockPipe(ArtemisTranslatePipe),

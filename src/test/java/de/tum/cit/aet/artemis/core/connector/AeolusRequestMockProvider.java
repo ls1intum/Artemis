@@ -4,6 +4,7 @@ import static org.springframework.test.web.client.match.MockRestRequestMatchers.
 import static org.springframework.test.web.client.match.MockRestRequestMatchers.method;
 import static org.springframework.test.web.client.match.MockRestRequestMatchers.requestTo;
 import static org.springframework.test.web.client.response.MockRestResponseCreators.withStatus;
+import static org.springframework.test.web.client.response.MockRestResponseCreators.withSuccess;
 
 import java.net.URL;
 import java.util.HashMap;
@@ -72,7 +73,7 @@ public class AeolusRequestMockProvider {
         String json = objectMapper.writeValueAsString(responseBody);
 
         mockServer.expect(requestTo(MatchesPattern.matchesPattern(uriPattern))).andExpect(method(HttpMethod.POST))
-                .andRespond(withStatus(HttpStatus.OK).body(json).contentType(org.springframework.http.MediaType.APPLICATION_JSON));
+                .andRespond(withSuccess().body(json).contentType(org.springframework.http.MediaType.APPLICATION_JSON));
     }
 
     /**
@@ -110,11 +111,11 @@ public class AeolusRequestMockProvider {
         String json = objectMapper.writeValueAsString(responseBody);
 
         mockServer.expect(requestTo(MatchesPattern.matchesPattern(uriPattern))).andExpect(method(HttpMethod.POST))
-                .andRespond(withStatus(HttpStatus.OK).body(json).contentType(org.springframework.http.MediaType.APPLICATION_JSON));
+                .andRespond(withSuccess().body(json).contentType(org.springframework.http.MediaType.APPLICATION_JSON));
     }
 
     public void mockAuthenticatedRequest(String uri, String token) {
-        mockServer.expect(requestTo(uri)).andExpect(method(HttpMethod.POST)).andExpect(header("Authorization", "Bearer " + token)).andRespond(withStatus(HttpStatus.OK));
+        mockServer.expect(requestTo(uri)).andExpect(method(HttpMethod.POST)).andExpect(header("Authorization", "Bearer " + token)).andRespond(withSuccess());
     }
 
     /**

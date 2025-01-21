@@ -33,7 +33,6 @@ describe('FileUploadExerciseUpdateComponent', () => {
     beforeEach(() => {
         TestBed.configureTestingModule({
             imports: [ArtemisTestModule],
-            declarations: [FileUploadExerciseUpdateComponent],
             providers: [
                 { provide: LocalStorageService, useClass: MockSyncStorage },
                 { provide: SessionStorageService, useClass: MockSyncStorage },
@@ -41,9 +40,7 @@ describe('FileUploadExerciseUpdateComponent', () => {
                 { provide: NgbModal, useClass: MockNgbModalService },
                 MockProvider(TranslateService),
             ],
-        })
-            .overrideTemplate(FileUploadExerciseUpdateComponent, '')
-            .compileComponents();
+        }).compileComponents();
 
         fixture = TestBed.createComponent(FileUploadExerciseUpdateComponent);
         comp = fixture.componentInstance;

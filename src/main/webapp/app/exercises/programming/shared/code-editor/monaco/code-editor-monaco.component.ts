@@ -52,7 +52,6 @@ export type Annotation = { fileName: string; row: number; column: number; text: 
     encapsulation: ViewEncapsulation.None,
     imports: [ArtemisSharedModule, ArtemisProgrammingManualAssessmentModule, MonacoEditorComponent, CodeEditorHeaderComponent],
     providers: [RepositoryFileService],
-    standalone: true,
     changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class CodeEditorMonacoComponent implements OnChanges {
@@ -128,19 +127,13 @@ export class CodeEditorMonacoComponent implements OnChanges {
     annotationsArray: Array<Annotation> = [];
 
     constructor() {
-        effect(
-            () => {
-                this.feedbackInternal.set(this.feedbacks());
-            },
-            { allowSignalWrites: true },
-        );
+        effect(() => {
+            this.feedbackInternal.set(this.feedbacks());
+        });
 
-        effect(
-            () => {
-                this.feedbackSuggestionsInternal.set(this.feedbackSuggestions());
-            },
-            { allowSignalWrites: true },
-        );
+        effect(() => {
+            this.feedbackSuggestionsInternal.set(this.feedbackSuggestions());
+        });
 
         effect(() => {
             const annotations = this.buildAnnotations();
@@ -375,7 +368,7 @@ export class CodeEditorMonacoComponent implements OnChanges {
      * @param line The line (0-based) for which to retrieve the feedback node.
      */
     getInlineFeedbackNode(line: number): HTMLElement | undefined {
-        return [...this.inlineFeedbackComponents(), ...this.inlineFeedbackSuggestionComponents()].find((c) => c.codeLine === line)?.elementRef?.nativeElement;
+        return [...this.inlineFeedbackComponents(), ...this.inlineFeedbackSuggestionComponents()].find((comp) => comp.codeLine === line)?.elementRef?.nativeElement;
     }
 
     private addLineWidgetWithFeedback(feedback: Feedback): void {

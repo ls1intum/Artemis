@@ -1,9 +1,9 @@
-import { ChangeDetectionStrategy, ChangeDetectorRef, Component, OnDestroy, OnInit } from '@angular/core';
+import { ChangeDetectionStrategy, ChangeDetectorRef, Component, OnDestroy, OnInit, inject } from '@angular/core';
 import { onError } from 'app/shared/util/global.utils';
 import { TutorialGroupsConfiguration } from 'app/entities/tutorial-group/tutorial-groups-configuration.model';
 import { EMPTY, Subject, combineLatest, finalize, from, switchMap, take } from 'rxjs';
 import { TutorialGroupsConfigurationService } from 'app/course/tutorial-groups/services/tutorial-groups-configuration.service';
-import { ActivatedRoute, Router } from '@angular/router';
+import { ActivatedRoute } from '@angular/router';
 import { HttpErrorResponse } from '@angular/common/http';
 import { AlertService } from 'app/core/util/alert.service';
 import { TutorialGroupFreePeriod } from 'app/entities/tutorial-group/tutorial-group-free-day.model';
@@ -14,14 +14,26 @@ import dayjs from 'dayjs/esm';
 import { NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
 import { CreateTutorialGroupFreePeriodComponent } from 'app/course/tutorial-groups/tutorial-groups-management/tutorial-free-periods/crud/create-tutorial-group-free-period/create-tutorial-group-free-period.component';
 import { catchError, takeUntil } from 'rxjs/operators';
+import { LoadingIndicatorContainerComponent } from 'app/shared/loading-indicator-container/loading-indicator-container.component';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { TutorialGroupFreePeriodsTableComponent } from './tutorial-group-free-periods-table/tutorial-group-free-periods-table.component';
 
 @Component({
     selector: 'jhi-tutorial-free-periods',
     templateUrl: './tutorial-group-free-periods-management.component.html',
     styleUrls: ['./tutorial-group-free-periods-management.component.scss'],
     changeDetection: ChangeDetectionStrategy.OnPush,
+    imports: [LoadingIndicatorContainerComponent, TranslateDirective, FaIconComponent, TutorialGroupFreePeriodsTableComponent],
 })
 export class TutorialGroupFreePeriodsManagementComponent implements OnInit, OnDestroy {
+    private activatedRoute = inject(ActivatedRoute);
+    private tutorialGroupsConfigurationService = inject(TutorialGroupsConfigurationService);
+    private alertService = inject(AlertService);
+    private sortService = inject(SortService);
+    private modalService = inject(NgbModal);
+    private cdr = inject(ChangeDetectorRef);
+
     isLoading = false;
     tutorialGroupsConfiguration: TutorialGroupsConfiguration;
     tutorialGroupFreePeriods: TutorialGroupFreePeriod[] = [];
@@ -33,16 +45,6 @@ export class TutorialGroupFreePeriodsManagementComponent implements OnInit, OnDe
     dialogError$ = this.dialogErrorSource.asObservable();
 
     ngUnsubscribe = new Subject<void>();
-
-    constructor(
-        private activatedRoute: ActivatedRoute,
-        private router: Router,
-        private tutorialGroupsConfigurationService: TutorialGroupsConfigurationService,
-        private alertService: AlertService,
-        private sortService: SortService,
-        private modalService: NgbModal,
-        private cdr: ChangeDetectorRef,
-    ) {}
 
     ngOnInit(): void {
         this.loadAll();

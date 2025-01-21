@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, inject } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { IconProp } from '@fortawesome/fontawesome-svg-core';
 import {
@@ -35,20 +35,22 @@ import {
     faWrench,
 } from '@fortawesome/free-solid-svg-icons';
 import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
+import { TranslateDirective } from '../shared/language/translate.directive';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { ArtemisTranslatePipe } from '../shared/pipes/artemis-translate.pipe';
 
 @Component({
     selector: 'jhi-feature-overview',
     templateUrl: './feature-overview.component.html',
     styleUrls: ['./feature-overview.scss'],
+    imports: [TranslateDirective, FaIconComponent, ArtemisTranslatePipe],
 })
 export class FeatureOverviewComponent implements OnInit {
+    private route = inject(ActivatedRoute);
+    private profileService = inject(ProfileService);
+
     features: Feature[];
     targetAudience = TargetAudience.INSTRUCTORS;
-
-    constructor(
-        private route: ActivatedRoute,
-        private profileService: ProfileService,
-    ) {}
 
     /**
      * Initialises the feature overview page either for students or for instructors, depending on the url.

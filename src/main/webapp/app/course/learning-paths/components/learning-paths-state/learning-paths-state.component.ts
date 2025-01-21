@@ -6,14 +6,14 @@ import { onError } from 'app/shared/util/global.utils';
 import { ActivatedRoute, Router } from '@angular/router';
 import { faSpinner } from '@fortawesome/free-solid-svg-icons';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
-import { CommonModule } from '@angular/common';
+
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
+import { NgClass } from '@angular/common';
 
 @Component({
     selector: 'jhi-learning-paths-state',
-    standalone: true,
     changeDetection: ChangeDetectionStrategy.OnPush,
-    imports: [TranslateDirective, CommonModule, FontAwesomeModule],
+    imports: [TranslateDirective, FontAwesomeModule, NgClass],
     templateUrl: './learning-paths-state.component.html',
     styleUrls: ['./learning-paths-state.component.scss', '../../pages/learning-path-instructor-page/learning-path-instructor-page.component.scss'],
 })
@@ -45,13 +45,10 @@ export class LearningPathsStateComponent {
     readonly learningPathHealthState = computed(() => this.learningPathHealth()?.status ?? []);
 
     constructor() {
-        effect(
-            () => {
-                const courseId = this.courseId();
-                untracked(() => this.loadLearningPathHealthState(courseId));
-            },
-            { allowSignalWrites: true },
-        );
+        effect(() => {
+            const courseId = this.courseId();
+            untracked(() => this.loadLearningPathHealthState(courseId));
+        });
     }
 
     protected async loadLearningPathHealthState(courseId: number): Promise<void> {

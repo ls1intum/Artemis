@@ -4,8 +4,7 @@ import { ExamModePickerComponent } from 'app/exam/manage/exams/exam-mode-picker/
 import { ArtemisSharedModule } from 'app/shared/shared.module';
 
 @NgModule({
-    imports: [ArtemisSharedModule],
-    declarations: [ExamModePickerComponent],
+    imports: [ArtemisSharedModule, ExamModePickerComponent],
     exports: [ExamModePickerComponent],
 })
 export class ArtemisExamModePickerModule {}

@@ -1,7 +1,6 @@
-import { Component, OnInit } from '@angular/core';
-import { ActivatedRoute, Router } from '@angular/router';
+import { Component, OnInit, inject } from '@angular/core';
+import { ActivatedRoute } from '@angular/router';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
-import { TranslateService } from '@ngx-translate/core';
 
 import { QuizExerciseService } from './quiz-exercise.service';
 import { QuizExercise } from 'app/entities/quiz/quiz-exercise.model';
@@ -10,25 +9,24 @@ import { CourseManagementService } from 'app/course/manage/course-management.ser
 import { QuizQuestion } from 'app/entities/quiz/quiz-question.model';
 import { Course } from 'app/entities/course.model';
 import { onError } from 'app/shared/util/global.utils';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { FormsModule } from '@angular/forms';
 
 @Component({
     selector: 'jhi-quiz-exercise-export',
     templateUrl: './quiz-exercise-export.component.html',
     styleUrls: ['./quiz-exercise-export.component.scss', '../shared/quiz.scss'],
+    imports: [TranslateDirective, FormsModule],
 })
 export class QuizExerciseExportComponent implements OnInit {
+    private route = inject(ActivatedRoute);
+    private quizExerciseService = inject(QuizExerciseService);
+    private courseService = inject(CourseManagementService);
+    private alertService = inject(AlertService);
+
     questions: QuizQuestion[] = new Array(0);
     courseId: number;
     course: Course;
-
-    constructor(
-        private route: ActivatedRoute,
-        private quizExerciseService: QuizExerciseService,
-        private courseService: CourseManagementService,
-        private alertService: AlertService,
-        private router: Router,
-        private translateService: TranslateService,
-    ) {}
 
     /**
      * Load the quizzes of the course for export on init.

@@ -3,7 +3,7 @@
         <div class="d-flex align-items-center">
             <span [jhiTranslate]="label"></span>
             @if (column !== 'errorCategory') {
-                <jhi-sort-icon [direction]="getSortDirection(column)"></jhi-sort-icon>
+                <jhi-sort-icon [direction]="getSortDirection(column)" />
             }
         </div>
     </th>
@@ -23,11 +23,11 @@
                     <input class="form-check-input mt-0" type="checkbox" (click)="toggleGroupFeedback()" [checked]="groupFeedback()" style="width: 2.5rem; height: 1.25rem" />
                     <label class="ms-1 me-2 mb-0">
                         <span [jhiTranslate]="TRANSLATION_BASE + '.groupFeedback'"></span>
-                        <fa-icon size="sm" [icon]="faCircleQuestion" [ngbTooltip]="TRANSLATION_BASE + '.groupFeedbackTooltip' | artemisTranslate" class="btn-warning"></fa-icon>
+                        <fa-icon size="sm" [icon]="faCircleQuestion" [ngbTooltip]="TRANSLATION_BASE + '.groupFeedbackTooltip' | artemisTranslate" class="btn-warning" />
                     </label>
                 </div>
                 <button class="btn me-2" (click)="openFilterModal()" [ngClass]="selectedFiltersCount() ? 'btn-success' : 'btn-secondary'">
-                    <fa-icon [icon]="faFilter"></fa-icon>
+                    <fa-icon [icon]="faFilter" />
                     <span [jhiTranslate]="TRANSLATION_BASE + '.filter'"></span> ({{ selectedFiltersCount() }})
                 </button>
                 <input
@@ -44,11 +44,11 @@
     <table class="table table-striped mb-3">
         <thead>
             <tr>
-                <ng-container *ngTemplateOutlet="headerTemplate; context: { column: 'count', label: TRANSLATION_BASE + '.occurrence', colSize: 'col-1' }"></ng-container>
-                <ng-container *ngTemplateOutlet="headerTemplate; context: { column: 'detailTexts', label: TRANSLATION_BASE + '.feedback', colSize: 'col-6' }"></ng-container>
-                <ng-container *ngTemplateOutlet="headerTemplate; context: { column: 'taskName', label: TRANSLATION_BASE + '.task', colSize: 'col-1' }"></ng-container>
-                <ng-container *ngTemplateOutlet="headerTemplate; context: { column: 'testCaseName', label: TRANSLATION_BASE + '.testcase', colSize: 'col-2' }"></ng-container>
-                <ng-container *ngTemplateOutlet="headerTemplate; context: { column: 'errorCategory', label: TRANSLATION_BASE + '.errorCategory', colSize: 'col-1' }"></ng-container>
+                <ng-container *ngTemplateOutlet="headerTemplate; context: { column: 'count', label: TRANSLATION_BASE + '.occurrence', colSize: 'col-1' }" />
+                <ng-container *ngTemplateOutlet="headerTemplate; context: { column: 'detailTexts', label: TRANSLATION_BASE + '.feedback', colSize: 'col-6' }" />
+                <ng-container *ngTemplateOutlet="headerTemplate; context: { column: 'taskName', label: TRANSLATION_BASE + '.task', colSize: 'col-1' }" />
+                <ng-container *ngTemplateOutlet="headerTemplate; context: { column: 'testCaseName', label: TRANSLATION_BASE + '.testcase', colSize: 'col-2' }" />
+                <ng-container *ngTemplateOutlet="headerTemplate; context: { column: 'errorCategory', label: TRANSLATION_BASE + '.errorCategory', colSize: 'col-1' }" />
             </tr>
         </thead>
         @if (isLoading()) {
@@ -62,7 +62,7 @@
                 @if (!content().resultsOnPage) {
                     <tr>
                         <td colspan="6">
-                            <ng-container *ngTemplateOutlet="emptyTableTemplate"></ng-container>
+                            <ng-container *ngTemplateOutlet="emptyTableTemplate" />
                         </td>
                     </tr>
                 } @else {
@@ -76,10 +76,10 @@
                             <td>{{ item.testCaseName }}</td>
                             <td>{{ item.errorCategory }}</td>
                             <td class="text-center">
-                                <fa-icon [icon]="facDetails" class="ms-2 clickable" (click)="openFeedbackModal(item)"></fa-icon>
-                                <fa-icon [icon]="faUsers" class="ms-2 clickable" (click)="openAffectedStudentsModal(item)"></fa-icon>
+                                <fa-icon [icon]="facDetails" class="ms-2 clickable" (click)="openFeedbackModal(item)" />
+                                <fa-icon [icon]="faUsers" class="ms-2 clickable" (click)="openAffectedStudentsModal(item)" />
                                 @if (isCommunicationEnabled()) {
-                                    <fa-icon [icon]="faMessage" class="ms-2 clickable" (click)="openFeedbackDetailChannelModal(item)"></fa-icon>
+                                    <fa-icon [icon]="faMessage" class="ms-2 clickable" (click)="openFeedbackDetailChannelModal(item)" />
                                 }
                             </td>
                         </tr>
@@ -89,7 +89,7 @@
         }
     </table>
     <div class="d-flex flex-column align-items-end mt-2">
-        <ngb-pagination [collectionSize]="collectionsSize()" [pageSize]="pageSize()" [page]="page()" (pageChange)="setPage($event)" size="sm" [maxSize]="5"></ngb-pagination>
+        <ngb-pagination [collectionSize]="collectionsSize()" [pageSize]="pageSize()" [page]="page()" (pageChange)="setPage($event)" size="sm" [maxSize]="5" />
         <div class="text-muted text-end">
             <span [jhiTranslate]="TRANSLATION_BASE + '.totalItems'" [translateValues]="{ count: totalItems() }"></span>
         </div>

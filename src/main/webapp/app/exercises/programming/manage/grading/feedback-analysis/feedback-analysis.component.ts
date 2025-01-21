@@ -1,9 +1,8 @@
 import { Component, computed, effect, inject, input, signal, untracked } from '@angular/core';
 import { FeedbackAnalysisService, FeedbackChannelRequestDTO, FeedbackDetail } from './feedback-analysis.service';
-import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
+import { NgbModal, NgbModule, NgbPagination } from '@ng-bootstrap/ng-bootstrap';
 import { AlertService } from 'app/core/util/alert.service';
-import { faCircleQuestion, faFilter, faMessage, faSort, faSortDown, faSortUp, faSpinner, faUsers } from '@fortawesome/free-solid-svg-icons';
-import { facDetails } from '../../../../../../content/icons/icons';
+import { faCircleQuestion, faFilter, faMessage, faSort, faSpinner, faUsers } from '@fortawesome/free-solid-svg-icons';
 import { SearchResult, SortingOrder } from 'app/shared/table/pageable-table';
 import { ArtemisSharedCommonModule } from 'app/shared/shared-common.module';
 import { FeedbackModalComponent } from 'app/exercises/programming/manage/grading/feedback-analysis/Modal/feedback-modal.component';
@@ -15,13 +14,13 @@ import { AffectedStudentsModalComponent } from 'app/exercises/programming/manage
 import { FeedbackDetailChannelModalComponent } from 'app/exercises/programming/manage/grading/feedback-analysis/Modal/feedback-detail-channel-modal.component';
 import { ChannelDTO } from 'app/entities/metis/conversation/channel.model';
 import { Router } from '@angular/router';
+import { facDetails } from 'app/icons/icons';
 
 @Component({
     selector: 'jhi-feedback-analysis',
     templateUrl: './feedback-analysis.component.html',
     styleUrls: ['./feedback-analysis.component.scss'],
-    standalone: true,
-    imports: [ArtemisSharedCommonModule, SortIconComponent],
+    imports: [ArtemisSharedCommonModule, SortIconComponent, NgbModule, NgbPagination],
     providers: [FeedbackAnalysisService],
 })
 export class FeedbackAnalysisComponent {
@@ -48,8 +47,6 @@ export class FeedbackAnalysisComponent {
 
     readonly TRANSLATION_BASE = 'artemisApp.programmingExercise.configureGrading.feedbackAnalysis';
     readonly faSort = faSort;
-    readonly faSortUp = faSortUp;
-    readonly faSortDown = faSortDown;
     readonly faFilter = faFilter;
     readonly facDetails = facDetails;
     readonly faUsers = faUsers;
