@@ -48,6 +48,7 @@ import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.dto.SearchResultPageDTO;
 import de.tum.cit.aet.artemis.core.dto.pageablesearch.SearchTermPageableSearchDTO;
+import de.tum.cit.aet.artemis.core.exception.AccessForbiddenException;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.core.exception.ConflictException;
 import de.tum.cit.aet.artemis.core.exception.ContinuousIntegrationException;
@@ -551,12 +552,13 @@ public class ProgrammingExerciseResource {
     }
 
     /**
-     * GET /programming-exercises : Queries a programming exercise by its project key.
+     * GET /programming-exercises/project-key/:projectKey : Queries a programming exercise by its project key.
      *
      *
      * @param projectKey the project key of the programming exercise
      *
-     * @return the ProgrammingExercise of this project key in an ResponseEntity or 404 Not Found if no exercise exists
+     * @return the ProgrammingExercise with this project key in an ResponseEntity or 404 Not Found if no exercise exists. It includes the students participation, submissions,
+     *         results and feedbacks.
      */
     @GetMapping("programming-exercises/project-key/{projectKey}")
     @EnforceAtLeastStudent
@@ -564,8 +566,17 @@ public class ProgrammingExerciseResource {
     public ResponseEntity<ProgrammingExercise> getExerciseByProjectKey(@PathVariable String projectKey) {
         User user = userRepository.getUserWithGroupsAndAuthorities();
 
-        final ProgrammingExercise exercise = programmingExerciseRepository.findWithStudentParticipationLatestResultFeedbackTestCasesByProjectKey(user.getId(), projectKey)
+        final ProgrammingExercise exercise = programmingExerciseRepository.findAllByProjectKey(projectKey).stream().findAny()
                 .orElseThrow(() -> new EntityNotFoundException("ProgrammingExercise", projectKey));
+
+        if (!authCheckService.isAllowedToSeeExercise(exercise, user)) {
+            throw new AccessForbiddenException("You are not allowed to access this exercise");
+        }
+
+        studentParticipationRepository.findByExerciseIdAndStudentIdAndTestRunWithEagerSubmissionsResultsFeedbacksTestCases(exercise.getId(), user.getId(), false)
+                .ifPresent(participation -> {
+                    exercise.setStudentParticipations(Set.of(participation));
+                });
 
         return ResponseEntity.ok(exercise);
     }
