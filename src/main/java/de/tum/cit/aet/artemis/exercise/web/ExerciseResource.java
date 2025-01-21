@@ -157,13 +157,13 @@ public class ExerciseResource {
                 }
             }
             else {
-                // Students should never access exercises
+                // Students should never access exam exercises like this
                 throw new AccessForbiddenException();
             }
         }
         // Normal exercise
         else {
-            if (!authCheckService.isAllowedToSeeExercise(exercise, user)) {
+            if (!authCheckService.isAllowedToSeeCourseExercise(exercise, user)) {
                 throw new AccessForbiddenException();
             }
             if (!authCheckService.isAtLeastTeachingAssistantForExercise(exercise, user)) {
@@ -198,7 +198,7 @@ public class ExerciseResource {
         }
         else {
             // Course exercise
-            if (!authCheckService.isAllowedToSeeExercise(exercise, user)) {
+            if (!authCheckService.isAllowedToSeeCourseExercise(exercise, user)) {
                 throw new AccessForbiddenException("You are not allowed to see this exercise!");
             }
             if (!exercise.isExampleSolutionPublished()) {
@@ -295,6 +295,7 @@ public class ExerciseResource {
 
     /**
      * GET /exercises/:exerciseId/details : sends exercise details including all results for the currently logged-in user
+     * NOTE: this should only be used for course exercises, not for exam exercises
      *
      * @param exerciseId the exerciseId of the exercise to get the repos from
      * @return the ResponseEntity with status 200 (OK) and with body the exercise, or with status 404 (Not Found)
@@ -307,14 +308,12 @@ public class ExerciseResource {
 
         final boolean isAtLeastTAForExercise = authCheckService.isAtLeastTeachingAssistantForExercise(exercise, user);
 
-        // TODO: Create alternative route so that instructors and admins can access the exercise details
-        // The users are not allowed to access the exercise details over this route if the exercise belongs to an exam
-        if (exercise.isExamExercise() && !isAtLeastTAForExercise) {
+        if (exercise.isExamExercise()) {
             throw new AccessForbiddenException();
         }
 
         // if exercise is not yet released to the students they should not have any access to it
-        if (!authCheckService.isAllowedToSeeExercise(exercise, user)) {
+        if (!authCheckService.isAllowedToSeeCourseExercise(exercise, user)) {
             throw new AccessForbiddenException();
         }
 
