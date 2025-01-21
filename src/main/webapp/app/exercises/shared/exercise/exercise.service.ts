@@ -198,6 +198,15 @@ export class ExerciseService {
         return this.http.delete<void>(`${this.resourceUrl}/${exerciseId}/reset`, { observe: 'response' });
     }
 
+    /**
+     * Evaluate the quiz exercise
+     * @param quizExerciseId id of the quiz exercise to be evaluated
+     * @returns void
+     */
+    evaluateQuizExercise(quizExerciseId: number): Observable<HttpResponse<void>> {
+        return this.http.post<any>(`api/quiz-exercises/${quizExerciseId}/evaluate`, {}, { observe: 'response' });
+    }
+
     getUpcomingExercises(): Observable<EntityArrayResponseType> {
         return this.http
             .get<Exercise[]>(`${this.adminResourceUrl}/upcoming`, { observe: 'response' })
