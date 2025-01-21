@@ -121,11 +121,11 @@ public class PyrisConnectorService {
             restTemplate.postForEntity(pyrisUrl + endpoint, objectMapper.valueToTree(executionDTO), Void.class);
         }
         catch (HttpStatusCodeException e) {
-            log.error("Failed to send transcription {} to Pyris: {}", executionDTO.transcription().lectureName(), e.getMessage());
+            log.error("Failed to send transcription {} to Pyris: {}", executionDTO.lectureName(), e.getMessage());
             throw toIrisException(e);
         }
         catch (RestClientException | IllegalArgumentException e) {
-            log.error("Failed to send transcription {} to Pyris: {}", executionDTO.transcription().lectureName(), e.getMessage());
+            log.error("Failed to send transcription {} to Pyris: {}", executionDTO.lectureName(), e.getMessage());
             throw new PyrisConnectorException("Could not fetch response from Pyris");
         }
     }

@@ -318,7 +318,7 @@ public class LectureResource {
                     .body(null);
         }
         Set<LectureTranscription> transcriptionsToIngest = new HashSet<>(transcriptions);
-        lectureService.ingestTranscriptionInPyris(transcriptionsToIngest);
+        lectureService.ingestTranscriptionInPyris(transcriptionsToIngest, course, lecture);
         return ResponseEntity.ok().build();
     }
 

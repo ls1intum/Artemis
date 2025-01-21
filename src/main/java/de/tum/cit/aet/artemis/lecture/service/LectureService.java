@@ -193,11 +193,7 @@ public class LectureService {
      *
      * @param transcriptions set of transcriptions to be ingested
      */
-    public void ingestTranscriptionInPyris(Set<LectureTranscription> transcriptions) {
-        if (pyrisWebhookService.isPresent()) {
-            for (LectureTranscription transcription : transcriptions) {
-                String jobToken = pyrisWebhookService.get().addTranscriptionToPyrisDB(transcription);
-            }
-        }
+    public void ingestTranscriptionInPyris(Set<LectureTranscription> transcriptions, Course course, Lecture lecture) {
+        pyrisWebhookService.ifPresent(webhookService -> webhookService.addTranscriptionsToPyrisDB(transcriptions, course, lecture));
     }
 }
