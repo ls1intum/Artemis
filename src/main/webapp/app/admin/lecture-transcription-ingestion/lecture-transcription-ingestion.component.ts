@@ -16,33 +16,40 @@ export class LectureTranscriptionIngestionComponent {
     private lectureTranscriptionService = inject(LectureTranscriptionService);
     private alertService = inject(AlertService);
 
-    courseIdInput = '';
-    lectureIdInput = '';
+    ingestCourseIdInput = '';
+    ingestLectureIdInput = '';
+
+    createCourseIdInput = '';
+    createLectureIdInput = '';
 
     transcriptionInput = '';
 
     faCheck = faCheck;
 
     ingestTranscription(): void {
-        this.lectureTranscriptionService.ingestTranscription(Number(this.courseIdInput), Number(this.lectureIdInput)).subscribe((successful) => {
+        this.lectureTranscriptionService.ingestTranscription(Number(this.ingestCourseIdInput), Number(this.ingestLectureIdInput)).subscribe((successful) => {
             if (successful) {
                 this.alertService.success('Ingested transcription');
             } else {
                 this.alertService.error('Unknown error while ingesting transcription');
             }
-            this.courseIdInput = '';
-            this.lectureIdInput = '';
+            this.ingestCourseIdInput = '';
+            this.ingestLectureIdInput = '';
         });
     }
 
     createTranscription(): void {
-        this.lectureTranscriptionService.createTranscription(JSON.parse(this.transcriptionInput)).subscribe((successful) => {
-            if (successful) {
-                this.alertService.success('Created transcription');
-            } else {
-                this.alertService.error('Unknown error while creating transcription');
-            }
-            this.transcriptionInput = '';
-        });
+        this.lectureTranscriptionService
+            .createTranscription(Number(this.createLectureIdInput), Number(this.createLectureIdInput), JSON.parse(this.transcriptionInput))
+            .subscribe((successful) => {
+                if (successful) {
+                    this.alertService.success('Created transcription');
+                } else {
+                    this.alertService.error('Unknown error while creating transcription');
+                }
+                this.transcriptionInput = '';
+                this.createCourseIdInput = '';
+                this.createLectureIdInput = '';
+            });
     }
 }

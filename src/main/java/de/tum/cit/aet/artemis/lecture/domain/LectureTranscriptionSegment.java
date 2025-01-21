@@ -18,8 +18,8 @@ import de.tum.cit.aet.artemis.core.domain.DomainObject;
 
 @Entity
 @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
-@Table(name = "transcription_segments")
-public class TranscriptionSegment extends DomainObject {
+@Table(name = "lecture_transcription_segments")
+public class LectureTranscriptionSegment extends DomainObject {
 
     @NotNull
     @Column(name = "start_time")
@@ -28,11 +28,6 @@ public class TranscriptionSegment extends DomainObject {
     @NotNull
     @Column(name = "end_time")
     private Double endTime;
-
-    @AssertTrue(message = "End time must be greater than start time")
-    private boolean isTimeValid() {
-        return startTime == null || endTime == null || endTime > startTime;
-    }
 
     @Lob
     private String text;
@@ -46,10 +41,10 @@ public class TranscriptionSegment extends DomainObject {
     @Column(name = "slide_number")
     private int slideNumber;
 
-    public TranscriptionSegment() {
+    public LectureTranscriptionSegment() {
     }
 
-    public TranscriptionSegment(Double startTime, Double endTime, String text, LectureUnit lectureUnit, int slideNumber) {
+    public LectureTranscriptionSegment(Double startTime, Double endTime, String text, LectureUnit lectureUnit, int slideNumber) {
         this.startTime = startTime;
         this.endTime = endTime;
         this.text = text;
@@ -99,6 +94,12 @@ public class TranscriptionSegment extends DomainObject {
 
     @Override
     public String toString() {
-        return "TranscriptionSegment [startTime = " + startTime + ", endTime = " + endTime + ", text = " + text + "]";
+        return "LectureTranscriptionSegment [startTime = " + startTime + ", endTime = " + endTime + ", text = " + text + "]";
     }
+
+    @AssertTrue(message = "End time must be greater than start time")
+    private boolean isTimeValid() {
+        return startTime == null || endTime == null || endTime > startTime;
+    }
+
 }

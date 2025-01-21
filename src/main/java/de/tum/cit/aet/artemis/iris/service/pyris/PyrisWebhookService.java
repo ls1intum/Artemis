@@ -36,8 +36,8 @@ import de.tum.cit.aet.artemis.iris.service.settings.IrisSettingsService;
 import de.tum.cit.aet.artemis.lecture.domain.AttachmentType;
 import de.tum.cit.aet.artemis.lecture.domain.AttachmentUnit;
 import de.tum.cit.aet.artemis.lecture.domain.Lecture;
+import de.tum.cit.aet.artemis.lecture.domain.LectureTranscription;
 import de.tum.cit.aet.artemis.lecture.domain.LectureUnit;
-import de.tum.cit.aet.artemis.lecture.domain.Transcription;
 import de.tum.cit.aet.artemis.lecture.repository.LectureRepository;
 import de.tum.cit.aet.artemis.lecture.repository.LectureUnitRepository;
 
@@ -78,7 +78,7 @@ public class PyrisWebhookService {
      * @param transcription The transcription that got Updated
      * @return jobToken if the job was created else null
      */
-    public String addTranscriptionToPyrisDB(Transcription transcription) {
+    public String addTranscriptionToPyrisDB(LectureTranscription transcription) {
         if (transcription == null) {
             throw new IllegalArgumentException("Transcription cannot be null");
         }
@@ -95,7 +95,7 @@ public class PyrisWebhookService {
     }
 
     /**
-     * executes executeTranscriptionAdditionWebhook add transcription from to the vector database on pyris
+     * executes executeTranscriptionAdditionWebhook to insert the transcription into the vector database of Pyris
      *
      * @param toUpdateTranscription The transcription that are going to be Updated
      * @return jobToken if the job was created

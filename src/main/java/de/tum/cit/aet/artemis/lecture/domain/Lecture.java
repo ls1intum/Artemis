@@ -63,7 +63,7 @@ public class Lecture extends DomainObject {
     @OneToMany(mappedBy = "lecture", cascade = CascadeType.ALL, orphanRemoval = true)
     @JsonIgnoreProperties("lecture")
     @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
-    private List<Transcription> transcriptions = new ArrayList<>();
+    private Set<LectureTranscription> lectureTranscriptions = new HashSet<>();
 
     @OneToMany(mappedBy = "lecture", cascade = CascadeType.REMOVE, orphanRemoval = true)
     @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
@@ -146,17 +146,17 @@ public class Lecture extends DomainObject {
         lectureUnit.setLecture(this);
     }
 
-    public List<Transcription> getTranscriptions() {
-        return transcriptions;
+    public Set<LectureTranscription> getLectureTranscriptions() {
+        return lectureTranscriptions;
     }
 
-    public void setTranscriptions(List<Transcription> transcriptions) {
-        this.transcriptions = transcriptions;
+    public void setTranscriptions(Set<LectureTranscription> lectureTranscriptions) {
+        this.lectureTranscriptions = lectureTranscriptions;
     }
 
-    public void addTranscription(Transcription transcription) {
-        this.transcriptions.add(transcription);
-        transcription.setLecture(this);
+    public void addTranscription(LectureTranscription lectureTranscription) {
+        this.lectureTranscriptions.add(lectureTranscription);
+        lectureTranscription.setLecture(this);
     }
 
     public Set<Post> getPosts() {

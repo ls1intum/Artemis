@@ -28,10 +28,10 @@ describe('LectureTranscriptionIngestionComponent', () => {
 
     it('should call ingestTranscription with correct parameters when ingest button is clicked', waitForAsync(() => {
         const courseId = '1';
-        comp.courseIdInput = courseId;
+        comp.ingestCourseIdInput = courseId;
 
         const lectureId = '1';
-        comp.lectureIdInput = lectureId;
+        comp.ingestLectureIdInput = lectureId;
         fixture.detectChanges();
 
         const button = fixture.debugElement.query(By.css('#ingest-transcription-button'));
@@ -44,7 +44,13 @@ describe('LectureTranscriptionIngestionComponent', () => {
 
     it('should call createTranscription with correct parameters when create transcription button is clicked', waitForAsync(() => {
         const transcription = '{ "transcription": [] }';
+        const courseId = '1';
+        const lectureId = '1';
+
         comp.transcriptionInput = transcription;
+        comp.createCourseIdInput = courseId;
+        comp.createLectureIdInput = lectureId;
+
         fixture.detectChanges();
 
         const button = fixture.debugElement.query(By.css('#create-transcription-button'));
@@ -52,6 +58,6 @@ describe('LectureTranscriptionIngestionComponent', () => {
         button.triggerEventHandler('onClick', null);
         fixture.detectChanges();
 
-        expect(lectureTranscriptionService.createTranscription).toHaveBeenCalledWith(JSON.parse(transcription));
+        expect(lectureTranscriptionService.createTranscription).toHaveBeenCalledWith(Number(courseId), Number(lectureId), JSON.parse(transcription));
     }));
 });

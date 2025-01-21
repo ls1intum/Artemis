@@ -28,6 +28,8 @@ public interface LectureUnitRepository extends ArtemisJpaRepository<LectureUnit,
             """)
     Optional<LectureUnit> findById(@Param("lectureUnitId") long lectureUnitId);
 
+    Set<LectureUnit> findAllByIdIn(@Param("lectureUnitIds") Set<Long> lectureUnitIds);
+
     @Query("""
             SELECT lu
             FROM LectureUnit lu

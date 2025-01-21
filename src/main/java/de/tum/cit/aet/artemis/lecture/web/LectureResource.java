@@ -50,10 +50,10 @@ import de.tum.cit.aet.artemis.exercise.service.ExerciseService;
 import de.tum.cit.aet.artemis.lecture.domain.AttachmentUnit;
 import de.tum.cit.aet.artemis.lecture.domain.ExerciseUnit;
 import de.tum.cit.aet.artemis.lecture.domain.Lecture;
+import de.tum.cit.aet.artemis.lecture.domain.LectureTranscription;
 import de.tum.cit.aet.artemis.lecture.domain.LectureUnit;
-import de.tum.cit.aet.artemis.lecture.domain.Transcription;
 import de.tum.cit.aet.artemis.lecture.repository.LectureRepository;
-import de.tum.cit.aet.artemis.lecture.repository.TranscriptionRepository;
+import de.tum.cit.aet.artemis.lecture.repository.LectureTranscriptionRepository;
 import de.tum.cit.aet.artemis.lecture.service.LectureImportService;
 import de.tum.cit.aet.artemis.lecture.service.LectureService;
 
@@ -71,7 +71,7 @@ public class LectureResource {
 
     private final CompetencyApi competencyApi;
 
-    private final TranscriptionRepository transcriptionRepository;
+    private final LectureTranscriptionRepository lectureTranscriptionRepository;
 
     @Value("${jhipster.clientApp.name}")
     private String applicationName;
@@ -96,7 +96,7 @@ public class LectureResource {
 
     public LectureResource(LectureRepository lectureRepository, LectureService lectureService, LectureImportService lectureImportService, CourseRepository courseRepository,
             UserRepository userRepository, AuthorizationCheckService authCheckService, ExerciseService exerciseService, ChannelService channelService,
-            ChannelRepository channelRepository, CompetencyApi competencyApi, TranscriptionRepository transcriptionRepository) {
+            ChannelRepository channelRepository, CompetencyApi competencyApi, LectureTranscriptionRepository lectureTranscriptionRepository) {
         this.lectureRepository = lectureRepository;
         this.lectureService = lectureService;
         this.lectureImportService = lectureImportService;
@@ -107,7 +107,7 @@ public class LectureResource {
         this.channelService = channelService;
         this.channelRepository = channelRepository;
         this.competencyApi = competencyApi;
-        this.transcriptionRepository = transcriptionRepository;
+        this.lectureTranscriptionRepository = lectureTranscriptionRepository;
     }
 
     /**
@@ -299,33 +299,27 @@ public class LectureResource {
     }
 
     /**
-     * POST /courses/{courseId}/ingest-transcription
+     * POST /lectures/{lectureId}/ingest-transcription
      * This endpoint is for starting the ingestion of all lectures or only one lecture when triggered in Artemis.
      *
-     * @param courseId  the ID of the course for which all lectures should be ingested in pyris
      * @param lectureId If this id is present then only ingest this one lecture of the respective course
      * @return the ResponseEntity with status 200 (OK) and a message success or null if the operation failed
      */
     @Profile(PROFILE_IRIS)
-    @PutMapping("courses/{courseId}/ingest-transcription")
+    @PutMapping("courses/{courseId}/lectures/{lectureId}/ingest-transcription")
     @EnforceAtLeastInstructorInCourse
-    public ResponseEntity<Void> ingestTranscriptions(@PathVariable Long courseId, @RequestParam(required = false) Optional<Long> lectureId) {
-        Course course = courseRepository.findByIdWithLecturesAndLectureUnitsElseThrow(courseId);
-        if (course == null) {
-            return ResponseEntity.notFound().build();
-        }
+    public ResponseEntity<Void> ingestTranscriptions(@PathVariable Long courseId, @PathVariable Long lectureId) {
+        Lecture lecture = lectureRepository.findById(lectureId).orElseThrow();
+        Course course = lecture.getCourse();
         authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.INSTRUCTOR, course, null);
-        if (lectureId.isPresent()) {
-            List<Transcription> transcriptions = transcriptionRepository.findAllByLectureIdWithSegments(lectureId.get());
-            if (transcriptions.isEmpty()) {
-                return ResponseEntity.badRequest().headers(HeaderUtil.createAlert(applicationName, "artemisApp.iris.ingestionAlert.noTranscriptionError", "noTranscription"))
-                        .body(null);
-            }
-            Set<Transcription> transcriptionsToIngest = new HashSet<>(transcriptions);
-            lectureService.ingestTranscriptionInPyris(transcriptionsToIngest);
-            return ResponseEntity.ok().build();
+        Set<LectureTranscription> transcriptions = lectureTranscriptionRepository.findAllWithTranscriptionSegmentsByLectureId(lectureId);
+        if (transcriptions.isEmpty()) {
+            return ResponseEntity.badRequest().headers(HeaderUtil.createAlert(applicationName, "artemisApp.iris.ingestionAlert.noTranscriptionError", "noTranscription"))
+                    .body(null);
         }
-        return ResponseEntity.badRequest().build();
+        Set<LectureTranscription> transcriptionsToIngest = new HashSet<>(transcriptions);
+        lectureService.ingestTranscriptionInPyris(transcriptionsToIngest);
+        return ResponseEntity.ok().build();
     }
 
     /**

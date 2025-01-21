@@ -29,8 +29,8 @@ import de.tum.cit.aet.artemis.lecture.domain.Attachment;
 import de.tum.cit.aet.artemis.lecture.domain.AttachmentUnit;
 import de.tum.cit.aet.artemis.lecture.domain.ExerciseUnit;
 import de.tum.cit.aet.artemis.lecture.domain.Lecture;
+import de.tum.cit.aet.artemis.lecture.domain.LectureTranscription;
 import de.tum.cit.aet.artemis.lecture.domain.LectureUnit;
-import de.tum.cit.aet.artemis.lecture.domain.Transcription;
 import de.tum.cit.aet.artemis.lecture.repository.LectureRepository;
 
 @Profile(PROFILE_CORE)
@@ -193,9 +193,9 @@ public class LectureService {
      *
      * @param transcriptions set of transcriptions to be ingested
      */
-    public void ingestTranscriptionInPyris(Set<Transcription> transcriptions) {
+    public void ingestTranscriptionInPyris(Set<LectureTranscription> transcriptions) {
         if (pyrisWebhookService.isPresent()) {
-            for (Transcription transcription : transcriptions) {
+            for (LectureTranscription transcription : transcriptions) {
                 String jobToken = pyrisWebhookService.get().addTranscriptionToPyrisDB(transcription);
             }
         }
