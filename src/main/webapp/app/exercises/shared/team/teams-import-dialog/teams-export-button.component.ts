@@ -1,7 +1,6 @@
 import { Component, Input, inject } from '@angular/core';
 import { Team } from 'app/entities/team.model';
 import { ButtonSize, ButtonType } from 'app/shared/components/button.component';
-import { AlertService } from 'app/core/util/alert.service';
 import { TeamService } from '../team.service';
 import { faFileExport } from '@fortawesome/free-solid-svg-icons';
 import { ButtonComponent } from 'app/shared/components/button.component';
@@ -21,7 +20,6 @@ import { ButtonComponent } from 'app/shared/components/button.component';
 })
 export class TeamsExportButtonComponent {
     private teamService = inject(TeamService);
-    private alertService = inject(AlertService);
 
     ButtonType = ButtonType;
     ButtonSize = ButtonSize;

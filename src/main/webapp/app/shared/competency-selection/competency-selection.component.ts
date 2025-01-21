@@ -56,8 +56,7 @@ export class CompetencySelectionComponent implements OnInit, ControlValueAccesso
     getIcon = getIcon;
     faQuestionCircle = faQuestionCircle;
 
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    _onChange = (value: any) => {};
+    _onChange = (_value: any) => {};
 
     protected readonly HIGH_COMPETENCY_LINK_WEIGHT = HIGH_COMPETENCY_LINK_WEIGHT;
     protected readonly MEDIUM_COMPETENCY_LINK_WEIGHT = MEDIUM_COMPETENCY_LINK_WEIGHT;
@@ -167,8 +166,7 @@ export class CompetencySelectionComponent implements OnInit, ControlValueAccesso
         this._onChange = fn;
     }
 
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    registerOnTouched(fn: any): void {}
+    registerOnTouched(_fn: any): void {}
 
     setDisabledState?(isDisabled: boolean): void {
         this.disabled = isDisabled;

@@ -63,8 +63,6 @@ describe('ProgrammingExerciseConfigureGradingComponent', () => {
     let programmingExerciseService: ProgrammingExerciseService;
     let modalService: NgbModal;
 
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    let updateTestCasesStub: jest.SpyInstance;
     let updateCategoriesStub: jest.SpyInstance;
     let resetCategoriesStub: jest.SpyInstance;
     let testCasesChangedStub: jest.SpyInstance;
