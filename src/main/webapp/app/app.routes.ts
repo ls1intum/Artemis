@@ -63,11 +63,11 @@ const routes: Routes = [
     // ===== TEAM ====
     {
         path: 'course-management/:courseId/exercises/:exerciseId/teams',
-        loadChildren: () => import('./exercises/shared/team/team.module').then((m) => m.ArtemisTeamModule),
+        loadChildren: () => import('./exercises/shared/team/team.route').then((m) => m.teamRoute),
     },
     {
         path: 'courses/:courseId/exercises/:exerciseId/teams',
-        loadChildren: () => import('./exercises/shared/team/team.module').then((m) => m.ArtemisTeamModule),
+        loadChildren: () => import('./exercises/shared/team/team.route').then((m) => m.teamRoute),
     },
     // ===== ACCOUNT ====
     {
@@ -161,7 +161,7 @@ const routes: Routes = [
     // ===== GRADING SYSTEM =====
     {
         path: 'courses/:courseId/grading-system',
-        loadChildren: () => import('./grading-system/grading-system.module').then((m) => m.GradingSystemModule),
+        loadChildren: () => import('./grading-system/grading-system.route').then((m) => m.gradingSystemState),
     },
 
     {
@@ -187,7 +187,7 @@ const routes: Routes = [
     },
     {
         path: 'courses/:courseId/exams/:examId/grading-system',
-        loadChildren: () => import('./grading-system/grading-system.module').then((m) => m.GradingSystemModule),
+        loadChildren: () => import('./grading-system/grading-system.route').then((m) => m.gradingSystemState),
     },
     {
         path: 'courses/:courseId/exams/:examId/exercises/:exerciseId/repository',
