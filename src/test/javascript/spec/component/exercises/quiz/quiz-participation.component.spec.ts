@@ -3,7 +3,7 @@ import { HttpTestingController, provideHttpClientTesting } from '@angular/common
 import { ComponentFixture, TestBed, discardPeriodicTasks, fakeAsync, tick, waitForAsync } from '@angular/core/testing';
 import { ActivatedRoute, Router } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
-import { JhiWebsocketService } from 'app/core/websocket/websocket.service';
+import { WebsocketService } from 'app/core/websocket/websocket.service';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
 import { QuizBatch, QuizExercise, QuizMode } from 'app/entities/quiz/quiz-exercise.model';
 import { QuizQuestion, QuizQuestionType } from 'app/entities/quiz/quiz-question.model';
@@ -151,7 +151,7 @@ describe('QuizParticipationComponent', () => {
                 .provide({ provide: TranslateService, useClass: MockTranslateService })
                 .provide({ provide: LocalStorageService, useClass: MockLocalStorageService })
                 .provide({ provide: SessionStorageService, useClass: MockSyncStorage })
-                .provide({ provide: JhiWebsocketService, useClass: MockWebsocketService })
+                .provide({ provide: WebsocketService, useClass: MockWebsocketService })
                 .provide({
                     provide: ActivatedRoute,
                     useValue: {
@@ -518,7 +518,7 @@ describe('QuizParticipationComponent', () => {
                 .provide({ provide: TranslateService, useClass: MockTranslateService })
                 .provide({ provide: LocalStorageService, useClass: MockLocalStorageService })
                 .provide({ provide: SessionStorageService, useClass: MockSyncStorage })
-                .provide({ provide: JhiWebsocketService, useClass: MockWebsocketService })
+                .provide({ provide: WebsocketService, useClass: MockWebsocketService })
                 .provide({
                     provide: ActivatedRoute,
                     useValue: {
@@ -591,7 +591,7 @@ describe('QuizParticipationComponent', () => {
                 .keep(AlertService)
                 .keep(ArtemisServerDateService)
                 .keep(QuizExerciseService)
-                .mock(JhiWebsocketService)
+                .mock(WebsocketService)
                 .provide(provideHttpClient())
                 .provide(provideHttpClientTesting())
                 .provide({ provide: TranslateService, useClass: MockTranslateService })
@@ -680,7 +680,7 @@ describe('QuizParticipationComponent', () => {
                 .provide({ provide: TranslateService, useClass: MockTranslateService })
                 .provide({ provide: LocalStorageService, useClass: MockLocalStorageService })
                 .provide({ provide: SessionStorageService, useClass: MockSyncStorage })
-                .provide({ provide: JhiWebsocketService, useClass: MockWebsocketService })
+                .provide({ provide: WebsocketService, useClass: MockWebsocketService })
                 .provide({
                     provide: ActivatedRoute,
                     useValue: {
