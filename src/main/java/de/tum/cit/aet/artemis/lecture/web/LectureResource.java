@@ -316,7 +316,6 @@ public class LectureResource {
             return ResponseEntity.badRequest().headers(HeaderUtil.createAlert(applicationName, "artemisApp.iris.ingestionAlert.wrongLectureError", "lectureDoesNotMatchCourse"))
                     .body(null);
         }
-        authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.INSTRUCTOR, course, null);
         Set<LectureTranscription> transcriptions = lectureTranscriptionRepository.findAllWithTranscriptionSegmentsByLectureId(lectureId);
         if (transcriptions.isEmpty()) {
             return ResponseEntity.badRequest().headers(HeaderUtil.createAlert(applicationName, "artemisApp.iris.ingestionAlert.noTranscriptionError", "noTranscription"))
