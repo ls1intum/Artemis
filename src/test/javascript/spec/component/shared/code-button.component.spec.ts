@@ -162,6 +162,8 @@ describe('CodeButtonComponent', () => {
         fixture.componentRef.setInput('participations', [participation]);
 
         await component.ngOnInit();
+        fixture.detectChanges();
+        await fixture.whenStable();
         component.onClick();
 
         expect(component.user.vcsAccessToken).toEqual(vcsToken);
@@ -176,6 +178,8 @@ describe('CodeButtonComponent', () => {
         participation.id = 1;
         fixture.componentRef.setInput('participations', [participation]);
         await component.ngOnInit();
+        fixture.detectChanges();
+        await fixture.whenStable();
         component.onClick();
 
         expect(component.user.vcsAccessToken).toEqual(vcsToken);
@@ -189,7 +193,7 @@ describe('CodeButtonComponent', () => {
         fixture.componentRef.setInput('participations', [participation]);
         component.sshTemplateUrl = 'ssh://git@gitlab.ase.in.tum.de:7999/';
         component.isTeamParticipation = true;
-        await component.ngOnInit();
+        fixture.detectChanges();
         component.onClick();
 
         expect(component.getHttpOrSshRepositoryUri()).toBe('ssh://git@gitlab.ase.in.tum.de:7999/ITCPLEASE1/itcplease1-exercise.git');
@@ -205,7 +209,7 @@ describe('CodeButtonComponent', () => {
         fixture.componentRef.setInput('participations', [participation]);
         component.useSsh = false;
         component.isTeamParticipation = true;
-        await component.ngOnInit();
+        fixture.detectChanges();
 
         let url = component.getHttpOrSshRepositoryUri();
         expect(url).toBe(`https://${component.user.login}@gitlab.ase.in.tum.de/scm/ITCPLEASE1/itcplease1-exercise-team1.git`);
@@ -222,6 +226,9 @@ describe('CodeButtonComponent', () => {
         localStorageState = { useSsh: false, useToken: true, usePassword: false };
 
         await component.ngOnInit();
+        fixture.detectChanges();
+        await fixture.whenStable();
+
         component.onClick();
 
         // Placeholder is shown
@@ -251,7 +258,7 @@ describe('CodeButtonComponent', () => {
         component.useSsh = false;
         component.isTeamParticipation = false;
 
-        await component.ngOnInit();
+        fixture.detectChanges();
 
         component.useToken = true;
 
@@ -269,7 +276,8 @@ describe('CodeButtonComponent', () => {
             testRun: true,
         };
         fixture.componentRef.setInput('participations', [participation1, participation2]);
-        await component.ngOnInit();
+        fixture.detectChanges();
+        await fixture.whenStable();
 
         expect(component.activeParticipation).toEqual(participation1);
         expect(component.getHttpOrSshRepositoryUri()).toBe('https://edx_userLogin@gitlab.ase.in.tum.de/scm/ITCPLEASE1/itcplease1-exercise.git');
@@ -286,14 +294,14 @@ describe('CodeButtonComponent', () => {
         fixture.componentRef.setInput('repositoryUri', 'https://gitlab.ase.in.tum.de/scm/ITCPLEASE1/itcplease1-exercise.solution.git');
         fixture.componentRef.setInput('participations', []);
         component.activeParticipation = undefined;
-        component.ngOnInit();
+        fixture.detectChanges();
 
         expect(component.isTeamParticipation).toBeFalsy();
         expect(component.getHttpOrSshRepositoryUri()).toBe('https://user1@gitlab.ase.in.tum.de/scm/ITCPLEASE1/itcplease1-exercise.solution.git');
     });
 
     it('should set wasCopied to true and back to false after 3 seconds on successful copy', () => {
-        component.ngOnInit();
+        fixture.detectChanges();
         jest.useFakeTimers();
         component.onCopyFinished(true);
         expect(component.wasCopied).toBeTrue();
@@ -303,7 +311,7 @@ describe('CodeButtonComponent', () => {
     });
 
     it('should not change wasCopied if copy is unsuccessful', () => {
-        component.ngOnInit();
+        fixture.detectChanges();
         component.onCopyFinished(false);
         expect(component.wasCopied).toBeFalse();
     });
@@ -373,7 +381,9 @@ describe('CodeButtonComponent', () => {
     ])('should correctly choose active participation', async (participations: ProgrammingExerciseStudentParticipation[], exercise: Exercise, expected: number) => {
         fixture.componentRef.setInput('participations', participations);
         fixture.componentRef.setInput('exercise', exercise);
-        await component.ngOnInit();
+
+        fixture.detectChanges();
+
         expect(component.activeParticipation?.id).toBe(expected);
     });
 

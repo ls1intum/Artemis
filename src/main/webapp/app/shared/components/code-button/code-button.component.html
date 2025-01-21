@@ -61,7 +61,7 @@
                 >{{ getHttpOrSshRepositoryUri() }} </pre
             >
             <div class="d-flex align-items-center">
-                @if (!localVCEnabled) {
+                @if (!localVCEnabled()) {
                     <a
                         [style.flex]="1"
                         class="btn btn-secondary btn-sm me-2 open-repository-button"

@@ -1,4 +1,4 @@
-import { Component, OnInit, inject, input } from '@angular/core';
+import { Component, OnInit, effect, inject, input, signal } from '@angular/core';
 import { ProgrammingExercise, ProgrammingLanguage } from 'app/entities/programming/programming-exercise.model';
 import { FeatureToggle } from 'app/shared/feature-toggle/feature-toggle.service';
 import { ExternalCloningService } from 'app/exercises/programming/shared/service/external-cloning.service';
@@ -90,7 +90,7 @@ export class CodeButtonComponent implements OnInit {
     sshTemplateUrl?: string;
     versionControlUrl: string;
 
-    localVCEnabled = false;
+    localVCEnabled = signal<boolean>(false);
     gitlabVCEnabled = false;
 
     copyEnabled = false;
@@ -120,8 +120,28 @@ export class CodeButtonComponent implements OnInit {
     readonly faExternalLink = faExternalLink;
     ideName: string;
 
-    async ngOnInit() {
+    constructor() {
         this.isInCourseManagement = this.router.url.includes('course-management');
+
+        effect(async () => {
+            if (this.participations()?.length) {
+                const shouldPreferPractice = this.participationService.shouldPreferPractice(this.exercise());
+                this.activeParticipation = this.participationService.getSpecificStudentParticipation(this.participations()!, shouldPreferPractice) ?? this.participations()![0];
+                this.isPracticeMode = isPracticeMode(this.activeParticipation);
+                this.isTeamParticipation = !!this.activeParticipation?.team;
+            }
+
+            this.cloneHeadline = this.getCloneHeadline();
+        });
+
+        effect(() => {
+            if (!this.isInCourseManagement && this.localVCEnabled()) {
+                this.loadVcsAccessTokensForAllParticipations();
+            }
+        });
+    }
+
+    async ngOnInit() {
         const user = await this.accountService.identity();
         if (!user) {
             return;
@@ -142,22 +162,10 @@ export class CodeButtonComponent implements OnInit {
                 this.versionControlUrl = profileInfo.versionControlUrl;
             }
 
-            this.localVCEnabled = profileInfo.activeProfiles.includes(PROFILE_LOCALVC);
+            this.localVCEnabled.set(profileInfo.activeProfiles.includes(PROFILE_LOCALVC));
             this.gitlabVCEnabled = profileInfo.activeProfiles.includes(PROFILE_GITLAB);
 
-            if (this.participations()?.length) {
-                const shouldPreferPractice = this.participationService.shouldPreferPractice(this.exercise());
-                this.activeParticipation = this.participationService.getSpecificStudentParticipation(this.participations()!, shouldPreferPractice) ?? this.participations()![0];
-                this.isPracticeMode = isPracticeMode(this.activeParticipation);
-                this.isTeamParticipation = !!this.activeParticipation?.team;
-            }
-
-            this.cloneHeadline = this.getCloneHeadline();
             this.configureTooltips(profileInfo);
-
-            if (!this.isInCourseManagement && this.localVCEnabled) {
-                this.loadVcsAccessTokensForAllParticipations();
-            }
         });
 
         this.ideSettingsService.loadIdePreferences().then((programmingLanguageToIde) => {
@@ -397,7 +405,7 @@ export class CodeButtonComponent implements OnInit {
     }
 
     private configureTooltips(profileInfo: ProfileInfo) {
-        if (this.localVCEnabled) {
+        if (this.localVCEnabled()) {
             this.vcsTokenSettingsUrl = `${window.location.origin}/user-settings/vcs-token`;
             this.sshSettingsUrl = `${window.location.origin}/user-settings/ssh`;
         } else {
