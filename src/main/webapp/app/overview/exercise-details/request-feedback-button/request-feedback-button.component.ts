@@ -82,9 +82,11 @@ export class RequestFeedbackButtonComponent implements OnInit {
     }
 
     acceptExternalLLMs(modal: any) {
-        this.userService.acceptExternalLLM();
-        this.userAccepted = true;
-        modal.close();
+        this.userService.acceptExternalLLM().subscribe(() => {
+            this.userAccepted = true;
+            modal.close();
+        });
+
         // Proceed with feedback request after accepting
         if (this.assureConditionsSatisfied()) {
             this.processFeedbackRequest();
