@@ -39,7 +39,7 @@ ext {
         ],
         "fileupload"   : [
             "INSTRUCTION": 0.906,
-            "CLASS": 0
+            "CLASS": 1
         ],
         "iris"        : [
             "INSTRUCTION": 0.792,
