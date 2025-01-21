@@ -1,9 +1,8 @@
-import { Location } from '@angular/common';
-import { Component, OnDestroy, OnInit, ViewEncapsulation } from '@angular/core';
+import { Location, NgClass, NgTemplateOutlet } from '@angular/common';
+import { Component, OnDestroy, OnInit, ViewEncapsulation, inject } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { faQuestionCircle, faSort, faSortDown, faSortUp, faSquare } from '@fortawesome/free-solid-svg-icons';
 import { TranslateService } from '@ngx-translate/core';
-import { AccountService } from 'app/core/auth/account.service';
 import { AlertService } from 'app/core/util/alert.service';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
 import { Course, isCommunicationEnabled } from 'app/entities/course.model';
@@ -17,12 +16,29 @@ import { ProgrammingExerciseGradingService, StaticCodeAnalysisCategoryUpdate } f
 import { ProgrammingExerciseWebsocketService } from 'app/exercises/programming/manage/services/programming-exercise-websocket.service';
 import { ProgrammingExerciseService } from 'app/exercises/programming/manage/services/programming-exercise.service';
 import { SubmissionPolicyService } from 'app/exercises/programming/manage/services/submission-policy.service';
+import { SubmissionPolicyUpdateComponent } from 'app/exercises/shared/submission-policy/submission-policy-update.component';
 import { ComponentCanDeactivate } from 'app/shared/guard/can-deactivate.model';
 import { roundValueSpecifiedByCourseSettings } from 'app/shared/util/utils';
 import { differenceBy as _differenceBy, differenceWith as _differenceWith, intersectionWith as _intersectionWith, unionBy as _unionBy } from 'lodash-es';
 import { Observable, Subscription, of, zip } from 'rxjs';
 import { catchError, distinctUntilChanged, map, take, tap } from 'rxjs/operators';
 import { ProgrammingExerciseTaskService } from 'app/exercises/programming/manage/grading/tasks/programming-exercise-task.service';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { ProgrammingExerciseConfigureGradingStatusComponent } from './programming-exercise-configure-grading-status.component';
+import { ProgrammingExerciseConfigureGradingActionsComponent } from './programming-exercise-configure-grading-actions.component';
+import { ProgrammingExerciseGradingSubmissionPolicyConfigurationActionsComponent } from './programming-exercise-grading-submission-policy-configuration-actions.component';
+import { NgbAlert, NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
+import { ProgrammingExerciseGradingTasksTableComponent } from './tasks/programming-exercise-grading-tasks-table.component';
+import { TestCaseDistributionChartComponent } from './charts/test-case-distribution-chart.component';
+import { ProgrammingExerciseGradingTableActionsComponent } from './programming-exercise-grading-table-actions.component';
+import { NgxDatatableModule } from '@siemens/ngx-datatable';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { FormsModule } from '@angular/forms';
+import { TableEditableFieldComponent } from 'app/shared/table/table-editable-field.component';
+import { CategoryIssuesChartComponent } from './charts/category-issues-chart.component';
+import { ScaCategoryDistributionChartComponent } from './charts/sca-category-distribution-chart.component';
+import { FeedbackAnalysisComponent } from './feedback-analysis/feedback-analysis.component';
+import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 
 /**
  * Describes the editableField
@@ -65,8 +81,42 @@ export type Table = 'testCases' | 'codeAnalysis';
     styleUrls: ['./programming-exercise-configure-grading.scss'],
     encapsulation: ViewEncapsulation.None,
     providers: [ProgrammingExerciseTaskService],
+    imports: [
+        NgClass,
+        TranslateDirective,
+        NgTemplateOutlet,
+        ProgrammingExerciseConfigureGradingStatusComponent,
+        ProgrammingExerciseConfigureGradingActionsComponent,
+        ProgrammingExerciseGradingSubmissionPolicyConfigurationActionsComponent,
+        SubmissionPolicyUpdateComponent,
+        NgbAlert,
+        ProgrammingExerciseGradingTasksTableComponent,
+        TestCaseDistributionChartComponent,
+        ProgrammingExerciseGradingTableActionsComponent,
+        NgxDatatableModule,
+        FaIconComponent,
+        NgbTooltip,
+        FormsModule,
+        TableEditableFieldComponent,
+        CategoryIssuesChartComponent,
+        ScaCategoryDistributionChartComponent,
+        FeedbackAnalysisComponent,
+        ArtemisTranslatePipe,
+    ],
 })
 export class ProgrammingExerciseConfigureGradingComponent implements OnInit, OnDestroy, ComponentCanDeactivate {
+    private gradingService = inject(ProgrammingExerciseGradingService);
+    private programmingExerciseService = inject(ProgrammingExerciseService);
+    private programmingExerciseSubmissionPolicyService = inject(SubmissionPolicyService);
+    private programmingExerciseWebsocketService = inject(ProgrammingExerciseWebsocketService);
+    private programmingExerciseTaskService = inject(ProgrammingExerciseTaskService);
+    private route = inject(ActivatedRoute);
+    private alertService = inject(AlertService);
+    private translateService = inject(TranslateService);
+    private location = inject(Location);
+    private router = inject(Router);
+    private courseManagementService = inject(CourseManagementService);
+
     readonly EditableField = EditableField;
     readonly CategoryState = StaticCodeAnalysisCategoryState;
     readonly Visibility = Visibility;
@@ -160,21 +210,6 @@ export class ProgrammingExerciseConfigureGradingComponent implements OnInit, OnD
         this.showInactiveValue = showInactive;
         this.updateTestCaseFilter();
     }
-
-    constructor(
-        private accountService: AccountService,
-        private gradingService: ProgrammingExerciseGradingService,
-        private programmingExerciseService: ProgrammingExerciseService,
-        private programmingExerciseSubmissionPolicyService: SubmissionPolicyService,
-        private programmingExerciseWebsocketService: ProgrammingExerciseWebsocketService,
-        private programmingExerciseTaskService: ProgrammingExerciseTaskService,
-        private route: ActivatedRoute,
-        private alertService: AlertService,
-        private translateService: TranslateService,
-        private location: Location,
-        private router: Router,
-        private courseManagementService: CourseManagementService,
-    ) {}
 
     /**
      * Subscribes to the route params to get the current exerciseId.

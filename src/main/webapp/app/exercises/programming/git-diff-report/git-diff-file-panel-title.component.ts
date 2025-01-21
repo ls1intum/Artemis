@@ -1,6 +1,6 @@
+import { NgClass } from '@angular/common';
 import { ChangeDetectionStrategy, Component, computed, input } from '@angular/core';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
-import { CommonModule } from '@angular/common';
 
 enum FileStatus {
     CREATED = 'created',
@@ -12,9 +12,8 @@ enum FileStatus {
     selector: 'jhi-git-diff-file-panel-title',
     templateUrl: './git-diff-file-panel-title.component.html',
     styleUrls: ['./git-diff-file-panel-title.component.scss'],
-    standalone: true,
     changeDetection: ChangeDetectionStrategy.OnPush,
-    imports: [TranslateDirective, CommonModule],
+    imports: [TranslateDirective, NgClass],
 })
 export class GitDiffFilePanelTitleComponent {
     readonly originalFilePath = input<string>();

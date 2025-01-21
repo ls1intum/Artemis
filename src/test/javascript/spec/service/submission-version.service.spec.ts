@@ -9,7 +9,7 @@ import { provideHttpClient } from '@angular/common/http';
 describe('SubmissionVersion Service', () => {
     let service: SubmissionVersionService;
     let httpMock: HttpTestingController;
-    let submission: TextSubmission;
+    const submission = new TextSubmission();
 
     beforeEach(() => {
         TestBed.configureTestingModule({

@@ -9,6 +9,4 @@ export class CourseManagementOverviewExerciseStatisticsDTO {
     public noOfRatedAssessments?: number;
     public noOfSubmissionsInTime?: number;
     public noOfAssessmentsDoneInPercent?: number;
-
-    constructor() {}
 }

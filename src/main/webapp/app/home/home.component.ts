@@ -26,7 +26,6 @@ import { Saml2LoginComponent } from './saml2-login/saml2-login.component';
     selector: 'jhi-home',
     templateUrl: './home.component.html',
     styleUrls: ['home.scss'],
-    standalone: true,
     imports: [TranslateDirective, FormsModule, RouterLink, FaIconComponent, Saml2LoginComponent, ArtemisSharedModule],
 })
 export class HomeComponent implements OnInit, AfterViewChecked {

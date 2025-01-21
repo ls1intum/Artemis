@@ -1,5 +1,9 @@
 import { Component } from '@angular/core';
 import { faInfoCircle } from '@fortawesome/free-solid-svg-icons';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
+import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 
 @Component({
     selector: 'jhi-code-editor-repository-is-locked',
@@ -16,6 +20,7 @@ import { faInfoCircle } from '@fortawesome/free-solid-svg-icons';
         </span>
     `,
     styles: ['.locked-lable {font-size: 1.2rem; color: white}'],
+    imports: [FaIconComponent, TranslateDirective, NgbTooltip, ArtemisTranslatePipe],
 })
 export class CodeEditorRepositoryIsLockedComponent {
     // Icons

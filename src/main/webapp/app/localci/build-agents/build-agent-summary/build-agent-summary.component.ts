@@ -1,6 +1,6 @@
 import { Component, OnDestroy, OnInit, inject } from '@angular/core';
 import { BuildAgentInformation, BuildAgentStatus } from 'app/entities/programming/build-agent-information.model';
-import { JhiWebsocketService } from 'app/core/websocket/websocket.service';
+import { WebsocketService } from 'app/core/websocket/websocket.service';
 import { BuildAgentsService } from 'app/localci/build-agents/build-agents.service';
 import { Subscription } from 'rxjs';
 import { faPause, faPlay, faTimes } from '@fortawesome/free-solid-svg-icons';
@@ -15,13 +15,12 @@ import { NgxDatatableModule } from '@siemens/ngx-datatable';
 
 @Component({
     selector: 'jhi-build-agents',
-    standalone: true,
     templateUrl: './build-agent-summary.component.html',
     styleUrl: './build-agent-summary.component.scss',
     imports: [ArtemisSharedModule, NgxDatatableModule, ArtemisDataTableModule],
 })
 export class BuildAgentSummaryComponent implements OnInit, OnDestroy {
-    private readonly websocketService = inject(JhiWebsocketService);
+    private readonly websocketService = inject(WebsocketService);
     private readonly buildAgentsService = inject(BuildAgentsService);
     private readonly buildQueueService = inject(BuildQueueService);
     private readonly router = inject(Router);

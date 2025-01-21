@@ -1,26 +1,27 @@
-import { Component, Input, OnChanges, OnInit, SimpleChanges } from '@angular/core';
+import { Component, Input, OnChanges, OnInit, SimpleChanges, inject } from '@angular/core';
 import { RatingService } from 'app/exercises/shared/rating/rating.service';
 import { StarRatingComponent } from 'app/exercises/shared/rating/star-rating/star-rating.component';
 import { Result } from 'app/entities/result.model';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
 import { AccountService } from 'app/core/auth/account.service';
 import { Observable } from 'rxjs';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
 
 @Component({
     selector: 'jhi-rating',
     templateUrl: './rating.component.html',
     styleUrls: ['./rating.component.scss'],
+    imports: [TranslateDirective, StarRatingComponent],
 })
 export class RatingComponent implements OnInit, OnChanges {
+    private ratingService = inject(RatingService);
+    private accountService = inject(AccountService);
+
     public rating: number;
     public disableRating = false;
-    @Input() result?: Result;
     private previousResultId?: number;
 
-    constructor(
-        private ratingService: RatingService,
-        private accountService: AccountService,
-    ) {}
+    @Input() result?: Result;
 
     ngOnInit(): void {
         this.loadRating();

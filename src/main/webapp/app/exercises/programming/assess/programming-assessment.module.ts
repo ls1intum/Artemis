@@ -3,7 +3,7 @@ import { ArtemisSharedModule } from 'app/shared/shared.module';
 import { ArtemisSharedComponentModule } from 'app/shared/components/shared-component.module';
 import { FormDateTimePickerModule } from 'app/shared/date-time-picker/date-time-picker.module';
 import { FormsModule } from '@angular/forms';
-import { FeatureToggleModule } from 'app/shared/feature-toggle/feature-toggle.module';
+
 import { ProgrammingAssessmentRepoExportButtonComponent } from 'app/exercises/programming/assess/repo-export/programming-assessment-repo-export-button.component';
 import { ProgrammingAssessmentRepoExportDialogComponent } from 'app/exercises/programming/assess/repo-export/programming-assessment-repo-export-dialog.component';
 import { ArtemisProgrammingAssessmentRoutingModule } from 'app/exercises/programming/assess/programming-assessment.route';
@@ -25,7 +25,6 @@ import { ComplaintsForTutorComponent } from 'app/complaints/complaints-for-tutor
         ArtemisSharedComponentModule,
         FormDateTimePickerModule,
         FormsModule,
-        FeatureToggleModule,
         ComplaintsForTutorComponent,
         ArtemisProgrammingAssessmentRoutingModule,
         ArtemisAssessmentSharedModule,
@@ -36,8 +35,6 @@ import { ComplaintsForTutorComponent } from 'app/complaints/complaints-for-tutor
         AssessmentInstructionsModule,
         ArtemisHeaderExercisePageWithDetailsModule,
         SubmissionResultStatusModule,
-    ],
-    declarations: [
         ProgrammingAssessmentRepoExportButtonComponent,
         ProgrammingAssessmentRepoExportDialogComponent,
         CodeEditorTutorAssessmentContainerComponent,

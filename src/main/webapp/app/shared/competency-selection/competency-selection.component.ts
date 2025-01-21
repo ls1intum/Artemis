@@ -1,5 +1,5 @@
-import { ChangeDetectorRef, Component, EventEmitter, Input, OnInit, Output, forwardRef } from '@angular/core';
-import { ControlValueAccessor, NG_VALUE_ACCESSOR } from '@angular/forms';
+import { ChangeDetectorRef, Component, EventEmitter, Input, OnInit, Output, forwardRef, inject } from '@angular/core';
+import { ControlValueAccessor, FormsModule, NG_VALUE_ACCESSOR } from '@angular/forms';
 import { faQuestionCircle } from '@fortawesome/free-solid-svg-icons';
 import {
     CompetencyLearningObjectLink,
@@ -15,6 +15,10 @@ import { ActivatedRoute } from '@angular/router';
 import { CourseStorageService } from 'app/course/manage/course-storage.service';
 import { finalize } from 'rxjs';
 import { CourseCompetencyService } from 'app/course/competencies/course-competency.service';
+import { FaIconComponent, FaStackComponent, FaStackItemSizeDirective } from '@fortawesome/angular-fontawesome';
+import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
+import { TranslateDirective } from '../language/translate.directive';
+import { ArtemisTranslatePipe } from '../pipes/artemis-translate.pipe';
 
 @Component({
     selector: 'jhi-competency-selection',
@@ -27,8 +31,14 @@ import { CourseCompetencyService } from 'app/course/competencies/course-competen
             useExisting: forwardRef(() => CompetencySelectionComponent),
         },
     ],
+    imports: [FaStackComponent, NgbTooltip, FaIconComponent, FaStackItemSizeDirective, FormsModule, TranslateDirective, ArtemisTranslatePipe],
 })
 export class CompetencySelectionComponent implements OnInit, ControlValueAccessor {
+    private route = inject(ActivatedRoute);
+    private courseStorageService = inject(CourseStorageService);
+    private courseCompetencyService = inject(CourseCompetencyService);
+    private changeDetector = inject(ChangeDetectorRef);
+
     @Input() labelName: string;
     @Input() labelTooltip: string;
 
@@ -46,21 +56,14 @@ export class CompetencySelectionComponent implements OnInit, ControlValueAccesso
     getIcon = getIcon;
     faQuestionCircle = faQuestionCircle;
 
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    _onChange = (value: any) => {};
+    _onChange = (_value: any) => {};
 
     protected readonly HIGH_COMPETENCY_LINK_WEIGHT = HIGH_COMPETENCY_LINK_WEIGHT;
     protected readonly MEDIUM_COMPETENCY_LINK_WEIGHT = MEDIUM_COMPETENCY_LINK_WEIGHT;
     protected readonly LOW_COMPETENCY_LINK_WEIGHT = LOW_COMPETENCY_LINK_WEIGHT;
     protected readonly LOW_COMPETENCY_LINK_WEIGHT_CUT_OFF = LOW_COMPETENCY_LINK_WEIGHT_CUT_OFF; // halfway between low and medium
-    protected readonly MEDIUM_COMPETENCY_LINK_WEIGHT_CUT_OFF = MEDIUM_COMPETENCY_LINK_WEIGHT_CUT_OFF; // halfway between medium and high
-
-    constructor(
-        private route: ActivatedRoute,
-        private courseStorageService: CourseStorageService,
-        private courseCompetencyService: CourseCompetencyService,
-        private changeDetector: ChangeDetectorRef,
-    ) {}
+    protected readonly MEDIUM_COMPETENCY_LINK_WEIGHT_CUT_OFF = MEDIUM_COMPETENCY_LINK_WEIGHT_CUT_OFF;
+    // halfway between medium and high
 
     ngOnInit(): void {
         const courseId = Number(this.route.snapshot.paramMap.get('courseId'));
@@ -163,8 +166,7 @@ export class CompetencySelectionComponent implements OnInit, ControlValueAccesso
         this._onChange = fn;
     }
 
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    registerOnTouched(fn: any): void {}
+    registerOnTouched(_fn: any): void {}
 
     setDisabledState?(isDisabled: boolean): void {
         this.disabled = isDisabled;

@@ -7,7 +7,6 @@ import { Observable } from 'rxjs';
 import { TranslateService } from '@ngx-translate/core';
 import { MockTranslateService } from '../helpers/mocks/service/mock-translate.service';
 import { DeleteDialogComponent } from 'app/shared/delete-dialog/delete-dialog.component';
-import { MockComponent } from 'ng-mocks';
 import { ButtonType } from 'app/shared/components/button.component';
 
 describe('Delete Dialog Service', () => {
@@ -18,7 +17,6 @@ describe('Delete Dialog Service', () => {
         TestBed.configureTestingModule({
             imports: [],
             providers: [DeleteDialogService, { provide: TranslateService, useClass: MockTranslateService }],
-            declarations: [MockComponent(DeleteDialogComponent)],
         });
         service = TestBed.inject(DeleteDialogService);
         modalService = TestBed.inject(NgbModal);

@@ -21,8 +21,8 @@ import { ExerciseCategoriesModule } from 'app/shared/exercise-categories/exercis
         GradingKeyOverviewModule,
         SubmissionResultStatusModule,
         ExerciseCategoriesModule,
+        CourseExerciseRowComponent,
     ],
-    declarations: [CourseExerciseRowComponent],
     exports: [CourseExerciseRowComponent],
 })
 export class ArtemisCourseExerciseRowModule {}

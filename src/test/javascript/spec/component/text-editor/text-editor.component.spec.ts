@@ -36,7 +36,6 @@ import { TeamParticipateInfoBoxComponent } from 'app/exercises/shared/team/team-
 import { TeamSubmissionSyncComponent } from 'app/exercises/shared/team-submission-sync/team-submission-sync.component';
 import { AdditionalFeedbackComponent } from 'app/shared/additional-feedback/additional-feedback.component';
 import { RatingComponent } from 'app/exercises/shared/rating/rating.component';
-import { NgModel } from '@angular/forms';
 import { MockTranslateService } from '../../helpers/mocks/service/mock-translate.service';
 import { ComplaintsStudentViewComponent } from 'app/complaints/complaints-for-students/complaints-student-view.component';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
@@ -81,7 +80,6 @@ describe('TextEditorComponent', () => {
                 MockComponent(TeamSubmissionSyncComponent),
                 MockComponent(AdditionalFeedbackComponent),
                 MockComponent(RatingComponent),
-                MockDirective(NgModel),
                 MockDirective(TranslateDirective),
             ],
             providers: [
@@ -311,6 +309,7 @@ describe('TextEditorComponent', () => {
     });
 
     it('should receive submission from team', () => {
+        comp.participation = { id: 1, team: { id: 1 } } as StudentParticipation;
         comp.textExercise = {
             id: 1,
             studentParticipations: [] as StudentParticipation[],

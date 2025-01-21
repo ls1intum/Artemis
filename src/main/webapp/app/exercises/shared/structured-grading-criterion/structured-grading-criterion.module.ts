@@ -7,8 +7,7 @@ import { ArtemisMarkdownModule } from 'app/shared/markdown.module';
 import { ArtemisSharedComponentModule } from 'app/shared/components/shared-component.module';
 
 @NgModule({
-    declarations: [GradingInstructionsDetailsComponent],
     exports: [GradingInstructionsDetailsComponent],
-    imports: [CommonModule, ArtemisSharedModule, ArtemisMarkdownModule, ArtemisMarkdownEditorModule, ArtemisSharedComponentModule],
+    imports: [CommonModule, ArtemisSharedModule, ArtemisMarkdownModule, ArtemisMarkdownEditorModule, ArtemisSharedComponentModule, GradingInstructionsDetailsComponent],
 })
 export class StructuredGradingCriterionModule {}

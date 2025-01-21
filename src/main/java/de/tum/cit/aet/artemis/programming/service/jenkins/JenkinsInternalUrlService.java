@@ -1,5 +1,7 @@
 package de.tum.cit.aet.artemis.programming.service.jenkins;
 
+import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_JENKINS;
+
 import java.net.URL;
 import java.util.Optional;
 
@@ -9,7 +11,7 @@ import org.springframework.stereotype.Service;
 
 import de.tum.cit.aet.artemis.programming.service.InternalUrlService;
 
-@Profile("jenkins")
+@Profile(PROFILE_JENKINS)
 @Service
 public class JenkinsInternalUrlService extends InternalUrlService {
 

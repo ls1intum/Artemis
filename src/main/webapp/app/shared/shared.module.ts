@@ -8,14 +8,13 @@ import { SecureLinkDirective } from 'app/shared/http/secure-link.directive';
 import { SecuredImageComponent } from 'app/shared/image/secured-image.component';
 import { ArtemisSharedPipesModule } from 'app/shared/pipes/shared-pipes.module';
 import { ArtemisSharedCommonModule } from 'app/shared/shared-common.module';
-import { ArtemisSharedLibsModule } from 'app/shared/shared-libs.module';
+
 import { CustomMaxDirective } from 'app/shared/validators/custom-max-validator.directive';
 import { CustomMinDirective } from 'app/shared/validators/custom-min-validator.directive';
 import { OrganizationSelectorComponent } from './organization-selector/organization-selector.component';
 import { AdditionalFeedbackComponent } from './additional-feedback/additional-feedback.component';
 import { ResizeableContainerComponent } from './resizeable-container/resizeable-container.component';
 import { RouterModule } from '@angular/router';
-import { ExtensionPointDirective } from 'app/shared/extension-point/extension-point.directive';
 import { CustomPatternValidatorDirective } from 'app/shared/validators/custom-pattern-validator.directive';
 import { ItemCountComponent } from 'app/shared/pagination/item-count.component';
 import { ConsistencyCheckComponent } from 'app/shared/consistency-check/consistency-check.component';
@@ -29,14 +28,16 @@ import { DetailOverviewNavigationBarComponent } from 'app/shared/detail-overview
 import { ScienceDirective } from 'app/shared/science/science.directive';
 
 @NgModule({
-    imports: [ArtemisSharedLibsModule, ArtemisSharedCommonModule, ArtemisSharedPipesModule, RouterModule, LoadingIndicatorContainerComponent],
-    declarations: [
+    imports: [
+        ArtemisSharedCommonModule,
+        ArtemisSharedPipesModule,
+        RouterModule,
+        LoadingIndicatorContainerComponent,
         DetailOverviewNavigationBarComponent,
         CircularProgressBarComponent,
         CompetencySelectionComponent,
         AdditionalFeedbackComponent,
         HasAnyAuthorityDirective,
-        ExtensionPointDirective,
         SecuredImageComponent,
         DeleteButtonDirective,
         DeleteDialogComponent,
@@ -56,7 +57,6 @@ import { ScienceDirective } from 'app/shared/science/science.directive';
         ScienceDirective,
     ],
     exports: [
-        ArtemisSharedLibsModule,
         ArtemisSharedCommonModule,
         ArtemisSharedPipesModule,
         RouterModule,
@@ -66,7 +66,6 @@ import { ScienceDirective } from 'app/shared/science/science.directive';
         LoadingIndicatorContainerComponent,
         AdditionalFeedbackComponent,
         HasAnyAuthorityDirective,
-        ExtensionPointDirective,
         SecuredImageComponent,
         DeleteButtonDirective,
         DeleteDialogComponent,
