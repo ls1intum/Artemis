@@ -15,7 +15,7 @@ import { Observable, firstValueFrom, map } from 'rxjs';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { TranslateService } from '@ngx-translate/core';
 import { DocumentationType } from 'app/shared/components/documentation-button/documentation-button.component';
-import { JhiWebsocketService } from 'app/core/websocket/websocket.service';
+import { WebsocketService } from 'app/core/websocket/websocket.service';
 import { IrisStageDTO, IrisStageStateDTO } from 'app/entities/iris/iris-stage-dto.model';
 import { CourseCompetencyService } from 'app/course/competencies/course-competency.service';
 import { ArtemisSharedCommonModule } from 'app/shared/shared-common.module';
@@ -62,7 +62,7 @@ export class GenerateCompetenciesComponent implements OnInit, ComponentCanDeacti
     private modalService = inject(NgbModal);
     private artemisTranslatePipe = inject(ArtemisTranslatePipe);
     private translateService = inject(TranslateService);
-    private jhiWebsocketService = inject(JhiWebsocketService);
+    private jhiWebsocketService = inject(WebsocketService);
 
     @ViewChild(CourseDescriptionFormComponent) courseDescriptionForm: CourseDescriptionFormComponent;
 

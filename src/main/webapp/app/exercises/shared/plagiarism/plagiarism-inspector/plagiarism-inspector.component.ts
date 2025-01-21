@@ -14,7 +14,7 @@ import { ModelingSubmissionElement } from 'app/exercises/shared/plagiarism/types
 import { TextSubmissionElement } from 'app/exercises/shared/plagiarism/types/text/TextSubmissionElement';
 import { ProgrammingExerciseService } from 'app/exercises/programming/manage/services/programming-exercise.service';
 import { PlagiarismOptions } from 'app/exercises/shared/plagiarism/types/PlagiarismOptions';
-import { JhiWebsocketService } from 'app/core/websocket/websocket.service';
+import { WebsocketService } from 'app/core/websocket/websocket.service';
 import { tap } from 'rxjs/operators';
 import { TranslateService } from '@ngx-translate/core';
 import { faChevronRight, faExclamationTriangle, faQuestionCircle } from '@fortawesome/free-solid-svg-icons';
@@ -65,7 +65,7 @@ export class PlagiarismInspectorComponent implements OnInit {
     private modelingExerciseService = inject(ModelingExerciseService);
     private programmingExerciseService = inject(ProgrammingExerciseService);
     private textExerciseService = inject(TextExerciseService);
-    private websocketService = inject(JhiWebsocketService);
+    private websocketService = inject(WebsocketService);
     private translateService = inject(TranslateService);
     private inspectorService = inject(PlagiarismInspectorService);
     private plagiarismCasesService = inject(PlagiarismCasesService);
