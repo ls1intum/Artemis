@@ -1,9 +1,9 @@
-import { RouterModule, Routes } from '@angular/router';
-import { NgModule } from '@angular/core';
+import { Routes } from '@angular/router';
 import { Authority } from 'app/shared/constants/authority.constants';
 
 import { LocalVCGuard } from 'app/localvc/localvc-guard.service';
 import { UserRouteAccessService } from 'app/core/auth/user-route-access-service';
+
 const routes: Routes = [
     {
         path: ':participationId',
@@ -42,9 +42,4 @@ const routes: Routes = [
         canActivate: [UserRouteAccessService, LocalVCGuard],
     },
 ];
-
-@NgModule({
-    imports: [RouterModule.forChild(routes)],
-    exports: [RouterModule],
-})
-export class ArtemisProgrammingRepositoryRoutingModule {}
+export { routes };

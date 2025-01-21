@@ -191,7 +191,7 @@ const routes: Routes = [
     },
     {
         path: 'courses/:courseId/exams/:examId/exercises/:exerciseId/repository',
-        loadChildren: () => import('./exercises/programming/participate/programming-repository-routing.module').then((m) => m.ArtemisProgrammingRepositoryRoutingModule),
+        loadChildren: () => import('./exercises/programming/participate/programming-repository.route').then((m) => m.routes),
     },
     {
         path: 'features',

@@ -1,7 +1,6 @@
-import { RouterModule, Routes } from '@angular/router';
+import { Routes } from '@angular/router';
 
 import { UserRouteAccessService } from 'app/core/auth/user-route-access-service';
-import { NgModule } from '@angular/core';
 import { Authority } from 'app/shared/constants/authority.constants';
 
 const routes: Routes = [
@@ -16,8 +15,4 @@ const routes: Routes = [
     },
 ];
 
-@NgModule({
-    imports: [RouterModule.forChild(routes)],
-    exports: [RouterModule],
-})
-export class ArtemisProgrammingParticipationRoutingModule {}
+export { routes };

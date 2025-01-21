@@ -92,7 +92,7 @@ const routes: Routes = [
                     authorities: [Authority.USER],
                     pageTitle: 'overview.textExercise',
                 },
-                loadChildren: () => import('../exercises/text/participate/text-participation.module').then((m) => m.ArtemisTextParticipationModule),
+                loadChildren: () => import('../exercises/text/participate/text-editor.route').then((m) => m.textEditorRoute),
             },
             {
                 path: 'exercises/programming-exercises/:exerciseId/code-editor',
@@ -100,7 +100,7 @@ const routes: Routes = [
                     authorities: [Authority.USER],
                     pageTitle: 'overview.programmingExercise',
                 },
-                loadChildren: () => import('../exercises/programming/participate/programming-participation.module').then((m) => m.ArtemisProgrammingParticipationModule),
+                loadChildren: () => import('../exercises/programming/participate/programming-participation.route').then((m) => m.routes),
             },
             {
                 path: 'exercises/:exerciseId/repository',
@@ -108,7 +108,7 @@ const routes: Routes = [
                     authorities: [Authority.USER],
                     pageTitle: 'overview.repository',
                 },
-                loadChildren: () => import('../exercises/programming/participate/programming-repository.module').then((m) => m.ArtemisProgrammingRepositoryModule),
+                loadChildren: () => import('../exercises/programming/participate/programming-repository.route').then((m) => m.routes),
             },
             {
                 path: 'exercises/modeling-exercises/:exerciseId',
