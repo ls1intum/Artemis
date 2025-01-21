@@ -397,6 +397,11 @@ export class TextEditorComponent implements OnInit, OnDestroy, ComponentCanDeact
         this.textSubmissionService.update(submissionToCreateOrUpdate, this.textExercise.id!).subscribe({
             next: (response) => {
                 this.submission = response.body!;
+                if (this.participation.team) {
+                    // Make sure the team is not lost during update
+                    const studentParticipation = this.submission.participation as StudentParticipation;
+                    studentParticipation.team = this.participation.team;
+                }
                 setLatestSubmissionResult(this.submission, getLatestSubmissionResult(this.submission));
                 this.submissionChange.next(this.submission);
                 // reconnect so that the submission status is displayed correctly in the result.component
@@ -447,7 +452,10 @@ export class TextEditorComponent implements OnInit, OnDestroy, ComponentCanDeact
     onReceiveSubmissionFromTeam(submission: TextSubmission) {
         submission.participation!.exercise = this.textExercise;
         submission.participation!.submissions = [submission];
-        this.updateParticipation(submission.participation as StudentParticipation);
+        // Keep the existing team on the participation
+        const studentParticipation = submission.participation as StudentParticipation;
+        studentParticipation.team = this.participation.team;
+        this.updateParticipation(studentParticipation);
     }
 
     onTextEditorInput(event: Event) {
