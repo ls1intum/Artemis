@@ -52,7 +52,7 @@ export const courseManagementState: Routes = [
                     pageTitle: 'artemisApp.course.gradingSystem',
                 },
                 canActivate: [UserRouteAccessService],
-                loadChildren: () => import('app/grading-system/grading-system.module').then((m) => m.GradingSystemModule),
+                loadChildren: () => import('app/grading-system/grading-system.route').then((m) => m.gradingSystemState),
             },
             {
                 path: ':courseId/iris-settings',
