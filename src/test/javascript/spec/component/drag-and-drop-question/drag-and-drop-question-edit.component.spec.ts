@@ -1,6 +1,5 @@
 import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
-import { NgModel } from '@angular/forms';
-import { NgbCollapse, NgbModal, NgbTooltipModule } from '@ng-bootstrap/ng-bootstrap';
+import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { DragAndDropMapping } from 'app/entities/quiz/drag-and-drop-mapping.model';
 import { DragAndDropQuestion } from 'app/entities/quiz/drag-and-drop-question.model';
 import { DragItem } from 'app/entities/quiz/drag-item.model';
@@ -9,23 +8,17 @@ import { DropLocation } from 'app/entities/quiz/drop-location.model';
 import { ScoringType } from 'app/entities/quiz/quiz-question.model';
 import { DragAndDropMouseEvent } from 'app/exercises/quiz/manage/drag-and-drop-question/drag-and-drop-mouse-event.class';
 import { DragAndDropQuestionEditComponent } from 'app/exercises/quiz/manage/drag-and-drop-question/drag-and-drop-question-edit.component';
-import { QuizScoringInfoModalComponent } from 'app/exercises/quiz/manage/quiz-scoring-info-modal/quiz-scoring-info-modal.component';
-import { DragAndDropQuestionComponent } from 'app/exercises/quiz/shared/questions/drag-and-drop-question/drag-and-drop-question.component';
-import { FileUploaderService } from 'app/shared/http/file-uploader.service';
-import { SecuredImageComponent } from 'app/shared/image/secured-image.component';
-import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
-import { MockComponent, MockDirective, MockModule, MockPipe, MockProvider } from 'ng-mocks';
+import { MockProvider } from 'ng-mocks';
 import { MockNgbModalService } from '../../helpers/mocks/service/mock-ngb-modal.service';
 import { triggerChanges } from '../../helpers/utils/general.utils';
 import { ArtemisTestModule } from '../../test.module';
-import { ArtemisMarkdownService } from 'app/shared/markdown.service';
-import { DragAndDropQuestionUtil } from 'app/exercises/quiz/shared/drag-and-drop-question-util.service';
 import { ChangeDetectorRef } from '@angular/core';
 import { clone } from 'lodash-es';
-import { CdkDragDrop, DragDropModule } from '@angular/cdk/drag-drop';
+import { CdkDragDrop } from '@angular/cdk/drag-drop';
 import { QuizExplanationAction } from 'app/shared/monaco-editor/model/actions/quiz/quiz-explanation.action';
 import { QuizHintAction } from 'app/shared/monaco-editor/model/actions/quiz/quiz-hint.action';
-import { MarkdownEditorMonacoComponent, TextWithDomainAction } from 'app/shared/markdown-editor/monaco/markdown-editor-monaco.component';
+import { TextWithDomainAction } from 'app/shared/markdown-editor/monaco/markdown-editor-monaco.component';
+import { MockResizeObserver } from '../../helpers/mocks/service/mock-resize-observer';
 
 describe('DragAndDropQuestionEditComponent', () => {
     let fixture: ComponentFixture<DragAndDropQuestionEditComponent>;
@@ -65,35 +58,29 @@ describe('DragAndDropQuestionEditComponent', () => {
         window.URL.createObjectURL = jest.fn();
     });
 
-    beforeEach(() => {
-        TestBed.configureTestingModule({
-            imports: [ArtemisTestModule, DragDropModule, MockDirective(NgbCollapse), MockModule(NgbTooltipModule)],
-            declarations: [
-                DragAndDropQuestionEditComponent,
-                MockPipe(ArtemisTranslatePipe),
-                MockComponent(QuizScoringInfoModalComponent),
-                MockComponent(MarkdownEditorMonacoComponent),
-                MockComponent(SecuredImageComponent),
-                MockComponent(DragAndDropQuestionComponent),
-                MockDirective(NgModel),
-            ],
-            providers: [
-                MockProvider(ArtemisMarkdownService),
-                MockProvider(DragAndDropQuestionUtil),
-                MockProvider(FileUploaderService),
-                { provide: NgbModal, useClass: MockNgbModalService },
-                MockProvider(ChangeDetectorRef),
-            ],
-        }).compileComponents();
+    beforeEach(async () => {
+        await TestBed.configureTestingModule({
+            imports: [ArtemisTestModule],
+        })
+            .overrideComponent(DragAndDropQuestionEditComponent, {
+                set: {
+                    providers: [{ provide: NgbModal, useClass: MockNgbModalService }, MockProvider(ChangeDetectorRef)],
+                },
+            })
+            .compileComponents();
         fixture = TestBed.createComponent(DragAndDropQuestionEditComponent);
         component = fixture.componentInstance;
-        modalService = TestBed.inject(NgbModal);
+        modalService = fixture.debugElement.injector.get(NgbModal);
         questionUpdatedSpy = jest.spyOn(component.questionUpdated, 'emit');
+        jest.spyOn(component['changeDetector'], 'detectChanges').mockImplementation(() => {});
         createObjectURLStub = jest.spyOn(window.URL, 'createObjectURL').mockImplementation((file: File) => {
             return 'some/client/dependent/path/' + file.name;
         });
         addFileSpy = jest.spyOn(component.addNewFile, 'emit');
         removeFileSpy = jest.spyOn(component.removeFile, 'emit');
+        global.ResizeObserver = jest.fn().mockImplementation((callback: ResizeObserverCallback) => {
+            return new MockResizeObserver(callback);
+        });
     });
 
     beforeEach(fakeAsync(() => {
@@ -593,6 +580,7 @@ describe('DragAndDropQuestionEditComponent', () => {
         component.question.text = 'should be removed';
 
         const newValue = 'new value';
+        expect(questionUpdatedSpy).toHaveBeenCalledTimes(0);
         component.changesInMarkdown(newValue);
 
         expect(questionUpdatedSpy).toHaveBeenCalledOnce();

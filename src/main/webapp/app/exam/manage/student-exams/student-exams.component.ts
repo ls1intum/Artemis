@@ -1,7 +1,9 @@
-import { Component, OnDestroy, OnInit } from '@angular/core';
-import { ActivatedRoute } from '@angular/router';
-import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
+import { Component, OnDestroy, OnInit, inject } from '@angular/core';
+import { ActivatedRoute, RouterLink } from '@angular/router';
+import { NgbModal, NgbProgressbar } from '@ng-bootstrap/ng-bootstrap';
 import { StudentExamService } from 'app/exam/manage/student-exams/student-exam.service';
+import { StudentExamWorkingTimeComponent } from 'app/exam/shared/student-exam-working-time/student-exam-working-time.component';
+import { TestExamWorkingTimeComponent } from 'app/exam/shared/testExam-workingTime/test-exam-working-time.component';
 import { Subscription } from 'rxjs';
 import { tap } from 'rxjs/operators';
 import { StudentExam } from 'app/entities/student-exam.model';
@@ -17,10 +19,16 @@ import { AccountService } from 'app/core/auth/account.service';
 import { onError } from 'app/shared/util/global.utils';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { faExclamationTriangle } from '@fortawesome/free-solid-svg-icons';
-import { JhiWebsocketService } from 'app/core/websocket/websocket.service';
+import { WebsocketService } from 'app/core/websocket/websocket.service';
 import { convertDateFromServer } from 'app/utils/date.utils';
 import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
 import { PROFILE_LOCALVC } from 'app/app.constants';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { StudentExamStatusComponent } from './student-exam-status/student-exam-status.component';
+import { DataTableComponent } from 'app/shared/data-table/data-table.component';
+import { NgxDatatableModule } from '@siemens/ngx-datatable';
+import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 
 const getWebsocketChannel = (examId: number) => `/topic/exams/${examId}/exercise-start-status`;
 
@@ -35,8 +43,32 @@ export type ExamExerciseStartPreparationStatus = {
 @Component({
     selector: 'jhi-student-exams',
     templateUrl: './student-exams.component.html',
+    imports: [
+        TranslateDirective,
+        FaIconComponent,
+        StudentExamStatusComponent,
+        NgbProgressbar,
+        DataTableComponent,
+        NgxDatatableModule,
+        RouterLink,
+        TestExamWorkingTimeComponent,
+        StudentExamWorkingTimeComponent,
+        ArtemisDatePipe,
+        ArtemisTranslatePipe,
+    ],
 })
 export class StudentExamsComponent implements OnInit, OnDestroy {
+    private route = inject(ActivatedRoute);
+    private examManagementService = inject(ExamManagementService);
+    private studentExamService = inject(StudentExamService);
+    private courseService = inject(CourseManagementService);
+    private alertService = inject(AlertService);
+    private modalService = inject(NgbModal);
+    private accountService = inject(AccountService);
+    private artemisTranslatePipe = inject(ArtemisTranslatePipe);
+    private websocketService = inject(WebsocketService);
+    private profileService = inject(ProfileService);
+
     courseId: number;
     examId: number;
     studentExams: StudentExam[] = [];
@@ -62,19 +94,6 @@ export class StudentExamsComponent implements OnInit, OnDestroy {
 
     // Icons
     faExclamationTriangle = faExclamationTriangle;
-
-    constructor(
-        private route: ActivatedRoute,
-        private examManagementService: ExamManagementService,
-        private studentExamService: StudentExamService,
-        private courseService: CourseManagementService,
-        private alertService: AlertService,
-        private modalService: NgbModal,
-        private accountService: AccountService,
-        private artemisTranslatePipe: ArtemisTranslatePipe,
-        private websocketService: JhiWebsocketService,
-        private profileService: ProfileService,
-    ) {}
 
     /**
      * Initialize the courseId and examId

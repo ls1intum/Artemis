@@ -10,10 +10,8 @@ import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
-import java.util.Set;
 import java.util.stream.Collectors;
 
 import jakarta.persistence.CascadeType;
@@ -28,7 +26,6 @@ import jakarta.persistence.ManyToOne;
 import jakarta.persistence.OneToMany;
 import jakarta.persistence.OrderColumn;
 import jakarta.persistence.Table;
-import jakarta.persistence.Transient;
 import jakarta.validation.constraints.NotNull;
 
 import org.apache.commons.lang3.StringUtils;
@@ -53,7 +50,6 @@ import de.tum.cit.aet.artemis.exercise.domain.SubmissionType;
 import de.tum.cit.aet.artemis.exercise.domain.participation.Participation;
 import de.tum.cit.aet.artemis.exercise.service.ExerciseDateService;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
-import de.tum.cit.aet.artemis.programming.domain.hestia.CoverageFileReport;
 import de.tum.cit.aet.artemis.programming.dto.ResultDTO;
 import de.tum.cit.aet.artemis.quiz.config.QuizView;
 import de.tum.cit.aet.artemis.quiz.domain.QuizExercise;
@@ -151,13 +147,6 @@ public class Result extends DomainObject implements Comparable<Result> {
     @Column(name = "last_modified_date")
     @JsonIgnore
     private Instant lastModifiedDate;
-
-    // This attribute is required to forward the coverage file reports after creating the build result. This is required in order to
-    // delay referencing the corresponding test cases from the entries because the test cases are not saved in the database
-    // at this point of time but the required test case name would be lost, otherwise.
-    @Transient
-    @JsonIgnore
-    private Map<String, Set<CoverageFileReport>> fileReportsByTestCaseName;
 
     public ZonedDateTime getCompletionDate() {
         return completionDate;
@@ -498,14 +487,6 @@ public class Result extends DomainObject implements Comparable<Result> {
 
     public void setCodeIssueCount(int codeIssueCount) {
         this.codeIssueCount = Math.min(codeIssueCount, SIZE_OF_UNSIGNED_TINYINT);
-    }
-
-    public Map<String, Set<CoverageFileReport>> getCoverageFileReportsByTestCaseName() {
-        return fileReportsByTestCaseName;
-    }
-
-    public void setCoverageFileReportsByTestCaseName(Map<String, Set<CoverageFileReport>> fileReportsByTestCaseName) {
-        this.fileReportsByTestCaseName = fileReportsByTestCaseName;
     }
 
     /**

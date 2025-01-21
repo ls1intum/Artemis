@@ -1,15 +1,23 @@
-import { Component, EventEmitter, Input, Output } from '@angular/core';
+import { Component, EventEmitter, Input, Output, inject } from '@angular/core';
 import { Observable, OperatorFunction, catchError, of, switchMap, tap } from 'rxjs';
 import { UserService } from 'app/core/user/user.service';
 import { faCircleNotch } from '@fortawesome/free-solid-svg-icons';
 import { User } from 'app/core/user/user.model';
+import { TranslateDirective } from '../language/translate.directive';
+import { FormsModule } from '@angular/forms';
+import { NgbTypeahead } from '@ng-bootstrap/ng-bootstrap';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { ArtemisTranslatePipe } from '../pipes/artemis-translate.pipe';
 
 @Component({
     selector: 'jhi-type-ahead-user-search-field',
     templateUrl: './type-ahead-user-search-field.component.html',
     styleUrls: ['./type-ahead-user-search-field.component.scss'],
+    imports: [TranslateDirective, FormsModule, NgbTypeahead, FaIconComponent, ArtemisTranslatePipe],
 })
 export class TypeAheadUserSearchFieldComponent {
+    private userService = inject(UserService);
+
     @Input() loginOrName: string;
     @Output() loginOrNameChange = new EventEmitter<string>();
 
@@ -20,8 +28,6 @@ export class TypeAheadUserSearchFieldComponent {
 
     readonly faCircleNotch = faCircleNotch;
     readonly MIN_SEARCH_QUERY_LENGTH = 3;
-
-    constructor(private userService: UserService) {}
 
     search: OperatorFunction<string, readonly User[]> = (login: Observable<string>) => {
         this.searchFailed = false;

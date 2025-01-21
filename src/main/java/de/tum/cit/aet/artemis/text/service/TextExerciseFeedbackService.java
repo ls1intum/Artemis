@@ -121,7 +121,7 @@ public class TextExerciseFeedbackService {
 
             log.debug("Submission id: {}", textSubmission.getId());
 
-            var athenaResponse = this.athenaFeedbackSuggestionsService.orElseThrow().getTextFeedbackSuggestions(textExercise, textSubmission, true);
+            var athenaResponse = this.athenaFeedbackSuggestionsService.orElseThrow().getTextFeedbackSuggestions(textExercise, textSubmission, false);
 
             Set<TextBlock> textBlocks = new HashSet<>();
             List<Feedback> feedbacks = new ArrayList<>();

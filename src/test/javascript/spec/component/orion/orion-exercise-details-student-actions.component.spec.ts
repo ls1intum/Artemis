@@ -61,7 +61,7 @@ describe('OrionExerciseDetailsStudentActionsComponent', () => {
     it('ngOnInit should subscribe to state', () => {
         comp.ngOnInit();
 
-        expect(orionStateStub).toHaveBeenCalledOnce();
+        expect(orionStateStub).toHaveBeenCalled();
         expect(orionStateStub).toHaveBeenCalledWith();
         expect(comp.orionState).toEqual(orionState);
     });

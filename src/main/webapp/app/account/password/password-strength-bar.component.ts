@@ -15,7 +15,6 @@ import { ArtemisSharedModule } from 'app/shared/shared.module';
         </ul>
     </div>`,
     styleUrls: ['password-strength-bar.scss'],
-    standalone: true,
     imports: [TranslateDirective, ArtemisSharedModule],
 })
 export class PasswordStrengthBarComponent {

@@ -1,5 +1,6 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, inject } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
+import { ExerciseDetailStatisticsComponent } from 'app/exercises/shared/statistics/exercise-detail-statistics.component';
 import dayjs from 'dayjs/esm';
 import { QuizExerciseService } from 'app/exercises/quiz/manage/quiz-exercise.service';
 import { QuizExercise } from 'app/entities/quiz/quiz-exercise.model';
@@ -13,12 +14,30 @@ import { ExerciseManagementStatisticsDto } from 'app/exercises/shared/statistics
 import { StatisticsService } from 'app/shared/statistics-graph/statistics.service';
 import { TranslateService } from '@ngx-translate/core';
 import { QuizQuestionType } from 'app/entities/quiz/quiz-question.model';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { DocumentationButtonComponent } from 'app/shared/components/documentation-button/documentation-button.component';
+import { QuizExerciseManageButtonsComponent } from './quiz-exercise-manage-buttons.component';
+import { QuizExerciseLifecycleButtonsComponent } from './quiz-exercise-lifecycle-buttons.component';
+import { DetailOverviewListComponent } from 'app/detail-overview-list/detail-overview-list.component';
 
 @Component({
     selector: 'jhi-quiz-exercise-detail',
     templateUrl: './quiz-exercise-detail.component.html',
+    imports: [
+        TranslateDirective,
+        DocumentationButtonComponent,
+        QuizExerciseManageButtonsComponent,
+        QuizExerciseLifecycleButtonsComponent,
+        ExerciseDetailStatisticsComponent,
+        DetailOverviewListComponent,
+    ],
 })
 export class QuizExerciseDetailComponent implements OnInit {
+    private route = inject(ActivatedRoute);
+    private quizExerciseService = inject(QuizExerciseService);
+    private statisticsService = inject(StatisticsService);
+    private translateService = inject(TranslateService);
+
     readonly documentationType: DocumentationType = 'Quiz';
     readonly dayjs = dayjs;
 
@@ -32,13 +51,6 @@ export class QuizExerciseDetailComponent implements OnInit {
     statistics: ExerciseManagementStatisticsDto;
 
     detailOverviewSections: DetailOverviewSection[];
-
-    constructor(
-        private route: ActivatedRoute,
-        private quizExerciseService: QuizExerciseService,
-        private statisticsService: StatisticsService,
-        private translateService: TranslateService,
-    ) {}
 
     /**
      * Load the quizzes of the course for export on init.

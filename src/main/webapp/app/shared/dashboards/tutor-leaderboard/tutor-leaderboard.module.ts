@@ -4,8 +4,7 @@ import { TutorLeaderboardComponent } from 'app/shared/dashboards/tutor-leaderboa
 import { ArtemisSharedModule } from 'app/shared/shared.module';
 
 @NgModule({
-    imports: [ArtemisSharedModule, RouterModule.forChild([])],
-    declarations: [TutorLeaderboardComponent],
+    imports: [ArtemisSharedModule, RouterModule.forChild([]), TutorLeaderboardComponent],
     exports: [TutorLeaderboardComponent],
 })
 export class ArtemisTutorLeaderboardModule {}

@@ -76,7 +76,7 @@
                     #trigger="cdkOverlayOrigin"
                     [title]="'artemisApp.metis.chooseReaction' | artemisTranslate"
                 >
-                    <fa-icon [icon]="faSmile" [class.open-selector]="showReactionSelector" [title]="'artemisApp.metis.chooseReaction' | artemisTranslate"></fa-icon>
+                    <fa-icon [icon]="faSmile" [class.open-selector]="showReactionSelector" [title]="'artemisApp.metis.chooseReaction' | artemisTranslate" />
                 </button>
 
                 <ng-template
@@ -93,7 +93,7 @@
                             (emojiSelect)="selectReaction($event)"
                             [categoriesIcons]="categoriesIcons"
                             [recent]="selectedCourseEmojis"
-                        ></jhi-emoji-picker>
+                        />
                     }
                 </ng-template>
             </ng-container>
@@ -106,7 +106,7 @@
                 (click)="editPosting()"
                 [ngbTooltip]="'artemisApp.metis.editPosting' | artemisTranslate"
             >
-                <fa-icon [icon]="faPencilAlt" cdkOverlayOrigin></fa-icon>
+                <fa-icon [icon]="faPencilAlt" cdkOverlayOrigin />
             </button>
         }
         <jhi-post-create-edit-modal #createEditModal [posting]="posting" [isCommunicationPage]="isCommunicationPage" (isModalOpen)="isModalOpen.emit()" />
@@ -137,7 +137,7 @@
                 (click)="bookmarkPosting()"
                 [ngbTooltip]="(posting.isSaved ? 'artemisApp.metis.post.removeBookmarkPost' : 'artemisApp.metis.post.bookmarkPost') | artemisTranslate"
             >
-                <fa-icon [icon]="posting.isSaved ? faBookmark : farBookmark" cdkOverlayOrigin></fa-icon>
+                <fa-icon [icon]="posting.isSaved ? faBookmark : farBookmark" cdkOverlayOrigin />
             </button>
         }
     </div>

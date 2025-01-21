@@ -1,4 +1,4 @@
-import { Component, OnDestroy, OnInit } from '@angular/core';
+import { Component, OnDestroy, OnInit, inject } from '@angular/core';
 import { User } from 'app/core/user/user.model';
 import { AccountService } from 'app/core/auth/account.service';
 import { Subject, Subscription, tap } from 'rxjs';
@@ -6,13 +6,36 @@ import dayjs from 'dayjs/esm';
 import { faBan, faCopy, faEdit, faSave, faTrash } from '@fortawesome/free-solid-svg-icons';
 import { ButtonSize, ButtonType } from 'app/shared/components/button.component';
 import { AlertService } from 'app/core/util/alert.service';
+import { TranslateDirective } from '../../language/translate.directive';
+import { CdkCopyToClipboard } from '@angular/cdk/clipboard';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { DeleteButtonDirective } from '../../delete-dialog/delete-button.directive';
+import { ButtonComponent } from '../../components/button.component';
+import { FormDateTimePickerComponent } from '../../date-time-picker/date-time-picker.component';
+import { FormsModule } from '@angular/forms';
+import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
+import { ArtemisTranslatePipe } from '../../pipes/artemis-translate.pipe';
 
 @Component({
     selector: 'jhi-account-information',
     templateUrl: './vcs-access-tokens-settings.component.html',
     styleUrls: ['../user-settings.scss'],
+    imports: [
+        TranslateDirective,
+        CdkCopyToClipboard,
+        FaIconComponent,
+        DeleteButtonDirective,
+        ButtonComponent,
+        FormDateTimePickerComponent,
+        FormsModule,
+        ArtemisDatePipe,
+        ArtemisTranslatePipe,
+    ],
 })
 export class VcsAccessTokensSettingsComponent implements OnInit, OnDestroy {
+    private accountService = inject(AccountService);
+    private alertService = inject(AlertService);
+
     currentUser?: User;
 
     readonly faEdit = faEdit;
@@ -32,11 +55,6 @@ export class VcsAccessTokensSettingsComponent implements OnInit, OnDestroy {
 
     protected readonly ButtonType = ButtonType;
     protected readonly ButtonSize = ButtonSize;
-
-    constructor(
-        private accountService: AccountService,
-        private alertService: AlertService,
-    ) {}
 
     ngOnInit() {
         this.authStateSubscription = this.accountService

@@ -9,7 +9,6 @@ import { faBan, faQuestionCircle, faSave } from '@fortawesome/free-solid-svg-ico
 import { FormulaAction } from 'app/shared/monaco-editor/model/actions/formula.action';
 import { Faq, FaqState } from 'app/entities/faq.model';
 import { FaqService } from 'app/faq/faq.service';
-import { TranslateService } from '@ngx-translate/core';
 import { FaqCategory } from 'app/entities/faq-category.model';
 import { loadCourseFaqCategories } from 'app/faq/faq.utils';
 import { ArtemisMarkdownEditorModule } from 'app/shared/markdown-editor/markdown-editor.module';
@@ -22,7 +21,6 @@ import { AccountService } from 'app/core/auth/account.service';
     selector: 'jhi-faq-update',
     templateUrl: './faq-update.component.html',
     styleUrls: ['./faq-update.component.scss'],
-    standalone: true,
     imports: [ArtemisSharedModule, ArtemisSharedComponentModule, ArtemisMarkdownEditorModule, ArtemisCategorySelectorModule],
 })
 export class FaqUpdateComponent implements OnInit {
@@ -32,7 +30,7 @@ export class FaqUpdateComponent implements OnInit {
     existingCategories: FaqCategory[];
     faqCategories: FaqCategory[];
     courseId: number;
-    isAtLeastInstructor: boolean = false;
+    isAtLeastInstructor = false;
     domainActionsDescription = [new FormulaAction()];
 
     // Icons
@@ -45,7 +43,6 @@ export class FaqUpdateComponent implements OnInit {
     private activatedRoute = inject(ActivatedRoute);
     private navigationUtilService = inject(ArtemisNavigationUtilService);
     private router = inject(Router);
-    private translateService = inject(TranslateService);
     private accountService = inject(AccountService);
 
     ngOnInit() {

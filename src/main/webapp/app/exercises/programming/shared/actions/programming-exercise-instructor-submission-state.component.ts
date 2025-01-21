@@ -1,4 +1,4 @@
-import { Component, Input, OnChanges, OnInit, SimpleChanges } from '@angular/core';
+import { Component, Input, OnChanges, OnInit, SimpleChanges, inject } from '@angular/core';
 import { debounceTime, map, tap } from 'rxjs/operators';
 import { ExerciseSubmissionState, ProgrammingSubmissionService, ProgrammingSubmissionState } from 'app/exercises/programming/participate/programming-submission.service';
 import { Subscription } from 'rxjs';
@@ -7,6 +7,13 @@ import { ProgrammingExercise } from 'app/entities/programming/programming-exerci
 import { hasExerciseChanged } from 'app/exercises/shared/exercise/exercise.utils';
 import { ButtonType } from 'app/shared/components/button.component';
 import { faCircleNotch, faClock, faRedo } from '@fortawesome/free-solid-svg-icons';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
+import { NgClass } from '@angular/common';
+import { ProgrammingExerciseTriggerAllButtonComponent } from './programming-exercise-trigger-all-button.component';
+import { ButtonComponent } from 'app/shared/components/button.component';
+import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
+import { DurationPipe } from 'app/shared/pipes/duration.pipe';
 
 /**
  * This components provides two buttons to the instructor to interact with the students' submissions:
@@ -18,8 +25,11 @@ import { faCircleNotch, faClock, faRedo } from '@fortawesome/free-solid-svg-icon
 @Component({
     selector: 'jhi-programming-exercise-instructor-submission-state',
     templateUrl: './programming-exercise-instructor-submission-state.component.html',
+    imports: [FaIconComponent, NgbTooltip, NgClass, ProgrammingExerciseTriggerAllButtonComponent, ButtonComponent, ArtemisTranslatePipe, DurationPipe],
 })
 export class ProgrammingExerciseInstructorSubmissionStateComponent implements OnChanges, OnInit {
+    private programmingSubmissionService = inject(ProgrammingSubmissionService);
+
     FeatureToggle = FeatureToggle;
     ButtonType = ButtonType;
     ProgrammingSubmissionState = ProgrammingSubmissionState;
@@ -40,8 +50,6 @@ export class ProgrammingExerciseInstructorSubmissionStateComponent implements On
     faClock = faClock;
     faCircleNotch = faCircleNotch;
     faRedo = faRedo;
-
-    constructor(private programmingSubmissionService: ProgrammingSubmissionService) {}
 
     ngOnInit(): void {
         this.resultEtaSubscription = this.programmingSubmissionService.getResultEtaInMs().subscribe((resultEta) => (this.resultEtaInMs = resultEta));
