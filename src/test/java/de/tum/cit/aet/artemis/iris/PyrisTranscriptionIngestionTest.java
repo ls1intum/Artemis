@@ -76,7 +76,7 @@ class PyrisLectureTranscriptionIngestionTest extends AbstractIrisIntegrationTest
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "STUDENT")
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "STUDENT")
     void testIngestTranscriptionInPyrisWithoutPermission() throws Exception {
         activateIrisFor(lecture1.getCourse());
         irisRequestMockProvider.mockTranscriptionIngestionWebhookRunResponse(dto -> {

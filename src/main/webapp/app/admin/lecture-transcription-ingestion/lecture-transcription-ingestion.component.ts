@@ -40,7 +40,7 @@ export class LectureTranscriptionIngestionComponent {
 
     createTranscription(): void {
         this.lectureTranscriptionService
-            .createTranscription(Number(this.createLectureIdInput), Number(this.createLectureIdInput), JSON.parse(this.transcriptionInput))
+            .createTranscription(Number(this.createCourseIdInput), Number(this.createLectureIdInput), JSON.parse(this.transcriptionInput))
             .subscribe((successful) => {
                 if (successful) {
                     this.alertService.success('Created transcription');
