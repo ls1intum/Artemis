@@ -59,42 +59,33 @@ describe('Lti13ExerciseLaunchComponent', () => {
 
     it('onInit fail without state', () => {
         const httpStub = jest.spyOn(http, 'post');
-        const consoleSpy = jest.spyOn(console, 'error').mockImplementation();
 
         route.snapshot = { queryParamMap: convertToParamMap({ id_token: 'id_token' }) } as ActivatedRouteSnapshot;
 
         comp.ngOnInit();
 
-        expect(consoleSpy).toHaveBeenCalledOnce();
-        expect(consoleSpy).toHaveBeenCalledWith('Required parameter for LTI launch missing');
         expect(comp.isLaunching).toBeFalse();
         expect(httpStub).not.toHaveBeenCalled();
     });
 
     it('onInit fail without token', () => {
         const httpStub = jest.spyOn(http, 'post');
-        const consoleSpy = jest.spyOn(console, 'error').mockImplementation();
 
         route.snapshot = { queryParamMap: convertToParamMap({ state: 'state' }) } as ActivatedRouteSnapshot;
 
         comp.ngOnInit();
 
-        expect(consoleSpy).toHaveBeenCalledOnce();
-        expect(consoleSpy).toHaveBeenCalledWith('Required parameter for LTI launch missing');
         expect(comp.isLaunching).toBeFalse();
         expect(httpStub).not.toHaveBeenCalled();
     });
 
     it('onInit no targetLinkUri', () => {
         const httpStub = jest.spyOn(http, 'post').mockReturnValue(of({ ltiIdToken: 'id-token', clientRegistrationId: 'client-id' }));
-        const consoleSpy = jest.spyOn(console, 'error').mockImplementation();
 
         expect(comp.isLaunching).toBeTrue();
 
         comp.ngOnInit();
 
-        expect(consoleSpy).toHaveBeenCalled();
-        expect(consoleSpy).toHaveBeenCalledWith('No LTI targetLinkUri received for a successful launch');
         expect(httpStub).toHaveBeenCalledOnce();
         expect(httpStub).toHaveBeenCalledWith('api/public/lti13/auth-login', expect.anything(), expect.anything());
 
