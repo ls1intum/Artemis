@@ -590,6 +590,7 @@ describe('PostingsMarkdownEditor', () => {
             getColumn: () => 5,
         } as TextEditorPosition);
         mockEditor.getLineText.mockReturnValue('- First line');
+        mockEditor.getTextAtRange.mockReturnValue('');
 
         const replaceTextSpy = jest.spyOn(mockEditor, 'replaceTextAtRange');
         bulletedListAction.run(mockEditor);
