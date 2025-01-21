@@ -309,6 +309,7 @@ describe('TextEditorComponent', () => {
     });
 
     it('should receive submission from team', () => {
+        comp.participation = { id: 1, team: { id: 1 } } as StudentParticipation;
         comp.textExercise = {
             id: 1,
             studentParticipations: [] as StudentParticipation[],

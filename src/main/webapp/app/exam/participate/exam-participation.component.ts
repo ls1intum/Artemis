@@ -1,6 +1,6 @@
 import { Component, OnDestroy, OnInit, QueryList, ViewChildren, inject } from '@angular/core';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
-import { JhiWebsocketService } from 'app/core/websocket/websocket.service';
+import { WebsocketService } from 'app/core/websocket/websocket.service';
 import { ExamParticipationService } from 'app/exam/participate/exam-participation.service';
 import { StudentExam } from 'app/entities/student-exam.model';
 import { Exercise, ExerciseType } from 'app/entities/exercise.model';
@@ -90,7 +90,7 @@ type GenerateParticipationStatus = 'generating' | 'failed' | 'success';
     ],
 })
 export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentCanDeactivate {
-    private websocketService = inject(JhiWebsocketService);
+    private websocketService = inject(WebsocketService);
     private route = inject(ActivatedRoute);
     private router = inject(Router);
     private examParticipationService = inject(ExamParticipationService);
