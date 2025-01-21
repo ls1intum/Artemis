@@ -2290,7 +2290,7 @@ public class ProgrammingExerciseIntegrationTestService {
         test_redirectGetSolutionRepositoryFilesWithoutContent((exercise, files) -> {
             LocalRepository localRepository = new LocalRepository("main");
             try {
-                hestiaUtilTestService.setupSolution(files, exercise, localRepository);
+                programmingExerciseUtilService.setupSolution(files, exercise, localRepository);
             }
             catch (Exception e) {
                 fail("Setup solution threw unexpected exception: " + e.getMessage());
@@ -2313,7 +2313,7 @@ public class ProgrammingExerciseIntegrationTestService {
         BiFunction<ProgrammingExercise, Map<String, String>, LocalRepository> redirectFnc = (exercise, files) -> {
             LocalRepository localRepository = new LocalRepository("main");
             try {
-                hestiaUtilTestService.setupTemplate(files, exercise, localRepository);
+                programmingExerciseUtilService.setupTemplate(files, exercise, localRepository);
             }
             catch (Exception e) {
                 fail("Setup template threw unexpected exception: " + e.getMessage());
