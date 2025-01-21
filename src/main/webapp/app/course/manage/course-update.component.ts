@@ -326,15 +326,18 @@ export class CourseUpdateComponent implements OnInit {
             file = base64StringToBlob(base64Data, 'image/*');
         }
 
-        const course = this.courseForm.getRawValue();
+        const course = this.courseForm.getRawValue() as Course;
+        // NOTE: prevent overriding this value accidentally
+        // TODO: move presentationScore to gradingScale to avoid this
+        course.presentationScore = this.course.presentationScore;
 
         if (this.communicationEnabled && this.messagingEnabled) {
-            course['courseInformationSharingConfiguration'] = CourseInformationSharingConfiguration.COMMUNICATION_AND_MESSAGING;
+            course.courseInformationSharingConfiguration = CourseInformationSharingConfiguration.COMMUNICATION_AND_MESSAGING;
         } else if (this.communicationEnabled && !this.messagingEnabled) {
-            course['courseInformationSharingConfiguration'] = CourseInformationSharingConfiguration.COMMUNICATION_ONLY;
+            course.courseInformationSharingConfiguration = CourseInformationSharingConfiguration.COMMUNICATION_ONLY;
         } else {
             this.communicationEnabled = false;
-            course['courseInformationSharingConfiguration'] = CourseInformationSharingConfiguration.DISABLED;
+            course.courseInformationSharingConfiguration = CourseInformationSharingConfiguration.DISABLED;
         }
 
         if (!course.enrollmentEnabled) {
