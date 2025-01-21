@@ -34,7 +34,7 @@
                 <constraints nullable="false"/>
             </column>
             <column name="text"
-                    type="CLOB"/>
+                    type="TEXT"/>
             <column name="lecture_unit_id"
                     type="BIGINT"/>
             <column name="slide_number"
