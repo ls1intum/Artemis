@@ -1,4 +1,4 @@
-import dayjs from 'dayjs/esm';
+import dayjs from 'dayjs';
 import { Page } from 'playwright-core';
 
 import { Course } from 'app/entities/course.model';

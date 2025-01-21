@@ -1,7 +1,7 @@
 import { Component, OnDestroy, OnInit, ViewChild, inject } from '@angular/core';
 import { faExclamationCircle, faWifi } from '@fortawesome/free-solid-svg-icons';
 import { Subscription, filter } from 'rxjs';
-import { JhiWebsocketService } from 'app/core/websocket/websocket.service';
+import { WebsocketService } from 'app/core/websocket/websocket.service';
 import { NgbPopover } from '@ng-bootstrap/ng-bootstrap';
 import { NavigationEnd, Router } from '@angular/router';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
@@ -16,7 +16,7 @@ import { NgClass } from '@angular/common';
     imports: [FaIconComponent, TranslateDirective, CloseCircleComponent, NgClass, NgbPopover],
 })
 export class JhiConnectionWarningComponent implements OnInit, OnDestroy {
-    private websocketService = inject(JhiWebsocketService);
+    private websocketService = inject(WebsocketService);
     private router = inject(Router);
 
     @ViewChild('popover') popover: NgbPopover;

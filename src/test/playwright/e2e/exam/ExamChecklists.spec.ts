@@ -3,7 +3,7 @@ import { admin, instructor, studentOne } from '../../support/users';
 import { Course } from 'app/entities/course.model';
 import { Exam } from 'app/entities/exam/exam.model';
 import { generateUUID, prepareExam, startAssessing } from '../../support/utils';
-import dayjs from 'dayjs/esm';
+import dayjs from 'dayjs';
 import { ExamChecklistItem } from '../../support/pageobjects/exam/ExamDetailsPage';
 import { ExerciseType } from '../../support/constants';
 import textExerciseTemplate from '../../fixtures/exercise/text/template.json';
