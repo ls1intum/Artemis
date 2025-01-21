@@ -69,7 +69,7 @@ public class LectureTranscriptionResource {
      */
     @PostMapping(value = "courses/{courseId}/lecture/{lectureId}/transcriptions")
     @EnforceAtLeastEditorInCourse
-    public ResponseEntity<LectureTranscription> createTranscription(@RequestBody LectureTranscriptionDTO transcriptionDTO, @PathVariable Long courseId,
+    public ResponseEntity<LectureTranscription> createLectureTranscription(@RequestBody LectureTranscriptionDTO transcriptionDTO, @PathVariable Long courseId,
             @PathVariable Long lectureId) throws URISyntaxException {
         Lecture lecture = lectureRepository.findById(transcriptionDTO.lectureId()).orElseThrow(() -> new EntityNotFoundException("no lecture found for this id"));
 
@@ -98,7 +98,7 @@ public class LectureTranscriptionResource {
      */
     @GetMapping("lectures/{lectureId}/transcription/{transcriptionId}")
     @EnforceAtLeastStudent
-    public ResponseEntity<LectureTranscription> getLecture(@PathVariable Long lectureId, @PathVariable Long transcriptionId) {
+    public ResponseEntity<LectureTranscription> getLectureTranscriptions(@PathVariable Long lectureId, @PathVariable Long transcriptionId) {
         log.debug("REST request to get transcription {}", transcriptionId);
         LectureTranscription transcription = lectureTranscriptionRepository.findById(transcriptionId).orElseThrow();
         authCheckService.checkIsAllowedToSeeLectureElseThrow(transcription.getLecture(), userRepository.getUserWithGroupsAndAuthorities());
