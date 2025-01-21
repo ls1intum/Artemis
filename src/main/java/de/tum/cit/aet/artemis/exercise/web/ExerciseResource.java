@@ -11,6 +11,7 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Profile;
@@ -346,7 +347,7 @@ public class ExerciseResource {
         PlagiarismCaseInfoDTO plagiarismCaseInfo = plagiarismCaseService.getPlagiarismCaseInfoForExerciseAndUser(exercise.getId(), user.getId()).orElse(null);
 
         // TODO TW: This "feature" is only temporary for a paper.
-        if (exercise.getProblemStatement().contains(ICER_PAPER_FLAG)) {
+        if (StringUtils.contains(exercise.getProblemStatement(), ICER_PAPER_FLAG)) {
             if (user.getId() % 3 == 2) {
                 irisSettings = null;
             }
