@@ -179,17 +179,17 @@ const routes: Routes = [
                 children: [
                     {
                         path: '',
-                        loadChildren: () => import('./course-competencies/course-competencies.module').then((m) => m.CourseCompetenciesModule),
+                        loadChildren: () => import('./course-competencies/course-competencies.route').then((m) => m.routes),
                     },
                     {
                         path: ':competencyId',
-                        loadChildren: () => import('../overview/course-competencies/course-competencies-details.module').then((m) => m.ArtemisCourseCompetenciesDetailsModule),
+                        loadChildren: () => import('../overview/course-competencies/course-competencies-details.route').then((m) => m.routes),
                     },
                 ],
             },
             {
                 path: CourseOverviewRoutePath.DASHBOARD,
-                loadChildren: () => import('./course-dashboard/course-dashboard.module').then((m) => m.CourseDashboardModule),
+                loadChildren: () => import('./course-dashboard/course-dashboard.route').then((m) => m.routes),
                 data: {
                     authorities: [Authority.USER],
                     pageTitle: 'overview.dashboard',
