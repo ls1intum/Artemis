@@ -155,13 +155,13 @@ const routes: Routes = [
                             showRefreshButton: true,
                         },
                         canActivate: [UserRouteAccessService],
-                        loadChildren: () => import('../overview/course-lectures/course-lecture-details.module').then((m) => m.ArtemisCourseLectureDetailsModule),
+                        loadChildren: () => import('../overview/course-lectures/course-lecture-details.route').then((m) => m.routes),
                     },
                 ],
             },
             {
                 path: CourseOverviewRoutePath.STATISTICS,
-                loadChildren: () => import('./course-statistics/course-statistics.module').then((m) => m.CourseStatisticsModule),
+                loadChildren: () => import('./course-statistics/course-statistics.route').then((m) => m.routes),
                 data: {
                     authorities: [Authority.USER],
                     pageTitle: 'overview.statistics',
