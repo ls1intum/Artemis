@@ -5,7 +5,7 @@ import { ArtemisTestModule } from '../test.module';
 
 import { ArtemisIntelligenceService } from 'app/shared/monaco-editor/model/actions/artemis-intelligence/artemis-intelligence.service';
 import { BehaviorSubject } from 'rxjs';
-import { JhiWebsocketService } from 'app/core/websocket/websocket.service';
+import { WebsocketService } from 'app/core/websocket/websocket.service';
 import RewritingVariant from 'app/shared/monaco-editor/model/actions/artemis-intelligence/rewriting-variant';
 
 describe('ArtemisIntelligenceService', () => {
@@ -21,7 +21,7 @@ describe('ArtemisIntelligenceService', () => {
 
         TestBed.configureTestingModule({
             imports: [ArtemisTestModule],
-            providers: [provideHttpClient(), provideHttpClientTesting(), { provide: JhiWebsocketService, useValue: mockWebsocketService }],
+            providers: [provideHttpClient(), provideHttpClientTesting(), { provide: WebsocketService, useValue: mockWebsocketService }],
         });
 
         httpMock = TestBed.inject(HttpTestingController);
