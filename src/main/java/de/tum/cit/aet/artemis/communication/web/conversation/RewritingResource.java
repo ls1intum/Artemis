@@ -18,7 +18,7 @@ import de.tum.cit.aet.artemis.core.repository.CourseRepository;
 import de.tum.cit.aet.artemis.core.repository.UserRepository;
 import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInCourse.EnforceAtLeastTutorInCourse;
 import de.tum.cit.aet.artemis.iris.service.IrisRewritingService;
-import de.tum.cit.aet.artemis.iris.service.pyris.dto.data.PyrisRewriteTextRequest;
+import de.tum.cit.aet.artemis.iris.service.pyris.dto.data.PyrisRewriteTextRequestDTO;
 
 /**
  * REST controller for managing Markdown Rewritings.
@@ -54,7 +54,7 @@ public class RewritingResource {
      */
     @EnforceAtLeastTutorInCourse
     @PostMapping("courses/{courseId}/rewrite-text")
-    public ResponseEntity<Void> rewriteText(@RequestBody PyrisRewriteTextRequest request, @PathVariable Long courseId) {
+    public ResponseEntity<Void> rewriteText(@RequestBody PyrisRewriteTextRequestDTO request, @PathVariable Long courseId) {
         var rewritingService = irisRewritingService.orElseThrow();
         var user = userRepository.getUserWithGroupsAndAuthorities();
         var course = courseRepository.findByIdElseThrow(courseId);
