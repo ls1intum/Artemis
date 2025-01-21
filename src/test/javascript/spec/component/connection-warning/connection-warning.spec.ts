@@ -2,7 +2,7 @@ import { ArtemisTestModule } from '../../test.module';
 import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
 import { BehaviorSubject } from 'rxjs';
 import { JhiConnectionWarningComponent } from 'app/shared/connection-warning/connection-warning.component';
-import { ConnectionState, JhiWebsocketService } from 'app/core/websocket/websocket.service';
+import { ConnectionState, WebsocketService } from 'app/core/websocket/websocket.service';
 import { By } from '@angular/platform-browser';
 
 describe('ConnectionWarning', () => {
@@ -16,7 +16,7 @@ describe('ConnectionWarning', () => {
             imports: [ArtemisTestModule],
             providers: [
                 {
-                    provide: JhiWebsocketService,
+                    provide: WebsocketService,
                     useValue: {
                         connectionState: subject.asObservable(),
                     },

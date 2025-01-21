@@ -23,7 +23,7 @@ import { Result } from 'app/entities/result.model';
 import { routes } from 'app/exercises/modeling/participate/modeling-participation.route';
 import { AssessmentType } from 'app/entities/assessment-type.model';
 import { Feedback, FeedbackType } from 'app/entities/feedback.model';
-import { JhiWebsocketService } from 'app/core/websocket/websocket.service';
+import { WebsocketService } from 'app/core/websocket/websocket.service';
 import { HtmlForMarkdownPipe } from 'app/shared/pipes/html-for-markdown.pipe';
 import { UMLDiagramType, UMLElement, UMLModel } from '@ls1intum/apollon';
 import { MockTranslateService } from '../../helpers/mocks/service/mock-translate.service';
@@ -472,7 +472,7 @@ describe('ModelingSubmissionComponent', () => {
 
         submission.submitted = false;
         jest.spyOn(service, 'getLatestSubmissionForModelingEditor').mockReturnValue(of(submission));
-        const websocketService = debugElement.injector.get(JhiWebsocketService);
+        const websocketService = debugElement.injector.get(WebsocketService);
         jest.spyOn(websocketService, 'subscribe');
         const modelSubmission = <ModelingSubmission>(<unknown>{
             id: 1,
