@@ -20,7 +20,7 @@ export class CourseCompetencyRelationNodeComponent implements AfterViewInit {
 
     private readonly element = inject(ElementRef);
 
-    readonly courseCompetencyNode = input.required<Node>();
+    courseCompetencyNode = input.required<Node>();
     readonly courseCompetencyType = computed(() => this.courseCompetencyNode().data.type!);
 
     readonly onSizeSet = output<SizeUpdate>();

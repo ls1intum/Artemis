@@ -20,6 +20,7 @@ import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { TutorialGroupSessionRowButtonsComponent } from './tutorial-group-session-row-buttons/tutorial-group-session-row-buttons.component';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { RemoveSecondsPipe } from 'app/course/tutorial-groups/shared/remove-seconds.pipe';
+import { captureException } from '@sentry/angular';
 
 @Component({
     selector: 'jhi-session-management',
@@ -63,7 +64,7 @@ export class TutorialGroupSessionsManagementComponent implements OnDestroy {
 
     initialize() {
         if (!this.tutorialGroupId || !this.course) {
-            console.error('Error: Component not fully configured');
+            captureException('Error: Component not fully configured');
         } else {
             this.isInitialized = true;
             this.loadAll();
