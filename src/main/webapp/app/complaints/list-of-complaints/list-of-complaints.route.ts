@@ -9,7 +9,7 @@ import { CourseManagementResolve } from 'app/course/manage/course-management-res
 
 export const listOfComplaintsRoute: Routes = [
     {
-        path: ':courseId/complaints',
+        path: '',
         loadComponent: () => import('app/complaints/list-of-complaints/list-of-complaints.component').then((m) => m.ListOfComplaintsComponent),
         resolve: {
             course: CourseManagementResolve,

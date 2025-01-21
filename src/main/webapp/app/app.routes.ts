@@ -130,7 +130,7 @@ const routes: Routes = [
     // ===== COURSE MANAGEMENT =====
     {
         path: 'course-management',
-        loadChildren: () => import('./course/manage/course-management.module').then((m) => m.ArtemisCourseManagementModule),
+        loadChildren: () => import('./course/manage/course-management.route').then((m) => m.courseManagementState),
     },
     {
         path: 'course-management/:courseId/programming-exercises/:exerciseId/code-editor',

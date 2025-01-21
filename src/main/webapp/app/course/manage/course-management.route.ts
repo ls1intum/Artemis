@@ -7,6 +7,7 @@ import { PendingChangesGuard } from 'app/shared/guard/pending-changes.guard';
 import { LocalCIGuard } from 'app/localci/localci-guard.service';
 import { IrisGuard } from 'app/iris/iris-guard.service';
 import { FaqResolve } from 'app/faq/faq-resolve.service';
+import { ComplaintType } from 'app/entities/complaint.model';
 
 export const courseManagementState: Routes = [
     {
@@ -55,8 +56,7 @@ export const courseManagementState: Routes = [
             },
             {
                 path: ':courseId/iris-settings',
-                loadChildren: () =>
-                    import('app/iris/settings/iris-course-settings-update/iris-course-settings-update-routing.module').then((m) => m.IrisCourseSettingsUpdateRoutingModule),
+                loadChildren: () => import('app/iris/settings/iris-course-settings-update/iris-course-settings-update.route').then((m) => m.routes),
             },
             {
                 path: ':courseId/tutorial-groups',
@@ -67,12 +67,49 @@ export const courseManagementState: Routes = [
                     import('app/course/tutorial-groups/tutorial-groups-management/tutorial-groups-management.module').then((m) => m.ArtemisTutorialGroupsManagementModule),
             },
             {
+                path: ':courseId/assessment-dashboard',
+                loadComponent: () => import('app/course/dashboards/assessment-dashboard/assessment-dashboard.component').then((m) => m.AssessmentDashboardComponent),
+                resolve: {
+                    course: CourseManagementResolve,
+                },
+                data: {
+                    authorities: [Authority.ADMIN, Authority.INSTRUCTOR, Authority.EDITOR, Authority.TA],
+                    pageTitle: 'artemisApp.assessmentDashboard.home.title',
+                },
+                canActivate: [UserRouteAccessService],
+            },
+            {
+                path: ':courseId/complaints',
+                loadComponent: () => import('app/complaints/list-of-complaints/list-of-complaints.component').then((m) => m.ListOfComplaintsComponent),
+                resolve: {
+                    course: CourseManagementResolve,
+                },
+                data: {
+                    authorities: [Authority.ADMIN, Authority.INSTRUCTOR, Authority.EDITOR, Authority.TA],
+                    pageTitle: 'artemisApp.complaint.listOfComplaints.title',
+                    complaintType: ComplaintType.COMPLAINT,
+                },
+                canActivate: [UserRouteAccessService],
+            },
+            {
+                path: ':courseId/scores',
+                loadComponent: () => import('app/course/course-scores/course-scores.component').then((m) => m.CourseScoresComponent),
+                resolve: {
+                    course: CourseManagementResolve,
+                },
+                data: {
+                    authorities: [Authority.ADMIN, Authority.INSTRUCTOR, Authority.EDITOR, Authority.TA],
+                    pageTitle: 'artemisApp.instructorDashboard.title',
+                },
+                canActivate: [UserRouteAccessService],
+            },
+            {
                 path: ':courseId/plagiarism-cases',
-                loadChildren: () => import('../plagiarism-cases/instructor-view/plagiarism-cases-instructor-view.module').then((m) => m.ArtemisPlagiarismCasesInstructorViewModule),
+                loadChildren: () => import('app/course/plagiarism-cases/instructor-view/plagiarism-instructor-view.route').then((m) => m.plagiarismInstructorRoutes),
             },
             {
                 path: ':courseId/exams/:examId/plagiarism-cases',
-                loadChildren: () => import('../plagiarism-cases/instructor-view/plagiarism-cases-instructor-view.module').then((m) => m.ArtemisPlagiarismCasesInstructorViewModule),
+                loadChildren: () => import('../plagiarism-cases/instructor-view/plagiarism-instructor-view.route').then((m) => m.plagiarismInstructorRoutes),
             },
             {
                 path: ':courseId/exams',
