@@ -195,7 +195,7 @@ const routes: Routes = [
     },
     {
         path: 'features',
-        loadChildren: () => import('./feature-overview/feature-overview.module').then((m) => m.FeatureOverviewModule),
+        loadChildren: () => import('./feature-overview/feature-overview.route').then((m) => m.featureOverviewState),
     },
     {
         path: 'lti',
