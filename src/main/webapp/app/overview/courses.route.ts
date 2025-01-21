@@ -34,7 +34,7 @@ const routes: Routes = [
     },
     {
         path: CourseOverviewRoutePath.ENROLL,
-        loadChildren: () => import('./course-registration/course-registration.module').then((m) => m.CourseRegistrationModule),
+        loadChildren: () => import('./course-registration/course-registration.route').then((m) => m.routes),
     },
     {
         path: CourseOverviewRoutePath.ARCHIVE,
@@ -50,7 +50,7 @@ const routes: Routes = [
     // so we need to load it outside the normal course routing
     {
         path: ':courseId/register',
-        loadChildren: () => import('./course-registration/course-registration-detail/course-registration-detail.module').then((m) => m.CourseRegistrationDetailModule),
+        loadChildren: () => import('./course-registration/course-registration-detail/course-registration-detail.route').then((m) => m.routes),
     },
     {
         path: ':courseId',
@@ -82,7 +82,7 @@ const routes: Routes = [
                             showRefreshButton: true,
                         },
                         canActivate: [UserRouteAccessService],
-                        loadChildren: () => import('../overview/exercise-details/course-exercise-details.module').then((m) => m.CourseExerciseDetailsModule),
+                        loadChildren: () => import('../overview/exercise-details/course-exercise-details.route').then((m) => m.routes),
                     },
                 ],
             },
