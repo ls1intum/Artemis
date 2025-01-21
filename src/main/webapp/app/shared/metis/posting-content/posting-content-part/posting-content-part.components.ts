@@ -23,14 +23,13 @@ import { MatDialog } from '@angular/material/dialog';
 import { AccountService } from 'app/core/auth/account.service';
 import { RouterLink } from '@angular/router';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { TranslateDirective } from '@ngx-translate/core';
 import { HtmlForPostingMarkdownPipe } from 'app/shared/pipes/html-for-posting-markdown.pipe';
 
 @Component({
     selector: 'jhi-posting-content-part',
     templateUrl: './posting-content-part.component.html',
     styleUrls: ['./../../metis.component.scss'],
-    imports: [RouterLink, FaIconComponent, TranslateDirective, HtmlForPostingMarkdownPipe],
+    imports: [RouterLink, FaIconComponent, HtmlForPostingMarkdownPipe],
 })
 export class PostingContentPartComponent implements OnInit, OnChanges {
     private fileService = inject(FileService);
