@@ -209,7 +209,7 @@ const routes: Routes = [
             },
             {
                 path: CourseOverviewRoutePath.COMMUNICATION,
-                loadChildren: () => import('./course-conversations/course-conversations.module').then((m) => m.CourseConversationsModule),
+                loadChildren: () => import('./course-conversations/course-conversations.route').then((m) => m.routes),
                 data: {
                     authorities: [Authority.USER],
                     pageTitle: 'overview.communication',
