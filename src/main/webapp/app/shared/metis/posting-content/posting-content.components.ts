@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, EventEmitter, Input, OnChanges, OnDestroy, OnInit, Output, input, output, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, EventEmitter, Input, OnChanges, OnDestroy, OnInit, Output, inject, input, output, signal } from '@angular/core';
 import { Params } from '@angular/router';
 import { faAngleDown, faAngleUp } from '@fortawesome/free-solid-svg-icons';
 import { Post } from 'app/entities/metis/post.model';
@@ -8,14 +8,22 @@ import { PatternMatch, PostingContentPart, ReferenceType } from '../metis.util';
 import { User } from 'app/core/user/user.model';
 import { Posting } from 'app/entities/metis/posting.model';
 import { isCommunicationEnabled } from 'app/entities/course.model';
+import { TranslateDirective } from '../../language/translate.directive';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { NgStyle } from '@angular/common';
+import { PostingContentPartComponent } from './posting-content-part/posting-content-part.components';
+import { LinkPreviewContainerComponent } from '../../link-preview/components/link-preview-container/link-preview-container.component';
 
 @Component({
     selector: 'jhi-posting-content',
     templateUrl: './posting-content.component.html',
     styleUrls: ['./posting-content.component.scss'],
     changeDetection: ChangeDetectionStrategy.OnPush,
+    imports: [TranslateDirective, FaIconComponent, NgStyle, PostingContentPartComponent, LinkPreviewContainerComponent],
 })
 export class PostingContentComponent implements OnInit, OnChanges, OnDestroy {
+    private metisService = inject(MetisService);
+
     @Input() content?: string;
     @Input() previewMode?: boolean;
     @Input() author?: User;
@@ -42,8 +50,6 @@ export class PostingContentComponent implements OnInit, OnChanges, OnDestroy {
     faAngleUp = faAngleUp;
     faAngleDown = faAngleDown;
 
-    constructor(private metisService: MetisService) {}
-
     /**
      * on initialization: calculate posting parts to be displayed
      */
@@ -59,10 +65,13 @@ export class PostingContentComponent implements OnInit, OnChanges, OnDestroy {
     /**
      * on changes: update posting parts to be displayed
      */
-    ngOnChanges(): void {
+    ngOnChanges() {
         if (!this.isSubscribeToMetis()) {
             this.computeContentPartsOfPosts();
         }
+
+        const patternMatches: PatternMatch[] = this.getPatternMatches();
+        this.computePostingContentParts(patternMatches);
     }
 
     /**
@@ -252,5 +261,9 @@ export class PostingContentComponent implements OnInit, OnChanges, OnDestroy {
             match = pattern.exec(this.content!);
         }
         return patternMatches;
+    }
+
+    contentPartTrack(index: number) {
+        return this.posting?.id + '_' + index;
     }
 }

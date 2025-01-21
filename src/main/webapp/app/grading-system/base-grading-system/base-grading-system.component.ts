@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, inject } from '@angular/core';
 import { GradeType, GradingScale } from 'app/entities/grading-scale.model';
 import { GradeStep } from 'app/entities/grade-step.model';
 import { ActivatedRoute } from '@angular/router';
@@ -37,8 +37,16 @@ export enum GradeEditMode {
     PERCENTAGE,
 }
 
-@Component({ template: '' })
+@Component({
+    template: '',
+})
 export abstract class BaseGradingSystemComponent implements OnInit {
+    protected gradingSystemService = inject(GradingSystemService);
+    private route = inject(ActivatedRoute);
+    private translateService = inject(TranslateService);
+    private courseService = inject(CourseManagementService);
+    private examService = inject(ExamManagementService);
+
     GradeType = GradeType;
     ButtonSize = ButtonSize;
     GradingScale = GradingScale;
@@ -66,14 +74,6 @@ export abstract class BaseGradingSystemComponent implements OnInit {
     faTimes = faTimes;
     faExclamationTriangle = faExclamationTriangle;
     faInfo = faInfo;
-
-    constructor(
-        protected gradingSystemService: GradingSystemService,
-        private route: ActivatedRoute,
-        private translateService: TranslateService,
-        private courseService: CourseManagementService,
-        private examService: ExamManagementService,
-    ) {}
 
     ngOnInit(): void {
         this.route.parent?.params.subscribe((params) => {

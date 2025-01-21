@@ -1,8 +1,7 @@
 import { GradingSystemService } from 'app/grading-system/grading-system.service';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
-import { MockComponent, MockDirective, MockModule, MockPipe, MockProvider } from 'ng-mocks';
-import { NgbModule } from '@ng-bootstrap/ng-bootstrap';
+import { MockComponent, MockDirective, MockPipe, MockProvider } from 'ng-mocks';
 import { ActivatedRoute, ActivatedRouteSnapshot, Params, Router } from '@angular/router';
 import { of } from 'rxjs';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
@@ -71,8 +70,7 @@ describe('GradingKeyTableComponent', () => {
         } as ActivatedRoute;
 
         return TestBed.configureTestingModule({
-            imports: [MockModule(NgbModule)],
-            declarations: [
+            imports: [
                 GradingKeyTableComponent,
                 MockComponent(FaIconComponent),
                 MockPipe(ArtemisTranslatePipe),

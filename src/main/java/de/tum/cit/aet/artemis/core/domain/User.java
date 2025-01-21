@@ -21,6 +21,7 @@ import jakarta.persistence.JoinColumn;
 import jakarta.persistence.JoinTable;
 import jakarta.persistence.ManyToMany;
 import jakarta.persistence.OneToMany;
+import jakarta.persistence.OneToOne;
 import jakarta.persistence.Table;
 import jakarta.persistence.Transient;
 import jakarta.validation.constraints.Email;
@@ -40,6 +41,7 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 
 import de.tum.cit.aet.artemis.atlas.domain.competency.CompetencyProgress;
 import de.tum.cit.aet.artemis.atlas.domain.competency.LearningPath;
+import de.tum.cit.aet.artemis.atlas.domain.profile.LearnerProfile;
 import de.tum.cit.aet.artemis.communication.domain.SavedPost;
 import de.tum.cit.aet.artemis.communication.domain.push_notification.PushNotificationDeviceConfiguration;
 import de.tum.cit.aet.artemis.core.config.Constants;
@@ -210,6 +212,11 @@ public class User extends AbstractAuditingEntity implements Participant {
     @Nullable
     @Column(name = "iris_accepted")
     private ZonedDateTime irisAccepted = null;
+
+    @OneToOne(fetch = FetchType.LAZY, cascade = CascadeType.ALL, orphanRemoval = true)
+    @JsonIgnoreProperties("user")
+    @JoinColumn(name = "learner_profile_id")
+    private LearnerProfile learnerProfile;
 
     public User() {
     }
@@ -534,6 +541,10 @@ public class User extends AbstractAuditingEntity implements Participant {
         this.irisAccepted = irisAccepted;
     }
 
+    public boolean hasAcceptedIris() {
+        return irisAccepted != null;
+    }
+
     /**
      * Checks if the user has accepted the Iris privacy policy.
      * If not, an {@link AccessForbiddenException} is thrown.
@@ -542,5 +553,13 @@ public class User extends AbstractAuditingEntity implements Participant {
         if (irisAccepted == null) {
             throw new AccessForbiddenException("The user has not accepted the Iris privacy policy yet.");
         }
+    }
+
+    public LearnerProfile getLearnerProfile() {
+        return learnerProfile;
+    }
+
+    public void setLearnerProfile(LearnerProfile learnerProfile) {
+        this.learnerProfile = learnerProfile;
     }
 }

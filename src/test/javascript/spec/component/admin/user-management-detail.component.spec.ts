@@ -18,7 +18,6 @@ describe('User Management Detail Component', () => {
     beforeEach(() => {
         TestBed.configureTestingModule({
             imports: [ArtemisTestModule],
-            declarations: [UserManagementDetailComponent],
             providers: [
                 {
                     provide: ActivatedRoute,

@@ -1,4 +1,4 @@
-import { Component, EventEmitter, Input, OnDestroy, Output } from '@angular/core';
+import { Component, EventEmitter, Input, OnDestroy, Output, inject } from '@angular/core';
 import { Team } from 'app/entities/team.model';
 import { Subject } from 'rxjs';
 import { ButtonSize, ButtonType } from 'app/shared/components/button.component';
@@ -6,6 +6,8 @@ import { TeamService } from 'app/exercises/shared/team/team.service';
 import { Exercise } from 'app/entities/exercise.model';
 import { AlertService } from 'app/core/util/alert.service';
 import { faTrashAlt } from '@fortawesome/free-solid-svg-icons';
+import { DeleteButtonDirective } from 'app/shared/delete-dialog/delete-button.directive';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 
 @Component({
     selector: 'jhi-team-delete-button',
@@ -24,8 +26,12 @@ import { faTrashAlt } from '@fortawesome/free-solid-svg-icons';
             </button>
         }
     `,
+    imports: [DeleteButtonDirective, FaIconComponent],
 })
 export class TeamDeleteButtonComponent implements OnDestroy {
+    private alertService = inject(AlertService);
+    private teamService = inject(TeamService);
+
     ButtonType = ButtonType;
     ButtonSize = ButtonSize;
 
@@ -40,11 +46,6 @@ export class TeamDeleteButtonComponent implements OnDestroy {
 
     // Icons
     faTrashAlt = faTrashAlt;
-
-    constructor(
-        private alertService: AlertService,
-        private teamService: TeamService,
-    ) {}
 
     /**
      * Life cycle hook to indicate component creation is done

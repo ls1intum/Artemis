@@ -1,14 +1,20 @@
-import { Component, ContentChild, ElementRef, Input, OnDestroy, OnInit } from '@angular/core';
+import { Component, ContentChild, ElementRef, Input, OnDestroy, OnInit, inject } from '@angular/core';
 import { faCircle, faExclamation, faTowerBroadcast } from '@fortawesome/free-solid-svg-icons';
 import { Subscription } from 'rxjs';
-import { JhiWebsocketService } from 'app/core/websocket/websocket.service';
+import { WebsocketService } from 'app/core/websocket/websocket.service';
+import { NgClass } from '@angular/common';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { TranslateDirective } from '../language/translate.directive';
 
 @Component({
     selector: 'jhi-connection-status',
     templateUrl: './connection-status.component.html',
     styleUrls: ['./connection-status.component.scss'],
+    imports: [NgClass, FaIconComponent, TranslateDirective],
 })
 export class JhiConnectionStatusComponent implements OnInit, OnDestroy {
+    private websocketService = inject(WebsocketService);
+
     @ContentChild('innerContent', { static: false }) innerContent: ElementRef;
     @Input() isExamMode = false;
     disconnected = true;
@@ -18,8 +24,6 @@ export class JhiConnectionStatusComponent implements OnInit, OnDestroy {
     readonly faCircle = faCircle;
     readonly faTowerBroadcast = faTowerBroadcast;
     readonly faExclamation = faExclamation;
-
-    constructor(private websocketService: JhiWebsocketService) {}
 
     ngOnInit() {
         // listen to connect / disconnect events

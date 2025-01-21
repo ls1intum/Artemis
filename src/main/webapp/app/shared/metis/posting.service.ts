@@ -15,7 +15,7 @@ export abstract class PostingService<T extends Posting> {
      * @param   {T} posting
      * @return  {T}
      */
-    protected convertPostingDateFromClient(posting: T): T {
+    protected convertPostingDateFromClient<T extends Posting>(posting: T): T {
         return {
             ...posting,
             creationDate: convertDateFromClient(posting.creationDate),

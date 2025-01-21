@@ -1,11 +1,12 @@
-import { Component, OnDestroy, OnInit, ViewChild } from '@angular/core';
+import { Component, OnDestroy, OnInit, ViewChild, inject } from '@angular/core';
+import { IncludedInScoreBadgeComponent } from 'app/exercises/shared/exercise-headers/included-in-score-badge.component';
+import { UpdatingResultComponent } from 'app/exercises/shared/result/updating-result.component';
 import { Observable, Subscription } from 'rxjs';
 import { map, tap } from 'rxjs/operators';
 import { ProgrammingExerciseParticipationService } from 'app/exercises/programming/manage/services/programming-exercise-participation.service';
 import { GuidedTourService } from 'app/guided-tour/guided-tour.service';
 import { codeEditorTour } from 'app/guided-tour/tours/code-editor-tour';
 import { ButtonSize } from 'app/shared/components/button.component';
-import { ResultService } from 'app/exercises/shared/result/result.service';
 import { DomainService } from 'app/exercises/programming/shared/code-editor/service/code-editor-domain.service';
 import { ExerciseType, IncludedInOverallScore, getCourseFromExercise } from 'app/entities/exercise.model';
 import { Result } from 'app/entities/result.model';
@@ -15,24 +16,43 @@ import { DomainType } from 'app/exercises/programming/shared/code-editor/model/c
 import { ActivatedRoute } from '@angular/router';
 import { CodeEditorContainerComponent } from 'app/exercises/programming/shared/code-editor/container/code-editor-container.component';
 import { ProgrammingExerciseStudentParticipation } from 'app/entities/participation/programming-exercise-student-participation.model';
-import { getUnreferencedFeedback } from 'app/exercises/shared/result/result.utils';
+import { getManualUnreferencedFeedback } from 'app/exercises/shared/result/result.utils';
 import { SubmissionType } from 'app/entities/submission.model';
 import { SubmissionPolicyType } from 'app/entities/submission-policy.model';
 import { Course } from 'app/entities/course.model';
 import { SubmissionPolicyService } from 'app/exercises/programming/manage/services/submission-policy.service';
 import { hasExerciseDueDatePassed } from 'app/exercises/shared/exercise/exercise.utils';
 import { faCircleNotch, faTimesCircle } from '@fortawesome/free-solid-svg-icons';
-import { ExerciseHint } from 'app/entities/hestia/exercise-hint.model';
-import { ExerciseHintService } from 'app/exercises/shared/exercise-hint/shared/exercise-hint.service';
-import { HttpResponse } from '@angular/common/http';
-import { AlertService } from 'app/core/util/alert.service';
 import { isManualResult as isManualResultFunction } from 'app/exercises/shared/result/result.utils';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { CodeEditorRepositoryIsLockedComponent } from '../shared/code-editor/layout/code-editor-repository-is-locked.component';
+import { ProgrammingExerciseStudentTriggerBuildButtonComponent } from '../shared/actions/programming-exercise-student-trigger-build-button.component';
+import { ProgrammingExerciseInstructionComponent } from '../shared/instructions-render/programming-exercise-instruction.component';
+import { AdditionalFeedbackComponent } from 'app/shared/additional-feedback/additional-feedback.component';
 
 @Component({
     selector: 'jhi-code-editor-student',
     templateUrl: './code-editor-student-container.component.html',
+    imports: [
+        FaIconComponent,
+        TranslateDirective,
+        CodeEditorContainerComponent,
+        IncludedInScoreBadgeComponent,
+        CodeEditorRepositoryIsLockedComponent,
+        UpdatingResultComponent,
+        ProgrammingExerciseStudentTriggerBuildButtonComponent,
+        ProgrammingExerciseInstructionComponent,
+        AdditionalFeedbackComponent,
+    ],
 })
 export class CodeEditorStudentContainerComponent implements OnInit, OnDestroy {
+    private domainService = inject(DomainService);
+    private programmingExerciseParticipationService = inject(ProgrammingExerciseParticipationService);
+    private guidedTourService = inject(GuidedTourService);
+    private submissionPolicyService = inject(SubmissionPolicyService);
+    private route = inject(ActivatedRoute);
+
     @ViewChild(CodeEditorContainerComponent, { static: false }) codeEditorContainer: CodeEditorContainerComponent;
     readonly IncludedInOverallScore = IncludedInOverallScore;
     readonly SubmissionPolicyType = SubmissionPolicyType;
@@ -44,9 +64,6 @@ export class CodeEditorStudentContainerComponent implements OnInit, OnDestroy {
     participation: ProgrammingExerciseStudentParticipation;
     exercise: ProgrammingExercise;
     course?: Course;
-
-    activatedExerciseHints?: ExerciseHint[];
-    availableExerciseHints?: ExerciseHint[];
 
     // Fatal error state: when the participation can't be retrieved, the code editor is unusable for the student
     loadingParticipation = false;
@@ -61,17 +78,6 @@ export class CodeEditorStudentContainerComponent implements OnInit, OnDestroy {
     // Icons
     faCircleNotch = faCircleNotch;
     faTimesCircle = faTimesCircle;
-
-    constructor(
-        private resultService: ResultService,
-        private domainService: DomainService,
-        private programmingExerciseParticipationService: ProgrammingExerciseParticipationService,
-        private guidedTourService: GuidedTourService,
-        private submissionPolicyService: SubmissionPolicyService,
-        private route: ActivatedRoute,
-        private alertService: AlertService,
-        private exerciseHintService: ExerciseHintService,
-    ) {}
 
     /**
      * On init set up the route param subscription.
@@ -103,7 +109,6 @@ export class CodeEditorStudentContainerComponent implements OnInit, OnDestroy {
                         if (this.participation.results && this.participation.results[0] && this.participation.results[0].feedbacks) {
                             checkSubsequentFeedbackInAssessment(this.participation.results[0].feedbacks);
                         }
-                        this.loadStudentExerciseHints();
                     }),
                 )
                 .subscribe({
@@ -172,37 +177,12 @@ export class CodeEditorStudentContainerComponent implements OnInit, OnDestroy {
     get unreferencedFeedback(): Feedback[] {
         if (this.latestResult?.feedbacks) {
             checkSubsequentFeedbackInAssessment(this.latestResult.feedbacks);
-            return getUnreferencedFeedback(this.latestResult.feedbacks) ?? [];
+            return getManualUnreferencedFeedback(this.latestResult.feedbacks) ?? [];
         }
         return [];
     }
 
     receivedNewResult() {
-        this.loadStudentExerciseHints();
         this.getNumberOfSubmissionsForSubmissionPolicy();
-    }
-
-    loadStudentExerciseHints() {
-        this.exerciseHintService.getActivatedExerciseHints(this.exercise.id!).subscribe((activatedRes?: HttpResponse<ExerciseHint[]>) => {
-            this.activatedExerciseHints = activatedRes!.body!;
-
-            this.exerciseHintService.getAvailableExerciseHints(this.exercise.id!).subscribe((availableRes?: HttpResponse<ExerciseHint[]>) => {
-                // filter out the activated hints from the available hints
-                this.availableExerciseHints = availableRes!.body!.filter(
-                    (availableHint) => !this.activatedExerciseHints?.some((activatedHint) => availableHint.id === activatedHint.id),
-                );
-                const filteredAvailableExerciseHints = this.availableExerciseHints.filter((hint) => hint.displayThreshold !== 0);
-                if (filteredAvailableExerciseHints.length) {
-                    this.alertService.info('artemisApp.exerciseHint.availableHintsAlertMessage', {
-                        taskName: filteredAvailableExerciseHints.first()?.programmingExerciseTask?.taskName,
-                    });
-                }
-            });
-        });
-    }
-
-    onHintActivated(exerciseHint: ExerciseHint) {
-        this.availableExerciseHints = this.availableExerciseHints?.filter((hint) => hint.id !== exerciseHint.id);
-        this.activatedExerciseHints?.push(exerciseHint);
     }
 }

@@ -1,19 +1,42 @@
 import { AfterViewInit, Component, ElementRef, EventEmitter, HostBinding, Input, Output, ViewChild, inject } from '@angular/core';
 import { TextBlock } from 'app/entities/text/text-block.model';
 import { Feedback, FeedbackType } from 'app/entities/feedback.model';
+import { FeedbackSuggestionBadgeComponent } from 'app/exercises/shared/feedback/feedback-suggestion-badge/feedback-suggestion-badge.component';
 import { ConfirmIconComponent } from 'app/shared/confirm-icon/confirm-icon.component';
 import { StructuredGradingCriterionService } from 'app/exercises/shared/structured-grading-criterion/structured-grading-criterion.service';
-import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
+import { NgbDropdown, NgbDropdownMenu, NgbDropdownToggle, NgbModal, NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { ActivatedRoute } from '@angular/router';
 import { TextAssessmentEventType } from 'app/entities/text/text-assesment-event.model';
 import { TextAssessmentAnalytics } from 'app/exercises/text/assess/analytics/text-assesment-analytics.service';
 import { faAngleRight, faEdit, faExclamationTriangle, faQuestionCircle, faTimes, faTrash } from '@fortawesome/free-solid-svg-icons';
 import { GradingCriterion } from 'app/exercises/shared/structured-grading-criterion/grading-criterion.model';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { GradingInstructionLinkIconComponent } from 'app/shared/grading-instruction-link-icon/grading-instruction-link-icon.component';
+import { TextblockFeedbackDropdownComponent } from './dropdown/textblock-feedback-dropdown.component';
+import { FormsModule } from '@angular/forms';
+import { AssessmentCorrectionRoundBadgeComponent } from 'app/assessment/unreferenced-feedback-detail/assessment-correction-round-badge/assessment-correction-round-badge.component';
+import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 
 @Component({
     selector: 'jhi-textblock-feedback-editor',
     templateUrl: './textblock-feedback-editor.component.html',
     styleUrls: ['./textblock-feedback-editor.component.scss'],
+    imports: [
+        FeedbackSuggestionBadgeComponent,
+        FaIconComponent,
+        NgbTooltip,
+        ConfirmIconComponent,
+        TranslateDirective,
+        GradingInstructionLinkIconComponent,
+        NgbDropdown,
+        NgbDropdownToggle,
+        NgbDropdownMenu,
+        TextblockFeedbackDropdownComponent,
+        FormsModule,
+        AssessmentCorrectionRoundBadgeComponent,
+        ArtemisTranslatePipe,
+    ],
 })
 export class TextblockFeedbackEditorComponent implements AfterViewInit {
     protected route = inject(ActivatedRoute);

@@ -21,7 +21,7 @@ import { HttpResponse } from '@angular/common/http';
 import { By } from '@angular/platform-browser';
 import { CompetencyRecommendationDetailComponent } from 'app/course/competencies/generate-competencies/competency-recommendation-detail.component';
 import { DocumentationButtonComponent } from 'app/shared/components/documentation-button/documentation-button.component';
-import { JhiWebsocketService } from 'app/core/websocket/websocket.service';
+import { WebsocketService } from 'app/core/websocket/websocket.service';
 import { IrisStageStateDTO } from 'app/entities/iris/iris-stage-dto.model';
 import { CourseDescriptionFormComponent } from 'app/course/competencies/generate-competencies/course-description-form.component';
 import { CourseCompetencyService } from 'app/course/competencies/course-competency.service';
@@ -57,7 +57,7 @@ describe('GenerateCompetenciesComponent', () => {
                 },
                 { provide: Router, useClass: MockRouter },
                 {
-                    provide: JhiWebsocketService,
+                    provide: WebsocketService,
                     useValue: {
                         subscribe: jest.fn(),
                         receive: jest.fn(() => mockWebSocketSubject.asObservable()),

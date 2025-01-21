@@ -6,8 +6,7 @@ import { ArtemisMarkdownModule } from 'app/shared/markdown.module';
 import { ExerciseUpdateWarningComponent } from 'app/exercises/shared/exercise-update-warning/exercise-update-warning.component';
 
 @NgModule({
-    declarations: [ExerciseUpdateWarningComponent],
     exports: [ExerciseUpdateWarningComponent],
-    imports: [CommonModule, ArtemisSharedModule, ArtemisMarkdownModule, ArtemisMarkdownEditorModule],
+    imports: [CommonModule, ArtemisSharedModule, ArtemisMarkdownModule, ArtemisMarkdownEditorModule, ExerciseUpdateWarningComponent],
 })
 export class ArtemisExerciseUpdateWarningModule {}

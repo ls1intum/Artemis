@@ -46,6 +46,7 @@ import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseParticipation;
 import de.tum.cit.aet.artemis.programming.domain.Repository;
 import de.tum.cit.aet.artemis.programming.domain.RepositoryType;
+import de.tum.cit.aet.artemis.programming.domain.VcsAccessLog;
 import de.tum.cit.aet.artemis.programming.domain.VcsRepositoryUri;
 import de.tum.cit.aet.artemis.programming.dto.FileMove;
 import de.tum.cit.aet.artemis.programming.service.localvc.VcsAccessLogService;
@@ -462,15 +463,24 @@ public class RepositoryService {
      *
      * @param repository for which to execute the commit.
      * @param user       the user who has committed the changes in the online editor
-     * @param domainId   the id of the domain Object (participation) owning the repository
      * @throws GitAPIException if the staging/committing process fails.
      */
-    public void commitChanges(Repository repository, User user, Long domainId) throws GitAPIException {
+    public void commitChanges(Repository repository, User user) throws GitAPIException {
         gitService.stageAllChanges(repository);
         gitService.commitAndPush(repository, "Changes by Online Editor", true, user);
-        if (vcsAccessLogService.isPresent()) {
-            vcsAccessLogService.get().storeCodeEditorAccessLog(repository, user, domainId);
-        }
+    }
+
+    /**
+     * Saves a preliminary access log for a push from the code editor, and returns it
+     *
+     * @param repository for which to execute the commit.
+     * @param user       the user who has committed the changes in the online editor
+     * @param domainId   the id that serves as an abstract identifier for retrieving the repository.
+     * @return an Optional of a preliminary VcsAccessLog
+     * @throws GitAPIException if accessing the repository fails
+     */
+    public Optional<VcsAccessLog> savePreliminaryCodeEditorAccessLog(Repository repository, User user, Long domainId) throws GitAPIException {
+        return vcsAccessLogService.isPresent() ? vcsAccessLogService.get().createPreliminaryCodeEditorAccessLog(repository, user, domainId) : Optional.empty();
     }
 
     /**

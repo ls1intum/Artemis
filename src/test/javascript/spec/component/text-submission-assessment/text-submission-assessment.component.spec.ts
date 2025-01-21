@@ -559,6 +559,28 @@ describe('TextSubmissionAssessmentComponent', () => {
                 [10, 15],
             ],
         },
+        // Two blocks, same end index
+        {
+            input: [
+                [377, 719],
+                [453, 719],
+            ],
+            output: [
+                [377, 453],
+                [453, 719],
+            ],
+        },
+        // Two blocks, same end index, wrong order
+        {
+            input: [
+                [453, 719],
+                [377, 719],
+            ],
+            output: [
+                [377, 453],
+                [453, 719],
+            ],
+        },
         // Two blocks, shifted
         {
             input: [

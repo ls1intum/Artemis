@@ -16,7 +16,19 @@ import {
     signal,
 } from '@angular/core';
 import { MonacoEditorComponent } from 'app/shared/monaco-editor/monaco-editor.component';
-import { NgbNavChangeEvent } from '@ng-bootstrap/ng-bootstrap';
+import {
+    NgbDropdown,
+    NgbDropdownMenu,
+    NgbDropdownToggle,
+    NgbNav,
+    NgbNavChangeEvent,
+    NgbNavContent,
+    NgbNavItem,
+    NgbNavLink,
+    NgbNavLinkBase,
+    NgbNavOutlet,
+    NgbTooltip,
+} from '@ng-bootstrap/ng-bootstrap';
 import { TextEditorAction } from 'app/shared/monaco-editor/model/actions/text-editor-action.model';
 import { BoldAction } from 'app/shared/monaco-editor/model/actions/bold.action';
 import { ItalicAction } from 'app/shared/monaco-editor/model/actions/italic.action';
@@ -38,7 +50,7 @@ import { HeadingAction } from 'app/shared/monaco-editor/model/actions/heading.ac
 import { FullscreenAction } from 'app/shared/monaco-editor/model/actions/fullscreen.action';
 import { ColorAction } from 'app/shared/monaco-editor/model/actions/color.action';
 import { ColorSelectorComponent } from 'app/shared/color-selector/color-selector.component';
-import { CdkDragMove, Point } from '@angular/cdk/drag-drop';
+import { CdkDrag, CdkDragMove, Point } from '@angular/cdk/drag-drop';
 import { TextEditorDomainAction } from 'app/shared/monaco-editor/model/actions/text-editor-domain-action.model';
 import { TextEditorDomainActionWithOptions } from 'app/shared/monaco-editor/model/actions/text-editor-domain-action-with-options.model';
 import { LectureAttachmentReferenceAction } from 'app/shared/monaco-editor/model/actions/communication/lecture-attachment-reference.action';
@@ -52,6 +64,12 @@ import { COMMUNICATION_MARKDOWN_EDITOR_OPTIONS, DEFAULT_MARKDOWN_EDITOR_OPTIONS 
 import { MetisService } from 'app/shared/metis/metis.service';
 import { UPLOAD_MARKDOWN_FILE_EXTENSIONS } from 'app/shared/constants/file-extensions.constants';
 import { EmojiAction } from 'app/shared/monaco-editor/model/actions/emoji.action';
+import { TranslateDirective } from '../../language/translate.directive';
+import { NgClass, NgTemplateOutlet } from '@angular/common';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { MatMenu, MatMenuItem, MatMenuTrigger } from '@angular/material/menu';
+import { MatButton } from '@angular/material/button';
+import { ArtemisTranslatePipe } from '../../pipes/artemis-translate.pipe';
 
 export enum MarkdownEditorHeight {
     INLINE = 125,
@@ -91,6 +109,30 @@ const BORDER_HEIGHT_OFFSET = 2;
     templateUrl: './markdown-editor-monaco.component.html',
     styleUrls: ['./markdown-editor-monaco.component.scss'],
     changeDetection: ChangeDetectionStrategy.OnPush,
+    imports: [
+        NgbNav,
+        NgbNavItem,
+        NgbNavLink,
+        NgbNavLinkBase,
+        TranslateDirective,
+        NgbNavContent,
+        NgClass,
+        MonacoEditorComponent,
+        FaIconComponent,
+        NgbTooltip,
+        NgTemplateOutlet,
+        NgbDropdown,
+        NgbDropdownToggle,
+        NgbDropdownMenu,
+        ColorSelectorComponent,
+        MatMenuTrigger,
+        MatMenu,
+        MatMenuItem,
+        NgbNavOutlet,
+        CdkDrag,
+        MatButton,
+        ArtemisTranslatePipe,
+    ],
 })
 export class MarkdownEditorMonacoComponent implements AfterContentInit, AfterViewInit, OnDestroy {
     private readonly alertService = inject(AlertService);
@@ -278,7 +320,9 @@ export class MarkdownEditorMonacoComponent implements AfterContentInit, AfterVie
             color: this.filterDisplayedAction(this.colorAction),
             domain: {
                 withoutOptions: this.filterDisplayedActions(this.domainActions.filter((action) => !(action instanceof TextEditorDomainActionWithOptions))),
-                withOptions: this.filterDisplayedActions(this.domainActions.filter((action) => action instanceof TextEditorDomainActionWithOptions)),
+                withOptions: this.filterDisplayedActions(
+                    this.domainActions.filter((action) => action instanceof TextEditorDomainActionWithOptions),
+                ) as TextEditorDomainActionWithOptions[],
             },
             lecture: this.filterDisplayedAction(this.lectureReferenceAction),
             meta: this.filterDisplayedActions(this.metaActions),
@@ -521,7 +565,7 @@ export class MarkdownEditorMonacoComponent implements AfterContentInit, AfterVie
     private processFileUploadResponse(response: FileUploadResponse, file: File): void {
         const extension = file.name.split('.').last()?.toLocaleLowerCase();
 
-        const attachmentAction: AttachmentAction | undefined = this.defaultActions.find((action) => action instanceof AttachmentAction);
+        const attachmentAction: AttachmentAction | undefined = this.defaultActions.find((action) => action instanceof AttachmentAction) as AttachmentAction;
         const urlAction: UrlAction | undefined = this.defaultActions.find((action) => action instanceof UrlAction);
         if (!attachmentAction || !urlAction || !response.path) {
             throw new Error('Cannot process file upload.');

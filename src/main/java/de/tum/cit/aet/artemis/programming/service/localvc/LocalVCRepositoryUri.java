@@ -101,10 +101,10 @@ public class LocalVCRepositoryUri extends VcsRepositoryUri {
      *
      * Examples:
      * <ul>
-     * <li>Correct URL: "https://artemis.cit.tum.de/git/projectKey/repositorySlug.git" - Returns 1 as "git" is at index 1.</li>
-     * <li>Incorrect URL: "https://artemis.cit.tum.de/projectKey/repositorySlug.git" - Throws LocalVCInternalException because the "git" segment is missing.</li>
-     * <li>Incorrect URL: "https://artemis.cit.tum.de/git/projectKey" - Throws LocalVCInternalException because there are not enough segments after "git".</li>
-     * <li>Incorrect URL: "https://artemis.cit.tum.de/git/projectKey/repositorySlug" - Throws LocalVCInternalException because the repository slug does not end with ".git".</li>
+     * <li>Correct URL: "https://artemis.tum.de/git/projectKey/repositorySlug.git" - Returns 1 as "git" is at index 1.</li>
+     * <li>Incorrect URL: "https://artemis.tum.de/projectKey/repositorySlug.git" - Throws LocalVCInternalException because the "git" segment is missing.</li>
+     * <li>Incorrect URL: "https://artemis.tum.de/git/projectKey" - Throws LocalVCInternalException because there are not enough segments after "git".</li>
+     * <li>Incorrect URL: "https://artemis.tum.de/git/projectKey/repositorySlug" - Throws LocalVCInternalException because the repository slug does not end with ".git".</li>
      * </ul>
      *
      * @param urlString The full URL string being analyzed, provided for context in error messages.
@@ -148,13 +148,13 @@ public class LocalVCRepositoryUri extends VcsRepositoryUri {
      * <ul>
      * <li>
      * Input: Local repository path - {@code Paths.get("/local/path/projectX/my-repo/.git")}
-     * and Local VC server URL - {@code new URI("https://artemis.cit.tum.de").getURL()}
-     * Output: {@code https://artemis.cit.tum.de/git/projectX/my-repo.git}
+     * and Local VC server URL - {@code new URI("https://artemis.tum.de").getURL()}
+     * Output: {@code https://artemis.tum.de/git/projectX/my-repo.git}
      * </li>
      * <li>
      * Input: Remote repository path - {@code Paths.get("/remote/path/projectY/my-repo")}
-     * and Local VC server URL - {@code new URI("https://artemis.cit.tum.de").getURL()}
-     * Output: {@code https://artemis.cit.tum.de/git/projectY/my-repo.git}
+     * and Local VC server URL - {@code new URI("https://artemis.tum.de").getURL()}
+     * Output: {@code https://artemis.tum.de/git/projectY/my-repo.git}
      * </li>
      * </ul>
      *
