@@ -95,7 +95,9 @@ describe('CourseLearnerProfileComponent', () => {
             ),
         );
 
-        jest.spyOn(learnerProfileApiService, 'getCourseLearnerProfilesForCurrentUser').mockReturnValue(new Promise<Record<number, CourseLearnerProfileDTO>>((resolve) => resolve(profiles)));
+        jest.spyOn(learnerProfileApiService, 'getCourseLearnerProfilesForCurrentUser').mockReturnValue(
+            new Promise<Record<number, CourseLearnerProfileDTO>>((resolve) => resolve(profiles)),
+        );
         putUpdatedCourseLearnerProfileSpy = jest.spyOn(learnerProfileApiService, 'putUpdatedCourseLearnerProfile');
 
         fixture.detectChanges();
@@ -108,9 +110,9 @@ describe('CourseLearnerProfileComponent', () => {
     });
 
     function selectCourse(id: number) {
-        for (let opt of selector.options) {
+        Array.from(selector.options).forEach((opt) => {
             opt.selected = opt.value == String(id);
-        }
+        });
     }
 
     it('should initialize', () => {
