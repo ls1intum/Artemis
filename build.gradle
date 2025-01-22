@@ -139,7 +139,6 @@ configurations.configureEach {
     exclude group: "xalan", module: "serializer"
 
     exclude group: "org.springframework.boot", module: "spring-boot-starter-cache"
-    exclude group: "io.micrometer", module: "micrometer-registry-prometheus"
     exclude group: "net.logstash.logback", module: "logstash-logback-encoder"
 
     exclude group: "javax.cache", module: "cache-api"
@@ -239,6 +238,13 @@ dependencies {
 
     // use newest version of commons-compress to avoid security issues through outdated dependencies
     implementation "org.apache.commons:commons-compress:1.27.1"
+
+    // required for monitoring with prometheus and grafana
+    implementation "io.micrometer:micrometer-registry-prometheus:${micrometer_version}"
+    implementation "io.micrometer:micrometer-core:${micrometer_version}"
+    implementation "io.micrometer:micrometer-commons:${micrometer_version}"
+    implementation "io.micrometer:micrometer-observation:${micrometer_version}"
+    implementation "io.micrometer:micrometer-jakarta9:${micrometer_version}"
 
     implementation "tech.jhipster:jhipster-framework:${jhipster_dependencies_version}"
 
