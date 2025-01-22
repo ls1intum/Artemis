@@ -139,7 +139,6 @@ configurations.configureEach {
     exclude group: "xalan", module: "serializer"
 
     exclude group: "org.springframework.boot", module: "spring-boot-starter-cache"
-    exclude group: "io.micrometer", module: "micrometer-registry-prometheus"
     exclude group: "net.logstash.logback", module: "logstash-logback-encoder"
 
     exclude group: "javax.cache", module: "cache-api"
