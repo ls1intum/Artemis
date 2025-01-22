@@ -1,4 +1,4 @@
-import { Component, OnDestroy, OnInit, QueryList, ViewChildren, inject } from '@angular/core';
+import { Component, HostListener, OnDestroy, OnInit, QueryList, ViewChildren, inject } from '@angular/core';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { WebsocketService } from 'app/core/websocket/websocket.service';
 import { ExamParticipationService } from 'app/exam/participate/exam-participation.service';
@@ -258,6 +258,12 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
             this.isProduction = profileInfo?.inProduction;
             this.isTestServer = profileInfo.testServer ?? false;
         });
+    }
+
+    //Make sure to warn the user before leaving the page in exam mode
+    @HostListener('window:beforeunload', ['$event'])
+    beforeUnloadHandler(event: BeforeUnloadEvent) {
+        event.preventDefault();
     }
 
     loadAndDisplaySummary() {
