@@ -9,7 +9,6 @@ import java.util.stream.Collectors;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Profile;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -29,15 +28,13 @@ import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastStudent;
 
 @Profile(PROFILE_CORE)
 @RestController
-@RequestMapping("api/")
+@RequestMapping("api/learner-profiles/")
 public class LearnerProfileResource {
 
     private static final Logger log = LoggerFactory.getLogger(LearnerProfileResource.class);
 
-    @Autowired
     private final UserRepository userRepository;
 
-    @Autowired
     private final CourseLearnerProfileRepository courseLearnerProfileRepository;
 
     public LearnerProfileResource(UserRepository userRepository, CourseLearnerProfileRepository courseLearnerProfileRepository) {
@@ -50,7 +47,7 @@ public class LearnerProfileResource {
      *
      * @return The ResponseEntity with status 200 (OK) and with body containing a map of DTOs, wich contain per course profile data.
      */
-    @GetMapping("learner-profiles/course-learner-profiles")
+    @GetMapping("course-learner-profiles")
     @EnforceAtLeastStudent
     public ResponseEntity<Map<Long, CourseLearnerProfileDTO>> getCourseLearnerProfiles() {
         User user = userRepository.getUser();
@@ -66,7 +63,7 @@ public class LearnerProfileResource {
      * @param courseLearnerProfileId ID of the CourseLearnerProfile
      * @return A ResponseEntity with a status matching the validity of the request containing the updated profile.
      */
-    @PutMapping(value = "learner-profiles/course-learner-profiles/{courseLearnerProfileId}")
+    @PutMapping(value = "course-learner-profiles/{courseLearnerProfileId}")
     @EnforceAtLeastStudent
     public ResponseEntity<CourseLearnerProfileDTO> updateCourseLearnerProfile(@PathVariable long courseLearnerProfileId,
             @RequestBody CourseLearnerProfileDTO courseLearnerProfileDTO) {

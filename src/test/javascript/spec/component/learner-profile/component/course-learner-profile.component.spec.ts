@@ -24,8 +24,6 @@ describe('CourseLearnerProfileComponent', () => {
     let courseManagerService: CourseManagementService;
     let learnerProfileApiService: LearnerProfileApiService;
 
-    let findAllForDropdownSpy: jest.SpyInstance;
-    let getCourseLearnerProfilesForCurrentUserSpy: jest.SpyInstance;
     let putUpdatedCourseLearnerProfileSpy: jest.SpyInstance;
 
     const errorBody = {
@@ -88,7 +86,7 @@ describe('CourseLearnerProfileComponent', () => {
         component = fixture.componentInstance;
         selector = fixture.nativeElement.getElementsByTagName('select')[0];
 
-        findAllForDropdownSpy = jest.spyOn(courseManagerService, 'findAllForDropdown').mockReturnValue(
+        jest.spyOn(courseManagerService, 'findAllForDropdown').mockReturnValue(
             of(
                 new HttpResponse<Course[]>({
                     status: 200,
@@ -97,7 +95,7 @@ describe('CourseLearnerProfileComponent', () => {
             ),
         );
 
-        getCourseLearnerProfilesForCurrentUserSpy = jest.spyOn(learnerProfileApiService, 'getCourseLearnerProfilesForCurrentUser').mockReturnValue(profiles);
+        jest.spyOn(learnerProfileApiService, 'getCourseLearnerProfilesForCurrentUser').mockReturnValue(new Promise<Record<number, CourseLearnerProfileDTO>>((resolve) => resolve(profiles)));
         putUpdatedCourseLearnerProfileSpy = jest.spyOn(learnerProfileApiService, 'putUpdatedCourseLearnerProfile');
 
         fixture.detectChanges();
