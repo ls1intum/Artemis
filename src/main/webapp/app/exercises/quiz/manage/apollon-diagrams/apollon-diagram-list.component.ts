@@ -8,7 +8,6 @@ import { ApollonDiagramCreateFormComponent } from 'app/exercises/quiz/manage/apo
 import { ApollonDiagramService } from 'app/exercises/quiz/manage/apollon-diagrams/apollon-diagram.service';
 import { ApollonDiagram } from 'app/entities/apollon-diagram.model';
 import { SortService } from 'app/shared/service/sort.service';
-import { AccountService } from 'app/core/auth/account.service';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
 import { Course } from 'app/entities/course.model';
 import { faPlus, faSort, faTimes, faX } from '@fortawesome/free-solid-svg-icons';
@@ -33,13 +32,12 @@ export class ApollonDiagramListComponent implements OnInit {
     private sortService = inject(SortService);
     private route = inject(ActivatedRoute);
     private courseService = inject(CourseManagementService);
-    private accountService = inject(AccountService);
 
     apollonDiagrams: ApollonDiagram[] = [];
-    predicate: string;
-    reverse: boolean;
-    @Input()
-    courseId: number;
+    predicate = 'id';
+    reverse = true;
+
+    @Input() courseId: number;
 
     @Output() openDiagram = new EventEmitter<number>();
     @Output() closeDialog = new EventEmitter();
@@ -56,11 +54,6 @@ export class ApollonDiagramListComponent implements OnInit {
     faTimes = faTimes;
 
     ButtonSize = ButtonSize;
-
-    constructor() {
-        this.predicate = 'id';
-        this.reverse = true;
-    }
 
     /**
      * Initializes Apollon diagrams from the server
@@ -136,10 +129,10 @@ export class ApollonDiagramListComponent implements OnInit {
 
     /**
      * Returns the unique identifier for items in the collection
-     * @param index of a diagram in the collection
+     * @param _index of a diagram in the collection
      * @param item current diagram
      */
-    trackId(index: number, item: ApollonDiagram) {
+    trackId(_index: number, item: ApollonDiagram) {
         return item.id;
     }
 

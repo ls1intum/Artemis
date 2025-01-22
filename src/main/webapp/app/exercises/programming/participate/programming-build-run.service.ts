@@ -1,7 +1,7 @@
 import { Injectable, OnDestroy, inject } from '@angular/core';
 import { BehaviorSubject, Observable } from 'rxjs';
 import { filter, tap } from 'rxjs/operators';
-import { JhiWebsocketService } from 'app/core/websocket/websocket.service';
+import { WebsocketService } from 'app/core/websocket/websocket.service';
 
 /**
  * Describes the build run state
@@ -24,7 +24,7 @@ export interface IProgrammingBuildRunService {
  */
 @Injectable({ providedIn: 'root' })
 export class ProgrammingBuildRunService implements OnDestroy {
-    private websocketService = inject(JhiWebsocketService);
+    private websocketService = inject(WebsocketService);
 
     // Boolean subject: true == build is running, false == build is not running.
     private buildRunSubjects: { [programmingExerciseId: number]: BehaviorSubject<BuildRunState | undefined> } = {};
