@@ -79,15 +79,12 @@ export abstract class ListAction extends TextEditorAction {
         const lines = selectedText.split('\n');
 
         // Check if the cursor is at the end of the line to add or remove the prefix
-        let position = editor.getPosition();
+        const position = editor.getPosition();
         if (position) {
             const currentLineText = editor.getLineText(position.getLineNumber());
 
             if (!selectedText && position.getColumn() <= currentLineText.length) {
-                const endPosition = new TextEditorPosition(position.getLineNumber(), currentLineText.length + 1);
-                editor.setPosition(endPosition);
-                editor.focus();
-                position = endPosition;
+                return;
             }
 
             if (position.getColumn() === currentLineText.length + 1) {
