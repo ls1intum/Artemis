@@ -23,7 +23,7 @@ plugins {
     id "io.spring.dependency-management" version "1.1.7"
     id "nebula.lint" version "20.5.5"
     id "org.liquibase.gradle" version "${liquibase_plugin_version}"
-    id "org.owasp.dependencycheck" version "12.0.0"
+    id "org.owasp.dependencycheck" version "12.0.1"
     id "org.springframework.boot" version "${spring_boot_version}"
 }
 
@@ -139,7 +139,6 @@ configurations.configureEach {
     exclude group: "xalan", module: "serializer"
 
     exclude group: "org.springframework.boot", module: "spring-boot-starter-cache"
-    exclude group: "io.micrometer", module: "micrometer-registry-prometheus"
     exclude group: "net.logstash.logback", module: "logstash-logback-encoder"
 
     exclude group: "javax.cache", module: "cache-api"
@@ -205,7 +204,7 @@ dependencies {
     implementation "org.apache.sshd:sshd-sftp:${sshd_version}"
 
     // https://mvnrepository.com/artifact/net.sourceforge.plantuml/plantuml
-    implementation "net.sourceforge.plantuml:plantuml:1.2024.8"
+    implementation "net.sourceforge.plantuml:plantuml:1.2025.0"
     implementation "me.xdrop:fuzzywuzzy:1.4.0"
     implementation("org.yaml:snakeyaml") {
         version {
@@ -239,6 +238,13 @@ dependencies {
 
     // use newest version of commons-compress to avoid security issues through outdated dependencies
     implementation "org.apache.commons:commons-compress:1.27.1"
+
+    // required for monitoring with prometheus and grafana
+    implementation "io.micrometer:micrometer-registry-prometheus:${micrometer_version}"
+    implementation "io.micrometer:micrometer-core:${micrometer_version}"
+    implementation "io.micrometer:micrometer-commons:${micrometer_version}"
+    implementation "io.micrometer:micrometer-observation:${micrometer_version}"
+    implementation "io.micrometer:micrometer-jakarta9:${micrometer_version}"
 
     implementation "tech.jhipster:jhipster-framework:${jhipster_dependencies_version}"
 
@@ -410,7 +416,7 @@ dependencies {
     testImplementation "org.springframework.boot:spring-boot-starter-test:${spring_boot_version}"
     testImplementation "org.springframework.security:spring-security-test:${spring_security_version}"
     testImplementation "org.springframework.boot:spring-boot-test:${spring_boot_version}"
-    testImplementation "org.assertj:assertj-core:3.27.2"
+    testImplementation "org.assertj:assertj-core:3.27.3"
     testImplementation "org.mockito:mockito-core:${mockito_version}"
     testImplementation "org.mockito:mockito-junit-jupiter:${mockito_version}"
 
@@ -494,9 +500,10 @@ tasks.named("dependencyUpdates").configure {
 // 2) Execute tests with coverage report:           ./gradlew test jacocoTestReport -x webapp
 // 2a) Execute tests without coverage report:       ./gradlew test -x webapp
 // 2b) Run a single test:                           ./gradlew test --tests ExamIntegrationTest -x webapp or ./gradlew test --tests ExamIntegrationTest.testGetExamScore -x webapp
-// 2c) Execute tests with Postgres container:       SPRING_PROFILES_INCLUDE=postgres ./gradlew test -x webapp
-// 2d) Execute tests with MySQL container:          SPRING_PROFILES_INCLUDE=mysql ./gradlew test -x webapp
-// 3) Verify code coverage (after tests):           ./gradlew jacocoTestCoverageVerification
+// 2c) Run tests for modules:                       ./gradlew test -DincludeModules=athena,atlas -x webapp (executes all tests in directories ./src/main/test/.../athena and ./src/main/test/.../atlas) + ArchitectureTests
+// 2d) Execute tests with Postgres container:       SPRING_PROFILES_INCLUDE=postgres ./gradlew test -x webapp
+// 2e) Execute tests with MySQL container:          SPRING_PROFILES_INCLUDE=mysql ./gradlew test -x webapp
+// 3) Verify code coverage (after tests):           ./gradlew jacocoTestCoverageVerification -x webapp
 // 4) Check Java code format:                       ./gradlew spotlessCheck -x webapp
 // 5) Apply Java code formatter:                    ./gradlew spotlessApply -x webapp
 // 6) Find dependency updates:                      ./gradlew dependencyUpdates -Drevision=release

@@ -1,5 +1,5 @@
 import { Component, Input, OnChanges, inject } from '@angular/core';
-import { ActivatedRoute, Router } from '@angular/router';
+import { Router } from '@angular/router';
 import { Color, ScaleType } from '@swimlane/ngx-charts';
 import { ARTEMIS_DEFAULT_COLOR } from 'app/app.constants';
 import { Course } from 'app/entities/course.model';
@@ -26,7 +26,6 @@ import { RouterLink } from '@angular/router';
 })
 export class CourseCardComponent implements OnChanges {
     private router = inject(Router);
-    private route = inject(ActivatedRoute);
     private scoresStorageService = inject(ScoresStorageService);
     private exerciseService = inject(ExerciseService);
 
@@ -44,8 +43,6 @@ export class CourseCardComponent implements OnChanges {
     totalRelativeScore: number;
     totalReachableScore: number;
     totalAbsoluteScore: number;
-
-    courseColor: string;
 
     // ngx
     ngxDoughnutData: any[] = [
@@ -91,15 +88,5 @@ export class CourseCardComponent implements OnChanges {
      */
     onSelect(): void {
         this.router.navigate(['courses', this.course.id]);
-    }
-
-    /**
-     * Navigates to the exam page of the course.
-     * We stop the propagation of the click event to avoid navigating to the exercise page.
-     * @param event the click event
-     */
-    navigateToExams(event: Event) {
-        event.stopPropagation();
-        this.router.navigate(['courses', this.course.id, 'exams']);
     }
 }

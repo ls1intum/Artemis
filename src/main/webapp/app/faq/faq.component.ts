@@ -22,6 +22,7 @@ import { TranslateService } from '@ngx-translate/core';
 import { PROFILE_IRIS } from 'app/app.constants';
 import { IrisSettingsService } from 'app/iris/settings/shared/iris-settings.service';
 import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
+
 import { NgbModule } from '@ng-bootstrap/ng-bootstrap';
 
 @Component({
@@ -48,8 +49,8 @@ export class FaqComponent implements OnInit, OnDestroy {
 
     activeFilters = new Set<string>();
     searchInput = new BehaviorSubject<string>('');
-    predicate: string;
-    ascending: boolean;
+    predicate = 'id';
+    ascending = true;
 
     // Icons
     protected readonly faEdit = faEdit;

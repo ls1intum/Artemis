@@ -11,14 +11,12 @@ import { Observable, map } from 'rxjs';
 import { HttpClient, HttpResponse } from '@angular/common/http';
 import { Injectable, inject } from '@angular/core';
 import { convertDateFromServer } from 'app/utils/date.utils';
-import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
 
 @Injectable({ providedIn: 'root' })
 export class CourseExerciseService {
     private http = inject(HttpClient);
     private participationWebsocketService = inject(ParticipationWebsocketService);
     private accountService = inject(AccountService);
-    private profileService = inject(ProfileService);
 
     private resourceUrl = `api/courses`;
 
