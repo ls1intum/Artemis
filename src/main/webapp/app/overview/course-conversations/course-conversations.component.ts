@@ -261,7 +261,7 @@ export class CourseConversationsComponent implements OnInit, OnDestroy {
                 .pipe(
                     debounceTime(500),
                     distinctUntilChanged(
-                        (prev, curr) => prev.action === curr.action && prev.channel.id === curr.channel.id && prev.channel.name === curr.channel.name && curr.action !== 'create',
+                        (prev, curr) => curr.action !== 'create' && prev.action === curr.action && prev.channel.id === curr.channel.id && prev.channel.name === curr.channel.name,
                     ),
                     takeUntil(this.ngUnsubscribe),
                 )
