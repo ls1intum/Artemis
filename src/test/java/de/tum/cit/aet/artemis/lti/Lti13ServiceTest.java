@@ -56,6 +56,7 @@ import de.tum.cit.aet.artemis.core.test_repository.UserTestRepository;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
 import de.tum.cit.aet.artemis.exercise.repository.ExerciseTestRepository;
+import de.tum.cit.aet.artemis.lecture.repository.LectureRepository;
 import de.tum.cit.aet.artemis.lti.config.Lti13TokenRetriever;
 import de.tum.cit.aet.artemis.lti.domain.LtiPlatformConfiguration;
 import de.tum.cit.aet.artemis.lti.domain.LtiResourceLaunch;
@@ -79,6 +80,9 @@ class Lti13ServiceTest {
 
     @Mock
     private ExerciseTestRepository exerciseRepository;
+
+    @Mock
+    private LectureRepository lectureRepository;
 
     @Mock
     private CourseTestRepository courseRepository;
@@ -120,7 +124,7 @@ class Lti13ServiceTest {
     @BeforeEach
     void init() {
         closeable = MockitoAnnotations.openMocks(this);
-        lti13Service = new Lti13Service(userRepository, exerciseRepository, courseRepository, launchRepository, ltiService, resultRepository, tokenRetriever,
+        lti13Service = new Lti13Service(userRepository, exerciseRepository, lectureRepository, courseRepository, launchRepository, ltiService, resultRepository, tokenRetriever,
                 onlineCourseConfigurationService, restTemplate, artemisAuthenticationProvider, ltiPlatformConfigurationRepository);
         clientRegistrationId = "clientId";
         onlineCourseConfiguration = new OnlineCourseConfiguration();

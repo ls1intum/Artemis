@@ -45,6 +45,8 @@ import de.tum.cit.aet.artemis.core.security.ArtemisAuthenticationProvider;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
 import de.tum.cit.aet.artemis.exercise.repository.ExerciseRepository;
+import de.tum.cit.aet.artemis.lecture.domain.Lecture;
+import de.tum.cit.aet.artemis.lecture.repository.LectureRepository;
 import de.tum.cit.aet.artemis.lti.config.Lti13TokenRetriever;
 import de.tum.cit.aet.artemis.lti.domain.LtiPlatformConfiguration;
 import de.tum.cit.aet.artemis.lti.domain.LtiResourceLaunch;
@@ -62,6 +64,8 @@ public class Lti13Service {
 
     private static final String EXERCISE_PATH_PATTERN = "/courses/{courseId}/exercises/{exerciseId}";
 
+    private static final String LECTURE_PATH_PATTERN = "/courses/{courseId}/lectures/{lectureId}";
+
     private static final String COMPETENCY_PATH_PATTERN = "/courses/{courseId}/competencies";
 
     private static final String IRIS_PATH_PATTERN = "/about-iris";
@@ -75,6 +79,8 @@ public class Lti13Service {
     private final UserRepository userRepository;
 
     private final ExerciseRepository exerciseRepository;
+
+    private final LectureRepository lectureRepository;
 
     private final CourseRepository courseRepository;
 
@@ -94,11 +100,13 @@ public class Lti13Service {
 
     private final RestTemplate restTemplate;
 
-    public Lti13Service(UserRepository userRepository, ExerciseRepository exerciseRepository, CourseRepository courseRepository, Lti13ResourceLaunchRepository launchRepository,
-            LtiService ltiService, ResultRepository resultRepository, Lti13TokenRetriever tokenRetriever, OnlineCourseConfigurationService onlineCourseConfigurationService,
-            RestTemplate restTemplate, ArtemisAuthenticationProvider artemisAuthenticationProvider, LtiPlatformConfigurationRepository ltiPlatformConfigurationRepository) {
+    public Lti13Service(UserRepository userRepository, ExerciseRepository exerciseRepository, LectureRepository lectureRepository, CourseRepository courseRepository,
+            Lti13ResourceLaunchRepository launchRepository, LtiService ltiService, ResultRepository resultRepository, Lti13TokenRetriever tokenRetriever,
+            OnlineCourseConfigurationService onlineCourseConfigurationService, RestTemplate restTemplate, ArtemisAuthenticationProvider artemisAuthenticationProvider,
+            LtiPlatformConfigurationRepository ltiPlatformConfigurationRepository) {
         this.userRepository = userRepository;
         this.exerciseRepository = exerciseRepository;
+        this.lectureRepository = lectureRepository;
         this.courseRepository = courseRepository;
         this.ltiService = ltiService;
         this.launchRepository = launchRepository;
@@ -118,10 +126,10 @@ public class Lti13Service {
      * @param clientRegistrationId the clientRegistrationId of the source LMS
      */
     // TODO implement Iris support
-    // TODO implement Lecture auth
     public void performLaunch(OidcIdToken ltiIdToken, String clientRegistrationId) {
         String targetLinkUrl = ltiIdToken.getClaim(Claims.TARGET_LINK_URI);
         Optional<Exercise> targetExercise = getExerciseFromTargetLink(targetLinkUrl);
+        Optional<Lecture> targetLecture = getLectureFromTargetLink(targetLinkUrl);
         Optional<Course> targetCourse = getCourseFromTargetLink(targetLinkUrl);
 
         if (targetCourse.isEmpty()) {
@@ -154,7 +162,7 @@ public class Lti13Service {
             Exercise exercise = targetExercise.get();
             handleLaunchRequest(launchRequest, user, exercise, ltiIdToken, onlineCourseConfiguration);
         }
-        else if (getCompetencyFromTargetLink(targetLinkUrl) || getLearningPathFromTargetLink(targetLinkUrl)) {
+        else if (getCompetencyFromTargetLink(targetLinkUrl) || getLearningPathFromTargetLink(targetLinkUrl) || targetLecture.isPresent()) {
             handleLaunchRequest(launchRequest, user, null, ltiIdToken, onlineCourseConfiguration);
         }
         else {
@@ -328,6 +336,49 @@ public class Lti13Service {
         return exerciseOpt;
     }
 
+    /**
+     * Returns an Optional of a Lecture that was referenced by targetLinkUrl.
+     *
+     * @param targetLinkUrl to retrieve a Lecture
+     * @return the Lecture or nothing otherwise
+     */
+    private Optional<Lecture> getLectureFromTargetLink(String targetLinkUrl) {
+        AntPathMatcher matcher = new AntPathMatcher();
+
+        String targetLinkPath;
+        try {
+            targetLinkPath = new URI(targetLinkUrl).getPath();
+        }
+        catch (URISyntaxException ex) {
+            log.info("Malformed target link url: {}", targetLinkUrl);
+            return Optional.empty();
+        }
+
+        if (!matcher.match(LECTURE_PATH_PATTERN, targetLinkPath)) {
+            log.info("Could not extract lecture from target link: {}", targetLinkUrl);
+            return Optional.empty();
+        }
+
+        Map<String, String> pathVariables = matcher.extractUriTemplateVariables(LECTURE_PATH_PATTERN, targetLinkPath);
+
+        String lectureId = pathVariables.get("lectureId");
+
+        Optional<Lecture> lectureOpt = lectureRepository.findById(Long.valueOf(lectureId));
+
+        if (lectureOpt.isEmpty()) {
+            log.info("Could not find lecture for target link url: {}", targetLinkUrl);
+            return Optional.empty();
+        }
+
+        return lectureOpt;
+    }
+
+    /**
+     * Returns an Optional of a Course that was referenced by targetLinkUrl.
+     *
+     * @param targetLinkUrl the target link URL to retrieve a Course
+     * @return the Course or nothing otherwise
+     */
     private Optional<Course> getCourseFromTargetLink(String targetLinkUrl) {
         AntPathMatcher matcher = new AntPathMatcher();
 
@@ -353,6 +404,9 @@ public class Lti13Service {
         else if (matcher.match(LEARNING_PATH_PATH_PATTERN, targetLinkPath)) {
             pathVariables = matcher.extractUriTemplateVariables(LEARNING_PATH_PATH_PATTERN, targetLinkPath);
         }
+        else if (matcher.match(LECTURE_PATH_PATTERN, targetLinkPath)) {
+            pathVariables = matcher.extractUriTemplateVariables(LECTURE_PATH_PATTERN, targetLinkPath);
+        }
 
         if (pathVariables == null || !pathVariables.containsKey("courseId")) {
             log.info("Could not extract courseId from target link: {}", targetLinkUrl);
@@ -363,6 +417,12 @@ public class Lti13Service {
         return courseRepository.findById(Long.valueOf(courseId));
     }
 
+    /**
+     * Checks if the target link URL references a competency.
+     *
+     * @param targetLinkUrl the target link URL
+     * @return true if the target link URL references a competency, false otherwise
+     */
     private boolean getCompetencyFromTargetLink(String targetLinkUrl) {
         AntPathMatcher matcher = new AntPathMatcher();
 
@@ -384,6 +444,12 @@ public class Lti13Service {
         return true;
     }
 
+    /**
+     * Checks if the target link URL references a learning path.
+     *
+     * @param targetLinkUrl the target link URL
+     * @return true if the target link URL references a learning path, false otherwise
+     */
     private boolean getLearningPathFromTargetLink(String targetLinkUrl) {
         AntPathMatcher matcher = new AntPathMatcher();
 
