@@ -239,6 +239,13 @@ dependencies {
     // use newest version of commons-compress to avoid security issues through outdated dependencies
     implementation "org.apache.commons:commons-compress:1.27.1"
 
+    // required for monitoring with prometheus and grafana
+    implementation "io.micrometer:micrometer-registry-prometheus:${micrometer_version}"
+    implementation "io.micrometer:micrometer-core:${micrometer_version}"
+    implementation "io.micrometer:micrometer-commons:${micrometer_version}"
+    implementation "io.micrometer:micrometer-observation:${micrometer_version}"
+    implementation "io.micrometer:micrometer-jakarta9:${micrometer_version}"
+
     implementation "tech.jhipster:jhipster-framework:${jhipster_dependencies_version}"
 
     // Defines low-level streaming API, and includes JSON-specific implementations
