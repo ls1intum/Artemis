@@ -591,14 +591,6 @@ public class Course extends DomainObject {
         return this.maxComplaintTimeDays > 0;
     }
 
-    public Set<Post> getPosts() {
-        return posts;
-    }
-
-    public void setPosts(Set<Post> posts) {
-        this.posts = posts;
-    }
-
     public boolean getRequestMoreFeedbackEnabled() {
         return maxRequestMoreFeedbackTimeDays > 0;
     }
