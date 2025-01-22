@@ -102,6 +102,7 @@ describe('CourseLearnerProfileComponent', () => {
 
         fixture.detectChanges();
         await fixture.whenStable();
+        await fixture.whenStable();
         fixture.detectChanges();
     });
 
