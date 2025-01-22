@@ -200,7 +200,7 @@ public class IrisSubSettingsService {
     /**
      * Updates a FAQ Ingestion sub settings object.
      * If the new settings are null, the current settings will be deleted (except if the parent settings are null == if the settings are global).
-     * Special notes:
+     * Special notes: if the new Settings are null, we will return null. That means the sub-settings will be deleted.
      *
      * @param currentSettings Current FAQ Ingestion sub settings.
      * @param newSettings     Updated FAQ Ingestion sub settings.

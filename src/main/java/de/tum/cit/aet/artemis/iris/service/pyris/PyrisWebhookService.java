@@ -251,7 +251,8 @@ public class PyrisWebhookService {
     }
 
     /**
-     * send the updated / created faqs to Pyris for ingestion if autoLecturesUpdate is enabled
+     * send the updated / created faqs to Pyris for ingestion if autoLecturesUpdate is enabled.
+     * It is automatically triggered on FAQ creation and updates *
      *
      * @param courseId Id of the course where the attachment is added
      * @param newFaq   the new faqs to be sent to pyris for ingestion
@@ -260,17 +261,17 @@ public class PyrisWebhookService {
         IrisCourseSettings courseSettings = irisSettingsRepository.findCourseSettings(courseId).isPresent() ? irisSettingsRepository.findCourseSettings(courseId).get() : null;
         if (courseSettings != null && courseSettings.getIrisFaqIngestionSettings() != null && courseSettings.getIrisFaqIngestionSettings().isEnabled()
                 && courseSettings.getIrisFaqIngestionSettings().getAutoIngestOnFaqCreation()) {
-            addFaqToPyris(newFaq);
+            addFaq(newFaq);
         }
     }
 
     /**
-     * adds the faq to the vector database in Pyris
+     * adds the faq to Pyris. It is triggered when the user manually sends the faqs via the button in the UI
      *
-     * @param faq The faq that got Updated
+     * @param faq The faq that will be added to pyris
      * @return jobToken if the job was created else null
      */
-    public String addFaqToPyris(Faq faq) {
+    public String addFaq(Faq faq) {
         if (faqIngestionEnabled(faq.getCourse())) {
             return executeFaqAdditionWebhook(new PyrisFaqWebhookDTO(faq.getId(), faq.getQuestionTitle(), faq.getQuestionAnswer(), faq.getCourse().getId(),
                     faq.getCourse().getTitle(), faq.getCourse().getDescription()));
@@ -295,12 +296,12 @@ public class PyrisWebhookService {
     }
 
     /**
-     * delete the faqs from the vector database on pyris
+     * delete the faqs in pyris
      *
-     * @param faq The faqs that got Updated / erased
+     * @param faq The faqs that gets erased
      * @return jobToken if the job was created
      */
-    public String deleteFaqFromPyrisDB(Faq faq) {
+    public String deleteFaq(Faq faq) {
         return executeFaqDeletionWebhook(new PyrisFaqWebhookDTO(faq.getId(), faq.getQuestionTitle(), faq.getQuestionAnswer(), faq.getCourse().getId(), faq.getCourse().getTitle(),
                 faq.getCourse().getDescription()));
 

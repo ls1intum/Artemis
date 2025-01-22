@@ -114,7 +114,7 @@ public class ProfileService {
     }
 
     /**
-     * Checks if the aeolus profile is active
+     * Checks if the IRIS profile is active
      *
      * @return true if the aeolus profile is active, false otherwise
      */

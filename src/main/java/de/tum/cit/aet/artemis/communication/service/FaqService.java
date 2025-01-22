@@ -1,6 +1,6 @@
 package de.tum.cit.aet.artemis.communication.service;
 
-import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
+import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_IRIS;
 
 import java.util.Optional;
 
@@ -13,11 +13,9 @@ import de.tum.cit.aet.artemis.communication.repository.FaqRepository;
 import de.tum.cit.aet.artemis.core.service.ProfileService;
 import de.tum.cit.aet.artemis.iris.service.pyris.PyrisWebhookService;
 
-@Profile(PROFILE_CORE)
+@Profile(PROFILE_IRIS)
 @Service
 public class FaqService {
-
-    private static final String METIS_ANSWER_POST_ENTITY_NAME = "metis.answerPost";
 
     private final Optional<PyrisWebhookService> pyrisWebhookService;
 
@@ -43,20 +41,16 @@ public class FaqService {
             if (faq.getFaqState() != FaqState.ACCEPTED) {
                 throw new IllegalArgumentException("Faq is not in the state accepted, you cannot ingest this faq");
             }
-            pyrisWebhookService.get().addFaqToPyris(faq);
-        }, () -> faqRepository.findAllByCourseIdAndFaqState(courseId, FaqState.ACCEPTED).forEach(faq -> pyrisWebhookService.get().addFaqToPyris(faq)));
+            pyrisWebhookService.get().addFaq(faq);
+        }, () -> faqRepository.findAllByCourseIdAndFaqState(courseId, FaqState.ACCEPTED).forEach(faq -> pyrisWebhookService.get().addFaq(faq)));
     }
 
     public void deleteFaqInPyris(Faq existingFaq) {
-        if (!profileService.isIrisActive()) {
-            return;
-        }
-
         if (pyrisWebhookService.isEmpty()) {
             return;
         }
 
-        pyrisWebhookService.get().deleteFaqFromPyrisDB(existingFaq);
+        pyrisWebhookService.get().deleteFaq(existingFaq);
     }
 
     public void autoIngestFaqsIntoPyris(Long courseId, Faq faq) {

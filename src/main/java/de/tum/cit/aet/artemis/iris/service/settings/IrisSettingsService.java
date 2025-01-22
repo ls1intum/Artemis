@@ -169,8 +169,7 @@ public class IrisSettingsService {
     }
 
     /**
-     * Get the combined Iris settings for a course.
-     * Combines the global settings with the course settings.
+     * This method initializes the Iris faq settings for a course.
      *
      * @param settings The course settings
      * @return The combined Iris settings for the course

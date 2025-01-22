@@ -200,7 +200,7 @@ public class PyrisConnectorService {
     }
 
     /**
-     * Executes a webhook and send faqs to the webhook with the given variant
+     * Executes a webhook and send faqs to the webhook with the given variant. This webhook adds an FAQ in the Pyris system.
      *
      * @param executionDTO The DTO sent as a body for the execution
      */
@@ -220,7 +220,7 @@ public class PyrisConnectorService {
     }
 
     /**
-     * Executes a webhook and send faqs to the webhook with the given variant
+     * Executes a webhook and adds faqs to the webhook with the given variant. This webhook deletes an FAQ in the Pyris system.
      *
      * @param executionDTO The DTO sent as a body for the execution
      */
