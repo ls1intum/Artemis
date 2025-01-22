@@ -401,8 +401,9 @@ public class ParticipationResource {
 
         // Check submission requirements
         if (exercise instanceof TextExercise || exercise instanceof ModelingExercise) {
-            if (submissionRepository.findAllByParticipationId(participation.getId()).isEmpty()) {
-                throw new BadRequestAlertException("You need to submit at least once", "participation", "preconditions not met");
+            boolean hasSubmittedOnce = submissionRepository.findAllByParticipationId(participation.getId()).stream().anyMatch(Submission::isSubmitted);
+            if (!hasSubmittedOnce) {
+                throw new BadRequestAlertException("You need to submit at least once", "participation", "noSubmissionExists", true);
             }
         }
         else if (exercise instanceof ProgrammingExercise) {
@@ -786,8 +787,17 @@ public class ParticipationResource {
         Exercise exercise = exerciseRepository.findByIdElseThrow(exerciseId);
         User user = userRepository.getUserWithGroupsAndAuthorities();
         // if exercise is not yet released to the students they should not have any access to it
-        if (!authCheckService.isAllowedToSeeExercise(exercise, user)) {
-            throw new AccessForbiddenException();
+        // Exam exercise
+        if (exercise.isExamExercise()) {
+            // NOTE: we disable access to exam exercises over this endpoint for now, in the future we should check if there is a way to enable this
+            // e.g. by checking if there is a visible exam attached and a student exam exists
+            throw new AccessForbiddenException("You are not allowed to access this exam exercise");
+        }
+        // Course exercise
+        else {
+            if (!authCheckService.isAllowedToSeeCourseExercise(exercise, user)) {
+                throw new AccessForbiddenException();
+            }
         }
         MappingJacksonValue response;
         if (exercise instanceof QuizExercise quizExercise) {
