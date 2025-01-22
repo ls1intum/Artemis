@@ -24,7 +24,7 @@ import { TextSubmission } from 'app/entities/text/text-submission.model';
 import { StringCountService } from 'app/exercises/text/participate/string-count.service';
 import { AccountService } from 'app/core/auth/account.service';
 import { getFirstResultWithComplaint, getLatestSubmissionResult, setLatestSubmissionResult } from 'app/entities/submission.model';
-import { getManualUnreferencedFeedback, isAthenaAIResult } from 'app/exercises/shared/result/result.utils';
+import { getUnreferencedFeedback, isAthenaAIResult } from 'app/exercises/shared/result/result.utils';
 import { onError } from 'app/shared/util/global.utils';
 import { Course } from 'app/entities/course.model';
 import { getCourseFromExercise } from 'app/entities/exercise.model';
@@ -356,7 +356,7 @@ export class TextEditorComponent implements OnInit, OnDestroy, ComponentCanDeact
      * Check whether or not a result exists and if, returns the unreferenced feedback of it
      */
     get unreferencedFeedback(): Feedback[] | undefined {
-        return this.result ? getManualUnreferencedFeedback(this.result.feedbacks) : undefined;
+        return this.result ? getUnreferencedFeedback(this.result.feedbacks) : undefined;
     }
 
     get wordCount(): number {
