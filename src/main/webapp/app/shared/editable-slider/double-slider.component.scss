@@ -10,7 +10,7 @@
 }
 input[type='range']#currentSlider::-webkit-slider-thumb,
 input[type='range']#currentSlider::-moz-range-thumb {
-    background-color: var(--bs-primary);
+    background-color: var(--primary);
 }
 
 input[type='number']::-webkit-inner-spin-button,
