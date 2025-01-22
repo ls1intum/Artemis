@@ -260,10 +260,14 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
         });
     }
 
-    //Make sure to warn the user before leaving the page in exam mode
+    //Make sure to warn the user before leaving (or reloading) the page in exam mode
     @HostListener('window:beforeunload', ['$event'])
     beforeUnloadHandler(event: BeforeUnloadEvent) {
-        event.preventDefault();
+        if (this.examStartConfirmed && !this.isOver()) {
+            event.preventDefault();
+            return this.translateService.instant('artemisApp.examParticipation.reloadWarning');
+        }
+        return true;
     }
 
     loadAndDisplaySummary() {
