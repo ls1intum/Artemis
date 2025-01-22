@@ -155,14 +155,13 @@ public class UserResource {
     }
 
     /**
-     * PUT users/accept-iris : sets the irisAccepted flag for the user to ZonedDateTime.now()
+     * PUT users/accept-external-llm : sets the externalLLMAccepted flag for the user to ZonedDateTime.now()
      *
      * @return the ResponseEntity with status 200 (OK), with status 404 (Not Found), or with status 400 (Bad Request) if Iris was already accepted
      */
     @PutMapping("users/accept-external-llm")
     @EnforceAtLeastStudent
     public ResponseEntity<Void> setExternalLLMAcceptedToTimestamp() {
-        log.debug("======== Set IRIS accepted =========");
         User user = userRepository.getUser();
         if (user.getExternalLLMAcceptedTimestamp() != null) {
             return ResponseEntity.badRequest().build();

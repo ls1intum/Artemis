@@ -127,10 +127,7 @@ export class RequestFeedbackButtonComponent implements OnInit {
      * @returns {boolean} `true` if all conditions are satisfied, otherwise `false`.
      */
     assureConditionsSatisfied(): boolean {
-        if (this.exercise().type === ExerciseType.PROGRAMMING || this.assureTextModelingConditions()) {
-            return true;
-        }
-        return false;
+        return this.exercise().type === ExerciseType.PROGRAMMING || this.assureTextModelingConditions();
     }
 
     /**
