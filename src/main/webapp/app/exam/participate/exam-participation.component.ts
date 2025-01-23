@@ -15,7 +15,7 @@ import { Submission } from 'app/entities/submission.model';
 import { Exam } from 'app/entities/exam/exam.model';
 import { ArtemisServerDateService } from 'app/shared/server-date.service';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
-import { BehaviorSubject, Observable, Subject, Subscription, of, throwError } from 'rxjs';
+import { BehaviorSubject, Observable, Subject, Subscription, combineLatest, of, throwError } from 'rxjs';
 import { catchError, distinctUntilChanged, filter, map, tap, throttleTime, timeout } from 'rxjs/operators';
 import { InitializationState } from 'app/entities/participation/participation.model';
 import { ProgrammingExercise } from 'app/entities/programming/programming-exercise.model';
@@ -210,8 +210,13 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
      * loads the exam from the server and initializes the view
      */
     ngOnInit(): void {
-        const courseId = this.route.snapshot.paramMap.get('courseId') || this.route.parent?.parent?.snapshot.paramMap.get('courseId');
-        this.courseId = parseInt(courseId!, 10);
+        combineLatest({
+            parentParams: this.route.parent?.parent?.params ?? of({ courseId: undefined }),
+            currentParams: this.route.params,
+        }).subscribe(({ parentParams, currentParams }) => {
+            const courseId = currentParams['courseId'] || parentParams['courseId'];
+            this.courseId = parseInt(courseId, 10);
+        });
         this.route.params.subscribe((params) => {
             this.examId = parseInt(params['examId'], 10);
             this.testRunId = parseInt(params['testRunId'], 10);
