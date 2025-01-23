@@ -25,6 +25,8 @@ import { Post } from 'app/entities/metis/post.model';
 import { faUser, faUserCheck, faUserGraduate } from '@fortawesome/free-solid-svg-icons';
 import { IconProp } from '@fortawesome/fontawesome-svg-core';
 import dayjs from 'dayjs/esm';
+import { MockTranslateService } from '../../../../helpers/mocks/service/mock-translate.service';
+import { TranslateService } from '@ngx-translate/core';
 
 describe('PostingHeaderComponent', () => {
     let component: PostingHeaderComponent;
@@ -34,8 +36,13 @@ describe('PostingHeaderComponent', () => {
 
     beforeEach(async () => {
         await TestBed.configureTestingModule({
-            imports: [MockModule(FormsModule), MockModule(ReactiveFormsModule), MockDirective(NgbTooltip), MockModule(MetisModule)],
-            providers: [FormBuilder, { provide: MetisService, useClass: MockMetisService }, { provide: AccountService, useClass: MockAccountService }],
+            imports: [MockModule(FormsModule), MockModule(ReactiveFormsModule), MockDirective(NgbTooltip)],
+            providers: [
+                FormBuilder,
+                { provide: MetisService, useClass: MockMetisService },
+                { provide: AccountService, useClass: MockAccountService },
+                { provide: TranslateService, useClass: MockTranslateService },
+            ],
             declarations: [
                 PostingHeaderComponent,
                 FaIconComponent,
