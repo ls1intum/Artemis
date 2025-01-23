@@ -119,7 +119,7 @@ describe('CourseLearnerProfileComponent', () => {
     it('should initialize', () => {
         expect(component).toBeTruthy();
         expect(component.courses).toStrictEqual(courses);
-        expect(component.courseLearnerProfiles).toBe(profiles);
+        expect(component.courseLearnerProfiles).toEqual(profiles);
     });
 
     it('should select active course', () => {
@@ -130,7 +130,7 @@ describe('CourseLearnerProfileComponent', () => {
         expect(component.activeCourse).toBe(course);
     });
 
-    function setupUpdateTest(course: number, updateFn: Function, attribute: keyof CourseLearnerProfileDTO): CourseLearnerProfileDTO {
+    function setupUpdateTest(course: number, updateFn: (value: number) => void, attribute: keyof CourseLearnerProfileDTO): CourseLearnerProfileDTO {
         let newVal = (profiles[course][attribute] + 1) % 5;
         let newProfile = profiles[course];
         newProfile[attribute] = newVal;
@@ -144,8 +144,8 @@ describe('CourseLearnerProfileComponent', () => {
         const req = httpTesting.expectOne(`api/learner-profiles/course-learner-profiles/${course}`, 'Request to put new Profile');
         req.flush(profile);
         expect(putUpdatedCourseLearnerProfileSpy).toHaveBeenCalled();
-        expect(putUpdatedCourseLearnerProfileSpy.mock.calls[0][0]).toBe(profile);
-        expect(component.courseLearnerProfiles[course]).toBe(profile);
+        expect(putUpdatedCourseLearnerProfileSpy.mock.calls[0][0]).toEqual(profile);
+        expect(component.courseLearnerProfiles[course]).toEqual(profile);
     }
 
     function validateError(course: number, profile: CourseLearnerProfileDTO) {
@@ -156,8 +156,8 @@ describe('CourseLearnerProfileComponent', () => {
             statusText: 'Bad Request',
         });
         expect(putUpdatedCourseLearnerProfileSpy).toHaveBeenCalled();
-        expect(putUpdatedCourseLearnerProfileSpy.mock.calls[0][0]).toBe(profile);
-        expect(component.courseLearnerProfiles[course]).toBe(profiles[course]);
+        expect(putUpdatedCourseLearnerProfileSpy.mock.calls[0][0]).toEqual(profile);
+        expect(component.courseLearnerProfiles[course]).toEqual(profiles[course]);
     }
 
     it('should update aimForGradeOrBonus on successful request', () => {

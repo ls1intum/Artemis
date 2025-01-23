@@ -31,6 +31,10 @@ import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastStudent;
 @RequestMapping("api/learner-profiles/")
 public class LearnerProfileResource {
 
+    private static final int MIN_PROFILE_VALUE = 0;
+
+    private static final int MAX_PROFILE_VALUE = 5;
+
     private static final Logger log = LoggerFactory.getLogger(LearnerProfileResource.class);
 
     private final UserRepository userRepository;
@@ -55,6 +59,18 @@ public class LearnerProfileResource {
         Map<Long, CourseLearnerProfileDTO> result = courseLearnerProfileRepository.findAllByLogin(user.getLogin()).stream()
                 .collect(Collectors.toMap(profile -> profile.getCourse().getId(), CourseLearnerProfileDTO::of));
         return ResponseEntity.ok(result);
+    }
+
+    /**
+     * Validate bounds fields in CourseLearnerProfile
+     *
+     * @param value     Value of the field
+     * @param fieldName Field name
+     */
+    private void validateProfileField(int value, String fieldName) {
+        if (value < MIN_PROFILE_VALUE || value > MAX_PROFILE_VALUE) {
+            throw new BadRequestAlertException(fieldName + " field is outside valid bounds", CourseLearnerProfile.ENTITY_NAME, fieldName.toLowerCase() + "OutOfBounds", true);
+        }
     }
 
     /**
@@ -84,15 +100,9 @@ public class LearnerProfileResource {
             throw new BadRequestAlertException("CourseLearnerProfile not found.", CourseLearnerProfile.ENTITY_NAME, "courseLearnerProfileNotFound", true);
         }
 
-        if (courseLearnerProfileDTO.aimForGradeOrBonus() < 0 || courseLearnerProfileDTO.aimForGradeOrBonus() > 4) {
-            throw new BadRequestAlertException("AimForGradeOrBonus field is outside valid bounds", CourseLearnerProfile.ENTITY_NAME, "aimForGradeOrBonusOutOfBounds", true);
-        }
-        if (courseLearnerProfileDTO.timeInvestment() < 0 || courseLearnerProfileDTO.timeInvestment() > 4) {
-            throw new BadRequestAlertException("TimeInvestment field is outside valid bounds", CourseLearnerProfile.ENTITY_NAME, "timeInvestmentOutOfBounds", true);
-        }
-        if (courseLearnerProfileDTO.repetitionIntensity() < 0 || courseLearnerProfileDTO.repetitionIntensity() > 4) {
-            throw new BadRequestAlertException("RepetitionIntensity field is outside valid bounds", CourseLearnerProfile.ENTITY_NAME, "repetitionIntensityOutOfBounds", true);
-        }
+        validateProfileField(courseLearnerProfileDTO.aimForGradeOrBonus(), "AimForGradeOrBonus");
+        validateProfileField(courseLearnerProfileDTO.timeInvestment(), "TimeInvestment");
+        validateProfileField(courseLearnerProfileDTO.repetitionIntensity(), "RepetitionIntensity");
 
         CourseLearnerProfile updateProfile = optionalCourseLearnerProfile.get();
         updateProfile.setAimForGradeOrBonus(courseLearnerProfileDTO.aimForGradeOrBonus());

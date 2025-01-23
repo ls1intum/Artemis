@@ -30,7 +30,7 @@ public interface CourseLearnerProfileRepository extends ArtemisJpaRepository<Cou
 
     @Transactional // ok because of delete
     @Modifying
-    void deleteAllByCourse(Course couese);
+    void deleteAllByCourse(Course course);
 
     @Query("""
                  SELECT clp

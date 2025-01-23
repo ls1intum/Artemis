@@ -46,8 +46,8 @@
                 [max]="4"
                 [(initialValue)]="timeInvestment"
                 [currentValue]="timeInvestment()"
-                [(editStateTransition)]="repetitionIntensityState"
-                (initialValueChange)="updateRepetitionIntensity($event)"
+                [(editStateTransition)]="timeInvestmentState"
+                (initialValueChange)="updateTimeInvestment($event)"
                 [disabled]="disabled"
             />
         </div>
@@ -58,8 +58,8 @@
                 [max]="4"
                 [(initialValue)]="repetitionIntensity"
                 [currentValue]="repetitionIntensity()"
-                [(editStateTransition)]="timeInvestmentState"
-                (initialValueChange)="updateTimeInvestment($event)"
+                [(editStateTransition)]="repetitionIntensityState"
+                (initialValueChange)="updateRepetitionIntensity($event)"
                 [disabled]="disabled"
             />
         </div>
