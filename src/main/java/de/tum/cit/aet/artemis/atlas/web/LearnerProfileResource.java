@@ -60,7 +60,8 @@ public class LearnerProfileResource {
     /**
      * PUT /learner-profiles/course-learner-profiles/{courseLearnerProfileId} : update a CourseLearnerProfile for the currently logged-in user.
      *
-     * @param courseLearnerProfileId ID of the CourseLearnerProfile
+     * @param courseLearnerProfileId  ID of the CourseLearnerProfile
+     * @param courseLearnerProfileDTO CourseLearnerProfile object from request body.
      * @return A ResponseEntity with a status matching the validity of the request containing the updated profile.
      */
     @PutMapping(value = "course-learner-profiles/{courseLearnerProfileId}")
