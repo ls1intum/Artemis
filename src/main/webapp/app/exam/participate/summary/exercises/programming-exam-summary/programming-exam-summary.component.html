@@ -10,7 +10,7 @@
                     <jhi-code-button
                         [smallButtons]="true"
                         [participations]="[participation]"
-                        [repositoryUri]="participation?.userIndependentRepositoryUri || ''"
+                        [repositoryUri]="participation?.userIndependentRepositoryUri ?? ''"
                         [routerLinkForRepositoryView]="[routerLink, 'exercises', exercise.id!, 'repository', participation.id!]"
                     />
                     <br />

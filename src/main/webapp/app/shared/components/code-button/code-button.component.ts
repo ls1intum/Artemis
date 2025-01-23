@@ -83,7 +83,7 @@ export class CodeButtonComponent implements OnInit {
     hideLabelMobile = input<boolean>(false);
 
     // this is the fallback
-    authenticationMethods = [States.Password, States.Token, States.SSH];
+    authenticationMechanism = [States.Password, States.Token, States.SSH];
     currentState = States.Password;
 
     userTokenStillValid = false;
@@ -159,7 +159,7 @@ export class CodeButtonComponent implements OnInit {
             this.sshTemplateUrl = profileInfo.sshCloneURLTemplate;
 
             if (profileInfo.authenticationMechanisms?.length) {
-                this.authenticationMethods = profileInfo.authenticationMechanisms.filter((method): method is States => Object.values(States).includes(method as States));
+                this.authenticationMechanism = profileInfo.authenticationMechanisms.filter((method): method is States => Object.values(States).includes(method as States));
             }
             if (profileInfo.versionControlUrl) {
                 this.versionControlUrl = profileInfo.versionControlUrl;
