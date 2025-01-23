@@ -20,7 +20,7 @@ import { MockRouter } from '../../helpers/mocks/mock-router';
 import { SecuredImageComponent } from 'app/shared/image/secured-image.component';
 import { OrionFilterDirective } from 'app/shared/orion/orion-filter.directive';
 import { TeamService } from 'app/exercises/shared/team/team.service';
-import { JhiWebsocketService } from 'app/core/websocket/websocket.service';
+import { WebsocketService } from 'app/core/websocket/websocket.service';
 import { QuizExercise } from 'app/entities/quiz/quiz-exercise.model';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { SortDirective } from 'app/shared/sort/sort.directive';
@@ -137,7 +137,7 @@ describe('CourseOverviewComponent', () => {
     let teamService: TeamService;
     let tutorialGroupsService: TutorialGroupsService;
     let tutorialGroupsConfigurationService: TutorialGroupsConfigurationService;
-    let jhiWebsocketService: JhiWebsocketService;
+    let jhiWebsocketService: WebsocketService;
     let courseAccessStorageService: CourseAccessStorageService;
     let router: MockRouter;
     let jhiWebsocketServiceReceiveStub: jest.SpyInstance;
@@ -192,7 +192,7 @@ describe('CourseOverviewComponent', () => {
                 MockProvider(CourseExerciseService),
                 MockProvider(CompetencyService),
                 MockProvider(TeamService),
-                MockProvider(JhiWebsocketService),
+                MockProvider(WebsocketService),
                 MockProvider(ArtemisServerDateService),
                 MockProvider(AlertService),
                 MockProvider(ChangeDetectorRef),
@@ -222,7 +222,7 @@ describe('CourseOverviewComponent', () => {
                 teamService = TestBed.inject(TeamService);
                 tutorialGroupsService = TestBed.inject(TutorialGroupsService);
                 tutorialGroupsConfigurationService = TestBed.inject(TutorialGroupsConfigurationService);
-                jhiWebsocketService = TestBed.inject(JhiWebsocketService);
+                jhiWebsocketService = TestBed.inject(WebsocketService);
                 courseAccessStorageService = TestBed.inject(CourseAccessStorageService);
                 metisConversationService = fixture.debugElement.injector.get(MetisConversationService);
                 itemsDrop = component.itemsDrop;

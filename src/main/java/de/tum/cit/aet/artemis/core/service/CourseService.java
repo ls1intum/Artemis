@@ -691,7 +691,7 @@ public class CourseService {
      * @param course The course from which the user should be removed from
      */
     public void unenrollUserForCourseOrThrow(User user, Course course) {
-        authCheckService.checkUserAllowedToUnenrollFromCourseElseThrow(user, course);
+        authCheckService.checkUserAllowedToUnenrollFromCourseElseThrow(course);
         userService.removeUserFromGroup(user, course.getStudentGroupName());
         learnerProfileApi.deleteCourseLearnerProfile(course, user);
         final var auditEvent = new AuditEvent(user.getLogin(), Constants.UNENROLL_FROM_COURSE, "course=" + course.getTitle());
