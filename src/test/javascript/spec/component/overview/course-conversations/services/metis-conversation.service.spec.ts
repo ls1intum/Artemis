@@ -5,7 +5,7 @@ import { MockProvider } from 'ng-mocks';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
 import { OneToOneChatService } from 'app/shared/metis/conversations/one-to-one-chat.service';
 import { AlertService } from 'app/core/util/alert.service';
-import { JhiWebsocketService } from 'app/core/websocket/websocket.service';
+import { WebsocketService } from 'app/core/websocket/websocket.service';
 import { Course } from 'app/entities/course.model';
 import { ConversationService } from 'app/shared/metis/conversations/conversation.service';
 import { ChannelService } from 'app/shared/metis/conversations/channel.service';
@@ -32,7 +32,7 @@ describe('MetisConversationService', () => {
     let groupChatService: GroupChatService;
     let oneToOneChatService: OneToOneChatService;
     let channelService: ChannelService;
-    let websocketService: JhiWebsocketService;
+    let websocketService: WebsocketService;
     let courseManagementService: CourseManagementService;
     let alertService: AlertService;
     let notificationService: NotificationService;
@@ -53,7 +53,7 @@ describe('MetisConversationService', () => {
                 MockProvider(ChannelService),
                 MockProvider(OneToOneChatService),
                 MockProvider(ConversationService),
-                MockProvider(JhiWebsocketService),
+                MockProvider(WebsocketService),
                 MockProvider(AlertService),
                 { provide: NotificationService, useClass: MockNotificationService },
                 { provide: AccountService, useClass: MockAccountService },
@@ -71,7 +71,7 @@ describe('MetisConversationService', () => {
         groupChatService = TestBed.inject(GroupChatService);
         oneToOneChatService = TestBed.inject(OneToOneChatService);
         channelService = TestBed.inject(ChannelService);
-        websocketService = TestBed.inject(JhiWebsocketService);
+        websocketService = TestBed.inject(WebsocketService);
         courseManagementService = TestBed.inject(CourseManagementService);
         conversationService = TestBed.inject(ConversationService);
         alertService = TestBed.inject(AlertService);
