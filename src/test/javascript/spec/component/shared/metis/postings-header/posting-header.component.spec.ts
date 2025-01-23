@@ -1,6 +1,5 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { MetisService } from 'app/shared/metis/metis.service';
-import { MetisModule } from 'app/shared/metis/metis.module';
 import { DebugElement, Injector, input, runInInjectionContext } from '@angular/core';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { MockComponent, MockDirective, MockModule, MockPipe } from 'ng-mocks';
