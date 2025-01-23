@@ -30,166 +30,99 @@ on:
   release:
     types:
     - created
-  # workflow_call makes it possible to trigger this build workflow from another workflow
-  # workflow_call is used to build the Artemis for deployments handled by Helios for specific cases
-  # Inconsistent behavior of the workflow_call is that it inherits the event name of the calling workflow
-  # That's why we need to check for the event name in the steps as workflow_dispatch but not as workflow_call
-  # Since the testserver-helios.yml is triggered by a workflow_dispatch, the build.yml will also be triggered by a workflow_dispatch
-  workflow_call:
-    inputs:
-      sha:
-        description: "Specific commit sha"
-        required: true
-        type: string
-      tag:
-        description: "Tag to use when building Docker image"
-        required: true
-        type: string
-      raw_url:
-        description: "URL to the raw content of the repository in the format https://raw.githubusercontent.com/:owner/:repo/:sha"
-        required: true
-        type: string
 
-# Keep in sync with codeql-analysis.yml and test.yml and analysis-of-endpoint-connections.yml
-env:
-  CI: true
-  node: 22
-  java: 21
-  RAW_URL: https://raw.githubusercontent.com/${{ github.repository }}/${{ github.sha }}
 
 jobs:
 
-  build:
-    name: Build .war artifact
+  define-inputs:
+    name: Define Inputs
     runs-on: ubuntu-latest
+    outputs:
+      release_upload: ${{ steps.set-upload-release.outputs.release_upload }}
+      release_url: ${{ steps.set-upload-release.outputs.release_url }}
+      release_path: ${{ steps.set-upload-release.outputs.release_path }}
+      release_name: ${{ steps.set-upload-release.outputs.release_name }}
+      release_type: ${{ steps.set-upload-release.outputs.release_type }}
+      docker_build: ${{ steps.set-docker-build.outputs.docker_build }}
+      docker_ref: ${{ steps.set-docker-ref.outputs.docker_ref }}
+      docker_build_tag: ${{ steps.set-docker-tag.outputs.docker_build_tag }}
     steps:
-      # If this is a workflow_dispatch, override RAW_URL
-    - name: Override RAW_URL for workflow_dispatch
-      if: ${{ github.event_name == 'workflow_dispatch' }}
-      run: echo "RAW_URL=${{ inputs.raw_url }}" >> $GITHUB_ENV
-      # If this workflow is called via `workflow_dispatch`, checkout the specified branch
-    - name: Git Checkout (for workflow_dispatch)
-      if: ${{ github.event_name == 'workflow_dispatch' }}
-      uses: actions/checkout@v4
-      with:
-        ref: ${{ inputs.sha }}
-      # Otherwise, checkout the default branch
-    - name: Git Checkout
-      if: ${{ github.event_name != 'workflow_dispatch' }}
-      uses: actions/checkout@v4
-    - name: Setup Node.js
-      uses: actions/setup-node@v4
-      with:
-        node-version: '${{ env.node }}'
-        cache: 'npm'
-    - name: Setup Java
-      uses: actions/setup-java@v4
-      with:
-        distribution: 'temurin'
-        java-version: '${{ env.java }}'
-        cache: 'gradle'
-    - name: Setup Gradle
-      uses: gradle/actions/setup-gradle@v3
-    - name: Production Build
-      run: ./gradlew -Pprod -Pwar clean bootWar
-    - name: Upload Artifact
-      uses: actions/upload-artifact@v4
-      with:
-        name: Artemis.war
-        path: build/libs/Artemis-*.war
-    - name: Upload Release Artifact
-      if: github.event_name == 'release' && github.event.action == 'created'
-      uses: actions/upload-release-asset@v1
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      with:
-        upload_url: ${{ github.event.release.upload_url }}
-        asset_path: build/libs/Artemis-${{ github.event.release.tag_name }}.war
-        asset_name: Artemis.war
-        asset_content_type: application/x-webarchive
+      - name: Set Upload Release Artifact Outputs
+        id: set-upload-release
+        run: |
+          if [[ "${{ github.event_name }}" == "release" && "${{ github.event.action }}" == "created" ]]; then
+            echo "::set-output name=release_upload::true"
+            echo "::set-output name=release_url::${{ github.event.release.upload_url }}"
+            echo "::set-output name=release_path::build/libs/Artemis-${{ github.event.release.tag_name }}.war"
+            echo "::set-output name=release_name::Artemis.war"
+            echo "::set-output name=release_type::application/x-webarchive"
+          else
+            echo "::set-output name=release_upload::false"
+          fi
 
-  docker:
-    name: Build and Push Docker Image
-    if: ${{ github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == 'ls1intum/Artemis' }}
-    runs-on: ubuntu-latest
-    steps:
-    # If this is a workflow_dispatch and a 'sha' is provided, override RAW_URL
-    - name: Override RAW_URL for workflow_dispatch
-      if: ${{ github.event_name == 'workflow_dispatch' && inputs.raw_url != '' }}
-      run: echo "RAW_URL=${{ inputs.raw_url }}" >> $GITHUB_ENV
-    - name: Compute Tag
-      uses: actions/github-script@v7
-      id: compute-tag
-      with:
-        result-encoding: string
-        script: |
-          if (context.eventName === "workflow_dispatch") {
-            // When the workflow_call is triggered by another workflow,
-            // the parent's payload is passed to the child workflow
-            // This is why we are using the inputs from the parent workflow
-            return context.payload.inputs.HELIOS_BUILD_TAG;
-          }
-          if (context.eventName === "pull_request") {
-            return "pr-" + context.issue.number;
-          }
-          if (context.eventName === "release") {
-            return "latest";
-          }
-          if (context.eventName === "push") {
-            if (context.ref.startsWith("refs/tags/")) {
-              return context.ref.slice(10);
+      - name: Set Docker Build Flag
+        id: set-docker-build
+        run: |
+          if [[ ${{ github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == 'ls1intum/Artemis' }} ]]; then
+            echo "::set-output name=docker_build::true"
+          else
+            echo "::set-output name=docker_build::false"
+          fi
+
+      - name: Set Docker ref
+        if: ${{ steps.set-docker-build.outputs.docker_build == 'true' }}
+        id: set-docker-ref
+        run: |
+          if [[ "${{ github.event_name }}" == "pull_request" ]]; then
+            # Checkout pull request HEAD commit instead of merge commit
+            # this is done to include the correct branch and git information inside the build
+            echo "::set-output name=docker_ref::${{ github.event.pull_request.head.ref }}"
+          elif [[ "${{ github.event_name }}" == "push" ]]; then
+            echo "::set-output name=docker_ref::${{ github.ref_name }}"
+          fi
+
+      - name: Compute Tag
+        if: ${{ steps.set-docker-build.outputs.docker_build == 'true' }}
+        uses: actions/github-script@v7
+        id: compute-tag
+        with:
+          result-encoding: string
+          script: |
+            if (context.eventName === "pull_request") {
+              return "pr-" + context.issue.number;
             }
-            if (context.ref === "refs/heads/develop") {
-              return "develop";
+            if (context.eventName === "release") {
+              return "latest";
             }
-          }
-          return "FALSE";
-    - name: Git Checkout for workflow_call
-      if: ${{ github.event_name == 'workflow_dispatch' }}
-      uses: actions/checkout@v4
-      with:
-        ref: ${{ inputs.sha }}
-    - name: Git Checkout for PRs
-      if: ${{ github.event_name == 'pull_request' }}
-      # Checkout pull request HEAD commit instead of merge commit
-      # this is done to include the correct branch and git information inside the build
-      uses: actions/checkout@v4
-      with:
-        ref: ${{ github.event.pull_request.head.ref }}
-    - name: Git Checkout for push actions
-      if: ${{ github.event_name == 'push' }}
-      uses: actions/checkout@v4
-      with:
-        ref: ${{ github.ref_name }}
-    - name: Git Checkout for push actions
-      if: ${{ github.event_name == 'release' }}
-      uses: actions/checkout@v4
-    - name: Set up QEMU
-      uses: docker/setup-qemu-action@v3
-    - name: Set up Docker Buildx
-      uses: docker/setup-buildx-action@v3
-    # Build and Push to GitHub Container Registry
-    - name: Login to GitHub Container Registry
-      uses: docker/login-action@v3
-      if: ${{ steps.compute-tag.outputs.result != 'FALSE' }}
-      with:
-        registry: ghcr.io
-        username: ${{ github.repository_owner }}
-        password: ${{ secrets.GITHUB_TOKEN }}
-    - name: Build and Push to GitHub Container Registry
-      uses: docker/build-push-action@v5
-      if: ${{ steps.compute-tag.outputs.result != 'FALSE' }}
-      with:
-        # beware that the linux/arm64 build from the registry is using an amd64 compiled .war file as
-        # the GitHub runners don't support arm64 and QEMU takes too long for emulating the build
-        platforms: linux/amd64,linux/arm64
-        file: ./docker/artemis/Dockerfile
-        context: .
-        tags: ghcr.io/ls1intum/artemis:${{ steps.compute-tag.outputs.result }}
-        push: true
-        cache-from: type=gha
-        cache-to: type=gha,mode=min
+            if (context.eventName === "push") {
+              if (context.ref.startsWith("refs/tags/")) {
+                return context.ref.slice(10);
+              }
+              if (context.ref === "refs/heads/develop") {
+                return "develop";
+              }
+            }
+            return "FALSE";
 
-    # TODO: Push to Docker Hub (develop + tag)
+      - name: Set Docker Build Tag
+        id: set-docker-tag
+        run: |
+          if [[ ${{ steps.compute-tag.outputs.result  != 'FALSE' }} ]]; then
+            echo "::set-output name=docker_build_tag::${{ steps.compute-tag.outputs.result }}"
+          fi
 
-    # TODO: Push to Chair Harbour (??)
+
+  call-build-workflow:
+    name: Call Build Workflow
+    needs: define-inputs
+    uses: ./.github/workflows/reusable-build.yml
+    with:
+      build_war: true
+      release_upload: ${{ needs.define-inputs.outputs.release_upload }}
+      release_url: ${{ needs.define-inputs.outputs.release_url }}
+      release_path: ${{ needs.define-inputs.outputs.release_path }}
+      release_name: ${{ needs.define-inputs.outputs.release_name }}
+      release_type: ${{ needs.define-inputs.outputs.release_type }}
+      docker: true
+      docker_ref: ${{ needs.define-inputs.outputs.docker_ref }}
+      docker_build_tag: ${{ needs.define-inputs.outputs.docker_build_tag }}
