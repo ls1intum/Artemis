@@ -18,7 +18,6 @@ import { ArtemisMarkdownModule } from 'app/shared/markdown.module';
 import { SearchFilterComponent } from 'app/shared/search-filter/search-filter.component';
 import { AccountService } from 'app/core/auth/account.service';
 import { Course } from 'app/entities/course.model';
-import { TranslateService } from '@ngx-translate/core';
 import { PROFILE_IRIS } from 'app/app.constants';
 import { IrisSettingsService } from 'app/iris/settings/shared/iris-settings.service';
 import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
@@ -68,7 +67,6 @@ export class FaqComponent implements OnInit, OnDestroy {
     private alertService = inject(AlertService);
     private sortService = inject(SortService);
     private accountService = inject(AccountService);
-    private translateService = inject(TranslateService);
     private profileService = inject(ProfileService);
     private irisSettingsService = inject(IrisSettingsService);
 
@@ -107,6 +105,7 @@ export class FaqComponent implements OnInit, OnDestroy {
         this.dialogErrorSource.complete();
         this.searchInput.complete();
         this.routeDataSubscription?.unsubscribe();
+        this.profileInfoSubscription?.unsubscribe();
     }
 
     deleteFaq(courseId: number, faqId: number) {
