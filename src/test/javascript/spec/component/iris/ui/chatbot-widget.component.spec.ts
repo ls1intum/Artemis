@@ -2,7 +2,7 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { IrisChatbotWidgetComponent } from 'app/iris/exercise-chatbot/widget/chatbot-widget.component';
 import { IrisChatService } from 'app/iris/iris-chat.service';
 import { MockComponent, MockProvider } from 'ng-mocks';
-import { MatDialog } from '@angular/material/dialog';
+import { MAT_DIALOG_DATA, MatDialog } from '@angular/material/dialog';
 import { Router } from '@angular/router';
 import { of } from 'rxjs';
 import { By } from '@angular/platform-browser';
@@ -16,7 +16,12 @@ describe('IrisChatbotWidgetComponent', () => {
     beforeEach(async () => {
         await TestBed.configureTestingModule({
             declarations: [IrisChatbotWidgetComponent, MockComponent(IrisBaseChatbotComponent)],
-            providers: [MockProvider(IrisChatService), { provide: MatDialog, useValue: { closeAll: jest.fn() } }, { provide: Router, useValue: { events: of() } }],
+            providers: [
+                MockProvider(IrisChatService),
+                { provide: MatDialog, useValue: { closeAll: jest.fn() } },
+                { provide: Router, useValue: { events: of() } },
+                { provide: MAT_DIALOG_DATA, useValue: { isChatGptWrapper: false } },
+            ],
         }).compileComponents();
 
         fixture = TestBed.createComponent(IrisChatbotWidgetComponent);
