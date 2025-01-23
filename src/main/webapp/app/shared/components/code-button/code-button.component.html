@@ -15,16 +15,16 @@
         container="body"
     ></button>
     <ng-template #popContent>
-        @if (useSsh && !doesUserHaveSSHkeys) {
+        @if (this.currentState === States.SSH && !doesUserHaveSSHkeys) {
             <div class="alert alert-warning" [innerHTML]="sshKeyMissingTip"></div>
         }
-        @if (useSsh && areAnySshKeysExpired) {
+        @if (this.currentState === States.SSH && areAnySshKeysExpired) {
             <div class="alert alert-warning" [innerHTML]="sshKeysExpiredTip"></div>
         }
-        @if (useToken && isInCourseManagement && !userTokenPresent) {
+        @if (this.currentState === States.Token && isInCourseManagement && !userTokenPresent) {
             <div class="alert alert-warning" [innerHTML]="tokenMissingTip"></div>
         }
-        @if (useToken && isInCourseManagement && userTokenPresent && !userTokenStillValid) {
+        @if (this.currentState === States.Token && isInCourseManagement && userTokenPresent && !userTokenStillValid) {
             <div class="alert alert-warning" [innerHTML]="tokenExpiredTip"></div>
         }
         @if (participations()!.length > 1) {
@@ -38,18 +38,18 @@
         <div class="d-flex" style="margin: 0; max-width: 100%">
             <div aria-label="Button group with nested dropdown" class="btn-group" ngbDropdown role="group" style="margin-bottom: 10px">
                 <button class="btn btn-primary btn-sm dropdown-toggle https-or-ssh-button" ngbDropdownToggle type="button">
-                    {{ useSsh ? 'SSH' : useToken ? 'Token' : 'HTTPS' }}
+                    {{ this.currentState === States.SSH ? 'SSH' : this.currentState === States.Token ? 'Token' : 'HTTPS' }}
                 </button>
                 <div class="dropdown-menu" ngbDropdownMenu style="min-width: 100%">
                     @for (method of authenticationMethods; track method) {
-                        @if (method === 'password') {
-                            <a (click)="useHttpsPassword()" class="dropdown-item {{ !useToken && !useSsh ? 'active' : '' }}" id="useHTTPSButton">HTTPS</a>
+                        @if (method === States.Password) {
+                            <a (click)="useHttpsPassword()" class="dropdown-item {{ this.currentState === States.Password ? 'active' : '' }}" id="useHTTPSButton">HTTPS</a>
                         }
-                        @if (method === 'token') {
-                            <a (click)="useHttpsToken()" class="dropdown-item {{ useToken && !useSsh ? 'active' : '' }}" id="useHTTPSWithTokenButton">Token</a>
+                        @if (method === States.Token) {
+                            <a (click)="useHttpsToken()" class="dropdown-item {{ this.currentState === States.Token ? 'active' : '' }}" id="useHTTPSWithTokenButton">Token</a>
                         }
-                        @if (method === 'ssh') {
-                            <a (click)="useSshUrl()" class="dropdown-item {{ useSsh ? 'active' : '' }}" id="useSSHButton">SSH</a>
+                        @if (method === States.SSH) {
+                            <a (click)="useSshUrl()" class="dropdown-item {{ this.currentState === States.SSH ? 'active' : '' }}" id="useSSHButton">SSH</a>
                         }
                     }
                 </div>

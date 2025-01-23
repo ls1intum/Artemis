@@ -31,6 +31,12 @@ import { ProfileInfo } from 'app/shared/layouts/profiles/profile-info.model';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { AlertService } from 'app/core/util/alert.service';
 
+export enum States {
+    Password = 'password',
+    Token = 'token',
+    SSH = 'ssh',
+}
+
 @Component({
     selector: 'jhi-code-button',
     templateUrl: './code-button.component.html',
@@ -77,11 +83,8 @@ export class CodeButtonComponent implements OnInit {
     hideLabelMobile = input<boolean>(false);
 
     // this is the fallback
-    authenticationMethods = ['password', 'token', 'ssh'];
-
-    usePassword = false;
-    useToken = false;
-    useSsh = false;
+    authenticationMethods = [States.Password, States.Token, States.SSH];
+    currentState = States.Password;
 
     userTokenStillValid = false;
     userTokenPresent = false;
@@ -156,7 +159,7 @@ export class CodeButtonComponent implements OnInit {
             this.sshTemplateUrl = profileInfo.sshCloneURLTemplate;
 
             if (profileInfo.authenticationMechanisms?.length) {
-                this.authenticationMethods = profileInfo.authenticationMechanisms;
+                this.authenticationMethods = profileInfo.authenticationMechanisms.filter((method): method is States => Object.values(States).includes(method as States));
             }
             if (profileInfo.versionControlUrl) {
                 this.versionControlUrl = profileInfo.versionControlUrl;
@@ -177,18 +180,14 @@ export class CodeButtonComponent implements OnInit {
     }
 
     public useSshUrl() {
-        this.usePassword = false;
-        this.useToken = false;
-        this.useSsh = true;
+        this.currentState = States.SSH;
 
         this.copyEnabled = this.doesUserHaveSSHkeys || this.gitlabVCEnabled;
         this.storeToLocalStorage();
     }
 
     public useHttpsToken() {
-        this.usePassword = false;
-        this.useToken = true;
-        this.useSsh = false;
+        this.currentState = States.Token;
 
         if (this.isInCourseManagement) {
             this.userTokenStillValid = dayjs().isBefore(dayjs(this.user.vcsAccessTokenExpiryDate));
@@ -201,18 +200,14 @@ export class CodeButtonComponent implements OnInit {
     }
 
     public useHttpsPassword() {
-        this.usePassword = true;
-        this.useToken = false;
-        this.useSsh = false;
+        this.currentState = States.Password;
 
         this.copyEnabled = true;
         this.storeToLocalStorage();
     }
 
     private storeToLocalStorage() {
-        this.localStorage.store('usePassword', this.usePassword);
-        this.localStorage.store('useToken', this.useToken);
-        this.localStorage.store('useSsh', this.useSsh);
+        this.localStorage.store('code-button-state', this.currentState);
     }
 
     public formatTip(translationKey: string, url: string): string {
@@ -224,9 +219,7 @@ export class CodeButtonComponent implements OnInit {
     }
 
     onClick() {
-        this.useSsh = this.localStorage.retrieve('useSsh') || false;
-        this.useToken = this.localStorage.retrieve('useToken') || false;
-        this.usePassword = this.localStorage.retrieve('usePassword') || false;
+        this.currentState = this.localStorage.retrieve('code-button-state') || States.Password;
 
         if (this.useSsh) {
             this.useSshUrl();
@@ -388,6 +381,17 @@ export class CodeButtonComponent implements OnInit {
         }
     }
 
+    get useToken() {
+        return this.currentState === States.Token;
+    }
+
+    get useSsh() {
+        return this.currentState === States.SSH;
+    }
+
+    get usePassword() {
+        return this.currentState === States.Password;
+    }
     /**
      * Checks whether the user owns any SSH keys, and checks if any of them is expired
      */
@@ -427,4 +431,6 @@ export class CodeButtonComponent implements OnInit {
             return 'artemisApp.exerciseActions.cloneExerciseRepository';
         }
     }
+
+    protected readonly States = States;
 }

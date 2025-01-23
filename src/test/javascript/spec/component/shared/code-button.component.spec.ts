@@ -1,20 +1,19 @@
-import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
+import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
 import { AccountService } from 'app/core/auth/account.service';
 import { AlertService } from 'app/core/util/alert.service';
 import { Exercise } from 'app/entities/exercise.model';
 import { ProgrammingExerciseStudentParticipation } from 'app/entities/participation/programming-exercise-student-participation.model';
-import { CodeButtonComponent } from 'app/shared/components/code-button/code-button.component';
+import { CodeButtonComponent, States } from 'app/shared/components/code-button/code-button.component';
 import { ProfileInfo } from 'app/shared/layouts/profiles/profile-info.model';
 import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
 import dayjs from 'dayjs/esm';
 import { MockProvider } from 'ng-mocks';
 import { LocalStorageService } from 'ngx-webstorage';
 import { BehaviorSubject, of, throwError } from 'rxjs';
-import { Router } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 import { ArtemisTestModule } from '../../test.module';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
-import { ActivatedRoute } from '@angular/router';
 import { SshUserSettingsService } from 'app/shared/user-settings/ssh-settings/ssh-user-settings.service';
 import { UserSshPublicKey } from 'app/entities/programming/user-ssh-public-key.model';
 import { MockRouter } from '../../helpers/mocks/mock-router';
@@ -36,7 +35,7 @@ describe('CodeButtonComponent', () => {
     const user = { login: 'user1', guidedTourSettings: [], internal: true, vcsAccessToken: 'token' };
     const route = { snapshot: { url: of('courses') } } as any as ActivatedRoute;
 
-    let localStorageState: { [key: string]: boolean } = { useSsh: true, useToken: false, usePassword: false };
+    let localStorageState: States = States.SSH;
     let router: MockRouter;
 
     const info: ProfileInfo = {
@@ -91,7 +90,6 @@ describe('CodeButtonComponent', () => {
         })
             .compileComponents()
             .then(() => {
-                localStorageState = { useSsh: true, useToken: false, usePassword: false };
                 fixture = TestBed.createComponent(CodeButtonComponent);
                 component = fixture.componentInstance;
                 profileService = TestBed.inject(ProfileService);
@@ -113,7 +111,7 @@ describe('CodeButtonComponent', () => {
                     .mockImplementation(() => Promise.resolve([{ id: 99, publicKey: 'key' } as UserSshPublicKey]));
                 fixture.componentRef.setInput('repositoryUri', '');
                 jest.spyOn(localStorageMock, 'retrieve').mockImplementation((key) => {
-                    return localStorageState[key];
+                    return localStorageState;
                 });
                 jest.spyOn(localStorageMock, 'store').mockImplementation(() => {});
                 createVcsAccessTokenSpy = jest
@@ -132,6 +130,7 @@ describe('CodeButtonComponent', () => {
 
     afterEach(() => {
         jest.restoreAllMocks();
+        localStorageState = States.SSH;
     });
 
     it('should initialize', async () => {
@@ -207,7 +206,7 @@ describe('CodeButtonComponent', () => {
         participation.repositoryUri = info.versionControlUrl!;
         participation.team = {};
         fixture.componentRef.setInput('participations', [participation]);
-        component.useSsh = false;
+        localStorageState = States.Password;
         component.isTeamParticipation = true;
         fixture.detectChanges();
 
@@ -223,7 +222,7 @@ describe('CodeButtonComponent', () => {
     it('should insert the correct token in the repository uri', async () => {
         participation.repositoryUri = `https://${component.user.login}@gitlab.ase.in.tum.de/scm/ITCPLEASE1/itcplease1-exercise-team1.git`;
         fixture.componentRef.setInput('participations', [participation]);
-        localStorageState = { useSsh: false, useToken: true, usePassword: false };
+        localStorageState = States.Token;
 
         await component.ngOnInit();
         fixture.detectChanges();
@@ -255,12 +254,9 @@ describe('CodeButtonComponent', () => {
         participation.repositoryUri = `https://gitlab.ase.in.tum.de/scm/ITCPLEASE1/itcplease1-exercise-team1.git`;
         fixture.componentRef.setInput('participations', [participation]);
 
-        component.useSsh = false;
         component.isTeamParticipation = false;
-
+        component.currentState = States.Token;
         fixture.detectChanges();
-
-        component.useToken = true;
 
         const url = component.getHttpOrSshRepositoryUri();
         expect(url).toBe(`https://${component.user.login}:**********@gitlab.ase.in.tum.de/scm/ITCPLEASE1/itcplease1-exercise-team1.git`);
@@ -331,19 +327,17 @@ describe('CodeButtonComponent', () => {
         tick();
         fixture.debugElement.query(By.css('#useSSHButton')).nativeElement.click();
         tick();
-        expect(localStorageMock.store).toHaveBeenNthCalledWith(4, 'usePassword', false);
-        expect(localStorageMock.store).toHaveBeenNthCalledWith(5, 'useToken', false);
-        expect(localStorageMock.store).toHaveBeenNthCalledWith(6, 'useSsh', true);
+        expect(localStorageMock.store).toHaveBeenNthCalledWith(2, 'code-button-state', 'ssh');
         expect(component.useSsh).toBeTrue();
 
         fixture.debugElement.query(By.css('#useHTTPSButton')).nativeElement.click();
         tick();
-        expect(localStorageMock.store).toHaveBeenNthCalledWith(9, 'useSsh', false);
+        expect(localStorageMock.store).toHaveBeenNthCalledWith(3, 'code-button-state', 'password');
         expect(component.useSsh).toBeFalse();
 
         fixture.debugElement.query(By.css('#useHTTPSWithTokenButton')).nativeElement.click();
         tick();
-        expect(localStorageMock.store).toHaveBeenNthCalledWith(12, 'useSsh', false);
+        expect(localStorageMock.store).toHaveBeenNthCalledWith(4, 'code-button-state', 'token');
         expect(component.useSsh).toBeFalse();
         expect(component.useToken).toBeTrue();
     }));
