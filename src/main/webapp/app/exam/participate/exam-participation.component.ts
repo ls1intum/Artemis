@@ -210,9 +210,8 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
      * loads the exam from the server and initializes the view
      */
     ngOnInit(): void {
-        this.route.parent?.parent?.params.subscribe((params) => {
-            this.courseId = parseInt(params['courseId'], 10);
-        });
+        const courseId = this.route.snapshot.paramMap.get('courseId') || this.route.parent?.parent?.snapshot.paramMap.get('courseId');
+        this.courseId = parseInt(courseId!, 10);
         this.route.params.subscribe((params) => {
             this.examId = parseInt(params['examId'], 10);
             this.testRunId = parseInt(params['testRunId'], 10);
