@@ -172,10 +172,8 @@ spring:
             repositories:
                 bootstrap-mode: deferred
         redis:
-            host: fcfe:0:0:0:0:0:b:2
+            host: fcfe:0:0:0:0:0:b:1
             port: 6379
-            username: artemis
-            password: artemis
             # custom attributes for Redisson Hibernate
             server-config: single
             idle-connection-timeout: 10000
