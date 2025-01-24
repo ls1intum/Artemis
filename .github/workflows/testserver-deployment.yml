@@ -26,8 +26,9 @@ env:
   RAW_URL: https://raw.githubusercontent.com/${{ github.repository }}/${{ github.event.inputs.branch_name }}
 
 jobs:
-  # Print the inputs for debugging
-  print-inputs:
+  # Log the inputs for debugging
+  log-inputs:
+    name: Log Inputs
     runs-on: ubuntu-latest
     steps:
       - name: Print Inputs
@@ -38,11 +39,13 @@ jobs:
           echo "RAW_URL: ${{ env.RAW_URL }}"
 
   determine-build-context:
+    name: Determine Build Context
     runs-on: ubuntu-latest
-    needs: print-inputs
+    needs: log-inputs
     outputs:
       pr_number: ${{ steps.get_pr.outputs.pr_number }}
       pr_head_sha: ${{ steps.get_pr.outputs.pr_head_sha }}
+      tag: ${{ steps.get_pr.outputs.tag }}
     steps:
       - name: Check if a PR exists for the branch
         id: get_pr
@@ -68,10 +71,19 @@ jobs:
             echo "No PR found for branch: $BRANCH_NAME targeting 'develop'."
             echo "pr_number=" >> $GITHUB_OUTPUT
             echo "pr_head_sha=" >> $GITHUB_OUTPUT
-            echo "tag=branch-$BRANCH_NAME" >> $GITHUB_OUTPUT
-          fi
 
-          echo "Tag: ${{ steps.get_pr.outputs.tag }}"
+            # Fetch the latest commit SHA of the branch
+            LATEST_SHA=$(gh api repos/${{ github.repository }}/git/refs/heads/$BRANCH_NAME --jq '.object.sha')
+
+            if [ -z "$LATEST_SHA" ]; then
+              echo "::error::Could not find the latest commit SHA for branch $BRANCH_NAME."
+              exit 1
+            fi
+
+            echo "Latest SHA for branch $BRANCH_NAME is $LATEST_SHA."
+            # Set tag as branch-SHA
+            echo "tag=branch-$LATEST_SHA" >> $GITHUB_OUTPUT
+          fi
 
 
   # Build the Docker image (branch without PR)
@@ -80,13 +92,13 @@ jobs:
     needs: determine-build-context
     uses: ./.github/workflows/reusable-build.yml
     with:
-      build_war: false
       docker: true
       docker_ref: ${{ github.event.inputs.branch_name }}
-      docker_build_tag: branch-${{ github.event.inputs.branch_name }}
+      docker_build_tag: ${{ needs.determine-build-context.outputs.tag }}
 
   # Check if the build has run successfully (PR)
   check-existing-build:
+    name: Check Existing Build
     if: ${{ needs.determine-build-context.outputs.pr_number != '' }}
     needs: determine-build-context
     runs-on: ubuntu-latest
@@ -110,6 +122,7 @@ jobs:
     # Run if either the conditional-build or check-existing-build job was successful
     # Use always() since one of the jobs will always skip
     if: always() && (needs.conditional-build.result == 'success' || needs.check-existing-build.result == 'success')
+    name: Deploy to Test-Server
     runs-on: ubuntu-latest
     environment:
       name: ${{ github.event.inputs.environment_name }}
@@ -143,6 +156,10 @@ jobs:
       - name: Deploy Artemis with Docker
         env:
           SSH_AUTH_SOCK: /tmp/ssh_agent.sock
+          DEPLOYMENT_USER: ${{ vars.DEPLOYMENT_USER }}
+          DEPLOYMENT_HOSTS: ${{ vars.DEPLOYMENT_HOSTS }}
           TAG: ${{ needs.determine-build-context.outputs.tag }}
+          BRANCH_NAME: ${{ github.event.inputs.branch_name }}
+          DEPLOYMENT_FOLDER: ${{ vars.DEPLOYMENT_FOLDER }}
         run: |
-          ./artemis-server-cli docker-deploy "${{ vars.DEPLOYMENT_USER }}@${{ vars.DEPLOYMENT_HOSTS }}" -g "$GATEWAY_USER@$GATEWAY_HOST" -t $TAG -b ${{ github.event.inputs.branch_name }} -d ${{ vars.DEPLOYMENT_FOLDER }} -y
+          ./artemis-server-cli docker-deploy "$DEPLOYMENT_USER@$DEPLOYMENT_HOSTS" -g "$GATEWAY_USER@$GATEWAY_HOST" -t $TAG -b $BRANCH_NAME -d $DEPLOYMENT_FOLDER -y
