@@ -2,7 +2,7 @@ import { HttpErrorResponse } from '@angular/common/http';
 import { Component, Input, OnDestroy, OnInit, ViewChild, inject } from '@angular/core';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { Patch, Selection, UMLDiagramType, UMLElementType, UMLModel, UMLRelationshipType } from '@ls1intum/apollon';
-import { JhiWebsocketService } from 'app/core/websocket/websocket.service';
+import { WebsocketService } from 'app/core/websocket/websocket.service';
 import { ComplaintType } from 'app/entities/complaint.model';
 import { Feedback, buildFeedbackTextForReview, checkSubsequentFeedbackInAssessment } from 'app/entities/feedback.model';
 import { ModelingExercise } from 'app/entities/modeling-exercise.model';
@@ -87,7 +87,7 @@ import { captureException } from '@sentry/angular';
     ],
 })
 export class ModelingSubmissionComponent implements OnInit, OnDestroy, ComponentCanDeactivate {
-    private jhiWebsocketService = inject(JhiWebsocketService);
+    private jhiWebsocketService = inject(WebsocketService);
     private modelingSubmissionService = inject(ModelingSubmissionService);
     private modelingAssessmentService = inject(ModelingAssessmentService);
     private alertService = inject(AlertService);

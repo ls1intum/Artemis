@@ -1,6 +1,6 @@
 @if (!isExamExercise && requestFeedbackEnabled) {
     @if (athenaEnabled) {
-        @if (exercise().type === ExerciseType.TEXT) {
+        @if (exercise().type === ExerciseType.TEXT || exercise().type === ExerciseType.MODELING) {
             <button
                 class="btn btn-primary"
                 (click)="requestFeedback(popup)"
