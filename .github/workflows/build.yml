@@ -31,6 +31,7 @@ on:
     types:
     - created
 
+# Keep this filename in sync with the filename environment variable (PR_AUTO_BUILD_FILE_NAME) in the testserver-deployment.yml workflow
 
 jobs:
 
@@ -50,6 +51,7 @@ jobs:
       - name: Set Upload Release Artifact Outputs
         id: set-upload-release
         run: |
+          # If event is release created, set the release_upload flag and the release artifact details
           if [[ "${{ github.event_name }}" == "release" && "${{ github.event.action }}" == "created" ]]; then
             echo "release_upload=true" >> $GITHUB_OUTPUT
             echo "release_url=${{ github.event.release.upload_url }}" >> $GITHUB_OUTPUT
@@ -81,7 +83,7 @@ jobs:
             echo "docker_ref=${{ github.ref_name }}" >> $GITHUB_OUTPUT
           fi
 
-      - name: Compute Tag
+      - name: Compute Docker Tag
         if: ${{ steps.set-docker-build.outputs.docker_build == 'true' }}
         uses: actions/github-script@v7
         id: compute-tag
@@ -104,7 +106,7 @@ jobs:
             }
             return "FALSE";
 
-      - name: Set Docker Build Tag
+      - name: Set Docker Tag
         id: set-docker-tag
         run: |
           if [[ ${{ steps.compute-tag.outputs.result  != 'FALSE' }} ]]; then
