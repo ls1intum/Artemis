@@ -101,7 +101,7 @@ class InternalAuthenticationIntegrationTest extends AbstractSpringIntegrationJen
 
     @BeforeEach
     void setUp() {
-        jenkinsRequestMockProvider.enableMockingOfRequests(jenkinsServer, jenkinsJobPermissionsService);
+        jenkinsRequestMockProvider.enableMockingOfRequests(jenkinsJobPermissionsService);
 
         userUtilService.addUsers(TEST_PREFIX, 1, 0, 0, 0);
         Course course = programmingExerciseUtilService.addCourseWithOneProgrammingExercise();

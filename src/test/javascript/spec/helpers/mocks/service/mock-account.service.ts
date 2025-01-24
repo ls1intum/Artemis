@@ -3,7 +3,6 @@ import { Course } from 'app/entities/course.model';
 import { IAccountService } from 'app/core/auth/account.service';
 import { User } from 'app/core/user/user.model';
 import { Exercise } from 'app/entities/exercise.model';
-import { UserSshPublicKey } from 'app/entities/programming/user-ssh-public-key.model';
 
 export class MockAccountService implements IAccountService {
     userIdentityValue: User | undefined;

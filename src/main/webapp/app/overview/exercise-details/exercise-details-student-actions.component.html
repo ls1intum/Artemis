@@ -133,7 +133,7 @@
                         />
                     }
                     @if (exercise.allowFeedbackRequests && gradedParticipation && exercise.type === ExerciseType.PROGRAMMING) {
-                        <jhi-request-feedback-button [exercise]="exercise" [smallButtons]="smallButtons"></jhi-request-feedback-button>
+                        <jhi-request-feedback-button [exercise]="exercise" [smallButtons]="smallButtons" />
                     }
                     <!--                    </ng-container>-->
                 }
@@ -233,7 +233,7 @@
                             [isGeneratingFeedback]="isGeneratingFeedback"
                             (generatingFeedback)="this.isGeneratingFeedback = true"
                             [isSubmitted]="gradedParticipation?.submissions?.last()?.submitted || false"
-                        ></jhi-request-feedback-button>
+                        />
                     }
                 }
             </div>

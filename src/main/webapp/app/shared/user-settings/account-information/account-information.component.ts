@@ -1,7 +1,7 @@
 import { Component, ElementRef, OnInit, ViewChild, inject } from '@angular/core';
 import { User } from 'app/core/user/user.model';
 import { AccountService } from 'app/core/auth/account.service';
-import { Observable, Subscription, tap } from 'rxjs';
+import { Observable } from 'rxjs';
 import { CachingStrategy } from 'app/shared/image/secured-image.component';
 import { faPencil, faPlus, faTrash } from '@fortawesome/free-solid-svg-icons';
 import { ImageCropperModalComponent } from 'app/course/manage/image-cropper-modal.component';
@@ -29,7 +29,7 @@ export class AccountInformationComponent implements OnInit {
 
     currentUser?: User;
     croppedImage?: string;
-    private authStateSubscription: Subscription;
+
     @ViewChild('fileInput', { static: false }) fileInput: ElementRef<HTMLInputElement>;
 
     // Icons
@@ -38,10 +38,9 @@ export class AccountInformationComponent implements OnInit {
     faPlus = faPlus;
 
     ngOnInit() {
-        this.authStateSubscription = this.accountService
-            .getAuthenticationState()
-            .pipe(tap((user: User) => (this.currentUser = user)))
-            .subscribe();
+        this.accountService.getAuthenticationState().subscribe((user) => {
+            this.currentUser = user;
+        });
     }
 
     setUserImage(event: Event) {

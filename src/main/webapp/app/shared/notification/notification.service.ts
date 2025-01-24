@@ -6,7 +6,7 @@ import { filter, map } from 'rxjs/operators';
 import { createRequestOption } from 'app/shared/util/request.util';
 import { ActivatedRoute, NavigationEnd, Params, Router } from '@angular/router';
 import { AccountService } from 'app/core/auth/account.service';
-import { JhiWebsocketService } from 'app/core/websocket/websocket.service';
+import { WebsocketService } from 'app/core/websocket/websocket.service';
 import { User } from 'app/core/user/user.model';
 import { GroupNotification, GroupNotificationType } from 'app/entities/group-notification.model';
 import {
@@ -65,7 +65,7 @@ const MESSAGING_NOTIFICATION_TEXTS = [
 
 @Injectable({ providedIn: 'root' })
 export class NotificationService {
-    private jhiWebsocketService = inject(JhiWebsocketService);
+    private jhiWebsocketService = inject(WebsocketService);
     private router = inject(Router);
     private http = inject(HttpClient);
     private accountService = inject(AccountService);
