@@ -69,7 +69,18 @@ jobs:
             echo "No PR found for branch: $BRANCH_NAME targeting 'develop'."
             echo "pr_number=" >> $GITHUB_OUTPUT
             echo "pr_head_sha=" >> $GITHUB_OUTPUT
-            echo "tag=branch-$BRANCH_NAME" >> $GITHUB_OUTPUT
+
+            # Fetch the latest commit SHA of the branch
+            LATEST_SHA=$(gh api repos/${{ github.repository }}/git/refs/heads/$BRANCH_NAME --jq '.object.sha')
+
+            if [ -z "$LATEST_SHA" ]; then
+              echo "::error::Could not find the latest commit SHA for branch $BRANCH_NAME."
+              exit 1
+            fi
+
+            echo "Latest SHA for branch $BRANCH_NAME is $LATEST_SHA."
+            # Set tag as branch-SHA
+            echo "tag=branch-$LATEST_SHA" >> $GITHUB_OUTPUT
           fi
 
 
