@@ -1,12 +1,7 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { ArtemisTestModule } from '../../../test.module';
 import { CourseDetailDoughnutChartComponent } from 'app/course/manage/detail/course-detail-doughnut-chart.component';
-import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
-import { MockModule, MockPipe } from 'ng-mocks';
 import { DoughnutChartType } from 'app/course/manage/detail/course-detail.component';
 import { Course } from 'app/entities/course.model';
-import { PieChartModule } from '@swimlane/ngx-charts';
-import { provideRouter } from '@angular/router';
 
 describe('CourseDetailDoughnutChartComponent', () => {
     let fixture: ComponentFixture<CourseDetailDoughnutChartComponent>;
@@ -18,11 +13,7 @@ describe('CourseDetailDoughnutChartComponent', () => {
     const max = 100;
 
     beforeEach(() => {
-        TestBed.configureTestingModule({
-            imports: [ArtemisTestModule, MockModule(PieChartModule)],
-            declarations: [CourseDetailDoughnutChartComponent, MockPipe(ArtemisTranslatePipe)],
-            providers: [provideRouter([])],
-        })
+        TestBed.configureTestingModule({})
             .compileComponents()
             .then(() => {
                 fixture = TestBed.createComponent(CourseDetailDoughnutChartComponent);
@@ -79,6 +70,13 @@ describe('CourseDetailDoughnutChartComponent', () => {
 
         expect(component.doughnutChartTitle).toBe('averageStudentScore');
         expect(component.titleLink).toBe('scores');
+
+        component.contentType = DoughnutChartType.CURRENT_LLM_COST;
+
+        component.ngOnInit();
+
+        expect(component.doughnutChartTitle).toBe('currentTotalLLMCost');
+        expect(component.titleLink).toBeUndefined();
 
         component.contentType = DoughnutChartType.AVERAGE_EXERCISE_SCORE;
 

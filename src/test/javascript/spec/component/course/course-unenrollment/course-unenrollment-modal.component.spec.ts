@@ -9,9 +9,7 @@ import { AlertService } from 'app/core/util/alert.service';
 import { CourseUnenrollmentModalComponent } from 'app/overview/course-unenrollment-modal.component';
 import { Course } from 'app/entities/course.model';
 import { By } from '@angular/platform-browser';
-import { TranslateService } from '@ngx-translate/core';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
-import { ReactiveFormsModule } from '@angular/forms';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 import { Router, provideRouter } from '@angular/router';
 
@@ -28,9 +26,9 @@ describe('CourseRegistrationButtonComponent', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule, ReactiveFormsModule],
+            imports: [ArtemisTestModule],
             declarations: [CourseUnenrollmentModalComponent, MockPipe(ArtemisTranslatePipe), MockPipe(ArtemisDatePipe)],
-            providers: [provideRouter([]), MockProvider(CourseManagementService), MockProvider(AlertService), MockProvider(TranslateService)],
+            providers: [provideRouter([]), MockProvider(CourseManagementService), MockProvider(AlertService)],
         })
             .compileComponents()
             .then(() => {

@@ -2,6 +2,8 @@ import { Component, EventEmitter, Input, Output } from '@angular/core';
 import { faCircleNotch, faDownload, faRotateRight, faUpload } from '@fortawesome/free-solid-svg-icons';
 
 import { FeatureToggle } from 'app/shared/feature-toggle/feature-toggle.service';
+import { FeatureToggleDirective } from '../../feature-toggle/feature-toggle.directive';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 
 export enum OrionButtonType {
     Other = 'Other',
@@ -13,6 +15,7 @@ export enum OrionButtonType {
 @Component({
     selector: 'jhi-ide-button',
     templateUrl: './orion-button.component.html',
+    imports: [FeatureToggleDirective, FaIconComponent],
 })
 export class OrionButtonComponent {
     @Input() buttonLabel: string;
@@ -33,8 +36,6 @@ export class OrionButtonComponent {
     faRotateRight = faRotateRight;
     faUpload = faUpload;
     faDownload = faDownload;
-
-    constructor() {}
 
     public get btnPrimary(): boolean {
         return !this.outlined;

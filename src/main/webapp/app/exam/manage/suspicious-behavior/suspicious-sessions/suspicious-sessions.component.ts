@@ -5,11 +5,9 @@ import { ArtemisSharedModule } from 'app/shared/shared.module';
 
 @Component({
     // this is intended and an attribute selector because otherwise the rendered table breaks
-    // eslint-disable-next-line @angular-eslint/component-selector
     selector: '[jhi-suspicious-sessions]',
     templateUrl: './suspicious-sessions.component.html',
     styleUrls: ['./suspicious-sessions.component.scss'],
-    standalone: true,
     imports: [ArtemisSharedModule],
 })
 export class SuspiciousSessionsComponent implements OnInit {

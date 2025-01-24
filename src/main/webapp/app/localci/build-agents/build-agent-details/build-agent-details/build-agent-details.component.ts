@@ -6,7 +6,7 @@ import { faCircleCheck, faExclamationCircle, faExclamationTriangle, faPause, faP
 import dayjs from 'dayjs/esm';
 import { TriggeredByPushTo } from 'app/entities/programming/repository-info.model';
 import { ActivatedRoute } from '@angular/router';
-import { JhiWebsocketService } from 'app/core/websocket/websocket.service';
+import { WebsocketService } from 'app/core/websocket/websocket.service';
 import { BuildQueueService } from 'app/localci/build-queue/build-queue.service';
 import { AlertService, AlertType } from 'app/core/util/alert.service';
 import { ArtemisSharedModule } from 'app/shared/shared.module';
@@ -18,11 +18,10 @@ import { SubmissionResultStatusModule } from 'app/overview/submission-result-sta
     selector: 'jhi-build-agent-details',
     templateUrl: './build-agent-details.component.html',
     styleUrl: './build-agent-details.component.scss',
-    standalone: true,
     imports: [ArtemisSharedModule, NgxDatatableModule, ArtemisDataTableModule, SubmissionResultStatusModule],
 })
 export class BuildAgentDetailsComponent implements OnInit, OnDestroy {
-    private readonly websocketService = inject(JhiWebsocketService);
+    private readonly websocketService = inject(WebsocketService);
     private readonly buildAgentsService = inject(BuildAgentsService);
     private readonly route = inject(ActivatedRoute);
     private readonly buildQueueService = inject(BuildQueueService);

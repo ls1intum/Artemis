@@ -1,6 +1,6 @@
 import { ComponentFixture, TestBed, fakeAsync, tick, waitForAsync } from '@angular/core/testing';
 import { ConversationInfoComponent } from 'app/overview/course-conversations/dialogs/conversation-detail-dialog/tabs/conversation-info/conversation-info.component';
-import { MockPipe, MockProvider } from 'ng-mocks';
+import { MockDirective, MockPipe, MockProvider } from 'ng-mocks';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { ChannelService } from 'app/shared/metis/conversations/channel.service';
 import { NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
@@ -19,8 +19,9 @@ import { of } from 'rxjs';
 import { GenericUpdateTextPropertyDialogComponent } from 'app/overview/course-conversations/dialogs/generic-update-text-property-dialog/generic-update-text-property-dialog.component';
 import { defaultSecondLayerDialogOptions } from 'app/overview/course-conversations/other/conversation.util';
 import { input } from '@angular/core';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
 
-const examples: ConversationDTO[] = [generateOneToOneChatDTO({}), generateExampleGroupChatDTO({}), generateExampleChannelDTO({})];
+const examples: ConversationDTO[] = [generateOneToOneChatDTO({}), generateExampleGroupChatDTO({}), generateExampleChannelDTO({} as ChannelDTO)];
 
 examples.forEach((activeConversation) => {
     describe('ConversationInfoComponent with ' + activeConversation.type, () => {
@@ -36,11 +37,11 @@ examples.forEach((activeConversation) => {
             name: 'updated',
             description: 'updated',
             topic: 'updated',
-        });
+        } as ChannelDTO);
 
         beforeEach(waitForAsync(() => {
             TestBed.configureTestingModule({
-                declarations: [ConversationInfoComponent, MockPipe(ArtemisTranslatePipe), MockPipe(ArtemisDatePipe)],
+                declarations: [ConversationInfoComponent, MockPipe(ArtemisTranslatePipe), MockPipe(ArtemisDatePipe), MockDirective(TranslateDirective)],
                 providers: [MockProvider(ChannelService), MockProvider(GroupChatService), MockProvider(NgbModal), MockProvider(AlertService)],
             }).compileComponents();
         }));

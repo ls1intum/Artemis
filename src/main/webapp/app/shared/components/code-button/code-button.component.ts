@@ -1,4 +1,4 @@
-import { Component, Input, OnChanges, OnInit } from '@angular/core';
+import { Component, Input, OnChanges, OnInit, inject } from '@angular/core';
 import { ProgrammingExercise, ProgrammingLanguage } from 'app/entities/programming/programming-exercise.model';
 import { FeatureToggle } from 'app/shared/feature-toggle/feature-toggle.service';
 import { ExternalCloningService } from 'app/exercises/programming/shared/service/external-cloning.service';
@@ -20,13 +20,50 @@ import { ProgrammingExerciseService } from 'app/exercises/programming/manage/ser
 import { ProfileInfo } from 'app/shared/layouts/profiles/profile-info.model';
 import { SshUserSettingsService } from 'app/shared/user-settings/ssh-settings/ssh-user-settings.service';
 import { UserSshPublicKey } from 'app/entities/programming/user-ssh-public-key.model';
+import { ExerciseActionButtonComponent } from '../exercise-action-button.component';
+import { FeatureToggleDirective } from '../../feature-toggle/feature-toggle.directive';
+import { NgbDropdown, NgbDropdownMenu, NgbDropdownToggle, NgbPopover } from '@ng-bootstrap/ng-bootstrap';
+import { TranslateDirective } from '../../language/translate.directive';
+import { NgClass } from '@angular/common';
+import { CdkCopyToClipboard } from '@angular/cdk/clipboard';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { RouterLink } from '@angular/router';
+import { HelpIconComponent } from '../help-icon.component';
+import { ArtemisTranslatePipe } from '../../pipes/artemis-translate.pipe';
+import { SafeUrlPipe } from 'app/shared/pipes/safe-url.pipe';
 
 @Component({
     selector: 'jhi-code-button',
     templateUrl: './code-button.component.html',
     styleUrls: ['./code-button.component.scss'],
+    imports: [
+        ExerciseActionButtonComponent,
+        FeatureToggleDirective,
+        NgbPopover,
+        TranslateDirective,
+        NgbDropdown,
+        NgbDropdownToggle,
+        NgbDropdownMenu,
+        NgClass,
+        CdkCopyToClipboard,
+        FaIconComponent,
+        RouterLink,
+        HelpIconComponent,
+        ArtemisTranslatePipe,
+        SafeUrlPipe,
+    ],
 })
 export class CodeButtonComponent implements OnInit, OnChanges {
+    private translateService = inject(TranslateService);
+    private externalCloningService = inject(ExternalCloningService);
+    private sshUserSettingsService = inject(SshUserSettingsService);
+    private accountService = inject(AccountService);
+    private profileService = inject(ProfileService);
+    private localStorage = inject(LocalStorageService);
+    private participationService = inject(ParticipationService);
+    private ideSettingsService = inject(IdeSettingsService);
+    private programmingExerciseService = inject(ProgrammingExerciseService);
+
     readonly FeatureToggle = FeatureToggle;
     readonly ProgrammingLanguage = ProgrammingLanguage;
 
@@ -81,18 +118,6 @@ export class CodeButtonComponent implements OnInit, OnChanges {
     readonly faExternalLink = faExternalLink;
     readonly faDesktop = faDesktop;
     ideName: string;
-
-    constructor(
-        private translateService: TranslateService,
-        private externalCloningService: ExternalCloningService,
-        private sshUserSettingsService: SshUserSettingsService,
-        private accountService: AccountService,
-        private profileService: ProfileService,
-        private localStorage: LocalStorageService,
-        private participationService: ParticipationService,
-        private ideSettingsService: IdeSettingsService,
-        private programmingExerciseService: ProgrammingExerciseService,
-    ) {}
 
     async ngOnInit() {
         const user = await this.accountService.identity();

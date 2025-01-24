@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, ChangeDetectorRef, Component, EventEmitter, HostBinding, Input, OnChanges, Output, TemplateRef, ViewEncapsulation } from '@angular/core';
+import { ChangeDetectionStrategy, ChangeDetectorRef, Component, EventEmitter, HostBinding, Input, OnChanges, Output, TemplateRef, ViewEncapsulation, inject } from '@angular/core';
 import { faUmbrellaBeach } from '@fortawesome/free-solid-svg-icons';
 import { TutorialGroupSession, TutorialGroupSessionStatus } from 'app/entities/tutorial-group/tutorial-group-session.model';
 import { TutorialGroup } from 'app/entities/tutorial-group/tutorial-group.model';
@@ -7,17 +7,28 @@ import { onError } from 'app/shared/util/global.utils';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { AlertService } from 'app/core/util/alert.service';
 import { map } from 'rxjs';
+import { NgbPopover } from '@ng-bootstrap/ng-bootstrap';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { FormsModule } from '@angular/forms';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { NgTemplateOutlet } from '@angular/common';
+import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
+import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 
 @Component({
     // this is intended and an attribute selector because otherwise the rendered table breaks
-    // eslint-disable-next-line @angular-eslint/component-selector
     selector: '[jhi-session-row]',
     templateUrl: './tutorial-group-session-row.component.html',
     styleUrls: ['./tutorial-group-session-row.component.scss'],
     encapsulation: ViewEncapsulation.None,
     changeDetection: ChangeDetectionStrategy.OnPush,
+    imports: [NgbPopover, FaIconComponent, FormsModule, TranslateDirective, NgTemplateOutlet, ArtemisDatePipe, ArtemisTranslatePipe],
 })
 export class TutorialGroupSessionRowComponent implements OnChanges {
+    private changeDetectorRef = inject(ChangeDetectorRef);
+    private tutorialGroupSessionService = inject(TutorialGroupSessionService);
+    private alertService = inject(AlertService);
+
     @HostBinding('class') class = 'tutorial-group-session-row';
 
     @Input()
@@ -47,12 +58,6 @@ export class TutorialGroupSessionRowComponent implements OnChanges {
     faUmbrellaBeach = faUmbrellaBeach;
 
     hasSchedule = false;
-
-    constructor(
-        private changeDetectorRef: ChangeDetectorRef,
-        private tutorialGroupSessionService: TutorialGroupSessionService,
-        private alertService: AlertService,
-    ) {}
 
     ngOnChanges() {
         if (this.session) {

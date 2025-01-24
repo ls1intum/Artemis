@@ -2,11 +2,9 @@ plugins {
     // %static-code-analysis-start%
     id 'checkstyle'
     id 'pmd'
-    id 'com.github.spotbugs' version '6.0.9'
+    id 'com.github.spotbugs' version '6.1.0'
     // %static-code-analysis-stop%
-    // %record-testwise-coverage-start%
-    id 'com.teamscale' version '33.1.2'
-    // %record-testwise-coverage-stop%
+    id 'com.teamscale' version '34.2.1'
 }
 
 apply plugin: 'java'
@@ -22,7 +20,7 @@ repositories {
 
 dependencies {
     testImplementation 'de.tum.in.ase:artemis-java-test-sandbox:1.13.0'
-    implementation 'org.apache.commons:commons-lang3:3.14.0'
+    implementation 'org.apache.commons:commons-lang3:3.17.0'
 
     // testImplementation(':${exerciseNamePomXml}')
     // testImplementation(':${exerciseNamePomXml}-Solution')
@@ -97,14 +95,6 @@ def forbiddenPackageFolders = [ //(2)
                                 "$studentOutputDir/org/opentest4j/",
                                 "$studentOutputDir/sun/",
                                 "$studentOutputDir/worker/org/gradle/"
-                                // %record-testwise-coverage-start%
-                                ,"$studentOutputDir/com/teamscale/",
-                                "$studentOutputDir/okhttp3/",
-                                "$studentOutputDir/retrofit2/",
-                                "$studentOutputDir/shadow/",
-                                "$studentOutputDir/com/squareup/",
-                                "$studentOutputDir/okio/"
-                                // %record-testwise-coverage-stop%
 ]
 test {
     doFirst { //(1)
@@ -125,17 +115,15 @@ configurations {
     behaviorTestRuntime.extendsFrom testRuntime
 }
 
-task structuralTests(type: Test) {
+tasks.register('structuralTests', Test) {
     testClassesDirs = sourceSets.structuralTest.output.classesDirs
     classpath += sourceSets.structuralTest.runtimeClasspath
-
     useJUnitPlatform()
 }
 
-task behaviorTests(type: Test) {
+tasks.register('behaviorTests', Test) {
     testClassesDirs = sourceSets.behaviorTest.output.classesDirs
     classpath += sourceSets.behaviorTest.runtimeClasspath
-
     useJUnitPlatform()
 }
 // %sequential-stop%
@@ -178,20 +166,3 @@ pmd {
     }
 }
 // %static-code-analysis-stop%
-
-
-// %record-testwise-coverage-start%
-tasks.register('tiaTests', com.teamscale.TestImpacted) {
-    systemProperty "ares.security.trustedpackages", "okhttp3,com.teamscale,retrofit2,shadow,com.squareup,okio"
-    useJUnitPlatform()
-    filter {
-        excludeTestsMatching "AttributeTest"
-        excludeTestsMatching "ConstructorTest"
-        excludeTestsMatching "ClassTest"
-        excludeTestsMatching "MethodTest"
-    }
-    jacoco {
-        includes = ["${packageName}.*"]
-    }
-}
-// %record-testwise-coverage-stop%

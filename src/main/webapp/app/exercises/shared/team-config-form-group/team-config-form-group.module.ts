@@ -6,8 +6,7 @@ import { ArtemisModePickerModule } from 'app/exercises/shared/mode-picker/mode-p
 import { ArtemisSharedModule } from 'app/shared/shared.module';
 
 @NgModule({
-    imports: [ArtemisSharedModule, ArtemisSharedComponentModule, ArtemisModePickerModule],
-    declarations: [TeamConfigFormGroupComponent],
+    imports: [ArtemisSharedModule, ArtemisSharedComponentModule, ArtemisModePickerModule, TeamConfigFormGroupComponent],
     exports: [TeamConfigFormGroupComponent],
 })
 export class ArtemisTeamConfigFormGroupModule {}

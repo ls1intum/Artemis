@@ -40,6 +40,15 @@
                             [currentAbsolute]="courseDTO?.currentAbsoluteAverageScore"
                             [currentMax]="courseDTO?.currentMaxAverageScore"
                         />
+                        @if (this.irisChatEnabled || this.isAthenaEnabled) {
+                            <jhi-course-detail-doughnut-chart
+                                class="doughnut-container col-sm-6 my-3"
+                                [course]="course"
+                                [contentType]="DoughnutChartType.CURRENT_LLM_COST"
+                                [showText]="courseDTO?.currentTotalLlmCostInEur + ' €'"
+                                [currentMax]="0"
+                            />
+                        }
                     </div>
                 </div>
                 <jhi-course-detail-line-chart class="col-xxl-8" [course]="course" [numberOfStudentsInCourse]="course.numberOfStudents!" [initialStats]="activeStudents" />

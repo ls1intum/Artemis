@@ -11,7 +11,6 @@ import { CourseCompetencyType } from 'app/entities/competency.model';
 @Component({
     selector: 'jhi-import-prerequisites',
     templateUrl: './import-course-competencies.component.html',
-    standalone: true,
     imports: [ArtemisSharedCommonModule, ArtemisSharedComponentModule, ArtemisCompetenciesModule],
 })
 export class ImportPrerequisitesComponent extends ImportCourseCompetenciesComponent {

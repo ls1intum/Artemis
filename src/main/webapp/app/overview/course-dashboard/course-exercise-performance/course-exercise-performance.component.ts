@@ -1,10 +1,13 @@
-import { Component, Input, OnChanges, OnDestroy, OnInit } from '@angular/core';
+import { Component, Input, OnChanges, OnDestroy, OnInit, inject } from '@angular/core';
 import { TranslateService } from '@ngx-translate/core';
-import { Color, ScaleType } from '@swimlane/ngx-charts';
+import { Color, LineChartModule, ScaleType } from '@swimlane/ngx-charts';
 import { GraphColors } from 'app/entities/statistics.model';
 import { NgxChartsMultiSeriesDataEntry } from 'app/shared/chart/ngx-charts-datatypes';
 import { round } from 'app/shared/util/utils';
 import { Subscription } from 'rxjs';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { HelpIconComponent } from 'app/shared/components/help-icon.component';
+import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 
 export interface ExercisePerformance {
     exerciseId: number;
@@ -21,8 +24,11 @@ const AVERAGE_GRAPH_COLOR = GraphColors.YELLOW;
     selector: 'jhi-course-exercise-performance',
     templateUrl: './course-exercise-performance.component.html',
     styleUrls: ['./course-exercise-performance.component.scss'],
+    imports: [TranslateDirective, HelpIconComponent, LineChartModule, ArtemisTranslatePipe],
 })
 export class CourseExercisePerformanceComponent implements OnInit, OnChanges, OnDestroy {
+    private translateService = inject(TranslateService);
+
     @Input() exercisePerformance: ExercisePerformance[] = [];
 
     yourScoreLabel: string;
@@ -41,7 +47,7 @@ export class CourseExercisePerformanceComponent implements OnInit, OnChanges, On
     protected readonly YOUR_GRAPH_COLOR = YOUR_GRAPH_COLOR;
     protected readonly AVERAGE_GRAPH_COLOR = AVERAGE_GRAPH_COLOR;
 
-    constructor(private translateService: TranslateService) {
+    constructor() {
         this.translateServiceSubscription = this.translateService.onLangChange.subscribe(() => {
             this.setupChart();
         });
@@ -55,7 +61,7 @@ export class CourseExercisePerformanceComponent implements OnInit, OnChanges, On
         this.translateServiceSubscription.unsubscribe();
     }
 
-    ngOnChanges(): void {
+    ngOnChanges() {
         this.setupChart();
     }
 

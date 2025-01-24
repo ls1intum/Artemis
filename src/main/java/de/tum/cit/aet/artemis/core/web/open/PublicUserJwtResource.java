@@ -35,7 +35,6 @@ import de.tum.cit.aet.artemis.core.dto.vm.LoginVM;
 import de.tum.cit.aet.artemis.core.exception.AccessForbiddenException;
 import de.tum.cit.aet.artemis.core.security.SecurityUtils;
 import de.tum.cit.aet.artemis.core.security.UserNotActivatedException;
-import de.tum.cit.aet.artemis.core.security.allowedTools.AllowedTools;
 import de.tum.cit.aet.artemis.core.security.allowedTools.ToolTokenType;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceNothing;
 import de.tum.cit.aet.artemis.core.security.jwt.JWTCookieService;
@@ -68,12 +67,12 @@ public class PublicUserJwtResource {
      *
      * @param loginVM   user credentials View Mode
      * @param userAgent User Agent
+     * @param tool      optional Tool Token Type to define the scope of the token
      * @param response  HTTP response
      * @return the ResponseEntity with status 200 (ok), 401 (unauthorized) or 403 (Captcha required)
      */
     @PostMapping("authenticate")
     @EnforceNothing
-    @AllowedTools(ToolTokenType.SCORPIO)
     public ResponseEntity<Map<String, String>> authorize(@Valid @RequestBody LoginVM loginVM, @RequestHeader("User-Agent") String userAgent,
             @RequestParam(name = "tool", required = false) ToolTokenType tool, HttpServletResponse response) {
 
@@ -148,7 +147,6 @@ public class PublicUserJwtResource {
      */
     @PostMapping("logout")
     @EnforceNothing
-    @AllowedTools(ToolTokenType.SCORPIO)
     public ResponseEntity<Void> logout(HttpServletRequest request, HttpServletResponse response) throws ServletException {
         request.logout();
         // Logout needs to build the same cookie (secure, httpOnly and sameSite='Lax') or browsers will ignore the header and not unset the cookie

@@ -8,6 +8,8 @@ import { TutorialGroupsService } from 'app/course/tutorial-groups/services/tutor
 import { AlertService } from 'app/core/util/alert.service';
 import { Directive, Input } from '@angular/core';
 import { of, throwError } from 'rxjs';
+import { MockTranslateService } from '../../../../../helpers/mocks/service/mock-translate.service';
+import { TranslateService } from '@ngx-translate/core';
 
 @Directive({
     selector: '[jhiTranslate]',
@@ -44,6 +46,7 @@ describe('TutorialGroupsExportButtonComponent', () => {
                 { provide: NgbModal, useClass: MockNgbModalService },
                 { provide: TutorialGroupsService, useValue: mockTutorialGroupsService },
                 { provide: AlertService, useValue: mockAlertService },
+                { provide: TranslateService, useClass: MockTranslateService },
             ],
         }).compileComponents();
 

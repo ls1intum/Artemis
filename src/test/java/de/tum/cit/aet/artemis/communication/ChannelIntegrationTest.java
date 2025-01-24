@@ -2,13 +2,14 @@ package de.tum.cit.aet.artemis.communication;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Fail.fail;
+import static org.awaitility.Awaitility.await;
 
 import java.time.ZonedDateTime;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
-import java.util.Optional;
 import java.util.Set;
+import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
 import org.junit.jupiter.api.AfterEach;
@@ -28,7 +29,6 @@ import de.tum.cit.aet.artemis.communication.dto.ChannelDTO;
 import de.tum.cit.aet.artemis.communication.dto.ChannelIdAndNameDTO;
 import de.tum.cit.aet.artemis.communication.dto.FeedbackChannelRequestDTO;
 import de.tum.cit.aet.artemis.communication.dto.MetisCrudAction;
-import de.tum.cit.aet.artemis.communication.service.conversation.ChannelService;
 import de.tum.cit.aet.artemis.communication.service.conversation.ConversationService;
 import de.tum.cit.aet.artemis.communication.util.ConversationUtilService;
 import de.tum.cit.aet.artemis.core.domain.Course;
@@ -77,9 +77,6 @@ class ChannelIntegrationTest extends AbstractConversationTest {
 
     @Autowired
     private ProgrammingExerciseUtilService programmingExerciseUtilService;
-
-    @Autowired
-    private ChannelService channelService;
 
     @BeforeEach
     @Override
@@ -141,6 +138,7 @@ class ChannelIntegrationTest extends AbstractConversationTest {
         channelDTO.setIsPublic(isPublicChannel);
         channelDTO.setIsAnnouncementChannel(false);
         channelDTO.setDescription("general channel");
+        channelDTO.setIsCourseWide(false);
 
         // when
         var chat = request.postWithResponseBody("/api/courses/" + exampleCourseId + "/channels", channelDTO, ChannelDTO.class, HttpStatus.CREATED);
@@ -175,6 +173,7 @@ class ChannelIntegrationTest extends AbstractConversationTest {
         channelDTO.setIsAnnouncementChannel(false);
         channelDTO.setName(TEST_PREFIX);
         channelDTO.setDescription("general channel");
+        channelDTO.setIsCourseWide(false);
 
         expectCreateForbidden(channelDTO);
 
@@ -193,6 +192,7 @@ class ChannelIntegrationTest extends AbstractConversationTest {
         channelDTO.setIsAnnouncementChannel(false);
         channelDTO.setName(TEST_PREFIX);
         channelDTO.setDescription("general channel");
+        channelDTO.setIsCourseWide(false);
 
         expectUpdateForbidden(1L, channelDTO);
 
@@ -238,6 +238,7 @@ class ChannelIntegrationTest extends AbstractConversationTest {
         channelDTO.setIsPublic(isPublicChannel);
         channelDTO.setIsAnnouncementChannel(false);
         channelDTO.setDescription("general channel");
+        channelDTO.setIsCourseWide(false);
 
         // then
         expectCreateForbidden(channelDTO);
@@ -936,6 +937,7 @@ class ChannelIntegrationTest extends AbstractConversationTest {
         channelDTO.setDescription("Discussion channel for feedback");
         channelDTO.setIsPublic(true);
         channelDTO.setIsAnnouncementChannel(false);
+        channelDTO.setIsCourseWide(false);
 
         FeedbackChannelRequestDTO feedbackChannelRequest = new FeedbackChannelRequestDTO(channelDTO, List.of("Sample feedback text"), "Sample testName");
 
@@ -960,6 +962,7 @@ class ChannelIntegrationTest extends AbstractConversationTest {
         channelDTO.setDescription("Discussion channel for feedback");
         channelDTO.setIsPublic(true);
         channelDTO.setIsAnnouncementChannel(false);
+        channelDTO.setIsCourseWide(false);
 
         FeedbackChannelRequestDTO feedbackChannelRequest = new FeedbackChannelRequestDTO(channelDTO, List.of("Sample feedback text"), "Sample testName");
 
@@ -981,10 +984,10 @@ class ChannelIntegrationTest extends AbstractConversationTest {
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
-    void markAllChannelsAsRead() throws Exception {
-        // ensure there exist atleast two channel with unread messages in the course
-        ChannelDTO newChannel1 = createChannel(true, "channel1");
-        ChannelDTO newChannel2 = createChannel(true, "channel2");
+    void shouldMarkAllChannelsAsReadWhenCallingResource() throws Exception {
+        // ensure there exist at least two channel with unread messages in the course
+        createChannel(true, "channel1");
+        createChannel(true, "channel2");
         List<Channel> channels = channelRepository.findChannelsByCourseId(exampleCourseId);
         channels.forEach(channel -> {
             addUsersToConversation(channel.getId(), "instructor1");
@@ -994,13 +997,14 @@ class ChannelIntegrationTest extends AbstractConversationTest {
             });
         });
 
-        User requestingUser = userTestRepository.getUser();
-        request.put("/api/courses/" + exampleCourseId + "/channels/mark-as-read", null, HttpStatus.OK);
+        User instructor1 = userTestRepository.getUser();
+        request.postWithoutLocation("/api/courses/" + exampleCourseId + "/channels/mark-as-read", null, HttpStatus.OK, null);
         List<Channel> updatedChannels = channelRepository.findChannelsByCourseId(exampleCourseId);
         updatedChannels.forEach(channel -> {
-            Optional<ConversationParticipant> conversationParticipant = conversationParticipantRepository.findConversationParticipantByConversationIdAndUserId(channel.getId(),
-                    requestingUser.getId());
-            assertThat(conversationParticipant.get().getUnreadMessagesCount()).isEqualTo(0L);
+            await().atMost(2, TimeUnit.SECONDS).untilAsserted(() -> {
+                var participant = conversationParticipantRepository.findConversationParticipantByConversationIdAndUserId(channel.getId(), instructor1.getId());
+                assertThat(participant).isPresent().get().extracting(ConversationParticipant::getUnreadMessagesCount).isEqualTo(0L);
+            });
         });
 
     }

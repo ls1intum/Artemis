@@ -39,9 +39,11 @@ public enum ProgrammingLanguage {
 
     private static final Set<ProgrammingLanguage> ENABLED_LANGUAGES = Set.of(
         ASSEMBLER,
+        BASH,
         C,
         C_PLUS_PLUS,
         C_SHARP,
+        GO,
         HASKELL,
         JAVA,
         JAVASCRIPT,

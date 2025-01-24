@@ -1,16 +1,18 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, inject } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
+import { TranslateDirective } from '../../language/translate.directive';
 
 @Component({
     selector: 'jhi-error',
     templateUrl: './error.component.html',
+    imports: [TranslateDirective],
 })
 export class ErrorComponent implements OnInit {
+    private route = inject(ActivatedRoute);
+
     errorMessage: string;
     error403: boolean;
     error404: boolean;
-
-    constructor(private route: ActivatedRoute) {}
 
     ngOnInit() {
         this.route.data.subscribe((routeData) => {

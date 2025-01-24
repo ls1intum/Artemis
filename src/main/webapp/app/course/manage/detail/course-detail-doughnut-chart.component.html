@@ -10,12 +10,17 @@
     <div class="doughnut-chart-container" [ngClass]="titleLink ? 'clickable' : ''" (click)="openCorrespondingPage()">
         <div class="doughnut-chart-text">
             @if (receivedStats) {
-                <div class="h4">{{ currentPercentage }}%</div>
-            }
-            @if (receivedStats) {
-                <div class="h6">{{ currentAbsolute }} / {{ currentMax }}</div>
-            }
-            @if (!receivedStats) {
+                @if (currentPercentage !== undefined) {
+                    <div class="h4">{{ currentPercentage }}%</div>
+                } @else if (showText) {
+                    <div class="h4">{{ showText }}</div>
+                }
+                @if (!showText) {
+                    <div class="h6">{{ currentAbsolute }} / {{ currentMax }}</div>
+                } @else if (currentPercentage !== undefined) {
+                    <div class="h6">{{ showText }}</div>
+                }
+            } @else {
                 <div class="h3">
                     <fa-icon [icon]="faSpinner" animation="spin" />
                 </div>

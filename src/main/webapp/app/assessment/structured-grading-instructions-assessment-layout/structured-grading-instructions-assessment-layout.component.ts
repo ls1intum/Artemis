@@ -4,11 +4,17 @@ import { AfterViewInit, Component, Input, OnInit, QueryList, ViewChildren } from
 import { faCompress, faExpand, faInfoCircle } from '@fortawesome/free-solid-svg-icons';
 import { ExpandableSectionComponent } from 'app/assessment/assessment-instructions/expandable-section/expandable-section.component';
 import { delay, startWith } from 'rxjs';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
+import { HelpIconComponent } from 'app/shared/components/help-icon.component';
+import { HtmlForMarkdownPipe } from 'app/shared/pipes/html-for-markdown.pipe';
 
 @Component({
     selector: 'jhi-structured-grading-instructions-assessment-layout',
     templateUrl: './structured-grading-instructions-assessment-layout.component.html',
     styleUrls: ['./structured-grading-instructions-assessment-layout.component.scss'],
+    imports: [FaIconComponent, TranslateDirective, ExpandableSectionComponent, NgbTooltip, HelpIconComponent, HtmlForMarkdownPipe],
 })
 export class StructuredGradingInstructionsAssessmentLayoutComponent implements OnInit, AfterViewInit {
     @Input() public criteria: GradingCriterion[];

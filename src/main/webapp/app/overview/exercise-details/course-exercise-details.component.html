@@ -2,7 +2,7 @@
     <div id="course-exercise-details" class="px-3 scrollable-content" [ngClass]="{ 'content-height-dev': !isProduction || isTestServer }">
         <div class="d-flex align-items-center my-2 justify-content-between">
             <div class="d-flex">
-                <h5 class="mb-0" id="exercise-header"><fa-icon class="me-2" [icon]="exerciseIcon"></fa-icon>{{ exercise.title }}</h5>
+                <h5 class="mb-0" id="exercise-header"><fa-icon class="me-2" [icon]="exerciseIcon" />{{ exercise.title }}</h5>
             </div>
             <div class="d-flex gap-1">
                 @if (exercise.isAtLeastTutor) {
@@ -15,22 +15,24 @@
                         </button>
                         <div ngbDropdownMenu aria-labelledby="instructor-actions-dropdown">
                             @for (instructorActionItem of instructorActionItems; track instructorActionItem) {
-                                <button class="btn" [routerLink]="instructorActionItem.routerLink" ngbDropdownItem>
+                                <a class="btn" [routerLink]="instructorActionItem.routerLink" ngbDropdownItem>
                                     @if (instructorActionItem.icon) {
                                         <fa-icon [fixedWidth]="true" [icon]="instructorActionItem.icon" class="ms-2 me-3" />
                                     }
                                     <span [jhiTranslate]="instructorActionItem.translation"></span>
-                                </button>
+                                </a>
                             }
                         </div>
                     </div>
                 }
-                <jhi-exercise-details-student-actions
-                    class="col"
-                    *jhiExtensionPoint="overrideStudentActions; context: { courseId: courseId, exercise: exercise }"
-                    [courseId]="courseId"
-                    [exercise]="exercise"
-                />
+                <!-- TODO: the extension point for Orion does not work with Angular 19, we need to find a different solution -->
+                <!--                <jhi-exercise-details-student-actions-->
+                <!--                    class="col"-->
+                <!--                    *jhiExtensionPoint="overrideStudentActions; context: { courseId: courseId, exercise: exercise }"-->
+                <!--                    [courseId]="courseId"-->
+                <!--                    [exercise]="exercise"-->
+                <!--                />-->
+                <jhi-exercise-details-student-actions class="col" [courseId]="courseId" [exercise]="exercise" />
                 @if (plagiarismCaseInfo && plagiarismCaseInfo.verdict !== PlagiarismVerdict.NO_PLAGIARISM) {
                     <a class="col-auto btn btn-danger btn-sm me-2" [routerLink]="['/courses', courseId, 'plagiarism-cases', plagiarismCaseInfo.id]">
                         @if (!plagiarismCaseInfo?.createdByContinuousPlagiarismControl) {
@@ -188,14 +190,9 @@
                     </div>
                 }
                 @if (exercise.type === PROGRAMMING && !exercise.exerciseGroup && irisSettings?.irisChatSettings?.enabled) {
-                    <jhi-exercise-chatbot-button [mode]="ChatServiceMode.EXERCISE" />
+                    <jhi-exercise-chatbot-button [mode]="ChatServiceMode.EXERCISE" [isChatGptWrapper]="isChatGptWrapper" />
+                    <!-- TODO TW: This "feature" is only temporary for a paper. -->
                 }
-                <jhi-exercise-hint-button-overlay
-                    class="p-3"
-                    [availableExerciseHints]="availableExerciseHints"
-                    [activatedExerciseHints]="activatedExerciseHints"
-                    (onHintActivated)="onHintActivated($event)"
-                />
                 @if (plagiarismCaseInfo?.verdict === PlagiarismVerdict.NO_PLAGIARISM) {
                     <a class="btn btn-info btn-sm me-2" [routerLink]="['/courses', courseId, 'plagiarism-cases', plagiarismCaseInfo?.id]">
                         <span jhiTranslate="artemisApp.plagiarism.plagiarismCases.resolvedPlagiarismCase"></span>

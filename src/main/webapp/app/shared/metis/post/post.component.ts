@@ -5,7 +5,6 @@ import {
     Component,
     EventEmitter,
     HostListener,
-    Inject,
     Input,
     OnChanges,
     OnInit,
@@ -13,16 +12,17 @@ import {
     Renderer2,
     ViewChild,
     ViewContainerRef,
+    inject,
     input,
 } from '@angular/core';
 import { Post } from 'app/entities/metis/post.model';
 import { PostingDirective } from 'app/shared/metis/posting.directive';
 import { MetisService } from 'app/shared/metis/metis.service';
-import { NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
+import { NgbModalRef, NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { ContextInformation, DisplayPriority, PageType, RouteComponents } from '../metis.util';
-import { faBookmark, faBullhorn, faCheckSquare, faComments, faPencilAlt, faSmile, faThumbtack, faTrash } from '@fortawesome/free-solid-svg-icons';
+import { faBookmark, faBullhorn, faComments, faPencilAlt, faSmile, faThumbtack, faTrash } from '@fortawesome/free-solid-svg-icons';
 import dayjs from 'dayjs/esm';
-import { PostFooterComponent } from 'app/shared/metis/posting-footer/post-footer/post-footer.component';
+import { PostingFooterComponent } from 'app/shared/metis/posting-footer/posting-footer.component';
 import { isCommunicationEnabled } from 'app/entities/course.model';
 import { getAsChannelDTO } from 'app/entities/metis/conversation/channel.model';
 import { AnswerPost } from 'app/entities/metis/answer-post.model';
@@ -30,8 +30,17 @@ import { AnswerPostCreateEditModalComponent } from 'app/shared/metis/posting-cre
 import { animate, style, transition, trigger } from '@angular/animations';
 import { PostCreateEditModalComponent } from 'app/shared/metis/posting-create-edit-modal/post-create-edit-modal/post-create-edit-modal.component';
 import { PostReactionsBarComponent } from 'app/shared/metis/posting-reactions-bar/post-reactions-bar/post-reactions-bar.component';
-import { CdkOverlayOrigin } from '@angular/cdk/overlay';
-import { DOCUMENT } from '@angular/common';
+import { CdkConnectedOverlay, CdkOverlayOrigin } from '@angular/cdk/overlay';
+import { DOCUMENT, NgClass, NgStyle } from '@angular/common';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { TranslateDirective } from '../../language/translate.directive';
+import { PostingHeaderComponent } from '../posting-header/posting-header.component';
+import { RouterLink, RouterLinkActive } from '@angular/router';
+import { PostingContentComponent } from '../posting-content/posting-content.components';
+import { MessageInlineInputComponent } from '../message/message-inline-input/message-inline-input.component';
+import { EmojiPickerComponent } from '../emoji/emoji-picker.component';
+import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
+import { ArtemisTranslatePipe } from '../../pipes/artemis-translate.pipe';
 
 @Component({
     selector: 'jhi-post',
@@ -44,8 +53,32 @@ import { DOCUMENT } from '@angular/common';
             transition(':leave', [animate('300ms ease-out', style({ opacity: 0 }))]),
         ]),
     ],
+    imports: [
+        NgClass,
+        FaIconComponent,
+        TranslateDirective,
+        NgbTooltip,
+        PostingHeaderComponent,
+        RouterLinkActive,
+        RouterLink,
+        PostingContentComponent,
+        PostReactionsBarComponent,
+        MessageInlineInputComponent,
+        PostingFooterComponent,
+        NgStyle,
+        CdkOverlayOrigin,
+        CdkConnectedOverlay,
+        EmojiPickerComponent,
+        ArtemisDatePipe,
+        ArtemisTranslatePipe,
+    ],
 })
 export class PostComponent extends PostingDirective<Post> implements OnInit, OnChanges, AfterContentChecked {
+    metisService = inject(MetisService);
+    changeDetector = inject(ChangeDetectorRef);
+    renderer = inject(Renderer2);
+    private document = inject<Document>(DOCUMENT);
+
     @Input() lastReadDate?: dayjs.Dayjs;
     @Input() readOnlyMode: boolean;
     @Input() previewMode: boolean;
@@ -53,15 +86,19 @@ export class PostComponent extends PostingDirective<Post> implements OnInit, OnC
     // we need to pass the ref in order to close it when navigating to the previewed post via post title
     @Input() modalRef?: NgbModalRef;
     @Input() showAnswers: boolean;
+
     @Output() openThread = new EventEmitter<void>();
+
     @ViewChild('createAnswerPostModal') createAnswerPostModalComponent: AnswerPostCreateEditModalComponent;
     @ViewChild('createEditModal') createEditModal!: PostCreateEditModalComponent;
     @ViewChild('createEditAnswerPostContainer', { read: ViewContainerRef }) containerRef: ViewContainerRef;
-    @ViewChild('postFooter') postFooterComponent: PostFooterComponent;
-    showReactionSelector = false;
+    @ViewChild('postFooter') postFooterComponent: PostingFooterComponent;
     @ViewChild('emojiPickerTrigger') emojiPickerTrigger!: CdkOverlayOrigin;
-    static activeDropdownPost: PostComponent | null = null;
+    @ViewChild(PostReactionsBarComponent) protected reactionsBarComponent!: PostReactionsBarComponent;
 
+    static activeDropdownPost: PostComponent | undefined = undefined;
+
+    showReactionSelector = false;
     displayInlineInput = false;
     routerLink: RouteComponents;
     queryParams = {};
@@ -74,9 +111,9 @@ export class PostComponent extends PostingDirective<Post> implements OnInit, OnC
     contextInformation: ContextInformation;
     readonly PageType = PageType;
     readonly DisplayPriority = DisplayPriority;
-    mayEdit: boolean = false;
-    mayDelete: boolean = false;
-    canPin: boolean = false;
+    mayEdit = false;
+    mayDelete = false;
+    canPin = false;
 
     // Icons
     readonly faBullhorn = faBullhorn;
@@ -85,21 +122,10 @@ export class PostComponent extends PostingDirective<Post> implements OnInit, OnC
     readonly faSmile = faSmile;
     readonly faTrash = faTrash;
     readonly faThumbtack = faThumbtack;
-    readonly faCheckSquare = faCheckSquare;
     readonly faBookmark = faBookmark;
 
     isConsecutive = input<boolean>(false);
     dropdownPosition = { x: 0, y: 0 };
-    @ViewChild(PostReactionsBarComponent) protected reactionsBarComponent!: PostReactionsBarComponent;
-
-    constructor(
-        public metisService: MetisService,
-        public changeDetector: ChangeDetectorRef,
-        public renderer: Renderer2,
-        @Inject(DOCUMENT) private document: Document,
-    ) {
-        super();
-    }
 
     get reactionsBar() {
         return this.reactionsBarComponent;

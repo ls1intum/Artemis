@@ -1,5 +1,5 @@
-import { Component, Input, OnDestroy, OnInit, ViewChild, ViewEncapsulation } from '@angular/core';
-import { NgForm } from '@angular/forms';
+import { Component, Input, OnDestroy, OnInit, ViewChild, ViewEncapsulation, inject } from '@angular/core';
+import { FormsModule, NgForm } from '@angular/forms';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import { AlertService } from 'app/core/util/alert.service';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
@@ -11,14 +11,39 @@ import { ActionType } from 'app/shared/delete-dialog/delete-dialog.model';
 import { flatMap } from 'lodash-es';
 import { User } from 'app/core/user/user.model';
 import { faBan, faCircleNotch, faSpinner, faUpload } from '@fortawesome/free-solid-svg-icons';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { NgClass } from '@angular/common';
+import { TeamsImportFromFileFormComponent } from './teams-import-from-file-form.component';
+import { HelpIconComponent } from 'app/shared/components/help-icon.component';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { TeamExerciseSearchComponent } from '../team-exercise-search/team-exercise-search.component';
+import { TeamStudentsListComponent } from '../team-participate/team-students-list.component';
+import { DeleteButtonDirective } from 'app/shared/delete-dialog/delete-button.directive';
+import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 
 @Component({
     selector: 'jhi-teams-import-dialog',
     templateUrl: './teams-import-dialog.component.html',
     styleUrls: ['./teams-import-dialog.component.scss'],
     encapsulation: ViewEncapsulation.None,
+    imports: [
+        FormsModule,
+        TranslateDirective,
+        NgClass,
+        TeamsImportFromFileFormComponent,
+        HelpIconComponent,
+        FaIconComponent,
+        TeamExerciseSearchComponent,
+        TeamStudentsListComponent,
+        DeleteButtonDirective,
+        ArtemisTranslatePipe,
+    ],
 })
 export class TeamsImportDialogComponent implements OnInit, OnDestroy {
+    private teamService = inject(TeamService);
+    private activeModal = inject(NgbActiveModal);
+    private alertService = inject(AlertService);
+
     readonly ImportStrategy = ImportStrategy;
     readonly ActionType = ActionType;
 
@@ -61,12 +86,6 @@ export class TeamsImportDialogComponent implements OnInit, OnDestroy {
     faSpinner = faSpinner;
     faCircleNotch = faCircleNotch;
     faUpload = faUpload;
-
-    constructor(
-        private teamService: TeamService,
-        private activeModal: NgbActiveModal,
-        private alertService: AlertService,
-    ) {}
 
     /**
      * Life cycle hook to indicate component creation is done
@@ -186,6 +205,8 @@ export class TeamsImportDialogComponent implements OnInit, OnDestroy {
                 return this.teams.length;
             case ImportStrategy.CREATE_ONLY:
                 return 0;
+            default:
+                return 0;
         }
     }
 
@@ -195,6 +216,8 @@ export class TeamsImportDialogComponent implements OnInit, OnDestroy {
                 return this.sourceTeams!.length;
             case ImportStrategy.CREATE_ONLY:
                 return this.numberOfConflictFreeSourceTeams;
+            default:
+                return 0;
         }
     }
 
@@ -204,6 +227,8 @@ export class TeamsImportDialogComponent implements OnInit, OnDestroy {
                 return this.sourceTeams!.length;
             case ImportStrategy.CREATE_ONLY:
                 return this.teams.length + this.numberOfConflictFreeSourceTeams;
+            default:
+                return 0;
         }
     }
 

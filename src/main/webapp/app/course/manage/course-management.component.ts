@@ -1,4 +1,4 @@
-import { AfterViewInit, Component, OnDestroy, OnInit } from '@angular/core';
+import { AfterViewInit, Component, OnDestroy, OnInit, inject } from '@angular/core';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { Subject, Subscription } from 'rxjs';
 import { Course } from 'app/entities/course.model';
@@ -12,14 +12,39 @@ import { EventManager } from 'app/core/util/event-manager.service';
 import { faAngleDown, faAngleUp, faPlus } from '@fortawesome/free-solid-svg-icons';
 import { DocumentationType } from 'app/shared/components/documentation-button/documentation-button.component';
 import { CourseAccessStorageService } from 'app/course/course-access-storage.service';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { DocumentationButtonComponent } from 'app/shared/components/documentation-button/documentation-button.component';
+import { HasAnyAuthorityDirective } from 'app/shared/auth/has-any-authority.directive';
+import { OrionFilterDirective } from 'app/shared/orion/orion-filter.directive';
+import { RouterLink } from '@angular/router';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { CourseManagementCardComponent } from './overview/course-management-card.component';
+import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 
 @Component({
     selector: 'jhi-course',
     templateUrl: './course-management.component.html',
     styles: ['.course-table {padding-bottom: 5rem}'],
     styleUrls: ['./course-management.component.scss'],
+    imports: [
+        TranslateDirective,
+        DocumentationButtonComponent,
+        // NOTE: this is actually used in the html template, otherwise *jhiHasAnyAuthority would not work
+        HasAnyAuthorityDirective,
+        OrionFilterDirective,
+        RouterLink,
+        FaIconComponent,
+        CourseManagementCardComponent,
+        ArtemisTranslatePipe,
+    ],
 })
 export class CourseManagementComponent implements OnInit, OnDestroy, AfterViewInit {
+    private courseManagementService = inject(CourseManagementService);
+    private alertService = inject(AlertService);
+    private eventManager = inject(EventManager);
+    private guidedTourService = inject(GuidedTourService);
+    private courseAccessStorageService = inject(CourseAccessStorageService);
+
     showOnlyActive = true;
 
     courses: Course[];
@@ -41,14 +66,6 @@ export class CourseManagementComponent implements OnInit, OnDestroy, AfterViewIn
     faPlus = faPlus;
     faAngleDown = faAngleDown;
     faAngleUp = faAngleUp;
-
-    constructor(
-        private courseManagementService: CourseManagementService,
-        private alertService: AlertService,
-        private eventManager: EventManager,
-        private guidedTourService: GuidedTourService,
-        private courseAccessStorageService: CourseAccessStorageService,
-    ) {}
 
     /**
      * loads all courses and subscribes to courseListModification

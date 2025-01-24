@@ -1,20 +1,31 @@
-import { AfterContentChecked, ChangeDetectorRef, Component, OnInit, ViewChild } from '@angular/core';
+import { AfterContentChecked, ChangeDetectorRef, Component, OnInit, ViewChild, inject } from '@angular/core';
 import { faBan, faCheckCircle, faCircleNotch, faExclamationTriangle, faSave } from '@fortawesome/free-solid-svg-icons';
 import { LegalDocumentService } from 'app/shared/service/legal-document.service';
-import { NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
+import { NgbModal, NgbModalRef, NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { UnsavedChangesWarningComponent } from 'app/admin/legal/unsaved-changes-warning/unsaved-changes-warning.component';
 import { LegalDocument, LegalDocumentLanguage, LegalDocumentType } from 'app/entities/legal-document.model';
 import { ActivatedRoute } from '@angular/router';
 import { Observable, tap } from 'rxjs';
 import { JhiLanguageHelper } from 'app/core/language/language.helper';
 import { MarkdownEditorHeight, MarkdownEditorMonacoComponent } from 'app/shared/markdown-editor/monaco/markdown-editor-monaco.component';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { ModePickerComponent } from 'app/exercises/shared/mode-picker/mode-picker.component';
+import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 
 @Component({
     selector: 'jhi-privacy-statement-update-component',
     styleUrls: ['./legal-document-update.component.scss'],
     templateUrl: './legal-document-update.component.html',
+    imports: [TranslateDirective, MarkdownEditorMonacoComponent, FaIconComponent, NgbTooltip, ModePickerComponent, ArtemisTranslatePipe],
 })
 export class LegalDocumentUpdateComponent implements OnInit, AfterContentChecked {
+    private legalDocumentService = inject(LegalDocumentService);
+    private modalService = inject(NgbModal);
+    private route = inject(ActivatedRoute);
+    private languageHelper = inject(JhiLanguageHelper);
+    private changeDetectorRef = inject(ChangeDetectorRef);
+
     readonly SUPPORTED_LANGUAGES: LegalDocumentLanguage[] = [LegalDocumentLanguage.GERMAN, LegalDocumentLanguage.ENGLISH];
     readonly faBan = faBan;
     readonly faSave = faSave;
@@ -41,18 +52,10 @@ export class LegalDocumentUpdateComponent implements OnInit, AfterContentChecked
     unsavedChangesWarning: NgbModalRef;
     titleKey: string;
 
-    constructor(
-        private legalDocumentService: LegalDocumentService,
-        private modalService: NgbModal,
-        private route: ActivatedRoute,
-        private languageHelper: JhiLanguageHelper,
-        private changeDetectorRef: ChangeDetectorRef,
-    ) {}
-
     ngOnInit() {
         // Tap the URL to determine, if it's the imprint or the privacy statement
         // we need the parent URL, because the imprint and privacy statement are children of the admin component and their path is specified there because they are lazy loaded
-        this.route.parent?.url
+        this.route.url
             .pipe(
                 tap((segments) => {
                     this.legalDocumentType = segments.some((segment) => segment.path === 'imprint') ? LegalDocumentType.IMPRINT : LegalDocumentType.PRIVACY_STATEMENT;

@@ -95,7 +95,7 @@ public class ConsistencyCheckTestService {
 
         var consistencyErrors = request.getList("/api/programming-exercises/" + exercise.getId() + "/consistency-check", HttpStatus.OK, ConsistencyErrorDTO.class);
         assertThat(consistencyErrors).hasSize(1);
-        assertThat(consistencyErrors.getFirst().getType()).isEqualTo(ConsistencyErrorDTO.ErrorType.VCS_PROJECT_MISSING);
+        assertThat(consistencyErrors.getFirst().type()).isEqualTo(ConsistencyErrorDTO.ErrorType.VCS_PROJECT_MISSING);
     }
 
     /**

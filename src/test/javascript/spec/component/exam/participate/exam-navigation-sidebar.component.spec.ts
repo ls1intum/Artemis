@@ -1,27 +1,19 @@
 import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
-import { MockComponent, MockModule } from 'ng-mocks';
 import { Exercise, ExerciseType } from 'app/entities/exercise.model';
 import { ExamSession } from 'app/entities/exam/exam-session.model';
-import { of } from 'rxjs';
+import { BehaviorSubject, of } from 'rxjs';
 import { ExamNavigationSidebarComponent } from 'app/exam/participate/exam-navigation-sidebar/exam-navigation-sidebar.component';
 import { CodeEditorRepositoryService } from 'app/exercises/programming/shared/code-editor/service/code-editor-repository.service';
-import { ExamTimerComponent } from 'app/exam/participate/timer/exam-timer.component';
-import { MockTranslateService, TranslateTestingModule } from '../../../helpers/mocks/service/mock-translate.service';
 import { ArtemisTestModule } from '../../../test.module';
 import { Submission } from 'app/entities/submission.model';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
-import { BehaviorSubject } from 'rxjs';
 import { ExamExerciseUpdateService } from 'app/exam/manage/exam-exercise-update.service';
 import { ExamParticipationService } from 'app/exam/participate/exam-participation.service';
+import { CommitState } from 'app/exercises/programming/shared/code-editor/model/code-editor.model';
+import { facSaveSuccess, facSaveWarning } from 'app/icons/icons';
+import { MockLocalStorageService } from '../../../helpers/mocks/service/mock-local-storage.service';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { MockSyncStorage } from '../../../helpers/mocks/service/mock-sync-storage.service';
-import { CommitState } from 'app/exercises/programming/shared/code-editor/model/code-editor.model';
-import { TranslateService } from '@ngx-translate/core';
-import { facSaveSuccess, facSaveWarning } from 'src/main/webapp/content/icons/icons';
-import { NgbTooltipModule } from '@ng-bootstrap/ng-bootstrap';
-import { ExamLiveEventsButtonComponent } from 'app/exam/participate/events/exam-live-events-button.component';
-import { ArtemisSharedCommonModule } from 'app/shared/shared-common.module';
-import { SearchFilterComponent } from 'app/shared/search-filter/search-filter.component';
 
 describe('ExamNavigationSidebarComponent', () => {
     let fixture: ComponentFixture<ExamNavigationSidebarComponent>;
@@ -35,14 +27,11 @@ describe('ExamNavigationSidebarComponent', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule, TranslateTestingModule, MockModule(NgbTooltipModule), MockModule(ArtemisSharedCommonModule)],
-            declarations: [ExamNavigationSidebarComponent, MockComponent(ExamTimerComponent), MockComponent(ExamLiveEventsButtonComponent), MockComponent(SearchFilterComponent)],
+            imports: [ArtemisTestModule],
             providers: [
-                ExamParticipationService,
                 { provide: ExamExerciseUpdateService, useValue: mockExamExerciseUpdateService },
-                { provide: LocalStorageService, useClass: MockSyncStorage },
+                { provide: LocalStorageService, useClass: MockLocalStorageService },
                 { provide: SessionStorageService, useClass: MockSyncStorage },
-                { provide: TranslateService, useClass: MockTranslateService },
             ],
         }).compileComponents();
 

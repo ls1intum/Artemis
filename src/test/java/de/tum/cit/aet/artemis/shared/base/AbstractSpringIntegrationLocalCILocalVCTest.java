@@ -9,15 +9,26 @@ import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_LOCALCI;
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_LOCALVC;
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_LTI;
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_SCHEDULING;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyBoolean;
+import static org.mockito.ArgumentMatchers.anyList;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.Mockito.doAnswer;
+import static org.mockito.Mockito.doNothing;
+import static org.mockito.Mockito.doReturn;
+import static org.mockito.Mockito.mock;
 import static tech.jhipster.config.JHipsterConstants.SPRING_PROFILE_TEST;
 
 import java.io.IOException;
 import java.net.URL;
 import java.nio.file.Path;
+import java.util.List;
 import java.util.Set;
 
 import org.gitlab4j.api.GitLabApiException;
 import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.parallel.ResourceLock;
 import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -31,9 +42,30 @@ import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.context.bean.override.mockito.MockitoSpyBean;
 
 import com.github.dockerjava.api.DockerClient;
+import com.github.dockerjava.api.async.ResultCallback;
+import com.github.dockerjava.api.command.CopyArchiveToContainerCmd;
+import com.github.dockerjava.api.command.CreateContainerCmd;
+import com.github.dockerjava.api.command.CreateContainerResponse;
+import com.github.dockerjava.api.command.DisconnectFromNetworkCmd;
+import com.github.dockerjava.api.command.ExecCreateCmd;
+import com.github.dockerjava.api.command.ExecCreateCmdResponse;
+import com.github.dockerjava.api.command.ExecStartCmd;
+import com.github.dockerjava.api.command.InspectImageCmd;
+import com.github.dockerjava.api.command.InspectImageResponse;
+import com.github.dockerjava.api.command.KillContainerCmd;
+import com.github.dockerjava.api.command.ListContainersCmd;
+import com.github.dockerjava.api.command.ListImagesCmd;
+import com.github.dockerjava.api.command.PullImageCmd;
+import com.github.dockerjava.api.command.RemoveContainerCmd;
+import com.github.dockerjava.api.command.RemoveImageCmd;
+import com.github.dockerjava.api.command.StartContainerCmd;
+import com.github.dockerjava.api.command.StopContainerCmd;
+import com.github.dockerjava.api.model.Container;
+import com.github.dockerjava.api.model.Image;
 
 import de.tum.cit.aet.artemis.atlas.service.competency.CompetencyJolService;
-import de.tum.cit.aet.artemis.communication.service.notifications.GroupNotificationScheduleService;
+import de.tum.cit.aet.artemis.buildagent.BuildAgentConfiguration;
+import de.tum.cit.aet.artemis.buildagent.service.BuildAgentDockerService;
 import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.service.ResourceLoaderService;
@@ -41,6 +73,7 @@ import de.tum.cit.aet.artemis.core.service.ldap.LdapUserService;
 import de.tum.cit.aet.artemis.core.user.util.UserUtilService;
 import de.tum.cit.aet.artemis.exam.service.ExamLiveEventsService;
 import de.tum.cit.aet.artemis.exercise.domain.Team;
+import de.tum.cit.aet.artemis.iris.service.pyris.PyrisEventService;
 import de.tum.cit.aet.artemis.iris.service.pyris.PyrisPipelineService;
 import de.tum.cit.aet.artemis.iris.service.session.IrisCourseChatSessionService;
 import de.tum.cit.aet.artemis.iris.service.session.IrisExerciseChatSessionService;
@@ -54,13 +87,13 @@ import de.tum.cit.aet.artemis.programming.icl.TestBuildAgentConfiguration;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseBuildConfigRepository;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseBuildStatisticsRepository;
 import de.tum.cit.aet.artemis.programming.repository.SolutionProgrammingExerciseParticipationRepository;
-import de.tum.cit.aet.artemis.programming.repository.TemplateProgrammingExerciseParticipationRepository;
 import de.tum.cit.aet.artemis.programming.service.ProgrammingMessagingService;
 import de.tum.cit.aet.artemis.programming.service.localci.LocalCIService;
 import de.tum.cit.aet.artemis.programming.service.localvc.LocalVCService;
 import de.tum.cit.aet.artemis.programming.test_repository.BuildJobTestRepository;
 import de.tum.cit.aet.artemis.programming.test_repository.ProgrammingExerciseStudentParticipationTestRepository;
 import de.tum.cit.aet.artemis.programming.test_repository.ProgrammingExerciseTestRepository;
+import de.tum.cit.aet.artemis.programming.test_repository.TemplateProgrammingExerciseParticipationTestRepository;
 
 // Must start up an actual web server such that the tests can communicate with the ArtemisGitServlet using JGit.
 // Otherwise, only MockMvc requests could be used. The port this runs on is defined at server.port (see @TestPropertySource).
@@ -87,18 +120,6 @@ public abstract class AbstractSpringIntegrationLocalCILocalVCTest extends Abstra
     @Autowired
     protected LocalVCLocalCITestService localVCLocalCITestService;
 
-    @MockitoSpyBean
-    protected LdapUserService ldapUserService;
-
-    @MockitoSpyBean
-    protected SpringSecurityLdapTemplate ldapTemplate;
-
-    @MockitoSpyBean
-    protected LocalVCService versionControlService;
-
-    @MockitoSpyBean
-    protected LocalCIService continuousIntegrationService;
-
     @Autowired
     protected ProgrammingExerciseTestRepository programmingExerciseRepository;
 
@@ -109,7 +130,7 @@ public abstract class AbstractSpringIntegrationLocalCILocalVCTest extends Abstra
     protected ProgrammingExerciseBuildStatisticsRepository programmingExerciseBuildStatisticsRepository;
 
     @Autowired
-    protected TemplateProgrammingExerciseParticipationRepository templateProgrammingExerciseParticipationRepository;
+    protected TemplateProgrammingExerciseParticipationTestRepository templateProgrammingExerciseParticipationRepository;
 
     @Autowired
     protected SolutionProgrammingExerciseParticipationRepository solutionProgrammingExerciseParticipationRepository;
@@ -123,11 +144,25 @@ public abstract class AbstractSpringIntegrationLocalCILocalVCTest extends Abstra
     @Autowired
     protected BuildJobTestRepository buildJobRepository;
 
+    @MockitoSpyBean
+    protected LdapUserService ldapUserService;
+
+    @MockitoSpyBean
+    protected SpringSecurityLdapTemplate ldapTemplate;
+
+    @MockitoSpyBean
+    protected LocalVCService versionControlService;
+
+    @MockitoSpyBean
+    protected LocalCIService continuousIntegrationService;
+
+    @MockitoSpyBean
+    protected BuildAgentConfiguration buildAgentConfiguration;
+
     /**
-     * This is the mock(DockerClient.class) provided by the {@link TestBuildAgentConfiguration}.
+     * This is the mock(DockerClient.class).
      * Subclasses can use this to dynamically mock methods of the DockerClient.
      */
-    @Autowired
     protected DockerClient dockerClient;
 
     @MockitoSpyBean
@@ -140,9 +175,6 @@ public abstract class AbstractSpringIntegrationLocalCILocalVCTest extends Abstra
     protected ExamLiveEventsService examLiveEventsService;
 
     @MockitoSpyBean
-    protected GroupNotificationScheduleService groupNotificationScheduleService;
-
-    @MockitoSpyBean
     protected IrisCourseChatSessionService irisCourseChatSessionService;
 
     @MockitoSpyBean
@@ -153,6 +185,9 @@ public abstract class AbstractSpringIntegrationLocalCILocalVCTest extends Abstra
 
     @MockitoSpyBean
     protected IrisExerciseChatSessionService irisExerciseChatSessionService;
+
+    @MockitoSpyBean
+    protected PyrisEventService pyrisEventService;
 
     @Value("${artemis.version-control.url}")
     protected URL localVCBaseUrl;
@@ -187,6 +222,128 @@ public abstract class AbstractSpringIntegrationLocalCILocalVCTest extends Abstra
     protected static final Path CHECKSTYLE_RESULTS_PATH = SCA_REPORTS_PATH.resolve("checkstyle-result.xml");
 
     protected static final Path PMD_RESULTS_PATH = SCA_REPORTS_PATH.resolve("pmd.xml");
+
+    private static DockerClient dockerClientMock;
+
+    @BeforeAll
+    protected static void mockDockerClient() throws InterruptedException {
+        DockerClient dockerClient = mock(DockerClient.class);
+
+        // Mock dockerClient.inspectImageCmd(String dockerImage).exec()
+        InspectImageCmd inspectImageCmd = mock(InspectImageCmd.class);
+        InspectImageResponse inspectImageResponse = new InspectImageResponse();
+        doReturn(inspectImageCmd).when(dockerClient).inspectImageCmd(anyString());
+        doReturn(inspectImageResponse).when(inspectImageCmd).exec();
+
+        // Mock PullImageCmd
+        PullImageCmd pullImageCmd = mock(PullImageCmd.class);
+        doReturn(pullImageCmd).when(dockerClient).pullImageCmd(anyString());
+        doReturn(pullImageCmd).when(pullImageCmd).withPlatform(anyString());
+        BuildAgentDockerService.MyPullImageResultCallback callback1 = mock(BuildAgentDockerService.MyPullImageResultCallback.class);
+        doReturn(callback1).when(pullImageCmd).exec(any(BuildAgentDockerService.MyPullImageResultCallback.class));
+        doReturn(null).when(callback1).awaitCompletion();
+
+        String dummyContainerId = "1234567890";
+
+        // Mock dockerClient.createContainerCmd(String dockerImage).withHostConfig(HostConfig hostConfig).withEnv(String... env).withCmd(String... cmd).exec()
+        CreateContainerCmd createContainerCmd = mock(CreateContainerCmd.class);
+        CreateContainerResponse createContainerResponse = new CreateContainerResponse();
+        createContainerResponse.setId(dummyContainerId);
+        doReturn(createContainerCmd).when(dockerClient).createContainerCmd(anyString());
+        doReturn(createContainerCmd).when(createContainerCmd).withName(anyString());
+        doReturn(createContainerCmd).when(createContainerCmd).withHostConfig(any());
+        doReturn(createContainerCmd).when(createContainerCmd).withEnv(anyList());
+        doReturn(createContainerCmd).when(createContainerCmd).withUser(anyString());
+        doReturn(createContainerCmd).when(createContainerCmd).withCmd(anyString(), anyString(), anyString());
+        doReturn(createContainerResponse).when(createContainerCmd).exec();
+
+        // Mock dockerClient.startContainerCmd(String containerId)
+        StartContainerCmd startContainerCmd = mock(StartContainerCmd.class);
+        doReturn(startContainerCmd).when(dockerClient).startContainerCmd(anyString());
+
+        // Mock dockerClient.copyArchiveToContainer(String containerId).withRemotePath(String path).withTarInputStream(InputStream uploadStream).exec()
+        CopyArchiveToContainerCmd copyArchiveToContainerCmd = mock(CopyArchiveToContainerCmd.class);
+        doReturn(copyArchiveToContainerCmd).when(dockerClient).copyArchiveToContainerCmd(anyString());
+        doReturn(copyArchiveToContainerCmd).when(copyArchiveToContainerCmd).withRemotePath(anyString());
+        doReturn(copyArchiveToContainerCmd).when(copyArchiveToContainerCmd).withTarInputStream(any());
+        doNothing().when(copyArchiveToContainerCmd).exec();
+
+        // Mock dockerClient.execCreateCmd(String containerId).withAttachStdout(Boolean attachStdout).withAttachStderr(Boolean attachStderr).withCmd(String... cmd).exec()
+        ExecCreateCmd execCreateCmd = mock(ExecCreateCmd.class);
+        ExecCreateCmdResponse execCreateCmdResponse = mock(ExecCreateCmdResponse.class);
+        doReturn(execCreateCmd).when(dockerClient).execCreateCmd(anyString());
+        doReturn(execCreateCmd).when(execCreateCmd).withCmd(any(String[].class));
+        doReturn(execCreateCmd).when(execCreateCmd).withUser(anyString());
+        doReturn(execCreateCmd).when(execCreateCmd).withAttachStdout(anyBoolean());
+        doReturn(execCreateCmd).when(execCreateCmd).withAttachStderr(anyBoolean());
+        doReturn(execCreateCmd).when(execCreateCmd).withCmd(anyString(), anyString());
+        doReturn(execCreateCmdResponse).when(execCreateCmd).exec();
+        doReturn("1234").when(execCreateCmdResponse).getId();
+
+        // Mock dockerClient.execStartCmd(String execId).exec(T resultCallback)
+        ExecStartCmd execStartCmd = mock(ExecStartCmd.class);
+        doReturn(execStartCmd).when(dockerClient).execStartCmd(anyString());
+        doReturn(execStartCmd).when(execStartCmd).withDetach(anyBoolean());
+        doAnswer(invocation -> {
+            // Stub the 'exec' method of the 'ExecStartCmd' to call the 'onComplete' method of the provided 'ResultCallback.Adapter', which simulates the command completing
+            // immediately.
+            ResultCallback.Adapter<?> callback = invocation.getArgument(0);
+            callback.onComplete();
+            return null;
+        }).when(execStartCmd).exec(any());
+
+        // Mock listContainerCmd() method.
+        ListContainersCmd listContainersCmd = mock(ListContainersCmd.class);
+        doReturn(listContainersCmd).when(dockerClient).listContainersCmd();
+        doReturn(listContainersCmd).when(listContainersCmd).withShowAll(anyBoolean());
+
+        // Mock container class
+        Container container = mock(Container.class);
+        doReturn(new String[] { "dummy-container-name" }).when(container).getNames();
+        doReturn("dummy-image-id").when(container).getImageId();
+        doReturn(List.of(container)).when(listContainersCmd).exec();
+
+        // Mock listImagesCmd() method.
+        ListImagesCmd listImagesCmd = mock(ListImagesCmd.class);
+        doReturn(listImagesCmd).when(dockerClient).listImagesCmd();
+        Image image = mock(Image.class);
+        doReturn("test-image-id").when(image).getId();
+        doReturn(new String[] { "test-image-name" }).when(image).getRepoTags();
+        doReturn(List.of(image)).when(listImagesCmd).exec();
+
+        // Mock removeImageCmd method.
+        RemoveImageCmd removeImageCmd = mock(RemoveImageCmd.class);
+        doReturn(removeImageCmd).when(dockerClient).removeImageCmd(anyString());
+        doNothing().when(removeImageCmd).exec();
+
+        // Mock removeContainerCmd
+        RemoveContainerCmd removeContainerCmd = mock(RemoveContainerCmd.class);
+        doReturn(removeContainerCmd).when(dockerClient).removeContainerCmd(anyString());
+        doReturn(removeContainerCmd).when(removeContainerCmd).withForce(true);
+
+        // Mock stopContainerCmd
+        StopContainerCmd stopContainerCmd = mock(StopContainerCmd.class);
+        doReturn(stopContainerCmd).when(dockerClient).stopContainerCmd(anyString());
+        doReturn(stopContainerCmd).when(stopContainerCmd).withTimeout(any());
+
+        // Mock killContainerCmd
+        KillContainerCmd killContainerCmd = mock(KillContainerCmd.class);
+        doReturn(killContainerCmd).when(dockerClient).killContainerCmd(anyString());
+
+        // Mock DisconnectFromNetworkCmd
+        DisconnectFromNetworkCmd disconnectFromNetworkCmd = mock(DisconnectFromNetworkCmd.class);
+        doReturn(disconnectFromNetworkCmd).when(dockerClient).disconnectFromNetworkCmd();
+        doReturn(disconnectFromNetworkCmd).when(disconnectFromNetworkCmd).withContainerId(anyString());
+        doReturn(disconnectFromNetworkCmd).when(disconnectFromNetworkCmd).withNetworkId(anyString());
+
+        dockerClientMock = dockerClient;
+    }
+
+    @BeforeEach
+    protected void mockBuildAgentServices() {
+        doReturn(dockerClientMock).when(buildAgentConfiguration).getDockerClient();
+        this.dockerClient = dockerClientMock;
+    }
 
     @AfterEach
     @Override
@@ -349,11 +506,6 @@ public abstract class AbstractSpringIntegrationLocalCILocalVCTest extends Abstra
     }
 
     @Override
-    public void mockDeleteUserInUserManagement(User user, boolean userExistsInUserManagement, boolean failInVcs, boolean failInCi) {
-        // Not implemented for local VC and local CI
-    }
-
-    @Override
     public void mockCreateGroupInUserManagement(String groupName) {
         // Not implemented for local VC and local CI
     }
@@ -396,6 +548,11 @@ public abstract class AbstractSpringIntegrationLocalCILocalVCTest extends Abstra
     @Override
     public void mockGetBuildPlan(String projectKey1, String planName, boolean planExistsInCi, boolean planIsActive, boolean planIsBuilding, boolean failToGetBuild) {
         // Not implemented for local VC and local CI
+    }
+
+    @Override
+    public void mockGetBuildPlanConfig(String projectKey, String planName) {
+        // not needed for localVCS/CI
     }
 
     @Override
@@ -456,5 +613,10 @@ public abstract class AbstractSpringIntegrationLocalCILocalVCTest extends Abstra
     @Override
     public void mockUserExists(String username) throws Exception {
         // Not implemented for local VC and local CI
+    }
+
+    @Override
+    public void mockGetCiProjectMissing(ProgrammingExercise exercise) {
+        // not relevant for local VC and local CI
     }
 }
