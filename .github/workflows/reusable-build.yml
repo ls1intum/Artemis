@@ -7,6 +7,7 @@ on:
       build_war:
         description: "Whether to build and upload the .war artifact."
         required: false
+        default: false
         type: boolean
       build_ref:
         description: "Branch name, tag, or commit SHA to use for the build job. If not provided, it falls back to the default behavior of actions/checkout."
@@ -18,37 +19,44 @@ on:
       release_upload:
         description: "Whether to upload the release artifact."
         required: false
+        default: false
         type: boolean
       release_url:
         description: "URL to upload the release artifact to."
         required: false
+        default: ''
         type: string
       release_path:
         description: "Path to the release artifact."
         required: false
+        default: ''
         type: string
       release_name:
         description: "Name of the release artifact."
         required: false
+        default: ''
         type: string
       release_type:
         description: "Content type of the release artifact."
         required: false
+        default: ''
         type: string
 
       # Docker job inputs
       docker:
         description: "Whether to build and push a Docker image."
         required: false
+        default: false
         type: boolean
       docker_ref:
         description: "Branch name, tag, or commit SHA to use for the Docker job. If not provided, it falls back to the default behavior of actions/checkout."
         required: false
-        type: string
         default: ''
+        type: string
       docker_build_tag:
         description: "Tag to use when building Docker image."
         required: false
+        default: ''
         type: string
 
 # Keep in sync with codeql-analysis.yml and test.yml and analysis-of-endpoint-connections.yml
@@ -58,13 +66,42 @@ env:
   java: 21
 
 jobs:
+  validate-inputs:
+    name: Validate Inputs
+    runs-on: ubuntu-latest
+    steps:
+      - name: Print Inputs
+        run: |
+          if [[ "${{ github.event.inputs.release_upload }}" ]]; then
+            # Check whether all release inputs are set
+            if [[ "${{ github.event.inputs.release_url }}" == '' ]]; then
+              echo "::error::Release upload is set to true, but release URL is not set."
+              exit 1
+            elif [[ "${{ github.event.inputs.release_path }}" == '' ]]; then
+              echo "::error::Release upload is set to true, but release path is not set."
+              exit 1
+            elif [[ "${{ github.event.inputs.release_name }}" == '' ]]; then
+              echo "::error::Release upload is set to true, but release name is not set."
+              exit 1
+            elif [[ "${{ github.event.inputs.release_type }}" == '' ]]; then
+              echo "::error::Release upload is set to true, but release type is not set."
+              exit 1
+            fi
+          fi
 
-# TODO: validate inputs
+          if [[ "${{ github.event.inputs.docker }}" ]]; then
+            # Check whether all Docker inputs are set
+            if [[ "${{ github.event.inputs.docker_build_tag }}" == '' ]]; then
+              echo "::error::Docker build is set to true, but Docker build tag is not set."
+              exit 1
+            fi
+          fi
 
 
   build:
     name: Build .war artifact
     if: ${{ inputs.build_war }}
+    needs: validate-inputs
     runs-on: ubuntu-latest
     steps:
       # Git Checkout
@@ -114,6 +151,7 @@ jobs:
   docker:
     name: Build and Push Docker Image
     if: ${{ inputs.docker }}
+    needs: validate-inputs
     runs-on: ubuntu-latest
     steps:
       # Git Checkout
