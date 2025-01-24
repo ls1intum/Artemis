@@ -7,13 +7,13 @@
                     - {{ quizExercise.title }}
                     @switch (mode) {
                         @case ('practice') {
-                            <ng-template [ngTemplateOutlet]="modeBadge" [ngTemplateOutletContext]="{ $implicit: 'practiceMode' }"></ng-template>
+                            <ng-template [ngTemplateOutlet]="modeBadge" [ngTemplateOutletContext]="{ $implicit: 'practiceMode' }" />
                         }
                         @case ('preview') {
-                            <ng-template [ngTemplateOutlet]="modeBadge" [ngTemplateOutletContext]="{ $implicit: 'previewMode' }"></ng-template>
+                            <ng-template [ngTemplateOutlet]="modeBadge" [ngTemplateOutletContext]="{ $implicit: 'previewMode' }" />
                         }
                         @case ('solution') {
-                            <ng-template [ngTemplateOutlet]="modeBadge" [ngTemplateOutletContext]="{ $implicit: 'solution' }"></ng-template>
+                            <ng-template [ngTemplateOutlet]="modeBadge" [ngTemplateOutletContext]="{ $implicit: 'solution' }" />
                         }
                     }
                     <ng-template #modeBadge let-modeTranslation>

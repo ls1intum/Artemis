@@ -23,7 +23,7 @@ import { MockAccountService } from '../../../../helpers/mocks/service/mock-accou
 import { AlertService } from 'app/core/util/alert.service';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { MockTranslateService } from '../../../../helpers/mocks/service/mock-translate.service';
-import { JhiWebsocketService } from 'app/core/websocket/websocket.service';
+import { WebsocketService } from 'app/core/websocket/websocket.service';
 import { MockWebsocketService } from '../../../../helpers/mocks/service/mock-websocket.service';
 import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
 import { ArtemisTestModule } from '../../../../test.module';
@@ -165,7 +165,7 @@ describe('StudentExamsComponent', () => {
         },
         { provide: AccountService, useClass: MockAccountService },
         { provide: TranslateService, useClass: MockTranslateService },
-        { provide: JhiWebsocketService, useClass: MockWebsocketService },
+        { provide: WebsocketService, useClass: MockWebsocketService },
         { provide: NgbModal, useClass: MockNgbModalService },
         MockProvider(ProfileService, { getProfileInfo: () => of({ activeProfiles: [] }) }, 'useValue'),
     ];

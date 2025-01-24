@@ -368,7 +368,7 @@ export class CodeEditorMonacoComponent implements OnChanges {
      * @param line The line (0-based) for which to retrieve the feedback node.
      */
     getInlineFeedbackNode(line: number): HTMLElement | undefined {
-        return [...this.inlineFeedbackComponents(), ...this.inlineFeedbackSuggestionComponents()].find((c) => c.codeLine === line)?.elementRef?.nativeElement;
+        return [...this.inlineFeedbackComponents(), ...this.inlineFeedbackSuggestionComponents()].find((comp) => comp.codeLine === line)?.elementRef?.nativeElement;
     }
 
     private addLineWidgetWithFeedback(feedback: Feedback): void {
