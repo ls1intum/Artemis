@@ -51,6 +51,7 @@ public enum ProgrammingLanguage {
         OCAML,
         PYTHON,
         R,
+        RUBY,
         RUST,
         SWIFT,
         TYPESCRIPT,
