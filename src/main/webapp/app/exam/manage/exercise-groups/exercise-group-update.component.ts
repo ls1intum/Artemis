@@ -9,15 +9,14 @@ import { Exam } from 'app/entities/exam/exam.model';
 import { onError } from 'app/shared/util/global.utils';
 import { faBan, faSave } from '@fortawesome/free-solid-svg-icons';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
-import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { NgbAlertModule } from '@ng-bootstrap/ng-bootstrap'; // Import NgbAlertModule
 import { FormsModule } from '@angular/forms';
+import { NgbAlert } from '@ng-bootstrap/ng-bootstrap';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 
 @Component({
     selector: 'jhi-exercise-group-update',
     templateUrl: './exercise-group-update.component.html',
-    standalone: true,
-    imports: [TranslateDirective, FaIconComponent, NgbAlertModule, FormsModule],
+    imports: [TranslateDirective, FormsModule, NgbAlert, FaIconComponent],
 })
 export class ExerciseGroupUpdateComponent implements OnInit {
     private route = inject(ActivatedRoute);

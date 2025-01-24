@@ -9,7 +9,6 @@ import { ArtemisSharedModule } from 'app/shared/shared.module';
 
 @Component({
     selector: 'jhi-course-competency-relation-node',
-    standalone: true,
     imports: [NgClass, TranslateDirective, NgbTooltipModule, ArtemisSharedModule],
     templateUrl: './course-competency-relation-node.component.html',
     styleUrl: './course-competency-relation-node.component.scss',
@@ -21,7 +20,7 @@ export class CourseCompetencyRelationNodeComponent implements AfterViewInit {
 
     private readonly element = inject(ElementRef);
 
-    readonly courseCompetencyNode = input.required<Node>();
+    courseCompetencyNode = input.required<Node>();
     readonly courseCompetencyType = computed(() => this.courseCompetencyNode().data.type!);
 
     readonly onSizeSet = output<SizeUpdate>();

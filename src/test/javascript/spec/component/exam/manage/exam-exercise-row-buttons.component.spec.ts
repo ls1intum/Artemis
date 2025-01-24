@@ -1,5 +1,4 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { Router, RouterModule } from '@angular/router';
 import { Course } from 'app/entities/course.model';
 import { HttpResponse } from '@angular/common/http';
 import { Exam } from 'app/entities/exam/exam.model';
@@ -7,8 +6,6 @@ import { ExamExerciseRowButtonsComponent } from 'app/exercises/shared/exam-exerc
 import { ExerciseType } from 'app/entities/exercise.model';
 import dayjs from 'dayjs/esm';
 import { of } from 'rxjs';
-import { MockTranslateService, TranslateTestingModule } from '../../../helpers/mocks/service/mock-translate.service';
-import { MockRouter } from '../../../helpers/mocks/mock-router';
 import { ArtemisTestModule } from '../../../test.module';
 import { QuizExerciseService } from 'app/exercises/quiz/manage/quiz-exercise.service';
 import { ProgrammingExerciseService } from 'app/exercises/programming/manage/services/programming-exercise.service';
@@ -17,7 +14,6 @@ import { TextExerciseService } from 'app/exercises/text/manage/text-exercise/tex
 import { DueDateStat } from 'app/course/dashboards/due-date-stat.model';
 import { ModelingExerciseService } from 'app/exercises/modeling/manage/modeling-exercise.service';
 import { FileUploadExerciseService } from 'app/exercises/file-upload/manage/file-upload-exercise.service';
-import { TranslateService } from '@ngx-translate/core';
 
 describe('Exam Exercise Row Buttons Component', () => {
     const course = new Course();
@@ -100,11 +96,7 @@ describe('Exam Exercise Row Buttons Component', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule, TranslateTestingModule, RouterModule],
-            providers: [
-                { provide: Router, useClass: MockRouter },
-                { provide: TranslateService, useClass: MockTranslateService },
-            ],
+            imports: [ArtemisTestModule],
         }).compileComponents();
 
         fixture = TestBed.createComponent(ExamExerciseRowButtonsComponent);

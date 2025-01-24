@@ -1,7 +1,13 @@
 import { Component, ViewChild, computed, forwardRef, input, model, output, signal } from '@angular/core';
-import { ControlValueAccessor, NG_VALUE_ACCESSOR, NgModel } from '@angular/forms';
+import { ControlValueAccessor, FormsModule, NG_VALUE_ACCESSOR, NgModel } from '@angular/forms';
 import { faCalendarAlt, faCircleXmark, faClock, faGlobe, faQuestionCircle, faTriangleExclamation } from '@fortawesome/free-solid-svg-icons';
 import dayjs from 'dayjs/esm';
+import { FaIconComponent, FaStackComponent, FaStackItemSizeDirective } from '@fortawesome/angular-fontawesome';
+import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
+import { OwlDateTimeModule } from '@danielmoncada/angular-datetime-picker';
+import { NgClass, NgTemplateOutlet } from '@angular/common';
+import { TranslateDirective } from '../language/translate.directive';
+import { ArtemisTranslatePipe } from '../pipes/artemis-translate.pipe';
 
 export enum DateTimePickerType {
     CALENDAR,
@@ -19,6 +25,18 @@ export enum DateTimePickerType {
             multi: true,
             useExisting: forwardRef(() => FormDateTimePickerComponent),
         },
+    ],
+    imports: [
+        FaStackComponent,
+        NgbTooltip,
+        FaIconComponent,
+        FaStackItemSizeDirective,
+        FormsModule,
+        OwlDateTimeModule,
+        NgClass,
+        NgTemplateOutlet,
+        TranslateDirective,
+        ArtemisTranslatePipe,
     ],
 })
 export class FormDateTimePickerComponent implements ControlValueAccessor {
@@ -55,7 +73,7 @@ export class FormDateTimePickerComponent implements ControlValueAccessor {
     });
 
     updateSignals(): void {
-        this.isInputValid.set(!Boolean(this.dateInput?.invalid));
+        this.isInputValid.set(!this.dateInput?.invalid);
         this.dateInputValue.set(this.dateInput?.value);
     }
 
@@ -85,10 +103,9 @@ export class FormDateTimePickerComponent implements ControlValueAccessor {
 
     /**
      * Registers a callback function is called by the forms API on initialization to update the form model on blur.
-     * @param fn
+     * @param _fn
      */
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    registerOnTouched(fn: any) {}
+    registerOnTouched(_fn: any) {}
 
     /**
      *

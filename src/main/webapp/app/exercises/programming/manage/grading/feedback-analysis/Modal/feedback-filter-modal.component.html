@@ -64,12 +64,7 @@
         </div>
     </div>
     <label [jhiTranslate]="TRANSLATION_BASE + '.occurrence'"></label>
-    <jhi-range-slider
-        [generalMinValue]="minCount()"
-        [generalMaxValue]="maxCount()"
-        [(selectedMinValue)]="filters.occurrence[0]"
-        [(selectedMaxValue)]="filters.occurrence[1]"
-    ></jhi-range-slider>
+    <jhi-range-slider [generalMinValue]="minCount()" [generalMaxValue]="maxCount()" [(selectedMinValue)]="filters.occurrence[0]" [(selectedMaxValue)]="filters.occurrence[1]" />
 </div>
 
 <div class="modal-footer">

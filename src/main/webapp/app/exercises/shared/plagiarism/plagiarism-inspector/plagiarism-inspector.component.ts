@@ -1,5 +1,5 @@
-import { Component, OnInit } from '@angular/core';
-import { ActivatedRoute, Router } from '@angular/router';
+import { Component, OnInit, inject } from '@angular/core';
+import { ActivatedRoute } from '@angular/router';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { ModelingExerciseService } from 'app/exercises/modeling/manage/modeling-exercise.service';
 import { Exercise, ExerciseType } from 'app/entities/exercise.model';
@@ -14,7 +14,7 @@ import { ModelingSubmissionElement } from 'app/exercises/shared/plagiarism/types
 import { TextSubmissionElement } from 'app/exercises/shared/plagiarism/types/text/TextSubmissionElement';
 import { ProgrammingExerciseService } from 'app/exercises/programming/manage/services/programming-exercise.service';
 import { PlagiarismOptions } from 'app/exercises/shared/plagiarism/types/PlagiarismOptions';
-import { JhiWebsocketService } from 'app/core/websocket/websocket.service';
+import { WebsocketService } from 'app/core/websocket/websocket.service';
 import { tap } from 'rxjs/operators';
 import { TranslateService } from '@ngx-translate/core';
 import { faChevronRight, faExclamationTriangle, faQuestionCircle } from '@fortawesome/free-solid-svg-icons';
@@ -22,9 +22,17 @@ import { FeatureToggle } from 'app/shared/feature-toggle/feature-toggle.service'
 import { Range } from 'app/shared/util/utils';
 import { PlagiarismInspectorService } from 'app/exercises/shared/plagiarism/plagiarism-inspector/plagiarism-inspector.service';
 import { PlagiarismCasesService } from 'app/course/plagiarism-cases/shared/plagiarism-cases.service';
-import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
+import { NgbDropdown, NgbDropdownButtonItem, NgbDropdownItem, NgbDropdownMenu, NgbDropdownToggle, NgbModal, NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { AlertService, AlertType } from 'app/core/util/alert.service';
 import { PlagiarismResultDTO, PlagiarismResultStats } from 'app/exercises/shared/plagiarism/types/PlagiarismResultDTO';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { FeatureToggleDirective } from 'app/shared/feature-toggle/feature-toggle.directive';
+import { FormsModule } from '@angular/forms';
+import { PlagiarismSidebarComponent } from '../plagiarism-sidebar/plagiarism-sidebar.component';
+import { PlagiarismDetailsComponent } from '../plagiarism-details/plagiarism-details.component';
+import { PlagiarismRunDetailsComponent } from '../plagiarism-run-details/plagiarism-run-details.component';
+import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 
 export type PlagiarismCheckState = {
     state: 'COMPLETED' | 'RUNNING';
@@ -35,8 +43,35 @@ export type PlagiarismCheckState = {
     selector: 'jhi-plagiarism-inspector',
     styleUrls: ['./plagiarism-inspector.component.scss'],
     templateUrl: './plagiarism-inspector.component.html',
+    imports: [
+        FaIconComponent,
+        TranslateDirective,
+        FeatureToggleDirective,
+        NgbDropdown,
+        NgbDropdownToggle,
+        NgbDropdownMenu,
+        NgbDropdownButtonItem,
+        NgbDropdownItem,
+        NgbTooltip,
+        FormsModule,
+        PlagiarismSidebarComponent,
+        PlagiarismDetailsComponent,
+        PlagiarismRunDetailsComponent,
+        ArtemisTranslatePipe,
+    ],
 })
 export class PlagiarismInspectorComponent implements OnInit {
+    private route = inject(ActivatedRoute);
+    private modelingExerciseService = inject(ModelingExerciseService);
+    private programmingExerciseService = inject(ProgrammingExerciseService);
+    private textExerciseService = inject(TextExerciseService);
+    private websocketService = inject(WebsocketService);
+    private translateService = inject(TranslateService);
+    private inspectorService = inject(PlagiarismInspectorService);
+    private plagiarismCasesService = inject(PlagiarismCasesService);
+    private modalService = inject(NgbModal);
+    private alertService = inject(AlertService);
+
     /**
      * The modeling exercise for which plagiarism is to be detected.
      */
@@ -125,20 +160,6 @@ export class PlagiarismInspectorComponent implements OnInit {
     faQuestionCircle = faQuestionCircle;
     faExclamationTriangle = faExclamationTriangle;
     faChevronRight = faChevronRight;
-
-    constructor(
-        private route: ActivatedRoute,
-        private router: Router,
-        private modelingExerciseService: ModelingExerciseService,
-        private programmingExerciseService: ProgrammingExerciseService,
-        private textExerciseService: TextExerciseService,
-        private websocketService: JhiWebsocketService,
-        private translateService: TranslateService,
-        private inspectorService: PlagiarismInspectorService,
-        private plagiarismCasesService: PlagiarismCasesService,
-        private modalService: NgbModal,
-        private alertService: AlertService,
-    ) {}
 
     ngOnInit() {
         this.route.data.subscribe(({ exercise }) => {

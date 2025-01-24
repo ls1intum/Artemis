@@ -6,7 +6,6 @@ import { ArtemisSharedModule } from 'app/shared/shared.module';
 @Component({
     selector: 'jhi-date-detail',
     templateUrl: 'date-detail.component.html',
-    standalone: true,
     imports: [NoDataComponent, ArtemisSharedModule],
 })
 export class DateDetailComponent {

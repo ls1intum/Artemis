@@ -1,16 +1,11 @@
 import { ArtemisTestModule } from '../../test.module';
-import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
-import { MockTranslateService } from '../../helpers/mocks/service/mock-translate.service';
 import {
     AssessmentDashboardInformationComponent,
     AssessmentDashboardInformationEntry,
 } from 'app/course/dashboards/assessment-dashboard/assessment-dashboard-information.component';
 import { DueDateStat } from 'app/course/dashboards/due-date-stat.model';
-import { PieChartModule } from '@swimlane/ngx-charts';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { MockComponent, MockModule, MockPipe } from 'ng-mocks';
 import { TranslateService } from '@ngx-translate/core';
-import { SidePanelComponent } from 'app/shared/side-panel/side-panel.component';
 import { Course } from 'app/entities/course.model';
 
 describe('AssessmentDashboardInformationComponent', () => {
@@ -19,9 +14,7 @@ describe('AssessmentDashboardInformationComponent', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule, MockModule(PieChartModule)],
-            declarations: [AssessmentDashboardInformationComponent, MockPipe(ArtemisTranslatePipe), MockComponent(SidePanelComponent)],
-            providers: [{ provide: TranslateService, useClass: MockTranslateService }],
+            imports: [ArtemisTestModule],
         }).compileComponents();
 
         fixture = TestBed.createComponent(AssessmentDashboardInformationComponent);

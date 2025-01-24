@@ -1,16 +1,24 @@
-import { Component, HostListener, Input, OnChanges } from '@angular/core';
+import { Component, HostListener, Input, OnChanges, inject } from '@angular/core';
 import { Course } from 'app/entities/course.model';
 import { ARTEMIS_DEFAULT_COLOR } from 'app/app.constants';
 import { CachingStrategy } from 'app/shared/image/secured-image.component';
-import { Router } from '@angular/router';
+import { Router, RouterLink } from '@angular/router';
 import { faArrowDown } from '@fortawesome/free-solid-svg-icons';
+import { NgStyle } from '@angular/common';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { TranslateDirective } from '../shared/language/translate.directive';
+import { SecuredImageComponent } from '../shared/image/secured-image.component';
+import { ArtemisTranslatePipe } from '../shared/pipes/artemis-translate.pipe';
 
 @Component({
     selector: 'jhi-header-course',
     templateUrl: './header-course.component.html',
     styleUrls: ['./header-course.component.scss'],
+    imports: [NgStyle, FaIconComponent, TranslateDirective, RouterLink, SecuredImageComponent, ArtemisTranslatePipe],
 })
 export class HeaderCourseComponent implements OnChanges {
+    protected router = inject(Router);
+
     readonly ARTEMIS_DEFAULT_COLOR = ARTEMIS_DEFAULT_COLOR;
     readonly CachingStrategy = CachingStrategy;
 
@@ -21,7 +29,6 @@ export class HeaderCourseComponent implements OnChanges {
     public longDescriptionShown = false;
 
     faArrowDown = faArrowDown;
-    constructor(protected router: Router) {}
 
     ngOnChanges() {
         this.adjustCourseDescription();

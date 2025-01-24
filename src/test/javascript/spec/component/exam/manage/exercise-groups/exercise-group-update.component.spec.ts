@@ -1,9 +1,6 @@
-import { HttpErrorResponse, provideHttpClient } from '@angular/common/http';
-import { provideHttpClientTesting } from '@angular/common/http/testing';
+import { HttpErrorResponse } from '@angular/common/http';
 import { ComponentFixture, TestBed, fakeAsync, flush, tick } from '@angular/core/testing';
-import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router, convertToParamMap } from '@angular/router';
-import { TranslateService } from '@ngx-translate/core';
 import { EntityResponseType } from 'app/complaints/complaint.service';
 import { Course } from 'app/entities/course.model';
 import { Exam } from 'app/entities/exam/exam.model';
@@ -15,8 +12,7 @@ import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { of, throwError } from 'rxjs';
 import { MockRouter } from '../../../../helpers/mocks/mock-router';
 import { MockSyncStorage } from '../../../../helpers/mocks/service/mock-sync-storage.service';
-import { MockTranslateService } from '../../../../helpers/mocks/service/mock-translate.service';
-import { NgbAlertsMocksModule } from '../../../../helpers/mocks/directive/ngbAlertsMocks.module';
+import { ArtemisTestModule } from '../../../../test.module';
 import '@angular/localize/init';
 
 describe('ExerciseGroupUpdateComponent', () => {
@@ -41,13 +37,10 @@ describe('ExerciseGroupUpdateComponent', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [FormsModule, NgbAlertsMocksModule],
+            imports: [ArtemisTestModule],
             providers: [
-                provideHttpClient(),
-                provideHttpClientTesting(),
                 { provide: SessionStorageService, useClass: MockSyncStorage },
                 { provide: LocalStorageService, useClass: MockSyncStorage },
-                { provide: TranslateService, useClass: MockTranslateService },
                 { provide: ActivatedRoute, useValue: route },
                 { provide: Router, useValue: mockRouter },
             ],

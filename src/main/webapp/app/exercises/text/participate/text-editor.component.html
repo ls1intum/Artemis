@@ -1,5 +1,5 @@
 <div [id]="'exercise-' + textExercise?.id">
-    @if (displayHeader) {
+    @if (displayHeader()) {
         <jhi-header-participation-page class="d-block mb-4" [exercise]="textExercise" [participation]="participation">
             <span pagetitle>
                 {{ 'artemisApp.textSubmission.textEditor' | artemisTranslate }}:
@@ -32,7 +32,7 @@
                                 [isGeneratingFeedback]="isGeneratingFeedback"
                                 (generatingFeedback)="this.isGeneratingFeedback = true"
                                 [isSubmitted]="submission.submitted || false"
-                            ></jhi-request-feedback-button>
+                            />
                         }
                     }
                     @if (!this.isReadOnlyWithShowResult) {
@@ -54,7 +54,7 @@
         @if (isReadOnlyWithShowResult) {
             @if (showHistory) {
                 <div id="result-history" class="row mb-2">
-                    <jhi-result-history [results]="sortedHistoryResults" [exercise]="textExercise" />
+                    <jhi-result-history [results]="sortedHistoryResults" [exercise]="textExercise" [selectedResultId]="submission.latestResult?.id!" />
                 </div>
             }
         }
@@ -64,7 +64,7 @@
     @if (textExercise) {
         <jhi-resizeable-container
             [isExerciseParticipation]="true"
-            [expandProblemStatement]="expandProblemStatement && !isReadOnlyWithShowResult"
+            [expandProblemStatement]="expandProblemStatement() && !isReadOnlyWithShowResult"
             [collapsed]="isReadOnlyWithShowResult"
         >
             <!--region Left Panel-->
@@ -79,7 +79,7 @@
                         <span
                             class="badge bg-primary mb-2"
                             id="word-count"
-                            [hidden]="submission && !submission.submitted && isExamSummary"
+                            [hidden]="submission && !submission.submitted && isExamSummary()"
                             jhiTranslate="artemisApp.textExercise.wordCount"
                             [translateValues]="{ count: wordCount }"
                         >
@@ -87,7 +87,7 @@
                         <span
                             class="badge bg-primary mb-2"
                             id="character-count"
-                            [hidden]="submission && !submission.submitted && isExamSummary"
+                            [hidden]="submission && !submission.submitted && isExamSummary()"
                             jhiTranslate="artemisApp.textExercise.characterCount"
                             [translateValues]="{ count: characterCount }"
                         >
@@ -104,7 +104,7 @@
                             [disabled]="!isActive || !submission || !isOwnerOfParticipation"
                             (keydown.tab)="onTextEditorTab(textEditor, $event)"
                             (input)="onTextEditorInput($event)"
-                            [hidden]="submission && !submission.submitted && isExamSummary"
+                            [hidden]="submission && !submission.submitted && isExamSummary()"
                         ></textarea>
                         @if (textExercise?.teamMode) {
                             <jhi-team-submission-sync

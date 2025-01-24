@@ -1,19 +1,19 @@
-import { Injectable } from '@angular/core';
+import { Injectable, inject } from '@angular/core';
 import { CanActivate, Router } from '@angular/router';
 import { firstValueFrom } from 'rxjs';
 
 import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
 import { PROFILE_LOCALVC } from 'app/app.constants';
+import { captureException } from '@sentry/angular';
 
 @Injectable({
     providedIn: 'root',
 })
 export class LocalVCGuard implements CanActivate {
-    localVCActive: boolean = false;
-    constructor(
-        private profileService: ProfileService,
-        private router: Router,
-    ) {}
+    private profileService = inject(ProfileService);
+    private router = inject(Router);
+
+    localVCActive = false;
 
     async canActivate(): Promise<boolean> {
         try {
@@ -29,7 +29,7 @@ export class LocalVCGuard implements CanActivate {
             }
             return true;
         } catch (error) {
-            console.error('Error fetching profile information:', error);
+            captureException('Error fetching profile information:', error);
             this.router.navigate(['/']);
             return false;
         }

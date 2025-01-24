@@ -20,6 +20,7 @@ import { AlertService } from 'app/core/util/alert.service';
 import { SortService } from 'app/shared/service/sort.service';
 import { MockAccountService } from '../../helpers/mocks/service/mock-account.service';
 import { AccountService } from 'app/core/auth/account.service';
+import 'jest-extended';
 
 function createFaq(id: number, category: string, color: string): Faq {
     const faq = new Faq();

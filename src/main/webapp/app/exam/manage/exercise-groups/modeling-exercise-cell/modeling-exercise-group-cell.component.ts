@@ -7,7 +7,6 @@ import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
     selector: 'jhi-modeling-exercise-group-cell',
     templateUrl: './modeling-exercise-group-cell.component.html',
     styles: [':host{display: contents}'],
-    standalone: true,
     imports: [ArtemisTranslatePipe],
 })
 export class ModelingExerciseGroupCellComponent {

@@ -1,18 +1,26 @@
-import { Component, Input, OnInit } from '@angular/core';
+import { Component, Input, OnInit, inject } from '@angular/core';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import { DeleteFileChange, FileType } from 'app/exercises/programming/shared/code-editor/model/code-editor.model';
 import { CodeEditorRepositoryFileService } from 'app/exercises/programming/shared/code-editor/service/code-editor-repository.service';
 import { IFileDeleteDelegate } from 'app/exercises/programming/shared/code-editor/file-browser/code-editor-file-browser-on-file-delete-delegate';
 import { captureException } from '@sentry/angular';
 import { faBan, faTrashAlt } from '@fortawesome/free-solid-svg-icons';
+import { FormsModule } from '@angular/forms';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 
 // Modal -> Delete repository file
 @Component({
     selector: 'jhi-code-editor-file-browser-delete',
     templateUrl: './code-editor-file-browser-delete.component.html',
     providers: [CodeEditorRepositoryFileService],
+    imports: [FormsModule, TranslateDirective, FaIconComponent, ArtemisTranslatePipe],
 })
 export class CodeEditorFileBrowserDeleteComponent implements OnInit {
+    activeModal = inject(NgbActiveModal);
+    private repositoryFileService = inject(CodeEditorRepositoryFileService);
+
     @Input() fileNameToDelete: string;
     @Input() parent: IFileDeleteDelegate;
     @Input() fileType: FileType;
@@ -22,11 +30,6 @@ export class CodeEditorFileBrowserDeleteComponent implements OnInit {
     // Icons
     faBan = faBan;
     faTrashAlt = faTrashAlt;
-
-    constructor(
-        public activeModal: NgbActiveModal,
-        private repositoryFileService: CodeEditorRepositoryFileService,
-    ) {}
 
     /**
      * @function ngOnInit

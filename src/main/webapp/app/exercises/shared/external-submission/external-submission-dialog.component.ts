@@ -1,10 +1,9 @@
-import { Component, Input, OnInit } from '@angular/core';
+import { Component, Input, OnInit, inject } from '@angular/core';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import { Result } from 'app/entities/result.model';
 import { Feedback, FeedbackType } from 'app/entities/feedback.model';
 import { HttpResponse } from '@angular/common/http';
 import { Observable } from 'rxjs';
-import { ParticipationService } from 'app/exercises/shared/participation/participation.service';
 import { Complaint } from 'app/entities/complaint.model';
 import { Exercise } from 'app/entities/exercise.model';
 import { ExternalSubmissionService } from 'app/exercises/shared/external-submission/external-submission.service';
@@ -12,12 +11,22 @@ import { SCORE_PATTERN } from 'app/app.constants';
 import { User } from 'app/core/user/user.model';
 import { EventManager } from 'app/core/util/event-manager.service';
 import { faBan, faSave } from '@fortawesome/free-solid-svg-icons';
+import { FormsModule } from '@angular/forms';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { NgClass } from '@angular/common';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { HtmlForMarkdownPipe } from 'app/shared/pipes/html-for-markdown.pipe';
 
 @Component({
     selector: 'jhi-external-submission-dialog',
     templateUrl: './external-submission-dialog.component.html',
+    imports: [FormsModule, TranslateDirective, NgClass, FaIconComponent, HtmlForMarkdownPipe],
 })
 export class ExternalSubmissionDialogComponent implements OnInit {
+    private externalSubmissionService = inject(ExternalSubmissionService);
+    private activeModal = inject(NgbActiveModal);
+    private eventManager = inject(EventManager);
+
     readonly SCORE_PATTERN = SCORE_PATTERN;
 
     @Input() exercise: Exercise;
@@ -33,13 +42,6 @@ export class ExternalSubmissionDialogComponent implements OnInit {
     // Icons
     faSave = faSave;
     faBan = faBan;
-
-    constructor(
-        private participationService: ParticipationService,
-        private externalSubmissionService: ExternalSubmissionService,
-        private activeModal: NgbActiveModal,
-        private eventManager: EventManager,
-    ) {}
 
     /**
      * Initialize Component by calling a helper that generates an initial manual result.

@@ -1,4 +1,4 @@
-import { Injectable } from '@angular/core';
+import { Injectable, inject } from '@angular/core';
 import { HttpClient, HttpResponse } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { ExampleSubmission } from 'app/entities/example-submission.model';
@@ -14,10 +14,8 @@ export type EntityResponseType = HttpResponse<ExampleSubmission>;
 
 @Injectable({ providedIn: 'root' })
 export class ExampleSubmissionService {
-    constructor(
-        private http: HttpClient,
-        private stringCountService: StringCountService,
-    ) {}
+    private http = inject(HttpClient);
+    private stringCountService = inject(StringCountService);
 
     /**
      * Creates an example submission

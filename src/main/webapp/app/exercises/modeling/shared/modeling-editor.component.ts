@@ -1,4 +1,4 @@
-import { AfterViewInit, Component, EventEmitter, Input, OnChanges, OnDestroy, Output, SimpleChanges, ViewEncapsulation } from '@angular/core';
+import { AfterViewInit, Component, EventEmitter, Input, OnChanges, OnDestroy, Output, SimpleChanges, ViewEncapsulation, inject } from '@angular/core';
 import { ApollonEditor, ApollonMode, SVG, UMLDiagramType, UMLElementType, UMLModel, UMLRelationship, UMLRelationshipType } from '@ls1intum/apollon';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { associationUML, personUML, studentUML } from 'app/guided-tour/guided-tour-task.model';
@@ -9,14 +9,24 @@ import { faQuestionCircle } from '@fortawesome/free-regular-svg-icons';
 import { ModelingComponent } from 'app/exercises/modeling/shared/modeling.component';
 import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
 import { Patch } from '@ls1intum/apollon';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { NgClass, NgStyle } from '@angular/common';
+import { ModelingExplanationEditorComponent } from './modeling-explanation-editor.component';
+import { captureException } from '@sentry/angular';
 
 @Component({
     selector: 'jhi-modeling-editor',
     templateUrl: './modeling-editor.component.html',
     styleUrls: ['./modeling-editor.component.scss'],
     encapsulation: ViewEncapsulation.None,
+    imports: [TranslateDirective, FaIconComponent, NgStyle, NgClass, ModelingExplanationEditorComponent],
 })
 export class ModelingEditorComponent extends ModelingComponent implements AfterViewInit, OnDestroy, OnChanges {
+    private modalService = inject(NgbModal);
+    private guidedTourService = inject(GuidedTourService);
+    private sanitizer = inject(DomSanitizer);
+
     @Input() showHelpButton = true;
     @Input() withExplanation = false;
     @Input() savedStatus?: { isChanged?: boolean; isSaving?: boolean };
@@ -42,11 +52,7 @@ export class ModelingEditorComponent extends ModelingComponent implements AfterV
     readonlyApollonDiagram?: SVG;
     readOnlySVG?: SafeHtml;
 
-    constructor(
-        private modalService: NgbModal,
-        private guidedTourService: GuidedTourService,
-        private sanitizer: DomSanitizer,
-    ) {
+    constructor() {
         super();
     }
 
@@ -121,7 +127,9 @@ export class ModelingEditorComponent extends ModelingComponent implements AfterV
             return;
         }
 
+        // eslint-disable-next-line no-undef
         console.log('Warning: Installing hack to prevent UI scroll jumps in Safari while using Apollon!');
+        // eslint-disable-next-line no-undef
         console.log('Warning: If you experience problems regarding the scrolling behavior, please report them at https://github.com/ls1intum/Artemis');
 
         this.mouseDownListener = () => {
@@ -221,8 +229,7 @@ export class ModelingEditorComponent extends ModelingComponent implements AfterV
         try {
             this.destroyApollonEditor();
         } catch (err) {
-            console.log(err);
-            throw err;
+            captureException(err);
         }
     }
 

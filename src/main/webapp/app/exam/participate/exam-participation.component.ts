@@ -1,6 +1,6 @@
-import { Component, OnDestroy, OnInit, QueryList, ViewChildren } from '@angular/core';
-import { ActivatedRoute, Router } from '@angular/router';
-import { JhiWebsocketService } from 'app/core/websocket/websocket.service';
+import { Component, OnDestroy, OnInit, QueryList, ViewChildren, inject } from '@angular/core';
+import { ActivatedRoute, Router, RouterLink } from '@angular/router';
+import { WebsocketService } from 'app/core/websocket/websocket.service';
 import { ExamParticipationService } from 'app/exam/participate/exam-participation.service';
 import { StudentExam } from 'app/entities/student-exam.model';
 import { Exercise, ExerciseType } from 'app/entities/exercise.model';
@@ -45,6 +45,22 @@ import {
 import { ExamExerciseUpdateService } from 'app/exam/manage/exam-exercise-update.service';
 import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
 import { SidebarCardElement, SidebarData } from 'app/types/sidebar';
+import { TestRunRibbonComponent } from '../manage/test-runs/test-run-ribbon.component';
+import { ExamParticipationCoverComponent } from './exam-cover/exam-participation-cover.component';
+import { AsyncPipe, NgClass } from '@angular/common';
+import { ExamBarComponent } from './exam-bar/exam-bar.component';
+import { ExamNavigationSidebarComponent } from './exam-navigation-sidebar/exam-navigation-sidebar.component';
+import { ExamExerciseOverviewPageComponent } from './exercises/exercise-overview-page/exam-exercise-overview-page.component';
+import { QuizExamSubmissionComponent } from './exercises/quiz/quiz-exam-submission.component';
+import { FileUploadExamSubmissionComponent } from './exercises/file-upload/file-upload-exam-submission.component';
+import { TextExamSubmissionComponent } from './exercises/text/text-exam-submission.component';
+import { ModelingExamSubmissionComponent } from './exercises/modeling/modeling-exam-submission.component';
+import { ProgrammingExamSubmissionComponent } from './exercises/programming/programming-exam-submission.component';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { JhiConnectionStatusComponent } from 'app/shared/connection-status/connection-status.component';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { ExamResultSummaryComponent } from './summary/exam-result-summary.component';
+import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 
 type GenerateParticipationStatus = 'generating' | 'failed' | 'success';
 
@@ -52,8 +68,46 @@ type GenerateParticipationStatus = 'generating' | 'failed' | 'success';
     selector: 'jhi-exam-participation',
     templateUrl: './exam-participation.component.html',
     styleUrls: ['./exam-participation.scss'],
+    imports: [
+        TestRunRibbonComponent,
+        ExamParticipationCoverComponent,
+        NgClass,
+        ExamBarComponent,
+        ExamNavigationSidebarComponent,
+        ExamExerciseOverviewPageComponent,
+        QuizExamSubmissionComponent,
+        FileUploadExamSubmissionComponent,
+        TextExamSubmissionComponent,
+        ModelingExamSubmissionComponent,
+        ProgrammingExamSubmissionComponent,
+        TranslateDirective,
+        JhiConnectionStatusComponent,
+        FaIconComponent,
+        ExamResultSummaryComponent,
+        RouterLink,
+        AsyncPipe,
+        ArtemisTranslatePipe,
+    ],
 })
 export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentCanDeactivate {
+    private websocketService = inject(WebsocketService);
+    private route = inject(ActivatedRoute);
+    private router = inject(Router);
+    private examParticipationService = inject(ExamParticipationService);
+    private modelingSubmissionService = inject(ModelingSubmissionService);
+    private programmingSubmissionService = inject(ProgrammingSubmissionService);
+    private textSubmissionService = inject(TextSubmissionService);
+    private serverDateService = inject(ArtemisServerDateService);
+    private translateService = inject(TranslateService);
+    private alertService = inject(AlertService);
+    private courseExerciseService = inject(CourseExerciseService);
+    private liveEventsService = inject(ExamParticipationLiveEventsService);
+    private courseService = inject(CourseManagementService);
+    private courseStorageService = inject(CourseStorageService);
+    private examExerciseUpdateService = inject(ExamExerciseUpdateService);
+    private examManagementService = inject(ExamManagementService);
+    private profileService = inject(ProfileService);
+
     @ViewChildren(ExamSubmissionComponent)
     currentPageComponents: QueryList<ExamSubmissionComponent>;
 
@@ -145,25 +199,7 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
     // Icons
     faGraduationCap = faGraduationCap;
 
-    constructor(
-        private websocketService: JhiWebsocketService,
-        private route: ActivatedRoute,
-        private router: Router,
-        private examParticipationService: ExamParticipationService,
-        private modelingSubmissionService: ModelingSubmissionService,
-        private programmingSubmissionService: ProgrammingSubmissionService,
-        private textSubmissionService: TextSubmissionService,
-        private serverDateService: ArtemisServerDateService,
-        private translateService: TranslateService,
-        private alertService: AlertService,
-        private courseExerciseService: CourseExerciseService,
-        private liveEventsService: ExamParticipationLiveEventsService,
-        private courseService: CourseManagementService,
-        private courseStorageService: CourseStorageService,
-        private examExerciseUpdateService: ExamExerciseUpdateService,
-        private examManagementService: ExamManagementService,
-        private profileService: ProfileService,
-    ) {
+    constructor() {
         // show only one synchronization error every 5s
         this.errorSubscription = this.synchronizationAlert.pipe(throttleTime(5000)).subscribe(() => {
             this.alertService.error('artemisApp.examParticipation.saveSubmissionError');
