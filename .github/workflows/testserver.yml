@@ -43,6 +43,7 @@ jobs:
     outputs:
       pr_number: ${{ steps.get_pr.outputs.pr_number }}
       pr_head_sha: ${{ steps.get_pr.outputs.pr_head_sha }}
+      tag: ${{ steps.get_pr.outputs.tag }}
     steps:
       - name: Check if a PR exists for the branch
         id: get_pr
@@ -141,6 +142,10 @@ jobs:
       - name: Deploy Artemis with Docker
         env:
           SSH_AUTH_SOCK: /tmp/ssh_agent.sock
+          DEPLOYMENT_USER: ${{ vars.DEPLOYMENT_USER }}
+          DEPLOYMENT_HOSTS: ${{ vars.DEPLOYMENT_HOSTS }}
           TAG: ${{ needs.determine-build-context.outputs.tag }}
+          BRANCH_NAME: ${{ github.event.inputs.branch_name }}
+          DEPLOYMENT_FOLDER: ${{ vars.DEPLOYMENT_FOLDER }}
         run: |
-          ./artemis-server-cli docker-deploy "${{ vars.DEPLOYMENT_USER }}@${{ vars.DEPLOYMENT_HOSTS }}" -g "$GATEWAY_USER@$GATEWAY_HOST" -t ${{ needs.determine-build-context.outputs.tag }} -b ${{ github.event.inputs.branch_name }} -d ${{ vars.DEPLOYMENT_FOLDER }} -y
+          ./artemis-server-cli docker-deploy "$DEPLOYMENT_USER@$DEPLOYMENT_HOSTS" -g "$GATEWAY_USER@$GATEWAY_HOST" -t $TAG -b $BRANCH_NAME -d $DEPLOYMENT_FOLDER -y
