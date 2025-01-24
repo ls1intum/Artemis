@@ -546,7 +546,7 @@ public class User extends AbstractAuditingEntity implements Participant {
     }
 
     /**
-     * Checks if the user has accepted the Iris privacy policy.
+     * Checks if the user has accepted the external LLM privacy policy.
      * If not, an {@link AccessForbiddenException} is thrown.
      */
     public void hasAcceptedExternalLLMElseThrow() {
