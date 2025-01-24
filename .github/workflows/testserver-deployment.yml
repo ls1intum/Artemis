@@ -81,7 +81,6 @@ jobs:
     uses: ./.github/workflows/reusable-build.yml
     with:
       build_war: false
-      release_upload: false
       docker: true
       docker_ref: ${{ github.event.inputs.branch_name }}
       docker_build_tag: branch-${{ github.event.inputs.branch_name }}
