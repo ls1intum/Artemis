@@ -118,7 +118,7 @@ jobs:
     uses: ./.github/workflows/reusable-build.yml
     with:
       build_war: true
-      release_upload: ${{ needs.define-inputs.outputs.release_upload }}
+      release_upload: ${{ needs.define-inputs.outputs.release_upload == 'true' }}
       release_url: ${{ needs.define-inputs.outputs.release_url }}
       release_path: ${{ needs.define-inputs.outputs.release_path }}
       release_name: ${{ needs.define-inputs.outputs.release_name }}
