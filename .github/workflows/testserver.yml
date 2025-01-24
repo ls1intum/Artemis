@@ -93,7 +93,7 @@ jobs:
       build_war: false
       docker: true
       docker_ref: ${{ github.event.inputs.branch_name }}
-      docker_build_tag: branch-${{ github.event.inputs.branch_name }}
+      docker_build_tag: ${{ needs.determine-build-context.outputs.tag }}
 
   # Check if the build has run successfully (PR)
   check-existing-build:
