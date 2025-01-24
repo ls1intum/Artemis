@@ -71,8 +71,6 @@ jobs:
             echo "tag=branch-$BRANCH_NAME" >> $GITHUB_OUTPUT
           fi
 
-          echo "Tag: ${{ steps.get_pr.outputs.tag }}"
-
 
   # Build the Docker image (branch without PR)
   conditional-build:
@@ -145,4 +143,4 @@ jobs:
           SSH_AUTH_SOCK: /tmp/ssh_agent.sock
           TAG: ${{ needs.determine-build-context.outputs.tag }}
         run: |
-          ./artemis-server-cli docker-deploy "${{ vars.DEPLOYMENT_USER }}@${{ vars.DEPLOYMENT_HOSTS }}" -g "$GATEWAY_USER@$GATEWAY_HOST" -t $TAG -b ${{ github.event.inputs.branch_name }} -d ${{ vars.DEPLOYMENT_FOLDER }} -y
+          ./artemis-server-cli docker-deploy "${{ vars.DEPLOYMENT_USER }}@${{ vars.DEPLOYMENT_HOSTS }}" -g "$GATEWAY_USER@$GATEWAY_HOST" -t ${{ needs.determine-build-context.outputs.tag }} -b ${{ github.event.inputs.branch_name }} -d ${{ vars.DEPLOYMENT_FOLDER }} -y
