@@ -6,7 +6,6 @@ import { QuizExercise } from 'app/entities/quiz/quiz-exercise.model';
     selector: 'jhi-quiz-exercise-group-cell',
     templateUrl: './quiz-exercise-group-cell.component.html',
     styles: [':host{display: contents}'],
-    standalone: true,
 })
 export class QuizExerciseGroupCellComponent {
     exerciseType = ExerciseType;
