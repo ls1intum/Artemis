@@ -436,6 +436,9 @@ public final class Constants {
 
     public static final Pattern ALLOWED_CHECKOUT_DIRECTORY = Pattern.compile("[\\w-]+(/[\\w-]+)*$");
 
+    // TODO TW: This "feature" is only temporary for a paper.
+    public static final String ICER_PAPER_FLAG = "ICER 2025 Paper a5157934-9092-4a72-addc-3aaf489debdc";
+
     private Constants() {
     }
 }

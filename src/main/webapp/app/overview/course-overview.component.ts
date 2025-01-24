@@ -41,7 +41,7 @@ import {
 } from '@fortawesome/free-solid-svg-icons';
 import { NgbDropdown, NgbDropdownButtonItem, NgbDropdownItem, NgbDropdownMenu, NgbDropdownToggle, NgbModal, NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { AlertService, AlertType } from 'app/core/util/alert.service';
-import { JhiWebsocketService } from 'app/core/websocket/websocket.service';
+import { WebsocketService } from 'app/core/websocket/websocket.service';
 import { CourseAccessStorageService } from 'app/course/course-access-storage.service';
 import { CourseStorageService } from 'app/course/manage/course-storage.service';
 import { Course, isCommunicationEnabled, isMessagingEnabled } from 'app/entities/course.model';
@@ -133,7 +133,7 @@ export class CourseOverviewComponent implements OnInit, OnDestroy, AfterViewInit
     private courseStorageService = inject(CourseStorageService);
     private route = inject(ActivatedRoute);
     private teamService = inject(TeamService);
-    private jhiWebsocketService = inject(JhiWebsocketService);
+    private jhiWebsocketService = inject(WebsocketService);
     private serverDateService = inject(ArtemisServerDateService);
     private alertService = inject(AlertService);
     private changeDetectorRef = inject(ChangeDetectorRef);

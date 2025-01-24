@@ -64,7 +64,6 @@ import de.tum.cit.aet.artemis.assessment.repository.TutorParticipationRepository
 import de.tum.cit.aet.artemis.assessment.service.AssessmentDashboardService;
 import de.tum.cit.aet.artemis.assessment.service.ComplaintService;
 import de.tum.cit.aet.artemis.assessment.service.CourseScoreCalculationService;
-import de.tum.cit.aet.artemis.assessment.service.GradingScaleService;
 import de.tum.cit.aet.artemis.athena.service.AthenaModuleService;
 import de.tum.cit.aet.artemis.atlas.api.LearnerProfileApi;
 import de.tum.cit.aet.artemis.atlas.api.LearningPathApi;
@@ -94,6 +93,8 @@ import de.tum.cit.aet.artemis.core.exception.ErrorConstants;
 import de.tum.cit.aet.artemis.core.repository.CourseRepository;
 import de.tum.cit.aet.artemis.core.repository.UserRepository;
 import de.tum.cit.aet.artemis.core.security.Role;
+import de.tum.cit.aet.artemis.core.security.allowedTools.AllowedTools;
+import de.tum.cit.aet.artemis.core.security.allowedTools.ToolTokenType;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastEditor;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastInstructor;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastStudent;
@@ -168,8 +169,6 @@ public class CourseResource {
 
     private final TutorialGroupsConfigurationService tutorialGroupsConfigurationService;
 
-    private final GradingScaleService gradingScaleService;
-
     private final CourseScoreCalculationService courseScoreCalculationService;
 
     private final GradingScaleRepository gradingScaleRepository;
@@ -195,10 +194,10 @@ public class CourseResource {
             Optional<OnlineCourseConfigurationService> onlineCourseConfigurationService, AuthorizationCheckService authCheckService,
             TutorParticipationRepository tutorParticipationRepository, SubmissionService submissionService, Optional<VcsUserManagementService> optionalVcsUserManagementService,
             AssessmentDashboardService assessmentDashboardService, ExerciseRepository exerciseRepository, Optional<CIUserManagementService> optionalCiUserManagementService,
-            FileService fileService, TutorialGroupsConfigurationService tutorialGroupsConfigurationService, GradingScaleService gradingScaleService,
-            CourseScoreCalculationService courseScoreCalculationService, GradingScaleRepository gradingScaleRepository, Optional<LearningPathApi> learningPathApi,
-            ConductAgreementService conductAgreementService, Optional<AthenaModuleService> athenaModuleService, ExamRepository examRepository, ComplaintService complaintService,
-            TeamRepository teamRepository, Optional<LearnerProfileApi> learnerProfileApi) {
+            FileService fileService, TutorialGroupsConfigurationService tutorialGroupsConfigurationService, CourseScoreCalculationService courseScoreCalculationService,
+            GradingScaleRepository gradingScaleRepository, LearningPathApi learningPathApi, ConductAgreementService conductAgreementService,
+            Optional<AthenaModuleService> athenaModuleService, ExamRepository examRepository, ComplaintService complaintService, TeamRepository teamRepository,
+            Optional<LearnerProfileApi> learnerProfileApi) {
         this.courseService = courseService;
         this.courseRepository = courseRepository;
         this.exerciseService = exerciseService;
@@ -213,7 +212,6 @@ public class CourseResource {
         this.exerciseRepository = exerciseRepository;
         this.fileService = fileService;
         this.tutorialGroupsConfigurationService = tutorialGroupsConfigurationService;
-        this.gradingScaleService = gradingScaleService;
         this.courseScoreCalculationService = courseScoreCalculationService;
         this.gradingScaleRepository = gradingScaleRepository;
         this.learningPathApi = learningPathApi;
@@ -273,17 +271,6 @@ public class CourseResource {
             // instructors are not allowed to change the dashboard settings
             if (existingCourse.getStudentCourseAnalyticsDashboardEnabled() != courseUpdate.getStudentCourseAnalyticsDashboardEnabled()) {
                 throw new BadRequestAlertException("You are not allowed to change the dashboard settings of a course", Course.ENTITY_NAME, "dashboardSettingsCannotChange", true);
-            }
-        }
-
-        if (courseUpdate.getPresentationScore() != null && courseUpdate.getPresentationScore() != 0) {
-            Optional<GradingScale> gradingScale = gradingScaleService.findGradingScaleByCourseId(courseUpdate.getId());
-            if (gradingScale.isPresent() && gradingScale.get().getPresentationsNumber() != null) {
-                throw new BadRequestAlertException("You cannot set a presentation score if the grading scale is already set up for graded presentations", Course.ENTITY_NAME,
-                        "gradedPresentationAlreadySet", true);
-            }
-            if (courseUpdate.getPresentationScore() < 0) {
-                throw new BadRequestAlertException("The presentation score cannot be negative", Course.ENTITY_NAME, "negativePresentationScore", true);
             }
         }
 
@@ -590,6 +577,7 @@ public class CourseResource {
     // TODO: we should rename this into courses/{courseId}/details
     @GetMapping("courses/{courseId}/for-dashboard")
     @EnforceAtLeastStudent
+    @AllowedTools(ToolTokenType.SCORPIO)
     public ResponseEntity<CourseForDashboardDTO> getCourseForDashboard(@PathVariable long courseId) {
         long timeNanoStart = System.nanoTime();
         log.debug("REST request to get one course {} with exams, lectures, exercises, participations, submissions and results, etc.", courseId);
@@ -654,6 +642,7 @@ public class CourseResource {
      */
     @GetMapping("courses/for-dashboard")
     @EnforceAtLeastStudent
+    @AllowedTools(ToolTokenType.SCORPIO)
     public ResponseEntity<CoursesForDashboardDTO> getCoursesForDashboard() {
         long timeNanoStart = System.nanoTime();
         User user = userRepository.getUserWithGroupsAndAuthorities();
@@ -1349,7 +1338,7 @@ public class CourseResource {
     public ResponseEntity<CourseManagementDetailViewDTO> getCourseDTOForDetailView(@PathVariable Long courseId) {
         Course course = courseRepository.findByIdElseThrow(courseId);
         authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.TEACHING_ASSISTANT, course, null);
-        GradingScale gradingScale = gradingScaleService.findGradingScaleByCourseId(courseId).orElse(null);
+        GradingScale gradingScale = gradingScaleRepository.findByCourseId(courseId).orElse(null);
         CourseManagementDetailViewDTO managementDetailViewDTO = courseService.getStatsForDetailView(course, gradingScale);
         return ResponseEntity.ok(managementDetailViewDTO);
     }

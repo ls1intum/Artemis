@@ -2,7 +2,7 @@ import { HttpErrorResponse } from '@angular/common/http';
 import { Component, Input, OnDestroy, OnInit, ViewChild, inject } from '@angular/core';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { Patch, Selection, UMLDiagramType, UMLElementType, UMLModel, UMLRelationshipType } from '@ls1intum/apollon';
-import { JhiWebsocketService } from 'app/core/websocket/websocket.service';
+import { WebsocketService } from 'app/core/websocket/websocket.service';
 import { ComplaintType } from 'app/entities/complaint.model';
 import { Feedback, buildFeedbackTextForReview, checkSubsequentFeedbackInAssessment } from 'app/entities/feedback.model';
 import { ModelingExercise } from 'app/entities/modeling-exercise.model';
@@ -56,6 +56,7 @@ import { AdditionalFeedbackComponent } from 'app/shared/additional-feedback/addi
 import { ComplaintsStudentViewComponent } from 'app/complaints/complaints-for-students/complaints-student-view.component';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { HtmlForMarkdownPipe } from 'app/shared/pipes/html-for-markdown.pipe';
+import { captureException } from '@sentry/angular';
 
 @Component({
     selector: 'jhi-modeling-submission',
@@ -86,7 +87,7 @@ import { HtmlForMarkdownPipe } from 'app/shared/pipes/html-for-markdown.pipe';
     ],
 })
 export class ModelingSubmissionComponent implements OnInit, OnDestroy, ComponentCanDeactivate {
-    private jhiWebsocketService = inject(JhiWebsocketService);
+    private jhiWebsocketService = inject(WebsocketService);
     private modelingSubmissionService = inject(ModelingSubmissionService);
     private modelingAssessmentService = inject(ModelingAssessmentService);
     private alertService = inject(AlertService);
@@ -311,7 +312,7 @@ export class ModelingSubmissionComponent implements OnInit, OnDestroy, Component
             if (matchingSubmission) {
                 modelingSubmission = matchingSubmission;
             } else {
-                console.warn(`Submission with ID ${this.submissionId} not found in sorted history results.`);
+                captureException(`Submission with ID ${this.submissionId} not found in sorted history results.`);
             }
         }
 
@@ -561,7 +562,7 @@ export class ModelingSubmissionComponent implements OnInit, OnDestroy, Component
                     this.result = getLatestSubmissionResult(this.submission);
                     this.onSaveSuccess();
                 },
-                error: (error: HttpErrorResponse) => this.onSaveError(error),
+                error: () => this.onSaveError(),
             });
         } else {
             this.modelingSubmissionService.create(this.submission, this.modelingExercise.id!).subscribe({
@@ -571,7 +572,7 @@ export class ModelingSubmissionComponent implements OnInit, OnDestroy, Component
                     this.subscribeToAutomaticSubmissionWebsocket();
                     this.onSaveSuccess();
                 },
-                error: (error: HttpErrorResponse) => this.onSaveError(error),
+                error: () => this.onSaveError(),
             });
         }
     }
@@ -620,7 +621,7 @@ export class ModelingSubmissionComponent implements OnInit, OnDestroy, Component
                     }
                     this.onSaveSuccess();
                 },
-                error: (error: HttpErrorResponse) => this.onSaveError(error),
+                error: () => this.onSaveError(),
             });
         } else {
             this.modelingSubmissionService.create(this.submission, this.modelingExercise.id!).subscribe({
@@ -639,7 +640,7 @@ export class ModelingSubmissionComponent implements OnInit, OnDestroy, Component
                     this.subscribeToAutomaticSubmissionWebsocket();
                     this.onSaveSuccess();
                 },
-                error: (error: HttpErrorResponse) => this.onSaveError(error),
+                error: () => this.onSaveError(),
             });
         }
     }
@@ -649,10 +650,7 @@ export class ModelingSubmissionComponent implements OnInit, OnDestroy, Component
         this.isChanged = !this.canDeactivate();
     }
 
-    private onSaveError(error?: HttpErrorResponse) {
-        if (error) {
-            console.error(error.message);
-        }
+    private onSaveError() {
         this.alertService.error('artemisApp.modelingEditor.error');
         this.isSaving = false;
     }

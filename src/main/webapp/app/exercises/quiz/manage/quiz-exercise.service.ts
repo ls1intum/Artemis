@@ -301,7 +301,7 @@ export class QuizExerciseService {
                 zip.file(fileName, fileResult);
             })
             .catch((error) => {
-                throw new Error(`File with name: ${fileName} at path: ${filePath} could not be fetched`, error);
+                throw new Error(`File with name: ${fileName} at path: ${filePath} could not be fetched` + error);
             });
     }
 

@@ -24,7 +24,7 @@ import { ProgrammingSubmissionService, ProgrammingSubmissionState, ProgrammingSu
 import { MockProgrammingSubmissionService } from '../../helpers/mocks/service/mock-programming-submission.service';
 import { GuidedTourService } from 'app/guided-tour/guided-tour.service';
 import { GuidedTourMapping } from 'app/guided-tour/guided-tour-setting.model';
-import { JhiWebsocketService } from 'app/core/websocket/websocket.service';
+import { WebsocketService } from 'app/core/websocket/websocket.service';
 import { MockWebsocketService } from '../../helpers/mocks/service/mock-websocket.service';
 import { Participation } from 'app/entities/participation/participation.model';
 import { BuildLogEntryArray } from 'app/entities/programming/build-log.model';
@@ -86,7 +86,7 @@ describe('CodeEditorContainerIntegration', () => {
                 CodeEditorConflictStateService,
                 MockProvider(AlertService),
                 { provide: ActivatedRoute, useClass: MockActivatedRouteWithSubjects },
-                { provide: JhiWebsocketService, useClass: MockWebsocketService },
+                { provide: WebsocketService, useClass: MockWebsocketService },
                 { provide: ParticipationWebsocketService, useClass: MockParticipationWebsocketService },
                 { provide: ProgrammingExerciseParticipationService, useClass: MockProgrammingExerciseParticipationService },
                 { provide: SessionStorageService, useClass: MockSyncStorage },

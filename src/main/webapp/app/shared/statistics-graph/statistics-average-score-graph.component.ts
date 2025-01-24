@@ -8,7 +8,6 @@ import { NgxChartsSingleSeriesDataEntry } from 'app/shared/chart/ngx-charts-data
 import { axisTickFormattingWithPercentageSign } from 'app/shared/statistics-graph/statistics-graph.utils';
 import { ChartExerciseTypeFilter } from 'app/shared/chart/chart-exercise-type-filter';
 import { ArtemisNavigationUtilService } from 'app/utils/navigation.utils';
-import { ThemeService } from 'app/core/theme/theme.service';
 import { ChartCategoryFilter } from 'app/shared/chart/chart-category-filter';
 import { TranslateDirective } from '../language/translate.directive';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
@@ -34,17 +33,13 @@ export enum PerformanceInterval {
     imports: [TranslateDirective, FaIconComponent, BarChartModule, NgbDropdown, NgbDropdownToggle, NgbDropdownMenu, NgClass, ArtemisTranslatePipe],
 })
 export class StatisticsAverageScoreGraphComponent implements OnInit {
-    private themeService = inject(ThemeService);
     private navigationUtilService = inject(ArtemisNavigationUtilService);
     readonly exerciseTypeFilter = inject(ChartExerciseTypeFilter);
     readonly chartCategoryFilter = inject(ChartCategoryFilter);
 
-    @Input()
-    exerciseAverageScores: CourseManagementStatisticsModel[];
-    @Input()
-    courseAverage: number;
-    @Input()
-    courseId: number;
+    @Input() exerciseAverageScores: CourseManagementStatisticsModel[];
+    @Input() courseAverage: number;
+    @Input() courseId: number;
 
     // Html properties
     LEFT = false;

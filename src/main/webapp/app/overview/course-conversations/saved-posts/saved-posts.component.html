@@ -7,7 +7,7 @@
     <hr class="my-2" />
     @if (isShowDeleteNotice) {
         <div class="saved-posts-delete-notice m-2 fs-x-small text-secondary">
-            <fa-icon class="me-1" [icon]="faInfoCircle"></fa-icon>
+            <fa-icon class="me-1" [icon]="faInfoCircle" />
             <span jhiTranslate="artemisApp.metis.overview.deleteNoticeSavedPosts"></span>
         </div>
     }
@@ -20,12 +20,12 @@
                         [isShowSavedPostOptions]="true"
                         (onChangeSavedPostStatus)="changeSavedPostStatus(post, $event)"
                         (onNavigateToPost)="onTriggerNavigateToPost(post)"
-                    ></jhi-posting-summary>
+                    />
                 }
             }
         } @else {
             <div class="saved-posts-empty-notice text-secondary">
-                <fa-icon class="mb-3" size="3x" [icon]="faBookmark"></fa-icon>
+                <fa-icon class="mb-3" size="3x" [icon]="faBookmark" />
                 <span jhiTranslate="artemisApp.metis.overview.emptySavedPosts"></span>
             </div>
         }
