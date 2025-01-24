@@ -26,7 +26,7 @@ env:
   RAW_URL: https://raw.githubusercontent.com/${{ github.repository }}/${{ github.event.inputs.branch_name }}
 
 jobs:
-  # Print the inputs for debugging
+  # Log the inputs for debugging
   log-inputs:
     name: Log Inputs
     runs-on: ubuntu-latest
