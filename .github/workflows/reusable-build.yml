@@ -59,6 +59,9 @@ env:
 
 jobs:
 
+# TODO: validate inputs
+
+
   build:
     name: Build .war artifact
     if: ${{ inputs.build_war }}
