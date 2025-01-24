@@ -1,113 +1,119 @@
-name: Deploy to Testserver with Helios
+name: Deploy to a test-server
 
 on:
   workflow_dispatch:
     inputs:
-      HELIOS_TRIGGERED_BY:
-        description: "Username that triggered deployment"
-        required: true
-        type: string
-      HELIOS_BRANCH_NAME:
+      branch_name:
         description: "Which branch to deploy"
         required: true
         type: string
-      HELIOS_BRANCH_HEAD_SHA:
-        description: "SHA (Head commit) of the branch to deploy"
-        required: true
-        type: string
-      HELIOS_ENVIRONMENT_NAME:
+      environment_name:
         description: "Which environment to deploy (e.g. artemis-test7.artemis.cit.tum.de, etc.)."
         required: true
         type: string
-      HELIOS_RAW_URL:
-        description: "URL to the raw content of the repository in the format https://raw.githubusercontent.com/:owner/:repo/:sha"
-        required: true
-        type: string
-      HELIOS_BUILD:
-        description: "Whether to also build or just deploy the existing Docker image"
-        required: true
-        type: boolean
-      HELIOS_PR_NUMBER:
-        description: "PR number that triggered deployment"
-        required: false
-        type: string
-      HELIOS_BUILD_TAG:
-        description: "Docker tag to use if we are building or pulling an existing image"
+      triggered_by:
+        description: "Username that triggered deployment (not required, shown if triggered via GitHub UI, logged if triggered via GitHub app)"
         required: false
         type: string
 
-concurrency: ${{ github.event.inputs.HELIOS_ENVIRONMENT_NAME }}
+
+concurrency: ${{ github.event.inputs.environment_name }}
 
 env:
   CI: true
-  RAW_URL: ${{ github.event.inputs.HELIOS_RAW_URL }}
+  # Keep filename in sync with the workflow responsible for automatic builds on PRs
+  PR_AUTO_BUILD_FILE_NAME: "build.yml"
+  RAW_URL: https://raw.githubusercontent.com/${{ github.repository }}/${{ github.event.inputs.branch_name }}
 
 jobs:
   # Print the inputs for debugging
-  validate-inputs:
+  print-inputs:
     runs-on: ubuntu-latest
     steps:
-      - name: Validate Build Tag Input Exists
-        if: ${{ github.event.inputs.HELIOS_BUILD == 'true' && github.event.inputs.HELIOS_BUILD_TAG == '' }}
-        run: |
-          echo "::error::HELIOS_BUILD is true but no HELIOS_BUILD_TAG was provided."
-          exit 1
-      - name: Validate PR Number Input Exists
-        if: ${{ github.event.inputs.HELIOS_BUILD == 'false' && github.event.inputs.HELIOS_PR_NUMBER == '' }}
-        run: |
-          echo "::error::HELIOS_BUILD is false but no HELIOS_PR_NUMBER was provided."
-          exit 1
-
       - name: Print Inputs
         run: |
+          echo "Branch: ${{ github.event.inputs.branch_name }}"
+          echo "Environment: ${{ github.event.inputs.environment_name }}"
+          echo "Triggered by: ${{ github.event.inputs.triggered_by }}"
           echo "RAW_URL: ${{ env.RAW_URL }}"
-          echo "Triggered by: ${{ github.event.inputs.HELIOS_TRIGGERED_BY }}"
-          echo "Branch: ${{ github.event.inputs.HELIOS_BRANCH_NAME }}"
-          echo "SHA: ${{ github.event.inputs.HELIOS_BRANCH_HEAD_SHA }}"
-          echo "PR Number: ${{ github.event.inputs.HELIOS_PR_NUMBER }}"
-          echo "Environment: ${{ github.event.inputs.HELIOS_ENVIRONMENT_NAME }}"
-          echo "Need Build? ${{ github.event.inputs.HELIOS_BUILD }}"
-          echo "Build Tag? ${{ github.event.inputs.HELIOS_BUILD_TAG }}"
+
+  determine-build-context:
+    runs-on: ubuntu-latest
+    needs: print-inputs
+    outputs:
+      pr_number: ${{ steps.get_pr.outputs.pr_number }}
+      pr_head_sha: ${{ steps.get_pr.outputs.pr_head_sha }}
+    steps:
+      - name: Check if a PR exists for the branch
+        id: get_pr
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          BRANCH_NAME=${{ github.event.inputs.branch_name }}
+          echo "Checking if PR exists for branch: $BRANCH_NAME targeting 'develop'."
+
+          PR_DETAILS=$(gh api repos/${{ github.repository }}/pulls \
+            --paginate \
+            --jq ".[] | select(.head.ref == \"$BRANCH_NAME\" and .base.ref == \"develop\") | {number: .number, sha: .head.sha}")
+
+          PR_NUMBER=$(echo "$PR_DETAILS" | jq -r ".number")
+          PR_HEAD_SHA=$(echo "$PR_DETAILS" | jq -r ".sha")
+
+          if [ -n "$PR_NUMBER" ] && [ "$PR_NUMBER" != "null" ]; then
+            echo "Found PR: $PR_NUMBER from branch: $BRANCH_NAME targeting 'develop' with Head: $PR_HEAD_SHA."
+            echo "pr_number=$PR_NUMBER" >> $GITHUB_OUTPUT
+            echo "pr_head_sha=$PR_HEAD_SHA" >> $GITHUB_OUTPUT
+            echo "tag=pr-$PR_NUMBER" >> $GITHUB_OUTPUT
+          else
+            echo "No PR found for branch: $BRANCH_NAME targeting 'develop'."
+            echo "pr_number=" >> $GITHUB_OUTPUT
+            echo "pr_head_sha=" >> $GITHUB_OUTPUT
+            echo "tag=branch-$BRANCH_NAME" >> $GITHUB_OUTPUT
+          fi
+
+          echo "Tag: ${{ steps.get_pr.outputs.tag }}"
+
 
   # Build the Docker image (branch without PR)
   conditional-build:
-    if: ${{ github.event.inputs.HELIOS_BUILD == 'true' }}
-    needs: [ validate-inputs ]
-    uses: ./.github/workflows/build.yml
+    if: ${{ needs.determine-build-context.outputs.pr_number == '' }}
+    needs: determine-build-context
+    uses: ./.github/workflows/reusable-build.yml
     with:
-      sha: ${{ github.event.inputs.HELIOS_BRANCH_HEAD_SHA }}
-      tag: ${{ github.event.inputs.HELIOS_BUILD_TAG }}
-      raw_url: ${{ github.event.inputs.HELIOS_RAW_URL }}
+      build_war: false
+      release_upload: false
+      docker: true
+      docker_ref: ${{ github.event.inputs.branch_name }}
+      docker_build_tag: branch-${{ github.event.inputs.branch_name }}
 
   # Check if the build has run successfully (PR)
   check-existing-build:
-    if: ${{ github.event.inputs.HELIOS_BUILD == 'false' }}
-    needs: [ validate-inputs ]
+    if: ${{ needs.determine-build-context.outputs.pr_number != '' }}
+    needs: determine-build-context
     runs-on: ubuntu-latest
     steps:
-      # Check if the build has run successfully (PR)
       - name: Get latest successful build for branch
         id: check_build
         uses: octokit/request-action@v2.x
         with:
-          route: GET /repos/${{ github.repository }}/actions/workflows/build.yml/runs?event=pull_request&status=success&head_sha=${{ github.event.inputs.HELIOS_BRANCH_HEAD_SHA }}
+          route: GET /repos/${{ github.repository }}/actions/workflows/build.yml/runs?event=pull_request&status=success&head_sha=${{ needs.determine-build-context.outputs.pr_head_sha }}
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       - name: Fail if no successful build found
         if: ${{ steps.check_build.conclusion == 'success' && fromJSON(steps.check_build.outputs.data).total_count == 0 }}
         run: |
-          echo "::error::No successful build found for branch '${{ github.event.inputs.HELIOS_BRANCH_NAME }}' with SHA '${{ github.event.inputs.HELIOS_BRANCH_HEAD_SHA }}'."
+          echo "::error::No successful build found for branch '${{ github.event.inputs.branch_name }}' with SHA '${{ needs.determine-build-context.outputs.pr_head_sha }}'."
           exit 1
 
-  # Deploy to the test servers
+  # Deploy to the test-server
   deploy:
-    needs: [ conditional-build, check-existing-build ]
-    # Run if either job is successful
-    # This if condition should be exactly like below, since one of the job is skipped
+    needs: [ determine-build-context, conditional-build, check-existing-build ]
+    # Run if either the conditional-build or check-existing-build job was successful
+    # Use always() since one of the jobs will always skip
     if: always() && (needs.conditional-build.result == 'success' || needs.check-existing-build.result == 'success')
     runs-on: ubuntu-latest
     environment:
-      name: ${{ github.event.inputs.HELIOS_ENVIRONMENT_NAME }}
+      name: ${{ github.event.inputs.environment_name }}
       url: ${{ vars.DEPLOYMENT_URL }}
 
     env:
@@ -116,24 +122,6 @@ jobs:
       GATEWAY_HOST_PUBLIC_KEY: "[gateway.artemis.in.tum.de]:2010 ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIKtTLiKRILjKZ+Qg4ReWKsG7mLDXkzHfeY5nalSQUNQ4"
 
     steps:
-      - name: Compute Tag
-        uses: actions/github-script@v7
-        id: compute-tag
-        with:
-          result-encoding: string
-          script: |
-            // Check if HELIOS_BUILD input is true
-            if (context.payload.inputs.HELIOS_BUILD === 'true') {
-              return context.payload.inputs.HELIOS_BUILD_TAG;
-            }
-            // Use the "pr-<pr-number>" format for pull requests
-            if (context.payload.inputs.HELIOS_BUILD === 'false') {
-              const prNumber = '${{ github.event.inputs.HELIOS_PR_NUMBER }}';
-              return `pr-${prNumber}`;
-            }
-
-            return "FALSE";
-
       # Download artemis-server-cli from GH without cloning the Repo
       - name: Fetch Artemis CLI
         run: |
@@ -156,6 +144,6 @@ jobs:
       - name: Deploy Artemis with Docker
         env:
           SSH_AUTH_SOCK: /tmp/ssh_agent.sock
-          TAG: ${{ steps.compute-tag.outputs.result }}
+          TAG: ${{ needs.determine-build-context.outputs.tag }}
         run: |
-          ./artemis-server-cli docker-deploy "${{ vars.DEPLOYMENT_USER }}@${{ vars.DEPLOYMENT_HOSTS }}" -g "$GATEWAY_USER@$GATEWAY_HOST" -t $TAG -b ${{ github.event.inputs.HELIOS_BRANCH_NAME }} -d ${{ vars.DEPLOYMENT_FOLDER }} -y
+          ./artemis-server-cli docker-deploy "${{ vars.DEPLOYMENT_USER }}@${{ vars.DEPLOYMENT_HOSTS }}" -g "$GATEWAY_USER@$GATEWAY_HOST" -t $TAG -b ${{ github.event.inputs.branch_name }} -d ${{ vars.DEPLOYMENT_FOLDER }} -y
