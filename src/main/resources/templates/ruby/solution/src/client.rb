@@ -2,7 +2,6 @@
 # frozen_string_literal: true
 
 require "date"
-require "English"
 
 require_relative "context"
 require_relative "policy"
@@ -47,11 +46,7 @@ module Client
   end
 
   def self.print_dates(dates)
-    $OUTPUT_RECORD_SEPARATOR = "\n"
-    $OUTPUT_FIELD_SEPARATOR = ", "
-    print(*dates)
-    $OUTPUT_RECORD_SEPARATOR = nil
-    $OUTPUT_FIELD_SEPARATOR = nil
+    puts(dates.join(", "))
   end
 end
 
