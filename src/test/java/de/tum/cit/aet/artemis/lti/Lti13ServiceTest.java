@@ -213,19 +213,10 @@ class Lti13ServiceTest {
 
     @Test
     void performLaunch_courseNotFound() {
-        long exerciseId = 134;
-        Exercise exercise = new TextExercise();
-        exercise.setId(exerciseId);
-        Course course = new Course();
-        course.setId(1000L);
-        exercise.setCourse(course);
+        this.prepareForPerformLaunch(1000L, 123L);
 
-        doReturn(Optional.of(exercise)).when(exerciseRepository).findById(any());
         doThrow(EntityNotFoundException.class).when(courseRepository).findByIdWithEagerOnlineCourseConfigurationElseThrow(1000L);
-
-        OidcIdToken oidcIdToken = mock(OidcIdToken.class);
-        String target = "https://some-artemis-domain.org/courses/12/exercises/123";
-        doReturn(target).when(oidcIdToken).getClaim(Claims.TARGET_LINK_URI);
+        doThrow(EntityNotFoundException.class).when(courseRepository).findById(1000L);
 
         assertThatExceptionOfType(EntityNotFoundException.class).isThrownBy(() -> lti13Service.performLaunch(oidcIdToken, clientRegistrationId));
     }
@@ -554,6 +545,14 @@ class Lti13ServiceTest {
         return new MockExercise(exerciseId, courseId);
     }
 
+    private Course getMockCourse(long courseId) {
+        Course course = new Course();
+        course.setId(courseId);
+        course.setOnlineCourseConfiguration(new OnlineCourseConfiguration());
+
+        return course;
+    }
+
     private record MockExercise(long exerciseId, long courseId) {
     }
 
@@ -563,6 +562,10 @@ class Lti13ServiceTest {
 
         Optional<User> user = Optional.of(new User());
         doReturn(user).when(userRepository).findOneWithGroupsAndAuthoritiesByLogin(any());
+
+        doReturn(Optional.of(getMockCourse(courseId))).when(courseRepository).findById(courseId);
+        doReturn(getMockCourse(courseId)).when(courseRepository).findWithEagerOnlineCourseConfigurationById(courseId);
+
         doNothing().when(ltiService).authenticateLtiUser(any(), any(), any(), any(), anyBoolean());
         doNothing().when(ltiService).onSuccessfulLtiAuthentication(any(), any());
     }
