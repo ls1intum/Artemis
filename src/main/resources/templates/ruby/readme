@@ -53,15 +53,15 @@ class Context ##testsColor(test_context_structure) {
 }
 
 interface SortStrategy {
-  +performSort(Array[Date])
+  +perform_sort(input: Array[Date])
 }
 
 class BubbleSort {
-  <color:testsColor(test_bubble_sort_sorts)>+performSort(List<Date>)</color>
+  <color:testsColor(test_bubble_sort_sorts)>+perform_sort(input: Array[Date])</color>
 }
 
 class MergeSort {
-  <color:testsColor(test_merge_sort_sorts)>+performSort(List<Date>)</color>
+  <color:testsColor(test_merge_sort_sorts)>+perform_sort(input: Array[Date])</color>
 }
 
 MergeSort -up-|> SortStrategy
