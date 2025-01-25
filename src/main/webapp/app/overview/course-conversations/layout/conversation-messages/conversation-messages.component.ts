@@ -152,6 +152,7 @@ export class ConversationMessagesComponent implements OnInit, AfterViewInit, OnD
         }
         const pinnedCount = this.allPosts.filter((post) => post.displayPriority === DisplayPriority.PINNED).length;
         this.pinnedCount.emit(pinnedCount);
+        this.cdr.detectChanges();
     }
 
     ngOnInit(): void {
