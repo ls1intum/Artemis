@@ -12,6 +12,7 @@ class Policy
     @context = context
   end
 
+  # Chooses a strategy depending on the number of date objects.
   def configure
     sort_algorithm = if @context.dates.length > DATES_SIZE_THRESHOLD
                        MergeSort.new

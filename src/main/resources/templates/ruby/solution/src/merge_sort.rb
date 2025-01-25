@@ -1,12 +1,15 @@
 # frozen_string_literal: true
 
 class MergeSort
+  # Wrapper method for the real MergeSort algorithm.
+  # @param input [Array<Date>] the Array of Dates to be sorted
   def perform_sort(input)
     mergesort(input, 0, input.length)
   end
 
   private
 
+  # Recursive merge sort method
   def mergesort(input, low, high)
     return if high - low <= 1
 
@@ -17,6 +20,7 @@ class MergeSort
     merge(input, low, mid, high)
   end
 
+  # Merge method
   def merge(input, low, middle, high)
     temp = Array.new(high - low)
 
