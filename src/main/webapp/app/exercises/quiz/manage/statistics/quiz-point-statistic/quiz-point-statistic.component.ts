@@ -2,7 +2,7 @@ import { ChangeDetectorRef, Component, OnDestroy, OnInit, inject } from '@angula
 import { ActivatedRoute, Router } from '@angular/router';
 import { AbstractQuizStatisticComponent } from 'app/exercises/quiz/manage/statistics/quiz-statistics';
 import { AccountService } from 'app/core/auth/account.service';
-import { JhiWebsocketService } from 'app/core/websocket/websocket.service';
+import { WebsocketService } from 'app/core/websocket/websocket.service';
 import { PointCounter } from 'app/entities/quiz/point-counter.model';
 import { QuizExerciseService } from 'app/exercises/quiz/manage/quiz-exercise.service';
 import { QuizPointStatistic } from 'app/entities/quiz/quiz-point-statistic.model';
@@ -31,7 +31,7 @@ export class QuizPointStatisticComponent extends AbstractQuizStatisticComponent 
     private router = inject(Router);
     private accountService = inject(AccountService);
     private quizExerciseService = inject(QuizExerciseService);
-    private jhiWebsocketService = inject(JhiWebsocketService);
+    private jhiWebsocketService = inject(WebsocketService);
     private changeDetector = inject(ChangeDetectorRef);
     private serverDateService = inject(ArtemisServerDateService);
 

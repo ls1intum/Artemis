@@ -1,5 +1,6 @@
 package de.tum.cit.aet.artemis.programming.service.jenkins;
 
+import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_JENKINS;
 import static de.tum.cit.aet.artemis.programming.domain.ProgrammingLanguage.BASH;
 import static de.tum.cit.aet.artemis.programming.domain.ProgrammingLanguage.C;
 import static de.tum.cit.aet.artemis.programming.domain.ProgrammingLanguage.C_PLUS_PLUS;
@@ -37,7 +38,7 @@ import de.tum.cit.aet.artemis.programming.service.ProgrammingLanguageFeature;
 import de.tum.cit.aet.artemis.programming.service.ProgrammingLanguageFeatureService;
 
 @Service
-@Profile("jenkins")
+@Profile(PROFILE_JENKINS)
 public class JenkinsProgrammingLanguageFeatureService extends ProgrammingLanguageFeatureService {
 
     protected JenkinsProgrammingLanguageFeatureService(LicenseService licenseService) {
