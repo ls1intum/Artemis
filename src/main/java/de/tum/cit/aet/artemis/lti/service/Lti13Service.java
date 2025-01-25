@@ -379,7 +379,7 @@ public class Lti13Service {
      * @param targetLinkUrl the target link URL to retrieve a Course
      * @return the Course or nothing otherwise
      */
-    private Optional<Course> getCourseFromTargetLink(String targetLinkUrl) {
+    public Optional<Course> getCourseFromTargetLink(String targetLinkUrl) {
         AntPathMatcher matcher = new AntPathMatcher();
 
         String targetLinkPath;

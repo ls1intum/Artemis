@@ -493,6 +493,66 @@ class Lti13ServiceTest {
         assertThatExceptionOfType(BadRequestAlertException.class).isThrownBy(() -> lti13Service.startDeepLinking(oidcIdToken, clientRegistrationId));
     }
 
+    @Test
+    void getCourseFromTargetLink_validCoursePath() {
+        String targetLinkUrl = "https://some-artemis-domain.org/courses/123";
+        Course mockCourse = new Course();
+        mockCourse.setId(123L);
+
+        when(courseRepository.findById(123L)).thenReturn(Optional.of(mockCourse));
+
+        Optional<Course> course = lti13Service.getCourseFromTargetLink(targetLinkUrl);
+
+        assertThat(course).isPresent();
+        assertThat(course.get().getId()).isEqualTo(123L);
+        verify(courseRepository).findById(123L);
+    }
+
+    @Test
+    void getCourseFromTargetLink_malformedUrl() {
+        String targetLinkUrl = "invalid-url";
+
+        Optional<Course> course = lti13Service.getCourseFromTargetLink(targetLinkUrl);
+
+        assertThat(course).isEmpty();
+        verifyNoInteractions(courseRepository);
+    }
+
+    @Test
+    void getCourseFromTargetLink_missingCourseId() {
+        String targetLinkUrl = "https://some-artemis-domain.org/with/invalid/path";
+
+        Optional<Course> course = lti13Service.getCourseFromTargetLink(targetLinkUrl);
+
+        assertThat(course).isEmpty();
+        verifyNoInteractions(courseRepository);
+    }
+
+    @Test
+    void getCourseFromTargetLink_noMatchingPath() {
+        String targetLinkUrl = "https://some-artemis-domain.org/lectures/567";
+
+        Optional<Course> course = lti13Service.getCourseFromTargetLink(targetLinkUrl);
+
+        assertThat(course).isEmpty();
+        verifyNoInteractions(courseRepository);
+    }
+
+    @Test
+    void getCourseFromTargetLink_validCompetencyPath() {
+        String targetLinkUrl = "https://some-artemis-domain.org/courses/456/competencies";
+        Course mockCourse = new Course();
+        mockCourse.setId(456L);
+
+        when(courseRepository.findById(456L)).thenReturn(Optional.of(mockCourse));
+
+        Optional<Course> course = lti13Service.getCourseFromTargetLink(targetLinkUrl);
+
+        assertThat(course).isPresent();
+        assertThat(course.get().getId()).isEqualTo(456L);
+        verify(courseRepository).findById(456L);
+    }
+
     private State getValidStateForNewResult(Result result) {
         User user = new User();
         user.setLogin("someone");
