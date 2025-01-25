@@ -16,7 +16,9 @@ import org.springframework.security.oauth2.core.oidc.OidcIdToken;
 import org.springframework.stereotype.Service;
 import org.springframework.web.util.UriComponentsBuilder;
 
+import de.tum.cit.aet.artemis.atlas.domain.competency.Competency;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
+import de.tum.cit.aet.artemis.core.repository.CourseRepository;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.domain.IncludedInOverallScore;
 import de.tum.cit.aet.artemis.exercise.repository.ExerciseRepository;
@@ -37,6 +39,8 @@ public class LtiDeepLinkingService {
 
     private static final double DEFAULT_SCORE_MAXIMUM = 100D;
 
+    private final CourseRepository courseRepository;
+
     private final ExerciseRepository exerciseRepository;
 
     private final LectureRepository lectureRepository;
@@ -49,7 +53,9 @@ public class LtiDeepLinkingService {
      * @param exerciseRepository The repository for exercises.
      * @param tokenRetriever     The LTI 1.3 token retriever.
      */
-    public LtiDeepLinkingService(ExerciseRepository exerciseRepository, LectureRepository lectureRepository, Lti13TokenRetriever tokenRetriever) {
+    public LtiDeepLinkingService(CourseRepository courseRepository, ExerciseRepository exerciseRepository, LectureRepository lectureRepository,
+            Lti13TokenRetriever tokenRetriever) {
+        this.courseRepository = courseRepository;
         this.exerciseRepository = exerciseRepository;
         this.lectureRepository = lectureRepository;
         this.tokenRetriever = tokenRetriever;
@@ -186,15 +192,20 @@ public class LtiDeepLinkingService {
     }
 
     private Map<String, Object> setCompetencyContentItem(String courseId) {
-        // TODO competency optional
+        Optional<Competency> competencyOpt = courseRepository.findWithEagerCompetenciesAndPrerequisitesById(Long.parseLong(courseId))
+                .flatMap(course -> course.getCompetencies().stream().findFirst());
         String launchUrl = String.format(artemisServerUrl + "/courses/%s/competencies", courseId);
-        return createSingleUnitContentItem(launchUrl);
+        return competencyOpt.map(competency -> createSingleUnitContentItem(launchUrl)).orElse(null);
     }
 
     private Map<String, Object> setLearningPathContentItem(String courseId) {
-        // TODO Learning path optional
-        String launchUrl = String.format(artemisServerUrl + "/courses/%s/learning-path", courseId);
-        return createSingleUnitContentItem(launchUrl);
+        boolean hasLearningPaths = courseRepository.findWithEagerLearningPathsAndLearningPathCompetenciesByIdElseThrow(Long.parseLong(courseId)).getLearningPathsEnabled();
+        if (hasLearningPaths) {
+            String launchUrl = String.format(artemisServerUrl + "/courses/%s/learning-path", courseId);
+            return createSingleUnitContentItem(launchUrl);
+        }
+        else
+            return null;
     }
 
     private Map<String, Object> setIrisContentItem(String courseId) {
