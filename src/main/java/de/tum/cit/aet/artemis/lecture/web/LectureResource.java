@@ -312,7 +312,7 @@ public class LectureResource {
     public ResponseEntity<Void> ingestTranscriptions(@PathVariable Long courseId, @PathVariable Long lectureId) {
         Lecture lecture = lectureRepository.findById(lectureId).orElseThrow();
         Course course = lecture.getCourse();
-        if (!lecture.getCourse().getId().equals(courseId)) {
+        if (!course.getId().equals(courseId)) {
             return ResponseEntity.badRequest().headers(HeaderUtil.createAlert(applicationName, "artemisApp.iris.ingestionAlert.wrongLectureError", "lectureDoesNotMatchCourse"))
                     .body(null);
         }

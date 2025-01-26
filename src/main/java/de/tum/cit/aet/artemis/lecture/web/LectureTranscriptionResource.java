@@ -8,6 +8,8 @@ import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+import jakarta.validation.Valid;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Profile;
@@ -71,7 +73,7 @@ public class LectureTranscriptionResource {
      */
     @PostMapping(value = "courses/{courseId}/lecture/{lectureId}/transcriptions")
     @EnforceAtLeastEditorInCourse
-    public ResponseEntity<LectureTranscription> createLectureTranscription(@RequestBody LectureTranscriptionDTO transcriptionDTO, @PathVariable Long courseId,
+    public ResponseEntity<LectureTranscription> createLectureTranscription(@Valid @RequestBody LectureTranscriptionDTO transcriptionDTO, @PathVariable Long courseId,
             @PathVariable Long lectureId) throws URISyntaxException {
         Lecture lecture = lectureRepository.findById(transcriptionDTO.lectureId()).orElseThrow(() -> new EntityNotFoundException("no lecture found for this id"));
 
