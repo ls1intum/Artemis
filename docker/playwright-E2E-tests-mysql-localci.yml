@@ -16,6 +16,8 @@ services:
         depends_on:
             mysql:
                 condition: service_healthy
+        ports:
+          - "8080:8080"
         env_file:
             - ./artemis/config/playwright.env
             - ./artemis/config/playwright-local.env

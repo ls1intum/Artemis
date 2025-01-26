@@ -15,6 +15,14 @@ const test = baseTest.extend<{
             await use('autoTestFixture');
 
             const jsCoverage = await page.coverage.stopJSCoverage();
+            if (process.env.CI) {
+                console.log('Adjusting coverage entry urls...');
+                console.log(`Source urls before: ${jsCoverage.map((entry) => entry.url)}`);
+                for (const entry of jsCoverage) {
+                    entry.url = entry.url.replace('https://nginx', 'http://artemis-app:8080');
+                }
+                console.log(`Source urls after: ${jsCoverage.map((entry) => entry.url)}`);
+            }
             await addCoverageReport(jsCoverage, test.info());
         },
         {
