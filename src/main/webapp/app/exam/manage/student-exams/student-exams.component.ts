@@ -19,7 +19,7 @@ import { AccountService } from 'app/core/auth/account.service';
 import { onError } from 'app/shared/util/global.utils';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { faExclamationTriangle } from '@fortawesome/free-solid-svg-icons';
-import { JhiWebsocketService } from 'app/core/websocket/websocket.service';
+import { WebsocketService } from 'app/core/websocket/websocket.service';
 import { convertDateFromServer } from 'app/utils/date.utils';
 import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
 import { PROFILE_LOCALVC } from 'app/app.constants';
@@ -66,7 +66,7 @@ export class StudentExamsComponent implements OnInit, OnDestroy {
     private modalService = inject(NgbModal);
     private accountService = inject(AccountService);
     private artemisTranslatePipe = inject(ArtemisTranslatePipe);
-    private websocketService = inject(JhiWebsocketService);
+    private websocketService = inject(WebsocketService);
     private profileService = inject(ProfileService);
 
     courseId: number;

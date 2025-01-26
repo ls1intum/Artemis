@@ -24,7 +24,7 @@ import { TextSubmission } from 'app/entities/text/text-submission.model';
 import { StringCountService } from 'app/exercises/text/participate/string-count.service';
 import { AccountService } from 'app/core/auth/account.service';
 import { getFirstResultWithComplaint, getLatestSubmissionResult, setLatestSubmissionResult } from 'app/entities/submission.model';
-import { getManualUnreferencedFeedback, isAthenaAIResult } from 'app/exercises/shared/result/result.utils';
+import { getUnreferencedFeedback, isAthenaAIResult } from 'app/exercises/shared/result/result.utils';
 import { onError } from 'app/shared/util/global.utils';
 import { Course } from 'app/entities/course.model';
 import { getCourseFromExercise } from 'app/entities/exercise.model';
@@ -356,7 +356,7 @@ export class TextEditorComponent implements OnInit, OnDestroy, ComponentCanDeact
      * Check whether or not a result exists and if, returns the unreferenced feedback of it
      */
     get unreferencedFeedback(): Feedback[] | undefined {
-        return this.result ? getManualUnreferencedFeedback(this.result.feedbacks) : undefined;
+        return this.result ? getUnreferencedFeedback(this.result.feedbacks) : undefined;
     }
 
     get wordCount(): number {
@@ -397,6 +397,11 @@ export class TextEditorComponent implements OnInit, OnDestroy, ComponentCanDeact
         this.textSubmissionService.update(submissionToCreateOrUpdate, this.textExercise.id!).subscribe({
             next: (response) => {
                 this.submission = response.body!;
+                if (this.participation.team) {
+                    // Make sure the team is not lost during update
+                    const studentParticipation = this.submission.participation as StudentParticipation;
+                    studentParticipation.team = this.participation.team;
+                }
                 setLatestSubmissionResult(this.submission, getLatestSubmissionResult(this.submission));
                 this.submissionChange.next(this.submission);
                 // reconnect so that the submission status is displayed correctly in the result.component
@@ -447,7 +452,10 @@ export class TextEditorComponent implements OnInit, OnDestroy, ComponentCanDeact
     onReceiveSubmissionFromTeam(submission: TextSubmission) {
         submission.participation!.exercise = this.textExercise;
         submission.participation!.submissions = [submission];
-        this.updateParticipation(submission.participation as StudentParticipation);
+        // Keep the existing team on the participation
+        const studentParticipation = submission.participation as StudentParticipation;
+        studentParticipation.team = this.participation.team;
+        this.updateParticipation(studentParticipation);
     }
 
     onTextEditorInput(event: Event) {

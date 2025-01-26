@@ -140,7 +140,7 @@ public class QuizSubmissionResource {
         QuizExercise quizExercise = quizExerciseRepository.findByIdWithQuestionsAndStatisticsElseThrow(exerciseId);
 
         User user = userRepository.getUserWithGroupsAndAuthorities();
-        if (!authCheckService.isAllowedToSeeExercise(quizExercise, user)) {
+        if (!authCheckService.isAllowedToSeeCourseExercise(quizExercise, user)) {
             return ResponseEntity.status(HttpStatus.FORBIDDEN)
                     .headers(HeaderUtil.createFailureAlert(applicationName, true, "submission", "Forbidden", "You are not allowed to participate in this exercise.")).body(null);
         }
