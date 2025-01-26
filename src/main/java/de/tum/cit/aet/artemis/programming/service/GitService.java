@@ -1015,7 +1015,7 @@ public class GitService extends AbstractGitService {
     }
 
     /**
-     * Lists all files and directories within the given repository, excluding symbolic links.
+     * Returns all files and directories within the given repository in a map, excluding symbolic links.
      * This method performs a file scan and filters out symbolic links.
      * It supports bare and checked-out repositories.
      * <p>
@@ -1026,7 +1026,7 @@ public class GitService extends AbstractGitService {
      * @return A {@link Map} where each key is a {@link File} object representing a file or directory, and each value is
      *         the corresponding {@link FileType} (FILE or FOLDER). The map excludes symbolic links.
      */
-    public Map<File, FileType> listFilesAndFolders(Repository repo) {
+    public Map<File, FileType> getFilesAndFolders(Repository repo) {
         FileAndDirectoryFilter filter = new FileAndDirectoryFilter();
 
         Iterator<java.io.File> itr = FileUtils.iterateFilesAndDirs(repo.getLocalPath().toFile(), filter, filter);
@@ -1048,13 +1048,13 @@ public class GitService extends AbstractGitService {
     }
 
     /**
-     * List all files in the repository. In an empty git repo, this method returns 0.
+     * List all files in the repository. In an empty git repo, this method returns en empty list.
      *
      * @param repo Local Repository Object.
      * @return Collection of File objects
      */
     @NotNull
-    public Collection<File> listFiles(Repository repo) {
+    public Collection<File> getFiles(Repository repo) {
         // Check if list of files is already cached
         if (repo.getFiles() == null) {
             FileAndDirectoryFilter filter = new FileAndDirectoryFilter();
@@ -1083,7 +1083,7 @@ public class GitService extends AbstractGitService {
         // Makes sure the requested file is part of the scanned list of files.
         // Ensures that it is not possible to do bad things like filename="../../passwd"
 
-        for (File file : listFilesAndFolders(repo).keySet()) {
+        for (File file : getFilesAndFolders(repo).keySet()) {
             if (file.toString().equals(filename)) {
                 return Optional.of(file);
             }

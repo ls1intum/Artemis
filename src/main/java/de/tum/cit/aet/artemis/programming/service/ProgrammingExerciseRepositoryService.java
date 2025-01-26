@@ -324,7 +324,7 @@ public class ProgrammingExerciseRepositoryService {
     private void setupTemplateAndPush(final RepositoryResources repositoryResources, final String templateName, final ProgrammingExercise programmingExercise, final User user)
             throws IOException, GitAPIException {
         // Only copy template if repo is empty
-        if (!gitService.listFiles(repositoryResources.repository).isEmpty()) {
+        if (!gitService.getFiles(repositoryResources.repository).isEmpty()) {
             return;
         }
 
@@ -358,7 +358,7 @@ public class ProgrammingExerciseRepositoryService {
      */
     private void setupTestTemplateAndPush(final RepositoryResources resources, final ProgrammingExercise programmingExercise, final User user) throws IOException, GitAPIException {
         // Only copy template if repo is empty
-        if (gitService.listFiles(resources.repository).isEmpty()
+        if (gitService.getFiles(resources.repository).isEmpty()
                 && (programmingExercise.getProgrammingLanguage() == ProgrammingLanguage.JAVA || programmingExercise.getProgrammingLanguage() == ProgrammingLanguage.KOTLIN)) {
             setupJVMTestTemplateAndPush(resources, programmingExercise, user);
         }

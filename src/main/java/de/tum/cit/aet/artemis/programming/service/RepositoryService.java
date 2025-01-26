@@ -97,7 +97,7 @@ public class RepositoryService {
      * @return a map of files with the information if they are a file or a folder.
      */
     public Map<String, FileType> getFiles(Repository repository) {
-        var iterator = gitService.listFilesAndFolders(repository).entrySet().iterator();
+        var iterator = gitService.getFilesAndFolders(repository).entrySet().iterator();
 
         Map<String, FileType> fileList = new HashMap<>();
 
@@ -158,7 +158,7 @@ public class RepositoryService {
      *         The map includes only those files that could successfully have their contents read; files that cause an IOException are logged but not included.
      */
     public Map<String, String> getFilesContentFromWorkingCopy(Repository repository) {
-        var files = gitService.listFilesAndFolders(repository).entrySet().stream().filter(entry -> entry.getValue() == FileType.FILE).map(Map.Entry::getKey).toList();
+        var files = gitService.getFilesAndFolders(repository).entrySet().stream().filter(entry -> entry.getValue() == FileType.FILE).map(Map.Entry::getKey).toList();
         Map<String, String> fileListWithContent = new HashMap<>();
 
         files.forEach(file -> {
@@ -262,9 +262,9 @@ public class RepositoryService {
     public Map<String, Boolean> getFilesWithInformationAboutChange(Repository repository, Repository templateRepository) {
         Map<String, Boolean> filesWithInformationAboutChange = new HashMap<>();
 
-        var repoFiles = gitService.listFilesAndFolders(repository).entrySet().stream().filter(entry -> entry.getValue() == FileType.FILE).map(Map.Entry::getKey).toList();
+        var repoFiles = gitService.getFilesAndFolders(repository).entrySet().stream().filter(entry -> entry.getValue() == FileType.FILE).map(Map.Entry::getKey).toList();
 
-        Map<String, File> templateRepoFiles = gitService.listFilesAndFolders(templateRepository).entrySet().stream().filter(entry -> entry.getValue() == FileType.FILE)
+        Map<String, File> templateRepoFiles = gitService.getFilesAndFolders(templateRepository).entrySet().stream().filter(entry -> entry.getValue() == FileType.FILE)
                 .collect(Collectors.toMap(entry -> entry.getKey().toString(), Map.Entry::getKey));
 
         repoFiles.forEach(file -> {

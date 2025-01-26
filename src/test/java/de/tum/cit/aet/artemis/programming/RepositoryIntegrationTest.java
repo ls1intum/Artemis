@@ -344,7 +344,7 @@ class RepositoryIntegrationTest extends AbstractProgrammingIntegrationJenkinsGit
     void testGetFilesWithContent_shouldNotThrowException() throws Exception {
         Map<de.tum.cit.aet.artemis.programming.domain.File, FileType> mockedFiles = new HashMap<>();
         mockedFiles.put(mock(de.tum.cit.aet.artemis.programming.domain.File.class), FileType.FILE);
-        doReturn(mockedFiles).when(gitService).listFilesAndFolders(any(Repository.class));
+        doReturn(mockedFiles).when(gitService).getFilesAndFolders(any(Repository.class));
 
         MockedStatic<FileUtils> mockedFileUtils = mockStatic(FileUtils.class);
         mockedFileUtils.when(() -> FileUtils.readFileToString(any(File.class), eq(StandardCharsets.UTF_8))).thenThrow(IOException.class);
