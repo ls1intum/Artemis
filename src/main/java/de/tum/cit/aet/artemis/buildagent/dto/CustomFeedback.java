@@ -1,4 +1,4 @@
-package de.tum.cit.aet.artemis.buildagent.dto.testsuite;
+package de.tum.cit.aet.artemis.buildagent.dto;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 

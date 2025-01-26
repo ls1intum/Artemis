@@ -9,8 +9,8 @@ import org.slf4j.LoggerFactory;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 
+import de.tum.cit.aet.artemis.buildagent.dto.CustomFeedback;
 import de.tum.cit.aet.artemis.buildagent.dto.LocalCITestJobDTO;
-import de.tum.cit.aet.artemis.buildagent.dto.testsuite.CustomFeedback;
 
 public final class CustomFeedbackParser {
 
