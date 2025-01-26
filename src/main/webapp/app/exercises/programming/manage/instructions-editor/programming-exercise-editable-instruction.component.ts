@@ -47,6 +47,7 @@ import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
 import { ArtemisIntelligenceService } from 'app/shared/monaco-editor/model/actions/artemis-intelligence/artemis-intelligence.service';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { ActivatedRoute } from '@angular/router';
+import { ConsistencyCheckAction } from 'app/shared/monaco-editor/model/actions/artemis-intelligence/consistency-check.action';
 
 @Component({
     selector: 'jhi-programming-exercise-editable-instructions',
@@ -83,9 +84,15 @@ export class ProgrammingExerciseEditableInstructionComponent implements AfterVie
     domainActions: TextEditorDomainAction[] = [new FormulaAction(), new TaskAction(), this.testCaseAction];
 
     courseId: number;
+    exerciseId: number;
     irisEnabled = toSignal(this.profileService.getProfileInfo().pipe(map((profileInfo) => profileInfo.activeProfiles.includes(PROFILE_IRIS))), { initialValue: false });
     artemisIntelligenceActions = computed(() =>
-        this.irisEnabled() ? [new RewriteAction(this.artemisIntelligenceService, RewritingVariant.PROBLEM_STATEMENT, this.courseId)] : [],
+        this.irisEnabled()
+            ? [
+                  new RewriteAction(this.artemisIntelligenceService, RewritingVariant.PROBLEM_STATEMENT, this.courseId),
+                  new ConsistencyCheckAction(this.artemisIntelligenceService, this.exerciseId),
+              ]
+            : [],
     );
 
     savingInstructions = false;
@@ -150,6 +157,7 @@ export class ProgrammingExerciseEditableInstructionComponent implements AfterVie
 
     ngOnInit() {
         this.courseId = Number(this.activatedRoute.snapshot.paramMap.get('courseId'));
+        this.exerciseId = Number(this.activatedRoute.snapshot.paramMap.get('exerciseId'));
     }
 
     ngOnChanges(changes: SimpleChanges): void {

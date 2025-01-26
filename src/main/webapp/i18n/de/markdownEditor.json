@@ -16,7 +16,11 @@
             "artemisIntelligence": {
                 "tooltip": "Artemis Intelligence",
                 "commands": {
-                    "rewrite": "Umformulieren"
+                    "rewrite": "Umformulieren",
+                    "consistencyCheck": "Plausibilität prüfen"
+                },
+                "modals": {
+                    "consistencyCheckTitle": "Ergebnis der Plausibilitätsprüfung"
                 },
                 "alerts": {
                     "rewrite": {

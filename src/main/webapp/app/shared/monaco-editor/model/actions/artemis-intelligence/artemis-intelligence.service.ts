@@ -11,14 +11,15 @@ import { AlertService } from 'app/core/util/alert.service';
  */
 @Injectable({ providedIn: 'root' })
 export class ArtemisIntelligenceService {
-    public resourceUrl = 'api/courses';
+    public resourceUrl = 'api';
 
     private http = inject(HttpClient);
     private jhiWebsocketService = inject(JhiWebsocketService);
     private alertService = inject(AlertService);
 
     private isLoadingRewrite = signal(false);
-    isLoading = computed(() => this.isLoadingRewrite());
+    private isLoadingConsistencyCheck = signal(false);
+    isLoading = computed(() => this.isLoadingRewrite() || this.isLoadingConsistencyCheck);
 
     /**
      * Triggers the rewriting pipeline via HTTP and subscribes to its WebSocket updates.
@@ -31,7 +32,7 @@ export class ArtemisIntelligenceService {
         this.isLoadingRewrite.set(true);
         return new Observable<string>((observer) => {
             this.http
-                .post(`${this.resourceUrl}/${courseId}/rewrite-text`, null, {
+                .post(`${this.resourceUrl}/courses/${courseId}/rewrite-text`, null, {
                     params: {
                         toBeRewritten: toBeRewritten,
                         variant: rewritingVariant,
@@ -60,6 +61,43 @@ export class ArtemisIntelligenceService {
                     },
                     error: (error) => {
                         this.isLoadingRewrite.set(false);
+                        observer.error(error);
+                    },
+                });
+        });
+    }
+
+    consistencyCheck(toBeChecked: string, exerciseId: number): Observable<string> {
+        this.isLoadingConsistencyCheck.set(true);
+        return new Observable<string>((observer) => {
+            this.http
+                .post(`${this.resourceUrl}/exercises/${exerciseId}/consistency-check`, null, {
+                    params: {
+                        toBeChecked: toBeChecked,
+                    },
+                })
+                .subscribe({
+                    next: () => {
+                        const websocketTopic = `/user/topic/iris/consistency-check/${exerciseId}`;
+                        this.jhiWebsocketService.subscribe(websocketTopic);
+                        this.jhiWebsocketService.receive(websocketTopic).subscribe({
+                            next: (update: any) => {
+                                if (update.result) {
+                                    observer.next(update.result);
+                                    observer.complete();
+                                    this.isLoadingConsistencyCheck.set(false);
+                                    this.jhiWebsocketService.unsubscribe(websocketTopic);
+                                }
+                            },
+                            error: (error) => {
+                                observer.error(error);
+                                this.isLoadingConsistencyCheck.set(false);
+                                this.jhiWebsocketService.unsubscribe(websocketTopic);
+                            },
+                        });
+                    },
+                    error: (error) => {
+                        this.isLoadingConsistencyCheck.set(false);
                         observer.error(error);
                     },
                 });

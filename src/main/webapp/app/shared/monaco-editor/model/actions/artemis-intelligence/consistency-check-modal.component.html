@@ -1,0 +1,14 @@
+<div class="modal-header">
+    <h4 class="modal-title">
+        {{ 'artemisApp.artemisIntelligence.modals.consistencyCheckTitle' | artemisTranslate }}
+    </h4>
+    <button aria-label="Close" data-dismiss="modal" class="btn-close" type="button" (click)="dismiss()"></button>
+</div>
+<div class="modal-body pad">
+    <div>
+        {{ response }}
+    </div>
+</div>
+<div class="modal-footer">
+    <button data-dismiss="modal" class="btn btn-secondary float-left" type="button" (click)="dismiss()">Done</button>
+</div>

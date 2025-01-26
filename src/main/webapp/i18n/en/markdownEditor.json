@@ -17,7 +17,11 @@
             "artemisIntelligence": {
                 "tooltip": "Artemis Intelligence",
                 "commands": {
-                    "rewrite": "Rewrite"
+                    "rewrite": "Rewrite",
+                    "consistencyCheck": "Check consistency"
+                },
+                "modals": {
+                    "consistencyCheckTitle": "Consistency check response"
                 },
                 "alerts": {
                     "rewrite": {

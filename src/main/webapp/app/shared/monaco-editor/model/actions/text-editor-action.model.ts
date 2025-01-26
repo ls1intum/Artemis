@@ -1,3 +1,5 @@
+import { inject } from '@angular/core';
+import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { IconDefinition } from '@fortawesome/fontawesome-svg-core';
 import { TranslateService } from '@ngx-translate/core';
 import { enterFullscreen, exitFullscreen, isFullScreen } from 'app/shared/util/fullscreen.util';
@@ -9,8 +11,11 @@ import { TextEditorCompletionItem } from 'app/shared/monaco-editor/model/actions
 import { TextEditorKeybinding } from 'app/shared/monaco-editor/model/actions/adapter/text-editor-keybinding.model';
 import RewritingVariant from 'app/shared/monaco-editor/model/actions/artemis-intelligence/rewriting-variant';
 import { ArtemisIntelligenceService } from 'app/shared/monaco-editor/model/actions/artemis-intelligence/artemis-intelligence.service';
+import { ConsistencyCheckModalComponent } from 'app/shared/monaco-editor/model/actions/artemis-intelligence/consistency-check-modal.component';
 
 export abstract class TextEditorAction implements Disposable {
+    private modalService = inject(NgbModal);
+
     id: string;
     label: string;
     translationKey: string;
@@ -312,6 +317,21 @@ export abstract class TextEditorAction implements Disposable {
                 },
                 error: (error) => {
                     console.error('Error during rewriting:', error);
+                },
+            });
+        }
+    }
+
+    consistencyCheck(editor: TextEditor, artemisIntelligence: ArtemisIntelligenceService, exerciseId: number): void {
+        const text = editor.getFullText();
+        if (text) {
+            artemisIntelligence.consistencyCheck(text, exerciseId).subscribe({
+                next: (message) => {
+                    const modalRef = this.modalService.open(ConsistencyCheckModalComponent);
+                    modalRef.componentInstance.response = message;
+                },
+                error: (error) => {
+                    console.error('Error during consistency check:', error);
                 },
             });
         }
