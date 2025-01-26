@@ -11,6 +11,13 @@ on:
           - develop
           - main
           - release/*
+      triggered_by:
+        description: "Username that triggered deployment (not required, shown if triggered via GitHub UI, logged if triggered via GitHub app)"
+        required: false
+        type: string
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.inputs.branch }}
 
 env:
   NODE_HOSTNAME_POSTFIX: ${{ secrets.NODE_HOSTNAME_POSTFIX }}
