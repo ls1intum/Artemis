@@ -211,6 +211,9 @@ export class CourseConversationsComponent implements OnInit, OnDestroy {
 
     onPinnedCountChanged(newCount: number): void {
         this.pinnedCount = newCount;
+        if (this.pinnedCount == 0 && this.showOnlyPinned) {
+            this.showOnlyPinned = false;
+        }
     }
 
     private setupMetis() {

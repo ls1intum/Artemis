@@ -27,7 +27,8 @@ import { MetisModule } from 'app/shared/metis/metis.module';
 import { MockTranslateService } from '../../../../../helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
 import { provideRouter } from '@angular/router';
-import { ProfilePictureComponent } from '../../../../../../../../main/webapp/app/shared/profile-picture/profile-picture.component';
+import { ProfilePictureComponent } from 'app/shared/profile-picture/profile-picture.component';
+import { input, runInInjectionContext, SimpleChanges } from '@angular/core';
 
 const examples: ConversationDTO[] = [
     generateOneToOneChatDTO({}),
@@ -170,6 +171,25 @@ examples.forEach((activeConversation) => {
             component.togglePinnedMessages();
             expect(togglePinnedMessageSpy).toHaveBeenCalled();
         }));
+
+        it('should set showPinnedMessages to false if pinnedMessageCount changes to 0 while it is currently showing pinned messages', () => {
+            component.showPinnedMessages = true;
+            runInInjectionContext(fixture.debugElement.injector, () => {
+                component.pinnedMessageCount = input<number>(3);
+
+                const changes: SimpleChanges = {
+                    pinnedMessageCount: {
+                        currentValue: 0,
+                        previousValue: 3,
+                        firstChange: false,
+                        isFirstChange: () => false,
+                    },
+                };
+
+                component.ngOnChanges(changes);
+                expect(component.showPinnedMessages).toBeFalse();
+            });
+        });
 
         if (activeConversation instanceof ChannelDTO && activeConversation.subType !== ChannelSubType.GENERAL) {
             it(
