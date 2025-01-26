@@ -46,7 +46,6 @@ import { ArtemisExamModePickerModule } from 'app/exam/manage/exams/exam-mode-pic
 import { ExamImportComponent } from 'app/exam/manage/exams/exam-import/exam-import.component';
 import { ArtemisHeaderExercisePageWithDetailsModule } from 'app/exercises/shared/exercise-headers/exercise-headers.module';
 import { ExamExerciseImportComponent } from 'app/exam/manage/exams/exam-exercise-import/exam-exercise-import.component';
-import { FeatureToggleModule } from 'app/shared/feature-toggle/feature-toggle.module';
 import { BonusComponent } from 'app/grading-system/bonus/bonus.component';
 import { ArtemisModePickerModule } from 'app/exercises/shared/mode-picker/mode-picker.module';
 import { StudentExamTimelineComponent } from './student-exams/student-exam-timeline/student-exam-timeline.component';
@@ -68,8 +67,6 @@ import { SafeHtmlPipe } from 'app/shared/pipes/safe-html.pipe';
 import { GradeStepBoundsPipe } from 'app/shared/pipes/grade-step-bounds.pipe';
 import { examScoresState } from 'app/exam/exam-scores/exam-scores.route';
 import { GitDiffLineStatComponent } from 'app/exercises/programming/git-diff-report/git-diff-line-stat.component';
-import { ExamExerciseImportComponent } from 'app/exam/manage/exams/exam-exercise-import/exam-exercise-import.component';
-import { ExamImportComponent } from 'app/exam/manage/exams/exam-import/exam-import.component';
 
 const ENTITY_STATES = [...examManagementState, ...examScoresState];
 
@@ -116,8 +113,16 @@ const ENTITY_STATES = [...examManagementState, ...examScoresState];
         ExamImportComponent,
         ExamExerciseImportComponent,
         BonusComponent,
-    ],
-    declarations: [
+        ProgrammingExerciseExamDiffComponent,
+        StudentExamTimelineComponent,
+        ExamLiveAnnouncementCreateButtonComponent,
+        ExamLiveAnnouncementCreateModalComponent,
+        ExamEditWorkingTimeDialogComponent,
+        ExamEditWorkingTimeComponent,
+        StudentExamDetailTableRowComponent,
+        QuizExerciseGroupCellComponent,
+        ModelingExerciseGroupCellComponent,
+        FileUploadExerciseGroupCellComponent,
         ExamManagementComponent,
         ExamUpdateComponent,
         ExamDetailComponent,
@@ -135,16 +140,6 @@ const ENTITY_STATES = [...examManagementState, ...examScoresState];
         ExamChecklistExerciseGroupTableComponent,
         ExamStatusComponent,
         ProgrammingExerciseGroupCellComponent,
-        FileUploadExerciseGroupCellComponent,
-        ModelingExerciseGroupCellComponent,
-        QuizExerciseGroupCellComponent,
-        StudentExamDetailTableRowComponent,
-        ExamEditWorkingTimeComponent,
-        ExamEditWorkingTimeDialogComponent,
-        ExamLiveAnnouncementCreateModalComponent,
-        ExamLiveAnnouncementCreateButtonComponent,
-        StudentExamTimelineComponent,
-        ProgrammingExerciseExamDiffComponent,
     ],
 })
 export class ArtemisExamManagementModule {}
