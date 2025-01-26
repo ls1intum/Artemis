@@ -6,11 +6,6 @@ on:
       branch:
         description: 'Branch to deploy'
         required: true
-        type: choice
-        options:
-          - develop
-          - main
-          - release/*
       triggered_by:
         description: "Username that triggered deployment (not required, shown if triggered via GitHub UI, logged if triggered via GitHub app)"
         required: false
@@ -19,49 +14,42 @@ on:
 concurrency:
   group: ${{ github.workflow }}-${{ github.event.inputs.branch }}
 
-env:
-  NODE_HOSTNAME_POSTFIX: ${{ secrets.NODE_HOSTNAME_POSTFIX }}
-  SECONDARY_NODE_HOSTNAMES: ${{ secrets.SECONDARY_NODE_HOSTNAMES }}
-  PRIMARY_NODE: ${{ secrets.PRIMARY_NODE_HOSTNAME }}
-  VM_USERNAME: ${{ secrets.SSH_USERNAME }}
-  HEALTH_CHECK_URL: "https://artemis-staging-localci.artemis.cit.tum.de/management/health"
-
 jobs:
   check-build-status:
     runs-on: ubuntu-latest
     outputs:
       can_deploy: ${{ steps.check_build.outputs.can_deploy }}
+      workflow_run_id: ${{ steps.get_workflow_run.outputs.data.workflow_runs[0].id }}
     steps:
-      - name: Get latest build for selected branch
-        id: check_build
+      - name: Get latest build workflow run
+        id: get_workflow_run
         uses: octokit/request-action@v2.x
         with:
           route: GET /repos/${{ github.repository }}/actions/workflows/build.yml/runs?branch=${{ github.event.inputs.branch }}&per_page=1
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Check build result
+  
+      - name: Check for war artifact
+        id: verify_artifact
+        uses: octokit/request-action@v2.x
+        with:
+          route: GET /repos/${{ github.repository }}/actions/runs/${{ fromJson(steps.get_workflow_run.outputs.data).workflow_runs[0].id }}/artifacts?name=Artemis.war
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+  
+      - name: Verify artifact exists
         id: check_result
         run: |
-          STATUS=$(echo '${{ steps.check_build.outputs.data }}' | jq -r '.workflow_runs[0].status')
-          CONCLUSION=$(echo '${{ steps.check_build.outputs.data }}' | jq -r '.workflow_runs[0].conclusion')
-          
-          echo "Latest build status: $STATUS"
-          echo "Latest build conclusion: $CONCLUSION"
-          
-          if [ "$STATUS" = "completed" ] && [ "$CONCLUSION" = "success" ]; then
+          TOTAL_COUNT=$(echo '${{ steps.verify_artifact.outputs.data }}' | jq -r '.total_count')
+            
+          if [ "$TOTAL_COUNT" -gt 0 ]; then
             echo "can_deploy=true" >> $GITHUB_OUTPUT
-            echo "Latest build was successful"
+            echo "Found Artemis.war artifact in latest build"
           else
             echo "can_deploy=false" >> $GITHUB_OUTPUT
-            echo "Latest build was not successful or still in progress"
+            echo "No Artemis.war artifact found in latest build"
+            exit 1
           fi
-
-      - name: Fail if build not successful
-        if: steps.check_result.outputs.can_deploy != 'true'
-        run: |
-          echo "Latest build was not successful or still in progress"
-          exit 1
 
   deploy:
     needs: check-build-status
@@ -70,6 +58,13 @@ jobs:
     environment: 
         name: artemis-staging-localci.artemis.cit.tum.de
         url: https://artemis-staging-localci.artemis.cit.tum.de
+    env:
+      NODE_HOSTNAME_POSTFIX: ${{ secrets.NODE_HOSTNAME_POSTFIX }}
+      SECONDARY_NODE_HOSTNAMES: ${{ secrets.SECONDARY_NODE_HOSTNAMES }}
+      PRIMARY_NODE: ${{ secrets.PRIMARY_NODE_HOSTNAME }}
+      VM_USERNAME: ${{ secrets.SSH_USERNAME }}
+      HEALTH_CHECK_URL: "https://artemis-staging-localci.artemis.cit.tum.de/management/health"
+
     timeout-minutes: 30
     
     steps:
