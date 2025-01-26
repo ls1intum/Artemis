@@ -8,8 +8,15 @@ import { BarChartModule } from '@swimlane/ngx-charts';
 import { ArtemisFeedbackModule } from 'app/exercises/shared/feedback/feedback.module';
 
 @NgModule({
-    imports: [ArtemisSharedModule, ArtemisProgrammingExerciseActionsModule, ArtemisFeedbackModule, ArtemisSharedComponentModule, SubmissionResultStatusModule, BarChartModule],
-    declarations: [ResultHistoryComponent],
+    imports: [
+        ArtemisSharedModule,
+        ArtemisProgrammingExerciseActionsModule,
+        ArtemisFeedbackModule,
+        ArtemisSharedComponentModule,
+        SubmissionResultStatusModule,
+        BarChartModule,
+        ResultHistoryComponent,
+    ],
     exports: [ResultHistoryComponent],
 })
 export class ArtemisResultModule {}

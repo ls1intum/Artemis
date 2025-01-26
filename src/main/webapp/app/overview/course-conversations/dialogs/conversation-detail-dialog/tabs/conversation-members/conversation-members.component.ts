@@ -8,12 +8,18 @@ import { AlertService } from 'app/core/util/alert.service';
 import { onError } from 'app/shared/util/global.utils';
 import { EMPTY, Subject, from, map } from 'rxjs';
 import { faMagnifyingGlass, faUserPlus } from '@fortawesome/free-solid-svg-icons';
-import { NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
+import { NgbModal, NgbModalRef, NgbPagination } from '@ng-bootstrap/ng-bootstrap';
 import { ConversationAddUsersDialogComponent } from 'app/overview/course-conversations/dialogs/conversation-add-users-dialog/conversation-add-users-dialog.component';
 import { getAsChannelDTO, isChannelDTO } from 'app/entities/metis/conversation/channel.model';
 import { canAddUsersToConversation } from 'app/shared/metis/conversations/conversation-permissions.utils';
 import { ConversationUserDTO } from 'app/entities/metis/conversation/conversation-user-dto.model';
 import { defaultSecondLayerDialogOptions } from 'app/overview/course-conversations/other/conversation.util';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { FormsModule } from '@angular/forms';
+import { ConversationMemberRowComponent } from './conversation-member-row/conversation-member-row.component';
+import { ItemCountComponent } from 'app/shared/pagination/item-count.component';
+import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 
 interface SearchQuery {
     searchTerm: string;
@@ -22,15 +28,16 @@ interface SearchQuery {
 @Component({
     selector: 'jhi-conversation-members',
     templateUrl: './conversation-members.component.html',
+    imports: [FaIconComponent, TranslateDirective, FormsModule, ConversationMemberRowComponent, ItemCountComponent, NgbPagination, ArtemisTranslatePipe],
 })
 export class ConversationMembersComponent implements OnInit, OnDestroy {
     private ngUnsubscribe = new Subject<void>();
 
     private readonly search$ = new Subject<SearchQuery>();
 
-    course = input<Course>();
-    activeConversationInput = input<ConversationDTO>();
-    activeConversation = signal<ConversationDTO | null>(null);
+    course = input.required<Course>();
+    activeConversationInput = input.required<ConversationDTO>();
+    activeConversation = signal<ConversationDTO | undefined>(undefined);
     changesPerformed = output<void>();
 
     canAddUsersToConversation = canAddUsersToConversation;
@@ -115,8 +122,8 @@ export class ConversationMembersComponent implements OnInit, OnDestroy {
                 switchMap(() => {
                     if (this.course()?.id && this.activeConversation()?.id) {
                         return this.conversationService.searchMembersOfConversation(
-                            this.course()?.id!,
-                            this.activeConversation()?.id!,
+                            this.course().id!,
+                            this.activeConversation()!.id!,
                             this.searchTerm,
                             this.page - 1,
                             this.itemsPerPage,

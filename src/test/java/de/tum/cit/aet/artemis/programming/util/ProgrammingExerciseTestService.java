@@ -5,6 +5,7 @@ import static de.tum.cit.aet.artemis.exercise.domain.ExerciseMode.INDIVIDUAL;
 import static de.tum.cit.aet.artemis.exercise.domain.ExerciseMode.TEAM;
 import static de.tum.cit.aet.artemis.programming.domain.ProgrammingLanguage.C;
 import static de.tum.cit.aet.artemis.programming.domain.ProgrammingLanguage.JAVA;
+import static de.tum.cit.aet.artemis.programming.domain.ProgrammingLanguage.KOTLIN;
 import static de.tum.cit.aet.artemis.programming.domain.ProgrammingLanguage.SWIFT;
 import static de.tum.cit.aet.artemis.programming.service.ProgrammingExerciseExportService.BUILD_PLAN_FILE_NAME;
 import static de.tum.cit.aet.artemis.programming.service.ProgrammingExerciseExportService.EXPORTED_EXERCISE_DETAILS_FILE_PREFIX;
@@ -119,6 +120,7 @@ import de.tum.cit.aet.artemis.plagiarism.domain.PlagiarismDetectionConfig;
 import de.tum.cit.aet.artemis.programming.domain.AuxiliaryRepository;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseStudentParticipation;
+import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseTask;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseTestCase;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingLanguage;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingSubmission;
@@ -127,8 +129,6 @@ import de.tum.cit.aet.artemis.programming.domain.RepositoryType;
 import de.tum.cit.aet.artemis.programming.domain.StaticCodeAnalysisCategory;
 import de.tum.cit.aet.artemis.programming.domain.VcsRepositoryUri;
 import de.tum.cit.aet.artemis.programming.domain.build.BuildLogStatisticsEntry;
-import de.tum.cit.aet.artemis.programming.domain.hestia.ExerciseHint;
-import de.tum.cit.aet.artemis.programming.domain.hestia.ProgrammingExerciseTask;
 import de.tum.cit.aet.artemis.programming.domain.submissionpolicy.LockRepositoryPolicy;
 import de.tum.cit.aet.artemis.programming.dto.BuildLogStatisticsDTO;
 import de.tum.cit.aet.artemis.programming.repository.AuxiliaryRepositoryRepository;
@@ -157,7 +157,7 @@ import de.tum.cit.aet.artemis.programming.util.GitUtilService.MockFileRepository
  * Note: this class should be independent of the actual VCS and CIS and contains common test logic for scenarios:
  * 1) Jenkins + Gitlab
  * The local CI + local VC systems require a different setup as there are no requests to external systems and only minimal mocking is necessary. See
- * {@link ProgrammingExerciseLocalVCLocalCIIntegrationTest}.
+ * {@link de.tum.cit.aet.artemis.programming.icl.ProgrammingExerciseLocalVCLocalCIIntegrationTest}.
  */
 @Service
 public class ProgrammingExerciseTestService {
@@ -526,8 +526,8 @@ public class ProgrammingExerciseTestService {
     public void createProgrammingExercise_programmingLanguage_validExercise_created(ProgrammingLanguage language, ProgrammingLanguageFeature programmingLanguageFeature)
             throws Exception {
         exercise.setProgrammingLanguage(language);
-        if (language == SWIFT) {
-            exercise.setPackageName("swiftTest");
+        if (programmingLanguageFeature.packageNameRequired() && language != JAVA && language != KOTLIN) {
+            exercise.setPackageName("testPackage");
         }
         exercise.setProjectType(programmingLanguageFeature.projectTypes().isEmpty() ? null : programmingLanguageFeature.projectTypes().getFirst());
         mockDelegate.mockConnectorRequestsForSetup(exercise, false, false, false);
@@ -687,8 +687,8 @@ public class ProgrammingExerciseTestService {
             throws Exception {
         exercise.setStaticCodeAnalysisEnabled(true);
         exercise.setProgrammingLanguage(language);
-        if (language == SWIFT) {
-            exercise.setPackageName("swiftTest");
+        if (programmingLanguageFeature.packageNameRequired() && language != JAVA && language != KOTLIN) {
+            exercise.setPackageName("testPackage");
         }
         // Exclude ProjectType FACT as SCA is not supported
         if (language == C) {
@@ -699,7 +699,7 @@ public class ProgrammingExerciseTestService {
         }
         mockDelegate.mockConnectorRequestsForSetup(exercise, false, false, false);
         exercise.setChannelName("testchannel-pe");
-        var generatedExercise = request.postWithResponseBody("/api/programming-exercises/setup", exercise, ProgrammingExercise.class);
+        var generatedExercise = request.postWithResponseBody("/api/programming-exercises/setup", exercise, ProgrammingExercise.class, HttpStatus.CREATED);
 
         exercise.setId(generatedExercise.getId());
         assertThat(exercise).isEqualTo(generatedExercise);
@@ -783,7 +783,6 @@ public class ProgrammingExerciseTestService {
         sourceExercise.setTasks(Collections.singletonList(task));
         programmingExerciseTaskRepository.save(task);
         programmingExerciseRepository.save(sourceExercise);
-        programmingExerciseUtilService.addHintsToExercise(sourceExercise);
 
         // Reset because we will add mocks for new requests
         mockDelegate.resetMockProvider();
@@ -818,7 +817,8 @@ public class ProgrammingExerciseTestService {
         importedExercise = programmingExerciseUtilService.loadProgrammingExerciseWithEagerReferences(importedExercise);
 
         // Check that the tasks were imported correctly (see #5474)
-        assertThat(programmingExerciseTaskRepository.findByExerciseId(importedExercise.getId())).hasSameSizeAs(sourceExercise.getTasks());
+        var importedExerciseTasks = programmingExerciseTaskRepository.findByExerciseId(importedExercise.getId());
+        assertThat(importedExerciseTasks).hasSameSizeAs(sourceExercise.getTasks());
     }
 
     // TEST
@@ -827,10 +827,9 @@ public class ProgrammingExerciseTestService {
         // Setup exercises for import
         ProgrammingExercise sourceExercise = programmingExerciseUtilService.addCourseWithOneProgrammingExerciseAndStaticCodeAnalysisCategories(programmingLanguage);
         sourceExercise.setPlagiarismDetectionConfig(PlagiarismDetectionConfig.createDefault());
-        sourceExercise = programmingExerciseRepository.save(sourceExercise);
         sourceExercise.setStaticCodeAnalysisEnabled(staticCodeAnalysisEnabled);
+        sourceExercise = programmingExerciseRepository.save(sourceExercise);
         programmingExerciseUtilService.addTestCasesToProgrammingExercise(sourceExercise);
-        programmingExerciseUtilService.addHintsToExercise(sourceExercise);
         sourceExercise = programmingExerciseUtilService.loadProgrammingExerciseWithEagerReferences(sourceExercise);
         ProgrammingExercise exerciseToBeImported = ProgrammingExerciseFactory.generateToBeImportedProgrammingExercise("ImportTitle", "imported", sourceExercise,
                 courseUtilService.addEmptyCourse());
@@ -867,15 +866,7 @@ public class ProgrammingExerciseTestService {
         var sourceTestCaseIds = sourceExercise.getTestCases().stream().map(ProgrammingExerciseTestCase::getId).collect(Collectors.toSet());
         assertThat(importedTestCaseIds).doesNotContainAnyElementsOf(sourceTestCaseIds);
         assertThat(importedExercise.getTestCases()).usingRecursiveFieldByFieldElementComparator()
-                .usingRecursiveFieldByFieldElementComparatorIgnoringFields("id", "exercise", "tasks", "solutionEntries", "coverageEntries")
-                .containsExactlyInAnyOrderElementsOf(sourceExercise.getTestCases());
-
-        // Assert correct creation of hints
-        var importedHintIds = importedExercise.getExerciseHints().stream().map(ExerciseHint::getId).collect(Collectors.toSet());
-        var sourceHintIds = sourceExercise.getExerciseHints().stream().map(ExerciseHint::getId).collect(Collectors.toSet());
-        assertThat(importedHintIds).doesNotContainAnyElementsOf(sourceHintIds);
-        assertThat(importedExercise.getExerciseHints()).usingRecursiveFieldByFieldElementComparatorIgnoringFields("id", "exercise", "exerciseHintActivations")
-                .containsExactlyInAnyOrderElementsOf(sourceExercise.getExerciseHints());
+                .usingRecursiveFieldByFieldElementComparatorIgnoringFields("id", "exercise", "tasks").containsExactlyInAnyOrderElementsOf(sourceExercise.getTestCases());
 
         // Assert creation of new build plan ids
         assertThat(importedExercise.getSolutionParticipation().getBuildPlanId()).isNotBlank().isNotEqualTo(sourceExercise.getSolutionParticipation().getBuildPlanId());
@@ -894,7 +885,6 @@ public class ProgrammingExerciseTestService {
             sourceExercise.setStaticCodeAnalysisEnabled(staticCodeAnalysisEnabled);
             sourceExercise.getBuildConfig().generateAndSetBuildPlanAccessSecret();
             programmingExerciseUtilService.addTestCasesToProgrammingExercise(sourceExercise);
-            programmingExerciseUtilService.addHintsToExercise(sourceExercise);
             programmingExerciseBuildConfigRepository.save(sourceExercise.getBuildConfig());
             sourceExercise = programmingExerciseUtilService.loadProgrammingExerciseWithEagerReferences(sourceExercise);
             ProgrammingExercise exerciseToBeImported = ProgrammingExerciseFactory.generateToBeImportedProgrammingExercise("ImportTitle", "imported", sourceExercise,
@@ -978,7 +968,6 @@ public class ProgrammingExerciseTestService {
         ProgrammingExercise sourceExercise = programmingExerciseUtilService.addCourseWithOneProgrammingExerciseAndStaticCodeAnalysisCategories();
         sourceExercise.setMode(ExerciseMode.INDIVIDUAL);
         programmingExerciseUtilService.addTestCasesToProgrammingExercise(sourceExercise);
-        programmingExerciseUtilService.addHintsToExercise(sourceExercise);
         sourceExercise = programmingExerciseUtilService.loadProgrammingExerciseWithEagerReferences(sourceExercise);
         sourceExercise.setCourse(sourceExercise.getCourseViaExerciseGroupOrCourseMember());
         programmingExerciseRepository.save(sourceExercise);
@@ -1018,7 +1007,7 @@ public class ProgrammingExerciseTestService {
         ProgrammingExercise sourceExercise = programmingExerciseUtilService.addCourseWithOneProgrammingExerciseAndStaticCodeAnalysisCategories();
         sourceExercise.setMode(TEAM);
         programmingExerciseUtilService.addTestCasesToProgrammingExercise(sourceExercise);
-        programmingExerciseUtilService.addHintsToExercise(sourceExercise);
+        programmingExerciseRepository.save(sourceExercise);
         sourceExercise = programmingExerciseUtilService.loadProgrammingExerciseWithEagerReferences(sourceExercise);
         var teamAssignmentConfig = new TeamAssignmentConfig();
         teamAssignmentConfig.setExercise(sourceExercise);
@@ -1185,7 +1174,6 @@ public class ProgrammingExerciseTestService {
         ProgrammingExercise sourceExercise = programmingExerciseUtilService.addProgrammingExerciseToExam(sourceExam, 0);
         sourceExercise.setStaticCodeAnalysisEnabled(false);
         programmingExerciseUtilService.addTestCasesToProgrammingExercise(sourceExercise);
-        programmingExerciseUtilService.addHintsToExercise(sourceExercise);
         sourceExercise = programmingExerciseUtilService.loadProgrammingExerciseWithEagerReferences(sourceExercise);
 
         // Setup to be imported exam and exercise
@@ -1203,6 +1191,7 @@ public class ProgrammingExerciseTestService {
         // Mock requests
         setupRepositoryMocks(sourceExercise, sourceExerciseRepo, sourceSolutionRepo, sourceTestRepo, sourceAuxRepo);
         setupRepositoryMocks(exerciseToBeImported, exerciseRepo, solutionRepo, testRepo, auxRepo);
+        mockDelegate.mockGetCiProjectMissing(exerciseToBeImported);
         mockDelegate.mockConnectorRequestsForImport(sourceExercise, exerciseToBeImported, false, false);
         doReturn(false).when(versionControlService).checkIfProjectExists(any(), any());
         // Import the exam
@@ -1230,15 +1219,7 @@ public class ProgrammingExerciseTestService {
         var sourceTestCaseIds = sourceExercise.getTestCases().stream().map(ProgrammingExerciseTestCase::getId).toList();
         assertThat(importedTestCaseIds).doesNotContainAnyElementsOf(sourceTestCaseIds);
         assertThat(importedExercise.getTestCases()).usingRecursiveFieldByFieldElementComparator()
-                .usingRecursiveFieldByFieldElementComparatorIgnoringFields("id", "exercise", "tasks", "solutionEntries", "coverageEntries")
-                .containsExactlyInAnyOrderElementsOf(sourceExercise.getTestCases());
-
-        // Assert correct creation of hints
-        var importedHintIds = importedExercise.getExerciseHints().stream().map(ExerciseHint::getId).toList();
-        var sourceHintIds = sourceExercise.getExerciseHints().stream().map(ExerciseHint::getId).toList();
-        assertThat(importedHintIds).doesNotContainAnyElementsOf(sourceHintIds);
-        assertThat(importedExercise.getExerciseHints()).usingRecursiveFieldByFieldElementComparatorIgnoringFields("id", "exercise", "exerciseHintActivations")
-                .containsExactlyInAnyOrderElementsOf(sourceExercise.getExerciseHints());
+                .usingRecursiveFieldByFieldElementComparatorIgnoringFields("id", "exercise", "tasks").containsExactlyInAnyOrderElementsOf(sourceExercise.getTestCases());
     }
 
     // TEST
@@ -1994,8 +1975,8 @@ public class ProgrammingExerciseTestService {
         Set<Long> peIds = exam.getExerciseGroups().get(6).getExercises().stream().map(Exercise::getId).collect(Collectors.toSet());
         List<ProgrammingExercise> programmingExercises = programmingExerciseTestRepository.findAllWithTemplateAndSolutionParticipationByIdIn(peIds);
         exam.getExerciseGroups().get(6).setExercises(new HashSet<>(programmingExercises));
-        for (var exercise : programmingExercises) {
 
+        for (var exercise : programmingExercises) {
             setupRepositoryMocks(exercise);
             for (var examUser : exam.getExamUsers()) {
                 var repo = new LocalRepository(defaultBranch);
@@ -2012,7 +1993,8 @@ public class ProgrammingExerciseTestService {
         }
 
         int noGeneratedParticipations = ExamPrepareExercisesTestUtil.prepareExerciseStart(request, exam, course);
-        assertThat(noGeneratedParticipations).isEqualTo(registeredStudents.size() * exam.getExerciseGroups().size());
+        assertThat(noGeneratedParticipations).as("for each of the %d students there should be %d exercises", registeredStudents.size(), exam.getExerciseGroups().size())
+                .isEqualTo(registeredStudents.size() * exam.getExerciseGroups().size());
 
         mockDelegate.resetMockProvider();
 
@@ -2309,17 +2291,18 @@ public class ProgrammingExerciseTestService {
         var participation7a = createProgrammingParticipationWithSubmissionAndResult(exercise3, testPrefix + "student10", 80D, ZonedDateTime.now().minusDays(4), true);
         var participation7b = createProgrammingParticipationWithSubmissionAndResult(exercise2, testPrefix + "student11", 80D, ZonedDateTime.now().minusDays(4), true);
 
-        var participation8b = createProgrammingParticipationWithSubmissionAndResult(exercise4, testPrefix + "student12", 100D, ZonedDateTime.now().minusDays(6), true);
+        var participation8a = createProgrammingParticipationWithSubmissionAndResult(exercise4, testPrefix + "student12", 100D, ZonedDateTime.now().minusDays(6), true);
 
         programmingExerciseStudentParticipationRepository.saveAll(Set.of(participation3a, participation3b, participation5b, participation6b));
         await().untilAsserted(
                 () -> assertThat(programmingExerciseStudentParticipationRepository.findAllWithBuildPlanIdWithResults()).containsExactlyInAnyOrderElementsOf(List.of(participation1a,
-                        participation1b, participation2a, participation2b, participation3a, participation3b, participation4b, participation7a, participation7b, participation8b)));
+                        participation1b, participation2a, participation2b, participation3a, participation3b, participation4b, participation7a, participation7b, participation8a)));
 
         mockDelegate.mockDeleteBuildPlan(exercise.getProjectKey(), exercise.getProjectKey() + "-" + participation1a.getParticipantIdentifier().toUpperCase(), false);
         mockDelegate.mockDeleteBuildPlan(exercise.getProjectKey(), exercise.getProjectKey() + "-" + participation2a.getParticipantIdentifier().toUpperCase(), false);
         mockDelegate.mockDeleteBuildPlan(exercise.getProjectKey(), exercise.getProjectKey() + "-" + participation3a.getParticipantIdentifier().toUpperCase(), false);
         mockDelegate.mockDeleteBuildPlan(exercise3.getProjectKey(), exercise3.getProjectKey() + "-" + participation7a.getParticipantIdentifier().toUpperCase(), false);
+        mockDelegate.mockDeleteBuildPlan(exercise4.getProjectKey(), exercise4.getProjectKey() + "-" + participation8a.getParticipantIdentifier().toUpperCase(), false);
 
         automaticProgrammingExerciseCleanupService.cleanup(); // this call won't do it, because of the missing profile, we execute it anyway to cover at least some code
         automaticProgrammingExerciseCleanupService.cleanupBuildPlansOnContinuousIntegrationServer();
@@ -2340,7 +2323,7 @@ public class ProgrammingExerciseTestService {
         assertThat(programmingExerciseStudentParticipationRepository.findByIdElseThrow(participation7a.getId()).getBuildPlanId()).isNull();
         assertThat(programmingExerciseStudentParticipationRepository.findByIdElseThrow(participation7b.getId()).getBuildPlanId()).isNotNull();
 
-        assertThat(programmingExerciseStudentParticipationRepository.findByIdElseThrow(participation8b.getId()).getBuildPlanId()).isNotNull();
+        assertThat(programmingExerciseStudentParticipationRepository.findByIdElseThrow(participation8a.getId()).getBuildPlanId()).isNull();
     }
 
     private ProgrammingExerciseStudentParticipation createProgrammingParticipationWithSubmissionAndResult(ProgrammingExercise exercise, String studentLogin, double score,

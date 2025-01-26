@@ -1,6 +1,5 @@
 import { NgModule } from '@angular/core';
 import { RouterModule } from '@angular/router';
-import { ArtemisExamScoresModule } from 'app/exam/exam-scores/exam-scores.module';
 import { ExamManagementComponent } from 'app/exam/manage/exam-management.component';
 import { examManagementState } from 'app/exam/manage/exam-management.route';
 import { ExamUpdateComponent } from 'app/exam/manage/exams/exam-update.component';
@@ -28,8 +27,6 @@ import { StudentExamSummaryComponent } from 'app/exam/manage/student-exams/stude
 import { ArtemisParticipationSummaryModule } from 'app/exam/participate/summary/exam-result-summary.module';
 import { ExamExerciseRowButtonsComponent } from 'app/exercises/shared/exam-exercise-row-buttons/exam-exercise-row-buttons.component';
 import { ArtemisProgrammingExerciseStatusModule } from 'app/exercises/programming/manage/status/programming-exercise-status.module';
-import { TestRunManagementComponent } from 'app/exam/manage/test-runs/test-run-management.component';
-import { CreateTestRunModalComponent } from 'app/exam/manage/test-runs/create-test-run-modal.component';
 import { ArtemisMarkdownModule } from 'app/shared/markdown.module';
 import { ExamChecklistComponent } from 'app/exam/manage/exams/exam-checklist-component/exam-checklist.component';
 import { ExamChecklistExerciseGroupTableComponent } from 'app/exam/manage/exams/exam-checklist-component/exam-checklist-exercisegroup-table/exam-checklist-exercisegroup-table.component';
@@ -49,16 +46,12 @@ import { ArtemisExamModePickerModule } from 'app/exam/manage/exams/exam-mode-pic
 import { ExamImportComponent } from 'app/exam/manage/exams/exam-import/exam-import.component';
 import { ArtemisHeaderExercisePageWithDetailsModule } from 'app/exercises/shared/exercise-headers/exercise-headers.module';
 import { ExamExerciseImportComponent } from 'app/exam/manage/exams/exam-exercise-import/exam-exercise-import.component';
-import { FeatureToggleModule } from 'app/shared/feature-toggle/feature-toggle.module';
+
 import { BonusComponent } from 'app/grading-system/bonus/bonus.component';
 import { ArtemisModePickerModule } from 'app/exercises/shared/mode-picker/mode-picker.module';
 import { StudentExamTimelineComponent } from './student-exams/student-exam-timeline/student-exam-timeline.component';
 import { TitleChannelNameModule } from 'app/shared/form/title-channel-name/title-channel-name.module';
 import { ExamEditWorkingTimeDialogComponent } from 'app/exam/manage/exams/exam-checklist-component/exam-edit-workingtime-dialog/exam-edit-working-time-dialog.component';
-import { SuspiciousBehaviorComponent } from './suspicious-behavior/suspicious-behavior.component';
-import { SuspiciousSessionsOverviewComponent } from './suspicious-behavior/suspicious-sessions-overview/suspicious-sessions-overview.component';
-import { PlagiarismCasesOverviewComponent } from './suspicious-behavior/plagiarism-cases-overview/plagiarism-cases-overview.component';
-import { SuspiciousSessionsComponent } from './suspicious-behavior/suspicious-sessions/suspicious-sessions.component';
 import { ExamEditWorkingTimeComponent } from 'app/exam/manage/exams/exam-checklist-component/exam-edit-workingtime-dialog/exam-edit-working-time.component';
 import { ExamLiveAnnouncementCreateModalComponent } from 'app/exam/manage/exams/exam-checklist-component/exam-announcement-dialog/exam-live-announcement-create-modal.component';
 import { ExamLiveAnnouncementCreateButtonComponent } from 'app/exam/manage/exams/exam-checklist-component/exam-announcement-dialog/exam-live-announcement-create-button.component';
@@ -71,17 +64,19 @@ import { ArtemisProgrammingExerciseModule } from 'app/exercises/programming/shar
 import { DetailModule } from 'app/detail-overview-list/detail.module';
 import { ArtemisDurationFromSecondsPipe } from 'app/shared/pipes/artemis-duration-from-seconds.pipe';
 import { NoDataComponent } from 'app/shared/no-data-component';
-import { GitDiffLineStatComponent } from 'app/exercises/programming/hestia/git-diff-report/git-diff-line-stat.component';
+import { SafeHtmlPipe } from 'app/shared/pipes/safe-html.pipe';
+import { GradeStepBoundsPipe } from 'app/shared/pipes/grade-step-bounds.pipe';
+import { examScoresState } from 'app/exam/exam-scores/exam-scores.route';
+import { GitDiffLineStatComponent } from 'app/exercises/programming/git-diff-report/git-diff-line-stat.component';
 
-const ENTITY_STATES = [...examManagementState];
+const ENTITY_STATES = [...examManagementState, ...examScoresState];
 
 @NgModule({
     // TODO: For better modularization we could define an exercise module with the corresponding exam routes
-    providers: [ArtemisDurationFromSecondsPipe],
+    providers: [ArtemisDurationFromSecondsPipe, SafeHtmlPipe, GradeStepBoundsPipe],
     imports: [
         RouterModule.forChild(ENTITY_STATES),
         ArtemisTextExerciseModule,
-        ArtemisExamScoresModule,
         ArtemisSharedModule,
         FormDateTimePickerModule,
         ArtemisSharedComponentModule,
@@ -102,7 +97,6 @@ const ENTITY_STATES = [...examManagementState];
         ArtemisExamModePickerModule,
         ArtemisHeaderExercisePageWithDetailsModule,
         BarChartModule,
-        FeatureToggleModule,
         ArtemisModePickerModule,
         StudentsUploadImagesModule,
         TitleChannelNameModule,
@@ -113,8 +107,9 @@ const ENTITY_STATES = [...examManagementState];
         DetailModule,
         NoDataComponent,
         GitDiffLineStatComponent,
-    ],
-    declarations: [
+        SafeHtmlPipe,
+        GradeStepBoundsPipe,
+        BonusComponent,
         ExamManagementComponent,
         ExamUpdateComponent,
         ExamDetailComponent,
@@ -125,8 +120,6 @@ const ENTITY_STATES = [...examManagementState];
         ExamStudentsAttendanceCheckComponent,
         StudentExamStatusComponent,
         StudentExamsComponent,
-        TestRunManagementComponent,
-        CreateTestRunModalComponent,
         StudentExamDetailComponent,
         DurationPipe,
         StudentExamSummaryComponent,
@@ -140,15 +133,10 @@ const ENTITY_STATES = [...examManagementState];
         StudentExamDetailTableRowComponent,
         ExamImportComponent,
         ExamExerciseImportComponent,
-        BonusComponent,
         ExamEditWorkingTimeComponent,
         ExamEditWorkingTimeDialogComponent,
         ExamLiveAnnouncementCreateModalComponent,
         ExamLiveAnnouncementCreateButtonComponent,
-        SuspiciousBehaviorComponent,
-        SuspiciousSessionsOverviewComponent,
-        PlagiarismCasesOverviewComponent,
-        SuspiciousSessionsComponent,
         StudentExamTimelineComponent,
         ProgrammingExerciseExamDiffComponent,
     ],

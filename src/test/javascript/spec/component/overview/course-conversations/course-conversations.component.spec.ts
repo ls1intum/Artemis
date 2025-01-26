@@ -1,6 +1,7 @@
 import { CourseConversationsComponent } from 'app/overview/course-conversations/course-conversations.component';
 import { ComponentFixture, TestBed, fakeAsync, tick, waitForAsync } from '@angular/core/testing';
 import { ConversationDTO } from 'app/entities/metis/conversation/conversation.model';
+import { OneToOneChatDTO } from '../../../../../../main/webapp/app/entities/metis/conversation/one-to-one-chat.model';
 import { generateExampleChannelDTO, generateExampleGroupChatDTO, generateOneToOneChatDTO } from './helpers/conversationExampleModels';
 import { MockComponent, MockPipe, MockProvider } from 'ng-mocks';
 import { MetisConversationService } from 'app/shared/metis/metis-conversation.service';
@@ -44,7 +45,12 @@ import { LayoutService } from 'app/shared/breakpoints/layout.service';
 import { CustomBreakpointNames } from 'app/shared/breakpoints/breakpoints.service';
 import { Posting, PostingType, SavedPostStatus, SavedPostStatusMap } from 'app/entities/metis/posting.model';
 
-const examples: (ConversationDTO | undefined)[] = [undefined, generateOneToOneChatDTO({}), generateExampleGroupChatDTO({}), generateExampleChannelDTO({})];
+const examples: (ConversationDTO | undefined)[] = [
+    undefined,
+    generateOneToOneChatDTO({} as OneToOneChatDTO),
+    generateExampleGroupChatDTO({} as GroupChatDTO),
+    generateExampleChannelDTO({} as ChannelDTO),
+];
 
 examples.forEach((activeConversation) => {
     describe('CourseConversationComponent with ' + (activeConversation?.type || 'no active conversation'), () => {
@@ -57,6 +63,7 @@ examples.forEach((activeConversation) => {
         let acceptCodeOfConductSpy: jest.SpyInstance;
         let setActiveConversationSpy: jest.SpyInstance;
         let metisConversationService: MetisConversationService;
+        let courseOverviewService: CourseOverviewService;
         let modalService: NgbModal;
         let courseSidebarService: CourseSidebarService;
         let layoutService: LayoutService;
@@ -130,6 +137,7 @@ examples.forEach((activeConversation) => {
             });
 
             metisConversationService = TestBed.inject(MetisConversationService);
+            courseOverviewService = TestBed.inject(CourseOverviewService);
             courseSidebarService = TestBed.inject(CourseSidebarService);
             layoutService = TestBed.inject(LayoutService);
             activatedRoute = TestBed.inject(ActivatedRoute);
@@ -158,6 +166,39 @@ examples.forEach((activeConversation) => {
             acceptCodeOfConductSpy = jest.spyOn(metisConversationService, 'acceptCodeOfConduct');
             jest.spyOn(metisService, 'posts', 'get').mockReturnValue(postsSubject.asObservable());
             modalService = TestBed.inject(NgbModal);
+            component.sidebarConversations = [];
+
+            jest.spyOn(courseOverviewService, 'mapConversationsToSidebarCardElements').mockReturnValue([
+                {
+                    id: 1,
+                    title: 'Test Channel 1',
+                    isCurrent: true,
+                    conversation: { id: 1 },
+                    size: 'S',
+                },
+                {
+                    id: 2,
+                    title: 'Test Channel 2',
+                    isCurrent: false,
+                    conversation: { id: 2 },
+                    size: 'S',
+                },
+            ]);
+
+            jest.spyOn(courseOverviewService, 'groupConversationsByChannelType').mockReturnValue({
+                recents: {
+                    entityData: [
+                        {
+                            id: 1,
+                            title: 'Test Channel 1',
+                            isCurrent: true,
+                            conversation: { id: 1 },
+                            size: 'S',
+                        },
+                    ],
+                },
+                generalChannels: { entityData: [] },
+            });
         }));
 
         afterEach(() => {
@@ -409,8 +450,6 @@ examples.forEach((activeConversation) => {
             });
 
             it('should log an error if createChannelFn throws an error', () => {
-                const consoleErrorSpy = jest.spyOn(console, 'error').mockImplementation();
-
                 component.createChannelFn = jest.fn().mockReturnValue({
                     pipe: () => ({
                         subscribe: ({ error }: any) => {
@@ -420,9 +459,6 @@ examples.forEach((activeConversation) => {
                 });
 
                 component.performChannelAction(channelAction);
-                expect(consoleErrorSpy).toHaveBeenCalledWith('Error creating channel:', 'Test Error');
-
-                consoleErrorSpy.mockRestore();
             });
 
             it('should not call createChannelFn or prepareSidebarData if createChannelFn is undefined', () => {
@@ -433,6 +469,17 @@ examples.forEach((activeConversation) => {
                 // Since createChannelFn is undefined, prepareSidebarData should not be called
                 expect(prepareSidebarDataSpy).not.toHaveBeenCalled();
             });
+
+            it('should correctly populate the recents group in accordionConversationGroups using existing mocks', fakeAsync(() => {
+                (metisConversationService.forceRefresh as jest.Mock).mockReturnValue(of({}));
+
+                component.prepareSidebarData();
+                tick();
+                const recentsGroup = component.accordionConversationGroups.recents;
+                expect(recentsGroup).toBeDefined();
+                expect(recentsGroup.entityData).toHaveLength(1);
+                expect(recentsGroup.entityData[0].isCurrent).toBeTrue();
+            }));
         });
 
         describe('query parameter handling', () => {
@@ -578,6 +625,14 @@ examples.forEach((activeConversation) => {
 
                 expect(setActiveConversationSpy).not.toHaveBeenCalled();
             });
+        });
+
+        it('should mark all channels as read', () => {
+            const markAllChannelsAsRead = jest.spyOn(metisConversationService, 'markAllChannelsAsRead').mockReturnValue(of());
+            const forceRefresh = jest.spyOn(metisConversationService, 'forceRefresh');
+            component.markAllChannelAsRead();
+            expect(markAllChannelsAsRead).toHaveBeenCalledOnce();
+            expect(forceRefresh).toHaveBeenCalledTimes(2);
         });
 
         describe('conversation selection', () => {

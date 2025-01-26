@@ -1,7 +1,11 @@
-import { AfterViewInit, ChangeDetectionStrategy, Component, OnDestroy, OnInit, ViewChild } from '@angular/core';
+import { AfterViewInit, ChangeDetectionStrategy, Component, OnDestroy, OnInit, ViewChild, inject } from '@angular/core';
 import { ActivatedRoute, Params } from '@angular/router';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { AlertService, AlertType } from 'app/core/util/alert.service';
+import { DifficultyPickerComponent } from 'app/exercises/shared/difficulty-picker/difficulty-picker.component';
+import { IncludedInOverallScorePickerComponent } from 'app/exercises/shared/included-in-overall-score-picker/included-in-overall-score-picker.component';
+import { PresentationScoreComponent } from 'app/exercises/shared/presentation-score/presentation-score.component';
+import { GradingInstructionsDetailsComponent } from 'app/exercises/shared/structured-grading-criterion/grading-instructions-details/grading-instructions-details.component';
 import { FileUploadExerciseService } from './file-upload-exercise.service';
 import { FileUploadExercise } from 'app/entities/file-upload-exercise.model';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
@@ -10,7 +14,7 @@ import { Exercise, ExerciseMode, IncludedInOverallScore, getCourseId, resetForIm
 import { ArtemisNavigationUtilService } from 'app/utils/navigation.utils';
 import { ExerciseCategory } from 'app/entities/exercise-category.model';
 import { cloneDeep } from 'lodash-es';
-import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
+import { NgbModal, NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { ExerciseUpdateWarningService } from 'app/exercises/shared/exercise-update-warning/exercise-update-warning.service';
 import { onError } from 'app/shared/util/global.utils';
 import { EditType, SaveExerciseCommand } from 'app/exercises/shared/exercise/exercise.utils';
@@ -22,17 +26,64 @@ import { scrollToTopOfPage } from 'app/shared/util/utils';
 import { FormDateTimePickerComponent } from 'app/shared/date-time-picker/date-time-picker.component';
 import { ExerciseTitleChannelNameComponent } from 'app/exercises/shared/exercise-title-channel-name/exercise-title-channel-name.component';
 import { TeamConfigFormGroupComponent } from 'app/exercises/shared/team-config-form-group/team-config-form-group.component';
-import { NgModel } from '@angular/forms';
+import { FormsModule, NgModel } from '@angular/forms';
 import { Subscription } from 'rxjs';
 import { FormSectionStatus } from 'app/forms/form-status-bar/form-status-bar.component';
 import { FormulaAction } from 'app/shared/monaco-editor/model/actions/formula.action';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { DocumentationButtonComponent } from 'app/shared/components/documentation-button/documentation-button.component';
+import { FormStatusBarComponent } from 'app/forms/form-status-bar/form-status-bar.component';
+import { HelpIconComponent } from 'app/shared/components/help-icon.component';
+import { CategorySelectorComponent } from 'app/shared/category-selector/category-selector.component';
+import { MarkdownEditorMonacoComponent } from 'app/shared/markdown-editor/monaco/markdown-editor-monaco.component';
+import { CompetencySelectionComponent } from 'app/shared/competency-selection/competency-selection.component';
+import { CustomMinDirective } from 'app/shared/validators/custom-min-validator.directive';
+import { CustomMaxDirective } from 'app/shared/validators/custom-max-validator.directive';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { FormFooterComponent } from 'app/forms/form-footer/form-footer.component';
+import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 
 @Component({
     selector: 'jhi-file-upload-exercise-update',
     templateUrl: './file-upload-exercise-update.component.html',
     changeDetection: ChangeDetectionStrategy.OnPush,
+    imports: [
+        FormsModule,
+        TranslateDirective,
+        DocumentationButtonComponent,
+        FormStatusBarComponent,
+        ExerciseTitleChannelNameComponent,
+        HelpIconComponent,
+        CategorySelectorComponent,
+        DifficultyPickerComponent,
+        TeamConfigFormGroupComponent,
+        MarkdownEditorMonacoComponent,
+        CompetencySelectionComponent,
+        FormDateTimePickerComponent,
+        IncludedInOverallScorePickerComponent,
+        CustomMinDirective,
+        CustomMaxDirective,
+        FaIconComponent,
+        NgbTooltip,
+        PresentationScoreComponent,
+        GradingInstructionsDetailsComponent,
+        FormFooterComponent,
+        ArtemisTranslatePipe,
+    ],
 })
 export class FileUploadExerciseUpdateComponent implements AfterViewInit, OnDestroy, OnInit {
+    private fileUploadExerciseService = inject(FileUploadExerciseService);
+    private modalService = inject(NgbModal);
+    private popupService = inject(ExerciseUpdateWarningService);
+    private activatedRoute = inject(ActivatedRoute);
+    private courseService = inject(CourseManagementService);
+    private exerciseService = inject(ExerciseService);
+    private alertService = inject(AlertService);
+    private navigationUtilService = inject(ArtemisNavigationUtilService);
+    private exerciseGroupService = inject(ExerciseGroupService);
+
+    protected readonly faQuestionCircle = faQuestionCircle;
+
     readonly IncludedInOverallScore = IncludedInOverallScore;
     readonly documentationType: DocumentationType = 'FileUpload';
 
@@ -50,7 +101,6 @@ export class FileUploadExerciseUpdateComponent implements AfterViewInit, OnDestr
     fileUploadExercise: FileUploadExercise;
     backupExercise: FileUploadExercise;
     isSaving: boolean;
-    goBackAfterSaving = false;
     exerciseCategories: ExerciseCategory[];
     existingCategories: ExerciseCategory[];
     notificationText?: string;
@@ -59,30 +109,13 @@ export class FileUploadExerciseUpdateComponent implements AfterViewInit, OnDestr
     isImport: boolean;
     examCourseId?: number;
 
-    saveCommand: SaveExerciseCommand<FileUploadExercise>;
-
     formStatusSections: FormSectionStatus[];
 
-    // Subcriptions
+    // Subscriptions
     titleChannelNameComponentSubscription?: Subscription;
     pointsSubscription?: Subscription;
     bonusPointsSubscription?: Subscription;
     teamSubscription?: Subscription;
-
-    // Icons
-    faQuestionCircle = faQuestionCircle;
-
-    constructor(
-        private fileUploadExerciseService: FileUploadExerciseService,
-        private modalService: NgbModal,
-        private popupService: ExerciseUpdateWarningService,
-        private activatedRoute: ActivatedRoute,
-        private courseService: CourseManagementService,
-        private exerciseService: ExerciseService,
-        private alertService: AlertService,
-        private navigationUtilService: ArtemisNavigationUtilService,
-        private exerciseGroupService: ExerciseGroupService,
-    ) {}
 
     get editType(): EditType {
         if (this.isImport) {
@@ -104,11 +137,6 @@ export class FileUploadExerciseUpdateComponent implements AfterViewInit, OnDestr
             this.examCourseId = getCourseId(fileUploadExercise);
         });
 
-        this.activatedRoute.queryParams.subscribe((params) => {
-            if (params.shouldHaveBackButtonToWizard) {
-                this.goBackAfterSaving = true;
-            }
-        });
         this.activatedRoute.url
             .pipe(
                 tap(
@@ -263,12 +291,6 @@ export class FileUploadExerciseUpdateComponent implements AfterViewInit, OnDestr
 
     private onSaveSuccess(exercise: Exercise) {
         this.isSaving = false;
-
-        if (this.goBackAfterSaving) {
-            this.navigationUtilService.navigateBack();
-
-            return;
-        }
 
         this.navigationUtilService.navigateForwardFromExerciseUpdateOrCreation(exercise);
     }

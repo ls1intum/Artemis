@@ -1,5 +1,6 @@
 package de.tum.cit.aet.artemis.lti.dto;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 /**
@@ -11,6 +12,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
  * @param jwksUri               The URI for the JSON Web Key Set (JWKS).
  * @param registrationEndpoint  The endpoint URL for registration.
  */
+@JsonInclude(JsonInclude.Include.NON_EMPTY)
 public record Lti13PlatformConfiguration(@JsonProperty("issuer") String issuer, @JsonProperty("token_endpoint") String tokenEndpoint,
         @JsonProperty("authorization_endpoint") String authorizationEndpoint, @JsonProperty("jwks_uri") String jwksUri,
         @JsonProperty("registration_endpoint") String registrationEndpoint) {

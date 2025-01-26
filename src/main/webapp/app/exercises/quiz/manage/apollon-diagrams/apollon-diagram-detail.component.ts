@@ -1,7 +1,7 @@
-import { Component, ElementRef, EventEmitter, Input, OnDestroy, OnInit, Output, ViewChild } from '@angular/core';
+import { Component, ElementRef, EventEmitter, Input, OnDestroy, OnInit, Output, ViewChild, inject } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { ApollonEditor, ApollonMode, Locale, UMLModel } from '@ls1intum/apollon';
-import { NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
+import { NgbModal, NgbModalRef, NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { JhiLanguageHelper } from 'app/core/language/language.helper';
 import { convertRenderedSVGToPNG } from './exercise-generation/svg-renderer';
 import { ApollonDiagramService } from 'app/exercises/quiz/manage/apollon-diagrams/apollon-diagram.service';
@@ -16,21 +16,31 @@ import { CourseManagementService } from 'app/course/manage/course-management.ser
 import { DragAndDropQuestion } from 'app/entities/quiz/drag-and-drop-question.model';
 import { ConfirmAutofocusModalComponent } from 'app/shared/components/confirm-autofocus-modal.component';
 import { lastValueFrom } from 'rxjs';
-import { NgModel } from '@angular/forms';
+import { FormsModule, NgModel } from '@angular/forms';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 
 @Component({
     selector: 'jhi-apollon-diagram-detail',
     templateUrl: './apollon-diagram-detail.component.html',
     providers: [ApollonDiagramService],
+    imports: [TranslateDirective, FaIconComponent, FormsModule, NgbTooltip, ArtemisTranslatePipe],
 })
 export class ApollonDiagramDetailComponent implements OnInit, OnDestroy {
+    private apollonDiagramService = inject(ApollonDiagramService);
+    private courseService = inject(CourseManagementService);
+    private alertService = inject(AlertService);
+    private translateService = inject(TranslateService);
+    private languageHelper = inject(JhiLanguageHelper);
+    private modalService = inject(NgbModal);
+    private route = inject(ActivatedRoute);
+
     @ViewChild('editorContainer', { static: false }) editorContainer: ElementRef;
     @ViewChild('titleField') titleField?: NgModel;
 
-    @Input()
-    private courseId: number;
-    @Input()
-    private apollonDiagramId: number;
+    @Input() courseId: number;
+    @Input() apollonDiagramId: number;
 
     @Output() closeEdit = new EventEmitter<DragAndDropQuestion | undefined>();
     @Output() closeModal = new EventEmitter();
@@ -40,7 +50,7 @@ export class ApollonDiagramDetailComponent implements OnInit, OnDestroy {
     apollonDiagram?: ApollonDiagram;
     apollonEditor?: ApollonEditor;
 
-    isSaved: boolean = true;
+    isSaved = true;
 
     /**  */
     autoSaveInterval: number;
@@ -72,16 +82,6 @@ export class ApollonDiagramDetailComponent implements OnInit, OnDestroy {
     faQuestionCircle = faQuestionCircle;
     faArrow = faArrowLeft;
     faX = faX;
-
-    constructor(
-        private apollonDiagramService: ApollonDiagramService,
-        private courseService: CourseManagementService,
-        private alertService: AlertService,
-        private translateService: TranslateService,
-        private languageHelper: JhiLanguageHelper,
-        private modalService: NgbModal,
-        private route: ActivatedRoute,
-    ) {}
 
     /**
      * Initializes Apollon Editor and sets auto save timer

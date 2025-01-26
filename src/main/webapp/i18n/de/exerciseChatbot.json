@@ -1,7 +1,7 @@
 {
     "artemisApp": {
         "exerciseChatbot": {
-            "popUpMessage": "Indem du fortfährst, erklärst du dich damit einverstanden, dass deine Interaktionen mit Iris und die erforderlichen Kontextdaten, z.B. dein Code, von Microsoft und OpenAI verarbeitet werden, wobei die Daten außerhalb unseres Universitätsrechenzentrums verarbeitet werden.",
+            "popUpMessage": "Indem du fortfährst, bestätigst du, dass du mind. 18 Jahre alt bist und dass du damit einverstanden bist, dass deine Interaktionen mit Iris und die notwendigen kontextbezogenen Daten, z.B. dein Code, von Microsoft und OpenAI (d.h. außerhalb unseres Universitätsrechenzentrums) verarbeitet werden.",
             "inputMessage": "Schreib eine Nachricht...",
             "accept": "Akzeptieren",
             "decline": "Ablehnen",
@@ -9,7 +9,7 @@
             "subtext": "iris ist ein LLM-basierter Chatbot, der dich durch deine Programmierübungen führt. Sie beantwortet Fragen und gibt Hilfestellungen.",
             "subheading1": "Datenverarbeitung & Einwilligung",
             "text1_1": "<b>Datenverarbeitung:</b> Deine Interaktionen mit Iris werden von Microsoft und OpenAI verarbeitet. Das bedeutet, dass die Informationen, die du mit Iris teilst, das Rechenzentrum unserer Universität verlassen.",
-            "text1_2": "<b>Einwilligung:</b> Um Iris benutzen zu können, musst du die Einwilligungserklärung akzeptieren, die beim ersten Öffnen von Iris erscheint. Damit stimmst du zu, dass Microsoft und OpenAI deine Daten wie beschrieben verarbeiten dürfen.",
+            "text1_2": "<b>Einwilligung:</b> Um Iris benutzen zu können, musst du mind. 18 Jahre alt sein und die Einwilligungserklärung akzeptieren, die beim ersten Öffnen von Iris erscheint. Damit stimmst du zu, dass Microsoft und OpenAI deine Daten wie beschrieben verarbeiten dürfen.",
             "subheading2": "Die wichtigsten Funktionen von Iris",
             "text2_1": "<b>Programmierkenntnisse:</b> Iris kann deine Fragen zu Programmiersprachen, Syntax, Algorithmen, Datenstrukturen oder anderen spezifischen Themen beantworten. Sie kann auch Probleme in deinem Code erkennen und dir Tipps zur Verbesserung geben.",
             "text2_2": "<b>Tutoring-Fähigkeiten:</b> Iris kann dir komplexe Programmierkonzepte erklären und anschauliche Beispiele geben.",
@@ -53,6 +53,7 @@
                 "rateLimitExceeded": "Du hast die maximale Anzahl von Nachrichten, die du in einem {{ hours }}-Stunden-Zeitfenster an Iris senden kannst, erreicht. Bitte versuche es später erneut!"
             },
             "disclaimer": "Iris kann Fehler machen. Überprüfe wichtige Informationen.",
+            "disclaimerGPT": "ChatGPT kann Fehler machen. Überprüfe wichtige Informationen.",
             "tutorFirstMessage": "Hallo, ich bin Iris! Ich kann dir bei deiner Programmieraufgabe helfen. Du kannst <a href='/about-iris' target='_blank'>hier</a> mehr über mich erfahren.",
             "codeEditorFirstMessage": "Hallo, ich bin Iris! Ich kann dir bei der Bearbeitung von Programmieraufgaben helfen. Ich kann zum Beispiel: <ul><li>eine neue Aufgabe erstellen</li><li><a href='/' target='_blank'>eine Variante von einer bestehenden Aufgabe erstellen</a></li><li>eine bestehende Aufgabe neuen Anforderungen anpassen</li></ul> Du kannst <a href='/about-iris' target='_blank'>hier</a> mehr über mich erfahren.",
             "rateLimitTooltip": "Dies ist die maximale Anzahl von Nachrichten, die du in einem {{ hours }}-Stunden-Zeitfenster an Iris senden kannst."

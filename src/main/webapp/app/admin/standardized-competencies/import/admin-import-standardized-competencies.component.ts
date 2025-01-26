@@ -1,4 +1,4 @@
-import { Component } from '@angular/core';
+import { Component, inject } from '@angular/core';
 import { faBan, faChevronRight, faFileImport, faQuestionCircle } from '@fortawesome/free-solid-svg-icons';
 import {
     KnowledgeAreaDTO,
@@ -18,6 +18,13 @@ import { ActivatedRoute, Router } from '@angular/router';
 import { MatTreeNestedDataSource } from '@angular/material/tree';
 import { NestedTreeControl } from '@angular/cdk/tree';
 import { getIcon } from 'app/entities/competency.model';
+import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
+import { ArtemisSharedModule } from 'app/shared/shared.module';
+import { ArtemisSharedComponentModule } from 'app/shared/components/shared-component.module';
+import { StandardizedCompetencyDetailComponent } from 'app/shared/standardized-competencies/standardized-competency-detail.component';
+import { KnowledgeAreaTreeComponent } from 'app/shared/standardized-competencies/knowledge-area-tree.component';
+import { ArtemisMarkdownModule } from 'app/shared/markdown.module';
+import { NgbCollapse } from '@ng-bootstrap/ng-bootstrap';
 
 interface ImportCount {
     knowledgeAreas: number;
@@ -27,6 +34,15 @@ interface ImportCount {
 @Component({
     selector: 'jhi-admin-import-standardized-competencies',
     templateUrl: './admin-import-standardized-competencies.component.html',
+    imports: [
+        ArtemisSharedModule,
+        ArtemisSharedComponentModule,
+        ArtemisMarkdownModule,
+        FontAwesomeModule,
+        StandardizedCompetencyDetailComponent,
+        KnowledgeAreaTreeComponent,
+        NgbCollapse,
+    ],
 })
 export class AdminImportStandardizedCompetenciesComponent {
     protected isLoading = false;
@@ -52,7 +68,7 @@ export class AdminImportStandardizedCompetenciesComponent {
     protected readonly importExample = `\`\`\`
 {
     "knowledgeAreas": [{
-        "title": "Artifical Intelligence",
+        "title": "Artificial Intelligence",
         "shortTitle": "AI",
         "description": "AI is a field in computer science...", //(optional)
         "competencies": [{
@@ -76,12 +92,10 @@ export class AdminImportStandardizedCompetenciesComponent {
 }
 \`\`\``;
 
-    public constructor(
-        private alertService: AlertService,
-        private adminStandardizedCompetencyService: AdminStandardizedCompetencyService,
-        private activatedRoute: ActivatedRoute,
-        private router: Router,
-    ) {}
+    private alertService = inject(AlertService);
+    private adminStandardizedCompetencyService = inject(AdminStandardizedCompetencyService);
+    private activatedRoute = inject(ActivatedRoute);
+    private router = inject(Router);
 
     /**
      * Verifies the file (only .json, smaller than 20 MB) and then tries to read the importData from it

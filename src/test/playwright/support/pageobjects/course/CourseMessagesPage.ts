@@ -113,6 +113,13 @@ export class CourseMessagesPage {
     }
 
     /**
+     * Marks a channel as course-wide in the modal dialog.
+     */
+    async setCourseWideChannel() {
+        await this.page.locator('.modal-content label[for="isCourseWideChannel"]').click();
+    }
+
+    /**
      * Marks a channel as an announcement channel in the modal dialog.
      */
     async setAnnouncementChannel() {
@@ -170,11 +177,15 @@ export class CourseMessagesPage {
      * @param newName - The new name for the conversation.
      */
     async editName(newName: string) {
+        await this.getName().click();
         await this.page.locator('#name-section .action-button').click();
         const nameField = this.page.locator('.channels-overview #name');
         await nameField.clear();
         await nameField.fill(newName);
         await this.page.locator('#submitButton').click();
+        await expect(this.page.locator('#name-section textarea')).toHaveValue(newName);
+        await this.closeEditPanel();
+        await this.page.waitForTimeout(200);
     }
 
     /**
@@ -182,11 +193,15 @@ export class CourseMessagesPage {
      * @param newTopic - The new topic for the conversation.
      */
     async editTopic(newTopic: string) {
+        await this.getName().click();
         await this.page.locator('#topic-section .action-button').click();
         const topicField = this.page.locator('.channels-overview #topic');
         await topicField.clear();
         await topicField.fill(newTopic);
         await this.page.locator('#submitButton').click();
+        await expect(this.page.locator('#topic-section textarea')).toHaveValue(newTopic);
+        await this.closeEditPanel();
+        await this.page.waitForTimeout(200);
     }
 
     /**
@@ -194,11 +209,15 @@ export class CourseMessagesPage {
      * @param newDescription - The new description for the conversation.
      */
     async editDescription(newDescription: string) {
+        await this.getName().click();
         await this.page.locator('#description-section .action-button').click();
         const descriptionField = this.page.locator('.channels-overview #description');
         await descriptionField.clear();
         await descriptionField.fill(newDescription);
         await this.page.locator('#submitButton').click();
+        await expect(this.page.locator('#description-section textarea')).toHaveValue(newDescription);
+        await this.closeEditPanel();
+        await this.page.waitForTimeout(200);
     }
 
     /**

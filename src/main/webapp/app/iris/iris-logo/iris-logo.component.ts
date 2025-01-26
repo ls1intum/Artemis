@@ -1,4 +1,4 @@
-import { Component, Input, OnInit } from '@angular/core';
+import { Component, computed, input } from '@angular/core';
 
 export enum IrisLogoSize {
     FLUID = 'fluid',
@@ -17,29 +17,29 @@ export enum IrisLogoLookDirection {
     templateUrl: './iris-logo.component.html',
     styleUrls: ['./iris-logo.component.scss'],
 })
-export class IrisLogoComponent implements OnInit {
-    @Input()
-    size: IrisLogoSize | number = IrisLogoSize.BIG;
+export class IrisLogoComponent {
+    size = input<IrisLogoSize | number>(IrisLogoSize.BIG);
+    look = input<IrisLogoLookDirection>(IrisLogoLookDirection.RIGHT);
 
-    @Input()
-    look: IrisLogoLookDirection = IrisLogoLookDirection.RIGHT;
-
-    logoUrl: string;
-    classList: string;
-
-    ngOnInit() {
-        if (this.size === IrisLogoSize.SMALL) {
-            this.logoUrl = 'public/images/iris/iris-logo-small.png';
-            this.classList = 'small';
-        } else if (this.size === IrisLogoSize.MEDIUM) {
-            this.logoUrl = `public/images/iris/iris-logo-big-${this.look}.png`;
-            this.classList = 'medium';
-        } else if (this.size === IrisLogoSize.BIG) {
-            this.logoUrl = `public/images/iris/iris-logo-big-${this.look}.png`;
-            this.classList = 'big img-fluid';
-        } else if (this.size === IrisLogoSize.FLUID) {
-            this.logoUrl = `public/images/iris/iris-logo-big-${this.look}.png`;
-            this.classList = 'fluid';
+    logoUrl = computed(() => {
+        if (this.size() === IrisLogoSize.SMALL) {
+            return 'public/images/iris/iris-logo-small.png';
         }
-    }
+        return `public/images/iris/iris-logo-big-${this.look()}.png`;
+    });
+
+    classList = computed(() => {
+        switch (this.size()) {
+            case IrisLogoSize.SMALL:
+                return 'small';
+            case IrisLogoSize.MEDIUM:
+                return 'medium';
+            case IrisLogoSize.BIG:
+                return 'big img-fluid';
+            case IrisLogoSize.FLUID:
+                return 'fluid';
+            default:
+                return '';
+        }
+    });
 }

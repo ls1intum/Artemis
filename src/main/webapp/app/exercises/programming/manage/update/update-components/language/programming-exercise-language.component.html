@@ -65,7 +65,7 @@
         @if (programmingExercise.programmingLanguage === ProgrammingLanguage.EMPTY) {
             <div>
                 <p>
-                    <fa-icon [icon]="faExclamationTriangle" size="xl" class="text-warning"></fa-icon>
+                    <fa-icon [icon]="faExclamationTriangle" size="xl" class="text-warning" />
                     <span jhiTranslate="artemisApp.programmingExercise.otherLanguageHints.title" [translateValues]="{ documentationLink: DOCUMENTATION_LINK }"></span>
                 </p>
                 <ol>
@@ -122,7 +122,7 @@
                 <input
                     required
                     type="text"
-                    [pattern]="programmingExerciseCreationConfig.appNamePatternForSwift"
+                    [pattern]="APP_NAME_PATTERN_FOR_SWIFT"
                     class="form-control"
                     name="packageName"
                     id="field_appName"
@@ -184,7 +184,7 @@
                     type="checkbox"
                     name="sequentialTestRuns"
                     id="field_sequentialTestRuns"
-                    [disabled]="!!programmingExercise.id || !!programmingExercise.staticCodeAnalysisEnabled || !!programmingExercise.buildConfig!.testwiseCoverageEnabled"
+                    [disabled]="!!programmingExercise.id || !!programmingExercise.staticCodeAnalysisEnabled"
                     [(ngModel)]="programmingExercise.buildConfig!.sequentialTestRuns"
                     checked
                 />
@@ -193,22 +193,6 @@
                 >
                 <jhi-help-icon placement="auto" text="artemisApp.programmingExercise.sequentialTestRuns.description" />
             </div>
-        </div>
-    }
-    <!-- Testwise Coverage checkbox-->
-    @if (programmingExerciseCreationConfig.testwiseCoverageAnalysisSupported) {
-        <div class="form-check custom-control custom-checkbox">
-            <input
-                class="form-check-input"
-                type="checkbox"
-                name="testwiseCoverageEnabled"
-                id="field_testwiseCoverageEnabled"
-                [disabled]="!!programmingExercise.buildConfig!.sequentialTestRuns || !!programmingExercise.id"
-                [(ngModel)]="programmingExercise.buildConfig!.testwiseCoverageEnabled"
-                checked
-            />
-            <label class="form-check-label custom-control-label" for="field_testwiseCoverageEnabled" jhiTranslate="artemisApp.programmingExercise.recordTestwiseCoverage"></label>
-            <jhi-help-icon placement="auto" text="artemisApp.programmingExercise.recordTestwiseCoverageTooltip" />
         </div>
     }
     @if (!programmingExercise.id && programmingExercise.programmingLanguage && programmingExerciseCreationConfig.checkoutSolutionRepositoryAllowed) {

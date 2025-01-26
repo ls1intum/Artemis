@@ -1,9 +1,9 @@
 import { HttpResponse, provideHttpClient } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
-import { ComponentFixture, TestBed, discardPeriodicTasks, fakeAsync, tick } from '@angular/core/testing';
-import { ActivatedRoute } from '@angular/router';
+import { ComponentFixture, TestBed, discardPeriodicTasks, fakeAsync, tick, waitForAsync } from '@angular/core/testing';
+import { ActivatedRoute, Router } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
-import { JhiWebsocketService } from 'app/core/websocket/websocket.service';
+import { WebsocketService } from 'app/core/websocket/websocket.service';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
 import { QuizBatch, QuizExercise, QuizMode } from 'app/entities/quiz/quiz-exercise.model';
 import { QuizQuestion, QuizQuestionType } from 'app/entities/quiz/quiz-question.model';
@@ -12,17 +12,10 @@ import { SubmittedAnswer } from 'app/entities/quiz/submitted-answer.model';
 import { Result } from 'app/entities/result.model';
 import { QuizExerciseService } from 'app/exercises/quiz/manage/quiz-exercise.service';
 import { QuizParticipationComponent } from 'app/exercises/quiz/participate/quiz-participation.component';
-import { DragAndDropQuestionComponent } from 'app/exercises/quiz/shared/questions/drag-and-drop-question/drag-and-drop-question.component';
-import { MultipleChoiceQuestionComponent } from 'app/exercises/quiz/shared/questions/multiple-choice-question/multiple-choice-question.component';
-import { ShortAnswerQuestionComponent } from 'app/exercises/quiz/shared/questions/short-answer-question/short-answer-question.component';
 import { ParticipationService } from 'app/exercises/shared/participation/participation.service';
-import { ButtonComponent } from 'app/shared/components/button.component';
-import { JhiConnectionStatusComponent } from 'app/shared/connection-status/connection-status.component';
-import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
-import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { ArtemisQuizService } from 'app/shared/quiz/quiz.service';
 import dayjs from 'dayjs/esm';
-import { MockComponent, MockDirective, MockPipe } from 'ng-mocks';
+import { MockBuilder } from 'ng-mocks';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { of } from 'rxjs';
 import { MockLocalStorageService } from '../../../helpers/mocks/service/mock-local-storage.service';
@@ -32,17 +25,24 @@ import { ArtemisTestModule } from '../../../test.module';
 import { AnswerOption } from 'app/entities/quiz/answer-option.model';
 import { DragAndDropMapping } from 'app/entities/quiz/drag-and-drop-mapping.model';
 import { ShortAnswerSubmittedText } from 'app/entities/quiz/short-answer-submitted-text.model';
-import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { AlertService } from 'app/core/util/alert.service';
-import { FeatureToggleDirective } from 'app/shared/feature-toggle/feature-toggle.directive';
 import { MockWebsocketService } from '../../../helpers/mocks/service/mock-websocket.service';
 import { MultipleChoiceQuestion } from 'app/entities/quiz/multiple-choice-question.model';
-import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
-import { NgModel } from '@angular/forms';
+import { QuizParticipationService } from 'app/exercises/quiz/participate/quiz-participation.service';
+import { ButtonComponent } from 'app/shared/components/button.component';
+import { SubmissionService } from 'app/exercises/shared/submission/submission.service';
+import { ArtemisServerDateService } from 'app/shared/server-date.service';
+import { MockRouter } from '../../../helpers/mocks/mock-router';
 
-// Store a copy of now to avoid timing issues
 const now = dayjs();
-const question1: QuizQuestion = { id: 1, type: QuizQuestionType.DRAG_AND_DROP, points: 1, invalid: false, exportQuiz: false, randomizeOrder: true };
+const question1: QuizQuestion = {
+    id: 1,
+    type: QuizQuestionType.DRAG_AND_DROP,
+    points: 1,
+    invalid: false,
+    exportQuiz: false,
+    randomizeOrder: true,
+};
 const question2: MultipleChoiceQuestion = {
     id: 2,
     type: QuizQuestionType.MULTIPLE_CHOICE,
@@ -52,26 +52,17 @@ const question2: MultipleChoiceQuestion = {
     exportQuiz: false,
     randomizeOrder: true,
 };
-const question3: QuizQuestion = { id: 3, type: QuizQuestionType.SHORT_ANSWER, points: 3, invalid: false, exportQuiz: false, randomizeOrder: true };
-
-const quizExercise: QuizExercise = {
-    id: 1,
-    quizQuestions: [question1, question2, question3],
-    releaseDate: dayjs(now).subtract(2, 'minutes'),
-    duration: 60 * 4,
-    dueDate: dayjs(now).add(2, 'minutes'),
-    quizStarted: true,
-    quizBatches: [
-        {
-            startTime: dayjs(now).subtract(2, 'minutes'),
-            started: true,
-        },
-    ],
-    quizMode: QuizMode.SYNCHRONIZED,
-    numberOfAssessmentsOfCorrectionRounds: [],
-    secondCorrectionEnabled: false,
-    studentAssignedTeamIdComputed: false,
+const question3: QuizQuestion = {
+    id: 3,
+    type: QuizQuestionType.SHORT_ANSWER,
+    points: 3,
+    invalid: false,
+    exportQuiz: false,
+    randomizeOrder: true,
 };
+
+let quizExercise: QuizExercise;
+
 const quizExerciseForPractice: QuizExercise = {
     id: 1,
     quizQuestions: [question1, question2, question3],
@@ -113,19 +104,6 @@ const quizExerciseUnreleased: QuizExercise = {
     studentAssignedTeamIdComputed: false,
 };
 
-const testBedDeclarations = [
-    QuizParticipationComponent,
-    ButtonComponent,
-    MockPipe(ArtemisTranslatePipe),
-    MockPipe(ArtemisDatePipe),
-    MockDirective(TranslateDirective),
-    MockComponent(MultipleChoiceQuestionComponent),
-    MockComponent(DragAndDropQuestionComponent),
-    MockComponent(ShortAnswerQuestionComponent),
-    MockComponent(JhiConnectionStatusComponent),
-    MockDirective(FeatureToggleDirective),
-];
-
 describe('QuizParticipationComponent', () => {
     let fixture: ComponentFixture<QuizParticipationComponent>;
     let component: QuizParticipationComponent;
@@ -136,45 +114,52 @@ describe('QuizParticipationComponent', () => {
     let participationService: ParticipationService;
     let quizExerciseService: QuizExerciseService;
 
+    beforeEach(() => {
+        quizExercise = {
+            id: 1,
+            quizQuestions: [question1, question2, question3],
+            releaseDate: dayjs(now).subtract(2, 'minutes'),
+            duration: 60 * 4,
+            dueDate: dayjs(now).add(2, 'minutes'),
+            quizStarted: true,
+            quizBatches: [
+                {
+                    startTime: dayjs(now).subtract(2, 'minutes'),
+                    started: true,
+                },
+            ],
+            quizMode: QuizMode.SYNCHRONIZED,
+            numberOfAssessmentsOfCorrectionRounds: [],
+            secondCorrectionEnabled: false,
+            studentAssignedTeamIdComputed: false,
+        };
+    });
+
     describe('live mode', () => {
-        beforeEach(() => {
-            TestBed.configureTestingModule({
-                imports: [ArtemisTestModule, MockDirective(NgbTooltip)],
-                declarations: [testBedDeclarations, MockDirective(NgModel)],
-                providers: [
-                    provideHttpClient(),
-                    provideHttpClientTesting(),
-                    {
-                        provide: ActivatedRoute,
-                        useValue: {
-                            params: of({ exerciseId: quizExercise.id }),
-                            data: of({ mode: 'live' }),
-                            parent: {
-                                parent: {
-                                    params: of({ courseId: 1 }),
-                                },
-                            },
-                        },
+        beforeEach(waitForAsync(() => {
+            MockBuilder(QuizParticipationComponent, ArtemisTestModule)
+                .keep(QuizExerciseService)
+                .keep(ButtonComponent)
+                .keep(QuizParticipationService)
+                .keep(ArtemisQuizService)
+                .keep(SubmissionService)
+                .keep(AlertService)
+                .keep(ArtemisServerDateService)
+                .keep(Router)
+                .provide(provideHttpClient())
+                .provide(provideHttpClientTesting())
+                .provide({ provide: TranslateService, useClass: MockTranslateService })
+                .provide({ provide: LocalStorageService, useClass: MockLocalStorageService })
+                .provide({ provide: SessionStorageService, useClass: MockSyncStorage })
+                .provide({ provide: WebsocketService, useClass: MockWebsocketService })
+                .provide({
+                    provide: ActivatedRoute,
+                    useValue: {
+                        params: of({ exerciseId: quizExercise.id }),
+                        data: of({ mode: 'live' }),
+                        parent: { parent: { params: of({ courseId: 1 }) } },
                     },
-                    {
-                        provide: LocalStorageService,
-                        useClass: MockLocalStorageService,
-                    },
-                    {
-                        provide: SessionStorageService,
-                        useClass: MockSyncStorage,
-                    },
-                    {
-                        provide: TranslateService,
-                        useClass: MockTranslateService,
-                    },
-                    {
-                        provide: JhiWebsocketService,
-                        useClass: MockWebsocketService,
-                    },
-                ],
-            })
-                .compileComponents()
+                })
                 .then(() => {
                     fixture = TestBed.createComponent(QuizParticipationComponent);
                     component = fixture.componentInstance;
@@ -188,7 +173,7 @@ describe('QuizParticipationComponent', () => {
                     jest.spyOn(quizExerciseService, 'findForStudent').mockReturnValue(of({ body: { ...quizExercise } } as HttpResponse<QuizExercise>));
                     httpMock = fixture.debugElement.injector.get(HttpTestingController);
                 });
-        });
+        }));
 
         afterEach(() => {
             httpMock.verify();
@@ -339,7 +324,14 @@ describe('QuizParticipationComponent', () => {
         ])('should join %s batches that have started %p', (quizMode, started) => {
             exerciseService = fixture.debugElement.injector.get(QuizExerciseService);
             const participationService = fixture.debugElement.injector.get(ParticipationService);
-            const participation: StudentParticipation = { exercise: { ...quizExercise, quizBatches: [], quizMode, quizStarted: false } as QuizExercise };
+            const participation: StudentParticipation = {
+                exercise: {
+                    ...quizExercise,
+                    quizBatches: [],
+                    quizMode,
+                    quizStarted: false,
+                } as QuizExercise,
+            };
             participationSpy = jest.spyOn(participationService, 'startQuizParticipation').mockReturnValue(of({ body: participation } as HttpResponse<StudentParticipation>));
 
             fixture.detectChanges();
@@ -435,7 +427,11 @@ describe('QuizParticipationComponent', () => {
             fixture.detectChanges();
 
             const answer: SubmittedAnswer = { scoreInPoints: 1, quizQuestion: question2 };
-            const quizSubmission: QuizSubmission = { submissionDate: now.subtract(3, 'minutes'), submittedAnswers: [answer], scoreInPoints: 1 };
+            const quizSubmission: QuizSubmission = {
+                submissionDate: now.subtract(3, 'minutes'),
+                submittedAnswers: [answer],
+                scoreInPoints: 1,
+            };
             const result: Result = { submission: quizSubmission };
             const participation: StudentParticipation = { exercise: quizExerciseForResults, results: [result] };
             component.showQuizResultAfterQuizEnd(participation);
@@ -476,7 +472,13 @@ describe('QuizParticipationComponent', () => {
         it('should adjust release date of the quiz if it didnt start', () => {
             const releaseDate = dayjs().add(1, 'minutes');
             const timeUntilPlannedStart = 10;
-            const quizToApply = { ...quizExercise, started: false, isPlannedToStart: true, releaseDate, timeUntilPlannedStart };
+            const quizToApply = {
+                ...quizExercise,
+                started: false,
+                isPlannedToStart: true,
+                releaseDate,
+                timeUntilPlannedStart,
+            };
 
             component.applyQuizFull(quizToApply);
             expect(component.quizExercise).toEqual(quizToApply);
@@ -484,7 +486,11 @@ describe('QuizParticipationComponent', () => {
         });
 
         it('should apply participation', () => {
-            const submission: QuizSubmission = { id: 1, submissionDate: dayjs().subtract(10, 'minutes'), submittedAnswers: [] };
+            const submission: QuizSubmission = {
+                id: 1,
+                submissionDate: dayjs().subtract(10, 'minutes'),
+                submittedAnswers: [],
+            };
             const result: Result = { id: 1, submission };
             const endedQuizExercise = { ...quizExercise, quizEnded: true };
             const participation: StudentParticipation = { exercise: endedQuizExercise, results: [result] };
@@ -499,34 +505,27 @@ describe('QuizParticipationComponent', () => {
 
     describe('preview mode', () => {
         beforeEach(() => {
-            TestBed.configureTestingModule({
-                imports: [ArtemisTestModule, MockDirective(NgbTooltip)],
-                declarations: testBedDeclarations,
-                providers: [
-                    provideHttpClient(),
-                    provideHttpClientTesting(),
-                    {
-                        provide: ActivatedRoute,
-                        useValue: {
-                            params: of({ courseId: 1, exerciseId: quizExercise.id }),
-                            data: of({ mode: 'preview' }),
-                        },
+            MockBuilder(QuizParticipationComponent, ArtemisTestModule)
+                .keep(ButtonComponent)
+                .keep(QuizParticipationService)
+                .keep(ArtemisQuizService)
+                .keep(SubmissionService)
+                .keep(AlertService)
+                .keep(ArtemisServerDateService)
+                .keep(Router)
+                .provide(provideHttpClient())
+                .provide(provideHttpClientTesting())
+                .provide({ provide: TranslateService, useClass: MockTranslateService })
+                .provide({ provide: LocalStorageService, useClass: MockLocalStorageService })
+                .provide({ provide: SessionStorageService, useClass: MockSyncStorage })
+                .provide({ provide: WebsocketService, useClass: MockWebsocketService })
+                .provide({
+                    provide: ActivatedRoute,
+                    useValue: {
+                        params: of({ exerciseId: quizExercise.id }),
+                        data: of({ mode: 'preview' }),
                     },
-                    {
-                        provide: LocalStorageService,
-                        useClass: MockLocalStorageService,
-                    },
-                    {
-                        provide: SessionStorageService,
-                        useClass: MockSyncStorage,
-                    },
-                    {
-                        provide: TranslateService,
-                        useClass: MockTranslateService,
-                    },
-                ],
-            })
-                .compileComponents()
+                })
                 .then(() => {
                     fixture = TestBed.createComponent(QuizParticipationComponent);
                     component = fixture.componentInstance;
@@ -541,8 +540,12 @@ describe('QuizParticipationComponent', () => {
             jest.restoreAllMocks();
         });
 
+        afterEach(fakeAsync(() => {
+            discardPeriodicTasks();
+        }));
+
         it('should initialize', () => {
-            const serviceStub = jest.spyOn(exerciseService, 'find').mockImplementation();
+            const serviceStub = jest.spyOn(exerciseService, 'find').mockReturnValue(of({ body: quizExercise } as HttpResponse<QuizExercise>));
             fixture.detectChanges();
             expect(serviceStub).toHaveBeenCalledWith(quizExercise.id);
         });
@@ -580,34 +583,28 @@ describe('QuizParticipationComponent', () => {
 
     describe('practice mode', () => {
         beforeEach(() => {
-            TestBed.configureTestingModule({
-                imports: [ArtemisTestModule, MockDirective(NgbTooltip)],
-                declarations: testBedDeclarations,
-                providers: [
-                    provideHttpClient(),
-                    provideHttpClientTesting(),
-                    {
-                        provide: ActivatedRoute,
-                        useValue: {
-                            params: of({ courseId: 1, exerciseId: quizExerciseForPractice.id }),
-                            data: of({ mode: 'practice' }),
-                        },
+            MockBuilder(QuizParticipationComponent)
+                .keep(ButtonComponent)
+                .keep(QuizParticipationService)
+                .keep(ArtemisQuizService)
+                .keep(SubmissionService)
+                .keep(AlertService)
+                .keep(ArtemisServerDateService)
+                .keep(QuizExerciseService)
+                .mock(WebsocketService)
+                .provide(provideHttpClient())
+                .provide(provideHttpClientTesting())
+                .provide({ provide: TranslateService, useClass: MockTranslateService })
+                .provide({ provide: LocalStorageService, useClass: MockLocalStorageService })
+                .provide({ provide: SessionStorageService, useClass: MockSyncStorage })
+                .provide({ provide: Router, useClass: MockRouter })
+                .provide({
+                    provide: ActivatedRoute,
+                    useValue: {
+                        params: of({ courseId: 1, exerciseId: quizExerciseForPractice.id }),
+                        data: of({ mode: 'practice' }),
                     },
-                    {
-                        provide: LocalStorageService,
-                        useClass: MockLocalStorageService,
-                    },
-                    {
-                        provide: SessionStorageService,
-                        useClass: MockSyncStorage,
-                    },
-                    {
-                        provide: TranslateService,
-                        useClass: MockTranslateService,
-                    },
-                ],
-            })
-                .compileComponents()
+                })
                 .then(() => {
                     fixture = TestBed.createComponent(QuizParticipationComponent);
                     component = fixture.componentInstance;
@@ -622,8 +619,12 @@ describe('QuizParticipationComponent', () => {
             jest.restoreAllMocks();
         });
 
+        afterEach(fakeAsync(() => {
+            discardPeriodicTasks();
+        }));
+
         it('should initialize', () => {
-            const serviceSpy = jest.spyOn(exerciseService, 'findForStudent').mockImplementation();
+            const serviceSpy = jest.spyOn(exerciseService, 'findForStudent').mockReturnValue(of({ body: quizExerciseForPractice } as HttpResponse<QuizExercise>));
             fixture.detectChanges();
 
             expect(serviceSpy).toHaveBeenCalledWith(quizExerciseForPractice.id);
@@ -653,7 +654,10 @@ describe('QuizParticipationComponent', () => {
 
             const request = httpMock.expectOne({ method: 'POST' });
             const quizSubmission: QuizSubmission = { submissionDate: now, submitted: true };
-            request.flush({ submission: quizSubmission, participation: { exercise: quizExerciseForPractice } as StudentParticipation } as Result);
+            request.flush({
+                submission: quizSubmission,
+                participation: { exercise: quizExerciseForPractice } as StudentParticipation,
+            } as Result);
             expect(request.request.url).toBe(`api/exercises/${quizExerciseForPractice.id}/submissions/practice`);
             fixture.detectChanges();
 
@@ -663,34 +667,27 @@ describe('QuizParticipationComponent', () => {
 
     describe('solution mode', () => {
         beforeEach(() => {
-            TestBed.configureTestingModule({
-                imports: [ArtemisTestModule, MockDirective(NgbTooltip)],
-                declarations: testBedDeclarations,
-                providers: [
-                    provideHttpClient(),
-                    provideHttpClientTesting(),
-                    {
-                        provide: ActivatedRoute,
-                        useValue: {
-                            params: of({ courseId: 1, exerciseId: quizExerciseForPractice.id }),
-                            data: of({ mode: 'solution' }),
-                        },
+            MockBuilder(QuizParticipationComponent, ArtemisTestModule)
+                .keep(ButtonComponent)
+                .keep(QuizParticipationService)
+                .keep(ArtemisQuizService)
+                .keep(SubmissionService)
+                .keep(AlertService)
+                .keep(ArtemisServerDateService)
+                .keep(Router)
+                .provide(provideHttpClient())
+                .provide(provideHttpClientTesting())
+                .provide({ provide: TranslateService, useClass: MockTranslateService })
+                .provide({ provide: LocalStorageService, useClass: MockLocalStorageService })
+                .provide({ provide: SessionStorageService, useClass: MockSyncStorage })
+                .provide({ provide: WebsocketService, useClass: MockWebsocketService })
+                .provide({
+                    provide: ActivatedRoute,
+                    useValue: {
+                        params: of({ courseId: 1, exerciseId: quizExerciseForPractice.id }),
+                        data: of({ mode: 'solution' }),
                     },
-                    {
-                        provide: LocalStorageService,
-                        useClass: MockLocalStorageService,
-                    },
-                    {
-                        provide: SessionStorageService,
-                        useClass: MockSyncStorage,
-                    },
-                    {
-                        provide: TranslateService,
-                        useClass: MockTranslateService,
-                    },
-                ],
-            })
-                .compileComponents()
+                })
                 .then(() => {
                     fixture = TestBed.createComponent(QuizParticipationComponent);
                     component = fixture.componentInstance;

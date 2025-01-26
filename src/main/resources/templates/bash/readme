@@ -1,0 +1,26 @@
+# Bash Scripting Exercise
+
+This exercise is designed to help you practice basic Bash scripting skills.
+Complete the following tasks by writing a Bash script that performs each action.
+
+1. [task][Add a Shebang](shebang,shebang_custom_message)
+Insert a "shebang" at the top of your script to specify that it should be executed with Bash.
+Assume Bash is installed at a standard path.
+
+2. [task][List Directory Entries](list_dir)
+Write a command to list all entries in the current directory, including hidden files, and print the output to the terminal.
+
+3. [task][Create File](file_creation)
+Create a file named `create_me.txt` in the current directory.
+
+4. [task][Delete a File](file_deletion)
+Delete the file named `delete_me.txt` from the current directory.
+
+5. [task][Rename a File](rename)
+Rename the file `rename_me.txt` to `renamed.txt`.
+
+6. [task][Find and Replace Text](replace)
+Replace all occurrences of the number `2.718` with `3.1415` in the file `numbers.txt`. Ensure the changes are saved.
+
+7. [task][Exit with Success](status_code)
+Exit the script with a successful status code.

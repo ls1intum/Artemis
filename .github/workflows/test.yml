@@ -40,7 +40,7 @@ concurrency:
 # Keep in sync with codeql-analysis.yml and build.yml
 env:
   CI: true
-  node: 20
+  node: 22
   java: 21
 
 jobs:
@@ -60,7 +60,32 @@ jobs:
           ${{ env.java }}
         cache: 'gradle'
     - name: Java Tests
-      run: set -o pipefail && ./gradlew --console=plain test jacocoTestReport -x webapp jacocoTestCoverageVerification | tee tests.log
+      run: |
+        set -o pipefail
+
+        DEFAULT_BRANCH="${{ github.event.repository.default_branch }}"
+        CURRENT_BRANCH="${{ github.ref_name }}"
+
+        if [[ "$DEFAULT_BRANCH" != "$CURRENT_BRANCH" ]]; then
+          # Explicitly fetch as the clone action only clones the current branch
+          git fetch origin "$DEFAULT_BRANCH"
+
+          chmod +x ./supporting_scripts/get_changed_modules.sh
+          CHANGED_MODULES=$(./supporting_scripts/get_changed_modules.sh "origin/$DEFAULT_BRANCH")
+
+          # Restrict executed tests to changed modules if there is diff between this and the base branch
+          if [ -n "${CHANGED_MODULES}" ]; then
+            IFS=,
+            TEST_MODULE_TAGS=$(echo "-DincludeModules=${CHANGED_MODULES[*]}")
+
+            echo "Executing tests for modules: $CHANGED_MODULES"
+            ./gradlew --console=plain test jacocoTestReport -x webapp jacocoTestCoverageVerification "$TEST_MODULE_TAGS" | tee tests.log
+            exit 0
+          fi
+        fi
+
+        echo "Executing all tests"
+        ./gradlew --console=plain test jacocoTestReport -x webapp jacocoTestCoverageVerification | tee tests.log
     - name: Print failed tests
       if: failure()
       run: grep "Test >.* FAILED\$" tests.log || echo "No failed tests."
@@ -92,8 +117,13 @@ jobs:
       uses: actions/upload-artifact@v4
       with:
         name: Coverage Report Server Tests
-        path: build/reports/jacoco/test/html/
-
+        path: build/reports/jacoco/test/html
+    - name: Append Per-Module Coverage to Job Summary
+      if: success() || failure()
+      run: |
+        AGGREGATED_REPORT_FILE=./module_coverage_report.md
+        python3 ./supporting_scripts/code-coverage/per_module_cov_report/parse_module_coverage.py build/reports/jacoco $AGGREGATED_REPORT_FILE
+        cat $AGGREGATED_REPORT_FILE > $GITHUB_STEP_SUMMARY
 
   server-tests-mysql:
       needs: [ server-tests ]

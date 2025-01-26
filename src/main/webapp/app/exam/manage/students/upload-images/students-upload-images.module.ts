@@ -5,8 +5,7 @@ import { ArtemisSharedComponentModule } from 'app/shared/components/shared-compo
 import { ArtemisSharedCommonModule } from 'app/shared/shared-common.module';
 
 @NgModule({
-    imports: [ArtemisSharedComponentModule, ArtemisSharedCommonModule],
-    declarations: [StudentsUploadImagesDialogComponent, StudentsUploadImagesButtonComponent],
+    imports: [ArtemisSharedComponentModule, ArtemisSharedCommonModule, StudentsUploadImagesDialogComponent, StudentsUploadImagesButtonComponent],
     exports: [StudentsUploadImagesDialogComponent, StudentsUploadImagesButtonComponent],
 })
 export class StudentsUploadImagesModule {}

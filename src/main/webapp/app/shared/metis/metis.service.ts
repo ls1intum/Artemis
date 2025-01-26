@@ -23,7 +23,7 @@ import {
 } from 'app/shared/metis/metis.util';
 import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
 import { Params } from '@angular/router';
-import { JhiWebsocketService } from 'app/core/websocket/websocket.service';
+import { WebsocketService } from 'app/core/websocket/websocket.service';
 import { MetisPostDTO } from 'app/entities/metis/metis-post-dto.model';
 import dayjs from 'dayjs/esm';
 import { PlagiarismCase } from 'app/exercises/shared/plagiarism/types/PlagiarismCase';
@@ -36,6 +36,14 @@ import { cloneDeep } from 'lodash-es';
 
 @Injectable()
 export class MetisService implements OnDestroy {
+    protected postService = inject(PostService);
+    protected answerPostService = inject(AnswerPostService);
+    protected reactionService = inject(ReactionService);
+    protected accountService = inject(AccountService);
+    protected exerciseService = inject(ExerciseService);
+    private jhiWebsocketService = inject(WebsocketService);
+    private conversationService = inject(ConversationService);
+
     private posts$: ReplaySubject<Post[]> = new ReplaySubject<Post[]>(1);
     private tags$: BehaviorSubject<string[]> = new BehaviorSubject<string[]>([]);
     private totalNumberOfPosts$: ReplaySubject<number> = new ReplaySubject<number>(1);
@@ -44,7 +52,6 @@ export class MetisService implements OnDestroy {
     private currentConversation?: ConversationDTO = undefined;
     private user: User;
     private pageType: PageType;
-    private course: Course;
     private courseId: number;
     private cachedPosts: Post[] = [];
     private cachedTotalNumberOfPosts: number;
@@ -53,16 +60,11 @@ export class MetisService implements OnDestroy {
     private courseWideTopicSubscription: Subscription;
     private savedPostService: SavedPostService = inject(SavedPostService);
 
-    constructor(
-        protected postService: PostService,
-        protected answerPostService: AnswerPostService,
-        protected reactionService: ReactionService,
-        protected accountService: AccountService,
-        protected exerciseService: ExerciseService,
-        private jhiWebsocketService: JhiWebsocketService,
-        private conversationService: ConversationService,
-        notificationService: NotificationService,
-    ) {
+    course: Course;
+
+    constructor() {
+        const notificationService = inject(NotificationService);
+
         this.accountService.identity().then((user: User) => {
             this.user = user!;
         });
@@ -245,8 +247,8 @@ export class MetisService implements OnDestroy {
 
     /**
      * updates a given posts by invoking the post service
-     * @param {Post} post to be updated
-     * @return {Observable<Post>} updated post
+     * @param post to be updated
+     * @return updated post
      */
     updatePost(post: Post): Observable<Post> {
         return this.postService.update(this.courseId, post).pipe(

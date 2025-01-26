@@ -7,8 +7,7 @@ import { ExerciseUnitComponent } from 'app/overview/course-lectures/exercise-uni
 import { ArtemisMarkdownModule } from 'app/shared/markdown.module';
 
 @NgModule({
-    imports: [ArtemisSharedModule, ArtemisSharedComponentModule, ArtemisSharedPipesModule, ArtemisCourseExerciseRowModule, ArtemisMarkdownModule],
-    declarations: [ExerciseUnitComponent],
+    imports: [ArtemisSharedModule, ArtemisSharedComponentModule, ArtemisSharedPipesModule, ArtemisCourseExerciseRowModule, ArtemisMarkdownModule, ExerciseUnitComponent],
     exports: [ExerciseUnitComponent],
 })
 export class ArtemisLectureUnitsModule {}

@@ -3,6 +3,7 @@ import { BehaviorSubject, Subject, lastValueFrom, of } from 'rxjs';
 import { range as _range } from 'lodash-es';
 import { MockWebsocketService } from '../helpers/mocks/service/mock-websocket.service';
 import {
+    BuildTimingInfo,
     ExerciseSubmissionState,
     ProgrammingSubmissionService,
     ProgrammingSubmissionState,
@@ -17,12 +18,15 @@ import { MockParticipationWebsocketService } from '../helpers/mocks/service/mock
 import { ProgrammingExerciseParticipationService } from 'app/exercises/programming/manage/services/programming-exercise-participation.service';
 import { MockProgrammingExerciseParticipationService } from '../helpers/mocks/service/mock-programming-exercise-participation.service';
 import { HttpClient, provideHttpClient } from '@angular/common/http';
-import { TestBed, fakeAsync, tick } from '@angular/core/testing';
-import { JhiWebsocketService } from 'app/core/websocket/websocket.service';
+import { TestBed, discardPeriodicTasks, fakeAsync, tick } from '@angular/core/testing';
+import { WebsocketService } from 'app/core/websocket/websocket.service';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
+import { ProfileService } from '../../../../main/webapp/app/shared/layouts/profiles/profile.service';
+import { MockProfileService } from '../helpers/mocks/service/mock-profile.service';
+import { SubmissionProcessingDTO } from '../../../../main/webapp/app/entities/programming/submission-processing-dto';
 
 describe('ProgrammingSubmissionService', () => {
-    let websocketService: JhiWebsocketService;
+    let websocketService: WebsocketService;
     let httpService: HttpClient;
     let participationWebsocketService: ParticipationWebsocketService;
     let participationService: ProgrammingExerciseParticipationService;
@@ -38,35 +42,62 @@ describe('ProgrammingSubmissionService', () => {
     let notifyAllResultSubscribersStub: jest.SpyInstance;
 
     let wsSubmissionSubject: Subject<Submission | undefined>;
+    let wsSubmissionProcessingSubject: Subject<SubmissionProcessingDTO | undefined>;
     let wsLatestResultSubject: Subject<Result | undefined>;
 
     const participationId = 1;
+    const exerciseId = 10;
     const submissionTopic = `/user/topic/newSubmissions`;
+    const submissionProcessingTopic = `/user/topic/submissionProcessing`;
     let currentSubmission: Submission;
     let currentSubmission2: Submission;
+    let currentProgrammingSubmission: ProgrammingSubmission;
+    let currentProgrammingSubmissionOld: ProgrammingSubmission;
     let result: Result;
     let result2: Result;
+    let buildTimingInfoEmpty: BuildTimingInfo;
+    let buildTimingInfo: BuildTimingInfo;
+    let mockSubmissionProcessingDTO: SubmissionProcessingDTO;
+    let mockSubmissionProcessingDTOOld: SubmissionProcessingDTO;
 
     beforeEach(() => {
         currentSubmission = { id: 11, submissionDate: dayjs().subtract(20, 'seconds'), participation: { id: participationId } } as any;
         currentSubmission2 = { id: 12, submissionDate: dayjs().subtract(20, 'seconds'), participation: { id: participationId } } as any;
         result = { id: 31, submission: currentSubmission } as any;
         result2 = { id: 32, submission: currentSubmission2 } as any;
+        buildTimingInfoEmpty = { buildStartDate: undefined, estimatedCompletionDate: undefined };
+        buildTimingInfo = { buildStartDate: dayjs().subtract(10, 'seconds'), estimatedCompletionDate: dayjs().add(10, 'seconds') };
+        currentProgrammingSubmission = { id: 12, submissionDate: dayjs().subtract(20, 'seconds'), participation: { id: participationId }, commitHash: 'abc123' } as any;
+        currentProgrammingSubmissionOld = { id: 11, submissionDate: dayjs().subtract(40, 'seconds'), participation: { id: participationId }, commitHash: 'abc123Old' } as any;
+        mockSubmissionProcessingDTO = {
+            exerciseId: exerciseId,
+            participationId: participationId,
+            commitHash: 'abc123',
+            estimatedCompletionDate: buildTimingInfo.estimatedCompletionDate,
+            buildStartDate: buildTimingInfo.buildStartDate,
+            submissionDate: dayjs().subtract(20, 'seconds'),
+        };
+        mockSubmissionProcessingDTOOld = {
+            ...mockSubmissionProcessingDTO,
+            commitHash: 'abc123Old',
+            submissionDate: dayjs().subtract(40, 'seconds'),
+        };
 
         TestBed.configureTestingModule({
             imports: [],
             providers: [
                 provideHttpClient(),
                 provideHttpClientTesting(),
-                { provide: JhiWebsocketService, useClass: MockWebsocketService },
+                { provide: WebsocketService, useClass: MockWebsocketService },
                 { provide: ParticipationWebsocketService, useClass: MockParticipationWebsocketService },
                 { provide: ProgrammingExerciseParticipationService, useClass: MockProgrammingExerciseParticipationService },
+                { provide: ProfileService, useClass: MockProfileService },
             ],
         })
             .compileComponents()
             .then(() => {
                 submissionService = TestBed.inject(ProgrammingSubmissionService);
-                websocketService = TestBed.inject(JhiWebsocketService);
+                websocketService = TestBed.inject(WebsocketService);
                 httpService = TestBed.inject(HttpClient);
                 participationWebsocketService = TestBed.inject(ParticipationWebsocketService);
                 participationService = TestBed.inject(ProgrammingExerciseParticipationService);
@@ -76,7 +107,15 @@ describe('ProgrammingSubmissionService', () => {
                 wsSubscribeStub = jest.spyOn(websocketService, 'subscribe');
                 wsUnsubscribeStub = jest.spyOn(websocketService, 'unsubscribe');
                 wsSubmissionSubject = new Subject<Submission | undefined>();
-                wsReceiveStub = jest.spyOn(websocketService, 'receive').mockReturnValue(wsSubmissionSubject);
+                wsSubmissionProcessingSubject = new Subject<SubmissionProcessingDTO | undefined>();
+                wsReceiveStub = jest.spyOn(websocketService, 'receive').mockImplementation((topic: string) => {
+                    if (topic === submissionTopic) {
+                        return wsSubmissionSubject;
+                    } else if (topic === submissionProcessingTopic) {
+                        return wsSubmissionProcessingSubject;
+                    }
+                    return new Subject();
+                });
                 wsLatestResultSubject = new Subject<Result | undefined>();
                 participationWsLatestResultStub = jest
                     .spyOn(participationWebsocketService, 'subscribeForLatestResultOfParticipation')
@@ -110,8 +149,14 @@ describe('ProgrammingSubmissionService', () => {
     it('should query httpService endpoint and setup the websocket subscriptions if no subject is cached for the provided participation', () => {
         httpGetStub.mockReturnValue(of(currentSubmission));
         let submission;
+        submissionService.setLocalCIProfile(false);
         submissionService.getLatestPendingSubmissionByParticipationId(participationId, 10, true).subscribe((sub) => (submission = sub));
-        expect(submission).toEqual({ submissionState: ProgrammingSubmissionState.IS_BUILDING_PENDING_SUBMISSION, submission: currentSubmission, participationId });
+        expect(submission).toEqual({
+            submissionState: ProgrammingSubmissionState.IS_BUILDING_PENDING_SUBMISSION,
+            submission: currentSubmission,
+            participationId,
+            buildTimingInfo: buildTimingInfoEmpty,
+        });
         expect(wsSubscribeStub).toHaveBeenCalledOnce();
         expect(wsSubscribeStub).toHaveBeenCalledWith(submissionTopic);
         expect(wsReceiveStub).toHaveBeenCalledOnce();
@@ -120,16 +165,39 @@ describe('ProgrammingSubmissionService', () => {
         expect(participationWsLatestResultStub).toHaveBeenCalledWith(participationId, true, 10);
     });
 
+    it('should query httpService endpoint and setup the websocket subscriptions if no subject is cached for the provided participation with localCI profile', () => {
+        httpGetStub.mockReturnValue(of(currentSubmission));
+        let submission;
+        submissionService.setLocalCIProfile(true);
+        submissionService.getLatestPendingSubmissionByParticipationId(participationId, 10, true).subscribe((sub) => (submission = sub));
+        expect(submission).toEqual({
+            submissionState: ProgrammingSubmissionState.IS_BUILDING_PENDING_SUBMISSION,
+            submission: currentSubmission,
+            participationId,
+            buildTimingInfo: buildTimingInfoEmpty,
+        });
+        expect(wsSubscribeStub).toHaveBeenCalledTimes(2);
+        expect(wsSubscribeStub).toHaveBeenNthCalledWith(1, submissionTopic);
+        expect(wsSubscribeStub).toHaveBeenNthCalledWith(2, submissionProcessingTopic);
+        expect(wsReceiveStub).toHaveBeenCalledTimes(2);
+        expect(wsReceiveStub).toHaveBeenNthCalledWith(1, submissionTopic);
+        expect(wsReceiveStub).toHaveBeenNthCalledWith(2, submissionProcessingTopic);
+        expect(participationWsLatestResultStub).toHaveBeenCalledOnce();
+        expect(participationWsLatestResultStub).toHaveBeenCalledWith(participationId, true, 10);
+    });
+
     it('should emit undefined when a new result comes in for the given participation to signal that the building process is over', () => {
         const returnedSubmissions: Array<ProgrammingSubmissionStateObj | undefined> = [];
         httpGetStub.mockReturnValue(of(currentSubmission));
         submissionService.getLatestPendingSubmissionByParticipationId(participationId, 10, true).subscribe((s) => returnedSubmissions.push(s));
-        expect(returnedSubmissions).toEqual([{ submissionState: ProgrammingSubmissionState.IS_BUILDING_PENDING_SUBMISSION, submission: currentSubmission, participationId }]);
+        expect(returnedSubmissions).toEqual([
+            { submissionState: ProgrammingSubmissionState.IS_BUILDING_PENDING_SUBMISSION, submission: currentSubmission, participationId, buildTimingInfo: buildTimingInfoEmpty },
+        ]);
         // Result comes in for submission.
         result.submission = currentSubmission;
         wsLatestResultSubject.next(result);
         expect(returnedSubmissions).toEqual([
-            { submissionState: ProgrammingSubmissionState.IS_BUILDING_PENDING_SUBMISSION, submission: currentSubmission, participationId },
+            { submissionState: ProgrammingSubmissionState.IS_BUILDING_PENDING_SUBMISSION, submission: currentSubmission, participationId, buildTimingInfo: buildTimingInfoEmpty },
             { submissionState: ProgrammingSubmissionState.HAS_NO_PENDING_SUBMISSION, submission: undefined, participationId },
         ]);
     });
@@ -138,11 +206,15 @@ describe('ProgrammingSubmissionService', () => {
         const returnedSubmissions: Array<ProgrammingSubmissionStateObj | undefined> = [];
         httpGetStub.mockReturnValue(of(currentSubmission));
         submissionService.getLatestPendingSubmissionByParticipationId(participationId, 10, true).subscribe((s) => returnedSubmissions.push(s));
-        expect(returnedSubmissions).toEqual([{ submissionState: ProgrammingSubmissionState.IS_BUILDING_PENDING_SUBMISSION, submission: currentSubmission, participationId }]);
+        expect(returnedSubmissions).toEqual([
+            { submissionState: ProgrammingSubmissionState.IS_BUILDING_PENDING_SUBMISSION, submission: currentSubmission, participationId, buildTimingInfo: buildTimingInfoEmpty },
+        ]);
         // Result comes in for submission.
         result.submission = currentSubmission2;
         wsLatestResultSubject.next(result);
-        expect(returnedSubmissions).toEqual([{ submissionState: ProgrammingSubmissionState.IS_BUILDING_PENDING_SUBMISSION, submission: currentSubmission, participationId }]);
+        expect(returnedSubmissions).toEqual([
+            { submissionState: ProgrammingSubmissionState.IS_BUILDING_PENDING_SUBMISSION, submission: currentSubmission, participationId, buildTimingInfo: buildTimingInfoEmpty },
+        ]);
     });
 
     it('should emit the newest submission when it was received through the websocket connection', () => {
@@ -371,4 +443,148 @@ describe('ProgrammingSubmissionService', () => {
         submissionService.unsubscribeForLatestSubmissionOfParticipation(2);
         expect(wsUnsubscribeStub).toHaveBeenCalledOnce();
     });
+
+    it('should only unsubscribe if no other participations use the topic with localci', () => {
+        submissionService.setLocalCIProfile(true);
+        httpGetStub.mockReturnValue(of(currentSubmission));
+        submissionService.getLatestPendingSubmissionByParticipationId(participationId, 10, true);
+        submissionService.getLatestPendingSubmissionByParticipationId(2, 10, true);
+
+        // Should not unsubscribe as participation 2 still uses the same topic
+        submissionService.unsubscribeForLatestSubmissionOfParticipation(participationId);
+        expect(wsUnsubscribeStub).not.toHaveBeenCalled();
+
+        // Should now unsubscribe as last participation for topic was unsubscribed
+        submissionService.unsubscribeForLatestSubmissionOfParticipation(2);
+        expect(wsUnsubscribeStub).toHaveBeenCalledTimes(2);
+    });
+
+    it('should emit the newest submission when it was received through the websocket connection with localci', () => {
+        submissionService.setLocalCIProfile(true);
+        const returnedSubmissions: Array<ProgrammingSubmissionStateObj | undefined> = [];
+        // No latest pending submission found.
+        httpGetStub.mockReturnValue(of(undefined));
+        submissionService.getLatestPendingSubmissionByParticipationId(participationId, 10, true).subscribe((s) => returnedSubmissions.push(s));
+        expect(returnedSubmissions).toEqual([{ submissionState: ProgrammingSubmissionState.HAS_NO_PENDING_SUBMISSION, submission: undefined, participationId }]);
+        // New submission comes in.
+        wsSubmissionSubject.next(currentProgrammingSubmission);
+        expect(returnedSubmissions).toEqual([
+            { submissionState: ProgrammingSubmissionState.HAS_NO_PENDING_SUBMISSION, submission: undefined, participationId },
+            { submissionState: ProgrammingSubmissionState.IS_QUEUED, submission: currentProgrammingSubmission, participationId },
+        ]);
+        // Submission is now building.
+        wsSubmissionProcessingSubject.next(mockSubmissionProcessingDTO);
+        expect(returnedSubmissions).toEqual([
+            { submissionState: ProgrammingSubmissionState.HAS_NO_PENDING_SUBMISSION, submission: undefined, participationId },
+            { submissionState: ProgrammingSubmissionState.IS_QUEUED, submission: currentProgrammingSubmission, participationId },
+            { submissionState: ProgrammingSubmissionState.IS_BUILDING_PENDING_SUBMISSION, submission: currentProgrammingSubmission, participationId, buildTimingInfo },
+        ]);
+        // Result comes in for submission.
+        result.submission = currentProgrammingSubmission;
+        wsLatestResultSubject.next(result);
+        expect(returnedSubmissions).toEqual([
+            { submissionState: ProgrammingSubmissionState.HAS_NO_PENDING_SUBMISSION, submission: undefined, participationId },
+            { submissionState: ProgrammingSubmissionState.IS_QUEUED, submission: currentProgrammingSubmission, participationId },
+            { submissionState: ProgrammingSubmissionState.IS_BUILDING_PENDING_SUBMISSION, submission: currentProgrammingSubmission, participationId, buildTimingInfo },
+            { submissionState: ProgrammingSubmissionState.HAS_NO_PENDING_SUBMISSION, submission: undefined, participationId },
+        ]);
+    });
+
+    it('should handle when submission processing event before submission event', () => {
+        submissionService.setLocalCIProfile(true);
+        const returnedSubmissions: Array<ProgrammingSubmissionStateObj | undefined> = [];
+        // No latest pending submission found.
+        httpGetStub.mockReturnValue(of(undefined));
+        submissionService.getLatestPendingSubmissionByParticipationId(participationId, 10, true).subscribe((s) => returnedSubmissions.push(s));
+        expect(returnedSubmissions).toEqual([{ submissionState: ProgrammingSubmissionState.HAS_NO_PENDING_SUBMISSION, submission: undefined, participationId }]);
+        // Submission is now building.
+        wsSubmissionProcessingSubject.next(mockSubmissionProcessingDTO);
+        expect(returnedSubmissions).toEqual([{ submissionState: ProgrammingSubmissionState.HAS_NO_PENDING_SUBMISSION, submission: undefined, participationId }]);
+        // New submission comes in.
+        wsSubmissionSubject.next(currentProgrammingSubmission);
+        expect(returnedSubmissions).toEqual([
+            { submissionState: ProgrammingSubmissionState.HAS_NO_PENDING_SUBMISSION, submission: undefined, participationId },
+            { submissionState: ProgrammingSubmissionState.IS_BUILDING_PENDING_SUBMISSION, submission: currentProgrammingSubmission, participationId, buildTimingInfo },
+        ]);
+        // Result comes in for submission.
+        result.submission = currentProgrammingSubmission;
+        wsLatestResultSubject.next(result);
+        expect(returnedSubmissions).toEqual([
+            { submissionState: ProgrammingSubmissionState.HAS_NO_PENDING_SUBMISSION, submission: undefined, participationId },
+            { submissionState: ProgrammingSubmissionState.IS_BUILDING_PENDING_SUBMISSION, submission: currentProgrammingSubmission, participationId, buildTimingInfo },
+            { submissionState: ProgrammingSubmissionState.HAS_NO_PENDING_SUBMISSION, submission: undefined, participationId },
+        ]);
+    });
+
+    it('should not update to building if old submission', () => {
+        submissionService.setLocalCIProfile(true);
+        const returnedSubmissions: Array<ProgrammingSubmissionStateObj | undefined> = [];
+        // No latest pending submission found.
+        httpGetStub.mockReturnValue(of(undefined));
+        submissionService.getLatestPendingSubmissionByParticipationId(participationId, 10, true).subscribe((s) => returnedSubmissions.push(s));
+        expect(returnedSubmissions).toEqual([{ submissionState: ProgrammingSubmissionState.HAS_NO_PENDING_SUBMISSION, submission: undefined, participationId }]);
+        // New submission comes in.
+        wsSubmissionSubject.next(currentProgrammingSubmissionOld);
+        wsSubmissionSubject.next(currentProgrammingSubmission);
+        expect(returnedSubmissions).toEqual([
+            { submissionState: ProgrammingSubmissionState.HAS_NO_PENDING_SUBMISSION, submission: undefined, participationId },
+            { submissionState: ProgrammingSubmissionState.IS_QUEUED, submission: currentProgrammingSubmissionOld, participationId },
+            { submissionState: ProgrammingSubmissionState.IS_QUEUED, submission: currentProgrammingSubmission, participationId },
+        ]);
+        // old submission is now building.
+        wsSubmissionProcessingSubject.next(mockSubmissionProcessingDTOOld);
+        expect(returnedSubmissions).toEqual([
+            { submissionState: ProgrammingSubmissionState.HAS_NO_PENDING_SUBMISSION, submission: undefined, participationId },
+            { submissionState: ProgrammingSubmissionState.IS_QUEUED, submission: currentProgrammingSubmissionOld, participationId },
+            { submissionState: ProgrammingSubmissionState.IS_QUEUED, submission: currentProgrammingSubmission, participationId },
+        ]);
+        // new submission is now building.
+        wsSubmissionProcessingSubject.next(mockSubmissionProcessingDTO);
+        expect(returnedSubmissions).toEqual([
+            { submissionState: ProgrammingSubmissionState.HAS_NO_PENDING_SUBMISSION, submission: undefined, participationId },
+            { submissionState: ProgrammingSubmissionState.IS_QUEUED, submission: currentProgrammingSubmissionOld, participationId },
+            { submissionState: ProgrammingSubmissionState.IS_QUEUED, submission: currentProgrammingSubmission, participationId },
+            {
+                submissionState: ProgrammingSubmissionState.IS_BUILDING_PENDING_SUBMISSION,
+                submission: currentProgrammingSubmission,
+                participationId,
+                buildTimingInfo: buildTimingInfo,
+            },
+        ]);
+    });
+
+    it('should change to building when queue timer ends', fakeAsync(() => {
+        // @ts-ignore
+        submissionService.currentExpectedQueueEstimate = 1000;
+        submissionService.setLocalCIProfile(true);
+        const returnedSubmissions: Array<ProgrammingSubmissionStateObj | undefined> = [];
+        // No latest pending submission found.
+        httpGetStub.mockReturnValue(of(undefined));
+        submissionService.getLatestPendingSubmissionByParticipationId(participationId, 10, true).subscribe((s) => returnedSubmissions.push(s));
+        expect(returnedSubmissions).toEqual([{ submissionState: ProgrammingSubmissionState.HAS_NO_PENDING_SUBMISSION, submission: undefined, participationId }]);
+        // New submission comes in.
+        currentProgrammingSubmission.submissionDate = dayjs();
+        wsSubmissionSubject.next(currentProgrammingSubmission);
+        expect(returnedSubmissions).toEqual([
+            { submissionState: ProgrammingSubmissionState.HAS_NO_PENDING_SUBMISSION, submission: undefined, participationId },
+            { submissionState: ProgrammingSubmissionState.IS_QUEUED, submission: currentProgrammingSubmission, participationId },
+        ]);
+
+        tick(1000);
+
+        expect(returnedSubmissions).toEqual([
+            { submissionState: ProgrammingSubmissionState.HAS_NO_PENDING_SUBMISSION, submission: undefined, participationId },
+            { submissionState: ProgrammingSubmissionState.IS_QUEUED, submission: currentProgrammingSubmission, participationId },
+            { submissionState: ProgrammingSubmissionState.IS_BUILDING_PENDING_SUBMISSION, submission: currentProgrammingSubmission, participationId },
+        ]);
+
+        wsSubmissionProcessingSubject.next(mockSubmissionProcessingDTO);
+        expect(returnedSubmissions).toEqual([
+            { submissionState: ProgrammingSubmissionState.HAS_NO_PENDING_SUBMISSION, submission: undefined, participationId },
+            { submissionState: ProgrammingSubmissionState.IS_QUEUED, submission: currentProgrammingSubmission, participationId },
+            { submissionState: ProgrammingSubmissionState.IS_BUILDING_PENDING_SUBMISSION, submission: currentProgrammingSubmission, participationId },
+        ]);
+
+        discardPeriodicTasks();
+    }));
 });

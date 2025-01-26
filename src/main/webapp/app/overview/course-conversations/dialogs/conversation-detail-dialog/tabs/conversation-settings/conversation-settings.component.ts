@@ -15,17 +15,21 @@ import { GroupChatService } from 'app/shared/metis/conversations/group-chat.serv
 import { isGroupChatDTO } from 'app/entities/metis/conversation/group-chat.model';
 import { defaultSecondLayerDialogOptions } from 'app/overview/course-conversations/other/conversation.util';
 import { catchError } from 'rxjs/operators';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { DeleteButtonDirective } from 'app/shared/delete-dialog/delete-button.directive';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 
 @Component({
     selector: 'jhi-conversation-settings',
     templateUrl: './conversation-settings.component.html',
     styleUrls: ['./conversation-settings.component.scss'],
+    imports: [TranslateDirective, DeleteButtonDirective, FaIconComponent],
 })
 export class ConversationSettingsComponent implements OnInit, OnDestroy {
     private ngUnsubscribe = new Subject<void>();
 
-    activeConversation = input<ConversationDTO>();
-    course = input<Course>();
+    activeConversation = input.required<ConversationDTO>();
+    course = input.required<Course>();
 
     channelArchivalChange = output<void>();
     channelDeleted = output<void>();
@@ -54,14 +58,14 @@ export class ConversationSettingsComponent implements OnInit, OnDestroy {
         this.canLeaveConversation = canLeaveConversation(conversation);
         this.conversationAsChannel = getAsChannelDTO(conversation);
         this.canChangeChannelArchivalState = this.conversationAsChannel ? canChangeChannelArchivalState(this.conversationAsChannel) : false;
-        this.canDeleteChannel = this.conversationAsChannel ? canDeleteChannel(this.course()!, this.conversationAsChannel) : false;
+        this.canDeleteChannel = this.conversationAsChannel ? canDeleteChannel(this.course(), this.conversationAsChannel) : false;
     }
 
     leaveConversation($event: MouseEvent) {
         $event.stopPropagation();
         if (isGroupChatDTO(this.activeConversation()!)) {
             this.groupChatService
-                .removeUsersFromGroupChat(this.course()!.id!, this.activeConversation()?.id!)
+                .removeUsersFromGroupChat(this.course().id!, this.activeConversation().id!)
                 .pipe(takeUntil(this.ngUnsubscribe))
                 .subscribe(() => {
                     this.conversationLeave.emit();
@@ -69,7 +73,7 @@ export class ConversationSettingsComponent implements OnInit, OnDestroy {
             return;
         } else if (isChannelDTO(this.activeConversation()!)) {
             this.channelService
-                .deregisterUsersFromChannel(this.course()!.id!, this.activeConversation()?.id!)
+                .deregisterUsersFromChannel(this.course().id!, this.activeConversation().id!)
                 .pipe(takeUntil(this.ngUnsubscribe))
                 .subscribe(() => {
                     this.conversationLeave.emit();
@@ -97,30 +101,16 @@ export class ConversationSettingsComponent implements OnInit, OnDestroy {
             confirmButtonKey: 'artemisApp.dialogs.archiveChannel.confirmButton',
         };
 
-        const translationParams = {
-            channelName: channel.name,
-        };
+        const modalRef = this.createModal(channel, event, keys);
 
-        event.stopPropagation();
-        const modalRef: NgbModalRef = this.modalService.open(GenericConfirmationDialogComponent, defaultSecondLayerDialogOptions);
-        modalRef.componentInstance.translationParameters = translationParams;
-        modalRef.componentInstance.translationKeys = keys;
-        modalRef.componentInstance.canBeUndone = true;
-        modalRef.componentInstance.initialize();
-
-        from(modalRef.result)
-            .pipe(
-                catchError(() => EMPTY),
-                takeUntil(this.ngUnsubscribe),
-            )
-            .subscribe(() => {
-                this.channelService.archive(this.course()?.id!, channel.id!).subscribe({
-                    next: () => {
-                        this.channelArchivalChange.emit();
-                    },
-                    error: (errorResponse: HttpErrorResponse) => onError(this.alertService, errorResponse),
-                });
+        this.openModal(modalRef, () => {
+            this.channelService.archive(this.course().id!, channel.id!).subscribe({
+                next: () => {
+                    this.channelArchivalChange.emit();
+                },
+                error: (errorResponse: HttpErrorResponse) => onError(this.alertService, errorResponse),
             });
+        });
     }
 
     openUnArchivalModal(event: MouseEvent) {
@@ -135,34 +125,38 @@ export class ConversationSettingsComponent implements OnInit, OnDestroy {
             descriptionKey: 'artemisApp.dialogs.unArchiveChannel.description',
             confirmButtonKey: 'artemisApp.dialogs.unArchiveChannel.confirmButton',
         };
+        const modalRef = this.createModal(channel, event, keys);
 
-        const translationParams = {
-            channelName: channel.name,
-        };
+        this.openModal(modalRef, () => {
+            this.channelService
+                .unarchive(this.course().id!, channel.id!)
+                .pipe(takeUntil(this.ngUnsubscribe))
+                .subscribe({
+                    next: () => {
+                        this.channelArchivalChange.emit();
+                    },
+                    error: (errorResponse: HttpErrorResponse) => onError(this.alertService, errorResponse),
+                });
+        });
+    }
 
-        event.stopPropagation();
-        const modalRef: NgbModalRef = this.modalService.open(GenericConfirmationDialogComponent, defaultSecondLayerDialogOptions);
-        modalRef.componentInstance.translationParameters = translationParams;
-        modalRef.componentInstance.translationKeys = keys;
-        modalRef.componentInstance.canBeUndone = true;
-        modalRef.componentInstance.initialize();
-
+    private openModal(modalRef: NgbModalRef, unArchiveObservable: () => void) {
         from(modalRef.result)
             .pipe(
                 catchError(() => EMPTY),
                 takeUntil(this.ngUnsubscribe),
             )
-            .subscribe(() => {
-                this.channelService
-                    .unarchive(this.course()?.id!, channel.id!)
-                    .pipe(takeUntil(this.ngUnsubscribe))
-                    .subscribe({
-                        next: () => {
-                            this.channelArchivalChange.emit();
-                        },
-                        error: (errorResponse: HttpErrorResponse) => onError(this.alertService, errorResponse),
-                    });
-            });
+            .subscribe(unArchiveObservable);
+    }
+
+    private createModal(channel: ChannelDTO, event: MouseEvent, keys: { titleKey: string; questionKey: string; descriptionKey: string; confirmButtonKey: string }): NgbModalRef {
+        event.stopPropagation();
+        const modalRef: NgbModalRef = this.modalService.open(GenericConfirmationDialogComponent, defaultSecondLayerDialogOptions);
+        modalRef.componentInstance.translationParameters = { channelName: channel.name };
+        modalRef.componentInstance.translationKeys = keys;
+        modalRef.componentInstance.canBeUndone = true;
+        modalRef.componentInstance.initialize();
+        return modalRef;
     }
 
     deleteChannel() {
@@ -171,7 +165,7 @@ export class ConversationSettingsComponent implements OnInit, OnDestroy {
             return;
         }
         this.channelService
-            .delete(this.course()?.id!, channel.id!)
+            .delete(this.course().id!, channel.id!)
             .pipe(takeUntil(this.ngUnsubscribe))
             .subscribe({
                 next: () => {
