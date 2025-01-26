@@ -64,18 +64,34 @@ jobs:
       PRIMARY_NODE: ${{ secrets.PRIMARY_NODE_HOSTNAME }}
       VM_USERNAME: ${{ secrets.SSH_USERNAME }}
       HEALTH_CHECK_URL: "https://artemis-staging-localci.artemis.cit.tum.de/management/health"
+      WORKFLOW_RUN_ID: ${{needs.check-build-status.outputs.workflow_run_id}}
 
     timeout-minutes: 30
     
     steps:
-      - name: Download artifact from build
-        uses: dawidd6/action-download-artifact@v2
+      - name: Download artifact from another workflow
+        uses: actions/github-script@v7
         with:
-          workflow: build.yml
-          workflow_conclusion: success
-          name: Artemis.war
-          path: artifacts
-          branch: ${{ github.event.inputs.branch }}
+          script: |
+            const artifacts = await github.rest.actions.listWorkflowRunArtifacts({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              run_id: ${{ env.WORKFLOW_RUN_ID }} 
+            });
+            const matchArtifact = artifacts.data.artifacts.find((artifact) => {
+              return artifact.name === "Artemis.war"
+            });
+            const download = await github.rest.actions.downloadArtifact({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              artifact_id: matchArtifact.id,
+              archive_format: 'zip'
+            });
+            const fs = require('fs');
+            fs.writeFileSync('${{github.workspace}}/artifact.zip', Buffer.from(download.data));
+
+      - name: Unzip artifact
+        run: unzip artifact.zip -d artifacts
 
       - name: Setup SSH
         env:
