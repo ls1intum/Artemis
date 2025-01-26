@@ -55,6 +55,9 @@ jobs:
     needs: check-build-status
     if: needs.check-build-status.outputs.can_deploy == 'true'
     runs-on: ubuntu-latest
+    environment: 
+        name: artemis-staging-localci.artemis.cit.tum.de
+        url: https://artemis-staging-localci.artemis.cit.tum.de
     
     steps:
       - name: Download artifact from build
