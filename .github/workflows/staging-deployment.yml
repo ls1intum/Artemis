@@ -70,6 +70,7 @@ jobs:
     environment: 
         name: artemis-staging-localci.artemis.cit.tum.de
         url: https://artemis-staging-localci.artemis.cit.tum.de
+    timeout-minutes: 30
     
     steps:
       - name: Download artifact from build
@@ -79,7 +80,7 @@ jobs:
           workflow_conclusion: success
           name: Artemis.war
           path: artifacts
-          branch: develop
+          branch: ${{ github.event.inputs.branch }}
 
       - name: Setup SSH
         env:
@@ -126,8 +127,8 @@ jobs:
           echo "Waiting initial 2 minutes for application startup..."
           sleep 120
 
-          MAX_RETRIES=12  # 12 retries * 30 seconds = 6 minutes total
-          RETRY_INTERVAL=30
+          MAX_RETRIES=10 # 10 retries = 10 minutes
+          RETRY_INTERVAL=60
           
           for i in $(seq 1 $MAX_RETRIES); do
             echo "Health check attempt $i of $MAX_RETRIES"
