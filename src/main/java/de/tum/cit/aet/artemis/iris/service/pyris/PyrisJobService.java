@@ -24,7 +24,6 @@ import de.tum.cit.aet.artemis.iris.service.pyris.job.CourseChatJob;
 import de.tum.cit.aet.artemis.iris.service.pyris.job.ExerciseChatJob;
 import de.tum.cit.aet.artemis.iris.service.pyris.job.IngestionWebhookJob;
 import de.tum.cit.aet.artemis.iris.service.pyris.job.PyrisJob;
-import de.tum.cit.aet.artemis.iris.service.pyris.job.TranscriptionIngestionWebhookJob;
 
 /**
  * The PyrisJobService class is responsible for managing Pyris jobs in the Artemis system.
@@ -118,7 +117,7 @@ public class PyrisJobService {
      */
     public String addTranscriptionIngestionWebhookJob(long courseId, long lectureId) {
         var token = generateJobIdToken();
-        var job = new TranscriptionIngestionWebhookJob(token, courseId, lectureId);
+        var job = new IngestionWebhookJob(token, courseId, lectureId, 0);
         long timeoutWebhookJob = 60;
         TimeUnit unitWebhookJob = TimeUnit.MINUTES;
         jobMap.put(token, job, timeoutWebhookJob, unitWebhookJob);

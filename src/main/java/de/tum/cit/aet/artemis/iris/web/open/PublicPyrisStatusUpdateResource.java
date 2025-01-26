@@ -169,7 +169,6 @@ public class PublicPyrisStatusUpdateResource {
         if (!(job instanceof IngestionWebhookJob ingestionWebhookJob)) {
             throw new ConflictException("Run ID is not an ingestion job", "Job", "invalidRunId");
         }
-
         pyrisStatusUpdateService.handleStatusUpdate(ingestionWebhookJob, statusUpdateDTO);
         return ResponseEntity.ok().build();
     }
