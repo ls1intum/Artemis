@@ -36,7 +36,7 @@ class CustomFeedbackParserTest {
         final var fileContent = String.format("""
                 {
                   "name": "%s",
-                  "successful": %b,
+                  "successful": "%b",
                   "message": "%s"
                 }""", testCaseName, successful, message);
 
@@ -52,7 +52,7 @@ class CustomFeedbackParserTest {
     }
 
     @Test
-    void shouldParseSuccessfulCustomFeedbackWithNoMessage() {
+    void shouldParseSuccessfulCustomFeedbackWithEmptyMessage() {
         final var fileContent = String.format("""
                 {
                   "name": "%s",
@@ -69,12 +69,45 @@ class CustomFeedbackParserTest {
     }
 
     @Test
-    void shouldNotParseFailedCustomFeedbackWithNoMessage() {
+    void shouldParseSuccessfulCustomFeedbackWithNullMessage() {
+        final var fileContent = String.format("""
+                {
+                  "name": "%s",
+                  "successful": true,
+                  "message": null
+                }""", testCaseName);
+
+        CustomFeedbackParser.processTestResultFile(fileName, fileContent, failedTests, successfulTests);
+
+        assertThat(successfulTests).hasSize(1);
+        var successfulTest = successfulTests.getFirst();
+        assertThat(successfulTest.name()).isEqualTo(testCaseName);
+        assertThat(successfulTest.testMessages()).hasSize(1);
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = { "", " " })
+    void shouldNotParseFailedCustomFeedbackWithEmptyMessage(String name) {
         final var fileContent = String.format("""
                 {
                   "name": "%s",
                   "successful": false,
-                  "message": ""
+                  "message": "%s"
+                }""", testCaseName, name);
+
+        CustomFeedbackParser.processTestResultFile(fileName, fileContent, failedTests, successfulTests);
+
+        assertThat(failedTests).isEmpty();
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = { "", " " })
+    void shouldNotParseFailedCustomFeedbackWithNullMessage() {
+        final var fileContent = String.format("""
+                {
+                  "name": "%s",
+                  "successful": false,
+                  "message": null
                 }""", testCaseName);
 
         CustomFeedbackParser.processTestResultFile(fileName, fileContent, failedTests, successfulTests);
@@ -87,10 +120,24 @@ class CustomFeedbackParserTest {
     void shouldNotParseCustomFeedbackWithoutName(String name) {
         final var fileContent = String.format("""
                 {
-                  "name": %s,
+                  "name": "%s",
                   "successful": true,
                   "message": "%s"
                 }""", name, testCaseName);
+
+        CustomFeedbackParser.processTestResultFile(fileName, fileContent, failedTests, successfulTests);
+
+        assertThat(successfulTests).isEmpty();
+    }
+
+    @Test
+    void shouldNotParseCustomFeedbackWithNullName() {
+        final var fileContent = String.format("""
+                {
+                  "name": null,
+                  "successful": true,
+                  "message": "%s"
+                }""", testCaseName);
 
         CustomFeedbackParser.processTestResultFile(fileName, fileContent, failedTests, successfulTests);
 
