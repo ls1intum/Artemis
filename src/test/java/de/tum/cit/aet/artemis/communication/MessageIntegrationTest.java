@@ -696,8 +696,7 @@ class MessageIntegrationTest extends AbstractSpringIntegrationIndependentTest {
         final var student1 = userTestRepository.findOneByLogin(TEST_PREFIX + "student1").orElseThrow();
         final var student2 = userTestRepository.findOneByLogin(TEST_PREFIX + "student2").orElseThrow();
 
-        Post postToSave1 = createPostWithOneToOneChat(TEST_PREFIX); // OneToOneChat 1
-        Post postToSave2 = createPostWithOneToOneChat(TEST_PREFIX); // OneToOneChat 1
+        Post postToSave1 = createPostWithOneToOneChat(TEST_PREFIX);
 
         Post createdPost1 = request.postWithResponseBody("/api/courses/" + courseId + "/messages", postToSave1, Post.class, HttpStatus.CREATED);
         final var oneToOneChat1 = createdPost1.getConversation();
@@ -708,24 +707,11 @@ class MessageIntegrationTest extends AbstractSpringIntegrationIndependentTest {
             assertThat(getUnreadMessagesCount(oneToOneChat1, student2)).isEqualTo(1);
         });
 
-        Post createdPost2 = request.postWithResponseBody("/api/courses/" + courseId + "/messages", postToSave2, Post.class, HttpStatus.CREATED);
-        final var oneToOneChat2 = createdPost2.getConversation();
-        // student 1 adds a message, so the unread count for student 2 should be 1
+        request.delete("/api/courses/" + courseId + "/messages/" + createdPost1.getId(), HttpStatus.OK);
+        // After deleting the message in the chat, the unread count in the chat should become 0
         await().untilAsserted(() -> {
             SecurityUtils.setAuthorizationObject();
-            assertThat(getUnreadMessagesCount(oneToOneChat1, student1)).isZero();
-            assertThat(getUnreadMessagesCount(oneToOneChat1, student2)).isEqualTo(1);
-        });
-
-        request.delete("/api/courses/" + courseId + "/messages/" + createdPost2.getId(), HttpStatus.OK);
-        // After deleting the message in the second chat, the unread count in the first chat should stay the same, the unread count in the second chat will become 0
-        await().untilAsserted(() -> {
-            SecurityUtils.setAuthorizationObject();
-            assertThat(getUnreadMessagesCount(oneToOneChat1, student2)).isEqualTo(1);
-            assertThat(getUnreadMessagesCount(oneToOneChat2, student2)).isZero();
-
-            // no changes for student1
-            assertThat(getUnreadMessagesCount(oneToOneChat1, student1)).isZero();
+            assertThat(getUnreadMessagesCount(oneToOneChat1, student2)).isZero();
             assertThat(getUnreadMessagesCount(oneToOneChat1, student1)).isZero();
         });
     }

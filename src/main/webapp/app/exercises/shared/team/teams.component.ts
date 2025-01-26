@@ -1,5 +1,4 @@
 import { Component, OnDestroy, OnInit, inject } from '@angular/core';
-import { ParticipationService } from 'app/exercises/shared/participation/participation.service';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { Subject } from 'rxjs';
 import { Team } from 'app/entities/team.model';
@@ -10,8 +9,6 @@ import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service'
 import { formatTeamAsSearchResult } from 'app/exercises/shared/team/team.utils';
 import { AccountService } from 'app/core/auth/account.service';
 import { User } from 'app/core/user/user.model';
-import { AlertService } from 'app/core/util/alert.service';
-import { EventManager } from 'app/core/util/event-manager.service';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { FormsModule } from '@angular/forms';
 import { TeamsExportButtonComponent } from './teams-import-dialog/teams-export-button.component';
@@ -48,9 +45,6 @@ export enum FilterProp {
 export class TeamsComponent implements OnInit, OnDestroy {
     private route = inject(ActivatedRoute);
     private router = inject(Router);
-    private participationService = inject(ParticipationService);
-    private alertService = inject(AlertService);
-    private eventManager = inject(EventManager);
     private exerciseService = inject(ExerciseService);
     private teamService = inject(TeamService);
     private accountService = inject(AccountService);

@@ -284,13 +284,6 @@ export class ExamStudentsComponent implements OnInit, OnDestroy {
     };
 
     /**
-     * Computes the row class that is being added to all rows of the datatable
-     */
-    dataTableRowClass = () => {
-        return this.rowClass;
-    };
-
-    /**
      * Can be used to highlight rows temporarily by flashing a certain css class
      *
      * @param className Name of the class to be applied to all rows
