@@ -291,9 +291,9 @@ examples.forEach((activeConversation) => {
             component.groupedPosts = mockGroups;
             component.unreadCount = 2;
 
-            const isFirstUnreadForPost1 = component.isFirstUnreadMarker(mockPosts[0], mockGroups[0]);
-            const isFirstUnreadForPost2 = component.isFirstUnreadMarker(mockPosts[1], mockGroups[0]);
-            const isFirstUnreadForPost3 = component.isFirstUnreadMarker(mockPosts[2], mockGroups[1]);
+            const isFirstUnreadForPost1 = component.isFirstUnreadMarker(mockPosts[0]);
+            const isFirstUnreadForPost2 = component.isFirstUnreadMarker(mockPosts[1]);
+            const isFirstUnreadForPost3 = component.isFirstUnreadMarker(mockPosts[2]);
 
             expect(isFirstUnreadForPost1).toBeFalse();
             expect(isFirstUnreadForPost2).toBeTrue();
