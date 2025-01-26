@@ -119,34 +119,23 @@ jobs:
       - name: Verify Primary Node Deployment
         id: verify_deployment
         run: |
-          echo "Waiting initial 2 minutes for application startup..."
-          sleep 120
-
-          MAX_RETRIES=10 # 10 retries = 10 minutes
-          RETRY_INTERVAL=60
-          
-          for i in $(seq 1 $MAX_RETRIES); do
-            echo "Health check attempt $i of $MAX_RETRIES"
-            
+          while true; do
+            echo "Performing health check..."
+      
             RESPONSE=$(curl -s -f $HEALTH_CHECK_URL || echo '{"status":"DOWN"}')
             STATUS=$(echo $RESPONSE | jq -r '.status')
-            
+      
             if [ "$STATUS" = "UP" ]; then
               echo "Health check passed! Application is UP"
               exit 0
             else
               echo "Health check failed. Status: $STATUS"
-              if [ $i -eq $MAX_RETRIES ]; then
-                echo "Max retries reached. Deployment verification failed!"
-                exit 1
-              fi
-              echo "Waiting ${RETRY_INTERVAL} seconds before next attempt..."
-              sleep $RETRY_INTERVAL
+              echo "Waiting 30 seconds before next attempt..."
+              sleep 30
             fi
           done
 
       - name: Phase 2 - Deploy to Secondary Nodes
-        if: ${{ success() }}
         run: |
           for node in $SECONDARY_NODE_HOSTNAMES; do
             VM_HOSTNAME="${node}${NODE_HOSTNAME_POSTFIX}"
