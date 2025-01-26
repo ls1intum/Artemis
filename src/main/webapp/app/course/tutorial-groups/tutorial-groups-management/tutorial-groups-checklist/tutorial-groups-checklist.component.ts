@@ -1,5 +1,5 @@
-import { ChangeDetectionStrategy, ChangeDetectorRef, Component, OnDestroy, OnInit } from '@angular/core';
-import { ActivatedRoute } from '@angular/router';
+import { ChangeDetectionStrategy, ChangeDetectorRef, Component, OnDestroy, OnInit, inject } from '@angular/core';
+import { ActivatedRoute, RouterLink } from '@angular/router';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
 import { Course } from 'app/entities/course.model';
 import { AlertService } from 'app/core/util/alert.service';
@@ -9,13 +9,24 @@ import { HttpErrorResponse } from '@angular/common/http';
 import { faPlus, faWrench } from '@fortawesome/free-solid-svg-icons';
 import { TutorialGroupsConfigurationService } from 'app/course/tutorial-groups/services/tutorial-groups-configuration.service';
 import { takeUntil } from 'rxjs/operators';
+import { LoadingIndicatorContainerComponent } from 'app/shared/loading-indicator-container/loading-indicator-container.component';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { ChecklistCheckComponent } from 'app/shared/components/checklist-check/checklist-check.component';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 
 @Component({
     selector: 'jhi-tutorial-groups-checklist',
     templateUrl: './tutorial-groups-checklist.component.html',
     changeDetection: ChangeDetectionStrategy.OnPush,
+    imports: [LoadingIndicatorContainerComponent, TranslateDirective, ChecklistCheckComponent, RouterLink, FaIconComponent],
 })
 export class TutorialGroupsChecklistComponent implements OnInit, OnDestroy {
+    private activatedRoute = inject(ActivatedRoute);
+    private courseManagementService = inject(CourseManagementService);
+    private alertService = inject(AlertService);
+    private tutorialGroupsConfigurationService = inject(TutorialGroupsConfigurationService);
+    private cdr = inject(ChangeDetectorRef);
+
     isLoading = false;
     course: Course;
     isTimeZoneConfigured = false;
@@ -25,13 +36,6 @@ export class TutorialGroupsChecklistComponent implements OnInit, OnDestroy {
     faPlus = faPlus;
 
     ngUnsubscribe = new Subject<void>();
-    constructor(
-        private activatedRoute: ActivatedRoute,
-        private courseManagementService: CourseManagementService,
-        private alertService: AlertService,
-        private tutorialGroupsConfigurationService: TutorialGroupsConfigurationService,
-        private cdr: ChangeDetectorRef,
-    ) {}
 
     get isFullyConfigured(): boolean {
         return this.isTimeZoneConfigured && this.isTutorialGroupConfigurationCreated;

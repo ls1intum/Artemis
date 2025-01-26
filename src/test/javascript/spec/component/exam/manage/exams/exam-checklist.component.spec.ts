@@ -11,7 +11,7 @@ import { ArtemisTestModule } from '../../../../test.module';
 import { ExamChecklistService } from 'app/exam/manage/exams/exam-checklist-component/exam-checklist.service';
 import { MockExamChecklistService } from '../../../../helpers/mocks/service/mock-exam-checklist.service';
 import { of } from 'rxjs';
-import { JhiWebsocketService } from 'app/core/websocket/websocket.service';
+import { WebsocketService } from 'app/core/websocket/websocket.service';
 import { MockWebsocketService } from '../../../../helpers/mocks/service/mock-websocket.service';
 import { ExamEditWorkingTimeComponent } from 'app/exam/manage/exams/exam-checklist-component/exam-edit-workingtime-dialog/exam-edit-working-time.component';
 
@@ -67,7 +67,7 @@ describe('ExamChecklistComponent', () => {
             ],
             providers: [
                 { provide: ExamChecklistService, useClass: MockExamChecklistService },
-                { provide: JhiWebsocketService, useClass: MockWebsocketService },
+                { provide: WebsocketService, useClass: MockWebsocketService },
             ],
         })
             .compileComponents()

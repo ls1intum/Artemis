@@ -13,8 +13,6 @@ describe('Assessment progress label test', () => {
     beforeEach(() => {
         TestBed.configureTestingModule({
             imports: [ArtemisTestModule],
-            declarations: [AssessmentProgressLabelComponent],
-            providers: [],
         })
             .compileComponents()
             .then(() => {

@@ -21,7 +21,7 @@ import { MockRouter } from '../../helpers/mocks/mock-router';
 import { MockLocalStorageService } from '../../helpers/mocks/service/mock-local-storage.service';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { MockProvider } from 'ng-mocks';
-import { JhiWebsocketService } from 'app/core/websocket/websocket.service';
+import { WebsocketService } from 'app/core/websocket/websocket.service';
 import { MetisPostDTO } from 'app/entities/metis/metis-post-dto.model';
 import { Subject, of } from 'rxjs';
 import {
@@ -48,6 +48,7 @@ import { NotificationService } from 'app/shared/notification/notification.servic
 import { MockNotificationService } from '../../helpers/mocks/service/mock-notification.service';
 import { SavedPostService } from 'app/shared/metis/saved-post.service';
 import { SavedPostStatus } from 'app/entities/metis/posting.model';
+import 'jest-extended';
 
 describe('Metis Service', () => {
     let metisService: MetisService;
@@ -56,7 +57,7 @@ describe('Metis Service', () => {
     let metisServiceCreateWebsocketSubscriptionSpy: jest.SpyInstance;
     let websocketServiceSubscribeSpy: jest.SpyInstance;
     let websocketServiceReceiveStub: jest.SpyInstance;
-    let websocketService: JhiWebsocketService;
+    let websocketService: WebsocketService;
     let reactionService: ReactionService;
     let postService: PostService;
     let answerPostService: AnswerPostService;
@@ -88,7 +89,7 @@ describe('Metis Service', () => {
             ],
         });
         metisService = TestBed.inject(MetisService);
-        websocketService = TestBed.inject(JhiWebsocketService);
+        websocketService = TestBed.inject(WebsocketService);
         reactionService = TestBed.inject(ReactionService);
         postService = TestBed.inject(PostService);
         answerPostService = TestBed.inject(AnswerPostService);

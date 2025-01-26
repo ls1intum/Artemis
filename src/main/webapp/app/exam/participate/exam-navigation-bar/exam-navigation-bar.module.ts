@@ -6,8 +6,7 @@ import { ArtemisExamTimerModule } from 'app/exam/participate/timer/exam-timer.mo
 import { ArtemisExamLiveEventsModule } from 'app/exam/participate/events/exam-live-events.module';
 
 @NgModule({
-    declarations: [ExamNavigationBarComponent],
-    imports: [CommonModule, ArtemisSharedCommonModule, ArtemisExamTimerModule, ArtemisExamLiveEventsModule],
+    imports: [CommonModule, ArtemisSharedCommonModule, ArtemisExamTimerModule, ArtemisExamLiveEventsModule, ExamNavigationBarComponent],
     exports: [ExamNavigationBarComponent],
 })
 export class ArtemisExamNavigationBarModule {}

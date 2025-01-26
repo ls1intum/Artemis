@@ -15,8 +15,12 @@ import { BarChartModule } from '@swimlane/ngx-charts';
 const ENTITY_STATES = [...quizStatisticRoute];
 
 @NgModule({
-    imports: [ArtemisSharedModule, RouterModule.forChild(ENTITY_STATES), ArtemisQuizQuestionTypesModule, ArtemisMarkdownModule, BarChartModule],
-    declarations: [
+    imports: [
+        ArtemisSharedModule,
+        RouterModule.forChild(ENTITY_STATES),
+        ArtemisQuizQuestionTypesModule,
+        ArtemisMarkdownModule,
+        BarChartModule,
         QuizStatisticComponent,
         QuizPointStatisticComponent,
         MultipleChoiceQuestionStatisticComponent,

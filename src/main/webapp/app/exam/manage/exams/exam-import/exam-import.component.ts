@@ -2,23 +2,29 @@ import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { Component, inject, input, viewChild } from '@angular/core';
 import { Router } from '@angular/router';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
+import { Component, Input, ViewChild, inject } from '@angular/core';
 import { AlertService } from 'app/core/util/alert.service';
 import { Exam } from 'app/entities/exam/exam.model';
 import { ExerciseGroup } from 'app/entities/exercise-group.model';
 import { ExamManagementService } from 'app/exam/manage/exam-management.service';
 import { ExamExerciseImportComponent } from 'app/exam/manage/exams/exam-exercise-import/exam-exercise-import.component';
-import { ExamImportPagingService } from 'app/exam/manage/exams/exam-import/exam-import-paging.service';
 import { ImportComponent } from 'app/shared/import/import.component';
-import { SortService } from 'app/shared/service/sort.service';
 import { onError } from 'app/shared/util/global.utils';
+import { FormsModule } from '@angular/forms';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { SortDirective } from 'app/shared/sort/sort.directive';
+import { SortByDirective } from 'app/shared/sort/sort-by.directive';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { NgbHighlight, NgbPagination } from '@ng-bootstrap/ng-bootstrap';
+import { ButtonComponent } from 'app/shared/components/button.component';
+import { ExamImportPagingService } from 'app/exam/manage/exams/exam-import/exam-import-paging.service';
 import { ArtemisSharedComponentModule } from 'app/shared/components/shared-component.module';
 import { ArtemisSharedModule } from 'app/shared/shared.module';
 
 @Component({
     selector: 'jhi-exam-import',
     templateUrl: './exam-import.component.html',
-    standalone: true,
-    imports: [ExamExerciseImportComponent, ArtemisSharedComponentModule, ArtemisSharedModule],
+    imports: [FormsModule, TranslateDirective, SortDirective, SortByDirective, FaIconComponent, NgbHighlight, ButtonComponent, NgbPagination, ExamExerciseImportComponent],
 })
 export class ExamImportComponent extends ImportComponent<Exam> {
     private examManagementService = inject(ExamManagementService);
@@ -37,12 +43,8 @@ export class ExamImportComponent extends ImportComponent<Exam> {
     isImportInSameCourse = false;
 
     constructor() {
-        const router = inject(Router);
-        const sortService = inject(SortService);
-        const activeModal = inject(NgbActiveModal);
         const pagingService = inject(ExamImportPagingService);
-
-        super(router, sortService, activeModal, pagingService);
+        super(pagingService);
     }
 
     /**

@@ -317,6 +317,11 @@ public final class Constants {
     public static final String PROFILE_BUILDAGENT = "buildagent";
 
     /**
+     * The name of the Spring profile used to process build jobs in a Jenkins setup.
+     */
+    public static final String PROFILE_JENKINS = "jenkins";
+
+    /**
      * The name of the Spring profile used for Artemis functionality.
      */
     public static final String PROFILE_ARTEMIS = "artemis";
@@ -425,6 +430,9 @@ public final class Constants {
     public static final String ASSIGNMENT_REPO_PLACEHOLDER_NO_SLASH = "${studentWorkingDirectoryNoSlash}";
 
     public static final Pattern ALLOWED_CHECKOUT_DIRECTORY = Pattern.compile("[\\w-]+(/[\\w-]+)*$");
+
+    // TODO TW: This "feature" is only temporary for a paper.
+    public static final String ICER_PAPER_FLAG = "ICER 2025 Paper a5157934-9092-4a72-addc-3aaf489debdc";
 
     private Constants() {
     }

@@ -4,15 +4,18 @@ import { faCheckDouble, faFont } from '@fortawesome/free-solid-svg-icons';
 import { Exercise, ExerciseType, getIcon } from 'app/entities/exercise.model';
 import { ExerciseGroup } from 'app/entities/exercise-group.model';
 import { EXERCISE_TITLE_NAME_REGEX, SHORT_NAME_PATTERN } from 'app/shared/constants/input.constants';
-import { ArtemisSharedComponentModule } from 'app/shared/components/shared-component.module';
-import { ArtemisSharedCommonModule } from 'app/shared/shared-common.module';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { HelpIconComponent } from 'app/shared/components/help-icon.component';
+import { FormsModule } from '@angular/forms';
+import { NgClass } from '@angular/common';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { DifficultyBadgeComponent } from 'app/exercises/shared/exercise-headers/difficulty-badge.component';
 
 @Component({
     selector: 'jhi-exam-exercise-import',
     templateUrl: './exam-exercise-import.component.html',
     styleUrls: ['./exam-exercise-import.component.scss'],
-    standalone: true,
-    imports: [ArtemisSharedComponentModule, ArtemisSharedCommonModule],
+    imports: [TranslateDirective, HelpIconComponent, FormsModule, NgClass, FaIconComponent, DifficultyBadgeComponent],
 })
 export class ExamExerciseImportComponent implements OnInit {
     exam = input.required<Exam>();
@@ -44,8 +47,6 @@ export class ExamExerciseImportComponent implements OnInit {
     faFont = faFont;
 
     getExerciseIcon = getIcon;
-
-    constructor() {}
 
     ngOnInit(): void {
         this.initializeSelectedExercisesAndContainsProgrammingExercisesMaps();

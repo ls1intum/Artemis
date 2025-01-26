@@ -2,12 +2,11 @@ import dayjs from 'dayjs/esm';
 import { of, throwError } from 'rxjs';
 import { Component } from '@angular/core';
 import cloneDeep from 'lodash-es/cloneDeep';
-import { FormsModule } from '@angular/forms';
-import { TranslateModule } from '@ngx-translate/core';
+import { NgForm } from '@angular/forms';
 import { ActivatedRoute, Router, UrlSegment, provideRouter } from '@angular/router';
 import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
 import { HttpErrorResponse, HttpResponse, provideHttpClient } from '@angular/common/http';
-import { MockComponent, MockDirective, MockModule, MockPipe, MockProvider } from 'ng-mocks';
+import { MockDirective, MockProvider } from 'ng-mocks';
 
 import { ExamUpdateComponent, prepareExamForImport } from 'app/exam/manage/exams/exam-update.component';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
@@ -15,33 +14,23 @@ import { MockSyncStorage } from '../../helpers/mocks/service/mock-sync-storage.s
 import { ExamManagementService } from 'app/exam/manage/exam-management.service';
 import { Exam } from 'app/entities/exam/exam.model';
 import { Course, CourseInformationSharingConfiguration } from 'app/entities/course.model';
-import { NgbModule } from '@ng-bootstrap/ng-bootstrap';
-import { FormDateTimePickerComponent } from 'app/shared/date-time-picker/date-time-picker.component';
 
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { GradingSystemService } from 'app/grading-system/grading-system.service';
 import { GradingScale } from 'app/entities/grading-scale.model';
-import { DataTableComponent } from 'app/shared/data-table/data-table.component';
 import { AlertService } from 'app/core/util/alert.service';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
-import { HelpIconComponent } from 'app/shared/components/help-icon.component';
-import { ArtemisExamModePickerModule } from 'app/exam/manage/exams/exam-mode-picker/exam-mode-picker.module';
-import { CustomMinDirective } from 'app/shared/validators/custom-min-validator.directive';
-import { CustomMaxDirective } from 'app/shared/validators/custom-max-validator.directive';
 import { ArtemisNavigationUtilService } from 'app/utils/navigation.utils';
 import { User } from 'app/core/user/user.model';
 import { StudentExam } from 'app/entities/student-exam.model';
 import { ExerciseGroup } from 'app/entities/exercise-group.model';
 import { ModelingExercise } from 'app/entities/modeling-exercise.model';
-import { ExamExerciseImportComponent } from 'app/exam/manage/exams/exam-exercise-import/exam-exercise-import.component';
-import { DocumentationButtonComponent } from 'app/shared/components/documentation-button/documentation-button.component';
-import { TitleChannelNameComponent } from 'app/shared/form/title-channel-name/title-channel-name.component';
 import { UMLDiagramType } from '@ls1intum/apollon';
 import { TextExercise } from 'app/entities/text/text-exercise.model';
-import { MarkdownEditorMonacoComponent } from 'app/shared/markdown-editor/monaco/markdown-editor-monaco.component';
-import { CustomNotIncludedInValidatorDirective } from '../../../../../main/webapp/app/shared/validators/custom-not-included-in-validator.directive';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
-import { ArtemisSharedComponentModule } from '../../../../../main/webapp/app/shared/components/shared-component.module';
+import { ArtemisTestModule } from '../../test.module';
+import { OwlDateTimeModule, OwlNativeDateTimeModule } from '@danielmoncada/angular-datetime-picker';
+import { MockResizeObserver } from '../../helpers/mocks/service/mock-resize-observer';
 
 @Component({
     template: '',
@@ -72,27 +61,14 @@ describe('ExamUpdateComponent', () => {
     describe('create and edit exams', () => {
         beforeEach(() => {
             TestBed.configureTestingModule({
-                imports: [MockModule(NgbModule), TranslateModule.forRoot(), FormsModule, ArtemisExamModePickerModule, TitleChannelNameComponent],
-                declarations: [
-                    ExamUpdateComponent,
-                    MockComponent(FormDateTimePickerComponent),
-                    MockComponent(MarkdownEditorMonacoComponent),
-                    MockComponent(DataTableComponent),
-                    DummyComponent,
-                    MockPipe(ArtemisTranslatePipe),
-                    MockComponent(HelpIconComponent),
-                    MockComponent(DocumentationButtonComponent),
-                    MockDirective(CustomMinDirective),
-                    MockDirective(CustomMaxDirective),
-                    MockDirective(CustomNotIncludedInValidatorDirective),
-                ],
+                imports: [ArtemisTestModule, OwlDateTimeModule, OwlNativeDateTimeModule],
                 providers: [
                     provideHttpClient(),
                     provideHttpClientTesting(),
                     provideRouter(routes),
+                    { provide: ArtemisTranslatePipe, useClass: ArtemisTranslatePipe },
                     { provide: LocalStorageService, useClass: MockSyncStorage },
                     { provide: SessionStorageService, useClass: MockSyncStorage },
-                    MockDirective(TranslateDirective),
                     {
                         provide: ActivatedRoute,
                         useValue: {
@@ -135,6 +111,9 @@ describe('ExamUpdateComponent', () => {
 
             router = TestBed.inject(Router);
             fixture = TestBed.createComponent(ExamUpdateComponent);
+            global.ResizeObserver = jest.fn().mockImplementation((callback: ResizeObserverCallback) => {
+                return new MockResizeObserver(callback);
+            });
             component = fixture.componentInstance;
             examManagementService = fixture.debugElement.injector.get(ExamManagementService);
         });
@@ -602,23 +581,12 @@ describe('ExamUpdateComponent', () => {
 
         beforeEach(() => {
             TestBed.configureTestingModule({
-                imports: [MockModule(NgbModule), TranslateModule.forRoot(), FormsModule, ArtemisExamModePickerModule, TitleChannelNameComponent, ArtemisSharedComponentModule],
-                declarations: [
-                    ExamUpdateComponent,
-                    ExamExerciseImportComponent,
-                    MockComponent(FormDateTimePickerComponent),
-                    MockComponent(MarkdownEditorMonacoComponent),
-                    MockComponent(DataTableComponent),
-                    DummyComponent,
-                    MockPipe(ArtemisTranslatePipe),
-                    MockDirective(CustomMinDirective),
-                    MockDirective(CustomMaxDirective),
-                    MockDirective(CustomNotIncludedInValidatorDirective),
-                ],
+                imports: [ArtemisTestModule, OwlDateTimeModule, OwlNativeDateTimeModule],
                 providers: [
                     provideHttpClient(),
                     provideHttpClientTesting(),
                     provideRouter(routes),
+                    { provide: ArtemisTranslatePipe, useClass: ArtemisTranslatePipe },
                     { provide: LocalStorageService, useClass: MockSyncStorage },
                     { provide: SessionStorageService, useClass: MockSyncStorage },
                     MockDirective(TranslateDirective),
@@ -641,6 +609,7 @@ describe('ExamUpdateComponent', () => {
                             );
                         },
                     }),
+                    MockDirective(NgForm),
                 ],
             }).compileComponents();
 

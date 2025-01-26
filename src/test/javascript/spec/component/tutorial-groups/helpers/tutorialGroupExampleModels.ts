@@ -1,7 +1,6 @@
 import { TutorialGroup } from 'app/entities/tutorial-group/tutorial-group.model';
 import { Course } from 'app/entities/course.model';
-import { User } from 'app/core/user/user.model';
-import { TutorialGroupFormData } from 'app/course/tutorial-groups/tutorial-groups-management/tutorial-groups/crud/tutorial-group-form/tutorial-group-form.component';
+import { TutorialGroupFormData, UserWithLabel } from 'app/course/tutorial-groups/tutorial-groups-management/tutorial-groups/crud/tutorial-group-form/tutorial-group-form.component';
 import dayjs from 'dayjs/esm';
 
 export const generateExampleTutorialGroup = ({
@@ -12,7 +11,7 @@ export const generateExampleTutorialGroup = ({
     language = 'ENGLISH',
     additionalInformation = 'Example Additional Information',
     isOnline = false,
-    teachingAssistant = { id: 1, login: 'Example TA' } as User,
+    teachingAssistant = { id: 1, login: 'Example TA', label: '(Example TA)' } as UserWithLabel,
     isUserRegistered = false,
     isUserTutor = false,
     numberOfRegisteredUsers = 5,

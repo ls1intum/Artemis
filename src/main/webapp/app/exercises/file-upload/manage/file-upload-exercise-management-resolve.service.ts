@@ -4,18 +4,16 @@ import { CourseManagementService } from 'app/course/manage/course-management.ser
 import { ExerciseGroupService } from 'app/exam/manage/exercise-groups/exercise-group.service';
 import { ExerciseGroup } from 'app/entities/exercise-group.model';
 import { Course } from 'app/entities/course.model';
-import { Injectable } from '@angular/core';
+import { Injectable, inject } from '@angular/core';
 import { ActivatedRouteSnapshot, Resolve } from '@angular/router';
 import { HttpResponse } from '@angular/common/http';
 import { filter, map, of } from 'rxjs';
 
 @Injectable({ providedIn: 'root' })
 export class FileUploadExerciseManagementResolve implements Resolve<FileUploadExercise> {
-    constructor(
-        private fileUploadExerciseService: FileUploadExerciseService,
-        private courseService: CourseManagementService,
-        private exerciseGroupService: ExerciseGroupService,
-    ) {}
+    private fileUploadExerciseService = inject(FileUploadExerciseService);
+    private courseService = inject(CourseManagementService);
+    private exerciseGroupService = inject(ExerciseGroupService);
 
     /**
      * Resolves the route and initializes file upload exercise either from exerciseId (existing exercise) or

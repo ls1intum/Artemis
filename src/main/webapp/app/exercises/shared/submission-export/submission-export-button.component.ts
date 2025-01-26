@@ -1,10 +1,11 @@
-import { Component, Input } from '@angular/core';
+import { Component, Input, inject } from '@angular/core';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { ButtonSize, ButtonType } from 'app/shared/components/button.component';
 import { SubmissionExportDialogComponent } from './submission-export-dialog.component';
 import { ExerciseType } from 'app/entities/exercise.model';
 import { faDownload } from '@fortawesome/free-solid-svg-icons';
 import { FeatureToggle } from 'app/shared/feature-toggle/feature-toggle.service';
+import { ButtonComponent } from 'app/shared/components/button.component';
 
 @Component({
     selector: 'jhi-exercise-submission-export',
@@ -20,8 +21,11 @@ import { FeatureToggle } from 'app/shared/feature-toggle/feature-toggle.service'
             (onClick)="openSubmissionExportDialog($event)"
         />
     `,
+    imports: [ButtonComponent],
 })
 export class SubmissionExportButtonComponent {
+    private modalService = inject(NgbModal);
+
     readonly ButtonType = ButtonType;
     readonly ButtonSize = ButtonSize;
     readonly FeatureToggle = FeatureToggle;
@@ -31,8 +35,6 @@ export class SubmissionExportButtonComponent {
 
     // Icons
     faDownload = faDownload;
-
-    constructor(private modalService: NgbModal) {}
 
     /**
      * Stops the propagation of the mouse event and updates the component instance

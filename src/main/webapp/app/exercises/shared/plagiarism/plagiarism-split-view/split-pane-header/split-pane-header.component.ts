@@ -2,6 +2,11 @@ import { Component, EventEmitter, Input, OnChanges, OnDestroy, OnInit, Output, S
 import { faChevronDown } from '@fortawesome/free-solid-svg-icons';
 import { Subject, Subscription } from 'rxjs';
 import { TextPlagiarismFileElement } from 'app/exercises/shared/plagiarism/types/text/TextPlagiarismFileElement';
+import { NgbDropdown, NgbDropdownItem } from '@ng-bootstrap/ng-bootstrap';
+import { NgClass } from '@angular/common';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 
 /**
  * A file name that additionally stores if a plagiarism match has been found for it.
@@ -15,6 +20,7 @@ export type FileWithHasMatch = {
     selector: 'jhi-split-pane-header',
     templateUrl: './split-pane-header.component.html',
     styleUrls: ['./split-pane-header.component.scss'],
+    imports: [NgbDropdown, NgClass, FaIconComponent, NgbDropdownItem, TranslateDirective, ArtemisTranslatePipe],
 })
 export class SplitPaneHeaderComponent implements OnChanges, OnInit, OnDestroy {
     @Input() files: FileWithHasMatch[];

@@ -1,12 +1,9 @@
 import { Routes } from '@angular/router';
 import { UserRouteAccessService } from 'app/core/auth/user-route-access-service';
-import { QuizExerciseUpdateComponent } from './quiz-exercise-update.component';
-import { QuizExerciseExportComponent } from './quiz-exercise-export.component';
+
 import { PendingChangesGuard } from 'app/shared/guard/pending-changes.guard';
-import { QuizReEvaluateComponent } from 'app/exercises/quiz/manage/re-evaluate/quiz-re-evaluate.component';
-import { QuizParticipationComponent } from 'app/exercises/quiz/participate/quiz-participation.component';
+
 import { Authority } from 'app/shared/constants/authority.constants';
-import { QuizExerciseDetailComponent } from 'app/exercises/quiz/manage/quiz-exercise-detail.component';
 
 export const quizManagementRoute: Routes = [
     {
@@ -15,7 +12,7 @@ export const quizManagementRoute: Routes = [
     },
     {
         path: ':courseId/quiz-exercises/new',
-        component: QuizExerciseUpdateComponent,
+        loadComponent: () => import('./quiz-exercise-update.component').then((m) => m.QuizExerciseUpdateComponent),
         data: {
             authorities: [Authority.EDITOR, Authority.INSTRUCTOR, Authority.ADMIN],
             pageTitle: 'artemisApp.quizExercise.home.title',
@@ -25,7 +22,7 @@ export const quizManagementRoute: Routes = [
     },
     {
         path: ':courseId/quiz-exercises/export',
-        component: QuizExerciseExportComponent,
+        loadComponent: () => import('./quiz-exercise-export.component').then((m) => m.QuizExerciseExportComponent),
         data: {
             authorities: [Authority.EDITOR, Authority.INSTRUCTOR, Authority.ADMIN],
             pageTitle: 'artemisApp.quizExercise.home.title',
@@ -34,7 +31,7 @@ export const quizManagementRoute: Routes = [
     },
     {
         path: ':courseId/quiz-exercises/:exerciseId',
-        component: QuizExerciseDetailComponent,
+        loadComponent: () => import('app/exercises/quiz/manage/quiz-exercise-detail.component').then((m) => m.QuizExerciseDetailComponent),
         data: {
             authorities: [Authority.TA, Authority.EDITOR, Authority.INSTRUCTOR, Authority.ADMIN],
             pageTitle: 'artemisApp.quizExercise.home.title',
@@ -43,7 +40,7 @@ export const quizManagementRoute: Routes = [
     },
     {
         path: ':courseId/quiz-exercises/:exerciseId/re-evaluate',
-        component: QuizReEvaluateComponent,
+        loadComponent: () => import('app/exercises/quiz/manage/re-evaluate/quiz-re-evaluate.component').then((m) => m.QuizReEvaluateComponent),
         data: {
             authorities: [Authority.INSTRUCTOR, Authority.ADMIN],
             pageTitle: 'artemisApp.quizExercise.home.title',
@@ -52,7 +49,7 @@ export const quizManagementRoute: Routes = [
     },
     {
         path: ':courseId/quiz-exercises/:exerciseId/edit',
-        component: QuizExerciseUpdateComponent,
+        loadComponent: () => import('./quiz-exercise-update.component').then((m) => m.QuizExerciseUpdateComponent),
         data: {
             authorities: [Authority.EDITOR, Authority.INSTRUCTOR, Authority.ADMIN],
             pageTitle: 'artemisApp.quizExercise.home.title',
@@ -62,7 +59,7 @@ export const quizManagementRoute: Routes = [
     },
     {
         path: ':courseId/quiz-exercises/:exerciseId/import',
-        component: QuizExerciseUpdateComponent,
+        loadComponent: () => import('./quiz-exercise-update.component').then((m) => m.QuizExerciseUpdateComponent),
         data: {
             authorities: [Authority.EDITOR, Authority.INSTRUCTOR, Authority.ADMIN],
             pageTitle: 'artemisApp.quizExercise.home.importLabel',
@@ -72,7 +69,7 @@ export const quizManagementRoute: Routes = [
     },
     {
         path: ':courseId/quiz-exercises/:exerciseId/preview',
-        component: QuizParticipationComponent,
+        loadComponent: () => import('app/exercises/quiz/participate/quiz-participation.component').then((m) => m.QuizParticipationComponent),
         data: {
             authorities: [Authority.TA, Authority.EDITOR, Authority.INSTRUCTOR, Authority.ADMIN],
             pageTitle: 'artemisApp.quizExercise.home.title',
@@ -82,7 +79,7 @@ export const quizManagementRoute: Routes = [
     },
     {
         path: ':courseId/quiz-exercises/:exerciseId/solution',
-        component: QuizParticipationComponent,
+        loadComponent: () => import('app/exercises/quiz/participate/quiz-participation.component').then((m) => m.QuizParticipationComponent),
         data: {
             authorities: [Authority.TA, Authority.EDITOR, Authority.INSTRUCTOR, Authority.ADMIN],
             pageTitle: 'artemisApp.quizExercise.home.title',

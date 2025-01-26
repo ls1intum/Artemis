@@ -8,7 +8,6 @@ import { ArtemisProgrammingExerciseActionsModule } from 'app/exercises/programmi
 @Component({
     selector: 'jhi-programming-repository-buttons-detail',
     templateUrl: 'programming-repository-buttons-detail.component.html',
-    standalone: true,
     imports: [NoDataComponent, RouterModule, ArtemisSharedComponentModule, ArtemisProgrammingExerciseActionsModule],
 })
 export class ProgrammingRepositoryButtonsDetailComponent {

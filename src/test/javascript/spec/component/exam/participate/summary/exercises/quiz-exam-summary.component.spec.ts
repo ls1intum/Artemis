@@ -1,7 +1,4 @@
-import { provideHttpClient } from '@angular/common/http';
-import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { TranslateService } from '@ngx-translate/core';
 import { Exam } from 'app/entities/exam/exam.model';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
 import { AnswerOption } from 'app/entities/quiz/answer-option.model';
@@ -22,12 +19,8 @@ import { ShortAnswerSpot } from 'app/entities/quiz/short-answer-spot.model';
 import { ShortAnswerSubmittedAnswer } from 'app/entities/quiz/short-answer-submitted-answer.model';
 import { ShortAnswerSubmittedText } from 'app/entities/quiz/short-answer-submitted-text.model';
 import { QuizExamSummaryComponent } from 'app/exam/participate/summary/exercises/quiz-exam-summary/quiz-exam-summary.component';
-import { QuizExerciseService } from 'app/exercises/quiz/manage/quiz-exercise.service';
-import { ArtemisQuizQuestionTypesModule } from 'app/exercises/quiz/shared/questions/artemis-quiz-question-types.module';
-import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
-import { ArtemisServerDateService } from 'app/shared/server-date.service';
 import dayjs from 'dayjs/esm';
-import { MockModule, MockPipe, MockProvider } from 'ng-mocks';
+import { ArtemisTestModule } from '../../../../../test.module';
 
 const multipleChoiceQuestion = { id: 1, type: QuizQuestionType.MULTIPLE_CHOICE } as MultipleChoiceQuestion;
 const wrongAnswerOption = { id: 1, isCorrect: false, question: multipleChoiceQuestion } as AnswerOption;
@@ -78,9 +71,7 @@ describe('QuizExamSummaryComponent', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [MockModule(ArtemisQuizQuestionTypesModule)],
-            declarations: [QuizExamSummaryComponent, MockPipe(ArtemisTranslatePipe)],
-            providers: [provideHttpClient(), provideHttpClientTesting(), MockProvider(TranslateService), MockProvider(QuizExerciseService), MockProvider(ArtemisServerDateService)],
+            imports: [ArtemisTestModule],
         })
             .compileComponents()
             .then(() => {
