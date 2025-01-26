@@ -11,8 +11,6 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 
 import de.tum.cit.aet.artemis.buildagent.dto.LocalCITestJobDTO;
 import de.tum.cit.aet.artemis.buildagent.dto.testsuite.CustomFeedback;
-import de.tum.cit.aet.artemis.buildagent.dto.testsuite.Failure;
-import de.tum.cit.aet.artemis.buildagent.dto.testsuite.TestCase;
 
 public final class CustomFeedbackParser {
 
@@ -21,6 +19,7 @@ public final class CustomFeedbackParser {
     private static final ObjectMapper mapper = new ObjectMapper();
 
     private CustomFeedbackParser() {
+
     }
 
     /**
@@ -42,9 +41,8 @@ public final class CustomFeedbackParser {
             log.error("Error during custom Feedback creation. {}", e.getMessage(), e);
             return;
         }
-        // Only create TestCase if there was no exception during the custom feedback extraction
-        final TestCase testCase = customFeedbackToTestCase(feedback);
-        processTestCase(testCase, failedTests, successfulTests);
+        List<LocalCITestJobDTO> toAddFeedbackTo = feedback.successful() ? successfulTests : failedTests;
+        toAddFeedbackTo.add(new LocalCITestJobDTO(feedback.name(), List.of(feedback.getMessage())));
     }
 
     /**
@@ -61,40 +59,8 @@ public final class CustomFeedbackParser {
         if (feedback.name() == null || feedback.name().trim().isEmpty()) {
             throw new InvalidPropertiesFormatException(String.format("Custom feedback from file %s needs to have a name attribute.", fileName));
         }
-        if (!feedback.successful() && feedback.message() == null) {
+        if (!feedback.successful() && (feedback.message() == null || feedback.message().trim().isEmpty())) {
             throw new InvalidPropertiesFormatException(String.format("Custom non-success feedback from file %s needs to have a message", fileName));
-        }
-    }
-
-    /**
-     * Convert a custom feedback into {@link TestCase}.
-     *
-     * @param feedback the custom feedback to convert
-     * @return A Testsuite in the same format as used by JUnit reports
-     */
-    private static TestCase customFeedbackToTestCase(final CustomFeedback feedback) {
-        final TestCase testCase;
-        if (feedback.successful()) {
-            testCase = new TestCase(feedback.name(), null, null, null, feedback.message());
-        }
-        else {
-            final Failure failure = new Failure();
-            failure.setMessage(feedback.message());
-            testCase = new TestCase(feedback.name(), failure, null, null, null);
-        }
-        return testCase;
-    }
-
-    private static void processTestCase(final TestCase testCase, final List<LocalCITestJobDTO> failedTests, final List<LocalCITestJobDTO> successfulTests) {
-        if (testCase.isSkipped()) {
-            return;
-        }
-        Failure failure = testCase.extractFailure();
-        if (failure != null) {
-            failedTests.add(new LocalCITestJobDTO(testCase.name(), List.of(failure.extractMessage())));
-        }
-        else {
-            successfulTests.add(new LocalCITestJobDTO(testCase.name(), List.of(testCase.extractSuccessMessage())));
         }
     }
 }
