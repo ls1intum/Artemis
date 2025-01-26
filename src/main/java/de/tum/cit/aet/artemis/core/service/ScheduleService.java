@@ -92,7 +92,7 @@ public class ScheduleService {
             // Calculate the scheduled time from the future's delay
             var scheduledTime = ZonedDateTime.now().plusSeconds(task.future().getDelay(TimeUnit.SECONDS));
             return new ScheduledExerciseEvent(entry.getKey().exerciseId(), entry.getKey().lifecycle(), task.name(), scheduledTime, task.future().state());
-        })).sorted(Comparator.comparing(ScheduledExerciseEvent::scheduledTime)).collect(Collectors.toList());
+        })).sorted(Comparator.comparing(ScheduledExerciseEvent::scheduledTime)).toList();
 
         // Apply pagination
         int start = (int) pageable.getOffset();
