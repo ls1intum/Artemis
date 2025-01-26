@@ -6,10 +6,6 @@ on:
       branch:
         description: 'Branch to deploy'
         required: true
-      triggered_by:
-        description: "Username that triggered deployment (not required, shown if triggered via GitHub UI, logged if triggered via GitHub app)"
-        required: false
-        type: string
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.event.inputs.branch }}
