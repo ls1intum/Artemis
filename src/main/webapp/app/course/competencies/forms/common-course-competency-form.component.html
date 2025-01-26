@@ -16,7 +16,7 @@
                     }
                     @if (titleControl?.errors?.maxlength) {
                         <div
-                            [jhiTranslate]="'artemisApp.' + courseCompetency?.type + '.titleMaxLengthValidationError'"
+                            [jhiTranslate]="'artemisApp.' + courseCompetency?.type + '.create.titleMaxLengthValidationError'"
                             [translateValues]="{ max: competencyValidators.TITLE_MAX }"
                         ></div>
                     }
@@ -41,7 +41,7 @@
                 <div class="alert alert-danger">
                     @if (descriptionControl?.errors?.maxlength) {
                         <div
-                            [jhiTranslate]="'artemisApp.competency.' + courseCompetency?.type + '.descriptionMaxLengthValidationError'"
+                            [jhiTranslate]="'artemisApp.' + courseCompetency?.type + '.create.descriptionMaxLengthValidationError'"
                             [translateValues]="{ max: competencyValidators.DESCRIPTION_MAX }"
                         ></div>
                     }
