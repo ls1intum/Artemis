@@ -18,13 +18,13 @@ import { ComponentCanDeactivate } from 'app/shared/guard/can-deactivate.model';
 import { Feedback } from 'app/entities/feedback.model';
 import { hasExerciseDueDatePassed } from 'app/exercises/shared/exercise/exercise.utils';
 import { TextExercise } from 'app/entities/text/text-exercise.model';
-import { ButtonType } from 'app/shared/components/button.component';
+import { ButtonComponent, ButtonType } from 'app/shared/components/button.component';
 import { Result } from 'app/entities/result.model';
 import { TextSubmission } from 'app/entities/text/text-submission.model';
 import { StringCountService } from 'app/exercises/text/participate/string-count.service';
 import { AccountService } from 'app/core/auth/account.service';
 import { getFirstResultWithComplaint, getLatestSubmissionResult, setLatestSubmissionResult } from 'app/entities/submission.model';
-import { getManualUnreferencedFeedback, isAthenaAIResult } from 'app/exercises/shared/result/result.utils';
+import { getUnreferencedFeedback, isAthenaAIResult } from 'app/exercises/shared/result/result.utils';
 import { onError } from 'app/shared/util/global.utils';
 import { Course } from 'app/entities/course.model';
 import { getCourseFromExercise } from 'app/entities/exercise.model';
@@ -37,7 +37,6 @@ import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
 import { PROFILE_IRIS } from 'app/app.constants';
 import { IrisSettingsService } from 'app/iris/settings/shared/iris-settings.service';
 import { AssessmentType } from 'app/entities/assessment-type.model';
-import { ButtonComponent } from 'app/shared/components/button.component';
 import { RequestFeedbackButtonComponent } from 'app/overview/exercise-details/request-feedback-button/request-feedback-button.component';
 import { ResultHistoryComponent } from 'app/overview/result-history/result-history.component';
 import { ResizeableContainerComponent } from 'app/shared/resizeable-container/resizeable-container.component';
@@ -286,6 +285,9 @@ export class TextEditorComponent implements OnInit, OnDestroy, ComponentCanDeact
 
             if (this.submission?.text) {
                 this.answer = this.submission.text;
+            } else {
+                // handles the case when a submission is empty
+                this.answer = '';
             }
         }
         // check whether the student looks at the result
@@ -356,7 +358,7 @@ export class TextEditorComponent implements OnInit, OnDestroy, ComponentCanDeact
      * Check whether or not a result exists and if, returns the unreferenced feedback of it
      */
     get unreferencedFeedback(): Feedback[] | undefined {
-        return this.result ? getManualUnreferencedFeedback(this.result.feedbacks) : undefined;
+        return this.result ? getUnreferencedFeedback(this.result.feedbacks) : undefined;
     }
 
     get wordCount(): number {
@@ -397,6 +399,11 @@ export class TextEditorComponent implements OnInit, OnDestroy, ComponentCanDeact
         this.textSubmissionService.update(submissionToCreateOrUpdate, this.textExercise.id!).subscribe({
             next: (response) => {
                 this.submission = response.body!;
+                if (this.participation.team) {
+                    // Make sure the team is not lost during update
+                    const studentParticipation = this.submission.participation as StudentParticipation;
+                    studentParticipation.team = this.participation.team;
+                }
                 setLatestSubmissionResult(this.submission, getLatestSubmissionResult(this.submission));
                 this.submissionChange.next(this.submission);
                 // reconnect so that the submission status is displayed correctly in the result.component
@@ -447,7 +454,10 @@ export class TextEditorComponent implements OnInit, OnDestroy, ComponentCanDeact
     onReceiveSubmissionFromTeam(submission: TextSubmission) {
         submission.participation!.exercise = this.textExercise;
         submission.participation!.submissions = [submission];
-        this.updateParticipation(submission.participation as StudentParticipation);
+        // Keep the existing team on the participation
+        const studentParticipation = submission.participation as StudentParticipation;
+        studentParticipation.team = this.participation.team;
+        this.updateParticipation(studentParticipation);
     }
 
     onTextEditorInput(event: Event) {
