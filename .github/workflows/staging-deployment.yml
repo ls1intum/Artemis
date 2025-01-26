@@ -1,11 +1,16 @@
 name: Artemis Staging Deployment
 
 on:
-  workflow_run:
-    workflows: ["Build Artemis"]
-    types:
-      - completed
   workflow_dispatch:
+    inputs:
+      branch:
+        description: 'Branch to deploy'
+        required: true
+        type: choice
+        options:
+          - develop
+          - main
+          - release/*
 
 env:
   NODE_HOSTNAME_POSTFIX: ${{ secrets.NODE_HOSTNAME_POSTFIX }}
@@ -20,11 +25,11 @@ jobs:
     outputs:
       can_deploy: ${{ steps.check_build.outputs.can_deploy }}
     steps:
-      - name: Get latest build for develop branch
+      - name: Get latest build for selected branch
         id: check_build
         uses: octokit/request-action@v2.x
         with:
-          route: GET /repos/${{ github.repository }}/actions/workflows/build.yml/runs?branch=develop&per_page=1
+          route: GET /repos/${{ github.repository }}/actions/workflows/build.yml/runs?branch=${{ github.event.inputs.branch }}&per_page=1
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
