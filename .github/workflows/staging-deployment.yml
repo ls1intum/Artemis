@@ -1,0 +1,153 @@
+name: Artemis Staging Deployment
+
+on:
+  workflow_run:
+    workflows: ["Build Artemis"]
+    types:
+      - completed
+  workflow_dispatch:
+
+env:
+  NODE_HOSTNAME_POSTFIX: ${{ secrets.NODE_HOSTNAME_POSTFIX }}
+  SECONDARY_NODE_HOSTNAMES: ${{ secrets.SECONDARY_NODE_HOSTNAMES }}
+  PRIMARY_NODE: ${{ secrets.PRIMARY_NODE_HOSTNAME }}
+  VM_USERNAME: ${{ secrets.SSH_USERNAME }}
+  HEALTH_CHECK_URL: "https://artemis-staging-localci.artemis.cit.tum.de/management/health"
+
+jobs:
+  check-build-status:
+    runs-on: ubuntu-latest
+    outputs:
+      can_deploy: ${{ steps.check_build.outputs.can_deploy }}
+    steps:
+      - name: Get latest build for develop branch
+        id: check_build
+        uses: octokit/request-action@v2.x
+        with:
+          route: GET /repos/${{ github.repository }}/actions/workflows/build.yml/runs?branch=develop&per_page=1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Check build result
+        id: check_result
+        run: |
+          STATUS=$(echo '${{ steps.check_build.outputs.data }}' | jq -r '.workflow_runs[0].status')
+          CONCLUSION=$(echo '${{ steps.check_build.outputs.data }}' | jq -r '.workflow_runs[0].conclusion')
+          
+          echo "Latest build status: $STATUS"
+          echo "Latest build conclusion: $CONCLUSION"
+          
+          if [ "$STATUS" = "completed" ] && [ "$CONCLUSION" = "success" ]; then
+            echo "can_deploy=true" >> $GITHUB_OUTPUT
+            echo "Latest build was successful"
+          else
+            echo "can_deploy=false" >> $GITHUB_OUTPUT
+            echo "Latest build was not successful or still in progress"
+          fi
+
+      - name: Fail if build not successful
+        if: steps.check_result.outputs.can_deploy != 'true'
+        run: |
+          echo "Latest build was not successful or still in progress"
+          exit 1
+
+  deploy:
+    needs: check-build-status
+    if: needs.check-build-status.outputs.can_deploy == 'true'
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Download artifact from build
+        uses: dawidd6/action-download-artifact@v2
+        with:
+          workflow: build.yml
+          workflow_conclusion: success
+          name: Artemis.war
+          path: artifacts
+          branch: develop
+
+      - name: Setup SSH
+        env:
+          SSH_PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
+        run: |
+          mkdir -p ~/.ssh
+          echo "$SSH_PRIVATE_KEY" > ~/.ssh/id_rsa
+          chmod 600 ~/.ssh/id_rsa
+          ssh-keyscan -t rsa ${PRIMARY_NODE}${NODE_HOSTNAME_POSTFIX} >> ~/.ssh/known_hosts
+          for node in $SECONDARY_NODE_HOSTNAMES; do
+            ssh-keyscan -t rsa ${node}${NODE_HOSTNAME_POSTFIX} >> ~/.ssh/known_hosts
+          done
+
+      - name: Phase 1 - Stop Secondary Nodes
+        run: |
+          for node in $SECONDARY_NODE_HOSTNAMES; do
+            VM_HOSTNAME="${node}${NODE_HOSTNAME_POSTFIX}"
+            echo "[INFO] Stop artemis.service on ${VM_HOSTNAME} ..."
+            ssh -o LogLevel=ERROR -l $VM_USERNAME $VM_HOSTNAME "sudo systemctl stop artemis"
+          done
+
+      - name: Phase 1 - Deploy to Primary Node
+        run: |
+          VM_HOSTNAME="${PRIMARY_NODE}${NODE_HOSTNAME_POSTFIX}"
+          echo "[INFO] Deploy on $VM_HOSTNAME ..."
+          
+          # Remove old backup
+          ssh -o LogLevel=ERROR -l $VM_USERNAME $VM_HOSTNAME "rm -f /opt/artemis/artemis.war.old"
+          
+          # Copy new war file
+          scp -o LogLevel=ERROR artifacts/*.war $VM_USERNAME@$VM_HOSTNAME:/opt/artemis/artemis.war.new
+          
+          # Stop service, rotate files, and start service
+          ssh -o LogLevel=ERROR -l $VM_USERNAME $VM_HOSTNAME << 'ENDSSH'
+            sudo systemctl stop artemis
+            mv /opt/artemis/artemis.war /opt/artemis/artemis.war.old
+            mv /opt/artemis/artemis.war.new /opt/artemis/artemis.war
+            sudo systemctl start artemis
+          ENDSSH
+
+      - name: Verify Primary Node Deployment
+        id: verify_deployment
+        run: |
+          echo "Waiting initial 2 minutes for application startup..."
+          sleep 120
+
+          MAX_RETRIES=12  # 12 retries * 30 seconds = 6 minutes total
+          RETRY_INTERVAL=30
+          
+          for i in $(seq 1 $MAX_RETRIES); do
+            echo "Health check attempt $i of $MAX_RETRIES"
+            
+            RESPONSE=$(curl -s -f $HEALTH_CHECK_URL || echo '{"status":"DOWN"}')
+            STATUS=$(echo $RESPONSE | jq -r '.status')
+            
+            if [ "$STATUS" = "UP" ]; then
+              echo "Health check passed! Application is UP"
+              exit 0
+            else
+              echo "Health check failed. Status: $STATUS"
+              if [ $i -eq $MAX_RETRIES ]; then
+                echo "Max retries reached. Deployment verification failed!"
+                exit 1
+              fi
+              echo "Waiting ${RETRY_INTERVAL} seconds before next attempt..."
+              sleep $RETRY_INTERVAL
+            fi
+          done
+
+      - name: Phase 2 - Deploy to Secondary Nodes
+        if: ${{ success() }}
+        run: |
+          for node in $SECONDARY_NODE_HOSTNAMES; do
+            VM_HOSTNAME="${node}${NODE_HOSTNAME_POSTFIX}"
+            echo "[INFO] Deploy on $VM_HOSTNAME ..."
+            
+            ssh -o LogLevel=ERROR -l $VM_USERNAME $VM_HOSTNAME "rm -f /opt/artemis/artemis.war.old"
+            scp -o LogLevel=ERROR artifacts/*.war $VM_USERNAME@$VM_HOSTNAME:/opt/artemis/artemis.war.new
+            
+            ssh -o LogLevel=ERROR -l $VM_USERNAME $VM_HOSTNAME << 'ENDSSH'
+              sudo systemctl stop artemis
+              mv /opt/artemis/artemis.war /opt/artemis/artemis.war.old
+              mv /opt/artemis/artemis.war.new /opt/artemis/artemis.war
+              sudo systemctl start artemis
+            ENDSSH
+          done
