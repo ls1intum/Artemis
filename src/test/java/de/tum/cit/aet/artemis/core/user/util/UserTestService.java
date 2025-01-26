@@ -226,8 +226,11 @@ public class UserTestService {
         userTestRepository.deleteAll(userTestRepository.searchAllByLoginOrName(Pageable.unpaged(), TEST_PREFIX));
         userUtilService.addUsers(TEST_PREFIX, 1, 1, 1, 1);
 
-        var users = Set.of(userUtilService.getUserByLogin(TEST_PREFIX + "student1"), userUtilService.getUserByLogin(TEST_PREFIX + "tutor1"),
-                userUtilService.getUserByLogin(TEST_PREFIX + "editor1"), userUtilService.getUserByLogin(TEST_PREFIX + "instructor1"));
+        var users = Stream.of("student1", "tutor1", "editor1", "instructor1").map(login -> {
+            final User user = userUtilService.getUserByLogin(TEST_PREFIX + login);
+            user.getGroups().clear();
+            return userTestRepository.save(user);
+        }).collect(Collectors.toSet());
 
         var logins = users.stream().map(User::getLogin).toList();
         request.delete("/api/admin/users", HttpStatus.OK, logins);
