@@ -1,7 +1,7 @@
 import { DebugElement, input, runInInjectionContext } from '@angular/core';
 import dayjs from 'dayjs/esm';
-import { ActivatedRoute, RouterModule, convertToParamMap } from '@angular/router';
-import { ComponentFixture, TestBed, fakeAsync, flush, tick } from '@angular/core/testing';
+import { ActivatedRoute, convertToParamMap, RouterModule } from '@angular/router';
+import { ComponentFixture, fakeAsync, flush, TestBed, tick } from '@angular/core/testing';
 import { AlertService } from 'app/core/util/alert.service';
 import { ArtemisTestModule } from '../../test.module';
 import { TranslateService } from '@ngx-translate/core';
@@ -328,6 +328,27 @@ describe('TextEditorComponent', () => {
         comp.onReceiveSubmissionFromTeam(submission);
         expect(comp['updateParticipation']).toHaveBeenCalledOnce();
         expect(comp.answer).toBe('abc');
+    });
+
+    it('should receive empty submission from team', () => {
+        comp.participation = { id: 1, team: { id: 1 } } as StudentParticipation;
+        comp.textExercise = {
+            id: 1,
+            studentParticipations: [] as StudentParticipation[],
+        } as TextExercise;
+        const submission = {
+            id: 1,
+            participation: {
+                id: 1,
+                exercise: { id: 1 } as Exercise,
+                submissions: [] as Submission[],
+            } as Participation,
+        } as TextSubmission;
+        // @ts-ignore
+        jest.spyOn(comp, 'updateParticipation');
+        comp.onReceiveSubmissionFromTeam(submission);
+        expect(comp['updateParticipation']).toHaveBeenCalledOnce();
+        expect(comp.answer).toBe('');
     });
 
     it('should set latest submission if submissionId is undefined in updateParticipation', () => {
