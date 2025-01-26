@@ -89,7 +89,7 @@ public class QuizScheduleService {
             var quizBatch = quizExercise.getQuizBatches().stream().findAny();
             if (quizBatch.isPresent() && quizBatch.get().getStartTime() != null) {
                 if (quizBatch.get().getStartTime().isAfter(ZonedDateTime.now())) {
-                    scheduleService.scheduleTask(quizExercise, quizBatch.get(), ExerciseLifecycle.START, () -> executeQuizStartNowTask(quizExercise.getId()));
+                    scheduleService.scheduleExerciseTask(quizExercise, quizBatch.get(), ExerciseLifecycle.START, () -> executeQuizStartNowTask(quizExercise.getId()), "quiz start");
                 }
             }
         }
@@ -104,8 +104,8 @@ public class QuizScheduleService {
     public void scheduleCalculateAllResults(QuizExercise quizExercise) {
         if (quizExercise.getDueDate() != null && !quizExercise.isQuizEnded()) {
             // we only schedule the task if the quiz is not over yet
-            scheduleService.scheduleTask(quizExercise, ExerciseLifecycle.DUE,
-                    Set.of(new Tuple<>(quizExercise.getDueDate().plusSeconds(5), () -> quizSubmissionService.calculateAllResults(quizExercise.getId()))));
+            scheduleService.scheduleExerciseTask(quizExercise, ExerciseLifecycle.DUE,
+                    new Tuple<>(quizExercise.getDueDate().plusSeconds(5), () -> quizSubmissionService.calculateAllResults(quizExercise.getId())), "calculate all quiz results");
         }
     }
 

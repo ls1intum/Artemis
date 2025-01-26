@@ -22,7 +22,9 @@ public class TaskSchedulingConfiguration {
     public TaskScheduler taskScheduler() {
         log.debug("Creating Task Scheduler ");
         var scheduler = new ThreadPoolTaskScheduler();
+        scheduler.setVirtualThreads(true);
         scheduler.setPoolSize(4);
+        scheduler.initialize();
         return scheduler;
     }
 }
