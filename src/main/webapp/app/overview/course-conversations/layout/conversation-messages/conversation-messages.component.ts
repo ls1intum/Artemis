@@ -42,6 +42,7 @@ import { NgClass } from '@angular/common';
 import { PostCreateEditModalComponent } from 'app/shared/metis/posting-create-edit-modal/post-create-edit-modal/post-create-edit-modal.component';
 import { MessageInlineInputComponent } from 'app/shared/metis/message/message-inline-input/message-inline-input.component';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
+import { AccountService } from 'app/core/auth/account.service';
 
 interface PostGroup {
     author: User | undefined;
@@ -68,6 +69,7 @@ export class ConversationMessagesComponent implements OnInit, AfterViewInit, OnD
     metisService = inject(MetisService);
     metisConversationService = inject(MetisConversationService);
     cdr = inject(ChangeDetectorRef);
+    private accountService = inject(AccountService);
 
     private ngUnsubscribe = new Subject<void>();
     readonly sessionStorageKey = 'conversationId.scrollPosition.';
@@ -123,6 +125,7 @@ export class ConversationMessagesComponent implements OnInit, AfterViewInit, OnD
     isHiddenInputFull = false;
     focusOnPostId: number | undefined = undefined;
     isOpenThreadOnFocus = false;
+    idOfLoggedInUser: number;
 
     private layoutService: LayoutService = inject(LayoutService);
 
@@ -147,6 +150,10 @@ export class ConversationMessagesComponent implements OnInit, AfterViewInit, OnD
                 this.isMobile = this.layoutService.isBreakpointActive(CustomBreakpointNames.extraSmall);
             });
         this.cdr.detectChanges();
+
+        this.accountService.identity().then((loggedInUser: User) => {
+            this.idOfLoggedInUser = loggedInUser.id!;
+        });
     }
 
     private subscribeToActiveConversation() {
@@ -161,39 +168,30 @@ export class ConversationMessagesComponent implements OnInit, AfterViewInit, OnD
         });
     }
 
-    /**
-     * Determines whether a post is the "first unread message" in the conversation.
-     */
-    isFirstUnreadMarker(post: Post, group: PostGroup): boolean {
+    isFirstUnreadMarker(post: Post): boolean {
         let remainingUnread = this.unreadCount;
-        let firstUnreadFound = false;
-
-        const groupIndex = this.groupedPosts.findIndex((g) => g === group);
-        if (groupIndex === -1) {
-            return false;
-        }
+        let targetFound = false;
 
         for (let i = this.groupedPosts.length - 1; i >= 0; i--) {
             const currentGroup = this.groupedPosts[i];
-            const groupMessageCount = currentGroup.posts.length;
 
-            if (i > groupIndex) {
-                remainingUnread -= groupMessageCount;
-            } else if (i === groupIndex) {
-                const postIndexInGroup = currentGroup.posts.indexOf(post);
+            for (let j = currentGroup.posts.length - 1; j >= 0; j--) {
+                const currentPost = currentGroup.posts[j];
 
-                if (!firstUnreadFound && postIndexInGroup === groupMessageCount - remainingUnread) {
-                    if (groupIndex === 0 && postIndexInGroup === 0) {
-                        remainingUnread--;
-                        return false;
-                    }
-                    firstUnreadFound = true;
-                    return true;
+                if (currentPost.author?.id === this.idOfLoggedInUser) {
+                    continue;
                 }
 
                 remainingUnread--;
-            } else {
-                return false;
+
+                if (remainingUnread === 0 && currentPost === post) {
+                    targetFound = true;
+                    return true;
+                }
+            }
+
+            if (targetFound) {
+                break;
             }
         }
 

@@ -650,7 +650,7 @@ export class MetisService implements OnDestroy {
                     }
                 }
 
-                if (this.currentPostContextFilter.conversationId && postDTO.post.author?.id !== this.user.id) {
+                if (this.currentPostContextFilter.conversationId) {
                     this.conversationService.markAsRead(this.courseId, this.currentPostContextFilter.conversationId).subscribe();
                 }
 

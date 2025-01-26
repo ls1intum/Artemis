@@ -85,7 +85,7 @@
                         <div class="message-group">
                             @for (post of group.posts; track postsTrackByFn($index, post)) {
                                 <div class="post-item" style="position: relative">
-                                    @if (isFirstUnreadMarker(post, group)) {
+                                    @if (isFirstUnreadMarker(post)) {
                                         <span class="unread-marker">
                                             <span class="unread-text" jhiTranslate="global.generic.new"></span>
                                         </span>

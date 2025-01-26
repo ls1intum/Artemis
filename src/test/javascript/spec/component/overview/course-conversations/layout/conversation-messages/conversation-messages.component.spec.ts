@@ -21,7 +21,8 @@ import { ChannelDTO, getAsChannelDTO } from 'app/entities/metis/conversation/cha
 import { PostCreateEditModalComponent } from 'app/shared/metis/posting-create-edit-modal/post-create-edit-modal/post-create-edit-modal.component';
 import dayjs from 'dayjs/esm';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
-import { User } from '../../../../../../../../main/webapp/app/core/user/user.model';
+import { User } from 'app/core/user/user.model';
+import { AccountService } from 'app/core/auth/account.service';
 
 const examples: ConversationDTO[] = [
     generateOneToOneChatDTO({}),
@@ -61,6 +62,8 @@ examples.forEach((activeConversation) => {
         let metisConversationService: MetisConversationService;
         let examplePost: Post;
         const course = { id: 1 } as Course;
+        let loggedInUser: User;
+        const currentUserTemplate = { id: 3, login: 'login3', firstName: 'Kaddl3', lastName: 'Garching3' } as User;
 
         beforeEach(waitForAsync(() => {
             TestBed.configureTestingModule({
@@ -76,13 +79,13 @@ examples.forEach((activeConversation) => {
                     MockComponent(PostCreateEditModalComponent),
                     MockDirective(TranslateDirective),
                 ],
-                providers: [MockProvider(MetisConversationService), MockProvider(MetisService), MockProvider(NgbModal)],
+                providers: [MockProvider(MetisConversationService), MockProvider(MetisService), MockProvider(AccountService), MockProvider(NgbModal)],
             }).compileComponents();
         }));
 
         beforeEach(() => {
             examplePost = { id: 1, content: 'loremIpsum' } as Post;
-
+            loggedInUser = { ...currentUserTemplate };
             metisService = TestBed.inject(MetisService);
             metisConversationService = TestBed.inject(MetisConversationService);
             Object.defineProperty(metisService, 'posts', { get: () => new BehaviorSubject([examplePost]).asObservable() });
@@ -103,6 +106,8 @@ examples.forEach((activeConversation) => {
                 },
             } as any;
             component.canStartSaving = true;
+            const accountService = TestBed.inject(AccountService);
+            jest.spyOn(accountService, 'identity').mockReturnValue(Promise.resolve(loggedInUser));
             fixture.detectChanges();
         });
 
