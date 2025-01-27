@@ -1,6 +1,6 @@
 package de.tum.cit.aet.artemis.communication.service;
 
-import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_IRIS;
+import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
 import java.util.Optional;
 
@@ -13,13 +13,11 @@ import de.tum.cit.aet.artemis.communication.repository.FaqRepository;
 import de.tum.cit.aet.artemis.core.service.ProfileService;
 import de.tum.cit.aet.artemis.iris.service.pyris.PyrisWebhookService;
 
-@Profile(PROFILE_IRIS)
+@Profile(PROFILE_CORE)
 @Service
 public class FaqService {
 
     private final Optional<PyrisWebhookService> pyrisWebhookService;
-
-    private final ProfileService profileService;
 
     private final FaqRepository faqRepository;
 
@@ -27,7 +25,6 @@ public class FaqService {
 
         this.pyrisWebhookService = pyrisWebhookService;
         this.faqRepository = faqRepository;
-        this.profileService = profileService;
 
     }
 
