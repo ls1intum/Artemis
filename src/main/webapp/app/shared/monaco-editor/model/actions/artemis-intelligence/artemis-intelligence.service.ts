@@ -78,7 +78,7 @@ export class ArtemisIntelligenceService {
                 })
                 .subscribe({
                     next: () => {
-                        const websocketTopic = `/user/topic/iris/consistency-check/${exerciseId}`;
+                        const websocketTopic = `/user/topic/iris/consistency-check/${courseId}/${exerciseId}`;
                         this.jhiWebsocketService.subscribe(websocketTopic);
                         this.jhiWebsocketService.receive(websocketTopic).subscribe({
                             next: (update: any) => {

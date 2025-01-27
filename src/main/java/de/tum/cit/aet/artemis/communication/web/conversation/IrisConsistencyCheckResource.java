@@ -11,7 +11,6 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import de.tum.cit.aet.artemis.core.repository.CourseRepository;
@@ -19,6 +18,7 @@ import de.tum.cit.aet.artemis.core.repository.UserRepository;
 import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInCourse.EnforceAtLeastTutorInCourse;
 import de.tum.cit.aet.artemis.exercise.repository.ExerciseRepository;
 import de.tum.cit.aet.artemis.iris.service.IrisConsistencyCheckService;
+import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 
 /**
  * REST controller for checking consistency of exercises.
@@ -49,13 +49,12 @@ public class IrisConsistencyCheckResource {
 
     @EnforceAtLeastTutorInCourse
     @PostMapping("exercises/{courseId}/{exerciseId}/consistency-check")
-    public ResponseEntity<Void> consistencyCheckExercise(@RequestParam String toBeChecked, @PathVariable Long exerciseId, @PathVariable Long courseId) {
+    public ResponseEntity<Void> consistencyCheckExercise(@PathVariable Long exerciseId, @PathVariable Long courseId) {
         var consistencyCheckService = irisConsistencyCheckService.orElseThrow();
         var user = userRepository.getUserWithGroupsAndAuthorities();
-        courseRepository.findByIdElseThrow(courseId);
+        var course = courseRepository.findByIdElseThrow(courseId);
         var exercise = exerciseRepository.findByIdElseThrow(exerciseId);
-        consistencyCheckService.executeConsistencyCheckPipeline(user, exercise, toBeChecked);
-        log.debug("REST request to check consistency of exercise: {}", toBeChecked);
+        consistencyCheckService.executeConsistencyCheckPipeline(user, course, (ProgrammingExercise) exercise);
         return ResponseEntity.ok().build();
     }
 

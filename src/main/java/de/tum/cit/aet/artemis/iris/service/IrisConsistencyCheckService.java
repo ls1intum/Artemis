@@ -7,18 +7,21 @@ import java.util.Optional;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
+import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.domain.LLMServiceType;
 import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.repository.UserRepository;
 import de.tum.cit.aet.artemis.core.service.LLMTokenUsageService;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.repository.ExerciseRepository;
+import de.tum.cit.aet.artemis.iris.service.pyris.PyrisDTOService;
 import de.tum.cit.aet.artemis.iris.service.pyris.PyrisJobService;
 import de.tum.cit.aet.artemis.iris.service.pyris.PyrisPipelineService;
+import de.tum.cit.aet.artemis.iris.service.pyris.dto.consistencyCheck.PyrisConsistencyCheckPipelineExecutionDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.consistencyCheck.PyrisConsistencyCheckStatusUpdateDTO;
-import de.tum.cit.aet.artemis.iris.service.pyris.dto.consistencyCheck.PyrisConsistencycheckPipelineExecutionDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.job.ConsistencyCheckJob;
 import de.tum.cit.aet.artemis.iris.service.websocket.IrisWebsocketService;
+import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 
 /**
  * Service to handle the rewriting subsystem of Iris.
@@ -39,32 +42,35 @@ public class IrisConsistencyCheckService {
 
     private final UserRepository userRepository;
 
+    private final PyrisDTOService pyrisDTOService;
+
     public IrisConsistencyCheckService(PyrisPipelineService pyrisPipelineService, LLMTokenUsageService llmTokenUsageService, ExerciseRepository exerciseRepository,
-            IrisWebsocketService websocketService, PyrisJobService pyrisJobService, UserRepository userRepository) {
+            IrisWebsocketService websocketService, PyrisJobService pyrisJobService, UserRepository userRepository, PyrisDTOService pyrisDTOService) {
         this.pyrisPipelineService = pyrisPipelineService;
         this.llmTokenUsageService = llmTokenUsageService;
         this.exerciseRepository = exerciseRepository;
         this.websocketService = websocketService;
         this.pyrisJobService = pyrisJobService;
         this.userRepository = userRepository;
+        this.pyrisDTOService = pyrisDTOService;
     }
 
     /**
      * Executes the consistency check pipeline on Pyris
      *
-     * @param user        the user for which the pipeline should be executed
-     * @param exercise    the exercise for which the pipeline should be executed
-     * @param toBeChecked the text to be checked
+     * @param user     the user for which the pipeline should be executed
+     * @param course   the course for which the pipeline should be executed
+     * @param exercise the exercise for which the pipeline should be executed
      */
-    public void executeConsistencyCheckPipeline(User user, Exercise exercise, String toBeChecked) {
+    public void executeConsistencyCheckPipeline(User user, Course course, ProgrammingExercise exercise) {
         // @formatter:off
         pyrisPipelineService.executePipeline(
                 "inconsistency-check",
                 "default",
                 Optional.empty(),
-                pyrisJobService.createTokenForJob(token -> new ConsistencyCheckJob(token, exercise.getId(), user.getId())),
-                executionDto -> new PyrisConsistencycheckPipelineExecutionDTO(executionDto, toBeChecked),
-                stages -> websocketService.send(user.getLogin(), websocketTopic(exercise.getId()), new PyrisConsistencyCheckStatusUpdateDTO(stages, null, null))
+                pyrisJobService.createTokenForJob(token -> new ConsistencyCheckJob(token, course.getId(), exercise.getId(), user.getId())),
+                executionDto -> new PyrisConsistencyCheckPipelineExecutionDTO(executionDto, pyrisDTOService.toPyrisProgrammingExerciseDTO(exercise)),
+                stages -> websocketService.send(user.getLogin(), websocketTopic(course.getId(), exercise.getId()), new PyrisConsistencyCheckStatusUpdateDTO(stages, null, null))
         );
         // @formatter:on
     }
@@ -83,13 +89,13 @@ public class IrisConsistencyCheckService {
         }
 
         var user = userRepository.findById(job.userId()).orElseThrow();
-        websocketService.send(user.getLogin(), websocketTopic(job.exerciseId()), statusUpdate);
+        websocketService.send(user.getLogin(), websocketTopic(job.courseId(), job.exerciseId()), statusUpdate);
 
         return job;
     }
 
-    private static String websocketTopic(long exerciseId) {
-        return "consistency-check/" + exerciseId;
+    private static String websocketTopic(long courseId, long exerciseId) {
+        return "consistency-check/" + courseId + "/" + exerciseId;
     }
 
 }
