@@ -262,6 +262,12 @@ public class SharedQueueProcessingService {
             return;
         }
 
+        // todo remove, probably wrong order executed on setup?
+        if (buildJobQueue == null) {
+            log.info("BuildJobQueue is null. Skipping build job processing.");
+            return;
+        }
+
         if (buildJobQueue.isEmpty() || isPaused.get()) {
             return;
         }
