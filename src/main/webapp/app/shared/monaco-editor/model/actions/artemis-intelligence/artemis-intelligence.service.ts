@@ -67,11 +67,11 @@ export class ArtemisIntelligenceService {
         });
     }
 
-    consistencyCheck(toBeChecked: string, exerciseId: number): Observable<string> {
+    consistencyCheck(toBeChecked: string, courseId: number, exerciseId: number): Observable<string> {
         this.isLoadingConsistencyCheck.set(true);
         return new Observable<string>((observer) => {
             this.http
-                .post(`${this.resourceUrl}/exercises/${exerciseId}/consistency-check`, null, {
+                .post(`${this.resourceUrl}/exercises/${courseId}/${exerciseId}/consistency-check`, null, {
                     params: {
                         toBeChecked: toBeChecked,
                     },
