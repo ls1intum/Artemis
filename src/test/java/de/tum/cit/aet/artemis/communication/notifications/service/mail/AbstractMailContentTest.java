@@ -13,6 +13,8 @@ import org.thymeleaf.spring6.SpringTemplateEngine;
 
 import de.tum.cit.aet.artemis.communication.service.notifications.MailSendingService;
 import de.tum.cit.aet.artemis.communication.service.notifications.MailService;
+import de.tum.cit.aet.artemis.communication.service.notifications.MarkdownCustomLinkRendererService;
+import de.tum.cit.aet.artemis.communication.service.notifications.MarkdownCustomReferenceRendererService;
 import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.service.TimeService;
 import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationIndependentTest;
@@ -36,9 +38,15 @@ class AbstractMailContentTest extends AbstractSpringIntegrationIndependentTest {
     @Autowired
     private MessageSource messageSource;
 
+    @Autowired
+    private MarkdownCustomLinkRendererService markdownCustomLinkRendererService;
+
+    @Autowired
+    private MarkdownCustomReferenceRendererService markdownCustomReferenceRendererService;
+
     @BeforeEach
     void setup() {
-        mailService = new MailService(messageSource, templateEngine, timeService, mailSendingService);
+        mailService = new MailService(messageSource, templateEngine, timeService, mailSendingService, markdownCustomLinkRendererService, markdownCustomReferenceRendererService);
     }
 
     /**
