@@ -27,12 +27,12 @@ public class ZipFileTestUtilService {
      * @throws IOException if something goes wrong
      */
     public Path extractZipFileRecursively(String zipFile) throws IOException {
-        File file = new File(zipFile);
+        File file = Path.of(zipFile).toFile();
 
         try (ZipFile zip = new ZipFile(file)) {
             String newPath = zipFile.substring(0, zipFile.length() - 4);
 
-            File parentFolder = new File(newPath);
+            File parentFolder = Path.of(newPath).toFile();
             parentFolder.mkdir();
 
             Enumeration<? extends ZipEntry> zipFileEntries = zip.entries();
@@ -41,7 +41,7 @@ public class ZipFileTestUtilService {
                 // grab a zip file entry
                 ZipEntry entry = zipFileEntries.nextElement();
                 String currentEntry = entry.getName();
-                File destFile = new File(parentFolder, currentEntry);
+                File destFile = parentFolder.toPath().resolve(currentEntry).toFile();
 
                 if (!destFile.getCanonicalPath().startsWith(parentFolder.getCanonicalPath())) {
                     fail("Bad zip entry");

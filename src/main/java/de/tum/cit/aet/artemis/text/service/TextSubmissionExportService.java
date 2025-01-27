@@ -4,9 +4,10 @@ import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
 import java.io.BufferedWriter;
 import java.io.File;
-import java.io.FileWriter;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
 
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
@@ -35,7 +36,7 @@ public class TextSubmissionExportService extends SubmissionExportService {
             }
         }
         else {
-            try (BufferedWriter writer = new BufferedWriter(new FileWriter(file, StandardCharsets.UTF_8))) {
+            try (BufferedWriter writer = Files.newBufferedWriter(file.toPath(), StandardCharsets.UTF_8)) {
                 writer.write(((TextSubmission) submission).getText());
             }
         }
@@ -50,14 +51,14 @@ public class TextSubmissionExportService extends SubmissionExportService {
      */
     public void saveSubmissionToFile(TextSubmission submission, String studentLogin, String submissionsFolderName) throws IOException {
         String submissionFileName = String.format("%s-%s%s", submission.getId(), studentLogin, this.getFileEndingForSubmission(submission));
-
-        File submissionExportFile = new File(submissionsFolderName, submissionFileName);
+        Path submissionPath = Path.of(submissionsFolderName, submissionFileName);
+        File submissionExportFile = submissionPath.toFile();
 
         if (!submissionExportFile.exists()) {
             submissionExportFile.createNewFile();
         }
 
-        try (BufferedWriter writer = new BufferedWriter(new FileWriter(submissionExportFile, StandardCharsets.UTF_8))) {
+        try (BufferedWriter writer = Files.newBufferedWriter(submissionPath, StandardCharsets.UTF_8)) {
             writer.write(submission.getText());
         }
     }

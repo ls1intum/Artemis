@@ -4,6 +4,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.when;
 
 import java.io.File;
+import java.nio.file.Path;
 import java.util.Objects;
 import java.util.stream.Stream;
 
@@ -80,8 +81,9 @@ class LinkPreviewIntegrationTest extends AbstractSpringIntegrationIndependentTes
     }
 
     private static Stream<Arguments> provideUrls() {
-        return Stream.of(Arguments.of("https://github.com/ls1intum/Artemis/pull/6615", new File(MOCK_FILE_PATH_PREFIX + "github_pull_request_6615.txt")),
-                Arguments.of("https://github.com/ls1intum/Artemis/pull/6618", new File(MOCK_FILE_PATH_PREFIX + "github_pull_request_6618.txt")),
-                Arguments.of("https://github.com/", new File(MOCK_FILE_PATH_PREFIX + "github_home.txt")), Arguments.of(GOOGLE_URL, new File(MOCK_FILE_PATH_PREFIX + "google.txt")));
+        var mockPath = Path.of(MOCK_FILE_PATH_PREFIX);
+        return Stream.of(Arguments.of("https://github.com/ls1intum/Artemis/pull/6615", mockPath.resolve("github_pull_request_6615.txt").toFile()),
+                Arguments.of("https://github.com/ls1intum/Artemis/pull/6618", mockPath.resolve("github_pull_request_6618.txt").toFile()),
+                Arguments.of("https://github.com/", mockPath.resolve("github_home.txt").toFile()), Arguments.of(GOOGLE_URL, mockPath.resolve("google.txt").toFile()));
     }
 }

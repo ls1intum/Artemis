@@ -3,6 +3,7 @@ package de.tum.cit.aet.artemis.buildagent.service;
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_BUILDAGENT;
 
 import java.io.File;
+import java.nio.file.Path;
 import java.time.Duration;
 import java.time.Instant;
 import java.time.ZonedDateTime;
@@ -350,7 +351,7 @@ public class BuildAgentDockerService {
 
         try {
             // Get the Docker root directory to check disk space.
-            File dockerRootDirectory = new File(Objects.requireNonNullElse(dockerClient.infoCmd().exec().getDockerRootDir(), "/"));
+            File dockerRootDirectory = Path.of(Objects.requireNonNullElse(dockerClient.infoCmd().exec().getDockerRootDir(), "/")).toFile();
             long usableSpace = dockerRootDirectory.getUsableSpace();
 
             long threshold = convertMegabytesToBytes(imageCleanupDiskSpaceThresholdMb);

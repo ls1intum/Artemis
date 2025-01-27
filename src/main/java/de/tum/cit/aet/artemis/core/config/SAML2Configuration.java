@@ -1,11 +1,11 @@
 package de.tum.cit.aet.artemis.core.config;
 
 import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileReader;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.security.Security;
 import java.security.cert.CertificateException;
 import java.security.cert.CertificateFactory;
@@ -117,8 +117,8 @@ public class SAML2Configuration {
             return false;
         }
 
-        File keyFile = new File(config.getKeyFile());
-        File certFile = new File(config.getCertFile());
+        File keyFile = Path.of(config.getKeyFile()).toFile();
+        File certFile = Path.of(config.getCertFile()).toFile();
 
         if (!keyFile.exists() || !certFile.exists()) {
             log.error("Keyfile or Certfile for SAML[{}] does not exist.", config.getRegistrationId());
@@ -129,7 +129,7 @@ public class SAML2Configuration {
     }
 
     private static X509Certificate readPublicCert(String file) throws IOException, CertificateException {
-        try (InputStream inStream = new FileInputStream(file)) {
+        try (InputStream inStream = Files.newInputStream(Path.of(file))) {
             CertificateFactory cf = CertificateFactory.getInstance("X.509");
             return (X509Certificate) cf.generateCertificate(inStream);
         }
@@ -137,7 +137,7 @@ public class SAML2Configuration {
 
     private RSAPrivateKey readPrivateKey(String file) throws IOException {
         // Read PKCS#8 File!
-        try (var keyReader = new FileReader(file, StandardCharsets.UTF_8); var pemParser = new PEMParser(keyReader)) {
+        try (var keyReader = Files.newBufferedReader(Path.of(file), StandardCharsets.UTF_8); var pemParser = new PEMParser(keyReader)) {
             JcaPEMKeyConverter converter = new JcaPEMKeyConverter();
             PrivateKeyInfo privateKeyInfo = PrivateKeyInfo.getInstance(pemParser.readObject());
             return (RSAPrivateKey) converter.getPrivateKey(privateKeyInfo);

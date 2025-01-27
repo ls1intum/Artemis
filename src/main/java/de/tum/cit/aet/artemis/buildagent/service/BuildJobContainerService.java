@@ -6,11 +6,10 @@ import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_BUILDAGENT;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
-import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.List;
@@ -366,7 +365,7 @@ public class BuildJobContainerService {
     }
 
     private ByteArrayOutputStream createTarArchive(String sourcePath) {
-        Path path = Paths.get(sourcePath);
+        Path path = Path.of(sourcePath);
 
         ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
 
@@ -389,10 +388,10 @@ public class BuildJobContainerService {
         tarArchiveOutputStream.putArchiveEntry(tarEntry);
 
         if (file.isFile()) {
-            try (FileInputStream fis = new FileInputStream(file)) {
+            try (InputStream is = Files.newInputStream(file.toPath())) {
                 byte[] buffer = new byte[1024];
                 int count;
-                while ((count = fis.read(buffer)) != -1) {
+                while ((count = is.read(buffer)) != -1) {
                     tarArchiveOutputStream.write(buffer, 0, count);
                 }
             }

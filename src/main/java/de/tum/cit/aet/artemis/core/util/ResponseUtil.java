@@ -1,8 +1,8 @@
 package de.tum.cit.aet.artemis.core.util;
 
 import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileNotFoundException;
+import java.io.IOException;
+import java.nio.file.Files;
 
 import org.springframework.core.io.InputStreamResource;
 import org.springframework.core.io.Resource;
@@ -26,10 +26,10 @@ public final class ResponseUtil implements tech.jhipster.web.util.ResponseUtil {
      */
     public static ResponseEntity<Resource> ok(File file) {
         try {
-            InputStreamResource resource = new InputStreamResource(new FileInputStream(file));
+            InputStreamResource resource = new InputStreamResource(Files.newInputStream(file.toPath()));
             return ResponseEntity.ok().contentLength(file.length()).contentType(MediaType.APPLICATION_OCTET_STREAM).header("filename", file.getName()).body(resource);
         }
-        catch (FileNotFoundException e) {
+        catch (IOException e) {
             throw new EntityNotFoundException("File not found");
         }
     }

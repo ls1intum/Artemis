@@ -2,11 +2,10 @@ package de.tum.cit.aet.artemis.programming.service;
 
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
-import java.io.FileInputStream;
-import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Arrays;
 import java.util.List;
@@ -103,7 +102,7 @@ public class JavaTemplateUpgradeService implements TemplateUpgradeService {
             String templatePomDir = repositoryType == RepositoryType.TESTS ? "test/maven/projectTemplate" : repositoryType.getName();
             Resource[] templatePoms = getTemplateResources(exercise, templatePomDir + "/**/" + POM_FILE);
             Repository repository = gitService.getOrCheckoutRepository(exercise.getRepositoryURL(repositoryType), true);
-            List<File> repositoryPoms = gitService.listFiles(repository).stream().filter(file -> Objects.equals(file.getName(), POM_FILE)).toList();
+            List<File> repositoryPoms = gitService.listFiles(repository).stream().filter(file -> Objects.equals(file.getFile().getName(), POM_FILE)).toList();
 
             // Validate that template and repository have the same number of pom.xml files, otherwise no upgrade will take place
             if (templatePoms.length == 1 && repositoryPoms.size() == 1) {
@@ -158,14 +157,14 @@ public class JavaTemplateUpgradeService implements TemplateUpgradeService {
     }
 
     private void writeProjectObjectModel(Model repositoryModel, File repositoryPom) throws IOException {
-        try (OutputStream outputStream = new FileOutputStream(repositoryPom)) {
+        try (OutputStream outputStream = Files.newOutputStream(repositoryPom.toPath())) {
             var pomWriter = new MavenXpp3Writer();
             pomWriter.write(outputStream, repositoryModel);
         }
     }
 
     private Model upgradeProjectObjectModel(Resource templatePom, File repositoryPom, boolean scaEnabled) throws IOException, XmlPullParserException {
-        try (InputStream templateInput = templatePom.getInputStream(); InputStream repoInput = new FileInputStream(repositoryPom)) {
+        try (InputStream templateInput = templatePom.getInputStream(); InputStream repoInput = Files.newInputStream(repositoryPom.toPath())) {
 
             var pomReader = new MavenXpp3Reader();
             Model templateModel = pomReader.read(templateInput);
@@ -272,7 +271,7 @@ public class JavaTemplateUpgradeService implements TemplateUpgradeService {
     }
 
     private Optional<File> getFileByName(Repository repository, String filename) {
-        return gitService.listFilesAndFolders(repository).keySet().stream().filter(file -> Objects.equals(filename, file.getName())).findFirst();
+        return gitService.listFilesAndFolders(repository).keySet().stream().filter(file -> Objects.equals(filename, file.getFile().getName())).findFirst();
     }
 
     private Optional<Resource> getFileByName(Resource[] resources, String filename) {
@@ -298,7 +297,7 @@ public class JavaTemplateUpgradeService implements TemplateUpgradeService {
             Optional<Resource> templateResource = getFileByName(templateResources, filename);
             if (repoFile.isPresent() && templateResource.isPresent()) {
                 try (InputStream inputStream = templateResource.get().getInputStream()) {
-                    FileUtils.copyToFile(inputStream, repoFile.get());
+                    FileUtils.copyToFile(inputStream, repoFile.get().getFile());
                 }
             }
         }

@@ -8,7 +8,6 @@ import java.io.File;
 import java.nio.charset.Charset;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 
 import org.apache.commons.io.FileUtils;
 import org.junit.jupiter.api.BeforeEach;
@@ -82,7 +81,7 @@ class AthenaRepositoryExportServiceTest extends AbstractSpringIntegrationIndepen
         File resultStudentRepo = athenaRepositoryExportService.exportRepository(programmingExerciseWithId.getId(), programmingSubmissionWithId.getId(), null);
         File resultSolutionRepo = athenaRepositoryExportService.exportRepository(programmingExerciseWithId.getId(), programmingSubmissionWithId.getId(), RepositoryType.SOLUTION);
 
-        assertThat(resultStudentRepo.toPath()).isEqualTo(Paths.get("repo.zip")); // The student repository ZIP is returned
+        assertThat(resultStudentRepo.toPath()).isEqualTo(Path.of("repo.zip")); // The student repository ZIP is returned
         assertThat(resultSolutionRepo).exists(); // The solution repository ZIP can actually be created in the test
     }
 
