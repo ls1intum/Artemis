@@ -19,7 +19,7 @@ const test = baseTest.extend<{
                 console.log('Adjusting coverage entry urls...');
                 console.log(`Source urls before: ${jsCoverage.map((entry) => entry.url)}`);
                 for (const entry of jsCoverage) {
-                    entry.url = entry.url.replace('https://nginx', 'http://artemis-app:8080');
+                    entry.url = entry.url.replace(process.env.BASE_URL!, 'http://artemis-app:8080');
                 }
                 console.log(`Source urls after: ${jsCoverage.map((entry) => entry.url)}`);
             }
