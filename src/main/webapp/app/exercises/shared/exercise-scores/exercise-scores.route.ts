@@ -7,7 +7,7 @@ import { exerciseTypes } from 'app/entities/exercise.model';
 export const routes: Routes = [
     ...exerciseTypes.map((exerciseType) => {
         return {
-            path: ':courseId/' + exerciseType + '-exercises/:exerciseId/scores',
+            path: exerciseType + '-exercises/:exerciseId/scores',
             component: ExerciseScoresComponent,
             data: {
                 authorities: [Authority.ADMIN, Authority.INSTRUCTOR, Authority.EDITOR, Authority.TA],

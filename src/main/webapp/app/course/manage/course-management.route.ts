@@ -281,6 +281,10 @@ export const courseManagementState: Routes = [
                         loadChildren: () => import('app/exercises/shared/exercise-scores/exercise-scores.route').then((m) => m.routes),
                     },
                     {
+                        path: '',
+                        loadChildren: () => import('app/exercises/shared/participation/participation.route').then((m) => m.routes),
+                    },
+                    {
                         // Create a new path without a component defined to prevent the CompetencyManagementComponent from being always rendered
                         path: 'competency-management',
                         data: {
