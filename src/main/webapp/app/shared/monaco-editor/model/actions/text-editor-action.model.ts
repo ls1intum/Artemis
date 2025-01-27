@@ -1,4 +1,3 @@
-import { inject } from '@angular/core';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { IconDefinition } from '@fortawesome/fontawesome-svg-core';
 import { TranslateService } from '@ngx-translate/core';
@@ -14,8 +13,7 @@ import { ArtemisIntelligenceService } from 'app/shared/monaco-editor/model/actio
 import { ConsistencyCheckModalComponent } from 'app/shared/monaco-editor/model/actions/artemis-intelligence/consistency-check-modal.component';
 
 export abstract class TextEditorAction implements Disposable {
-    private modalService = inject(NgbModal);
-
+    modalService;
     id: string;
     label: string;
     translationKey: string;
@@ -40,13 +38,15 @@ export abstract class TextEditorAction implements Disposable {
      * @param icon The icon to display in the editor toolbar, if any.
      * @param keybindings The keybindings to trigger the action, if any.
      * @param hideInEditor Whether to hide the action in the editor toolbar. Defaults to false.
+     * @param ngbModal
      */
-    constructor(id: string, translationKey: string, icon?: IconDefinition, keybindings?: TextEditorKeybinding[], hideInEditor?: boolean) {
+    constructor(id: string, translationKey: string, icon?: IconDefinition, keybindings?: TextEditorKeybinding[], hideInEditor?: boolean, ngbModal?: NgbModal) {
         this.id = id;
         this.translationKey = translationKey;
         this.icon = icon;
         this.keybindings = keybindings;
         this.hideInEditor = hideInEditor ?? false;
+        this.modalService = ngbModal;
     }
 
     /**
@@ -327,7 +327,7 @@ export abstract class TextEditorAction implements Disposable {
         if (text) {
             artemisIntelligence.consistencyCheck(text, exerciseId).subscribe({
                 next: (message) => {
-                    const modalRef = this.modalService.open(ConsistencyCheckModalComponent);
+                    const modalRef = this.modalService!.open(ConsistencyCheckModalComponent);
                     modalRef.componentInstance.response = message;
                 },
                 error: (error) => {
