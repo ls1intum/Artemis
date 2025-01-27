@@ -7,7 +7,9 @@
             "password.placeholder": "Passwort",
             "rememberme": "Automatische Anmeldung",
             "acceptTerms": "Bedingungen akzeptieren",
-            "button": "Anmelden"
+            "button": "Anmelden",
+            "eduId-text": "Anmelden über EduID",
+            "eduId-button": "Über Institution anmelden"
         },
         "messages": {
             "error": {

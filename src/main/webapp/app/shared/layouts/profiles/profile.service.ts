@@ -91,6 +91,9 @@ export class ProfileService {
                         profileInfo.buildTimeoutMax = data.buildTimeoutMax;
                         profileInfo.buildTimeoutDefault = data.buildTimeoutDefault;
 
+                        // CodeAbility: Added the following attribute:
+                        profileInfo.shibbolethUrl = data.shibbolethUrl;
+
                         return profileInfo;
                     }),
                 )

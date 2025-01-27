@@ -45,4 +45,10 @@ export class AuthServerProvider implements IAuthServerProvider {
         // The local or session storage might have to be cleared asynchronously in future due to updated browser apis. This is why this method is already acting asynchronous.
         return of(undefined);
     }
+
+    // CodeAbility: Added method loginShib()
+    loginShib(credentials: Credentials): Observable<any> {
+        return this.http.post('api/public/authenticate-shib', credentials);
+    }
+
 }

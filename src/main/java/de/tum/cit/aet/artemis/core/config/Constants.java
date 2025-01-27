@@ -426,6 +426,9 @@ public final class Constants {
 
     public static final Pattern ALLOWED_CHECKOUT_DIRECTORY = Pattern.compile("[\\w-]+(/[\\w-]+)*$");
 
+    // CodeAbility: Added constants SHIBBOLETH_URL and WIKI_URL
+    public static final String SHIBBOLETH_URL = "shibbolethUrl";
+
     private Constants() {
     }
 }

@@ -19,6 +19,7 @@ import { TranslateService } from '@ngx-translate/core';
 import { ArtemisSharedModule } from 'app/shared/shared.module';
 import { TranslateDirective } from '../shared/language/translate.directive';
 import { FormsModule } from '@angular/forms';
+import { HttpErrorResponse } from '@angular/common/http';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { Saml2LoginComponent } from './saml2-login/saml2-login.component';
 
@@ -54,7 +55,7 @@ export class HomeComponent implements OnInit, AfterViewChecked {
     rememberMe = true;
     // in case this is activated (see application-artemis.yml), users have to actively click into it
     needsToAcceptTerms = false;
-    userAcceptedTerms = false;
+    userAcceptedTerms = true; // CodeAbility: set default to true
     username: string;
     credentials: Credentials;
     isRegistrationEnabled = false;
@@ -80,6 +81,12 @@ export class HomeComponent implements OnInit, AfterViewChecked {
     faCircleNotch = faCircleNotch;
     usernameTouched = false;
     passwordTouched = false;
+
+    // CodeAbility: Added the following attributes
+    eduIdError: string | null;
+    authenticationAttempts = 0;
+    captchaRequired = false;
+    shibbolethUrl: string;
 
     ngOnInit() {
         this.profileService.getProfileInfo().subscribe((profileInfo) => {
@@ -133,6 +140,11 @@ export class HomeComponent implements OnInit, AfterViewChecked {
             const loginFormOverride = params.hasOwnProperty('showLoginForm');
             this.isPasswordLoginDisabled = !!this.profileInfo?.saml2 && this.profileInfo.saml2.passwordLoginDisabled && !loginFormOverride;
         });
+        //CodeAbility: added the following two lines
+        this.shibbolethUrl = profileInfo.shibbolethUrl || '';
+        if (document.cookie.indexOf('shib-autologin=') >= 0) {
+            this.loginShib();
+        }
     }
 
     registerAuthenticationSuccess() {
@@ -174,8 +186,11 @@ export class HomeComponent implements OnInit, AfterViewChecked {
                 rememberMe: this.rememberMe,
             })
             .then(() => this.handleLoginSuccess())
-            .catch(() => {
+            .catch((error: HttpErrorResponse) => {
                 this.authenticationError = true;
+                //CodeAbility: added the following two lines
+                this.authenticationAttempts++;
+                this.captchaRequired = error.headers.get('X-artemisApp-error') === 'CAPTCHA required';
             })
             .finally(() => (this.isSubmittingLogin = false));
     }
@@ -185,6 +200,9 @@ export class HomeComponent implements OnInit, AfterViewChecked {
      */
     private handleLoginSuccess() {
         this.authenticationError = false;
+        // CodeAbility: added the following two lines
+        this.authenticationAttempts = 0;
+        this.captchaRequired = false;
 
         if (this.router.url === '/register' || /^\/activate\//.test(this.router.url) || /^\/reset\//.test(this.router.url)) {
             this.router.navigate(['']);
@@ -254,5 +272,70 @@ export class HomeComponent implements OnInit, AfterViewChecked {
             this.password !== undefined &&
             this.password.length >= this.PASSWORD_MIN_LENGTH &&
             this.password.length <= this.PASSWORD_MAX_LENGTH;
+    }
+
+    // CodeAbility: Added the methods loginShib(), setAutoLoginCookie() and removeAutoLoginCookie()
+    loginShib() {
+        this.isSubmittingLogin = true;
+        if (document.cookie.indexOf('shib-autologin=') < 0) {
+            this.setAutoLoginCookie();
+            window.location.href = this.shibbolethUrl;
+            return;
+        } else {
+            this.removeAutoLoginCookie();
+        }
+        this.loginService
+            .loginShib({
+                username: this.username,
+                password: this.password,
+                rememberMe: this.rememberMe,
+            })
+            .then(() => {
+                this.authenticationError = false;
+                this.authenticationAttempts = 0;
+                this.captchaRequired = false;
+
+                if (this.router.url === '/register' || /^\/activate\//.test(this.router.url) || /^\/reset\//.test(this.router.url)) {
+                    this.router.navigate(['']);
+                }
+
+                this.eventManager.broadcast({
+                    name: 'authenticationSuccess',
+                    content: 'Sending Authentication Success',
+                });
+
+                // Log in to Orion
+                if (isOrion) {
+                    const modalRef: NgbModalRef = this.modalService.open(ModalConfirmAutofocusComponent as Component, { size: 'lg', backdrop: 'static' });
+                    modalRef.componentInstance.text = 'login.ide.confirmation';
+                    modalRef.componentInstance.title = 'login.ide.title';
+                    modalRef.result.then(
+                        () => {
+                            this.orionConnectorService.login(this.username, this.password);
+                        },
+                        () => {},
+                    );
+                }
+            })
+            .catch((error: HttpErrorResponse) => {
+                this.removeAutoLoginCookie();
+                if (error.headers.get('X-artemisApp-params')!.localeCompare('SessionNotFound') === 0) {
+                    // displaying error disabled for the case no Shib-Session is found
+                    // this.eduIdError = error.headers.get('X-artemisApp-params');
+                } else {
+                    this.eduIdError = error.headers.get('X-artemisApp-params');
+                    this.captchaRequired = error.headers.get('X-artemisApp-error') === 'CAPTCHA required';
+                    this.authenticationAttempts++;
+                }
+            })
+            .finally(() => (this.isSubmittingLogin = false));
+    }
+
+    setAutoLoginCookie() {
+        document.cookie = 'shib-autologin=true';
+    }
+
+    removeAutoLoginCookie() {
+        document.cookie = 'shib-autologin=; expires=Thu, 01 Jan 1970 00:00:00 UTC;';
     }
 }

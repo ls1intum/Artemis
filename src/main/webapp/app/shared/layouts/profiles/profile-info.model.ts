@@ -58,6 +58,8 @@ export class ProfileInfo {
     public theiaPortalURL: string;
     public operatorName: string;
     public operatorAdminName?: string;
+    // CodeAbility: Added the following attribute:
+    public shibbolethUrl?: string;
 }
 
 export const hasEditableBuildPlan = (profileInfo: ProfileInfo): boolean => {

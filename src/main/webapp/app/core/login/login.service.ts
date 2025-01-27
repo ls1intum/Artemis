@@ -86,4 +86,24 @@ export class LoginService {
     lastLogoutWasForceful(): boolean {
         return this.logoutWasForceful;
     }
+
+    // CodeAbility: Added method loginShib()
+    loginShib(credentials: Credentials, callback?: any) {
+        const cb = callback || function () {};
+        return new Promise<void>((resolve, reject) => {
+            this.authServerProvider.loginShib(credentials).subscribe({
+                next: () => {
+                    this.accountService.identity(true).then(() => {
+                        resolve();
+                    });
+                    return cb();
+                },
+                error: (err: any) => {
+                    this.logout(false);
+                    reject(err);
+                },
+            });
+        });
+    }
+
 }

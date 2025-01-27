@@ -438,4 +438,11 @@ public class MailService implements InstantNotificationService {
         String content = templateEngine.process("mail/weeklySummary", context);
         mailSendingService.sendEmail(user, subject, content, false, true);
     }
+
+    // CodeAbility: Added method sendCreationMail()
+    public void sendCreationEmail(User user) {
+        log.debug("Sending creation email to '{}'", user.getEmail());
+        sendEmailFromTemplate(user, "mail/creationEmail", "email.activation.title");
+    }
+
 }

@@ -45,9 +45,6 @@
                                 type="text"
                                 tabindex="1"
                             />
-                            @if (usernameForm.errors && (usernameForm.dirty || usernameForm.touched) && usernameTouched) {
-                                <span class="mt-1 text-danger small" [jhiTranslate]="errorMessageUsername"></span>
-                            }
                         </div>
                         <div class="form-group">
                             <div class="d-flex mb-2">
@@ -74,6 +71,7 @@
                             @if (passwordForm.errors && (passwordForm.dirty || passwordForm.touched) && passwordTouched) {
                                 <span class="mt-1 text-danger small" jhiTranslate="home.errors.passwordIncorrect"></span>
                             }
+
                         </div>
                         <div class="form-group">
                             <div class="form-check">
@@ -117,48 +115,45 @@
                 </div>
             </div>
         }
-        @if (!isPasswordLoginDisabled && !!profileInfo?.saml2) {
-            <div class="col-12 col-xl-2 py-5 h-100">
-                <div class="d-none d-xl-block vertical-divider" jhiTranslate="login.divider"></div>
-                <div class="d-xl-none horizontal-divider" jhiTranslate="login.divider"></div>
+
+        <div class="col-12 col-xl-2 py-5 h-100">
+            <div class="d-none d-xl-block vertical-divider" jhiTranslate="login.divider"></div>
+            <div class="d-xl-none horizontal-divider" jhiTranslate="login.divider"></div>
+        </div>
+
+        <!-- CodeAbility: Replaced SAML2 default login with EduID Shibboleth login -->
+        <div class="login-col col-12 col-xl-5">
+            <!-- Shibboleth Authentication -->
+
+            <div
+                [jhiTranslate]="'home.login.saml2.pleaseSignInProvider'"
+                [translateValues]="{ account: accountName }"
+                class="lead text-center mb-4"
+            >
+                Please sign in via Single Sign-on.
             </div>
-        }
-        @if (!!profileInfo?.saml2) {
-            <div class="login-col col-12 col-xl-5">
-                <!-- SAML2 Authentication -->
-                <div class="h-100 d-flex flex-column align-items-center justify-content-center">
-                    @if (!profileInfo!.saml2!.identityProviderName) {
-                        <div [jhiTranslate]="'home.login.saml2.pleaseSignIn'" class="lead text-center">Please sign in via Single Sign-on.</div>
-                    }
-                    @if (profileInfo!.saml2!.identityProviderName) {
-                        <div
-                            [jhiTranslate]="'home.login.saml2.pleaseSignInProvider'"
-                            [translateValues]="{ provider: profileInfo!.saml2!.identityProviderName }"
-                            class="lead text-center"
-                        >
-                            Please sign in.
-                        </div>
-                    }
-                    <div class="saml2-center d-flex flex-column align-items-center justify-content-center flex-grow-1">
-                        <div class="form-group">
-                            @if (needsToAcceptTerms) {
-                                <div class="form-check">
-                                    <label class="form-check-label" for="acceptTerms">
-                                        <input [(ngModel)]="userAcceptedTerms" class="form-check-input" type="checkbox" />
-                                        <a [routerLink]="['privacy']" jhiTranslate="login.form.acceptTerms"></a>
-                                    </label>
-                                </div>
-                            }
-                        </div>
-                        <jhi-saml2-login
-                            [acceptedTerms]="!needsToAcceptTerms || userAcceptedTerms"
-                            [rememberMe]="rememberMe"
-                            [saml2Profile]="profileInfo!.saml2!"
-                            class="d-block text-center"
-                        />
+
+            <div class="form-group text-center">
+                <form name="shibLoginForm" class="login-form mx-auto" role="form" (ngSubmit)="loginShib()">
+                    <div class="form-group">
+                        @if (eduIdError !== null && eduIdError === 'AttributeNotFound') {
+                            <div class="alert alert-danger mt-1" jhiTranslate="home.errors.eduId.attributesMissing">
+                                <span class="bold">EduId error:</span> One or more attributes couldn't be found in request!
+                            </div>
+                        }
+                        @if (eduIdError !== null && eduIdError === 'emailAlreadyUsed') {
+                            <div class="alert alert-danger mt-1" jhiTranslate="home.errors.eduId.emailAlreadyUsed">
+                                <span class="bold">EduId error:</span> Email already in use!
+                            </div>
+                        }
                     </div>
-                </div>
+                    <label class="font-weight-bold w-100" jhiTranslate="login.form.eduId-text">Login with eduID</label>
+                    <button type="button" [disabled]="!userAcceptedTerms" class="btn btn-primary" (click)="loginShib()">
+                        <span jhiTranslate="login.form.eduId-button"> EduID</span>
+                    </button>
+                </form>
             </div>
-        }
+        </div>
     </div>
 </div>
+

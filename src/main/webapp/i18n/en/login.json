@@ -7,7 +7,9 @@
             "password.placeholder": "Password",
             "rememberme": "Remember me",
             "acceptTerms": "Accept terms",
-            "button": "Sign in"
+            "button": "Sign in",
+            "eduId-text": "Sign in with EduID",
+            "eduId-button": "Sign in via institution"
         },
         "messages": {
             "error": {

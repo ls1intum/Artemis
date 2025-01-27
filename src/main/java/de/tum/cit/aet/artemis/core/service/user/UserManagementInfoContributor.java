@@ -38,6 +38,10 @@ public class UserManagementInfoContributor implements InfoContributor {
     @Value("${artemis.user-management.login.account-name:#{null}}")
     private Optional<String> accountName;
 
+    // CodeAbility: Added shibbolethUrl and wikiUrl (also in contribute() method)
+    @Value("${artemis.user-management.shibboleth-url:#{null}}")
+    private Optional<String> shibbolethUrl;
+
     @Override
     public void contribute(Info.Builder builder) {
         builder.withDetail(Constants.REGISTRATION_ENABLED, registrationEnabled.orElse(Boolean.FALSE));
