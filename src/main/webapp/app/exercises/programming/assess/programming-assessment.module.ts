@@ -6,7 +6,6 @@ import { FormsModule } from '@angular/forms';
 
 import { ProgrammingAssessmentRepoExportButtonComponent } from 'app/exercises/programming/assess/repo-export/programming-assessment-repo-export-button.component';
 import { ProgrammingAssessmentRepoExportDialogComponent } from 'app/exercises/programming/assess/repo-export/programming-assessment-repo-export-dialog.component';
-import { ArtemisProgrammingAssessmentRoutingModule } from 'app/exercises/programming/assess/programming-assessment.route';
 import { ArtemisAssessmentSharedModule } from 'app/assessment/assessment-shared.module';
 import { ArtemisCodeEditorModule } from 'app/exercises/programming/shared/code-editor/code-editor.module';
 import { ArtemisResultModule } from 'app/exercises/shared/result/result.module';
@@ -26,7 +25,6 @@ import { ComplaintsForTutorComponent } from 'app/complaints/complaints-for-tutor
         FormDateTimePickerModule,
         FormsModule,
         ComplaintsForTutorComponent,
-        ArtemisProgrammingAssessmentRoutingModule,
         ArtemisAssessmentSharedModule,
         ArtemisCodeEditorModule,
         ArtemisResultModule,

@@ -97,7 +97,7 @@ export const routes: Routes = [
         canActivate: [UserRouteAccessService],
     },
     {
-        path: ':courseId/modeling-exercises/:exerciseId/submissions/:submissionId',
+        path: 'modeling-exercises/:exerciseId/submissions/:submissionId',
         loadChildren: () => import('app/exercises/modeling/assess/modeling-assessment-editor/modeling-assessment-editor.route').then((m) => m.routes),
     },
 ];

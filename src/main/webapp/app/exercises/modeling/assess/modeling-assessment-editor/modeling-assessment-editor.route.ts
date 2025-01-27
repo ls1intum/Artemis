@@ -5,7 +5,7 @@ import { Authority } from 'app/shared/constants/authority.constants';
 
 export const routes: Routes = [
     {
-        path: ':courseId/modeling-exercises/:exerciseId/submissions/:submissionId/assessment',
+        path: 'assessment',
         loadComponent: () =>
             import('app/exercises/modeling/assess/modeling-assessment-editor/modeling-assessment-editor.component').then((m) => m.ModelingAssessmentEditorComponent),
         data: {
@@ -15,7 +15,7 @@ export const routes: Routes = [
         canActivate: [UserRouteAccessService],
     },
     {
-        path: ':courseId/modeling-exercises/:exerciseId/submissions/:submissionId/assessments/:resultId',
+        path: 'assessments/:resultId',
         loadComponent: () =>
             import('app/exercises/modeling/assess/modeling-assessment-editor/modeling-assessment-editor.component').then((m) => m.ModelingAssessmentEditorComponent),
         data: {

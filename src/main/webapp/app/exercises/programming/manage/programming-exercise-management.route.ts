@@ -217,4 +217,8 @@ export const routes: Routes = [
         },
         canActivate: [UserRouteAccessService, LocalVCGuard],
     },
+    {
+        path: 'programming-exercises/:exerciseId/submissions/:submissionId',
+        loadChildren: () => import('app/exercises/programming/assess/programming-assessment.route').then((m) => m.routes),
+    },
 ];
