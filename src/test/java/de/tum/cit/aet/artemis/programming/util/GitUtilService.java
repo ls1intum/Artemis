@@ -202,9 +202,25 @@ public class GitUtilService {
         }
     }
 
+    public File getFile(REPOS repo, FILES fileToRead) {
+        Path path = Path.of(getCompleteRepoPathStringByType(repo), fileToRead.toString());
+        return path.toFile();
+    }
+
     public File getFile(REPOS repo, String fileToRead) {
         Path path = Path.of(getCompleteRepoPathStringByType(repo), fileToRead);
         return path.toFile();
+    }
+
+    public String getFileContent(REPOS repo, FILES fileToRead) {
+        try {
+            Path path = Path.of(getCompleteRepoPathStringByType(repo), fileToRead.toString());
+            byte[] encoded = Files.readAllBytes(path);
+            return new String(encoded, Charset.defaultCharset());
+        }
+        catch (IOException ex) {
+            return null;
+        }
     }
 
     public String getFileContent(REPOS repo, String fileToRead) {
@@ -257,15 +273,15 @@ public class GitUtilService {
     }
 
     public boolean isLocalEqualToRemote() {
-        String fileContentLocal1 = getFileContent(REPOS.LOCAL, GitUtilService.FILES.FILE1.toString());
-        String fileContentLocal2 = getFileContent(REPOS.LOCAL, GitUtilService.FILES.FILE2.toString());
-        String fileContentLocal3 = getFileContent(REPOS.LOCAL, GitUtilService.FILES.FILE3.toString());
-        String fileContentLocal4 = getFileContent(REPOS.LOCAL, GitUtilService.FILES.FILE4.toString() + ".jar");
+        String fileContentLocal1 = getFileContent(REPOS.LOCAL, GitUtilService.FILES.FILE1);
+        String fileContentLocal2 = getFileContent(REPOS.LOCAL, GitUtilService.FILES.FILE2);
+        String fileContentLocal3 = getFileContent(REPOS.LOCAL, GitUtilService.FILES.FILE3);
+        String fileContentLocal4 = getFileContent(REPOS.LOCAL, GitUtilService.FILES.FILE4 + ".jar");
 
-        String fileContentRemote1 = getFileContent(REPOS.REMOTE, GitUtilService.FILES.FILE1.toString());
-        String fileContentRemote2 = getFileContent(REPOS.REMOTE, GitUtilService.FILES.FILE2.toString());
-        String fileContentRemote3 = getFileContent(REPOS.REMOTE, GitUtilService.FILES.FILE3.toString());
-        String fileContentRemote4 = getFileContent(REPOS.REMOTE, GitUtilService.FILES.FILE4.toString() + ".jar");
+        String fileContentRemote1 = getFileContent(REPOS.REMOTE, GitUtilService.FILES.FILE1);
+        String fileContentRemote2 = getFileContent(REPOS.REMOTE, GitUtilService.FILES.FILE2);
+        String fileContentRemote3 = getFileContent(REPOS.REMOTE, GitUtilService.FILES.FILE3);
+        String fileContentRemote4 = getFileContent(REPOS.REMOTE, FILES.FILE4 + ".jar");
 
         return fileContentLocal1.equals(fileContentRemote1) && fileContentLocal2.equals(fileContentRemote2) && fileContentLocal3.equals(fileContentRemote3)
                 && fileContentLocal4.equals(fileContentRemote4);

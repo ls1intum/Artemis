@@ -66,7 +66,7 @@ public class PyrisDTOService {
         catch (GitAPIException e) {
             log.error("Could not fetch existing test repository", e);
         }
-        var testsRepositoryContents = testRepo.map((Repository repository) -> repositoryService.getFilesContentFromWorkingCopy(repository)).orElse(Map.of());
+        var testsRepositoryContents = testRepo.map(repositoryService::getFilesContentFromWorkingCopy).orElse(Map.of());
 
         return new PyrisProgrammingExerciseDTO(exercise.getId(), exercise.getTitle(), exercise.getProgrammingLanguage(), templateRepositoryContents, solutionRepositoryContents,
                 testsRepositoryContents, exercise.getProblemStatement(), toInstant(exercise.getReleaseDate()), toInstant(exercise.getDueDate()));
@@ -157,8 +157,7 @@ public class PyrisDTOService {
                 }).orElse(Map.of());
             }
             else {
-                return Optional.ofNullable(gitService.getOrCheckoutRepository(repositoryUri, true)).map(repo -> repositoryService.getFilesContentFromWorkingCopy(repo))
-                        .orElse(Map.of());
+                return Optional.ofNullable(gitService.getOrCheckoutRepository(repositoryUri, true)).map(repositoryService::getFilesContentFromWorkingCopy).orElse(Map.of());
             }
         }
         catch (GitAPIException e) {
