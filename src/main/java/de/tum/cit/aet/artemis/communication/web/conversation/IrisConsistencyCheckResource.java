@@ -25,9 +25,9 @@ import de.tum.cit.aet.artemis.iris.service.IrisConsistencyCheckService;
 @Profile(PROFILE_IRIS)
 @RestController
 @RequestMapping("api/")
-public class ConsistencyCheckResource {
+public class IrisConsistencyCheckResource {
 
-    private static final Logger log = LoggerFactory.getLogger(ConsistencyCheckResource.class);
+    private static final Logger log = LoggerFactory.getLogger(IrisConsistencyCheckResource.class);
 
     private final UserRepository userRepository;
 
@@ -35,7 +35,7 @@ public class ConsistencyCheckResource {
 
     private final Optional<IrisConsistencyCheckService> irisConsistencyCheckService;
 
-    public ConsistencyCheckResource(UserRepository userRepository, ExerciseRepository exerciseRepository, Optional<IrisConsistencyCheckService> irisConsistencyCheckService) {
+    public IrisConsistencyCheckResource(UserRepository userRepository, ExerciseRepository exerciseRepository, Optional<IrisConsistencyCheckService> irisConsistencyCheckService) {
         this.userRepository = userRepository;
         this.exerciseRepository = exerciseRepository;
         this.irisConsistencyCheckService = irisConsistencyCheckService;
