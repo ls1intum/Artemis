@@ -17,9 +17,9 @@ export class ArtemisIntelligenceService {
     private jhiWebsocketService = inject(JhiWebsocketService);
     private alertService = inject(AlertService);
 
-    private isLoadingRewrite = signal(false);
-    private isLoadingConsistencyCheck = signal(false);
-    isLoading = computed(() => this.isLoadingRewrite() || this.isLoadingConsistencyCheck);
+    private isLoadingRewrite = signal<boolean>(false);
+    private isLoadingConsistencyCheck = signal<boolean>(false);
+    isLoading = computed(() => this.isLoadingRewrite() || this.isLoadingConsistencyCheck());
 
     /**
      * Triggers the rewriting pipeline via HTTP and subscribes to its WebSocket updates.
