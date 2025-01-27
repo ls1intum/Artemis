@@ -12,8 +12,6 @@ import { StudentExamDetailComponent } from 'app/exam/manage/student-exams/studen
 import { StudentsUploadImagesModule } from 'app/exam/manage/students/upload-images/students-upload-images.module';
 import { ExamStudentsAttendanceCheckComponent } from 'app/exam/manage/students/verify-attendance-check/exam-students-attendance-check.component';
 import { ArtemisTextExerciseModule } from 'app/exercises/text/manage/text-exercise/text-exercise.module';
-import { ArtemisFileUploadExerciseManagementModule } from 'app/exercises/file-upload/manage/file-upload-exercise-management.module';
-import { ArtemisQuizManagementModule } from 'app/exercises/quiz/manage/quiz-management.module';
 import { ArtemisSharedModule } from 'app/shared/shared.module';
 import { ArtemisDataTableModule } from 'app/shared/data-table/data-table.module';
 import { NgxDatatableModule } from '@siemens/ngx-datatable';
@@ -82,8 +80,6 @@ const ENTITY_STATES = [...examManagementState, ...examScoresState];
         ArtemisMarkdownEditorModule,
         NgxDatatableModule,
         ArtemisDataTableModule,
-        ArtemisFileUploadExerciseManagementModule,
-        ArtemisQuizManagementModule,
         ArtemisParticipationSummaryModule,
         ArtemisProgrammingExerciseStatusModule,
         ArtemisMarkdownModule,

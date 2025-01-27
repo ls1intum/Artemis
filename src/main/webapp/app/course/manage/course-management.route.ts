@@ -241,6 +241,22 @@ export const courseManagementState: Routes = [
                         loadChildren: () => import('app/exercises/text/manage/text-exercise/text-exercise.route').then((m) => m.textExerciseRoute),
                     },
                     {
+                        path: '',
+                        loadChildren: () => import('app/exercises/programming/manage/programming-exercise-management.route').then((m) => m.routes),
+                    },
+                    {
+                        path: '',
+                        loadChildren: () => import('app/exercises/quiz/manage/quiz-management.route').then((m) => m.quizManagementRoute),
+                    },
+                    {
+                        path: '',
+                        loadChildren: () => import('app/exercises/file-upload/manage/file-upload-exercise-management.route').then((m) => m.routes),
+                    },
+                    {
+                        path: '',
+                        loadChildren: () => import('app/exercises/modeling/manage/modeling-exercise.route').then((m) => m.routes),
+                    },
+                    {
                         // Create a new path without a component defined to prevent the CompetencyManagementComponent from being always rendered
                         path: 'competency-management',
                         data: {
