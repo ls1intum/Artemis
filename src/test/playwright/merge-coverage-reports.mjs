@@ -52,5 +52,5 @@ archive.on('error', (err) => {
 });
 
 archive.pipe(output);
-archive.directory(path.join(__dirname, 'test-reports/monocart-report-parallel/coverage'), false);
+archive.directory(path.join(__dirname, 'test-reports/monocart-report/coverage/lcov-report'), false);
 await archive.finalize();
