@@ -202,6 +202,7 @@ public class PyrisConnectorService {
     /**
      * Executes a webhook and send faqs to the webhook with the given variant. This webhook adds an FAQ in the Pyris system.
      *
+     * @param toUpdateFaq  The DTO containing the faq to update
      * @param executionDTO The DTO sent as a body for the execution
      */
     public void executeFaqAdditionWebhook(PyrisFaqWebhookDTO toUpdateFaq, PyrisWebhookFaqIngestionExecutionDTO executionDTO) {

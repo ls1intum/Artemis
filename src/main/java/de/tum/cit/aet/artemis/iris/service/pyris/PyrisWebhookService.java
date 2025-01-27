@@ -252,7 +252,6 @@ public class PyrisWebhookService {
 
     /**
      * send the updated / created faqs to Pyris for ingestion if autoLecturesUpdate is enabled.
-     * It is automatically triggered on FAQ creation and updates *
      *
      * @param courseId Id of the course where the attachment is added
      * @param newFaq   the new faqs to be sent to pyris for ingestion
@@ -266,7 +265,7 @@ public class PyrisWebhookService {
     }
 
     /**
-     * adds the faq to Pyris. It is triggered when the user manually sends the faqs via the button in the UI
+     * adds the faq to Pyris.
      *
      * @param faq The faq that will be added to pyris
      * @return jobToken if the job was created else null
