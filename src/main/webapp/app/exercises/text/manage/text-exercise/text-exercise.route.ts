@@ -74,10 +74,6 @@ export const textExerciseRoute: Routes = [
         canActivate: [UserRouteAccessService],
     },
     {
-        path: 'text-exercises',
-        redirectTo: 'exercises',
-    },
-    {
         path: 'text-exercises/:exerciseId/iris-settings',
         loadChildren: () =>
             import('app/iris/settings/iris-exercise-settings-update/iris-exercise-settings-update-routing.module').then((m) => m.IrisExerciseSettingsUpdateRoutingModule),

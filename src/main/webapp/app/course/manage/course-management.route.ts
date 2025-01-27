@@ -236,6 +236,27 @@ export const courseManagementState: Routes = [
                         path: '',
                         loadChildren: () => import('app/assessment/assessment-locks/assessment-locks.route').then((m) => m.assessmentLocksRoute),
                     },
+                    // we have to define the redirects here. When we define them in the child routes, the redirect doesn't work
+                    {
+                        path: 'text-exercises',
+                        redirectTo: 'exercises',
+                    },
+                    {
+                        path: 'modeling-exercises',
+                        redirectTo: 'exercises',
+                    },
+                    {
+                        path: 'file-upload-exercises',
+                        redirectTo: 'exercises',
+                    },
+                    {
+                        path: 'quiz-exercises',
+                        redirectTo: 'exercises',
+                    },
+                    {
+                        path: 'programming-exercises',
+                        redirectTo: 'exercises',
+                    },
                     {
                         path: '',
                         loadChildren: () => import('app/exercises/text/manage/text-exercise/text-exercise.route').then((m) => m.textExerciseRoute),

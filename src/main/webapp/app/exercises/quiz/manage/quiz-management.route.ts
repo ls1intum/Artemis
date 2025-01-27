@@ -6,10 +6,6 @@ import { PendingChangesGuard } from 'app/shared/guard/pending-changes.guard';
 import { Authority } from 'app/shared/constants/authority.constants';
 
 export const quizManagementRoute: Routes = [
-    // {
-    //     path: 'quiz-exercises',
-    //     redirectTo: 'exercises',
-    // },
     {
         path: 'quiz-exercises/new',
         loadComponent: () => import('./quiz-exercise-update.component').then((m) => m.QuizExerciseUpdateComponent),

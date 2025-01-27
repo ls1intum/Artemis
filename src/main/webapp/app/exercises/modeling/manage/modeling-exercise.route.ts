@@ -76,10 +76,6 @@ export const routes: Routes = [
         canActivate: [UserRouteAccessService],
     },
     {
-        path: 'modeling-exercises',
-        redirectTo: 'exercises',
-    },
-    {
         path: 'modeling-exercises/:exerciseId/exercise-statistics',
         loadComponent: () => import('app/exercises/shared/statistics/exercise-statistics.component').then((m) => m.ExerciseStatisticsComponent),
         resolve: {

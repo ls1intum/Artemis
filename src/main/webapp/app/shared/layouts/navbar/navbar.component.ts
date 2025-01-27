@@ -466,10 +466,6 @@ export class NavbarComponent implements OnInit, OnDestroy {
                     this.addBreadcrumbForNumberSegment(currentPath, segment);
                 } else {
                     this.addBreadcrumbForUrlSegment(currentPath, segment);
-                    // eslint-disable-next-line no-undef
-                    console.log('currentPath: ' + currentPath);
-                    // eslint-disable-next-line no-undef
-                    console.log('segment: ' + segment);
                     this.lastRouteUrlSegment = segment;
                 }
             }
