@@ -582,4 +582,26 @@ describe('PostingsMarkdownEditor', () => {
         (component as any).handleKeyDown(mockModel, mockPosition.lineNumber);
         expect(handleActionClickSpy).not.toHaveBeenCalled();
     });
+
+    it('should keep the cursor position intact when editing text in a list item', () => {
+        const bulletedListAction = component.defaultActions.find((action: any) => action instanceof BulletedListAction) as BulletedListAction;
+        mockEditor.getPosition.mockReturnValue({
+            getLineNumber: () => 1,
+            getColumn: () => 5,
+        } as TextEditorPosition);
+        mockEditor.getLineText.mockReturnValue('- First line');
+        mockEditor.getTextAtRange.mockReturnValue('');
+
+        const replaceTextSpy = jest.spyOn(mockEditor, 'replaceTextAtRange');
+        bulletedListAction.run(mockEditor);
+
+        expect(replaceTextSpy).not.toHaveBeenCalled();
+
+        const cursorPosition = mockEditor.getPosition();
+        expect(cursorPosition).toEqual({
+            getLineNumber: expect.any(Function),
+            getColumn: expect.any(Function),
+        });
+        expect(cursorPosition?.getColumn()).toBe(5);
+    });
 });
