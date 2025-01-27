@@ -136,18 +136,7 @@ const routes: Routes = [
         path: 'course-management/:courseId/programming-exercises/:exerciseId/code-editor',
         loadChildren: () => import('./exercises/programming/manage/code-editor/code-editor-management.module').then((m) => m.ArtemisCodeEditorManagementModule),
     },
-    {
-        path: 'course-management/:courseId/text-exercises/:exerciseId',
-        loadChildren: () => import('./exercises/text/assess/text-submission-assessment.module').then((m) => m.ArtemisTextSubmissionAssessmentModule),
-    },
-    {
-        path: 'course-management/:courseId/text-exercises/:exerciseId/example-submissions/:exampleSubmissionId',
-        loadChildren: () => import('./exercises/text/manage/example-text-submission/example-text-submission.module').then((m) => m.ArtemisExampleTextSubmissionModule),
-    },
-    {
-        path: 'course-management/:courseId/programming-exercises/:exerciseId',
-        loadChildren: () => import('./exercises/programming/manage/programming-exercise-management.route').then((m) => m.routes),
-    },
+
     {
         path: 'courses',
         loadChildren: () => import('./overview/courses.module').then((m) => m.ArtemisCoursesModule),

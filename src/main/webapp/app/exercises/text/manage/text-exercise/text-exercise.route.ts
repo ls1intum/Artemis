@@ -26,6 +26,10 @@ export const textExerciseRoute: Routes = [
         canActivate: [UserRouteAccessService],
     },
     {
+        path: 'text-exercises/:exerciseId',
+        loadChildren: () => import('app/exercises/text/assess/text-submission-assessment.route').then((m) => m.textSubmissionAssessmentRoutes),
+    },
+    {
         path: 'text-exercises/:exerciseId/edit',
         loadComponent: () => import('./text-exercise-update.component').then((m) => m.TextExerciseUpdateComponent),
         resolve: {
@@ -93,5 +97,9 @@ export const textExerciseRoute: Routes = [
     {
         path: 'text-exercises/:exerciseId/tutor-effort-statistics',
         loadChildren: () => import('../tutor-effort/tutor-effort-statistics.module').then((m) => m.ArtemisTutorEffortStatisticsModule),
+    },
+    {
+        path: 'text-exercises/:exerciseId/example-submissions/:exampleSubmissionId',
+        loadChildren: () => import('../example-text-submission//example-text-submission.route').then((m) => m.exampleTextSubmissionRoute),
     },
 ];

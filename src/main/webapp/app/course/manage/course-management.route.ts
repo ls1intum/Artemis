@@ -69,8 +69,7 @@ export const courseManagementState: Routes = [
                 resolve: {
                     course: TutorialGroupManagementResolve,
                 },
-                loadChildren: () =>
-                    import('app/course/tutorial-groups/tutorial-groups-management/tutorial-groups-management.module').then((m) => m.ArtemisTutorialGroupsManagementModule),
+                loadChildren: () => import('app/course/tutorial-groups/tutorial-groups-management/tutorial-groups-management.route').then((m) => m.tutorialGroupManagementRoutes),
             },
             {
                 path: ':courseId/assessment-dashboard/:exerciseId',
@@ -276,6 +275,10 @@ export const courseManagementState: Routes = [
                     {
                         path: '',
                         loadChildren: () => import('app/exercises/modeling/manage/modeling-exercise.route').then((m) => m.routes),
+                    },
+                    {
+                        path: '',
+                        loadChildren: () => import('app/exercises/shared/exercise-scores/exercise-scores.route').then((m) => m.routes),
                     },
                     {
                         // Create a new path without a component defined to prevent the CompetencyManagementComponent from being always rendered

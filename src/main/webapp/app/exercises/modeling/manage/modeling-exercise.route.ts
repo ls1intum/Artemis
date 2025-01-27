@@ -87,4 +87,17 @@ export const routes: Routes = [
         },
         canActivate: [UserRouteAccessService],
     },
+    {
+        path: 'modeling-exercises/:exerciseId/example-submissions/:exampleSubmissionId',
+        loadComponent: () => import('app/exercises/modeling/manage/example-modeling/example-modeling-submission.component').then((m) => m.ExampleModelingSubmissionComponent),
+        data: {
+            authorities: [Authority.ADMIN, Authority.INSTRUCTOR, Authority.EDITOR, Authority.TA],
+            pageTitle: 'artemisApp.exampleSubmission.home.editor',
+        },
+        canActivate: [UserRouteAccessService],
+    },
+    {
+        path: ':courseId/modeling-exercises/:exerciseId/submissions/:submissionId',
+        loadChildren: () => import('app/exercises/modeling/assess/modeling-assessment-editor/modeling-assessment-editor.route').then((m) => m.routes),
+    },
 ];
