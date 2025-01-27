@@ -6,7 +6,7 @@
             <jhi-help-icon placement="right auto" text="artemisApp.userSettings.idePreferencesPage.jetbrainsHelp" />
         </dt>
         <h5 class="py-2" jhiTranslate="artemisApp.userSettings.idePreferencesPage.default"></h5>
-        <ng-container *ngTemplateOutlet="ideButtonRow; context: { language: ProgrammingLanguage.EMPTY }"></ng-container>
+        <ng-container *ngTemplateOutlet="ideButtonRow; context: { language: ProgrammingLanguage.EMPTY }" />
     </div>
     <!-- Display each customized Programming Language -->
     @for (programmingLanguage of assignedProgrammingLanguages; track programmingLanguage) {
@@ -16,10 +16,10 @@
                     {{ programmingLanguage }}
                 </h5>
                 <button class="btn btn-sm btn-outline-danger" (click)="removeProgrammingLanguage(programmingLanguage)">
-                    <fa-icon [icon]="faTrash"></fa-icon>
+                    <fa-icon [icon]="faTrash" />
                 </button>
             </div>
-            <ng-container *ngTemplateOutlet="ideButtonRow; context: { language: programmingLanguage }"></ng-container>
+            <ng-container *ngTemplateOutlet="ideButtonRow; context: { language: programmingLanguage }" />
         </div>
     }
     <!-- Display plus button to add Programming Language with drop down menu -->
@@ -27,7 +27,7 @@
         <div class="list-group-item">
             <div ngbDropdown class="d-inline-block">
                 <button type="button" class="btn btn-primary" id="dropdown" ngbDropdownToggle>
-                    <fa-icon [icon]="faPlus"></fa-icon>
+                    <fa-icon [icon]="faPlus" />
                 </button>
                 <div ngbDropdownMenu aria-labelledby="dropdown">
                     @for (programmingLanguage of remainingProgrammingLanguages; track programmingLanguage) {

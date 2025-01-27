@@ -12,8 +12,7 @@
                     [authorName]="authorOfPosting.name"
                     [imageUrl]="authorOfPosting.imageUrl"
                     [isEditable]="currentUser !== undefined && authorOfPosting.id === currentUser.id"
-                >
-                </jhi-profile-picture>
+                />
                 <span class="fs-small d-inline-flex flex-column align-items-start">
                     <span class="fw-semibold" [ngClass]="{ clickable: !isAuthorOfPosting && posting()?.authorRole }" (click)="userNameClicked()">{{ authorOfPosting.name }}</span>
                     <span class="fs-x-small mt-1 text-body-secondary">
@@ -41,6 +40,9 @@
                 class="col-auto pe-0 resolved px-1"
                 [ngbTooltip]="'artemisApp.metis.post.postMarkedAsResolvedTooltip' | artemisTranslate"
             />
+        }
+        @if (isPostPinned()) {
+            <jhi-emoji class="fs-x-small" emoji="pushpin" />
         }
         @if ((!!isCommunicationPage() && !lastReadDate()) || (lastReadDate() && creationDate && isAfter && !isAuthorOfPosting)) {
             <span jhiTranslate="global.generic.new" class="badge bg-secondary hideAfter5Seconds"></span>

@@ -3,7 +3,7 @@ import { MockComponent, MockPipe, MockProvider } from 'ng-mocks';
 import { AlertService } from 'app/core/util/alert.service';
 import { of } from 'rxjs';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
-import { HttpResponse } from '@angular/common/http';
+import { HttpResponse, provideHttpClient } from '@angular/common/http';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { MockRouterLinkDirective } from '../../../../../helpers/mocks/directive/mock-router-link.directive';
 import { SortService } from 'app/shared/service/sort.service';
@@ -17,21 +17,13 @@ import { TutorialGroup } from 'app/entities/tutorial-group/tutorial-group.model'
 import { generateExampleTutorialGroup } from '../../../helpers/tutorialGroupExampleModels';
 import { Course } from 'app/entities/course.model';
 import { TutorialGroupSessionRowStubComponent, TutorialGroupSessionsTableStubComponent } from '../../../stubs/tutorial-group-sessions-table-stub.component';
-import { Component, EventEmitter, Input, Output } from '@angular/core';
 import { NgbActiveModal, NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { CreateTutorialGroupSessionComponent } from 'app/course/tutorial-groups/tutorial-groups-management/tutorial-group-sessions/crud/create-tutorial-group-session/create-tutorial-group-session.component';
 import { RemoveSecondsPipe } from 'app/course/tutorial-groups/shared/remove-seconds.pipe';
+import { MockTranslateService } from '../../../../../helpers/mocks/service/mock-translate.service';
+import { TranslateService } from '@ngx-translate/core';
+import { provideHttpClientTesting } from '@angular/common/http/testing';
 
-@Component({ selector: 'jhi-tutorial-group-session-row-buttons', template: '' })
-class TutorialGroupSessionRowButtonsStubComponent {
-    @Input() course: Course;
-    @Input() tutorialGroup: TutorialGroup;
-    @Input() tutorialGroupSession: TutorialGroupSession;
-
-    @Output() tutorialGroupSessionDeleted = new EventEmitter<void>();
-    @Output() tutorialGroupEdited = new EventEmitter<void>();
-    @Output() cancelOrActivatePressed = new EventEmitter<void>();
-}
 describe('TutorialGroupSessionsManagement', () => {
     let fixture: ComponentFixture<TutorialGroupSessionsManagementComponent>;
     let component: TutorialGroupSessionsManagementComponent;
@@ -57,14 +49,22 @@ describe('TutorialGroupSessionsManagement', () => {
                 TutorialGroupSessionsManagementComponent,
                 TutorialGroupSessionRowStubComponent,
                 TutorialGroupSessionsTableStubComponent,
-                TutorialGroupSessionRowButtonsStubComponent,
                 LoadingIndicatorContainerStubComponent,
                 MockPipe(ArtemisTranslatePipe),
                 MockPipe(RemoveSecondsPipe),
                 MockComponent(FaIconComponent),
                 MockRouterLinkDirective,
             ],
-            providers: [MockProvider(TutorialGroupsService), MockProvider(AlertService), MockProvider(NgbActiveModal), MockProvider(NgbModal), SortService],
+            providers: [
+                MockProvider(TutorialGroupsService),
+                MockProvider(AlertService),
+                MockProvider(NgbActiveModal),
+                MockProvider(NgbModal),
+                SortService,
+                { provide: TranslateService, useClass: MockTranslateService },
+                provideHttpClient(),
+                provideHttpClientTesting(),
+            ],
         })
             .compileComponents()
             .then(() => {

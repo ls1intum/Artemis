@@ -22,7 +22,6 @@ import { PDFDocument } from 'pdf-lib';
     selector: 'jhi-pdf-preview-component',
     templateUrl: './pdf-preview.component.html',
     styleUrls: ['./pdf-preview.component.scss'],
-    standalone: true,
     imports: [ArtemisSharedModule, PdfPreviewThumbnailGridComponent],
 })
 export class PdfPreviewComponent implements OnInit, OnDestroy {

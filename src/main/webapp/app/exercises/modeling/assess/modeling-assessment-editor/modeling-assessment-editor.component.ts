@@ -1,9 +1,10 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, inject } from '@angular/core';
 import { Location } from '@angular/common';
+import { UnreferencedFeedbackComponent } from 'app/exercises/shared/unreferenced-feedback/unreferenced-feedback.component';
 import { firstValueFrom } from 'rxjs';
 import { AlertService } from 'app/core/util/alert.service';
 import { UMLDiagramType, UMLModel } from '@ls1intum/apollon';
-import { ActivatedRoute, Router } from '@angular/router';
+import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { AccountService } from 'app/core/auth/account.service';
 import { HttpErrorResponse } from '@angular/common/http';
 import { TranslateService } from '@ngx-translate/core';
@@ -31,13 +32,45 @@ import { isAllowedToModifyFeedback } from 'app/assessment/assessment.service';
 import { AssessmentAfterComplaint } from 'app/complaints/complaints-for-tutor/complaints-for-tutor.component';
 import { AthenaService } from 'app/assessment/athena.service';
 import { faCircleNotch, faQuestionCircle } from '@fortawesome/free-solid-svg-icons';
+import { AssessmentLayoutComponent } from 'app/assessment/assessment-layout/assessment-layout.component';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { ModelingAssessmentComponent } from '../modeling-assessment.component';
+import { CollapsableAssessmentInstructionsComponent } from 'app/assessment/assessment-instructions/collapsable-assessment-instructions/collapsable-assessment-instructions.component';
+import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 
 @Component({
     selector: 'jhi-modeling-assessment-editor',
     templateUrl: './modeling-assessment-editor.component.html',
     styleUrls: ['./modeling-assessment-editor.component.scss'],
+    imports: [
+        AssessmentLayoutComponent,
+        TranslateDirective,
+        NgbTooltip,
+        FaIconComponent,
+        ModelingAssessmentComponent,
+        CollapsableAssessmentInstructionsComponent,
+        UnreferencedFeedbackComponent,
+        RouterLink,
+        ArtemisTranslatePipe,
+    ],
 })
 export class ModelingAssessmentEditorComponent implements OnInit {
+    private alertService = inject(AlertService);
+    private router = inject(Router);
+    private route = inject(ActivatedRoute);
+    private modelingSubmissionService = inject(ModelingSubmissionService);
+    private modelingAssessmentService = inject(ModelingAssessmentService);
+    private accountService = inject(AccountService);
+    private location = inject(Location);
+    private translateService = inject(TranslateService);
+    private complaintService = inject(ComplaintService);
+    private structuredGradingCriterionService = inject(StructuredGradingCriterionService);
+    private submissionService = inject(SubmissionService);
+    private exampleSubmissionService = inject(ExampleSubmissionService);
+    private athenaService = inject(AthenaService);
+
     totalScore = 0;
     submission?: ModelingSubmission;
     model?: UMLModel;
@@ -78,21 +111,9 @@ export class ModelingAssessmentEditorComponent implements OnInit {
     protected readonly faCircleNotch = faCircleNotch;
     protected readonly faQuestionCircle = faQuestionCircle;
 
-    constructor(
-        private alertService: AlertService,
-        private router: Router,
-        private route: ActivatedRoute,
-        private modelingSubmissionService: ModelingSubmissionService,
-        private modelingAssessmentService: ModelingAssessmentService,
-        private accountService: AccountService,
-        private location: Location,
-        private translateService: TranslateService,
-        private complaintService: ComplaintService,
-        private structuredGradingCriterionService: StructuredGradingCriterionService,
-        private submissionService: SubmissionService,
-        private exampleSubmissionService: ExampleSubmissionService,
-        private athenaService: AthenaService,
-    ) {
+    constructor() {
+        const translateService = this.translateService;
+
         translateService.get('artemisApp.modelingAssessmentEditor.messages.confirmCancel').subscribe((text) => (this.cancelConfirmationText = text));
     }
 
@@ -140,7 +161,7 @@ export class ModelingAssessmentEditorComponent implements OnInit {
             this.exerciseDashboardLink = getExerciseDashboardLink(this.courseId, this.exerciseId, this.examId, this.isTestRun);
 
             const submissionId = params.get('submissionId');
-            this.resultId = Number(params.get('resultId')) ?? 0;
+            this.resultId = Number(params.get('resultId')) || 0;
             if (submissionId === 'new') {
                 this.loadRandomSubmission(this.exerciseId);
             } else {
@@ -525,9 +546,6 @@ export class ModelingAssessmentEditorComponent implements OnInit {
 
                 this.nextSubmissionBusy = false;
                 this.isLoading = false;
-
-                // navigate to the new assessment page to trigger re-initialization of the components
-                this.router.onSameUrlNavigation = 'reload';
 
                 // navigate to root and then to new assessment page to trigger re-initialization of the components
                 const url = getLinkToSubmissionAssessment(ExerciseType.MODELING, this.courseId, this.exerciseId, undefined, submission.id!, this.examId, this.exerciseGroupId);

@@ -8,7 +8,6 @@ import { RouterLink } from '@angular/router';
 
 @Component({
     selector: 'jhi-profile-picture',
-    standalone: true,
     templateUrl: './profile-picture.component.html',
     styleUrls: ['./profile-picture.component.scss'],
     imports: [ArtemisSharedCommonModule, RouterLink, ArtemisSharedPipesModule],
@@ -16,9 +15,9 @@ import { RouterLink } from '@angular/router';
 export class ProfilePictureComponent implements OnInit, OnChanges {
     readonly imageSizeInRem = input<string>('2.15');
     readonly fontSizeInRem = input<string>('0.9');
-    readonly authorName = input<string | undefined>(undefined);
-    readonly authorId = input<number | undefined>(undefined);
-    readonly imageUrl = input<string | undefined>(undefined);
+    authorName = input<string | undefined>(undefined);
+    authorId = input<number | undefined>(undefined);
+    imageUrl = input<string | undefined>(undefined);
     readonly imageClass = input<string>('');
     readonly defaultPictureClass = input<string>('');
     readonly imageId = input<string>('');
@@ -38,7 +37,7 @@ export class ProfilePictureComponent implements OnInit, OnChanges {
         this.updateImageData();
     }
 
-    ngOnChanges(): void {
+    ngOnChanges() {
         this.updateImageData();
     }
 

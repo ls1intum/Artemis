@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, inject } from '@angular/core';
 import { HttpHeaders, HttpResponse } from '@angular/common/http';
 import { DatePipe } from '@angular/common';
 import { ActivatedRoute, Router } from '@angular/router';
@@ -8,12 +8,26 @@ import { ITEMS_PER_PAGE } from 'app/shared/constants/pagination.constants';
 import { Audit } from './audit.model';
 import { AuditsService } from './audits.service';
 import { faSort } from '@fortawesome/free-solid-svg-icons';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { FormsModule } from '@angular/forms';
+import { SortDirective } from 'app/shared/sort/sort.directive';
+import { SortByDirective } from 'app/shared/sort/sort-by.directive';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { ItemCountComponent } from 'app/shared/pagination/item-count.component';
+import { NgbPagination } from '@ng-bootstrap/ng-bootstrap';
+import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 
 @Component({
     selector: 'jhi-audit',
     templateUrl: './audits.component.html',
+    imports: [TranslateDirective, FormsModule, SortDirective, SortByDirective, FaIconComponent, ItemCountComponent, NgbPagination, ArtemisDatePipe],
 })
 export class AuditsComponent implements OnInit {
+    private auditsService = inject(AuditsService);
+    private activatedRoute = inject(ActivatedRoute);
+    private datePipe = inject(DatePipe);
+    private router = inject(Router);
+
     audits?: Audit[];
     fromDate = '';
     predicate!: string;
@@ -30,13 +44,6 @@ export class AuditsComponent implements OnInit {
 
     // Icon
     faSort = faSort;
-
-    constructor(
-        private auditsService: AuditsService,
-        private activatedRoute: ActivatedRoute,
-        private datePipe: DatePipe,
-        private router: Router,
-    ) {}
 
     ngOnInit(): void {
         this.toDate = this.today();

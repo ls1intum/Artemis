@@ -1,16 +1,24 @@
-import { Component, OnDestroy, OnInit, ViewChild } from '@angular/core';
+import { Component, OnDestroy, OnInit, ViewChild, inject } from '@angular/core';
 import { faExclamationCircle, faWifi } from '@fortawesome/free-solid-svg-icons';
 import { Subscription, filter } from 'rxjs';
-import { JhiWebsocketService } from 'app/core/websocket/websocket.service';
+import { WebsocketService } from 'app/core/websocket/websocket.service';
 import { NgbPopover } from '@ng-bootstrap/ng-bootstrap';
 import { NavigationEnd, Router } from '@angular/router';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { TranslateDirective } from '../language/translate.directive';
+import { CloseCircleComponent } from '../close-circle/close-circle.component';
+import { NgClass } from '@angular/common';
 
 @Component({
     selector: 'jhi-connection-warning',
     templateUrl: './connection-warning.component.html',
     styleUrls: ['./connection-warning.component.scss'],
+    imports: [FaIconComponent, TranslateDirective, CloseCircleComponent, NgClass, NgbPopover],
 })
 export class JhiConnectionWarningComponent implements OnInit, OnDestroy {
+    private websocketService = inject(WebsocketService);
+    private router = inject(Router);
+
     @ViewChild('popover') popover: NgbPopover;
 
     disconnected = false;
@@ -23,10 +31,9 @@ export class JhiConnectionWarningComponent implements OnInit, OnDestroy {
     faExclamationCircle = faExclamationCircle;
     faWifi = faWifi;
 
-    constructor(
-        private websocketService: JhiWebsocketService,
-        private router: Router,
-    ) {
+    constructor() {
+        const router = this.router;
+
         this.routerSubscription = router.events
             .pipe(filter((event) => event instanceof NavigationEnd))
             .subscribe((event: NavigationEnd) => (this.isOnExamParticipationPage = !!event.url.match('^/courses/\\d+/exams/\\d+')));

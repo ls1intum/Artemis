@@ -9,8 +9,6 @@ export class StringCountService {
      */
     private readonly WORD_MATCH_REGEX = /[\w\u00C0-\u00ff]+/g;
 
-    constructor() {}
-
     /**
      * Counts the number of words in a text
      * @param text

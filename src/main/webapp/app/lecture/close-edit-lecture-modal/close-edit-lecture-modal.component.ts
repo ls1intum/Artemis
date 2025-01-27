@@ -6,7 +6,6 @@ import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 
 @Component({
     selector: 'jhi-close-edit-lecture-modal',
-    standalone: true,
     imports: [TranslateDirective, ArtemisSharedCommonModule],
     templateUrl: './close-edit-lecture-modal.component.html',
 })

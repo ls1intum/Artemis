@@ -1,4 +1,4 @@
-import { Component, OnInit, ViewChild } from '@angular/core';
+import { Component, OnInit, ViewChild, inject } from '@angular/core';
 import { CompetencyService } from 'app/course/competencies/competency.service';
 import { AlertService } from 'app/core/util/alert.service';
 import { onError } from 'app/shared/util/global.utils';
@@ -6,7 +6,7 @@ import { HttpErrorResponse } from '@angular/common/http';
 import { Competency, CompetencyTaxonomy } from 'app/entities/competency.model';
 import { ActivatedRoute, Router } from '@angular/router';
 import { faBan, faSave, faTimes } from '@fortawesome/free-solid-svg-icons';
-import { FormArray, FormBuilder, FormControl, FormGroup } from '@angular/forms';
+import { FormArray, FormBuilder, FormControl, FormGroup, FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { ButtonType } from 'app/shared/components/button.component';
 import { ComponentCanDeactivate } from 'app/shared/guard/can-deactivate.model';
 import { ConfirmAutofocusModalComponent } from 'app/shared/components/confirm-autofocus-modal.component';
@@ -15,7 +15,7 @@ import { Observable, firstValueFrom, map } from 'rxjs';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { TranslateService } from '@ngx-translate/core';
 import { DocumentationType } from 'app/shared/components/documentation-button/documentation-button.component';
-import { JhiWebsocketService } from 'app/core/websocket/websocket.service';
+import { WebsocketService } from 'app/core/websocket/websocket.service';
 import { IrisStageDTO, IrisStageStateDTO } from 'app/entities/iris/iris-stage-dto.model';
 import { CourseCompetencyService } from 'app/course/competencies/course-competency.service';
 import { ArtemisSharedCommonModule } from 'app/shared/shared-common.module';
@@ -49,15 +49,26 @@ type CompetencyGenerationStatusUpdate = {
 @Component({
     selector: 'jhi-generate-competencies',
     templateUrl: './generate-competencies.component.html',
-    standalone: true,
-    imports: [ArtemisSharedCommonModule, ArtemisSharedComponentModule, ArtemisCompetenciesModule],
+    imports: [ArtemisSharedCommonModule, ArtemisSharedComponentModule, ArtemisCompetenciesModule, FormsModule, ReactiveFormsModule],
 })
 export class GenerateCompetenciesComponent implements OnInit, ComponentCanDeactivate {
+    private courseManagementService = inject(CourseManagementService);
+    private courseCompetencyService = inject(CourseCompetencyService);
+    private competencyService = inject(CompetencyService);
+    private alertService = inject(AlertService);
+    private activatedRoute = inject(ActivatedRoute);
+    private router = inject(Router);
+    private formBuilder = inject(FormBuilder);
+    private modalService = inject(NgbModal);
+    private artemisTranslatePipe = inject(ArtemisTranslatePipe);
+    private translateService = inject(TranslateService);
+    private jhiWebsocketService = inject(WebsocketService);
+
     @ViewChild(CourseDescriptionFormComponent) courseDescriptionForm: CourseDescriptionFormComponent;
 
     courseId: number;
     isLoading = false;
-    submitted: boolean = false;
+    submitted = false;
     form = new FormGroup({ competencies: new FormArray<FormGroup<CompetencyFormControlsWithViewed>>([]) });
 
     //Icons
@@ -68,20 +79,6 @@ export class GenerateCompetenciesComponent implements OnInit, ComponentCanDeacti
     //Other constants
     protected readonly ButtonType = ButtonType;
     readonly documentationType: DocumentationType = 'GenerateCompetencies';
-
-    constructor(
-        private courseManagementService: CourseManagementService,
-        private courseCompetencyService: CourseCompetencyService,
-        private competencyService: CompetencyService,
-        private alertService: AlertService,
-        private activatedRoute: ActivatedRoute,
-        private router: Router,
-        private formBuilder: FormBuilder,
-        private modalService: NgbModal,
-        private artemisTranslatePipe: ArtemisTranslatePipe,
-        private translateService: TranslateService,
-        private jhiWebsocketService: JhiWebsocketService,
-    ) {}
 
     ngOnInit(): void {
         this.activatedRoute.params.subscribe((params) => {

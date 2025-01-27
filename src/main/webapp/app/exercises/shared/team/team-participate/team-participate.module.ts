@@ -6,8 +6,7 @@ import { TeamStudentsListComponent } from 'app/exercises/shared/team/team-partic
 import { RouterModule } from '@angular/router';
 
 @NgModule({
-    imports: [ArtemisSharedModule, RouterModule],
-    declarations: [TeamParticipateInfoBoxComponent, TeamStudentsOnlineListComponent, TeamStudentsListComponent],
+    imports: [ArtemisSharedModule, RouterModule, TeamParticipateInfoBoxComponent, TeamStudentsOnlineListComponent, TeamStudentsListComponent],
     exports: [TeamParticipateInfoBoxComponent, TeamStudentsOnlineListComponent, TeamStudentsListComponent],
 })
 export class ArtemisTeamParticipeModule {}

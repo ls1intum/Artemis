@@ -4,8 +4,7 @@ import { ExerciseFeedbackSuggestionOptionsComponent } from 'app/exercises/shared
 import { ArtemisSharedComponentModule } from 'app/shared/components/shared-component.module';
 
 @NgModule({
-    declarations: [ExerciseFeedbackSuggestionOptionsComponent],
-    imports: [ArtemisSharedCommonModule, ArtemisSharedComponentModule],
+    imports: [ArtemisSharedCommonModule, ArtemisSharedComponentModule, ExerciseFeedbackSuggestionOptionsComponent],
     exports: [ExerciseFeedbackSuggestionOptionsComponent],
 })
 export class ExerciseFeedbackSuggestionOptionsModule {}

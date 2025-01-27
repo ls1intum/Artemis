@@ -7,6 +7,7 @@ import { GitDiffLineStatComponent } from 'app/exercises/programming/git-diff-rep
 import { ArtemisSharedComponentModule } from 'app/shared/components/shared-component.module';
 import { ArtemisSharedModule } from 'app/shared/shared.module';
 import { GitDiffFilePanelComponent } from 'app/exercises/programming/git-diff-report/git-diff-file-panel.component';
+import { captureException } from '@sentry/angular';
 
 interface DiffInformation {
     path: string;
@@ -19,7 +20,6 @@ interface DiffInformation {
 @Component({
     selector: 'jhi-git-diff-report',
     templateUrl: './git-diff-report.component.html',
-    standalone: true,
     changeDetection: ChangeDetectionStrategy.OnPush,
     imports: [GitDiffLineStatComponent, ArtemisSharedModule, ArtemisSharedComponentModule, GitDiffFilePanelComponent],
 })
@@ -149,7 +149,7 @@ export class GitDiffReportComponent {
             diffInformation[index].diffReady = ready;
             this.diffInformationForPaths.set(diffInformation);
         } else {
-            console.error(`Received diff ready event for unknown path: ${path}`);
+            captureException(`Received diff ready event for unknown path: ${path}`);
         }
     }
 }

@@ -5,7 +5,6 @@ import { TranslateDirective } from 'app/shared/language/translate.directive';
 
 @Component({
     selector: 'jhi-programming-exercise-difficulty',
-    standalone: true,
     templateUrl: './programming-exercise-difficulty.component.html',
     styleUrls: ['../../../programming-exercise-form.scss'],
     imports: [ArtemisDifficultyPickerModule, TranslateDirective],

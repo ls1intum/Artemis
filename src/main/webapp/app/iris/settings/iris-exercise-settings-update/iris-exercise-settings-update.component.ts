@@ -1,14 +1,18 @@
-import { Component, Input, OnInit, ViewChild } from '@angular/core';
+import { Component, Input, OnInit, ViewChild, inject } from '@angular/core';
 import { IrisSettingsType } from 'app/entities/iris/settings/iris-settings.model';
 import { ComponentCanDeactivate } from 'app/shared/guard/can-deactivate.model';
 import { IrisSettingsUpdateComponent } from 'app/iris/settings/iris-settings-update/iris-settings-update.component';
 import { ActivatedRoute } from '@angular/router';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
 
 @Component({
     selector: 'jhi-iris-exercise-settings-update',
     templateUrl: './iris-exercise-settings-update.component.html',
+    imports: [TranslateDirective, IrisSettingsUpdateComponent],
 })
 export class IrisExerciseSettingsUpdateComponent implements OnInit, ComponentCanDeactivate {
+    private route = inject(ActivatedRoute);
+
     @ViewChild(IrisSettingsUpdateComponent)
     settingsUpdateComponent?: IrisSettingsUpdateComponent;
 
@@ -18,8 +22,6 @@ export class IrisExerciseSettingsUpdateComponent implements OnInit, ComponentCan
     public exerciseId?: number;
 
     EXERCISE = IrisSettingsType.EXERCISE;
-
-    constructor(private route: ActivatedRoute) {}
 
     ngOnInit(): void {
         this.route.parent?.params.subscribe((params) => {

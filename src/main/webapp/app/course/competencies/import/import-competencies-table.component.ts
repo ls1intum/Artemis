@@ -2,10 +2,18 @@ import { Component, ContentChild, EventEmitter, Input, OnInit, Output, TemplateR
 import { faSort } from '@fortawesome/free-solid-svg-icons';
 import { PageableSearch, SearchResult, SortingOrder } from 'app/shared/table/pageable-table';
 import { Competency } from 'app/entities/competency.model';
+import { SortDirective } from 'app/shared/sort/sort.directive';
+import { SortByDirective } from 'app/shared/sort/sort-by.directive';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { NgTemplateOutlet } from '@angular/common';
+import { NgbPagination } from '@ng-bootstrap/ng-bootstrap';
+import { HtmlForMarkdownPipe } from 'app/shared/pipes/html-for-markdown.pipe';
 
 @Component({
     selector: 'jhi-import-competencies-table',
     templateUrl: './import-competencies-table.component.html',
+    imports: [SortDirective, SortByDirective, FaIconComponent, TranslateDirective, NgTemplateOutlet, NgbPagination, HtmlForMarkdownPipe],
 })
 export class ImportCompetenciesTableComponent implements OnInit {
     @Input() content: SearchResult<Competency>;

@@ -21,13 +21,6 @@ import { ArtemisProgrammingSubmissionPolicyStatusModule } from 'app/exercises/pr
 import { ExerciseSaveButtonComponent } from './exercise-save-button/exercise-save-button.component';
 
 @NgModule({
-    declarations: [
-        FileUploadExamSubmissionComponent,
-        QuizExamSubmissionComponent,
-        ProgrammingExamSubmissionComponent,
-        TextExamSubmissionComponent,
-        ModelingExamSubmissionComponent,
-    ],
     imports: [
         CommonModule,
         ArtemisSharedModule,
@@ -44,6 +37,11 @@ import { ExerciseSaveButtonComponent } from './exercise-save-button/exercise-sav
         ArtemisProgrammingSubmissionPolicyStatusModule,
         ExamExerciseUpdateHighlighterModule,
         ExerciseSaveButtonComponent,
+        FileUploadExamSubmissionComponent,
+        QuizExamSubmissionComponent,
+        ProgrammingExamSubmissionComponent,
+        TextExamSubmissionComponent,
+        ModelingExamSubmissionComponent,
     ],
     exports: [FileUploadExamSubmissionComponent, QuizExamSubmissionComponent, ProgrammingExamSubmissionComponent, TextExamSubmissionComponent, ModelingExamSubmissionComponent],
 })
