@@ -1,29 +1,10 @@
-import { ActivatedRouteSnapshot, Resolve, RouterModule, Routes } from '@angular/router';
+import { Routes } from '@angular/router';
 import { UserRouteAccessService } from 'app/core/auth/user-route-access-service';
-import { Injectable, NgModule, inject } from '@angular/core';
-
-import { ProgrammingExercise } from 'app/entities/programming/programming-exercise.model';
-import { ProgrammingExerciseService } from 'app/exercises/programming/manage/services/programming-exercise.service';
-import { map } from 'rxjs/operators';
-import { HttpResponse } from '@angular/common/http';
-import { of } from 'rxjs';
 
 import { Authority } from 'app/shared/constants/authority.constants';
 
 import { LocalVCGuard } from 'app/localvc/localvc-guard.service';
-
-@Injectable({ providedIn: 'root' })
-export class ProgrammingExerciseResolve implements Resolve<ProgrammingExercise> {
-    private service = inject(ProgrammingExerciseService);
-
-    resolve(route: ActivatedRouteSnapshot) {
-        const exerciseId = route.params['exerciseId'] ? route.params['exerciseId'] : undefined;
-        if (exerciseId) {
-            return this.service.find(exerciseId, true).pipe(map((programmingExercise: HttpResponse<ProgrammingExercise>) => programmingExercise.body!));
-        }
-        return of(new ProgrammingExercise(undefined, undefined));
-    }
-}
+import { ProgrammingExerciseResolve } from 'app/exercises/programming/manage/programming-exercise-resolve.service';
 
 export const routes: Routes = [
     {
@@ -241,9 +222,3 @@ export const routes: Routes = [
         canActivate: [UserRouteAccessService, LocalVCGuard],
     },
 ];
-
-@NgModule({
-    imports: [RouterModule.forChild(routes)],
-    exports: [RouterModule],
-})
-export class ArtemisProgrammingExerciseManagementRoutingModule {}

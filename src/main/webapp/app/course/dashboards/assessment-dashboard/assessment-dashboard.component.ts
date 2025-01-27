@@ -30,9 +30,9 @@ import { FormsModule } from '@angular/forms';
 import { ArtemisSharedCommonModule } from 'app/shared/shared-common.module';
 import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { ArtemisTutorParticipationGraphModule } from 'app/shared/dashboards/tutor-participation-graph/tutor-participation-graph.module';
-import { ArtemisExerciseAssessmentDashboardModule } from 'app/exercises/shared/dashboards/tutor/exercise-assessment-dashboard.module';
 import { ArtemisTutorLeaderboardModule } from 'app/shared/dashboards/tutor-leaderboard/tutor-leaderboard.module';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
+import { SecondCorrectionEnableButtonComponent } from 'app/exercises/shared/dashboards/tutor/second-correction-button/second-correction-enable-button.component';
 
 @Component({
     selector: 'jhi-assessment-dashboard',
@@ -50,9 +50,9 @@ import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
         ArtemisSharedCommonModule,
         NgbTooltip,
         ArtemisTutorParticipationGraphModule,
-        ArtemisExerciseAssessmentDashboardModule,
         ArtemisTutorLeaderboardModule,
         ArtemisTranslatePipe,
+        SecondCorrectionEnableButtonComponent,
     ],
 })
 export class AssessmentDashboardComponent implements OnInit {

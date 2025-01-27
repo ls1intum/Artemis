@@ -146,8 +146,7 @@ const routes: Routes = [
     },
     {
         path: 'course-management/:courseId/programming-exercises/:exerciseId',
-        loadChildren: () =>
-            import('./exercises/programming/manage/programming-exercise-management-routing.module').then((m) => m.ArtemisProgrammingExerciseManagementRoutingModule),
+        loadChildren: () => import('./exercises/programming/manage/programming-exercise-management.route').then((m) => m.routes),
     },
     {
         path: 'courses',

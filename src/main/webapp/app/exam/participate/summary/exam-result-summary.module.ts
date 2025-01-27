@@ -21,7 +21,6 @@ import { ArtemisMarkdownModule } from 'app/shared/markdown.module';
 import { SubmissionResultStatusModule } from 'app/overview/submission-result-status.module';
 import { ArtemisExamSharedModule } from 'app/exam/shared/exam-shared.module';
 import { ExampleSolutionComponent } from 'app/exercises/shared/example-solution/example-solution.component';
-import { ArtemisProgrammingExerciseManagementModule } from 'app/exercises/programming/manage/programming-exercise-management.module';
 import { ArtemisSharedComponentModule } from 'app/shared/components/shared-component.module';
 import { GradingKeyOverviewModule } from 'app/grading-system/grading-key-overview/grading-key-overview.module';
 import { ExamResultSummaryExerciseCardHeaderComponent } from 'app/exam/participate/summary/exercises/header/exam-result-summary-exercise-card-header.component';
@@ -44,7 +43,6 @@ import { NoDataComponent } from 'app/shared/no-data-component';
         ArtemisResultModule,
         ArtemisComplaintsModule,
         ArtemisProgrammingExerciseInstructionsRenderModule,
-        ArtemisProgrammingExerciseManagementModule,
         ArtemisHeaderExercisePageWithDetailsModule,
         ArtemisMarkdownModule,
         SubmissionResultStatusModule,

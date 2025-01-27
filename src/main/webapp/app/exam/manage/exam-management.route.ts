@@ -1,10 +1,6 @@
 import { Routes } from '@angular/router';
 import { UserRouteAccessService } from 'app/core/auth/user-route-access-service';
 
-import { TextExerciseResolver } from 'app/exercises/text/manage/text-exercise/text-exercise.route';
-
-import { ProgrammingExerciseResolve } from 'app/exercises/programming/manage/programming-exercise-management-routing.module';
-
 import { PendingChangesGuard } from 'app/shared/guard/pending-changes.guard';
 import { Authority } from 'app/shared/constants/authority.constants';
 import { ExerciseAssessmentDashboardComponent } from 'app/exercises/shared/dashboards/tutor/exercise-assessment-dashboard.component';
@@ -26,6 +22,8 @@ import { ModelingExerciseResolver } from 'app/exercises/modeling/manage/modeling
 import { CourseResolve, ExamResolve, ExerciseGroupResolve, StudentExamResolve } from 'app/exam/manage/exam-management-resolve.service';
 
 import { LocalVCGuard } from 'app/localvc/localvc-guard.service';
+import { ProgrammingExerciseResolve } from 'app/exercises/programming/manage/programming-exercise-resolve.service';
+import { TextExerciseResolver } from 'app/exercises/text/manage/text-exercise/text-exercise-resolver.service';
 
 export const examManagementRoute: Routes = [
     {
@@ -179,7 +177,7 @@ export const examManagementRoute: Routes = [
             pageTitle: 'artemisApp.examManagement.gradingSystem',
         },
         canActivate: [UserRouteAccessService],
-        loadChildren: () => import('app/grading-system/grading-system.module').then((m) => m.GradingSystemModule),
+        loadChildren: () => import('app/grading-system/grading-system.route').then((m) => m.gradingSystemState),
     },
     {
         path: ':examId/bonus',
