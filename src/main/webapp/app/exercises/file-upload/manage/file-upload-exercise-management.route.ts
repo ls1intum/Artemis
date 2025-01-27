@@ -64,4 +64,8 @@ export const routes: Routes = [
         },
         canActivate: [UserRouteAccessService],
     },
+    {
+        path: 'file-upload-exercises/:exerciseId',
+        loadChildren: () => import('app/exercises/file-upload/assess/file-upload-assessment.route').then((m) => m.routes),
+    },
 ];
