@@ -12,6 +12,8 @@ import jakarta.validation.constraints.Min;
 
 import org.hibernate.annotations.Cache;
 import org.hibernate.annotations.CacheConcurrencyStrategy;
+import org.hibernate.annotations.OnDelete;
+import org.hibernate.annotations.OnDeleteAction;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 
@@ -30,6 +32,8 @@ public class CourseLearnerProfile extends DomainObject {
 
     @OneToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "course_id")
+    // Since a course does not store the reference to the course_learner_profile, we need to make the cascade deletion explicitly
+    @OnDelete(action = OnDeleteAction.CASCADE)
     private Course course;
 
     @Column(name = "aim_for_grade_or_bonus")
