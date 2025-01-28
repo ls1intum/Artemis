@@ -13,7 +13,6 @@ jobs:
   check-build-status:
     runs-on: ubuntu-latest
     outputs:
-      can_deploy: ${{ steps.check_build.outputs.can_deploy }}
       workflow_run_id: ${{ steps.get_workflow_run.outputs.data.workflow_runs[0].id }}
     steps:
       - name: Get latest build workflow run
@@ -38,17 +37,14 @@ jobs:
           TOTAL_COUNT=$(echo '${{ steps.verify_artifact.outputs.data }}' | jq -r '.total_count')
             
           if [ "$TOTAL_COUNT" -gt 0 ]; then
-            echo "can_deploy=true" >> $GITHUB_OUTPUT
             echo "Found Artemis.war artifact in latest build"
           else
-            echo "can_deploy=false" >> $GITHUB_OUTPUT
-            echo "No Artemis.war artifact found in latest build"
+            echo "::error::No Artemis.war artifact found in latest build!"
             exit 1
           fi
 
   deploy:
     needs: check-build-status
-    if: needs.check-build-status.outputs.can_deploy == 'true'
     runs-on: ubuntu-latest
     environment: 
         name: artemis-staging-localci.artemis.cit.tum.de
