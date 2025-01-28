@@ -160,7 +160,7 @@ public interface UserRepository extends ArtemisJpaRepository<User, Long>, JpaSpe
     Optional<User> findOneWithGroupsAuthoritiesAndGuidedTourSettingsByLogin(String login);
 
     @EntityGraph(type = LOAD, attributePaths = { "groups", "authorities", "guidedTourSettings", "externalLLMAccepted" })
-    Optional<User> findOneWithGroupsAndAuthoritiesAndGuidedTourSettingsAndIrisAcceptedTimestampByLogin(String login);
+    Optional<User> findOneWithGroupsAndAuthoritiesAndGuidedTourSettingsAndExternalLLMAcceptedTimestampByLogin(String login);
 
     Long countByIsDeletedIsFalseAndGroupsContains(String groupName);
 
