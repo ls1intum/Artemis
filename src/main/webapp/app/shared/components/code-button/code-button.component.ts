@@ -127,9 +127,9 @@ export class CodeButtonComponent implements OnInit {
         this.isInCourseManagement = this.router.url.includes('course-management');
 
         effect(async () => {
-            if (this.participations()?.length) {
+            if (this.participations().length) {
                 const shouldPreferPractice = this.participationService.shouldPreferPractice(this.exercise());
-                this.activeParticipation = this.participationService.getSpecificStudentParticipation(this.participations()!, shouldPreferPractice) ?? this.participations()![0];
+                this.activeParticipation = this.participationService.getSpecificStudentParticipation(this.participations(), shouldPreferPractice) ?? this.participations()[0];
                 this.isPracticeMode = isPracticeMode(this.activeParticipation);
                 this.isTeamParticipation = !!this.activeParticipation?.team;
             }
@@ -256,8 +256,8 @@ export class CodeButtonComponent implements OnInit {
     }
 
     loadVcsAccessTokensForAllParticipations() {
-        this.participations()?.forEach((participation) => {
-            if (participation?.id && !participation.vcsAccessToken) {
+        this.participations().forEach((participation) => {
+            if (participation.id && !participation.vcsAccessToken) {
                 this.loadParticipationVcsAccessToken(participation);
             }
         });
@@ -374,7 +374,7 @@ export class CodeButtonComponent implements OnInit {
 
     switchPracticeMode() {
         this.isPracticeMode = !this.isPracticeMode;
-        this.activeParticipation = this.participationService.getSpecificStudentParticipation(this.participations()!, this.isPracticeMode)!;
+        this.activeParticipation = this.participationService.getSpecificStudentParticipation(this.participations(), this.isPracticeMode)!;
         this.cloneHeadline = this.isPracticeMode ? 'artemisApp.exerciseActions.clonePracticeRepository' : 'artemisApp.exerciseActions.cloneRatedRepository';
         if (this.activeParticipation.vcsAccessToken) {
             this.user.vcsAccessToken = this.activeParticipation.vcsAccessToken;
@@ -422,7 +422,7 @@ export class CodeButtonComponent implements OnInit {
     }
 
     private getCloneHeadline() {
-        if (this.participations()?.length) {
+        if (this.participations().length) {
             this.isPracticeMode = isPracticeMode(this.activeParticipation);
             return this.isPracticeMode && !this.exercise()?.exerciseGroup
                 ? 'artemisApp.exerciseActions.clonePracticeRepository'
