@@ -15,6 +15,7 @@ import { isExamExercise } from 'app/shared/util/utils';
 import { ExerciseDetailsType, ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { ParticipationService } from 'app/exercises/shared/participation/participation.service';
+import { AssessmentType } from 'app/entities/assessment-type.model';
 
 @Component({
     selector: 'jhi-request-feedback-button',
@@ -27,6 +28,8 @@ export class RequestFeedbackButtonComponent implements OnInit {
     requestFeedbackEnabled = false;
     isExamExercise: boolean;
     participation?: StudentParticipation;
+    currentFeedbackRequestCount = 0;
+    feedbackRequestLimit = 10;
 
     isSubmitted = input<boolean>();
     pendingChanges = input<boolean>(false);
@@ -62,6 +65,10 @@ export class RequestFeedbackButtonComponent implements OnInit {
             this.exerciseService.getExerciseDetails(this.exercise().id!).subscribe({
                 next: (exerciseResponse: HttpResponse<ExerciseDetailsType>) => {
                     this.participation = this.participationService.getSpecificStudentParticipation(exerciseResponse.body!.exercise.studentParticipations ?? [], false);
+                    if (this.participation) {
+                        this.currentFeedbackRequestCount =
+                            this.participation.results?.filter((result) => result.assessmentType == AssessmentType.AUTOMATIC_ATHENA && result.successful == true).length ?? 0;
+                    }
                 },
                 error: (error: HttpErrorResponse) => {
                     this.alertService.error(`artemisApp.${error.error.entityName}.errors.${error.error.errorKey}`);
@@ -79,6 +86,7 @@ export class RequestFeedbackButtonComponent implements OnInit {
             next: (participation: StudentParticipation) => {
                 if (participation) {
                     this.generatingFeedback.emit();
+                    this.currentFeedbackRequestCount += 1;
                     this.alertService.success('artemisApp.exercise.feedbackRequestSent');
                 }
             },
