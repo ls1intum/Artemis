@@ -15,7 +15,6 @@ import { ArtemisResultModule } from 'app/exercises/shared/result/result.module';
 import { ArtemisComplaintsModule } from 'app/complaints/complaints.module';
 import { ExamGeneralInformationComponent } from 'app/exam/participate/general-information/exam-general-information.component';
 import { ExamResultOverviewComponent } from 'app/exam/participate/summary/result-overview/exam-result-overview.component';
-import { ArtemisProgrammingExerciseInstructionsRenderModule } from 'app/exercises/programming/shared/instructions-render/programming-exercise-instructions-render.module';
 import { ArtemisHeaderExercisePageWithDetailsModule } from 'app/exercises/shared/exercise-headers/exercise-headers.module';
 import { ArtemisMarkdownModule } from 'app/shared/markdown.module';
 import { SubmissionResultStatusModule } from 'app/overview/submission-result-status.module';
@@ -43,7 +42,6 @@ import { NoDataComponent } from 'app/shared/no-data-component';
         ArtemisFullscreenModule,
         ArtemisResultModule,
         ArtemisComplaintsModule,
-        ArtemisProgrammingExerciseInstructionsRenderModule,
         ArtemisProgrammingExerciseManagementModule,
         ArtemisHeaderExercisePageWithDetailsModule,
         ArtemisMarkdownModule,
