@@ -36,7 +36,7 @@ jobs:
         id: verify_artifact
         uses: octokit/request-action@v2.x
         with:
-          route: GET /repos/${{ github.repository }}/actions/runs/${{ fromJson(steps.get_workflow_run.outputs.data).workflow_runs[0].id }}/artifacts?name=Artemis.war
+          route: GET /repos/${{ github.repository }}/actions/runs/${{ steps.set_build_workflow_id.outputs.workflow_id }}/artifacts?name=Artemis.war
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
   
