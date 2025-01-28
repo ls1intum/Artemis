@@ -9,7 +9,8 @@
             "exerciseToImport": "Bitte die zu importierende Aufgabe auswählen",
             "loginAsInstructor": "Bitte melden Sie sich als Instruktor ein!",
             "error": {
-                "loadingStatus": "Sharing Profile ist nicht aktiv!"
+                "loadingStatus": "Sharing Profile ist nicht aktiv!",
+                "statusError": "Status der Sharing Platform kann nicht identifiziert werden"
             }
         }
     }

@@ -10,6 +10,8 @@ export class SharingInfo {
     public apiBaseURL: '';
     /** ID of the currently selected exercise */
     public selectedExercise = 0;
+    /** checksum fo apiBaseURL and returnURL */
+    public checksum: '';
 
     /**
      * Checks if a shopping basket is currently available

@@ -13,6 +13,7 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.security.InvalidKeyException;
+import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
 import java.util.Base64;
@@ -250,7 +251,7 @@ public class ExerciseSharingService {
      * @return The content of the Problem-Statement file
      */
     public String getProblemStatementFromBasket(SharingInfoDTO sharingInfo) {
-        Pattern pattern = Pattern.compile("^Problem-Statement|^exercise.md$", Pattern.CASE_INSENSITIVE);
+        Pattern pattern = Pattern.compile("^(Problem-Statement|exercise\\.md)$", Pattern.CASE_INSENSITIVE);
 
         try {
             String problemStatement = this.getEntryFromBasket(pattern, sharingInfo);
@@ -386,14 +387,14 @@ public class ExerciseSharingService {
         String psk = sharingConnectorService.getSharingApiKeyOrNull();
 
         // Konvertiere den Pre-shared Key in ein Byte-Array
-        SecretKeySpec secretKeySpec = new SecretKeySpec(psk.getBytes(), algorithm);
+        SecretKeySpec secretKeySpec = new SecretKeySpec(psk.getBytes(StandardCharsets.UTF_8), algorithm);
 
         try {
             // Initialisiere den Mac mit dem Algorithmus und dem Schlüssel
             Mac mac = Mac.getInstance(algorithm);
             mac.init(secretKeySpec);
             // Berechne das HMAC
-            byte[] hmacBytes = mac.doFinal(base64token.getBytes());
+            byte[] hmacBytes = mac.doFinal(base64token.getBytes(StandardCharsets.UTF_8));
 
             // Konvertiere das Ergebnis in Base64 für einfache Speicherung
             return Base64.getEncoder().encodeToString(hmacBytes);
@@ -413,8 +414,7 @@ public class ExerciseSharingService {
      */
     public boolean validate(String base64token, String sec) {
         String computedHMAC = createHMAC(base64token);
-        return computedHMAC.equals(sec);
-    }
+        return MessageDigest.isEqual(computedHMAC.getBytes(StandardCharsets.UTF_8), sec.getBytes(StandardCharsets.UTF_8));    }
 
     /**
      * loads the stored file from file system (via the b64 token).

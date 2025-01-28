@@ -9,7 +9,8 @@
             "exerciseToImport": "Please select exercise to import",
             "loginAsInstructor": "Please ensure to log in as instructor!",
             "error": {
-                "loadingStatus": "Sharing profile is not activated"
+                "loadingStatus": "Sharing profile is not activated",
+                "statusError": "Status of Sharing Platform cannot be determined"
             }
         }
     }

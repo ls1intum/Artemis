@@ -34,7 +34,8 @@ body {
 }
 
 .wrapper {
-    float: left;
+    display: flex;
+    flex-direction: column;
     align-content: center;
     align-items: center;
     box-sizing: border-box;
@@ -44,10 +45,16 @@ body {
 
 .features-overview {
     margin: 0;
-    padding-left: 20%;
-    padding-right: 20%;
+    padding: 0 max(20px, 20%);
     text-align: center;
     color: #3070b3;
+}
+
+@media (max-width: 768px) {
+    .content h2 {
+        font-size: 2em;
+        padding: 0.5em 20px;
+    }
 }
 
 .content h2 {
@@ -62,7 +69,7 @@ body {
 }
 
 .container {
-    width: 1200px;
+    width: min(1200px, 100%);
     height: auto;
     margin: 0 auto;
     display: grid;
@@ -73,6 +80,26 @@ body {
     padding: 10px;
     box-sizing: border-box;
     cursor: pointer;
+}
+
+@media (hover: hover) {
+    .container .box:hover .icon {
+        top: 20px;
+        left: calc(50% - 40px);
+        width: 80px;
+        height: 80px;
+        border-radius: 50%;
+        cursor: pointer;
+    }
+}
+
+@media (hover: none) {
+    .container .box .icon {
+        position: relative;
+        height: 80px;
+        border-radius: 50%;
+        margin: 0 auto;
+    }
 }
 
 .feature-content {

@@ -175,7 +175,7 @@ public class SharingConnectorService {
                 restTemplate.getForObject(reInitUrlWithApiKey, Boolean.class);
             }
             catch (Exception e) {
-                log.error("Failed to request reinitialization from Sharing Platform", e);
+                log.info("Failed to request reinitialization from Sharing Platform: {}", e.getMessage());
             }
         }
     }
