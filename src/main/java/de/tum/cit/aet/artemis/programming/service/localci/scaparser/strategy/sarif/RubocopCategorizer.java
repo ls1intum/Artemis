@@ -11,6 +11,10 @@ public class RubocopCategorizer implements RuleCategorizer {
 
     @Override
     public String categorizeRule(ReportingDescriptor rule) {
-        return rule.id().substring(0, rule.id().indexOf('/'));
+        int separatorIndex = rule.id().indexOf('/');
+        if (separatorIndex == -1) {
+            return rule.id();
+        }
+        return rule.id().substring(0, separatorIndex);
     }
 }
