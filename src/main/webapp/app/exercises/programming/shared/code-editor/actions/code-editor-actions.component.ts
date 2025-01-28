@@ -4,6 +4,7 @@ import { NgbModal, NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { catchError, switchMap, tap } from 'rxjs/operators';
 import { Observable, Subscription, of, throwError } from 'rxjs';
 import { isEmpty as _isEmpty } from 'lodash-es';
+import { Router, RouterLink } from '@angular/router';
 import { CodeEditorSubmissionService } from 'app/exercises/programming/shared/code-editor/service/code-editor-submission.service';
 import { CodeEditorConflictStateService } from 'app/exercises/programming/shared/code-editor/service/code-editor-conflict-state.service';
 import { CodeEditorResolveConflictModalComponent } from 'app/exercises/programming/shared/code-editor/actions/code-editor-resolve-conflict-modal.component';
@@ -24,7 +25,7 @@ import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 @Component({
     selector: 'jhi-code-editor-actions',
     templateUrl: './code-editor-actions.component.html',
-    imports: [RequestFeedbackButtonComponent, FeatureToggleDirective, NgbTooltip, FaIconComponent, TranslateDirective, ArtemisTranslatePipe],
+    imports: [RequestFeedbackButtonComponent, FeatureToggleDirective, NgbTooltip, FaIconComponent, TranslateDirective, ArtemisTranslatePipe, RouterLink],
 })
 export class CodeEditorActionsComponent implements OnInit, OnDestroy, OnChanges {
     private repositoryService = inject(CodeEditorRepositoryService);
@@ -32,6 +33,7 @@ export class CodeEditorActionsComponent implements OnInit, OnDestroy, OnChanges 
     private conflictService = inject(CodeEditorConflictStateService);
     private modalService = inject(NgbModal);
     private submissionService = inject(CodeEditorSubmissionService);
+    private readonly router = inject(Router);
 
     CommitState = CommitState;
     EditorState = EditorState;
@@ -60,6 +62,7 @@ export class CodeEditorActionsComponent implements OnInit, OnDestroy, OnChanges 
     editorStateValue: EditorState;
     commitStateValue: CommitState;
     isResolvingConflict = false;
+    routerLink: string;
 
     conflictStateSubscription: Subscription;
     submissionSubscription: Subscription;
@@ -85,6 +88,7 @@ export class CodeEditorActionsComponent implements OnInit, OnDestroy, OnChanges 
     }
 
     ngOnInit(): void {
+        this.routerLink = this.router.url;
         this.conflictStateSubscription = this.conflictService.subscribeConflictState().subscribe((gitConflictState: GitConflictState) => {
             // When the conflict is encountered when opening the code-editor, setting the commitState here could cause an uncheckedException.
             // This is why a timeout of 0 is set to make sure the template is rendered before setting the commitState.

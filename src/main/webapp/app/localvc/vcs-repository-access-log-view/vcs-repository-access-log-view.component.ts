@@ -21,7 +21,7 @@ export class VcsRepositoryAccessLogViewComponent {
 
     private readonly params = toSignal(this.route.params, { requireSync: true });
     private readonly participationId = computed(() => {
-        const participationId = this.params().participationId;
+        const participationId = this.params().repositoryId;
         if (participationId) {
             return Number(participationId);
         }
