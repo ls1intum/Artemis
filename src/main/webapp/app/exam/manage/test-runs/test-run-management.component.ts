@@ -105,7 +105,7 @@ export class TestRunManagementComponent implements OnInit {
         modalRef.componentInstance.exam = this.exam();
         modalRef.result
             .then((testRunConfiguration: StudentExam) => {
-                this.examManagementService.createTestRun(this.course()?.id!, this.exam()?.id!, testRunConfiguration).subscribe({
+                this.examManagementService.createTestRun(this.course()!.id!, this.exam()!.id!, testRunConfiguration).subscribe({
                     next: (response: HttpResponse<StudentExam>) => {
                         if (response.body != undefined) {
                             this.testRuns.update((current) => [...current, response.body!]);
@@ -121,7 +121,7 @@ export class TestRunManagementComponent implements OnInit {
 
     /**
      * Delete the test run with the given id.
-     * @param testRunId {number}
+     * @param testRunId
      */
     deleteTestRun(testRunId: number) {
         this.examManagementService.deleteTestRun(this.course()!.id!, this.exam()!.id!, testRunId).subscribe({
@@ -135,10 +135,10 @@ export class TestRunManagementComponent implements OnInit {
 
     /**
      * Track the items on the testruns Table
-     * @param index {number}
-     * @param item {StudentExam}
+     * @param _index
+     * @param item
      */
-    trackId(index: number, item: StudentExam) {
+    trackId(_index: number, item: StudentExam) {
         return item.id;
     }
 
