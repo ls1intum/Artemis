@@ -9,6 +9,9 @@ on:
 
 concurrency: staging
 
+env:
+  build_workflow_name: build.yml
+
 jobs:
   check-build-status:
     runs-on: ubuntu-latest
@@ -19,7 +22,7 @@ jobs:
         id: get_workflow_run
         uses: octokit/request-action@v2.x
         with:
-          route: GET /repos/${{ github.repository }}/actions/workflows/build.yml/runs?branch=${{ github.event.inputs.branch }}&per_page=1
+          route: GET /repos/${{ github.repository }}/actions/workflows/${{ env.build_workflow_name }}/runs?branch=${{ github.event.inputs.branch }}&per_page=1
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
@@ -66,29 +69,13 @@ jobs:
     timeout-minutes: 30
     
     steps:
-      - name: Download artifact from another workflow
-        uses: actions/github-script@v7
+      - name: Download artifact
+        uses: actions/download-artifact@v4
         with:
-          script: |
-            const artifacts = await github.rest.actions.listWorkflowRunArtifacts({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              run_id: ${{ env.WORKFLOW_RUN_ID }} 
-            });
-            const matchArtifact = artifacts.data.artifacts.find((artifact) => {
-              return artifact.name === "Artemis.war"
-            });
-            const download = await github.rest.actions.downloadArtifact({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              artifact_id: matchArtifact.id,
-              archive_format: 'zip'
-            });
-            const fs = require('fs');
-            fs.writeFileSync('${{github.workspace}}/artifact.zip', Buffer.from(download.data));
-
-      - name: Unzip artifact
-        run: unzip artifact.zip -d artifacts
+          name: Artemis.war
+          path: artifacts
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          run-id: ${{ env.WORKFLOW_RUN_ID  }}
 
       - name: Setup SSH
         env:
