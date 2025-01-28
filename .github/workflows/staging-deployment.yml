@@ -69,7 +69,7 @@ jobs:
       HEALTH_CHECK_URL: "${{vars.DEPLOYMENT_URL}}/management/health"
       WORKFLOW_RUN_ID: ${{needs.check-build-status.outputs.build_workflow_run_id}}
 
-    timeout-minutes: 30
+    timeout-minutes: 10
     
     steps:
       - name: Download artifact
@@ -142,8 +142,8 @@ jobs:
               exit 0
             else
               echo "Health check failed. Status: $STATUS"
-              echo "Waiting 30 seconds before next attempt..."
-              sleep 30
+              echo "Waiting 10 seconds before next attempt..."
+              sleep 10
             fi
           done
 
