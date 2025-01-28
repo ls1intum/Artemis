@@ -1,6 +1,5 @@
 package de.tum.cit.aet.artemis.core.config;
 
-import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
@@ -117,10 +116,10 @@ public class SAML2Configuration {
             return false;
         }
 
-        File keyFile = Path.of(config.getKeyFile()).toFile();
-        File certFile = Path.of(config.getCertFile()).toFile();
+        Path keyFile = Path.of(config.getKeyFile());
+        Path certFile = Path.of(config.getCertFile());
 
-        if (!keyFile.exists() || !certFile.exists()) {
+        if (!Files.exists(keyFile) || !Files.exists(certFile)) {
             log.error("Keyfile or Certfile for SAML[{}] does not exist.", config.getRegistrationId());
             return false;
         }

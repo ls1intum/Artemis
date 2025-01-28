@@ -5,7 +5,6 @@ import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_BUILDAGENT;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
-import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.Files;
@@ -19,6 +18,7 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
+import java.util.stream.Stream;
 
 import org.apache.commons.compress.archivers.tar.TarArchiveEntry;
 import org.apache.commons.compress.archivers.tar.TarArchiveInputStream;
@@ -341,7 +341,7 @@ public class BuildJobContainerService {
     }
 
     private void addAndPrepareDirectoryAndReplaceContent(String containerId, Path repositoryPath, String newDirectoryName) {
-        copyToContainer(repositoryPath.toString(), containerId);
+        copyToContainer(repositoryPath, containerId);
         addDirectory(containerId, newDirectoryName, true);
         insertRepositoryFiles(containerId, LOCALCI_WORKING_DIRECTORY + "/" + repositoryPath.getFileName().toString(), newDirectoryName);
     }
@@ -355,7 +355,7 @@ public class BuildJobContainerService {
         executeDockerCommand(containerId, null, false, false, true, command);
     }
 
-    private void copyToContainer(String sourcePath, String containerId) {
+    private void copyToContainer(Path sourcePath, String containerId) {
         try (InputStream uploadStream = new ByteArrayInputStream(createTarArchive(sourcePath).toByteArray())) {
             buildAgentConfiguration.getDockerClient().copyArchiveToContainerCmd(containerId).withRemotePath(LOCALCI_WORKING_DIRECTORY).withTarInputStream(uploadStream).exec();
         }
@@ -364,8 +364,7 @@ public class BuildJobContainerService {
         }
     }
 
-    private ByteArrayOutputStream createTarArchive(String sourcePath) {
-        Path path = Path.of(sourcePath);
+    private ByteArrayOutputStream createTarArchive(Path sourcePath) {
 
         ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
 
@@ -375,7 +374,7 @@ public class BuildJobContainerService {
         tarArchiveOutputStream.setLongFileMode(TarArchiveOutputStream.LONGFILE_POSIX);
 
         try {
-            addFileToTar(tarArchiveOutputStream, path.toFile(), "");
+            addFileToTar(tarArchiveOutputStream, sourcePath, "");
         }
         catch (IOException e) {
             throw new LocalCIException("Could not create tar archive", e);
@@ -383,12 +382,12 @@ public class BuildJobContainerService {
         return byteArrayOutputStream;
     }
 
-    private void addFileToTar(TarArchiveOutputStream tarArchiveOutputStream, File file, String parent) throws IOException {
-        TarArchiveEntry tarEntry = new TarArchiveEntry(file, parent + file.getName());
+    private void addFileToTar(TarArchiveOutputStream tarArchiveOutputStream, Path path, String parent) throws IOException {
+        TarArchiveEntry tarEntry = new TarArchiveEntry(path, parent + path.getFileName());
         tarArchiveOutputStream.putArchiveEntry(tarEntry);
 
-        if (file.isFile()) {
-            try (InputStream is = Files.newInputStream(file.toPath())) {
+        if (Files.isRegularFile(path)) {
+            try (InputStream is = Files.newInputStream(path)) {
                 byte[] buffer = new byte[1024];
                 int count;
                 while ((count = is.read(buffer)) != -1) {
@@ -399,13 +398,13 @@ public class BuildJobContainerService {
         }
         else {
             tarArchiveOutputStream.closeArchiveEntry();
-            File[] children = file.listFiles();
-            if (children != null) {
-                for (File child : children) {
-                    addFileToTar(tarArchiveOutputStream, child, parent + file.getName() + "/");
+            try (Stream<Path> children = Files.list(path)) {
+                for (Path child : children.toList()) {
+                    addFileToTar(tarArchiveOutputStream, child, parent + path.getFileName() + "/");
                 }
             }
         }
+
     }
 
     private void executeDockerCommandWithoutAwaitingResponse(String containerId, String... command) {
