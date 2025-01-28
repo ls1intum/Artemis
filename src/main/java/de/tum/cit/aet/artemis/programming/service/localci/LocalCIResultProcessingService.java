@@ -58,6 +58,8 @@ public class LocalCIResultProcessingService {
 
     private static final Logger log = LoggerFactory.getLogger(LocalCIResultProcessingService.class);
 
+    private static final int BUILD_STATISTICS_UPDATE_THRESHOLD = 10;
+
     private final HazelcastInstance hazelcastInstance;
 
     private final ProgrammingExerciseGradingService programmingExerciseGradingService;
@@ -298,8 +300,9 @@ public class LocalCIResultProcessingService {
                 programmingExerciseBuildStatisticsRepository.save(programmingExerciseBuildStatistics);
             }
             else {
-                // only update the database row if the build duration has changed using a modifying query
-                if (averageDuration == programmingExerciseBuildStatistics.getBuildDurationSeconds()) {
+                // only update the database row if the build duration has changed using a modifying query or when the build count is above a certain threshold
+                if (averageDuration == programmingExerciseBuildStatistics.getBuildDurationSeconds()
+                        && buildStatisticsDto.buildCountWhenUpdated() - programmingExerciseBuildStatistics.getBuildCountWhenUpdated() < BUILD_STATISTICS_UPDATE_THRESHOLD) {
                     return;
                 }
                 programmingExerciseBuildStatisticsRepository.updateStatistics(averageDuration, buildStatisticsDto.buildCountWhenUpdated(), exerciseId);
