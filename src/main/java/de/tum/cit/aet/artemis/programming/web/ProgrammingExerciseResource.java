@@ -81,6 +81,7 @@ import de.tum.cit.aet.artemis.programming.dto.BuildLogStatisticsDTO;
 import de.tum.cit.aet.artemis.programming.dto.CheckoutDirectoriesDTO;
 import de.tum.cit.aet.artemis.programming.dto.ProgrammingExerciseResetOptionsDTO;
 import de.tum.cit.aet.artemis.programming.dto.ProgrammingExerciseTestCaseStateDTO;
+import de.tum.cit.aet.artemis.programming.dto.ProjectKeyProgrammingExerciseDTO;
 import de.tum.cit.aet.artemis.programming.repository.BuildLogStatisticsEntryRepository;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseRepository;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseTestCaseRepository;
@@ -563,7 +564,7 @@ public class ProgrammingExerciseResource {
     @GetMapping("programming-exercises/project-key/{projectKey}")
     @EnforceAtLeastStudent
     @AllowedTools(ToolTokenType.SCORPIO)
-    public ResponseEntity<ProgrammingExercise> getExerciseByProjectKey(@PathVariable String projectKey) {
+    public ResponseEntity<ProjectKeyProgrammingExerciseDTO> getExerciseByProjectKey(@PathVariable String projectKey) {
         User user = userRepository.getUserWithGroupsAndAuthorities();
 
         final ProgrammingExercise exercise = programmingExerciseRepository.findAllByProjectKey(projectKey).stream().findAny()
@@ -578,7 +579,7 @@ public class ProgrammingExerciseResource {
                     exercise.setStudentParticipations(Set.of(participation));
                 });
 
-        return ResponseEntity.ok(exercise);
+        return ResponseEntity.ok(ProjectKeyProgrammingExerciseDTO.of(exercise));
     }
 
     /**
