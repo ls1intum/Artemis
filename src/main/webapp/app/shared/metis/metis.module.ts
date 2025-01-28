@@ -19,8 +19,6 @@ import { PickerModule } from '@ctrl/ngx-emoji-mart';
 import { EmojiModule } from '@ctrl/ngx-emoji-mart/ngx-emoji';
 import { OverlayModule } from '@angular/cdk/overlay';
 import { CommonModule } from '@angular/common';
-import { PostReactionsBarComponent } from 'app/shared/metis/posting-reactions-bar/post-reactions-bar/post-reactions-bar.component';
-import { AnswerPostReactionsBarComponent } from 'app/shared/metis/posting-reactions-bar/answer-post-reactions-bar/answer-post-reactions-bar.component';
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
 import { PostingContentComponent } from './posting-content/posting-content.components';
 import { PostingContentPartComponent } from 'app/shared/metis/posting-content/posting-content-part/posting-content-part.components';
@@ -41,6 +39,7 @@ import { LinkPreviewComponent } from 'app/shared/link-preview/components/link-pr
 import { LinkPreviewContainerComponent } from 'app/shared/link-preview/components/link-preview-container/link-preview-container.component';
 import { MetisConversationService } from 'app/shared/metis/metis-conversation.service';
 import { ProfilePictureComponent } from 'app/shared/profile-picture/profile-picture.component';
+import { PostingReactionsBarComponent } from 'app/shared/metis/posting-reactions-bar/posting-reactions-bar.component';
 
 @NgModule({
     imports: [
@@ -81,8 +80,7 @@ import { ProfilePictureComponent } from 'app/shared/profile-picture/profile-pict
         LinkPreviewComponent,
         LinkPreviewContainerComponent,
         EnlargeSlideImageComponent,
-        PostReactionsBarComponent,
-        AnswerPostReactionsBarComponent,
+        PostingReactionsBarComponent,
         MessageInlineInputComponent,
         MessageReplyInlineInputComponent,
         ReactingUsersOnPostingPipe,
@@ -103,8 +101,7 @@ import { ProfilePictureComponent } from 'app/shared/profile-picture/profile-pict
         LinkPreviewComponent,
         LinkPreviewContainerComponent,
         EnlargeSlideImageComponent,
-        PostReactionsBarComponent,
-        AnswerPostReactionsBarComponent,
+        PostingReactionsBarComponent,
         MessageInlineInputComponent,
         MessageReplyInlineInputComponent,
         HtmlForPostingMarkdownPipe,
