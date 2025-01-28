@@ -9,9 +9,6 @@ import { UserRouteAccessService } from 'app/core/auth/user-route-access-service'
 import { Authority } from 'app/shared/constants/authority.constants';
 import { RouterModule, Routes } from '@angular/router';
 import { ArtemisMarkdownModule } from 'app/shared/markdown.module';
-
-import { ArtemisSidePanelModule } from 'app/shared/side-panel/side-panel.module';
-
 import { JudgementOfLearningRatingComponent } from 'app/course/competencies/judgement-of-learning-rating/judgement-of-learning-rating.component';
 import { AttachmentUnitComponent } from 'app/overview/course-lectures/attachment-unit/attachment-unit.component';
 import { VideoUnitComponent } from 'app/overview/course-lectures/video-unit/video-unit.component';
@@ -38,7 +35,6 @@ const routes: Routes = [
         ArtemisLectureUnitsModule,
         ArtemisCompetenciesModule,
         ArtemisMarkdownModule,
-        ArtemisSidePanelModule,
         JudgementOfLearningRatingComponent,
         AttachmentUnitComponent,
         VideoUnitComponent,
