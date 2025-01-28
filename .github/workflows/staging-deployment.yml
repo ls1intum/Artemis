@@ -57,13 +57,15 @@ jobs:
     runs-on: ubuntu-latest
     environment: 
         name: artemis-staging-localci.artemis.cit.tum.de
-        url: https://artemis-staging-localci.artemis.cit.tum.de
+        url: ${{ vars.DEPLOYMENT_URL }}
     env:
-      NODE_HOSTNAME_POSTFIX: ${{ secrets.NODE_HOSTNAME_POSTFIX }}
-      SECONDARY_NODE_HOSTNAMES: ${{ secrets.SECONDARY_NODE_HOSTNAMES }}
-      PRIMARY_NODE: ${{ secrets.PRIMARY_NODE_HOSTNAME }}
-      VM_USERNAME: ${{ secrets.SSH_USERNAME }}
-      HEALTH_CHECK_URL: "https://artemis-staging-localci.artemis.cit.tum.de/management/health"
+      DEPLOYMENT_HOSTS_PRIMARY: ${{ vars.DEPLOYMENT_HOSTS_PRIMARY}}
+      DEPLOYMENT_HOSTS_SECONDARY: ${{ vars.DEPLOYMENT_HOSTS_SECONDARY }}
+      DEPLOYMENT_USER: ${{ vars.DEPLOYMENT_USER }}
+
+      DEPLOYMENT_FOLDER: ${{ vars.DEPLOYMENT_FOLDER }}
+
+      HEALTH_CHECK_URL: "${{vars.DEPLOYMENT_URL}}/management/health"
       WORKFLOW_RUN_ID: ${{needs.check-build-status.outputs.build_workflow_run_id}}
 
     timeout-minutes: 30
@@ -79,40 +81,40 @@ jobs:
 
       - name: Setup SSH
         env:
-          SSH_PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
+          DEPLOYMENT_SSH_KEY: ${{ secrets.DEPLOYMENT_SSH_KEY }}
         run: |
           mkdir -p ~/.ssh
-          echo "$SSH_PRIVATE_KEY" > ~/.ssh/id_rsa
+          echo "$DEPLOYMENT_SSH_KEY" > ~/.ssh/id_rsa
           chmod 600 ~/.ssh/id_rsa
-          ssh-keyscan -t rsa ${PRIMARY_NODE}${NODE_HOSTNAME_POSTFIX} >> ~/.ssh/known_hosts
-          for node in $SECONDARY_NODE_HOSTNAMES; do
-            ssh-keyscan -t rsa ${node}${NODE_HOSTNAME_POSTFIX} >> ~/.ssh/known_hosts
+          ssh-keyscan -t rsa ${DEPLOYMENT_HOSTS_PRIMARY} >> ~/.ssh/known_hosts
+          for node in $DEPLOYMENT_HOSTS_SECONDARY; do
+            ssh-keyscan -t rsa ${node} >> ~/.ssh/known_hosts
           done
 
       - name: Phase 1 - Stop Secondary Nodes
         run: |
-          for node in $SECONDARY_NODE_HOSTNAMES; do
-            VM_HOSTNAME="${node}${NODE_HOSTNAME_POSTFIX}"
+          for node in $DEPLOYMENT_HOSTS_SECONDARY; do
+            VM_HOSTNAME="${node}"
             echo "[INFO] Stop artemis.service on ${VM_HOSTNAME} ..."
-            ssh -o LogLevel=ERROR -l $VM_USERNAME $VM_HOSTNAME "sudo systemctl stop artemis"
+            ssh -o LogLevel=ERROR -l $DEPLOYMENT_USER $VM_HOSTNAME "sudo systemctl stop artemis"
           done
 
       - name: Phase 1 - Deploy to Primary Node
         run: |
-          VM_HOSTNAME="${PRIMARY_NODE}${NODE_HOSTNAME_POSTFIX}"
+          VM_HOSTNAME="${DEPLOYMENT_HOSTS_PRIMARY}"
           echo "[INFO] Deploy on $VM_HOSTNAME ..."
           
           # Remove old backup
-          ssh -o LogLevel=ERROR -l $VM_USERNAME $VM_HOSTNAME "rm -f /opt/artemis/artemis.war.old"
+          ssh -o LogLevel=ERROR -l $DEPLOYMENT_USER $VM_HOSTNAME "rm -f $DEPLOYMENT_FOLDER/artemis.war.old"
           
           # Copy new war file
-          scp -o LogLevel=ERROR artifacts/*.war $VM_USERNAME@$VM_HOSTNAME:/opt/artemis/artemis.war.new
+          scp -o LogLevel=ERROR artifacts/*.war $DEPLOYMENT_USER@$VM_HOSTNAME:$DEPLOYMENT_FOLDER/artemis.war.new
           
           # Stop service, rotate files, and start service
-          ssh -o LogLevel=ERROR -l $VM_USERNAME $VM_HOSTNAME << 'ENDSSH'
+          ssh -o LogLevel=ERROR -l $DEPLOYMENT_USER $VM_HOSTNAME << 'ENDSSH'
             sudo systemctl stop artemis
-            mv /opt/artemis/artemis.war /opt/artemis/artemis.war.old
-            mv /opt/artemis/artemis.war.new /opt/artemis/artemis.war
+            mv $DEPLOYMENT_FOLDER/artemis.war $DEPLOYMENT_FOLDER/artemis.war.old
+            mv $DEPLOYMENT_FOLDER/artemis.war.new $DEPLOYMENT_FOLDER/artemis.war
             sudo systemctl start artemis
           ENDSSH
 
@@ -137,17 +139,17 @@ jobs:
 
       - name: Phase 2 - Deploy to Secondary Nodes
         run: |
-          for node in $SECONDARY_NODE_HOSTNAMES; do
-            VM_HOSTNAME="${node}${NODE_HOSTNAME_POSTFIX}"
+          for node in $DEPLOYMENT_HOSTS_SECONDARY; do
+            VM_HOSTNAME="${node}"
             echo "[INFO] Deploy on $VM_HOSTNAME ..."
             
-            ssh -o LogLevel=ERROR -l $VM_USERNAME $VM_HOSTNAME "rm -f /opt/artemis/artemis.war.old"
-            scp -o LogLevel=ERROR artifacts/*.war $VM_USERNAME@$VM_HOSTNAME:/opt/artemis/artemis.war.new
+            ssh -o LogLevel=ERROR -l $DEPLOYMENT_USER $VM_HOSTNAME "rm -f $DEPLOYMENT_FOLDER/artemis.war.old"
+            scp -o LogLevel=ERROR artifacts/*.war $DEPLOYMENT_USER@$VM_HOSTNAME:$DEPLOYMENT_FOLDER/artemis.war.new
             
-            ssh -o LogLevel=ERROR -l $VM_USERNAME $VM_HOSTNAME << 'ENDSSH'
+            ssh -o LogLevel=ERROR -l $DEPLOYMENT_USER $VM_HOSTNAME << 'ENDSSH'
               sudo systemctl stop artemis
-              mv /opt/artemis/artemis.war /opt/artemis/artemis.war.old
-              mv /opt/artemis/artemis.war.new /opt/artemis/artemis.war
+              mv $DEPLOYMENT_FOLDER/artemis.war $DEPLOYMENT_FOLDER/artemis.war.old
+              mv $DEPLOYMENT_FOLDER/artemis.war.new $DEPLOYMENT_FOLDER/artemis.war
               sudo systemctl start artemis
             ENDSSH
           done
