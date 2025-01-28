@@ -65,9 +65,16 @@ public class SarifParser implements ParserStrategy {
 
     private final RuleCategorizer ruleCategorizer;
 
+    private final MessageProcessor messageProcessor;
+
     public SarifParser(StaticCodeAnalysisTool tool, RuleCategorizer ruleCategorizer) {
+        this(tool, ruleCategorizer, null);
+    }
+
+    public SarifParser(StaticCodeAnalysisTool tool, RuleCategorizer ruleCategorizer, MessageProcessor messageProcessor) {
         this.tool = tool;
         this.ruleCategorizer = ruleCategorizer;
+        this.messageProcessor = messageProcessor;
     }
 
     @Override
@@ -124,7 +131,8 @@ public class SarifParser implements ParserStrategy {
 
         Level level = result.getOptionalLevel().orElseGet(() -> getDefaultLevel(rule));
 
-        String message = findMessage(result, driver, rule);
+        String rawMessage = findMessage(result, driver, rule);
+        String message = messageProcessor != null ? messageProcessor.processMessage(rawMessage, rule.orElse(null)) : rawMessage;
 
         return new StaticCodeAnalysisIssue(fileLocation.path(), fileLocation.startLine(), fileLocation.endLine(), fileLocation.startColumn(), fileLocation.endColumn(), ruleId,
                 category, message, level.toString(), null);
