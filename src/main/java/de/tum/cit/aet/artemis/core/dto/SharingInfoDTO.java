@@ -1,7 +1,9 @@
 package de.tum.cit.aet.artemis.core.dto;
 
+import java.util.Map;
 import java.util.Objects;
 
+import org.codeability.sharing.plugins.api.util.SecretChecksumCalculator;
 import org.springframework.context.annotation.Profile;
 
 /**
@@ -24,6 +26,11 @@ public class SharingInfoDTO {
      * the base URL for the basket request
      */
     private String apiBaseURL;
+
+    /**
+     * the base URL for the basket request
+     */
+    private String checksum;
 
     /**
      * the index of the request exercise
@@ -100,5 +107,22 @@ public class SharingInfoDTO {
     @Override
     public int hashCode() {
         return Objects.hash(basketToken, returnURL, apiBaseURL, exercisePosition);
+    }
+
+    public String getChecksum() {
+        return checksum;
+    }
+
+    public void setChecksum(String checksum) {
+        this.checksum = checksum;
+    }
+
+    /**
+     * verifies the checksum of returnURL and apiBaseURL with the secret key
+     * @param secretKey the secret key
+     * @return true, if checksum is correct
+     */
+    public boolean checkChecksum(String secretKey) {
+        return SecretChecksumCalculator.checkChecksum(Map.of("returnURL", returnURL, "apiBaseURL", apiBaseURL), secretKey, checksum);
     }
 }

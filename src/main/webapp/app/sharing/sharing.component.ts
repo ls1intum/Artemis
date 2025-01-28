@@ -19,6 +19,7 @@ import { faPlus, faSort } from '@fortawesome/free-solid-svg-icons';
     selector: 'jhi-sharing',
     templateUrl: './sharing.component.html',
     styleUrls: ['./sharing.scss'],
+    standalone: false
 })
 export class SharingComponent implements OnInit {
     courses: Course[];
@@ -53,6 +54,7 @@ export class SharingComponent implements OnInit {
         this.route.queryParams.subscribe((qparams: Params) => {
             this.sharingInfo.returnURL = qparams['returnURL'];
             this.sharingInfo.apiBaseURL = qparams['apiBaseURL'];
+            this.sharingInfo.checksum = qparams['checksum'];
             this.programmingExerciseSharingService.getSharedExercises(this.sharingInfo).subscribe((res: ShoppingBasket) => {
                 this.shoppingBasket = res;
             });

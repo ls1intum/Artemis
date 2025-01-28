@@ -1281,6 +1281,7 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
             this.sharingInfo.returnURL = qparams['returnUrl'];
             this.sharingInfo.apiBaseURL = qparams['apiBaseUrl'];
             this.sharingInfo.selectedExercise = qparams['selectedExercise'];
+            this.sharingInfo.checksum = qparams['checksum'];
             this.programmingExerciseSharingService.loadDetailsForExercises(this.sharingInfo).subscribe(
                 (exerciseDetails: ProgrammingExercise) => {
                     if (!exerciseDetails.buildConfig) {

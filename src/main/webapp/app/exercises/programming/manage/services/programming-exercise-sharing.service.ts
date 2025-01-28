@@ -32,7 +32,7 @@ export class ProgrammingExerciseSharingService {
     getSharedExercises(sharingInfo: SharingInfo): Observable<ShoppingBasket> {
         return this.http
             .get<ShoppingBasket>(this.resourceUrl + '/basket', {
-                params: { basketToken: sharingInfo.basketToken, apiBaseUrl: sharingInfo.apiBaseURL },
+                params: { basketToken: sharingInfo.basketToken, returnURL: sharingInfo.returnURL, apiBaseURL: sharingInfo.apiBaseURL, checksum: sharingInfo.checksum },
                 observe: 'response',
             })
             .pipe(map((response: HttpResponse<ShoppingBasket>) => response.body!));
