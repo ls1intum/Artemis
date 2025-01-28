@@ -59,16 +59,32 @@ describe('AnswerPostCreateEditModalComponent', () => {
 
     it('should invoke create embedded view', () => {
         component.posting = metisResolvingAnswerPostUser1;
-        const viewContainerRefCreateEmbeddedView = jest.spyOn(viewContainerRef, 'createEmbeddedView');
-        fixture.componentRef.setInput('createEditAnswerPostContainerRef', viewContainerRef);
+        const mockClear = jest.fn();
+        const mockCreateEmbeddedView = jest.fn();
+
+        runInInjectionContext(fixture.debugElement.injector, () => {
+            component.createEditAnswerPostContainerRef = input<ViewContainerRef>({
+                clear: mockClear,
+                createEmbeddedView: mockCreateEmbeddedView,
+            } as unknown as ViewContainerRef);
+        });
+        component.open();
         fixture.detectChanges();
         expect(mockCreateEmbeddedView).toHaveBeenCalledOnce();
     });
 
     it('should invoke clear embedded view', () => {
         component.posting = metisResolvingAnswerPostUser1;
-        const viewContainerRefClear = jest.spyOn(viewContainerRef, 'clear');
-        fixture.componentRef.setInput('createEditAnswerPostContainerRef', viewContainerRef);
+        const mockClear = jest.fn();
+        const mockCreateEmbeddedView = jest.fn();
+
+        runInInjectionContext(fixture.debugElement.injector, () => {
+            component.createEditAnswerPostContainerRef = input<ViewContainerRef>({
+                clear: mockClear,
+                createEmbeddedView: mockCreateEmbeddedView,
+            } as unknown as ViewContainerRef);
+        });
+        component.close();
         fixture.detectChanges();
         expect(mockClear).toHaveBeenCalledOnce();
     });
