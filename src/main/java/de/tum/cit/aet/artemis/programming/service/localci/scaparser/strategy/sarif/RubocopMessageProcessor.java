@@ -19,8 +19,6 @@ public class RubocopMessageProcessor implements MessageProcessor {
         if (message.startsWith(prefix)) {
             return message.substring(prefix.length());
         }
-        else {
-            return message;
-        }
+        return message;
     }
 }
