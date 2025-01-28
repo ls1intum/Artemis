@@ -9,7 +9,6 @@ import { ProgrammingAssessmentRepoExportDialogComponent } from 'app/exercises/pr
 import { ArtemisAssessmentSharedModule } from 'app/assessment/assessment-shared.module';
 import { ArtemisCodeEditorModule } from 'app/exercises/programming/shared/code-editor/code-editor.module';
 import { ArtemisResultModule } from 'app/exercises/shared/result/result.module';
-import { ArtemisProgrammingExerciseInstructionsRenderModule } from 'app/exercises/programming/shared/instructions-render/programming-exercise-instructions-render.module';
 import { CodeEditorTutorAssessmentContainerComponent } from 'app/exercises/programming/assess/code-editor-tutor-assessment-container.component';
 import { ArtemisProgrammingManualAssessmentModule } from 'app/exercises/programming/assess/programming-manual-assessment.module';
 import { AssessmentInstructionsModule } from 'app/assessment/assessment-instructions/assessment-instructions.module';
@@ -28,7 +27,6 @@ import { ComplaintsForTutorComponent } from 'app/complaints/complaints-for-tutor
         ArtemisAssessmentSharedModule,
         ArtemisCodeEditorModule,
         ArtemisResultModule,
-        ArtemisProgrammingExerciseInstructionsRenderModule,
         ArtemisProgrammingManualAssessmentModule,
         AssessmentInstructionsModule,
         ArtemisHeaderExercisePageWithDetailsModule,

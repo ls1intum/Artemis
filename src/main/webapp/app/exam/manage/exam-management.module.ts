@@ -45,7 +45,6 @@ import { ArtemisHeaderExercisePageWithDetailsModule } from 'app/exercises/shared
 import { ExamExerciseImportComponent } from 'app/exam/manage/exams/exam-exercise-import/exam-exercise-import.component';
 
 import { BonusComponent } from 'app/grading-system/bonus/bonus.component';
-import { ArtemisModePickerModule } from 'app/exercises/shared/mode-picker/mode-picker.module';
 import { StudentExamTimelineComponent } from './student-exams/student-exam-timeline/student-exam-timeline.component';
 import { TitleChannelNameModule } from 'app/shared/form/title-channel-name/title-channel-name.module';
 import { ExamEditWorkingTimeDialogComponent } from 'app/exam/manage/exams/exam-checklist-component/exam-edit-workingtime-dialog/exam-edit-working-time-dialog.component';
@@ -91,7 +90,6 @@ const ENTITY_STATES = [...examManagementState, ...examScoresState];
         ArtemisExamModePickerModule,
         ArtemisHeaderExercisePageWithDetailsModule,
         BarChartModule,
-        ArtemisModePickerModule,
         StudentsUploadImagesModule,
         TitleChannelNameModule,
         ArtemisExamNavigationBarModule,
