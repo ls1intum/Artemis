@@ -201,7 +201,7 @@ jobs:
           file: ./docker/artemis/Dockerfile
           tags: ghcr.io/ls1intum/artemis:${{ inputs.docker_build_tag }}
           network: default
-          push: true
+          outputs: type=image,"name=ghcr.io/ls1intum/artemis:${{ inputs.docker_build_tag }}",push=true,push-by-digest=true,name-canonical=true
           cache-from: type=gha
           cache-to: type=gha,mode=min
 
