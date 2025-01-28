@@ -8,7 +8,7 @@ import { FormBuilder, FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { PostingMarkdownEditorComponent } from 'app/shared/metis/posting-markdown-editor/posting-markdown-editor.component';
 import { PostingButtonComponent } from 'app/shared/metis/posting-button/posting-button.component';
 import { HelpIconComponent } from 'app/shared/components/help-icon.component';
-import { ViewContainerRef } from '@angular/core';
+import { input, runInInjectionContext, ViewContainerRef } from '@angular/core';
 import { MockViewContainerRef } from '../../../../../helpers/mocks/service/mock-view-container-ref.service';
 import { metisAnswerPostToCreateUser1, metisAnswerPostUser2, metisResolvingAnswerPostUser1 } from '../../../../../helpers/sample/metis-sample-data';
 
@@ -16,7 +16,6 @@ describe('AnswerPostCreateEditModalComponent', () => {
     let component: AnswerPostCreateEditModalComponent;
     let fixture: ComponentFixture<AnswerPostCreateEditModalComponent>;
     let metisService: MetisService;
-    let viewContainerRef: ViewContainerRef;
     let updatePostingMock: jest.SpyInstance;
 
     beforeEach(() => {
@@ -36,7 +35,6 @@ describe('AnswerPostCreateEditModalComponent', () => {
                 fixture = TestBed.createComponent(AnswerPostCreateEditModalComponent);
                 component = fixture.componentInstance;
                 metisService = TestBed.inject(MetisService);
-                viewContainerRef = TestBed.inject(ViewContainerRef);
                 updatePostingMock = jest.spyOn(component, 'updatePosting');
             });
     });
@@ -64,8 +62,7 @@ describe('AnswerPostCreateEditModalComponent', () => {
         const viewContainerRefCreateEmbeddedView = jest.spyOn(viewContainerRef, 'createEmbeddedView');
         fixture.componentRef.setInput('createEditAnswerPostContainerRef', viewContainerRef);
         fixture.detectChanges();
-        component.open();
-        expect(viewContainerRefCreateEmbeddedView).toHaveBeenCalledOnce();
+        expect(mockCreateEmbeddedView).toHaveBeenCalledOnce();
     });
 
     it('should invoke clear embedded view', () => {
@@ -73,8 +70,7 @@ describe('AnswerPostCreateEditModalComponent', () => {
         const viewContainerRefClear = jest.spyOn(viewContainerRef, 'clear');
         fixture.componentRef.setInput('createEditAnswerPostContainerRef', viewContainerRef);
         fixture.detectChanges();
-        component.close();
-        expect(viewContainerRefClear).toHaveBeenCalledOnce();
+        expect(mockClear).toHaveBeenCalledOnce();
     });
 
     it('should invoke updatePosting when confirming', () => {

@@ -25,7 +25,7 @@ export class AnswerPostCreateEditModalComponent extends PostingCreateEditModalDi
      */
     open(): void {
         this.close();
-        this.createEditAnswerPostContainerRef()!.createEmbeddedView(this.postingEditor);
+        this.createEditAnswerPostContainerRef()?.createEmbeddedView(this.postingEditor);
         this.isInputOpen = true;
     }
 
@@ -33,7 +33,7 @@ export class AnswerPostCreateEditModalComponent extends PostingCreateEditModalDi
      * clears the container to remove the input field when the user clicks cancel
      */
     close(): void {
-        this.createEditAnswerPostContainerRef()!.clear();
+        this.createEditAnswerPostContainerRef()?.clear();
         this.resetFormGroup();
         this.isInputOpen = false;
     }
