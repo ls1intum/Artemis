@@ -62,7 +62,7 @@ describe('AnswerPostCreateEditModalComponent', () => {
     it('should invoke create embedded view', () => {
         component.posting = metisResolvingAnswerPostUser1;
         const viewContainerRefCreateEmbeddedView = jest.spyOn(viewContainerRef, 'createEmbeddedView');
-        component.createEditAnswerPostContainerRef = viewContainerRef;
+        fixture.componentRef.setInput('createEditAnswerPostContainerRef', viewContainerRef);
         fixture.detectChanges();
         component.open();
         expect(viewContainerRefCreateEmbeddedView).toHaveBeenCalledOnce();
@@ -71,7 +71,7 @@ describe('AnswerPostCreateEditModalComponent', () => {
     it('should invoke clear embedded view', () => {
         component.posting = metisResolvingAnswerPostUser1;
         const viewContainerRefClear = jest.spyOn(viewContainerRef, 'clear');
-        component.createEditAnswerPostContainerRef = viewContainerRef;
+        fixture.componentRef.setInput('createEditAnswerPostContainerRef', viewContainerRef);
         fixture.detectChanges();
         component.close();
         expect(viewContainerRefClear).toHaveBeenCalledOnce();
