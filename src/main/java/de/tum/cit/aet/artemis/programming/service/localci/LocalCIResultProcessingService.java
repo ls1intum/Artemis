@@ -290,16 +290,18 @@ public class LocalCIResultProcessingService {
             if (buildStatisticsDto == null || buildStatisticsDto.buildCountWhenUpdated() == 0) {
                 return;
             }
-            var programmingExerciseBuildStatistics = programmingExerciseBuildStatisticsRepository.findByExerciseId(exerciseId).orElse(null);
 
             long averageDuration = Math.round(buildStatisticsDto.buildDurationSeconds());
 
-            if (programmingExerciseBuildStatistics == null) {
+            var programmingExerciseBuildStatisticsOpt = programmingExerciseBuildStatisticsRepository.findByExerciseId(exerciseId);
+
+            if (programmingExerciseBuildStatisticsOpt.isEmpty()) {
                 // create the database row if it does not exist
-                programmingExerciseBuildStatistics = new ProgrammingExerciseBuildStatistics(exerciseId, averageDuration, buildStatisticsDto.buildCountWhenUpdated());
+                var programmingExerciseBuildStatistics = new ProgrammingExerciseBuildStatistics(exerciseId, averageDuration, buildStatisticsDto.buildCountWhenUpdated());
                 programmingExerciseBuildStatisticsRepository.save(programmingExerciseBuildStatistics);
             }
             else {
+                var programmingExerciseBuildStatistics = programmingExerciseBuildStatisticsOpt.get();
                 // only update the database row if the build duration has changed using a modifying query or when the build count is above a certain threshold
                 if (averageDuration == programmingExerciseBuildStatistics.getBuildDurationSeconds()
                         && buildStatisticsDto.buildCountWhenUpdated() - programmingExerciseBuildStatistics.getBuildCountWhenUpdated() < BUILD_STATISTICS_UPDATE_THRESHOLD) {
