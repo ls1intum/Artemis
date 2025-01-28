@@ -64,6 +64,7 @@ jobs:
       DEPLOYMENT_USER: ${{ vars.DEPLOYMENT_USER }}
 
       DEPLOYMENT_FOLDER: ${{ vars.DEPLOYMENT_FOLDER }}
+      SSH_AUTH_SOCK: /tmp/ssh_agent.sock 
 
       HEALTH_CHECK_URL: "${{vars.DEPLOYMENT_URL}}/management/health"
       WORKFLOW_RUN_ID: ${{needs.check-build-status.outputs.build_workflow_run_id}}
@@ -82,36 +83,45 @@ jobs:
       - name: Setup SSH
         env:
           DEPLOYMENT_SSH_KEY: ${{ secrets.DEPLOYMENT_SSH_KEY }}
+          SSH_AUTH_SOCK: /tmp/ssh_agent.sock
+          DEPLOYMENT_HOST_PUBLIC_KEYS: ${{ vars.DEPLOYMENT_HOST_PUBLIC_KEYS }}
         run: |
           mkdir -p ~/.ssh
-          echo "$DEPLOYMENT_SSH_KEY" > ~/.ssh/id_rsa
-          chmod 600 ~/.ssh/id_rsa
-          ssh-keyscan -t rsa ${DEPLOYMENT_HOSTS_PRIMARY} >> ~/.ssh/known_hosts
-          for node in $DEPLOYMENT_HOSTS_SECONDARY; do
-            ssh-keyscan -t rsa ${node} >> ~/.ssh/known_hosts
-          done
+          ssh-agent -a $SSH_AUTH_SOCK > /dev/null
+          ssh-add - <<< "$DEPLOYMENT_SSH_KEY"
+          cat - <<< $DEPLOYMENT_HOST_PUBLIC_KEYS >> ~/.ssh/known_hosts
+          ssh-add -l || echo "No identities found"
 
       - name: Phase 1 - Stop Secondary Nodes
         run: |
           for node in $DEPLOYMENT_HOSTS_SECONDARY; do
-            VM_HOSTNAME="${node}"
-            echo "[INFO] Stop artemis.service on ${VM_HOSTNAME} ..."
-            ssh -o LogLevel=ERROR -l $DEPLOYMENT_USER $VM_HOSTNAME "sudo systemctl stop artemis"
+            echo "[INFO] Stop artemis.service on ${node} ..."
+            ssh -o BatchMode=yes -o StrictHostKeyChecking=accept-new \
+                -l $DEPLOYMENT_USER $node "sudo systemctl stop artemis" || {
+              echo "::error::Failed to stop service on ${node}"
+              exit 1
           done
 
       - name: Phase 1 - Deploy to Primary Node
         run: |
-          VM_HOSTNAME="${DEPLOYMENT_HOSTS_PRIMARY}"
-          echo "[INFO] Deploy on $VM_HOSTNAME ..."
+          echo "[INFO] Deploy on $DEPLOYMENT_HOSTS_PRIMARY ..."
           
           # Remove old backup
-          ssh -o LogLevel=ERROR -l $DEPLOYMENT_USER $VM_HOSTNAME "rm -f $DEPLOYMENT_FOLDER/artemis.war.old"
+          ssh -o BatchMode=yes -o StrictHostKeyChecking=accept-new \
+              -l $DEPLOYMENT_USER $DEPLOYMENT_HOSTS_PRIMARY \
+              "rm -f $DEPLOYMENT_FOLDER/artemis.war.old" || exit 1
           
           # Copy new war file
-          scp -o LogLevel=ERROR artifacts/*.war $DEPLOYMENT_USER@$VM_HOSTNAME:$DEPLOYMENT_FOLDER/artemis.war.new
-          
+          scp -o BatchMode=yes -o StrictHostKeyChecking=accept-new \
+              artifacts/*.war $DEPLOYMENT_USER@$DEPLOYMENT_HOSTS_PRIMARY:$DEPLOYMENT_FOLDER/artemis.war.new || {
+            echo "::error::Failed to copy war file to primary host"
+            exit 1
+          }
+
           # Stop service, rotate files, and start service
-          ssh -o LogLevel=ERROR -l $DEPLOYMENT_USER $VM_HOSTNAME << 'ENDSSH'
+          ssh -o BatchMode=yes -o StrictHostKeyChecking=accept-new \
+              -l $DEPLOYMENT_USER $DEPLOYMENT_HOSTS_PRIMARY << 'ENDSSH' || exit 1
+            set -e
             sudo systemctl stop artemis
             mv $DEPLOYMENT_FOLDER/artemis.war $DEPLOYMENT_FOLDER/artemis.war.old
             mv $DEPLOYMENT_FOLDER/artemis.war.new $DEPLOYMENT_FOLDER/artemis.war
@@ -140,13 +150,27 @@ jobs:
       - name: Phase 2 - Deploy to Secondary Nodes
         run: |
           for node in $DEPLOYMENT_HOSTS_SECONDARY; do
-            VM_HOSTNAME="${node}"
-            echo "[INFO] Deploy on $VM_HOSTNAME ..."
+            echo "[INFO] Deploy on ${node} ..."
             
-            ssh -o LogLevel=ERROR -l $DEPLOYMENT_USER $VM_HOSTNAME "rm -f $DEPLOYMENT_FOLDER/artemis.war.old"
-            scp -o LogLevel=ERROR artifacts/*.war $DEPLOYMENT_USER@$VM_HOSTNAME:$DEPLOYMENT_FOLDER/artemis.war.new
+            # Remove old backup
+            ssh -o BatchMode=yes -o StrictHostKeyChecking=accept-new \
+                -l $DEPLOYMENT_USER $node \
+                "rm -f $DEPLOYMENT_FOLDER/artemis.war.old" || continue
             
-            ssh -o LogLevel=ERROR -l $DEPLOYMENT_USER $VM_HOSTNAME << 'ENDSSH'
+            # Copy new war file
+            scp -o BatchMode=yes -o StrictHostKeyChecking=accept-new \
+                artifacts/*.war $DEPLOYMENT_USER@$node:$DEPLOYMENT_FOLDER/artemis.war.new || {
+              echo "::warning::Failed to copy war file to secondary host ${node}"
+              continue
+            }
+            
+            # Deploy
+            ssh -o BatchMode=yes -o StrictHostKeyChecking=accept-new \
+                -l $DEPLOYMENT_USER $node << 'ENDSSH' || {
+              echo "::warning::Failed to deploy to secondary host ${node}"
+              continue
+            }
+              set -e
               sudo systemctl stop artemis
               mv $DEPLOYMENT_FOLDER/artemis.war $DEPLOYMENT_FOLDER/artemis.war.old
               mv $DEPLOYMENT_FOLDER/artemis.war.new $DEPLOYMENT_FOLDER/artemis.war
