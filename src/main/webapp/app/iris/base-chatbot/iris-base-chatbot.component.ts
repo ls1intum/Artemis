@@ -1,10 +1,23 @@
-import { faArrowDown, faCircle, faCircleInfo, faCompress, faExpand, faPaperPlane, faRedo, faThumbsDown, faThumbsUp, faTrash, faXmark } from '@fortawesome/free-solid-svg-icons';
+import {
+    faArrowDown,
+    faCircle,
+    faCircleInfo,
+    faCompress,
+    faExpand,
+    faGear,
+    faPaperPlane,
+    faRedo,
+    faThumbsDown,
+    faThumbsUp,
+    faTrash,
+    faXmark,
+} from '@fortawesome/free-solid-svg-icons';
 import { NgbModal, NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
-import { AfterViewInit, Component, ElementRef, EventEmitter, Input, OnDestroy, OnInit, Output, ViewChild, inject } from '@angular/core';
+import { AfterViewInit, Component, DestroyRef, ElementRef, EventEmitter, Input, OnDestroy, OnInit, Output, OutputRefSubscription, ViewChild, inject } from '@angular/core';
 import { IrisAssistantMessage, IrisMessage, IrisSender } from 'app/entities/iris/iris-message.model';
-import { Subscription } from 'rxjs';
+import { Subscription, tap } from 'rxjs';
 import { IrisErrorMessageKey } from 'app/entities/iris/iris-errors.model';
-import { ButtonType } from 'app/shared/components/button.component';
+import { ButtonComponent, ButtonType } from 'app/shared/components/button.component';
 import { TranslateService } from '@ngx-translate/core';
 import { IrisLogoSize } from 'app/iris/iris-logo/iris-logo.component';
 import { IrisStageDTO, IrisStageStateDTO } from 'app/entities/iris/iris-stage-dto.model';
@@ -21,10 +34,15 @@ import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { ChatStatusBarComponent } from './chat-status-bar/chat-status-bar.component';
 import { FormsModule } from '@angular/forms';
-import { ButtonComponent } from 'app/shared/components/button.component';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { AsPipe } from 'app/shared/pipes/as.pipe';
 import { HtmlForMarkdownPipe } from 'app/shared/pipes/html-for-markdown.pipe';
+import { Overlay, OverlayRef } from '@angular/cdk/overlay';
+import { ComponentPortal } from '@angular/cdk/portal';
+import { IrisPersonalSettingsComponent } from 'app/iris/base-chatbot/iris-personal-settings/iris-personal-settings.component';
+import { IrisPersonalSettings } from 'app/entities/iris/settings/iris-personal-settings.model';
+import { IrisProactiveEventDisableDuration } from 'app/entities/iris/iris-disable-proactive-events-dto.model';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 
 @Component({
     selector: 'jhi-iris-base-chatbot',
@@ -100,6 +118,8 @@ export class IrisBaseChatbotComponent implements OnInit, OnDestroy, AfterViewIni
     protected translateService = inject(TranslateService);
     protected statusService = inject(IrisStatusService);
     protected chatService = inject(IrisChatService);
+    private overlay = inject(Overlay);
+    private destroyRef = inject(DestroyRef);
 
     // Icons
     faTrash = faTrash;
@@ -113,6 +133,7 @@ export class IrisBaseChatbotComponent implements OnInit, OnDestroy, AfterViewIni
     faThumbsUp = faThumbsUp;
     faThumbsDown = faThumbsDown;
     faRedo = faRedo;
+    faGear = faGear;
 
     // State variables
     messagesSubscription: Subscription;
@@ -122,6 +143,7 @@ export class IrisBaseChatbotComponent implements OnInit, OnDestroy, AfterViewIni
     rateLimitSubscription: Subscription;
     activeStatusSubscription: Subscription;
     suggestionsSubscription: Subscription;
+    personalSettingsSubscription: OutputRefSubscription;
 
     messages: IrisMessage[] = [];
     stages?: IrisStageDTO[] = [];
@@ -142,9 +164,11 @@ export class IrisBaseChatbotComponent implements OnInit, OnDestroy, AfterViewIni
     rows = 1;
     resendAnimationActive: boolean;
     public ButtonType = ButtonType;
+    personalSettingsMenuOverlayRef: OverlayRef | undefined;
 
     @Input() fullSize: boolean | undefined;
-    @Input() showCloseButton = false;
+    @Input() showCloseButton: boolean = false;
+    @Input() proactivityEnabled: boolean = false;
     @Input() isChatGptWrapper = false;
     @Output() fullSizeToggle = new EventEmitter<void>();
     @Output() closeClicked = new EventEmitter<void>();
@@ -154,6 +178,7 @@ export class IrisBaseChatbotComponent implements OnInit, OnDestroy, AfterViewIni
     @ViewChild('scrollArrow') scrollArrow!: ElementRef;
     @ViewChild('messageTextarea') messageTextarea: ElementRef<HTMLTextAreaElement>;
     @ViewChild('acceptButton') acceptButton: ElementRef<HTMLButtonElement>;
+    @ViewChild('personalSettingsButton') personalSettingsButton: ElementRef<HTMLButtonElement>;
 
     // Types
     protected readonly IrisLogoSize = IrisLogoSize;
@@ -232,6 +257,8 @@ export class IrisBaseChatbotComponent implements OnInit, OnDestroy, AfterViewIni
         this.rateLimitSubscription.unsubscribe();
         this.activeStatusSubscription.unsubscribe();
         this.suggestionsSubscription.unsubscribe();
+        this.personalSettingsMenuOverlayRef?.dispose();
+        this.personalSettingsSubscription?.unsubscribe();
     }
 
     checkIfUserAcceptedIris(): void {
@@ -437,5 +464,81 @@ export class IrisBaseChatbotComponent implements OnInit, OnDestroy, AfterViewIni
     onSuggestionClick(suggestion: string) {
         this.newMessageTextContent = suggestion;
         this.onSend();
+    }
+
+    togglePersonalSettingsMenu() {
+        if (this.personalSettingsMenuOverlayRef) {
+            this.closeIrisPersonalSettings();
+        } else {
+            this.openIrisPersonalSettings();
+        }
+    }
+
+    /**
+     * Checks if the personal settings are valid.
+     * @param settings - The personal settings.
+     * @returns A boolean indicating if the personal settings are valid.
+     */
+    private personalSettingsValid(settings: IrisPersonalSettings): boolean {
+        if (settings.proactivitySettings.duration === IrisProactiveEventDisableDuration.CUSTOM) {
+            return settings.proactivitySettings.endTime !== null && settings.proactivitySettings.endTime.isValid();
+        }
+        return settings.proactivitySettings.duration !== null;
+    }
+
+    /**
+     * Update personal settings for the chat.
+     */
+    updatePersonalSettings(personalChatSettings: IrisPersonalSettings) {
+        const { duration, endTime } = personalChatSettings.proactivitySettings;
+        // For now, we only support disabling proactive events
+        if (this.personalSettingsValid(personalChatSettings)) {
+            this.chatService.disableProactiveEvents({ duration, endTime });
+        }
+    }
+
+    /**
+     * Opens the personal settings menu.
+     */
+    openIrisPersonalSettings() {
+        this.personalSettingsMenuOverlayRef = this.overlay.create({
+            height: '500px',
+            width: '400px',
+            positionStrategy: this.overlay
+                .position()
+                .flexibleConnectedTo(this.personalSettingsButton)
+                .withPositions([
+                    {
+                        originX: 'start',
+                        originY: 'bottom',
+                        overlayX: 'end',
+                        overlayY: 'top',
+                        offsetX: -320,
+                    },
+                ]),
+            hasBackdrop: true,
+            backdropClass: 'cdk-overlay-transparent-backdrop',
+        });
+        const irisPersonalSettingsPortal = new ComponentPortal(IrisPersonalSettingsComponent);
+        const irisPersonalSettingsComponentRef = this.personalSettingsMenuOverlayRef.attach(irisPersonalSettingsPortal);
+        this.personalSettingsSubscription = irisPersonalSettingsComponentRef.instance.settingsResult.subscribe((settings) => {
+            this.updatePersonalSettings(settings);
+            this.closeIrisPersonalSettings();
+        });
+        this.personalSettingsMenuOverlayRef
+            .backdropClick()
+            .pipe(
+                takeUntilDestroyed(this.destroyRef),
+                tap(() => this.closeIrisPersonalSettings()),
+            )
+            .subscribe();
+    }
+
+    /**
+     * Closes the personal settings menu.
+     */
+    closeIrisPersonalSettings() {
+        this.personalSettingsMenuOverlayRef?.dispose();
+        this.personalSettingsMenuOverlayRef = undefined;
     }
 }

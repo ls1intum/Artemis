@@ -92,7 +92,25 @@
                 "parseResponse": "Ein Fehler ist beim Parsen der Antwort von Iris aufgetreten. Ursache: {{ cause }}"
             },
             "chat": {
-                "helpOffer": "Wie kann ich Dir helfen?"
+                "helpOffer": "Wie kann ich Dir helfen?",
+                "personalSettings": {
+                    "title": "Persönliche Einstellungen",
+                    "proactivitySettings": {
+                        "title": "Proaktivitätseinstellungen",
+                        "tooltip": "Passe das proaktive Verhalten von Iris an.",
+                        "delayProactiveInterventions": {
+                            "title": "Proaktive Interventionen verzögern",
+                            "tooltip": "Verzögere proaktive Interventionen um die angegebene Zeit.",
+                            "options": {
+                                "thirtyMinutes": "30 Minuten",
+                                "oneHour": "1 Stunde",
+                                "oneDay": "1 Tag",
+                                "forever": "Für immer",
+                                "custom": "Benutzerdefiniert"
+                            }
+                        }
+                    }
+                }
             },
             "chatBubble": {
                 "seeFull": "Vollständige Nachricht sehen"

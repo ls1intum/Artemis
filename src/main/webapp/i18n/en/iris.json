@@ -92,7 +92,25 @@
                 "parseResponse": "An error occurred while parsing the response from Iris. Cause: {{ cause }}"
             },
             "chat": {
-                "helpOffer": "How can I help you today?"
+                "helpOffer": "How can I help you today?",
+                "personalSettings": {
+                    "title": "Personal Settings",
+                    "proactivitySettings": {
+                        "title": "Proactivity Settings",
+                        "tooltip": "Customize the proactive behavior of Iris.",
+                        "delayProactiveInterventions": {
+                            "title": "Delay Proactive Interventions",
+                            "tooltip": "Delay proactive interventions until the specified date and time.",
+                            "options": {
+                                "thirtyMinutes": "30 minutes",
+                                "oneHour": "1 hour",
+                                "oneDay": "1 day",
+                                "forever": "Forever",
+                                "custom": "Custom"
+                            }
+                        }
+                    }
+                }
             },
             "chatBubble": {
                 "seeFull": "See full message"

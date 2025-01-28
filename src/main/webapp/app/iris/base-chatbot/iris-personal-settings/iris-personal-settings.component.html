@@ -1,0 +1,43 @@
+<section class="settings-container">
+    <div class="settings-header">
+        <span>{{ 'artemisApp.iris.chat.personalSettings.title' | artemisTranslate }}</span>
+        <div class="toolbox">
+            <button (click)="close()" class="header-icon">
+                <fa-icon [icon]="faXmark" />
+            </button>
+        </div>
+    </div>
+    <div class="settings-content">
+        <div class="settings-content-section">
+            <h5>{{ 'artemisApp.iris.chat.personalSettings.proactivitySettings.title' | artemisTranslate }}</h5>
+        </div>
+        <div class="settings-content-item">
+            <div class="settings-content-item-label">
+                <span>{{ 'artemisApp.iris.chat.personalSettings.proactivitySettings.delayProactiveInterventions.title' | artemisTranslate }}</span>
+            </div>
+            <div class="settings-content-item-input">
+                <div ngbDropdown class="d-block flex-grow-1">
+                    <button class="btn btn-outline-primary w-100" id="dropdownBasic1" ngbDropdownToggle>Until</button>
+                    <div ngbDropdownMenu aria-labelledby="dropdownBasic1">
+                        @for (option of proactiveDisableOptions; track option) {
+                            <button ngbDropdownItem>
+                                {{
+                                    'artemisApp.iris.chat.personalSettings.proactivitySettings.delayProactiveInterventions.options.' + durationTranslationsMap[option]
+                                        | artemisTranslate
+                                }}
+                            </button>
+                        }
+                    </div>
+                </div>
+                <jhi-date-time-picker
+                    [ngModel]="personalChatSettings().proactivitySettings.endTime"
+                    (ngModelChange)="updatePersonalSettings('proactivitySettings.endTime', $event)"
+                    [shouldDisplayTimeZoneWarning]="false"
+                    [min]="currentDate"
+                    name="disableProactivityDate"
+                    id="disableProactivityDate"
+                />
+            </div>
+        </div>
+    </div>
+</section>
