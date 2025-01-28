@@ -76,7 +76,7 @@ public class UserDTO extends AuditingEntityDTO {
 
     private ZonedDateTime vcsAccessTokenExpiryDate;
 
-    private ZonedDateTime externalLLMAccepted;
+    private ZonedDateTime externalLLMUsageAccepted;
 
     public UserDTO() {
         // Empty constructor needed for Jackson.
@@ -86,12 +86,12 @@ public class UserDTO extends AuditingEntityDTO {
         this(user.getId(), user.getLogin(), user.getName(), user.getFirstName(), user.getLastName(), user.getEmail(), user.getVisibleRegistrationNumber(), user.getActivated(),
                 user.getImageUrl(), user.getLangKey(), user.isInternal(), user.getCreatedBy(), user.getCreatedDate(), user.getLastModifiedBy(), user.getLastModifiedDate(),
                 user.getLastNotificationRead(), user.getAuthorities(), user.getGroups(), user.getGuidedTourSettings(), user.getOrganizations(),
-                user.getExternalLLMAcceptedTimestamp());
+                user.getExternalLLMUsageAcceptedTimestamp());
     }
 
     public UserDTO(Long id, String login, String name, String firstName, String lastName, String email, String visibleRegistrationNumber, boolean activated, String imageUrl,
             String langKey, boolean isInternal, String createdBy, Instant createdDate, String lastModifiedBy, Instant lastModifiedDate, ZonedDateTime lastNotificationRead,
-            Set<Authority> authorities, Set<String> groups, Set<GuidedTourSetting> guidedTourSettings, Set<Organization> organizations, ZonedDateTime externalLLMAccepted) {
+            Set<Authority> authorities, Set<String> groups, Set<GuidedTourSetting> guidedTourSettings, Set<Organization> organizations, ZonedDateTime externalLLMUsageAccepted) {
 
         this.id = id;
         this.login = login;
@@ -115,7 +115,7 @@ public class UserDTO extends AuditingEntityDTO {
         this.groups = groups;
         this.guidedTourSettings = guidedTourSettings;
         this.organizations = organizations;
-        this.externalLLMAccepted = externalLLMAccepted;
+        this.externalLLMUsageAccepted = externalLLMUsageAccepted;
     }
 
     public Long getId() {
@@ -275,11 +275,11 @@ public class UserDTO extends AuditingEntityDTO {
         isInternal = internal;
     }
 
-    public ZonedDateTime getExternalLLMAccepted() {
-        return externalLLMAccepted;
+    public ZonedDateTime getExternalLLMUsageAccepted() {
+        return externalLLMUsageAccepted;
     }
 
-    public void setExternalLLMAccepted(ZonedDateTime externalLLMAccepted) {
-        this.externalLLMAccepted = externalLLMAccepted;
+    public void setExternalLLMUsageAccepted(ZonedDateTime externalLLMUsageAccepted) {
+        this.externalLLMUsageAccepted = externalLLMUsageAccepted;
     }
 }

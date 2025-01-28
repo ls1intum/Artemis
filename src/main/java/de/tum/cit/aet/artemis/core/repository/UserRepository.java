@@ -159,8 +159,8 @@ public interface UserRepository extends ArtemisJpaRepository<User, Long>, JpaSpe
     @EntityGraph(type = LOAD, attributePaths = { "groups", "authorities", "guidedTourSettings" })
     Optional<User> findOneWithGroupsAuthoritiesAndGuidedTourSettingsByLogin(String login);
 
-    @EntityGraph(type = LOAD, attributePaths = { "groups", "authorities", "guidedTourSettings", "externalLLMAccepted" })
-    Optional<User> findOneWithGroupsAndAuthoritiesAndGuidedTourSettingsAndExternalLLMAcceptedTimestampByLogin(String login);
+    @EntityGraph(type = LOAD, attributePaths = { "groups", "authorities", "guidedTourSettings", "externalLLMUsageAccepted" })
+    Optional<User> findOneWithGroupsAndAuthoritiesAndGuidedTourSettingsAndExternalLLMUsageAcceptedTimestampByLogin(String login);
 
     Long countByIsDeletedIsFalseAndGroupsContains(String groupName);
 
@@ -742,10 +742,10 @@ public interface UserRepository extends ArtemisJpaRepository<User, Long>, JpaSpe
     @Transactional // ok because of modifying query
     @Query("""
             UPDATE User user
-            SET user.externalLLMAccepted = :acceptDatetime
+            SET user.externalLLMUsageAccepted = :acceptDatetime
             WHERE user.id = :userId
             """)
-    void updateExternalLLMAcceptedToDate(@Param("userId") long userId, @Param("acceptDatetime") ZonedDateTime acceptDatetime);
+    void updateExternalLLMUsageAcceptedToDate(@Param("userId") long userId, @Param("acceptDatetime") ZonedDateTime acceptDatetime);
 
     @Query("""
             SELECT DISTINCT user

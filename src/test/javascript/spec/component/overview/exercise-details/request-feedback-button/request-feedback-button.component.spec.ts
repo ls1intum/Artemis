@@ -91,7 +91,7 @@ describe('RequestFeedbackButtonComponent', () => {
         const participation = createParticipation();
         const exercise = createBaseExercise(ExerciseType.TEXT, true, participation);
         setupComponentInputs(exercise);
-        component.userAccepted = true;
+        component.hasUserAcceptedExternalLLMUsage = true;
 
         jest.spyOn(courseExerciseService, 'requestFeedback').mockReturnValue(
             new Observable((subscriber) => {
@@ -164,7 +164,7 @@ describe('RequestFeedbackButtonComponent', () => {
         const participation = createParticipation();
         const exercise = createBaseExercise(ExerciseType.PROGRAMMING, false, participation);
         setupComponentInputs(exercise);
-        component.userAccepted = true;
+        component.hasUserAcceptedExternalLLMUsage = true;
 
         initAndTick();
 
@@ -183,7 +183,7 @@ describe('RequestFeedbackButtonComponent', () => {
         setAthenaEnabled(true);
         const exercise = createBaseExercise(ExerciseType.TEXT, false);
         setupComponentInputs(exercise);
-        component.userAccepted = true;
+        component.hasUserAcceptedExternalLLMUsage = true;
 
         jest.spyOn(component, 'hasAthenaResultForLatestSubmission').mockReturnValue(true);
         jest.spyOn(alertService, 'warning');
@@ -219,12 +219,12 @@ describe('RequestFeedbackButtonComponent', () => {
         expect(button.nativeElement.disabled).toBeFalse();
     }));
 
-    it('should open modal when userAccepted is false and requestFeedback is clicked', fakeAsync(() => {
+    it('should open modal when hasUserAcceptedExternalLLMUsage is false and requestFeedback is clicked', fakeAsync(() => {
         setAthenaEnabled(true);
         const participation = createParticipation();
         const exercise = createBaseExercise(ExerciseType.TEXT, false, participation);
         setupComponentInputs(exercise, true, false);
-        component.userAccepted = false;
+        component.hasUserAcceptedExternalLLMUsage = false;
 
         // Set up modal spy
         const modalService = TestBed.inject(NgbModal);
@@ -240,12 +240,12 @@ describe('RequestFeedbackButtonComponent', () => {
         expect(modalSpy).toHaveBeenCalled();
     }));
 
-    it('should not open modal when userAccepted is true and requestFeedback is clicked', fakeAsync(() => {
+    it('should not open modal when hasUserAcceptedExternalLLMUsage is true and requestFeedback is clicked', fakeAsync(() => {
         setAthenaEnabled(true);
         const participation = createParticipation();
         const exercise = createBaseExercise(ExerciseType.TEXT, false, participation);
         setupComponentInputs(exercise, true, false);
-        component.userAccepted = true;
+        component.hasUserAcceptedExternalLLMUsage = true;
 
         // Set up spies
         const modalService = TestBed.inject(NgbModal);

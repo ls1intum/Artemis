@@ -201,7 +201,7 @@ export class IrisBaseChatbotComponent implements OnInit, OnDestroy, AfterViewIni
             this.suggestions = suggestions;
         });
 
-        this.checkIfUserAcceptedExternalLLM();
+        this.checkIfUserAcceptedExternalLLMUsage();
 
         // Focus on message textarea
         setTimeout(() => {
@@ -234,8 +234,8 @@ export class IrisBaseChatbotComponent implements OnInit, OnDestroy, AfterViewIni
         this.suggestionsSubscription.unsubscribe();
     }
 
-    checkIfUserAcceptedExternalLLM(): void {
-        this.userAccepted = !!this.accountService.userIdentity?.externalLLMAccepted;
+    checkIfUserAcceptedExternalLLMUsage(): void {
+        this.userAccepted = !!this.accountService.userIdentity?.externalLLMUsageAccepted;
         setTimeout(() => this.adjustTextareaRows(), 0);
     }
 

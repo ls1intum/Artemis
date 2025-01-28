@@ -100,7 +100,7 @@ public class UserResource {
             user.setLastModifiedDate(null);
             user.setCreatedBy(null);
             user.setCreatedDate(null);
-            user.setExternalLLMAccepted(null);
+            user.setExternalLLMUsageAccepted(null);
         });
         HttpHeaders headers = PaginationUtil.generatePaginationHttpHeaders(ServletUriComponentsBuilder.fromCurrentRequest(), page);
         return new ResponseEntity<>(page.getContent(), headers, HttpStatus.OK);
@@ -155,19 +155,19 @@ public class UserResource {
     }
 
     /**
-     * PUT users/accept-external-llm : sets the externalLLMAccepted flag for the user to ZonedDateTime.now()
+     * PUT users/accept-external-llm-usage : sets the externalLLMUsageAccepted flag for the user to ZonedDateTime.now()
      *
      * @return the ResponseEntity with status 200 (OK), with status 404 (Not Found),
      *         or with status 400 (Bad Request) if external LLM usage was already accepted
      */
-    @PutMapping("users/accept-external-llm")
+    @PutMapping("users/accept-external-llm-usage")
     @EnforceAtLeastStudent
-    public ResponseEntity<Void> setExternalLLMAcceptedToTimestamp() {
+    public ResponseEntity<Void> setExternalLLMUsageAcceptedToTimestamp() {
         User user = userRepository.getUser();
-        if (user.getExternalLLMAcceptedTimestamp() != null) {
+        if (user.getExternalLLMUsageAcceptedTimestamp() != null) {
             return ResponseEntity.badRequest().build();
         }
-        userRepository.updateExternalLLMAcceptedToDate(user.getId(), ZonedDateTime.now());
+        userRepository.updateExternalLLMUsageAcceptedToDate(user.getId(), ZonedDateTime.now());
         return ResponseEntity.ok().build();
     }
 }

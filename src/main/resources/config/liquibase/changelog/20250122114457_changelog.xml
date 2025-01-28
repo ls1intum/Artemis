@@ -6,7 +6,7 @@
     <changeSet id="20250122114457" author="ahmetsenturk">
         <renameColumn tableName="jhi_user"
                       oldColumnName="iris_accepted"
-                      newColumnName="external_llm_accepted"
+                      newColumnName="external_llm_usage_accepted"
                       columnDataType="datetime(3)"/>
     </changeSet>
 </databaseChangeLog>

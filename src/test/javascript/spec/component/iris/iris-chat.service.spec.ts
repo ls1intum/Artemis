@@ -38,10 +38,10 @@ describe('IrisChatService', () => {
         handleRateLimitInfo: jest.fn(),
     };
     const userMock = {
-        acceptExternalLLM: jest.fn(),
+        acceptExternalLLMUsage: jest.fn(),
     };
     const accountMock = {
-        userIdentity: { externalLLMAccepted: dayjs() },
+        userIdentity: { externalLLMUsageAccepted: dayjs() },
     };
 
     beforeEach(() => {

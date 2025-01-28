@@ -45,7 +45,7 @@ export class IrisChatService implements OnDestroy {
 
     private sessionCreationIdentifier?: string;
 
-    hasJustAcceptedExternalLLM = false;
+    hasJustAcceptedExternalLLMUsage = false;
 
     protected constructor() {
         this.rateLimitSubscription = this.status.currentRatelimitInfo().subscribe((info) => (this.rateLimitInfo = info));
@@ -56,7 +56,7 @@ export class IrisChatService implements OnDestroy {
     }
 
     protected start() {
-        if (this.accountService.userIdentity?.externalLLMAccepted || this.hasJustAcceptedExternalLLM) {
+        if (this.accountService.userIdentity?.externalLLMUsageAccepted || this.hasJustAcceptedExternalLLMUsage) {
             this.getCurrentSessionOrCreate().subscribe(this.handleNewSession());
         }
     }
@@ -152,8 +152,8 @@ export class IrisChatService implements OnDestroy {
     }
 
     public setUserAccepted(): void {
-        this.userService.acceptExternalLLM().subscribe(() => {
-            this.hasJustAcceptedExternalLLM = true;
+        this.userService.acceptExternalLLMUsage().subscribe(() => {
+            this.hasJustAcceptedExternalLLMUsage = true;
             this.closeAndStart();
         });
     }

@@ -210,8 +210,8 @@ public class User extends AbstractAuditingEntity implements Participant {
     private Set<PushNotificationDeviceConfiguration> pushNotificationDeviceConfigurations = new HashSet<>();
 
     @Nullable
-    @Column(name = "external_llm_accepted")
-    private ZonedDateTime externalLLMAccepted = null;
+    @Column(name = "external_llm_usage_accepted")
+    private ZonedDateTime externalLLMUsageAccepted = null;
 
     @OneToOne(fetch = FetchType.LAZY, cascade = CascadeType.ALL, orphanRemoval = true)
     @JsonIgnoreProperties("user")
@@ -533,24 +533,24 @@ public class User extends AbstractAuditingEntity implements Participant {
     }
 
     @Nullable
-    public ZonedDateTime getExternalLLMAcceptedTimestamp() {
-        return externalLLMAccepted;
+    public ZonedDateTime getExternalLLMUsageAcceptedTimestamp() {
+        return externalLLMUsageAccepted;
     }
 
-    public void setExternalLLMAcceptedTimestamp(@Nullable ZonedDateTime externalLLMAccepted) {
-        this.externalLLMAccepted = externalLLMAccepted;
+    public void setExternalLLMUsageAcceptedTimestamp(@Nullable ZonedDateTime externalLLMUsageAccepted) {
+        this.externalLLMUsageAccepted = externalLLMUsageAccepted;
     }
 
-    public boolean hasAcceptedExternalLLM() {
-        return externalLLMAccepted != null;
+    public boolean hasAcceptedExternalLLMUsage() {
+        return externalLLMUsageAccepted != null;
     }
 
     /**
      * Checks if the user has accepted the external LLM privacy policy.
      * If not, an {@link AccessForbiddenException} is thrown.
      */
-    public void hasAcceptedExternalLLMElseThrow() {
-        if (externalLLMAccepted == null) {
+    public void hasAcceptedExternalLLMUsageElseThrow() {
+        if (externalLLMUsageAccepted == null) {
             throw new AccessForbiddenException("The user has not accepted the external LLM privacy policy yet.");
         }
     }

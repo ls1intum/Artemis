@@ -42,9 +42,9 @@ export class UserService {
     }
 
     /**
-     * Accept external LLM policy.
+     * Accept external LLM usage policy.
      */
-    acceptExternalLLM(): Observable<HttpResponse<void>> {
-        return this.http.put<HttpResponse<void>>(`${this.resourceUrl}/accept-external-llm`, { observe: 'response' });
+    acceptExternalLLMUsage(): Observable<HttpResponse<void>> {
+        return this.http.put<HttpResponse<void>>(`${this.resourceUrl}/accept-external-llm-usage`, { observe: 'response' });
     }
 }

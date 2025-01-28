@@ -53,12 +53,12 @@ describe('IrisBaseChatbotComponent', () => {
         acceptExternalLLM: jest.fn(),
     } as any;
     let accountMock = {
-        userIdentity: { externalLLMAccepted: dayjs() },
+        userIdentity: { externalLLMUsageAccepted: dayjs() },
     } as any;
 
     beforeEach(async () => {
         accountMock = {
-            userIdentity: { externalLLMAccepted: dayjs() },
+            userIdentity: { externalLLMUsageAccepted: dayjs() },
         } as any;
 
         await TestBed.configureTestingModule({
@@ -113,19 +113,19 @@ describe('IrisBaseChatbotComponent', () => {
         expect(component).toBeTruthy();
     });
 
-    it('should set userAccepted to false if user has not accepted the policy', () => {
-        accountMock.userIdentity.externalLLMAccepted = undefined;
+    it('should set hasUserAcceptedExternalLLMUsage to false if user has not accepted the policy', () => {
+        accountMock.userIdentity.externalLLMUsageAccepted = undefined;
         component.ngOnInit();
         expect(component.userAccepted).toBeFalse();
     });
 
-    it('should set userAccepted to true if user has accepted the policy', () => {
+    it('should set hasUserAcceptedExternalLLMUsage to true if user has accepted the policy', () => {
         component.ngOnInit();
         expect(component.userAccepted).toBeTrue();
     });
 
     it('should call API when user accept the policy', () => {
-        const stub = jest.spyOn(mockUserService, 'acceptExternalLLM');
+        const stub = jest.spyOn(mockUserService, 'acceptExternalLLMUsage');
         stub.mockReturnValue(of(new HttpResponse<void>()));
 
         component.acceptPermission();
@@ -383,7 +383,7 @@ describe('IrisBaseChatbotComponent', () => {
 
         expect(sendButton.disabled).toBeTruthy();
     });
-    it('should not render submit button if userAccepted is false', () => {
+    it('should not render submit button if hasUserAcceptedExternalLLMUsage is false', () => {
         component.userAccepted = false;
         component.isLoading = false;
         component.error = undefined;
@@ -498,7 +498,7 @@ describe('IrisBaseChatbotComponent', () => {
         expect(suggestionButtons).toHaveLength(0);
     });
 
-    it('should not render suggestions if userAccepted is false', () => {
+    it('should not render suggestions if hasUserAcceptedExternalLLMUsage is false', () => {
         // Arrange
         const expectedSuggestions = ['suggestion1', 'suggestion2'];
         const mockMessages = [mockClientMessage, mockServerMessage];

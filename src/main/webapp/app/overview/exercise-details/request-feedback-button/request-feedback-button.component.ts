@@ -29,7 +29,7 @@ export class RequestFeedbackButtonComponent implements OnInit {
     requestFeedbackEnabled = false;
     isExamExercise: boolean;
     participation?: StudentParticipation;
-    userAccepted: boolean;
+    hasUserAcceptedExternalLLMUsage: boolean;
 
     isSubmitted = input<boolean>();
     pendingChanges = input<boolean>(false);
@@ -61,7 +61,7 @@ export class RequestFeedbackButtonComponent implements OnInit {
         }
         this.requestFeedbackEnabled = this.exercise().allowFeedbackRequests ?? false;
         this.updateParticipation();
-        this.setUserAcceptedExternalLLMs();
+        this.setUserAcceptedExternalLLMUsage();
     }
 
     private updateParticipation() {
@@ -77,13 +77,13 @@ export class RequestFeedbackButtonComponent implements OnInit {
         }
     }
 
-    setUserAcceptedExternalLLMs(): void {
-        this.userAccepted = !!this.accountService.userIdentity?.externalLLMAccepted;
+    setUserAcceptedExternalLLMUsage(): void {
+        this.hasUserAcceptedExternalLLMUsage = !!this.accountService.userIdentity?.externalLLMUsageAccepted;
     }
 
-    acceptExternalLLMs(modal: any) {
-        this.userService.acceptExternalLLM().subscribe(() => {
-            this.userAccepted = true;
+    acceptExternalLLMUsage(modal: any) {
+        this.userService.acceptExternalLLMUsage().subscribe(() => {
+            this.hasUserAcceptedExternalLLMUsage = true;
             modal.close();
         });
 
@@ -94,7 +94,7 @@ export class RequestFeedbackButtonComponent implements OnInit {
     }
 
     requestFeedback(content: TemplateRef<any>) {
-        if (!this.userAccepted) {
+        if (!this.hasUserAcceptedExternalLLMUsage) {
             this.modalService.open(content, { ariaLabelledBy: 'modal-title' });
             return;
         }

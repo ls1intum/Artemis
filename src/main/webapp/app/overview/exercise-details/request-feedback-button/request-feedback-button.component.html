@@ -45,9 +45,9 @@
         <h4 class="modal-title" id="modal-title">Confirm External LLM Usage</h4>
         <button type="button" class="btn-close" aria-label="Close" (click)="modal.dismiss('Cross click')"></button>
     </div>
-    <div class="modal-body" jhiTranslate="artemisApp.exerciseActions.externalLLM.popUpMessage"></div>
+    <div class="modal-body" jhiTranslate="artemisApp.exerciseActions.externalLLMUsage.popUpMessage"></div>
     <div class="modal-footer">
-        <button type="button" class="btn btn-outline-secondary" (click)="modal.dismiss('decline')" jhiTranslate="artemisApp.exerciseActions.externalLLM.decline"></button>
-        <button type="button" class="btn btn-primary" (click)="acceptExternalLLMs(modal)" jhiTranslate="artemisApp.exerciseActions.externalLLM.accept"></button>
+        <button type="button" class="btn btn-outline-secondary" (click)="modal.dismiss('decline')" jhiTranslate="artemisApp.exerciseActions.externalLLMUsage.decline"></button>
+        <button type="button" class="btn btn-primary" (click)="acceptExternalLLMUsage(modal)" jhiTranslate="artemisApp.exerciseActions.externalLLMUsage.accept"></button>
     </div>
 </ng-template>
