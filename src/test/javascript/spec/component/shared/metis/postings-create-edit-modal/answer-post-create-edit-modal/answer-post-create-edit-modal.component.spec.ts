@@ -16,7 +16,6 @@ describe('AnswerPostCreateEditModalComponent', () => {
     let component: AnswerPostCreateEditModalComponent;
     let fixture: ComponentFixture<AnswerPostCreateEditModalComponent>;
     let metisService: MetisService;
-    let viewContainerRef: ViewContainerRef;
     let updatePostingMock: jest.SpyInstance;
 
     beforeEach(() => {
@@ -36,8 +35,6 @@ describe('AnswerPostCreateEditModalComponent', () => {
                 fixture = TestBed.createComponent(AnswerPostCreateEditModalComponent);
                 component = fixture.componentInstance;
                 metisService = TestBed.inject(MetisService);
-                viewContainerRef = TestBed.inject(ViewContainerRef);
-
                 updatePostingMock = jest.spyOn(component, 'updatePosting');
             });
     });
