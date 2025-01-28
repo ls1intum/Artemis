@@ -93,11 +93,15 @@ export class RequestFeedbackButtonComponent implements OnInit {
         }
     }
 
-    requestFeedback(content: TemplateRef<any>) {
+    requestAIFeedback(content: TemplateRef<any>) {
         if (!this.hasUserAcceptedExternalLLMUsage) {
             this.modalService.open(content, { ariaLabelledBy: 'modal-title' });
             return;
         }
+        this.requestFeedback();
+    }
+
+    requestFeedback() {
         if (!this.assureConditionsSatisfied()) {
             return;
         }
