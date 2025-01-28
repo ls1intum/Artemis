@@ -13,7 +13,7 @@ jobs:
   check-build-status:
     runs-on: ubuntu-latest
     outputs:
-      workflow_run_id: ${{ steps.get_workflow_run.outputs.data.workflow_runs[0].id }}
+      build_workflow_run_id: ${{ steps.set_build_workflow_id.outputs.workflow_id }} 
     steps:
       - name: Get latest build workflow run
         id: get_workflow_run
@@ -22,6 +22,12 @@ jobs:
           route: GET /repos/${{ github.repository }}/actions/workflows/build.yml/runs?branch=${{ github.event.inputs.branch }}&per_page=1
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Set build workflow ID
+        id: set_build_workflow_id
+        run: |
+          WORKFLOW_ID=$(echo '${{ steps.get_workflow_run.outputs.data }}' | jq -r '.workflow_runs[0].id')
+          echo "workflow_id=$WORKFLOW_ID" >> $GITHUB_OUTPUT
   
       - name: Check for war artifact
         id: verify_artifact
@@ -55,7 +61,7 @@ jobs:
       PRIMARY_NODE: ${{ secrets.PRIMARY_NODE_HOSTNAME }}
       VM_USERNAME: ${{ secrets.SSH_USERNAME }}
       HEALTH_CHECK_URL: "https://artemis-staging-localci.artemis.cit.tum.de/management/health"
-      WORKFLOW_RUN_ID: ${{needs.check-build-status.outputs.workflow_run_id}}
+      WORKFLOW_RUN_ID: ${{needs.check-build-status.outputs.build_workflow_run_id}}
 
     timeout-minutes: 30
     
