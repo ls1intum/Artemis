@@ -6,6 +6,9 @@ on:
       branch:
         description: 'Branch to deploy'
         required: true
+      vpn_config:
+        description: 'TUM VPN configuration'
+        required: true
 
 concurrency: staging
 
@@ -79,6 +82,35 @@ jobs:
           path: artifacts
           github-token: ${{ secrets.GITHUB_TOKEN }}
           run-id: ${{ env.WORKFLOW_RUN_ID  }}
+
+      - name: Setup VPN
+        env:
+          VPN_CONFIG: ${{ github.event.inputs.vpn_config }}
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y openvpn
+          
+          # Save VPN config
+          echo "$VPN_CONFIG" > /tmp/config.ovpn
+          
+          # If using credentials, create auth file
+          echo "$VPN_USERNAME" > /tmp/vpn-creds
+          echo "$VPN_PASSWORD" >> /tmp/vpn-creds
+          
+          # Start VPN in background
+          sudo openvpn --config /tmp/config.ovpn --auth-user-pass /tmp/vpn-creds --daemon
+          
+          # Wait for VPN connection
+          echo "Waiting for VPN connection..."
+          sleep 30
+          
+          # Test connection
+          ping -c 1 172.24.70.146 || {
+            echo "Failed to establish VPN connection"
+            exit 1
+          }
+          
+          echo "VPN connection established"
 
       - name: Setup SSH
         env:
