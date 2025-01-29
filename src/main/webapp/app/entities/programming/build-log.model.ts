@@ -8,11 +8,6 @@ export enum BuildLogType {
     OTHER = 'OTHER',
 }
 
-export type BuildLogLines = {
-    time?: string;
-    logLines: string[];
-};
-
 export type BuildLogEntry = {
     time: any;
     log: string;

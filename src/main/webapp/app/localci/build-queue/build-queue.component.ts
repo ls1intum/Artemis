@@ -28,12 +28,13 @@ import { NgClass } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { SortDirective } from 'app/shared/sort/sort.directive';
 import { SortByDirective } from 'app/shared/sort/sort-by.directive';
-import { ResultComponent } from '../../exercises/shared/result/result.component';
+import { ResultComponent } from 'app/exercises/shared/result/result.component';
 import { ItemCountComponent } from 'app/shared/pagination/item-count.component';
 import { FormDateTimePickerComponent } from 'app/shared/date-time-picker/date-time-picker.component';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { ArtemisDurationFromSecondsPipe } from 'app/shared/pipes/artemis-duration-from-seconds.pipe';
+import { downloadFile } from 'app/shared/util/download.util';
 
 export class FinishedBuildJobFilter {
     status?: string = undefined;
@@ -449,18 +450,11 @@ export class BuildQueueComponent implements OnInit, OnDestroy {
     downloadBuildLogs(): void {
         if (this.displayedBuildJobId && this.rawBuildLogsString) {
             const blob = new Blob([this.rawBuildLogsString], { type: 'text/plain' });
-
-            const url = window.URL.createObjectURL(blob);
-
-            const anchor = document.createElement('a');
-            anchor.href = url;
-            anchor.download = `${this.displayedBuildJobId}.log`;
-
-            // Programmatically click the link to trigger download
-            anchor.click();
-
-            // Clean up the URL object
-            window.URL.revokeObjectURL(url);
+            try {
+                downloadFile(blob, `${this.displayedBuildJobId}.log`);
+            } catch (error) {
+                this.alertService.error('artemisApp.buildQueue.logs.downloadError');
+            }
         }
     }
 

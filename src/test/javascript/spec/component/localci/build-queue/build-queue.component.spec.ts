@@ -15,6 +15,9 @@ import { LocalStorageService } from 'ngx-webstorage';
 import { MockLocalStorageService } from '../../../helpers/mocks/service/mock-local-storage.service';
 import { MockNgbModalService } from '../../../helpers/mocks/service/mock-ngb-modal.service';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
+import { MockProvider } from 'ng-mocks';
+import * as DownloadUtil from '../../../../../../main/webapp/app/shared/util/download.util';
+import { AlertService } from '../../../../../../main/webapp/app/core/util/alert.service';
 
 describe('BuildQueueComponent', () => {
     let component: BuildQueueComponent;
@@ -264,6 +267,9 @@ describe('BuildQueueComponent', () => {
         numberOfAppliedFilters: 0,
     };
 
+    let alertService: AlertService;
+    let alertServiceErrorStub: jest.SpyInstance;
+
     beforeEach(waitForAsync(() => {
         mockActivatedRoute = { params: of({ courseId: testCourseId }) };
 
@@ -276,14 +282,15 @@ describe('BuildQueueComponent', () => {
                 { provide: DataTableComponent, useClass: DataTableComponent },
                 { provide: LocalStorageService, useValue: mockLocalStorageService },
                 { provide: NgbModal, useClass: MockNgbModalService },
+                MockProvider(AlertService),
             ],
         }).compileComponents();
-    }));
 
-    beforeEach(() => {
         fixture = TestBed.createComponent(BuildQueueComponent);
         component = fixture.componentInstance;
-    });
+        alertService = TestBed.inject(AlertService);
+        alertServiceErrorStub = jest.spyOn(alertService, 'error');
+    }));
 
     beforeEach(() => {
         jest.clearAllMocks();
@@ -671,25 +678,21 @@ describe('BuildQueueComponent', () => {
         expect(component.rawBuildLogsString).toEqual(buildLogsMultiLines);
 
         const mockBlob = new Blob([buildLogsMultiLines], { type: 'text/plain' });
-        const mockUrl = 'blob:http://localhost:12345';
-        const mockAnchor = {
-            href: '',
-            download: '',
-            click: jest.fn(),
-        };
 
-        global.URL.createObjectURL = jest.fn(() => 'mockedURL');
-        global.URL.revokeObjectURL = jest.fn();
-        jest.spyOn(window.URL, 'createObjectURL').mockReturnValue(mockUrl);
-        jest.spyOn(document, 'createElement').mockReturnValue(mockAnchor as unknown as HTMLAnchorElement);
-        jest.spyOn(window.URL, 'revokeObjectURL').mockImplementation();
+        const downloadSpy = jest.spyOn(DownloadUtil, 'downloadFile');
 
         component.downloadBuildLogs();
 
-        expect(window.URL.createObjectURL).toHaveBeenCalledWith(mockBlob);
-        expect(mockAnchor.href).toBe(mockUrl);
-        expect(mockAnchor.download).toBe(`${buildJobId}.log`);
-        expect(mockAnchor.click).toHaveBeenCalled();
-        expect(window.URL.revokeObjectURL).toHaveBeenCalledWith(mockUrl);
+        expect(downloadSpy).toHaveBeenCalledOnce();
+        expect(downloadSpy).toHaveBeenCalledWith(mockBlob, `${buildJobId}.log`);
+        expect(alertServiceErrorStub).toHaveBeenCalled();
+
+        global.URL.createObjectURL = jest.fn(() => 'mockedURL');
+        global.URL.revokeObjectURL = jest.fn();
+
+        component.downloadBuildLogs();
+
+        expect(downloadSpy).toHaveBeenCalledTimes(2);
+        expect(downloadSpy).toHaveBeenCalledWith(mockBlob, `${buildJobId}.log`);
     });
 });
