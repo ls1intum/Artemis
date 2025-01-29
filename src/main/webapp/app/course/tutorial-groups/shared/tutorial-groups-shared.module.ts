@@ -6,7 +6,6 @@ import { TutorialGroupsTableComponent } from './tutorial-groups-table/tutorial-g
 import { TutorialGroupSessionsTableComponent } from './tutorial-group-sessions-table/tutorial-group-sessions-table.component';
 import { TutorialGroupSessionRowComponent } from 'app/course/tutorial-groups/shared/tutorial-group-sessions-table/tutorial-group-session-row/tutorial-group-session-row.component';
 import { TutorialGroupFreeDaysOverviewComponent } from './tutorial-group-free-days-overview/tutorial-group-free-days-overview.component';
-import { ArtemisSidePanelModule } from 'app/shared/side-panel/side-panel.module';
 import { TutorialGroupRowComponent } from './tutorial-groups-table/tutorial-group-row/tutorial-group-row.component';
 
 import { TutorialGroupUtilizationIndicatorComponent } from './tutorial-group-utilization-indicator/tutorial-group-utilization-indicator.component';
@@ -20,7 +19,6 @@ import { ProfilePictureComponent } from 'app/shared/profile-picture/profile-pict
     imports: [
         ArtemisSharedModule,
         RouterModule,
-        ArtemisSidePanelModule,
         DetailModule,
         IconCardComponent,
         ProfilePictureComponent,

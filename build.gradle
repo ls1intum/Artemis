@@ -16,19 +16,19 @@ plugins {
     id "com.adarshr.test-logger" version "4.0.0"
     id "com.diffplug.spotless" version "${spotless_plugin_version}"
     id "com.github.andygoossens.modernizer" version "${modernizer_plugin_version}"
-    id "com.github.ben-manes.versions" version "0.51.0"
+    id "com.github.ben-manes.versions" version "0.52.0"
     id "com.github.node-gradle.node" version "${gradle_node_plugin_version}"
     id "com.google.cloud.tools.jib" version "3.4.4"
     id "com.gorylenko.gradle-git-properties" version "2.4.2"
     id "io.spring.dependency-management" version "1.1.7"
-    id "nebula.lint" version "20.5.5"
+    id "nebula.lint" version "20.5.6"
     id "org.liquibase.gradle" version "${liquibase_plugin_version}"
-    id "org.owasp.dependencycheck" version "12.0.0"
+    id "org.owasp.dependencycheck" version "12.0.1"
     id "org.springframework.boot" version "${spring_boot_version}"
 }
 
 group = "de.tum.cit.aet.artemis"
-version = "7.9.0"
+version = "7.9.1"
 description = "Interactive Learning with Individual Feedback"
 
 java {
@@ -139,7 +139,6 @@ configurations.configureEach {
     exclude group: "xalan", module: "serializer"
 
     exclude group: "org.springframework.boot", module: "spring-boot-starter-cache"
-    exclude group: "io.micrometer", module: "micrometer-registry-prometheus"
     exclude group: "net.logstash.logback", module: "logstash-logback-encoder"
 
     exclude group: "javax.cache", module: "cache-api"
@@ -205,7 +204,7 @@ dependencies {
     implementation "org.apache.sshd:sshd-sftp:${sshd_version}"
 
     // https://mvnrepository.com/artifact/net.sourceforge.plantuml/plantuml
-    implementation "net.sourceforge.plantuml:plantuml:1.2024.8"
+    implementation "net.sourceforge.plantuml:plantuml:1.2025.0"
     implementation "me.xdrop:fuzzywuzzy:1.4.0"
     implementation("org.yaml:snakeyaml") {
         version {
@@ -226,7 +225,7 @@ dependencies {
     implementation "org.apache.santuario:xmlsec:4.0.3"
 
     implementation "org.jsoup:jsoup:1.18.3"
-    implementation "commons-codec:commons-codec:1.17.2"   // needed for spring security saml2
+    implementation "commons-codec:commons-codec:1.18.0"   // needed for spring security saml2
 
     // use the latest version to avoid security vulnerabilities
     implementation "org.springframework:spring-webmvc:${spring_framework_version}"
@@ -239,6 +238,13 @@ dependencies {
 
     // use newest version of commons-compress to avoid security issues through outdated dependencies
     implementation "org.apache.commons:commons-compress:1.27.1"
+
+    // required for monitoring with prometheus and grafana
+    implementation "io.micrometer:micrometer-registry-prometheus:${micrometer_version}"
+    implementation "io.micrometer:micrometer-core:${micrometer_version}"
+    implementation "io.micrometer:micrometer-commons:${micrometer_version}"
+    implementation "io.micrometer:micrometer-observation:${micrometer_version}"
+    implementation "io.micrometer:micrometer-jakarta9:${micrometer_version}"
 
     implementation "tech.jhipster:jhipster-framework:${jhipster_dependencies_version}"
 
@@ -346,7 +352,7 @@ dependencies {
 
     // used for testing and Java Template Upgrade Service
     implementation "org.apache.maven:maven-model:3.9.9"
-    implementation "org.apache.pdfbox:pdfbox:3.0.3"
+    implementation "org.apache.pdfbox:pdfbox:3.0.4"
     implementation "org.apache.commons:commons-csv:1.13.0"
     implementation "org.commonmark:commonmark:0.24.0"
     implementation "commons-fileupload:commons-fileupload:1.5"
@@ -410,7 +416,7 @@ dependencies {
     testImplementation "org.springframework.boot:spring-boot-starter-test:${spring_boot_version}"
     testImplementation "org.springframework.security:spring-security-test:${spring_security_version}"
     testImplementation "org.springframework.boot:spring-boot-test:${spring_boot_version}"
-    testImplementation "org.assertj:assertj-core:3.27.2"
+    testImplementation "org.assertj:assertj-core:3.27.3"
     testImplementation "org.mockito:mockito-core:${mockito_version}"
     testImplementation "org.mockito:mockito-junit-jupiter:${mockito_version}"
 
@@ -497,7 +503,7 @@ tasks.named("dependencyUpdates").configure {
 // 2c) Run tests for modules:                       ./gradlew test -DincludeModules=athena,atlas -x webapp (executes all tests in directories ./src/main/test/.../athena and ./src/main/test/.../atlas) + ArchitectureTests
 // 2d) Execute tests with Postgres container:       SPRING_PROFILES_INCLUDE=postgres ./gradlew test -x webapp
 // 2e) Execute tests with MySQL container:          SPRING_PROFILES_INCLUDE=mysql ./gradlew test -x webapp
-// 3) Verify code coverage (after tests):           ./gradlew jacocoTestCoverageVerification
+// 3) Verify code coverage (after tests):           ./gradlew jacocoTestCoverageVerification -x webapp
 // 4) Check Java code format:                       ./gradlew spotlessCheck -x webapp
 // 5) Apply Java code formatter:                    ./gradlew spotlessApply -x webapp
 // 6) Find dependency updates:                      ./gradlew dependencyUpdates -Drevision=release

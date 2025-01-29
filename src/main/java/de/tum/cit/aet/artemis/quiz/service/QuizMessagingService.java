@@ -51,6 +51,7 @@ public class QuizMessagingService {
         try {
             long start = System.currentTimeMillis();
             Class<?> view = quizExercise.viewForStudentsInQuizExercise(quizBatch);
+            // TODO: use a proper DTO and avoid sending the whole quiz exercise based on the view
             byte[] payload = objectMapper.writerWithView(view).writeValueAsBytes(quizExercise);
             // For each change we send the same message. The client needs to decide how to handle the date based on the quiz status
             if (quizExercise.isVisibleToStudents() && quizExercise.isCourseExercise()) {
@@ -63,6 +64,7 @@ public class QuizMessagingService {
                 if (quizChange == START_BATCH && quizBatch != null) {
                     destination = destination + "/" + quizBatch.getId();
                 }
+                // TODO the view could also be passed as conversion hint to the message converter
                 websocketMessagingService.sendMessage(destination, MessageBuilder.withPayload(payload).build());
                 log.info("Sent '{}' for quiz {} to all listening clients in {} ms", quizChange, quizExercise.getId(), System.currentTimeMillis() - start);
             }

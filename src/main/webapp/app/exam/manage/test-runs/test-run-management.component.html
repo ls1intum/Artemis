@@ -1,34 +1,34 @@
 <div>
     <div class="d-flex">
         <div class="mb-3">
-            <h2><span jhiTranslate="artemisApp.examManagement.testRun.title"></span>{{ exam?.title }}</h2>
+            <h2><span jhiTranslate="artemisApp.examManagement.testRun.title"></span>{{ exam()?.title }}</h2>
         </div>
         <div class="ms-auto">
             <div class="d-flex mb-1">
-                <div [ngbTooltip]="'artemisApp.examManagement.testRun.createTestRunDisabled' | artemisTranslate" [disableTooltip]="examContainsExercises">
-                    @if (course?.isAtLeastInstructor) {
+                <div [ngbTooltip]="'artemisApp.examManagement.testRun.createTestRunDisabled' | artemisTranslate" [disableTooltip]="examContainsExercises()">
+                    @if (course()?.isAtLeastInstructor) {
                         <button
                             id="createTestRunButton"
                             class="btn btn-primary btn-sm me-1 mb-1"
                             style="height: 40px"
                             (click)="openCreateTestRunModal()"
-                            [disabled]="isLoading || !examContainsExercises"
+                            [disabled]="isLoading() || !examContainsExercises()"
                         >
-                            @if (isLoading) {
+                            @if (isLoading()) {
                                 <span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
                             }
                             <span jhiTranslate="artemisApp.examManagement.testRun.setup"></span>
                         </button>
                     }
                 </div>
-                @if (exam && !exam.testExam) {
-                    <div [ngbTooltip]="'artemisApp.examManagement.testRun.assessTestRunDisabled' | artemisTranslate" [disableTooltip]="testRunCanBeAssessed">
-                        @if (course?.isAtLeastInstructor) {
+                @if (exam() && !exam()?.testExam) {
+                    <div [ngbTooltip]="'artemisApp.examManagement.testRun.assessTestRunDisabled' | artemisTranslate" [disableTooltip]="testRunCanBeAssessed()">
+                        @if (course()?.isAtLeastInstructor) {
                             <a
                                 class="btn btn-primary btn-sm me-1 mb-1"
                                 style="height: 40px; display: inline-flex; align-items: center"
-                                [routerLink]="['/course-management', course.id, 'exams', exam.id, 'test-runs', 'assess']"
-                                [class.disabled]="isLoading || !testRunCanBeAssessed"
+                                [routerLink]="['/course-management', course()?.id, 'exams', exam()?.id, 'test-runs', 'assess']"
+                                [class.disabled]="isLoading() || !testRunCanBeAssessed()"
                             >
                                 <span jhiTranslate="artemisApp.examManagement.testRun.assess"></span>
                             </a>
@@ -42,7 +42,7 @@
         <span jhiTranslate="artemisApp.examManagement.testRun.text"></span>
     </div>
     <div class="alert alert-warning" jhiTranslate="artemisApp.examManagement.testRun.reminderToDelete"></div>
-    @if (testRuns) {
+    @if (testRuns()) {
         <div class="table-responsive">
             <table class="table table-striped">
                 <thead>
@@ -75,7 +75,7 @@
                     </tr>
                 </thead>
                 <tbody>
-                    @for (testRun of testRuns; track trackId($index, testRun)) {
+                    @for (testRun of testRuns(); track trackId($index, testRun)) {
                         <tr [id]="'testrun-' + testRun.id">
                             <td class="testrun-id d-none d-md-table-cell">
                                 <a [routerLink]="[testRun.id]">{{ testRun.id }}</a>
@@ -89,9 +89,9 @@
                             <td>{{ testRun.submissionDate | artemisDate }}</td>
                             <td [width]="350">
                                 <div class="w-100 text-end">
-                                    @if (course?.isAtLeastInstructor) {
+                                    @if (course()?.isAtLeastInstructor) {
                                         <div class="btn-group">
-                                            @if (testRun.user?.id === instructor?.id) {
+                                            @if (testRun.user?.id === instructor()?.id) {
                                                 @if (!testRun.submitted) {
                                                     <a class="start-testrun btn btn-primary btn-sm me-1 mb-1" [routerLink]="['../test-runs/' + testRun.id + '/conduction']">
                                                         @if (!testRun.started) {
@@ -113,7 +113,7 @@
                                             }
                                             <a
                                                 class="manage-worktime btn btn-primary btn-sm me-1 mb-1"
-                                                [routerLink]="['/course-management', course.id, 'exams', exam.id, 'test-runs', testRun.id]"
+                                                [routerLink]="['/course-management', course()!.id, 'exams', exam()!.id, 'test-runs', testRun.id]"
                                                 [class.disabled]="testRun.started"
                                             >
                                                 <span jhiTranslate="artemisApp.examManagement.testRun.manage"></span>
