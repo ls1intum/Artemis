@@ -249,4 +249,10 @@ describe('FaqUpdateComponent', () => {
         expect(alertServiceStub).toHaveBeenCalledOnce();
         flush();
     }));
+
+    it('should handleMarkdownChange properly ', () => {
+        faqUpdateComponent.faq = { questionTitle: 'test1', questionAnswer: 'answer' } as Faq;
+        faqUpdateComponent.handleMarkdownChange('test');
+        expect(faqUpdateComponent.faq.questionAnswer).toEqual('test');
+    });
 });
