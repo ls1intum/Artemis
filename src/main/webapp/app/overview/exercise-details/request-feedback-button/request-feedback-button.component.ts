@@ -29,7 +29,7 @@ export class RequestFeedbackButtonComponent implements OnInit {
     isExamExercise: boolean;
     participation?: StudentParticipation;
     currentFeedbackRequestCount = 0;
-    feedbackRequestLimit = 10;
+    feedbackRequestLimit = 10; // remark: this will be defined by the instructor and fetched
 
     isSubmitted = input<boolean>();
     pendingChanges = input<boolean>(false);
