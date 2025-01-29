@@ -2,6 +2,7 @@ package de.tum.cit.aet.artemis.core.user;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+import java.time.ZonedDateTime;
 import java.util.Optional;
 import java.util.regex.Pattern;
 
@@ -467,5 +468,37 @@ class AccountResourceIntegrationTest extends AbstractSpringIntegrationIndependen
         KeyAndPasswordVM finishResetData = new KeyAndPasswordVM();
         finishResetData.setNewPassword(getValidPassword());
         request.postWithoutLocation("/api/public/account/reset-password/finish", finishResetData, HttpStatus.FORBIDDEN, null);
+    }
+
+    @Test
+    @WithMockUser(username = AUTHENTICATEDUSER)
+    void acceptExternalLLMUsageSuccessful() throws Exception {
+        // Create user in repo with null timestamp
+        User user = userUtilService.createAndSaveUser(AUTHENTICATEDUSER);
+        user.setExternalLLMUsageAcceptedTimestamp(null);
+        userTestRepository.save(user);
+
+        request.put("/api/users/accept-external-llm-usage", null, HttpStatus.OK);
+
+        // Verify timestamp was set
+        Optional<User> updatedUser = userTestRepository.findOneByLogin(AUTHENTICATEDUSER);
+        assertThat(updatedUser).isPresent();
+        assertThat(updatedUser.get().getExternalLLMUsageAcceptedTimestamp()).isNotNull();
+    }
+
+    @Test
+    @WithMockUser(username = AUTHENTICATEDUSER)
+    void acceptExternalLLMUsageAlreadyAccepted() throws Exception {
+        // Create user in repo with existing timestamp
+        User user = userUtilService.createAndSaveUser(AUTHENTICATEDUSER);
+        user.setExternalLLMUsageAcceptedTimestamp(ZonedDateTime.now());
+        userTestRepository.save(user);
+
+        request.put("/api/users/accept-external-llm-usage", null, HttpStatus.BAD_REQUEST);
+
+        // Verify timestamp wasn't changed
+        Optional<User> unchangedUser = userTestRepository.findOneByLogin(AUTHENTICATEDUSER);
+        assertThat(unchangedUser).isPresent();
+        assertThat(unchangedUser.get().getExternalLLMUsageAcceptedTimestamp()).isEqualTo(user.getExternalLLMUsageAcceptedTimestamp());
     }
 }
