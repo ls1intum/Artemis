@@ -1,4 +1,3 @@
-import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { IconDefinition } from '@fortawesome/fontawesome-svg-core';
 import { TranslateService } from '@ngx-translate/core';
 import { enterFullscreen, exitFullscreen, isFullScreen } from 'app/shared/util/fullscreen.util';
@@ -10,7 +9,8 @@ import { TextEditorCompletionItem } from 'app/shared/monaco-editor/model/actions
 import { TextEditorKeybinding } from 'app/shared/monaco-editor/model/actions/adapter/text-editor-keybinding.model';
 import RewritingVariant from 'app/shared/monaco-editor/model/actions/artemis-intelligence/rewriting-variant';
 import { ArtemisIntelligenceService } from 'app/shared/monaco-editor/model/actions/artemis-intelligence/artemis-intelligence.service';
-import { ConsistencyCheckModalComponent } from 'app/shared/monaco-editor/model/actions/artemis-intelligence/consistency-check-modal.component';
+import { WritableSignal } from '@angular/core';
+import { htmlForMarkdown } from 'app/shared/util/markdown.conversion.util';
 
 export abstract class TextEditorAction implements Disposable {
     id: string;
@@ -317,14 +317,12 @@ export abstract class TextEditorAction implements Disposable {
         }
     }
 
-    consistencyCheck(editor: TextEditor, artemisIntelligence: ArtemisIntelligenceService, modalService: NgbModal, exerciseId: number): void {
+    consistencyCheck(editor: TextEditor, artemisIntelligence: ArtemisIntelligenceService, exerciseId: number, resultSignal: WritableSignal<string>): void {
         const text = editor.getFullText();
         if (text) {
             artemisIntelligence.consistencyCheck(exerciseId).subscribe({
-                next: (message) => {
-                    const modalRef = modalService.open(ConsistencyCheckModalComponent, { size: 'xl' });
-                    const consistencyCheckModalComponent = modalRef.componentInstance as ConsistencyCheckModalComponent;
-                    consistencyCheckModalComponent.setResponse(message);
+                next: (result) => {
+                    resultSignal.set(htmlForMarkdown(result));
                 },
             });
         }

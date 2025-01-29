@@ -13,6 +13,7 @@ import {
     ViewEncapsulation,
     computed,
     inject,
+    signal,
 } from '@angular/core';
 import { AlertService } from 'app/core/util/alert.service';
 import { ProgrammingExerciseInstructionComponent } from 'app/exercises/programming/shared/instructions-render/programming-exercise-instruction.component';
@@ -27,7 +28,7 @@ import { hasExerciseChanged } from 'app/exercises/shared/exercise/exercise.utils
 import { ProgrammingExerciseParticipationService } from 'app/exercises/programming/manage/services/programming-exercise-participation.service';
 import { ProgrammingExerciseGradingService } from 'app/exercises/programming/manage/services/programming-exercise-grading.service';
 import { Result } from 'app/entities/result.model';
-import { faCheckCircle, faCircleNotch, faExclamationTriangle, faGripLines, faSave } from '@fortawesome/free-solid-svg-icons';
+import { faCheckCircle, faCircleNotch, faExclamationTriangle, faSave } from '@fortawesome/free-solid-svg-icons';
 import { MarkdownEditorHeight, MarkdownEditorMonacoComponent } from 'app/shared/markdown-editor/monaco/markdown-editor-monaco.component';
 import { Annotation } from 'app/exercises/programming/shared/code-editor/monaco/code-editor-monaco.component';
 import { FormulaAction } from 'app/shared/monaco-editor/model/actions/formula.action';
@@ -37,7 +38,7 @@ import { TextEditorDomainAction } from 'app/shared/monaco-editor/model/actions/t
 import { NgClass } from '@angular/common';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
-import { NgbModal, NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
+import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { ProgrammingExerciseInstructionAnalysisComponent } from './analysis/programming-exercise-instruction-analysis.component';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { RewriteAction } from 'app/shared/monaco-editor/model/actions/artemis-intelligence/rewrite.action';
@@ -73,7 +74,6 @@ export class ProgrammingExerciseEditableInstructionComponent implements AfterVie
     private testCaseService = inject(ProgrammingExerciseGradingService);
     private profileService = inject(ProfileService);
     private artemisIntelligenceService = inject(ArtemisIntelligenceService);
-    private modalService = inject(NgbModal);
 
     participationValue: Participation;
     programmingExercise: ProgrammingExercise;
@@ -91,13 +91,16 @@ export class ProgrammingExerciseEditableInstructionComponent implements AfterVie
         this.irisEnabled()
             ? [
                   new RewriteAction(this.artemisIntelligenceService, RewritingVariant.PROBLEM_STATEMENT, this.courseId),
-                  ...(this.exerciseId ? [new ConsistencyCheckAction(this.artemisIntelligenceService, this.modalService, this.exerciseId)] : []),
+                  ...(this.exerciseId ? [new ConsistencyCheckAction(this.artemisIntelligenceService, this.exerciseId, this.renderedConsistencyCheckResultMarkdown)] : []),
               ]
             : [],
     );
 
     savingInstructions = false;
     unsavedChangesValue = false;
+
+    renderedConsistencyCheckResultMarkdown = signal<string>('');
+    showConsistencyCheck = computed(() => !!this.renderedConsistencyCheckResultMarkdown());
 
     testCaseSubscription: Subscription;
     forceRenderSubscription: Subscription;
@@ -152,7 +155,6 @@ export class ProgrammingExerciseEditableInstructionComponent implements AfterVie
     faCheckCircle = faCheckCircle;
     faExclamationTriangle = faExclamationTriangle;
     faCircleNotch = faCircleNotch;
-    faGripLines = faGripLines;
 
     protected readonly MarkdownEditorHeight = MarkdownEditorHeight;
 
@@ -228,6 +230,10 @@ export class ProgrammingExerciseEditableInstructionComponent implements AfterVie
             this.unsavedChanges = true;
         }
         this.instructionChange.emit(problemStatement);
+    }
+
+    dismissConsistencyCheck() {
+        this.renderedConsistencyCheckResultMarkdown.set('');
     }
 
     /**
