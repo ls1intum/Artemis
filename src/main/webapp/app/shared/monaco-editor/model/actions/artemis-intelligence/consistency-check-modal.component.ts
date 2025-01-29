@@ -13,13 +13,11 @@ export class ConsistencyCheckModalComponent {
     private activeModal = inject(NgbActiveModal);
     private sanitizer = inject(DomSanitizer);
 
-    isLoading = signal(true);
     renderedMarkdown = signal<SafeHtml>('');
 
     setResponse(response: string) {
         const renderedResponse = htmlForMarkdown(response);
         this.renderedMarkdown.set(this.sanitizer.bypassSecurityTrustHtml(renderedResponse));
-        this.isLoading.set(false);
     }
 
     dismiss(): void {
