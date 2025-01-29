@@ -85,33 +85,61 @@ jobs:
 
       - name: Setup VPN
         env:
-          VPN_CONFIG: ${{ github.event.inputs.vpn_config }}
+          VPN_CONFIG: ${{  github.event.inputs.vpn_config }}
         run: |
+          # Install OpenVPN
           sudo apt-get update
           sudo apt-get install -y openvpn
-          
+      
           # Save VPN config
           echo "$VPN_CONFIG" > /tmp/config.ovpn
           
-          # If using credentials, create auth file
-          echo "$VPN_USERNAME" > /tmp/vpn-creds
-          echo "$VPN_PASSWORD" >> /tmp/vpn-creds
+          # Debug: Check config file
+          echo "Checking VPN config file:"
+          cat /tmp/config.ovpn
           
-          # Start VPN in background
-          sudo openvpn --config /tmp/config.ovpn --auth-user-pass /tmp/vpn-creds --daemon
+          # Start VPN with verbose logging
+          echo "Starting OpenVPN..."
+          sudo openvpn --config /tmp/config.ovpn --daemon --log /tmp/vpn.log --verb 4
           
-          # Wait for VPN connection
+          # Wait for VPN to initialize
           echo "Waiting for VPN connection..."
           sleep 30
           
-          # Test connection
+          # Debug: Check VPN status
+          echo "VPN log:"
+          sudo cat /tmp/vpn.log
+          
+          # Check if tun interface is created
+          echo "Network interfaces:"
+          ip a
+          
+          # Test connection to target
+          echo "Testing connection..."
           ping -c 1 172.24.70.146 || {
-            echo "Failed to establish VPN connection"
+            echo "VPN connection failed"
+            echo "Latest VPN logs:"
+            sudo tail -n 50 /tmp/vpn.log
             exit 1
           }
           
+          # If we get here, VPN is working
           echo "VPN connection established"
-
+        
+      - name: Debug Network
+        if: failure()
+        run: |
+          echo "Network route table:"
+          ip route
+          
+          echo "DNS resolution:"
+          cat /etc/resolv.conf
+          
+          echo "Can we reach the VPN server?"
+          ping -c 1 eduvpn-n19.srv.lrz.de || true
+          
+          echo "OpenVPN status:"
+          sudo systemctl status openvpn || true
       - name: Setup SSH
         env:
           DEPLOYMENT_SSH_KEY: ${{ secrets.DEPLOYMENT_SSH_KEY }}
