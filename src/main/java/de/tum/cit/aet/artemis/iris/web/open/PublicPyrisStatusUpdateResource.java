@@ -190,7 +190,7 @@ public class PublicPyrisStatusUpdateResource {
      * @throws AccessForbiddenException if the token is invalid
      * @return a {@link ResponseEntity} with status {@code 200 (OK)}
      */
-    @PostMapping("pipelines/consistency-check/runs/{runId}/status")
+    @PostMapping("pipelines/inconsistency-check/runs/{runId}/status")
     @EnforceNothing
     public ResponseEntity<Void> setConsistencyCheckJobStatus(@PathVariable String runId, @RequestBody PyrisConsistencyCheckStatusUpdateDTO statusUpdateDTO,
             HttpServletRequest request) {
