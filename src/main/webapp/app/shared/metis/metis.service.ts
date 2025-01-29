@@ -55,7 +55,7 @@ export class MetisService implements OnDestroy {
     private user: User;
     private pageType: PageType;
     private courseId: number;
-    cachedPosts: Post[] = [];
+    private cachedPosts: Post[] = [];
     private cachedTotalNumberOfPosts: number;
     private subscriptionChannel?: string;
 
