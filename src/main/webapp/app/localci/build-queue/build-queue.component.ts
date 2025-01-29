@@ -2,7 +2,7 @@ import { Component, OnDestroy, OnInit, ViewChild, inject } from '@angular/core';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { BuildJob, BuildJobStatistics, FinishedBuildJob, SpanType } from 'app/entities/programming/build-job.model';
 import { faAngleDown, faAngleRight, faCircleCheck, faExclamationCircle, faExclamationTriangle, faFilter, faSort, faSync, faTimes } from '@fortawesome/free-solid-svg-icons';
-import { JhiWebsocketService } from 'app/core/websocket/websocket.service';
+import { WebsocketService } from 'app/core/websocket/websocket.service';
 import { BuildQueueService } from 'app/localci/build-queue/build-queue.service';
 import { debounceTime, distinctUntilChanged, map, switchMap, take, tap } from 'rxjs/operators';
 import { TriggeredByPushTo } from 'app/entities/programming/repository-info.model';
@@ -145,7 +145,7 @@ export enum FinishedBuildJobFilterStorageKey {
 })
 export class BuildQueueComponent implements OnInit, OnDestroy {
     private route = inject(ActivatedRoute);
-    private websocketService = inject(JhiWebsocketService);
+    private websocketService = inject(WebsocketService);
     private buildQueueService = inject(BuildQueueService);
     private alertService = inject(AlertService);
     private modalService = inject(NgbModal);

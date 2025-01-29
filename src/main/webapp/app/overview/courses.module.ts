@@ -1,6 +1,5 @@
 import { NgModule } from '@angular/core';
 import { ArtemisSharedModule } from 'app/shared/shared.module';
-import { ArtemisSidePanelModule } from 'app/shared/side-panel/side-panel.module';
 import { CourseLectureRowComponent } from 'app/overview/course-lectures/course-lecture-row.component';
 import { OrionModule } from 'app/shared/orion/orion.module';
 
@@ -13,7 +12,6 @@ import { ArtemisComplaintsModule } from 'app/complaints/complaints.module';
 import { CourseLecturesComponent } from 'app/overview/course-lectures/course-lectures.component';
 import { ArtemisCoursesRoutingModule } from 'app/overview/courses-routing.module';
 import { ArtemisSharedPipesModule } from 'app/shared/pipes/shared-pipes.module';
-import { RatingModule } from 'app/exercises/shared/rating/rating.module';
 import { ArtemisExerciseButtonsModule } from 'app/overview/exercise-details/exercise-buttons.module';
 import { ArtemisCourseExerciseRowModule } from 'app/overview/course-exercises/course-exercise-row.module';
 import { NgxChartsModule, PieChartModule } from '@swimlane/ngx-charts';
@@ -27,12 +25,10 @@ import { SearchFilterComponent } from 'app/shared/search-filter/search-filter.co
         ArtemisCourseExerciseRowModule,
         ArtemisSharedModule,
         ArtemisSharedPipesModule,
-        ArtemisSidePanelModule,
         ArtemisCoursesRoutingModule,
         ArtemisHeaderExercisePageWithDetailsModule,
         OrionModule,
         ArtemisComplaintsModule,
-        RatingModule,
         NgxChartsModule,
         PieChartModule,
         ArtemisSidebarModule,

@@ -1,7 +1,7 @@
 import { HttpClient } from '@angular/common/http';
 import { Injectable, computed, inject, signal } from '@angular/core';
 import { Observable } from 'rxjs';
-import { JhiWebsocketService } from 'app/core/websocket/websocket.service';
+import { WebsocketService } from 'app/core/websocket/websocket.service';
 import RewritingVariant from 'app/shared/monaco-editor/model/actions/artemis-intelligence/rewriting-variant';
 import { AlertService } from 'app/core/util/alert.service';
 
@@ -14,7 +14,7 @@ export class ArtemisIntelligenceService {
     public resourceUrl = 'api';
 
     private http = inject(HttpClient);
-    private jhiWebsocketService = inject(JhiWebsocketService);
+    private jhiWebsocketService = inject(WebsocketService);
     private alertService = inject(AlertService);
 
     private isLoadingRewrite = signal<boolean>(false);
@@ -32,11 +32,9 @@ export class ArtemisIntelligenceService {
         this.isLoadingRewrite.set(true);
         return new Observable<string>((observer) => {
             this.http
-                .post(`${this.resourceUrl}/courses/${courseId}/rewrite-text`, null, {
-                    params: {
-                        toBeRewritten: toBeRewritten,
-                        variant: rewritingVariant,
-                    },
+                .post(`${this.resourceUrl}/${courseId}/rewrite-text`, {
+                    toBeRewritten: toBeRewritten,
+                    variant: rewritingVariant,
                 })
                 .subscribe({
                     next: () => {

@@ -16,7 +16,6 @@ import { IrisModule } from 'app/iris/iris.module';
 import { TaxonomySelectComponent } from 'app/course/competencies/taxonomy-select/taxonomy-select.component';
 import { CompetencyAccordionComponent } from 'app/course/competencies/competency-accordion/competency-accordion.component';
 import { ArtemisCourseExerciseRowModule } from 'app/overview/course-exercises/course-exercise-row.module';
-import { RatingModule } from 'app/exercises/shared/rating/rating.module';
 import { JudgementOfLearningRatingComponent } from 'app/course/competencies/judgement-of-learning-rating/judgement-of-learning-rating.component';
 import { CompetencyManagementTableComponent } from 'app/course/competencies/competency-management/competency-management-table.component';
 import { CompetencySearchComponent } from 'app/course/competencies/import/competency-search.component';
@@ -37,7 +36,6 @@ import { ArtemisMarkdownEditorModule } from 'app/shared/markdown-editor/markdown
         ArtemisMarkdownModule,
         IrisModule,
         ArtemisCourseExerciseRowModule,
-        RatingModule,
         JudgementOfLearningRatingComponent,
         CompetencyManagementTableComponent,
         ArtemisMarkdownEditorModule,

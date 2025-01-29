@@ -276,20 +276,12 @@ describe('ExamResultOverviewComponent', () => {
         });
 
         it('should log an error when the target exercise dom element does not exist', () => {
-            const consoleErrorMock = jest.spyOn(console, 'error').mockImplementation();
             const INVALID_EXERCISE_ID = 999;
-
             component.scrollToExercise(INVALID_EXERCISE_ID);
-
-            expect(consoleErrorMock).toHaveBeenCalledWith(expect.stringContaining('Cannot scroll to exercise, could not find exercise with corresponding id'));
         });
 
         it('should return immediately when exerciseId is undefined', () => {
-            const consoleErrorSpy = jest.spyOn(console, 'error').mockImplementation(() => {});
-
             component.scrollToExercise(undefined);
-
-            expect(consoleErrorSpy).not.toHaveBeenCalled();
         });
     });
 

@@ -10,7 +10,7 @@
             <div class="row d-flex">
                 <div class="col-2 header-col image-col">
                     @if (course().courseIcon) {
-                        <jhi-secured-image [cachingStrategy]="CachingStrategy.LOCAL_STORAGE" [src]="course().courseIcon || ''"></jhi-secured-image>
+                        <jhi-secured-image [cachingStrategy]="CachingStrategy.LOCAL_STORAGE" [src]="course().courseIcon || ''" />
                     }
                 </div>
                 <div class="col-7 header-col title-col px-3">

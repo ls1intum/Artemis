@@ -315,9 +315,6 @@ export abstract class TextEditorAction implements Disposable {
                 next: (message) => {
                     this.replaceTextAtRange(editor, new TextEditorRange(new TextEditorPosition(1, 1), this.getEndPosition(editor)), message);
                 },
-                error: (error) => {
-                    console.error('Error during rewriting:', error);
-                },
             });
         }
     }
