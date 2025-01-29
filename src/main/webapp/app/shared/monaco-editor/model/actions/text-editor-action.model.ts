@@ -13,7 +13,6 @@ import { ArtemisIntelligenceService } from 'app/shared/monaco-editor/model/actio
 import { ConsistencyCheckModalComponent } from 'app/shared/monaco-editor/model/actions/artemis-intelligence/consistency-check-modal.component';
 
 export abstract class TextEditorAction implements Disposable {
-    modalService;
     id: string;
     label: string;
     translationKey: string;
@@ -40,13 +39,12 @@ export abstract class TextEditorAction implements Disposable {
      * @param hideInEditor Whether to hide the action in the editor toolbar. Defaults to false.
      * @param ngbModal
      */
-    constructor(id: string, translationKey: string, icon?: IconDefinition, keybindings?: TextEditorKeybinding[], hideInEditor?: boolean, ngbModal?: NgbModal) {
+    constructor(id: string, translationKey: string, icon?: IconDefinition, keybindings?: TextEditorKeybinding[], hideInEditor?: boolean) {
         this.id = id;
         this.translationKey = translationKey;
         this.icon = icon;
         this.keybindings = keybindings;
         this.hideInEditor = hideInEditor ?? false;
-        this.modalService = ngbModal;
     }
 
     /**
@@ -319,12 +317,12 @@ export abstract class TextEditorAction implements Disposable {
         }
     }
 
-    consistencyCheck(editor: TextEditor, artemisIntelligence: ArtemisIntelligenceService, exerciseId: number): void {
+    consistencyCheck(editor: TextEditor, artemisIntelligence: ArtemisIntelligenceService, modalService: NgbModal, exerciseId: number): void {
         const text = editor.getFullText();
         if (text) {
             artemisIntelligence.consistencyCheck(exerciseId).subscribe({
                 next: (message) => {
-                    const modalRef = this.modalService!.open(ConsistencyCheckModalComponent);
+                    const modalRef = modalService.open(ConsistencyCheckModalComponent);
                     modalRef.componentInstance.response = message;
                 },
             });

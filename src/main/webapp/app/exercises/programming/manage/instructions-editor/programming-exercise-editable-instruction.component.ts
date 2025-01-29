@@ -37,7 +37,7 @@ import { TextEditorDomainAction } from 'app/shared/monaco-editor/model/actions/t
 import { NgClass } from '@angular/common';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
-import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
+import { NgbModal, NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { ProgrammingExerciseInstructionAnalysisComponent } from './analysis/programming-exercise-instruction-analysis.component';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { RewriteAction } from 'app/shared/monaco-editor/model/actions/artemis-intelligence/rewrite.action';
@@ -73,6 +73,7 @@ export class ProgrammingExerciseEditableInstructionComponent implements AfterVie
     private testCaseService = inject(ProgrammingExerciseGradingService);
     private profileService = inject(ProfileService);
     private artemisIntelligenceService = inject(ArtemisIntelligenceService);
+    private modalService = inject(NgbModal);
 
     participationValue: Participation;
     programmingExercise: ProgrammingExercise;
@@ -90,7 +91,7 @@ export class ProgrammingExerciseEditableInstructionComponent implements AfterVie
         this.irisEnabled()
             ? [
                   new RewriteAction(this.artemisIntelligenceService, RewritingVariant.PROBLEM_STATEMENT, this.courseId),
-                  ...(this.exerciseId ? [new ConsistencyCheckAction(this.artemisIntelligenceService, this.exerciseId)] : []),
+                  ...(this.exerciseId ? [new ConsistencyCheckAction(this.artemisIntelligenceService, this.modalService, this.exerciseId)] : []),
               ]
             : [],
     );
