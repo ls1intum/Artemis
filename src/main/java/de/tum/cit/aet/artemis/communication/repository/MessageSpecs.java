@@ -15,6 +15,7 @@ import org.springframework.data.jpa.domain.Specification;
 
 import de.tum.cit.aet.artemis.communication.domain.AnswerPost;
 import de.tum.cit.aet.artemis.communication.domain.AnswerPost_;
+import de.tum.cit.aet.artemis.communication.domain.DisplayPriority;
 import de.tum.cit.aet.artemis.communication.domain.Post;
 import de.tum.cit.aet.artemis.communication.domain.PostSortCriterion;
 import de.tum.cit.aet.artemis.communication.domain.Post_;
@@ -237,7 +238,7 @@ public class MessageSpecs {
             if (!pinnedOnly) {
                 return null;
             }
-            return criteriaBuilder.equal(root.get(Post_.DISPLAY_PRIORITY), "PINNED");
+            return criteriaBuilder.equal(root.get(Post_.DISPLAY_PRIORITY), DisplayPriority.PINNED.name());
         };
     }
 }
