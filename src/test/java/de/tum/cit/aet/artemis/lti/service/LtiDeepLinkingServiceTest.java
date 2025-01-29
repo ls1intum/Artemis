@@ -34,7 +34,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 
 import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
-import de.tum.cit.aet.artemis.core.repository.CourseRepository;
+import de.tum.cit.aet.artemis.core.test_repository.CourseTestRepository;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.repository.ExerciseTestRepository;
 import de.tum.cit.aet.artemis.lecture.repository.LectureRepository;
@@ -46,7 +46,7 @@ import uk.ac.ox.ctl.lti13.lti.Claims;
 class LtiDeepLinkingServiceTest {
 
     @Mock
-    private CourseRepository courseRepository;
+    private CourseTestRepository courseRepository;
 
     @Mock
     private ExerciseTestRepository exerciseRepository;
