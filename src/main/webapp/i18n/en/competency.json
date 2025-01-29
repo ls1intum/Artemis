@@ -161,12 +161,12 @@
                 "selfRelation": "You can not create a relation between a competency and itself.",
                 "relationAlreadyExists": "This relation already exists.",
                 "type": {
-                    "REQUIRES": "Requires",
+                    "ASSUMES": "Requires",
                     "EXTENDS": "Extends",
                     "MATCHES": "Matches"
                 },
                 "typeExplanation": {
-                    "REQUIRES": "The head competency requires the student to master the tail competency and teaches new knowledge that builds upon the tail competency.",
+                    "ASSUMES": "The head competency requires the student to master the tail competency and teaches new knowledge that builds upon the tail competency.",
                     "EXTENDS": "The head competency requires the student to master the tail competency and deepens that knowledge further.",
                     "MATCHES": "The head and tail competency match and cover the same knowledge."
                 }
@@ -254,7 +254,7 @@
             "relations": {
                 "modalTitle": "Course competency relations",
                 "relationTypes": {
-                    "REQUIRES": "Requires",
+                    "ASSUMES": "Requires",
                     "EXTENDS": "Extends",
                     "MATCHES": "Matches"
                 },
