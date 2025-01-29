@@ -18,6 +18,7 @@ import {
     MetisWebsocketChannelPrefix,
     PageType,
     PostContextFilter,
+    PostSortCriterion,
     RouteComponents,
     SortDirection,
 } from 'app/shared/metis/metis.util';
@@ -296,7 +297,10 @@ export class MetisService implements OnDestroy {
 
     public fetchAllPinnedPosts(conversationId: number): Observable<Post[]> {
         const pinnedFilter: PostContextFilter = {
-            conversationId,
+            courseId: this.courseId,
+            conversationId: conversationId,
+            postSortCriterion: PostSortCriterion.CREATION_DATE,
+            sortingOrder: SortDirection.DESCENDING,
             pinnedOnly: true,
             pagingEnabled: false,
         };
