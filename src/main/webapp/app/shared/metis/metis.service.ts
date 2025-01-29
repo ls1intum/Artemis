@@ -263,7 +263,6 @@ export class MetisService implements OnDestroy {
                 const indexToUpdate = this.cachedPosts.findIndex((cachedPost) => cachedPost.id === updatedPost.id);
                 if (indexToUpdate > -1) {
                     updatedPost.answers = [...(this.cachedPosts[indexToUpdate].answers ?? [])];
-                    updatedPost.authorRole = this.cachedPosts[indexToUpdate].authorRole;
                     this.cachedPosts[indexToUpdate] = updatedPost;
                     this.posts$.next(this.cachedPosts);
                     this.totalNumberOfPosts$.next(this.cachedTotalNumberOfPosts);
@@ -324,6 +323,8 @@ export class MetisService implements OnDestroy {
             tap((updatedPost: Post) => {
                 const currentPinnedPosts = this.pinnedPosts$.getValue();
                 if (displayPriority === DisplayPriority.PINNED) {
+                    const indexToUpdate = this.cachedPosts.findIndex((cachedPost) => cachedPost.id === updatedPost.id);
+                    updatedPost.authorRole = this.cachedPosts[indexToUpdate].authorRole;
                     this.pinnedPosts$.next([...currentPinnedPosts, updatedPost]);
                 } else {
                     this.pinnedPosts$.next(currentPinnedPosts.filter((post) => post.id !== postId));
