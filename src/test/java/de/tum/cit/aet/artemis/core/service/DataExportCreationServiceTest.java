@@ -236,8 +236,9 @@ class DataExportCreationServiceTest extends AbstractSpringIntegrationJenkinsGitl
 
         Set<ScienceEvent> actual = new HashSet<>();
 
-        try (var reader = Files.newBufferedReader(extractedZipDirPath.resolve("science_events.csv"));
-                var csvParser = new CSVParser(reader, CSVFormat.DEFAULT.builder().setHeader().setSkipHeaderRecord(true).build())) {
+        final var format = CSVFormat.DEFAULT.builder().setHeader().setSkipHeaderRecord(true).get();
+
+        try (var reader = Files.newBufferedReader(extractedZipDirPath.resolve("science_events.csv")); var csvParser = CSVParser.parse(reader, format)) {
             var records = csvParser.getRecords();
             assertThat(records.size()).isEqualTo(events.size());
             for (var record : records) {

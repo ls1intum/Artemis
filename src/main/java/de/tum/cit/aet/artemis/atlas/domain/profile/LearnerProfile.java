@@ -11,17 +11,27 @@ import jakarta.persistence.OneToMany;
 import jakarta.persistence.OneToOne;
 import jakarta.persistence.Table;
 
+import org.hibernate.annotations.Cache;
+import org.hibernate.annotations.CacheConcurrencyStrategy;
+
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.fasterxml.jackson.annotation.JsonInclude;
+
 import de.tum.cit.aet.artemis.core.domain.DomainObject;
 import de.tum.cit.aet.artemis.core.domain.User;
 
 @Entity
 @Table(name = "learner_profile")
+@Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
+@JsonInclude(JsonInclude.Include.NON_EMPTY)
 public class LearnerProfile extends DomainObject {
 
+    @JsonIgnoreProperties("learnerProfile")
     @OneToOne(mappedBy = "learnerProfile", cascade = CascadeType.PERSIST)
     private User user;
 
     @OneToMany(mappedBy = "learnerProfile", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
+    @JsonIgnoreProperties("learnerProfile")
     private Set<CourseLearnerProfile> courseLearnerProfiles = new HashSet<>();
 
     public void setUser(User user) {

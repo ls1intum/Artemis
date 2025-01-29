@@ -101,6 +101,7 @@ export class UnreferencedFeedbackDetailComponent implements OnInit {
     }
 
     updateFeedbackOnDrop(event: Event) {
+        event.stopPropagation();
         this.structuredGradingCriterionService.updateFeedbackWithStructuredGradingInstructionEvent(this.feedback, event);
         this.onFeedbackChange.emit(this.feedback);
     }

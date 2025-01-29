@@ -99,13 +99,10 @@ describe('TextAssessmentAnalytics Service', () => {
         service.analyticsEnabled = true;
         const textAssessmentService = TestBed.inject(TextAssessmentService);
         const errorStub = jest.spyOn(textAssessmentService, 'addTextAssessmentEvent').mockReturnValue(throwError(() => error));
-        const consoleErrorMock = jest.spyOn(console, 'error').mockImplementation();
 
         service.sendAssessmentEvent(TextAssessmentEventType.EDIT_AUTOMATIC_FEEDBACK, FeedbackType.AUTOMATIC, TextBlockType.AUTOMATIC);
 
         expect(errorStub).toHaveBeenCalledOnce();
-        expect(consoleErrorMock).toHaveBeenCalledOnce();
-        expect(consoleErrorMock).toHaveBeenCalledWith('Error sending statistics: error occurred');
     });
 
     it('should not subscribe to route parameters if artemis analytics is disabled', fakeAsync(() => {

@@ -94,6 +94,7 @@ export class CourseManagementAPIRequests {
         };
 
         if (iconFileName) {
+            // @ts-ignore
             multipart['file'] = {
                 name: iconFileName,
                 mimeType: 'application/octet-stream',

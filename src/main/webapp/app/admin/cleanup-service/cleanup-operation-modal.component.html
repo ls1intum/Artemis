@@ -29,9 +29,9 @@
                     : {{ counts[key] }}
                     @if (operationExecuted) {
                         @if (counts[key] > 0) {
-                            <fa-icon [icon]="faTimes" class="text-danger"></fa-icon>
+                            <fa-icon [icon]="faTimes" class="text-danger" />
                         } @else {
-                            <fa-icon [icon]="faCheckCircle" class="text-success"></fa-icon>
+                            <fa-icon [icon]="faCheckCircle" class="text-success" />
                         }
                     }
                 </li>
