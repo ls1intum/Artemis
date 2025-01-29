@@ -17,7 +17,7 @@
                 "tooltip": "Artemis Intelligence",
                 "commands": {
                     "rewrite": "Umformulieren",
-                    "consistencyCheck": "Plausibilität prüfen"
+                    "consistencyCheck": "Konsistenz prüfen"
                 },
                 "modals": {
                     "consistencyCheckTitle": "Ergebnis der Plausibilitätsprüfung"
