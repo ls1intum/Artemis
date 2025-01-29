@@ -30,6 +30,7 @@ import { MockAlertService } from '../../helpers/mocks/service/mock-alert.service
 import { MarkdownEditorMonacoComponent } from 'app/shared/markdown-editor/monaco/markdown-editor-monaco.component';
 import { ActivatedRoute, convertToParamMap } from '@angular/router';
 import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
+import { ProfileInfo } from '../../../../../main/webapp/app/shared/layouts/profiles/profile-info.model';
 
 describe('ProgrammingExerciseEditableInstructionComponent', () => {
     let comp: ProgrammingExerciseEditableInstructionComponent;
