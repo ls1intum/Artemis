@@ -32,7 +32,7 @@ export class ArtemisIntelligenceService {
         this.isLoadingRewrite.set(true);
         return new Observable<string>((observer) => {
             this.http
-                .post(`${this.resourceUrl}/${courseId}/rewrite-text`, {
+                .post(`${this.resourceUrl}/courses/${courseId}/rewrite-text`, {
                     toBeRewritten: toBeRewritten,
                     variant: rewritingVariant,
                 })
@@ -65,40 +65,34 @@ export class ArtemisIntelligenceService {
         });
     }
 
-    consistencyCheck(toBeChecked: string, courseId: number, exerciseId: number): Observable<string> {
+    consistencyCheck(exerciseId: number): Observable<string> {
         this.isLoadingConsistencyCheck.set(true);
         return new Observable<string>((observer) => {
-            this.http
-                .post(`${this.resourceUrl}/exercises/${courseId}/${exerciseId}/consistency-check`, null, {
-                    params: {
-                        toBeChecked: toBeChecked,
-                    },
-                })
-                .subscribe({
-                    next: () => {
-                        const websocketTopic = `/user/topic/iris/consistency-check/${courseId}/${exerciseId}`;
-                        this.jhiWebsocketService.subscribe(websocketTopic);
-                        this.jhiWebsocketService.receive(websocketTopic).subscribe({
-                            next: (update: any) => {
-                                if (update.result) {
-                                    observer.next(update.result);
-                                    observer.complete();
-                                    this.isLoadingConsistencyCheck.set(false);
-                                    this.jhiWebsocketService.unsubscribe(websocketTopic);
-                                }
-                            },
-                            error: (error) => {
-                                observer.error(error);
+            this.http.post(`${this.resourceUrl}/iris/consistency-check/exercises/${exerciseId}`, null).subscribe({
+                next: () => {
+                    const websocketTopic = `/user/topic/iris/consistency-check/exercises/${exerciseId}`;
+                    this.jhiWebsocketService.subscribe(websocketTopic);
+                    this.jhiWebsocketService.receive(websocketTopic).subscribe({
+                        next: (update: any) => {
+                            if (update.result) {
+                                observer.next(update.result);
+                                observer.complete();
                                 this.isLoadingConsistencyCheck.set(false);
                                 this.jhiWebsocketService.unsubscribe(websocketTopic);
-                            },
-                        });
-                    },
-                    error: (error) => {
-                        this.isLoadingConsistencyCheck.set(false);
-                        observer.error(error);
-                    },
-                });
+                            }
+                        },
+                        error: (error) => {
+                            observer.error(error);
+                            this.isLoadingConsistencyCheck.set(false);
+                            this.jhiWebsocketService.unsubscribe(websocketTopic);
+                        },
+                    });
+                },
+                error: (error) => {
+                    this.isLoadingConsistencyCheck.set(false);
+                    observer.error(error);
+                },
+            });
         });
     }
 }

@@ -59,10 +59,10 @@ public class IrisConsistencyCheckService {
      * Executes the consistency check pipeline on Pyris
      *
      * @param user     the user for which the pipeline should be executed
-     * @param course   the course for which the pipeline should be executed
      * @param exercise the exercise for which the pipeline should be executed
      */
-    public void executeConsistencyCheckPipeline(User user, Course course, ProgrammingExercise exercise) {
+    public void executeConsistencyCheckPipeline(User user, ProgrammingExercise exercise) {
+        Course course = exercise.getCourseViaExerciseGroupOrCourseMember();
         // @formatter:off
         pyrisPipelineService.executePipeline(
                 "inconsistency-check",
@@ -70,7 +70,7 @@ public class IrisConsistencyCheckService {
                 Optional.empty(),
                 pyrisJobService.createTokenForJob(token -> new ConsistencyCheckJob(token, course.getId(), exercise.getId(), user.getId())),
                 executionDto -> new PyrisConsistencyCheckPipelineExecutionDTO(executionDto, pyrisDTOService.toPyrisProgrammingExerciseDTO(exercise)),
-                stages -> websocketService.send(user.getLogin(), websocketTopic(course.getId(), exercise.getId()), new PyrisConsistencyCheckStatusUpdateDTO(stages, null, null))
+                stages -> websocketService.send(user.getLogin(), websocketTopic(exercise.getId()), new PyrisConsistencyCheckStatusUpdateDTO(stages, null, null))
         );
         // @formatter:on
     }
@@ -89,13 +89,13 @@ public class IrisConsistencyCheckService {
         }
 
         var user = userRepository.findById(job.userId()).orElseThrow();
-        websocketService.send(user.getLogin(), websocketTopic(job.courseId(), job.exerciseId()), statusUpdate);
+        websocketService.send(user.getLogin(), websocketTopic(job.exerciseId()), statusUpdate);
 
         return job;
     }
 
-    private static String websocketTopic(long courseId, long exerciseId) {
-        return "consistency-check/" + courseId + "/" + exerciseId;
+    private static String websocketTopic(long exerciseId) {
+        return "consistency-check/exercises/" + exerciseId;
     }
 
 }

@@ -12,7 +12,6 @@ export class ConsistencyCheckAction extends TextEditorAction {
 
     constructor(
         private readonly artemisIntelligenceService: ArtemisIntelligenceService,
-        private readonly courseId: number,
         private readonly exerciseId: number,
     ) {
         super(ConsistencyCheckAction.ID, 'artemisApp.markdownEditor.artemisIntelligence.commands.consistencyCheck');
@@ -23,6 +22,6 @@ export class ConsistencyCheckAction extends TextEditorAction {
      * @param editor The editor in which to rewrite the markdown.
      */
     run(editor: TextEditor): void {
-        this.consistencyCheck(editor, this.artemisIntelligenceService, this.courseId, this.exerciseId);
+        this.consistencyCheck(editor, this.artemisIntelligenceService, this.exerciseId);
     }
 }

@@ -90,7 +90,7 @@ export class ProgrammingExerciseEditableInstructionComponent implements AfterVie
         this.irisEnabled()
             ? [
                   new RewriteAction(this.artemisIntelligenceService, RewritingVariant.PROBLEM_STATEMENT, this.courseId),
-                  ...(this.exerciseId ? [new ConsistencyCheckAction(this.artemisIntelligenceService, this.courseId, this.exerciseId)] : []),
+                  ...(this.exerciseId ? [new ConsistencyCheckAction(this.artemisIntelligenceService, this.exerciseId)] : []),
               ]
             : [],
     );
