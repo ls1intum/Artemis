@@ -85,11 +85,11 @@ examples.forEach((activeConversation) => {
             Object.defineProperty(metisConversationService, 'course', { get: () => course });
             Object.defineProperty(metisConversationService, 'activeConversation$', { get: () => new BehaviorSubject(activeConversation).asObservable() });
             Object.defineProperty(metisService, 'getPinnedPosts', {
-                value: () => of([]), // Provide a stub Observable return
+                value: () => of([]),
             });
 
             Object.defineProperty(metisService, 'fetchAllPinnedPosts', {
-                value: () => of([]), // Or return of([somePinnedPost])
+                value: () => of([]),
             });
 
             fixture = TestBed.createComponent(ConversationMessagesComponent);
