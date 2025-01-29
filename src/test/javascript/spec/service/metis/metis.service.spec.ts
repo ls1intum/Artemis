@@ -160,15 +160,80 @@ describe('Metis Service', () => {
             cachedPostsSub.unsubscribe();
         }));
 
-        it('should pin a post', fakeAsync(() => {
-            const postServiceSpy = jest.spyOn(postService, 'updatePostDisplayPriority');
-            const updatedPostSub = metisService.updatePostDisplayPriority(post.id!, DisplayPriority.PINNED).subscribe((updatedPost) => {
-                expect(updatedPost).toEqual({ id: post.id, displayPriority: DisplayPriority.PINNED });
+        it('should pin a post and add it to pinnedPosts$', fakeAsync(() => {
+            let pinnedPostsResult: Post[] = [];
+            const pinnedPostsSubscription = metisService.getPinnedPosts().subscribe((pinned) => {
+                pinnedPostsResult = pinned;
             });
-            expect(postServiceSpy).toHaveBeenCalledOnce();
+
+            const updateSpy = jest
+                .spyOn(postService, 'updatePostDisplayPriority')
+                .mockReturnValue(of(new HttpResponse({ body: { id: 42, displayPriority: DisplayPriority.PINNED } as Post })));
+
+            metisService.updatePostDisplayPriority(post.id!, DisplayPriority.PINNED).subscribe((updatedPost) => {
+                expect(updatedPost).toEqual({
+                    id: 42,
+                    displayPriority: DisplayPriority.PINNED,
+                } as Post);
+            });
+
             tick();
-            expect(metisServiceGetFilteredPostsSpy).not.toHaveBeenCalled();
-            updatedPostSub.unsubscribe();
+
+            expect(pinnedPostsResult).toHaveLength(1);
+            expect(pinnedPostsResult[0].id).toBe(42);
+            expect(pinnedPostsResult[0].displayPriority).toBe(DisplayPriority.PINNED);
+
+            expect(updateSpy).toHaveBeenCalledTimes(1);
+            pinnedPostsSubscription.unsubscribe();
+        }));
+
+        it('should unpin a post and remove it from pinnedPosts$', fakeAsync(() => {
+            const pinnedPost = { id: 42, displayPriority: DisplayPriority.PINNED } as Post;
+            metisService['pinnedPosts$'].next([pinnedPost]);
+
+            let pinnedPostsResult: Post[] = [];
+            const pinnedPostsSubscription = metisService.getPinnedPosts().subscribe((pinned) => {
+                pinnedPostsResult = pinned;
+            });
+
+            const updateSpy = jest
+                .spyOn(postService, 'updatePostDisplayPriority')
+                .mockReturnValue(of(new HttpResponse({ body: { id: 42, displayPriority: DisplayPriority.NONE } as Post })));
+
+            metisService.updatePostDisplayPriority(42, DisplayPriority.NONE).subscribe((updatedPost) => {
+                expect(updatedPost).toEqual({
+                    id: 42,
+                    displayPriority: DisplayPriority.NONE,
+                } as Post);
+            });
+
+            tick();
+
+            expect(pinnedPostsResult).toHaveLength(0);
+            expect(updateSpy).toHaveBeenCalledTimes(1);
+
+            pinnedPostsSubscription.unsubscribe();
+        }));
+
+        it('should fetch pinned posts from server and update pinnedPosts$', fakeAsync(() => {
+            const pinnedPostsMock: Post[] = [{ id: 100, displayPriority: DisplayPriority.PINNED } as Post, { id: 101, displayPriority: DisplayPriority.PINNED } as Post];
+            const getPostsSpy = jest.spyOn(postService, 'getPosts').mockReturnValue(of(new HttpResponse({ body: pinnedPostsMock })));
+
+            let pinnedPostsResult: Post[] = [];
+            const subscription = metisService.getPinnedPosts().subscribe((pinned) => {
+                pinnedPostsResult = pinned;
+            });
+
+            metisService.fetchAllPinnedPosts(post.conversation!.id!).subscribe((fetched) => {
+                expect(fetched).toEqual(pinnedPostsMock);
+            });
+
+            tick();
+
+            expect(pinnedPostsResult).toEqual(pinnedPostsMock);
+            expect(getPostsSpy).toHaveBeenCalledTimes(1);
+
+            subscription.unsubscribe();
         }));
 
         it('should archive a post', fakeAsync(() => {

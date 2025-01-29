@@ -1,6 +1,6 @@
 import { Post } from 'app/entities/metis/post.model';
 import { PostService } from 'app/shared/metis/post.service';
-import { BehaviorSubject, Observable, ReplaySubject, Subscription, map, tap } from 'rxjs';
+import { BehaviorSubject, Observable, ReplaySubject, Subscription, catchError, map, of, tap } from 'rxjs';
 import { HttpResponse } from '@angular/common/http';
 import { User } from 'app/core/user/user.model';
 import { AccountService } from 'app/core/auth/account.service';
@@ -47,6 +47,7 @@ export class MetisService implements OnDestroy {
     private posts$: ReplaySubject<Post[]> = new ReplaySubject<Post[]>(1);
     private tags$: BehaviorSubject<string[]> = new BehaviorSubject<string[]>([]);
     private totalNumberOfPosts$: ReplaySubject<number> = new ReplaySubject<number>(1);
+    private pinnedPosts$: BehaviorSubject<Post[]> = new BehaviorSubject<Post[]>([]);
 
     private currentPostContextFilter: PostContextFilter = {};
     private currentConversation?: ConversationDTO = undefined;
@@ -82,6 +83,10 @@ export class MetisService implements OnDestroy {
 
     get totalNumberOfPosts(): Observable<number> {
         return this.totalNumberOfPosts$.asObservable();
+    }
+
+    getPinnedPosts(): Observable<Post[]> {
+        return this.pinnedPosts$.asObservable();
     }
 
     getCurrentConversation(): ConversationDTO | undefined {
@@ -289,14 +294,37 @@ export class MetisService implements OnDestroy {
         );
     }
 
-    /**
-     * updates the display priority of a post to NONE, PINNED, ARCHIVED
-     * @param {number} postId id of the post for which the displayPriority is changed
-     * @param {DisplayPriority} displayPriority new displayPriority
-     * @return {Observable<Post>} updated post
-     */
+    public fetchAllPinnedPosts(conversationId: number): Observable<Post[]> {
+        const pinnedFilter: PostContextFilter = {
+            conversationId,
+            pinnedOnly: true,
+            pagingEnabled: false,
+        };
+
+        return this.postService.getPosts(this.courseId, pinnedFilter).pipe(
+            map((res: HttpResponse<Post[]>) => res.body ?? []),
+            tap((pinnedPosts: Post[]) => {
+                this.pinnedPosts$.next(pinnedPosts);
+            }),
+            catchError((err) => {
+                this.pinnedPosts$.next([]);
+                return of([]);
+            }),
+        );
+    }
+
     updatePostDisplayPriority(postId: number, displayPriority: DisplayPriority): Observable<Post> {
-        return this.postService.updatePostDisplayPriority(this.courseId, postId, displayPriority).pipe(map((res: HttpResponse<Post>) => res.body!));
+        return this.postService.updatePostDisplayPriority(this.courseId, postId, displayPriority).pipe(
+            map((res: HttpResponse<Post>) => res.body!),
+            tap((updatedPost: Post) => {
+                const currentPinnedPosts = this.pinnedPosts$.getValue();
+                if (displayPriority === DisplayPriority.PINNED) {
+                    this.pinnedPosts$.next([...currentPinnedPosts, updatedPost]);
+                } else {
+                    this.pinnedPosts$.next(currentPinnedPosts.filter((post) => post.id !== postId));
+                }
+            }),
+        );
     }
 
     /**

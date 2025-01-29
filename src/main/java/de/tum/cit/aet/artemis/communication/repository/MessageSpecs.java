@@ -225,4 +225,19 @@ public class MessageSpecs {
             return null;
         };
     }
+
+    /**
+     * Specification to fetch only pinned Posts (DisplayPriority = PINNED)
+     *
+     * @param pinnedOnly whether only pinned posts should be fetched
+     * @return specification used to chain DB operations
+     */
+    public static Specification<Post> getPinnedSpecification(boolean pinnedOnly) {
+        return (root, query, criteriaBuilder) -> {
+            if (!pinnedOnly) {
+                return null;
+            }
+            return criteriaBuilder.equal(root.get(Post_.DISPLAY_PRIORITY), "PINNED");
+        };
+    }
 }
