@@ -60,7 +60,7 @@ jobs:
         url: ${{ vars.DEPLOYMENT_URL }}
     env:
       DEPLOYMENT_HOSTS_PRIMARY: ${{ vars.DEPLOYMENT_HOSTS_PRIMARY}}
-      DEPLOYMENT_HOSTS_SECONDARY: ${{ vars.DEPLOYMENT_HOSTS_SECONDARY }}
+      DEPLOYMENT_HOSTS_SECONDARY: "artemis-staging-localci-node-2.artemis.cit.tum.de artemis-staging-localci-node-3.artemis.cit.tum.de artemis-staging-localci-node-4.artemis.cit.tum.de artemis-staging-localci-node-5.artemis.cit.tum.de"
       DEPLOYMENT_USER: ${{ vars.DEPLOYMENT_USER }}
 
       DEPLOYMENT_FOLDER: ${{ vars.DEPLOYMENT_FOLDER }}
