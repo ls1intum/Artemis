@@ -37,9 +37,8 @@ public record ProjectKeyProgrammingExerciseDTO(Long id, String problemStatement,
                 .map(e -> new ProjectKeyProgrammingExerciseDTO(e.getId(), e.getProblemStatement(), e.getTitle(), e.getShortName(), e.getReleaseDate(), e.getStartDate(),
                         e.getDueDate(), e.getAssessmentDueDate(), e.getMaxPoints(), e.getBonusPoints(), e.getAssessmentType(), e.getAllowComplaintsForAutomaticAssessments(),
                         e.getAllowFeedbackRequests(), e.getDifficulty(), e.getMode(), e.getIncludedInOverallScore(), e.getExerciseType(), e.getExampleSolutionPublicationDate(),
-                        e.getStudentParticipations() == null ? null
-                                : e.getStudentParticipations().stream().map(p -> ProjectKeyStudentParticipationDTO.of((ProgrammingExerciseStudentParticipation) p))
-                                        .collect(Collectors.toSet()),
+                        Optional.ofNullable(e.getStudentParticipations()).orElse(Set.of()).stream()
+                                .map(p -> ProjectKeyStudentParticipationDTO.of((ProgrammingExerciseStudentParticipation) p)).collect(Collectors.toSet()),
                         e.getProjectKey(), e.getProgrammingLanguage(), e.getShowTestNamesToStudents()))
                 .orElse(null);
     }
@@ -51,8 +50,8 @@ public record ProjectKeyProgrammingExerciseDTO(Long id, String problemStatement,
         public static ProjectKeyStudentParticipationDTO of(ProgrammingExerciseStudentParticipation participation) {
             return Optional.ofNullable(participation)
                     .map(p -> new ProjectKeyStudentParticipationDTO(p.getId(), p.getIndividualDueDate(),
-                            p.getSubmissions() == null ? null
-                                    : p.getSubmissions().stream().map(s -> ProjectKeySubmissionDTO.of((ProgrammingSubmission) s)).collect(Collectors.toSet()),
+                            Optional.ofNullable(p.getSubmissions()).orElse(Set.of()).stream().map(s -> ProjectKeySubmissionDTO.of((ProgrammingSubmission) s))
+                                    .collect(Collectors.toSet()),
                             p.getParticipantName(), p.getParticipantIdentifier(), p.getRepositoryUri(), p.getBuildPlanId(), p.getBranch()))
                     .orElse(null);
         }
@@ -65,8 +64,7 @@ public record ProjectKeyProgrammingExerciseDTO(Long id, String problemStatement,
         public static ProjectKeySubmissionDTO of(ProgrammingSubmission submission) {
             return Optional.ofNullable(submission)
                     .map(s -> new ProjectKeySubmissionDTO(s.getId(), s.isSubmitted(), s.getSubmissionDate(), s.getType(), s.isExampleSubmission(), s.getDurationInMinutes(),
-                            s.getResults() == null ? null : s.getResults().stream().map(ProjectKeyResultDTO::of).collect(Collectors.toList()), s.getCommitHash(),
-                            s.isBuildFailed()))
+                            Optional.ofNullable(s.getResults()).orElse(List.of()).stream().map(ProjectKeyResultDTO::of).toList(), s.getCommitHash(), s.isBuildFailed()))
                     .orElse(null);
         }
 
@@ -80,7 +78,7 @@ public record ProjectKeyProgrammingExerciseDTO(Long id, String problemStatement,
             return Optional.ofNullable(result)
                     .map(r -> new ProjectKeyResultDTO(r.getId(), r.getCompletionDate(), r.isSuccessful(), r.getScore(), r.getAssessmentType(), r.isRated(), r.hasComplaint(),
                             r.isExampleResult(), r.getTestCaseCount(), r.getPassedTestCaseCount(), r.getCodeIssueCount(),
-                            r.getFeedbacks() == null ? null : r.getFeedbacks().stream().map(ProjectKeyFeedbackDTO::of).collect(Collectors.toList())))
+                            Optional.ofNullable(r.getFeedbacks()).orElse(List.of()).stream().map(ProjectKeyFeedbackDTO::of).toList()))
                     .orElse(null);
         }
 

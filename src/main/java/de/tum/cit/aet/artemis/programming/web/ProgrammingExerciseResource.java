@@ -574,8 +574,8 @@ public class ProgrammingExerciseResource {
             throw new AccessForbiddenException("You are not allowed to access this exercise");
         }
 
-        studentParticipationRepository.findByExerciseIdAndStudentIdAndTestRunWithEagerSubmissionsResultsFeedbacksTestCases(exercise.getId(), user.getId(), false)
-                .ifPresentOrElse(participation -> exercise.setStudentParticipations(Set.of(participation)), () -> exercise.setStudentParticipations(null));
+        studentParticipationRepository.findByExerciseIdAndStudentIdWithEagerLatestSubmissionLatestResultFeedbacksTestCases(exercise.getId(), user.getId())
+                .ifPresentOrElse(participation -> exercise.setStudentParticipations(Set.of(participation)), () -> exercise.setStudentParticipations(Set.of()));
 
         return ResponseEntity.ok(ProjectKeyProgrammingExerciseDTO.of(exercise));
     }

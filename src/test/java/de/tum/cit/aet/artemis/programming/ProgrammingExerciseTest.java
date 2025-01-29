@@ -259,7 +259,7 @@ class ProgrammingExerciseTest extends AbstractProgrammingIntegrationJenkinsGitla
     void testGetProgrammingExerciseByProjectKey() throws Exception {
         Course course = courseUtilService.createCourseWithUserPrefix(TEST_PREFIX);
         ProgrammingExercise programmingExercise = programmingExerciseUtilService.addProgrammingExerciseToCourse(course);
-        programmingExercise.setReleaseDate(null);
+        programmingExercise.setReleaseDate(ZonedDateTime.now());
         programmingExercise = programmingExerciseRepository.save(programmingExercise);
 
         ProjectKeyProgrammingExerciseDTO programmingExerciseByProjectKey = request.get("/api/programming-exercises/project-key/" + programmingExercise.getProjectKey(),
@@ -275,7 +275,7 @@ class ProgrammingExerciseTest extends AbstractProgrammingIntegrationJenkinsGitla
     void testGetProgrammingExerciseByProjectKeyWithParticipation() throws Exception {
         Course course = courseUtilService.createCourseWithUserPrefix(TEST_PREFIX);
         ProgrammingExercise programmingExercise = programmingExerciseUtilService.addProgrammingExerciseToCourse(course);
-        programmingExercise.setReleaseDate(null);
+        programmingExercise.setReleaseDate(ZonedDateTime.now());
         programmingExercise = programmingExerciseRepository.save(programmingExercise);
         ProgrammingExerciseStudentParticipation participation = participationUtilService.addStudentParticipationForProgrammingExercise(programmingExercise,
                 TEST_PREFIX + "student1");
@@ -297,7 +297,7 @@ class ProgrammingExerciseTest extends AbstractProgrammingIntegrationJenkinsGitla
     void testGetProgrammingExerciseByProjectKeyWithParticipationSubmissionAndResult() throws Exception {
         Course course = courseUtilService.createCourseWithUserPrefix(TEST_PREFIX);
         ProgrammingExercise programmingExercise = programmingExerciseUtilService.addProgrammingExerciseToCourse(course);
-        programmingExercise.setReleaseDate(null);
+        programmingExercise.setReleaseDate(ZonedDateTime.now());
         programmingExercise = programmingExerciseRepository.save(programmingExercise);
         Result result = programmingExerciseUtilService.addProgrammingSubmissionWithResult(programmingExercise, new ProgrammingSubmission(), TEST_PREFIX + "student1");
 
