@@ -743,6 +743,11 @@
                     "addEnvVar": "Umgebungsvariable hinzufügen",
                     "removeEnvVar": "Entfernen"
                 }
+            },
+            "artemisIntelligence": {
+                "consistencyCheckModal": {
+                    "title": "Konsistenzprüfung"
+                }
             }
         },
         "error": {

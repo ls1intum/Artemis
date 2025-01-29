@@ -320,10 +320,11 @@ export abstract class TextEditorAction implements Disposable {
     consistencyCheck(editor: TextEditor, artemisIntelligence: ArtemisIntelligenceService, modalService: NgbModal, exerciseId: number): void {
         const text = editor.getFullText();
         if (text) {
+            const modalRef = modalService.open(ConsistencyCheckModalComponent);
+            const consistencyCheckModalComponent = modalRef.componentInstance as ConsistencyCheckModalComponent;
             artemisIntelligence.consistencyCheck(exerciseId).subscribe({
                 next: (message) => {
-                    const modalRef = modalService.open(ConsistencyCheckModalComponent);
-                    modalRef.componentInstance.response = message;
+                    consistencyCheckModalComponent.setResponse(message);
                 },
             });
         }

@@ -20,9 +20,6 @@
                     "rewrite": "Rewrite",
                     "consistencyCheck": "Check consistency"
                 },
-                "modals": {
-                    "consistencyCheckTitle": "Consistency check response"
-                },
                 "alerts": {
                     "rewrite": {
                         "success": "The text was rewritten. Press Ctrl+Z / Cmd+Z to restore the original text."
