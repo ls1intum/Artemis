@@ -37,7 +37,6 @@ export abstract class TextEditorAction implements Disposable {
      * @param icon The icon to display in the editor toolbar, if any.
      * @param keybindings The keybindings to trigger the action, if any.
      * @param hideInEditor Whether to hide the action in the editor toolbar. Defaults to false.
-     * @param ngbModal
      */
     constructor(id: string, translationKey: string, icon?: IconDefinition, keybindings?: TextEditorKeybinding[], hideInEditor?: boolean) {
         this.id = id;

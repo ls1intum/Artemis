@@ -19,9 +19,6 @@
                     "rewrite": "Umformulieren",
                     "consistencyCheck": "Konsistenz prüfen"
                 },
-                "modals": {
-                    "consistencyCheckTitle": "Ergebnis der Plausibilitätsprüfung"
-                },
                 "alerts": {
                     "rewrite": {
                         "success": "Der Text wurde umgeschrieben. Drücke Strg+Z / Cmd+Z, um den Originaltext wiederherzustellen."

@@ -16,7 +16,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import de.tum.cit.aet.artemis.core.repository.CourseRepository;
 import de.tum.cit.aet.artemis.core.repository.UserRepository;
-import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInExercise.EnforceAtLeastTutorInExercise;
+import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInExercise.EnforceAtLeastEditorInExercise;
 import de.tum.cit.aet.artemis.exercise.repository.ExerciseRepository;
 import de.tum.cit.aet.artemis.iris.service.IrisConsistencyCheckService;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
@@ -45,7 +45,13 @@ public class IrisConsistencyCheckResource {
 
     }
 
-    @EnforceAtLeastTutorInExercise
+    /**
+     * POST /api/iris/consistency-check/exercises/{exerciseId} : Check the consistency of an exercise.
+     *
+     * @param exerciseId the id of the exercise to check
+     * @return the ResponseEntity with status 200 (OK)
+     */
+    @EnforceAtLeastEditorInExercise
     @PostMapping("exercises/{exerciseId}")
     @Transactional
     public ResponseEntity<Void> consistencyCheckExercise(@PathVariable Long exerciseId) {
@@ -55,5 +61,4 @@ public class IrisConsistencyCheckResource {
         consistencyCheckService.executeConsistencyCheckPipeline(user, (ProgrammingExercise) exercise);
         return ResponseEntity.ok().build();
     }
-
 }

@@ -79,7 +79,7 @@ public class IrisConsistencyCheckService {
      * Takes a status update from Pyris containing a new consistency check result and sends it to the client via websocket
      *
      * @param job          Job related to the status update
-     * @param statusUpdate the status update containing text recommendations
+     * @param statusUpdate the status update containing the consistency check result
      * @return the same job that was passed in
      */
     public ConsistencyCheckJob handleStatusUpdate(ConsistencyCheckJob job, PyrisConsistencyCheckStatusUpdateDTO statusUpdate) {
