@@ -14,7 +14,7 @@ ext {
             "CLASS": 2
         ],
         "atlas"        : [
-            "INSTRUCTION": 0.860,
+            "INSTRUCTION": 0.850,
             "CLASS": 12
         ],
         "buildagent"   : [

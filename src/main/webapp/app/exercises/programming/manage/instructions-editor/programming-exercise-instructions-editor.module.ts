@@ -1,6 +1,5 @@
 import { NgModule } from '@angular/core';
 import { ArtemisSharedModule } from 'app/shared/shared.module';
-import { ArtemisProgrammingExerciseInstructionsRenderModule } from 'app/exercises/programming/shared/instructions-render/programming-exercise-instructions-render.module';
 import { ArtemisMarkdownEditorModule } from 'app/shared/markdown-editor/markdown-editor.module';
 import { ArtemisProgrammingExerciseStatusModule } from 'app/exercises/programming/manage/status/programming-exercise-status.module';
 import { ProgrammingExerciseInstructionAnalysisComponent } from 'app/exercises/programming/manage/instructions-editor/analysis/programming-exercise-instruction-analysis.component';
@@ -11,7 +10,6 @@ import { TaskCountWarningComponent } from './analysis/task-count-warning/task-co
 @NgModule({
     imports: [
         ArtemisSharedModule,
-        ArtemisProgrammingExerciseInstructionsRenderModule,
         ArtemisMarkdownEditorModule,
         ArtemisProgrammingExerciseStatusModule,
         ProgrammingExerciseEditableInstructionComponent,
@@ -19,6 +17,6 @@ import { TaskCountWarningComponent } from './analysis/task-count-warning/task-co
         TaskCountWarningComponent,
     ],
     providers: [ProgrammingExerciseInstructionAnalysisService],
-    exports: [ArtemisProgrammingExerciseInstructionsRenderModule, ProgrammingExerciseEditableInstructionComponent],
+    exports: [ProgrammingExerciseEditableInstructionComponent],
 })
 export class ArtemisProgrammingExerciseInstructionsEditorModule {}
