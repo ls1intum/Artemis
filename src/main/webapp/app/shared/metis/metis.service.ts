@@ -55,7 +55,7 @@ export class MetisService implements OnDestroy {
     private user: User;
     private pageType: PageType;
     private courseId: number;
-    private cachedPosts: Post[] = [];
+    cachedPosts: Post[] = [];
     private cachedTotalNumberOfPosts: number;
     private subscriptionChannel?: string;
 
@@ -324,7 +324,9 @@ export class MetisService implements OnDestroy {
                 const currentPinnedPosts = this.pinnedPosts$.getValue();
                 if (displayPriority === DisplayPriority.PINNED) {
                     const indexToUpdate = this.cachedPosts.findIndex((cachedPost) => cachedPost.id === updatedPost.id);
-                    updatedPost.authorRole = this.cachedPosts[indexToUpdate].authorRole;
+                    if (indexToUpdate > -1) {
+                        updatedPost.authorRole = this.cachedPosts[indexToUpdate].authorRole;
+                    }
                     this.pinnedPosts$.next([...currentPinnedPosts, updatedPost]);
                 } else {
                     this.pinnedPosts$.next(currentPinnedPosts.filter((post) => post.id !== postId));

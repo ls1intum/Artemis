@@ -1,4 +1,4 @@
-import { TestBed, fakeAsync, tick } from '@angular/core/testing';
+import { fakeAsync, TestBed, tick } from '@angular/core/testing';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { Post } from 'app/entities/metis/post.model';
 import { Course } from 'app/entities/course.model';
@@ -13,7 +13,7 @@ import { AnswerPost } from 'app/entities/metis/answer-post.model';
 import { ReactionService } from 'app/shared/metis/reaction.service';
 import { MockReactionService } from '../../helpers/mocks/service/mock-reaction.service';
 import { Reaction } from 'app/entities/metis/reaction.model';
-import { DisplayPriority, MetisPostAction, PageType, PostContextFilter } from 'app/shared/metis/metis.util';
+import { DisplayPriority, MetisPostAction, PageType, PostContextFilter, UserRole } from 'app/shared/metis/metis.util';
 import { MockTranslateService } from '../../helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
 import { Router } from '@angular/router';
@@ -23,7 +23,7 @@ import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { MockProvider } from 'ng-mocks';
 import { WebsocketService } from 'app/core/websocket/websocket.service';
 import { MetisPostDTO } from 'app/entities/metis/metis-post-dto.model';
-import { Subject, of } from 'rxjs';
+import { of, Subject } from 'rxjs';
 import {
     metisChannel,
     metisCourse,
@@ -165,15 +165,15 @@ describe('Metis Service', () => {
             const pinnedPostsSubscription = metisService.getPinnedPosts().subscribe((pinned) => {
                 pinnedPostsResult = pinned;
             });
-
             const updateSpy = jest
                 .spyOn(postService, 'updatePostDisplayPriority')
-                .mockReturnValue(of(new HttpResponse({ body: { id: 42, displayPriority: DisplayPriority.PINNED } as Post })));
+                .mockReturnValue(of(new HttpResponse({ body: { id: 42, displayPriority: DisplayPriority.PINNED, authorRole: UserRole.USER } as Post })));
 
             metisService.updatePostDisplayPriority(post.id!, DisplayPriority.PINNED).subscribe((updatedPost) => {
                 expect(updatedPost).toEqual({
                     id: 42,
                     displayPriority: DisplayPriority.PINNED,
+                    authorRole: UserRole.USER,
                 } as Post);
             });
 
