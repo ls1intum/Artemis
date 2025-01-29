@@ -92,11 +92,36 @@ jobs:
           cat - <<< $DEPLOYMENT_HOST_PUBLIC_KEYS >> ~/.ssh/known_hosts
           ssh-add -l || echo "No identities found"
 
+      - name: Test SSH Configuration
+        run: |
+          echo "Testing SSH configuration..."
+          ssh -v -o BatchMode=yes -o ConnectTimeout=10 \
+              -l $DEPLOYMENT_USER $DEPLOYMENT_HOSTS_PRIMARY "echo 'SSH test successful'" || {
+            echo "::error::SSH test failed"
+            exit 1
+          }
+
+      - name: Network Diagnostics
+        run: |
+          for node in $DEPLOYMENT_HOSTS_SECONDARY; do
+            echo "Testing connectivity to $node..."
+            # Try ping
+            ping -c 1 -W 5 $node || echo "Ping failed for $node"
+            
+            # Try telnet to SSH port
+            timeout 5 nc -zv $node 22 || echo "Cannot connect to SSH port on $node"
+            
+            # Try traceroute
+            traceroute -n -w 2 $node || echo "Traceroute failed for $node"
+          done
+
       - name: Phase 1 - Stop Secondary Nodes
         run: |
           for node in $DEPLOYMENT_HOSTS_SECONDARY; do
             echo "[INFO] Stop artemis.service on ${node} ..."
-            ssh -o BatchMode=yes -o StrictHostKeyChecking=accept-new \
+            ssh -v -o BatchMode=yes \
+                -o StrictHostKeyChecking=accept-new \
+                -o ConnectTimeout=30 \
                 -l $DEPLOYMENT_USER $node "sudo systemctl stop artemis" || {
               echo "::error::Failed to stop service on ${node}"
               exit 1
