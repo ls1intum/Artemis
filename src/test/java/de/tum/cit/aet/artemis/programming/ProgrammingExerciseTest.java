@@ -13,6 +13,8 @@ import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -23,6 +25,7 @@ import org.springframework.http.MediaType;
 import org.springframework.security.test.context.support.WithMockUser;
 
 import de.tum.cit.aet.artemis.assessment.domain.AssessmentType;
+import de.tum.cit.aet.artemis.assessment.domain.Result;
 import de.tum.cit.aet.artemis.communication.domain.conversation.Channel;
 import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.exam.domain.StudentExam;
@@ -35,10 +38,13 @@ import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseStudentParticipation;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseTestCase;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingSubmission;
+import de.tum.cit.aet.artemis.programming.dto.ProjectKeyProgrammingExerciseDTO;
 
 class ProgrammingExerciseTest extends AbstractProgrammingIntegrationJenkinsGitlabTest {
 
     private static final String TEST_PREFIX = "peinttest";
+
+    private static final Log log = LogFactory.getLog(ProgrammingExerciseTest.class);
 
     private Long programmingExerciseId;
 
@@ -251,27 +257,64 @@ class ProgrammingExerciseTest extends AbstractProgrammingIntegrationJenkinsGitla
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testGetProgrammingExerciseByProjectKey() throws Exception {
-        Course course = programmingExerciseUtilService.addCourseWithOneProgrammingExercise();
-        ProgrammingExercise programmingExercise = (ProgrammingExercise) course.getExercises().stream().findFirst().orElseThrow();
+        Course course = courseUtilService.createCourseWithUserPrefix(TEST_PREFIX);
+        ProgrammingExercise programmingExercise = programmingExerciseUtilService.addProgrammingExerciseToCourse(course);
+        programmingExercise.setReleaseDate(null);
+        programmingExercise = programmingExerciseRepository.save(programmingExercise);
 
-        ProgrammingExercise programmingExerciseByProjectKey = request.get("/api/programming-exercises/project-key/" + programmingExercise.getProjectKey(), HttpStatus.OK,
-                ProgrammingExercise.class);
-        assertThat(programmingExerciseByProjectKey).isEqualTo(programmingExercise);
-        assertThat(programmingExerciseByProjectKey.getStudentParticipations()).isEmpty();
+        ProjectKeyProgrammingExerciseDTO programmingExerciseByProjectKey = request.get("/api/programming-exercises/project-key/" + programmingExercise.getProjectKey(),
+                HttpStatus.OK, ProjectKeyProgrammingExerciseDTO.class);
+
+        ProjectKeyProgrammingExerciseDTO expectedDTO = ProjectKeyProgrammingExerciseDTO.of(programmingExercise);
+        assertThat(programmingExerciseByProjectKey.id()).isEqualTo(expectedDTO.id());
+        assertThat(programmingExerciseByProjectKey.studentParticipations()).isNull();
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testGetProgrammingExerciseByProjectKeyWithParticipation() throws Exception {
-        Course course = programmingExerciseUtilService.addCourseWithOneProgrammingExercise();
-        ProgrammingExercise programmingExercise = (ProgrammingExercise) course.getExercises().stream().findFirst().orElseThrow();
+        Course course = courseUtilService.createCourseWithUserPrefix(TEST_PREFIX);
+        ProgrammingExercise programmingExercise = programmingExerciseUtilService.addProgrammingExerciseToCourse(course);
+        programmingExercise.setReleaseDate(null);
+        programmingExercise = programmingExerciseRepository.save(programmingExercise);
         ProgrammingExerciseStudentParticipation participation = participationUtilService.addStudentParticipationForProgrammingExercise(programmingExercise,
                 TEST_PREFIX + "student1");
 
-        ProgrammingExercise programmingExerciseByProjectKey = request.get("/api/programming-exercises/project-key/" + programmingExercise.getProjectKey(), HttpStatus.OK,
-                ProgrammingExercise.class);
-        assertThat(programmingExerciseByProjectKey).isEqualTo(programmingExercise);
-        assertThat(programmingExerciseByProjectKey.getStudentParticipations().contains(participation)).isTrue();
+        ProjectKeyProgrammingExerciseDTO programmingExerciseByProjectKey = request.get("/api/programming-exercises/project-key/" + programmingExercise.getProjectKey(),
+                HttpStatus.OK, ProjectKeyProgrammingExerciseDTO.class);
+
+        ProjectKeyProgrammingExerciseDTO expectedDTO = ProjectKeyProgrammingExerciseDTO.of(programmingExercise);
+
+        assertThat(programmingExerciseByProjectKey.id()).isEqualTo(expectedDTO.id());
+        assertThat(programmingExerciseByProjectKey.studentParticipations()).hasSize(1);
+        for (var studentParticipation : programmingExerciseByProjectKey.studentParticipations()) {
+            assertThat(studentParticipation.submissions()).isNull();
+        }
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void testGetProgrammingExerciseByProjectKeyWithParticipationSubmissionAndResult() throws Exception {
+        Course course = courseUtilService.createCourseWithUserPrefix(TEST_PREFIX);
+        ProgrammingExercise programmingExercise = programmingExerciseUtilService.addProgrammingExerciseToCourse(course);
+        programmingExercise.setReleaseDate(null);
+        programmingExercise = programmingExerciseRepository.save(programmingExercise);
+        Result result = programmingExerciseUtilService.addProgrammingSubmissionWithResult(programmingExercise, new ProgrammingSubmission(), TEST_PREFIX + "student1");
+
+        ProjectKeyProgrammingExerciseDTO programmingExerciseByProjectKey = request.get("/api/programming-exercises/project-key/" + programmingExercise.getProjectKey(),
+                HttpStatus.OK, ProjectKeyProgrammingExerciseDTO.class);
+
+        ProjectKeyProgrammingExerciseDTO expectedDTO = ProjectKeyProgrammingExerciseDTO.of(programmingExercise);
+
+        assertThat(programmingExerciseByProjectKey.id()).isEqualTo(expectedDTO.id());
+        assertThat(programmingExerciseByProjectKey.studentParticipations()).hasSize(1);
+        for (var studentParticipation : programmingExerciseByProjectKey.studentParticipations()) {
+            assertThat(studentParticipation.submissions()).hasSize(1);
+            for (var submission : studentParticipation.submissions()) {
+                assertThat(submission.results()).hasSize(1);
+            }
+        }
+
     }
 
     @Test

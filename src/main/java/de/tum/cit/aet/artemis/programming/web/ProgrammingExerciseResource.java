@@ -575,9 +575,7 @@ public class ProgrammingExerciseResource {
         }
 
         studentParticipationRepository.findByExerciseIdAndStudentIdAndTestRunWithEagerSubmissionsResultsFeedbacksTestCases(exercise.getId(), user.getId(), false)
-                .ifPresent(participation -> {
-                    exercise.setStudentParticipations(Set.of(participation));
-                });
+                .ifPresentOrElse(participation -> exercise.setStudentParticipations(Set.of(participation)), () -> exercise.setStudentParticipations(null));
 
         return ResponseEntity.ok(ProjectKeyProgrammingExerciseDTO.of(exercise));
     }
