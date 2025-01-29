@@ -1,4 +1,4 @@
-package de.tum.cit.aet.artemis.communication.web.conversation;
+package de.tum.cit.aet.artemis.iris.web;
 
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_IRIS;
 
@@ -26,9 +26,9 @@ import de.tum.cit.aet.artemis.iris.service.pyris.dto.data.PyrisRewriteTextReques
 @Profile(PROFILE_IRIS)
 @RestController
 @RequestMapping("api/")
-public class RewritingResource {
+public class IrisRewritingResource {
 
-    private static final Logger log = LoggerFactory.getLogger(RewritingResource.class);
+    private static final Logger log = LoggerFactory.getLogger(IrisRewritingResource.class);
 
     private static final String ENTITY_NAME = "rewriting";
 
@@ -38,7 +38,7 @@ public class RewritingResource {
 
     private final Optional<IrisRewritingService> irisRewritingService;
 
-    public RewritingResource(UserRepository userRepository, CourseRepository courseRepository, Optional<IrisRewritingService> irisRewritingService) {
+    public IrisRewritingResource(UserRepository userRepository, CourseRepository courseRepository, Optional<IrisRewritingService> irisRewritingService) {
         this.userRepository = userRepository;
         this.courseRepository = courseRepository;
         this.irisRewritingService = irisRewritingService;
