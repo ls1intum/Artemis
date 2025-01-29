@@ -316,6 +316,14 @@ export abstract class TextEditorAction implements Disposable {
         }
     }
 
+    /**
+     * Runs the consistency check on the exercise.
+     *
+     * @param editor The editor for which the consistency check should be run (only used for checking non-empty text).
+     * @param artemisIntelligence The service to use for consistency checking.
+     * @param exerciseId The id of the exercise to check.
+     * @param resultSignal The signal to write the result of the consistency check to.
+     */
     consistencyCheck(editor: TextEditor, artemisIntelligence: ArtemisIntelligenceService, exerciseId: number, resultSignal: WritableSignal<string>): void {
         const text = editor.getFullText();
         if (text) {

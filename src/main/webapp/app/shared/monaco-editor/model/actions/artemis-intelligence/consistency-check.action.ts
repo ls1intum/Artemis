@@ -20,7 +20,8 @@ export class ConsistencyCheckAction extends TextEditorAction {
     }
 
     /**
-     * Runs the rewriting of the markdown content of the editor.
+     * Runs the consistency check on the exercise.
+     *
      * @param editor The editor in which to rewrite the markdown.
      * @param artemisIntelligenceService The service to use for rewriting the markdown.
      * @param exerciseId The id of the exercise to check.

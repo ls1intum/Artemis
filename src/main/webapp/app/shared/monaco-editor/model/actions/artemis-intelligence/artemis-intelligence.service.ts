@@ -65,6 +65,12 @@ export class ArtemisIntelligenceService {
         });
     }
 
+    /**
+     * Triggers the consistency check pipeline via HTTP and subscribes to its WebSocket updates.
+     *
+     * @param exerciseId The ID of the exercise to check for consistency.
+     * @return Observable that emits the consistency check result when available.
+     */
     consistencyCheck(exerciseId: number): Observable<string> {
         this.isLoadingConsistencyCheck.set(true);
         return new Observable<string>((observer) => {
