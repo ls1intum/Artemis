@@ -64,7 +64,6 @@ jobs:
       DEPLOYMENT_USER: ${{ vars.DEPLOYMENT_USER }}
 
       DEPLOYMENT_FOLDER: ${{ vars.DEPLOYMENT_FOLDER }}
-      SSH_AUTH_SOCK: /tmp/ssh_agent.sock 
 
       HEALTH_CHECK_URL: "${{vars.DEPLOYMENT_URL}}/management/health"
       WORKFLOW_RUN_ID: ${{needs.check-build-status.outputs.build_workflow_run_id}}
@@ -80,28 +79,40 @@ jobs:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           run-id: ${{ env.WORKFLOW_RUN_ID  }}
 
-      - name: Setup SSH
+      - name: Setup SSH and Test Connectivity
         env:
           DEPLOYMENT_SSH_KEY: ${{ secrets.DEPLOYMENT_SSH_KEY }}
-          SSH_AUTH_SOCK: /tmp/ssh_agent.sock
+          SSH_AUTH_SOCK: /tmp/ssh_agent_${{ github.run_id }}.sock  
           DEPLOYMENT_HOST_PUBLIC_KEYS: ${{ vars.DEPLOYMENT_HOST_PUBLIC_KEYS }}
         run: |
+          # Cleanup any existing socket
+          if [ -S "$SSH_AUTH_SOCK" ]; then
+            rm -f "$SSH_AUTH_SOCK"
+          fi
+          
+          # Create .ssh directory with proper permissions
           mkdir -p ~/.ssh
-          ssh-agent -a $SSH_AUTH_SOCK > /dev/null
+          chmod 700 ~/.ssh
+          
+          # Start SSH agent with the unique socket
+          ssh-agent -a "$SSH_AUTH_SOCK" > /dev/null
+          
+          # Add the deployment key
           ssh-add - <<< "$DEPLOYMENT_SSH_KEY"
-          cat - <<< $DEPLOYMENT_HOST_PUBLIC_KEYS >> ~/.ssh/known_hosts
+          
+          # Add host keys
+          cat - <<< "$DEPLOYMENT_HOST_PUBLIC_KEYS" >> ~/.ssh/known_hosts
+          chmod 600 ~/.ssh/known_hosts
+          
+          # List identities
           ssh-add -l || echo "No identities found"
-
-      - name: Phase 1 - Stop Secondary Nodes
-        run: |
-          for node in $DEPLOYMENT_HOSTS_SECONDARY; do
-            echo "[INFO] Stop artemis.service on ${node} ..."
-            ssh -o BatchMode=yes -o StrictHostKeyChecking=accept-new \
-                -l $DEPLOYMENT_USER $node "sudo systemctl stop artemis" || {
-              echo "::error::Failed to stop service on ${node}"
-              exit 1
-            }   
-          done
+          
+          echo "Testing connectivity to primary node:"
+          ping -c 3 $DEPLOYMENT_HOSTS_PRIMARY
+          
+          echo "Testing SSH connection to primary node:"
+          ssh -o BatchMode=yes -o StrictHostKeyChecking=accept-new \
+              -l $DEPLOYMENT_USER $DEPLOYMENT_HOSTS_PRIMARY "echo 'SSH connection successful'"
 
       - name: Phase 1 - Deploy to Primary Node
         run: |
@@ -148,33 +159,4 @@ jobs:
             fi
           done
 
-      - name: Phase 2 - Deploy to Secondary Nodes
-        run: |
-          for node in $DEPLOYMENT_HOSTS_SECONDARY; do
-            echo "[INFO] Deploy on ${node} ..."
-            
-            # Remove old backup
-            ssh -o BatchMode=yes -o StrictHostKeyChecking=accept-new \
-                -l $DEPLOYMENT_USER $node \
-                "rm -f $DEPLOYMENT_FOLDER/artemis.war.old" || continue
-            
-            # Copy new war file
-            scp -o BatchMode=yes -o StrictHostKeyChecking=accept-new \
-                artifacts/*.war $DEPLOYMENT_USER@$node:$DEPLOYMENT_FOLDER/artemis.war.new || {
-              echo "::warning::Failed to copy war file to secondary host ${node}"
-              continue
-            }
-            
-            # Deploy
-            ssh -o BatchMode=yes -o StrictHostKeyChecking=accept-new \
-                -l $DEPLOYMENT_USER $node << 'ENDSSH' || {
-              echo "::warning::Failed to deploy to secondary host ${node}"
-              continue
-            }
-              set -e
-              sudo systemctl stop artemis
-              mv $DEPLOYMENT_FOLDER/artemis.war $DEPLOYMENT_FOLDER/artemis.war.old
-              mv $DEPLOYMENT_FOLDER/artemis.war.new $DEPLOYMENT_FOLDER/artemis.war
-              sudo systemctl start artemis
-            ENDSSH
-          done
+      
