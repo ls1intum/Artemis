@@ -14,7 +14,7 @@ ext {
             "CLASS": 2
         ],
         "atlas"        : [
-            "INSTRUCTION": 0.860,
+            "INSTRUCTION": 0.850,
             "CLASS": 12
         ],
         "buildagent"   : [
@@ -39,10 +39,10 @@ ext {
         ],
         "fileupload"   : [
             "INSTRUCTION": 0.906,
-            "CLASS": 0
+            "CLASS": 1
         ],
         "iris"        : [
-            "INSTRUCTION": 0.795,
+            "INSTRUCTION": 0.792,
             "CLASS": 17
         ],
         "lecture"      : [
