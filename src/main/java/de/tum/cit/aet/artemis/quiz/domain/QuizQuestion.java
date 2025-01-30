@@ -257,7 +257,7 @@ public abstract class QuizQuestion extends DomainObject {
     @JsonIgnore
     public Boolean isValid() {
         // check title and score
-        return getTitle() != null && !getTitle().isEmpty() && (getPoints() != null && Double.compare(getPoints(), 0.0) > 0);
+        return getTitle() != null && !getTitle().isEmpty() && Double.compare(getPoints(), 0.0) > 0;
     }
 
     /**
