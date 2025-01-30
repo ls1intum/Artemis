@@ -247,8 +247,8 @@ public class PyrisWebhookService {
     }
 
     private boolean faqIngestionEnabled(Course course) {
-        return irisSettingsService.getRawIrisSettingsFor(course).getIrisFaqIngestionSettings() != null
-                && irisSettingsService.getRawIrisSettingsFor(course).getIrisFaqIngestionSettings().isEnabled();
+        var settings = irisSettingsService.getRawIrisSettingsFor(course).getIrisFaqIngestionSettings();
+        return settings != null && settings.isEnabled();
     }
 
     /**
