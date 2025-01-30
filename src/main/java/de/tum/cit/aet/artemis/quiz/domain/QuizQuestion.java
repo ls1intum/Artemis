@@ -141,16 +141,16 @@ public abstract class QuizQuestion extends DomainObject {
         this.explanation = explanation;
     }
 
-    public Double getPoints() {
+    public double getPoints() {
         return points;
     }
 
-    public QuizQuestion score(Double score) {
+    public QuizQuestion score(double score) {
         this.points = score;
         return this;
     }
 
-    public void setPoints(Double score) {
+    public void setPoints(double score) {
         this.points = score;
     }
 
