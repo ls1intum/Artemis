@@ -374,7 +374,11 @@ describe('Lti13DeepLinkingComponent', () => {
         const currentLink = 'http://example.com/target';
         const loggedInUser: User = { id: 3, login: 'lti_user' } as User;
 
-        const replaceMock = jest.spyOn(window.location, 'replace').mockImplementation(jest.fn());
+        const replaceMock = jest.fn();
+        Object.defineProperty(window.location, 'replace', {
+            value: replaceMock,
+            writable: true,
+        });
 
         accountServiceMock.getAuthenticationState.mockReturnValue(of(loggedInUser));
         routerMock.navigate.mockReturnValue(Promise.resolve(true));
@@ -386,7 +390,10 @@ describe('Lti13DeepLinkingComponent', () => {
         expect(accountServiceMock.getAuthenticationState).toHaveBeenCalled();
         expect(replaceMock).toHaveBeenCalledWith(currentLink);
 
-        replaceMock.mockRestore();
+        Object.defineProperty(window.location, 'replace', {
+            value: jest.requireActual('jsdom').jsdom().defaultView.location.replace,
+            writable: true,
+        });
     }));
 
     it('should handle empty course gracefully', fakeAsync(() => {
