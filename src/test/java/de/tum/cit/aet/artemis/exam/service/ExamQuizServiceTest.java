@@ -361,9 +361,9 @@ class ExamQuizServiceTest extends AbstractSpringIntegrationIndependentTest {
         assertThat(quizExerciseWithStatistic.getQuizPointStatistic().getParticipantsUnrated()).isZero();
         assertThat(quizExerciseWithStatistic.getQuizPointStatistic().getParticipantsRated()).isEqualTo(NUMBER_OF_STUDENTS);
 
-        int questionScore = quizExerciseWithStatistic.getQuizQuestions().stream().map(QuizQuestion::getPoints).reduce(0, Integer::sum);
+        double questionScore = quizExerciseWithStatistic.getQuizQuestions().stream().map(QuizQuestion::getPoints).reduce(0.0, Double::sum);
         assertThat(quizExerciseWithStatistic.getMaxPoints()).isEqualTo(questionScore);
-        assertThat(quizExerciseWithStatistic.getQuizPointStatistic().getPointCounters()).hasSize(questionScore + 1);
+        assertThat(quizExerciseWithStatistic.getQuizPointStatistic().getPointCounters()).hasSize((int) Math.round(questionScore + 1));
         // check general statistics
         for (var pointCounter : quizExerciseWithStatistic.getQuizPointStatistic().getPointCounters()) {
             // MC, DnD and short Answer are all incorrect
