@@ -6,9 +6,6 @@ on:
       branch:
         description: 'Branch to deploy'
         required: true
-      vpn_config:
-        description: 'TUM VPN configuration'
-        required: true
 
 concurrency: staging
 
@@ -57,7 +54,7 @@ jobs:
 
   deploy:
     needs: check-build-status
-    runs-on: ubuntu-latest
+    runs-on: [self-hosted, ase-large-ubuntu]
     environment: 
         name: artemis-staging-localci.artemis.cit.tum.de
         url: ${{ vars.DEPLOYMENT_URL }}
@@ -83,123 +80,55 @@ jobs:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           run-id: ${{ env.WORKFLOW_RUN_ID  }}
 
-      - name: Setup VPN
-        env:
-          VPN_CONFIG: ${{  github.event.inputs.vpn_config }}
-        run: |
-          # Install OpenVPN
-          sudo apt-get update
-          sudo apt-get install -y openvpn
-      
-          # Save VPN config
-          echo "$VPN_CONFIG" > /tmp/config.ovpn
-          
-          # Debug: Check config file
-          echo "Checking VPN config file:"
-          cat /tmp/config.ovpn
-          
-          # Start VPN with verbose logging
-          echo "Starting OpenVPN..."
-          sudo openvpn --config /tmp/config.ovpn --daemon --log /tmp/vpn.log --verb 4
-          
-          # Wait for VPN to initialize
-          echo "Waiting for VPN connection..."
-          sleep 30
-          
-          # Debug: Check VPN status
-          echo "VPN log:"
-          sudo cat /tmp/vpn.log
-          
-          # Check if tun interface is created
-          echo "Network interfaces:"
-          ip a
-          
-          # Test connection to target
-          echo "Testing connection..."
-          ping -c 1 172.24.70.146 || {
-            echo "VPN connection failed"
-            echo "Latest VPN logs:"
-            sudo tail -n 50 /tmp/vpn.log
-            exit 1
-          }
-          
-          # If we get here, VPN is working
-          echo "VPN connection established"
-        
-      - name: Debug Network
-        if: failure()
-        run: |
-          echo "Network route table:"
-          ip route
-          
-          echo "DNS resolution:"
-          cat /etc/resolv.conf
-          
-          echo "Can we reach the VPN server?"
-          ping -c 1 eduvpn-n19.srv.lrz.de || true
-          
-          echo "OpenVPN status:"
-          sudo systemctl status openvpn || true
       - name: Setup SSH
         env:
           DEPLOYMENT_SSH_KEY: ${{ secrets.DEPLOYMENT_SSH_KEY }}
+          SSH_AUTH_SOCK: /tmp/ssh_agent.sock
+          DEPLOYMENT_HOST_PUBLIC_KEYS: ${{ vars.DEPLOYMENT_HOST_PUBLIC_KEYS }}
         run: |
           mkdir -p ~/.ssh
-          echo "$DEPLOYMENT_SSH_KEY" > ~/.ssh/id_rsa
-          chmod 600 ~/.ssh/id_rsa
-          ssh-keyscan -t rsa ${DEPLOYMENT_HOSTS_PRIMARY} >> ~/.ssh/known_hosts
-          for node in $DEPLOYMENT_HOSTS_SECONDARY; do
-            ssh-keyscan -t rsa ${node} >> ~/.ssh/known_hosts
-          done
+          ssh-agent -a $SSH_AUTH_SOCK > /dev/null
+          ssh-add - <<< "$DEPLOYMENT_SSH_KEY"
+          cat - <<< $DEPLOYMENT_HOST_PUBLIC_KEYS >> ~/.ssh/known_hosts
+          ssh-add -l || echo "No identities found"
 
-      - name: Test SSH Configuration
-        run: |
-          echo "Testing SSH configuration..."
-          ssh -v -o BatchMode=yes -o ConnectTimeout=10 \
-              -l $DEPLOYMENT_USER $DEPLOYMENT_HOSTS_PRIMARY "echo 'SSH test successful'" || {
-            echo "::error::SSH test failed"
-            exit 1
-          }
-  
-      - name: Network Diagnostics
-        run: |
-          for node in $DEPLOYMENT_HOSTS_SECONDARY; do
-            echo "Testing connectivity to $node..."
-            # Try ping
-            ping -c 1 -W 5 $node || echo "Ping failed for $node"
-            
-            # Try telnet to SSH port
-            timeout 5 nc -zv $node 22 || echo "Cannot connect to SSH port on $node"
-            
-            # Try traceroute
-            traceroute -n -w 2 $node || echo "Traceroute failed for $node"
-          done
-      
       - name: Phase 1 - Stop Secondary Nodes
         run: |
           for node in $DEPLOYMENT_HOSTS_SECONDARY; do
-            VM_HOSTNAME="${node}"
-            echo "[INFO] Stop artemis.service on ${VM_HOSTNAME} ..."
-            ssh -o LogLevel=ERROR -l $DEPLOYMENT_USER $VM_HOSTNAME "sudo systemctl stop artemis"
+            echo "[INFO] Stop artemis.service on ${node} ..."
+            ssh -o BatchMode=yes -o StrictHostKeyChecking=accept-new \
+                -l $DEPLOYMENT_USER $node "sudo systemctl stop artemis" || {
+              echo "::error::Failed to stop service on ${node}"
+              exit 1
+            }   
           done
+
       - name: Phase 1 - Deploy to Primary Node
         run: |
-          VM_HOSTNAME="${DEPLOYMENT_HOSTS_PRIMARY}"
-          echo "[INFO] Deploy on $VM_HOSTNAME ..."
+          echo "[INFO] Deploy on $DEPLOYMENT_HOSTS_PRIMARY ..."
           
           # Remove old backup
-          ssh -o LogLevel=ERROR -l $DEPLOYMENT_USER $VM_HOSTNAME "rm -f $DEPLOYMENT_FOLDER/artemis.war.old"
+          ssh -o BatchMode=yes -o StrictHostKeyChecking=accept-new \
+              -l $DEPLOYMENT_USER $DEPLOYMENT_HOSTS_PRIMARY \
+              "rm -f $DEPLOYMENT_FOLDER/artemis.war.old" || exit 1
           
           # Copy new war file
-          scp -o LogLevel=ERROR artifacts/*.war $DEPLOYMENT_USER@$VM_HOSTNAME:$DEPLOYMENT_FOLDER/artemis.war.new
-          
+          scp -o BatchMode=yes -o StrictHostKeyChecking=accept-new \
+              artifacts/*.war $DEPLOYMENT_USER@$DEPLOYMENT_HOSTS_PRIMARY:$DEPLOYMENT_FOLDER/artemis.war.new || {
+            echo "::error::Failed to copy war file to primary host"
+            exit 1
+          }
+
           # Stop service, rotate files, and start service
-          ssh -o LogLevel=ERROR -l $DEPLOYMENT_USER $VM_HOSTNAME << 'ENDSSH'
+          ssh -o BatchMode=yes -o StrictHostKeyChecking=accept-new \
+              -l $DEPLOYMENT_USER $DEPLOYMENT_HOSTS_PRIMARY << 'ENDSSH' || exit 1
+            set -e
             sudo systemctl stop artemis
             mv $DEPLOYMENT_FOLDER/artemis.war $DEPLOYMENT_FOLDER/artemis.war.old
             mv $DEPLOYMENT_FOLDER/artemis.war.new $DEPLOYMENT_FOLDER/artemis.war
             sudo systemctl start artemis
           ENDSSH
+
       - name: Verify Primary Node Deployment
         id: verify_deployment
         run: |
@@ -214,20 +143,35 @@ jobs:
               exit 0
             else
               echo "Health check failed. Status: $STATUS"
-              echo "Waiting 30 seconds before next attempt..."
-              sleep 30
+              echo "Waiting 10 seconds before next attempt..."
+              sleep 10
             fi
           done
+
       - name: Phase 2 - Deploy to Secondary Nodes
         run: |
           for node in $DEPLOYMENT_HOSTS_SECONDARY; do
-            VM_HOSTNAME="${node}"
-            echo "[INFO] Deploy on $VM_HOSTNAME ..."
+            echo "[INFO] Deploy on ${node} ..."
             
-            ssh -o LogLevel=ERROR -l $DEPLOYMENT_USER $VM_HOSTNAME "rm -f $DEPLOYMENT_FOLDER/artemis.war.old"
-            scp -o LogLevel=ERROR artifacts/*.war $DEPLOYMENT_USER@$VM_HOSTNAME:$DEPLOYMENT_FOLDER/artemis.war.new
+            # Remove old backup
+            ssh -o BatchMode=yes -o StrictHostKeyChecking=accept-new \
+                -l $DEPLOYMENT_USER $node \
+                "rm -f $DEPLOYMENT_FOLDER/artemis.war.old" || continue
             
-            ssh -o LogLevel=ERROR -l $DEPLOYMENT_USER $VM_HOSTNAME << 'ENDSSH'
+            # Copy new war file
+            scp -o BatchMode=yes -o StrictHostKeyChecking=accept-new \
+                artifacts/*.war $DEPLOYMENT_USER@$node:$DEPLOYMENT_FOLDER/artemis.war.new || {
+              echo "::warning::Failed to copy war file to secondary host ${node}"
+              continue
+            }
+            
+            # Deploy
+            ssh -o BatchMode=yes -o StrictHostKeyChecking=accept-new \
+                -l $DEPLOYMENT_USER $node << 'ENDSSH' || {
+              echo "::warning::Failed to deploy to secondary host ${node}"
+              continue
+            }
+              set -e
               sudo systemctl stop artemis
               mv $DEPLOYMENT_FOLDER/artemis.war $DEPLOYMENT_FOLDER/artemis.war.old
               mv $DEPLOYMENT_FOLDER/artemis.war.new $DEPLOYMENT_FOLDER/artemis.war
