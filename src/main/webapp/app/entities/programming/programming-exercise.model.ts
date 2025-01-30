@@ -27,6 +27,7 @@ export enum ProgrammingLanguage {
     OCAML = 'OCAML',
     PYTHON = 'PYTHON',
     R = 'R',
+    RUBY = 'RUBY',
     RUST = 'RUST',
     SWIFT = 'SWIFT',
     TYPESCRIPT = 'TYPESCRIPT',
