@@ -246,7 +246,7 @@ describe('Lti13DeepLinkingComponent', () => {
         expect(component.isIrisSelected).toBeFalse();
 
         component.enableCompetency();
-        expect(component.isCompetencySelected).toBeTrue(); // Should remain true
+        expect(component.isCompetencySelected).toBeTrue();
     });
 
     it('should select and deselect a learning path', () => {
@@ -257,7 +257,7 @@ describe('Lti13DeepLinkingComponent', () => {
         expect(component.isIrisSelected).toBeFalse();
 
         component.enableLearningPath();
-        expect(component.isLearningPathSelected).toBeTrue(); // Should remain true
+        expect(component.isLearningPathSelected).toBeTrue();
     });
 
     it('should send deep link request when competency is selected', fakeAsync(() => {
@@ -271,6 +271,7 @@ describe('Lti13DeepLinkingComponent', () => {
 
         httpMock.post.mockReturnValue(of(mockResponse));
         component.sendDeepLinkRequest();
+        tick();
 
         expect(httpMock.post).toHaveBeenCalledWith(`api/lti13/deep-linking/${component.courseId}`, null, {
             observe: 'response',
@@ -289,6 +290,7 @@ describe('Lti13DeepLinkingComponent', () => {
 
         httpMock.post.mockReturnValue(of(mockResponse));
         component.sendDeepLinkRequest();
+        tick();
 
         expect(httpMock.post).toHaveBeenCalledWith(`api/lti13/deep-linking/${component.courseId}`, null, {
             observe: 'response',
