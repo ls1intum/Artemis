@@ -422,7 +422,7 @@ describe('PostingReactionsBarComponent', () => {
         fixture.detectChanges();
         const pinEmoji = getElement(debugElement, '.pin');
         pinEmoji.click();
-        component.posting()!.displayPriority = DisplayPriority.PINNED;
+        (component.posting() as Post)!.displayPriority = DisplayPriority.PINNED;
         expect(metisServiceUpdateDisplayPriorityMock).toHaveBeenCalledWith(component.posting()!.id!, DisplayPriority.PINNED);
         component.ngOnChanges();
         // set correct tooltips for tutor and post that is pinned and not archived
