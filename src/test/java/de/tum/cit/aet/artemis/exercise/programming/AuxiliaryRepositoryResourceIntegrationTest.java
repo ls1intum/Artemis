@@ -334,7 +334,7 @@ class AuxiliaryRepositoryResourceIntegrationTest extends AbstractSpringIntegrati
 
         File mockFile = mock(File.class);
         doReturn(Optional.of(mockFile)).when(gitService).getFileByName(any(), eq(currentLocalFileName));
-        doReturn(currentLocalFileName).when(mockFile.getFile()).getName();
+        doReturn(currentLocalFileName).when(mockFile).getName();
         doReturn(false).when(mockFile).isFile();
 
         Repository mockRepository = mock(Repository.class);
