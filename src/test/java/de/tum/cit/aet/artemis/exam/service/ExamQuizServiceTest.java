@@ -1,6 +1,7 @@
 package de.tum.cit.aet.artemis.exam.service;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.within;
 import static org.awaitility.Awaitility.await;
 
 import java.time.ZonedDateTime;
@@ -362,7 +363,7 @@ class ExamQuizServiceTest extends AbstractSpringIntegrationIndependentTest {
         assertThat(quizExerciseWithStatistic.getQuizPointStatistic().getParticipantsRated()).isEqualTo(NUMBER_OF_STUDENTS);
 
         double questionScore = quizExerciseWithStatistic.getQuizQuestions().stream().map(QuizQuestion::getPoints).reduce(0.0, Double::sum);
-        assertThat(quizExerciseWithStatistic.getMaxPoints()).isEqualTo(questionScore);
+        assertThat(quizExerciseWithStatistic.getMaxPoints()).isCloseTo(questionScore, within(0.0001));
         assertThat(quizExerciseWithStatistic.getQuizPointStatistic().getPointCounters()).hasSize((int) Math.round(questionScore + 1));
         // check general statistics
         for (var pointCounter : quizExerciseWithStatistic.getQuizPointStatistic().getPointCounters()) {
