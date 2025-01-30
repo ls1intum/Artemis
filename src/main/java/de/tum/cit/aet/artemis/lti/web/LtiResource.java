@@ -122,25 +122,34 @@ public class LtiResource {
     }
 
     /**
-     * Handles the HTTP POST request for LTI 1.3 Deep Linking. This endpoint is used for deep linking of LTI links
-     * for exercises within a course. The method populates content items with the provided course and exercise identifiers,
-     * builds a deep linking response, and returns the target link URI in a JSON object.
+     * Handles the HTTP POST request for LTI 1.3 Deep Linking. This endpoint enables deep linking of LTI links
+     * for various course-related resources, such as exercises, lectures, competencies, learning paths, and IRIS integrations.
+     * The method processes the provided course and resource identifiers, validates LTI configurations,
+     * and constructs a deep linking response based on the specified resource type. The resulting deep link target URI
+     * is returned in a JSON object.
      *
-     * @param courseId             The identifier of the course for which the deep linking is being performed.
-     * @param exerciseIds          The identifier of the exercises to be included in the deep linking response.
-     * @param ltiIdToken           The token holding the deep linking information.
-     * @param clientRegistrationId The identifier online of the course configuration.
+     * @param courseId             The identifier of the course for which deep linking is being performed.
+     * @param exerciseIds          A set of exercise identifiers to be included in the deep linking response (optional).
+     * @param lectureIds           A set of lecture identifiers to be included in the deep linking response (optional).
+     * @param competency           A flag indicating whether the deep linking request is for a competency resource.
+     * @param learningPath         A flag indicating whether the deep linking request is for a learning path resource.
+     * @param iris                 A flag indicating whether the deep linking request is for an IRIS integration.
+     * @param ltiIdToken           The token containing the deep linking information.
+     * @param clientRegistrationId The identifier of the course's online configuration.
      * @return A ResponseEntity containing a JSON object with the 'targetLinkUri' property set to the deep linking response target link.
+     * @throws ParseException           If the LTI ID token cannot be parsed.
+     * @throws BadRequestAlertException If LTI is not configured for the course or if no valid deep linking type is provided.
      */
-    // TODO Deep Linking 1
+
     @PostMapping("lti13/deep-linking/{courseId}")
     @EnforceAtLeastInstructor
     public ResponseEntity<String> lti13DeepLinking(@PathVariable Long courseId, @RequestParam(name = "exerciseIds", required = false) Set<Long> exerciseIds,
             @RequestParam(name = "lectureIds", required = false) Set<Long> lectureIds, @RequestParam(name = "competency", required = false) boolean competency,
             @RequestParam(name = "learningPath", required = false) boolean learningPath, @RequestParam(name = "iris", required = false) boolean iris,
             @RequestParam(name = "ltiIdToken") String ltiIdToken, @RequestParam(name = "clientRegistrationId") String clientRegistrationId) throws ParseException {
-        // TODO update message
-        log.info("LTI 1.3 Deep Linking request received for course {} with exercises {} for registrationId {}", courseId, exerciseIds, clientRegistrationId);
+
+        log.info("LTI 1.3 Deep Linking request received for course {} with exercises: {}, lectures: {}, competency: {}, learningPath: {}, iris: {}, registrationId: {}", courseId,
+                exerciseIds, lectureIds, competency, learningPath, iris, clientRegistrationId);
 
         Course course = courseRepository.findByIdWithEagerOnlineCourseConfigurationElseThrow(courseId);
         authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.INSTRUCTOR, course, null);
