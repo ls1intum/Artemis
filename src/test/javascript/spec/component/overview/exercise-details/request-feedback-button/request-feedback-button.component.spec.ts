@@ -93,14 +93,16 @@ describe('RequestFeedbackButtonComponent', () => {
         setupComponentInputs(exercise);
         component.hasUserAcceptedExternalLLMUsage = true;
 
-        jest.spyOn(courseExerciseService, 'requestAIFeedback').mockReturnValue(
-            new Observable((subscriber) => {
+        jest.spyOn(courseExerciseService, 'requestFeedback').mockReturnValue(
+            new Observable<StudentParticipation>((subscriber) => {
                 subscriber.error({ error: { errorKey: 'someError' } });
             }),
         );
         jest.spyOn(alertService, 'error');
 
-        component.requestAIFeedback({} as any);
+        // component.requestAIFeedback({} as any);
+        const mockTemplateRef = {} as TemplateRef<any>;
+        component.requestAIFeedback(mockTemplateRef);
         tick();
 
         expect(alertService.error).toHaveBeenCalledWith('artemisApp.exercise.someError');
@@ -169,7 +171,7 @@ describe('RequestFeedbackButtonComponent', () => {
         initAndTick();
 
         jest.spyOn(component, 'requestAIFeedback');
-        jest.spyOn(courseExerciseService, 'requestAIFeedback').mockReturnValue(of({} as StudentParticipation));
+        jest.spyOn(courseExerciseService, 'requestFeedback').mockReturnValue(of({} as StudentParticipation));
 
         const button = debugElement.query(By.css('button'));
         expect(button).not.toBeNull();
@@ -250,7 +252,7 @@ describe('RequestFeedbackButtonComponent', () => {
         // Set up spies
         const modalService = TestBed.inject(NgbModal);
         const modalSpy = jest.spyOn(modalService, 'open');
-        const processFeedbackSpy = jest.spyOn(courseExerciseService, 'requestAIFeedback').mockReturnValue(of({} as StudentParticipation));
+        const processFeedbackSpy = jest.spyOn(courseExerciseService, 'requestFeedback').mockReturnValue(of({} as StudentParticipation));
 
         // Just call requestAIFeedback with an empty template ref object
         const mockTemplateRef = {} as TemplateRef<any>;

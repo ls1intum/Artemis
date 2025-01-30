@@ -17,7 +17,6 @@
                 class="btn btn-primary"
                 (click)="requestAIFeedback(popup)"
                 [class.btn-sm]="smallButtons()"
-                [disabled]="isGeneratingFeedback()"
                 [id]="'request-feedback-' + exercise().id"
                 [ngbTooltip]="'artemisApp.exerciseActions.requestAutomaticFeedbackTooltip' | artemisTranslate"
             >
