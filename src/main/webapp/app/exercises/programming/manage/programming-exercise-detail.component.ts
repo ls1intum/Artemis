@@ -230,7 +230,7 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
                                 );
                             }
                             this.supportsAuxiliaryRepositories =
-                                this.programmingLanguageFeatureService.getProgrammingLanguageFeature(programmingExercise.programmingLanguage).auxiliaryRepositoriesSupported ??
+                                this.programmingLanguageFeatureService.getProgrammingLanguageFeature(programmingExercise.programmingLanguage)?.auxiliaryRepositoriesSupported ??
                                 false;
                             this.localVCEnabled = profileInfo.activeProfiles.includes(PROFILE_LOCALVC);
                             this.localCIEnabled = profileInfo.activeProfiles.includes(PROFILE_LOCALCI);
@@ -269,9 +269,8 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
                 .subscribe({
                     next: () => {
                         this.checkAndAlertInconsistencies();
-                        this.plagiarismCheckSupported = this.programmingLanguageFeatureService.getProgrammingLanguageFeature(
-                            programmingExercise.programmingLanguage,
-                        ).plagiarismCheckSupported;
+                        this.plagiarismCheckSupported =
+                            this.programmingLanguageFeatureService.getProgrammingLanguageFeature(programmingExercise.programmingLanguage)?.plagiarismCheckSupported ?? false;
 
                         /** we make sure to await the results of the subscriptions (switchMap) to only call {@link getExerciseDetails} once */
                         this.exerciseDetailSections = this.getExerciseDetails();
