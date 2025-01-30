@@ -529,6 +529,7 @@ describe('PostingReactionsBarComponent', () => {
 
     it('should invoke metis service when toggle resolve is clicked', () => {
         runInInjectionContext(fixture.debugElement.injector, () => {
+            unApprovedAnswerPost1.post = post;
             component.posting = input<Posting>(unApprovedAnswerPost1);
             component.isEmojiCount = input<boolean>(false);
 

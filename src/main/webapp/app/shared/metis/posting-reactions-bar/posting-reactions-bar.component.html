@@ -103,7 +103,7 @@
                 <fa-icon [icon]="faPencilAlt" />
             </button>
         }
-
+        <jhi-post-create-edit-modal #createEditModal [posting]="posting()!" [isCommunicationPage]="isCommunicationPage()!" (isModalOpen)="isModalOpen.emit()" />
         <!-- Delete button -->
         @if (!isEmojiCount() && mayDelete) {
             <button class="reaction-button clickable fs-small">

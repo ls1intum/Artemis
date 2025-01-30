@@ -77,6 +77,7 @@ interface ReactionMetaDataMap {
         ArtemisTranslatePipe,
         ReactingUsersOnPostingPipe,
         NgClass,
+        PostCreateEditModalComponent,
     ],
 })
 export class PostingReactionsBarComponent<T extends Posting> implements OnInit, OnChanges {
@@ -136,7 +137,6 @@ export class PostingReactionsBarComponent<T extends Posting> implements OnInit, 
     readonly faTrash = faTrashAlt;
 
     createEditModal = viewChild.required<PostCreateEditModalComponent>('createEditModal');
-    //postCreateEditModal = viewChild<PostCreateEditModalComponent>();
 
     /**
      * on initialization: updates the current posting and its reactions,
@@ -148,10 +148,10 @@ export class PostingReactionsBarComponent<T extends Posting> implements OnInit, 
         this.isAtLeastTutorInCourse = this.metisService.metisUserIsAtLeastTutorInCourse();
         this.isAtLeastInstructorInCourse = this.metisService.metisUserIsAtLeastInstructorInCourse();
         this.isAnswerOfAnnouncement =
-            this.posting() instanceof AnswerPost ? (getAsChannelDTO((this.posting() as AnswerPost).post?.conversation)?.isAnnouncementChannel ?? false) : false;
-        this.isAuthorOfOriginalPost = this.posting() instanceof AnswerPost ? this.metisService.metisUserIsAuthorOfPosting((this.posting() as AnswerPost).post!) : false;
+            this.getPostingType() === 'answerPost' ? (getAsChannelDTO((this.posting() as AnswerPost).post?.conversation)?.isAnnouncementChannel ?? false) : false;
+        this.isAuthorOfOriginalPost = this.getPostingType() === 'answerPost' ? this.metisService.metisUserIsAuthorOfPosting((this.posting() as AnswerPost).post!) : false;
 
-        if (this.posting() instanceof Post) {
+        if (this.getPostingType() === 'post') {
             const currentConversation = this.metisService.getCurrentConversation();
             this.setCanPin(currentConversation);
             this.resetTooltipsAndPriority();
@@ -167,7 +167,7 @@ export class PostingReactionsBarComponent<T extends Posting> implements OnInit, 
     ngOnChanges() {
         this.updatePostingWithReactions();
         this.isAtLeastTutorInCourse = this.metisService.metisUserIsAtLeastTutorInCourse();
-        if (this.posting() instanceof Post) {
+        if (this.getPostingType() === 'post') {
             this.resetTooltipsAndPriority();
         }
         this.setMayDelete();
@@ -283,7 +283,7 @@ export class PostingReactionsBarComponent<T extends Posting> implements OnInit, 
     buildReaction(emojiId: string): Reaction {
         const reaction = new Reaction();
         reaction.emojiId = emojiId;
-        if (this.posting() instanceof AnswerPost) {
+        if (this.getPostingType() === 'answerPost') {
             reaction.answerPost = this.posting() as AnswerPost;
         } else {
             reaction.post = this.posting() as Post;
@@ -438,14 +438,22 @@ export class PostingReactionsBarComponent<T extends Posting> implements OnInit, 
     }
 
     editPosting() {
-        this.openPostingCreateEditModal.emit();
+        if (this.getPostingType() === 'post') {
+            if ((this.posting() as Post)!.title != '') {
+                this.createEditModal().open();
+            } else {
+                this.isModalOpen.emit();
+            }
+        } else {
+            this.openPostingCreateEditModal.emit();
+        }
     }
 
     setMayDelete(): void {
         const conversation = this.getConversation();
         const channel = getAsChannelDTO(conversation);
 
-        const isAnswerOfAnnouncement = this.posting() instanceof AnswerPost ? (channel?.isAnnouncementChannel ?? false) : false;
+        const isAnswerOfAnnouncement = this.getPostingType() === 'answerPost' ? (channel?.isAnnouncementChannel ?? false) : false;
         const isCourseWide = channel?.isCourseWide ?? false;
 
         const canDeleteAnnouncement = isAnswerOfAnnouncement ? this.isAtLeastInstructorInCourse : true;
@@ -454,21 +462,18 @@ export class PostingReactionsBarComponent<T extends Posting> implements OnInit, 
 
         this.mayDelete = !this.isReadOnlyMode() && !this.previewMode() && (this.isAuthorOfPosting || mayDeleteOtherUsers) && canDeleteAnnouncement;
         this.mayDeleteOutput.emit(this.mayDelete);
-        //console.log(this.isAuthorOfPosting || mayDeleteOtherUsers);
     }
 
     private getConversation(): Conversation | undefined {
-        if (this.posting() instanceof Post) {
+        if (this.getPostingType() === 'answerPost') {
+            return (this.posting() as AnswerPost).post?.conversation;
+        } else {
             return (this.posting() as Post).conversation;
         }
-        if (this.posting() instanceof AnswerPost) {
-            return (this.posting() as AnswerPost).post?.conversation;
-        }
-        return undefined;
     }
 
     getPostingType(): 'post' | 'answerPost' {
-        return this.posting() instanceof Post ? 'post' : 'answerPost';
+        return this.posting() && 'post' in this.posting()! ? 'answerPost' : 'post';
     }
 
     getSaved(): boolean {
