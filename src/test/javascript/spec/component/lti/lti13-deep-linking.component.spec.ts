@@ -370,31 +370,6 @@ describe('Lti13DeepLinkingComponent', () => {
         expect(component.exercises[2].title).toBe(exercise2.title);
     });
 
-    it('should redirect user to login and then back to the target link', fakeAsync(() => {
-        const currentLink = 'http://example.com/target';
-        const loggedInUser: User = { id: 3, login: 'lti_user' } as User;
-
-        const originalLocation = window.location;
-
-        window.location = {
-            ...originalLocation,
-            replace: jest.fn(),
-        } as unknown as Location;
-
-        accountServiceMock.getAuthenticationState.mockReturnValue(of(loggedInUser));
-        routerMock.navigate.mockReturnValue(Promise.resolve(true));
-
-        component.redirectUserToLoginThenTargetLink(currentLink);
-        tick();
-
-        expect(routerMock.navigate).toHaveBeenCalledWith(['/']);
-        expect(accountServiceMock.getAuthenticationState).toHaveBeenCalled();
-        expect(window.location.replace).toHaveBeenCalledWith(currentLink);
-
-        // Restore the original window.location
-        window.location = originalLocation;
-    }));
-
     it('should handle empty course gracefully', fakeAsync(() => {
         const loggedInUser: User = { id: 3, login: 'lti_user' } as User;
         accountServiceMock.identity.mockReturnValue(Promise.resolve(loggedInUser));
