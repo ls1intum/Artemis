@@ -207,9 +207,7 @@ describe('Lti13DeepLinkingComponent', () => {
             lectures: [lecture1, lecture2],
         };
 
-        courseManagementServiceMock.findWithExercisesAndLecturesAndCompetencies.mockReturnValue(
-            of(new HttpResponse({ body: extendedCourse }))
-        );
+        courseManagementServiceMock.findWithExercisesAndLecturesAndCompetencies.mockReturnValue(of(new HttpResponse({ body: extendedCourse })));
 
         component.ngOnInit();
         tick(1000);
@@ -229,9 +227,7 @@ describe('Lti13DeepLinkingComponent', () => {
             lectures: [],
         };
 
-        courseManagementServiceMock.findWithExercisesAndLecturesAndCompetencies.mockReturnValue(
-            of(new HttpResponse({ body: emptyCourse }))
-        );
+        courseManagementServiceMock.findWithExercisesAndLecturesAndCompetencies.mockReturnValue(of(new HttpResponse({ body: emptyCourse })));
 
         component.ngOnInit();
         tick(1000);
@@ -299,5 +295,4 @@ describe('Lti13DeepLinkingComponent', () => {
             params: new HttpParams().set('learningPath', 'true').set('ltiIdToken', '').set('clientRegistrationId', ''),
         });
     }));
-
 });
