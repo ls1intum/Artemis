@@ -6,6 +6,7 @@ import { FeedbackDetail } from 'app/exercises/programming/manage/grading/feedbac
 import { ConfirmFeedbackChannelCreationModalComponent } from 'app/exercises/programming/manage/grading/feedback-analysis/Modal/confirm-feedback-channel-creation-modal.component';
 import { ArtemisSharedCommonModule } from 'app/shared/shared-common.module';
 import { AlertService } from 'app/core/util/alert.service';
+import dayjs from 'dayjs';
 
 @Component({
     selector: 'jhi-feedback-detail-channel-modal',
@@ -15,7 +16,8 @@ import { AlertService } from 'app/core/util/alert.service';
 export class FeedbackDetailChannelModalComponent {
     protected readonly TRANSLATION_BASE = 'artemisApp.programmingExercise.configureGrading.feedbackAnalysis.feedbackDetailChannel';
     feedbackDetail = input.required<FeedbackDetail>();
-    groupFeedback = input.required<boolean>();
+    exerciseDueDate = input<dayjs.Dayjs | undefined>();
+    currentDateTime = signal(dayjs());
     formSubmitted = output<{ channelDto: ChannelDTO; navigate: boolean }>();
 
     isConfirmModalOpen = signal(false);

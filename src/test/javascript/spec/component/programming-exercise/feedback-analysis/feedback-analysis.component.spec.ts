@@ -51,7 +51,7 @@ describe('FeedbackAnalysisComponent', () => {
         totalItems: 2,
         taskNames: ['task1', 'task2'],
         testCaseNames: ['test1', 'test2'],
-        errorCategories: ['Student Error', 'AST Error', 'Ares Error'],
+        errorCategories: ['Student Error', 'Ares Error', 'AST Error'],
         highestOccurrenceOfGroupedFeedback: 0,
     };
 
@@ -328,6 +328,36 @@ describe('FeedbackAnalysisComponent', () => {
 
             expect(component.groupFeedback()).toBe(!initialGroupFeedback);
             expect(loadDataSpy).toHaveBeenCalledOnce();
+        });
+    });
+
+    describe('updateCache', () => {
+        it('should restore cache if no new response is provided', () => {
+            component.previousResponseData.set(feedbackResponseMock);
+            component.previousRequestState.set({
+                page: 1,
+                pageSize: 25,
+                searchTerm: '',
+                sortingOrder: 'DESCENDING',
+                sortedColumn: 'count',
+                filterErrorCategories: ['Student Error'],
+            });
+            component.previousRequestFilters.set({ tasks: ['task1'], testCases: ['testCase1'], occurrence: [0, 10], errorCategories: ['Student Error'] });
+            component.previousRequestGroupFeedback.set(false);
+
+            component.updateCache();
+
+            expect(component.content().resultsOnPage).toEqual(feedbackResponseMock.feedbackDetails.resultsOnPage);
+            expect(component.totalItems()).toBe(feedbackResponseMock.totalItems);
+            expect(component.taskNames()).toEqual(feedbackResponseMock.taskNames);
+            expect(component.testCaseNames()).toEqual(feedbackResponseMock.testCaseNames);
+            expect(component.errorCategories()).toEqual(feedbackResponseMock.errorCategories);
+            expect(component.maxCount()).toBe(feedbackResponseMock.highestOccurrenceOfGroupedFeedback);
+
+            expect(component.previousResponseData()).toEqual(component.currentResponseData());
+            expect(component.previousRequestState()).toEqual(component.currentRequestState());
+            expect(component.previousRequestFilters()).toEqual(component.currentRequestFilters());
+            expect(component.previousRequestGroupFeedback()).toEqual(component.currentRequestGroupFeedback());
         });
     });
 });

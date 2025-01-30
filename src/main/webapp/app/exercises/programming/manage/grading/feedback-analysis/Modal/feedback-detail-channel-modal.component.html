@@ -8,6 +8,11 @@
     <div class="mb-3 text-muted">
         <p [jhiTranslate]="TRANSLATION_BASE + '.description'"></p>
     </div>
+    @if (exerciseDueDate() === undefined || currentDateTime().isBefore(exerciseDueDate())) {
+        <div class="alert alert-info mt-2">
+            <div [jhiTranslate]="TRANSLATION_BASE + '.dueDate'"></div>
+        </div>
+    }
     <form [formGroup]="form" (ngSubmit)="submitForm(false)">
         <div class="form-group">
             <label for="name" [jhiTranslate]="TRANSLATION_BASE + '.label'"></label>

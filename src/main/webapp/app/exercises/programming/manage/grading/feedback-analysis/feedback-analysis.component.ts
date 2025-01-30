@@ -1,5 +1,5 @@
 import { Component, computed, effect, inject, input, signal, untracked } from '@angular/core';
-import { FeedbackAnalysisService, FeedbackChannelRequestDTO, FeedbackDetail } from './feedback-analysis.service';
+import { FeedbackAnalysisResponse, FeedbackAnalysisService, FeedbackChannelRequestDTO, FeedbackDetail } from './feedback-analysis.service';
 import { NgbModal, NgbModule, NgbPagination } from '@ng-bootstrap/ng-bootstrap';
 import { AlertService } from 'app/core/util/alert.service';
 import { faCircleQuestion, faFilter, faMessage, faSort, faSpinner, faUsers } from '@fortawesome/free-solid-svg-icons';
@@ -15,6 +15,7 @@ import { FeedbackDetailChannelModalComponent } from 'app/exercises/programming/m
 import { ChannelDTO } from 'app/entities/metis/conversation/channel.model';
 import { Router } from '@angular/router';
 import { facDetails } from 'app/icons/icons';
+import dayjs from 'dayjs';
 
 @Component({
     selector: 'jhi-feedback-analysis',
@@ -26,6 +27,7 @@ import { facDetails } from 'app/icons/icons';
 export class FeedbackAnalysisComponent {
     exerciseTitle = input.required<string>();
     exerciseId = input.required<number>();
+    exerciseDueDate = input<dayjs.Dayjs | undefined>();
     courseId = input.required<number>();
     isCommunicationEnabled = input.required<boolean>();
 
@@ -66,12 +68,22 @@ export class FeedbackAnalysisComponent {
     readonly testCaseNames = signal<string[]>([]);
     readonly minCount = signal<number>(0);
     readonly maxCount = signal<number>(0);
-    readonly errorCategories = signal<string[]>([]);
+    readonly errorCategories = signal<string[]>(['Student Error', 'Ares Error', 'AST Error']);
 
     private isFeedbackDetailChannelModalOpen = false;
 
     private readonly debounceLoadData = BaseApiHttpService.debounce(this.loadData.bind(this), 300);
     readonly groupFeedback = signal<boolean>(false);
+
+    currentRequestFilters = signal<any | null>(null);
+    currentRequestState = signal<any | null>(null);
+    currentRequestGroupFeedback = signal<boolean | null>(null);
+    currentResponseData = signal<FeedbackAnalysisResponse | null>(null);
+
+    previousRequestFilters = signal<any | null>(null);
+    previousRequestState = signal<any | null>(null);
+    previousRequestGroupFeedback = signal<boolean | null>(null);
+    previousResponseData = signal<FeedbackAnalysisResponse | null>(null);
 
     constructor() {
         effect(() => {
@@ -96,27 +108,72 @@ export class FeedbackAnalysisComponent {
             filterErrorCategories: this.errorCategories(),
         };
 
+        const filters = {
+            tasks: this.selectedFiltersCount() !== 0 ? savedTasks : [],
+            testCases: this.selectedFiltersCount() !== 0 ? savedTestCases : [],
+            occurrence: this.selectedFiltersCount() !== 0 ? savedOccurrence : [],
+            errorCategories: this.selectedFiltersCount() !== 0 ? savedErrorCategories : [],
+        };
+
+        // cache related check if we should loading new data is necessary
+        if (
+            JSON.stringify(this.previousRequestFilters()) === JSON.stringify(filters) &&
+            JSON.stringify(this.previousRequestState()) === JSON.stringify(state) &&
+            this.previousRequestGroupFeedback() === this.groupFeedback() &&
+            this.previousResponseData() !== null
+        ) {
+            this.updateCache();
+            return;
+        }
+
         this.isLoading.set(true);
         try {
             const response = await this.feedbackAnalysisService.search(state, this.groupFeedback(), {
                 exerciseId: this.exerciseId(),
-                filters: {
-                    tasks: this.selectedFiltersCount() !== 0 ? savedTasks : [],
-                    testCases: this.selectedFiltersCount() !== 0 ? savedTestCases : [],
-                    occurrence: this.selectedFiltersCount() !== 0 ? savedOccurrence : [],
-                    errorCategories: this.selectedFiltersCount() !== 0 ? savedErrorCategories : [],
-                },
+                filters,
             });
+            this.updateCache(response, state, filters);
+        } catch (error) {
+            this.alertService.error(this.TRANSLATION_BASE + '.error');
+        } finally {
+            this.isLoading.set(false);
+        }
+    }
+
+    updateCache(response?: FeedbackAnalysisResponse, state?: any, filters?: any): void {
+        if (response) {
+            this.previousResponseData.set(this.currentResponseData());
+            this.previousRequestGroupFeedback.set(this.currentRequestGroupFeedback());
+            this.previousRequestState.set(this.currentRequestState());
+            this.previousRequestFilters.set(this.currentRequestFilters());
+
+            this.currentResponseData.set(response);
+            this.currentRequestGroupFeedback.set(this.groupFeedback());
+            this.currentRequestState.set(state);
+            this.currentRequestFilters.set(filters);
+
             this.content.set(response.feedbackDetails);
             this.totalItems.set(response.totalItems);
             this.taskNames.set(response.taskNames);
             this.testCaseNames.set(response.testCaseNames);
             this.errorCategories.set(response.errorCategories);
             this.maxCount.set(response.highestOccurrenceOfGroupedFeedback);
-        } catch (error) {
-            this.alertService.error(this.TRANSLATION_BASE + '.error');
-        } finally {
-            this.isLoading.set(false);
+        } else {
+            this.content.set(this.previousResponseData()!.feedbackDetails);
+            this.totalItems.set(this.previousResponseData()!.totalItems);
+            this.taskNames.set(this.previousResponseData()!.taskNames);
+            this.testCaseNames.set(this.previousResponseData()!.testCaseNames);
+            this.errorCategories.set(this.previousResponseData()!.errorCategories);
+            this.maxCount.set(this.previousResponseData()!.highestOccurrenceOfGroupedFeedback);
+
+            this.previousResponseData.set(this.currentResponseData());
+            this.previousRequestGroupFeedback.set(this.currentRequestGroupFeedback());
+            this.previousRequestState.set(this.currentRequestState());
+            this.previousRequestFilters.set(this.currentRequestFilters());
+            this.currentResponseData.set(this.previousResponseData());
+            this.currentRequestGroupFeedback.set(this.groupFeedback());
+            this.currentRequestState.set(this.previousRequestState());
+            this.currentRequestFilters.set(this.previousRequestFilters());
         }
     }
 
@@ -210,7 +267,6 @@ export class FeedbackAnalysisComponent {
         modalRef.componentInstance.courseId = this.courseId;
         modalRef.componentInstance.exerciseId = this.exerciseId;
         modalRef.componentInstance.feedbackDetail = signal(feedbackDetail);
-        modalRef.componentInstance.groupFeedback = signal(this.groupFeedback());
     }
 
     async openFeedbackDetailChannelModal(feedbackDetail: FeedbackDetail): Promise<void> {
@@ -220,7 +276,7 @@ export class FeedbackAnalysisComponent {
         this.isFeedbackDetailChannelModalOpen = true;
         const modalRef = this.modalService.open(FeedbackDetailChannelModalComponent, { centered: true, size: 'lg' });
         modalRef.componentInstance.feedbackDetail = signal(feedbackDetail);
-        modalRef.componentInstance.groupFeedback = signal(this.groupFeedback());
+        modalRef.componentInstance.exerciseDueDate = signal(this.exerciseDueDate());
         modalRef.componentInstance.formSubmitted.subscribe(async ({ channelDto, navigate }: { channelDto: ChannelDTO; navigate: boolean }) => {
             try {
                 const feedbackChannelRequest: FeedbackChannelRequestDTO = {
