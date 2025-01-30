@@ -10,6 +10,7 @@ import java.util.ArrayList;
 import java.util.Base64;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -257,9 +258,14 @@ public class PyrisWebhookService {
      * @param newFaq   the new faqs to be sent to pyris for ingestion
      */
     public void autoUpdateFaqInPyris(Long courseId, Faq newFaq) {
-        IrisCourseSettings courseSettings = irisSettingsRepository.findCourseSettings(courseId).isPresent() ? irisSettingsRepository.findCourseSettings(courseId).get() : null;
-        if (courseSettings != null && courseSettings.getIrisFaqIngestionSettings() != null && courseSettings.getIrisFaqIngestionSettings().isEnabled()
-                && courseSettings.getIrisFaqIngestionSettings().getAutoIngestOnFaqCreation()) {
+        IrisCourseSettings presentCourseSettings = null;
+        Optional<IrisCourseSettings> courseSettings = irisSettingsRepository.findCourseSettings(courseId);
+        if (courseSettings.isPresent()) {
+            presentCourseSettings = courseSettings.get();
+        }
+
+        if (presentCourseSettings != null && presentCourseSettings.getIrisFaqIngestionSettings() != null && presentCourseSettings.getIrisFaqIngestionSettings().isEnabled()
+                && presentCourseSettings.getIrisFaqIngestionSettings().getAutoIngestOnFaqCreation()) {
             addFaq(newFaq);
         }
     }

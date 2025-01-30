@@ -93,9 +93,7 @@ public class FaqResource {
         }
         Faq savedFaq = faqRepository.save(faq);
         FaqDTO dto = new FaqDTO(savedFaq);
-        if (checkIfFaqIsAccepted(savedFaq)) {
-            faqService.autoIngestFaqsIntoPyris(courseId, savedFaq);
-        }
+        faqService.autoIngestFaqsIntoPyris(courseId, savedFaq);
         return ResponseEntity.created(new URI("/api/courses/" + courseId + "/faqs/" + savedFaq.getId())).body(dto);
     }
 
@@ -122,9 +120,7 @@ public class FaqResource {
             throw new BadRequestAlertException("Course ID of the FAQ provided courseID must match", ENTITY_NAME, "idNull");
         }
         Faq updatedFaq = faqRepository.save(faq);
-        if (checkIfFaqIsAccepted(updatedFaq)) {
-            faqService.autoIngestFaqsIntoPyris(courseId, updatedFaq);
-        }
+        faqService.autoIngestFaqsIntoPyris(courseId, updatedFaq);
         FaqDTO dto = new FaqDTO(updatedFaq);
         return ResponseEntity.ok().body(dto);
     }
@@ -239,7 +235,6 @@ public class FaqResource {
     @EnforceAtLeastInstructorInCourse
     public ResponseEntity<Void> ingestFaqInIris(@PathVariable Long courseId, @RequestParam(required = false) Optional<Long> faqId) {
         Course course = courseRepository.findByIdElseThrow(courseId);
-        authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.INSTRUCTOR, course, null);
         faqService.ingestFaqsIntoPyris(courseId, faqId);
         return ResponseEntity.ok().build();
     }

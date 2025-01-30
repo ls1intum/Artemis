@@ -49,6 +49,9 @@ public class PyrisJobService {
     @Value("${artemis.iris.jobs.timeout:300}")
     private int jobTimeout; // in seconds
 
+    @Value("${artemis.iris.jobs.ingestion.timeout:3600}")
+    private int ingestionJobTimeout; // in seconds
+
     public PyrisJobService(@Qualifier("hazelcastInstance") HazelcastInstance hazelcastInstance) {
         this.hazelcastInstance = hazelcastInstance;
     }
@@ -103,9 +106,7 @@ public class PyrisJobService {
     public String addLectureIngestionWebhookJob(long courseId, long lectureId, long lectureUnitId) {
         var token = generateJobIdToken();
         var job = new LectureIngestionWebhookJob(token, courseId, lectureId, lectureUnitId);
-        long timeoutWebhookJob = 60;
-        TimeUnit unitWebhookJob = TimeUnit.MINUTES;
-        jobMap.put(token, job, timeoutWebhookJob, unitWebhookJob);
+        jobMap.put(token, job, ingestionJobTimeout, TimeUnit.SECONDS);
         return token;
     }
 
@@ -119,9 +120,7 @@ public class PyrisJobService {
     public String addFaqIngestionWebhookJob(long courseId, long faqId) {
         var token = generateJobIdToken();
         var job = new FaqIngestionWebhookJob(token, courseId, faqId);
-        long timeoutWebhookJob = 60;
-        TimeUnit unitWebhookJob = TimeUnit.MINUTES;
-        jobMap.put(token, job, timeoutWebhookJob, unitWebhookJob);
+        jobMap.put(token, job, ingestionJobTimeout, TimeUnit.SECONDS);
         return token;
     }
 

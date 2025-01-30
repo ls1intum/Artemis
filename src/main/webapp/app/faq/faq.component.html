@@ -46,7 +46,7 @@
                         <span jhiTranslate="{{ isAtLeastInstructor ? 'artemisApp.faq.home.createLabel' : 'artemisApp.faq.home.proposeLabel' }}"></span>
                     </a>
                     @if (isAtLeastInstructor && faqIngestionEnabled) {
-                        <button (click)="ingestFaqsInPyris()" class="btn btn-primary jh-create-entity mb-1" id="backend-trigger-button">
+                        <button (click)="ingestFaqsInPyris()" class="btn btn-primary jh-create-entity mb-1">
                             <fa-icon [icon]="faFileExport" />
                             <span jhiTranslate="artemisApp.faq.home.ingestLabel"></span>
                         </button>

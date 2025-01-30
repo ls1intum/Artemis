@@ -146,7 +146,6 @@ public class IrisResource {
     public ResponseEntity<Map<Long, IngestionState>> getStatusOfFaqIngestion(@PathVariable long courseId, @PathVariable long faqId) {
         try {
             Course course = courseRepository.findByIdElseThrow(courseId);
-            authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.INSTRUCTOR, course, null);
             Map<Long, IngestionState> responseMap = Map.of(faqId, pyrisWebhookService.getFaqIngestionState(courseId, faqId));
             return ResponseEntity.ok(responseMap);
         }

@@ -76,6 +76,10 @@ public class FaqService {
             return;
         }
 
+        if (faq.getFaqState() != FaqState.ACCEPTED) {
+            return;
+        }
+
         pyrisWebhookService.get().autoUpdateFaqInPyris(courseId, faq);
     }
 }
