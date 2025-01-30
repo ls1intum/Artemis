@@ -161,7 +161,7 @@ public class RepositoryService {
 
         files.forEach(file -> {
             try {
-                fileListWithContent.put(file.toString(), FileUtils.readFileToString(file, StandardCharsets.UTF_8));
+                fileListWithContent.put(file.toString(), FileUtils.readFileToString(file.getFile(), StandardCharsets.UTF_8));
             }
             catch (IOException e) {
                 log.error("Content of file: {} could not be loaded and throws the following error: {}", file, e.getMessage());
@@ -274,7 +274,7 @@ public class RepositoryService {
             else {
                 File templateFile = templateRepoFiles.get(fileName);
                 try {
-                    if (FileUtils.contentEquals(file, templateFile)) {
+                    if (FileUtils.contentEquals(file.getFile(), templateFile.getFile())) {
                         filesWithInformationAboutChange.put(fileName, false);
                     }
                     else {
@@ -300,7 +300,7 @@ public class RepositoryService {
     public void createFile(Repository repository, String filePath, InputStream inputStream) throws IOException {
         Path safePath = checkIfPathIsValidAndExistanceAndReturnSafePath(repository, filePath, false);
         File file = checkIfPathAndFileAreValidAndReturnSafeFile(repository, safePath);
-        FileUtils.copyToFile(inputStream, file);
+        FileUtils.copyToFile(inputStream, file.getFile());
     }
 
     /**
@@ -317,7 +317,7 @@ public class RepositoryService {
         Files.createDirectory(repository.getLocalPath().resolve(safePath));
         // We need to add an empty keep file so that the folder can be added to the git repository
         File keep = new File(repository.getLocalPath().resolve(safePath).resolve(".keep"), repository);
-        FileUtils.copyToFile(inputStream, keep);
+        FileUtils.copyToFile(inputStream, keep.getFile());
     }
 
     /**
@@ -370,7 +370,7 @@ public class RepositoryService {
         }
 
         File file = new File(Path.of(repository.getLocalPath().toString()).resolve(path).toFile(), repository);
-        if (!repository.isValidFile(file)) {
+        if (!repository.isValidFile(file.getFile())) {
             throw new IllegalArgumentException("Path is not valid");
         }
         return file;
@@ -393,14 +393,14 @@ public class RepositoryService {
         if (existingFile.isEmpty()) {
             throw new FileNotFoundException();
         }
-        if (!repository.isValidFile(existingFile.get())) {
+        if (!repository.isValidFile(existingFile.get().getFile())) {
             throw new IllegalArgumentException("Existing path is not valid");
         }
         File newFile = new File(existingFile.get().toPath().getParent().resolve(newFilename), repository);
-        if (!repository.isValidFile(newFile)) {
+        if (!repository.isValidFile(newFile.getFile())) {
             throw new IllegalArgumentException("Existing path is not valid");
         }
-        if (gitService.getFileByName(repository, newFile.getPath()).isPresent()) {
+        if (gitService.getFileByName(repository, newFile.getFile().getPath()).isPresent()) {
             throw new FileAlreadyExistsException("New path is not valid");
         }
         boolean isRenamed = existingFile.get().renameTo(newFile);
@@ -425,14 +425,14 @@ public class RepositoryService {
         if (file.isEmpty()) {
             throw new FileNotFoundException();
         }
-        if (!repository.isValidFile(file.get())) {
+        if (!repository.isValidFile(file.get().getFile())) {
             throw new IllegalArgumentException();
         }
         if (file.get().isFile()) {
             Files.delete(file.get().toPath());
         }
         else {
-            FileUtils.deleteDirectory(file.get());
+            FileUtils.deleteDirectory(file.get().getFile());
         }
     }
 
