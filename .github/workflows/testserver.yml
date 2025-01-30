@@ -109,7 +109,7 @@ jobs:
           for node in $HOSTS_SPACE_SEPARATED
           do
               # Build SSH-command
-              SSH="ssh -o LogLevel=ERROR -i id_rsa -l $DEPLOYMENT_USER $node"
+              SSH="ssh -o LogLevel=DEBUG3 -o ConnectTimeout=120 -i id_rsa -l $DEPLOYMENT_USER $node"
               # Stop Artemis-Service on node
               echo "[INFO] Stop artemis.service on ${node} ..."
               $SSH sudo systemctl stop artemis
@@ -118,7 +118,7 @@ jobs:
       - name: Phase 1 - Deploy to Primary Node
         run: |
           echo "[INFO] Deploy on $DEPLOYMENT_HOSTS_PRIMARY ..."
-          SSH="ssh -o LogLevel=ERROR -i id_rsa -l $DEPLOYMENT_USER $DEPLOYMENT_HOSTS_PRIMARY"
+          SSH="ssh -o LogLevel=DEBUG3 -o ConnectTimeout=120 -i id_rsa -l $DEPLOYMENT_USER $DEPLOYMENT_HOSTS_PRIMARY"
           
           # Remove old artemis.war
           echo "[INFO] Remove old artemis.war ..."
