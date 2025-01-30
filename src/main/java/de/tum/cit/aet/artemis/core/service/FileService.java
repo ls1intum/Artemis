@@ -5,6 +5,7 @@ import static java.nio.charset.StandardCharsets.UTF_8;
 
 import java.io.ByteArrayOutputStream;
 import java.io.File;
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -15,6 +16,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
@@ -27,9 +29,9 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
+import java.util.function.Predicate;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 import jakarta.annotation.Nullable;
 import jakarta.validation.constraints.NotNull;
@@ -494,12 +496,11 @@ public class FileService implements DisposableBean {
      * @throws IOException if the directory could not be renamed.
      */
     public void renameDirectory(Path oldDirectoryPath, Path targetDirectoryPath) throws IOException {
-        File oldDirectory = oldDirectoryPath.toFile();
-        if (!oldDirectory.exists()) {
-            log.error("Directory {} should be renamed but does not exist.", oldDirectoryPath);
-            throw new RuntimeException("Directory " + oldDirectoryPath + " should be renamed but does not exist.");
-        }
 
+        if (!Files.exists(oldDirectoryPath)) {
+            throw new FilePathParsingException("Directory " + oldDirectoryPath + " should be renamed but does not exist.");
+        }
+        File oldDirectory = oldDirectoryPath.toFile();
         File targetDirectory = targetDirectoryPath.toFile();
 
         FileUtils.moveDirectory(oldDirectory, targetDirectory);
@@ -513,12 +514,13 @@ public class FileService implements DisposableBean {
      */
     public void replacePlaceholderSections(Path filePath, Map<String, Boolean> sections) {
         Map<Pattern, Boolean> patternBooleanMap = sections.entrySet().stream().collect(Collectors.toMap(e -> Pattern.compile(".*%" + e.getKey() + ".*%.*"), Map.Entry::getValue));
-        Path tempFile = Path.of(filePath + "_temp");
-        if (!Files.exists(filePath)) {
+        File file = filePath.toFile();
+        File tempFile = Path.of(filePath + "_temp").toFile();
+        if (!file.exists()) {
             throw new FilePathParsingException("File " + filePath + " should be updated but does not exist.");
         }
 
-        try (var reader = Files.newBufferedReader(filePath, UTF_8); var writer = Files.newBufferedWriter(tempFile, UTF_8)) {
+        try (var reader = Files.newBufferedReader(file.toPath(), UTF_8); var writer = Files.newBufferedWriter(tempFile.toPath(), UTF_8)) {
             Map.Entry<Pattern, Boolean> matchingStartPattern = null;
             String line = reader.readLine();
             while (line != null) {
@@ -565,8 +567,8 @@ public class FileService implements DisposableBean {
         }
         // Accessing already opened files will cause an exception on Windows machines, therefore close the streams
         try {
-            Files.delete(filePath);
-            FileUtils.moveFile(tempFile.toFile(), filePath.toFile());
+            Files.delete(file.toPath());
+            FileUtils.moveFile(tempFile, filePath.toFile());
         }
         catch (IOException ex) {
             throw new RuntimeException("Error encountered when reading File " + filePath + ".", ex);
@@ -583,7 +585,8 @@ public class FileService implements DisposableBean {
      */
     public void replaceVariablesInDirectoryName(Path startPath, String targetString, String replacementString) throws IOException {
         log.debug("Replacing {} with {} in directory {}", targetString, replacementString, startPath);
-        if (!Files.exists(startPath) || !Files.isDirectory(startPath)) {
+        File directory = startPath.toFile();
+        if (!directory.exists() || !directory.isDirectory()) {
             throw new RuntimeException("Directory " + startPath + " should be replaced but does not exist.");
         }
         String pathString = startPath.toString();
@@ -592,20 +595,16 @@ public class FileService implements DisposableBean {
             String targetPath = pathString.replace(targetString, replacementString);
             final var path = Path.of(targetPath);
             renameDirectory(startPath, path);
+            directory = path.toFile();
         }
 
         // Get all subdirectories
-        List<Path> subDirectories;
-        try (Stream<Path> paths = Files.list(startPath)) {
-            subDirectories = paths.filter(Files::isDirectory).toList();
-        }
-        catch (IOException e) {
-            log.error("Error listing subdirectories in {}", startPath, e);
-            throw new RuntimeException("Error listing subdirectories in " + startPath);
-        }
+        final var subDirectories = directory.list((current, name) -> current.toPath().resolve(name).toFile().isDirectory());
 
-        for (Path subDirectory : subDirectories) {
-            replaceVariablesInDirectoryName(subDirectory, targetString, replacementString);
+        if (subDirectories != null) {
+            for (String subDirectory : subDirectories) {
+                replaceVariablesInDirectoryName(directory.toPath().toAbsolutePath().resolve(subDirectory), targetString, replacementString);
+            }
         }
     }
 
@@ -619,19 +618,23 @@ public class FileService implements DisposableBean {
      */
     public void replaceVariablesInFilename(Path startPath, String targetString, String replacementString) throws IOException {
         log.debug("Replacing {} with {} in directory {}", targetString, replacementString, startPath);
-        if (!Files.exists(startPath) || !Files.isDirectory(startPath)) {
-            throw new RuntimeException("Files in directory " + startPath + " should be replaced but the directory does not exist.");
+        File directory = startPath.toFile();
+        if (!directory.exists() || !directory.isDirectory()) {
+            throw new FileNotFoundException("Files in the directory " + startPath + " should be replaced but it does not exist.");
         }
 
         // rename all files in the file tree
-        List<Path> files;
-        try (Stream<Path> stream = Files.find(startPath, Integer.MAX_VALUE, (filePath, fileAttr) -> fileAttr.isRegularFile() && filePath.toString().contains(targetString))) {
-            files = stream.toList();
-        }
-
-        for (Path filePath : files) {
-            String cleanFileName = sanitizeFilename(filePath.toString().replace(targetString, replacementString));
-            FileUtils.moveFile(filePath.toFile(), Path.of(cleanFileName).toFile());
+        try (var files = Files.find(startPath, Integer.MAX_VALUE, (filePath, fileAttr) -> fileAttr.isRegularFile() && filePath.toString().contains(targetString))) {
+            files.forEach(filePath -> {
+                try {
+                    // We expect the strings to be clean already, so the filename shouldn't change. If it does, we are on the safe side with the sanitation.
+                    String cleanFileName = sanitizeFilename(filePath.toString().replace(targetString, replacementString));
+                    FileUtils.moveFile(filePath.toFile(), Path.of(cleanFileName).toFile());
+                }
+                catch (IOException e) {
+                    throw new RuntimeException("File " + filePath + " should be replaced but does not exist.");
+                }
+            });
         }
     }
 
@@ -643,7 +646,7 @@ public class FileService implements DisposableBean {
      * @param startPath    the path where the start directory is located
      * @param replacements the replacements that should be applied
      */
-    public void replaceVariablesInFileRecursive(Path startPath, Map<String, String> replacements) throws IOException {
+    public void replaceVariablesInFileRecursive(Path startPath, Map<String, String> replacements) {
         replaceVariablesInFileRecursive(startPath, replacements, Collections.emptyList());
     }
 
@@ -656,41 +659,33 @@ public class FileService implements DisposableBean {
      * @param replacements  the replacements that should be applied
      * @param filesToIgnore the name of files for which no replacement should be done
      */
-    public void replaceVariablesInFileRecursive(Path startPath, Map<String, String> replacements, List<String> filesToIgnore) throws IOException {
+    public void replaceVariablesInFileRecursive(Path startPath, Map<String, String> replacements, List<String> filesToIgnore) {
         log.debug("Replacing {} in files in directory {}", replacements, startPath);
-        if (!Files.exists(startPath) || !Files.isDirectory(startPath)) {
+        File directory = startPath.toFile();
+        if (!directory.exists() || !directory.isDirectory()) {
             throw new RuntimeException("Files in directory " + startPath + " should be replaced but the directory does not exist.");
         }
 
         // Get all files in directory
-        List<Path> files;
-        try (Stream<Path> paths = Files.list(startPath)) {
-            files = paths.filter(Files::isRegularFile).toList();
-        }
-
-        // Filter out files that should be ignored
-        List<Path> filteredFiles = new ArrayList<>();
-        for (Path file : files) {
-            if (!filesToIgnore.contains(file.getFileName().toString())) {
-                filteredFiles.add(file);
+        String[] files = directory.list((current, name) -> current.toPath().resolve(name).toFile().isFile());
+        if (files != null) {
+            // filter out files that should be ignored
+            files = Arrays.stream(files).filter(Predicate.not(filesToIgnore::contains)).toArray(String[]::new);
+            for (String file : files) {
+                replaceVariablesInFile(directory.toPath().toAbsolutePath().resolve(file), replacements);
             }
-        }
-        for (Path file : filteredFiles) {
-            replaceVariablesInFile(file, replacements);
         }
 
         // Recursive call: get all subdirectories
-        List<Path> subDirectories;
-        try (Stream<Path> paths = Files.list(startPath)) {
-            subDirectories = paths.filter(Files::isDirectory).toList();
-        }
-
-        for (Path subDirectory : subDirectories) {
-            if (subDirectory.getFileName().toString().equalsIgnoreCase(".git")) {
-                // Ignore files in the '.git' folder
-                continue;
+        String[] subDirectories = directory.list((current, name) -> current.toPath().resolve(name).toFile().isDirectory());
+        if (subDirectories != null) {
+            for (String subDirectory : subDirectories) {
+                if (subDirectory.equalsIgnoreCase(".git")) {
+                    // ignore files in the '.git' folder
+                    continue;
+                }
+                replaceVariablesInFileRecursive(directory.toPath().toAbsolutePath().resolve(subDirectory), replacements, filesToIgnore);
             }
-            replaceVariablesInFileRecursive(subDirectory, replacements, filesToIgnore);
         }
     }
 
@@ -745,14 +740,15 @@ public class FileService implements DisposableBean {
      */
     public void normalizeLineEndingsDirectory(Path startPath) throws IOException {
         log.debug("Normalizing file endings in directory {}", startPath);
-        if (!Files.exists(startPath) || !Files.isDirectory(startPath)) {
-            throw new RuntimeException("Files in directory " + startPath + " should be normalized but the directory does not exist.");
+        File directory = startPath.toFile();
+        if (!directory.exists() || !directory.isDirectory()) {
+            throw new RuntimeException("File endings in directory " + startPath + " should be normalized but the directory does not exist.");
         }
 
         // Ignore the .git repository
         IOFileFilter directoryFileFilter = FileFilterUtils.notFileFilter(FileFilterUtils.nameFileFilter(".git"));
         // Get all files in directory
-        Collection<File> files = FileUtils.listFiles(startPath.toFile(), FileFilterUtils.trueFileFilter(), directoryFileFilter);
+        Collection<File> files = FileUtils.listFiles(directory, FileFilterUtils.trueFileFilter(), directoryFileFilter);
 
         for (File file : files) {
             normalizeLineEndings(file.toPath().toAbsolutePath());
@@ -789,14 +785,15 @@ public class FileService implements DisposableBean {
      */
     public void convertFilesInDirectoryToUtf8(Path startPath) throws IOException {
         log.debug("Converting files in directory {} to UTF-8", startPath);
-        if (!Files.exists(startPath) || !Files.isDirectory(startPath)) {
+        File directory = startPath.toFile();
+        if (!directory.exists() || !directory.isDirectory()) {
             throw new RuntimeException("Files in directory " + startPath + " should be converted to UTF-8 but the directory does not exist.");
         }
 
         // Ignore the .git repository
         IOFileFilter directoryFileFilter = FileFilterUtils.notFileFilter(FileFilterUtils.nameFileFilter(".git"));
         // Get all files in directory
-        Collection<File> files = FileUtils.listFiles(startPath.toFile(), FileFilterUtils.trueFileFilter(), directoryFileFilter);
+        Collection<File> files = FileUtils.listFiles(directory, FileFilterUtils.trueFileFilter(), directoryFileFilter);
 
         for (File file : files) {
             convertToUTF8(file.toPath());
