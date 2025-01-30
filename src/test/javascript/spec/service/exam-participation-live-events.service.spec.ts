@@ -1,7 +1,7 @@
 import { TestBed, fakeAsync, tick } from '@angular/core/testing';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { Subject, firstValueFrom } from 'rxjs';
-import { ConnectionState, JhiWebsocketService } from 'app/core/websocket/websocket.service';
+import { ConnectionState, WebsocketService } from 'app/core/websocket/websocket.service';
 import { ExamParticipationService } from 'app/exam/participate/exam-participation.service';
 import { ExamLiveEvent, ExamLiveEventType, ExamParticipationLiveEventsService } from 'app/exam/participate/exam-participation-live-events.service';
 import { LocalStorageService } from 'ngx-webstorage';
@@ -12,7 +12,7 @@ import { provideHttpClient } from '@angular/common/http';
 describe('ExamParticipationLiveEventsService', () => {
     let service: ExamParticipationLiveEventsService;
     let httpMock: HttpTestingController;
-    let mockWebsocketService: JhiWebsocketService;
+    let mockWebsocketService: WebsocketService;
     let mockExamParticipationService: ExamParticipationService;
     let mockLocalStorageService: LocalStorageService;
     let websocketConnectionStateSubject: Subject<ConnectionState>;
@@ -32,14 +32,14 @@ describe('ExamParticipationLiveEventsService', () => {
 
         const tmpMockWebsocketService = new MockWebsocketService();
         tmpMockWebsocketService.state = websocketConnectionStateSubject.asObservable();
-        mockWebsocketService = tmpMockWebsocketService as unknown as JhiWebsocketService;
+        mockWebsocketService = tmpMockWebsocketService as unknown as WebsocketService;
 
         TestBed.configureTestingModule({
             imports: [],
             providers: [
                 provideHttpClient(),
                 provideHttpClientTesting(),
-                { provide: JhiWebsocketService, useValue: mockWebsocketService },
+                { provide: WebsocketService, useValue: mockWebsocketService },
                 { provide: ExamParticipationService, useValue: mockExamParticipationService },
                 { provide: LocalStorageService, useValue: mockLocalStorageService },
             ],
@@ -47,7 +47,7 @@ describe('ExamParticipationLiveEventsService', () => {
 
         service = TestBed.inject(ExamParticipationLiveEventsService);
         httpMock = TestBed.inject(HttpTestingController);
-        mockWebsocketService = TestBed.inject(JhiWebsocketService);
+        mockWebsocketService = TestBed.inject(WebsocketService);
 
         service['studentExamId'] = 1;
         service['examId'] = 1;
