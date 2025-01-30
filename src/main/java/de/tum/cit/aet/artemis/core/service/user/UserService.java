@@ -127,7 +127,8 @@ public class UserService {
             CacheManager cacheManager, Optional<LdapUserService> ldapUserService, GuidedTourSettingsRepository guidedTourSettingsRepository, PasswordService passwordService,
             Optional<VcsUserManagementService> optionalVcsUserManagementService, Optional<CIUserManagementService> optionalCIUserManagementService,
             InstanceMessageSendService instanceMessageSendService, FileService fileService, ScienceEventApi scienceEventApi,
-            ParticipationVcsAccessTokenService participationVCSAccessTokenService, LearnerProfileApi learnerProfileApi, SavedPostRepository savedPostRepository, UserSshPublicKeyService userSshPublicKeyService) {
+            ParticipationVcsAccessTokenService participationVCSAccessTokenService, LearnerProfileApi learnerProfileApi, SavedPostRepository savedPostRepository,
+            UserSshPublicKeyService userSshPublicKeyService) {
         this.userCreationService = userCreationService;
         this.userRepository = userRepository;
         this.authorityService = authorityService;
