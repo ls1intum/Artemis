@@ -126,7 +126,6 @@ export class PostingReactionsBarComponent<T extends Posting> implements OnInit, 
     isDeleteEvent = output<boolean>();
     readonly onBookmarkClicked = output<void>();
     openThread = output<void>();
-    isThreadOpen = false;
 
     // Icons
     readonly faBookmark = faBookmark;
@@ -159,10 +158,6 @@ export class PostingReactionsBarComponent<T extends Posting> implements OnInit, 
         }
         this.setMayDelete();
         this.setMayEdit();
-
-        this.openThread.subscribe(() => {
-            this.isThreadOpen = true;
-        });
     }
 
     /**
