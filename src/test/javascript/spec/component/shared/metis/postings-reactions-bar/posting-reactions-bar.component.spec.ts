@@ -542,4 +542,67 @@ describe('PostingReactionsBarComponent', () => {
             expect(metisServiceUpdateAnswerPostMock).toHaveBeenCalledOnce();
         });
     });
+
+    it('should create a Reaction with answerPost when posting type is answerPost', () => {
+        const answerPost = new AnswerPost();
+        runInInjectionContext(fixture.debugElement.injector, () => {
+            component.posting = input<Posting>(answerPost);
+        });
+
+        const reaction = component.buildReaction('thumbsup');
+        expect(reaction.answerPost).toBe(answerPost);
+        expect(reaction.post).toBeUndefined();
+    });
+
+    it('should create a Reaction with post when posting type is post', () => {
+        const post = new Post();
+        runInInjectionContext(fixture.debugElement.injector, () => {
+            component.posting = input<Posting>(post);
+        });
+
+        const reaction = component.buildReaction('thumbsup');
+        expect(reaction.post).toBe(post);
+        expect(reaction.answerPost).toBeUndefined();
+    });
+
+    it('should not toggle pin when user has no permission', () => {
+        const channelConversation = {
+            type: ConversationType.CHANNEL,
+            hasChannelModerationRights: false,
+        } as ChannelDTO;
+        component.setCanPin(channelConversation);
+        fixture.detectChanges();
+        component.togglePin();
+        expect(metisServiceUpdateDisplayPriorityMock).not.toHaveBeenCalled();
+    });
+
+    it('should emit isDeleteEvent when deletePosting is called', () => {
+        const spy = jest.spyOn(component.isDeleteEvent, 'emit');
+        component.deletePosting();
+        expect(spy).toHaveBeenCalledWith(true);
+    });
+
+    it('should toggle pin and update displayPriority when user has permission', () => {
+        jest.spyOn(metisService, 'metisUserIsAtLeastTutorInCourse').mockReturnValue(true);
+
+        const moderatorChannel = {
+            type: ConversationType.CHANNEL,
+            hasChannelModerationRights: true,
+        } as ChannelDTO;
+        jest.spyOn(metisService, 'getCurrentConversation').mockReturnValue(moderatorChannel);
+
+        runInInjectionContext(fixture.debugElement.injector, () => {
+            component.posting = input<Posting>(post);
+        });
+        component.ngOnInit();
+        expect(component.displayPriority).toBe(DisplayPriority.NONE);
+
+        component.togglePin();
+        expect(metisServiceUpdateDisplayPriorityMock).toHaveBeenCalledWith(post.id!, DisplayPriority.PINNED);
+        expect(component.displayPriority).toBe(DisplayPriority.PINNED);
+
+        component.togglePin();
+        expect(metisServiceUpdateDisplayPriorityMock).toHaveBeenCalledWith(post.id!, DisplayPriority.NONE);
+        expect(component.displayPriority).toBe(DisplayPriority.NONE);
+    });
 });

@@ -188,7 +188,7 @@ export class PostingReactionsBarComponent<T extends Posting> implements OnInit, 
      *
      * @param currentConversation the conversation the post belongs to
      */
-    private setCanPin(currentConversation: ConversationDTO | undefined) {
+    setCanPin(currentConversation: ConversationDTO | undefined) {
         if (!currentConversation) {
             this.canPin = this.metisService.metisUserIsAtLeastTutorInCourse();
             return;
@@ -394,13 +394,15 @@ export class PostingReactionsBarComponent<T extends Posting> implements OnInit, 
      * in case the displayPriority is already set to PINNED, it will be changed to NONE
      */
     togglePin() {
-        if (this.displayPriority === DisplayPriority.PINNED) {
-            this.displayPriority = DisplayPriority.NONE;
-        } else {
-            this.displayPriority = DisplayPriority.PINNED;
+        if (this.canPin) {
+            if (this.displayPriority === DisplayPriority.PINNED) {
+                this.displayPriority = DisplayPriority.NONE;
+            } else {
+                this.displayPriority = DisplayPriority.PINNED;
+            }
+            (this.posting() as Post).displayPriority = this.displayPriority;
+            this.metisService.updatePostDisplayPriority((this.posting() as Posting).id!, this.displayPriority).subscribe();
         }
-        (this.posting() as Post).displayPriority = this.displayPriority;
-        this.metisService.updatePostDisplayPriority((this.posting() as Posting).id!, this.displayPriority).subscribe();
     }
 
     /**
