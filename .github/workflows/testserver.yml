@@ -60,7 +60,7 @@ jobs:
         url: ${{ vars.DEPLOYMENT_URL }}
     env:
       DEPLOYMENT_HOSTS_PRIMARY: ${{ vars.DEPLOYMENT_HOSTS_PRIMARY}}
-      DEPLOYMENT_HOSTS_SECONDARY: "artemis-staging-localci-node-2.artemis.cit.tum.de artemis-staging-localci-node-3.artemis.cit.tum.de artemis-staging-localci-node-4.artemis.cit.tum.de artemis-staging-localci-node-5.artemis.cit.tum.de"
+      DEPLOYMENT_HOSTS_SECONDARY: ${{ vars.DEPLOYMENT_HOSTS_SECONDARY}}
       DEPLOYMENT_USER: ${{ vars.DEPLOYMENT_USER }}
 
       DEPLOYMENT_FOLDER: ${{ vars.DEPLOYMENT_FOLDER }}
@@ -85,60 +85,62 @@ jobs:
           SSH_AUTH_SOCK: /tmp/ssh_agent_${{ github.run_id }}.sock  
           DEPLOYMENT_HOST_PUBLIC_KEYS: ${{ vars.DEPLOYMENT_HOST_PUBLIC_KEYS }}
         run: |
-          # Cleanup any existing socket
-          if [ -S "$SSH_AUTH_SOCK" ]; then
-            rm -f "$SSH_AUTH_SOCK"
-          fi
-          
-          # Create .ssh directory with proper permissions
-          mkdir -p ~/.ssh
-          chmod 700 ~/.ssh
-          
-          # Start SSH agent with the unique socket
-          ssh-agent -a "$SSH_AUTH_SOCK" > /dev/null
-          
-          # Add the deployment key
-          ssh-add - <<< "$DEPLOYMENT_SSH_KEY"
-          
-          # Add host keys
-          cat - <<< "$DEPLOYMENT_HOST_PUBLIC_KEYS" >> ~/.ssh/known_hosts
-          chmod 600 ~/.ssh/known_hosts
-          
-          # List identities
-          ssh-add -l || echo "No identities found"
+          echo "-----BEGIN RSA PRIVATE KEY-----" > id_rsa
+          echo "$DEPLOYMENT_SSH_KEY" | sed -r 's/^-----BEGIN RSA PRIVATE KEY----- //;s/ -----END RSA PRIVATE KEY-----//' | tr " " "\n" >> id_rsa
+          echo "-----END RSA PRIVATE KEY-----" >> id_rsa
+          chmod 600 id_rsa
           
           echo "Testing connectivity to primary node:"
           ping -c 3 $DEPLOYMENT_HOSTS_PRIMARY
-          
-          echo "Testing SSH connection to primary node:"
-          ssh -o BatchMode=yes -o StrictHostKeyChecking=accept-new \
-              -l $DEPLOYMENT_USER $DEPLOYMENT_HOSTS_PRIMARY "echo 'SSH connection successful'"
+          HOSTS_SPACE_SEPARATED=$(echo "$DEPLOYMENT_HOSTS_SECONDARY" | tr -d '\r' | tr '\n' ' ' | awk '{$1=$1};1')
+          echo "Debug: Hosts list: $HOSTS_SPACE_SEPARATED"
+
+          for node in $HOSTS_SPACE_SEPARATED
+          do
+            echo "Testing connectivity to secondary node: $node"  
+            ping -c 3 $node
+          done
+
+      - name: Phase 1 - Stop Secondary Nodes
+        run: |
+          # Convert newline-separated list to space-separated
+          HOSTS_SPACE_SEPARATED=$(echo "$DEPLOYMENT_HOSTS_SECONDARY" | tr -d '\r' | tr '\n' ' ' | awk '{$1=$1};1')
+          echo "Debug: Hosts list: $HOSTS_SPACE_SEPARATED"
+          for node in $HOSTS_SPACE_SEPARATED
+          do
+              # Build SSH-command
+              SSH="ssh -o LogLevel=ERROR -i id_rsa -l $DEPLOYMENT_USER $node"
+              # Stop Artemis-Service on node
+              echo "[INFO] Stop artemis.service on ${node} ..."
+              $SSH sudo systemctl stop artemis
+          done
 
       - name: Phase 1 - Deploy to Primary Node
         run: |
           echo "[INFO] Deploy on $DEPLOYMENT_HOSTS_PRIMARY ..."
+          SSH="ssh -o LogLevel=ERROR -i id_rsa -l $DEPLOYMENT_USER $DEPLOYMENT_HOSTS_PRIMARY"
           
-          # Remove old backup
-          ssh -o BatchMode=yes -o StrictHostKeyChecking=accept-new \
-              -l $DEPLOYMENT_USER $DEPLOYMENT_HOSTS_PRIMARY \
-              "rm -f $DEPLOYMENT_FOLDER/artemis.war.old" || exit 1
-          
-          # Copy new war file
-          scp -o BatchMode=yes -o StrictHostKeyChecking=accept-new \
-              artifacts/*.war $DEPLOYMENT_USER@$DEPLOYMENT_HOSTS_PRIMARY:$DEPLOYMENT_FOLDER/artemis.war.new || {
-            echo "::error::Failed to copy war file to primary host"
-            exit 1
-          }
+          # Remove old artemis.war
+          echo "[INFO] Remove old artemis.war ..."
+          $SSH rm /opt/artemis/artemis.war.old
 
-          # Stop service, rotate files, and start service
-          ssh -o BatchMode=yes -o StrictHostKeyChecking=accept-new \
-              -l $DEPLOYMENT_USER $DEPLOYMENT_HOSTS_PRIMARY << 'ENDSSH' || exit 1
-            set -e
-            sudo systemctl stop artemis
-            mv $DEPLOYMENT_FOLDER/artemis.war $DEPLOYMENT_FOLDER/artemis.war.old
-            mv $DEPLOYMENT_FOLDER/artemis.war.new $DEPLOYMENT_FOLDER/artemis.war
-            sudo systemctl start artemis
-          ENDSSH
+          # Copy new artemis.war to node
+          echo "[INFO] Copy new artemis.war ..."
+          scp -o LogLevel=ERROR -i id_rsa artifacts/*.war $DEPLOYMENT_USER@$DEPLOYMENT_HOSTS_PRIMARY:/opt/artemis/artemis.war.new
+
+          # Stop Artemis-Service on node
+          echo "[INFO] Stop artemis.service ..."
+          $SSH sudo systemctl stop artemis
+
+          # Replace old artemis.war
+          echo "[INFO] Rename old artemis.war ..."
+          $SSH mv /opt/artemis/artemis.war /opt/artemis/artemis.war.old
+          echo "[INFO] Rename new artemis.war ..."
+          $SSH mv /opt/artemis/artemis.war.new /opt/artemis/artemis.war
+
+          # Start Artemis-Service on node
+          echo "[INFO] Start artemis.service ..."
+          $SSH sudo systemctl start artemis
 
       - name: Verify Primary Node Deployment
         id: verify_deployment
@@ -158,5 +160,42 @@ jobs:
               sleep 10
             fi
           done
+      - name: Phase 2 - Deploy to Secondary Nodes
+        run: |
+          HOSTS_SPACE_SEPARATED=$(echo "$DEPLOYMENT_HOSTS_SECONDARY" | tr -d '\r' | tr '\n' ' ' | awk '{$1=$1};1')
+          
+          echo "Debug: Hosts list: $HOSTS_SPACE_SEPARATED"
 
+          # Deploy to secondary nodes
+          for node in $HOSTS_SPACE_SEPARATED
+          do
+            echo "##################################################################################################"
+            echo "[INFO] Deploy on $node ..."
+            echo "##################################################################################################"
+
+            # Build SSH-command
+            SSH="ssh -o LogLevel=ERROR -i id_rsa -l $DEPLOYMENT_USER $node"
+
+            # Remove old artemis.war
+            echo "[INFO] Remove old artemis.war ..."
+            $SSH rm /opt/artemis/artemis.war.old
+
+            # Copy new artemis.war to node
+            echo "[INFO] Copy new artemis.war ..."
+            scp -o LogLevel=ERROR -i id_rsa artifacts/*.war $DEPLOYMENT_USER@$node:/opt/artemis/artemis.war.new
+
+            # Stop Artemis-Service on node
+            echo "[INFO] Stop artemis.service ..."
+            $SSH sudo systemctl stop artemis
+
+            # Replace old artemis.war
+            echo "[INFO] Rename old artemis.war ..."
+            $SSH mv /opt/artemis/artemis.war /opt/artemis/artemis.war.old
+            echo "[INFO] Rename new artemis.war ..."
+            $SSH mv /opt/artemis/artemis.war.new /opt/artemis/artemis.war
+
+            # Start Artemis-Service on node
+            echo "[INFO] Start artemis.service ..."
+            $SSH sudo systemctl start artemis
+          done
       
