@@ -1,5 +1,5 @@
 import { Injectable, OnDestroy, inject } from '@angular/core';
-import { JhiWebsocketService } from 'app/core/websocket/websocket.service';
+import { WebsocketService } from 'app/core/websocket/websocket.service';
 import { Observable, Subject, Subscription } from 'rxjs';
 
 type SubscribedChannel = { wsSubscription: Subscription; subject: Subject<any> };
@@ -9,7 +9,7 @@ type SubscribedChannel = { wsSubscription: Subscription; subject: Subject<any> }
  */
 @Injectable({ providedIn: 'root' })
 export class IrisWebsocketService implements OnDestroy {
-    protected jhiWebsocketService = inject(JhiWebsocketService);
+    protected jhiWebsocketService = inject(WebsocketService);
 
     private subscribedChannels: Map<number, SubscribedChannel> = new Map();
 

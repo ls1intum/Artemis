@@ -24,7 +24,7 @@ import {
 } from 'app/shared/metis/metis.util';
 import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
 import { Params } from '@angular/router';
-import { JhiWebsocketService } from 'app/core/websocket/websocket.service';
+import { WebsocketService } from 'app/core/websocket/websocket.service';
 import { MetisPostDTO } from 'app/entities/metis/metis-post-dto.model';
 import dayjs from 'dayjs/esm';
 import { PlagiarismCase } from 'app/exercises/shared/plagiarism/types/PlagiarismCase';
@@ -45,7 +45,7 @@ export class MetisService implements OnDestroy {
     protected reactionService = inject(ReactionService);
     protected accountService = inject(AccountService);
     protected exerciseService = inject(ExerciseService);
-    private jhiWebsocketService = inject(JhiWebsocketService);
+    private jhiWebsocketService = inject(WebsocketService);
     private conversationService = inject(ConversationService);
     private forwardedMessageService = inject(ForwardedMessageService);
 
