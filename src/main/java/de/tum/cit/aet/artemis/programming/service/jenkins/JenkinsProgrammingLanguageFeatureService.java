@@ -25,11 +25,15 @@ import static de.tum.cit.aet.artemis.programming.domain.ProjectType.PLAIN;
 import static de.tum.cit.aet.artemis.programming.domain.ProjectType.PLAIN_GRADLE;
 import static de.tum.cit.aet.artemis.programming.domain.ProjectType.PLAIN_MAVEN;
 
+import java.util.EnumMap;
 import java.util.List;
+import java.util.Map;
 
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
+import de.tum.cit.aet.artemis.programming.domain.ProgrammingLanguage;
+import de.tum.cit.aet.artemis.programming.service.LicenseService;
 import de.tum.cit.aet.artemis.programming.service.ProgrammingLanguageFeature;
 import de.tum.cit.aet.artemis.programming.service.ProgrammingLanguageFeatureService;
 
@@ -37,8 +41,14 @@ import de.tum.cit.aet.artemis.programming.service.ProgrammingLanguageFeatureServ
 @Profile(PROFILE_JENKINS)
 public class JenkinsProgrammingLanguageFeatureService extends ProgrammingLanguageFeatureService {
 
-    public JenkinsProgrammingLanguageFeatureService() {
+    protected JenkinsProgrammingLanguageFeatureService(LicenseService licenseService) {
+        super(licenseService);
+    }
+
+    @Override
+    protected Map<ProgrammingLanguage, ProgrammingLanguageFeature> getSupportedProgrammingLanguageFeatures() {
         // Must be extended once a new programming language is added
+        EnumMap<ProgrammingLanguage, ProgrammingLanguageFeature> programmingLanguageFeatures = new EnumMap<>(ProgrammingLanguage.class);
         programmingLanguageFeatures.put(EMPTY, new ProgrammingLanguageFeature(EMPTY, false, false, false, false, false, List.of(), false));
         programmingLanguageFeatures.put(BASH, new ProgrammingLanguageFeature(BASH, false, false, false, false, false, List.of(), false));
         programmingLanguageFeatures.put(C, new ProgrammingLanguageFeature(C, false, false, true, false, false, List.of(FACT, GCC), false));
@@ -56,5 +66,6 @@ public class JenkinsProgrammingLanguageFeatureService extends ProgrammingLanguag
         // Jenkins is not supporting XCODE at the moment
         programmingLanguageFeatures.put(SWIFT, new ProgrammingLanguageFeature(SWIFT, false, true, true, true, false, List.of(PLAIN), false));
         programmingLanguageFeatures.put(TYPESCRIPT, new ProgrammingLanguageFeature(TYPESCRIPT, false, false, true, false, false, List.of(), false));
+        return programmingLanguageFeatures;
     }
 }
