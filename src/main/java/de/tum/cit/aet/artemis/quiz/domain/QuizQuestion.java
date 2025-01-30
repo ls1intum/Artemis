@@ -69,7 +69,7 @@ public abstract class QuizQuestion extends DomainObject {
 
     @Column(name = "points")
     @JsonView(QuizView.Before.class)
-    private Double points;
+    private double points;
 
     @Enumerated(EnumType.STRING)
     @Column(name = "scoring_type")
