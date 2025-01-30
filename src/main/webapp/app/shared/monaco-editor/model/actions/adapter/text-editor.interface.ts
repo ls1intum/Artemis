@@ -54,6 +54,12 @@ export interface TextEditor {
     getTextAtRange(range: TextEditorRange): string;
 
     /**
+     * Retrieves the full text of the editor.
+     * Line endings are normalized to '\n'.
+     */
+    getFullText(): string;
+
+    /**
      * Retrieves the text of the line at the given line number in the editor.
      * @param lineNumber The line number to get the text from. Line numbers start at 1.
      */
