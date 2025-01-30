@@ -17,6 +17,8 @@ import org.springframework.web.bind.annotation.RestController;
 
 import de.tum.cit.aet.artemis.core.exception.ConflictException;
 import de.tum.cit.aet.artemis.core.repository.UserRepository;
+import de.tum.cit.aet.artemis.core.security.Role;
+import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
 import de.tum.cit.aet.artemis.iris.domain.session.IrisLectureChatSession;
 import de.tum.cit.aet.artemis.iris.domain.settings.IrisSubSettingsType;
 import de.tum.cit.aet.artemis.iris.repository.IrisLectureChatSessionRepository;
@@ -29,6 +31,7 @@ import de.tum.cit.aet.artemis.lecture.repository.LectureRepository;
 @Profile(PROFILE_IRIS)
 @RestController
 @RequestMapping("api/iris/lecture-chat/")
+
 public class IrisLectureChatSessionResource {
 
     private final UserRepository userRepository;
@@ -43,14 +46,18 @@ public class IrisLectureChatSessionResource {
 
     private final IrisLectureChatSessionRepository irisLectureChatSessionRepository;
 
+    private final AuthorizationCheckService authorizationCheckService;
+
     protected IrisLectureChatSessionResource(UserRepository userRepository, IrisSessionService irisSessionService, IrisSettingsService irisSettingsService,
-            LectureRepository lectureRepository, IrisLectureChatSessionService irisLectureChatSessionService, IrisLectureChatSessionRepository irisLectureChatSessionRepository) {
+            LectureRepository lectureRepository, IrisLectureChatSessionService irisLectureChatSessionService, IrisLectureChatSessionRepository irisLectureChatSessionRepository,
+            AuthorizationCheckService authorizationCheckService) {
         this.userRepository = userRepository;
         this.irisSessionService = irisSessionService;
         this.irisSettingsService = irisSettingsService;
         this.lectureRepository = lectureRepository;
         this.irisLectureChatSessionService = irisLectureChatSessionService;
         this.irisLectureChatSessionRepository = irisLectureChatSessionRepository;
+        this.authorizationCheckService = authorizationCheckService;
     }
 
     /**
@@ -64,9 +71,10 @@ public class IrisLectureChatSessionResource {
         var lecture = lectureRepository.findByIdElseThrow(lectureId);
         validateLecture(lecture);
 
-        irisSettingsService.isEnabledForElseThrow(IrisSubSettingsType.LECTURE_CHAT, lecture.getCourse());
         var user = userRepository.getUserWithGroupsAndAuthorities();
+        authorizationCheckService.checkHasAtLeastRoleForLectureElseThrow(Role.STUDENT, lecture, user);
 
+        irisSettingsService.isEnabledForElseThrow(IrisSubSettingsType.LECTURE_CHAT, lecture.getCourse());
         var sessionOptional = irisLectureChatSessionRepository.findLatestSessionsByLectureIdAndUserIdWithMessages(lecture.getId(), user.getId(), Pageable.ofSize(1)).stream()
                 .findFirst();
         if (sessionOptional.isPresent()) {
@@ -86,13 +94,15 @@ public class IrisLectureChatSessionResource {
      * @param lectureId of the exercise
      * @return the {@link ResponseEntity} with status {@code 200 (Ok)} and with body the new iris session for the lecture
      */
-    @PostMapping("{lectureId}/sessions")
+    @PostMapping("lecture/{lectureId}/sessions")
     public ResponseEntity<IrisLectureChatSession> createSessionForLecture(@PathVariable Long lectureId) throws URISyntaxException {
         var lecture = lectureRepository.findByIdElseThrow(lectureId);
         validateLecture(lecture);
 
-        irisSettingsService.isEnabledForElseThrow(IrisSubSettingsType.LECTURE_CHAT, lecture.getCourse());
         var user = userRepository.getUserWithGroupsAndAuthorities();
+        authorizationCheckService.checkHasAtLeastRoleForLectureElseThrow(Role.STUDENT, lecture, user);
+
+        irisSettingsService.isEnabledForElseThrow(IrisSubSettingsType.LECTURE_CHAT, lecture.getCourse());
         user.hasAcceptedIrisElseThrow();
 
         var session = irisLectureChatSessionRepository.save(new IrisLectureChatSession(lecture, user));
@@ -112,8 +122,10 @@ public class IrisLectureChatSessionResource {
         var lecture = lectureRepository.findByIdElseThrow(lectureId);
         validateLecture(lecture);
 
-        irisSettingsService.isEnabledForElseThrow(IrisSubSettingsType.LECTURE_CHAT, lecture.getCourse());
         var user = userRepository.getUserWithGroupsAndAuthorities();
+        authorizationCheckService.checkHasAtLeastRoleForLectureElseThrow(Role.STUDENT, lecture, user);
+
+        irisSettingsService.isEnabledForElseThrow(IrisSubSettingsType.LECTURE_CHAT, lecture.getCourse());
         user.hasAcceptedIrisElseThrow();
 
         var sessions = irisLectureChatSessionRepository.findByLectureIdAndUserIdOrderByCreationDateDesc(lecture.getId(), user.getId());
