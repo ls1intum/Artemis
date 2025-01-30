@@ -8,7 +8,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Profile;
 import org.springframework.http.ResponseEntity;
-import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -17,9 +16,8 @@ import org.springframework.web.bind.annotation.RestController;
 import de.tum.cit.aet.artemis.core.repository.CourseRepository;
 import de.tum.cit.aet.artemis.core.repository.UserRepository;
 import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInExercise.EnforceAtLeastEditorInExercise;
-import de.tum.cit.aet.artemis.exercise.repository.ExerciseRepository;
 import de.tum.cit.aet.artemis.iris.service.IrisConsistencyCheckService;
-import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
+import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseRepository;
 
 /**
  * REST controller for checking consistency of exercises.
@@ -33,14 +31,14 @@ public class IrisConsistencyCheckResource {
 
     private final UserRepository userRepository;
 
-    private final ExerciseRepository exerciseRepository;
+    private final ProgrammingExerciseRepository programmingExerciseRepository;
 
     private final Optional<IrisConsistencyCheckService> irisConsistencyCheckService;
 
-    public IrisConsistencyCheckResource(UserRepository userRepository, ExerciseRepository exerciseRepository, CourseRepository courseRepository,
+    public IrisConsistencyCheckResource(UserRepository userRepository, ProgrammingExerciseRepository programmingExerciseRepository, CourseRepository courseRepository,
             Optional<IrisConsistencyCheckService> irisConsistencyCheckService) {
         this.userRepository = userRepository;
-        this.exerciseRepository = exerciseRepository;
+        this.programmingExerciseRepository = programmingExerciseRepository;
         this.irisConsistencyCheckService = irisConsistencyCheckService;
 
     }
@@ -53,12 +51,11 @@ public class IrisConsistencyCheckResource {
      */
     @EnforceAtLeastEditorInExercise
     @PostMapping("exercises/{exerciseId}")
-    @Transactional
     public ResponseEntity<Void> consistencyCheckExercise(@PathVariable Long exerciseId) {
         var consistencyCheckService = irisConsistencyCheckService.orElseThrow();
         var user = userRepository.getUserWithGroupsAndAuthorities();
-        var exercise = exerciseRepository.findByIdElseThrow(exerciseId);
-        consistencyCheckService.executeConsistencyCheckPipeline(user, (ProgrammingExercise) exercise);
+        var programmingExercise = programmingExerciseRepository.findByIdWithTemplateAndSolutionParticipationElseThrow(exerciseId);
+        consistencyCheckService.executeConsistencyCheckPipeline(user, programmingExercise);
         return ResponseEntity.ok().build();
     }
 }
