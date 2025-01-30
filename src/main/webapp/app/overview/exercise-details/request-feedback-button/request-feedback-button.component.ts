@@ -1,5 +1,5 @@
 import { Component, OnInit, inject, input, output } from '@angular/core';
-
+import { Subscription, filter, skip } from 'rxjs';
 import { NgbTooltipModule } from '@ng-bootstrap/ng-bootstrap';
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
 import { faPenSquare } from '@fortawesome/free-solid-svg-icons';
@@ -16,6 +16,8 @@ import { ExerciseDetailsType, ExerciseService } from 'app/exercises/shared/exerc
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { ParticipationService } from 'app/exercises/shared/participation/participation.service';
 import { AssessmentType } from 'app/entities/assessment-type.model';
+import { ParticipationWebsocketService } from 'app/overview/participation-websocket.service';
+import { Result } from 'app/entities/result.model';
 
 @Component({
     selector: 'jhi-request-feedback-button',
@@ -45,6 +47,9 @@ export class RequestFeedbackButtonComponent implements OnInit {
     private translateService = inject(TranslateService);
     private exerciseService = inject(ExerciseService);
     private participationService = inject(ParticipationService);
+    private participationWebsocketService = inject(ParticipationWebsocketService);
+
+    private athenaResultUpdateListener?: Subscription;
 
     protected readonly ExerciseType = ExerciseType;
 
@@ -68,12 +73,40 @@ export class RequestFeedbackButtonComponent implements OnInit {
                     if (this.participation) {
                         this.currentFeedbackRequestCount =
                             this.participation.results?.filter((result) => result.assessmentType == AssessmentType.AUTOMATIC_ATHENA && result.successful == true).length ?? 0;
+                        this.subscribeToResultUpdates();
                     }
                 },
                 error: (error: HttpErrorResponse) => {
                     this.alertService.error(`artemisApp.${error.error.entityName}.errors.${error.error.errorKey}`);
                 },
             });
+        }
+    }
+
+    private subscribeToResultUpdates() {
+        if (!this.participation?.id) {
+            return;
+        }
+
+        // Subscribe to result updates for this participation
+        this.athenaResultUpdateListener = this.participationWebsocketService
+            .subscribeForLatestResultOfParticipation(this.participation.id, true)
+            .pipe(
+                skip(1), // Skip initial value
+                filter((result): result is Result => !!result),
+                filter((result) => result.assessmentType === AssessmentType.AUTOMATIC_ATHENA),
+            )
+            .subscribe(this.handleAthenaAssessment.bind(this));
+    }
+
+    private handleAthenaAssessment(result: Result) {
+        if (result.completionDate) {
+            if (result.successful) {
+                this.currentFeedbackRequestCount += 1;
+                this.alertService.success('artemisApp.exercise.athenaFeedbackSuccessful');
+            }
+        } else if (result.successful === false) {
+            this.alertService.error('artemisApp.exercise.athenaFeedbackFailed');
         }
     }
 
@@ -86,7 +119,6 @@ export class RequestFeedbackButtonComponent implements OnInit {
             next: (participation: StudentParticipation) => {
                 if (participation) {
                     this.generatingFeedback.emit();
-                    this.currentFeedbackRequestCount += 1;
                     this.alertService.success('artemisApp.exercise.feedbackRequestSent');
                 }
             },
