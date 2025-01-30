@@ -4,7 +4,6 @@ import { DebugElement, input, runInInjectionContext } from '@angular/core';
 import { Post } from 'app/entities/metis/post.model';
 import { MockComponent, MockDirective, MockPipe, MockProvider } from 'ng-mocks';
 import { getElement } from '../../../../helpers/utils/general.utils';
-import { PostReactionsBarComponent } from 'app/shared/metis/posting-reactions-bar/post-reactions-bar/post-reactions-bar.component';
 import { Reaction } from 'app/entities/metis/reaction.model';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { ReactionService } from 'app/shared/metis/reaction.service';
@@ -70,7 +69,6 @@ describe('PostingReactionsBarComponent', () => {
         return TestBed.configureTestingModule({
             imports: [MockDirective(NgbTooltip)],
             declarations: [
-                PostReactionsBarComponent,
                 TranslatePipeMock,
                 MockPipe(ReactingUsersOnPostingPipe),
                 MockComponent(FaIconComponent),
