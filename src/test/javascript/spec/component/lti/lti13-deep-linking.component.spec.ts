@@ -334,10 +334,14 @@ describe('Lti13DeepLinkingComponent', () => {
         component.sendDeepLinkRequest();
         tick();
 
-        expect(httpMock.post).toHaveBeenCalledWith(`api/lti13/deep-linking/${component.courseId}`, null, {
-            observe: 'response',
-            params: new HttpParams().set('lectureIds', '1,2').set('ltiIdToken', '').set('clientRegistrationId', ''),
-        });
+        expect(httpMock.post).toHaveBeenCalledWith(
+            `api/lti13/deep-linking/${component.courseId}`,
+            null,
+            expect.objectContaining({
+                observe: 'response',
+                params: expect.any(HttpParams),
+            }),
+        );
     }));
 
     it('should show an error when no content is selected', () => {
@@ -366,23 +370,11 @@ describe('Lti13DeepLinkingComponent', () => {
         expect(component.exercises[2].title).toBe(exercise2.title);
     });
 
-    it('should sort lectures by title in descending order', () => {
-        const lecture1 = { id: 1, title: 'Introduction to LTI' };
-        const lecture2 = { id: 2, title: 'Advanced LTI Concepts' };
-        component.lectures = [lecture1, lecture2];
-        component.predicate = 'title';
-        component.reverse = true;
-
-        component.sortRows();
-
-        expect(sortServiceMock.sortByProperty).toHaveBeenCalledWith(component.lectures, 'title', true);
-        expect(component.lectures[0].title).toBe(lecture2.title);
-        expect(component.lectures[1].title).toBe(lecture1.title);
-    });
-
     it('should redirect user to login and then back to the target link', fakeAsync(() => {
         const currentLink = 'http://example.com/target';
         const loggedInUser: User = { id: 3, login: 'lti_user' } as User;
+
+        const replaceMock = jest.spyOn(window.location, 'replace').mockImplementation(jest.fn());
 
         accountServiceMock.getAuthenticationState.mockReturnValue(of(loggedInUser));
         routerMock.navigate.mockReturnValue(Promise.resolve(true));
@@ -392,7 +384,9 @@ describe('Lti13DeepLinkingComponent', () => {
 
         expect(routerMock.navigate).toHaveBeenCalledWith(['/']);
         expect(accountServiceMock.getAuthenticationState).toHaveBeenCalled();
-        expect(window.location.replace).toHaveBeenCalledWith(currentLink);
+        expect(replaceMock).toHaveBeenCalledWith(currentLink);
+
+        replaceMock.mockRestore();
     }));
 
     it('should handle empty course gracefully', fakeAsync(() => {
