@@ -94,7 +94,7 @@ public class IrisLectureChatSessionResource {
      * @param lectureId of the exercise
      * @return the {@link ResponseEntity} with status {@code 200 (Ok)} and with body the new iris session for the lecture
      */
-    @PostMapping("lecture/{lectureId}/sessions")
+    @PostMapping("{lectureId}/sessions")
     public ResponseEntity<IrisLectureChatSession> createSessionForLecture(@PathVariable Long lectureId) throws URISyntaxException {
         var lecture = lectureRepository.findByIdElseThrow(lectureId);
         validateLecture(lecture);
