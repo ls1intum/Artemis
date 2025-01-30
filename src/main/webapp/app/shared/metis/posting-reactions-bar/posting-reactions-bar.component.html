@@ -8,34 +8,19 @@
                 </button>
             </div>
         }
-        @if (!isCommunicationPage()) {
-            @if (sortedAnswerPosts()?.length) {
-                @if (showAnswers()) {
-                    <div>
-                        <button class="reaction-button clickable collapse-answers-btn" [class.reaction-button--reacted]="showAnswers()" (click)="closeAnswerView()">
-                            <jhi-emoji [emoji]="closeCrossId" />
-                            <span jhiTranslate="artemisApp.metis.collapseAnswers" class="emoji-count"></span>
-                        </button>
-                    </div>
-                } @else {
-                    <div>
-                        <button class="reaction-button clickable expand-answers-btn" (click)="openAnswerView()">
-                            <fa-icon class="fa-xs align-self-center" [icon]="faArrowRight" />
-                            <span class="emoji-count">{{
-                                sortedAnswerPosts()?.length === 1
-                                    ? ('artemisApp.metis.showSingleAnswer' | artemisTranslate)
-                                    : ('artemisApp.metis.showMultipleAnswers' | artemisTranslate: { number: sortedAnswerPosts()?.length })
-                            }}</span>
-                        </button>
-                    </div>
-                }
-            }
-        } @else {
-            @if (!isThreadSidebar() && !showAnswers() && sortedAnswerPosts()?.length) {
+        @if (!isCommunicationPage() && sortedAnswerPosts()?.length) {
+            @if (showAnswers()) {
                 <div>
-                    <button class="reaction-button clickable expand-answers-btn" (click)="openThread.emit()">
-                        <fa-icon [icon]="faArrowRight" />
-                        <span class="emoji-count px-2">{{
+                    <button class="reaction-button clickable collapse-answers-btn" [class.reaction-button--reacted]="showAnswers()" (click)="closeAnswerView()">
+                        <jhi-emoji [emoji]="closeCrossId" />
+                        <span jhiTranslate="artemisApp.metis.collapseAnswers" class="emoji-count"></span>
+                    </button>
+                </div>
+            } @else {
+                <div>
+                    <button class="reaction-button clickable expand-answers-btn" (click)="openAnswerView()">
+                        <fa-icon class="fa-xs align-self-center" [icon]="faArrowRight" />
+                        <span class="emoji-count">{{
                             sortedAnswerPosts()?.length === 1
                                 ? ('artemisApp.metis.showSingleAnswer' | artemisTranslate)
                                 : ('artemisApp.metis.showMultipleAnswers' | artemisTranslate: { number: sortedAnswerPosts()?.length })
@@ -43,6 +28,17 @@
                     </button>
                 </div>
             }
+        } @else if (!isThreadSidebar() && !showAnswers() && sortedAnswerPosts()?.length) {
+            <div>
+                <button class="reaction-button clickable expand-answers-btn" (click)="openThread.emit()">
+                    <fa-icon [icon]="faArrowRight" />
+                    <span class="emoji-count px-2">{{
+                        sortedAnswerPosts()?.length === 1
+                            ? ('artemisApp.metis.showSingleAnswer' | artemisTranslate)
+                            : ('artemisApp.metis.showMultipleAnswers' | artemisTranslate: { number: sortedAnswerPosts()?.length })
+                    }}</span>
+                </button>
+            </div>
         }
     }
 
