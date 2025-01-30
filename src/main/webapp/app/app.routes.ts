@@ -183,7 +183,7 @@ const routes: Routes = [
     // ===== EXAM =====
     {
         path: 'course-management/:courseId/exams',
-        loadChildren: () => import('./exam/manage/exam-management.module').then((m) => m.ArtemisExamManagementModule),
+        loadChildren: () => import('./exam/manage/exam-management.route').then((m) => m.examManagementRoute),
     },
     {
         path: 'courses/:courseId/exams/:examId/grading-system',

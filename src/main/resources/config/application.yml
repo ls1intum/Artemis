@@ -105,6 +105,8 @@ artemis:
                     default: "ghcr.io/ls1intum/artemis-javascript-docker:v1.0.0"
                 go:
                     default: "ghcr.io/ls1intum/artemis-go-docker:v1.0.0"
+                matlab:
+                    default: "mathworks/matlab:r2024b"
                 ruby:
                     default: "ghcr.io/ls1intum/artemis-ruby-docker:v1.0.0"
 
