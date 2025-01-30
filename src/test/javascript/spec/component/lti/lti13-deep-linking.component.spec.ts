@@ -297,4 +297,116 @@ describe('Lti13DeepLinkingComponent', () => {
             params: new HttpParams().set('learningPath', 'true').set('ltiIdToken', '').set('clientRegistrationId', ''),
         });
     }));
+
+    it('should send deep link request when IRIS is selected', fakeAsync(() => {
+        component.enableIris();
+        component.courseId = 123;
+
+        const mockResponse = new HttpResponse({
+            status: 200,
+            body: { targetLinkUri: 'http://example.com/deep_link' },
+        });
+
+        httpMock.post.mockReturnValue(of(mockResponse));
+        component.sendDeepLinkRequest();
+        tick();
+
+        expect(httpMock.post).toHaveBeenCalledWith(`api/lti13/deep-linking/${component.courseId}`, null, {
+            observe: 'response',
+            params: new HttpParams().set('iris', 'true').set('ltiIdToken', '').set('clientRegistrationId', ''),
+        });
+    }));
+
+    it('should send deep link request when lectures are selected', fakeAsync(() => {
+        const lecture1 = { id: 1, title: 'Introduction to LTI' };
+        const lecture2 = { id: 2, title: 'Advanced LTI Concepts' };
+        component.lectures = [lecture1, lecture2];
+        component.selectLecture(lecture1.id);
+        component.selectLecture(lecture2.id);
+        component.courseId = 123;
+
+        const mockResponse = new HttpResponse({
+            status: 200,
+            body: { targetLinkUri: 'http://example.com/deep_link' },
+        });
+
+        httpMock.post.mockReturnValue(of(mockResponse));
+        component.sendDeepLinkRequest();
+        tick();
+
+        expect(httpMock.post).toHaveBeenCalledWith(`api/lti13/deep-linking/${component.courseId}`, null, {
+            observe: 'response',
+            params: new HttpParams().set('lectureIds', '1,2').set('ltiIdToken', '').set('clientRegistrationId', ''),
+        });
+    }));
+
+    it('should show an error when no content is selected', () => {
+        component.selectedExercises = new Set();
+        component.selectedLectures = new Set();
+        component.isCompetencySelected = false;
+        component.isLearningPathSelected = false;
+        component.isIrisSelected = false;
+
+        component.sendDeepLinkRequest();
+
+        expect(alertServiceMock.error).toHaveBeenCalledWith('artemisApp.lti13.deepLinking.selectToLink');
+        expect(httpMock.post).not.toHaveBeenCalled();
+    });
+
+    it('should sort exercises by title in ascending order', () => {
+        component.exercises = [exercise1, exercise2, exercise3];
+        component.predicate = 'title';
+        component.reverse = false;
+
+        component.sortRows();
+
+        expect(sortServiceMock.sortByProperty).toHaveBeenCalledWith(component.exercises, 'title', false);
+        expect(component.exercises[0].title).toBe(exercise1.title);
+        expect(component.exercises[1].title).toBe(exercise3.title);
+        expect(component.exercises[2].title).toBe(exercise2.title);
+    });
+
+    it('should sort lectures by title in descending order', () => {
+        const lecture1 = { id: 1, title: 'Introduction to LTI' };
+        const lecture2 = { id: 2, title: 'Advanced LTI Concepts' };
+        component.lectures = [lecture1, lecture2];
+        component.predicate = 'title';
+        component.reverse = true;
+
+        component.sortRows();
+
+        expect(sortServiceMock.sortByProperty).toHaveBeenCalledWith(component.lectures, 'title', true);
+        expect(component.lectures[0].title).toBe(lecture2.title);
+        expect(component.lectures[1].title).toBe(lecture1.title);
+    });
+
+    it('should redirect user to login and then back to the target link', fakeAsync(() => {
+        const currentLink = 'http://example.com/target';
+        const loggedInUser: User = { id: 3, login: 'lti_user' } as User;
+
+        accountServiceMock.getAuthenticationState.mockReturnValue(of(loggedInUser));
+        routerMock.navigate.mockReturnValue(Promise.resolve(true));
+
+        component.redirectUserToLoginThenTargetLink(currentLink);
+        tick();
+
+        expect(routerMock.navigate).toHaveBeenCalledWith(['/']);
+        expect(accountServiceMock.getAuthenticationState).toHaveBeenCalled();
+        expect(window.location.replace).toHaveBeenCalledWith(currentLink);
+    }));
+
+    it('should handle empty course gracefully', fakeAsync(() => {
+        const loggedInUser: User = { id: 3, login: 'lti_user' } as User;
+        accountServiceMock.identity.mockReturnValue(Promise.resolve(loggedInUser));
+
+        const emptyCourse = { id: 123, shortName: 'tutorial', exercises: [], lectures: [] } as Course;
+        courseManagementServiceMock.findWithExercisesAndLecturesAndCompetencies.mockReturnValue(of(new HttpResponse({ body: emptyCourse })));
+
+        component.ngOnInit();
+        tick(1000);
+
+        expect(component.course).toEqual(emptyCourse);
+        expect(component.exercises).toEqual([]);
+        expect(component.lectures).toEqual([]);
+    }));
 });
