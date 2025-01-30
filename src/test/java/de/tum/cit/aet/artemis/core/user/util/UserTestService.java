@@ -127,20 +127,8 @@ public class UserTestService {
     private ExerciseTestRepository exerciseTestRepository;
 
     @Autowired
-    private ParticipationVCSAccessTokenRepository participationVCSAccessTokenRepository;
-
-    @Autowired
-    private ParticipationTestRepository participationRepository;
-
-    @Autowired
-    private SubmissionTestRepository submissionRepository;
-
-    @Autowired
-    private ExerciseTestRepository exerciseTestRepository;
-
-    @Autowired
     private NotificationTestRepository notificationTestRepository;
-  
+
     private String TEST_PREFIX;
 
     private MockDelegate mockDelegate;
