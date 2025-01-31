@@ -260,8 +260,6 @@ export class ModelingSubmissionComponent implements OnInit, OnDestroy, Component
                                 return dateB - dateA; // Descending order (latest date first)
                             });
                             latestResult = sortedResults[0]; // Get the first element after sorting
-                        } else {
-                            latestResult = undefined; // Handle cases with no results
                         }
 
                         if (latestResult) {
