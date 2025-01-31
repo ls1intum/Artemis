@@ -209,8 +209,8 @@ public class LtiDeepLinkingService {
     }
 
     private Map<String, Object> setIrisContentItem(String courseId) {
-        // TODO Iris optional + URL
-        String launchUrl = String.format(artemisServerUrl + "/about-iris", courseId);
+        // TODO Iris optional
+        String launchUrl = String.format(artemisServerUrl + "/courses/%s/dashboard", courseId);
         return createSingleUnitContentItem(launchUrl);
     }
 
