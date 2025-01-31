@@ -37,20 +37,31 @@ console.log(`Merged coverage reports successfully`);
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-const zipFilePath = path.join(__dirname, 'test-reports/monocart-report/e2e-client-coverage.zip');
-const output = fs.createWriteStream(zipFilePath);
-const archive = archiver('zip', {
-    zlib: { level: 9 },
-});
+async function createArchive(outputPath, inputDirectory) {
+    const output = fs.createWriteStream(outputPath);
+    const archive = archiver('zip', { zlib: { level: 9 } });
 
-output.on('close', () => {
-    console.log(`Coverage report archived on: ${zipFilePath}`);
-});
+    output.on('close', () => {
+        console.log(`Coverage report archived on: ${outputPath}`);
+    });
 
-archive.on('error', (err) => {
-    throw err;
-});
+    archive.on('error', (err) => {
+        throw err;
+    });
 
-archive.pipe(output);
-archive.directory(path.join(__dirname, 'test-reports/monocart-report/coverage/lcov-report'), false);
-await archive.finalize();
+    archive.pipe(output);
+    archive.directory(inputDirectory, false);
+    await archive.finalize();
+}
+
+// Archiving process
+const baseDir = path.join(__dirname, 'test-reports/monocart-report');
+try {
+    await createArchive(path.join(baseDir, 'e2e-client-coverage.zip'), path.join(baseDir, 'coverage/lcov-report'));
+
+    await createArchive(path.join(baseDir, 'e2e-client-coverage-parallel.zip'), path.join(__dirname, 'test-reports/monocart-report-parallel/coverage/lcov-report'));
+
+    await createArchive(path.join(baseDir, 'e2e-client-coverage-sequential.zip'), path.join(__dirname, 'test-reports/monocart-report-sequential/coverage/lcov-report'));
+} catch (err) {
+    console.error('Error while creating archives:', err);
+}
