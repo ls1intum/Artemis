@@ -219,20 +219,6 @@ public interface StudentParticipationRepository extends ArtemisJpaRepository<Stu
             @Param("testRun") boolean testRun);
 
     @Query("""
-            SELECT DISTINCT p
-            FROM StudentParticipation p
-                LEFT JOIN FETCH p.submissions s
-                LEFT JOIN FETCH s.results r
-                LEFT JOIN FETCH r.feedbacks f
-                LEFT JOIN FETCH f.testCase
-            WHERE p.exercise.id = :exerciseId
-                AND p.student.id = :studentId
-                AND p.testRun = :testRun
-            """)
-    Optional<StudentParticipation> findByExerciseIdAndStudentIdAndTestRunWithEagerSubmissionsResultsFeedbacksTestCases(@Param("exerciseId") long exerciseId,
-            @Param("studentId") long studentId, @Param("testRun") boolean testRun);
-
-    @Query("""
             SELECT DISTINCT sp
             FROM StudentParticipation sp
                 LEFT JOIN FETCH sp.submissions s
@@ -244,7 +230,7 @@ public interface StudentParticipationRepository extends ArtemisJpaRepository<Stu
                 AND (s.id IS NULL OR s.id = (SELECT MAX(s2.id) FROM sp.submissions s2))
                 AND (r.id IS NULL OR r.id = (SELECT MAX(re2.id) FROM s.results re2))
             """)
-    Optional<StudentParticipation> findByExerciseIdAndStudentIdWithEagerLatestSubmissionLatestResultFeedbacksTestCases(@Param("exerciseId") long exerciseId,
+    Set<StudentParticipation> findAllByExerciseIdAndStudentIdWithEagerLatestSubmissionLatestResultFeedbacksTestCases(@Param("exerciseId") long exerciseId,
             @Param("studentId") long studentId);
 
     /**
@@ -1403,21 +1389,6 @@ public interface StudentParticipationRepository extends ArtemisJpaRepository<Stu
                 ORDER BY p.student.firstName ASC
             """)
     List<FeedbackAffectedStudentDTO> findAffectedStudentsByFeedbackIds(@Param("exerciseId") long exerciseId, @Param("feedbackIds") List<Long> feedbackIds);
-
-    @Query("""
-                SELECT f.id
-                FROM ProgrammingExerciseStudentParticipation p
-                INNER JOIN p.results r ON r.id = (
-                    SELECT MAX(pr.id)
-                    FROM p.results pr
-                    WHERE pr.participation.id = p.id
-                )
-                INNER JOIN r.feedbacks f
-                WHERE p.exercise.id = :exerciseId
-                      AND p.testRun = FALSE
-                ORDER BY p.student.firstName ASC
-            """)
-    List<Long> findAffectedStudentsByFeedbackIds2(@Param("exerciseId") long exerciseId);
 
     /**
      * Retrieves the logins of students affected by a specific feedback detail text in a given exercise.

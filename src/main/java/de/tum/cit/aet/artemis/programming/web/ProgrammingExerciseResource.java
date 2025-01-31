@@ -570,12 +570,17 @@ public class ProgrammingExerciseResource {
         final ProgrammingExercise exercise = programmingExerciseRepository.findAllByProjectKey(projectKey).stream().findAny()
                 .orElseThrow(() -> new EntityNotFoundException("ProgrammingExercise", projectKey));
 
-        if (!authCheckService.isAllowedToSeeExercise(exercise, user)) {
+        if (!authCheckService.isAllowedToSeeCourseExercise(exercise, user)) {
             throw new AccessForbiddenException("You are not allowed to access this exercise");
         }
 
-        studentParticipationRepository.findByExerciseIdAndStudentIdWithEagerLatestSubmissionLatestResultFeedbacksTestCases(exercise.getId(), user.getId())
-                .ifPresentOrElse(participation -> exercise.setStudentParticipations(Set.of(participation)), () -> exercise.setStudentParticipations(Set.of()));
+        var participations = studentParticipationRepository.findAllByExerciseIdAndStudentIdWithEagerLatestSubmissionLatestResultFeedbacksTestCases(exercise.getId(), user.getId());
+        if (participations.isEmpty()) {
+            exercise.setStudentParticipations(Set.of());
+        }
+        else {
+            exercise.setStudentParticipations(participations);
+        }
 
         return ResponseEntity.ok(ProjectKeyProgrammingExerciseDTO.of(exercise));
     }
