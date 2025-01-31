@@ -248,11 +248,28 @@ export class ModelingSubmissionComponent implements OnInit, OnDestroy, Component
 
                     return dateA - dateB;
                 });
-                this.sortedResultHistory = this.sortedSubmissionHistory.map((submission) => {
-                    const result = getLatestSubmissionResult(submission)!;
-                    result.participation = submission.participation;
-                    return result;
-                });
+                this.sortedResultHistory = this.sortedSubmissionHistory
+                    .map((submission) => {
+                        let latestResult: Result | undefined; // Initialize latestResult
+
+                        if (submission?.results && submission.results.length > 0) {
+                            // Sort results inline to find the latest one
+                            const sortedResults = [...submission.results].sort((a, b) => {
+                                const dateA = a.completionDate ? dayjs(a.completionDate).valueOf() : 0;
+                                const dateB = b.completionDate ? dayjs(b.completionDate).valueOf() : 0;
+                                return dateB - dateA; // Descending order (latest date first)
+                            });
+                            latestResult = sortedResults[0]; // Get the first element after sorting
+                        } else {
+                            latestResult = undefined; // Handle cases with no results
+                        }
+
+                        if (latestResult) {
+                            latestResult.participation = submission.participation; // Attach participation if result exists
+                        }
+                        return latestResult; // Return the latest result (or undefined if no results)
+                    })
+                    .filter((result): result is Result => !!result);
             }),
         );
     }
