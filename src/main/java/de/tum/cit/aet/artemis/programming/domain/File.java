@@ -3,29 +3,23 @@ package de.tum.cit.aet.artemis.programming.domain;
 import java.nio.file.Path;
 import java.util.regex.Pattern;
 
-public class File {
-
-    private final java.io.File file;
+public class File extends java.io.File {
 
     private Repository repository;
 
     public File(java.io.File file, Repository repository) {
-        this.file = file;
+        super(file.getPath());
         this.repository = repository;
     }
 
     public File(Path path, Repository repository) {
-        this.file = path.toFile();
+        super(path.toString());
         this.repository = repository;
     }
 
     public File(String path, Repository repository) {
-        this.file = Path.of(path).toFile();
+        super(path);
         this.repository = repository;
-    }
-
-    public java.io.File getFile() {
-        return file;
     }
 
     public Repository getRepository() {
@@ -38,23 +32,11 @@ public class File {
 
     @Override
     public String toString() {
-        String path = repository.getLocalPath().relativize(file.toPath()).toString();
+        String path = repository.getLocalPath().relativize(super.toPath()).toString();
         // Unify separator
-        if (!"/".equals(java.io.File.separator)) {
-            path = path.replaceAll(Pattern.quote(java.io.File.separator), "/");
+        if (!"/".equals(File.separator)) {
+            path = path.replaceAll(Pattern.quote(File.separator), "/");
         }
         return path;
-    }
-
-    public Path toPath() {
-        return file.toPath();
-    }
-
-    public boolean isFile() {
-        return file.isFile();
-    }
-
-    public boolean renameTo(File newFile) {
-        return file.renameTo(newFile.getFile());
     }
 }

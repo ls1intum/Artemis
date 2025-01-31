@@ -26,7 +26,7 @@ public class Repository extends org.eclipse.jgit.internal.storage.file.FileRepos
     private Collection<File> files;
 
     public Repository(File gitDir, VcsRepositoryUri remoteRepositoryUri) throws IOException {
-        super(gitDir.getFile());
+        super(gitDir);
         this.remoteRepositoryUri = remoteRepositoryUri;
     }
 

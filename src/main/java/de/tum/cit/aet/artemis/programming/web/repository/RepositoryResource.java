@@ -414,7 +414,7 @@ public abstract class RepositoryResource {
         }
 
         try (var inputStream = new ByteArrayInputStream(submission.getFileContent().getBytes(StandardCharsets.UTF_8))) {
-            FileUtils.copyToFile(inputStream, file.get().getFile());
+            FileUtils.copyToFile(inputStream, file.get());
         }
     }
 }
