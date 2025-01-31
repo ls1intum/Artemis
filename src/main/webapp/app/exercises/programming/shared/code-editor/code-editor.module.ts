@@ -6,7 +6,6 @@ import { CodeEditorFileBrowserFolderComponent } from 'app/exercises/programming/
 import { CodeEditorFileBrowserDeleteComponent } from 'app/exercises/programming/shared/code-editor/file-browser/code-editor-file-browser-delete';
 import { CodeEditorInstructionsComponent } from 'app/exercises/programming/shared/code-editor/instructions/code-editor-instructions.component';
 import { CodeEditorResolveConflictModalComponent } from 'app/exercises/programming/shared/code-editor/actions/code-editor-resolve-conflict-modal.component';
-import { ArtemisProgrammingExerciseInstructionsEditorModule } from 'app/exercises/programming/manage/instructions-editor/programming-exercise-instructions-editor.module';
 import { ArtemisSharedModule } from 'app/shared/shared.module';
 import { CodeEditorRepositoryIsLockedComponent } from 'app/exercises/programming/shared/code-editor/layout/code-editor-repository-is-locked.component';
 import { CodeEditorFileBrowserCreateNodeComponent } from 'app/exercises/programming/shared/code-editor/file-browser/code-editor-file-browser-create-node.component';
@@ -29,7 +28,6 @@ import { MonacoEditorComponent } from 'app/shared/monaco-editor/monaco-editor.co
         NgbModule,
         ArtemisSharedModule,
         TreeviewModule.forRoot(),
-        ArtemisProgrammingExerciseInstructionsEditorModule,
         MonacoEditorComponent,
         ArtemisSharedComponentModule,
         RequestFeedbackButtonComponent,
