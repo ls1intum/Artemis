@@ -16,7 +16,8 @@
             "artemisIntelligence": {
                 "tooltip": "Artemis Intelligence",
                 "commands": {
-                    "rewrite": "Umformulieren"
+                    "rewrite": "Umformulieren",
+                    "consistencyCheck": "Konsistenz prüfen"
                 },
                 "alerts": {
                     "rewrite": {

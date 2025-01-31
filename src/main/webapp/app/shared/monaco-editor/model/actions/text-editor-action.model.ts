@@ -9,6 +9,8 @@ import { TextEditorCompletionItem } from 'app/shared/monaco-editor/model/actions
 import { TextEditorKeybinding } from 'app/shared/monaco-editor/model/actions/adapter/text-editor-keybinding.model';
 import RewritingVariant from 'app/shared/monaco-editor/model/actions/artemis-intelligence/rewriting-variant';
 import { ArtemisIntelligenceService } from 'app/shared/monaco-editor/model/actions/artemis-intelligence/artemis-intelligence.service';
+import { WritableSignal } from '@angular/core';
+import { htmlForMarkdown } from 'app/shared/util/markdown.conversion.util';
 
 export abstract class TextEditorAction implements Disposable {
     id: string;
@@ -309,6 +311,25 @@ export abstract class TextEditorAction implements Disposable {
             artemisIntelligence.rewrite(text, variant, courseId).subscribe({
                 next: (message) => {
                     this.replaceTextAtRange(editor, new TextEditorRange(new TextEditorPosition(1, 1), this.getEndPosition(editor)), message);
+                },
+            });
+        }
+    }
+
+    /**
+     * Runs the consistency check on the exercise.
+     *
+     * @param editor The editor for which the consistency check should be run (only used for checking non-empty text).
+     * @param artemisIntelligence The service to use for consistency checking.
+     * @param exerciseId The id of the exercise to check.
+     * @param resultSignal The signal to write the result of the consistency check to.
+     */
+    consistencyCheck(editor: TextEditor, artemisIntelligence: ArtemisIntelligenceService, exerciseId: number, resultSignal: WritableSignal<string>): void {
+        const text = editor.getFullText();
+        if (text) {
+            artemisIntelligence.consistencyCheck(exerciseId).subscribe({
+                next: (result) => {
+                    resultSignal.set(htmlForMarkdown(result));
                 },
             });
         }
