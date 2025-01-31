@@ -118,8 +118,8 @@ jacocoTestReport {
 }
 
 jacocoTestCoverageVerification {
-    // Only run full coverage when no specific modules set
-    enabled = reportedModules.size() == 0
+    // Only run full coverage when no specific/all modules set
+    enabled = reportedModules.size() == 0 || reportedModules.size() == ModuleCoverageThresholds.size()
 
     def minInstructionCoveredRatio = AggregatedCoverageThresholds["INSTRUCTION"] as double
     def maxNumberUncoveredClasses = AggregatedCoverageThresholds["CLASS"] as int
