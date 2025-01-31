@@ -134,7 +134,7 @@ const routes: Routes = [
     },
     {
         path: 'course-management/:courseId/programming-exercises/:exerciseId/code-editor',
-        loadChildren: () => import('./exercises/programming/manage/code-editor/code-editor-management.module').then((m) => m.ArtemisCodeEditorManagementModule),
+        loadChildren: () => import('./exercises/programming/manage/code-editor/code-editor-management-routes').then((m) => m.routes),
     },
 
     {

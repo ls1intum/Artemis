@@ -16,7 +16,6 @@ import { CodeEditorStatusComponent } from 'app/exercises/programming/shared/code
 
 import { CodeEditorConfirmRefreshModalComponent } from 'app/exercises/programming/shared/code-editor/actions/code-editor-confirm-refresh-modal.component';
 import { CodeEditorContainerComponent } from 'app/exercises/programming/shared/code-editor/container/code-editor-container.component';
-import { ArtemisProgrammingManualAssessmentModule } from 'app/exercises/programming/assess/programming-manual-assessment.module';
 import { NgbModule } from '@ng-bootstrap/ng-bootstrap';
 import { TreeviewModule } from 'app/exercises/programming/shared/code-editor/treeview/treeview.module';
 import { CodeEditorFileBrowserBadgeComponent } from 'app/exercises/programming/shared/code-editor/file-browser/code-editor-file-browser-badge.component';
@@ -31,7 +30,6 @@ import { MonacoEditorComponent } from 'app/shared/monaco-editor/monaco-editor.co
         ArtemisSharedModule,
         TreeviewModule.forRoot(),
         ArtemisProgrammingExerciseInstructionsEditorModule,
-        ArtemisProgrammingManualAssessmentModule,
         MonacoEditorComponent,
         ArtemisSharedComponentModule,
         RequestFeedbackButtonComponent,
