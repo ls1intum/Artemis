@@ -55,13 +55,13 @@
     @if (isFeedbackView && showResultHistory) {
         <div class="mb-4">
             <div id="result-history" class="row mb-2">
-                <jhi-result-history [results]="sortedResultHistory" [exercise]="modelingExercise" />
+                <jhi-result-history [results]="sortedResultHistory" [exercise]="modelingExercise" [selectedResultId]="submission.latestResult?.id!" />
             </div>
         </div>
     }
 
     @if (modelingExercise) {
-        <jhi-resizeable-container [isExerciseParticipation]="true" [isBeingPrinted]="isPrinting" [expandProblemStatement]="expandProblemStatement">
+        <jhi-resizeable-container [isExerciseParticipation]="true" [isBeingPrinted]="isPrinting" [expandProblemStatement]="expandProblemStatement" [collapsed]="isFeedbackView">
             <!--region Left Panel-->
             <ng-container left-body>
                 @if (!submission || submission.submitted || !isExamSummary) {
@@ -108,7 +108,7 @@
                                             </div>
                                         }
                                         @if (((!isActive || result) && (!isLate || submission.submitted)) || isFeedbackView) {
-                                            <div class="col-9">
+                                            <div class="col-8 editor-assessment">
                                                 <jhi-modeling-assessment
                                                     [umlModel]="umlModel"
                                                     [resultFeedbacks]="assessmentResult?.feedbacks || []"
@@ -125,7 +125,7 @@
                                             </div>
                                         }
                                         @if ((submission?.submitted && (!isActive || result)) || isFeedbackView) {
-                                            <div class="col-3 pt-5">
+                                            <div class="col-4 pt-5 editor-assessment overflow-auto">
                                                 <h4 jhiTranslate="artemisApp.modelingSubmission.assessment.title"></h4>
                                                 @if (!assessmentResult || !assessmentResult!.feedbacks || assessmentResult!.feedbacks!.length === 0) {
                                                     <p jhiTranslate="artemisApp.modelingSubmission.assessment.noAssessment"></p>
