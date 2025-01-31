@@ -42,8 +42,8 @@ ext {
             "CLASS": 1
         ],
         "iris"        : [
-            "INSTRUCTION": 0.775,
-            "CLASS": 22
+            "INSTRUCTION": 0.760,
+            "CLASS": 25
         ],
         "lecture"      : [
             "INSTRUCTION": 0.867,
