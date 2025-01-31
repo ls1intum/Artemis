@@ -58,12 +58,14 @@ class PyrisFaqIngestionTest extends AbstractIrisIntegrationTest {
 
     private Faq faq1;
 
+    private long courseId;
+
     @BeforeEach
     void initTestCase() throws Exception {
         userUtilService.addUsers(TEST_PREFIX, 1, 1, 0, 1);
         List<Course> courses = courseUtilService.createCoursesWithExercisesAndLectures(TEST_PREFIX, true, true, 1);
         Course course1 = this.courseRepository.findByIdWithExercisesAndExerciseDetailsAndLecturesElseThrow(courses.getFirst().getId());
-
+        long courseId = course1.getId();
         this.faq1 = generateFaq(course1, FaqState.ACCEPTED, "Faq 1 title", "Faq 1 content");
         faqRepository.save(faq1);
         // Add users that are not in the course
@@ -96,7 +98,7 @@ class PyrisFaqIngestionTest extends AbstractIrisIntegrationTest {
         irisRequestMockProvider.mockFaqIngestionWebhookRunResponse(dto -> {
             assertThat(dto.settings().authenticationToken()).isNotNull();
         });
-        Faq returnedFaq = request.postWithResponseBody("/api/courses/" + faq.getCourse().getId() + "/faqs", faq, Faq.class, HttpStatus.CREATED);
+        Faq returnedFaq = request.postWithResponseBody("/api/courses/" + courseId + "/faqs", faq, Faq.class, HttpStatus.CREATED);
     }
 
     @Test
@@ -106,7 +108,7 @@ class PyrisFaqIngestionTest extends AbstractIrisIntegrationTest {
         irisRequestMockProvider.mockFaqIngestionWebhookRunResponse(dto -> {
             assertThat(dto.settings().authenticationToken()).isNotNull();
         });
-        request.postWithResponseBody("/api/courses/" + faq1.getCourse().getId() + "/faqs/ingest", Optional.empty(), boolean.class, HttpStatus.OK);
+        request.postWithResponseBody("/api/courses/" + courseId + "/faqs/ingest", Optional.empty(), boolean.class, HttpStatus.OK);
     }
 
     @Test
