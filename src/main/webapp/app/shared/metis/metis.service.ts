@@ -318,21 +318,7 @@ export class MetisService implements OnDestroy {
     }
 
     updatePostDisplayPriority(postId: number, displayPriority: DisplayPriority): Observable<Post> {
-        return this.postService.updatePostDisplayPriority(this.courseId, postId, displayPriority).pipe(
-            map((res: HttpResponse<Post>) => res.body!),
-            tap((updatedPost: Post) => {
-                const currentPinnedPosts = this.pinnedPosts$.getValue();
-                if (displayPriority === DisplayPriority.PINNED) {
-                    const indexToUpdate = this.cachedPosts.findIndex((cachedPost) => cachedPost.id === updatedPost.id);
-                    if (indexToUpdate > -1) {
-                        updatedPost.authorRole = this.cachedPosts[indexToUpdate].authorRole;
-                    }
-                    this.pinnedPosts$.next([...currentPinnedPosts, updatedPost]);
-                } else {
-                    this.pinnedPosts$.next(currentPinnedPosts.filter((post) => post.id !== postId));
-                }
-            }),
-        );
+        return this.postService.updatePostDisplayPriority(this.courseId, postId, displayPriority).pipe(map((res: HttpResponse<Post>) => res.body!));
     }
 
     /**
@@ -704,12 +690,27 @@ export class MetisService implements OnDestroy {
                     });
                     this.cachedPosts[indexToUpdate] = postDTO.post;
                 }
+                if (postDTO.post.displayPriority === DisplayPriority.PINNED) {
+                    const currentPinnedPosts = this.pinnedPosts$.getValue();
+                    const alreadyPinned = currentPinnedPosts.some((pinnedPost) => pinnedPost.id === postDTO.post.id);
+                    if (!alreadyPinned) {
+                        this.pinnedPosts$.next([postDTO.post, ...currentPinnedPosts]);
+                    }
+                } else {
+                    this.removeFromPinnedPosts(postDTO.post.id!);
+                }
                 this.addTags(postDTO.post.tags);
                 break;
             case MetisPostAction.DELETE:
                 const indexToDelete = this.cachedPosts.findIndex((post) => post.id === postDTO.post.id);
                 if (indexToDelete > -1) {
                     this.cachedPosts.splice(indexToDelete, 1);
+                }
+                const currentPinnedPosts = this.pinnedPosts$.getValue();
+                const isPinned = currentPinnedPosts.some((pinnedPost) => pinnedPost.id === postDTO.post.id);
+                if (isPinned) {
+                    const updatedPinnedPosts = currentPinnedPosts.filter((pinnedPost) => pinnedPost.id !== postDTO.post.id);
+                    this.pinnedPosts$.next(updatedPinnedPosts);
                 }
                 break;
             default:
@@ -765,5 +766,18 @@ export class MetisService implements OnDestroy {
         other.courseWideChannelIds?.sort((a, b) => a - b);
 
         return this.currentPostContextFilter.courseWideChannelIds?.toString() !== other.courseWideChannelIds?.toString();
+    }
+
+    /**
+     * Removes a post from the pinnedPosts$ if it exists.
+     * @param postId The ID of the post to remove.
+     */
+    private removeFromPinnedPosts(postId: number): void {
+        const currentPinnedPosts = this.pinnedPosts$.getValue();
+        const isPinned = currentPinnedPosts.some((pinnedPost) => pinnedPost.id === postId);
+        if (isPinned) {
+            const updatedPinnedPosts = currentPinnedPosts.filter((pinnedPost) => pinnedPost.id !== postId);
+            this.pinnedPosts$.next(updatedPinnedPosts);
+        }
     }
 }

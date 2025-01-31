@@ -160,34 +160,31 @@ describe('Metis Service', () => {
             cachedPostsSub.unsubscribe();
         }));
 
-        it('should pin a post and add it to pinnedPosts$', fakeAsync(() => {
+        it('should pin a post and add it to pinnedPosts$ when receiving a WebSocket update', fakeAsync(() => {
             let pinnedPostsResult: Post[] = [];
             const pinnedPostsSubscription = metisService.getPinnedPosts().subscribe((pinned) => {
                 pinnedPostsResult = pinned;
             });
-            const updateSpy = jest
-                .spyOn(postService, 'updatePostDisplayPriority')
-                .mockReturnValue(of(new HttpResponse({ body: { id: 42, displayPriority: DisplayPriority.PINNED, authorRole: UserRole.USER } as Post })));
 
-            metisService.updatePostDisplayPriority(post.id!, DisplayPriority.PINNED).subscribe((updatedPost) => {
-                expect(updatedPost).toEqual({
-                    id: 42,
-                    displayPriority: DisplayPriority.PINNED,
-                    authorRole: UserRole.USER,
-                } as Post);
-            });
+            const pinnedPostDTO: MetisPostDTO = {
+                post: { id: 42, displayPriority: DisplayPriority.PINNED, authorRole: UserRole.USER } as Post,
+                action: MetisPostAction.UPDATE, // WebSocket'ten güncelleme mesajı geliyor gibi simüle ettik
+            };
+
+            // WebSocket mesajı işleme alındığında
+            metisService['handleNewOrUpdatedMessage'](pinnedPostDTO);
 
             tick();
 
+            // pinnedPosts$ güncellenmeli ve yeni post burada olmalı
             expect(pinnedPostsResult).toHaveLength(1);
             expect(pinnedPostsResult[0].id).toBe(42);
             expect(pinnedPostsResult[0].displayPriority).toBe(DisplayPriority.PINNED);
 
-            expect(updateSpy).toHaveBeenCalledTimes(1);
             pinnedPostsSubscription.unsubscribe();
         }));
 
-        it('should unpin a post and remove it from pinnedPosts$', fakeAsync(() => {
+        it('should unpin a post and remove it from pinnedPosts$ when receiving a WebSocket update', fakeAsync(() => {
             const pinnedPost = { id: 42, displayPriority: DisplayPriority.PINNED } as Post;
             metisService['pinnedPosts$'].next([pinnedPost]);
 
@@ -196,22 +193,15 @@ describe('Metis Service', () => {
                 pinnedPostsResult = pinned;
             });
 
-            const updateSpy = jest
-                .spyOn(postService, 'updatePostDisplayPriority')
-                .mockReturnValue(of(new HttpResponse({ body: { id: 42, displayPriority: DisplayPriority.NONE } as Post })));
+            const unpinnedPostDTO: MetisPostDTO = {
+                post: { id: 42, displayPriority: DisplayPriority.NONE } as Post,
+                action: MetisPostAction.UPDATE,
+            };
 
-            metisService.updatePostDisplayPriority(42, DisplayPriority.NONE).subscribe((updatedPost) => {
-                expect(updatedPost).toEqual({
-                    id: 42,
-                    displayPriority: DisplayPriority.NONE,
-                } as Post);
-            });
-
+            metisService['handleNewOrUpdatedMessage'](unpinnedPostDTO);
             tick();
 
             expect(pinnedPostsResult).toHaveLength(0);
-            expect(updateSpy).toHaveBeenCalledTimes(1);
-
             pinnedPostsSubscription.unsubscribe();
         }));
 
@@ -745,6 +735,58 @@ describe('Metis Service', () => {
             expect(spyPostsNext).toHaveBeenCalledWith([]);
             expect(metisService['cachedTotalNumberOfPosts']).toBe(0);
             expect(spyNumberOfPostsNext).toHaveBeenCalledWith(0);
+        });
+
+        it('should remove pinned post from pinnedPosts$ when WebSocket DELETE action is received', () => {
+            const pinnedPost = { id: 123, displayPriority: DisplayPriority.PINNED } as Post;
+            const mockDeleteDTO: MetisPostDTO = {
+                action: MetisPostAction.DELETE,
+                post: { ...pinnedPost },
+            };
+
+            metisService['pinnedPosts$'].next([pinnedPost]);
+            metisService['cachedPosts'].push({ ...pinnedPost });
+            metisService['handleNewOrUpdatedMessage'](mockDeleteDTO);
+
+            let pinnedPostsResult: Post[] = [];
+            const pinnedSubscription = metisService.getPinnedPosts().subscribe((pinned) => {
+                pinnedPostsResult = pinned;
+            });
+
+            expect(pinnedPostsResult).toHaveLength(0);
+            pinnedSubscription.unsubscribe();
+        });
+
+        it('should remove a post from pinnedPosts$ if the given post ID exists in the pinned list', () => {
+            const pinnedPost = { id: 999, displayPriority: DisplayPriority.PINNED } as Post;
+            metisService['pinnedPosts$'].next([pinnedPost]);
+
+            let pinnedPostsResult: Post[] = [];
+            const pinnedSub = metisService.getPinnedPosts().subscribe((pinned) => {
+                pinnedPostsResult = pinned;
+            });
+
+            metisService['removeFromPinnedPosts'](999);
+            expect(pinnedPostsResult).toHaveLength(0);
+
+            pinnedSub.unsubscribe();
+        });
+
+        it('should not modify pinnedPosts$ if the given post ID is not in the pinned list', () => {
+            const pinnedPost = { id: 999, displayPriority: DisplayPriority.PINNED } as Post;
+            metisService['pinnedPosts$'].next([pinnedPost]);
+
+            let pinnedPostsResult: Post[] = [];
+            const pinnedSub = metisService.getPinnedPosts().subscribe((pinned) => {
+                pinnedPostsResult = pinned;
+            });
+
+            metisService['removeFromPinnedPosts'](123);
+
+            expect(pinnedPostsResult).toHaveLength(1);
+            expect(pinnedPostsResult[0]).toEqual(pinnedPost);
+
+            pinnedSub.unsubscribe();
         });
     });
 });
