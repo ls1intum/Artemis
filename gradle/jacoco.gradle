@@ -104,14 +104,16 @@ jacocoTestReport {
         html.outputLocation = file("build/reports/jacoco/test/html")
     }
 
-    classDirectories.setFrom(
-        files(classDirectories.files.collect { classDir ->
-            project.fileTree(classDir) {
-                includes=["$BasePath/**/*.class"]
-                excludes=ignoredDirectories
-            }
-        })
-    )
+    afterEvaluate {
+        classDirectories.setFrom(
+            files(classDirectories.files.collect { classDir ->
+                project.fileTree(classDir) {
+                    includes=["$BasePath/**/*.class"]
+                    excludes=ignoredDirectories
+                }
+            })
+        )
+    }
 
     finalizedBy reportedModules
         .collect { module -> registerJacocoReportTask(module as String, jacocoTestReport) }
