@@ -1,5 +1,4 @@
 import { CourseConversationsComponent } from 'app/overview/course-conversations/course-conversations.component';
-import { MetisModule } from 'app/shared/metis/metis.module';
 import { ArtemisSharedModule } from 'app/shared/shared.module';
 import { NgModule } from '@angular/core';
 import { RouterModule, Routes } from '@angular/router';
@@ -49,7 +48,6 @@ const routes: Routes = [
 @NgModule({
     imports: [
         RouterModule.forChild(routes),
-        MetisModule,
         ArtemisMarkdownModule,
         ArtemisSharedModule,
         ArtemisSharedComponentModule,

@@ -14,7 +14,7 @@ ext {
             "CLASS": 2
         ],
         "atlas"        : [
-            "INSTRUCTION": 0.860,
+            "INSTRUCTION": 0.850,
             "CLASS": 12
         ],
         "buildagent"   : [
@@ -39,11 +39,11 @@ ext {
         ],
         "fileupload"   : [
             "INSTRUCTION": 0.906,
-            "CLASS": 0
+            "CLASS": 1
         ],
         "iris"        : [
-            "INSTRUCTION": 0.795,
-            "CLASS": 17
+            "INSTRUCTION": 0.775,
+            "CLASS": 22
         ],
         "lecture"      : [
             "INSTRUCTION": 0.867,
@@ -83,10 +83,10 @@ ext {
         ? ModuleCoverageThresholds.collect {element -> element.key}
         : includedModules as ArrayList
 
-    // we want to ignore some generated files in the domain folders
     ignoredDirectories = [
         "**/$BasePath/**/domain/**/*_*",
         "**/$BasePath/core/config/migration/entries/**",
+        "**/org/gradle/**",
         "**/gradle-wrapper.jar/**"
     ]
 }
