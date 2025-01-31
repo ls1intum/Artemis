@@ -52,10 +52,9 @@ public class TextSubmissionExportService extends SubmissionExportService {
     public void saveSubmissionToFile(TextSubmission submission, String studentLogin, String submissionsFolderName) throws IOException {
         String submissionFileName = String.format("%s-%s%s", submission.getId(), studentLogin, this.getFileEndingForSubmission(submission));
         Path submissionPath = Path.of(submissionsFolderName, submissionFileName);
-        File submissionExportFile = submissionPath.toFile();
 
-        if (!submissionExportFile.exists()) {
-            submissionExportFile.createNewFile();
+        if (!Files.exists(submissionPath)) {
+            Files.createFile(submissionPath);
         }
 
         try (BufferedWriter writer = Files.newBufferedWriter(submissionPath, StandardCharsets.UTF_8)) {
