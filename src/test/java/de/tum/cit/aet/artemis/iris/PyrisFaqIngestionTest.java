@@ -16,6 +16,7 @@ import org.springframework.mock.web.MockHttpServletResponse;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.util.LinkedMultiValueMap;
 
+import de.tum.cit.aet.artemis.communication.FaqFactory;
 import de.tum.cit.aet.artemis.communication.domain.Faq;
 import de.tum.cit.aet.artemis.communication.domain.FaqState;
 import de.tum.cit.aet.artemis.communication.repository.FaqRepository;
@@ -64,7 +65,7 @@ class PyrisFaqIngestionTest extends AbstractIrisIntegrationTest {
 
     @BeforeEach
     void initTestCase() throws Exception {
-        userUtilService.addUsers(TEST_PREFIX, 1, 1, 0, 1);
+        userUtilService.addUsers(TEST_PREFIX, 1, 0, 0, 1);
         List<Course> courses = courseUtilService.createCoursesWithExercisesAndLectures(TEST_PREFIX, true, true, 1);
         this.course1 = this.courseRepository.findByIdWithExercisesAndExerciseDetailsAndLecturesElseThrow(courses.getFirst().getId());
         long courseId = course1.getId();
@@ -79,8 +80,6 @@ class PyrisFaqIngestionTest extends AbstractIrisIntegrationTest {
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void autoIngestionWhenFaqIsCreatedAndAutoUpdateEnabled() throws Exception {
-        this.faq1 = generateFaq(this.course1, FaqState.ACCEPTED, "Faq 1 title", "Faq 1 content");
-        faq1.setQuestionTitle("Lorem Ipsum");
         activateIrisFor(faq1.getCourse());
         IrisCourseSettings courseSettings = irisSettingsService.getRawIrisSettingsFor(faq1.getCourse());
         courseSettings.getIrisFaqIngestionSettings().setAutoIngestOnFaqCreation(true);
@@ -88,7 +87,8 @@ class PyrisFaqIngestionTest extends AbstractIrisIntegrationTest {
         irisRequestMockProvider.mockFaqIngestionWebhookRunResponse(dto -> {
             assertThat(dto.settings().authenticationToken()).isNotNull();
         });
-        Faq returnedFaq = request.postWithResponseBody("/api/courses/" + faq1.getCourse().getId() + "/faqs", faq1, Faq.class, HttpStatus.CREATED);
+        Faq newFaq = FaqFactory.generateFaq(course1, FaqState.ACCEPTED, "title", "answer");
+        Faq returnedFaq = request.postWithResponseBody("/api/courses/" + course1.getId() + "/faqs", newFaq, Faq.class, HttpStatus.CREATED);
 
     }
 
@@ -96,12 +96,11 @@ class PyrisFaqIngestionTest extends AbstractIrisIntegrationTest {
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void noAutoIngestionWhenFaqIsCreatedAndAutoUpdateEnabled() throws Exception {
 
-        this.faq1 = generateFaq(this.course1, FaqState.ACCEPTED, "Faq 1 title", "Faq 1 content");
-        faq1.setQuestionTitle("Lorem Ipsum");
         irisRequestMockProvider.mockFaqIngestionWebhookRunResponse(dto -> {
             assertThat(dto.settings().authenticationToken()).isNotNull();
         });
-        Faq returnedFaq = request.postWithResponseBody("/api/courses/" + courseId + "/faqs", faq1, Faq.class, HttpStatus.CREATED);
+        Faq newFaq = FaqFactory.generateFaq(course1, FaqState.ACCEPTED, "title", "answer");
+        Faq returnedFaq = request.postWithResponseBody("/api/courses/" + course1.getId() + "/faqs", newFaq, Faq.class, HttpStatus.CREATED);
     }
 
     @Test
