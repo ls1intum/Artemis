@@ -4,21 +4,22 @@ import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_IRIS;
 
 import java.util.List;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
 import de.tum.cit.aet.artemis.iris.service.IrisCompetencyGenerationService;
+import de.tum.cit.aet.artemis.iris.service.IrisConsistencyCheckService;
 import de.tum.cit.aet.artemis.iris.service.IrisRewritingService;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.chat.PyrisChatStatusUpdateDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.chat.textexercise.PyrisTextExerciseChatStatusUpdateDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.competency.PyrisCompetencyStatusUpdateDTO;
+import de.tum.cit.aet.artemis.iris.service.pyris.dto.consistencyCheck.PyrisConsistencyCheckStatusUpdateDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.lectureingestionwebhook.PyrisLectureIngestionStatusUpdateDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.rewriting.PyrisRewritingStatusUpdateDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.status.PyrisStageDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.status.PyrisStageState;
 import de.tum.cit.aet.artemis.iris.service.pyris.job.CompetencyExtractionJob;
+import de.tum.cit.aet.artemis.iris.service.pyris.job.ConsistencyCheckJob;
 import de.tum.cit.aet.artemis.iris.service.pyris.job.CourseChatJob;
 import de.tum.cit.aet.artemis.iris.service.pyris.job.ExerciseChatJob;
 import de.tum.cit.aet.artemis.iris.service.pyris.job.IngestionWebhookJob;
@@ -46,17 +47,18 @@ public class PyrisStatusUpdateService {
 
     private final IrisRewritingService rewritingService;
 
-    private static final Logger log = LoggerFactory.getLogger(PyrisStatusUpdateService.class);
+    private final IrisConsistencyCheckService consistencyCheckService;
 
     public PyrisStatusUpdateService(PyrisJobService pyrisJobService, IrisExerciseChatSessionService irisExerciseChatSessionService,
             IrisTextExerciseChatSessionService irisTextExerciseChatSessionService, IrisCourseChatSessionService courseChatSessionService,
-            IrisCompetencyGenerationService competencyGenerationService, IrisRewritingService rewritingService) {
+            IrisCompetencyGenerationService competencyGenerationService, IrisRewritingService rewritingService, IrisConsistencyCheckService consistencyCheckService) {
         this.pyrisJobService = pyrisJobService;
         this.irisExerciseChatSessionService = irisExerciseChatSessionService;
         this.irisTextExerciseChatSessionService = irisTextExerciseChatSessionService;
         this.courseChatSessionService = courseChatSessionService;
         this.competencyGenerationService = competencyGenerationService;
         this.rewritingService = rewritingService;
+        this.consistencyCheckService = consistencyCheckService;
     }
 
     /**
@@ -120,6 +122,18 @@ public class PyrisStatusUpdateService {
      */
     public void handleStatusUpdate(RewritingJob job, PyrisRewritingStatusUpdateDTO statusUpdate) {
         var updatedJob = rewritingService.handleStatusUpdate(job, statusUpdate);
+        removeJobIfTerminatedElseUpdate(statusUpdate.stages(), updatedJob);
+    }
+
+    /**
+     * Handles the status update of a consistency check job and forwards it to
+     * {@link IrisConsistencyCheckService#handleStatusUpdate(ConsistencyCheckJob, PyrisConsistencyCheckStatusUpdateDTO)}
+     *
+     * @param job          the job that is updated
+     * @param statusUpdate the status update
+     */
+    public void handleStatusUpdate(ConsistencyCheckJob job, PyrisConsistencyCheckStatusUpdateDTO statusUpdate) {
+        var updatedJob = consistencyCheckService.handleStatusUpdate(job, statusUpdate);
         removeJobIfTerminatedElseUpdate(statusUpdate.stages(), updatedJob);
     }
 
