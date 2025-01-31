@@ -1,7 +1,7 @@
 ext {
     AggregatedCoverageThresholds = [
-        "INSTRUCTION": 0.895,
-        "CLASS": 56
+        "INSTRUCTION": 1,
+        "CLASS": 0
     ];
     // (Isolated) thresholds when executing each module on its own
     ModuleCoverageThresholds = [
