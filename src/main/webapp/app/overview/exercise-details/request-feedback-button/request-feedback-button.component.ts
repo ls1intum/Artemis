@@ -1,4 +1,4 @@
-import { Component, OnInit, inject, input, output } from '@angular/core';
+import { Component, OnDestroy, OnInit, inject, input, output } from '@angular/core';
 import { Subscription, filter, skip } from 'rxjs';
 import { NgbTooltipModule } from '@ng-bootstrap/ng-bootstrap';
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
@@ -24,7 +24,7 @@ import { Result } from 'app/entities/result.model';
     imports: [ArtemisSharedCommonModule, NgbTooltipModule, FontAwesomeModule],
     templateUrl: './request-feedback-button.component.html',
 })
-export class RequestFeedbackButtonComponent implements OnInit {
+export class RequestFeedbackButtonComponent implements OnInit, OnDestroy {
     faPenSquare = faPenSquare;
     athenaEnabled = false;
     requestFeedbackEnabled = false;
@@ -64,6 +64,9 @@ export class RequestFeedbackButtonComponent implements OnInit {
         this.requestFeedbackEnabled = this.exercise().allowFeedbackRequests ?? false;
         this.updateParticipation();
     }
+    ngOnDestroy(): void {
+        this.athenaResultUpdateListener?.unsubscribe();
+    }
 
     private updateParticipation() {
         if (this.exercise().id) {
@@ -100,13 +103,8 @@ export class RequestFeedbackButtonComponent implements OnInit {
     }
 
     private handleAthenaAssessment(result: Result) {
-        if (result.completionDate) {
-            if (result.successful) {
-                this.currentFeedbackRequestCount += 1;
-                this.alertService.success('artemisApp.exercise.athenaFeedbackSuccessful');
-            }
-        } else if (result.successful === false) {
-            this.alertService.error('artemisApp.exercise.athenaFeedbackFailed');
+        if (result.completionDate && result.successful) {
+            this.currentFeedbackRequestCount += 1;
         }
     }
 
