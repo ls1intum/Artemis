@@ -121,6 +121,14 @@ jacocoTestCoverageVerification {
     // Only run full coverage when no specific/all modules set
     enabled = reportedModules.size() == 0 || reportedModules.size() == ModuleCoverageThresholds.size()
 
+    classDirectories.setFrom(
+        files(classDirectories.files.collect { classDir ->
+            project.fileTree(classDir) {
+                excludes=ignoredDirectories
+            }
+        })
+    )
+
     def minInstructionCoveredRatio = AggregatedCoverageThresholds["INSTRUCTION"] as double
     def maxNumberUncoveredClasses = AggregatedCoverageThresholds["CLASS"] as int
     applyVerificationRule(jacocoTestCoverageVerification, minInstructionCoveredRatio, maxNumberUncoveredClasses)
