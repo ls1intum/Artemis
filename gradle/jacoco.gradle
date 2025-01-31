@@ -84,8 +84,8 @@ ext {
         : includedModules as ArrayList
 
     ignoredDirectories = [
-        "**/$BasePath/**/domain/**/*_*",
-        "**/$BasePath/core/config/migration/entries/**",
+        "$BasePath/**/domain/**/*_*",
+        "$BasePath/core/config/migration/entries/**",
         "org/gradle/**",
         "**/gradle-wrapper.jar/**"
     ]
@@ -107,6 +107,7 @@ jacocoTestReport {
     classDirectories.setFrom(
         files(classDirectories.files.collect { classDir ->
             project.fileTree(classDir) {
+                includes=["$BasePath/**/*.class"]
                 excludes=ignoredDirectories
             }
         })
