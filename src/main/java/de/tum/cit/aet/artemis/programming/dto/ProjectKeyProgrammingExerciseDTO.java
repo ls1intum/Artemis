@@ -33,6 +33,13 @@ public record ProjectKeyProgrammingExerciseDTO(Long id, String problemStatement,
         ZonedDateTime exampleSolutionPublicationDate, ProjectKeyCourseDTO course, Set<ProjectKeyStudentParticipationDTO> studentParticipations, String projectKey,
         ProgrammingLanguage programmingLanguage, Boolean showTestNamesToStudents) {
 
+    /**
+     * Converts a ProgrammingExercise into a dto for the endpoint
+     * {@link de.tum.cit.aet.artemis.programming.web.ProgrammingExerciseResource#getProgrammingExerciseByProjectKey(String)}.
+     *
+     * @param exercise to convert
+     * @return the converted DTO
+     */
     public static ProjectKeyProgrammingExerciseDTO of(ProgrammingExercise exercise) {
         return Optional.ofNullable(exercise)
                 .map(e -> new ProjectKeyProgrammingExerciseDTO(e.getId(), e.getProblemStatement(), e.getTitle(), e.getShortName(), e.getReleaseDate(), e.getStartDate(),
@@ -48,6 +55,12 @@ public record ProjectKeyProgrammingExerciseDTO(Long id, String problemStatement,
     @JsonInclude(JsonInclude.Include.NON_EMPTY)
     public record ProjectKeyCourseDTO(Long id, String title, String shortName) {
 
+        /**
+         * Converts a Course into a dto for the endpoint {@link de.tum.cit.aet.artemis.programming.web.ProgrammingExerciseResource#getProgrammingExerciseByProjectKey(String)}.
+         *
+         * @param course to convert
+         * @return the converted DTO
+         */
         public static ProjectKeyCourseDTO of(Course course) {
             return new ProjectKeyCourseDTO(course.getId(), course.getTitle(), course.getShortName());
         }
@@ -57,6 +70,13 @@ public record ProjectKeyProgrammingExerciseDTO(Long id, String problemStatement,
     public record ProjectKeyStudentParticipationDTO(Long id, ZonedDateTime individualDueDate, Set<ProjectKeySubmissionDTO> submissions, String participantName,
             String participantIdentifier, String repositoryUri, String buildPlanId, String branch) {
 
+        /**
+         * Converts a ProgrammingExerciseStudentParticipation into a dto for the endpoint
+         * {@link de.tum.cit.aet.artemis.programming.web.ProgrammingExerciseResource#getProgrammingExerciseByProjectKey(String)}.
+         *
+         * @param participation to convert
+         * @return the converted DTO
+         */
         public static ProjectKeyStudentParticipationDTO of(ProgrammingExerciseStudentParticipation participation) {
             return Optional.ofNullable(participation)
                     .map(p -> new ProjectKeyStudentParticipationDTO(p.getId(), p.getIndividualDueDate(),
@@ -71,6 +91,13 @@ public record ProjectKeyProgrammingExerciseDTO(Long id, String problemStatement,
     public record ProjectKeySubmissionDTO(Long id, Boolean submitted, ZonedDateTime submissionDate, SubmissionType type, Boolean exampleSubmission, Long durationInMinutes,
             List<ProjectKeyResultDTO> results, String commitHash, Boolean buildFailed) {
 
+        /**
+         * Converts a ProgrammingSubmission into a dto for the endpoint
+         * {@link de.tum.cit.aet.artemis.programming.web.ProgrammingExerciseResource#getProgrammingExerciseByProjectKey(String)}.
+         *
+         * @param submission to convert
+         * @return the converted DTO
+         */
         public static ProjectKeySubmissionDTO of(ProgrammingSubmission submission) {
             return Optional.ofNullable(submission)
                     .map(s -> new ProjectKeySubmissionDTO(s.getId(), s.isSubmitted(), s.getSubmissionDate(), s.getType(), s.isExampleSubmission(), s.getDurationInMinutes(),
@@ -84,6 +111,12 @@ public record ProjectKeyProgrammingExerciseDTO(Long id, String problemStatement,
     public record ProjectKeyResultDTO(Long id, ZonedDateTime completionDate, Boolean successful, Double score, AssessmentType assessmentType, Boolean rated, Boolean hasComplaint,
             Boolean exampleResult, Integer testCaseCount, Integer passedTestCaseCount, Integer codeIssueCount, List<ProjectKeyFeedbackDTO> feedbacks) {
 
+        /**
+         * Converts a Result into a dto for the endpoint {@link de.tum.cit.aet.artemis.programming.web.ProgrammingExerciseResource#getProgrammingExerciseByProjectKey(String)}.
+         *
+         * @param result to convert
+         * @return the converted DTO
+         */
         public static ProjectKeyResultDTO of(Result result) {
             return Optional.ofNullable(result)
                     .map(r -> new ProjectKeyResultDTO(r.getId(), r.getCompletionDate(), r.isSuccessful(), r.getScore(), r.getAssessmentType(), r.isRated(), r.hasComplaint(),
@@ -98,6 +131,12 @@ public record ProjectKeyProgrammingExerciseDTO(Long id, String problemStatement,
     public record ProjectKeyFeedbackDTO(Long id, String text, String detailText, Boolean hasLongFeedbackText, String reference, Double credits, FeedbackType type, Boolean positive,
             ProjectKeyTestCaseDTO testCase) {
 
+        /**
+         * Converts a Feedback into a dto for the endpoint {@link de.tum.cit.aet.artemis.programming.web.ProgrammingExerciseResource#getProgrammingExerciseByProjectKey(String)}.
+         *
+         * @param feedback to convert
+         * @return the converted DTO
+         */
         public static ProjectKeyFeedbackDTO of(Feedback feedback) {
             return Optional.ofNullable(feedback).map(f -> new ProjectKeyFeedbackDTO(f.getId(), f.getText(), f.getDetailText(), f.getHasLongFeedbackText(), f.getReference(),
                     f.getCredits(), f.getType(), f.isPositive(), ProjectKeyTestCaseDTO.of(f.getTestCase()))).orElse(null);
@@ -108,6 +147,13 @@ public record ProjectKeyProgrammingExerciseDTO(Long id, String problemStatement,
     public record ProjectKeyTestCaseDTO(Long id, String testName, Double weight, Double bonusMultiplier, Double bonusPoints, Boolean active, Visibility visibility,
             ProgrammingExerciseTestCaseType type) {
 
+        /**
+         * Converts a ProgrammingExerciseTestCase into a dto for the endpoint
+         * {@link de.tum.cit.aet.artemis.programming.web.ProgrammingExerciseResource#getProgrammingExerciseByProjectKey(String)}.
+         *
+         * @param testCase to convert
+         * @return the converted DTO
+         */
         public static ProjectKeyTestCaseDTO of(ProgrammingExerciseTestCase testCase) {
             return Optional.ofNullable(testCase).map(t -> new ProjectKeyTestCaseDTO(t.getId(), t.getTestName(), t.getWeight(), t.getBonusMultiplier(), t.getBonusPoints(),
                     t.isActive(), t.getVisibility(), t.getType())).orElse(null);

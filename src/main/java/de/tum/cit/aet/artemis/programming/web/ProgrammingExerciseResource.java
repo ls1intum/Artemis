@@ -555,7 +555,6 @@ public class ProgrammingExerciseResource {
     /**
      * GET /programming-exercises/project-key/:projectKey : Queries a programming exercise by its project key.
      *
-     *
      * @param projectKey the project key of the programming exercise
      *
      * @return the ProgrammingExercise with this project key in an ResponseEntity or 404 Not Found if no exercise exists. It includes the students participation, submissions,
@@ -564,7 +563,7 @@ public class ProgrammingExerciseResource {
     @GetMapping("programming-exercises/project-key/{projectKey}")
     @EnforceAtLeastStudent
     @AllowedTools(ToolTokenType.SCORPIO)
-    public ResponseEntity<ProjectKeyProgrammingExerciseDTO> getExerciseByProjectKey(@PathVariable String projectKey) {
+    public ResponseEntity<ProjectKeyProgrammingExerciseDTO> getProgrammingExerciseByProjectKey(@PathVariable String projectKey) {
         User user = userRepository.getUserWithGroupsAndAuthorities();
 
         final ProgrammingExercise exercise = programmingExerciseRepository.findAllByProjectKey(projectKey).stream().findAny()
