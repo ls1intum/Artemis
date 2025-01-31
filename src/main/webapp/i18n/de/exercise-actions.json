@@ -49,8 +49,6 @@
             "cloneRatedRepository": "Klone dein Repository für diese Aufgabe:",
             "clonePracticeRepository": "Klone dein Repository zum Üben für diese Aufgabe:",
             "cloneExerciseRepository": "Klone ein Repository für diese Aufgabe",
-            "repositoryPassword": "Dein Passwort lautet:",
-            "hoverToShow": "(hover, um es anzuzeigen)",
             "cloneSourceTree": {
                 "button": "Im Git Client klonen",
                 "helpIcon": "Dies öffnet das Repository in Sourcetree oder Tower. Falls du diese nicht installiert hast, kannst du das Repository in deiner IDE oder dem Terminal klonen."

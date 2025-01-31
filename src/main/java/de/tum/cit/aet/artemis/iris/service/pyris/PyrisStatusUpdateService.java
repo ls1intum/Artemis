@@ -14,6 +14,7 @@ import de.tum.cit.aet.artemis.iris.service.pyris.dto.chat.PyrisChatStatusUpdateD
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.chat.textexercise.PyrisTextExerciseChatStatusUpdateDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.competency.PyrisCompetencyStatusUpdateDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.consistencyCheck.PyrisConsistencyCheckStatusUpdateDTO;
+import de.tum.cit.aet.artemis.iris.service.pyris.dto.faqingestionwebhook.PyrisFaqIngestionStatusUpdateDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.lectureingestionwebhook.PyrisLectureIngestionStatusUpdateDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.rewriting.PyrisRewritingStatusUpdateDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.status.PyrisStageDTO;
@@ -22,7 +23,8 @@ import de.tum.cit.aet.artemis.iris.service.pyris.job.CompetencyExtractionJob;
 import de.tum.cit.aet.artemis.iris.service.pyris.job.ConsistencyCheckJob;
 import de.tum.cit.aet.artemis.iris.service.pyris.job.CourseChatJob;
 import de.tum.cit.aet.artemis.iris.service.pyris.job.ExerciseChatJob;
-import de.tum.cit.aet.artemis.iris.service.pyris.job.IngestionWebhookJob;
+import de.tum.cit.aet.artemis.iris.service.pyris.job.FaqIngestionWebhookJob;
+import de.tum.cit.aet.artemis.iris.service.pyris.job.LectureIngestionWebhookJob;
 import de.tum.cit.aet.artemis.iris.service.pyris.job.PyrisJob;
 import de.tum.cit.aet.artemis.iris.service.pyris.job.RewritingJob;
 import de.tum.cit.aet.artemis.iris.service.pyris.job.TextExerciseChatJob;
@@ -163,7 +165,18 @@ public class PyrisStatusUpdateService {
      * @param job          the job that is updated
      * @param statusUpdate the status update
      */
-    public void handleStatusUpdate(IngestionWebhookJob job, PyrisLectureIngestionStatusUpdateDTO statusUpdate) {
+    public void handleStatusUpdate(LectureIngestionWebhookJob job, PyrisLectureIngestionStatusUpdateDTO statusUpdate) {
         removeJobIfTerminatedElseUpdate(statusUpdate.stages(), job);
     }
+
+    /**
+     * Handles the status update of a FAQ ingestion job.
+     *
+     * @param job          the job that is updated
+     * @param statusUpdate the status update
+     */
+    public void handleStatusUpdate(FaqIngestionWebhookJob job, PyrisFaqIngestionStatusUpdateDTO statusUpdate) {
+        removeJobIfTerminatedElseUpdate(statusUpdate.stages(), job);
+    }
+
 }
