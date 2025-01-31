@@ -190,6 +190,44 @@ examples.forEach((activeConversation) => {
             });
         });
 
+        it('should not change showPinnedMessages if pinnedMessageCount changes but is not 0', () => {
+            component.showPinnedMessages = true;
+            runInInjectionContext(fixture.debugElement.injector, () => {
+                component.pinnedMessageCount = input<number>(3);
+
+                const changes: SimpleChanges = {
+                    pinnedMessageCount: {
+                        currentValue: 5,
+                        previousValue: 3,
+                        firstChange: false,
+                        isFirstChange: () => false,
+                    },
+                };
+
+                component.ngOnChanges(changes);
+                expect(component.showPinnedMessages).toBeTrue();
+            });
+        });
+
+        it('should correctly handle first change of pinnedMessageCount', () => {
+            component.showPinnedMessages = false;
+            runInInjectionContext(fixture.debugElement.injector, () => {
+                component.pinnedMessageCount = input<number>(2);
+
+                const changes: SimpleChanges = {
+                    pinnedMessageCount: {
+                        currentValue: 2,
+                        previousValue: undefined,
+                        firstChange: true,
+                        isFirstChange: () => true,
+                    },
+                };
+
+                component.ngOnChanges(changes);
+                expect(component.showPinnedMessages).toBeFalse();
+            });
+        });
+
         if (activeConversation instanceof ChannelDTO && activeConversation.subType !== ChannelSubType.GENERAL) {
             it(
                 'should navigate to ' + activeConversation.subType,

@@ -674,6 +674,22 @@ examples.forEach((activeConversation) => {
                 component.onPinnedCountChanged(newPinnedCount);
                 expect(component.pinnedCount).toBe(newPinnedCount);
             });
+
+            it('should set showOnlyPinned to false if pinnedCount becomes 0', () => {
+                component.showOnlyPinned = true;
+                component.onPinnedCountChanged(0);
+                expect(component.showOnlyPinned).toBeFalse();
+            });
+
+            it('should not change showOnlyPinned if pinnedCount changes but is not 0', () => {
+                component.showOnlyPinned = true;
+                component.onPinnedCountChanged(5);
+                expect(component.showOnlyPinned).toBeTrue();
+
+                component.showOnlyPinned = false;
+                component.onPinnedCountChanged(10);
+                expect(component.showOnlyPinned).toBeFalse();
+            });
         });
     });
 });
