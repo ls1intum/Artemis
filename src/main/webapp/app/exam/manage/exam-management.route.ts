@@ -62,6 +62,15 @@ export const examManagementRoute: Routes = [
         canActivate: [UserRouteAccessService],
     },
     {
+        path: ':examId/scores',
+        loadComponent: () => import('app/exam/exam-scores/exam-scores.component').then((m) => m.ExamScoresComponent),
+        data: {
+            authorities: [Authority.ADMIN, Authority.INSTRUCTOR],
+            pageTitle: 'artemisApp.examScores.title',
+        },
+        canActivate: [UserRouteAccessService],
+    },
+    {
         path: ':examId',
         loadComponent: () => import('app/exam/manage/exams/exam-detail.component').then((m) => m.ExamDetailComponent),
         resolve: {
@@ -992,14 +1001,5 @@ export const examManagementRoute: Routes = [
             pageTitle: 'artemisApp.apollonDiagram.detail.title',
         },
         canActivate: [UserRouteAccessService],
-    },
-];
-
-const EXAM_MANAGEMENT_ROUTES = [...examManagementRoute];
-
-export const examManagementState: Routes = [
-    {
-        path: '',
-        children: EXAM_MANAGEMENT_ROUTES,
     },
 ];
