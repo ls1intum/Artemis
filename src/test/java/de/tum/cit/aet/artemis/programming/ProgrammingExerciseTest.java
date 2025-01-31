@@ -12,6 +12,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
+import java.util.UUID;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -315,6 +316,34 @@ class ProgrammingExerciseTest extends AbstractProgrammingIntegrationJenkinsGitla
             }
         }
 
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void testGetProgrammingExerciseByProjectKeyNotFound() throws Exception {
+        Course course = courseUtilService.createCourseWithUserPrefix(TEST_PREFIX);
+        ProgrammingExercise programmingExercise = programmingExerciseUtilService.addProgrammingExerciseToCourse(course);
+
+        String projectKey;
+        List<ProgrammingExercise> foundProgrammingExercises;
+        do {
+            projectKey = UUID.randomUUID().toString();
+            foundProgrammingExercises = programmingExerciseRepository.findAllByProjectKey(projectKey);
+        }
+        while (!foundProgrammingExercises.isEmpty());
+
+        String body = request.get("/api/programming-exercises/project-key/" + projectKey, HttpStatus.NOT_FOUND, String.class);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void testGetProgrammingExerciseByProjectKeyNotVisible() throws Exception {
+        Course course = courseUtilService.createCourseWithUserPrefix(TEST_PREFIX);
+        ProgrammingExercise programmingExercise = programmingExerciseUtilService.addProgrammingExerciseToCourse(course);
+        programmingExercise.setReleaseDate(ZonedDateTime.now().plusHours(2));
+        programmingExercise = programmingExerciseRepository.save(programmingExercise);
+
+        String body = request.get("/api/programming-exercises/project-key/" + programmingExercise.getProjectKey(), HttpStatus.FORBIDDEN, String.class);
     }
 
     @Test
