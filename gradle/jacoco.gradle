@@ -86,7 +86,7 @@ ext {
     ignoredDirectories = [
         "**/$BasePath/**/domain/**/*_*",
         "**/$BasePath/core/config/migration/entries/**",
-        "**/org/gradle/**",
+        "org/gradle/**",
         "**/gradle-wrapper.jar/**"
     ]
 }
