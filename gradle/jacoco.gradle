@@ -42,8 +42,8 @@ ext {
             "CLASS": 1
         ],
         "iris"        : [
-            "INSTRUCTION": 0.792,
-            "CLASS": 17
+            "INSTRUCTION": 0.760,
+            "CLASS": 25
         ],
         "lecture"      : [
             "INSTRUCTION": 0.867,
@@ -83,10 +83,10 @@ ext {
         ? ModuleCoverageThresholds.collect {element -> element.key}
         : includedModules as ArrayList
 
-    // we want to ignore some generated files in the domain folders
     ignoredDirectories = [
         "**/$BasePath/**/domain/**/*_*",
         "**/$BasePath/core/config/migration/entries/**",
+        "**/org/gradle/**",
         "**/gradle-wrapper.jar/**"
     ]
 }

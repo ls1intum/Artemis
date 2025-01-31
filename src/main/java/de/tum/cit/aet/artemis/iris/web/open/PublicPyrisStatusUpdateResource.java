@@ -23,13 +23,17 @@ import de.tum.cit.aet.artemis.iris.service.pyris.dto.chat.PyrisChatStatusUpdateD
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.chat.lecture.PyrisLectureChatStatusUpdateDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.chat.textexercise.PyrisTextExerciseChatStatusUpdateDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.competency.PyrisCompetencyStatusUpdateDTO;
+import de.tum.cit.aet.artemis.iris.service.pyris.dto.consistencyCheck.PyrisConsistencyCheckStatusUpdateDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.lectureingestionwebhook.PyrisLectureIngestionStatusUpdateDTO;
+import de.tum.cit.aet.artemis.iris.service.pyris.dto.rewriting.PyrisRewritingStatusUpdateDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.job.CompetencyExtractionJob;
+import de.tum.cit.aet.artemis.iris.service.pyris.job.ConsistencyCheckJob;
 import de.tum.cit.aet.artemis.iris.service.pyris.job.CourseChatJob;
 import de.tum.cit.aet.artemis.iris.service.pyris.job.ExerciseChatJob;
 import de.tum.cit.aet.artemis.iris.service.pyris.job.IngestionWebhookJob;
 import de.tum.cit.aet.artemis.iris.service.pyris.job.LectureChatJob;
 import de.tum.cit.aet.artemis.iris.service.pyris.job.PyrisJob;
+import de.tum.cit.aet.artemis.iris.service.pyris.job.RewritingJob;
 import de.tum.cit.aet.artemis.iris.service.pyris.job.TextExerciseChatJob;
 
 /**
@@ -165,6 +169,57 @@ public class PublicPyrisStatusUpdateResource {
     @EnforceNothing
     public ResponseEntity<Void> respondInLectureChat(@PathVariable String runId, @RequestBody PyrisLectureChatStatusUpdateDTO statusUpdateDTO, HttpServletRequest request) {
         var job = pyrisJobService.getAndAuthenticateJobFromHeaderElseThrow(request, LectureChatJob.class);
+        if (!Objects.equals(job.jobId(), runId)) {
+            throw new ConflictException("Run ID in URL does not match run ID in request body", "Job", "runIdMismatch");
+        }
+
+        pyrisStatusUpdateService.handleStatusUpdate(job, statusUpdateDTO);
+
+        return ResponseEntity.ok().build();
+    }
+
+    /**
+     * POST public/pyris/pipelines/rewriting/runs/:runId/status : Send the rewritten text in a status update
+     * <p>
+     * Uses custom token based authentication.
+     *
+     * @param runId           the ID of the job
+     * @param statusUpdateDTO the status update
+     * @param request         the HTTP request
+     * @throws ConflictException        if the run ID in the URL does not match the run ID in the request body
+     * @throws AccessForbiddenException if the token is invalid
+     * @return a {@link ResponseEntity} with status {@code 200 (OK)}
+     */
+    @PostMapping("pipelines/rewriting/runs/{runId}/status")
+    @EnforceNothing
+    public ResponseEntity<Void> setRewritingJobStatus(@PathVariable String runId, @RequestBody PyrisRewritingStatusUpdateDTO statusUpdateDTO, HttpServletRequest request) {
+        var job = pyrisJobService.getAndAuthenticateJobFromHeaderElseThrow(request, RewritingJob.class);
+        if (!Objects.equals(job.jobId(), runId)) {
+            throw new ConflictException("Run ID in URL does not match run ID in request body", "Job", "runIdMismatch");
+        }
+
+        pyrisStatusUpdateService.handleStatusUpdate(job, statusUpdateDTO);
+
+        return ResponseEntity.ok().build();
+    }
+
+    /**
+     * POST public/pyris/pipelines/inconsistency-check/runs/:runId/status : Send the consistency check response in a status update
+     * <p>
+     * Uses custom token based authentication.
+     *
+     * @param runId           the ID of the job
+     * @param statusUpdateDTO the status update
+     * @param request         the HTTP request
+     * @throws ConflictException        if the run ID in the URL does not match the run ID in the request body
+     * @throws AccessForbiddenException if the token is invalid
+     * @return a {@link ResponseEntity} with status {@code 200 (OK)}
+     */
+    @PostMapping("pipelines/inconsistency-check/runs/{runId}/status")
+    @EnforceNothing
+    public ResponseEntity<Void> setConsistencyCheckJobStatus(@PathVariable String runId, @RequestBody PyrisConsistencyCheckStatusUpdateDTO statusUpdateDTO,
+            HttpServletRequest request) {
+        var job = pyrisJobService.getAndAuthenticateJobFromHeaderElseThrow(request, ConsistencyCheckJob.class);
         if (!Objects.equals(job.jobId(), runId)) {
             throw new ConflictException("Run ID in URL does not match run ID in request body", "Job", "runIdMismatch");
         }
