@@ -239,15 +239,14 @@ export class ModelingSubmissionComponent implements OnInit, OnDestroy, Component
             }),
             tap((submissions: ModelingSubmission[]) => {
                 this.sortedSubmissionHistory = submissions.sort((a, b) => {
-                    // Get the latest result for each submission (sorted by completionDate descending)
                     const latestResultA = this.sortResultsByCompletionDate(a.results ?? [])[0];
                     const latestResultB = this.sortResultsByCompletionDate(b.results ?? [])[0];
 
                     // Use the latest result's completionDate for comparison
-                    const dateA = latestResultA?.completionDate ? latestResultA.completionDate.valueOf() : 0;
-                    const dateB = latestResultB?.completionDate ? latestResultB.completionDate.valueOf() : 0;
+                    const dateA = latestResultA?.completionDate ? dayjs(latestResultA.completionDate).valueOf() : 0;
+                    const dateB = latestResultB?.completionDate ? dayjs(latestResultB.completionDate).valueOf() : 0;
 
-                    return dateB - dateA; // Sort submissions by latest result's completionDate in descending order
+                    return dateA - dateB;
                 });
                 this.sortedResultHistory = this.sortedSubmissionHistory.map((submission) => {
                     const result = getLatestSubmissionResult(submission)!;
@@ -260,9 +259,9 @@ export class ModelingSubmissionComponent implements OnInit, OnDestroy, Component
 
     private sortResultsByCompletionDate(results: Result[]): Result[] {
         return results.sort((a, b) => {
-            const dateA = a.completionDate ? a.completionDate.valueOf() : 0;
-            const dateB = b.completionDate ? b.completionDate.valueOf() : 0;
-            return dateB - dateA; // Descending
+            const dateA = a.completionDate ? dayjs(a.completionDate).valueOf() : 0;
+            const dateB = b.completionDate ? dayjs(b.completionDate).valueOf() : 0;
+            return dateB - dateA;
         });
     }
 
