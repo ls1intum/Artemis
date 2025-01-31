@@ -1,0 +1,25 @@
+GEM
+  remote: https://rubygems.org/
+  specs:
+    bigdecimal (3.1.9)
+    date (3.4.1)
+    minitest (5.25.4)
+    minitest-junit (2.1.0)
+      minitest (~> 5.11)
+      ox (~> 2, >= 2.14.2)
+    ox (2.14.20)
+      bigdecimal (>= 3.0)
+    rake (13.2.1)
+
+PLATFORMS
+  ruby
+  x86_64-linux
+
+DEPENDENCIES
+  date (~> 3.4)
+  minitest (~> 5.16)
+  minitest-junit (~> 2.1)
+  rake (~> 13.0)
+
+BUNDLED WITH
+   2.6.2
