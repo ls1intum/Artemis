@@ -574,12 +574,7 @@ public class ProgrammingExerciseResource {
         }
 
         var participations = studentParticipationRepository.findAllByExerciseIdAndStudentIdWithEagerLatestSubmissionLatestResultFeedbacksTestCases(exercise.getId(), user.getId());
-        if (participations.isEmpty()) {
-            exercise.setStudentParticipations(Set.of());
-        }
-        else {
-            exercise.setStudentParticipations(participations);
-        }
+        exercise.setStudentParticipations(participations);
 
         return ResponseEntity.ok(ProjectKeyProgrammingExerciseDTO.of(exercise));
     }
