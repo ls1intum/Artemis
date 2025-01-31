@@ -13,7 +13,6 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-import de.tum.cit.aet.artemis.core.repository.CourseRepository;
 import de.tum.cit.aet.artemis.core.repository.UserRepository;
 import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInExercise.EnforceAtLeastEditorInExercise;
 import de.tum.cit.aet.artemis.iris.service.IrisConsistencyCheckService;
@@ -35,12 +34,11 @@ public class IrisConsistencyCheckResource {
 
     private final Optional<IrisConsistencyCheckService> irisConsistencyCheckService;
 
-    public IrisConsistencyCheckResource(UserRepository userRepository, ProgrammingExerciseRepository programmingExerciseRepository, CourseRepository courseRepository,
+    public IrisConsistencyCheckResource(UserRepository userRepository, ProgrammingExerciseRepository programmingExerciseRepository,
             Optional<IrisConsistencyCheckService> irisConsistencyCheckService) {
         this.userRepository = userRepository;
         this.programmingExerciseRepository = programmingExerciseRepository;
         this.irisConsistencyCheckService = irisConsistencyCheckService;
-
     }
 
     /**
