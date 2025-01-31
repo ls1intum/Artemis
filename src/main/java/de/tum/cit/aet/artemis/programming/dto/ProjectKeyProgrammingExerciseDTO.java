@@ -30,7 +30,7 @@ import de.tum.cit.aet.artemis.programming.domain.ProgrammingSubmission;
 public record ProjectKeyProgrammingExerciseDTO(Long id, String problemStatement, String title, String shortName, ZonedDateTime releaseDate, ZonedDateTime startDate,
         ZonedDateTime dueDate, ZonedDateTime assessmentDueDate, Double maxPoints, Double bonusPoints, AssessmentType assessmentType, Boolean allowComplaintsForAutomaticAssessments,
         Boolean allowFeedbackRequests, DifficultyLevel difficulty, ExerciseMode mode, IncludedInOverallScore includedInOverallScore, ExerciseType exerciseType,
-        ZonedDateTime exampleSolutionPublicationDate, ProjectKeyCourse course, Set<ProjectKeyStudentParticipationDTO> studentParticipations, String projectKey,
+        ZonedDateTime exampleSolutionPublicationDate, ProjectKeyCourseDTO course, Set<ProjectKeyStudentParticipationDTO> studentParticipations, String projectKey,
         ProgrammingLanguage programmingLanguage, Boolean showTestNamesToStudents) {
 
     public static ProjectKeyProgrammingExerciseDTO of(ProgrammingExercise exercise) {
@@ -38,7 +38,7 @@ public record ProjectKeyProgrammingExerciseDTO(Long id, String problemStatement,
                 .map(e -> new ProjectKeyProgrammingExerciseDTO(e.getId(), e.getProblemStatement(), e.getTitle(), e.getShortName(), e.getReleaseDate(), e.getStartDate(),
                         e.getDueDate(), e.getAssessmentDueDate(), e.getMaxPoints(), e.getBonusPoints(), e.getAssessmentType(), e.getAllowComplaintsForAutomaticAssessments(),
                         e.getAllowFeedbackRequests(), e.getDifficulty(), e.getMode(), e.getIncludedInOverallScore(), e.getExerciseType(), e.getExampleSolutionPublicationDate(),
-                        ProjectKeyCourse.of(e.getCourseViaExerciseGroupOrCourseMember()),
+                        ProjectKeyCourseDTO.of(e.getCourseViaExerciseGroupOrCourseMember()),
                         Optional.ofNullable(e.getStudentParticipations()).orElse(Set.of()).stream()
                                 .map(p -> ProjectKeyStudentParticipationDTO.of((ProgrammingExerciseStudentParticipation) p)).collect(Collectors.toSet()),
                         e.getProjectKey(), e.getProgrammingLanguage(), e.getShowTestNamesToStudents()))
@@ -46,10 +46,10 @@ public record ProjectKeyProgrammingExerciseDTO(Long id, String problemStatement,
     }
 
     @JsonInclude(JsonInclude.Include.NON_EMPTY)
-    public record ProjectKeyCourse(Long id, String title, String shortName) {
+    public record ProjectKeyCourseDTO(Long id, String title, String shortName) {
 
-        public static ProjectKeyCourse of(Course course) {
-            return new ProjectKeyCourse(course.getId(), course.getTitle(), course.getShortName());
+        public static ProjectKeyCourseDTO of(Course course) {
+            return new ProjectKeyCourseDTO(course.getId(), course.getTitle(), course.getShortName());
         }
     }
 
