@@ -74,7 +74,7 @@ class PyrisFaqIngestionTest extends AbstractIrisIntegrationTest {
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
-    void autoIngestionWhenFaqIsCreatedAndAutoUpdateEnabled() {
+    void autoIngestionWhenFaqIsCreatedAndAutoUpdateEnabled() throws Exception {
         Faq faq = new Faq();
         faq.setQuestionTitle("Lorem Ipsum");
         activateIrisFor(faq1.getCourse());
@@ -84,16 +84,19 @@ class PyrisFaqIngestionTest extends AbstractIrisIntegrationTest {
         irisRequestMockProvider.mockFaqIngestionWebhookRunResponse(dto -> {
             assertThat(dto.settings().authenticationToken()).isNotNull();
         });
+        Faq returnedFaq = request.postWithResponseBody("/api/courses/" + faq.getCourse().getId() + "/faqs", faq, Faq.class, HttpStatus.CREATED);
+
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
-    void noAutoIngestionWhenFaqIsCreatedAndAutoUpdateEnabled() {
+    void noAutoIngestionWhenFaqIsCreatedAndAutoUpdateEnabled() throws Exception {
         Faq faq = new Faq();
         faq.setQuestionTitle("Lorem Ipsum");
         irisRequestMockProvider.mockFaqIngestionWebhookRunResponse(dto -> {
             assertThat(dto.settings().authenticationToken()).isNotNull();
         });
+        Faq returnedFaq = request.postWithResponseBody("/api/courses/" + faq.getCourse().getId() + "/faqs", faq, Faq.class, HttpStatus.CREATED);
     }
 
     @Test
@@ -128,6 +131,16 @@ class PyrisFaqIngestionTest extends AbstractIrisIntegrationTest {
             assertThat(dto.settings().authenticationToken()).isNotNull();
         });
         request.postWithResponseBody("/api/courses/" + faq1.getCourse().getId() + "/faqs/ingest", Optional.empty(), boolean.class, HttpStatus.OK);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testAddSpecificFaqToPyrisDBAddJobWithCourseSettingsEnabled() throws Exception {
+        activateIrisFor(faq1.getCourse());
+        irisRequestMockProvider.mockFaqIngestionWebhookRunResponse(dto -> {
+            assertThat(dto.settings().authenticationToken()).isNotNull();
+        });
+        request.postWithResponseBody("/api/courses/" + faq1.getCourse().getId() + "/faqs/ingest?faqId=" + faq1.getId(), Optional.empty(), boolean.class, HttpStatus.OK);
     }
 
     @Test
