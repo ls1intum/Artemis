@@ -29,6 +29,7 @@ on:
   release:
     types:
     - created
+  workflow_dispatch:
 
 # Limit the number of concurrent runs to one per PR
 # If a run is already in progress, cancel it
