@@ -57,11 +57,11 @@ async function createArchive(outputPath, inputDirectory) {
 // Archiving process
 const baseDir = path.join(__dirname, 'test-reports/monocart-report');
 try {
-    await createArchive(path.join(baseDir, 'e2e-client-coverage.zip'), path.join(baseDir, 'coverage/lcov-report'));
+    await createArchive(path.join(baseDir, 'e2e-client-coverage.zip'), path.join(baseDir, 'coverage'));
 
-    await createArchive(path.join(baseDir, 'e2e-client-coverage-parallel.zip'), path.join(__dirname, 'test-reports/monocart-report-parallel/coverage/lcov-report'));
+    await createArchive(path.join(baseDir, 'e2e-client-coverage-parallel.zip'), path.join(__dirname, 'test-reports/monocart-report-parallel'));
 
-    await createArchive(path.join(baseDir, 'e2e-client-coverage-sequential.zip'), path.join(__dirname, 'test-reports/monocart-report-sequential/coverage/lcov-report'));
+    await createArchive(path.join(baseDir, 'e2e-client-coverage-sequential.zip'), path.join(__dirname, 'test-reports/monocart-report-sequential'));
 } catch (err) {
     console.error('Error while creating archives:', err);
 }
