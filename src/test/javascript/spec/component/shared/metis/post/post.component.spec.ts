@@ -48,6 +48,9 @@ import { MockAccountService } from '../../../../helpers/mocks/service/mock-accou
 import { MockLocalStorageService } from '../../../../helpers/mocks/service/mock-local-storage.service';
 import { LocalStorageService } from 'ngx-webstorage';
 import { AnswerPost } from 'app/entities/metis/answer-post.model';
+import { ConversationService } from 'app/shared/metis/conversations/conversation.service';
+import { MockConversationService } from '../../../../helpers/mocks/service/mock-conversation.service';
+import { MockMetisConversationService } from '../../../../helpers/mocks/service/mock-metis-conversation.service';
 
 describe('PostComponent', () => {
     let component: PostComponent;
@@ -72,11 +75,12 @@ describe('PostComponent', () => {
                 { provide: MetisService, useClass: MockMetisService },
                 { provide: Router, useClass: MockRouter },
                 { provide: DOCUMENT, useValue: document },
-                MockProvider(MetisConversationService),
                 MockProvider(OneToOneChatService),
                 { provide: TranslateService, useClass: MockTranslateService },
                 { provide: AccountService, useClass: MockAccountService },
                 { provide: LocalStorageService, useClass: MockLocalStorageService },
+                { provide: ConversationService, useClass: MockConversationService },
+                { provide: MetisConversationService, useClass: MockMetisConversationService },
             ],
             declarations: [
                 PostComponent,
