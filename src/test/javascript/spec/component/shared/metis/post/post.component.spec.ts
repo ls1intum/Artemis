@@ -33,7 +33,6 @@ import { OneToOneChatDTO } from 'app/entities/metis/conversation/one-to-one-chat
 import { HttpResponse } from '@angular/common/http';
 import { MockRouter } from '../../../../helpers/mocks/mock-router';
 import { AnswerPostCreateEditModalComponent } from 'app/shared/metis/posting-create-edit-modal/answer-post-create-edit-modal/answer-post-create-edit-modal.component';
-import { PostReactionsBarComponent } from 'app/shared/metis/posting-reactions-bar/post-reactions-bar/post-reactions-bar.component';
 import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
 import { DOCUMENT } from '@angular/common';
 import { Posting, PostingType } from 'app/entities/metis/posting.model';
@@ -44,6 +43,10 @@ import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { TranslateService } from '@ngx-translate/core';
 import { By } from '@angular/platform-browser';
 import dayjs from 'dayjs/esm';
+import { AccountService } from 'app/core/auth/account.service';
+import { MockAccountService } from '../../../../helpers/mocks/service/mock-account.service';
+import { MockLocalStorageService } from '../../../../helpers/mocks/service/mock-local-storage.service';
+import { LocalStorageService } from 'ngx-webstorage';
 import { AnswerPost } from 'app/entities/metis/answer-post.model';
 
 describe('PostComponent', () => {
@@ -72,6 +75,8 @@ describe('PostComponent', () => {
                 MockProvider(MetisConversationService),
                 MockProvider(OneToOneChatService),
                 { provide: TranslateService, useClass: MockTranslateService },
+                { provide: AccountService, useClass: MockAccountService },
+                { provide: LocalStorageService, useClass: MockLocalStorageService },
             ],
             declarations: [
                 PostComponent,
@@ -81,7 +86,6 @@ describe('PostComponent', () => {
                 MockComponent(PostingContentComponent),
                 MockComponent(PostingFooterComponent),
                 MockComponent(AnswerPostCreateEditModalComponent),
-                MockComponent(PostReactionsBarComponent),
                 MockRouterLinkDirective,
                 MockQueryParamsDirective,
                 TranslatePipeMock,

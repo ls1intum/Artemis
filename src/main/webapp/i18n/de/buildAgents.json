@@ -24,13 +24,22 @@
                 "buildAgentResumeFailed": "Fortsetzen des Build-Agenten fehlgeschlagen.",
                 "buildAgentWithoutName": "Der Name des Build-Agenten ist erforderlich.",
                 "buildAgentsPaused": "Anfrage zum Anhalten aller Build-Agenten erfolgreich gesendet. Die Agenten akzeptieren keine neuen Build-Jobs und werden die aktuellen Build-Jobs entweder ordnungsgemäß beenden oder nach einer konfigurierbaren Anzahl von Sekunden abbrechen.",
-                "buildAgentsResumed": "Anfrage zum Fortsetzen aller Build-Agenten erfolgreich gesendet. Die Agenten werden wieder neue Build-Jobs annehmen."
+                "buildAgentsResumed": "Anfrage zum Fortsetzen aller Build-Agenten erfolgreich gesendet. Die Agenten werden wieder neue Build-Jobs annehmen.",
+                "distributedDataCleared": "Verteilte Daten erfolgreich gelöscht.",
+                "distributedDataClearFailed": "Löschen der verteilten Daten fehlgeschlagen."
             },
             "pause": "Anhalten",
             "resume": "Fortsetzen",
             "pauseAll": "Alle Agenten Anhalten",
             "resumeAll": "Alle Agenten fortsetzen",
-            "pauseAllWarning": "Du bist dabei, alle Build-Agenten anzuhalten. Dies wird verhindern, dass sie neue Build-Jobs verarbeiten.\nBist du sicher, dass du fortfahren möchtest?"
+            "pauseAllWarning": "Du bist dabei, alle Build-Agenten anzuhalten. Dies wird verhindern, dass sie neue Build-Jobs verarbeiten.\nBist du sicher, dass du fortfahren möchtest?",
+            "clearDistributedData": {
+                "title": "Verteilte Daten löschen",
+                "descriptionFirst": "Diese Aktion wird alle verteilten Daten löschen. Dazu gehören die BuildJob Queue, die processingJobs Map, die DockerImageCleanUp Map, die BuildAgents Map und die BuildJobResults Queue.",
+                "descriptionSecond": "Diese Aktion ist irreversibel und führt zu Datenverlust. Das System benötigt einige Minuten, um wieder in den Normalbetrieb zurückzukehren.",
+                "descriptionThird": "Wenn du sicher bist, dass du fortfahren möchtest, gib bitte 'CLEAR DATA' in das untenstehende Eingabefeld ein und klicke auf die Schaltfläche 'Daten löschen'.",
+                "clearData": "Daten löschen"
+            }
         }
     }
 }
