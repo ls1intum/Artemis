@@ -25,7 +25,6 @@ import { isCommunicationEnabled } from 'app/entities/course.model';
 import { getAsChannelDTO } from 'app/entities/metis/conversation/channel.model';
 import { AnswerPost } from 'app/entities/metis/answer-post.model';
 import { animate, style, transition, trigger } from '@angular/animations';
-import { PostReactionsBarComponent } from 'app/shared/metis/posting-reactions-bar/post-reactions-bar/post-reactions-bar.component';
 import { CdkConnectedOverlay, CdkOverlayOrigin } from '@angular/cdk/overlay';
 import { DOCUMENT, NgClass, NgStyle } from '@angular/common';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
@@ -37,6 +36,7 @@ import { MessageInlineInputComponent } from '../message/message-inline-input/mes
 import { EmojiPickerComponent } from '../emoji/emoji-picker.component';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 import { ArtemisTranslatePipe } from '../../pipes/artemis-translate.pipe';
+import { PostingReactionsBarComponent } from 'app/shared/metis/posting-reactions-bar/posting-reactions-bar.component';
 
 @Component({
     selector: 'jhi-post',
@@ -58,7 +58,7 @@ import { ArtemisTranslatePipe } from '../../pipes/artemis-translate.pipe';
         RouterLinkActive,
         RouterLink,
         PostingContentComponent,
-        PostReactionsBarComponent,
+        PostingReactionsBarComponent,
         MessageInlineInputComponent,
         PostingFooterComponent,
         NgStyle,
@@ -86,7 +86,7 @@ export class PostComponent extends PostingDirective<Post> implements OnInit, OnC
     openThread = output<void>();
 
     postFooterComponent = viewChild<PostingFooterComponent>('postFooter');
-    reactionsBarComponent = viewChild.required<PostReactionsBarComponent>(PostReactionsBarComponent);
+    reactionsBarComponent = viewChild.required<PostingReactionsBarComponent<Post>>(PostingReactionsBarComponent);
 
     static activeDropdownPost: PostComponent | undefined = undefined;
 
