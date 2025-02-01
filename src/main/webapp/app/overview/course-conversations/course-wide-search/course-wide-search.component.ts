@@ -27,7 +27,7 @@ import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
     imports: [NgClass, TranslateDirective, FaIconComponent, FormsModule, ReactiveFormsModule, NgbTooltip, InfiniteScrollDirective, PostingThreadComponent, ArtemisTranslatePipe],
 })
 export class CourseWideSearchComponent implements OnInit, AfterViewInit, OnDestroy {
-    readonly courseWideSearchConfig = input<CourseWideSearchConfig>();
+    readonly courseWideSearchConfig = input.required<CourseWideSearchConfig>();
 
     readonly messages = viewChildren<ElementRef>('postingThread');
     readonly messages$ = toObservable(this.messages);

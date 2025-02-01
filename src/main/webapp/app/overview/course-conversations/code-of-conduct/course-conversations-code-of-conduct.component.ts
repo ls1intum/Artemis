@@ -17,13 +17,13 @@ export class CourseConversationsCodeOfConductComponent implements OnInit {
     private alertService = inject(AlertService);
     private conversationService = inject(ConversationService);
 
-    course = input<Course>();
+    course = input.required<Course>();
 
     responsibleContacts: User[] = [];
 
     ngOnInit() {
-        if (this.course()?.id) {
-            this.conversationService.getResponsibleUsersForCodeOfConduct(this.course()!.id!).subscribe({
+        if (this.course().id) {
+            this.conversationService.getResponsibleUsersForCodeOfConduct(this.course().id!).subscribe({
                 next: (res: HttpResponse<User[]>) => {
                     if (res.body) {
                         this.responsibleContacts = res.body;
