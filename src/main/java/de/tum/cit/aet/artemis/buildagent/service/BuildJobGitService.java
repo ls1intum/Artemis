@@ -113,7 +113,7 @@ public class BuildJobGitService extends AbstractGitService {
      */
     public Repository cloneRepository(VcsRepositoryUri repoUri, Path localPath) throws GitAPIException, GitException, InvalidPathException, IOException, URISyntaxException {
         var gitUriAsString = getGitUriAsString(repoUri);
-        log.debug("Cloning from {} to {}", gitUriAsString, localPath);
+        log.info("Cloning from {} to {}", gitUriAsString, localPath);
         // make sure the directory to copy into is empty (the operation only executes a delete if the directory exists)
         FileUtils.deleteDirectory(localPath.toFile());
         Git git = null;
