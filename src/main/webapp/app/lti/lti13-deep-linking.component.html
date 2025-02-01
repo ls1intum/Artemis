@@ -148,7 +148,7 @@
 
     <div class="modal-footer">
         <div>
-            @if (selectedExercises?.size || isCompetencySelected || isLearningPathSelected || isIrisSelected) {
+            @if (selectedExercises?.size || selectedLectures?.size || isCompetencySelected || isLearningPathSelected || isIrisSelected) {
                 <button type="submit" (click)="sendDeepLinkRequest()" class="btn btn-success">
                     <span class="d-sm-inline" jhiTranslate="artemisApp.lti13.deepLinking.link"></span>
                 </button>
