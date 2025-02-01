@@ -1,7 +1,7 @@
 import dayjs from 'dayjs/esm';
 import { Component, OnChanges, computed, inject, input, output, viewChild } from '@angular/core';
 import { AbstractControl, FormBuilder, FormGroup, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
-import { faArrowLeft, faTimes } from '@fortawesome/free-solid-svg-icons';
+import { faArrowLeft, faBan } from '@fortawesome/free-solid-svg-icons';
 import { map } from 'rxjs';
 import { HttpResponse } from '@angular/common/http';
 import { OnlineResourceDTO } from 'app/lecture/lecture-unit/lecture-unit-management/online-resource-dto.model';
@@ -41,7 +41,7 @@ function urlValidator(control: AbstractControl) {
 })
 export class OnlineUnitFormComponent implements OnChanges {
     protected readonly faArrowLeft = faArrowLeft;
-    protected readonly faTimes = faTimes;
+    protected readonly faBan = faBan;
 
     formData = input<OnlineUnitFormData>();
     isEditMode = input<boolean>(false);

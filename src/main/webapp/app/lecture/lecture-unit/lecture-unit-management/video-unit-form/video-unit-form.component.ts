@@ -2,7 +2,7 @@ import dayjs from 'dayjs/esm';
 import { Component, computed, effect, inject, input, output, untracked, viewChild } from '@angular/core';
 import { AbstractControl, FormBuilder, FormGroup, FormsModule, ReactiveFormsModule, ValidationErrors, Validators } from '@angular/forms';
 import urlParser from 'js-video-url-parser';
-import { faArrowLeft, faTimes } from '@fortawesome/free-solid-svg-icons';
+import { faArrowLeft, faBan } from '@fortawesome/free-solid-svg-icons';
 import { CompetencyLectureUnitLink } from 'app/entities/competency.model';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { FormDateTimePickerComponent } from 'app/shared/date-time-picker/date-time-picker.component';
@@ -65,7 +65,7 @@ function videoSourceUrlValidator(control: AbstractControl): ValidationErrors | u
     imports: [FormsModule, ReactiveFormsModule, TranslateDirective, FormDateTimePickerComponent, CompetencySelectionComponent, FaIconComponent, ArtemisTranslatePipe],
 })
 export class VideoUnitFormComponent {
-    protected readonly faTimes = faTimes;
+    protected readonly faBan = faBan;
     protected readonly faArrowLeft = faArrowLeft;
 
     private readonly formBuilder = inject(FormBuilder);

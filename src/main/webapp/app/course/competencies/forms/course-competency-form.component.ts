@@ -4,7 +4,7 @@ import { of } from 'rxjs';
 import { catchError, delay, map, switchMap } from 'rxjs/operators';
 import { Lecture } from 'app/entities/lecture.model';
 import { CompetencyTaxonomy, DEFAULT_MASTERY_THRESHOLD } from 'app/entities/competency.model';
-import { faQuestionCircle, faTimes } from '@fortawesome/free-solid-svg-icons';
+import { faBan, faQuestionCircle } from '@fortawesome/free-solid-svg-icons';
 import dayjs from 'dayjs/esm';
 import { CourseCompetencyService } from 'app/course/competencies/course-competency.service';
 
@@ -70,7 +70,7 @@ export abstract class CourseCompetencyFormComponent {
     form: FormGroup;
 
     // Icons
-    protected readonly faTimes = faTimes;
+    protected readonly faBan = faBan;
     protected readonly faQuestionCircle = faQuestionCircle;
 
     get titleControl() {

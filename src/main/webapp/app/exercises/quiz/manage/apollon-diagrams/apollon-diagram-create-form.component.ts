@@ -3,7 +3,7 @@ import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import { AlertService } from 'app/core/util/alert.service';
 import { ApollonDiagramService } from 'app/exercises/quiz/manage/apollon-diagrams/apollon-diagram.service';
 import { ApollonDiagram } from 'app/entities/apollon-diagram.model';
-import { faSave } from '@fortawesome/free-solid-svg-icons';
+import { faBan, faSave } from '@fortawesome/free-solid-svg-icons';
 import { FormsModule } from '@angular/forms';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
@@ -25,6 +25,7 @@ export class ApollonDiagramCreateFormComponent implements AfterViewInit {
 
     // Icons
     faSave = faSave;
+    faBan = faBan;
 
     /**
      * Adds focus on the title input field

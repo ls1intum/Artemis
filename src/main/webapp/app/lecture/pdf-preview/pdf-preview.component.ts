@@ -10,7 +10,7 @@ import { Subject, Subscription } from 'rxjs';
 import { Course } from 'app/entities/course.model';
 import { HttpErrorResponse } from '@angular/common/http';
 import { ArtemisSharedModule } from 'app/shared/shared.module';
-import { faFileImport, faSave, faTimes, faTrash } from '@fortawesome/free-solid-svg-icons';
+import { faBan, faFileImport, faSave, faTrash } from '@fortawesome/free-solid-svg-icons';
 import dayjs from 'dayjs/esm';
 import { objectToJsonBlob } from 'app/utils/blob-util';
 import { MAX_FILE_SIZE } from 'app/shared/constants/input.constants';
@@ -58,7 +58,7 @@ export class PdfPreviewComponent implements OnInit, OnDestroy {
     // Icons
     protected readonly faFileImport = faFileImport;
     protected readonly faSave = faSave;
-    protected readonly faTimes = faTimes;
+    protected readonly faBan = faBan;
     protected readonly faTrash = faTrash;
 
     ngOnInit() {
