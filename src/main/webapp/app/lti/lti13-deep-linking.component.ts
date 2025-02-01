@@ -155,9 +155,9 @@ export class Lti13DeepLinkingComponent implements OnInit {
     selectLecture(lectureId: number | undefined) {
         if (lectureId !== undefined) {
             if (this.selectedLectures?.has(lectureId)) {
-                this.selectedExercises?.delete(lectureId);
+                this.selectedLectures?.delete(lectureId);
             } else {
-                this.selectedExercises?.add(lectureId);
+                this.selectedLectures?.add(lectureId);
             }
         }
     }
