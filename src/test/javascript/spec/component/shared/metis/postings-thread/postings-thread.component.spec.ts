@@ -15,7 +15,8 @@ import { TranslatePipeMock } from '../../../../helpers/mocks/service/mock-transl
 import { post } from '../../../../helpers/sample/metis-sample-data';
 import { getElement } from '../../../../helpers/utils/general.utils';
 import { signal } from '@angular/core';
-import { PostReactionsBarComponent } from 'app/shared/metis/posting-reactions-bar/post-reactions-bar/post-reactions-bar.component';
+import { PostingReactionsBarComponent } from 'app/shared/metis/posting-reactions-bar/posting-reactions-bar.component';
+import { Post } from 'app/entities/metis/post.model';
 
 describe('PostingThreadComponent', () => {
     let component: PostingThreadComponent;
@@ -24,7 +25,7 @@ describe('PostingThreadComponent', () => {
     beforeEach(() => {
         // Workaround for mocked components with viewChild: https://github.com/help-me-mom/ng-mocks/issues/8634
         MockInstance(PostComponent, 'postFooterComponent', signal(undefined));
-        MockInstance(PostComponent, 'reactionsBarComponent', signal({} as unknown as PostReactionsBarComponent));
+        MockInstance(PostComponent, 'reactionsBarComponent', signal({} as unknown as PostingReactionsBarComponent<Post>));
 
         return TestBed.configureTestingModule({
             providers: [
