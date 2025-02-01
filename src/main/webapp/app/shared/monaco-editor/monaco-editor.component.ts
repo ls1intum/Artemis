@@ -10,6 +10,7 @@ import { MonacoEditorLineHighlight } from 'app/shared/monaco-editor/model/monaco
 import { MonacoEditorOptionPreset } from 'app/shared/monaco-editor/model/monaco-editor-option-preset.model';
 import { MonacoEditorService } from 'app/shared/monaco-editor/monaco-editor.service';
 import { getOS } from 'app/shared/util/os-detector.util';
+import GraphemeSplitter from 'grapheme-splitter';
 
 import { EmojiConvertor } from 'emoji-js';
 import * as monaco from 'monaco-editor';
@@ -153,6 +154,47 @@ export class MonacoEditorComponent implements OnInit, OnDestroy {
                 document.activeElement.blur();
             }
             this.onBlurEditor.emit();
+        });
+
+        this._editor.addCommand(monaco.KeyCode.Backspace, () => {
+            const model = this._editor.getModel();
+            const selection = this._editor.getSelection();
+            if (!model || !selection) return;
+
+            // If there is a selection, let the default delete behavior handle it.
+            if (!selection.isEmpty()) {
+                this._editor.trigger('keyboard', 'deleteLeft', null);
+                return;
+            }
+
+            const lineNumber = selection.startLineNumber;
+            const column = selection.startColumn;
+            const lineContent = model.getLineContent(lineNumber);
+
+            // Get the text before the cursor
+            const textBeforeCursor = lineContent.substring(0, column - 1);
+            const splitter = new GraphemeSplitter();
+            const graphemes = splitter.splitGraphemes(textBeforeCursor);
+
+            // If there is nothing to delete, do nothing.
+            if (graphemes.length === 0) return;
+
+            // Remove the last grapheme
+            graphemes.pop();
+            const newTextBeforeCursor = graphemes.join('');
+            const textAfterCursor = lineContent.substring(column - 1);
+
+            const newLineContent = newTextBeforeCursor + textAfterCursor;
+            model.pushEditOperations(
+                [],
+                [
+                    {
+                        range: new monaco.Range(lineNumber, 1, lineNumber, lineContent.length + 1),
+                        text: newLineContent,
+                    },
+                ],
+                () => null,
+            );
         });
     }
 
