@@ -542,6 +542,7 @@ public class BuildJobExecutionService {
                     buildLogsMap.appendBuildLogEntry(buildJobId, msg);
                     throw new LocalCIException(msg, e);
                 }
+                log.info("Attempt " + attempt + " to clone repository " + repositoryUri.repositorySlug() + " failed due to " + e.getMessage() + "/n" + e.getCause().getMessage());
                 buildLogsMap.appendBuildLogEntry(buildJobId,
                         "Attempt " + attempt + " to clone repository " + repositoryUri.repositorySlug() + " failed due to " + e.getMessage() + ". Retrying...");
             }
