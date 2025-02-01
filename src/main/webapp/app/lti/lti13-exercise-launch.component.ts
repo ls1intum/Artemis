@@ -151,13 +151,14 @@ export class Lti13ExerciseLaunchComponent implements OnInit {
     replaceWindowLocationWrapper(url: string): void {
         this.ltiService.setShownViaLti(true);
         this.themeService.applyThemePreference(Theme.LIGHT);
+        console.log('url', url);
         let path;
         if (url === '/lti/select-course') {
             path = url;
         } else {
             path = new URL(url).pathname;
         }
-
+        console.log('path', path);
         this.router.navigate([path], { replaceUrl: true });
     }
 }
