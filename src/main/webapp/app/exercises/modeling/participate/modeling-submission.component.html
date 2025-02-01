@@ -186,16 +186,18 @@
                                 </div>
                             </jhi-fullscreen>
                         </div>
-                        <div class="row">
-                            @if (unreferencedFeedback && unreferencedFeedback!.length > 0) {
-                                <jhi-additional-feedback
-                                    class="col-xl-8 mt-3 alert unreferencedFeedback"
-                                    [feedback]="unreferencedFeedback || []"
-                                    [additional]="true"
-                                    [course]="course"
-                                />
-                            }
-                        </div>
+                        @if ((submission?.submitted && (!isActive || result)) || isFeedbackView) {
+                            <div class="row">
+                                @if (unreferencedFeedback && unreferencedFeedback!.length > 0) {
+                                    <jhi-additional-feedback
+                                        class="col-xl-8 mt-3 alert unreferencedFeedback"
+                                        [feedback]="unreferencedFeedback || []"
+                                        [additional]="true"
+                                        [course]="course"
+                                    />
+                                }
+                            </div>
+                        }
                         @if (result) {
                             <div class="row">
                                 <jhi-rating class="mt-2 alert alert-info" [result]="addParticipationToResult(result, participation)" />
