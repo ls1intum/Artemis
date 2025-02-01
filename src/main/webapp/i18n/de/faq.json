@@ -8,7 +8,8 @@
                 "accept": "FAQ akzeptieren",
                 "reject": "FAQ ablehnen",
                 "filterLabel": "Filter",
-                "createOrEditLabel": "FAQ erstellen oder bearbeiten"
+                "createOrEditLabel": "FAQ erstellen oder bearbeiten",
+                "ingestLabel": "FAQs an IRIS schicken"
             },
             "created": "Die FAQ {{ title }} wurde erfolgreich erstellt",
             "updated": "Die FAQ {{ title }} wurde erfolgreich aktualisiert",
