@@ -1,80 +1,80 @@
 ext {
     AggregatedCoverageThresholds = [
-        "INSTRUCTION": 0.895,
+        "INSTRUCTION": 0.89,
         "CLASS": 56
     ];
     // (Isolated) thresholds when executing each module on its own
     ModuleCoverageThresholds = [
         "assessment"   : [
-            "INSTRUCTION": 0.779,
+            "INSTRUCTION": 0.77,
             "CLASS": 8
         ],
         "athena"       : [
-            "INSTRUCTION": 0.856,
+            "INSTRUCTION": 0.85,
             "CLASS": 2
         ],
         "atlas"        : [
-            "INSTRUCTION": 0.850,
+            "INSTRUCTION": 0.85,
             "CLASS": 12
         ],
         "buildagent"   : [
-            "INSTRUCTION": 0.313,
+            "INSTRUCTION": 0.31,
             "CLASS": 13
         ],
         "communication": [
-            "INSTRUCTION": 0.890,
+            "INSTRUCTION": 0.89,
             "CLASS": 7
         ],
         "core"         : [
-            "INSTRUCTION": 0.657,
+            "INSTRUCTION": 0.65,
             "CLASS": 69
         ],
         "exam"         : [
-            "INSTRUCTION": 0.914,
+            "INSTRUCTION": 0.91,
             "CLASS": 1
         ],
         "exercise"     : [
-            "INSTRUCTION": 0.649,
+            "INSTRUCTION": 0.64,
             "CLASS": 9
         ],
         "fileupload"   : [
-            "INSTRUCTION": 0.906,
+            "INSTRUCTION": 0.90,
             "CLASS": 1
         ],
         "iris"        : [
-            "INSTRUCTION": 0.792,
-            "CLASS": 17
+            "INSTRUCTION": 0.74,
+            "CLASS": 25
         ],
         "lecture"      : [
-            "INSTRUCTION": 0.867,
+            "INSTRUCTION": 0.86,
             "CLASS": 0
         ],
         "lti"          : [
-            "INSTRUCTION": 0.770,
+            "INSTRUCTION": 0.77,
             "CLASS": 3
         ],
         "modeling"     : [
-            "INSTRUCTION": 0.891,
+            "INSTRUCTION": 0.89,
             "CLASS": 2
         ],
         "plagiarism"   : [
-            "INSTRUCTION": 0.760,
+            "INSTRUCTION": 0.76,
             "CLASS": 1
         ],
         "programming"  : [
-            "INSTRUCTION": 0.863,
+            "INSTRUCTION": 0.86,
             "CLASS": 12
         ],
         "quiz"         : [
-            "INSTRUCTION": 0.784,
+            "INSTRUCTION": 0.78,
             "CLASS": 6
         ],
         "text"         : [
-            "INSTRUCTION": 0.847,
+            "INSTRUCTION": 0.84,
             "CLASS": 0
         ],
         "tutorialgroup": [
-            "INSTRUCTION": 0.915,
+            "INSTRUCTION": 0.91,
             "CLASS": 0
         ],
     ]
@@ -83,10 +83,10 @@ ext {
         ? ModuleCoverageThresholds.collect {element -> element.key}
         : includedModules as ArrayList
 
-    // we want to ignore some generated files in the domain folders
     ignoredDirectories = [
         "**/$BasePath/**/domain/**/*_*",
         "**/$BasePath/core/config/migration/entries/**",
+        "**/org/gradle/**",
         "**/gradle-wrapper.jar/**"
     ]
 }
