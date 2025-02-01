@@ -75,15 +75,15 @@ export class FeedbackAnalysisComponent {
     private readonly debounceLoadData = BaseApiHttpService.debounce(this.loadData.bind(this), 300);
     readonly groupFeedback = signal<boolean>(false);
 
-    currentRequestFilters = signal<any | null>(null);
-    currentRequestState = signal<any | null>(null);
-    currentRequestGroupFeedback = signal<boolean | null>(null);
-    currentResponseData = signal<FeedbackAnalysisResponse | null>(null);
+    currentRequestFilters = signal<any | undefined>(undefined);
+    currentRequestState = signal<any | undefined>(undefined);
+    currentRequestGroupFeedback = signal<boolean | undefined>(undefined);
+    currentResponseData = signal<FeedbackAnalysisResponse | undefined>(undefined);
 
-    previousRequestFilters = signal<any | null>(null);
-    previousRequestState = signal<any | null>(null);
-    previousRequestGroupFeedback = signal<boolean | null>(null);
-    previousResponseData = signal<FeedbackAnalysisResponse | null>(null);
+    previousRequestFilters = signal<any | undefined>(undefined);
+    previousRequestState = signal<any | undefined>(undefined);
+    previousRequestGroupFeedback = signal<boolean | undefined>(undefined);
+    previousResponseData = signal<FeedbackAnalysisResponse | undefined>(undefined);
 
     constructor() {
         effect(() => {
