@@ -448,6 +448,7 @@ export class ModelingSubmissionComponent implements OnInit, OnDestroy, Component
         // Handle initial results (no skip)
         this.manualResultUpdateListener = resultStream$
             .pipe(
+                skip(1),
                 filter((result): result is Result => !!result),
                 filter((result) => !result.assessmentType || result.assessmentType !== AssessmentType.AUTOMATIC_ATHENA),
             )
@@ -471,7 +472,6 @@ export class ModelingSubmissionComponent implements OnInit, OnDestroy, Component
         if (!result.completionDate) {
             return;
         }
-
         this.assessmentResult = this.modelingAssessmentService.convertResult(result);
         this.prepareAssessmentData();
         this.alertService.info('artemisApp.modelingEditor.newAssessment');
