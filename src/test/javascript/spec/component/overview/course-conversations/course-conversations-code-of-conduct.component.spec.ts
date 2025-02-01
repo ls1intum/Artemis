@@ -10,6 +10,7 @@ import { MockConversationService } from '../../../helpers/mocks/service/mock-con
 
 describe('Course Conversations Code Of Conduct Component', () => {
     let fixture: ComponentFixture<CourseConversationsCodeOfConductComponent>;
+    let conversationService: ConversationService;
 
     beforeEach(() => {
         TestBed.configureTestingModule({
@@ -20,7 +21,7 @@ describe('Course Conversations Code Of Conduct Component', () => {
             .compileComponents()
             .then(() => {
                 fixture = TestBed.createComponent(CourseConversationsCodeOfConductComponent);
-
+                conversationService = TestBed.inject(ConversationService);
                 fixture.componentRef.setInput('course', { id: 1 });
             });
     });
@@ -30,7 +31,9 @@ describe('Course Conversations Code Of Conduct Component', () => {
     });
 
     it('should initialize', () => {
+        let getResponsibleUsersSpy = jest.spyOn(conversationService, 'getResponsibleUsersForCodeOfConduct');
         fixture.detectChanges();
+        expect(getResponsibleUsersSpy).toHaveBeenCalled();
         expect(CourseConversationsCodeOfConductComponent).not.toBeNull();
     });
 });
