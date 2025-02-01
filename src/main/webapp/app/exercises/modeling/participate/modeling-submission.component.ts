@@ -449,7 +449,6 @@ export class ModelingSubmissionComponent implements OnInit, OnDestroy, Component
         // Handle initial results (no skip)
         this.manualResultUpdateListener = resultStream$
             .pipe(
-                skip(1),
                 filter((result): result is Result => !!result),
                 filter((result) => !result.assessmentType || result.assessmentType !== AssessmentType.AUTOMATIC_ATHENA),
             )
