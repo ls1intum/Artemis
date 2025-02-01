@@ -327,4 +327,51 @@ describe('MonacoEditorComponent', () => {
         comp.setText('line1\n\nline3');
         expect(comp.getLineContent(2)).toBe('');
     });
+
+    it('should delete a combined emoji entirely on backspace press', fakeAsync(() => {
+        fixture.detectChanges();
+        const combinedEmoji = '🇩🇪';
+        comp.setText(combinedEmoji);
+
+        const lines = combinedEmoji.split('\n');
+        const lastLine = lines[lines.length - 1];
+        comp.setPosition({ lineNumber: lines.length, column: lastLine.length + 1 });
+
+        const commandId = comp.getCustomBackspaceCommandId();
+        expect(commandId).toBeDefined();
+
+        comp['_editor'].trigger('keyboard', commandId!, null);
+        tick();
+
+        expect(comp.getText()).toEqual('');
+    }));
+
+    it('should delete combined emojis one cluster at a time on backspace press', fakeAsync(() => {
+        fixture.detectChanges();
+
+        const emoji1 = '🇩🇪';
+        const emoji2 = '🇫🇷';
+        const combinedText = emoji1 + emoji2;
+
+        comp.setText(combinedText);
+        comp.setPosition({ lineNumber: 1, column: combinedText.length + 1 });
+
+        let commandId = comp.getCustomBackspaceCommandId();
+        expect(commandId).toBeDefined();
+        comp['_editor'].trigger('keyboard', commandId!, null);
+        tick();
+        fixture.detectChanges();
+
+        expect(comp.getText()).toEqual(emoji1);
+
+        comp.setPosition({ lineNumber: 1, column: emoji1.length + 1 });
+
+        commandId = comp.getCustomBackspaceCommandId();
+        expect(commandId).toBeDefined();
+        comp['_editor'].trigger('keyboard', commandId!, null);
+        tick();
+        fixture.detectChanges();
+
+        expect(comp.getText()).toEqual('');
+    }));
 });

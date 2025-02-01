@@ -67,6 +67,7 @@ export class MonacoEditorComponent implements OnInit, OnDestroy {
     private textChangedListener?: Disposable;
     private blurEditorWidgetListener?: Disposable;
     private textChangedEmitTimeout?: NodeJS.Timeout;
+    private customBackspaceCommandId: string | undefined;
 
     /*
      * Injected services and elements.
@@ -156,46 +157,43 @@ export class MonacoEditorComponent implements OnInit, OnDestroy {
             this.onBlurEditor.emit();
         });
 
-        this._editor.addCommand(monaco.KeyCode.Backspace, () => {
-            const model = this._editor.getModel();
-            const selection = this._editor.getSelection();
-            if (!model || !selection) return;
+        this.customBackspaceCommandId =
+            this._editor.addCommand(monaco.KeyCode.Backspace, () => {
+                const model = this._editor.getModel();
+                const selection = this._editor.getSelection();
+                if (!model || !selection) return;
 
-            // If there is a selection, let the default delete behavior handle it.
-            if (!selection.isEmpty()) {
-                this._editor.trigger('keyboard', 'deleteLeft', null);
-                return;
-            }
+                if (!selection.isEmpty()) {
+                    this._editor.trigger('keyboard', 'deleteLeft', null);
+                    return;
+                }
 
-            const lineNumber = selection.startLineNumber;
-            const column = selection.startColumn;
-            const lineContent = model.getLineContent(lineNumber);
+                const lineNumber = selection.startLineNumber;
+                const column = selection.startColumn;
+                const lineContent = model.getLineContent(lineNumber);
 
-            // Get the text before the cursor
-            const textBeforeCursor = lineContent.substring(0, column - 1);
-            const splitter = new GraphemeSplitter();
-            const graphemes = splitter.splitGraphemes(textBeforeCursor);
+                const textBeforeCursor = lineContent.substring(0, column - 1);
+                const splitter = new GraphemeSplitter();
+                const graphemes = splitter.splitGraphemes(textBeforeCursor);
 
-            // If there is nothing to delete, do nothing.
-            if (graphemes.length === 0) return;
+                if (graphemes.length === 0) return;
 
-            // Remove the last grapheme
-            graphemes.pop();
-            const newTextBeforeCursor = graphemes.join('');
-            const textAfterCursor = lineContent.substring(column - 1);
+                graphemes.pop();
+                const newTextBeforeCursor = graphemes.join('');
+                const textAfterCursor = lineContent.substring(column - 1);
 
-            const newLineContent = newTextBeforeCursor + textAfterCursor;
-            model.pushEditOperations(
-                [],
-                [
-                    {
-                        range: new monaco.Range(lineNumber, 1, lineNumber, lineContent.length + 1),
-                        text: newLineContent,
-                    },
-                ],
-                () => null,
-            );
-        });
+                const newLineContent = newTextBeforeCursor + textAfterCursor;
+                model.pushEditOperations(
+                    [],
+                    [
+                        {
+                            range: new monaco.Range(lineNumber, 1, lineNumber, lineContent.length + 1),
+                            text: newLineContent,
+                        },
+                    ],
+                    () => null,
+                );
+            }) || undefined;
     }
 
     ngOnDestroy() {
@@ -258,7 +256,7 @@ export class MonacoEditorComponent implements OnInit, OnDestroy {
         const convertedText = this.convertTextToEmoji(text);
         if (this.isConvertedToEmoji(text, convertedText)) {
             this._editor.setValue(convertedText);
-            this.setPosition({ column: this.getPosition().column + 2 + text.length, lineNumber: this.getPosition().lineNumber });
+            this.setPosition({ column: this.getPosition().column + convertedText.length + text.length, lineNumber: this.getPosition().lineNumber });
         }
         if (this.getText() !== convertedText) {
             this._editor.setValue(convertedText);
@@ -485,5 +483,9 @@ export class MonacoEditorComponent implements OnInit, OnDestroy {
      */
     applyOptionPreset(options: MonacoEditorOptionPreset): void {
         options.apply(this._editor);
+    }
+
+    public getCustomBackspaceCommandId(): string | undefined {
+        return this.customBackspaceCommandId;
     }
 }
