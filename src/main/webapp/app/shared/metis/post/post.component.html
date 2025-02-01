@@ -92,9 +92,9 @@
                         <div class="hover-actions" [ngClass]="{ 'mb-2': previewMode }">
                             @if (!previewMode) {
                                 <!-- Post reactions (that appear when post is hovered) -->
-                                <jhi-post-reactions-bar
+                                <jhi-posting-reactions-bar
                                     [lastReadDate]="lastReadDate"
-                                    [readOnlyMode]="readOnlyMode"
+                                    [isReadOnlyMode]="readOnlyMode"
                                     [previewMode]="previewMode"
                                     [posting]="posting"
                                     [(showAnswers)]="showAnswers"
@@ -126,9 +126,9 @@
         <div class="post-content-padding justify-content-between post-reactions-bar" [ngClass]="{ 'mb-2': previewMode, 'is-saved': posting.isSaved && isConsecutive() }">
             <!-- Post reactions -->
             @if (!previewMode) {
-                <jhi-post-reactions-bar
+                <jhi-posting-reactions-bar
                     [lastReadDate]="lastReadDate"
-                    [readOnlyMode]="readOnlyMode"
+                    [isReadOnlyMode]="readOnlyMode"
                     [previewMode]="previewMode"
                     [posting]="posting"
                     [(showAnswers)]="showAnswers"
