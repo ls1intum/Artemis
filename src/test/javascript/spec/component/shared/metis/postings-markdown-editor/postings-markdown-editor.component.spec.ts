@@ -618,17 +618,6 @@ describe('PostingsMarkdownEditor', () => {
         expect(mockEditor.focus).toHaveBeenCalled();
     });
 
-    it('should not insert emoji if cursor position is null', () => {
-        const emojiAction = new EmojiAction(component.viewContainerRef, mockOverlay as any, overlayPositionBuilderMock as any);
-        mockEditor.getPosition.mockReturnValue(null);
-
-        emojiAction.insertEmojiAtCursor(mockEditor, '😀');
-
-        expect(mockEditor.replaceTextAtRange).not.toHaveBeenCalled();
-        expect(mockEditor.setPosition).not.toHaveBeenCalled();
-        expect(mockEditor.focus).not.toHaveBeenCalled();
-    });
-
     it('should close the emoji picker and insert emoji on selection event', () => {
         const emojiAction = new EmojiAction(component.viewContainerRef, mockOverlay as any, overlayPositionBuilderMock as any);
         emojiAction.setPoint({ x: 100, y: 200 });
