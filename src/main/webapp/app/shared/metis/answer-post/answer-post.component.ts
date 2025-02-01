@@ -22,7 +22,6 @@ import { animate, style, transition, trigger } from '@angular/animations';
 import { Reaction } from 'app/entities/metis/reaction.model';
 import { faBookmark, faPencilAlt, faSmile, faTrash } from '@fortawesome/free-solid-svg-icons';
 import { DOCUMENT, NgClass, NgStyle } from '@angular/common';
-import { AnswerPostReactionsBarComponent } from 'app/shared/metis/posting-reactions-bar/answer-post-reactions-bar/answer-post-reactions-bar.component';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { TranslateDirective } from '../../language/translate.directive';
 import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
@@ -33,6 +32,7 @@ import { CdkConnectedOverlay, CdkOverlayOrigin } from '@angular/cdk/overlay';
 import { EmojiPickerComponent } from '../emoji/emoji-picker.component';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 import { captureException } from '@sentry/angular';
+import { PostingReactionsBarComponent } from 'app/shared/metis/posting-reactions-bar/posting-reactions-bar.component';
 
 @Component({
     selector: 'jhi-answer-post',
@@ -52,7 +52,7 @@ import { captureException } from '@sentry/angular';
         NgbTooltip,
         PostingHeaderComponent,
         PostingContentComponent,
-        AnswerPostReactionsBarComponent,
+        PostingReactionsBarComponent,
         AnswerPostCreateEditModalComponent,
         NgStyle,
         CdkOverlayOrigin,
@@ -77,7 +77,7 @@ export class AnswerPostComponent extends PostingDirective<AnswerPost> implements
 
     // ng-container to render answerPostCreateEditModalComponent
     @ViewChild('createEditAnswerPostContainer', { read: ViewContainerRef }) containerRef: ViewContainerRef;
-    @ViewChild(AnswerPostReactionsBarComponent) private reactionsBarComponent!: AnswerPostReactionsBarComponent;
+    @ViewChild(PostingReactionsBarComponent) protected reactionsBarComponent!: PostingReactionsBarComponent<AnswerPost>;
 
     // Icons
     faBookmark = faBookmark;
