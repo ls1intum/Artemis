@@ -84,6 +84,7 @@ describe('PostingsMarkdownEditor', () => {
         revealRange: jest.fn(),
         addCompleter: jest.fn(),
         addPasteListener: jest.fn(),
+        getFullText: jest.fn(),
     };
 
     const mockPositionStrategy = {
