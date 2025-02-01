@@ -120,7 +120,7 @@ export class FeedbackAnalysisComponent {
             JSON.stringify(this.previousRequestFilters()) === JSON.stringify(filters) &&
             JSON.stringify(this.previousRequestState()) === JSON.stringify(state) &&
             this.previousRequestGroupFeedback() === this.groupFeedback() &&
-            this.previousResponseData() !== null
+            this.previousResponseData() !== undefined
         ) {
             this.updateCache();
             return;
