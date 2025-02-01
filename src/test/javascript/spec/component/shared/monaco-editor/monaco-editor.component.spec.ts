@@ -374,4 +374,36 @@ describe('MonacoEditorComponent', () => {
 
         expect(comp.getText()).toEqual('');
     }));
+
+    it('should delete only one emoji at a time in mixed text', fakeAsync(() => {
+        fixture.detectChanges();
+
+        const textWithEmoji = 'Hello 🇩🇪 World!';
+        comp.setText(textWithEmoji);
+
+        comp.setPosition({ lineNumber: 1, column: textWithEmoji.length - 6 });
+
+        const commandId = comp.getCustomBackspaceCommandId();
+        expect(commandId).toBeDefined();
+
+        comp['_editor'].trigger('keyboard', commandId!, null);
+        tick();
+
+        expect(comp.getText()).toEqual('Hello  World!');
+    }));
+
+    it('should place the cursor correctly after deleting an emoji', fakeAsync(() => {
+        fixture.detectChanges();
+
+        const text = 'Hello 👋';
+        comp.setText(text);
+        comp.setPosition({ lineNumber: 1, column: text.length + 1 });
+
+        const commandId = comp.getCustomBackspaceCommandId();
+        comp['_editor'].trigger('keyboard', commandId!, null);
+        tick();
+
+        const newPosition = comp.getPosition();
+        expect(newPosition.column).toBe(7);
+    }));
 });
