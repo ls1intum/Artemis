@@ -33,7 +33,7 @@ packages:
   artemis_assignment:
     dependency: "direct main"
     description:
-      path: "../solution"
+      path: "../assignment"
       relative: true
     source: path
     version: "1.0.0"

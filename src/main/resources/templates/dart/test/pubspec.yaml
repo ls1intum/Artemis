@@ -12,4 +12,4 @@ dependencies:
   test: ^1.24.0
 
   artemis_assignment:
-    path: "../solution"
+    path: "../assignment"
