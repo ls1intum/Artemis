@@ -84,7 +84,7 @@ public class BuildJobManagementService {
     private final Set<String> cancelledBuildJobs = new ConcurrentSkipListSet<>();
 
     public BuildJobManagementService(@Qualifier("hazelcastInstance") HazelcastInstance hazelcastInstance, BuildJobExecutionService buildJobExecutionService,
-            BuildAgentConfiguration buildAgentConfiguration, BuildJobContainerService buildJobContainerService, BuildLogsMap buildLogsMap) {
+                                     BuildAgentConfiguration buildAgentConfiguration, BuildJobContainerService buildJobContainerService, BuildLogsMap buildLogsMap) {
         this.buildJobExecutionService = buildJobExecutionService;
         this.buildAgentConfiguration = buildAgentConfiguration;
         this.buildJobContainerService = buildJobContainerService;
@@ -164,30 +164,28 @@ public class BuildJobManagementService {
             try {
                 return future.get(buildJobTimeoutSeconds, TimeUnit.SECONDS);
             }
-            catch (Exception e) {
+            catch (Exception ex) {
+                if (DockerUtil.isDockerNotAvailable(ex)) {
+                    log.error("Cannot connect to Docker Host. Make sure Docker is running and configured properly! Error while listing containers for cleanup: {}",
+                        ex.getMessage());
+                    throw new CompletionException(ex);
+                }
                 // RejectedExecutionException is thrown if the queue size limit (defined in "artemis.continuous-integration.queue-size-limit") is reached.
                 // Wrap the exception in a CompletionException so that the future is completed exceptionally and the thenAccept block is not run.
                 // This CompletionException will not resurface anywhere else as it is thrown in this completable future's separate thread.
                 if (cancelledBuildJobs.contains(buildJobItem.id())) {
                     finishCancelledBuildJob(buildJobItem.repositoryInfo().assignmentRepositoryUri(), buildJobItem.id(), containerName);
                     String msg = "Build job with id " + buildJobItem.id() + " was cancelled.";
-                    String stackTrace = stackTraceToString(e);
+                    String stackTrace = stackTraceToString(ex);
                     buildLogsMap.appendBuildLogEntry(buildJobItem.id(), new BuildLogDTO(ZonedDateTime.now(), msg + "\n" + stackTrace));
-                    throw new CompletionException(msg, e);
+                    throw new CompletionException(msg, ex);
                 }
                 else {
-                    finishBuildJobExceptionally(buildJobItem.id(), containerName, e);
-
-                    final String msg;
-                    if (e instanceof TimeoutException) {
-                        msg = "Build job with id " + buildJobItem.id() + " was timed out";
+                    finishBuildJobExceptionally(buildJobItem.id(), containerName, ex);
+                    if (ex instanceof TimeoutException) {
                         logTimedOutBuildJob(buildJobItem, buildJobTimeoutSeconds);
                     }
-                    else {
-                        msg = "Build job with id " + buildJobItem.id() + " failed";
-                    }
-
-                    throw new CompletionException(msg, e);
+                    throw new CompletionException(ex);
                 }
             }
         });
@@ -201,13 +199,13 @@ public class BuildJobManagementService {
 
     private void logTimedOutBuildJob(BuildJobQueueItem buildJobItem, int buildJobTimeoutSeconds) {
         String msg = "Timed out after " + buildJobTimeoutSeconds + " seconds. "
-                + "This may be due to an infinite loop or inefficient code. Please review your code for potential issues. "
-                + "If the problem persists, contact your instructor for assistance. (Build job ID: " + buildJobItem.id() + ")";
+            + "This may be due to an infinite loop or inefficient code. Please review your code for potential issues. "
+            + "If the problem persists, contact your instructor for assistance. (Build job ID: " + buildJobItem.id() + ")";
         buildLogsMap.appendBuildLogEntry(buildJobItem.id(), msg);
         log.warn(msg);
 
         msg = "Executing build job with id " + buildJobItem.id() + " timed out after " + buildJobTimeoutSeconds + " seconds."
-                + "This may be due to strict timeout settings. Consider increasing the exercise timeout and applying stricter timeout constraints within the test cases using @StrictTimeout.";
+            + "This may be due to strict timeout settings. Consider increasing the exercise timeout and applying stricter timeout constraints within the test cases using @StrictTimeout.";
         buildLogsMap.appendBuildLogEntry(buildJobItem.id(), msg);
     }
 

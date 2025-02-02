@@ -38,6 +38,7 @@ import com.hazelcast.topic.ITopic;
 import de.tum.cit.aet.artemis.buildagent.dto.BuildAgentInformation;
 import de.tum.cit.aet.artemis.buildagent.dto.BuildJobQueueItem;
 import de.tum.cit.aet.artemis.buildagent.dto.DockerImageBuild;
+import de.tum.cit.aet.artemis.buildagent.dto.ResultQueueItem;
 import de.tum.cit.aet.artemis.core.dto.SortingOrder;
 import de.tum.cit.aet.artemis.core.dto.pageablesearch.FinishedBuildJobPageableSearchDTO;
 import de.tum.cit.aet.artemis.core.service.ProfileService;
@@ -61,6 +62,8 @@ public class SharedQueueManagementService {
     private final ProfileService profileService;
 
     private IQueue<BuildJobQueueItem> queue;
+
+    private IQueue<ResultQueueItem> resultQueue;
 
     /**
      * Map of build jobs currently being processed across all nodes
@@ -101,6 +104,7 @@ public class SharedQueueManagementService {
         this.resumeBuildAgentTopic = hazelcastInstance.getTopic("resumeBuildAgentTopic");
         this.buildAgentInformation.addEntryListener(new BuildAgentListener(), false);
         this.updateBuildAgentCapacity();
+        this.resultQueue = this.hazelcastInstance.getQueue("buildResultQueue");
     }
 
     /**
@@ -327,6 +331,18 @@ public class SharedQueueManagementService {
     }
 
     /**
+     * Clear all build related data from the distributed data structures.
+     * This method should only be called by an admin user.
+     */
+    public void clearDistributedData() {
+        queue.clear();
+        processingJobs.clear();
+        dockerImageCleanupInfo.clear();
+        resultQueue.clear();
+        buildAgentInformation.clear();
+    }
+
+    /**
      * Get all finished build jobs that match the search criteria.
      *
      * @param search   the search criteria
@@ -427,7 +443,6 @@ public class SharedQueueManagementService {
             return 0;
         }
         return Duration.between(now, estimatedCompletionDate).toSeconds();
-
     }
 
     private class BuildAgentListener

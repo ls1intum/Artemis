@@ -8,7 +8,8 @@
                 "accept": "Accept FAQ",
                 "reject": "Reject FAQ",
                 "filterLabel": "Filter",
-                "createOrEditLabel": "Create or edit FAQ"
+                "createOrEditLabel": "Create or edit FAQ",
+                "ingestLabel": "Send FAQs to Iris"
             },
             "created": "The FAQ {{ title }} was successfully created",
             "updated": "The FAQ {{ title }} was successfully updated",
