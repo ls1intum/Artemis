@@ -692,8 +692,11 @@ export class MetisService implements OnDestroy {
                 }
                 if (postDTO.post.displayPriority === DisplayPriority.PINNED) {
                     const currentPinnedPosts = this.pinnedPosts$.getValue();
-                    const alreadyPinned = currentPinnedPosts.some((pinnedPost) => pinnedPost.id === postDTO.post.id);
-                    if (!alreadyPinned) {
+                    const indexPinned = currentPinnedPosts.findIndex((pinnedPost) => pinnedPost.id === postDTO.post.id);
+                    if (indexPinned > -1) {
+                        currentPinnedPosts[indexPinned] = postDTO.post;
+                        this.pinnedPosts$.next([...currentPinnedPosts]);
+                    } else {
                         this.pinnedPosts$.next([postDTO.post, ...currentPinnedPosts]);
                     }
                 } else {

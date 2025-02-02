@@ -788,5 +788,40 @@ describe('Metis Service', () => {
 
             pinnedSub.unsubscribe();
         });
+
+        it('should update a pinned post when receiving a WebSocket update', fakeAsync(() => {
+            const pinnedPost = {
+                id: 42,
+                displayPriority: DisplayPriority.PINNED,
+                content: 'Old Content',
+                authorRole: UserRole.USER,
+                tags: [],
+            } as Post;
+
+            metisService['cachedPosts'] = [pinnedPost];
+            metisService['pinnedPosts$'].next([pinnedPost]);
+
+            const updatedPost = {
+                id: 42,
+                displayPriority: DisplayPriority.PINNED,
+                content: 'Updated Content',
+                tags: ['newTag'],
+            } as Post;
+            const updateDTO: MetisPostDTO = {
+                post: updatedPost,
+                action: MetisPostAction.UPDATE,
+            };
+
+            metisService['handleNewOrUpdatedMessage'](updateDTO);
+            tick();
+
+            let pinnedPostsResult: Post[] = [];
+            metisService.getPinnedPosts().subscribe((pinned) => (pinnedPostsResult = pinned));
+
+            expect(pinnedPostsResult).toHaveLength(1);
+            expect(pinnedPostsResult[0].id).toEqual(42);
+            expect(pinnedPostsResult[0].content).toEqual('Updated Content');
+            expect(pinnedPostsResult[0].tags).toEqual(['newTag']);
+        }));
     });
 });
