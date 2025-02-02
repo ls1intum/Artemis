@@ -134,21 +134,9 @@ const routes: Routes = [
     },
     {
         path: 'course-management/:courseId/programming-exercises/:exerciseId/code-editor',
-        loadChildren: () => import('./exercises/programming/manage/code-editor/code-editor-management.module').then((m) => m.ArtemisCodeEditorManagementModule),
+        loadChildren: () => import('./exercises/programming/manage/code-editor/code-editor-management-routes').then((m) => m.routes),
     },
-    {
-        path: 'course-management/:courseId/text-exercises/:exerciseId',
-        loadChildren: () => import('./exercises/text/assess/text-submission-assessment.module').then((m) => m.ArtemisTextSubmissionAssessmentModule),
-    },
-    {
-        path: 'course-management/:courseId/text-exercises/:exerciseId/example-submissions/:exampleSubmissionId',
-        loadChildren: () => import('./exercises/text/manage/example-text-submission/example-text-submission.module').then((m) => m.ArtemisExampleTextSubmissionModule),
-    },
-    {
-        path: 'course-management/:courseId/programming-exercises/:exerciseId',
-        loadChildren: () =>
-            import('./exercises/programming/manage/programming-exercise-management-routing.module').then((m) => m.ArtemisProgrammingExerciseManagementRoutingModule),
-    },
+
     {
         path: 'courses',
         loadChildren: () => import('./overview/courses.route').then((m) => m.coursesState),
@@ -183,7 +171,7 @@ const routes: Routes = [
     // ===== EXAM =====
     {
         path: 'course-management/:courseId/exams',
-        loadChildren: () => import('./exam/manage/exam-management.module').then((m) => m.ArtemisExamManagementModule),
+        loadChildren: () => import('./exam/manage/exam-management.route').then((m) => m.examManagementRoute),
     },
     {
         path: 'courses/:courseId/exams/:examId/grading-system',

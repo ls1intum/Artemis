@@ -7,7 +7,9 @@ import { PendingChangesGuard } from 'app/shared/guard/pending-changes.guard';
 import { LocalCIGuard } from 'app/localci/localci-guard.service';
 import { IrisGuard } from 'app/iris/iris-guard.service';
 import { FaqResolve } from 'app/faq/faq-resolve.service';
-import { ComplaintType } from 'app/entities/complaint.model';
+import { ExerciseAssessmentDashboardComponent } from 'app/exercises/shared/dashboards/tutor/exercise-assessment-dashboard.component';
+import { isOrion } from 'app/shared/orion/orion';
+import { OrionExerciseAssessmentDashboardComponent } from 'app/orion/assessment/orion-exercise-assessment-dashboard.component';
 
 export const courseManagementState: Routes = [
     {
@@ -59,12 +61,24 @@ export const courseManagementState: Routes = [
                 loadChildren: () => import('app/iris/settings/iris-course-settings-update/iris-course-settings-update.route').then((m) => m.routes),
             },
             {
+                path: ':courseId/lectures',
+                loadChildren: () => import('app/lecture/lecture.route').then((m) => m.lectureRoute),
+            },
+            {
                 path: ':courseId/tutorial-groups',
                 resolve: {
                     course: TutorialGroupManagementResolve,
                 },
-                loadChildren: () =>
-                    import('app/course/tutorial-groups/tutorial-groups-management/tutorial-groups-management.module').then((m) => m.ArtemisTutorialGroupsManagementModule),
+                loadChildren: () => import('app/course/tutorial-groups/tutorial-groups-management/tutorial-groups-management.route').then((m) => m.tutorialGroupManagementRoutes),
+            },
+            {
+                path: ':courseId/assessment-dashboard/:exerciseId',
+                loadComponent: () => (isOrion ? OrionExerciseAssessmentDashboardComponent : ExerciseAssessmentDashboardComponent),
+                data: {
+                    authorities: [Authority.ADMIN, Authority.INSTRUCTOR, Authority.EDITOR, Authority.TA],
+                    pageTitle: 'artemisApp.exerciseAssessmentDashboard.home.title',
+                },
+                canActivate: [UserRouteAccessService],
             },
             {
                 path: ':courseId/assessment-dashboard',
@@ -75,19 +89,6 @@ export const courseManagementState: Routes = [
                 data: {
                     authorities: [Authority.ADMIN, Authority.INSTRUCTOR, Authority.EDITOR, Authority.TA],
                     pageTitle: 'artemisApp.assessmentDashboard.home.title',
-                },
-                canActivate: [UserRouteAccessService],
-            },
-            {
-                path: ':courseId/complaints',
-                loadComponent: () => import('app/complaints/list-of-complaints/list-of-complaints.component').then((m) => m.ListOfComplaintsComponent),
-                resolve: {
-                    course: CourseManagementResolve,
-                },
-                data: {
-                    authorities: [Authority.ADMIN, Authority.INSTRUCTOR, Authority.EDITOR, Authority.TA],
-                    pageTitle: 'artemisApp.complaint.listOfComplaints.title',
-                    complaintType: ComplaintType.COMPLAINT,
                 },
                 canActivate: [UserRouteAccessService],
             },
@@ -113,7 +114,7 @@ export const courseManagementState: Routes = [
             },
             {
                 path: ':courseId/exams',
-                loadChildren: () => import('../../exam/manage/exam-management.module').then((m) => m.ArtemisExamManagementModule),
+                loadChildren: () => import('../../exam/manage/exam-management.route').then((m) => m.examManagementRoute),
             },
             {
                 path: ':courseId/tutorial-groups-checklist',
@@ -225,6 +226,63 @@ export const courseManagementState: Routes = [
                             pageTitle: 'artemisApp.competency.manage.title',
                         },
                         canActivate: [UserRouteAccessService],
+                    },
+                    {
+                        path: '',
+                        loadChildren: () => import('app/complaints/list-of-complaints/list-of-complaints.route').then((m) => m.listOfComplaintsRoute),
+                    },
+                    {
+                        path: '',
+                        loadChildren: () => import('app/assessment/assessment-locks/assessment-locks.route').then((m) => m.assessmentLocksRoute),
+                    },
+                    // we have to define the redirects here. When we define them in the child routes, the redirect doesn't work
+                    {
+                        path: 'text-exercises',
+                        redirectTo: 'exercises',
+                    },
+                    {
+                        path: 'modeling-exercises',
+                        redirectTo: 'exercises',
+                    },
+                    {
+                        path: 'file-upload-exercises',
+                        redirectTo: 'exercises',
+                    },
+                    {
+                        path: 'quiz-exercises',
+                        redirectTo: 'exercises',
+                    },
+                    {
+                        path: 'programming-exercises',
+                        redirectTo: 'exercises',
+                    },
+                    {
+                        path: '',
+                        loadChildren: () => import('app/exercises/text/manage/text-exercise/text-exercise.route').then((m) => m.textExerciseRoute),
+                    },
+                    {
+                        path: '',
+                        loadChildren: () => import('app/exercises/programming/manage/programming-exercise-management.route').then((m) => m.routes),
+                    },
+                    {
+                        path: '',
+                        loadChildren: () => import('app/exercises/quiz/manage/quiz-management.route').then((m) => m.quizManagementRoute),
+                    },
+                    {
+                        path: '',
+                        loadChildren: () => import('app/exercises/file-upload/manage/file-upload-exercise-management.route').then((m) => m.routes),
+                    },
+                    {
+                        path: '',
+                        loadChildren: () => import('app/exercises/modeling/manage/modeling-exercise.route').then((m) => m.routes),
+                    },
+                    {
+                        path: '',
+                        loadChildren: () => import('app/exercises/shared/exercise-scores/exercise-scores.route').then((m) => m.routes),
+                    },
+                    {
+                        path: '',
+                        loadChildren: () => import('app/exercises/shared/participation/participation.route').then((m) => m.routes),
                     },
                     {
                         // Create a new path without a component defined to prevent the CompetencyManagementComponent from being always rendered

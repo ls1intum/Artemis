@@ -119,7 +119,7 @@ jobs:
         name: Coverage Report Server Tests
         path: build/reports/jacoco/test/html
     - name: Append Per-Module Coverage to Job Summary
-      if: success() || failure()
+      if: success()
       run: |
         AGGREGATED_REPORT_FILE=./module_coverage_report.md
         python3 ./supporting_scripts/code-coverage/per_module_cov_report/parse_module_coverage.py build/reports/jacoco $AGGREGATED_REPORT_FILE
