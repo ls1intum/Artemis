@@ -183,7 +183,7 @@ public class LocalCIResultProcessingService {
                             && buildException.getMessage().equals("Build job with id " + buildJob.id() + " was cancelled.")) {
                         savedBuildJob = saveFinishedBuildJob(buildJob, BuildStatus.CANCELLED, result);
                     }
-                    else if (ex.getCause() instanceof TimeoutException && ex.getMessage().equals("Build job with id " + buildJob.id() + " was timed out")) {
+                    else if (buildException.getCause() instanceof TimeoutException) {
                         savedBuildJob = saveFinishedBuildJob(buildJob, BuildStatus.TIMEOUT, result);
                     }
                     else {
