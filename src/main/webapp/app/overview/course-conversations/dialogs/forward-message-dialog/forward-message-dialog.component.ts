@@ -51,19 +51,19 @@ export class ForwardMessageDialogComponent implements OnInit, AfterViewInit {
     filteredOptions: CombinedOption[] = [];
     defaultActions: TextEditorAction[];
     searchTerm: string = '';
-    isInputFocused = false;
     newPost = new Post();
+    isInputFocused = false;
+    showDropdown = false;
+    showFullForwardedMessage = false;
+    isContentLong = false;
 
-    protected showDropdown = false;
-    protected showFullForwardedMessage = false;
-    protected isContentLong = false;
+    protected activeModal = inject(NgbActiveModal);
     protected searchInput = viewChild<ElementRef>('searchInput');
     protected messageContent = viewChild<ElementRef>('messageContent');
 
     private courseManagementService: CourseManagementService = inject(CourseManagementService);
     private cdr = inject(ChangeDetectorRef);
     private renderer = inject(Renderer2);
-    protected activeModal = inject(NgbActiveModal);
 
     ngOnInit(): void {
         this.filteredChannels = this.channels() || [];

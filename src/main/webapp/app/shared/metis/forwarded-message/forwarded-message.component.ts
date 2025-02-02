@@ -28,11 +28,11 @@ export class ForwardedMessageComponent implements AfterViewInit {
     todayFlag?: string;
     originalPostDetails = input<Posting>();
     messageContent = viewChild<ElementRef>('messageContent');
+    isContentLong = false;
+    showFullForwardedMessage = false;
+    postingIsOfToday = false;
 
-    protected isContentLong = false;
-    protected showFullForwardedMessage = false;
     protected viewButtonVisible = false;
-    protected postingIsOfToday = false;
 
     private cdr = inject(ChangeDetectorRef);
     private conversation: Conversation | undefined;
