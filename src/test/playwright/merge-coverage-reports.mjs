@@ -5,23 +5,28 @@ import archiver from 'archiver';
 import coverage from 'istanbul-lib-coverage';
 import reports from 'istanbul-reports';
 import libReport from 'istanbul-lib-report';
+import fsAsync from 'fs/promises';
 import fs from 'fs';
 
-const coverageJsonParallel = './test-reports/monocart-report-parallel/coverage/coverage-final.json';
-const coverageJsonSequential = './test-reports/monocart-report-sequential/coverage/coverage-final.json';
-const outputDir = './test-reports/monocart-report/coverage';
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
+const coverageParallelDir = path.join(__dirname, 'test-reports/monocart-report-parallel');
+const coverageSequentialDir = path.join(__dirname, 'test-reports/monocart-report-sequential');
+const coverageDir = path.join(__dirname, 'test-reports/client-coverage');
+const lcovDir = path.join(coverageDir, 'lcov-report');
 
 console.log(`Merging coverage reports`);
 
-const coverageParallel = JSON.parse(fs.readFileSync(coverageJsonParallel, 'utf8'));
-const coverageSequential = JSON.parse(fs.readFileSync(coverageJsonSequential, 'utf8'));
+const coverageParallel = JSON.parse(fs.readFileSync(path.join(coverageParallelDir, '/coverage/coverage-final.json'), 'utf8'));
+const coverageSequential = JSON.parse(fs.readFileSync(path.join(coverageSequentialDir, '/coverage/coverage-final.json'), 'utf8'));
 
 const mapA = coverage.createCoverageMap(coverageParallel);
 const mapB = coverage.createCoverageMap(coverageSequential);
 mapA.merge(mapB);
 
 const context = libReport.createContext({
-    dir: outputDir,
+    dir: lcovDir,
     coverageMap: mapA,
 });
 
@@ -33,12 +38,22 @@ lcovReport.execute(context);
 
 console.log(`Merged coverage reports successfully`);
 
-// Archive the lcov coverage report
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
+await fsAsync.rm(coverageParallelDir, { recursive: true, force: true });
+await fsAsync.rm(coverageSequentialDir, { recursive: true, force: true });
 
+// Bamboo can upload only files as an artifact, not directories
+// That's why we archive the lcov coverage directory on CI to prepare it as an artifact
+if (process.env.CI === 'true') {
+    try {
+        await createArchive(path.join(coverageDir, 'e2e-client-coverage.zip'), lcovDir);
+    } catch (err) {
+        console.error('Error while creating archives:', err);
+    }
+}
+
+// Archives the directory
 async function createArchive(outputPath, inputDirectory) {
-    const output = fs.createWriteStream(outputPath);
+    const output = await fs.createWriteStream(outputPath);
     const archive = archiver('zip', { zlib: { level: 9 } });
 
     output.on('close', () => {
@@ -50,18 +65,6 @@ async function createArchive(outputPath, inputDirectory) {
     });
 
     archive.pipe(output);
-    archive.directory(inputDirectory, false);
+    archive.directory(inputDirectory, '', (entry) => entry);
     await archive.finalize();
-}
-
-// Archiving process
-const baseDir = path.join(__dirname, 'test-reports/monocart-report');
-try {
-    await createArchive(path.join(baseDir, 'e2e-client-coverage.zip'), path.join(baseDir, 'coverage'));
-
-    await createArchive(path.join(baseDir, 'e2e-client-coverage-parallel.zip'), path.join(__dirname, 'test-reports/monocart-report-parallel'));
-
-    await createArchive(path.join(baseDir, 'e2e-client-coverage-sequential.zip'), path.join(__dirname, 'test-reports/monocart-report-sequential'));
-} catch (err) {
-    console.error('Error while creating archives:', err);
 }
