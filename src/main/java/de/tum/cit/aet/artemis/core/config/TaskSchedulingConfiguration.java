@@ -18,6 +18,11 @@ public class TaskSchedulingConfiguration {
 
     private static final Logger log = LoggerFactory.getLogger(TaskSchedulingConfiguration.class);
 
+    /**
+     * Create a Task Scheduler with virtual threads and a pool size of 4.
+     *
+     * @return the Task Scheduler bean that can be injected into any service to schedule tasks
+     */
     @Bean(name = "taskScheduler")
     public TaskScheduler taskScheduler() {
         log.debug("Creating Task Scheduler ");

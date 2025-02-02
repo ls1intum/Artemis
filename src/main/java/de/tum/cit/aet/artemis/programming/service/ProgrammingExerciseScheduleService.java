@@ -297,7 +297,7 @@ public class ProgrammingExerciseScheduleService implements IExerciseScheduleServ
         if (exercise.getReleaseDate() != null) {
             scheduleService.scheduleExerciseTask(exercise, ExerciseLifecycle.SHORTLY_BEFORE_RELEASE, () -> combineTemplateCommitsForExercise(exercise).run(),
                     "combine template commits");
-            log.info("Scheduled combining template commits before release date for Programming Exercise \"{}\" (#{}) for {}.", exercise.getTitle(), exercise.getId(),
+            log.info("Scheduled combining template commits before release date for programming exercise \"{}\" (#{}) for {}.", exercise.getTitle(), exercise.getId(),
                     exercise.getReleaseDate());
         }
     }
@@ -476,13 +476,13 @@ public class ProgrammingExerciseScheduleService implements IExerciseScheduleServ
     @NotNull
     private Runnable combineTemplateCommitsForExercise(ProgrammingExercise exercise) {
         return () -> {
-            log.info("Start combine template commits for programming exercise {}.", exercise.getId());
+            log.debug("Start combine template commits for programming exercise {}.", exercise.getId());
             SecurityUtils.setAuthorizationObject();
             try {
                 ProgrammingExercise programmingExerciseWithTemplateParticipation = programmingExerciseRepository
                         .findByIdWithTemplateAndSolutionParticipationElseThrow(exercise.getId());
                 gitService.combineAllCommitsOfRepositoryIntoOne(programmingExerciseWithTemplateParticipation.getTemplateParticipation().getVcsRepositoryUri());
-                log.info("Combined template repository commits of programming exercise {}.", programmingExerciseWithTemplateParticipation.getId());
+                log.debug("Combined template repository commits of programming exercise {}.", programmingExerciseWithTemplateParticipation.getId());
             }
             catch (GitAPIException e) {
                 log.error("Failed to communicate with GitService for combining template commits of exercise {}", exercise.getId(), e);

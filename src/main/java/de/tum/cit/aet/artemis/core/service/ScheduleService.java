@@ -86,6 +86,12 @@ public class ScheduleService {
         this.taskScheduler = scheduler;
     }
 
+    /**
+     * Get all scheduled exercise events.
+     *
+     * @param pageable the pagination information
+     * @return a page of scheduled exercise events
+     */
     public Page<ScheduledExerciseEvent> findAllExerciseEvents(Pageable pageable) {
         // Flatten the map into a list of ScheduledExerciseEvent
         var allEvents = scheduledExerciseTasks.entrySet().stream().flatMap(entry -> entry.getValue().stream().map(task -> {
@@ -102,14 +108,34 @@ public class ScheduleService {
         return new PageImpl<>(paginatedEvents, pageable, allEvents.size());
     }
 
+    /**
+     * Initializes and schedules periodic logging and cleanup tasks for scheduled exercises
+     * and participation tasks. This method is triggered automatically when the application
+     * is fully started.
+     *
+     * <p>
+     * Every 15 seconds, this method:
+     * <ul>
+     * <li>Logs the total number of scheduled exercise and participation tasks.</li>
+     * <li>Iterates through scheduled exercise tasks and logs their details, including
+     * execution time and state. It removes tasks that are no longer running.</li>
+     * <li>Iterates through scheduled participation tasks and logs their details,
+     * including execution time and state. It removes tasks that are no longer running.</li>
+     * <li>Cleans up empty entries from both task maps to avoid memory leaks.</li>
+     * </ul>
+     *
+     * <p>
+     * The scheduling mechanism ensures that outdated or completed tasks do not persist in
+     * memory unnecessarily while maintaining visibility into scheduled tasks.
+     */
     @EventListener(ApplicationReadyEvent.class)
     public void startup() {
         taskScheduler.scheduleAtFixedRate(() -> {
-            log.info("Number of scheduled Exercise Tasks: {}", scheduledExerciseTasks.values().stream().mapToLong(Set::size).sum());
+            log.debug("Number of scheduled Exercise Tasks: {}", scheduledExerciseTasks.values().stream().mapToLong(Set::size).sum());
 
             // if the map is not empty and there is at least still one future in the values map, log the tasks and remove the ones that are not running anymore
             if (!scheduledExerciseTasks.isEmpty() && scheduledExerciseTasks.values().stream().anyMatch(set -> !set.isEmpty())) {
-                log.info("  Scheduled Exercise Tasks:");
+                log.debug("  Scheduled Exercise Tasks:");
                 scheduledExerciseTasks.forEach((key, taskNames) -> {
                     taskNames.removeIf(taskName -> {
                         long delay = taskName.future().getDelay(TimeUnit.SECONDS);
@@ -117,7 +143,7 @@ public class ScheduleService {
                         Instant scheduledTime = Instant.now().plusSeconds(delay);
                         ZonedDateTime zonedScheduledTime = scheduledTime.atZone(systemDefault());
                         String formattedTime = zonedScheduledTime.format(formatter);
-                        log.info("    Exercise: {}, Lifecycle: {}, Name: {}, Scheduled Run Time: {}, State: {}, Remaining Delay: {} s", key.exerciseId(), key.lifecycle(),
+                        log.debug("    Exercise: {}, Lifecycle: {}, Name: {}, Scheduled Run Time: {}, State: {}, Remaining Delay: {} s", key.exerciseId(), key.lifecycle(),
                                 taskName.name(), formattedTime, state, delay);
                         return state != Future.State.RUNNING;
                     });
@@ -127,11 +153,11 @@ public class ScheduleService {
             // clean up empty entries in the map
             scheduledExerciseTasks.entrySet().removeIf(entry -> entry.getValue().isEmpty());
 
-            log.info("Number of scheduled Participation Tasks: {}", scheduledParticipationTasks.values().stream().mapToLong(Set::size).sum());
+            log.debug("Number of scheduled Participation Tasks: {}", scheduledParticipationTasks.values().stream().mapToLong(Set::size).sum());
 
             // if the map is not empty and there is at least still one future in the values map, log the tasks and remove the ones that are not running anymore
             if (!scheduledParticipationTasks.isEmpty() && scheduledParticipationTasks.values().stream().anyMatch(set -> !set.isEmpty())) {
-                log.info("  Scheduled Participation Tasks:");
+                log.debug("  Scheduled Participation Tasks:");
                 scheduledParticipationTasks.forEach((key, taskNames) -> {
                     taskNames.removeIf(taskName -> {
                         long delay = taskName.future().getDelay(TimeUnit.SECONDS);
@@ -139,7 +165,7 @@ public class ScheduleService {
                         Instant scheduledTime = Instant.now().plusSeconds(delay);
                         ZonedDateTime zonedScheduledTime = scheduledTime.atZone(systemDefault());
                         String formattedTime = zonedScheduledTime.format(formatter);
-                        log.info("    Exercise: {}, Participation: {}, Lifecycle: {}, Name: {}, Scheduled Run Time: {}, State: {}, Remaining Delay: {} s", key.exerciseId(),
+                        log.debug("    Exercise: {}, Participation: {}, Lifecycle: {}, Name: {}, Scheduled Run Time: {}, State: {}, Remaining Delay: {} s", key.exerciseId(),
                                 key.participationId(), key.lifecycle(), taskName.name(), formattedTime, state, delay);
                         return state != Future.State.RUNNING;
                     });
@@ -215,6 +241,7 @@ public class ScheduleService {
      * @param exercise      Exercise
      * @param lifecycle     ExerciseLifecycle
      * @param scheduledTask One runnable tasks to be executed at the associated ZonedDateTimes
+     * @param name          Name of the task
      */
     public void scheduleExerciseTask(Exercise exercise, ExerciseLifecycle lifecycle, Tuple<ZonedDateTime, Runnable> scheduledTask, String name) {
         // check if already scheduled for exercise. if so, cancel.
@@ -266,7 +293,7 @@ public class ScheduleService {
         var task = new ExerciseLifecycleKey(exerciseId, lifecycle);
         var taskNames = scheduledExerciseTasks.get(task);
         if (taskNames != null) {
-            log.info("Cancelling scheduled task {} for Exercise (#{}).", lifecycle, exerciseId);
+            log.debug("Cancelling scheduled task {} for Exercise (#{}).", lifecycle, exerciseId);
             taskNames.forEach(taskName -> taskName.future().cancel(true));
             removeScheduledExerciseTask(exerciseId, lifecycle);
         }
