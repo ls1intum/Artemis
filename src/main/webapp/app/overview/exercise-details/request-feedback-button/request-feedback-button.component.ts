@@ -84,6 +84,7 @@ export class RequestFeedbackButtonComponent implements OnInit {
     acceptExternalLLMUsage(modal: any) {
         this.userService.acceptExternalLLMUsage().subscribe(() => {
             this.hasUserAcceptedExternalLLMUsage = true;
+            this.accountService.setUserAcceptedExternalLLMUsage();
             modal.close();
         });
 
