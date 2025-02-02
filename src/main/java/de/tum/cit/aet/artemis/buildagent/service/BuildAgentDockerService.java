@@ -132,6 +132,11 @@ public class BuildAgentDockerService {
                         .filter(container -> container.getNames()[0].startsWith("/" + buildContainerPrefix)).toList();
             }
             catch (Exception ex) {
+                if (DockerUtil.isDockerNotAvailable(ex)) {
+                    log.error("Cannot connect to Docker Host. Make sure Docker is running and configured properly! Error while listing containers for cleanup: {}",
+                            ex.getMessage());
+                    return;
+                }
                 log.error("Make sure Docker is running and configured properly! Error while listing containers for cleanup: {}", ex.getMessage(), ex);
                 return;
             }
@@ -169,15 +174,6 @@ public class BuildAgentDockerService {
      * Callback that allows us to provide more information about the docker pull operation results
      */
     public static class MyPullImageResultCallback extends PullImageResultCallback {
-
-        private final String buildJobId;
-
-        private final BuildLogsMap buildLogsMap;
-
-        MyPullImageResultCallback(String buildJobId, BuildLogsMap buildLogsMap) {
-            this.buildJobId = buildJobId;
-            this.buildLogsMap = buildLogsMap;
-        }
 
         @Override
         public void onNext(PullResponseItem item) {
@@ -217,12 +213,12 @@ public class BuildAgentDockerService {
     public void pullDockerImage(BuildJobQueueItem buildJob, BuildLogsMap buildLogsMap) {
         DockerClient dockerClient = buildAgentConfiguration.getDockerClient();
         final String imageName = buildJob.buildConfig().dockerImage();
-        try {
+        try (var inspectImageCommand = dockerClient.inspectImageCmd(imageName)) {
             // First check if the image is already available
             String msg = "~~~~~~~~~~~~~~~~~~~~ Inspecting docker image " + imageName + " ~~~~~~~~~~~~~~~~~~~~";
             log.info(msg);
             buildLogsMap.appendBuildLogEntry(buildJob.id(), msg);
-            var inspectImageResponse = dockerClient.inspectImageCmd(imageName).exec();
+            var inspectImageResponse = inspectImageCommand.exec();
             checkImageArchitecture(imageName, inspectImageResponse, buildJob, buildLogsMap);
         }
         catch (NotFoundException | BadRequestException e) {
@@ -247,7 +243,7 @@ public class BuildAgentDockerService {
                 try {
                     // Only pull the image if the inspect command failed
                     var command = dockerClient.pullImageCmd(imageName).withPlatform(imageArchitecture);
-                    var exec = command.exec(new MyPullImageResultCallback(buildJob.id(), buildLogsMap));
+                    var exec = command.exec(new MyPullImageResultCallback());
                     exec.awaitCompletion();
 
                     // Check if the image is compatible with the current architecture
@@ -263,6 +259,13 @@ public class BuildAgentDockerService {
                 String msg2 = "~~~~~~~~~~~~~~~~~~~~ Pulling docker image " + imageName + " done after " + TimeLogUtil.formatDurationFrom(start) + " ~~~~~~~~~~~~~~~~~~~~";
                 log.info(msg2);
                 buildLogsMap.appendBuildLogEntry(buildJob.id(), msg2);
+            }
+            catch (Exception ex) {
+                if (DockerUtil.isDockerNotAvailable(ex)) {
+                    log.error("Cannot connect to Docker Host. Make sure Docker is running and configured properly! Error while inspecting image: {}", ex.getMessage());
+                }
+                throw new LocalCIException("Cannot connect to Docker Host. Make sure Docker is running and configured properly!", ex);
+                // Do not proceed if Docker is not running
             }
             finally {
                 lock.unlock();
@@ -320,12 +323,12 @@ public class BuildAgentDockerService {
         for (String dockerImage : dockerImageCleanupInfo.keySet()) {
             if (imageNames.contains(dockerImage)) {
                 if (dockerImageCleanupInfo.get(dockerImage).isBefore(ZonedDateTime.now().minusDays(imageExpiryDays))) {
-                    log.info("Deleting docker image {}", dockerImage);
-                    try {
-                        buildAgentConfiguration.getDockerClient().removeImageCmd(dockerImage).exec();
+                    log.info("Remove docker image {} because it was not used for at least {} days", dockerImage, imageExpiryDays);
+                    try (final var removeCommand = buildAgentConfiguration.getDockerClient().removeImageCmd(dockerImage)) {
+                        removeCommand.exec();
                     }
                     catch (NotFoundException e) {
-                        log.warn("Docker image {} not found during cleanup", dockerImage);
+                        log.warn("Docker image {} not found during cleaning up old docker images", dockerImage);
                     }
                 }
             }
@@ -379,14 +382,14 @@ public class BuildAgentDockerService {
             Map.Entry<String, ZonedDateTime> oldestImage = mutableSortedImagesByLastBuildDate.getFirst();
             while (oldestImage != null && usableSpace < threshold && deleteAttempts > 0 && totalAttempts > 0) {
                 if (unusedImages.contains(oldestImage.getKey())) {
-                    log.info("Deleting docker image {}", oldestImage.getKey());
+                    log.info("Remove oldest docker image {} to cleanup disk space to avoid filling up the hard disk", oldestImage.getKey());
                     try {
                         dockerClient.removeImageCmd(oldestImage.getKey()).exec();
                         usableSpace = dockerRootDirectory.getUsableSpace();
                         deleteAttempts--;
                     }
                     catch (NotFoundException e) {
-                        log.warn("Docker image {} not found during cleanup", oldestImage.getKey());
+                        log.warn("Docker image {} not found during disk cleanup", oldestImage.getKey());
                     }
                 }
                 mutableSortedImagesByLastBuildDate.remove(oldestImage);
