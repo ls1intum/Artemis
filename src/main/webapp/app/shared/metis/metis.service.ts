@@ -22,7 +22,6 @@ import {
     RouteComponents,
     SortDirection,
 } from 'app/shared/metis/metis.util';
-import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
 import { Params } from '@angular/router';
 import { WebsocketService } from 'app/core/websocket/websocket.service';
 import { MetisPostDTO } from 'app/entities/metis/metis-post-dto.model';
@@ -40,11 +39,10 @@ import { throwError } from 'rxjs';
 
 @Injectable()
 export class MetisService implements OnDestroy {
-    protected postService = inject(PostService);
-    protected answerPostService = inject(AnswerPostService);
-    protected reactionService = inject(ReactionService);
-    protected accountService = inject(AccountService);
-    protected exerciseService = inject(ExerciseService);
+    private postService = inject(PostService);
+    private answerPostService = inject(AnswerPostService);
+    private reactionService = inject(ReactionService);
+    private accountService = inject(AccountService);
     private jhiWebsocketService = inject(WebsocketService);
     private conversationService = inject(ConversationService);
     private forwardedMessageService = inject(ForwardedMessageService);

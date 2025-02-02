@@ -22,18 +22,21 @@ import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 })
 export class ForwardedMessageComponent implements AfterViewInit {
     readonly faShare = faShare;
-    sourceName: string | undefined = '';
-    originalPostDetails = input<Posting>();
-    postingIsOfToday: boolean;
-    todayFlag?: string;
     readonly onNavigateToPost = output<Posting>();
+
+    sourceName: string | undefined = '';
+    todayFlag?: string;
+    originalPostDetails = input<Posting>();
     messageContent = viewChild<ElementRef>('messageContent');
-    isContentLong: boolean = false;
-    showFullForwardedMessage: boolean = false;
+
+    protected isContentLong = false;
+    protected showFullForwardedMessage = false;
+    protected viewButtonVisible = false;
+    protected postingIsOfToday = false;
+
     private cdr = inject(ChangeDetectorRef);
     private conversation: Conversation | undefined;
-    private isAnswerPost: boolean = false;
-    protected viewButtonVisible: boolean = false;
+    private isAnswerPost = false;
 
     constructor() {
         effect(() => {

@@ -87,11 +87,11 @@ interface ReactionMetaDataMap {
     ],
 })
 export class PostingReactionsBarComponent<T extends Posting> implements OnInit, OnChanges {
-    protected metisService = inject(MetisService);
+    private metisService = inject(MetisService);
     private accountService = inject(AccountService);
-    public conversationService: ConversationService = inject(ConversationService);
-    public modalService: NgbModal = inject(NgbModal);
-    public metisConversationService: MetisConversationService = inject(MetisConversationService);
+    private conversationService: ConversationService = inject(ConversationService);
+    private modalService: NgbModal = inject(NgbModal);
+    private metisConversationService: MetisConversationService = inject(MetisConversationService);
 
     pinEmojiId: string = PIN_EMOJI_ID;
     archiveEmojiId: string = ARCHIVE_EMOJI_ID;

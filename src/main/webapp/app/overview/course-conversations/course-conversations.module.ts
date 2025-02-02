@@ -33,7 +33,6 @@ import { ProfilePictureComponent } from 'app/shared/profile-picture/profile-pict
 import { SavedPostsComponent } from 'app/overview/course-conversations/saved-posts/saved-posts.component';
 import { PostingSummaryComponent } from 'app/overview/course-conversations/posting-summary/posting-summary.component';
 import { InfiniteScrollDirective } from 'ngx-infinite-scroll';
-import { ForwardMessageDialogComponent } from 'app/overview/course-conversations/dialogs/forward-message-dialog/forward-message-dialog.component';
 
 const routes: Routes = [
     {
@@ -81,7 +80,6 @@ const routes: Routes = [
         CourseWideSearchComponent,
         SavedPostsComponent,
         PostingSummaryComponent,
-        ForwardMessageDialogComponent,
     ],
 })
 export class CourseConversationsModule {}
