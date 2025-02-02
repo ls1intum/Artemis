@@ -70,7 +70,7 @@ export class ProfileService {
                         profileInfo.accountName = data.accountName;
                         profileInfo.versionControlUrl = data.versionControlUrl;
                         profileInfo.versionControlName = data.versionControlName;
-                        profileInfo.authenticationMechanisms = data.authenticationMechanisms;
+                        profileInfo.repositoryAuthenticationMechanisms = data.repositoryAuthenticationMechanisms;
                         profileInfo.continuousIntegrationName = data.continuousIntegrationName;
                         profileInfo.programmingLanguageFeatures = data.programmingLanguageFeatures;
                         profileInfo.textAssessmentAnalyticsEnabled = data.textAssessmentAnalyticsEnabled;
