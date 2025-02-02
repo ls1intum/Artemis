@@ -44,7 +44,7 @@
                     (channelReferenceClicked)="channelReferenceClicked.emit($event)"
                 />
                 <div class="post-content-padding hover-actions">
-                    <jhi-answer-post-reactions-bar
+                    <jhi-posting-reactions-bar
                         [isReadOnlyMode]="isReadOnlyMode"
                         [posting]="posting"
                         [isLastAnswer]="isLastAnswer"
@@ -65,7 +65,7 @@
     </div>
     @if (!isDeleted) {
         <div class="post-content-padding post-reactions-bar" [ngClass]="{ 'is-saved': posting.isSaved && isConsecutive() }" @fade>
-            <jhi-answer-post-reactions-bar
+            <jhi-posting-reactions-bar
                 [isReadOnlyMode]="isReadOnlyMode"
                 [posting]="posting"
                 [isLastAnswer]="isLastAnswer"
