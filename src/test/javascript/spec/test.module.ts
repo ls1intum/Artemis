@@ -21,6 +21,8 @@ import { MockProfileService } from './helpers/mocks/service/mock-profile.service
 import { FontAwesomeTestingModule } from '@fortawesome/angular-fontawesome/testing';
 import { provideHttpClient } from '@angular/common/http';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
+import { MockArtemisServerDateService } from './helpers/mocks/service/mock-artemis-server-date.service';
+import { ArtemisServerDateService } from 'app/shared/server-date.service';
 
 @NgModule({
     providers: [
@@ -39,6 +41,10 @@ import { provideHttpClientTesting } from '@angular/common/http/testing';
         {
             provide: AccountService,
             useClass: MockAccountService,
+        },
+        {
+            provide: ArtemisServerDateService,
+            useClass: MockArtemisServerDateService,
         },
         MockProvider(AlertService),
         {
