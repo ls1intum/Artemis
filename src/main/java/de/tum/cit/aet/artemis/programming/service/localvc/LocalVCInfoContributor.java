@@ -1,6 +1,6 @@
 package de.tum.cit.aet.artemis.programming.service.localvc;
 
-import static de.tum.cit.aet.artemis.core.config.Constants.INFO_CODE_BUTTON_AUTHENTICATION_MECHANISMS;
+import static de.tum.cit.aet.artemis.core.config.Constants.INFO_CODE_BUTTON_REPOSITORY_AUTHENTICATION_MECHANISMS;
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_LOCALVC;
 
 import java.net.URI;
@@ -31,7 +31,7 @@ public class LocalVCInfoContributor implements InfoContributor {
     private String artemisServerUrl;
 
     @Value("${artemis.version-control.repository-authentication-mechanisms:password,token,ssh}")
-    private List<String> orderedAuthenticationMechanisms;
+    private List<String> orderedRepositoryAuthenticationMechanisms;
 
     @Value("${artemis.version-control.ssh-port:7921}")
     private int sshPort;
@@ -45,7 +45,7 @@ public class LocalVCInfoContributor implements InfoContributor {
         builder.withDetail(Constants.VERSION_CONTROL_NAME, "Local VC");
 
         // Store the authentication mechanisms that should be used by the code-button and their order
-        builder.withDetail(INFO_CODE_BUTTON_AUTHENTICATION_MECHANISMS, orderedAuthenticationMechanisms);
+        builder.withDetail(INFO_CODE_BUTTON_REPOSITORY_AUTHENTICATION_MECHANISMS, orderedRepositoryAuthenticationMechanisms);
         // Store ssh url template
         try {
             var serverUri = new URI(artemisServerUrl);

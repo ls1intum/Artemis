@@ -15,9 +15,9 @@ class LocalVCInfoContributorTest {
     @Test
     void testContribute() {
         Info.Builder builder = new Info.Builder();
-        var authenticationMechanisms = List.of("password", "token", "ssh");
+        var repositoryAuthenticationMechanisms = List.of("password", "token", "ssh");
         LocalVCInfoContributor localVCInfoContributor = new LocalVCInfoContributor();
-        ReflectionTestUtils.setField(localVCInfoContributor, "orderedAuthenticationMechanisms", authenticationMechanisms);
+        ReflectionTestUtils.setField(localVCInfoContributor, "orderedRepositoryAuthenticationMechanisms", repositoryAuthenticationMechanisms);
 
         try {
             localVCInfoContributor.contribute(builder);
@@ -26,6 +26,6 @@ class LocalVCInfoContributorTest {
         }
 
         Info info = builder.build();
-        assertThat(info.getDetails().get("authenticationMechanisms")).isEqualTo(authenticationMechanisms);
+        assertThat(info.getDetails().get("repositoryAuthenticationMechanisms")).isEqualTo(repositoryAuthenticationMechanisms);
     }
 }
