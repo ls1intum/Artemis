@@ -6,7 +6,7 @@ import { TutorialGroupManagementResolve } from 'app/course/tutorial-groups/tutor
 import { PendingChangesGuard } from 'app/shared/guard/pending-changes.guard';
 import { LocalCIGuard } from 'app/localci/localci-guard.service';
 import { IrisGuard } from 'app/iris/iris-guard.service';
-import { FaqResolve } from 'app/faq/faq.routes';
+import { FaqResolve } from 'app/faq/faq-resolve.service';
 
 export const courseManagementState: Routes = [
     {
@@ -76,7 +76,7 @@ export const courseManagementState: Routes = [
             },
             {
                 path: ':courseId/exams',
-                loadChildren: () => import('../../exam/manage/exam-management.module').then((m) => m.ArtemisExamManagementModule),
+                loadChildren: () => import('../../exam/manage/exam-management.route').then((m) => m.examManagementRoute),
             },
             {
                 path: ':courseId/tutorial-groups-checklist',

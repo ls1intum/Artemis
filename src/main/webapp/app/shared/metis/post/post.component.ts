@@ -29,9 +29,9 @@ import { AnswerPost } from 'app/entities/metis/answer-post.model';
 import { AnswerPostCreateEditModalComponent } from 'app/shared/metis/posting-create-edit-modal/answer-post-create-edit-modal/answer-post-create-edit-modal.component';
 import { animate, style, transition, trigger } from '@angular/animations';
 import { PostCreateEditModalComponent } from 'app/shared/metis/posting-create-edit-modal/post-create-edit-modal/post-create-edit-modal.component';
-import { PostReactionsBarComponent } from 'app/shared/metis/posting-reactions-bar/post-reactions-bar/post-reactions-bar.component';
+import { PostingReactionsBarComponent } from 'app/shared/metis/posting-reactions-bar/posting-reactions-bar.component';
 import { CdkConnectedOverlay, CdkOverlayOrigin } from '@angular/cdk/overlay';
-import { DOCUMENT, NgClass, NgIf, NgStyle } from '@angular/common';
+import { DOCUMENT, NgClass, NgStyle } from '@angular/common';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { TranslateDirective } from '../../language/translate.directive';
 import { PostingHeaderComponent } from '../posting-header/posting-header.component';
@@ -62,10 +62,9 @@ import { ArtemisTranslatePipe } from '../../pipes/artemis-translate.pipe';
         RouterLinkActive,
         RouterLink,
         PostingContentComponent,
-        PostReactionsBarComponent,
+        PostingReactionsBarComponent,
         MessageInlineInputComponent,
         PostingFooterComponent,
-        NgIf,
         NgStyle,
         CdkOverlayOrigin,
         CdkConnectedOverlay,
@@ -95,7 +94,7 @@ export class PostComponent extends PostingDirective<Post> implements OnInit, OnC
     @ViewChild('createEditAnswerPostContainer', { read: ViewContainerRef }) containerRef: ViewContainerRef;
     @ViewChild('postFooter') postFooterComponent: PostingFooterComponent;
     @ViewChild('emojiPickerTrigger') emojiPickerTrigger!: CdkOverlayOrigin;
-    @ViewChild(PostReactionsBarComponent) protected reactionsBarComponent!: PostReactionsBarComponent;
+    @ViewChild(PostingReactionsBarComponent) protected reactionsBarComponent!: PostingReactionsBarComponent<Post>;
 
     static activeDropdownPost: PostComponent | undefined = undefined;
 

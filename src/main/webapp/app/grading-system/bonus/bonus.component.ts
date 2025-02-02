@@ -1,4 +1,5 @@
 import { Component, OnInit, inject } from '@angular/core';
+import { ModePickerComponent } from 'app/exercises/shared/mode-picker/mode-picker.component';
 import { BonusService } from 'app/grading-system/bonus/bonus.service';
 import { GradingSystemService } from 'app/grading-system/grading-system.service';
 import { GradingScale } from 'app/entities/grading-scale.model';
@@ -16,7 +17,6 @@ import { ArtemisSharedModule } from 'app/shared/shared.module';
 import { ArtemisSharedComponentModule } from 'app/shared/components/shared-component.module';
 import { SafeHtmlPipe } from 'app/shared/pipes/safe-html.pipe';
 import { GradeStepBoundsPipe } from 'app/shared/pipes/grade-step-bounds.pipe';
-import { ArtemisModePickerModule } from 'app/exercises/shared/mode-picker/mode-picker.module';
 
 export enum BonusStrategyOption {
     GRADES,
@@ -32,7 +32,7 @@ export enum BonusStrategyDiscreteness {
     selector: 'jhi-bonus',
     templateUrl: './bonus.component.html',
     styleUrls: ['./bonus.component.scss'],
-    imports: [ArtemisSharedModule, ArtemisSharedComponentModule, ArtemisModePickerModule, SafeHtmlPipe, GradeStepBoundsPipe],
+    imports: [ArtemisSharedModule, ArtemisSharedComponentModule, SafeHtmlPipe, GradeStepBoundsPipe, ModePickerComponent],
 })
 export class BonusComponent implements OnInit {
     private bonusService = inject(BonusService);

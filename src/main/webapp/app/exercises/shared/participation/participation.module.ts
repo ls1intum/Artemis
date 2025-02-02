@@ -1,11 +1,9 @@
 import { NgModule } from '@angular/core';
-
 import { ArtemisSharedModule } from 'app/shared/shared.module';
 import { ArtemisProgrammingExerciseActionsModule } from 'app/exercises/programming/shared/actions/programming-exercise-actions.module';
 import { ArtemisParticipationSubmissionModule } from 'app/exercises/shared/participation-submission/participation-submission.module';
 import { NgxDatatableModule } from '@siemens/ngx-datatable';
 import { ArtemisDataTableModule } from 'app/shared/data-table/data-table.module';
-
 import { ParticipationComponent } from 'app/exercises/shared/participation/participation.component';
 import { ArtemisExerciseScoresModule } from 'app/exercises/shared/exercise-scores/exercise-scores.module';
 import { ArtemisParticipationRoutingModule } from 'app/exercises/shared/participation/participation-routing.module';

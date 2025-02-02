@@ -20,6 +20,7 @@ import de.tum.cit.aet.artemis.iris.domain.settings.IrisCompetencyGenerationSubSe
 import de.tum.cit.aet.artemis.iris.domain.settings.IrisCourseChatSubSettings;
 import de.tum.cit.aet.artemis.iris.domain.settings.IrisCourseSettings;
 import de.tum.cit.aet.artemis.iris.domain.settings.IrisExerciseSettings;
+import de.tum.cit.aet.artemis.iris.domain.settings.IrisFaqIngestionSubSettings;
 import de.tum.cit.aet.artemis.iris.domain.settings.IrisLectureIngestionSubSettings;
 import de.tum.cit.aet.artemis.iris.domain.settings.IrisSettings;
 import de.tum.cit.aet.artemis.iris.domain.settings.IrisSettingsType;
@@ -28,6 +29,7 @@ import de.tum.cit.aet.artemis.iris.domain.settings.IrisTextExerciseChatSubSettin
 import de.tum.cit.aet.artemis.iris.dto.IrisCombinedChatSubSettingsDTO;
 import de.tum.cit.aet.artemis.iris.dto.IrisCombinedCompetencyGenerationSubSettingsDTO;
 import de.tum.cit.aet.artemis.iris.dto.IrisCombinedCourseChatSubSettingsDTO;
+import de.tum.cit.aet.artemis.iris.dto.IrisCombinedFaqIngestionSubSettingsDTO;
 import de.tum.cit.aet.artemis.iris.dto.IrisCombinedLectureIngestionSubSettingsDTO;
 import de.tum.cit.aet.artemis.iris.dto.IrisCombinedTextExerciseChatSubSettingsDTO;
 
@@ -196,6 +198,37 @@ public class IrisSubSettingsService {
     }
 
     /**
+     * Updates a FAQ Ingestion sub settings object.
+     * If the new settings are null, the current settings will be deleted (except if the parent settings are null == if the settings are global).
+     * Special notes: if the new Settings are null, we will return null. That means the sub-settings will be deleted.
+     *
+     * @param currentSettings Current FAQ Ingestion sub settings.
+     * @param newSettings     Updated FAQ Ingestion sub settings.
+     * @param parentSettings  Parent FAQ Ingestion sub settings.
+     * @param settingsType    Type of the settings the sub settings belong to.
+     * @return Updated FAQ Ingestion sub settings.
+     */
+    public IrisFaqIngestionSubSettings update(IrisFaqIngestionSubSettings currentSettings, IrisFaqIngestionSubSettings newSettings,
+            IrisCombinedFaqIngestionSubSettingsDTO parentSettings, IrisSettingsType settingsType) {
+        if (newSettings == null) {
+            if (parentSettings == null) {
+                throw new IllegalArgumentException("Cannot delete the FAQ Ingestion settings");
+            }
+            return null;
+        }
+        if (currentSettings == null) {
+            currentSettings = new IrisFaqIngestionSubSettings();
+        }
+
+        if (authCheckService.isAdmin() && (settingsType == IrisSettingsType.COURSE || settingsType == IrisSettingsType.GLOBAL)) {
+            currentSettings.setEnabled(newSettings.isEnabled());
+            currentSettings.setAutoIngestOnFaqCreation(newSettings.getAutoIngestOnFaqCreation());
+        }
+
+        return currentSettings;
+    }
+
+    /**
      * Updates a Competency Generation sub settings object.
      * If the new settings are null, the current settings will be deleted (except if the parent settings are null == if the settings are global).
      * Special notes:
@@ -332,6 +365,20 @@ public class IrisSubSettingsService {
     public IrisCombinedLectureIngestionSubSettingsDTO combineLectureIngestionSubSettings(ArrayList<IrisSettings> settingsList, boolean minimal) {
         var enabled = getCombinedEnabled(settingsList, IrisSettings::getIrisLectureIngestionSettings);
         return new IrisCombinedLectureIngestionSubSettingsDTO(enabled);
+    }
+
+    /**
+     * Combines the FAQ Ingestion settings of multiple {@link IrisSettings} objects.
+     * If minimal is true, the returned object will only contain the enabled and rateLimit fields.
+     * The minimal version can safely be sent to students.
+     *
+     * @param settingsList List of {@link IrisSettings} objects to combine.
+     * @param minimal      Whether to return a minimal version of the combined settings.
+     * @return Combined Lecture Ingestion settings.
+     */
+    public IrisCombinedFaqIngestionSubSettingsDTO combineFaqIngestionSubSettings(ArrayList<IrisSettings> settingsList, boolean minimal) {
+        var enabled = getCombinedEnabled(settingsList, IrisSettings::getIrisFaqIngestionSettings);
+        return new IrisCombinedFaqIngestionSubSettingsDTO(enabled);
     }
 
     /**

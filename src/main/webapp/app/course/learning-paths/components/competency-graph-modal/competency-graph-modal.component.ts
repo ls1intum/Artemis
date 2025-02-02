@@ -21,6 +21,7 @@ export class CompetencyGraphModalComponent {
     private readonly learningPathApiService = inject(LearningPathApiService);
     private readonly alertService = inject(AlertService);
 
+    readonly name = input<string>();
     readonly learningPathId = input.required<number>();
 
     readonly isLoading = signal<boolean>(false);
@@ -50,12 +51,13 @@ export class CompetencyGraphModalComponent {
         this.activeModal.close();
     }
 
-    static openCompetencyGraphModal(modalService: NgbModal, learningPathId: number): void {
+    static openCompetencyGraphModal(modalService: NgbModal, learningPathId: number, name: string | undefined): void {
         const modalRef = modalService.open(CompetencyGraphModalComponent, {
             size: 'xl',
             backdrop: 'static',
             windowClass: 'competency-graph-modal',
         });
         modalRef.componentInstance.learningPathId = signal<number>(learningPathId);
+        modalRef.componentInstance.name = signal<string | undefined>(name);
     }
 }
