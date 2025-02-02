@@ -75,7 +75,6 @@ export enum MedianType {
     templateUrl: './exam-scores.component.html',
     changeDetection: ChangeDetectionStrategy.OnPush,
     styleUrls: ['./exam-scores.component.scss', '../../shared/chart/vertical-bar-chart.scss'],
-    standalone: true,
     imports: [RouterLink, ArtemisSharedComponentModule, ArtemisSharedCommonModule, ExamScoresAverageScoresGraphComponent, ArtemisParticipantScoresModule, ExportModule],
 })
 export class ExamScoresComponent implements OnInit, OnDestroy {

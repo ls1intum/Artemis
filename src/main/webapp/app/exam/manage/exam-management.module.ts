@@ -27,8 +27,6 @@ import { StudentExamSummaryComponent } from 'app/exam/manage/student-exams/stude
 import { ArtemisParticipationSummaryModule } from 'app/exam/participate/summary/exam-result-summary.module';
 import { ExamExerciseRowButtonsComponent } from 'app/exercises/shared/exam-exercise-row-buttons/exam-exercise-row-buttons.component';
 import { ArtemisProgrammingExerciseStatusModule } from 'app/exercises/programming/manage/status/programming-exercise-status.module';
-import { TestRunManagementComponent } from 'app/exam/manage/test-runs/test-run-management.component';
-import { CreateTestRunModalComponent } from 'app/exam/manage/test-runs/create-test-run-modal.component';
 import { ArtemisMarkdownModule } from 'app/shared/markdown.module';
 import { ExamChecklistComponent } from 'app/exam/manage/exams/exam-checklist-component/exam-checklist.component';
 import { ExamChecklistExerciseGroupTableComponent } from 'app/exam/manage/exams/exam-checklist-component/exam-checklist-exercisegroup-table/exam-checklist-exercisegroup-table.component';
@@ -48,9 +46,8 @@ import { ArtemisExamModePickerModule } from 'app/exam/manage/exams/exam-mode-pic
 import { ExamImportComponent } from 'app/exam/manage/exams/exam-import/exam-import.component';
 import { ArtemisHeaderExercisePageWithDetailsModule } from 'app/exercises/shared/exercise-headers/exercise-headers.module';
 import { ExamExerciseImportComponent } from 'app/exam/manage/exams/exam-exercise-import/exam-exercise-import.component';
-import { FeatureToggleModule } from 'app/shared/feature-toggle/feature-toggle.module';
+
 import { BonusComponent } from 'app/grading-system/bonus/bonus.component';
-import { ArtemisModePickerModule } from 'app/exercises/shared/mode-picker/mode-picker.module';
 import { StudentExamTimelineComponent } from './student-exams/student-exam-timeline/student-exam-timeline.component';
 import { TitleChannelNameModule } from 'app/shared/form/title-channel-name/title-channel-name.module';
 import { ExamEditWorkingTimeDialogComponent } from 'app/exam/manage/exams/exam-checklist-component/exam-edit-workingtime-dialog/exam-edit-working-time-dialog.component';
@@ -99,8 +96,6 @@ const ENTITY_STATES = [...examManagementState, ...examScoresState];
         ArtemisExamModePickerModule,
         ArtemisHeaderExercisePageWithDetailsModule,
         BarChartModule,
-        FeatureToggleModule,
-        ArtemisModePickerModule,
         StudentsUploadImagesModule,
         TitleChannelNameModule,
         ArtemisExamNavigationBarModule,
@@ -113,8 +108,6 @@ const ENTITY_STATES = [...examManagementState, ...examScoresState];
         SafeHtmlPipe,
         GradeStepBoundsPipe,
         BonusComponent,
-    ],
-    declarations: [
         ExamManagementComponent,
         ExamUpdateComponent,
         ExamDetailComponent,
@@ -125,8 +118,6 @@ const ENTITY_STATES = [...examManagementState, ...examScoresState];
         ExamStudentsAttendanceCheckComponent,
         StudentExamStatusComponent,
         StudentExamsComponent,
-        TestRunManagementComponent,
-        CreateTestRunModalComponent,
         StudentExamDetailComponent,
         DurationPipe,
         StudentExamSummaryComponent,

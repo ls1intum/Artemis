@@ -2,7 +2,7 @@ import { TestBed, fakeAsync, tick } from '@angular/core/testing';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { of } from 'rxjs';
 import { MockService } from 'ng-mocks';
-import { JhiWebsocketService } from 'app/core/websocket/websocket.service';
+import { WebsocketService } from 'app/core/websocket/websocket.service';
 import { FeatureToggleService } from 'app/shared/feature-toggle/feature-toggle.service';
 import { MockHttpService } from '../helpers/mocks/service/mock-http.service';
 import { User } from 'app/core/user/user.model';
@@ -46,7 +46,7 @@ describe('AccountService', () => {
             providers: [
                 { provide: TranslateService, useClass: MockTranslateService },
                 { provide: SessionStorageService, useClass: MockSyncStorage },
-                { provide: JhiWebsocketService, useValue: MockService(JhiWebsocketService) },
+                { provide: WebsocketService, useValue: MockService(WebsocketService) },
                 { provide: FeatureToggleService, useValue: MockService(FeatureToggleService) },
                 provideHttpClient(),
                 provideHttpClientTesting(),

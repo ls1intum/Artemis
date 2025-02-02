@@ -11,7 +11,6 @@ import { ExamExerciseUpdateHighlighterModule } from 'app/exam/participate/exerci
 import { ArtemisSharedComponentModule } from 'app/shared/components/shared-component.module';
 import { ArtemisQuizQuestionTypesModule } from 'app/exercises/quiz/shared/questions/artemis-quiz-question-types.module';
 import { SubmissionResultStatusModule } from 'app/overview/submission-result-status.module';
-import { ArtemisProgrammingExerciseInstructionsRenderModule } from 'app/exercises/programming/shared/instructions-render/programming-exercise-instructions-render.module';
 import { ArtemisExerciseButtonsModule } from 'app/overview/exercise-details/exercise-buttons.module';
 import { ArtemisProgrammingExerciseActionsModule } from 'app/exercises/programming/shared/actions/programming-exercise-actions.module';
 import { ArtemisCodeEditorModule } from 'app/exercises/programming/shared/code-editor/code-editor.module';
@@ -21,13 +20,6 @@ import { ArtemisProgrammingSubmissionPolicyStatusModule } from 'app/exercises/pr
 import { ExerciseSaveButtonComponent } from './exercise-save-button/exercise-save-button.component';
 
 @NgModule({
-    declarations: [
-        FileUploadExamSubmissionComponent,
-        QuizExamSubmissionComponent,
-        ProgrammingExamSubmissionComponent,
-        TextExamSubmissionComponent,
-        ModelingExamSubmissionComponent,
-    ],
     imports: [
         CommonModule,
         ArtemisSharedModule,
@@ -35,7 +27,6 @@ import { ExerciseSaveButtonComponent } from './exercise-save-button/exercise-sav
         ArtemisSharedComponentModule,
         ArtemisQuizQuestionTypesModule,
         SubmissionResultStatusModule,
-        ArtemisProgrammingExerciseInstructionsRenderModule,
         ArtemisExerciseButtonsModule,
         ArtemisProgrammingExerciseActionsModule,
         ArtemisCodeEditorModule,
@@ -44,6 +35,11 @@ import { ExerciseSaveButtonComponent } from './exercise-save-button/exercise-sav
         ArtemisProgrammingSubmissionPolicyStatusModule,
         ExamExerciseUpdateHighlighterModule,
         ExerciseSaveButtonComponent,
+        FileUploadExamSubmissionComponent,
+        QuizExamSubmissionComponent,
+        ProgrammingExamSubmissionComponent,
+        TextExamSubmissionComponent,
+        ModelingExamSubmissionComponent,
     ],
     exports: [FileUploadExamSubmissionComponent, QuizExamSubmissionComponent, ProgrammingExamSubmissionComponent, TextExamSubmissionComponent, ModelingExamSubmissionComponent],
 })

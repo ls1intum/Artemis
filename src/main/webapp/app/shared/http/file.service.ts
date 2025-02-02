@@ -1,5 +1,5 @@
 import { HttpClient, HttpResponse } from '@angular/common/http';
-import { Injectable } from '@angular/core';
+import { Injectable, inject } from '@angular/core';
 import { lastValueFrom } from 'rxjs';
 import { v4 as uuid } from 'uuid';
 import { Observable } from 'rxjs';
@@ -8,9 +8,8 @@ import { ProgrammingLanguage, ProjectType } from 'app/entities/programming/progr
 
 @Injectable({ providedIn: 'root' })
 export class FileService {
+    private http = inject(HttpClient);
     private resourceUrl = 'api/files';
-
-    constructor(private http: HttpClient) {}
 
     /**
      * Fetches the template file for the given programming language
@@ -68,14 +67,26 @@ export class FileService {
      * @param downloadName the name given to the attachment
      */
     downloadFileByAttachmentName(downloadUrl: string, downloadName: string) {
+        const normalizedDownloadUrl = this.createAttachmentFileUrl(downloadUrl, downloadName, true);
+        const newWindow = window.open('about:blank');
+        newWindow!.location.href = normalizedDownloadUrl;
+        return newWindow;
+    }
+
+    /**
+     * Creates the URL to download a attachment file
+     *
+     * @param downloadUrl url that is stored in the attachment model
+     * @param downloadName the name given to the attachment
+     * @param encodeName whether or not to encode the downloadName
+     */
+    createAttachmentFileUrl(downloadUrl: string, downloadName: string, encodeName: boolean) {
         const downloadUrlComponents = downloadUrl.split('/');
         // take the last element
         const extension = downloadUrlComponents.pop()!.split('.').pop();
         const restOfUrl = downloadUrlComponents.join('/');
-        const normalizedDownloadUrl = restOfUrl + '/' + encodeURIComponent(downloadName + '.' + extension);
-        const newWindow = window.open('about:blank');
-        newWindow!.location.href = normalizedDownloadUrl;
-        return newWindow;
+        const encodedDownloadName = encodeName ? encodeURIComponent(downloadName + '.' + extension) : downloadName + '.' + extension;
+        return restOfUrl + '/' + encodedDownloadName;
     }
 
     /**

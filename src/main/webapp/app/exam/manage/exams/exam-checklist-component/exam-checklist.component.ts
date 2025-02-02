@@ -1,9 +1,9 @@
-import { Component, Input, OnChanges, OnDestroy, OnInit } from '@angular/core';
+import { Component, Input, OnChanges, OnDestroy, OnInit, inject } from '@angular/core';
 import { Exam } from 'app/entities/exam/exam.model';
 import { ExamChecklist } from 'app/entities/exam/exam-checklist.model';
 import { faChartBar, faEye, faListAlt, faThList, faUser, faWrench } from '@fortawesome/free-solid-svg-icons';
 import { ExamChecklistService } from 'app/exam/manage/exams/exam-checklist-component/exam-checklist.service';
-import { JhiWebsocketService } from 'app/core/websocket/websocket.service';
+import { WebsocketService } from 'app/core/websocket/websocket.service';
 import { ExamManagementService } from 'app/exam/manage/exam-management.service';
 import { AlertService } from 'app/core/util/alert.service';
 import { HttpErrorResponse } from '@angular/common/http';
@@ -11,12 +11,40 @@ import dayjs from 'dayjs/esm';
 import { StudentExamService } from 'app/exam/manage/student-exams/student-exam.service';
 import { Subject, Subscription } from 'rxjs';
 import { captureException } from '@sentry/angular';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { ChecklistCheckComponent } from 'app/shared/components/checklist-check/checklist-check.component';
+import { ExamChecklistExerciseGroupTableComponent } from './exam-checklist-exercisegroup-table/exam-checklist-exercisegroup-table.component';
+import { RouterLink } from '@angular/router';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { ProgressBarComponent } from 'app/shared/dashboards/tutor-participation-graph/progress-bar/progress-bar.component';
+import { ExamEditWorkingTimeComponent } from './exam-edit-workingtime-dialog/exam-edit-working-time.component';
+import { ExamLiveAnnouncementCreateButtonComponent } from './exam-announcement-dialog/exam-live-announcement-create-button.component';
+import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
+import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 
 @Component({
     selector: 'jhi-exam-checklist',
     templateUrl: './exam-checklist.component.html',
+    imports: [
+        TranslateDirective,
+        ChecklistCheckComponent,
+        ExamChecklistExerciseGroupTableComponent,
+        RouterLink,
+        FaIconComponent,
+        ProgressBarComponent,
+        ExamEditWorkingTimeComponent,
+        ExamLiveAnnouncementCreateButtonComponent,
+        ArtemisDatePipe,
+        ArtemisTranslatePipe,
+    ],
 })
 export class ExamChecklistComponent implements OnChanges, OnInit, OnDestroy {
+    private examChecklistService = inject(ExamChecklistService);
+    private websocketService = inject(WebsocketService);
+    private examManagementService = inject(ExamManagementService);
+    private alertService = inject(AlertService);
+    private studentExamService = inject(StudentExamService);
+
     @Input() exam: Exam;
     @Input() getExamRoutesByIdentifier: any;
     private longestWorkingTimeSub: Subscription | null = null;
@@ -53,14 +81,6 @@ export class ExamChecklistComponent implements OnChanges, OnInit, OnDestroy {
 
     private dialogErrorSource = new Subject<string>();
     dialogError$ = this.dialogErrorSource.asObservable();
-
-    constructor(
-        private examChecklistService: ExamChecklistService,
-        private websocketService: JhiWebsocketService,
-        private examManagementService: ExamManagementService,
-        private alertService: AlertService,
-        private studentExamService: StudentExamService,
-    ) {}
 
     ngOnInit() {
         const submittedTopic = this.examChecklistService.getSubmittedTopic(this.exam);

@@ -15,7 +15,6 @@ import { ArtemisProgrammingParticipationModule } from 'app/exercises/programming
 import { ArtemisCodeEditorModule } from 'app/exercises/programming/shared/code-editor/code-editor.module';
 import { ArtemisResultModule } from 'app/exercises/shared/result/result.module';
 import { ArtemisProgrammingExerciseActionsModule } from 'app/exercises/programming/shared/actions/programming-exercise-actions.module';
-import { ArtemisProgrammingExerciseInstructionsRenderModule } from 'app/exercises/programming/shared/instructions-render/programming-exercise-instructions-render.module';
 import { ArtemisParticipationSummaryModule } from 'app/exam/participate/summary/exam-result-summary.module';
 import { ArtemisExerciseButtonsModule } from 'app/overview/exercise-details/exercise-buttons.module';
 import { ArtemisHeaderExercisePageWithDetailsModule } from 'app/exercises/shared/exercise-headers/exercise-headers.module';
@@ -32,6 +31,8 @@ import { ExamStartInformationComponent } from 'app/exam/participate/exam-start-i
 import { ArtemisSidebarModule } from 'app/shared/sidebar/sidebar.module';
 import { ExamNavigationSidebarComponent } from 'app/exam/participate/exam-navigation-sidebar/exam-navigation-sidebar.component';
 import { ExamBarComponent } from 'app/exam/participate/exam-bar/exam-bar.component';
+import { TestRunRibbonComponent } from 'app/exam/manage/test-runs/test-run-ribbon.component';
+
 const ENTITY_STATES = [...examParticipationState];
 
 @NgModule({
@@ -48,7 +49,6 @@ const ENTITY_STATES = [...examParticipationState];
         ArtemisCodeEditorModule,
         ArtemisResultModule,
         ArtemisProgrammingExerciseActionsModule,
-        ArtemisProgrammingExerciseInstructionsRenderModule,
         ArtemisExerciseButtonsModule,
         ArtemisProgrammingAssessmentModule,
         ArtemisParticipationSummaryModule,
@@ -64,7 +64,10 @@ const ENTITY_STATES = [...examParticipationState];
         ArtemisSidebarModule,
         ExamNavigationSidebarComponent,
         ExamBarComponent,
+        ExamParticipationComponent,
+        ExamParticipationCoverComponent,
+        ExamExerciseOverviewPageComponent,
+        TestRunRibbonComponent,
     ],
-    declarations: [ExamParticipationComponent, ExamParticipationCoverComponent, ExamExerciseOverviewPageComponent],
 })
 export class ArtemisExamParticipationModule {}

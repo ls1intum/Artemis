@@ -1,4 +1,4 @@
-import { Component, Input, OnInit } from '@angular/core';
+import { Component, Input, OnInit, inject } from '@angular/core';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import { AlertService } from 'app/core/util/alert.service';
 import { catchError, tap } from 'rxjs/operators';
@@ -9,13 +9,24 @@ import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service'
 import { SubmissionExportOptions, SubmissionExportService } from './submission-export.service';
 import { downloadZipFileFromResponse } from 'app/shared/util/download.util';
 import { faCircleNotch } from '@fortawesome/free-solid-svg-icons';
+import { FormsModule } from '@angular/forms';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { HelpIconComponent } from 'app/shared/components/help-icon.component';
+import { FormDateTimePickerComponent } from 'app/shared/date-time-picker/date-time-picker.component';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 
 @Component({
     selector: 'jhi-exercise-submission-export-dialog',
     templateUrl: './submission-export-dialog.component.html',
     styles: ['textarea { width: 100%; }'],
+    imports: [FormsModule, TranslateDirective, HelpIconComponent, FormDateTimePickerComponent, FaIconComponent],
 })
 export class SubmissionExportDialogComponent implements OnInit {
+    private exerciseService = inject(ExerciseService);
+    private submissionExportService = inject(SubmissionExportService);
+    activeModal = inject(NgbActiveModal);
+    private alertService = inject(AlertService);
+
     @Input() exerciseId: number;
     @Input() exerciseType: ExerciseType;
 
@@ -26,13 +37,6 @@ export class SubmissionExportDialogComponent implements OnInit {
 
     // Icons
     faCircleNotch = faCircleNotch;
-
-    constructor(
-        private exerciseService: ExerciseService,
-        private submissionExportService: SubmissionExportService,
-        public activeModal: NgbActiveModal,
-        private alertService: AlertService,
-    ) {}
 
     ngOnInit() {
         this.isLoading = true;

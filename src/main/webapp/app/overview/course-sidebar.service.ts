@@ -8,8 +8,6 @@ export class CourseSidebarService {
     public openSidebar$: EventEmitter<void> = new EventEmitter();
     public toggleSidebar$: EventEmitter<void> = new EventEmitter();
 
-    constructor() {}
-
     public closeSidebar(): void {
         this.closeSidebar$.emit();
     }

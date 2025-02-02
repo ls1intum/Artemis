@@ -1,7 +1,7 @@
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { TestBed, fakeAsync, tick } from '@angular/core/testing';
 import { AccountService } from 'app/core/auth/account.service';
-import { JhiWebsocketService } from 'app/core/websocket/websocket.service';
+import { WebsocketService } from 'app/core/websocket/websocket.service';
 import { UserSettingsService } from 'app/shared/user-settings/user-settings.service';
 import { SettingId, UserSettingsCategory } from 'app/shared/constants/user-settings.constants';
 import { MockWebsocketService } from '../../../helpers/mocks/service/mock-websocket.service';
@@ -128,7 +128,7 @@ describe('User Settings Service', () => {
             providers: [
                 provideHttpClient(),
                 provideHttpClientTesting(),
-                { provide: JhiWebsocketService, useClass: MockWebsocketService },
+                { provide: WebsocketService, useClass: MockWebsocketService },
                 { provide: AccountService, useClass: MockAccountService },
             ],
         })

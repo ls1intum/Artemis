@@ -1,36 +1,23 @@
-import { MockTranslateService } from '../helpers/mocks/service/mock-translate.service';
 import { ArtemisTimeAgoPipe } from 'app/shared/pipes/artemis-time-ago.pipe';
 import { TestBed, fakeAsync, tick } from '@angular/core/testing';
 import { TranslateService } from '@ngx-translate/core';
-import { ChangeDetectorRef, NgZone } from '@angular/core';
-import { ArtemisServerDateService } from 'app/shared/server-date.service';
+import { ChangeDetectorRef } from '@angular/core';
 import dayjs from 'dayjs/esm';
-import { MockArtemisServerDateService } from '../helpers/mocks/service/mock-artemis-server-date.service';
+import { ArtemisTestModule } from '../test.module';
 
 describe('ArtemisTimeAgoPipe', () => {
     let pipe: ArtemisTimeAgoPipe;
     let translateService: TranslateService;
-    let cdRef: ChangeDetectorRef;
-    let serverTimeService: ArtemisServerDateService;
+    const cdRef = { markForCheck: jest.fn() } as any as ChangeDetectorRef;
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            declarations: [ArtemisTimeAgoPipe],
-            providers: [
-                { provide: TranslateService, useClass: MockTranslateService },
-                { provide: ArtemisServerDateService, useClass: MockArtemisServerDateService },
-            ],
-        })
-            .compileComponents()
-            .then(() => {
-                cdRef = { markForCheck: jest.fn() } as any as ChangeDetectorRef;
-
-                translateService = TestBed.inject(TranslateService);
-                translateService.use('en');
-                serverTimeService = TestBed.inject(ArtemisServerDateService);
-                const ngZone = TestBed.inject(NgZone);
-                pipe = new ArtemisTimeAgoPipe(cdRef, ngZone, translateService, serverTimeService);
-            });
+            imports: [ArtemisTestModule],
+            providers: [ArtemisTimeAgoPipe, { provide: ChangeDetectorRef, useValue: cdRef }],
+        }).compileComponents();
+        translateService = TestBed.inject(TranslateService);
+        translateService.use('en');
+        pipe = TestBed.inject(ArtemisTimeAgoPipe);
     });
 
     it.each([

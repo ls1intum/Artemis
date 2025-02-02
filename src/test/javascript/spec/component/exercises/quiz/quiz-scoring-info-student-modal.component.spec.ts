@@ -1,12 +1,11 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { MockPipe } from 'ng-mocks';
+import { MockBuilder } from 'ng-mocks';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { TranslateService } from '@ngx-translate/core';
 import { QuizScoringInfoStudentModalComponent } from 'app/exercises/quiz/shared/questions/quiz-scoring-infostudent-modal/quiz-scoring-info-student-modal.component';
 import { MockTranslateService } from '../../../helpers/mocks/service/mock-translate.service';
 import { MockNgbModalService } from '../../../helpers/mocks/service/mock-ngb-modal.service';
 import { ArtemisTestModule } from '../../../test.module';
-import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { ShortAnswerQuestion } from 'app/entities/quiz/short-answer-question.model';
 import { DragAndDropQuestion } from 'app/entities/quiz/drag-and-drop-question.model';
 import { ShortAnswerSpot } from 'app/entities/quiz/short-answer-spot.model';
@@ -26,25 +25,18 @@ describe('Quiz Scoring Info Student Modal Component', () => {
     let translateSpy: jest.SpyInstance;
     const translationBasePath = 'artemisApp.quizExercise.explanationText.';
 
-    beforeEach(() => {
-        TestBed.configureTestingModule({
-            imports: [ArtemisTestModule],
-            declarations: [QuizScoringInfoStudentModalComponent, MockPipe(ArtemisTranslatePipe)],
-            providers: [
-                { provide: TranslateService, useClass: MockTranslateService },
-                { provide: NgbModal, useClass: MockNgbModalService },
-            ],
-        })
-            .compileComponents()
-            .then(() => {
-                fixture = TestBed.createComponent(QuizScoringInfoStudentModalComponent);
-                comp = fixture.componentInstance;
-                modalService = TestBed.inject(NgbModal);
-                translateService = TestBed.inject(TranslateService);
+    beforeEach(async () => {
+        await MockBuilder(QuizScoringInfoStudentModalComponent, ArtemisTestModule)
+            .provide({ provide: TranslateService, useClass: MockTranslateService })
+            .provide({ provide: NgbModal, useClass: MockNgbModalService });
 
-                translateSpy = jest.spyOn(translateService, 'instant');
-                comp.question = {} as ShortAnswerQuestion;
-            });
+        fixture = TestBed.createComponent(QuizScoringInfoStudentModalComponent);
+        comp = fixture.componentInstance;
+        modalService = TestBed.inject(NgbModal);
+        translateService = TestBed.inject(TranslateService);
+
+        translateSpy = jest.spyOn(translateService, 'instant');
+        comp.question = {} as ShortAnswerQuestion;
     });
 
     afterEach(() => {

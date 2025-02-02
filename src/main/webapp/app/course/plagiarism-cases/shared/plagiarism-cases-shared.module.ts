@@ -5,11 +5,16 @@ import { ArtemisTutorParticipationGraphModule } from 'app/shared/dashboards/tuto
 import { ArtemisSharedComponentModule } from 'app/shared/components/shared-component.module';
 import { PlagiarismCaseVerdictComponent } from 'app/course/plagiarism-cases/shared/verdict/plagiarism-case-verdict.component';
 import { PlagiarismCaseReviewComponent } from 'app/course/plagiarism-cases/shared/review/plagiarism-case-review.component';
-import { MetisModule } from 'app/shared/metis/metis.module';
 
 @NgModule({
-    imports: [ArtemisSharedModule, ArtemisSharedComponentModule, ArtemisPlagiarismModule, ArtemisTutorParticipationGraphModule, MetisModule],
-    declarations: [PlagiarismCaseVerdictComponent, PlagiarismCaseReviewComponent],
+    imports: [
+        ArtemisSharedModule,
+        ArtemisSharedComponentModule,
+        ArtemisPlagiarismModule,
+        ArtemisTutorParticipationGraphModule,
+        PlagiarismCaseVerdictComponent,
+        PlagiarismCaseReviewComponent,
+    ],
     exports: [
         PlagiarismCaseVerdictComponent,
         PlagiarismCaseReviewComponent,
@@ -17,7 +22,6 @@ import { MetisModule } from 'app/shared/metis/metis.module';
         ArtemisSharedComponentModule,
         ArtemisPlagiarismModule,
         ArtemisTutorParticipationGraphModule,
-        MetisModule,
     ],
 })
 export class ArtemisPlagiarismCasesSharedModule {}

@@ -8,7 +8,7 @@ import { ActivatedRoute, Router } from '@angular/router';
 import { Course } from 'app/entities/course.model';
 import { Observable, combineLatestWith } from 'rxjs';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
-import { NgbModal, NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
+import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { SortService } from 'app/shared/service/sort.service';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 import { TranslateService } from '@ngx-translate/core';
@@ -24,7 +24,6 @@ import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 @Component({
     selector: 'jhi-complaint-list',
     templateUrl: './list-of-complaints.component.html',
-    standalone: true,
     imports: [TranslateDirective, FormsModule, ArtemisSharedCommonModule, FaIconComponent, NgbTooltip, ArtemisTranslatePipe],
 })
 export class ListOfComplaintsComponent implements OnInit {
@@ -32,7 +31,6 @@ export class ListOfComplaintsComponent implements OnInit {
     private alertService = inject(AlertService);
     private route = inject(ActivatedRoute);
     private router = inject(Router);
-    private modalService = inject(NgbModal);
     private sortService = inject(SortService);
     private translateService = inject(TranslateService);
     private artemisDatePipe = inject(ArtemisDatePipe);

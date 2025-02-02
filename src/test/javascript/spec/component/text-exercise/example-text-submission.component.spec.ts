@@ -22,7 +22,7 @@ import { HelpIconComponent } from 'app/shared/components/help-icon.component';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { ResizeableContainerComponent } from 'app/shared/resizeable-container/resizeable-container.component';
 import { ScoreDisplayComponent } from 'app/shared/score-display/score-display.component';
-import { MockComponent, MockPipe, MockProvider } from 'ng-mocks';
+import { MockComponent, MockDirective, MockPipe, MockProvider } from 'ng-mocks';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { of, throwError } from 'rxjs';
 import { MockSyncStorage } from '../../helpers/mocks/service/mock-sync-storage.service';
@@ -33,6 +33,7 @@ import { AlertService } from 'app/core/util/alert.service';
 import { DebugElement } from '@angular/core';
 import { ConfirmAutofocusModalComponent } from 'app/shared/components/confirm-autofocus-modal.component';
 import { ConfirmAutofocusButtonComponent } from 'app/shared/components/confirm-autofocus-button.component';
+import { TranslateDirective } from '../../../../../main/webapp/app/shared/language/translate.directive';
 
 describe('ExampleTextSubmissionComponent', () => {
     let fixture: ComponentFixture<ExampleTextSubmissionComponent>;
@@ -62,6 +63,7 @@ describe('ExampleTextSubmissionComponent', () => {
         TestBed.configureTestingModule({
             imports: [ArtemisTestModule, FormsModule],
             declarations: [
+                MockDirective(TranslateDirective),
                 ExampleTextSubmissionComponent,
                 MockComponent(ConfirmAutofocusModalComponent),
                 MockComponent(ResizeableContainerComponent),

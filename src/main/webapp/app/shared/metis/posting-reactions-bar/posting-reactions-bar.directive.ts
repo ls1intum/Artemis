@@ -1,4 +1,4 @@
-import { Directive, EventEmitter, Input, OnChanges, OnInit, Output, output } from '@angular/core';
+import { Directive, EventEmitter, Input, OnChanges, OnInit, Output, inject, output } from '@angular/core';
 import { Posting } from 'app/entities/metis/posting.model';
 import { MetisService } from 'app/shared/metis/metis.service';
 import { EmojiData } from '@ctrl/ngx-emoji-mart/ngx-emoji';
@@ -9,7 +9,6 @@ import { faBookmark as farBookmark } from '@fortawesome/free-regular-svg-icons';
 
 const PIN_EMOJI_ID = 'pushpin';
 const ARCHIVE_EMOJI_ID = 'open_file_folder';
-const SPEECH_BALLOON_ID = 'speech_balloon';
 const HEAVY_MULTIPLICATION_ID = 'heavy_multiplication_x';
 
 const SPEECH_BALLOON_UNICODE = '1F4AC';
@@ -44,21 +43,24 @@ interface ReactionMetaDataMap {
 
 @Directive()
 export abstract class PostingsReactionsBarDirective<T extends Posting> implements OnInit, OnChanges {
+    protected metisService = inject(MetisService);
+
     pinEmojiId: string = PIN_EMOJI_ID;
     archiveEmojiId: string = ARCHIVE_EMOJI_ID;
-    speechBalloonId: string = SPEECH_BALLOON_ID;
     closeCrossId: string = HEAVY_MULTIPLICATION_ID;
 
     @Input() posting: T;
     @Input() isThreadSidebar: boolean;
+
     @Output() openPostingCreateEditModal = new EventEmitter<void>();
     @Output() reactionsUpdated = new EventEmitter<Reaction[]>();
+    @Output() isModalOpen = new EventEmitter<void>();
 
     showReactionSelector = false;
     currentUserIsAtLeastTutor: boolean;
     isAtLeastTutorInCourse: boolean;
     isAuthorOfPosting: boolean;
-    @Output() isModalOpen = new EventEmitter<void>();
+
     isDeleteEvent = output<boolean>();
     readonly onBookmarkClicked = output<void>();
 
@@ -104,8 +106,6 @@ export abstract class PostingsReactionsBarDirective<T extends Posting> implement
      */
     reactionMetaDataMap: ReactionMetaDataMap = {};
 
-    protected constructor(protected metisService: MetisService) {}
-
     /**
      * on initialization: updates the current posting and its reactions,
      * invokes metis service to check user authority
@@ -125,7 +125,7 @@ export abstract class PostingsReactionsBarDirective<T extends Posting> implement
      * on changes: updates the current posting and its reactions,
      * invokes metis service to check user authority
      */
-    ngOnChanges(): void {
+    ngOnChanges() {
         this.updatePostingWithReactions();
         this.currentUserIsAtLeastTutor = this.metisService.metisUserIsAtLeastTutorInCourse();
     }

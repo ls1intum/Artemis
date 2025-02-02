@@ -1,12 +1,11 @@
-import { MetisModule } from 'app/shared/metis/metis.module';
+import { CourseConversationsComponent } from 'app/overview/course-conversations/course-conversations.component';
 import { ArtemisSharedModule } from 'app/shared/shared.module';
 import { NgModule } from '@angular/core';
 import { RouterModule, Routes } from '@angular/router';
 import { ArtemisSharedComponentModule } from 'app/shared/components/shared-component.module';
-import { CourseConversationsComponent } from 'app/overview/course-conversations/course-conversations.component';
+
 import { ArtemisDataTableModule } from 'app/shared/data-table/data-table.module';
 import { ConversationMessagesComponent } from 'app/overview/course-conversations/layout/conversation-messages/conversation-messages.component';
-import { InfiniteScrollModule } from 'ngx-infinite-scroll';
 import { ConversationThreadSidebarComponent } from 'app/overview/course-conversations/layout/conversation-thread-sidebar/conversation-thread-sidebar.component';
 import { ChannelsOverviewDialogComponent } from './dialogs/channels-overview-dialog/channels-overview-dialog.component';
 import { ChannelItemComponent } from './dialogs/channels-overview-dialog/channel-item/channel-item.component';
@@ -33,6 +32,7 @@ import { ArtemisSidebarModule } from 'app/shared/sidebar/sidebar.module';
 import { ProfilePictureComponent } from 'app/shared/profile-picture/profile-picture.component';
 import { SavedPostsComponent } from 'app/overview/course-conversations/saved-posts/saved-posts.component';
 import { PostingSummaryComponent } from 'app/overview/course-conversations/posting-summary/posting-summary.component';
+import { InfiniteScrollDirective } from 'ngx-infinite-scroll';
 
 const routes: Routes = [
     {
@@ -41,24 +41,21 @@ const routes: Routes = [
         data: {
             pageTitle: 'artemisApp.conversationsLayout.tabTitle',
         },
-        component: CourseConversationsComponent,
+        loadComponent: () => import('app/overview/course-conversations/course-conversations.component').then((m) => m.CourseConversationsComponent),
     },
 ];
 
 @NgModule({
     imports: [
         RouterModule.forChild(routes),
-        MetisModule,
         ArtemisMarkdownModule,
         ArtemisSharedModule,
         ArtemisSharedComponentModule,
         ArtemisDataTableModule,
         ArtemisSidebarModule,
-        InfiniteScrollModule,
+        InfiniteScrollDirective,
         CourseUsersSelectorModule,
         ProfilePictureComponent,
-    ],
-    declarations: [
         CourseConversationsComponent,
         CourseConversationsCodeOfConductComponent,
         ConversationThreadSidebarComponent,

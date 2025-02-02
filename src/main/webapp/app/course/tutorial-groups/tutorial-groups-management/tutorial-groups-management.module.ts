@@ -31,7 +31,6 @@ import { TutorialGroupManagementDetailComponent } from 'app/course/tutorial-grou
 import { EditTutorialGroupsConfigurationComponent } from 'app/course/tutorial-groups/tutorial-groups-management/tutorial-groups-configuration/crud/edit-tutorial-groups-configuration/edit-tutorial-groups-configuration.component';
 import { NgModule } from '@angular/core';
 import { TutorialGroupsCourseInformationComponent } from 'app/course/tutorial-groups/tutorial-groups-management/tutorial-groups/tutorial-groups-management/tutorial-groups-course-information/tutorial-groups-course-information.component';
-import { ArtemisSidePanelModule } from 'app/shared/side-panel/side-panel.module';
 import { TutorialGroupsRegistrationImportDialogComponent } from './tutorial-groups/tutorial-groups-management/tutorial-groups-import-dialog/tutorial-groups-registration-import-dialog.component';
 import { TutorialGroupsImportButtonComponent } from 'app/course/tutorial-groups/tutorial-groups-management/tutorial-groups/tutorial-groups-management/tutorial-groups-import-button/tutorial-groups-import-button.component';
 import { TutorialGroupsChecklistComponent } from './tutorial-groups-checklist/tutorial-groups-checklist.component';
@@ -50,11 +49,8 @@ import { ArtemisMarkdownEditorModule } from 'app/shared/markdown-editor/markdown
         ArtemisMarkdownModule,
         OwlDateTimeModule,
         ArtemisTutorialGroupsSharedModule,
-        ArtemisSidePanelModule,
         ArtemisSharedComponentModule,
         ArtemisMarkdownEditorModule,
-    ],
-    declarations: [
         TutorialGroupsManagementComponent,
         TutorialGroupFormComponent,
         CreateTutorialGroupComponent,
