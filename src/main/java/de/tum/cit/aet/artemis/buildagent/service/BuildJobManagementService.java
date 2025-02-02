@@ -164,23 +164,28 @@ public class BuildJobManagementService {
             try {
                 return future.get(buildJobTimeoutSeconds, TimeUnit.SECONDS);
             }
-            catch (Exception e) {
+            catch (Exception ex) {
+                if (DockerUtil.isDockerNotAvailable(ex)) {
+                    log.error("Cannot connect to Docker Host. Make sure Docker is running and configured properly! Error while listing containers for cleanup: {}",
+                            ex.getMessage());
+                    throw new CompletionException(ex);
+                }
                 // RejectedExecutionException is thrown if the queue size limit (defined in "artemis.continuous-integration.queue-size-limit") is reached.
                 // Wrap the exception in a CompletionException so that the future is completed exceptionally and the thenAccept block is not run.
                 // This CompletionException will not resurface anywhere else as it is thrown in this completable future's separate thread.
                 if (cancelledBuildJobs.contains(buildJobItem.id())) {
                     finishCancelledBuildJob(buildJobItem.repositoryInfo().assignmentRepositoryUri(), buildJobItem.id(), containerName);
                     String msg = "Build job with id " + buildJobItem.id() + " was cancelled.";
-                    String stackTrace = stackTraceToString(e);
+                    String stackTrace = stackTraceToString(ex);
                     buildLogsMap.appendBuildLogEntry(buildJobItem.id(), new BuildLogDTO(ZonedDateTime.now(), msg + "\n" + stackTrace));
-                    throw new CompletionException(msg, e);
+                    throw new CompletionException(msg, ex);
                 }
                 else {
-                    finishBuildJobExceptionally(buildJobItem.id(), containerName, e);
-                    if (e instanceof TimeoutException) {
+                    finishBuildJobExceptionally(buildJobItem.id(), containerName, ex);
+                    if (ex instanceof TimeoutException) {
                         logTimedOutBuildJob(buildJobItem, buildJobTimeoutSeconds);
                     }
-                    throw new CompletionException(e);
+                    throw new CompletionException(ex);
                 }
             }
         });
