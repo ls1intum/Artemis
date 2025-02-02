@@ -31,7 +31,7 @@ import { ProfileInfo } from 'app/shared/layouts/profiles/profile-info.model';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { AlertService } from 'app/core/util/alert.service';
 
-export enum States {
+export enum RepositoryAuthenticationMethod {
     Password = 'password',
     Token = 'token',
     SSH = 'ssh',
@@ -69,8 +69,9 @@ export class CodeButtonComponent implements OnInit {
     private alertService = inject(AlertService);
     private router = inject(Router);
 
-    readonly FeatureToggle = FeatureToggle;
-    readonly ProgrammingLanguage = ProgrammingLanguage;
+    protected readonly FeatureToggle = FeatureToggle;
+    protected readonly ProgrammingLanguage = ProgrammingLanguage;
+    protected readonly RepositoryAuthenticationMethod = RepositoryAuthenticationMethod;
 
     loading = input<boolean>(false);
 
@@ -82,9 +83,9 @@ export class CodeButtonComponent implements OnInit {
     exercise = input<ProgrammingExercise>();
     hideLabelMobile = input<boolean>(false);
 
-    // this is the fallback
-    authenticationMechanism = [States.Password, States.Token, States.SSH];
-    currentState = States.Password;
+    // this is the fallback with a default order in case the server does not specify this as part of the profile info endpoint
+    authenticationMechanism = [RepositoryAuthenticationMethod.Password, RepositoryAuthenticationMethod.Token, RepositoryAuthenticationMethod.SSH];
+    selectedAuthenticationMechanism = RepositoryAuthenticationMethod.Password;
 
     userTokenStillValid = false;
     userTokenPresent = false;
@@ -158,8 +159,10 @@ export class CodeButtonComponent implements OnInit {
             this.sshSettingsUrl = profileInfo.sshKeysURL;
             this.sshTemplateUrl = profileInfo.sshCloneURLTemplate;
 
-            if (profileInfo.authenticationMechanisms?.length) {
-                this.authenticationMechanism = profileInfo.authenticationMechanisms.filter((method): method is States => Object.values(States).includes(method as States));
+            if (profileInfo.repositoryAuthenticationMechanisms?.length) {
+                this.authenticationMechanism = profileInfo.repositoryAuthenticationMechanisms.filter((method): method is RepositoryAuthenticationMethod =>
+                    Object.values(RepositoryAuthenticationMethod).includes(method as RepositoryAuthenticationMethod),
+                );
             }
             if (profileInfo.versionControlUrl) {
                 this.versionControlUrl = profileInfo.versionControlUrl;
@@ -180,14 +183,14 @@ export class CodeButtonComponent implements OnInit {
     }
 
     public useSshUrl() {
-        this.currentState = States.SSH;
+        this.selectedAuthenticationMechanism = RepositoryAuthenticationMethod.SSH;
 
         this.copyEnabled = this.doesUserHaveSSHkeys || this.gitlabVCEnabled;
         this.storeToLocalStorage();
     }
 
     public useHttpsToken() {
-        this.currentState = States.Token;
+        this.selectedAuthenticationMechanism = RepositoryAuthenticationMethod.Token;
 
         if (this.isInCourseManagement) {
             this.userTokenStillValid = dayjs().isBefore(dayjs(this.user.vcsAccessTokenExpiryDate));
@@ -200,14 +203,14 @@ export class CodeButtonComponent implements OnInit {
     }
 
     public useHttpsPassword() {
-        this.currentState = States.Password;
+        this.selectedAuthenticationMechanism = RepositoryAuthenticationMethod.Password;
 
         this.copyEnabled = true;
         this.storeToLocalStorage();
     }
 
     private storeToLocalStorage() {
-        this.localStorage.store('code-button-state', this.currentState);
+        this.localStorage.store('code-button-state', this.selectedAuthenticationMechanism);
     }
 
     public formatTip(translationKey: string, url: string): string {
@@ -219,7 +222,7 @@ export class CodeButtonComponent implements OnInit {
     }
 
     onClick() {
-        this.currentState = this.localStorage.retrieve('code-button-state') || States.Password;
+        this.selectedAuthenticationMechanism = this.localStorage.retrieve('code-button-state') || RepositoryAuthenticationMethod.Password;
 
         if (this.useSsh) {
             this.useSshUrl();
@@ -234,7 +237,6 @@ export class CodeButtonComponent implements OnInit {
     /**
      * Add the credentials to the http url, if a token should be used.
      *
-     * @param url the url to which the credentials should be added
      * @param insertPlaceholder if true, instead of the actual token, '**********' is used (e.g. to prevent leaking the token during a screen-share)
      */
     getHttpOrSshRepositoryUri(insertPlaceholder = true): string {
@@ -382,15 +384,15 @@ export class CodeButtonComponent implements OnInit {
     }
 
     get useToken() {
-        return this.currentState === States.Token;
+        return this.selectedAuthenticationMechanism === RepositoryAuthenticationMethod.Token;
     }
 
     get useSsh() {
-        return this.currentState === States.SSH;
+        return this.selectedAuthenticationMechanism === RepositoryAuthenticationMethod.SSH;
     }
 
     get usePassword() {
-        return this.currentState === States.Password;
+        return this.selectedAuthenticationMechanism === RepositoryAuthenticationMethod.Password;
     }
     /**
      * Checks whether the user owns any SSH keys, and checks if any of them is expired
@@ -431,6 +433,4 @@ export class CodeButtonComponent implements OnInit {
             return 'artemisApp.exerciseActions.cloneExerciseRepository';
         }
     }
-
-    protected readonly States = States;
 }
