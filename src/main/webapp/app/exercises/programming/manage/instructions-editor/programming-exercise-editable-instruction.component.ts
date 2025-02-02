@@ -1,8 +1,24 @@
-import { AfterViewInit, Component, EventEmitter, HostListener, Input, OnChanges, OnDestroy, Output, SimpleChanges, ViewChild, ViewEncapsulation, inject } from '@angular/core';
+import {
+    AfterViewInit,
+    Component,
+    EventEmitter,
+    HostListener,
+    Input,
+    OnChanges,
+    OnDestroy,
+    OnInit,
+    Output,
+    SimpleChanges,
+    ViewChild,
+    ViewEncapsulation,
+    computed,
+    inject,
+    signal,
+} from '@angular/core';
 import { AlertService } from 'app/core/util/alert.service';
 import { ProgrammingExerciseInstructionComponent } from 'app/exercises/programming/shared/instructions-render/programming-exercise-instruction.component';
 import { Observable, Subject, Subscription, of, throwError } from 'rxjs';
-import { catchError, map as rxMap, switchMap, tap } from 'rxjs/operators';
+import { catchError, map, switchMap, tap } from 'rxjs/operators';
 import { ProgrammingExerciseTestCase } from 'app/entities/programming/programming-exercise-test-case.model';
 import { ProblemStatementAnalysis } from 'app/exercises/programming/manage/instructions-editor/analysis/programming-exercise-instruction-analysis.model';
 import { Participation } from 'app/entities/participation/participation.model';
@@ -12,7 +28,7 @@ import { hasExerciseChanged } from 'app/exercises/shared/exercise/exercise.utils
 import { ProgrammingExerciseParticipationService } from 'app/exercises/programming/manage/services/programming-exercise-participation.service';
 import { ProgrammingExerciseGradingService } from 'app/exercises/programming/manage/services/programming-exercise-grading.service';
 import { Result } from 'app/entities/result.model';
-import { faCheckCircle, faCircleNotch, faExclamationTriangle, faGripLines, faSave } from '@fortawesome/free-solid-svg-icons';
+import { faCheckCircle, faCircleNotch, faExclamationTriangle, faSave } from '@fortawesome/free-solid-svg-icons';
 import { MarkdownEditorHeight, MarkdownEditorMonacoComponent } from 'app/shared/markdown-editor/monaco/markdown-editor-monaco.component';
 import { Annotation } from 'app/exercises/programming/shared/code-editor/monaco/code-editor-monaco.component';
 import { FormulaAction } from 'app/shared/monaco-editor/model/actions/formula.action';
@@ -25,6 +41,14 @@ import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { ProgrammingExerciseInstructionAnalysisComponent } from './analysis/programming-exercise-instruction-analysis.component';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
+import { RewriteAction } from 'app/shared/monaco-editor/model/actions/artemis-intelligence/rewrite.action';
+import { PROFILE_IRIS } from 'app/app.constants';
+import RewritingVariant from 'app/shared/monaco-editor/model/actions/artemis-intelligence/rewriting-variant';
+import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
+import { ArtemisIntelligenceService } from 'app/shared/monaco-editor/model/actions/artemis-intelligence/artemis-intelligence.service';
+import { toSignal } from '@angular/core/rxjs-interop';
+import { ActivatedRoute } from '@angular/router';
+import { ConsistencyCheckAction } from 'app/shared/monaco-editor/model/actions/artemis-intelligence/consistency-check.action';
 
 @Component({
     selector: 'jhi-programming-exercise-editable-instructions',
@@ -42,11 +66,14 @@ import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
         ArtemisTranslatePipe,
     ],
 })
-export class ProgrammingExerciseEditableInstructionComponent implements AfterViewInit, OnChanges, OnDestroy {
+export class ProgrammingExerciseEditableInstructionComponent implements AfterViewInit, OnChanges, OnDestroy, OnInit {
+    private activatedRoute = inject(ActivatedRoute);
     private programmingExerciseService = inject(ProgrammingExerciseService);
     private alertService = inject(AlertService);
     private programmingExerciseParticipationService = inject(ProgrammingExerciseParticipationService);
     private testCaseService = inject(ProgrammingExerciseGradingService);
+    private profileService = inject(ProfileService);
+    private artemisIntelligenceService = inject(ArtemisIntelligenceService);
 
     participationValue: Participation;
     programmingExercise: ProgrammingExercise;
@@ -57,8 +84,23 @@ export class ProgrammingExerciseEditableInstructionComponent implements AfterVie
     testCaseAction = new TestCaseAction();
     domainActions: TextEditorDomainAction[] = [new FormulaAction(), new TaskAction(), this.testCaseAction];
 
+    courseId: number;
+    exerciseId: number;
+    irisEnabled = toSignal(this.profileService.getProfileInfo().pipe(map((profileInfo) => profileInfo.activeProfiles.includes(PROFILE_IRIS))), { initialValue: false });
+    artemisIntelligenceActions = computed(() =>
+        this.irisEnabled()
+            ? [
+                  new RewriteAction(this.artemisIntelligenceService, RewritingVariant.PROBLEM_STATEMENT, this.courseId),
+                  ...(this.exerciseId ? [new ConsistencyCheckAction(this.artemisIntelligenceService, this.exerciseId, this.renderedConsistencyCheckResultMarkdown)] : []),
+              ]
+            : [],
+    );
+
     savingInstructions = false;
     unsavedChangesValue = false;
+
+    renderedConsistencyCheckResultMarkdown = signal<string>('');
+    showConsistencyCheck = computed(() => !!this.renderedConsistencyCheckResultMarkdown());
 
     testCaseSubscription: Subscription;
     forceRenderSubscription: Subscription;
@@ -113,9 +155,13 @@ export class ProgrammingExerciseEditableInstructionComponent implements AfterVie
     faCheckCircle = faCheckCircle;
     faExclamationTriangle = faExclamationTriangle;
     faCircleNotch = faCircleNotch;
-    faGripLines = faGripLines;
 
     protected readonly MarkdownEditorHeight = MarkdownEditorHeight;
+
+    ngOnInit() {
+        this.courseId = Number(this.activatedRoute.snapshot.paramMap.get('courseId'));
+        this.exerciseId = Number(this.activatedRoute.snapshot.paramMap.get('exerciseId'));
+    }
 
     ngOnChanges(changes: SimpleChanges): void {
         if (hasExerciseChanged(changes)) {
@@ -186,6 +232,10 @@ export class ProgrammingExerciseEditableInstructionComponent implements AfterVie
         this.instructionChange.emit(problemStatement);
     }
 
+    dismissConsistencyCheck() {
+        this.renderedConsistencyCheckResultMarkdown.set('');
+    }
+
     /**
      * Signal that the markdown should be rendered into html.
      */
@@ -236,9 +286,9 @@ export class ProgrammingExerciseEditableInstructionComponent implements AfterVie
     loadTestCasesFromTemplateParticipationResult = (templateParticipationId: number): Observable<Array<string | undefined>> => {
         // Fallback for exercises that don't have test cases yet.
         return this.programmingExerciseParticipationService.getLatestResultWithFeedback(templateParticipationId).pipe(
-            rxMap((result) => (!result?.feedbacks ? throwError(() => new Error('no result available')) : result)),
+            map((result) => (!result?.feedbacks ? throwError(() => new Error('no result available')) : result)),
             // use the text (legacy case) or the name of the provided test case attribute
-            rxMap(({ feedbacks }: Result) => feedbacks!.map((feedback) => feedback.text ?? feedback.testCase?.testName).sort()),
+            map(({ feedbacks }: Result) => feedbacks!.map((feedback) => feedback.text ?? feedback.testCase?.testName).sort()),
             catchError(() => of([])),
         );
     };
