@@ -42,27 +42,28 @@ export class ForwardMessageDialogComponent implements OnInit, AfterViewInit {
     users = signal<UserPublicInfoDTO[] | []>([]);
     postToForward = signal<Post | undefined>(undefined);
     courseId = signal<number | undefined>(undefined);
+    editorHeight = input<MarkdownEditorHeight>(MarkdownEditorHeight.INLINE);
     filteredChannels: ChannelDTO[] = [];
     filteredUsers: UserPublicInfoDTO[] = [];
     selectedChannels: ChannelDTO[] = [];
     selectedUsers: UserPublicInfoDTO[] = [];
-    searchTerm: string = '';
-    isInputFocused: boolean = false;
-    newPost: Post = new Post();
-    defaultActions: TextEditorAction[];
-    editorHeight = input<MarkdownEditorHeight>(MarkdownEditorHeight.INLINE);
-    searchInput = viewChild<ElementRef>('searchInput');
-    messageContent = viewChild<ElementRef>('messageContent');
-    public courseManagementService: CourseManagementService = inject(CourseManagementService);
-
-    showDropdown: boolean = false;
     combinedOptions: CombinedOption[] = [];
     filteredOptions: CombinedOption[] = [];
-    showFullForwardedMessage: boolean = false;
-    isContentLong: boolean = false;
+    defaultActions: TextEditorAction[];
+    searchTerm: string = '';
+    isInputFocused = false;
+    newPost = new Post();
+
+    protected showDropdown = false;
+    protected showFullForwardedMessage = false;
+    protected isContentLong = false;
+    protected searchInput = viewChild<ElementRef>('searchInput');
+    protected messageContent = viewChild<ElementRef>('messageContent');
+
+    private courseManagementService: CourseManagementService = inject(CourseManagementService);
     private cdr = inject(ChangeDetectorRef);
-    public renderer = inject(Renderer2);
-    public activeModal = inject(NgbActiveModal);
+    private renderer = inject(Renderer2);
+    protected activeModal = inject(NgbActiveModal);
 
     ngOnInit(): void {
         this.filteredChannels = this.channels() || [];
