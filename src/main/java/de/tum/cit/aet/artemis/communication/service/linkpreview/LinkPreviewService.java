@@ -8,10 +8,6 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
 import de.tum.cit.aet.artemis.communication.dto.LinkPreviewDTO;
-import de.tum.cit.aet.artemis.communication.service.linkpreview.ogparser.Content;
-import de.tum.cit.aet.artemis.communication.service.linkpreview.ogparser.OgParser;
-import de.tum.cit.aet.artemis.communication.service.linkpreview.ogparser.OpenGraph;
-import de.tum.cit.aet.artemis.communication.service.linkpreview.ogparser.htmlparser.OgMetaElementHtmlParser;
 
 /**
  * Service for retrieving meta information from a given url.
@@ -42,7 +38,7 @@ public class LinkPreviewService {
 
         // Return a LinkPreviewDTO object containing the meta information if all of the required meta elements are present
         if (titleContent != null && descriptionContent != null && imageContent != null && urlContent != null) {
-            return new LinkPreviewDTO(titleContent.getValue(), descriptionContent.getValue(), imageContent.getValue(), urlContent.getValue());
+            return new LinkPreviewDTO(titleContent.value(), descriptionContent.value(), imageContent.value(), urlContent.value());
         }
         return new LinkPreviewDTO(null, null, null, null);
     }
