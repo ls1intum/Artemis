@@ -17,6 +17,14 @@ import { Router } from '@angular/router';
 import { facDetails } from 'app/icons/icons';
 import dayjs from 'dayjs';
 
+export interface FeedbackAnalysisState {
+    page: number;
+    pageSize: number;
+    searchTerm: string;
+    sortingOrder: SortingOrder;
+    sortedColumn: string;
+    filterErrorCategories: string[];
+}
 @Component({
     selector: 'jhi-feedback-analysis',
     templateUrl: './feedback-analysis.component.html',
@@ -75,13 +83,13 @@ export class FeedbackAnalysisComponent {
     private readonly debounceLoadData = BaseApiHttpService.debounce(this.loadData.bind(this), 300);
     readonly groupFeedback = signal<boolean>(false);
 
-    currentRequestFilters = signal<any | undefined>(undefined);
-    currentRequestState = signal<any | undefined>(undefined);
+    currentRequestFilters = signal<FilterData | undefined>(undefined);
+    currentRequestState = signal<FeedbackAnalysisState | undefined>(undefined);
     currentRequestGroupFeedback = signal<boolean | undefined>(undefined);
     currentResponseData = signal<FeedbackAnalysisResponse | undefined>(undefined);
 
-    previousRequestFilters = signal<any | undefined>(undefined);
-    previousRequestState = signal<any | undefined>(undefined);
+    previousRequestFilters = signal<FilterData | undefined>(undefined);
+    previousRequestState = signal<FeedbackAnalysisState | undefined>(undefined);
     previousRequestGroupFeedback = signal<boolean | undefined>(undefined);
     previousResponseData = signal<FeedbackAnalysisResponse | undefined>(undefined);
 
@@ -120,9 +128,9 @@ export class FeedbackAnalysisComponent {
             JSON.stringify(this.previousRequestFilters()) === JSON.stringify(filters) &&
             JSON.stringify(this.previousRequestState()) === JSON.stringify(state) &&
             this.previousRequestGroupFeedback() === this.groupFeedback() &&
-            this.previousResponseData() !== undefined
+            this.previousResponseData()
         ) {
-            this.updateCache();
+            this.updateCache(this.previousResponseData()!, state, filters);
             return;
         }
 
@@ -140,41 +148,23 @@ export class FeedbackAnalysisComponent {
         }
     }
 
-    updateCache(response?: FeedbackAnalysisResponse, state?: any, filters?: any): void {
-        if (response) {
-            this.previousResponseData.set(this.currentResponseData());
-            this.previousRequestGroupFeedback.set(this.currentRequestGroupFeedback());
-            this.previousRequestState.set(this.currentRequestState());
-            this.previousRequestFilters.set(this.currentRequestFilters());
+    updateCache(response: FeedbackAnalysisResponse, state: FeedbackAnalysisState, filters: FilterData): void {
+        this.content.set(response.feedbackDetails);
+        this.totalItems.set(response.totalItems);
+        this.taskNames.set(response.taskNames);
+        this.testCaseNames.set(response.testCaseNames);
+        this.errorCategories.set(response.errorCategories);
+        this.maxCount.set(response.highestOccurrenceOfGroupedFeedback);
 
-            this.currentResponseData.set(response);
-            this.currentRequestGroupFeedback.set(this.groupFeedback());
-            this.currentRequestState.set(state);
-            this.currentRequestFilters.set(filters);
+        this.previousResponseData.set(this.currentResponseData());
+        this.previousRequestGroupFeedback.set(this.currentRequestGroupFeedback());
+        this.previousRequestState.set(this.currentRequestState());
+        this.previousRequestFilters.set(this.currentRequestFilters());
 
-            this.content.set(response.feedbackDetails);
-            this.totalItems.set(response.totalItems);
-            this.taskNames.set(response.taskNames);
-            this.testCaseNames.set(response.testCaseNames);
-            this.errorCategories.set(response.errorCategories);
-            this.maxCount.set(response.highestOccurrenceOfGroupedFeedback);
-        } else {
-            this.content.set(this.previousResponseData()!.feedbackDetails);
-            this.totalItems.set(this.previousResponseData()!.totalItems);
-            this.taskNames.set(this.previousResponseData()!.taskNames);
-            this.testCaseNames.set(this.previousResponseData()!.testCaseNames);
-            this.errorCategories.set(this.previousResponseData()!.errorCategories);
-            this.maxCount.set(this.previousResponseData()!.highestOccurrenceOfGroupedFeedback);
-
-            this.previousResponseData.set(this.currentResponseData());
-            this.previousRequestGroupFeedback.set(this.currentRequestGroupFeedback());
-            this.previousRequestState.set(this.currentRequestState());
-            this.previousRequestFilters.set(this.currentRequestFilters());
-            this.currentResponseData.set(this.previousResponseData());
-            this.currentRequestGroupFeedback.set(this.groupFeedback());
-            this.currentRequestState.set(this.previousRequestState());
-            this.currentRequestFilters.set(this.previousRequestFilters());
-        }
+        this.currentResponseData.set(response);
+        this.currentRequestGroupFeedback.set(this.groupFeedback());
+        this.currentRequestState.set(state);
+        this.currentRequestFilters.set(filters);
     }
 
     setPage(newPage: number): void {

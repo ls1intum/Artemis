@@ -2,17 +2,18 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { TranslateModule, TranslateService } from '@ngx-translate/core';
 import { MockTranslateService } from '../../../helpers/mocks/service/mock-translate.service';
 import { ArtemisTestModule } from '../../../test.module';
-import { FeedbackAnalysisComponent } from 'app/exercises/programming/manage/grading/feedback-analysis/feedback-analysis.component';
+import { FeedbackAnalysisComponent, FeedbackAnalysisState } from 'app/exercises/programming/manage/grading/feedback-analysis/feedback-analysis.component';
 import { FeedbackAnalysisResponse, FeedbackAnalysisService, FeedbackDetail } from 'app/exercises/programming/manage/grading/feedback-analysis/feedback-analysis.service';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { LocalStorageService } from 'ngx-webstorage';
 import '@angular/localize/init';
-import { FeedbackFilterModalComponent } from 'app/exercises/programming/manage/grading/feedback-analysis/Modal/feedback-filter-modal.component';
+import { FeedbackFilterModalComponent, FilterData } from 'app/exercises/programming/manage/grading/feedback-analysis/Modal/feedback-filter-modal.component';
 import { AffectedStudentsModalComponent } from 'app/exercises/programming/manage/grading/feedback-analysis/Modal/feedback-affected-students-modal.component';
 import { FeedbackDetailChannelModalComponent } from 'app/exercises/programming/manage/grading/feedback-analysis/Modal/feedback-detail-channel-modal.component';
 import { Subject } from 'rxjs';
 import { ChannelDTO } from 'app/entities/metis/conversation/channel.model';
 import { AlertService } from 'app/core/util/alert.service';
+import { SortingOrder } from 'app/shared/table/pageable-table';
 
 describe('FeedbackAnalysisComponent', () => {
     let fixture: ComponentFixture<FeedbackAnalysisComponent>;
@@ -334,18 +335,27 @@ describe('FeedbackAnalysisComponent', () => {
     describe('updateCache', () => {
         it('should restore cache if no new response is provided', () => {
             component.previousResponseData.set(feedbackResponseMock);
-            component.previousRequestState.set({
+
+            const previousState: FeedbackAnalysisState = {
                 page: 1,
                 pageSize: 25,
                 searchTerm: '',
-                sortingOrder: 'DESCENDING',
+                sortingOrder: SortingOrder.DESCENDING,
                 sortedColumn: 'count',
-                filterErrorCategories: ['Student Error'],
-            });
-            component.previousRequestFilters.set({ tasks: ['task1'], testCases: ['testCase1'], occurrence: [0, 10], errorCategories: ['Student Error'] });
+                filterErrorCategories: ['Student Error', 'Ares Error', 'AST Error'],
+            };
+            component.previousRequestState.set(previousState);
+
+            const previousFilters: FilterData = {
+                tasks: ['task1'],
+                testCases: ['testCase1'],
+                occurrence: [0, 10],
+                errorCategories: ['Student Error'],
+            };
+
             component.previousRequestGroupFeedback.set(false);
 
-            component.updateCache();
+            component.updateCache(component.previousResponseData()!, component.previousRequestState()!, component.previousRequestFilters()!);
 
             expect(component.content().resultsOnPage).toEqual(feedbackResponseMock.feedbackDetails.resultsOnPage);
             expect(component.totalItems()).toBe(feedbackResponseMock.totalItems);
@@ -356,7 +366,7 @@ describe('FeedbackAnalysisComponent', () => {
 
             expect(component.previousResponseData()).toEqual(component.currentResponseData());
             expect(component.previousRequestState()).toEqual(component.currentRequestState());
-            expect(component.previousRequestFilters()).toEqual(component.currentRequestFilters());
+            expect(previousFilters).toEqual(component.currentRequestFilters());
             expect(component.previousRequestGroupFeedback()).toEqual(component.currentRequestGroupFeedback());
         });
     });
