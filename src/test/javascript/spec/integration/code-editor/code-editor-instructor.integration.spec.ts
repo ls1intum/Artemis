@@ -92,7 +92,7 @@ describe('CodeEditorInstructorIntegration', () => {
     let routeSubject: Subject<Params>;
 
     const mockProfileInfo = { activeProfiles: ['iris'] } as ProfileInfo;
-    const courseId = 1;
+
     // Workaround for an error with MockComponent(). You can remove this once https://github.com/help-me-mom/ng-mocks/issues/8634 is resolved.
     mockCodeEditorMonacoViewChildren();
 
