@@ -64,7 +64,7 @@ export class PostingFooterComponent implements OnInit, OnDestroy, AfterContentCh
     }
 
     ngOnDestroy(): void {
-        this.answerPostCreateEditModal?.createEditAnswerPostContainerRef?.clear();
+        this.answerPostCreateEditModal?.createEditAnswerPostContainerRef()?.clear();
     }
 
     /**

@@ -31,6 +31,10 @@
                         "title": "Vorlesungen Erfassung Einstellungen",
                         "autoIngestOnAttachmentUpload": "Vorlesungen automatisch an Pyris senden"
                     },
+                    "faqIngestionSettings": {
+                        "title": "FAQ Ingestion Settings",
+                        "autoIngest": "FAQs automatisch an Pyris senden"
+                    },
                     "competencyGenerationSettings": "Kompetenzgenerierung Einstellungen",
                     "proactivityBuildFailedEventEnabled": {
                         "label": "Build-Fehler überwachen",
@@ -129,7 +133,9 @@
                 "lectureSuccess": "Vorlesung Ingestion in Pyris erfolgreich gestartet",
                 "lectureError": "Fehler beim Senden der Vorlesung an Pyris",
                 "allLecturesSuccess": "Alle Vorlesungen Ingestion in Pyris erfolgreich gestartet",
+                "allFaqsSuccess": "Alle Faqs Ingestion in Pyris erfolgreich gestartet",
                 "allLecturesError": "Fehler beim Senden aller Vorlesungen an Pyris",
+                "allFaqsError": "Fehler beim Senden aller FAQs an Pyris",
                 "lectureNotFound": "Vorlesung kann nicht an Pyris gesendet werden, keine Vorlesung mit der angegebenen ID gefunden.",
                 "pyrisUnavailable": "Pyris ist derzeit nicht verfügbar.",
                 "pyrisError": "Ein Fehler ist bei der Kommunikation mit Pyris aufgetreten."

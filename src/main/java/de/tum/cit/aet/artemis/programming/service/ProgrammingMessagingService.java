@@ -186,8 +186,6 @@ public class ProgrammingMessagingService {
      * @param participation the participation for which the result was created.
      */
     public void notifyUserAboutNewResult(Result result, ProgrammingExerciseParticipation participation) {
-        var submission = result.getSubmission();
-        log.debug("Send result to client over websocket. Result: {}, Submission: {}, Participation: {}", result, submission, submission.getParticipation());
         // notify user via websocket
         resultWebsocketService.broadcastNewResult((Participation) participation, result);
 
