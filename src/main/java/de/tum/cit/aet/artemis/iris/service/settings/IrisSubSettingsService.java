@@ -204,11 +204,11 @@ public class IrisSubSettingsService {
      * If the new settings are null, the current settings will be deleted (except if the parent settings are null == if the settings are global).
      * Special notes:
      *
-     * @param currentSettings Current Lecture Ingestion sub settings.
-     * @param newSettings     Updated Lecture Ingestion sub settings.
-     * @param parentSettings  Parent Lecture Ingestion sub settings.
+     * @param currentSettings Current Lecture Chat sub settings.
+     * @param newSettings     Updated Lecture Chat sub settings.
+     * @param parentSettings  Parent Lecture Chat sub settings.
      * @param settingsType    Type of the settings the sub settings belong to.
-     * @return Updated Lecture Ingestion sub settings.
+     * @return Updated Lecture Chat sub settings.
      */
     public IrisLectureChatSubSettings update(IrisLectureChatSubSettings currentSettings, IrisLectureChatSubSettings newSettings,
             IrisCombinedLectureChatSubSettingsDTO parentSettings, IrisSettingsType settingsType) {
