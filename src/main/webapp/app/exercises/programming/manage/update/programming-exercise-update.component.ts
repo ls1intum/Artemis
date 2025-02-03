@@ -289,7 +289,7 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
         const languageChanged = this.selectedProgrammingLanguageValue !== language;
         this.selectedProgrammingLanguageValue = language;
 
-        const programmingLanguageFeature = this.programmingLanguageFeatureService.getProgrammingLanguageFeature(language);
+        const programmingLanguageFeature = this.programmingLanguageFeatureService.getProgrammingLanguageFeature(language)!;
         this.packageNameRequired = programmingLanguageFeature?.packageNameRequired;
         this.staticCodeAnalysisAllowed = programmingLanguageFeature.staticCodeAnalysis;
         this.checkoutSolutionRepositoryAllowed = programmingLanguageFeature.checkoutSolutionRepositoryAllowed;
@@ -377,7 +377,7 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
 
         // update the project types for java programming exercises according to whether dependencies should be included
         if (this.programmingExercise.programmingLanguage === ProgrammingLanguage.JAVA) {
-            const programmingLanguageFeature = this.programmingLanguageFeatureService.getProgrammingLanguageFeature(ProgrammingLanguage.JAVA);
+            const programmingLanguageFeature = this.programmingLanguageFeatureService.getProgrammingLanguageFeature(ProgrammingLanguage.JAVA)!;
             if (type == ProjectType.MAVEN_BLACKBOX) {
                 this.selectedProjectTypeValue = ProjectType.MAVEN_BLACKBOX;
                 this.programmingExercise.projectType = ProjectType.MAVEN_BLACKBOX;
