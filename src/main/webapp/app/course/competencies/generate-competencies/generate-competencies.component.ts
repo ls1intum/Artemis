@@ -20,9 +20,9 @@ import { IrisStageDTO, IrisStageStateDTO } from 'app/entities/iris/iris-stage-dt
 import { CourseCompetencyService } from 'app/course/competencies/course-competency.service';
 import { ArtemisSharedCommonModule } from 'app/shared/shared-common.module';
 import { ArtemisSharedComponentModule } from 'app/shared/components/shared-component.module';
-import { ArtemisCompetenciesModule } from 'app/course/competencies/competency.module';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
 import { CourseDescriptionFormComponent } from 'app/course/competencies/generate-competencies/course-description-form.component';
+import { CompetencyRecommendationDetailComponent } from 'app/course/competencies/generate-competencies/competency-recommendation-detail.component';
 
 export type CompetencyFormControlsWithViewed = {
     competency: FormGroup<CompetencyFormControls>;
@@ -49,7 +49,7 @@ type CompetencyGenerationStatusUpdate = {
 @Component({
     selector: 'jhi-generate-competencies',
     templateUrl: './generate-competencies.component.html',
-    imports: [ArtemisSharedCommonModule, ArtemisSharedComponentModule, ArtemisCompetenciesModule, FormsModule, ReactiveFormsModule],
+    imports: [ArtemisSharedCommonModule, ArtemisSharedComponentModule, FormsModule, ReactiveFormsModule, CourseDescriptionFormComponent, CompetencyRecommendationDetailComponent],
 })
 export class GenerateCompetenciesComponent implements OnInit, ComponentCanDeactivate {
     private courseManagementService = inject(CourseManagementService);

@@ -1,8 +1,6 @@
 import { NgModule } from '@angular/core';
 import { ArtemisSharedModule } from 'app/shared/shared.module';
 import { ArtemisSharedPipesModule } from 'app/shared/pipes/shared-pipes.module';
-import { ArtemisExerciseButtonsModule } from 'app/overview/exercise-details/exercise-buttons.module';
-import { ArtemisCourseExerciseRowModule } from 'app/overview/course-exercises/course-exercise-row.module';
 import { SidebarAccordionComponent } from './sidebar-accordion/sidebar-accordion.component';
 import { SidebarCardSmallComponent } from 'app/shared/sidebar/sidebar-card-small/sidebar-card-small.component';
 import { SidebarCardMediumComponent } from 'app/shared/sidebar/sidebar-card-medium/sidebar-card-medium.component';
@@ -18,8 +16,6 @@ import { ProfilePictureComponent } from 'app/shared/profile-picture/profile-pict
 
 @NgModule({
     imports: [
-        ArtemisExerciseButtonsModule,
-        ArtemisCourseExerciseRowModule,
         ArtemisSharedModule,
         ArtemisSharedPipesModule,
         ArtemisSharedCommonModule,
