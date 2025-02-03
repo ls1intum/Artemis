@@ -548,15 +548,15 @@ class LocalCIIntegrationTest extends AbstractProgrammingIntegrationLocalCILocalV
 
         BuildJobQueueItem item = queuedJobs.stream().filter(i -> i.buildConfig().commitHashToBuild().equals(commitHash) && i.participationId() == studentParticipation.getId())
                 .findFirst().orElseThrow();
-        assertThat(item.jobTimingInfo().estimatedDuration()).isEqualTo(24);
+        assertThat(item.jobTimingInfo().estimatedDuration()).isEqualTo(22);
         sharedQueueProcessingService.init();
 
         await().until(() -> processingJobs.values().stream().anyMatch(buildJobQueueItem -> buildJobQueueItem.buildConfig().commitHashToBuild().equals(commitHash)
                 && buildJobQueueItem.participationId() == studentParticipation.getId()));
         item = processingJobs.values().stream().filter(i -> i.buildConfig().commitHashToBuild().equals(commitHash) && i.participationId() == studentParticipation.getId())
                 .findFirst().orElseThrow();
-        assertThat(item.jobTimingInfo().estimatedDuration()).isEqualTo(24);
-        assertThat(item.jobTimingInfo().estimatedCompletionDate()).isCloseTo(item.jobTimingInfo().buildStartDate().plusSeconds(24), within(500, ChronoUnit.MILLIS));
+        assertThat(item.jobTimingInfo().estimatedDuration()).isEqualTo(22);
+        assertThat(item.jobTimingInfo().estimatedCompletionDate()).isCloseTo(item.jobTimingInfo().buildStartDate().plusSeconds(22), within(500, ChronoUnit.MILLIS));
     }
 
     @Test

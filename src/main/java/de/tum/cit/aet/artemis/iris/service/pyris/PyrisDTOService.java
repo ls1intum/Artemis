@@ -59,6 +59,10 @@ public class PyrisDTOService {
     public PyrisProgrammingExerciseDTO toPyrisProgrammingExerciseDTO(ProgrammingExercise exercise) {
         var templateRepositoryContents = getFilteredRepositoryContents(exercise.getTemplateParticipation());
         var solutionRepositoryContents = getFilteredRepositoryContents(exercise.getSolutionParticipation());
+
+        // var templateRepositoryContents = new HashMap<String, String>();
+        // var solutionRepositoryContents = new HashMap<String, String>();
+
         Optional<Repository> testRepo = Optional.empty();
         try {
             testRepo = Optional.ofNullable(gitService.getOrCheckoutRepository(exercise.getVcsTestRepositoryUri(), true));

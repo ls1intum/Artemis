@@ -260,8 +260,8 @@ export class ResultService implements IResultService {
                 this.convertResultDatesFromServer(resultWithPoints.result);
                 const pointsMap = new Map<number, number>();
                 if (resultWithPoints.pointsPerCriterion) {
-                    resultWithPoints.pointsPerCriterion.forEach((value, key) => {
-                        pointsMap.set(Number(key), value);
+                    Object.entries(resultWithPoints.pointsPerCriterion).forEach(([key, value]) => {
+                        pointsMap.set(+key, value);
                     });
                 }
                 resultWithPoints.pointsPerCriterion = pointsMap;

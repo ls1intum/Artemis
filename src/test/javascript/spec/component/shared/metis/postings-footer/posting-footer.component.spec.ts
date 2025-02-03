@@ -1,7 +1,6 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { MockComponent, MockModule } from 'ng-mocks';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { PostReactionsBarComponent } from 'app/shared/metis/posting-reactions-bar/post-reactions-bar/post-reactions-bar.component';
 import { ArtemisCoursesRoutingModule } from 'app/overview/courses-routing.module';
 import { MetisService } from 'app/shared/metis/metis.service';
 import { PostService } from 'app/shared/metis/post.service';
@@ -46,7 +45,6 @@ describe('PostingFooterComponent', () => {
                 PostingFooterComponent,
                 TranslatePipeMock,
                 MockComponent(FaIconComponent),
-                MockComponent(PostReactionsBarComponent),
                 MockComponent(PostComponent),
                 MockComponent(AnswerPostComponent),
                 MockComponent(AnswerPostCreateEditModalComponent),
