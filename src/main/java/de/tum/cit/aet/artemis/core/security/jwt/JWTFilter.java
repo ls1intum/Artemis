@@ -124,7 +124,7 @@ public class JWTFilter extends GenericFilterBean {
      * @param source        the source of the jwt token
      * @return true if the jwt is valid, false if missing or invalid
      */
-    private static boolean isJwtValid(TokenProvider tokenProvider, @Nullable String jwtToken, @Nullable String source) {
+    public static boolean isJwtValid(TokenProvider tokenProvider, @Nullable String jwtToken, @Nullable String source) {
         return StringUtils.hasText(jwtToken) && tokenProvider.validateTokenForAuthority(jwtToken, source);
     }
 }
