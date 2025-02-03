@@ -10,7 +10,7 @@ type EntityResponseType = HttpResponse<ForwardedMessage>;
 export class ForwardedMessageService {
     public resourceUrl = 'api/forwarded-messages';
 
-    private http: HttpClient = inject(HttpClient);
+    private http = inject(HttpClient);
 
     /**
      * Creates a new ForwardedMessage.

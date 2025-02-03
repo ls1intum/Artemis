@@ -141,9 +141,9 @@ export class PostingReactionsBarComponent<T extends Posting> implements OnInit, 
 
     private metisService = inject(MetisService);
     private accountService = inject(AccountService);
-    private conversationService: ConversationService = inject(ConversationService);
-    private modalService: NgbModal = inject(NgbModal);
-    private metisConversationService: MetisConversationService = inject(MetisConversationService);
+    private conversationService = inject(ConversationService);
+    private modalService = inject(NgbModal);
+    private metisConversationService = inject(MetisConversationService);
 
     /**
      * on initialization: updates the current posting and its reactions,

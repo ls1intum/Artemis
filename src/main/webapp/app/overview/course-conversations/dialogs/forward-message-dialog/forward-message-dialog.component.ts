@@ -61,7 +61,7 @@ export class ForwardMessageDialogComponent implements OnInit, AfterViewInit {
     protected searchInput = viewChild<ElementRef>('searchInput');
     protected messageContent = viewChild<ElementRef>('messageContent');
 
-    private courseManagementService: CourseManagementService = inject(CourseManagementService);
+    private courseManagementService = inject(CourseManagementService);
     private cdr = inject(ChangeDetectorRef);
     private renderer = inject(Renderer2);
 
